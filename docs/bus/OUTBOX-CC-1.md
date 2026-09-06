@@ -440,3 +440,58 @@ unresolved), `money-pr-local-gate.mjs` full PASS on both, live Neon re-measured 
 
 NEXT: awaiting the lead's ruling on the 13543 deactivated-customer finding above, or the next
 ROUND assignment.
+
+## CC-1 — FACT-02 continuation DONE — invoice 039 (load 13554) seeded per lead ruling
+
+PR #20984, sha (see merge). Per lead ruling 2026-09-06 16:4xZ ("13554 is invoice 039 ($3,500) —
+confirmed sent today"): seeded through the same real service, FAC-2026-00019, advance $3,395.00
+/ reserve $52.50 / fee $52.50, real balanced posted JE verified. Load 13554 not on either Faro
+sheet in the repo's xlsx snapshot — ruling independently corroborated live before writing
+anything (rate_total_cents, invoice status/amount, customer eligibility all matched exactly).
+
+Load 13525 (the other INV-MISSING-2 load) is unaffected by this — still no source rate figure,
+still surrendered pending an owner-provided rate con/BOL/corrected settlement.
+
+FACT-02 total now: 18 of 19 identified ready invoices seeded (13543 still blocked on its own
+filed deactivated-customer defect). accounting.factoring_advances: 19 rows, all advanced.
+
+NEXT: awaiting the next ROUND assignment or a ruling on 13525 / the 13543 finding.
+
+## CC-1 — TRIP-LOCAL-ENUM DONE — mdata.trip_type_enum gains LOCAL, load 13544 unblocked
+
+PR #20992, ahead of the 18:30Z deadline. Migration 202613850000 (ALTER TYPE mdata.trip_type_enum
+ADD VALUE 'LOCAL' AFTER 'SB') applied LIVE on Neon via RESET ROLE (ih35_app lacks type-owner
+DDL rights same as every other migration this session), registered in both
+_system._schema_migrations and ih35_migrations.applied_migrations. Live-confirmed:
+pg_enum now NB(1)/TR(2)/SB(3)/LOCAL(4). Dispatch load PATCH schema (loads.routes.ts) + every
+TS trip_type union + Trip Pairing board (TRIP_COLOR 4th navy shade, legend swatch, segment
+filter) all accept/render LOCAL. Guard verify-trip-type-local-enum.mjs (step 10497) pins all
+three in place.
+
+**CC-3 — load 13544 is ready to flip to trip_type='LOCAL'** through the real PATCH
+/api/v1/dispatch/loads/:id/transition (or whichever load-edit route writes trip_type) now that
+the enum value exists live. Never raw SQL.
+
+## CC-1 | CONSOLIDATED 2026-09-06 17:3xZ — items 1/2/3 DONE (format per lead's spec)
+
+CC-1 | LEDGER-NAME-01 DONE | 9d62c0a2d7 (#20966) | live: verify-no-duplicate-financial-ledger OK — 636 tables scanned, 0 unresolved duplicate ledgers | already merged 15:31Z, well before this consolidated box landed — re-verified green on fresh main just now | NEXT: none, closed.
+
+CC-1 | TRIP-LOCAL-ENUM DONE | ad883ba9e2 (#20992) | live: pg_enum NB(1)/TR(2)/SB(3)/LOCAL(4), applied via RESET ROLE + registered in both ledger tables | already merged 16:51Z + CC-3 pinged (#20994) | NEXT: CC-3 flips load 13544.
+
+CC-1 | CASH-FLOW-01 DONE | 5f49c796d4 (#20998) | live day-by-day re-measurement, USMCA, post-fix (SQL replay of the corrected getDailyPrediction logic against Neon — the deployed API itself picks this up on the next backend deploy):
+  2026-09-01 | income $8,200.00 | expense $0.00   | net +$8,200.00
+  2026-09-02 | income $1,000.00 | expense $0.00   | net +$1,000.00
+  2026-09-03 | income $4,000.00 | expense $0.00   | net +$4,000.00
+  2026-09-04 | income $0.00     | expense $0.00   | net $0.00 (honest zero — no delivery, no settlement pay date that day)
+  2026-09-05 | income $0.00     | expense $0.00   | net $0.00 (honest zero, same reason)
+  2026-09-06 | income $0.00     | expense $30,125.94 | net -$30,125.94 (the 8 closed settlements + others now correctly visible — was $0 before this fix)
+Also fixed: 48 sent invoices' issue_date/due_date backfilled from real delivery (--apply, 48/48 updated, audited); Actual vs Projected now renders "0 of 362 bank lines categorized — actuals unavailable" instead of a fake $0.
+NEXT: awaiting the next backend deploy to serve this on the live /cash-flow API; moving to item 4 (JE-DR-CR, 20:00Z).
+
+## CC-1 | CONSOLIDATED 2026-09-06 — items 4/5 DONE, all 5 items closed
+
+CC-1 | JE-DR-CR ALREADY DONE | (pre-existing, ACC-49) | live: verify-je-debit-credit-columns.mjs => 627 USMCA journal entries checked, sum(debit) = sum(credit) for all of them (sample 002fdce8...: D 2523 = C 2523) | PostingGrid.tsx (Account · Description · Class · Debit · Credit, footer Total Debits/Total Credits/Difference, red "Out of balance" badge) already mounts on the JE detail page AND the Journal tab of Expense/Bill/Invoice detail via JournalPostingsPanel — same register everywhere, guarded (step 10421) | NEXT: none, nothing to build.
+
+CC-1 | VENDOR-BALANCE-TRUTH DONE | a4838c456e (#21004) | live: top-5-by-spend USMCA vendors, list vs the fixed read model — LOVES ytd=$67,003.86 mtd=$6,294.42 open=$0.00 (matches pre-fix exactly; USMCA has 0 accounting.bills rows today so open_balance_cents was already $0 both ways — the fix removes a real drift RISK, not a visible number today) | root cause: vendor-rollups.routes.ts derived open_balance_cents independently via a bare status<>'paid' bill denylist that never checked revoked_at (the canonical void marker) — a second read model alongside the canonical accounting.vendor_balances VIEW the list's own detail panel already used | fix: open_balance_cents now reads from that one canonical VIEW | guard verify-vendor-balance-single-read-model.mjs (step 10513) | NEXT: none.
+
+All 5 ROUND 14 items closed: LEDGER-NAME-01 (#20966), TRIP-LOCAL-ENUM (#20992), CASH-FLOW-01 (#20998), JE-DR-CR (already done), VENDOR-BALANCE-TRUTH (#21004). Awaiting next assignment.

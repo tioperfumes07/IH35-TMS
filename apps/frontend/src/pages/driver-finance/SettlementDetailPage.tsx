@@ -58,6 +58,10 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { ConfirmModal } from "../../components/shared/ConfirmModal";
 import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrailPanel";
 import { TourSettlementTab } from "../../components/dispatch/TourSettlementTab";
+import { getTourReadout } from "../../api/tourReadout";
+import { SettlementLoadsSection } from "./components/SettlementLoadsSection";
+import { CompanyWaterfallSection } from "./components/CompanyWaterfallSection";
+import { SettlementNumberBox } from "./components/SettlementNumberBox";
 
 function toDeductionRows(lines: Array<Record<string, unknown>>): DeductionRow[] {
   return lines
@@ -114,6 +118,17 @@ export function SettlementDetailPage() {
     queryFn: () => getSettlement(settlementId!, companyId),
     enabled: Boolean(settlementId && companyId),
   });
+
+  // SETL-DETAIL-01 — SAME queryKey TourSettlementTab uses below (getTourReadout keyed by
+  // settlementId), so React Query dedupes this to one network request; feeds the header (tour legs
+  // NB→TR→SB with dates) and the new Revenue/Driver pay/Company margin KPI tiles from the one
+  // shared readout, never a second, independently-computed source of truth.
+  const readoutQuery = useQuery({
+    queryKey: ["tour-readout", "settlement", companyId, settlementId],
+    queryFn: () => getTourReadout(settlementId!, companyId),
+    enabled: Boolean(settlementId && companyId),
+  });
+  const readout = readoutQuery.data;
 
   // HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID: completes the hold/resume pair now that hold
   // actually persists real state (see HoldDeductionModal.tsx) — without this a held deduction had
@@ -518,6 +533,39 @@ export function SettlementDetailPage() {
           Team split lines detected (primary/co-driver)
         </div>
       ) : null}
+      {/* SETL-DETAIL-01 (lead ROUND 14) — NUMBER box (typed wins) + unit(s) + tour legs NB→TR→SB
+          with dates, additive alongside the pre-existing SettlementHeader (never deleted, §7). */}
+      <div className="ldt-card" data-testid="settlement-detail-identity-strip" style={{ padding: 10, display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-start" }}>
+        <SettlementNumberBox
+          settlementId={settlementId}
+          companyId={companyId}
+          displayId={settlementDisplayId}
+          isOpen={String(settlement.status ?? "") === "open"}
+          onSaved={() => void detailQuery.refetch()}
+        />
+        <div>
+          <div className="text-[11px] uppercase text-gray-500">Unit(s)</div>
+          <div className="text-xs font-semibold" data-testid="settlement-detail-unit">
+            {readout?.tour.unit_number ?? "—"}
+          </div>
+        </div>
+        <div style={{ flex: 1, minWidth: 220 }}>
+          <div className="text-[11px] uppercase text-gray-500">Tour legs</div>
+          <div className="flex flex-wrap gap-1" data-testid="settlement-detail-tour-legs">
+            {readout && readout.legs.length > 0 ? (
+              readout.legs.map((leg) => (
+                <span key={leg.load_id} className={`ldt-pill ${leg.is_cancelled ? "" : leg.trip_type === "SB" ? "ok" : leg.trip_type === "NB" ? "warn" : ""}`} title={`${leg.load_number} · ${leg.lane}`}>
+                  {leg.trip_type ?? "?"} {leg.load_number}
+                  {leg.pickup_date ? ` ${formatDateUS(leg.pickup_date)}` : ""}
+                  {leg.delivery_date ? `→${formatDateUS(leg.delivery_date)}` : ""}
+                </span>
+              ))
+            ) : (
+              <span className="ldt-muted">{"—"}</span>
+            )}
+          </div>
+        </div>
+      </div>
       <SettlementHeader
         settlementId={settlementId}
         settlementDisplayId={settlementDisplayId}
@@ -531,20 +579,20 @@ export function SettlementDetailPage() {
         onRefresh={() => void debt.refresh()}
       />
       <SettlementKpiGrid
-        loadedPayCents={summary.earningsTotal}
-        loadedMiles={kpi.loadedMiles}
-        loadedRate={kpi.loadedRate}
-        emptyPayCents={summary.deadheadTotal}
-        emptyMiles={kpi.emptyMiles}
-        emptyRate={kpi.emptyRate}
-        additionalCents={summary.extraTotal}
-        additionalLines={extra.length}
+        revenueCents={readout?.company_settlement?.revenue_cents ?? 0}
+        revenueSub={`${readout?.legs.length ?? 0} load${(readout?.legs.length ?? 0) === 1 ? "" : "s"}`}
+        driverPayCents={readout?.driver_settlement?.gross_cents ?? summary.earningsTotal + summary.deadheadTotal}
+        driverPaySub={`${kpi.loadedMiles.toLocaleString("en-US", { maximumFractionDigits: 0 })} mi loaded`}
         reimbursementCents={summary.reimbTotal}
         reimbursementLines={reimbursements.length}
         deductionCents={summary.deductionTotal}
         deductionBreakdown={kpi.deductionBreakdown}
         netPayCents={kpi.netPayCents}
+        companyMarginCents={readout?.company_settlement?.margin_cents ?? 0}
+        companyMarginSub={readout?.totals?.margin_pct == null ? "—" : `${readout.totals.margin_pct.toFixed(1)}%`}
       />
+      {readout ? <SettlementLoadsSection legs={readout.legs} /> : null}
+      {readout ? <CompanyWaterfallSection readout={readout} /> : null}
       <MoneyProofTrailPanel operatingCompanyId={companyId} documentType="settlement" documentId={settlementId} />
       {settlementIsCancelled ? (
         <div className="rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800">

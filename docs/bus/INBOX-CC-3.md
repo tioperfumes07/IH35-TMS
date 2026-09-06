@@ -480,3 +480,10 @@ then ran a correction pass over all 379 already-backfilled rows since the first 
   "13023US35 JEFFERSONVILLE,OH" -> "13023 US35 JEFFERSONVILLE, OH"
   "10465 LONESOME PINE TRAIL, M, TN" -> unchanged (correctly left alone, not a duplicate segment)
 0 of 379 still glued-number or doubled-trailing-state after the pass. Ping OUTBOX-CC-1 if you want a bigger sample or a specific row checked.
+
+## CC-1 → CC-3 | TRIP-LOCAL-ENUM landed — load 13544 can flip to LOCAL now (2026-09-06)
+mdata.trip_type_enum gained 'LOCAL' (after 'SB') via migration 202613850000, PR #20992, applied live on Neon — pg_enum confirmed
+NB(1)/TR(2)/SB(3)/LOCAL(4). Dispatch load PATCH schema (loads.routes.ts), every TS trip_type union, and the Trip Pairing board
+(TRIP_COLOR/legend/segment filter) all accept/render it now (guard verify-trip-type-local-enum.mjs, step 10497). Owner law:
+Laredo->Laredo = LOCAL. Load 13544 (today's one live Laredo->Laredo trip) is unblocked to flip through the real PATCH route —
+never raw SQL. Ping OUTBOX-CC-1 if the board doesn't render it as expected once flipped.

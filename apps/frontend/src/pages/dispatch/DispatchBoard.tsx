@@ -124,6 +124,7 @@ type BoardLoadExtras = {
   customer_wo_number?: string | null;
   commodity?: string | null;
   linehaul_cents?: number | null;
+  in_shop?: DispatchInShopUnit;
 };
 
 type BoardLoad = DispatchLoadRow & BoardLoadExtras;
@@ -275,16 +276,42 @@ function unitToBoardRow(unit: UnitsWithoutLoad): BoardLoad {
 
 function inShopUnitToBoardRow(unit: DispatchInShopUnit): BoardLoad {
   return {
-    id: `unit:inshop:${unit.id}`,
-    assigned_unit_id: unit.id,
+    id: `unit:inshop:${unit.unit_id}`,
+    assigned_unit_id: unit.unit_id,
     assigned_unit_number: unit.unit_number,
     assigned_primary_driver_id: null,
     assigned_primary_driver_name: null,
     trailer_number: null,
     load_number: "",
     status: "unassigned",
-    customer_wo_number: (unit.open_wo_count ?? 0) > 0 ? `${unit.open_wo_count} open` : null,
+    customer_wo_number: unit.work_order_display_id,
+    in_shop: unit,
   } as unknown as BoardLoad;
+}
+
+function renderInShopDetails(load: BoardLoad): ReactNode {
+  const unit = load.in_shop;
+  if (!unit) return load.customer_wo_number ?? "—";
+  const opened = formatInCompanyTimeZone(unit.opened_at, { month: "short", day: "2-digit" });
+  const eta = unit.expected_ready_at
+    ? formatInCompanyTimeZone(unit.expected_ready_at, { month: "short", day: "2-digit" })
+    : "—";
+  return (
+    <div className="grid min-w-[430px] grid-cols-[minmax(60px,1fr)_minmax(90px,1.4fr)_70px_70px_70px] gap-2 text-xs" data-testid="dispatch-in-shop-details">
+      <span>
+        <span className="font-semibold">WO</span>{" "}
+        <EntityLink
+          kind="work_order"
+          id={unit.work_order_id}
+          label={entityLabel(unit.work_order_display_id, unit.work_order_id, "Work order")}
+        />
+      </span>
+      <span><span className="font-semibold">Shop</span> {unit.shop_or_vendor}</span>
+      <span><span className="font-semibold">Opened</span> {opened}</span>
+      <span><span className="font-semibold">ETA</span> {eta}</span>
+      <span><span className="font-semibold">Days down</span> {unit.days_down}</span>
+    </div>
+  );
 }
 
 function unitIdFromBoardRowId(id: string) {
@@ -543,7 +570,9 @@ export function DispatchBoard({
     refetchInterval: 60_000,
   });
   const inShopUnits = inShopUnitsQuery.isError ? [] : (inShopUnitsQuery.data ?? []);
-  const inShopUnitIds = useMemo(() => new Set(inShopUnits.map((unit) => unit.id)), [inShopUnits]);
+  // DispatchInShopUnit's real key is unit_id (api/dispatch.ts) — .id never existed on this type;
+  // this line only typechecked before because a prior tsc pass didn't reach it.
+  const inShopUnitIds = useMemo(() => new Set(inShopUnits.map((unit) => unit.unit_id)), [inShopUnits]);
 
   const triSignalsQuery = useQuery({
     queryKey: ["dispatch-board", "tri-signals", companyId],
@@ -1051,7 +1080,7 @@ export function DispatchBoard({
     // On-time · Freshness), then STATUS (Status signal · Risk · Status · Pre-settlement).
     { key: "customer", header: "Customer", cell: renderCustomerCell },
     { key: "commodity", header: "Commodity", cell: (load) => load.commodity ?? "—", defaultHidden: true },
-    { key: "wo", header: "WO #", cell: (load) => load.customer_wo_number ?? "—" },
+    { key: "wo", header: "WO #", cell: renderInShopDetails },
     { key: "pickup", header: "Pickup", cell: (load) => load.first_pickup_city ?? "—" },
     { key: "pickup_date", header: "PU date", cell: (load) => renderPickupDateCell(load) },
     { key: "pickup_time", header: "PU time", cell: (load) => renderPickupTimeCell(load) },

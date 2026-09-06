@@ -1269,3 +1269,45 @@ Zero of the 29 cancelled USMCA loads touched. No raw SQL for writes — every
 write went through PATCH /api/v1/mdata/loads/:id/stops/:stopId.
 
 STOPS-APPT-FIX: COMPLETE.
+
+ROUND 13 progress — OPT-PANEL-01 ✔ (PR #20973, merged), INV-COPIES-01 ✔ (PR
+#20978, merged, 38/38 PDFs in ~/Downloads/USMCA-INVOICES-2026-09-06/),
+MatchDrawer/manual-match-picker test fixes ✔ (PR #20980): stale
+VARIANCE_HELD_NOTE assertion (BANK-F9998 F8 already changed the wording,
+test never updated) + BankReconciliationPage.tsx's worklist row (the
+merchant-name label's own click handler unconditionally stopped
+propagation before the row's select handler could fire, so the manual-
+match panel never opened — fixed by forwarding the click to row-select too,
+shared component itself untouched). vitest 8/8. BANK-MATCH-QBO (#20975)
+confirmed additive — MatchDrawer keeps working unmodified against the new
+match-candidates shape; adopting the new columns (counterparty_name /
+reference / description / open_balance_cents / payee_similarity + filters)
+into the drawer is queued, no deadline given — moving to LB-CHROME-1 now
+(deadline 18:30Z, time-boxed, surrender Cursor), column-adoption after.
+
+DELIVER-HAND-9 — DONE (owner ruling 16:4xZ quoted verbatim in the script's
+own console output). All 9 loads (13512, 13513, 13520, 13528, 13532,
+13535, 13536, 13537, 13508) delivered via --include-hand-list --apply.
+13508 (assigned_not_dispatched) got its own extra leading transition to
+dispatched first, then joined the same in_transit → delivered_pending_docs
+chain as the other 8.
+
+NEON PROOF (post-run): loads by status — cancelled=29,
+delivered_pending_docs=49, dispatched=0 — every non-cancelled USMCA load
+is now delivered. Invoices sent=48, void=30. revrec: 48 rows, $139,880.00.
+A/R sent sum: $139,880.00, matching revrec exactly.
+
+RECONCILED against your own arithmetic: the 9 loads THIS run touched
+(isolated by updated_at, all within the same ~3-min window) sum to
+EXACTLY $23,625.00 — matches your math precisely. The 48th sent invoice
+(vs. the 47 you expected) is load 13554/invoice 039 — timestamped 5
+minutes BEFORE this run started, confirmed as CC-1's own concurrent
+FACT-02 continuation work (OUTBOX-CC-1.md), not touched by this script.
+Not a defect in this run; fully reconciled.
+
+OWNER_HAND_LOADS itself is untouched — a bare re-run without
+--include-hand-list still holds all 9. Guard verify-deliver-seed-40.mjs
+re-pinned (10/10 selftest) to require the release stay an explicit flag,
+never a default-true, and to print the owner's quote when taken.
+
+DELIVER-HAND-9: COMPLETE. Moving to TPB-DATES-01 (18:30Z).

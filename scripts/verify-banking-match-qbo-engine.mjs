@@ -72,7 +72,34 @@ export function problemsFor({ service, route, api, view }) {
     if (!view.includes(`data-testid="${id}"`)) p.push(`view: filter control ${id} missing`);
   }
   if (!view.includes('data-testid="banking-match-candidate-payee"')) p.push("view: candidate rows do not show the Payee");
-  if (!/getMatchCandidates\(String\(expandedTxId\), companyId, \{[\s\S]{0,400}kinds: matchKind \? \[matchKind\] : undefined,[\s\S]{0,300}payee: matchPayee \|\| undefined,/.test(view)) p.push("view: filters are not sent to the query");
+  if (!/getMatchCandidates\(String\(expandedTxId\), companyId, \{[\s\S]{0,400}kinds: matchKinds\.size >= ALL_MATCH_KINDS\.length \? undefined : \[\.\.\.matchKinds\],[\s\S]{0,300}payee: matchPayee \|\| undefined,/.test(view)) p.push("view: filters are not sent to the query");
+
+  // BANK-MATCH-QBO-c (owner 2026-09-06 verbatim: "THE COLUMNS ARE NOT ADJUSTIBLE, THE GEAR WITH
+  // COLUMNS AND FILTER IS NOT THERE ... THAT LIST MUST BE MULTIPLE SELECTOR"): the register is a
+  // real <ParityTable> (gear = column show/hide + drag-resize + drag-reorder), Show is a
+  // checklist (never a single-select <select>), and "Gap" is retired in favor of two signed
+  // columns (Difference, Days off).
+  if (!/<ParityTable\b/.test(view) || !/gearButtonTestId="banking-match-gear"/.test(view)) {
+    p.push("view: the match-candidates register must be a real ParityTable with its own gear (column show/hide, drag-resize, drag-reorder)");
+  }
+  if (/<select\b[\s\S]{0,80}data-testid="banking-match-filter-kind"/.test(view)) {
+    p.push("view: Show reverted to a single-select <select> — it must be a multi-select checklist");
+  }
+  if (!/data-testid=\{`banking-match-filter-kind-\$\{kind\}`\}/.test(view)) {
+    p.push("view: Show checklist options must each carry a per-kind data-testid (banking-match-filter-kind-<kind>)");
+  }
+  const allKindsLine = view.match(/const ALL_MATCH_KINDS: BankMatchCandidateKind\[\] = \[[^\]]*\];/)?.[0] ?? "";
+  for (const kind of ["bill", "bill_payment", "expense", "payment", "transfer", "je"]) {
+    if (!allKindsLine.includes(`"${kind}"`)) {
+      p.push(`view: Show checklist is missing the ${kind} option`);
+    }
+  }
+  if (/Gap \(\$/.test(view) || />Gap</.test(view)) {
+    p.push('view: "Gap" column text is back — it must be split into Difference and Days off');
+  }
+  if (!view.includes('label: "Difference"') || !view.includes('label: "Days off"')) {
+    p.push("view: candidate columns must carry Difference and Days off (Gap's signed replacement)");
+  }
   return p;
 }
 
@@ -89,7 +116,10 @@ function selftest() {
     ["api forgets kinds", { ...base, api: base.api.replace('params.set("kinds", opts.kinds.join(","));', "") }],
     ["Show dropdown removed", { ...base, view: base.view.replace('data-testid="banking-match-filter-kind"', "") }],
     ["Payee column removed", { ...base, view: base.view.replace('data-testid="banking-match-candidate-payee"', "") }],
-    ["filters not sent", { ...base, view: base.view.replace("kinds: matchKind ? [matchKind] : undefined,", "") }],
+    ["filters not sent", { ...base, view: base.view.replace("kinds: matchKinds.size >= ALL_MATCH_KINDS.length ? undefined : [...matchKinds],", "") }],
+    ["gear removed", { ...base, view: base.view.replace('gearButtonTestId="banking-match-gear"', "") }],
+    ["single-select restored", { ...base, view: base.view.replace('<div className="ldt-fld" data-testid="banking-match-filter-kind">', '<select data-testid="banking-match-filter-kind">') }],
+    ["Gap returns", { ...base, view: base.view.replace('label: "Difference"', 'label: "Gap ($ · days)"') }],
   ];
   let caught = 0;
   for (const [name, m] of mutants) {

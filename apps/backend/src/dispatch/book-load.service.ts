@@ -75,7 +75,7 @@ export type BookLoadInput = {
   customer_id: string;
   status: DispatchStatus;
   // Trip Pairing (Block 04): NB starts a tour (fresh tour_id), TR/SB join an existing tour_id.
-  trip_type?: "NB" | "TR" | "SB";
+  trip_type?: "NB" | "TR" | "SB" | "LOCAL";
   tour_id?: string;
   customer_wo_number?: string;
   customer_po_number?: string;

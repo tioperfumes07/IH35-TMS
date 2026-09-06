@@ -11,15 +11,22 @@
  * `lg:border-l` (border-gray-200); every candidate was its own `border-gray-100` card (1px #f3f4f6 — invisible on
  * white) laid out KIND · AMOUNT / memo / "Date: … Amount gap: … Date gap: … Score: …" on three lines.
  *
+ * RE-PINNED BANK-MATCH-QBO-c (owner 2026-09-06): the candidate register itself moved off the hand-built
+ * .ldt-rows.ldt-rows-match div-grid onto a real <ParityTable> (gear = column show/hide + drag-resize +
+ * drag-reorder); "Gap" split into signed Difference/Days off columns. The head-order pin below now reads
+ * the buildMatchCandidateColumns() factory's own column array (source order = render order absent a
+ * manual reorder) instead of literal <span> head cells.
+ *
  * PINS (source, apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx):
  *   1. both boxes are `.ldt-card strong` with testids banking-categorize-box / banking-match-candidates-box;
  *   2. each box opens with an `.ldt-ch` header band;
- *   3. the candidate register is `.ldt-rows ldt-rows-match` whose head row reads Date · Description · Type · Amount · Gap
- *      in that order; every candidate row carries data-testid banking-match-candidate-row and the `best` class when
- *      auto_match;
+ *   3. buildMatchCandidateColumns() reads Date · Type · Ref no. · Payee · Description · Open balance · Amount ·
+ *      Difference · Days off in that order; the register is a real <ParityTable>, every candidate row carries
+ *      the banking-match-candidate-row testid (via rowTestId) and the `best` class when auto_match (via
+ *      rowClassName);
  *   4. no `border-gray-100` card remains inside the match pane (the invisible divider);
- *   5. the palette carries `.ldt-card.strong` (border-color: var(--ldt-ink2)) and `.ldt-rows-match .ldt-row` with a full
- *      `--ldt-rule` bottom border (styles/tokens-load-detail.css).
+ *   5. the palette carries `.ldt-card.strong` (border-color: var(--ldt-ink2)) and
+ *      `.ldt-rows-match-table tr.best { background: var(--ldt-accent-soft) }` (styles/tokens-load-detail.css).
  *
  * Usage: node scripts/verify-banking-categorize-boxes.mjs [--selftest]
  */
@@ -43,26 +50,35 @@ export function problemsFor(view, css) {
   }
   if ((panel.match(/className="ldt-ch"/g) ?? []).length < 2) problems.push("both boxes must open with an .ldt-ch header band");
 
-  const reg = panel.indexOf('className="ldt-rows ldt-rows-match"');
-  if (reg === -1) problems.push("candidate register (.ldt-rows.ldt-rows-match) missing");
+  // BANK-MATCH-QBO-c: the register itself is a <ParityTable> now, fed by buildMatchCandidateColumns()
+  // (a module-level factory, not inline JSX inside the panel) — read ITS column array for the head order.
+  const factoryMatch = view.match(/function buildMatchCandidateColumns\([\s\S]*?\n\}\n/);
+  const factory = factoryMatch?.[0] ?? "";
+  if (!factory) problems.push("buildMatchCandidateColumns() factory missing — the candidate register must be built from one column-array factory, not inline JSX");
+  // storageKey is unique to THIS register — the main transactions table (elsewhere in the same
+  // file) is also a <ParityTable>, so a bare "<ParityTable" substring check would pass even if
+  // this specific register reverted to a div-grid.
+  if (!/storageKey="banking-match-candidates"/.test(panel)) problems.push("candidate register must be a real <ParityTable> (storageKey=\"banking-match-candidates\"), not a hand-built div-grid");
   else {
-    const head = panel.slice(reg, panel.indexOf("</div>", panel.indexOf('className="ldt-row head"', reg)));
-    // BANK-MATCH-QBO (owner 2026-09-06): QuickBooks "Find match" order — Date · Type · Ref no. · Payee ·
-    // Description · Open balance · Amount · Gap.
-    const order = ["<span>Date</span>", "<span>Type</span>", "<span>Ref no.</span>", "<span>Payee</span>", "<span>Description</span>", "Open balance</span>", "Amount</span>", "Gap ($ · days)</span>"];
-    let last = -1;
-    for (const cell of order) {
-      const i = head.indexOf(cell);
-      if (i === -1 || i < last) { problems.push(`candidate head row must read Date · Type · Ref no. · Payee · Description · Open balance · Amount · Gap (broke at ${cell})`); break; }
-      last = i;
+    const labels = [...factory.matchAll(/label:\s*"([^"]*)"/g)].map((m) => m[1]);
+    const order = ["Date", "Type", "Ref no.", "Payee", "Description", "Open balance", "Amount", "Difference", "Days off"];
+    let cursor = -1;
+    for (const want of order) {
+      const i = labels.indexOf(want, cursor + 1);
+      if (i === -1 || i <= cursor) {
+        problems.push(`candidate columns must read Date · Type · Ref no. · Payee · Description · Open balance · Amount · Difference · Days off (broke at ${want})`);
+        break;
+      }
+      cursor = i;
     }
-    if (!/data-testid="banking-match-candidate-row"/.test(panel)) problems.push("candidate rows lack data-testid banking-match-candidate-row");
-    if (!/candidate\.auto_match \? " best" : ""/.test(panel)) problems.push("auto_match row must carry the `best` class");
+    if (!/rowTestId=\{\(\) => "banking-match-candidate-row"\}/.test(panel)) problems.push("candidate rows lack the banking-match-candidate-row testid (rowTestId)");
+    if (!/rowClassName=\{\(c\) => \(c\.auto_match \? "best" : ""\)\}/.test(panel)) problems.push("auto_match row must carry the `best` class (rowClassName)");
+    if (!/gearButtonTestId="banking-match-gear"/.test(panel)) problems.push("candidate register must expose its own gear (column show/hide + drag-resize + drag-reorder)");
   }
   if (/border-gray-100/.test(panel)) problems.push("border-gray-100 (invisible divider) still inside the expanded panel");
 
   if (!/\.ldt-card\.strong\s*\{\s*border-color:\s*var\(--ldt-ink2\)/.test(css)) problems.push("tokens: .ldt-card.strong { border-color: var(--ldt-ink2) } missing");
-  if (!/\.ldt-rows-match \.ldt-row\s*\{[^}]*border-bottom:\s*1px solid var\(--ldt-rule\)/.test(css)) problems.push("tokens: .ldt-rows-match .ldt-row needs a full --ldt-rule bottom border");
+  if (!/\.ldt-rows-match-table tr\.best\s*\{\s*background:\s*var\(--ldt-accent-soft\)/.test(css)) problems.push("tokens: .ldt-rows-match-table tr.best needs the --ldt-accent-soft best-match tint");
   return problems;
 }
 
@@ -74,14 +90,14 @@ function selftest() {
     ["left box loses the dark outline", view.replace('className="ldt-card strong" data-testid="banking-categorize-box"', 'className="p-1" data-testid="banking-categorize-box"'), css],
     ["right box loses the dark outline", view.replace('className="ldt-card strong" data-testid="banking-match-candidates-box"', 'className="border-l" data-testid="banking-match-candidates-box"'), css],
     ["a header band is dropped", view.replace('<div className="ldt-ch">\n            <span>Match candidates</span>', '<div>\n            <span>Match candidates</span>'), css],
-    ["Type before Date", view.replace("<span>Date</span>\n                  <span>Type</span>", "<span>Type</span>\n                  <span>Date</span>"), css],
-    ["Payee column dropped", view.replace("<span>Payee</span>\n", ""), css],
-    ["register removed", view.replace('className="ldt-rows ldt-rows-match"', 'className="space-y-1.5"'), css],
-    ["row testid removed", view.replace('data-testid="banking-match-candidate-row"', ""), css],
-    ["best class removed", view.replace('className={`ldt-row${candidate.auto_match ? " best" : ""}`}', 'className="ldt-row"'), css],
-    ["invisible divider returns", view.replace('className={`ldt-row${candidate.auto_match ? " best" : ""}`}', 'className="rounded-sm border border-gray-100"'), css],
+    ["Type before Date", view.replace('key: "event_date",\n      label: "Date",', 'key: "event_date",\n      label: "___MOVED___",').replace('key: "ledger_entry_kind",\n      label: "Type",', 'key: "ledger_entry_kind",\n      label: "Date",'), css],
+    ["Payee column dropped", view.replace('key: "counterparty_name",\n      label: "Payee",', 'key: "counterparty_name",\n      label: "Payee_REMOVED",'), css],
+    ["register removed (ParityTable reverted to a div-grid)", view.replace('storageKey="banking-match-candidates"', ""), css],
+    ["row testid removed", view.replace('rowTestId={() => "banking-match-candidate-row"}', ""), css],
+    ["best class removed", view.replace('rowClassName={(c) => (c.auto_match ? "best" : "")}', ""), css],
+    ["gear removed", view.replace('gearButtonTestId="banking-match-gear"', ""), css],
     ["tokens: strong outline dropped", view, css.replace(".ldt-card.strong { border-color: var(--ldt-ink2); }", "")],
-    ["tokens: row rule dropped", view, css.replace("border-bottom: 1px solid var(--ldt-rule); }\n.ldt-rows-match .ldt-row:last-child", "}\n.ldt-rows-match .ldt-row:last-child")],
+    ["tokens: best tint dropped", view, css.replace(".ldt-rows-match-table tr.best { background: var(--ldt-accent-soft); }", "")],
   ];
   let caught = 0;
   for (const [name, v, c] of mutants) {
@@ -96,5 +112,5 @@ if (process.argv.includes("--selftest")) selftest();
 else {
   const problems = problemsFor(fs.readFileSync(VIEW, "utf8"), fs.readFileSync(CSS, "utf8"));
   if (problems.length) { console.error(`FAIL ${LABEL}:`); for (const p of problems) console.error(`  - ${p}`); process.exit(1); }
-  console.log(`PASS ${LABEL} — two .ldt-card.strong boxes, .ldt-ch bands, candidate register Date · Type · Ref no. · Payee · Description · Open balance · Amount · Gap`);
+  console.log(`PASS ${LABEL} — two .ldt-card.strong boxes, .ldt-ch bands, candidate ParityTable Date · Type · Ref no. · Payee · Description · Open balance · Amount · Difference · Days off`);
 }

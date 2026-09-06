@@ -51,12 +51,16 @@ export type AvpLineItem = {
   // DEAD-SCHEMA-CASH-FLOW-SNAPSHOT-CAPTURED-AT-UNREAD — set only for an "income" line sourced
   // from the frozen daily snapshot; null/undefined for a live-computed figure.
   projected_captured_at?: string | null;
+  // CASH-FLOW-01 (owner order 2026-09-06): true only when bank_categorization_coverage.categorized_count
+  // is 0 company-wide — render "actuals unavailable", never a bare $0 (LAW §8 "zero is a claim").
+  actual_unavailable?: boolean;
 };
 
 export type ActualVsProjectedResult = {
   from: string;
   to: string;
   lines: AvpLineItem[];
+  bank_categorization_coverage: { categorized_count: number; total_count: number };
   accuracy_summary: {
     total_projected_income_cents: number;
     total_actual_income_cents: number;
