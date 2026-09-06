@@ -154,6 +154,7 @@ import { registerSettlementsBulkRoutes } from "./driver-finance/settlements-bulk
 import { registerPreSettlementsRoutes as registerC1PreSettlementsRoutes } from "./settlements/pre-settlements.routes.js";
 import { registerCustomerContractRoutes } from "./customer-contracts/customer-contract.routes.js";
 import { registerPreSettlementRoutes } from "./driver-finance/pre-settlement.routes.js";
+import { registerTourReadoutRoutes } from "./driver-finance/tour-readout.routes.js";
 import { registerDriverFinanceSettlementHtmlRoutes } from "./driver-finance/settlement-render.routes.js";
 import { registerDriverFinanceDriverBillsRoutes } from "./driver-finance/driver-bills.routes.js";
 import { registerDriverFinanceDriverBillsListRoutes } from "./driver-finance/driver-bills-list.routes.js";
@@ -970,6 +971,7 @@ async function main() {
   await registerDriverFinanceSettlementRoutes(app);
   await registerSettlementsBulkRoutes(app);
   await registerPreSettlementRoutes(app);
+  await registerTourReadoutRoutes(app);
   await registerC1PreSettlementsRoutes(app);
   await registerCustomerContractRoutes(app);
   await registerWeeklyCloseRoutes(app);

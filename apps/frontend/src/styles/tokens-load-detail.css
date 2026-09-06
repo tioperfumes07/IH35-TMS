@@ -132,3 +132,5 @@ button.ldt-pill { cursor: pointer; }
 .ldt-row.big { background: var(--ldt-accent-soft); color: var(--ldt-accent); font-weight: 700; font-size: 13px; }
 .ldt-row.click { cursor: pointer; }
 .ldt-row.click:hover { background: var(--ldt-accent-soft); }
+.ldt-rows-legs .ldt-row { grid-template-columns: 44px 80px 1fr 110px 110px 110px 150px; }
+.ldt-row.this { outline: 2px solid var(--ldt-accent-soft); outline-offset: -2px; }

@@ -4,8 +4,8 @@
   "8058": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-2-stops-record" },
   "8060": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-3-driver-pay" },
   "8062": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-4-factoring-money" },
-  "8064": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-5-presettlement-readout" },
-  "8066": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-6-settlement-frozen" },
+  "8064": { "claimed_at": "2026-09-05", "claimed_by": "claude-lead (LDT reassigned by owner 2026-09-06; was cursor)", "purpose": "verify-ldt-5-presettlement-readout" },
+  "8066": { "claimed_at": "2026-09-05", "claimed_by": "claude-lead (LDT reassigned by owner 2026-09-06; was cursor)", "purpose": "verify-ldt-6-settlement-frozen" },
   "8068": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-7-audit-english" },
   "10433": {
     "claimed_at": "2026-09-06",
