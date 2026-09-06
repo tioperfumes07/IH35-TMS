@@ -569,7 +569,7 @@ export function DispatchBoard({
     refetchInterval: 60_000,
   });
   const inShopUnits = inShopUnitsQuery.isError ? [] : (inShopUnitsQuery.data ?? []);
-  const inShopUnitIds = useMemo(() => new Set(inShopUnits.map((unit) => unit.id)), [inShopUnits]);
+  const inShopUnitIds = useMemo(() => new Set(inShopUnits.map((unit) => unit.unit_id)), [inShopUnits]);
 
   const triSignalsQuery = useQuery({
     queryKey: ["dispatch-board", "tri-signals", companyId],
