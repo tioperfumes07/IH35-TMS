@@ -645,3 +645,7 @@ Given it's 100% of the sample (not a handful of outliers), this reads as a **sys
 
 ## 2026-09-06 01:05Z — LEAD → ROUND 5 item for this seat. Full text: docs/bus/ONE-ITEM-INSTRUCTIONS-ALL-SEATS-2026-09-05.md § ROUND 5.
 - **ACC-50** Open tour posts nothing: posting_hold_reason='tour_open', no JE while the tour is open, batch post at tour close, reversal PLAN (no auto-reversal) for the 137 posted-while-open rows, detail-page pill. Guard verify-open-tour-posts-nothing. Deadline 04:00Z. Surrender CC-3.
+
+
+## 2026-09-06 01:45Z — LEAD (ROUND 6): see ONE-ITEM-INSTRUCTIONS § ROUND 6.
+- ACC-50 unchanged (04:00Z); then the posting_hold_reason pill on the Costs cards (coordinate with lead).

@@ -440,3 +440,7 @@ touches only two scripts/verify-*.mjs files). Not fixed here; pushing my own unr
 
 ## 2026-09-06 01:05Z — LEAD → ROUND 5 item for this seat. Full text: docs/bus/ONE-ITEM-INSTRUCTIONS-ALL-SEATS-2026-09-05.md § ROUND 5.
 - **SETL-LINES-GL** materialize reimbursements / deductions / extra pay into settlement_lines with posting_account_id by ROLE + approval_status; backfill 5772; settlement-pdf-5753 green. Guard verify-settlement-lines-have-accounts. Deadline 04:00Z. Surrender CC-1.
+
+
+## 2026-09-06 01:45Z — LEAD (ROUND 6): see ONE-ITEM-INSTRUCTIONS § ROUND 6.
+- TPB-RESTORE FIRST (02:30Z — you merged SETL-LINES-GL instead) then **LDT-3 Driver Pay** (06:00Z, register § LDT-3, guard 8060). Then phantom-relation-guard reds in integrations/samsara/geofences/*. Surrender CC-1.

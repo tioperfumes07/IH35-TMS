@@ -250,3 +250,21 @@ Lead audits each DONE line on Neon + tip + live within 30 minutes; ✔/✗ poste
 
 ---
 Lead audits each DONE line on Neon + tip + live within 30 minutes; ✔/✗ posted here and on OUTBOX-<SEAT>. Deploys within 20 minutes of every code merge (lead only).
+
+
+---
+
+# 2026-09-06 01:45Z — LDT-1 + LDT-1B LIVE · OWNER RULINGS · LDT SPLIT ACROSS SEATS (ROUND 6)
+
+**LIVE (lead):** #20808 5314be31 + #20809 87ee3078 + #20813 b24b8d83 — Dispatch → Load costs (`/accounting/load-costs`) expands every load row into the cost cards (LoadDetailCostsTab); receipt on every expense/bill creator/editor (ReceiptAttach → documents.attachments); Paid-with = bank/card/fuel-card only (live USMCA: 1000 BofA · 2500 Amex · 1295 Relay; 1250 Fuel-Overage Receivable leaked once, fixed in b24b8d83); fixed footer; bank section; --ldt-* palette. Measured live 01:33Z on 13567: 5 saved cards + 1 new, 6 receipt inputs, footer margin −$860.50 · −41.0%. Cursor's LDT-1C (4336b5cd) had Paid-with = 0 options on production (account_type "bank" never matches the live chart) and a non-uploading receipt — superseded.
+**Owner 01:2xZ–01:4xZ:** "Trip Pairing board looks like shit … triangulations … a column should expand … who authorized" → CC-3 #19364 (2026-09-01, GO-05 WAVE1) flattened the legs — TPB-RESTORE (CC-3, 02:30Z). "Roundtrips … somebody fucked up my designs" → Cursor BRD-10 ebc54d5d (09-04) made the load board default — RT-RESTORE (Cursor, 02:30Z). "The design surface is Dispatch → Load costs → the overview → all the tabs within it; expenses/bills created there must appear in Accounting → Expenses / Bills" → LDT-1B built there. "I love that design, build them all … I instructed you on Pre-Settlement and Settlement … we are missing the Close button" → LDT-5/6 + Close tour → Settlement = LEAD, now.
+**Pre-existing CI reds (not new):** phantom-relation-guard (geo.geofence_vehicle_state, integrations.samsara_addresses, telematics.load_odometer_segments in integrations/samsara/geofences/*) → CC-3 geofence lane after TPB-RESTORE; verify-load-costs-on-time-requires-appointment.mjs stale regex → CC-2 with the Load costs registers item.
+
+## ROUND 6 — LDT tabs split (all against docs/design/reference/LOAD-DETAIL-TABS-RENDERS-LIVE-13526-2026-09-05.html + CURSOR-LOAD-DETAIL-TABS-BUILD-2026-09-05.md § LDT-n; palette = styles/tokens-load-detail.css .ldt-* only; verify-step numbers 8058–8068 already claimed)
+- **LEAD:** LDT-5 Pre-Settlement (tour readout endpoint `GET /api/v1/tours/:id/readout`, per-leg Revenue·Costs·Driver pay·Margin, Costs on this tour, Ready to close? checklist, **Close tour → Settlement (human confirms)**) + LDT-6 Settlement (driver + company settlement on close, frozen, PDF, JE) — Costs footer, Pre-Settlement and Settlement read the same readout.
+- **CURSOR:** RT-RESTORE (02:30Z) → **LDT-7 Audit in English** (05:00Z, guard 8068, surrender CC-2).
+- **CC-3:** TPB-RESTORE (02:30Z) → **LDT-3 Driver Pay** (06:00Z, guard 8060, surrender CC-1). SETL-LINES-GL de2d4a8c received — lead audit pending (prod writes: 3 expenses voided, 3 reimbursements created on 5772).
+- **CODEX:** TEL-42 (03:30Z) → **LDT-2 Stops** (06:00Z, guard 8058, surrender CC-3).
+- **CASCADE/DEVIN:** LST-CUST-ACT (04:00Z) → **LDT-4 Factoring** (06:00Z, guard 8062, surrender Cursor).
+- **CC-1:** ACC-50 (04:00Z) → posting_hold pill on the Costs cards (with lead). **CC-2:** DSP-48b (03:30Z) → Load costs page registers (Fuel advances · Broker advances · Driver pay · Documents) in the .ldt-* design + fix the stale on-time guard.
+Full item text for LDT-2/3/4/7: the register § LDT-n (unchanged) + this round's additions: .ldt-* palette mandatory (no hex — guard), unknown numbers render "—" never 0, every box a pop-up, receipts via ReceiptAttach.
