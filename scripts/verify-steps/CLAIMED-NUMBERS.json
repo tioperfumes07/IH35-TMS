@@ -5937,6 +5937,11 @@
     "claimed_at": "2026-09-06",
     "purpose": "verify-cash-flow-rolling-ledger (CASH-FLOW-02, owner order 2026-09-06 20:1xZ: rolling A/R+A/P ledger with real dates -- expected income automatically from loads/invoices/factoring, expected expenses from bills/driver pay/driver bills/unmatched expenses/loan schedule -- carry-forward until paid/matched, day grid with running cash from the live bank balance) -- 4th renumber of this session (10517 -> 10541 -> 10545 -> 10549 -> 10573, each collision with a different concurrent session), jumping a +20 buffer past the current max this time since single-digit gaps keep getting claimed within minutes. NOTE FOR THE LEAD: this collided FIVE times in about 90 minutes across at least 3 different concurrent sessions/lanes (cc-1 itself, a settlement lane, and CC-3) -- CLAIMED-NUMBERS.json as one shared JSON file, edited blind by many concurrent sessions with no lock, is now a real operational bottleneck, not a one-off fluke. Recommend a systemic fix (per-number files under scripts/verify-steps/, or a DB-backed atomic claim) before the next high-concurrency session."
   },
+  "10592": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-settlements-company-driver-side-by-side (ROUND 16.3, owner 2026-09-06 20:3xZ: /settlements gets a Company & Driver tab with two half-width cards side by side -- LEFT driver settlement, RIGHT company settlement waterfall -- 50/50 at >=1280px stacked below, both reading getTourReadout + getCompanySettlementReport, no raw table, PDF via openPrintableDocument; plus a Company settlements register tab). Cursor EVEN lane; +19 buffer past current max 10573 per the concurrency note above."
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
