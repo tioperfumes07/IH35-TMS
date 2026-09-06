@@ -188,7 +188,7 @@ export type DispatchBookLoadPayload = {
   requested_load_number?: string;
   addToOpenPresettlement?: boolean;
   reservation_uuid?: string;
-  trip_type?: "NB" | "TR" | "SB";
+  trip_type?: "NB" | "TR" | "SB" | "LOCAL";
   tour_id?: string;
   trailer_type?: "refrigerated_van" | "dry_van" | "flatbed" | "lowboy" | "power_only_no_trailer" | "power_only_customer_trailer";
   assigned_unit_id?: string;
@@ -586,7 +586,7 @@ export function getDispatchLoadPositions(operatingCompanyId: string, loadIds: st
 // Trip Pairing Board (Block 05).
 export type TripLeg = {
   load_id: string;
-  trip_type: "NB" | "TR" | "SB";
+  trip_type: "NB" | "TR" | "SB" | "LOCAL";
   status: string;
   delivery_city: string | null;
   delivery_state: string | null;
