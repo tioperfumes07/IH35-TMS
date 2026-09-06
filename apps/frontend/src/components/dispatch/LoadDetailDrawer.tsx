@@ -748,7 +748,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                 {moreOpen ? (
                   <>
                     <div className="fixed inset-0 z-[215]" onClick={() => setMoreOpen(false)} aria-hidden="true" />
-                    <div className="absolute right-0 z-[216] mt-1 min-w-[190px] rounded-sm border border-gray-200 bg-white py-1 shadow-lg" role="menu">
+                    <div className="absolute right-0 z-[212] mt-1 min-w-[190px] rounded-sm border border-gray-200 bg-white py-1 shadow-lg" role="menu">
                       {moreTabs.map((tab) => (
                         <button
                           key={tab}
@@ -771,7 +771,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
           </div>
         </header>
         {statPop && ldt0.popups[statPop] ? (
-          <div className="fixed inset-0 z-[220] flex items-start justify-center bg-black/30 p-6" onClick={() => setStatPop(null)} data-testid="ldt0-stat-popup">
+          <div className="fixed inset-0 z-[212] flex items-start justify-center bg-black/30 p-6" onClick={() => setStatPop(null)} data-testid="ldt0-stat-popup">
             <div className="mt-16 w-full max-w-md rounded-sm border border-gray-200 bg-white shadow-xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
               <div className="flex items-center justify-between border-b border-gray-200 px-4 py-2">
                 <h3 className="text-xs font-semibold uppercase text-[#4B5563]">{ldt0.popups[statPop].title}</h3>
