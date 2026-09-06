@@ -33,7 +33,15 @@ export type SettlementDeductionSourceType =
   | "fine"
   | "toll"
   | "citation"
-  | "other";
+  | "other"
+  // SETL-DED-GL (owner ruling 2026-09-06 01:5xZ, "Admin fee is actually either wire fee, ACH fee, or
+  // gas for a company vehicle they use. Should each line carry a GL? Of course."): these four replace
+  // the generic 'other' bucket going forward — each binds to a real CoA role (see
+  // settlement-lines-materialize.service.ts's deduction branch), never a guessed account.
+  | "wire_fee"
+  | "ach_fee"
+  | "company_vehicle_fuel"
+  | "escrow_contribution";
 
 export type CreateSettlementDeductionInput = {
   driverId: string;
