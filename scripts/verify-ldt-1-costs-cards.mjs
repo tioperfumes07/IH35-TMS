@@ -23,6 +23,11 @@
 import fs from "node:fs";
 
 const COSTS = "apps/frontend/src/components/dispatch/LoadDetailCostsTab.tsx";
+// LDT-1 (owner order 2026-09-05 23:45Z) also put the Book Load wizard MilesStrip live geocode
+// preview under this step: the wizard must quote the linehaul (pickup→delivery) AND the Empty leg
+// (yard→pickup) via the route-reference proxy and show them read-only. Cursor owns BookLoadModalV4.
+const WIZARD = "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx";
+const MILES_STRIP = "apps/frontend/src/pages/dispatch/components/book-load-v4/MilesStrip.tsx";
 
 function auditCosts(src) {
   const errors = [];
@@ -51,24 +56,50 @@ function auditCosts(src) {
   return errors;
 }
 
-function run(costs) {
-  return [...auditCosts(costs)];
+function auditWizardGeocode(wizardSrc, stripSrc) {
+  const errors = [];
+  // The wizard actually calls the route-reference proxy (not just imports it).
+  if (!wizardSrc.includes("geocodeRouteReference(")) errors.push("BookLoadModalV4 does not call geocodeRouteReference — the MilesStrip live geocode preview is not wired");
+  // The Empty leg's origin is the yard fallback constant (single source, TODO TEL-42), never a
+  // second hard-coded coordinate pair.
+  if (!wizardSrc.includes("YARD_FALLBACK")) errors.push("BookLoadModalV4 does not use the YARD_FALLBACK constant for the Empty-leg origin");
+  if (!/TODO\(TEL-42\)/.test(wizardSrc)) errors.push("YARD_FALLBACK is missing its TODO(TEL-42) removal marker (owner ruling: single constant, removed when the yard row lands)");
+  // Both reference figures reach MilesStrip.
+  if (!/googleReferencePractical=\{/.test(wizardSrc)) errors.push("BookLoadModalV4 does not pass googleReferencePractical to MilesStrip");
+  if (!/googleReferenceEmpty=\{/.test(wizardSrc)) errors.push("BookLoadModalV4 does not pass googleReferenceEmpty (yard→pickup) to MilesStrip");
+  // MilesStrip renders the Empty-leg reference read-only (no input / onChange in the block).
+  const emptyBlock = stripSrc.match(/\{googleReferenceEmpty \? \(([\s\S]*?)\) : null\}/);
+  if (!emptyBlock) errors.push("MilesStrip does not render googleReferenceEmpty as a plain read-only conditional block");
+  else if (/<input|onChange/.test(emptyBlock[1])) errors.push("MilesStrip Empty-leg reference must be read-only — no <input> or onChange in the block");
+  return errors;
+}
+
+function run(costs, wizard, strip) {
+  return [...auditCosts(costs), ...auditWizardGeocode(wizard, strip)];
 }
 
 const costs = fs.readFileSync(COSTS, "utf8");
+const wizard = fs.readFileSync(WIZARD, "utf8");
+const strip = fs.readFileSync(MILES_STRIP, "utf8");
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    ["costs: drop number label", [costs.replace('data-testid="load-cost-number"', 'data-testid="load-cost-nope"')]],
-    ["costs: number regressed to input", [costs + '\ndata-testid="load-cost-field-number"']],
-    ["costs: drop expense toggle", [costs.replace('data-testid="load-cost-toggle-expense"', 'data-testid="x"')]],
-    ["costs: drop receipt", [costs.replaceAll('data-testid="load-cost-receipt"', 'data-testid="x"')]],
-    ["costs: drop margin footer", [costs.replace('data-testid="load-costs-margin"', 'data-testid="x"')]],
-    ["costs: drop bank section", [costs.replace('data-testid="load-costs-bank-section"', 'data-testid="x"')]],
-    ["costs: unstick totals footer", [costs.replace(/(data-testid="load-costs-margin" className=")sticky bottom-0 z-10 /, "$1")]],
-    ["costs: reintroduce broad asset filter", [costs.replace("chart.filter((row) => isPaidWithAccount(row.account_type))", "chart.filter((row) => /asset|bank|credit ?card/.test(row.account_type))")]],
-    ["costs: drop margin formula", [costs.replace("revenue - savedCosts - driverPay", "revenue")]],
-    ["costs: drop receipt upload primitive", [costs.replaceAll("EntityDocumentUpload", "NopeUpload")]],
+    ["costs: drop number label", [costs.replace('data-testid="load-cost-number"', 'data-testid="load-cost-nope"'), wizard, strip]],
+    ["costs: number regressed to input", [costs + '\ndata-testid="load-cost-field-number"', wizard, strip]],
+    ["costs: drop expense toggle", [costs.replace('data-testid="load-cost-toggle-expense"', 'data-testid="x"'), wizard, strip]],
+    ["costs: drop receipt", [costs.replaceAll('data-testid="load-cost-receipt"', 'data-testid="x"'), wizard, strip]],
+    ["costs: drop margin footer", [costs.replace('data-testid="load-costs-margin"', 'data-testid="x"'), wizard, strip]],
+    ["costs: drop bank section", [costs.replace('data-testid="load-costs-bank-section"', 'data-testid="x"'), wizard, strip]],
+    ["costs: unstick totals footer", [costs.replace(/(data-testid="load-costs-margin" className=")sticky bottom-0 z-10 /, "$1"), wizard, strip]],
+    ["costs: reintroduce broad asset filter", [costs.replace("chart.filter((row) => isPaidWithAccount(row.account_type))", "chart.filter((row) => /asset|bank|credit ?card/.test(row.account_type))"), wizard, strip]],
+    ["costs: drop margin formula", [costs.replace("revenue - savedCosts - driverPay", "revenue"), wizard, strip]],
+    ["costs: drop receipt upload primitive", [costs.replaceAll("EntityDocumentUpload", "NopeUpload"), wizard, strip]],
+    ["wizard: drop geocode call", [costs, wizard.replaceAll("geocodeRouteReference(", "nope("), strip]],
+    ["wizard: drop YARD_FALLBACK", [costs, wizard.replaceAll("YARD_FALLBACK", "NOPE_YARD"), strip]],
+    ["wizard: drop TEL-42 todo", [costs, wizard.replace("TODO(TEL-42)", "todo later"), strip]],
+    ["wizard: drop practical ref prop", [costs, wizard.replace("googleReferencePractical={", "nopePractical={"), strip]],
+    ["wizard: drop empty ref prop", [costs, wizard.replace("googleReferenceEmpty={", "nopeEmpty={"), strip]],
+    ["strip: empty ref becomes editable", [costs, wizard, strip.replace(/(\{googleReferenceEmpty \? \()/, "$1<input onChange={()=>{}} />&&")]],
   ];
   let caught = 0;
   for (const [label, args] of mutations) {
@@ -76,13 +107,13 @@ if (process.argv.includes("--selftest")) {
     console.error(`SELFTEST FAIL — mutation escaped: ${label}`);
     process.exit(1);
   }
-  const clean = run(costs);
+  const clean = run(costs, wizard, strip);
   if (clean.length) { console.error(`SELFTEST FAIL — good sources rejected:\n- ${clean.join("\n- ")}`); process.exit(1); }
   console.log(`PASS verify-ldt-1-costs-cards --selftest ${caught}/${mutations.length}`);
   process.exit(0);
 }
 
-const failures = run(costs);
+const failures = run(costs, wizard, strip);
 if (failures.length) {
   console.error("FAIL verify-ldt-1-costs-cards");
   failures.forEach((f) => console.error(`- ${f}`));
