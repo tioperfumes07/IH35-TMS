@@ -128,7 +128,7 @@ describe("LoadDetailCostsTab — entry cards + SET-15 advance received", () => {
     expect(screen.getByTestId("load-costs-bank-section")).toHaveTextContent("What the bank will do with these");
     // The five live split buckets still exist (footer breakdown pop-up).
     for (const h of ["Late Fee", "Lumper", "Fuel", "R&M Exp", "Other"]) {
-      fireEvent.click(within(totals).getByTestId("load-costs-total-costs").closest("tr")!);
+      fireEvent.click(within(totals).getByTestId("load-costs-total-costs").closest(".ldt-row")!);
       expect(within(screen.getByTestId("load-costs-popup")).getByText(h)).toBeInTheDocument();
       fireEvent.click(screen.getByLabelText("Close"));
     }

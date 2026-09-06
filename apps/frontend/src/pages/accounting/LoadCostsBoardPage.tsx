@@ -148,10 +148,10 @@ function ExpandPanel({ row, companyId }: { row: BoardRow; companyId: string }) {
     </section>
     <section className="ldt-card" data-testid="panel-approx-settlement">
       <div className="ldt-ch"><span>Approximate settlement (board figures)</span><span className="ldt-open">not final</span></div>
-      <table className="ldt-table"><tbody>
-        {([["Line haul revenue", Number(row.revenue_cents)], ["Costs on this load", rowCosts(row)], ["Driver pay", rowPay(row)]] as Array<[string, number]>).map(([k, v]) => <tr key={k}><td>{k}</td><td className="m">{fmt(v)}</td></tr>)}
-        <tr className="big"><td>Approximate margin</td><td className="m">{fmt(rowMargin(row))}</td></tr>
-      </tbody></table>
+      <div className="ldt-rows">
+        {([["Line haul revenue", Number(row.revenue_cents)], ["Costs on this load", rowCosts(row)], ["Driver pay", rowPay(row)]] as Array<[string, number]>).map(([k, v]) => <div className="ldt-row" key={k}><span>{k}</span><span className="ldt-m">{fmt(v)}</span></div>)}
+        <div className="ldt-row big"><span>Approximate margin</span><span className="ldt-m">{fmt(rowMargin(row))}</span></div>
+      </div>
     </section>
   </div>;
 }
