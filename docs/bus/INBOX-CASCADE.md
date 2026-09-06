@@ -359,3 +359,5 @@ component (ParityTable/DataTable/etc) whenever convenient — not blocking anyth
 - LST-CUST-ACT (04:00Z) then **LDT-4 Factoring** (06:00Z, register § LDT-4, guard 8062, ReceiptAttach for the packet). Surrender Cursor.
 
 ## 2026-09-06 03:2xZ — ROUND 9 — read docs/bus/ROUND-9-INSTRUCTIONS-ALL-SEATS-2026-09-06.md § CASCADE. Start now.
+
+## 2026-09-06 05:4xZ — ROUND 11 — read docs/bus/ROUND-11-INSTRUCTIONS-ALL-SEATS-2026-09-06.md § CASCADE. Start now.

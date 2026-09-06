@@ -833,3 +833,12 @@ AUDIT 22:17Z | DEPLOY TIMER | ✗ | API live d988cd31 since 19:37Z; code merged 
   OPEN INVOICES $0 is correct: 46 pro forma invoices are non-posting until delivery.
 - Live anomaly: expense 13550-4 dated 2026-09-27 (future; load 13550 delivered 08-28) — seed date defect → CC-3 with DED-DUP.
 - Owner still to decide: bulk-deliver click (40 loads); SB rule for the 15 seed tours.
+
+## 2026-09-06 · 05:25–05:45Z · REG-PARSE · MD-WIDTH-0 · Round 11
+- Owner: "EXPENSES NEEDS TO BE PARSED — DESCRIPTION, RECEIPT NUMBER, ADDRESS, SETTLEMENT NO IN COLUMNS; RECEIPT = ATTACH ONLY; SAME FOR BILLS"
+  → #20909 f38d696c (lib/expense-memo.ts parser, tests 5/5 on live memo shapes; 3 new register columns; ReceiptAttach attach-only).
+  Durable fix = structured fields (CC-1 REG-PARSE-DATA).
+- Owner: "CANNOT OPEN THE VENDORS OR CUSTOMERS" → measured live: aside 1770px / main 0px (CERT-01 #17901 width classes) → #20910 d4ab9a67.
+  13 Vendors/Customers tests fail on bare main (pre-existing) → Cursor VC-LIST-01.
+- Owner: Vendors/Customers "no balances, filters wrong, page size, no asc/desc" → Round 11 Cursor VC-LIST-01 (ParityTable, real balances
+  from bills+expenses / invoices excl. pro forma, filters wired). Round 11 issued to all seats (docs/bus/ROUND-11-INSTRUCTIONS-ALL-SEATS-2026-09-06.md).

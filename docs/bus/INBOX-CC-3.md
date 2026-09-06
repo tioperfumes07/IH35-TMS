@@ -468,3 +468,5 @@ lead's ✔ per scripts/ops/split-seed-tours.ts. Column is queryable now — re-m
 EXP-DATE: expense 13550-4 (LOVES, Fuel-DEF $42.38, "inv 99460605 — 2026-09-27", settlement 5789) carries transaction_date 2026-09-27 — a FUTURE
 date; load 13550 delivered 2026-08-28. Sweep all seeded expenses for transaction_date > now() or > the load's delivery date + 3 days; paste the
 list with the signed-settlement source date; correct through the real expense edit path (audited), never raw UPDATE. Fold into DED-DUP's PR or its own.
+
+## 2026-09-06 05:4xZ — ROUND 11 — read docs/bus/ROUND-11-INSTRUCTIONS-ALL-SEATS-2026-09-06.md § CC-3. Start now.
