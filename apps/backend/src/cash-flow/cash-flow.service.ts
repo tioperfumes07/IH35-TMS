@@ -999,6 +999,15 @@ export type RollingLedgerRow = {
   /** today - due_date in days (positive = overdue, 0 = due today, negative = not yet due). */
   days_overdue: number;
   status: "overdue" | "due_today" | "upcoming";
+  /** Set only when a real accounting.cash_flow_row_adjustments row governs this occurrence. */
+  reason_label?: string | null;
+  reason_note?: string | null;
+  /** The $0 placeholder left on the ORIGINAL due date after a roll-over — "the amount changes to
+   *  0 but still stays there and states [reason]" (owner, 2026-09-06 20:2xZ). */
+  is_rollover_echo?: boolean;
+  /** id of the governing accounting.cash_flow_row_adjustments row, for a further roll-over/hide
+   *  action from the UI. */
+  adjustment_id?: string;
 };
 
 export type RollingLedgerDay = {
@@ -1500,7 +1509,198 @@ export async function getRollingLedgerRows(
     });
   }
 
-  return rows;
+  return applyRowAdjustments(client, operatingCompanyId, rows, today);
+}
+
+/**
+ * Owner refinement, verbatim (2026-09-06 20:2xZ): "WE SHOULD BE ABLE TO SELECT IT AND DECIDE IF
+ * WE DO NOT WANT IT SHOWING HERE ANYMORE. AND IF A LOAD IS DUE TOMORROW, BUT IT IS LATE IT
+ * AUTOMATICALLY CARRIES OVER TO THE NEXT DAY AND IN THE CURRENT DAY THE AMOUNT CHANGES TO 0 BUT
+ * STILL STAYS THERE AND STATES DUE TO LATE DELIVERY, OR BREAKDOWN, ETC. AND THE NEXT DAY IT SHOWS
+ * WITH REASON AS WELL."
+ *
+ * Overlays the latest accounting.cash_flow_row_adjustments row (if any) per (document_kind,
+ * document_id) onto the freshly-sourced rows:
+ *   - hidden_at set -> the row is dropped entirely (it "leaves the daily snapshot" per the owner;
+ *     it still lives in the append-only adjustments table for a future aging report).
+ *   - projected_due_date set (roll-over) -> TWO rows are emitted: a $0 "echo" pinned at the
+ *     adjustment's own original_due_date (so the day it was originally due keeps showing it,
+ *     with the reason), and the real-amount row moved to projected_due_date.
+ *   - neither set (a no-op adjustment, should not normally occur) -> row passes through unchanged.
+ */
+async function applyRowAdjustments(
+  client: Queryable,
+  operatingCompanyId: string,
+  rows: RollingLedgerRow[],
+  today: string
+): Promise<RollingLedgerRow[]> {
+  const adjRes = await client.query<{
+    id: string;
+    document_kind: string;
+    document_id: string;
+    original_due_date: string;
+    projected_due_date: string | null;
+    reason_label: string;
+    note: string | null;
+    hidden_at: string | null;
+  }>(
+    `
+    SELECT DISTINCT ON (a.document_kind, a.document_id)
+      a.id::text,
+      a.document_kind,
+      a.document_id::text,
+      a.original_due_date::text AS original_due_date,
+      a.projected_due_date::text AS projected_due_date,
+      r.label AS reason_label,
+      a.note,
+      a.hidden_at::text AS hidden_at
+    FROM accounting.cash_flow_row_adjustments a
+    JOIN catalogs.cash_flow_adjustment_reasons r ON r.id = a.reason_id
+    WHERE a.operating_company_id = $1::uuid
+    ORDER BY a.document_kind, a.document_id, a.seq DESC
+    `,
+    [operatingCompanyId]
+  );
+
+  const byKey = new Map<string, (typeof adjRes.rows)[number]>();
+  for (const a of adjRes.rows) byKey.set(`${a.document_kind}:${a.document_id}`, a);
+  if (byKey.size === 0) return rows;
+
+  const out: RollingLedgerRow[] = [];
+  for (const row of rows) {
+    const adj = byKey.get(`${row.document_kind}:${row.document_id}`);
+    if (!adj) {
+      out.push(row);
+      continue;
+    }
+    if (adj.hidden_at) continue; // dropped from the snapshot, not from the append-only ledger
+
+    if (adj.projected_due_date) {
+      const echoDaysOverdue = daysBetween(today, adj.original_due_date);
+      out.push({
+        ...row,
+        due_date: adj.original_due_date,
+        amount_cents: 0,
+        days_overdue: echoDaysOverdue,
+        status: rowStatus(echoDaysOverdue),
+        reason_label: adj.reason_label,
+        reason_note: adj.note,
+        is_rollover_echo: true,
+        adjustment_id: adj.id,
+      });
+      const newDaysOverdue = daysBetween(today, adj.projected_due_date);
+      out.push({
+        ...row,
+        due_date: adj.projected_due_date,
+        days_overdue: newDaysOverdue,
+        status: rowStatus(newDaysOverdue),
+        reason_label: adj.reason_label,
+        reason_note: adj.note,
+        adjustment_id: adj.id,
+      });
+    } else {
+      out.push({ ...row, reason_label: adj.reason_label, reason_note: adj.note, adjustment_id: adj.id });
+    }
+  }
+  return out;
+}
+
+// ─── Cash Flow Row Adjustments (roll-over + hide) ─────────────────────────────
+
+export type CashFlowAdjustmentReason = {
+  id: string;
+  code: string;
+  label: string;
+  applies_to: "income" | "expense" | "both";
+};
+
+export async function listCashFlowAdjustmentReasons(client: Queryable): Promise<CashFlowAdjustmentReason[]> {
+  const res = await client.query<CashFlowAdjustmentReason>(
+    `
+    SELECT id::text, code, label, applies_to
+    FROM catalogs.cash_flow_adjustment_reasons
+    WHERE is_active = true
+    ORDER BY display_order ASC
+    `
+  );
+  return res.rows;
+}
+
+export type CreateCashFlowRowAdjustmentInput = {
+  operating_company_id: string;
+  document_kind: string;
+  document_id: string;
+  original_due_date: string;
+  /** null = a pure "stop showing" hide with no roll-over date change. */
+  projected_due_date: string | null;
+  reason_code: string;
+  note?: string | null;
+  hidden_reason?: string | null;
+  created_by_user_id: string;
+};
+
+export type CashFlowRowAdjustmentRow = {
+  id: string;
+  operating_company_id: string;
+  document_kind: string;
+  document_id: string;
+  original_due_date: string;
+  projected_due_date: string | null;
+  reason_id: string;
+  note: string | null;
+  hidden_at: string | null;
+  hidden_reason: string | null;
+  hidden_by_user_id: string | null;
+  created_by_user_id: string;
+  created_at: string;
+};
+
+export async function createCashFlowRowAdjustment(
+  client: Queryable,
+  input: CreateCashFlowRowAdjustmentInput
+): Promise<CashFlowRowAdjustmentRow> {
+  const reasonRes = await client.query<{ id: string }>(
+    `SELECT id::text FROM catalogs.cash_flow_adjustment_reasons WHERE code = $1 AND is_active = true`,
+    [input.reason_code]
+  );
+  const reason = reasonRes.rows[0];
+  if (!reason) {
+    // FAIL CLOSED (LAW §5 -- never guess a role/catalog mapping): a reason code that does not
+    // resolve to a real, active catalog row is a real defect (stale FE option, bad input), not
+    // something to silently default.
+    throw new Error(`unknown_or_inactive_cash_flow_adjustment_reason_code: ${input.reason_code}`);
+  }
+  const isHide = Boolean(input.hidden_reason);
+  const result = await client.query<CashFlowRowAdjustmentRow>(
+    `
+    INSERT INTO accounting.cash_flow_row_adjustments (
+      operating_company_id, document_kind, document_id, original_due_date, projected_due_date,
+      reason_id, note, hidden_at, hidden_reason, hidden_by_user_id, created_by_user_id
+    ) VALUES (
+      $1::uuid, $2, $3::uuid, $4::date, $5::date,
+      $6::uuid, $7, $8, $9, $10::uuid, $11::uuid
+    )
+    RETURNING
+      id::text, operating_company_id::text, document_kind, document_id::text,
+      original_due_date::text, projected_due_date::text, reason_id::text, note,
+      hidden_at::text, hidden_reason, hidden_by_user_id::text, created_by_user_id::text,
+      created_at::text
+    `,
+    [
+      input.operating_company_id,
+      input.document_kind,
+      input.document_id,
+      input.original_due_date,
+      input.projected_due_date,
+      reason.id,
+      input.note ?? null,
+      isHide ? new Date().toISOString() : null,
+      isHide ? input.hidden_reason : null,
+      isHide ? input.created_by_user_id : null,
+      input.created_by_user_id,
+    ]
+  );
+  return result.rows[0];
 }
 
 /** Day grid: for each date in [from, to], sum rows due that day and rows carried forward from an
