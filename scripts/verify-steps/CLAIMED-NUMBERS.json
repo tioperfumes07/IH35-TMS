@@ -1,12 +1,44 @@
 {
-  "8054": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-0-tabbar-header" },
-  "8056": { "claimed_at": "2026-09-05", "claimed_by": "claude-lead (LDT reassigned by owner 2026-09-06 00:2xZ; was cursor)", "purpose": "verify-ldt-1-costs-cards" },
-  "8058": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-2-stops-record" },
-  "8060": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-3-driver-pay" },
-  "8062": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-4-factoring-money" },
-  "8064": { "claimed_at": "2026-09-05", "claimed_by": "claude-lead (LDT reassigned by owner 2026-09-06; was cursor)", "purpose": "verify-ldt-5-presettlement-readout" },
-  "8066": { "claimed_at": "2026-09-05", "claimed_by": "claude-lead (LDT reassigned by owner 2026-09-06; was cursor)", "purpose": "verify-ldt-6-settlement-frozen" },
-  "8068": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-7-audit-english" },
+  "8054": {
+    "claimed_at": "2026-09-05",
+    "claimed_by": "cursor",
+    "purpose": "verify-ldt-0-tabbar-header"
+  },
+  "8056": {
+    "claimed_at": "2026-09-05",
+    "claimed_by": "claude-lead (LDT reassigned by owner 2026-09-06 00:2xZ; was cursor)",
+    "purpose": "verify-ldt-1-costs-cards"
+  },
+  "8058": {
+    "claimed_at": "2026-09-05",
+    "claimed_by": "cursor",
+    "purpose": "verify-ldt-2-stops-record"
+  },
+  "8060": {
+    "claimed_at": "2026-09-05",
+    "claimed_by": "cursor",
+    "purpose": "verify-ldt-3-driver-pay"
+  },
+  "8062": {
+    "claimed_at": "2026-09-05",
+    "claimed_by": "cursor",
+    "purpose": "verify-ldt-4-factoring-money"
+  },
+  "8064": {
+    "claimed_at": "2026-09-05",
+    "claimed_by": "claude-lead (LDT reassigned by owner 2026-09-06; was cursor)",
+    "purpose": "verify-ldt-5-presettlement-readout"
+  },
+  "8066": {
+    "claimed_at": "2026-09-05",
+    "claimed_by": "claude-lead (LDT reassigned by owner 2026-09-06; was cursor)",
+    "purpose": "verify-ldt-6-settlement-frozen"
+  },
+  "8068": {
+    "claimed_at": "2026-09-05",
+    "claimed_by": "cursor",
+    "purpose": "verify-ldt-7-audit-english"
+  },
   "10437": {
     "claimed_at": "2026-09-06",
     "claimed_by": "cc-1",
@@ -7661,5 +7693,10 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1052
+  "total_claimed": 1052,
+  "10441": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-round-trips-bar-dates (RT-FIX: Round Trips bars span first pickup -> last delivery, never created_at; Load board default restored per GO-RT-01; dispatch loads list carries pickup_scheduled_at/delivery_scheduled_at)"
+  }
 }
