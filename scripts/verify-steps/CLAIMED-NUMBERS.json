@@ -7723,5 +7723,10 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1053
+  "total_claimed": 1053,
+  "10449": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-load-costs-load-page (LDT-PAGE: /accounting/load-costs/:loadId renders the approved load page \u2014 breadcrumb, shared header stats, tab row \u2014 via LoadDetailDrawer mode=page; board links point at it)"
+  }
 }
