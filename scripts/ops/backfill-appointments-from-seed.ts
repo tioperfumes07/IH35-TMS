@@ -88,9 +88,13 @@ async function loadTargetStops(client: pg.PoolClient): Promise<TargetStop[]> {
          AND s.soft_deleted_at IS NULL
          AND s.appointment_start_at IS NULL
          AND s.scheduled_arrival_at IS NOT NULL
-         -- SCOPE LAW: exactly the 48 dispatched loads + load 13508, NEVER the 29 cancelled loads
-         -- (or any other status this measurement did not account for).
-         AND (l.status = 'dispatched' OR l.load_number = '13508')
+         -- SCOPE LAW (widened 2026-09-06 after DELIVER-SEED-40 moved 20 of the original 48
+         -- dispatched loads to delivered_pending_docs, live-confirmed those 20 lost NO evidence
+         -- and are just as real/eligible -- appointment_start_at is orthogonal to delivery
+         -- status): the 48 originally-dispatched loads regardless of which of those two REAL,
+         -- evidence-bearing statuses they now sit at, plus load 13508, NEVER the 29 cancelled
+         -- loads (or any other status this measurement did not account for).
+         AND (l.status IN ('dispatched', 'delivered_pending_docs') OR l.load_number = '13508')
          AND l.status != 'cancelled'
        ORDER BY l.load_number::int, s.sequence_number ASC
     `,
@@ -153,7 +157,7 @@ async function main() {
 
     report.push(
       `STOPS-APPT-FIX ${dryRun ? "DRY-RUN" : "APPLY"} — ${targets.length} target stop(s) across ${byLoad.size} load(s) ` +
-        `(scope: status='dispatched' OR load_number='13508', status != 'cancelled', appointment_start_at IS NULL, scheduled_arrival_at IS NOT NULL)`
+        `(scope: status IN ('dispatched','delivered_pending_docs') OR load_number='13508', status != 'cancelled', appointment_start_at IS NULL, scheduled_arrival_at IS NOT NULL)`
     );
 
     for (const [loadNumber, stops] of byLoad) {

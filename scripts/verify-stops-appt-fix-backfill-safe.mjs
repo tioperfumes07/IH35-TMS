@@ -72,8 +72,8 @@ export function collectProblems(root = ROOT) {
   if (!/status != 'cancelled'/.test(scriptSrc) && !/status != "cancelled"/.test(scriptSrc)) {
     problems.push(`${SCRIPT_FILE}: the target-stop query must explicitly exclude status='cancelled' loads, not rely only on the dispatched/13508 allowlist`);
   }
-  if (!/status = 'dispatched' OR l\.load_number = '13508'/.test(scriptSrc)) {
-    problems.push(`${SCRIPT_FILE}: the target-stop query must scope to exactly status='dispatched' OR load_number='13508' — the live-measured scope, never every open load`);
+  if (!/status IN \('dispatched', 'delivered_pending_docs'\) OR l\.load_number = '13508'/.test(scriptSrc)) {
+    problems.push(`${SCRIPT_FILE}: the target-stop query must scope to exactly status IN ('dispatched', 'delivered_pending_docs') OR load_number='13508' — the live-measured scope (widened once DELIVER-SEED-40 advanced some of the original 48), never every open load`);
   }
 
   // 5. The value written must be sourced from the existing scheduled_arrival_at column, never a
@@ -108,7 +108,7 @@ if (process.argv.includes("--selftest")) {
     `const dryRun = !apply || args.includes("--dry-run");`,
     `const LEAD_APPROVAL_QUOTE = "";`,
     `if (apply && LEAD_APPROVAL_QUOTE.trim().length === 0) { throw new Error("refused"); }`,
-    `AND (l.status = 'dispatched' OR l.load_number = '13508')`,
+    `AND (l.status IN ('dispatched', 'delivered_pending_docs') OR l.load_number = '13508')`,
     `AND l.status != 'cancelled'`,
     `payload: { appointment_start_at: s.scheduled_arrival_at }`,
   ].join("\n");
@@ -120,7 +120,7 @@ if (process.argv.includes("--selftest")) {
     { name: "script: default-apply regression (dry-run no longer default)", overrides: { [SCRIPT_FILE]: GOOD_SCRIPT.replace("const dryRun = !apply || args.includes", "const dryRun = args.includes") }, expectProblems: 1 },
     { name: "script: LEAD_APPROVAL_QUOTE gate removed", overrides: { [SCRIPT_FILE]: GOOD_SCRIPT.replace('if (apply && LEAD_APPROVAL_QUOTE.trim().length === 0) { throw new Error("refused"); }', "") }, expectProblems: 1 },
     { name: "script: cancelled-exclusion removed", overrides: { [SCRIPT_FILE]: GOOD_SCRIPT.replace("AND l.status != 'cancelled'", "") }, expectProblems: 1 },
-    { name: "script: scope allowlist removed (would target every open load)", overrides: { [SCRIPT_FILE]: GOOD_SCRIPT.replace("AND (l.status = 'dispatched' OR l.load_number = '13508')", "") }, expectProblems: 1 },
+    { name: "script: scope allowlist removed (would target every open load)", overrides: { [SCRIPT_FILE]: GOOD_SCRIPT.replace("AND (l.status IN ('dispatched', 'delivered_pending_docs') OR l.load_number = '13508')", "") }, expectProblems: 1 },
     { name: "script: value source changed to a literal (invents a time)", overrides: { [SCRIPT_FILE]: GOOD_SCRIPT.replace("payload: { appointment_start_at: s.scheduled_arrival_at }", 'payload: { appointment_start_at: "2026-01-01T00:00:00Z" }') }, expectProblems: 1 },
   ];
 
