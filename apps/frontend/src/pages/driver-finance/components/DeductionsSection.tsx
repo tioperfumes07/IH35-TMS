@@ -11,6 +11,7 @@
  */
 import { Button } from "../../../components/Button";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { mmmDd } from "../../../lib/formatDate";
 
 export type DeductionRow = {
@@ -19,6 +20,7 @@ export type DeductionRow = {
   /** S.1b — line_date (COALESCE of created_at), load_number, deduction_type, and posting
    *  account fields from the driver_settlement_deductions + catalogs.accounts joins. */
   line_date?: string | null;
+  load_id?: string | null;
   load_number?: string | null;
   deduction_type?: string | null;
   posting_account_number?: string | null;
@@ -59,7 +61,7 @@ const COLUMNS: Array<ParityColumn<DeductionRow>> = [
     label: "Load #",
     sortable: true,
     sortValue: (row) => row.load_number ?? "",
-    render: (row) => row.load_number ?? "—",
+    render: (row) => row.load_id ? <EntityLink kind="load" id={row.load_id} label={row.load_number ?? "—"} /> : "—",
   },
   {
     key: "line_date",

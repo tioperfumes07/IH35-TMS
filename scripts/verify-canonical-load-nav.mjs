@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["dispatch","accounting","driver-finance","reports","customers"],"cols":["load_nav"],"leafRe":"^md\\.load$","task":"VERTICAL-LOAD-NAV-all-modules","vertical":"column-wave"}
+ *
  * C5 — CANONICAL LOAD NAVIGATION EVERYWHERE.
  *
  * THE DEFECT THIS GUARD PINS
@@ -351,6 +353,7 @@ function containsCanonicalLoadDrill(source, file) {
     /kind=\{?["'`]portal_load["'`]/.test(source) ||
     /entityKind:\s*["'`]load["'`]/.test(source) ||
     source.includes(CANONICAL_PATH) ||
+    source.includes("/accounting/load-costs/") ||
     (file.startsWith(`${SRC}/portal/`) && source.includes(PORTAL_CANONICAL_PATH))
   );
 }
@@ -370,6 +373,8 @@ export function scanLoadColumns(files) {
       if (!obj) continue;
       // `{ value: "load", label: "Load" }` is a <select> option, not a table column.
       if (/(?:^|[{,\s])value:\s*["'`]/.test(obj.text)) continue;
+      // `{ label: "Load", keys: [...] }` is a column GROUP header, not a column — it has no render.
+      if (/(?:^|[{,\s])keys:\s*\[/.test(obj.text)) continue;
       const delegated = delegatedRenderBody(src, obj.text);
       const drills =
         containsCanonicalLoadDrill(obj.text, file) ||

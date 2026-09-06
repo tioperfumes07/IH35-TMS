@@ -1291,6 +1291,7 @@ export type PostedWhileTourOpenAccountLine = {
 export type PostedWhileTourOpenRow = {
   doc_type: "expense" | "bill";
   doc_id: string;
+  load_id: string | null;
   load_number: string | null;
   journal_entry_id: string | null;
   amount_cents: number;

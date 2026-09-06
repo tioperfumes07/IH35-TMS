@@ -384,7 +384,7 @@ function CustomerFinancialActivityTab({
         },
       },
       { key: "reference", label: "Reference", render: (r) => r.reference || "—" },
-      { key: "load_number", label: "Load", render: (r) => r.load_number ?? "—" },
+      { key: "load_number", label: "Load", render: (r) => r.load_id ? <EntityLink kind="load" id={r.load_id} label={r.load_number ?? "—"} /> : "—" },
       {
         key: "amount_cents",
         label: "Amount",

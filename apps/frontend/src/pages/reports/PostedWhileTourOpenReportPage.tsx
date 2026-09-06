@@ -45,7 +45,7 @@ export function PostedWhileTourOpenReportPage() {
         sortable: true,
         render: (r) => <EntityLink kind={r.doc_type} id={r.doc_id} label={entityLabel(null, r.doc_id, r.doc_type === "expense" ? "Expense" : "Bill")} />,
       },
-      { key: "load_number", label: "Load", sortable: true, render: (r) => r.load_number ?? "—" },
+      { key: "load_number", label: "Load", sortable: true, render: (r) => r.load_id ? <EntityLink kind="load" id={r.load_id} label={r.load_number ?? "—"} /> : "—" },
       {
         key: "journal_entry_id",
         label: "Journal entry",
