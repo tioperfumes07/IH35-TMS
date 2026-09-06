@@ -1428,3 +1428,25 @@ app's own routes: get_connection_string / reset_postgres_role_password for
 neondb_owner -> strip "-pooler" from the returned hostname -> set
 PGOPTIONS="-c role=ih35_app" in the shell env before running the script.
 assert-neon-branch.mjs still verifies the branch first.
+
+CC-2 | FLAG (not fixed by me, cross-lane) | go26-consolidation-ratchet RED
+on origin/main (active repo ruleset, PR #21055/8a7... CASH-FLOW-02(a)):
+raw_table_outside_infra 41 -> 42. Traced precisely: RollingLedgerTab.tsx
+(new, cash-flow) hand-rolls 2 raw <table> elements
+(rolling-ledger-day-grid + rolling-ledger-rows-table). The file's own
+top comment says this is deliberate for now — "Part (b) (date presets/
+type filter/gear/export toolbar...) ships in a follow-up PR — this tab
+still works stand-alone... in the meantime" — i.e. the ParityTable
+migration is explicitly PLANNED for that follow-up, not an oversight.
+NOT fixing this myself: (a) it's CASH-FLOW-02, CC-1's active financial
+lane, mid multi-part rollout, with its own dedicated guard
+(verify-cash-flow-rolling-ledger.mjs) presumably pinning these exact
+testids for part (a); converting to ParityTable now would very likely
+collide with CC-1's own stated part (b) plan. (b) Rule 6 (never exempt or
+baseline a red guard) rules out the OTHER easy fix (adding the file to
+TABLE_INFRA_FILES) without owner sign-off — that's not my call either.
+Practical note: this did NOT hard-block my own PR #21057's squash-merge
+via the API (merged clean, sha 1c56bca66c) despite showing
+mergeStateStatus=BLOCKED beforehand — worth knowing if another seat hits
+the same scare. Flagging with full root cause so whoever owns
+CASH-FLOW-02(b) doesn't have to re-derive it.
