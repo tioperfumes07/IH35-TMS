@@ -34,26 +34,9 @@ import { formatMoneyCents } from "../constants";
 
 // ─── .ldt-* palette (GLOBAL-TYPE-SIZE-BASELINE tokens) ────────────────────────
 
-const LDT_CSS = `
-.ldt-stepbar { display: flex; flex-wrap: wrap; gap: 4px; }
-.ldt-step { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; color: #6B7280; border: 1px solid #E5E7EB; border-radius: 2px; background: #FFFFFF; line-height: 1.4; }
-.ldt-step--active { color: #0F1219; border-color: #1F2A44; background: #F7F8FA; }
-.ldt-step--past { color: #16A34A; border-color: #E5E7EB; }
-.ldt-step--future { color: #9CA3AF; border-color: #E5E7EB; background: #FFFFFF; }
-.ldt-card { border: 1px solid #E5E7EB; border-radius: 2px; background: #FFFFFF; padding: 12px; }
-.ldt-card__title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #4B5563; margin-bottom: 8px; letter-spacing: 0.02em; }
-.ldt-card__row { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; font-size: 12px; color: #1F2A44; border-bottom: 1px solid #F3F4F6; }
-.ldt-card__row:last-child { border-bottom: none; }
-.ldt-money { display: flex; flex-direction: column; gap: 0; }
-.ldt-money__label { font-size: 11px; color: #6B7280; }
-.ldt-money__sub { font-size: 11px; color: #9CA3AF; }
-.ldt-money__value { font-size: 12px; font-weight: 600; color: #0F1219; text-align: right; font-variant-numeric: tabular-nums; }
-.ldt-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; font-size: 12px; border: 1px solid #E5E7EB; border-radius: 2px; background: #FFFFFF; color: #1F2A44; cursor: pointer; text-decoration: none; }
-.ldt-chip:disabled { opacity: 0.6; cursor: default; }
-.ldt-chip--ok { color: #16A34A; }
-.ldt-chip--ok:hover:not(:disabled) { border-color: #16A34A; }
-.ldt-chip--missing { color: #DC2626; cursor: default; border-color: #FECACA; background: #FEF2F2; }
-`;
+// LDT-4 DESIGN (lead 2026-09-06): the tab's styles live in styles/tokens-load-detail.css (.ldt-stages / .ldt-chip) — an inline
+// <style> here redefined .ldt-card / .ldt-ch for every tab that mounted after Factoring (measured live 04:1xZ: flat cards).
+
 
 // ─── constants ───────────────────────────────────────────────────────────────
 
@@ -171,15 +154,12 @@ function PacketChip({ label, file }: { label: string; file?: DocsFile | null }) 
 
   if (!file) {
     return (
-      <div className="ldt-chip ldt-chip--missing" data-testid={testId}>
-        <span>{label}</span>
-        <span className="font-medium">Missing</span>
-      </div>
+      <span className="ldt-pill warn" data-testid={testId}>none on file</span>
     );
   }
 
   return (
-    <button type="button" onClick={handleClick} disabled={loading} className="ldt-chip ldt-chip--ok" data-testid={testId}>
+    <button type="button" onClick={handleClick} disabled={loading} className="ldt-chip" data-testid={testId}>
       <span>✓</span>
       <span>{label}</span>
       <span className="max-w-[140px] truncate text-gray-500">{file.original_filename}</span>
@@ -192,12 +172,9 @@ function MoneyRow({
   label, value, sub,
 }: { label: string; value: string; sub?: string | null }) {
   return (
-    <div className="ldt-card__row">
-      <div>
-        <div className="ldt-money__label">{label}</div>
-        {sub ? <div className="ldt-money__sub">{sub}</div> : null}
-      </div>
-      <div className="ldt-money__value">{value}</div>
+    <div className="ldt-row">
+      <span>{label}{sub ? <span className="ldt-sub">{sub}</span> : null}</span>
+      <span className="ldt-m">{value}</span>
     </div>
   );
 }
@@ -419,7 +396,6 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
 
   return (
     <>
-      <style>{LDT_CSS}</style>
       <div className="space-y-4 text-xs">
         {/* Exact Leaves load.drawer.factoring:customer — customer_id was used for invoice queries only. */}
         {load.customer_id ? (
@@ -430,20 +406,15 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
         ) : null}
 
         {/* ── Step bar (LDT-4) ─────────────────────────────────────────────── */}
+        {/* LDT-4 DESIGN (owner 2026-09-06 04:2xZ, render § Factoring): the stages are ONE segmented bar across the card —
+            the reached stages filled, the current one dark, the rest outlined — not a row of small chips. */}
         <div className="ldt-card">
-          <div className="ldt-card__title">Factoring Status</div>
-          <div className="ldt-stepbar">
+          <div className="ldt-stages" data-testid="factoring-stages">
             {STEP_ORDER.map((s, idx) => {
-              const cls =
-                idx === stepIndex
-                  ? "ldt-step ldt-step--active"
-                  : idx < stepIndex
-                  ? "ldt-step ldt-step--past"
-                  : "ldt-step ldt-step--future";
+              const cls = idx === stepIndex ? "ldt-stage now" : idx < stepIndex ? "ldt-stage done" : "ldt-stage";
               return (
                 <div key={s} className={cls} data-testid={`factoring-step-${s.toLowerCase()}`}>
-                  {idx < stepIndex ? "✓ " : idx === stepIndex ? "▶ " : ""}
-                  {STEP_LABELS[s]}
+                  {idx === 0 && linkedInvoice ? `${STEP_LABELS[s]} ${linkedInvoice.display_id ?? ""} · ${formatMoneyCents(linkedInvoice.total_cents ?? null, currency)}` : STEP_LABELS[s]}
                 </div>
               );
             })}
@@ -493,10 +464,11 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
           </div>
         </div>
 
+        <div className="ldt-grid2">
         {/* ── The money card (LDT-4) ───────────────────────────────────────── */}
-        <div className="ldt-card">
-          <div className="ldt-card__title">The money</div>
-          <div className="ldt-money">
+        <div className="ldt-card" data-testid="factoring-money-card">
+          <div className="ldt-ch"><span>The money</span><span className="ldt-sub">ASC 860 · secured borrowing, recourse</span></div>
+          <div className="ldt-rows">
             <MoneyRow
               label="Invoice face"
               value={formatMoneyCents(linkedInvoice?.total_cents ?? null, currency)}
@@ -536,13 +508,13 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
         </div>
 
         {/* ── Packet card (LDT-4) — real attachment chips ──────────────────── */}
-        <div className="ldt-card">
-          <div className="ldt-card__title">Packet</div>
-          <div className="flex flex-wrap gap-2">
-            <PacketChip label="Rate con" file={rateConfFile} />
-            <PacketChip label="BOL" file={bolFile} />
-            <PacketChip label="POD" file={podFile} />
-            <PacketChip label="Invoice PDF" file={invoicePdfFile} />
+        <div className="ldt-card" data-testid="factoring-packet-card">
+          <div className="ldt-ch"><span>Packet</span><span className="ldt-sub">auto-assembles at delivery</span></div>
+          <div className="ldt-rows">
+            <div className="ldt-row"><span>Rate confirmation</span><PacketChip label="Rate con" file={rateConfFile} /></div>
+            <div className="ldt-row"><span>Bill of lading</span><PacketChip label="BOL" file={bolFile} /></div>
+            <div className="ldt-row"><span>Proof of delivery</span><PacketChip label="POD" file={podFile} /></div>
+            <div className="ldt-row"><span>Invoice PDF</span><PacketChip label="Invoice PDF" file={invoicePdfFile} /></div>
           </div>
           {/* Error notes for failed fetches (honest failure, not silent empty) */}
           {docsQ.isError ? (
@@ -561,22 +533,26 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
             </p>
           ) : null}
         </div>
+        </div>
+        <div className="ldt-note" data-testid="factoring-links-note">
+          Every figure links: <code>accounting.invoices</code> ↔ <code>factoring_advances</code> ↔ <code>broker_advances</code> ↔ <code>journal_entries</code>. A/R stays on the books; the invoice is never derecognized. Chargebacks appear here only when driver-caused and approved.
+        </div>
 
         {/* ── Chargebacks (LDT-4) — only when driver-caused and approved ────── */}
         {linkedInvoice?.factoring_status === "recourse_returned" ? (
           <div className="ldt-card">
-            <div className="ldt-card__title">Chargebacks</div>
+            <div className="ldt-ch"><span>Chargebacks</span></div>
             {linkedInvoice.source_load_chargeback_requested ? (
-              <div className="ldt-card__row">
+              <div className="ldt-row">
                 <div>
                   <div className="text-gray-800">Chargeback — driver-caused and approved</div>
                   {linkedInvoice.source_load_chargeback_reason ? (
-                    <div className="ldt-money__sub">{linkedInvoice.source_load_chargeback_reason}</div>
+                    <div className="ldt-sub">{linkedInvoice.source_load_chargeback_reason}</div>
                   ) : null}
                 </div>
               </div>
             ) : (
-              <div className="ldt-card__row text-gray-500">No chargebacks</div>
+              <div className="ldt-row ldt-muted">No chargebacks</div>
             )}
           </div>
         ) : null}
