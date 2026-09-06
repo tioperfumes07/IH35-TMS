@@ -5762,6 +5762,11 @@
     "claimed_at": "2026-09-06",
     "purpose": "verify-vendors-customers-list-standard (VC-LIST-01: Vendors + Customers lists as ParityTable with real Open balance/Spend from bills+expenses rollup and invoice-based A/R; owner ROUND 11 even lane)"
   },
+  "10464": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-orphan-guard-batch (GUARD-WIRE-93 ROUND 12: wire the 93 orphan guards that pass standalone into CI so verify:guard-wired census drops 107->14; both registry-batch guards green. The 14 ENV-CENSUS-FAIL guards stay unwired/OPEN until their owning seat fixes the defect. Cursor EVEN lane, Rule 25/37)"
+  },
   "10465": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
@@ -7773,5 +7778,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1054
+  "total_claimed": 1055
 }
