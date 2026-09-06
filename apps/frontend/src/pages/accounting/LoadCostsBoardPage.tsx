@@ -249,7 +249,7 @@ function loadCell(loadsById: Map<string, string>): ParityColumn<RegisterRow> {
 const BROKER_ADVANCE_COLUMNS = (loadsById: Map<string, string>): Array<ParityColumn<RegisterRow>> => [
   { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateUS(r.date) : DASH },
   loadCell(loadsById),
-  { key: "category", label: "Category", testId: "reg-col-category", sortable: true, sortValue: r => r.category ?? "", render: r => r.category ? r.category.replaceAll("_", " ") : DASH },
+  { key: "advance_category", label: "Category", testId: "reg-col-category", sortable: true, sortValue: r => r.category ?? "", render: r => r.category ? r.category.replaceAll("_", " ") : DASH },
   { key: "instrument", label: "Instrument", testId: "reg-col-instrument", sortable: false, render: r => r.instrument || DASH },
   { key: "amount", label: "Amount", testId: "reg-col-amount", sortable: true, className: `${NUM} ldt-m`, sortValue: r => r.amountCents, render: r => fmt(r.amountCents) },
   { key: "status", label: "Applied to invoice", testId: "reg-col-status", sortable: true, className: "whitespace-nowrap text-center", sortValue: r => r.appliedStatus ?? "", render: r => statusPill(r.appliedStatus ?? "") },
@@ -301,6 +301,19 @@ const DOCUMENT_COLUMNS = (companyId: string, loadsById: Map<string, string>): Ar
 ];
 
 const REGISTER_LIMIT = 500;
+/** GET /api/v1/expenses accepts limit ≤ 200 — never ask for more in one call. */
+const EXPENSES_PAGE = 200;
+/** REG-400: page GET /api/v1/expenses at its own cap until exhausted (a 500 in one call is HTTP 400 → empty register). */
+async function listAllExpenses(companyId: string) {
+  const all: Awaited<ReturnType<typeof listExpenses>>["rows"] = [];
+  for (let offset = 0; offset < 5000; offset += EXPENSES_PAGE) {
+    const page = await listExpenses(companyId, { limit: EXPENSES_PAGE, offset });
+    const got = page.rows ?? [];
+    all.push(...got);
+    if (got.length < EXPENSES_PAGE) break;
+  }
+  return all;
+}
 function TransactionRegister({ tab, companyId, loadsById, navigate }: { tab: CostTab; companyId: string; loadsById: Map<string, string>; navigate: (path: string) => void }) {
   const coaRoles = useQuery({ queryKey: ["load-costs-board", "coa-roles", companyId], queryFn: () => listCoaRoles(companyId), enabled: Boolean(companyId) && tab === "fuel_advances" });
   const q = useQuery({
@@ -331,10 +344,11 @@ function TransactionRegister({ tab, companyId, loadsById, navigate }: { tab: Cos
         // labelled which is which — a cash advance the driver draws down at a truck stop, and a
         // company fuel expense (driver_id set, category = the company_fuel_advance_expense CoA
         // role, per LoadDetailCostsTab.tsx's own fuel-advance write path) posted directly.
-        const [advancesRes, expensesRes] = await Promise.all([
+        const [advancesRes, expenseRowsAll] = await Promise.all([
           listCashAdvances(companyId, {}) as Promise<{ advances?: Array<Record<string, unknown>> }>,
-          listExpenses(companyId, { limit: REGISTER_LIMIT }),
+          listAllExpenses(companyId),
         ]);
+        const expensesRes = { rows: expenseRowsAll };
         const cashRows: RegisterRow[] = (advancesRes.advances ?? []).filter(a => a.purpose === "fuel_deposit").map(a => ({ id: String(a.id), number: String(a.display_id ?? a.reference ?? "—"), date: (a.disbursed_at ?? a.created_at ?? null) as string | null, party: String(a.driver_name ?? a.recipient_name ?? "Driver"), loadNumber: (a.load_number ?? null) as string | null, loadId: (a.load_id ?? null) as string | null, detail: "Fuel cash advance", amountCents: Number(a.amount_cents ?? a.amount ?? 0), status: String(a.status ?? "—") }));
         const fuelRole = (coaRoles.data?.rows ?? []).find(role => role.role === "company_fuel_advance_expense" && role.is_active && role.account_number);
         const expenseRows: RegisterRow[] = fuelRole
@@ -372,14 +386,18 @@ function TransactionRegister({ tab, companyId, loadsById, navigate }: { tab: Cos
         }));
       }
       // expenses + repairs_maintenance both read from expenses; R&M narrows to work-order-linked lines.
-      const res = await listExpenses(companyId, { limit: REGISTER_LIMIT });
-      const rows = (res.rows ?? []).filter(x => x.status !== "void");
+      // REG-400 (owner 2026-09-06 04:5xZ "THE EXPENSES … DO NOT SHOW"): GET /api/v1/expenses caps limit at 200
+      // (expenses.routes.ts z.max(200)); the register asked for 500 → HTTP 400 → the table said "No expenses
+      // transactions found" over 207 real entries. Page through the API at its own cap until exhausted.
+      const rows = (await listAllExpenses(companyId)).filter(x => x.status !== "void");
       const filtered = tab === "repairs_maintenance" ? rows.filter(x => x.linked_work_order_uuid != null) : rows;
       return filtered.map(x => ({ receiptEntity: "expense" as const, id: x.id, number: x.expense_number ?? "—", date: x.transaction_date, party: x.vendor_name ?? ([x.driver_first_name, x.driver_last_name].filter(Boolean).join(" ") || "Vendor not set"), loadNumber: x.load_number, loadId: x.load_id, detail: tab === "repairs_maintenance" && x.work_order_display_id ? `Work order ${x.work_order_display_id}` : (x.line_description ?? x.memo ?? "Expense"), amountCents: Number(x.total_amount_cents), status: x.status === "posted" ? "Posted" : x.status === "active" ? "Recorded" : x.status === "draft" ? "Draft" : x.status }));
     },
   });
   const rows = q.data ?? [];
   const goToLoad = (r: RegisterRow) => { if (r.loadId) navigate(`/accounting/load-costs/${r.loadId}?tab=Costs`); };
+  // A failed fetch must never render as "No … transactions found" (LAW: empty is a question, not an answer).
+  if (q.isError) return <div data-testid="load-costs-register-error"><ListErrorState title={`Couldn't load ${tab.replaceAll("_", " ")}`} status={(q.error as { status?: number })?.status ?? 0} message={q.error instanceof Error ? q.error.message : String(q.error)} onRetry={() => void q.refetch()} /></div>;
   const columns =
     tab === "driver_pay" ? DRIVER_PAY_COLUMNS
     : tab === "broker_advances" ? BROKER_ADVANCE_COLUMNS(loadsById)
@@ -434,7 +452,7 @@ const TOUR_COLUMNS = (state: "open" | "closed"): ParityColumn<TourListRow>[] => 
   { key: "revenue", label: "Revenue", testId: "tour-col-revenue", sortable: true, className: "text-right tabular-nums", sortValue: r => r.revenue_cents, render: r => fmt(r.revenue_cents) },
   { key: "costs", label: "Costs", testId: "tour-col-costs", sortable: true, className: "text-right tabular-nums", sortValue: r => r.costs_cents, render: r => fmt(r.costs_cents) },
   { key: "driver_pay", label: "Driver pay", testId: "tour-col-driver-pay", sortable: true, className: "text-right tabular-nums", sortValue: r => r.driver_pay_cents, render: r => fmt(r.driver_pay_cents) },
-  { key: "margin", label: "Margin", testId: "tour-col-margin", sortable: true, className: "text-right tabular-nums", sortValue: r => r.margin_cents, render: r => <span className={r.margin_cents < 0 ? "text-[#991B1B]" : undefined}>{fmt(r.margin_cents)}{r.margin_pct == null ? "" : ` · ${r.margin_pct.toFixed(1)}%`}</span> },
+  { key: "tour_margin", label: "Margin", testId: "tour-col-margin", sortable: true, className: "text-right tabular-nums", sortValue: r => r.margin_cents, render: r => <span className={r.margin_cents < 0 ? "text-[#991B1B]" : undefined}>{fmt(r.margin_cents)}{r.margin_pct == null ? "" : ` · ${r.margin_pct.toFixed(1)}%`}</span> },
   { key: "miles", label: "Miles practical · real", testId: "tour-col-miles", className: "text-right tabular-nums", render: r => `${r.miles_practical.toLocaleString("en-US")} · ${r.miles_real == null ? DASH : r.miles_real.toLocaleString("en-US")}` },
   ...(state === "open"
     ? [{ key: "ready", label: "Ready to close", testId: "tour-col-ready", sortable: true, sortValue: (r: TourListRow) => r.ready_ok, render: (r: TourListRow) => <span className={`ldt-pill ${r.can_close ? "ok" : r.ready_ok === 0 ? "bad" : "warn"}`} title={r.close_blockers.join("\n")}>{r.can_close ? `Ready · ${r.ready_ok}/${r.ready_total}` : `${r.ready_ok}/${r.ready_total} · ${r.close_blockers[0] ?? "open items"}`}</span> } as ParityColumn<TourListRow>]
@@ -465,7 +483,7 @@ function TourRegister({ state, companyId, onCount }: { state: "open" | "closed";
       revenue: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.revenue_cents, 0)),
       costs: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.costs_cents, 0)),
       driver_pay: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.driver_pay_cents, 0)),
-      margin: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.margin_cents, 0)),
+      tour_margin: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.margin_cents, 0)),
     }}
   /></div>;
 }
