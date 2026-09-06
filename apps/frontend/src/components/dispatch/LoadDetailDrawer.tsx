@@ -24,7 +24,7 @@ import { MoneyProofTrailPanel } from "../accounting/MoneyProofTrailPanel";
 import { LoadDetailSettlementTab } from "./LoadDetailSettlementTab";
 import { LoadDetailGeofenceTimelineTab } from "./LoadDetailGeofenceTimelineTab";
 import { LoadStopsRecordTab } from "./LoadStopsRecordTab";
-import { EntityAuditHistoryTab } from "../audit/EntityAuditHistoryTab";
+import { LoadAuditTab } from "./LoadAuditTab";
 import { STATUS_LABEL, formatMoneyCents } from "./constants";
 import { LoadReassignModal } from "../../pages/dispatch/LoadReassignModal";
 import { LoadTemplateLibrary, SaveLoadTemplateModal, templateJsonFromLoadDetail } from "../../pages/dispatch/LoadTemplateLibrary";
@@ -1413,7 +1413,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
           ) : null}
 
           {activeTab === "Audit" && load ? (
-            <EntityAuditHistoryTab operatingCompanyId={load.operating_company_id} entityType="load" entityId={load.id} />
+            <LoadAuditTab load={load} operatingCompanyId={load.operating_company_id} />
           ) : null}
           {activeTab === "Assignment History" ? (
             <div className="space-y-3">
