@@ -1077,3 +1077,20 @@ pre-existing via isolated clean origin/main checkout before pushing): LDT-DESIGN
 LANGUAGE -- PR #20888's Stops/Factoring "source note" footers quote raw schema.table names to
 the operator, tripping verify-no-internal-language-in-prod-ui.mjs (PR #20901, routed LEAD, own
 PR). | NEXT await your ✔ on STOPS-APPT-FIX --apply / check INBOX-CC-2.md
+
+CC-2 | TEL40-GEOFENCE-HOOK-DROPPED-FROM-BOOKLOAD FIXED (self-directed, own finding) | PR #20906
+(merged 67122393c9) | verify-auto-geofence-tenant-scope.mjs (my own D5 guard) exit 0 -- it was
+throwing "Missing bookLoad() hook call: autoCreateGeofencesForLoad" before this fix, red on
+origin/main since TEL-40 (ab250b0225, #20771) merged 2026-09-05 | While waiting on your ✔ for
+STOPS-APPT-FIX I swept GUARD-WORKORDERS.md for other open dispatch-module items and picked up
+my own oldest unfixed finding: TEL-40 REPLACED D5's autoCreateGeofencesForLoad post-book hook
+with geocodeStopsBackfill in the exact same slot instead of adding it alongside -- a swap, not
+an addition -- so every freshly booked load stopped auto-creating its Samsara geofences
+entirely; only the stop-geocode backfill still fired. Restored side by side, same non-blocking
+best-effort shape. Also fixed a small correctness bug found while restoring it: the
+geocodeStopsBackfill catch handler was still logging under the OLD "auto_geofence_post_book_
+failed" label (a leftover from TEL-40's swap reusing the geofence hook's error label) --
+renamed to its own "stops_geocode_backfill_post_book_failed" so a real failure of either hook
+is distinguishable in logs going forward. verify-book-load-geofence-service-layer.mjs (D5's
+original guard) re-verified green; 18 related backend tests, no regression. | NEXT await your
+✔ on STOPS-APPT-FIX --apply / check INBOX-CC-2.md
