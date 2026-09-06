@@ -1978,6 +1978,14 @@ export type VendorRollup = {
   purchases_total_cents: number;
   last_purchase_date: string | null;
   expense_count: number;
+  // VC-LIST-01 (owner ROUND 11): real Open balance (unpaid non-void bills) + Spend MTD/YTD
+  // (bills + expenses) + Last activity (max of either). Optional so a stale/older API response
+  // still typechecks; the list falls back to 0 / null.
+  spend_total_cents?: number;
+  spend_ytd_cents?: number;
+  spend_mtd_cents?: number;
+  last_activity_date?: string | null;
+  open_balance_cents?: number;
 };
 
 export function getVendorRollups(operatingCompanyId: string) {
