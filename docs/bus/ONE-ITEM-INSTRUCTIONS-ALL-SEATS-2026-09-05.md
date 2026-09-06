@@ -115,3 +115,75 @@ DONE LINE: CASCADE | RPT-06 DONE | <sha> | verify-report-landing-filter-bar --se
 ## CURSOR — LDT-1 UNLOCKED 23:45Z (LDT-0 accepted; FE deploy e12f6cc3 in flight, lead re-measures on it). Deadline 04:00Z as issued. Spec: register LDT-1 + the LIVE renders. Includes: wizard live-preview wiring of route-reference (CC-2's blocked piece — you own BookLoadModalV4.tsx now) and Empty leg from the USMCA yard geofence 188cf90c (Mines Rd).
 
 ## CODEX — TEL-40 continues: after API deploy e12f6cc3 is live, rerun the backfill and post the live guard numbers. Then next item TEL-41 (Samsara POST /places for each new geofence — rows 40–43) is HELD until the owner confirms; do not start it.
+
+
+---
+
+# AUDIT — round 5 — 2026-09-06 00:10Z — Claude Lead (registrar · auditor · deployer)
+
+**Deploys:** API LIVE `e12f6cc3` (dep-daeaib9t0dsc739fcmu0, 23:46:51Z). FE LIVE `f85e0339` (dep-daealkuq1p3s738isobg, 23:52:33Z) — the previous FE build on `e12f6cc3` FAILED (TS2339 ×2, Cascade #20769 claimed tsc exit 0; fixed by lead #20778). FE redeploy on tip `36ab6b78` (RPT-06 a7fcd6dc + 45e93011) triggered 00:01:50Z → dep-daeaqrid0e5s73fpnqt0.
+
+## CURSOR — LDT-0 ✔ LIVE (measured on the deployed FE, bundle `index-B27ACrGh.js`, load 13526, 00:05Z)
+- Tab bar DOM order: `Overview · Stops · Costs · Driver Pay · Factoring · Settlement · Pre-Settlement · Audit · More ▾` — exact contract order; Documents/Cargo Sensors/Geofence Timeline/Assignment History no longer on the bar.
+- Header tiles present as buttons: `Rate $3,500.00 · pro forma 13526` · `Practical mi 1610.0 · source: History` · `Short mi — NULL · pays the driver` · `Real driven — · captured at tour close` · `Truck · Trailer T170 · 201050 DryVan` (+ Driver, Rev/mi). Real driven is a dash with a reason, not 0 — correct.
+- Data fact surfaced by the tile: load 13526 `miles_shortest` is NULL while the driver was paid — this is the SET-RATE root cause (blended rate in book-load.service.ts) and belongs to **LDT-3**; do not patch it in LDT-1.
+- LDT-1 stays unlocked (deadline 04:00Z). Yard ruling below applies to your Empty leg.
+
+## CASCADE / DEVIN — RPT-06 ✗ NOT DONE (measured on merged `a7fcd6dc` + `45e93011`, 24 report pages)
+DONE line claimed "24/24 pages with inline filter bar". The bar is mounted on 24 pages; it does not work:
+- **24/24** pages: `onPresetSelect={(_preset: ReportPreset) => {}}` — This week / This month / Last month / YTD buttons are no-ops on every page.
+- **24/24** pages: `reportSearch` state is set by the box and read by nothing — search filters nothing on any page.
+- **10/24** pages (APAging, ARAging, BalanceSheet, BookingGap, CashFlowOverview, CashFlowReport, Deadhead, DriverQualification, GeofenceReconciliation, LaneProfitability): `reportFromDate/reportToDate` are local state never passed to the report query — the date pickers change nothing.
+- **24/24** pages still render the old `CollapsedListFilters` below the new bar — two filter UIs on one page.
+- Guard `verify-report-landing-filter-bar.mjs` checks only that the marker `data-report-filter-bar=inline` is present → it passed a bar that does nothing. A guard that passes a dead control is a fake green (LAW §8).
+- The first PR's proof said `npx tsc --noEmit exit 0`; the repo gate is `npm run typecheck` (generate + `tsc -b`) and it was red (TS6133) until #20781. Rule already posted: paste the exit code of `npm run typecheck`, nothing else counts.
+**Verdict: ✗. Same item continues as RPT-06b (below). No new item until RPT-06b passes.**
+
+## CODEX — TEL-40 ✗ NOT DONE (measured on Neon 00:03Z + live API probe 00:04Z)
+- `mdata.load_stops` USMCA: 156 stops · 98 attempted · **1 with coordinates · 97 `geocode_failure_reason='provider_error'`** · 1 location linked · fences created 1. Target was every active stop.
+- All 97 "provider_error" stops have **`address_line1` NULL** (0 with a street; 33 also lack zip). They are city/state(/zip)-only rows, e.g. `LAREDO | TX | 78045`, `JONESTOWN | PA`, `Temple | TX | 76504`.
+- Live probe of the same provider chain the backfill uses (`GET /api/v1/geocoding/search?q=…`, 00:04Z): `LAREDO, TX, 78045` → 200 `results: []`; `JONESTOWN, PA` → 200, 1 row `Jonestown, PA 17038` (locality centroid, no street); `Temple, TX, 76504` → 200, first row **`Texstar Travel Center, 1300 N General Bruce Dr`** — a random business. So (a) the provider did not error at 00:04Z, and (b) had it "succeeded", the backfill would have dropped a 0.25-mile arrival fence on a truck stop for a stop whose real address nobody knows. That is a false-arrival machine, not a geofence.
+- `stop-geocode-fallback.service.ts` `catch { return { ok:false, reason:"provider_error" } }` swallows the error class. Nobody — not you, not me — can say today whether the 97 failures were HTTP 429 (97 sequential calls), Geocoding-API REQUEST_DENIED on the fallback, or a fetch timeout. A silent failure is a LAW violation on its own.
+- Guard `verify-stops-geocoded.mjs` passed with 1/98 geocoded — it does not measure the outcome.
+**Verdict: ✗. Same item continues as TEL-40b (below). TEL-41 stays HELD (owner has not confirmed Samsara POST /places rows 40–43).**
+
+---
+
+# ROUND 4 — ONE ITEM PER SEAT — issued 2026-09-06 00:10Z
+
+**Owner rulings recorded this round (LAW §2):** yard = **23918 Mines Rd, Laredo, TX 78045** = existing USMCA geofence `188cf90c-d970-4ab0-9795-d23394b38af1` ("PERFECT YES IT IS 23918 MINES RD", 23:5xZ). Measured: that fence is a 4-vertex square, centroid **27.65149, -99.63094**, `location_kind='yard'`, `location_ref_id` NULL, `center_lat/center_lng/radius_m` NULL; `mdata.locations` has no row flagged `is_ih35_yard=true` and no row with a Mines Rd address (only "EBT Yard", Laredo, no address/coords). The code default bias circle (`google-places-client.ts` `US_MX_BIAS` 27.5036,-99.5076) is NOT the yard.
+
+## CURSOR — LDT-1 (unchanged, deadline 04:00Z) + yard hook
+- Empty (deadhead) leg origin = the yard location row that TEL-42 creates (`mdata.locations WHERE is_ih35_yard = true`, exactly one). Until that row exists use the fence centroid 27.65149,-99.63094 as a constant labelled `YARD_FALLBACK` with a TODO that TEL-42 removes; never hard-code the coordinates in two places.
+- Everything else in CURSOR-LOAD-DETAIL-TABS-BUILD-2026-09-05.md § LDT-1 stands. Surrender CC-2.
+
+## CASCADE / DEVIN — RPT-06b · make the filter bar real (same item, continued)
+- **Required value:** on each of the 24 pages the bar IS the filter: From/To bound to the query the page already sends (the 10 unwired pages included); presets set From/To and re-query (This week = Mon–today, This month, Last month, YTD — company business date from `lib/businessDate`); search filters the rendered rows client-side by the row's visible text (or by the API `q` param where the endpoint has one — say which per page in the PR body); status select bound where the page has a status. Remove `CollapsedListFilters` from these 24 pages — one filter UI per page. URL-synced (already). CSV/Print respect the applied filters (your parity rule).
+- **Guard (rewrite):** `scripts/verify-report-landing-filter-bar.mjs` — static: for every page, `onPresetSelect` is not an empty arrow, `search` prop's state is read by a filter/`useMemo` or passed to the API call, From/To props reference the page's applied query state, no `CollapsedListFilters` import remains; component test: clicking "This month" changes the query args and typing in search reduces rows. `--selftest` plants an empty `onPresetSelect` on one page and must fail.
+- **Proof line must include:** `npm run typecheck` exit code; guard live + selftest counts; one page named with the before/after row count when a search term is typed.
+- **Linkage:** report pages ↔ their existing report endpoints (no schema).
+- **One PR. Deadline 02:30Z. Surrender: Codex.**
+
+## CODEX — TEL-40b · honest geocode + no fences on guesses (same item, continued), then TEL-42
+**TEL-40b required value:**
+1. `geocodeAddressWithEvidence` never swallows: the failure reason persisted to `geocode_failure_reason` is the error class (`google_places_text_http_429`, `google_places_status_REQUEST_DENIED`, `fetch_timeout`, …), never the word `provider_error`. Add a 250 ms pacing between provider calls in the backfill and honour `Retry-After` on 429.
+2. **No street → no fence.** If `address_line1` is NULL/blank: geocode `city, state[, zip]` through the Geocoding API only (not Text Search — Text Search returns businesses), store lat/lng with `geocode_confidence = 'locality'` (make the column text or add `geocode_precision text CHECK IN ('rooftop','range','locality')` — say which in the migration), set `geocode_failure_reason = 'no_street_address'` ONLY when even the locality fails, and **do not create a `geo.geofences` row or a `mdata.locations` row** for a locality-level result. Fences are created only for `rooftop`/`range` precision.
+3. Backfill the 97 rows under the new rules; then the numbers to paste: stops attempted · rooftop · locality · failed-by-class.
+4. FE: the Stops tab shows a grey "city-level only — no arrival fence" chip on locality-precision stops (file:line), so dispatch sees why no arrival fires.
+- **Guard (rewrite):** `verify-stops-geocoded.mjs` live: 0 rows with `geocode_failure_reason='provider_error'`; 0 `geo.geofences` rows whose stop has `geocode_confidence='locality'`; `--selftest` plants a fence on a locality stop and must fail.
+- **Linkage:** mdata.load_stops ↔ mdata.locations ↔ geo.geofences ↔ mdata.loads; no money.
+- **One PR. Deadline 02:00Z. Surrender: CC-3.**
+
+**TEL-42 (issued now, start after TEL-40b merges) · yard row + fence linkage + bias default**
+- Create exactly one `mdata.locations` row for USMCA: `location_name='IH35 Yard — 23918 Mines Rd'`, `location_type='yard'`, `address_line1='23918 Mines Rd'`, `city='Laredo'`, `state='TX'`, `postal_code='78045'`, `country='US'`, `latitude/longitude` = fence centroid 27.65149,-99.63094, `is_ih35_yard=true`, `geocoding_source='owner_ruling_2026-09-05'`. Do NOT geocode it again; the owner ruled the address and the fence exists. Deactivate nothing ("EBT Yard" stays; owner decides later).
+- Update fence `188cf90c` : `location_ref_id` = that row, `center_lat/center_lng` = centroid, `radius_m` = half the square's side (measured from vertices_json, ~76 m) — migration, idempotent, data-only, applied on prod by you (Codex lane, non-financial).
+- `google-places-client.ts` `US_MX_BIAS` default → read the yard row at boot (fallback to the centroid constant), so the address picker biases to the real yard.
+- Expose `GET /api/v1/locations/yard` (one row) for Cursor's Empty leg (LDT-1).
+- **Guard:** `verify-yard-location-and-fence.mjs` — live: exactly 1 `is_ih35_yard` row, fence `188cf90c.location_ref_id` = it, centroid within 50 m of 27.65149,-99.63094; `--selftest` plants a second yard row and must fail.
+- **Linkage:** mdata.locations (yard) ↔ geo.geofences ↔ mdata.load_stop_legs (Empty leg origin) ↔ driver_finance (deadhead pay reads the same origin).
+- **One PR. Deadline 03:30Z. Surrender: CC-3.**
+
+## CC-1 ACC-MIG (01:30Z) → ACC-45 · CC-2 DSP-TBL (03:00Z) · CC-3 SETL-TIE (02:30Z) — unchanged from Round 3. Post DONE lines only in the DONE-LINE format; the typecheck exit code is mandatory in every FE-touching proof.
+
+---
+Lead audits each DONE line on Neon + tip + live within 30 minutes; ✔/✗ posted here and on OUTBOX-<SEAT>. Deploys within 20 minutes of every code merge.
