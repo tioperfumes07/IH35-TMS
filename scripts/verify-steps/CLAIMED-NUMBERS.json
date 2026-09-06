@@ -5797,6 +5797,11 @@
     "claimed_at": "2026-09-06",
     "purpose": "verify-census-orphans-wired (ENV-CENSUS-ROOT root fix: ONE step that RUNS every verify-*.mjs that was merged without CI wiring — 107 on main after #20932 reverted the mass exemption — so verify:guard-wired reports 0 orphan and every still-failing guard is named in CI instead of hidden)"
   },
+  "10483": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-load-bookended-settlement-reuse-checks-lines (MEGA-TOUR-RULING, CC-1: openLoadBookendedSettlement's reuse query must accept a settlement with a live settlement_lines->driver_bills trace even when its first_load_id anchor is cancelled)"
+  },
   "10485": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
@@ -7798,5 +7803,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1055
+  "total_claimed": 1056
 }
