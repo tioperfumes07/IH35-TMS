@@ -973,6 +973,19 @@ export async function closeSettlementPayRun(
       [payrunRunId, opco, je.id]
     );
 
+    // SETL-POST-01 (lead ROUND 13, 2026-09-06): migration 202607520000 added driver_settlements.
+    // posted_at/posted_by_user_id anticipating this exact stamp ("posted_at <- post UPDATE (now())")
+    // but the write never landed in either live poster — a settlement genuinely posted through THIS
+    // path still read posted_at IS NULL forever. COALESCE guards a re-entrant call (the idempotency
+    // claim above already prevents a double-post; this only protects against overwriting a real
+    // timestamp if this branch is ever reached twice for the same run).
+    await client.query(
+      `UPDATE driver_finance.driver_settlements
+          SET posted_at = COALESCE(posted_at, now()), posted_by_user_id = COALESCE(posted_by_user_id, $3::uuid)
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [settlementId, opco, actor.userId]
+    );
+
     // ACCT-R-01: keep accounting.escrow_accounts.balance_cents (the GL-linked liability balance
     // releaseDriverEscrowSeparation() trusts) in sync with the driver_finance.escrow_balances /
     // escrow_ledger contribution just recorded above. The JE leg already credited the driver's escrow
