@@ -1,4 +1,5 @@
 import { entityLabel } from "../../lib/entity-label";
+import { formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -546,7 +547,7 @@ export function SettlementDetailPage() {
         <div>
           <div className="text-[11px] uppercase text-gray-500">Unit(s)</div>
           <div className="text-xs font-semibold" data-testid="settlement-detail-unit">
-            {readout?.tour.unit_number ?? "—"}
+            {readout?.tour?.unit_number ?? "—"}
           </div>
         </div>
         <div style={{ flex: 1, minWidth: 220 }}>

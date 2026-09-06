@@ -450,6 +450,7 @@ export function BillsPage() {
       dateTo,
       unitId: deepLinkUnitId || "",
       loadId: deepLinkLoadId || "",
+      billType,
     },
     empty: {
       category: "" as const,
@@ -459,6 +460,7 @@ export function BillsPage() {
       dateTo: "",
       unitId: "",
       loadId: "",
+      billType: "all" as "all" | "vendor_bill" | "driver_bill",
     },
     onApply: (next) => {
       setCategory(next.category);
@@ -466,6 +468,7 @@ export function BillsPage() {
       setVendorId(next.vendorId);
       setDateFrom(next.dateFrom);
       setDateTo(next.dateTo);
+      setBillType(next.billType);
       setSearchParams(
         (prev) => {
           const params = new URLSearchParams(prev);
@@ -770,8 +773,8 @@ export function BillsPage() {
           <span className="text-gray-600">Type:</span>
           <SelectCombobox
             className="rounded-sm border border-gray-300 px-2 py-1"
-            value={billType}
-            onChange={(event) => setBillType(event.target.value as typeof billType)}
+            value={staged.draft.billType}
+            onChange={(event) => staged.setDraft({ ...staged.draft, billType: event.target.value as typeof billType })}
             data-testid="bills-type-filter"
           >
             <option value="all">All bill types</option>

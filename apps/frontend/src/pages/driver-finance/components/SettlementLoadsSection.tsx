@@ -15,7 +15,7 @@ const rateFor = (leg: TourLeg) => (leg.miles_practical && leg.miles_practical > 
  * from the same tour-readout every other section on this page reads, so this register can never
  * disagree with the KPI tiles above it. Every row drills to its source load (EntityLink).
  */
-export function SettlementLoadsSection({ legs, currencyCode = "USD" }: { legs: TourLeg[]; currencyCode?: string }) {
+export function SettlementLoadsSection({ legs }: { legs: TourLeg[]; currencyCode?: string }) {
   const columns: ParityColumn<TourLeg>[] = [
     {
       key: "trip_type",
@@ -47,7 +47,7 @@ export function SettlementLoadsSection({ legs, currencyCode = "USD" }: { legs: T
       label: "Linehaul",
       sortable: true,
       cellClass: "text-right tabular-nums",
-      render: (l) => (l.is_cancelled ? <span className="ldt-muted">cancelled</span> : formatUsdCents(l.revenue_cents, currencyCode)),
+      render: (l) => (l.is_cancelled ? <span className="ldt-muted">cancelled</span> : formatUsdCents(l.revenue_cents)),
     },
   ];
 
@@ -71,7 +71,7 @@ export function SettlementLoadsSection({ legs, currencyCode = "USD" }: { legs: T
         footerCells={{
           lane: "Subtotal",
           miles_practical: miles(totalPractical),
-          revenue_cents: formatUsdCents(totalLinehaul, currencyCode),
+          revenue_cents: formatUsdCents(totalLinehaul),
         }}
       />
     </section>
