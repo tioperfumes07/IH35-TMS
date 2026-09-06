@@ -1272,9 +1272,20 @@ export function BookLoadModalV4({
       if (!(Number(values.miles_practical) > 0)) {
         form.setError("miles_practical", {
           type: "required",
-          message: "Enter practical miles so revenue per mile can be computed from the typed rate.",
+          message: "Practical must be greater than 0 — enter practical miles so revenue per mile can be computed from the typed rate.",
         });
         pushToast("Enter practical miles before booking", "error");
+        return;
+      }
+      // RG-03 / MIL-01 (owner CONSOLIDATED, DSP-22): shortest (short) miles drive driver pay —
+      // once a driver is seated, booking without them would settle the driver on $0 miles. Not
+      // required before a driver is assigned (the load can still be booked open).
+      if (assignedPrimaryDriverId && !(Number(values.miles_shortest) > 0)) {
+        form.setError("miles_shortest", {
+          type: "required",
+          message: "Enter shortest miles before booking with a driver — driver pay is computed from shortest miles.",
+        });
+        pushToast("Enter shortest miles before booking with a driver", "error");
         return;
       }
     }
@@ -2409,7 +2420,7 @@ export function BookLoadModalV4({
               <div className="blw-sec-hd">
                 <span className="blw-sec-chip">C</span>
                 <span className="blw-sec-name">Stops and miles</span>
-                <span className="blw-sec-meta">1 pickup, 1 delivery, practical miles (short miles optional)</span>
+                <span className="blw-sec-meta">1 pickup, 1 delivery, practical miles (shortest required once a driver is seated)</span>
               </div>
               <div className="space-y-2 p-3">
                 <MilesStrip
@@ -2429,7 +2440,7 @@ export function BookLoadModalV4({
                       ? "operator"
                       : laneMileageQuery.data?.fill_confidence
                   }
-                  shortestRequired={false}
+                  shortestRequired={Boolean(assignedPrimaryDriverId)}
                   practicalRequired
                   milesColumnInverted={milesColumnInverted}
                   reverseLaneShortDiff={reverseLaneShortDiff}

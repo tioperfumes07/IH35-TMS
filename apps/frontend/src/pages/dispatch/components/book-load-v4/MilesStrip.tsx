@@ -122,7 +122,7 @@ export function MilesStrip({
       <div className="flex text-xs font-semibold tracking-wide text-slate-700">
         <div className={cell}>
           <label className="text-slate-600" htmlFor="book-miles-practical">
-            Practical miles{practicalRequired ? " *" : ""}
+            Practical (long){practicalRequired ? " *" : ""}
           </label>
           {editable ? (
             <input
@@ -145,7 +145,7 @@ export function MilesStrip({
         </div>
         <div className={`${cell} bg-slate-100`}>
           <label className="text-slate-700" htmlFor="book-miles-shortest">
-            Short miles{shortestRequired ? " *" : ""}
+            Shortest{shortestRequired ? " *" : ""}
           </label>
           {editable ? (
             <input
