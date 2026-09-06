@@ -155,13 +155,49 @@ export async function openLoadBookendedSettlement(
         -- first load is a real in-flight trip is still reused) and breaks only the orphan case. A
         -- settlement with no anchor at all is likewise not reusable — there is nothing to continue.
         AND s.first_load_id IS NOT NULL
-        AND EXISTS (
-          SELECT 1
-          FROM mdata.loads fl
-          WHERE fl.id = s.first_load_id
-            AND fl.operating_company_id = s.operating_company_id
-            AND fl.soft_deleted_at IS NULL
-            AND fl.status::text <> 'cancelled'
+        -- MEGA-TOUR-RULING (CC-1, 2026-09-06, docs/bus/OUTBOX-CC-1.md OUTBOX-CC-1 · MEGA-TOUR-RULING):
+        -- measured live that the mega-tour settlement seed assigned each driver's first_load_id
+        -- essentially arbitrarily -- "one of the driver's loads," not "the load that still
+        -- matters." 8 of 11 still-open USMCA mega-tour settlements have a first_load_id pointing
+        -- at a CANCELLED load, yet 6 of those 8 have real, LIVE loads correctly attached via
+        -- settlement_lines right now. The original EXISTS below (unchanged, still correct for the
+        -- normal single-trip settlement and for a future post-tour-split per-trip settlement whose
+        -- first_load_id IS the trip's real anchor) asked the wrong question for those 6+ drivers:
+        -- it called the settlement dead because its arbitrary anchor died, even though the
+        -- settlement's REAL load membership (settlement_lines) was still live. That false "not
+        -- reusable" verdict made openLoadBookendedSettlement fall through to INSERT a second open
+        -- settlement for a driver who already had one, and
+        -- uq_driver_settlements_one_open_per_driver correctly refused the duplicate (23505) --
+        -- the constraint did its job; the query asked it the wrong question. This is NOT "pick an
+        -- invariant, one has to yield": the seed's one-open-settlement-per-driver mega-tour and the
+        -- DB's one-open-settlement-per-driver constraint say the SAME thing. Widening to ALSO accept
+        -- a settlement with at least one active (is_active = true) settlement_lines row tracing
+        -- through driver_bills (canonical per ACCT-F275/ACCT-F290, settlement_lines.load_id a
+        -- denormalized fallback -- same resolution already used a few lines below in this file) to
+        -- a non-cancelled load is a strict superset of the original check: zero schema change, zero
+        -- data change, and it keeps holding once CC-3's separate TOUR-SPLIT-PLAN split runs (each
+        -- new per-trip settlement's own first_load_id will then correctly be its real anchor, and
+        -- this same widened check still passes via option (a) alone).
+        AND (
+          EXISTS (
+            SELECT 1
+            FROM mdata.loads fl
+            WHERE fl.id = s.first_load_id
+              AND fl.operating_company_id = s.operating_company_id
+              AND fl.soft_deleted_at IS NULL
+              AND fl.status::text <> 'cancelled'
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM driver_finance.settlement_lines sl
+            LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
+            JOIN mdata.loads ll ON ll.id = COALESCE(db.load_id, sl.load_id)
+                                AND ll.operating_company_id = s.operating_company_id
+                                AND ll.soft_deleted_at IS NULL
+            WHERE sl.settlement_id = s.id
+              AND sl.is_active = true
+              AND ll.status::text <> 'cancelled'
+          )
         )
       ORDER BY s.created_at DESC
       LIMIT 1
