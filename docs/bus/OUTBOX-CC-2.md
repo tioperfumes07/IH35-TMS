@@ -994,3 +994,45 @@ regex still expected the old single-line form) -- rewritten to assert the real i
 (a not-yet-delivered load can never render On Time/Late) instead of a literal string match.
 New apps/frontend/src/pages/accounting/LoadCostsBoardPage.registers.test.tsx (4/4, renders
 the real page against mocked APIs). | NEXT await lead
+
+CC-2 | DSP-49 DONE | PR #20855 (merged 518184ff9d) | deadline 05:00Z MET | root cause: the
+wizard's single "Appointment date/time" field had only ever written scheduled_arrival_at (a
+rough field); appointment_start_at -- the REAL field Round Trips/tour readout and
+LoadStopsRecordTab's own appointmentText() actually read, falling back to
+scheduled_arrival_at only as a last resort -- was a dead hidden input the wizard never
+wrote. Measured LIVE against Neon (bypass_rls, BEGIN/ROLLBACK, false-empty control
+asserted): 49 of 49 (100%) open USMCA loads are missing a real appointment_start_at on the
+first pickup or last delivery, every one of them still carrying a scheduled_arrival_at
+fallback (0 with no date at all) -- load numbers 13508, 13510, 13511, 13512, 13513, 13514,
+13515, 13516, 13518, 13519, 13520, 13521, 13522, 13523, 13525, 13526, 13528, 13529, 13530,
+13532, 13534, 13535, 13536, 13537, 13538, 13541, 13542, 13543, 13544, 13545, 13546, 13547,
+13548, 13549, 13550, 13551, 13552, 13554, 13555, 13557, 13558, 13559, 13560, 13561, 13562,
+13565, 13566, 13567, 13568 (scripts/report-loads-missing-appointments.mjs, read-only, no
+--apply, no backfill -- exact convention as the session's other report scripts). FIX (root
+cause, not a required-attribute patch): BookLoadStopsSection.tsx's date/time combine()
+handler now writes appointment_start_at ALONGSIDE scheduled_arrival_at every time the
+wizard's single field is set, and a react-hook-form required rule (with the reason shown
+inline in red) gates exactly the first pickup and the last delivery -- an intermediate
+stop's appointment stays optional, matching the requirement's own wording. bookLoad()
+(book-load.service.ts) rejects server-side too (pickup_appointment_required /
+delivery_appointment_required) regardless of what the client sent -- defense in depth, the
+backend already persisted appointment_start_at/appointment_end_at when sent, so this closes
+the frontend-only gap, not a backend persistence gap. LoadStopsRecordTab.tsx's Stops header
+now shows a red "No appointment on file" banner (same appointment_start_at-specific
+definition as the report script, not the scheduled_arrival_at display fallback) naming
+which of pickup/delivery is missing, with an inline "Edit stops" link into the existing
+MultiStopEditor (real Window start/Window end fields already write
+appointment_start_at/appointment_end_at directly). No backfill of any existing load's
+dates -- going-forward only, never invented a time. GUARD
+scripts/verify-appointments-required-on-book.mjs (verify-step 10447, claimed via PR
+#20853): static source-scan on both files + spawns the real
+BookLoadStopsSection.appointments.test.tsx component test live (4/4) -- --selftest 8/8,
+each case removing one piece of the gate and confirming the guard actually catches it.
+Also: LoadStopsRecordTab.appointments.test.tsx (4/4, banner render + Edit-stops-click) and
+a genuine backend unit test calling bookLoad() directly, no DB mock needed since the check
+returns before any DB access (book-load-appointments-required.test.ts, 5/5). Found, filed
+(not fixed -- out of lane), 2 pre-existing origin/main defects unrelated to this diff, hit
+via the pre-push ratchet guards and confirmed via isolated clean origin/main checkouts
+before filing: LDT-TABS-ENTITY-LINK-DRIFT (PR #20851, routed LEAD) and
+SETL-DED-UI-RAW-FONT-SIZE (PR #20852, routed CC-3) -- docs/audit/GUARD-WORKORDERS.md (PR
+#20856). | NEXT check INBOX-CC-2.md
