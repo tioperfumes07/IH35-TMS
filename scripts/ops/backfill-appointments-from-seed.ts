@@ -55,10 +55,10 @@ import { registerLoadRoutes } from "../../apps/backend/src/mdata/loads.routes.js
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const OWNER_USER_ID = "e4117991-d2c0-406d-8cda-74e98d95bccd"; // identity.users tioperfumes07@gmail.com, role Owner
 
-// Empty on purpose. --apply refuses unless this is set to the lead's ✔ quoted VERBATIM in a
-// future commit, per the task's own instruction ("--apply only after the lead's ✔ is quoted in
-// the PR"). Never pre-filled or guessed.
-const LEAD_APPROVAL_QUOTE = "";
+// LEAD | ROUND 13 | 2026-09-06 14:55Z (docs/bus, relayed to CC-2): "STOPS-APPT-FIX dry-run (98
+// stops / 49 loads) read; ✔ --apply, post before/after counts." Quoted verbatim, filled only in
+// this follow-up commit after the dry-run (98 stops / 49 loads) was posted and read.
+const LEAD_APPROVAL_QUOTE = "STOPS-APPT-FIX dry-run (98 stops / 49 loads) read; ✔ --apply, post before/after counts.";
 
 type TargetStop = {
   stop_id: string;
@@ -170,11 +170,18 @@ async function main() {
           wouldChange += 1;
           continue;
         }
+        // BUG FOUND LIVE 2026-09-06 (first --apply attempt, 98/98 BLOCKED): s.scheduled_arrival_at
+        // comes from Postgres via ::text cast ("2026-08-19 05:00:00+00" -- space separator, no
+        // offset colon), which the PATCH route's zod isoDatetimeSchema (.datetime({offset:true}))
+        // rejects outright as "Invalid ISO datetime" -- the exact same class of gotcha as
+        // DELIVER-SEED-40's delivered_at bug. Re-format via new Date(...).toISOString() before
+        // sending; correct whether the source string already carries an offset or not.
+        const appointmentStartAt = new Date(s.scheduled_arrival_at).toISOString();
         const res = await app.inject({
           method: "PATCH",
           url: `/api/v1/mdata/loads/${s.load_id}/stops/${s.stop_id}`,
           headers: authHeader,
-          payload: { appointment_start_at: s.scheduled_arrival_at },
+          payload: { appointment_start_at: appointmentStartAt },
         });
         if (res.statusCode >= 300) {
           failed += 1;
@@ -184,7 +191,7 @@ async function main() {
         } else {
           changed += 1;
           report.push(
-            `  DONE load ${loadNumber} stop #${s.sequence_number} ${s.stop_type} stop_id=${s.stop_id} — appointment_start_at := ${s.scheduled_arrival_at}`
+            `  DONE load ${loadNumber} stop #${s.sequence_number} ${s.stop_type} stop_id=${s.stop_id} — appointment_start_at := ${appointmentStartAt}`
           );
         }
       }
