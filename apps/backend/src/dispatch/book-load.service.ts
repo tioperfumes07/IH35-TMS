@@ -520,21 +520,52 @@ async function resolveDriverBasePayCents(
     }
   }
 
+  // GO-21 B5 — an explicit, reason-carrying override. A typed rate with no reason is never used
+  // (treated as absent, falling through to the card above) — this is the "never a bare editable box"
+  // rule enforced in code, not just in the wizard. Hoisted above the deadhead block (SET-RATE-TIEOUT,
+  // 2026-09-05) so a genuine override governs the WHOLE load's pay, not just its loaded portion — see
+  // that comment below for why a loaded-only override was itself a defect.
+  const overrideReason = typeof load.driver_pay_rate_override_reason === "string" ? load.driver_pay_rate_override_reason.trim() : "";
+  const perLoadRateDollars = Number(load.driver_pay_rate_per_mile ?? Number.NaN);
+  const perLoadMiles =
+    Number(load.miles_shortest ?? Number.NaN) > 0
+      ? Number(load.miles_shortest)
+      : Number(load.miles_practical ?? Number.NaN);
+  const hasValidOverride =
+    overrideReason.length >= 10 &&
+    Number.isFinite(perLoadRateDollars) &&
+    perLoadRateDollars > 0 &&
+    Number.isFinite(perLoadMiles) &&
+    perLoadMiles > 0;
+
   // MILES SPEC (owner 2026-09-02) — the empty-mile leg, computed once here regardless of which
   // branch resolves the LOADED portion below. rate_empty_per_mile_cents is its OWN config value;
   // when not yet set for this driver it falls back to the loaded rate_per_mile_cents LIVE (never a
   // stored duplicate — "it equals rate_loaded today, do not hardcode the equality"). Deadhead pay
   // needs a per-mile rate even when the driver's loaded basis is flat per_load_pay — deadhead is
   // inherently mileage-based ("a property of where the truck was, not of the lane").
+  //
+  // SET-RATE-TIEOUT (owner order 2026-09-05, SETL-TIEOUT-01 blocker fix): a reason-carrying GO-21-B5
+  // override used to govern the LOADED leg only — deadhead always fell through to the driver's LIVE
+  // rate-card empty rate, even on an override load. That is wrong for the exact case the override
+  // exists for: a historical/reconciliation-sourced rate that differs from today's card. Measured on
+  // settlement 5772 (docs/lockdown/Coders-Faro/CC-1/CC-1-HUMAN-SEQUENCE-REPLAY.txt, load 13512): the
+  // signed source's Driver RPM is a flat $0.45/mi for BOTH the loaded and empty legs, but driver
+  // Pedro Abraham Lopez Collado's LIVE card is $0.48/mi with no configured empty rate — an override
+  // that only touched the loaded leg would still silently overpay the deadhead leg at the wrong,
+  // current-day rate on a load explicitly minted to reproduce a historical, signed figure to the
+  // cent. An active override now governs BOTH legs at the SAME override rate — it is one real,
+  // documented rate for the whole load, not two different figures depending on which mile is which.
   let deadheadCents = 0;
   let milesDeadheadUsed: number | null = null;
   let rateEmptyPerMileCentsUsed: number | null = null;
   const milesDeadhead = Number(load.miles_deadhead ?? Number.NaN);
-  if (rate && Number.isFinite(milesDeadhead) && milesDeadhead > 0) {
-    const resolvedEmptyRate =
-      rate.rate_empty_per_mile_cents != null && Number(rate.rate_empty_per_mile_cents) > 0
+  if (Number.isFinite(milesDeadhead) && milesDeadhead > 0) {
+    const resolvedEmptyRate = hasValidOverride
+      ? perLoadRateDollars * 100
+      : rate && rate.rate_empty_per_mile_cents != null && Number(rate.rate_empty_per_mile_cents) > 0
         ? Number(rate.rate_empty_per_mile_cents)
-        : Number(rate.rate_per_mile_cents ?? 0);
+        : Number(rate?.rate_per_mile_cents ?? 0);
     if (Number.isFinite(resolvedEmptyRate) && resolvedEmptyRate > 0) {
       deadheadCents = Math.round(resolvedEmptyRate * milesDeadhead);
       milesDeadheadUsed = milesDeadhead;
@@ -542,22 +573,7 @@ async function resolveDriverBasePayCents(
     }
   }
 
-  // GO-21 B5 — an explicit, reason-carrying override. A typed rate with no reason is never used
-  // (treated as absent, falling through to the card above) — this is the "never a bare editable box"
-  // rule enforced in code, not just in the wizard.
-  const overrideReason = typeof load.driver_pay_rate_override_reason === "string" ? load.driver_pay_rate_override_reason.trim() : "";
-  const perLoadRateDollars = Number(load.driver_pay_rate_per_mile ?? Number.NaN);
-  const perLoadMiles =
-    Number(load.miles_shortest ?? Number.NaN) > 0
-      ? Number(load.miles_shortest)
-      : Number(load.miles_practical ?? Number.NaN);
-  if (
-    overrideReason.length >= 10 &&
-    Number.isFinite(perLoadRateDollars) &&
-    perLoadRateDollars > 0 &&
-    Number.isFinite(perLoadMiles) &&
-    perLoadMiles > 0
-  ) {
+  if (hasValidOverride) {
     const overrideCents = Math.round(perLoadRateDollars * 100 * perLoadMiles);
     if (actorUserId) {
       await appendCrudAudit(
