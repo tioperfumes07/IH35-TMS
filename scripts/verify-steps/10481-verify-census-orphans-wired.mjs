@@ -36,6 +36,7 @@ export const CENSUS_ORPHAN_GUARDS = [
   "verify-dispatch-breadcrumb-trip-pairing-round-trips.mjs",
   "verify-dispatch-empty-cell-dash.mjs",
   "verify-dispatch-home-tab-label.mjs",
+  "verify-dispatch-in-shop-feed-wired.mjs",
   "verify-dispatch-invalid-transition-reason.mjs",
   "verify-dispatch-kanban-collapsed-lane-expander.mjs",
   "verify-dispatch-kanban-column-resize.mjs",
