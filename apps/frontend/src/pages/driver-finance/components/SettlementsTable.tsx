@@ -105,13 +105,13 @@ export function SettlementsTable({
           if (links.length > 0) {
             return (
               <span className="flex flex-wrap items-center gap-1">
-                {links.map(({ id, label }, i) => (
-                  <span key={id} className="flex items-center gap-1">
+                {links.map((link, i) => (
+                  <span key={link.id} className="flex items-center gap-1">
                     {i > 0 ? <span className="text-gray-400">·</span> : null}
                     <EntityLink
                       kind="load"
-                      id={id}
-                      label={entityLabel(label, id, "Load")}
+                      id={link.id}
+                      label={entityLabel(link.label, link.id, "Load")}
                       className="tabular-nums text-slate-700 hover:underline"
                     />
                   </span>
