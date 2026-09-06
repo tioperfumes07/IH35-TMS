@@ -842,3 +842,7 @@ AUDIT 22:17Z | DEPLOY TIMER | ✗ | API live d988cd31 since 19:37Z; code merged 
   13 Vendors/Customers tests fail on bare main (pre-existing) → Cursor VC-LIST-01.
 - Owner: Vendors/Customers "no balances, filters wrong, page size, no asc/desc" → Round 11 Cursor VC-LIST-01 (ParityTable, real balances
   from bills+expenses / invoices excl. pro forma, filters wired). Round 11 issued to all seats (docs/bus/ROUND-11-INSTRUCTIONS-ALL-SEATS-2026-09-06.md).
+- 05:5xZ Owner: "list the loads I need to input … the rest of the settlements close … factoring: one purchase, then seed from Faro, keep Faro".
+  Measured: only 13556 missing; 12 Laredo-bound loads seeded TR not SB (the "no SB leg" blocker). Owner ruling recorded: seed settlements with
+  no Laredo leg close with the SB item confirmed by name. CC-3 TRIP-TYPE-SB, CC-1 FACT-01 issued (Round 11 addenda). Vendors master-detail
+  live-verified 05:41Z (LOVES opens; expenses table still composite → Cursor addendum).
