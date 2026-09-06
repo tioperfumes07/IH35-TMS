@@ -917,3 +917,13 @@ Every row resolves to the SAME account (all 7 are reimbursement_type='other' in 
 FOUND + FIXED WHILE BUILDING (own bug, not shipped): the ops script's first draft resolved the expense-account LABEL in a second, separate withCurrentUser() call that never re-set app.operating_company_id — catalogs.accounts' FORCED RLS silently returned 0 rows and the script fell back to printing the raw account UUID instead of "DRIVERTRIPLU056412 Driver Trip-Lumper Reimbursement". Caught before commit by actually reading the dry-run output, not just checking exit code — same false-empty class as the RLS landmine this session's skills warn about. Fixed by merging both reads into one scoped connection.
 
 --apply is code-refused without your exact ✔ quote (LEAD_APPROVAL_QUOTE left empty in the script by design, same gate as CLOSE-POST-A item 2). Ready to run the moment you ✔ or say "reopen" per your own forwarded recommendation to the owner — this build makes the apply one command, exactly as asked.
+
+---
+
+CC-3 | ACK ROUND 16.19 | CONFIRMED NEXT — not superseded | verified live: /driver-finance/company-settlements (old standalone) AND the newer Company&Driver tab both roll Driver Payment/Fuel/Expenses into aggregate lines; only Customer Charges is itemized-by-load today | building per-load register now, deadline 03:00Z
+
+SETL-CLOSE-POST-A item 2 and SET-24 routing are both merged and reported (not "in flight" — my coding on both is done; the two applies are gated on your ✔, nothing more for me to build there right now). Starting the itemized rebuild immediately.
+
+VERIFIED LIVE (code read, not guessed): the standalone /driver-finance/company-settlements route (CompanySettlementsPage.tsx) is still the flat 6-column list + aggregate 8-line waterfall you're looking at. There is ALSO a newer surface (tonight's ROUND 16.3 side-by-side tab at /driver-finance/settlements?tab=company_driver, plus its own Company settlements register tab) that already itemizes Customer Charges by load but still rolls Driver Payment/Fuel Purchases/Expenses into single aggregate lines — same gap, different page. Backend (buildCompanySettlementReport) ALREADY returns per-load, per-driver rows for all 4 sections — this is a frontend rebuild, not a new endpoint. Found a real multi-driver settlement to prove against: CS-2026-0007 (2 drivers — Hugo Gaytan + Genaro Guerrero Chavez).
+
+Plan: shared per-load itemized register component (grouped by load, driver sub-grouped within Driver Payment when >1 driver), wired into both surfaces so whichever page you have open shows the fix; same check on Driver Settlement detail page (load_id/load_number already flow through most of its line renderers — verifying, not assuming, before claiming done).
