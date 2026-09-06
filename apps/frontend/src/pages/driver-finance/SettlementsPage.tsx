@@ -9,6 +9,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SettlementDetailPage } from "./SettlementDetailPage";
 import { SettlementDisputesTab } from "./components/SettlementDisputesTab";
 import { SettlementsTable } from "./components/SettlementsTable";
+import { SettlementsToursRegister } from "./SettlementsToursRegister";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { formatUsdCents } from "../../lib/money";
@@ -49,6 +50,11 @@ export function SettlementsPage() {
   const [pendingReverseIds, setPendingReverseIds] = useState<string[]>([]);
   const [pendingReverseLabels, setPendingReverseLabels] = useState<Record<string, string>>({});
   const activeTab = searchParams.get("tab") === "disputes" ? "disputes" : "settlements";
+  // SETL-MOD-01 — the Settlements list defaults to the tour readout (one row per tour, the SAME
+  // GET /api/v1/driver-finance/tours the Load-costs Pre-Settlement/Settlement tabs read). The prior
+  // payment-centric per-settlement table is preserved under ?view=payments (never deleted — it owns
+  // the payment pipeline + bulk void).
+  const settlementsView = searchParams.get("view") === "payments" ? "payments" : "tours";
   const selectedSettlementId = searchParams.get("settlement_id");
   // Driver profile "Full settlements" → /settlements?driver_id= (PreserveSearchNavigate keeps param).
   // BANK-F5165 — visible EntityPicker (URL-only client filter is not reverse chrome).
@@ -249,6 +255,36 @@ export function SettlementsPage() {
       </div>
 
       {activeTab === "settlements" ? (
+        <>
+      <div className="flex items-center gap-2" data-testid="settlements-view-toggle">
+        <Button
+          size="sm"
+          variant={settlementsView === "tours" ? "primary" : "secondary"}
+          onClick={() => {
+            const next = new URLSearchParams(searchParams);
+            next.delete("view");
+            next.delete("settlement_id");
+            setSearchParams(next);
+          }}
+        >
+          Tours
+        </Button>
+        <Button
+          size="sm"
+          variant={settlementsView === "payments" ? "primary" : "secondary"}
+          onClick={() => {
+            const next = new URLSearchParams(searchParams);
+            next.set("view", "payments");
+            next.delete("settlement_id");
+            setSearchParams(next);
+          }}
+        >
+          Payments
+        </Button>
+      </div>
+      {settlementsView === "tours" ? (
+        <SettlementsToursRegister companyId={companyId} />
+      ) : (
         <>
       <CollapsedListFilters
         activeFilterCount={(selectedPaymentState ? 1 : 0) + (effectiveDriverId ? 1 : 0) + (hideCancelled ? 0 : 1)}
@@ -460,6 +496,8 @@ export function SettlementsPage() {
         onClose={() => bulk.setProgressOpen(false)}
         resolveRowHref={(id) => `/driver-finance/settlements?settlement_id=${encodeURIComponent(id)}`}
       />
+        </>
+      )}
         </>
       ) : (
         <SettlementDisputesTab companyId={companyId} />
