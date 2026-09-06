@@ -463,3 +463,8 @@ S-13643=5784, S-13644=5775, S-13645=5783, S-13646=5779, S-13647=5776, S-13648=57
 settlements (S-13650/51/52/53/56) are still NULL (no signed number applies this round). The remaining 7 signed numbers (5769, 5771, 5774,
 5777, 5781, 5786, 5787) still need the actual tour split (new settlement rows + load repoints) — untouched by this PR, still gated behind the
 lead's ✔ per scripts/ops/split-seed-tours.ts. Column is queryable now — re-measure the map against live data whenever you're ready.
+
+## 2026-09-06 05:20Z — ROUND 10 addendum 2 (lead, measured live on Load costs → Expenses)
+EXP-DATE: expense 13550-4 (LOVES, Fuel-DEF $42.38, "inv 99460605 — 2026-09-27", settlement 5789) carries transaction_date 2026-09-27 — a FUTURE
+date; load 13550 delivered 2026-08-28. Sweep all seeded expenses for transaction_date > now() or > the load's delivery date + 3 days; paste the
+list with the signed-settlement source date; correct through the real expense edit path (audited), never raw UPDATE. Fold into DED-DUP's PR or its own.

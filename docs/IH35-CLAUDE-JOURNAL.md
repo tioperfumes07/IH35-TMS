@@ -822,3 +822,14 @@ AUDIT 22:17Z | DEPLOY TIMER | ✗ | API live d988cd31 since 19:37Z; code merged 
 - Round 10 issued 04:3xZ (Cursor SETL-MOD-02 · CC-1 SOURCE-DOCUMENT-REF migration, no live wire_fee test deduction · CC-2 STOPS-APPT-FIX
   dry-run · CC-3 catalog-picker test + Factoring guards red on main · Codex TEL-46 + route-manifest-parity · Cascade ENV-CENSUS status).
 - Cursor reconciliation rulings (2ede3257): all disputed loads stay Transportation per source workbook; 13505/13507 = owner hand settlements.
+
+## 2026-09-06 · 04:50–05:20Z · "IN ACCOUNTING, WHERE ARE THE TABS?" · "EXPENSES/BILLS/DRIVER PAY DO NOT SHOW"
+- Accounting bar: Load costs was only under Expenses ▾ → top-row LOAD COSTS leaf (#20904 f33bb93d, subnav-manifest leafOf).
+- REG-400: Load costs → Expenses/R&M/Fuel-advance registers empty because GET /api/v1/expenses?limit=500 → HTTP 400 (cap 200) and the
+  react-query error rendered as "No expenses transactions found". Fixed: listAllExpenses() pages at 200; register errors render
+  ListErrorState. Guard verify-load-costs-register-fetch (step 10461, claimed 4b697775). Live 05:18Z: 207 rows.
+- CI step 10341 verify-load-costs-board-column-contract was red on main (file-wide scan hit register keys 'category'/'margin') → keys renamed.
+- HUB-MTD-EXPENSES (#20905 a1112b4e): Accounting home MTD Expenses summed bills only ($0) → bills + direct expenses ($6,336.80 · 16 expenses).
+  OPEN INVOICES $0 is correct: 46 pro forma invoices are non-posting until delivery.
+- Live anomaly: expense 13550-4 dated 2026-09-27 (future; load 13550 delivered 08-28) — seed date defect → CC-3 with DED-DUP.
+- Owner still to decide: bulk-deliver click (40 loads); SB rule for the 15 seed tours.
