@@ -47,11 +47,13 @@ export function problemsFor(view, css) {
   if (reg === -1) problems.push("candidate register (.ldt-rows.ldt-rows-match) missing");
   else {
     const head = panel.slice(reg, panel.indexOf("</div>", panel.indexOf('className="ldt-row head"', reg)));
-    const order = ["<span>Date</span>", "<span>Description</span>", "<span>Type</span>", "Amount</span>", "<span>Gap</span>"];
+    // BANK-MATCH-QBO (owner 2026-09-06): QuickBooks "Find match" order — Date · Type · Ref no. · Payee ·
+    // Description · Open balance · Amount · Gap.
+    const order = ["<span>Date</span>", "<span>Type</span>", "<span>Ref no.</span>", "<span>Payee</span>", "<span>Description</span>", "Open balance</span>", "Amount</span>", "Gap ($ · days)</span>"];
     let last = -1;
     for (const cell of order) {
       const i = head.indexOf(cell);
-      if (i === -1 || i < last) { problems.push(`candidate head row must read Date · Description · Type · Amount · Gap (broke at ${cell})`); break; }
+      if (i === -1 || i < last) { problems.push(`candidate head row must read Date · Type · Ref no. · Payee · Description · Open balance · Amount · Gap (broke at ${cell})`); break; }
       last = i;
     }
     if (!/data-testid="banking-match-candidate-row"/.test(panel)) problems.push("candidate rows lack data-testid banking-match-candidate-row");
@@ -72,7 +74,8 @@ function selftest() {
     ["left box loses the dark outline", view.replace('className="ldt-card strong" data-testid="banking-categorize-box"', 'className="p-1" data-testid="banking-categorize-box"'), css],
     ["right box loses the dark outline", view.replace('className="ldt-card strong" data-testid="banking-match-candidates-box"', 'className="border-l" data-testid="banking-match-candidates-box"'), css],
     ["a header band is dropped", view.replace('<div className="ldt-ch">\n            <span>Match candidates</span>', '<div>\n            <span>Match candidates</span>'), css],
-    ["Description before Date", view.replace("<span>Date</span>\n                  <span>Description</span>", "<span>Description</span>\n                  <span>Date</span>"), css],
+    ["Type before Date", view.replace("<span>Date</span>\n                  <span>Type</span>", "<span>Type</span>\n                  <span>Date</span>"), css],
+    ["Payee column dropped", view.replace("<span>Payee</span>\n", ""), css],
     ["register removed", view.replace('className="ldt-rows ldt-rows-match"', 'className="space-y-1.5"'), css],
     ["row testid removed", view.replace('data-testid="banking-match-candidate-row"', ""), css],
     ["best class removed", view.replace('className={`ldt-row${candidate.auto_match ? " best" : ""}`}', 'className="ldt-row"'), css],
@@ -93,5 +96,5 @@ if (process.argv.includes("--selftest")) selftest();
 else {
   const problems = problemsFor(fs.readFileSync(VIEW, "utf8"), fs.readFileSync(CSS, "utf8"));
   if (problems.length) { console.error(`FAIL ${LABEL}:`); for (const p of problems) console.error(`  - ${p}`); process.exit(1); }
-  console.log(`PASS ${LABEL} — two .ldt-card.strong boxes, .ldt-ch bands, candidate register Date · Description · Type · Amount · Gap`);
+  console.log(`PASS ${LABEL} — two .ldt-card.strong boxes, .ldt-ch bands, candidate register Date · Type · Ref no. · Payee · Description · Open balance · Amount · Gap`);
 }
