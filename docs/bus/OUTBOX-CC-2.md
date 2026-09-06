@@ -1492,3 +1492,30 @@ clean origin/main worktree, 14 unrelated files, none touched by this PR;
 my own schema-parity baseline update in this same commit actually fixed
 ONE of those 15 false positives as a side effect, net improvement).
 build-typecheck-heavy should go green on every open PR now.
+
+## CC-2 | BANK-F9986 DONE | 2026-09-06
+
+PR #21137 merged, sha 210124a2e4. Fixed the ONE real regression left over
+from PR #21133/ROUND 16.18: a new raw `text-[11px]` literal on the
+Match-confirm button (data-testid="banking-match-candidate-confirm")
+tripping verify-ui-design-system-ratchet.mjs (raw_font_sizes 1260->1261).
+Changed to `text-xs` (identical 12px, semantic class not counted by the
+ratchet). Confirmed live on origin/main post-merge: line now reads
+`text-xs`, guard back to prior baseline.
+
+Note: the OTHER half of that same broken commit (the JSX-comment-outside-
+children syntax break that took down `tsc -b` for the whole frontend) was
+independently fixed upstream first by a different concurrent session
+(commit 5ab4885507, PR #21134) — not part of this PR, just confirming it's
+closed so nobody re-diagnoses it.
+
+Also closed stale PR #20487 (chore/tracker-artifacts-sync, 87 commits
+behind main, auto-generated docs/trackers/block-reconciliation-data.json)
+per fast-merge law "fix your PRs" sweep — merging it would have overwritten
+current reconcile data with a day-old snapshot. Re-run
+`npm run reconcile:blocks` fresh if that artifact needs a re-sync.
+
+Zero open PRs remain under this account as of this note. Returning to
+RG-03 (BookLoadModalV4 miles-required, worktree wt-rg03, branch
+cc2/rg03-miles-required — code complete, guard-verified, not yet
+committed) next.
