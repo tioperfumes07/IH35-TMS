@@ -713,6 +713,11 @@ export type ExpenseListRow = {
   /** ACC-50 (LAW §2) — why posting is held while posting_status='unposted', e.g. "tour_open". */
   posting_hold_reason?: string | null;
   memo: string | null;
+  /** REG-PARSE-DATA (ROUND 11, additive, 2026-09-06) — structured fields backfilled from the
+   *  seed's composite memo string; read these first, fall back to parseExpenseMemo(memo) only
+   *  when null. */
+  merchant_address?: string | null;
+  source_settlement_ref?: string | null;
   load_id: string | null;
   load_number: string | null;
   vendor_uuid: string | null;
