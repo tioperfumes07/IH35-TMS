@@ -57,6 +57,7 @@ import { SelectCombobox } from "../../components/Combobox";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ConfirmModal } from "../../components/shared/ConfirmModal";
 import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrailPanel";
+import { TourSettlementTab } from "../../components/dispatch/TourSettlementTab";
 
 function toDeductionRows(lines: Array<Record<string, unknown>>): DeductionRow[] {
   return lines
@@ -501,6 +502,17 @@ export function SettlementDetailPage() {
           </div>
         }
       />
+      {/* SETL-MOD-02 (owner ROUND 10, render § Settlement + DRIVER-SETTLEMENT-DETAIL-REFERENCE): the
+          Settlements-module detail leads with the APPROVED Settlement design — driver settlement card
+          (loaded × rate · empty × rate · gross · escrow · recoveries · net, 5% floor) and company
+          settlement card (revenue · costs · driver pay · factoring fee · margin with $/mi practical·real)
+          side by side, GL account on every line, PDF link, frozen note when closed. Same readout the
+          Load-costs board Settlement tab uses (TourSettlementTab keyed by settlementId), so the two
+          surfaces show one truth. The operational pay-pipeline / dispute / finalize controls below are
+          preserved (NEVER DELETE) as the workflow beneath the approved readout. */}
+      <div data-testid="settlement-detail-approved-design" data-surface="load-detail">
+        <TourSettlementTab settlementId={settlementId} operatingCompanyId={companyId} />
+      </div>
       {hasEngineTeamSplitLines ? (
         <div className="mb-3 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-400">
           Team split lines detected (primary/co-driver)
