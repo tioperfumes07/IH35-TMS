@@ -1159,7 +1159,7 @@ export function ParityTable<T>({
               type="button"
               aria-label={isExpanded ? "Collapse row" : "Expand row"}
               aria-expanded={isExpanded}
-              className={`${MIN_HIT_TARGET_CLASS} text-gray-500 hover:text-gray-800`}
+              className="parity-expand-toggle-box flex items-center justify-center text-gray-500 hover:text-gray-800"
               data-testid="parity-expand-toggle"
               onClick={() => toggleExpanded(id)}
             >

@@ -163,3 +163,17 @@ button.ldt-pill { cursor: pointer; }
 /* The expanded panel sits inside a <td> whose text-align is center; a register and a form read left. */
 [data-testid="banking-categorize-expanded-panel"] { text-align: left; }
 .ldt-rows-match-table tr.best { background: var(--ldt-accent-soft); }
+
+/* B1 EXPAND-BOX (owner CONSOLIDATED 2026-09-06, item 4): ParityTable's [data-testid=parity-expand-toggle]
+   measured 24x24/glyph 12px/no border -- too small next to the rest of the register chrome. This box is
+   shared by every ParityTable register app-wide (loaded globally via main.tsx), not a per-page override. */
+.parity-expand-toggle-box {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--ldt-rule);
+  border-radius: 4px;
+  font-size: 16px;
+  line-height: 1;
+  background: transparent;
+}
+.parity-expand-toggle-box:hover { background: var(--ldt-accent-soft); }
