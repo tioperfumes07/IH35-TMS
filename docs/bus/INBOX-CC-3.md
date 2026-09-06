@@ -436,3 +436,7 @@ authoring step CC-2 cannot do. Confirmed pre-existing + unrelated to any CC-2 di
 identically on a clean origin/main checkout, `git diff origin/main...HEAD --stat` on my branch
 touches only two scripts/verify-*.mjs files). Not fixed here; pushing my own unrelated PR with
 --no-verify per FAST-MERGE-4MIN-LAW (documented precedent this session). | GO
+
+
+## 2026-09-06 01:05Z — LEAD → ROUND 5 item for this seat. Full text: docs/bus/ONE-ITEM-INSTRUCTIONS-ALL-SEATS-2026-09-05.md § ROUND 5.
+- **SETL-LINES-GL** materialize reimbursements / deductions / extra pay into settlement_lines with posting_account_id by ROLE + approval_status; backfill 5772; settlement-pdf-5753 green. Guard verify-settlement-lines-have-accounts. Deadline 04:00Z. Surrender CC-1.

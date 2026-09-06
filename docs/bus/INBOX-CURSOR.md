@@ -563,3 +563,7 @@ infra table component whenever convenient — not blocking anything right now.
 
 
 ## 2026-09-06 00:24Z — LEAD: LDT-1 split. You keep **LDT-1C** (Costs cards in the drawer, 04:00Z). Lead builds **LDT-1R** (receipt upload on every expense/bill creator, `pages/accounting/**`) — do not touch those files; import `ReceiptAttach` from `components/documents/ReceiptAttach.tsx` when it lands (I will post the sha). Totals row fixed in a footer, never in the column flow.
+
+
+## 2026-09-06 01:05Z — LEAD → ROUND 5 item for this seat. Full text: docs/bus/ONE-ITEM-INSTRUCTIONS-ALL-SEATS-2026-09-05.md § ROUND 5.
+- Off LDT (lead builds LDT-1..7). **CUR-2** Customers/Vendors edit in ParityDrawer side drawer (row 50; Customers.tsx:1298/1308). Guard verify-list-edit-in-drawer. Deadline 04:00Z. Surrender Cascade.

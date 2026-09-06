@@ -196,3 +196,57 @@ Lead audits each DONE line on Neon + tip + live within 30 minutes; ✔/✗ poste
 - **LDT-1 is split so two builders work without touching the same files:**
   - **LDT-1C (Cursor, unchanged deadline 04:00Z):** Costs tab cards inside `LoadDetailDrawer` per the render — every box, pop-ups on click, live columns kept, totals in a fixed footer (owner: "if you rearrange columns … the totals stay stuck"), Paid-with = bank/card/fuel only. Files: `components/dispatch/**`, `components/load-costs/**` (new). Do NOT touch `pages/accounting/**` creators.
   - **LDT-1R (Claude Lead, deadline 02:30Z):** receipt/photo upload on EVERY expense and bill creator and editor (`pages/accounting/**` Expense/Bill create + detail, the drawer's Add-cost modal via a shared `ReceiptAttach` component exported from `components/documents/ReceiptAttach.tsx` that Cursor mounts in LDT-1C). Storage: `docs.files` + link table to `accounting.expenses` / `accounting.bills` (both-way). Guard `verify-receipt-on-every-creator.mjs`.
+
+
+---
+
+# ROUND 5 — ONE ITEM PER SEAT — issued 2026-09-06 01:05Z — Claude Lead
+
+**Deploys (lead):** API + FE re-triggered on tip `8286796c` at 00:59Z (dep-daeblr1t0dsc739j6l5g API · dep-daeblrv40ujc73ejio70 FE). Codex: deploys are LEAD, not Cursor — never wait on Cursor for a live SHA.
+**Received DONE lines (lead re-measure runs in the background, ✔/✗ posted on your OUTBOX within 30 min):** CC-1 ACC-MIG + ACC-45 (57d96353) · CC-2 DSP-TBL (68a29038) · CC-3 SETL-TIE (d8104333) · CASCADE RPT-06b (46cb3e95) · CODEX TEL-40b (662e832b, migration 202613790000 applied: 97 → `provider_unavailable`, 0 locality fences).
+**LDT-1..7 (load-detail tabs) are Claude Lead's build** (owner 00:3xZ "you build all loads and finish all related"). Cursor is off LDT. LDT-1 is in the lead's worktree: cards + ReceiptAttach + Paid-with law + fixed footer + bank section, typecheck FE/BE exit 0, 13/13 + 3/3 tests, guard 8056 selftest 9/9 — PR lands next.
+
+## CC-1 — item ACC-50 · "Open tour posts nothing" — the posting gate (LAW §2)
+- **Measured (CC-3, scripts/report-posted-expenses-while-tour-open.mjs, 36-load USMCA scope, 00:1xZ):** **137 of 137** posted expenses were posted while their tour/settlement was still OPEN; load 13526 alone has 5. LAW §2: a cost on an open tour accrues, it does not post; the GL entry is written at tour close.
+- **Required value:** (1) `accounting/expenses` + `bills` posting path: when the document carries a `load_id` whose driver tour/settlement is OPEN, the engine writes the document with `posting_status='unposted'` and `posting_hold_reason='tour_open'` (new column, additive, text) and creates NO journal entry; the Costs card hint already says "Will post … when the tour closes". (2) Tour close (settlement close) posts every held expense/bill of the tour's loads in one batch, same engine, same accounts — no new posting code. (3) The 137 already-posted rows: DO NOT auto-reverse. Produce `scripts/report-open-tour-posted-reversal-plan.mjs` that lists every JE to reverse (id, load, amount, accounts) and stops; the owner confirms before any reversal runs. (4) Expense/Bill detail pages show the hold as a pill ("held — tour open") with the reason.
+- **Guard:** `scripts/verify-open-tour-posts-nothing.mjs` — static: the posting path checks tour state before posting; live: 0 expenses/bills created after this merge with `posting_status='posted'` whose tour is open; `--selftest` plants a post-while-open and must fail. Wire in `scripts/verify-steps/` (claim the number first).
+- **Linkage:** accounting.expenses/bills ↔ mdata.loads ↔ driver_finance.driver_settlements (tour) ↔ accounting.journal_entries.
+- **One PR. Deadline 04:00Z. Surrender: CC-3.**
+
+## CC-2 — item DSP-48b · Google reference miles in Book Load §C (the half DSP-48 left open)
+- **Measured:** DSP-48 (4ad92aa6) built `POST /api/v1/geocoding/route-reference` + guard; the wizard line and the per-leg persistence were routed to LDT-1 because `mdata.load_stop_legs` did not exist. CC-1's ACC-MIG claim `202613780000 mdata.load_stop_legs` is merged (57d96353) — confirm on Neon (`to_regclass('mdata.load_stop_legs')`) and paste the column list.
+- **Required value:** wizard §C (`BookLoadStopsSection.tsx` miles strip): under Practical / Short / Empty a grey read-only line `Google ref 1,214.3 mi · 18 h 40 m` (Empty = yard → first pickup; yard = `GET /api/v1/locations/yard` when Codex ships TEL-42, until then the constant 27.65149,-99.63094 in ONE place), never editable, never copied into the inputs, never in pay/RPM. On save persist per leg to `mdata.load_stop_legs.google_reference_miles / google_reference_fetched_at`; the 30-day expiry job from DSP-48 covers the rows. Hover label "Google car routing — reference only".
+- **Guard:** extend `verify-google-reference-miles.mjs`: wizard renders the reference line, inputs never written by the reference path, legs persisted on save; `--selftest` writes the reference into `miles_practical` and must fail.
+- **Linkage:** mdata.load_stops ↔ mdata.load_stop_legs ↔ mdata.loads. No money.
+- **One PR. Deadline 03:30Z. Surrender: Codex.**
+- Your TEL-40 hook finding (booked loads no longer auto-create geofences; stops that already carry picker lat/lng get no fence because `candidateStops` only takes NULL coordinates) is real and is Codex's TEL-42 part 0 — thank you, do not fix it in your lane.
+
+## CC-3 — item SETL-LINES-GL · every settlement line carries its account + approval
+- **Measured (your own REMAINING, 00:1xZ):** `docs/module-completion/settlements.json` auto_check (`scripts/tieout/settlement-pdf-5753.mjs`) requires EVERY settlement line — reimbursements ($67.22 + $41.14 + $15.25 on 13512/13513), deductions ($25.00 + $35.00), additional pay ($50.00) — to exist as a `driver_finance.settlement_lines` row with `load_id`, a resolved `posting_account_id` and `approval_status='approved'`. No code materializes reimbursements / deductions / extra pay into settlement_lines with an account; `posting_account_id` is "never yet written by any live poster" (settlements.routes.ts comment).
+- **Required value:** one service `driver-finance/settlement-lines-materialize.service.ts`: for an OPEN settlement, every `driver_reimbursements`, `driver_settlement_deductions` and extra-pay row on the tour's loads becomes exactly one `settlement_lines` row (idempotent by source id) with `line_type`, `load_id`, `amount_cents`, `posting_account_id` resolved BY ROLE (`reimbursement_expense`, `driver_pay_expense`, deduction → the deduction type's role; unresolved role = line stays `approval_status='pending'` with the reason, never a guessed account), `approval_status` from the source row. Runs at line creation and at settlement close; the settlement PDF and the Pre-Settlement readout read settlement_lines only. Backfill settlement 5772 (13512/13513) and paste the per-line table with accounts.
+- **Guard:** `scripts/verify-settlement-lines-have-accounts.mjs` — live: for every USMCA settlement line, `posting_account_id IS NOT NULL OR approval_status='pending'`, and sum(lines) = settlement gross/deductions; `--selftest` plants a NULL account on an approved line and must fail. `settlement-pdf-5753.mjs` must go green for 5772.
+- **Linkage:** driver_finance.settlement_lines ↔ driver_reimbursements ↔ driver_settlement_deductions ↔ driver_bills ↔ catalogs.accounts (roles) ↔ accounting.journal_entries.
+- **One PR. Deadline 04:00Z. Surrender: CC-1.**
+
+## CASCADE / DEVIN — item LST-CUST-ACT · Customer profile: real Activity + Statements (row 46)
+- **Measured (inventory row 46, 21:5xZ):** `apps/frontend/src/pages/lists/Customers.tsx:838-842` renders a transaction-list PLACEHOLDER on the customer profile; vendors' side was built by CC-1 in ACC-45 (Statements/Activity tabs, 57d96353). Owner 21:5xZ: "statements and all that … should appear in their history".
+- **Required value:** the customer profile gets the SAME two tabs CC-1 built for vendors, reading customer money: **Activity** = every invoice, payment received, credit, broker advance, factoring event for this customer (date · type · number · load · amount · balance after · status), newest first, row click → the record; **Statements** = QuickBooks-style balance-forward / open-item statement for a date range with Print + CSV (your parity) and the same filter bar as reports (RPT-06b component, no second filter UI). Read model: `GET /api/v1/customers/:id/activity?from&to` if CC-1's vendor endpoint pattern exists, mirror it exactly (name the file:line you mirrored). No new write paths.
+- **Guard:** `scripts/verify-customer-activity-statements.mjs` — live: for 3 USMCA customers with invoices, activity row count = invoices + payments + credits for that customer; statement closing balance = A/R for the customer; `--selftest` drops a payment from the union and must fail.
+- **Linkage:** mdata.customers ↔ accounting.invoices ↔ payments ↔ credits ↔ broker_advances ↔ mdata.loads.
+- **One PR. Deadline 04:00Z. Surrender: Cursor.** Proof includes `npm run typecheck` exit code.
+
+## CODEX — item TEL-42 (issued 00:10Z) — start NOW, with part 0 added
+- Lead deploys 662e832b on the API now (dep-daeblr1t0dsc739j6l5g); do not wait on Cursor. Post the live SHA when `/api/v1/healthz` shows it, then the TEL-40b live guard.
+- **TEL-42 part 0 (from CC-2's measured finding):** `stops-geocode-backfill.service.ts` `candidateStops` takes only `latitude IS NULL OR longitude IS NULL` — a stop that already carries picker coordinates (Place Details = rooftop) never gets a location row or a fence, and TEL-40 replaced the D5 post-book hook so freshly booked loads create no fences at all. Required: candidateStops also selects stops WITH coordinates and NO active fence on their location; those are `rooftop` precision (source `picker`) → location + fence; the post-book hook stays `geocodeStopsBackfill(load)`. Paste: stops with coords and no fence before/after.
+- Parts 1–4 unchanged (yard row `is_ih35_yard`, fence 188cf90c linkage + centroid + radius, bias default, `GET /api/v1/locations/yard`, guard `verify-yard-location-and-fence.mjs`).
+- **One PR. Deadline 03:30Z. Surrender: CC-3.**
+
+## CURSOR — item CUR-2 · Customer / Vendor edit in a side drawer, not a full page (row 50)
+- **Measured (inventory row 50, 21:5xZ):** `apps/frontend/src/pages/lists/Customers.tsx:1298` and `:1308` navigate to a full-page edit form; owner: "when editing, maybe it should be edited in a side modal, not full page, just like in QuickBooks".
+- **Required value:** Edit on Customers and Vendors opens the existing edit form inside `ParityDrawer` (the app's side drawer — same one RecordExpenseModal uses), pre-filled, Save = the SAME update endpoints, Escape/backdrop closes, unsaved-changes prompt, list row refreshes in place. Full-page route stays reachable by URL (additive-only) but no button links to it.
+- **Guard:** `scripts/verify-list-edit-in-drawer.mjs` — Customers and Vendors edit buttons open a ParityDrawer (component test), no `navigate(...edit)` on the Edit button; `--selftest` restores the navigate and must fail.
+- **Linkage:** mdata.customers / mdata.vendors ↔ existing PATCH routes.
+- **One PR. Deadline 04:00Z. Surrender: Cascade.** You no longer touch `components/dispatch/**` load-detail tabs.
+
+---
+Lead audits each DONE line on Neon + tip + live within 30 minutes; ✔/✗ posted here and on OUTBOX-<SEAT>. Deploys within 20 minutes of every code merge (lead only).
