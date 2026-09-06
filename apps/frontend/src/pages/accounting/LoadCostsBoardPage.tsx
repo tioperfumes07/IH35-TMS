@@ -10,12 +10,13 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateUS, mmmDd } from "../../lib/formatDate";
 import { useDispatchLoad } from "../../api/loads";
 import { LoadDetailCostsTab } from "../../components/dispatch/LoadDetailCostsTab";
 import { TourPreSettlementTab } from "../../components/dispatch/TourPreSettlementTab";
 import { TourSettlementTab } from "../../components/dispatch/TourSettlementTab";
 import { listTours, type TourListRow } from "../../api/tourReadout";
+import { TourLegsCell, LEGS_HEADER_TITLE } from "../../components/dispatch/TourLegsCell";
 import { ReceiptAttach } from "../../components/documents/ReceiptAttach";
 import { useToast } from "../../components/Toast";
 import { parseExpenseMemo } from "../../lib/expense-memo";
@@ -468,22 +469,29 @@ function TransactionRegister({ tab, companyId, loadsById, navigate }: { tab: Cos
 // ── LDT-TABS: tour registers (Pre-Settlement = open tours · Settlement = closed tours). One row per tour; the
 // expanded row is the SAME TourPreSettlementTab / TourSettlementTab (legs · costs · Ready to close? · Close tour →
 // Settlement (human confirms) | driver + company settlement, frozen) keyed by settlement — one read model.
+
+// ROUND 16.1 — the Legs cell (TourLegsCell) + header tooltip live in components/dispatch/TourLegsCell
+// so this register and the /settlements Tours register render identical leg pills. Column caps
+// (min 240 / max 420 on Legs; 96px dates; nowrap money) below keep any one column off the whole screen.
 const TOUR_COLUMNS = (state: "open" | "closed"): ParityColumn<TourListRow>[] => [
-  { key: "tour", label: "Tour", testId: "tour-col-id", sortable: true, className: "whitespace-nowrap", sortValue: r => r.display_id ?? "", render: r => <Link className="ldt-link font-semibold" style={{ display: "inline" }} to={`/driver-finance/settlements?settlement_id=${encodeURIComponent(r.settlement_id)}`}>{r.display_id ?? "Settlement"}</Link> },
-  { key: "driver", label: "Driver", testId: "tour-col-driver", sortable: true, sortValue: r => r.driver_name ?? "", render: r => r.driver_name ?? DASH },
-  { key: "unit", label: "Unit", testId: "tour-col-unit", sortable: true, sortValue: r => r.unit_number ?? "", render: r => r.unit_number ?? DASH },
-  { key: "legs", label: "Legs", testId: "tour-col-legs", sortable: true, sortValue: r => r.leg_count, render: r => <span title={r.legs_label}>{r.leg_count === 0 ? DASH : `${r.leg_count} · ${r.legs_label}`}</span> },
-  { key: "started", label: "Started", testId: "tour-col-started", sortable: true, className: "whitespace-nowrap", sortValue: r => r.trip_started_at ?? "", render: r => r.trip_started_at ? formatDateUS(r.trip_started_at) : DASH },
-  ...(state === "closed" ? [{ key: "closed", label: "Closed", testId: "tour-col-closed", sortable: true, className: "whitespace-nowrap", sortValue: (r: TourListRow) => r.trip_closed_at ?? "", render: (r: TourListRow) => r.trip_closed_at ? formatDateUS(r.trip_closed_at) : DASH } as ParityColumn<TourListRow>] : []),
-  { key: "revenue", label: "Revenue", testId: "tour-col-revenue", sortable: true, className: "text-right tabular-nums", sortValue: r => r.revenue_cents, render: r => fmt(r.revenue_cents) },
-  { key: "costs", label: "Costs", testId: "tour-col-costs", sortable: true, className: "text-right tabular-nums", sortValue: r => r.costs_cents, render: r => fmt(r.costs_cents) },
-  { key: "driver_pay", label: "Driver pay", testId: "tour-col-driver-pay", sortable: true, className: "text-right tabular-nums", sortValue: r => r.driver_pay_cents, render: r => fmt(r.driver_pay_cents) },
-  { key: "tour_margin", label: "Margin", testId: "tour-col-margin", sortable: true, className: "text-right tabular-nums", sortValue: r => r.margin_cents, render: r => <span className={r.margin_cents < 0 ? "text-[#991B1B]" : undefined}>{fmt(r.margin_cents)}{r.margin_pct == null ? "" : ` · ${r.margin_pct.toFixed(1)}%`}</span> },
-  { key: "miles", label: "Miles practical · real", testId: "tour-col-miles", className: "text-right tabular-nums", render: r => `${r.miles_practical.toLocaleString("en-US")} · ${r.miles_real == null ? DASH : r.miles_real.toLocaleString("en-US")}` },
+  { key: "tour", label: "Tour", testId: "tour-col-id", sortable: true, className: "whitespace-nowrap", minWidth: 90, sortValue: r => r.display_id ?? "", render: r => <Link className="ldt-link font-semibold" style={{ display: "inline" }} to={`/driver-finance/settlements?settlement_id=${encodeURIComponent(r.settlement_id)}`}>{r.display_id ?? "Settlement"}</Link> },
+  { key: "driver", label: "Driver", testId: "tour-col-driver", sortable: true, minWidth: 120, maxWidth: 200, cellClass: "whitespace-nowrap", sortValue: r => r.driver_name ?? "", render: r => <span className="block max-w-[200px] truncate" title={r.driver_name ?? ""}>{r.driver_name ?? DASH}</span> },
+  { key: "unit", label: "Unit", testId: "tour-col-unit", sortable: true, minWidth: 56, maxWidth: 64, className: "whitespace-nowrap", sortValue: r => r.unit_number ?? "", render: r => r.unit_number ?? DASH },
+  // ROUND 16.1 — leg pills, one line, count-first, EntityLink each, "+N more" overflow, capped 240–420.
+  { key: "legs", label: "Legs", testId: "tour-col-legs", sortable: true, minWidth: 240, maxWidth: 420, cellClass: "whitespace-nowrap overflow-hidden", headerTitle: LEGS_HEADER_TITLE, sortValue: r => r.leg_count, exportValue: r => (r.leg_count === 0 ? "" : `${r.leg_count} legs · ${r.legs_label}`), render: r => <TourLegsCell legs={r.legs} legsLabel={r.legs_label} /> },
+  { key: "started", label: "Started", testId: "tour-col-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, sortValue: r => r.trip_started_at ?? "", render: r => r.trip_started_at ? mmmDd(r.trip_started_at) : DASH },
+  ...(state === "closed" ? [{ key: "closed", label: "Closed", testId: "tour-col-closed", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, sortValue: (r: TourListRow) => r.trip_closed_at ?? "", render: (r: TourListRow) => r.trip_closed_at ? mmmDd(r.trip_closed_at) : DASH } as ParityColumn<TourListRow>] : []),
+  // ROUND 16.1 — money cells: nowrap + right + mono, auto-fit to the widest value (never wraps "$12,595.90").
+  { key: "revenue", label: "Revenue", testId: "tour-col-revenue", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.revenue_cents, render: r => fmt(r.revenue_cents) },
+  { key: "costs", label: "Costs", testId: "tour-col-costs", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.costs_cents, render: r => fmt(r.costs_cents) },
+  { key: "driver_pay", label: "Driver pay", testId: "tour-col-driver-pay", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.driver_pay_cents, render: r => fmt(r.driver_pay_cents) },
+  { key: "tour_margin", label: "Margin", testId: "tour-col-margin", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 120, maxWidth: 180, sortValue: r => r.margin_cents, render: r => <span className={r.margin_cents < 0 ? "text-[#991B1B]" : undefined}>{fmt(r.margin_cents)}{r.margin_pct == null ? "" : ` · ${r.margin_pct.toFixed(1)}%`}</span> },
+  { key: "miles", label: "Miles practical · real", testId: "tour-col-miles", cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 120, maxWidth: 170, render: r => `${r.miles_practical.toLocaleString("en-US")} · ${r.miles_real == null ? DASH : r.miles_real.toLocaleString("en-US")}` },
   ...(state === "open"
-    ? [{ key: "ready", label: "Ready to close", testId: "tour-col-ready", sortable: true, sortValue: (r: TourListRow) => r.ready_ok, render: (r: TourListRow) => <span className={`ldt-pill ${r.can_close ? "ok" : r.ready_ok === 0 ? "bad" : "warn"}`} title={r.close_blockers.join("\n")}>{r.can_close ? `Ready · ${r.ready_ok}/${r.ready_total}` : `${r.ready_ok}/${r.ready_total} · ${r.close_blockers[0] ?? "open items"}`}</span> } as ParityColumn<TourListRow>]
-    : [{ key: "net", label: "Driver net", testId: "tour-col-driver-net", sortable: true, className: "text-right tabular-nums", sortValue: (r: TourListRow) => r.driver_net_cents ?? 0, render: (r: TourListRow) => r.driver_net_cents == null ? DASH : fmt(r.driver_net_cents) } as ParityColumn<TourListRow>,
-       { key: "company", label: "Company settlement", testId: "tour-col-company", render: (r: TourListRow) => r.company_settlement_display_id ?? <span className="ldt-pill warn">none</span> } as ParityColumn<TourListRow>]),
+    ? [{ key: "ready", label: "Ready to close", testId: "tour-col-ready", sortable: true, minWidth: 120, maxWidth: 200, sortValue: (r: TourListRow) => r.ready_ok, render: (r: TourListRow) => <span className={`ldt-pill ${r.can_close ? "ok" : r.ready_ok === 0 ? "bad" : "warn"}`} title={r.close_blockers.join("\n")}>{r.can_close ? `Ready · ${r.ready_ok}/${r.ready_total}` : `${r.ready_ok}/${r.ready_total} · ${r.close_blockers[0] ?? "open items"}`}</span> } as ParityColumn<TourListRow>]
+    : [{ key: "net", label: "Driver net", testId: "tour-col-driver-net", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: (r: TourListRow) => r.driver_net_cents ?? 0, render: (r: TourListRow) => r.driver_net_cents == null ? DASH : fmt(r.driver_net_cents) } as ParityColumn<TourListRow>,
+       // ROUND 16.1 — "none" was a bare warn chip; the owner asked for a clear "not opened" state.
+       { key: "company", label: "Company settlement", testId: "tour-col-company", minWidth: 120, maxWidth: 160, cellClass: "whitespace-nowrap", render: (r: TourListRow) => r.company_settlement_display_id ? r.company_settlement_display_id : <span className="ldt-pill warn" data-testid="tour-company-not-opened">not opened</span> } as ParityColumn<TourListRow>]),
 ];
 function TourRegister({ state, companyId, onCount }: { state: "open" | "closed"; companyId: string; onCount: (n: number | null) => void }) {
   const q = useQuery({ queryKey: ["load-costs-board", "tours", state, companyId], queryFn: () => listTours(companyId, state), enabled: Boolean(companyId) });
