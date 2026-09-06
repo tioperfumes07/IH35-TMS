@@ -2421,11 +2421,11 @@ export function BankingTransactionsDesignView({
             </label>
             <label className="ldt-fld">
               <span className="ldt-muted block">Date from</span>
-              <input type="date" data-testid="banking-match-filter-date-from" value={matchDateFrom} onChange={(e) => setMatchDateFrom(e.target.value)} className="h-7 rounded-sm border border-gray-300 px-1 text-xs" />
+              <DatePicker data-testid="banking-match-filter-date-from" value={matchDateFrom} onChange={setMatchDateFrom} className="h-7" />
             </label>
             <label className="ldt-fld">
               <span className="ldt-muted block">Date to</span>
-              <input type="date" data-testid="banking-match-filter-date-to" value={matchDateTo} onChange={(e) => setMatchDateTo(e.target.value)} className="h-7 rounded-sm border border-gray-300 px-1 text-xs" />
+              <DatePicker data-testid="banking-match-filter-date-to" value={matchDateTo} onChange={setMatchDateTo} className="h-7" />
             </label>
             <label className="ldt-fld">
               <span className="ldt-muted block">Amount from</span>
