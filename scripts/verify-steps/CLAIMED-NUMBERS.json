@@ -7828,5 +7828,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "verify-cash-flow-avp-actuals-honest-unavailable (CASH-FLOW-01 root cause #3, LAW §8 zero is a claim: Actual vs Projected must render \"N of M bank lines categorized -- actuals unavailable\" instead of a bare $0 when 0 bank_transactions are categorized company-wide)"
+  },
+  "10513": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-vendor-balance-single-read-model (VENDOR-BALANCE-TRUTH owner order 2026-09-06, inventory #15: vendor-rollups.routes.ts derived open_balance_cents independently via a bare status<>'paid' bill denylist -- a second, drift-prone computation alongside the canonical accounting.vendor_balances VIEW already used by the Vendors list detail panel; now reads open_balance_cents from that one canonical read model)"
   }
 }
