@@ -344,6 +344,14 @@ export function BankingTransactionsDesignView({
   const [matchSearchAll, setMatchSearchAll] = useState(false);
   const [matchSearchQ, setMatchSearchQ] = useState("");
   const [matchDraftQ, setMatchDraftQ] = useState("");
+  // BANK-MATCH-QBO (owner 2026-09-06): the QuickBooks "Find match" filters — Show (record type), Payee,
+  // date From/To, amount From/To. Empty = no filter. Applied server-side by match-candidates.
+  const [matchKind, setMatchKind] = useState<"" | BankMatchCandidateKind>("");
+  const [matchPayee, setMatchPayee] = useState("");
+  const [matchDateFrom, setMatchDateFrom] = useState("");
+  const [matchDateTo, setMatchDateTo] = useState("");
+  const [matchAmountMin, setMatchAmountMin] = useState("");
+  const [matchAmountMax, setMatchAmountMax] = useState("");
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const [collapsedMonths, setCollapsedMonths] = useState<Record<string, boolean>>({});
   const [viewSettingsOpen, setViewSettingsOpen] = useState(false);
@@ -491,11 +499,20 @@ export function BankingTransactionsDesignView({
   // "similar past categorizations" suggestions endpoint below (that one was wrongly bound here before —
   // it answers a different question and always came back empty for a first-time transaction).
   const matchCandidatesQuery = useQuery({
-    queryKey: ["banking", "tx-match-candidates", companyId, expandedTxId ?? "", matchSearchAll, matchSearchQ],
+    queryKey: [
+      "banking", "tx-match-candidates", companyId, expandedTxId ?? "", matchSearchAll, matchSearchQ,
+      matchKind, matchPayee, matchDateFrom, matchDateTo, matchAmountMin, matchAmountMax,
+    ],
     queryFn: () =>
       getMatchCandidates(String(expandedTxId), companyId, {
         searchAll: matchSearchAll,
         q: matchSearchQ || undefined,
+        kinds: matchKind ? [matchKind] : undefined,
+        payee: matchPayee || undefined,
+        dateFrom: matchDateFrom || undefined,
+        dateTo: matchDateTo || undefined,
+        amountMin: matchAmountMin === "" ? undefined : Number(matchAmountMin),
+        amountMax: matchAmountMax === "" ? undefined : Number(matchAmountMax),
       }),
     enabled: Boolean(companyId && expandedTxId),
   });
@@ -504,6 +521,12 @@ export function BankingTransactionsDesignView({
     setMatchSearchAll(false);
     setMatchSearchQ("");
     setMatchDraftQ("");
+    setMatchKind("");
+    setMatchPayee("");
+    setMatchDateFrom("");
+    setMatchDateTo("");
+    setMatchAmountMin("");
+    setMatchAmountMax("");
   }, [expandedTxId]);
 
   // BLOCK-6b — FORWARD drill-through panel. API + client existed; this wire is the Law §9 surface.
@@ -2369,8 +2392,55 @@ export function BankingTransactionsDesignView({
           </div>
           <div className="p-2">
           <p className="ldt-muted">
-            Recommended matches (±7 days) from live ledger data. If none fit, Search all like QuickBooks.
+            Recommended matches from the live ledger — {matchCandidatesQuery.data?.days_before ?? 90} days before and{" "}
+            {matchCandidatesQuery.data?.days_after ?? 20} days after the bank date, like QuickBooks. Ranked by the payee name on the bank
+            line, exact amount, then date. Search all widens to a year.
           </p>
+          {/* BANK-MATCH-QBO: the QuickBooks "Find match" filter row — Show · Payee · Date from/to · Amount from/to. */}
+          <div className="mt-2 flex flex-wrap items-end gap-2" data-testid="banking-match-filters">
+            <label className="ldt-fld">
+              <span className="ldt-muted block">Show</span>
+              <select
+                data-testid="banking-match-filter-kind"
+                value={matchKind}
+                onChange={(e) => setMatchKind(e.target.value as "" | BankMatchCandidateKind)}
+                className="h-7 rounded-sm border border-gray-300 px-1 text-xs"
+              >
+                <option value="">All records</option>
+                <option value="bill">Bills (open)</option>
+                <option value="bill_payment">Bill payments</option>
+                <option value="expense">Expenses</option>
+                <option value="payment">Customer payments</option>
+                <option value="transfer">Transfers</option>
+                <option value="je">Journal entries</option>
+              </select>
+            </label>
+            <label className="ldt-fld">
+              <span className="ldt-muted block">Payee (vendor / customer)</span>
+              <input data-testid="banking-match-filter-payee" value={matchPayee} onChange={(e) => setMatchPayee(e.target.value)} placeholder="e.g. Holiday Inn" className="h-7 min-w-[150px] rounded-sm border border-gray-300 px-2 text-xs" />
+            </label>
+            <label className="ldt-fld">
+              <span className="ldt-muted block">Date from</span>
+              <input type="date" data-testid="banking-match-filter-date-from" value={matchDateFrom} onChange={(e) => setMatchDateFrom(e.target.value)} className="h-7 rounded-sm border border-gray-300 px-1 text-xs" />
+            </label>
+            <label className="ldt-fld">
+              <span className="ldt-muted block">Date to</span>
+              <input type="date" data-testid="banking-match-filter-date-to" value={matchDateTo} onChange={(e) => setMatchDateTo(e.target.value)} className="h-7 rounded-sm border border-gray-300 px-1 text-xs" />
+            </label>
+            <label className="ldt-fld">
+              <span className="ldt-muted block">Amount from</span>
+              <input type="number" inputMode="decimal" min={0} step="0.01" data-testid="banking-match-filter-amount-min" value={matchAmountMin} onChange={(e) => setMatchAmountMin(e.target.value)} className="h-7 w-24 rounded-sm border border-gray-300 px-1 text-xs" />
+            </label>
+            <label className="ldt-fld">
+              <span className="ldt-muted block">Amount to</span>
+              <input type="number" inputMode="decimal" min={0} step="0.01" data-testid="banking-match-filter-amount-max" value={matchAmountMax} onChange={(e) => setMatchAmountMax(e.target.value)} className="h-7 w-24 rounded-sm border border-gray-300 px-1 text-xs" />
+            </label>
+            {matchKind || matchPayee || matchDateFrom || matchDateTo || matchAmountMin || matchAmountMax ? (
+              <button type="button" className="ldt-link" data-testid="banking-match-filter-clear" onClick={() => { setMatchKind(""); setMatchPayee(""); setMatchDateFrom(""); setMatchDateTo(""); setMatchAmountMin(""); setMatchAmountMax(""); }}>
+                clear filters
+              </button>
+            ) : null}
+          </div>
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <input
               type="search"
@@ -2413,18 +2483,22 @@ export function BankingTransactionsDesignView({
           (matchCandidatesQuery.data?.candidates ?? []).length === 0 ? (
             <p className="mt-2 text-xs text-gray-500">No match candidates found for this transaction.</p>
           ) : null}
-          {/* BANK-DESIGN-1: the suggestions are ONE register, QuickBooks "Find match" order — DATE · DESCRIPTION · TYPE
-              (drill-through) · AMOUNT · GAP (amount / days) · Best match — every candidate on one line, a full
-              --ldt-rule between every two, best match tinted --ldt-accent-soft. Score kept as the row title. */}
+          {/* BANK-DESIGN-1 + BANK-MATCH-QBO: the suggestions are ONE register in QuickBooks "Find match" order —
+              DATE · TYPE (drill-through) · REF NO. · PAYEE · DESCRIPTION · OPEN BALANCE · AMOUNT · GAP · Best match —
+              every candidate on one line, a full --ldt-rule between every two, best match tinted --ldt-accent-soft.
+              GAP = how far the record is from the bank line: dollars off · days off (0.00 · 0d is an exact match). */}
           {(matchCandidatesQuery.data?.candidates ?? []).length > 0 ? (
             <div className="ldt-card mt-2">
               <div className="ldt-rows ldt-rows-match" data-testid="banking-match-candidates-register">
                 <div className="ldt-row head">
                   <span>Date</span>
-                  <span>Description</span>
                   <span>Type</span>
+                  <span>Ref no.</span>
+                  <span>Payee</span>
+                  <span>Description</span>
+                  <span className="ldt-m">Open balance</span>
                   <span className="ldt-m">Amount</span>
-                  <span>Gap</span>
+                  <span title="How far this record is from the bank line: dollars off · days off. $0.00 · 0d = exact.">Gap ($ · days)</span>
                   <span />
                 </div>
                 {[...(matchCandidatesQuery.data?.candidates ?? [])]
@@ -2437,7 +2511,6 @@ export function BankingTransactionsDesignView({
                       title={`Score ${candidate.match_score.toFixed(3)}`}
                     >
                       <span className="ldt-k">{String(candidate.event_date ?? "").slice(0, 10) || "—"}</span>
-                      <span title={candidate.memo}>{candidate.memo?.trim() ? candidate.memo : "—"}</span>
                       <span>
                         <EntityLink
                           kind={MATCH_CANDIDATE_ENTITY_KIND[candidate.ledger_entry_kind]}
@@ -2446,6 +2519,14 @@ export function BankingTransactionsDesignView({
                           className="ldt-pill ok hover:underline"
                         />
                       </span>
+                      <span className="ldt-k" title={candidate.reference ?? undefined}>{candidate.reference?.trim() ? candidate.reference : "—"}</span>
+                      <span title={candidate.counterparty_name ?? undefined} data-testid="banking-match-candidate-payee">
+                        {candidate.counterparty_name?.trim() ? candidate.counterparty_name : "—"}
+                      </span>
+                      <span title={candidate.description ?? candidate.memo}>
+                        {candidate.description?.trim() ? candidate.description : candidate.memo?.trim() ? candidate.memo : "—"}
+                      </span>
+                      <span className="ldt-m">{candidate.open_balance_cents == null ? "—" : formatUsdCents(Math.abs(Number(candidate.open_balance_cents)))}</span>
                       <span className="ldt-m">{formatUsdCents(Math.abs(Number(candidate.amount_cents ?? 0)))}</span>
                       <span className="ldt-k">
                         {formatUsdCents(Math.abs(Number(candidate.amount_gap_cents ?? 0)))} · {candidate.date_gap_days}d
