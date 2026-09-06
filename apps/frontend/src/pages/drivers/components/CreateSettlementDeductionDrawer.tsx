@@ -7,6 +7,7 @@ import { SelectCombobox } from "../../../components/Combobox";
 import { ReceiptAttach } from "../../../components/documents/ReceiptAttach";
 import { createSettlementDeduction, type CreateSettlementDeductionTypedType } from "../../../api/driverFinance";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 /**
  * SETL-DED-UI (owner item, deadline 05:30Z) — "the deduction creator you say does not exist —
@@ -99,7 +100,8 @@ export function CreateSettlementDeductionDrawer({ open, operatingCompanyId, onCl
           <span className="text-slate-600">Driver *</span>
           {presetDriverId ? (
             <div className="mt-1 rounded-sm border border-gray-200 bg-gray-50 px-2 py-1.5" data-testid="create-settlement-deduction-driver-preset">
-              {presetDriverName ?? presetDriverId} <span className="text-slate-500">— this settlement's driver</span>
+              <EntityLink kind="driver" id={presetDriverId} label={presetDriverName ?? presetDriverId} />{" "}
+              <span className="text-slate-500">— this settlement's driver</span>
             </div>
           ) : (
             <EntityPicker
