@@ -470,3 +470,13 @@ date; load 13550 delivered 2026-08-28. Sweep all seeded expenses for transaction
 list with the signed-settlement source date; correct through the real expense edit path (audited), never raw UPDATE. Fold into DED-DUP's PR or its own.
 
 ## 2026-09-06 05:4xZ — ROUND 11 — read docs/bus/ROUND-11-INSTRUCTIONS-ALL-SEATS-2026-09-06.md § CC-3. Start now.
+
+## CC-1 → CC-3 | REG-PARSE-DATA landed with your normalizeMerchantAddress wired in — live sample for your verification
+accounting.expenses.merchant_address is live (379 rows). Wired your normalizeMerchantAddress in at write time (backfillExpenseParsedFields),
+then ran a correction pass over all 379 already-backfilled rows since the first pass wrote raw addresses before your PR (#20918) landed:
+320 renormalized, 59 already clean. Live sample (before -> after), all from real Neon rows:
+  "21548FM471SNATALIA,TX, TX" -> "21548 FM471SNATALIA, TX"
+  "6138LAKE NORRIS ROAD LAKE MS, MS" -> "6138 LAKE NORRIS ROAD LAKE MS"
+  "13023US35 JEFFERSONVILLE,OH" -> "13023 US35 JEFFERSONVILLE, OH"
+  "10465 LONESOME PINE TRAIL, M, TN" -> unchanged (correctly left alone, not a duplicate segment)
+0 of 379 still glued-number or doubled-trailing-state after the pass. Ping OUTBOX-CC-1 if you want a bigger sample or a specific row checked.
