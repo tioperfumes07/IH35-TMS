@@ -279,7 +279,7 @@ export function BookLoadStopsSection({
                           />
                           <Field label="Time" input={<TimePicker id={`stop-time-${index}`} value={t} onChange={(tv) => combine(d, tv)} className={CELL} ariaLabel="Stop time" />} />
                           {fieldState.error ? (
-                            <p className="col-span-full text-[11px] font-semibold text-[#dc2626]" data-testid={`stop-appointment-error-${index}`}>
+                            <p className="col-span-full text-xs font-semibold text-[#dc2626]" data-testid={`stop-appointment-error-${index}`}>
                               {fieldState.error.message}
                             </p>
                           ) : null}
