@@ -5905,7 +5905,7 @@
   "10541": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
-    "purpose": "verify-cash-flow-rolling-ledger (CASH-FLOW-02, owner order 2026-09-06 20:1xZ: rolling A/R+A/P ledger with real dates -- expected income automatically from loads/invoices/factoring, expected expenses from bills/driver pay/driver bills/unmatched expenses/loan schedule -- carry-forward until paid/matched, day grid with running cash from the live bank balance)"
+    "purpose": "verify-settlement-add-deduction-wired (SET-01 first half: settlement detail +Add deduction button had no onClick at all; wired to the same shared CreateSettlementDeductionDrawer the driver-profile queue uses, driver preset to the settlement own driver)"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -7898,7 +7898,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1060,
+  "total_claimed": 1061,
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
@@ -7909,14 +7909,14 @@
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
   },
-  "10541": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-06",
-    "purpose": "verify-settlement-add-deduction-wired (SET-01 first half: settlement detail +Add deduction button had no onClick at all; wired to the same shared CreateSettlementDeductionDrawer the driver-profile queue uses, driver preset to the settlement own driver)"
-  },
   "10545": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "verify-settlement-reopen-disabled-not-hidden (SET-13: Reopen control was hidden entirely behind paymentState+role checks; LAW-EDITABLE-BY-PERMISSION-ALWAYS-TRACEABLE requires disabled+reason, never hidden)"
+  },
+  "10549": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-close-creates-company-settlement (ROUND 16.2: one close two settlements was wired into driver-PWA tour-close but not settlement-payrun-close.service.ts, the path SETL-CLOSE-POST-A apply uses -- pins both close branches call it in the same transaction)"
   }
 }
