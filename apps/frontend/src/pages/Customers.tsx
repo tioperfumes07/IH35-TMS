@@ -36,6 +36,7 @@ import { useToast } from "../components/Toast";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { displayEntityNotes } from "../lib/qboArchiveNotes";
 import { CustomerCOITab } from "./customers/CustomerCOITab";
+import { CustomerEditDrawer } from "../components/customers/CustomerEditDrawer";
 import { CustomerListSidebar } from "./customers/CustomerListSidebar";
 import { CustomersListView } from "./customers/CustomersListView";
 import { CustomersSyncPanel } from "./customers/CustomersSyncPanel";
@@ -590,6 +591,8 @@ export function CustomersPage() {
     setSearchParams(next, { replace: true });
   };
   const [createValues, setCreateValues] = useState<CustomerProfileFormValues>(emptyCustomerProfileValues);
+  // CUR-2: Edit opens the profile form in the right-side ParityDrawer (QBO-style), not the full page.
+  const [editDrawerCustomer, setEditDrawerCustomer] = useState<Customer | null>(null);
   const [createFormError, setCreateFormError] = useState("");
   const [createFieldErrors, setCreateFieldErrors] = useState<{ legal_name?: string; mc_number?: string; customer_type?: string; email?: string }>({});
   // CLOSURE-31: default to the prior "master-detail" design; "list" is opt-in only.
@@ -1212,7 +1215,7 @@ export function CustomersPage() {
                         type="button"
                         variant="secondary"
                         className="h-8"
-                        onClick={() => navigate(`/customers/${selectedCustomer.id}`)}
+                        onClick={() => setEditDrawerCustomer(selectedCustomer)}
                         data-testid="customer-header-edit"
                       >
                         Edit
@@ -1385,7 +1388,7 @@ export function CustomersPage() {
                 <CustomerDetailsTab
                   customer={selectedCustomer}
                   summary={summaryQuery.data}
-                  onEdit={() => navigate(`/customers/${selectedCustomer.id}`)}
+                  onEdit={() => setEditDrawerCustomer(selectedCustomer)}
                 />
               ) : activeTab === "activity_feed" ? (
                 <CustomerFinancialActivityTab
@@ -1395,7 +1398,7 @@ export function CustomersPage() {
               ) : activeTab === "notes" ? (
                 <CustomerNotesTab
                   customer={selectedCustomer}
-                  onEdit={() => navigate(`/customers/${selectedCustomer.id}`)}
+                  onEdit={() => setEditDrawerCustomer(selectedCustomer)}
                 />
               ) : activeTab === "tasks" ? (
                 <TasksTab
@@ -1535,6 +1538,14 @@ export function CustomersPage() {
           </div>
         </form>
       </Modal>
+      {/* CUR-2: Edit-in-side-drawer (QBO style). Full-page /customers/:id stays reachable by URL. */}
+      <CustomerEditDrawer
+        open={Boolean(editDrawerCustomer)}
+        customer={editDrawerCustomer}
+        operatingCompanyId={companyId || undefined}
+        onClose={() => setEditDrawerCustomer(null)}
+        onSaved={() => void customersQuery.refetch()}
+      />
     </div>
   );
 }
