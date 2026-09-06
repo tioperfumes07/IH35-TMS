@@ -3,6 +3,8 @@
 // movement. The settlement HEADER posts one aggregate balanced JE at finalize via
 // settlement-payrun-close.service.ts's closeSettlementPayRun (createJournalEntry) -- CORRECTED 2026-09-02: postSettlementToGl was RETIRED (SET-01, 2026-07-26), never live in prod (verified 2026-09-02, GO-23 C6 shrink).
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { materializeSettlementLines } from "./settlement-lines-materialize.service.js";
+import { logger } from "../observability/structured-logger.js";
 
 /**
  * HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID: the canonical value settlement_lines.source_table
@@ -202,6 +204,34 @@ export async function createSettlementDeduction(
     "info",
     "PREREQ-B-SETTLEMENT-DEDUCTION-SVC"
   );
+
+  // SETL-LINES-GL — "runs at line creation": if this driver already has an OPEN load-bookended
+  // settlement covering this deduction's load, materialize it into a real settlement_lines row
+  // (load_id + a resolved GL recovery account) immediately. Best effort: a materializer hiccup must
+  // never fail the deduction itself — the close-time sweep still picks up anything skipped here.
+  if (input.loadId) {
+    try {
+      const openSettlementRes = await client.query<{ id: string }>(
+        `
+          SELECT id::text FROM driver_finance.driver_settlements
+           WHERE operating_company_id = $1::uuid AND driver_id = $2::uuid
+             AND settlement_model = 'load_bookended' AND status = 'open'
+           ORDER BY created_at DESC LIMIT 1
+        `,
+        [input.operatingCompanyId, input.driverId]
+      );
+      const openSettlementId = openSettlementRes.rows[0]?.id;
+      if (openSettlementId) {
+        await materializeSettlementLines(client as unknown as Parameters<typeof materializeSettlementLines>[0], {
+          settlementId: openSettlementId,
+          operatingCompanyId: input.operatingCompanyId,
+          actorUserId: input.createdByUserId,
+        });
+      }
+    } catch (err) {
+      logger.warn("settlement_lines_materialize_at_creation_failed", { err, deductionId: row.id });
+    }
+  }
 
   return row;
 }

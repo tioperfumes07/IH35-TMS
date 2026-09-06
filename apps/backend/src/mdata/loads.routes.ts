@@ -212,6 +212,10 @@ const updateLoadBodySchema = z
     team_id: z.string().uuid().nullable().optional(),
     notes: z.string().trim().max(5000).nullable().optional(),
     soft_deleted_at: isoDatetimeSchema.nullable().optional(),
+    // SETL-LINES-GL (2026-09-05): the column has existed since booking, written only at
+    // book-load time — a load booked without its customer W.O. number on file (e.g. a historical
+    // backfill sourced before the number was known) had no way to correct it afterward.
+    customer_wo_number: z.string().trim().max(100).nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
@@ -1619,6 +1623,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     if ("assigned_secondary_driver_id" in b) add("assigned_secondary_driver_id", b.assigned_secondary_driver_id ?? null);
     if ("team_id" in b) add("team_id", b.team_id ?? null);
     if ("notes" in b) add("notes", b.notes ?? null);
+    if ("customer_wo_number" in b) add("customer_wo_number", b.customer_wo_number ?? null);
     if ("soft_deleted_at" in b) {
       add("soft_deleted_at", b.soft_deleted_at ?? null);
       if (b.soft_deleted_at) {
@@ -1640,7 +1645,8 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             SELECT
               id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
               assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
-              dispatcher_user_id, notes, created_at, updated_at, soft_deleted_at, deleted_by_user_id
+              dispatcher_user_id, notes, created_at, updated_at, soft_deleted_at, deleted_by_user_id,
+              customer_wo_number
             FROM mdata.loads
             WHERE id = $1
               -- Tier-1 entity-scope (money by-id IDOR): same loads_update_office role-only RLS gap.
