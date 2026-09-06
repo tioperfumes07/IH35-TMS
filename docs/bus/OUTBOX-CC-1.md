@@ -487,3 +487,11 @@ CC-1 | CASH-FLOW-01 DONE | 5f49c796d4 (#20998) | live day-by-day re-measurement,
   2026-09-06 | income $0.00     | expense $30,125.94 | net -$30,125.94 (the 8 closed settlements + others now correctly visible — was $0 before this fix)
 Also fixed: 48 sent invoices' issue_date/due_date backfilled from real delivery (--apply, 48/48 updated, audited); Actual vs Projected now renders "0 of 362 bank lines categorized — actuals unavailable" instead of a fake $0.
 NEXT: awaiting the next backend deploy to serve this on the live /cash-flow API; moving to item 4 (JE-DR-CR, 20:00Z).
+
+## CC-1 | CONSOLIDATED 2026-09-06 — items 4/5 DONE, all 5 items closed
+
+CC-1 | JE-DR-CR ALREADY DONE | (pre-existing, ACC-49) | live: verify-je-debit-credit-columns.mjs => 627 USMCA journal entries checked, sum(debit) = sum(credit) for all of them (sample 002fdce8...: D 2523 = C 2523) | PostingGrid.tsx (Account · Description · Class · Debit · Credit, footer Total Debits/Total Credits/Difference, red "Out of balance" badge) already mounts on the JE detail page AND the Journal tab of Expense/Bill/Invoice detail via JournalPostingsPanel — same register everywhere, guarded (step 10421) | NEXT: none, nothing to build.
+
+CC-1 | VENDOR-BALANCE-TRUTH DONE | a4838c456e (#21004) | live: top-5-by-spend USMCA vendors, list vs the fixed read model — LOVES ytd=$67,003.86 mtd=$6,294.42 open=$0.00 (matches pre-fix exactly; USMCA has 0 accounting.bills rows today so open_balance_cents was already $0 both ways — the fix removes a real drift RISK, not a visible number today) | root cause: vendor-rollups.routes.ts derived open_balance_cents independently via a bare status<>'paid' bill denylist that never checked revoked_at (the canonical void marker) — a second read model alongside the canonical accounting.vendor_balances VIEW the list's own detail panel already used | fix: open_balance_cents now reads from that one canonical VIEW | guard verify-vendor-balance-single-read-model.mjs (step 10513) | NEXT: none.
+
+All 5 ROUND 14 items closed: LEDGER-NAME-01 (#20966), TRIP-LOCAL-ENUM (#20992), CASH-FLOW-01 (#20998), JE-DR-CR (already done), VENDOR-BALANCE-TRUTH (#21004). Awaiting next assignment.
