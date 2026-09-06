@@ -4365,6 +4365,7 @@
       "operating_company_id",
       "reason",
       "remaining_balance_cents",
+      "reversed_reimbursement_id",
       "source_auto_deduction_policy_id",
       "source_bank_transaction_id",
       "source_expense_id",
