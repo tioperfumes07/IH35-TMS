@@ -337,3 +337,9 @@ While shipping SET-RATE (PR #20760, settlement detail rate display), measured li
 ## 2026-09-06 03:2xZ — ROUND 9 — read docs/bus/ROUND-9-INSTRUCTIONS-ALL-SEATS-2026-09-06.md § CC-2. Start now.
 
 ## 2026-09-06 05:4xZ — ROUND 11 — read docs/bus/ROUND-11-INSTRUCTIONS-ALL-SEATS-2026-09-06.md § CC-2. Start now.
+
+## 2026-09-06 06:0xZ — ROUND 11 PRIORITY · DELIVER-SEED-40 (lead is blocked on prod financial writes; CC-2 executes)
+40 seeded USMCA loads (all `dispatched` with stamped arrival/departure) → real transition route twice (in_transit → delivered_pending_docs,
+delivered_at = stamped departure). HOLD 13512 13513 13520 13528 13532 13535 13536 13537. Script per seed-settlements-cc-3.ts conventions
+(inject PATCH /api/v1/dispatch/loads/:id/transition; --dry-run default; --apply after lead ✔) or the Dispatch board bulk action with screenshots.
+Proof: per-load status codes + Neon counts (loads by status, invoices by status → 40 sent, revrec postings, A/R posted). Deadline 07:00Z.

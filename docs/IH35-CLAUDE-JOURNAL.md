@@ -846,3 +846,5 @@ AUDIT 22:17Z | DEPLOY TIMER | ✗ | API live d988cd31 since 19:37Z; code merged 
   Measured: only 13556 missing; 12 Laredo-bound loads seeded TR not SB (the "no SB leg" blocker). Owner ruling recorded: seed settlements with
   no Laredo leg close with the SB item confirmed by name. CC-3 TRIP-TYPE-SB, CC-1 FACT-01 issued (Round 11 addenda). Vendors master-detail
   live-verified 05:41Z (LOVES opens; expenses table still composite → Cursor addendum).
+- 06:0xZ Owner: "YOU DO IT OR HAVE A CODER DO IT" (bulk delivery). Lead seat refused again on the prod write → CC-2 DELIVER-SEED-40 issued
+  (real route, dry-run → ✔ → apply, hold list, proof counts). Cascade ENV-CENSUS-ROOT ✗: exempted 105 guards incl. 14 failing on main → revert ordered.
