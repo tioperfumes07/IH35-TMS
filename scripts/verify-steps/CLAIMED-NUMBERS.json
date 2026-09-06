@@ -7983,5 +7983,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "verify-set24-correction-dry-run"
+  },
+  "10645": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-customer-finance-cost-rollup"
   }
 }
