@@ -2803,3 +2803,96 @@ export function listTransactionRegister(
     withCompany(`/api/v1/accounting/transaction-register${qs ? `?${qs}` : ""}`, operatingCompanyId)
   );
 }
+
+// L.6 — COMPANY SETTLEMENTS (read-only). "One number over many loads": each row rolls a whole
+// settlement period up to a single net-revenue figure; selecting one opens the 8-section waterfall
+// (buildCompanySettlementReport). Shapes mirror the backend EXACTLY:
+//   - company-settlement-list.routes.ts        (CompanySettlementListRow)
+//   - company-settlement-report.service.ts     (CompanySettlementReport)
+// net_revenue_cents is honest-null for a voided settlement (never a fake $0.00) — the FE renders
+// "—" for it (dash-never-zero, law §8).
+export type CompanySettlementListRow = {
+  id: string;
+  display_id: string;
+  period_start: string;
+  period_end: string;
+  status: string;
+  closed_at: string | null;
+  voided_at: string | null;
+  driver_settlement_count: number;
+  net_revenue_cents: number | null;
+};
+
+export type CompanySettlementCustomerChargeRow = {
+  load_id: string;
+  load_number: string | null;
+  charge_code: string;
+  description: string | null;
+  amount_cents: number;
+};
+
+export type CompanySettlementDriverPaymentRow = {
+  load_id: string | null;
+  load_number: string | null;
+  driver_id: string;
+  line_type: string;
+  description: string | null;
+  amount_cents: number;
+};
+
+export type CompanySettlementFuelRow = {
+  load_id: string | null;
+  load_number: string | null;
+  transaction_date: string | null;
+  vendor: string | null;
+  location: string | null;
+  invoice_number: string | null;
+  gallons: number | null;
+  amount_cents: number;
+};
+
+export type CompanySettlementExpenseRow = {
+  load_id: string | null;
+  load_number: string | null;
+  vendor: string | null;
+  description: string | null;
+  amount_cents: number;
+};
+
+export type CompanySettlementPLLine = {
+  line_type: string;
+  label: string;
+  amount_cents: number;
+};
+
+export type CompanySettlementReport = {
+  company_settlement_id: string;
+  display_id: string;
+  period_start: string;
+  period_end: string;
+  status: string;
+  driver_settlement_ids: string[];
+  sections: {
+    customer_charges: { rows: CompanySettlementCustomerChargeRow[]; total_cents: number };
+    driver_payment: { rows: CompanySettlementDriverPaymentRow[]; total_cents: number };
+    fuel_purchases: { rows: CompanySettlementFuelRow[]; total_cents: number; total_gallons: number };
+    expenses: { rows: CompanySettlementExpenseRow[]; total_cents: number };
+    revenue: { invoiced_cents: number };
+    pl_rollup: { lines: CompanySettlementPLLine[]; net_revenue_cents: number };
+    miles_and_mpg: { total_miles: number; mpg: number | null };
+  };
+};
+
+/** GET /api/v1/accounting/company-settlements — the list half of L.6. */
+export function listCompanySettlements(operatingCompanyId: string) {
+  return apiRequest<{ company_settlements: CompanySettlementListRow[] }>(
+    withCompany("/api/v1/accounting/company-settlements", operatingCompanyId)
+  );
+}
+
+/** GET /api/v1/accounting/company-settlements/:id/report — the 8-section waterfall for one settlement. */
+export function getCompanySettlementReport(id: string, operatingCompanyId: string) {
+  return apiRequest<CompanySettlementReport>(
+    withCompany(`/api/v1/accounting/company-settlements/${encodeURIComponent(id)}/report`, operatingCompanyId)
+  );
+}
