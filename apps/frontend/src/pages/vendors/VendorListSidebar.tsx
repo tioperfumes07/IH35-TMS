@@ -105,6 +105,7 @@ export function VendorListSidebar({
         totalCount={totalCount}
         onPageChange={onPageChange}
         onPageSizeChange={onPageSizeChange}
+        allowAll
         loading={listState.isLoading}
       />
       <input
@@ -185,6 +186,7 @@ export function VendorListSidebar({
           totalCount={totalCount}
           onPageChange={onPageChange}
           onPageSizeChange={onPageSizeChange}
+          allowAll
           loading={listState.isLoading}
         />
       </div>

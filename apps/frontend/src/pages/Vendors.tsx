@@ -23,6 +23,7 @@ import { VendorsSyncPanel } from "./vendors/VendorsSyncPanel";
 import { VendorCreateModal } from "../components/vendors/VendorCreateModal";
 import { VendorEditDrawer } from "../components/vendors/VendorEditDrawer";
 import { useViewModePref } from "../hooks/useViewModePref";
+import { useListPageSizePref } from "../hooks/useListPageSizePref";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { formatDateUS, mmmDd } from "../lib/formatDate";
 import { EntityLink } from "../components/shared/EntityLink";
@@ -190,7 +191,8 @@ export function VendorsPage() {
   // K.9 — roster Vendor Type filter (inline, visible on first load, 0 clicks).
   const [rosterVendorType, setRosterVendorType] = useState("");
   const [sidebarPage, setSidebarPage] = useState(1);
-  const [sidebarPageSize, setSidebarPageSize] = useState(50);
+  // VC-10 / VC-LIST-02 — persisted page size (survives reload); "All" is a valid stored value.
+  const [sidebarPageSize, setSidebarPageSize] = useListPageSizePref("vendors", 50);
   const createOpen = searchParams.get("create") === "1";
   const openCreate = () => {
     if (searchParams.get("create") === "1") return;
