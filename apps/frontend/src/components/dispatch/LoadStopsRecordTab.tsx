@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   geocodeDispatchLoadStops,
   getLoadStopsRecord,
-  type StopsRecordEvent,
   type StopsRecordLeg,
   type StopsRecordResponse,
   type StopsRecordStop,
@@ -121,70 +120,79 @@ function StopsPopup({ title, onClose, children }: { title: string; onClose: () =
   );
 }
 
-function LegMilesPopup({ data, onClose }: { data: StopsRecordResponse; onClose: () => void }) {
+function legsForDisplay(data: StopsRecordResponse): StopsRecordLeg[] {
   const { legs, load } = data;
-  const displayedLegs: StopsRecordLeg[] = legs.length > 0 ? legs : [
-    { leg_index: 0, leg_kind: "deadhead_to_pickup", from_label: "Yard", to_label: "Pickup (deadhead, attributed to this pickup)", practical_miles: null, short_miles: null, real_miles: null, google_reference_miles: null },
+  if (legs.length > 0) return legs;
+  return [
+    { leg_index: 0, leg_kind: "deadhead_to_pickup", from_label: "Yard", to_label: "Pickup (deadhead, this load picks up)", practical_miles: load.miles_deadhead, short_miles: null, real_miles: null, google_reference_miles: null },
     { leg_index: 1, leg_kind: "loaded", from_label: "Pickup", to_label: "Delivery", practical_miles: load.miles_practical, short_miles: load.miles_shortest, real_miles: null, google_reference_miles: null },
   ];
-  const columns: Array<ParityColumn<StopsRecordLeg>> = [
-    { key: "leg", label: "Leg", render: (leg) => `${leg.from_label} → ${leg.to_label}` },
-    { key: "practical_miles", label: "Practical", render: (leg) => fmtMiles(leg.practical_miles), cellClass: "text-right tabular-nums" },
-    { key: "short_miles", label: "Short", render: (leg) => fmtMiles(leg.short_miles), cellClass: "text-right tabular-nums" },
-    { key: "real_miles", label: "Real", render: (leg) => fmtMiles(leg.real_miles), cellClass: "text-right tabular-nums" },
-    { key: "google_reference_miles", label: "Google ref", render: (leg) => fmtMiles(leg.google_reference_miles), cellClass: "text-right tabular-nums" },
-  ];
-  return (
-    <StopsPopup title="Leg miles" onClose={onClose}>
-      <ParityTable rows={displayedLegs} columns={columns} rowKey={(leg) => String(leg.leg_index)} tableTestId="stops-record-legs-table" rowTestId={() => "stops-record-leg-row"} storageKey="load-stops-record-legs" suppressToolbarSearch suppressToolbarRange initialPageSize={25} />
-      <p className="mt-2 text-xs text-gray-500">
-        Deadhead {fmtMiles(load.miles_deadhead)} mi is stored on the load, not on a leg. Real driven miles need an
-        odometer reading at each fence — unavailable until the stops are geocoded and the fences fire.
-      </p>
-    </StopsPopup>
-  );
 }
+const sum = (xs: Array<number | null>): number | null => (xs.every((x) => x == null) ? null : xs.reduce<number>((n, x) => n + (x ?? 0), 0));
+const four = (a: number | null, b: number | null, c: number | null, d: number | null) => `${fmtMiles(a)} · ${fmtMiles(b)} · ${fmtMiles(c)} · ${fmtMiles(d)}`;
 
-function EventsPopup({ data, onClose }: { data: StopsRecordResponse; onClose: () => void }) {
-  const { events, stops, geofence_event_count } = data;
+/** § Stops design: two inline cards + the source note. */
+function StopsDesignCards({ data }: { data: StopsRecordResponse }) {
+  const legs = legsForDisplay(data);
+  const { stops, events, geofence_event_count } = data;
+  const geocoded = stops.filter((s) => !s.geocode_missing).length;
+  const timeline: Array<{ at: string | null; tone: "ok" | "warn" | "off"; text: string }> = [];
+  if (events.length > 0) {
+    for (const e of events) {
+      const kind = e.event_kind === "entered" ? "Entered" : e.event_kind === "exited" ? "Exited" : e.event_kind;
+      timeline.push({ at: e.occurred_at, tone: e.event_kind === "exited" ? "warn" : "ok", text: `${kind}${e.sequence != null ? ` stop #${e.sequence} fence` : " fence"} · source ${e.source}` });
+    }
+  } else {
+    for (const st of [...stops].sort((x, y) => x.sequence - y.sequence)) {
+      const label = stopTypeLabel(st.stop_type).toLowerCase();
+      if (st.arrived_at) timeline.push({ at: st.arrived_at, tone: "ok", text: `Arrived ${label} — source ${st.source}${st.geocode_missing ? " (no fence: stop not geocoded)" : ""}` });
+      if (st.departed_at) timeline.push({ at: st.departed_at, tone: "warn", text: `Departed ${label} — source ${st.source}` });
+      if (!st.arrived_at) timeline.push({ at: null, tone: "off", text: `${stopTypeLabel(st.stop_type)} fence not yet entered` });
+    }
+  }
+  const noOdometer = legs.every((l) => l.real_miles == null);
   return (
-    <StopsPopup title="Arrival & departure events" onClose={onClose}>
-      {geofence_event_count === 0 ? (
-        <p className="text-xs text-gray-600">
-          No geofence events for this load yet ({stops.filter((s) => !s.geocode_missing).length} of {stops.length} stops
-          are geocoded). The arrivals and departures below are the recorded actual times; once the stops have
-          coordinates, fence entries and exits (with the source) will appear here.
-        </p>
-      ) : null}
-      <div className="mt-2 space-y-1">
-        {events.length > 0
-          ? events.map((e: StopsRecordEvent, i: number) => (
-              <div key={i} className="flex items-start gap-2 border-b border-gray-100 py-1" data-testid="stops-record-event-row">
-                <span className="w-28 shrink-0 tabular-nums text-gray-500">{fmtTs(e.occurred_at)}</span>
-                <span className="text-gray-800">
-                  {e.event_kind === "entered" ? "Entered" : e.event_kind === "exited" ? "Exited" : e.event_kind}
-                  {e.sequence != null ? ` stop #${e.sequence}` : ""} — source {e.source}
-                </span>
-              </div>
-            ))
-          : stops.map((s) => (
-              <div key={s.stop_id} className="border-b border-gray-100 py-1">
-                <div className="flex items-start gap-2">
-                  <span className="w-28 shrink-0 tabular-nums text-gray-500">{fmtTs(s.arrived_at)}</span>
-                  <span className="text-gray-800">
-                    Arrived {stopTypeLabel(s.stop_type).toLowerCase()} #{s.sequence} — source {s.source}
-                  </span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="w-28 shrink-0 tabular-nums text-gray-500">{fmtTs(s.departed_at)}</span>
-                  <span className="text-gray-800">
-                    Departed {stopTypeLabel(s.stop_type).toLowerCase()} #{s.sequence} — source {s.source}
-                  </span>
-                </div>
+    <>
+      <div className="ldt-grid2" data-testid="stops-design-cards">
+        <section className="ldt-card" data-testid="stops-record-legs">
+          <div className="ldt-ch"><span>Leg miles</span><span className="ldt-sub">practical · short · real · google ref</span></div>
+          <div className="ldt-rows">
+            {legs.map((l) => (
+              <div key={l.leg_index} className="ldt-row" data-testid="stops-record-leg-row">
+                <span>{l.from_label} → {l.to_label}</span>
+                <span className="ldt-k">{four(l.practical_miles, l.short_miles, l.real_miles, l.google_reference_miles)}</span>
               </div>
             ))}
+            <div className="ldt-row tot" data-testid="stops-leg-miles-total">
+              <span>Total{data.load.miles_deadhead != null && legs.length === 1 ? <span className="ldt-muted"> deadhead {fmtMiles(data.load.miles_deadhead)} stored on load, not on a leg</span> : null}</span>
+              <span className="ldt-k">{four(sum(legs.map((l) => l.practical_miles)), sum(legs.map((l) => l.short_miles)), sum(legs.map((l) => l.real_miles)), sum(legs.map((l) => l.google_reference_miles)))}</span>
+            </div>
+          </div>
+        </section>
+        <section className="ldt-card" data-testid="stops-record-events">
+          <div className="ldt-ch"><span>Arrival &amp; departure events</span><span className="ldt-sub">geo.geofence_events</span></div>
+          <div className="ldt-rows">
+            {timeline.map((t, i) => (
+              <div key={i} className="ldt-row" data-testid="stops-record-event-row" style={{ gridTemplateColumns: "72px 14px 1fr" }}>
+                <span className="ldt-k ldt-muted">{t.at ? fmtTs(t.at) : DASH}</span>
+                <span aria-hidden="true" style={{ display: "inline-block", width: 9, height: 9, borderRadius: 9, marginTop: 4, background: t.tone === "ok" ? "var(--ldt-accent)" : t.tone === "warn" ? "var(--ldt-warn)" : "var(--ldt-rule)" }} />
+                <span>{t.text}</span>
+              </div>
+            ))}
+            {noOdometer ? (
+              <div className="ldt-row" data-testid="stops-no-odometer" style={{ gridTemplateColumns: "72px 14px 1fr" }}>
+                <span className="ldt-k ldt-muted">{DASH}</span>
+                <span aria-hidden="true" style={{ display: "inline-block", width: 9, height: 9, borderRadius: 9, marginTop: 4, background: "var(--ldt-rule)" }} />
+                <span className="ldt-muted">No odometer captured — real driven miles unavailable for this load ({geofence_event_count} fence events · {geocoded} of {stops.length} stops geocoded)</span>
+              </div>
+            ) : null}
+          </div>
+        </section>
       </div>
-    </StopsPopup>
+      <div className="ldt-note" data-testid="stops-source-note">
+        Every value here is read from <code>mdata.load_stops</code> (planned), <code>geo.geofence_events</code> (actual), <code>telematics.vehicle_locations.odometer_mi</code> (real) and <code>load_stop_legs</code> (miles). Nothing on this tab is typed. Editing goes back to the wizard.
+      </div>
+    </>
   );
 }
 
@@ -235,7 +243,6 @@ function StopDetailPopup({ stop, onClose }: { stop: StopsRecordStop; onClose: ()
 
 export function LoadStopsRecordTab({ loadId, operatingCompanyId, onEditStops }: Props) {
   const queryClient = useQueryClient();
-  const [pop, setPop] = useState<"legs" | "events" | null>(null);
   const [openStop, setOpenStop] = useState<StopsRecordStop | null>(null);
 
   const query = useQuery({
@@ -338,7 +345,7 @@ export function LoadStopsRecordTab({ loadId, operatingCompanyId, onEditStops }: 
           No stops found.
         </div>
       ) : (
-        <ParityTable rows={stops} columns={stopColumns} rowKey={(stop) => stop.stop_id} onRowClick={setOpenStop} tableTestId="stops-record-table" rowTestId={() => "stops-record-row"} storageKey="load-stops-record" minWidthPx={900} suppressToolbarSearch suppressToolbarRange initialPageSize={25} />
+        <div data-testid="stops-record-table"><ParityTable rows={stops} columns={stopColumns} rowKey={(stop) => stop.stop_id} onRowClick={setOpenStop} rowTestId={() => "stops-record-row"} storageKey="load-stops-record" minWidthPx={900} suppressToolbarSearch suppressToolbarRange initialPageSize={25} /></div>
       )}
 
       {geocodeMutation.isError ? (
@@ -353,38 +360,13 @@ export function LoadStopsRecordTab({ loadId, operatingCompanyId, onEditStops }: 
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-        <button
-          type="button"
-          className="rounded-sm border border-gray-200 bg-white p-2 text-left hover:bg-gray-50"
-          data-testid="stops-record-legs"
-          onClick={() => setPop("legs")}
-        >
-          <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
-            Leg miles<span className="text-gray-400">practical · short · real · google ref ↗</span>
-          </div>
-          <div className="mt-1 text-xs text-gray-700">
-            Loaded {fmtMiles(data?.load.miles_practical)} mi practical · deadhead {fmtMiles(data?.load.miles_deadhead)} mi
-          </div>
-        </button>
-        <button
-          type="button"
-          className="rounded-sm border border-gray-200 bg-white p-2 text-left hover:bg-gray-50"
-          data-testid="stops-record-events"
-          onClick={() => setPop("events")}
-        >
-          <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
-            Arrival &amp; departure events<span className="text-gray-400">geo.geofence_events ↗</span>
-          </div>
-          <div className="mt-1 text-xs text-gray-700">
-            {data?.geofence_event_count ?? 0} fence events · {stops.filter((s) => !s.geocode_missing).length} of{" "}
-            {stops.length} stops geocoded
-          </div>
-        </button>
-      </div>
+      {/* LDT-2 DESIGN (owner 2026-09-06 04:2xZ "THE DESIGN … I WANT ALL THE SHIT IN THESE PICTURES"): the approved render
+          (LOAD-DETAIL-TABS-RENDERS-2026-09-05.html § Stops) shows LEG MILES and ARRIVAL & DEPARTURE EVENTS as two INLINE
+          cards — every leg row with practical · short · real · google ref, the fence/driver/manual events as a timeline —
+          not two one-line buttons hiding the data behind a pop-up. Every value is read from mdata.load_stops (planned),
+          geo.geofence_events (actual), telematics odometer (real) and load_stop_legs (miles). Nothing typed here. */}
+      {data ? <StopsDesignCards data={data} /> : null}
 
-      {pop === "legs" && data ? <LegMilesPopup data={data} onClose={() => setPop(null)} /> : null}
-      {pop === "events" && data ? <EventsPopup data={data} onClose={() => setPop(null)} /> : null}
       {openStop ? <StopDetailPopup stop={openStop} onClose={() => setOpenStop(null)} /> : null}
     </div>
   );

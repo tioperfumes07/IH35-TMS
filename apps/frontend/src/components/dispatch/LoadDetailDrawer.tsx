@@ -23,6 +23,7 @@ import { LoadDetailCostsTab } from "./LoadDetailCostsTab";
 import { MoneyProofTrailPanel } from "../accounting/MoneyProofTrailPanel";
 import { LoadDetailSettlementTab } from "./LoadDetailSettlementTab";
 import { TourPreSettlementTab } from "./TourPreSettlementTab";
+import { getTourReadoutForLoad } from "../../api/tourReadout";
 import { TourSettlementTab } from "./TourSettlementTab";
 import { LoadDetailGeofenceTimelineTab } from "./LoadDetailGeofenceTimelineTab";
 import { LoadStopsRecordTab } from "./LoadStopsRecordTab";
@@ -193,6 +194,11 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<DrawerTab>(initialTab);
+  const tourChip = useQuery({
+    queryKey: ["tour-readout", "load", operatingCompanyId ?? "", loadId ?? ""],
+    queryFn: () => getTourReadoutForLoad(loadId!, operatingCompanyId!),
+    enabled: Boolean(isOpen && loadId && operatingCompanyId),
+  });
   useEffect(() => {
     if (isOpen) setActiveTab(initialTab);
   }, [initialTab, isOpen, loadId]);
@@ -376,7 +382,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
     const fmt = (s?: { city: string | null; state: string | null }) => (s ? [s.city, s.state].filter(Boolean).join(", ") : "");
     const origin = fmt(stops[0]) || load.first_pickup_city || "—";
     const dest = fmt(stops[stops.length - 1]) || load.first_delivery_city || "—";
-    return `${origin} -> ${dest}`;
+    return `${origin} → ${dest}`;
   }, [load]);
   const canInvoiceFromLoad = useMemo(() => {
     if (!load) return false;
@@ -658,6 +664,19 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                   <span className="inline-block rounded-sm border border-gray-300 bg-gray-50 px-1.5 py-px text-xs font-semibold uppercase text-[#4B5563]">
                     {load.status}
                   </span>
+                  {/* LDT-PAGE design chip (render § Shared header): TOUR OPEN · PRE-SETTLEMENT S-… — read from the one tour readout. */}
+                  {tourChip.data?.tour ? (
+                    <button
+                      type="button"
+                      className="ldt-pill warn"
+                      style={{ textTransform: "uppercase", fontWeight: 700 }}
+                      data-testid="ldt0-tour-chip"
+                      onClick={() => setActiveTab("Pre-Settlement")}
+                      title="Open the Pre-Settlement tab"
+                    >
+                      Tour {tourChip.data.tour.is_open ? "open" : "closed"} · {tourChip.data.tour.is_open ? "pre-settlement" : "settlement"} {tourChip.data.tour.display_id ?? ""}
+                    </button>
+                  ) : null}
                 </div>
               ) : null}
             </div>
@@ -1644,6 +1663,8 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
             <Button type="button" variant="danger" size="sm" onClick={() => setCancelOpen(true)}>
               Cancel Load
             </Button>
+          ) : isPage ? (
+            <span />
           ) : (
             <Button type="button" variant="secondary" size="sm" onClick={onClose}>
               Close
@@ -1662,9 +1683,11 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
             >
               Edit
             </Button>
-            <Button type="button" size="sm" onClick={onClose}>
-              Close
-            </Button>
+            {isPage ? null : (
+              <Button type="button" size="sm" onClick={onClose}>
+                Close
+              </Button>
+            )}
           </div>
         </footer>
       </aside>

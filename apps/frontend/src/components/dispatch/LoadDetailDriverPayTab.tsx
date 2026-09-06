@@ -106,60 +106,66 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
   const { bill, mileage_lines, accessorials, deductions, broker_advances, rate_card, posting_preview, driver_id, driver_name } = data;
   const knownLineTotal = mileage_lines.reduce((s, l) => s + (l.amount_cents ?? 0), 0) + accessorials.reduce((s, a) => s + Math.round(Number(a.amount) * 100), 0);
 
+  const totalDebit = posting_preview.debit.reduce((n, d) => n + d.amount_cents, 0);
+  const totalCredit = posting_preview.credit.reduce((n, c) => n + c.amount_cents, 0);
+  const basisLabel = (kind: MileageLine["kind"]) => (kind === "loaded" ? (rate_card?.basis_type === "shortest" ? "Short" : "Practical") : "Deadhead (attributed to this pickup)");
+  const acct = (a: { account_label: { account_number: string; account_name: string } | null; account_id: string }) => (a.account_label ? `${a.account_label.account_number} ${a.account_label.account_name}` : a.account_id);
+  const escrow = deductions.filter((d) => /escrow/i.test(d.deduction_type) || /escrow/i.test(d.reason ?? ""));
+  const otherDeductions = deductions.filter((d) => !escrow.includes(d));
+  const money = (c: number) => formatMoneyCents(c, currencyCode);
+
+  // LDT-3 DESIGN (owner 2026-09-06 04:2xZ "THE DESIGN … ALL THE SHIT IN THESE PICTURES"): the approved render
+  // (LOAD-DETAIL-TABS-RENDERS-2026-09-05.html § Driver Pay) — one header line with the bill and its state, the pay table with
+  // LINE · BASIS · MILES · RATE · AMOUNT · SOURCE, then TWO cards side by side: DEDUCTIONS & ADVANCES (fuel advance · broker
+  // advance · escrow, each with its rule) and POSTING — WHEN THE TOUR CLOSES (ACCOUNT · DEBIT · CREDIT, totals in balance).
   return (
-    <div className="ldt-body">
+    <div className="ldt-body" data-testid="driver-pay-tab">
       <div className="ldt-rowbar">
         <div>
-          {driver_id ? (
-            <EntityLink kind="driver" id={driver_id} label={entityLabel(driver_name, driver_id, "Driver")} className="ldt-k" />
-          ) : (
-            <span className="ldt-muted">No driver</span>
-          )}
-          <span className="ldt-sub">{bill.bill_number} · <span className={pillClass(bill.status === "open" ? "pending" : "approved")}>{statusLabel(bill.status)}</span></span>
+          Driver bill <b className="ldt-k">{bill.bill_number}</b> ·{" "}
+          {driver_id ? <EntityLink kind="driver" id={driver_id} label={entityLabel(driver_name, driver_id, "Driver")} /> : <span className="ldt-muted">no driver</span>} ·{" "}
+          <span className={pillClass(bill.status === "open" ? "pending" : "approved")}>{statusLabel(bill.status)}</span>
+          {bill.status === "open" ? <span className="ldt-muted"> · accrues to the open tour</span> : null}
         </div>
-        {rate_card ? (
-          <span className="ldt-muted">
-            Rate card: {rate_card.basis_type === "per_load_pay" ? "flat per load" : "per mile"} · effective {formatDateUS(rate_card.effective_from)}
-          </span>
-        ) : (
-          <span className="ldt-muted">No active rate card on file for this driver</span>
-        )}
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          {rate_card ? (
+            <span className="ldt-muted">Rate card: {rate_card.basis_type === "per_load_pay" ? "flat per load" : "per mile"} · effective {formatDateUS(rate_card.effective_from)}</span>
+          ) : (
+            <span className="ldt-muted">No active rate card on file for this driver</span>
+          )}
+          <EntityLink kind="driver_bill" id={bill.id} label="Open driver bill" className="ldt-btn g" />
+        </div>
       </div>
 
-      <div className="ldt-card">
-        <div className="ldt-ch">Driver Pay</div>
-        <div className="ldt-rows ldt-rows-4">
+      <div className="ldt-card" data-testid="driver-pay-lines-card">
+        <div className="ldt-rows ldt-rows-pay">
           <div className="ldt-row head">
-            <span>Line</span><span>Miles</span><span>Rate</span><span>Amount</span>
+            <span>Line</span><span>Basis</span><span>Miles</span><span>Rate</span><span>Amount</span><span>Source</span>
           </div>
           {mileage_lines.map((line) => (
-            <div className="ldt-row" key={line.kind}>
+            <div className="ldt-row" key={line.kind} data-testid={`driver-pay-line-${line.kind}`}>
               <span>{MILE_KIND_LABEL[line.kind]}</span>
+              <span>{basisLabel(line.kind)}</span>
               <span className="ldt-m">{fmtMiles(line.miles)}</span>
-              <span className="ldt-m">
-                {line.miles == null ? <span title="no telematics miles for this leg">{DASH}</span> : fmtRate(line.rate_cents_per_mile)}
-              </span>
-              <span className="ldt-m">{line.amount_cents == null ? DASH : formatMoneyCents(line.amount_cents, currencyCode)}</span>
+              <span className="ldt-m">{line.miles == null ? <span title="no telematics miles for this leg">{DASH}</span> : fmtRate(line.rate_cents_per_mile)}</span>
+              <span className="ldt-m">{line.amount_cents == null ? DASH : money(line.amount_cents)}</span>
+              <span className="ldt-k ldt-muted">{line.kind === "loaded" ? "loaded_pay_cents" : "deadhead_pay_cents"} {line.amount_cents ?? DASH}{line.rate_cents_per_mile != null ? ` · rate ${(line.rate_cents_per_mile / 100).toFixed(2)}` : ""}</span>
             </div>
           ))}
           {accessorials.map((a) => (
             <div className="ldt-row" key={a.id}>
-              <span>
-                {a.line_type === "detention_pay" ? "Detention" : "Accessorial"} — {a.description}{" "}
-                <span className={pillClass(a.approval_status)}>{statusLabel(a.approval_status)}</span>
-              </span>
+              <span>{a.line_type === "detention_pay" ? "Detention" : "Accessorial"} — {a.description}</span>
+              <span><span className={pillClass(a.approval_status)}>{statusLabel(a.approval_status)}</span></span>
               <span className="ldt-m">{DASH}</span>
               <span className="ldt-m">{DASH}</span>
-              <span className="ldt-m">{formatMoneyCents(Math.round(Number(a.amount) * 100), currencyCode)}</span>
+              <span className="ldt-m">{money(Math.round(Number(a.amount) * 100))}</span>
+              <span className="ldt-k ldt-muted">settlement_lines {a.line_type}</span>
             </div>
           ))}
           <div className="ldt-row tot">
-            <span>Lines total (mileage + accessorials)</span><span /><span />
-            <span className="ldt-m">{formatMoneyCents(knownLineTotal, currencyCode)}</span>
-          </div>
-          <div className="ldt-row big">
-            <span>Gross (driver bill)</span><span /><span />
-            <span className="ldt-m">{formatMoneyCents(bill.gross_amount_cents, currencyCode)}</span>
+            <span>Gross pay on this load</span><span /><span /><span />
+            <span className="ldt-m" data-testid="driver-pay-gross">{money(bill.gross_amount_cents)}</span>
+            <span className="ldt-k ldt-muted">gross_amount_cents {bill.gross_amount_cents} {knownLineTotal === bill.gross_amount_cents ? "✔ adds up" : `≠ lines ${knownLineTotal}`}</span>
           </div>
         </div>
         <div className="ldt-hint">
@@ -167,70 +173,75 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
         </div>
       </div>
 
-      <div className="ldt-card">
-        <div className="ldt-ch">Deductions &amp; advances touching this load</div>
-        {deductions.length === 0 && broker_advances.length === 0 ? (
-          <div className="ldt-hint">None on file for this load.</div>
-        ) : (
-          <div className="ldt-rows ldt-rows-4">
-            <div className="ldt-row head">
-              <span>Item</span><span /><span>Status</span><span>Amount</span>
+      <div className="ldt-grid2">
+        <div className="ldt-card" data-testid="driver-pay-deductions-card">
+          <div className="ldt-ch"><span>Deductions &amp; advances touching this load</span><span className="ldt-sub">driver_finance</span></div>
+          <div className="ldt-rows ldt-rows-ded">
+            <div className="ldt-row">
+              <span>Fuel advance (company → driver)</span>
+              <span className="ldt-m">{money(0)}</span>
+              <span className="ldt-muted">company expense when it happens, never a receivable</span>
             </div>
-            {deductions.map((d) => (
-              <div className="ldt-row" key={d.id}>
-                <span>{d.reason ?? statusLabel(d.deduction_type)}</span>
-                <span />
-                <span className={pillClass(d.applied_to_settlement_id ? "approved" : "pending")}>
-                  {d.applied_to_settlement_id ? "Applied" : statusLabel(d.status)}
-                </span>
-                <span className="ldt-m">−{formatMoneyCents(Number(d.amount_cents), currencyCode)}</span>
+            {broker_advances.length === 0 ? (
+              <div className="ldt-row">
+                <span>Broker advance to driver (bill payment)</span>
+                <span className="ldt-m">{money(0)}</span>
+                <span className="ldt-muted">links to broker_advances by instrument</span>
               </div>
-            ))}
-            {broker_advances.map((b) => (
+            ) : broker_advances.map((b) => (
               <div className="ldt-row" key={b.id}>
-                <span>Broker advance — {statusLabel(b.category)}</span>
-                <span />
-                <span className={pillClass(b.disbursed_to_driver_bill_id ? "approved" : "pending")}>
-                  {b.disbursed_to_driver_bill_id ? "Disbursed" : "Pending disbursement"}
-                </span>
-                <span className="ldt-m">{formatMoneyCents(Number(b.disbursed_amount_cents ?? b.amount_cents), currencyCode)}</span>
+                <span>Broker advance to driver — {statusLabel(b.category)}</span>
+                <span className="ldt-m">{money(Number(b.disbursed_amount_cents ?? b.amount_cents))}</span>
+                <span className="ldt-muted">{b.disbursed_to_driver_bill_id ? "disbursed · links to broker_advances by instrument" : "pending disbursement"}</span>
+              </div>
+            ))}
+            {escrow.length === 0 ? (
+              <div className="ldt-row">
+                <span>Escrow contribution (this period)</span>
+                <span className="ldt-m">{money(0)}</span>
+                <span className="ldt-muted">liability · driver's own 2100 sub-account</span>
+              </div>
+            ) : escrow.map((d) => (
+              <div className="ldt-row" key={d.id}>
+                <span>Escrow contribution (this period)</span>
+                <span className="ldt-m">−{money(Number(d.amount_cents))}</span>
+                <span className="ldt-muted">liability · {d.applied_to_settlement_id ? "applied" : statusLabel(d.status)}{d.reason ? ` · ${d.reason}` : ""}</span>
+              </div>
+            ))}
+            {otherDeductions.map((d) => (
+              <div className="ldt-row" key={d.id}>
+                <span>{statusLabel(d.deduction_type)}</span>
+                <span className="ldt-m">−{money(Number(d.amount_cents))}</span>
+                <span className="ldt-muted">{d.applied_to_settlement_id ? "applied" : statusLabel(d.status)}{d.reason ? ` · ${d.reason}` : ""}</span>
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
 
-      <div className="ldt-card">
-        <div className="ldt-ch">Posting preview — when the tour closes</div>
-        {posting_preview.balanced ? (
-          <div className="ldt-rows ldt-rows-4">
-            <div className="ldt-row head">
-              <span>Account</span><span>Side</span><span /><span>Amount</span>
-            </div>
-            {posting_preview.debit.map((d) => (
-              <div className="ldt-row" key={`d-${d.account_id}`}>
-                <span>{d.account_label ? `${d.account_label.account_number} ${d.account_label.account_name}` : d.account_id}</span>
-                <span style={{ color: "var(--ldt-debit)", fontWeight: 600 }}>Debit</span>
-                <span />
-                <span className="ldt-m">{formatMoneyCents(d.amount_cents, currencyCode)}</span>
+        <div className="ldt-card" data-testid="driver-pay-posting-card">
+          <div className="ldt-ch"><span>Posting</span><span className="ldt-sub">when the tour closes</span></div>
+          {posting_preview.balanced ? (
+            <div className="ldt-rows ldt-rows-post">
+              <div className="ldt-row head"><span>Account</span><span>Debit</span><span>Credit</span></div>
+              {posting_preview.debit.map((d) => (
+                <div className="ldt-row" key={`d-${d.account_id}`}><span>{acct(d)}</span><span className="ldt-m">{(d.amount_cents / 100).toFixed(2)}</span><span /></div>
+              ))}
+              {posting_preview.credit.map((c) => (
+                <div className="ldt-row" key={`c-${c.account_id}`}><span>{acct(c)}</span><span /><span className="ldt-m">{(c.amount_cents / 100).toFixed(2)}</span></div>
+              ))}
+              <div className="ldt-row tot" data-testid="driver-pay-posting-totals">
+                <span>Totals · {totalDebit === totalCredit ? "in balance" : "OUT OF BALANCE"}</span>
+                <span className="ldt-m">{(totalDebit / 100).toFixed(2)}</span>
+                <span className="ldt-m">{(totalCredit / 100).toFixed(2)}</span>
               </div>
-            ))}
-            {posting_preview.credit.map((c) => (
-              <div className="ldt-row" key={`c-${c.account_id}`}>
-                <span>{c.account_label ? `${c.account_label.account_number} ${c.account_label.account_name}` : c.account_id}</span>
-                <span style={{ color: "var(--ldt-accent)", fontWeight: 600 }}>Credit</span>
-                <span />
-                <span className="ldt-m">{formatMoneyCents(c.amount_cents, currencyCode)}</span>
-              </div>
-            ))}
-            <div className="ldt-row tot">
-              <span>In balance</span><span /><span /><span className="ldt-m"><span className="ldt-pill ok">Balanced</span></span>
             </div>
-          </div>
-        ) : (
-          <div className="ldt-note warn">Preview unavailable — {posting_preview.unresolved_reason ?? "GL account not resolved"}.</div>
-        )}
-        <div className="ldt-hint">Preview only — nothing here posts. The real journal entry is created when the driver's settlement pay run closes.</div>
+          ) : (
+            <div className="ldt-note warn">Preview unavailable — {posting_preview.unresolved_reason ?? "GL account not resolved"}.</div>
+          )}
+        </div>
+      </div>
+      <div className="ldt-note warn">
+        Nothing posts here while the tour is open (LAW §2 "open = pre-settlement"). The Amount column is computed <b>from the same rate the line stores</b> — miles × rate is the only path. The real journal entry is created when the driver's settlement pay run closes.
       </div>
     </div>
   );
