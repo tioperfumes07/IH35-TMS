@@ -520,15 +520,11 @@ export async function postVoidReversal(
   // document with zero posted lines could still (in principle) carry a bank match, and the owner's
   // rule has no "only if something reversed" exception: "no voided document may leave a bank
   // transaction categorized against it."
-  await unmatchBankTransactionsForVoid(
-    client,
-    {
-      operatingCompanyId: params.operatingCompanyId,
-      entityType: params.entityType,
-      entityId: params.entityId,
-    },
-    actor
-  );
+  await unmatchBankTransactionsForVoid(client, {
+    operatingCompanyId: params.operatingCompanyId,
+    entityType: params.entityType,
+    entityId: params.entityId,
+  }, actor);
 
   const originalLines = await readOriginalGlPostings(client, params.operatingCompanyId, params.entityType, params.entityId);
   if (originalLines.length === 0) {
