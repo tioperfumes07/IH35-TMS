@@ -22,9 +22,9 @@
       "date": "2026-08-12"
     },
     "linehaul_amount": 1700,
-    "loaded_miles": 721.4,
+    "loaded_miles": 716.8,
     "loaded_rate": 0.45,
-    "empty_miles": 232.8,
+    "empty_miles": 222.0,
     "empty_rate": 0.45,
     "fuel_rows": [
       {
@@ -89,9 +89,9 @@
       "date": "2026-08-13"
     },
     "linehaul_amount": 525,
-    "loaded_miles": 442.2,
+    "loaded_miles": 436.1,
     "loaded_rate": 0.45,
-    "empty_miles": 109.8,
+    "empty_miles": 108.2,
     "empty_rate": 0.45,
     "fuel_rows": [
       {
