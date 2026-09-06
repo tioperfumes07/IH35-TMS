@@ -7693,7 +7693,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1052,
+  "total_claimed": 1053,
   "10441": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
@@ -7713,5 +7713,10 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-06",
     "purpose": "verify-driver-bill-rate-per-mile-not-blended (CC-3 finding: driver_bills.rate_per_mile_cents must be a real resolved rate, never round(loaded+deadhead totalCents / loaded-only milesBasis))"
+  },
+  "10453": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-bank-fee-recovery-role-bound (ROUND 9 BANK-FEE-ROLE: 'bank_fee_recovery' role admitted by chart_of_accounts_roles CHECK + bound live to USMCA account 6300 Bank Service Charges & Wire Fees)"
   }
 }
