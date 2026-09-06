@@ -5782,6 +5782,11 @@
     "claimed_at": "2026-09-06",
     "purpose": "verify-no-future-dated-seed-expenses wiring (EXP-DATE guard merged in #20917 as an orphan; verify:guard-wired reddened main/locked-guards; step runs --selftest + static half)"
   },
+  "10477": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-banking-categorize-boxes (BANK-DESIGN-1 owner 2026-09-06: two .ldt-card.strong boxes in the Banking categorize row, match candidates as one Date · Description · Type · Amount · Gap register, Load-costs palette)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
