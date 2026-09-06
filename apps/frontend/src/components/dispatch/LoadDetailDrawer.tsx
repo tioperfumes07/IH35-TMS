@@ -154,6 +154,11 @@ function loadHasCrossBorder(load: LoadDetail): boolean {
 
 const FACTORING_PACKAGE_META_PREFIX = "IH35_FACTORING_PACKAGE_V1::";
 
+// LDT-1..7 (2026-09-06): every designed tab (Costs' 12-column register included) is a wide readout —
+// the 600px default drawer crams them behind horizontal scroll. Single definition so the Costs
+// branch and the general "every other designed tab" branch can never drift apart.
+const WIDE_DRAWER_CLASS = "fixed right-0 top-0 z-[210] flex h-full w-full flex-col overflow-hidden bg-white shadow-xl md:w-[92vw] xl:w-[1400px]";
+
 type FactoringPackageMeta = {
   generated_at: string | null;
   emailed_at: string | null;
@@ -630,9 +635,11 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
           // LDT-1..7 (2026-09-06): every designed tab is a wide readout (cards, legs table, checklists) — the 600px
           // drawer crams them behind horizontal scroll (measured live 02:19Z on 13526 Pre-Settlement). Wide for all
           // designed tabs; Overview keeps the narrow drawer.
-          activeTab !== "Overview"
-            ? "fixed right-0 top-0 z-[210] flex h-full w-full flex-col overflow-hidden bg-white shadow-xl md:w-[92vw] xl:w-[1400px]"
-            : "fixed right-0 top-0 z-[210] flex h-full w-full flex-col overflow-hidden bg-white shadow-xl md:w-[600px]"
+          activeTab === "Costs"
+            ? WIDE_DRAWER_CLASS
+            : activeTab !== "Overview"
+              ? WIDE_DRAWER_CLASS
+              : "fixed right-0 top-0 z-[210] flex h-full w-full flex-col overflow-hidden bg-white shadow-xl md:w-[600px]"
         }
         data-testid={isPage ? "load-costs-load-page" : "load-detail-drawer"}
         data-surface="load-detail"
