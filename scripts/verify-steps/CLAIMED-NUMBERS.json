@@ -5922,6 +5922,11 @@
     "claimed_at": "2026-09-06",
     "purpose": "verify-cash-flow-rolling-ledger (CASH-FLOW-02, owner order 2026-09-06 20:1xZ: rolling A/R+A/P ledger with real dates -- expected income automatically from loads/invoices/factoring, expected expenses from bills/driver pay/driver bills/unmatched expenses/loan schedule -- carry-forward until paid/matched, day grid with running cash from the live bank balance) -- 3rd renumber of this session: originally claimed 10517 (collided), renumbered 10541 (collided again with a fast-moving settlement lane also claiming in the cc-1 band), landing here at 10549. NOTE FOR THE LEAD: CLAIMED-NUMBERS.json is colliding multiple times per hour today across concurrent sessions writing to different byte-ranges of the same file with no git conflict -- worth a systemic fix (e.g. per-number files, or a DB-backed claim) rather than a single shared JSON."
   },
+  "10553": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-tour-settlement-company-link (ROUND 16.2 item 3: company settlement number was dead text on TourSettlementTab; now a real EntityLink to CompanySettlementsPage via a query-param deep link)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",

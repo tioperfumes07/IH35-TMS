@@ -8,8 +8,9 @@
 // Read-only: no create/void/edit here. Money uses the app cents formatter; a voided settlement's
 // net is a dash, never a fake $0.00 (law §8, dash-never-zero). Styling uses the .ldt-* palette
 // (styles/tokens-load-detail.css) matching the Load-detail Costs / Tour-settlement surfaces.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -50,6 +51,11 @@ export function CompanySettlementsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [selected, setSelected] = useState<CompanySettlementListRow | null>(null);
+  // ROUND 16.2 item 3 — EntityLink kind="company_settlement" (EntityLink.tsx) drills here via
+  // ?id=<company_settlement_id>. Auto-open that row's detail panel once the list loads, same
+  // pattern SettlementDetailPage uses for ?settlement_id.
+  const [searchParams] = useSearchParams();
+  const deepLinkId = searchParams.get("id");
 
   const listQuery = useQuery({
     queryKey: ["accounting", "company-settlements", companyId],
@@ -58,6 +64,12 @@ export function CompanySettlementsPage() {
   });
 
   const rows = listQuery.data?.company_settlements ?? [];
+
+  useEffect(() => {
+    if (!deepLinkId || selected) return;
+    const match = rows.find((r) => r.id === deepLinkId);
+    if (match) setSelected(match);
+  }, [deepLinkId, rows, selected]);
 
   const columns = useMemo<ParityColumn<CompanySettlementListRow>[]>(
     () => [

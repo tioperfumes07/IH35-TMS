@@ -64,7 +64,17 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
       </div>
 
       <div className="ldt-card" data-testid="company-settlement-card">
-        <div className="ldt-ch"><span>Company settlement {t.is_open ? "(on close)" : ""}</span><span className="ldt-open">{cs.display_id ?? "not opened yet"}{cs.status ? ` · ${cs.status}` : ""}</span></div>
+        <div className="ldt-ch">
+          <span>Company settlement {t.is_open ? "(on close)" : ""}</span>
+          <span className="ldt-open" data-testid="company-settlement-number">
+            {cs.id && cs.display_id ? (
+              <EntityLink kind="company_settlement" id={cs.id} label={cs.display_id} />
+            ) : (
+              "not opened yet"
+            )}
+            {cs.status ? ` · ${cs.status}` : ""}
+          </span>
+        </div>
         <div className="ldt-rows">
           <div className="ldt-row"><span>Revenue ({r.legs.length} load{r.legs.length === 1 ? "" : "s"} so far)</span><span className="ldt-m">{money(cs.revenue_cents, currencyCode)}</span></div>
           <div className="ldt-row"><span>Costs ({r.costs.length} entries)</span><span className="ldt-m">−{money(cs.costs_cents, currencyCode)}</span></div>

@@ -46,6 +46,7 @@ import {
 } from "./escrow-resolver.service.js";
 import { resolveSettlementMinNet } from "./settlement-deduction-cap.service.js";
 import { stampTripClosedForBookendedSettlement } from "./settlements-load-bookended.service.js";
+import { closeCompanySettlementAlongsideDriverSettlement } from "../accounting/company-settlement-close.service.js";
 
 import {
   SETTLEMENT_GL_POSTING_FLAG_KEY,
@@ -816,6 +817,20 @@ export async function closeSettlementPayRun(
           actorUserId: actor.userId,
         });
       }
+      // ROUND 16.2 CLOSE-CREATES-COMPANY-SETTLEMENT (owner 2026-09-06 20:3xZ) — "one close, two
+      // settlements" (25-TASK #4) was wired into the driver-PWA tour-close path but NOT into this
+      // payrun-close path — the exact path SETL-CLOSE-POST-A's real --apply calls. Same rule as
+      // tour-close.service.ts: whenever the driver settlement ends up closed (freshly stamped now,
+      // or already closed from an earlier call), the company settlement must exist alongside it.
+      // Idempotent (find-or-create by exact period, at-most-one-link junction) — safe to call on
+      // every re-entry, never a second computation.
+      if (settlement.settlement_model === "load_bookended" && (trip_close_stamp?.stamped || settlement.trip_closed_at)) {
+        await closeCompanySettlementAlongsideDriverSettlement(client, {
+          operatingCompanyId: opco,
+          driverSettlementId: settlementId,
+          actorUserId: actor.userId,
+        });
+      }
       return {
         result: "posted" as const,
         posting_enabled: true,
@@ -1041,6 +1056,16 @@ export async function closeSettlementPayRun(
       trip_close_stamp = await stampTripClosedForBookendedSettlement(client, {
         settlementId,
         operatingCompanyId: opco,
+        actorUserId: actor.userId,
+      });
+    }
+    // ROUND 16.2 CLOSE-CREATES-COMPANY-SETTLEMENT — same rule as the idempotent-reentry branch
+    // above: whenever the driver settlement ends up closed, the company settlement must exist
+    // alongside it, in this SAME transaction (a failure here rolls back the whole payrun close).
+    if (settlement.settlement_model === "load_bookended" && (trip_close_stamp?.stamped || settlement.trip_closed_at)) {
+      await closeCompanySettlementAlongsideDriverSettlement(client, {
+        operatingCompanyId: opco,
+        driverSettlementId: settlementId,
         actorUserId: actor.userId,
       });
     }
