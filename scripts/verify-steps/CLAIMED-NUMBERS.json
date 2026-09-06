@@ -7708,5 +7708,10 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-06",
     "purpose": "verify-appointments-required-on-book (DSP-49: Book Load requires a pickup appointment on the first pickup and a delivery appointment on the last delivery, both frontend Controller-gated and backend-rejected)"
+  },
+  "10451": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-driver-bill-rate-per-mile-not-blended (CC-3 finding: driver_bills.rate_per_mile_cents must be a real resolved rate, never round(loaded+deadhead totalCents / loaded-only milesBasis))"
   }
 }
