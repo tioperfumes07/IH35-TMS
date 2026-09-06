@@ -88,6 +88,12 @@ type Props = {
    * those are not part of the load-costs context (owner order 2026-09-05). Callers on
    * /accounting/** may omit this; it is inferred from the pathname as a fallback. */
   openedFrom?: "accounting" | "dispatch";
+  /** LDT-PAGE (owner 2026-09-06 04:0xZ "I DO NOT SEE THE APP LIKE THE PICTURES"): the approved render
+   * (docs/design/reference/LOAD-DETAIL-TABS-RENDERS-LIVE-13526-2026-09-05.html) is a full PAGE — breadcrumb
+   * Accounting › Load costs › 13526, shared header (every stat opens its source), the tab row, then the tab —
+   * reached by clicking a load on Dispatch → Load costs. `mode="page"` renders that page inline (no portal,
+   * no backdrop, no Close, full width) with the same header, stats, tabs and content the drawer carries. */
+  mode?: "drawer" | "page";
   onClose: () => void;
 };
 
@@ -182,7 +188,8 @@ function serializeFactoringPackageNotes(meta: FactoringPackageMeta, visibleNotes
   return `${FACTORING_PACKAGE_META_PREFIX}${JSON.stringify(meta)}\n${visibleNotes.trim()}`.trim();
 }
 
-export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, operatingCompanyId, initialTab = "Overview", openedFrom, onClose }: Props) {
+export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, operatingCompanyId, initialTab = "Overview", openedFrom, mode = "drawer", onClose }: Props) {
+  const isPage = mode === "page";
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<DrawerTab>(initialTab);
@@ -603,11 +610,14 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
 
   // LV-WO-LOAD-DRAWER: portal to document.body so parent overflow/transform cannot clip the fixed panel
   // (Devin Live FAIL: WO→load reached /dispatch/loads/:id?view=list with no visible drawer).
-  return createPortal(
+  const body = (
     <>
-      <div className="fixed inset-0 z-[200] bg-black/30" onClick={onClose} data-testid="load-detail-drawer-backdrop" />
+      {isPage ? null : <div className="fixed inset-0 z-[200] bg-black/30" onClick={onClose} data-testid="load-detail-drawer-backdrop" />}
       <aside
         className={
+          isPage
+            ? "flex w-full flex-col rounded-sm border border-gray-200 bg-white"
+            :
           // The Costs tab hosts the 12-column QuickBooks register (natural width ~1365px). At the
           // default 600px it is crammed behind a horizontal scrollbar and reads as "no creator", so
           // the drawer widens for that tab only, capped at the viewport on smaller screens.
@@ -618,17 +628,24 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
             ? "fixed right-0 top-0 z-[210] flex h-full w-full flex-col overflow-hidden bg-white shadow-xl md:w-[92vw] xl:w-[1400px]"
             : "fixed right-0 top-0 z-[210] flex h-full w-full flex-col overflow-hidden bg-white shadow-xl md:w-[600px]"
         }
-        data-testid="load-detail-drawer"
+        data-testid={isPage ? "load-costs-load-page" : "load-detail-drawer"}
         data-surface="load-detail"
         data-drawer-tab={activeTab}
         data-load-id={loadId}
-        role="dialog"
-        aria-modal="true"
+        data-mode={mode}
+        {...(isPage ? {} : { role: "dialog", "aria-modal": true })}
       >
         {/* The header is outside the only vertical scroller. A sticky child of the
             scrolling aside still left the live tab strip off-screen/intercepted;
             a fixed flex region makes pointer reachability structural. */}
         <header className="z-20 shrink-0 border-b border-gray-200 bg-white p-4">
+          {isPage ? (
+            <nav className="mb-2 text-xs text-gray-500" data-testid="load-costs-load-breadcrumb" aria-label="Breadcrumb">
+              <Link className="hover:underline" to="/accounting">Accounting</Link> <span aria-hidden="true">›</span>{" "}
+              <Link className="hover:underline" to="/accounting/load-costs">Load costs</Link> <span aria-hidden="true">›</span>{" "}
+              <span className="font-semibold text-gray-800">{load?.load_number ?? "…"}</span>
+            </nav>
+          ) : null}
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-page-title font-semibold text-gray-900">
@@ -662,9 +679,13 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
               >
                 Record expense
               </Button>
-              <Button type="button" variant="secondary" size="sm" onClick={onClose}>
-                Close
-              </Button>
+              {isPage ? (
+                <Link className="text-xs font-semibold text-slate-700 underline" to="/accounting/load-costs" data-testid="load-costs-load-back">← Load costs</Link>
+              ) : (
+                <Button type="button" variant="secondary" size="sm" onClick={onClose}>
+                  Close
+                </Button>
+              )}
             </div>
           </div>
           {load ? (
@@ -751,7 +772,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
           </div>
         ) : null}
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-4" data-testid="load-detail-drawer-scroll-body">
+        <div className={isPage ? "p-4" : "min-h-0 flex-1 overflow-y-auto p-4"} data-testid="load-detail-drawer-scroll-body">
           {activeTab === "Overview" ? (
             load ? (
               <div className="space-y-3 text-xs">
@@ -1752,9 +1773,10 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
           onClose={() => setRecordExpenseOpen(false)}
         />
       ) : null}
-    </>,
-    document.body
+    </>
   );
+  // LDT-PAGE: the page renders inline where it is mounted; the drawer portals to body so parent overflow cannot clip it.
+  return isPage ? body : createPortal(body, document.body);
 }
 
 export {
