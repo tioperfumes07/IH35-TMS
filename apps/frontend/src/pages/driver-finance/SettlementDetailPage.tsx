@@ -39,6 +39,7 @@ import { previewTeamSettlementSplit } from "../../api/mdata";
 import { DebtBanner } from "./components/DebtBanner";
 import { DeadheadPaySection } from "./components/DeadheadPaySection";
 import { DeductionsSection, type DeductionRow } from "./components/DeductionsSection";
+import { CreateSettlementDeductionDrawer } from "../drivers/components/CreateSettlementDeductionDrawer";
 import { EarningsSection } from "./components/EarningsSection";
 import { EscrowVisualizer } from "./components/EscrowVisualizer";
 import { SETTLEMENT_DISPUTE_CATEGORY_OPTIONS } from "./settlementDisputeCategories";
@@ -102,6 +103,7 @@ export function SettlementDetailPage() {
   const [ackChecked, setAckChecked] = useState(false);
   const [liabilityOpen, setLiabilityOpen] = useState(false);
   const [holdTarget, setHoldTarget] = useState<DeductionRow | null>(null);
+  const [addDeductionOpen, setAddDeductionOpen] = useState(false);
   const [bankReference, setBankReference] = useState("");
   const [bounceReason, setBounceReason] = useState("");
   const [manualPaymentMethod, setManualPaymentMethod] = useState("check");
@@ -735,7 +737,18 @@ export function SettlementDetailPage() {
             onHold={(row) => setHoldTarget(row)}
             onResume={(row) => void handleResumeDeduction(row)}
             isOpen={!settlementIsLocked}
+            onAdd={driverId ? () => setAddDeductionOpen(true) : undefined}
           />
+          {driverId && companyId ? (
+            <CreateSettlementDeductionDrawer
+              open={addDeductionOpen}
+              operatingCompanyId={companyId}
+              presetDriverId={driverId}
+              presetDriverName={String(settlement.driver_full_name ?? "")}
+              onClose={() => setAddDeductionOpen(false)}
+              onCreated={() => void detailQuery.refetch()}
+            />
+          ) : null}
           {/* Settlement payout poster creates a real accounting.bills row + journal entry per
               load this settlement pays out — drill-through into that posting. Empty when no
               bills were posted yet (honest-empty, not fabricated). */}

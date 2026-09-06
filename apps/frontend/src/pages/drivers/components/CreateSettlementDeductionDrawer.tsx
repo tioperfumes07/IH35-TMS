@@ -28,10 +28,15 @@ type Props = {
   operatingCompanyId: string;
   onClose: () => void;
   onCreated: () => void;
+  // SET-01 — opened FROM a settlement's own detail page (never a picker there: this deduction is
+  // for the settlement you're already looking at, not a new one to go find). When set, the driver
+  // step is a fixed read-only label instead of the EntityPicker below.
+  presetDriverId?: string | null;
+  presetDriverName?: string | null;
 };
 
-export function CreateSettlementDeductionDrawer({ open, operatingCompanyId, onClose, onCreated }: Props) {
-  const [driverId, setDriverId] = useState<string | null>(null);
+export function CreateSettlementDeductionDrawer({ open, operatingCompanyId, onClose, onCreated, presetDriverId, presetDriverName }: Props) {
+  const [driverId, setDriverId] = useState<string | null>(presetDriverId ?? null);
   const [deductionType, setDeductionType] = useState<CreateSettlementDeductionTypedType | "">("");
   const [amountUsd, setAmountUsd] = useState<number | null>(null);
   const [loadId, setLoadId] = useState<string | null>(null);
@@ -46,7 +51,7 @@ export function CreateSettlementDeductionDrawer({ open, operatingCompanyId, onCl
   const [attachmentCount, setAttachmentCount] = useState(0);
 
   const reset = () => {
-    setDriverId(null);
+    setDriverId(presetDriverId ?? null);
     setDeductionType("");
     setAmountUsd(null);
     setLoadId(null);
@@ -92,16 +97,22 @@ export function CreateSettlementDeductionDrawer({ open, operatingCompanyId, onCl
       <div className="space-y-3 text-xs text-gray-700" data-testid="create-settlement-deduction-drawer">
         <label className="block text-xs">
           <span className="text-slate-600">Driver *</span>
-          <EntityPicker
-            kind="driver"
-            operatingCompanyId={operatingCompanyId}
-            value={driverId}
-            onChange={(id) => setDriverId(id)}
-            allowCreate={false}
-            placeholder="Select a driver…"
-            className="mt-1"
-            dataTestId="create-settlement-deduction-driver"
-          />
+          {presetDriverId ? (
+            <div className="mt-1 rounded-sm border border-gray-200 bg-gray-50 px-2 py-1.5" data-testid="create-settlement-deduction-driver-preset">
+              {presetDriverName ?? presetDriverId} <span className="text-slate-500">— this settlement's driver</span>
+            </div>
+          ) : (
+            <EntityPicker
+              kind="driver"
+              operatingCompanyId={operatingCompanyId}
+              value={driverId}
+              onChange={(id) => setDriverId(id)}
+              allowCreate={false}
+              placeholder="Select a driver…"
+              className="mt-1"
+              dataTestId="create-settlement-deduction-driver"
+            />
+          )}
         </label>
 
         <label className="block text-xs">
