@@ -1,12 +1,16 @@
 #!/usr/bin/env node
-// L5 GUARD — driver settlement detail KPI grid transcribes the owner-approved reference exactly.
-// Reference: docs/design/reference/DRIVER-SETTLEMENT-DETAIL-REFERENCE-2026-09-05.html (.kpis / .kpi).
-// Owner defect (inv #11): "boxes out of proportion" on the settlement detail. The reference is a 6-column
-// grid of 93px tiles on #F4F7FA / #C7D2DC. This guard locks that transcription so it cannot silently drift:
+// L5 GUARD — driver settlement detail KPI grid, 93px tile contract.
+// SETL-DETAIL-01 (lead ROUND 14, 2026-09-06 — owner: "following much of Load Costs") superseded the
+// original 2026-09-05 reference's six labels (Loaded pay/Empty miles pay/Additional pay/
+// Reimbursements/Deductions/Net pay) with Load-Costs-framed labels: Revenue/Driver pay/
+// Reimbursements/Deductions/Net pay/Company margin — a deliberate, dated, explicit instruction
+// (same class of legitimate-guard-update as FACTORING-GUARDS: the underlying feature correctly
+// evolved, so the check is updated to match, never edited to silently paper over a real defect).
+// The style contract (6-column, 93px tiles, #F4F7FA/#C7D2DC) is UNCHANGED and still locked here:
 //   1. the component renders a 6-column grid (repeat(6,1fr)) with the settlement-kpi-grid testid
 //   2. tiles are 93px tall on the reference surface (#F4F7FA) + rule (#C7D2DC)
-//   3. all six reference labels are present (Loaded pay/Empty miles pay/Additional pay/Reimbursements/Deductions/Net pay)
-//   4. the detail page mounts the grid with the S.1-sourced totals (loadedPayCents/emptyPayCents/netPayCents)
+//   3. all six current labels are present
+//   4. the detail page mounts the grid fed from the shared tour-readout (never a second, drifting source)
 // It asserts NO posting/GL path — this is a read-only summary of already-computed settlement totals.
 import { readFileSync } from "node:fs";
 
@@ -14,7 +18,7 @@ const GRID = "apps/frontend/src/pages/driver-finance/components/SettlementKpiGri
 const PAGE = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
 const fail = (m) => { console.error(`FAIL verify-settlement-detail-kpi-grid: ${m}`); process.exit(1); };
 
-const LABELS = ["Loaded pay", "Empty miles pay", "Additional pay", "Reimbursements", "Deductions", "Net pay"];
+const LABELS = ["Revenue", "Driver pay", "Reimbursements", "Deductions", "Net pay", "Company margin"];
 
 function verify(grid, page) {
   const f = [];
@@ -29,10 +33,10 @@ function verify(grid, page) {
   for (const l of LABELS) {
     if (!grid.includes(`label="${l}"`)) f.push(`label:${l}`);
   }
-  // 4 — page mounts the grid with the S.1-sourced totals
+  // 4 — page mounts the grid fed from the shared readout
   if (!/<SettlementKpiGrid/.test(page)) f.push("page-mounts-grid");
-  if (!/loadedPayCents=\{summary\.earningsTotal\}/.test(page)) f.push("page-loaded");
-  if (!/emptyPayCents=\{summary\.deadheadTotal\}/.test(page)) f.push("page-empty");
+  if (!/revenueCents=\{readout\?\.company_settlement\?\.revenue_cents/.test(page)) f.push("page-revenue");
+  if (!/companyMarginCents=\{readout\?\.company_settlement\?\.margin_cents/.test(page)) f.push("page-margin");
   if (!/netPayCents=\{kpi\.netPayCents\}/.test(page)) f.push("page-net");
   return f;
 }
@@ -51,6 +55,8 @@ if (process.argv.includes("--selftest")) {
     [grid.replace('label="Net pay"', 'label="Net"'), page],
     [grid, page.replace('<SettlementKpiGrid', '<Nope')],
     [grid, page.replace('netPayCents={kpi.netPayCents}', 'netPayCents={0}')],
+    [grid, page.replace('revenueCents={readout?.company_settlement?.revenue_cents', 'revenueCents={0} //readout?.company_settlement?.revenue_cents')],
+    [grid, page.replace('companyMarginCents={readout?.company_settlement?.margin_cents', 'companyMarginCents={0} //readout?.company_settlement?.margin_cents')],
   ];
   for (const [g, p] of mutations) {
     if (g === grid && p === page) fail("a selftest mutation did not change the source — the check is stale");

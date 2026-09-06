@@ -154,6 +154,14 @@ export function createSettlement(payload: Record<string, unknown>) {
   return apiRequest<Record<string, unknown>>("/api/v1/driver-finance/settlements", { method: "POST", body: payload });
 }
 
+// SETL-DETAIL-01 — NUMBER box, typed-wins (blank body = no-op, keeps the auto-assigned number).
+export function patchSettlementDisplayId(id: string, companyId: string, displayId: string) {
+  return apiRequest<{ updated: boolean; display_id: string }>(`/api/v1/driver-finance/settlements/${id}/display-id?${q(companyId)}`, {
+    method: "PATCH",
+    body: { operating_company_id: companyId, display_id: displayId },
+  });
+}
+
 export function acknowledgeSettlement(id: string, companyId: string, etag?: string) {
   return apiRequest<Record<string, unknown>>(`/api/v1/driver-finance/settlements/${id}/acknowledge?${q(companyId)}`, {
     method: "PATCH",

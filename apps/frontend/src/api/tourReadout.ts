@@ -4,6 +4,7 @@ import { apiRequest } from "./client";
 export type TourLeg = {
   load_id: string; load_number: string; trip_type: string | null; status: string; is_delivered: boolean; is_cancelled?: boolean;
   lane: string; pickup_city: string | null; delivery_city: string | null;
+  pickup_date: string | null; delivery_date: string | null;
   revenue_cents: number; costs_cents: number; driver_pay_cents: number; margin_cents: number; margin_pct: number | null;
   miles_practical: number | null; miles_shortest: number | null; miles_deadhead: number | null; miles_real: number | null;
   pod_count: number; cost_count: number; is_this_load: boolean;

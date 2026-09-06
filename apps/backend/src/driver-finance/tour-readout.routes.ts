@@ -56,6 +56,10 @@ const nOrNull = (v: unknown) => (v == null ? null : Number(v));
 export type TourLeg = {
   load_id: string; load_number: string; trip_type: string | null; status: string; is_delivered: boolean; is_cancelled: boolean;
   lane: string; pickup_city: string | null; delivery_city: string | null;
+  /** SETL-DETAIL-01 — first pickup stop's scheduled date / last delivery stop's scheduled date, for
+   *  the settlement-detail header's "tour legs NB→TR→SB with dates" and the LOADS register. Dash
+   *  (null), never fabricated, when a stop genuinely carries no scheduled_arrival_at. */
+  pickup_date: string | null; delivery_date: string | null;
   revenue_cents: number; costs_cents: number; driver_pay_cents: number; margin_cents: number; margin_pct: number | null;
   miles_practical: number | null; miles_shortest: number | null; miles_deadhead: number | null; miles_real: number | null;
   pod_count: number; cost_count: number; is_this_load: boolean;
@@ -96,6 +100,7 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
   const legsRes = await client.query<{
     load_id: string; load_number: string; trip_type: string | null; status: string; rate_total_cents: unknown;
     miles_practical: unknown; miles_shortest: unknown; miles_deadhead: unknown; pickup_city: string | null; pickup_state: string | null; delivery_city: string | null; delivery_state: string | null;
+    pickup_date: string | null; delivery_date: string | null;
     unit_number: string | null; expense_cents: unknown; bill_cents: unknown; driver_pay_cents: unknown; cost_count: unknown; pod_count: unknown; miles_real: unknown;
   }>(
     `WITH legs AS (
@@ -109,6 +114,8 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
             (SELECT s1.state FROM mdata.load_stops s1 WHERE s1.load_id = l.id AND s1.soft_deleted_at IS NULL ORDER BY s1.sequence_number ASC LIMIT 1) AS pickup_state,
             (SELECT s2.city FROM mdata.load_stops s2 WHERE s2.load_id = l.id AND s2.soft_deleted_at IS NULL ORDER BY s2.sequence_number DESC LIMIT 1) AS delivery_city,
             (SELECT s2.state FROM mdata.load_stops s2 WHERE s2.load_id = l.id AND s2.soft_deleted_at IS NULL ORDER BY s2.sequence_number DESC LIMIT 1) AS delivery_state,
+            (SELECT COALESCE(s1.actual_arrival_at, s1.appointment_start_at, s1.scheduled_arrival_at)::text FROM mdata.load_stops s1 WHERE s1.load_id = l.id AND s1.soft_deleted_at IS NULL ORDER BY s1.sequence_number ASC LIMIT 1) AS pickup_date,
+            (SELECT COALESCE(s2.actual_arrival_at, s2.appointment_start_at, s2.scheduled_arrival_at)::text FROM mdata.load_stops s2 WHERE s2.load_id = l.id AND s2.soft_deleted_at IS NULL ORDER BY s2.sequence_number DESC LIMIT 1) AS delivery_date,
             u.unit_number,
             (SELECT COALESCE(SUM(e.total_amount_cents),0) FROM accounting.expenses e WHERE e.load_id = l.id AND e.operating_company_id = l.operating_company_id AND e.status <> 'void') AS expense_cents,
             (SELECT COALESCE(SUM(b.amount_cents),0) FROM accounting.bills b WHERE b.operating_company_id = l.operating_company_id AND b.status <> 'voided' AND b.voided_at IS NULL
@@ -133,6 +140,7 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
       load_id: r.load_id, load_number: r.load_number, trip_type: r.trip_type, status: r.status, is_delivered: DELIVERED.has(String(r.status).toLowerCase()), is_cancelled: cancelled,
       lane: `${[r.pickup_city, r.pickup_state].filter(Boolean).join(" ")} → ${[r.delivery_city, r.delivery_state].filter(Boolean).join(" ")}`.trim(),
       pickup_city: r.pickup_city, delivery_city: r.delivery_city,
+      pickup_date: r.pickup_date, delivery_date: r.delivery_date,
       revenue_cents: revenue, costs_cents: costs, driver_pay_cents: pay, margin_cents: margin, margin_pct: revenue > 0 ? Math.round((margin / revenue) * 1000) / 10 : null,
       miles_practical: nOrNull(r.miles_practical), miles_shortest: nOrNull(r.miles_shortest), miles_deadhead: nOrNull(r.miles_deadhead), miles_real: nOrNull(r.miles_real),
       pod_count: n(r.pod_count), cost_count: n(r.cost_count), is_this_load: thisLoadId != null && r.load_id === thisLoadId,
