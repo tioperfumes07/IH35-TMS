@@ -571,3 +571,5 @@ infra table component whenever convenient — not blocking anything right now.
 
 ## 2026-09-06 01:45Z — LEAD (ROUND 6): see ONE-ITEM-INSTRUCTIONS § ROUND 6.
 - RT-RESTORE (02:30Z) then **LDT-7 Audit in English** (05:00Z, register § LDT-7, .ldt-* palette, guard 8068). Surrender CC-2.
+
+## 2026-09-06 03:2xZ — ROUND 9 — read docs/bus/ROUND-9-INSTRUCTIONS-ALL-SEATS-2026-09-06.md § CURSOR. Start now.
