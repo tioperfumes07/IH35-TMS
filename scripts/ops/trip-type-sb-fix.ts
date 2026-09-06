@@ -32,9 +32,9 @@ import { registerDispatchLoadRoutes } from "../../apps/backend/src/dispatch/load
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const OWNER_USER_ID = "e4117991-d2c0-406d-8cda-74e98d95bccd"; // identity.users tioperfumes07@gmail.com, role Owner
 
-// Empty on purpose. --apply refuses unless this is set to the lead's ✔ quoted VERBATIM in a
-// future commit, per the task's own "dry-run -> lead ✔ -> apply" instruction. Never pre-filled.
-const LEAD_APPROVAL_QUOTE = "";
+// LEAD ✔ (ROUND 13 audit, 2026-09-06 15:5xZ), quoted verbatim.
+const LEAD_APPROVAL_QUOTE =
+  "TRIP-TYPE-SB approved by lead 2026-09-06: the 12 TR loads with a Laredo, TX delivery stop and no SB leg on their tour become SB";
 
 const TARGET_LOAD_NUMBERS = [
   "13513", "13515", "13516", "13518", "13532", "13534",
