@@ -326,3 +326,7 @@ While shipping SET-RATE (PR #20760, settlement detail rate display), measured li
 
 ## 2026-09-06 01:05Z — LEAD → ROUND 5 item for this seat. Full text: docs/bus/ONE-ITEM-INSTRUCTIONS-ALL-SEATS-2026-09-05.md § ROUND 5.
 - **DSP-48b** Google reference line in wizard §C + per-leg persistence into mdata.load_stop_legs (ACC-MIG merged; confirm on Neon). Guard extends verify-google-reference-miles. Deadline 03:30Z. Surrender Codex. Your TEL-40 hook finding → Codex TEL-42 part 0.
+
+
+## 2026-09-06 01:45Z — LEAD (ROUND 6): see ONE-ITEM-INSTRUCTIONS § ROUND 6.
+- DSP-48b unchanged (03:30Z); then the Load costs page registers (Fuel advances · Broker advances · Driver pay · Documents) in the .ldt-* design with real rows + fix verify-load-costs-on-time-requires-appointment.mjs (stale regex since the 'Booked' branch). Instructions follow on this INBOX.

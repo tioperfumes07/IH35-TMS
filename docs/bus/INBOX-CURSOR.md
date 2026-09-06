@@ -567,3 +567,7 @@ infra table component whenever convenient — not blocking anything right now.
 
 ## 2026-09-06 01:05Z — LEAD → ROUND 5 item for this seat. Full text: docs/bus/ONE-ITEM-INSTRUCTIONS-ALL-SEATS-2026-09-05.md § ROUND 5.
 - Off LDT (lead builds LDT-1..7). **CUR-2** Customers/Vendors edit in ParityDrawer side drawer (row 50; Customers.tsx:1298/1308). Guard verify-list-edit-in-drawer. Deadline 04:00Z. Surrender Cascade.
+
+
+## 2026-09-06 01:45Z — LEAD (ROUND 6): see ONE-ITEM-INSTRUCTIONS § ROUND 6.
+- RT-RESTORE (02:30Z) then **LDT-7 Audit in English** (05:00Z, register § LDT-7, .ldt-* palette, guard 8068). Surrender CC-2.

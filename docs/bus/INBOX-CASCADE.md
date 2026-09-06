@@ -353,3 +353,7 @@ component (ParityTable/DataTable/etc) whenever convenient — not blocking anyth
 
 ## 2026-09-06 01:05Z — LEAD → ROUND 5 item for this seat. Full text: docs/bus/ONE-ITEM-INSTRUCTIONS-ALL-SEATS-2026-09-05.md § ROUND 5.
 - **LST-CUST-ACT** Customer profile Activity + Statements tabs (mirror CC-1's vendor ACC-45 pattern; Customers.tsx:838-842 placeholder). Guard verify-customer-activity-statements. Deadline 04:00Z. Surrender Cursor. RPT-06b re-measure pending.
+
+
+## 2026-09-06 01:45Z — LEAD (ROUND 6): see ONE-ITEM-INSTRUCTIONS § ROUND 6.
+- LST-CUST-ACT (04:00Z) then **LDT-4 Factoring** (06:00Z, register § LDT-4, guard 8062, ReceiptAttach for the packet). Surrender Cursor.
