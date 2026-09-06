@@ -97,6 +97,35 @@ export type RollingLedgerRow = {
   amount_cents: number;
   days_overdue: number;
   status: "overdue" | "due_today" | "upcoming";
+  reason_label?: string | null;
+  reason_note?: string | null;
+  is_rollover_echo?: boolean;
+  adjustment_id?: string;
+  load_id?: string | null;
+  load_number?: string | null;
+};
+
+export type CashFlowAdjustmentReason = {
+  id: string;
+  code: string;
+  label: string;
+  applies_to: "income" | "expense" | "both";
+};
+
+export type CashFlowRowAdjustment = {
+  id: string;
+  operating_company_id: string;
+  document_kind: string;
+  document_id: string;
+  original_due_date: string;
+  projected_due_date: string | null;
+  reason_id: string;
+  note: string | null;
+  hidden_at: string | null;
+  hidden_reason: string | null;
+  hidden_by_user_id: string | null;
+  created_by_user_id: string;
+  created_at: string;
 };
 
 export type RollingLedgerDay = {
@@ -154,6 +183,26 @@ export function getRollingLedger(
 ): Promise<RollingLedgerResult> {
   const params = new URLSearchParams({ operating_company_id: operatingCompanyId, from, to });
   return apiRequest<RollingLedgerResult>(`/api/v1/cash-flow/rolling-ledger?${params}`);
+}
+
+export function getCashFlowAdjustmentReasons(): Promise<CashFlowAdjustmentReason[]> {
+  return apiRequest<CashFlowAdjustmentReason[]>("/api/v1/cash-flow/rolling-ledger/reasons");
+}
+
+export function createCashFlowRowAdjustment(payload: {
+  operating_company_id: string;
+  document_kind: string;
+  document_id: string;
+  original_due_date: string;
+  projected_due_date: string | null;
+  reason_code: string;
+  note?: string | null;
+  hidden_reason?: string | null;
+}): Promise<CashFlowRowAdjustment> {
+  return apiRequest<CashFlowRowAdjustment>("/api/v1/cash-flow/rolling-ledger/adjustments", {
+    method: "POST",
+    body: payload,
+  });
 }
 
 export function addCashFlowAdjustment(payload: {
