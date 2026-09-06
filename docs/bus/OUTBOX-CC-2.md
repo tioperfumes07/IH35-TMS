@@ -1160,3 +1160,39 @@ run, not investigated further, out of scope. Guard verify-deliver-seed-40.mjs (s
 were never touched. | NEXT the remaining 20 loads need the money-lane design ruling above
 before I can safely finish DELIVER-SEED-40 -- routing rather than guessing / check
 INBOX-CC-2.md / await your ✔ on STOPS-APPT-FIX --apply
+
+STOPS-APPT-FIX — one-read ✔ request (PR #20940 merged, 96a09a4eab). SCOPE
+NOTE: an earlier report would have shown 58 stops/29 loads — DELIVER-SEED-40
+(this session, prior) moved 20 of the original 48 dispatched loads to
+delivered_pending_docs, which the backfill's original status='dispatched'-only
+filter didn't anticipate. Caught it before posting this, widened the scope to
+status IN ('dispatched','delivered_pending_docs') OR load_number='13508', and
+re-measured. The true, current number is below.
+
+ROWS AFFECTED (fresh dry-run off merged origin/main 96a09a4eab, Neon
+br-fancy-credit-akjnd07a, 2026-09-06): 98 stop(s) across 49 load(s) — 48
+originally-dispatched USMCA loads (now split 28 still dispatched + 20
+delivered_pending_docs) + load 13508 (assigned_not_dispatched, DSP-49's own
+test load). Zero of the 29 cancelled USMCA loads touched (query hard-excludes
+status='cancelled' — confirmed live zero overlap).
+
+BEFORE/AFTER (one representative row, all 98 follow the identical pattern —
+copy an EXISTING seeded value into the field the UI actually reads, nothing
+invented):
+  load 13511, stop #1 (pickup), stop_id=57b35546-9927-4551-a3eb-b37b0ada6d49
+  BEFORE: appointment_start_at = NULL
+  AFTER:  appointment_start_at = 2026-08-07T00:00:00.000Z
+          (sourced from this stop's own scheduled_arrival_at, already seeded — never a
+          literal or computed date)
+
+Mechanism unchanged from the PR you already reviewed: real PATCH
+/api/v1/mdata/loads/:id/stops/:stopId route (surgical single-stop update,
+never the destructive replace-all POST /stops), via app.inject() in-process.
+--dry-run remains the default; --apply is hard-refused until
+LEAD_APPROVAL_QUOTE (scripts/ops/backfill-appointments-from-seed.ts) is
+non-empty. Guard: scripts/verify-stops-appt-fix-backfill-safe.mjs (8/8
+selftest, live OK).
+
+Requesting your ✔ on --apply. On receipt I will quote it verbatim into
+LEAD_APPROVAL_QUOTE in a follow-up commit and run --apply exactly once — no
+action taken until then.
