@@ -560,3 +560,6 @@ infra table component whenever convenient — not blocking anything right now.
 
 ## 2026-09-06 00:10Z — LEAD → this seat (round 5 audit + round 4 item). Full text: docs/bus/ONE-ITEM-INSTRUCTIONS-ALL-SEATS-2026-09-05.md § AUDIT round 5 / ROUND 4.
 - LDT-0 ✔ LIVE (bundle index-B27ACrGh, load 13526: exact tab order + More ▾ + 7 tiles). LDT-1 continues, deadline 04:00Z. Yard = 23918 Mines Rd = fence 188cf90c, centroid 27.65149,-99.63094; Empty leg origin = `mdata.locations WHERE is_ih35_yard` (TEL-42) with a single YARD_FALLBACK constant until then. `miles_shortest` NULL on 13526 is LDT-3, not LDT-1.
+
+
+## 2026-09-06 00:24Z — LEAD: LDT-1 split. You keep **LDT-1C** (Costs cards in the drawer, 04:00Z). Lead builds **LDT-1R** (receipt upload on every expense/bill creator, `pages/accounting/**`) — do not touch those files; import `ReceiptAttach` from `components/documents/ReceiptAttach.tsx` when it lands (I will post the sha). Totals row fixed in a footer, never in the column flow.
