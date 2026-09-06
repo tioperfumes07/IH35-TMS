@@ -3,6 +3,7 @@ import { DatePicker } from "../components/forms/DatePicker";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 import { ListErrorState } from "../components/ListErrorState";
 import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombstone";
+import { EntityLink } from "../components/shared/EntityLink";
 import { customerQualityKind, customerQualityClass } from "../lib/quality-badge";
 import { formatUsdCents } from "../lib/money";
 import { customerIsSelectable } from "../lib/customer-selectable";
@@ -982,11 +983,11 @@ export function CustomersPage() {
             "—"
           ),
       },
-      { key: "settlement_no", label: "Settlement #", defaultHidden: true, render: () => "—" },
-      { key: "truck_no", label: "Truck #", defaultHidden: true, render: () => "—" },
-      { key: "pickup_date", label: "Pick-up date", defaultHidden: true, render: () => "—" },
-      { key: "delivery_date", label: "Delivery date", defaultHidden: true, render: () => "—" },
-      { key: "loaded_miles", label: "Loaded miles", defaultHidden: true, render: () => "—" },
+      { key: "settlement_no", label: "Settlement #", defaultHidden: true, sortable: true, sortValue: (r) => r.linked_settlement_display_id ?? "", render: (r) => r.linked_settlement_id ? <EntityLink kind="settlement" id={r.linked_settlement_id} label={r.linked_settlement_display_id ?? "—"} /> : "—" },
+      { key: "truck_no", label: "Truck #", defaultHidden: true, sortable: true, sortValue: (r) => r.linked_unit_number ?? "", render: (r) => r.linked_unit_number ?? "—" },
+      { key: "pickup_date", label: "Pick-up date", defaultHidden: true, sortable: true, sortValue: (r) => r.linked_pickup_date ?? "", render: (r) => mmmDd(r.linked_pickup_date) || "—" },
+      { key: "delivery_date", label: "Delivery date", defaultHidden: true, sortable: true, sortValue: (r) => r.linked_delivery_date ?? "", render: (r) => mmmDd(r.linked_delivery_date) || "—" },
+      { key: "loaded_miles", label: "Loaded miles", defaultHidden: true, sortable: true, sortValue: (r) => Number(r.linked_loaded_miles ?? 0), render: (r) => r.linked_loaded_miles != null ? Number(r.linked_loaded_miles).toLocaleString() : "—" },
     ],
     [],
   );

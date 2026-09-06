@@ -460,7 +460,7 @@ export function VendorsPage() {
   const txColumns = useMemo<ParityColumn<(typeof txRows)[number]>[]>(
     () => [
       { key: "date", label: "Date", sortable: true, render: (r) => formatDateUS(r.bill_date) },
-      { key: "type", label: "Type", sortable: true, render: () => "bill" },
+      { key: "type", label: "Type", sortable: true, sortValue: (r) => r.driver_id ? "driver_bill" : "vendor_bill", render: (r) => r.driver_id ? "Driver bill" : "Vendor bill" },
       {
         key: "doc_no",
         label: "Doc #",
@@ -475,12 +475,12 @@ export function VendorsPage() {
         label: "Balance",
         render: (r) => fmtMoney(Number(r.balance_cents ?? Number(r.amount_cents ?? 0) - Number(r.paid_cents ?? 0))),
       },
-      { key: "load_no", label: "Load #", render: () => "—" },
-      { key: "settlement_no", label: "Settlement #", defaultHidden: true, render: () => "—" },
-      { key: "truck_no", label: "Truck #", defaultHidden: true, render: () => "—" },
-      { key: "pickup_date", label: "Pick-up date", defaultHidden: true, render: () => "—" },
-      { key: "delivery_date", label: "Delivery date", defaultHidden: true, render: () => "—" },
-      { key: "loaded_miles", label: "Loaded miles", defaultHidden: true, render: () => "—" },
+      { key: "load_no", label: "Load #", sortable: true, sortValue: (r) => r.linked_load_number ?? "", render: (r) => r.linked_load_id ? <EntityLinkOrTombstone kind="load" id={r.linked_load_id} name={r.linked_load_number} noun="Load" /> : "—" },
+      { key: "settlement_no", label: "Settlement #", defaultHidden: true, sortable: true, sortValue: (r) => r.linked_settlement_display_id ?? "", render: (r) => r.linked_settlement_id ? <EntityLink kind="settlement" id={r.linked_settlement_id} label={r.linked_settlement_display_id ?? "—"} /> : "—" },
+      { key: "truck_no", label: "Truck #", defaultHidden: true, sortable: true, sortValue: (r) => r.linked_unit_number ?? "", render: (r) => r.linked_unit_number ?? "—" },
+      { key: "pickup_date", label: "Pick-up date", defaultHidden: true, sortable: true, sortValue: (r) => r.linked_pickup_date ?? "", render: (r) => mmmDd(r.linked_pickup_date) || "—" },
+      { key: "delivery_date", label: "Delivery date", defaultHidden: true, sortable: true, sortValue: (r) => r.linked_delivery_date ?? "", render: (r) => mmmDd(r.linked_delivery_date) || "—" },
+      { key: "loaded_miles", label: "Loaded miles", defaultHidden: true, sortable: true, sortValue: (r) => Number(r.linked_loaded_miles ?? 0), render: (r) => r.linked_loaded_miles != null ? Number(r.linked_loaded_miles).toLocaleString() : "—" },
     ],
     [],
   );
