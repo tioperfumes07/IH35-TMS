@@ -64,7 +64,13 @@
 .ldt-toggle > button:disabled { cursor: default; }
 .ldt-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px 10px; padding: 10px; }
 .ldt-fld label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .04em; color: var(--ldt-muted); margin-bottom: 3px; }
-.ldt-inp, .ldt-fld input, .ldt-fld select { width: 100%; height: 28px; border: 1px solid var(--ldt-rule); border-radius: 2px; background: var(--ldt-card); color: var(--ldt-ink); font-size: 12px; padding: 0 7px; font-family: var(--ldt-body); }
+/* ROUND 16.18 (owner, 2026-09-06): "check the calendars, there is a box within a box." Root
+   cause — this element-selector rule reached into DatePicker.tsx's OWN internal <input>/<select>
+   (already wrapped in its own bordered/backed control box) and painted a second border+background+
+   height around it. :not(.dp-input):not(.dp-select) excludes DatePicker's internal elements
+   app-wide (Load Detail, Banking, everywhere .ldt-fld wraps a <DatePicker>) instead of patching
+   one page. */
+.ldt-inp, .ldt-fld input:not(.dp-input), .ldt-fld select:not(.dp-select) { width: 100%; height: 28px; border: 1px solid var(--ldt-rule); border-radius: 2px; background: var(--ldt-card); color: var(--ldt-ink); font-size: 12px; padding: 0 7px; font-family: var(--ldt-body); }
 .ldt-inp { display: flex; align-items: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .ldt-inp.ro { background: var(--ldt-paper); color: var(--ldt-ink2); }
 .ldt-inp.mono, .ldt-mono { font-family: var(--ldt-mono); font-variant-numeric: tabular-nums; }

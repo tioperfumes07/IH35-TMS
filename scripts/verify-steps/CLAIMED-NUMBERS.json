@@ -8008,5 +8008,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-09-06",
     "purpose": "verify-factoring-register-shared-manifest"
+  },
+  "10681": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-banking-match-panel-layout-and-datepicker-boxinbox"
   }
 }
