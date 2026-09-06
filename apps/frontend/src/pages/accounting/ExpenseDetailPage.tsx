@@ -147,6 +147,9 @@ export function ExpenseDetailPage() {
         actions={
           <div className="flex items-center gap-2">
             <StatusBadge variant={statusVariant(expense.status)}>{expense.status}</StatusBadge>
+            {expense.posting_hold_reason === "tour_open" ? (
+              <StatusBadge variant="crit">held — tour open</StatusBadge>
+            ) : null}
             <Button
               variant="secondary"
               size="sm"
@@ -270,7 +273,15 @@ export function ExpenseDetailPage() {
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">GL posting</span>
-          <span className="text-xs capitalize text-gray-900">{expense.posting_status}</span>
+          <span className="flex items-center gap-2 text-xs capitalize text-gray-900">
+            {expense.posting_status}
+            {/* ACC-50 (LAW §2) — "open tour posts nothing": this expense carries a load whose
+                tour/settlement is still open, so it was held instead of posting, even if GL
+                posting is enabled for this entity. Clears itself once the tour closes. */}
+            {expense.posting_hold_reason === "tour_open" ? (
+              <StatusBadge variant="crit">held — tour open</StatusBadge>
+            ) : null}
+          </span>
         </DataPanelRow>
         {expense.journal_entry_id ? (
           <DataPanelRow>

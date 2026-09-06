@@ -304,6 +304,8 @@ export type VendorBill = {
   /** Present when bills.service resolves a cash-advance reverse link for BillDetail. */
   linked_cash_advance_id?: string | null;
   linked_cash_advance_display_id?: string | null;
+  /** ACC-50 (LAW §2) — why this bill hasn't posted yet, e.g. "tour_open". Null when never held. */
+  posting_hold_reason?: string | null;
 };
 
 /** ACCT-F603 — never pass legacy QBO vendor_id text to EntityLink (404s /vendors/472). */
@@ -708,6 +710,8 @@ export type ExpenseListRow = {
   total_amount_cents: number | string;
   status: ExpenseListStatus;
   posting_status: ExpensePostingStatus;
+  /** ACC-50 (LAW §2) — why posting is held while posting_status='unposted', e.g. "tour_open". */
+  posting_hold_reason?: string | null;
   memo: string | null;
   load_id: string | null;
   load_number: string | null;
@@ -834,6 +838,8 @@ export type ExpenseDetail = {
   total_amount_cents: number | string;
   status: ExpenseListStatus;
   posting_status: ExpensePostingStatus;
+  /** ACC-50 (LAW §2) — why posting is held while posting_status='unposted', e.g. "tour_open". */
+  posting_hold_reason?: string | null;
   memo: string | null;
   /** VIS-01 — expense void date/reason, shown by VoidedBanner. */
   voided_at?: string | null;
