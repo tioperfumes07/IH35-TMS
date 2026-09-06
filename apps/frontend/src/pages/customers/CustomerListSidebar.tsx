@@ -94,8 +94,10 @@ export function CustomerListSidebar({
   // LIST-EMPTY-1: the empty message renders only after the roster settles.
   const listState = useListState(status, pagedCustomers.length === 0);
 
+  // MD-WIDTH-0 (lead 2026-09-06, measured live: aside 1770px, main 0px at 1920 viewport) — the master list must have an
+  // explicit width beside the detail pane; `w-full` + `shrink-0` alone swallowed the whole flex row and the detail never showed.
   return (
-    <aside className="w-full min-w-0 max-w-none shrink-0 rounded-sm border border-gray-200 bg-white p-2 xl:min-w-[300px] xl:max-w-[560px]" data-customer-list-sidebar="true">
+    <aside className="w-full shrink-0 rounded-sm border border-gray-200 bg-white p-2 xl:w-[440px] xl:min-w-[300px] xl:max-w-[560px]" data-customer-list-sidebar="true">
       <SidebarPagination
         page={safePage}
         pageSize={pageSize}
