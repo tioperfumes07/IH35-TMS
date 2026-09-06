@@ -7748,5 +7748,10 @@
     "claimed_by": "claude-lead",
     "claimed_at": "2026-09-06",
     "purpose": "verify-load-costs-register-fetch (REG-400: registers page GET /expenses at its 200 cap, surface fetch errors instead of 'No transactions found'; Load costs top-row tab in Accounting nav)"
+  },
+  "10465": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-reg-parse-data-backfill (ROUND 11 REG-PARSE-DATA: accounting.expenses.merchant_address/source_settlement_ref columns + backfill through a real service, never raw UPDATE; vendor_document_number cleaned to receipt-no-only; expense_lines.description cleaned to item-only)"
   }
 }
