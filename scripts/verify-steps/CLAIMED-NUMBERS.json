@@ -5797,6 +5797,11 @@
     "claimed_at": "2026-09-06",
     "purpose": "verify-census-orphans-wired (ENV-CENSUS-ROOT root fix: ONE step that RUNS every verify-*.mjs that was merged without CI wiring — 107 on main after #20932 reverted the mass exemption — so verify:guard-wired reports 0 orphan and every still-failing guard is named in CI instead of hidden)"
   },
+  "10485": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-load-costs-drawer-wide wiring (census money rows sub-item #5, ENV-CENSUS-FAIL-08: LoadDetailDrawer.tsx Costs tab must use the wide drawer class so the 12-column Load Costs register is not crammed behind horizontal scroll)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
