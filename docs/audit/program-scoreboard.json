@@ -1,10 +1,10 @@
 {
-  "healthzSha": "f7ef5df",
-  "generated_at": "2026-09-06T15:42:59.450Z",
+  "healthzSha": "bf12221",
+  "generated_at": "2026-09-06T22:02:07.214Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
-    "deployedSha": "f7ef5df",
+    "deployedSha": "bf12221",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -1180,7 +1180,7 @@
     {
       "tier": "3",
       "module": "cash-flow",
-      "build": "3/3",
+      "build": "3/4",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 20968,
-      "title": "Claude-3: FINDING: ROUND 13 — SETL-POST-01 dry-run, TRIP-TYPE-SB dry-run, INV-MISSING-2 surrendered",
+      "number": 21095,
+      "title": "FINDING: DRV-09 equipment history omitted canonical load, trailer, and real miles",
       "state": "merged",
-      "mergedAtCt": "09/06/2026, 10:37 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20968",
-      "sha": "65466ea8f0",
-      "committedAtIso": "2026-09-06T10:37:12-05:00"
+      "mergedAtCt": "09/06/2026, 05:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21095",
+      "sha": "bddbe6051d",
+      "committedAtIso": "2026-09-06T17:00:56-05:00"
     },
     {
-      "number": 20967,
-      "title": "FINDING: two CI runners execute the same census-orphan guards — every CI job pays twice",
+      "number": 21079,
+      "title": "tooling: CLAIM-HELPER-01 — one helper every seat runs to claim a verify-step number (origin/main + local read, per-seat stagger inside the lane band, textual registry append) + guard",
       "state": "merged",
-      "mergedAtCt": "09/06/2026, 10:32 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20967",
-      "sha": "968ea385e6",
-      "committedAtIso": "2026-09-06T10:32:46-05:00"
+      "mergedAtCt": "09/06/2026, 04:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21079",
+      "sha": "bf12221604",
+      "committedAtIso": "2026-09-06T16:55:48-05:00"
     },
     {
-      "number": 20966,
-      "title": "FINDING: ACCT-F25104 LEDGER-NAME-01 — accounting.broker_advances name-collides with driver_finance.driver_advances in verify-no-duplicate-financial-ledger",
+      "number": 21094,
+      "title": "FINDING: N/A (docs(audit) — files REVREC-NEVER-POSTS-TO-GL, a severe finding found live-testing INV-11)",
       "state": "merged",
-      "mergedAtCt": "09/06/2026, 10:31 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20966",
-      "sha": "9d62c0a2d7",
-      "committedAtIso": "2026-09-06T10:31:39-05:00"
+      "mergedAtCt": "09/06/2026, 04:54 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21094",
+      "sha": "e52e84de58",
+      "committedAtIso": "2026-09-06T16:54:10-05:00"
     },
     {
-      "number": 20965,
-      "title": "FINDING: segment materializer heartbeat hid the measured blocker",
+      "number": 21093,
+      "title": "FINDING: SET-24 DED-DUP LIVE CONFIRMATION — driver_reimbursements had 7 more duplicate groups",
       "state": "merged",
-      "mergedAtCt": "09/06/2026, 10:29 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20965",
-      "sha": "a6046d46dd",
-      "committedAtIso": "2026-09-06T10:29:18-05:00"
+      "mergedAtCt": "09/06/2026, 04:51 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21093",
+      "sha": "a3edfbdcf0",
+      "committedAtIso": "2026-09-06T16:51:56-05:00"
     },
     {
-      "number": 20964,
-      "title": "CLAIM-RESERVE: migration 202613840000 (LEDGER-NAME-01)",
+      "number": 21091,
+      "title": "FINDING: N/A (CLAIM-RESERVE registry repair -- 6 migration numbers sat at ROOT level instead of inside 'claimed'; verify-migration-claimed-on-main could not see them)",
       "state": "merged",
-      "mergedAtCt": "09/06/2026, 10:27 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20964",
-      "sha": "7d9ca2ebdc",
-      "committedAtIso": "2026-09-06T10:27:40-05:00"
+      "mergedAtCt": "09/06/2026, 04:51 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21091",
+      "sha": "0c43718e10",
+      "committedAtIso": "2026-09-06T16:51:41-05:00"
     },
     {
-      "number": 20963,
-      "title": "fix(guard): verify-book-load-footer-save-controls re-pinned to the owner's 2026-09-04 order (item 5 'enable Book and send', #20456) — the last red census guard",
+      "number": 21092,
+      "title": "FINDING: N/A (CLAIM-RESERVE 10625 -- reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "09/06/2026, 09:52 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20963",
-      "sha": "561f8e4746",
-      "committedAtIso": "2026-09-06T09:52:47-05:00"
+      "mergedAtCt": "09/06/2026, 04:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21092",
+      "sha": "43476cd45b",
+      "committedAtIso": "2026-09-06T16:47:26-05:00"
     },
     {
-      "number": 20962,
-      "title": "docs(bus): DELIVER-SEED-FINISH DONE line — 20/20 delivered on CC-1's ruling",
+      "number": 21086,
+      "title": "FINDING: N/A (CLAIM-RESERVE 202613880000 -- reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "09/06/2026, 03:00 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20962",
-      "sha": "f7ef5df0c5",
-      "committedAtIso": "2026-09-06T03:00:25-05:00"
+      "mergedAtCt": "09/06/2026, 04:44 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21086",
+      "sha": "9f3842c97c",
+      "committedAtIso": "2026-09-06T16:44:25-05:00"
     },
     {
-      "number": 20961,
-      "title": "docs(audit): close SETL-BOOKENDED-ONE-OPEN-PER-DRIVER-VS-MEGA-TOUR-SEED",
+      "number": 21089,
+      "title": "FINDING: N/A (docs(bus) report — INV-09/ACC-08 DONE, naming question filed as owner-decision-needed)",
       "state": "merged",
-      "mergedAtCt": "09/06/2026, 02:59 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20961",
-      "sha": "7941bd6ac9",
-      "committedAtIso": "2026-09-06T02:59:44-05:00"
+      "mergedAtCt": "09/06/2026, 04:43 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21089",
+      "sha": "0744bd3fd0",
+      "committedAtIso": "2026-09-06T16:43:53-05:00"
     },
     {
-      "number": 20960,
-      "title": "FINDING: SETL-BOOKENDED-ONE-OPEN-PER-DRIVER-VS-MEGA-TOUR-SEED (docs/audit/GUARD-WORKORDERS.md,",
+      "number": 21088,
+      "title": "FINDING: SET-05 SETTLEMENT-ACCRUAL GUARD — pins the existing SET-ACCRUAL fix",
       "state": "merged",
-      "mergedAtCt": "09/06/2026, 02:49 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20960",
-      "sha": "90ee21e8db",
-      "committedAtIso": "2026-09-06T02:49:58-05:00"
+      "mergedAtCt": "09/06/2026, 04:43 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21088",
+      "sha": "de80adc48d",
+      "committedAtIso": "2026-09-06T16:43:09-05:00"
     },
     {
-      "number": 20959,
-      "title": "FINDING: N/A (docs(bus) report — CC-1 CENSUS MONEY ROWS DONE, all 5 sub-items, ahead of 11:00Z deadline)",
+      "number": 21087,
+      "title": "FINDING: ACCT-F25121 INV-09/ACC-08 VOID-COLUMN-COLLAPSE -- re-confirmed the split-brain premise is FALSE, guarded the real invariant, filed the residual naming question as owner-decision-needed",
       "state": "merged",
-      "mergedAtCt": "09/06/2026, 02:48 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/20959",
-      "sha": "243ccd81d9",
-      "committedAtIso": "2026-09-06T02:48:27-05:00"
+      "mergedAtCt": "09/06/2026, 04:42 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21087",
+      "sha": "742dde89d3",
+      "committedAtIso": "2026-09-06T16:42:08-05:00"
     }
   ]
 }
