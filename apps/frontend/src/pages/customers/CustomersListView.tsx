@@ -446,6 +446,29 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
               return label ? label : <span className="text-gray-400">—</span>;
             },
           },
+          // CC-3 — pre-VC-LIST-01 roll-up columns (kept, default hidden now that VC-LIST-01's
+          // "Revenue (YTD)" / "Last load" above carry the same data under the owner's ROUND 11
+          // wording). Never deleted (§7) — same pattern VendorsListView.tsx's "Purchases YTD" /
+          // "Last Purchase" already follows for the identical reason.
+          {
+            key: "booked_ytd",
+            label: "Booked YTD",
+            sortable: false,
+            defaultHidden: true,
+            cellClass: "text-right tabular-nums",
+            render: (row) => (row.booked_ytd_cents == null ? <span className="text-gray-400">—</span> : fmtMoney(row.booked_ytd_cents)),
+          },
+          {
+            key: "last_load",
+            label: "Last Load",
+            sortable: false,
+            defaultHidden: true,
+            cellClass: "text-right tabular-nums",
+            render: (row) => {
+              const label = row.last_load_iso ? mmmDd(row.last_load_iso) : "";
+              return label ? label : <span className="text-gray-400">—</span>;
+            },
+          },
           {
             key: "factored_label",
             label: "Factored?",
