@@ -453,6 +453,15 @@ type DriverPayResolution = {
   milesDeadheadUsed: number | null;
   /** The resolved empty-mile rate actually used — null when deadhead pay is 0. */
   rateEmptyPerMileCentsUsed: number | null;
+  /**
+   * CC-3 ROOT-CAUSE FINDING (2026-09-05, "book-load.service.ts mints a blended (wrong)
+   * driver_bills.rate_per_mile_cents"): the configured/override per-mile LOADED rate actually
+   * used, in cents — null on a flat per_load_pay basis (there is no real per-mile rate to report).
+   * This is the TRUE card/override figure (e.g. $0.60/mi), never re-derived from dividing a
+   * loaded+deadhead(+bonus) total by loaded-only miles — that blended division is exactly the bug
+   * this field exists to stop callers from reproducing.
+   */
+  rateLoadedPerMileCentsUsed: number | null;
 };
 
 async function resolveDriverBasePayCents(
@@ -600,6 +609,9 @@ async function resolveDriverBasePayCents(
       deadheadCents,
       milesDeadheadUsed,
       rateEmptyPerMileCentsUsed,
+      // A GO-21-B5 override IS a per-mile rate by construction (hasValidOverride requires
+      // perLoadRateDollars > 0) — this is the one, real, documented rate for the whole load.
+      rateLoadedPerMileCentsUsed: Math.round(perLoadRateDollars * 100),
     };
   }
 
@@ -614,6 +626,11 @@ async function resolveDriverBasePayCents(
     deadheadCents,
     milesDeadheadUsed,
     rateEmptyPerMileCentsUsed,
+    // per_load_pay (flat) has no real per-mile rate to report — null, never a division artifact.
+    rateLoadedPerMileCentsUsed:
+      rate.basis_type !== "per_load_pay" && Number(rate.rate_per_mile_cents ?? 0) > 0
+        ? Math.round(Number(rate.rate_per_mile_cents))
+        : null,
   };
 }
 
@@ -826,7 +843,14 @@ export async function createDriverBillArtifacts(
 
     for (const row of inserts) {
       if (row.cents <= 0) continue;
-      const ratePerMileCents = milesBasis && milesBasis > 0 ? Math.round(row.cents / milesBasis) : null;
+      // CC-3 ROOT-CAUSE FIX (2026-09-05 finding, docs/bus/INBOX-CC-2.md): this used to be
+      // Math.round(row.cents / milesBasis) — row.cents is this driver's SHARE of loaded+deadhead
+      // pay, milesBasis is loaded-ONLY miles, so dividing one by the other produced a blended
+      // figure that was neither the loaded nor the empty rate. The real per-mile rate is a
+      // load-level configured/override value (basePayCents.rateLoadedPerMileCentsUsed), not
+      // something to re-derive from a driver's split share — both team-split rows report the
+      // SAME rate, exactly like rate_empty_per_mile_cents already does below.
+      const ratePerMileCents = basePayCents.rateLoadedPerMileCentsUsed;
       const rowLoadedCents = row.cents - row.deadheadCents;
       const billRes = await client.query<{ id: string }>(
         `
@@ -903,7 +927,14 @@ export async function createDriverBillArtifacts(
 
   if (!input.assigned_primary_driver_id) return { outcome: "not_applicable" };
 
-  const ratePerMileCents = milesBasis && milesBasis > 0 ? Math.round(totalBillCents / milesBasis) : null;
+  // CC-3 ROOT-CAUSE FIX (2026-09-05 finding, docs/bus/INBOX-CC-2.md): this used to be
+  // Math.round(totalBillCents / milesBasis) — totalBillCents includes the deadhead portion (and
+  // extra-stop/tarp/lumper bonuses), milesBasis is loaded-ONLY miles, so the division produced a
+  // blended figure that was neither the loaded nor the empty per-mile rate (measured live on load
+  // 13526: rate_per_mile_cents=60 while the real card rate was $0.45/mi). The real per-mile rate
+  // is the configured card rate or GO-21-B5 override, resolved once in resolveDriverBasePayCents()
+  // and never re-derived from totals.
+  const ratePerMileCents = basePayCents.rateLoadedPerMileCentsUsed;
 
   const billRes = await client.query<{ id: string }>(
     `
