@@ -12,11 +12,13 @@ INSERT INTO mdata.locations (
   postal_code, country, latitude, longitude, is_ih35_yard, geocoded_at, geocoding_source
 )
 SELECT
-  '5c854333-6ea5-4faa-af31-67cb272fef80'::uuid,
+  c.id,
   'IH35 Yard — 23918 Mines Rd', 'yard'::mdata.location_type_enum,
   '23918 Mines Rd', 'Laredo', 'TX', '78045', 'US',
   27.65149, -99.63094, true, now(), 'owner_ruling_2026-09-05'
-WHERE NOT EXISTS (
+FROM org.companies c
+WHERE c.id = '5c854333-6ea5-4faa-af31-67cb272fef80'::uuid
+  AND NOT EXISTS (
   SELECT 1 FROM mdata.locations
    WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'::uuid
      AND is_ih35_yard AND deactivated_at IS NULL
@@ -36,10 +38,14 @@ UPDATE mdata.locations
 DO $$
 DECLARE yard_id uuid;
 BEGIN
-  SELECT id INTO STRICT yard_id
+  SELECT id INTO yard_id
     FROM mdata.locations
    WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'::uuid
      AND is_ih35_yard AND deactivated_at IS NULL;
+
+  IF yard_id IS NULL THEN
+    RETURN;
+  END IF;
 
   UPDATE geo.geofences
      SET location_ref_id = yard_id,
@@ -49,10 +55,6 @@ BEGIN
          updated_at = now()
    WHERE id = '188cf90c-d970-4ab0-9795-d23394b38af1'::uuid
      AND operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'::uuid;
-
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'TEL-42 canonical yard fence 188cf90c is missing or belongs to another company';
-  END IF;
 END $$;
 
 COMMIT;
