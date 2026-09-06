@@ -77,9 +77,17 @@ export function collectProblems(root = ROOT) {
   }
 
   // 5. The value written must be sourced from the existing scheduled_arrival_at column, never a
-  // literal date or a computed/derived value — "never invent a time".
-  if (!/appointment_start_at:\s*s\.scheduled_arrival_at/.test(scriptSrc)) {
-    problems.push(`${SCRIPT_FILE}: the PATCH payload must set appointment_start_at from the stop's own scheduled_arrival_at column, never a literal or computed date`);
+  // literal date — "never invent a time". BUG FOUND LIVE 2026-09-06 (first --apply attempt, 98/98
+  // BLOCKED): the raw ::text-cast value from Postgres ("2026-08-19 05:00:00+00", space separator,
+  // no offset colon) fails the PATCH route's strict isoDatetimeSchema (.datetime({offset:true})) --
+  // the exact same class of gotcha as DELIVER-SEED-40's delivered_at bug. The value must be
+  // re-formatted via new Date(s.scheduled_arrival_at).toISOString() before it is sent, still
+  // deriving from the real column, never a literal.
+  if (!/new Date\(s\.scheduled_arrival_at\)\.toISOString\(\)/.test(scriptSrc)) {
+    problems.push(`${SCRIPT_FILE}: appointment_start_at must be sourced via new Date(s.scheduled_arrival_at).toISOString() -- a raw Postgres ::text cast is not valid ISO 8601 and the PATCH route's zod schema rejects it`);
+  }
+  if (/appointment_start_at:\s*["']/.test(scriptSrc)) {
+    problems.push(`${SCRIPT_FILE}: the PATCH payload must never set appointment_start_at to a literal string -- the value must trace to the stop's own scheduled_arrival_at column`);
   }
 
   return problems;
@@ -110,7 +118,8 @@ if (process.argv.includes("--selftest")) {
     `if (apply && LEAD_APPROVAL_QUOTE.trim().length === 0) { throw new Error("refused"); }`,
     `AND (l.status IN ('dispatched', 'delivered_pending_docs') OR l.load_number = '13508')`,
     `AND l.status != 'cancelled'`,
-    `payload: { appointment_start_at: s.scheduled_arrival_at }`,
+    `const appointmentStartAt = new Date(s.scheduled_arrival_at).toISOString();`,
+    `payload: { appointment_start_at: appointmentStartAt }`,
   ].join("\n");
 
   const cases = [
@@ -121,7 +130,8 @@ if (process.argv.includes("--selftest")) {
     { name: "script: LEAD_APPROVAL_QUOTE gate removed", overrides: { [SCRIPT_FILE]: GOOD_SCRIPT.replace('if (apply && LEAD_APPROVAL_QUOTE.trim().length === 0) { throw new Error("refused"); }', "") }, expectProblems: 1 },
     { name: "script: cancelled-exclusion removed", overrides: { [SCRIPT_FILE]: GOOD_SCRIPT.replace("AND l.status != 'cancelled'", "") }, expectProblems: 1 },
     { name: "script: scope allowlist removed (would target every open load)", overrides: { [SCRIPT_FILE]: GOOD_SCRIPT.replace("AND (l.status IN ('dispatched', 'delivered_pending_docs') OR l.load_number = '13508')", "") }, expectProblems: 1 },
-    { name: "script: value source changed to a literal (invents a time)", overrides: { [SCRIPT_FILE]: GOOD_SCRIPT.replace("payload: { appointment_start_at: s.scheduled_arrival_at }", 'payload: { appointment_start_at: "2026-01-01T00:00:00Z" }') }, expectProblems: 1 },
+    { name: "script: value source changed to a literal (invents a time)", overrides: { [SCRIPT_FILE]: GOOD_SCRIPT.replace("payload: { appointment_start_at: appointmentStartAt }", 'payload: { appointment_start_at: "2026-01-01T00:00:00Z" }') }, expectProblems: 1 },
+    { name: "script: ISO re-format dropped (raw ::text cast sent again)", overrides: { [SCRIPT_FILE]: GOOD_SCRIPT.replace("const appointmentStartAt = new Date(s.scheduled_arrival_at).toISOString();\n", "").replace("appointment_start_at: appointmentStartAt", "appointment_start_at: s.scheduled_arrival_at") }, expectProblems: 1 },
   ];
 
   function writeFixture(tmpRoot, overrides) {
