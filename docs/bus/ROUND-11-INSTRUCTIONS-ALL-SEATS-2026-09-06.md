@@ -59,3 +59,13 @@ Paste the table (endpoint · FE limit · API cap · status). Fix each mismatch o
 
 ---
 **Owner decisions still open (lead holds):** bulk-deliver click for the 40 seeded loads; SB rule for the 15 seed tours (no SB legs exist).
+
+---
+## 05:5xZ ADDENDA (owner 05:4xZ: "LIST THE LOADS I NEED TO INPUT SO THE SETTLEMENTS CAN CLOSE. THE REST OF THE SETTLEMENTS CLOSE … I WANT TO SEE THEM IN FACTORING, A CODER CREATES ONE PURCHASE, THEN SEED AND CONFIRM WITH FARO'S FILES, KEEP FARO TO RECONCILE TOMORROW")
+Measured: only 13556 is a missing USMCA load (USMCA BY LOAD, no settlement #). 12 Laredo-bound loads were seeded trip_type TR, not SB:
+13513 13515 13516 13518 13532 13534 13544 13548 13552 13562 13567 13568 — the real reason every tour says "no SB leg".
+OWNER RULING (recorded): seed settlements whose signed load set has no Laredo leg (5771 5773 5776 5777 5779 5782 5783 5784 5785 5787) close with
+"no SB leg" confirmed by name; live tours keep the hard rule.
+- CC-3 PRIORITY: TRIP-TYPE-SB (script, dry-run → lead ✔ → apply) + readout rule (sb_delivered.hard=false only when source_document_ref set and no Laredo leg). Deadline 07:30Z.
+- CC-1 PRIORITY: FACT-01 — after the owner's bulk-deliver click: invoices visible in Factoring; ONE real factoring purchase with JE pasted; seed the rest from Faro files (dry-run → ✔ → apply); keep every Faro line. Deadline 08:00Z. SOURCE-DOCUMENT-REF + REG-PARSE-DATA follow.
+- CURSOR addendum: vendor master-detail Expenses table uses the parsed columns and pages GET /expenses at 200.
