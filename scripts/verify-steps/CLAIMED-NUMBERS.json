@@ -5918,14 +5918,19 @@
     "purpose": "verify-banking-toolbar-single-search (B4 BANK-TOOLBAR-ONE first slice, owner CONSOLIDATED 2026-09-06 18:30Z item 4: BankingTransactionsDesignView main register had 2 competing search boxes -- the page own Filter by description Combobox AND ParityTable native UniversalListToolbar search -- suppressed via suppressToolbarSearch, same defect class as LV-WORK-ORDERS-CONSOLE-DUPLICATE-SEARCH)"
   },
   "10549": {
-    "claimed_by": "claude",
+    "claimed_by": "cc-3",
     "claimed_at": "2026-09-06",
-    "purpose": "verify-cash-flow-rolling-ledger (CASH-FLOW-02, owner order 2026-09-06 20:1xZ: rolling A/R+A/P ledger with real dates -- expected income automatically from loads/invoices/factoring, expected expenses from bills/driver pay/driver bills/unmatched expenses/loan schedule -- carry-forward until paid/matched, day grid with running cash from the live bank balance) -- 3rd renumber of this session: originally claimed 10517 (collided), renumbered 10541 (collided again with a fast-moving settlement lane also claiming in the cc-1 band), landing here at 10549. NOTE FOR THE LEAD: CLAIMED-NUMBERS.json is colliding multiple times per hour today across concurrent sessions writing to different byte-ranges of the same file with no git conflict -- worth a systemic fix (e.g. per-number files, or a DB-backed claim) rather than a single shared JSON."
+    "purpose": "verify-close-creates-company-settlement (CC-3, ROUND 16.2, #21052) -- this key previously held CC-1's verify-cash-flow-rolling-ledger claim (CASH-FLOW-02); #21052's file scripts/verify-steps/10549-verify-close-creates-company-settlement.mjs shipped WITHOUT registering a claim here (a real process gap -- verify-verify-step-claimed-on-main.mjs did not catch it, worth investigating why), producing a genuine duplicate-number FILE collision with CC-1's already-merged 10549-verify-cash-flow-rolling-ledger.mjs. Resolved by renumbering CC-1's file to 10573 (this file's number is untouched, is real, is CC-3's) -- see 10573 below."
   },
   "10553": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "verify-tour-settlement-company-link (ROUND 16.2 item 3: company settlement number was dead text on TourSettlementTab; now a real EntityLink to CompanySettlementsPage via a query-param deep link)"
+  },
+  "10573": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-cash-flow-rolling-ledger (CASH-FLOW-02, owner order 2026-09-06 20:1xZ: rolling A/R+A/P ledger with real dates -- expected income automatically from loads/invoices/factoring, expected expenses from bills/driver pay/driver bills/unmatched expenses/loan schedule -- carry-forward until paid/matched, day grid with running cash from the live bank balance) -- 4th renumber of this session (10517 -> 10541 -> 10545 -> 10549 -> 10573, each collision with a different concurrent session), jumping a +20 buffer past the current max this time since single-digit gaps keep getting claimed within minutes. NOTE FOR THE LEAD: this collided FIVE times in about 90 minutes across at least 3 different concurrent sessions/lanes (cc-1 itself, a settlement lane, and CC-3) -- CLAIMED-NUMBERS.json as one shared JSON file, edited blind by many concurrent sessions with no lock, is now a real operational bottleneck, not a one-off fluke. Recommend a systemic fix (per-number files under scripts/verify-steps/, or a DB-backed atomic claim) before the next high-concurrency session."
   },
   "_band": {
     "cc-1": "n%4===1",
