@@ -7,8 +7,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import {
   billVendorDrillId,
-  listBills,
-  listDriverBills,
+  listBillRegister,
   listPaymentsForBill,
   type BillPayment,
   type BillStatus,
@@ -257,6 +256,7 @@ export function BillsPage() {
   // Payments/Invoices/etc.) has one. Client-side over the already-loaded rows (server list caps at
   // 200, same rows already in memory) — bill number, vendor name, memo.
   const [search, setSearch] = useState("");
+  const [billType, setBillType] = useState<"all" | "vendor_bill" | "driver_bill">("all");
   // BILLS-VENDORFILTER-01: server-side vendor filter (listBills already accepts vendor_id).
   // Keep vendor_id URL-synced for aging drill same-route / back-forward.
   const vendorId = searchParams.get("vendor_id") ?? "";
@@ -320,9 +320,10 @@ export function BillsPage() {
       // SORT LAW — sort/dir part of query identity so header click refetches SQL ORDER BY.
       sortKey,
       sortDirection,
+      billType,
     ],
     queryFn: () =>
-      listBills(companyId, {
+      listBillRegister(companyId, {
         include_balance: true,
         status: status || undefined,
         has_balance: hasBalance || undefined,
@@ -338,6 +339,7 @@ export function BillsPage() {
         sort: sortKey || undefined,
         dir: sortKey ? sortDirection : undefined,
         limit: 200,
+        bill_type: billType,
       }),
     enabled: Boolean(companyId),
   });
@@ -348,16 +350,15 @@ export function BillsPage() {
   // bills" view or the "driver" category chip is active — the union + Source distinction this
   // page's spec asks for, done honestly rather than faking one shared row shape for two
   // structurally different tables.
-  const showDriverBills = category === "" || category === "driver";
-  const driverBillsQuery = useQuery({
-    queryKey: ["driver-finance", "driver-bills-list", companyId],
-    queryFn: () => listDriverBills(companyId, { limit: 200 }),
-    enabled: Boolean(companyId) && showDriverBills,
-  });
-  const driverBillRows = driverBillsQuery.data?.driver_bills ?? [];
+  const showDriverBills = billType !== "vendor_bill" && (category === "" || category === "driver");
+  const driverBillRows = (billsQuery.data?.rows ?? [])
+    .filter((row) => row.bill_type === "driver_bill")
+    .map((row) => row.bill as DriverBillListRow);
 
   const rows = useMemo(() => {
-    const all = billsQuery.data?.rows ?? [];
+    const all = (billsQuery.data?.rows ?? [])
+      .filter((row) => row.bill_type === "vendor_bill")
+      .map((row) => row.bill as VendorBill);
     // Keep deep-linked bill visible even when a category chip would filter it out.
     let next = category
       ? all.filter((bill) => bill.id === deepLinkBillId || billMatchesCategory(bill, category))
@@ -374,7 +375,9 @@ export function BillsPage() {
   }, [billsQuery.data?.rows, category, deepLinkBillId]);
 
   const billKpis = useMemo(() => {
-    const all = billsQuery.data?.rows ?? [];
+    const all = (billsQuery.data?.rows ?? [])
+      .filter((row) => row.bill_type === "vendor_bill")
+      .map((row) => row.bill as VendorBill);
     const mtdStart = monthStartIso();
     const past90Start = daysAgoIso(90);
     const openBills = all.filter((bill) => (bill.status === "open" || bill.status === "partial") && billBalanceCents(bill) > 0);
@@ -493,6 +496,7 @@ export function BillsPage() {
   // Settlement, exactly the reference's column set for driver_finance.driver_bills.
   const driverBillColumns = useMemo<ParityColumn<DriverBillListRow>[]>(
     () => [
+      { key: "bill_type", label: "Type", render: () => "Driver bill" },
       { key: "bill_number", label: "Bill #", render: (b) => b.bill_number ?? "—" },
       { key: "driver_name", label: "Driver", render: (b) => <EntityLink kind="driver" id={b.driver_id} label={b.driver_name ?? "—"} /> },
       { key: "load_number", label: "Load", render: (b) => (b.load_id ? <EntityLink kind="load" id={b.load_id} label={b.load_number ?? "—"} /> : b.load_number ?? "—") },
@@ -518,6 +522,7 @@ export function BillsPage() {
 
   const columns = useMemo<ParityColumn<VendorBill>[]>(
     () => [
+      { key: "bill_type", label: "Type", sortable: false, render: () => "Vendor bill" },
       { key: "vendor_name", label: "Vendor", sortable: true, render: (bill) => <EntityLink kind="vendor" id={billVendorDrillId(bill)} label={entityLabel(bill.vendor_name, bill.vendor_id, "Vendor")} /> },
       {
         key: "display_id",
@@ -762,6 +767,20 @@ export function BillsPage() {
           </label>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="text-gray-600">Type:</span>
+          <SelectCombobox
+            className="rounded-sm border border-gray-300 px-2 py-1"
+            value={billType}
+            onChange={(event) => setBillType(event.target.value as typeof billType)}
+            data-testid="bills-type-filter"
+          >
+            <option value="all">All bill types</option>
+            <option value="vendor_bill">Vendor bill</option>
+            <option value="driver_bill">Driver bill</option>
+          </SelectCombobox>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="text-gray-600">Category:</span>
           <button
             type="button"
@@ -977,12 +996,15 @@ export function BillsPage() {
               Source: Driver
             </span>
           </div>
-          {driverBillsQuery.isError ? <ListErrorBanner onRetry={() => void driverBillsQuery.refetch()} /> : null}
+          <div className="flex gap-2 text-xs text-slate-600" data-testid="bills-type-totals">
+            <span>Vendor bills: {billsQuery.data?.totals.vendor_bill.count ?? 0} · {money(billsQuery.data?.totals.vendor_bill.amount_cents ?? 0)}</span>
+            <span>Driver bills: {billsQuery.data?.totals.driver_bill.count ?? 0} · {money(billsQuery.data?.totals.driver_bill.amount_cents ?? 0)}</span>
+          </div>
           <ParityTable
             columns={driverBillColumns}
             rows={driverBillRows}
             rowKey={(b) => b.id}
-            loading={driverBillsQuery.isPending}
+            loading={billsQuery.isPending}
             exportFilename="driver-bills"
             storageKey="bills-driver-list"
             initialPageSize={50}

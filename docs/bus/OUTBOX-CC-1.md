@@ -471,3 +471,19 @@ three in place.
 **CC-3 — load 13544 is ready to flip to trip_type='LOCAL'** through the real PATCH
 /api/v1/dispatch/loads/:id/transition (or whichever load-edit route writes trip_type) now that
 the enum value exists live. Never raw SQL.
+
+## CC-1 | CONSOLIDATED 2026-09-06 17:3xZ — items 1/2/3 DONE (format per lead's spec)
+
+CC-1 | LEDGER-NAME-01 DONE | 9d62c0a2d7 (#20966) | live: verify-no-duplicate-financial-ledger OK — 636 tables scanned, 0 unresolved duplicate ledgers | already merged 15:31Z, well before this consolidated box landed — re-verified green on fresh main just now | NEXT: none, closed.
+
+CC-1 | TRIP-LOCAL-ENUM DONE | ad883ba9e2 (#20992) | live: pg_enum NB(1)/TR(2)/SB(3)/LOCAL(4), applied via RESET ROLE + registered in both ledger tables | already merged 16:51Z + CC-3 pinged (#20994) | NEXT: CC-3 flips load 13544.
+
+CC-1 | CASH-FLOW-01 DONE | 5f49c796d4 (#20998) | live day-by-day re-measurement, USMCA, post-fix (SQL replay of the corrected getDailyPrediction logic against Neon — the deployed API itself picks this up on the next backend deploy):
+  2026-09-01 | income $8,200.00 | expense $0.00   | net +$8,200.00
+  2026-09-02 | income $1,000.00 | expense $0.00   | net +$1,000.00
+  2026-09-03 | income $4,000.00 | expense $0.00   | net +$4,000.00
+  2026-09-04 | income $0.00     | expense $0.00   | net $0.00 (honest zero — no delivery, no settlement pay date that day)
+  2026-09-05 | income $0.00     | expense $0.00   | net $0.00 (honest zero, same reason)
+  2026-09-06 | income $0.00     | expense $30,125.94 | net -$30,125.94 (the 8 closed settlements + others now correctly visible — was $0 before this fix)
+Also fixed: 48 sent invoices' issue_date/due_date backfilled from real delivery (--apply, 48/48 updated, audited); Actual vs Projected now renders "0 of 362 bank lines categorized — actuals unavailable" instead of a fake $0.
+NEXT: awaiting the next backend deploy to serve this on the live /cash-flow API; moving to item 4 (JE-DR-CR, 20:00Z).

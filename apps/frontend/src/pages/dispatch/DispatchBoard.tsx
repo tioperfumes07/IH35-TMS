@@ -570,8 +570,7 @@ export function DispatchBoard({
   });
   const inShopUnits = inShopUnitsQuery.isError ? [] : (inShopUnitsQuery.data ?? []);
   // DispatchInShopUnit's real key is unit_id (api/dispatch.ts) — .id never existed on this type;
-  // this line only typechecked before because a prior tsc pass didn't reach it. Fixed in place
-  // (unrelated to BANK-MATCH-QBO-c; found live while confirming a clean merge).
+  // this line only typechecked before because a prior tsc pass didn't reach it.
   const inShopUnitIds = useMemo(() => new Set(inShopUnits.map((unit) => unit.unit_id)), [inShopUnits]);
 
   const triSignalsQuery = useQuery({

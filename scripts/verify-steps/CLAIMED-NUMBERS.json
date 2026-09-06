@@ -7813,5 +7813,25 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "verify-trip-type-local-enum (TRIP-LOCAL-ENUM owner order 2026-09-06: mdata.trip_type_enum gains 'LOCAL' after 'SB' -- pins the enum value in the migration + the dispatch load PATCH schema + Trip Pairing board legend/type chip so none can silently drop it)"
+  },
+  "10501": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-cash-flow-closed-settlement-expected-expense (CASH-FLOW-01 root cause #1, owner order 2026-09-06 ROUND 14: closed, unpaid driver_finance.driver_settlements were never Expected Expenses because the status predicate omitted 'closed', the real terminal status settlements-load-bookended.service.ts writes)"
+  },
+  "10505": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-invoice-dates-from-real-delivery (CASH-FLOW-01 root cause #2: invoice issue_date/due_date must derive from the load's real delivery-stop date, not the mint wall-clock moment, both at mint time (from-load.ts) and in the audited backfill/correction service)"
+  },
+  "10509": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-cash-flow-avp-actuals-honest-unavailable (CASH-FLOW-01 root cause #3, LAW §8 zero is a claim: Actual vs Projected must render \"N of M bank lines categorized -- actuals unavailable\" instead of a bare $0 when 0 bank_transactions are categorized company-wide)"
+  },
+  "10513": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-vendor-balance-single-read-model (VENDOR-BALANCE-TRUTH owner order 2026-09-06, inventory #15: vendor-rollups.routes.ts derived open_balance_cents independently via a bare status<>'paid' bill denylist -- a second, drift-prone computation alongside the canonical accounting.vendor_balances VIEW already used by the Vendors list detail panel; now reads open_balance_cents from that one canonical read model)"
   }
 }
