@@ -8,6 +8,16 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00–11 / 12–23) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202613810000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-06",
+      "purpose": "ROUND 9 BANK-FEE-ROLE: widen accounting.chart_of_accounts_roles.role CHECK to admit 'bank_fee_recovery' (SETL-DED-UI/SETL-DED-GL wire_fee/ach_fee deduction recovery, docs/audit/migration-drafts/BANK-FEE-RECOVERY-COA-ROLE-CHECK-WIDEN-migration-draft.sql)"
+    },
+    "202613810001": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-06",
+      "purpose": "ROUND 9 BANK-FEE-ROLE: seed accounting.chart_of_accounts_roles for USMCA binding 'bank_fee_recovery' -> account 6300 Bank Service Charges & Wire Fees (live-verified id de553cc4-160c-4dec-8256-dfb28e9d4989), depends on 202613810000 (docs/audit/migration-drafts/BANK-FEE-RECOVERY-USMCA-SEED-migration-draft.sql)"
+    },
     "202613800000": {
       "claimed_by": "claude",
       "claimed_at": "2026-09-06",
