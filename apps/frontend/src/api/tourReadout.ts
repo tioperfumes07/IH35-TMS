@@ -2,7 +2,7 @@ import { apiRequest } from "./client";
 
 /** LDT-5/6 · ONE tour readout — Costs footer, Pre-Settlement and Settlement read the same numbers (register § LDT-5). */
 export type TourLeg = {
-  load_id: string; load_number: string; trip_type: string | null; status: string; is_delivered: boolean;
+  load_id: string; load_number: string; trip_type: string | null; status: string; is_delivered: boolean; is_cancelled?: boolean;
   lane: string; pickup_city: string | null; delivery_city: string | null;
   revenue_cents: number; costs_cents: number; driver_pay_cents: number; margin_cents: number; margin_pct: number | null;
   miles_practical: number | null; miles_shortest: number | null; miles_deadhead: number | null; miles_real: number | null;

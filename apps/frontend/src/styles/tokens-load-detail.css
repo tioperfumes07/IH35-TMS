@@ -134,3 +134,6 @@ button.ldt-pill { cursor: pointer; }
 .ldt-row.click:hover { background: var(--ldt-accent-soft); }
 .ldt-rows-legs .ldt-row { grid-template-columns: 44px 80px 1fr 110px 110px 110px 150px; }
 .ldt-row.this { outline: 2px solid var(--ldt-accent-soft); outline-offset: -2px; }
+.ldt-row.cancelled { color: var(--ldt-muted); text-decoration: line-through; }
+.ldt-row.cancelled .ldt-sub { text-decoration: none; }
+.ldt-pill { white-space: normal; height: auto; min-height: 18px; padding: 2px 7px; line-height: 1.25; }

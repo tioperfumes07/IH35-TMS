@@ -54,7 +54,7 @@ const n = (v: unknown) => (v == null ? 0 : Number(v));
 const nOrNull = (v: unknown) => (v == null ? null : Number(v));
 
 export type TourLeg = {
-  load_id: string; load_number: string; trip_type: string | null; status: string; is_delivered: boolean;
+  load_id: string; load_number: string; trip_type: string | null; status: string; is_delivered: boolean; is_cancelled: boolean;
   lane: string; pickup_city: string | null; delivery_city: string | null;
   revenue_cents: number; costs_cents: number; driver_pay_cents: number; margin_cents: number; margin_pct: number | null;
   miles_practical: number | null; miles_shortest: number | null; miles_deadhead: number | null; miles_real: number | null;
@@ -123,10 +123,14 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
       ORDER BY CASE l.trip_type::text WHEN 'NB' THEN 1 WHEN 'TR' THEN 2 WHEN 'SB' THEN 3 ELSE 4 END, l.created_at ASC`,
     [settlementId, companyId, s.first_load_id, s.last_load_id]
   );
+  // A cancelled leg stays visible (it happened) but carries no money into the tour: measured live 02:19Z, TR 13527
+  // (cancelled) was adding $3,000 revenue and 100% margin to S-13646's totals.
+  const CANCELLED = new Set(["cancelled", "canceled", "abandoned", "driver_walkoff", "driver_no_show"]);
   const legs: TourLeg[] = legsRes.rows.map((r) => {
-    const revenue = n(r.rate_total_cents); const costs = n(r.expense_cents) + n(r.bill_cents); const pay = n(r.driver_pay_cents); const margin = revenue - costs - pay;
+    const cancelled = CANCELLED.has(String(r.status).toLowerCase());
+    const revenue = cancelled ? 0 : n(r.rate_total_cents); const costs = n(r.expense_cents) + n(r.bill_cents); const pay = n(r.driver_pay_cents); const margin = revenue - costs - pay;
     return {
-      load_id: r.load_id, load_number: r.load_number, trip_type: r.trip_type, status: r.status, is_delivered: DELIVERED.has(String(r.status).toLowerCase()),
+      load_id: r.load_id, load_number: r.load_number, trip_type: r.trip_type, status: r.status, is_delivered: DELIVERED.has(String(r.status).toLowerCase()), is_cancelled: cancelled,
       lane: `${[r.pickup_city, r.pickup_state].filter(Boolean).join(" ")} → ${[r.delivery_city, r.delivery_state].filter(Boolean).join(" ")}`.trim(),
       pickup_city: r.pickup_city, delivery_city: r.delivery_city,
       revenue_cents: revenue, costs_cents: costs, driver_pay_cents: pay, margin_cents: margin, margin_pct: revenue > 0 ? Math.round((margin / revenue) * 1000) / 10 : null,
@@ -203,24 +207,25 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
     [companyId, loadIds]
   ) : { rows: [{ factored: 0, face_cents: 0, advance_cents: 0 }] };
 
-  const totals = legs.reduce((t, l) => ({ revenue_cents: t.revenue_cents + l.revenue_cents, costs_cents: t.costs_cents + l.costs_cents, driver_pay_cents: t.driver_pay_cents + l.driver_pay_cents, miles_practical: t.miles_practical + (l.miles_practical ?? 0), miles_real: l.miles_real == null ? t.miles_real : (t.miles_real ?? 0) + l.miles_real }), { revenue_cents: 0, costs_cents: 0, driver_pay_cents: 0, miles_practical: 0, miles_real: null as number | null });
+  const active = legs.filter((l) => !l.is_cancelled);
+  const totals = active.reduce((t, l) => ({ revenue_cents: t.revenue_cents + l.revenue_cents, costs_cents: t.costs_cents + l.costs_cents, driver_pay_cents: t.driver_pay_cents + l.driver_pay_cents, miles_practical: t.miles_practical + (l.miles_practical ?? 0), miles_real: l.miles_real == null ? t.miles_real : (t.miles_real ?? 0) + l.miles_real }), { revenue_cents: 0, costs_cents: 0, driver_pay_cents: 0, miles_practical: 0, miles_real: null as number | null });
   const margin = totals.revenue_cents - totals.costs_cents - totals.driver_pay_cents;
 
   // Ready to close? — every item measured, in English. `hard` items refuse the close; soft ones are confirmed by name.
-  const sb = legs.filter((l) => l.trip_type === "SB");
-  const undelivered = legs.filter((l) => !l.is_delivered);
-  const deliveredLegs = legs.filter((l) => l.is_delivered);
+  const sb = active.filter((l) => l.trip_type === "SB");
+  const undelivered = active.filter((l) => !l.is_delivered);
+  const deliveredLegs = active.filter((l) => l.is_delivered);
   const podsHave = deliveredLegs.filter((l) => l.pod_count > 0).length;
   const missingAccount = costs.filter((c) => !c.has_account).length; const missingVendor = costs.filter((c) => !c.has_vendor).length; const missingReceipt = costs.filter((c) => c.receipt_count === 0).length;
-  const payIncomplete = legs.filter((l) => !driverBills.some((b) => b.load_id === l.load_id && b.loaded_pay_cents != null && b.deadhead_pay_cents != null));
+  const payIncomplete = active.filter((l) => !driverBills.some((b) => b.load_id === l.load_id && b.loaded_pay_cents != null && b.deadhead_pay_cents != null));
   const ready: ReadyItem[] = [
     { key: "sb_delivered", label: "SB load delivered at Laredo", hard: true, ok: sb.length > 0 && sb.every((l) => l.is_delivered) && undelivered.length === 0,
       detail: sb.length === 0 ? "no SB leg on this tour yet — awaiting the return load" : undelivered.length ? `${undelivered.map((l) => `${l.trip_type ?? "leg"} ${l.load_number} ${l.status}`).join(", ")} not delivered` : "yes" },
-    { key: "pods", label: "All PODs on file", hard: false, ok: deliveredLegs.length > 0 && podsHave === deliveredLegs.length, detail: `${podsHave} of ${deliveredLegs.length || legs.length}` },
+    { key: "pods", label: "All PODs on file", hard: false, ok: deliveredLegs.length > 0 && podsHave === deliveredLegs.length, detail: `${podsHave} of ${deliveredLegs.length || active.length}` },
     { key: "costs_complete", label: "Every cost has account + vendor + receipt", hard: false, ok: costs.length > 0 && missingAccount === 0 && missingVendor === 0 && missingReceipt === 0,
       detail: costs.length === 0 ? "no costs recorded" : `account ${missingAccount === 0 ? "✔" : `${missingAccount} missing`} · vendor ${missingVendor === 0 ? "✔" : `${missingVendor} missing`} · receipt ${costs.length - missingReceipt} of ${costs.length}` },
-    { key: "driver_pay", label: "Driver pay lines complete (loaded + empty)", hard: false, ok: legs.length > 0 && payIncomplete.length === 0, detail: payIncomplete.length ? `${payIncomplete.map((l) => l.load_number).join(", ")} missing a two-line driver bill` : "yes" },
-    { key: "real_miles", label: "Real driven miles captured", hard: false, ok: legs.length > 0 && legs.every((l) => l.miles_real != null), detail: legs.every((l) => l.miles_real != null) && legs.length ? `${totals.miles_real?.toFixed(1)} mi` : "no odometer segments — no fence events captured" },
+    { key: "driver_pay", label: "Driver pay lines complete (loaded + empty)", hard: false, ok: active.length > 0 && payIncomplete.length === 0, detail: payIncomplete.length ? `${payIncomplete.map((l) => l.load_number).join(", ")} missing a two-line driver bill` : "yes" },
+    { key: "real_miles", label: "Real driven miles captured", hard: false, ok: active.length > 0 && active.every((l) => l.miles_real != null), detail: active.every((l) => l.miles_real != null) && active.length ? `${totals.miles_real?.toFixed(1)} mi` : "no odometer segments — no fence events captured" },
   ];
   const closedAlready = Boolean(s.trip_closed_at) || !["open"].includes(String(s.status));
   const hardBlockers = ready.filter((r) => r.hard && !r.ok).map((r) => `${r.label}: ${r.detail}`);
