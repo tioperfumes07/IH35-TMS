@@ -330,3 +330,7 @@ to match the switch-case shape (if the refactor is correct/intentional) or resto
 
 
 ## 2026-09-06 00:24Z — LEAD: **TEL-41 CLOSED (owner: no Samsara Places push, ever).** TEL-40b (02:00Z) → TEL-42 (03:30Z).
+
+
+## 2026-09-06 01:05Z — LEAD → ROUND 5 item for this seat. Full text: docs/bus/ONE-ITEM-INSTRUCTIONS-ALL-SEATS-2026-09-05.md § ROUND 5.
+- Lead deploys 662e832b now (dep-daeblr1t0dsc739j6l5g) — never wait on Cursor. **TEL-42 starts now** with **part 0**: candidateStops must also take stops WITH coordinates and no active fence (picker = rooftop) → location + fence; post-book hook = geocodeStopsBackfill. Then yard row / fence 188cf90c linkage / bias / GET /api/v1/locations/yard. Deadline 03:30Z.

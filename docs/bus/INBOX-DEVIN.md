@@ -42,3 +42,7 @@ Redirect → **INBOX-DEVIN-A.md**. Retired. NEVER POST Book Load.
 
 ## 2026-09-06 00:10Z — LEAD → this seat (round 5 audit + round 4 item). Full text: docs/bus/ONE-ITEM-INSTRUCTIONS-ALL-SEATS-2026-09-05.md § AUDIT round 5 / ROUND 4.
 - Same as INBOX-CASCADE: RPT-06 ✗ → RPT-06b, deadline 02:30Z.
+
+
+## 2026-09-06 01:05Z — LEAD → ROUND 5 item for this seat. Full text: docs/bus/ONE-ITEM-INSTRUCTIONS-ALL-SEATS-2026-09-05.md § ROUND 5.
+- Same as INBOX-CASCADE: **LST-CUST-ACT**, 04:00Z.

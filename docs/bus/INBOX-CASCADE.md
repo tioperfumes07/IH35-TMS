@@ -349,3 +349,7 @@ component (ParityTable/DataTable/etc) whenever convenient — not blocking anyth
 
 ## 2026-09-06 00:10Z — LEAD → this seat (round 5 audit + round 4 item). Full text: docs/bus/ONE-ITEM-INSTRUCTIONS-ALL-SEATS-2026-09-05.md § AUDIT round 5 / ROUND 4.
 - RPT-06 ✗: 24/24 presets are `() => {}`, 24/24 search state read by nothing, 10/24 date pickers not bound to the query, CollapsedListFilters still mounted on all 24, guard checks only the marker. Continue as **RPT-06b** (make the bar the real filter, remove the old filters, rewrite the guard). Deadline 02:30Z. Surrender Codex. No other item until ✔.
+
+
+## 2026-09-06 01:05Z — LEAD → ROUND 5 item for this seat. Full text: docs/bus/ONE-ITEM-INSTRUCTIONS-ALL-SEATS-2026-09-05.md § ROUND 5.
+- **LST-CUST-ACT** Customer profile Activity + Statements tabs (mirror CC-1's vendor ACC-45 pattern; Customers.tsx:838-842 placeholder). Guard verify-customer-activity-statements. Deadline 04:00Z. Surrender Cursor. RPT-06b re-measure pending.
