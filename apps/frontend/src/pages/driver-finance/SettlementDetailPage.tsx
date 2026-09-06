@@ -165,6 +165,20 @@ export function SettlementDetailPage() {
   // gate rather than leaving the control ungated in the gap; swap for a permission-key check when that
   // flag flips on.
   const canVoidSettlement = auth.user?.role === "Owner" || auth.user?.role === "Accountant";
+  // SET-13 REOPEN-DISABLED-NOT-HIDDEN (owner CONSOLIDATED 2026-09-06 18:30Z item 7) — the whole
+  // Reopen control used to be nested inside BOTH `paymentState === "manual_paid"` AND an
+  // Owner/Administrator role check, so it disappeared entirely rather than showing disabled with a
+  // reason. LAW-EDITABLE-BY-PERMISSION-ALWAYS-TRACEABLE: "a hard cannot-be-mutated with no
+  // authorized path is a DEFECT, not a safety feature" — the control must always render; only its
+  // enabled state and the stated reason change.
+  const canReopenRole = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
+  const reopenBlockedReason =
+    paymentState !== "manual_paid"
+      ? "Only available once this settlement is marked paid manually"
+      : !canReopenRole
+        ? "Requires Owner or Administrator role"
+        : null;
+  const canReopen = reopenBlockedReason === null;
   const settlementIsCancelled = String(settlement.status ?? "") === "cancelled";
   const settlementIsLocked = Boolean(settlement.locked_at) && !settlementIsCancelled;
   const settlementIsPaid = String(settlement.status ?? "") === "paid";
@@ -1026,44 +1040,54 @@ export function SettlementDetailPage() {
                     <p className="text-xs text-gray-600">
                       Marked paid manually — no further bank pipeline actions unless bounced back to unpaid.
                     </p>
-                    {auth.user?.role === "Owner" || auth.user?.role === "Administrator" ? (
-                      // UI-01 PART 2 — flat inside the single "Payment Status" frame above, not a
-                      // nested card (QBO/NetSuite style); the top border alone separates the
-                      // correction sub-section without framing a second box.
-                      <div className="space-y-1 border-t border-slate-200 pt-2">
-                        <p className="text-xs text-slate-700">
-                          Marked paid in error? Reopen requires a written reason and is itself permanently
-                          audited — the original mark-paid record is never erased.
-                        </p>
-                        <input
-                          value={reopenReason}
-                          onChange={(event) => setReopenReason(event.target.value)}
-                          placeholder="Reason for reopening (required)"
-                          className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                        />
-                        <button
-                          type="button"
-                          className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700"
-                          onClick={() => {
-                            if (!companyId) return;
-                            const reason = reopenReason.trim();
-                            if (reason.length < 3) {
-                              pushToast("Reopen reason must be at least 3 characters", "error");
-                              return;
-                            }
-                            setPendingConfirm("reopen");
-                          }}
-                        >
-                          Reopen (correction)
-                        </button>
-                      </div>
-                    ) : null}
                   </div>
                 ) : null}
 
                 {paymentState === "cleared" ? (
                   <p className="text-xs text-gray-600">Payment cleared through the bank pipeline.</p>
                 ) : null}
+
+                {/* SET-13 — always rendered (never hidden); disabled + a reason tooltip when not
+                    permitted right now, per LAW-EDITABLE-BY-PERMISSION-ALWAYS-TRACEABLE. UI-01
+                    PART 2 — flat inside the single "Payment Status" frame above, not a nested card
+                    (QBO/NetSuite style); the top border alone separates the correction sub-section
+                    without framing a second box. */}
+                <div className="space-y-1 border-t border-slate-200 pt-2" data-testid="settlement-reopen-block">
+                  <p className="text-xs text-slate-700">
+                    Marked paid in error? Reopen requires a written reason and is itself permanently
+                    audited — the original mark-paid record is never erased.
+                  </p>
+                  <input
+                    value={reopenReason}
+                    onChange={(event) => setReopenReason(event.target.value)}
+                    placeholder="Reason for reopening (required)"
+                    disabled={!canReopen}
+                    className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:bg-gray-100 disabled:text-gray-400"
+                  />
+                  <button
+                    type="button"
+                    className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700 disabled:cursor-not-allowed disabled:text-gray-400"
+                    disabled={!canReopen || reopenReason.trim().length < 3}
+                    title={reopenBlockedReason ?? undefined}
+                    data-testid="settlement-reopen-button"
+                    onClick={() => {
+                      if (!companyId || !canReopen) return;
+                      const reason = reopenReason.trim();
+                      if (reason.length < 3) {
+                        pushToast("Reopen reason must be at least 3 characters", "error");
+                        return;
+                      }
+                      setPendingConfirm("reopen");
+                    }}
+                  >
+                    Reopen (correction)
+                  </button>
+                  {reopenBlockedReason ? (
+                    <p className="text-xs text-slate-500" data-testid="settlement-reopen-blocked-reason">
+                      {reopenBlockedReason}
+                    </p>
+                  ) : null}
+                </div>
 
                 <div className="space-y-1 border-t border-gray-100 pt-2">
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Events</p>
