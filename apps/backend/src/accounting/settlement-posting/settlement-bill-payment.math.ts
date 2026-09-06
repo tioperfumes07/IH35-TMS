@@ -69,6 +69,16 @@ export function bucketRecoveryRoleKey(deductionType: string): string {
   // chart_of_accounts_roles or account_role_bindings, so the derived key would fail closed on every
   // fuel deduction (including the fuel-card overage recovery this alias exists to serve).
   if (t === "fuel") return "fuel_advance_recovery";
+  // SETTLEMENTS-LIST-TRUTH follow-up (found live 2026-09-06 re-running SETL-CLOSE-POST-A after
+  // DELIVER-HAND-9 closed S-13654): 'company_vehicle_fuel' deductions already resolve at
+  // create-time to the bound 'company_fuel_advance_expense' role (5000 Fuel & Diesel) — confirmed
+  // live, no migration needed for that role. This function's own generic `${t}_recovery` fallback
+  // never had the matching alias, so the payrun-close consumption side derived
+  // 'company_vehicle_fuel_recovery' instead — a role that was never bound anywhere — and refused to
+  // preview S-13654 even though the deduction's real target account has existed all along. Same
+  // create-side/consume-side vocabulary mismatch class as the 'fuel'/'fuel_advance_recovery' alias
+  // directly above; fixed the same way.
+  if (t === "company_vehicle_fuel") return "company_fuel_advance_expense";
   return `${t}_recovery`;
 }
 
