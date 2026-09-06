@@ -886,3 +886,34 @@ FULL RE-DRY-RUN (setl-close-post-a-dry-run.ts, previewOnly=true, zero writes —
 Item-2 guard live half re-run: verify-close-post-a-item2-historical-advances.mjs CLOSE_POST_A_ITEM2_LIVE=1 → PASS (live) — all 6 historical advances exist, dated in 2026.
 
 Unchanged gate: SETL-CLOSE-POST-A's real closeSettlementPayRun --apply (previewOnly=false) still needs your ✔ on this full, combined (item 1 + item 2) 13-settlement JE set above before it runs. Ready the moment you say so.
+
+---
+
+CC-3 | SET-24 ROUTING BUILT | aefb381198 | live pending (Render stuck on 8a86575, healthz ok:true but stale) | type reimbursement_reversal · dry-run 7 rows · 0 → 7200 | NEXT owner ✔
+
+Built per your ROUND 16.13 ruling #2 verbatim. PR #21124 merged aefb381198 (fast 4-min law). Migration 202613890000 reserved (PR #21114, merged 351219ac55) then applied live on Neon (column + FK + index confirmed). Verify-step 10653 reserved (PR #21115, merged 986fa0cbb0).
+
+WHAT SHIPPED (additive):
+- deduction_type 'reimbursement_reversal' (SettlementDeductionSourceType, deductions.service.ts) + new column driver_finance.driver_settlement_deductions.reversed_reimbursement_id (uuid, FK to driver_finance.driver_reimbursements(id), indexed) — required for this type, forbidden for every other type (validated in createSettlementDeduction).
+- bucketRecoveryRoleKey (settlement-bill-payment.math.ts) special-cases 'reimbursement_reversal' -> the EXISTING 'reimbursement_expense' CoA role (the SAME account every real reimbursement already credits), checked BEFORE the generic ${t}_recovery fallback that would otherwise derive a never-bound role. classifyDeductionTarget still buckets it as bucket_recovery (never advance/escrow), so it flows through settlement-payrun-close.service.ts's existing per-role credit-leg loop with zero new GL math.
+- UI (PendingSettlementDeductionsPanel.tsx): a 'reimbursement_reversal' row's Reason column now renders "Reimbursement reversal · reverses <account> · voided <id>" (linked to the voided driver_reimbursement) instead of raw reason text. The GET /api/v1/driver-finance/deductions route resolves the reimbursement_expense account once per request (not per row) and attaches its label.
+
+ONE ROW PER VOIDED REIMBURSEMENT, not one row per driver/settlement summing several ids: matches this table's existing singular source_*_id FK convention (source_expense_id, source_bank_transaction_id — none are arrays). The original 4 driver/settlement corrections decompose into exactly 7 rows with no remainder.
+
+GUARD: scripts/verify-reimbursement-reversal-routes-to-expense.mjs (verify-step 10653) --selftest pins the special-case ordering, the required/forbidden FK validation, and the ops script's shape (4 mutations all caught). Live half queries accounting.chart_of_accounts_roles for both reimbursement_expense and other_recovery (USMCA) and FAILS if they ever resolve to the SAME account — the literal "forbids 7200 for this type" the ruling asked for, checked against the real live account ids, not hardcoded.
+
+RE-RUN DRY-RUN (7 rows, driver · settlement · amount · expense account · voided id):
+  Luis Armando Sosa Perez · S-13646 · $27.00 · DRIVERTRIPLU056412 Driver Trip-Lumper Reimbursement · voided 507b804d-b964-4369-8789-6900f61d8c79
+  Jorge Luis Infante Corona · S-13645 · $25.00 · DRIVERTRIPLU056412 Driver Trip-Lumper Reimbursement · voided 7c2dffe8-5a72-4715-a4d8-70188563751b
+  Jorge Luis Infante Corona · S-13645 · $25.00 · DRIVERTRIPLU056412 Driver Trip-Lumper Reimbursement · voided 8dfa5aae-2b4f-4c0c-a220-aaacceb3a8a4
+  Hugo Gaytan · S-13648 · $18.00 · DRIVERTRIPLU056412 Driver Trip-Lumper Reimbursement · voided ef211f6c-6681-4074-95d5-ac034b315fca
+  Hugo Gaytan · S-13648 · $25.00 · DRIVERTRIPLU056412 Driver Trip-Lumper Reimbursement · voided 2a12ab33-fa90-4086-8438-575eb3afe06b
+  Jose Antonio Vicente Martinez · S-13643 · $30.30 · DRIVERTRIPLU056412 Driver Trip-Lumper Reimbursement · voided ddff9437-d3b7-4a41-b7c8-5fda2f742a82
+  Jose Antonio Vicente Martinez · S-13643 · $22.14 · DRIVERTRIPLU056412 Driver Trip-Lumper Reimbursement · voided dca86e56-ffac-4dca-835b-5d823e86b342
+  TOTAL: $172.44 — exact match, unchanged from the original tally.
+
+Every row resolves to the SAME account (all 7 are reimbursement_type='other' in the source data, and every reimbursement type already routes through this one role — live-verified, no per-type variation exists in this codebase today). "Per row (it can differ by row)" is honored structurally — the account is looked up FROM each row's own reversed_reimbursement_id via the shared role resolver, reused, never hardcoded a second time — even though today every row happens to resolve to the same place.
+
+FOUND + FIXED WHILE BUILDING (own bug, not shipped): the ops script's first draft resolved the expense-account LABEL in a second, separate withCurrentUser() call that never re-set app.operating_company_id — catalogs.accounts' FORCED RLS silently returned 0 rows and the script fell back to printing the raw account UUID instead of "DRIVERTRIPLU056412 Driver Trip-Lumper Reimbursement". Caught before commit by actually reading the dry-run output, not just checking exit code — same false-empty class as the RLS landmine this session's skills warn about. Fixed by merging both reads into one scoped connection.
+
+--apply is code-refused without your exact ✔ quote (LEAD_APPROVAL_QUOTE left empty in the script by design, same gate as CLOSE-POST-A item 2). Ready to run the moment you ✔ or say "reopen" per your own forwarded recommendation to the owner — this build makes the apply one command, exactly as asked.
