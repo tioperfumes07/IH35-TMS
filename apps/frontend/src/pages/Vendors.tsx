@@ -21,6 +21,7 @@ import { VendorsListView } from "./vendors/VendorsListView";
 import { VendorListSidebar } from "./vendors/VendorListSidebar";
 import { VendorsSyncPanel } from "./vendors/VendorsSyncPanel";
 import { VendorCreateModal } from "../components/vendors/VendorCreateModal";
+import { VendorEditDrawer } from "../components/vendors/VendorEditDrawer";
 import { useViewModePref } from "../hooks/useViewModePref";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { formatDateUS, mmmDd } from "../lib/formatDate";
@@ -96,6 +97,8 @@ export function VendorsPage() {
   const companyId = selectedCompanyId ?? "";
   // USMCA/TRK are TMS-native — QBO vendor sync chrome is TRANSP-only (customers twin #8698 / LV #1420).
   const qboAvailable = selectedCompany?.code === "TRANSP";
+  // CUR-2: Edit opens the vendor's core fields in the right-side ParityDrawer (QBO-style), not the full page.
+  const [editVendorId, setEditVendorId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   // BANK-SORT-ROLLOUT-CRM — name sort persists in ?sort=name&dir= via shared useUrlSort
   // (same contract as accounting VendorsListView / #2609). Default (no params) = A→Z.
@@ -718,7 +721,7 @@ export function VendorsPage() {
                         type="button"
                         variant="secondary"
                         className="h-8"
-                        onClick={() => navigate(`/vendors/${selectedVendor.id}`)}
+                        onClick={() => setEditVendorId(selectedVendor.id)}
                         data-testid="vendor-header-edit"
                       >
                         Edit
@@ -895,6 +898,18 @@ export function VendorsPage() {
       </div>
       )}
       <VendorCreateModal open={createOpen} onClose={closeCreate} operatingCompanyId={companyId} />
+      {/* CUR-2: Edit-in-side-drawer (QBO style). Full-page /vendors/:id stays reachable by URL. */}
+      <VendorEditDrawer
+        open={Boolean(editVendorId)}
+        vendorId={editVendorId}
+        vendorName={selectedVendor?.id === editVendorId ? selectedVendor?.name : null}
+        operatingCompanyId={companyId || undefined}
+        onClose={() => setEditVendorId(null)}
+        onSaved={() => {
+          void vendorsQuery.refetch();
+          void inactiveVendorsQuery.refetch();
+        }}
+      />
     </div>
   );
 }
