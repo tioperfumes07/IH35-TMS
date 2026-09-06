@@ -7963,5 +7963,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "verify-settlement-list-accrual (SET-05: pins the SET-ACCRUAL fix in settlements.routes.ts -- both list-query blocks must show line-derived accrual for pre-close settlements, never a stale /bin/zsh header; live half checks real USMCA data)"
+  },
+  "10625": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-health-deep-financial-checks (INV-11/ACC-18/ACC-19, owner CONSOLIDATED 2026-09-06 18:30Z item 7: /health/deep runs only infra checks -- postgres/redis/r2/plaid/qbo -- zero financial checks; adds real A/R tie-out, A/P tie-out, trial balance, bank control account, and JE debit=credit checks, each naming itself and failing loudly)"
   }
 }
