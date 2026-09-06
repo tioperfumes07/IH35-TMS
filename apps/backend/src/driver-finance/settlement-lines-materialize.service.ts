@@ -1,0 +1,304 @@
+/**
+ * settlement-lines-materialize.service.ts — SETL-LINES-GL (owner item, 2026-09-05, deadline 04:00Z).
+ *
+ * MEASURED (SETL-TIEOUT-01's own REMAINING): the OLDER, stricter settlement-pdf-5753.mjs requires
+ * every settlement_lines row to carry load_id + a resolved posting_account_id + approval_status=
+ * 'approved'. Two existing functions ALREADY materialize part of this at settlement CLOSE time —
+ * computeSettlementReimbursements (settlement-contract-terms.service.ts) and
+ * applyPendingDeductionsToSettlementWithNetFloor (settlement-deduction-cap.service.ts) — but NEITHER
+ * sets load_id or posting_account_id, and both are gated behind close-time flags, never running at
+ * line-creation time. This file is the missing piece: ONE materializer, callable idempotently at
+ * BOTH creation time and close time, that fills exactly those two gaps for driver_reimbursements,
+ * driver_settlement_deductions, and the extra-pay rows already stored in driver_reimbursements
+ * (reimbursement_type='other' with a reason naming additional/layover/bonus pay — this table has no
+ * distinct "extra pay" category of its own; see EXTRA_PAY_REASON_PATTERN below).
+ *
+ * IDEMPOTENT BY SOURCE ID: a driver_reimbursements row already carrying settlement_line_id, or a
+ * driver_settlement_deductions row already carrying applied_to_settlement_id, is skipped — re-running
+ * this on the same settlement is always a no-op for rows it already materialized. This function does
+ * NOT supersede computeSettlementReimbursements / applyPendingDeductionsToSettlementWithNetFloor —
+ * if those run later (settlement close, when their flags are on), they see the SAME idempotency
+ * columns already set and skip the rows this function already applied, so the two paths can never
+ * double-materialize the same source row.
+ *
+ * ACCOUNT RESOLUTION — reuses the EXISTING role machinery, no new GL math:
+ *   reimbursement  -> role 'reimbursement_expense' (real, active COA role)
+ *   extra_pay      -> role 'driver_pay_expense' (real, active COA role — extra pay is driver
+ *                     compensation, the same bucket earnings/deadhead_pay already post to)
+ *   deduction      -> bucketRecoveryRoleKey(deduction_type) (the SAME function
+ *                     settlement-bill-payment-posting.service.ts / settlement-posting.service.ts /
+ *                     settlement-payrun-close.service.ts already use to resolve a deduction's
+ *                     recovery account), guarded by isCoaRole so an unmapped key never reaches the
+ *                     resolver as a raw string.
+ * An unresolved role (resolveRoleAccountOptional returns null, or isCoaRole rejects the derived key —
+ * e.g. deduction_type='other' has no 'other_recovery' role bound) leaves posting_account_id NULL and
+ * FORCES approval_status='pending' regardless of the source row's own status — LAW: never a guessed
+ * account, and an approved line must always carry a real one (this is exactly what
+ * verify-settlement-lines-have-accounts.mjs locks).
+ *
+ * approval_status FROM THE SOURCE (when a role DID resolve): driver_reimbursements.status
+ * 'paid'/'settled' -> 'approved' (the claim is already processed); 'pending' -> 'pending'.
+ * driver_settlement_deductions.status 'applied' -> 'approved'; 'pending'/'partial'/'deferred' ->
+ * 'pending'. Neither table's status is overwritten here beyond what this function's own apply step
+ * sets (driver_reimbursements -> 'settled', matching computeSettlementReimbursements' own convention;
+ * driver_settlement_deductions keeps its existing status column, tracked instead via
+ * applied_to_settlement_id, matching applyPendingDeductionsToSettlementWithNetFloor's own convention).
+ *
+ * "The tour's loads": the set of load_id values already present on this settlement's own earnings/
+ * deadhead_pay settlement_lines rows (the load-bookended settlement's real load membership) — never
+ * re-derived from a load-number range guess.
+ */
+import { appendCrudAudit } from "../audit/crud-audit.js";
+import { resolveRoleAccountOptional, isCoaRole } from "../accounting/coa-roles/resolver.service.js";
+import { bucketRecoveryRoleKey } from "../accounting/settlement-posting/settlement-bill-payment.math.js";
+import { SETTLEMENT_DEDUCTION_SOURCE_TABLE } from "./deductions.service.js";
+
+type QueryClient = {
+  query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
+};
+
+const REIMBURSEMENTS_SOURCE_TABLE = "driver_finance.driver_reimbursements";
+// This table has no distinct "extra pay" category — additional/bonus/layover pay is entered as a
+// driver_reimbursements row with reimbursement_type='other' (see scripts/seed-missing-usmca-loads.ts's
+// own reimbursement_rows.concat(additional_pay_rows) loop). Narrowly scoped to the 'other' bucket only
+// — a real toll/fuel/scale/parking/lumper reimbursement is NEVER reclassified as extra pay.
+const EXTRA_PAY_REASON_PATTERN = /additional pay|layover|bonus/i;
+
+export type MaterializedLine = {
+  sourceTable: string;
+  sourceId: string;
+  settlementLineId: string;
+  lineType: string;
+  amountCents: number;
+  postingAccountId: string | null;
+  approvalStatus: "pending" | "approved";
+  accountRoleAttempted: string;
+  reason?: string;
+};
+
+export type MaterializeSettlementLinesResult = {
+  settlementId: string;
+  loadIds: string[];
+  materialized: MaterializedLine[];
+  skippedAlreadyMaterialized: number;
+};
+
+/**
+ * Materialize every not-yet-materialized driver_reimbursements / driver_settlement_deductions row
+ * for this settlement's own loads into a real settlement_lines row. Idempotent — safe to call
+ * repeatedly (at line creation and again at close).
+ */
+export async function materializeSettlementLines(
+  client: QueryClient,
+  input: { settlementId: string; operatingCompanyId: string; actorUserId: string }
+): Promise<MaterializeSettlementLinesResult> {
+  const settlementRes = await client.query<{ id: string; driver_id: string; status: string; is_sample_data: boolean }>(
+    `SELECT id::text, driver_id::text, status, is_sample_data FROM driver_finance.driver_settlements WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+    [input.settlementId, input.operatingCompanyId]
+  );
+  const settlement = settlementRes.rows[0];
+  if (!settlement) return { settlementId: input.settlementId, loadIds: [], materialized: [], skippedAlreadyMaterialized: 0 };
+  if (settlement.status !== "open") {
+    // Only an OPEN settlement can gain new lines — matches every other settlement-lines writer's
+    // own invariant (a locked/closed/paid/cancelled settlement's lines are frozen).
+    return { settlementId: input.settlementId, loadIds: [], materialized: [], skippedAlreadyMaterialized: 0 };
+  }
+
+  const loadIdsRes = await client.query<{ load_id: string }>(
+    `
+      SELECT DISTINCT load_id::text
+        FROM driver_finance.settlement_lines
+       WHERE settlement_id = $1::uuid AND is_active = true AND load_id IS NOT NULL
+    `,
+    [input.settlementId]
+  );
+  const loadIds = loadIdsRes.rows.map((r) => r.load_id);
+  if (loadIds.length === 0) return { settlementId: input.settlementId, loadIds: [], materialized: [], skippedAlreadyMaterialized: 0 };
+
+  const materialized: MaterializedLine[] = [];
+  let skipped = 0;
+
+  // ---- driver_reimbursements (reimbursement + extra_pay) ----
+  const reimbRes = await client.query<{
+    id: string;
+    amount_cents: string | number;
+    reason: string | null;
+    load_id: string | null;
+    reimbursement_type: string | null;
+    status: string;
+  }>(
+    `
+      SELECT id::text, amount_cents, reason, load_id::text, reimbursement_type, status
+        FROM driver_finance.driver_reimbursements
+       WHERE operating_company_id = $1::uuid
+         AND driver_id = $2::uuid
+         AND load_id = ANY($3::uuid[])
+         AND pay_mode = 'settlement'
+         AND settlement_line_id IS NULL
+         AND voided_at IS NULL
+         AND status <> 'void'
+       ORDER BY created_at ASC, id ASC
+       FOR UPDATE
+    `,
+    [input.operatingCompanyId, settlement.driver_id, loadIds]
+  );
+  for (const r of reimbRes.rows) {
+    const amountCents = Math.round(Number(r.amount_cents ?? 0));
+    if (amountCents <= 0) continue;
+    const isExtraPay = r.reimbursement_type === "other" && EXTRA_PAY_REASON_PATTERN.test(r.reason ?? "");
+    const lineType = isExtraPay ? "extra_pay" : "reimbursement";
+    const role = isExtraPay ? "driver_pay_expense" : "reimbursement_expense";
+    const postingAccountId = await resolveRoleAccountOptional(client, input.operatingCompanyId, role);
+    const sourceApproved = r.status === "paid" || r.status === "settled";
+    const approvalStatus: "pending" | "approved" = postingAccountId && sourceApproved ? "approved" : "pending";
+
+    const dollars = amountCents / 100;
+    const description = `${lineType === "extra_pay" ? "Additional pay" : "Reimbursement"} — ${r.reimbursement_type ?? "expense"}${r.reason ? `: ${r.reason}` : ""}`.slice(0, 500);
+    const lineRes = await client.query<{ id: string }>(
+      `
+        INSERT INTO driver_finance.settlement_lines (
+          settlement_id, line_type, description, amount, load_id, source_table, source_reference_id,
+          posting_account_id, approval_status, is_sample_data
+        )
+        VALUES ($1::uuid, $2, $3, $4, $5::uuid, $6, $7::uuid, $8::uuid, $9, $10)
+        RETURNING id::text
+      `,
+      [input.settlementId, lineType, description, dollars, r.load_id, REIMBURSEMENTS_SOURCE_TABLE, r.id, postingAccountId, approvalStatus, settlement.is_sample_data]
+    );
+    const settlementLineId = lineRes.rows[0]!.id;
+
+    await client.query(
+      `
+        UPDATE driver_finance.driver_reimbursements
+           SET settlement_line_id = $2::uuid, applied_to_settlement_id = COALESCE(applied_to_settlement_id, $3::uuid),
+               status = CASE WHEN status = 'pending' THEN 'settled' ELSE status END, updated_at = now()
+         WHERE id = $1::uuid AND settlement_line_id IS NULL
+      `,
+      [r.id, settlementLineId, input.settlementId]
+    );
+
+    await appendCrudAudit(
+      client as never,
+      input.actorUserId,
+      "driver_finance.settlement_line.materialized",
+      { resource_type: "driver_finance.settlement_lines", resource_id: settlementLineId, source_table: REIMBURSEMENTS_SOURCE_TABLE, source_id: r.id, line_type: lineType, amount_cents: amountCents, posting_account_id: postingAccountId, approval_status: approvalStatus },
+      "info",
+      "SETL-LINES-GL"
+    );
+
+    materialized.push({
+      sourceTable: REIMBURSEMENTS_SOURCE_TABLE,
+      sourceId: r.id,
+      settlementLineId,
+      lineType,
+      amountCents,
+      postingAccountId,
+      approvalStatus,
+      accountRoleAttempted: role,
+      reason: postingAccountId ? undefined : `no COA role account bound for role '${role}'`,
+    });
+  }
+
+  // ---- driver_settlement_deductions ----
+  const dedRes = await client.query<{
+    id: string;
+    amount_cents: string | number;
+    reason: string | null;
+    load_id: string | null;
+    deduction_type: string;
+    status: string;
+  }>(
+    `
+      SELECT id::text, amount_cents, reason, load_id::text, deduction_type, status
+        FROM driver_finance.driver_settlement_deductions
+       WHERE operating_company_id = $1::uuid
+         AND driver_id = $2::uuid
+         AND load_id = ANY($3::uuid[])
+         AND applied_to_settlement_id IS NULL
+         AND voided_at IS NULL
+       ORDER BY created_at ASC, id ASC
+       FOR UPDATE
+    `,
+    [input.operatingCompanyId, settlement.driver_id, loadIds]
+  );
+  for (const d of dedRes.rows) {
+    const amountCents = Math.round(Number(d.amount_cents ?? 0));
+    if (amountCents <= 0) continue;
+    const roleKey = bucketRecoveryRoleKey(d.deduction_type);
+    const postingAccountId = isCoaRole(roleKey) ? await resolveRoleAccountOptional(client, input.operatingCompanyId, roleKey) : null;
+    const sourceApproved = d.status === "applied";
+    const approvalStatus: "pending" | "approved" = postingAccountId && sourceApproved ? "approved" : "pending";
+
+    const dollars = amountCents / 100;
+    const description = String(d.reason ?? "Settlement deduction").slice(0, 500);
+    const lineRes = await client.query<{ id: string }>(
+      `
+        INSERT INTO driver_finance.settlement_lines (
+          settlement_id, line_type, description, amount, load_id, source_table, source_reference_id,
+          posting_account_id, approval_status, is_sample_data
+        )
+        VALUES ($1::uuid, 'deduction', $2, $3, $4::uuid, $5, $6::uuid, $7::uuid, $8, $9)
+        RETURNING id::text
+      `,
+      [input.settlementId, description, dollars, d.load_id, SETTLEMENT_DEDUCTION_SOURCE_TABLE, d.id, postingAccountId, approvalStatus, settlement.is_sample_data]
+    );
+    const settlementLineId = lineRes.rows[0]!.id;
+
+    await client.query(
+      `UPDATE driver_finance.driver_settlement_deductions SET applied_to_settlement_id = $2::uuid, remaining_balance_cents = 0, updated_at = now() WHERE id = $1::uuid AND applied_to_settlement_id IS NULL`,
+      [d.id, input.settlementId]
+    );
+
+    await appendCrudAudit(
+      client as never,
+      input.actorUserId,
+      "driver_finance.settlement_line.materialized",
+      { resource_type: "driver_finance.settlement_lines", resource_id: settlementLineId, source_table: SETTLEMENT_DEDUCTION_SOURCE_TABLE, source_id: d.id, line_type: "deduction", amount_cents: amountCents, posting_account_id: postingAccountId, approval_status: approvalStatus },
+      "info",
+      "SETL-LINES-GL"
+    );
+
+    materialized.push({
+      sourceTable: SETTLEMENT_DEDUCTION_SOURCE_TABLE,
+      sourceId: d.id,
+      settlementLineId,
+      lineType: "deduction",
+      amountCents,
+      postingAccountId,
+      approvalStatus,
+      accountRoleAttempted: roleKey,
+      reason: postingAccountId ? undefined : `no COA role account bound for deduction_type '${d.deduction_type}' (derived role '${roleKey}')`,
+    });
+  }
+
+  return { settlementId: input.settlementId, loadIds, materialized, skippedAlreadyMaterialized: skipped };
+}
+
+/**
+ * Backfill helper: also resolves + stamps posting_account_id on this settlement's PRE-EXISTING
+ * earnings/deadhead_pay lines that predate this file (they were never given a posting_account_id —
+ * "never yet written by any live poster"). Idempotent: only touches rows where posting_account_id IS
+ * NULL. Both line types are driver compensation, the same role earnings/deadhead already economically
+ * belong to.
+ */
+export async function backfillDriverPayAccountOnExistingLines(
+  client: QueryClient,
+  input: { settlementId: string; operatingCompanyId: string }
+): Promise<number> {
+  const accountId = await resolveRoleAccountOptional(client, input.operatingCompanyId, "driver_pay_expense");
+  if (!accountId) return 0;
+  const res = await client.query<{ id: string }>(
+    `
+      UPDATE driver_finance.settlement_lines
+         SET posting_account_id = $3::uuid
+       WHERE settlement_id = $1::uuid
+         AND operating_company_id = $2::uuid
+         AND line_type IN ('earnings', 'deadhead_pay')
+         AND posting_account_id IS NULL
+         AND is_active = true
+       RETURNING id::text
+    `,
+    [input.settlementId, input.operatingCompanyId, accountId]
+  );
+  return res.rows.length;
+}

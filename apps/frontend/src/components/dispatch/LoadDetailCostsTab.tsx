@@ -29,6 +29,7 @@ import { EntityLink } from "../shared/EntityLink";
 import { ReceiptAttach } from "../documents/ReceiptAttach";
 import { PAID_WITH_KIND_LABEL, paidWithAccounts, paidWithKind } from "../load-costs/paidWith";
 import { formatMoneyCents } from "./constants";
+import { formatDateUS } from "../../lib/formatDate";
 
 // LDT-1 (owner order 2026-09-05 23:00Z, CURSOR-LOAD-DETAIL-TABS-BUILD § LDT-1; built by Claude Lead
 // 2026-09-06 on the owner's "you build all loads and finish all related"): the Costs tab is the
@@ -459,7 +460,7 @@ function SavedBillCard({ row, opco, currency, canEdit, onPop }: { row: VendorBil
 function ExpensePop({ row, currency }: { row: ExpenseListRow; currency: string }) {
   return <div className="ldt-rows">
     <div className="ldt-row"><span>Number</span><span className="ldt-m">{row.expense_number ?? DASH}</span></div>
-    <div className="ldt-row"><span>Date</span><span className="ldt-m">{row.transaction_date}</span></div>
+    <div className="ldt-row"><span>Date</span><span className="ldt-m">{formatDateUS(row.transaction_date)}</span></div>
     <div className="ldt-row"><span>Vendor</span><span className="ldt-m">{row.vendor_name ?? DASH}</span></div>
     <div className="ldt-row"><span>Category</span><span className="ldt-m">{acctLabel(row.category_account_number, row.category_account_name)}</span></div>
     <div className="ldt-row"><span>Paid with</span><span className="ldt-m">{acctLabel(row.payment_account_number, row.payment_account_name)}</span></div>

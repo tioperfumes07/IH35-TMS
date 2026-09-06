@@ -6,6 +6,7 @@ import { applyPendingDeductionsToSettlementWithNetFloor } from "./settlement-ded
 import { applyAutoDeductionsToSettlement } from "../settlements/auto-deductions/apply.js";
 import { computeSettlementContractTerms, SETTLEMENT_CONTRACT_TERMS_FLAG } from "./settlement-contract-terms.service.js";
 import { appendSettlementLineFromDriverBillIfMissing, appendEscrowContributionLineIfMissing, fetchTeamDriversForLoad } from "./settlement-engine.js";
+import { materializeSettlementLines } from "./settlement-lines-materialize.service.js";
 import { fromMdataStatus } from "../dispatch/load-state-machine.js";
 import {
   settlementEarningsSumSql,
@@ -632,6 +633,18 @@ async function closeLoadBookendedSettlementForDriver(
       context: { settlement_id: settlementId, driver_id: opts.driverId, last_load_id: opts.load.id },
     });
   }
+
+  // SETL-LINES-GL — "runs at ... close": final, unconditional sweep (not flag-gated — this only
+  // resolves load_id/posting_account_id/approval_status on lines that already exist or that the
+  // two appliers above just created; it never changes a dollar amount, so it is safe regardless of
+  // whether SETTLEMENT_CONTRACT_TERMS_FLAG / SETTLEMENT_DEDUCTION_APPLY_FLAG are on). Idempotent —
+  // a row this same close's own appliers (or an earlier line-creation-time call) already
+  // materialized is skipped by source-id.
+  await materializeSettlementLines(client, {
+    settlementId,
+    operatingCompanyId: opts.operatingCompanyId,
+    actorUserId: opts.actorUserId,
+  });
 
   const totals = await aggregateSettlementTotals(client, settlementId, opts.operatingCompanyId);
 
