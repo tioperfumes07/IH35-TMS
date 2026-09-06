@@ -1,4 +1,5 @@
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
+import { ReceiptAttach } from "../../components/documents/ReceiptAttach";
 import { formatDateUS } from "../../lib/formatDate";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -302,6 +303,11 @@ export function BillDetailPage() {
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Bill #</span>
           <span className="text-xs text-gray-900">{bill.display_id ?? "—"}</span>
+        </DataPanelRow>
+        {/* LDT-1 (2026-09-06): receipt / vendor invoice image on EVERY bill editor — documents.attachments 'bill'. */}
+        <DataPanelRow>
+          <span className="text-xs font-semibold text-gray-600">Receipt</span>
+          <ReceiptAttach operatingCompanyId={selectedCompanyId!} entityType="bill" entityId={bill.id} readOnly={Boolean(bill.revoked_at)} testId="bill-detail-receipt" />
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Vendor Invoice #</span>

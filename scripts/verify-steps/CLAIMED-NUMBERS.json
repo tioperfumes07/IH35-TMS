@@ -1,6 +1,6 @@
 {
   "8054": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-0-tabbar-header" },
-  "8056": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-1-costs-cards" },
+  "8056": { "claimed_at": "2026-09-05", "claimed_by": "claude-lead (LDT reassigned by owner 2026-09-06 00:2xZ; was cursor)", "purpose": "verify-ldt-1-costs-cards" },
   "8058": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-2-stops-record" },
   "8060": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-3-driver-pay" },
   "8062": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-4-factoring-money" },

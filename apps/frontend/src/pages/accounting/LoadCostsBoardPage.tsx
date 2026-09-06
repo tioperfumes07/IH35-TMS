@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { listBills, listDriverBills, listExpenses, type ExpenseListRow, type VendorBill } from "../../api/accounting";
+import { listBills, listDriverBills, listExpenses } from "../../api/accounting";
 import { listCashAdvances } from "../../api/cashAdvances";
 import { apiRequest } from "../../api/client";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -9,6 +9,9 @@ import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
+import { useDispatchLoad } from "../../api/loads";
+import { LoadDetailCostsTab } from "../../components/dispatch/LoadDetailCostsTab";
+import { ReceiptAttach } from "../../components/documents/ReceiptAttach";
 
 type FilterPill = "in_motion" | "delivered_open" | "all_open" | "this_week";
 // LOAD-COSTS-COMPLETE item (3) (owner's exact board-column list, 2026-09-04): Load · Unit · Driver ·
@@ -120,29 +123,36 @@ function serviceStatus(r: BoardRow): { label: string; style: { backgroundColor: 
     : { label: "Late", style: { backgroundColor: "#FEF2F2", color: "#991B1B", borderColor: "#FCA5A5" } };
 }
 
-const PAGE_LIMIT = 200;
-async function fetchAllExpenses(companyId: string, loadId: string) {
-  const all: ExpenseListRow[] = []; let offset = 0;
-  while (true) { const res = await listExpenses(companyId, { load_id: loadId, limit: PAGE_LIMIT, offset }); const rows = res.rows ?? []; all.push(...rows); if (rows.length < PAGE_LIMIT) break; offset += PAGE_LIMIT; }
-  return all;
-}
-async function fetchAllBills(companyId: string, loadId: string) {
-  const all: VendorBill[] = []; let offset = 0;
-  while (true) { const res = await listBills(companyId, { load_id: loadId, limit: PAGE_LIMIT, offset }); const rows = res.rows ?? []; all.push(...rows); if (rows.length < PAGE_LIMIT) break; offset += PAGE_LIMIT; }
-  return all;
-}
-
+// LDT-1B (owner 2026-09-06 01:3xZ: "click on Load costs in Dispatch, then it takes you to this overview, then all
+// the tabs within it" — the design lives HERE, not one click deeper). Expanding a load row renders the SAME
+// cost cards the load drawer renders (LoadDetailCostsTab): number derived, Expense·paid now | Bill·owed, Paid
+// with = bank/card/fuel card, Receipt on every card, English posting hint, fixed totals footer, bank section.
+// One component, one write path (createExpense / createVendorBill) — a cost saved here IS the row Accounting →
+// Expenses / Bills lists. The legacy panel ids stay (element manifest) around the cards.
 function ExpandPanel({ row, companyId }: { row: BoardRow; companyId: string }) {
-  const expenses = useQuery({ queryKey: ["load-costs-board", "expenses", companyId, row.load_id], queryFn: () => fetchAllExpenses(companyId, row.load_id) });
-  const bills = useQuery({ queryKey: ["load-costs-board", "bills", companyId, row.load_id], queryFn: () => fetchAllBills(companyId, row.load_id) });
-  const entries = [
-    ...(expenses.data ?? []).filter(x => x.status !== "void").map(x => ({ id: x.id, number: x.expense_number ?? row.load_number, label: x.vendor_name ?? "Vendor not set", detail: x.line_description ?? x.memo ?? "Expense · paid now", amount: Number(x.total_amount_cents), owed: false })),
-    ...(bills.data ?? []).filter(x => x.status !== "voided").map(x => ({ id: x.id, number: x.display_id ?? row.load_number, label: x.vendor_name ?? "Vendor not set", detail: x.bill_number ? `Vendor invoice ${x.bill_number}` : "Bill · owed", amount: Number(x.amount_cents), owed: x.status !== "paid" })),
-  ];
+  const load = useDispatchLoad(row.load_id, companyId);
   const params = new URLSearchParams({ load_id: row.load_id, load_number: row.load_number }).toString();
-  return <div className="grid gap-3 bg-[#F7F8FA] p-3 md:grid-cols-[1.55fr_1fr]" data-testid="load-costs-expand">
-    <section className="overflow-hidden rounded border border-[#E5E7EB] bg-white" data-testid="panel-costs-on-load"><header className="flex justify-between border-b px-3 py-[7px] font-bold uppercase text-[#4B5563]"><span>Costs on this load</span><span>{entries.length} entries</span></header>{entries.length === 0 ? <p className="p-3 text-xs text-[#6B7280]">No costs on this load yet.</p> : entries.map(e => <div key={e.id} className="grid grid-cols-[76px_1fr_80px_96px] gap-2 border-b px-3 py-2 text-xs"><b>{e.number}</b><span>{e.label}<small className="block text-[#6B7280]">{e.detail}</small></span><b className="text-center uppercase">{e.owed ? "Owed" : "Paid"}</b><b className="text-right">{fmt(e.amount)}</b></div>)}<div className="flex flex-wrap gap-2 p-3"><Link data-testid="btn-add-cost" className="rounded bg-[#16A34A] px-2.5 py-1.5 text-xs font-semibold text-white" to={`/accounting/expenses/new?${params}`}>+ Add a cost</Link><Link data-testid="btn-receipt-photo" className="rounded border border-[#16A34A] px-2.5 py-1.5 text-xs font-semibold text-[#16A34A]" to={`/accounting/receipts?${params}`}>+ From a receipt photo</Link><Link data-testid="btn-fuel-advance" className="rounded border border-[#16A34A] px-2.5 py-1.5 text-xs font-semibold text-[#16A34A]" to={`/cash-advances?${params}`}>+ Fuel advance</Link></div></section>
-    <section className="overflow-hidden rounded border border-[#E5E7EB] bg-white" data-testid="panel-approx-settlement"><header className="flex justify-between border-b px-3 py-[7px] font-bold uppercase text-[#4B5563]"><span>Approximate settlement</span><span>not final</span></header>{[["Line haul revenue", Number(row.revenue_cents)], ["Costs on the load", -rowCosts(row)], ["Driver pay accruing", -rowPay(row)]].map(([l, v]) => <div key={String(l)} className="flex justify-between border-b px-3 py-[7px] text-xs"><span>{l}</span><span>{fmt(Number(v))}</span></div>)}<div className="flex justify-between bg-[#DCFCE7] px-3 py-[7px] text-xs font-bold text-[#16A34A]"><span>Approximate margin</span><span>{fmt(rowMargin(row))}</span></div></section>
+  return <div className="ldt-body" style={{ padding: 10 }} data-testid="load-costs-expand" data-surface="load-detail">
+    <section className="ldt-card" data-testid="panel-costs-on-load">
+      <div className="ldt-ch"><span>Costs on load {row.load_number}</span><span className="ldt-open">{row.expense_count + row.bill_count} saved</span></div>
+      <div style={{ padding: 10 }}>
+        {load.data ? <LoadDetailCostsTab load={load.data} canEdit={true} />
+          : load.isError ? <p className="ldt-bad-text">Could not load {row.load_number} — {String((load.error as { message?: string })?.message ?? "error")}.</p>
+          : <p className="ldt-muted">Loading load {row.load_number}…</p>}
+      </div>
+      <div className="ldt-actions" style={{ padding: "0 10px 10px" }}>
+        <Link data-testid="btn-add-cost" className="ldt-btn" to={`/accounting/expenses/new?${params}`}>Open the full expense form</Link>
+        <Link data-testid="btn-receipt-photo" className="ldt-btn g" to={`/accounting/receipts?${params}`}>Receipts inbox</Link>
+        <Link data-testid="btn-fuel-advance" className="ldt-btn g" to={`/cash-advances?${params}`}>Cash advances</Link>
+      </div>
+    </section>
+    <section className="ldt-card" data-testid="panel-approx-settlement">
+      <div className="ldt-ch"><span>Approximate settlement (board figures)</span><span className="ldt-open">not final</span></div>
+      <table className="ldt-table"><tbody>
+        {([["Line haul revenue", Number(row.revenue_cents)], ["Costs on this load", rowCosts(row)], ["Driver pay", rowPay(row)]] as Array<[string, number]>).map(([k, v]) => <tr key={k}><td>{k}</td><td className="m">{fmt(v)}</td></tr>)}
+        <tr className="big"><td>Approximate margin</td><td className="m">{fmt(rowMargin(row))}</td></tr>
+      </tbody></table>
+    </section>
   </div>;
 }
 
@@ -152,7 +162,7 @@ function ExpandPanel({ row, companyId }: { row: BoardRow; companyId: string }) {
 // renders ITS OWN register of that transaction type (real rows), scoped to USMCA. "Costs" stays the
 // per-load overview board. Read-only — this board never posts (create is the header + New menu, which
 // routes to the create screens).
-type RegisterRow = { id: string; number: string; date: string | null; party: string; loadNumber: string | null; loadId: string | null; detail: string; amountCents: number; status: string };
+type RegisterRow = { id: string; number: string; date: string | null; party: string; loadNumber: string | null; loadId: string | null; detail: string; amountCents: number; status: string; receiptEntity?: "expense" | "bill" };
 const REGISTER_COLUMNS: Array<ParityColumn<RegisterRow>> = [
   { key: "number", label: "Number", testId: "reg-col-number", sortable: true, className: "whitespace-nowrap", sortValue: r => r.number, render: r => <span className="font-semibold text-slate-700">{r.number}</span> },
   { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateUS(r.date) : DASH },
@@ -162,6 +172,10 @@ const REGISTER_COLUMNS: Array<ParityColumn<RegisterRow>> = [
   { key: "amount", label: "Amount", testId: "reg-col-amount", sortable: true, className: NUM, sortValue: r => r.amountCents, render: r => fmt(r.amountCents) },
   { key: "status", label: "Status", testId: "reg-col-status", sortable: true, className: "whitespace-nowrap text-center", sortValue: r => r.status, render: r => <span className="inline-block rounded-sm border border-[#C7D2DC] bg-[#EEF2F6] px-2 py-px font-bold uppercase text-[#4B5563]" style={{ fontSize: 10 }}>{r.status}</span> },
 ];
+/** LDT-1B: receipt on every expense/bill row of the Dispatch → Load costs registers (documents.attachments). */
+function receiptColumn(companyId: string): ParityColumn<RegisterRow> {
+  return { key: "receipt", label: "Receipt", testId: "reg-col-receipt", sortable: false, render: r => r.receiptEntity ? <ReceiptAttach operatingCompanyId={companyId} entityType={r.receiptEntity} entityId={r.id} testId="reg-receipt" /> : <span className="text-slate-400">{DASH}</span> };
+}
 
 const REGISTER_LIMIT = 500;
 function TransactionRegister({ tab, companyId }: { tab: CostTab; companyId: string }) {
@@ -172,7 +186,7 @@ function TransactionRegister({ tab, companyId }: { tab: CostTab; companyId: stri
     queryFn: async (): Promise<RegisterRow[]> => {
       if (tab === "bills") {
         const res = await listBills(companyId, { limit: REGISTER_LIMIT });
-        return (res.rows ?? []).filter(b => b.status !== "voided").map(b => ({ id: b.id, number: b.display_id ?? "—", date: b.bill_date, party: b.vendor_name ?? "Vendor not set", loadNumber: null, loadId: null, detail: b.bill_number ? `Vendor invoice ${b.bill_number}` : (b.memo ?? "Bill · owed"), amountCents: Number(b.amount_cents), status: b.status === "paid" ? "Paid" : "Owed" }));
+        return (res.rows ?? []).filter(b => b.status !== "voided").map(b => ({ receiptEntity: "bill" as const, id: b.id, number: b.display_id ?? "—", date: b.bill_date, party: b.vendor_name ?? "Vendor not set", loadNumber: null, loadId: null, detail: b.bill_number ? `Vendor invoice ${b.bill_number}` : (b.memo ?? "Bill · owed"), amountCents: Number(b.amount_cents), status: b.status === "paid" ? "Paid" : "Owed" }));
       }
       if (tab === "driver_pay") {
         const res = await listDriverBills(companyId, { limit: REGISTER_LIMIT }) as { rows?: Array<Record<string, unknown>> };
@@ -186,7 +200,7 @@ function TransactionRegister({ tab, companyId }: { tab: CostTab; companyId: stri
       const res = await listExpenses(companyId, { limit: REGISTER_LIMIT });
       const rows = (res.rows ?? []).filter(x => x.status !== "void");
       const filtered = tab === "repairs_maintenance" ? rows.filter(x => x.linked_work_order_uuid != null) : rows;
-      return filtered.map(x => ({ id: x.id, number: x.expense_number ?? "—", date: x.transaction_date, party: x.vendor_name ?? ([x.driver_first_name, x.driver_last_name].filter(Boolean).join(" ") || "Vendor not set"), loadNumber: x.load_number, loadId: x.load_id, detail: tab === "repairs_maintenance" && x.work_order_display_id ? `Work order ${x.work_order_display_id}` : (x.line_description ?? x.memo ?? "Expense"), amountCents: Number(x.total_amount_cents), status: x.status === "posted" ? "Posted" : x.status === "active" ? "Recorded" : x.status === "draft" ? "Draft" : x.status }));
+      return filtered.map(x => ({ receiptEntity: "expense" as const, id: x.id, number: x.expense_number ?? "—", date: x.transaction_date, party: x.vendor_name ?? ([x.driver_first_name, x.driver_last_name].filter(Boolean).join(" ") || "Vendor not set"), loadNumber: x.load_number, loadId: x.load_id, detail: tab === "repairs_maintenance" && x.work_order_display_id ? `Work order ${x.work_order_display_id}` : (x.line_description ?? x.memo ?? "Expense"), amountCents: Number(x.total_amount_cents), status: x.status === "posted" ? "Posted" : x.status === "active" ? "Recorded" : x.status === "draft" ? "Draft" : x.status }));
     },
   });
   if (tab === "documents") return <p data-testid="reg-note" className="p-4 text-xs text-[#6B7280]">Documents are attached per load — open a load to see its documents.</p>;
@@ -196,7 +210,7 @@ function TransactionRegister({ tab, companyId }: { tab: CostTab; companyId: stri
   // "Totals (N)" label now lives in the "number" column's cell, the amount total stays keyed to
   // "amount" so it never drifts if a column is reordered/hidden. `total`/`rows.length` recomputed
   // from the callback's own visibleRows for consistency with the new per-column model.
-  return <div data-testid="load-costs-register"><ParityTable columns={REGISTER_COLUMNS} rows={rows} rowKey={r => r.id} loading={q.isLoading} emptyText={`No ${tab.replaceAll("_", " ")} transactions found.`} storageKey={`load-costs-register-${tab}`} exportFilename={`load-costs-${tab}`} tableTestId={`load-costs-register-${tab}`} footerCells={{
+  return <div data-testid="load-costs-register"><ParityTable columns={tab === "expenses" || tab === "bills" || tab === "repairs_maintenance" ? [...REGISTER_COLUMNS, receiptColumn(companyId)] : REGISTER_COLUMNS} rows={rows} rowKey={r => r.id} loading={q.isLoading} emptyText={`No ${tab.replaceAll("_", " ")} transactions found.`} storageKey={`load-costs-register-${tab}`} exportFilename={`load-costs-${tab}`} tableTestId={`load-costs-register-${tab}`} footerCells={{
     number: (visibleRows) => <span className="font-semibold uppercase tracking-[0.4px] text-gray-600" style={{ fontSize: 11 }} data-testid="reg-totals-label">Totals ({visibleRows.length})</span>,
     amount: (visibleRows) => <span className="text-gray-900" data-testid="reg-totals-amount">{fmt(visibleRows.reduce((n, r) => n + r.amountCents, 0))}</span>,
   }} /></div>;
@@ -276,9 +290,9 @@ export function LoadCostsBoardPage() {
     { label: "Driver pay", keys: ["short_miles", "rate_loaded", "loaded_pay", "empty_miles", "rate_empty", "deadhead_pay"], bg: "#F4F1FA", bgEven: "#EDE7F5" },
     { label: "", keys: ["gross"], bg: "#EDF1F5", bgEven: "#E6EBF1" },
   ];
-  return <main className="space-y-4 bg-[#F7F8FA]" data-testid="load-costs-shell"><button type="button" data-testid="load-costs-back" className="text-xs font-semibold text-slate-700" onClick={() => navigate(-1)}>← Back</button><header data-testid="load-costs-title"><h1 className="font-semibold text-[#0F1219]" style={{ fontSize: 22 }}>Load costs</h1><p className="text-xs text-[#6B7280]">Live loads, recorded costs, and approximate margin. This board reads; it never posts.</p></header>{query.isError ? <ListErrorState title="Could not load the costs board." status={(query.error as { status?: number })?.status ?? 0} onRetry={() => void query.refetch()} /> : null}<section className="overflow-hidden rounded border border-[#E5E7EB] bg-white"><div data-testid="load-costs-topbar" className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3"><h2 className="font-semibold" style={{ fontSize: 22 }}>Costs</h2><div className="flex flex-wrap items-center gap-2"><div className="flex gap-1">{/* DESIGN-CONTRACT chips: radius 2px, height 22px, border 1px --line2; ACTIVE = #14314F white
+  return <main className="space-y-4" data-surface="load-detail" style={{ background: "var(--ldt-paper)", padding: 12 }} data-testid="load-costs-shell"><button type="button" data-testid="load-costs-back" className="text-xs font-semibold text-slate-700" onClick={() => navigate(-1)}>← Back</button><header data-testid="load-costs-title"><h1 className="font-semibold text-[#0F1219]" style={{ fontSize: 22 }}>Load costs</h1><p className="text-xs text-[#6B7280]">Live loads, recorded costs, and approximate margin. This board reads; it never posts.</p></header>{query.isError ? <ListErrorState title="Could not load the costs board." status={(query.error as { status?: number })?.status ?? 0} onRetry={() => void query.refetch()} /> : null}<section className="overflow-hidden rounded border border-[#E5E7EB] bg-white"><div data-testid="load-costs-topbar" className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3"><h2 className="font-semibold" style={{ fontSize: 22 }}>Costs</h2><div className="flex flex-wrap items-center gap-2"><div className="flex gap-1">{/* DESIGN-CONTRACT chips: radius 2px, height 22px, border 1px --line2; ACTIVE = #14314F white
     (the contract's own active-chip value -- distinct from the header row, which stays light ink). */}
-{(["in_motion", "delivered_open", "all_open", "this_week"] as const).map(id => <button key={id} data-testid={`load-costs-pill-${id}`} type="button" onClick={() => setFilter(id)} className={`inline-flex h-[22px] items-center rounded-sm border px-2 text-xs capitalize ${filter === id ? "border-[#14314F] bg-[#14314F] font-semibold text-white" : "border-[#C7D2DC] bg-white text-[#6B7280] hover:bg-gray-50"}`}>{id.replaceAll("_", " ")}</button>)}</div><label className="flex items-center gap-1.5 text-xs text-[#4B5563]"><input data-testid="load-costs-show-voided" type="checkbox" checked={showVoided} onChange={e => setShowVoided(e.target.checked)} />Show voided</label></div></div><div data-testid="load-costs-tabs" className="flex flex-wrap gap-1 border-b border-[#E5E7EB] px-4 py-2">{COST_TABS.map(t => { const c = tabCount(t); return <button key={t.id} type="button" data-testid={`load-costs-tab-${t.id}`} aria-selected={costTab === t.id} onClick={() => setCostTab(t.id)} className={`inline-flex h-[28px] items-center gap-1.5 rounded-sm border px-2 text-xs font-semibold ${costTab === t.id ? "border-[#14314F] bg-[#14314F] text-white" : "border-[#C7D2DC] bg-white text-[#4B5563] hover:bg-gray-50"}`}>{t.label}<span className={`inline-flex min-w-[16px] items-center justify-center rounded-sm px-1 ${costTab === t.id ? "bg-white/20 text-white" : "bg-gray-100 text-[#6B7280]"}`} style={{ fontSize: 10 }}>{c == null || c === 0 ? "—" : c}</span></button>; })}</div>{!activeTab.measured ? <p data-testid="load-costs-tab-note" className="px-4 pb-2 pt-1 text-xs text-[#6B7280]">Open a load to see its {activeTab.label.toLowerCase()} — this total is not yet aggregated on the board.</p> : null}<div className="grid grid-cols-2 gap-2 p-2 sm:grid-cols-3 lg:grid-cols-6" data-note="KPI-TILE-SIZE LAW 2026-09-04: gap-2 + padding replaces border-b, matching Safety's own KPI-row grid (was over the 101px ceiling with no gap)"><DrillKpiCard testId="kpi-loads-in-motion" label="Loads in motion" value={rows.filter(r => MOTION.includes(r.status)).length} hint={`${visible.length} rows`} onClick={() => setFilter("in_motion")} /><DrillKpiCard testId="kpi-revenue-booked" label="Revenue booked" value={fmt(revenue)} hint={`${visible.length} loads`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-costs-recorded" label="Costs recorded" value={fmt(costs)} hint={`${visible.reduce((n, r) => n + r.expense_count + r.bill_count, 0)} entries`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-driver-pay" label="Driver pay accruing" value={fmt(driver)} hint={`${visible.length} loads`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-approx-margin" label="Approximate margin" value={revenue ? `${(margin / revenue * 100).toFixed(1)}%` : "—"} hint={fmt(margin)} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-bank-unmatched" label="Bank items unmatched" value={query.data?.unmatched_bank_count ?? 0} hint="Open bank items" to="/banking/transactions" /></div>{costTab !== "costs" ? <TransactionRegister tab={costTab} companyId={companyId} /> : <div><ParityTable columns={columns} rows={visible} rowKey={r => r.load_id} loading={query.isLoading} emptyText="No loads found for this company." storageKey="load-costs-board-v3" enableColumnReorder enableColumnResize renderExpanded={r => <ExpandPanel row={r} companyId={companyId} />} expandMode="single" suppressToolbarRange exportFilename="load-costs" tableTestId="accounting-load-costs-board" sortKey={sortKey} sortDirection={sortDirection} onSortChange={(key, direction) => { setSortKey(key); setSortDirection(direction); }} sortMode="external" columnGroups={COLUMN_GROUPS} headerBg="#EEF2F6" headerInk="#1F2937" minWidthPx={1660} columnLayout="auto" footerCells={{
+{(["in_motion", "delivered_open", "all_open", "this_week"] as const).map(id => <button key={id} data-testid={`load-costs-pill-${id}`} type="button" onClick={() => setFilter(id)} className={`ldt-btn ${filter === id ? "p" : "g"} capitalize`} style={{ height: 22 }}>{id.replaceAll("_", " ")}</button>)}</div><label className="flex items-center gap-1.5 text-xs text-[#4B5563]"><input data-testid="load-costs-show-voided" type="checkbox" checked={showVoided} onChange={e => setShowVoided(e.target.checked)} />Show voided</label></div></div><div data-testid="load-costs-tabs" className="flex flex-wrap gap-1 border-b border-[#E5E7EB] px-4 py-2">{COST_TABS.map(t => { const c = tabCount(t); return <button key={t.id} type="button" data-testid={`load-costs-tab-${t.id}`} aria-selected={costTab === t.id} onClick={() => setCostTab(t.id)} className={`ldt-btn ${costTab === t.id ? "p" : "g"}`}>{t.label}<span className={`inline-flex min-w-[16px] items-center justify-center rounded-sm px-1 ${costTab === t.id ? "bg-white/20 text-white" : "bg-gray-100 text-[#6B7280]"}`} style={{ fontSize: 10 }}>{c == null || c === 0 ? "—" : c}</span></button>; })}</div>{!activeTab.measured ? <p data-testid="load-costs-tab-note" className="px-4 pb-2 pt-1 text-xs text-[#6B7280]">Open a load to see its {activeTab.label.toLowerCase()} — this total is not yet aggregated on the board.</p> : null}<div className="grid grid-cols-2 gap-2 p-2 sm:grid-cols-3 lg:grid-cols-6" data-note="KPI-TILE-SIZE LAW 2026-09-04: gap-2 + padding replaces border-b, matching Safety's own KPI-row grid (was over the 101px ceiling with no gap)"><DrillKpiCard testId="kpi-loads-in-motion" label="Loads in motion" value={rows.filter(r => MOTION.includes(r.status)).length} hint={`${visible.length} rows`} onClick={() => setFilter("in_motion")} /><DrillKpiCard testId="kpi-revenue-booked" label="Revenue booked" value={fmt(revenue)} hint={`${visible.length} loads`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-costs-recorded" label="Costs recorded" value={fmt(costs)} hint={`${visible.reduce((n, r) => n + r.expense_count + r.bill_count, 0)} entries`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-driver-pay" label="Driver pay accruing" value={fmt(driver)} hint={`${visible.length} loads`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-approx-margin" label="Approximate margin" value={revenue ? `${(margin / revenue * 100).toFixed(1)}%` : "—"} hint={fmt(margin)} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-bank-unmatched" label="Bank items unmatched" value={query.data?.unmatched_bank_count ?? 0} hint="Open bank items" to="/banking/transactions" /></div>{costTab !== "costs" ? <TransactionRegister tab={costTab} companyId={companyId} /> : <div><ParityTable columns={columns} rows={visible} rowKey={r => r.load_id} loading={query.isLoading} emptyText="No loads found for this company." storageKey="load-costs-board-v3" enableColumnReorder enableColumnResize renderExpanded={r => <ExpandPanel row={r} companyId={companyId} />} expandMode="single" suppressToolbarRange exportFilename="load-costs" tableTestId="accounting-load-costs-board" sortKey={sortKey} sortDirection={sortDirection} onSortChange={(key, direction) => { setSortKey(key); setSortDirection(direction); }} sortMode="external" columnGroups={COLUMN_GROUPS} headerBg="#EEF2F6" headerInk="#1F2937" minWidthPx={1660} columnLayout="auto" footerCells={{
               // DSP-TBL (owner ruling 2026-09-05): footerCells replaces the raw colSpan=6 footer
               // — every total now stays keyed to its own column, so reordering/hiding a column
               // (enableColumnReorder is on for this board) can never desync a total from the
