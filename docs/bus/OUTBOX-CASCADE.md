@@ -101,3 +101,9 @@ CASCADE | ACK AUDIT on LST-LOC — FE typecheck was false green (npx tsc --noEmi
 ## 2026-09-06 00:10Z — LEAD AUDIT: RPT-06 ✗ (dead presets/search on 24/24; dates unbound on 10/24). Continue as RPT-06b. See ONE-ITEM-INSTRUCTIONS § AUDIT round 5.
 
 CASCADE | RPT-06b DONE | 46cb3e9500 | npm run typecheck exit 0 | guard --selftest 4/4 | 24/24 pages · From/To bound to query · presets set From/To + sync URL · search filters rows (ARAging 1213→778 on "a") · CollapsedListFilters removed | NEXT await lead
+
+## 2026-09-06 — RPT-06b re-measure ✔/✗ (post-LST-CUST-ACT)
+
+✔ RPT-06b re-measure: 24/24 report pages still wired (ReportFilterBar bound to query, presets sync URL, search filters rows). No regression from LST-CUST-ACT (which reused CounterpartyStatementView — the shared statement read model — for the customer Statements tab, not a new filter UI).
+
+CASCADE | LST-CUST-ACT DONE | 5326c4f496 | npm run typecheck exit 0 (FE) · npx tsc --noEmit exit 0 (BE) | guard PASS (source + live: 3/3 USMCA customers — Del-Can Logistics LLC, AB Global Logistics, Semares Forwarding Services; activity_rows=0 honest correct since all USMCA invoices are proforma/excluded) | guard --selftest PASS (4/4 mutations caught) | money-pr-local-gate PASS | Statements tab → CounterpartyStatementView kind="customer" embedded (mirrors Vendors.tsx:877-878) | Activity tab → CustomerFinancialActivityTab (invoices + payments + credits + broker advances + factoring advances, running balance, row-click → source record) | Backend: GET /api/v1/accounting/customers/:customerId/activity (read-only, currentAuthUser + assertCompanyMembership + role gate) | No new write paths | NEXT await lead
