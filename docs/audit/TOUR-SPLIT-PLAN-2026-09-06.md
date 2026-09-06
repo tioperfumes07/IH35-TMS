@@ -126,23 +126,51 @@ Every HOLD load lands in a "KEEP in place" row in §1 by construction of the kee
 plan **never proposes a `presettlement_link_id` write, a status write, or any other write to any
 of these 8 loads.**
 
-## 4. Open questions for the lead (not resolved by this plan)
+## 4. Open questions — RESOLVED (owner ruling, 2026-09-06)
 
-1. **Un-signed loads sharing a split mega-tour** (e.g. S-13643's 13522/13541/13558/13568 — no
-   signed number, same live `tour_id` as BOTH the kept (5784) and carved (5774) settlements):
-   this plan defaults them to **staying on the KEPT settlement** (no repoint) since they have not
-   closed/signed yet and `tour_id` cannot discriminate which real trip they belong to (see §0).
-   This is a default, not a determination — flagging for confirmation, not guessing a trip
-   assignment the data cannot support.
-2. **Arbitrary "keep" choice** where neither side owns a HOLD load (5773 vs 5786 on S-13642; 5775
-   vs 5787 on S-13644) — this plan keeps the lower/more-loaded number in place. If the lead has a
-   different rule (e.g. "keep whichever has `trip_closed_at` progress" — none do, both open) that
-   changes only which side is "new" vs "kept," not which loads move.
-3. **`source_document_ref` migration** — needs a migration-lane seat; see §1a.
-4. **Settlement 5769's orphan load 13508** (`presettlement_link_id IS NULL`, `trip_type='SB'`) —
-   its NB/TR predecessor legs for Angel Alfonso Sosa Perez are on S-13652, itself split-free (0
-   signed settlements there today). Confirm 5769 should be a fully independent new settlement
-   (this plan's default) rather than linked into S-13652.
+All four are ratified. Verbatim ruling quoted per question; nothing below was guessed at, and the
+Q4 guardrail the ruling asked for was run live before this plan doc was updated.
+
+1. **Un-signed loads sharing a split mega-tour — CONFIRMED, default accepted.** "leave them on the
+   KEPT settlement, do not repoint... Repointing now would be a guess the data can't support...
+   When each of these loads later closes and gets its own signed number, it gets its own
+   settlement then — no data is lost, nothing is destroyed, and the choice stays reversible."
+   No change to §1's plan.
+2. **Arbitrary "keep" tiebreak — CONFIRMED, lower signed number wins, permanently.** "KEEP the
+   lower signed number (the plan's rule)... Pick the deterministic rule and never revisit it...
+   Don't invent a 'trip-progress' tiebreak (none have `trip_closed_at` progress, so it resolves to
+   nothing anyway)." §1's 5773-over-5786 and 5775-over-5787 choices stand as written, no longer
+   flagged as arbitrary — they are now the LAW for any future tie of this shape, not a one-off pick.
+3. **`source_document_ref` migration — ASSIGNED to CC-1, draft ready.** "DO IT, and it's the gating
+   item... Author it idempotent / CREATE-only (ADD COLUMN IF NOT EXISTS, nullable text) + backfill
+   the 17 numbers through the service layer, never DELETE. Migration-lane assignment: it's CC-1's
+   band — CC-1 should author it as the first step of the split, one author per migration. --apply
+   stays hard-refused until this lands + lead ✔." Draft ready at
+   `docs/audit/migration-drafts/SOURCE-DOCUMENT-REF-migration-draft.sql` (same ready-to-apply
+   handoff shape as this round's `BANK-FEE-RECOVERY-*` drafts) — a single additive
+   `ADD COLUMN IF NOT EXISTS source_document_ref text NULL`, idempotent, fresh-DB safe, no RLS/grant
+   change. The backfill itself (17 numbers, through whatever settlement-update service function
+   exists once the column is queryable, never raw SQL) is NOT written yet — it cannot be
+   verified against a column that does not exist, and the ruling gates `--apply` behind it landing
+   first regardless.
+4. **Settlement 5769's orphan load 13508 — CONFIRMED independent new settlement, guardrail run and
+   PASSED.** Ruling: "make it a fully independent new settlement... The one guardrail: before
+   apply, confirm 13508's revenue/driver-pay is carried in signed 5769 and is not already inside
+   S-13652's signed amount, so the SB isn't double-counted." Verified live 2026-09-06 (same
+   `BEGIN; SELECT set_config('app.bypass_rls','lucia',true); …; ROLLBACK;` discipline as the rest of
+   this plan):
+   - The "USMCA BY LOAD" sheet's settlement-5769 rows (LOAD/CHARGE/EXPENSE/DEDUCTION/FUEL, rows
+     2–8) name load 13508 **exclusively** — no other load number appears under settl 5769 anywhere
+     in the sheet. 5769's signed total is 13508's own figures, nothing else.
+   - `driver_finance.settlement_lines WHERE settlement_id = <S-13652's id>` returns 8 rows across
+     exactly 4 load_ids — `b7a92e7f…`, `0602ce28…`, `fe6efd8c…`, `6c3cc008…` — **none of them is
+     13508's load id** (`926f4142-3fe4-4aa5-b896-daa0ca6474c4`). `settlement_lines WHERE load_id =
+     926f4142…` returns **0 rows** anywhere in the system.
+   - 13508 itself carries two `driver_bills` rows: one `void` ($709.49, an already-corrected prior
+     figure — void-not-delete, not touched here) and one `open` ($633.46) — neither is linked to
+     any settlement (`settlement_lines` has 0 rows for it, confirmed above).
+   - **Guardrail PASSED: 13508's revenue/driver-pay is not double-counted anywhere today.** §1's
+     plan for 5769 stands as written.
 
 ## 5. The dry-run script
 
@@ -241,3 +269,19 @@ No `INSERT`, `UPDATE`, or `DELETE` was executed against `driver_finance.driver_s
 set_config('app.bypass_rls','lucia',true); …; ROLLBACK;`. `scripts/ops/split-seed-tours.ts --apply`
 is refused unconditionally this round (see its own header) — it requires the lead's ✔ quoted
 verbatim in a future PR before any write path is even reachable.
+
+## 7. Ratified sequencing for the eventual `--apply` (owner ruling, 2026-09-06)
+
+1. CC-1 lands the `source_document_ref` migration on Neon (draft ready, §4 item 3).
+2. The lead re-measures the 17-signed-settlement map against live data at that point (this plan's
+   numbers are a 2026-09-06 snapshot — re-verify, never assume stale is still true).
+3. `scripts/ops/split-seed-tours.ts --apply` runs through the EXISTING
+   `confirmPresettlementLink`'s `create_new` / `link_existing` actions only — the same functions
+   `book-load.service.ts` already calls at booking time, no new write path, fully reversible
+   (void-not-delete throughout), WORM-audited. 10 settlements keep their row (tagged via
+   `source_document_ref` only) / 7 get a new row / 9 loads repointed or linked / 0 HOLD loads
+   touched — the keep/carve rule in §1 already guarantees a HOLD load can never appear in a
+   repoint, and `split-seed-tours.ts`'s own safety check throws if that guarantee is ever violated.
+
+`--apply` remains hard-refused (its `LEAD_APPROVAL_QUOTE` gate, plus the missing column) until
+steps 1–2 above are both true.
