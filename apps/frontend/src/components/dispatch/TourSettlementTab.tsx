@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getTourReadoutForLoad, type TourReadout } from "../../api/tourReadout";
+import { getTourReadout, getTourReadoutForLoad, type TourReadout } from "../../api/tourReadout";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { EntityLink } from "../shared/EntityLink";
 import { formatMoneyCents } from "./constants";
@@ -14,8 +14,13 @@ const miles = (m: number | null | undefined) => (m == null ? DASH : m.toLocaleSt
 const rate = (c: number | null | undefined) => (c == null ? DASH : `$${(c / 100).toFixed(4)}`);
 const perMile = (c: number | null | undefined) => (c == null ? "—/mi" : `$${(c / 100).toFixed(2)}/mi`);
 
-export function TourSettlementTab({ loadId, operatingCompanyId, currencyCode = "USD" }: { loadId: string; operatingCompanyId: string; currencyCode?: "USD" | "MXN" }) {
-  const q = useQuery({ queryKey: ["tour-readout", "load", operatingCompanyId, loadId], queryFn: () => getTourReadoutForLoad(loadId, operatingCompanyId) });
+/** Keyed by a load (drawer) OR by a settlement (Load costs board → Settlement tab, LDT-TABS). Same readout either way. */
+export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, currencyCode = "USD" }: { loadId?: string; settlementId?: string; operatingCompanyId: string; currencyCode?: "USD" | "MXN" }) {
+  const q = useQuery({
+    queryKey: ["tour-readout", settlementId ? "settlement" : "load", operatingCompanyId, settlementId ?? loadId],
+    queryFn: () => (settlementId ? getTourReadout(settlementId, operatingCompanyId) : getTourReadoutForLoad(loadId!, operatingCompanyId)),
+    enabled: Boolean(settlementId || loadId),
+  });
   if (q.isLoading) return <p className="ldt-muted" data-testid="tour-settlement-loading">Loading the settlement…</p>;
   if (q.isError) return <div className="ldt-note bad" data-testid="tour-settlement-error">Couldn't load the settlement — {userFacingApiError(q.error, "error")}. <button type="button" className="ldt-link" onClick={() => void q.refetch()}>Retry</button></div>;
   const r: TourReadout | undefined = q.data;

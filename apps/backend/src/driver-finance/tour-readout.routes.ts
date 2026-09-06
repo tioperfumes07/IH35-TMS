@@ -267,8 +267,60 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
   };
 }
 
+const toursQuery = z.object({ operating_company_id: z.string().uuid(), state: z.enum(["open", "closed"]).default("open"), limit: z.coerce.number().int().min(1).max(200).default(60) });
+
+export type TourListRow = {
+  settlement_id: string; display_id: string | null; status: string; is_open: boolean; driver_name: string | null; unit_number: string | null;
+  trip_started_at: string | null; trip_closed_at: string | null; leg_count: number; legs_label: string;
+  revenue_cents: number; costs_cents: number; driver_pay_cents: number; margin_cents: number; margin_pct: number | null;
+  miles_practical: number; miles_real: number | null; ready_ok: number; ready_total: number; can_close: boolean; close_blockers: string[];
+  driver_net_cents: number | null; company_settlement_display_id: string | null;
+};
+
+/**
+ * LDT-TABS (owner 2026-09-06 02:4xZ: "IT WAS TO BE BUILT ON TABS … I AM GOING TO CLICK ON THE TAB AND LOOK AT THE
+ * LOADS, FROM THERE I AM GOING TO CLOSE THE LOAD"). The Load costs board's Pre-Settlement tab lists every OPEN tour,
+ * the Settlement tab every CLOSED one, each row built from the SAME buildTourReadout — one read model, no second sum.
+ */
+export async function listTours(client: Db, companyId: string, state: "open" | "closed", limit: number): Promise<TourListRow[]> {
+  const ids = await client.query<{ id: string }>(
+    `SELECT s.id FROM driver_finance.driver_settlements s
+      WHERE s.operating_company_id = $1::uuid AND s.voided_at IS NULL
+        AND (s.settlement_model = 'load_bookended' OR s.first_load_id IS NOT NULL)
+        AND ${state === "open" ? "s.trip_closed_at IS NULL" : "s.trip_closed_at IS NOT NULL"}
+      ORDER BY ${state === "open" ? "s.trip_started_at DESC NULLS LAST, s.created_at DESC" : "s.trip_closed_at DESC"}
+      LIMIT $2`,
+    [companyId, limit]
+  );
+  const out: TourListRow[] = [];
+  for (const { id } of ids.rows) {
+    const r = await buildTourReadout(client, companyId, id, null);
+    if (!r || !r.tour) continue;
+    const live = r.legs.filter((l) => !l.is_cancelled);
+    out.push({
+      settlement_id: r.tour.settlement_id, display_id: r.tour.display_id, status: r.tour.status, is_open: r.tour.is_open,
+      driver_name: r.tour.driver_name, unit_number: r.tour.unit_number, trip_started_at: r.tour.trip_started_at, trip_closed_at: r.tour.trip_closed_at,
+      leg_count: live.length, legs_label: live.map((l) => `${l.trip_type ?? "?"} ${l.load_number}`).join(" → "),
+      revenue_cents: r.totals?.revenue_cents ?? 0, costs_cents: r.totals?.costs_cents ?? 0, driver_pay_cents: r.totals?.driver_pay_cents ?? 0,
+      margin_cents: r.totals?.margin_cents ?? 0, margin_pct: r.totals?.margin_pct ?? null,
+      miles_practical: r.totals?.miles_practical ?? 0, miles_real: r.totals?.miles_real ?? null,
+      ready_ok: r.ready.filter((x) => x.ok).length, ready_total: r.ready.length, can_close: r.can_close, close_blockers: r.close_blockers,
+      driver_net_cents: r.driver_settlement ? r.driver_settlement.net_cents : null,
+      company_settlement_display_id: r.company_settlement?.display_id ?? null,
+    });
+  }
+  return out;
+}
+
 export async function registerTourReadoutRoutes(app: FastifyInstance) {
   const RL = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } };
+
+  app.get("/api/v1/driver-finance/tours", RL, async (req, reply) => {
+    const user = authed(req, reply); if (!user) return;
+    const q = toursQuery.safeParse(req.query ?? {}); if (!q.success) return validationError(reply, q.error);
+    const rows = await withCompany(user.uuid, q.data.operating_company_id, (client) => listTours(client, q.data.operating_company_id, q.data.state, q.data.limit));
+    return { state: q.data.state, count: rows.length, rows };
+  });
 
   app.get("/api/v1/driver-finance/pre-settlements/:id/readout", RL, async (req, reply) => {
     const user = authed(req, reply); if (!user) return;

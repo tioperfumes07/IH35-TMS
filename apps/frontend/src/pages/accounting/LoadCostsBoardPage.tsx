@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { listBills, listBrokerAdvances, listCoaRoles, listDriverBills, listExpenses, type BrokerAdvanceRow } from "../../api/accounting";
@@ -13,6 +13,9 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { useDispatchLoad } from "../../api/loads";
 import { LoadDetailCostsTab } from "../../components/dispatch/LoadDetailCostsTab";
+import { TourPreSettlementTab } from "../../components/dispatch/TourPreSettlementTab";
+import { TourSettlementTab } from "../../components/dispatch/TourSettlementTab";
+import { listTours, type TourListRow } from "../../api/tourReadout";
 import { ReceiptAttach } from "../../components/documents/ReceiptAttach";
 import { useToast } from "../../components/Toast";
 
@@ -89,7 +92,7 @@ const rowMargin = (r: BoardRow) => Number(r.revenue_cents) - rowCosts(r) - rowPa
 // number of loads in the current status filter that match. `measured: false` tabs (Broker advances,
 // Documents) have no per-load aggregate on the board read shape yet — they stay visible, keep every
 // load in view, and show a dash badge + an honest caption instead of fabricating a zero.
-type CostTab = "costs" | "expenses" | "bills" | "fuel_advances" | "broker_advances" | "driver_pay" | "repairs_maintenance" | "documents";
+type CostTab = "costs" | "expenses" | "bills" | "fuel_advances" | "broker_advances" | "driver_pay" | "repairs_maintenance" | "documents" | "pre_settlement" | "settlement";
 const COST_TABS: Array<{ id: CostTab; label: string; measured: boolean; has: (r: BoardRow) => boolean }> = [
   { id: "costs", label: "Costs", measured: true, has: () => true },
   { id: "expenses", label: "Expenses", measured: true, has: (r) => r.expense_count > 0 },
@@ -99,6 +102,11 @@ const COST_TABS: Array<{ id: CostTab; label: string; measured: boolean; has: (r:
   { id: "driver_pay", label: "Driver pay", measured: true, has: (r) => Number(r.driver_pay_cents) > 0 },
   { id: "repairs_maintenance", label: "Repairs & maintenance", measured: true, has: (r) => Number(r.repairs_maintenance_cents) > 0 },
   { id: "documents", label: "Documents", measured: false, has: () => true },
+  // LDT-TABS (owner 2026-09-06 02:4xZ): Pre-Settlement = every OPEN tour (legs, Ready-to-close, the Close button);
+  // Settlement = every CLOSED tour (driver + company settlement, frozen). Rows come from the tour readout, not the
+  // per-load board rows, so the badge is the tour count (TourRegister supplies it) — `has` keeps every load in view.
+  { id: "pre_settlement", label: "Pre-Settlement", measured: false, has: () => true },
+  { id: "settlement", label: "Settlement", measured: false, has: () => true },
 ];
 function matches(r: BoardRow, f: FilterPill) { if (f === "in_motion") return MOTION.includes(r.status); if (f === "delivered_open") return DELIVERED.includes(r.status); if (f === "this_week") return !CLOSED.includes(r.status) && Date.parse(r.created_at) >= Date.now() - 604800000; return !CLOSED.includes(r.status); }
 function chip(style: { backgroundColor: string; color: string; borderColor?: string }) { return style; }
@@ -413,6 +421,54 @@ function TransactionRegister({ tab, companyId, loadsById, navigate }: { tab: Cos
   /></div>;
 }
 
+// ── LDT-TABS: tour registers (Pre-Settlement = open tours · Settlement = closed tours). One row per tour; the
+// expanded row is the SAME TourPreSettlementTab / TourSettlementTab (legs · costs · Ready to close? · Close tour →
+// Settlement (human confirms) | driver + company settlement, frozen) keyed by settlement — one read model.
+const TOUR_COLUMNS = (state: "open" | "closed"): ParityColumn<TourListRow>[] => [
+  { key: "tour", label: "Tour", testId: "tour-col-id", sortable: true, className: "whitespace-nowrap", sortValue: r => r.display_id ?? "", render: r => <span className="font-semibold text-slate-700">{r.display_id ?? r.settlement_id.slice(0, 8)}</span> },
+  { key: "driver", label: "Driver", testId: "tour-col-driver", sortable: true, sortValue: r => r.driver_name ?? "", render: r => r.driver_name ?? DASH },
+  { key: "unit", label: "Unit", testId: "tour-col-unit", sortable: true, sortValue: r => r.unit_number ?? "", render: r => r.unit_number ?? DASH },
+  { key: "legs", label: "Legs", testId: "tour-col-legs", sortable: true, sortValue: r => r.leg_count, render: r => <span title={r.legs_label}>{r.leg_count === 0 ? DASH : `${r.leg_count} · ${r.legs_label}`}</span> },
+  { key: "started", label: "Started", testId: "tour-col-started", sortable: true, className: "whitespace-nowrap", sortValue: r => r.trip_started_at ?? "", render: r => r.trip_started_at ? formatDateUS(r.trip_started_at) : DASH },
+  ...(state === "closed" ? [{ key: "closed", label: "Closed", testId: "tour-col-closed", sortable: true, className: "whitespace-nowrap", sortValue: (r: TourListRow) => r.trip_closed_at ?? "", render: (r: TourListRow) => r.trip_closed_at ? formatDateUS(r.trip_closed_at) : DASH } as ParityColumn<TourListRow>] : []),
+  { key: "revenue", label: "Revenue", testId: "tour-col-revenue", sortable: true, className: "text-right tabular-nums", sortValue: r => r.revenue_cents, render: r => fmt(r.revenue_cents) },
+  { key: "costs", label: "Costs", testId: "tour-col-costs", sortable: true, className: "text-right tabular-nums", sortValue: r => r.costs_cents, render: r => fmt(r.costs_cents) },
+  { key: "driver_pay", label: "Driver pay", testId: "tour-col-driver-pay", sortable: true, className: "text-right tabular-nums", sortValue: r => r.driver_pay_cents, render: r => fmt(r.driver_pay_cents) },
+  { key: "margin", label: "Margin", testId: "tour-col-margin", sortable: true, className: "text-right tabular-nums", sortValue: r => r.margin_cents, render: r => <span className={r.margin_cents < 0 ? "text-[#991B1B]" : undefined}>{fmt(r.margin_cents)}{r.margin_pct == null ? "" : ` · ${r.margin_pct.toFixed(1)}%`}</span> },
+  { key: "miles", label: "Miles practical · real", testId: "tour-col-miles", className: "text-right tabular-nums", render: r => `${r.miles_practical.toLocaleString("en-US")} · ${r.miles_real == null ? DASH : r.miles_real.toLocaleString("en-US")}` },
+  ...(state === "open"
+    ? [{ key: "ready", label: "Ready to close", testId: "tour-col-ready", sortable: true, sortValue: (r: TourListRow) => r.ready_ok, render: (r: TourListRow) => <span className={`ldt-pill ${r.can_close ? "ok" : r.ready_ok === 0 ? "bad" : "warn"}`} title={r.close_blockers.join("\n")}>{r.can_close ? `Ready · ${r.ready_ok}/${r.ready_total}` : `${r.ready_ok}/${r.ready_total} · ${r.close_blockers[0] ?? "open items"}`}</span> } as ParityColumn<TourListRow>]
+    : [{ key: "net", label: "Driver net", testId: "tour-col-driver-net", sortable: true, className: "text-right tabular-nums", sortValue: (r: TourListRow) => r.driver_net_cents ?? 0, render: (r: TourListRow) => r.driver_net_cents == null ? DASH : fmt(r.driver_net_cents) } as ParityColumn<TourListRow>,
+       { key: "company", label: "Company settlement", testId: "tour-col-company", render: (r: TourListRow) => r.company_settlement_display_id ?? <span className="ldt-pill warn">none</span> } as ParityColumn<TourListRow>]),
+];
+function TourRegister({ state, companyId, onCount }: { state: "open" | "closed"; companyId: string; onCount: (n: number | null) => void }) {
+  const q = useQuery({ queryKey: ["load-costs-board", "tours", state, companyId], queryFn: () => listTours(companyId, state), enabled: Boolean(companyId) });
+  const rows = q.data?.rows ?? [];
+  useEffect(() => { onCount(q.data ? q.data.count : null); }, [q.data, onCount]);
+  if (q.isError) return <ListErrorState status={0} message={q.error instanceof Error ? q.error.message : String(q.error)} onRetry={() => void q.refetch()} />;
+  return <div data-testid={`load-costs-tours-${state}`} data-surface="load-detail"><ParityTable
+    columns={TOUR_COLUMNS(state)}
+    rows={rows}
+    rowKey={r => r.settlement_id}
+    loading={q.isLoading}
+    emptyText={state === "open" ? "No open tours — a tour opens when a driver is assigned to a load." : "No closed tours yet — close a tour from the Pre-Settlement tab."}
+    storageKey={`load-costs-tours-${state}`}
+    exportFilename={`load-costs-tours-${state}`}
+    tableTestId={`load-costs-tours-table-${state}`}
+    enableColumnReorder
+    enableColumnResize
+    expandMode="single"
+    renderExpanded={r => <div className="p-3" data-testid={`tour-expand-${state}`}>{state === "open" ? <TourPreSettlementTab settlementId={r.settlement_id} operatingCompanyId={companyId} /> : <TourSettlementTab settlementId={r.settlement_id} operatingCompanyId={companyId} />}</div>}
+    footerCells={{
+      tour: (v: TourListRow[]) => <span className="font-semibold uppercase tracking-[0.4px] text-gray-600" style={{ fontSize: 11 }} data-testid="tour-totals-label">Totals ({v.length})</span>,
+      revenue: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.revenue_cents, 0)),
+      costs: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.costs_cents, 0)),
+      driver_pay: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.driver_pay_cents, 0)),
+      margin: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.margin_cents, 0)),
+    }}
+  /></div>;
+}
+
 export function LoadCostsBoardPage() {
   const navigate = useNavigate(); const { selectedCompanyId } = useCompanyContext(); const companyId = selectedCompanyId ?? "";
   const [filter, setFilter] = useState<FilterPill>("in_motion");
@@ -435,7 +491,10 @@ export function LoadCostsBoardPage() {
   const statusFiltered = useMemo(() => rows.filter(r => matches(r, filter)), [rows, filter]);
   const activeTab = COST_TABS.find(t => t.id === costTab) ?? COST_TABS[0];
   const visible = useMemo(() => statusFiltered.filter(r => activeTab.has(r)), [statusFiltered, activeTab]);
-  const tabCount = (t: typeof COST_TABS[number]) => (t.measured ? statusFiltered.filter(t.has).length : null);
+  const [tourCounts, setTourCounts] = useState<{ open: number | null; closed: number | null }>({ open: null, closed: null });
+  const onOpenCount = useCallback((n: number | null) => setTourCounts(c => (c.open === n ? c : { ...c, open: n })), []);
+  const onClosedCount = useCallback((n: number | null) => setTourCounts(c => (c.closed === n ? c : { ...c, closed: n })), []);
+  const tabCount = (t: typeof COST_TABS[number]) => (t.id === "pre_settlement" ? tourCounts.open : t.id === "settlement" ? tourCounts.closed : t.measured ? statusFiltered.filter(t.has).length : null);
   const revenue = visible.reduce((n, r) => n + Number(r.revenue_cents), 0); const costs = visible.reduce((n, r) => n + rowCosts(r), 0); const driver = visible.reduce((n, r) => n + rowPay(r), 0); const margin = revenue - costs - driver;
   // Spec §4 "A totals row that foots every money column": sums the CURRENTLY VISIBLE (filtered)
   // rows for every money column, in the same left-to-right order as the columns themselves, so the
@@ -493,7 +552,7 @@ export function LoadCostsBoardPage() {
   ];
   return <main className="space-y-4" data-surface="load-detail" style={{ background: "var(--ldt-paper)", padding: 12 }} data-testid="load-costs-shell"><button type="button" data-testid="load-costs-back" className="text-xs font-semibold text-slate-700" onClick={() => navigate(-1)}>← Back</button><header data-testid="load-costs-title"><h1 className="font-semibold text-[#0F1219]" style={{ fontSize: 22 }}>Load costs</h1><p className="text-xs text-[#6B7280]">Live loads, recorded costs, and approximate margin. This board reads; it never posts.</p></header>{query.isError ? <ListErrorState title="Could not load the costs board." status={(query.error as { status?: number })?.status ?? 0} onRetry={() => void query.refetch()} /> : null}<section className="overflow-hidden rounded border border-[#E5E7EB] bg-white"><div data-testid="load-costs-topbar" className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3"><h2 className="font-semibold" style={{ fontSize: 22 }}>Costs</h2><div className="flex flex-wrap items-center gap-2"><div className="flex gap-1">{/* DESIGN-CONTRACT chips: radius 2px, height 22px, border 1px --line2; ACTIVE = #14314F white
     (the contract's own active-chip value -- distinct from the header row, which stays light ink). */}
-{(["in_motion", "delivered_open", "all_open", "this_week"] as const).map(id => <button key={id} data-testid={`load-costs-pill-${id}`} type="button" onClick={() => setFilter(id)} className={`ldt-btn ${filter === id ? "p" : "g"} capitalize`} style={{ height: 22 }}>{id.replaceAll("_", " ")}</button>)}</div><label className="flex items-center gap-1.5 text-xs text-[#4B5563]"><input data-testid="load-costs-show-voided" type="checkbox" checked={showVoided} onChange={e => setShowVoided(e.target.checked)} />Show voided</label></div></div><div data-testid="load-costs-tabs" className="flex flex-wrap gap-1 border-b border-[#E5E7EB] px-4 py-2">{COST_TABS.map(t => { const c = tabCount(t); return <button key={t.id} type="button" data-testid={`load-costs-tab-${t.id}`} aria-selected={costTab === t.id} onClick={() => setCostTab(t.id)} className={`ldt-btn ${costTab === t.id ? "p" : "g"}`}>{t.label}<span className={`inline-flex min-w-[16px] items-center justify-center rounded-sm px-1 ${costTab === t.id ? "bg-white/20 text-white" : "bg-gray-100 text-[#6B7280]"}`} style={{ fontSize: 10 }}>{c == null || c === 0 ? "—" : c}</span></button>; })}</div>{!activeTab.measured ? <p data-testid="load-costs-tab-note" className="px-4 pb-2 pt-1 text-xs text-[#6B7280]">Open a load to see its {activeTab.label.toLowerCase()} — this total is not yet aggregated on the board.</p> : null}<div className="grid grid-cols-2 gap-2 p-2 sm:grid-cols-3 lg:grid-cols-6" data-note="KPI-TILE-SIZE LAW 2026-09-04: gap-2 + padding replaces border-b, matching Safety's own KPI-row grid (was over the 101px ceiling with no gap)"><DrillKpiCard testId="kpi-loads-in-motion" label="Loads in motion" value={rows.filter(r => MOTION.includes(r.status)).length} hint={`${visible.length} rows`} onClick={() => setFilter("in_motion")} /><DrillKpiCard testId="kpi-revenue-booked" label="Revenue booked" value={fmt(revenue)} hint={`${visible.length} loads`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-costs-recorded" label="Costs recorded" value={fmt(costs)} hint={`${visible.reduce((n, r) => n + r.expense_count + r.bill_count, 0)} entries`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-driver-pay" label="Driver pay accruing" value={fmt(driver)} hint={`${visible.length} loads`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-approx-margin" label="Approximate margin" value={revenue ? `${(margin / revenue * 100).toFixed(1)}%` : "—"} hint={fmt(margin)} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-bank-unmatched" label="Bank items unmatched" value={query.data?.unmatched_bank_count ?? 0} hint="Open bank items" to="/banking/transactions" /></div>{costTab !== "costs" ? <TransactionRegister tab={costTab} companyId={companyId} loadsById={loadsById} navigate={navigate} /> : <div><ParityTable columns={columns} rows={visible} rowKey={r => r.load_id} loading={query.isLoading} emptyText="No loads found for this company." storageKey="load-costs-board-v3" enableColumnReorder enableColumnResize renderExpanded={r => <ExpandPanel row={r} companyId={companyId} />} expandMode="single" suppressToolbarRange exportFilename="load-costs" tableTestId="accounting-load-costs-board" sortKey={sortKey} sortDirection={sortDirection} onSortChange={(key, direction) => { setSortKey(key); setSortDirection(direction); }} sortMode="external" columnGroups={COLUMN_GROUPS} headerBg="#EEF2F6" headerInk="#1F2937" minWidthPx={1660} columnLayout="auto" footerCells={{
+{(["in_motion", "delivered_open", "all_open", "this_week"] as const).map(id => <button key={id} data-testid={`load-costs-pill-${id}`} type="button" onClick={() => setFilter(id)} className={`ldt-btn ${filter === id ? "p" : "g"} capitalize`} style={{ height: 22 }}>{id.replaceAll("_", " ")}</button>)}</div><label className="flex items-center gap-1.5 text-xs text-[#4B5563]"><input data-testid="load-costs-show-voided" type="checkbox" checked={showVoided} onChange={e => setShowVoided(e.target.checked)} />Show voided</label></div></div><div data-testid="load-costs-tabs" className="flex flex-wrap gap-1 border-b border-[#E5E7EB] px-4 py-2">{COST_TABS.map(t => { const c = tabCount(t); return <button key={t.id} type="button" data-testid={`load-costs-tab-${t.id}`} aria-selected={costTab === t.id} onClick={() => setCostTab(t.id)} className={`ldt-btn ${costTab === t.id ? "p" : "g"}`}>{t.label}<span className={`inline-flex min-w-[16px] items-center justify-center rounded-sm px-1 ${costTab === t.id ? "bg-white/20 text-white" : "bg-gray-100 text-[#6B7280]"}`} style={{ fontSize: 10 }}>{c == null || c === 0 ? "—" : c}</span></button>; })}</div>{!activeTab.measured && activeTab.id !== "pre_settlement" && activeTab.id !== "settlement" ? <p data-testid="load-costs-tab-note" className="px-4 pb-2 pt-1 text-xs text-[#6B7280]">Open a load to see its {activeTab.label.toLowerCase()} — this total is not yet aggregated on the board.</p> : null}<div className="grid grid-cols-2 gap-2 p-2 sm:grid-cols-3 lg:grid-cols-6" data-note="KPI-TILE-SIZE LAW 2026-09-04: gap-2 + padding replaces border-b, matching Safety's own KPI-row grid (was over the 101px ceiling with no gap)"><DrillKpiCard testId="kpi-loads-in-motion" label="Loads in motion" value={rows.filter(r => MOTION.includes(r.status)).length} hint={`${visible.length} rows`} onClick={() => setFilter("in_motion")} /><DrillKpiCard testId="kpi-revenue-booked" label="Revenue booked" value={fmt(revenue)} hint={`${visible.length} loads`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-costs-recorded" label="Costs recorded" value={fmt(costs)} hint={`${visible.reduce((n, r) => n + r.expense_count + r.bill_count, 0)} entries`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-driver-pay" label="Driver pay accruing" value={fmt(driver)} hint={`${visible.length} loads`} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-approx-margin" label="Approximate margin" value={revenue ? `${(margin / revenue * 100).toFixed(1)}%` : "—"} hint={fmt(margin)} onClick={() => setFilter(filter)} /><DrillKpiCard testId="kpi-bank-unmatched" label="Bank items unmatched" value={query.data?.unmatched_bank_count ?? 0} hint="Open bank items" to="/banking/transactions" /></div>{costTab === "pre_settlement" ? <TourRegister state="open" companyId={companyId} onCount={onOpenCount} /> : costTab === "settlement" ? <TourRegister state="closed" companyId={companyId} onCount={onClosedCount} /> : costTab !== "costs" ? <TransactionRegister tab={costTab} companyId={companyId} loadsById={loadsById} navigate={navigate} /> : <div><ParityTable columns={columns} rows={visible} rowKey={r => r.load_id} loading={query.isLoading} emptyText="No loads found for this company." storageKey="load-costs-board-v3" enableColumnReorder enableColumnResize renderExpanded={r => <ExpandPanel row={r} companyId={companyId} />} expandMode="single" suppressToolbarRange exportFilename="load-costs" tableTestId="accounting-load-costs-board" sortKey={sortKey} sortDirection={sortDirection} onSortChange={(key, direction) => { setSortKey(key); setSortDirection(direction); }} sortMode="external" columnGroups={COLUMN_GROUPS} headerBg="#EEF2F6" headerInk="#1F2937" minWidthPx={1660} columnLayout="auto" footerCells={{
               // DSP-TBL (owner ruling 2026-09-05): footerCells replaces the raw colSpan=6 footer
               // — every total now stays keyed to its own column, so reordering/hiding a column
               // (enableColumnReorder is on for this board) can never desync a total from the
