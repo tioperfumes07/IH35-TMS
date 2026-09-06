@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
-import { listSettlementDeductions } from "../../api/driverFinance";
+import { listSettlementDeductions, type SettlementDeductionListRow } from "../../api/driverFinance";
 import { Button } from "../../components/Button";
 import { DataPanel } from "../../components/layout/DataPanel";
-import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { EntityPicker } from "../../components/EntityPicker";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -16,6 +15,7 @@ import { formatUsdCents } from "../../lib/money";
 import { entityLabel } from "../../lib/entity-label";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { CreateSettlementDeductionDrawer } from "./components/CreateSettlementDeductionDrawer";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 const EMPTY_FILTERS = { driverId: "" };
 
@@ -88,6 +88,20 @@ export function PendingSettlementDeductionsPanel() {
   // rows. `rows` is now empty whenever the query is in an error state — the cached data is never
   // shown, only the error + Retry.
   const rows = query.isError ? [] : (query.data?.deductions ?? []);
+  const orderedRows = useMemo(() => [...rows].sort((a, b) =>
+    (a.driver_name || a.driver_id).localeCompare(b.driver_name || b.driver_id)
+      || a.created_at.localeCompare(b.created_at)
+      || a.id.localeCompare(b.id)
+  ), [rows]);
+  const deductionColumns = useMemo<Array<ParityColumn<SettlementDeductionListRow>>>(() => [
+    { key: "driver_name", label: "Driver", sortable: true, render: (row) => <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} /> },
+    { key: "deduction_type", label: "Type", sortable: true },
+    { key: "reason", label: "Reason", sortable: true, render: (row) => row.reason?.trim() || "—" },
+    { key: "load_number", label: "Load", sortable: true, render: (row) => row.load_id ? <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} /> : "—" },
+    { key: "applied_to_settlement_display_id", label: "Settlement", sortable: true, render: (row) => row.applied_to_settlement_id ? <EntityLink kind="settlement" id={row.applied_to_settlement_id} label={entityLabel(row.applied_to_settlement_display_id, row.applied_to_settlement_id, "Settlement")} /> : "—" },
+    { key: "status", label: "Status", sortable: true, render: (row) => <StatusBadge status={row.status} /> },
+    { key: "remaining_balance_cents", label: "Amount", sortable: true, cellClass: "text-right font-semibold text-red-700", render: (row) => formatUsdCents(row.remaining_balance_cents ?? row.amount_cents) },
+  ], []);
 
   if (!selectedCompanyId) {
     return <p className="px-2 py-2 text-xs text-gray-500">Select an operating company to view pending deductions.</p>;
@@ -157,39 +171,16 @@ export function PendingSettlementDeductionsPanel() {
         {!query.isLoading && !query.isError && rows.length === 0 ? (
           <p className="px-2 py-2 text-xs text-gray-500">No pending settlement deductions.</p>
         ) : null}
-        {rows.map((row) => (
-          <DataPanelRow key={row.id}>
-            <span className="min-w-0">
-              <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />
-              {" · "}
-              <span className="text-slate-700">{row.reason?.trim() || row.deduction_type}</span>{" "}
-              <StatusBadge status={row.status} />
-              {/* LINK-F5187-style reverse drill: the API already returns load_id/load_number and
-                  applied_to_settlement_id/_display_id (see SettlementDeductionListRow) but this row
-                  discarded both, leaving no drill from a deduction back to the load that caused it
-                  or the settlement it landed on. */}
-              {row.load_id ? (
-                <>
-                  {" · "}
-                  <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} />
-                </>
-              ) : null}
-              {row.applied_to_settlement_id ? (
-                <>
-                  {" · "}
-                  <EntityLink
-                    kind="settlement"
-                    id={row.applied_to_settlement_id}
-                    label={entityLabel(row.applied_to_settlement_display_id, row.applied_to_settlement_id, "Settlement")}
-                  />
-                </>
-              ) : null}
-            </span>
-            <span className="shrink-0 font-semibold text-red-700">
-              {formatUsdCents(row.remaining_balance_cents ?? row.amount_cents)}
-            </span>
-          </DataPanelRow>
-        ))}
+        {!query.isLoading && !query.isError && orderedRows.length > 0 ? (
+          <ParityTable
+            columns={deductionColumns}
+            rows={orderedRows}
+            rowKey={(row) => row.id}
+            storageKey="drivers-pending-deductions-by-driver"
+            tableTestId="drivers-pending-deductions-table"
+            initialPageSize={25}
+          />
+        ) : null}
         <CappedListNotice
           shown={rows.length}
           limit={200}
