@@ -1,12 +1,10 @@
 import { useMemo, useState } from "react";
-import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   getFuelReconciliation,
   rematchFuelTxnToGps,
   type FuelReconciliationFlag,
-  type FuelReconciliationResponse,
   type FuelReconciliationTruckRow,
   type FuelReconciliationUnmatchedCard,
   type FuelReconciliationUnmatchedWo,
@@ -20,8 +18,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { ReportBlockVPendingBanner } from "./ReportBlockVPendingBanner";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ReportsSubNav } from "./ReportsSubNav";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { ReportFilterBar, type ReportPreset } from "../../components/reports/ReportFilterBar";
+import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
@@ -66,11 +63,6 @@ export function FuelReconciliationPage() {
   const emptyRange = defaultRange();
   const [applied, setApplied] = useState({ ...emptyRange, unitFilter: "" });
   const [reportSearch, setReportSearch] = useState("");
-  const staged = useStagedListFilters({
-    applied,
-    empty: { ...emptyRange, unitFilter: "" },
-    onApply: setApplied,
-  });
   const tab = useMemo(() => parseFuelReconTab(searchParams), [searchParams]);
   const setTab = (next: FuelReconTab) => {
     setSearchParams(
@@ -98,7 +90,14 @@ export function FuelReconciliationPage() {
     retry: false,
   });
 
-  const sorted = query.data?.by_truck ?? [];
+  const filtered = useMemo(() => {
+    const rows = query.data?.by_truck ?? [];
+    const q = reportSearch.toLowerCase();
+    if (!q) return rows;
+    return rows.filter((r) => {
+      return String(r.unit_number ?? "").toLowerCase().includes(q);
+    });
+  }, [query.data?.by_truck, reportSearch]);
 
   function printLetter() {
     const data = query.data;
@@ -110,7 +109,7 @@ export function FuelReconciliationPage() {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
     const t = data.totals;
-    const rowsHtml = sorted
+    const rowsHtml = filtered
       .map(
         (r) => `<tr>
           <td>${esc(r.unit_number)}</td>
@@ -238,9 +237,9 @@ export function FuelReconciliationPage() {
     [],
   );
 
-  function exportCsv(data: FuelReconciliationResponse) {
+  function exportCsv() {
     const h = ["Unit", "Card", "WO", "Delta", "MatchedPct", "Flags"];
-    const lines = (data.by_truck ?? []).map((r) =>
+    const lines = filtered.map((r) =>
       [r.unit_number, r.card_amount_cents, r.wo_amount_cents, r.delta_cents, r.matched_pct, r.flags.join("|")].join(","),
     );
     const blob = new Blob([[h.join(","), ...lines].join("\n")], { type: "text/csv" });
@@ -266,7 +265,7 @@ export function FuelReconciliationPage() {
             <Button size="sm" variant="secondary" onClick={printLetter} disabled={!query.data}>
               Print this page
             </Button>
-            <Button size="sm" variant="secondary" disabled={!query.data} onClick={() => query.data && exportCsv(query.data)}>
+            <Button size="sm" variant="secondary" disabled={!query.data} onClick={() => exportCsv()}>
               Export CSV
             </Button>
           </div>
@@ -281,44 +280,26 @@ export function FuelReconciliationPage() {
         toDate={applied.end}
         onFromDateChange={(d) => setApplied((p) => ({ ...p, start: d ?? "" }))}
         onToDateChange={(d) => setApplied((p) => ({ ...p, end: d ?? "" }))}
-        onPresetSelect={(_preset: ReportPreset) => {}}
+        onPresetSelect={(preset) => {
+          const next = new URLSearchParams(searchParams);
+          next.set("preset", preset);
+          setSearchParams(next, { replace: true });
+        }}
         search={reportSearch}
         onSearchChange={setReportSearch}
-      />
-
-      <CollapsedListFilters
-        activeFilterCount={JSON.stringify(applied) !== JSON.stringify({ ...emptyRange, unitFilter: "" }) ? 1 : 0}
-        defaultOpen={true}
-        onApply={staged.apply}
-        onReset={staged.reset}
-        onCancel={staged.cancel}
-        applyDisabled={!staged.dirty}
-        testIdPrefix="reports-fuel-reconciliation"
-        className="no-print rounded-sm border border-gray-200 bg-white p-3"
       >
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="text-xs text-gray-600">
-            From
-            <DatePicker className="mt-1 block h-9" value={staged.draft.start} onChange={(next) => staged.setDraft((p) => ({ ...p, start: next }))} />
-          </label>
-          <label className="text-xs text-gray-600">
-            To
-            <DatePicker className="mt-1 block h-9" value={staged.draft.end} onChange={(next) => staged.setDraft((p) => ({ ...p, end: next }))} />
-          </label>
-          <label className="text-xs text-gray-600">
-            Unit
-            <input
-              type="text"
-              className="mt-1 block h-9 w-28 rounded-sm border border-gray-300 px-2 text-xs"
-              value={staged.draft.unitFilter}
-              onChange={(e) => staged.setDraft((p) => ({ ...p, unitFilter: e.target.value }))}
-              placeholder="All units"
-              data-testid="reports-fuel-reconciliation-unit"
-              // TODO: wire to backend filter
-            />
-          </label>
-        </div>
-      </CollapsedListFilters>
+        <label className="flex items-center gap-1 text-xs text-slate-600">
+          <span className="font-semibold text-slate-600">Unit</span>
+          <input
+            type="text"
+            className="h-7 w-24 rounded-sm border border-slate-300 px-2 text-xs"
+            value={applied.unitFilter}
+            onChange={(e) => setApplied((p) => ({ ...p, unitFilter: e.target.value }))}
+            placeholder="All units"
+            data-testid="reports-fuel-reconciliation-unit"
+          />
+        </label>
+      </ReportFilterBar>
 
       {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
 
@@ -342,10 +323,10 @@ export function FuelReconciliationPage() {
           </div>
 
           <ParityTable
-            rows={sorted}
+            rows={filtered}
             columns={truckColumns}
             rowKey={(r) => r.unit_id}
-            loading={query.isPending || (query.isFetching && sorted.length === 0)}
+            loading={query.isPending || (query.isFetching && filtered.length === 0)}
             storageKey="fuel-reconciliation"
             emptyText="No trucks with fuel data for this period."
             exportFilename={`fuel-reconciliation-${applied.start}-${applied.end}`}
