@@ -269,6 +269,7 @@ import BookingGapReport from "../pages/reports/BookingGapReport";
 const FaultDraftsPage = React.lazy(() => import("../pages/maintenance/FaultDraftsPage").then((m) => ({ default: m.FaultDraftsPage })));
 const FaultRulesPage = React.lazy(() => import("../pages/maintenance/FaultRulesPage").then((m) => ({ default: m.FaultRulesPage })));
 const DeadheadReportPage = React.lazy(() => import("../pages/reports/DeadheadReportPage").then((m) => ({ default: m.DeadheadReportPage })));
+const PostedWhileTourOpenReportPage = React.lazy(() => import("../pages/reports/PostedWhileTourOpenReportPage").then((m) => ({ default: m.PostedWhileTourOpenReportPage })));
 const AuditActivityByUserPage = React.lazy(() => import("../pages/reports/audit/AuditActivityByUserPage").then((m) => ({ default: m.AuditActivityByUserPage })));
 const AuditActivityByModulePage = React.lazy(() => import("../pages/reports/audit/AuditActivityByModulePage").then((m) => ({ default: m.AuditActivityByModulePage })));
 const AuditFinancialChangeLogPage = React.lazy(() => import("../pages/reports/audit/AuditFinancialChangeLogPage").then((m) => ({ default: m.AuditFinancialChangeLogPage })));
@@ -3514,6 +3515,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DeadheadReportPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/posted-while-tour-open"
+          element={
+            <ProtectedRoute>
+              <PostedWhileTourOpenReportPage />
             </ProtectedRoute>
           }
         />
