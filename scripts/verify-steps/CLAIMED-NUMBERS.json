@@ -5897,6 +5897,11 @@
     "claimed_at": "2026-09-06",
     "purpose": "verify-bank-rules-usmca-seed (BANK-RULES-USMCA lead 2026-09-06: suggestion engine falls back to the raw bank description -- description_normalized was NULL on all 364 USMCA lines -- plus the USMCA bank-rule seed through POST /api/v1/banking/rules + refresh-suggestion, dry-run by default) -- RENUMBERED from 10533 2026-09-06 20:0xZ: 10533 was already claimed+wired for verify-invoice-issue-date-from-load since #21019/#21030; this claim (#21034, cc-1-band 10533 mistakenly used for a banking/cc-2-lane guard) collided on the same key and its file has been git-mv'd to 10539-verify-bank-rules-usmca-seed.mjs, content byte-identical, no logic change."
   },
+  "10541": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-cash-flow-rolling-ledger (CASH-FLOW-02, owner order 2026-09-06 20:1xZ: rolling A/R+A/P ledger with real dates -- expected income automatically from loads/invoices/factoring, expected expenses from bills/driver pay/driver bills/unmatched expenses/loan schedule -- carry-forward until paid/matched, day grid with running cash from the live bank balance)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
