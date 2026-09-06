@@ -5862,6 +5862,11 @@
     "claimed_at": "2026-09-06",
     "purpose": "verify-settlement-detail-kpi-grid (SETL-DETAIL-01 guard, existed since PR #21001 but was never wired into package.json or a verify-step -- wiring it now, plus the SETL-KPI-CENTS-01 fix it now also pins)"
   },
+  "10518": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-company-settlements-page (SET-04 / L.6, owner CONSOLIDATED 2026-09-06 18:30Z item 7: /driver-finance/company-settlements FE page for accounting.company_settlements -- ParityTable list + waterfall Invoiced - Quick Pay - Driver Salary - Additional Pay - Fuel - Company Expenses = Net Revenue per doc 5784, Load-Costs/.ldt palette; sidebar points at the real page)"
+  },
   "10519": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
