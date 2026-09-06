@@ -249,9 +249,9 @@ const createDispatchLoadBodySchema = z.object({
   // LOADS-MILEAGE-INTEGER-TRUNCATION (migration 202613310000 widened the columns to numeric(10,1)):
   // AlwaysTrack carries tenths of a mile; multipleOf(0.1) matches the DB precision exactly instead
   // of forcing the caller to round to a whole mile.
-  miles_practical: z.number().min(0).multipleOf(0.1).nullable().optional(),
-  miles_shortest: z.number().min(0).multipleOf(0.1).nullable().optional(),
-  miles_deadhead: z.number().min(0).multipleOf(0.1).nullable().optional(),
+  miles_practical: z.number().min(0).multipleOf(0.1).optional(),
+  miles_shortest: z.number().min(0).multipleOf(0.1).optional(),
+  miles_deadhead: z.number().min(0).multipleOf(0.1).optional(),
   mileage_source: z
     .enum([
       "History",
