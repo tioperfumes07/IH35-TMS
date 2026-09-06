@@ -5947,6 +5947,11 @@
     "claimed_at": "2026-09-06",
     "purpose": "verify-one-void-convention (INV-09/ACC-08, owner CONSOLIDATED 2026-09-06 18:30Z item 6: locks the accounting.bills voided_at/revoked_at sync-trigger invariant live-reconfirmed correct on 09-05 and again today -- the broader 4-table naming-consistency question stays filed as an owner-decision-needed item, not guessed)"
   },
+  "10594": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-factoring-layout-tabs-first"
+  },
   "10597": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
@@ -5971,6 +5976,31 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "verify-health-deep-financial-checks (INV-11/ACC-18/ACC-19, owner CONSOLIDATED 2026-09-06 18:30Z item 7: /health/deep runs only infra checks -- postgres/redis/r2/plaid/qbo -- zero financial checks; adds real A/R tie-out, A/P tie-out, trial balance, bank control account, and JE debit=credit checks, each naming itself and failing loudly)"
+  },
+  "10633": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-close-post-a-item2-historical-advances"
+  },
+  "10641": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-set24-correction-dry-run"
+  },
+  "10645": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-customer-finance-cost-rollup"
+  },
+  "10653": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-reimbursement-reversal-routes-to-expense"
+  },
+  "10657": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-dispatch-planner-active-driver-scope"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -7973,30 +8003,5 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
-  },
-  "10633": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-06",
-    "purpose": "verify-close-post-a-item2-historical-advances"
-  },
-  "10641": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-06",
-    "purpose": "verify-set24-correction-dry-run"
-  },
-  "10645": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-06",
-    "purpose": "verify-customer-finance-cost-rollup"
-  },
-  "10594": {
-    "claimed_by": "cursor",
-    "claimed_at": "2026-09-06",
-    "purpose": "verify-factoring-layout-tabs-first"
-  },
-  "10653": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-06",
-    "purpose": "verify-reimbursement-reversal-routes-to-expense"
   }
 }
