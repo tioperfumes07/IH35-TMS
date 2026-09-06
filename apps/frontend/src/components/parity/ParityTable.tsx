@@ -42,10 +42,18 @@ export type ParityColumn<T> = {
   render?: (row: T) => ReactNode;
   className?: string;
   cellClass?: string;
+  /** Optional native tooltip on the header cell (ROUND 16.1) — lets a column explain itself
+   *  (e.g. "Legs = the loads in this tour, in order …"). Additive: omit for no tooltip. */
+  headerTitle?: string;
   /** Floor for the auto-fit measured width (never shrinks it, only widens) — a user manual
    *  drag-resize still overrides this completely, same as autoFitWidths always did. Additive:
    *  omitting it preserves today's pure-measured width for every existing column. */
   minWidth?: number;
+  /** Ceiling for the auto-fit measured width (ROUND 16.1) — caps a column so one long value can't
+   *  let it occupy the whole screen (the owner's Load-Costs "a column occupies all screen" report).
+   *  Overrides the global AUTO_FIT_MAX_WIDTH for this column only. A user manual drag-resize still
+   *  overrides it. Additive: omitting it preserves today's global-capped measured width. */
+  maxWidth?: number;
   /** Initial hidden state in the gear column-toggle (still toggleable on). */
   defaultHidden?: boolean;
   /** Exclude from the gear column-toggle list (always shown). */
@@ -794,7 +802,11 @@ export function ParityTable<T>({
         const w = measureTextWidth(text, d.font);
         if (w > widest) widest = w;
       }
-      widths[key] = Math.min(AUTO_FIT_MAX_WIDTH, Math.max(AUTO_FIT_MIN_WIDTH, Math.ceil(widest + AUTO_FIT_CHROME_PX)));
+      // ROUND 16.1 — a per-column maxWidth (when set) caps the auto-fit below the global ceiling so
+      // one long value can't stretch the column across the whole screen; minWidth still floors it.
+      const ceiling = Math.min(AUTO_FIT_MAX_WIDTH, column.maxWidth ?? AUTO_FIT_MAX_WIDTH);
+      const floor = Math.max(AUTO_FIT_MIN_WIDTH, column.minWidth ?? 0);
+      widths[key] = Math.max(floor, Math.min(ceiling, Math.max(AUTO_FIT_MIN_WIDTH, Math.ceil(widest + AUTO_FIT_CHROME_PX))));
     }
     return widths;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- colWidths only gates which columns are
@@ -1509,6 +1521,7 @@ export function ParityTable<T>({
                 <th
                   key={key}
                   data-testid={column.testId}
+                  title={column.headerTitle}
                   // REORDER — draggable on the whole <th>, not a separate handle: the sort button
                   // (a click, no movement) and the resize grip (its own onMouseDown + stopPropagation)
                   // both already coexist fine with a draggable ancestor; a real drag gesture bubbles

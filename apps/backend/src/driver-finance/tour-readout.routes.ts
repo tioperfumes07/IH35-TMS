@@ -280,6 +280,11 @@ const toursQuery = z.object({ operating_company_id: z.string().uuid(), state: z.
 export type TourListRow = {
   settlement_id: string; display_id: string | null; status: string; is_open: boolean; driver_name: string | null; unit_number: string | null;
   trip_started_at: string | null; trip_closed_at: string | null; leg_count: number; legs_label: string;
+  /** ROUND 16.1 (owner 2026-09-06): the tour's live legs in order, compact — so the Load-Costs
+   *  Settlement/Pre-Settlement register can render each leg as a type-colored pill that is an
+   *  EntityLink to the load (needs the load_id the flat legs_label string never carried). READ-only
+   *  projection off the same buildTourReadout legs; additive, never re-derived. */
+  legs: { load_id: string; load_number: string; trip_type: string | null }[];
   revenue_cents: number; costs_cents: number; driver_pay_cents: number; margin_cents: number; margin_pct: number | null;
   miles_practical: number; miles_real: number | null; ready_ok: number; ready_total: number; can_close: boolean; close_blockers: string[];
   driver_net_cents: number | null; company_settlement_display_id: string | null;
@@ -309,6 +314,7 @@ export async function listTours(client: Db, companyId: string, state: "open" | "
       settlement_id: r.tour.settlement_id, display_id: r.tour.display_id, status: r.tour.status, is_open: r.tour.is_open,
       driver_name: r.tour.driver_name, unit_number: r.tour.unit_number, trip_started_at: r.tour.trip_started_at, trip_closed_at: r.tour.trip_closed_at,
       leg_count: live.length, legs_label: live.map((l) => `${l.trip_type ?? "?"} ${l.load_number}`).join(" → "),
+      legs: live.map((l) => ({ load_id: l.load_id, load_number: l.load_number, trip_type: l.trip_type })),
       revenue_cents: r.totals?.revenue_cents ?? 0, costs_cents: r.totals?.costs_cents ?? 0, driver_pay_cents: r.totals?.driver_pay_cents ?? 0,
       margin_cents: r.totals?.margin_cents ?? 0, margin_pct: r.totals?.margin_pct ?? null,
       miles_practical: r.totals?.miles_practical ?? 0, miles_real: r.totals?.miles_real ?? null,

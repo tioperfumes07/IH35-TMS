@@ -63,9 +63,13 @@ export function closeTour(settlementId: string, operatingCompanyId: string) {
 }
 
 /** LDT-TABS · Load costs board → Pre-Settlement (open tours) / Settlement (closed tours) registers; rows come from the same readout. */
+export type TourLegBrief = { load_id: string; load_number: string; trip_type: string | null };
 export type TourListRow = {
   settlement_id: string; display_id: string | null; status: string; is_open: boolean; driver_name: string | null; unit_number: string | null;
   trip_started_at: string | null; trip_closed_at: string | null; leg_count: number; legs_label: string;
+  /** ROUND 16.1 — the tour's live legs in order (load_id · load_number · trip_type) so the register
+   *  can render each leg as a type-colored EntityLink pill. Downstream READ of the tour-readout model. */
+  legs: TourLegBrief[];
   revenue_cents: number; costs_cents: number; driver_pay_cents: number; margin_cents: number; margin_pct: number | null;
   miles_practical: number; miles_real: number | null; ready_ok: number; ready_total: number; can_close: boolean; close_blockers: string[];
   driver_net_cents: number | null; company_settlement_display_id: string | null;

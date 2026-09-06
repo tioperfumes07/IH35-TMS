@@ -83,6 +83,20 @@
 button.ldt-pill { cursor: pointer; }
 .ldt-live { font-size: 9.5px; font-weight: 700; letter-spacing: .06em; color: var(--ldt-bad); text-transform: uppercase; }
 
+/* ROUND 16.1 — Legs column: one line of compact type-colored pills (count first, then each leg
+   as an EntityLink pill, overflow → "+N more"). Row must never grow past one line, so the row is
+   nowrap + overflow-hidden and each pill is 18px tall. Type colors: NB accent-soft, TR rule2,
+   SB warn-soft, LOCAL muted. */
+.ldt-legs { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; max-width: 100%; line-height: 1; }
+.ldt-legcount { display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 2px; font-size: 10.5px; font-weight: 700; white-space: nowrap; background: var(--ldt-rule2); color: var(--ldt-ink); }
+.ldt-legpill { display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 2px; font-size: 10.5px; font-weight: 600; white-space: nowrap; text-decoration: none; }
+.ldt-legpill:hover { text-decoration: underline; }
+.ldt-legpill.nb { background: var(--ldt-accent-soft); color: var(--ldt-accent); }
+.ldt-legpill.tr { background: var(--ldt-rule2); color: var(--ldt-ink); }
+.ldt-legpill.sb { background: var(--ldt-warn-soft); color: var(--ldt-warn); }
+.ldt-legpill.local { background: var(--ldt-rule); color: var(--ldt-muted); }
+.ldt-legmore { display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 2px; font-size: 10.5px; font-weight: 600; white-space: nowrap; background: var(--ldt-rule); color: var(--ldt-muted); cursor: help; }
+
 /* Attach control + pop-up */
 .ldt-att { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border: 1px dashed var(--ldt-accent); border-radius: 2px; background: var(--ldt-card); color: var(--ldt-accent); font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .ldt-att:disabled { opacity: .6; cursor: progress; }
