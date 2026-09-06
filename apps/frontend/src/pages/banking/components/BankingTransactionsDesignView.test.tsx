@@ -421,6 +421,80 @@ describe("BankingTransactionsDesignView ParityTable Phase B shell", () => {
   });
 });
 
+// B2 BANK-REGISTER-COLUMNS (owner CONSOLIDATED 2026-09-06 18:30Z, item 3): "Check No., Vendor,
+// Memo, Category, Match status, Reference and Posted JE are real columns, Check No. and Vendor on
+// by default."
+describe("BankingTransactionsDesignView B2 register columns", () => {
+  const account = {
+    id: "acct-1",
+    operating_company_id: "company-1",
+    institution_name: "Chase",
+    account_name: "Operating",
+    account_mask: "1234",
+    account_type: "depository",
+    current_balance_cents: 100000,
+    available_balance_cents: 100000,
+    currency_code: "USD",
+    is_active: true,
+    sync_status: "active" as const,
+    last_synced_at: null,
+    plaid_item_id: "item-1",
+    created_at: "2026-05-01T00:00:00.000Z",
+    updated_at: "2026-05-01T00:00:00.000Z",
+  };
+
+  it("Check No. and Payee (Vendor) render by default; the 5 new columns stay hidden until toggled on", async () => {
+    // Un-matched, so it stays on the default "For review" tab (a matched transaction is bucketed
+    // out of that tab entirely — hasPersistedMatch/matched_kind — a different, real behavior this
+    // test isn't exercising).
+    vi.mocked(bankingApi.getPlaidCompanyTransactions).mockResolvedValue({
+      transactions: [
+        {
+          ...tx("tx-b2-1", "acct-1", 2500, "2026-05-17T00:00:00.000Z", "B2 columns txn"),
+          source_ref: "REF-9001",
+        },
+      ],
+    });
+
+    render(
+      wrap(
+        <BankingTransactionsDesignView
+          companyId="company-1"
+          accounts={[account]}
+          selectedAccountId="acct-1"
+          onSelectAccount={() => {}}
+          onManageConnections={() => {}}
+          onDataChanged={() => {}}
+        />
+      )
+    );
+
+    expect(await screen.findByText("B2 columns txn")).toBeInTheDocument();
+    // Check No. and Payee columns are ON by default — their <th> header renders without any gear
+    // interaction. Scoped to each column's own testId throughout this test: several of these
+    // labels (e.g. "Category") also appear as plain toolbar text ("Categorize by ▾
+    // Category/Item"), which a bare screen.getByText/getByRole("columnheader") would collide with.
+    expect(screen.getByTestId("banking-register-col-checkNo")).toBeInTheDocument();
+    expect(screen.getByTestId("banking-register-col-payee")).toBeInTheDocument();
+    // The 5 new columns are OFF by default — no such <th> exists yet.
+    expect(screen.queryByTestId("banking-register-col-memo")).toBeNull();
+    expect(screen.queryByTestId("banking-register-col-category")).toBeNull();
+    expect(screen.queryByTestId("banking-register-col-matchStatus")).toBeNull();
+    expect(screen.queryByTestId("banking-register-col-reference")).toBeNull();
+    expect(screen.queryByTestId("banking-register-col-postedJe")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "View settings" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Memo" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Category" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Match status" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Reference" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Posted JE" }));
+
+    await waitFor(() => expect(screen.getByText("REF-9001")).toBeInTheDocument());
+    expect(screen.getByText("Unmatched")).toBeInTheDocument();
+  });
+});
+
 describe("BankingTransactionsDesignView inline class create (FIX-4)", () => {
   it("keeps the new class label after inline create, without needing a reselect", async () => {
     vi.mocked(bankingApi.getPlaidCompanyTransactions).mockResolvedValue({

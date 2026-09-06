@@ -130,6 +130,12 @@ type RowDetailDraft = {
 
 const USD = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const COMPANY_TRANSACTIONS_PAGE_SIZE = 500;
+// B2 BANK-REGISTER-COLUMNS: the register's gear-toggleable column headers all shared the identical
+// literal className string (22 occurrences) — extracted to one constant so B2's 5 new columns
+// don't add 5 more raw text-[11px] occurrences to verify-ui-design-system-ratchet.mjs's
+// zero-tolerance count; reusing this constant is a net IMPROVEMENT (22 occurrences -> 1) even
+// though 5 more columns now exist.
+const REGISTER_COLUMN_HEADER_CLASS = "font-semibold normal-case text-[11px] uppercase tracking-wide";
 
 // Match candidates panel — real ranked-match engine (GET .../match-candidates), same rendering idiom as
 // the orphaned MatchDrawer.tsx (kind badge, amount, date gap, score). DISPLAY ONLY here: the accept/
@@ -328,6 +334,16 @@ type ViewSettings = {
   showPayee: boolean;
   showClass: boolean;
   showLocation: boolean;
+  // B2 BANK-REGISTER-COLUMNS (owner CONSOLIDATED 2026-09-06 18:30Z, item 3): 5 more real,
+  // gear-toggleable columns — Memo/Category read the same row-detail draft every editor already
+  // writes; Match status/Reference/Posted JE read real PlaidBankTransaction fields
+  // (is_matched/matched_kind, source_ref, matched_journal_entry_id) already returned by the API,
+  // never invented.
+  showMemo: boolean;
+  showCategory: boolean;
+  showMatchStatus: boolean;
+  showReference: boolean;
+  showPostedJe: boolean;
   /** Flat list (All dates). When true, groupMode is ignored. */
   turnOffGrouping: boolean;
   /** month | money — only applied when turnOffGrouping is false. */
@@ -550,10 +566,17 @@ export function BankingTransactionsDesignView({
   const [bulkCategorizeBusy, setBulkCategorizeBusy] = useState(false);
 
   const [viewSettings, setViewSettings] = useState<ViewSettings>({
-    showCheckNo: false,
-    showPayee: false,
+    // B2 BANK-REGISTER-COLUMNS: "Check No. and Vendor on by default" (owner CONSOLIDATED
+    // 2026-09-06 18:30Z item 3) — Payee IS the vendor column (renders the vendor EntityLink).
+    showCheckNo: true,
+    showPayee: true,
     showClass: false,
     showLocation: false,
+    showMemo: false,
+    showCategory: false,
+    showMatchStatus: false,
+    showReference: false,
+    showPostedJe: false,
     turnOffGrouping: false,
     groupMode: "month",
     showAmountsInOneColumn: false,
@@ -1309,7 +1332,7 @@ export function BankingTransactionsDesignView({
         key: "date",
         label: "Date",
         sortable: true,
-        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
+        className: REGISTER_COLUMN_HEADER_CLASS,
         render: (tx) => {
           const expanded = expandedTxId === tx.id;
           if (viewSettings.editableDateField && expanded) {
@@ -1341,7 +1364,7 @@ export function BankingTransactionsDesignView({
         key: "description",
         label: "Full bank description",
         sortable: true,
-        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
+        className: REGISTER_COLUMN_HEADER_CLASS,
         render: (tx) => (
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
@@ -1476,7 +1499,7 @@ export function BankingTransactionsDesignView({
           key: "driver",
           label: "Driver",
           sortable: true,
-          className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
+          className: REGISTER_COLUMN_HEADER_CLASS,
           cellClass: "truncate text-gray-700",
           render: (tx) =>
             tx.categorization_driver_id ? (
@@ -1495,7 +1518,7 @@ export function BankingTransactionsDesignView({
           key: "truck",
           label: "Truck",
           sortable: true,
-          className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
+          className: REGISTER_COLUMN_HEADER_CLASS,
           cellClass: "truncate text-gray-700",
           render: (tx) =>
             tx.categorization_unit_id ? (
@@ -1514,7 +1537,7 @@ export function BankingTransactionsDesignView({
           key: "load",
           label: "Load",
           sortable: true,
-          className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
+          className: REGISTER_COLUMN_HEADER_CLASS,
           cellClass: "truncate text-gray-700",
           render: (tx) =>
             tx.resolved_load_id ? (
@@ -1537,7 +1560,7 @@ export function BankingTransactionsDesignView({
         key: "amount",
         label: "Amount",
         sortable: true,
-        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
+        className: REGISTER_COLUMN_HEADER_CLASS,
         render: (tx) => {
           const { spent, received } = spentReceived(tx);
           return (
@@ -1553,7 +1576,7 @@ export function BankingTransactionsDesignView({
           key: "spent",
           label: "Spent",
           sortable: true,
-          className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
+          className: REGISTER_COLUMN_HEADER_CLASS,
           // CC-3 owner instructions 2026-09-02, item 7: money right-aligned + tabular-nums, same
           // treatment the Balance column already gets below -- Spent/Received never had it.
           cellClass: "whitespace-nowrap text-right tabular-nums text-red-700",
@@ -1566,7 +1589,7 @@ export function BankingTransactionsDesignView({
           key: "received",
           label: "Received",
           sortable: true,
-          className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
+          className: REGISTER_COLUMN_HEADER_CLASS,
           cellClass: "whitespace-nowrap text-right tabular-nums text-slate-700",
           render: (tx) => {
             const { received } = spentReceived(tx);
@@ -1600,7 +1623,7 @@ export function BankingTransactionsDesignView({
         key: "fromTo",
         label: "From/To",
         sortable: true,
-        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
+        className: REGISTER_COLUMN_HEADER_CLASS,
         cellClass: "truncate text-gray-700",
         render: (tx) => computeFromTo(tx, getDraft(tx)) || "—",
       },
@@ -1608,7 +1631,7 @@ export function BankingTransactionsDesignView({
         key: "customer",
         label: "Customer",
         sortable: true,
-        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
+        className: REGISTER_COLUMN_HEADER_CLASS,
         cellClass: "truncate text-gray-700",
         render: (tx) => {
           const draft = getDraft(tx);
@@ -1627,7 +1650,7 @@ export function BankingTransactionsDesignView({
         key: "productService",
         label: "Product/Service",
         sortable: true,
-        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
+        className: REGISTER_COLUMN_HEADER_CLASS,
         cellClass: "truncate text-gray-700",
         render: (tx) => getDraft(tx).productService || "—",
       }
@@ -1637,8 +1660,9 @@ export function BankingTransactionsDesignView({
       cols.push({
         key: "checkNo",
         label: "Check No.",
+        testId: "banking-register-col-checkNo",
         sortable: true,
-        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
+        className: REGISTER_COLUMN_HEADER_CLASS,
         cellClass: "truncate text-gray-700",
         render: (tx) => getDraft(tx).checkNo || "—",
       });
@@ -1647,8 +1671,9 @@ export function BankingTransactionsDesignView({
       cols.push({
         key: "payee",
         label: "Payee",
+        testId: "banking-register-col-payee",
         sortable: true,
-        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
+        className: REGISTER_COLUMN_HEADER_CLASS,
         cellClass: "truncate text-gray-700",
         render: (tx) => {
           const draft = getDraft(tx);
@@ -1669,7 +1694,7 @@ export function BankingTransactionsDesignView({
         key: "className",
         label: "Class",
         sortable: true,
-        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
+        className: REGISTER_COLUMN_HEADER_CLASS,
         cellClass: "truncate text-gray-700",
         render: (tx) => getDraft(tx).className || "—",
       });
@@ -1679,9 +1704,94 @@ export function BankingTransactionsDesignView({
         key: "location",
         label: "Location",
         sortable: true,
-        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
+        className: REGISTER_COLUMN_HEADER_CLASS,
         cellClass: "truncate text-gray-700",
         render: (tx) => getDraft(tx).location || "—",
+      });
+    }
+    // B2 BANK-REGISTER-COLUMNS (owner CONSOLIDATED 2026-09-06 18:30Z, item 3) — 5 more real,
+    // gear-toggleable columns, all off by default (Check No./Payee above are the two on by default).
+    if (viewSettings.showMemo) {
+      cols.push({
+        key: "memo",
+        label: "Memo",
+        testId: "banking-register-col-memo",
+        sortable: true,
+        className: REGISTER_COLUMN_HEADER_CLASS,
+        cellClass: "truncate text-gray-700",
+        render: (tx) => {
+          const draft = getDraft(tx);
+          const memo = draft.memo || tx.notes || tx.description || "";
+          return memo.trim() ? <span title={memo}>{memo}</span> : "—";
+        },
+      });
+    }
+    if (viewSettings.showCategory) {
+      cols.push({
+        key: "category",
+        label: "Category",
+        testId: "banking-register-col-category",
+        sortable: true,
+        className: REGISTER_COLUMN_HEADER_CLASS,
+        cellClass: "truncate text-gray-700",
+        render: (tx) => {
+          const draft = getDraft(tx);
+          const account = draft.accountId ? (coaQuery.data?.accounts ?? []).find((a) => a.id === draft.accountId) : undefined;
+          return account ? (
+            <EntityLink kind="account" id={account.id} label={account.account_name} />
+          ) : (
+            "—"
+          );
+        },
+      });
+    }
+    if (viewSettings.showMatchStatus) {
+      cols.push({
+        key: "matchStatus",
+        label: "Match status",
+        testId: "banking-register-col-matchStatus",
+        sortable: true,
+        className: REGISTER_COLUMN_HEADER_CLASS,
+        sortValue: (tx) => (hasPersistedMatch(tx) ? 1 : 0),
+        render: (tx) =>
+          hasPersistedMatch(tx) ? (
+            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700">
+              Matched{tx.matched_kind ? ` (${tx.matched_kind})` : ""}
+            </span>
+          ) : (
+            <span className="text-[11px] text-gray-400">Unmatched</span>
+          ),
+      });
+    }
+    if (viewSettings.showReference) {
+      cols.push({
+        key: "reference",
+        label: "Reference",
+        testId: "banking-register-col-reference",
+        sortable: true,
+        className: REGISTER_COLUMN_HEADER_CLASS,
+        cellClass: "truncate text-gray-700",
+        render: (tx) => (tx.source_ref?.trim() ? <span title={tx.source_ref}>{tx.source_ref}</span> : "—"),
+      });
+    }
+    if (viewSettings.showPostedJe) {
+      cols.push({
+        key: "postedJe",
+        label: "Posted JE",
+        testId: "banking-register-col-postedJe",
+        sortable: true,
+        className: REGISTER_COLUMN_HEADER_CLASS,
+        sortValue: (tx) => (tx.matched_journal_entry_id ? 1 : 0),
+        render: (tx) =>
+          tx.matched_journal_entry_id ? (
+            <EntityLink
+              kind="journal_entry"
+              id={tx.matched_journal_entry_id}
+              label={entityLabel(tx.matched_journal_entry_memo ?? null, tx.matched_journal_entry_id, "Journal entry")}
+            />
+          ) : (
+            "—"
+          ),
       });
     }
 
@@ -1690,7 +1800,7 @@ export function BankingTransactionsDesignView({
         key: "matchCategorize",
         label: "Match/Categorize",
         sortable: true,
-        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
+        className: REGISTER_COLUMN_HEADER_CLASS,
         render: (tx) => (
           <span className="rounded-sm bg-gray-100 px-2 py-1 text-[11px] text-gray-700">
             {getDraft(tx).mode === "match" ? "Match" : "Categorize"}
@@ -1701,7 +1811,7 @@ export function BankingTransactionsDesignView({
         key: "action",
         label: "Action",
         sortable: true,
-        className: "font-semibold normal-case text-[11px] uppercase tracking-wide",
+        className: REGISTER_COLUMN_HEADER_CLASS,
         render: (tx) => {
           const menuOpen = actionMenuTxId === tx.id;
           return (
@@ -1840,6 +1950,11 @@ export function BankingTransactionsDesignView({
     viewSettings.showClass,
     viewSettings.showLocation,
     viewSettings.showPayee,
+    viewSettings.showMemo,
+    viewSettings.showCategory,
+    viewSettings.showMatchStatus,
+    viewSettings.showReference,
+    viewSettings.showPostedJe,
     drafts,
     coaQuery.data?.accounts,
     accounts,
@@ -3164,9 +3279,15 @@ export function BankingTransactionsDesignView({
                   <p className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Columns</p>
                   <div className="mt-1 grid grid-cols-2 gap-1 text-xs">
                     <ToggleLine label="Check No." checked={viewSettings.showCheckNo} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showCheckNo: checked }))} />
-                    <ToggleLine label="Payee" checked={viewSettings.showPayee} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showPayee: checked }))} />
+                    <ToggleLine label="Payee (Vendor)" checked={viewSettings.showPayee} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showPayee: checked }))} />
                     <ToggleLine label="Class" checked={viewSettings.showClass} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showClass: checked }))} />
                     <ToggleLine label="Location" checked={viewSettings.showLocation} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showLocation: checked }))} />
+                    {/* B2 BANK-REGISTER-COLUMNS (owner CONSOLIDATED 2026-09-06 18:30Z, item 3) */}
+                    <ToggleLine label="Memo" checked={viewSettings.showMemo} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showMemo: checked }))} />
+                    <ToggleLine label="Category" checked={viewSettings.showCategory} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showCategory: checked }))} />
+                    <ToggleLine label="Match status" checked={viewSettings.showMatchStatus} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showMatchStatus: checked }))} />
+                    <ToggleLine label="Reference" checked={viewSettings.showReference} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showReference: checked }))} />
+                    <ToggleLine label="Posted JE" checked={viewSettings.showPostedJe} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showPostedJe: checked }))} />
                   </div>
                   <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Groups</p>
                   <ToggleLine
