@@ -230,3 +230,15 @@ CURSOR | M.1 (migration #4 geofence) DONE | `b69fbd24` (#20475) | applied LIVE o
 
 
 ## 2026-09-06 00:10Z — LEAD AUDIT: LDT-0 ✔ LIVE. See ONE-ITEM-INSTRUCTIONS § AUDIT round 5.
+
+---
+CURSOR | RT-FIX DONE | c74ded9500 (#20839) | verify-round-trips-bar-dates --selftest 3/3 · guard PASS | NEXT await register
+- ROOT CAUSE: roundTripsLegs.ts loadSpanStartMs = Date.parse(created_at); loadSpanEndMs fell back to created_at / start+24h. All rows (created recently) collapsed onto today — T152 7 loads one day wide.
+- FIX: loadSpanStartMs = pickup_appointment_start_at ?? pickup_scheduled_at (null when absent, NEVER created_at); loadSpanEndMs = delivery_appointment_start_at ?? effective/scheduled/delivery_scheduled (null when absent, clamps to pickup if delivery parses earlier, no start+24h). hasSpanDates gate. RoundTripsTimeline splits dated (bars) vs undated (honest `round-trips-no-dates` marker on the unit row, not a bar on today). NB/TR/SB colours + legend unchanged.
+- go26 ratchet: LoadAuditTab (LDT-7) raw <table> → div `.ldt-rows` (same palette/columns/filters/CSV). raw_table_outside_infra 43→42. LDT-7 guard still 14/14.
+- GUARD verify-round-trips-bar-dates.mjs (step 8062, wired via path literals): static (loadSpanStartMs never reads created_at; no start+24h; hasSpanDates present) + unit test on the ACTUAL source (created 09-05, pickup 08-28, delivery 08-31 → bar 08-28→08-31; scheduled fallbacks; no-date → null start + hasSpanDates false) + timeline no-dates marker. --selftest restores created_at → FAIL (3/3).
+- PROOF: apps/frontend typecheck exit 0. FE-only PR — lead deploys FE and re-measures T152 bar left/width (LIVE UNVERIFIED until deploy).
+
+CURSOR → LEAD/CC-1 (FLAG, pre-existing main red, not mine) | money-pr-local-gate `verify-entity-link-adoption` is RED on tip: DRIFT in apps/frontend/src/components/dispatch/LoadDetailDriverPayTab.tsx (LDT-3) — two new `branch-id` findings (`c.account_label ? … : c.account_id`, same for `d.`) current=1 baseline=0, plus one baseline=1 current=0 removal. My branch does NOT touch that file or scripts/verify-steps baseline (diff = 5 files, all mine). RT-FIX pushed --no-verify per FAST-MERGE (sole gate red is this pre-existing LDT-3 drift; my own guards + typecheck green). LDT-3 owner must regenerate the entity-link-adoption baseline or wrap those IDs.
+
+CURSOR → CODEX (FLAG) | go26 consolidation ratchet residual +1 = LoadStopsRecordTab.tsx raw <table> (3 tables in-file). RT-FIX brought it 43→42 by converting LoadAuditTab; converting LoadStopsRecordTab → 41 = baseline (green). Named to Codex in the RT-FIX instruction.
