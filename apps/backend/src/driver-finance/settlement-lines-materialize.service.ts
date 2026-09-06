@@ -52,6 +52,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { resolveRoleAccountOptional, isCoaRole } from "../accounting/coa-roles/resolver.service.js";
 import { bucketRecoveryRoleKey } from "../accounting/settlement-posting/settlement-bill-payment.math.js";
 import { SETTLEMENT_DEDUCTION_SOURCE_TABLE } from "./deductions.service.js";
+import { resolveDriverEscrowLiabilityAccount } from "./escrow-resolver.service.js";
 
 type QueryClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -224,8 +225,50 @@ export async function materializeSettlementLines(
   for (const d of dedRes.rows) {
     const amountCents = Math.round(Number(d.amount_cents ?? 0));
     if (amountCents <= 0) continue;
-    const roleKey = bucketRecoveryRoleKey(d.deduction_type);
-    const postingAccountId = isCoaRole(roleKey) ? await resolveRoleAccountOptional(client, input.operatingCompanyId, roleKey) : null;
+    // SETL-DED-GL (owner ruling 2026-09-06 01:5xZ): the four typed deduction kinds each bind to a
+    // SPECIFIC role/account, not the generic `${type}_recovery` bucket guess.
+    //   company_vehicle_fuel -> REUSES the EXISTING, already-bound 'company_fuel_advance_expense'
+    //     role (5000 Fuel & Diesel) — the SAME account a company fuel advance debits, so a recovery
+    //     credit here is a contra to that same expense, matching the owner's "credits the account the
+    //     fee/advance itself posts to" rule with NO new role/migration needed.
+    //   escrow_contribution -> the DRIVER'S OWN escrow liability sub-account
+    //     (resolveDriverEscrowLiabilityAccount) — explicitly NOT bucketRecoveryRoleKey's generic
+    //     'escrow_contribution_recovery' guess.
+    //   wire_fee / ach_fee -> a dedicated 'bank_fee_recovery' role (6300 Bank Service Charges & Wire
+    //     Fees) is the semantically correct target, but that role does not exist in
+    //     chart_of_accounts_roles' DB-level CHECK constraint yet and CC-3 has NO migration lane
+    //     (standing law) — the existing 'factor_wire_fee' role already bound to 6300 is NOT reused
+    //     here because it is a LIVE, actively-posted Faro-factoring role (poster.service.ts) and
+    //     commingling an unrelated driver-fee recovery into it would corrupt factoring reconciliation.
+    //     Correctly stays unresolved/pending with an honest reason (LAW: never a guessed account)
+    //     until a seat with migration authority adds the role. Filed to the board, not silently worked
+    //     around.
+    // Any OTHER/legacy deduction_type (including the grandfathered pre-existing 'other' rows) keeps
+    // the original bucketRecoveryRoleKey fallback.
+    let roleKey = bucketRecoveryRoleKey(d.deduction_type);
+    let postingAccountId: string | null = null;
+    let unresolvedReason: string | undefined;
+    if (d.deduction_type === "wire_fee" || d.deduction_type === "ach_fee") {
+      roleKey = "bank_fee_recovery";
+      postingAccountId = null;
+      unresolvedReason = `role 'bank_fee_recovery' is not yet admitted by chart_of_accounts_roles' CHECK constraint — needs a migration CC-3 has no lane for (deduction_type '${d.deduction_type}'); filed to the board`;
+    } else if (d.deduction_type === "company_vehicle_fuel") {
+      roleKey = "company_fuel_advance_expense";
+      postingAccountId = isCoaRole(roleKey) ? await resolveRoleAccountOptional(client, input.operatingCompanyId, roleKey) : null;
+      if (!postingAccountId) unresolvedReason = `no COA role account bound for role 'company_fuel_advance_expense' (deduction_type '${d.deduction_type}')`;
+    } else if (d.deduction_type === "escrow_contribution") {
+      roleKey = "escrow_contribution";
+      try {
+        const escrow = await resolveDriverEscrowLiabilityAccount(client, input.operatingCompanyId, settlement.driver_id);
+        postingAccountId = escrow.accountId;
+      } catch (err) {
+        postingAccountId = null;
+        unresolvedReason = `driver escrow liability sub-account not resolved for deduction_type 'escrow_contribution': ${err instanceof Error ? err.message : String(err)}`;
+      }
+    } else {
+      postingAccountId = isCoaRole(roleKey) ? await resolveRoleAccountOptional(client, input.operatingCompanyId, roleKey) : null;
+      if (!postingAccountId) unresolvedReason = `no COA role account bound for deduction_type '${d.deduction_type}' (derived role '${roleKey}')`;
+    }
     const sourceApproved = d.status === "applied";
     const approvalStatus: "pending" | "approved" = postingAccountId && sourceApproved ? "approved" : "pending";
 
@@ -267,7 +310,7 @@ export async function materializeSettlementLines(
       postingAccountId,
       approvalStatus,
       accountRoleAttempted: roleKey,
-      reason: postingAccountId ? undefined : `no COA role account bound for deduction_type '${d.deduction_type}' (derived role '${roleKey}')`,
+      reason: postingAccountId ? undefined : unresolvedReason,
     });
   }
 
