@@ -32,6 +32,7 @@ export type LoadStop = {
   sequence_number: number;
   stop_type: "pickup" | "delivery" | "fuel" | "rest" | "border";
   location_id: string | null;
+  geocode_precision?: "rooftop" | "range" | "locality" | null;
   address_line1: string | null;
   city: string | null;
   state: string | null;

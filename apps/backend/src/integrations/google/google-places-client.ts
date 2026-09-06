@@ -62,8 +62,42 @@ type GoogleAddressComponent = { long_name: string; short_name: string; types: st
 type GoogleGeocodeResult = {
   formatted_address?: string;
   address_components?: GoogleAddressComponent[];
-  geometry?: { location?: { lat?: number; lng?: number } };
+  geometry?: { location?: { lat?: number; lng?: number }; location_type?: string };
 };
+
+export type GoogleGeocodePrecision = "rooftop" | "range" | "locality";
+export type GoogleGeocodeEvidence = AddressResult & { precision: GoogleGeocodePrecision };
+
+const GOOGLE_FETCH_TIMEOUT_MS = 10_000;
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+function retryAfterMs(value: string | null): number {
+  if (!value) return 0;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1_000);
+  const at = Date.parse(value);
+  return Number.isFinite(at) ? Math.max(0, at - Date.now()) : 0;
+}
+
+async function fetchGoogle(url: string, init: RequestInit | undefined, errorPrefix: string): Promise<Response> {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    let response: Response;
+    try {
+      response = await fetch(url, { ...init, signal: AbortSignal.timeout(GOOGLE_FETCH_TIMEOUT_MS) });
+    } catch (error) {
+      if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {
+        throw new Error("fetch_timeout");
+      }
+      throw new Error("fetch_network_error");
+    }
+    if (response.status !== 429 || attempt === 1) {
+      if (!response.ok) throw new Error(`${errorPrefix}_http_${response.status}`);
+      return response;
+    }
+    // Provider contract: honor Retry-After before the single retry; never spin on quota errors.
+    await sleep(Math.max(250, retryAfterMs(response.headers.get("retry-after"))));
+  }
+  throw new Error(`${errorPrefix}_http_429`);
+}
 
 function component(components: GoogleAddressComponent[], type: string, useShort = false): string {
   const hit = components.find((c) => c.types.includes(type));
@@ -226,7 +260,7 @@ export async function placeDetails(placeId: string, sessionToken?: string): Prom
 }
 
 async function textSearch(query: string, maxResults: number, apiKey: string): Promise<AddressResult[]> {
-  const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+  const res = await fetchGoogle("https://places.googleapis.com/v1/places:searchText", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -247,8 +281,7 @@ async function textSearch(query: string, maxResults: number, apiKey: string): Pr
         },
       },
     }),
-  });
-  if (!res.ok) throw new Error(`google_places_text_http_${res.status}`);
+  }, "google_places_text");
   const data = (await res.json()) as { places?: PlacesNewPlace[] };
   const places = Array.isArray(data.places) ? data.places : [];
   return places.map((pl) => {
@@ -271,8 +304,7 @@ async function geocode(query: string, maxResults: number, apiKey: string): Promi
   const url =
     `https://maps.googleapis.com/maps/api/geocode/json` +
     `?address=${encodeURIComponent(query)}&components=country:US|country:MX&key=${encodeURIComponent(apiKey)}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`google_places_http_${res.status}`);
+  const res = await fetchGoogle(url, undefined, "google_geocoding");
   const data = (await res.json()) as { status?: string; results?: GoogleGeocodeResult[] };
   // Google's API returns 200 with a body-level status for quota/auth errors — never throw a raw key
   // leak, just surface a stable error class.
@@ -288,6 +320,29 @@ async function geocode(query: string, maxResults: number, apiKey: string): Promi
       typeof r.geometry?.location?.lng === "number" ? r.geometry.location.lng : null,
     ),
   );
+}
+
+/** Geocoding API only. Used for city/state[/zip] stop rows so Places Text Search can never
+ * turn a locality query into a random business and an unsafe arrival fence. */
+export async function geocodeLocality(query: string): Promise<GoogleGeocodeEvidence | null> {
+  const cfg = loadConfig();
+  if (!cfg) throw new Error("google_places_not_configured");
+  const url =
+    `https://maps.googleapis.com/maps/api/geocode/json` +
+    `?address=${encodeURIComponent(query)}&components=country:US|country:MX&key=${encodeURIComponent(cfg.apiKey)}`;
+  const res = await fetchGoogle(url, undefined, "google_geocoding");
+  const data = (await res.json()) as { status?: string; results?: GoogleGeocodeResult[] };
+  if (data.status && data.status !== "OK" && data.status !== "ZERO_RESULTS") {
+    throw new Error(`google_places_status_${data.status}`);
+  }
+  const row = data.results?.[0];
+  const lat = row?.geometry?.location?.lat;
+  const lon = row?.geometry?.location?.lng;
+  if (!row || typeof lat !== "number" || typeof lon !== "number") return null;
+  const mapped = fromComponents(row.address_components ?? [], row.formatted_address ?? "", lat, lon);
+  // A streetless request is intentionally locality evidence even if Google's location_type says
+  // APPROXIMATE/GEOMETRIC_CENTER. It may be stored for planning but must never create a fence.
+  return { ...mapped, precision: "locality" };
 }
 
 /** Address / business-name lookup for the Book Load address field. Places Text Search (New) first — it

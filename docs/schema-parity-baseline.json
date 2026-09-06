@@ -7908,6 +7908,18 @@
       "transfer_location",
       "updated_at"
     ],
+    "mdata.load_stop_legs": [
+      "created_at",
+      "from_stop_id",
+      "google_reference_fetched_at",
+      "google_reference_miles",
+      "id",
+      "leg_index",
+      "leg_kind",
+      "load_id",
+      "operating_company_id",
+      "to_stop_id"
+    ],
     "mdata.load_stops": [
       "actual_arrival_at",
       "actual_arrival_source",
@@ -7923,6 +7935,7 @@
       "geocode_attempted_at",
       "geocode_confidence",
       "geocode_failure_reason",
+      "geocode_precision",
       "geocode_source",
       "id",
       "is_extra_stop",
