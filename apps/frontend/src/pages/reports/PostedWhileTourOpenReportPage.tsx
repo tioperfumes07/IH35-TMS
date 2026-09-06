@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
@@ -18,6 +19,7 @@ import { getPostedWhileTourOpenReport, type PostedWhileTourOpenRow } from "../..
 // void, or post anything; it only names what a real reversal WOULD need to touch.
 
 function money(cents: number) {
+  if (!cents) return "—";
   return formatUsdCents(cents);
 }
 
@@ -72,7 +74,8 @@ export function PostedWhileTourOpenReportPage() {
       {
         key: "accounts",
         label: "GL accounts",
-        sortable: false,
+        sortable: true,
+        sortValue: (r) => r.accounts.map((a) => a.account_number ?? a.account_name ?? "").join(", "),
         render: (r) =>
           r.accounts.length === 0 ? (
             "—"
@@ -98,6 +101,11 @@ export function PostedWhileTourOpenReportPage() {
         subtitle="LAW §2 — documents that posted before their load's tour closed. Read-only: the owner confirms before any reversal runs."
         backHref="/reports"
         breadcrumb={["Reports", "Posted while tour open"]}
+        actions={
+          <Button size="sm" variant="secondary" onClick={() => window.print()}>
+            Print
+          </Button>
+        }
       />
       <ReportsSubNav />
 
