@@ -5867,6 +5867,11 @@
     "claimed_at": "2026-09-06",
     "purpose": "verify-expense-number-never-null (INV-13, owner CONSOLIDATED item 5: no expense-mint path, including cash-advances/lumper-cash-advance-split.ts, may write a NULL expense_number on any USMCA expense)"
   },
+  "10529": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-vendor-open-balance-includes-expenses (VC-01, owner CONSOLIDATED item 4: spend totals include both expenses and bills, last_activity_date is always a real transaction date never vendor.updated_at; Open Balance stays bills-only by design -- accounting.expenses has no open/unpaid state, verified live)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
