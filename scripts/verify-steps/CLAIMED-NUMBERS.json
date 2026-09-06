@@ -5872,6 +5872,11 @@
     "claimed_at": "2026-09-06",
     "purpose": "verify-banking-register-columns (B2 BANK-REGISTER-COLUMNS, owner CONSOLIDATED 2026-09-06 18:30Z item 3: Check No./Vendor on by default; Memo/Category/Match status/Reference/Posted JE as 5 new real, gear-toggleable columns on BankingTransactionsDesignView.tsx main register)"
   },
+  "10520": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-load-costs-settlement-legs-columns (ROUND 16.1, owner 2026-09-06 20:2xZ: /accounting/load-costs Settlement/Pre-Settlement tour register Legs column renders one nowrap line of type-colored EntityLink leg pills (count + '+N more'), money cells nowrap auto-fit, mmmDd dates capped, driver ellipsis, company 'not opened' pill; ParityColumn maxWidth/headerTitle; backend legs[] projection)"
+  },
   "10521": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
