@@ -947,3 +947,24 @@ ForLoad() call for geocodeStopsBackfill() in the same bookLoad() hook slot inste
 both -- verify-auto-geofence-tenant-scope.mjs is red on origin/main right now as a result;
 routed to lead-assign via GUARD-WORKORDERS.md TEL40-GEOFENCE-HOOK-DROPPED-FROM-BOOKLOAD (PR
 #20794). | NEXT await lead
+
+CC-2 | DSP-48b DONE | 6a58fee70e | verify-google-reference-miles --selftest 7/7 (live PASS)
+| empty leg (yard -> first pickup) now persists to mdata.load_stop_legs on save
+(leg_kind='empty', leg_index=-1, from_stop_id NULL, origin sourced from Codex's TEL-42
+getYardBiasCoordinates() -- never a hardcoded coordinate of this file's own). SCOPE CUT
+TWICE mid-build on fresh live evidence, not guessed: the wizard-line half of this task's
+own brief ("BookLoadStopsSection.tsx miles strip") was already shipped by PR #20801
+(LDT-1, GLB-13526, merged just before this task posted) -- building a second reference
+strip there would have been a regression, not a fix, so it was dropped. The yard
+coordinate's "ONE place" originally meant a new backend constant (yard-location.ts, since
+deleted); Codex's TEL-42 (#20804) shipped GET /api/v1/locations/yard + the real
+getYardBiasCoordinates() service mid-build, so this PR now calls that directly instead --
+the actual one place, not a temporary stand-in. Also found and routed (not fixed, out of
+scope): TEL-42's own migration (202613790001) hardcodes an operating_company_id INSERT
+with no org.companies existence guard, breaking a from-scratch verify:db:reset
+(build-typecheck-heavy CI job) though prod itself is fine; required-checks-gate/
+hold-merge-gate unaffected. Filed GUARD-WORKORDERS.md TEL42-YARD-MIGRATION-FK-FRESH-DB
+(PR #20815). Confirmed live (not assumed): BookLoadModalV4.tsx:294 still carries its own
+hardcoded YARD_FALLBACK, unchanged by TEL-42 -- that PR added the route/service, it did
+not repoint the wizard's own call to it; its own TODO(TEL-42) comment already names this,
+Cursor's lane. | NEXT await lead
