@@ -927,3 +927,23 @@ guessing past it. (3) The "Empty" (yard->pickup) leg reference isn't computed ye
 company "yard" point (likely geo.geofences location_kind='yard' polygon centroid) is a real open
 design question, flagged rather than fabricated; this PR's persisted path covers the practical
 route only. PR #20763 (feature), #20759 (claim 10423), #20755 (migration routing to CC-1).
+
+CC-2 | DSP-TBL DONE | 68a290386e | verify-parity-table-footer-follows-columns
+--selftest 4/4 (live PASS: footerCells present, 0 raw footers, spawned vitest 2 files/52 tests
+green) | ParityTable gets a new footerCells prop keyed by column, rendered from the SAME ordered
+visibleColumns list the header <th> loop uses, so reorder/hide can never desync a total from its
+column again; raw footer kept with a dev-only deprecation warning. HONEST NUMBER: the task's own
+brief stated "26 pages pass a static footer" -- an AST scan (TypeScript compiler API, walking
+every <ParityTable ... footer=.../> JSX attribute specifically, not a regex/grep count) found
+exactly 4 files / 5 call sites in apps/frontend/src today, all 4 migrated in this PR:
+AccessorialEditor.tsx, LoadCostsBoardPage.tsx (register + board, 2 calls), AtRiskQueuePage.tsx,
+FleetCoveredPage.tsx (its second, unrelated TIV-reconciliation footer row moved to its own <p>
+below the table, since footerCells is one row by design). 0 raw ParityTable footer= call sites
+remain repo-wide; if a 26th caller exists somewhere this scan missed, the guard's own AST check
+is now permanent and will fail red the moment one appears. Filed docs/audit/GUARD-WORKORDERS.md
+ACCT-F25062 (closed) with the same "4, not 26" note for the record. Also found and routed (not
+fixed here, out of scope): TEL-40 (#20771) silently swapped D5's post-book autoCreateGeofences
+ForLoad() call for geocodeStopsBackfill() in the same bookLoad() hook slot instead of keeping
+both -- verify-auto-geofence-tenant-scope.mjs is red on origin/main right now as a result;
+routed to lead-assign via GUARD-WORKORDERS.md TEL40-GEOFENCE-HOOK-DROPPED-FROM-BOOKLOAD (PR
+#20794). | NEXT await lead
