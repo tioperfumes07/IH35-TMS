@@ -187,3 +187,12 @@ DONE line claimed "24/24 pages with inline filter bar". The bar is mounted on 24
 
 ---
 Lead audits each DONE line on Neon + tip + live within 30 minutes; ✔/✗ posted here and on OUTBOX-<SEAT>. Deploys within 20 minutes of every code merge.
+
+
+---
+# 2026-09-06 00:24Z — OWNER RULINGS + LDT-1 SPLIT
+- **TEL-41 CLOSED — NO Samsara Places push.** Owner accepted the recommendation. Codex: TEL-40b then TEL-42, nothing on Samsara Places ever.
+- **Owner 00:1xZ: "WHY CAN'T I STILL NOT SEE ANY FIXES OR CHANGES IN LOAD COSTS OR ANY OF THE TABS, OR THE CREATE EXPENSES."** Measured: only LDT-0 (tab bar + header) is merged/live (5ebef926, FE 23:52Z). No LDT-1 PR exists at 2026-09-06 00:24Z. Repo fact: the only `<input type="file">` under `pages/accounting/` is FixedAssetsPage.tsx — no expense or bill creator can take a receipt today.
+- **LDT-1 is split so two builders work without touching the same files:**
+  - **LDT-1C (Cursor, unchanged deadline 04:00Z):** Costs tab cards inside `LoadDetailDrawer` per the render — every box, pop-ups on click, live columns kept, totals in a fixed footer (owner: "if you rearrange columns … the totals stay stuck"), Paid-with = bank/card/fuel only. Files: `components/dispatch/**`, `components/load-costs/**` (new). Do NOT touch `pages/accounting/**` creators.
+  - **LDT-1R (Claude Lead, deadline 02:30Z):** receipt/photo upload on EVERY expense and bill creator and editor (`pages/accounting/**` Expense/Bill create + detail, the drawer's Add-cost modal via a shared `ReceiptAttach` component exported from `components/documents/ReceiptAttach.tsx` that Cursor mounts in LDT-1C). Storage: `docs.files` + link table to `accounting.expenses` / `accounting.bills` (both-way). Guard `verify-receipt-on-every-creator.mjs`.
