@@ -46,17 +46,19 @@ export async function materializeRealDrivenMilesSegments(
               l.assigned_unit_id AS unit_id,
               p.id AS pickup_stop_id,
               p.location_id AS pickup_location_id,
+              COALESCE(p.actual_arrival_at, p.scheduled_arrival_at) AS pickup_window_at,
               d.id AS delivery_stop_id,
-              d.location_id AS delivery_location_id
+              d.location_id AS delivery_location_id,
+              COALESCE(d.actual_departure_at, d.actual_arrival_at, d.scheduled_arrival_at) AS delivery_window_at
        FROM mdata.loads l
        JOIN LATERAL (
-         SELECT id, location_id
+         SELECT id, location_id, scheduled_arrival_at, actual_arrival_at
          FROM mdata.load_stops
          WHERE load_id = l.id AND stop_type::text = 'pickup' AND soft_deleted_at IS NULL
          ORDER BY sequence_number ASC LIMIT 1
        ) p ON true
        JOIN LATERAL (
-         SELECT id, location_id
+         SELECT id, location_id, scheduled_arrival_at, actual_arrival_at, actual_departure_at
          FROM mdata.load_stops
          WHERE load_id = l.id AND stop_type::text = 'delivery' AND soft_deleted_at IS NULL
          ORDER BY sequence_number DESC LIMIT 1
@@ -79,7 +81,29 @@ export async function materializeRealDrivenMilesSegments(
          JOIN geo.geofences gf ON gf.id = ge.geofence_id
          JOIN mdata.locations loc ON loc.id = gf.location_ref_id AND loc.is_ih35_yard = true
          WHERE ge.operating_company_id = $1::uuid AND ge.unit_id = lc.unit_id AND ge.event_kind = 'exited'
-         ORDER BY ge.occurred_at DESC LIMIT 1
+           AND lc.pickup_window_at IS NOT NULL
+           AND lc.delivery_window_at IS NOT NULL
+           AND ge.occurred_at BETWEEN lc.pickup_window_at - interval '24 hours'
+                                  AND lc.delivery_window_at + interval '24 hours'
+           AND NOT EXISTS (
+             SELECT 1
+             FROM mdata.loads competing_load
+             JOIN LATERAL (
+               SELECT COALESCE(competing_pickup.actual_arrival_at, competing_pickup.scheduled_arrival_at) AS pickup_at
+               FROM mdata.load_stops competing_pickup
+               WHERE competing_pickup.load_id = competing_load.id
+                 AND competing_pickup.stop_type::text = 'pickup'
+                 AND competing_pickup.soft_deleted_at IS NULL
+               ORDER BY competing_pickup.sequence_number ASC LIMIT 1
+             ) competing_window ON true
+             WHERE competing_load.operating_company_id = $1::uuid
+               AND competing_load.assigned_unit_id = lc.unit_id
+               AND competing_load.soft_deleted_at IS NULL
+               AND competing_load.id <> lc.load_id
+               AND abs(extract(epoch FROM (ge.occurred_at - competing_window.pickup_at)))
+                   < abs(extract(epoch FROM (ge.occurred_at - lc.pickup_window_at)))
+           )
+         ORDER BY abs(extract(epoch FROM (ge.occurred_at - lc.pickup_window_at))), ge.occurred_at DESC LIMIT 1
        ) yard_exit ON true
        LEFT JOIN LATERAL (
          SELECT ge.id, ge.occurred_at
