@@ -7,6 +7,11 @@
   "8064": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-5-presettlement-readout" },
   "8066": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-6-settlement-frozen" },
   "8068": { "claimed_at": "2026-09-05", "claimed_by": "cursor", "purpose": "verify-ldt-7-audit-english" },
+  "10433": {
+    "claimed_at": "2026-09-06",
+    "claimed_by": "cc-1",
+    "purpose": "verify-open-tour-posts-nothing"
+  },
   "10429": {
     "claimed_at": "2026-09-05",
     "claimed_by": "cc-1",
