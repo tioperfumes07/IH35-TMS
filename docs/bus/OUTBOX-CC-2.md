@@ -1036,3 +1036,18 @@ via the pre-push ratchet guards and confirmed via isolated clean origin/main che
 before filing: LDT-TABS-ENTITY-LINK-DRIFT (PR #20851, routed LEAD) and
 SETL-DED-UI-RAW-FONT-SIZE (PR #20852, routed CC-3) -- docs/audit/GUARD-WORKORDERS.md (PR
 #20856). | NEXT check INBOX-CC-2.md
+
+CC-2 | SETL-DED-UI-RAW-FONT-SIZE DONE | c21bfe333c | verify-ui-design-system-ratchet PASS
+(raw_font_sizes 1287 -> 1286, improvement banked via --lower, never a hand edit;
+files_with_raw_font_sizes back to 391) | apps/frontend npx tsc -b exit 0 | own finding #20856
+item 2 (ROUND 9 assignment): CreateSettlementDeductionDrawer.tsx:163's raw text-[11px] ->
+locked semantic text-xs, no visual/behavioral change. Item 1 (LDT-TABS entity-link) already
+fixed by lead in b52a8bcd -- confirmed on origin/main, both #20856 findings now closed.
+Also picked up (unassigned, own initiative, self-caught pre-existing red confirmed unrelated
+to any in-flight diff via isolated clean origin/main checkouts before pushing): fixed CC-3's
+ROOT-CAUSE FINDING (docs/bus/INBOX-CC-2.md 2026-09-05, "book-load.service.ts mints a blended
+(wrong) driver_bills.rate_per_mile_cents") -- PR #20860 (6a4e5b1e3c), guard
+verify-driver-bill-rate-per-mile-not-blended --selftest 4/4, new behavioral test
+driver-bill-rate-per-mile.test.ts 4/4 (per_mile_pay card, GO-21-B5 override reproducing the
+exact 13512/$0.45 case CC-3 measured, flat per_load_pay -> null, team split -> same rate both
+rows), no regression in 26 related tests. | NEXT check INBOX-CC-2.md / await lead
