@@ -1935,6 +1935,9 @@ export const COA_ROLE_VALUES = [
   // this since ACCT-F345; the frontend enum never picked it up). Bound live for USMCA -> 1000 Bank
   // of America - Operating. Used by LoadDetailCostsTab.tsx's fuel-advance "Paid from" leg.
   "operating_bank",
+  // SETL-DED-UI — bank/wire/ACH fee recovery role; see resolver.service.ts's own comment for why
+  // it is added here even though the live DB CHECK constraint does not admit it yet.
+  "bank_fee_recovery",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

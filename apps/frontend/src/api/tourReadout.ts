@@ -60,3 +60,15 @@ export function closeTour(settlementId: string, operatingCompanyId: string) {
     body: { operating_company_id: operatingCompanyId, confirm: true },
   });
 }
+
+/** LDT-TABS · Load costs board → Pre-Settlement (open tours) / Settlement (closed tours) registers; rows come from the same readout. */
+export type TourListRow = {
+  settlement_id: string; display_id: string | null; status: string; is_open: boolean; driver_name: string | null; unit_number: string | null;
+  trip_started_at: string | null; trip_closed_at: string | null; leg_count: number; legs_label: string;
+  revenue_cents: number; costs_cents: number; driver_pay_cents: number; margin_cents: number; margin_pct: number | null;
+  miles_practical: number; miles_real: number | null; ready_ok: number; ready_total: number; can_close: boolean; close_blockers: string[];
+  driver_net_cents: number | null; company_settlement_display_id: string | null;
+};
+export function listTours(operatingCompanyId: string, state: "open" | "closed") {
+  return apiRequest<{ state: string; count: number; rows: TourListRow[] }>(`/api/v1/driver-finance/tours?operating_company_id=${encodeURIComponent(operatingCompanyId)}&state=${state}`);
+}

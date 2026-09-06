@@ -140,7 +140,7 @@ export async function materializeRealDrivenMilesSegments(
      ), inserted AS (
        INSERT INTO telematics.load_odometer_segments (
          operating_company_id, load_id, unit_id, segment_kind, from_stop_id, to_stop_id,
-         started_at, ended_at, odometer_start_mi, odometer_end_mi,
+         started_at, ended_at, odometer_start_mi, odometer_end_mi
        )
        SELECT $1::uuid, load_id, unit_id, segment_kind, from_stop_id, to_stop_id,
               started_at, ended_at, odometer_start_mi, odometer_end_mi

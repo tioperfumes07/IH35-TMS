@@ -516,6 +516,46 @@ export function listSettlementDeductions(
   );
 }
 
+// SETL-DED-UI (owner item, deadline 05:30Z) — the deduction creator, typed kinds only (no 'other').
+export type CreateSettlementDeductionTypedType = "wire_fee" | "ach_fee" | "company_vehicle_fuel" | "escrow_contribution";
+export type CreateSettlementDeductionInput = {
+  operating_company_id: string;
+  driver_id: string;
+  deduction_type: CreateSettlementDeductionTypedType;
+  amount_cents: number;
+  reason: string;
+  load_id?: string;
+  /** Draft id ReceiptAttach's "source doc" control uploaded against before this row existed. */
+  attachment_draft_id?: string;
+};
+export type CreatedSettlementDeductionRow = {
+  id: string;
+  operating_company_id: string;
+  driver_id: string;
+  deduction_type: string;
+  amount_cents: number;
+  reason: string;
+  applied_to_settlement_id: string | null;
+  load_id: string | null;
+  created_at: string;
+};
+export function createSettlementDeduction(input: CreateSettlementDeductionInput) {
+  return apiRequest<CreatedSettlementDeductionRow>(
+    `/api/v1/driver-finance/settlement-deductions?${q(input.operating_company_id)}`,
+    {
+      method: "POST",
+      body: {
+        driver_id: input.driver_id,
+        deduction_type: input.deduction_type,
+        amount_cents: input.amount_cents,
+        reason: input.reason,
+        load_id: input.load_id,
+        attachment_draft_id: input.attachment_draft_id,
+      },
+    }
+  );
+}
+
 export function approvePendingEscrowDeduction(
   id: string,
   payload: { operating_company_id: string; override_amount_cents?: number; review_notes?: string }
