@@ -165,6 +165,8 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, ro
         rowKey={(row) => row.id}
         storageKey="vendors-list"
         exportFilename="vendors"
+        pageSizeOptions={[25, 50, 100, 250, 300]}
+        allowAllPageSize
         initialPageSize={50}
         sortKey={sortKey}
         sortDirection={sortDirection}

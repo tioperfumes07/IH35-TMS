@@ -80,6 +80,13 @@ export type ParityTableProps<T> = {
 
   density?: ParityDensity;
   pageSizeOptions?: number[];
+  /**
+   * VC-LIST-02 (owner "ALL PAGE SIZE", 2026-09-06): append an "All" option to the page-size
+   * control that renders every matching row on one page. Sort survives it (sorting runs on the
+   * full row set before slicing, and "All" simply stops slicing). Off by default so existing
+   * lists are unchanged.
+   */
+  allowAllPageSize?: boolean;
   initialPageSize?: number;
   /** localStorage key to persist column visibility + density + per-page. */
   storageKey?: string;
@@ -386,6 +393,14 @@ const DENSITY_LABEL: Record<ParityDensity, string> = {
 // a short numeric/status column from shrinking to illegible; MAX stops one long free-text column
 // (a memo/description) from eating the whole table — a user who genuinely needs more still has the
 // existing manual drag-resize, which always wins once used (see colWidths vs autoFitWidths below).
+// VC-LIST-02 — the "All" page-size value. A large FINITE sentinel (never Infinity, which would
+// make offset = 0 * Infinity = NaN and break slicing): pageCount = ceil(total / ALL_PAGE_SIZE) = 1,
+// offset = 0, and slice(0, ALL_PAGE_SIZE) returns every row. Labeled "All" in the UI.
+export const ALL_PAGE_SIZE = 1_000_000;
+// Above this many rendered rows, mark each data row content-visibility:auto so the browser skips
+// layout/paint for offscreen rows (native, no JS windowing — keeps the locked sticky-header /
+// colgroup-width / resizable-th contract intact). Honors VC-LIST-02 "virtualized if >1,000".
+const LARGE_RENDER_ROW_THRESHOLD = 1000;
 const AUTO_FIT_MIN_WIDTH = 64;
 const AUTO_FIT_MAX_WIDTH = 320;
 // Cell horizontal padding (px-2 = 0.5rem each side) + the sort arrow glyph + a small buffer so a
@@ -481,6 +496,7 @@ export function ParityTable<T>({
   emptyText = "No records found.",
   density: densityProp = "regular",
   pageSizeOptions = [25, 50, 100, 300],
+  allowAllPageSize = false,
   initialPageSize,
   storageKey,
   toolbar,
@@ -568,6 +584,12 @@ export function ParityTable<T>({
     persisted.pageSize ?? initialPageSize ?? pageSizeOptions[0] ?? 25,
   );
   const pageSize = isPageSizeControlled ? controlledPageSize : internalPageSize;
+  // VC-LIST-02 — page-size options as rendered: append the "All" sentinel when allowed (dedup-safe).
+  const renderedPageSizeOptions =
+    allowAllPageSize && !pageSizeOptions.includes(ALL_PAGE_SIZE)
+      ? [...pageSizeOptions, ALL_PAGE_SIZE]
+      : pageSizeOptions;
+  const pageSizeOptionLabel = (opt: number) => (opt >= ALL_PAGE_SIZE ? "All" : String(opt));
   const [hidden, setHidden] = useState<Set<string>>(
     () =>
       new Set(
@@ -750,6 +772,8 @@ export function ParityTable<T>({
   const offset = (safePage - 1) * pageSize;
   const pageRows = sortedRows.slice(offset, offset + pageSize);
   const d = DENSITY[density];
+  // VC-LIST-02 — when "All" renders a large set, let the browser skip offscreen row paint/layout.
+  const virtualizeRows = pageRows.length > LARGE_RENDER_ROW_THRESHOLD;
 
   // AUTO-FIT — only for columns the user has NOT manually resized (colWidths, still the source of
   // truth once set — see the `w = colWidths[key] ?? autoFitWidths[key]` lookup below). Recomputed
@@ -1115,7 +1139,11 @@ export function ParityTable<T>({
         className={`border-t border-gray-200 ${
           onRowClick || (expandOnRowClick && renderExpanded) ? "cursor-pointer hover:bg-gray-50" : ""
         } ${rowClassName ? rowClassName(row) : ""}`}
-        style={{ height: d.rowH, ...(selected.has(id) ? { backgroundColor: colors.accentTint } : {}) }}
+        style={{
+          height: d.rowH,
+          ...(virtualizeRows ? { contentVisibility: "auto", containIntrinsicSize: `${d.rowH}px` } : {}),
+          ...(selected.has(id) ? { backgroundColor: colors.accentTint } : {}),
+        }}
         onClick={onRowClick ? (event) => {
           if (isParityTableInteractiveTarget(event.target)) return;
           onRowClick(row);
@@ -1319,9 +1347,9 @@ export function ParityTable<T>({
                       savePersisted(storageKey, { hidden: [...draftHidden], density: draftDensity, pageSize: next, colWidths, colOrder });
                     }}
                   >
-                    {pageSizeOptions.map((opt) => (
+                    {renderedPageSizeOptions.map((opt) => (
                       <option key={opt} value={opt}>
-                        {opt}
+                        {pageSizeOptionLabel(opt)}
                       </option>
                     ))}
                   </select>
@@ -1695,9 +1723,9 @@ export function ParityTable<T>({
               value={pageSize}
               onChange={(e) => changePageSize(Number(e.target.value))}
             >
-              {pageSizeOptions.map((opt) => (
+              {renderedPageSizeOptions.map((opt) => (
                 <option key={opt} value={opt}>
-                  {opt}
+                  {pageSizeOptionLabel(opt)}
                 </option>
               ))}
             </select>
