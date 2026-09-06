@@ -5802,6 +5802,11 @@
     "claimed_at": "2026-09-06",
     "purpose": "verify-load-costs-drawer-wide wiring (census money rows sub-item #5, ENV-CENSUS-FAIL-08: LoadDetailDrawer.tsx Costs tab must use the wide drawer class so the 12-column Load Costs register is not crammed behind horizontal scroll)"
   },
+  "10489": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-broker-advance-never-driver-liability-never-invoice-face wiring (census money rows sub-item #1: guard tightened to assert the real invariant -- no CREATE of a driver liability/advance -- instead of banning every driver_finance reference, which wrongly flagged the owner-approved LOAD-COSTS-COMPLETE item (2) read-only driver_bills paydown)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
