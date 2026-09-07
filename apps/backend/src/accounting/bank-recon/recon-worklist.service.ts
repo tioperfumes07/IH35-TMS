@@ -249,9 +249,25 @@ export async function rejectReconMatch(input: {
 // BANK-F9998 F5 — the reconciliation.routes.ts unmatch endpoint requires an active reconciliation
 // session covering the transaction's date. MatchDrawer's own accept-match flow (this file) needs
 // no session at all, so a bare MatchDrawer confirm had no direct undo without first standing up a
-// session for that period. This mirrors that session-scoped handler's release logic (all 6
+// session for that period. This mirrors that session-scoped handler's release logic (all
 // matched_*_id columns, 'rejected' reconciliation_matches rows, JE reversal — same as F6) without
 // the session/date-range gate, reachable from wherever an ad-hoc accept-match was made.
+//
+// BNK-11 (ACC-20, 2026-09-07) — this handler only ever cleared 6 of the 8 matched_*_id columns
+// acceptMatchWithResolveDifference() can actually set (match.service.ts's MATCHED_COLUMN_BY_KIND
+// includes 'payment' -> matched_payment_id and 'bill_payment' -> matched_bill_payment_id — neither
+// was in this function's UPDATE, SELECT, or its rejectedKinds list). So unmatching a bank line that
+// had been matched to a payment or a bill payment left banking.bank_transactions.matched_payment_id
+// / matched_bill_payment_id pointing at the ledger row FOREVER, while review_state correctly reset
+// to 'for_review' — a bank line simultaneously "back in the queue" and "still linked" to a payment
+// it no longer represents. Worse: acceptMatchWithResolveDifference's own payment/bill_payment branch
+// (lines ~1179-1259) stamps the REVERSE pointer on the ledger side too — accounting.payments
+// .source_bank_transaction_id and accounting.bill_payments.source_bank_transaction_id /
+// from_bank_account_id — and this function never cleared those either. Fixed on both sides: clear
+// matched_payment_id/matched_bill_payment_id here (mirroring the other 6 columns exactly), and
+// null out the ledger-side back-pointer ONLY when it still points at THIS bank transaction (so a
+// payment/bill_payment later re-linked to a DIFFERENT bank line, or independently posted straight
+// to the bank, is never clobbered by an unmatch of a stale, no-longer-relevant link).
 export async function unmatchBankTransaction(input: {
   operating_company_id: string;
   bank_transaction_id: string;
@@ -271,11 +287,14 @@ export async function unmatchBankTransaction(input: {
       prev_load_id: string | null;
       prev_bill_id: string | null;
       prev_settlement_id: string | null;
+      prev_payment_id: string | null;
+      prev_bill_payment_id: string | null;
     }>(
       `
         WITH prior AS (
           SELECT id, matched_expense_id, matched_transfer_id, matched_journal_entry_id,
-                 matched_load_id, matched_bill_id, matched_settlement_id
+                 matched_load_id, matched_bill_id, matched_settlement_id,
+                 matched_payment_id, matched_bill_payment_id
           FROM banking.bank_transactions
           WHERE id = $1::uuid AND operating_company_id = $2::uuid
         )
@@ -286,6 +305,8 @@ export async function unmatchBankTransaction(input: {
             matched_load_id = NULL,
             matched_bill_id = NULL,
             matched_settlement_id = NULL,
+            matched_payment_id = NULL,
+            matched_bill_payment_id = NULL,
             -- 'unmatched' is not a legal review_state (CHECK: for_review|categorized|excluded|matched|
             -- transfer) — 'for_review' is the correct "back in the queue" state, and unlike the
             -- session-scoped unmatch (reconciliation.routes.ts, which leaves review_state untouched at
@@ -302,7 +323,9 @@ export async function unmatchBankTransaction(input: {
           prior.matched_journal_entry_id::text AS prev_journal_entry_id,
           prior.matched_load_id::text AS prev_load_id,
           prior.matched_bill_id::text AS prev_bill_id,
-          prior.matched_settlement_id::text AS prev_settlement_id
+          prior.matched_settlement_id::text AS prev_settlement_id,
+          prior.matched_payment_id::text AS prev_payment_id,
+          prior.matched_bill_payment_id::text AS prev_bill_payment_id
       `,
       [input.bank_transaction_id, input.operating_company_id]
     );
@@ -318,11 +341,39 @@ export async function unmatchBankTransaction(input: {
       });
     }
 
+    // BNK-11 — clear the reverse (ledger-side) back-pointer too, scoped to "still points at THIS
+    // bank transaction" so a link that has since moved on (re-matched elsewhere, or posted directly)
+    // is never touched by unmatching a now-stale reference.
+    if (row.prev_payment_id) {
+      await client.query(
+        `UPDATE accounting.payments
+            SET source_bank_transaction_id = NULL
+          WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid
+            AND source_bank_transaction_id = $3::uuid`,
+        [row.prev_payment_id, input.operating_company_id, input.bank_transaction_id]
+      );
+    }
+    if (row.prev_bill_payment_id) {
+      await client.query(
+        `UPDATE accounting.bill_payments
+            SET source_bank_transaction_id = NULL,
+                from_bank_account_id = NULL,
+                updated_at = now()
+          WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid
+            AND source_bank_transaction_id = $3::uuid`,
+        [row.prev_bill_payment_id, input.operating_company_id, input.bank_transaction_id]
+      );
+    }
+
     const rejectedKinds: Array<{ kind: LedgerEntryKind; id: string }> = [];
     if (row.prev_expense_id) rejectedKinds.push({ kind: "expense", id: row.prev_expense_id });
     if (row.prev_transfer_id) rejectedKinds.push({ kind: "transfer", id: row.prev_transfer_id });
     if (row.prev_journal_entry_id) rejectedKinds.push({ kind: "je", id: row.prev_journal_entry_id });
     if (row.prev_bill_id) rejectedKinds.push({ kind: "bill", id: row.prev_bill_id });
+    if (row.prev_payment_id) rejectedKinds.push({ kind: "payment", id: row.prev_payment_id });
+    if (row.prev_bill_payment_id) rejectedKinds.push({ kind: "bill_payment", id: row.prev_bill_payment_id });
     // load/settlement are not LedgerEntryKind members in this module's own type (that widened CHECK
     // is reconciliation.routes.ts's own session-scoped kind set) — rejected as 'bill'-shaped rows
     // would be wrong; skip them here since acceptReconMatch/MatchDrawer never write those two kinds.
