@@ -105,7 +105,7 @@ From `USMCA BY LOAD` (LOAD rows) + `DIESEL — LOAD NOT IN EXPORT` (5791/5792). 
 
 ### 6a. Active-loads seed 13563–13573 (owner order 2026-09-06, source = AlwaysTrack Report (37))
 Seeded LIVE (dispatched, pro forma invoice, `is_sample_data=false`): **13563** $500 · **13564** $3,000 · **13569** $3,000 · **13570** $5,900 (XPR — customer created) · **13571** $4,900 · **13572** $3,200 · **13573** $2,300. Invoice = AlwaysTrack "Charges"; 13564 blank→Faro $3,000. Driver 13570 = app record "Carlos Mauricio Carvallo".
-**Faro variances (owner confirm, seeded at AlwaysTrack value):** 13563 $500 vs Faro $600; 13570 $5,900 vs Faro $6,115.
+**Rate authority — owner ruling 2026-09-06:** "the rate in allways is insignificant ... that account is for transportation ... this app is unreliable." AlwaysTrack is NOT the rate authority; the **Faro purchase amount is**. Corrected via real `PATCH /api/v1/mdata/loads/:id` (`rate_total_cents`→resync proforma, no raw SQL): **13563 $500→$600** (inv 046), **13570 $5,900→$6,115** (inv 052). Verified pro forma $600.00 / $6,115.00. (13564/13569 $3,000, 13571 $4,900, 13573 $2,300 already = Faro.)
 **Pending 4619442-1** (Armstrong, no load number in AlwaysTrack) — NOT seeded, needs a number.
 
 ---
