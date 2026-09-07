@@ -8043,5 +8043,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-07",
     "purpose": "verify-factoring-submit-queue-uses-authoritative-assignment"
+  },
+  "10598": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-factoring-vendor-mirror-sync"
   }
 }
