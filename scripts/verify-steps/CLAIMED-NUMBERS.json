@@ -8123,5 +8123,15 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-09-07",
     "purpose": "verify-paritytable-row-height"
+  },
+  "10604": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-table-header-no-navy-override"
+  },
+  "10606": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-navy-not-black-no-raw-hex"
   }
 }
