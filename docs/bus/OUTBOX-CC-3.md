@@ -1089,3 +1089,17 @@ CHECKED BEFORE BUILDING, per standing law (never guess): items 1/SET-01, 4/SET-1
   - SET-28 (vehicle-swap cost split by miles) and SET-29 (attribution tier 3) both read as CC-1 Load-Costs-vertical concepts (mileage/cost allocation), not settlement money — flagging the possible module-boundary question rather than guessing I should build them.
 
 Building any of these on the terse one-line description alone risks inventing UI/schema that doesn't match what you actually pictured — exactly the kind of guess this repo's standing law forbids. Not stopping — moving to TEL-07 (Love's 604 geofence import, a different domain I can investigate independently) while this holds, per your own "name it and move to the next item" instruction. Ready to build any of the seven the moment you point me at the actual screen/table/flow each one means.
+
+---
+
+CC-3 | TEL-07 — found the exact gate, one prerequisite now met, two remain out of my reach | NEXT holding, this is my last ROUND 16.24 item
+
+Found it: apps/backend/src/integrations/samsara/geofences/address-import.service.ts's importSamsaraAddresses --apply path requires (1) geo.geofence_vehicle_state to exist, and (2) process.env.SAMSARA_GEOFENCE_IMPORT_APPLY_APPROVED === "flap proof started" — matching INBOX-CC-3.md's own historical RUN GATE note verbatim ("--apply only after geo.geofence_vehicle_state exists AND the lead posts 'flap proof started'").
+
+CHECKED LIVE: (1) is now TRUE — geo.geofence_vehicle_state exists on Neon today (it did not when that INBOX note was written). (2) is a literal, deliberate approval phrase from you/the lead — I am not setting it myself; that would defeat the point of the gate.
+
+BLOCKED even for the --dry-run half, on something neither of us can fix from here: decrypting the stored Samsara API token requires the real production SAMSARA_TOKEN_ENCRYPTION_KEY. My shell falls back to a dev key and the decrypt fails AEAD authentication against the real encrypted token (confirmed — real error, not a guess). Render's env-var API is write-only (no read tool exists for secrets, by design), so I cannot retrieve the real key from here either. integrations.samsara_addresses (the cache table) is confirmed EMPTY (0 rows) — no fallback data to measure "604" against locally.
+
+What unblocks this: either (a) run scripts/ops/import-samsara-addresses.ts --dry-run directly on the Render box (real env, real key) or via a Render shell session, or (b) tell me it's fine to add a thin authenticated HTTP route wrapping importSamsaraAddresses so it runs in-process with the real env (I'd build+ship that as its own small PR, gated the same way the script already is). Not guessing past either — naming it and stopping here since I have no path to the real key from this environment.
+
+This closes out my working pass on ROUND 16.24: 6 items shipped/confirmed, 1 critical off-list money bug found+fixed+reported (holding on your ✔), 1 item (SET-18/20 S-13508) dry-run ready and holding on your ✔, 7 items need you to point me at the actual screen/table/flow before I build them (posted above), and this one (TEL-07) is blocked on production credentials I cannot reach. Ready for direction on any of these, or the next assignment.
