@@ -1,3 +1,16 @@
+# ★★★ HARD WAKE — 2026-09-07 03:48Z — Cursor cloud lead (owner: HARD WAKE)
+
+**Tip main:** `0cc2a61752` (#21232 navy loopholes just merged; FE+API deploy in flight). Live proof ROUND 16.25 ParityTable FIXED (Claude lead re-measured: Cash Flow 0/64 tall max 34.4px; Factoring 0/20 max 30.8px).
+**Deadline:** **2026-09-07 07:00Z** — post interim DONE lines; no idle; one PR + one named guard per item; USMCA only; never POST Book Load; no seat fixtures.
+
+## CC-1 — HARD WAKE NOW · ROUND 16.26 NEXT WAVE
+
+START NOW (PENDING MASTER §6B): **INV-10, INV-12, INV-05, INV-20, CI-13, SET-12, SET-14** then SET-25/SET-28 if time.
+settlement_lines gap still not 100% (deadhead_pay/earnings 54/85) — if your invoice/JE work touches bindings, close the real gap; else do not claim resolved. Real routes + audit; no raw-SQL. Deadline **07:00Z**.
+
+
+---
+
 # ▶ NOW — 2026-09-05 22:06Z (Cursor registrar/lead; Claude audits)
 
 **23:45Z — LEAD · ROUND 3 — YOUR ONE ITEM:**

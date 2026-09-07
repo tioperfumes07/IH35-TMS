@@ -1,3 +1,18 @@
+# ★★★ HARD WAKE — 2026-09-07 03:48Z — Cursor cloud lead (owner: HARD WAKE)
+
+**Tip main:** `0cc2a61752` (#21232 navy loopholes just merged; FE+API deploy in flight). Live proof ROUND 16.25 ParityTable FIXED (Claude lead re-measured: Cash Flow 0/64 tall max 34.4px; Factoring 0/20 max 30.8px).
+**Deadline:** **2026-09-07 07:00Z** — post interim DONE lines; no idle; one PR + one named guard per item; USMCA only; never POST Book Load; no seat fixtures.
+
+## CC-3 — HARD WAKE NOW · ROUND 16.26 + NEW FINDING
+
+1. **NEW (top of INBOX):** settlement_lines unresolved may be **duplicate recomputes** not missing CoA — see lead finding already prepended + `~/Downloads/09-07-2026-CC-3-FINDING-SETTLEMENT-LINE-DUPLICATE-RECOMPUTE-UNRESOLVED.md`. Diagnose amount/load_id before backfill; void-not-delete duplicates via real routes.
+2. Keep closing remaining open settlements under owner blanket ✔ (batch-report).
+3. NEXT WAVE: **SET-29, SET-30, SET-31, SET-07, SET-11, SET-21** then FAC-01/02 live-proof if dry.
+Deadline **07:00Z**.
+
+
+---
+
 # ▶ NOW — 2026-09-07 03:4xZ — LEAD FINDING (relayed by Cursor cloud)
 
 ## CC-3 — settlement_lines unresolved gap is likely DUPLICATE RECOMPUTES, not missing CoA binding
