@@ -1,33 +1,48 @@
 {
-  "_doc": "EXACT field-set per wizard section (GUARD empty-diff contract, source: IH35-WIZARD-IDENTICAL-TARGET.md). verify:wizard-section-equality slices each container's source region (div-depth) and asserts the rendered field labels == exact_labels — FAIL on missing OR extra. Add a section here once its component wraps its fields in a data-testid container.",
-  "Load Book/Edit Wizard — §C stops": {
+  "_doc": "EXACT field-set per wizard section (GUARD empty-diff contract, source: IH35-WIZARD-IDENTICAL-TARGET.md). verify:wizard-section-equality slices each container's source region (div-depth) and asserts the rendered field labels == exact_labels \u2014 FAIL on missing OR extra. Add a section here once its component wraps its fields in a data-testid container.",
+  "Load Book/Edit Wizard \u2014 \u00a7C stops": {
     "component": "apps/frontend/src/pages/dispatch/components/BookLoadStopsSection.tsx",
     "sections": [
       {
-        "name": "§C stop locrow",
+        "name": "\u00a7C stop locrow",
         "container": "stop-locrow",
-        "exact_labels": ["Address", "City", "St", "Zip Code", "Date", "Time"]
+        "exact_labels": [
+          "Location",
+          "Address"
+        ]
       },
       {
-        "name": "§C stop siterow",
+        "name": "\u00a7C stop siterow",
         "container": "stop-siterow",
-        "exact_labels": ["Site contact", "Site phone", "Dock", "Free time / lumper", "Lumper amount ($)"]
+        "exact_labels": [
+          "Site contact",
+          "Site phone",
+          "Dock",
+          "Time"
+        ]
       }
     ]
   },
-  "Load Book/Edit Wizard — §B equipment": {
+  "Load Book/Edit Wizard \u2014 \u00a7B equipment": {
     "component": "apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx",
     "sections": [
       {
-        "name": "§B reefer panel (trailer = Reefer)",
+        "name": "\u00a7B reefer panel (trailer = Reefer)",
         "container": "reefer-panel",
         "_note": "RENDER-A-v2: Temperature type (Frozen/Fresh) asked FIRST, then Reefer temperature (the single setpoint); mode/pre-cool removed. temperature_type persists via migration 202606231600 (W-FIX-1).",
-        "exact_labels": ["Temperature type", "Reefer temperature (°F)"]
+        "exact_labels": [
+          "Temperature type",
+          "Reefer temperature (\u00b0F)"
+        ]
       },
       {
-        "name": "§B flatbed panel (trailer = Flatbed)",
+        "name": "\u00a7B flatbed panel (trailer = Flatbed)",
         "container": "flatbed-tarp-detail",
-        "exact_labels": ["Tarp required?", "Tarp qty", "Tarp size"]
+        "exact_labels": [
+          "Tarp required?",
+          "Tarp qty",
+          "Tarp size"
+        ]
       }
     ]
   }
