@@ -486,6 +486,7 @@ export async function backfillExistingSettlementLineAccounts(
         [input.settlementId, input.operatingCompanyId, escrow.accountId]
       );
       escrowContributionUpdated = res.rows.length;
+      // intentional swallow: no resolvable escrow sub-account for this driver — never guess; leave NULL
     } catch {
       // No resolvable escrow sub-account for this driver — never guess; leave NULL, same as the
       // materializer's own live-flow behavior for an unresolved role.
