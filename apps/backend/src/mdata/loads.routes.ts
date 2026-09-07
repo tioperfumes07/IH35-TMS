@@ -84,10 +84,20 @@ const statusFilterSchema = z
   }, z.array(loadStatusSchema).max(20).optional())
   .optional();
 
-/** Terminal load statuses — completed/cancelled cohort routed to Loads History (board_scope=history). */
+/**
+ * Terminal load statuses — completed/cancelled cohort routed to Loads History (board_scope=history).
+ *
+ * DSP-BAND-GAP (owner 2026-09-06, measured live: 10 of 16 trucks on the board): `delivered_pending_docs`
+ * is NOT terminal — the load delivered but is pending paperwork/invoicing, so it is still LIVE work
+ * (DispatchOverview's active-loads tile counts it, and dispatch/units-without-load treats it as an
+ * ACTIVE load and so drops that truck from "Awaiting"). Listing it here made the LIVE board hide it
+ * (NOT terminal filter), so a delivered_pending_docs truck was history to the Booked band and active
+ * to the Awaiting band — it fell into NEITHER and vanished (T156/T163/T170/T171/T173/T176). It must be
+ * LIVE so it shows in Booked, consistent with the Awaiting roster. History still shows delivered/
+ * completed_docs_received/invoiced/paid/closed/cancelled/abandoned/walkoff/no-show.
+ */
 const TERMINAL_LOAD_STATUSES = [
   "delivered",
-  "delivered_pending_docs",
   "completed_docs_received",
   "invoiced",
   "paid",
