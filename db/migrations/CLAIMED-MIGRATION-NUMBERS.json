@@ -8,6 +8,11 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202613910000": {
+      "claimed_by": "claude-3",
+      "claimed_at": "2026-09-07",
+      "purpose": "SET-24 / ROUND 16.24 item 9: partial unique index on driver_finance.settlement_lines (settlement_id, line_type, description, amount) WHERE is_active=true AND line_type <> 'reimbursement' -- blocks a duplicate deduction/earnings/etc line from ever being materialized twice again (the exact historical-backfill-loop-ran-twice class of bug DED-DUP/SET-24 already found and voided at the source, but never prevented at the settlement_lines layer itself). reimbursement excluded from the index for now -- live active duplicates there are the already-identified SET-24 $172.44 overpayment, pending the owner's reimbursement_reversal correction; tightening the index to cover reimbursement too is a follow-up once that correction lands."
+    },
     "202613890000": {
       "claimed_by": "claude-3",
       "claimed_at": "2026-09-06",
