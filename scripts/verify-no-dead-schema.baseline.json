@@ -4,11 +4,11 @@
   "_captured": "2026-07-21",
   "_scope": "SCHEMA REACHABILITY IN CODE only. This guard cannot prove rows are populated, that a poster runs, or that reverse drill-through exists in the UI. Those are live-data audits (LAW 0: prod wins). Never cite this guard as proof the books are wired.",
   "_verdicts": {
-    "none": "identifier appears NOWHERE in non-test source — storage with no reader at all",
-    "weak": "identifier appears in the codebase but in NO file that touches this table — the substring illusion (e.g. mdata.drivers.employment_status, superseded by driver_employment_status_id in 0343)"
+    "none": "identifier appears NOWHERE in non-test source \u2014 storage with no reader at all",
+    "weak": "identifier appears in the codebase but in NO file that touches this table \u2014 the substring illusion (e.g. mdata.drivers.employment_status, superseded by driver_employment_status_id in 0343)"
   },
-  "_recapture": "2026-07-21 — coverage went from 1,074 ADD COLUMN-only objects to 5,740 live columns (inline CREATE TABLE columns were 81% of the schema and were invisible), and whole-corpus substring matching was replaced by whole-token, table-context matching. The count grew because the guard now sees what it always claimed to check. DO-block DDL (real CREATE TABLE inside $$ bodies) and comma-separated inline columns are now parsed too — the prior revision discarded dollar-quoted bodies entirely.",
-  "count": 507,
+  "_recapture": "2026-07-21 \u2014 coverage went from 1,074 ADD COLUMN-only objects to 5,740 live columns (inline CREATE TABLE columns were 81% of the schema and were invisible), and whole-corpus substring matching was replaced by whole-token, table-context matching. The count grew because the guard now sees what it always claimed to check. DO-block DDL (real CREATE TABLE inside $$ bodies) and comma-separated inline columns are now parsed too \u2014 the prior revision discarded dollar-quoted bodies entirely.",
+  "count": 566,
   "entries": [
     {
       "object": "_system.background_jobs.last_error_message",
@@ -669,42 +669,42 @@
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "202612640000_vendor_payment_methods_master_data.sql",
-      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" — this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
+      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" \u2014 this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
     },
     {
       "object": "accounting.vendor_payment_methods.account_last4",
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "202612640000_vendor_payment_methods_master_data.sql",
-      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" — this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
+      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" \u2014 this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
     },
     {
       "object": "accounting.vendor_payment_methods.account_token",
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "202612640000_vendor_payment_methods_master_data.sql",
-      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" — this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
+      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" \u2014 this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
     },
     {
       "object": "accounting.vendor_payment_methods.is_default",
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "202612640000_vendor_payment_methods_master_data.sql",
-      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" — this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
+      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" \u2014 this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
     },
     {
       "object": "accounting.vendor_payment_methods.routing_last4",
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "202612640000_vendor_payment_methods_master_data.sql",
-      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" — this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
+      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" \u2014 this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
     },
     {
       "object": "accounting.vendor_payment_methods.vendor_id",
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "202612640000_vendor_payment_methods_master_data.sql",
-      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" — this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
+      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" \u2014 this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
     },
     {
       "object": "alerts.broker_queue.proposed_message",
@@ -1569,14 +1569,14 @@
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "202612600000_finance_forecast_scenarios_data_model.sql",
-      "reason": "202612600000_finance_forecast_scenarios_data_model.sql: finance.forecast_scenarios/forecast_lines ARE live-wired (real service apps/backend/src/finance/scenarios/scenarios.service.ts + FinanceScenariosPage.tsx/FinanceOverviewPage.tsx/ScenarioLinesTable.tsx consume every other column). deleted_at specifically is genuinely vestigial: the migration's own design is supersede-not-delete (status draft/active/superseded + superseded_at/superseded_by_scenario_id, confirmed live in scenarios.service.ts), so deleted_at was never meant to be read — a template-copy leftover, harmless nullable column, not a missing feature."
+      "reason": "202612600000_finance_forecast_scenarios_data_model.sql: finance.forecast_scenarios/forecast_lines ARE live-wired (real service apps/backend/src/finance/scenarios/scenarios.service.ts + FinanceScenariosPage.tsx/FinanceOverviewPage.tsx/ScenarioLinesTable.tsx consume every other column). deleted_at specifically is genuinely vestigial: the migration's own design is supersede-not-delete (status draft/active/superseded + superseded_at/superseded_by_scenario_id, confirmed live in scenarios.service.ts), so deleted_at was never meant to be read \u2014 a template-copy leftover, harmless nullable column, not a missing feature."
     },
     {
       "object": "finance.forecast_scenarios.deleted_at",
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "202612600000_finance_forecast_scenarios_data_model.sql",
-      "reason": "202612600000_finance_forecast_scenarios_data_model.sql: finance.forecast_scenarios/forecast_lines ARE live-wired (real service apps/backend/src/finance/scenarios/scenarios.service.ts + FinanceScenariosPage.tsx/FinanceOverviewPage.tsx/ScenarioLinesTable.tsx consume every other column). deleted_at specifically is genuinely vestigial: the migration's own design is supersede-not-delete (status draft/active/superseded + superseded_at/superseded_by_scenario_id, confirmed live in scenarios.service.ts), so deleted_at was never meant to be read — a template-copy leftover, harmless nullable column, not a missing feature."
+      "reason": "202612600000_finance_forecast_scenarios_data_model.sql: finance.forecast_scenarios/forecast_lines ARE live-wired (real service apps/backend/src/finance/scenarios/scenarios.service.ts + FinanceScenariosPage.tsx/FinanceOverviewPage.tsx/ScenarioLinesTable.tsx consume every other column). deleted_at specifically is genuinely vestigial: the migration's own design is supersede-not-delete (status draft/active/superseded + superseded_at/superseded_by_scenario_id, confirmed live in scenarios.service.ts), so deleted_at was never meant to be read \u2014 a template-copy leftover, harmless nullable column, not a missing feature."
     },
     {
       "object": "finance.loan_amortization_rows.deleted_at",
@@ -2435,7 +2435,7 @@
       "kind": "COLUMN",
       "verdict": "none",
       "migration": "0003_outbox_init.sql",
-      "reason": "outbox.outbox_queue is a RETIRED duplicate of outbox.events. Verified on prod 2026-08-03 (positive control mdata.vendors=2,828): 49 rows, ALL 'PENDING', attempts=0 on every row, oldest 2026-06-16 — nothing has ever drained it, because processor.ts reads outbox.events (31,622 rows, 31,618 delivered). This column became reader-less in the SAME PR that repointed 9 of its 11 producers onto the live table; its siblings available_at/locked_at/processed_at were already baselined here for the same reason and are the pre-existing evidence of it. Retiring the table is a MIGRATION and therefore owner-gated, so it is tracked separately rather than smuggled in — the two remaining writers are a deprecated unreachable route file and the QBO write-back pair that stays off by owner ruling."
+      "reason": "outbox.outbox_queue is a RETIRED duplicate of outbox.events. Verified on prod 2026-08-03 (positive control mdata.vendors=2,828): 49 rows, ALL 'PENDING', attempts=0 on every row, oldest 2026-06-16 \u2014 nothing has ever drained it, because processor.ts reads outbox.events (31,622 rows, 31,618 delivered). This column became reader-less in the SAME PR that repointed 9 of its 11 producers onto the live table; its siblings available_at/locked_at/processed_at were already baselined here for the same reason and are the pre-existing evidence of it. Retiring the table is a MIGRATION and therefore owner-gated, so it is tracked separately rather than smuggled in \u2014 the two remaining writers are a deprecated unreachable route file and the QBO write-back pair that stays off by owner ruling."
     },
     {
       "object": "outbox.outbox_queue.locked_at",
@@ -3012,7 +3012,476 @@
       "kind": "COLUMN",
       "verdict": "none",
       "migration": "0201_ds_remediate_qbo_remote_counts_canonical.sql",
-      "reason": "DEAD-SCHEMA-OUTBOX-QUEUE-EXTERNAL-ID-UNREAD (CC-3 2026-08-27): outbox.queue has an INSERT-only caller (lists-hub.routes.ts force-qbo-sync) and genuinely NO SELECT/UPDATE anywhere in apps/backend/src — confirmed via repo-wide grep, zero hits. The table has no dequeue/processor at all, so external_id (meant to record the remote system's assigned id after a successful push) is unread because nothing processes a row past insert, not because of a missing read on this one column specifically. The migration's own header comment says this exact thing: \"Long-term outbox unification with accounting.outbox_events is tracked separately\" — building a real QBO-sync processor is a genuine new feature (and QBO write-back-sensitive), not a drive-by reader. Baselined rather than fabricating a consumer."
+      "reason": "DEAD-SCHEMA-OUTBOX-QUEUE-EXTERNAL-ID-UNREAD (CC-3 2026-08-27): outbox.queue has an INSERT-only caller (lists-hub.routes.ts force-qbo-sync) and genuinely NO SELECT/UPDATE anywhere in apps/backend/src \u2014 confirmed via repo-wide grep, zero hits. The table has no dequeue/processor at all, so external_id (meant to record the remote system's assigned id after a successful push) is unread because nothing processes a row past insert, not because of a missing read on this one column specifically. The migration's own header comment says this exact thing: \"Long-term outbox unification with accounting.outbox_events is tracked separately\" \u2014 building a real QBO-sync processor is a genuine new feature (and QBO write-back-sensitive), not a drive-by reader. Baselined rather than fabricating a consumer."
+    },
+    {
+      "object": "accounting.bill_payments.void_reversal_entry_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613490001_go22_void_wiring_driver_finance_liability_chain.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "accounting.lease_contract.rate_per_unit_cents",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613301000_fleet_lease_08_lease_contract_rate_per_unit_basis.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "accounting.lease_contract.unit_count_basis",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613301000_fleet_lease_08_lease_contract_rate_per_unit_basis.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "accounting.lease_contract.unit_count_basis_as_of",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613301000_fleet_lease_08_lease_contract_rate_per_unit_basis.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "accounting.vendor_credits.void_reversal_entry_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613490001_go22_void_wiring_driver_finance_liability_chain.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "banking.reconciliation_drift_alerts.is_sample_data",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613420001_go20_slice_a_bank_reconciliation_drift_alerts.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "catalogs.driver_leave_balances.deactivated_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613620001_cc3_ddl_handoff_retention_grant_leave_safety_deactivated_at.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "catalogs.driver_leave_balances.deactivated_reason",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613620001_cc3_ddl_handoff_retention_grant_leave_safety_deactivated_at.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "catalogs.lane_mileage.first_seen",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613342200_go16_rev_b_lane_mileage.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "catalogs.lane_mileage.last_seen",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613342200_go16_rev_b_lane_mileage.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "catalogs.lane_mileage.practical_max",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613342200_go16_rev_b_lane_mileage.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "catalogs.lane_mileage.practical_min",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613342200_go16_rev_b_lane_mileage.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "catalogs.lane_mileage.short_max",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613342200_go16_rev_b_lane_mileage.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "catalogs.lane_mileage.short_min",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613342200_go16_rev_b_lane_mileage.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "catalogs.point_mileage.computed_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613600001_point_mileage_table.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "dispatch.cargo_sensor_incidents.customer_notified_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613390002_go20_d_cargo_sensor_incidents.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "dispatch.cargo_sensor_incidents.is_sample_data",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613390002_go20_d_cargo_sensor_incidents.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "dispatch.manual_delivery_authorizations.revoke_reason",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613960000_manual_delivery_authorization.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "dispatch.manual_delivery_authorizations.revoked_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613960000_manual_delivery_authorization.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "geo.geofence_state_transitions.is_superseded",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "geo.geofence_state_transitions.superseded_reason",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "geo.geofences.requires_driver_response",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "identity.permissions.field_name",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613312000_permission_model.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "identity.role_permissions",
+      "kind": "TABLE",
+      "verdict": "none",
+      "migration": "202613312000_permission_model.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "identity.role_permissions.granted_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613312000_permission_model.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "identity.role_permissions.granted_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613312000_permission_model.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "identity.role_permissions.permission_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613312000_permission_model.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "identity.user_permissions",
+      "kind": "TABLE",
+      "verdict": "none",
+      "migration": "202613312000_permission_model.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "identity.user_permissions.expires_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613312000_permission_model.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "identity.user_permissions.grant_type",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613312000_permission_model.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "identity.user_permissions.granted_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613312000_permission_model.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "identity.user_permissions.granted_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613312000_permission_model.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "identity.user_permissions.permission_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613312000_permission_model.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "identity.user_permissions.reason",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613312000_permission_model.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "identity.user_permissions.user_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613312000_permission_model.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "identity.users.is_primary_owner",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613312000_permission_model.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "integrations.samsara_addresses.deactivated_reason",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613760001_samsara_geofence_import_drafts_batch.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "maintenance.predictive_alerts.equipment_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613410001_go20_b_maintenance_predictive_alerts.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "maintenance.predictive_alerts.is_sample_data",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613410001_go20_b_maintenance_predictive_alerts.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "mdata.driver_tag_memberships.assigned_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613430001_driver_f7334_canonical_driver_tags.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "mdata.loads.mileage_variance_flag",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613342200_go16_rev_b_lane_mileage.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "pwa.driver_prompts",
+      "kind": "TABLE",
+      "verdict": "none",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "pwa.driver_prompts.answer_code",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "pwa.driver_prompts.answer_note",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "pwa.driver_prompts.answered_at",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "pwa.driver_prompts.answered_by_user_uuid",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "pwa.driver_prompts.asked_at",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "pwa.driver_prompts.driver_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "pwa.driver_prompts.escalation_count",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "pwa.driver_prompts.expires_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "pwa.driver_prompts.geofence_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "pwa.driver_prompts.gps_lat",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "pwa.driver_prompts.gps_lng",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "pwa.driver_prompts.last_escalated_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "pwa.driver_prompts.load_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "pwa.driver_prompts.odometer_mi",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "pwa.driver_prompts.options_json",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "pwa.driver_prompts.prompt_kind",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "pwa.driver_prompts.question",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "pwa.driver_prompts.resolved_by",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "pwa.driver_prompts.stop_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "pwa.driver_prompts.unit_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "safety.accident_liabilities.is_sample_data",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613400001_go20_slice_c_accident_liabilities.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "safety.driver_safety_scores.deactivated_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613620001_cc3_ddl_handoff_retention_grant_leave_safety_deactivated_at.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "safety.driver_safety_scores.deactivated_reason",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613620001_cc3_ddl_handoff_retention_grant_leave_safety_deactivated_at.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "telematics.vehicle_locations.source_operating_company_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613761300_samsara_usmca_retag.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
+    },
+    {
+      "object": "telematics.vehicle_locations.source_raw_samsara_event_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613761300_samsara_usmca_retag.sql",
+      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
     }
   ]
 }
