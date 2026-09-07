@@ -1035,3 +1035,18 @@ PROPOSED CORRECTION (not executed, needs your ✔): a new, audited, pending dedu
 SEPARATE FOLLOW-UP FLAGGED (dormant, not urgent): classifyDeductionTarget does not treat 'escrow_contribution' as an escrow target the way it treats bare 'escrow' — a FUTURE close on a settlement carrying one of the 46 now-retyped escrow_contribution rows would hit an unbound 'escrow_contribution_recovery' role and FAIL CLOSED (never silently miscount again, this is the safe failure mode) rather than post. Confirmed live: none of the 46 rows are on an open settlement today, so nothing is at risk right now — naming it so it's not a surprise later.
 
 Continuing the rest of ROUND 16.24's list while this holds for your read, per your own instruction not to stop on an owner-decision item.
+
+---
+
+CC-3 | CLARIFICATION on the CRITICAL finding above — the reimbursement side is NOT a new bug, it's the SAME SET-24 $172.44 you already have a build-ready correction for | NEXT building SET-24 item 9's duplicate-prevention guard now
+
+Dug one level deeper (checking whether the SAME active-duplicate pattern also hit reimbursements, which the JE reads from a DIFFERENT table than deductions): driver_finance.settlement_lines itself still carries ACTIVE duplicate 'reimbursement' rows on 4 of the 13 posted settlements — S-13643 ($22.14+$30.30), S-13645 ($25+$25), S-13646 ($27), S-13648 ($25+$18). Sum of the overcounted copies: exactly $172.44.
+
+That number is not a coincidence — it is the EXACT SET-24 duplicate-reimbursement total from earlier tonight (7 duplicate driver_reimbursements rows voided at the SOURCE, correction built as deduction_type='reimbursement_reversal', still pending your ✔ to apply). loadReimbursementsCents (the real JE poster's reimbursement term) reads driver_finance.settlement_lines directly, is_active=true — and voiding the SOURCE driver_reimbursements row never retroactively voids the settlement_lines row it had already materialized (the exact caveat retype-settlement-deduction.service.ts's own header already documents). So these 4 settlements' posted JEs correctly reflect what the app's own math produced at the time — an OVERPAYMENT of $172.44 via double-counted reimbursements — and the reimbursement_reversal correction I already built is EXACTLY the fix, already scoped to claw it back on the driver's next settlement.
+
+NET PICTURE, both real, both separate, neither fabricated to net against the other (zero is a claim — I'm not blending an overpayment and an underpayment into one number):
+  UNDERPAID (deductions wrongly counted, my new finding): $535.25 across 8 settlements — needs a NEW correction, not yet built.
+  OVERPAID (reimbursements double-counted, SET-24, already known): $172.44 across 4 settlements — correction ALREADY BUILT (reimbursement_reversal), pending the SAME ✔.
+  These affect overlapping but not identical settlement/driver sets — I will build BOTH as separate, clearly-labeled correction rows (never one blended figure) the moment you say go on either or both.
+
+The 'deduction'-type duplicates in the same settlement_lines rows (Admin fee, Driver-Escrow For Claims) do NOT feed the JE math at all — deductions are summed from the driver_settlement_deductions source table directly (now fixed), not from settlement_lines. Those duplicate display rows are stale, display-only artifacts — real, but a data-hygiene issue, not a money-correctness one. Building the fix for that now as ROUND 16.24 item 9 (the duplicate-prevention guard you asked for), which happens to be exactly what surfaced all of this.
