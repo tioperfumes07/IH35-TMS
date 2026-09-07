@@ -175,6 +175,16 @@ export function finalizeSettlement(id: string, companyId: string) {
   });
 }
 
+// SET-33: Approve settlement — flips approval_status from 'needs_review' to 'approved'.
+// Calls the existing POST /api/v1/settlements/approve route (approval.routes.ts).
+// The backend requires all line items to be approved first (checkAllLinesApproved).
+export function approveSettlement(id: string, companyId: string) {
+  return apiRequest<{ success: boolean; status: string }>(
+    `/api/v1/settlements/approve?operating_company_id=${encodeURIComponent(companyId)}`,
+    { method: "POST", body: { settlement_id: id } }
+  );
+}
+
 // SETL-NO-VOID-PATH-01 — Owner/Accountant reversal, same shared void.service.ts engine as every
 // other financial void in this app. Reason is required server-side (min length 1) — always pass a
 // real one, never a placeholder string.

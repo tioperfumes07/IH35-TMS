@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   acknowledgeSettlement,
+  approveSettlement,
   finalizeSettlement,
   openSettlementDispute,
   getSettlementPaymentEvents,
@@ -154,11 +155,13 @@ export function SettlementDetailPage() {
 
   const settlement = (detailQuery.data ?? {}) as Record<string, unknown>;
   const paymentState = String(settlement.payment_state ?? "unpaid");
+  const approvalStatus = String(settlement.approval_status ?? "needs_review");
   const settlementDisplayId =
     typeof settlement.display_id === "string" && settlement.display_id ? settlement.display_id : null;
   const isFinalSettlement = String(settlement.status ?? "") === "locked" || String(settlement.status ?? "") === "final";
   const showFinalizeBlock = !isFinalSettlement;
   const showManualPaidDraftBanner = paymentState === "manual_paid" && !isFinalSettlement;
+  const canApproveSettlement = (auth.user?.role === "Owner" || auth.user?.role === "Administrator" || auth.user?.role === "Accountant") && approvalStatus === "needs_review" && !isFinalSettlement;
   const canOpenDispute = auth.user?.role === "Owner" || auth.user?.role === "Administrator" || auth.user?.role === "Driver";
   // SETL-NO-VOID-PATH-01 — matches void.service.ts's canVoid() exactly (Owner + Accountant only).
   // Hardcoded fallback per VOID LAW item 6: PERMISSION_MODEL_ENFORCED is OFF today, so this stays the
@@ -814,6 +817,30 @@ export function SettlementDetailPage() {
               navigate(`/accounting/escrow${q.toString() ? `?${q.toString()}` : ""}`);
             }}
           />
+          {canApproveSettlement ? (
+            <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Approval</p>
+                <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">{approvalStatus}</span>
+              </div>
+              <p className="mb-2 text-xs text-gray-600">All line items must be reviewed before approving. This flips the settlement from Needs Review to Approved.</p>
+              <button
+                type="button"
+                className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs text-white"
+                onClick={() => {
+                  if (!companyId) return;
+                  void approveSettlement(settlementId, companyId)
+                    .then(() => {
+                      pushToast("Settlement approved", "success");
+                      void refreshSettlementViews();
+                    })
+                    .catch((error) => pushToast(userFacingApiError(error, "Approve blocked — all lines must be reviewed first"), "error"));
+                }}
+              >
+                Approve Settlement
+              </button>
+            </div>
+          ) : null}
           {showFinalizeBlock ? (
             <FinalizeBlock
               checked={ackChecked}
