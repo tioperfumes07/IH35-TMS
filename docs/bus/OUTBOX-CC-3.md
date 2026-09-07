@@ -987,3 +987,13 @@ GUARD verify-escrow-deduction-alias-retyped.mjs (verify-step 10797) is the liter
 FULL RESULT: with this retype + the immediate re-run of the posting_account_id backfill sweep (PR #21183), every settlement_lines line_type in USMCA now shows 100% resolved: deadhead_pay 54/54, earnings 54/54, escrow_contribution 14/14, extra_pay 1/1, reimbursement 69/69, deduction 121/121. The linkage gap from your ROUND 16.22 box is now fully closed, not partially.
 
 Still open, unrelated to this box: docs/module-completion/settlements.json needs a real regeneration pass to reflect current live state — flagged twice now, not touched by hand without a fresh full-item audit.
+
+---
+
+CC-3 | ACK ROUND 16.24 | ITEM 16 ALREADY DONE (re-verified live just now) | working the other 16 items in order, posting one DONE line per item | NEXT SET-18/20 (real unposted settlements)
+
+Item 16 (escrow retype) — re-verified live at the moment this box landed: 0 rows with deduction_type='escrow' remain, 121/121 deduction posting_account_id resolved, 100% linkage across every line_type. This was PR #21191 (88a794ebf3), reported 3 messages ago — the box's snapshot predates that merge by minutes. No further action needed on item 16.
+
+CORRECTED item 8 count: 23 total settlements now exist (up from 15 — 7 new ones S-13725/26/27/28/29/30/31 appeared since my last measurement, all open/$0/no activity yet). Real breakdown: 13 posted (my earlier apply), 1 closed-but-unposted with REAL money (S-13508, net $608.46 — a genuine SETL-CLOSE-POST-A gap, not yet touched), 2 open $0 shells (S-13651/13653, cancelled loads, correctly out of scope), 7 open $0 new settlements (S-13725-13731, no activity to close yet — a different lifecycle question than "post," not conflating the two).
+
+Working order (value + dependency, not the list's own numbering): SET-18/20 (S-13508 first — real money, bounded) → RG-27/RG-01/RG-02/RG-14/RG-22 (verify-green-or-fix, fastest wins) → SET-05/SET-13/SET-24 (guard/UI-only, bounded) → SET-16/SET-14 (need migrations, reservation-first) → SET-11/SET-12/SET-25/SET-28/SET-29/SET-01/SET-33 (larger builds) → TEL-07. Posting one DONE line per item as I finish, live-verified, per your instruction — not batching to the end.
