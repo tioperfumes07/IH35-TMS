@@ -67,8 +67,15 @@ export async function getCustomerActivity(input: {
     }>(
       `
         SELECT i.id::text AS id, i.issue_date::text AS date, i.display_id AS reference,
-               i.source_load_number AS load_number, i.total_cents AS amount_cents, i.status
+               l.load_number AS load_number, i.total_cents AS amount_cents, i.status
         FROM accounting.invoices i
+        -- ACCT-F26013 (owner, 2026-09-07): accounting.invoices has source_load_id (a UUID FK to
+        -- mdata.loads), never a "source_load_number" column — this query 500'd every single time
+        -- a customer's Activity/Transaction tab loaded (column referenced on the invoices alias
+        -- did not exist), caught live while re-verifying the ACCT-F26012 quarantine fix. load_number is
+        -- read from mdata.loads via the real FK, same as the broker_advances branch below already
+        -- does correctly.
+        LEFT JOIN mdata.loads l ON l.id = i.source_load_id AND l.operating_company_id = i.operating_company_id
         WHERE i.operating_company_id = $1::uuid
           AND i.customer_id = $2::uuid
           AND i.total_cents IS NOT NULL
@@ -98,11 +105,12 @@ export async function getCustomerActivity(input: {
     }>(
       `
         SELECT p.id::text AS id, p.payment_date::text AS date, p.display_id AS reference,
-               i.source_load_number AS load_number, pa.amount_cents AS amount_cents,
+               l.load_number AS load_number, pa.amount_cents AS amount_cents,
                COALESCE(p.status, 'received') AS status
         FROM accounting.payment_applications pa
         JOIN accounting.payments p ON p.id = pa.payment_id AND p.operating_company_id = pa.operating_company_id
         JOIN accounting.invoices i ON i.id = pa.invoice_id AND i.operating_company_id = pa.operating_company_id
+        LEFT JOIN mdata.loads l ON l.id = i.source_load_id AND l.operating_company_id = i.operating_company_id
         WHERE pa.operating_company_id = $1::uuid
           AND i.customer_id = $2::uuid
           AND p.voided_at IS NULL
@@ -130,11 +138,12 @@ export async function getCustomerActivity(input: {
     }>(
       `
         SELECT cm.id::text AS id, (cma.applied_at AT TIME ZONE 'UTC')::date::text AS date,
-               cm.display_id AS reference, i.source_load_number AS load_number,
+               cm.display_id AS reference, l.load_number AS load_number,
                cma.applied_cents AS amount_cents, COALESCE(cm.status, 'applied') AS status
         FROM accounting.credit_memo_applications cma
         JOIN accounting.credit_memos cm ON cm.id = cma.credit_memo_id AND cm.operating_company_id = cma.operating_company_id
         JOIN accounting.invoices i ON i.id = cma.invoice_id AND i.operating_company_id = cma.operating_company_id
+        LEFT JOIN mdata.loads l ON l.id = i.source_load_id AND l.operating_company_id = i.operating_company_id
         WHERE cma.operating_company_id = $1::uuid
           AND i.customer_id = $2::uuid
           AND cma.voided_at IS NULL
@@ -193,8 +202,9 @@ export async function getCustomerActivity(input: {
       `
         SELECT DISTINCT fa.id::text AS id, fa.submitted_at::date::text AS date,
                fa.display_id AS reference,
-               (SELECT i2.source_load_number
+               (SELECT l2.load_number
                   FROM accounting.invoices i2
+                  LEFT JOIN mdata.loads l2 ON l2.id = i2.source_load_id AND l2.operating_company_id = i2.operating_company_id
                  WHERE i2.factoring_advance_id = fa.id
                    AND i2.operating_company_id = fa.operating_company_id
                  ORDER BY i2.issue_date DESC
