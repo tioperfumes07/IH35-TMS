@@ -23,6 +23,7 @@ import {
 } from "../../api/accounting";
 import { formatUsdCents } from "../../lib/money";
 import { mmmDd } from "../../lib/formatDate";
+import { CompanySettlementItemizedByLoad } from "./components/CompanySettlementItemizedByLoad";
 
 // Dash-never-zero (law §8): a null/void money value renders "—", never "$0.00".
 const DASH = "—";
@@ -274,6 +275,17 @@ function CompanySettlementWaterfall({
           ) : null}
         </div>
       )}
+
+      {/* ROUND 16.19 — itemized per-load register UNDER the waterfall above (never replacing it —
+          the waterfall's Net Revenue stays the one audited figure). */}
+      {report ? (
+        <>
+          <div className="ldt-ch" style={{ marginTop: 8 }}>
+            <span>Itemized by load</span>
+          </div>
+          <CompanySettlementItemizedByLoad report={report} />
+        </>
+      ) : null}
     </div>
   );
 }

@@ -2835,6 +2835,7 @@ export type CompanySettlementDriverPaymentRow = {
   load_id: string | null;
   load_number: string | null;
   driver_id: string;
+  driver_name: string | null;
   line_type: string;
   description: string | null;
   amount_cents: number;

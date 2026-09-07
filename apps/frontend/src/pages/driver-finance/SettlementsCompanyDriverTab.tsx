@@ -25,6 +25,7 @@ import {
 import { formatUsdCents } from "../../lib/money";
 import { mmmDd } from "../../lib/formatDate";
 import { openPrintableDocument } from "../../lib/openPrintableDocument";
+import { CompanySettlementItemizedByLoad } from "./components/CompanySettlementItemizedByLoad";
 
 const DASH = "\u2014";
 function money(cents: number | null | undefined): string {
@@ -401,6 +402,11 @@ function CompanySettlementCard({ readout, companyId }: { readout: TourReadout; c
             <div className="ldt-row"><span>Less · Company expenses</span><span className="ldt-m">{money(report.sections.expenses.total_cents)}</span></div>
             <div className="ldt-row big"><span>NET REVENUE{marginPct == null ? "" : ` · ${marginPct.toFixed(1)}%`}</span><span className="ldt-m">{money(report.sections.pl_rollup.net_revenue_cents)}</span></div>
           </div>
+
+          {/* ROUND 16.19 — itemized per-load register UNDER the waterfall above (never replacing
+              it — the waterfall's NET REVENUE stays the one audited figure). */}
+          <div className="ldt-ch" style={{ marginTop: 8 }}><span>Itemized by load</span></div>
+          <CompanySettlementItemizedByLoad report={report} />
 
           {cs?.factoring && cs.factoring.factored_invoices > 0 ? (
             <div className="ldt-rows" style={{ marginTop: 8 }}>
