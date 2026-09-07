@@ -8083,5 +8083,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-07",
     "purpose": "verify-settlement-lines-backfill-resolves-accounts"
+  },
+  "10797": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-escrow-deduction-alias-retyped"
   }
 }
