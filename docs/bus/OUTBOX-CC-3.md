@@ -1103,3 +1103,28 @@ BLOCKED even for the --dry-run half, on something neither of us can fix from her
 What unblocks this: either (a) run scripts/ops/import-samsara-addresses.ts --dry-run directly on the Render box (real env, real key) or via a Render shell session, or (b) tell me it's fine to add a thin authenticated HTTP route wrapping importSamsaraAddresses so it runs in-process with the real env (I'd build+ship that as its own small PR, gated the same way the script already is). Not guessing past either — naming it and stopping here since I have no path to the real key from this environment.
 
 This closes out my working pass on ROUND 16.24: 6 items shipped/confirmed, 1 critical off-list money bug found+fixed+reported (holding on your ✔), 1 item (SET-18/20 S-13508) dry-run ready and holding on your ✔, 7 items need you to point me at the actual screen/table/flow before I build them (posted above), and this one (TEL-07) is blocked on production credentials I cannot reach. Ready for direction on any of these, or the next assignment.
+
+---
+
+CC-3 | REPLY to your CORRECTION — investigated row by row, no real gap, guard now prints both counts so this can't recur | 0a23a45cd2 | live confirmed | NEXT holding on your ✔ for the two open corrections + the 7 grounding questions
+
+Checked precisely, not defensively. Both flagged groups are legitimately voided, both predate tonight's linkage work:
+
+GAP 1 (31 earnings + 31 deadhead_pay): all 62 rows are `is_active=false`. 29+29 voided 2026-09-05T13:55:57Z as "TRANSPORTATION-NOT-USMCA: worked before 08/07 cutover; seed contamination quarantined 2026-09-05 per owner reconciliation IH35-BY-LOAD-20260904" (the same 08/07-cutover quarantine sweep from yesterday — these loads don't belong to USMCA at all). The remaining 2+2 voided 2026-09-06T00:11Z as "SETL-TIEOUT-01 repair: bill total did not match the signed reconciliation source... blended loaded+deadhead miles into one divisor" for loads 13512/13513 (the exact SETL-TIEOUT-01 fix from earlier tonight — the WRONG bill was voided and replaced with a corrected one). None of these 62 rows will ever post to a JE — they structurally can't need a posting_account_id any more than any other voided row in this table does.
+
+GAP 2 (2 deduction rows on settlement 4ae11649): both `is_active=false`, voided 2026-09-06T02:23:01Z with reason "SETL-DED-GL: memo... is an escrow contribution, not an unclassified 'other' deduction — retyped to bind the driver's own escrow liability sub-account." These are the OLD halves of a real retype-settlement-deduction.service.ts void+replace correction for loads 13512/13513 — their REPLACEMENT rows (cba340e2, 6d294379) are ACTIVE and already carry a resolved posting_account_id (8cd7ca04-4bcd-4d79-8850-405b381e9df9).
+
+ROOT CAUSE of the discrepancy: your re-verification query counted ALL rows (active + voided); mine counted active only. Active-only is the correct population for a "resolved" metric (a voided row never posts, same rule as every other void in this schema) — my "100%" claim was numerically correct, just not labeled "of active rows," which is exactly the kind of ambiguity that invites a reasonable re-check like this one.
+
+FIXED (not a data change, a reporting-clarity one, PR #21226, 0a23a45cd2): the guard now prints BOTH numbers side by side. Live output, right now:
+
+  reimbursement 69/69 active
+  extra_pay 1/1 active
+  deduction 90/90 active (+33 voided, correctly excluded, raw total 123)
+  deadhead_pay 54/54 active (+31 voided, correctly excluded, raw total 85)
+  earnings 54/54 active (+31 voided, correctly excluded, raw total 85)
+  escrow_contribution 14/14 active
+
+This reproduces your exact raw numbers (85/85/123) side by side with the active ones, so a future spot-check sees immediately that the gap is void rows, not an unresolved one — re-measurable by anyone, per house rule 2, without re-deriving the is_active filter.
+
+Restating what's still actually open and holding on your ✔ (unchanged by this reply): the $535.25 deduction underpayment correction, the $172.44 SET-24 reimbursement overpayment correction, S-13508's apply, and the 7 items needing you to point me at the actual screen/table/flow.
