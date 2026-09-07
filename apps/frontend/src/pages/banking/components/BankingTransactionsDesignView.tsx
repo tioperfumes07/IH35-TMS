@@ -723,6 +723,40 @@ export function BankingTransactionsDesignView({
     enabled: Boolean(companyId),
   });
 
+  // BANK-F10041 (2026-09-07) — runningBalanceById below MUST be computed over the account's FULL,
+  // unfiltered transaction history. transactionsQuery (above) is scoped to whatever the operator has
+  // active right now (date_from/date_to, types, description search) -- when ANY of those filters is
+  // set, transactionsQuery.data is a SUBSET of the ledger, and walking it backward from
+  // current_balance_cents silently skips the delta of every transaction outside the filter, producing
+  // a wrong balance on every visible row with no error and no indicator. This is the real cause of the
+  // -$13,062.53 discrepancy the owner found on account e83028a5-dcda-4233-b660-5b9923b3d39c, 12/08/25 --
+  // NOT the is_credit sign convention (that landmine is already correctly handled by spentReceived()
+  // above and by banking.routes.ts's BANK-F10005 fix; do not re-"fix" that). This query is the fix:
+  // it always fetches the account's complete history with NO date/type/description predicate, so the
+  // running-balance math's own stated precondition ("full history is present") is actually true.
+  const fullHistoryQuery = useQuery({
+    queryKey: ["banking", "transactions-full-history", companyId, selectedAccount?.id ?? ""],
+    queryFn: async () => {
+      const merged: PlaidBankTransaction[] = [];
+      let offset = 0;
+      while (true) {
+        const page = await getPlaidCompanyTransactions(companyId, {
+          limit: COMPANY_TRANSACTIONS_PAGE_SIZE,
+          offset,
+          bank_account_id: selectedAccount?.id ?? undefined,
+          sort: "date_desc",
+        });
+        const rows = page.transactions ?? [];
+        merged.push(...rows);
+        if (rows.length < COMPANY_TRANSACTIONS_PAGE_SIZE) break;
+        offset += COMPANY_TRANSACTIONS_PAGE_SIZE;
+      }
+      return { transactions: merged };
+    },
+    enabled: Boolean(companyId && selectedAccount?.id),
+    staleTime: 30_000,
+  });
+
   // PRIMARY match panel — the real ranked-match engine (match.service.ts findCandidates), NOT the
   // "similar past categorizations" suggestions endpoint below (that one was wrongly bound here before —
   // it answers a different question and always came back empty for a first-time transaction).
@@ -1055,17 +1089,21 @@ export function BankingTransactionsDesignView({
     [collapsedAllGroupings, collapsedMonths, groupedRows]
   );
 
-  // Running balance ("Balance" column), computed over the FULL account ledger — not the visible page —
-  // so each row shows its true post-transaction balance even when the view is filtered or paginated.
+  // Running balance ("Balance" column), computed over the FULL account ledger — not the visible page,
+  // and NOT scopedRows (scopedRows honors whatever date/type/description filter is active, which is
+  // exactly the bug fixed under BANK-F10041 above) — so each row shows its true post-transaction
+  // balance even when the view is filtered or paginated.
   // Anchor = the account's current balance (balance AFTER the newest transaction); we walk newest->oldest:
   //   balanceAfter(newest) = currentBalance; balanceAfter(older) = balanceAfter(newer) - signed(newer).
   // signed = received - spent (cents). This is only meaningful in date order (the default sort) and when the
-  // full history is present (post-reconnect it is) — matching how a QuickBooks/bank register behaves.
+  // full history is present — guaranteed now by fullHistoryQuery, matching how a QuickBooks/bank register
+  // behaves regardless of what the operator has filtered the visible list down to.
   const runningBalanceById = useMemo(() => {
     const map = new Map<string, number>();
     if (!selectedAccount) return map;
     let running = Number(selectedAccount.current_balance_cents ?? 0);
-    const ordered = [...scopedRows].sort((a, b) => {
+    const historyRows = fullHistoryQuery.data?.transactions ?? [];
+    const ordered = [...historyRows].sort((a, b) => {
       const da = a.transaction_date ?? "";
       const db = b.transaction_date ?? "";
       if (da === db) return 0;
@@ -1077,7 +1115,7 @@ export function BankingTransactionsDesignView({
       running -= received - spent;
     }
     return map;
-  }, [scopedRows, selectedAccount]);
+  }, [fullHistoryQuery.data, selectedAccount]);
 
   function makeDefaultDraft(tx: PlaidBankTransaction): RowDetailDraft {
     const description = tx.description || tx.merchant_name || "";
