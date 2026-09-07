@@ -1008,3 +1008,30 @@ node scripts/verify-dispatch-telemetry-failure-honesty.mjs (RG-14) → PASS.
 node scripts/verify-money-proof-trail-click-to-ledger.mjs (RG-22) → PASS (10 document types, 10 mounted surfaces, ledger click wired).
 
 RG-02 and RG-14 have no dedicated scripts/verify-steps/ entry (checked — a real gap in the registry-tracking convention this session otherwise follows for new guards), but verify-static.mjs's own header confirms it globs scripts/verify-*.mjs directly and runs every match regardless of verify-steps wiring — so both ARE live-enforced in CI today, just not also registered in the step-number dashboard. RG-22 is invoked as a sub-call inside verify-step 3029 (verify-je-payload-carries-label.mjs's own spawnSync at the bottom), so it's doubly covered. All 4 confirmed green, no code change needed for any of them.
+
+---
+
+CC-3 | ★★★ CRITICAL FINDING — NOT ASKED FOR, FOUND WHILE WORKING ROUND 16.24 ITEM 9 ★★★ | 0edc0a2166 | live pending | root cause fixed + guarded, HISTORICAL $535.25 SHORTFALL ON 8 ALREADY-POSTED SETTLEMENTS NEEDS YOUR ✔ ON THE CORRECTION | NEXT holding on this, continuing the rest of the list meanwhile
+
+While building SET-24's duplicate-prevention guard I found a live duplicate group in driver_finance.settlement_lines and traced it to a real bug in the REAL JE-posting poster: settlement-payrun-close.service.ts's loadOtherDeductionsByRole (the function that computes what actually gets credited on the balanced JE) selected every driver_settlement_deductions row by applied_to_settlement_id with NO voided_at filter. Void-not-delete means a voided row (a DED-DUP duplicate, a TRANSPORTATION-NOT-USMCA quarantine void, or a SETL-DED-GL retype's old row) keeps applied_to_settlement_id set forever — so every one of those voided rows was STILL summed into the real, posted JE, crediting more recovery than it should have and understating the driver's disbursed net pay by that exact amount.
+
+FIXED (PR #21204, 0edc0a2166): one line, `AND dsd.voided_at IS NULL`. Guarded (verify-payrun-close-excludes-voided-deductions.mjs, verify-step 10809) — live half re-checks S-13508 (the one settlement still awaiting your ✔ to post) and confirms it is NOT at risk from this bug.
+
+HISTORICAL IMPACT — precisely quantified, NOT corrected (a posted JE is WORM, I will not touch it without your read): 8 of the 13 settlements I posted for real earlier this session wrongly included voided deductions:
+  S-13642 — $10.00
+  S-13643 — $120.00
+  S-13645 — $20.00
+  S-13646 — $10.00
+  S-13647 — $320.00
+  S-13648 — $35.25
+  S-13650 — $10.00
+  S-13652 — $10.00
+  TOTAL: $535.25 — each affected driver was underpaid by their line above relative to the correct deduction total.
+
+Checked and ruled OUT a second suspect: escrow_contribution-typed voided rows also appear in the same duplicate group, but they carried deduction_type='escrow' (not yet 'escrow_contribution') at the moment these 8 JEs actually posted — classifyDeductionTarget correctly excluded them THEN. They were only retyped to 'escrow_contribution' by my own ESCROW-ALIAS-RETYPE fix AFTER these JEs already posted, so they did not contribute to this shortfall. Confirmed by comparing void timestamps and posted_at timestamps directly, not assumed.
+
+PROPOSED CORRECTION (not executed, needs your ✔): a new, audited, pending deduction-reversal/credit applied to each affected driver's NEXT settlement — the exact same shape as the SET-24 reimbursement_reversal correction I already built and you already approved the pattern for. I will build this the moment you say go; I am not moving money without it.
+
+SEPARATE FOLLOW-UP FLAGGED (dormant, not urgent): classifyDeductionTarget does not treat 'escrow_contribution' as an escrow target the way it treats bare 'escrow' — a FUTURE close on a settlement carrying one of the 46 now-retyped escrow_contribution rows would hit an unbound 'escrow_contribution_recovery' role and FAIL CLOSED (never silently miscount again, this is the safe failure mode) rather than post. Confirmed live: none of the 46 rows are on an open settlement today, so nothing is at risk right now — naming it so it's not a surprise later.
+
+Continuing the rest of ROUND 16.24's list while this holds for your read, per your own instruction not to stop on an owner-decision item.
