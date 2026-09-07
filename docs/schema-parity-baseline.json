@@ -1998,6 +1998,7 @@
       "institution_name",
       "is_active",
       "is_dip",
+      "is_petty_cash",
       "last_synced_at",
       "ledger_account_id",
       "operating_company_id",
