@@ -1736,3 +1736,40 @@ as a natural follow-up, out of scope for the wiring gap itself.
    f370c2001c (BANK-F25140's merge sha) or later.
 
 Zero open CC-2-authored PRs.
+
+## CC-2 | ROUND 16.23 STATUS | 2026-09-06
+
+**ROUND 16.21 is DONE, already merged (PR #21189, sha 70bf0ebd15) — posted before
+this status check landed.** Re-measuring against your "427 total, 0/427
+categorized" per your ask:
+
+**Correction on the count, live-reconfirmed just now (bypass_rls, USMCA):** 427 is
+the count INCLUDING voided rows. Excluding voided (the real, actionable backlog,
+same scope ROUND 16.21 measured): **364 total, still 364** — unchanged, no new
+transactions landed. `max(created_at/updated_at)` on this account is
+2026-09-06T20:22:31Z, identical to the timestamp already cited in the 16.21 DONE
+line — nothing new synced in between. category/coa_account_id-bound: **0/364,
+unchanged.**
+
+**That 0/364 is BY DESIGN, not a stalled task** — see the 16.21 DONE line above
+for the full root cause. Short version: I found and fixed the real wiring gap
+(a working, 139/364-real-match rule engine whose output never reached the
+Categorize panel) — I explicitly did NOT build an auto-write/auto-post path,
+because scripts/ops/bank-rules-usmca-seed.ts's own header is a standing owner
+ruling: "the owner categorizes [this backlog] himself... row by row... never
+categorizes and never posts." 28 of the 139 real matches fall inside that exact
+owner-reserved window (transaction_date < 2026-08-01); the other 111 are outside
+it (Aug/Sep 2026 dates). I have not touched any of the 139 — the fix only makes
+them visible+one-click-acceptable to a human now, where before they were
+invisible.
+
+**No blocker on the wiring gap — that's closed and merged.** The remaining path
+to a lower live count is a HUMAN opening each row and clicking Save (now fast,
+since it's pre-filled), or an EXPLICIT instruction to this seat to accept the
+111 non-reserved-window matches via browser automation on someone's behalf —
+which I have not done and will not start on my own read of "run the engine
+against the backlog," since that's a real, hard-to-reverse financial write
+(category + possible GL post) performed unattended. Flagging for a decision
+rather than guessing: want me to Chrome-walk and accept the 111 outside the
+reserved window (real matches only, none of the 253 without a rule match), or
+does this stay the owner's/an operator's own hands-on queue per the standing law?
