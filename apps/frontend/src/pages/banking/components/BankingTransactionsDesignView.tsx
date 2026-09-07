@@ -1131,6 +1131,33 @@ export function BankingTransactionsDesignView({
     setDrafts((prev) => ({ ...prev, [tx.id]: { ...(prev[tx.id] ?? makeDefaultDraft(tx)), ...patch } }));
   }
 
+  // ROUND 16.21 (owner, 2026-09-06): "banking categorization backlog is 0/364, not improving."
+  // Root cause traced to ACCT-F375 (2026-08-12) never reaching the frontend: accounting.banking_rules
+  // has real, seeded, correctly-matching USMCA rules (139/364 live matches confirmed) and the
+  // /suggestions endpoint has ALWAYS computed+returned a `rule_match` for them, but nothing in this
+  // component ever read it — an operator opening a row saw a blank Category/Payee even when a
+  // real rule match existed, and had to categorize entirely from scratch. Owner standing law
+  // (scripts/ops/bank-rules-usmca-seed.ts's own header) is explicit that categorization itself stays
+  // a HUMAN action, row by row, never automatic — so this pre-fills the form fields only, through the
+  // exact same Category/Payee pickers and Save button every manual categorization already uses; it
+  // writes nothing until the operator reviews and saves. Never overwrites a value already present
+  // (an operator's own edit, or a re-open after a prior partial fill) — pre-fill is a one-time
+  // convenience, not a standing override.
+  useEffect(() => {
+    const ruleMatch = suggestionsQuery.data?.rule_match;
+    if (!ruleMatch || !expandedTxId) return;
+    const tx = scopedRows.find((row) => row.id === expandedTxId);
+    if (!tx) return;
+    const existing = drafts[tx.id];
+    if (existing?.accountId || existing?.vendorId) return;
+    setDraft(tx, {
+      accountId: ruleMatch.then_account_id,
+      vendorId: ruleMatch.then_vendor_id ?? "",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- scopedRows/drafts intentionally excluded:
+    // this effect fires once per (expandedTxId, rule_match) pair, not on every unrelated draft edit.
+  }, [suggestionsQuery.data?.rule_match, expandedTxId]);
+
   // FIX-04 — the From/To column names the REAL accounts on each side (QBO register style), not the raw
   // bank description. FROM = the transaction's own bank/cash account (banking.bank_accounts). TO = the
   // categorize draft's chosen side, reusing the SAME draft fields the Category/Payee/Customer columns
@@ -2877,6 +2904,16 @@ export function BankingTransactionsDesignView({
                 }
               />
             </div>
+          ) : null}
+
+          {suggestionsQuery.data?.rule_match ? (
+            <p
+              className="mt-3 border-t border-slate-300 bg-slate-50 pt-2 text-xs text-slate-700"
+              data-testid="banking-rule-match-prefill-note"
+            >
+              Rule match: Category/Payee above were pre-filled from a matching bank-feed rule —
+              review before saving.
+            </p>
           ) : null}
 
           <div className="mt-3 border-t pt-2" style={{ borderColor: "var(--ldt-rule)" }}>

@@ -900,8 +900,21 @@ export function supersedePlaidPendingTransaction(transactionId: string, companyI
   );
 }
 
+// ACCT-F375 (landed 2026-08-12): the backend has always computed a rule-based match here (reusing
+// accounting.banking_rules' own bankingRuleMatches predicate) and returned it as `rule_match` — this
+// is the SAME real rule set (15/16 real, seeded USMCA rules) that banking-rules.engine.ts's
+// applyBankingRulesForTransaction writes onto suggested_vendor_id/suggested_account_id, but until
+// ROUND 16.21 nothing in the frontend ever read `rule_match` off this response. That gap — not a
+// missing/broken rule engine — is why 0 of 364 real USMCA rule matches ever turned into an actual
+// categorization: the UI simply never showed the human anything to accept.
+export type BankTransactionRuleMatch = {
+  rule_id: string;
+  then_account_id: string;
+  then_vendor_id: string | null;
+};
+
 export function getBankingSuggestions(transactionId: string, companyId: string) {
-  return apiRequest<{ suggestions: Array<Record<string, unknown>> }>(
+  return apiRequest<{ suggestions: Array<Record<string, unknown>>; rule_match: BankTransactionRuleMatch | null }>(
     `/api/v1/banking/transactions/${transactionId}/suggestions?${q(companyId)}`
   );
 }
