@@ -1,4 +1,9 @@
 {
+  "10711": {
+    "claimed_at": "2026-09-06",
+    "claimed_by": "cc-2",
+    "purpose": "verify-banking-toolbar-single"
+  },
   "2426": {
     "claimed_at": "2026-08-31",
     "claimed_by": "cursor",
@@ -7993,7 +7998,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1061,
+  "total_claimed": 1062,
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
