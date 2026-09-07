@@ -6227,6 +6227,16 @@
     "claimed_at": "2026-09-07",
     "purpose": "verify-driver-status-lock-blocks-reactivation (orphan-guard wiring, DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION, PR #21326). Guard shipped with the fix commit but never wired into a verify-step -- this step wires its CI execution (--selftest + real run)."
   },
+  "10909": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-settlement-poster-stamps-bill-driver-id (INV-01, CC-1 CURRENT ASSIGNMENT 2026-09-07). Static guard: settlement-bill-payment-posting.service.ts's createBill() call passes driverId: settlement.driver_id, so accounting.bills.driver_id is populated for driver-pay bills instead of staying NULL on every one this poster creates."
+  },
+  "10913": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-customer-transactions-uses-linked-joins-endpoint (VC-06, owner raw findings dump 2026-09-07). Static guard: Customers.tsx's Transaction List invoicesQuery calls the customer-scoped listAllCustomerInvoices (GET /api/v1/customers/:id/invoices, already joins mdata.units/load_stops/driver_finance.driver_settlements) instead of the generic listAllInvoices, so Load#/Settlement#/Truck#/dates/miles stop rendering as dashes."
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
