@@ -1058,6 +1058,17 @@ function rowStatus(daysOverdue: number): RollingLedgerRow["status"] {
  *     (advanced but wire not yet matched -> advance; collected but reserve not yet released ->
  *     reserve) · mdata.loads delivered/confirmed with no invoice at all yet (flagged "not invoiced").
  */
+// CASH-FLOW-ROLLING-LEDGER-SERIAL-QUERIES (ROUND 16.24 item 1, 2026-09-06):
+// live-reproduced (Claude-in-Chrome, real network timing via performance.getEntriesByType) — the
+// GET /api/v1/cash-flow/rolling-ledger response itself took 3.9-5.4s across repeated real loads
+// (this was NOT a client-side loading-state bug; the API call is what's slow). Root cause: this
+// function ran 9 independent, read-only SELECTs one after another via sequential `await`, each
+// paying its own Neon round-trip latency — the 9 round-trips summed instead of overlapping. None
+// of the 9 depend on each other's results (each only needs operatingCompanyId/today); only the
+// final applyRowAdjustments() call genuinely depends on all of them (it overlays adjustments onto
+// the merged `rows`). Fixed by firing all 9 concurrently via Promise.all and processing their
+// results in the SAME original order afterward — output row order and every per-row field are
+// byte-for-byte unchanged, only the wall-clock shape changed (sum of 9 round-trips -> max of 9).
 export async function getRollingLedgerRows(
   client: Queryable,
   operatingCompanyId: string,
@@ -1069,7 +1080,7 @@ export async function getRollingLedgerRows(
 
   // 1) accounting.bills — unpaid, not void/revoked. vendor_id is TEXT (safe-cast v.id::text, never
   // b.vendor_id::uuid — see driver-finance-driver-bills-not-accounting-bills / vendor-credits-vendor-id-safe-cast landmines).
-  const billRows = await client.query<{
+  const billsPromise = client.query<{
     id: string;
     display_id: string | null;
     vendor_name: string;
@@ -1095,28 +1106,12 @@ export async function getRollingLedgerRows(
     `,
     [operatingCompanyId]
   );
-  for (const b of billRows.rows) {
-    const daysOverdue = daysBetween(today, b.due_date);
-    rows.push({
-      row_kind: "expense",
-      type: "Bill",
-      document_kind: "bill",
-      document_id: b.id,
-      document_label: b.display_id ?? b.id.slice(0, 8),
-      counterparty: b.vendor_name,
-      origin_date: b.bill_date ?? b.due_date,
-      due_date: b.due_date,
-      amount_cents: b.remaining_cents,
-      days_overdue: daysOverdue,
-      status: rowStatus(daysOverdue),
-    });
-  }
 
   // 2) driver_finance.driver_settlements — closed and unpaid (same predicate as
   // getDailyPrediction's driver_pay query, kept in sync so this ledger and the daily strip never
   // disagree on which settlements are due).
-  try {
-    const settlementRows = await client.query<{
+  const settlementsPromise = client
+    .query<{
       id: string;
       display_id: string | null;
       driver_name: string;
@@ -1143,35 +1138,20 @@ export async function getRollingLedgerRows(
       ORDER BY due_date ASC
       `,
       [operatingCompanyId]
-    );
-    for (const s of settlementRows.rows) {
-      const daysOverdue = daysBetween(today, s.due_date);
-      rows.push({
-        row_kind: "expense",
-        type: "Driver pay",
-        document_kind: "settlement",
-        document_id: s.id,
-        document_label: s.display_id ?? s.id.slice(0, 8),
-        counterparty: s.driver_name,
-        origin_date: s.created_at,
-        due_date: s.due_date,
-        amount_cents: s.amount_cents,
-        days_overdue: daysOverdue,
-        status: rowStatus(daysOverdue),
+    )
+    .catch((err) => {
+      logger.warn("cash-flow rolling-ledger: driver_settlements subquery failed", {
+        operating_company_id: operatingCompanyId,
+        error_stack: err instanceof Error ? err.stack : String(err),
       });
-    }
-  } catch (err) {
-    logger.warn("cash-flow rolling-ledger: driver_settlements subquery failed", {
-      operating_company_id: operatingCompanyId,
-      error_stack: err instanceof Error ? err.stack : String(err),
+      return { rows: [] as { id: string; display_id: string | null; driver_name: string; created_at: string; due_date: string; amount_cents: number }[] };
     });
-  }
 
   // 3) driver_finance.driver_bills — open (not yet folded into a settlement, not voided). No
   // due_date column exists on this table (checked live schema — never invented one); due = its own
   // created_at date, i.e. due immediately, the honest reading of "open with no separate term".
-  try {
-    const driverBillRows = await client.query<{
+  const driverBillsPromise = client
+    .query<{
       id: string;
       bill_number: string | null;
       driver_name: string;
@@ -1194,33 +1174,18 @@ export async function getRollingLedgerRows(
       ORDER BY db.created_at ASC
       `,
       [operatingCompanyId]
-    );
-    for (const db_ of driverBillRows.rows) {
-      const daysOverdue = daysBetween(today, db_.created_at);
-      rows.push({
-        row_kind: "expense",
-        type: "Driver bill",
-        document_kind: "driver_bill",
-        document_id: db_.id,
-        document_label: db_.bill_number ?? db_.id.slice(0, 8),
-        counterparty: db_.driver_name,
-        origin_date: db_.created_at,
-        due_date: db_.created_at,
-        amount_cents: db_.amount_cents,
-        days_overdue: daysOverdue,
-        status: rowStatus(daysOverdue),
+    )
+    .catch((err) => {
+      logger.warn("cash-flow rolling-ledger: driver_bills subquery failed", {
+        operating_company_id: operatingCompanyId,
+        error_stack: err instanceof Error ? err.stack : String(err),
       });
-    }
-  } catch (err) {
-    logger.warn("cash-flow rolling-ledger: driver_bills subquery failed", {
-      operating_company_id: operatingCompanyId,
-      error_stack: err instanceof Error ? err.stack : String(err),
+      return { rows: [] as { id: string; bill_number: string | null; driver_name: string; created_at: string; amount_cents: number }[] };
     });
-  }
 
   // 4) accounting.expenses — posted, not voided, no matched bank line yet
   // (banking.bank_transactions.matched_expense_id — the real match column, checked live schema).
-  const expenseRows = await client.query<{
+  const expensesPromise = client.query<{
     id: string;
     expense_number: string | null;
     vendor_name: string;
@@ -1248,27 +1213,11 @@ export async function getRollingLedgerRows(
     `,
     [operatingCompanyId]
   );
-  for (const e of expenseRows.rows) {
-    const daysOverdue = daysBetween(today, e.transaction_date);
-    rows.push({
-      row_kind: "expense",
-      type: "Expense — unmatched",
-      document_kind: "expense",
-      document_id: e.id,
-      document_label: e.expense_number ?? e.id.slice(0, 8),
-      counterparty: e.vendor_name,
-      origin_date: e.transaction_date,
-      due_date: e.transaction_date,
-      amount_cents: e.amount_cents,
-      days_overdue: daysOverdue,
-      status: rowStatus(daysOverdue),
-    });
-  }
 
   // 5) finance.loan_amortization_rows — unposted, where a real schedule exists. 0 rows for USMCA
   // today (live-checked) — this correctly renders nothing rather than fabricating a fake schedule.
-  try {
-    const loanRows = await client.query<{
+  const loansPromise = client
+    .query<{
       id: string;
       loan_name: string;
       due_date: string;
@@ -1290,35 +1239,20 @@ export async function getRollingLedgerRows(
       ORDER BY lr.due_date ASC
       `,
       [operatingCompanyId]
-    );
-    for (const l of loanRows.rows) {
-      const daysOverdue = daysBetween(today, l.due_date);
-      rows.push({
-        row_kind: "expense",
-        type: "Loan payment",
-        document_kind: "loan_amortization_row",
-        document_id: l.id,
-        document_label: l.loan_name,
-        counterparty: l.loan_name,
-        origin_date: l.due_date,
-        due_date: l.due_date,
-        amount_cents: l.payment_cents,
-        days_overdue: daysOverdue,
-        status: rowStatus(daysOverdue),
+    )
+    .catch((err) => {
+      logger.warn("cash-flow rolling-ledger: loan_amortization_rows subquery failed", {
+        operating_company_id: operatingCompanyId,
+        error_stack: err instanceof Error ? err.stack : String(err),
       });
-    }
-  } catch (err) {
-    logger.warn("cash-flow rolling-ledger: loan_amortization_rows subquery failed", {
-      operating_company_id: operatingCompanyId,
-      error_stack: err instanceof Error ? err.stack : String(err),
+      return { rows: [] as { id: string; loan_name: string; due_date: string; payment_cents: number }[] };
     });
-  }
 
   // ── INCOME ────────────────────────────────────────────────────────────────
 
   // 1) accounting.invoices — sent, real open balance, NOT factored (factored invoices are tracked
   // via factoring_advances below instead, so a factored invoice's cash isn't double-counted here).
-  const invoiceRows = await client.query<{
+  const invoicesPromise = client.query<{
     id: string;
     display_id: string | null;
     customer_name: string;
@@ -1350,30 +1284,11 @@ export async function getRollingLedgerRows(
     `,
     [operatingCompanyId]
   );
-  for (const inv of invoiceRows.rows) {
-    const due = inv.due_date ?? inv.issue_date ?? today;
-    const daysOverdue = daysBetween(today, due);
-    rows.push({
-      row_kind: "income",
-      type: "Invoice",
-      document_kind: "invoice",
-      document_id: inv.id,
-      document_label: inv.display_id ?? inv.id.slice(0, 8),
-      counterparty: inv.customer_name,
-      origin_date: inv.issue_date ?? due,
-      due_date: due,
-      amount_cents: inv.amount_open_cents,
-      days_overdue: daysOverdue,
-      status: rowStatus(daysOverdue),
-      load_id: inv.load_id,
-      load_number: inv.load_number,
-    });
-  }
 
   // 2) accounting.factoring_advances — advanced but the wire hasn't matched a bank line yet
   // (banking.bank_transactions.matched_advance_id), and separately, collected but the reserve
   // hasn't been released yet (released_at IS NULL).
-  const advanceRows = await client.query<{
+  const advancesPromise = client.query<{
     id: string;
     display_id: string | null;
     vendor_name: string;
@@ -1400,24 +1315,8 @@ export async function getRollingLedgerRows(
     `,
     [operatingCompanyId]
   );
-  for (const a of advanceRows.rows) {
-    const daysOverdue = daysBetween(today, a.advanced_at);
-    rows.push({
-      row_kind: "income",
-      type: "Factor advance",
-      document_kind: "factoring_advance",
-      document_id: a.id,
-      document_label: a.display_id ?? a.id.slice(0, 8),
-      counterparty: a.vendor_name,
-      origin_date: a.advanced_at,
-      due_date: a.advanced_at,
-      amount_cents: a.advance_amount_cents,
-      days_overdue: daysOverdue,
-      status: rowStatus(daysOverdue),
-    });
-  }
 
-  const reserveRows = await client.query<{
+  const reservesPromise = client.query<{
     id: string;
     display_id: string | null;
     vendor_name: string;
@@ -1441,22 +1340,6 @@ export async function getRollingLedgerRows(
     `,
     [operatingCompanyId]
   );
-  for (const r of reserveRows.rows) {
-    const daysOverdue = daysBetween(today, r.collected_at);
-    rows.push({
-      row_kind: "income",
-      type: "Factor reserve",
-      document_kind: "factoring_advance",
-      document_id: r.id,
-      document_label: r.display_id ?? r.id.slice(0, 8),
-      counterparty: r.vendor_name,
-      origin_date: r.collected_at,
-      due_date: r.collected_at,
-      amount_cents: r.reserve_amount_cents,
-      days_overdue: daysOverdue,
-      status: rowStatus(daysOverdue),
-    });
-  }
 
   // 3) mdata.loads — delivered/confirmed, genuinely NOT invoiced at all yet (no proforma AND no
   // real invoice of any status for this load). Status list is the canonical
@@ -1467,7 +1350,7 @@ export async function getRollingLedgerRows(
   // last delivery stop + customer's payment terms (COALESCE to 0 days when no terms are
   // configured — never a fabricated default).
   const notInvoicedStatuses = ["delivered", ...DELIVERY_EVIDENCE_MDATA_STATUSES];
-  const notInvoicedRows = await client.query<{
+  const notInvoicedPromise = client.query<{
     id: string;
     load_number: string;
     customer_name: string;
@@ -1500,6 +1383,162 @@ export async function getRollingLedgerRows(
     `,
     [operatingCompanyId, notInvoicedStatuses]
   );
+
+  // All 9 above are independent reads (each keyed only on operatingCompanyId/today) -- fire them
+  // concurrently instead of paying 9 sequential Neon round-trips, then process in the exact same
+  // order the old sequential-await code did so row order/content is unchanged.
+  const [billRows, settlementRows, driverBillRows, expenseRows, loanRows, invoiceRows, advanceRows, reserveRows, notInvoicedRows] =
+    await Promise.all([
+      billsPromise,
+      settlementsPromise,
+      driverBillsPromise,
+      expensesPromise,
+      loansPromise,
+      invoicesPromise,
+      advancesPromise,
+      reservesPromise,
+      notInvoicedPromise,
+    ]);
+
+  for (const b of billRows.rows) {
+    const daysOverdue = daysBetween(today, b.due_date);
+    rows.push({
+      row_kind: "expense",
+      type: "Bill",
+      document_kind: "bill",
+      document_id: b.id,
+      document_label: b.display_id ?? b.id.slice(0, 8),
+      counterparty: b.vendor_name,
+      origin_date: b.bill_date ?? b.due_date,
+      due_date: b.due_date,
+      amount_cents: b.remaining_cents,
+      days_overdue: daysOverdue,
+      status: rowStatus(daysOverdue),
+    });
+  }
+
+  for (const s of settlementRows.rows) {
+    const daysOverdue = daysBetween(today, s.due_date);
+    rows.push({
+      row_kind: "expense",
+      type: "Driver pay",
+      document_kind: "settlement",
+      document_id: s.id,
+      document_label: s.display_id ?? s.id.slice(0, 8),
+      counterparty: s.driver_name,
+      origin_date: s.created_at,
+      due_date: s.due_date,
+      amount_cents: s.amount_cents,
+      days_overdue: daysOverdue,
+      status: rowStatus(daysOverdue),
+    });
+  }
+
+  for (const db_ of driverBillRows.rows) {
+    const daysOverdue = daysBetween(today, db_.created_at);
+    rows.push({
+      row_kind: "expense",
+      type: "Driver bill",
+      document_kind: "driver_bill",
+      document_id: db_.id,
+      document_label: db_.bill_number ?? db_.id.slice(0, 8),
+      counterparty: db_.driver_name,
+      origin_date: db_.created_at,
+      due_date: db_.created_at,
+      amount_cents: db_.amount_cents,
+      days_overdue: daysOverdue,
+      status: rowStatus(daysOverdue),
+    });
+  }
+
+  for (const e of expenseRows.rows) {
+    const daysOverdue = daysBetween(today, e.transaction_date);
+    rows.push({
+      row_kind: "expense",
+      type: "Expense — unmatched",
+      document_kind: "expense",
+      document_id: e.id,
+      document_label: e.expense_number ?? e.id.slice(0, 8),
+      counterparty: e.vendor_name,
+      origin_date: e.transaction_date,
+      due_date: e.transaction_date,
+      amount_cents: e.amount_cents,
+      days_overdue: daysOverdue,
+      status: rowStatus(daysOverdue),
+    });
+  }
+
+  for (const l of loanRows.rows) {
+    const daysOverdue = daysBetween(today, l.due_date);
+    rows.push({
+      row_kind: "expense",
+      type: "Loan payment",
+      document_kind: "loan_amortization_row",
+      document_id: l.id,
+      document_label: l.loan_name,
+      counterparty: l.loan_name,
+      origin_date: l.due_date,
+      due_date: l.due_date,
+      amount_cents: l.payment_cents,
+      days_overdue: daysOverdue,
+      status: rowStatus(daysOverdue),
+    });
+  }
+
+  for (const inv of invoiceRows.rows) {
+    const due = inv.due_date ?? inv.issue_date ?? today;
+    const daysOverdue = daysBetween(today, due);
+    rows.push({
+      row_kind: "income",
+      type: "Invoice",
+      document_kind: "invoice",
+      document_id: inv.id,
+      document_label: inv.display_id ?? inv.id.slice(0, 8),
+      counterparty: inv.customer_name,
+      origin_date: inv.issue_date ?? due,
+      due_date: due,
+      amount_cents: inv.amount_open_cents,
+      days_overdue: daysOverdue,
+      status: rowStatus(daysOverdue),
+      load_id: inv.load_id,
+      load_number: inv.load_number,
+    });
+  }
+
+  for (const a of advanceRows.rows) {
+    const daysOverdue = daysBetween(today, a.advanced_at);
+    rows.push({
+      row_kind: "income",
+      type: "Factor advance",
+      document_kind: "factoring_advance",
+      document_id: a.id,
+      document_label: a.display_id ?? a.id.slice(0, 8),
+      counterparty: a.vendor_name,
+      origin_date: a.advanced_at,
+      due_date: a.advanced_at,
+      amount_cents: a.advance_amount_cents,
+      days_overdue: daysOverdue,
+      status: rowStatus(daysOverdue),
+    });
+  }
+
+  for (const r of reserveRows.rows) {
+    const daysOverdue = daysBetween(today, r.collected_at);
+    rows.push({
+      row_kind: "income",
+      type: "Factor reserve",
+      document_kind: "factoring_advance",
+      document_id: r.id,
+      document_label: r.display_id ?? r.id.slice(0, 8),
+      counterparty: r.vendor_name,
+      origin_date: r.collected_at,
+      due_date: r.collected_at,
+      amount_cents: r.reserve_amount_cents,
+      days_overdue: daysOverdue,
+      status: rowStatus(daysOverdue),
+    });
+  }
+
   for (const l of notInvoicedRows.rows) {
     const origin = l.delivery_date ?? today;
     const termsDays = l.terms_days ?? 0;
