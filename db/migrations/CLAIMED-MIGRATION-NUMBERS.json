@@ -816,6 +816,11 @@
       "claimed_by": "cursor",
       "claimed_at": "2026-09-06",
       "purpose": "WORM trigger for accounting.cash_flow_row_adjustments (added in 202613860000 without WORM protection). Idempotent CREATE TRIGGER IF NOT EXISTS via DO block. RG-16 guard sweep."
+    },
+    "202613900200": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-06",
+      "purpose": "Petty Cash account feature (owner request 2026-09-06): additive is_petty_cash boolean on banking.bank_accounts + petty_cash_funding transfer_type CHECK + PETTY_CASH_CHECK_TRANSFER_ENABLED feature flag (default OFF). When a check is generated and the flag is ON, the check amount posts a transfer from the source bank account to the petty cash account."
     }
   },
   "202613590001": {
@@ -842,10 +847,5 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "additive: accounting.cash_flow_row_adjustments gains a bigserial seq column. Found live-testing 202613860000's own read-model overlay: two adjustments on the same row created inside ONE transaction share an identical now() timestamp (frozen per-transaction in Postgres), making the DISTINCT ON ... ORDER BY created_at DESC latest-adjustment-wins tie-break non-deterministic. seq is monotonic regardless of transaction timing; the overlay query re-orders on it instead."
-  },
-  "202613900200": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-06",
-    "purpose": "Petty Cash account feature (owner request 2026-09-06): additive is_petty_cash boolean on banking.bank_accounts + petty_cash_funding transfer_type CHECK + PETTY_CASH_CHECK_TRANSFER_ENABLED feature flag (default OFF). When a check is generated and the flag is ON, the check amount posts a transfer from the source bank account to the petty cash account."
   }
 }
