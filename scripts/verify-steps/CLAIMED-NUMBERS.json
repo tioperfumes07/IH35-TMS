@@ -5967,6 +5967,11 @@
     "claimed_at": "2026-09-07",
     "purpose": "verify-factoring-vendor-mirror-sync"
   },
+  "10600": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-live-board-includes-delivered-pending-docs"
+  },
   "10605": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
@@ -6051,6 +6056,21 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-07",
     "purpose": "verify-customers-vendors-sample-data-quarantine"
+  },
+  "10765": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-customer-activity-load-number-join"
+  },
+  "10777": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-factoring-chargebacks-fees-customer-uuid-cast"
+  },
+  "10781": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-vendor-customer-merge"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -8053,20 +8073,5 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
-  },
-  "10765": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-07",
-    "purpose": "verify-customer-activity-load-number-join"
-  },
-  "10777": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-07",
-    "purpose": "verify-factoring-chargebacks-fees-customer-uuid-cast"
-  },
-  "10600": {
-    "claimed_by": "cursor",
-    "claimed_at": "2026-09-07",
-    "purpose": "verify-live-board-includes-delivered-pending-docs"
   }
 }
