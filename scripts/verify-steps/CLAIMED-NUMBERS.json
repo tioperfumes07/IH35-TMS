@@ -1,9 +1,4 @@
 {
-  "10711": {
-    "claimed_at": "2026-09-06",
-    "claimed_by": "cc-2",
-    "purpose": "verify-banking-toolbar-single"
-  },
   "2426": {
     "claimed_at": "2026-08-31",
     "claimed_by": "cursor",
@@ -5957,10 +5952,20 @@
     "claimed_at": "2026-09-06",
     "purpose": "verify-factoring-layout-tabs-first"
   },
+  "10596": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-factoring-register-shared-manifest"
+  },
   "10597": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "verify-anomaly-detector-distinct-orderby (ROUND 16.4: detectDvirMajorOpen + detectInactiveDriverAssignment threw 42P10 SELECT DISTINCT/ORDER BY mismatch, cascading current-transaction-is-aborted across every rule/company; fixed + SAVEPOINT-isolated both loops)"
+  },
+  "10598": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-factoring-vendor-mirror-sync"
   },
   "10605": {
     "claimed_by": "claude",
@@ -6006,6 +6011,46 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "verify-dispatch-planner-active-driver-scope"
+  },
+  "10681": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-banking-match-panel-layout-and-datepicker-boxinbox"
+  },
+  "10693": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-banking-home-virtual-tile-routing"
+  },
+  "10701": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-company-settlement-itemized-by-load"
+  },
+  "10705": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-fleet-sample-data-quarantine"
+  },
+  "10707": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-dispatch-planner-safety-entitylink"
+  },
+  "10711": {
+    "claimed_at": "2026-09-06",
+    "claimed_by": "cc-2",
+    "purpose": "verify-banking-toolbar-single"
+  },
+  "10729": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-factoring-submit-queue-uses-authoritative-assignment"
+  },
+  "10741": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-customers-vendors-sample-data-quarantine"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -8008,45 +8053,5 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
-  },
-  "10596": {
-    "claimed_by": "cursor",
-    "claimed_at": "2026-09-06",
-    "purpose": "verify-factoring-register-shared-manifest"
-  },
-  "10681": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-06",
-    "purpose": "verify-banking-match-panel-layout-and-datepicker-boxinbox"
-  },
-  "10693": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-06",
-    "purpose": "verify-banking-home-virtual-tile-routing"
-  },
-  "10701": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-07",
-    "purpose": "verify-company-settlement-itemized-by-load"
-  },
-  "10705": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-07",
-    "purpose": "verify-fleet-sample-data-quarantine"
-  },
-  "10707": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-06",
-    "purpose": "verify-dispatch-planner-safety-entitylink"
-  },
-  "10729": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-07",
-    "purpose": "verify-factoring-submit-queue-uses-authoritative-assignment"
-  },
-  "10598": {
-    "claimed_by": "cursor",
-    "claimed_at": "2026-09-07",
-    "purpose": "verify-factoring-vendor-mirror-sync"
   }
 }
