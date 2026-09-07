@@ -968,3 +968,22 @@ GUARD: scripts/verify-settlement-lines-backfill-resolves-accounts.mjs (verify-st
 FOUND, NOT GUESSED A FIX FOR: the remaining 42 unresolved deduction rows are ALL deduction_type='escrow' (distinct from 'escrow_contribution', which is now 14/14) — a pre-existing gap in the ORIGINAL materializer's own deduction branching (my extraction is behavior-preserving, didn't create this). classifyDeductionTarget's own ESCROW_TYPES set already treats 'escrow' as a driver's-own-liability target in the real JE-posting path (settlement-payrun-close.service.ts skips it entirely, target==='escrow' → continue), but nothing resolves what account it should carry on settlement_lines. This needs your read on whether 'escrow'-type deductions are a legacy alias that should route through resolveDriverEscrowLiabilityAccount like escrow_contribution, or represent a genuinely different money movement (an escrow return/withdrawal) I shouldn't assume — not fixed here, correctly not guessed at.
 
 "settlements 8/10 -> 10/10" note: docs/module-completion/settlements.json is still the same stale (2026-08-29) doc flagged in my last report — this PR doesn't touch it; the module-completion scoreboard needs a real regeneration pass separate from this money-linkage work, and I'm not editing that JSON by hand without a fresh audit of every one of its 10 items.
+
+---
+
+CC-3 | ESCROW-ALIAS-RETYPE DONE | 88a794ebf3 | live pending (Render batches deploys) | before 46 'escrow' → after 0 · deduction posting_account_id 79/121 → 121/121 (100%) | PR #21191 · guard 10797 4/4
+
+Deadline was 02:15Z — shipped and live-verified before it.
+
+BEFORE -> AFTER (Neon, real apply):
+  deduction_type='escrow' count: 46 -> 0
+  deduction_type='escrow_contribution' count: 0 -> 46
+  deduction posting_account_id resolved: 79/121 -> 121/121
+
+Checked the existing audited retype path (retype-settlement-deduction.service.ts) before reaching for a raw UPDATE — it requires the deduction's settlement to be 'open'; live-verified all 46 rows' settlements are closed (several already POSTED for real earlier this session), so that path structurally refuses every one of them. A scoped, guarded, idempotent UPDATE (exactly as directed) was the only correct tool — no dollar amount, settlement total, or JE changes; every retyped row got a real audit-log entry.
+
+GUARD verify-escrow-deduction-alias-retyped.mjs (verify-step 10797) is the literal mutant-revert you asked for: pre-apply live run FAILed (46 rows still 'escrow'), post-apply live run PASSed (0 remain) — proven both ways, not just asserted. --selftest 4/4 mutations caught.
+
+FULL RESULT: with this retype + the immediate re-run of the posting_account_id backfill sweep (PR #21183), every settlement_lines line_type in USMCA now shows 100% resolved: deadhead_pay 54/54, earnings 54/54, escrow_contribution 14/14, extra_pay 1/1, reimbursement 69/69, deduction 121/121. The linkage gap from your ROUND 16.22 box is now fully closed, not partially.
+
+Still open, unrelated to this box: docs/module-completion/settlements.json needs a real regeneration pass to reflect current live state — flagged twice now, not touched by hand without a fresh full-item audit.
