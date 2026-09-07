@@ -241,7 +241,13 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
               SELECT
                 i.id::text AS invoice_id,
                 i.display_id AS invoice_display_id,
-                i.customer_id::text AS customer_id,
+                -- ACCT-F26015 (owner, 2026-09-07): this was i.customer_id::text, but customerFilter
+                -- below compares it against $N::uuid -- "operator does not exist: text = uuid",
+                -- 500ing this endpoint every time a customer_id filter was passed (caught live while
+                -- re-verifying the ACCT-F26014 payments.status fix on the same customer profile
+                -- page). Kept as uuid here, matching the filter own cast, same as the sibling
+                -- recourse-pipeline route LATERAL join (i.customer_id, no cast) just above.
+                i.customer_id,
                 c.customer_name,
                 i.source_load_id::text AS load_id
               FROM accounting.invoices i

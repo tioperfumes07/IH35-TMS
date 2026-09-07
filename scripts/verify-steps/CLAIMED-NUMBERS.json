@@ -8058,5 +8058,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-07",
     "purpose": "verify-customer-activity-load-number-join"
+  },
+  "10777": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-factoring-chargebacks-fees-customer-uuid-cast"
   }
 }
