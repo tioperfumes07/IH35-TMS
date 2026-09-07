@@ -241,6 +241,24 @@ function isWriteRole(role: string): boolean {
   return role === "Owner" || role === "Administrator" || role === "Manager" || role === "Accountant" || role === "Dispatcher";
 }
 
+// FAC-03 (2026-09-07): PR #21157 (ACCT-F26012) quarantined 11 existing seat-test customer rows
+// out of LIST reads (is_sample_data IS NOT TRUE) but only ever auto-FLAGGED is_sample_data on
+// create — the INSERT itself still succeeded, so a new fixture row (another "P23-SMOKE-..." /
+// "CC3-..." / "TEST ..." named customer) could still land live in USMCA, just pre-quarantined.
+// mdata.vendors already has a hard reject-on-create for its own fixture pattern (VEND-3,
+// isTestVendorFixtureName / TEST-VENDOR); customers had no equivalent. This closes that parity
+// gap using the SAME detector already used for the quarantine + auto-flag (single source of
+// truth, no new pattern invented) — reused for create AND rename, matching VEND-3's scope.
+const IS_PROD_ENV = process.env.NODE_ENV === "production";
+
+function sendSampleDataCustomerFixtureRejected(reply: FastifyReply) {
+  return reply.code(422).send({
+    error: "mdata_customer_sample_data_fixture_rejected",
+    message: "Customer names matching a test/demo/sample or seat-agent fixture pattern are not allowed in production",
+    fieldErrors: { name: "Test/demo/sample fixture names are not allowed in production" },
+  });
+}
+
 function canReadTaxId(role: string): boolean {
   return role === "Owner" || role === "Administrator";
 }
@@ -685,6 +703,13 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const b = parsedBody.data;
     const normalizedName = repairUtf8Mojibake(b.legal_name ?? b.name ?? "");
+    // FAC-03 reject-on-create: block before any DB work, same place VEND-3 blocks in
+    // vendors.routes.ts's create handler. An explicit is_sample_data:true from the caller does
+    // NOT bypass this — that field only controls display/quarantine, not whether creation is
+    // allowed; a caller that knows the row is a fixture should not be creating it in prod at all.
+    if (IS_PROD_ENV && looksLikeSampleDataName(normalizedName)) {
+      return sendSampleDataCustomerFixtureRejected(reply);
+    }
     const normalizedCode = b.code ?? b.customer_code;
     const normalizedCustomerType = normalizeCustomerType(b.customer_type);
     // Resolve the operating company BEFORE the dedup check so the check is entity-scoped (G6-3).
@@ -1006,6 +1031,12 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       return reply.code(403).send({ error: "credit_limit_forbidden" });
     }
     const patchName = b.legal_name ?? b.name ?? null;
+    // FAC-03 reject-on-rename: mirrors the create-path guard above (and VEND-3's own
+    // create+rename scope) — a real customer must not be renamed INTO a fixture-looking name
+    // in production either. Only fires when the caller is actually changing the name.
+    if (IS_PROD_ENV && patchName != null && looksLikeSampleDataName(patchName)) {
+      return sendSampleDataCustomerFixtureRejected(reply);
+    }
     // Resolve the caller's operating company up front so the dedup check is entity-scoped (G6-3).
     const patchScopedCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
       resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id)
