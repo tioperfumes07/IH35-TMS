@@ -36,6 +36,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
         "load", "unit", "driver_name", "pu_date", "del_date", "status", "revenue",
         "late_fee", "lumper", "fuel", "repairs_maintenance", "other",
         "short_miles", "rate_loaded", "loaded_pay", "empty_miles", "rate_empty", "deadhead_pay", "gross", "margin",
+        "settlement",
       ]).default("load"),
       sort_direction: z.enum(["asc", "desc"]).default("desc"),
       /** LOAD-COSTS-COMPLETE item (3): voided (cancelled) loads hidden by default. */
@@ -70,6 +71,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
         deadhead_pay: "CASE WHEN COALESCE(dpa.has_deadhead_miles,false) THEN COALESCE(dpa.deadhead_pay_cents,0) END",
         gross: "COALESCE(dp.driver_pay_cents,0)",
         margin: "(l.rate_total_cents-COALESCE(ec.expense_cents,0)-COALESCE(bc.bill_cents,0)-COALESCE(dp.driver_pay_cents,0))",
+        settlement: "si.settlement_display_id",
       } as const;
       const sortSql = `${sortColumns[parsed.data.load_costs_sort]} ${parsed.data.sort_direction.toUpperCase()} NULLS LAST, l.load_number ASC`;
       const result = await client.query(
@@ -163,6 +165,25 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
               AND db.status <> 'void'
               AND db.team_driver_id IS NULL
             ORDER BY db.load_id, db.created_at DESC
+         -- NEW-08 (owner raw findings 2026-09-07): "every load leaving Laredo must be assigned a
+         -- settlement number the moment it's created". That assignment already happens at booking
+         -- time (SET-01/SET-02, book-load.service.ts) -- driver_finance.driver_settlements.display_id
+         -- (format S-<n>) is written into driver_finance.settlement_lines via source_driver_bill_id
+         -- inside the SAME transaction that creates the load's driver bill. This CTE surfaces that
+         -- already-real linkage as a board column; it does not create any new settlement logic.
+         -- DISTINCT ON keeps one settlement per load even if a load's bill carries >1 settlement_line
+         -- row (never expected today, but the board must not duplicate a load row if it ever does).
+         ), settlement_info AS (
+           SELECT DISTINCT ON (db.load_id)
+                  db.load_id,
+                  ds.display_id AS settlement_display_id,
+                  ds.id::text AS settlement_id
+             FROM driver_finance.driver_bills db
+             JOIN driver_finance.settlement_lines sl ON sl.source_driver_bill_id = db.id
+             JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
+            WHERE db.operating_company_id = $1::uuid
+              AND db.load_id IS NOT NULL
+            ORDER BY db.load_id, db.created_at DESC
          ), driver_pay_amounts AS (
            SELECT db.load_id,
                   COALESCE(SUM(db.loaded_pay_cents), 0)::bigint AS loaded_pay_cents,
@@ -241,10 +262,12 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                 dpd.empty_miles::text AS empty_miles,
                 dpd.rate_empty_cents::text AS rate_empty_cents,
                 COALESCE(dpa.loaded_pay_cents, 0)::text AS loaded_pay_cents,
-                CASE WHEN COALESCE(dpa.has_deadhead_miles, false) THEN COALESCE(dpa.deadhead_pay_cents, 0)::text ELSE NULL END AS deadhead_pay_cents
+                CASE WHEN COALESCE(dpa.has_deadhead_miles, false) THEN COALESCE(dpa.deadhead_pay_cents, 0)::text ELSE NULL END AS deadhead_pay_cents,
+                si.settlement_display_id, si.settlement_id
            FROM views.dispatch_load_with_driver_status l
            LEFT JOIN expense_costs ec ON ec.load_id=l.id LEFT JOIN bill_costs bc ON bc.load_id=l.id LEFT JOIN repair_costs rm ON rm.load_id=l.id LEFT JOIN driver_pay dp ON dp.load_id=l.id
            LEFT JOIN category_costs cb ON cb.load_id=l.id LEFT JOIN driver_pay_detail dpd ON dpd.load_id=l.id LEFT JOIN driver_pay_amounts dpa ON dpa.load_id=l.id
+           LEFT JOIN settlement_info si ON si.load_id=l.id
            LEFT JOIN mdata.customers c ON c.id=l.customer_id AND c.operating_company_id=l.operating_company_id
            -- W-FIX-3b (loads.routes.ts, same rule): mdata.units has owner_company_id /
            -- currently_leased_to_company_id, never operating_company_id. mdata.loads has NO

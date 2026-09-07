@@ -43,6 +43,10 @@ type BoardRow = {
   rate_empty_cents: string | null;
   /** null for the same reason as empty_miles -- see honesty rule above. */
   deadhead_pay_cents: string | null;
+  /** NEW-08: the real driver_finance.driver_settlements this load is already linked to (assigned at
+   * booking time, SET-01/SET-02) -- null only for a load with no driver bill yet (e.g. unassigned). */
+  settlement_display_id: string | null;
+  settlement_id: string | null;
 };
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const fmt = (c: number) => money.format(c / 100);
@@ -71,9 +75,17 @@ const NUM = "text-center whitespace-nowrap [font-variant-numeric:tabular-nums]";
 // gets it uniformly; no longer set per-cell here. The Gross cell's extra .tot-c shade (#EDF1F5)
 // distinguishing it from the rest of the row is not reproducible per-cell in the new column-keyed
 // model (footerCells has no per-cell background override) — an accepted, honest simplification.
-const CLOSED = ["cancelled", "abandoned", "closed", "paid", "driver_walkoff", "driver_no_show"];
+// NEW-09 (owner raw findings 2026-09-07): "unit 168 / Mecor / a load already invoiced should not
+// still be sitting in Load Costs as an open item -- it belongs in resettlement". Live-verified
+// (load 13569, unit T168): a load reaches status='invoiced' only once accounting.invoices has a
+// real, non-voided row for it (unique partial index ux_invoices_source_load_active enforces one
+// active invoice per load) -- at that point its cost-tracking lifecycle on THIS board is done, same
+// as 'paid'. `invoiced` used to sit in DELIVERED (open), which made an already-invoiced load keep
+// showing under both "Delivered - open" and "All open" forever. Moved to CLOSED so it stops
+// appearing as open; the load stays fully visible under "All" and its own detail page.
+const CLOSED = ["cancelled", "abandoned", "closed", "paid", "invoiced", "driver_walkoff", "driver_no_show"];
 const MOTION = ["draft", "booked", "planned", "unassigned", "assigned", "assigned_not_dispatched", "dispatched", "at_pickup", "in_transit", "at_delivery"];
-const DELIVERED = ["delivered", "delivered_pending_docs", "completed_docs_received", "invoiced"];
+const DELIVERED = ["delivered", "delivered_pending_docs", "completed_docs_received"];
 export const LOAD_COSTS_ELEMENT_MANIFEST = [
   "load-costs-shell", "load-costs-back", "load-costs-title", "load-costs-topbar",
   "load-costs-pill-in_motion", "load-costs-pill-delivered_open", "load-costs-pill-all_open", "load-costs-pill-this_week",
@@ -586,6 +598,13 @@ export function LoadCostsBoardPage() {
     // Kept as an opt-in extra (never in the owner's exact default list) rather than deleted --
     // additive-only law (Rule 07): hidden by default, still reachable from the gear chooser.
     { key: "margin", label: "Margin", testId: "col-margin", sortable: true, className: NUM, defaultHidden: true, sortValue: r => rowMargin(r), render: r => Number(r.revenue_cents) ? `${(rowMargin(r) / Number(r.revenue_cents) * 100).toFixed(1)}%` : "—" },
+    // NEW-08 (owner raw findings 2026-09-07): "every load leaving Laredo must be assigned a
+    // settlement number the moment it's created -- Load Costs needs a Settlement # column." The
+    // assignment already happens at booking (SET-01/SET-02); this surfaces it. Kept opt-in/
+    // defaultHidden like Margin -- spec 09-04-2026 §5.1 locks the exact 19-column default set and
+    // additive-only law (Rule 07) forbids silently expanding it, so a net-new column joins the same
+    // way Margin did rather than being forced into the default view.
+    { key: "settlement", label: "Settlement #", testId: "col-settlement", sortable: true, className: "whitespace-nowrap", defaultHidden: true, sortValue: r => r.settlement_display_id ?? "", render: r => r.settlement_id ? <Link className="font-semibold text-slate-700 underline" to={`/driver-finance/settlements?settlement_id=${r.settlement_id}`}>{r.settlement_display_id}</Link> : "—" },
   ];
   // Spec §2.2 "the piece the owner keeps pointing at" -- a second header row banding the 19 columns.
   // Hex values are the design law's own literal tokens (--grp-bg / --rev / --cost / --pay), applied
