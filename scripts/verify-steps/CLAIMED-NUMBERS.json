@@ -8038,5 +8038,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "verify-dispatch-planner-safety-entitylink"
+  },
+  "10729": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-factoring-submit-queue-uses-authoritative-assignment"
   }
 }
