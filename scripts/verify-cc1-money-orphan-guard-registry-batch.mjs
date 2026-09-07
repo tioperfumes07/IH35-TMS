@@ -58,6 +58,7 @@ const REQUIRED = [
   "verify-reports-gl-je-final-leaves.mjs",
   "verify-reports-gl-je-required-honest.mjs",
   "verify-reverse-link-inline-surface-linkage.mjs",
+  "verify-round1621-rule-match-prefill.mjs",
   "verify-safety-required-money-honest.mjs",
   "verify-scenario-ap-insurance-honest.mjs",
   "verify-settlement-inline-surface-linkage.mjs",
