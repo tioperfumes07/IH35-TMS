@@ -244,6 +244,24 @@ async function handleInvoiceBulk(ctx: BulkPerEntityContext<InvoiceBulkPayload>):
     if (updateRes.rows.length === 0) {
       return { ok: false, code: "E_UPDATE_FAILED", message: "Invoice mark factored failed" };
     }
+    // CRITICAL-AR-TIEOUT-POSTED-WITHOUT-POSTING (2026-09-07, live healthz ledger.ar_tieout +
+    // ledger.posted_without_posting both RED, $27,722.41 variance): unlike its set_status/mark_sent
+    // siblings above, this branch can ALSO carry a draft invoice straight to a real A/R state (the
+    // CASE'd status transition two statements up) but never called either poster -- 10 real USMCA
+    // invoices reached status='sent' with zero accounting.journal_entry_postings rows this way.
+    // Same fix as GO-0014 event2-silent-on-issued-invoices above: reuse the SAME two idempotent
+    // helpers the sibling actions already call, never a new GL poster or hand-written JE.
+    if (POSTABLE_INVOICE_STATUSES.has(String((updateRes.rows[0] as Record<string, unknown>).status))) {
+      await postInvoiceGlAndAudit(client, { invoiceId: id, operatingCompanyId, actorUserId });
+      if (oldRow.source_load_id) {
+        await fireRevrecLatchOnInvoiceIssued(client as object, {
+          operating_company_id: operatingCompanyId,
+          source_load_id: String(oldRow.source_load_id),
+          actor_user_id: actorUserId,
+          invoice_id: id,
+        });
+      }
+    }
     auditPayload.changes = buildPatchChanges(
       { factoring_status: "submitted", factoring_advance_id: factoredPayload.batch_id },
       oldRow,
