@@ -740,6 +740,27 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
           [parsedBody.data.email, parsedBody.data.role, firstName, lastName, passwordHash, inheritedCompanyId]
         );
         const row = res.rows[0];
+
+        // USER-S06 (2026-09-07, live P0) -- default_company_id alone does NOT grant visibility. The
+        // company picker (GET /org/me/companies) and /org/me/current-company both source their
+        // available-companies list strictly from org.user_company_access (loadAccessibleCompanies /
+        // company-context.routes.ts), with a bypass ONLY for role === 'Owner'. Every non-Owner user
+        // created here got default_company_id stamped but no matching grant row, so the picker had
+        // nothing to show them -- "select an operating company" with an empty list, no way to proceed.
+        // Live-confirmed on prod 2026-09-07: 6 real users silently broken since 2026-06-10 (including
+        // the owner's own second login, jorge@ih35trucking.net) before this fix + a one-time backfill.
+        // Owner role is exempt in loadAccessibleCompanies's `$2::text = 'Owner'` branch, but granting it
+        // anyway is harmless (ON CONFLICT DO NOTHING) and keeps this one INSERT unconditional -- no
+        // branch to regress later if that exemption ever changes.
+        await client.query(
+          `
+            INSERT INTO org.user_company_access (user_id, company_id, granted_by_user_id)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (user_id, company_id) DO NOTHING
+          `,
+          [row.id, inheritedCompanyId, authUser.uuid]
+        );
+
         if (setupToken) {
           await client.query(
             `
