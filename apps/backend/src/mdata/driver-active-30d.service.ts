@@ -9,6 +9,18 @@
  *
  * Mass write sets status + deactivated_at only — does NOT deactivate identity.users
  * (roster Inactive ≠ lock out of PWA). Manual /reactivate remains the operator path.
+ *
+ * DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION (owner urgent report 2026-09-07): live-confirmed on
+ * audit.row_changes that this job's REACTIVATE branch flips 70-91 USMCA drivers Inactive->Active on
+ * many single nights (91 on 2026-09-01 alone) — it could not tell the difference between "I
+ * auto-deactivated this driver for inactivity" and "the owner deliberately deactivated this driver
+ * (manually in the TMS app, or in Samsara) for a real business reason," so ANY later touch to a
+ * stale load's updated_at (an unrelated backfill/reconcile job, not the driver doing anything) was
+ * enough to silently undo the owner's action. `status_locked_at` (migration 202613980000) is the
+ * fix: non-NULL means an owner-sourced deactivation is in effect, and this job's reactivate branch
+ * must never touch that row regardless of the activity predicate. The auto-deactivate branch below
+ * intentionally never SETS this lock — a driver THIS job deactivates for pure inactivity stays
+ * eligible for this job's own future reactivation, unchanged from today.
  */
 import type { PoolClient } from "pg";
 
@@ -99,6 +111,7 @@ export async function applyDriverActive30dRule(
        WHERE d.archived_at IS NULL
          AND d.status = 'Inactive'::mdata.driver_status
          AND d.deactivated_at IS NOT NULL
+         AND d.status_locked_at IS NULL
          AND ($2::uuid IS NULL OR d.operating_company_id = $2::uuid)
          AND ${ACTIVITY_PREDICATE}
       RETURNING d.id

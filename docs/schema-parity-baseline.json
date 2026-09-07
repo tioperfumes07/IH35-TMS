@@ -7822,6 +7822,8 @@
       "sentri_member",
       "settlement_auto_pay_enabled",
       "status",
+      "status_locked_at",
+      "status_locked_reason",
       "termination_date",
       "twic_card_number",
       "twic_expiration",
