@@ -8103,5 +8103,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-07",
     "purpose": "verify-rolling-ledger-queries-parallel"
+  },
+  "10821": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-no-duplicate-settlement-lines"
   }
 }
