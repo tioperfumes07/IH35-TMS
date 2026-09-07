@@ -1614,3 +1614,57 @@ over the 09-05 law.
 
 Both ROUND 16.19 tasks now closed on this seat (Safety EntityLink half +
 this one). Zero open CC-2-authored PRs.
+
+## CC-2 | ACC-20 DONE | 2026-09-06
+
+PR #21173 merged, sha 4a5d3e7263. Closed the code-path check this seat
+had left UNVERIFIED since 09-05: "no automatic un-categorize in either
+direction when a match is reversed" (owner-defect-register).
+
+Found the real gap by reading the actual code (not guessed): when a
+MATCHED document (bill/load/settlement/expense) is voided, void.service.ts's
+shared BANK_TX_UNMATCH_RESET_SQL correctly clears every matched_*_id
+pointer and every categorization_* field, but never touched review_state
+-- so the bank transaction stayed stuck at review_state='matched' forever,
+which match.service.ts's own confirm-match idempotency guard then treats
+as a PERMANENT refusal to ever re-match that transaction again. The
+sibling manual /unmatch route (ReconciliationWorkspace's "Unmatch
+selected") already did this correctly -- the two release paths had
+silently diverged.
+
+Live evidence gathered before fixing: 167 real review_state='matched'
+rows exist today (bypass_rls, all 3 entities), 0 currently orphaned -- but
+`banking.reconciliation_matches` has ZERO rows from either void-cascade
+unmatch function ever, meaning that code path has literally never fired
+in production. Per this session's own false-empty doctrine, the clean
+live count is NOT proof the code is correct -- it's proof the path is
+untested. Confirmed the gap is real and reachable via direct source read
+of match.service.ts's idempotency guard.
+
+FIX: one line -- `review_state = 'for_review'` added to the shared reset
+SQL, matching the sibling route exactly. No schema change, no GL/JE
+impact (the JE reversal already happens earlier in postVoidReversal).
+
+GUARD: scripts/verify-acc20-void-unmatch-resets-review-state.mjs, --selftest
+1/1. Extended void-linkage-integrity-law.test.ts with 2 new cases.
+Confirmed the 3 other guards already touching this SQL block
+(uncategorized-kpi-parity, settlement-void-cascade, undo-categorization-
+reverses-je) all still pass -- no regression to their pinned shape.
+
+LIVE PROOF: guard + selftest green, 7/7 unit tests, tsc clean,
+1121/1128 apps/backend/src/accounting+banking tests (7 pre-existing
+unrelated maintenance-posting failures reproduced identically with this
+diff stashed out, confirmed before touching anything), full
+money-pr-local-gate PASS.
+
+REMAINING, honestly: Live=UNVERIFIED because the defect has never fired
+in prod (0 historical void-cascade unmatch events) -- there is no live
+"before" bad row to re-confirm as fixed today. Real live proof is the
+NEXT actual document void of a matched bank transaction, whenever it
+naturally occurs. Also: ACC-20's original text named a second half ("the
+match-flow audit already in 02-MATCH-FLOW-AUDIT") -- not investigated in
+this pass, scoped strictly to the review_state gap found and fixed here.
+
+ACC-20 moves from PENDING to CLOSED on the 5-day register (PENDING-REGISTER-5-DAYS-VERIFIED-2026-09-05.md
+line 113, PENDING-REGISTER-5DAY-2026-09-05.md line 113 — leaving those
+docs as history per never-delete; this note is the current status).
