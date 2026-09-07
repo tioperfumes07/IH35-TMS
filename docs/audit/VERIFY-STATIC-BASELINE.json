@@ -3,7 +3,7 @@
   "measured_at": "2026-09-01T19:30Z",
   "measured_sha": "23a5776217",
   "measured_branch": "origin/main",
-  "total_failures": 338,
+  "total_failures": 341,
   "breakdown": {
     "selftest_failed": "see note",
     "registry_threshold": "see note",
@@ -348,6 +348,9 @@
     "verify-wo-cancel-reason-combobox.mjs",
     "verify-wo-console-list-uses-paritytable.mjs",
     "verify-work-order-queries-exclude-voided.mjs",
-    "verify-work-orders-console-no-dup-search.mjs"
+    "verify-work-orders-console-no-dup-search.mjs",
+    "verify-bank-fee-recovery-role-bound.mjs",
+    "verify-factoring-chargeback-invoice-customer-reverse.mjs",
+    "verify-no-swallow-on-money-paths.mjs"
   ]
 }

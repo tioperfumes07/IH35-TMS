@@ -249,7 +249,11 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
                 -- recourse-pipeline route LATERAL join (i.customer_id, no cast) just above.
                 i.customer_id,
                 c.customer_name,
-                i.source_load_id::text AS load_id
+                -- ACCT-F26015b: drop ::text cast on source_load_id — loadCostRollupLateral
+                -- joins l.id (uuid) = inv.load_id, so a ::text here raises
+                -- "operator does not exist: uuid = text" (42883). Sibling recourse-pipeline
+                -- route above already keeps this as uuid (i.source_load_id, no cast).
+                i.source_load_id AS load_id
               FROM accounting.invoices i
               LEFT JOIN mdata.customers c
                 ON c.id = i.customer_id

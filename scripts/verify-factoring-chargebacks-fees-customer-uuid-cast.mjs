@@ -8,6 +8,13 @@
 // LATERAL join in factoring.routes.ts must select i.customer_id with no ::text cast, matching the
 // sibling recourse-pipeline route's LATERAL join (which never had this bug) and the filter's own
 // ::uuid cast.
+//
+// ACCT-F26015b (Devin, 2026-09-07) -- the F26015 fix was incomplete: the same LATERAL join also
+// cast i.source_load_id::text AS load_id, and loadCostRollupLateral joins l.id (uuid) =
+// inv.load_id. So even after the customer_id fix, the endpoint still 500'd with
+// "operator does not exist: uuid = text" on EVERY call (not just with a customer_id filter).
+// Extended guard: the chargebacks-fees LATERAL join must also select i.source_load_id with no
+// ::text cast, matching the sibling recourse-pipeline route (i.source_load_id, no cast).
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -23,6 +30,14 @@ function problemsForSource(src) {
       "chargebacks-fees LATERAL join must not cast i.customer_id to text -- customerFilter compares it against $N::uuid (operator does not exist: text = uuid)"
     );
   }
+  // ACCT-F26015b: loadCostRollupLateral joins l.id (uuid) = inv.load_id, so a ::text cast
+  // on i.source_load_id in the chargebacks-fees LATERAL join raises
+  // "operator does not exist: uuid = text" on every call.
+  if (/i\.source_load_id::text AS load_id/.test(src)) {
+    problems.push(
+      "chargebacks-fees LATERAL join must not cast i.source_load_id to text -- loadCostRollupLateral joins l.id (uuid) = inv.load_id (operator does not exist: uuid = text)"
+    );
+  }
   return problems;
 }
 
@@ -34,8 +49,15 @@ function main() {
       {
         name: "reverts to the text-cast customer_id (type-mismatch 500)",
         src: clean.replace(
-          "                i.customer_id,\n                c.customer_name,\n                i.source_load_id::text AS load_id",
-          "                i.customer_id::text AS customer_id,\n                c.customer_name,\n                i.source_load_id::text AS load_id"
+          "                i.customer_id,\n                c.customer_name,",
+          "                i.customer_id::text AS customer_id,\n                c.customer_name,"
+        ),
+      },
+      {
+        name: "reverts to the text-cast load_id (uuid=text 500 in loadCostRollupLateral)",
+        src: clean.replace(
+          "                i.source_load_id AS load_id",
+          "                i.source_load_id::text AS load_id"
         ),
       },
     ];
