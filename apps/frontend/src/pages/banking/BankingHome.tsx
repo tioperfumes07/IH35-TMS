@@ -70,6 +70,29 @@ type Props = {
   initialTab?: BankingTabId;
 };
 
+// ROUND 16.19 (owner, 2026-09-06): "in the banking home page it shows many bank accounts but in
+// transactions only 3. that is not correct." MEASURED live and in db/migrations/
+// 202608041400_restore_banking_account_tiles_view.sql: Home's tile strip shows 6 tiles — 3 REAL
+// Plaid-linked accounts (tile_kind='real', real banking.bank_accounts rows) plus 3 VIRTUAL
+// synthetic sub-ledger pools (tile_kind='virtual': Factoring Reserve, Driver Escrow Pool, Cash
+// Advance Pool) that are hardcoded UUIDs ('00000000-...-59'/'-56'/'-60') computed from
+// views.factoring_balance_invoice_linkage / driver_finance.escrow_balances /
+// driver_finance.driver_advances — they are NOT banking.bank_accounts rows and have no Plaid feed,
+// so they cannot and should not appear as Transactions tabs (that register is typed
+// PlaidBankAccount[] and shows real bank-transaction feeds). That gap is correct by nature — a
+// sub-ledger pool has no bank feed to categorize, same as QuickBooks' Undeposited Funds is not a
+// bank account. The REAL bug (root-caused live): clicking one of the 3 virtual tiles navigated to
+// /banking/accounts/:id or the Transactions tab keyed to that synthetic id, which matches nothing
+// in banking.bank_accounts or the Plaid account list — a dead click ("it failed to load"). Fixed:
+// route each virtual tile to the page that already shows its REAL underlying ledger instead.
+function virtualTileRoute(tile: { tile_kind?: string; account_type?: string } | undefined): string | null {
+  if (!tile || tile.tile_kind !== "virtual") return null;
+  if (tile.account_type === "virtual_factoring") return "/banking/factoring";
+  if (tile.account_type === "virtual_escrow") return "/banking/driver-escrow";
+  if (tile.account_type === "virtual_advance") return "/cash-advances";
+  return null;
+}
+
 export function BankingHomePage({ initialTab }: Props = {}) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -492,10 +515,20 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             tiles={sortedBankTiles}
             selectedId={selectedId}
             onSelect={(id) => {
+              const virtualPath = virtualTileRoute(sortedBankTiles.find((t) => t.id === id));
+              if (virtualPath) {
+                navigate(virtualPath);
+                return;
+              }
               setSelectedAccountId(id);
               navigate(`/banking/accounts/${id}`);
             }}
             onView={(id) => {
+              const virtualPath = virtualTileRoute(sortedBankTiles.find((t) => t.id === id));
+              if (virtualPath) {
+                navigate(virtualPath);
+                return;
+              }
               setSelectedAccountId(id);
               setTransactionsInitialFilter("all");
               setActiveTab("transactions");
@@ -527,13 +560,19 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                         type="button"
                         className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                         onClick={() => {
+                          const virtualPath = virtualTileRoute(tile);
+                          if (virtualPath) {
+                            navigate(virtualPath);
+                            setInspectTileId(null);
+                            return;
+                          }
                           setSelectedAccountId(inspectTileId);
                           setActiveTab("transactions");
                           navigate(BANKING_TAB_PATH.transactions);
                           setInspectTileId(null);
                         }}
                       >
-                        View register
+                        {virtualTileRoute(tile) ? "View ledger" : "View register"}
                       </button>
                       <button type="button" className="rounded-sm border border-gray-300 px-2 py-1 text-xs" onClick={() => setInspectTileId(null)}>
                         Close
