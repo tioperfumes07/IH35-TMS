@@ -143,13 +143,23 @@ async function fetchAdvanceDetail(client: any, advanceId: string, operatingCompa
         i.id,
         i.display_id,
         i.customer_id,
-        c.customer_name,
+        COALESCE(c.customer_name, c2.customer_name) AS customer_name,
         i.issue_date,
         i.total_cents,
         i.factoring_status
       FROM accounting.invoices i
-      JOIN mdata.customers c ON c.id = i.customer_id
+      -- FACT-CUST-DEACT (owner Decision 2, 2026-09-07) — same class as ACCT-F5787: mdata.customers'
+      -- customers_select RLS hides a deactivated customer, so a plain JOIN silently dropped this
+      -- invoice from its OWN advance's detail the moment the customer was archived. LEFT JOIN + the
+      -- full-row resolver fallback (mdata.get_customer_same_company, only when the RLS-scoped join
+      -- missed) keeps the invoice and resolves customer_name regardless of archive state. Never
+      -- touches customers_select.
+      LEFT JOIN mdata.customers c ON c.id = i.customer_id
                             AND c.operating_company_id = i.operating_company_id
+      LEFT JOIN LATERAL (
+        SELECT * FROM mdata.get_customer_same_company(i.customer_id, i.operating_company_id)
+        WHERE c.id IS NULL
+      ) c2 ON true
       WHERE i.factoring_advance_id = $1
         -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): i itself was read by factoring_advance_id alone,
         -- with no tie back to a company. advance.operating_company_id is already in scope from the
@@ -334,21 +344,29 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
             i.id,
             i.display_id,
             i.customer_id,
-            c.customer_name,
+            COALESCE(c.customer_name, c2.customer_name) AS customer_name,
             i.issue_date,
             i.total_cents,
             (${INVOICE_PLEDGE_CENTS_SQL})::bigint AS pledge_cents,
             COALESCE(i.factoring_status, 'not_factored') AS factoring_status,
-            COALESCE(c.factoring_recourse_type, 'recourse') AS customer_recourse_type,
-            c.factoring_eligible
+            COALESCE(c.factoring_recourse_type, c2.factoring_recourse_type, 'recourse') AS customer_recourse_type,
+            COALESCE(c.factoring_eligible, c2.factoring_eligible) AS factoring_eligible
           FROM accounting.invoices i
-          JOIN mdata.customers c ON c.id = i.customer_id
+          -- FACT-CUST-DEACT (owner Decision 2, 2026-09-07) — same class as ACCT-F5787: a deactivated but
+          -- factoring-eligible customer's sendable invoice must still be OFFERED here, not silently
+          -- hidden by customers_select RLS. LEFT JOIN + full-row resolver fallback; the eligibility gate
+          -- below reads through COALESCE(c, c2) so archive state alone never removes a factorable invoice.
+          LEFT JOIN mdata.customers c ON c.id = i.customer_id
                                 AND c.operating_company_id = i.operating_company_id
+          LEFT JOIN LATERAL (
+            SELECT * FROM mdata.get_customer_same_company(i.customer_id, i.operating_company_id)
+            WHERE c.id IS NULL
+          ) c2 ON true
           WHERE i.operating_company_id = $1::uuid
             AND i.status = 'sent'
             AND i.voided_at IS NULL
             AND COALESCE(i.factoring_status, 'not_factored') = 'not_factored'
-            AND c.factoring_eligible = true
+            AND COALESCE(c.factoring_eligible, c2.factoring_eligible) = true
           ORDER BY i.issue_date DESC, i.created_at DESC
           LIMIT 500
         `,
@@ -427,10 +445,21 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
             (${INVOICE_PLEDGE_CENTS_SQL})::bigint AS pledge_cents,
             i.status,
             COALESCE(i.factoring_status, 'not_factored') AS factoring_status,
-            c.factoring_eligible
+            COALESCE(c.factoring_eligible, c2.factoring_eligible) AS factoring_eligible
           FROM accounting.invoices i
-          JOIN mdata.customers c ON c.id = i.customer_id
+          -- FACT-CUST-DEACT (owner Decision 2, 2026-09-07) — same class as ACCT-F5787. The plain JOIN
+          -- here meant customers_select RLS (deactivated_at IS NULL) dropped a real, in-scope invoice
+          -- whose customer had been archived, so the length check below fired a PHANTOM invoice_not_found
+          -- (404) — the exact symptom the owner hit factoring PFL/Ostt. LEFT JOIN + the full-row resolver
+          -- keeps the invoice AND resolves factoring_eligible even when archived, so an eligible customer
+          -- factors without being un-archived, and the eligibility gate (not a phantom 404) is what
+          -- speaks when it truly is ineligible. customers_select is never modified.
+          LEFT JOIN mdata.customers c ON c.id = i.customer_id
                                 AND c.operating_company_id = i.operating_company_id
+          LEFT JOIN LATERAL (
+            SELECT * FROM mdata.get_customer_same_company(i.customer_id, i.operating_company_id)
+            WHERE c.id IS NULL
+          ) c2 ON true
           WHERE i.operating_company_id = $1::uuid
             AND i.id = ANY($2::uuid[])
         `,
@@ -891,10 +920,17 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
 
       const recourseRes = await client.query(
         `
-          SELECT BOOL_AND(COALESCE(c.factoring_recourse_type, 'recourse') = 'recourse') AS all_recourse
+          SELECT BOOL_AND(COALESCE(c.factoring_recourse_type, c2.factoring_recourse_type, 'recourse') = 'recourse') AS all_recourse
           FROM accounting.invoices i
-          JOIN mdata.customers c ON c.id = i.customer_id
+          -- FACT-CUST-DEACT (owner Decision 2, 2026-09-07) — same class as ACCT-F5787: LEFT JOIN + full-row
+          -- resolver so a later-deactivated customer never drops its invoice from this recourse test. A
+          -- fully unresolved customer COALESCEs to the SAFE 'recourse' default (never silently non-recourse).
+          LEFT JOIN mdata.customers c ON c.id = i.customer_id
                                 AND c.operating_company_id = i.operating_company_id
+          LEFT JOIN LATERAL (
+            SELECT * FROM mdata.get_customer_same_company(i.customer_id, i.operating_company_id)
+            WHERE c.id IS NULL
+          ) c2 ON true
           WHERE i.factoring_advance_id = $1
             AND i.operating_company_id = $2::uuid
         `,
