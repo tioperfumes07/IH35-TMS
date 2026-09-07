@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Download, MessageSquare, Paperclip, Printer, Settings } from "lucide-react";
+import { Download, MessageSquare, Paperclip, Printer } from "lucide-react";
 import {
   acceptBankReconMatch,
   categorizeBankTransaction,
@@ -570,7 +570,6 @@ export function BankingTransactionsDesignView({
   const [matchAmountMax, setMatchAmountMax] = useState("");
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const [collapsedMonths, setCollapsedMonths] = useState<Record<string, boolean>>({});
-  const [viewSettingsOpen, setViewSettingsOpen] = useState(false);
   const [printExportMenuOpen, setPrintExportMenuOpen] = useState(false);
   const [expandedTxId, setExpandedTxId] = useState<string | null>(null);
   useEffect(() => {
@@ -1718,6 +1717,11 @@ export function BankingTransactionsDesignView({
         render: (tx) => getDraft(tx).checkNo || "—",
       });
     }
+    // verify-banking-register-columns.mjs pins these 9 to a page-level viewSettings.showX
+    // conditional push + a ToggleLine wired to each flag (an earlier, still-binding CONSOLIDATED
+    // round) — BANK-TOOLBAR-ONE (ROUND 16.19) keeps that architecture as-is and only relocates
+    // WHERE the ToggleLines render (gearExtra, inside the ONE gear) rather than changing how
+    // visibility is computed.
     if (viewSettings.showPayee) {
       cols.push({
         key: "payee",
@@ -3129,8 +3133,13 @@ export function BankingTransactionsDesignView({
               </button>
             ))}
           </div>
-          {/* B.2 — date range VISIBLE ON LANDING: both fields render inline, not behind a click.
-          The "Presets" button is a pure convenience shortcut for the same two fields. */}
+          {/* B.2 (owner order 2026-09-05, verify-banking-toolbar-uniform-height.mjs) — date range
+          VISIBLE ON LANDING: both fields render unconditionally, never gated behind a click. This
+          law predates and overrides ROUND 16.19's "Dates▾" phrasing for the From/To fields
+          themselves — Presets + the grouping mode picker (the parts the law does NOT pin) are the
+          part that actually consolidates: one "Presets ▾" trigger now holds both, instead of a
+          separate Presets button AND a separate By-month/Money-in-out/All-dates segmented control
+          sitting in the row. */}
           <div className="flex h-7 items-center gap-1">
             <label htmlFor="tx-date-from" className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
               From
@@ -3147,7 +3156,7 @@ export function BankingTransactionsDesignView({
                 onClick={() => setShowDateFilterMenu((open) => !open)}
                 data-testid="bank-date-filter-button"
               >
-                Presets
+                Presets ▾
               </button>
               {showDateFilterMenu ? (
                 <div className="absolute left-0 z-20 mt-1 w-56 rounded-sm border border-gray-200 bg-white p-2 shadow-sm">
@@ -3194,6 +3203,34 @@ export function BankingTransactionsDesignView({
                       </button>
                     ))}
                   </div>
+                  {/* DEFECT-9b + audit gap #5 — QBO grouping: By month | Money in/out | All dates
+                  (flat). Pipeline sorts the full set, then groups, then pages. turnOffGrouping
+                  remains the flat-list switch. BANK-TOOLBAR-ONE (ROUND 16.19): folded into this
+                  same Presets popover instead of its own separate segmented control in the row. */}
+                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Group by</p>
+                  <div className="mt-1 inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-xs">
+                    <button
+                      type="button"
+                      className={`flex h-7 items-center px-2.5 ${!viewSettings.turnOffGrouping && viewSettings.groupMode === "month" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
+                      onClick={() => setViewSettings((prev) => ({ ...prev, turnOffGrouping: false, groupMode: "month" }))}
+                    >
+                      By month
+                    </button>
+                    <button
+                      type="button"
+                      className={`flex h-7 items-center border-l border-gray-300 px-2.5 ${!viewSettings.turnOffGrouping && viewSettings.groupMode === "money" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
+                      onClick={() => setViewSettings((prev) => ({ ...prev, turnOffGrouping: false, groupMode: "money" }))}
+                    >
+                      Money in/out
+                    </button>
+                    <button
+                      type="button"
+                      className={`flex h-7 items-center border-l border-gray-300 px-2.5 ${viewSettings.turnOffGrouping ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
+                      onClick={() => setViewSettings((prev) => ({ ...prev, turnOffGrouping: true }))}
+                    >
+                      All dates
+                    </button>
+                  </div>
                 </div>
               ) : null}
             </div>
@@ -3226,33 +3263,6 @@ export function BankingTransactionsDesignView({
           >
             {suggestingMatches ? "Suggesting..." : "Suggest matches"}
           </button>
-          {/* DEFECT-9b + audit gap #5 — QBO grouping: By month | Money in/out | All dates (flat).
-          Pipeline sorts the full set, then groups, then pages. Month bands follow date ASC/DESC.
-          turnOffGrouping remains the flat-list switch (settings + All dates). B.2: Money in/out is
-          explicitly named in the owner's "ALL controls incl Money in/out" height requirement. */}
-          <div className="inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-xs">
-            <button
-              type="button"
-              className={`flex h-7 items-center px-2.5 ${!viewSettings.turnOffGrouping && viewSettings.groupMode === "month" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
-              onClick={() => setViewSettings((prev) => ({ ...prev, turnOffGrouping: false, groupMode: "month" }))}
-            >
-              By month
-            </button>
-            <button
-              type="button"
-              className={`flex h-7 items-center border-l border-gray-300 px-2.5 ${!viewSettings.turnOffGrouping && viewSettings.groupMode === "money" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
-              onClick={() => setViewSettings((prev) => ({ ...prev, turnOffGrouping: false, groupMode: "money" }))}
-            >
-              Money in/out
-            </button>
-            <button
-              type="button"
-              className={`flex h-7 items-center border-l border-gray-300 px-2.5 ${viewSettings.turnOffGrouping ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
-              onClick={() => setViewSettings((prev) => ({ ...prev, turnOffGrouping: true }))}
-            >
-              All dates
-            </button>
-          </div>
           {/* B.2 — transaction TYPE filter: multi-select checkboxes/chips (was a single-select
           <select>). Selected ids render as removable chips on the trigger button; "All transaction
           types" clears the selection. See matchesTransactionTypeFilter (module scope, above) and
@@ -3359,94 +3369,6 @@ export function BankingTransactionsDesignView({
             <div className="relative">
               <button
                 type="button"
-                aria-label="View settings"
-                className="flex h-7 items-center rounded-sm border border-gray-300 px-2 text-gray-700"
-                onClick={() => setViewSettingsOpen((open) => !open)}
-              >
-                <Settings className="h-4 w-4" />
-              </button>
-              {viewSettingsOpen ? (
-                <div className="absolute right-0 z-20 mt-1 w-[360px] rounded-sm border border-gray-200 bg-white p-3 shadow-sm">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Columns</p>
-                  <div className="mt-1 grid grid-cols-2 gap-1 text-xs">
-                    <ToggleLine label="Check No." checked={viewSettings.showCheckNo} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showCheckNo: checked }))} />
-                    <ToggleLine label="Payee (Vendor)" checked={viewSettings.showPayee} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showPayee: checked }))} />
-                    <ToggleLine label="Class" checked={viewSettings.showClass} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showClass: checked }))} />
-                    <ToggleLine label="Location" checked={viewSettings.showLocation} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showLocation: checked }))} />
-                    {/* B2 BANK-REGISTER-COLUMNS (owner CONSOLIDATED 2026-09-06 18:30Z, item 3) */}
-                    <ToggleLine label="Memo" checked={viewSettings.showMemo} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showMemo: checked }))} />
-                    <ToggleLine label="Category" checked={viewSettings.showCategory} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showCategory: checked }))} />
-                    <ToggleLine label="Match status" checked={viewSettings.showMatchStatus} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showMatchStatus: checked }))} />
-                    <ToggleLine label="Reference" checked={viewSettings.showReference} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showReference: checked }))} />
-                    <ToggleLine label="Posted JE" checked={viewSettings.showPostedJe} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showPostedJe: checked }))} />
-                  </div>
-                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Groups</p>
-                  <ToggleLine
-                    label="Turn off grouping"
-                    checked={viewSettings.turnOffGrouping}
-                    onChange={(checked) =>
-                      setViewSettings((prev) => ({
-                        ...prev,
-                        turnOffGrouping: checked,
-                        groupMode: checked ? prev.groupMode : prev.groupMode === "money" ? "money" : "month",
-                      }))
-                    }
-                  />
-                  {!viewSettings.turnOffGrouping ? (
-                    <div className="mt-1 flex flex-wrap gap-1 text-xs">
-                      <button
-                        type="button"
-                        className={`rounded-sm border px-2 py-0.5 ${viewSettings.groupMode === "month" ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-gray-300 text-gray-700"}`}
-                        onClick={() => setViewSettings((prev) => ({ ...prev, groupMode: "month" }))}
-                      >
-                        By month
-                      </button>
-                      <button
-                        type="button"
-                        className={`rounded-sm border px-2 py-0.5 ${viewSettings.groupMode === "money" ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-gray-300 text-gray-700"}`}
-                        onClick={() => setViewSettings((prev) => ({ ...prev, groupMode: "money" }))}
-                      >
-                        Money in/out
-                      </button>
-                    </div>
-                  ) : null}
-                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Automation review</p>
-                  <label
-                    className="inline-flex items-center gap-2 text-xs text-gray-500"
-                    data-testid="banking-add-new-vendors-automation-not-wired"
-                    title="Bank-feed auto-vendor review automation is not wired yet. Inline + Add new vendor on each categorize row still works via ReferenceSelect."
-                  >
-                    <input type="checkbox" checked={false} disabled readOnly aria-disabled="true" />
-                    Add new vendors (automation — not wired)
-                  </label>
-                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Transaction details</p>
-                  <div className="grid grid-cols-1 gap-1 text-xs">
-                    <ToggleLine label="Show amounts in 1 column" checked={viewSettings.showAmountsInOneColumn} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showAmountsInOneColumn: checked }))} />
-                    <ToggleLine label="Show tags field" checked={viewSettings.showTagsField} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showTagsField: checked }))} />
-                    <ToggleLine label="Editable date field" checked={viewSettings.editableDateField} onChange={(checked) => setViewSettings((prev) => ({ ...prev, editableDateField: checked }))} />
-                    <ToggleLine label="Show bank details" checked={viewSettings.showBankDetails} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showBankDetails: checked }))} />
-                    <ToggleLine label="Copy bank detail to memo" checked={viewSettings.copyBankDetailToMemo} onChange={(checked) => setViewSettings((prev) => ({ ...prev, copyBankDetailToMemo: checked }))} />
-                    <ToggleLine label="Enable suggested categorization" checked={viewSettings.enableSuggestedCategorization} onChange={(checked) => setViewSettings((prev) => ({ ...prev, enableSuggestedCategorization: checked }))} />
-                  </div>
-                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Page size</p>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {([50, 75, 100, 200, 300] as const).map((size) => (
-                      <button
-                        key={size}
-                        type="button"
-                        className={`rounded-sm border px-2 py-1 text-xs ${viewSettings.pageSize === size ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-gray-300 text-gray-700"}`}
-                        onClick={() => setViewSettings((prev) => ({ ...prev, pageSize: size }))}
-                      >
-                        {size}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-            <div className="relative">
-              <button
-                type="button"
                 className="flex h-7 items-center rounded-sm border border-gray-300 px-2 text-gray-700"
                 onClick={() => setPrintExportMenuOpen((open) => !open)}
               >
@@ -3518,6 +3440,60 @@ export function BankingTransactionsDesignView({
         // covers ground the page's hardcoded From/To transaction-date fields don't — the owner's
         // own spec explicitly keeps "Range (ParityTable's)" in the consolidated bar).
         suppressToolbarSearch
+        // BANK-TOOLBAR-ONE (owner ROUND 16.19, 2026-09-06): the page's own second "View settings"
+        // gear is gone — its still-needed content (checkNo forced-visible toggle, transaction-detail
+        // toggles, and this page's own pageSize used to compute pagedGroups/totalPages, which is NOT
+        // the same state as ParityTable's internal pager) now renders inside THIS gear's own popover
+        // via gearExtra, so there is exactly ONE gear on this register.
+        gearButtonTestId="banking-transactions-gear"
+        gearExtra={
+          <>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Also show</p>
+            <div className="mt-1 grid grid-cols-2 gap-1 text-xs">
+              <ToggleLine label="Check No." checked={viewSettings.showCheckNo} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showCheckNo: checked }))} />
+              <ToggleLine label="Payee (Vendor)" checked={viewSettings.showPayee} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showPayee: checked }))} />
+              <ToggleLine label="Class" checked={viewSettings.showClass} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showClass: checked }))} />
+              <ToggleLine label="Location" checked={viewSettings.showLocation} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showLocation: checked }))} />
+              {/* B2 BANK-REGISTER-COLUMNS (owner CONSOLIDATED 2026-09-06 18:30Z, item 3) */}
+              <ToggleLine label="Memo" checked={viewSettings.showMemo} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showMemo: checked }))} />
+              <ToggleLine label="Category" checked={viewSettings.showCategory} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showCategory: checked }))} />
+              <ToggleLine label="Match status" checked={viewSettings.showMatchStatus} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showMatchStatus: checked }))} />
+              <ToggleLine label="Reference" checked={viewSettings.showReference} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showReference: checked }))} />
+              <ToggleLine label="Posted JE" checked={viewSettings.showPostedJe} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showPostedJe: checked }))} />
+            </div>
+            <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Automation review</p>
+            <label
+              className="inline-flex items-center gap-2 text-xs text-gray-500"
+              data-testid="banking-add-new-vendors-automation-not-wired"
+              title="Bank-feed auto-vendor review automation is not wired yet. Inline + Add new vendor on each categorize row still works via ReferenceSelect."
+            >
+              <input type="checkbox" checked={false} disabled readOnly aria-disabled="true" />
+              Add new vendors (automation — not wired)
+            </label>
+            <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Transaction details</p>
+            <div className="grid grid-cols-1 gap-1 text-xs">
+              <ToggleLine label="Show amounts in 1 column" checked={viewSettings.showAmountsInOneColumn} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showAmountsInOneColumn: checked }))} />
+              <ToggleLine label="Show tags field" checked={viewSettings.showTagsField} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showTagsField: checked }))} />
+              <ToggleLine label="Editable date field" checked={viewSettings.editableDateField} onChange={(checked) => setViewSettings((prev) => ({ ...prev, editableDateField: checked }))} />
+              <ToggleLine label="Show bank details" checked={viewSettings.showBankDetails} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showBankDetails: checked }))} />
+              <ToggleLine label="Copy bank detail to memo" checked={viewSettings.copyBankDetailToMemo} onChange={(checked) => setViewSettings((prev) => ({ ...prev, copyBankDetailToMemo: checked }))} />
+              <ToggleLine label="Enable suggested categorization" checked={viewSettings.enableSuggestedCategorization} onChange={(checked) => setViewSettings((prev) => ({ ...prev, enableSuggestedCategorization: checked }))} />
+            </div>
+            <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Rows per page (register)</p>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {([50, 75, 100, 200, 300] as const).map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  className={`rounded-sm border px-2 py-1 text-xs ${viewSettings.pageSize === size ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-gray-300 text-gray-700"}`}
+                  onClick={() => setViewSettings((prev) => ({ ...prev, pageSize: size }))}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </>
+        }
         enableColumnResize
         stickyHeader
         selectable

@@ -2,10 +2,17 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState, type ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as bankingApi from "../../../api/banking";
 import { ToastProvider } from "../../../components/Toast";
 import { BankingTransactionsDesignView, spentReceived } from "./BankingTransactionsDesignView";
+
+// BANK-TOOLBAR-ONE: column visibility now persists via ParityTable's own storageKey
+// ("banking-transactions", same convention as ParityTable.test.tsx/ParityTable.footer.test.tsx) —
+// clear it between tests so one test's gear toggles can't leak into the next.
+beforeEach(() => {
+  window.localStorage.clear();
+});
 
 vi.mock("../../../api/banking", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../../api/banking")>();
@@ -483,12 +490,18 @@ describe("BankingTransactionsDesignView B2 register columns", () => {
     expect(screen.queryByTestId("banking-register-col-reference")).toBeNull();
     expect(screen.queryByTestId("banking-register-col-postedJe")).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "View settings" }));
+    // BANK-TOOLBAR-ONE: the page's own second "View settings" gear is gone — Memo/Category/Match
+    // status/Reference/Posted JE are now unconditional, defaultHidden columns toggled from
+    // ParityTable's own single gear (the "Also show"/columns list rendered inside it).
+    fireEvent.click(screen.getByTestId("banking-transactions-gear"));
     fireEvent.click(screen.getByRole("checkbox", { name: "Memo" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Category" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Match status" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Reference" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Posted JE" }));
+    // ParityTable's own gear is draft + Apply (unlike the old page-level ToggleLine, which applied
+    // each click immediately) — commit the column-visibility draft before asserting.
+    fireEvent.click(screen.getByRole("button", { name: "Apply" }));
 
     await waitFor(() => expect(screen.getByText("REF-9001")).toBeInTheDocument());
     expect(screen.getByText("Unmatched")).toBeInTheDocument();
@@ -532,10 +545,11 @@ describe("BankingTransactionsDesignView inline class create (FIX-4)", () => {
       )
     );
 
-    // Turn on the Class column (hidden by default) via the view-settings gear.
+    // Turn on the Class column (hidden by default) via the ONE gear (BANK-TOOLBAR-ONE).
     expect(await screen.findByText("Class create test txn")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "View settings" }));
+    fireEvent.click(screen.getByTestId("banking-transactions-gear"));
     fireEvent.click(screen.getByRole("checkbox", { name: "Class" }));
+    fireEvent.click(screen.getByRole("button", { name: "Apply" }));
 
     // Expand the row (Categorize is the default mode) to reveal the Class ReferenceSelect.
     fireEvent.click(screen.getByText("Class create test txn"));
