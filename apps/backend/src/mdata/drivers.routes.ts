@@ -2512,11 +2512,15 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       // (badge, Status field, Active/Inactive tab filter) reads the text `status` column, not
       // deactivated_at — so writing only deactivated_at left drivers reading "Active" forever.
       // Preserve a 'Terminated' status (a stronger, deliberate end-state) rather than downgrade it.
+      // DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION: a human deactivated this driver on purpose — lock
+      // it so the daily driver-active-30d cron can never silently flip it back to Active.
       const res = await client.query(
         `
           UPDATE mdata.drivers
           SET deactivated_at = now(),
               status = CASE WHEN status = 'Terminated' THEN status ELSE 'Inactive'::mdata.driver_status END,
+              status_locked_at = now(),
+              status_locked_reason = 'manual_deactivate',
               updated_by_user_id = $2
           WHERE id = $1
             AND operating_company_id = $3::uuid
@@ -2601,10 +2605,14 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       if (oldRow.status === "Terminated") return { error: "mdata_driver_terminated" as const };
       if (oldRow.deactivated_at === null) return { error: "mdata_driver_already_active" as const };
 
+      // A human is explicitly putting this driver back — clear any status lock (manual or
+      // Samsara-sourced) so the driver isn't left un-reactivatable by the 30d cron going forward.
       const res = await client.query(
         `UPDATE mdata.drivers
             SET deactivated_at = NULL,
                 status = 'Active'::mdata.driver_status,
+                status_locked_at = NULL,
+                status_locked_reason = NULL,
                 updated_by_user_id = $2
           WHERE id = $1
             AND operating_company_id = $3::uuid

@@ -170,6 +170,45 @@ export async function collectSamsaraDriverMirror(
       upserted += 1;
       if (localDriverId) linked += 1;
       void res;
+
+      // DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION (owner urgent report 2026-09-07): Samsara is the
+      // owner's real deactivation surface ("I DEACTIVATED MANY DRIVERS IN SAMSARA") -- propagate that
+      // truth into mdata.drivers directly and LOCK it, so the daily driver-active-30d cron can never
+      // silently reverse it. A driver Samsara reports active again only has the LOCK cleared (not
+      // forced back to status='Active') when this collector itself set that lock -- real activity
+      // (loads/telematics), not "Samsara says active," is still what the owner's own 2026-08-08 law
+      // requires for reactivation; never overrides a human's own manual_deactivate lock.
+      if (localDriverId) {
+        if (activationStatus === "deactivated") {
+          await client.query(
+            `
+              UPDATE mdata.drivers
+              SET status = CASE WHEN status = 'Terminated' THEN status ELSE 'Inactive'::mdata.driver_status END,
+                  deactivated_at = COALESCE(deactivated_at, now()),
+                  status_locked_at = now(),
+                  status_locked_reason = 'samsara_deactivated',
+                  updated_at = now()
+              WHERE id = $1::uuid
+                AND operating_company_id = $2::uuid
+                AND status <> 'Terminated'
+            `,
+            [localDriverId, operatingCompanyId]
+          );
+        } else {
+          await client.query(
+            `
+              UPDATE mdata.drivers
+              SET status_locked_at = NULL,
+                  status_locked_reason = NULL,
+                  updated_at = now()
+              WHERE id = $1::uuid
+                AND operating_company_id = $2::uuid
+                AND status_locked_reason = 'samsara_deactivated'
+            `,
+            [localDriverId, operatingCompanyId]
+          );
+        }
+      }
     }
 
     await appendAuditEvent(client, "samsara.driver_mirror_collected", "info", {

@@ -434,6 +434,17 @@ try {
   checkMigrationFilenames();
 
   await client.connect();
+  // DB-MIGRATE-SESSION-ROLE-DEFAULT (owner urgent report 2026-09-07, found while applying
+  // 202613980000): this connection's login role now carries a session-level default that silently
+  // drops every connection down to the restricted `ih35_app` runtime role (`current_user` reads
+  // `ih35_app` even though `session_user` is the real login role) -- ih35_app has only
+  // SELECT/INSERT/UPDATE/DELETE grants (migration 0065), never CREATE SCHEMA / ALTER TABLE / ADD
+  // CONSTRAINT, so every migration attempt failed closed with "permission denied for database" /
+  // "must be owner of table" the instant this default was introduced, for every login role tested
+  // (neondb_owner AND agent_rw), not just this session's credentials. RESET ROLE restores the
+  // actual authenticated (table-owning) identity; it is always safe to call, a no-op if no such
+  // default exists.
+  await client.query("RESET ROLE").catch(() => {});
   await ensureLedgers(client);
 
   const diskMigrations = getMigrationFiles();
