@@ -8093,5 +8093,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-07",
     "purpose": "verify-planner-scroll-not-wheel-trapped"
+  },
+  "10813": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-rolling-ledger-queries-parallel"
   }
 }
