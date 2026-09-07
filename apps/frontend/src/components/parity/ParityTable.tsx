@@ -189,6 +189,15 @@ export type ParityTableProps<T> = {
    */
   gearButtonTestId?: string;
   /**
+   * BANK-TOOLBAR-ONE (owner ROUND 16.19, 2026-09-06): additional page-specific settings rendered
+   * inside THIS gear's own popover, below "Columns" and above the Reset/Cancel/Apply footer — lets
+   * a page fold its own extra settings (a forced-visible column toggle, a page-size the page itself
+   * paginates by, a feature flag) into the ONE canonical gear instead of standing up a second,
+   * competing "View settings" gear button next to it. Additive: omitting it renders nothing extra,
+   * every existing consumer is byte-identical.
+   */
+  gearExtra?: ReactNode;
+  /**
    * Optional per-row data-testid on the rendered `<tr>`. Lets a migrated page preserve existing
    * row-level test/e2e selectors. Additive — omitting it renders no per-row testid.
    */
@@ -532,6 +541,7 @@ export function ParityTable<T>({
   renderExpanded,
   tableTestId,
   gearButtonTestId,
+  gearExtra,
   rowTestId,
   sortKey: controlledSortKey,
   sortDirection: controlledSortDirection,
@@ -1405,6 +1415,11 @@ export function ParityTable<T>({
                       );
                     })}
                 </div>
+                {gearExtra ? (
+                  <div className="mt-2 border-t border-gray-200 pt-2" data-testid="parity-gear-extra">
+                    {gearExtra}
+                  </div>
+                ) : null}
                 <div className="mt-2 flex items-center justify-end gap-2 border-t border-gray-200 pt-2">
                   <button type="button" className="rounded-sm px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-100" onClick={resetGear}>Reset</button>
                   <button type="button" className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50" onClick={cancelGear}>Cancel</button>
