@@ -973,6 +973,17 @@ export function unhideBankAccount(companyId: string, bankAccountId: string) {
   });
 }
 
+// ── Petty Cash account (owner request 2026-09-06) ────────────────────────────────────────────────────
+// A Petty Cash account is a REAL banking.bank_accounts row (tile_kind='real'), created manually
+// (not via Plaid). When a check is generated, the check amount posts a transfer FROM the source
+// bank account TO this account.
+export function createPettyCashAccount(companyId: string, displayName?: string) {
+  return apiRequest<{ account: { id: string; already_existed: boolean } }>(`/api/v1/banking/accounts/petty-cash`, {
+    method: "POST",
+    body: { operating_company_id: companyId, display_name: displayName },
+  });
+}
+
 export function saveAccountVisibility(
   companyId: string,
   accounts: Array<{ id: string; visible: boolean; display_order: number; tag?: string; is_dip?: boolean }>

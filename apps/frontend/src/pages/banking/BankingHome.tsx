@@ -12,6 +12,7 @@ import {
   getQboSyncQueueStats,
   getReconciliationSessions,
   startReconciliationSession,
+  createPettyCashAccount,
 } from "../../api/banking";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityPicker } from "../../components/EntityPicker";
@@ -373,6 +374,20 @@ export function BankingHomePage({ initialTab }: Props = {}) {
           <ActionButton onClick={() => navigate("/banking/email-queue")}>Email Queue</ActionButton>
         ) : null}
         <ActionButton onClick={() => setManageOpen(true)}>+ Create Account / Manage Accounts</ActionButton>
+        <ActionButton
+          onClick={async () => {
+            try {
+              const result = await createPettyCashAccount(companyId);
+              pushToast(result.account.already_existed ? "Petty Cash account already exists." : "Petty Cash account created.", "success");
+              void queryClient.invalidateQueries({ queryKey: ["banking", "tiles", companyId] });
+              void queryClient.invalidateQueries({ queryKey: ["banking", "accounts", companyId] });
+            } catch (err) {
+              pushToast(`Failed to create Petty Cash account: ${(err as Error)?.message ?? "Unknown error"}`, "error");
+            }
+          }}
+        >
+          + Petty Cash
+        </ActionButton>
         <PlaidLinkButton
           operatingCompanyId={companyId}
           accountType="bank"
