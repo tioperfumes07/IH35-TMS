@@ -2039,11 +2039,16 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             ON l.assigned_unit_id = u.id
             AND l.operating_company_id = $1::uuid
             AND l.soft_deleted_at IS NULL
+            -- DSP-BAND-DUP (owner 2026-09-06): a truck is "occupied" only by an IN-FLIGHT load. Once a
+            -- load reaches delivered_pending_docs the truck has physically delivered and is FREE for the
+            -- next dispatch, so it must NOT count as an active load here — otherwise a truck with only a
+            -- delivered-pending-docs backlog (T171/T173/T156/T170/T163/T176) is dropped from Awaiting AND
+            -- excluded from the Booked band (delivered_pending_docs is terminal there), and vanishes. It
+            -- now surfaces ONCE in Awaiting. In-flight = assigned_not_dispatched/dispatched/in_transit.
             AND l.status IN (
               'assigned_not_dispatched'::mdata.load_status_enum,
               'dispatched'::mdata.load_status_enum,
-              'in_transit'::mdata.load_status_enum,
-              'delivered_pending_docs'::mdata.load_status_enum
+              'in_transit'::mdata.load_status_enum
             )
           -- The unit's DEFAULT driver (mdata.units.assigned_driver_id), so awaiting-truck rows can
           -- show Driver + HOS even with no load. (The old join used the load's driver, which is
