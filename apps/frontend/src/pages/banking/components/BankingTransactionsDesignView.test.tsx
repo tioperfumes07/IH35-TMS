@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useState, type ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -19,10 +19,11 @@ vi.mock("../../../api/banking", async (importOriginal) => {
   return {
     ...actual,
     getPlaidCompanyTransactions: vi.fn(),
-    getBankingSuggestions: vi.fn().mockResolvedValue({ suggestions: [] }),
+    getBankingSuggestions: vi.fn().mockResolvedValue({ suggestions: [], rule_match: null }),
     getMatchCandidates: vi.fn().mockResolvedValue({ candidates: [], match_candidates_count: 0 }),
     getCoaAccounts: vi.fn().mockResolvedValue({ accounts: [] }),
     categorizeTransaction: vi.fn().mockResolvedValue({ ok: true }),
+    categorizeBankTransaction: vi.fn().mockResolvedValue({ ok: true }),
     skipBankTransactionInvestigation: vi.fn().mockResolvedValue({ ok: true }),
     splitTransaction: vi.fn().mockResolvedValue({ ok: true }),
     uploadBankStatementCsv: vi.fn().mockResolvedValue({ added: 0, errors: [] }),
@@ -566,4 +567,72 @@ describe("BankingTransactionsDesignView inline class create (FIX-4)", () => {
     // The collapsed row's Class cell must show the new name immediately — no reopen/reselect.
     expect(await screen.findByText("TRK-101-SMITH")).toBeInTheDocument();
   });
+});
+
+describe("BankingTransactionsDesignView rule-match pre-fill (ROUND 16.21)", () => {
+  it("pre-fills Category from a real accounting.banking_rules match (ACCT-F375) without writing anything until Save", async () => {
+    vi.mocked(bankingApi.getPlaidCompanyTransactions).mockResolvedValue({
+      transactions: [tx("tx-rule-1", "acct-1", 5000, "2026-08-20T00:00:00.000Z", "LOVE'S TRAVEL STOP #123")],
+    });
+    vi.mocked(bankingApi.getCoaAccounts).mockResolvedValue({
+      accounts: [{ id: "acct-6300", account_number: "6300", account_name: "Fuel & Diesel", account_type: "expense" }],
+    });
+    vi.mocked(bankingApi.getBankingSuggestions).mockResolvedValue({
+      suggestions: [],
+      rule_match: { rule_id: "rule-1", then_account_id: "acct-6300", then_vendor_id: null },
+    });
+
+    render(
+      wrap(
+        <BankingTransactionsDesignView
+          companyId="company-1"
+          accounts={[
+            {
+              id: "acct-1",
+              operating_company_id: "company-1",
+              institution_name: "Chase",
+              account_name: "Operating",
+              account_mask: "1234",
+              account_type: "depository",
+              current_balance_cents: 100000,
+              available_balance_cents: 100000,
+              currency_code: "USD",
+              is_active: true,
+              sync_status: "active",
+              last_synced_at: null,
+              plaid_item_id: "item-1",
+              created_at: "2026-05-01T00:00:00.000Z",
+              updated_at: "2026-05-01T00:00:00.000Z",
+            },
+          ]}
+          selectedAccountId="acct-1"
+          onSelectAccount={() => {}}
+          onManageConnections={() => {}}
+          onDataChanged={() => {}}
+        />
+      )
+    );
+
+    // Expand the row (Categorize is the default mode) — this triggers the /suggestions fetch.
+    expect(await screen.findByText("LOVE'S TRAVEL STOP #123")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("LOVE'S TRAVEL STOP #123"));
+
+    // The honesty note confirms the pre-fill actually ran (not just that data arrived).
+    expect(await screen.findByTestId("banking-rule-match-prefill-note")).toBeInTheDocument();
+    // The Category picker itself now shows the matched account — pre-filled, not blank; the
+    // operator still has to click the real Save/Categorize action for anything to persist (this
+    // test asserts only the form state, never calls categorizeBankTransaction). ReferenceSelect
+    // renders its current value as a combobox <input value="…">, so this checks the input's value,
+    // not rendered text content.
+    expect(
+      await within(screen.getByTestId("banking-categorize-picker-category")).findByDisplayValue("Fuel & Diesel")
+    ).toBeInTheDocument();
+    expect(bankingApi.categorizeBankTransaction).not.toHaveBeenCalled();
+  });
+
+  // The "never clobber an operator's own pick" guarantee (the pre-fill effect's own
+  // `if (existing?.accountId || existing?.vendorId) return;` early-out) is pinned by
+  // scripts/verify-round1621-rule-match-prefill.mjs instead of here — driving the real
+  // ReferenceSelect/Combobox through a manual override in this test harness fights portal timing
+  // that isn't the thing actually under test; the guard reads the one-line invariant directly.
 });
