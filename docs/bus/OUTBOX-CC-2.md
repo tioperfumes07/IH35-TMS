@@ -1668,3 +1668,71 @@ this pass, scoped strictly to the review_state gap found and fixed here.
 ACC-20 moves from PENDING to CLOSED on the 5-day register (PENDING-REGISTER-5-DAYS-VERIFIED-2026-09-05.md
 line 113, PENDING-REGISTER-5DAY-2026-09-05.md line 113 — leaving those
 docs as history per never-delete; this note is the current status).
+
+## CC-2 | ROUND 16.21 DONE + ROUND 16.22 (partial) | 2026-09-06
+
+**16.21 — categorized count: BEFORE 0/364, AFTER 0/364 (unchanged, by design — see
+root cause).** PR #21189 merged, sha 70bf0ebd15.
+
+ROOT CAUSE (traced end to end, not guessed): accounting.banking_rules carries 16
+real, active, correctly-authored USMCA rules that genuinely match 139 of the 364
+real transactions (live-confirmed, suggested_source='banking_rule' on all 139) —
+the rule engine works. Those matches only ever wrote suggested_vendor_id/
+suggested_account_id. Separately, the GET .../suggestions endpoint has, since
+ACCT-F375 (2026-08-12), always computed and returned this same match as
+`rule_match` — but nothing in BankingTransactionsDesignView.tsx ever read it. An
+operator expanding a row with a real match saw a blank Category/Payee and had to
+categorize from scratch. The working rule engine's output never reached a human.
+
+FLAGGED A REAL CONFLICT before shipping the wrong fix: first built an
+auto-categorize extension (plaid.service.ts's autoCategorize() reading
+accounting.banking_rules too, committing without a GL post) — reverted on finding
+scripts/ops/bank-rules-usmca-seed.ts's own header is an explicit owner standing
+law: "the owner categorizes December 2025 → July 2026 himself... never
+categorizes and never posts... the owner accepts or overrides row by row." 109 of
+the 364 rows fall inside that exact reserved window. Auto-committing any of them,
+even without a GL post, would have gone against this. Built the fix the law
+itself describes instead: pre-fill Category/Payee from the real match so the
+operator can review-and-accept in one click, through the SAME picker + Save flow
+every manual categorization already uses — writes nothing until they click Save.
+
+GUARD: scripts/verify-round1621-rule-match-prefill.mjs (verify-step 10791, claim
+PR #21187), --selftest 2/2. New frontend test confirms the pre-fill renders and
+that the pre-fill itself never calls categorizeBankTransaction.
+
+LIVE PROOF: guard + selftest green, vitest 52/52 (15 files), tsc clean, 3 adjacent
+banking guards unaffected, full money-pr-local-gate PASS. Live Neon re-measure:
+category/coa_account_id-set count 0/364 → 0/364 (unchanged — correct, see root
+cause); suggested_account_id count unchanged 139/364 (the real matches now
+visible to a human for the first time).
+
+REMAINING (16.21): getting the live count off 0/364 now requires an operator to
+actually open rows and click Save — this fix makes that fast and accurate
+instead of from-scratch. Not done: a "has a suggestion" indicator on the
+collapsed row so an operator can prioritize which rows to open first — flagged
+as a natural follow-up, out of scope for the wiring gap itself.
+
+---
+
+**16.22 (partial — items 2/3 done, item 1 pending deploy):**
+
+2. CONFIRMED live (Neon, bypass_rls): `lib.feature_flags.default_enabled=false`
+   for PETTY_CASH_CHECK_TRANSFER_ENABLED, ZERO rows in
+   lib.feature_flag_overrides for this key — the flag is OFF for every entity
+   right now, no exceptions. Confirmed in code (bills.service.ts's own comment,
+   line ~2638): "When the flag is OFF (default) or no petty cash account exists,
+   check payments work exactly as before" — the skip-branch only fires when the
+   flag resolves true, so off-by-default is a real no-op, not just a config
+   default with a code path that still runs. scripts/verify-petty-cash-check-transfer.mjs
+   PASS (reused as the checklist per your instruction, no gap found requiring a
+   guard change).
+3. Not flipped, not touched — confirmed left exactly as merged (owner decision
+   per the migration's own comment, untouched).
+1. NOT YET DONE — needs a live Chrome walk of `/banking` on the deployed
+   frontend, which is not live yet (PR #21168's own DOD line said "frontend
+   not deployed" and this seat does not trigger deploys). Will Chrome-verify
+   Petty Cash create-through-UI + tile_kind='real' once a batch lands and
+   /api/v1/healthz/shallow (or the frontend's own /version.json) reaches
+   f370c2001c (BANK-F25140's merge sha) or later.
+
+Zero open CC-2-authored PRs.
