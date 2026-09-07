@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { assertDriverQualifiedForLoad, DriverNotQualifiedError } from "../driver-qualification.service.js";
 import { advanceDraftStatusIfCrewed } from "../draft-crew-status-advance.js";
+import { ACTIVE_UNIT_STATUSES, assertUnitNotActiveOnAnotherLoad } from "../unit-active-load-guard.js";
 
 type LoadRow = {
   id: string;
@@ -13,13 +14,15 @@ type LoadRow = {
   assigned_secondary_driver_id: string | null;
   load_number: string | null;
   is_hazmat: boolean;
+  status: string;
 };
 
 async function fetchLoadForUpdate(client: PoolClient, loadId: string, operatingCompanyId: string): Promise<LoadRow | null> {
   const res = await client.query<LoadRow>(
     `
       SELECT id, operating_company_id, assigned_primary_driver_id, assigned_unit_id, assigned_secondary_driver_id, load_number,
-             COALESCE((quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat
+             COALESCE((quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat,
+             status
       FROM mdata.loads
       WHERE id = $1
         AND operating_company_id = $2::uuid
@@ -190,6 +193,18 @@ export async function reassignUnit(
       const load = await fetchLoadForUpdate(client, input.load_uuid, input.operating_company_id);
       if (!load) throw new Error("E_LOAD_NOT_FOUND");
       await assertUnitAvailable(client, input.unit_uuid, input.operating_company_id);
+
+      // NEW-02 (owner urgent live report 2026-09-07, T152 double-dispatch): this load's own
+      // status doesn't change here, only its unit — but the load may already be active
+      // (dispatched/in_transit/etc.), so reassigning it onto a unit that's active on a DIFFERENT
+      // load right now would create the exact same double-dispatch.
+      if ((ACTIVE_UNIT_STATUSES as readonly string[]).includes(String(load.status))) {
+        await assertUnitNotActiveOnAnotherLoad(client, {
+          operating_company_id: input.operating_company_id,
+          unit_id: input.unit_uuid,
+          exclude_load_id: input.load_uuid,
+        });
+      }
 
       const unitUpdate = await client.query<{ id: string }>(
         `UPDATE mdata.loads

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { reassignDriver, reassignTrailer, reassignUnit } from "./quicksave.service.js";
 import { DriverNotQualifiedError } from "../driver-qualification.service.js";
+import { UnitAlreadyActiveOnLoadError } from "../unit-active-load-guard.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
@@ -104,6 +105,19 @@ function mapValidationError(error: unknown) {
           cdl_expires_at: error.block.cdlExpiresAt,
           medical_expiry_date: error.block.medicalExpiryDate,
           hazmat_endorsement_expires_at: error.block.hazmatEndorsementExpiresAt,
+        },
+      },
+    };
+  }
+  if (error instanceof UnitAlreadyActiveOnLoadError) {
+    return {
+      status: 409,
+      payload: {
+        error: error.code,
+        message: error.message,
+        details: {
+          conflicting_load_id: error.conflictingLoadId,
+          conflicting_load_number: error.conflictingLoadNumber,
         },
       },
     };

@@ -9,6 +9,7 @@ import {
   DriverNotQualifiedError,
 } from "./driver-qualification.service.js";
 import { advanceDraftStatusIfCrewed } from "./draft-crew-status-advance.js";
+import { ACTIVE_UNIT_STATUSES, assertUnitNotActiveOnAnotherLoad } from "./unit-active-load-guard.js";
 
 type QuickAssignInput = {
   operating_company_id: string;
@@ -61,7 +62,8 @@ export async function quickAssignLoad(
       const loadRes = await client.query(
         `
           SELECT id, operating_company_id, assigned_primary_driver_id, assigned_unit_id, assigned_secondary_driver_id, load_number,
-                 COALESCE((quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat
+                 COALESCE((quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat,
+                 status
           FROM mdata.loads
           WHERE id = $1
             AND operating_company_id = $2::uuid
@@ -72,6 +74,18 @@ export async function quickAssignLoad(
       );
       const load = loadRes.rows[0];
       if (!load) throw new Error("E_LOAD_NOT_FOUND");
+
+      // NEW-02 (owner urgent live report 2026-09-07, T152 double-dispatch): quick-assign can set
+      // assigned_unit_id with no cross-load check. The load's own status doesn't change here, but
+      // it may already be active — reassigning it onto a unit that's active on a DIFFERENT load
+      // right now would create the exact same double-dispatch.
+      if (input.unit_id && (ACTIVE_UNIT_STATUSES as readonly string[]).includes(String(load.status))) {
+        await assertUnitNotActiveOnAnotherLoad(client, {
+          operating_company_id: input.operating_company_id,
+          unit_id: input.unit_id,
+          exclude_load_id: input.load_id,
+        });
+      }
 
       const isVehicleSwap = Boolean(
         load.assigned_unit_id && input.unit_id && load.assigned_unit_id !== input.unit_id,
