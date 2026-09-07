@@ -8,6 +8,11 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202613980000": {
+      "claimed_by": "claude-3",
+      "claimed_at": "2026-09-07",
+      "purpose": "DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION (owner urgent report 2026-09-07): mdata.drivers gains status_locked_at/status_locked_reason so the daily mdata.driver_active_30d cron (driver-active-30d.service.ts) can never silently reactivate a driver the owner deactivated (manually in the TMS app, or in Samsara) -- live-confirmed on audit.row_changes: 70-91 USMCA drivers flip Active<->Inactive on many single cron runs (91 reactivated 2026-09-01 alone), leaving 89 Active against the owner's ~30 expectation."
+    },
     "202613950000": {
       "claimed_by": "claude",
       "claimed_at": "2026-09-07",
