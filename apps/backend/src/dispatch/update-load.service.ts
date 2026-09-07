@@ -771,7 +771,8 @@ export async function updateDispatchLoad(
       ? (fields.assigned_primary_driver_id ?? null)
       : (old.assigned_primary_driver_id ?? null);
   const effectiveTeam = "team_id" in fields ? (fields.team_id ?? null) : (old.team_id ?? null);
-  if (String(old.status ?? "") === "draft" && (effectivePrimaryDriver || effectiveTeam)) {
+  const willAdvanceFromDraft = String(old.status ?? "") === "draft" && (effectivePrimaryDriver || effectiveTeam);
+  if (willAdvanceFromDraft) {
     add("status", "assigned_not_dispatched", "::mdata.load_status_enum");
   }
 
@@ -785,10 +786,7 @@ export async function updateDispatchLoad(
     "assigned_unit_id" in fields
       ? (fields.assigned_unit_id ?? null)
       : ((old.assigned_unit_id as string | null | undefined) ?? null);
-  const effectiveLoadStatus =
-    String(old.status ?? "") === "draft" && (effectivePrimaryDriver || effectiveTeam)
-      ? "assigned_not_dispatched"
-      : String(old.status ?? "");
+  const effectiveLoadStatus = willAdvanceFromDraft ? "assigned_not_dispatched" : String(old.status ?? "");
   if (effectiveUnitId && (ACTIVE_UNIT_STATUSES as readonly string[]).includes(effectiveLoadStatus)) {
     await assertUnitNotActiveOnAnotherLoad(client, {
       operating_company_id: operatingCompanyId,
