@@ -1,4 +1,9 @@
 {
+  "10897": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-round1621-rule-match-prefill (CI-execution wiring only -- content ownership stays cc-2's, who claimed 10791 for this same guard on 2026-09-06 but never authored a wrapper file. That guard's own orphan status is now a REQUIRED-check-level repo-wide blocker (locked-guards-heavy / verify-guard-wired.mjs) failing on origin/main and blocking every PR's merge, not just cc-2's -- so wiring its CI execution under a fresh cc-1-lane number, leaving 10791 untouched/unedited, unblocks the whole repo without touching cc-2's own claim.)"
+  },
   "10889": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-07",
