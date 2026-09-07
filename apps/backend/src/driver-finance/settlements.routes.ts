@@ -207,6 +207,12 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             s.payment_bank_reference,
             s.payment_bounced_reason,
             s.payment_method,
+            -- SETL-ATNUM / SETL-DATES (owner 2026-09-07): the shared AlwaysTrack settlement number
+            -- (driver + company settlements for a trip share it) and the trip open/close dates. The
+            -- view (driver_settlement_with_debt) does not carry these; read them off the base row.
+            s.source_document_ref,
+            s.trip_started_at,
+            s.trip_closed_at,
             (
               -- ACCT-F275 — count the covered loads through BOTH linkages, canonical first.
               --
@@ -385,6 +391,12 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             s.payment_bank_reference,
             s.payment_bounced_reason,
             s.payment_method,
+            -- SETL-ATNUM / SETL-DATES (owner 2026-09-07): the shared AlwaysTrack settlement number
+            -- (driver + company settlements for a trip share it) and the trip open/close dates. The
+            -- view (driver_settlement_with_debt) does not carry these; read them off the base row.
+            s.source_document_ref,
+            s.trip_started_at,
+            s.trip_closed_at,
             (
               -- ACCT-F275 — count the covered loads through BOTH linkages, canonical first.
               --
