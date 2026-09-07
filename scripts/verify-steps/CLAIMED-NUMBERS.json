@@ -8113,5 +8113,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-07",
     "purpose": "verify-payrun-close-requires-load-activity"
+  },
+  "10833": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-cash-flow-row-adjustments-seq-grant"
   }
 }
