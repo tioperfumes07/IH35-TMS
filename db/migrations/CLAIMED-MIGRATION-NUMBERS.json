@@ -826,6 +826,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-09-06",
       "purpose": "Petty Cash account feature (owner request 2026-09-06): additive is_petty_cash boolean on banking.bank_accounts + petty_cash_funding transfer_type CHECK + PETTY_CASH_CHECK_TRANSFER_ENABLED feature flag (default OFF). When a check is generated and the flag is ON, the check amount posts a transfer from the source bank account to the petty cash account."
+    },
+    "202613920000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-07",
+      "purpose": "ROUND 16.24 item 3: GRANT USAGE/SELECT on accounting.cash_flow_row_adjustments_seq_seq to ih35_app -- migration 202613870000 added the seq bigserial column but never granted its implicit sequence, so every roll-over/hide write has been failing live with 42501 permission denied since that migration landed (live-reproduced this session)."
     }
   },
   "202613590001": {
