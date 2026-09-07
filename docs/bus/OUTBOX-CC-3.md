@@ -943,3 +943,28 @@ CONFIRMED, NOT REBUILT: the Driver Settlement detail page (SettlementDetailPage.
 GUARD: scripts/verify-company-settlement-itemized-by-load.mjs (verify-step 10701) --selftest pins the driver_name join, the driver-grouping gate (>1 distinct driver), and both surfaces rendering the register alongside the unchanged net_revenue_cents line. Caught + fixed my own replace->replaceAll selftest bug before shipping (same class of bug this session flagged twice before — a single .replace() leaving a second occurrence of the mutated string intact).
 
 Deadline was 03:00Z — shipped and live-verified well ahead of it.
+
+---
+
+CC-3 | ROUND-16.22 BOTH ITEMS DONE | cb11a85d7b | live pending (Render batches deploys) | linkage materializer PR #21183 · guard verify-settlement-lines-backfill-resolves-accounts (10789) selftest 4/4 caught · before/after 261 rows backfilled | NEXT flag: deduction_type='escrow' still unresolved (42 rows, pre-existing, not this PR's scope)
+
+Item 1 (CLOSE-POST-A apply) reported separately above (b97fa820cc, 13/13 posted). This line covers item 2.
+
+INVESTIGATED BEFORE BUILDING (per standing law — flag stale packets, don't blindly comply): settlement-lines-materialize.service.ts already existed (I built it earlier tonight for SETL-LINES-GL) and already does almost exactly what this box described — idempotent materializer, role-based account resolution, wired at BOTH line-creation (deductions.service.ts, driver-reimbursement.service.ts) AND settlement close (settlements-load-bookended.service.ts's own "unconditional sweep" comment, verbatim). The literal ask to "Build" it was stale. The REAL gap, found by measuring live rather than trusting the packet's framing: that materializer only ever resolves accounts for NEWLY-created rows on an OPEN settlement — it structurally cannot touch a settlement that's already closed, which is nearly all of USMCA's 15+ historical settlements. Before this PR: reimbursement 3/69, deduction 2/121, escrow_contribution 0/14, earnings/deadhead_pay 2/54 each had a resolved posting_account_id.
+
+FIX: extracted the deduction role-resolution branching into a shared resolveDeductionPostingAccount helper (one rule set, no drift), built backfillExistingSettlementLineAccounts (UPDATE-only, works regardless of settlement status, never touches approval_status or a dollar amount), wired it into the SAME close-time unconditional sweep, and ran a one-time ops sweep across all 23 USMCA settlements.
+
+LIVE BEFORE -> AFTER (Neon, real apply, not a dry-run):
+  deadhead_pay: 2/54 -> 54/54
+  earnings: 2/54 -> 54/54
+  escrow_contribution: 0/14 -> 14/14
+  extra_pay: 1/1 -> 1/1 (unchanged, already resolved)
+  reimbursement: 3/69 -> 69/69
+  deduction: 2/121 -> 79/121
+  TOTAL rows given a posting_account_id: 261
+
+GUARD: scripts/verify-settlement-lines-backfill-resolves-accounts.mjs (verify-step 10789, PR #21180 merged 1d35257b52) --selftest 4/4 mutations caught (shared-helper delegation, close-time wiring, approval_status never touched, unresolvable source counted not dropped). Live half re-run post-apply: PASS.
+
+FOUND, NOT GUESSED A FIX FOR: the remaining 42 unresolved deduction rows are ALL deduction_type='escrow' (distinct from 'escrow_contribution', which is now 14/14) — a pre-existing gap in the ORIGINAL materializer's own deduction branching (my extraction is behavior-preserving, didn't create this). classifyDeductionTarget's own ESCROW_TYPES set already treats 'escrow' as a driver's-own-liability target in the real JE-posting path (settlement-payrun-close.service.ts skips it entirely, target==='escrow' → continue), but nothing resolves what account it should carry on settlement_lines. This needs your read on whether 'escrow'-type deductions are a legacy alias that should route through resolveDriverEscrowLiabilityAccount like escrow_contribution, or represent a genuinely different money movement (an escrow return/withdrawal) I shouldn't assume — not fixed here, correctly not guessed at.
+
+"settlements 8/10 -> 10/10" note: docs/module-completion/settlements.json is still the same stale (2026-08-29) doc flagged in my last report — this PR doesn't touch it; the module-completion scoreboard needs a real regeneration pass separate from this money-linkage work, and I'm not editing that JSON by hand without a fresh audit of every one of its 10 items.

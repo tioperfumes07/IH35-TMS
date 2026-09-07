@@ -1,6 +1,6 @@
 {
   "healthzSha": "d918eda",
-  "generated_at": "2026-09-07T01:52:31.778Z",
+  "generated_at": "2026-09-07T01:50:48.632Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
@@ -2123,15 +2123,6 @@
   },
   "recentActivity": [
     {
-      "number": 21185,
-      "title": "FINDING: ACCT-F26018 ROUND 16.22 — fix the 7 remaining verify-step 3429 batch failures (1 real regression, 6 stale guards)",
-      "state": "merged",
-      "mergedAtCt": "09/06/2026, 08:51 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21185",
-      "sha": "b8e0d17844",
-      "committedAtIso": "2026-09-06T20:51:59-05:00"
-    },
-    {
       "number": 21184,
       "title": "FINDING: N/A (OUTBOX DONE — ROUND 16.22 item 2 linkage backfill, PR #21183/cb11a85d7b already merged)",
       "state": "merged",
@@ -2211,6 +2202,15 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21176",
       "sha": "3abf5d1d94",
       "committedAtIso": "2026-09-06T20:23:36-05:00"
+    },
+    {
+      "number": 21175,
+      "title": "CC-2-docs: ACC-20 DONE note",
+      "state": "merged",
+      "mergedAtCt": "09/06/2026, 08:18 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21175",
+      "sha": "e6ea2ab253",
+      "committedAtIso": "2026-09-06T20:18:58-05:00"
     }
   ]
 }
