@@ -13,7 +13,6 @@ import {
 import { createPortal } from "react-dom";
 import { Link, useLocation } from "react-router-dom";
 import { useQueries } from "@tanstack/react-query";
-import { listFactoringCandidateInvoices } from "../../api/accounting";
 import {
   getDetentionBoard,
   getDispatchDashboard,
@@ -61,7 +60,12 @@ const DISPATCH_NAV_ITEMS: readonly NavItem[] = [
   { label: "Late", href: "/dispatch/alerts/late-arrivals", badgeKey: "late" },
   { label: "Live Map", href: "/dispatch/geofencing", badgeKey: "live_map" },
   { label: "Trip Pairing", href: "/dispatch/trip-pairing" },
-  { label: "Factoring", href: "/dispatch/factoring-queue", badgeKey: "factoring" },
+  // BRD-22 (owner 2026-09-03): "FACTORING does not belong in Dispatch. Remove it from
+  // dispatch." PR #19091 (WIR-03) only re-pointed this item's href from /accounting/factoring
+  // to /dispatch/factoring-queue — it never removed the item, so BRD-22 stayed open despite
+  // being marked fixed. This tab is removed here. FactoringQueuePage itself is untouched
+  // (still reachable via the Factoring hub's reverse link and the sidebar flyout) — only the
+  // Dispatch top-nav destination goes away. See verify-dispatch-subnav-no-factoring.mjs.
   {
     label: "Planning",
     href: "/dispatch/planners/loads",
@@ -138,7 +142,6 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   "/dispatch/border-crossing/history": "Border",
   "/dispatch/alerts/late-arrivals": "Late",
   "/dispatch/geofencing": "Live Map",
-  "/dispatch/factoring-queue": "Factoring",
   "/dispatch/planners/driver": "Driver Planner",
   "/dispatch/planners/truck": "Truck Planner",
   "/dispatch/planners/loads": "Loads Planner",
@@ -213,8 +216,6 @@ export function dispatchSubNavActiveHref(
     return "/dispatch/alerts/late-arrivals";
   if (pathname.startsWith("/dispatch/geofencing"))
     return "/dispatch/geofencing";
-  if (pathname.startsWith("/dispatch/factoring-queue"))
-    return "/dispatch/factoring-queue";
   if (pathname.startsWith("/driver-finance/settlements"))
     return "/driver-finance/settlements";
   if (pathname.startsWith("/accounting/pre-settlements"))
@@ -506,7 +507,6 @@ export function DispatchSubnav({ operatingCompanyId }: Props) {
     detentionQ,
     lateQ,
     positionsQ,
-    factoringQ,
     unassignedQ,
     templatesQ,
     podQ,
@@ -550,12 +550,6 @@ export function DispatchSubnav({ operatingCompanyId }: Props) {
         refetchInterval: 30_000,
       },
       {
-        queryKey: ["dispatch-subnav", "factoring", operatingCompanyId],
-        queryFn: () => listFactoringCandidateInvoices(operatingCompanyId),
-        enabled,
-        refetchInterval: 60_000,
-      },
-      {
         queryKey: ["dispatch-subnav", "unassigned", operatingCompanyId],
         queryFn: () => listUnitsWithoutLoad(operatingCompanyId),
         enabled,
@@ -590,7 +584,6 @@ export function DispatchSubnav({ operatingCompanyId }: Props) {
     detentionQ,
     lateQ,
     positionsQ,
-    factoringQ,
     unassignedQ,
     templatesQ,
     podQ,
@@ -622,10 +615,6 @@ export function DispatchSubnav({ operatingCompanyId }: Props) {
       live_map:
         enabled && !positionsQ.isLoading && !positionsQ.isError
           ? (positionsQ.data?.rows?.length ?? 0)
-          : null,
-      factoring:
-        enabled && !factoringQ.isLoading && !factoringQ.isError
-          ? (factoringQ.data?.rows?.length ?? 0)
           : null,
       unassigned_units:
         enabled && !unassignedQ.isLoading && !unassignedQ.isError
@@ -664,9 +653,6 @@ export function DispatchSubnav({ operatingCompanyId }: Props) {
       positionsQ.isLoading,
       positionsQ.isError,
       positionsQ.data,
-      factoringQ.isLoading,
-      factoringQ.isError,
-      factoringQ.data,
       unassignedQ.isLoading,
       unassignedQ.isError,
       unassignedQ.data,
