@@ -79,13 +79,22 @@ export function buildLoadCostColumns<R>(
     id: LoadCostColumnId,
     label: string,
     pick: (f: LoadCostColumnFields) => number | null,
-    opts: { redWhenNegative?: boolean } = {},
+    opts: { redWhenNegative?: boolean; defaultHidden?: boolean } = {},
   ): ParityColumn<R> => ({
     key: `lc_${id}`,
     label,
     testId: `lc-col-${id}`,
     sortable: true,
     cellClass: MONEY_CELL,
+    // NEW-22 (owner 2026-09-07): "Chargeback and Fee History currently shows Load Costs data
+    // (fees/driver-pay/margin) — wrong. Every Factoring tab must default to factoring-only
+    // columns (reserve, fees, settlement #); Profit/Trip Expenses must NOT be selected by
+    // default, only addable via the gear." Revenue/Costs/Driver pay/Margin are the P&L/
+    // profitability figures that belong to the LOAD COSTS page's own default view, not
+    // Factoring's; they stay in the gear (never removed, Rule 07) but start unchecked here.
+    // Factoring-native figures (Reserve, Factoring fee, Advanced, Due) are unaffected —
+    // opts.defaultHidden is only ever passed for the four P&L columns below.
+    defaultHidden: opts.defaultHidden,
     sortValue: (row) => pick(adapt(row)) ?? Number.NEGATIVE_INFINITY,
     render: (row) => {
       const cents = pick(adapt(row));
@@ -147,10 +156,10 @@ export function buildLoadCostColumns<R>(
       sortValue: (row) => adapt(row).settlementNumber ?? "",
       render: (row) => adapt(row).settlementNumber || DASH,
     },
-    moneyCol("revenue", "Revenue", (f) => f.revenueCents),
-    moneyCol("costs", "Costs", (f) => f.costsCents),
-    moneyCol("driver_pay", "Driver pay", (f) => f.driverPayCents),
-    moneyCol("margin", "Margin", (f) => f.marginCents, { redWhenNegative: true }),
+    moneyCol("revenue", "Revenue", (f) => f.revenueCents, { defaultHidden: true }),
+    moneyCol("costs", "Costs", (f) => f.costsCents, { defaultHidden: true }),
+    moneyCol("driver_pay", "Driver pay", (f) => f.driverPayCents, { defaultHidden: true }),
+    moneyCol("margin", "Margin", (f) => f.marginCents, { redWhenNegative: true, defaultHidden: true }),
     moneyCol("factoring_fee", "Factoring fee", (f) => f.factoringFeeCents),
     moneyCol("reserve", "Reserve", (f) => f.reserveCents),
     moneyCol("advanced", "Advanced", (f) => f.advancedCents),
