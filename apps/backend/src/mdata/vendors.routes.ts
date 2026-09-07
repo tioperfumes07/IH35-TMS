@@ -375,6 +375,11 @@ export async function registerVendorRoutes(app: FastifyInstance) {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
       const values: unknown[] = [];
       const filters: string[] = [];
+      // ACCT-F26012 (owner, 2026-09-07) — the live Vendors list carried 7 is_sample_data=true rows
+      // (measured live, USMCA) with no exclusion of any kind: unlike Fleet (fleet-visibility.ts's
+      // excludeSampleDataSql, ACCT-F25134) this list endpoint never filtered on is_sample_data at
+      // all. Same fix, same fragment shape, quarantine-not-delete.
+      filters.push("is_sample_data IS NOT TRUE");
       if (status === "active") filters.push("deactivated_at IS NULL");
       if (status === "inactive") filters.push("deactivated_at IS NOT NULL");
       if (vendor_type) {
