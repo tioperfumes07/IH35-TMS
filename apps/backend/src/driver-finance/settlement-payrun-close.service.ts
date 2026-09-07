@@ -88,7 +88,8 @@ export type PayRunCloseErrorCode =
   | "NET_PAY_FLOOR_BREACH"
   | "UNBALANCED_ENTRY"
   | "SETTLEMENT_ALREADY_POSTED_BY_OTHER_POSTER"
-  | "OUTSTANDING_LOAN_DECISION_REQUIRED";
+  | "OUTSTANDING_LOAN_DECISION_REQUIRED"
+  | "SETTLEMENT_HAS_NO_LOAD_ACTIVITY";
 
 export class SettlementPayRunError extends Error {
   code: PayRunCloseErrorCode;
@@ -472,6 +473,31 @@ export async function closeSettlementPayRun(
       throw new SettlementPayRunError(
         "SETTLEMENT_NOT_POSTABLE",
         `Settlement ${settlement.display_id ?? settlement.id} is not finalized/locked (status=${settlement.status})`
+      );
+    }
+
+    // ROUND 16.24 item 3 — a settlement that never actually ran a load (never touched the Laredo
+    // yard) must never post a real JE, regardless of what its stored gross_pay/net_pay columns say.
+    // Checked directly against settlement_lines' own load_id (the same real-load-membership signal
+    // buildCompanySettlementReport/materializeSettlementLines already use), not the settlement's
+    // own possibly-stale header figures — a $0 shell (e.g. a cancelled-load settlement) would
+    // otherwise only be caught later by assertBalanced's generic "debits<=0" refusal, which never
+    // names WHY. This fails closed with a clear, specific reason instead.
+    const loadActivity = await client.query<{ n: string }>(
+      `
+        SELECT count(*)::text AS n
+          FROM driver_finance.settlement_lines sl
+         WHERE sl.settlement_id = $1::uuid
+           AND sl.is_active = true
+           AND sl.line_type IN ('earnings', 'deadhead_pay')
+           AND sl.load_id IS NOT NULL
+      `,
+      [settlementId]
+    );
+    if (Number(loadActivity.rows[0]?.n ?? 0) === 0) {
+      throw new SettlementPayRunError(
+        "SETTLEMENT_HAS_NO_LOAD_ACTIVITY",
+        `Settlement ${settlement.display_id ?? settlement.id} never touched the Laredo yard — no active earnings/deadhead_pay line carries a real load_id — refusing to post`
       );
     }
 
