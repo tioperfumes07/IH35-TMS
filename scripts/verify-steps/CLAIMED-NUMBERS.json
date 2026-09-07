@@ -5952,6 +5952,11 @@
     "claimed_at": "2026-09-06",
     "purpose": "verify-factoring-layout-tabs-first"
   },
+  "10596": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-factoring-register-shared-manifest"
+  },
   "10597": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
@@ -6001,6 +6006,21 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "verify-dispatch-planner-active-driver-scope"
+  },
+  "10681": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-banking-match-panel-layout-and-datepicker-boxinbox"
+  },
+  "10693": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-banking-home-virtual-tile-routing"
+  },
+  "10697": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-fleet-sample-data-quarantine"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -8003,20 +8023,5 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
-  },
-  "10596": {
-    "claimed_by": "cursor",
-    "claimed_at": "2026-09-06",
-    "purpose": "verify-factoring-register-shared-manifest"
-  },
-  "10681": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-06",
-    "purpose": "verify-banking-match-panel-layout-and-datepicker-boxinbox"
-  },
-  "10693": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-06",
-    "purpose": "verify-banking-home-virtual-tile-routing"
   }
 }
