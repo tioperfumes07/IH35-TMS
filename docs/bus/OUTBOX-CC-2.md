@@ -1558,3 +1558,59 @@ the Planner) — confirmed no overlap with this PR before merging.
 
 BANK-TOOLBAR-ONE (the other ROUND 16.19 task) is in progress on this seat
 in parallel — see next entry.
+
+## CC-2 | ROUND 16.19 (BANK-TOOLBAR-ONE half) DONE | 2026-09-06
+
+PR #21161 merged, sha 4db3ec219f. Consolidated the Banking Transactions
+toolbar's ONE gear (ParityTable's own canonical column-chooser, extended
+via a new additive `gearExtra` prop, replacing the page's own second "View
+settings" gear) and folded the By-month/Money-in-out/All-dates grouping
+picker into the existing Presets popover instead of a standalone segmented
+control sitting next to it.
+
+FLAGGING A REAL CONFLICT rather than silently picking a side: this round's
+own directive described a single "Dates▾" dropdown that hides From/To
+behind a click. That directly conflicts with
+scripts/verify-banking-toolbar-uniform-height.mjs — an existing,
+still-binding guard from an owner order ONE DAY EARLIER (2026-09-05)
+requiring the date range to render "VISIBLE ON LANDING ... not behind a
+click". I kept the earlier, guard-enforced law (From/To stayed exactly
+where/how they already rendered, unconditional) and only consolidated the
+parts that don't conflict with it (the gear, the grouping picker). If the
+literal "Dates▾ hides From/To" shape is still wanted, that needs an
+explicit new owner call overriding the 09-05 order — not something I'll
+guess at by editing or weakening the existing guard myself.
+
+New guard: scripts/verify-banking-toolbar-single.mjs (verify-step 10711,
+claim PR #21153) — scoped deliberately narrow (ONE gear + grouping-inside-
+Presets only) so it never re-litigates column-visibility architecture or
+date-visibility, which stay owned by verify-banking-register-columns.mjs /
+verify-banking-toolbar-uniform-height.mjs respectively.
+
+Also hit and fixed two real regressions caught by PRE-EXISTING guards
+before this even reached push (not just the guard I wrote): my first pass
+at this had migrated the 8 gear-toggleable columns to ParityTable's native
+defaultHidden mechanism (architecturally cleaner, but conflicts with
+verify-banking-register-columns.mjs's pinned viewSettings.showX + ToggleLine
+shape) and had dropped the "Add new vendors — not wired" honesty checkbox
+as apparently-dead UI (it isn't — verify-banking-categorize-pickers.mjs
+requires it present). Both reverted to the pinned shape before merging;
+neither shipped.
+
+LIVE PROOF: node scripts/verify-banking-toolbar-single.mjs (+ --selftest)
+exit 0; the 4 pre-existing banking guards it touches adjacent surface for
+(categorize-pickers, register-columns, toolbar-single-search, toolbar-
+uniform-height) all exit 0; apps/frontend tsc -b --force clean; vitest run
+src/pages/banking/ 51/51; full money-pr-local-gate PASS.
+
+REMAINING: UNVERIFIED-LIVE — same constraint as the Safety EntityLink half
+above (deploy batched, not this seat's to trigger; this seat also never
+enters credentials to start a fresh authenticated session at a local dev
+server, even pointed at the live API via vite's /api proxy). Chrome
+verification follows once healthz/version catches up to 4db3ec219f. Also
+still open: the From/To-behind-a-click question flagged above needs an
+explicit owner decision if Lead's literal Dates▾ shape is still wanted
+over the 09-05 law.
+
+Both ROUND 16.19 tasks now closed on this seat (Safety EntityLink half +
+this one). Zero open CC-2-authored PRs.
