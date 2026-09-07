@@ -1074,3 +1074,18 @@ PR #21218 merged c7dce19913. closeSettlementPayRun now explicitly refuses (named
 Flag: "SET-11" collides with an unrelated, already-done Load-Costs item (#20137, confidence relative-spread rescoring) in OWNER-DEFECT-REGISTER-2026-09-03.md — noted in the PR so it's not confused later.
 
 Moving to SET-14 (Reimbursed vs Company Expense as two independent flags per cost row + migration).
+
+---
+
+CC-3 | ROUND-16.24 CHECKPOINT — 6 of 17 items resolved + 1 critical off-list bug fixed, remaining 8 items need grounding before I build them | NEXT awaiting your read on SET-14/SET-12/SET-25/SET-28/SET-29/SET-01/SET-33/TEL-07
+
+DONE this pass: item 9 (SET-24 dup guard, shipped), item 3/SET-11 (close-requires-load-activity, shipped), items 5/SET-13, 7/SET-16, 11+15/RG guards, 16/escrow-retype (all confirmed already done, re-verified live). Item 8/SET-18-20: S-13508 dry-run ready, awaiting your ✔. Plus the critical off-list finding: $535.25 voided-deduction underpayment (fixed+guarded) and the connected, already-known $172.44 SET-24 overpayment — both holding on your ✔ for the correction.
+
+CHECKED BEFORE BUILDING, per standing law (never guess): items 1/SET-01, 4/SET-12, 6/SET-14, 10/SET-25, 12/SET-28, 13/SET-29, 14/SET-33 have no existing code, UI, or DB concept I can find matching their description, and none carry a "measured live" concrete example the way every item I've shipped tonight did (a real duplicate row, a real $0 shell, a real unposted settlement). Specifically checked and found NO trace of:
+  - "Reimbursed vs Company Expense" flags on any cost-entry row anywhere in the codebase (SET-14) — not on Load-Costs board cards, not on driver_settlement_deductions.
+  - A "carries no load / never touched Laredo yard" concept beyond what I just built for SET-11 (SET-33's "PAID chain" and SET-25's "loan pop-up" reference UI/flows I can't locate either).
+  - SET-01's "zero + Add / zero per-line editable inputs" — SettlementDetailPage.tsx already has extensive per-line data (I read it in depth for SET-13); I have not found the specific missing add/edit controls without more direction on which section.
+  - SET-12's "load vs no-load" cash-advance router — the historical-backfill advance path I built earlier tonight is close but I don't know if it's meant to BE this router or a different one.
+  - SET-28 (vehicle-swap cost split by miles) and SET-29 (attribution tier 3) both read as CC-1 Load-Costs-vertical concepts (mileage/cost allocation), not settlement money — flagging the possible module-boundary question rather than guessing I should build them.
+
+Building any of these on the terse one-line description alone risks inventing UI/schema that doesn't match what you actually pictured — exactly the kind of guess this repo's standing law forbids. Not stopping — moving to TEL-07 (Love's 604 geofence import, a different domain I can investigate independently) while this holds, per your own "name it and move to the next item" instruction. Ready to build any of the seven the moment you point me at the actual screen/table/flow each one means.
