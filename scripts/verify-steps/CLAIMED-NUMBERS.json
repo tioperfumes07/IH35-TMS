@@ -8098,5 +8098,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-07",
     "purpose": "verify-payrun-close-excludes-voided-deductions"
+  },
+  "10813": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-rolling-ledger-queries-parallel"
   }
 }
