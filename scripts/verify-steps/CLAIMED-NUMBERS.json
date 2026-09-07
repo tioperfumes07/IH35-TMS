@@ -6222,6 +6222,11 @@
     "claimed_at": "2026-09-07",
     "purpose": "verify-load-costs-settlement-column-and-invoiced-not-open (NEW-08 + NEW-09, owner raw findings dump 2026-09-07 ~21:00Z). Static guard: load-costs-board.routes.ts surfaces the already-real driver_finance settlement linkage (SET-01/SET-02) as a Settlement # board column; LoadCostsBoardPage.tsx has that column wired opt-in (margin's own defaultHidden precedent); 'invoiced' status moved from DELIVERED (open) to CLOSED so an already-invoiced load stops showing as open."
   },
+  "10905": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-driver-status-lock-blocks-reactivation (orphan-guard wiring, DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION, PR #21326). Guard shipped with the fix commit but never wired into a verify-step -- this step wires its CI execution (--selftest + real run)."
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
