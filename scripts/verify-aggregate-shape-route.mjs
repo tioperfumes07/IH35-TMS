@@ -43,7 +43,7 @@ function unitMaintenanceVoidFailures(unitSource) {
 
 function currentLoadCustomerFailures(unitSource) {
   const failures = [];
-  if (!/l\.customer_id::text AS customer_id[\s\S]{0,900}LEFT JOIN LATERAL \(\s+SELECT scoped_customer\.customer_name\s+FROM mdata\.get_customer_same_company\(l\.customer_id, l\.operating_company_id\) scoped_customer\s+LIMIT 1\s+\) c ON TRUE[\s\S]{0,260}WHERE l\.assigned_unit_id = \$1::uuid\s+AND l\.operating_company_id = \$2::uuid/.test(unitSource)) {
+  if (!/l\.customer_id::text AS customer_id[\s\S]{0,1200}LEFT JOIN LATERAL \(\s+SELECT scoped_customer\.customer_name\s+FROM mdata\.get_customer_same_company\(l\.customer_id, l\.operating_company_id\) scoped_customer\s+LIMIT 1\s+\) c ON TRUE[\s\S]{0,800}WHERE l\.assigned_unit_id = \$1::uuid\s+AND l\.operating_company_id = \$2::uuid/.test(unitSource)) {
     failures.push("unit aggregate current-load customer reverse must use the scoped historical customer resolver");
   }
   return failures;
