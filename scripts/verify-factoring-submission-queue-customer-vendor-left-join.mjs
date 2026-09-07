@@ -3,21 +3,35 @@
  * ACCT-F5787 — CLS-DEACTIVATED-PLAIN-JOIN-CUSTOMERS-VENDORS (factoring/submission-queue.service.ts
  * instance). mdata.customers' customers_select RLS requires deactivated_at IS NULL for a non-bypass
  * reader, so the "submit to Faro" queue's plain JOIN mdata.customers silently dropped a real,
- * currently-sendable invoice the moment its customer was deactivated — and because this consumer needs
- * the FULL customer row (c.factoring_company_vendor_id drives both the WHERE clause and the second
- * JOIN to mdata.vendors), a label-only resolver could not fix it. Migration 202613060000 adds
+ * currently-sendable invoice the moment its customer was deactivated. Migration 202613060000 adds
  * mdata.get_customer_same_company (RETURNS SETOF mdata.customers, mirrors mdata.get_vendor_same_company
  * / ACCT-F5767 exactly). Fixed via a LEFT JOIN + a LATERAL fallback that only invokes the resolver when
  * the primary RLS-scoped join already found nothing (WHERE c.id IS NULL) — the common (active
  * customer) path never calls the resolver.
  *
- * Live-verified: the LATERAL-only-when-null mechanism deterministically resolves customer_name and
- * factoring_company_vendor_id via the fallback when the primary join is forced to miss (c.id IS NULL),
- * independent of RLS session state.
+ * SUPERSEDED IN PART BY ACCT-F26011 (owner, 2026-09-06, root-caused live via Cursor + independently
+ * re-verified): the original fix gated submittability on mdata.customers.factoring_company_vendor_id
+ * joined to mdata.vendors — a denormalized mirror column populated on only 2 of 1,226 customers
+ * actually assigned in the authoritative factoring.customer_factor_assignment table (measured live,
+ * USMCA prod), so ~99.9% of Faro-assigned invoices silently never reached this queue.
+ * batch.service.ts's getFactorForCustomer already read customer_factor_assignment correctly, so the
+ * fix repointed this query at the SAME authoritative, effective-dated source (LEFT JOIN LATERAL over
+ * factoring.customer_factor_assignment + factoring.factor, keyed on COALESCE(c.id, c2.id) — the SAME
+ * c/c2 customer resolved above, so the ACCT-F5787 deactivated-customer fix is still fully exercised)
+ * instead of mdata.vendors, which factoring.factor carries no vendor_id back to. This guard was
+ * updated in the same pass to check the CURRENT (customer_factor_assignment) mechanism instead of the
+ * one it replaced — the old mdata.vendors join check would otherwise permanently fail against
+ * legitimately-fixed code.
+ *
+ * Live-verified: the LATERAL-only-when-null mechanism deterministically resolves customer_name via
+ * the fallback when the primary join is forced to miss (c.id IS NULL), independent of RLS session
+ * state; assigned_factor resolves through the SAME c/c2 customer id either way.
  *
  * INVARIANT (static — no database): the submission-queue query must LEFT JOIN (never plain/INNER JOIN)
- * mdata.customers and mdata.vendors, must LEFT JOIN LATERAL mdata.get_customer_same_company gated on
- * "c.id IS NULL", and customer_name / factoring_company_vendor_id must be COALESCEd with the c2
+ * mdata.customers, must LEFT JOIN LATERAL mdata.get_customer_same_company gated on "c.id IS NULL",
+ * must LEFT JOIN LATERAL factoring.customer_factor_assignment (effective-dated, not voided) keyed on
+ * COALESCE(c.id, c2.id) — never the retired mdata.customers.factoring_company_vendor_id mirror — and
+ * gate the WHERE clause on assigned_factor.id IS NOT NULL. customer_name must be COALESCEd with the c2
  * fallback. customers_select must never be touched.
  *
  * Self-test: node scripts/verify-factoring-submission-queue-customer-vendor-left-join.mjs --selftest
@@ -53,14 +67,17 @@ export function checkRouteSource(src) {
   if (!/LEFT JOIN LATERAL \(\s*SELECT \* FROM mdata\.get_customer_same_company\(i\.customer_id, i\.operating_company_id\)\s*WHERE c\.id IS NULL\s*\) c2 ON true/.test(src)) {
     problems.push("LATERAL fallback to mdata.get_customer_same_company (gated on c.id IS NULL) is missing or malformed");
   }
-  if (!/LEFT JOIN mdata\.vendors fv ON fv\.id = COALESCE\(c\.factoring_company_vendor_id, c2\.factoring_company_vendor_id\)/.test(src)) {
-    problems.push("mdata.vendors join no longer resolves factoring_company_vendor_id via the c/c2 fallback, or reverted to a plain JOIN");
+  if (!/FROM factoring\.customer_factor_assignment cfa\s*\n\s*JOIN factoring\.factor f ON f\.id = cfa\.factor_id AND f\.voided_at IS NULL/.test(src)) {
+    problems.push("assigned-factor lookup no longer joins factoring.customer_factor_assignment -> factoring.factor (ACCT-F26011) — reverted to the retired mdata.vendors/factoring_company_vendor_id mirror, or the voided_at guard was dropped");
+  }
+  if (!/WHERE cfa\.customer_id = COALESCE\(c\.id, c2\.id\)/.test(src)) {
+    problems.push("customer_factor_assignment lookup no longer keys off COALESCE(c.id, c2.id) — the ACCT-F5787 deactivated-customer fallback would stop covering the factor-assignment leg");
   }
   if (!/COALESCE\(c\.customer_name, c2\.customer_name\) AS customer_name/.test(src)) {
     problems.push("customer_name is not COALESCEd with the c2 fallback");
   }
-  if (!/COALESCE\(c\.factoring_company_vendor_id, c2\.factoring_company_vendor_id\) IS NOT NULL/.test(src)) {
-    problems.push("the factoring_company_vendor_id NOT NULL filter no longer checks the c2 fallback — a deactivated customer with a real factoring vendor would still be excluded");
+  if (!/AND assigned_factor\.id\s+IS NOT NULL/.test(src)) {
+    problems.push("the WHERE clause no longer requires assigned_factor.id IS NOT NULL (ACCT-F26011) — an invoice with no live customer_factor_assignment would wrongly reach the queue, or the check reverted to the retired factoring_company_vendor_id column");
   }
   if (/ALTER (POLICY|TABLE mdata\.customers)\b.*customers_select/is.test(src) || /DROP POLICY.*customers_select/i.test(src)) {
     problems.push("this file touches customers_select directly — the established fix pattern is a same-company SECURITY DEFINER fallback, not weakening the RLS policy");
@@ -89,10 +106,18 @@ function selftest() {
       SELECT * FROM mdata.get_customer_same_company(i.customer_id, i.operating_company_id)
       WHERE c.id IS NULL
     ) c2 ON true
-    LEFT JOIN mdata.vendors fv ON fv.id = COALESCE(c.factoring_company_vendor_id, c2.factoring_company_vendor_id)
-                               AND fv.operating_company_id = $1::uuid
+    LEFT JOIN LATERAL (
+      SELECT f.id, f.name
+      FROM factoring.customer_factor_assignment cfa
+      JOIN factoring.factor f ON f.id = cfa.factor_id AND f.voided_at IS NULL
+      WHERE cfa.customer_id = COALESCE(c.id, c2.id)
+        AND cfa.tenant_id   = $1::uuid
+        AND cfa.voided_at   IS NULL
+      ORDER BY cfa.effective_from DESC
+      LIMIT 1
+    ) assigned_factor ON true
     WHERE i.operating_company_id = $1::uuid
-      AND COALESCE(c.factoring_company_vendor_id, c2.factoring_company_vendor_id) IS NOT NULL
+      AND assigned_factor.id     IS NOT NULL
     SELECT COALESCE(c.customer_name, c2.customer_name) AS customer_name
   `;
   const cases = [
@@ -103,24 +128,26 @@ function selftest() {
       expectProblems: true,
     },
     {
-      name: "LATERAL fallback removed",
+      name: "get_customer_same_company LATERAL fallback removed",
       src: goodSrc.replace(/LEFT JOIN LATERAL[\s\S]*?c2 ON true/, "-- lateral removed"),
       expectProblems: true,
     },
     {
-      name: "vendors join reverted to raw c.factoring_company_vendor_id (no fallback)",
+      name: "assigned-factor lookup reverted to retired mdata.vendors/factoring_company_vendor_id mirror (ACCT-F26011 regression)",
       src: goodSrc.replace(
-        "LEFT JOIN mdata.vendors fv ON fv.id = COALESCE(c.factoring_company_vendor_id, c2.factoring_company_vendor_id)",
-        "LEFT JOIN mdata.vendors fv ON fv.id = c.factoring_company_vendor_id"
+        /FROM factoring\.customer_factor_assignment cfa\s*\n\s*JOIN factoring\.factor f ON f\.id = cfa\.factor_id AND f\.voided_at IS NULL/,
+        "FROM mdata.vendors fv WHERE fv.id = COALESCE(c.factoring_company_vendor_id, c2.factoring_company_vendor_id)"
       ),
       expectProblems: true,
     },
     {
-      name: "WHERE filter reverted to raw c.factoring_company_vendor_id (no fallback)",
-      src: goodSrc.replace(
-        "COALESCE(c.factoring_company_vendor_id, c2.factoring_company_vendor_id) IS NOT NULL",
-        "c.factoring_company_vendor_id IS NOT NULL"
-      ),
+      name: "customer_factor_assignment lookup no longer keyed on COALESCE(c.id, c2.id)",
+      src: goodSrc.replace("WHERE cfa.customer_id = COALESCE(c.id, c2.id)", "WHERE cfa.customer_id = c.id"),
+      expectProblems: true,
+    },
+    {
+      name: "WHERE filter reverted off assigned_factor.id",
+      src: goodSrc.replace("AND assigned_factor.id     IS NOT NULL", "AND c.factoring_company_vendor_id IS NOT NULL"),
       expectProblems: true,
     },
     {
@@ -162,7 +189,7 @@ function main() {
     for (const p of problems) console.error(`  - ${p}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: OK — submission-queue query LEFT JOINs mdata.customers/mdata.vendors with a LATERAL same-company resolver fallback, customers_select untouched`);
+  console.log(`${LABEL}: OK — submission-queue query LEFT JOINs mdata.customers with a LATERAL same-company resolver fallback and resolves the assigned factor via factoring.customer_factor_assignment (ACCT-F26011), customers_select untouched`);
 }
 
 main();
