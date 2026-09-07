@@ -5,6 +5,9 @@ import fs from "node:fs";
 const file = "apps/frontend/src/components/dispatch/DispatchSubnav.tsx";
 const live = fs.readFileSync(file, "utf8");
 
+// FAC-11/BRD-22 (2026-09-07): factoringQ was removed from DispatchSubnav.tsx along with the
+// "Factoring" nav item it backed (see verify-dispatch-subnav-no-factoring.mjs) — Factoring is no
+// longer a Dispatch subnav destination, so there is no badge left to be dishonest about.
 const queryNames = [
   "dashboardQ",
   "assignmentsQ",
@@ -12,7 +15,6 @@ const queryNames = [
   "detentionQ",
   "lateQ",
   "positionsQ",
-  "factoringQ",
   "unassignedQ",
   "templatesQ",
   "podQ",

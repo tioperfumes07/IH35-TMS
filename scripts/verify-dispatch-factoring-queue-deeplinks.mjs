@@ -142,17 +142,19 @@ export function checkSubnavRoutes(src) {
       `${SUBNAV}: "Reserve a Load" nav href must include book_load=1`,
     );
   }
-  if (!/label:\s*["']Factoring["'][\s\S]{0,80}?href:\s*["']\/dispatch\/factoring-queue["']/.test(src)) {
-    failures.push(`${SUBNAV}: Dispatch Factoring tab must stay inside Dispatch at /dispatch/factoring-queue`);
-  }
-  if (/label:\s*["']Factoring["'][\s\S]{0,80}?href:\s*["']\/accounting\/factoring["']/.test(src)) {
-    failures.push(`${SUBNAV}: Dispatch Factoring tab must not leave the module for /accounting/factoring`);
-  }
-  if (!src.includes('"/dispatch/factoring-queue": "Factoring"')) {
-    failures.push(`${SUBNAV}: Dispatch Factoring queue must have its own breadcrumb label`);
-  }
-  if (!/pathname\.startsWith\(["']\/dispatch\/factoring-queue["']\)[\s\S]{0,80}?return ["']\/dispatch\/factoring-queue["']/.test(src)) {
-    failures.push(`${SUBNAV}: active-route resolver must keep Factoring selected on the Dispatch queue`);
+  // BRD-22 (owner 2026-09-03, re-verified live 2026-09-07 as FAC-11): "FACTORING does not
+  // belong in Dispatch. Remove it from dispatch." This guard used to REQUIRE a Factoring
+  // nav item here (`must stay inside Dispatch`) — that pinned the exact defect the owner
+  // reported. PR #19091 (WIR-03) satisfied the old assertion by only re-pointing the href
+  // (/accounting/factoring -> /dispatch/factoring-queue) without ever removing the item,
+  // which is why BRD-22 stayed open under a guard that read GREEN. The requirement is now
+  // inverted: no Factoring destination may exist in DISPATCH_NAV_ITEMS at all. See
+  // verify-dispatch-subnav-no-factoring.mjs for the dedicated, single-purpose guard.
+  if (/label:\s*["']Factoring["']/.test(src)) {
+    failures.push(
+      `${SUBNAV}: BRD-22 — Dispatch subnav must not contain a "Factoring" nav item (owner: ` +
+        `"FACTORING does not belong in Dispatch. Remove it from dispatch.")`,
+    );
   }
   return failures;
 }
@@ -198,15 +200,11 @@ if (process.argv.includes("--selftest")) {
     const loadId = searchParams.get("load_id") ?? searchParams.get("load");
     // no book_load handling
   `;
-  const goodSubnav = `{ label: "Reserve a Load", href: "/dispatch/book-load?book_load=1" }
-    { label: "Factoring", href: "/dispatch/factoring-queue" }
-    "/dispatch/factoring-queue": "Factoring"
-    if (pathname.startsWith("/dispatch/factoring-queue")) return "/dispatch/factoring-queue";`;
+  const goodSubnav = `{ label: "Reserve a Load", href: "/dispatch/book-load?book_load=1" }`;
   const badSubnav = goodSubnav.replace("/dispatch/book-load?book_load=1", "/dispatch/book-load");
-  const badFactoringSubnav = goodSubnav.replace(
-    '{ label: "Factoring", href: "/dispatch/factoring-queue" }',
-    '{ label: "Factoring", href: "/accounting/factoring" }',
-  );
+  // BRD-22 regression fixtures: either href shape re-introduces the Factoring nav item.
+  const badFactoringSubnav = `${goodSubnav}\n    { label: "Factoring", href: "/dispatch/factoring-queue" }`;
+  const badFactoringSubnavAccounting = `${goodSubnav}\n    { label: "Factoring", href: "/accounting/factoring" }`;
   const goodApi = `SELECT c.id AS customer_id FROM mdata.load_stops WHERE load_id = l.id AND stop_type = 'delivery' AND soft_deleted_at IS NULL ORDER BY sequence_number DESC; customer_id: row.customer_id`;
   const badApiRetiredStop = goodApi.replace("AND soft_deleted_at IS NULL", "");
 
@@ -219,7 +217,8 @@ if (process.argv.includes("--selftest")) {
     ["dispatch missing book_load fails", checkDispatchConsumer(badDispatchNoBook).length > 0],
     ["good subnav passes", checkSubnavRoutes(goodSubnav).length === 0],
     ["bad reserve subnav fails", checkSubnavRoutes(badSubnav).length > 0],
-    ["accounting factoring subnav escape fails", checkSubnavRoutes(badFactoringSubnav).length > 0],
+    ["reintroduced dispatch-queue factoring subnav item fails", checkSubnavRoutes(badFactoringSubnav).length > 0],
+    ["reintroduced accounting factoring subnav item fails", checkSubnavRoutes(badFactoringSubnavAccounting).length > 0],
     ["active delivery stop API passes", checkFactoringQueueApi(goodApi).length === 0],
     ["retired delivery stop API fails", checkFactoringQueueApi(badApiRetiredStop).length > 0],
   ];
