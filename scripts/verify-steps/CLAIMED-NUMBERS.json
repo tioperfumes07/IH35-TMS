@@ -8028,5 +8028,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-07",
     "purpose": "verify-fleet-sample-data-quarantine"
+  },
+  "10707": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-06",
+    "purpose": "verify-dispatch-planner-safety-entitylink"
   }
 }
