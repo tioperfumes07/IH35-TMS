@@ -42,6 +42,12 @@ export type ParityColumn<T> = {
   render?: (row: T) => ReactNode;
   className?: string;
   cellClass?: string;
+  /** ROUND 16.25 (owner-reported row-height defect, live-confirmed root cause 2026-09-07):
+   *  body cells truncate (nowrap + ellipsis) by default so one wrapped cell can't inflate an
+   *  entire row's height. Set true ONLY for a column that legitimately needs multi-line text
+   *  (a long description/reason/notes column) — it opts back into wrap-break-word. Default
+   *  false/omitted = truncate, matching every existing column's actual data shape. */
+  allowWrap?: boolean;
   /** Optional native tooltip on the header cell (ROUND 16.1) — lets a column explain itself
    *  (e.g. "Legs = the loads in this tour, in order …"). Additive: omit for no tooltip. */
   headerTitle?: string;
@@ -1222,9 +1228,14 @@ export function ParityTable<T>({
           return (
           <td
             key={String(column.key)}
-            className={`overflow-hidden wrap-break-word px-2 align-top text-gray-800 ${
-              column.cellClass ?? column.className ?? ""
-            }`}
+            title={
+              !column.allowWrap && column.render == null
+                ? String((row as Record<string, unknown>)[String(column.key)] ?? "")
+                : undefined
+            }
+            className={`overflow-hidden px-2 align-top text-gray-800 ${
+              column.allowWrap ? "wrap-break-word" : "whitespace-nowrap text-ellipsis"
+            } ${column.cellClass ?? column.className ?? ""}`}
             style={{
               paddingTop: d.padY,
               paddingBottom: d.padY,
