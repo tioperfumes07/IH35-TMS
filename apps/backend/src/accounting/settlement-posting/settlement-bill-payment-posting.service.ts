@@ -608,6 +608,14 @@ export async function postSettlementBillPayment(
         {
           operatingCompanyId: opco,
           vendorId: driverVendorId,
+          // INV-01 (CC-1 CURRENT ASSIGNMENT, 2026-09-07): this is unambiguously a driver-pay bill
+          // (settlement.driver_id is in scope the whole function) but createBill's driverId param
+          // was never passed here, so accounting.bills.driver_id stayed NULL on every bill this
+          // poster ever created -- the one column that exists specifically so a driver-pay bill can
+          // be found by driver (bills.service.ts's own driverId-stamp gate). Vendor-side recovery
+          // bills already stamp it via the Costs-tab bill-creator path; this is the matching
+          // driver-pay-side stamp, forward-fix only (does not touch any already-posted bill).
+          driverId: settlement.driver_id,
           // GO-19 slice 03 (owner reversal of the prior AP-BILL-NUMBER-IS-THE-LOAD-NUMBER rationale
           // below) — driver bill number EQUALS the load number, no 'B-' prefix, matching
           // driver-bill-number.ts's driverBillNumberFromLoadNumber contract everywhere else a driver
