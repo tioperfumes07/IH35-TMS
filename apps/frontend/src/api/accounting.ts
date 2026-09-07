@@ -501,6 +501,64 @@ export async function listAllInvoices(
   }
 }
 
+/**
+ * VC-06 (Customers & Vendors module, 2026-09-07): GET /api/v1/accounting/invoices (used by
+ * listInvoices/listAllInvoices above) never joins mdata.units/mdata.load_stops/
+ * driver_finance.driver_settlements, so the Customer detail page's Transaction List always
+ * rendered "—" for Settlement #/Truck #/Pick-up date/Delivery date/Loaded miles even though the
+ * Invoice type and Customers.tsx's txColumns both already model those exact linked_* fields (per
+ * the CV-TRANSACTION-COLUMNS tag on both). GET /api/v1/customers/:id/invoices
+ * (customer-invoices.routes.ts) already carries the correct joins and was already registered +
+ * DB-tested -- just never called by any frontend page. This wires it in as the customer-scoped
+ * reverse-drill it was built to be, instead of porting its joins into the general invoices list
+ * (which serves other, non-customer-detail callers this tab doesn't need to affect).
+ */
+export function listCustomerInvoices(
+  customerId: string,
+  operatingCompanyId: string,
+  params: { status?: string; from_date?: string; to_date?: string; limit?: number; offset?: number } = {}
+) {
+  const query = new URLSearchParams();
+  if (params.status) query.set("status", params.status);
+  if (params.from_date) query.set("from_date", params.from_date);
+  if (params.to_date) query.set("to_date", params.to_date);
+  if (params.limit !== undefined) query.set("limit", String(params.limit));
+  if (params.offset !== undefined) query.set("offset", String(params.offset));
+  const qs = query.toString();
+  return apiRequest<{
+    invoices: Invoice[];
+    // customer-invoices.routes.ts's own response shape names this total_count, not total (unlike
+    // GET /accounting/invoices's `total`) -- kept as-is rather than silently renamed, so a reader
+    // diffing this against the backend route never has to guess which field is real.
+    total_count?: number;
+    limit?: number;
+    offset?: number;
+  }>(withCompany(`/api/v1/customers/${encodeURIComponent(customerId)}/invoices${qs ? `?${qs}` : ""}`, operatingCompanyId));
+}
+
+/**
+ * Fetch every page of a customer's invoices (same unbounded-population guarantee as
+ * listAllInvoices above, scoped to the customer-invoices reverse-drill route).
+ */
+export async function listAllCustomerInvoices(
+  customerId: string,
+  operatingCompanyId: string,
+  params: Omit<Parameters<typeof listCustomerInvoices>[2], "limit" | "offset"> = {}
+) {
+  const limit = 200;
+  const invoices: Invoice[] = [];
+  let offset = 0;
+  while (true) {
+    const page = await listCustomerInvoices(customerId, operatingCompanyId, { ...params, limit, offset });
+    invoices.push(...page.invoices);
+    const total = page.total_count ?? invoices.length;
+    if (invoices.length >= total || page.invoices.length === 0) {
+      return { invoices, total };
+    }
+    offset += page.invoices.length;
+  }
+}
+
 /** WAVE-H2 reverse drill — load → invoices. */
 export function listLoadInvoices(operatingCompanyId: string, loadId: string, params: { limit?: number; offset?: number } = {}) {
   const query = new URLSearchParams();

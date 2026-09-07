@@ -9,7 +9,7 @@ import { formatUsdCents } from "../lib/money";
 import { customerIsSelectable } from "../lib/customer-selectable";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { listAllInvoices, type Invoice } from "../api/accounting";
+import { listAllInvoices, listAllCustomerInvoices, type Invoice } from "../api/accounting";
 import { getCustomerActivity, type CustomerActivityRow } from "../api/customers";
 import { CounterpartyStatementView } from "./reports/CounterpartyStatementPage";
 import { listAllDispatchLoads, type DispatchLoad } from "../api/dispatch";
@@ -906,9 +906,13 @@ export function CustomersPage() {
   });
   const invoicesQuery = useQuery({
     queryKey: ["customers", "transactions", companyId, selectedCustomer?.id ?? "", statusFilter, dateFrom, dateTo],
+    // VC-06: this feeds txColumns' Load #/Settlement #/Truck #/Pick-up/Delivery/Loaded-miles
+    // columns below -- listAllInvoices (GET /accounting/invoices) never joins mdata.units/
+    // load_stops/driver_finance.driver_settlements, so those always rendered "—". The
+    // customer-scoped reverse-drill route already carries those joins (built + DB-tested,
+    // just never called from here) -- use it instead of porting the joins into the general list.
     queryFn: () =>
-      listAllInvoices(companyId, {
-        customer_id: selectedCustomer!.id,
+      listAllCustomerInvoices(selectedCustomer!.id, companyId, {
         status: statusFilter || undefined,
         from_date: dateFrom || undefined,
         to_date: dateTo || undefined,
