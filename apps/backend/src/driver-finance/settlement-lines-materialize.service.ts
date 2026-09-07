@@ -65,6 +65,73 @@ const REIMBURSEMENTS_SOURCE_TABLE = "driver_finance.driver_reimbursements";
 // — a real toll/fuel/scale/parking/lumper reimbursement is NEVER reclassified as extra pay.
 const EXTRA_PAY_REASON_PATTERN = /additional pay|layover|bonus/i;
 
+export type DeductionPostingAccountResolution = {
+  roleKey: string;
+  postingAccountId: string | null;
+  unresolvedReason?: string;
+};
+
+/**
+ * SETL-DED-GL (owner ruling 2026-09-06 01:5xZ): the four typed deduction kinds each bind to a
+ * SPECIFIC role/account, not the generic `${type}_recovery` bucket guess.
+ *   company_vehicle_fuel -> REUSES the EXISTING, already-bound 'company_fuel_advance_expense'
+ *     role (5000 Fuel & Diesel) — the SAME account a company fuel advance debits, so a recovery
+ *     credit here is a contra to that same expense, matching the owner's "credits the account the
+ *     fee/advance itself posts to" rule with NO new role/migration needed.
+ *   escrow_contribution -> the DRIVER'S OWN escrow liability sub-account
+ *     (resolveDriverEscrowLiabilityAccount) — explicitly NOT bucketRecoveryRoleKey's generic
+ *     'escrow_contribution_recovery' guess.
+ *   wire_fee / ach_fee -> a dedicated 'bank_fee_recovery' role (6300 Bank Service Charges & Wire
+ *     Fees) is the semantically correct target — the existing 'factor_wire_fee' role already
+ *     bound to 6300 is NOT reused here because it is a LIVE, actively-posted Faro-factoring role
+ *     (poster.service.ts) and commingling an unrelated driver-fee recovery into it would corrupt
+ *     factoring reconciliation. 'bank_fee_recovery' is a real CoaRole (resolver.service.ts) but,
+ *     as of this writing, NOT yet admitted by chart_of_accounts_roles' DB-level CHECK constraint
+ *     — CC-3 has no migration lane (standing law); a ready-to-apply draft migration + seed live
+ *     in docs/audit/migration-drafts/BANK-FEE-RECOVERY-*.sql for a migration-lane seat. This
+ *     branch already resolves it BY ROLE like every other typed kind (isCoaRole + resolveRole
+ *     AccountOptional) — it correctly returns null/pending today (never a guessed account) and
+ *     needs ZERO further code change the moment the migration lands and the role is bound.
+ * Any OTHER/legacy deduction_type (including the grandfathered pre-existing 'other' rows, and the
+ * SET-24 'reimbursement_reversal' type) keeps the original bucketRecoveryRoleKey fallback.
+ *
+ * EXTRACTED (ROUND 16.22): this was inline in materializeSettlementLines's deduction loop; pulled
+ * out so backfillExistingSettlementLineAccounts below can resolve EXISTING deduction lines by the
+ * SAME rules without a second, drifting copy of the branching logic.
+ */
+export async function resolveDeductionPostingAccount(
+  client: QueryClient,
+  operatingCompanyId: string,
+  driverId: string,
+  deductionType: string
+): Promise<DeductionPostingAccountResolution> {
+  let roleKey = bucketRecoveryRoleKey(deductionType);
+  let postingAccountId: string | null = null;
+  let unresolvedReason: string | undefined;
+  if (deductionType === "wire_fee" || deductionType === "ach_fee") {
+    roleKey = "bank_fee_recovery";
+    postingAccountId = isCoaRole(roleKey) ? await resolveRoleAccountOptional(client, operatingCompanyId, roleKey) : null;
+    if (!postingAccountId) unresolvedReason = `no COA role account bound for role 'bank_fee_recovery' (deduction_type '${deductionType}') — needs a migration to admit the role into chart_of_accounts_roles' CHECK constraint; see docs/audit/migration-drafts/BANK-FEE-RECOVERY-*.sql`;
+  } else if (deductionType === "company_vehicle_fuel") {
+    roleKey = "company_fuel_advance_expense";
+    postingAccountId = isCoaRole(roleKey) ? await resolveRoleAccountOptional(client, operatingCompanyId, roleKey) : null;
+    if (!postingAccountId) unresolvedReason = `no COA role account bound for role 'company_fuel_advance_expense' (deduction_type '${deductionType}')`;
+  } else if (deductionType === "escrow_contribution") {
+    roleKey = "escrow_contribution";
+    try {
+      const escrow = await resolveDriverEscrowLiabilityAccount(client, operatingCompanyId, driverId);
+      postingAccountId = escrow.accountId;
+    } catch (err) {
+      postingAccountId = null;
+      unresolvedReason = `driver escrow liability sub-account not resolved for deduction_type 'escrow_contribution': ${err instanceof Error ? err.message : String(err)}`;
+    }
+  } else {
+    postingAccountId = isCoaRole(roleKey) ? await resolveRoleAccountOptional(client, operatingCompanyId, roleKey) : null;
+    if (!postingAccountId) unresolvedReason = `no COA role account bound for deduction_type '${deductionType}' (derived role '${roleKey}')`;
+  }
+  return { roleKey, postingAccountId, unresolvedReason };
+}
+
 export type MaterializedLine = {
   sourceTable: string;
   sourceId: string;
@@ -225,52 +292,12 @@ export async function materializeSettlementLines(
   for (const d of dedRes.rows) {
     const amountCents = Math.round(Number(d.amount_cents ?? 0));
     if (amountCents <= 0) continue;
-    // SETL-DED-GL (owner ruling 2026-09-06 01:5xZ): the four typed deduction kinds each bind to a
-    // SPECIFIC role/account, not the generic `${type}_recovery` bucket guess.
-    //   company_vehicle_fuel -> REUSES the EXISTING, already-bound 'company_fuel_advance_expense'
-    //     role (5000 Fuel & Diesel) — the SAME account a company fuel advance debits, so a recovery
-    //     credit here is a contra to that same expense, matching the owner's "credits the account the
-    //     fee/advance itself posts to" rule with NO new role/migration needed.
-    //   escrow_contribution -> the DRIVER'S OWN escrow liability sub-account
-    //     (resolveDriverEscrowLiabilityAccount) — explicitly NOT bucketRecoveryRoleKey's generic
-    //     'escrow_contribution_recovery' guess.
-    //   wire_fee / ach_fee -> a dedicated 'bank_fee_recovery' role (6300 Bank Service Charges & Wire
-    //     Fees) is the semantically correct target — the existing 'factor_wire_fee' role already
-    //     bound to 6300 is NOT reused here because it is a LIVE, actively-posted Faro-factoring role
-    //     (poster.service.ts) and commingling an unrelated driver-fee recovery into it would corrupt
-    //     factoring reconciliation. 'bank_fee_recovery' is a real CoaRole (resolver.service.ts) but,
-    //     as of this writing, NOT yet admitted by chart_of_accounts_roles' DB-level CHECK constraint
-    //     — CC-3 has no migration lane (standing law); a ready-to-apply draft migration + seed live
-    //     in docs/audit/migration-drafts/BANK-FEE-RECOVERY-*.sql for a migration-lane seat. This
-    //     branch already resolves it BY ROLE like every other typed kind (isCoaRole + resolveRole
-    //     AccountOptional) — it correctly returns null/pending today (never a guessed account) and
-    //     needs ZERO further code change the moment the migration lands and the role is bound.
-    // Any OTHER/legacy deduction_type (including the grandfathered pre-existing 'other' rows) keeps
-    // the original bucketRecoveryRoleKey fallback.
-    let roleKey = bucketRecoveryRoleKey(d.deduction_type);
-    let postingAccountId: string | null = null;
-    let unresolvedReason: string | undefined;
-    if (d.deduction_type === "wire_fee" || d.deduction_type === "ach_fee") {
-      roleKey = "bank_fee_recovery";
-      postingAccountId = isCoaRole(roleKey) ? await resolveRoleAccountOptional(client, input.operatingCompanyId, roleKey) : null;
-      if (!postingAccountId) unresolvedReason = `no COA role account bound for role 'bank_fee_recovery' (deduction_type '${d.deduction_type}') — needs a migration to admit the role into chart_of_accounts_roles' CHECK constraint; see docs/audit/migration-drafts/BANK-FEE-RECOVERY-*.sql`;
-    } else if (d.deduction_type === "company_vehicle_fuel") {
-      roleKey = "company_fuel_advance_expense";
-      postingAccountId = isCoaRole(roleKey) ? await resolveRoleAccountOptional(client, input.operatingCompanyId, roleKey) : null;
-      if (!postingAccountId) unresolvedReason = `no COA role account bound for role 'company_fuel_advance_expense' (deduction_type '${d.deduction_type}')`;
-    } else if (d.deduction_type === "escrow_contribution") {
-      roleKey = "escrow_contribution";
-      try {
-        const escrow = await resolveDriverEscrowLiabilityAccount(client, input.operatingCompanyId, settlement.driver_id);
-        postingAccountId = escrow.accountId;
-      } catch (err) {
-        postingAccountId = null;
-        unresolvedReason = `driver escrow liability sub-account not resolved for deduction_type 'escrow_contribution': ${err instanceof Error ? err.message : String(err)}`;
-      }
-    } else {
-      postingAccountId = isCoaRole(roleKey) ? await resolveRoleAccountOptional(client, input.operatingCompanyId, roleKey) : null;
-      if (!postingAccountId) unresolvedReason = `no COA role account bound for deduction_type '${d.deduction_type}' (derived role '${roleKey}')`;
-    }
+    const { roleKey, postingAccountId, unresolvedReason } = await resolveDeductionPostingAccount(
+      client,
+      input.operatingCompanyId,
+      settlement.driver_id,
+      d.deduction_type
+    );
     const sourceApproved = d.status === "applied";
     const approvalStatus: "pending" | "approved" = postingAccountId && sourceApproved ? "approved" : "pending";
 
@@ -346,4 +373,151 @@ export async function backfillDriverPayAccountOnExistingLines(
     [input.settlementId, input.operatingCompanyId, accountId]
   );
   return res.rows.length;
+}
+
+export type BackfillExistingLinesResult = {
+  settlementId: string;
+  driverPayUpdated: number;
+  reimbursementUpdated: number;
+  extraPayUpdated: number;
+  escrowContributionUpdated: number;
+  deductionUpdated: number;
+  deductionSkippedNoSource: number;
+  totalUpdated: number;
+};
+
+/**
+ * ROUND 16.22 (owner ✔) — settlements 8/10 -> 10/10: materializeSettlementLines only resolves
+ * posting_account_id for NEWLY-materialized source rows on an OPEN settlement (idempotent by
+ * source id, gated on settlement.status === 'open'). It NEVER touches settlement_lines rows that
+ * already existed before this file did — the vast majority of USMCA's historical settlements were
+ * seeded/closed before this machinery existed and their reimbursement/deduction/escrow_contribution
+ * lines still carry posting_account_id = NULL even though the settlement itself is long closed.
+ * backfillDriverPayAccountOnExistingLines (above) already does this for earnings/deadhead_pay; this
+ * is the SAME pattern extended to every other line type, callable regardless of settlement status
+ * (an UPDATE-only backfill never creates a new line, never changes a dollar amount, and never
+ * flips approval_status — a row that was never approved does not become approved just because its
+ * account resolved years later; only posting_account_id changes).
+ *
+ * PER LINE TYPE:
+ *   earnings / deadhead_pay -> delegates to backfillDriverPayAccountOnExistingLines (unchanged).
+ *   extra_pay / reimbursement -> both route through the SAME single role (driver_pay_expense /
+ *     reimbursement_expense respectively) for every row of that line_type — no per-row source
+ *     lookup needed, because every real reimbursement/extra-pay row already resolves to the one
+ *     company-wide account (verified live this session across every reimbursement_type seen).
+ *   escrow_contribution -> the driver's OWN escrow liability sub-account, resolved via this
+ *     settlement's own driver_id (joined from driver_finance.driver_settlements) — per-driver, so
+ *     one UPDATE per settlement (all its escrow_contribution lines share the same settlement, hence
+ *     the same driver).
+ *   deduction -> the ONLY line type needing a per-row source lookup, because line_type is always
+ *     the literal 'deduction' — the real deduction_type lives on the source
+ *     driver_finance.driver_settlement_deductions row, joined via source_table/source_reference_id
+ *     (rows with no source link at all — pre-materializer raw-seeded — are skipped, counted
+ *     separately, never guessed). Reuses resolveDeductionPostingAccount, the SAME branching logic
+ *     materializeSettlementLines's own deduction loop uses — one rule set, never two.
+ *
+ * NEVER silently drops a row: every row considered either gets an account or is counted in
+ * deductionSkippedNoSource (the one case a per-row account genuinely cannot be resolved here).
+ */
+export async function backfillExistingSettlementLineAccounts(
+  client: QueryClient,
+  input: { settlementId: string; operatingCompanyId: string }
+): Promise<BackfillExistingLinesResult> {
+  const driverPayUpdated = await backfillDriverPayAccountOnExistingLines(client, input);
+
+  const reimbAccountId = await resolveRoleAccountOptional(client, input.operatingCompanyId, "reimbursement_expense");
+  let reimbursementUpdated = 0;
+  if (reimbAccountId) {
+    const res = await client.query<{ id: string }>(
+      `
+        UPDATE driver_finance.settlement_lines
+           SET posting_account_id = $3::uuid
+         WHERE settlement_id = $1::uuid AND operating_company_id = $2::uuid
+           AND line_type = 'reimbursement' AND posting_account_id IS NULL AND is_active = true
+         RETURNING id::text
+      `,
+      [input.settlementId, input.operatingCompanyId, reimbAccountId]
+    );
+    reimbursementUpdated = res.rows.length;
+  }
+
+  const extraPayAccountId = await resolveRoleAccountOptional(client, input.operatingCompanyId, "driver_pay_expense");
+  let extraPayUpdated = 0;
+  if (extraPayAccountId) {
+    const res = await client.query<{ id: string }>(
+      `
+        UPDATE driver_finance.settlement_lines
+           SET posting_account_id = $3::uuid
+         WHERE settlement_id = $1::uuid AND operating_company_id = $2::uuid
+           AND line_type = 'extra_pay' AND posting_account_id IS NULL AND is_active = true
+         RETURNING id::text
+      `,
+      [input.settlementId, input.operatingCompanyId, extraPayAccountId]
+    );
+    extraPayUpdated = res.rows.length;
+  }
+
+  const settlementRes = await client.query<{ driver_id: string }>(
+    `SELECT driver_id::text FROM driver_finance.driver_settlements WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+    [input.settlementId, input.operatingCompanyId]
+  );
+  const driverId = settlementRes.rows[0]?.driver_id ?? null;
+  let escrowContributionUpdated = 0;
+  if (driverId) {
+    try {
+      const escrow = await resolveDriverEscrowLiabilityAccount(client, input.operatingCompanyId, driverId);
+      const res = await client.query<{ id: string }>(
+        `
+          UPDATE driver_finance.settlement_lines
+             SET posting_account_id = $3::uuid
+           WHERE settlement_id = $1::uuid AND operating_company_id = $2::uuid
+             AND line_type = 'escrow_contribution' AND posting_account_id IS NULL AND is_active = true
+           RETURNING id::text
+        `,
+        [input.settlementId, input.operatingCompanyId, escrow.accountId]
+      );
+      escrowContributionUpdated = res.rows.length;
+    } catch {
+      // No resolvable escrow sub-account for this driver — never guess; leave NULL, same as the
+      // materializer's own live-flow behavior for an unresolved role.
+    }
+  }
+
+  const dedRows = await client.query<{ id: string; deduction_type: string | null }>(
+    `
+      SELECT sl.id::text, dsd.deduction_type
+        FROM driver_finance.settlement_lines sl
+        LEFT JOIN driver_finance.driver_settlement_deductions dsd
+          ON dsd.id = sl.source_reference_id AND sl.source_table = 'driver_finance.driver_settlement_deductions'
+       WHERE sl.settlement_id = $1::uuid AND sl.operating_company_id = $2::uuid
+         AND sl.line_type = 'deduction' AND sl.posting_account_id IS NULL AND sl.is_active = true
+    `,
+    [input.settlementId, input.operatingCompanyId]
+  );
+  let deductionUpdated = 0;
+  let deductionSkippedNoSource = 0;
+  for (const row of dedRows.rows) {
+    if (!row.deduction_type || !driverId) {
+      deductionSkippedNoSource += 1;
+      continue;
+    }
+    const { postingAccountId } = await resolveDeductionPostingAccount(client, input.operatingCompanyId, driverId, row.deduction_type);
+    if (!postingAccountId) continue; // unresolved role — leave NULL, never guess (counted as "still pending", not a drop)
+    await client.query(
+      `UPDATE driver_finance.settlement_lines SET posting_account_id = $2::uuid WHERE id = $1::uuid AND posting_account_id IS NULL`,
+      [row.id, postingAccountId]
+    );
+    deductionUpdated += 1;
+  }
+
+  return {
+    settlementId: input.settlementId,
+    driverPayUpdated,
+    reimbursementUpdated,
+    extraPayUpdated,
+    escrowContributionUpdated,
+    deductionUpdated,
+    deductionSkippedNoSource,
+    totalUpdated: driverPayUpdated + reimbursementUpdated + extraPayUpdated + escrowContributionUpdated + deductionUpdated,
+  };
 }
