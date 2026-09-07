@@ -997,3 +997,14 @@ Item 16 (escrow retype) — re-verified live at the moment this box landed: 0 ro
 CORRECTED item 8 count: 23 total settlements now exist (up from 15 — 7 new ones S-13725/26/27/28/29/30/31 appeared since my last measurement, all open/$0/no activity yet). Real breakdown: 13 posted (my earlier apply), 1 closed-but-unposted with REAL money (S-13508, net $608.46 — a genuine SETL-CLOSE-POST-A gap, not yet touched), 2 open $0 shells (S-13651/13653, cancelled loads, correctly out of scope), 7 open $0 new settlements (S-13725-13731, no activity to close yet — a different lifecycle question than "post," not conflating the two).
 
 Working order (value + dependency, not the list's own numbering): SET-18/20 (S-13508 first — real money, bounded) → RG-27/RG-01/RG-02/RG-14/RG-22 (verify-green-or-fix, fastest wins) → SET-05/SET-13/SET-24 (guard/UI-only, bounded) → SET-16/SET-14 (need migrations, reservation-first) → SET-11/SET-12/SET-25/SET-28/SET-29/SET-01/SET-33 (larger builds) → TEL-07. Posting one DONE line per item as I finish, live-verified, per your instruction — not batching to the end.
+
+---
+
+CC-3 | ROUND-16.24 ITEMS 11+15 DONE (RG-27/RG-01/RG-02/RG-14/RG-22) | confirmed green live, no fix needed | NEXT SET-05
+
+node scripts/verify-settlement-void-cascade.mjs (SET-27/RG-01) → OK — postVoidReversal un-matches bank transactions for every voidable entity type (wired in CI via verify-step 10189).
+node scripts/verify-settlements-grid-honest-labels.mjs (RG-02) → PASS — settlement list/header/dispute/earnings reverse labels bind exact rows.
+node scripts/verify-dispatch-telemetry-failure-honesty.mjs (RG-14) → PASS.
+node scripts/verify-money-proof-trail-click-to-ledger.mjs (RG-22) → PASS (10 document types, 10 mounted surfaces, ledger click wired).
+
+RG-02 and RG-14 have no dedicated scripts/verify-steps/ entry (checked — a real gap in the registry-tracking convention this session otherwise follows for new guards), but verify-static.mjs's own header confirms it globs scripts/verify-*.mjs directly and runs every match regardless of verify-steps wiring — so both ARE live-enforced in CI today, just not also registered in the step-number dashboard. RG-22 is invoked as a sub-call inside verify-step 3029 (verify-je-payload-carries-label.mjs's own spawnSync at the bottom), so it's doubly covered. All 4 confirmed green, no code change needed for any of them.
