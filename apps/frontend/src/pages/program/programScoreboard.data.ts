@@ -29,15 +29,15 @@ export interface ProgramScoreboard {
 }
 
 export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
-  "healthzSha": "109a212",
-  "generated_at": "2026-09-07T17:53:24.425Z",
+  "healthzSha": "287a7d2",
+  "generated_at": "2026-09-07T23:38:07.719Z",
   "meta": {
-    "generatedAt": "2026-08-31T10:22:35-05:00",
-    "sourceSha": "237d06c610",
-    "deployedSha": "109a212",
+    "generatedAt": "2026-09-07T14:01:54-05:00",
+    "sourceSha": "c8bffc7c01",
+    "deployedSha": "287a7d2",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2383,
-    "failOpen": 177,
+    "ledgerRows": 2386,
+    "failOpen": 180,
     "defects": 28
   },
   "modules": [
@@ -166,7 +166,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "AUDIT",
         "AUDIT"
       ],
-      "gap": "1,434 CoA. V2 FAIL: payment-terms creator 42701. Catalog click-throughs pending.",
+      "gap": "1,434 CoA. Catalog creators PASS (payment-terms 200, 7 rows on prod 109a212b). Click-throughs pending.",
       "cellsByEntity": {
         "TRANSP": [
           "AUDIT",
@@ -325,7 +325,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "WO create #4091 merged (was 500) — pending deploy+live 201. V2 FAIL: maintenance catalogs 404 unmounted.",
+      "gap": "WO create #4091 merged (was 500) — pending deploy+live 201. Maintenance catalogs PASS (service-tasks 200, 5 rows on prod 109a212b).",
       "cellsByEntity": {
         "TRANSP": [
           "AUDIT",
@@ -431,7 +431,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "1,547 txns/$625,546/100% load_id NULL/0 GL. V4+V6 FAIL, no fix merged.",
+      "gap": "1,581 txns/$639,203 (TRANSP; 0 USMCA)/1,556 posted (98.4%, 3,112 JE lines)/14 stranded >3d ($6,932.13, CC-1). load_id null is a 100%-reasoned exemption, not a gap. Cells above still show the pre-fix FAIL/UNV pattern, not re-derived here -- flagged for whoever owns cell regeneration.",
       "cellsByEntity": {
         "TRANSP": [
           "AUDIT",
@@ -632,7 +632,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "AUDIT",
         "FAIL",
         "UNV",
-        "AUDIT",
+        "FAIL",
         "FIX",
         "AUDIT",
         "UNV",
@@ -664,7 +664,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
           "AUDIT",
           "FAIL",
           "FIX",
-          "AUDIT",
+          "FAIL",
           "FIX",
           "AUDIT",
           "UNV",
@@ -908,7 +908,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "188 units. V2 FAIL: fleet catalogs POST 500 (trailing -- comment). A fix live-check.",
+      "gap": "188 units. Fleet catalogs PASS (asset-locations 200, 3 rows on prod 109a212b).",
       "cellsByEntity": {
         "TRANSP": [
           "AUDIT",
@@ -1650,10 +1650,10 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "tone": "flag"
     },
     {
-      "n": "$625,546",
-      "label": "Fuel — 0 GL",
-      "detail": "1,547 txns · 100% load_id NULL · 0 postings.",
-      "tone": "flag"
+      "n": "$639,203",
+      "label": "Fuel — 98.4% GL",
+      "detail": "1,581 txns (TRANSP; 0 USMCA) · 1,556 posted, 3,112 JE lines · 14 stranded >3d ($6,932.13, CC-1) · load_id null is a 100%-reasoned exemption, not a gap.",
+      "tone": "good"
     },
     {
       "n": "192",
@@ -1772,14 +1772,14 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "text": "**#4091 WO create** and **invoice→GL** merged on 308bc661b; flip green after deploy + one live exercise each."
     },
     {
-      "badge": "V2 · FAIL",
-      "tone": "fail",
-      "text": "**Catalog creators broken** — fleet 500 (SQL comment); maintenance 404 (unmounted); payment-terms 42701 (dup column)."
+      "badge": "V2 · PASS",
+      "tone": "ver",
+      "text": "**Catalog creators** — all 3 return HTTP 200 on prod SHA 109a212b (2026-09-07): fleet asset-locations 3 rows, maintenance service-tasks 5 rows, payment-terms 7 rows. Prior 500/404/42701 fixed and deployed."
     },
     {
-      "badge": "V4/V6 · FAIL",
-      "tone": "fail",
-      "text": "**Fuel → GL** — 1,547 txns, $625,546.39, 0 postings, 100% load_id NULL (§4)."
+      "badge": "V4/V6 · N/A",
+      "tone": "ver",
+      "text": "**Fuel → GL** — USMCA has 0 fuel transactions (Neon, bypass_rls=lucia, 2026-09-07). The 1,581 txns / $639,202.83 are under TRANSP (IH 35 Transportation LLC, 91e0bf0a), frozen per USMCA-only scope. No USMCA fuel→GL gap exists."
     }
   ],
   "live_scenario_probe": {

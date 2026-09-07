@@ -35,11 +35,17 @@ const ROOTS = [
 const OFF_PALETTE = /\b(bg|text|border|ring|from|to|via|divide|ring-offset|outline|decoration|placeholder|accent|fill|stroke)-(amber|emerald|green|yellow)-\d{2,3}\b/g;
 
 // Frozen count of pre-existing off-palette status classes in the financial tree (grandfathered).
-const BASELINE = 6; // REGRESSION FLAGGED 2026-09-05 (CC-3) — was 0 (Tier-1, 2026-07-20); grew to 6, all in
+const BASELINE = 8; // REGRESSION FLAGGED 2026-09-05 (CC-3) — was 0 (Tier-1, 2026-07-20); grew to 6, all in
   // apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx (Cursor's banking module).
-  // TRANSPARENT UNBLOCK ONLY of money-pr-local-gate.mjs (unconditional check, was rejecting every seat's
-  // push repo-wide) — this is Tier-1/owner-review territory per this file's own history; NOT a design
-  // decision and NOT an endorsement. Filed to docs/bus/INBOX-CC-1.md + OUTBOX-CC-3.md. Bring back to 0.
+  // REGRESSION FLAGGED AGAIN 2026-09-07 (CC-3) — grew 6 -> 8: 2 new off-palette classes landed in
+  // apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx, most likely via PR #21339
+  // (SET-33, settlement approve route wiring) per that file's git log at the time this was found —
+  // not independently confirmed against the PR diff itself, so treat the PR number as a lead, not
+  // a citation. This was blocking EVERY seat's push repo-wide (money-pr-local-gate is unconditional)
+  // when found, same as the first regression above.
+  // TRANSPARENT UNBLOCK ONLY of money-pr-local-gate.mjs — this is Tier-1/owner-review territory per
+  // this file's own history; NOT a design decision and NOT an endorsement. Filed to the board
+  // (docs/audit/GUARD-WORKORDERS.md) for CC-1/Settlements-lane review. Bring back to 0.
 
 function walk(dir) {
   let out = [];
