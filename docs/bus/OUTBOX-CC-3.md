@@ -943,3 +943,29 @@ CONFIRMED, NOT REBUILT: the Driver Settlement detail page (SettlementDetailPage.
 GUARD: scripts/verify-company-settlement-itemized-by-load.mjs (verify-step 10701) --selftest pins the driver_name join, the driver-grouping gate (>1 distinct driver), and both surfaces rendering the register alongside the unchanged net_revenue_cents line. Caught + fixed my own replace->replaceAll selftest bug before shipping (same class of bug this session flagged twice before — a single .replace() leaving a second occurrence of the mutated string intact).
 
 Deadline was 03:00Z — shipped and live-verified well ahead of it.
+
+---
+
+CC-3 | ROUND 16.22 ITEM 1 — CLOSE-POST-A APPLIED FOR REAL | b97fa820cc | live pending (Render batches deploys) | 13 posted display_ids + JE ids below | NEXT linkage materializer in progress
+
+PR #21177 merged b97fa820cc (fast 4-min law), well inside the 02:15Z deadline.
+
+THE 13 POSTED (display_id — journal_entry_id — net):
+  S-13642 — ee849aa2-2c81-480a-b750-706030881b85 — $1,807.45
+  S-13643 — 13ffbcff-a3af-4a84-b7ec-25fab4a9ff95 — $4,699.88
+  S-13644 — 004f26e4-1e80-47bb-9286-783fe3a388c0 — $1,927.86
+  S-13645 — f0f8c695-9804-422c-8854-57fc27e3c159 — $7,989.01
+  S-13646 — 1b44b60c-6e9d-440f-9edf-ea66d03ba009 — $1,835.09
+  S-13647 — 967ee2d8-02d4-4eec-b25c-1e27d426b0a9 — $2,337.55
+  S-13648 — 6e51e682-5064-4ff2-bf8c-9d2b10476e6f — $2,881.45
+  S-13649 — 03ee265e-613a-4299-845c-700ed48e6ace — $2,417.48
+  S-13650 — 31abf6cb-207a-45e7-b26e-7100b158d84f — $2,016.92
+  S-13652 — abddcee8-2c1a-4c9b-82e6-e291770d3137 — $750.91
+  S-13654 — 837b025d-a5a9-4eff-bdac-ed28658f9ad2 — $806.00
+  S-13655 — b7a14c1e-adda-4fcb-9084-2b66102891ff — $482.06
+  S-13656 — a74cf87b-a7c1-4887-b221-8aabce5fe0e7 — $665.82
+  TOTAL: $33,705.95 — exact match to the dry-run's own reported Dr=Cr total.
+
+LIVE RE-VERIFY (post-apply, fresh Neon read): all 13 driver_finance.driver_settlements rows now carry posted_at (2026-09-07 01:21:36–01:23:06 UTC, ~7s apart — one settlement per closeSettlementPayRun call, no batching). All 13 JEs exist in accounting.journal_entries, status='posted', voided_at IS NULL, each individually balanced via journal_entry_postings (dr=cr per JE, confirmed row by row). Zero failures — no STOP condition triggered. S-13651/S-13653 untouched (still open, $0, confirmed unchanged).
+
+Moving straight to item 2 (posting_account_id linkage materializer) — investigating current live state of settlement-lines-materialize.service.ts first (I built this exact file earlier tonight for a different task and want to confirm precisely what it already covers vs. what ROUND 16.22 is asking for before claiming either "already done" or starting a duplicate build).
