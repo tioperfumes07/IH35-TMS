@@ -16,6 +16,16 @@ type BaseProps = {
   defaultOpen?: boolean;
   /** e.g. { "data-customers-filter-toolbar": "collapsed" } */
   dataAttributes?: Record<string, string>;
+  /**
+   * Optional test-id overrides for the Apply/Cancel/Reset footer buttons — lets a page migrating
+   * its own hand-rolled filter chrome onto this shared component keep an existing test/e2e hook
+   * (e.g. a guard pinning `data-testid="foo-filter-apply"`) instead of losing it to this
+   * component's un-tagged defaults. Additive — omitting any of these renders no data-testid on
+   * that button, unchanged from today.
+   */
+  applyTestId?: string;
+  cancelTestId?: string;
+  resetTestId?: string;
 };
 
 type Props = BaseProps & (
@@ -40,6 +50,9 @@ export function CollapsedListFilters({
   onCancel = () => {},
   applyDisabled = false,
   applyLawExemptReason,
+  applyTestId,
+  cancelTestId,
+  resetTestId,
 }: Props) {
   const [filtersOpen, setFiltersOpen] = useState(defaultOpen ?? false);
   const ref = useRef<HTMLDivElement>(null);
@@ -118,16 +131,17 @@ export function CollapsedListFilters({
         >
           {children}
           {applyLawExemptReason ? null : <div className="flex items-center justify-end gap-2 border-t border-gray-200 pt-3">
-            <Button type="button" variant="tertiary" size="sm" className="font-semibold" onClick={onReset}>
+            <Button type="button" variant="tertiary" size="sm" className="font-semibold" data-testid={resetTestId} onClick={onReset}>
               Reset
             </Button>
-            <Button type="button" variant="secondary" size="sm" className="font-semibold" onClick={cancelAndClose}>
+            <Button type="button" variant="secondary" size="sm" className="font-semibold" data-testid={cancelTestId} onClick={cancelAndClose}>
               Cancel
             </Button>
             <Button
               type="button"
               size="sm"
               className="font-semibold"
+              data-testid={applyTestId}
               disabled={applyDisabled}
               onClick={() => {
                 onApply();

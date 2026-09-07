@@ -3,6 +3,7 @@
  * Migrated to shared ParityTable grammar; amount formatting, sign, column order,
  * EntityLink, and bulk Export Selected / Dispute stub preserved 1:1.
  */
+import type { ReactNode } from "react";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -33,6 +34,8 @@ type Props = {
   rows: ChargebackFeeRow[];
   fmtCurrency: (value: unknown) => string;
   fmtDate: (value: unknown) => string;
+  /** NEW-20 — see RecoursePipelineTable.tsx's identical prop for the full rationale. */
+  filterBar?: ReactNode;
 };
 
 // Minimal RFC-4180 CSV cell escaping (mirrors the inline pattern in AccountRegisterPage/useListExport).
@@ -51,7 +54,7 @@ function downloadCsv(filename: string, header: string[], rows: string[][]) {
   URL.revokeObjectURL(url);
 }
 
-export function ChargebacksTable({ rows, fmtCurrency, fmtDate }: Props) {
+export function ChargebacksTable({ rows, fmtCurrency, fmtDate, filterBar }: Props) {
   const { pushToast } = useToast();
 
   const columns: Array<ParityColumn<ChargebackFeeRow>> = [
@@ -136,6 +139,7 @@ export function ChargebacksTable({ rows, fmtCurrency, fmtDate }: Props) {
       storageKey="factoring-chargebacks"
       tableTestId="factoring-chargebacks-table"
       emptyText="No chargeback/fee rows available."
+      filterBar={filterBar}
       selectable
       maxSelectable={200}
       onSelectionCapExceeded={() => pushToast("Selection cap of 200 rows reached.", "error")}

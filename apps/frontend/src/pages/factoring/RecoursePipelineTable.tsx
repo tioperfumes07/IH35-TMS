@@ -1,5 +1,5 @@
 import { visibleDocumentLabel } from "../../lib/entity-label";
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useToast } from "../../components/Toast";
@@ -25,6 +25,15 @@ type Props = {
   rows: RecoursePipelineRow[];
   fmtCurrency: (value: unknown) => string;
   fmtDate: (value: unknown) => string;
+  /**
+   * NEW-20 (owner 2026-09-07): "customer/load boxes too large and misaligned; filter/range box +
+   * gear should sit in the same row as the customer/load boxes." Rendered via ParityTable's own
+   * `filterBar` slot — the same collapsed-filters chrome (CollapsedListFilters) already standard
+   * across the Accounting module (Expenses/Payments/Credit Memos/Bill Payments/Manual JE) — so the
+   * Customer/Load pickers live in ONE bordered table shell alongside search/range/gear instead of
+   * a separate full-width box floating above it. Optional/additive — omitting it renders no bar.
+   */
+  filterBar?: ReactNode;
 };
 
 // Minimal RFC-4180 CSV cell escaping (mirrors the inline pattern in AccountRegisterPage/useListExport).
@@ -43,7 +52,7 @@ function downloadCsv(filename: string, header: string[], rows: string[][]) {
   URL.revokeObjectURL(url);
 }
 
-export function RecoursePipelineTable({ rows, fmtCurrency, fmtDate }: Props) {
+export function RecoursePipelineTable({ rows, fmtCurrency, fmtDate, filterBar }: Props) {
   const { pushToast } = useToast();
 
   const exportSelected = (selected: RecoursePipelineRow[]) => {
@@ -159,6 +168,7 @@ export function RecoursePipelineTable({ rows, fmtCurrency, fmtDate }: Props) {
       emptyText="No recourse pipeline rows available in this environment."
       storageKey="factoring-recourse-pipeline"
       tableTestId="factoring-recourse-pipeline-table"
+      filterBar={filterBar}
       selectable
       maxSelectable={200}
       onSelectionCapExceeded={() =>
