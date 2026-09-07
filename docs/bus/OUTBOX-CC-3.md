@@ -1050,3 +1050,17 @@ NET PICTURE, both real, both separate, neither fabricated to net against the oth
   These affect overlapping but not identical settlement/driver sets — I will build BOTH as separate, clearly-labeled correction rows (never one blended figure) the moment you say go on either or both.
 
 The 'deduction'-type duplicates in the same settlement_lines rows (Admin fee, Driver-Escrow For Claims) do NOT feed the JE math at all — deductions are summed from the driver_settlement_deductions source table directly (now fixed), not from settlement_lines. Those duplicate display rows are stale, display-only artifacts — real, but a data-hygiene issue, not a money-correctness one. Building the fix for that now as ROUND 16.24 item 9 (the duplicate-prevention guard you asked for), which happens to be exactly what surfaced all of this.
+
+---
+
+CC-3 | ROUND-16.24 ITEM 9 DONE (SET-24 duplicate-prevention guard) | 274128f2f3 | live pending | 31 stale duplicate lines voided + permanent unique index live | NEXT SET-11
+
+PR #21213 merged 274128f2f3. This is the item that led to the two critical findings above ($535.25 underpayment, $172.44 overpayment) — building the duplicate guard is what surfaced them.
+
+FIX: void-not-delete cleanup (19 groups, 31 stale 'deduction'-typed settlement_lines rows — Admin fee/Driver-Escrow duplicates that survived the earlier DED-DUP/SET-24 source-row voids because voiding a source row never retroactively voids the line it already materialized) + a permanent partial UNIQUE INDEX on settlement_lines(settlement_id, line_type, description, amount) WHERE is_active=true AND line_type <> 'reimbursement' — this exact bug class can never recreate itself again at the DB layer.
+
+'reimbursement' deliberately excluded from both the cleanup and the index — those are the already-reported $172.44 overpayment, real disbursed money pending your ✔ on the reimbursement_reversal correction, not a display artifact to silently void.
+
+GUARD verify-no-duplicate-settlement-lines.mjs (verify-step 10821) --selftest 5/5. Live: index confirmed present, 0 active non-reimbursement duplicate groups remain in USMCA.
+
+Moving to SET-11 (close must refuse when the settlement never touched the Laredo yard / carries no load).
