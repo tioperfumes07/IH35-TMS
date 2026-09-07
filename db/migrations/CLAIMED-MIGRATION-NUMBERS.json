@@ -861,6 +861,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-09-07",
       "purpose": "SAFETY-BROKEN-VIEW (owner QA finding 50345, routed 2026-09-07): rewrites views.safety_events_with_driver to alias the CURRENT safety.safety_events columns (subject_driver_id/subject_unit_id/occurred_at) onto driver_id/unit_id/event_at -- the view had been stuck on migration 0045s empty fallback on prod, returning 0 rows while USMCA has 7 real open safety events."
+    },
+    "202613990000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-07",
+      "purpose": "ACCT-RECONCILIATION-FINDINGS-CHECK-CONSTRAINT-MISSING-6-TYPES (CC-2 finding, routed to CC-1 -- migration authority). Widens _system.reconciliation_findings_finding_type_check to add the 6 finding_type values ledger-integrity-detectors.service.ts already tries to persist and the constraint currently rejects: test_named_account_in_coa, journal_entry_fewer_than_two_postings, posting_orphan_or_cross_company_account, voided_document_reversal_broken, void_metadata_incomplete, is_sample_data_not_explicit. Additive-only: DROP+ADD CHECK with the fuller list, never narrows."
     }
   },
   "202613590001": {
