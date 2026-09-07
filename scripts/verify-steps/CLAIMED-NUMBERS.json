@@ -8063,5 +8063,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-07",
     "purpose": "verify-factoring-chargebacks-fees-customer-uuid-cast"
+  },
+  "10600": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-live-board-includes-delivered-pending-docs"
   }
 }
