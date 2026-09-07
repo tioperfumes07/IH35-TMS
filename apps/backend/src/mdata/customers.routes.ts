@@ -257,9 +257,9 @@ function canForceFmcsaVerify(role: string): boolean {
 async function assertUniqueCustomerFields(
   authUserId: string,
   operatingCompanyId: string,
-  payload: { name?: string | null; mc_number?: string | null; dot_number?: string | null },
+  payload: { name?: string | null; mc_number?: string | null; dot_number?: string | null; tax_id?: string | null },
   excludeId?: string
-): Promise<null | "name" | "mc_number" | "dot_number"> {
+): Promise<null | "name" | "mc_number" | "dot_number" | "tax_id"> {
   const conflict = await withCurrentUser(authUserId, async (client) => {
     await setScopedCompanyContext(client, authUserId, operatingCompanyId);
     const checks: Array<{ key: "name" | "mc_number" | "dot_number"; column: string; value: string; caseInsensitive: boolean }> = [];
@@ -278,6 +278,22 @@ async function assertUniqueCustomerFields(
       }
       const res = await client.query(`SELECT id FROM mdata.customers WHERE ${where} LIMIT 1`, values);
       if (res.rows.length > 0) return check.key;
+    }
+    if (payload.tax_id?.trim()) {
+      const values: unknown[] = [operatingCompanyId];
+      let where = "operating_company_id = $1::uuid AND deactivated_at IS NULL AND tax_id_encrypted IS NOT NULL";
+      if (excludeId) {
+        values.push(excludeId);
+        where += " AND id <> $2::uuid";
+      }
+      const rows = await client.query<{ tax_id_encrypted: Buffer }>(
+        `SELECT tax_id_encrypted FROM mdata.customers WHERE ${where}`,
+        values
+      );
+      const wanted = payload.tax_id.replace(/[^a-z0-9]/gi, "").toLowerCase();
+      if (rows.rows.some((row) => decrypt(row.tax_id_encrypted)?.replace(/[^a-z0-9]/gi, "").toLowerCase() === wanted)) {
+        return "tax_id";
+      }
     }
     return null;
   });
@@ -680,6 +696,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       name: normalizedName,
       mc_number: b.mc_number ?? null,
       dot_number: b.dot_number ?? null,
+      tax_id: b.tax_id ?? null,
     });
     if (conflict) {
       const fieldKey = conflict === "name" ? "legal_name" : conflict;
@@ -994,7 +1011,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id)
     );
     if (!patchScopedCompanyId) return reply.code(404).send({ error: "mdata_customer_not_found" });
-    const conflict = await assertUniqueCustomerFields(authUser.uuid, patchScopedCompanyId, { name: patchName, mc_number: b.mc_number ?? null, dot_number: b.dot_number ?? null }, parsedParams.data.id);
+    const conflict = await assertUniqueCustomerFields(authUser.uuid, patchScopedCompanyId, { name: patchName, mc_number: b.mc_number ?? null, dot_number: b.dot_number ?? null, tax_id: b.tax_id ?? null }, parsedParams.data.id);
     if (conflict) {
       const fieldKey = conflict === "name" ? "name" : conflict;
       return reply.code(409).send({

@@ -5,6 +5,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { mergeCustomers, mergeVendors } from "./vendor-customer-merge.service.js";
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 
@@ -27,6 +28,12 @@ const flagDuplicateBodySchema = z.object({
   operating_company_id: z.string().uuid().optional(),
 });
 
+const mergeBodySchema = z.object({
+  merge_target_id: z.string().uuid(),
+  reason: z.string().trim().min(1).max(1000),
+  operating_company_id: z.string().uuid(),
+});
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
@@ -45,6 +52,50 @@ function sendValidation(reply: FastifyReply, error: z.ZodError) {
 
 // ── Route registration ────────────────────────────────────────────────────────
 export async function registerReclassifyRoutes(app: FastifyInstance) {
+
+  for (const entity of ["customers", "vendors"] as const) {
+    app.post(`/api/v1/${entity}/:id/merge`, { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      if (!canReclassify(user.role)) return reply.code(403).send({ error: "forbidden" });
+      const params = idParamSchema.safeParse(req.params);
+      if (!params.success) return sendValidation(reply, params.error);
+      const body = mergeBodySchema.safeParse(req.body ?? {});
+      if (!body.success) return sendValidation(reply, body.error);
+      if (params.data.id === body.data.merge_target_id) {
+        return reply.code(409).send({ error: "merge_survivor_equals_duplicate" });
+      }
+
+      try {
+        const result = await withCurrentUser(user.uuid, async (client) => {
+          await assertCompanyMembership(client, user.uuid, body.data.operating_company_id);
+          const input = {
+            survivorId: body.data.merge_target_id,
+            duplicateId: params.data.id,
+            actorUserId: user.uuid,
+            reason: body.data.reason,
+            operatingCompanyId: body.data.operating_company_id,
+          };
+          return entity === "customers"
+            ? mergeCustomers(client, input)
+            : mergeVendors(client, input);
+        });
+        return reply.send({ merge: result });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (message.endsWith("_merge_pair_not_found_same_company")) {
+          return reply.code(404).send({ error: message });
+        }
+        if (message.endsWith("_merge_unconfirmed_duplicate")) {
+          return reply.code(409).send({
+            error: message,
+            message: "Merge requires identical tax ID or identical legal name and registered address.",
+          });
+        }
+        throw error;
+      }
+    });
+  }
 
   // POST /api/v1/customers/:id/reclassify
   // Rate-limited (CodeQL js/missing-rate-limiting). 30/min for a state-changing POST; the plugin is

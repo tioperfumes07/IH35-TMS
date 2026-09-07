@@ -56,6 +56,7 @@
  * error, not a fix).
  */
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { decrypt } from "../lib/encryption.js";
 
 type QueryableClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
@@ -131,6 +132,65 @@ export type MergeResult = {
   total_rows_repointed: number;
 };
 
+type DuplicateEvidence = "identical_tax_id" | "identical_legal_name_and_registered_address";
+
+async function assertConfirmedDuplicate(
+  client: QueryableClient,
+  entity: "vendor" | "customer",
+  survivorId: string,
+  duplicateId: string,
+  operatingCompanyId: string
+): Promise<DuplicateEvidence> {
+  const isVendor = entity === "vendor";
+  const table = isVendor ? "mdata.vendors" : "mdata.customers";
+  const name = isVendor ? "vendor_name" : "customer_name";
+  const address = isVendor ? "address_line1" : "billing_address_line1";
+  const tax = isVendor ? "tax_id" : "tax_id_encrypted";
+  const taxComparison = isVendor
+    ? `NULLIF(regexp_replace(lower(btrim(s.${tax})), '[^a-z0-9]', '', 'g'), '') IS NOT NULL
+       AND regexp_replace(lower(btrim(s.${tax})), '[^a-z0-9]', '', 'g') =
+           regexp_replace(lower(btrim(d.${tax})), '[^a-z0-9]', '', 'g')`
+    : "false";
+
+  const res = await client.query<{
+    identical_tax_id: boolean;
+    identical_name_address: boolean;
+    source_tax_id_encrypted: Buffer | null;
+    duplicate_tax_id_encrypted: Buffer | null;
+  }>(
+    `SELECT (${taxComparison}) AS identical_tax_id,
+            ${isVendor ? "NULL::bytea" : `s.${tax}`} AS source_tax_id_encrypted,
+            ${isVendor ? "NULL::bytea" : `d.${tax}`} AS duplicate_tax_id_encrypted,
+            (NULLIF(regexp_replace(lower(btrim(s.${name})), '[^a-z0-9]', '', 'g'), '') IS NOT NULL
+             AND NULLIF(regexp_replace(lower(btrim(s.${address})), '[^a-z0-9]', '', 'g'), '') IS NOT NULL
+             AND regexp_replace(lower(btrim(s.${name})), '[^a-z0-9]', '', 'g') =
+                 regexp_replace(lower(btrim(d.${name})), '[^a-z0-9]', '', 'g')
+             AND regexp_replace(lower(btrim(s.${address})), '[^a-z0-9]', '', 'g') =
+                 regexp_replace(lower(btrim(d.${address})), '[^a-z0-9]', '', 'g')) AS identical_name_address
+       FROM ${table} s
+       JOIN ${table} d ON d.id = $2::uuid
+      WHERE s.id = $1::uuid
+        AND s.operating_company_id = $3::uuid
+        AND d.operating_company_id = $3::uuid
+        AND s.id <> d.id
+        AND COALESCE(s.is_duplicate, false) = false
+        AND COALESCE(d.is_duplicate, false) = false
+      FOR UPDATE OF s, d`,
+    [survivorId, duplicateId, operatingCompanyId]
+  );
+  const row = res.rows[0];
+  if (!row) throw new Error(`${entity}_merge_pair_not_found_same_company`);
+  const customerSourceTax = isVendor ? null : decrypt(row.source_tax_id_encrypted);
+  const customerDuplicateTax = isVendor ? null : decrypt(row.duplicate_tax_id_encrypted);
+  if (row.identical_tax_id || (
+    customerSourceTax !== null && customerSourceTax.trim() !== "" &&
+    customerSourceTax.replace(/[^a-z0-9]/gi, "").toLowerCase() ===
+      customerDuplicateTax?.replace(/[^a-z0-9]/gi, "").toLowerCase()
+  )) return "identical_tax_id";
+  if (row.identical_name_address) return "identical_legal_name_and_registered_address";
+  throw new Error(`${entity}_merge_unconfirmed_duplicate`);
+}
+
 async function repointColumns(
   client: QueryableClient,
   columns: Array<{ table: string; column: string }>,
@@ -166,11 +226,15 @@ export async function mergeVendors(
   if (input.survivorId === input.duplicateId) {
     throw new Error("merge_survivor_equals_duplicate");
   }
+  const evidence = await assertConfirmedDuplicate(
+    client, "vendor", input.survivorId, input.duplicateId, input.operatingCompanyId
+  );
   const repointed = await repointColumns(client, VENDOR_REPOINT_COLUMNS, input.survivorId, input.duplicateId);
 
   const flagRes = await client.query(
     `UPDATE mdata.vendors
-     SET is_duplicate = true, merge_target_id = $1, updated_at = now()
+     SET is_duplicate = true, merge_target_id = $1,
+         deactivated_at = COALESCE(deactivated_at, now()), updated_at = now()
      WHERE id = $2
      RETURNING id`,
     [input.survivorId, input.duplicateId]
@@ -185,6 +249,7 @@ export async function mergeVendors(
     operating_company_id: input.operatingCompanyId,
     survivor_id: input.survivorId,
     reason: input.reason,
+    duplicate_evidence: evidence,
     repointed,
     total_rows_repointed: totalRows,
   }, "info", "ROUND-16.21-VENDOR-CUSTOMER-MERGE");
@@ -193,7 +258,7 @@ export async function mergeVendors(
     `INSERT INTO mdata.entity_reclassification_log
        (operating_company_id, entity_table, entity_id, action, reason, actor_user_id)
      VALUES ($1::uuid, 'mdata.vendors', $2, 'merge', $3, $4)`,
-    [input.operatingCompanyId, input.duplicateId, `merged into ${input.survivorId}: ${input.reason}`, input.actorUserId]
+    [input.operatingCompanyId, input.duplicateId, `merged into ${input.survivorId} (${evidence}): ${input.reason}`, input.actorUserId]
   );
 
   return { survivor_id: input.survivorId, duplicate_id: input.duplicateId, entity: "vendor", repointed, total_rows_repointed: totalRows };
@@ -213,11 +278,15 @@ export async function mergeCustomers(
   if (input.survivorId === input.duplicateId) {
     throw new Error("merge_survivor_equals_duplicate");
   }
+  const evidence = await assertConfirmedDuplicate(
+    client, "customer", input.survivorId, input.duplicateId, input.operatingCompanyId
+  );
   const repointed = await repointColumns(client, CUSTOMER_REPOINT_COLUMNS, input.survivorId, input.duplicateId);
 
   const flagRes = await client.query(
     `UPDATE mdata.customers
-     SET is_duplicate = true, merge_target_id = $1, updated_at = now()
+     SET is_duplicate = true, merge_target_id = $1,
+         deactivated_at = COALESCE(deactivated_at, now()), updated_at = now()
      WHERE id = $2
      RETURNING id`,
     [input.survivorId, input.duplicateId]
@@ -232,6 +301,7 @@ export async function mergeCustomers(
     operating_company_id: input.operatingCompanyId,
     survivor_id: input.survivorId,
     reason: input.reason,
+    duplicate_evidence: evidence,
     repointed,
     total_rows_repointed: totalRows,
   }, "info", "ROUND-16.21-VENDOR-CUSTOMER-MERGE");
@@ -240,7 +310,7 @@ export async function mergeCustomers(
     `INSERT INTO mdata.entity_reclassification_log
        (operating_company_id, entity_table, entity_id, action, reason, actor_user_id)
      VALUES ($1::uuid, 'mdata.customers', $2, 'merge', $3, $4)`,
-    [input.operatingCompanyId, input.duplicateId, `merged into ${input.survivorId}: ${input.reason}`, input.actorUserId]
+    [input.operatingCompanyId, input.duplicateId, `merged into ${input.survivorId} (${evidence}): ${input.reason}`, input.actorUserId]
   );
 
   return { survivor_id: input.survivorId, duplicate_id: input.duplicateId, entity: "customer", repointed, total_rows_repointed: totalRows };
