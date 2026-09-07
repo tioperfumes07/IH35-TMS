@@ -95,33 +95,53 @@ async function liveCheck() {
     await client.query("BEGIN");
     await client.query("RESET ROLE");
     await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
+    // ROUND 16.24 CORRECTION (owner re-verification found a "not 100%" false alarm): a raw,
+    // unfiltered count of settlement_lines includes VOIDED rows (is_active=false) — a duplicate
+    // sweep, a TRANSPORTATION-NOT-USMCA quarantine, or a SETL-DED-GL retype's superseded old row —
+    // none of which need or should ever carry a posting_account_id (the same rule already applies
+    // to every other voided financial row in this schema). Printing ONLY the active-scoped numbers
+    // invites exactly the ambiguity that produced that false alarm — this now prints BOTH the
+    // active (the real, re-measurable "resolved" metric) AND the raw all-rows count side by side,
+    // so a future spot-check can see immediately that the gap between them is void rows, not an
+    // unresolved gap, without having to re-derive the is_active filter themselves.
     const res = await client.query(
       `
-        SELECT sl.line_type, count(*) AS total, count(sl.posting_account_id) AS with_account
+        SELECT sl.line_type,
+               count(*) FILTER (WHERE sl.is_active) AS active_total,
+               count(sl.posting_account_id) FILTER (WHERE sl.is_active) AS active_with_account,
+               count(*) AS raw_total,
+               count(*) FILTER (WHERE NOT sl.is_active) AS voided_total
           FROM driver_finance.settlement_lines sl
           JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
-         WHERE ds.operating_company_id = $1::uuid AND sl.is_active = true
+         WHERE ds.operating_company_id = $1::uuid
          GROUP BY sl.line_type
       `,
       [USMCA]
     );
     await client.query("ROLLBACK");
 
-    const byType = Object.fromEntries(res.rows.map((r) => [r.line_type, { total: Number(r.total), withAccount: Number(r.with_account) }]));
+    const byType = Object.fromEntries(
+      res.rows.map((r) => [
+        r.line_type,
+        { total: Number(r.active_total), withAccount: Number(r.active_with_account), rawTotal: Number(r.raw_total), voided: Number(r.voided_total) },
+      ])
+    );
     const failures = [];
     for (const lineType of ["reimbursement", "deduction", "escrow_contribution"]) {
       const row = byType[lineType];
       if (!row) continue; // no rows of this type live — nothing to assert
       if (row.total > 0 && row.withAccount === 0) {
-        failures.push(`${lineType}: 0 of ${row.total} have posting_account_id — the backfill sweep has not been applied yet`);
+        failures.push(`${lineType}: 0 of ${row.total} ACTIVE rows have posting_account_id — the backfill sweep has not been applied yet`);
       }
     }
     if (failures.length) {
       console.error(`${LABEL} FAIL — ${failures.join("; ")}`);
       return 1;
     }
-    const summary = Object.entries(byType).map(([t, c]) => `${t} ${c.withAccount}/${c.total}`).join(", ");
-    console.log(`${LABEL} PASS (live) — every checked line type has at least one resolved posting_account_id: ${summary}`);
+    const summary = Object.entries(byType)
+      .map(([t, c]) => `${t} ${c.withAccount}/${c.total} active${c.voided > 0 ? ` (+${c.voided} voided, correctly excluded, raw total ${c.rawTotal})` : ""}`)
+      .join(", ");
+    console.log(`${LABEL} PASS (live) — every checked line type has 100% of its ACTIVE rows resolved: ${summary}`);
     return 0;
   } finally {
     await client.end().catch(() => {});
