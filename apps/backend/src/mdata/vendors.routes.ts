@@ -300,6 +300,27 @@ async function vendorNameConflictExists(
   });
 }
 
+async function vendorTaxIdConflictExists(
+  authUserId: string,
+  operatingCompanyId: string,
+  taxId: string,
+  excludeId?: string
+): Promise<boolean> {
+  return withCurrentUser(authUserId, async (client) => {
+    await setScopedCompanyContext(client, authUserId, operatingCompanyId);
+    const values: unknown[] = [taxId, operatingCompanyId];
+    let where = `NULLIF(regexp_replace(lower(btrim(tax_id)), '[^a-z0-9]', '', 'g'), '') =
+                 NULLIF(regexp_replace(lower(btrim($1)), '[^a-z0-9]', '', 'g'), '')
+                 AND operating_company_id = $2::uuid AND deactivated_at IS NULL`;
+    if (excludeId) {
+      values.push(excludeId);
+      where += " AND id <> $3::uuid";
+    }
+    const res = await client.query(`SELECT id FROM mdata.vendors WHERE ${where} LIMIT 1`, values);
+    return res.rows.length > 0;
+  });
+}
+
 /** PATCH G6-2: entity comes from the vendor row, never the caller's default or the request body. */
 async function resolveVendorRowOperatingCompanyId(authUserId: string, vendorId: string): Promise<string | null> {
   return withCurrentUser(authUserId, async (client) => {
@@ -543,6 +564,13 @@ export async function registerVendorRoutes(app: FastifyInstance) {
         fieldErrors: { name: "Already in use" },
       });
     }
+    if (b.tax_id && await vendorTaxIdConflictExists(authUser.uuid, createOperatingCompanyId, b.tax_id)) {
+      return reply.code(409).send({
+        error: "mdata_vendor_tax_id_conflict",
+        message: "Vendor with this tax ID already exists",
+        fieldErrors: { tax_id: "Already in use" },
+      });
+    }
     if (b.default_expense_account_id) {
       const check = await withCurrentUser(authUser.uuid, async (client) =>
         checkDefaultExpenseAccountIsExpenseType(
@@ -748,7 +776,8 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     const needsScopedVendor = Boolean(
       ("name" in b && b.name) ||
       ("default_expense_account_id" in b && b.default_expense_account_id) ||
-      ("driver_id" in b && b.driver_id)
+      ("driver_id" in b && b.driver_id) ||
+      ("tax_id" in b && b.tax_id)
     );
     const patchScopedCompanyId = needsScopedVendor
       ? await resolveVendorRowOperatingCompanyId(authUser.uuid, parsedParams.data.id)
@@ -769,6 +798,15 @@ export async function registerVendorRoutes(app: FastifyInstance) {
           fieldErrors: { name: "Already in use" },
         });
       }
+    }
+    if ("tax_id" in b && b.tax_id && await vendorTaxIdConflictExists(
+      authUser.uuid, patchScopedCompanyId as string, b.tax_id, parsedParams.data.id
+    )) {
+      return reply.code(409).send({
+        error: "mdata_vendor_tax_id_conflict",
+        message: "Vendor with this tax ID already exists",
+        fieldErrors: { tax_id: "Already in use" },
+      });
     }
     if ("default_expense_account_id" in b && b.default_expense_account_id) {
       const check = await withCurrentUser(authUser.uuid, async (client) =>
