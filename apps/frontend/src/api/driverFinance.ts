@@ -6,11 +6,20 @@ export type { SettlementStatus } from "@ih35/shared-types";
 export type SettlementListRow = {
   id: string;
   display_id: string | null;
+  /**
+   * SETL-ATNUM: the AlwaysTrack settlement number (e.g. "5795") the driver + company settlements
+   * for a trip actually share. When present it is the canonical settlement number shown to the
+   * operator — the `S-{load}` display_id is only the internal auto-default fallback.
+   */
+  source_document_ref: string | null;
   driver_id: string;
   driver_full_name: string;
   driver_display_id: string;
   period_start: string;
   period_end: string;
+  /** Trip window: when the settlement opened (first load dispatched) and when it was closed. */
+  trip_started_at: string | null;
+  trip_closed_at: string | null;
   status: SettlementStatus;
   /** Distinct loads linked via settlement_lines → driver_bills.load_id */
   load_count: number;

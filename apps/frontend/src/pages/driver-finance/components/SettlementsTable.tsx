@@ -67,12 +67,20 @@ export function SettlementsTable({
         ),
       },
       {
+        // SETL-ATNUM — the driver + company settlements for a trip share ONE AlwaysTrack number
+        // (e.g. 5795). When source_document_ref carries that number it IS the settlement number the
+        // operator recognizes; the `S-{load}` display_id is only the internal auto-default fallback.
         key: "settlement_display_id",
         label: "Settlement #",
         sortable: true,
-        sortValue: (row) => entityLabel(row.display_id, row.id, "Settlement"),
+        sortValue: (row) => row.source_document_ref ?? entityLabel(row.display_id, row.id, "Settlement"),
         render: (row) => (
-          <EntityLinkOrTombstone kind="settlement" id={row.id} name={row.display_id} noun="Settlement" />
+          <EntityLinkOrTombstone
+            kind="settlement"
+            id={row.id}
+            name={row.source_document_ref ?? row.display_id}
+            noun="Settlement"
+          />
         ),
       },
       {
@@ -90,6 +98,23 @@ export function SettlementsTable({
             {formatDateUS(row.period_start)} → {formatDateUS(row.period_end)}
           </>
         ),
+      },
+      {
+        // SETL-DATES (owner 2026-09-07): a settlement must always show when it opened and when it
+        // closed. trip_started_at is stamped when the first load is dispatched (open); trip_closed_at
+        // when the payrun closes it. An open settlement has no close date yet, so show a dash.
+        key: "trip_started_at",
+        label: "Started",
+        sortable: true,
+        sortValue: (row) => row.trip_started_at ?? null,
+        render: (row) => (row.trip_started_at ? formatDateUS(row.trip_started_at) : <span className="text-gray-500">—</span>),
+      },
+      {
+        key: "trip_closed_at",
+        label: "Closed",
+        sortable: true,
+        sortValue: (row) => row.trip_closed_at ?? null,
+        render: (row) => (row.trip_closed_at ? formatDateUS(row.trip_closed_at) : <span className="text-gray-500">—</span>),
       },
       {
         key: "loads",

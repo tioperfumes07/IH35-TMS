@@ -821,7 +821,7 @@ export function SettlementDetailPage() {
             <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
               <div className="mb-2 flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Approval</p>
-                <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">{approvalStatus}</span>
+                <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{approvalStatus}</span>
               </div>
               <p className="mb-2 text-xs text-gray-600">All line items must be reviewed before approving. This flips the settlement from Needs Review to Approved.</p>
               <button

@@ -1,6 +1,6 @@
 {
   "healthzSha": "287a7d2",
-  "generated_at": "2026-09-07T23:38:07.719Z",
+  "generated_at": "2026-09-07T23:46:33.158Z",
   "meta": {
     "generatedAt": "2026-09-07T14:01:54-05:00",
     "sourceSha": "c8bffc7c01",
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 21350,
+      "title": "FINDING: N/A (docs(board) -- §7 financial palette baseline regrown 6->8, blocking every seat's push, transparent unblock only)",
+      "state": "merged",
+      "mergedAtCt": "09/07/2026, 06:44 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21350",
+      "sha": "c6e87e4766",
+      "committedAtIso": "2026-09-07T18:44:58-05:00"
+    },
+    {
+      "number": 21348,
+      "title": "FINDING: wire verify-factoring-collapsed-filter-chrome into verify-step 10916 (orphan guard)",
+      "state": "merged",
+      "mergedAtCt": "09/07/2026, 06:40 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21348",
+      "sha": "cc27b72bca",
+      "committedAtIso": "2026-09-07T18:40:27-05:00"
+    },
+    {
       "number": 21346,
       "title": "FINDING: BUILD-VITEST5 — deploy build_failed (npm ERESOLVE) after vitest 5 merge left @vitest/coverage-v8/@vitest/ui at 4.x",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21341",
       "sha": "cf622ed720",
       "committedAtIso": "2026-09-07T18:14:06-05:00"
-    },
-    {
-      "number": 21340,
-      "title": "FINDING: wire 3 orphan guards from concurrent PRs into verify-steps 10910/10912/10914",
-      "state": "merged",
-      "mergedAtCt": "09/07/2026, 06:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21340",
-      "sha": "4c2997a14a",
-      "committedAtIso": "2026-09-07T18:09:28-05:00"
-    },
-    {
-      "number": 21339,
-      "title": "FINDING: SET-33 — wire the settlement approve route into the frontend (approve chain was a dead-end, needs_review=25/25)",
-      "state": "merged",
-      "mergedAtCt": "09/07/2026, 06:08 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21339",
-      "sha": "547e63d53c",
-      "committedAtIso": "2026-09-07T18:08:14-05:00"
     }
   ]
 }
