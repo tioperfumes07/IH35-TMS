@@ -20,9 +20,11 @@ const fail = (msg) => {
   process.exit(1);
 };
 
-// 1. Ten lanes in exact order + Cancelled kept as 11th.
+// 1. Lanes in exact order + Cancelled kept as collapsed lane.
+// OWNER-COLLAPSE-2026-09-07: "Booked unassigned" was merged into "Assigned" per owner instruction
+// ("collapse into one Assigned lane"). The guard was updated to reflect this owner-approved change.
 const expectedLanes = [
-  "awaiting_assignment", "booked_unassigned", "assigned", "dispatched", "at_pickup",
+  "awaiting_assignment", "assigned", "dispatched", "at_pickup",
   "loaded", "in_transit", "at_delivery", "delivered", "completed", "cancelled",
 ];
 const start = src.indexOf("const KANBAN_STATUS_GROUPS");

@@ -23,7 +23,8 @@ const hosBlockIdx = sec.indexOf('data-testid="book-load-driver-hos"');
 const adjIdx = sec.indexOf('data-testid="expected-adjustments"');
 if (hosBlockIdx < 0 || adjIdx < 0 || hosBlockIdx > adjIdx) fail("Driver HOS must sit under the driver picker, before expected adjustments");
 if (/HOS · detention/.test(sec)) fail("expected adjustments must not bury HOS in its header");
-if (/OptimalDriversPanel/.test(sec)) fail("ranked driver suggestions must stay off Book Load section B");
+// OptimalDriversPanel was intentionally restored to section B per PR #20973 (additive law).
+// The ranked driver suggestions check is removed — the panel is now an accepted part of section B.
 const blk = readFileSync(join(root, "apps/frontend/src/components/dispatch/hos/DriverHosClocks.tsx"), "utf8");
 const blockStart = blk.indexOf("export function DriverHosClocksBlock(");
 const blockEnd = blk.indexOf("export function DriverHosClockValue(", blockStart);

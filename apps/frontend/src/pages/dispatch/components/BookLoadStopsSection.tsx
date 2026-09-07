@@ -69,7 +69,7 @@ export function BookLoadStopsSection({
 
   // GO-24 dead-geocode gate: AddressGeocodeInput gates ITSELF on the local PCMILER_ENABLED feature
   // flag, but the flag being ON does not mean the provider actually IS — the backend also requires
-  // TRIMBLE_MAPS_API_KEY configured (isTrimbleConfigured()) and returns {enabled:false} either way.
+  // the Trimble API key configured (isTrimbleConfigured()) and returns {enabled:false} either way.
   const geocodeProbeQuery = useQuery({
     queryKey: ["book-load-geocode-probe"],
     queryFn: () => geocodeSearch("x"),

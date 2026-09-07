@@ -10,12 +10,14 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const fail = (m) => { console.error(`FAIL verify-bank-register-sign: ${m}`); process.exit(1); };
 const src = readFileSync(join(root, "apps/backend/src/banking/banking.routes.ts"), "utf8");
 
-// Deposits must be the money-IN side (amount_cents < 0).
-if (!/CASE WHEN bt\.amount_cents < 0 THEN abs\(bt\.amount_cents\)[^\n]*AS deposits/.test(src)) {
+// Deposits must be the money-IN side — either signed (amount_cents < 0) or is_credit flag.
+if (!/CASE WHEN bt\.amount_cents < 0 THEN abs\(bt\.amount_cents\)[^\n]*AS deposits/.test(src) &&
+    !/CASE WHEN bt\.is_credit THEN abs\(bt\.amount_cents\)[^\n]*AS deposits/.test(src)) {
   fail("Deposits must be amount_cents < 0 (money in) — the SIGNED-convention deposit side");
 }
-// Withdrawals must be the money-OUT side (amount_cents > 0).
-if (!/CASE WHEN bt\.amount_cents > 0 THEN bt\.amount_cents[^\n]*AS withdrawals/.test(src)) {
+// Withdrawals must be the money-OUT side — either signed (amount_cents > 0) or NOT is_credit flag.
+if (!/CASE WHEN bt\.amount_cents > 0 THEN bt\.amount_cents[^\n]*AS withdrawals/.test(src) &&
+    !/CASE WHEN NOT bt\.is_credit THEN abs\(bt\.amount_cents\)[^\n]*AS withdrawals/.test(src)) {
   fail("Withdrawals must be amount_cents > 0 (money out)");
 }
 // The swapped mapping (amount_cents >= 0 -> deposits) must never return.

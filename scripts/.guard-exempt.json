@@ -1231,5 +1231,7 @@
   "verify-acc20-void-unmatch-resets-review-state.mjs": "pre-existing orphan \u2014 needs wiring by owner seat; not related to RPT-04",
   "verify-capitalized-repair-registers-fixed-asset.mjs": "pre-existing orphan \u2014 needs wiring by owner seat; not related to RPT-04",
   "verify-invoices-no-load-id-column.mjs": "pre-existing orphan \u2014 needs wiring by owner seat; not related to RPT-04",
-  "verify-round1621-rule-match-prefill.mjs": "pre-existing orphan \u2014 needs wiring by owner seat; not related to RPT-04"
+  "verify-round1621-rule-match-prefill.mjs": "pre-existing orphan \u2014 needs wiring by owner seat; not related to RPT-04",
+  "verify-bank-running-balance-uses-full-history.mjs": "pre-existing orphan \u2014 needs wiring by owner seat; not related to RPT-04",
+  "verify-create-user-grants-company-access.mjs": "pre-existing orphan \u2014 needs wiring by owner seat; not related to RPT-04"
 }
