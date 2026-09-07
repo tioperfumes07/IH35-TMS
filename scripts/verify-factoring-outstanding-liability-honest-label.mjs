@@ -47,11 +47,12 @@ export function run(root = process.cwd()) {
       mustInclude: ["summary?.outstanding_liability_balance", "Outstanding Liability Balance"],
       mustNotInclude: [">Chargeback Balance<"],
     },
-    {
-      file: "apps/frontend/src/pages/factoring/ReserveTracker.tsx",
-      mustInclude: ['summaryQ.data?.outstanding_liability_balance', 'label="Outstanding Liability"'],
-      mustNotInclude: ['label="Chargebacks Pending"'],
-    },
+    // NEW-19 (2026-09-07): ReserveTracker.tsx's OWN "Outstanding Liability" tile was removed —
+    // it was a duplicate of FactoringHome.tsx's tile above (same summary query, rendered twice
+    // one screen apart). FactoringHome.tsx is the only remaining renderer of this figure on the
+    // Reserve Tracker tab (ReserveTracker.tsx mounts only inside FactoringHome.tsx), so the
+    // check above already covers it. See scripts/verify-dispatch-subnav-no-factoring.mjs-style
+    // reasoning: this guard now protects the ONE surviving surface instead of two.
     {
       file: "apps/frontend/src/pages/banking/BankingHome.tsx",
       mustInclude: ["row.outstanding_liability_balance", "factoringOutstandingLiability"],
@@ -90,8 +91,6 @@ if (process.argv.includes("--selftest")) {
     "apps/backend/src/factoring/factoring.routes.ts": "outstanding_liability_balance: 0,\n",
     "apps/frontend/src/pages/factoring/FactoringHome.tsx":
       "summary?.outstanding_liability_balance\nOutstanding Liability Balance\n",
-    "apps/frontend/src/pages/factoring/ReserveTracker.tsx":
-      'summaryQ.data?.outstanding_liability_balance\nlabel="Outstanding Liability"\n',
     "apps/frontend/src/pages/banking/BankingHome.tsx":
       "row.outstanding_liability_balance\nfactoringOutstandingLiability\n",
   };

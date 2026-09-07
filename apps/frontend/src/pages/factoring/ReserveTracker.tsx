@@ -3,27 +3,32 @@
  * Spec: FACTORING-PACKET-AUTO-ASSEMBLY.md §Factoring Reserve Tracker
  *
  * Shows per FARO account:
- *   - Total invoices submitted (count + $)
- *   - Total advances received ($)
- *   - Total reserve held / Faro Escrow balance ($)
- *   - Total fees paid YTD ($)
- *   - Chargebacks pending ($)
  *   - Estimated reserve release schedule (7/14/30/60-day forecast)
+ *   - Reserve movement history for the selected factor
+ *   - Per-factor reserve balances
+ *   - Chargeback + fee history (with monthly summaries)
  *
- * All data from existing reserve/factoring APIs — no new financial code.
+ * NEW-19 (owner 2026-09-07): this page used to ALSO render its own 6-tile summary KPI band
+ * (Submitted/Advances/Reserve Held/Fees Paid/Outstanding Liability/Active Factor) using
+ * KpiStatCard. ReserveTracker is only ever mounted inside FactoringHome.tsx (confirmed —
+ * no other importer), which already renders an overlapping 6-tile band one screen higher
+ * (Active factor/Reserve balance/Outstanding Liability Balance/Advanced MTD/Recourse
+ * days/Chargebacks & fees, via DrillKpiCard) for the SAME company/summary data — same
+ * queryKey ["factoring","summary",companyId], so it was even the same network fetch,
+ * just rendered twice in two different card styles. That duplication is exactly what read
+ * as "KPI boxes ... out of proportion" — removed here; FactoringHome's band is now the only
+ * summary band on this tab. All data from existing reserve/factoring APIs — no new financial code.
  */
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  getFactoringSummary,
   getFactoringChargebacksFees,
   getReserveBalances,
   getReserveBalanceHistory,
   getReserveReleaseForecast,
   listFactors,
-  listFactoringBatches,
   type FactoringChargebackFeeRow,
   type FactoringReserveBalanceHistoryEntry,
   type FactoringReserveReleaseForecastPoint,
@@ -35,28 +40,13 @@ import { ReserveDashboardAddFactorModal } from "./ReserveDashboardAddFactorModal
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
-import { KpiStatCard } from "../../components/layout/KpiStatCard";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const fmtM = (cents: number) => money.format((Number(cents) || 0) / 100);
-// FACT-RESERVE-TRACKER-100X-OUTSTANDING-LIABILITY: views.factoring_summary's
-// outstanding_liability_balance (and reserve_balance) are plain decimal DOLLAR values (no _cents
-// suffix, NUMERIC in Postgres — confirmed live: "1850.0000000000000000") — FactoringHome.tsx's own
-// fmtCurrency() renders this field with no /100, and that is the correct reading. Every OTHER KPI
-// on this page (totalSubmittedFace, totalReserveHeld, totalAdvances) is genuinely built from
-// *_cents columns, so fmtM's /100 is correct for those. Do not run this one dollar-denominated
-// field through fmtM — it silently understated a real factoring liability by 100x ($1,850.00
-// rendered as $18.50).
-const fmtDollars = (value: number) => money.format(Number(value) || 0);
 const fmtD = (v: string | null | undefined) => formatDateUS(v);
 const fmtDt = (v: string | null | undefined) => formatDateUS(v);
-
-// B3 BANK-KPI-CARDS (owner CONSOLIDATED 2026-09-06, item 6): this page's own KpiCard was extracted
-// to components/layout/KpiStatCard.tsx so Banking's Accounts band renders the literal same
-// component instead of a lookalike copy — imported above.
 
 // ─── ParityTable columns (display-only; order/format preserved 1:1) ──────────
 
@@ -162,13 +152,6 @@ export function ReserveTracker() {
     () => (factorsQ.data ?? []).map((f) => ({ value: f.id, label: f.name })),
     [factorsQ.data],
   );
-  // summary (submitted count, reserve balance, chargeback balance)
-  const summaryQ = useQuery({
-    queryKey: ["factoring", "summary", companyId],
-    queryFn: () => getFactoringSummary(companyId),
-    enabled: Boolean(companyId),
-  });
-
   // reserve balances per factor
   const balancesQ = useQuery({
     queryKey: ["factoring", "reserves", "balances", companyId],
@@ -180,18 +163,6 @@ export function ReserveTracker() {
   const chargebacksQ = useQuery({
     queryKey: ["factoring", "chargebacks-fees", companyId],
     queryFn: () => getFactoringChargebacksFees(companyId),
-    enabled: Boolean(companyId),
-  });
-
-  // funded/submitted batch list for total submitted count + face value
-  const batchesSubmittedQ = useQuery({
-    queryKey: ["factoring", "batches", companyId, "submitted"],
-    queryFn: () => listFactoringBatches(companyId, "submitted"),
-    enabled: Boolean(companyId),
-  });
-  const batchesFundedQ = useQuery({
-    queryKey: ["factoring", "batches", companyId, "funded"],
-    queryFn: () => listFactoringBatches(companyId, "funded"),
     enabled: Boolean(companyId),
   });
 
@@ -246,46 +217,6 @@ export function ReserveTracker() {
     return m;
   }, [factorsQ.data]);
 
-  const totalSubmittedFace = useMemo(() => {
-    const submitted = (batchesSubmittedQ.data?.batches ?? []).reduce(
-      (acc, b) => acc + b.total_face_cents,
-      0,
-    );
-    const funded = (batchesFundedQ.data?.batches ?? []).reduce(
-      (acc, b) => acc + b.total_face_cents,
-      0,
-    );
-    return submitted + funded;
-  }, [batchesSubmittedQ.data, batchesFundedQ.data]);
-
-  const totalSubmittedCount =
-    (batchesSubmittedQ.data?.batches?.length ?? 0) + (batchesFundedQ.data?.batches?.length ?? 0);
-
-  const totalReserveHeld = useMemo(
-    () => (balancesQ.data ?? []).reduce((acc, b) => acc + b.balance_cents, 0),
-    [balancesQ.data],
-  );
-
-  const totalAdvances = useMemo(
-    () => (batchesFundedQ.data?.batches ?? []).reduce((acc, b) => acc + b.expected_advance_cents, 0),
-    [batchesFundedQ.data],
-  );
-
-  const totalFeesYtd = useMemo(
-    () =>
-      (chargebacksQ.data?.monthly_summary ?? []).reduce(
-        (acc, row) => acc + (Number(row.factor_fee_total) || 0),
-        0,
-      ),
-    [chargebacksQ.data],
-  );
-
-  // FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY: this KPI read
-  // summaryQ.data.chargeback_balance, which is actually Advance + Reserve still owed to the
-  // factor (outstanding_liability_signed_cents), not a real chargeback/recourse figure — the
-  // honestly-computed chargeback total lives in chargebacksQ (Chargebacks & Fees tab) above.
-  const outstandingLiabilityBalance = Number(summaryQ.data?.outstanding_liability_balance ?? 0);
-
   const totalHistPages = Math.max(1, Math.ceil((historyQ.data?.total ?? 0) / PAGE_SIZE));
 
   const forecastByWindow = {
@@ -305,43 +236,11 @@ export function ReserveTracker() {
 
   return (
     <div className="space-y-4" data-testid="faro-reserve-tracker">
-      {/* B-A3: Reserve / fees / chargebacks / factor → real routes. Submitted / Advances have no
-          batches-list route (only /factoring/batches/new and /:id) — honest disabled, not Submission Queue. */}
-      <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
-        <KpiStatCard
-          label="Submitted (batches)"
-          value={String(totalSubmittedCount)}
-          sub={fmtM(totalSubmittedFace) + " face"}
-          disabled
-          disabledReason={NOT_AVAILABLE_YET}
-        />
-        <KpiStatCard
-          label="Advances Received"
-          value={fmtM(totalAdvances)}
-          sub={`${batchesFundedQ.data?.batches?.length ?? 0} funded`}
-          disabled
-          disabledReason={NOT_AVAILABLE_YET}
-        />
-        <KpiStatCard
-          label="FARO Reserve Held"
-          value={fmtM(totalReserveHeld)}
-          sub={`across ${(balancesQ.data ?? []).length} factor(s)`}
-          to="/factoring/reserves"
-        />
-        <KpiStatCard label="Fees Paid YTD" value={fmtM(totalFeesYtd)} to="/factoring/chargebacks-fees" />
-        <KpiStatCard
-          label="Outstanding Liability"
-          value={fmtDollars(outstandingLiabilityBalance)}
-          sub={outstandingLiabilityBalance > 0 ? "advance + reserve owed" : "none"}
-          to="/factoring/chargebacks-fees"
-        />
-        <KpiStatCard
-          label="Active Factor"
-          value={summaryQ.data?.active_factor_name ?? "—"}
-          sub={`${summaryQ.data?.recourse_days ?? 90}-day recourse`}
-          to="/factoring/factors"
-        />
-      </div>
+      {/* NEW-19: the duplicate 6-tile summary KPI band that used to render here (Submitted/
+          Advances/Reserve Held/Fees Paid/Outstanding Liability/Active Factor) was removed —
+          FactoringHome.tsx, the only mount point for this component, already renders an
+          overlapping band one screen higher from the same summary query. See the file header
+          comment for the full explanation. */}
 
       {/* Release forecast */}
       <div className="rounded-sm border border-gray-200 bg-white p-3">

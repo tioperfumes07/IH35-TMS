@@ -6,13 +6,21 @@
  * `GET /api/v1/factoring/summary` returns `outstanding_liability_balance` as a plain decimal DOLLAR
  * string ("1850.0000000000000000" — a NUMERIC column, no `_cents` suffix). `FactoringHome.tsx`'s own
  * `fmtCurrency()` renders that field correctly, no `/100` (confirmed correct: $1,850.00, matching the
- * live liability). `ReserveTracker.tsx` rendered the SAME field through `fmtM()` — a helper built for
- * every OTHER KPI on that page, which genuinely are `*_cents` columns (`total_face_cents`,
- * `balance_cents`, `expected_advance_cents`) — silently understating a real factoring liability by
- * 100x: $1,850.00 displayed as $18.50, on the one dashboard whose job is showing factoring risk.
+ * live liability). `ReserveTracker.tsx` used to render the SAME field a second time (a duplicate tile)
+ * through `fmtM()` — a helper built for every OTHER KPI on that page, which genuinely are `*_cents`
+ * columns — silently understating a real factoring liability by 100x: $1,850.00 displayed as $18.50.
  *
- * WHAT IS ASSERTED: `ReserveTracker.tsx`'s "Outstanding Liability" KPI renders
- * `outstandingLiabilityBalance` through a dollar-only formatter (no `/100`), never through `fmtM`.
+ * NEW-19 (2026-09-07): ReserveTracker.tsx's whole duplicate KPI band (including that Outstanding
+ * Liability tile) was removed — it was a straight duplicate of FactoringHome.tsx's own band one
+ * screen higher, same query, rendered twice in two different card styles. FactoringHome.tsx is now
+ * the ONLY renderer of this figure on the Reserve Tracker tab (ReserveTracker.tsx mounts only inside
+ * FactoringHome.tsx). This guard is RETARGETED, not retired: it now protects the one surviving
+ * surface against the exact same mistake — FactoringHome.tsx mixes true *_cents fields (which IT
+ * divides by 100 inline, e.g. `gross_total_cents ?? 0) / 100`) with this one plain-dollar field in
+ * the same file, so the same "somebody adds /100 out of habit" risk still exists there.
+ *
+ * WHAT IS ASSERTED: FactoringHome.tsx's "Outstanding Liability Balance" DrillKpiCard renders
+ * `summary?.outstanding_liability_balance` through `fmtCurrency(...)` with NO `/ 100` division.
  *
  * METHOD: comments/strings stripped before structural assertions. --selftest mutates the REAL source
  * and requires the assertion to trip.
@@ -20,7 +28,7 @@
 import { readFileSync } from "node:fs";
 
 const LABEL = "verify-reserve-tracker-outstanding-liability-not-double-scaled";
-const FILE = "apps/frontend/src/pages/factoring/ReserveTracker.tsx";
+const FILE = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
 
 function stripCommentsAndStrings(src) {
   return src
@@ -39,26 +47,29 @@ function check(sources) {
     return errors;
   }
   const src = stripCommentsAndStrings(raw);
+  void src;
 
-  // 1. A dollar-only formatter (not dividing by 100) must exist.
-  if (!/const\s+fmtDollars\s*=\s*\(\s*\w+\s*:\s*number\s*\)\s*=>\s*money\.format\(\s*Number\(\s*\w+\s*\)\s*\|\|\s*0\s*\)/.test(src)) {
-    errors.push(
-      `${FILE}: no dollar-only formatter (fmtDollars) found — the outstanding-liability field is a ` +
-        `plain-dollar API value; formatting it with the cents-dividing fmtM() understates it 100x.`
-    );
-  }
-
-  // 2. The Outstanding Liability KPI must use the dollar-only formatter, never fmtM.
-  //    (matched against RAW source — stripCommentsAndStrings blanks the "Outstanding Liability" label.)
-  const kpiMatch = raw.match(/label="Outstanding Liability"[\s\S]{0,80}value=\{(\w+)\(outstandingLiabilityBalance\)\}/);
+  // The Outstanding Liability Balance DrillKpiCard must render the field through fmtCurrency,
+  // with no "/ 100" (or "/100") division applied to it anywhere on that value expression.
+  const kpiMatch = raw.match(
+    /testId="factoring-kpi-outstanding-liability"[\s\S]{0,200}?value=\{([^}]+)\}/,
+  );
   if (!kpiMatch) {
-    errors.push(`${FILE}: could not find the Outstanding Liability KpiCard's value expression.`);
-  } else if (kpiMatch[1] === "fmtM") {
-    errors.push(
-      `${FILE}: Outstanding Liability KPI renders outstandingLiabilityBalance through fmtM (divides ` +
-        `by 100) — that field is already dollars (views.factoring_summary.outstanding_liability_balance, ` +
-        `no _cents suffix), so this silently shows 1/100th of the real liability.`
-    );
+    errors.push(`${FILE}: could not find the Outstanding Liability Balance DrillKpiCard's value expression.`);
+  } else {
+    const valueExpr = kpiMatch[1];
+    if (!/fmtCurrency\(/.test(valueExpr)) {
+      errors.push(
+        `${FILE}: Outstanding Liability Balance KPI must render through fmtCurrency(...) — found "${valueExpr.trim()}".`,
+      );
+    }
+    if (/\/\s*100\b/.test(valueExpr)) {
+      errors.push(
+        `${FILE}: Outstanding Liability Balance KPI value expression divides by 100 — that field is ` +
+          `already dollars (views.factoring_summary.outstanding_liability_balance, no _cents suffix), ` +
+          `so this silently shows 1/100th of the real liability. Found "${valueExpr.trim()}".`,
+      );
+    }
   }
 
   return errors;
@@ -83,13 +94,19 @@ function selftest() {
     process.exit(1);
   }
   const mutations = [
-    ["outstanding liability reverted to fmtM", (s) => ({
+    ["outstanding liability given a /100 division", (s) => ({
       ...s,
-      [FILE]: s[FILE].replace('value={fmtDollars(outstandingLiabilityBalance)}', 'value={fmtM(outstandingLiabilityBalance)}'),
+      [FILE]: s[FILE].replace(
+        'value={summaryQuery.isError ? null : fmtCurrency(summary?.outstanding_liability_balance)}',
+        'value={summaryQuery.isError ? null : fmtCurrency(Number(summary?.outstanding_liability_balance ?? 0) / 100)}',
+      ),
     })],
-    ["fmtDollars helper deleted", (s) => ({
+    ["outstanding liability reverted off fmtCurrency", (s) => ({
       ...s,
-      [FILE]: s[FILE].replace(/const fmtDollars = \(value: number\) => money\.format\(Number\(value\) \|\| 0\);\n/, ""),
+      [FILE]: s[FILE].replace(
+        'value={summaryQuery.isError ? null : fmtCurrency(summary?.outstanding_liability_balance)}',
+        'value={summaryQuery.isError ? null : String(summary?.outstanding_liability_balance ?? 0)}',
+      ),
     })],
   ];
   for (const [name, mutate] of mutations) {
@@ -116,6 +133,6 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-  `${LABEL} PASS — Reserve Tracker's Outstanding Liability KPI renders the already-dollar API field ` +
-    `directly, no double-scaling.`
+  `${LABEL} PASS — FactoringHome's Outstanding Liability Balance KPI renders the already-dollar API ` +
+    `field directly, no double-scaling.`,
 );
