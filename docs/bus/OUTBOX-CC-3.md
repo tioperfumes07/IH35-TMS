@@ -1064,3 +1064,13 @@ FIX: void-not-delete cleanup (19 groups, 31 stale 'deduction'-typed settlement_l
 GUARD verify-no-duplicate-settlement-lines.mjs (verify-step 10821) --selftest 5/5. Live: index confirmed present, 0 active non-reimbursement duplicate groups remain in USMCA.
 
 Moving to SET-11 (close must refuse when the settlement never touched the Laredo yard / carries no load).
+
+---
+
+CC-3 | ROUND-16.24 ITEM 3 DONE (SET-11 close-requires-load-activity) | c7dce19913 | live pending | new SETTLEMENT_HAS_NO_LOAD_ACTIVITY refusal, inert against all existing data | NEXT SET-14
+
+PR #21218 merged c7dce19913. closeSettlementPayRun now explicitly refuses (named error, not the generic balance-check fallthrough) any settlement with zero active earnings/deadhead_pay lines carrying a real load_id — "never touched the Laredo yard." Guard verify-payrun-close-requires-load-activity.mjs (verify-step 10829) --selftest 3/3; live half confirms every currently closed/locked/posted USMCA settlement already has real load activity, so this is a pure forward guard, breaks nothing already posted.
+
+Flag: "SET-11" collides with an unrelated, already-done Load-Costs item (#20137, confidence relative-spread rescoring) in OWNER-DEFECT-REGISTER-2026-09-03.md — noted in the PR so it's not confused later.
+
+Moving to SET-14 (Reimbursed vs Company Expense as two independent flags per cost row + migration).
