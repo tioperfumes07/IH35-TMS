@@ -1,13 +1,13 @@
 {
-  "healthzSha": "109a212",
-  "generated_at": "2026-09-07T18:10:00.000Z",
+  "healthzSha": "287a7d2",
+  "generated_at": "2026-09-07T23:38:07.719Z",
   "meta": {
-    "generatedAt": "2026-08-31T10:22:35-05:00",
-    "sourceSha": "237d06c610",
-    "deployedSha": "109a212",
+    "generatedAt": "2026-09-07T14:01:54-05:00",
+    "sourceSha": "c8bffc7c01",
+    "deployedSha": "287a7d2",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2383,
-    "failOpen": 177,
+    "ledgerRows": 2386,
+    "failOpen": 180,
     "defects": 28
   },
   "modules": [
@@ -602,7 +602,7 @@
         "AUDIT",
         "FAIL",
         "UNV",
-        "AUDIT",
+        "FAIL",
         "FIX",
         "AUDIT",
         "UNV",
@@ -634,7 +634,7 @@
           "AUDIT",
           "FAIL",
           "FIX",
-          "AUDIT",
+          "FAIL",
           "FIX",
           "AUDIT",
           "UNV",
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 21267,
-      "title": "FINDING: ACCT-F26030 GUARD-WORKORDERS TRANSP-AR-CONTROL-NEGATIVE-BALANCE -- traced to the owner-entered 12/31/2024 opening JE, not a posting-side defect",
+      "number": 21346,
+      "title": "FINDING: BUILD-VITEST5 — deploy build_failed (npm ERESOLVE) after vitest 5 merge left @vitest/coverage-v8/@vitest/ui at 4.x",
       "state": "merged",
-      "mergedAtCt": "09/07/2026, 12:46 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21267",
-      "sha": "b7d141e07b",
-      "committedAtIso": "2026-09-07T12:46:16-05:00"
+      "mergedAtCt": "09/07/2026, 06:30 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21346",
+      "sha": "287a7d283a",
+      "committedAtIso": "2026-09-07T18:30:19-05:00"
     },
     {
-      "number": 21266,
-      "title": "FINDING: N/A (CLAIM-RESERVE 10865 -- reservation-only commit, no code fix)",
+      "number": 21345,
+      "title": "FINDING: NEW-20 -- Recourse Pipeline + Chargebacks & Fees filters folded into shared CollapsedListFilters chrome",
       "state": "merged",
-      "mergedAtCt": "09/07/2026, 12:33 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21266",
-      "sha": "37955d1a39",
-      "committedAtIso": "2026-09-07T12:33:30-05:00"
+      "mergedAtCt": "09/07/2026, 06:24 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21345",
+      "sha": "400139b3b5",
+      "committedAtIso": "2026-09-07T18:24:37-05:00"
     },
     {
-      "number": 21265,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "number": 21342,
+      "title": "FINDING: ACCT-F26047 VC-06 -- Customer Transaction List Load#/Settlement#/Truck#/dates/miles always dashed",
       "state": "merged",
-      "mergedAtCt": "09/07/2026, 07:46 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21265",
-      "sha": "109a212bd5",
-      "committedAtIso": "2026-09-07T12:46:13Z"
+      "mergedAtCt": "09/07/2026, 06:17 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21342",
+      "sha": "5d1a3dac8f",
+      "committedAtIso": "2026-09-07T18:17:38-05:00"
     },
     {
-      "number": 21256,
-      "title": "FINDING: N/A (docs(board) — close stale REVREC-NEVER-POSTS-TO-GL, file TRANSP-AR-CONTROL-NEGATIVE-BALANCE)",
+      "number": 21264,
+      "title": "chore(deps): bump vitest from 4.1.10 to 5.0.0",
       "state": "merged",
-      "mergedAtCt": "09/07/2026, 01:15 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21256",
-      "sha": "95667b314f",
-      "committedAtIso": "2026-09-07T01:15:11-05:00"
+      "mergedAtCt": "09/07/2026, 06:16 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21264",
+      "sha": "55a9bbc549",
+      "committedAtIso": "2026-09-07T18:16:25-05:00"
     },
     {
-      "number": 21255,
-      "title": "FINDING: N/A (docs(board) — self-correct ACCT-F26028/PR #21253, file new untracked-index finding)",
+      "number": 21261,
+      "title": "chore(deps): bump plaid from 43.0.0 to 47.0.0",
       "state": "merged",
-      "mergedAtCt": "09/07/2026, 01:12 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21255",
-      "sha": "05441d28bc",
-      "committedAtIso": "2026-09-07T01:12:46-05:00"
+      "mergedAtCt": "09/07/2026, 06:16 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21261",
+      "sha": "0859ad0a65",
+      "committedAtIso": "2026-09-07T18:16:03-05:00"
     },
     {
-      "number": 21254,
-      "title": "FINDING: ACCT-F26029 SELF-CORRECTION -- reverts ACCT-F26028 (PR #21253), which duplicated an already-live fix",
+      "number": 21258,
+      "title": "chore(ci): bump actions/checkout from 4 to 7",
       "state": "merged",
-      "mergedAtCt": "09/07/2026, 01:11 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21254",
-      "sha": "43933a88fc",
-      "committedAtIso": "2026-09-07T01:11:32-05:00"
+      "mergedAtCt": "09/07/2026, 06:16 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21258",
+      "sha": "e17d065acd",
+      "committedAtIso": "2026-09-07T18:16:00-05:00"
     },
     {
-      "number": 21253,
-      "title": "FINDING: ACCT-F26028 GUARD-WORKORDERS CHART-OF-ACCOUNTS-ROLES-NO-UNIQUE-PER-COMPANY-ROLE -- coa-roles + bank_accounts.ledger_account_id are now structurally unique among active rows",
+      "number": 21257,
+      "title": "chore(ci): bump actions/upload-artifact from 4 to 7",
       "state": "merged",
-      "mergedAtCt": "09/07/2026, 01:08 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21253",
-      "sha": "ddf5151050",
-      "committedAtIso": "2026-09-07T01:08:20-05:00"
+      "mergedAtCt": "09/07/2026, 06:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21257",
+      "sha": "adbc08b05d",
+      "committedAtIso": "2026-09-07T18:15:55-05:00"
     },
     {
-      "number": 21252,
-      "title": "FINDING: N/A (CLAIM-RESERVE 202613950000 + 10861 -- reservation-only commit, no code fix)",
+      "number": 21341,
+      "title": "FINDING: ACCT-F26046 INV-01 -- settlement poster never stamped accounting.bills.driver_id on driver-pay bills",
       "state": "merged",
-      "mergedAtCt": "09/07/2026, 01:05 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21252",
-      "sha": "9928f100e6",
-      "committedAtIso": "2026-09-07T01:05:39-05:00"
+      "mergedAtCt": "09/07/2026, 06:14 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21341",
+      "sha": "cf622ed720",
+      "committedAtIso": "2026-09-07T18:14:06-05:00"
     },
     {
-      "number": 21251,
-      "title": "FINDING: N/A (docs(board) — close GUARD-WORKORDERS DEPRECIATION-REGISTER-DEFERRED-VS-NEVER-DEFER, ACCT-F26027/PR #21250)",
+      "number": 21340,
+      "title": "FINDING: wire 3 orphan guards from concurrent PRs into verify-steps 10910/10912/10914",
       "state": "merged",
-      "mergedAtCt": "09/07/2026, 12:38 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21251",
-      "sha": "7fd4a7a6f0",
-      "committedAtIso": "2026-09-07T00:38:12-05:00"
+      "mergedAtCt": "09/07/2026, 06:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21340",
+      "sha": "4c2997a14a",
+      "committedAtIso": "2026-09-07T18:09:28-05:00"
     },
     {
-      "number": 21250,
-      "title": "FINDING: ACCT-F26027 GUARD-WORKORDERS DEPRECIATION-REGISTER-DEFERRED-VS-NEVER-DEFER -- a capitalized severe repair now registers a fixed_assets row, not just a GL debit",
+      "number": 21339,
+      "title": "FINDING: SET-33 — wire the settlement approve route into the frontend (approve chain was a dead-end, needs_review=25/25)",
       "state": "merged",
-      "mergedAtCt": "09/07/2026, 12:37 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21250",
-      "sha": "066aad883a",
-      "committedAtIso": "2026-09-07T00:37:24-05:00"
+      "mergedAtCt": "09/07/2026, 06:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21339",
+      "sha": "547e63d53c",
+      "committedAtIso": "2026-09-07T18:08:14-05:00"
     }
   ]
 }
