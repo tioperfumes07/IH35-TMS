@@ -1519,3 +1519,42 @@ Zero open PRs remain under this account as of this note. Returning to
 RG-03 (BookLoadModalV4 miles-required, worktree wt-rg03, branch
 cc2/rg03-miles-required — code complete, guard-verified, not yet
 committed) next.
+
+## CC-2 | ROUND 16.19 (Safety EntityLink half) DONE | 2026-09-06
+
+PR #21151 merged, sha c30261915c (claim PR #21149 for verify-step 10707
+merged first, sha 6b394cee31). Picked up ROUND 16.16's remaining half:
+Safety EntityLink wired into Dispatch Planner rows + last_dispatch_activity_at
+surfaced.
+
+- Backend (driver-scheduler.service.ts, getFleetSchedule): added
+  last_dispatch_activity_at = MAX(assigned_at) from
+  dispatch.load_assignment_history (driver on either side: new_driver_id OR
+  previous_driver_id) — a computed LATERAL join, no migration (CC-2 can't
+  author one; verified live on Neon prod the table already has 154 real
+  rows, no new column needed).
+- Frontend (SafetyDriverSchedulerGrid.tsx, backs DriverPlanner): both the
+  grid view (row.secondary) and the list view (new "Safety" + "Last
+  Dispatch Activity" columns) now render EntityLink kind="driver_safety_profile"
+  plus the formatted timestamp.
+- Guard: scripts/verify-dispatch-planner-safety-entitylink.mjs (verify-step
+  10707), --selftest 3/3.
+
+LIVE PROOF: guard OK + selftest PASS, both apps' tsc -b --force clean, full
+money-pr-local-gate PASS, and the derivation query itself proven against
+real USMCA data in a ROLLBACK-only read-only transaction on Neon prod (8
+real drivers, correctly-ordered distinct timestamps, latest 2026-09-05).
+
+REMAINING: Lead's directive asked for a live-Chrome screenshot proof
+against the deployed app — that is UNVERIFIED-LIVE pending the next
+batched deploy (session law: deploy batched 5-10 merges, Cursor/CC-1 only;
+not triggered from this seat). Will Chrome-verify once a batch lands and
+/api/v1/healthz/shallow version reaches c30261915c or later.
+
+NOTE for other seats: origin/main also picked up
+scripts/verify-driver-safety-dispatch-linkage.mjs during this window (a
+DIFFERENT surface — DriverProfilePage/unit-profile EntityLink wiring, not
+the Planner) — confirmed no overlap with this PR before merging.
+
+BANK-TOOLBAR-ONE (the other ROUND 16.19 task) is in progress on this seat
+in parallel — see next entry.
