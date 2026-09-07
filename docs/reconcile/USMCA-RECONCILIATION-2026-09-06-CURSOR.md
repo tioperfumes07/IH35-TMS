@@ -101,7 +101,12 @@ From `USMCA BY LOAD` (LOAD rows) + `DIESEL — LOAD NOT IN EXPORT` (5791/5792). 
 |---|---|---|
 | **13556** | `USMCA BY LOAD` (Hummingbird Logistix, Laredo→Medley FL, **no settlement #, no date**, T176) | **TO SEED** — find its signed source (settlement PDF / Faro / QBO invoice), hand CC-3 the seed row |
 | **13553** | `TRANSPORTATION BY LOAD` (PAYPA Transport) | **DO NOT SEED** — correctly Transportation |
-| **13563 / 13564** | **neither** BY-LOAD sheet | I saw these **only as numeric-sequence gaps** between 13562 and 13565 in the Neon USMCA set — not on any workbook sheet. Agrees with lead. |
+| **13563 / 13564** | **neither** BY-LOAD sheet | ~~numeric-sequence gaps~~ **RESOLVED 2026-09-06** — owner provided AlwaysTrack `Report (37).xlsx` (LOAD HISTORY 08-24→09-06); 13563/13564 (and 13569–13573) are real **active USMCA** loads (dispatched Sep 1–4). **SEEDED** via `seed-missing-usmca-loads.ts` `--apply`, `is_sample_data=false`. See `~/Desktop/Cursor-2026-09-06-ACTIVE-LOADS-SEED-13563-13573.md`. |
+
+### 6a. Active-loads seed 13563–13573 (owner order 2026-09-06, source = AlwaysTrack Report (37))
+Seeded LIVE (dispatched, pro forma invoice, `is_sample_data=false`): **13563** $500 · **13564** $3,000 · **13569** $3,000 · **13570** $5,900 (XPR — customer created) · **13571** $4,900 · **13572** $3,200 · **13573** $2,300. Invoice = AlwaysTrack "Charges"; 13564 blank→Faro $3,000. Driver 13570 = app record "Carlos Mauricio Carvallo".
+**Faro variances (owner confirm, seeded at AlwaysTrack value):** 13563 $500 vs Faro $600; 13570 $5,900 vs Faro $6,115.
+**Pending 4619442-1** (Armstrong, no load number in AlwaysTrack) — NOT seeded, needs a number.
 
 ---
 
