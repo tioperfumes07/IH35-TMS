@@ -59,6 +59,7 @@ import { apiRequest } from "../../api/client";
 import { FACTORING_TAB_PATH, factoringTabFromPath } from "../../router/route-manifest";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
+import { CollapsedListFilters } from "../../components/table/CollapsedListFilters";
 
 const SUBNAV = [
   { id: "reserve_tracker", label: "Reserve Tracker" },
@@ -352,12 +353,15 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
   const deepLinkVendorId = applied.vendorId || null;
   const deepLinkDriverId = applied.driverId || null;
 
-  function setCustomerFilter(next: string) {
-    staged.setDraft((d) => ({ ...d, customerId: next }));
-  }
-  function setLoadFilter(next: string) {
-    staged.setDraft((d) => ({ ...d, loadId: next }));
-  }
+  // NEW-20 (2026-09-07): setCustomerFilter/setLoadFilter used to wrap staged.setDraft for the
+  // recourse-pipeline and chargebacks-fees Customer/Load pickers; both call sites now call
+  // staged.setDraft(...) directly inline (matching the established CollapsedListFilters
+  // convention every other consumer uses, e.g. ExpensesListPage.tsx) so
+  // verify-collapsed-list-filters-apply.mjs's static scan — which whitelists only the literal
+  // `setDraft` call name inside a CollapsedListFilters body — can see the mutation is
+  // draft-only without needing to trace through a named wrapper function. Removed as dead code;
+  // setVendorFilter/setDriverFilter below are unaffected (still used by other tabs' bespoke
+  // filter grids, out of this PR's scope).
   function setVendorFilter(next: string) {
     staged.setDraft((d) => ({ ...d, vendorId: next }));
   }
@@ -719,56 +723,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
       ) : null}
 
       {tab === "recourse_pipeline" ? (
-        <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
-          <div className="relative grid gap-2 sm:grid-cols-2 lg:grid-cols-3" data-testid="factoring-home-recourse-filters">
-            <label className="text-[11px] text-slate-600">
-              Customer
-              <EntityPicker
-                kind="customer"
-                operatingCompanyId={companyId}
-                value={filterDraft.customerId || null}
-                onChange={(next) => setCustomerFilter(next ?? "")}
-                allowCreate={false}
-                placeholder="All customers"
-                className="mt-1"
-                dataTestId="factoring-home-filter-customer"
-              />
-            </label>
-            <label className="text-[11px] text-slate-600">
-              Load
-              <EntityPicker
-                kind="load"
-                operatingCompanyId={companyId}
-                value={filterDraft.loadId || null}
-                onChange={(next) => setLoadFilter(next ?? "")}
-                allowCreate={false}
-                placeholder="All loads"
-                className="mt-1"
-                dataTestId="factoring-home-filter-load"
-              />
-            </label>
-            <div className="flex flex-wrap items-end gap-2">
-              <Button type="button" size="sm" data-testid="factoring-home-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
-                Apply
-              </Button>
-              <Button type="button" size="sm" variant="secondary" data-testid="factoring-home-filter-cancel" onClick={staged.cancel} disabled={!staged.dirty}>
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                data-testid="factoring-home-filter-reset"
-                onClick={() => {
-                  staged.cancel();
-                  setApplied(EMPTY_FILTERS);
-                  patchListSearchParam(EMPTY_FILTERS);
-                }}
-              >
-                Reset
-              </Button>
-            </div>
-          </div>
+        <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-home-recourse-filters">
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
             <span className="font-medium text-gray-900">Invoices inside recourse window (sorted by days until expiry)</span>
             <span className="text-gray-600">
@@ -776,55 +731,113 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
             </span>
           </div>
           <div className="overflow-x-auto">
-            <RecoursePipelineTable rows={invoices} fmtCurrency={fmtCurrency} fmtDate={fmtDate} />
+            <RecoursePipelineTable
+              rows={invoices}
+              fmtCurrency={fmtCurrency}
+              fmtDate={fmtDate}
+              filterBar={
+                // NEW-20 (owner 2026-09-07): "customer/load boxes too large and misaligned;
+                // filter/range box + gear should sit in the same row as the customer/load
+                // boxes." CollapsedListFilters is the SAME shared chrome the Accounting module
+                // already standardizes on (Expenses/Payments/Credit Memos/Bill Payments/Manual
+                // JE) — a slim "Filters" toggle sits in the table's own filterBar row (next to
+                // search/range/gear, in the one bordered shell) instead of two full-width
+                // EntityPicker boxes floating in a separate outer div above it.
+                <CollapsedListFilters
+                  activeFilterCount={[applied.customerId, applied.loadId].filter(Boolean).length}
+                  onApply={staged.apply}
+                  onCancel={staged.cancel}
+                  onReset={() => {
+                    staged.cancel();
+                    setApplied(EMPTY_FILTERS);
+                    patchListSearchParam(EMPTY_FILTERS);
+                  }}
+                  applyDisabled={!staged.dirty}
+                  testIdPrefix="factoring-home-recourse"
+                  applyTestId="factoring-home-filter-apply"
+                  cancelTestId="factoring-home-filter-cancel"
+                  resetTestId="factoring-home-filter-reset"
+                >
+                  <div className="flex flex-wrap items-end gap-3">
+                    <label className="text-[11px] text-slate-600">
+                      Customer
+                      <EntityPicker
+                        kind="customer"
+                        operatingCompanyId={companyId}
+                        value={filterDraft.customerId || null}
+                        onChange={(next) => staged.setDraft((d) => ({ ...d, customerId: next ?? "" }))}
+                        allowCreate={false}
+                        placeholder="All customers"
+                        className="mt-1"
+                        dataTestId="factoring-home-filter-customer"
+                      />
+                    </label>
+                    <label className="text-[11px] text-slate-600">
+                      Load
+                      <EntityPicker
+                        kind="load"
+                        operatingCompanyId={companyId}
+                        value={filterDraft.loadId || null}
+                        onChange={(next) => staged.setDraft((d) => ({ ...d, loadId: next ?? "" }))}
+                        allowCreate={false}
+                        placeholder="All loads"
+                        className="mt-1"
+                        dataTestId="factoring-home-filter-load"
+                      />
+                    </label>
+                  </div>
+                </CollapsedListFilters>
+              }
+            />
           </div>
           <CappedListNotice shown={invoices.length} limit={200} total={recourseQuery.data?.total} hint="Narrow the filters to see the remaining invoices." />
         </div>
       ) : null}
 
       {tab === "chargebacks_fees" ? (
-        <div className="space-y-3">
-          <div className="relative grid gap-2 sm:grid-cols-2 lg:grid-cols-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-home-chargebacks-filters">
-            <label className="text-[11px] text-slate-600">
-              Customer
-              <EntityPicker
-                kind="customer"
-                operatingCompanyId={companyId}
-                value={filterDraft.customerId || null}
-                onChange={(next) => setCustomerFilter(next ?? "")}
-                allowCreate={false}
-                placeholder="All customers"
-                className="mt-1"
-                dataTestId="factoring-home-chargebacks-filter-customer"
-              />
-            </label>
-            <div className="flex flex-wrap items-end gap-2">
-              <Button type="button" size="sm" data-testid="factoring-home-chargebacks-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
-                Apply
-              </Button>
-              <Button type="button" size="sm" variant="secondary" data-testid="factoring-home-chargebacks-filter-cancel" onClick={staged.cancel} disabled={!staged.dirty}>
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                data-testid="factoring-home-chargebacks-filter-reset"
-                onClick={() => {
-                  staged.cancel();
-                  setApplied(EMPTY_FILTERS);
-                  patchListSearchParam(EMPTY_FILTERS);
-                }}
-              >
-                Reset
-              </Button>
-            </div>
-          </div>
+        <div className="space-y-3" data-testid="factoring-home-chargebacks-filters">
         <div className="grid gap-3 lg:grid-cols-2">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-xs font-medium text-gray-900">Chargebacks + fee history</div>
             <div className="overflow-x-auto">
-              <ChargebacksTable rows={feesQuery.data?.history ?? []} fmtCurrency={fmtCurrency} fmtDate={fmtDate} />
+              <ChargebacksTable
+                rows={feesQuery.data?.history ?? []}
+                fmtCurrency={fmtCurrency}
+                fmtDate={fmtDate}
+                filterBar={
+                  // NEW-20 — see the identical Recourse Pipeline filterBar above for the full
+                  // rationale (CollapsedListFilters, the shared Accounting-module chrome).
+                  <CollapsedListFilters
+                    activeFilterCount={applied.customerId ? 1 : 0}
+                    onApply={staged.apply}
+                    onCancel={staged.cancel}
+                    onReset={() => {
+                      staged.cancel();
+                      setApplied(EMPTY_FILTERS);
+                      patchListSearchParam(EMPTY_FILTERS);
+                    }}
+                    applyDisabled={!staged.dirty}
+                    testIdPrefix="factoring-home-chargebacks"
+                    applyTestId="factoring-home-chargebacks-filter-apply"
+                    cancelTestId="factoring-home-chargebacks-filter-cancel"
+                    resetTestId="factoring-home-chargebacks-filter-reset"
+                  >
+                    <label className="text-[11px] text-slate-600">
+                      Customer
+                      <EntityPicker
+                        kind="customer"
+                        operatingCompanyId={companyId}
+                        value={filterDraft.customerId || null}
+                        onChange={(next) => staged.setDraft((d) => ({ ...d, customerId: next ?? "" }))}
+                        allowCreate={false}
+                        placeholder="All customers"
+                        className="mt-1"
+                        dataTestId="factoring-home-chargebacks-filter-customer"
+                      />
+                    </label>
+                  </CollapsedListFilters>
+                }
+              />
             </div>
             <CappedListNotice
               shown={feesQuery.data?.history?.length ?? 0}

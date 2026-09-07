@@ -17,13 +17,24 @@ const source = Object.fromEntries(Object.entries(paths).map(([key, rel]) => [key
 export function collectFailures(src = source) {
   const failures = [];
   const requireText = (key, token, message) => { if (!src[key].includes(token)) failures.push(message); };
+  const requireMatch = (key, pattern, message) => { if (!pattern.test(src[key])) failures.push(message); };
   const forbid = (key, pattern, message) => { if (pattern.test(src[key])) failures.push(message); };
 
   forbid("page", /activeFactorVendor|parseVendorNotes|serializeVendorNotes|updateVendor\s*\(/, "Factoring profile must never use the mdata vendor-notes dual path");
   requireText("page", 'queryKey: ["factoring", "factors", companyId]', "factor reader cache must be selected-company scoped");
   requireText("page", "queryFn: () => listFactors(companyId).then((res) => res.factors)", "profile must read canonical factors for the selected company");
   requireText("page", "resolveActiveFactorFromSummary(summary, factorsQuery.data ?? [])", "profile must resolve the canonical summary identity against canonical factor rows");
-  requireText("page", "<FactoringProfilePanel\n            factor={activeFactor}", "mounted profile panel must receive the resolved factor row");
+  // FAC-07 (owner 2026-09-06) inserted `variant="compact"` between the opening tag and
+  // `factor={activeFactor}` — this used to require them on adjacent lines with fixed
+  // indentation, which broke (silently, unrelated to any factor-identity regression) the moment
+  // that unrelated prop landed. The real intent — the MOUNTED panel receives the resolved
+  // activeFactor row, not a re-derived stand-in — is what matters; assert that within the whole
+  // <FactoringProfilePanel ... /> tag, independent of prop order/count/indentation.
+  requireMatch(
+    "page",
+    /<FactoringProfilePanel[^>]*?\bfactor=\{activeFactor\}/s,
+    "mounted profile panel must receive the resolved factor row",
+  );
   requireText("page", "setProfileEditForm(factorToProfileForm(activeFactor))", "edit form must hydrate from that same resolved row");
   requireText("page", "await updateFactor(activeFactor.id, companyId, {", "save must patch that same factor id inside the selected company");
   requireText("page", 'queryKey: ["factoring", "factors", companyId]', "save/read invalidation must retain selected-company identity");
