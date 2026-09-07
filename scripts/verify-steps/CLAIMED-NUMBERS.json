@@ -8088,5 +8088,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-07",
     "purpose": "verify-escrow-deduction-alias-retyped"
+  },
+  "10801": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-planner-scroll-not-wheel-trapped"
   }
 }
