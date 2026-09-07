@@ -87,17 +87,24 @@ const statusFilterSchema = z
 /**
  * Terminal load statuses — completed/cancelled cohort routed to Loads History (board_scope=history).
  *
- * DSP-BAND-GAP (owner 2026-09-06, measured live: 10 of 16 trucks on the board): `delivered_pending_docs`
- * is NOT terminal — the load delivered but is pending paperwork/invoicing, so it is still LIVE work
- * (DispatchOverview's active-loads tile counts it, and dispatch/units-without-load treats it as an
- * ACTIVE load and so drops that truck from "Awaiting"). Listing it here made the LIVE board hide it
- * (NOT terminal filter), so a delivered_pending_docs truck was history to the Booked band and active
- * to the Awaiting band — it fell into NEITHER and vanished (T156/T163/T170/T171/T173/T176). It must be
- * LIVE so it shows in Booked, consistent with the Awaiting roster. History still shows delivered/
- * completed_docs_received/invoiced/paid/closed/cancelled/abandoned/walkoff/no-show.
+ * DSP-BAND-DUP (owner 2026-09-06 21:2xZ verbatim: "you messed up the vehicles in list view, you
+ * duplicated some vehicles"): `delivered_pending_docs` is TERMINAL for the LIVE Booked band. The truck
+ * has PHYSICALLY DELIVERED the load — it is free; the row is only pending paperwork/invoicing. Measured
+ * live (Neon prod, RLS-bypassed): USMCA has a large delivered-pending-docs backlog (T152 8, T177 8,
+ * T171 7, T175 7, …). The Booked band renders ONE ROW PER LOAD, so treating delivered_pending_docs as
+ * LIVE made each truck repeat once per backlog load — the "duplicated vehicles" the owner saw.
+ *
+ * The truck-centric board is fixed from the AWAITING side instead: a truck whose only open loads are
+ * delivered_pending_docs is DROPPED from the units-without-load active set (dispatch/loads.routes.ts)
+ * and surfaces ONCE in "Awaiting assignment" (available for the next dispatch). So the Booked band shows
+ * only genuinely in-flight loads (assigned_not_dispatched/dispatched/in_transit) — one row per truck —
+ * and every in-service truck still appears exactly once (Booked if in-flight, else Awaiting, else In
+ * shop). History still shows delivered/delivered_pending_docs/completed_docs_received/invoiced/paid/
+ * closed/cancelled/abandoned/walkoff/no-show.
  */
 const TERMINAL_LOAD_STATUSES = [
   "delivered",
+  "delivered_pending_docs",
   "completed_docs_received",
   "invoiced",
   "paid",
