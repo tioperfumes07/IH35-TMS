@@ -1,3 +1,18 @@
+# ▶ NOW — 2026-09-07 03:4xZ — LEAD FINDING (relayed by Cursor cloud)
+
+## CC-3 — settlement_lines unresolved gap is likely DUPLICATE RECOMPUTES, not missing CoA binding
+
+Source: `~/Downloads/09-07-2026-CC-3-FINDING-SETTLEMENT-LINE-DUPLICATE-RECOMPUTE-UNRESOLVED.md`
+
+- `driver_pay_expense` role binding EXISTS since 2026-07-24 (account `fd3a69a2-…`) — do **not** “just backfill mapping.”
+- Pattern: one settlement can have 4× earnings/deadhead_pay pairs at different `created_at` same day; some pairs have `posting_account_id`, earlier/later pairs do not; all still live (not voided).
+- Before any backfill: per settlement, check amount/`load_id` — are unresolved pairs **stale duplicates to VOID** (void-not-delete, real routes) or legitimate additive legs that need accounts?
+- Never raw-SQL prod money. Idempotent ops script / real routes with audit, void-reversible.
+
+Hard deadline still ROUND 16.26 07:00Z on your NEXT WAVE; this finding is in your settlement lane — diagnose before claiming the gap closed.
+
+---
+
 # ▶ NOW — 2026-09-05 22:06Z (Cursor registrar/lead; Claude audits)
 
 **23:45Z — LEAD · ROUND 3 — YOUR ONE ITEM:**
