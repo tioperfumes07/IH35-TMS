@@ -106,7 +106,12 @@ export async function getCustomerActivity(input: {
       `
         SELECT p.id::text AS id, p.payment_date::text AS date, p.display_id AS reference,
                l.load_number AS load_number, pa.amount_cents AS amount_cents,
-               COALESCE(p.status, 'received') AS status
+               -- ACCT-F26014 (owner, 2026-09-07): accounting.payments has no "status" column at
+               -- all -- the prior fallback expression referencing it 500'd right after the
+               -- source_load_number fix uncovered it. Every row this query returns already passed
+               -- the payment's own void exclusion above, so 'received' is the correct, non-guessed
+               -- literal here, not a fallback for a real column.
+               'received'::text AS status
         FROM accounting.payment_applications pa
         JOIN accounting.payments p ON p.id = pa.payment_id AND p.operating_company_id = pa.operating_company_id
         JOIN accounting.invoices i ON i.id = pa.invoice_id AND i.operating_company_id = pa.operating_company_id
