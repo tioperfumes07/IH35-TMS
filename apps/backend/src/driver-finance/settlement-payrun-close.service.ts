@@ -202,6 +202,15 @@ async function loadOtherDeductionsByRole(
   operatingCompanyId: string,
   settlementId: string
 ): Promise<Map<string, number>> {
+  // ROUND 16.24 (found live, not asked for): this query had NO voided_at filter — a duplicate or
+  // out-of-entity deduction voided AFTER being attached to a settlement (DED-DUP / TRANSPORTATION-
+  // NOT-USMCA quarantine / SETL-DED-GL retype all leave applied_to_settlement_id set, per void-not-
+  // delete) was still summed here and credited into the JE, understating the driver's real net pay.
+  // Live-measured impact across the 13 already-posted USMCA settlements: 8 of them wrongly included
+  // $535.25 total of voided 'other'-typed rows (S-13642 $10, S-13643 $120, S-13645 $20, S-13646 $10,
+  // S-13647 $320, S-13648 $35.25, S-13650 $10, S-13652 $10) — reported to the owner, not corrected
+  // here (a posted JE is WORM; the correction is a driver-favorable credit on a future settlement,
+  // gated on the owner's read, exactly like every other settlement money correction this session).
   const res = await client.query<{ deduction_type: string; bucket_type: string | null; amount_cents: string }>(
     `
       SELECT dsd.deduction_type, ddb.bucket_type, dsd.amount_cents::bigint AS amount_cents
@@ -209,6 +218,7 @@ async function loadOtherDeductionsByRole(
       LEFT JOIN driver_finance.driver_deduction_buckets ddb ON ddb.id = dsd.bucket_id
       WHERE dsd.operating_company_id = $1::uuid
         AND dsd.applied_to_settlement_id = $2::uuid
+        AND dsd.voided_at IS NULL
     `,
     [operatingCompanyId, settlementId]
   );
