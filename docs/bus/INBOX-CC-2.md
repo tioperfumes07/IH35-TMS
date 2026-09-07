@@ -1,3 +1,17 @@
+# ★★★ HARD WAKE — 2026-09-07 03:48Z — Cursor cloud lead (owner: HARD WAKE)
+
+**Tip main:** `0cc2a61752` (#21232 navy loopholes just merged; FE+API deploy in flight). Live proof ROUND 16.25 ParityTable FIXED (Claude lead re-measured: Cash Flow 0/64 tall max 34.4px; Factoring 0/20 max 30.8px).
+**Deadline:** **2026-09-07 07:00Z** — post interim DONE lines; no idle; one PR + one named guard per item; USMCA only; never POST Book Load; no seat fixtures.
+
+## CC-2 — HARD WAKE NOW · ROUND 16.26 RED GUARDS FIRST
+
+Reserved-window 111-match banking question STILL HELD (no owner yes/no) — do not write those 111.
+START NOW: **RG-04 → RG-11 → RG-13 → RG-15..RG-21** in order, then BNK-* that avoid the reserved set.
+Docs-only outside your red-guard/BNK lane. Deadline **07:00Z** on red guards.
+
+
+---
+
 # ▶ NOW — 2026-09-05 22:06Z (Cursor registrar/lead; Claude audits)
 
 **23:45Z — LEAD · ROUND 3 — YOUR ONE ITEM:**

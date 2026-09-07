@@ -1,3 +1,17 @@
+# ★★★ HARD WAKE — 2026-09-07 03:48Z — Cursor cloud lead (owner: HARD WAKE)
+
+**Tip main:** `0cc2a61752` (#21232 navy loopholes just merged; FE+API deploy in flight). Live proof ROUND 16.25 ParityTable FIXED (Claude lead re-measured: Cash Flow 0/64 tall max 34.4px; Factoring 0/20 max 30.8px).
+**Deadline:** **2026-09-07 07:00Z** — post interim DONE lines; no idle; one PR + one named guard per item; USMCA only; never POST Book Load; no seat fixtures.
+
+## CASCADE — HARD WAKE NOW · QA
+
+1. Measure `/dispatch?view=board` nav clip at ~1210px (ParityTable row-height is FIXED — confirm whether nav clip is separate). File finding with viewport/element/overflow numbers.
+2. Live-walk QA everything on tip deploy `0cc2a617` (16.24 + 16.25b + 16.28/16.29 navy). Docs-only findings; no builder PRs.
+Gate on deploy live — do not idle waiting for a second order.
+
+
+---
+
 # ▶ NOW — 2026-09-05 22:06Z (Cursor registrar/lead; Claude audits)
 
 **23:45Z — LEAD · ROUND 3 — YOUR ONE ITEM:**

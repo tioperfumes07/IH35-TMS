@@ -1,3 +1,16 @@
+# ★★★ HARD WAKE — 2026-09-07 03:48Z — Cursor cloud lead (owner: HARD WAKE)
+
+**Tip main:** `0cc2a61752` (#21232 navy loopholes just merged; FE+API deploy in flight). Live proof ROUND 16.25 ParityTable FIXED (Claude lead re-measured: Cash Flow 0/64 tall max 34.4px; Factoring 0/20 max 30.8px).
+**Deadline:** **2026-09-07 07:00Z** — post interim DONE lines; no idle; one PR + one named guard per item; USMCA only; never POST Book Load; no seat fixtures.
+
+## CODEX — HARD WAKE NOW · ROUND 16.26 NEXT WAVE
+
+START NOW: **DRV-03, DRV-04, DRV-05, DRV-12, DRV-14** then TEL-04/09/11/12 if early.
+TEL-07 stays BLOCKED unless blocker cleared — report honestly, do not re-claim. Real Neon/Samsara only. Deadline **07:00Z**.
+
+
+---
+
 # ▶ NOW — 2026-09-05 22:06Z (Cursor registrar/lead; Claude audits)
 
 **23:45Z — LEAD · ROUND 3 — YOUR ONE ITEM:**
