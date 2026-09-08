@@ -9225,3 +9225,16 @@ not outstanding. No code change in this commit; documenting so the claim stops l
 undone work on the next pass. | — | — | none | `pg_indexes` confirmation + duplicate-session
 census cited in commit `fe9f16eeb3`, re-cited here rather than re-run (DB unchanged since) | **MOOT
 · superseded by CC-1's DB-level unique index, closed 2026-09-01, no guard needed** |
+
+## verify-petty-cash-check-transfer wired at verify-step 10819 (CC-2, 2026-09-08)
+
+`scripts/verify-petty-cash-check-transfer.mjs` (owner's 2026-09-06 Petty Cash account feature —
+"i need petty cash account in banking, when we generate a check we will transfer it to that bank
+account") was fully authored, its `--selftest` passes 6/6 planted defects, and the live check
+passes clean against the already-shipped feature (migration `202613900200`, `is_petty_cash` column,
+`PETTY_CASH_CHECK_TRANSFER_ENABLED` flag, backend wiring in `bills.service.ts`/`transfers.service.ts`/
+`banking.routes.ts`, frontend "+ Petty Cash" account creation on `BankingHome.tsx`) — but the guard
+itself was never wired into any verify-step, so `verify:pre-commit`/CI's actual required check had
+never once run it. A future regression to this feature (owner-facing, real money movement) would
+have shipped silently green. Claimed 10819 (CLAIM-RESERVE, PR #21398, merged), authored
+`scripts/verify-steps/10819-verify-petty-cash-check-transfer.mjs` here. | `scripts/verify-steps/10819-verify-petty-cash-check-transfer.mjs` | — | none | `node scripts/verify-petty-cash-check-transfer.mjs --selftest` exit 0 (6/6); `node scripts/verify-petty-cash-check-transfer.mjs` exit 0 | **CLOSED · orphan guard now actually runs in CI** |
