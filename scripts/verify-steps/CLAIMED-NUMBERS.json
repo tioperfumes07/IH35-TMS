@@ -8353,5 +8353,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-08",
     "purpose": "verify-samsara-driver-linkage-match-rate"
+  },
+  "10831": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-08",
+    "purpose": "verify-dispatch-completion-prompts-wired"
   }
 }
