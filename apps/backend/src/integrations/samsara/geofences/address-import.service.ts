@@ -203,7 +203,7 @@ export async function importSamsaraAddresses(options: {
 }): Promise<SamsaraAddressImportResult> {
   const apply = options.apply === true;
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id',$1,true)`, [options.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id',$1::text,true)`, [options.operatingCompanyId]);
     if (apply) {
       const gate = await client.query(`SELECT to_regclass('geo.geofence_vehicle_state')::text AS relation`);
       if (!gate.rows[0]?.relation) throw new Error("samsara_address_import_apply_blocked:geo.geofence_vehicle_state_missing");

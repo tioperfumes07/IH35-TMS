@@ -246,14 +246,11 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
       key: "driver_id",
       label: "Driver",
       render: (row) => (
-        <button
-          type="button"
-          className="text-left text-[#1f2a44] underline"
-          data-testid={`internal-fine-driver-open-${String(row.id ?? "")}`}
-          onClick={() => setSelectedFine(row)}
-        >
-          {entityLabel((row.driver_name as string | undefined)?.trim(), String(row.driver_id ?? ""), "Driver")}
-        </button>
+        <EntityLink
+          kind="driver"
+          id={row.driver_id as string | undefined}
+          label={entityLabel((row.driver_name as string | undefined)?.trim(), String(row.driver_id ?? ""), "Driver")}
+        />
       ),
     },
     { key: "reason_code", label: "Reason", render: (row) => String(row.reason_code ?? row.reason_name ?? "—") },
