@@ -1,5 +1,10 @@
 # USMCA Settlement/Dispatch/Factoring Reconciliation — 2026-09-07
 
+## OWNER CORRECTION (2026-09-07 21:57): settlements are the 4-digit AlwaysTrack doc numbers, NOT `S-137xx`
+- A settlement number is a **4-digit AlwaysTrack document number** (e.g. 5786). Loads never carry an "S-".
+- The DB `S-13642…S-13656` / `S-137xx` values are an **unlinked internal counter**, not real settlements. They must be voided/relinked, never reported as settlements.
+- **The real USMCA driver settlements = 21 signed documents: 5774, 5777–5796. Total driver pay due = $27,487.36 across 161 load-lines** (source: `usmca-settlements-from-signed-docs.csv`, `usmca-settlement-lines-from-signed-docs.csv`, parsed from the signed PDFs).
+- Because the `S-137xx` linkage is wrong, BOTH prior reconciliations (Claude's per-driver delta table and the per-load table below) are **not trustworthy for moving money**. No settlement is closed/paid until each DB settlement is rebuilt to equal its signed 4-digit doc, dollar-for-dollar. Owner enters nothing by hand.
 Source of truth: signed settlement PDFs in ~/Downloads (Driver_/Company_Settlement_5753-5796), the AlwaysTrack dispatch board screenshots (owner, 2026-09-07), the Faro factoring report, and the live Neon DB (br-fancy-credit-akjnd07a, USMCA 5c854333, bypass_rls=lucia).
 
 ## Rule applied
