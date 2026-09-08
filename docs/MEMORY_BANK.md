@@ -75,10 +75,16 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Driver identity:** hired Mexican-B1 external contractors (W-8BEN), NOT owner-operators. Pay =
   per-load fixed fee, booked "Cost of Labor–Mexico Drivers" as Contract Labor (never Purchased
   Transportation, never payroll-with-withholding).
-- **The "$3,660 over/under" was a mis-scoped week/aggregate comparison, NOT real over/underpayment.**
-  No USMCA driver is owed money or was overpaid; they were paid correctly per AlwaysTrack. The defect
-  is purely how the TMS grouped/valued the settlement records (one-per-driver, wide July→Sept ranges,
-  some voided load-bills) vs one-settlement-per-tour.
+- **The "$3,660 over/under" week/aggregate delta is a mis-scoped comparison — but "NO driver is owed"
+  is FALSIFIED (Claude, line-level, 2026-09-08).** At least Pedro Abraham Lopez Collado is genuinely
+  UNDERPAID: his live settlement (DB `S-13654`) is a PARTIAL rebuild of **tour 5772** covering only 2 of
+  4 loads; the other 2 (13502, 13507) — real signed pay — exist NOWHERE in `driver_bills`/`settlement_lines`.
+  Reverse it without posting the full $997.08 of tour 5772 and he goes from wrongly-paid $756 to paid
+  nothing. **Do NOT assume "everyone was paid correctly."** CC-1 is auditing all 17 for the same
+  partial-rebuild/missing-load pattern; CC-2 is checking for other standalone manual JEs beyond 15e0887f.
+  The rebuild **scope (driver/tour list) is a PARAMETER, not hardcoded** — it may grow to cover 5760–5773
+  for whichever drivers CC-1 flags. Do not finalize/rehearse the full pass until CC-1 + CC-2 report back.
+  (The 28-tour source already covers all 4 of tour 5772's loads — Pedro is fixable within scope.)
 
 ---
 
