@@ -1773,3 +1773,54 @@ against the backlog," since that's a real, hard-to-reverse financial write
 rather than guessing: want me to Chrome-walk and accept the 111 outside the
 reserved window (real matches only, none of the 253 without a rule match), or
 does this stay the owner's/an operator's own hands-on queue per the standing law?
+
+## CC-2 | INDEPENDENT VERIFY — manual JE 15e0887f (S-13643/load 13541/doc 5796) | 2026-09-08
+
+**Owner ask:** confirm (1) not linked to `driver_finance.payrun_gl_runs`, (2) already folded into
+S-13643's stored `net_pay`, (3) whether any OTHER standalone correction JE exists for the other 16
+settlements. Traced live on Neon (`tiny-field-89581227`, branch `br-fancy-credit-akjnd07a`,
+`bypass_rls=lucia`), by settlement_lines/journal_entries content, not date ranges.
+
+**Verdict: 15e0887f is the ONLY standalone settlement-correction JE in scope. Confirmed on all 3 points.**
+
+**(1) NOT linked to payrun_gl_runs — CONFIRMED.** `driver_finance.payrun_gl_runs` has a UNIQUE
+`(operating_company_id, settlement_id)` constraint — one row per settlement. S-13643's row
+(`settlement_id=2c1d92fa-fb38-4d08-8871-9440713db194`) still points its `journal_entry_id` at the
+ORIGINAL posting JE `13ffbcff-a3af-4a84-b7ec-25fab4a9ff95`, exactly the JE `15e0887f`'s own memo
+says it corrects. `15e0887f` itself is absent from `payrun_gl_runs` entirely and carries
+`reverses_je_id = NULL` / `reversed_by_je_id = NULL` — it is a genuinely standalone, second JE
+against the same settlement, linked only by memo text, not by any FK.
+
+**(2) Folded into net_pay — CONFIRMED, at the LINE level, not just the header.** Traced
+`driver_finance.settlement_lines` for load `ebf7e233-b78e-48f3-bbec-2d5fdd887274` (load 13541):
+the original 2026-09-05 lines ("Loaded Miles" $769.39 + "Empty Miles" $0.00 = $769.39) are VOIDED
+(`voided_at = 2026-09-07T20:11:25.944Z`, void-not-delete, WORM-correct), and TWO replacement lines
+were created at the exact same instant ("Loaded Miles" $189.93 + "Empty Miles" $189.80 = $379.73 —
+441.7mi + 441.4mi @ $0.43/mi, matching the JE memo's own math to the cent). $769.39 − $379.73 =
+**$389.66 exactly**, matching the JE's stated correction. S-13643's current stored `net_pay` =
+$4,310.22 = gross_pay $4,345.05 − deductions $350.00 + reimbursements $315.17 (internally
+consistent) — this is the corrected, current figure, not a stale pre-correction number sitting
+next to a side-channel JE.
+
+**(3) No second hidden manual/correction JE for the other 16 — CONFIRMED, 3 independent searches, 0 hits beyond 15e0887f:**
+- Every JE mentioning `Settlement S-` that is NOT the settlement's own `payrun_gl_runs`-linked
+  posting JE → **1 row, 15e0887f.**
+- Every JE with `source = 'manual'` for USMCA, ever → **0 rows.** (Note: 15e0887f's own `source`
+  column is `'auto'`, not `'manual'`, despite being a one-off human-authored correction — the
+  `manual` enum value appears entirely unused across all 759 USMCA journal entries. Flagging as a
+  terminology note, not a defect — every JE in this system posts through the same code path
+  regardless of who triggered it, so `source` tracks "posted automatically by a service" vs.
+  something else that isn't yet built, not "human-initiated vs. system-initiated.")
+- Every USMCA JE with `memo ILIKE '%correction%'` in the settlement window (2026-07-03 to
+  2026-09-07) → 3 rows: `15e0887f` (this one) plus `df6dff65` and `0ff7b735`, which are BOTH
+  properly `reverses_je_id`-linked reversal JEs for load 13541's **customer-invoice/revenue-
+  recognition side** (ACCT-F26031, the $3,500→$2,500 re-rate — a separate, already-closed money
+  thread for the same load, unrelated to driver settlements).
+- Broader sweep (any JE not in `payrun_gl_runs`, no reversal FK, memo mentions "driver", in-window)
+  → 7 rows: the same `15e0887f` plus 6 "Driver advance CA-2026-000N posting" entries — legitimate,
+  expected, correctly-standalone cash-advance postings, not settlement corrections.
+
+**No second hidden manual JE exists.** Cursor's reversal-engine orchestration for the 17→21
+rebuild needs to handle exactly ONE standalone correction (15e0887f/S-13643), nothing else.
+
+Files touched: none (read-only verification). No code shipped, per this task's own framing.
