@@ -1,5 +1,57 @@
 # GUARD WORK-ORDERS — the live fix board (read after AUDIT-COVERAGE-LIVE.md, before any block)
 
+## Active Architectural Decisions & Known Quirks (owner 2026-09-08: folded into this board instead
+of a separate memory file, so it stays next to the findings it explains and inherits this board's
+own append-only/citation discipline — never a hand-maintained prose file that can silently drift
+out of sync with the real source of truth, the exact SAF-F28 failure class docs/CLAUDE.md §7
+already documents. Append new bullets under the relevant heading; never rewrite an existing one —
+supersede it with a dated correction, same rule as every row below.)
+
+**Architectural decisions:**
+- FAC-09a Faro debtor-portal rebuild (CC-3, 2026-09-08): the real 15-item nav lives in
+  `FactoringHome.tsx`'s `SUBNAV` array, doc order locked by `verify-faro-tabs-real-data.mjs`. Each
+  real report page is built on already-fetched query data (no new backend calls) with an honest
+  "—" for every column with no backing field — never a fabricated number. The 5 pre-existing
+  internal-ops tabs are preserved under an "Internal Tools" dropdown (Rule 07), not deleted.
+
+**Known quirks & blockers:**
+- **Deploy lag is real and un-forceable.** A merged PR is not live — prod deploys are batched
+  (`docs/lockdown/NO-PER-MERGE-PROD-DEPLOY-LAW-2026-08-21.md`), and no coder lane triggers one
+  (Rule 42). Before trusting ANY live-Chrome check, compare `GET /api/v1/healthz`'s `git_sha`
+  against `git log` to confirm your fix's commit is actually behind that SHA — 2026-09-08 hit this
+  twice in one session (Purchase Report and a vendor-merge fix both showed pre-fix behavior live
+  for ~10-20 min after merging, purely from deploy lag, not a broken fix).
+- **Postgres NUMERIC columns serialize as JS strings over the wire**, regardless of what the TS
+  type claims. `fmtCurrency(value)`-style single-value display is safe (it coerces with `Number()`
+  internally), but any raw `total += row.some_numeric_field` reducer is NOT — it silently does
+  string concatenation instead of addition, and only shows as `$NaN` once enough rows garble the
+  string past what `Number()` can parse (caught live 2026-09-08, `FactoringHome.tsx`'s
+  `agingTotals` and Purchase Report footer sums, PR #21406). Always wrap raw API numeric fields in
+  `Number(x ?? 0)` before summing.
+- **A client-side tab/route change does not remount the page component** when multiple routes
+  render the same component (e.g. every `/factoring/<tab>` route → `FactoringHomePage`). A
+  `useEffect(() => {...}, [])` (mount-only) that reads `useSearchParams()` will never see query
+  params that arrive via a later client-side navigation — only a genuine full page load re-runs
+  it. Depend on the specific extracted param VALUES instead of `[]` (caught live 2026-09-08, the
+  duplicate-vendor-merge deep-link prefill, PR #21410).
+- **CC-3's branch prefix (`claude-3/`) is chrome-only for verify-step authoring** — same
+  restriction this lane already has for migrations. A new `scripts/verify-X.mjs` guard needs a
+  `scripts/verify-steps/NNN-verify-X.mjs` wrapper to actually run in CI, but that wrapper file
+  itself can't be authored from a `claude-3/` branch (`verify-verify-step-lane-band.mjs` rejects
+  it). Fallback: claim the number (CLAIM-RESERVE, still fine from this lane) and add an honest,
+  dated entry to `scripts/.guard-exempt.json` explaining a non-chrome-only lane needs to author the
+  wrapper — never silently leave the guard unwired (PRs #21391/#21393, 2026-09-08).
+- **Two disconnected reserve-tracking systems exist for factoring.** `views.factoring_summary`'s
+  `reserve_balance` is a real, nonzero, currently-displayed aggregate ($2,276.11 for USMCA as of
+  2026-09-08); the dedicated line-item ledger (`factoring.reserve_movement` /
+  `factoring.v_factor_reserve_balance`) has ZERO rows for USMCA. Building a line-item Reserve
+  report today would show 0 rows next to a real nonzero balance — a real data-model gap, not a
+  build-effort gap. Needs either backfilling `factoring.reserve_movement` or a schema decision
+  before that report can be built without fabricating rows.
+- **`accounting.payments` has zero rows for USMCA** (confirmed via Neon, 2026-09-08) — "Payments
+  to You" / "Debtor Receipts" on the Faro-portal rebuild have no backing data source at all yet,
+  distinct from the reserve gap above. Flag, don't fabricate, don't silently leave unexplained.
+
 | **OPEN (CC-1 2026-09-04, filed not fixed -- owner order, stop editor is Cursor's surface):** `LOAD-13508-PICKUP-STOP-UNPINNED` -- live-verified (bypass_rls, USMCA, load 926f4142-3fe4-4aa5-b896-daa0ca6474c4 / display 13508): the PICKUP stop (seq 1, Indianapolis, IN) has `location_id`, `latitude`, `longitude` all NULL -- city/state TEXT only, no geocoded pin. The DELIVERY stop (seq 2, Laredo, TX) has a real `location_id` (`61824de5-1eb3-48e4-b8a1-fc3b5b367df7`) but its own `latitude`/`longitude` columns are also NULL (secondary, lower-priority note -- it at least carries a resolvable FK, the pickup carries neither). Per docs/bus current-state law §8: "City text is not a location... store latitude and longitude on the stop." The picker itself works and is proven live on the delivery stop -- it was simply never invoked on the pickup. This is the origin point of the mileage the driver on this load is being paid on (see ACCT-F25010 / DRV-BILL-MILES-INTEGER for the full mileage-basis story on this same load) -- an unpinned origin makes any future OSM/routing-engine mileage computation for this load impossible to trust even after a real engine is wired in. | `mdata.load_stops` (load 926f4142-3fe4-4aa5-b896-daa0ca6474c4, stop seq 1) | **Cursor -- stop editor / location picker surface** | require the location picker (already built, already proven on delivery stops) on the pickup stop too, or a live guard flagging any load_stops row with city/state text but no location_id/lat/lng on a load past `unassigned` status | live `mdata.load_stops` read, bypass_rls, this session | **OPEN · routed=Cursor · not fixed here, filed only per owner order** |
 
 | **CORRECTION (CC-1 2026-09-04) -- attribution amendment to ACCT-F25010 / PR #20302:** the merged PR's title originally read "owner error." **That framing is wrong and is corrected here per the owner's own explicit instruction.** The owner ordered a re-import of `catalogs.lane_mileage.short_miles` (his own words: "I ordered the re-import... without reading §2") -- that order is his. But the SPECIFIC decision this incident's migration (202613670001) made -- DROPPING `practical_miles NOT NULL` and the `short<=practical` CHECK to let that import land, reasoning that MILES-INVERT-01's trust-flag trigger was a sufficient flag-not-reject replacement -- was CC-1's own engineering call, authored and applied without the owner ordering that specific constraint-drop. That reasoning was wrong; the constraint was correctly rejecting data with no legitimate content, not flagging a legitimate-but-unusual shape. PR #20302's title has been edited via `gh pr edit` to remove the "owner error" framing; this row is the durable register correction the merged commit's own git history cannot retroactively carry. | `db/migrations/202613670001...sql` (mine), `db/migrations/202613680001...sql` (mine, the reversal) | -- | -- | attribution correction only, no code/data change | owner's own correction message, this session | **CORRECTION · CC-1's error, not the owner's, not CC-3's** |
