@@ -162,3 +162,74 @@ doc_no,driver,load,category,description,amount
 5795,LUIS ARMANDO SOSA PEREZ,13567,cash_advance,2026-09-03 - CASH ADVANCE WIRE TRANSFER - CASH ADVANCE WIRE TRANSFER,-201.99
 5796,JOSE ANTONIO VICENTE MARTINEZ,13541,loaded_pay,Loaded Miles       441.7 @ $0.43                                                                                189.93,189.93
 5796,JOSE ANTONIO VICENTE MARTINEZ,13541,empty_pay,Empty Miles        441.4 @ $0.43                                                                                189.80,189.8
+5769,Angel Alfonso Sosa Perez,13498,loaded_pay,"Loaded Miles 1,263.9 @ $0.45 568.76",568.76
+5769,Angel Alfonso Sosa Perez,13508,loaded_pay,"Loaded Miles 1,284.0 @ $0.45 577.80",577.80
+5769,Angel Alfonso Sosa Perez,13508,empty_pay,Empty Miles 19.9 @ $0.45 8.96,8.96
+5769,Angel Alfonso Sosa Perez,13498,escrow,Load 13498 2026-08-12 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00,-25.00
+5769,Angel Alfonso Sosa Perez,13508,escrow,Load 13508 2026-08-12 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00,-25.00
+5769,Angel Alfonso Sosa Perez,13508,admin_fee,Load 13508 2026-08-12 - Admin fee - GAS -10.00,-10.00
+5770,Neftali Coronado Urbano,13503,loaded_pay,"Loaded Miles 1,894.3 @ $0.50 947.15",947.15
+5770,Neftali Coronado Urbano,13509,loaded_pay,"Loaded Miles 1,813.3 @ $0.50 906.65",906.65
+5770,Neftali Coronado Urbano,13509,empty_pay,Empty Miles 107.4 @ $0.50 53.70,53.70
+5770,Neftali Coronado Urbano,13503,additional_pay,Load 13503 Driver Pay-Enlonada 25.00,25.00
+5770,Neftali Coronado Urbano,13503,additional_pay,Load 13503 Driver Pay-Desenlonada 25.00,25.00
+5770,Neftali Coronado Urbano,13509,additional_pay,Load 13509 Driver Pay-Enlonada 25.00,25.00
+5770,Neftali Coronado Urbano,13509,additional_pay,Load 13509 Driver Pay-Desenlonada 25.00,25.00
+5770,Neftali Coronado Urbano,13509,admin_fee,Load 13509 2026-08-12 - Admin fee - Gas -10.00,-10.00
+5771,Jorge Luis Infante Corona,13504,loaded_pay,"Loaded Miles 1,890.2 @ $0.50 945.10",945.10
+5771,Jorge Luis Infante Corona,13510,loaded_pay,"Loaded Miles 1,574.8 @ $0.50 787.40",787.40
+5771,Jorge Luis Infante Corona,13510,empty_pay,Empty Miles 353.2 @ $0.50 176.60,176.60
+5771,Jorge Luis Infante Corona,13504,additional_pay,Load 13504 Driver Pay-Enlonada 25.00,25.00
+5771,Jorge Luis Infante Corona,13504,additional_pay,Load 13504 Driver Pay-Desenlonada 25.00,25.00
+5771,Jorge Luis Infante Corona,13510,admin_fee,Load 13510 2026-08-12 - Admin fee - Gas -10.00,-10.00
+5772,PEDRO ABRAHAM LOPEZ COLLADO,13502,loaded_pay,"Loaded Miles 1,079.7 @ $0.45 485.87",485.87
+5772,PEDRO ABRAHAM LOPEZ COLLADO,13507,loaded_pay,Loaded Miles 414.2 @ $0.45 186.39,186.39
+5772,PEDRO ABRAHAM LOPEZ COLLADO,13507,empty_pay,Empty Miles 93.7 @ $0.45 42.17,42.17
+5772,PEDRO ABRAHAM LOPEZ COLLADO,13512,loaded_pay,Loaded Miles 716.8 @ $0.45 322.56,322.56
+5772,PEDRO ABRAHAM LOPEZ COLLADO,13512,empty_pay,Empty Miles 222.0 @ $0.45 99.90,99.90
+5772,PEDRO ABRAHAM LOPEZ COLLADO,13513,loaded_pay,Loaded Miles 436.1 @ $0.45 196.25,196.25
+5772,PEDRO ABRAHAM LOPEZ COLLADO,13513,empty_pay,Empty Miles 108.2 @ $0.45 48.69,48.69
+5772,PEDRO ABRAHAM LOPEZ COLLADO,13502,additional_pay,Load 13502 Driver Pay-Bono por Contratatacion 1/4 50.00,50.00
+5772,PEDRO ABRAHAM LOPEZ COLLADO,13512,additional_pay,Load 13512 Driver Pay-Layover-Estancia 8y9 de agosto 50.00,50.00
+5772,PEDRO ABRAHAM LOPEZ COLLADO,13513,reimbursement,Load 13513 CAT SCALE Driver Reimbursement-TPE-Scale Expense 15.25,15.25
+5772,PEDRO ABRAHAM LOPEZ COLLADO,13502,escrow,Load 13502 2026-08-13 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00,-25.00
+5772,PEDRO ABRAHAM LOPEZ COLLADO,13502,cash_advance,Load 13502 2026-08-01 - Cash Advance-Check - Cash Advance-Check EFS -390.00,-390.00
+5772,PEDRO ABRAHAM LOPEZ COLLADO,13507,escrow,Load 13507 2026-08-13 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00,-25.00
+5772,PEDRO ABRAHAM LOPEZ COLLADO,13512,escrow,Load 13512 2026-08-13 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00,-25.00
+5772,PEDRO ABRAHAM LOPEZ COLLADO,13513,escrow,Load 13513 2026-08-13 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00,-25.00
+5772,PEDRO ABRAHAM LOPEZ COLLADO,13513,admin_fee,Load 13513 2026-08-13 - Admin fee - GAS -10.00,-10.00
+5773,Concepcion Cordova Dominguez,13497,loaded_pay,"Loaded Miles 2,088.6 @ $0.45 939.87",939.87
+5773,Concepcion Cordova Dominguez,13511,loaded_pay,"Loaded Miles 1,540.5 @ $0.45 693.23",693.23
+5773,Concepcion Cordova Dominguez,13511,empty_pay,Empty Miles 587.6 @ $0.45 264.42,264.42
+5773,Concepcion Cordova Dominguez,13497,escrow,Load 13497 2026-08-13 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00,-25.00
+5773,Concepcion Cordova Dominguez,13511,escrow,Load 13511 2026-08-13 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00,-25.00
+5773,Concepcion Cordova Dominguez,13511,admin_fee,Load 13511 2026-08-13 - Admin fee - GAS -10.00,-10.00
+5775,ALFONSO HIDALGO CHAVEZ,13506,loaded_pay,"Loaded Miles 1,292.4 @ $0.45 581.58",581.58
+5775,ALFONSO HIDALGO CHAVEZ,13514,loaded_pay,"Loaded Miles 1,119.2 @ $0.45 503.64",503.64
+5775,ALFONSO HIDALGO CHAVEZ,13514,empty_pay,Empty Miles 109.3 @ $0.45 49.19,49.19
+5775,ALFONSO HIDALGO CHAVEZ,13516,loaded_pay,Loaded Miles 351.6 @ $0.45 158.22,158.22
+5775,ALFONSO HIDALGO CHAVEZ,13516,empty_pay,Empty Miles 25.6 @ $0.45 11.52,11.52
+5775,ALFONSO HIDALGO CHAVEZ,13514,additional_pay,Load 13514 Driver Pay-Layover-Estancia 8 y 9 de Agosto 50.00,50.00
+5775,ALFONSO HIDALGO CHAVEZ,13516,additional_pay,Load 13516 Driver Pay-Bono por Contratacion 1/4 50.00,50.00
+5775,ALFONSO HIDALGO CHAVEZ,13514,reimbursement,Load 13514 LOVES Driver Reimbursement-TPE-Scale Expense 15.25,15.25
+5775,ALFONSO HIDALGO CHAVEZ,13506,escrow,Load 13506 2026-08-14 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00,-25.00
+5775,ALFONSO HIDALGO CHAVEZ,13514,escrow,Load 13514 2026-08-14 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00,-25.00
+5775,ALFONSO HIDALGO CHAVEZ,13516,escrow,Load 13516 2026-08-14 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00,-25.00
+5775,ALFONSO HIDALGO CHAVEZ,13516,admin_fee,Load 13516 2026-08-14 - Admin fee - GAS -10.00,-10.00
+5775,ALFONSO HIDALGO CHAVEZ,13516,cash_advance,Load 13516 2026-08-05 - CASH ADVANCE WIRE TRANSFER - CASH ADVANCE WIRE TRANSFER -148.00,-148.00
+5776,Leonel Antonio Morales,13505,loaded_pay,"Loaded Miles 1,292.4 @ $0.45 581.58",581.58
+5776,Leonel Antonio Morales,13515,loaded_pay,Loaded Miles 426.8 @ $0.45 192.06,192.06
+5776,Leonel Antonio Morales,13515,empty_pay,Empty Miles 36.6 @ $0.45 16.47,16.47
+5776,Leonel Antonio Morales,13520,loaded_pay,Loaded Miles 897.6 @ $0.45 403.92,403.92
+5776,Leonel Antonio Morales,13520,empty_pay,Empty Miles 21.9 @ $0.45 9.86,9.86
+5776,Leonel Antonio Morales,13505,additional_pay,Load 13505 Driver Pay-Layover-Estancia 5-6-7-8 DE AGOSTO 100.00,100.00
+5776,Leonel Antonio Morales,13505,reimbursement,Load 13505 LOVES Driver Reimbursement-TPE-Scale Expense 5.25,5.25
+5776,Leonel Antonio Morales,13505,reimbursement,Load 13505 LOVES Driver Reimbursement-TPE-Scale Expense 15.25,15.25
+5776,Leonel Antonio Morales,13515,reimbursement,Load 13515 LOVES Driver Reimbursement-TPE-Scale Expense 5.25,5.25
+5776,Leonel Antonio Morales,13515,reimbursement,Load 13515 LOVES Driver Reimbursement-TPE-Scale Expense 15.25,15.25
+5776,Leonel Antonio Morales,13515,reimbursement,Load 13515 VALERO Driver Reimbursement-TPE-Scale Expense 15.25,15.25
+5776,Leonel Antonio Morales,13515,reimbursement,Load 13515 VALERO Driver Reimbursement-TPE-Scale Expense 5.25,5.25
+5776,Leonel Antonio Morales,13505,escrow,Load 13505 2026-08-14 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00,-25.00
+5776,Leonel Antonio Morales,13515,escrow,Load 13515 2026-08-14 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00,-25.00
+5776,Leonel Antonio Morales,13515,admin_fee,Load 13515 2026-08-14 - Admin fee - GAS -10.00,-10.00
+5776,Leonel Antonio Morales,13520,escrow,Load 13520 2026-08-14 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00,-25.00
