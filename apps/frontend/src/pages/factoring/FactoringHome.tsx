@@ -328,31 +328,19 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   // (DuplicateVendorsBanner.tsx) resolves real from/to vendor ids+names via its own scan and used
   // to discard them on "Open Driver Vendor Merges" (a bare nav link), dumping the office user on
   // an empty form whose from/to fields are free text — they had no way to know the raw QBO vendor
-  // uuid the scan already found. Consume the banner's deep-link params, prefill the merge form,
-  // land on its tab. Manual entry into the free-text fields is untouched (still works, still
-  // requires typing MERGE to confirm) — this only removes the "go find the id yourself" dead end.
+  // uuid the scan already found. Consume the banner's deep-link params ONCE, prefill the merge
+  // form, land on its tab, and clear the params so they don't re-fire the effect or linger in the
+  // URL. Manual entry into the free-text fields is untouched (still works, still requires typing
+  // MERGE to confirm) — this only removes the "go find the id yourself" dead end.
   //
-  // MERGE-DEEPLINK-NEVER-FIRES-2026-09-08 (live-Chrome caught, twice):
-  //   (1) This effect was originally mount-only (`[]` deps), but every /factoring/<tab> route
-  //       renders the SAME FactoringHomePage instance — clicking "Merge these" is a client-side
-  //       route change, not a remount, so a mount-only effect never saw the new query params.
-  //       Fixed (PR #21410) by depending on the two param VALUES instead of `[]`.
-  //   (2) That fix still failed live, even on a genuine hard browser navigation — root-caused via
-  //       apps/frontend/src/routes/manifest.tsx's RouteContentBoundary, which keys its <Suspense>
-  //       on `${location.pathname}${location.search}` (deliberately, to avoid stale content
-  //       flashing across navigations). This effect used to call `setSearchParams(next, {replace:
-  //       true})` to strip the merge_* params after consuming them — changing `location.search`,
-  //       which changes that Suspense key, which force-REMOUNTS the entire page a moment after
-  //       this effect set state, wiping it before it could render. Every other URL-driven filter
-  //       in this file (customer_id/load_id/etc.) survives the same remount unnoticed because it
-  //       re-derives its state from the URL on mount and never deletes the URL params that seeded
-  //       it — this effect was the only one that deleted its own source of truth out from under
-  //       itself. Fixed by no longer deleting the merge_* params: they stay in the URL (same
-  //       pattern as every sibling filter), so a remount just re-runs this same effect with the
-  //       same values and lands on the same state, instead of finding nothing.
-  //   A dedicated isolated test (FactoringHome.vendor-merge-deeplink.test.tsx) passed for fix (1)
-  //   because a bare MemoryRouter has no keyed-remount-on-search-change behavior to catch (2) —
-  //   this class of bug needs the real route tree, not just the page component in isolation.
+  // MERGE-DEEPLINK-NEVER-FIRES-2026-09-08 (live-Chrome caught): this effect was mount-only
+  // (`[]` deps), but every /factoring/<tab> route renders the SAME FactoringHomePage component
+  // instance — clicking "Merge these" is a client-side route change, not a remount, so a
+  // mount-only effect never saw the new query params. Live-reproduced twice (a real click AND a
+  // full browser navigation to the exact deep-link URL both left "From vendor" / "To vendor"
+  // showing "— (Unassigned)"). Fixed by depending on the two param VALUES (not the whole
+  // searchParams object, which is a new reference every render) so the effect re-runs whenever
+  // they actually change, remount or not.
   const mergeFromVendorIdParam = searchParams.get("merge_from_vendor_id");
   const mergeToVendorIdParam = searchParams.get("merge_to_vendor_id");
   useEffect(() => {
@@ -364,9 +352,15 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     setMergeFromVendorName(searchParams.get("merge_from_vendor_name")?.trim() ?? "");
     setMergeToVendorName(searchParams.get("merge_to_vendor_name")?.trim() ?? "");
     setTab("vendor_merges");
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- searchParams/state setters are
-    // intentionally excluded: searchParams is a fresh object every render (would fire every
-    // render if included) and the setters are referentially stable.
+    const next = new URLSearchParams(searchParams);
+    next.delete("merge_from_vendor_id");
+    next.delete("merge_from_vendor_name");
+    next.delete("merge_to_vendor_id");
+    next.delete("merge_to_vendor_name");
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- searchParams/setSearchParams/state
+    // setters are intentionally excluded: searchParams is a fresh object every render (would
+    // fire every render if included) and the setters are referentially stable.
   }, [mergeFromVendorIdParam, mergeToVendorIdParam]);
 
   const EMPTY_FILTERS = {
@@ -1154,7 +1148,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <div className="text-xs font-medium text-gray-900">Fees Paid</div>
-            <div className="inline-flex overflow-hidden border border-gray-300" data-testid="factoring-fees-paid-view-toggle">
+            <div className="inline-flex overflow-hidden rounded-sm border border-gray-300" data-testid="factoring-fees-paid-view-toggle">
               <button
                 type="button"
                 data-testid="factoring-fees-paid-view-open-invoices"
@@ -1285,19 +1279,19 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6" data-testid="factoring-aging-summary-strip">
-              <div className="border border-gray-200 p-2 text-center">
+              <div className="p-2 text-center">
                 <div className="text-xs uppercase tracking-wide text-gray-500">Total Records</div>
                 <div className="mt-1 font-semibold text-gray-900" data-testid="factoring-aging-total-records">{agingRows.length}</div>
               </div>
               {(["0-30", "31-60", "61-90", "90+"] as const).map((bucket) => (
-                <div key={bucket} className="border border-gray-200 p-2 text-center">
+                <div key={bucket} className="p-2 text-center">
                   <div className="text-xs uppercase tracking-wide text-gray-500">Total {bucket}</div>
                   <div className="mt-1 font-semibold text-gray-900" data-testid={`factoring-aging-total-${bucket}`}>
                     {fmtCurrency(agingTotals[bucket])}
                   </div>
                 </div>
               ))}
-              <div className="border border-gray-200 p-2 text-center">
+              <div className="p-2 text-center">
                 <div className="text-xs uppercase tracking-wide text-gray-500">Total Balance</div>
                 <div className="mt-1 font-semibold text-gray-900" data-testid="factoring-aging-total-balance">
                   {fmtCurrency(agingTotals.balance)}
@@ -1545,7 +1539,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
               <div className="text-xs font-medium text-gray-900">Statement history</div>
               {/* NEW-25: Summary (monthly totals, the historical default) vs Detail (the same
                   line-item chargeback/fee history the Chargebacks & Fees tab renders). */}
-              <div className="inline-flex overflow-hidden border border-gray-300" data-testid="factoring-statements-view-toggle">
+              <div className="inline-flex overflow-hidden rounded-sm border border-gray-300" data-testid="factoring-statements-view-toggle">
                 <button
                   type="button"
                   data-testid="factoring-statements-view-summary"
