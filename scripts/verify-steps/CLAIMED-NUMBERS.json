@@ -8328,5 +8328,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-09-08",
     "purpose": "verify-settlement-net-pay-triple-figure-fixed (EVEN Cursor lane; ships Claude-authored settlement net-pay triple-figure display fix)"
+  },
+  "11081": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-08",
+    "purpose": "verify-factoring-nested-box-baseline"
   }
 }
