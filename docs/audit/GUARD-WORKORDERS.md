@@ -8933,6 +8933,39 @@ Owner instruction (verbatim): "I NOTICED THESE ISSUES IN THE PAST HOUR. READ THO
 
 **Real completion count: 3 of 3 items closed** (1 already-built confirmation + 1 fix-PR covering both NEW-08 and NEW-09). One PR (#21318) + one named guard (`verify-load-costs-settlement-column-and-invoiced-not-open.mjs`, verify-step 10901), per the assignment box's own instruction.
 
+## NEW-09 CORRECTION (CC-1, 2026-09-08) — the 2026-09-07 fix above never actually worked
+
+The PR #21318 fix above moved `'invoiced'` from `DELIVERED` to `CLOSED` in
+`LoadCostsBoardPage.tsx`'s status arrays, reasoning `mdata.loads.status` becomes `'invoiced'` once a
+real invoice exists. **That reasoning was never true.** Live-reconfirmed 2026-09-08:
+`SELECT count(*) FROM mdata.loads WHERE status='invoiced'` = **0, system-wide, every entity** —
+nothing anywhere in the codebase ever writes that value (grepped `apps/backend/src`; the only two
+`status = 'invoiced'` writes target unrelated tables, `dispatch.detention_requests` and
+`maintenance.road_service_tickets`). Load 13569 (the exact case the prior fix cited) was still
+showing under "All Open" on the live, deployed app the day after that PR merged — live Chrome
+screenshot confirms it. The prior guard only checked static array membership (`'invoiced' in CLOSED`,
+not in `DELIVERED`), which stayed green forever without the underlying behavior ever firing — a
+guard asserting the code SHAPE, not the real live outcome.
+
+**Real fix, PR #21447 (merged):** `load-costs-board.routes.ts` gains an `invoice_info` CTE computing
+`is_invoiced` from a real, issued (`status NOT IN ('draft','proforma','void')`) `accounting.invoices`
+row — the actual signal, independent of the load-status literal that nothing writes.
+`LoadCostsBoardPage.tsx` gets a single `isClosed(r)` choke point
+(`CLOSED.includes(r.status) || r.is_invoiced`) that `matches()` now routes through for every filter
+pill (`in_motion`/`delivered_open`/`this_week`/`all_open`), not just the one that happened to check
+the status literal. Guard extended (not duplicated): `verify-load-costs-settlement-column-and-invoiced-not-open.mjs`
+now asserts the real `invoice_info`/`isClosed` wiring in addition to the old array-shape check (9/9
+selftest, up from 5/5).
+
+Also resolved in the same pass: **"Mecor" is not a customer** (flagged as unresolved in the 2026-09-07
+close) — it's driver Fernando **Mecor** Hernandez's own middle name, confirmed live via the Load Costs
+Board UI. No customer named Mecor/Immec exists on either of unit T168's loads. The settlement-
+inheritance half (13569/13577 sharing S-13727) re-confirmed still correct, no change needed there.
+
+**Remaining:** post-deploy live re-screenshot of load 13569 under "All Open" (should show 0 rows) —
+this repo's frontend/backend services have `autoDeploy: "no"` (batched manual deploys), so this stays
+`UNVERIFIED` until the next batch deploy, not silently skipped.
+
 ## INV-10 (ACC-17) — CARD PREMISE WRONG, no backfill needed; 3 genuine driver-duplicate cases flagged (CC-1, 2026-09-07)
 
 The CC-1 CURRENT ASSIGNMENT box framed INV-10 as "one person = one financial identity (`drivers.qbo_vendor_id` vs `vendors.driver_id`) ... you own writing the actual invariant/backfill." **Live-verified before writing any code: this premise is wrong. There is no missing invariant to backfill, and writing driver/vendor UUIDs into `mdata.drivers.qbo_vendor_id` would be a real data-corruption bug**, not a fix.
