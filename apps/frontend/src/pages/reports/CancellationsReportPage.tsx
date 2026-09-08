@@ -12,6 +12,7 @@ import { EntityLink, type EntityKind } from "../../components/shared/EntityLink"
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { mmmDd } from "../../lib/formatDate";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
+import { useStagedListFilters } from "../../components/table";
 
 import { formatUsdCents } from "../../lib/money";
 
@@ -134,6 +135,7 @@ export function CancellationsReportPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const emptyFilters = { from: "", to: "", reason: "" };
   const [applied, setApplied] = useState(emptyFilters);
+  const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
   const [reportSearch, setReportSearch] = useState("");
 
   const query = useQuery({
@@ -180,10 +182,10 @@ export function CancellationsReportPage() {
 
       <ReportFilterBar
         testIdPrefix="reports-cancellations"
-        fromDate={applied.from || null}
-        toDate={applied.to || null}
-        onFromDateChange={(d) => setApplied((p) => ({ ...p, from: d ?? "" }))}
-        onToDateChange={(d) => setApplied((p) => ({ ...p, to: d ?? "" }))}
+        fromDate={staged.draft.from || null}
+        toDate={staged.draft.to || null}
+        onFromDateChange={(d) => staged.setDraft((p) => ({ ...p, from: d ?? "" }))}
+        onToDateChange={(d) => staged.setDraft((p) => ({ ...p, to: d ?? "" }))}
         onPresetSelect={(preset) => {
           const next = new URLSearchParams(searchParams);
           next.set("preset", preset);
@@ -191,13 +193,17 @@ export function CancellationsReportPage() {
         }}
         search={reportSearch}
         onSearchChange={setReportSearch}
+        onApply={staged.apply}
+        onCancel={staged.cancel}
+        onReset={staged.reset}
+        applyDisabled={!staged.dirty}
       >
         <label className="flex items-center gap-1 text-xs text-slate-600">
           <span className="font-semibold text-slate-600">Reason</span>
           <select
             className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
-            value={applied.reason}
-            onChange={(e) => setApplied((p) => ({ ...p, reason: e.target.value }))}
+            value={staged.draft.reason}
+            onChange={(e) => staged.setDraft((p) => ({ ...p, reason: e.target.value }))}
             data-testid="reports-cancellations-reason"
           >
             <option value="">All reasons</option>

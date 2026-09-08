@@ -20,6 +20,7 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useStagedListFilters } from "../../components/table";
 import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 
@@ -48,6 +49,8 @@ const FLAG_META: Record<FuelReconciliationFlag, { label: string }> = {
 type FuelReconTab = "card" | "wo";
 const FUEL_RECON_TAB_IDS = ["card", "wo"] as const;
 
+type FuelReconFilters = { start: string; end: string; unitFilter: string };
+
 function parseFuelReconTab(searchParams: URLSearchParams): FuelReconTab {
   const raw = (searchParams.get("tab") ?? "card").toLowerCase();
   return (FUEL_RECON_TAB_IDS as readonly string[]).includes(raw) ? (raw as FuelReconTab) : "card";
@@ -61,7 +64,13 @@ export function FuelReconciliationPage() {
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
   const emptyRange = defaultRange();
-  const [applied, setApplied] = useState({ ...emptyRange, unitFilter: "" });
+  const emptyFilters: FuelReconFilters = { ...emptyRange, unitFilter: "" };
+  const [appliedFilters, setAppliedFilters] = useState<FuelReconFilters>(emptyFilters);
+  const staged = useStagedListFilters({
+    applied: appliedFilters,
+    empty: emptyFilters,
+    onApply: setAppliedFilters,
+  });
   const [reportSearch, setReportSearch] = useState("");
   const tab = useMemo(() => parseFuelReconTab(searchParams), [searchParams]);
   const setTab = (next: FuelReconTab) => {
@@ -79,12 +88,12 @@ export function FuelReconciliationPage() {
   const [matchNote, setMatchNote] = useState("");
 
   const query = useQuery({
-    queryKey: ["reports", "fuel-reconciliation", companyId, applied.start, applied.end],
+    queryKey: ["reports", "fuel-reconciliation", companyId, appliedFilters.start, appliedFilters.end],
     queryFn: () =>
       getFuelReconciliation({
         operating_company_id: companyId,
-        period_start: applied.start,
-        period_end: applied.end,
+        period_start: appliedFilters.start,
+        period_end: appliedFilters.end,
       }),
     enabled: Boolean(companyId),
     retry: false,
@@ -122,10 +131,10 @@ export function FuelReconciliationPage() {
       )
       .join("");
     printLetterHtml({
-      title: `Fuel reconciliation ${applied.start}_${applied.end}`,
+      title: `Fuel reconciliation ${appliedFilters.start}_${appliedFilters.end}`,
       bodyHtml: `
         <h1>Fuel reconciliation</h1>
-        <div class="meta">${esc(mmmDd(applied.start))} → ${esc(mmmDd(applied.end))} · printed ${esc(
+        <div class="meta">${esc(mmmDd(appliedFilters.start))} → ${esc(mmmDd(appliedFilters.end))} · printed ${esc(
           mmmDdTime(new Date()),
         )}</div>
         <table>
@@ -246,7 +255,7 @@ export function FuelReconciliationPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `fuel-reconciliation-${applied.start}-${applied.end}.csv`;
+    a.download = `fuel-reconciliation-${appliedFilters.start}-${appliedFilters.end}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -276,10 +285,10 @@ export function FuelReconciliationPage() {
 
       <ReportFilterBar
         testIdPrefix="reports-fuel-reconciliation"
-        fromDate={applied.start}
-        toDate={applied.end}
-        onFromDateChange={(d) => setApplied((p) => ({ ...p, start: d ?? "" }))}
-        onToDateChange={(d) => setApplied((p) => ({ ...p, end: d ?? "" }))}
+        fromDate={staged.draft.start}
+        toDate={staged.draft.end}
+        onFromDateChange={(d) => staged.setDraft((p) => ({ ...p, start: d ?? "" }))}
+        onToDateChange={(d) => staged.setDraft((p) => ({ ...p, end: d ?? "" }))}
         onPresetSelect={(preset) => {
           const next = new URLSearchParams(searchParams);
           next.set("preset", preset);
@@ -287,14 +296,18 @@ export function FuelReconciliationPage() {
         }}
         search={reportSearch}
         onSearchChange={setReportSearch}
+        onApply={staged.apply}
+        onCancel={staged.cancel}
+        onReset={staged.reset}
+        applyDisabled={!staged.dirty}
       >
         <label className="flex items-center gap-1 text-xs text-slate-600">
           <span className="font-semibold text-slate-600">Unit</span>
           <input
             type="text"
             className="h-7 w-24 rounded-sm border border-slate-300 px-2 text-xs"
-            value={applied.unitFilter}
-            onChange={(e) => setApplied((p) => ({ ...p, unitFilter: e.target.value }))}
+            value={staged.draft.unitFilter}
+            onChange={(e) => staged.setDraft((p) => ({ ...p, unitFilter: e.target.value }))}
             placeholder="All units"
             data-testid="reports-fuel-reconciliation-unit"
           />
@@ -329,7 +342,7 @@ export function FuelReconciliationPage() {
             loading={query.isPending || (query.isFetching && filtered.length === 0)}
             storageKey="fuel-reconciliation"
             emptyText="No trucks with fuel data for this period."
-            exportFilename={`fuel-reconciliation-${applied.start}-${applied.end}`}
+            exportFilename={`fuel-reconciliation-${appliedFilters.start}-${appliedFilters.end}`}
             rowClassName={(r) => (isSuspicious(r) ? "bg-red-50" : "")}
             onRowClick={(r) => navigate(`/fleet/units/${r.unit_id}?tab=financial`)}
           />

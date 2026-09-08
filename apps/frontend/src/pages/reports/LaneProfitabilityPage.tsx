@@ -26,6 +26,7 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { SelectCombobox } from "../../components/Combobox";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useStagedListFilters } from "../../components/table";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 
@@ -50,23 +51,36 @@ function marginClass(margin: number | null) {
   return "text-rose-700 font-semibold";
 }
 
+type LaneProfitabilityFilters = {
+  period: LaneProfitabilityPeriod;
+  customStart: string;
+  customEnd: string;
+  minRevenue: string;
+  minLoads: string;
+};
+
 export function LaneProfitabilityPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
-  const emptyFilters = { period: "YTD" as LaneProfitabilityPeriod, customStart: "", customEnd: "", minRevenue: "", minLoads: "" };
-  const [applied, setApplied] = useState(emptyFilters);
+  const emptyFilters: LaneProfitabilityFilters = { period: "YTD" as LaneProfitabilityPeriod, customStart: "", customEnd: "", minRevenue: "", minLoads: "" };
+  const [appliedFilters, setAppliedFilters] = useState<LaneProfitabilityFilters>(emptyFilters);
+  const staged = useStagedListFilters({
+    applied: appliedFilters,
+    empty: emptyFilters,
+    onApply: setAppliedFilters,
+  });
   const [reportSearch, setReportSearch] = useState("");
   const [selectedLane, setSelectedLane] = useState<LaneProfitabilityLane | null>(null);
 
   const query = useQuery({
-    queryKey: ["reports", "lane-profitability", companyId, applied.period, applied.customStart, applied.customEnd],
+    queryKey: ["reports", "lane-profitability", companyId, appliedFilters.period, appliedFilters.customStart, appliedFilters.customEnd],
     queryFn: () =>
       getLaneProfitability({
         operating_company_id: companyId,
-        period: applied.period,
-        start: applied.period === "custom" ? applied.customStart : undefined,
-        end: applied.period === "custom" ? applied.customEnd : undefined,
+        period: appliedFilters.period,
+        start: appliedFilters.period === "custom" ? appliedFilters.customStart : undefined,
+        end: appliedFilters.period === "custom" ? appliedFilters.customEnd : undefined,
       }),
     enabled: Boolean(companyId),
     retry: false,
@@ -204,10 +218,10 @@ export function LaneProfitabilityPage() {
       <div className="flex flex-wrap items-end gap-3">
         <ReportFilterBar
         testIdPrefix="reports-lane-profitability"
-        fromDate={applied.period === "custom" ? applied.customStart : (query.data?.period.start ?? null)}
-        toDate={applied.period === "custom" ? applied.customEnd : (query.data?.period.end ?? null)}
-        onFromDateChange={(d) => setApplied((p) => ({ ...p, customStart: d ?? "", period: "custom" }))}
-        onToDateChange={(d) => setApplied((p) => ({ ...p, customEnd: d ?? "", period: "custom" }))}
+        fromDate={staged.draft.period === "custom" ? staged.draft.customStart : (query.data?.period.start ?? null)}
+        toDate={staged.draft.period === "custom" ? staged.draft.customEnd : (query.data?.period.end ?? null)}
+        onFromDateChange={(d) => staged.setDraft((p) => ({ ...p, customStart: d ?? "", period: "custom" }))}
+        onToDateChange={(d) => staged.setDraft((p) => ({ ...p, customEnd: d ?? "", period: "custom" }))}
         onPresetSelect={(preset) => {
           const next = new URLSearchParams(searchParams);
           next.set("preset", preset);
@@ -215,13 +229,17 @@ export function LaneProfitabilityPage() {
         }}
         search={reportSearch}
         onSearchChange={setReportSearch}
+        onApply={staged.apply}
+        onCancel={staged.cancel}
+        onReset={staged.reset}
+        applyDisabled={!staged.dirty}
       >
         <label className="flex items-center gap-1 text-xs text-slate-600">
           <span className="font-semibold text-slate-600">Period</span>
           <SelectCombobox
             className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
-            value={applied.period}
-            onChange={(e) => setApplied((p) => ({ ...p, period: e.target.value as LaneProfitabilityPeriod }))}
+            value={staged.draft.period}
+            onChange={(e) => staged.setDraft((p) => ({ ...p, period: e.target.value as LaneProfitabilityPeriod }))}
           >
             <option value="YTD">YTD</option>
             <option value="quarter">Last quarter</option>
@@ -232,8 +250,8 @@ export function LaneProfitabilityPage() {
         <label className="flex items-center gap-1 text-xs text-slate-600">
           <span className="font-semibold text-slate-600">Min rev ($)</span>
           <MoneyInput
-            valueDollars={applied.minRevenue ? Number(applied.minRevenue) : null}
-            onChangeDollars={(d) => setApplied((p) => ({ ...p, minRevenue: d == null ? "" : String(d) }))}
+            valueDollars={staged.draft.minRevenue ? Number(staged.draft.minRevenue) : null}
+            onChangeDollars={(d) => staged.setDraft((p) => ({ ...p, minRevenue: d == null ? "" : String(d) }))}
             ariaLabel="Min revenue ($)"
             className="h-7 w-24"
             name="reports-lane-profitability-min-revenue"
@@ -245,8 +263,8 @@ export function LaneProfitabilityPage() {
             type="number"
             min={0}
             className="h-7 w-20 rounded-sm border border-slate-300 px-2 text-xs"
-            value={applied.minLoads}
-            onChange={(e) => setApplied((p) => ({ ...p, minLoads: e.target.value }))}
+            value={staged.draft.minLoads}
+            onChange={(e) => staged.setDraft((p) => ({ ...p, minLoads: e.target.value }))}
             data-testid="reports-lane-profitability-min-loads"
           />
         </label>

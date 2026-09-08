@@ -6,6 +6,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
+import { useStagedListFilters } from "../../components/table";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { SelectCombobox } from "../../components/Combobox";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
@@ -41,6 +42,7 @@ export function DispatchMarginPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const emptyFilters = { ...currentQuarterRange(), basis: "accrual" as "accrual" | "cash" };
   const [applied, setApplied] = useState(emptyFilters);
+  const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
   const [reportSearch, setReportSearch] = useState("");
 
   const query = useQuery({
@@ -113,10 +115,10 @@ export function DispatchMarginPage() {
 
       <ReportFilterBar
         testIdPrefix="reports-dispatch-margin"
-        fromDate={applied.start}
-        toDate={applied.end}
-        onFromDateChange={(d) => setApplied((p) => ({ ...p, start: d ?? "" }))}
-        onToDateChange={(d) => setApplied((p) => ({ ...p, end: d ?? "" }))}
+        fromDate={staged.draft.start}
+        toDate={staged.draft.end}
+        onFromDateChange={(d) => staged.setDraft((p) => ({ ...p, start: d ?? "" }))}
+        onToDateChange={(d) => staged.setDraft((p) => ({ ...p, end: d ?? "" }))}
         onPresetSelect={(preset) => {
           const next = new URLSearchParams(searchParams);
           next.set("preset", preset);
@@ -124,13 +126,17 @@ export function DispatchMarginPage() {
         }}
         search={reportSearch}
         onSearchChange={setReportSearch}
+        onApply={staged.apply}
+        onCancel={staged.cancel}
+        onReset={staged.reset}
+        applyDisabled={!staged.dirty}
       >
         <label className="flex items-center gap-1 text-xs text-slate-600">
           <span className="font-semibold text-slate-600">Basis</span>
           <SelectCombobox
             className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
-            value={applied.basis}
-            onChange={(e) => setApplied((p) => ({ ...p, basis: e.target.value as "accrual" | "cash" }))}
+            value={staged.draft.basis}
+            onChange={(e) => staged.setDraft((p) => ({ ...p, basis: e.target.value as "accrual" | "cash" }))}
           >
             <option value="accrual">Accrual</option>
             <option value="cash">Cash</option>

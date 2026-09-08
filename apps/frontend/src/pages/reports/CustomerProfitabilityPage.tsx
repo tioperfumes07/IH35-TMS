@@ -25,6 +25,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
+import { useStagedListFilters } from "../../components/table";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -94,6 +95,7 @@ export function CustomerProfitabilityPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const emptyFilters = { ...currentQuarterRange(), minRevDollars: "1000" };
   const [applied, setApplied] = useState(emptyFilters);
+  const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
   const [reportSearch, setReportSearch] = useState("");
   const appliedMinCents = useMemo(() => {
     const d = applied.minRevDollars.trim() === "" ? DEFAULT_MIN_REVENUE_CENTS : Math.round(Number(applied.minRevDollars) * 100) || 0;
@@ -321,10 +323,10 @@ export function CustomerProfitabilityPage() {
 
       <ReportFilterBar
         testIdPrefix="reports-customer-profitability"
-        fromDate={applied.start}
-        toDate={applied.end}
-        onFromDateChange={(d) => setApplied((p) => ({ ...p, start: d ?? "" }))}
-        onToDateChange={(d) => setApplied((p) => ({ ...p, end: d ?? "" }))}
+        fromDate={staged.draft.start}
+        toDate={staged.draft.end}
+        onFromDateChange={(d) => staged.setDraft((p) => ({ ...p, start: d ?? "" }))}
+        onToDateChange={(d) => staged.setDraft((p) => ({ ...p, end: d ?? "" }))}
         onPresetSelect={(preset) => {
           const next = new URLSearchParams(searchParams);
           next.set("preset", preset);
@@ -332,12 +334,16 @@ export function CustomerProfitabilityPage() {
         }}
         search={reportSearch}
         onSearchChange={setReportSearch}
+        onApply={staged.apply}
+        onCancel={staged.cancel}
+        onReset={staged.reset}
+        applyDisabled={!staged.dirty}
       >
         <label className="flex items-center gap-1 text-xs text-slate-600">
           <span className="font-semibold text-slate-600">Min rev ($)</span>
           <MoneyInput
-            valueDollars={applied.minRevDollars ? Number(applied.minRevDollars) : null}
-            onChangeDollars={(d) => setApplied((p) => ({ ...p, minRevDollars: d == null ? "" : String(d) }))}
+            valueDollars={staged.draft.minRevDollars ? Number(staged.draft.minRevDollars) : null}
+            onChangeDollars={(d) => staged.setDraft((p) => ({ ...p, minRevDollars: d == null ? "" : String(d) }))}
             ariaLabel="Min revenue ($)"
             className="h-7 w-24"
             name="reports-customer-profitability-min-rev"

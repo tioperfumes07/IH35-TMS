@@ -11,8 +11,11 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { mmmDd } from "../../lib/formatDate";
+import { useStagedListFilters } from "../../components/table";
 
 type Entity = "drivers" | "customers" | "vendors";
+
+type DuplicateMastersFilters = { entity: Entity };
 
 const ENTITY_OPTIONS: Array<{ value: Entity; label: string }> = [
   { value: "drivers", label: "Drivers" },
@@ -48,11 +51,17 @@ export function DuplicateMastersReport() {
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [entity, setEntity] = useState<Entity>("drivers");
+  const emptyFilters: DuplicateMastersFilters = { entity: "drivers" };
+  const [appliedFilters, setAppliedFilters] = useState<DuplicateMastersFilters>(emptyFilters);
+  const staged = useStagedListFilters({
+    applied: appliedFilters,
+    empty: emptyFilters,
+    onApply: setAppliedFilters,
+  });
 
   const query = useQuery({
-    queryKey: ["reports", "duplicate-masters", companyId, entity],
-    queryFn: () => getDuplicateMasters(companyId, entity),
+    queryKey: ["reports", "duplicate-masters", companyId, appliedFilters.entity],
+    queryFn: () => getDuplicateMasters(companyId, appliedFilters.entity),
     enabled: Boolean(companyId),
     retry: false,
   });
@@ -60,6 +69,7 @@ export function DuplicateMastersReport() {
   const data = query.data;
   const groups = data?.groups ?? [];
   const tableLoading = query.isPending || (query.isFetching && !data);
+  const entity = appliedFilters.entity;
 
   const columns = useMemo<ParityColumn<DuplicateMastersGroup>[]>(
     () => [
@@ -180,9 +190,9 @@ export function DuplicateMastersReport() {
             key={opt.value}
             type="button"
             data-testid={`duplicate-masters-entity-${opt.value}`}
-            onClick={() => setEntity(opt.value)}
+            onClick={() => staged.setDraft((p) => ({ ...p, entity: opt.value }))}
             className={`rounded-sm px-3 py-1 text-xs font-medium transition-colors ${
-              entity === opt.value
+              staged.draft.entity === opt.value
                 ? "bg-white text-gray-900 shadow-sm"
                 : "text-gray-600 hover:text-gray-900"
             }`}
@@ -191,6 +201,13 @@ export function DuplicateMastersReport() {
           </button>
         ))}
       </div>
+      {staged.dirty ? (
+        <div className="no-print flex gap-2">
+          <button type="button" className="h-7 rounded-sm bg-[#1F2A44] px-2 text-xs text-white" onClick={staged.apply}>Apply</button>
+          <button type="button" className="h-7 rounded-sm border border-gray-300 px-2 text-xs" onClick={staged.cancel}>Cancel</button>
+          <button type="button" className="h-7 rounded-sm border border-gray-300 px-2 text-xs" onClick={staged.reset}>Reset</button>
+        </div>
+      ) : null}
 
       {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {query.isError ? (

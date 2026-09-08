@@ -9,6 +9,13 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatPlannerDayLabel } from "../dispatch/planners/plannerDayLabel";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
+import { useStagedListFilters } from "../../components/table";
+
+type DriverQualificationFilters = {
+  includeInactive: boolean;
+  complianceFilter: string;
+  sortBy: string;
+};
 
 function mmmDd(iso: string | null | undefined): string {
   if (!iso) return "—";
@@ -44,15 +51,19 @@ export function DriverQualificationReportPage() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
-  const [includeInactive, setIncludeInactive] = useState(false);
-  const [complianceFilter, setComplianceFilter] = useState("");
-  const [sortBy, setSortBy] = useState("name");
+  const emptyFilters: DriverQualificationFilters = { includeInactive: false, complianceFilter: "", sortBy: "name" };
+  const [appliedFilters, setAppliedFilters] = useState<DriverQualificationFilters>(emptyFilters);
+  const staged = useStagedListFilters({
+    applied: appliedFilters,
+    empty: emptyFilters,
+    onApply: setAppliedFilters,
+  });
   const [reportSearch, setReportSearch] = useState("");
 
   const rosterQ = useQuery({
-    queryKey: ["safety", "driver-qualification", "roster", operatingCompanyId, includeInactive],
+    queryKey: ["safety", "driver-qualification", "roster", operatingCompanyId, appliedFilters.includeInactive],
     enabled: Boolean(operatingCompanyId),
-    queryFn: () => getDriverQualificationRoster(operatingCompanyId, includeInactive),
+    queryFn: () => getDriverQualificationRoster(operatingCompanyId, appliedFilters.includeInactive),
   });
 
   const summaryQ = useQuery({
@@ -63,7 +74,7 @@ export function DriverQualificationReportPage() {
 
   const rows = useMemo(() => {
     const all = rosterQ.data?.drivers ?? [];
-    const filter = complianceFilter;
+    const filter = appliedFilters.complianceFilter;
     const filtered = filter ? all.filter((d) => d.compliance_level === filter) : all;
     const q = reportSearch.toLowerCase();
     if (!q) return filtered;
@@ -71,7 +82,7 @@ export function DriverQualificationReportPage() {
       const haystack = `${driverName(d)} ${d.cdl_number ?? ""} ${d.cdl_state ?? ""} ${d.driver_status ?? ""}`.toLowerCase();
       return haystack.includes(q);
     });
-  }, [complianceFilter, rosterQ.data, reportSearch]);
+  }, [appliedFilters.complianceFilter, rosterQ.data, reportSearch]);
 
   const columns = useMemo<ParityColumn<DqfRosterDriver>[]>(() => [
     {
@@ -223,12 +234,16 @@ export function DriverQualificationReportPage() {
             }}
             search={reportSearch}
             onSearchChange={setReportSearch}
+            onApply={staged.apply}
+            onCancel={staged.cancel}
+            onReset={staged.reset}
+            applyDisabled={!staged.dirty}
           >
             <label className="flex items-center gap-1 text-xs text-slate-600">
               <span className="font-semibold text-slate-600">Compliance</span>
               <select
-                value={complianceFilter}
-                onChange={(e) => setComplianceFilter(e.target.value)}
+                value={staged.draft.complianceFilter}
+                onChange={(e) => staged.setDraft((p) => ({ ...p, complianceFilter: e.target.value }))}
                 className="h-7 rounded-sm border border-slate-300 bg-white px-2 text-xs"
               >
                 <option value="">All compliance levels</option>
@@ -241,8 +256,8 @@ export function DriverQualificationReportPage() {
             <label className="flex items-center gap-1 text-xs text-slate-600">
               <span className="font-semibold text-slate-600">Sort by</span>
               <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+                value={staged.draft.sortBy}
+                onChange={(e) => staged.setDraft((p) => ({ ...p, sortBy: e.target.value }))}
                 className="h-7 rounded-sm border border-slate-300 bg-white px-2 text-xs"
                 data-testid="driver-qualification-sort-by"
               >
@@ -257,8 +272,8 @@ export function DriverQualificationReportPage() {
           <label className="flex items-center gap-1.5 text-xs text-gray-700">
             <input
               type="checkbox"
-              checked={includeInactive}
-              onChange={(e) => setIncludeInactive(e.target.checked)}
+              checked={staged.draft.includeInactive}
+              onChange={(e) => staged.setDraft((p) => ({ ...p, includeInactive: e.target.checked }))}
               className="h-4 w-4 rounded-sm border-gray-300"
             />
             Include inactive drivers

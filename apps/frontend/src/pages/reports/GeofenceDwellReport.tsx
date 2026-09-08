@@ -10,6 +10,7 @@ import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { mmmDdTime } from "../../lib/formatDate";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useStagedListFilters } from "../../components/table";
 import { Combobox } from "../../components/Combobox";
 import { SelectCombobox } from "../../components/Combobox";
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
@@ -34,12 +35,24 @@ function today() {
   return companyToday();
 }
 
+type GeofenceDwellFilters = {
+  periodStart: string;
+  periodEnd: string;
+  geofenceId: string;
+  locationKind: GeofenceLocationKind | "";
+};
+
 export function GeofenceDwellReport() {
   const { selectedCompanyId, companies } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
-  const emptyFilters = { periodStart: monthStart(), periodEnd: today(), geofenceId: "", locationKind: "" as GeofenceLocationKind | "" };
-  const [applied, setApplied] = useState(emptyFilters);
+  const emptyFilters: GeofenceDwellFilters = { periodStart: monthStart(), periodEnd: today(), geofenceId: "", locationKind: "" };
+  const [appliedFilters, setAppliedFilters] = useState<GeofenceDwellFilters>(emptyFilters);
+  const staged = useStagedListFilters({
+    applied: appliedFilters,
+    empty: emptyFilters,
+    onApply: setAppliedFilters,
+  });
   const [reportSearch, setReportSearch] = useState("");
 
   const geofenceQuery = useQuery({
@@ -54,14 +67,14 @@ export function GeofenceDwellReport() {
   );
 
   const reportQuery = useQuery({
-    queryKey: ["reports", "geofence-dwell", operatingCompanyId, applied.periodStart, applied.periodEnd, applied.geofenceId, applied.locationKind],
+    queryKey: ["reports", "geofence-dwell", operatingCompanyId, appliedFilters.periodStart, appliedFilters.periodEnd, appliedFilters.geofenceId, appliedFilters.locationKind],
     queryFn: () =>
       getGeofenceDwellReport({
         operating_company_id: operatingCompanyId,
-        period_start: applied.periodStart,
-        period_end: applied.periodEnd,
-        geofence_id: applied.geofenceId || undefined,
-        location_kind: (applied.locationKind || undefined) as GeofenceLocationKind | undefined,
+        period_start: appliedFilters.periodStart,
+        period_end: appliedFilters.periodEnd,
+        geofence_id: appliedFilters.geofenceId || undefined,
+        location_kind: (appliedFilters.locationKind || undefined) as GeofenceLocationKind | undefined,
       }),
     enabled: Boolean(operatingCompanyId),
   });
@@ -85,7 +98,7 @@ export function GeofenceDwellReport() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `geofence-dwell-${applied.periodStart}-${applied.periodEnd}.csv`;
+    anchor.download = `geofence-dwell-${appliedFilters.periodStart}-${appliedFilters.periodEnd}.csv`;
     anchor.click();
     URL.revokeObjectURL(url);
   }
@@ -151,10 +164,10 @@ export function GeofenceDwellReport() {
 
       <ReportFilterBar
         testIdPrefix="reports-geofence-dwell"
-        fromDate={applied.periodStart}
-        toDate={applied.periodEnd}
-        onFromDateChange={(d) => setApplied((p) => ({ ...p, periodStart: d ?? "" }))}
-        onToDateChange={(d) => setApplied((p) => ({ ...p, periodEnd: d ?? "" }))}
+        fromDate={staged.draft.periodStart}
+        toDate={staged.draft.periodEnd}
+        onFromDateChange={(d) => staged.setDraft((p) => ({ ...p, periodStart: d ?? "" }))}
+        onToDateChange={(d) => staged.setDraft((p) => ({ ...p, periodEnd: d ?? "" }))}
         onPresetSelect={(preset) => {
           const next = new URLSearchParams(searchParams);
           next.set("preset", preset);
@@ -162,6 +175,10 @@ export function GeofenceDwellReport() {
         }}
         search={reportSearch}
         onSearchChange={setReportSearch}
+        onApply={staged.apply}
+        onCancel={staged.cancel}
+        onReset={staged.reset}
+        applyDisabled={!staged.dirty}
       >
         <div className="flex items-center gap-2">
           <div className="text-xs text-slate-700">
@@ -169,8 +186,8 @@ export function GeofenceDwellReport() {
               id="geofence-dwell-filter"
               className="h-7"
               options={geofenceOptions}
-              value={applied.geofenceId || null}
-              onChange={(next) => setApplied((p) => ({ ...p, geofenceId: next ?? "" }))}
+              value={staged.draft.geofenceId || null}
+              onChange={(next) => staged.setDraft((p) => ({ ...p, geofenceId: next ?? "" }))}
               placeholder="All geofences"
               loading={geofenceQuery.isLoading}
               error={geofenceQuery.isError ? "Couldn't load geofences" : undefined}
@@ -180,8 +197,8 @@ export function GeofenceDwellReport() {
             <span className="font-semibold text-slate-600">Kind</span>
             <SelectCombobox
               className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
-              value={applied.locationKind}
-              onChange={(event) => setApplied((p) => ({ ...p, locationKind: event.target.value as GeofenceLocationKind | "" }))}
+              value={staged.draft.locationKind}
+              onChange={(event) => staged.setDraft((p) => ({ ...p, locationKind: event.target.value as GeofenceLocationKind | "" }))}
             >
               <option value="">All kinds</option>
               <option value="customer_site">Customer site</option>
@@ -215,7 +232,7 @@ export function GeofenceDwellReport() {
         loading={reportQuery.isPending || (reportQuery.isFetching && filteredRows.length === 0)}
         storageKey="geofence-dwell"
         emptyText="No dwell events for the current filters."
-        exportFilename={`geofence-dwell-${applied.periodStart}-${applied.periodEnd}`}
+        exportFilename={`geofence-dwell-${appliedFilters.periodStart}-${appliedFilters.periodEnd}`}
       />
     </div>
   );

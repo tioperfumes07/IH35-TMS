@@ -5,6 +5,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
+import { useStagedListFilters } from "../../components/table";
 import { SelectCombobox } from "../../components/Combobox";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { resolveApiUrl } from "../../api/client";
@@ -65,8 +66,10 @@ export function BookingGapReport() {
   const [searchParams, setSearchParams] = useSearchParams();
   const emptyFilters = { period: DEFAULT_PERIOD as Period, groupBy: "week" as GroupBy, minLoads: "" };
   const [applied, setApplied] = useState(emptyFilters);
+  const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
   const [reportSearch, setReportSearch] = useState("");
   const { from, to } = periodDates(applied.period);
+  const { from: draftFrom, to: draftTo } = periodDates(staged.draft.period);
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery<{ data: { dispatchers: DispatcherStats[] } }>({
     queryKey: ["booking-gap", operatingCompanyId, from, to],
@@ -157,8 +160,8 @@ export function BookingGapReport() {
 
       <ReportFilterBar
         testIdPrefix="reports-booking-gap"
-        fromDate={from}
-        toDate={to}
+        fromDate={draftFrom}
+        toDate={draftTo}
         onFromDateChange={() => {}}
         onToDateChange={() => {}}
         onPresetSelect={(preset) => {
@@ -168,13 +171,17 @@ export function BookingGapReport() {
         }}
         search={reportSearch}
         onSearchChange={setReportSearch}
+        onApply={staged.apply}
+        onCancel={staged.cancel}
+        onReset={staged.reset}
+        applyDisabled={!staged.dirty}
       >
         <label className="flex items-center gap-1 text-xs text-slate-600">
           <span className="font-semibold text-slate-600">Period</span>
           <SelectCombobox
             className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
-            value={applied.period}
-            onChange={(event) => setApplied((p) => ({ ...p, period: event.target.value as Period }))}
+            value={staged.draft.period}
+            onChange={(event) => staged.setDraft((p) => ({ ...p, period: event.target.value as Period }))}
             aria-label="Period"
             data-testid="reports-booking-gap-period"
           >
@@ -189,8 +196,8 @@ export function BookingGapReport() {
           <span className="font-semibold text-slate-600">Group by</span>
           <SelectCombobox
             className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
-            value={applied.groupBy}
-            onChange={(event) => setApplied((p) => ({ ...p, groupBy: event.target.value as GroupBy }))}
+            value={staged.draft.groupBy}
+            onChange={(event) => staged.setDraft((p) => ({ ...p, groupBy: event.target.value as GroupBy }))}
             aria-label="Group by"
             data-testid="reports-booking-gap-group-by"
           >
@@ -207,8 +214,8 @@ export function BookingGapReport() {
             type="number"
             min={0}
             className="h-7 w-20 rounded-sm border border-slate-300 px-2 text-xs"
-            value={applied.minLoads}
-            onChange={(e) => setApplied((p) => ({ ...p, minLoads: e.target.value }))}
+            value={staged.draft.minLoads}
+            onChange={(e) => staged.setDraft((p) => ({ ...p, minLoads: e.target.value }))}
             aria-label="Min loads"
             data-testid="reports-booking-gap-min-loads"
           />

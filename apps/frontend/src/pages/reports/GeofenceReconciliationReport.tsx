@@ -13,6 +13,7 @@ import { resolveApiUrl } from "../../api/client";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useStagedListFilters } from "../../components/table";
 
 interface Finding {
   uuid: string;
@@ -41,21 +42,28 @@ const ANOMALY_COLORS: Record<string, string> = {
   expected_missing: "bg-red-100 text-red-800",
 };
 
+type GeofenceReconFilters = { appliedDate: string; kindFilter: string };
+
 export function GeofenceReconciliationReport() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const today = companyToday();
   const yesterday = addDaysIso(today, -1);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [appliedDate, setAppliedDate] = useState(yesterday);
-  const [kindFilter, setKindFilter] = useState("");
+  const emptyFilters: GeofenceReconFilters = { appliedDate: yesterday, kindFilter: "" };
+  const [appliedFilters, setAppliedFilters] = useState<GeofenceReconFilters>(emptyFilters);
+  const staged = useStagedListFilters({
+    applied: appliedFilters,
+    empty: emptyFilters,
+    onApply: setAppliedFilters,
+  });
   const [reportSearch, setReportSearch] = useState("");
   const qc = useQueryClient();
 
   const { data, isLoading, isError, error, refetch } = useQuery<{ data: Finding[] }>({
-    queryKey: ["geofence-recon", operatingCompanyId, appliedDate],
+    queryKey: ["geofence-recon", operatingCompanyId, appliedFilters.appliedDate],
     queryFn: async () => {
-      const res = await fetch(resolveApiUrl(`/api/v1/integrations/samsara/geofences/reconciliation?operating_company_id=${encodeURIComponent(operatingCompanyId)}&date=${appliedDate}`),
+      const res = await fetch(resolveApiUrl(`/api/v1/integrations/samsara/geofences/reconciliation?operating_company_id=${encodeURIComponent(operatingCompanyId)}&date=${appliedFilters.appliedDate}`),
         { credentials: "include" }
       );
       if (!res.ok) throw new Error("Failed to load reconciliation");
@@ -131,9 +139,9 @@ export function GeofenceReconciliationReport() {
 
       <ReportFilterBar
         testIdPrefix="reports-geofence-recon"
-        fromDate={appliedDate}
+        fromDate={staged.draft.appliedDate}
         toDate={null}
-        onFromDateChange={(date) => { if (date) setAppliedDate(date); }}
+        onFromDateChange={(date) => { if (date) staged.setDraft((p) => ({ ...p, appliedDate: date })); }}
         onToDateChange={() => {}}
         onPresetSelect={(preset) => {
           const next = new URLSearchParams(searchParams);
@@ -142,13 +150,17 @@ export function GeofenceReconciliationReport() {
         }}
         search={reportSearch}
         onSearchChange={setReportSearch}
+        onApply={staged.apply}
+        onCancel={staged.cancel}
+        onReset={staged.reset}
+        applyDisabled={!staged.dirty}
       >
         <label className="flex items-center gap-1 text-xs text-slate-600">
           <span className="font-semibold text-slate-600">Kind</span>
           <select
             className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
-            value={kindFilter}
-            onChange={(e) => setKindFilter(e.target.value)}
+            value={staged.draft.kindFilter}
+            onChange={(e) => staged.setDraft((p) => ({ ...p, kindFilter: e.target.value }))}
             data-testid="reports-geofence-recon-kind"
           >
             <option value="">All kinds</option>
@@ -174,8 +186,8 @@ export function GeofenceReconciliationReport() {
           rowKey={(f) => f.uuid}
           loading={isLoading}
           storageKey="geofence-recon"
-          emptyText={`No anomalies found for ${mmmDd(appliedDate)}.`}
-          exportFilename={`geofence-recon-${appliedDate}`}
+          emptyText={`No anomalies found for ${mmmDd(appliedFilters.appliedDate)}.`}
+          exportFilename={`geofence-recon-${appliedFilters.appliedDate}`}
           rowClassName={(f) => (f.resolved ? "opacity-50" : "")}
           rowActions={(f) =>
             !f.resolved ? (

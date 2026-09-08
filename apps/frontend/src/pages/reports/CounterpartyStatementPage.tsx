@@ -10,6 +10,7 @@ import { listAllDispatchLoads, type DispatchLoad } from "../../api/dispatch";
 import { listExpenses, type ExpenseListRow } from "../../api/accounting";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useStagedListFilters } from "../../components/table";
 import { openPrintableDocument } from "../../lib/openPrintableDocument";
 import { formatUsdCents } from "../../lib/money";
 import { mmmDd } from "../../lib/formatDate";
@@ -151,14 +152,16 @@ export function CounterpartyStatementView({
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const defaultRange = currentMonthRange();
-  const [range, setRange] = useState(defaultRange);
+  const emptyFilters = { ...defaultRange };
+  const [appliedFilters, setAppliedFilters] = useState(emptyFilters);
+  const staged = useStagedListFilters({ applied: appliedFilters, empty: emptyFilters, onApply: setAppliedFilters });
 
   const query = useQuery({
-    queryKey: ["reports", "counterparty-statement", kind, companyId, counterpartyId, range.start, range.end],
+    queryKey: ["reports", "counterparty-statement", kind, companyId, counterpartyId, appliedFilters.start, appliedFilters.end],
     queryFn: () =>
       kind === "customer"
-        ? getCustomerStatementOfAccount({ operating_company_id: companyId, customer_id: counterpartyId, from_date: range.start, to_date: range.end })
-        : getVendorStatementOfAccount({ operating_company_id: companyId, vendor_id: counterpartyId, from_date: range.start, to_date: range.end }),
+        ? getCustomerStatementOfAccount({ operating_company_id: companyId, customer_id: counterpartyId, from_date: appliedFilters.start, to_date: appliedFilters.end })
+        : getVendorStatementOfAccount({ operating_company_id: companyId, vendor_id: counterpartyId, from_date: appliedFilters.start, to_date: appliedFilters.end }),
     enabled: Boolean(companyId) && Boolean(counterpartyId),
     retry: false,
   });
@@ -181,8 +184,8 @@ export function CounterpartyStatementView({
   const backHref = kind === "customer" ? `/customers/${counterpartyId}` : `/vendors/${counterpartyId}`;
   const printPath =
     kind === "customer"
-      ? `/api/v1/accounting/customers/${encodeURIComponent(counterpartyId)}/statement.html?operating_company_id=${encodeURIComponent(companyId)}&from_date=${range.start}&to_date=${range.end}`
-      : `/api/v1/accounting/vendors/${encodeURIComponent(counterpartyId)}/statement.html?operating_company_id=${encodeURIComponent(companyId)}&from_date=${range.start}&to_date=${range.end}`;
+      ? `/api/v1/accounting/customers/${encodeURIComponent(counterpartyId)}/statement.html?operating_company_id=${encodeURIComponent(companyId)}&from_date=${appliedFilters.start}&to_date=${appliedFilters.end}`
+      : `/api/v1/accounting/vendors/${encodeURIComponent(counterpartyId)}/statement.html?operating_company_id=${encodeURIComponent(companyId)}&from_date=${appliedFilters.start}&to_date=${appliedFilters.end}`;
 
   return (
     <div className="space-y-4 print:space-y-2">
@@ -220,12 +223,38 @@ export function CounterpartyStatementView({
       <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
         <label className="text-xs text-gray-600">
           From
-          <DatePicker className="mt-1 block h-9" value={range.start} onChange={(next) => setRange((prev) => ({ ...prev, start: next }))} />
+          <DatePicker className="mt-1 block h-9" value={staged.draft.start} onChange={(next) => staged.setDraft((p) => ({ ...p, start: next }))} />
         </label>
         <label className="text-xs text-gray-600">
           To
-          <DatePicker className="mt-1 block h-9" value={range.end} onChange={(next) => setRange((prev) => ({ ...prev, end: next }))} />
+          <DatePicker className="mt-1 block h-9" value={staged.draft.end} onChange={(next) => staged.setDraft((p) => ({ ...p, end: next }))} />
         </label>
+        <div className="mx-1 h-5 w-px bg-slate-200" />
+        <button
+          type="button"
+          onClick={staged.reset}
+          className="h-7 rounded-sm border border-slate-300 bg-white px-3 text-xs font-medium text-slate-600 hover:bg-slate-50"
+          data-testid="reports-counterparty-statement-reset"
+        >
+          Reset
+        </button>
+        <button
+          type="button"
+          onClick={staged.cancel}
+          className="h-7 rounded-sm border border-slate-300 bg-white px-3 text-xs font-medium text-slate-600 hover:bg-slate-50"
+          data-testid="reports-counterparty-statement-cancel"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={staged.apply}
+          disabled={!staged.dirty}
+          className="h-7 rounded-sm border border-slate-700 bg-slate-700 px-3 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+          data-testid="reports-counterparty-statement-apply"
+        >
+          Apply
+        </button>
       </div>
 
       {query.data ? (
