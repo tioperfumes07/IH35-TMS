@@ -332,7 +332,7 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, ro
           {
             key: "purchases_ytd",
             label: "Purchases YTD",
-            sortable: false,
+            sortable: true,
             defaultHidden: true,
             cellClass: "text-right tabular-nums",
             render: (row) => {
@@ -343,7 +343,7 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, ro
           {
             key: "last_purchase",
             label: "Last Purchase",
-            sortable: false,
+            sortable: true,
             defaultHidden: true,
             cellClass: "text-right tabular-nums",
             render: (row) => {

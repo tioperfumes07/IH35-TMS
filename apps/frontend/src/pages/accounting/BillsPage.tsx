@@ -499,19 +499,20 @@ export function BillsPage() {
   // Settlement, exactly the reference's column set for driver_finance.driver_bills.
   const driverBillColumns = useMemo<ParityColumn<DriverBillListRow>[]>(
     () => [
-      { key: "bill_type", label: "Type", render: () => "Driver bill" },
-      { key: "bill_number", label: "Bill #", render: (b) => b.bill_number ?? "—" },
-      { key: "driver_name", label: "Driver", render: (b) => <EntityLink kind="driver" id={b.driver_id} label={b.driver_name ?? "—"} /> },
-      { key: "load_number", label: "Load", render: (b) => (b.load_id ? <EntityLink kind="load" id={b.load_id} label={b.load_number ?? "—"} /> : b.load_number ?? "—") },
-      { key: "miles_basis", label: "Loaded mi", render: (b) => (b.miles_basis != null ? Number(b.miles_basis).toLocaleString(undefined, { maximumFractionDigits: 1 }) : "—") },
-      { key: "rate_per_mile_cents", label: "Rate", render: (b) => (b.rate_per_mile_cents != null ? `$${(b.rate_per_mile_cents / 100).toFixed(4)}` : "—") },
-      { key: "miles_deadhead", label: "Empty mi", render: (b) => (b.miles_deadhead != null ? Number(b.miles_deadhead).toLocaleString(undefined, { maximumFractionDigits: 1 }) : "—") },
-      { key: "rate_empty_per_mile_cents", label: "Rate", render: (b) => (b.rate_empty_per_mile_cents != null ? `$${(b.rate_empty_per_mile_cents / 100).toFixed(4)}` : "—") },
-      { key: "gross_amount_cents", label: "Gross", render: (b) => (b.gross_amount_cents != null ? money(b.gross_amount_cents) : "—") },
-      { key: "status", label: "Status", render: (b) => <span className="capitalize">{b.status}</span> },
+      { key: "bill_type", label: "Type", sortable: true, render: () => "Driver bill" },
+      { key: "bill_number", label: "Bill #", sortable: true, render: (b) => b.bill_number ?? "—" },
+      { key: "driver_name", label: "Driver", sortable: true, render: (b) => <EntityLink kind="driver" id={b.driver_id} label={b.driver_name ?? "—"} /> },
+      { key: "load_number", label: "Load", sortable: true, render: (b) => (b.load_id ? <EntityLink kind="load" id={b.load_id} label={b.load_number ?? "—"} /> : b.load_number ?? "—") },
+      { key: "miles_basis", label: "Loaded mi", sortable: true, render: (b) => (b.miles_basis != null ? Number(b.miles_basis).toLocaleString(undefined, { maximumFractionDigits: 1 }) : "—") },
+      { key: "rate_per_mile_cents", label: "Rate", sortable: true, render: (b) => (b.rate_per_mile_cents != null ? `$${(b.rate_per_mile_cents / 100).toFixed(4)}` : "—") },
+      { key: "miles_deadhead", label: "Empty mi", sortable: true, render: (b) => (b.miles_deadhead != null ? Number(b.miles_deadhead).toLocaleString(undefined, { maximumFractionDigits: 1 }) : "—") },
+      { key: "rate_empty_per_mile_cents", label: "Rate", sortable: true, render: (b) => (b.rate_empty_per_mile_cents != null ? `$${(b.rate_empty_per_mile_cents / 100).toFixed(4)}` : "—") },
+      { key: "gross_amount_cents", label: "Gross", sortable: true, render: (b) => (b.gross_amount_cents != null ? money(b.gross_amount_cents) : "—") },
+      { key: "status", label: "Status", sortable: true, render: (b) => <span className="capitalize">{b.status}</span> },
       {
         key: "settlement_display_id",
         label: "Settlement",
+        sortable: true,
         render: (b) =>
           b.settled_in_settlement_id ? (
             <EntityLink kind="settlement" id={b.settled_in_settlement_id} label={b.settlement_display_id ?? "—"} />
@@ -525,7 +526,7 @@ export function BillsPage() {
 
   const columns = useMemo<ParityColumn<VendorBill>[]>(
     () => [
-      { key: "bill_type", label: "Type", sortable: false, render: () => "Vendor bill" },
+      { key: "bill_type", label: "Type", sortable: true, render: () => "Vendor bill" },
       { key: "vendor_name", label: "Vendor", sortable: true, render: (bill) => <EntityLink kind="vendor" id={billVendorDrillId(bill)} label={entityLabel(bill.vendor_name, bill.vendor_id, "Vendor")} /> },
       {
         key: "display_id",
@@ -614,7 +615,7 @@ export function BillsPage() {
       {
         key: "receipt",
         label: "Receipt",
-        sortable: false,
+        sortable: true,
         render: (bill) =>
           companyId ? (
             <ReceiptAttach operatingCompanyId={companyId} entityType="bill" entityId={bill.id} readOnly testId={`receipt-attach-bill-${bill.id}`} />

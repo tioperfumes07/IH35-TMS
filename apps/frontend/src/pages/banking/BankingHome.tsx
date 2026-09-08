@@ -13,6 +13,7 @@ import {
   getReconciliationSessions,
   startReconciliationSession,
   createPettyCashAccount,
+  reorderBankAccounts,
 } from "../../api/banking";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityPicker } from "../../components/EntityPicker";
@@ -308,6 +309,34 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     if (!bankAccountsPanelRows.some((row) => row.id === selectedAccountId)) setSelectedAccountId(null);
   }, [bankAccountsPanelRows, selectedAccountId]);
   const selectedId = selectedAccountId ?? bankAccountsPanelRows[0]?.id ?? null;
+
+  const handleReorderAccount = async (accountId: string, direction: "up" | "down") => {
+    const ids = bankAccountsPanelRows.map((r) => r.id);
+    const idx = ids.indexOf(accountId);
+    if (idx < 0) return;
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= ids.length) return;
+    [ids[idx], ids[swapIdx]] = [ids[swapIdx], ids[idx]];
+    void queryClient.cancelQueries({ queryKey: ["banking", "tiles", companyId] });
+    const prevTiles = tilesQuery.data;
+    queryClient.setQueryData(["banking", "tiles", companyId], (old: { tiles: typeof tiles } | undefined) => {
+      if (!old) return old;
+      const reordered = ids.map((id, i) => {
+        const tile = old.tiles.find((t) => t.id === id);
+        return tile ? { ...tile, display_order: i } : null;
+      }).filter(Boolean) as typeof tiles;
+      const untouched = old.tiles.filter((t) => !ids.includes(t.id));
+      return { ...old, tiles: [...untouched, ...reordered].sort((a, b) => a.display_order - b.display_order) };
+    });
+    try {
+      await reorderBankAccounts(companyId, ids);
+      void queryClient.invalidateQueries({ queryKey: ["banking", "tiles", companyId] });
+      void queryClient.invalidateQueries({ queryKey: ["banking", "all-accounts", companyId] });
+    } catch {
+      queryClient.setQueryData(["banking", "tiles", companyId], prevTiles);
+      pushToast("Failed to reorder account", "error");
+    }
+  };
   const factoringTile = useMemo(
     () => tiles.find((t) => String(t.tile_kind) === "virtual" || t.display_name.toLowerCase().includes("factoring")) ?? null,
     [tiles]
@@ -659,19 +688,45 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 </button>
               </div>
               <div className="max-h-[260px] overflow-y-auto">
-                {bankAccountsPanelRows.map((row) => (
-                  <button
+                {bankAccountsPanelRows.map((row, idx) => (
+                  <div
                     key={row.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedAccountId(row.id);
-                      navigate(`/banking/accounts/${row.id}`);
-                    }}
-                    className={`grid w-full grid-cols-[1fr_auto] border-b border-gray-100 px-3 py-1.5 text-left text-xs ${selectedId === row.id ? "bg-slate-100" : "hover:bg-gray-50"}`}
+                    className={`grid w-full grid-cols-[1fr_auto_auto] items-center border-b border-gray-100 px-3 py-1.5 text-xs ${selectedId === row.id ? "bg-slate-100" : "hover:bg-gray-50"}`}
                   >
-                    <span className="truncate">{row.displayName}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedAccountId(row.id);
+                        navigate(`/banking/accounts/${row.id}`);
+                      }}
+                      className="truncate text-left"
+                    >
+                      {row.displayName}
+                    </button>
                     <span className="font-medium">{money.format(row.balance)}</span>
-                  </button>
+                    <span className="flex flex-col">
+                      <button
+                        type="button"
+                        className="text-xs leading-none text-gray-400 hover:text-gray-700 disabled:opacity-30"
+                        disabled={idx === 0}
+                        onClick={() => void handleReorderAccount(row.id, "up")}
+                        aria-label={`Move ${row.displayName} up`}
+                        data-testid={`bank-account-reorder-up-${row.id}`}
+                      >
+                        ▲
+                      </button>
+                      <button
+                        type="button"
+                        className="text-xs leading-none text-gray-400 hover:text-gray-700 disabled:opacity-30"
+                        disabled={idx === bankAccountsPanelRows.length - 1}
+                        onClick={() => void handleReorderAccount(row.id, "down")}
+                        aria-label={`Move ${row.displayName} down`}
+                        data-testid={`bank-account-reorder-down-${row.id}`}
+                      >
+                        ▼
+                      </button>
+                    </span>
+                  </div>
                 ))}
                 {bankAccountsPanelRows.length === 0 ? <EntityEmptyState entityName={selectedCompany?.legal_name} noun="bank accounts" /> : null}
               </div>

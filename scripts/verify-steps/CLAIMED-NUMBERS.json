@@ -6292,6 +6292,11 @@
     "claimed_at": "2026-09-08",
     "purpose": "verify-factoring-statements-summary-detail-toggle"
   },
+  "11061": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-08",
+    "purpose": "verify-factoring-equipment-vendor-merges-collapsed-filters"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -8293,5 +8298,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
+  },
+  "11041": {
+    "claimed_at": "2026-09-08",
+    "claimed_by": "claude-1",
+    "purpose": "verify-load-costs-return-columns"
   }
 }

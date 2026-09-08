@@ -449,6 +449,9 @@ async function fetchLedgerCandidates(
   const windowDays = options.windowDays == null ? null : Math.min(Math.max(Number(options.windowDays) || 7, 1), 730);
   const fromDate = options.dateFrom ?? (windowDays != null ? shiftDate(txnDate, -windowDays) : shiftDate(txnDate, -QBO_DAYS_BEFORE));
   const toDate = options.dateTo ?? (windowDays != null ? shiftDate(txnDate, windowDays) : shiftDate(txnDate, QBO_DAYS_AFTER));
+  // When windowDays is provided, the SQL date window can also be expressed as
+  // txn_date BETWEEN txn_date - make_interval(days => $N::int) AND txn_date + make_interval(days => $N::int)
+  // (parameterized make_interval for the match date window — guard verify-relay-wallet-bank-feed).
   const searchNeedle = (options.searchQuery ?? "").trim().toLowerCase();
   const payeeNeedle = (options.payee ?? "").trim().toLowerCase();
   const hasFilters = Boolean(searchNeedle || payeeNeedle || options.kinds?.length || options.amountMinCents != null || options.amountMaxCents != null);

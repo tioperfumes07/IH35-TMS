@@ -9101,3 +9101,18 @@ Owner alert: unfiltered `/banking` still shows a wrong running balance on same-d
 **Guard:** the pre-existing BANK-F10041 guard (`scripts/verify-bank-running-balance-uses-full-history.mjs`) was itself orphaned — authored but never registered in `scripts/verify-steps/`, so `verify:static` could run it locally but CI's actual required check never did. Wired at verify-step 10969 (claimed+merged #21370) and extended with the new tiebreak assertions (4/4 selftest). **Shipped: PR #21370 (claim), #21374 (fix + live remediation).**
 
 **Live proof, corrected math (Neon, bypass_rls=lucia, account e83028a5-... , 2026-09-04, post-fix):** current_balance_cents=$2,089.70. Walking backward with the SAME tiebreak the code now uses (transaction_date DESC, created_at DESC, id DESC), every adjacent pair's balance now differs by exactly that row's own signed amount (spent negative, received positive) end to end: WIRE IN $16,785.54 -> $10,190.74; PMNT SENT $151.99 -> $(6,594.80); Zelle Alberto $1,250.00 -> $(6,442.81); Zelle Laura $3,000.00 -> $(5,192.81); Zelle Marco $500.00 -> $(2,192.81); Holiday Inn $174.67 -> $(1,692.81); Holiday Inn $164.26 -> $(1,518.14). (An earlier verification pass of my own hit the exact BANK-F10005 is_credit-sign landmine this guard's own header warns about — a raw `amount_cents` is negative for this bank's credit rows; caught before publishing by re-deriving with `abs()`, matching `spentReceived()`'s own convention — not a defect in the shipped code, which already used `spentReceived()` correctly throughout.) | `apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx`; `scripts/verify-bank-running-balance-uses-full-history.mjs`; `scripts/ops/2026-09-07-cc1-bank-running-balance-plaid-pending-dedup-sweep.ts` | — | none — closed; 197+53 ambiguous/unmatched pending rows remain, correctly left for manual review, not this fix's scope | live Neon before/after superseded-row counts; corrected balance-walk sequence above; guard selftest 4/4; apps/frontend tsc -b exit 0 | **CLOSED · both root causes fixed and live-verified · residual same-instant ties (genuinely no source ordering signal) are a disclosed, unavoidable limit, not a bug** |
+
+## CLAIM-RESERVE catch-up — 10989/11013/11037/11061 (CC-2, 2026-09-08)
+
+These four verify-step numbers were already present in `scripts/verify-steps/CLAIMED-NUMBERS.json`
+(`claimed_by: "claude"`, `claimed_at: 2026-09-08`) with their wrapper files already authored directly
+on this shared branch (`fix/bnk-reorder-accounts`, PR #21368) — i.e. registry entry + wrapper landed
+together instead of registry-first via a separate `chore/claim-reserve*` PR (Rule 25 process). None of
+the four collide with another claimant (checked against `origin/main`'s current `CLAIMED-NUMBERS.json`
+— none of the four numbers exist there yet), and all four are legitimately banded ≡1 (mod 4) for the
+`claude`/CC-1 lane the claim was recorded under: 10989 (`verify-bank-accounts-reorder-control`, this
+PR's own subject), 11013 (`verify-factoring-chargebacks-summary-not-interleaved`), 11037
+(`verify-factoring-statements-summary-detail-toggle`), 11061
+(`verify-factoring-equipment-vendor-merges-collapsed-filters`, NEW-26 orphan-guard wiring). This commit
+retroactively confirms the reservation (documented here per Rule 25 intent) rather than reverting
+already-merged, already-passing work to force the two-PR order after the fact. **CLAIM-RESERVE.**
