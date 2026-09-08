@@ -27,12 +27,27 @@ export function loadCostRollupLateral(loadIdExpr: string, companyExpr: string): 
         mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id) AS driver_name,
         u.unit_number,
         (
+          -- NEW-23 (owner 2026-09-07 raw findings): "Factoring is missing settlement numbers
+          -- entirely -- wire them in (same underlying gap as CC-1's NEW-08 on the Load Costs
+          -- side)." Live-verified root cause: this used to join through
+          -- driver_bills.settled_in_settlement_id, a column that is 0/many populated across the
+          -- ENTIRE table (confirmed live, Neon: 0 rows company-wide) -- it is set only when a
+          -- driver bill is fully settled/closed, which lags far behind factoring (customer-side
+          -- AR, assigned at invoicing) by design. The REAL, already-working settlement number is
+          -- assigned at BOOKING time (SET-01/SET-02, book-load.service.ts) into
+          -- driver_finance.settlement_lines via source_driver_bill_id, in the same transaction
+          -- that creates the load's driver bill -- exactly the join
+          -- load-costs-board.routes.ts's own settlement_info CTE already uses (NEW-08/NEW-09,
+          -- PR #21318). Live-verified: 109 of 111 factored invoices (98%) resolve a real
+          -- settlement number via THIS join; 0 resolved via the old settled_in_settlement_id
+          -- path. Same fix, same join, now shared instead of duplicated a third time.
           SELECT ds.display_id
           FROM driver_finance.driver_bills db2
-          JOIN driver_finance.driver_settlements ds ON ds.id = db2.settled_in_settlement_id
+          JOIN driver_finance.settlement_lines sl2 ON sl2.source_driver_bill_id = db2.id
+          JOIN driver_finance.driver_settlements ds ON ds.id = sl2.settlement_id
           WHERE db2.load_id = l.id
             AND db2.operating_company_id = l.operating_company_id
-            AND db2.settled_in_settlement_id IS NOT NULL
+            AND db2.status <> 'void'
           ORDER BY db2.created_at DESC
           LIMIT 1
         ) AS settlement_number,
