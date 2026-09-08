@@ -468,6 +468,35 @@ export function spentReceived(tx: PlaidBankTransaction) {
   return { spent: amount, received: 0 };
 }
 
+/**
+ * BANK-RUNNING-BALANCE-STILL-BROKEN-UNFILTERED (2026-09-08, owner live proof, account
+ * e83028a5-dcda-4233-b660-5b9923b3d39c) -- the root cause of the reported discrepancy was actually
+ * hundreds of stale duplicate Plaid PENDING rows never retired when their POSTED successor arrived
+ * (fixed live via a one-time supersedePlaidPendingByExactPostedCandidate sweep, see
+ * scripts/ops/2026-09-07-cc1-bank-running-balance-plaid-pending-dedup-sweep.ts -- NOT a code change).
+ * But even with duplicates gone, transactions imported in the same Plaid sync batch can share an
+ * IDENTICAL transaction_date AND created_at (no finer-grained source timestamp exists for them) --
+ * the table's default sort (below) and runningBalanceById's walk (below) each did their own
+ * date-only comparison and relied on Array.sort's stability to break ties, but they sort two
+ * DIFFERENT source arrays (transactionsQuery's scoped/filtered rows vs fullHistoryQuery's full
+ * history) that are not guaranteed to arrive from the server in the same relative order for a tied
+ * group -- so the SAME real transaction could be treated as "row N" for display purposes and
+ * "row N+1" for the balance walk, misattributing one transaction's delta to its neighbor.
+ * `id` is a fully deterministic (if arbitrary, for true same-instant ties) final tiebreak used by
+ * BOTH sort call sites, so a same-batch group is now ALWAYS ordered identically in both places --
+ * adjacent displayed balances always subtract to exactly the row between them's own signed amount.
+ */
+export function compareTxNewestFirst(a: PlaidBankTransaction, b: PlaidBankTransaction): number {
+  const da = a.transaction_date ?? "";
+  const db = b.transaction_date ?? "";
+  if (da !== db) return da < db ? 1 : -1;
+  const ca = a.created_at ?? "";
+  const cb = b.created_at ?? "";
+  if (ca !== cb) return ca < cb ? 1 : -1;
+  if (a.id === b.id) return 0;
+  return a.id < b.id ? 1 : -1;
+}
+
 function transactionLabel(tx: PlaidBankTransaction) {
   return tx.description || tx.merchant_name || "—";
 }
@@ -985,6 +1014,15 @@ export function BankingTransactionsDesignView({
       if (sortBy.key === "balance") return 0; // balance uses runningBalanceById post-map; date order preferred
       return tx.transaction_date ?? "";
     };
+    if (sortBy.key === "date" || sortBy.key === "balance") {
+      // BANK-RUNNING-BALANCE-STILL-BROKEN-UNFILTERED (2026-09-08) -- must use the EXACT same
+      // newest-first ordering (incl. tiebreak) as runningBalanceById below, or a same-day/same-
+      // batch group of transactions can render in a different relative order here than the walk
+      // that computed their Balance column, making adjacent displayed balances not subtract to the
+      // row's own signed amount. See compareTxNewestFirst's own comment for why `id` is the final
+      // tiebreak.
+      return [...filtered].sort((a, b) => compareTxNewestFirst(a, b) * -sortDir);
+    }
     return [...filtered].sort((a, b) => {
       const va = sortVal(a);
       const vb = sortVal(b);
@@ -1103,12 +1141,7 @@ export function BankingTransactionsDesignView({
     if (!selectedAccount) return map;
     let running = Number(selectedAccount.current_balance_cents ?? 0);
     const historyRows = fullHistoryQuery.data?.transactions ?? [];
-    const ordered = [...historyRows].sort((a, b) => {
-      const da = a.transaction_date ?? "";
-      const db = b.transaction_date ?? "";
-      if (da === db) return 0;
-      return da < db ? 1 : -1; // date descending (newest first)
-    });
+    const ordered = [...historyRows].sort(compareTxNewestFirst);
     for (const tx of ordered) {
       map.set(tx.id, running);
       const { spent, received } = spentReceived(tx);
