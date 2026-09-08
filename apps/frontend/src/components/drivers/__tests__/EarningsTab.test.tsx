@@ -55,6 +55,9 @@ describe("EarningsTab", () => {
         {
           id: "set-1",
           display_id: "S-2026-0001",
+          source_document_ref: null,
+          trip_started_at: null,
+          trip_closed_at: null,
           driver_id: driverId,
           driver_full_name: "Alex Driver",
           driver_display_id: "DRV-1",
@@ -72,6 +75,9 @@ describe("EarningsTab", () => {
         {
           id: "set-2",
           display_id: "S-2026-0002",
+          source_document_ref: null,
+          trip_started_at: null,
+          trip_closed_at: null,
           driver_id: driverId,
           driver_full_name: "Alex Driver",
           driver_display_id: "DRV-1",
