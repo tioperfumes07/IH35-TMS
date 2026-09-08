@@ -4,6 +4,7 @@ import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { looksLikeSampleDataName } from "./sample-data-name-detection.js";
 
 const locationTypeSchema = z.enum([
   "customer_warehouse",
@@ -72,6 +73,10 @@ const createLocationBodySchema = z.object({
   dock_instructions: z.string().trim().max(2000).optional(),
   parking_instructions: z.string().trim().max(2000).optional(),
   notes: z.string().trim().max(5000).optional(),
+  // ACC-15 (OWNER-DEFECT-REGISTER 09-03): same gap/fix as vendors.routes.ts's G1 -- an explicit
+  // value from the caller always wins; when omitted, auto-derive from the name a human actually
+  // typed instead of silently defaulting to false.
+  is_sample_data: z.boolean().optional(),
 });
 
 const updateLocationBodySchema = z
@@ -308,9 +313,10 @@ export async function registerLocationRoutes(app: FastifyInstance) {
               address_line1, address_line2, city, state, postal_code, country,
               latitude, longitude, geocoded_at, geocoding_source, hours_of_operation_jsonb,
               dock_count, appointment_required, appointment_lead_time_hours, dock_high, power_only_friendly, drop_trailer_friendly,
-              phone, security_instructions, dock_instructions, parking_instructions, notes, created_by_user_id, updated_by_user_id
+              phone, security_instructions, dock_instructions, parking_instructions, notes, created_by_user_id, updated_by_user_id,
+              is_sample_data
             ) VALUES (
-              $1,$2,$3::mdata.location_type_enum,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$29
+              $1,$2,$3::mdata.location_type_enum,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$29,$30
             )
             RETURNING *
           `,
@@ -344,6 +350,8 @@ export async function registerLocationRoutes(app: FastifyInstance) {
             b.parking_instructions ?? null,
             b.notes ?? null,
             authUser.uuid,
+            // ACC-15: explicit caller value wins; otherwise auto-derive from the name typed.
+            b.is_sample_data ?? (looksLikeSampleDataName(b.name) || false),
           ]
         );
         const row = res.rows[0];
