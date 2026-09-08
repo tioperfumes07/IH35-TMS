@@ -9382,3 +9382,28 @@ preventive fix (no live file currently hits the bug), same class as BANK-F26054 
 scripts/verify-enum-literals.mjs` exit 0, unchanged (33 enums, 35 enum columns, 0 invalid literals,
 same before and after — this fix changes nothing observable today, only forecloses a latent false
 positive/negative) | **CLOSED · repo-wide static-analysis hardening, preventive** |
+
+## RULE 51 — generalize the Memory Bank + execution mode across all seats (CC-2, 2026-09-08)
+
+Owner asked (chat): stop losing hours to agents re-deriving forgotten architectural logic and
+stalling on passive re-verification, using the same pattern `docs/bus/` already uses for cross-seat
+coordination. `docs/MEMORY_BANK.md` already existed and was already live (Cursor's settlement-
+reconciliation effort, PR #21414) with exactly this shape — this closes the loop by (1) generalizing
+its own stated requirement from that one effort to every seat/module, (2) adding a cheap existence/
+structure guard so the file (and its 3 section headers) can't silently disappear, (3) fixing a stale
+CC-2 role reference in `.cursor/rules/00-IH35-LAW.mdc` (still said "design-system transcription +
+verify-live" from before the 2026-09-08 rule change — same correction already made in
+`docs/CLAUDE.md` earlier this session), and (4) pointing `docs/CLAUDE.md` §13 at the memory bank
+first among required reads. Appended real Banking-module entries (cleared_date wiring, account
+reorder, running-balance, the alias-scoping guard bug class) to the existing file rather than
+inventing a parallel one — **caught and corrected an near-miss in the same commit:** my first draft
+used `Write` (overwrite) without reading the live file first and would have destroyed Cursor's real
+settlement-reversal entries; re-read fresh via `git show origin/main:docs/MEMORY_BANK.md` and
+switched to a pure append before this ever reached a commit. That exact near-miss is now itself
+documented as a Known Quirk in the file, for the next seat. | `docs/MEMORY_BANK.md`;
+`.cursor/rules/51-memory-bank-and-execution-mode.mdc` (new); `.cursor/rules/00-IH35-LAW.mdc`;
+`docs/CLAUDE.md`; `scripts/verify-memory-bank-structure.mjs` + `scripts/verify-steps/10827-verify-
+memory-bank-structure.mjs` (new, claimed via PR #21420, merged) | — | none | `node scripts/verify-
+memory-bank-structure.mjs --selftest` exit 0 (4/4); `node scripts/verify-memory-bank-structure.mjs`
+exit 0 | **CLOSED · standing rule generalized, structure now guarded, no seat's existing content
+touched or overwritten** |

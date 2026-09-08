@@ -36,7 +36,7 @@ Every money/data fix is a **vertical slice**: table change, backend rule, endpoi
 
 ## Seats
 
-CC-1 money · CC-2 design-system transcription + verify-live (the only seat that writes the verified flag) · CC-3 mechanical · Cascade merge API · Codex reverse/CI · Devin-A RETIRED. Cursor is lead. Migration lanes: CC-1 hours 00–11 UTC, Cursor hours 12–23 UTC, one author per migration.
+CC-1 money · CC-2 Banking (reconciliation, account reorder, running-balance correctness) — builds and fixes real code, ships merged PRs with live proof, same as every other seat (owner correction 2026-09-08: verify-only/reservation-only is retired; ~~design-system transcription + verify-live (the only seat that writes the verified flag)~~ is superseded) · CC-3 mechanical · Cascade merge API · Codex reverse/CI · Devin-A RETIRED. Cursor is lead. Migration lanes: CC-1 hours 00–11 UTC, Cursor hours 12–23 UTC, one author per migration.
 
 ## Locked UI standard — read it, never invent one
 

@@ -1,0 +1,65 @@
+---
+description: Memory Bank update requirement (generalized to every seat) + execution-mode reinforcement — stop re-deriving forgotten logic, stop passive re-verifying
+alwaysApply: true
+---
+
+# RULE 51 — MEMORY BANK + EXECUTION MODE (owner 2026-09-08)
+
+Owner (verbatim, on losing hours to agents re-deriving forgotten logic and stalling on passive
+re-verification): the memory/passivity problem gets solved the same way `docs/bus/` already
+solves cross-seat coordination — write it down where the next agent (or the next hour of this
+same agent) is forced to read it, and strip the option to stall on "just checking."
+
+## 1. The Memory Vault — `docs/MEMORY_BANK.md`
+
+**Already exists and is already live** (Cursor's settlement-reconciliation effort, 2026-09-07/08 —
+read it before touching settlements, reversals, or the fast-merge method). This rule generalizes
+its own stated requirement ("Any agent that builds complex logic... MUST record it here before
+ending its session") from that one effort to **every seat, every module**: if a session lands
+complex logic — an engine, a root-cause class fixed across multiple files, a locked architectural
+decision — it goes into `docs/MEMORY_BANK.md` **before the session closes**, not after.
+
+Append under the existing top-level headings (`## Active Architectural Decisions` / `## Known
+Quirks & Blockers` / `## Next Immediate Milestones`); a seat working a different module namespaces
+its own sub-heading (`## Active Architectural Decisions — <Module> (<seat>, <date>)`) rather than
+editing another seat's prose, same discipline as `docs/audit/GUARD-WORKORDERS.md`. **Read the file
+fresh (`git show origin/main:docs/MEMORY_BANK.md`) immediately before editing it** — this repo
+checkout is genuinely shared across concurrent seats; a plain overwrite here can destroy another
+seat's real, in-progress entries (see the Known Quirks entry this rule's own author added after
+almost doing exactly that).
+
+Structure is guarded (`scripts/verify-memory-bank-structure.mjs`, verify-step 10827) — the file
+must exist and keep its 3 required section headers. Whether a specific entry is *worth* including
+stays judgment, not guardable; the guard only stops the file (or its section headers) from
+disappearing outright.
+
+`docs/CLAUDE.md` §13 lists it first among required reads for exactly this reason — read it before
+touching a module you didn't just build yourself.
+
+## 2. Execution mode — you are hired to build, not to audit
+
+This restates and sharpens `00-IH35-LAW.mdc` rules 1/5/14 (already binding) because it is worth
+saying in the specific words that stop the specific failure mode observed:
+
+1. You are hired to **WRITE, FIX, and BUILD** code. You are not an auditor, and a finding without a
+   fix is not the deliverable — fix it in the same block, in your own lane.
+2. Do not spend multiple turns "verifying," "analyzing," or "confirming" once you have enough
+   information to act. Verification that exists only to justify not yet starting is the failure
+   mode this rule exists to stop — not the local-gate/typecheck/guard-selftest checks that are
+   required plumbing for shipping a mergeable PR (those stay mandatory, per Rule 25/29; keep them
+   quick and in the background, don't narrate them as the work itself).
+3. If you find a bug or a missing implementation while working, do not just report it — fix it in
+   the codebase in the same session, same as any other finding in your own lane.
+4. Before starting complex or previously-built logic (a reconciliation engine, a posting flow, a
+   migration class), read `docs/MEMORY_BANK.md` for how it was done, read the actual code, and
+   execute. Do not ask permission to begin — Rule 1's "the live thing, not a plan about it" already
+   covers this; this rule exists so the instruction survives being said only once in chat.
+
+## 3. The bus as a progress gate
+
+Every board/outbox entry that closes a session or a block states **what files it changed**, in the
+same evidence block Rule 30/DoD already requires (`GUARD:`, `LIVE PROOF:`). An entry that only
+verified something and changed nothing says so plainly (`Files Modified: none — verify-only pass`)
+rather than reading like a fix — that phrase is the tripwire: if the next agent (or Jorge) sees
+"Files Modified: none" on a row that was supposed to be a fix, that is the signal the seat stalled,
+not that the work is done.

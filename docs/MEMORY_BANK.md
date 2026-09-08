@@ -109,3 +109,61 @@ Scope: USMCA only (`5c854333-6ea5-4faa-af31-67cb272fef80`). Neon `tiny-field-895
 - #21403 — reversal poster (MERGED) · #21404 — reconciliation tie-outs (MERGED)
 - #21408 — claim-reserve 11078 (MERGED) · #21412 — settlement triple-figure display fix (MERGED)
 - #21414 — MEMORY_BANK.md (MERGED) · #21416 — preview harness + doc 5780 tie-out 21/21 (MERGED)
+
+## Active Architectural Decisions — Banking (CC-2, 2026-09-08)
+
+- **Bank reconciliation — cleared_date:** `accounting.payments`/`accounting.bill_payments` carry
+  THREE distinct dates, never collapsed: `payment_date` (issued — drives GL period/cash-basis/tax
+  year), `cleared_date` (drives ONLY which reconciliation session a payment settles in — nullable
+  until a matching bank transaction clears it), and the bank transaction's own `transaction_date`.
+  The reconciliation Accept-match flow (`apps/backend/src/accounting/bank-recon/match.service.ts`,
+  `acceptMatchWithResolveDifference`) stamps `cleared_date = COALESCE(cleared_date, <bank txn's
+  date>)` at match time; unmatching (`recon-worklist.service.ts`) clears it back to `NULL`.
+  (BANK-F26053)
+- **Bank account reorder:** `banking.bank_accounts.display_order` is the sort key; `PATCH
+  /api/v1/banking/accounts/reorder` writes it sequentially from an ordered `account_ids[]`. UI:
+  up/down arrows on `BankingHome.tsx`, not drag-and-drop. (BANK-F25142, PR #21368)
+- **Banking running-balance:** must always walk the account's FULL, unfiltered transaction history
+  (never a date/type/description-filtered subset) — `fullHistoryQuery` in
+  `BankingTransactionsDesignView.tsx`. Tiebreak for same-instant transactions is
+  `compareTxNewestFirst` (transaction_date, then created_at, then id — fully deterministic).
+  Historical root cause of the owner's reported "-$13,062.53" was 616 stale duplicate Plaid
+  pending/posted rows, not a display bug — see `BANK-F30002` in `docs/audit/GUARD-WORKORDERS.md`.
+- **SQL static-analysis alias scoping (repo-wide, not Banking-only):** any guard that resolves
+  `alias.column` references by building an `aliasToTable` map from `FROM`/`JOIN` clauses MUST
+  track every table an alias is EVER bound to (a `Set`, not a single value) — an alias reused
+  across SIBLING scalar subqueries (not CTEs) in the same fragment will otherwise have its first
+  binding silently overwritten by its last, misattributing every reference to the wrong table.
+  Fixed in `verify-sql-column-existence.mjs` (BANK-F26054) and `verify-enum-literals.mjs`
+  (BANK-F26055). **Residual sweep item:** `verify-driver-manager-shared-drivers.mjs`,
+  `verify-lane-mileage-merge-and-rescore.mjs`, `verify-load-reads-shared-drivers.mjs`,
+  `verify-no-orphan-routes.mjs` have the same map shape and have not yet been audited.
+
+## Known Quirks & Blockers — Banking (CC-2, 2026-09-08)
+
+- **CC-2 (Banking seat) cannot author `db/migrations/*.sql`** — `verify-migration-lane-band.mjs`
+  hard-bars `cc-2/`/`cc2/`-prefixed branches. Migrations needed for Banking work are handed off on
+  `docs/audit/GUARD-WORKORDERS.md` to a migration-authorized lane.
+- **A guard that passes its own `--selftest` and live run can still be completely inert** if it was
+  never wired into `scripts/verify-steps/` or `package.json` — check both before trusting a green
+  guard means anything runs in CI. `scripts/.guard-exempt.json` is the third valid state
+  (deliberately not checked, not orphaned).
+- **This repo checkout is a genuinely shared working directory across concurrent seats** — a `git
+  am`/`git rebase`/mid-conflict session started by one seat can leave the primary directory's index
+  locked or mid-operation for another seat's `cd`-and-`git`-there workflow (this file's own
+  settlement-reversal work and this session's Banking work landed at the same time, in the same
+  checkout). If `git status` shows "in the middle of an am session" or a branch you didn't check
+  out, **do not touch it** (no stash/abort/skip) — extract your own uncommitted diff to a patch file
+  and apply it in a fresh `git worktree add <path> origin/main --detach` instead. **Always read a
+  shared file like this one fresh (`git show origin/main:<path>`) immediately before editing it —
+  a plain overwrite here would have destroyed the settlement-reversal entries above.**
+
+## Next Immediate Milestones — Banking (CC-2, 2026-09-08)
+
+1. Audit the 4 residual `aliasToTable`-shaped guards listed above for the same alias-scoping bug
+   class (BANK-F26054/BANK-F26055 follow-up).
+2. Optional: one-time backfill of `cleared_date` for already-matched historical
+   payments/bill_payments (`source_bank_transaction_id` set, `cleared_date` still `NULL`) — flagged
+   in BANK-F26053 as not required for going-forward correctness, deliberately not attempted blind.
+3. CC-1 separately owns the still-open unfiltered running-balance defect thread beyond BANK-F30002 —
+   coordinate before claiming new Banking verify-step numbers to avoid colliding with theirs.
