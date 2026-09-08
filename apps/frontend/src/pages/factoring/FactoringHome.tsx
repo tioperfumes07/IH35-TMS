@@ -192,6 +192,12 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
   }, [location.pathname]);
   const [deactivating, setDeactivating] = useState(false);
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
+  // NEW-25 (owner 2026-09-07): "Statements/Settings need a summary-totals vs. detailed-view
+  // toggle." "Summary" is the existing one-row-per-month statement history; "Detail" reuses the
+  // SAME already-fetched line-item chargeback/fee history (feesQuery.data.history) the
+  // Chargebacks & Fees tab already renders through ChargebacksTable -- no new backend query, no
+  // new data source, just a second, already-correct view of the same underlying transactions.
+  const [statementsView, setStatementsView] = useState<"summary" | "detail">("summary");
   const [faroCsvText, setFaroCsvText] = useState("");
   const [faroFileName, setFaroFileName] = useState("");
   const [showFaroJsonFallback, setShowFaroJsonFallback] = useState(false);
@@ -886,22 +892,62 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           </div>
 
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-xs font-medium text-gray-900">Statement history</div>
-            {settingsQuery.isError ? (
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="text-xs font-medium text-gray-900">Statement history</div>
+              {/* NEW-25: Summary (monthly totals, the historical default) vs Detail (the same
+                  line-item chargeback/fee history the Chargebacks & Fees tab renders). */}
+              <div className="inline-flex overflow-hidden rounded-sm border border-gray-300" data-testid="factoring-statements-view-toggle">
+                <button
+                  type="button"
+                  data-testid="factoring-statements-view-summary"
+                  className={`px-2.5 py-1 text-xs font-semibold ${statementsView === "summary" ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
+                  aria-pressed={statementsView === "summary"}
+                  onClick={() => setStatementsView("summary")}
+                >
+                  Summary
+                </button>
+                <button
+                  type="button"
+                  data-testid="factoring-statements-view-detail"
+                  className={`border-l border-gray-300 px-2.5 py-1 text-xs font-semibold ${statementsView === "detail" ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
+                  aria-pressed={statementsView === "detail"}
+                  onClick={() => setStatementsView("detail")}
+                >
+                  Detail
+                </button>
+              </div>
+            </div>
+            {statementsView === "summary" ? (
+              settingsQuery.isError ? (
+                <ListErrorState
+                  title="Couldn't load statement history"
+                  {...formatQueryErrorDetail(settingsQuery.error)}
+                  onRetry={() => void settingsQuery.refetch()}
+                />
+              ) : (
+                <ParityTable
+                  columns={STATEMENT_HISTORY_COLUMNS}
+                  rows={settingsQuery.data?.statements ?? []}
+                  rowKey={(row) => String(row.statement_month)}
+                  loading={settingsQuery.isLoading}
+                  emptyText="No statement history rows available."
+                  storageKey="factoring-home-statement-history"
+                />
+              )
+            ) : feesQuery.isError ? (
               <ListErrorState
-                title="Couldn't load statement history"
-                {...formatQueryErrorDetail(settingsQuery.error)}
-                onRetry={() => void settingsQuery.refetch()}
+                title="Couldn't load statement detail"
+                {...formatQueryErrorDetail(feesQuery.error)}
+                onRetry={() => void feesQuery.refetch()}
               />
             ) : (
-              <ParityTable
-                columns={STATEMENT_HISTORY_COLUMNS}
-                rows={settingsQuery.data?.statements ?? []}
-                rowKey={(row) => String(row.statement_month)}
-                loading={settingsQuery.isLoading}
-                emptyText="No statement history rows available."
-                storageKey="factoring-home-statement-history"
-              />
+              <div className="overflow-x-auto">
+                <ChargebacksTable
+                  rows={feesQuery.data?.history ?? []}
+                  fmtCurrency={fmtCurrency}
+                  fmtDate={fmtDate}
+                />
+              </div>
             )}
           </div>
 
