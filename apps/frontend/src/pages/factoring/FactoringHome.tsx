@@ -47,7 +47,7 @@ import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { factorToProfileForm, profileFormToFactorPatch, resolveActiveFactorFromSummary, type FactorProfileForm } from "../../lib/factorProfile";
 import { FactoringProfilePanel } from "./FactoringProfilePanel";
-import { ChargebacksTable } from "./ChargebacksTable";
+import { ChargebacksTable, type ChargebackFeeRow } from "./ChargebacksTable";
 import { RecoursePipelineTable } from "./RecoursePipelineTable";
 import { ReserveTracker } from "./ReserveTracker";
 import { FaroCSVUploadWidget } from "../../components/factoring/FaroCSVUploadWidget";
@@ -246,6 +246,9 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   // Chargebacks & Fees tab already renders through ChargebacksTable -- no new backend query, no
   // new data source, just a second, already-correct view of the same underlying transactions.
   const [statementsView, setStatementsView] = useState<"summary" | "detail">("summary");
+  // FAC-09a Fees Paid — "View Closed Invoices" (open-invoices, per the doc's own confusing real
+  // button label) / "View All Fees" toggle, per the real portal's screenshot.
+  const [feesPaidView, setFeesPaidView] = useState<"open_invoices" | "all_fees">("all_fees");
   const [faroCsvText, setFaroCsvText] = useState("");
   const [faroFileName, setFaroFileName] = useState("");
   const [showFaroJsonFallback, setShowFaroJsonFallback] = useState(false);
@@ -451,6 +454,29 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     }
     return totals;
   }, [agingRows]);
+  // FAC-09a Fees Paid "Open Invoices" view — Accrued Fees per invoice, summed from the same
+  // feesQuery.data.history (views.factoring_chargebacks_fees) rows the "All Fees" view and the
+  // Chargebacks & Fees internal tool tab already render, keyed by the shared factoring_advance_id
+  // FK (no new backend query).
+  const accruedFeesByAdvance = useMemo(() => {
+    const totals = new Map<string, number>();
+    for (const row of feesQuery.data?.history ?? []) {
+      totals.set(row.factoring_advance_id, (totals.get(row.factoring_advance_id) ?? 0) + Number(row.factor_fee_amount ?? 0));
+    }
+    return totals;
+  }, [feesQuery.data?.history]);
+  const feesPaidOpenInvoiceRows = useMemo(
+    () =>
+      agingRows.map((row) => ({
+        ...row,
+        accrued_fees: accruedFeesByAdvance.get(row.factoring_advance_id) ?? 0,
+      })),
+    [agingRows, accruedFeesByAdvance],
+  );
+  const feesPaidAllFeesTotal = useMemo(
+    () => (feesQuery.data?.history ?? []).reduce((sum, row) => sum + Number(row.factor_fee_amount ?? 0), 0),
+    [feesQuery.data?.history],
+  );
   const settingsQuery = useQuery({
     queryKey: ["factoring", "statements-settings", companyId],
     queryFn: () => getFactoringStatementsSettings(companyId),
@@ -805,7 +831,6 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       tab === "payments_to_you" ||
       tab === "debtor_receipts" ||
       tab === "purchase_report" ||
-      tab === "fees_paid" ||
       tab === "reserve" ||
       tab === "chargebacks_overpayments" ||
       tab === "loan_save" ||
@@ -967,6 +992,136 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             </div>
           );
         })()
+      ) : null}
+
+      {/* FAC-09a Fees Paid (real, this pass): two views per the real portal's own screenshot --
+          "Open Invoices" (per-invoice Accrued Fees, built on the same agingRows + feesQuery
+          history already fetched for Aging/Chargebacks & Fees) and "All Fees" (the full fee
+          line-item history, built directly on feesQuery.data.history -- no new backend query
+          either way). Fee Description is honestly "Factor Fee" for every row -- this schema has
+          one combined factor_fee_amount, not a Discount/Schedule/Wire breakdown, same limitation
+          noted on Account Summary. PO/Ref has no backing field -- rendered "—", never fabricated. */}
+      {tab === "fees_paid" ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-3">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="text-xs font-medium text-gray-900">Fees Paid</div>
+            <div className="inline-flex overflow-hidden rounded-sm border border-gray-300" data-testid="factoring-fees-paid-view-toggle">
+              <button
+                type="button"
+                data-testid="factoring-fees-paid-view-open-invoices"
+                className={`px-2.5 py-1 text-xs font-semibold ${feesPaidView === "open_invoices" ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
+                aria-pressed={feesPaidView === "open_invoices"}
+                onClick={() => setFeesPaidView("open_invoices")}
+              >
+                View Closed Invoices
+              </button>
+              <button
+                type="button"
+                data-testid="factoring-fees-paid-view-all-fees"
+                className={`border-l border-gray-300 px-2.5 py-1 text-xs font-semibold ${feesPaidView === "all_fees" ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
+                aria-pressed={feesPaidView === "all_fees"}
+                onClick={() => setFeesPaidView("all_fees")}
+              >
+                View All Fees
+              </button>
+            </div>
+          </div>
+
+          {feesPaidView === "open_invoices" ? (
+            recourseQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load open-invoice fees"
+                {...formatQueryErrorDetail(recourseQuery.error)}
+                onRetry={() => void recourseQuery.refetch()}
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <ParityTable
+                  columns={[
+                    {
+                      key: "customer_name",
+                      label: "Debtor",
+                      render: (row: (typeof feesPaidOpenInvoiceRows)[number]) =>
+                        row.customer_id ? <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} /> : row.customer_name,
+                    },
+                    {
+                      key: "invoice_reference",
+                      label: "Invoice No",
+                      render: (row: (typeof feesPaidOpenInvoiceRows)[number]) =>
+                        row.invoice_id ? <EntityLink kind="invoice" id={row.invoice_id} label={row.invoice_reference} /> : row.invoice_reference,
+                    },
+                    { key: "age", label: "Age", cellClass: "text-right", render: (row: (typeof feesPaidOpenInvoiceRows)[number]) => row.age },
+                    { key: "amount", label: "Amount", cellClass: "text-right", render: (row: (typeof feesPaidOpenInvoiceRows)[number]) => fmtCurrency(row.invoice_amount) },
+                    { key: "balance", label: "Balance", cellClass: "text-right", render: (row: (typeof feesPaidOpenInvoiceRows)[number]) => fmtCurrency(row.invoice_amount) },
+                    {
+                      key: "accrued_fees",
+                      label: "Accrued Fees",
+                      cellClass: "text-right font-semibold",
+                      render: (row: (typeof feesPaidOpenInvoiceRows)[number]) => fmtCurrency(row.accrued_fees),
+                    },
+                  ]}
+                  rows={feesPaidOpenInvoiceRows}
+                  rowKey={(row) => row.factoring_advance_id}
+                  loading={recourseQuery.isLoading}
+                  emptyText="No open invoices."
+                  storageKey="factoring-fees-paid-open-invoices"
+                  footerCells={{
+                    customer_name: `${feesPaidOpenInvoiceRows.length} invoices`,
+                    accrued_fees: fmtCurrency(feesPaidOpenInvoiceRows.reduce((sum, row) => sum + row.accrued_fees, 0)),
+                  }}
+                />
+                <p className="mt-2 text-xs text-gray-500" data-testid="factoring-fees-paid-open-invoices-footnote">
+                  Amount and Balance are the same figure (invoice_amount) — this schema does not yet
+                  track partial debtor payments separately from the original invoice amount.
+                </p>
+              </div>
+            )
+          ) : feesQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load fee history"
+              {...formatQueryErrorDetail(feesQuery.error)}
+              onRetry={() => void feesQuery.refetch()}
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <ParityTable
+                columns={[
+                  {
+                    key: "customer_name",
+                    label: "Debtor",
+                    render: (row: ChargebackFeeRow) =>
+                      row.customer_id ? <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} /> : row.customer_name,
+                  },
+                  {
+                    key: "invoice_display_id",
+                    label: "Invoice No",
+                    render: (row: ChargebackFeeRow) =>
+                      row.invoice_id ? <EntityLink kind="invoice" id={row.invoice_id} label={row.invoice_display_id} /> : row.invoice_display_id,
+                  },
+                  { key: "po_ref", label: "PO/Ref", render: () => "—" },
+                  { key: "statement_reference", label: "Other Ref", render: (row: ChargebackFeeRow) => row.statement_reference ?? "—" },
+                  { key: "created_at", label: "Date", render: (row: ChargebackFeeRow) => fmtDate(row.created_at) },
+                  { key: "factor_fee_amount", label: "Amount", cellClass: "text-right", render: (row: ChargebackFeeRow) => fmtCurrency(row.factor_fee_amount) },
+                  { key: "fee_description", label: "Fee Description", render: () => "Factor Fee" },
+                ]}
+                rows={feesQuery.data?.history ?? []}
+                rowKey={(row) => row.factoring_advance_id}
+                loading={feesQuery.isLoading}
+                emptyText="No fee history."
+                storageKey="factoring-fees-paid-all-fees"
+                footerCells={{
+                  customer_name: `${(feesQuery.data?.history ?? []).length} fee record(s)`,
+                  factor_fee_amount: fmtCurrency(feesPaidAllFeesTotal),
+                }}
+              />
+              <p className="mt-2 text-xs text-gray-500" data-testid="factoring-fees-paid-all-fees-footnote">
+                "Fee Description" is honestly "Factor Fee" for every row — this schema tracks one
+                combined factor_fee_amount, not a Discount/Schedule/Wire-fee breakdown. "PO/Ref" has
+                no backing field on this view — never fabricated.
+              </p>
+            </div>
+          )}
+        </div>
       ) : null}
 
       {tab === "aging" ? (
