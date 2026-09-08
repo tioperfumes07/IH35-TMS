@@ -260,3 +260,20 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
    in BANK-F26053 as not required for going-forward correctness, deliberately not attempted blind.
 3. CC-1 separately owns the still-open unfiltered running-balance defect thread beyond BANK-F30002 —
    coordinate before claiming new Banking verify-step numbers to avoid colliding with theirs.
+
+## CC-1 — Pedro-shaped-gap audit across the 17, inside the (now-superseded) 21-tour window (2026-09-08)
+
+Audited whether any of the other 16 driver-settlement rows share Pedro's shape (tour 5772: 2 of that
+tour's 4 loads present, 2 absent). Full table: `docs/bus/OUTBOX-CC-1.md` (2026-09-08 06:1xZ). Result:
+none do — every outside-5774–5796 tour referenced anywhere across the 17 (5753, 5761, 5764, 5765,
+5767, 5768, 5769, 5770, 5771, 5772, 5773) was pdftotext'd from its real signed PDF and every load on
+it is present live except tour 5772's 13502/13507.
+
+**Pedro's own case is not a USMCA gap.** 13502/13507 are Transportation-entity loads under the
+standing owner entity rule (13:36Z) — not USMCA rows at all. His real USMCA loads on tour 5772
+(13512, 13513) are both paid and present. If 13502/13507 pay is owed, it's a Transportation-books
+question, not a hole in this rebuild.
+
+This audit was run against the OLDER 21-tour/5774–5796 framing before reading the SCOPE CORRECTION
+section above — it does not address the 38-tour/36-missing-load finding. Reading the checker handoff
+(`~/Downloads/2026-09-08-Cursor-to-Claude-SETTLEMENT-REBUILD-CHECKER-HANDOFF.md`) next.
