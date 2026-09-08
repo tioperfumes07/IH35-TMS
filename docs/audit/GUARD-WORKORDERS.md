@@ -9259,3 +9259,47 @@ none | `node scripts/verify-bank-recon-accept-closed-session-conflict.mjs --self
 `node scripts/verify-bank-recon-accept-closed-session-conflict.mjs` exit 0 | **CLOSED · orphan
 guard now actually runs in CI · swept the rest of the Banking guard surface, no other orphans
 found (26/27 candidates confirmed exempt-listed)** |
+
+## BANK-F26054 — verify-sql-column-existence's alias map lost bindings on sibling-subquery reuse (CC-2, 2026-09-08)
+
+`scripts/verify-sql-column-existence.mjs`'s `analyzeSqlFragment` built `aliasToTable` as a
+single-valued `Map`, so when the SAME short alias (e.g. `e`, `s`) is reused across TWO SIBLING
+scalar subqueries in one fragment (not CTEs — `splitWithQueryFragments`'s per-CTE scoping never
+applied), the SECOND binding silently overwrote the FIRST. Every `alias.column` reference anywhere
+in the fragment was then checked against whichever table's alias declaration happened to parse
+LAST, regardless of which subquery it actually belonged to. This produced two distinct real
+failures, both live-confirmed against actual migrations before fixing anything:
+
+1. **False positive (currently red on `origin/main`):** `mdata/drivers.routes.ts`'s
+   `(SELECT count(*) FROM mdata.equipment e WHERE e.assigned_driver_id = $1) + (SELECT count(*)
+   FROM accounting.expenses e WHERE e.driver_uuid = $1)` — both subqueries correctly named, both
+   column references genuinely correct on their own table, but the LAST alias binding
+   (`accounting.expenses`) made the FIRST reference (`e.assigned_driver_id`, genuinely on
+   `mdata.equipment`) get checked against `accounting.expenses` (which uses `driver_uuid`, not
+   `assigned_driver_id` — confirmed via migration `202609022351`'s own comment: "Driver FK twin of
+   accounting.expenses.driver_uuid... historical only. Do not rename").
+2. **Latent false negative (a time bomb, not yet tripped):** `dispatch/load-status-signal/
+   tri-signal.service.ts` reuses `s` across a `mdata.load_stops s` LATERAL and a sibling
+   `dispatch.auto_status_suggestions s` LATERAL. `s.suggested_at`/`s.operating_company_id` belong
+   to the untracked `auto_status_suggestions` table (confirmed real via migration `0230`) — genuinely
+   correct code that would have been wrongly flagged the moment binding order shifted (e.g. a future
+   edit reordering the two LATERALs), with no warning that this was one edit away from a false red.
+
+**FIX:** `aliasToTable` now tracks every table an alias is EVER bound to within a fragment (a `Set`,
+not one value). A qualified reference is valid if the column exists on ANY tracked (TARGET_TABLES)
+candidate; if ANY candidate for that alias falls outside the curated TARGET_TABLES set (an
+untracked table — case 2's shape), the reference is treated as genuinely ambiguous and skipped
+rather than false-accused, matching the guard's own existing conservatism for a single untracked
+table. This can only ever REDUCE false positives/negatives — it can never mask a real typo, since a
+genuinely wrong column name essentially never coincidentally exists on some unrelated table the
+same alias was also bound to. Added 3 new selftest cases reproducing both real shapes (clean when
+correct on a tracked candidate, still flagged when wrong on every tracked candidate, skipped when
+ambiguous against an untracked candidate) — selftest now 22/22 (was 19/19), live check now green
+(was FAILED on `mdata/drivers.routes.ts`). | `scripts/verify-sql-column-existence.mjs` | — | none —
+both real files (`drivers.routes.ts`, `tri-signal.service.ts`) already had correct SQL; only the
+analyzer needed fixing, per its own contract ("if the column DOES exist in prod, this is a BASELINE
+defect — fix it AT SOURCE... do NOT allowlist it") | `node scripts/verify-sql-column-existence.mjs
+--selftest` exit 0 (22/22); `node scripts/verify-sql-column-existence.mjs` exit 0 (was FAILED
+before this fix, confirmed FAILED first on a clean `origin/main` worktree to rule out any other
+cause) | **CLOSED · repo-wide static-analysis fix, not a single-file patch — protects every future
+file with this alias-reuse shape, not just the two found here** |
