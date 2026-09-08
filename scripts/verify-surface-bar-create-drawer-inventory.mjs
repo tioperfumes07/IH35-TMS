@@ -31,6 +31,7 @@ const ALLOWED_NESTED = new Set([
   "components/forms/shared/QuickCreateEntityModal.tsx",
   "components/parity/InlineCreateDrawer.tsx",
   "components/parity/CatalogQuickCreateDrawer.tsx",
+  "pages/drivers/components/CreateSettlementDeductionDrawer.tsx",
 ]);
 
 /**

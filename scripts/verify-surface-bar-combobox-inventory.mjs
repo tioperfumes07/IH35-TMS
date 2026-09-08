@@ -23,6 +23,11 @@ const ALLOWED_NESTED = new Set([
   "components/shared/SelectCombobox.tsx",
   "components/EntityPicker.tsx",
   "components/parity/ReferenceSelect.tsx",
+  "pages/dispatch/components/book-load-v4/InterchangeTrailerPicker.tsx",
+  "pages/dispatch/components/book-load-v4/LocationPicker.tsx",
+  "pages/lists/safety/CatalogStatusFilterCombobox.tsx",
+  "components/Combobox.tsx",
+  "pages/cash-flow/tabs/RollingLedgerTab.tsx",
 ]);
 
 /** Combobox hosts owned by an existing matrix leaf (page/section nests). */
