@@ -6342,6 +6342,11 @@
     "claimed_at": "2026-09-08",
     "purpose": "verify-acc15-locations-is-sample-data"
   },
+  "11089": {
+    "claimed_by": "claude-1",
+    "claimed_at": "2026-09-08",
+    "purpose": "verify-maintenance-triage-queue-entity-scoped"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
