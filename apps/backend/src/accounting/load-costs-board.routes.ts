@@ -184,6 +184,21 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
             WHERE db.operating_company_id = $1::uuid
               AND db.load_id IS NOT NULL
             ORDER BY db.load_id, db.created_at DESC
+         -- NEW-09 (owner raw findings 2026-09-07): "a load already invoiced should not still sit in
+         -- Load Costs as an open item -- it belongs in resettlement." The board's own open/closed
+         -- split (matches(), LoadCostsBoardPage.tsx) checked mdata.loads.status against a literal
+         -- 'invoiced' value -- but live-confirmed nothing anywhere in the codebase ever sets
+         -- mdata.loads.status = 'invoiced' (0 rows system-wide carry it); dispatch status stays
+         -- delivered_pending_docs/completed_docs_received forever, so an invoiced load never left
+         -- the open buckets. Fixed at the real signal instead: does this load have a real, issued
+         -- (non-draft, non-proforma, non-void) invoice -- the same "genuinely invoiced" bar
+         -- ux_invoices_source_load_active already enforces one-active-per-load for.
+         ), invoice_info AS (
+           SELECT i.source_load_id AS load_id, true AS is_invoiced
+             FROM accounting.invoices i
+            WHERE i.operating_company_id = $1::uuid
+              AND i.source_load_id IS NOT NULL
+              AND i.status NOT IN ('draft', 'proforma', 'void')
          ), driver_pay_amounts AS (
            SELECT db.load_id,
                   COALESCE(SUM(db.loaded_pay_cents), 0)::bigint AS loaded_pay_cents,
@@ -263,11 +278,13 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                 dpd.rate_empty_cents::text AS rate_empty_cents,
                 COALESCE(dpa.loaded_pay_cents, 0)::text AS loaded_pay_cents,
                 CASE WHEN COALESCE(dpa.has_deadhead_miles, false) THEN COALESCE(dpa.deadhead_pay_cents, 0)::text ELSE NULL END AS deadhead_pay_cents,
-                si.settlement_display_id, si.settlement_id
+                si.settlement_display_id, si.settlement_id,
+                COALESCE(ii.is_invoiced, false) AS is_invoiced
            FROM views.dispatch_load_with_driver_status l
            LEFT JOIN expense_costs ec ON ec.load_id=l.id LEFT JOIN bill_costs bc ON bc.load_id=l.id LEFT JOIN repair_costs rm ON rm.load_id=l.id LEFT JOIN driver_pay dp ON dp.load_id=l.id
            LEFT JOIN category_costs cb ON cb.load_id=l.id LEFT JOIN driver_pay_detail dpd ON dpd.load_id=l.id LEFT JOIN driver_pay_amounts dpa ON dpa.load_id=l.id
            LEFT JOIN settlement_info si ON si.load_id=l.id
+           LEFT JOIN invoice_info ii ON ii.load_id=l.id
            LEFT JOIN mdata.customers c ON c.id=l.customer_id AND c.operating_company_id=l.operating_company_id
            -- W-FIX-3b (loads.routes.ts, same rule): mdata.units has owner_company_id /
            -- currently_leased_to_company_id, never operating_company_id. mdata.loads has NO
