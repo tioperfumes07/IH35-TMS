@@ -10,6 +10,19 @@ Scope: USMCA only (`5c854333-6ea5-4faa-af31-67cb272fef80`). Neon `tiny-field-895
 
 ---
 
+## SCOPE — SETTLED, DO NOT RE-RECONCILE (owner 2026-09-08: "you are doing the same work for the 4th time")
+
+The factoring reconciliation is ALREADY DONE and committed — `usmca-factoring-reconciliation.csv` +
+`FINDINGS.md` §"Factoring tie-out vs Faro". Do not re-parse Faro or re-derive this. Settled facts:
+- **Faro purchased ~47 of ~50 USMCA loads** (MATCH or the flat +$10 wire-fee AMOUNT_DIFF). The **3–4
+  Faro did NOT purchase**: load **13513** (APP_ONLY, not in Faro) + unlinked advances **FAC-2026-00001 /
+  00050 / 00051**.
+- **USMCA rebuild scope = tours 5769–5796** (every tour with a Faro-purchased or direct-pay USMCA load =
+  what's already in the app + the factoring CSV). **Pre-Faro tours 5753, 5760–5768 are TRANSPORTATION,
+  already QuickBooks-reconciled — NOT in the USMCA rebuild.** Owner anchor: first USMCA Faro purchase
+  ≈ Aug 7; the factoring CSV is the authoritative scope, not a hand-guessed date.
+- Next action is the REBUILD ORCHESTRATION, not more reconciliation.
+
 ## SCOPE CORRECTION — the real tour universe is 38 docs, not 21 (measured 2026-09-08)
 
 The earlier "21 signed docs / $27,487.36" window was a SUBSET (docs 5774,5777–5796) that tied to itself
