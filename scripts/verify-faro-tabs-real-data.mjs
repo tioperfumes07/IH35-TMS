@@ -18,6 +18,10 @@
  *    Due Date/Age/0-30/31-60/61-90/90+/Balance/Purchase) built on the recourse-pipeline data
  *    (no fabricated new data source), with a summary strip (Total Records + the 4 buckets +
  *    Total Balance).
+ *  - The Account Summary tab is no longer a stub, and its real line items (Ending AR Balance,
+ *    Reserve Balance, Fees Paid total, Other Adjustments) are wired to the already-fetched
+ *    summaryQuery (views.factoring_summary) / feesQuery (views.factoring_chargebacks_fees
+ *    monthly_summary) data — not a fabricated new source.
  *
  * Usage:
  *   node scripts/verify-faro-tabs-real-data.mjs            # scan
@@ -135,6 +139,44 @@ export function checkAgingReal(src) {
   return failures;
 }
 
+export function checkAccountSummaryReal(src) {
+  const failures = [];
+  const stubMatch = src.match(/tab === "request_debtor_credit_check"[\s\S]*?data-testid=\{`factoring-stub-\$\{tab\}`\}/);
+  if (stubMatch && /tab === "account_summary"/.test(stubMatch[0])) {
+    failures.push(`${HOME}: Account Summary is still routed through the generic honest-stub block — must have its own real section (FAC-09a).`);
+  }
+  const marker = 'tab === "account_summary" ?';
+  const idx = src.indexOf(marker);
+  if (idx === -1) {
+    failures.push(`${HOME}: could not find a dedicated Account Summary ("tab === \"account_summary\" ?") block.`);
+    return failures;
+  }
+  const section = src.slice(idx, idx + 8000);
+  const requiredRealBindings = [
+    { pattern: /summary\?\.outstanding_liability_balance/, label: "Ending AR Balance bound to summary.outstanding_liability_balance" },
+    { pattern: /summary\?\.reserve_balance/, label: "Reserve Balance bound to summary.reserve_balance" },
+    { pattern: /latestMonth\?\.factor_fee_total/, label: "Fees Paid total bound to feesQuery monthly_summary factor_fee_total" },
+    { pattern: /latestMonth\?\.chargeback_total/, label: "Other Adjustments bound to feesQuery monthly_summary chargeback_total" },
+  ];
+  for (const { pattern, label } of requiredRealBindings) {
+    if (!pattern.test(section)) {
+      failures.push(`${HOME}: Account Summary missing real binding — ${label}.`);
+    }
+  }
+  const requiredTestIds = [
+    "factoring-account-summary-ending-balance",
+    "factoring-account-summary-reserve-balance",
+    "factoring-account-summary-fees-total",
+    "factoring-account-summary-adjustments",
+  ];
+  for (const testId of requiredTestIds) {
+    if (!section.includes(testId)) {
+      failures.push(`${HOME}: Account Summary missing required data-testid="${testId}".`);
+    }
+  }
+  return failures;
+}
+
 export function run() {
   const failures = [];
   const { ok, src, err } = read(HOME);
@@ -145,6 +187,7 @@ export function run() {
   failures.push(...checkNavOrder(src));
   failures.push(...checkInternalToolsPreserved(src));
   failures.push(...checkAgingReal(src));
+  failures.push(...checkAccountSummaryReal(src));
   return { ok: failures.length === 0, failures };
 }
 
@@ -177,6 +220,24 @@ if (process.argv.includes("--selftest")) {
       <div data-testid="factoring-aging-total-balance" />
     ) : null
   `;
+  const stubBlock = `
+      {tab === "request_debtor_credit_check" ||
+      tab === "funds_due" ||
+      tab === "payments_to_you" ||
+      tab === "fees_paid" ? (
+        <div data-testid={\`factoring-stub-\${tab}\`}>stub</div>
+      ) : null}
+  `;
+  const accountSummaryBlock = `
+      {tab === "account_summary" ? (
+        <div data-testid="factoring-account-summary">
+          <span data-testid="factoring-account-summary-ending-balance">{fmtCurrency(summary?.outstanding_liability_balance)}</span>
+          <span data-testid="factoring-account-summary-reserve-balance">{fmtCurrency(summary?.reserve_balance)}</span>
+          <span data-testid="factoring-account-summary-fees-total">{fmtCurrency(latestMonth?.factor_fee_total)}</span>
+          <span data-testid="factoring-account-summary-adjustments">{fmtCurrency(latestMonth?.chargeback_total)}</span>
+        </div>
+      ) : null}
+  `;
   const goodSrc = `
 const SUBNAV = [
 ${idsBlock}
@@ -185,17 +246,29 @@ const INTERNAL_TOOLS_SUBNAV = [
 ${internalBlock}
 ] as const;
 Internal Tools
+${stubBlock}
+${accountSummaryBlock}
 ${agingBlock}
   `;
   const badWrongOrder = goodSrc.replace('{ id: "aging", label: "x" },', '{ id: "zzz", label: "x" },');
   const badDeletedInternal = goodSrc.replace('{ id: "vendor_merges", label: "x" },', "");
   const badAgingMissingColumn = goodSrc.replace('{ key: "b4", label: "90+" },', "");
+  const badAccountSummaryStillStub = goodSrc.replace(
+    'tab === "payments_to_you" ||\n      tab === "fees_paid" ? (',
+    'tab === "payments_to_you" ||\n      tab === "account_summary" ||\n      tab === "fees_paid" ? (',
+  );
+  const badAccountSummaryFakeBinding = goodSrc.replace(
+    'data-testid="factoring-account-summary-reserve-balance">{fmtCurrency(summary?.reserve_balance)}</span>',
+    'data-testid="factoring-account-summary-reserve-balance">{fmtCurrency(9999)}</span>',
+  );
 
   const checks = [
-    ["clean source passes", checkNavOrder(goodSrc).length === 0 && checkInternalToolsPreserved(goodSrc).length === 0 && checkAgingReal(goodSrc).length === 0],
+    ["clean source passes", checkNavOrder(goodSrc).length === 0 && checkInternalToolsPreserved(goodSrc).length === 0 && checkAgingReal(goodSrc).length === 0 && checkAccountSummaryReal(goodSrc).length === 0],
     ["wrong nav order fails", checkNavOrder(badWrongOrder).length > 0],
     ["deleted internal tab fails", checkInternalToolsPreserved(badDeletedInternal).length > 0],
     ["missing aging column fails", checkAgingReal(badAgingMissingColumn).length > 0],
+    ["account summary still stub fails", checkAccountSummaryReal(badAccountSummaryStillStub).length > 0],
+    ["account summary fake binding fails", checkAccountSummaryReal(badAccountSummaryFakeBinding).length > 0],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
@@ -213,5 +286,5 @@ if (!ok) {
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — 15-item real nav order locked, internal-ops tabs preserved (Rule 07), Aging report real (FAC-09a)`);
+console.log(`${LABEL}: OK — 15-item real nav order locked, internal-ops tabs preserved (Rule 07), Aging + Account Summary reports real (FAC-09a)`);
 process.exit(0);
