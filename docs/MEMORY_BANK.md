@@ -93,8 +93,19 @@ Scope: USMCA only (`5c854333-6ea5-4faa-af31-67cb272fef80`). Neon `tiny-field-895
    invoice 13510; verify 13513; confirm FAC-00001/00050/00051.
 3. **Maker-checker:** Cursor builds + executes; Claude re-derives every dollar from signed docs +
    prod; owner has final say before any live post.
+   - **PREVIEW is GREEN (PR #21416):** `node scripts/reconciliation/preview-usmca-settlement-rebuild.mjs`
+     → all 21 docs tie to the penny, grand total **$27,487.36** (163 lines). Only gap was doc 5780
+     (two Flat Rate $150 loads 13530+13532 = $300) — added from the signed PDF; salary set to 300.
+   - **Checker handoff ISSUED 2026-09-08** →
+     `~/Downloads/2026-09-08-Cursor-to-Claude-SETTLEMENT-REBUILD-CHECKER-HANDOFF.md`. Claude must: run
+     + re-derive the preview vs the 21 signed PDFs and confirm doc 5780; verify the reversal engine
+     (no new GL math, equal-and-opposite, pay-run path); re-derive the 17→21 overpay $3,660.01 vs live
+     prod ($31,147.37 → $27,487.36); confirm the 8 zero-pay loads get pay created from docs and the
+     2026-09-07 20:11 CT manual JE (S-13643/13541/5796 −$389.66) is folded in, not double-corrected.
+     Claude returns GO/NO-GO. **Nothing posts to the live ledger without Claude's yes AND the owner's yes.**
 
 ## PRs (this reconciliation effort)
 
 - #21403 — reversal poster (MERGED) · #21404 — reconciliation tie-outs (MERGED)
 - #21408 — claim-reserve 11078 (MERGED) · #21412 — settlement triple-figure display fix (MERGED)
+- #21414 — MEMORY_BANK.md (MERGED) · #21416 — preview harness + doc 5780 tie-out 21/21 (MERGED)
