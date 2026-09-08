@@ -1,6 +1,6 @@
 {
  "date": "2026-09-08",
- "generated_at_iso": "2026-09-08T16:44:20.947Z",
+ "generated_at_iso": "2026-09-08T21:15:51.151Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 30,
@@ -13727,6 +13727,12 @@
  ],
  "merged_prs": [
   {
+   "number": 21465,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-08T16:44:53Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 21464,
    "title": "Cursor- Phase 2 repost: 28/28 USMCA settlements tie to signed penny ($37,830.87)",
    "mergedAt": "2026-09-08T15:20:37Z",
@@ -17319,12 +17325,6 @@
    "title": "feat(load-costs): Pre-Settlement + Settlement tabs on the Load costs board (tours register, Close tour) — LDT-TABS",
    "mergedAt": "2026-09-06T03:05:19Z",
    "branch": "lead/ldt-tabs"
-  },
-  {
-   "number": 20850,
-   "title": "CLAIM-RESERVE: 10445 verify-load-costs-tour-tabs (LDT-TABS)",
-   "mergedAt": "2026-09-06T02:58:49Z",
-   "branch": "chore/claim-reserve-10445"
   }
  ],
  "merged_pr_total": 3000,
