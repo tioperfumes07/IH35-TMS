@@ -9169,3 +9169,43 @@ proof block. Do not re-open NEW-33/NEW-33-UPDATE as "OPEN" — read BANK-F30002 
 | NEW-32 | CLOSED — PR #21368 |
 | NEW-33 | CLOSED — see BANK-F30002 |
 | NEW-33-UPDATE | CLOSED — see BANK-F30002 |
+
+## BANK-F26053 — reconciliation match-accept never stamped cleared_date (CC-2, 2026-09-08)
+
+**THREE-DATES-COVERAGE-GAP (ACCT-F10209, migration `202613310400`, 2026-09-01 owner ruling) was
+only half-wired.** The migration added `accounting.payments.cleared_date` /
+`accounting.bill_payments.cleared_date` specifically so a payment's cash-basis `payment_date`
+(issued) and the date its bank line actually clears (`cleared_date` — "drives ONLY which
+reconciliation session it settles in") never collapse into one field again. The column's own
+comment says "Nullable until a matching bank transaction clears it." The existing guard
+(`verify-three-dates-cleared-date.mjs`) only checked the migration itself and the two narrow
+bank-feed-driven CREATION paths (`bank-transaction-splits.service.ts`, `bulk-transactions.ts`)
+where a bill_payment is created directly FROM a bank transaction (issued=cleared at that instant).
+It never checked the general, primary case: a payment/bill_payment created earlier (invoice
+payment received, bill paid by check) and matched to its bank line LATER via the ordinary
+reconciliation worklist Accept flow — `match.service.ts`'s `acceptMatchWithResolveDifference`.
+That function stamps `source_bank_transaction_id`/`from_bank_account_id` on accept but never
+touched `cleared_date`, so every reconciliation match through the normal worklist UI left
+`cleared_date` NULL forever, on both payments and bill_payments — the exact gap the migration was
+written to close, silently unfixed on the one path that matters for almost every real match.
+
+**FIX:** `match.service.ts`'s accept-match UPDATE on both `accounting.payments` and
+`accounting.bill_payments` now also sets `cleared_date = COALESCE(cleared_date, <bank txn's own
+transaction_date>)` — COALESCE so a payment already stamped via one of the two direct-creation
+paths keeps its own value; `payment_date` (issued) is never touched. Symmetrically,
+`recon-worklist.service.ts`'s unmatch flow now also clears `cleared_date` back to NULL alongside
+`source_bank_transaction_id`/`from_bank_account_id` (unmatching detaches a payment from the
+reconciliation session it settled in, so a stale `cleared_date` would misreport that). Extended
+`verify-three-dates-cleared-date.mjs` (already-wired verify-step 10209) to assert both the
+match-accept stamp and the unmatch clear on both tables — 9/9 selftest mutations caught (up from
+5/5; the guard was structurally incapable of catching this gap before, not merely unlucky). |
+`apps/backend/src/accounting/bank-recon/match.service.ts`;
+`apps/backend/src/accounting/bank-recon/recon-worklist.service.ts`;
+`scripts/verify-three-dates-cleared-date.mjs` | — | none for this fix; a one-time backfill of
+`cleared_date` for ALREADY-matched historical payments/bill_payments (those with
+`source_bank_transaction_id` set but `cleared_date` still NULL) is a separate, optional follow-up —
+not required for this fix to be correct going forward, and deliberately not attempted blind in this
+pass | `node scripts/verify-three-dates-cleared-date.mjs --selftest` exit 0 (9/9); `node
+scripts/verify-three-dates-cleared-date.mjs` exit 0; `npx tsc -p apps/backend/tsconfig.json
+--noEmit` exit 0 | **CLOSED · reconciliation match-accept/unmatch now correctly wires the column
+the migration added specifically for this** |
