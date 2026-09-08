@@ -31,6 +31,30 @@ import pg from "pg";
 import { reverseSettlementPayRunInClientTx } from "../src/driver-finance/settlement-payrun-reverse.service.js";
 import { reverseJournalEntryNoFlip } from "../src/accounting/journal-entries.service.js";
 
+// ── HARD PROD BLOCK (code-level, not a comment/eyeball step). ──────────────────────────────────────
+// Checker finding (Claude Lead, 2026-09-08): the old design relied on a human reading a printed host
+// string before Ctrl-C'ing (the repo-wide guard-expense-gl-branch.sh pattern) — a single copy-paste of
+// the real prod REBUILD_DB_URL plus --commit + REBUILD_I_UNDERSTAND=yes would silently post to prod
+// with nothing in code to stop it. Fixed here with an unconditional string match against the ACTUAL
+// prod Neon endpoint (project tiny-field-89581227, branch br-fancy-credit-akjnd07a — confirmed live via
+// Neon list_branch_computes 2026-09-08), checked before anything else runs, with NO override flag.
+const PROD_ENDPOINT_MARKERS = [
+  "ep-broad-block-akykk7bw", // prod compute endpoint id (host + pooled host both contain this)
+  "tiny-field-89581227", // prod Neon project id, in case a project-qualified host/string is ever used
+];
+function assertNotProd(dbUrl: string): void {
+  const lowered = dbUrl.toLowerCase();
+  const hit = PROD_ENDPOINT_MARKERS.find((m) => lowered.includes(m.toLowerCase()));
+  if (hit) {
+    throw new Error(
+      `REFUSING TO RUN: REBUILD_DB_URL resolves to the PROD Neon endpoint (matched "${hit}"). ` +
+        `This script only ever runs against an isolated rehearsal branch. There is no override flag for ` +
+        `this check — point REBUILD_DB_URL at a branch, never prod, regardless of --commit or ` +
+        `REBUILD_I_UNDERSTAND.`
+    );
+  }
+}
+
 // ── Fixed data (identities, not scope). Scope is the --settlements parameter / discovery query. ──────
 const OPCO = "5c854333-6ea5-4faa-af31-67cb272fef80"; // USMCA
 const ACTOR = "e4117991-d2c0-406d-8cda-74e98d95bccd"; // system actor used by the rehearsal harness
@@ -88,6 +112,7 @@ async function main() {
   const { commit, settlements: scopeOverride } = parseArgv();
   const url = process.env.REBUILD_DB_URL || process.env.REHEARSAL_DB_URL;
   if (!url) throw new Error("REBUILD_DB_URL (or REHEARSAL_DB_URL) required — point it at an ISOLATED Neon branch");
+  assertNotProd(url); // hard, unconditional — runs before any connection is opened, no override
   const commitConfirmed = commit && process.env.REBUILD_I_UNDERSTAND === "yes";
   if (commit && !commitConfirmed) {
     throw new Error("--commit requires env REBUILD_I_UNDERSTAND=yes (and must target a branch, never prod, without owner+Claude GO)");
@@ -253,4 +278,29 @@ async function main() {
   }
 }
 
-main();
+function selftest(): void {
+  // Real prod host, real pooled host, and a project-qualified variant — all must be refused.
+  const prodVariants = [
+    "postgres://user:pass@ep-broad-block-akykk7bw.c-3.us-west-2.aws.neon.tech/neondb?sslmode=require",
+    "postgres://user:pass@ep-broad-block-akykk7bw-pooler.c-3.us-west-2.aws.neon.tech/neondb?sslmode=require",
+    "postgres://user:pass@some-host/neondb?options=project%3Dtiny-field-89581227",
+  ];
+  for (const url of prodVariants) {
+    try {
+      assertNotProd(url);
+      throw new Error(`selftest FAILED: prod-like URL was NOT refused: ${url}`);
+    } catch (e) {
+      if (!(e instanceof Error) || !e.message.startsWith("REFUSING TO RUN")) throw e;
+    }
+  }
+  // A real rehearsal-branch-shaped URL must NOT be refused.
+  const branchUrl = "postgres://user:pass@ep-royal-grass-ak4y2evz.c-3.us-west-2.aws.neon.tech/neondb?sslmode=require";
+  assertNotProd(branchUrl); // throws (and fails the selftest) if it wrongly matches
+  console.log("[rebuild-usmca-settlements-orchestration --selftest] PASS — prod endpoint hard-blocked, branch URL unaffected");
+}
+
+if (process.argv.includes("--selftest")) {
+  selftest();
+} else {
+  main();
+}
