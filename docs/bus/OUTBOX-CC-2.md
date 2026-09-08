@@ -1880,3 +1880,15 @@ Full writeup for each item is in `docs/audit/GUARD-WORKORDERS.md`. Summary:
 5 real PRs merged this pass (#21451, #21454, #21455, plus the two deploys triggered after). Both
 `IH35-TMS` (backend) and `ih35-tms-web` (frontend) redeployed from `38fb28efc4` (autoDeploy is off
 on both — deploys require an explicit trigger, done this pass).
+
+## CC-2 | Production backend deploy unblocked, confirmed live | 2026-09-08
+
+Two-layer migration-ledger issue (unrelated to my own diffs) was blocking every backend deploy for
+the whole team — full writeup in docs/audit/GUARD-WORKORDERS.md. Fixed via PR #21457 (LV-087 ledger
+orphan) + PR #21459 (checksum modified-after-apply, a manual CC-1 apply with a placeholder
+checksum). Redeployed and confirmed live: backend `srv-d7rpem7avr4c73fhp4n0` on commit `0284c1bc7a`,
+`{"ok":true}` on `/api/v1/healthz/readyz`. Frontend already live. Both PRIORITY #1 directive PRs
+(#21451, #21455) are now actually serving in production, not just merged to main.
+
+Flagged, not fixed (separate lane): `202613640001_flt08_unit_file_categories.sql` is applied on
+prod but deleted from db/migrations/ — FLT-08/fleet lane should restore it from git history.
