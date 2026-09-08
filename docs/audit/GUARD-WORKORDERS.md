@@ -9209,3 +9209,19 @@ pass | `node scripts/verify-three-dates-cleared-date.mjs --selftest` exit 0 (9/9
 scripts/verify-three-dates-cleared-date.mjs` exit 0; `npx tsc -p apps/backend/tsconfig.json
 --noEmit` exit 0 | **CLOSED · reconciliation match-accept/unmatch now correctly wires the column
 the migration added specifically for this** |
+
+## verify-step 10103 — moot claim, closing the loose end (CC-2, 2026-09-08)
+
+`scripts/verify-steps/CLAIMED-NUMBERS.json` has held `10103` (`verify-reconciliation-one-open-per-account-period`,
+`GO-ACCT-01 control fix`, claimed 2026-08-30) with no wrapper file ever authored — an orphaned
+reservation, the exact "claim without delivering" pattern this session was asked to sweep. Traced
+it: the underlying real-world defect (duplicate open reconciliation sessions for the same
+account/period) was already fixed by CC-1 via a DB-level unique index
+(`ux_reconciliation_sessions_one_per_account_period`), live-verified closed on 2026-09-01
+(`docs/audit/GUARD-WORKORDERS.md`, commit `fe9f16eeb3`: index confirmed present, a fresh repo-wide
+duplicate-session census returned 0 rows). No application-level guard for this class was ever
+needed or built on top of the DB constraint, so 10103 has nothing left to deliver — it is **moot**,
+not outstanding. No code change in this commit; documenting so the claim stops looking like
+undone work on the next pass. | — | — | none | `pg_indexes` confirmation + duplicate-session
+census cited in commit `fe9f16eeb3`, re-cited here rather than re-run (DB unchanged since) | **MOOT
+· superseded by CC-1's DB-level unique index, closed 2026-09-01, no guard needed** |
