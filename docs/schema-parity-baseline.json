@@ -8161,6 +8161,7 @@
       "hours_of_operation_jsonb",
       "id",
       "is_ih35_yard",
+      "is_sample_data",
       "latitude",
       "linked_customer_id",
       "linked_vendor_id",
