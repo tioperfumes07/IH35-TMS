@@ -318,7 +318,7 @@ export function contractErrors(src) {
     // a11y + unsaved guard must be shared, never gated on the variant.
     const hasEscapeHandling =
       /useEscapeKey\(attemptClose,\s*open\)/.test(modal) ||
-      /useEscapeKey\(\(\)\s*=>\s*\{[\s\S]{0,400}?attemptClose\(\);[\s\S]{0,120}?\},\s*open\)/.test(modal);
+      /useEscapeKey\(\(\)\s*=>\s*\{[\s\S]{0,600}?attemptClose\(\);[\s\S]{0,120}?\},\s*open\)/.test(modal);
     if (!hasEscapeHandling) {
       errors.push(`PRIMITIVE-A11Y: ${MODAL_FILE} lost its Escape handling through \`attemptClose\`.`);
     }

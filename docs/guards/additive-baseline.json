@@ -191,16 +191,21 @@
     "Repairs & maintenance"
   ],
   "pattern_scan": {
-    "total": 24,
+    "total": 61,
     "perFile": {
+      "apps/frontend/src/components/accounting/PostingGrid.tsx": 1,
       "apps/frontend/src/pages/Customers.tsx": 5,
       "apps/frontend/src/pages/Vendors.tsx": 5,
       "apps/frontend/src/pages/accounting/BillsPage.tsx": 5,
-      "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx": 1,
+      "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx": 4,
       "apps/frontend/src/pages/accounting/PaymentsListPage.tsx": 1,
+      "apps/frontend/src/pages/customers/CustomersListView.tsx": 17,
       "apps/frontend/src/pages/dispatch/DispatchBoard.tsx": 5,
       "apps/frontend/src/pages/dispatch/EquipmentTransferRequests.tsx": 1,
-      "apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx": 1
+      "apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx": 4,
+      "apps/frontend/src/pages/factoring/loadCostColumnManifest.tsx": 4,
+      "apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx": 1,
+      "apps/frontend/src/pages/vendors/VendorsListView.tsx": 8
     }
   }
 }

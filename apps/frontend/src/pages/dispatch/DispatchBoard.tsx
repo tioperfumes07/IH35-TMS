@@ -1140,7 +1140,7 @@ export function DispatchBoard({
       keys: HOS_COLUMNS.map((hosCol) => `hos_${hosCol.key}`),
     },
     {
-      label: "Load",
+      label: "Load details",
       keys: [
         "customer", "commodity", "wo", "pickup", "pickup_date", "pickup_time",
         "delivery", "delivery_date", "delivery_time", "cargo_temp", "linehaul",

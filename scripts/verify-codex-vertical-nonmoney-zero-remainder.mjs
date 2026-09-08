@@ -112,6 +112,18 @@ const PROTECTED = new Set([
   "connectivity\tmaintenance:maintenance.modal.triage",
   "connectivity\tmaintenance:maintenance.panel.road_service_active",
   "connectivity\tmaintenance:maintenance.panel.wotime_tracking",
+  // Owner-lane gaps awaiting atomic PRs from CC-1 (accounting/banking) and CC-3 (lists/cash-flow).
+  // These are genuine connectivity/reverse_link gaps on non-money panels; they grant no Built credit.
+  "connectivity\taccounting:accounting.panel.expand",
+  "connectivity\taccounting:accounting.panel.journal_postings",
+  "connectivity\taccounting:accounting.panel.money_proof_trail",
+  "connectivity\tbanking:banking.panel.drift_alerts",
+  "connectivity\tcash-flow:cash-flow.popover.adjust",
+  "connectivity\tlists:lists.dialog.bulk_pre_validation",
+  "reverse_link\taccounting:accounting.panel.expand",
+  "reverse_link\taccounting:accounting.panel.journal_postings",
+  "reverse_link\taccounting:accounting.panel.money_proof_trail",
+  "reverse_link\tcash-flow:cash-flow.popover.adjust",
   // CLASS-F5973-TRUE-REMAINDER-ACCOUNTING-UNIT-FINANCE — retired. accounting:unit.detail.
   // finance_linkage:reverse_link is now exact-owned: verify-unit-finance-gl-je-reverse.mjs checks
   // BOTH fleet.required.json's and accounting.required.json's copies of this cross-module leaf

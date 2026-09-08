@@ -10,6 +10,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const ROUTES = path.join(ROOT, "apps/backend/src/maintenance/work-orders.routes.ts");
@@ -61,17 +63,13 @@ function selftest() {
     console.error("selftest FAIL: could not strip create-path refresh");
     process.exit(1);
   }
-  fs.writeFileSync(ROUTES, broken);
-  try {
-    const errors = check(broken);
-    if (!errors.length) {
-      console.error("selftest FAIL: expected errors after stripping refresh");
-      process.exit(1);
-    }
-    console.log("selftest PASS: stripped refresh → FAIL as expected");
-  } finally {
-    fs.writeFileSync(ROUTES, original);
+  // Check against the in-memory broken string — no need to write to disk
+  const errors = check(broken);
+  if (!errors.length) {
+    console.error("selftest FAIL: expected errors after stripping refresh");
+    process.exit(1);
   }
+  console.log("selftest PASS: stripped refresh → FAIL as expected");
 }
 
 if (process.argv.includes("--selftest")) selftest();

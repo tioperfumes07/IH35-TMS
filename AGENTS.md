@@ -12,7 +12,7 @@
 
 > Merge on green + proof. No `JORGE-APPROVED`. **USMCA only.** Every USMCA row is REAL unless `is_sample_data=true`. Never POST Book Load. No seat financial fixtures. (Both mean TEST/SAMPLE data and wizard probing. **Owner order 2026-09-05 04:47Z: the real-settlement SEED — `scripts/seed-settlements-<seat>.ts`, `is_sample_data=false`, through the service layer — is ORDERED, not forbidden.** Do not cite this line against it.) U14 closed — never recertify.
 
-> **On-demand (not session queue):** DoD/evidence — [docs/specs/DEFINITION-OF-DONE.md](docs/specs/DEFINITION-OF-DONE.md) · PR checklist — [docs/specs/PER-PR-CHECKLIST.md](docs/specs/PER-PR-CHECKLIST.md) · architecture — [docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md](docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md)
+> **On-demand (not session queue):** DoD/evidence — [docs/specs/DEFINITION-OF-DONE.md](docs/specs/DEFINITION-OF-DONE.md) · PR checklist — [docs/specs/PER-PR-CHECKLIST.md](docs/specs/PER-PR-CHECKLIST.md) · architecture — [docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md](docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md) · findings law — [docs/audit/FINDINGS-TRIPLE-LOCK-LAW.md](docs/audit/FINDINGS-TRIPLE-LOCK-LAW.md)
 
 ---
 

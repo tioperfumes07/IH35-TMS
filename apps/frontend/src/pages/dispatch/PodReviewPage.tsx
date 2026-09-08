@@ -6,7 +6,6 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { SelectCombobox } from "../../components/Combobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -194,8 +193,8 @@ export function PodReviewPage() {
         </label>
         <label className="text-xs">
           POD status
-          <SelectCombobox
-            className="mt-1 block w-full"
+          <select
+            className="mt-1 block w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={staged.draft.statusFilter}
             onChange={(event) => staged.setDraft({ ...staged.draft, statusFilter: event.target.value as typeof statusFilter })}
             data-testid="pod-status-filter"
@@ -204,7 +203,7 @@ export function PodReviewPage() {
             <option value="approved">Approved</option>
             <option value="rejected">Rejected</option>
             <option value="">All</option>
-          </SelectCombobox>
+          </select>
         </label>
       </div>
     </CollapsedListFilters>

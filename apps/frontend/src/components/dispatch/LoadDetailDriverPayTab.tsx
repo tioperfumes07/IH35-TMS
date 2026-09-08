@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { formatMoneyCents } from "./constants";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
@@ -123,7 +123,7 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
     <div className="ldt-body" data-testid="driver-pay-tab">
       <div className="ldt-rowbar">
         <div>
-          Driver bill <b className="ldt-k">{bill.bill_number}</b> ·{" "}
+          Driver bill <b className="ldt-k">{visibleDocumentLabel(bill.bill_number, bill.id, "Driver bill")}</b> ·{" "}
           {driver_id ? <EntityLink kind="driver" id={driver_id} label={entityLabel(driver_name, driver_id, "Driver")} /> : <span className="ldt-muted">no driver</span>} ·{" "}
           <span className={pillClass(bill.status === "open" ? "pending" : "approved")}>{statusLabel(bill.status)}</span>
           {bill.status === "open" ? <span className="ldt-muted"> · accrues to the open tour</span> : null}

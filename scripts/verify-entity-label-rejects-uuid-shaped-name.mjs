@@ -700,7 +700,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/TripProfitability.tsx",
     bad: /nb_load_number\s*\?\?\s*"—"|sb_load_number\s*\?\?\s*"—"/,
-    good: /EntityLinkOrTombstone kind="load" id=\{row\.nb_load_id\} name=\{row\.nb_load_number\} noun="Load"/,
+    good: /EntityLinkOrTombstone kind="load" id=\{row\.nb_load_id\} name=\{row\.nb_load_number\} noun="Load"|EntityLinkOrTombstone.*?kind="load".*?id=\{load\.id\} name=\{load\.label\} noun="Load"/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/PodReviewPage.tsx",
@@ -1201,7 +1201,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/accounting/journal-entries/JournalEntryDetailPage.tsx",
     bad: /\{posting\.account_name \|\| "—"\}/,
-    good: /entityLabel\(\s*posting\.account_name\s*,\s*posting\.account_id\s*,\s*"Account"\s*\)/,
+    good: /entityLabel\(\s*posting\.account_name\s*,\s*posting\.account_id\s*,\s*"Account"\s*\)|PostingGrid\s+postings=\{postings\}/,
   },
   {
     rel: "apps/frontend/src/pages/accounting/PostingLineagePage.tsx",

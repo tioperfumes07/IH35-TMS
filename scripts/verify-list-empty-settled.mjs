@@ -338,7 +338,7 @@ const MIGRATED = [
   },
   {
     file: "apps/frontend/src/pages/dispatch/TripProfitability.tsx",
-    empties: ["No trips closed in this period."],
+    empties: ["No company settlements in this period."],
   },
   { file: "apps/frontend/src/pages/work-orders/WorkOrdersConsoleListPage.tsx", empties: ["No work orders match the current filters."] },
   { file: "apps/frontend/src/pages/safety/AccidentsPage.tsx", empties: ["No accident reports found."] },

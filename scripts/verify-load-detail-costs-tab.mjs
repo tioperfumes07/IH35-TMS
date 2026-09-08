@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["connectivity","reverse_link","load"],"leaves":["dispatch.panel.dispatch_load_costs"]} */
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";

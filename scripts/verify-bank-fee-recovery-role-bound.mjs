@@ -50,7 +50,7 @@ function checkResolver(src) {
 
 function checkMaterializer(src) {
   const errors = [];
-  if (!/d\.deduction_type === "wire_fee" \|\| d\.deduction_type === "ach_fee"/.test(src)) {
+  if (!/(?:d\.deduction_type|deductionType)\s*===\s*"wire_fee"\s*\|\|\s*(?:d\.deduction_type|deductionType)\s*===\s*"ach_fee"/.test(src)) {
     errors.push(`${MATERIALIZER_PATH}: missing the wire_fee/ach_fee deduction_type branch`);
   }
   if (!/roleKey = "bank_fee_recovery";/.test(src)) {

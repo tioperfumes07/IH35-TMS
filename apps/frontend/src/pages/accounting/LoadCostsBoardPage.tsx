@@ -8,6 +8,7 @@ import { getAttachmentDownloadUrl } from "../../api/attachments";
 import { getDownloadUrl } from "../../api/docs";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS, mmmDd } from "../../lib/formatDate";
@@ -209,7 +210,7 @@ const REGISTER_COLUMNS: Array<ParityColumn<RegisterRow>> = [
   { key: "number", label: "Number", testId: "reg-col-number", sortable: true, className: "whitespace-nowrap", sortValue: r => r.number, render: r => <span className="font-semibold text-slate-700">{r.number}</span> },
   { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateUS(r.date) : DASH },
   { key: "party", label: "Vendor / Driver", testId: "reg-col-party", sortable: true, sortValue: r => r.party, render: r => r.party || DASH },
-  { key: "load", label: "Load", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap", sortValue: r => r.loadNumber ?? "", render: r => r.loadId ? <Link className="font-semibold text-slate-700 underline" to={`/accounting/load-costs/${r.loadId}?tab=Costs`}>{r.loadNumber ?? r.loadId}</Link> : DASH },
+  { key: "load", label: "Load", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap", sortValue: r => r.loadNumber ?? "", render: r => r.loadId ? <EntityLink kind="load" id={r.loadId} label={r.loadNumber ?? r.loadId} /> : DASH },
   { key: "detail", label: "Description", testId: "reg-col-detail", sortable: true, sortValue: r => r.detail, render: r => <span className="text-[#4B5563]">{r.detail || DASH}</span> },
   // REG-PARSE (owner 2026-09-06 05:2xZ): receipt number, address and settlement number are their own columns.
   { key: "receipt_number", label: "Receipt no.", testId: "reg-col-receipt-number", sortable: true, className: "whitespace-nowrap", sortValue: r => r.receiptNumber ?? "", render: r => r.receiptNumber ? <span className="ldt-k">{r.receiptNumber}</span> : DASH },
@@ -240,7 +241,7 @@ const DRIVER_PAY_COLUMNS: Array<ParityColumn<RegisterRow>> = [
   { key: "number", label: "Number", testId: "reg-col-number", sortable: true, className: "whitespace-nowrap", sortValue: r => r.number, render: r => <span className="font-semibold">{r.number}</span> },
   { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateUS(r.date) : DASH },
   { key: "party", label: "Driver", testId: "reg-col-party", sortable: true, sortValue: r => r.party, render: r => r.party || DASH },
-  { key: "load", label: "Load", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap", sortValue: r => r.loadNumber ?? "", render: r => r.loadId ? <Link className="ldt-link" style={{ display: "inline" }} to={`/accounting/load-costs/${r.loadId}?tab=Costs`}>{r.loadNumber ?? r.loadId}</Link> : DASH },
+  { key: "load", label: "Load", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap", sortValue: r => r.loadNumber ?? "", render: r => r.loadId ? <EntityLink kind="load" id={r.loadId} label={r.loadNumber ?? r.loadId} /> : DASH },
   { key: "loaded", label: "Loaded mi × rate", testId: "reg-col-loaded", sortable: false, className: `${NUM} ldt-m`, render: r => milesRateCell(r.loadedMiles, r.loadedRateCents) },
   { key: "empty", label: "Empty mi × rate", testId: "reg-col-empty", sortable: false, className: `${NUM} ldt-m`, render: r => milesRateCell(r.emptyMiles, r.emptyRateCents) },
   { key: "gross", label: "Gross", testId: "reg-col-gross", sortable: true, className: `${NUM} ldt-m`, sortValue: r => r.grossCents ?? 0, render: r => r.grossCents == null ? DASH : fmt(r.grossCents) },
@@ -261,7 +262,7 @@ function loadCell(loadsById: Map<string, string>): ParityColumn<RegisterRow> {
     render: r => {
       if (!r.loadId) return DASH;
       const label = loadsById.get(r.loadId) ?? r.loadNumber ?? r.loadId;
-      return <Link className="ldt-link" style={{ display: "inline" }} to={`/accounting/load-costs/${r.loadId}?tab=Costs`}>{label}</Link>;
+      return <EntityLink kind="load" id={r.loadId} label={label} />;
     },
   };
 }
@@ -639,7 +640,7 @@ export function LoadCostsBoardPage() {
     deadhead_pay: visible.reduce((n, r) => n + (r.deadhead_pay_cents == null ? 0 : Number(r.deadhead_pay_cents)), 0), gross: driver,
   }), [visible, revenue, driver]);
   const columns: Array<ParityColumn<BoardRow>> = [
-    { key: "load", label: "Load", testId: "col-load", sortable: true, alwaysVisible: true, sortValue: r => r.load_number, render: r => <Link className="font-semibold text-slate-700 underline" to={`/accounting/load-costs/${r.load_id}?tab=Costs`}>{r.load_number}</Link> },
+    { key: "load", label: "Load", testId: "col-load", sortable: true, alwaysVisible: true, sortValue: r => r.load_number, render: r => <EntityLink kind="load" id={r.load_id} label={r.load_number} /> },
     // LOAD-COSTS-RETURN-COLS (owner 2026-09-08, item 3): "Unassigned" is a distinct, real state
     // (no unit ever booked to this load) -- a plain "—" reads as "not measured", the same dash
     // every other untracked cell on this board already uses. Named so an operator scanning the

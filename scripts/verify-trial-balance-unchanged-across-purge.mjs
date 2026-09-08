@@ -209,7 +209,7 @@ function selftest() {
 
 async function main() {
   const args = process.argv.slice(2);
-  if (args.includes("--selftest")) {
+  if (process.argv.includes("--selftest")) {
     selftest();
     return;
   }

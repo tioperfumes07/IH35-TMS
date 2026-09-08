@@ -36,6 +36,7 @@ const SHARED_SHELLS = [
   "apps/frontend/src/pages/lists/dispatch/DispatchCatalogListPage.tsx",
   "apps/frontend/src/pages/lists/accounting/AccountingCatalogListPage.tsx",
   "apps/frontend/src/pages/lists/driver/DriverCatalogListPage.tsx",
+  "apps/frontend/src/pages/lists/safety/SafetyGenericCatalogListPage.tsx",
 ];
 
 const SHELL_BASENAMES = new Set(
@@ -45,6 +46,7 @@ const SHELL_BASENAMES = new Set(
 /** Search-only / create-elsewhere slices (not catalog +Create shells). */
 const ALLOWED_NON_CREATE_LIST_PAGES = new Set([
   "apps/frontend/src/pages/lists/names/BrokersListPage.tsx", // customer_type=broker; create via customers
+  "apps/frontend/src/pages/lists/LocationsListPage.tsx", // locations managed via maintenance/geofence; search-only slice
 ]);
 
 function read(rel) {

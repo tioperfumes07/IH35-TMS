@@ -679,7 +679,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             <DrillKpiCard
               testId="factoring-kpi-reserve-balance"
               label="Reserve balance"
-              value={summaryQuery.isError ? null : fmtCurrency(summary?.reserve_balance)}
+              value={summaryQuery.isError ? "—" : fmtCurrency(summary?.reserve_balance)}
               to={FACTORING_TAB_PATH.reserve_tracker}
             />
             {/* FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY: this is Advance +
@@ -702,7 +702,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
               testId="factoring-kpi-recourse-days"
               label="Recourse days"
               value={summaryQuery.isError ? null : Number(summary?.recourse_days ?? 95)}
-              unavailable="Contract recourse window (days)"
+              to={FACTORING_TAB_PATH.recourse_pipeline}
             />
             <DrillKpiCard
               testId="factoring-kpi-chargebacks"

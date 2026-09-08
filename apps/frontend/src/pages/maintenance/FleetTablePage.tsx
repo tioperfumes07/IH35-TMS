@@ -11,6 +11,7 @@ import { downloadFleetLocationHosXlsx, getFleetLocationHos } from "../../api/rep
 import { useListState } from "../../components/list-state";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
+import { KpiCard } from "../../components/layout/KpiCard";
 import { BUTTON_MD_SIZE_CLASS } from "../../design/tokens";
 
 type Props = {
@@ -413,17 +414,15 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
           active={effectiveStatus === "OutOfService"}
           onClick={() => setStatus("OutOfService")}
         />
-        <DrillKpiCard
+        <KpiCard
           label="Avg Age"
-          value={kpis.avg_age_years == null ? null : `${Number(kpis.avg_age_years).toFixed(1)} y`}
-          active={searchParams.get("sort") === "year" && searchParams.get("dir") === "asc"}
-          onClick={() =>
-            patchParams((params) => {
-              // Oldest model year first is the record-level drill behind the aggregate age.
-              params.set("sort", "year");
-              params.set("dir", "asc");
-            })
-          }
+          number={kpis.avg_age_years == null ? "—" : `${Number(kpis.avg_age_years).toFixed(1)} y`}
+          onClick={() => {
+            const params = new URLSearchParams(searchParams);
+            params.set("sort", "year");
+            params.set("dir", "asc");
+            setSearchParams(params, { replace: true });
+          }}
         />
       </div>
 

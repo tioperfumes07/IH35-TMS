@@ -522,7 +522,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
               Acquisition date
               <DatePicker
                 id="property-tax-acquisition-date"
-                className={`${FILTER_CONTROL_SIZE_CLASS} mt-1 w-40 rounded-sm border px-2 text-xs`}
+                className={`${FILTER_CONTROL_SIZE_CLASS} mt-1 w-40`}
                 value={acquisitionDate}
                 onChange={setAcquisitionDate}
               />

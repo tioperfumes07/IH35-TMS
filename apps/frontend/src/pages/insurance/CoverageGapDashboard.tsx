@@ -13,6 +13,11 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+
+/** Convert raw missing-type codes to human-readable labels using the catalog map. */
+function missingTypeLabels(codes: string[], typeNames: Map<string, string>): string {
+  return codes.map((code) => typeNames.get(code) ?? code).join(", ");
+}
 import { ListErrorState } from "../../components/ListErrorState";
 import { ApiError } from "../../api/client";
 import { useSearchParams } from "react-router-dom";
@@ -171,7 +176,12 @@ export function CoverageGapDashboard() {
       },
       render: (row) => <CoverageChip status={coverageCell(code, row.missing_types, requiredTypes)} />,
     }));
-    return [unitCol, ...typeCols];
+    const missingTypesCol: ParityColumn<InsuranceCoverageGapUnit> = {
+      key: "missing_types",
+      label: "Missing types",
+      render: (row) => <span className="text-xs text-slate-600">{missingTypeLabels(row.missing_types, typeNameByCode)}</span>,
+    };
+    return [unitCol, ...typeCols, missingTypesCol];
   }, [catalogCodes, typeNameByCode, requiredTypes]);
 
   if (!companyId) {
@@ -250,6 +260,19 @@ export function CoverageGapDashboard() {
           <p className="mt-2 text-page-title font-semibold text-slate-900">{summary.expiring90.length}</p>
         </article>
       </section>
+
+      {summary.unitsWithoutActiveCoverage.length > 0 ? (
+        <section className="rounded-sm border border-gray-200 bg-white p-4">
+          <h3 className="text-xs font-semibold text-slate-900">Units without active coverage</h3>
+          <ul className="mt-2 space-y-1">
+            {summary.unitsWithoutActiveCoverage.slice(0, 10).map((row) => (
+              <li key={row.unit_id} className="text-xs text-slate-600">
+                <EntityLink kind="unit" id={row.unit_id} label={unitLabel(row)} /> — {missingTypeLabels(row.missing_types, typeNameByCode)}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section className="rounded-sm border border-gray-200 bg-white p-4">
         <h3 className="text-xs font-semibold text-slate-900">Coverage by type</h3>

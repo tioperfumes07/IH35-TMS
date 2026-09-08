@@ -105,7 +105,11 @@ export function InvoiceSearchReportPage() {
       label: "Load",
       sortable: true,
       sortValue: (r) => r.source_load_number ?? "",
-      render: (r) => <span className="font-mono text-gray-600">{r.source_load_number ?? "—"}</span>,
+      render: (r) => r.source_load_id ? (
+        <EntityLink kind="load" id={r.source_load_id} label={String(r.source_load_number ?? "—")} />
+      ) : (
+        <span className="font-mono text-gray-600">{r.source_load_number ?? "—"}</span>
+      ),
     },
     {
       key: "status",

@@ -27,7 +27,7 @@ export type SettlementKpiGridProps = {
   companyMarginSub: string;
 };
 
-function Tile({ label, value, sub, negative }: { label: string; value: string; sub: string; negative?: boolean }) {
+function SettlementTile({ label, value, sub, negative }: { label: string; value: string; sub: string; negative?: boolean }) {
   return (
     <div
       style={{
@@ -73,21 +73,21 @@ export function SettlementKpiGrid(props: SettlementKpiGridProps) {
       data-testid="settlement-kpi-grid"
       style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8, margin: "10px 0 14px" }}
     >
-      <Tile label="Revenue" value={formatUsdCents(revenueCents)} sub={revenueSub} />
-      <Tile label="Driver pay" value={formatUsdCents(driverPayCents)} sub={driverPaySub} />
-      <Tile
+      <SettlementTile label="Revenue" value={formatUsdCents(revenueCents)} sub={revenueSub} />
+      <SettlementTile label="Driver pay" value={formatUsdCents(driverPayCents)} sub={driverPaySub} />
+      <SettlementTile
         label="Reimbursements"
         value={formatUsdCents(reimbursementCents)}
         sub={`${reimbursementLines} ${reimbursementLines === 1 ? "line" : "lines"}`}
       />
-      <Tile
+      <SettlementTile
         label="Deductions"
         value={deductionCents > 0 ? `−${formatUsdCents(deductionCents)}` : formatUsdCents(0)}
         sub={deductionBreakdown || "0 lines"}
         negative={deductionCents > 0}
       />
-      <Tile label="Net pay" value={formatUsdCents(netPayCents)} sub="Driver take-home this period" />
-      <Tile label="Company margin" value={formatUsdCents(companyMarginCents)} sub={companyMarginSub} negative={companyMarginCents < 0} />
+      <SettlementTile label="Net pay" value={formatUsdCents(netPayCents)} sub="Driver take-home this period" />
+      <SettlementTile label="Company margin" value={formatUsdCents(companyMarginCents)} sub={companyMarginSub} negative={companyMarginCents < 0} />
     </div>
   );
 }

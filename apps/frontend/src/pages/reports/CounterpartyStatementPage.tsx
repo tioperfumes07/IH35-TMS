@@ -122,7 +122,7 @@ const expenseColumns: Array<ParityColumn<ExpenseRow>> = [
     render: (exp) => exp.transaction_date ? mmmDd(exp.transaction_date) : "—",
   },
   { key: "memo", label: "Description", sortable: true, render: (exp) => exp.memo ?? "—" },
-  { key: "load_number", label: "Load", sortable: true, render: (exp) => exp.load_number ?? "—" },
+  { key: "load_number", label: "Load", sortable: true, render: (exp) => exp.load_id ? <EntityLink kind="load" id={exp.load_id} label={exp.load_number ?? "—"} /> : (exp.load_number ?? "—") },
   {
     key: "total_amount_cents",
     label: "Amount",
