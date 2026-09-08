@@ -53,6 +53,16 @@ export function pairOutboundReturn(unitLoads: DispatchLoadRow[]): {
 }
 
 /**
+ * Moved out of RoundTrips.tsx (owner order 2026-09-08, Load Costs board "Return Booked" column)
+ * so a second surface computing the same "does this unit still need a return trip" question reads
+ * the ONE definition instead of a local copy that could silently drift out of sync with this one.
+ * An outbound leg still counts as "needs return" only while it's in an active dispatch status --
+ * a delivered-with-no-return-booked outbound is surfaced separately (see
+ * apps/frontend/src/api/dispatch.ts's listUnitsWithoutLoad / hours_since_last_delivery), not by this set.
+ */
+export const NEEDS_RETURN_STATUSES = new Set(["dispatched", "at_pickup", "in_transit", "at_delivery"]);
+
+/**
  * RT-FIX (owner 2026-09-05 02:15Z): a Round Trips bar spans the actual work window —
  * first pickup appointment → last delivery appointment. `created_at` (when the row was keyed)
  * NEVER positions a bar; that is what stacked every bar on "today", one day wide. A load with no

@@ -12,15 +12,13 @@ import type { DataTableErrorState } from "../../lib/tableError";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
-import { RT_KANBAN_CARD_CLASS, RT_KANBAN_COL_MIN, RT_PAIRING_ACTIVE_STATUSES, orderedLegsForUnit, pairOutboundReturn, resolvedTripType } from "./roundTripsLegs";
+import { RT_KANBAN_CARD_CLASS, RT_KANBAN_COL_MIN, RT_PAIRING_ACTIVE_STATUSES, NEEDS_RETURN_STATUSES, orderedLegsForUnit, pairOutboundReturn, resolvedTripType } from "./roundTripsLegs";
 import { RoundTripsTimeline, defaultTimelineRange } from "./RoundTripsTimeline";
 
 const SORT_KEY = "ih35.roundTrips.sort";
 const VIEW_KEY = "ih35.roundTrips.view";
 
 const ACTIVE_STATUSES = new Set<string>(RT_PAIRING_ACTIVE_STATUSES);
-
-const NEEDS_RETURN_STATUSES = new Set(["dispatched", "at_pickup", "in_transit", "at_delivery"]);
 
 type UnitPair = {
   unitId: string;

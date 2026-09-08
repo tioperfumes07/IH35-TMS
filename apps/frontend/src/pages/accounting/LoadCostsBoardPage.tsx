@@ -11,7 +11,9 @@ import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS, mmmDd } from "../../lib/formatDate";
-import { useDispatchLoad } from "../../api/loads";
+import { useDispatchLoad, listAllLoads, type DispatchLoadRow } from "../../api/loads";
+import { listUnitsWithoutLoad } from "../../api/dispatch";
+import { pairOutboundReturn, NEEDS_RETURN_STATUSES } from "../dispatch/roundTripsLegs";
 import { LoadDetailCostsTab } from "../../components/dispatch/LoadDetailCostsTab";
 import { TourPreSettlementTab } from "../../components/dispatch/TourPreSettlementTab";
 import { TourSettlementTab } from "../../components/dispatch/TourSettlementTab";
@@ -549,6 +551,71 @@ export function LoadCostsBoardPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const query = useQuery({ queryKey: ["accounting", "load-costs-board", companyId, showVoided, sortKey, sortDirection], queryFn: () => apiRequest<{ rows: BoardRow[]; unmatched_bank_count: number }>(`/api/v1/accounting/load-costs-board?operating_company_id=${encodeURIComponent(companyId)}&show_voided=${showVoided}&load_costs_sort=${encodeURIComponent(sortKey)}&sort_direction=${sortDirection}`), enabled: Boolean(companyId), retry: false });
   const rows = query.data?.rows ?? [];
+  // LOAD-COSTS-RETURN-COLS (owner 2026-09-08): Days Since Delivery / Return Booked reuse the SAME
+  // computed data Dispatch Home's "Units Needing Return" / round-trip pairing already produce --
+  // never a second copy of the hours-since-delivery math or the NB/TR/SB pairing logic.
+  const unitsWithoutLoadQuery = useQuery({
+    queryKey: ["load-costs-board", "units-without-load", companyId],
+    queryFn: () => listUnitsWithoutLoad(companyId),
+    enabled: Boolean(companyId),
+  });
+  // Company-wide load set (unbounded, all statuses) purely to run pairOutboundReturn per unit --
+  // the SAME pairing engine RoundTrips.tsx uses, reused rather than reimplemented so this column
+  // and the Dispatch Round Trips board can never disagree about whether a unit's return is booked.
+  const allLoadsForPairingQuery = useQuery({
+    queryKey: ["load-costs-board", "all-loads-for-return-pairing", companyId],
+    queryFn: () => listAllLoads({ operating_company_id: [companyId] }),
+    enabled: Boolean(companyId),
+    staleTime: 60_000,
+  });
+  /** unit_number -> whether that unit's most recent outbound leg is still active with no return leg
+   * booked yet (pairOutboundReturn + NEEDS_RETURN_STATUSES, byte-identical to RoundTrips.tsx). */
+  const returnBookedByUnit = useMemo(() => {
+    const map = new Map<string, boolean>();
+    const allLoads = allLoadsForPairingQuery.data?.loads ?? [];
+    const byUnit = new Map<string, DispatchLoadRow[]>();
+    for (const load of allLoads) {
+      const unitNumber = load.assigned_unit_number;
+      if (!unitNumber) continue;
+      const list = byUnit.get(unitNumber) ?? [];
+      list.push(load);
+      byUnit.set(unitNumber, list);
+    }
+    for (const [unitNumber, unitLoads] of byUnit) {
+      const { outbound, returnLoad } = pairOutboundReturn(unitLoads);
+      const needsReturn = Boolean(outbound && !returnLoad && NEEDS_RETURN_STATUSES.has(outbound.status));
+      // "Return Booked" is the inverse of "needs a return" -- No only while a real outbound leg is
+      // still active with nothing booked back; otherwise (no active outbound, or a return already
+      // exists) there's nothing exposed to ask about, so leave it unset (renders "—", not a false "Yes").
+      if (outbound && NEEDS_RETURN_STATUSES.has(outbound.status)) map.set(unitNumber, !needsReturn);
+    }
+    return map;
+  }, [allLoadsForPairingQuery.data]);
+  /** unit_number -> days since that unit's LAST completed delivery, only while the unit is
+   * currently idle (no active load) -- listUnitsWithoutLoad already scopes to exactly that state,
+   * so this never claims a days-since-delivery figure for a unit that's back out on a new load. */
+  const daysSinceDeliveryByUnit = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const u of unitsWithoutLoadQuery.data?.units ?? []) {
+      if (u.hours_since_last_delivery == null) continue;
+      map.set(u.unit_number, Math.floor(u.hours_since_last_delivery / 24));
+    }
+    return map;
+  }, [unitsWithoutLoadQuery.data]);
+  /** A row only gets the days-since-delivery figure if it's the LATEST delivered row for that idle
+   * unit in this dataset -- otherwise an older load for the same now-idle unit would show the same
+   * "current" days-idle figure, which belongs to the unit's most recent delivery, not this one. */
+  const latestDeliveryRowIdByUnit = useMemo(() => {
+    const map = new Map<string, { loadId: string; at: number }>();
+    for (const r of rows) {
+      if (!r.unit_number || !r.actual_delivery_at) continue;
+      const at = Date.parse(r.actual_delivery_at);
+      if (Number.isNaN(at)) continue;
+      const current = map.get(r.unit_number);
+      if (!current || at > current.at) map.set(r.unit_number, { loadId: r.load_id, at });
+    }
+    return map;
+  }, [rows]);
   // LCB-REG — Broker advances/Documents registers aren't filtered by the board's status pills (an
   // advance or a document on a load that's since closed is still real); they resolve a load's
   // display number from the FULL unfiltered board, not `visible`.
@@ -573,7 +640,11 @@ export function LoadCostsBoardPage() {
   }), [visible, revenue, driver]);
   const columns: Array<ParityColumn<BoardRow>> = [
     { key: "load", label: "Load", testId: "col-load", sortable: true, alwaysVisible: true, sortValue: r => r.load_number, render: r => <Link className="font-semibold text-slate-700 underline" to={`/accounting/load-costs/${r.load_id}?tab=Costs`}>{r.load_number}</Link> },
-    { key: "unit", label: "Unit", testId: "col-unit", sortable: true, className: "whitespace-nowrap", sortValue: r => r.unit_number ?? "", render: r => r.unit_number ?? "—" },
+    // LOAD-COSTS-RETURN-COLS (owner 2026-09-08, item 3): "Unassigned" is a distinct, real state
+    // (no unit ever booked to this load) -- a plain "—" reads as "not measured", the same dash
+    // every other untracked cell on this board already uses. Named so an operator scanning the
+    // column can tell "nothing to show" apart from "nobody's driving this yet".
+    { key: "unit", label: "Unit", testId: "col-unit", sortable: true, className: "whitespace-nowrap", sortValue: r => r.unit_number ?? "", render: r => r.unit_number ?? "Unassigned" },
     { key: "driver_name", label: "Driver", testId: "col-driver-name", sortable: true, className: "whitespace-nowrap", sortValue: r => r.driver_name ?? "", render: r => r.driver_name ?? "Not assigned" },
     { key: "pu_date", label: "PU Date", testId: "col-pu-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.pickup_date ?? "", render: r => r.pickup_date ? formatDateUS(r.pickup_date) : "—" },
     { key: "del_date", label: "Del Date", testId: "col-del-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.actual_delivery_at ?? "", render: r => r.actual_delivery_at ? formatDateUS(r.actual_delivery_at) : "—" },
@@ -605,6 +676,43 @@ export function LoadCostsBoardPage() {
     // additive-only law (Rule 07) forbids silently expanding it, so a net-new column joins the same
     // way Margin did rather than being forced into the default view.
     { key: "settlement", label: "Settlement #", testId: "col-settlement", sortable: true, className: "whitespace-nowrap", defaultHidden: true, sortValue: r => r.settlement_display_id ?? "", render: r => r.settlement_id ? <Link className="font-semibold text-slate-700 underline" to={`/driver-finance/settlements?settlement_id=${r.settlement_id}`}>{r.settlement_display_id}</Link> : "—" },
+    // LOAD-COSTS-RETURN-COLS (owner 2026-09-08): same source as Dispatch Home's "Units Needing
+    // Return" tile (listUnitsWithoutLoad's own hours_since_last_delivery) -- never a second copy of
+    // that math. Only the LATEST delivered row for a currently-idle unit gets a value; an older
+    // load for the same now-idle unit renders a dash (it isn't what's making the truck idle today).
+    // defaultHidden like Margin/Settlement # -- spec 09-04-2026 locks the exact 19-column default
+    // set (Rule 07 additive-only), so a net-new column joins opt-in, never forced into the default view.
+    {
+      key: "days_since_delivery", label: "Days Since Delivery", testId: "col-days-since-delivery",
+      sortable: true, className: NUM, defaultHidden: true,
+      sortValue: r => {
+        const latest = r.unit_number ? latestDeliveryRowIdByUnit.get(r.unit_number) : undefined;
+        if (!latest || latest.loadId !== r.load_id) return -1;
+        return r.unit_number ? daysSinceDeliveryByUnit.get(r.unit_number) ?? -1 : -1;
+      },
+      render: r => {
+        const latest = r.unit_number ? latestDeliveryRowIdByUnit.get(r.unit_number) : undefined;
+        if (!latest || latest.loadId !== r.load_id) return DASH;
+        const days = r.unit_number ? daysSinceDeliveryByUnit.get(r.unit_number) : undefined;
+        return days == null ? DASH : `${days}d`;
+      },
+    },
+    // "Return Booked" — reuses roundTripsLegs.ts's pairOutboundReturn + NEEDS_RETURN_STATUSES
+    // (the SAME functions RoundTrips.tsx uses) so this can never drift from what Dispatch's own
+    // Round Trips board says about the same unit.
+    {
+      key: "return_booked", label: "Return Booked", testId: "col-return-booked",
+      sortable: true, className: "whitespace-nowrap text-center", defaultHidden: true,
+      sortValue: r => {
+        const v = r.unit_number ? returnBookedByUnit.get(r.unit_number) : undefined;
+        return v == null ? -1 : v ? 1 : 0;
+      },
+      render: r => {
+        const v = r.unit_number ? returnBookedByUnit.get(r.unit_number) : undefined;
+        if (v == null) return DASH;
+        return v ? "Yes" : "No";
+      },
+    },
   ];
   // Spec §2.2 "the piece the owner keeps pointing at" -- a second header row banding the 19 columns.
   // Hex values are the design law's own literal tokens (--grp-bg / --rev / --cost / --pay), applied

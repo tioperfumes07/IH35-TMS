@@ -416,7 +416,11 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
           </DataPanel>
         </div>
 
-        <DataPanel title="Round-trip exposure" viewAllHref="/dispatch?view=list" accentColor={colors.dispatch.strong}>
+        <DataPanel
+          title="Round-trip exposure" viewAllHref="/dispatch?view=list"
+          titleHint="Loads whose truck is currently dispatched or in transit — out on the road, no return leg confirmed complete yet."
+          accentColor={colors.dispatch.strong}
+        >
           {exposureLoadsQ.isLoading ? (
             <PanelLoading />
           ) : exposureLoadsQ.isError ? (

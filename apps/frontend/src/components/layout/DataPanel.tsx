@@ -4,12 +4,18 @@ import { colors, spacing, typography } from "../../design/tokens";
 
 type Props = {
   title: string;
+  /** LOAD-COSTS-RETURN-COLS (owner 2026-09-08): "Round-Trip Exposure ... reads as an unexplained
+   * number" -- an optional plain-language explainer, shown as a native hover tooltip on the panel
+   * title so a KPI/panel whose name alone doesn't say what it counts can say so without a new
+   * always-visible UI element. Additive-only: every existing DataPanel caller keeps rendering
+   * identically since this prop defaults to none. */
+  titleHint?: string;
   accentColor?: string;
   viewAllHref?: string;
   children: ReactNode;
 };
 
-export function DataPanel({ title, accentColor, viewAllHref, children }: Props) {
+export function DataPanel({ title, titleHint, accentColor, viewAllHref, children }: Props) {
   return (
     <section
       className="overflow-hidden bg-white"
@@ -28,7 +34,8 @@ export function DataPanel({ title, accentColor, viewAllHref, children }: Props) 
             exact locked value, transcribed, not invented. */}
         <span
           className="uppercase"
-          style={{ fontSize: typography.panelHeader, color: colors.columnHeader, letterSpacing: typography.tightUpper, fontWeight: 700 }}
+          style={{ fontSize: typography.panelHeader, color: colors.columnHeader, letterSpacing: typography.tightUpper, fontWeight: 700, cursor: titleHint ? "help" : undefined }}
+          title={titleHint}
         >
           {title}
         </span>
