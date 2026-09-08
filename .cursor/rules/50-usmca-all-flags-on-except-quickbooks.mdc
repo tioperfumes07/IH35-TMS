@@ -1,0 +1,54 @@
+---
+description: USMCA runs with ALL feature flags ENABLED except QuickBooks — money posts to the ledger/GL/register everywhere; QBO write-back stays off; the block-dispatch queue is dead.
+alwaysApply: true
+---
+
+# RULE 50 — USMCA: ALL FLAGS ON EXCEPT QUICKBOOKS (owner ruling 2026-09-07)
+
+Owner, verbatim: **"make this a permanent rule, all flags are on, except quickbooks and block. do it now."**
+
+This supersedes any older doc, memory, or default that treats USMCA money posting as flag-gated OFF.
+
+## The rule (LAW)
+
+For USMCA (`operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'`):
+
+1. **Every `lib.feature_flags` flag is ENABLED** via an operating-company override in
+   `lib.feature_flag_overrides` (`user_uuid IS NULL`, `enabled = true`). Money **posts to the
+   ledger / GL / register everywhere** — invoices + A/R, revenue recognition, settlements, expenses,
+   bills, bill payments, customer payments, **factoring**, driver advances/escrow, bank feed + splits,
+   parts, fuel-card overage, amortization, prepaid, fixed assets, lease, property tax, reimbursement,
+   related-party loan, insurance-claim recovery, safety fine, TONU/cancellation A/R, transfers,
+   warranty. Void-reversal is enabled. There is no "posting is off" state for USMCA.
+
+2. **QuickBooks is the ONLY money exclusion — it stays OFF.** Keep disabled: every `QBO_*` flag
+   (all sync / push / pull / mirror / projection), **`VOID_QBO_MIRROR_ENABLED`**, and
+   **`TMS_QBO_RECON_ENABLED`**. This preserves the standing law **"Parallel books. No write-back to
+   QuickBooks, ever. Reconcile only."** The read-only reconcile surfaces
+   (`QBO_RECONCILE_UI_ENABLED`, `TMS_QBO_RECON_UI_ENABLED`) may remain on — they never write back.
+
+3. **"Block" = the retired block-dispatch / audit-block queue.** It is dead, it is **not a flag**, and
+   it is never resurrected (`Downloads/abb`, `Downloads/20 blocks`, GUARD-WORKORDERS sweep rows, etc.).
+
+4. **New flags default ON for USMCA** unless the new flag is a QuickBooks / QBO write-back flag, in
+   which case it defaults OFF. A seat adding a flag to `lib.feature_flags` must add the USMCA
+   `enabled = true` override in the same change (or leave OFF only if it is a QBO write-back flag).
+
+5. Owner-**action** gates are unchanged by this rule: enabling a *capability* flag (period close/reopen,
+   opening-balance import, permission model) does not authorize a seat to perform the owner-only
+   action. **Nobody closes a period but Jorge; opening balances are owner-entered; no seat moves money
+   to an external system.** The flag being ON only makes the feature available in-app.
+
+## Live state set when this rule was written (proof)
+
+Neon `tiny-field-89581227` branch `br-fancy-credit-akjnd07a`, `bypass_rls=lucia`, USMCA:
+`lib.feature_flag_overrides` — **76 of 76 non-QBO flags `enabled=true`**, **0 QBO sync flags enabled**
+(only the read-only `QBO_RECONCILE_UI_ENABLED` on). `GET /api/v1/healthz` — all critical `ledger.*`
+checks green.
+
+## Note — flags ON ≠ history auto-posted
+
+Flipping a posting flag ON is event-driven: it makes **new** operations post. Rows created while a flag
+was OFF (existing settlements, factoring advances, expenses, invoices) are **not** retroactively posted
+by the flip — they must be back-posted through the existing gated poster. That back-post is normal
+Tier-A money work, done + proven, never new GL math.
