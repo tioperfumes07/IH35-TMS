@@ -332,9 +332,20 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   // form, land on its tab, and clear the params so they don't re-fire the effect or linger in the
   // URL. Manual entry into the free-text fields is untouched (still works, still requires typing
   // MERGE to confirm) — this only removes the "go find the id yourself" dead end.
+  //
+  // MERGE-DEEPLINK-NEVER-FIRES-2026-09-08 (live-Chrome caught): this effect was mount-only
+  // (`[]` deps), but every /factoring/<tab> route renders the SAME FactoringHomePage component
+  // instance — clicking "Merge these" is a client-side route change, not a remount, so a
+  // mount-only effect never saw the new query params. Live-reproduced twice (a real click AND a
+  // full browser navigation to the exact deep-link URL both left "From vendor" / "To vendor"
+  // showing "— (Unassigned)"). Fixed by depending on the two param VALUES (not the whole
+  // searchParams object, which is a new reference every render) so the effect re-runs whenever
+  // they actually change, remount or not.
+  const mergeFromVendorIdParam = searchParams.get("merge_from_vendor_id");
+  const mergeToVendorIdParam = searchParams.get("merge_to_vendor_id");
   useEffect(() => {
-    const fromId = searchParams.get("merge_from_vendor_id")?.trim();
-    const toId = searchParams.get("merge_to_vendor_id")?.trim();
+    const fromId = mergeFromVendorIdParam?.trim();
+    const toId = mergeToVendorIdParam?.trim();
     if (!fromId || !toId) return;
     setMergeFromVendor(fromId);
     setMergeToVendor(toId);
@@ -347,8 +358,10 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     next.delete("merge_to_vendor_id");
     next.delete("merge_to_vendor_name");
     setSearchParams(next, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- searchParams/setSearchParams/state
+    // setters are intentionally excluded: searchParams is a fresh object every render (would
+    // fire every render if included) and the setters are referentially stable.
+  }, [mergeFromVendorIdParam, mergeToVendorIdParam]);
 
   const EMPTY_FILTERS = {
     customerId: "",

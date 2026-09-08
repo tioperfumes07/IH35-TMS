@@ -47,6 +47,29 @@ export function check({ bannerText, homeText }) {
     failures.push(`${HOME_FILE}: prefill effect no longer switches to the vendor_merges tab — a deep-link would prefill an invisible form`);
   }
 
+  // MERGE-DEEPLINK-NEVER-FIRES-2026-09-08 (live-Chrome caught): the original fix used a
+  // mount-only `useEffect(() => {...}, [])`, but every /factoring/<tab> route renders the SAME
+  // FactoringHomePage instance — clicking "Merge these" is a client-side route change, not a
+  // remount, so the effect never re-ran and the form stayed "Unassigned" every time. Live-
+  // reproduced twice (a real click AND a full browser navigation to the exact deep-link URL).
+  // The static checks above only assert the wiring EXISTS, not that it can actually fire on a
+  // client-side nav — this one specifically rejects the empty-deps mount-only shape that broke
+  // it in production.
+  const effectStart = homeText.indexOf('searchParams.get("merge_from_vendor_id")');
+  if (effectStart === -1) {
+    failures.push(`${HOME_FILE}: could not locate the merge-prefill effect body to check its dependency array`);
+  } else {
+    const window = homeText.slice(effectStart, effectStart + 1200);
+    const depsMatch = window.match(/\}, (\[[^\]]*\])\);/);
+    if (!depsMatch) {
+      failures.push(`${HOME_FILE}: could not find the merge-prefill effect's closing dependency array within range`);
+    } else if (depsMatch[1].replace(/\s/g, "") === "[]") {
+      failures.push(
+        `${HOME_FILE}: merge-prefill effect has a mount-only "[]" dependency array — it will never re-run on a client-side tab switch (the actual production bug), only on a true component remount. Depend on the specific query-param values (e.g. the extracted merge_from_vendor_id/merge_to_vendor_id strings), not an empty array.`,
+      );
+    }
+  }
+
   return failures;
 }
 
@@ -98,7 +121,26 @@ async function selftest() {
   }
   console.log("PASS(selftest): planted home regression correctly caught");
 
-  console.log("PASS: selftest 2/2 planted offenders caught; baseline clean");
+  const effectStart = files.homeText.indexOf('searchParams.get("merge_from_vendor_id")');
+  const window = files.homeText.slice(effectStart, effectStart + 1200);
+  const depsMatch = window.match(/\}, (\[[^\]]*\])\);/);
+  if (!depsMatch) {
+    console.error("FAIL(selftest): could not locate the real dependency array to plant the mount-only regression against");
+    process.exit(1);
+  }
+  const offenderMountOnly = files.homeText.replace(`}, ${depsMatch[1]});`, "}, []);");
+  if (offenderMountOnly === files.homeText) {
+    console.error("FAIL(selftest): mount-only offender mutation did not change the source");
+    process.exit(1);
+  }
+  const f3 = check({ ...files, homeText: offenderMountOnly });
+  if (f3.length === 0) {
+    console.error("FAIL(selftest): planted mount-only \"[]\" deps regression (the actual production bug) was NOT caught");
+    process.exit(1);
+  }
+  console.log("PASS(selftest): planted mount-only deps regression correctly caught");
+
+  console.log("PASS: selftest 3/3 planted offenders caught; baseline clean");
 }
 
 if (process.argv.includes("--selftest")) {
