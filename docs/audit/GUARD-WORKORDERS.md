@@ -9561,3 +9561,44 @@ GROUP BY` showing the Feb-2026 zero row, confirmed with and without `voided_at` 
 accounts | **REOPENED · pagination sub-item CLOSED with live proof · balance sub-item narrowed to a
 specific evidenced data gap, correctly left OPEN pending a live Plaid re-sync capability neither BANK-F30002
 nor this session's DB-only tools can perform** |
+
+## NEW-29 / NEW-30 / NEW-31 — board closure (CC-2, 2026-09-08)
+
+**Shipped: PR #21455** (`cc-2/new-29-30-31-dispatch-completion-prompts`), guarded by
+`scripts/verify-dispatch-completion-prompts-wired.mjs` (verify-step 10831, reservation PR #21454).
+
+New dispatch-owned route `apps/backend/src/dispatch/completion-prompts.routes.ts` (wired into
+`index.ts`) + new frontend `LoadCompletionPromptsCard.tsx` (mounted in `LoadDetailDrawer.tsx`'s
+Overview tab, renders nothing unless the load is reefer or has a late stop):
+- **NEW-29 (lumper receipts sent) — CLOSED.** `POST .../completion-prompts/lumper {receipts_sent}`,
+  click-confirmed Yes/No, gated on `is_reefer` (mirrors `CargoTempBadge.tsx`'s canonical
+  `isReeferCommodity()` predicate, server-side).
+- **NEW-30 (lumper who's-paying + invoice-customer-too) — CLOSED.** Who's-paying reads the
+  already-existing Book Load-captured `mdata.load_stops.lumper_paid_by` (read-only — Book Load
+  stays Cursor's write path); when paid-by is not `carrier`, a second click-confirm asks "Invoice
+  the customer for this lumper too?" (`POST .../completion-prompts/lumper {invoice_customer}`).
+- **NEW-31 (late driver → penalty prompt) — CLOSED.** Late stops are detected by comparing
+  `mdata.load_stops.actual_arrival_at` against `appointment_end_at`/`scheduled_arrival_at` (both
+  pre-existing columns); `POST .../completion-prompts/late-penalty {penalty}` records the decision.
+
+**Billing-hook constraint honored, not built around:** none of the three new decisions
+(receipts-sent, invoice-customer-too, late-penalty) had a column anywhere, and CC-2 cannot author
+migrations (`verify-migration-lane-band.mjs`). All three are recorded as durable
+`audit.audit_events` rows — the exact append-only pattern `driver/arrival-prompts.routes.ts`
+already uses for driver arrival confirm/dismiss — not a new table, not a schema change. The actual
+billing hooks already exist and are CC-1/AP-owned: `accounting.expense_lines.billable_customer_uuid`
+(the already-built, currently `LUMPER_LIFECYCLE_ENABLED`-gated Lumper Lifecycle scenario-2 pipeline
+in `apps/backend/src/cash-advances/lumper-*.ts`) is the natural consumer of
+`dispatch.lumper_customer_invoice_requested`, and driver-finance internal fines are the natural
+consumer of `dispatch.late_penalty_decision` when `penalty=true`. **Per the owner's explicit "flag
+CC-1 rather than reaching into CC-1's files" instruction, this PR only EMITS those two audit events
+— CC-1/AP should wire the actual consumption whenever `LUMPER_LIFECYCLE_ENABLED`/internal-fines
+posting is ready to act on them.** Flagging here rather than opening a separate row since the hook
+already has an owner and an existing (flagged-off) pipeline — nothing new for CC-1 to design, only
+to wire.
+
+| id | status |
+|---|---|
+| NEW-29 | CLOSED — PR #21455 |
+| NEW-30 | CLOSED — PR #21455 |
+| NEW-31 | CLOSED — PR #21455 (billing-hook consumption flagged to CC-1, not built here — see above) |
