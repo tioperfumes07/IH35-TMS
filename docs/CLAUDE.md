@@ -241,11 +241,12 @@ inbound links until SAF-F22).
 
 ## 13) Files Next Claude Must Read (In Order)
 
-1. `docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md`
-2. `docs/trackers/phase-1.md`
-3. `docs/trackers/phase-2.md`
-4. `docs/STATUS.md`
-5. `package.json` (scripts and verification matrix)
+1. `docs/MEMORY_BANK.md` — fast-scan architectural decisions + known quirks (update it before closing any session that lands complex/cross-cutting logic)
+2. `docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md`
+3. `docs/trackers/phase-1.md`
+4. `docs/trackers/phase-2.md`
+5. `docs/STATUS.md`
+6. `package.json` (scripts and verification matrix)
 
 ## 14) Most Recent Work Context
 
