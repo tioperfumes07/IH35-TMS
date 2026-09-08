@@ -30,7 +30,18 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
   const bills = ds.driver_bills;
   const grossFromBills = bills.reduce((s, b) => s + b.gross_amount_cents, 0);
   const gross = ds.gross_cents || grossFromBills;
+  // OWNER-LIVE-DEFECT-2026-09-08 (Jorge, live walkthrough of S-13644): for a CLOSED settlement,
+  // ds.net_cents is driver_finance.driver_settlements.net_pay — the stored, authoritative figure
+  // the close engine computed as gross - deductions + reimbursements — it already has
+  // reimbursements baked in. The render below used to add reimbursements_cents to `net` a SECOND
+  // time unconditionally, so this card showed net_pay + reimbursements twice for every closed
+  // settlement. Live proof: S-13644's net_pay is $1,802.86 (queried live, Neon
+  // tiny-field-89581227/br-fancy-credit-akjnd07a) but this card rendered $2,015.11 — exactly
+  // $1,802.86 + $212.25 (reimbursements_cents) double-added. For an OPEN settlement `net` here
+  // never included reimbursements, so it still needs the one addition below. `netTotal` is the
+  // single, correct, once-added figure for both states.
   const net = t.is_open ? gross - ds.escrow_cents - ds.recoveries_cents : ds.net_cents;
+  const netTotal = t.is_open ? net + (ds.reimbursements_cents || 0) : net;
 
   return <div className="ldt-body" data-testid="tour-settlement-tab" data-surface="load-detail" data-frozen={!t.is_open}>
     <div className="ldt-rowbar">
@@ -49,7 +60,7 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
           <div className="ldt-row"><span>Escrow contribution<span className="ldt-sub">$25 per load, capped at $2,500 on account</span></span><span className="ldt-m">−{money(ds.escrow_cents, currencyCode)}</span></div>
           <div className="ldt-row"><span>Recoveries (fuel overage / damage / fees)</span><span className="ldt-m">−{money(ds.recoveries_cents, currencyCode)}</span></div>
           {ds.reimbursements_cents ? <div className="ldt-row"><span>Reimbursements to the driver</span><span className="ldt-m">+{money(ds.reimbursements_cents, currencyCode)}</span></div> : null}
-          <div className="ldt-row big"><span>Net pay · 5% floor respected</span><span className="ldt-m" data-testid="driver-net">{money(net + (ds.reimbursements_cents || 0), currencyCode)}</span></div>
+          <div className="ldt-row big"><span>Net pay · 5% floor respected</span><span className="ldt-m" data-testid="driver-net">{money(netTotal, currencyCode)}</span></div>
         </div>
         {ds.lines.length ? <div style={{ padding: "0 10px 10px" }}>
           <div className="ldt-muted" style={{ margin: "8px 0 4px" }}>Settlement lines · every line carries its GL account (owner ruling 2026-09-06)</div>
