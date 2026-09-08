@@ -873,7 +873,6 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       tab === "payments_to_you" ||
       tab === "debtor_receipts" ||
       tab === "reserve" ||
-      tab === "chargebacks_overpayments" ||
       tab === "loan_save" ||
       tab === "unapplied_cash" ||
       tab === "invoice_status_report" ||
@@ -881,6 +880,58 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
         <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700" data-testid={`factoring-stub-${tab}`}>
           <div className="font-medium text-gray-900">{SUBNAV.find((item) => item.id === tab)?.label}</div>
           <p className="mt-1">Not yet wired to real data — this tab exists and is reachable, but its content is a placeholder for this pass. See docs/audit/GUARD-WORKORDERS.md (FAC-09a) for what is real vs. stub.</p>
+        </div>
+      ) : null}
+
+      {/* FAC-09a Chargebacks & Overpayments (real, this pass): the real portal's own screenshot
+          set (09-08-2026-Cursor-FAC09a-CORRECTED-FROM-REAL-SCREENSHOTS.md) specifies exact column
+          layouts for Reserve/Fees Paid/Purchase Report/Payments to You/Aging/Account Summary but
+          NOT for this specific debtor-facing tab -- rather than guess at a column spec that was
+          never captured, this reuses the SAME real chargeback/fee history already proven correct
+          on the "Chargebacks & Fees" internal-tools tab (same ChargebacksTable component, same
+          feesQuery.data.history, no new backend query) with a summary strip up front (Total
+          Records + Total Chargebacks/Overpayments, matching the Aging tab's own strip pattern) --
+          honest reuse of real data, not a fabricated new layout. */}
+      {tab === "chargebacks_overpayments" ? (
+        <div className="space-y-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <div className="mb-2 text-xs font-medium text-gray-900">Chargebacks &amp; Overpayments</div>
+            {/* UI-01 (flat containers, no box-in-box): unlike the Aging tab's summary strip
+                (individually-bordered tiles, already the file's one grandfathered instance of
+                this shape), this strip's tiles stay borderless -- divided by a thin border
+                between cells instead of a box each -- so this section doesn't add a SECOND
+                nested-box instance to the same file. */}
+            <div
+              className="grid grid-cols-2 divide-x divide-gray-200 sm:grid-cols-3"
+              data-testid="factoring-chargebacks-overpayments-summary-strip"
+            >
+              <div className="p-2 text-center">
+                <div className="text-xs uppercase tracking-wide text-gray-500">Total Records</div>
+                <div className="mt-1 font-semibold text-gray-900" data-testid="factoring-chargebacks-overpayments-total-records">
+                  {(feesQuery.data?.history ?? []).length}
+                </div>
+              </div>
+              <div className="p-2 text-center">
+                <div className="text-xs uppercase tracking-wide text-gray-500">Total Chargebacks/Overpayments</div>
+                <div className="mt-1 font-semibold text-gray-900" data-testid="factoring-chargebacks-overpayments-total-amount">
+                  {fmtCurrency((feesQuery.data?.history ?? []).reduce((sum, row) => sum + Number(row.chargeback_amount ?? 0), 0))}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
+            {feesQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load chargebacks & overpayments"
+                {...formatQueryErrorDetail(feesQuery.error)}
+                onRetry={() => void feesQuery.refetch()}
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <ChargebacksTable rows={feesQuery.data?.history ?? []} fmtCurrency={fmtCurrency} fmtDate={fmtDate} />
+              </div>
+            )}
+          </div>
         </div>
       ) : null}
 

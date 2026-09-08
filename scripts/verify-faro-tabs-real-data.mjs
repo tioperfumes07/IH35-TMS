@@ -252,6 +252,38 @@ export function checkPurchaseReportReal(src) {
   return failures;
 }
 
+export function checkChargebacksOverpaymentsReal(src) {
+  const failures = [];
+  const stubMatch = src.match(/tab === "request_debtor_credit_check"[\s\S]*?data-testid=\{`factoring-stub-\$\{tab\}`\}/);
+  if (stubMatch && /tab === "chargebacks_overpayments"/.test(stubMatch[0])) {
+    failures.push(`${HOME}: Chargebacks & Overpayments is still routed through the generic honest-stub block — must have its own real section (FAC-09a).`);
+  }
+  const marker = 'tab === "chargebacks_overpayments" ?';
+  const idx = src.indexOf(marker);
+  if (idx === -1) {
+    failures.push(`${HOME}: could not find a dedicated Chargebacks & Overpayments ("tab === \"chargebacks_overpayments\" ?") block.`);
+    return failures;
+  }
+  const section = src.slice(idx, idx + 4000);
+  const requiredRealBindings = [
+    { pattern: /feesQuery\.data\?\.history/, label: "table bound to feesQuery.data.history (the same real chargeback/fee data proven on Chargebacks & Fees)" },
+    { pattern: /row\.chargeback_amount/, label: "Total Chargebacks/Overpayments summed from row.chargeback_amount" },
+    { pattern: /<ChargebacksTable/, label: "renders through the shared, already-proven ChargebacksTable component" },
+  ];
+  for (const { pattern, label } of requiredRealBindings) {
+    if (!pattern.test(section)) {
+      failures.push(`${HOME}: Chargebacks & Overpayments missing real binding — ${label}.`);
+    }
+  }
+  const requiredTestIds = ["factoring-chargebacks-overpayments-total-records", "factoring-chargebacks-overpayments-total-amount"];
+  for (const testId of requiredTestIds) {
+    if (!section.includes(testId)) {
+      failures.push(`${HOME}: Chargebacks & Overpayments missing required data-testid="${testId}".`);
+    }
+  }
+  return failures;
+}
+
 export function run() {
   const failures = [];
   const { ok, src, err } = read(HOME);
@@ -265,6 +297,7 @@ export function run() {
   failures.push(...checkAccountSummaryReal(src));
   failures.push(...checkFeesPaidReal(src));
   failures.push(...checkPurchaseReportReal(src));
+  failures.push(...checkChargebacksOverpaymentsReal(src));
   return { ok: failures.length === 0, failures };
 }
 
@@ -358,6 +391,17 @@ if (process.argv.includes("--selftest")) {
         </div>
       ) : null}
   `;
+  const chargebacksOverpaymentsBlock = `
+      {tab === "chargebacks_overpayments" ? (
+        <div>
+          <span data-testid="factoring-chargebacks-overpayments-total-records">{(feesQuery.data?.history ?? []).length}</span>
+          <span data-testid="factoring-chargebacks-overpayments-total-amount">
+            {fmtCurrency((feesQuery.data?.history ?? []).reduce((sum, row) => sum + Number(row.chargeback_amount ?? 0), 0))}
+          </span>
+          <ChargebacksTable rows={feesQuery.data?.history ?? []} fmtCurrency={fmtCurrency} fmtDate={fmtDate} />
+        </div>
+      ) : null}
+  `;
   const goodSrc = `
 const SUBNAV = [
 ${idsBlock}
@@ -370,6 +414,7 @@ ${stubBlock}
 ${accountSummaryBlock}
 ${feesPaidBlock}
 ${purchaseReportBlock}
+${chargebacksOverpaymentsBlock}
 ${agingBlock}
   `;
   const badWrongOrder = goodSrc.replace('{ id: "aging", label: "x" },', '{ id: "zzz", label: "x" },');
@@ -400,9 +445,17 @@ ${agingBlock}
     '{ key: "advance_amount", label: "Net Adv", render: (row) => fmtCurrency(row.advance_amount) },',
     '{ key: "advance_amount", label: "Net Adv", render: () => fmtCurrency(9999) },',
   );
+  const badChargebacksOverpaymentsStillStub = goodSrc.replace(
+    'tab === "payments_to_you" ? (',
+    'tab === "payments_to_you" ||\n      tab === "chargebacks_overpayments" ? (',
+  );
+  const badChargebacksOverpaymentsFakeBinding = goodSrc.replace(
+    '{fmtCurrency((feesQuery.data?.history ?? []).reduce((sum, row) => sum + Number(row.chargeback_amount ?? 0), 0))}',
+    "{fmtCurrency(9999)}",
+  );
 
   const checks = [
-    ["clean source passes", checkNavOrder(goodSrc).length === 0 && checkInternalToolsPreserved(goodSrc).length === 0 && checkAgingReal(goodSrc).length === 0 && checkAccountSummaryReal(goodSrc).length === 0 && checkFeesPaidReal(goodSrc).length === 0 && checkPurchaseReportReal(goodSrc).length === 0],
+    ["clean source passes", checkNavOrder(goodSrc).length === 0 && checkInternalToolsPreserved(goodSrc).length === 0 && checkAgingReal(goodSrc).length === 0 && checkAccountSummaryReal(goodSrc).length === 0 && checkFeesPaidReal(goodSrc).length === 0 && checkPurchaseReportReal(goodSrc).length === 0 && checkChargebacksOverpaymentsReal(goodSrc).length === 0],
     ["wrong nav order fails", checkNavOrder(badWrongOrder).length > 0],
     ["deleted internal tab fails", checkInternalToolsPreserved(badDeletedInternal).length > 0],
     ["missing aging column fails", checkAgingReal(badAgingMissingColumn).length > 0],
@@ -413,6 +466,8 @@ ${agingBlock}
     ["purchase report still stub fails", checkPurchaseReportReal(badPurchaseReportStillStub).length > 0],
     ["purchase report missing column fails", checkPurchaseReportReal(badPurchaseReportMissingColumn).length > 0],
     ["purchase report fake binding fails", checkPurchaseReportReal(badPurchaseReportFakeBinding).length > 0],
+    ["chargebacks & overpayments still stub fails", checkChargebacksOverpaymentsReal(badChargebacksOverpaymentsStillStub).length > 0],
+    ["chargebacks & overpayments fake binding fails", checkChargebacksOverpaymentsReal(badChargebacksOverpaymentsFakeBinding).length > 0],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
@@ -430,5 +485,5 @@ if (!ok) {
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — 15-item real nav order locked, internal-ops tabs preserved (Rule 07), Aging + Account Summary + Fees Paid + Purchase Report real (FAC-09a)`);
+console.log(`${LABEL}: OK — 15-item real nav order locked, internal-ops tabs preserved (Rule 07), Aging + Account Summary + Fees Paid + Purchase Report + Chargebacks & Overpayments real (FAC-09a)`);
 process.exit(0);
