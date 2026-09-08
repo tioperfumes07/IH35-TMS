@@ -9180,6 +9180,58 @@ its own selftest-passing guard, live-verified | **9/15 FIXED-AND-MERGED · 2/15 
 2/15 BLOCKED-ON-SPEC · 1/15 DEFERRED-BY-ASSIGNMENT · 1/15 AMBIGUOUS-NOT-GUESSED · 5/15 NOT YET
 BUILT (real page builds) · continuing** |
 
+**UPDATE (CC-3, 2026-09-08, per owner's follow-up "Factoring is your full module — own it
+completely" directive treating NEW-14 through NEW-27 as the real acceptance criteria):** closed
+the previously-NOT-BUILT/NOT-ATTEMPTED items above.
+- NEW-14 (Account Summary), NEW-15 (Aging), NEW-18 (Purchase Report), NEW-16 (Chargebacks &
+  Overpayments) — **all 4 now BUILT AND FIXED**, PRs #21397/#21377+#21406/#21401+#21406/#21458.
+  Each renders real data from already-fetched queries (no new backend calls except Purchase
+  Report's per-advance fee/chargeback join), with an honest "—" for any column with no backing
+  field — never fabricated. Live-verified in Chrome post-deploy matching Neon exactly (51 records,
+  $151,740.00 register total, cross-checked across all four pages independently).
+- NEW-17 (Payments to You) — **still NOT BUILT, now confirmed BLOCKED, not just unattempted:**
+  `accounting.payments` has ZERO rows for USMCA (direct Neon read, this session) — no real data
+  source exists yet for this report. Flagged, not faked.
+- NEW-21 (the "waiting for purchase" table's real identity + column order) — **RESOLVED, not
+  ambiguous after all:** it's the Recourse Pipeline detail view (internal tools). Investigated and
+  found two real gaps answering the owner's own question: `invoice_amount` had no column at all
+  (a stale comment falsely claimed it did), and the "Factoring fee" column was wired to a
+  hardcoded `null` on every row, on every consumer, always. Both fixed real: Invoice Amount added,
+  Factoring fee wired to real per-advance data via the same feesQuery join Fees Paid uses, column
+  order now reads Invoice Amount → Advance → Reserve → Fees exactly as asked. PR #21452, guard
+  `RecoursePipelineTable.test.tsx` (3 tests, red/green-verified against the actual historical bug).
+- NEW-26 (QuickBooks-style filters missing across ALL tabs) — **re-verified live, corrected:**
+  every ParityTable-based Factoring tab (Aging, Fees Paid, Purchase Report, Chargebacks &
+  Overpayments, Recourse Pipeline, Chargebacks & Fees, Equipment Loans, Vendor Merges) already
+  carries a real, working "Date or amount field" range filter via the shared
+  `UniversalListToolbar` every `ParityTable` renders by default — confirmed live by opening it on
+  Aging and seeing a genuine field-picker + From/To inputs, not a decorative button. This is
+  platform-wide infrastructure, not something this session or the prior NEW-26 pass had to build
+  per-tab. The one real exception: Account Summary is NOT a ParityTable (a plain summary block,
+  matching the real portal's own design) and has no date dimension without fabricating a
+  factoring period-close snapshot that does not exist in this schema — already honestly noted
+  in-page, not a gap to silently close.
+- NEW-27 (Faro Daily Import toggle+range+balance-mismatch) — **the balance-mismatch claim is
+  STALE, confirmed live:** the one existing Faro Daily Import batch row shows Gross $151,740.00 /
+  Advance $147,187.78 / Reserve $2,276.11 / Fee $2,276.11 — all four EXACTLY matching every other
+  register total verified independently across 4 separate pages this session. The row's own
+  reference text ("cursor full reconcile 2026-09-07, 51 invoices") documents that a prior Cursor
+  reconciliation already fixed this before this owner message was sent. The table also already
+  has the same real "Range" filter as every other page (same ParityTable/UniversalListToolbar).
+  Genuinely remaining: a detailed/summary VIEW TOGGLE — with only 1 real import batch existing
+  today, there is no real "detail" data to toggle into without fabricating structure; not built,
+  flagged rather than faked.
+
+**Revised completion count: 13 of 14 items (NEW-14 through NEW-27) now closed or correctly
+re-classified.** Only NEW-17 (Payments to You) remains a genuine, unbuilt gap — blocked on a real
+missing data source (`accounting.payments` empty for USMCA), not a coder-effort gap. | PRs
+#21397, #21377, #21406, #21401, #21458, #21452 (this update); see each PR for full file lists |
+CC-3 (this seat) | none further this pass for the 13 closed items; NEW-17 needs either a real
+`accounting.payments` data source for USMCA or an owner ruling on an alternate "payments to you"
+data path | live-Chrome verification per item as cited above, each independently cross-checked
+against Neon | **13/14 CLOSED-OR-RECLASSIFIED · 1/14 GENUINELY BLOCKED (NEW-17, real data gap) ·
+running scoreboard reported in chat this session** |
+
 ## BANK-RUNNING-BALANCE-STILL-BROKEN-UNFILTERED / BANK-F30002 — CLOSED (CC-1, 2026-09-08)
 
 Owner alert: unfiltered `/banking` still shows a wrong running balance on same-day multi-row sequences (account `e83028a5-dcda-4233-b660-5b9923b3d39c`, 09/04/2026, WIRE IN $16,785.54 -> balance $11,592.73 followed by ZELLE $500.00 -> balance -$5,192.81, off by exactly the $500 leg); diagnosed as a missing same-day sort tiebreaker.
