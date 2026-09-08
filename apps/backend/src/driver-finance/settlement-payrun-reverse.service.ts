@@ -224,7 +224,7 @@ export async function reverseSettlementPayRunInClientTx(
        FROM accounting.escrow_postings
       WHERE operating_company_id = $1::uuid
         AND source_type = 'driver_settlement'
-        AND source_id = $2::text
+        AND source_id = $2::uuid
         AND posting_type = 'deposit'`,
     [opco, settlementId]
   );
