@@ -1148,7 +1148,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <div className="text-xs font-medium text-gray-900">Fees Paid</div>
-            <div className="inline-flex overflow-hidden rounded-sm border border-gray-300" data-testid="factoring-fees-paid-view-toggle">
+            <div className="inline-flex overflow-hidden border border-gray-300" data-testid="factoring-fees-paid-view-toggle">
               <button
                 type="button"
                 data-testid="factoring-fees-paid-view-open-invoices"
@@ -1279,19 +1279,19 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6" data-testid="factoring-aging-summary-strip">
-              <div className="rounded-sm border border-gray-200 p-2 text-center">
+              <div className="border border-gray-200 p-2 text-center">
                 <div className="text-xs uppercase tracking-wide text-gray-500">Total Records</div>
                 <div className="mt-1 font-semibold text-gray-900" data-testid="factoring-aging-total-records">{agingRows.length}</div>
               </div>
               {(["0-30", "31-60", "61-90", "90+"] as const).map((bucket) => (
-                <div key={bucket} className="rounded-sm border border-gray-200 p-2 text-center">
+                <div key={bucket} className="border border-gray-200 p-2 text-center">
                   <div className="text-xs uppercase tracking-wide text-gray-500">Total {bucket}</div>
                   <div className="mt-1 font-semibold text-gray-900" data-testid={`factoring-aging-total-${bucket}`}>
                     {fmtCurrency(agingTotals[bucket])}
                   </div>
                 </div>
               ))}
-              <div className="rounded-sm border border-gray-200 p-2 text-center">
+              <div className="border border-gray-200 p-2 text-center">
                 <div className="text-xs uppercase tracking-wide text-gray-500">Total Balance</div>
                 <div className="mt-1 font-semibold text-gray-900" data-testid="factoring-aging-total-balance">
                   {fmtCurrency(agingTotals.balance)}
@@ -1539,7 +1539,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
               <div className="text-xs font-medium text-gray-900">Statement history</div>
               {/* NEW-25: Summary (monthly totals, the historical default) vs Detail (the same
                   line-item chargeback/fee history the Chargebacks & Fees tab renders). */}
-              <div className="inline-flex overflow-hidden rounded-sm border border-gray-300" data-testid="factoring-statements-view-toggle">
+              <div className="inline-flex overflow-hidden border border-gray-300" data-testid="factoring-statements-view-toggle">
                 <button
                   type="button"
                   data-testid="factoring-statements-view-summary"

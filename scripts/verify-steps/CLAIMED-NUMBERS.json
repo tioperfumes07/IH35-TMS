@@ -6147,10 +6147,25 @@
     "claimed_at": "2026-09-08",
     "purpose": "verify-factoring-equipment-vendor-merges-collapsed-filters"
   },
+  "10819": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-08",
+    "purpose": "verify-petty-cash-check-transfer"
+  },
   "10821": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-07",
     "purpose": "verify-no-duplicate-settlement-lines"
+  },
+  "10823": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-08",
+    "purpose": "verify-bank-recon-accept-closed-session-conflict"
+  },
+  "10827": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-08",
+    "purpose": "verify-memory-bank-structure"
   },
   "10829": {
     "claimed_by": "claude",
@@ -6292,10 +6307,35 @@
     "claimed_at": "2026-09-08",
     "purpose": "verify-factoring-statements-summary-detail-toggle"
   },
+  "11041": {
+    "claimed_at": "2026-09-08",
+    "claimed_by": "claude-1",
+    "purpose": "verify-load-costs-return-columns"
+  },
   "11061": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-08",
     "purpose": "verify-factoring-equipment-vendor-merges-collapsed-filters"
+  },
+  "11065": {
+    "claimed_at": "2026-09-08",
+    "claimed_by": "claude-1",
+    "purpose": "verify-md-width-0-vendors-customers"
+  },
+  "11069": {
+    "claimed_at": "2026-09-08",
+    "claimed_by": "claude-1",
+    "purpose": "verify-health-deep-financial-checks-wired"
+  },
+  "11078": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-08",
+    "purpose": "verify-settlement-net-pay-triple-figure-fixed (EVEN Cursor lane; ships Claude-authored settlement net-pay triple-figure display fix)"
+  },
+  "11081": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-08",
+    "purpose": "verify-factoring-nested-box-baseline"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -8298,40 +8338,5 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
-  },
-  "11041": {
-    "claimed_at": "2026-09-08",
-    "claimed_by": "claude-1",
-    "purpose": "verify-load-costs-return-columns"
-  },
-  "11065": {
-    "claimed_at": "2026-09-08",
-    "claimed_by": "claude-1",
-    "purpose": "verify-md-width-0-vendors-customers"
-  },
-  "11069": {
-    "claimed_at": "2026-09-08",
-    "claimed_by": "claude-1",
-    "purpose": "verify-health-deep-financial-checks-wired"
-  },
-  "10819": {
-    "claimed_by": "cc-2",
-    "claimed_at": "2026-09-08",
-    "purpose": "verify-petty-cash-check-transfer"
-  },
-  "10823": {
-    "claimed_by": "cc-2",
-    "claimed_at": "2026-09-08",
-    "purpose": "verify-bank-recon-accept-closed-session-conflict"
-  },
-  "11078": {
-    "claimed_by": "cursor",
-    "claimed_at": "2026-09-08",
-    "purpose": "verify-settlement-net-pay-triple-figure-fixed (EVEN Cursor lane; ships Claude-authored settlement net-pay triple-figure display fix)"
-  },
-  "10827": {
-    "claimed_by": "cc-2",
-    "claimed_at": "2026-09-08",
-    "purpose": "verify-memory-bank-structure"
   }
 }
