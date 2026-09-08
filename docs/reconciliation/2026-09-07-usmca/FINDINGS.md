@@ -31,6 +31,27 @@ Source of truth: signed settlement PDFs in ~/Downloads (Driver_/Company_Settleme
 - **Load 13572** (GENARO GUERRERO CHAVEZ): DB=delivered_pending_docs/S-13730:closed, signed=(none), board=YES → FIX: on board but DB settlement CLOSED -> verify signed doc; if none, reverse settlement & keep load in dispatch
 - **Load 13340047** (): DB=MISSING FROM DB/(none), signed=(none), board=YES → FIX: board load missing from DB -> create in dispatch
 
+## Factoring tie-out vs Faro (measured live 2026-09-07, RLS bypass; Faro = `faro_canonical_import.csv`)
+
+App: **51 advances**, gross **$151,740.00**, advance **$147,187.78** (all USMCA-scoped — Faro is
+Transportation's portal but the fleet is USMCA, Rule 49 §3b; 0 advances remain under Transportation).
+Faro canonical: **48 invoices**, gross **$147,065.00**, advance **$142,503.04**.
+
+- **32 invoices match exactly** (gross + advance).
+- **15 invoices: gross matches, advance is +$10.00 in the app** (13508, 13511, 13512, 13518, 13520,
+  13523, 13526, 13536, 13537, 13543, 13548, 13558, 13559, 13564, 13568). Root cause: Faro charges a
+  **flat $10 wire fee on top of the 1.5% factor fee** (e.g. inv 13508: Faro fee $47.50 vs app $37.50),
+  so the app over-states the advance by $10 on each. Fix = fee model adds the $10 wire fee per advance.
+- **APP_ONLY: load 13513** ($525 gross) — advanced in app, not in Faro canonical → verify vs Faro portal.
+- **FARO_ONLY: invoice 13510** — in Faro canonical, no matching app advance → seed the advance.
+- **3 app advances unlinked to any Faro invoice #**: FAC-2026-00001 ($3,000, no ref — suspected
+  seed/dupe), FAC-2026-00050 (FARO-RECON-ITS-007, $350), FAC-2026-00051 (FARO-RECON-MPH-016, $3,800)
+  → confirm each against the Faro portal export; void FAC-00001 if it has no Faro backing.
+- Net advance delta **+$4,684.74** (app over Faro), driven by the 3 unlinked + 13513 (− 13510) + 15×$10.
+
+Full per-invoice table: `usmca-factoring-reconciliation.csv`. These are non-GL corrections (advance
+amount/fee + one void + one seed) done through the factoring service layer, not raw ledger edits.
+
 ## Full per-load table
 
 See `usmca-load-reconciliation.csv`.
