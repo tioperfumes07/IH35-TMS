@@ -1855,3 +1855,28 @@ is upstream of and additional to it, not a re-derivation.
 
 Next: NEW-32 (already shipped, PR #21368/#21447 area — citing GO below), then NEW-29/30/31 (Dispatch
 reefer/lumper/late-penalty prompts).
+
+## CC-2 | PRIORITY #1 directive — final GO/NO-GO report | 2026-09-08
+
+Full writeup for each item is in `docs/audit/GUARD-WORKORDERS.md`. Summary:
+
+1. **Pagination tiebreaker — GO.** BANK-F25150 (`link.routes.ts` ORDER BY ..., id ASC) is already
+   live. Fresh live before/after on account `e83028a5-...`: pre-fix shape duplicates 3 ids across a
+   page boundary live; current shape = 0 dup/0 drop across 4 pages vs. unpaginated (278=278). No
+   code change needed. PR #21451.
+2. **Balance root cause — NO-GO on fully resolved, GO on identified-with-live-proof.** BANK-F30002
+   (CC-1) fixed a real, different bug and materially improved the number; residual cause narrowed
+   live to a real Feb-2026 zero-transaction gap on this account (not a stale current_balance_cents,
+   not a math bug). Closing it needs a live Plaid re-sync this session cannot perform — flagged for
+   whoever owns Plaid ops access. PR #21451.
+3. **NEW-32 (Bank Accounts reorder) — GO.** Already shipped earlier this session (PR #21368,
+   BANK-F25142), reconfirmed green on live main this pass:
+   `node scripts/verify-bank-accounts-reorder-control.mjs` exit 0.
+4. **NEW-29/30/31 (Dispatch reefer lumper + late penalty prompts) — GO.** New dispatch-owned route
+   + frontend card, click-confirmed, gated on reefer/late detection, billing-hook decisions emitted
+   as audit events and flagged to CC-1/AP rather than written into CC-1's tables. PR #21455
+   (+ claim-reserve #21454 for verify-step 10831).
+
+5 real PRs merged this pass (#21451, #21454, #21455, plus the two deploys triggered after). Both
+`IH35-TMS` (backend) and `ih35-tms-web` (frontend) redeployed from `38fb28efc4` (autoDeploy is off
+on both — deploys require an explicit trigger, done this pass).
