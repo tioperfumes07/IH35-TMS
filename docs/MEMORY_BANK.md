@@ -178,6 +178,19 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
      prod ($31,147.37 → $27,487.36); confirm the 8 zero-pay loads get pay created from docs and the
      2026-09-07 20:11 CT manual JE (S-13643/13541/5796 −$389.66) is folded in, not double-corrected.
      Claude returns GO/NO-GO. **Nothing posts to the live ledger without Claude's yes AND the owner's yes.**
+   - **Independent verify of the manual-JE point, DONE 2026-09-08 (CC-2, line-level, not date-range)**
+     → full verdict in `docs/bus/OUTBOX-CC-2.md`. Confirmed on Neon: JE `15e0887f-d94e-42a2-a248-
+     1a14f951cde3` is standalone (not in `payrun_gl_runs`, `payrun_gl_runs.journal_entry_id` still
+     points at the original `13ffbcff-...`); the −$389.66 IS folded in at the `settlement_lines`
+     level (original $769.39 line voided, replacement $379.73 line created same instant, S-13643's
+     stored `net_pay=$4,310.22` is internally consistent with the corrected figures); and **it is
+     the ONLY standalone settlement-correction JE across the full 2026-07-03→09-07 window** — 4
+     independent searches (by "Settlement S-" mention, by `source='manual'`, by
+     `memo ILIKE '%correction%'`, and a broad "driver"-mentioning sweep) found nothing else besides
+     6 unrelated, legitimate "Driver advance CA-2026-000N posting" JEs and 2 already-closed,
+     properly-linked reversal JEs for load 13541's separate invoice-side re-rate (ACCT-F26031).
+     Note: `15e0887f`'s own `source` column is `'auto'`, not `'manual'` — every USMCA JE ever posted
+     uses `source='auto'`, `'manual'` is unused system-wide; a naming quirk, not a defect.
 
 ## PRs (this reconciliation effort)
 
