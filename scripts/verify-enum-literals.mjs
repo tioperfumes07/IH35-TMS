@@ -114,14 +114,29 @@ for (const f of srcFiles) {
     if (!/\b(FROM|JOIN|UPDATE|INTO)\s+[a-z_]+\.[a-z_]+/i.test(tl)) continue;
 
     // alias -> table, and the full set of tables in this query
+    //
+    // BANK-F26054 follow-up (2026-09-08): aliasToTable used to be single-valued, so an alias
+    // reused across sibling scalar subqueries in the same template literal (same class of bug
+    // fixed in verify-sql-column-existence.mjs's analyzeSqlFragment) had its FIRST binding
+    // silently overwritten by its LAST — a qualified alias.col reference would be checked against
+    // whichever table happened to parse last, not the one it actually belonged to. Currently
+    // dormant (0 live violations either way today), but one alias-reuse edit away from either a
+    // false 22P02-risk report or a missed real one. Fixed the same way: track every table an
+    // alias is EVER bound to, and check the literal against the UNION of valid enum members
+    // across every candidate table where the column is actually an enum column there.
     const aliasToTable = new Map();
+    const addAlias = (key, table) => {
+      let set = aliasToTable.get(key);
+      if (!set) aliasToTable.set(key, (set = new Set()));
+      set.add(table);
+    };
     const tables = new Set();
     let tm;
     const tre = new RegExp(tableRefRe.source, "gi");
     while ((tm = tre.exec(tl))) {
       const table = tm[1];
       tables.add(table);
-      if (tm[2] && !SQL_KEYWORDS.has(tm[2].toLowerCase())) aliasToTable.set(tm[2].toLowerCase(), table);
+      if (tm[2] && !SQL_KEYWORDS.has(tm[2].toLowerCase())) addAlias(tm[2].toLowerCase(), table);
     }
     const singleTable = tables.size === 1 ? [...tables][0] : null;
 
@@ -130,22 +145,27 @@ for (const f of srcFiles) {
     while ((cm = cre.exec(tl))) {
       const alias = cm[1] ? cm[1].toLowerCase() : null;
       const col = cm[2].toLowerCase();
-      // Resolve which table this column belongs to:
-      //  - qualified alias.col -> the aliased table (precise)
+      // Resolve which table(s) this column could belong to:
+      //  - qualified alias.col -> every table the alias was ever bound to in this fragment
       //  - unqualified col     -> only if the query has exactly ONE table (unambiguous)
-      let table = null;
-      if (alias) table = aliasToTable.get(alias) ?? null;
-      else table = singleTable;
-      if (!table) continue;
-      const cols = tableColEnum.get(table);
-      if (!cols || !cols.has(col)) continue; // column isn't an enum column on that table
-      const members = enumMembers.get(cols.get(col));
+      let candidates = null;
+      if (alias) candidates = aliasToTable.get(alias) ?? null;
+      else if (singleTable) candidates = new Set([singleTable]);
+      if (!candidates) continue;
+      // Only candidates where this column is actually an enum column there count — a candidate
+      // that doesn't track it as an enum at all neither confirms nor denies the literal.
+      const enumTables = [...candidates].filter((t) => tableColEnum.get(t)?.has(col));
+      if (enumTables.length === 0) continue;
+      const validMembers = new Set();
+      for (const t of enumTables) {
+        for (const m of enumMembers.get(tableColEnum.get(t).get(col))) validMembers.add(m);
+      }
       const lits = [...cm[3].matchAll(/'([^']*)'/g)].map((x) => x[1]);
       for (const lit of lits) {
         if (lit === "") continue;
-        if (members.has(lit)) continue;
-        if (ALLOWLIST.has(`${table}.${col}='${lit}'`)) continue;
-        violations.push({ file: f, table, col, lit, valid: [...members].join(", ") });
+        if (validMembers.has(lit)) continue;
+        if (enumTables.some((t) => ALLOWLIST.has(`${t}.${col}='${lit}'`))) continue;
+        violations.push({ file: f, table: enumTables[0], col, lit, valid: [...validMembers].join(", ") });
       }
     }
   }

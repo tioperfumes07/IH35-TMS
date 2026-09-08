@@ -9303,3 +9303,30 @@ defect — fix it AT SOURCE... do NOT allowlist it") | `node scripts/verify-sql-
 before this fix, confirmed FAILED first on a clean `origin/main` worktree to rule out any other
 cause) | **CLOSED · repo-wide static-analysis fix, not a single-file patch — protects every future
 file with this alias-reuse shape, not just the two found here** |
+
+## BANK-F26055 — verify-enum-literals had the same alias-scoping gap as BANK-F26054 (CC-2, 2026-09-08)
+
+Following BANK-F26054's fix to `verify-sql-column-existence.mjs`, swept for the same bug shape
+(single-valued `aliasToTable` Map losing bindings when an alias is reused across sibling scalar
+subqueries) across every other guard doing SQL alias-to-table resolution. Found one more:
+`verify-enum-literals.mjs`'s `aliasToTable.set(alias, table)` had the identical overwrite-on-reuse
+gap — a qualified `alias.col = 'literal'` comparison was checked against whichever table's alias
+declaration parsed LAST in the same backtick template literal, not the one it actually belonged to.
+**Currently dormant** (live run: 0 violations both before and after this fix — no file in the repo
+today happens to reuse an alias across two sibling subqueries with CONFLICTING enum sets on that
+column name), but the same one-edit-away time-bomb shape as tri-signal.service.ts: verified with a
+standalone reproduction (`u` bound to both `mdata.units` and `mdata.customers`, each with a
+`status` enum column with disjoint valid members) that the OLD code would have wrongly checked
+`u.status = 'InService'` (valid on units) against `mdata.customers`' member set and flagged a false
+violation. **FIX:** same pattern as BANK-F26054 — `aliasToTable` now tracks every table an alias is
+EVER bound to; a qualified reference's literal is checked against the UNION of valid enum members
+across every candidate table where that column is actually an enum column there (a candidate that
+doesn't track the column as an enum at all is simply excluded from the union, not treated as
+disqualifying). This file has no pre-existing `--selftest` harness to extend (unlike
+`verify-sql-column-existence.mjs`); verified via a standalone repro script instead (reproduced the
+old false-positive, confirmed the new logic resolves both literals correctly) plus the unchanged
+live 0-violations result. | `scripts/verify-enum-literals.mjs` | — | none — this is a dormant,
+preventive fix (no live file currently hits the bug), same class as BANK-F26054 | live run: `node
+scripts/verify-enum-literals.mjs` exit 0, unchanged (33 enums, 35 enum columns, 0 invalid literals,
+same before and after — this fix changes nothing observable today, only forecloses a latent false
+positive/negative) | **CLOSED · repo-wide static-analysis hardening, preventive** |
