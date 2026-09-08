@@ -169,9 +169,14 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   across SIBLING scalar subqueries (not CTEs) in the same fragment will otherwise have its first
   binding silently overwritten by its last, misattributing every reference to the wrong table.
   Fixed in `verify-sql-column-existence.mjs` (BANK-F26054) and `verify-enum-literals.mjs`
-  (BANK-F26055). **Residual sweep item:** `verify-driver-manager-shared-drivers.mjs`,
-  `verify-lane-mileage-merge-and-rescore.mjs`, `verify-load-reads-shared-drivers.mjs`,
-  `verify-no-orphan-routes.mjs` have the same map shape and have not yet been audited.
+  (BANK-F26055). **Residual sweep CLOSED (2026-09-08):** the 4 flagged files
+  (`verify-driver-manager-shared-drivers.mjs`, `verify-lane-mileage-merge-and-rescore.mjs`,
+  `verify-load-reads-shared-drivers.mjs`, `verify-no-orphan-routes.mjs`) were audited and do NOT
+  have this bug — each `alias` there is a fixed literal-string list checked with hardcoded needles
+  (first two), an unrelated JS variable name (`aliasMap` in the third — application-code merge
+  logic, not a SQL table-alias map), or import-alias resolution for JS `import { foo as bar }`
+  (the fourth) — none dynamically parse `FROM`/`JOIN` into a table-lookup map the way
+  `verify-sql-column-existence.mjs`/`verify-enum-literals.mjs` did. No further guard fix needed.
 
 ## Known Quirks & Blockers — Banking (CC-2, 2026-09-08)
 
@@ -194,8 +199,8 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 
 ## Next Immediate Milestones — Banking (CC-2, 2026-09-08)
 
-1. Audit the 4 residual `aliasToTable`-shaped guards listed above for the same alias-scoping bug
-   class (BANK-F26054/BANK-F26055 follow-up).
+1. ~~Audit the 4 residual `aliasToTable`-shaped guards for the same alias-scoping bug class~~ —
+   DONE 2026-09-08, closed clean (see Known Quirks entry above), no further action.
 2. Optional: one-time backfill of `cleared_date` for already-matched historical
    payments/bill_payments (`source_bank_transaction_id` set, `cleared_date` still `NULL`) — flagged
    in BANK-F26053 as not required for going-forward correctness, deliberately not attempted blind.
