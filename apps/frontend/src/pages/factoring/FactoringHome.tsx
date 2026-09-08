@@ -1148,7 +1148,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <div className="text-xs font-medium text-gray-900">Fees Paid</div>
-            <div className="inline-flex overflow-hidden rounded-sm border border-gray-300" data-testid="factoring-fees-paid-view-toggle">
+            <div className="inline-flex overflow-hidden" data-testid="factoring-fees-paid-view-toggle">
               <button
                 type="button"
                 data-testid="factoring-fees-paid-view-open-invoices"
