@@ -17,6 +17,7 @@ import { FlatFieldGrid } from "../layout/FlatFieldGrid";
 import { getDownloadUrl, listAllFiles } from "../../api/docs";
 import { CancelLoadModal } from "./CancelLoadModal";
 import { LdtDocumentsTab } from "./tabs/LdtDocumentsTab";
+import { LoadCompletionPromptsCard } from "./LoadCompletionPromptsCard";
 import { LoadDetailDriverPayTab } from "./LoadDetailDriverPayTab";
 import { LoadDetailCostsTab } from "./LoadDetailCostsTab";
 import { MoneyProofTrailPanel } from "../accounting/MoneyProofTrailPanel";
@@ -955,6 +956,11 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                     ) : null}
                   </div>
                 </OverviewWizardSection>
+
+                {/* NEW-29/30/31 — dispatch-side click-confirm prompts (reefer lumper + late
+                    penalty). Self-contained: fetches/posts its own state, renders nothing when
+                    the load is neither reefer nor late. */}
+                <LoadCompletionPromptsCard loadId={load.id} operatingCompanyId={load.operating_company_id} />
 
                 {/* §B — Equipment · Driver · Trailer. The trailer is resolved from the canonical
                     load_assignment_history.new_trailer_id link. Driver pay rate stays "—"

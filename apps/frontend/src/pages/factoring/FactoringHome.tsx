@@ -896,14 +896,22 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
         <div className="space-y-3">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-xs font-medium text-gray-900">Chargebacks &amp; Overpayments</div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="factoring-chargebacks-overpayments-summary-strip">
-              <div className="rounded-sm border border-gray-200 p-2 text-center">
+            {/* UI-01 (flat containers, no box-in-box): unlike the Aging tab's summary strip
+                (individually-bordered tiles, already the file's one grandfathered instance of
+                this shape), this strip's tiles stay borderless -- divided by a thin border
+                between cells instead of a box each -- so this section doesn't add a SECOND
+                nested-box instance to the same file. */}
+            <div
+              className="grid grid-cols-2 divide-x divide-gray-200 sm:grid-cols-3"
+              data-testid="factoring-chargebacks-overpayments-summary-strip"
+            >
+              <div className="p-2 text-center">
                 <div className="text-xs uppercase tracking-wide text-gray-500">Total Records</div>
                 <div className="mt-1 font-semibold text-gray-900" data-testid="factoring-chargebacks-overpayments-total-records">
                   {(feesQuery.data?.history ?? []).length}
                 </div>
               </div>
-              <div className="rounded-sm border border-gray-200 p-2 text-center">
+              <div className="p-2 text-center">
                 <div className="text-xs uppercase tracking-wide text-gray-500">Total Chargebacks/Overpayments</div>
                 <div className="mt-1 font-semibold text-gray-900" data-testid="factoring-chargebacks-overpayments-total-amount">
                   {fmtCurrency((feesQuery.data?.history ?? []).reduce((sum, row) => sum + Number(row.chargeback_amount ?? 0), 0))}
