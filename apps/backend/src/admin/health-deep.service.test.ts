@@ -8,6 +8,13 @@ vi.mock("../auth/db.js", () => ({
     };
     return fn(fakeClient);
   }),
+  // INV-11 (ACC-18) -- runAdminDeepHealthProbe now also imports LEDGER_FINANCIAL_HEALTH_CHECKS,
+  // whose own import chain (org/companies.routes.js) transitively reaches auth/lucia.ts's
+  // `new NodePostgresAdapter(luciaPool, ...)` at MODULE LOAD time -- that constructor call needs
+  // `luciaPool` to exist even though this test never invokes it. A stub is enough; nothing in this
+  // test suite queries through it directly (every DB read here goes through the mocked
+  // withLuciaBypass above).
+  luciaPool: {},
 }));
 
 const { RedisMock } = vi.hoisted(() => ({
