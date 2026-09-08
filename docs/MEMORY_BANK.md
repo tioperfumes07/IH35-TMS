@@ -10,6 +10,31 @@ Scope: USMCA only (`5c854333-6ea5-4faa-af31-67cb272fef80`). Neon `tiny-field-895
 
 ---
 
+## SCOPE CORRECTION — the real tour universe is 38 docs, not 21 (measured 2026-09-08)
+
+The earlier "21 signed docs / $27,487.36" window was a SUBSET (docs 5774,5777–5796) that tied to itself
+but is NOT the real universe. Parsing EVERY signed `Driver_Settlement_*.pdf` in `~/Downloads` gives
+**38 unique tours (5753, 5760–5796), grand due $51,774.19, 82 distinct loads** — see
+`docs/reconciliation/2026-09-07-usmca/all-signed-driver-settlements.csv` + `ALL-TOURS-VS-APP.md`.
+- The 17 live app settlements are per-DRIVER aggregates; **9 of them mix loads from 2–4 different tours**
+  (misgrouped). Coverage: 13 FULL, 14 PARTIAL, 11 NONE. **36 loads have signed pay but are missing from
+  the app.**
+- **Faro three-way**: 48 invoices, $142,503.04 advance. **Faro factoring starts at load 13508 / tour
+  5769**; tours **5753, 5760–5768 are pre-Faro / not factored** → the owner's "reconcile via QuickBooks"
+  set. 4 factored loads (13564,13569,13571,13573) aren't in the app yet (active/Sept). 13541 = direct-pay
+  (owner ruling), correctly not in Faro.
+- **OPEN owner scope decision:** do all 38 tours post as USMCA settlements, or is there a start-date /
+  pre-Faro cutoff (5753/5760–5768 → Transportation frozen / QBO reconcile)? Guessing mispays real drivers.
+
+## NAMING LAW — NEVER SAY "S-13xxx" (owner corrected Cursor AGAIN 2026-09-08)
+
+- **A load = 5 digits** (13502, 13541). **A settlement/tour = the 4-digit AlwaysTrack doc** (5772, 5774).
+- The DB `display_id` values like `S-13654` are the MISLABELED internal counter (load# with an `S-`
+  prefix). They are NOT settlement numbers. **Never refer to a settlement as `S-13xxx` in any message,
+  doc, or commit.** Always translate to the 4-digit tour doc (e.g. the row the DB calls `S-13654` IS
+  **tour 5772**, Pedro Abraham Lopez Collado). The rebuild stamps `source_document_ref` = the 4-digit doc
+  and that becomes the identity.
+
 ## DOMAIN MODEL — WHAT A SETTLEMENT IS (READ THIS FIRST — owner corrected Cursor 3× on 2026-09-08)
 
 Source: `docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md` §2–§3 (LOCKED). If you find yourself reasoning
