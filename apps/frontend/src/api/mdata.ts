@@ -440,10 +440,13 @@ export function sendDriverProfileMessage(
   );
 }
 
-export function deactivateDriver(id: string) {
+export function deactivateDriver(id: string, options?: { quarantineTestFixture?: boolean }) {
   return apiRequest<{ id: string; deactivated_at: string | null; was_already_deactivated: boolean }>(
     `/api/v1/mdata/drivers/${id}/deactivate`,
-    { method: "POST" }
+    {
+      method: "POST",
+      body: options?.quarantineTestFixture ? { quarantine_test_fixture: true } : {},
+    }
   );
 }
 

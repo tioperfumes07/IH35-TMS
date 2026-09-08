@@ -220,7 +220,11 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
     setVisibilityError("");
     setVisibilitySaving(true);
     try {
-      await (isHidden ? reactivateDriver(driverId) : deactivateDriver(driverId));
+      await (isHidden
+        ? reactivateDriver(driverId)
+        : deactivateDriver(driverId, {
+            quarantineTestFixture: /(^|\W)(test|codex)(\W|$)/i.test(`${driver.first_name ?? ""} ${driver.last_name ?? ""}`),
+          }));
       refreshDriver();
     } catch (err) {
       setVisibilityError(userFacingApiError(err, "Could not update driver list visibility"));

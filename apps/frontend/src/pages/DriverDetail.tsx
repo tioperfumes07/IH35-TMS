@@ -604,7 +604,9 @@ export function DriverDetailPage() {
   });
 
   const deactivateMutation = useMutation({
-    mutationFn: () => deactivateDriver(id),
+    mutationFn: () => deactivateDriver(id, {
+      quarantineTestFixture: /(^|\W)(test|codex)(\W|$)/i.test(`${driver?.first_name ?? ""} ${driver?.last_name ?? ""}`),
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["driver", id] });
       queryClient.invalidateQueries({ queryKey: ["drivers"] });

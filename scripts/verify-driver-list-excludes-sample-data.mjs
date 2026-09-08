@@ -19,6 +19,9 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = {
   routes: "apps/backend/src/mdata/drivers.routes.ts",
+  api: "apps/frontend/src/api/mdata.ts",
+  detail: "apps/frontend/src/pages/DriverDetail.tsx",
+  profile: "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
 };
 const LABEL = "verify-driver-list-excludes-sample-data";
 
@@ -57,13 +60,22 @@ export function audit(src) {
   if (!/reason: quarantineTestFixture \? "test fixture quarantined per owner ruling — never delete"/.test(src.routes)) {
     failures.push(`${FILES.routes}: fixture quarantine must retain the owner reason in the append-only audit event`);
   }
+  if (!/deactivateDriver\(id: string, options\?: \{ quarantineTestFixture\?: boolean \}\)/.test(src.api) ||
+      !/body: options\?\.quarantineTestFixture \? \{ quarantine_test_fixture: true \} : \{\}/.test(src.api)) {
+    failures.push(`${FILES.api}: canonical driver API must expose the audited fixture-quarantine flag`);
+  }
+  for (const key of ["detail", "profile"]) {
+    if (!/deactivateDriver\([\s\S]{0,180}quarantineTestFixture:[\s\S]{0,100}\(test\|codex\)/.test(src[key])) {
+      failures.push(`${FILES[key]}: unmistakable TEST/CODEX driver deactivation must use fixture quarantine mode`);
+    }
+  }
   return failures;
 }
 
 function loadSrc(root) {
-  return {
-    routes: fs.readFileSync(path.join(root, FILES.routes), "utf8"),
-  };
+  return Object.fromEntries(
+    Object.entries(FILES).map(([key, rel]) => [key, fs.readFileSync(path.join(root, rel), "utf8")]),
+  );
 }
 
 if (process.argv.includes("--selftest")) {
@@ -108,7 +120,15 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL — fixture-quarantine mutation escaped`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 4 mutations detected`);
+  const uiMutation = {
+    ...good,
+    api: good.api.replace("{ quarantine_test_fixture: true }", "{}"),
+  };
+  if (audit(uiMutation).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — fixture-quarantine UI mutation escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — 5 mutations detected`);
   process.exit(0);
 }
 
