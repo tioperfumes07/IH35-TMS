@@ -68,6 +68,9 @@ describe("EarningsTab", () => {
           has_pending_acks: false,
           live_debt_flag: 450,
           debt_computed_at: "2026-06-03T12:00:00.000Z",
+          source_document_ref: null,
+          trip_started_at: "2026-05-01T08:00:00.000Z",
+          trip_closed_at: "2026-05-07T17:00:00.000Z",
         },
         {
           id: "set-2",
@@ -85,6 +88,9 @@ describe("EarningsTab", () => {
           has_pending_acks: false,
           live_debt_flag: 0,
           debt_computed_at: null,
+          source_document_ref: null,
+          trip_started_at: "2026-04-24T08:00:00.000Z",
+          trip_closed_at: "2026-04-30T17:00:00.000Z",
         },
       ],
     });
