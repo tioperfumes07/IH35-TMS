@@ -58,6 +58,11 @@
       "file": "202610290000_disp01_escrow_abandon_trigger_text_cast.sql",
       "ledger": "mirror",
       "reason": "Mirror-ledger row for a migration with NO file in db/migrations/ and no canonical row. Its subject — re-casting the abandonment write to ::text — was itself a false premise: load_status_enum genuinely contains 'abandoned'/'driver_walkoff'/'driver_no_show' (added by 0094 via ALTER TYPE), so the cast was never needed and the file was dropped. Harmless operationally (db:migrate can never see a file that does not exist, so it cannot be re-applied), but it is a row asserting an application that cannot be evidenced. Recorded, not deleted."
+    },
+    {
+      "file": "202614000000_mdata_locations_is_sample_data",
+      "ledger": "mirror",
+      "reason": "URGENT — this row was blocking every production backend deploy (LV-087 pre-deploy refusal, discovered 2026-09-08 ~07:11Z UTC while redeploying commit 38fb28efc4, unrelated to that commit's own diff). NOT a real orphan: the migration genuinely ran — db/migrations/202614000000_mdata_locations_is_sample_data.sql exists on disk, mdata.locations.is_sample_data exists on prod (confirmed via information_schema.columns), and the CORRECTLY-suffixed row '202614000000_mdata_locations_is_sample_data.sql' is present in BOTH _system._schema_migrations (canonical) and ih35_migrations.applied_migrations (mirror), same applied_at=2026-09-08T05:13:37.607Z as this row. This entry is a STRAY DUPLICATE mirror row for the same migration, missing its .sql extension (likely a manual/scripted mirror-backfill typo by another concurrent session earlier the same day) — a second, malformed mirror insert for an already-correctly-applied migration, not evidence the DDL never ran. Per this file's own rule (never delete a ledger row to make a guard green), recorded here rather than deleted so db:migrate can proceed."
     }
   ]
 }
