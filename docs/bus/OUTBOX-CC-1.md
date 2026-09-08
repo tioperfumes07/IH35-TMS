@@ -697,3 +697,70 @@ settlement deductions). `cash-advances.routes.ts`'s reversal route checks exactl
 cannot_reverse_after_settlement_deductions`) before calling `reverseDriverAdvanceInClientTx` — these
 are real rows that would trip it, not CI fixtures. Read-only check, no advance actually reversed.
 Status: DONE, live-verified. No code change needed.
+
+## 2026-09-08 06:1xZ — CC-1: Pedro-Lopez-Collado-shaped gap audit — all 17 live driver-settlement rows checked
+
+**Read this note before the table: I found `docs/MEMORY_BANK.md` already contains a NEWER scope
+correction (38 real tours, not the 21 this assignment's window was built on — 36 loads found missing
+across that wider universe) and a checker handoff addressed directly to me
+(`~/Downloads/2026-09-08-Cursor-to-Claude-SETTLEMENT-REBUILD-CHECKER-HANDOFF.md`, unread as of this
+post) asking for a formal GO/NO-GO. This audit answers the narrower question I was actually asked —
+does any of the 17 have a Pedro-shaped gap inside the 5774–5796 window — and that answer is complete
+and correct. It does not supersede or replace the larger 38-tour audit; going to read the checker
+handoff next.**
+
+Per the naming law (owner correction, 2026-09-08): the DB's `S-13xxx` display_id is a mislabeled
+internal counter, not a settlement number — every row below is identified by driver + its real
+4-digit tour doc.
+
+Reconstructed the 17 live (USMCA `driver_finance.driver_settlements`, `status='closed'`, `net_pay <>
+0` — 18 closed rows minus one $0.00 row = 17; Pedro's tour 5772 row ($756.00) matched the
+assignment's own anchor exactly, confirming this is the right population). For each, extracted every
+`settlement NNNN, load NNNNN` reference from `settlement_lines.description`, and for every doc number
+outside the window this assignment named (5774–5796, or below), pdftotext'd the real signed PDF from
+`~/Downloads/Driver_Settlement_<N>.pdf` and cross-checked every load on that doc against
+`driver_finance.driver_bills`/`driver_finance.settlement_lines` (bill or line, void or active — just
+PRESENT, per the assignment's own bar).
+
+**Outside-window docs referenced anywhere across the 17, all checked against their real signed PDF:
+5753, 5761, 5764, 5765, 5767, 5768, 5769, 5770, 5771, 5772, 5773.**
+
+**Correction to the assignment's own premise on Pedro's case:** tour 5772's other 2 loads (13502,
+13507) are confirmed absent from `mdata.loads` in USMCA entirely — but per a standing owner rule
+(13:36Z, quoted identically across `INBOX-CC-1/CC-2/CC-3/CASCADE/CODEX/CURSOR.md`), both are
+Transportation-entity loads (pickup 08/03–08/06, before the 08/07 USMCA cutover) — "13502/13507 do
+not exist [in USMCA]... correctly NOT real USMCA rows." Pedro's real USMCA loads on tour 5772 (13512,
+13513 — both inside the owner's own confirmed USMCA-universe load list) are the ones his $756.00
+pays, and both are present. There is no missing $997.08 inside USMCA's books on this tour — if pay
+for 13502/13507 is owed, it belongs to Transportation's own settlement books, a different entity, out
+of scope for this rebuild. Flagging for the owner to confirm those two loads were paid through
+Transportation, but it is not a hole in the USMCA rebuild.
+
+No other of the 16 shows a Pedro-shaped gap. Every outside-window doc's full load list (verified
+against the real PDF, not just what's already in the DB) is 100% present somewhere live.
+
+| Driver | Primary tour(s) | Outside-window tour(s) checked | Every load present? | Verdict |
+|---|---|---|---|---|
+| Concepcion Cordova Dominguez | 5773 | 5773 (2/2: 13497,13511) | Yes | CLEAR |
+| Jorge Luis Infante Corona (row A) | 5784 (+5767,5774,5794 refs) | 5767 (2/2: 13495,13496) | Yes | CLEAR |
+| Alfonso Hidalgo Chavez | 5775 (+5787 ref) | none outside window | Yes | CLEAR |
+| Jorge Luis Infante Corona (row B) | 5783 (+5764,5771,5777,5789 refs) | 5764 (2/2: 13487,13493), 5771 (2/2: 13504,13510) | Yes | CLEAR |
+| Luis Armando Sosa Perez | 5779 (+5795 ref) | none outside window | Yes | CLEAR |
+| Leonel Antonio Morales Noguez | 5776 (+5761,5781,5790 refs) | 5761 (2/2: 13482,13485) | Yes | CLEAR |
+| Hugo Gaytan | 5782 (+5768,5778,5791 refs) | 5768 (2/2: 13494,13500) | Yes | CLEAR |
+| Genaro Guerrero Chavez (row A) | 5785 (+5792 ref) | none outside window | Yes | CLEAR |
+| Neftali Coronado Urbano | (no primary ref) 5753,5765,5770,5793 refs | 5753 (2/2: 13471,13480), 5765 (2/2: 13492,13499), 5770 (2/2: 13503,13509) | Yes | CLEAR |
+| Angel Alfonso Sosa (row A) | (no primary ref) 5769,5788 refs | 5769 (2/2: 13498,13508) | Yes | CLEAR |
+| **Pedro Abraham Lopez Collado** | **5772** | **5772 (2/4: 13512,13513 present; 13502,13507 absent)** | **No — but see correction above** | **FLAG (owner-confirm, not a USMCA rebuild gap)** |
+| Rafael Rogelio Rivero Reynoso (row A) | 5780 | none outside window | Yes | CLEAR |
+| Angel Alfonso Sosa (row B) | not tour-linked (current mileage pay, load 13508) | n/a | n/a | CLEAR (not a rebuild row) |
+| Vicente Santos Contreras | not tour-linked (load 13551) | n/a | n/a | CLEAR (not a rebuild row) |
+| Rafael Rogelio Rivero Reynoso (row B) | not tour-linked (loads 13553,13563) | n/a | n/a | CLEAR (not a rebuild row) |
+| Carlos Mauricio Carvallo | not tour-linked (load 13570) | n/a | n/a | CLEAR (not a rebuild row) |
+| Genaro Guerrero Chavez (row B) | not tour-linked (load 13572) | n/a | n/a | CLEAR (not a rebuild row) |
+
+**Bottom line for the assignment's own question:** no hidden Pedro-shaped gap exists among the other
+16. The one real finding (Pedro/tour 5772) is a scope-boundary question for the owner (Transportation
+vs. USMCA pay), not a USMCA data hole. Nothing voided, corrected, or reposted; read-only per the
+assignment. **This does not answer the larger 38-tour/36-missing-load question already raised in
+MEMORY_BANK.md — going there next.**
