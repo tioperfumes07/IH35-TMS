@@ -370,6 +370,8 @@ export function scanLoadColumns(files) {
       if (!obj) continue;
       // `{ value: "load", label: "Load" }` is a <select> option, not a table column.
       if (/(?:^|[{,\s])value:\s*["'`]/.test(obj.text)) continue;
+      // `{ label: "Load", keys: [...] }` is a column-GROUP header, not a column definition.
+      if (/\bkeys:\s*\[/.test(obj.text)) continue;
       const delegated = delegatedRenderBody(src, obj.text);
       const drills =
         containsCanonicalLoadDrill(obj.text, file) ||

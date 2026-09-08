@@ -31,7 +31,7 @@ const composed = ["verify-wave-a-load-column.mjs", "verify-book-load-stamps-link
 export function auditLoadColumn(sources, leaves) {
   const failures = [];
   const p10 = leaves.filter((leaf) => P10.has(leaf.module));
-  if (p10.length < 94) failures.push(`priority-10 load inventory unexpectedly shrank to ${p10.length}`);
+  if (p10.length < 96) failures.push(`priority-10 load inventory unexpectedly shrank to ${p10.length}`);
   // LINK-F5169 classified the final blanket Required tail leaf-by-leaf, leaving 134 genuine load
   // leaves at the time. Floor lowered to 131 (2026-08-20, CC-3) to match #9817
   // FLEET-UNIT-TRIP-COST-LOAD-REVERSE-INFLATION, a legitimate, documented honesty correction that
@@ -47,7 +47,7 @@ export function auditLoadColumn(sources, leaves) {
   // This floor may
   // only ever go DOWN for a documented un-inflation like #9817 — never UP without a genuinely new
   // load leaf actually being built.
-  if (leaves.length < 127) failures.push(`all-module load inventory unexpectedly shrank to ${leaves.length}`);
+  if (leaves.length < 129) failures.push(`all-module load inventory unexpectedly shrank to ${leaves.length}`);
   for (const id of ["accounting.list", "accounting.submit", "accounting.detail"]) {
     if (leaves.some((leaf) => leaf.module === "factoring" && leaf.id === id)) failures.push(`factoring:${id} must not invent a per-advance load FK`);
   }

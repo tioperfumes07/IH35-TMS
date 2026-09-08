@@ -2,7 +2,7 @@
 /**
  * CODEX-VERTICAL-NONMONEY-ZERO-REMAINDER-RATCHET
  *
- * Class/census guard only — intentionally carries no Box-3 Built tag. It derives every non-money,
+ * MATRIX-BUILT-OPTIONAL — Class/census guard only, not a leaf-specific wiring ratchet. It derives every non-money,
  * non-Chrome, non-scenario column from the module maps (canonical identities plus work_order,
  * claim, accident, policy, settlement, legal_matter, and future relationship columns) and proves
  * every cell outside explicitly itemized protected lanes has leaf-specific evidence. A new

@@ -16,7 +16,7 @@ const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
 
 const CHECKS = [
   { name: "settlements hop → driver-finance", file: MANIFEST, pattern: /PreserveSearchNavigate to="\/driver-finance\/settlements"/ },
-  { name: "dispatch settlements secondary mount", file: MANIFEST, pattern: /path="\/dispatch\/settlements"[\s\S]*subTab="settlements"/ },
+  { name: "dispatch settlements secondary mount", file: MANIFEST, pattern: /path="\/dispatch\/settlements"[\s\S]*PreserveSearchNavigate to="\/driver-finance\/settlements"/ },
   { name: "dispatch pre-settlements secondary mount", file: MANIFEST, pattern: /path="\/dispatch\/pre-settlements"[\s\S]*subTab="pre_settlements"/ },
   { name: "border crossing wizard route", file: MANIFEST, pattern: /path="\/dispatch\/border-crossing"/ },
   { name: "dispatch alerts route", file: MANIFEST, pattern: /path="\/dispatch\/alerts"/ },

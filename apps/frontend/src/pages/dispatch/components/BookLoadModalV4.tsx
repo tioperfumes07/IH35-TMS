@@ -1328,7 +1328,6 @@ export function BookLoadModalV4({
         requires_load_locks: values.requires_load_locks,
         requires_straps: values.requires_straps,
         load_type: values.load_type,
-        catalog_load_type_id: values.catalog_load_type_id || undefined,
         driver_pay_rate_per_mile:
           Number.isFinite(values.driver_pay_rate_per_mile) && values.driver_pay_rate_per_mile > 0
             ? values.driver_pay_rate_per_mile

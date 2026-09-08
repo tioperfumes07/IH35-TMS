@@ -31,7 +31,7 @@ const LEAVES = ["cash_advances", "deductions", "disputes"];
 const CHECKS = [
   { name: "cash_advances driver drill", file: DRIVERS_PAGE, pattern: /debtAlertColumns[\s\S]{0,300}kind="driver"/ },
   { name: "cash_advances liability drill", file: DRIVERS_PAGE, pattern: /debtAlertColumns[\s\S]{0,900}kind="liability"/ },
-  { name: "deductions driver drill", file: DEDUCTIONS_PANEL, pattern: /rows\.map[\s\S]{0,300}kind="driver"/ },
+  { name: "deductions driver drill", file: DEDUCTIONS_PANEL, pattern: /kind="driver"[\s\S]{0,60}id=\{row\.driver_id\}/ },
   { name: "deductions load reverse drill", file: DEDUCTIONS_PANEL, pattern: /row\.load_id[\s\S]{0,120}kind="load"/ },
   { name: "deductions settlement reverse drill", file: DEDUCTIONS_PANEL, pattern: /row\.applied_to_settlement_id[\s\S]{0,180}kind="settlement"/ },
   { name: "disputes driver drill", file: DISPUTES_LIST, pattern: /kind="driver"[\s\S]{0,60}id=\{row\.driver_id\}/ },

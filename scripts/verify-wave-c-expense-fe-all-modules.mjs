@@ -25,8 +25,8 @@ export function collectExpenseLeaves(read = fs.readFileSync, readDir = fs.readdi
 }
 const contracts = [
   ["apps/frontend/src/pages/accounting/ExpensesListPage.tsx", /label: "Vendor"[\s\S]*kind="vendor"[\s\S]*label: "JE"[\s\S]*kind="journal_entry"/],
-  ["apps/frontend/src/pages/accounting/MaintenanceShopHubPage.tsx", /<EntityLink kind="expense" id=\{row\.financial_id\}/],
-  ["apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx", /<EntityLink kind="expense" id=\{tx\.matched_expense_id\}/],
+  ["apps/frontend/src/pages/accounting/MaintenanceShopHubPage.tsx", /<EntityLink[\s\S]*kind="expense"[\s\S]*id=\{row\.financial_id\}/],
+  ["apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx", /<EntityLink[\s\S]*kind="expense"[\s\S]*id=\{tx\.matched_expense_id\}/],
   ["apps/frontend/src/pages/home/QuickActionsBar.tsx", /<RecordExpenseModal/],
   ["apps/frontend/src/pages/insurance/ClaimsTab.tsx", /kind="expense"/],
   ["apps/frontend/src/pages/maintenance/MaintenanceHome.tsx", /<CreateExpenseModal/],
