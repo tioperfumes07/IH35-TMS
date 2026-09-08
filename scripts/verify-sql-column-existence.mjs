@@ -376,7 +376,25 @@ function analyzeSqlFragment(sql, schema) {
   const low = norm.toLowerCase();
 
   // FROM/JOIN <schema.table> [AS] [alias] — build alias→table map.
+  //
+  // BANK-F26054 (2026-09-08): aliasToTable used to be a single-valued Map, so two SIBLING scalar
+  // subqueries in the same fragment reusing the same short alias (e.g. two `(SELECT count(*) FROM
+  // mdata.equipment e WHERE …) + (SELECT count(*) FROM accounting.expenses e WHERE …)` in the same
+  // SELECT list — real repro: drivers.routes.ts) silently let the SECOND binding overwrite the
+  // FIRST, so every `e.column` reference in the whole fragment was checked against whichever table's
+  // alias happened to parse last — misattributing a correct `e.driver_uuid` (accounting.expenses) or
+  // `e.assigned_driver_id` (mdata.equipment) reference to the OTHER table. Neither subquery is a CTE,
+  // so splitWithQueryFragments's per-CTE scoping never applied. Fixed by tracking every table an
+  // alias is EVER bound to within the fragment (a Set, not a single value) and treating a qualified
+  // reference as valid if the column exists on ANY of them — this can only make the check MORE
+  // lenient (never masks a genuine typo, since a real typo'd column essentially never coincidentally
+  // exists on some unrelated table the same alias was also bound to).
   const aliasToTable = new Map();
+  const addAlias = (key, table) => {
+    let set = aliasToTable.get(key);
+    if (!set) aliasToTable.set(key, (set = new Set()));
+    set.add(table);
+  };
   const tableRefs = [];
   const tableRe = /\b(?:from|join)\s+([a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*)(?:\s+(?:as\s+)?([a-z_][a-z0-9_]*))?/gi;
   let tm;
@@ -385,9 +403,9 @@ function analyzeSqlFragment(sql, schema) {
     const alias = tm[2] && !["on","using","where","left","right","inner","outer","join","cross","full","set"].includes(tm[2])
       ? tm[2] : null;
     tableRefs.push(table);
-    if (alias) aliasToTable.set(alias, table);
+    if (alias) addAlias(alias, table);
     // A table with no alias is referable by its bare table name (last segment).
-    aliasToTable.set(table.split(".")[1], table);
+    addAlias(table.split(".")[1], table);
   }
 
   const isTarget = (t) => TARGET_TABLES.has(t) && schema.has(t);
@@ -406,8 +424,8 @@ function analyzeSqlFragment(sql, schema) {
   if (utm) {
     const table = utm[1];
     const alias = utm[2] && utm[2] !== "set" ? utm[2] : null;
-    if (alias) aliasToTable.set(alias, table);
-    aliasToTable.set(table.split(".")[1], table);
+    if (alias) addAlias(alias, table);
+    addAlias(table.split(".")[1], table);
     if (isTarget(table)) updateTargetTable = table;
   }
   if (updateTargetTable) {
@@ -447,13 +465,23 @@ function analyzeSqlFragment(sql, schema) {
   while ((qm = qualRe.exec(low))) {
     const alias = qm[1];
     const col = qm[2];
-    const table = aliasToTable.get(alias);
-    if (!table || !isTarget(table)) continue;
+    const candidates = aliasToTable.get(alias);
+    if (!candidates) continue;
     // skip schema.table itself (e.g. mdata.vendors) — alias segment would be a schema, not a col
     if (schema.has(`${alias}.${col}`)) continue;
     if (col === "*") continue;
-    if (!schema.get(table).has(col)) {
-      violations.push({ table, column: col, ctx: `${alias}.${col}` });
+    // An alias reused across sibling scalar subqueries in the same fragment binds to MULTIPLE
+    // tables here (see the aliasToTable comment above). If ANY candidate is a table this guard
+    // does not track (outside TARGET_TABLES/schema), the reference is genuinely ambiguous — we
+    // cannot prove the column is wrong against an unrelated tracked candidate when the real match
+    // may be sitting on the untracked one, so skip rather than false-accuse (same conservatism the
+    // guard already applies to a single untracked table). Only when every candidate is tracked do
+    // we check "exists on ANY of them" and report against the first one missing it.
+    const candidateList = [...candidates];
+    if (candidateList.some((t) => !isTarget(t))) continue;
+    const existsSomewhere = candidateList.some((t) => schema.get(t).has(col));
+    if (!existsSomewhere) {
+      violations.push({ table: candidateList[0], column: col, ctx: `${alias}.${col}` });
     }
   }
 
@@ -588,6 +616,7 @@ function selftest() {
   const schema = new Map([
     ["mdata.vendors", new Set(["id", "operating_company_id", "deactivated_at", "vendor_name"])],
     ["mdata.loads", new Set(["id", "status", "assigned_primary_driver_id", "operating_company_id"])],
+    ["mdata.units", new Set(["id", "unit_number", "operating_company_id"])],
   ]);
   let ok = true;
   const check = (name, sql, expectViolation) => {
@@ -628,6 +657,26 @@ function selftest() {
   // Alias rebound across CTEs must not false-positive: first CTE uses v=vendors, second uses v as output alias only in FROM scoped.
   check("CTE alias rebind across bodies — no false positive on clean cols",
     "WITH a AS (SELECT v.id FROM mdata.vendors v WHERE v.deactivated_at IS NULL), b AS (SELECT l.id FROM mdata.loads l WHERE l.status = $1) SELECT a.id FROM a JOIN b ON true", false);
+
+  // BANK-F26054 — alias reused across SIBLING scalar subqueries (not CTEs, so splitWithQueryFragments'
+  // per-CTE scoping never applies). Real repro: mdata/drivers.routes.ts's
+  // (SELECT count(*) FROM mdata.equipment e WHERE e.assigned_driver_id = $1) +
+  // (SELECT count(*) FROM accounting.expenses e WHERE e.driver_uuid = $1) — the second binding used
+  // to silently overwrite the first, so v.status below (genuinely valid on mdata.loads) would have
+  // been checked against mdata.units (which lacks it) and wrongly flagged.
+  check("alias reused across sibling scalar subqueries, both target tables, both cols real — clean",
+    "SELECT (SELECT count(*) FROM mdata.loads v WHERE v.status = $1) + (SELECT count(*) FROM mdata.units v WHERE v.unit_number = $1)", false);
+  // Same alias reuse, but the column is invalid on BOTH candidate tables — must still be caught.
+  check("alias reused across sibling scalar subqueries, real defect on both candidates — flagged",
+    "SELECT (SELECT count(*) FROM mdata.loads v WHERE v.status = $1) + (SELECT count(*) FROM mdata.units v WHERE v.bogus_column_xyz = $1)", true);
+  // Same alias reused across ONE tracked target table and ONE table this guard does not track at
+  // all (dispatch.auto_status_suggestions is real and deliberately outside TARGET_TABLES). Real
+  // repro: tri-signal.service.ts's `s` bound to mdata.load_stops in one LATERAL and
+  // dispatch.auto_status_suggestions in a sibling LATERAL — s.suggested_at/s.operating_company_id
+  // belong to the untracked table and must NOT be flagged just because the tracked candidate lacks
+  // them; the reference is ambiguous, not provably wrong.
+  check("alias reused across one tracked + one untracked table — ambiguous, not flagged",
+    "SELECT (SELECT id FROM mdata.loads s WHERE s.status = $1) + (SELECT MAX(s.suggested_at) FROM dispatch.auto_status_suggestions s WHERE s.load_id = $1)", false);
 
   // SELECT-list pass (CLS-SCHEMA-DRIFT). The first case is the VERBATIM live defect from
   // dispatch/auth-gates/wf-038-active-driver.gate.ts, reduced to the vendors fixture: a phantom column
