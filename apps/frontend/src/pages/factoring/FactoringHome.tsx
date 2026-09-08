@@ -796,7 +796,30 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
 
       {tab === "chargebacks_fees" ? (
         <div className="space-y-3" data-testid="factoring-home-chargebacks-filters">
-        <div className="grid gap-3 lg:grid-cols-2">
+          {/* NEW-24 (owner 2026-09-07): "Chargebacks & Fee History screen is split awkwardly
+              with Monthly Fee Summaries mixed in — give each its own tab/window, or put Monthly
+              Fee Summary above, not interleaved." Was a side-by-side lg:grid-cols-2 (two panels
+              sharing one screen width, each squeezed) — now a vertical stack, summary ABOVE
+              detail, each full-width and un-interleaved, per the owner's own second option. */}
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <div className="mb-2 text-xs font-medium text-gray-900">Monthly fee summaries</div>
+            {feesQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load monthly fee summaries"
+                {...formatQueryErrorDetail(feesQuery.error)}
+                onRetry={() => void feesQuery.refetch()}
+              />
+            ) : (
+              <ParityTable
+                columns={MONTHLY_FEE_COLUMNS}
+                rows={feesQuery.data?.monthly_summary ?? []}
+                rowKey={(row) => String(row.statement_month)}
+                loading={feesQuery.isLoading}
+                emptyText="No monthly fee summaries available."
+                storageKey="factoring-home-monthly-fee-summaries"
+              />
+            )}
+          </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-xs font-medium text-gray-900">Chargebacks + fee history</div>
             <div className="overflow-x-auto">
@@ -846,26 +869,6 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
               hint="Narrow the customer filter to see the remaining chargebacks and fees."
             />
           </div>
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-xs font-medium text-gray-900">Monthly fee summaries</div>
-            {feesQuery.isError ? (
-              <ListErrorState
-                title="Couldn't load monthly fee summaries"
-                {...formatQueryErrorDetail(feesQuery.error)}
-                onRetry={() => void feesQuery.refetch()}
-              />
-            ) : (
-              <ParityTable
-                columns={MONTHLY_FEE_COLUMNS}
-                rows={feesQuery.data?.monthly_summary ?? []}
-                rowKey={(row) => String(row.statement_month)}
-                loading={feesQuery.isLoading}
-                emptyText="No monthly fee summaries available."
-                storageKey="factoring-home-monthly-fee-summaries"
-              />
-            )}
-          </div>
-        </div>
         </div>
       ) : null}
 
