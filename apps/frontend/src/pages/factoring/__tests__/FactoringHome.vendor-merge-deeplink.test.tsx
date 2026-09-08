@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import * as factoringApi from "../../../api/factoring";
 import * as dataInfraApi from "../../../api/data-infra";
@@ -76,5 +76,48 @@ describe("FactoringHomePage vendor-merge deep-link prefill (MERGE-DEEPLINK-NEVER
     expect((toInput as HTMLInputElement).value).toBe(toId);
     expect(await screen.findByText("NEFTALI URBANO CORONADO")).toBeTruthy();
     expect(await screen.findByText("Neftali Coronado Urbano")).toBeTruthy();
+  });
+
+  /**
+   * MERGE-DEEPLINK-NEVER-FIRES-2026-09-08 part 2: the test above passed even for the FIRST,
+   * still-broken fix (PR #21410) because a bare MemoryRouter has no keyed-remount-on-search-
+   * change behavior. The real production bug: apps/frontend/src/routes/manifest.tsx's
+   * RouteContentBoundary keys its <Suspense> on `${location.pathname}${location.search}` --
+   * deliberately, to avoid stale content flashing across navigations. The prefill effect used to
+   * call `setSearchParams(next, {replace:true})` to strip the merge_* params right after setting
+   * state, which changes `location.search`, which changes that Suspense key, which force-remounts
+   * the whole page an instant later -- wiping the state before it could ever render. This test
+   * asserts the actual fix's contract directly: the effect must NEVER delete the merge_* params
+   * from the URL (same pattern every sibling URL-driven filter in this file already follows) --
+   * if it does, ANY ancestor that re-keys on location.search (like the real RouteContentBoundary)
+   * will remount this page and lose the very state this effect just set.
+   */
+  it("does NOT delete the merge_* query params from the URL after consuming them (they must survive a keyed-Suspense remount)", async () => {
+    stubHappyPathApis();
+    const fromId = "2bb0cc18-21ef-46de-890c-426b54112ffd";
+    const toId = "3a5fa060-2ff4-4ebe-843d-7871eab7b322";
+    let observedSearch = "";
+    function LocationSpy() {
+      observedSearch = useLocation().search;
+      return null;
+    }
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <MemoryRouter
+        initialEntries={[
+          `/factoring/vendor-merges?merge_from_vendor_id=${fromId}&merge_from_vendor_name=NEFTALI+URBANO+CORONADO&merge_to_vendor_id=${toId}&merge_to_vendor_name=Neftali+Coronado+Urbano`,
+        ]}
+      >
+        <QueryClientProvider client={qc}>
+          <ToastProvider>
+            <LocationSpy />
+            <FactoringHomePage initialTab="vendor_merges" />
+          </ToastProvider>
+        </QueryClientProvider>
+      </MemoryRouter>
+    );
+    await screen.findByPlaceholderText("from qbo vendor id");
+    expect(observedSearch).toContain(`merge_from_vendor_id=${fromId}`);
+    expect(observedSearch).toContain(`merge_to_vendor_id=${toId}`);
   });
 });
