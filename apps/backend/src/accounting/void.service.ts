@@ -693,6 +693,27 @@ export async function postVoidReversal(
   // more than one journal entry; pointing a single FK at one of several would assert something false.
   // When the source resolves to exactly one JE we link both directions; otherwise the per-line
   // reversal_of_line_id / reversed_by_line_id links above remain the record, and nothing is invented.
+  //
+  // ACCT-F5723 (measured live, prod, USMCA, 2026-09-07): this lookup used to require
+  // `p.posting_batch_id IS NOT NULL`, but readOriginalGlPostings() above — the function that actually
+  // finds the lines this same call just flipped — was already fixed under ACCT-F331 to NOT require
+  // posting_batch_id, because sub-ledger posters (e.g. the revenue-recognition two-event latch in
+  // revrec-delivery-posting/poster.service.ts) tag their postings with source_transaction_type/id but
+  // never populate posting_batch_id (they write directly, outside the posting-engine batch flow). The
+  // two functions had drifted out of sync: readOriginalGlPostings found and flipped the latch's "bill"
+  // JE correctly (net GL effect = $0, proven live), but THIS lookup's stricter filter matched zero rows,
+  // so reversed_by_je_id/reverses_je_id were silently never written on the original latch JE.
+  //
+  // Consequence, proven live on load ebf7e233-b78e-48f3-bbec-2d5fdd887274 (invoice 13541 void-and-reissue,
+  // owner rate correction $3,500 -> $2,500): standingLatchJePredicate (ACCT-F66, invoice-gl.service.ts)
+  // keys ONLY on journal_entries.reversed_by_je_id IS NULL to decide whether a revrec latch is still
+  // "standing". With the FK never written, the fully-reversed, net-zero old latch JE still read as
+  // standing, so the ACCT-F205 interlock refused to let the corrected reissued invoice
+  // (INV-2026-00002, $2,500) post its own A/R — the exact "reversed latch blocks recognition forever"
+  // trap ACCT-F66's own header already documents for the read side (loadHasStandingBillLatch /
+  // loadHasStandingInvoiceGl), now confirmed on the WRITE side of the same FK. Removing the
+  // posting_batch_id filter here — the same fix already applied to readOriginalGlPostings — closes it at
+  // the source instead of teaching every reader of reversed_by_je_id a second, inconsistent test.
   if (reversalJeId) {
     const src = await client.query<{ je_id: string }>(
       `
@@ -701,7 +722,6 @@ export async function postVoidReversal(
         WHERE p.operating_company_id = $1::uuid
           AND p.source_transaction_type = $3
           AND p.source_transaction_id = $2
-          AND p.posting_batch_id IS NOT NULL
           AND p.journal_entry_uuid <> $4::uuid
         LIMIT 2
       `,
