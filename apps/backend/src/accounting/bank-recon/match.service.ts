@@ -1179,13 +1179,27 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
     // WAVE-H3 (LINK-007/008): reverse stamp money → bank. Forward-only matched_* left payments /
     // bill_payments.source_bank_transaction_id null forever (CLS-LINKAGE-ONEWAY). COALESCE keeps
     // create/categorize provenance if already set. No mass backfill — new accepts only.
+    //
+    // BANK-F26053 (THREE-DATES-COVERAGE-GAP follow-up, 2026-09-08): this is THE reconciliation
+    // match-accept moment — cleared_date (added by migration 202613310400 specifically "until a
+    // matching bank transaction clears it") belongs here, not only on the two bank-feed-driven
+    // creation paths verify-three-dates-cleared-date.mjs already covers. COALESCE so a payment
+    // already cleared via one of those direct-creation paths keeps its own timestamp; only a
+    // payment created BEFORE its bank transaction cleared (the ordinary case) gets stamped here,
+    // using the bank's own transaction_date — never re-dating payment_date (issued) itself.
     if (input.ledger_entry_kind === "payment") {
       await client.query(
         `UPDATE accounting.payments
-            SET source_bank_transaction_id = COALESCE(source_bank_transaction_id, $1::uuid)
+            SET source_bank_transaction_id = COALESCE(source_bank_transaction_id, $1::uuid),
+                cleared_date = COALESCE(cleared_date, $4::date)
           WHERE id = $2::uuid
             AND operating_company_id = $3::uuid`,
-        [input.bank_transaction_id, input.ledger_entry_id, input.operating_company_id]
+        [
+          input.bank_transaction_id,
+          input.ledger_entry_id,
+          input.operating_company_id,
+          txn.transaction_date.slice(0, 10),
+        ]
       );
 
       // ACCT-F5620 (re-applied a 3rd time — see docs/bus/OUTBOX-CC-1.md /
@@ -1245,10 +1259,12 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
         }
       }
     } else if (input.ledger_entry_kind === "bill_payment") {
+      // BANK-F26053 — same THREE-DATES-COVERAGE-GAP stamp as the payment branch above.
       await client.query(
         `UPDATE accounting.bill_payments
             SET source_bank_transaction_id = COALESCE(source_bank_transaction_id, $1::uuid),
                 from_bank_account_id = COALESCE(from_bank_account_id, $4::uuid),
+                cleared_date = COALESCE(cleared_date, $5::date),
                 updated_at = now()
           WHERE id = $2::uuid
             AND operating_company_id = $3::uuid`,
@@ -1257,6 +1273,7 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
           input.ledger_entry_id,
           input.operating_company_id,
           txn.bank_account_id,
+          txn.transaction_date.slice(0, 10),
         ]
       );
     }

@@ -344,10 +344,16 @@ export async function unmatchBankTransaction(input: {
     // BNK-11 — clear the reverse (ledger-side) back-pointer too, scoped to "still points at THIS
     // bank transaction" so a link that has since moved on (re-matched elsewhere, or posted directly)
     // is never touched by unmatching a now-stale reference.
+    //
+    // BANK-F26053 — clear cleared_date alongside source_bank_transaction_id, same scope. Unmatching
+    // detaches this payment from the reconciliation session it settled in (THREE-DATES-COVERAGE-GAP:
+    // cleared_date drives ONLY that), so leaving a stale cleared_date after unmatch would misreport
+    // a session the payment no longer belongs to.
     if (row.prev_payment_id) {
       await client.query(
         `UPDATE accounting.payments
-            SET source_bank_transaction_id = NULL
+            SET source_bank_transaction_id = NULL,
+                cleared_date = NULL
           WHERE id = $1::uuid
             AND operating_company_id = $2::uuid
             AND source_bank_transaction_id = $3::uuid`,
@@ -359,6 +365,7 @@ export async function unmatchBankTransaction(input: {
         `UPDATE accounting.bill_payments
             SET source_bank_transaction_id = NULL,
                 from_bank_account_id = NULL,
+                cleared_date = NULL,
                 updated_at = now()
           WHERE id = $1::uuid
             AND operating_company_id = $2::uuid
