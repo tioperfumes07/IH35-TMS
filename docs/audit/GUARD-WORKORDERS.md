@@ -9238,3 +9238,24 @@ itself was never wired into any verify-step, so `verify:pre-commit`/CI's actual 
 never once run it. A future regression to this feature (owner-facing, real money movement) would
 have shipped silently green. Claimed 10819 (CLAIM-RESERVE, PR #21398, merged), authored
 `scripts/verify-steps/10819-verify-petty-cash-check-transfer.mjs` here. | `scripts/verify-steps/10819-verify-petty-cash-check-transfer.mjs` | — | none | `node scripts/verify-petty-cash-check-transfer.mjs --selftest` exit 0 (6/6); `node scripts/verify-petty-cash-check-transfer.mjs` exit 0 | **CLOSED · orphan guard now actually runs in CI** |
+
+## verify-bank-recon-accept-closed-session-conflict wired at verify-step 10823 (CC-2, 2026-09-08)
+
+Systematic sweep of all ~300 Banking/reconciliation-named guards against verify-steps wiring +
+`scripts/.guard-exempt.json` found ONE genuine orphan (the other 26 candidates the raw filename
+grep surfaced were all correctly exempt-listed): `verify-bank-recon-accept-closed-session-conflict.mjs`
+asserts `match.service.ts`'s `acceptMatchWithResolveDifference` calls
+`assertBankTxnNotInReconciledSession` BEFORE `storeMatch` (never accept a reconciliation match
+into an already-closed/locked session) and that both the accept-match and manual-match routes map
+the typed `ReconciledSessionLockedError` to HTTP 409. The guard is fully authored, its `--selftest`
+passes 3/3 planted defects, and the live check already passes clean — the underlying safety code
+is correct and was never broken. It was simply never wired into any verify-step or the exempt
+list, so CI's actual required check had never once run it; a future regression to this closed-
+session safety check (directly adjacent to BANK-F26053, which this session already touched in the
+same function) would have shipped silently green. Claimed 10823 (CLAIM-RESERVE, PR #21402,
+merged), authored `scripts/verify-steps/10823-verify-bank-recon-accept-closed-session-conflict.mjs`
+here. | `scripts/verify-steps/10823-verify-bank-recon-accept-closed-session-conflict.mjs` | — |
+none | `node scripts/verify-bank-recon-accept-closed-session-conflict.mjs --selftest` exit 0 (3/3);
+`node scripts/verify-bank-recon-accept-closed-session-conflict.mjs` exit 0 | **CLOSED · orphan
+guard now actually runs in CI · swept the rest of the Banking guard surface, no other orphans
+found (26/27 candidates confirmed exempt-listed)** |
