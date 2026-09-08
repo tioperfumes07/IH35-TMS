@@ -1357,7 +1357,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                             type="text"
                             value={medicalCardNumber}
                             onChange={(event) => setMedicalCardNumber(event.target.value)}
-                            className="rounded-sm border h-8 px-2 text-xs"
+                            className="h-8"
                           />
                         </div>
                         <div className="flex flex-col gap-1">
@@ -1367,7 +1367,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                             data-testid="driver-create-medical-card-issued"
                             value={medicalCardIssuedDate}
                             onChange={(value) => setMedicalCardIssuedDate(value)}
-                            className="rounded-sm border h-8 px-2 text-xs"
+                            className="h-8"
                           />
                         </div>
                         <p className="col-span-full text-xs text-gray-600">
@@ -1420,7 +1420,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                             data-testid="driver-create-clearinghouse-queried-at"
                             value={clearinghouseQueriedAt}
                             onChange={(value) => setClearinghouseQueriedAt(value)}
-                            className="rounded-sm border h-8 px-2 text-xs"
+                            className="h-8"
                           />
                         </div>
                         <label className="col-span-full flex items-center gap-2 text-xs text-gray-700">
@@ -1873,6 +1873,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         open={licenseClassCreateOpen}
         onClose={() => setLicenseClassCreateOpen(false)}
         title="Add license class"
+        variant="drawer"
       >
         {licenseClassCreateContent}
       </Modal>

@@ -34,7 +34,7 @@ export function BrokersListPage() {
         operating_company_id: companyId,
         customer_type: "broker",
         search: search || undefined,
-        status: showInactive ? undefined : "active",
+        ...(showInactive ? {} : { status: "active" }),
       }),
     enabled: Boolean(companyId),
     ...catalogListSearchQueryOptions,

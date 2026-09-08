@@ -705,6 +705,18 @@
         "connectivity"
       ],
       "surface_path": "pages/vendors/VendorsListView.tsx"
+    },
+    {
+      "id": "vendors.drawer.vendor_edit",
+      "tab": "Drawers",
+      "sub": "Drawer: Vendor Edit",
+      "route_hint": "surface://components/vendors/VendorEditDrawer.tsx",
+      "surface_kind": "drawer",
+      "surface_path": "components/vendors/VendorEditDrawer.tsx",
+      "required": [
+        "connectivity",
+        "vendor"
+      ]
     }
   ],
   "honesty_audit": {

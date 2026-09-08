@@ -28,6 +28,28 @@ function cents(n) {
 let failures = 0;
 const lines = [];
 
+function selftest() {
+  // Plant a mismatch: a fake settlement JSON where the invoice total doesn't match the sum of loads
+  const fakeSettlement = {
+    loads: [{ customer_name: "TEST", linehaul_amount: 100.00, fuel_rows: [], expense_rows: [], loaded_miles: 0, loaded_rate: null }],
+    company_settlement_totals: { invoiced: 200.00, fuel: 0, company_expenses: 0 },
+    driver_settlement_totals: { salary: 0 },
+  };
+  let invoiceCents = 0;
+  for (const load of fakeSettlement.loads) {
+    if (load.customer_name) invoiceCents += cents(load.linehaul_amount);
+  }
+  const docInvoiceCents = cents(fakeSettlement.company_settlement_totals.invoiced);
+  if (Math.abs(invoiceCents - docInvoiceCents) <= 0) {
+    console.error("selftest FAIL: planted mismatch was not detected");
+    process.exit(1);
+  }
+  console.log("selftest PASS: planted invoice mismatch detected as expected");
+  process.exit(0);
+}
+
+if (process.argv.includes("--selftest")) selftest();
+
 for (const num of CODEX_SLICE) {
   const p = path.join(SLICE_DIR, `settlement-${num}.json`);
   if (!fs.existsSync(p)) {

@@ -2,6 +2,7 @@
 /**
  * Owner 2026-09-03 — table header colour pair + date-column ratchet + sortable default.
  * One sweep, one guard. Hand-rolled <table> screens are listed, not converted here.
+ * @independent-input apps/frontend/src
  */
 import fs from "node:fs";
 import path from "node:path";

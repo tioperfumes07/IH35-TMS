@@ -403,6 +403,13 @@ export function spawnSafetyWo(id: string, companyId: string) {
   });
 }
 
+export function voidAccidentLiability(id: string, companyId: string, reason: string) {
+  return apiRequest<Record<string, unknown>>(
+    `/api/v1/safety/accident-liabilities/${encodeURIComponent(id)}/void`,
+    { method: "POST", body: { operating_company_id: companyId, reason } }
+  );
+}
+
 export function getTrainingCompletions(companyId: string, params: { driver_id?: string; limit?: number; offset?: number } = {}) {
   const qs = new URLSearchParams({ operating_company_id: companyId });
   if (params.driver_id) qs.set("driver_id", params.driver_id);

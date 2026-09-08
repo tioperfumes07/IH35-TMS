@@ -11,8 +11,8 @@ const files = {
 };
 const HEADER = '/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["misc.trip_profit"],"task":"DISP-F5866-TRIP-PROFIT-REVERSE-EXACT-LEAF","vertical":"column-wave"} */';
 const checks = [
-  ["settlement query driver FK", "service", /s\.driver_id::text AS driver_id/, false],
-  ["profitability projection driver FK", "service", /t\.driver_id/, false],
+  ["settlement query driver FK", "service", /s\.driver_id\b/, false],
+  ["profitability projection driver FK", "service", /sip\.driver_id::text AS driver_id/, false],
   ["serializer driver FK", "service", /driver_id:\s*r\.driver_id \? String\(r\.driver_id\) : null/, false],
   ["client driver FK type", "api", /driver_id:\s*string \| null/, false],
   ["report driver tombstone-safe drill", "page", /<EntityLinkOrTombstone kind="driver" id=\{row\.driver_id\} name=\{row\.driver_name\} noun="Driver"/, false],

@@ -17,6 +17,7 @@ const OPEN_TOUR_STATUSES_EXCLUDED = new Set(["approved", "paid", "cancelled", "c
 export type PostedWhileTourOpenRow = {
   doc_type: "expense" | "bill";
   doc_id: string;
+  load_id: string | null;
   load_number: string | null;
   journal_entry_id: string | null;
   amount_cents: number;
@@ -42,6 +43,7 @@ async function jeLinesFor(client: DbClient, journalEntryId: string | null) {
 export async function getPostedWhileTourOpenReport(client: DbClient, operatingCompanyId: string): Promise<PostedWhileTourOpenRow[]> {
   const expensesRes = await client.query<{
     doc_id: string;
+    load_id: string | null;
     load_number: string | null;
     journal_entry_id: string | null;
     amount_cents: string;
@@ -50,6 +52,7 @@ export async function getPostedWhileTourOpenReport(client: DbClient, operatingCo
     `
       SELECT DISTINCT ON (e.id)
         e.id::text AS doc_id,
+        l.id::text AS load_id,
         l.load_number,
         e.journal_entry_id::text AS journal_entry_id,
         e.total_amount_cents::text AS amount_cents,
@@ -68,6 +71,7 @@ export async function getPostedWhileTourOpenReport(client: DbClient, operatingCo
 
   const billsRes = await client.query<{
     doc_id: string;
+    load_id: string | null;
     load_number: string | null;
     amount_cents: string;
     settlement_status: string | null;
@@ -75,6 +79,7 @@ export async function getPostedWhileTourOpenReport(client: DbClient, operatingCo
     `
       SELECT DISTINCT ON (b.id, bl.load_id)
         b.id::text AS doc_id,
+        l.id::text AS load_id,
         l.load_number,
         bl.amount::numeric::text AS amount_cents,
         ds.status AS settlement_status
@@ -113,6 +118,7 @@ export async function getPostedWhileTourOpenReport(client: DbClient, operatingCo
     rows.push({
       doc_type: "expense",
       doc_id: e.doc_id,
+      load_id: e.load_id,
       load_number: e.load_number,
       journal_entry_id: e.journal_entry_id,
       amount_cents: Number(e.amount_cents),
@@ -128,6 +134,7 @@ export async function getPostedWhileTourOpenReport(client: DbClient, operatingCo
     rows.push({
       doc_type: "bill",
       doc_id: b.doc_id,
+      load_id: b.load_id,
       load_number: b.load_number,
       journal_entry_id: journalEntryId,
       amount_cents: Math.round(Number(b.amount_cents) * 100),

@@ -47,7 +47,7 @@ export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId,
 
   return <div className="ldt-body" data-testid="tour-presettlement-tab" data-surface="load-detail">
     <div className="ldt-rowbar">
-      <span>Tour <span className="ldt-k">{t.tour_id ? t.tour_id.slice(0, 8) : DASH}</span> · pre-settlement <EntityLink kind="settlement" id={t.settlement_id} label={t.display_id ?? t.settlement_id.slice(0, 8)} />{" "}
+      <span>Tour <span className="ldt-k">{t.tour_id ? "Tour" : DASH}</span> · pre-settlement <EntityLink kind="settlement" id={t.settlement_id} label={t.display_id ?? "Settlement"} />{" "}
         · {r.legs.map((l) => `${l.trip_type ?? "leg"} ${l.load_number}${l.is_this_load ? " (this load)" : ""}`).join(" · ")}{sb ? "" : " · SB —"} · {t.driver_name ?? "driver"}{t.unit_number ? ` · ${t.unit_number}` : ""}</span>
       <span className={`ldt-pill ${t.is_open ? "warn" : "ok"}`} data-testid="tour-state-chip">{t.is_open ? "open · nothing posted" : `closed · ${t.status}`}</span>
     </div>

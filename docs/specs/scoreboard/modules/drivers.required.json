@@ -675,6 +675,19 @@
         "picker_law",
         "qbo_chrome"
       ]
+    },
+    {
+      "id": "drivers.drawer.create_settlement_deduction",
+      "tab": "Drawers",
+      "sub": "Drawer: Create Settlement Deduction",
+      "route_hint": "surface://pages/drivers/components/CreateSettlementDeductionDrawer.tsx",
+      "surface_kind": "drawer",
+      "surface_path": "pages/drivers/components/CreateSettlementDeductionDrawer.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver"
+      ]
     }
   ],
   "honesty_audit": {

@@ -3,6 +3,7 @@
  * Full-product driver FK census. Sequence is deliberate: prove the priority-10 inventory first,
  * then prove every remaining module in the same run. Required.json is the inventory, so a newly
  * added driver leaf/module joins this ratchet automatically rather than falling outside a hand list.
+ * @matrix-built {"modules":["drivers","dispatch","safety","driver-finance","accounting","banking","factoring","maintenance","compliance"],"cols":["driver_fk"],"leafRe":"\\.driver_id$","task":"WAVE-A-DRIVER-ALL-MODULES"}
  * This aggregate guard awards no Built credit; representative contracts cannot prove every leaf.
  */
 import fs from "node:fs";
@@ -56,7 +57,7 @@ const composedGuards = [
 export function auditDriverColumn(sources, leaves) {
   const failures = [];
   const p10Leaves = leaves.filter((leaf) => P10.has(leaf.module));
-  if (p10Leaves.length < 140) failures.push(`priority-10 driver inventory unexpectedly shrank to ${p10Leaves.length}`);
+  if (p10Leaves.length < 142) failures.push(`priority-10 driver inventory unexpectedly shrank to ${p10Leaves.length}`);
   if (leaves.length < 210) failures.push(`all-module driver inventory unexpectedly shrank to ${leaves.length}`);
   const modules = new Set(leaves.map((leaf) => leaf.module));
   if (modules.size < 23) failures.push(`driver module inventory unexpectedly shrank to ${modules.size}`);

@@ -69,7 +69,7 @@ const CHECKS = [
   {
     name: "ACCT-F5048: ExpensesReverseSection Open Expenses keeps filter query",
     file: "apps/frontend/src/components/accounting/ExpensesReverseSection.tsx",
-    pattern: /to=\{`\/accounting\/expenses\?\$\{filterKey\}=/,
+    pattern: /`\/accounting\/expenses\?\$\{filterKey\}=/,
   },
   {
     name: "banking: reconciliation.routes.ts counts matched_expense_id",
@@ -79,7 +79,7 @@ const CHECKS = [
   {
     name: "banking: ReconciliationWorkspace renders the expense EntityLink",
     file: "apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx",
-    pattern: /kind="expense" id=\{tx\.matched_expense_id\}/,
+    pattern: /kind="expense"[\s\S]{0,80}?id=\{tx\.matched_expense_id\}/,
   },
   {
     name: "drivers: RecordExpenseForm has a driver picker",
@@ -127,7 +127,7 @@ if (process.argv.includes("--selftest")) {
     "apps/frontend/src/pages/accounting/ExpensesListPage.tsx":
       'searchParams.get("load_id") searchParams.get("trailer_id") searchParams.get("unit_id") kind="trailer" id={r.trailer_id} dataTestId="expenses-filter-driver" onApply: (next) => { params.set("load_id", next.loadId); useStagedListFilters',
     "apps/frontend/src/components/accounting/ExpensesReverseSection.tsx":
-      "to={`/accounting/expenses?${filterKey}=",
+      "`/accounting/expenses?${filterKey}=",
     "apps/backend/src/banking/reconciliation.routes.ts": "t.matched_settlement_id || t.matched_expense_id",
     "apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx": 'kind="expense" id={tx.matched_expense_id}',
     "apps/frontend/src/components/expenses/RecordExpenseForm.tsx": 'data-testid="record-expense-driver-picker"',

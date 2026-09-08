@@ -53,6 +53,20 @@ function walkDir(dir) {
   }
 }
 
+function selftest() {
+  const planted = "INSERT INTO qbo.sync_alerts (entity_type, error_message) VALUES ('test', 'msg');";
+  const cols = extractInsertColumns(planted);
+  const caught = cols.some((c) => FORBIDDEN_COLUMNS.includes(c));
+  if (!caught) {
+    console.error("selftest FAIL: planted drifted column names were not detected");
+    process.exit(1);
+  }
+  console.log("selftest PASS: planted drifted column names detected as expected");
+  process.exit(0);
+}
+
+if (process.argv.includes("--selftest")) selftest();
+
 walkDir(BACKEND_SRC);
 
 if (failures > 0) {

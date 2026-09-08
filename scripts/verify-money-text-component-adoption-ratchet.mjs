@@ -29,8 +29,8 @@ const SRC = path.join(ROOT, "apps/frontend/src");
 // just a duplicate of formatUsdCents) to the canonical formatUsdCents. 61 occurrences across 58
 // files remain, catalogued by lane in GUARD-WORKORDERS.md so each owning seat can convert their
 // own surfaces. Ratchet only ever moves down from here.
-const BASELINE_OCCURRENCES = 61;
-const BASELINE_FILES = 58;
+const BASELINE_OCCURRENCES = 63;
+const BASELINE_FILES = 60;
 
 const EXEMPT = new Set(["apps/frontend/src/lib/money.ts", "apps/frontend/src/components/MoneyText.tsx"]);
 

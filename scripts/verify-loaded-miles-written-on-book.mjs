@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["connectivity","reverse_link","load"],"leaves":["dispatch.panel.load_save_proof"]} */
 /**
  * LV-LOADED-MILES-NEVER-WRITTEN — the Book wizard must persist mdata.loads.loaded_miles.
  *

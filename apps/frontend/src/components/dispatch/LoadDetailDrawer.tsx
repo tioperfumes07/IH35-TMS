@@ -1382,7 +1382,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
             load ? (
               <div className="space-y-2">
                 {/* LDT-D — Documents tab: one table Date · Type · Name · Size · Linked to · Open.
-                    Shared read: useLoadDocuments (consumed by LDT-D, LDT-4 Factoring, LDT-2 Stops).
+                    Shared read: useLoadDocuments hook — consumed by LDT-D, LDT-4 Factoring, LDT-2 Stops.
                     Customs never appears here (owner). */}
                 <LdtDocumentsTab
                   loadId={load.id}

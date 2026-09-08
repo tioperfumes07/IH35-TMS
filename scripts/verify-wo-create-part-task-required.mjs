@@ -4,8 +4,9 @@
  * Backend sectionALineSchema already enforces description.min(1); blank used to 400
  * with a misleading header Zod dump. Frontend must gate + toast + disable Create.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdtempSync, copyFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
 
 const ROOT = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
 const MODAL = join(ROOT, "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx");
@@ -13,8 +14,8 @@ const BOX = join(ROOT, "apps/frontend/src/components/forms/shared/CostBreakdownB
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
 const LABEL = "verify-wo-create-part-task-required";
 
-export function run() {
-  const modal = strip(readFileSync(MODAL, "utf8"));
+export function run(modalPath = MODAL) {
+  const modal = strip(readFileSync(modalPath, "utf8"));
   const box = strip(readFileSync(BOX, "utf8"));
   const checks = [
     ["section-a-trim", /description:\s*String\(line\.description \?\? ""\)\.trim\(\)/.test(modal)],
@@ -43,19 +44,22 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAIL: already red — ${run().message}`);
     process.exit(1);
   }
+  const tmpDir = mkdtempSync(join(tmpdir(), "wo-part-task-"));
+  const tmpModal = join(tmpDir, "CreateWorkOrderModal.tsx");
   try {
+    copyFileSync(MODAL, tmpModal);
     writeFileSync(
-      MODAL,
+      tmpModal,
       original.replace("Part # / Task required on every Section A cost line", "cost line description optional"),
       "utf8",
     );
-    const caught = run();
+    const caught = run(tmpModal);
     if (caught.ok || !caught.failed.includes("part-task-check-label")) {
       console.error(`${LABEL} SELFTEST FAIL: not caught`, caught);
       process.exit(1);
     }
   } finally {
-    writeFileSync(MODAL, original, "utf8");
+    rmSync(tmpDir, { recursive: true, force: true });
   }
   console.log(`${LABEL} SELFTEST OK`);
 }

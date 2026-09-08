@@ -111,7 +111,7 @@ export function LoadsPlanner() {
               : "—",
           }));
           const columns: Array<ParityColumn<LoadListRow>> = [
-            { key: "loadNumber", label: "Load #", sortable: true },
+            { key: "loadNumber", label: "Load #", sortable: true, render: (row) => <EntityLinkOrTombstone kind="load" id={row.id} name={row.loadNumber} noun="Load" /> },
             { key: "driver", label: "Driver", sortable: true },
             { key: "unit", label: "Unit", sortable: true },
             { key: "customer", label: "Customer", sortable: true },

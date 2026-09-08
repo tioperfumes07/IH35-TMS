@@ -9,6 +9,7 @@ import {
   patchSafetyAccident,
   spawnSafetyLiability,
   spawnSafetyWo,
+  voidAccidentLiability,
   type AccidentFault,
 } from "../../api/safety";
 import { suggestExpenseLoad } from "../../api/maintenance";
@@ -396,6 +397,35 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
       });
   };
 
+  const voidLiability = () => {
+    if (!canMutate || isBusy) return;
+    const liabilityId = accident ? String(accident.spawned_liability_id ?? "") : "";
+    if (!liabilityId) return;
+    const generation = lifecycleGenerationRef.current;
+    const companyId = operatingCompanyId;
+    const reason = window.prompt("Reason for voiding this accident liability (required):", "");
+    if (reason == null) return;
+    const trimmed = reason.trim();
+    if (!trimmed) {
+      pushToast("A reason is required to void an accident liability", "error");
+      return;
+    }
+    setActionPending(true);
+    void voidAccidentLiability(liabilityId, companyId, trimmed)
+      .then(() => {
+        if (lifecycleGenerationRef.current !== generation) return;
+        pushToast("Accident liability voided", "success");
+        onUpdated();
+      })
+      .catch((error) => {
+        if (lifecycleGenerationRef.current !== generation) return;
+        pushToast(userFacingApiError(error, "Request failed"), "error");
+      })
+      .finally(() => {
+        if (lifecycleGenerationRef.current === generation) setActionPending(false);
+      });
+  };
+
   const uploadPhoto = (file: File) => {
     if (!canMutate || isBusy) return;
     const generation = lifecycleGenerationRef.current;
@@ -709,6 +739,16 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                     label="Liability"
                     data-testid="accident-spawned-liability"
                   />
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    className="ml-2"
+                    onClick={voidLiability}
+                    disabled={!canMutate || isBusy}
+                    data-testid="accident-void-liability"
+                  >
+                    Void Liability
+                  </Button>
                 </p>
               ) : null}
             </Field>

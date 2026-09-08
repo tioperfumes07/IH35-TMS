@@ -107,7 +107,7 @@ export function PendingSettlementDeductionsPanel() {
         row.deduction_type === "reimbursement_reversal" ? (
           <span>
             Reimbursement reversal · reverses {row.reimbursement_reversal_expense_account ?? "—"} · voided{" "}
-            {row.reversed_reimbursement_id ? <EntityLink kind="driver_reimbursement" id={row.reversed_reimbursement_id} label={row.reversed_reimbursement_id.slice(0, 8)} /> : "—"}
+            {row.reversed_reimbursement_id ? <EntityLink kind="driver_reimbursement" id={row.reversed_reimbursement_id} label="Reimbursement" /> : "—"}
           </span>
         ) : (
           row.reason?.trim() || "—"

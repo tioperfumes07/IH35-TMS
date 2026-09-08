@@ -73,6 +73,23 @@
 
 ---
 
+## F6 — `dashboard.routes.ts:215-216` — maintenance triage list query missing `operating_company_id` scope (count query has it)
+
+**What it is:** The `/api/v1/maintenance/dashboard/triage` route has two queries: a count query (lines 161-177) and a list query (lines 178-219). The count query correctly filters `WHERE i.operating_company_id = $1::uuid` (line 174). The list query's WHERE clause (lines 215-216) is:
+```sql
+WHERE i.promoted_to_wo_id IS NULL
+  AND i.promoted_to_damage_report_id IS NULL
+```
+It is missing `AND i.operating_company_id = $1::uuid`. The `$1` parameter is only used in the `LEFT JOIN mdata.loads` scoping (line 213), not in the main `dispatch.intransit_issues` predicate.
+
+**file:line:** `apps/backend/src/maintenance/dashboard.routes.ts:215-216` (list query) vs `:174` (count query — correct)
+
+**Neon proof:** `SELECT operating_company_id, COUNT(*) FROM dispatch.intransit_issues GROUP BY operating_company_id` → 0 rows on USMCA branch today. The table is empty, so the leak is not currently exploitable, but the source defect is real: when intransit issues arrive for any operating company, the list query will return rows from ALL companies while the count query returns only the scoped count, causing `total_count` to disagree with `issues.length` for any cross-entity user.
+
+**Correct target behavior:** Add `AND i.operating_company_id = $1::uuid` to the list query WHERE clause (line 215), matching the count query at line 174. The `withCompany` wrapper sets `app.operating_company_id` via RLS, but per Rule 49 §4 and the project's RLS-backstop design, the SQL predicate must be explicit — RLS is not a backstop for Owner sessions (`org.user_accessible_company_ids()` returns every active company for an Owner).
+
+---
+
 ## Notes for CC-2 / CC-3
 
 - All five findings were derived by READING the source components (`PlannerCalendarPage.tsx`, `TasksCalendarPage.tsx`, and `Combobox.tsx`), not by grepping labels.

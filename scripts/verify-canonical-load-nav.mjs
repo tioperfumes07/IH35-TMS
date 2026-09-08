@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * C5 — CANONICAL LOAD NAVIGATION EVERYWHERE.
+ * @matrix-built {"modules":["dispatch","reports","accounting","customers","driver-finance"],"cols":["load-nav"],"leafRe":"\\.load_number$","task":"CANONICAL-LOAD-NAV"}
  *
  * THE DEFECT THIS GUARD PINS
  * --------------------------
@@ -370,6 +371,8 @@ export function scanLoadColumns(files) {
       if (!obj) continue;
       // `{ value: "load", label: "Load" }` is a <select> option, not a table column.
       if (/(?:^|[{,\s])value:\s*["'`]/.test(obj.text)) continue;
+      // `{ label: "Load", keys: [...] }` is a column-GROUP header, not a column definition.
+      if (/\bkeys:\s*\[/.test(obj.text)) continue;
       const delegated = delegatedRenderBody(src, obj.text);
       const drills =
         containsCanonicalLoadDrill(obj.text, file) ||
