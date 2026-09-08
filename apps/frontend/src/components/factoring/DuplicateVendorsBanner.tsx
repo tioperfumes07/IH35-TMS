@@ -117,24 +117,42 @@ export function DuplicateVendorsBanner({ companyId }: DuplicateVendorsBannerProp
               // ids for this pair; carry them into the merge form via query params so "review and
               // merge" is one click, not "go find the raw QBO vendor uuid yourself" (the merge
               // form's from/to fields are free text — see FactoringHome.tsx vendor_merges tab).
-              const mergeParams = new URLSearchParams({
-                merge_from_vendor_id: p.from_vendor_id,
-                merge_from_vendor_name: p.from_vendor_name,
-                merge_to_vendor_id: p.to_vendor_id,
-                merge_to_vendor_name: p.to_vendor_name,
-              });
+              //
+              // VENDOR-MERGE-QBO-ID-MISMATCH (owner-live-tested 2026-09-08): the merge endpoint
+              // validates fromQboVendorId/toQboVendorId against QuickBooks' own external
+              // entity id — a different value from p.from_vendor_id/p.to_vendor_id (this
+              // TMS's internal UUID, still used below for the EntityLink navigation, unchanged).
+              // Deep-linking the internal UUID into the merge form 404'd every time, confirmed
+              // live. Use the real from_qbo_vendor_id/to_qbo_vendor_id instead — and when either
+              // is null (this vendor has never synced to QBO), don't offer a merge link that can
+              // only ever fail: show an honest note instead of a broken "Merge these".
+              const canDeepLinkMerge = Boolean(p.from_qbo_vendor_id && p.to_qbo_vendor_id);
+              const mergeParams = canDeepLinkMerge
+                ? new URLSearchParams({
+                    merge_from_vendor_id: p.from_qbo_vendor_id as string,
+                    merge_from_vendor_name: p.from_vendor_name,
+                    merge_to_vendor_id: p.to_qbo_vendor_id as string,
+                    merge_to_vendor_name: p.to_vendor_name,
+                  })
+                : null;
               return (
                 <li key={`${p.from_vendor_id}-${p.to_vendor_id}`}>
                   <EntityLink kind="vendor" id={p.from_vendor_id} label={p.from_vendor_name} /> ↔{" "}
                   <EntityLink kind="vendor" id={p.to_vendor_id} label={p.to_vendor_name} /> (
                   {Math.round(Number(p.similarity) * 100)}% similar) —{" "}
-                  <NavLink
-                    to={`${FACTORING_TAB_PATH.vendor_merges}?${mergeParams.toString()}`}
-                    className="font-semibold underline underline-offset-2 hover:text-slate-900"
-                    data-testid="factoring-duplicate-vendors-banner-merge-pair-link"
-                  >
-                    Merge these
-                  </NavLink>
+                  {canDeepLinkMerge ? (
+                    <NavLink
+                      to={`${FACTORING_TAB_PATH.vendor_merges}?${mergeParams!.toString()}`}
+                      className="font-semibold underline underline-offset-2 hover:text-slate-900"
+                      data-testid="factoring-duplicate-vendors-banner-merge-pair-link"
+                    >
+                      Merge these
+                    </NavLink>
+                  ) : (
+                    <span className="text-slate-500" data-testid="factoring-duplicate-vendors-banner-merge-pair-unsynced">
+                      not yet synced to QBO — merge from Driver Vendor Merges manually
+                    </span>
+                  )}
                 </li>
               );
             })}
