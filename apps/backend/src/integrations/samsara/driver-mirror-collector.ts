@@ -61,6 +61,22 @@ function normalizeName(value: string | null): string | null {
   return cleaned.length > 0 ? cleaned : null;
 }
 
+export function resolveMirrorLocalDriverId(input: {
+  samsaraDriverId: string;
+  licenseNumber: string | null;
+  normalizedName: string | null;
+  bySamsaraId: Map<string, string[]>;
+  byLicense: Map<string, string[]>;
+  byName: Map<string, string[]>;
+}): string | null {
+  const samsaraIdCandidates = input.bySamsaraId.get(input.samsaraDriverId) ?? [];
+  if (samsaraIdCandidates.length === 1) return samsaraIdCandidates[0]!;
+  const licenseCandidates = input.licenseNumber ? input.byLicense.get(input.licenseNumber) ?? [] : [];
+  if (licenseCandidates.length === 1) return licenseCandidates[0]!;
+  const nameCandidates = input.normalizedName ? input.byName.get(input.normalizedName) ?? [] : [];
+  return nameCandidates.length === 1 ? nameCandidates[0]! : null;
+}
+
 async function appendAuditEvent(client: DbClient, eventClass: string, severity: "info" | "warning", payload: Record<string, unknown>) {
   await client.query(`SELECT audit.append_event($1, $2, $3::jsonb, NULL, $4)`, [
     eventClass,
@@ -111,14 +127,20 @@ export async function collectSamsaraDriverMirror(
 
     // Pre-load the local roster once (never a re-query per row) for the license/name match — matches
     // the R2/resolveOrCreate convention elsewhere in this repo of never guessing among ambiguous rows.
-    const roster = await client.query<{ id: string; cdl_number: string | null; mexican_license_number: string | null; first_name: string | null; last_name: string | null }>(
-      `SELECT id::text, cdl_number, mexican_license_number, first_name, last_name
+    const roster = await client.query<{ id: string; samsara_driver_id: string | null; cdl_number: string | null; mexican_license_number: string | null; first_name: string | null; last_name: string | null }>(
+      `SELECT id::text, samsara_driver_id, cdl_number, mexican_license_number, first_name, last_name
          FROM mdata.drivers WHERE operating_company_id = $1::uuid`,
       [operatingCompanyId]
     );
+    const bySamsaraId = new Map<string, string[]>();
     const byLicense = new Map<string, string[]>();
     const byName = new Map<string, string[]>();
     for (const row of roster.rows) {
+      if (row.samsara_driver_id) {
+        const existing = bySamsaraId.get(row.samsara_driver_id) ?? [];
+        existing.push(row.id);
+        bySamsaraId.set(row.samsara_driver_id, existing);
+      }
       const cdl = normalizeLicense(row.cdl_number);
       const mex = normalizeLicense(row.mexican_license_number);
       for (const license of new Set([cdl, mex].filter((value): value is string => Boolean(value)))) {
@@ -143,13 +165,17 @@ export async function collectSamsaraDriverMirror(
       const licenseNumber = normalizeLicense(readString(raw, "licenseNumber", "license_number"));
       const name = normalizeName(readString(raw, "name") ?? `${readString(raw, "firstName") ?? ""} ${readString(raw, "lastName") ?? ""}`);
 
-      const licenseCandidates = licenseNumber ? byLicense.get(licenseNumber) ?? [] : [];
-      let localDriverId: string | null = licenseCandidates.length === 1 ? licenseCandidates[0]! : null;
-      if (!localDriverId && name) {
-        const candidates = byName.get(name) ?? [];
-        // Never guess among ambiguous name matches (R2 convention) — link only when exactly one.
-        if (candidates.length === 1) localDriverId = candidates[0]!;
-      }
+      // The explicit Samsara id on the local driver is the authoritative identity link. Resolve it
+      // before the heuristic license/name fallbacks; duplicate names and reused/duplicated license
+      // values must not erase a previously established one-to-one external identity.
+      const localDriverId = resolveMirrorLocalDriverId({
+        samsaraDriverId: driver.id,
+        licenseNumber,
+        normalizedName: name,
+        bySamsaraId,
+        byLicense,
+        byName,
+      });
 
       const res = await client.query<{ inserted: boolean }>(
         `
