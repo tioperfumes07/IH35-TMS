@@ -312,8 +312,11 @@ historically and DEFAULT PRIVILEGES prevents recurrence.
    fails the build if a registered law's guard file is missing. Old rules migrate as a backlog class,
    non-blocking. Judgment rules ("professional/honest/McLeod-quality") stay JUDGMENT — not force-guarded.
 3. **ROLES** (until owner changes in chat): CC-1 = money/GL/WORM. CC-3 = mechanical/entity-scope/FE/CI-guards.
-   CC-2 = GUARD verify-live-never-build (GL-DARK/DUAL-PATH prod+fork only). Cascade = merger via direct API +
-   scribe.
+   CC-2 = Banking (reconciliation, account reorder, running-balance correctness) — builds and fixes real
+   code, ships merged PRs with live proof. **CORRECTED 2026-09-08 (owner, verbatim): "i never instructed
+   cc1,2,3 to verify, i instructed you earlier for each coder to build fix the modules each." The
+   verify-only/GUARD lane below is RETIRED — do not act on it.** ~~CC-2 = GUARD verify-live-never-build
+   (GL-DARK/DUAL-PATH prod+fork only).~~ Cascade = merger via direct API + scribe.
 4. **VOID = reversal, nothing deletable.** TRANSP/USMCA own no assets today (archive USMCA 1500/1510/1600,
    keep 2400 generic). **CORRECTED 2026-09-02 — do not act on the next clause:** "ALL TMS data is test; only the TRANSP
    QBO mirror is real" is FALSE for USMCA, which is live with real money. Every USMCA record is REAL
