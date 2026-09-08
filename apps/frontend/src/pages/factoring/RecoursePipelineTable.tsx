@@ -34,6 +34,19 @@ type Props = {
    * a separate full-width box floating above it. Optional/additive — omitting it renders no bar.
    */
   filterBar?: ReactNode;
+  /**
+   * NEW-21 (owner 2026-09-08, a real question about this detail view, not a bug report): "what
+   * table/section is this, what data should it show ... surface up front, in order: original
+   * invoice amount, advance, reserve, fees." Two real gaps found answering it: (1) invoice_amount
+   * (a real field already on every row) had no column at all; (2) the "Factoring fee" column
+   * (from the shared loadCostColumnManifest) was wired to a hardcoded `factoringFeeCents: null`
+   * — it existed in the gear but showed "—" for every row, on every consumer, always. Real fee
+   * data lives in views.factoring_chargebacks_fees (feesQuery), keyed by factoring_advance_id —
+   * same already-fetched map (accruedFeesByAdvance) Fees Paid/Purchase Report already use this
+   * session. Optional so existing callers that don't pass it just keep seeing "—", never a
+   * fabricated number.
+   */
+  feesByAdvance?: Map<string, number>;
 };
 
 // Minimal RFC-4180 CSV cell escaping (mirrors the inline pattern in AccountRegisterPage/useListExport).
@@ -52,7 +65,7 @@ function downloadCsv(filename: string, header: string[], rows: string[][]) {
   URL.revokeObjectURL(url);
 }
 
-export function RecoursePipelineTable({ rows, fmtCurrency, fmtDate, filterBar }: Props) {
+export function RecoursePipelineTable({ rows, fmtCurrency, fmtDate, filterBar, feesByAdvance }: Props) {
   const { pushToast } = useToast();
 
   const exportSelected = (selected: RecoursePipelineRow[]) => {
@@ -62,18 +75,51 @@ export function RecoursePipelineTable({ rows, fmtCurrency, fmtDate, filterBar }:
     }
     downloadCsv(
       `factoring-recourse-pipeline-${new Date().toISOString().slice(0, 10)}.csv`,
-      ["Invoice", "Customer", "Advance", "Reserve", "Recourse Expiry", "Days Left"],
+      ["Invoice", "Customer", "Invoice Amount", "Advance", "Reserve", "Fees", "Recourse Expiry", "Days Left"],
       selected.map((row) => [
         row.invoice_reference,
         row.customer_name,
+        fmtCurrency(row.invoice_amount),
         fmtCurrency(row.advance_amount),
         fmtCurrency(row.reserve_amount),
+        fmtCurrency(feesByAdvance?.get(row.factoring_advance_id) ?? null),
         fmtDate(row.recourse_expiry_date),
         String(Number(row.days_until_recourse_expiry ?? 0)),
       ])
     );
     pushToast(`Exported ${selected.length} recourse row(s).`, "success");
   };
+
+  // NEW-21: single buildLoadCostColumns() call, same adapter/exclude as before — factoringFeeCents
+  // now reads the real per-advance fee from feesByAdvance instead of a hardcoded null. Split the
+  // returned array so "Factoring fee" can be repositioned right after Reserve (see columns below)
+  // without touching the shared manifest file's own column order (still used, unreordered, by
+  // ChargebacksTable).
+  const loadCostColumns = useMemo(
+    () =>
+      buildLoadCostColumns<RecoursePipelineRow>(
+        (row) => ({
+          loadId: row.load_id,
+          loadNumber: row.lc_load_number,
+          driverId: row.lc_driver_id,
+          driverName: row.lc_driver_name,
+          unitNumber: row.lc_unit_number,
+          settlementNumber: row.lc_settlement_number,
+          revenueCents: centsFromWire(row.lc_revenue_cents),
+          costsCents: centsFromWire(row.lc_costs_cents),
+          driverPayCents: centsFromWire(row.lc_driver_pay_cents),
+          marginCents: centsFromWire(row.lc_margin_cents),
+          factoringFeeCents: feesByAdvance ? Math.round((feesByAdvance.get(row.factoring_advance_id) ?? 0) * 100) : null,
+          reserveCents: null,
+          advancedCents: null,
+          dueCents: null,
+        }),
+        { exclude: ["reserve", "advanced", "due"] },
+      ),
+    [feesByAdvance],
+  );
+  const feeColumn = useMemo(() => loadCostColumns.filter((c) => c.key === "lc_factoring_fee"), [loadCostColumns]);
+  const restLoadCostColumns = useMemo(() => loadCostColumns.filter((c) => c.key !== "lc_factoring_fee"), [loadCostColumns]);
 
   const columns: Array<ParityColumn<RecoursePipelineRow>> = useMemo(
     () => [
@@ -108,6 +154,15 @@ export function RecoursePipelineTable({ rows, fmtCurrency, fmtDate, filterBar }:
             visibleDocumentLabel(row.customer_name, null, "No customer name")
           ),
       },
+      // NEW-21: "original invoice amount" had NO column at all before this — a stale comment
+      // below claimed it did. Real field (row.invoice_amount), already fetched, never rendered.
+      {
+        key: "invoice_amount",
+        label: "Invoice Amount",
+        sortable: true,
+        cellClass: "text-right",
+        render: (row) => fmtCurrency(row.invoice_amount),
+      },
       {
         key: "advance_amount",
         label: "Advance",
@@ -120,6 +175,13 @@ export function RecoursePipelineTable({ rows, fmtCurrency, fmtDate, filterBar }:
         sortable: true,
         render: (row) => fmtCurrency(row.reserve_amount),
       },
+      // NEW-21: pulled out of the shared Load-Costs manifest's own fixed position (after
+      // Settlement #, before Advanced/Due) and placed here instead, immediately after Reserve —
+      // "surface up front, in order: original invoice amount, advance, reserve, fees." Same
+      // column definition/rendering (real data via feesByAdvance below), only its position in
+      // THIS table's own array changes; the shared manifest file and ChargebacksTable's column
+      // order are untouched.
+      ...feeColumn,
       {
         key: "recourse_expiry_date",
         label: "Recourse Expiry",
@@ -133,31 +195,14 @@ export function RecoursePipelineTable({ rows, fmtCurrency, fmtDate, filterBar }:
         render: (row) => Number(row.days_until_recourse_expiry ?? 0),
         sortValue: (row) => Number(row.days_until_recourse_expiry ?? 0),
       },
-      // FAC-08: Load, Driver, Truck, Settlement #, Revenue, Costs, Driver pay, Margin, Factoring fee
-      // — from the SHARED Load-Costs manifest (never re-authored). Reserve/Advanced/Due are excluded
-      // here because this register renders its own native Advance + Reserve dollar columns above
-      // (never-delete law) and the invoice amount is its own column; no duplicate in the gear.
-      ...buildLoadCostColumns<RecoursePipelineRow>(
-        (row) => ({
-          loadId: row.load_id,
-          loadNumber: row.lc_load_number,
-          driverId: row.lc_driver_id,
-          driverName: row.lc_driver_name,
-          unitNumber: row.lc_unit_number,
-          settlementNumber: row.lc_settlement_number,
-          revenueCents: centsFromWire(row.lc_revenue_cents),
-          costsCents: centsFromWire(row.lc_costs_cents),
-          driverPayCents: centsFromWire(row.lc_driver_pay_cents),
-          marginCents: centsFromWire(row.lc_margin_cents),
-          factoringFeeCents: null,
-          reserveCents: null,
-          advancedCents: null,
-          dueCents: null,
-        }),
-        { exclude: ["reserve", "advanced", "due"] },
-      ),
+      // FAC-08: Load, Driver, Truck, Settlement #, Revenue, Costs, Driver pay, Margin — from the
+      // SHARED Load-Costs manifest (never re-authored). Factoring fee is excluded from this
+      // spread (see feeColumn above, repositioned per NEW-21). Reserve/Advanced/Due stay
+      // excluded because this register renders its own native Advance + Reserve dollar columns
+      // above (never-delete law).
+      ...restLoadCostColumns,
     ],
-    [fmtCurrency, fmtDate],
+    [fmtCurrency, fmtDate, feeColumn, restLoadCostColumns],
   );
 
   return (

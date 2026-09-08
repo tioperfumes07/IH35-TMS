@@ -1384,6 +1384,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
               rows={invoices}
               fmtCurrency={fmtCurrency}
               fmtDate={fmtDate}
+              feesByAdvance={accruedFeesByAdvance}
               filterBar={
                 // NEW-20 (owner 2026-09-07): "customer/load boxes too large and misaligned;
                 // filter/range box + gear should sit in the same row as the customer/load
