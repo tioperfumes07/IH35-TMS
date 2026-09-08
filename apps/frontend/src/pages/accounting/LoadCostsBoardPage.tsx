@@ -8,7 +8,6 @@ import { getAttachmentDownloadUrl } from "../../api/attachments";
 import { getDownloadUrl } from "../../api/docs";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
-import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS, mmmDd } from "../../lib/formatDate";
@@ -50,6 +49,11 @@ type BoardRow = {
    * booking time, SET-01/SET-02) -- null only for a load with no driver bill yet (e.g. unassigned). */
   settlement_display_id: string | null;
   settlement_id: string | null;
+  /** NEW-09: true when a real, issued (non-draft, non-proforma, non-void) accounting.invoices row
+   * exists for this load -- the ground truth for "already invoiced, belongs in resettlement, not
+   * open items." mdata.loads.status never actually reaches 'invoiced' (0 rows system-wide), so
+   * that literal string in CLOSED below never matched anything -- this is the real signal. */
+  is_invoiced: boolean;
 };
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const fmt = (c: number) => money.format(c / 100);
@@ -78,17 +82,21 @@ const NUM = "text-center whitespace-nowrap [font-variant-numeric:tabular-nums]";
 // gets it uniformly; no longer set per-cell here. The Gross cell's extra .tot-c shade (#EDF1F5)
 // distinguishing it from the rest of the row is not reproducible per-cell in the new column-keyed
 // model (footerCells has no per-cell background override) — an accepted, honest simplification.
-// NEW-09 (owner raw findings 2026-09-07): "unit 168 / Mecor / a load already invoiced should not
-// still be sitting in Load Costs as an open item -- it belongs in resettlement". Live-verified
-// (load 13569, unit T168): a load reaches status='invoiced' only once accounting.invoices has a
-// real, non-voided row for it (unique partial index ux_invoices_source_load_active enforces one
-// active invoice per load) -- at that point its cost-tracking lifecycle on THIS board is done, same
-// as 'paid'. `invoiced` used to sit in DELIVERED (open), which made an already-invoiced load keep
-// showing under both "Delivered - open" and "All open" forever. Moved to CLOSED so it stops
-// appearing as open; the load stays fully visible under "All" and its own detail page.
+// NEW-09 (owner raw findings 2026-09-07): "unit 168 / a load already invoiced should not still be
+// sitting in Load Costs as an open item -- it belongs in resettlement". A 2026-09-07 pass added the
+// literal 'invoiced' status here, reasoning a load reaches mdata.loads.status='invoiced' once
+// accounting.invoices has a real row for it -- but live-reconfirmed 2026-09-08: NOTHING in the
+// codebase ever sets mdata.loads.status='invoiced' (0 rows system-wide carry it, across every
+// entity). That fix never actually fired; load 13569 (unit T168, real signed invoice already SENT)
+// stayed in `delivered_pending_docs`, still an open bucket. `invoiced` is kept in this list (a
+// future write path could legitimately use it and this must not silently stop honoring it), but the
+// real fix is isClosed() below, which checks the load's actual invoice existence server-computed
+// (`is_invoiced`, load-costs-board.routes.ts's invoice_info CTE) instead of a status value that
+// nothing writes.
 const CLOSED = ["cancelled", "abandoned", "closed", "paid", "invoiced", "driver_walkoff", "driver_no_show"];
 const MOTION = ["draft", "booked", "planned", "unassigned", "assigned", "assigned_not_dispatched", "dispatched", "at_pickup", "in_transit", "at_delivery"];
 const DELIVERED = ["delivered", "delivered_pending_docs", "completed_docs_received"];
+const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || r.is_invoiced;
 export const LOAD_COSTS_ELEMENT_MANIFEST = [
   "load-costs-shell", "load-costs-back", "load-costs-title", "load-costs-topbar",
   "load-costs-pill-in_motion", "load-costs-pill-delivered_open", "load-costs-pill-all_open", "load-costs-pill-this_week",
@@ -125,7 +133,7 @@ const COST_TABS: Array<{ id: CostTab; label: string; measured: boolean; has: (r:
   { id: "pre_settlement", label: "Pre-Settlement", measured: false, has: () => true },
   { id: "settlement", label: "Settlement", measured: false, has: () => true },
 ];
-function matches(r: BoardRow, f: FilterPill) { if (f === "in_motion") return MOTION.includes(r.status); if (f === "delivered_open") return DELIVERED.includes(r.status); if (f === "this_week") return !CLOSED.includes(r.status) && Date.parse(r.created_at) >= Date.now() - 604800000; return !CLOSED.includes(r.status); }
+function matches(r: BoardRow, f: FilterPill) { if (f === "in_motion") return MOTION.includes(r.status); if (f === "delivered_open") return DELIVERED.includes(r.status) && !isClosed(r); if (f === "this_week") return !isClosed(r) && Date.parse(r.created_at) >= Date.now() - 604800000; return !isClosed(r); }
 function chip(style: { backgroundColor: string; color: string; borderColor?: string }) { return style; }
 // LOAD-COSTS-COMPLETE item (3) (owner order 2026-09-04), spec 09-04-2026 §2.2: Status on this board
 // is SERVICE performance (In transit / On Time / Late / Delivered — no appointment on file), computed
@@ -210,7 +218,7 @@ const REGISTER_COLUMNS: Array<ParityColumn<RegisterRow>> = [
   { key: "number", label: "Number", testId: "reg-col-number", sortable: true, className: "whitespace-nowrap", sortValue: r => r.number, render: r => <span className="font-semibold text-slate-700">{r.number}</span> },
   { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateUS(r.date) : DASH },
   { key: "party", label: "Vendor / Driver", testId: "reg-col-party", sortable: true, sortValue: r => r.party, render: r => r.party || DASH },
-  { key: "load", label: "Load", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap", sortValue: r => r.loadNumber ?? "", render: r => r.loadId ? <span className="inline-flex items-center gap-1"><EntityLink kind="load" id={r.loadId} label={r.loadNumber ?? r.loadId} /><Link className="text-xs text-slate-500 hover:text-slate-700" to={`/accounting/load-costs/${r.loadId}?tab=Costs`}>Costs</Link></span> : DASH },
+  { key: "load", label: "Load", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap", sortValue: r => r.loadNumber ?? "", render: r => r.loadId ? <Link className="font-semibold text-slate-700 underline" to={`/accounting/load-costs/${r.loadId}?tab=Costs`}>{r.loadNumber ?? r.loadId}</Link> : DASH },
   { key: "detail", label: "Description", testId: "reg-col-detail", sortable: true, sortValue: r => r.detail, render: r => <span className="text-[#4B5563]">{r.detail || DASH}</span> },
   // REG-PARSE (owner 2026-09-06 05:2xZ): receipt number, address and settlement number are their own columns.
   { key: "receipt_number", label: "Receipt no.", testId: "reg-col-receipt-number", sortable: true, className: "whitespace-nowrap", sortValue: r => r.receiptNumber ?? "", render: r => r.receiptNumber ? <span className="ldt-k">{r.receiptNumber}</span> : DASH },
@@ -241,7 +249,7 @@ const DRIVER_PAY_COLUMNS: Array<ParityColumn<RegisterRow>> = [
   { key: "number", label: "Number", testId: "reg-col-number", sortable: true, className: "whitespace-nowrap", sortValue: r => r.number, render: r => <span className="font-semibold">{r.number}</span> },
   { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateUS(r.date) : DASH },
   { key: "party", label: "Driver", testId: "reg-col-party", sortable: true, sortValue: r => r.party, render: r => r.party || DASH },
-  { key: "load", label: "Load", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap", sortValue: r => r.loadNumber ?? "", render: r => r.loadId ? <span className="inline-flex items-center gap-1"><EntityLink kind="load" id={r.loadId} label={r.loadNumber ?? r.loadId} /><Link className="text-xs text-slate-500 hover:text-slate-700" to={`/accounting/load-costs/${r.loadId}?tab=Costs`}>Costs</Link></span> : DASH },
+  { key: "load", label: "Load", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap", sortValue: r => r.loadNumber ?? "", render: r => r.loadId ? <Link className="ldt-link" style={{ display: "inline" }} to={`/accounting/load-costs/${r.loadId}?tab=Costs`}>{r.loadNumber ?? r.loadId}</Link> : DASH },
   { key: "loaded", label: "Loaded mi × rate", testId: "reg-col-loaded", sortable: false, className: `${NUM} ldt-m`, render: r => milesRateCell(r.loadedMiles, r.loadedRateCents) },
   { key: "empty", label: "Empty mi × rate", testId: "reg-col-empty", sortable: false, className: `${NUM} ldt-m`, render: r => milesRateCell(r.emptyMiles, r.emptyRateCents) },
   { key: "gross", label: "Gross", testId: "reg-col-gross", sortable: true, className: `${NUM} ldt-m`, sortValue: r => r.grossCents ?? 0, render: r => r.grossCents == null ? DASH : fmt(r.grossCents) },
@@ -262,7 +270,7 @@ function loadCell(loadsById: Map<string, string>): ParityColumn<RegisterRow> {
     render: r => {
       if (!r.loadId) return DASH;
       const label = loadsById.get(r.loadId) ?? r.loadNumber ?? r.loadId;
-      return <span className="inline-flex items-center gap-1"><EntityLink kind="load" id={r.loadId} label={label} /><Link className="text-xs text-slate-500 hover:text-slate-700" to={`/accounting/load-costs/${r.loadId}?tab=Costs`}>Costs</Link></span>;
+      return <Link className="ldt-link" style={{ display: "inline" }} to={`/accounting/load-costs/${r.loadId}?tab=Costs`}>{label}</Link>;
     },
   };
 }
@@ -640,7 +648,7 @@ export function LoadCostsBoardPage() {
     deadhead_pay: visible.reduce((n, r) => n + (r.deadhead_pay_cents == null ? 0 : Number(r.deadhead_pay_cents)), 0), gross: driver,
   }), [visible, revenue, driver]);
   const columns: Array<ParityColumn<BoardRow>> = [
-    { key: "load", label: "Load", testId: "col-load", sortable: true, alwaysVisible: true, sortValue: r => r.load_number, render: r => <span className="inline-flex items-center gap-1"><EntityLink kind="load" id={r.load_id} label={r.load_number} /><Link className="text-xs text-slate-500 hover:text-slate-700" to={`/accounting/load-costs/${r.load_id}?tab=Costs`}>Costs</Link></span> },
+    { key: "load", label: "Load", testId: "col-load", sortable: true, alwaysVisible: true, sortValue: r => r.load_number, render: r => <Link className="font-semibold text-slate-700 underline" to={`/accounting/load-costs/${r.load_id}?tab=Costs`}>{r.load_number}</Link> },
     // LOAD-COSTS-RETURN-COLS (owner 2026-09-08, item 3): "Unassigned" is a distinct, real state
     // (no unit ever booked to this load) -- a plain "—" reads as "not measured", the same dash
     // every other untracked cell on this board already uses. Named so an operator scanning the
