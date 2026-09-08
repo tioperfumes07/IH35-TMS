@@ -141,7 +141,7 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
           query.data.incidents.map((incident) => (
             <article
               key={incident.id}
-              className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-xs text-slate-700"
+              className="p-2 text-xs text-slate-700"
             >
               <div className="flex flex-wrap justify-between gap-2">
                 <strong className="capitalize">{incident.breach_kind} · {incident.severity}</strong>

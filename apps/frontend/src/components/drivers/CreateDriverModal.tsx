@@ -1334,7 +1334,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                     ? { text: "Required — missing", cls: "bg-slate-100 text-slate-700 border-slate-200 font-bold" }
                     : { text: "Open — complete after Save", cls: "bg-slate-100 text-slate-600 border-slate-200" };
                 return (
-                  <div key={item.id} className="rounded-sm border border-gray-200 p-2" data-testid={`driver-create-dqf-item-${item.code}`}>
+                  <div key={item.id} className="p-2" data-testid={`driver-create-dqf-item-${item.code}`}>
                     <div className="flex items-center justify-between gap-2">
                       <div>
                         <span className="text-xs font-semibold text-gray-800">{item.label}</span>

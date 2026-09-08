@@ -106,7 +106,9 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
           WHERE s.operating_company_id = $1::uuid
             AND s.settlement_model = 'load_bookended'
             AND s.trip_closed_at IS NULL
-            AND s.status NOT IN ('approved', 'paid', 'cancelled')
+            -- EXP-CLOSED-TOUR-VOCAB (owner 2026-09-07): 'closed'/'final' are terminal statuses too;
+            -- a closed/final settlement is not an open pre-settlement (mirrors tour-open-gate).
+            AND s.status NOT IN ('approved', 'paid', 'cancelled', 'closed', 'final')
           ORDER BY s.trip_started_at DESC
         `,
         [companyId]
@@ -162,7 +164,9 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
           WHERE s.driver_id = $1
             AND s.operating_company_id = $2::uuid
             AND s.settlement_model = 'load_bookended'
-            AND s.status NOT IN ('approved', 'paid', 'cancelled')
+            -- EXP-CLOSED-TOUR-VOCAB (owner 2026-09-07): 'closed'/'final' are terminal — a closed
+            -- settlement is not the driver's open pre-settlement (mirrors tour-open-gate).
+            AND s.status NOT IN ('approved', 'paid', 'cancelled', 'closed', 'final')
           ORDER BY s.created_at DESC
           LIMIT 1
         `,

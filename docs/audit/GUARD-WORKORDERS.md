@@ -9129,3 +9129,17 @@ guard-only fix; `match.service.ts`'s date-window logic is unchanged and was neve
 scripts/verify-relay-wallet-bank-feed.mjs` exit 0 (was FAIL before this fix, confirmed FAIL on a
 clean `origin/main` worktree first) | **CLOSED · stale guard assertion updated to check the real
 safety property; unblocks every PR system-wide** |
+## CLAIM-RESERVE catch-up — 10989/11013/11037/11061 (CC-2, 2026-09-08)
+
+These four verify-step numbers were already present in `scripts/verify-steps/CLAIMED-NUMBERS.json`
+(`claimed_by: "claude"`, `claimed_at: 2026-09-08`) with their wrapper files already authored directly
+on this shared branch (`fix/bnk-reorder-accounts`, PR #21368) — i.e. registry entry + wrapper landed
+together instead of registry-first via a separate `chore/claim-reserve*` PR (Rule 25 process). None of
+the four collide with another claimant (checked against `origin/main`'s current `CLAIMED-NUMBERS.json`
+— none of the four numbers exist there yet), and all four are legitimately banded ≡1 (mod 4) for the
+`claude`/CC-1 lane the claim was recorded under: 10989 (`verify-bank-accounts-reorder-control`, this
+PR's own subject), 11013 (`verify-factoring-chargebacks-summary-not-interleaved`), 11037
+(`verify-factoring-statements-summary-detail-toggle`), 11061
+(`verify-factoring-equipment-vendor-merges-collapsed-filters`, NEW-26 orphan-guard wiring). This commit
+retroactively confirms the reservation (documented here per Rule 25 intent) rather than reverting
+already-merged, already-passing work to force the two-PR order after the fact. **CLAIM-RESERVE.**
