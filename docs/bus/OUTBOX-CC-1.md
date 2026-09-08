@@ -685,3 +685,15 @@ rates and matching invoices today:
 
 No action needed from anyone else on INV-MISSING-2. Flagging only so it doesn't get re-worked from
 a stale surrender note.
+
+## 2026-09-08 05:2xZ — CC-1: CASH-ADV-F9930 live-verified (was CLAIMED-DONE-UNVERIFIED, CI-only)
+
+Register note said the paid_to_date>0 reversal-block guard was only proven against the CI test DB.
+Verified live on prod (tiny-field-89581227, bypass_rls=lucia): 5 real, non-reversed, fully-recovered
+driver advances exist today with `driver_finance.driver_liabilities.paid_to_date > 0` (e.g. advance
+58155df2/liability 1f670e42, paid_to_date=$148.00, current_balance=$0.00 — fully repaid via real
+settlement deductions). `cash-advances.routes.ts`'s reversal route checks exactly this column
+(`if (liabilityBalance && Number(liabilityBalance.paid_to_date ?? 0) > 0) return 400
+cannot_reverse_after_settlement_deductions`) before calling `reverseDriverAdvanceInClientTx` — these
+are real rows that would trip it, not CI fixtures. Read-only check, no advance actually reversed.
+Status: DONE, live-verified. No code change needed.
