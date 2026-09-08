@@ -36,8 +36,15 @@ but is NOT the real universe. Parsing EVERY signed `Driver_Settlement_*.pdf` in 
   5769**; tours **5753, 5760–5768 are pre-Faro / not factored** → the owner's "reconcile via QuickBooks"
   set. 4 factored loads (13564,13569,13571,13573) aren't in the app yet (active/Sept). 13541 = direct-pay
   (owner ruling), correctly not in Faro.
-- **OPEN owner scope decision:** do all 38 tours post as USMCA settlements, or is there a start-date /
-  pre-Faro cutoff (5753/5760–5768 → Transportation frozen / QBO reconcile)? Guessing mispays real drivers.
+- **RESOLVED owner ruling 2026-09-08 ("WE HAVEN'T CHANGED THE NAME IN ALWAYS"):** the doc-header
+  company name is NOT an entity discriminator. EVERY in-scope signed doc 5769–5796 is headed **"IH35
+  Transportation, LLC"** — because the company name was never changed in AlwaysTrack, NOT because the
+  tour is a Transportation entity. **All 28 Faro-era tours 5769–5796 are USMCA.** The entity boundary is
+  the **Faro purchase line** (first purchase = load 13508 / tour 5769), NOT the header. Pre-Faro 5753 +
+  5760–5768 stay Transportation/QBO **only because Faro didn't buy them**, not because of any name.
+  → **CC-1's reclassification of Pedro / tour 5772 (and loads 13502, 13507) as "Transportation-entity"
+  is SUPERSEDED** — it keyed off the stale header. Pedro/5772 is a REAL USMCA underpayment; the rebuild
+  posts his full $997.08 (all 4 loads). USMCA rebuild scope = **28 tours 5769–5796, $37,830.87**.
 
 ## NAMING LAW — NEVER SAY "S-13xxx" (owner corrected Cursor AGAIN 2026-09-08)
 
@@ -80,11 +87,14 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   UNDERPAID: his live settlement (DB `S-13654`) is a PARTIAL rebuild of **tour 5772** covering only 2 of
   4 loads; the other 2 (13502, 13507) — real signed pay — exist NOWHERE in `driver_bills`/`settlement_lines`.
   Reverse it without posting the full $997.08 of tour 5772 and he goes from wrongly-paid $756 to paid
-  nothing. **Do NOT assume "everyone was paid correctly."** CC-1 is auditing all 17 for the same
-  partial-rebuild/missing-load pattern; CC-2 is checking for other standalone manual JEs beyond 15e0887f.
-  The rebuild **scope (driver/tour list) is a PARAMETER, not hardcoded** — it may grow to cover 5760–5773
-  for whichever drivers CC-1 flags. Do not finalize/rehearse the full pass until CC-1 + CC-2 report back.
-  (The 28-tour source already covers all 4 of tour 5772's loads — Pedro is fixable within scope.)
+  nothing. **Do NOT assume "everyone was paid correctly."**
+  **BOTH audit gates now returned (2026-09-08):** CC-1 — no OTHER of the 17 shares Pedro's
+  partial-rebuild shape (only 5772). CC-2 — exactly ONE standalone manual JE to fold (`15e0887f`),
+  line-level confirmed by 4 independent searches, no second hidden one. Scope is now RESOLVED (not a
+  growing parameter): **28 Faro-era tours 5769–5796, $37,830.87**, per the "WE HAVEN'T CHANGED THE NAME
+  IN ALWAYS" ruling (doc header ≠ entity). Pedro/5772 rebuilds in full ($997.08, all 4 loads incl.
+  13502/13507). Checker verdict = CONDITIONAL GO, condition (owner scope decision) now met. Still: no
+  prod post without Claude's GO + owner's explicit yes.
 
 ---
 
@@ -292,6 +302,12 @@ it is present live except tour 5772's 13502/13507.
 standing owner entity rule (13:36Z) — not USMCA rows at all. His real USMCA loads on tour 5772
 (13512, 13513) are both paid and present. If 13502/13507 pay is owed, it's a Transportation-books
 question, not a hole in this rebuild.
+
+> **SUPERSEDED 2026-09-08 by owner ruling "WE HAVEN'T CHANGED THE NAME IN ALWAYS":** the above
+> Pedro→Transportation reclassification keyed off the doc header "IH35 Transportation, LLC", which is
+> a STALE AlwaysTrack label (never renamed), NOT an entity signal — EVERY in-scope doc 5769–5796 shows
+> it. Entity is set by the Faro purchase line, not the header. **Tour 5772 is USMCA; loads 13502 &
+> 13507 are USMCA and ARE a real hole in this rebuild.** Pedro is owed his full $997.08 (all 4 loads).
 
 This audit was run against the OLDER 21-tour/5774–5796 framing before reading the SCOPE CORRECTION
 section above — it does not address the 38-tour/36-missing-load finding. Reading the checker handoff
