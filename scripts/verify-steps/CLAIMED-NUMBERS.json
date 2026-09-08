@@ -8258,5 +8258,15 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-07",
     "purpose": "verify-unmatch-clears-both-sides"
+  },
+  "10965": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-08",
+    "purpose": "verify-report-pages-use-staged-filters"
+  },
+  "10989": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-08",
+    "purpose": "verify-report-pages-use-staged-filters"
   }
 }
