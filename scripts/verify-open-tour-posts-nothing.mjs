@@ -185,7 +185,10 @@ async function main() {
         LEFT JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
         WHERE e.posting_status = 'posted'
           AND e.created_at > $1::timestamptz
-          AND (ds.status IS NULL OR ds.status NOT IN ('approved', 'paid', 'cancelled'))
+          -- EXP-CLOSED-TOUR-VOCAB (owner 2026-09-07): 'closed'/'final' are terminal, GL-posted
+          -- statuses — a tour in either is closed, so posting its expense is correct, not a
+          -- violation. Mirrors tour-open-gate.service.ts CLOSED_TOUR_STATUSES.
+          AND (ds.status IS NULL OR ds.status NOT IN ('approved', 'paid', 'cancelled', 'closed', 'final'))
       `,
       [GATE_MERGE_CUTOFF]
     );

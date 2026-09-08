@@ -1396,7 +1396,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             </div>
             <div className="space-y-2">
               {(equipmentLoansQuery.data?.rows ?? []).map((row) => (
-                <div key={row.id} className="rounded-sm border border-gray-200 p-2 text-xs">
+                <div key={row.id} className="p-2 text-xs">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <EntityLink kind="unit" id={row.equipment_id} label={entityLabel(row.equipment_number, row.equipment_id, "Equipment")} className="font-semibold" />{" "}

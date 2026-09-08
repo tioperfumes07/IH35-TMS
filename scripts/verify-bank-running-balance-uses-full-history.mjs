@@ -87,12 +87,43 @@ export function checkRunningBalanceUsesFullHistory(source) {
     }
   }
 
+  // BANK-RUNNING-BALANCE-STILL-BROKEN-UNFILTERED (2026-09-08) — even with the full-history wiring
+  // above intact, tableRows' default date/balance sort and runningBalanceById's walk each sorted
+  // their OWN source array using only `transaction_date`, relying on Array.sort's stability to
+  // break same-day ties — but the two sorts run over two DIFFERENT arrays (transactionsQuery's
+  // scoped rows vs fullHistoryQuery's full history) that are not guaranteed to arrive in the same
+  // relative order for a tied group, so the SAME transaction could land in a different relative
+  // position for display vs for the balance walk. compareTxNewestFirst is the shared, fully
+  // deterministic (transaction_date, then created_at, then id) tiebreak both call sites must use.
+  const hasSharedComparator = /export function compareTxNewestFirst\(/.test(source);
+  if (!hasSharedComparator) {
+    failures.push("compareTxNewestFirst helper not found — the shared newest-first tiebreak was removed.");
+  }
+  if (runningBalanceBlock && !/\.sort\(\s*compareTxNewestFirst\s*\)/.test(runningBalanceBlock)) {
+    failures.push(
+      "runningBalanceById no longer sorts with compareTxNewestFirst — it can drift out of sync with " +
+        "the table's own date-sort tiebreak again (the exact BANK-RUNNING-BALANCE-STILL-BROKEN-UNFILTERED regression)."
+    );
+  }
+  const tableRowsBlock = extractCallBlock(source, /const\s+tableRows\s*=\s*useMemo\(/);
+  if (!tableRowsBlock) {
+    failures.push("tableRows useMemo not found.");
+  } else if (!/compareTxNewestFirst\(a,\s*b\)/.test(tableRowsBlock)) {
+    failures.push(
+      "tableRows' date/balance sort branch no longer calls compareTxNewestFirst — it can order same-" +
+        "day rows differently than runningBalanceById, breaking the adjacent-balance-subtracts-correctly guarantee."
+    );
+  }
+
   return failures;
 }
 
 function main() {
   if (process.argv.includes("--selftest")) {
     const good = `
+      export function compareTxNewestFirst(a, b) {
+        return 0;
+      }
       const fullHistoryQuery = useQuery({
         queryKey: ["x"],
         queryFn: async () => {
@@ -105,28 +136,54 @@ function main() {
           return { transactions: page.transactions ?? [] };
         },
       });
+      const tableRows = useMemo(() => {
+        if (sortBy.key === "date" || sortBy.key === "balance") {
+          return [...filtered].sort((a, b) => compareTxNewestFirst(a, b) * -sortDir);
+        }
+        return [...filtered];
+      }, [sortBy]);
       const runningBalanceById = useMemo(() => {
         const historyRows = fullHistoryQuery.data?.transactions ?? [];
+        const ordered = [...historyRows].sort(compareTxNewestFirst);
         return new Map();
       }, [fullHistoryQuery.data, selectedAccount]);
     `;
-    const bad = `
-      const runningBalanceById = useMemo(() => {
-        const ordered = [...scopedRows];
-        return new Map();
-      }, [scopedRows, selectedAccount]);
-    `;
+    const badFixtures = {
+      "scopedRows regression": `
+        const runningBalanceById = useMemo(() => {
+          const ordered = [...scopedRows];
+          return new Map();
+        }, [scopedRows, selectedAccount]);
+      `,
+      "no shared comparator": good.replace(
+        "export function compareTxNewestFirst(a, b) {\n        return 0;\n      }",
+        ""
+      ),
+      "runningBalanceById skips compareTxNewestFirst": good.replace(
+        "const ordered = [...historyRows].sort(compareTxNewestFirst);",
+        `const ordered = [...historyRows].sort((a, b) => (a.transaction_date < b.transaction_date ? 1 : -1));`
+      ),
+      "tableRows skips compareTxNewestFirst": good.replace(
+        `return [...filtered].sort((a, b) => compareTxNewestFirst(a, b) * -sortDir);`,
+        `return [...filtered].sort((a, b) => (a.transaction_date < b.transaction_date ? 1 : -1));`
+      ),
+    };
+
     const goodFailures = checkRunningBalanceUsesFullHistory(good);
-    const badFailures = checkRunningBalanceUsesFullHistory(bad);
     if (goodFailures.length !== 0) {
       console.error(`[${LABEL}] SELFTEST FAILED: expected good fixture to pass, got`, goodFailures);
       process.exit(1);
     }
-    if (badFailures.length === 0) {
-      console.error(`[${LABEL}] SELFTEST FAILED: expected bad fixture to fail, got none`);
-      process.exit(1);
+    let caught = 0;
+    for (const [name, src] of Object.entries(badFixtures)) {
+      const failures = checkRunningBalanceUsesFullHistory(src);
+      if (failures.length === 0) {
+        console.error(`[${LABEL}] SELFTEST FAILED: mutation "${name}" escaped detection`);
+        process.exit(1);
+      }
+      caught += 1;
     }
-    console.log(`[${LABEL}] selftest OK (good=0 failures, bad=${badFailures.length} failures)`);
+    console.log(`[${LABEL}] selftest OK (good=0 failures, ${caught}/${Object.keys(badFixtures).length} planted defects caught)`);
     process.exit(0);
   }
 

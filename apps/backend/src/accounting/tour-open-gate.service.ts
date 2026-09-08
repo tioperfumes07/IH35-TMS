@@ -19,7 +19,13 @@ export const TOUR_OPEN_HOLD_REASON = "tour_open" as const;
 // Mirrors report-posted-expenses-while-tour-open.mjs's OPEN_TOUR_STATUSES_EXCLUDED and
 // pre-settlement.routes.ts's own "open tour" gate exactly — one definition, reused, never
 // reinvented.
-const CLOSED_TOUR_STATUSES = new Set(["approved", "paid", "cancelled"]);
+// EXP-CLOSED-TOUR-VOCAB (owner 2026-09-07 "close them out ... expenses"): 'closed' and 'final' are
+// terminal settlement statuses (driver_settlements status CHECK enum) and are BOTH in the pay-run
+// poster's POSTABLE_STATUSES — a settlement in either state is GL-posted and by definition NOT open.
+// USMCA's real settlements close to status='closed' (never 'approved'/'paid'), so omitting 'closed'
+// here left every held tour-open load cost on a genuinely-closed, GL-posted tour stuck unposted.
+// Widening this can only release held expenses on already-terminal tours; open/draft/etc. stay open.
+const CLOSED_TOUR_STATUSES = new Set(["approved", "paid", "cancelled", "closed", "final"]);
 
 /**
  * Is the given load's tour still open? A load with no driver_bill/settlement link yet is

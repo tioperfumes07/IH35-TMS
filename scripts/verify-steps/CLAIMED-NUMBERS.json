@@ -6107,20 +6107,45 @@
     "claimed_at": "2026-09-07",
     "purpose": "verify-escrow-deduction-alias-retyped"
   },
+  "10799": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-unit-single-active-load"
+  },
   "10801": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-07",
     "purpose": "verify-planner-scroll-not-wheel-trapped"
+  },
+  "10803": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-unmatch-clears-both-sides"
+  },
+  "10807": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-unit-single-active-load"
   },
   "10809": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-07",
     "purpose": "verify-payrun-close-excludes-voided-deductions"
   },
+  "10811": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-07",
+    "purpose": "verify-unmatch-clears-both-sides"
+  },
   "10813": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-07",
     "purpose": "verify-rolling-ledger-queries-parallel"
+  },
+  "10815": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-08",
+    "purpose": "verify-factoring-equipment-vendor-merges-collapsed-filters"
   },
   "10821": {
     "claimed_by": "claude",
@@ -6236,6 +6261,41 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-07",
     "purpose": "verify-customer-transactions-uses-linked-joins-endpoint (VC-06, owner raw findings dump 2026-09-07). Static guard: Customers.tsx's Transaction List invoicesQuery calls the customer-scoped listAllCustomerInvoices (GET /api/v1/customers/:id/invoices, already joins mdata.units/load_stops/driver_finance.driver_settlements) instead of the generic listAllInvoices, so Load#/Settlement#/Truck#/dates/miles stop rendering as dashes."
+  },
+  "10917": {
+    "claimed_at": "2026-09-07",
+    "claimed_by": "claude-1",
+    "purpose": "verify-invoice-sent-requires-gl-posting"
+  },
+  "10941": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-08",
+    "purpose": "verify-void-reversal-links-non-batch-postings"
+  },
+  "10969": {
+    "claimed_at": "2026-09-08",
+    "claimed_by": "claude-1",
+    "purpose": "verify-bank-running-balance-uses-full-history (wire orphaned BANK-F10041 guard into CI)"
+  },
+  "10989": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-08",
+    "purpose": "verify-bank-accounts-reorder-control"
+  },
+  "11013": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-08",
+    "purpose": "verify-factoring-chargebacks-summary-not-interleaved"
+  },
+  "11037": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-08",
+    "purpose": "verify-factoring-statements-summary-detail-toggle"
+  },
+  "11061": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-08",
+    "purpose": "verify-factoring-equipment-vendor-merges-collapsed-filters"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -8239,39 +8299,9 @@
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
   },
-  "10799": {
-    "claimed_by": "cc-2",
-    "claimed_at": "2026-09-07",
-    "purpose": "verify-unit-single-active-load"
-  },
-  "10803": {
-    "claimed_by": "cc-2",
-    "claimed_at": "2026-09-07",
-    "purpose": "verify-unmatch-clears-both-sides"
-  },
-  "10807": {
-    "claimed_by": "cc-2",
-    "claimed_at": "2026-09-07",
-    "purpose": "verify-unit-single-active-load"
-  },
-  "10811": {
-    "claimed_by": "cc-2",
-    "claimed_at": "2026-09-07",
-    "purpose": "verify-unmatch-clears-both-sides"
-  },
-  "10917": {
-    "claimed_at": "2026-09-07",
-    "claimed_by": "claude-1",
-    "purpose": "verify-invoice-sent-requires-gl-posting"
-  },
-  "10941": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-08",
-    "purpose": "verify-void-reversal-links-non-batch-postings"
-  },
-  "10969": {
+  "11041": {
     "claimed_at": "2026-09-08",
     "claimed_by": "claude-1",
-    "purpose": "verify-bank-running-balance-uses-full-history (wire orphaned BANK-F10041 guard into CI)"
+    "purpose": "verify-load-costs-return-columns"
   }
 }

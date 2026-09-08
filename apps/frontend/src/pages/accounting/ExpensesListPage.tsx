@@ -369,7 +369,7 @@ export function ExpensesListPage() {
     {
       key: "receipt",
       label: "Receipt",
-      sortable: false,
+      sortable: true,
       render: (r) =>
         companyId ? (
           <ReceiptAttach operatingCompanyId={companyId} entityType="expense" entityId={r.id} readOnly testId={`receipt-attach-expense-${r.id}`} />

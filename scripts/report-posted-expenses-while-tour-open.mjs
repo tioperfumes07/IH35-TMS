@@ -21,7 +21,8 @@ const LOADS_36 = [
   "13538", "13541", "13542", "13543", "13544", "13545", "13546", "13547", "13548", "13549",
   "13550", "13551", "13552", "13554", "13556", "13557",
 ];
-const OPEN_TOUR_STATUSES_EXCLUDED = ["approved", "paid", "cancelled"];
+// EXP-CLOSED-TOUR-VOCAB (owner 2026-09-07): 'closed'/'final' are terminal, GL-posted statuses too.
+const OPEN_TOUR_STATUSES_EXCLUDED = ["approved", "paid", "cancelled", "closed", "final"];
 
 if (!process.env.DATABASE_URL) {
   console.error("report-posted-expenses-while-tour-open: DATABASE_URL required (read-only report, no --apply flag exists)");

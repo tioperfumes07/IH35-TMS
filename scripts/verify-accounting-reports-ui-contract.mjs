@@ -131,20 +131,22 @@ try {
 
   const cashFlowOverviewPath = "apps/frontend/src/pages/reports/CashFlowOverviewPage.tsx";
   const cashFlowOverview = read(cashFlowOverviewPath);
-  assertIncludes(cashFlowOverview, "appliedAsOf", "Cash flow overview must stage as-of date (appliedAsOf)");
-  // The page now wires the bespoke appliedAsOf setter through useStagedListFilters's onApply(next)
-  // callback — onApply: (next) => setAppliedAsOf(next.asOfDate) — rather than a bare
-  // setAppliedAsOf(asOf) onChange. Accept either shape (bounded, not an unbounded window).
-  if (!/setAppliedAsOf\((?:asOf|next\.asOfDate)\)/.test(cashFlowOverview)) {
-    throw new Error("Cash flow overview must Apply staged as-of date");
+  // RPT-04: CashFlowOverviewPage migrated from bespoke appliedAsOf/setAppliedAsOf to
+  // useStagedListFilters with appliedFilters.asOfDate. Accept either shape.
+  const cfoBespoke = cashFlowOverview.includes("appliedAsOf") && /setAppliedAsOf\((?:asOf|next\.asOfDate)\)/.test(cashFlowOverview);
+  const cfoStaged = /useStagedListFilters/.test(cashFlowOverview) && /appliedFilters\.asOfDate/.test(cashFlowOverview) && /onApply=\{staged\.apply\}/.test(cashFlowOverview);
+  if (!cfoBespoke && !cfoStaged) {
+    throw new Error("Cash flow overview must stage as-of date (appliedAsOf pair or useStagedListFilters with asOfDate + staged.apply)");
   }
 
   const geofenceReconPath = "apps/frontend/src/pages/reports/GeofenceReconciliationReport.tsx";
   const geofenceRecon = read(geofenceReconPath);
+  // RPT-04: GeofenceReconciliationReport migrated from bespoke appliedDate/setAppliedDate to
+  // useStagedListFilters with appliedFilters.appliedDate. Accept either shape.
   assertIncludes(geofenceRecon, "appliedDate", "Geofence recon must stage report date (appliedDate)");
-  // Same useStagedListFilters onApply(next) wrapping as CashFlowOverviewPage.tsx above:
-  // onApply: (next) => setAppliedDate(next.reportDate), not a bare setAppliedDate(date).
-  if (!/setAppliedDate\((?:date|next\.reportDate)\)/.test(geofenceRecon)) {
+  const grBespoke = /setAppliedDate\((?:date|next\.reportDate)\)/.test(geofenceRecon);
+  const grStaged = /useStagedListFilters/.test(geofenceRecon) && /appliedFilters\.appliedDate/.test(geofenceRecon) && /onApply=\{staged\.apply\}/.test(geofenceRecon);
+  if (!grBespoke && !grStaged) {
     throw new Error("Geofence recon must Apply staged report date");
   }
   assertIncludes(scheduleModal, "option.name", "ScheduleReportModal must render report name, not raw id");

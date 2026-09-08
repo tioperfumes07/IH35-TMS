@@ -163,7 +163,8 @@ async function main() {
         LEFT JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
         WHERE e.operating_company_id = $1::uuid
           AND e.posting_status = 'posted'
-          AND (ds.status IS NULL OR ds.status NOT IN ('approved', 'paid', 'cancelled'))
+          -- EXP-CLOSED-TOUR-VOCAB (owner 2026-09-07): 'closed'/'final' are terminal statuses too.
+          AND (ds.status IS NULL OR ds.status NOT IN ('approved', 'paid', 'cancelled', 'closed', 'final'))
       `,
       [USMCA]
     );

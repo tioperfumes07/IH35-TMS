@@ -1007,6 +1007,13 @@ export function saveAccountVisibility(
   });
 }
 
+export function reorderBankAccounts(companyId: string, accountIds: string[]) {
+  return apiRequest<{ updated_accounts: Array<{ id: string; display_order: number }> }>(`/api/v1/banking/accounts/reorder`, {
+    method: "PATCH",
+    body: { operating_company_id: companyId, account_ids: accountIds },
+  });
+}
+
 /**
  * @deprecated ARCHIVED 2026-06-24 (Tier-1 H-1). Zero callers. The `/api/v1/banking/manual-je` endpoint is
  * retired (returns 410 Gone) — it wrote to the forbidden, GL-unread accounting.journal_entry_lines. Post
