@@ -223,7 +223,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
       await (isHidden
         ? reactivateDriver(driverId)
         : deactivateDriver(driverId, {
-            quarantineTestFixture: /(^|\W)(test|codex)(\W|$)/i.test(`${driver.first_name ?? ""} ${driver.last_name ?? ""}`),
+            quarantineTestFixture: /(^|\W)(test|codex)(\W|$)/i.test(`${driver?.first_name ?? ""} ${driver?.last_name ?? ""}`),
           }));
       refreshDriver();
     } catch (err) {
