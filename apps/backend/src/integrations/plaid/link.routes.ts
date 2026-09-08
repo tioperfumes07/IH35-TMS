@@ -625,14 +625,24 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
     const query = companyTransactionsQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
 
+    // BANK-F25150 (NEW-33 investigation, 2026-09-07, live-reproduced): `created_at` is not a
+    // unique tiebreaker — bulk Plaid syncs insert many rows with the identical timestamp, so ties
+    // on (transaction_date, created_at) leave Postgres free to return them in different relative
+    // order across separate LIMIT/OFFSET queries. A client that pages through the full history
+    // (page 1 offset=0, page 2 offset=100, ...) can then see the same tied-boundary row twice (it
+    // reappears at the tail of one page and the head of the next) while a DIFFERENT tied row from
+    // that same group is dropped from both pages — confirmed live: txn dd0d8831-... duplicated
+    // across a two-page fetch of account e83028a5-..., while txn dd28711f-... (also 2026-08-22)
+    // was present in a single unpaginated call but silently absent from the two-page merge. `bt.id`
+    // is the only column guaranteed unique per row, so it is the final tiebreaker on every branch.
     const sortSql =
       query.data.sort === "date_asc"
-        ? "bt.transaction_date ASC, bt.created_at ASC"
+        ? "bt.transaction_date ASC, bt.created_at ASC, bt.id ASC"
         : query.data.sort === "amount_desc"
-          ? "bt.amount_cents DESC, bt.transaction_date DESC"
+          ? "bt.amount_cents DESC, bt.transaction_date DESC, bt.id ASC"
           : query.data.sort === "amount_asc"
-            ? "bt.amount_cents ASC, bt.transaction_date DESC"
-            : "bt.transaction_date DESC, bt.created_at DESC";
+            ? "bt.amount_cents ASC, bt.transaction_date DESC, bt.id ASC"
+            : "bt.transaction_date DESC, bt.created_at DESC, bt.id ASC";
 
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const predicates: string[] = [
