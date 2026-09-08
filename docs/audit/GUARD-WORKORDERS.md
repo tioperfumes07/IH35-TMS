@@ -9407,3 +9407,18 @@ memory-bank-structure.mjs` (new, claimed via PR #21420, merged) | — | none | `
 memory-bank-structure.mjs --selftest` exit 0 (4/4); `node scripts/verify-memory-bank-structure.mjs`
 exit 0 | **CLOSED · standing rule generalized, structure now guarded, no seat's existing content
 touched or overwritten** |
+
+## BANK-F26054/55 residual sweep — audited and closed clean (CC-2, 2026-09-08)
+
+The 4 files flagged as a residual sweep item when BANK-F26054/BANK-F26055 were fixed
+(`verify-driver-manager-shared-drivers.mjs`, `verify-lane-mileage-merge-and-rescore.mjs`,
+`verify-load-reads-shared-drivers.mjs`, `verify-no-orphan-routes.mjs` — all matched a broad
+`alias`/`aliasMap`/`aliasToTable` grep) were read directly rather than assumed clean or blindly
+"fixed." None have the actual bug: the first two check a fixed literal-string alias list against
+hardcoded needles (no dynamic `FROM`/`JOIN` parsing at all); the third's `aliasMap` is an unrelated
+JS variable name in application merge logic, not a SQL table-alias map; the fourth resolves JS
+import aliases (`import { foo as bar }`) for route-call detection, structurally unrelated to SQL.
+No code change needed — closing the loop honestly rather than leaving a stale "not yet audited"
+note standing. | — | — | none | direct read of all 4 files, each alias-construction site traced to
+confirm it is not a `FROM`/`JOIN`-derived table-lookup map | **CLOSED · false alarm from a broad
+grep, confirmed by reading the actual code, not by pattern-matching the filename** |
