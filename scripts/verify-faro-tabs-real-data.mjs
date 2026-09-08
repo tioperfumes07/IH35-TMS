@@ -213,6 +213,45 @@ export function checkFeesPaidReal(src) {
   return failures;
 }
 
+export function checkPurchaseReportReal(src) {
+  const failures = [];
+  const stubMatch = src.match(/tab === "request_debtor_credit_check"[\s\S]*?data-testid=\{`factoring-stub-\$\{tab\}`\}/);
+  if (stubMatch && /tab === "purchase_report"/.test(stubMatch[0])) {
+    failures.push(`${HOME}: Purchase Report is still routed through the generic honest-stub block — must have its own real section (FAC-09a).`);
+  }
+  const marker = 'tab === "purchase_report" ?';
+  const idx = src.indexOf(marker);
+  if (idx === -1) {
+    failures.push(`${HOME}: could not find a dedicated Purchase Report ("tab === \"purchase_report\" ?") block.`);
+    return failures;
+  }
+  const section = src.slice(idx, idx + 8000);
+  const requiredColumnLabels = [
+    '"Debtor"', '"Date"', '"Inv #"', '"PO"', '"Other Ref"', '"Purchase"', '"Escrow Rsv"', '"Cash Rsv"',
+    '"Discount"', '"Fees"', '"Wire Fee"', '"Rebate Income"', '"Returned Item Fee"', '"Schedule Fee"',
+    '"Shipping Fee"', '"Cash Advance Fee"', '"Processing Fee"', '"Dispatch"', '"Net Adv"', '"Receipts"',
+    '"Sch Fee"', '"ChgBack (Refund)"',
+  ];
+  for (const label of requiredColumnLabels) {
+    if (!section.includes(`label: ${label}`)) {
+      failures.push(`${HOME}: Purchase Report missing required column label ${label}.`);
+    }
+  }
+  const requiredRealBindings = [
+    { pattern: /purchaseReportRows/, label: "table bound to purchaseReportRows (agingRows + fee/chargeback join)" },
+    { pattern: /row\.invoice_amount/, label: "Purchase column bound to row.invoice_amount" },
+    { pattern: /row\.reserve_amount/, label: "Cash Rsv column bound to row.reserve_amount" },
+    { pattern: /row\.advance_amount/, label: "Net Adv column bound to row.advance_amount" },
+    { pattern: /row\.chargeback/, label: "ChgBack column bound to row.chargeback (real per-advance chargeback sum)" },
+  ];
+  for (const { pattern, label } of requiredRealBindings) {
+    if (!pattern.test(section)) {
+      failures.push(`${HOME}: Purchase Report missing real binding — ${label}.`);
+    }
+  }
+  return failures;
+}
+
 export function run() {
   const failures = [];
   const { ok, src, err } = read(HOME);
@@ -225,6 +264,7 @@ export function run() {
   failures.push(...checkAgingReal(src));
   failures.push(...checkAccountSummaryReal(src));
   failures.push(...checkFeesPaidReal(src));
+  failures.push(...checkPurchaseReportReal(src));
   return { ok: failures.length === 0, failures };
 }
 
@@ -264,6 +304,37 @@ if (process.argv.includes("--selftest")) {
         <div data-testid={\`factoring-stub-\${tab}\`}>stub</div>
       ) : null}
   `;
+  const purchaseReportBlock = `
+      {tab === "purchase_report" ? (
+        <ParityTable
+          columns={[
+            { key: "customer_name", label: "Debtor" },
+            { key: "factored_at", label: "Date" },
+            { key: "invoice_reference", label: "Inv #" },
+            { key: "po", label: "PO" },
+            { key: "other_ref", label: "Other Ref" },
+            { key: "purchase", label: "Purchase", render: (row) => fmtCurrency(row.invoice_amount) },
+            { key: "escrow_rsv", label: "Escrow Rsv" },
+            { key: "cash_rsv", label: "Cash Rsv", render: (row) => fmtCurrency(row.reserve_amount) },
+            { key: "discount", label: "Discount" },
+            { key: "fees", label: "Fees" },
+            { key: "wire_fee", label: "Wire Fee" },
+            { key: "rebate_income", label: "Rebate Income" },
+            { key: "returned_item_fee", label: "Returned Item Fee" },
+            { key: "schedule_fee", label: "Schedule Fee" },
+            { key: "shipping_fee", label: "Shipping Fee" },
+            { key: "cash_advance_fee", label: "Cash Advance Fee" },
+            { key: "processing_fee", label: "Processing Fee" },
+            { key: "dispatch", label: "Dispatch" },
+            { key: "advance_amount", label: "Net Adv", render: (row) => fmtCurrency(row.advance_amount) },
+            { key: "receipts", label: "Receipts" },
+            { key: "sch_fee", label: "Sch Fee" },
+            { key: "chargeback", label: "ChgBack (Refund)", render: (row) => fmtCurrency(row.chargeback) },
+          ]}
+          rows={purchaseReportRows}
+        />
+      ) : null}
+  `;
   const accountSummaryBlock = `
       {tab === "account_summary" ? (
         <div data-testid="factoring-account-summary">
@@ -298,6 +369,7 @@ Internal Tools
 ${stubBlock}
 ${accountSummaryBlock}
 ${feesPaidBlock}
+${purchaseReportBlock}
 ${agingBlock}
   `;
   const badWrongOrder = goodSrc.replace('{ id: "aging", label: "x" },', '{ id: "zzz", label: "x" },');
@@ -319,9 +391,18 @@ ${agingBlock}
     '<span>{(feesQuery.data?.history ?? []).map((row) => fmtCurrency(row.factor_fee_amount))}</span>',
     "<span>{fmtCurrency(9999)}</span>",
   );
+  const badPurchaseReportStillStub = goodSrc.replace(
+    'tab === "payments_to_you" ? (',
+    'tab === "payments_to_you" ||\n      tab === "purchase_report" ? (',
+  );
+  const badPurchaseReportMissingColumn = goodSrc.replace('{ key: "chargeback", label: "ChgBack (Refund)", render: (row) => fmtCurrency(row.chargeback) },', "");
+  const badPurchaseReportFakeBinding = goodSrc.replace(
+    '{ key: "advance_amount", label: "Net Adv", render: (row) => fmtCurrency(row.advance_amount) },',
+    '{ key: "advance_amount", label: "Net Adv", render: () => fmtCurrency(9999) },',
+  );
 
   const checks = [
-    ["clean source passes", checkNavOrder(goodSrc).length === 0 && checkInternalToolsPreserved(goodSrc).length === 0 && checkAgingReal(goodSrc).length === 0 && checkAccountSummaryReal(goodSrc).length === 0 && checkFeesPaidReal(goodSrc).length === 0],
+    ["clean source passes", checkNavOrder(goodSrc).length === 0 && checkInternalToolsPreserved(goodSrc).length === 0 && checkAgingReal(goodSrc).length === 0 && checkAccountSummaryReal(goodSrc).length === 0 && checkFeesPaidReal(goodSrc).length === 0 && checkPurchaseReportReal(goodSrc).length === 0],
     ["wrong nav order fails", checkNavOrder(badWrongOrder).length > 0],
     ["deleted internal tab fails", checkInternalToolsPreserved(badDeletedInternal).length > 0],
     ["missing aging column fails", checkAgingReal(badAgingMissingColumn).length > 0],
@@ -329,6 +410,9 @@ ${agingBlock}
     ["account summary fake binding fails", checkAccountSummaryReal(badAccountSummaryFakeBinding).length > 0],
     ["fees paid still stub fails", checkFeesPaidReal(badFeesPaidStillStub).length > 0],
     ["fees paid fake binding fails", checkFeesPaidReal(badFeesPaidFakeBinding).length > 0],
+    ["purchase report still stub fails", checkPurchaseReportReal(badPurchaseReportStillStub).length > 0],
+    ["purchase report missing column fails", checkPurchaseReportReal(badPurchaseReportMissingColumn).length > 0],
+    ["purchase report fake binding fails", checkPurchaseReportReal(badPurchaseReportFakeBinding).length > 0],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
@@ -346,5 +430,5 @@ if (!ok) {
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — 15-item real nav order locked, internal-ops tabs preserved (Rule 07), Aging + Account Summary + Fees Paid reports real (FAC-09a)`);
+console.log(`${LABEL}: OK — 15-item real nav order locked, internal-ops tabs preserved (Rule 07), Aging + Account Summary + Fees Paid + Purchase Report real (FAC-09a)`);
 process.exit(0);

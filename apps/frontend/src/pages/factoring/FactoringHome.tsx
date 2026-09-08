@@ -477,6 +477,35 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     () => (feesQuery.data?.history ?? []).reduce((sum, row) => sum + Number(row.factor_fee_amount ?? 0), 0),
     [feesQuery.data?.history],
   );
+  // FAC-09a Purchase Report — same per-advance fee-history join as Fees Paid's Open Invoices view,
+  // plus chargeback_amount and statement_reference (both real, from the same already-fetched
+  // feesQuery.data.history rows). No new backend query.
+  const chargebacksByAdvance = useMemo(() => {
+    const totals = new Map<string, number>();
+    for (const row of feesQuery.data?.history ?? []) {
+      totals.set(row.factoring_advance_id, (totals.get(row.factoring_advance_id) ?? 0) + Number(row.chargeback_amount ?? 0));
+    }
+    return totals;
+  }, [feesQuery.data?.history]);
+  const statementReferenceByAdvance = useMemo(() => {
+    const refs = new Map<string, string>();
+    for (const row of feesQuery.data?.history ?? []) {
+      if (row.statement_reference && !refs.has(row.factoring_advance_id)) {
+        refs.set(row.factoring_advance_id, row.statement_reference);
+      }
+    }
+    return refs;
+  }, [feesQuery.data?.history]);
+  const purchaseReportRows = useMemo(
+    () =>
+      agingRows.map((row) => ({
+        ...row,
+        fees: accruedFeesByAdvance.get(row.factoring_advance_id) ?? 0,
+        chargeback: chargebacksByAdvance.get(row.factoring_advance_id) ?? 0,
+        other_ref: statementReferenceByAdvance.get(row.factoring_advance_id) ?? null,
+      })),
+    [agingRows, accruedFeesByAdvance, chargebacksByAdvance, statementReferenceByAdvance],
+  );
   const settingsQuery = useQuery({
     queryKey: ["factoring", "statements-settings", companyId],
     queryFn: () => getFactoringStatementsSettings(companyId),
@@ -830,7 +859,6 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       tab === "funds_due" ||
       tab === "payments_to_you" ||
       tab === "debtor_receipts" ||
-      tab === "purchase_report" ||
       tab === "reserve" ||
       tab === "chargebacks_overpayments" ||
       tab === "loan_save" ||
@@ -992,6 +1020,108 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             </div>
           );
         })()
+      ) : null}
+
+      {/* FAC-09a Purchase Report (real, this pass): built on the SAME agingRows (recourse-pipeline)
+          + feesQuery history already fetched for Aging/Fees Paid -- no new backend query. Of the
+          doc's 22 real-portal columns, 9 have a real backing field in this schema (Debtor, Date,
+          Inv #, Other Ref, Purchase, Cash Rsv, Fees, Net Adv, ChgBack); the other 13 (PO, Escrow
+          Rsv, Discount, Wire Fee, Rebate Income, Returned Item Fee, Schedule Fee, Shipping Fee,
+          Cash Advance Fee, Processing Fee, Dispatch, Receipts, Sch Fee) have no backing field at
+          all -- rendered an honest "—" in every row, never fabricated. "Display Fee Detail" /
+          "Include Non-Purchased Invoices" checkboxes and "Filter by Debtor" are not wired this
+          pass (noted in-page, not silently dropped). */}
+      {tab === "purchase_report" ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-purchase-report">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="text-xs font-medium text-gray-900">Purchase Report</div>
+            <div className="text-xs text-gray-500">
+              "Display Fee Detail" / "Include Non-Purchased Invoices" / "Filter by Debtor" are not
+              wired this pass — every invoice in the register is shown.
+            </div>
+          </div>
+          {recourseQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load purchase report"
+              {...formatQueryErrorDetail(recourseQuery.error)}
+              onRetry={() => void recourseQuery.refetch()}
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <ParityTable
+                columns={[
+                  {
+                    key: "customer_name",
+                    label: "Debtor",
+                    render: (row: (typeof purchaseReportRows)[number]) =>
+                      row.customer_id ? <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} /> : row.customer_name,
+                  },
+                  { key: "factored_at", label: "Date", render: (row: (typeof purchaseReportRows)[number]) => fmtDate(row.factored_at) },
+                  {
+                    key: "invoice_reference",
+                    label: "Inv #",
+                    render: (row: (typeof purchaseReportRows)[number]) =>
+                      row.invoice_id ? <EntityLink kind="invoice" id={row.invoice_id} label={row.invoice_reference} /> : row.invoice_reference,
+                  },
+                  { key: "po", label: "PO", render: () => "—" },
+                  { key: "other_ref", label: "Other Ref", render: (row: (typeof purchaseReportRows)[number]) => row.other_ref ?? "—" },
+                  { key: "purchase", label: "Purchase", cellClass: "text-right", render: (row: (typeof purchaseReportRows)[number]) => fmtCurrency(row.invoice_amount) },
+                  { key: "escrow_rsv", label: "Escrow Rsv", render: () => "—" },
+                  {
+                    key: "cash_rsv",
+                    label: "Cash Rsv",
+                    cellClass: "text-right",
+                    render: (row: (typeof purchaseReportRows)[number]) => fmtCurrency(row.reserve_amount),
+                  },
+                  { key: "discount", label: "Discount", render: () => "—" },
+                  { key: "fees", label: "Fees", cellClass: "text-right", render: (row: (typeof purchaseReportRows)[number]) => fmtCurrency(row.fees) },
+                  { key: "wire_fee", label: "Wire Fee", render: () => "—" },
+                  { key: "rebate_income", label: "Rebate Income", render: () => "—" },
+                  { key: "returned_item_fee", label: "Returned Item Fee", render: () => "—" },
+                  { key: "schedule_fee", label: "Schedule Fee", render: () => "—" },
+                  { key: "shipping_fee", label: "Shipping Fee", render: () => "—" },
+                  { key: "cash_advance_fee", label: "Cash Advance Fee", render: () => "—" },
+                  { key: "processing_fee", label: "Processing Fee", render: () => "—" },
+                  { key: "dispatch", label: "Dispatch", render: () => "—" },
+                  {
+                    key: "advance_amount",
+                    label: "Net Adv",
+                    cellClass: "text-right",
+                    render: (row: (typeof purchaseReportRows)[number]) => fmtCurrency(row.advance_amount),
+                  },
+                  { key: "receipts", label: "Receipts", render: () => "—" },
+                  { key: "sch_fee", label: "Sch Fee", render: () => "—" },
+                  {
+                    key: "chargeback",
+                    label: "ChgBack (Refund)",
+                    cellClass: "text-right",
+                    render: (row: (typeof purchaseReportRows)[number]) => fmtCurrency(row.chargeback),
+                  },
+                ]}
+                rows={purchaseReportRows}
+                rowKey={(row) => row.factoring_advance_id}
+                loading={recourseQuery.isLoading}
+                emptyText="No purchased invoices."
+                storageKey="factoring-purchase-report"
+                footerCells={{
+                  customer_name: `${purchaseReportRows.length} invoices`,
+                  purchase: fmtCurrency(purchaseReportRows.reduce((sum, row) => sum + row.invoice_amount, 0)),
+                  cash_rsv: fmtCurrency(purchaseReportRows.reduce((sum, row) => sum + row.reserve_amount, 0)),
+                  fees: fmtCurrency(purchaseReportRows.reduce((sum, row) => sum + row.fees, 0)),
+                  advance_amount: fmtCurrency(purchaseReportRows.reduce((sum, row) => sum + row.advance_amount, 0)),
+                  chargeback: fmtCurrency(purchaseReportRows.reduce((sum, row) => sum + row.chargeback, 0)),
+                }}
+              />
+              <p className="mt-2 text-xs text-gray-500" data-testid="factoring-purchase-report-footnote">
+                "Cash Rsv" shows this schema's one combined per-invoice reserve_amount (no Escrow /
+                Cash split field exists, so "Escrow Rsv" is honestly "—"). PO, Discount, Wire Fee,
+                Rebate Income, Returned Item Fee, Schedule Fee, Shipping Fee, Cash Advance Fee,
+                Processing Fee, Dispatch, Receipts, and Sch Fee have no backing field in this
+                schema — never fabricated.
+              </p>
+            </div>
+          )}
+        </div>
       ) : null}
 
       {/* FAC-09a Fees Paid (real, this pass): two views per the real portal's own screenshot --
