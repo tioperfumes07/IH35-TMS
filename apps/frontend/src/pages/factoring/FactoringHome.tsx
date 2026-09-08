@@ -805,7 +805,6 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       tab === "payments_to_you" ||
       tab === "debtor_receipts" ||
       tab === "purchase_report" ||
-      tab === "account_summary" ||
       tab === "fees_paid" ||
       tab === "reserve" ||
       tab === "chargebacks_overpayments" ||
@@ -817,6 +816,157 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
           <div className="font-medium text-gray-900">{SUBNAV.find((item) => item.id === tab)?.label}</div>
           <p className="mt-1">Not yet wired to real data — this tab exists and is reachable, but its content is a placeholder for this pass. See docs/audit/GUARD-WORKORDERS.md (FAC-09a) for what is real vs. stub.</p>
         </div>
+      ) : null}
+
+      {/* FAC-09a Account Summary (real, this pass): a plain summary block per the real portal's
+          own screenshots, NOT a register. Built entirely on already-fetched summaryQuery
+          (views.factoring_summary) + feesQuery (views.factoring_chargebacks_fees monthly_summary)
+          data — no new backend query. This schema has no period-close snapshot for factoring (no
+          Beginning/Ending balance history) and no per-fee-type breakdown (Discount/Schedule/Wire
+          are one combined factor_fee_amount) and no Loan/Savings/Funds-on-Hold/escrow-vs-cash
+          reserve split — every line without a real backing field renders an honest "—" rather
+          than a fabricated number, same standard as the Aging tab's PO/Other Ref/Memos columns. */}
+      {tab === "account_summary" ? (
+        (() => {
+          const latestMonth = feesQuery.data?.monthly_summary?.[0] ?? null;
+          return (
+            <div className="space-y-3">
+              {summaryQuery.isError ? (
+                <ListErrorBanner onRetry={() => void summaryQuery.refetch()} />
+              ) : (
+                <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-account-summary">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-xs font-medium text-gray-900">Account Summary</div>
+                    <div className="text-xs text-gray-500">
+                      No date-range picker this pass — this schema has no historical period-close
+                      snapshot for factoring balances, so a date range could not change any of the
+                      point-in-time figures below without fabricating history.
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2">
+                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                      <span className="text-xs text-gray-600">Beginning Balance</span>
+                      <span className="text-xs text-gray-400" data-testid="factoring-account-summary-beginning-balance">—</span>
+                    </div>
+                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                      <span className="text-xs text-gray-600">Ending Balance (AR)</span>
+                      <span className="text-xs font-medium text-gray-900" data-testid="factoring-account-summary-ending-balance">
+                        {summaryQuery.isError ? "—" : fmtCurrency(summary?.outstanding_liability_balance)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                      <span className="text-xs text-gray-600">Payments to You *</span>
+                      <span className="text-xs text-gray-400" data-testid="factoring-account-summary-payments-to-you">—</span>
+                    </div>
+                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                      <span className="text-xs text-gray-600">Debtor Receipts</span>
+                      <span className="text-xs text-gray-400" data-testid="factoring-account-summary-debtor-receipts">—</span>
+                    </div>
+                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                      <span className="text-xs text-gray-600">Payments from You</span>
+                      <span className="text-xs text-gray-400" data-testid="factoring-account-summary-payments-from-you">—</span>
+                    </div>
+                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                      <span className="text-xs text-gray-600">Reserve Balance (combined)</span>
+                      <span className="text-xs font-medium text-gray-900" data-testid="factoring-account-summary-reserve-balance">
+                        {summaryQuery.isError ? "—" : fmtCurrency(summary?.reserve_balance)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 border-t border-gray-200 pt-2">
+                    <div className="text-xs font-medium text-gray-900">
+                      Fees Paid{latestMonth ? ` — ${fmtDate(latestMonth.statement_month)} (most recent posted month)` : ""}
+                    </div>
+                    <div className="mt-1 grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2">
+                      <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                        <span className="text-xs text-gray-600">Discount Fee</span>
+                        <span className="text-xs text-gray-400" data-testid="factoring-account-summary-fee-discount">—</span>
+                      </div>
+                      <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                        <span className="text-xs text-gray-600">Schedule Fee</span>
+                        <span className="text-xs text-gray-400" data-testid="factoring-account-summary-fee-schedule">—</span>
+                      </div>
+                      <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                        <span className="text-xs text-gray-600">Wire Fee</span>
+                        <span className="text-xs text-gray-400" data-testid="factoring-account-summary-fee-wire">—</span>
+                      </div>
+                      <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                        <span className="text-xs text-gray-600">Total Fees (all types combined)</span>
+                        <span className="text-xs font-medium text-gray-900" data-testid="factoring-account-summary-fees-total">
+                          {feesQuery.isError ? "—" : fmtCurrency(latestMonth?.factor_fee_total)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 border-t border-gray-200 pt-2">
+                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                      <span className="text-xs text-gray-600">Other Adjustments (Chargebacks/Overpayments, most recent posted month)</span>
+                      <span className="text-xs font-medium text-gray-900" data-testid="factoring-account-summary-adjustments">
+                        {feesQuery.isError ? "—" : fmtCurrency(latestMonth?.chargeback_total)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                      <span className="text-xs text-gray-600">Total Change in NFE</span>
+                      <span className="text-xs text-gray-400" data-testid="factoring-account-summary-nfe-change">—</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 border-t border-gray-200 pt-2">
+                    <div className="mb-1 text-xs font-medium text-gray-900">Beginning / Ending — Balance Sheet Items</div>
+                    <div className="overflow-x-auto">
+                      <ParityTable
+                        columns={[
+                          { key: "label", label: "Item" },
+                          {
+                            key: "beginning",
+                            label: "Beginning",
+                            render: (row: { label: string; testId: string }) => (
+                              <span className="text-gray-400" data-testid={`factoring-account-summary-${row.testId}-beginning`}>—</span>
+                            ),
+                          },
+                          {
+                            key: "ending",
+                            label: "Ending",
+                            render: (row: { label: string; ending: unknown; testId: string }) =>
+                              row.ending == null ? (
+                                <span className="text-gray-400" data-testid={`factoring-account-summary-${row.testId}-ending`}>—</span>
+                              ) : (
+                                <span className="font-medium text-gray-900" data-testid={`factoring-account-summary-${row.testId}-ending`}>
+                                  {fmtCurrency(row.ending)}
+                                </span>
+                              ),
+                          },
+                        ]}
+                        rows={[
+                          { label: "AR Balance", ending: summaryQuery.isError ? null : summary?.outstanding_liability_balance, testId: "ar-balance" },
+                          { label: "Escrow Reserve", ending: null, testId: "escrow-reserve" },
+                          { label: "Cash Reserve", ending: null, testId: "cash-reserve" },
+                          { label: "Loan", ending: null, testId: "loan" },
+                          { label: "Savings", ending: null, testId: "savings" },
+                          { label: "Funds on Hold", ending: null, testId: "funds-on-hold" },
+                          { label: "NFE", ending: null, testId: "nfe" },
+                        ]}
+                        rowKey={(row) => row.testId}
+                      />
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500" data-testid="factoring-account-summary-footnote">
+                      * Payments to You includes all payments due on invoices purchased during the
+                      selected date range (real portal definition). "Escrow Reserve" / "Cash
+                      Reserve" are shown separately in the real Faro portal; this system tracks one
+                      combined reserve_balance with no type split, so both rows above are honestly
+                      "—" rather than duplicating the combined figure into each. Loan / Savings /
+                      Funds on Hold / NFE and all Beginning-column figures have no backing field in
+                      this schema yet (no factoring period-close snapshot exists) — never fabricated.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()
       ) : null}
 
       {tab === "aging" ? (
