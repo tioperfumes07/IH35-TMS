@@ -116,6 +116,22 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 5. Neon yourself if money/migrations.
 6. Never merge on gate FAIL, never `--no-verify` for your own red guard, never ask the owner to merge.
 
+## Rehearsal + remaining gates (2026-09-08)
+
+- **Reversal engine REHEARSED on an isolated Neon branch (PR #21431).** Harness:
+  `apps/backend/scripts/rehearse-settlement-payrun-reversal.mts` (runs the REAL engine on a fork,
+  refuses non-Neon URLs, prints before/after + independent equal-and-opposite proof). Rehearsal on
+  branch `br-small-lake-ak5keqpa`, S-13644: reversed, reversal JE 81ef03ff, advances_restored 2,
+  escrow 2500¢, proof {nonzero 0, residual 0}, run posted→void, posted_at cleared. It caught + fixed a
+  real `uuid=text` bug on `escrow_postings.source_id` that would have thrown on prod settlement #1.
+  **Re-run this harness on a fresh branch before any prod post.**
+- **OPEN — Claude gate: manual JE `15e0887f`** (S-13643 / load 13541 / doc 5796, −$389.66) is a
+  standalone JE NOT linked to `payrun_gl_runs`; the reversal engine only reverses the payrun-linked JE,
+  so the orchestration must explicitly reverse/fold `15e0887f` or 5796 double/under-corrects.
+- **Rebuild bills: un-void 7, create 1.** 7 of the 8 "zero-pay" loads already have VOIDED
+  `driver_finance.driver_bills` rows matching the signed docs (13540 is 1¢ off — trace, don't shrug);
+  only 13554 has no bill row. The rebuild un-voids the 7, creates 13554 — it must NOT blindly create 8.
+
 ## Next Immediate Milestones
 
 1. **Rebuild orchestration (17→21):** data-driven from the two signed-doc CSVs. Reverse mis-grouped
