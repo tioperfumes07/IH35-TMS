@@ -212,7 +212,14 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
         -- (TRANSP/TRK/USMCA) can never surface here even for a cross-entity user. ETA stop inherits the load.
         LEFT JOIN mdata.loads l ON l.id = i.load_id AND l.operating_company_id = $1::uuid
         LEFT JOIN mdata.load_stops s ON s.id = i.stop_id AND s.load_id = l.id
-        WHERE i.promoted_to_wo_id IS NULL
+        -- F6 (Cascade finding, PR #21384) — this WHERE lacked i.operating_company_id = $1::uuid while
+        -- the countRes query just above it already has it. The u/d JOINs above only pin the UNIT and
+        -- DRIVER to i.operating_company_id, never i.operating_company_id itself to $1 — so a
+        -- multi-entity user (RLS here allows any of their companies, same reasoning as the load JOIN's
+        -- own comment above) could see another entity's intransit_issues rows leak into this entity's
+        -- triage queue. Matches the count query exactly now.
+        WHERE i.operating_company_id = $1::uuid
+          AND i.promoted_to_wo_id IS NULL
           AND i.promoted_to_damage_report_id IS NULL
         ORDER BY i.reported_at DESC, i.id ASC
         LIMIT $2 OFFSET $3
