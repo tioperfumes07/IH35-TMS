@@ -1824,3 +1824,34 @@ next to a side-channel JE.
 rebuild needs to handle exactly ONE standalone correction (15e0887f/S-13643), nothing else.
 
 Files touched: none (read-only verification). No code shipped, per this task's own framing.
+
+## CC-2 | PRIORITY #1 balance bug — pagination proven fixed live, root cause narrowed to a real data gap | 2026-09-08
+
+Reopened my own premature `NEW-33/NEW-33-UPDATE` closure per owner instruction ("do not close by
+re-framing as fixed by BANK-F25141"). Full writeup + live proof in `docs/audit/GUARD-WORKORDERS.md`
+("NEW-33-UPDATE reopened — pagination tiebreaker proven live; balance root cause narrowed...").
+
+Short version:
+- **Pagination tiebreaker: GO.** `link.routes.ts`'s `ORDER BY transaction_date DESC, id ASC`
+  (BANK-F25150) is already live. Fresh live before/after on account `e83028a5-...`: old shape (no
+  id tiebreak) duplicates 3 ids across a page boundary; current shape = 0 dup/0 drop across 4 pages
+  vs. unpaginated (278=278). No code change needed.
+- **Balance root cause: NO-GO on fully resolved, GO on identified-with-live-proof.** BANK-F30002
+  (CC-1, thank you — the 616-row pending/posted dedup) fixed a real, different bug and materially
+  improved the number, but did not close it. New evidence this session: account `e83028a5-...` has
+  **zero transactions in February 2026** — a full calendar month with no activity sandwiched between
+  active months on both this account and its re-linked predecessor. That's the arithmetic driver of
+  the residual negative implied terminal balance: an incomplete transaction set, not a stale
+  `current_balance_cents` (confirmed fresh, `last_synced_at` = yesterday) and not a math/query bug.
+  Separately (not the balance driver, but a real anomaly worth a look): `available_balance_cents` on
+  this account is frozen at exactly its deactivated predecessor's value from the 2026-06-30 re-link
+  and hasn't moved since, while `current_balance_cents` on the same row updates normally.
+  Closing this fully needs a live Plaid `/transactions/sync` re-pull for this account/access_token —
+  outside this session's tool access. Flagging for whoever owns Plaid ops access to trigger a
+  manual re-sync on this one account, then re-run the same backward walk to confirm the gap fills.
+
+No duplicate work with CC-1's BANK-F30002 — read that entry in full before writing this; my finding
+is upstream of and additional to it, not a re-derivation.
+
+Next: NEW-32 (already shipped, PR #21368/#21447 area — citing GO below), then NEW-29/30/31 (Dispatch
+reefer/lumper/late-penalty prompts).
