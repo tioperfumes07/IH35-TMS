@@ -16,6 +16,7 @@ import {
   assertDriverQualifiedForLoad,
   DriverNotQualifiedError,
 } from "./driver-qualification.service.js";
+import { ACTIVE_UNIT_STATUSES, assertUnitNotActiveOnAnotherLoad } from "./unit-active-load-guard.js";
 // DRV-BILL-SKIP-PATHS — Edit Load is the ONLY writer of miles_shortest/miles_practical/miles_deadhead
 // on mdata/loads.routes.ts's generic PATCH surface (that schema has no miles fields at all — see
 // createLoadBodySchema/updateLoadBodySchema), and it can also change assigned_primary_driver_id /
@@ -770,8 +771,28 @@ export async function updateDispatchLoad(
       ? (fields.assigned_primary_driver_id ?? null)
       : (old.assigned_primary_driver_id ?? null);
   const effectiveTeam = "team_id" in fields ? (fields.team_id ?? null) : (old.team_id ?? null);
-  if (String(old.status ?? "") === "draft" && (effectivePrimaryDriver || effectiveTeam)) {
+  const willAdvanceFromDraft = String(old.status ?? "") === "draft" && (effectivePrimaryDriver || effectiveTeam);
+  if (willAdvanceFromDraft) {
     add("status", "assigned_not_dispatched", "::mdata.load_status_enum");
+  }
+
+  // NEW-02 (owner urgent live report 2026-09-07, T152 double-dispatch): this PATCH path can change
+  // assigned_unit_id (SCALAR_COLUMNS) with no cross-load check, and can ALSO move the load's own
+  // status into the active set via the draft-advance directly above — either alone is enough to
+  // create the same double-dispatch. Compute the EFFECTIVE post-edit unit/status (fields not
+  // touched here keep their old value) and reject if that would leave the unit active on some
+  // OTHER load too.
+  const effectiveUnitId: string | null =
+    "assigned_unit_id" in fields
+      ? (fields.assigned_unit_id ?? null)
+      : ((old.assigned_unit_id as string | null | undefined) ?? null);
+  const effectiveLoadStatus = willAdvanceFromDraft ? "assigned_not_dispatched" : String(old.status ?? "");
+  if (effectiveUnitId && (ACTIVE_UNIT_STATUSES as readonly string[]).includes(effectiveLoadStatus)) {
+    await assertUnitNotActiveOnAnotherLoad(client, {
+      operating_company_id: operatingCompanyId,
+      unit_id: effectiveUnitId,
+      exclude_load_id: loadId,
+    });
   }
 
   if (setParts.length > 0) {

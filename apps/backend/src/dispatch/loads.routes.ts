@@ -56,6 +56,7 @@ import { resolveLaneMileage } from "./lane-mileage.service.js";
 import { computeChainDeadheadMiles } from "./deadhead/chain-deadhead.service.js";
 import { openWorkOrderPredicateSql } from "../maintenance/in-shop-condition.js";
 import { backfillStopCoordinatesForLoad } from "../telematics/stop-geocode-fallback.service.js";
+import { UnitAlreadyActiveOnLoadError } from "./unit-active-load-guard.js";
 
 // Book Load §C relocates several stop fields to hidden, react-hook-form-registered <input>s
 // (BookLoadStopsSection.tsx). RHF reads a hidden input's value as a STRING ("" when empty), so
@@ -1625,6 +1626,13 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       // HTTP-booked load once bookLoad() already does it.
       return reply.code(201).send(result.row);
     } catch (error) {
+      if (error instanceof UnitAlreadyActiveOnLoadError) {
+        return reply.code(409).send({
+          error: error.code,
+          message: error.message,
+          details: { conflicting_load_id: error.conflictingLoadId, conflicting_load_number: error.conflictingLoadNumber },
+        });
+      }
       const code = (error as { code?: string }).code;
       if (code === "23505") return reply.code(409).send({ error: "dispatch_load_conflict" });
       if (code === "23503") return reply.code(400).send({ error: "invalid_foreign_key" });
@@ -1678,6 +1686,13 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             medical_expiry_date: error.block.medicalExpiryDate,
             hazmat_endorsement_expires_at: error.block.hazmatEndorsementExpiresAt,
           },
+        });
+      }
+      if (error instanceof UnitAlreadyActiveOnLoadError) {
+        return reply.code(409).send({
+          error: error.code,
+          message: error.message,
+          details: { conflicting_load_id: error.conflictingLoadId, conflicting_load_number: error.conflictingLoadNumber },
         });
       }
       const code = (error as { code?: string }).code;

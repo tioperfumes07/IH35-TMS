@@ -8,6 +8,7 @@ import {
   quickAssignLoad,
 } from "./quick-assign.service.js";
 import { DriverNotQualifiedError } from "./driver-qualification.service.js";
+import { UnitAlreadyActiveOnLoadError } from "./unit-active-load-guard.js";
 
 const loadIdParamsSchema = z.object({ id: z.string().uuid() });
 const quickAssignBodySchema = z.object({
@@ -47,6 +48,16 @@ function mapQuickAssignError(error: unknown) {
           medical_expiry_date: error.block.medicalExpiryDate,
           hazmat_endorsement_expires_at: error.block.hazmatEndorsementExpiresAt,
         },
+      },
+    };
+  }
+  if (error instanceof UnitAlreadyActiveOnLoadError) {
+    return {
+      status: 409,
+      payload: {
+        error: error.code,
+        message: error.message,
+        details: { conflicting_load_id: error.conflictingLoadId, conflicting_load_number: error.conflictingLoadNumber },
       },
     };
   }

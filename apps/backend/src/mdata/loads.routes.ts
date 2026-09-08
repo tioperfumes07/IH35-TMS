@@ -35,6 +35,11 @@ import {
 } from "../dispatch/driver-qualification.service.js";
 import { resyncProformaInvoiceFromLoadRate } from "../accounting/resync-proforma-from-load-rate.js";
 import { mintProformaInvoiceOnFirstPickup } from "../accounting/proforma-mint-on-first-pickup.js";
+import {
+  ACTIVE_UNIT_STATUSES,
+  UnitAlreadyActiveOnLoadError,
+  assertUnitNotActiveOnAnotherLoad,
+} from "../dispatch/unit-active-load-guard.js";
 import type { PoolClient } from "pg";
 
 const loadStatusSchema = z.enum([
@@ -1724,6 +1729,21 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           );
         }
 
+        // NEW-02 (owner urgent live report 2026-09-07, T152 double-dispatch): this route can set
+        // assigned_unit_id AND status in the same PATCH with no prior cross-load check — the
+        // highest-risk single call site for a unit ending up active on two loads at once. Compute
+        // the EFFECTIVE post-patch unit/status (fields not in this patch keep their old value) and
+        // reject if that would leave the unit active on some OTHER load too.
+        const effectiveUnitId = "assigned_unit_id" in b ? (b.assigned_unit_id ?? null) : oldRow.assigned_unit_id;
+        const effectiveStatus = "status" in b ? b.status : oldRow.status;
+        if (effectiveUnitId && (ACTIVE_UNIT_STATUSES as readonly string[]).includes(String(effectiveStatus))) {
+          await assertUnitNotActiveOnAnotherLoad(client, {
+            operating_company_id: scopedCompanyId,
+            unit_id: effectiveUnitId,
+            exclude_load_id: parsedParams.data.id,
+          });
+        }
+
         const res = await client.query(
           `
             UPDATE mdata.loads
@@ -1909,6 +1929,16 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             cdl_expires_at: err.block.cdlExpiresAt,
             medical_expiry_date: err.block.medicalExpiryDate,
             hazmat_endorsement_expires_at: err.block.hazmatEndorsementExpiresAt,
+          },
+        });
+      }
+      if (err instanceof UnitAlreadyActiveOnLoadError) {
+        return reply.code(409).send({
+          error: err.code,
+          message: err.message,
+          details: {
+            conflicting_load_id: err.conflictingLoadId,
+            conflicting_load_number: err.conflictingLoadNumber,
           },
         });
       }

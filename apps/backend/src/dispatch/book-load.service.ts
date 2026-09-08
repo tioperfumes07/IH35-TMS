@@ -28,6 +28,7 @@ import { linkLoadToPresettlementAtBookingInClientTx } from "./presettlement-link
 import { geocodeStopsBackfill } from "../telematics/stops-geocode-backfill.service.js";
 import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.js";
 import { computeAndPersistGoogleReferenceMilesForLoad } from "./google-reference-miles.service.js";
+import { ACTIVE_UNIT_STATUSES, assertUnitNotActiveOnAnotherLoad } from "./unit-active-load-guard.js";
 
 type BookLoadStop = {
   // 'border' = a port-of-entry crossing stop captured in Book Load for a cross-border (NB/SB) load.
@@ -1989,6 +1990,17 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
       customer_po_number: input.customer_po_number ?? null,
       hazmat: Boolean(input.hazmat),
     };
+
+    // NEW-02 (owner urgent live report 2026-09-07, T152 double-dispatch): booking a brand-new load
+    // had zero cross-load check on the incoming unit — a dispatcher could book a new load onto a
+    // unit that was already assigned/dispatched/in_transit on an existing one. This is a new INSERT
+    // (no exclude_load_id — there is no existing load id to exclude yet).
+    if (input.assigned_unit_id && (ACTIVE_UNIT_STATUSES as readonly string[]).includes(statusForInsert)) {
+      await assertUnitNotActiveOnAnotherLoad(client, {
+        operating_company_id: input.operating_company_id,
+        unit_id: input.assigned_unit_id,
+      });
+    }
 
     // W-FIX-3b (root-caused 2026-06-24): the selected trailer is an mdata.equipment id. mdata.loads has NO
     // trailer_id column — verified against db/migrations AND live prod (GUARD: loads_has_trailer_id=0). The
