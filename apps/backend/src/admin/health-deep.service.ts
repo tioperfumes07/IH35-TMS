@@ -1,6 +1,7 @@
 import { HeadBucketCommand, S3Client } from "@aws-sdk/client-s3";
 import { Redis } from "ioredis";
 import { withLuciaBypass } from "../auth/db.js";
+import { LEDGER_FINANCIAL_HEALTH_CHECKS } from "../health/ledger-financial-health.checks.js";
 
 export type AdminDeepHealthCheck = {
   name: string;
@@ -228,12 +229,31 @@ async function probeQboCompanyInfoCheck(): Promise<AdminDeepHealthCheck> {
   }
 }
 
+/**
+ * INV-11 (ACC-18, owner-routed CC-1, board row): "the health endpoint has ZERO financial checks."
+ * Live-verified before writing anything: `/api/v1/admin/health/deep` (this probe) is a pure
+ * INFRASTRUCTURE check (postgres connectivity, redis, R2, Plaid sandbox, QBO company info) — the
+ * finding is correct, not stale. `/api/v1/healthz` (a SEPARATE route, health.routes.ts) already
+ * computes real A/R tie-out, A/P tie-out, unbalanced-JE, orphaned-bank-match, posted-without-
+ * posting, and voided-without-reason checks via LEDGER_FINANCIAL_HEALTH_CHECKS -- reused here
+ * verbatim (same functions, same 8s timeout convention) rather than writing a second set of GL
+ * queries that could drift from healthz's own. No new financial math: these are the EXACT same
+ * assertions healthz already runs.
+ */
+const FINANCIAL_HEALTH_TIMEOUT_MS = 8_000;
+
 export async function runAdminDeepHealthProbe(): Promise<{ checks: AdminDeepHealthCheck[]; total_ms: number }> {
   const wallStart = Date.now();
 
   const plaidCreds = resolvePlaidSandboxCredentials();
 
-  const [postgres, redis, r2, plaid, qbo] = await Promise.all([
+  // NOTE: every entry below must be an INLINE promise-returning expression, not a variable built
+  // ahead of time (e.g. via a separate `.map()` call) -- Promise.all's array literal is what fixes
+  // the call order (postgres.select1 first), and each `timedProbe(...)` call synchronously invokes
+  // its probe function before awaiting; hoisting the financial checks into their own array made
+  // their withLuciaBypass calls fire before postgres.select1's own, racing a single-instance test
+  // failure mock onto the wrong check.
+  const [postgres, redis, r2, plaid, qbo, ...financial] = await Promise.all([
     timedProbe("postgres.select1", "critical", 2000, probePostgresSelect1),
     probeRedisCheck(),
     timedProbe("r2.head_bucket", "non_critical", 3000, probeR2HeadBucket),
@@ -248,8 +268,9 @@ export async function runAdminDeepHealthProbe(): Promise<{ checks: AdminDeepHeal
           error: "skipped_missing_plaid_sandbox_credentials",
         }),
     probeQboCompanyInfoCheck(),
+    ...LEDGER_FINANCIAL_HEALTH_CHECKS.map((c) => timedProbe(c.name, "critical", FINANCIAL_HEALTH_TIMEOUT_MS, c.run)),
   ]);
 
-  const checks = [postgres, redis, r2, plaid, qbo];
+  const checks = [postgres, redis, r2, plaid, qbo, ...financial];
   return { checks, total_ms: Date.now() - wallStart };
 }
