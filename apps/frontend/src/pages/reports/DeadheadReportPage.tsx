@@ -7,6 +7,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
+import { useStagedListFilters } from "../../components/table";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -15,6 +16,13 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { SelectCombobox } from "../../components/Combobox";
 
 type DeadheadPeriod = "last_4_weeks" | "last_12_weeks" | "YTD";
+
+type DeadheadFilters = {
+  period: DeadheadPeriod;
+  groupBy: string;
+  minDeadheadMiles: string;
+  selectedUnitId: string | null;
+};
 
 type DeadheadUnitRow = {
   unit_id: string;
@@ -71,23 +79,22 @@ export function DeadheadReportPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
-  const [appliedPeriod, setAppliedPeriod] = useState<DeadheadPeriod>("last_4_weeks");
-  const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
-  const [groupBy, setGroupBy] = useState("week");
-  const [minDeadheadMiles, setMinDeadheadMiles] = useState("");
+  const emptyFilters: DeadheadFilters = { period: "last_4_weeks", groupBy: "week", minDeadheadMiles: "", selectedUnitId: null };
+  const [appliedFilters, setAppliedFilters] = useState<DeadheadFilters>(emptyFilters);
+  const staged = useStagedListFilters({ applied: appliedFilters, empty: emptyFilters, onApply: setAppliedFilters });
   const [reportSearch, setReportSearch] = useState("");
 
   const reportQuery = useQuery({
-    queryKey: ["reports", "deadhead", companyId, appliedPeriod],
-    queryFn: () => fetchDeadheadReport(companyId, appliedPeriod),
+    queryKey: ["reports", "deadhead", companyId, appliedFilters.period],
+    queryFn: () => fetchDeadheadReport(companyId, appliedFilters.period),
     enabled: Boolean(companyId),
     retry: false,
   });
 
   const drilldownQuery = useQuery({
-    queryKey: ["reports", "deadhead", "drilldown", companyId, appliedPeriod, selectedUnitId],
-    queryFn: () => fetchDeadheadReport(companyId, appliedPeriod, selectedUnitId ?? undefined),
-    enabled: Boolean(companyId && selectedUnitId),
+    queryKey: ["reports", "deadhead", "drilldown", companyId, appliedFilters.period, appliedFilters.selectedUnitId],
+    queryFn: () => fetchDeadheadReport(companyId, appliedFilters.period, appliedFilters.selectedUnitId ?? undefined),
+    enabled: Boolean(companyId && appliedFilters.selectedUnitId),
     retry: false,
   });
 
@@ -153,15 +160,18 @@ export function DeadheadReportPage() {
         }}
         search={reportSearch}
         onSearchChange={setReportSearch}
+        onApply={staged.apply}
+        onCancel={staged.cancel}
+        onReset={staged.reset}
+        applyDisabled={!staged.dirty}
       >
         <label className="flex items-center gap-1 text-xs text-slate-600">
           <span className="font-semibold text-slate-600">Period</span>
           <SelectCombobox
             className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
-            value={appliedPeriod}
+            value={staged.draft.period}
             onChange={(e) => {
-              setSelectedUnitId(null);
-              setAppliedPeriod(e.target.value as DeadheadPeriod);
+              staged.setDraft((p) => ({ ...p, period: e.target.value as DeadheadPeriod, selectedUnitId: null }));
             }}
           >
             <option value="last_4_weeks">Last 4 weeks</option>
@@ -173,8 +183,8 @@ export function DeadheadReportPage() {
           <span className="font-semibold text-slate-600">Group by</span>
           <select
             className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
-            value={groupBy}
-            onChange={(e) => setGroupBy(e.target.value)}
+            value={staged.draft.groupBy}
+            onChange={(e) => staged.setDraft((p) => ({ ...p, groupBy: e.target.value }))}
             data-testid="reports-deadhead-group-by"
           >
             <option value="day">Day</option>
@@ -188,8 +198,8 @@ export function DeadheadReportPage() {
             type="number"
             min={0}
             className="h-7 w-24 rounded-sm border border-slate-300 px-2 text-xs"
-            value={minDeadheadMiles}
-            onChange={(e) => setMinDeadheadMiles(e.target.value)}
+            value={staged.draft.minDeadheadMiles}
+            onChange={(e) => staged.setDraft((p) => ({ ...p, minDeadheadMiles: e.target.value }))}
             data-testid="reports-deadhead-min-miles"
           />
         </label>
@@ -236,11 +246,11 @@ export function DeadheadReportPage() {
             storageKey="deadhead-report"
             emptyText="No trucks with deadhead data for this period."
             exportFilename="deadhead-report.csv"
-            rowClassName={(row) => (selectedUnitId === row.unit_id ? "bg-slate-100" : "")}
-            onRowClick={(row) => setSelectedUnitId(row.unit_id)}
+            rowClassName={(row) => (appliedFilters.selectedUnitId === row.unit_id ? "bg-slate-100" : "")}
+            onRowClick={(row) => setAppliedFilters((p) => ({ ...p, selectedUnitId: row.unit_id }))}
           />
 
-          {selectedUnitId && trend.length > 0 ? (
+          {appliedFilters.selectedUnitId && trend.length > 0 ? (
             <div className="rounded-sm border border-gray-200 bg-white p-4">
               <h3 className="mb-2 text-xs font-semibold text-gray-800">Weekly deadhead trend</h3>
               <div className="h-64">

@@ -14,6 +14,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
+import { useStagedListFilters } from "../../components/table";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -56,7 +57,9 @@ export function SettlementSummaryPage() {
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
   const emptyRange = defaultRange();
-  const [applied, setApplied] = useState({ ...emptyRange, driverFilter: "" });
+  const emptyFilters = { ...emptyRange, driverFilter: "" };
+  const [applied, setApplied] = useState(emptyFilters);
+  const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
   const [reportSearch, setReportSearch] = useState("");
 
   const query = useQuery({
@@ -226,10 +229,10 @@ export function SettlementSummaryPage() {
 
       <ReportFilterBar
         testIdPrefix="reports-settlement-summary"
-        fromDate={applied.start}
-        toDate={applied.end}
-        onFromDateChange={(d) => setApplied((p) => ({ ...p, start: d ?? "" }))}
-        onToDateChange={(d) => setApplied((p) => ({ ...p, end: d ?? "" }))}
+        fromDate={staged.draft.start}
+        toDate={staged.draft.end}
+        onFromDateChange={(d) => staged.setDraft((p) => ({ ...p, start: d ?? "" }))}
+        onToDateChange={(d) => staged.setDraft((p) => ({ ...p, end: d ?? "" }))}
         onPresetSelect={(preset) => {
           const next = new URLSearchParams(searchParams);
           next.set("preset", preset);
@@ -237,14 +240,18 @@ export function SettlementSummaryPage() {
         }}
         search={reportSearch}
         onSearchChange={setReportSearch}
+        onApply={staged.apply}
+        onCancel={staged.cancel}
+        onReset={staged.reset}
+        applyDisabled={!staged.dirty}
       >
         <label className="flex items-center gap-1 text-xs text-slate-600">
           <span className="font-semibold text-slate-600">Driver</span>
           <input
             type="text"
             className="h-7 w-32 rounded-sm border border-slate-300 px-2 text-xs"
-            value={applied.driverFilter}
-            onChange={(e) => setApplied((p) => ({ ...p, driverFilter: e.target.value }))}
+            value={staged.draft.driverFilter}
+            onChange={(e) => staged.setDraft((p) => ({ ...p, driverFilter: e.target.value }))}
             placeholder="All drivers"
             data-testid="reports-settlement-summary-driver"
           />

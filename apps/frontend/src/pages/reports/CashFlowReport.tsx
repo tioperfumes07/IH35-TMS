@@ -7,6 +7,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
+import { useStagedListFilters } from "../../components/table";
 import { companyToday } from "../../lib/businessDate";
 
 type CashFlowReportResponse = {
@@ -30,16 +31,17 @@ export function CashFlowReport() {
   const companyId = selectedCompanyId ?? "";
   const today = companyToday();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [appliedAsOf, setAppliedAsOf] = useState(today);
-  const [groupBy, setGroupBy] = useState("month");
+  const emptyFilters = { asOfDate: today, groupBy: "month" };
+  const [appliedFilters, setAppliedFilters] = useState(emptyFilters);
+  const staged = useStagedListFilters({ applied: appliedFilters, empty: emptyFilters, onApply: setAppliedFilters });
   const [reportSearch, setReportSearch] = useState("");
 
   const query = useQuery({
-    queryKey: ["reports", "cash-flow", companyId, appliedAsOf],
+    queryKey: ["reports", "cash-flow", companyId, appliedFilters.asOfDate],
     enabled: Boolean(companyId),
     queryFn: () =>
       apiRequest<CashFlowReportResponse>(
-        `/api/v1/reports/cash-flow?operating_company_id=${encodeURIComponent(companyId)}&as_of_date=${appliedAsOf}`
+        `/api/v1/reports/cash-flow?operating_company_id=${encodeURIComponent(companyId)}&as_of_date=${appliedFilters.asOfDate}`
       ),
   });
 
@@ -93,9 +95,9 @@ export function CashFlowReport() {
       </div>
       <ReportFilterBar
         testIdPrefix="reports-cash-flow"
-        fromDate={appliedAsOf}
+        fromDate={staged.draft.asOfDate}
         toDate={null}
-        onFromDateChange={(d) => setAppliedAsOf(d ?? today)}
+        onFromDateChange={(d) => staged.setDraft((p) => ({ ...p, asOfDate: d ?? today }))}
         onToDateChange={() => {}}
         onPresetSelect={(preset) => {
           const next = new URLSearchParams(searchParams);
@@ -104,13 +106,17 @@ export function CashFlowReport() {
         }}
         search={reportSearch}
         onSearchChange={setReportSearch}
+        onApply={staged.apply}
+        onCancel={staged.cancel}
+        onReset={staged.reset}
+        applyDisabled={!staged.dirty}
       >
         <label className="flex items-center gap-1 text-xs text-slate-600">
           <span className="font-semibold text-slate-600">Group by</span>
           <select
             className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
-            value={groupBy}
-            onChange={(e) => setGroupBy(e.target.value)}
+            value={staged.draft.groupBy}
+            onChange={(e) => staged.setDraft((p) => ({ ...p, groupBy: e.target.value }))}
             data-testid="reports-cash-flow-group-by"
           >
             <option value="day">Day</option>

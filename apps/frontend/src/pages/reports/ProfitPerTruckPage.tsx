@@ -10,6 +10,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
+import { useStagedListFilters } from "../../components/table";
 import { useListState } from "../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
@@ -79,6 +80,7 @@ export function ProfitPerTruckPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const emptyFilters = { ...currentQuarterRange(), flagFilter: "all" as FlagFilter };
   const [applied, setApplied] = useState(emptyFilters);
+  const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
   const [reportSearch, setReportSearch] = useState("");
 
   const query = useQuery({
@@ -321,10 +323,10 @@ export function ProfitPerTruckPage() {
 
       <ReportFilterBar
         testIdPrefix="reports-profit-per-truck"
-        fromDate={applied.start}
-        toDate={applied.end}
-        onFromDateChange={(d) => setApplied((p) => ({ ...p, start: d ?? "" }))}
-        onToDateChange={(d) => setApplied((p) => ({ ...p, end: d ?? "" }))}
+        fromDate={staged.draft.start}
+        toDate={staged.draft.end}
+        onFromDateChange={(d) => staged.setDraft((p) => ({ ...p, start: d ?? "" }))}
+        onToDateChange={(d) => staged.setDraft((p) => ({ ...p, end: d ?? "" }))}
         onPresetSelect={(preset) => {
           const next = new URLSearchParams(searchParams);
           next.set("preset", preset);
@@ -332,13 +334,17 @@ export function ProfitPerTruckPage() {
         }}
         search={reportSearch}
         onSearchChange={setReportSearch}
+        onApply={staged.apply}
+        onCancel={staged.cancel}
+        onReset={staged.reset}
+        applyDisabled={!staged.dirty}
       >
         <label className="flex items-center gap-1 text-xs text-slate-600">
           <span className="font-semibold text-slate-600">Flag</span>
           <SelectCombobox
             className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
-            value={applied.flagFilter}
-            onChange={(event) => setApplied((p) => ({ ...p, flagFilter: event.target.value as FlagFilter }))}
+            value={staged.draft.flagFilter}
+            onChange={(event) => staged.setDraft((p) => ({ ...p, flagFilter: event.target.value as FlagFilter }))}
           >
             <option value="all">All</option>
             <option value="most_profitable">{PROFIT_PER_TRUCK_FLAG_LABELS.most_profitable}</option>

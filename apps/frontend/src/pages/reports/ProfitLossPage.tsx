@@ -13,6 +13,7 @@ import {
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
+import { useStagedListFilters } from "../../components/table";
 import { formatAccountTypeLabel } from "../../lib/formatAccountTypeLabel";
 import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
@@ -52,6 +53,7 @@ export function ProfitLossPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const emptyFilters = { ...currentMonthRange(), basis: "accrual" as AccountingBasis };
   const [applied, setApplied] = useState(emptyFilters);
+  const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
   const exportAction = useExportAction();
   const [reportSearch, setReportSearch] = useState("");
 
@@ -217,10 +219,10 @@ export function ProfitLossPage() {
 
       <ReportFilterBar
         testIdPrefix="reports-profit-loss"
-        fromDate={applied.start}
-        toDate={applied.end}
-        onFromDateChange={(d) => setApplied((p) => ({ ...p, start: d ?? "" }))}
-        onToDateChange={(d) => setApplied((p) => ({ ...p, end: d ?? "" }))}
+        fromDate={staged.draft.start}
+        toDate={staged.draft.end}
+        onFromDateChange={(d) => staged.setDraft((p) => ({ ...p, start: d ?? "" }))}
+        onToDateChange={(d) => staged.setDraft((p) => ({ ...p, end: d ?? "" }))}
         onPresetSelect={(preset) => {
           const next = new URLSearchParams(searchParams);
           next.set("preset", preset);
@@ -228,10 +230,14 @@ export function ProfitLossPage() {
         }}
         search={reportSearch}
         onSearchChange={setReportSearch}
+        onApply={staged.apply}
+        onCancel={staged.cancel}
+        onReset={staged.reset}
+        applyDisabled={!staged.dirty}
       >
         <BasisSelector
-          value={applied.basis}
-          onChange={(next) => setApplied((p) => ({ ...p, basis: next }))}
+          value={staged.draft.basis}
+          onChange={(next) => staged.setDraft((p) => ({ ...p, basis: next }))}
         />
       </ReportFilterBar>
 

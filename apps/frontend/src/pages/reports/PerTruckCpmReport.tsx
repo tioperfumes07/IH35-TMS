@@ -6,6 +6,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
+import { useStagedListFilters } from "../../components/table";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -51,7 +52,9 @@ export function PerTruckCpmReport() {
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
   const defaultRange = currentQuarterRange();
-  const [applied, setApplied] = useState({ ...defaultRange, minMiles: "" });
+  const emptyFilters = { ...defaultRange, minMiles: "" };
+  const [applied, setApplied] = useState(emptyFilters);
+  const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
   const [reportSearch, setReportSearch] = useState("");
 
   const query = useQuery({
@@ -103,10 +106,10 @@ export function PerTruckCpmReport() {
       </div>
       <ReportFilterBar
         testIdPrefix="reports-per-truck-cpm"
-        fromDate={applied.from}
-        toDate={applied.to}
-        onFromDateChange={(d) => setApplied((p) => ({ ...p, from: d ?? "" }))}
-        onToDateChange={(d) => setApplied((p) => ({ ...p, to: d ?? "" }))}
+        fromDate={staged.draft.from}
+        toDate={staged.draft.to}
+        onFromDateChange={(d) => staged.setDraft((p) => ({ ...p, from: d ?? "" }))}
+        onToDateChange={(d) => staged.setDraft((p) => ({ ...p, to: d ?? "" }))}
         onPresetSelect={(preset) => {
           const next = new URLSearchParams(searchParams);
           next.set("preset", preset);
@@ -114,6 +117,10 @@ export function PerTruckCpmReport() {
         }}
         search={reportSearch}
         onSearchChange={setReportSearch}
+        onApply={staged.apply}
+        onCancel={staged.cancel}
+        onReset={staged.reset}
+        applyDisabled={!staged.dirty}
       >
         <label className="flex items-center gap-1 text-xs text-slate-600">
           <span className="font-semibold text-slate-600">Min miles</span>
@@ -121,8 +128,8 @@ export function PerTruckCpmReport() {
             type="number"
             min={0}
             className="h-7 w-24 rounded-sm border border-slate-300 px-2 text-xs"
-            value={applied.minMiles}
-            onChange={(e) => setApplied((p) => ({ ...p, minMiles: e.target.value }))}
+            value={staged.draft.minMiles}
+            onChange={(e) => staged.setDraft((p) => ({ ...p, minMiles: e.target.value }))}
             data-testid="reports-per-truck-cpm-min-miles"
           />
         </label>

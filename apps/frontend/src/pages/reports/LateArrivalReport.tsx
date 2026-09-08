@@ -9,9 +9,17 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useStagedListFilters } from "../../components/table";
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 
 type GroupBy = "driver" | "customer" | "lane";
+
+type LateArrivalFilters = {
+  from: string;
+  to: string;
+  groupBy: GroupBy;
+  minDelayHours: string;
+};
 
 type LateArrivalRow = {
   entity_id: string;
@@ -57,13 +65,18 @@ export function LateArrivalReport() {
   const { selectedCompanyId, companies } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
-  const emptyFilters = { from: monthStart(), to: today(), groupBy: "driver" as GroupBy, minDelayHours: "" };
-  const [applied, setApplied] = useState(emptyFilters);
+  const emptyFilters: LateArrivalFilters = { from: monthStart(), to: today(), groupBy: "driver" as GroupBy, minDelayHours: "" };
+  const [appliedFilters, setAppliedFilters] = useState<LateArrivalFilters>(emptyFilters);
+  const staged = useStagedListFilters({
+    applied: appliedFilters,
+    empty: emptyFilters,
+    onApply: setAppliedFilters,
+  });
   const [reportSearch, setReportSearch] = useState("");
 
   const reportQuery = useQuery({
-    queryKey: ["reports", "late-arrival", operatingCompanyId, applied.from, applied.to, applied.groupBy],
-    queryFn: () => fetchLateArrivalReport(operatingCompanyId, applied.from, applied.to, applied.groupBy),
+    queryKey: ["reports", "late-arrival", operatingCompanyId, appliedFilters.from, appliedFilters.to, appliedFilters.groupBy],
+    queryFn: () => fetchLateArrivalReport(operatingCompanyId, appliedFilters.from, appliedFilters.to, appliedFilters.groupBy),
     enabled: Boolean(operatingCompanyId),
   });
 
@@ -83,12 +96,12 @@ export function LateArrivalReport() {
 
   const columns = useMemo<ParityColumn<LateArrivalRow>[]>(
     () => [
-      { key: "entity_label", label: TAB_LABELS[applied.groupBy], sortable: true, render: (row) => <span className="font-medium text-slate-900">{row.entity_label}</span> },
+      { key: "entity_label", label: TAB_LABELS[appliedFilters.groupBy], sortable: true, render: (row) => <span className="font-medium text-slate-900">{row.entity_label}</span> },
       { key: "late_count", label: "Late", sortable: true },
       { key: "total_count", label: "Total", sortable: true },
       { key: "late_rate", label: "Rate", sortable: true, render: (row) => pct(row.late_rate) },
     ],
-    [applied.groupBy],
+    [appliedFilters.groupBy],
   );
 
   return (
@@ -113,10 +126,10 @@ export function LateArrivalReport() {
 
       <ReportFilterBar
         testIdPrefix="reports-late-arrival"
-        fromDate={applied.from}
-        toDate={applied.to}
-        onFromDateChange={(d) => setApplied((p) => ({ ...p, from: d ?? "" }))}
-        onToDateChange={(d) => setApplied((p) => ({ ...p, to: d ?? "" }))}
+        fromDate={staged.draft.from}
+        toDate={staged.draft.to}
+        onFromDateChange={(d) => staged.setDraft((p) => ({ ...p, from: d ?? "" }))}
+        onToDateChange={(d) => staged.setDraft((p) => ({ ...p, to: d ?? "" }))}
         onPresetSelect={(preset) => {
           const next = new URLSearchParams(searchParams);
           next.set("preset", preset);
@@ -124,6 +137,10 @@ export function LateArrivalReport() {
         }}
         search={reportSearch}
         onSearchChange={setReportSearch}
+        onApply={staged.apply}
+        onCancel={staged.cancel}
+        onReset={staged.reset}
+        applyDisabled={!staged.dirty}
       >
         <label className="flex items-center gap-1 text-xs text-slate-600">
           <span className="font-semibold text-slate-600">Min delay (h)</span>
@@ -131,8 +148,8 @@ export function LateArrivalReport() {
             type="number"
             min={0}
             className="h-7 w-24 rounded-sm border border-slate-300 px-2 text-xs"
-            value={applied.minDelayHours}
-            onChange={(e) => setApplied((p) => ({ ...p, minDelayHours: e.target.value }))}
+            value={staged.draft.minDelayHours}
+            onChange={(e) => staged.setDraft((p) => ({ ...p, minDelayHours: e.target.value }))}
             data-testid="reports-late-arrival-min-delay"
           />
         </label>
@@ -147,9 +164,9 @@ export function LateArrivalReport() {
           <button
             key={tab}
             type="button"
-            className={`px-3 py-2 text-xs ${applied.groupBy === tab ? "border-b-2 border-slate-300 font-medium text-slate-700" : "text-slate-600"}`}
+            className={`px-3 py-2 text-xs ${staged.draft.groupBy === tab ? "border-b-2 border-slate-300 font-medium text-slate-700" : "text-slate-600"}`}
             onClick={() => {
-              setApplied((current) => ({ ...current, groupBy: tab }));
+              staged.setDraft((current) => ({ ...current, groupBy: tab }));
             }}
           >
             {TAB_LABELS[tab]}

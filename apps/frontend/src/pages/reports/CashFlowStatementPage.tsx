@@ -13,6 +13,7 @@ import {
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
+import { useStagedListFilters } from "../../components/table";
 import { formatAccountTypeLabel } from "../../lib/formatAccountTypeLabel";
 import { formatCashFlowCompoundLabel } from "../../lib/formatCashFlowCompoundLabel";
 import { humanizeEnumLabel } from "../../lib/humanizeEnumLabel";
@@ -47,7 +48,9 @@ export function CashFlowStatementPage() {
   const defaultRange = currentMonthRange();
   // Q7 precedent (cash-basis/engine.ts, already locked for every other basis-enabled report in this
   // app): basis defaults to accrual, frontend-only, no per-user memory.
-  const [applied, setApplied] = useState<{ start: string; end: string; basis: AccountingBasis }>({ ...defaultRange, basis: "accrual" });
+  const emptyFilters = { ...defaultRange, basis: "accrual" as AccountingBasis };
+  const [applied, setApplied] = useState(emptyFilters);
+  const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
   const exportAction = useExportAction();
   const [reportSearch, setReportSearch] = useState("");
 
@@ -230,10 +233,10 @@ export function CashFlowStatementPage() {
 
       <ReportFilterBar
         testIdPrefix="reports-cash-flow-statement"
-        fromDate={applied.start}
-        toDate={applied.end}
-        onFromDateChange={(d) => setApplied((p) => ({ ...p, start: d ?? "" }))}
-        onToDateChange={(d) => setApplied((p) => ({ ...p, end: d ?? "" }))}
+        fromDate={staged.draft.start}
+        toDate={staged.draft.end}
+        onFromDateChange={(d) => staged.setDraft((p) => ({ ...p, start: d ?? "" }))}
+        onToDateChange={(d) => staged.setDraft((p) => ({ ...p, end: d ?? "" }))}
         onPresetSelect={(preset) => {
           const next = new URLSearchParams(searchParams);
           next.set("preset", preset);
@@ -241,11 +244,15 @@ export function CashFlowStatementPage() {
         }}
         search={reportSearch}
         onSearchChange={setReportSearch}
+        onApply={staged.apply}
+        onCancel={staged.cancel}
+        onReset={staged.reset}
+        applyDisabled={!staged.dirty}
       >
         <div data-testid="reports-cash-flow-statement-basis">
           <BasisSelector
-            value={applied.basis}
-            onChange={(next) => setApplied((p) => ({ ...p, basis: next }))}
+            value={staged.draft.basis}
+            onChange={(next) => staged.setDraft((p) => ({ ...p, basis: next }))}
           />
         </div>
       </ReportFilterBar>

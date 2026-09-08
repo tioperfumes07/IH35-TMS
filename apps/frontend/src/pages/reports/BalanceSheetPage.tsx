@@ -15,6 +15,7 @@ import {
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
+import { useStagedListFilters } from "../../components/table";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 import { getShowAccountNumbers } from "../../lib/show-account-numbers";
 import { useExportAction } from "../../hooks/useExportAction";
@@ -44,6 +45,7 @@ export function BalanceSheetPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const emptyFilters = { asOfDate: today, basis: "accrual" as AccountingBasis, compareToDate: "" };
   const [applied, setApplied] = useState(emptyFilters);
+  const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
   const [reportSearch, setReportSearch] = useState("");
   const exportAction = useExportAction();
 
@@ -215,9 +217,9 @@ export function BalanceSheetPage() {
 
       <ReportFilterBar
         testIdPrefix="reports-balance-sheet"
-        fromDate={applied.asOfDate}
+        fromDate={staged.draft.asOfDate}
         toDate={null}
-        onFromDateChange={(d) => setApplied((p) => ({ ...p, asOfDate: d ?? today }))}
+        onFromDateChange={(d) => staged.setDraft((p) => ({ ...p, asOfDate: d ?? today }))}
         onToDateChange={() => {}}
         onPresetSelect={(preset) => {
           const next = new URLSearchParams(searchParams);
@@ -226,10 +228,14 @@ export function BalanceSheetPage() {
         }}
         search={reportSearch}
         onSearchChange={setReportSearch}
+        onApply={staged.apply}
+        onCancel={staged.cancel}
+        onReset={staged.reset}
+        applyDisabled={!staged.dirty}
       >
         <BasisSelector
-          value={applied.basis}
-          onChange={(next) => setApplied((p) => ({ ...p, basis: next }))}
+          value={staged.draft.basis}
+          onChange={(next) => staged.setDraft((p) => ({ ...p, basis: next }))}
         />
       </ReportFilterBar>
 

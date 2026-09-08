@@ -14,6 +14,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockVPendingBanner } from "./ReportBlockVPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
+import { useStagedListFilters } from "../../components/table";
 import { formatChartLegendLabel } from "../../lib/chartLegend";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
@@ -51,22 +52,30 @@ const FLAG_META: Record<MaintenanceCostFlag, { label: string }> = {
 
 const PIE_COLORS = ["#0d9488", "#155e75", "#f59e0b", "#dc2626", "#64748b", "#1e293b"];
 
+type MaintenanceCostFilters = { start: string; end: string; unitFilter: string };
+
 export function MaintenanceCostPerUnitPage() {
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
   const emptyRange = currentQuarterRange();
-  const [applied, setApplied] = useState({ ...emptyRange, unitFilter: "" });
+  const emptyFilters: MaintenanceCostFilters = { ...emptyRange, unitFilter: "" };
+  const [appliedFilters, setAppliedFilters] = useState<MaintenanceCostFilters>(emptyFilters);
+  const staged = useStagedListFilters({
+    applied: appliedFilters,
+    empty: emptyFilters,
+    onApply: setAppliedFilters,
+  });
   const [reportSearch, setReportSearch] = useState("");
 
   const query = useQuery({
-    queryKey: ["reports", "maintenance-cost-per-unit", companyId, applied.start, applied.end],
+    queryKey: ["reports", "maintenance-cost-per-unit", companyId, appliedFilters.start, appliedFilters.end],
     queryFn: () =>
       getMaintenanceCostPerUnit({
         operating_company_id: companyId,
-        period_start: applied.start,
-        period_end: applied.end,
+        period_start: appliedFilters.start,
+        period_end: appliedFilters.end,
       }),
     enabled: Boolean(companyId),
     retry: false,
@@ -144,7 +153,7 @@ export function MaintenanceCostPerUnitPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `maintenance-cost-per-unit-${applied.start}-${applied.end}.csv`;
+    a.download = `maintenance-cost-per-unit-${appliedFilters.start}-${appliedFilters.end}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -179,10 +188,10 @@ export function MaintenanceCostPerUnitPage() {
       )
       .join("");
     printLetterHtml({
-      title: `Maintenance cost per unit ${applied.start}_${applied.end}`,
+      title: `Maintenance cost per unit ${appliedFilters.start}_${appliedFilters.end}`,
       bodyHtml: `
         <h1>Maintenance cost per unit</h1>
-        <div class="meta">${esc(mmmDd(applied.start))} → ${esc(mmmDd(applied.end))} · ${esc(
+        <div class="meta">${esc(mmmDd(appliedFilters.start))} → ${esc(mmmDd(appliedFilters.end))} · ${esc(
           data.basis,
         )} · printed ${esc(mmmDdTime(new Date()))}</div>
         <table>
@@ -244,10 +253,10 @@ export function MaintenanceCostPerUnitPage() {
 
       <ReportFilterBar
         testIdPrefix="reports-maintenance-cost-per-unit"
-        fromDate={applied.start}
-        toDate={applied.end}
-        onFromDateChange={(d) => setApplied((p) => ({ ...p, start: d ?? "" }))}
-        onToDateChange={(d) => setApplied((p) => ({ ...p, end: d ?? "" }))}
+        fromDate={staged.draft.start}
+        toDate={staged.draft.end}
+        onFromDateChange={(d) => staged.setDraft((p) => ({ ...p, start: d ?? "" }))}
+        onToDateChange={(d) => staged.setDraft((p) => ({ ...p, end: d ?? "" }))}
         onPresetSelect={(preset) => {
           const next = new URLSearchParams(searchParams);
           next.set("preset", preset);
@@ -255,14 +264,18 @@ export function MaintenanceCostPerUnitPage() {
         }}
         search={reportSearch}
         onSearchChange={setReportSearch}
+        onApply={staged.apply}
+        onCancel={staged.cancel}
+        onReset={staged.reset}
+        applyDisabled={!staged.dirty}
       >
         <label className="flex items-center gap-1 text-xs text-slate-600">
           <span className="font-semibold text-slate-600">Unit</span>
           <input
             type="text"
             className="h-7 w-24 rounded-sm border border-slate-300 px-2 text-xs"
-            value={applied.unitFilter}
-            onChange={(e) => setApplied((p) => ({ ...p, unitFilter: e.target.value }))}
+            value={staged.draft.unitFilter}
+            onChange={(e) => staged.setDraft((p) => ({ ...p, unitFilter: e.target.value }))}
             placeholder="All units"
             data-testid="reports-maintenance-cost-per-unit-unit"
           />
@@ -300,7 +313,7 @@ export function MaintenanceCostPerUnitPage() {
             loading={query.isPending || (query.isFetching && filtered.length === 0)}
             storageKey="maintenance-cost-per-unit"
             emptyText="No trucks match the current filters for this period."
-            exportFilename={`maintenance-cost-per-unit-${applied.start}-${applied.end}`}
+            exportFilename={`maintenance-cost-per-unit-${appliedFilters.start}-${appliedFilters.end}`}
             onRowClick={(r) => navigate(`/fleet/units/${r.unit_id}?tab=maintenance`)}
           />
 

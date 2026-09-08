@@ -22,6 +22,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
+import { useStagedListFilters } from "../../components/table";
 import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 
@@ -98,13 +99,14 @@ export function CashFlowOverviewPage() {
   const companyId = selectedCompanyId ?? "";
   const today = companyToday();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [appliedAsOf, setAppliedAsOf] = useState(today);
-  const [groupBy, setGroupBy] = useState("month");
+  const emptyFilters = { asOfDate: today, groupBy: "month" };
+  const [appliedFilters, setAppliedFilters] = useState(emptyFilters);
+  const staged = useStagedListFilters({ applied: appliedFilters, empty: emptyFilters, onApply: setAppliedFilters });
   const [reportSearch, setReportSearch] = useState("");
 
   const query = useQuery({
-    queryKey: ["reports", "cash-flow-overview", companyId, appliedAsOf],
-    queryFn: () => getCashFlowOverview({ operating_company_id: companyId, as_of_date: appliedAsOf }),
+    queryKey: ["reports", "cash-flow-overview", companyId, appliedFilters.asOfDate],
+    queryFn: () => getCashFlowOverview({ operating_company_id: companyId, as_of_date: appliedFilters.asOfDate }),
     enabled: Boolean(companyId),
     retry: false,
   });
@@ -148,7 +150,7 @@ export function CashFlowOverviewPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `cash-flow-overview-${appliedAsOf}.csv`;
+    a.download = `cash-flow-overview-${appliedFilters.asOfDate}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -165,10 +167,10 @@ export function CashFlowOverviewPage() {
     const row = (label: string, cents: number) =>
       `<tr><th>${esc(label)}</th><td style="text-align:right">${esc(money(cents))}</td></tr>`;
     printLetterHtml({
-      title: `Cash flow overview ${appliedAsOf}`,
+      title: `Cash flow overview ${appliedFilters.asOfDate}`,
       bodyHtml: `
         <h1>Cash flow overview</h1>
-        <div class="meta">As of ${esc(mmmDd(appliedAsOf) || appliedAsOf)} · printed ${esc(mmmDdTime(new Date()))}</div>
+        <div class="meta">As of ${esc(mmmDd(appliedFilters.asOfDate) || appliedFilters.asOfDate)} · printed ${esc(mmmDdTime(new Date()))}</div>
         <h1 style="margin-top:16px">Current state</h1>
         <table>
           <tbody>
@@ -232,9 +234,9 @@ export function CashFlowOverviewPage() {
 
       <ReportFilterBar
         testIdPrefix="reports-cash-flow-overview"
-        fromDate={appliedAsOf}
+        fromDate={staged.draft.asOfDate}
         toDate={null}
-        onFromDateChange={(asOf) => { if (asOf) setAppliedAsOf(asOf); }}
+        onFromDateChange={(asOf) => { if (asOf) staged.setDraft((p) => ({ ...p, asOfDate: asOf })); }}
         onToDateChange={() => {}}
         onPresetSelect={(preset) => {
           const next = new URLSearchParams(searchParams);
@@ -243,13 +245,17 @@ export function CashFlowOverviewPage() {
         }}
         search={reportSearch}
         onSearchChange={setReportSearch}
+        onApply={staged.apply}
+        onCancel={staged.cancel}
+        onReset={staged.reset}
+        applyDisabled={!staged.dirty}
       >
         <label className="flex items-center gap-1 text-xs text-slate-600">
           <span className="font-semibold text-slate-600">Group by</span>
           <select
             className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
-            value={groupBy}
-            onChange={(e) => setGroupBy(e.target.value)}
+            value={staged.draft.groupBy}
+            onChange={(e) => staged.setDraft((p) => ({ ...p, groupBy: e.target.value }))}
             data-testid="reports-cash-flow-overview-group-by"
           >
             <option value="day">Day</option>

@@ -10,6 +10,7 @@ import { formatPlannerDayLabel } from "../dispatch/planners/plannerDayLabel";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { useStagedListFilters } from "../../components/table";
 
 import { formatUsdCents } from "../../lib/money";
 
@@ -49,21 +50,27 @@ const STATUS_OPTIONS = [
   { value: "void", label: "Void" },
 ];
 
+type InvoiceSearchFilters = { search: string; statusFilter: string; dateRange: string };
+
 export function InvoiceSearchReportPage() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("active");
-  const [dateRange, setDateRange] = useState("all");
+  const emptyFilters: InvoiceSearchFilters = { search: "", statusFilter: "active", dateRange: "all" };
+  const [appliedFilters, setAppliedFilters] = useState<InvoiceSearchFilters>(emptyFilters);
+  const staged = useStagedListFilters({
+    applied: appliedFilters,
+    empty: emptyFilters,
+    onApply: setAppliedFilters,
+  });
 
   const invoicesQ = useQuery({
-    queryKey: ["reports", "invoice-search", operatingCompanyId, search, statusFilter, sortKey, sortDirection],
+    queryKey: ["reports", "invoice-search", operatingCompanyId, appliedFilters.search, appliedFilters.statusFilter, sortKey, sortDirection],
     enabled: Boolean(operatingCompanyId),
     queryFn: () =>
       listInvoices(operatingCompanyId, {
-        search: search || undefined,
-        status: statusFilter || undefined,
+        search: appliedFilters.search || undefined,
+        status: appliedFilters.statusFilter || undefined,
         sort: sortKey || undefined,
         dir: sortDirection || undefined,
         limit: 100,
@@ -176,15 +183,15 @@ export function InvoiceSearchReportPage() {
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <input
             type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={staged.draft.search}
+            onChange={(e) => staged.setDraft((p) => ({ ...p, search: e.target.value }))}
             placeholder="Search invoice #, customer, load #…"
             className="h-7 w-64 rounded-sm border border-gray-300 px-2 text-xs"
             data-testid="invoice-search-input"
           />
           <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            value={staged.draft.statusFilter}
+            onChange={(e) => staged.setDraft((p) => ({ ...p, statusFilter: e.target.value }))}
             className="h-7 rounded-sm border border-gray-300 px-2 text-xs"
             data-testid="invoice-search-status"
           >
@@ -193,8 +200,8 @@ export function InvoiceSearchReportPage() {
             ))}
           </select>
           <select
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
+            value={staged.draft.dateRange}
+            onChange={(e) => staged.setDraft((p) => ({ ...p, dateRange: e.target.value }))}
             className="h-7 rounded-sm border border-gray-300 px-2 text-xs"
             data-testid="invoice-search-date-range"
             // TODO: wire to backend filter
@@ -204,6 +211,13 @@ export function InvoiceSearchReportPage() {
             <option value="last_90">Last 90 days</option>
             <option value="this_year">This year</option>
           </select>
+          <button type="button" className="h-7 rounded-sm bg-[#1F2A44] px-2 text-xs text-white disabled:opacity-50" disabled={!staged.dirty} onClick={staged.apply}>Apply</button>
+          {staged.dirty ? (
+            <>
+              <button type="button" className="h-7 rounded-sm border border-gray-300 px-2 text-xs" onClick={staged.cancel}>Cancel</button>
+              <button type="button" className="h-7 rounded-sm border border-gray-300 px-2 text-xs" onClick={staged.reset}>Reset</button>
+            </>
+          ) : null}
           <span className="text-xs text-gray-500">{total} result{total === 1 ? "" : "s"}</span>
         </div>
 
