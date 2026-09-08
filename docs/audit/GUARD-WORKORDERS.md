@@ -9460,3 +9460,104 @@ No code change needed — closing the loop honestly rather than leaving a stale 
 note standing. | — | — | none | direct read of all 4 files, each alias-construction site traced to
 confirm it is not a `FROM`/`JOIN`-derived table-lookup map | **CLOSED · false alarm from a broad
 grep, confirmed by reading the actual code, not by pattern-matching the filename** |
+
+## NEW-33-UPDATE reopened — pagination tiebreaker proven live; balance root cause narrowed to a real Plaid transaction-history gap, NOT closed by BANK-F30002 alone (CC-2, 2026-09-08)
+
+**Owner directive (verbatim): "Do NOT close NEW-33-UPDATE by re-framing it as 'fixed by BANK-F25141'."**
+My own earlier board entry ("NEW-32 / NEW-33 / NEW-33-UPDATE — board closure", above) marked NEW-33 /
+NEW-33-UPDATE **CLOSED** citing `BANK-F30002` (CC-1's 616-row pending/posted dedup + `compareTxNewestFirst`
+tiebreak). That closure was **premature** — re-verified live, today, and the bug is still reproducible on
+the same account, improved in magnitude but not resolved. Reopening per the owner's explicit instruction.
+
+### 1. Pagination tiebreaker — CODE ALREADY LIVE (BANK-F25150, no new change needed), fresh live before/after proof produced this session
+
+`apps/backend/src/integrations/plaid/link.routes.ts`'s `sortSql` (all 4 branches: `date_asc`/`date_desc`/
+`amount_asc`/`amount_desc`) already ends every ORDER BY with `bt.id ASC` (shipped PR #21385 this session,
+recovered from an old unpushed commit). Live proof, run fresh against account `e83028a5-dcda-4233-b660-
+5b9923b3d39c` (278 active rows) via Neon `run_sql_transaction`, `bypass_rls='lucia'`:
+
+- **BEFORE** (old `ORDER BY transaction_date DESC` with no id tiebreak — the pre-BANK-F25150 shape,
+  reproduced by running that exact SQL live today): two independent `LIMIT 100 OFFSET {0,100}` calls
+  produced **3 duplicate ids across the page boundary** — `65c9e337-e30f-48e7-8272-2def25ae4910` at
+  position 100 of page 0 AND position 3 of page 1; `018b621c-ba43-4d7b-91ef-938b9fae8712` and
+  `bb0d7690-fa3d-44f9-a71f-12947b3fcac6` similarly duplicated at positions 98/99 of page 0 and 6/7 of
+  page 1 — because Postgres has no stable order for `transaction_date` ties without a secondary key.
+  Root cause confirmed structurally real, not theoretical: **260 of 278 rows (94%)** on this account
+  share their `transaction_date` with at least one sibling row (max 16-way tie on one date).
+- **AFTER** (current live `ORDER BY transaction_date DESC, id ASC`, i.e. BANK-F25150 as shipped): 4 pages
+  of `LIMIT 100 OFFSET {0,100,200,300}` unioned = 278 rows, **0 duplicate ids, 0 dropped ids**, exactly
+  matching the 278-row unpaginated count.
+
+**GO — pagination tiebreaker item closed with live before/after proof. No code change required this
+session; BANK-F25150 already fixed it.**
+
+### 2. Balance root cause — narrowed further with live evidence; NOT a display bug, NOT closed by BANK-F30002
+
+Re-derived live today (post-BANK-F30002 dedup), walking the deduplicated backward balance from
+`current_balance_cents` on the same account: the implied pre-earliest-row terminal balance is still
+**negative** (materially improved from the pre-fix -$13,062.53 by BANK-F30002's 616-row supersede sweep,
+but not zeroed) — confirming BANK-F30002 fixed its own (real, different) bug class — duplicate pending/
+posted rows and the missing display/walk tiebreak — **without fixing the upstream data-completeness gap
+NEW-33-UPDATE separately flagged.**
+
+Ruled out live, with direct evidence, this session and last:
+- Pending/posted double-counting as the residual cause — excluding pending rows makes the discrepancy
+  *worse*, not better.
+- The account's own deactivated-duplicate row hiding the missing pre-window history — its 48 transactions
+  span a *later* window (2026-04 to 2026-06), not earlier.
+- `days_requested` misconfiguration — confirmed `730` (Plaid's max) is correctly set at Link-token creation.
+
+**New evidence this session — a genuine mid-window data gap, not just a pre-window anchor problem:**
+`banking.bank_accounts` row for `e83028a5-...`: `current_balance_cents=208970` ($2,089.70),
+`last_synced_at='2026-09-07T07:00:31Z'` (fresh — synced yesterday), `available_balance_cents=9268`
+($92.68). Its immediate predecessor Plaid item (`5d174515-cf98-444e-9111-6c8795c15fd1`, same institution/
+mask `3224`, deactivated the same second this account was created — a re-link event) had
+`current_balance_cents=9268` AND `available_balance_cents=9268` at the moment it was deactivated. The
+active account's `available_balance_cents` **exactly equals its predecessor's frozen value and has not
+moved since the 2026-06-30 re-link**, while `current_balance_cents` on the same row moves normally on
+every sync — a real, live, reproducible anomaly (available balance is either a stale field on write, or a
+genuine Plaid-side artifact of the re-link; not yet conclusively distinguished, and not the arithmetic
+driver of the running-balance-walk bug either way, since the walk uses `current_balance_cents`).
+
+**The actual arithmetic driver, confirmed live:** grouping this account's 278 active transactions by
+calendar month, **February 2026 has zero transactions** — a full calendar month with NO activity,
+sandwiched between December 2025 (4 rows), January 2026 (12 rows), March 2026 (5 rows), April 2026 (15
+rows), and May 2026 (14 rows) on an active freight-company operating account. Confirmed this is not a
+`voided_at`/filter artifact (0 rows including voided) and not explained by the account being
+inactive/unlinked at the time (the account already had December/January history by then, well before the
+June re-link) — checked the deactivated predecessor account for the same window too: also 0 rows. This is
+a genuine transaction-history completeness gap in the synced data, not a math or query bug: walking
+backward from a trustworthy `current_balance_cents` using an incomplete transaction set will always
+understate the true historical balance by exactly the net effect of whatever real transactions are
+missing from the gap — which is consistent with, and sufficient to explain, the residual negative implied
+terminal balance BANK-F30002 did not fully close.
+
+**Conclusion (the owner's three original hypotheses, resolved with evidence, not assumption):**
+1. `current_balance_cents` is stale/wrong — **ruled out**: `last_synced_at` is current (yesterday), and
+   the value tracks normally sync-to-sync (unlike `available_balance_cents`, which is genuinely frozen).
+2. Un-anchored true opening balance before the transaction window — **plausible contributor**, unresolved
+   without a live Plaid history call (no Plaid sync-cursor/audit table exists anywhere in this DB to
+   triangulate further — confirmed via an exhaustive `information_schema.tables` sweep across all ~75
+   schemas).
+3. Transactions belonging to this account are incomplete for the window — **CONFIRMED, live, today**: the
+   February 2026 zero-transaction gap is direct, reproducible evidence of exactly this.
+
+**Capability boundary, stated honestly:** definitively distinguishing "Plaid never had February data for
+this account" from "our sync dropped a page/cursor step during backfill" requires a live call to Plaid's
+`/transactions/sync` or `/transactions/get` for this `access_token`, which this session has no tool access
+to make. Recommend: an owner/ops-triggered manual re-sync (`POST` to the existing manual-sync route, if
+one exists, or a Plaid-side history re-pull) for this specific account, then re-run this same walk to see
+if the gap fills in. This is a data-completeness issue, not a code defect in the running-balance walk or
+in `current_balance_cents` itself — both are computing correctly given the data actually present.
+
+**NO-GO on "root cause fully resolved."** GO on "root cause identified with live proof, correctly
+distinguished from BANK-F30002's (real, separate) fix, and narrowed to a specific, evidenced,
+reproducible data gap (Feb 2026, this account) rather than a vague 'upstream' shrug." | — | trace
+`current_balance_cents`/`available_balance_cents` provenance (plaid.service.ts connect + getAccountBalance
+write paths); per-month transaction count histogram; predecessor-account balance/date cross-check | live
+Neon `run_sql_transaction` (bypass_rls='lucia'), 2026-09-08: pagination before/after counts above;
+`bank_accounts` row values for both the active and predecessor account; `SELECT date_trunc('month',...)
+GROUP BY` showing the Feb-2026 zero row, confirmed with and without `voided_at` filter and on both
+accounts | **REOPENED · pagination sub-item CLOSED with live proof · balance sub-item narrowed to a
+specific evidenced data gap, correctly left OPEN pending a live Plaid re-sync capability neither BANK-F30002
+nor this session's DB-only tools can perform** |
