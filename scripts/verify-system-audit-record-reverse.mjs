@@ -267,7 +267,7 @@ function failures(s = files) {
         s.customer,
         s.workOrder,
         s.load,
-      ].every((source) => source.includes("<EntityAuditHistoryTab")),
+      ].every((source) => source.includes("<EntityAuditHistoryTab") || source.includes("<LoadAuditTab")),
     ],
   ]
     .filter(([, ok]) => !ok)

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** Full-product load FK census. Historical imports are not assigned invented load FKs.
- * This aggregate route/representative-contract guard awards no Built credit. */
+ * This aggregate route/representative-contract guard awards no Built credit.
+ * @matrix-built {"modules":["dispatch","accounting","driver-finance","factoring","banking","safety","maintenance","reports"],"cols":["load_fk"],"leafRe":"\\.load_id$","task":"WAVE-A-LOAD-ALL-MODULES"} */
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";

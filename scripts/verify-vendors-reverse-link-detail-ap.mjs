@@ -21,7 +21,7 @@ const HEADER = ' * @matrix-built {"modules":["vendors"],"cols":["reverse_link"],
 const LEAVES = ["detail.ap.bills", "detail.ap.expenses", "detail.ap.bill_payments"];
 
 const CHECKS = [
-  { name: "bill EntityLink", pattern: /render: \(b\) => <EntityLink kind="bill" id=\{b\.id\} label=\{entityLabel\(b\.bill_number, b\.id, "Record"\)\} \/>/ },
+  { name: "bill EntityLink", pattern: /render: \(b\) => <EntityLink kind="bill" id=\{b\.id\} label=\{(entityLabel|visibleDocumentLabel)\(b\.bill_number, b\.id, "Record"\)\} \/>/ },
   { name: "expense EntityLink", pattern: /render: \(e\) => \([\s\S]{0,100}<EntityLink kind="expense" id=\{e\.id\} label=\{entityLabel\(e\.expense_number, e\.id, "Record"\)\} \/>/ },
   { name: "bill_payment EntityLink", pattern: /render: \(p\) => \([\s\S]{0,100}<EntityLink kind="bill_payment" id=\{p\.id\} label=\{entityLabel\(p\.reference, p\.id, "Payment"\)\} \/>/ },
   { name: "VendorApAgingSection mount", pattern: /<VendorApAgingSection operatingCompanyId=\{companyId\} vendorId=\{vendor\.id\} \/>/ },

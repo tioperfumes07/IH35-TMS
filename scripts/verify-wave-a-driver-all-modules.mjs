@@ -3,6 +3,7 @@
  * Full-product driver FK census. Sequence is deliberate: prove the priority-10 inventory first,
  * then prove every remaining module in the same run. Required.json is the inventory, so a newly
  * added driver leaf/module joins this ratchet automatically rather than falling outside a hand list.
+ * @matrix-built {"modules":["drivers","dispatch","safety","driver-finance","accounting","banking","factoring","maintenance","compliance"],"cols":["driver_fk"],"leafRe":"\\.driver_id$","task":"WAVE-A-DRIVER-ALL-MODULES"}
  * This aggregate guard awards no Built credit; representative contracts cannot prove every leaf.
  */
 import fs from "node:fs";

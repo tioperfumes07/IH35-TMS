@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * C5 — CANONICAL LOAD NAVIGATION EVERYWHERE.
+ * @matrix-built {"modules":["dispatch","reports","accounting","customers","driver-finance"],"cols":["load-nav"],"leafRe":"\\.load_number$","task":"CANONICAL-LOAD-NAV"}
  *
  * THE DEFECT THIS GUARD PINS
  * --------------------------

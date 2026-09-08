@@ -10,7 +10,7 @@ const source = { page: fs.readFileSync(PAGE, "utf8"), matrix: fs.readFileSync(MA
 const checks = [
   ["selected company produces canonical company id", "page", /const \{ selectedCompanyId, selectedCompany \} = useCompanyContext\(\)[\s\S]{0,80}const companyId = selectedCompanyId \?\? ""/],
   ["vendor cache identity includes selected company", "page", /queryKey: \["vendors", "page", companyId\]/],
-  ["vendor reader sends selected company and active scope", "page", /listVendors\(\{ operating_company_id: companyId, limit: 5000, active_company_only: true \}\)/],
+  ["vendor reader sends selected company and active scope", "page", /listAllVendors\(\{ operating_company_id: companyId, active_company_only: true \}\)/],
   ["vendor reader waits for selected company", "page", /queryKey: \["vendors", "page", companyId\][\s\S]{0,500}enabled: Boolean\(companyId\)/],
   ["selected master row resolves exact canonical ID", "page", /vendorsSorted\.find\(\(vendor\) => vendor\.id === selectedVendorId\)/],
   ["list-to-master transition stores selected canonical ID", "page", /onSelectVendor=\{\(vendorId\) => \{[\s\S]{0,100}setSelectedVendorId\(vendorId\)[\s\S]{0,100}setViewMode\("master-detail"\)/],
@@ -18,7 +18,7 @@ const checks = [
   ["master detail exposes exact selected-row surface", "page", /data-testid="vendor-master-detail-profile"/],
   ["canonical profile label drills by selected vendor ID", "page", /<EntityLink kind="vendor" id=\{selectedVendor\.id\} label=\{selectedVendor\.name\} \/>/],
   ["full-profile action is tombstone-safe and exact", "page", /<EntityLinkOrTombstone[\s\S]{0,500}kind="vendor"[\s\S]{0,160}id=\{selectedVendor\.id\}[\s\S]{0,160}name=\{selectedVendor\.name\}[\s\S]{0,300}vendor-details-full-profile-record-link/],
-  ["edit action routes by selected canonical ID", "page", /navigate\(`\/vendors\/\$\{selectedVendor\.id\}`\)/],
+  ["edit action routes by selected canonical ID", "page", /navigate\(`\/vendors\/\$\{selectedVendor\.id\}`\)|setEditVendorId\(selectedVendor\.id\)/],
   ["profile displays selected vendor code", "page", /<dd>\{selectedVendor\.vendor_code \|\| "—"\}<\/dd>/],
   ["profile displays selected vendor type", "page", /<dd>\{selectedVendor\.vendor_type \|\| "—"\}<\/dd>/],
 ];
@@ -47,7 +47,7 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   for (const [message, key, pattern] of checks) {
-    const changedSource = source[key].replace(pattern, "/* planted vendor master-detail defect */");
+    const changedSource = source[key].replace(new RegExp(pattern.source, "g"), "/* planted vendor master-detail defect */");
     if (changedSource === source[key] || !audit({ ...source, [key]: changedSource }).includes(message)) {
       console.error(`${LABEL} SELFTEST FAIL — escaped or inert plant: ${message}`);
       process.exit(1);
