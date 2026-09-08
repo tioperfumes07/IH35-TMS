@@ -290,3 +290,49 @@ question, not a hole in this rebuild.
 This audit was run against the OLDER 21-tour/5774–5796 framing before reading the SCOPE CORRECTION
 section above — it does not address the 38-tour/36-missing-load finding. Reading the checker handoff
 (`~/Downloads/2026-09-08-Cursor-to-Claude-SETTLEMENT-REBUILD-CHECKER-HANDOFF.md`) next.
+
+## CC-1 — CHECKER VERDICT on the 21-doc rebuild handoff — CONDITIONAL GO (2026-09-08)
+
+Independently re-derived the checker handoff (`~/Downloads/2026-09-08-Cursor-to-Claude-SETTLEMENT-
+REBUILD-CHECKER-HANDOFF.md`), all 4 sections, myself — not trusting Cursor's summary:
+
+1. **Tie-out harness** — ran `node scripts/reconciliation/preview-usmca-settlement-rebuild.mjs`
+   myself: `PREVIEW PASS`, docs:21 lines:163, grand **27487.36**. Confirmed. pdftotext'd
+   `Driver_Settlement_5780.pdf` myself: two Flat Rate $150 loads (13530, 13532), `TOTAL DUE: 300.00` —
+   matches the harness's net exactly. Spot-checked the sign model against 5774/5780 real PDFs — holds.
+2. **Reversal engine** (`settlement-payrun-reverse.service.ts`) — read in full. Confirmed: reverses
+   via `reverseJournalEntryNoFlip` (no new GL math), proves equal-and-opposite at the full
+   (account, class, entity) grain with a hard throw on failure, targets `payrun_gl_runs` (the path
+   that actually posted the 17), correctly inverts advance recovery + both escrow sub-ledgers
+   (GL-linked `accounting.escrow_accounts` via `recordEscrowPostingOnly('release')` AND the pay-run
+   cap summary `escrow_balances`/`escrow_ledger`), clears `posted_at`. Well-built, matches the claim.
+3. **17→21 delta** — queried live: `SUM(net_pay)` over the 17 closed USMCA settlements =
+   **$31,147.37**. Minus $27,487.36 = **$3,660.01**. Confirmed exact.
+4. **8 zero-pay loads + manual JE** — queried live: 7 of 8 (13517,13524,13527,13531,13533,13539,13540)
+   already have VOIDED `driver_finance.driver_bills` rows at the exact signed-doc gross amounts
+   ($471.97/$853.61/$696.15/$666.81/$500.22/$670.68/$760.59) — un-void, don't recreate. Only 13554
+   has no bill row — create. Matches the plan exactly; confirms it must un-void 7 + create 1, not
+   blindly create 8. Manual JE `15e0887f` (tour 5796, −$389.66) fold-in: not re-verified independently
+   by me — already independently verified by CC-2 (`docs/bus/OUTBOX-CC-2.md`, line-level, 4 independent
+   searches, confirmed standalone + folded into `settlement_lines` + no other correction JE exists
+   2026-07-03→09-07) — citing, not duplicating that work.
+
+**Verdict: CONDITIONAL GO.** Every mechanical claim in the handoff is independently confirmed —
+dollar-for-dollar, PDF-for-PDF, code-read, live-queried. I am not withholding on the mechanics.
+
+**The one open condition:** this file's own SCOPE CORRECTION section (above) — discovered the same
+day, apparently after this handoff was written — says the real universe is 38 tours (not 21), 36
+loads are missing across that wider set, and 9 of the 17 live rows mix loads from 2–4 different
+tours. The 21-doc PREVIEW harness proves the TARGET state (21 fresh doc-settlements) is internally
+consistent; it does not verify that reversing the 17 messy, tour-mixed rows and remapping their lines
+onto the correct one of 21 new doc-settlements is itself correct — that redistribution step isn't
+covered by anything I re-derived above. Executing the 21-doc rebuild now would be mechanically safe
+but would leave the wider 38-tour gap (and the still-open "does everything before tour 5769 belong in
+USMCA or is it Transportation/QBO-reconcile" question) unresolved immediately after — a real risk of
+needing a second rebuild days later on the same ledger.
+
+**Ask before posting:** the owner's decision on the 38-vs-21-tour scope question already flagged
+above (`OPEN owner scope decision`). If the owner says "post the 21 now, the wider 38-tour question
+is separate and later" — my GO is unconditional and this rebuild can execute as planned. If the
+owner wants both handled in one pass, the orchestration needs to widen before posting. Nothing posts
+without both yeses per the handoff's own rule; this is that rule being followed, not a stall.
