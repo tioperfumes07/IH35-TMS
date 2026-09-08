@@ -8303,5 +8303,10 @@
     "claimed_at": "2026-09-08",
     "claimed_by": "claude-1",
     "purpose": "verify-load-costs-return-columns"
+  },
+  "11065": {
+    "claimed_at": "2026-09-08",
+    "claimed_by": "claude-1",
+    "purpose": "verify-md-width-0-vendors-customers"
   }
 }
