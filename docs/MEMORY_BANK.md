@@ -235,6 +235,62 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
      Note: `15e0887f`'s own `source` column is `'auto'`, not `'manual'` — every USMCA JE ever posted
      uses `source='auto'`, `'manual'` is unused system-wide; a naming quirk, not a defect.
 
+## Phase 2 build recipe — the repost, schema-grounded (2026-09-08, Cursor)
+
+Phase 1 (reverse) is MERGED + branch-proven (#21448) and prod-guarded (#21453, `assertNotProd`).
+Phase 2 = the repost. Build it into the SAME orchestration `.mts` so reverse→repost runs as ONE
+gated pass (the app is never left empty). Reuse `closeSettlementPayRun` — NO new GL math. The
+28-doc target is penny-exact TODAY: `node scripts/reconciliation/preview-usmca-settlement-rebuild.mjs`
+→ `PREVIEW PASS`, 28 docs, 234 lines, grand **$37,830.87**.
+
+**Signed-doc line model → poster terms (verified against doc 5772/5778):**
+- `loaded_pay`/`empty_pay`/`flat_rate` + `additional_pay` (layover/bonus) → settlement `gross_pay`
+  (driver-pay expense debit). i.e. `gross_pay = salary + additional_pay`.
+- `reimbursement`/`deduction` (fuel, scale, toll…) → `settlement_lines(line_type='reimbursement')`,
+  positive. Poster's `loadReimbursementsCents` sums active reimbursement lines.
+- `escrow` = exactly **−$25 per load** → `settlement_lines(line_type='escrow_contribution')`, one
+  −25 line per load. Poster reads `loadAccruedEscrowContributionCents` for `settlement_model=
+  'load_bookended'` (sums the lines as-is, no re-cap at close). SET `settlement_model='load_bookended'`.
+- `admin_fee` = −$10 → an "other" `driver_settlement_deductions` row (`applied_to_settlement_id` set,
+  `voided_at IS NULL`). Poster's `loadOtherDeductionsByRole` maps it via `bucketRecoveryRoleKey` →
+  MUST resolve a CoA recovery role or the close throws `DEDUCTION_RECOVERY_ACCOUNT_MISSING`. **Verify
+  the admin-fee recovery role is bound before rehearsal.**
+- `cash_advance` → recovered from the EXISTING `driver_advances` rows (restored by the Phase-1
+  reversal — do NOT create new ones).
+- Penny check example doc 5772 (Pedro): gross 1481.83 + reimb 15.25 − escrow 100 − admin 10 −
+  advance 390 = **997.08** ✓.
+
+**Schema facts (measured 2026-09-08 — NOT NULL / no-default columns to satisfy on create):**
+- `driver_settlements`: operating_company_id, display_id, driver_id, period_start, period_end,
+  status, **trace_no (bigint, NO DEFAULT — source it the same way live inserts do; do not invent)**.
+  `gross_pay` dflt 0; `settlement_model` nullable (set `load_bookended`); `source_document_ref`
+  nullable (stamp the 4-digit doc); `is_sample_data` dflt false (**MUST stay false — real money**).
+- `settlement_lines`: settlement_id, line_type, description, amount (all NOT NULL); set
+  operating_company_id + load_id + is_active=true; `amount` is a numeric dollar value (poster uses
+  `dollarsToCents`). Earnings lines must be `line_type IN ('earnings','deadhead_pay')` WITH load_id
+  or the poster's `SETTLEMENT_HAS_NO_LOAD_ACTIVITY` guard refuses to post.
+- `driver_settlement_deductions`: operating_company_id, driver_id, deduction_type, amount_cents,
+  reason (all NOT NULL). `amount_cents` is a bigint (cents), positive magnitude.
+
+**Dependencies to resolve BEFORE the rehearsal (each a real query, none guessable):**
+1. `trace_no` source for driver_settlements (sequence or max+1 — match live inserts).
+2. admin-fee → CoA recovery role binding exists (else close throws).
+3. driver name (CSV) → `mdata.drivers.id` map for all ~11 in-scope drivers.
+4. load number (CSV) → `mdata.loads.id` map for all in-scope loads.
+5. the 8 zero-pay bills: un-void 7 existing VOIDED `driver_bills` at signed amounts (13517, 13524,
+   13527, 13531, 13533, 13539, 13540 — 13540 has a known 1¢ delta to TRACE not shrug) + CREATE 13554.
+
+**The one real edge case — per-tour advance recovery.** `closeSettlementPayRun` recovers ALL of a
+driver's un-recovered `driver_advances` at each close (oldest-first). Posting per-tour, a driver with
+advances across multiple tours would have tour #1 sweep every advance → other tours miss their penny.
+FIX: process a driver's tours chronologically and cap each close at that tour's exact `cash_advance`
+sum via the B7 `loanRecoveryDecision {mode:'partial', partial_cents}`, mapping the signed cash_advance
+lines to the specific advance rows. Net ties per tour; advance→tour attribution stays oldest-first.
+
+**Rehearsal (fresh branch off prod each time): reverse (Phase 1) → un-void/create bills → post 28 →
+assert each net == signed `total_due` AND grand == 37830.87.** Prod post stays gated: `assertNotProd`
+blocks `--commit` at the code level; the real post needs Claude GO + owner yes.
+
 ## PRs (this reconciliation effort)
 
 - #21403 — reversal poster (MERGED) · #21404 — reconciliation tie-outs (MERGED)
