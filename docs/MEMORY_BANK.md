@@ -10,6 +10,40 @@ Scope: USMCA only (`5c854333-6ea5-4faa-af31-67cb272fef80`). Neon `tiny-field-895
 
 ---
 
+## DOMAIN MODEL — WHAT A SETTLEMENT IS (READ THIS FIRST — owner corrected Cursor 3× on 2026-09-08)
+
+Source: `docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md` §2–§3 (LOCKED). If you find yourself reasoning
+about settlements in "weeks" or calendar date-windows, STOP — you are wrong. Read this.
+
+- **A settlement is a SET OF TRIPS — a TOUR.** A tour = a NORTHBOUND trip (loaded, into the US) +
+  sometimes TRIANGULATION trip(s) (US-to-US legs) + a SOUTHBOUND trip (back to Laredo/Mexico). That is
+  why each signed AlwaysTrack doc lists 2–3 loads: those are the LEGS of one tour.
+- **HOS makes a weekly settlement IMPOSSIBLE.** A driver has 70 hours / 8 days and must take a 34-hour
+  reset. A tour runs as long as the round trip takes around that reset — it never lines up with a
+  calendar week. NEVER group or compare settlements by week/date-window.
+- **Bill per LOAD** (`driver_finance.driver_bills`, one bill per load, numbered by load #, gross =
+  the load's fixed fee from `accounting.bills.amount_cents`). **Multiple per-load bills aggregate into
+  ONE settlement (the trip/tour).** Worked example in blueprint §3: Mecor, 3 loads → 1 settlement.
+- **Settlements post as Bill + BillPayment — NOT a single JE (LOCKED, blueprint §3).** Driver = a
+  VENDOR (A/P aging, W-8BEN on file). Canonical engine = `driver_finance.driver_settlements` +
+  `driver_finance.driver_settlement_deductions`. Deductions apply **pay-first, then escrow**, and
+  credit **that driver's OWN** sub-accounts (Cash-Advance ASSET sub, Driver Escrow LIABILITY sub).
+  Net-pay floor = 5% editable per settlement.
+- **⚠️ The 17 live USMCA settlements were posted the WRONG way** — via `closeSettlementPayRun` as a
+  SINGLE JE through `payrun_gl_runs`, which contradicts the locked Bill+BillPayment architecture. The
+  Bill+BillPayment cascade (`driver_settlement_gl_runs`/`driver_settlement_gl_bills`) has zero rows
+  because the CANONICAL path was never used yet — not because it's dead. The rebuild must repost via
+  the canonical Bill+BillPayment engine, not re-run the single-JE path.
+- **Driver identity:** hired Mexican-B1 external contractors (W-8BEN), NOT owner-operators. Pay =
+  per-load fixed fee, booked "Cost of Labor–Mexico Drivers" as Contract Labor (never Purchased
+  Transportation, never payroll-with-withholding).
+- **The "$3,660 over/under" was a mis-scoped week/aggregate comparison, NOT real over/underpayment.**
+  No USMCA driver is owed money or was overpaid; they were paid correctly per AlwaysTrack. The defect
+  is purely how the TMS grouped/valued the settlement records (one-per-driver, wide July→Sept ranges,
+  some voided load-bills) vs one-settlement-per-tour.
+
+---
+
 ## Active Architectural Decisions
 
 - **Settlement identity (owner ruling 2026-09-07):** a settlement number IS a 4-digit AlwaysTrack
