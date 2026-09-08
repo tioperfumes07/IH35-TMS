@@ -9102,6 +9102,33 @@ Owner alert: unfiltered `/banking` still shows a wrong running balance on same-d
 
 **Live proof, corrected math (Neon, bypass_rls=lucia, account e83028a5-... , 2026-09-04, post-fix):** current_balance_cents=$2,089.70. Walking backward with the SAME tiebreak the code now uses (transaction_date DESC, created_at DESC, id DESC), every adjacent pair's balance now differs by exactly that row's own signed amount (spent negative, received positive) end to end: WIRE IN $16,785.54 -> $10,190.74; PMNT SENT $151.99 -> $(6,594.80); Zelle Alberto $1,250.00 -> $(6,442.81); Zelle Laura $3,000.00 -> $(5,192.81); Zelle Marco $500.00 -> $(2,192.81); Holiday Inn $174.67 -> $(1,692.81); Holiday Inn $164.26 -> $(1,518.14). (An earlier verification pass of my own hit the exact BANK-F10005 is_credit-sign landmine this guard's own header warns about — a raw `amount_cents` is negative for this bank's credit rows; caught before publishing by re-deriving with `abs()`, matching `spentReceived()`'s own convention — not a defect in the shipped code, which already used `spentReceived()` correctly throughout.) | `apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx`; `scripts/verify-bank-running-balance-uses-full-history.mjs`; `scripts/ops/2026-09-07-cc1-bank-running-balance-plaid-pending-dedup-sweep.ts` | — | none — closed; 197+53 ambiguous/unmatched pending rows remain, correctly left for manual review, not this fix's scope | live Neon before/after superseded-row counts; corrected balance-walk sequence above; guard selftest 4/4; apps/frontend tsc -b exit 0 | **CLOSED · both root causes fixed and live-verified · residual same-instant ties (genuinely no source ordering signal) are a disclosed, unavoidable limit, not a bug** |
 
+## BANK-F26051 — verify-relay-wallet-bank-feed stale make_interval check — CLOSED (CC-2, 2026-09-08)
+
+`locked-guards-heavy` was red repo-wide (every open PR, unrelated to any one PR's diff — confirmed
+by running the guard directly against a clean `origin/main` worktree, red there too): "match.service
+must use parameterized make_interval for match date window". `scripts/verify-relay-wallet-bank-feed.mjs`
+required the literal SQL fragment `make_interval(days =>` in `apps/backend/src/accounting/bank-recon/match.service.ts`.
+
+**ROOT CAUSE:** `match.service.ts` never used SQL-side `make_interval` for this — BANK-MATCH-QBO
+(#20975) computes the match date window in JS via `shiftDate()` (UTC-safe day arithmetic:
+`setUTCDate`, no DST/timezone landmine) and binds the resulting `fromDate`/`toDate` as ordinary
+parameterized query args (`p.payment_date BETWEEN $2::date AND $3::date`, params
+`[operatingCompanyId, fromDate, toDate, ...]`) across all 6 `findCandidates` sub-queries — equally
+safe (no string interpolation into SQL anywhere), just not the one specific implementation this
+check was grepping for. The regex went stale the moment #20975 merged and has been a false-red on
+every PR since, with nobody investigating because the failure message names a file unrelated to
+most PRs' own diffs.
+
+**FIX:** replaced the stale literal-pattern check with one that asserts the actual safety property —
+FAIL if `fromDate`/`toDate` are ever string-interpolated into a SQL template (`${fromDate}` /
+`${toDate}`), PASS only if they're bound as parameterized query arguments (`[operatingCompanyId,
+fromDate, ...]`). Verified against the current file: interpolation absent, parameterized binding
+present. Did NOT touch `match.service.ts` itself — the code was already correct; only the stale
+guard assertion was wrong. | `scripts/verify-relay-wallet-bank-feed.mjs` | — | none — this was a
+guard-only fix; `match.service.ts`'s date-window logic is unchanged and was never unsafe | `node
+scripts/verify-relay-wallet-bank-feed.mjs` exit 0 (was FAIL before this fix, confirmed FAIL on a
+clean `origin/main` worktree first) | **CLOSED · stale guard assertion updated to check the real
+safety property; unblocks every PR system-wide** |
 ## CLAIM-RESERVE catch-up — 10989/11013/11037/11061 (CC-2, 2026-09-08)
 
 These four verify-step numbers were already present in `scripts/verify-steps/CLAIMED-NUMBERS.json`

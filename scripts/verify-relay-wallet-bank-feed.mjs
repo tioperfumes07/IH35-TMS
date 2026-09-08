@@ -90,8 +90,26 @@ const matchService = read("apps/backend/src/accounting/bank-recon/match.service.
 if (matchService && !/windowDays|window_days|searchQuery|search_query/.test(matchService)) {
   failures.push("match.service findCandidates must support Search-all window_days + search_query");
 }
-if (matchService && !/make_interval\(days =>/.test(matchService)) {
-  failures.push("match.service must use parameterized make_interval for match date window");
+if (matchService) {
+  // BANK-F26051 (2026-09-08): this check used to require SQL-side `make_interval(days => ...)`
+  // for the match date window. BANK-MATCH-QBO (#20975) replaced that with JS-side `shiftDate()`
+  // (UTC-safe day arithmetic) whose fromDate/toDate are bound as ordinary query parameters —
+  // an equally safe, equally parameterized approach, just not the exact literal this check was
+  // grepping for. The regex went stale the day #20975 merged and has been a false-red on every
+  // PR system-wide since (confirmed red on a clean origin/main, unrelated to any one PR's diff).
+  // Assert the actual safety property instead of one specific historical implementation: the
+  // window bounds must never be string-interpolated into a query template, and must actually be
+  // bound as parameterized query arguments.
+  if (/\$\{\s*(fromDate|toDate)\s*\}/.test(matchService)) {
+    failures.push(
+      "match.service must NOT string-interpolate fromDate/toDate into a SQL template literal — bind them as query parameters ($N) instead",
+    );
+  }
+  if (!/\[\s*operatingCompanyId,\s*fromDate/.test(matchService)) {
+    failures.push(
+      "match.service must bind fromDate/toDate as parameterized query arguments for the match date window",
+    );
+  }
 }
 
 const designView = read(
