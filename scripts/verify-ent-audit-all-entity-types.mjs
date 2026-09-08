@@ -29,7 +29,9 @@ const TARGETS = [
   { file: "apps/frontend/src/pages/drivers/DriverProfilePage.tsx", entityType: "driver" },
   { file: "apps/frontend/src/pages/CustomerDetail.tsx", entityType: "customer" },
   { file: "apps/frontend/src/pages/VendorDetail.tsx", entityType: "vendor" },
-  { file: "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx", entityType: "load" },
+  // LoadDetailDrawer is excluded: LDT-7 (verify-ldt-7-audit-english.mjs) requires the load Audit tab
+  // to render LoadAuditTab (custom English audit) instead of the generic EntityAuditHistoryTab
+  // (which prints machine codes). LDT-7 supersedes this guard for the load entity type.
   { file: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx", entityType: "work_order" },
 ];
 

@@ -34,6 +34,10 @@ const ALLOWED_NESTED = new Set([
   "components/forms/shared/QuickCreateEntityModal.tsx",
   "components/parity/InlineCreateDrawer.tsx",
   "components/parity/CatalogQuickCreateDrawer.tsx",
+  // Shared locations list page — hosts a CSV-export / filter Modal but is not a
+  // standalone create surface; the part/repair/shop/asset location list leaves
+  // have no surface_path, so no single required.json leaf owns this shell.
+  "pages/lists/LocationsListPage.tsx",
 ]);
 
 /**

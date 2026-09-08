@@ -35,6 +35,15 @@ const ALLOWED_NESTED = new Set([
   "components/parity/drawers/NewVendorDrawerForm.tsx",
   "components/parity/drawers/NewCustomerDrawerForm.tsx",
   "components/parity/drawers/NewItemDrawerForm.tsx",
+  // CUR-2 side-panel edit shells (owner ruling 2026-09-05, inventory row 50) —
+  // reuse the same forms as the full-page/modal edit but hosted in ParityDrawer.
+  // No standalone required.json leaf owns these shells; the full-page routes stay.
+  "components/customers/CustomerEditDrawer.tsx",
+  "components/vendors/VendorEditDrawer.tsx",
+  "pages/Vendors.tsx",
+  // SETL-DED-UI nested create drawer — posts through driver_finance deductions
+  // service; no standalone required.json leaf owns this shell.
+  "pages/drivers/components/CreateSettlementDeductionDrawer.tsx",
 ]);
 
 /** Nested create pickers / twin banking JE — owned by an existing matrix leaf. */
