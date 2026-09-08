@@ -473,7 +473,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
           {
             key: "booked_ytd",
             label: "Booked YTD",
-            sortable: false,
+            sortable: true,
             defaultHidden: true,
             cellClass: "text-right tabular-nums",
             render: (row) => (row.booked_ytd_cents == null ? <span className="text-gray-400">—</span> : fmtMoney(row.booked_ytd_cents)),
@@ -481,7 +481,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
           {
             key: "last_load",
             label: "Last Load",
-            sortable: false,
+            sortable: true,
             defaultHidden: true,
             cellClass: "text-right tabular-nums",
             render: (row) => {
@@ -552,7 +552,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
           {
             key: "late_fee_cents",
             label: "Late fees",
-            sortable: false,
+            sortable: true,
             defaultHidden: true,
             cellClass: "text-right tabular-nums",
             render: () => (

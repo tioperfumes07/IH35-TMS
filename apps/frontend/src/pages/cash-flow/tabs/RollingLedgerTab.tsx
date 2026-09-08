@@ -865,7 +865,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
               Presets <ChevronDown className="h-3 w-3" />
             </button>
             {presetMenuOpen && (
-              <div className="absolute left-0 top-full z-10 mt-1 w-40 rounded-sm border border-slate-200 bg-white p-1 shadow-md">
+              <div className="absolute left-0 top-full z-10 mt-1 w-40 bg-white p-1 shadow-md">
                 {PRESET_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}

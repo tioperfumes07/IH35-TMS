@@ -83,6 +83,11 @@ const visibilityBodySchema = z.object({
     .max(200),
 });
 
+const reorderBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  account_ids: z.array(z.string().uuid()).min(1).max(200),
+});
+
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
   return req.user;
@@ -376,6 +381,34 @@ export async function registerBankingRoutes(app: FastifyInstance) {
             RETURNING *
           `,
           [account.id, account.visible, account.display_order, account.tag ?? null, account.is_dip ?? null, b.operating_company_id]
+        );
+        if ((res.rowCount ?? 0) > 0) rows.push(res.rows[0]);
+      }
+      return rows;
+    });
+    return { updated_accounts: updated };
+  });
+
+  // BNK-REORDER: reorder bank account tiles by writing display_order sequentially.
+  // Accepts an ordered list of bank_account_ids; writes display_order = index in one transaction.
+  app.patch("/api/v1/banking/accounts/reorder", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const body = reorderBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+    const b = body.data;
+
+    const updated = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
+      if (!(await hasRelation(client, "banking.bank_accounts"))) return [];
+      const rows: Record<string, unknown>[] = [];
+      for (let i = 0; i < b.account_ids.length; i++) {
+        const res = await client.query(
+          `UPDATE banking.bank_accounts
+             SET display_order = $2
+           WHERE id = $1
+             AND operating_company_id = $3::uuid
+           RETURNING id, display_order`,
+          [b.account_ids[i], i, b.operating_company_id],
         );
         if ((res.rowCount ?? 0) > 0) rows.push(res.rows[0]);
       }

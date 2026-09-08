@@ -6292,6 +6292,11 @@
     "claimed_at": "2026-09-08",
     "purpose": "verify-factoring-statements-summary-detail-toggle"
   },
+  "11061": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-08",
+    "purpose": "verify-factoring-equipment-vendor-merges-collapsed-filters"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
