@@ -1,0 +1,162 @@
+doc_no,driver,load,category,description,amount
+5774,JOSE ANTONIO VICENTE MARTINEZ,13517,loaded_pay,"Loaded Miles       1,097.6 @ $0.43                                                                                              471.97",471.97
+5774,JOSE ANTONIO VICENTE MARTINEZ,13517,deduction,FUEL AMERICA Fuel-Reefer Diesel,45.47
+5774,JOSE ANTONIO VICENTE MARTINEZ,13517,escrow,2026-08-14 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5774,JOSE ANTONIO VICENTE MARTINEZ,13518,loaded_pay,"Loaded Miles       1,214.8 @ $0.43                                                                                             522.36",522.36
+5774,JOSE ANTONIO VICENTE MARTINEZ,13518,empty_pay,Empty Miles        134.0 @ $0.43                                                                                                57.62,57.62
+5774,JOSE ANTONIO VICENTE MARTINEZ,13518,deduction,THORNTON Fuel-Reefer Diesel,70
+5774,JOSE ANTONIO VICENTE MARTINEZ,13518,escrow,2026-08-14 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5774,JOSE ANTONIO VICENTE MARTINEZ,13518,admin_fee,2026-08-14 - Admin fee - GAS,-10
+5777,Jorge Luis Infante Corona,13519,loaded_pay,"Loaded Miles       1,890.2 @ $0.50                                                                                          945.10",945.1
+5777,Jorge Luis Infante Corona,13519,additional_pay,Driver Pay-Enlonada,25
+5777,Jorge Luis Infante Corona,13519,additional_pay,Driver Pay-Desenlonada,25
+5777,Jorge Luis Infante Corona,13521,loaded_pay,"Loaded Miles       1,557.7 @ $0.50                                                                                          778.85",778.85
+5777,Jorge Luis Infante Corona,13521,empty_pay,Empty Miles        368.1 @ $0.50                                                                                            184.05,184.05
+5777,Jorge Luis Infante Corona,13521,admin_fee,2026-08-17 - Admin fee - GAS,-10
+5778,HUGO GAYTAN SARABIA,13524,loaded_pay,"Loaded Miles       1,185.4 @ $0.45                                                                                             533.43",533.43
+5778,HUGO GAYTAN SARABIA,13524,empty_pay,Empty Miles        711.5 @ $0.45                                                                                               320.18,320.18
+5778,HUGO GAYTAN SARABIA,13524,additional_pay,Driver Pay-Layover-Estancia 10Y11 DE AGOSTO,50
+5778,HUGO GAYTAN SARABIA,13524,escrow,2026-08-17 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5778,HUGO GAYTAN SARABIA,13524,admin_fee,2026-08-17 - Admin fee -,-10
+5778,HUGO GAYTAN SARABIA,13524,cash_advance,2026-08-15 - CASH ADVANCE WIRE TRANSFER - CASH ADVANCE WIRE TRANSFER,-200
+5778,HUGO GAYTAN SARABIA,13525,loaded_pay,"Loaded Miles       1,303.1 @ $0.45                                                                                            586.40",586.4
+5778,HUGO GAYTAN SARABIA,13525,reimbursement,LOVES Driver Reimbursement-TPE-Scale Expense,15.25
+5778,HUGO GAYTAN SARABIA,13525,escrow,2026-08-17 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5779,LUIS ARMANDO SOSA PEREZ,13526,loaded_pay,"Loaded Miles       1,122.1 @ $0.45                                                                                           504.95",504.95
+5779,LUIS ARMANDO SOSA PEREZ,13526,empty_pay,Empty Miles        487.9 @ $0.45                                                                                             219.56,219.56
+5779,LUIS ARMANDO SOSA PEREZ,13526,additional_pay,Driver Pay-Bonus 60 MILLAS EXTRA X.45 CENTAVOS,27
+5779,LUIS ARMANDO SOSA PEREZ,13526,escrow,2026-08-20 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5779,LUIS ARMANDO SOSA PEREZ,13526,admin_fee,2026-08-20 - Admin fee - GAS,-10
+5779,LUIS ARMANDO SOSA PEREZ,13527,loaded_pay,"Loaded Miles       1,547.0 @ $0.45                                                                                           696.15",696.15
+5779,LUIS ARMANDO SOSA PEREZ,13527,escrow,2026-08-20 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5781,Leonel Antonio Morales,13523,loaded_pay,"Loaded Miles       1,395.3 @ $0.45                                                                                         627.89",627.89
+5781,Leonel Antonio Morales,13523,escrow,2026-08-21 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5781,Leonel Antonio Morales,13534,loaded_pay,"Loaded Miles       1,391.7 @ $0.45                                                                                        626.27",626.27
+5781,Leonel Antonio Morales,13534,empty_pay,Empty Miles        58.1 @ $0.45                                                                                            26.15,26.15
+5781,Leonel Antonio Morales,13534,escrow,2026-08-21 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5781,Leonel Antonio Morales,13534,admin_fee,2026-08-21 - Admin fee - GAS,-10
+5782,HUGO GAYTAN SARABIA,13529,loaded_pay,"Loaded Miles       1,618.9 @ $0.45                                                                                                728.51",728.51
+5782,HUGO GAYTAN SARABIA,13529,escrow,2026-08-24 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5782,HUGO GAYTAN SARABIA,13540,loaded_pay,"Loaded Miles       1,511.7 @ $0.45                                                                                               680.27",680.27
+5782,HUGO GAYTAN SARABIA,13540,empty_pay,Empty Miles        178.5 @ $0.45                                                                                                  80.33,80.33
+5782,HUGO GAYTAN SARABIA,13540,additional_pay,Driver Pay-Layover-Estancia 21 de Agosto,25
+5782,HUGO GAYTAN SARABIA,13540,deduction,TYSON LUMPER VIAJE PASADO,18
+5782,HUGO GAYTAN SARABIA,13540,escrow,2026-08-24 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5782,HUGO GAYTAN SARABIA,13540,admin_fee,2026-08-24 - Admin fee - GAS,-10
+5782,HUGO GAYTAN SARABIA,13540,admin_fee,2026-08-24 - Admin fee - BASCULA PAGADA EN VIAJE PASADO,-15.25
+5783,Jorge Luis Infante Corona,13535,loaded_pay,"Loaded Miles       1,890.2 @ $0.50                                                                                          945.10",945.1
+5783,Jorge Luis Infante Corona,13535,additional_pay,Driver Pay-Enlonada,25
+5783,Jorge Luis Infante Corona,13535,additional_pay,Driver Pay-Desenlonada,25
+5783,Jorge Luis Infante Corona,13537,loaded_pay,"Loaded Miles       1,586.6 @ $0.50                                                                                          793.30",793.3
+5783,Jorge Luis Infante Corona,13537,empty_pay,Empty Miles        335.7 @ $0.50                                                                                            167.85,167.85
+5783,Jorge Luis Infante Corona,13537,additional_pay,"Driver Pay-Enlonada- EDISON, NJ",25
+5783,Jorge Luis Infante Corona,13537,additional_pay,"Driver Pay-Desenlonada- BAYTOWN, TX",25
+5783,Jorge Luis Infante Corona,13537,additional_pay,"Driver Pay-Enlonada - BAYTOWN, TX",25
+5783,Jorge Luis Infante Corona,13537,additional_pay,"Driver Pay-Desenlonada - Houston, TX",25
+5783,Jorge Luis Infante Corona,13537,additional_pay,Driver Pay-Extra Delivery/Drop,25
+5783,Jorge Luis Infante Corona,13537,admin_fee,2026-08-25 - Admin fee - GAS,-10
+5784,JOSE ANTONIO VICENTE MARTINEZ,13522,loaded_pay,"Loaded Miles       1,319.0 @ $0.43                                                                                              567.17",567.17
+5784,JOSE ANTONIO VICENTE MARTINEZ,13522,deduction,FUEL AMERICA WASHOUT TRUCK-171,55.21
+5784,JOSE ANTONIO VICENTE MARTINEZ,13522,escrow,2026-08-25 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5784,JOSE ANTONIO VICENTE MARTINEZ,13528,loaded_pay,Loaded Miles       542.1 @ $0.43                                                                                                233.10,233.1
+5784,JOSE ANTONIO VICENTE MARTINEZ,13528,empty_pay,Empty Miles        121.6 @ $0.43                                                                                                 52.29,52.29
+5784,JOSE ANTONIO VICENTE MARTINEZ,13528,additional_pay,Driver Pay-Extra Delivery/Drop,25
+5784,JOSE ANTONIO VICENTE MARTINEZ,13528,escrow,2026-08-25 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5784,JOSE ANTONIO VICENTE MARTINEZ,13536,loaded_pay,"Loaded Miles       1,607.9 @ $0.43                                                                                             691.40",691.4
+5784,JOSE ANTONIO VICENTE MARTINEZ,13536,empty_pay,Empty Miles        276.7 @ $0.43                                                                                               118.98,118.98
+5784,JOSE ANTONIO VICENTE MARTINEZ,13536,deduction,BLUE BEACON Reefer Trailer-Washout Expense,49.5
+5784,JOSE ANTONIO VICENTE MARTINEZ,13536,deduction,BLUE BEACON Reefer Trailer-Washout Expense,44.63
+5784,JOSE ANTONIO VICENTE MARTINEZ,13536,escrow,2026-08-25 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5784,JOSE ANTONIO VICENTE MARTINEZ,13536,admin_fee,2026-08-25 - Admin fee - GAS,-10
+5785,Genaro Guerrero Chavez,13531,loaded_pay,"Loaded Miles       1,481.8 @ $0.45                                                                                             666.81",666.81
+5785,Genaro Guerrero Chavez,13531,escrow,2026-08-26 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5785,Genaro Guerrero Chavez,13531,cash_advance,2026-08-18 - CASH ADVANCE WIRE TRANSFER - CASH ADVANCE WIRE TRANSFER,-301.99
+5785,Genaro Guerrero Chavez,13538,loaded_pay,Loaded Miles       561.1 @ $0.45                                                                                               252.50,252.5
+5785,Genaro Guerrero Chavez,13538,empty_pay,Empty Miles        126.9 @ $0.45                                                                                                57.11,57.11
+5785,Genaro Guerrero Chavez,13538,additional_pay,Driver Pay-Extra Delivery/Drop,25
+5785,Genaro Guerrero Chavez,13538,deduction,Warehouse-Lumper Fee Expense COBRO POR ENTRAR A DESCARGA,10
+5785,Genaro Guerrero Chavez,13538,escrow,2026-08-26 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5785,Genaro Guerrero Chavez,13543,loaded_pay,Loaded Miles       776.3 @ $0.45                                                                                              349.34,349.34
+5785,Genaro Guerrero Chavez,13543,empty_pay,Empty Miles        439.8 @ $0.45                                                                                              197.91,197.91
+5785,Genaro Guerrero Chavez,13543,additional_pay,"Driver Pay-Layover-Estancia 22,23y24 de Agosto",75
+5785,Genaro Guerrero Chavez,13543,escrow,2026-08-26 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5785,Genaro Guerrero Chavez,13543,admin_fee,2026-08-26 - Admin fee - GAS,-10
+5786,Concepcion Cordova Dominguez,13533,loaded_pay,"Loaded Miles       1,111.6 @ $0.45                                                                                           500.22",500.22
+5786,Concepcion Cordova Dominguez,13548,loaded_pay,"Loaded Miles       1,043.4 @ $0.45                                                                                          469.53",469.53
+5786,Concepcion Cordova Dominguez,13548,empty_pay,Empty Miles        154.0 @ $0.45                                                                                             69.30,69.3
+5787,ALFONSO HIDALGO CHAVEZ,13549,loaded_pay,Loaded Miles       745.5 @ $0.45                                                                                              335.48,335.48
+5787,ALFONSO HIDALGO CHAVEZ,13549,empty_pay,Empty Miles        520.2 @ $0.45                                                                                              234.09,234.09
+5787,ALFONSO HIDALGO CHAVEZ,13549,additional_pay,"Driver Pay-Layover-Estancia 22,23,24 De Agosto",75
+5787,ALFONSO HIDALGO CHAVEZ,13549,deduction,FLYING Bridge & Toll Expenses:OTR-Parking Expense,22
+5787,ALFONSO HIDALGO CHAVEZ,13549,escrow,2026-08-28 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5787,ALFONSO HIDALGO CHAVEZ,13549,cash_advance,2026-08-24 - CASH ADVANCE WIRE TRANSFER - CASH ADVANCE WIRE TRANSFER,-151.99
+5787,ALFONSO HIDALGO CHAVEZ,13555,loaded_pay,Loaded Miles       958.1 @ $0.45                                                                                             431.15,431.15
+5787,ALFONSO HIDALGO CHAVEZ,13555,escrow,2026-08-28 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5787,ALFONSO HIDALGO CHAVEZ,13555,admin_fee,2026-08-28 - Admin fee - GAS,-10
+5788,Angel Alfonso Sosa Perez,13539,loaded_pay,"Loaded Miles       1,490.4 @ $0.45                                                                                670.68",670.68
+5788,Angel Alfonso Sosa Perez,13539,escrow,2026-08-31 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5788,Angel Alfonso Sosa Perez,13546,loaded_pay,Loaded Miles       750.5 @ $0.45                                                                                  337.73,337.73
+5788,Angel Alfonso Sosa Perez,13546,empty_pay,Empty Miles        71.4 @ $0.45                                                                                    32.13,32.13
+5788,Angel Alfonso Sosa Perez,13546,escrow,2026-08-31 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5788,Angel Alfonso Sosa Perez,13546,admin_fee,2026-08-24 - Admin fee - PAGO DE TELEFONO PERSONAL,-165
+5788,Angel Alfonso Sosa Perez,13546,cash_advance,2026-08-25 - CASH ADVANCE WIRE TRANSFER - CASH ADVANCE WIRE TRANSFER,-201.99
+5788,Angel Alfonso Sosa Perez,13552,loaded_pay,"Loaded Miles       1,349.2 @ $0.45                                                                                607.14",607.14
+5788,Angel Alfonso Sosa Perez,13552,empty_pay,Empty Miles        173.8 @ $0.45                                                                                   78.21,78.21
+5788,Angel Alfonso Sosa Perez,13552,escrow,2026-08-31 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5788,Angel Alfonso Sosa Perez,13552,admin_fee,2026-08-31 - Admin fee - Gas,-10
+5789,Jorge Luis Infante Corona,13550,loaded_pay,"Loaded Miles       1,890.2 @ $0.50                                                                                          945.10",945.1
+5789,Jorge Luis Infante Corona,13550,additional_pay,Driver Pay-Enlonada,25
+5789,Jorge Luis Infante Corona,13550,additional_pay,Driver Pay-Desenlonada,25
+5789,Jorge Luis Infante Corona,13557,loaded_pay,"Loaded Miles       1,415.9 @ $0.50                                                                                          707.95",707.95
+5789,Jorge Luis Infante Corona,13557,empty_pay,Empty Miles        545.6 @ $0.50                                                                                            272.80,272.8
+5789,Jorge Luis Infante Corona,13557,additional_pay,Driver Pay-Enlonada,25
+5789,Jorge Luis Infante Corona,13557,additional_pay,Driver Pay-Desenlonada,25
+5789,Jorge Luis Infante Corona,13557,admin_fee,2026-09-01 - Admin fee - Gas,-10
+5790,Leonel Antonio Morales,13542,loaded_pay,"Loaded Miles       1,502.1 @ $0.50                                                                                         751.05",751.05
+5790,Leonel Antonio Morales,13542,escrow,2026-09-01 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5790,Leonel Antonio Morales,13554,loaded_pay,"Loaded Miles       1,046.8 @ $0.50                                                                                        523.40",523.4
+5790,Leonel Antonio Morales,13554,empty_pay,Empty Miles        476.6 @ $0.50                                                                                          238.30,238.3
+5790,Leonel Antonio Morales,13554,escrow,2026-09-01 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5790,Leonel Antonio Morales,13554,admin_fee,2026-09-01 - Admin fee - GAS,-10
+5791,HUGO GAYTAN SARABIA,13545,loaded_pay,"Loaded Miles       1,820.1 @ $0.45                                                                                                819.05",819.05
+5791,HUGO GAYTAN SARABIA,13545,escrow,2026-09-01 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5791,HUGO GAYTAN SARABIA,13560,loaded_pay,"Loaded Miles       1,524.4 @ $0.45                                                                                               685.98",685.98
+5791,HUGO GAYTAN SARABIA,13560,empty_pay,Empty Miles        411.1 @ $0.45                                                                                                 185.00,185
+5791,HUGO GAYTAN SARABIA,13560,escrow,2026-09-01 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5791,HUGO GAYTAN SARABIA,13560,admin_fee,2026-09-01 - Admin fee - GAS,-10
+5792,Genaro Guerrero Chavez,13547,loaded_pay,"Loaded Miles       1,820.1 @ $0.45                                                                                              819.05",819.05
+5792,Genaro Guerrero Chavez,13547,escrow,2026-09-01 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5792,Genaro Guerrero Chavez,13559,loaded_pay,"Loaded Miles       1,508.1 @ $0.45                                                                                              678.65",678.65
+5792,Genaro Guerrero Chavez,13559,empty_pay,Empty Miles        68.8 @ $0.45                                                                                                  30.96,30.96
+5792,Genaro Guerrero Chavez,13559,escrow,2026-09-01 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5792,Genaro Guerrero Chavez,13562,loaded_pay,Loaded Miles       420.4 @ $0.45                                                                                               189.18,189.18
+5792,Genaro Guerrero Chavez,13562,empty_pay,Empty Miles        44.9 @ $0.45                                                                                                 20.21,20.21
+5792,Genaro Guerrero Chavez,13562,escrow,2026-09-02 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5792,Genaro Guerrero Chavez,13562,admin_fee,2026-09-02 - Admin fee - GAS,-10
+5792,Genaro Guerrero Chavez,13562,admin_fee,2026-09-02 - Admin fee - VUELO,-267
+5793,Neftali Coronado Urbano,13565,loaded_pay,"Loaded Miles       1,485.2 @ $0.50                                                                                               742.60",742.6
+5793,Neftali Coronado Urbano,13565,reimbursement,LOVES Driver Reimbursement-TPE-Scale Expense,15.25
+5793,Neftali Coronado Urbano,13565,deduction,PENSION BELEN Parking Expense,11.76
+5793,Neftali Coronado Urbano,13566,loaded_pay,"Loaded Miles       1,086.0 @ $0.50                                                                                              543.00",543
+5793,Neftali Coronado Urbano,13566,empty_pay,Empty Miles        402.1 @ $0.50                                                                                                201.05,201.05
+5793,Neftali Coronado Urbano,13566,additional_pay,Driver Pay-Layover-Estancia 29y30 de Agosto,50
+5793,Neftali Coronado Urbano,13566,reimbursement,CAT SCALE Driver Reimbursement-TPE-Scale Expense,15.25
+5793,Neftali Coronado Urbano,13566,admin_fee,2026-09-03 - Admin fee - GAS,-10
+5794,JOSE ANTONIO VICENTE MARTINEZ,13558,loaded_pay,"Loaded Miles       1,312.6 @ $0.43                                                                                              564.42",564.42
+5794,JOSE ANTONIO VICENTE MARTINEZ,13558,reimbursement,LOVES Driver Reimbursement-Fuel-Def,30.3
+5794,JOSE ANTONIO VICENTE MARTINEZ,13558,deduction,LOVES 1ASC ''19 PREMIUM,22.14
+5794,JOSE ANTONIO VICENTE MARTINEZ,13558,escrow,2026-09-04 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5794,JOSE ANTONIO VICENTE MARTINEZ,13568,loaded_pay,"Loaded Miles       1,464.7 @ $0.43                                                                                             629.82",629.82
+5794,JOSE ANTONIO VICENTE MARTINEZ,13568,empty_pay,Empty Miles        220.0 @ $0.43                                                                                                94.60,94.6
+5794,JOSE ANTONIO VICENTE MARTINEZ,13568,deduction,LOVES Reefer Trailer-Washout Expense,49.32
+5794,JOSE ANTONIO VICENTE MARTINEZ,13568,escrow,2026-09-04 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5794,JOSE ANTONIO VICENTE MARTINEZ,13568,admin_fee,2026-09-04 - Admin fee - GAS,-10
+5795,LUIS ARMANDO SOSA PEREZ,13561,loaded_pay,"Loaded Miles       1,111.6 @ $0.45                                                                                    500.22",500.22
+5795,LUIS ARMANDO SOSA PEREZ,13561,escrow,2026-09-03 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5795,LUIS ARMANDO SOSA PEREZ,13567,loaded_pay,"Loaded Miles       1,164.9 @ $0.45                                                                                    524.21",524.21
+5795,LUIS ARMANDO SOSA PEREZ,13567,empty_pay,Empty Miles        59.1 @ $0.45                                                                                        26.60,26.6
+5795,LUIS ARMANDO SOSA PEREZ,13567,escrow,2026-09-03 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5795,LUIS ARMANDO SOSA PEREZ,13567,admin_fee,2026-09-03 - Admin fee - GAS,-10
+5795,LUIS ARMANDO SOSA PEREZ,13567,cash_advance,2026-09-03 - CASH ADVANCE WIRE TRANSFER - CASH ADVANCE WIRE TRANSFER,-201.99
+5796,JOSE ANTONIO VICENTE MARTINEZ,13541,loaded_pay,Loaded Miles       441.7 @ $0.43                                                                                189.93,189.93
+5796,JOSE ANTONIO VICENTE MARTINEZ,13541,empty_pay,Empty Miles        441.4 @ $0.43                                                                                189.80,189.8
