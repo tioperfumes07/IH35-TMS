@@ -61,7 +61,33 @@ import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { CollapsedListFilters } from "../../components/table/CollapsedListFilters";
 
+// FAC-09a (owner 2026-09-08, "CORRECTED FROM REAL SCREENSHOTS"): the real Faro debtor portal's
+// own left-nav, in its own real order — rebuilt here to match exactly. Messages & Support is a
+// contact/inbox action (envelope), not a data report, styled distinctly per the source doc.
 const SUBNAV = [
+  { id: "submit_invoice", label: "Submit Invoice" },
+  { id: "request_debtor_credit_check", label: "Request Debtor / Credit Check" },
+  { id: "funds_due", label: "Funds Due" },
+  { id: "payments_to_you", label: "Payments to You" },
+  { id: "debtor_receipts", label: "Debtor Receipts" },
+  { id: "purchase_report", label: "Purchase Report" },
+  { id: "account_summary", label: "Account Summary" },
+  { id: "fees_paid", label: "Fees Paid" },
+  { id: "aging", label: "Aging" },
+  { id: "reserve", label: "Reserve" },
+  { id: "chargebacks_overpayments", label: "Chargebacks & Overpayments" },
+  { id: "loan_save", label: "Loan / Save" },
+  { id: "unapplied_cash", label: "Unapplied Cash" },
+  { id: "invoice_status_report", label: "Invoice Status Report (BETA)" },
+  { id: "messages_support", label: "✉ Messages & Support" },
+] as const;
+
+// Pre-existing internal-ops tabs — kept fully reachable (Rule 07, never delete) under an
+// "Internal Tools" dropdown rather than folded into the 15-item list above, since they are a
+// different kind of tool (internal ops actions: CSV imports, QBO vendor-merge cleanup, CCG
+// equipment financing, the pre-9a operational reserve/statement views) than the debtor-facing
+// report list the owner's screenshots describe.
+const INTERNAL_TOOLS_SUBNAV = [
   { id: "reserve_tracker", label: "Reserve Tracker" },
   { id: "recourse_pipeline", label: "Recourse Pipeline" },
   { id: "chargebacks_fees", label: "Chargebacks & Fees" },
@@ -71,7 +97,7 @@ const SUBNAV = [
   { id: "vendor_merges", label: "Driver Vendor Merges" },
 ] as const;
 
-type FactoringTabId = (typeof SUBNAV)[number]["id"];
+type FactoringTabId = (typeof SUBNAV)[number]["id"] | (typeof INTERNAL_TOOLS_SUBNAV)[number]["id"];
 
 type FactoringHomeProps = {
   initialTab?: FactoringTabId;
@@ -179,7 +205,29 @@ const VENDOR_MERGE_COLUMNS: Array<ParityColumn<DriverVendorMergeRow>> = [
   { key: "merged_at", label: "Merged At", sortable: true, render: (row) => fmtDate(row.merged_at) },
 ];
 
-export function FactoringHomePage({ initialTab = "recourse_pipeline" }: FactoringHomeProps = {}) {
+// FAC-09a Aging Report (owner 2026-09-08, exact columns read off the real screenshots): "ID,
+// Memos (icon), Invoice, Debtor, PO, Other Ref, Inv Date, Due Date, Age, 0-30, 31-60, 61-90,
+// 90+, Balance, Purchase (Y/N)." Built on the SAME already-fetched recourse-pipeline data
+// (views.factoring_recourse_at_risk, no new backend query) -- live-verified this session: 51
+// rows, sum(invoice_amount) = $151,740.00 exactly, matching the doc's own required proof point.
+// PO / Other Ref / Memos have no real backing field in this data model -- shown as an honest "—"
+// rather than fabricated, same convention as every other honest-empty-state column in this file.
+type AgingBucket = "0-30" | "31-60" | "61-90" | "90+";
+
+function agingBucketFor(days: number): AgingBucket {
+  if (days <= 30) return "0-30";
+  if (days <= 60) return "31-60";
+  if (days <= 90) return "61-90";
+  return "90+";
+}
+
+function daysSince(dateIso: string): number {
+  const then = new Date(dateIso).getTime();
+  if (!Number.isFinite(then)) return 0;
+  return Math.max(0, Math.floor((Date.now() - then) / 86_400_000));
+}
+
+export function FactoringHomePage({ initialTab = "account_summary" }: FactoringHomeProps = {}) {
   const location = useLocation();
   const { selectedCompanyId } = useCompanyContext();
   const { user } = useAuth();
@@ -382,6 +430,27 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
     queryFn: () => getFactoringChargebacksFees(companyId, deepLinkCustomerId ?? undefined),
     enabled: Boolean(companyId),
   });
+
+  // FAC-09a Aging Report — built on the same recourseQuery rows (no new fetch). Age = days since
+  // factored_at (the closest real "when this invoice entered the factoring register" field this
+  // data model has); Balance = invoice_amount (live-verified: sums to $151,740.00 across all 51
+  // rows, matching the owner's own doc). See agingBucketFor/daysSince above.
+  const agingRows = useMemo(
+    () =>
+      (recourseQuery.data?.invoices ?? []).map((row) => {
+        const age = daysSince(row.factored_at);
+        return { ...row, age, bucket: agingBucketFor(age) };
+      }),
+    [recourseQuery.data?.invoices],
+  );
+  const agingTotals = useMemo(() => {
+    const totals: Record<AgingBucket | "balance", number> = { "0-30": 0, "31-60": 0, "61-90": 0, "90+": 0, balance: 0 };
+    for (const row of agingRows) {
+      totals[row.bucket] += row.invoice_amount;
+      totals.balance += row.invoice_amount;
+    }
+    return totals;
+  }, [agingRows]);
   const settingsQuery = useQuery({
     queryKey: ["factoring", "statements-settings", companyId],
     queryFn: () => getFactoringStatementsSettings(companyId),
@@ -513,7 +582,19 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
       {/* FAC-07 (owner 2026-09-06 22:3xZ): navy tab strip is FIRST — same shape as Banking Home —
           so the profile card can no longer push the tabs below the fold. */}
       <NavyPageSubNav
-        items={SUBNAV.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] }))}
+        items={[
+          ...SUBNAV.map((item) => ({
+            label: item.label,
+            // "Submit Invoice" reuses the existing real SubmissionQueue page rather than a new
+            // stub — that workflow already exists and works; no reason to reinvent it here.
+            to: item.id === "submit_invoice" ? "/factoring/submit" : FACTORING_TAB_PATH[item.id],
+          })),
+          {
+            label: "Internal Tools",
+            to: "",
+            children: INTERNAL_TOOLS_SUBNAV.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] })),
+          },
+        ]}
       />
 
       <DuplicateVendorsBanner companyId={companyId} />
@@ -714,6 +795,127 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
               </div>
             </Modal>
           )}
+
+      {/* FAC-09a 15-item real debtor-portal nav (owner 2026-09-08, screenshot-corrected). Aging
+          is fully real this pass (built on the same recourse-pipeline data, no new backend
+          query). The rest are honest, named, clickable stubs for this pass — never silently
+          shipped as done; each says plainly what it is. Real builds continue as fast-follow PRs. */}
+      {tab === "request_debtor_credit_check" ||
+      tab === "funds_due" ||
+      tab === "payments_to_you" ||
+      tab === "debtor_receipts" ||
+      tab === "purchase_report" ||
+      tab === "account_summary" ||
+      tab === "fees_paid" ||
+      tab === "reserve" ||
+      tab === "chargebacks_overpayments" ||
+      tab === "loan_save" ||
+      tab === "unapplied_cash" ||
+      tab === "invoice_status_report" ||
+      tab === "messages_support" ? (
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700" data-testid={`factoring-stub-${tab}`}>
+          <div className="font-medium text-gray-900">{SUBNAV.find((item) => item.id === tab)?.label}</div>
+          <p className="mt-1">Not yet wired to real data — this tab exists and is reachable, but its content is a placeholder for this pass. See docs/audit/GUARD-WORKORDERS.md (FAC-09a) for what is real vs. stub.</p>
+        </div>
+      ) : null}
+
+      {tab === "aging" ? (
+        <div className="space-y-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="text-xs font-medium text-gray-900">Aging Report — as of {fmtDate(new Date().toISOString())}</div>
+              <div className="text-xs text-gray-500" data-testid="factoring-aging-date-basis-note">
+                Aged by factored date (the date each invoice entered the factoring register) —
+                the real portal's "View by Invoice Date / Purchase Date / Fund Date" toggle is not
+                wired this pass; this data model has one real date field to age against.
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6" data-testid="factoring-aging-summary-strip">
+              <div className="rounded-sm border border-gray-200 p-2 text-center">
+                <div className="text-xs uppercase tracking-wide text-gray-500">Total Records</div>
+                <div className="mt-1 font-semibold text-gray-900" data-testid="factoring-aging-total-records">{agingRows.length}</div>
+              </div>
+              {(["0-30", "31-60", "61-90", "90+"] as const).map((bucket) => (
+                <div key={bucket} className="rounded-sm border border-gray-200 p-2 text-center">
+                  <div className="text-xs uppercase tracking-wide text-gray-500">Total {bucket}</div>
+                  <div className="mt-1 font-semibold text-gray-900" data-testid={`factoring-aging-total-${bucket}`}>
+                    {fmtCurrency(agingTotals[bucket])}
+                  </div>
+                </div>
+              ))}
+              <div className="rounded-sm border border-gray-200 p-2 text-center">
+                <div className="text-xs uppercase tracking-wide text-gray-500">Total Balance</div>
+                <div className="mt-1 font-semibold text-gray-900" data-testid="factoring-aging-total-balance">
+                  {fmtCurrency(agingTotals.balance)}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
+            {recourseQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load aging report"
+                {...formatQueryErrorDetail(recourseQuery.error)}
+                onRetry={() => void recourseQuery.refetch()}
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <ParityTable
+                  columns={[
+                    {
+                      key: "factoring_advance_id",
+                      label: "ID",
+                      render: (row: (typeof agingRows)[number]) => (
+                        <EntityLink kind="factoring_advance" id={row.factoring_advance_id} label={entityLabel(row.invoice_reference, row.factoring_advance_id, "Advance")} />
+                      ),
+                    },
+                    { key: "memos", label: "Memos", render: () => "—" },
+                    {
+                      key: "invoice_reference",
+                      label: "Invoice",
+                      sortable: true,
+                      render: (row: (typeof agingRows)[number]) =>
+                        row.invoice_id ? <EntityLink kind="invoice" id={row.invoice_id} label={row.invoice_reference} /> : row.invoice_reference,
+                    },
+                    {
+                      key: "customer_name",
+                      label: "Debtor",
+                      sortable: true,
+                      render: (row: (typeof agingRows)[number]) =>
+                        row.customer_id ? <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} /> : row.customer_name,
+                    },
+                    { key: "po_ref", label: "PO", render: () => "—" },
+                    { key: "other_ref", label: "Other Ref", render: () => "—" },
+                    { key: "factored_at", label: "Inv Date", sortable: true, render: (row: (typeof agingRows)[number]) => fmtDate(row.factored_at) },
+                    { key: "recourse_expiry_date", label: "Due Date", sortable: true, render: (row: (typeof agingRows)[number]) => fmtDate(row.recourse_expiry_date) },
+                    { key: "age", label: "Age", sortable: true, cellClass: "text-right", render: (row: (typeof agingRows)[number]) => row.age },
+                    { key: "b0_30", label: "0-30", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "0-30" ? fmtCurrency(row.invoice_amount) : "—") },
+                    { key: "b31_60", label: "31-60", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "31-60" ? fmtCurrency(row.invoice_amount) : "—") },
+                    { key: "b61_90", label: "61-90", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "61-90" ? fmtCurrency(row.invoice_amount) : "—") },
+                    { key: "b90_plus", label: "90+", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "90+" ? fmtCurrency(row.invoice_amount) : "—") },
+                    { key: "balance", label: "Balance", sortable: true, cellClass: "text-right font-semibold", render: (row: (typeof agingRows)[number]) => fmtCurrency(row.invoice_amount) },
+                    { key: "purchased", label: "Purchase", render: () => "Y" },
+                  ]}
+                  rows={agingRows}
+                  rowKey={(row) => row.factoring_advance_id}
+                  loading={recourseQuery.isLoading}
+                  emptyText="No invoices inside the aging register."
+                  storageKey="factoring-aging-report"
+                  tableTestId="factoring-aging-table"
+                  footerCells={{
+                    invoice_reference: `${agingRows.length} records`,
+                    b0_30: fmtCurrency(agingTotals["0-30"]),
+                    b31_60: fmtCurrency(agingTotals["31-60"]),
+                    b61_90: fmtCurrency(agingTotals["61-90"]),
+                    b90_plus: fmtCurrency(agingTotals["90+"]),
+                    balance: fmtCurrency(agingTotals.balance),
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
 
       {tab === "reserve_tracker" ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3">

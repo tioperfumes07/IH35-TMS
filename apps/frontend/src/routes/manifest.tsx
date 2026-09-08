@@ -670,6 +670,23 @@ function DriversSubtabRoute({
 }
 
 type FactoringTabId =
+  // FAC-09a 15-item real debtor-portal nav (owner 2026-09-08, screenshot-corrected).
+  | "submit_invoice"
+  | "request_debtor_credit_check"
+  | "funds_due"
+  | "payments_to_you"
+  | "debtor_receipts"
+  | "purchase_report"
+  | "account_summary"
+  | "fees_paid"
+  | "aging"
+  | "reserve"
+  | "chargebacks_overpayments"
+  | "loan_save"
+  | "unapplied_cash"
+  | "invoice_status_report"
+  | "messages_support"
+  // Internal-ops tabs (pre-existing, kept reachable — Rule 07, never delete).
   | "recourse_pipeline"
   | "chargebacks_fees"
   | "statements_settings"
@@ -2244,6 +2261,128 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
+        {/* FAC-09a 15-item real debtor-portal nav (owner 2026-09-08, screenshot-corrected). */}
+        <Route
+          path="/factoring/submit-invoice"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="submit_invoice" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/request-debtor-credit-check"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="request_debtor_credit_check" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/funds-due"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="funds_due" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/payments-to-you"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="payments_to_you" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/debtor-receipts"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="debtor_receipts" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/purchase-report"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="purchase_report" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/account-summary"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="account_summary" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/fees-paid"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="fees_paid" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/aging"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="aging" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/reserve"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="reserve" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/chargebacks-overpayments"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="chargebacks_overpayments" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/loan-save"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="loan_save" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/unapplied-cash"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="unapplied_cash" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/invoice-status-report"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="invoice_status_report" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/messages-support"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="messages_support" />
+            </ProtectedRoute>
+          }
+        />
+        {/* Internal-ops tabs (pre-existing, kept reachable — Rule 07, never delete). */}
         <Route
           path="/factoring/recourse-pipeline"
           element={

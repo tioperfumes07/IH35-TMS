@@ -159,7 +159,29 @@ export function maintenanceTabFromPath(pathname: string): string | null {
   return null;
 }
 
+// FAC-09a (owner 2026-09-08, "CORRECTED FROM REAL SCREENSHOTS"): the real Faro debtor portal
+// has 15 nav items, in this exact order — rebuilt here to match. The 5 pre-existing internal-ops
+// tabs (reserve_tracker/statements_settings/faro_imports/equipment_loans/vendor_merges) are kept
+// reachable (Rule 07 — never delete) under the "Internal Tools" dropdown rather than deleted;
+// they are a different kind of tool (internal ops actions) than the 15-item debtor-facing report
+// list the owner's screenshots describe, so they are additive, not folded into the 15.
 export const FACTORING_TAB_PATH: Record<string, string> = {
+  submit_invoice: "/factoring/submit-invoice",
+  request_debtor_credit_check: "/factoring/request-debtor-credit-check",
+  funds_due: "/factoring/funds-due",
+  payments_to_you: "/factoring/payments-to-you",
+  debtor_receipts: "/factoring/debtor-receipts",
+  purchase_report: "/factoring/purchase-report",
+  account_summary: "/factoring/account-summary",
+  fees_paid: "/factoring/fees-paid",
+  aging: "/factoring/aging",
+  reserve: "/factoring/reserve",
+  chargebacks_overpayments: "/factoring/chargebacks-overpayments",
+  loan_save: "/factoring/loan-save",
+  unapplied_cash: "/factoring/unapplied-cash",
+  invoice_status_report: "/factoring/invoice-status-report",
+  messages_support: "/factoring/messages-support",
+  // Internal-ops tabs (pre-existing, kept reachable under "Internal Tools" — not deleted).
   recourse_pipeline: "/factoring/recourse-pipeline",
   chargebacks_fees: "/factoring/chargebacks-fees",
   statements_settings: "/factoring/statements-settings",
@@ -171,11 +193,11 @@ export const FACTORING_TAB_PATH: Record<string, string> = {
 
 export function factoringTabFromPath(pathname: string): string {
   const norm = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
-  if (norm === "/factoring") return "recourse_pipeline";
+  if (norm === "/factoring") return "account_summary";
   for (const [id, routePath] of Object.entries(FACTORING_TAB_PATH)) {
     if (routePath === norm) return id;
   }
-  return "recourse_pipeline";
+  return "aging";
 }
 
 export const DISPATCH_SECONDARY_TAB_PATH: Record<string, string> = {
