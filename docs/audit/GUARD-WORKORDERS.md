@@ -8942,3 +8942,61 @@ Live-verified (Neon, USMCA): `driver_finance.driver_bills`=93 rows vs `accountin
 ## VC-06 — CLOSED (CC-1, 2026-09-07): Customer Transaction List Load#/Settlement#/Truck#/dates/miles now wired
 
 Root cause: `Customers.tsx`'s Transaction List already had column definitions reading `linked_settlement_id`/`linked_unit_number`/`linked_pickup_date`/`linked_delivery_date`/`linked_loaded_miles` (tagged `CV-TRANSACTION-COLUMNS inv #46`), but its backing query called `listAllInvoices` → `GET /api/v1/accounting/invoices`, which only joins `mdata.loads` (Load # only) — every other linked field was always `undefined`, so every column always rendered "—". A correctly-joined, purpose-built, already-DB-tested route (`GET /api/v1/customers/:id/invoices`, `customer-invoices.routes.ts` — joins `mdata.units`/`mdata.load_stops`/`driver_finance.driver_settlements`) already existed but was never called by any frontend page. Fixed by wiring `Customers.tsx`'s `invoicesQuery` to the customer-scoped route instead of porting its joins into the general invoices list (PR #21342, `ACCT-F26047`, merged `5d1a3dac8f`). Vendor side (`Vendors.tsx`/`listBillsByVendor`) read-checked and appears already correctly wired — a load-linked vendor bill still showing dashes would be a separate live spot-check, not this fix's scope. Guard: `scripts/verify-customer-transactions-uses-linked-joins-endpoint.mjs` (verify-step 10913). | `apps/frontend/src/pages/Customers.tsx`, `apps/frontend/src/api/accounting.ts` | — | none — closed | PR #21342 evidence block; apps/frontend tsc -b exit 0 | **CLOSED · endpoint-wiring fix, reused an already-built+tested backend route · Live=UNVERIFIED until deploy + live walkthrough** |
+
+## USMCA-TEST-FIXTURE-HARD-DELETE — MOSTLY CLOSED (CC-1, 2026-09-07, owner direct order, live execution)
+
+Owner direct order: "all test demo, practice etc names must have been hard deleted already." Executed
+the live delete against the 12 records named in the order (7 `mdata.drivers` + 5 mirrored
+`mdata.vendors`, all Codex onboarding-flow test artifacts, 2026-08-21 through 2026-08-29) plus 2
+additional pre-existing `is_sample_data=true` test vendors surfaced by the order's own final
+verification query (`CODEX-AUDIT-SPINE-VENDOR-20260816-0327`, `CODEX AUDIT-SPINE-DRIVER-20260816-0329`,
+an unrelated older audit-spine test batch, zero linkage anywhere, confirmed via an exhaustive
+`pg_constraint`-driven scan of every FK referencing `mdata.vendors`).
+
+**Result: 5 of 7 drivers + all 7 vendors (5+2) HARD-DELETED. 2 of 7 drivers BLOCKED, not forced** —
+per the order's own instruction ("if either DELETE hits an FK violation... STOP, do not force it,
+report which table/constraint"):
+- `9f35cf21-01bb-467e-bc31-e96bb9c60dfe` — blocked by `dispatch.stop_arrivals` (append-only, DELETE
+  refused at the DB level, no soft-delete column exists on that table).
+- `db37af23-ea20-493b-8321-a26a30205250` — blocked by `telematics.vehicle_driver_assignments`
+  (same append-only refusal).
+
+Both were already `deactivated_at`-set (soft-deactivated 2026-09-01) before this pass and remain so —
+correctly excluded from Active driver counts, just not hard-removable while their append-only
+telematics/dispatch evidence rows exist. Six OTHER child-table rows across `drivers.retention_scores`
+(10 rows, a nightly-job-computed cache, not WORM-protected), `safety.driver_safety_scores` (5 rows,
+same), `safety.driver_leave_requests`/`dvir_submissions`/`harsh_events` (1 row each, all explicitly
+TEST-tagged in their own data — `"reason": "TEST DATA sick day keep"`,
+`raw_samsara_id: "TEST-TESTMTDQ4UCF"`) were confirmed as downstream test artifacts of these SAME 7
+test drivers (not independent real records) and deleted first to satisfy the FK ordering, for the 5
+drivers that were NOT blocked by an append-only table.
+
+**Mechanical note for whoever runs a live-data DELETE against this project next:** the write-capable
+Neon MCP connection is pooled and silently downgrades to `ih35_app` (RLS-restricted, no DELETE policy
+exists on `mdata.drivers`/`mdata.vendors` at all — every DELETE attempt returns 0 rows with NO error,
+which looks like success but changes nothing) — `RESET ROLE` must run as its own statement before any
+DELETE to restore `neondb_owner` (confirmed `rolbypassrls=true`), matching the existing
+`neon-pooled-owner-connection-role-downgrade` landmine. `information_schema`-based FK scans under the
+downgraded role can ALSO silently omit real constraints (missed `driver_safety_scores`'s FK entirely on
+a first pass) — a `pg_constraint`/`pg_class` catalog-direct scan (immune to role-based
+information_schema visibility) is the reliable way to enumerate every FK referencing a table before
+attempting a hard delete.
+
+Not duplicative of Codex's concurrent `DRIVER-TEST-FIXTURES-LEAK-AS-REAL` (PR #21357, merged): that PR
+ships a GOING-FORWARD systemic quarantine capability (auto-mark + audited soft-quarantine route) for
+future leaks; this row is the one-time retroactive HARD delete the owner explicitly ordered for the
+records that already existed. Complementary, not overlapping. | `mdata.drivers`, `mdata.vendors`,
+`drivers.retention_scores`, `safety.driver_safety_scores`, `safety.driver_leave_requests`,
+`safety.dvir_submissions`, `safety.harsh_events` (rows deleted, no code/schema change) | **whoever owns
+`dispatch.stop_arrivals`/`telematics.vehicle_driver_assignments` (append-only tables) — a soft-delete
+column would be needed on either before the 2 remaining test drivers can be fully hard-deleted; not
+built here, owner may decide 2 permanently-soft-deactivated test-driver rows are an acceptable
+permanent residue instead** | add a soft-delete/void column to the 2 append-only tables if hard-deleting
+these 2 drivers is still required, or accept the current deactivated-but-present state as final | Neon
+live (bypass_rls=lucia + RESET ROLE, tiny-field-89581227): 12 RETURNING rows from the 2 successful
+driver DELETEs + 2 vendor DELETE batches (ids/names quoted above); final confirmation query (owner's
+own SQL) returns exactly 2 remaining rows, both already-deactivated, both with a named blocking
+constraint; 0 vendors, 0 customers, 0 test load numbers remain matching any test/demo/practice/codex
+pattern | **MOSTLY CLOSED · 5/7 drivers + 7/7 vendors hard-deleted, live-proven · 2/7 drivers blocked by
+append-only tables with no soft-delete path, reported not forced, already soft-deactivated as fallback**
+|
