@@ -67,8 +67,18 @@ import { CompanyWaterfallSection } from "./components/CompanyWaterfallSection";
 import { SettlementNumberBox } from "./components/SettlementNumberBox";
 
 function toDeductionRows(lines: Array<Record<string, unknown>>): DeductionRow[] {
+  // OWNER-LIVE-DEFECT-2026-09-08 (Jorge, live walkthrough of S-13644): this filter excluded
+  // line_type='escrow_contribution' entirely — an escrow-contribution settlement line withholds
+  // real driver dollars ($25/load, same as any other deduction) but was invisible to both this
+  // table AND this page's own Net Pay Summary math, even though the settlement's stored,
+  // authoritative deductions_total column (driver_finance.driver_settlements.deductions_total)
+  // DOES include it. Live proof: S-13644's stored deductions_total is $469.99 — the nine
+  // line_type='deduction' rows sum to $444.99, and the missing $25.00 is exactly one
+  // line_type='escrow_contribution' row ("Load 13555 — Escrow Contribution") this filter dropped.
+  // Escrow withholding is economically a deduction from this period's pay, so it belongs in the
+  // same table the driver and owner read as "what was withheld."
   return lines
-    .filter((line) => String(line.line_type) === "deduction")
+    .filter((line) => ["deduction", "escrow_contribution"].includes(String(line.line_type)))
     .map((line) => ({
       id: String(line.id),
       description: String(line.description ?? "Deduction"),
@@ -251,6 +261,23 @@ export function SettlementDetailPage() {
   });
   const debt = useLiveDebt(driverId, companyId || null);
   const lines = (settlement.lines as Array<Record<string, unknown>> | undefined) ?? [];
+  // OWNER-LIVE-DEFECT-2026-09-08 (Jorge, live walkthrough of S-13644): settlements.routes.ts's
+  // lines query (SELECT sl.* ... WHERE sl.settlement_id = $1) intentionally does NOT filter
+  // sl.voided_at/sl.is_active — the SQL comment above it says so, because "loads in cycle" (built
+  // from the raw `lines` array below) is a historical record and a voided line's load must not
+  // disappear from that history. But that same unfiltered `lines` array was also being fed
+  // straight into the MONEY math (earnings/deadhead/extra/reimbursements/deductions -> NetPaySummary
+  // and the KPI net-pay figure) with no voided-line exclusion at all. Live proof: settlement
+  // S-13644 (Alfonso Hidalgo Chavez) carries a voided (voided_at set, is_active=false) $581.58
+  // "Load 13506 — Loaded Miles" earnings line for a CANCELLED load — it was still being summed
+  // into Gross Pay, inflating the on-screen Net Pay Summary total by exactly $581.58 (queried live,
+  // Neon tiny-field-89581227/br-fancy-credit-akjnd07a, 2026-09-08). `activeLines` is the
+  // money-math-only view: `lines` (unfiltered, historical) stays the source for "loads in cycle"
+  // and the team-split gate below; every dollar total on this page must read from `activeLines`.
+  const activeLines = useMemo(
+    () => lines.filter((line) => !line.voided_at && line.is_active !== false),
+    [lines]
+  );
   const hasEngineTeamSplitLines = useMemo(
     () => lines.some((line) => ["team_split_primary", "team_split_secondary"].includes(String(line.line_type))),
     [lines]
@@ -298,7 +325,7 @@ export function SettlementDetailPage() {
     enabled: Boolean(settlementLoadId && companyId),
   });
 
-  const earnings = lines.filter((line) => String(line.line_type) === "earnings").map((line) => ({
+  const earnings = activeLines.filter((line) => String(line.line_type) === "earnings").map((line) => ({
     id: String(line.id),
     // C5 — the load was carried on the line and then dropped here, which is why the Earnings
     // "Load" column had nothing but the line id to show.
@@ -333,7 +360,7 @@ export function SettlementDetailPage() {
   }));
   // 25-task #12 — deadhead_pay is its own settlement_lines row (MILES SPEC), rendered as its own
   // "Empty Miles" section, never folded into Earnings (which is the loaded-mile row).
-  const deadhead = lines.filter((line) => String(line.line_type) === "deadhead_pay").map((line) => ({
+  const deadhead = activeLines.filter((line) => String(line.line_type) === "deadhead_pay").map((line) => ({
     id: String(line.id),
     load_id: typeof line.load_id === "string" ? line.load_id : null,
     load_number: typeof line.load_number === "string" ? line.load_number : null,
@@ -359,7 +386,7 @@ export function SettlementDetailPage() {
     rate_source: typeof line.rate_source === "string" ? line.rate_source : null,
     amount: Number(line.amount ?? 0),
   }));
-  const extra = lines.filter((line) => String(line.line_type) === "extra_pay").map((line) => ({
+  const extra = activeLines.filter((line) => String(line.line_type) === "extra_pay").map((line) => ({
     id: String(line.id),
     // S.1b — load linkage, line_date, and approval_status for the Additional pay section.
     load_id: typeof line.load_id === "string" ? line.load_id : null,
@@ -370,7 +397,7 @@ export function SettlementDetailPage() {
     description: String(line.description ?? ""),
     amount: Number(line.amount ?? 0),
   }));
-  const reimbursements = lines.filter((line) => String(line.line_type) === "reimbursement").map((line) => ({
+  const reimbursements = activeLines.filter((line) => String(line.line_type) === "reimbursement").map((line) => ({
     id: String(line.id),
     // S.1b — load linkage, line_date (COALESCE of posting_date), reimbursement_type/reason,
     // vendor fields, and receipt_number from the driver_reimbursements join.
@@ -384,7 +411,7 @@ export function SettlementDetailPage() {
     receipt_number: typeof line.receipt_number === "string" ? line.receipt_number : null,
     amount: Number(line.amount ?? 0),
   }));
-  const deductions = toDeductionRows(lines);
+  const deductions = toDeductionRows(activeLines);
 
   const summary = useMemo(() => {
     const earningsTotal = earnings.reduce((sum, row) => sum + row.amount, 0);
