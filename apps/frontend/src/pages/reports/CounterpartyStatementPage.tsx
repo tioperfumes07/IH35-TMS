@@ -112,7 +112,7 @@ const loadColumns: Array<ParityColumn<LoadRow>> = [
   },
 ];
 
-type ExpenseRow = Pick<ExpenseListRow, "id" | "transaction_date" | "memo" | "total_amount_cents" | "status" | "load_number">;
+type ExpenseRow = Pick<ExpenseListRow, "id" | "transaction_date" | "memo" | "total_amount_cents" | "status" | "load_number" | "load_id">;
 
 const expenseColumns: Array<ParityColumn<ExpenseRow>> = [
   {

@@ -102,6 +102,7 @@ export type CustomerActivityRow = {
   date: string;
   type: CustomerActivityType;
   reference: string;
+  load_id: string | null;
   load_number: string | null;
   /** Signed: positive = charge (invoice), negative = payment/credit/advance. */
   amount_cents: number;
