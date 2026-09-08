@@ -44,6 +44,19 @@ export function audit(src) {
   if (authorizationJoins.length !== 2) {
     failures.push(`${FILES.routes}: canonical driver count and row reads must both admit active selected-company driver authorizations`);
   }
+  if (!/function unmistakableDriverFixtureName[\s\S]{0,180}\(test\|codex\)/.test(src.routes) ||
+      !/\(b\.is_sample_data \?\? false\) \|\| unmistakableDriverFixtureName\(b\.first_name, b\.last_name\)/.test(src.routes)) {
+    failures.push(`${FILES.routes}: unmistakable TEST/CODEX onboarding names must be marked is_sample_data at the canonical create write`);
+  }
+  if (!/quarantine_test_fixture: z\.literal\(true\)\.optional\(\)/.test(src.routes) ||
+      !/mdata_driver_test_fixture_has_real_activity/.test(src.routes) ||
+      !/is_sample_data = CASE WHEN \$4::boolean THEN true ELSE is_sample_data END/.test(src.routes) ||
+      !/status_locked_reason = CASE WHEN \$4::boolean THEN 'test_fixture_quarantine'/.test(src.routes)) {
+    failures.push(`${FILES.routes}: canonical deactivate route must atomically quarantine only unlinked fixture drivers as sample + inactive`);
+  }
+  if (!/reason: quarantineTestFixture \? "test fixture quarantined per owner ruling — never delete"/.test(src.routes)) {
+    failures.push(`${FILES.routes}: fixture quarantine must retain the owner reason in the append-only audit event`);
+  }
   return failures;
 }
 
@@ -79,7 +92,23 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL — shared-driver authorization mutation escaped`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 2 mutations detected`);
+  const createMutation = {
+    ...good,
+    routes: good.routes.replace("(b.is_sample_data ?? false) || unmistakableDriverFixtureName(b.first_name, b.last_name)", "b.is_sample_data ?? false"),
+  };
+  if (audit(createMutation).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — fixture-create mutation escaped`);
+    process.exit(1);
+  }
+  const quarantineMutation = {
+    ...good,
+    routes: good.routes.replace("is_sample_data = CASE WHEN $4::boolean THEN true ELSE is_sample_data END", "is_sample_data = is_sample_data"),
+  };
+  if (audit(quarantineMutation).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — fixture-quarantine mutation escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — 4 mutations detected`);
   process.exit(0);
 }
 
