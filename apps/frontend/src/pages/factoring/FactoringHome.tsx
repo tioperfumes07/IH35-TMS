@@ -359,21 +359,14 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
   const deepLinkVendorId = applied.vendorId || null;
   const deepLinkDriverId = applied.driverId || null;
 
-  // NEW-20 (2026-09-07): setCustomerFilter/setLoadFilter used to wrap staged.setDraft for the
-  // recourse-pipeline and chargebacks-fees Customer/Load pickers; both call sites now call
-  // staged.setDraft(...) directly inline (matching the established CollapsedListFilters
-  // convention every other consumer uses, e.g. ExpensesListPage.tsx) so
+  // NEW-20/NEW-26 (2026-09-07): setCustomerFilter/setLoadFilter/setVendorFilter/setDriverFilter
+  // used to wrap staged.setDraft for each tab's own Customer/Load/Vendor/Driver pickers; every
+  // call site now calls staged.setDraft(...) directly inline (matching the established
+  // CollapsedListFilters convention every other consumer uses, e.g. ExpensesListPage.tsx) so
   // verify-collapsed-list-filters-apply.mjs's static scan — which whitelists only the literal
   // `setDraft` call name inside a CollapsedListFilters body — can see the mutation is
-  // draft-only without needing to trace through a named wrapper function. Removed as dead code;
-  // setVendorFilter/setDriverFilter below are unaffected (still used by other tabs' bespoke
-  // filter grids, out of this PR's scope).
-  function setVendorFilter(next: string) {
-    staged.setDraft((d) => ({ ...d, vendorId: next }));
-  }
-  function setDriverFilter(next: string) {
-    staged.setDraft((d) => ({ ...d, driverId: next }));
-  }
+  // draft-only without needing to trace through a named wrapper function. All four wrapper
+  // functions removed as dead code once their last call site moved to the inline form.
 
   const recourseQuery = useQuery({
     queryKey: ["factoring", "recourse", companyId, deepLinkCustomerId, deepLinkLoadId],
@@ -1162,44 +1155,43 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
               </Button>
             </div>
           </div>
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="relative mb-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3" data-testid="factoring-home-equipment-loan-filters">
-              <label className="text-[11px] text-slate-600">
-                Lender vendor
-                <EntityPicker
-                  kind="vendor"
-                  operatingCompanyId={companyId}
-                  value={filterDraft.vendorId || null}
-                  onChange={(next) => setVendorFilter(next ?? "")}
-                  allowCreate={false}
-                  placeholder="All lenders"
-                  className="mt-1"
-                  dataTestId="factoring-home-filter-vendor"
-                />
-              </label>
-              <div className="flex flex-wrap items-end gap-2">
-                <Button type="button" size="sm" data-testid="factoring-home-equipment-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
-                  Apply
-                </Button>
-                <Button type="button" size="sm" variant="secondary" data-testid="factoring-home-equipment-filter-cancel" onClick={staged.cancel} disabled={!staged.dirty}>
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  data-testid="factoring-home-equipment-filter-reset"
-                  onClick={() => {
-                    staged.cancel();
-                    setApplied(EMPTY_FILTERS);
-                    patchListSearchParam(EMPTY_FILTERS);
-                  }}
-                >
-                  Reset
-                </Button>
-              </div>
+          <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-home-equipment-loan-filters">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="text-xs font-medium text-gray-900">Loans + ledger actions</div>
+              {/* NEW-26: this list is a raw card list, not a ParityTable, so there is no
+                  search/range/gear row to fold into via filterBar — CollapsedListFilters is used
+                  standalone here instead, still compacting the always-open filter grid into a
+                  toggle. */}
+              <CollapsedListFilters
+                activeFilterCount={applied.vendorId ? 1 : 0}
+                onApply={staged.apply}
+                onCancel={staged.cancel}
+                onReset={() => {
+                  staged.cancel();
+                  setApplied(EMPTY_FILTERS);
+                  patchListSearchParam(EMPTY_FILTERS);
+                }}
+                applyDisabled={!staged.dirty}
+                testIdPrefix="factoring-home-equipment"
+                applyTestId="factoring-home-equipment-filter-apply"
+                cancelTestId="factoring-home-equipment-filter-cancel"
+                resetTestId="factoring-home-equipment-filter-reset"
+              >
+                <label className="text-[11px] text-slate-600">
+                  Lender vendor
+                  <EntityPicker
+                    kind="vendor"
+                    operatingCompanyId={companyId}
+                    value={filterDraft.vendorId || null}
+                    onChange={(next) => staged.setDraft((d) => ({ ...d, vendorId: next ?? "" }))}
+                    allowCreate={false}
+                    placeholder="All lenders"
+                    className="mt-1"
+                    dataTestId="factoring-home-filter-vendor"
+                  />
+                </label>
+              </CollapsedListFilters>
             </div>
-            <div className="mb-2 text-xs font-medium text-gray-900">Loans + ledger actions</div>
             <div className="space-y-2">
               {(equipmentLoansQuery.data?.rows ?? []).map((row) => (
                 <div key={row.id} className="rounded-sm border border-gray-200 p-2 text-xs">
@@ -1346,56 +1338,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
               </Button>
             </div>
           </div>
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="relative mb-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3" data-testid="factoring-home-vendor-merges-filters">
-              <label className="text-[11px] text-slate-600">
-                Driver
-                <EntityPicker
-                  kind="driver"
-                  operatingCompanyId={companyId}
-                  value={filterDraft.driverId || null}
-                  onChange={(next) => setDriverFilter(next ?? "")}
-                  allowCreate={false}
-                  placeholder="All drivers"
-                  className="mt-1"
-                  dataTestId="factoring-home-filter-driver"
-                />
-              </label>
-              <label className="text-[11px] text-slate-600">
-                Vendor
-                <EntityPicker
-                  kind="vendor"
-                  operatingCompanyId={companyId}
-                  value={filterDraft.vendorId || null}
-                  onChange={(next) => setVendorFilter(next ?? "")}
-                  allowCreate={false}
-                  placeholder="All vendors"
-                  className="mt-1"
-                  dataTestId="factoring-home-merges-filter-vendor"
-                />
-              </label>
-              <div className="flex flex-wrap items-end gap-2">
-                <Button type="button" size="sm" data-testid="factoring-home-merges-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
-                  Apply
-                </Button>
-                <Button type="button" size="sm" variant="secondary" data-testid="factoring-home-merges-filter-cancel" onClick={staged.cancel} disabled={!staged.dirty}>
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  data-testid="factoring-home-merges-filter-reset"
-                  onClick={() => {
-                    staged.cancel();
-                    setApplied(EMPTY_FILTERS);
-                    patchListSearchParam(EMPTY_FILTERS);
-                  }}
-                >
-                  Reset
-                </Button>
-              </div>
-            </div>
+          <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-home-vendor-merges-filters">
             <div className="mb-2 text-xs font-medium text-gray-900">Recent merge history</div>
             {vendorMergesQuery.isError ? (
               <ListErrorState
@@ -1411,6 +1354,56 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                 loading={vendorMergesQuery.isLoading}
                 emptyText="No merge history yet."
                 storageKey="factoring-home-vendor-merges"
+                filterBar={
+                  // NEW-26 (owner 2026-09-07): "QuickBooks-style filters (date range etc.)
+                  // missing across ALL Factoring tabs." Same CollapsedListFilters chrome as
+                  // NEW-20's Recourse Pipeline / Chargebacks & Fees fix, extended to this tab's
+                  // own Driver/Vendor filter grid.
+                  <CollapsedListFilters
+                    activeFilterCount={[applied.driverId, applied.vendorId].filter(Boolean).length}
+                    onApply={staged.apply}
+                    onCancel={staged.cancel}
+                    onReset={() => {
+                      staged.cancel();
+                      setApplied(EMPTY_FILTERS);
+                      patchListSearchParam(EMPTY_FILTERS);
+                    }}
+                    applyDisabled={!staged.dirty}
+                    testIdPrefix="factoring-home-merges"
+                    applyTestId="factoring-home-merges-filter-apply"
+                    cancelTestId="factoring-home-merges-filter-cancel"
+                    resetTestId="factoring-home-merges-filter-reset"
+                  >
+                    <div className="flex flex-wrap items-end gap-3">
+                      <label className="text-[11px] text-slate-600">
+                        Driver
+                        <EntityPicker
+                          kind="driver"
+                          operatingCompanyId={companyId}
+                          value={filterDraft.driverId || null}
+                          onChange={(next) => staged.setDraft((d) => ({ ...d, driverId: next ?? "" }))}
+                          allowCreate={false}
+                          placeholder="All drivers"
+                          className="mt-1"
+                          dataTestId="factoring-home-filter-driver"
+                        />
+                      </label>
+                      <label className="text-[11px] text-slate-600">
+                        Vendor
+                        <EntityPicker
+                          kind="vendor"
+                          operatingCompanyId={companyId}
+                          value={filterDraft.vendorId || null}
+                          onChange={(next) => staged.setDraft((d) => ({ ...d, vendorId: next ?? "" }))}
+                          allowCreate={false}
+                          placeholder="All vendors"
+                          className="mt-1"
+                          dataTestId="factoring-home-merges-filter-vendor"
+                        />
+                      </label>
+                    </div>
+                  </CollapsedListFilters>
+                }
               />
             )}
           </div>
