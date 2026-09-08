@@ -1,10 +1,10 @@
 {
-  "healthzSha": "287a7d2",
-  "generated_at": "2026-09-07T23:46:33.158Z",
+  "healthzSha": "0284c1b",
+  "generated_at": "2026-09-08T07:28:28.872Z",
   "meta": {
     "generatedAt": "2026-09-07T14:01:54-05:00",
     "sourceSha": "c8bffc7c01",
-    "deployedSha": "287a7d2",
+    "deployedSha": "0284c1b",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 21350,
-      "title": "FINDING: N/A (docs(board) -- §7 financial palette baseline regrown 6->8, blocking every seat's push, transparent unblock only)",
+      "number": 21460,
+      "title": "FINDING: Phase 2 (settlement repost) recipe was only in chat/summary, not in-repo — the next working session (or another seat) would re-derive the schema facts and dependency list from scratch, exactly the amnesia Rule 51 exists to stop.",
       "state": "merged",
-      "mergedAtCt": "09/07/2026, 06:44 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21350",
-      "sha": "c6e87e4766",
-      "committedAtIso": "2026-09-07T18:44:58-05:00"
+      "mergedAtCt": "09/08/2026, 02:25 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21460",
+      "sha": "0d196be76d",
+      "committedAtIso": "2026-09-08T02:25:13-05:00"
     },
     {
-      "number": 21348,
-      "title": "FINDING: wire verify-factoring-collapsed-filter-chrome into verify-step 10916 (orphan guard)",
+      "number": 21459,
+      "title": "FINDING: migration checksum \"modified after apply\" (placeholder ledger checksum from a manual CC-1 apply) blocking ALL production backend deploys, second/deeper layer under the LV-087 fix — recorded as a documented checksum override",
       "state": "merged",
-      "mergedAtCt": "09/07/2026, 06:40 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21348",
-      "sha": "cc27b72bca",
-      "committedAtIso": "2026-09-07T18:40:27-05:00"
+      "mergedAtCt": "09/08/2026, 02:23 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21459",
+      "sha": "0284c1bc7a",
+      "committedAtIso": "2026-09-08T02:23:35-05:00"
     },
     {
-      "number": 21346,
-      "title": "FINDING: BUILD-VITEST5 — deploy build_failed (npm ERESOLVE) after vitest 5 merge left @vitest/coverage-v8/@vitest/ui at 4.x",
+      "number": 21458,
+      "title": "FINDING: NEW-16 -- Chargebacks & Overpayments page built real",
       "state": "merged",
-      "mergedAtCt": "09/07/2026, 06:30 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21346",
-      "sha": "287a7d283a",
-      "committedAtIso": "2026-09-07T18:30:19-05:00"
+      "mergedAtCt": "09/08/2026, 02:17 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21458",
+      "sha": "40de2dd3a2",
+      "committedAtIso": "2026-09-08T02:17:01-05:00"
     },
     {
-      "number": 21345,
-      "title": "FINDING: NEW-20 -- Recourse Pipeline + Chargebacks & Fees filters folded into shared CollapsedListFilters chrome",
+      "number": 21457,
+      "title": "FINDING: LV-087 ledger-orphan mirror row blocking ALL production backend deploys — recorded as a documented exception (real DDL confirmed already applied, not an unapplied migration)",
       "state": "merged",
-      "mergedAtCt": "09/07/2026, 06:24 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21345",
-      "sha": "400139b3b5",
-      "committedAtIso": "2026-09-07T18:24:37-05:00"
+      "mergedAtCt": "09/08/2026, 02:16 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21457",
+      "sha": "306da1fb45",
+      "committedAtIso": "2026-09-08T02:16:42-05:00"
     },
     {
-      "number": 21342,
-      "title": "FINDING: ACCT-F26047 VC-06 -- Customer Transaction List Load#/Settlement#/Truck#/dates/miles always dashed",
+      "number": 21456,
+      "title": "FINDING: N/A (board closure — NEW-29/NEW-30/NEW-31 closed citing PR #21455; final GO/NO-GO report for owner's PRIORITY #1 directive posted to OUTBOX-CC-2.md, docs-only)",
       "state": "merged",
-      "mergedAtCt": "09/07/2026, 06:17 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21342",
-      "sha": "5d1a3dac8f",
-      "committedAtIso": "2026-09-07T18:17:38-05:00"
+      "mergedAtCt": "09/08/2026, 02:12 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21456",
+      "sha": "0b6bdc91aa",
+      "committedAtIso": "2026-09-08T02:12:16-05:00"
     },
     {
-      "number": 21264,
-      "title": "chore(deps): bump vitest from 4.1.10 to 5.0.0",
+      "number": 21455,
+      "title": "FINDING: NEW-29/30/31 — dispatch-side click-confirm prompts for reefer lumper receipts/customer-invoice and late-arrival penalty (owner PRIORITY #1 directive, Dispatch cross-cut, no reach into CC-1's billing files)",
       "state": "merged",
-      "mergedAtCt": "09/07/2026, 06:16 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21264",
-      "sha": "55a9bbc549",
-      "committedAtIso": "2026-09-07T18:16:25-05:00"
+      "mergedAtCt": "09/08/2026, 02:09 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21455",
+      "sha": "38fb28efc4",
+      "committedAtIso": "2026-09-08T02:09:39-05:00"
     },
     {
-      "number": 21261,
-      "title": "chore(deps): bump plaid from 43.0.0 to 47.0.0",
+      "number": 21454,
+      "title": "FINDING: N/A (CLAIM-RESERVE 10831 -- reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "09/07/2026, 06:16 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21261",
-      "sha": "0859ad0a65",
-      "committedAtIso": "2026-09-07T18:16:03-05:00"
+      "mergedAtCt": "09/08/2026, 02:05 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21454",
+      "sha": "e78020f275",
+      "committedAtIso": "2026-09-08T02:05:07-05:00"
     },
     {
-      "number": 21258,
-      "title": "chore(ci): bump actions/checkout from 4 to 7",
+      "number": 21453,
+      "title": "FINDING: SETTLE-REBUILD-P1 orchestration script had no code-level block against running against prod (#21448 follow-up)",
       "state": "merged",
-      "mergedAtCt": "09/07/2026, 06:16 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21258",
-      "sha": "e17d065acd",
-      "committedAtIso": "2026-09-07T18:16:00-05:00"
+      "mergedAtCt": "09/08/2026, 01:59 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21453",
+      "sha": "879fc16966",
+      "committedAtIso": "2026-09-08T01:59:34-05:00"
     },
     {
-      "number": 21257,
-      "title": "chore(ci): bump actions/upload-artifact from 4 to 7",
+      "number": 21452,
+      "title": "FINDING: NEW-21 -- Recourse Pipeline detail view was missing Invoice Amount entirely and its Fees column was hardcoded to null",
       "state": "merged",
-      "mergedAtCt": "09/07/2026, 06:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21257",
-      "sha": "adbc08b05d",
-      "committedAtIso": "2026-09-07T18:15:55-05:00"
+      "mergedAtCt": "09/08/2026, 01:59 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21452",
+      "sha": "df194b1d4b",
+      "committedAtIso": "2026-09-08T01:59:02-05:00"
     },
     {
-      "number": 21341,
-      "title": "FINDING: ACCT-F26046 INV-01 -- settlement poster never stamped accounting.bills.driver_id on driver-pay bills",
+      "number": 21451,
+      "title": "FINDING: NEW-33-UPDATE reopened — pagination tiebreaker live-proven fixed (BANK-F25150 already live), balance root cause narrowed to a real Feb-2026 transaction-history gap on account e83028a5 (docs-only, owner PRIORITY #1 directive)",
       "state": "merged",
-      "mergedAtCt": "09/07/2026, 06:14 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21341",
-      "sha": "cf622ed720",
-      "committedAtIso": "2026-09-07T18:14:06-05:00"
+      "mergedAtCt": "09/08/2026, 01:55 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21451",
+      "sha": "34e750ce79",
+      "committedAtIso": "2026-09-08T01:55:49-05:00"
     }
   ]
 }

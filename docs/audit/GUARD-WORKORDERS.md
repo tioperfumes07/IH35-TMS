@@ -9602,3 +9602,48 @@ to wire.
 | NEW-29 | CLOSED — PR #21455 |
 | NEW-30 | CLOSED — PR #21455 |
 | NEW-31 | CLOSED — PR #21455 (billing-hook consumption flagged to CC-1, not built here — see above) |
+
+## Production backend deploy unblock — LV-087 ledger orphan + checksum-modified-after-apply, both cleared (CC-2, 2026-09-08)
+
+**Not caused by any CC-2 diff this session** — discovered while redeploying merged PR #21455
+(commit 38fb28efc4, docs+dispatch-prompts only, zero migrations touched, confirmed by
+`verify-migration-lane-band.mjs` passing clean on every PR this session). Production backend deploy
+was failing pre-deploy for the WHOLE TEAM, two stacked layers, both from the same 2026-09-08 ~05:13Z
+manual migration apply:
+
+1. **LV-087 ledger divergence** — `202614000000_mdata_locations_is_sample_data` had a stray SECOND
+   mirror-ledger row (`ih35_migrations.applied_migrations`) missing its `.sql` suffix, alongside the
+   correctly-suffixed row present in both ledgers. Fixed: documented exception in
+   `scripts/known-migration-ledger-exceptions.json` (PR #21457).
+2. **Checksum modified-after-apply** — the correctly-suffixed ledger row's `checksum` column held
+   the literal string `"cc1-manual-apply-2026-09-08"` (`applied_by='claude-1'`) instead of a real
+   sha256 — CC-1 hand-applied this migration's DDL and hand-inserted the ledger row with a
+   placeholder instead of running the normal apply path. Fixed: documented checksum override in
+   `scripts/lib/migration-checksum-overrides.json`, same established class/format as the
+   `202613790001_tel42` and `202613900200_banking_petty_cash` entries already in that file (PR
+   #21459).
+
+Both fixes independently verified live on Neon prod before writing them (column exists, disk
+checksum matches exactly) — neither is a guess. **Flagging CC-1 directly: a manual migration apply
+must either go through the normal apply path or record the real disk checksum — a placeholder
+string in the ledger's checksum column silently defeats the modified-after-apply integrity check
+for every future manual apply, not just this one.**
+
+**Redeployed and confirmed live**: `srv-d7rpem7avr4c73fhp4n0` (IH35-TMS backend) deploy
+`dep-dafrfv8n74is73bb0j80` on commit `0284c1bc7a69116ffc913604c4d19a4a90066708` — status `live`,
+`curl https://ih35-tms.onrender.com/api/v1/healthz/readyz` → `{"ok":true}`. `ih35-tms-web`
+(frontend) already confirmed live earlier this pass.
+
+**Separate, NOT fixed here, flagged for whoever owns it:** `verify-applied-migrations-immutable.mjs`
+independently fails — `202613640001_flt08_unit_file_categories.sql` is applied on prod but the file
+is deleted from `db/migrations/`. Reproduced identically on a clean `origin/main` with my checksum-
+override change stashed out, so this predates and is unrelated to this session's fixes — a
+different defect class (deleted applied-migration file vs. ledger/checksum bookkeeping), for the
+FLT-08/fleet lane to restore from git history. Not blocking `npm run db:migrate`'s actual apply path
+(confirmed — the live redeploy above completed cleanly through pre-deploy despite this guard's own
+separate FAIL, meaning it is not in the `db:migrate && db:verify:critical-runtime` chain the
+deploy runs), but IS a real CI guard failure for the owning lane to close. | — | verify-applied-
+migrations-immutable.mjs FAILED — 1 applied migration(s) differ from disk;
+202613640001_flt08_unit_file_categories.sql: applied but file is GONE from db/migrations | live
+node scripts/verify-applied-migrations-immutable.mjs FAIL, reproduced on clean origin/main | OPEN ·
+FLT-08/fleet lane · guard-only, does not block deploys today |
