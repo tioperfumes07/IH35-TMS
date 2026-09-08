@@ -30,7 +30,8 @@ const DIR = path.join(ROOT, "docs/reconciliation/2026-09-07-usmca");
 const HEADERS_CSV = path.join(DIR, "usmca-settlements-from-signed-docs.csv");
 const LINES_CSV = path.join(DIR, "usmca-settlement-lines-from-signed-docs.csv");
 
-const EXPECTED_GRAND_TOTAL = 27487.36;
+const EXPECTED_GRAND_TOTAL = 37830.87; // 28 in-scope USMCA tours 5769-5796 (Faro-era). Was 27487.36 for the 21-doc subset before the 7 pre-window Faro-era tours (5769-5773,5775,5776) were added.
+const EXPECTED_DOC_COUNT = 28;
 
 /** RFC-4180-ish CSV parser (handles quoted fields with embedded commas). */
 function parseCsv(text) {
@@ -141,8 +142,8 @@ function main() {
   console.log(`grand net total: ${fmt(grand)}   expected: ${EXPECTED_GRAND_TOTAL.toFixed(2)}`);
 
   const grandOk = grand === cents(EXPECTED_GRAND_TOTAL);
-  if (allOk && grandOk && headers.length === 21) {
-    console.log("PREVIEW PASS — all 21 docs tie to the penny; grand total matches. Ready for post on owner+Claude sign-off.");
+  if (allOk && grandOk && headers.length === EXPECTED_DOC_COUNT) {
+    console.log(`PREVIEW PASS — all ${EXPECTED_DOC_COUNT} docs tie to the penny; grand total matches. Ready for post on owner+Claude sign-off.`);
     process.exit(0);
   }
   console.log("PREVIEW FAIL — see <Δ> flags above. Do NOT post until every doc ties.");

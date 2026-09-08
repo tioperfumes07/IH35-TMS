@@ -1,0 +1,224 @@
+doc_no,load,category,amount,description
+5769,13498,loaded_pay,568.76,"Loaded Miles 1,263.9 @ $0.45 568.76"
+5769,13508,loaded_pay,577.80,"Loaded Miles 1,284.0 @ $0.45 577.80"
+5769,13508,empty_pay,8.96,Empty Miles 19.9 @ $0.45 8.96
+5769,13498,escrow,-25.00,Load 13498 2026-08-12 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5769,13508,escrow,-25.00,Load 13508 2026-08-12 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5769,13508,admin_fee,-10.00,Load 13508 2026-08-12 - Admin fee - GAS -10.00
+5770,13503,loaded_pay,947.15,"Loaded Miles 1,894.3 @ $0.50 947.15"
+5770,13509,loaded_pay,906.65,"Loaded Miles 1,813.3 @ $0.50 906.65"
+5770,13509,empty_pay,53.70,Empty Miles 107.4 @ $0.50 53.70
+5770,13503,additional_pay,25.00,Load 13503 Driver Pay-Enlonada 25.00
+5770,13503,additional_pay,25.00,Load 13503 Driver Pay-Desenlonada 25.00
+5770,13509,additional_pay,25.00,Load 13509 Driver Pay-Enlonada 25.00
+5770,13509,additional_pay,25.00,Load 13509 Driver Pay-Desenlonada 25.00
+5770,13509,admin_fee,-10.00,Load 13509 2026-08-12 - Admin fee - Gas -10.00
+5771,13504,loaded_pay,945.10,"Loaded Miles 1,890.2 @ $0.50 945.10"
+5771,13510,loaded_pay,787.40,"Loaded Miles 1,574.8 @ $0.50 787.40"
+5771,13510,empty_pay,176.60,Empty Miles 353.2 @ $0.50 176.60
+5771,13504,additional_pay,25.00,Load 13504 Driver Pay-Enlonada 25.00
+5771,13504,additional_pay,25.00,Load 13504 Driver Pay-Desenlonada 25.00
+5771,13510,admin_fee,-10.00,Load 13510 2026-08-12 - Admin fee - Gas -10.00
+5772,13502,loaded_pay,485.87,"Loaded Miles 1,079.7 @ $0.45 485.87"
+5772,13507,loaded_pay,186.39,Loaded Miles 414.2 @ $0.45 186.39
+5772,13507,empty_pay,42.17,Empty Miles 93.7 @ $0.45 42.17
+5772,13512,loaded_pay,322.56,Loaded Miles 716.8 @ $0.45 322.56
+5772,13512,empty_pay,99.90,Empty Miles 222.0 @ $0.45 99.90
+5772,13513,loaded_pay,196.25,Loaded Miles 436.1 @ $0.45 196.25
+5772,13513,empty_pay,48.69,Empty Miles 108.2 @ $0.45 48.69
+5772,13502,additional_pay,50.00,Load 13502 Driver Pay-Bono por Contratatacion 1/4 50.00
+5772,13512,additional_pay,50.00,Load 13512 Driver Pay-Layover-Estancia 8y9 de agosto 50.00
+5772,13513,reimbursement,15.25,Load 13513 CAT SCALE Driver Reimbursement-TPE-Scale Expense 15.25
+5772,13502,escrow,-25.00,Load 13502 2026-08-13 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5772,13502,cash_advance,-390.00,Load 13502 2026-08-01 - Cash Advance-Check - Cash Advance-Check EFS -390.00
+5772,13507,escrow,-25.00,Load 13507 2026-08-13 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5772,13512,escrow,-25.00,Load 13512 2026-08-13 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5772,13513,escrow,-25.00,Load 13513 2026-08-13 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5772,13513,admin_fee,-10.00,Load 13513 2026-08-13 - Admin fee - GAS -10.00
+5773,13497,loaded_pay,939.87,"Loaded Miles 2,088.6 @ $0.45 939.87"
+5773,13511,loaded_pay,693.23,"Loaded Miles 1,540.5 @ $0.45 693.23"
+5773,13511,empty_pay,264.42,Empty Miles 587.6 @ $0.45 264.42
+5773,13497,escrow,-25.00,Load 13497 2026-08-13 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5773,13511,escrow,-25.00,Load 13511 2026-08-13 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5773,13511,admin_fee,-10.00,Load 13511 2026-08-13 - Admin fee - GAS -10.00
+5774,13517,loaded_pay,471.97,"Loaded Miles 1,097.6 @ $0.43 471.97"
+5774,13518,loaded_pay,522.36,"Loaded Miles 1,214.8 @ $0.43 522.36"
+5774,13518,empty_pay,57.62,Empty Miles 134.0 @ $0.43 57.62
+5774,13517,escrow,-25.00,Load 13517 2026-08-14 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5774,13518,escrow,-25.00,Load 13518 2026-08-14 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5774,13518,admin_fee,-10.00,Load 13518 2026-08-14 - Admin fee - GAS -10.00
+5775,13506,loaded_pay,581.58,"Loaded Miles 1,292.4 @ $0.45 581.58"
+5775,13514,loaded_pay,503.64,"Loaded Miles 1,119.2 @ $0.45 503.64"
+5775,13514,empty_pay,49.19,Empty Miles 109.3 @ $0.45 49.19
+5775,13516,loaded_pay,158.22,Loaded Miles 351.6 @ $0.45 158.22
+5775,13516,empty_pay,11.52,Empty Miles 25.6 @ $0.45 11.52
+5775,13514,additional_pay,50.00,Load 13514 Driver Pay-Layover-Estancia 8 y 9 de Agosto 50.00
+5775,13516,additional_pay,50.00,Load 13516 Driver Pay-Bono por Contratacion 1/4 50.00
+5775,13514,reimbursement,15.25,Load 13514 LOVES Driver Reimbursement-TPE-Scale Expense 15.25
+5775,13506,escrow,-25.00,Load 13506 2026-08-14 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5775,13514,escrow,-25.00,Load 13514 2026-08-14 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5775,13516,escrow,-25.00,Load 13516 2026-08-14 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5775,13516,admin_fee,-10.00,Load 13516 2026-08-14 - Admin fee - GAS -10.00
+5775,13516,cash_advance,-148.00,Load 13516 2026-08-05 - CASH ADVANCE WIRE TRANSFER - CASH ADVANCE WIRE TRANSFER -148.00
+5776,13505,loaded_pay,581.58,"Loaded Miles 1,292.4 @ $0.45 581.58"
+5776,13515,loaded_pay,192.06,Loaded Miles 426.8 @ $0.45 192.06
+5776,13515,empty_pay,16.47,Empty Miles 36.6 @ $0.45 16.47
+5776,13520,loaded_pay,403.92,Loaded Miles 897.6 @ $0.45 403.92
+5776,13520,empty_pay,9.86,Empty Miles 21.9 @ $0.45 9.86
+5776,13505,additional_pay,100.00,Load 13505 Driver Pay-Layover-Estancia 5-6-7-8 DE AGOSTO 100.00
+5776,13505,reimbursement,5.25,Load 13505 LOVES Driver Reimbursement-TPE-Scale Expense 5.25
+5776,13505,reimbursement,15.25,Load 13505 LOVES Driver Reimbursement-TPE-Scale Expense 15.25
+5776,13515,reimbursement,5.25,Load 13515 LOVES Driver Reimbursement-TPE-Scale Expense 5.25
+5776,13515,reimbursement,15.25,Load 13515 LOVES Driver Reimbursement-TPE-Scale Expense 15.25
+5776,13515,reimbursement,15.25,Load 13515 VALERO Driver Reimbursement-TPE-Scale Expense 15.25
+5776,13515,reimbursement,5.25,Load 13515 VALERO Driver Reimbursement-TPE-Scale Expense 5.25
+5776,13505,escrow,-25.00,Load 13505 2026-08-14 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5776,13515,escrow,-25.00,Load 13515 2026-08-14 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5776,13515,admin_fee,-10.00,Load 13515 2026-08-14 - Admin fee - GAS -10.00
+5776,13520,escrow,-25.00,Load 13520 2026-08-14 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5777,13519,loaded_pay,945.10,"Loaded Miles 1,890.2 @ $0.50 945.10"
+5777,13521,loaded_pay,778.85,"Loaded Miles 1,557.7 @ $0.50 778.85"
+5777,13521,empty_pay,184.05,Empty Miles 368.1 @ $0.50 184.05
+5777,13519,additional_pay,25.00,Load 13519 Driver Pay-Enlonada 25.00
+5777,13519,additional_pay,25.00,Load 13519 Driver Pay-Desenlonada 25.00
+5777,13521,admin_fee,-10.00,Load 13521 2026-08-17 - Admin fee - GAS -10.00
+5778,13524,loaded_pay,533.43,"Loaded Miles 1,185.4 @ $0.45 533.43"
+5778,13524,empty_pay,320.18,Empty Miles 711.5 @ $0.45 320.18
+5778,13525,loaded_pay,586.40,"Loaded Miles 1,303.1 @ $0.45 586.40"
+5778,13524,additional_pay,50.00,Load 13524 Driver Pay-Layover-Estancia 10Y11 DE AGOSTO 50.00
+5778,13525,reimbursement,15.25,Load 13525 LOVES Driver Reimbursement-TPE-Scale Expense 15.25
+5778,13524,escrow,-25.00,Load 13524 2026-08-17 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5778,13524,admin_fee,-10.00,Load 13524 2026-08-17 - Admin fee - -10.00
+5778,13524,cash_advance,-200.00,Load 13524 2026-08-15 - CASH ADVANCE WIRE TRANSFER - CASH ADVANCE WIRE TRANSFER -200.00
+5778,13525,escrow,-25.00,Load 13525 2026-08-17 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5779,13526,loaded_pay,504.95,"Loaded Miles 1,122.1 @ $0.45 504.95"
+5779,13526,empty_pay,219.56,Empty Miles 487.9 @ $0.45 219.56
+5779,13527,loaded_pay,696.15,"Loaded Miles 1,547.0 @ $0.45 696.15"
+5779,13526,additional_pay,27.00,Load 13526 Driver Pay-Bonus 60 MILLAS EXTRA X.45 CENTAVOS 27.00
+5779,13526,escrow,-25.00,Load 13526 2026-08-20 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5779,13526,admin_fee,-10.00,Load 13526 2026-08-20 - Admin fee - GAS -10.00
+5779,13527,escrow,-25.00,Load 13527 2026-08-20 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5780,13530,flat_rate,150.00,Flat Rate 150.00
+5780,13532,flat_rate,150.00,Flat Rate 150.00
+5781,13523,loaded_pay,627.89,"Loaded Miles 1,395.3 @ $0.45 627.89"
+5781,13534,loaded_pay,626.27,"Loaded Miles 1,391.7 @ $0.45 626.27"
+5781,13534,empty_pay,26.15,Empty Miles 58.1 @ $0.45 26.15
+5781,13523,escrow,-25.00,Load 13523 2026-08-21 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5781,13534,escrow,-25.00,Load 13534 2026-08-21 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5781,13534,admin_fee,-10.00,Load 13534 2026-08-21 - Admin fee - GAS -10.00
+5782,13529,loaded_pay,728.51,"Loaded Miles 1,618.9 @ $0.45 728.51"
+5782,13540,loaded_pay,680.27,"Loaded Miles 1,511.7 @ $0.45 680.27"
+5782,13540,empty_pay,80.33,Empty Miles 178.5 @ $0.45 80.33
+5782,13540,additional_pay,25.00,Load 13540 Driver Pay-Layover-Estancia 21 de Agosto 25.00
+5782,13529,escrow,-25.00,Load 13529 2026-08-24 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5782,13540,escrow,-25.00,Load 13540 2026-08-24 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5782,13540,admin_fee,-10.00,Load 13540 2026-08-24 - Admin fee - GAS -10.00
+5782,13540,admin_fee,-15.25,Load 13540 2026-08-24 - Admin fee - BASCULA PAGADA EN VIAJE PASADO -15.25
+5783,13535,loaded_pay,945.10,"Loaded Miles 1,890.2 @ $0.50 945.10"
+5783,13537,loaded_pay,793.30,"Loaded Miles 1,586.6 @ $0.50 793.30"
+5783,13537,empty_pay,167.85,Empty Miles 335.7 @ $0.50 167.85
+5783,13535,additional_pay,25.00,Load 13535 Driver Pay-Enlonada 25.00
+5783,13535,additional_pay,25.00,Load 13535 Driver Pay-Desenlonada 25.00
+5783,13537,additional_pay,25.00,"Load 13537 Driver Pay-Enlonada- EDISON, NJ 25.00"
+5783,13537,additional_pay,25.00,"Load 13537 Driver Pay-Desenlonada- BAYTOWN, TX 25.00"
+5783,13537,additional_pay,25.00,"Load 13537 Driver Pay-Enlonada - BAYTOWN, TX 25.00"
+5783,13537,additional_pay,25.00,"Load 13537 Driver Pay-Desenlonada - Houston, TX 25.00"
+5783,13537,additional_pay,25.00,Load 13537 Driver Pay-Extra Delivery/Drop 25.00
+5783,13537,admin_fee,-10.00,Load 13537 2026-08-25 - Admin fee - GAS -10.00
+5784,13522,loaded_pay,567.17,"Loaded Miles 1,319.0 @ $0.43 567.17"
+5784,13528,loaded_pay,233.10,Loaded Miles 542.1 @ $0.43 233.10
+5784,13528,empty_pay,52.29,Empty Miles 121.6 @ $0.43 52.29
+5784,13536,loaded_pay,691.40,"Loaded Miles 1,607.9 @ $0.43 691.40"
+5784,13536,empty_pay,118.98,Empty Miles 276.7 @ $0.43 118.98
+5784,13528,additional_pay,25.00,Load 13528 Driver Pay-Extra Delivery/Drop 25.00
+5784,13522,escrow,-25.00,Load 13522 2026-08-25 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5784,13528,escrow,-25.00,Load 13528 2026-08-25 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5784,13536,escrow,-25.00,Load 13536 2026-08-25 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5784,13536,admin_fee,-10.00,Load 13536 2026-08-25 - Admin fee - GAS -10.00
+5785,13531,loaded_pay,666.81,"Loaded Miles 1,481.8 @ $0.45 666.81"
+5785,13538,loaded_pay,252.50,Loaded Miles 561.1 @ $0.45 252.50
+5785,13538,empty_pay,57.11,Empty Miles 126.9 @ $0.45 57.11
+5785,13543,loaded_pay,349.34,Loaded Miles 776.3 @ $0.45 349.34
+5785,13543,empty_pay,197.91,Empty Miles 439.8 @ $0.45 197.91
+5785,13538,additional_pay,25.00,Load 13538 Driver Pay-Extra Delivery/Drop 25.00
+5785,13543,additional_pay,75.00,"Load 13543 Driver Pay-Layover-Estancia 22,23y24 de Agosto 75.00"
+5785,13531,escrow,-25.00,Load 13531 2026-08-26 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5785,13531,cash_advance,-301.99,Load 13531 2026-08-18 - CASH ADVANCE WIRE TRANSFER - CASH ADVANCE WIRE TRANSFER -301.99
+5785,13538,escrow,-25.00,Load 13538 2026-08-26 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5785,13543,escrow,-25.00,Load 13543 2026-08-26 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5785,13543,admin_fee,-10.00,Load 13543 2026-08-26 - Admin fee - GAS -10.00
+5786,13533,loaded_pay,500.22,"Loaded Miles 1,111.6 @ $0.45 500.22"
+5786,13548,loaded_pay,469.53,"Loaded Miles 1,043.4 @ $0.45 469.53"
+5786,13548,empty_pay,69.30,Empty Miles 154.0 @ $0.45 69.30
+5787,13549,loaded_pay,335.48,Loaded Miles 745.5 @ $0.45 335.48
+5787,13549,empty_pay,234.09,Empty Miles 520.2 @ $0.45 234.09
+5787,13555,loaded_pay,431.15,Loaded Miles 958.1 @ $0.45 431.15
+5787,13549,additional_pay,75.00,"Load 13549 Driver Pay-Layover-Estancia 22,23,24 De Agosto 75.00"
+5787,13549,escrow,-25.00,Load 13549 2026-08-28 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5787,13549,cash_advance,-151.99,Load 13549 2026-08-24 - CASH ADVANCE WIRE TRANSFER - CASH ADVANCE WIRE TRANSFER -151.99
+5787,13555,escrow,-25.00,Load 13555 2026-08-28 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5787,13555,admin_fee,-10.00,Load 13555 2026-08-28 - Admin fee - GAS -10.00
+5788,13539,loaded_pay,670.68,"Loaded Miles 1,490.4 @ $0.45 670.68"
+5788,13546,loaded_pay,337.73,Loaded Miles 750.5 @ $0.45 337.73
+5788,13546,empty_pay,32.13,Empty Miles 71.4 @ $0.45 32.13
+5788,13552,loaded_pay,607.14,"Loaded Miles 1,349.2 @ $0.45 607.14"
+5788,13552,empty_pay,78.21,Empty Miles 173.8 @ $0.45 78.21
+5788,13539,escrow,-25.00,Load 13539 2026-08-31 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5788,13546,escrow,-25.00,Load 13546 2026-08-31 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5788,13546,admin_fee,-165.00,Load 13546 2026-08-24 - Admin fee - PAGO DE TELEFONO PERSONAL -165.00
+5788,13546,cash_advance,-201.99,Load 13546 2026-08-25 - CASH ADVANCE WIRE TRANSFER - CASH ADVANCE WIRE TRANSFER -201.99
+5788,13552,escrow,-25.00,Load 13552 2026-08-31 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5788,13552,admin_fee,-10.00,Load 13552 2026-08-31 - Admin fee - Gas -10.00
+5789,13550,loaded_pay,945.10,"Loaded Miles 1,890.2 @ $0.50 945.10"
+5789,13557,loaded_pay,707.95,"Loaded Miles 1,415.9 @ $0.50 707.95"
+5789,13557,empty_pay,272.80,Empty Miles 545.6 @ $0.50 272.80
+5789,13550,additional_pay,25.00,Load 13550 Driver Pay-Enlonada 25.00
+5789,13550,additional_pay,25.00,Load 13550 Driver Pay-Desenlonada 25.00
+5789,13557,additional_pay,25.00,Load 13557 Driver Pay-Enlonada 25.00
+5789,13557,additional_pay,25.00,Load 13557 Driver Pay-Desenlonada 25.00
+5789,13557,admin_fee,-10.00,Load 13557 2026-09-01 - Admin fee - Gas -10.00
+5790,13542,loaded_pay,751.05,"Loaded Miles 1,502.1 @ $0.50 751.05"
+5790,13554,loaded_pay,523.40,"Loaded Miles 1,046.8 @ $0.50 523.40"
+5790,13554,empty_pay,238.30,Empty Miles 476.6 @ $0.50 238.30
+5790,13542,escrow,-25.00,Load 13542 2026-09-01 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5790,13554,escrow,-25.00,Load 13554 2026-09-01 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5790,13554,admin_fee,-10.00,Load 13554 2026-09-01 - Admin fee - GAS -10.00
+5791,13545,loaded_pay,819.05,"Loaded Miles 1,820.1 @ $0.45 819.05"
+5791,13560,loaded_pay,685.98,"Loaded Miles 1,524.4 @ $0.45 685.98"
+5791,13560,empty_pay,185.00,Empty Miles 411.1 @ $0.45 185.00
+5791,13545,escrow,-25.00,Load 13545 2026-09-01 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5791,13560,escrow,-25.00,Load 13560 2026-09-01 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5791,13560,admin_fee,-10.00,Load 13560 2026-09-01 - Admin fee - GAS -10.00
+5792,13547,loaded_pay,819.05,"Loaded Miles 1,820.1 @ $0.45 819.05"
+5792,13559,loaded_pay,678.65,"Loaded Miles 1,508.1 @ $0.45 678.65"
+5792,13559,empty_pay,30.96,Empty Miles 68.8 @ $0.45 30.96
+5792,13562,loaded_pay,189.18,Loaded Miles 420.4 @ $0.45 189.18
+5792,13562,empty_pay,20.21,Empty Miles 44.9 @ $0.45 20.21
+5792,13547,escrow,-25.00,Load 13547 2026-09-01 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5792,13559,escrow,-25.00,Load 13559 2026-09-01 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5792,13562,escrow,-25.00,Load 13562 2026-09-02 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5792,13562,admin_fee,-10.00,Load 13562 2026-09-02 - Admin fee - GAS -10.00
+5792,13562,admin_fee,-267.00,Load 13562 2026-09-02 - Admin fee - VUELO -267.00
+5793,13565,loaded_pay,742.60,"Loaded Miles 1,485.2 @ $0.50 742.60"
+5793,13566,loaded_pay,543.00,"Loaded Miles 1,086.0 @ $0.50 543.00"
+5793,13566,empty_pay,201.05,Empty Miles 402.1 @ $0.50 201.05
+5793,13566,additional_pay,50.00,Load 13566 Driver Pay-Layover-Estancia 29y30 de Agosto 50.00
+5793,13566,reimbursement,15.25,Load 13566 CAT SCALE Driver Reimbursement-TPE-Scale Expense 15.25
+5793,13565,reimbursement,15.25,Load 13565 LOVES Driver Reimbursement-TPE-Scale Expense 15.25
+5793,13566,admin_fee,-10.00,Load 13566 2026-09-03 - Admin fee - GAS -10.00
+5794,13558,loaded_pay,564.42,"Loaded Miles 1,312.6 @ $0.43 564.42"
+5794,13568,loaded_pay,629.82,"Loaded Miles 1,464.7 @ $0.43 629.82"
+5794,13568,empty_pay,94.60,Empty Miles 220.0 @ $0.43 94.60
+5794,13558,reimbursement,30.30,Load 13558 LOVES Driver Reimbursement-Fuel-Def 30.30
+5794,13558,escrow,-25.00,Load 13558 2026-09-04 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5794,13568,escrow,-25.00,Load 13568 2026-09-04 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5794,13568,admin_fee,-10.00,Load 13568 2026-09-04 - Admin fee - GAS -10.00
+5795,13561,loaded_pay,500.22,"Loaded Miles 1,111.6 @ $0.45 500.22"
+5795,13567,loaded_pay,524.21,"Loaded Miles 1,164.9 @ $0.45 524.21"
+5795,13567,empty_pay,26.60,Empty Miles 59.1 @ $0.45 26.60
+5795,13567,escrow,-25.00,Load 13567 2026-09-03 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5795,13567,admin_fee,-10.00,Load 13567 2026-09-03 - Admin fee - GAS -10.00
+5795,13567,cash_advance,-201.99,Load 13567 2026-09-03 - CASH ADVANCE WIRE TRANSFER - CASH ADVANCE WIRE TRANSFER -201.99
+5795,13561,escrow,-25.00,Load 13561 2026-09-03 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00
+5796,13541,loaded_pay,189.93,Loaded Miles 441.7 @ $0.43 189.93
+5796,13541,empty_pay,189.80,Empty Miles 441.4 @ $0.43 189.80
