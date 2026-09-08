@@ -9,7 +9,10 @@ type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
 
-const OPEN_TOUR_STATUSES_EXCLUDED = new Set(["approved", "paid", "cancelled"]);
+// EXP-CLOSED-TOUR-VOCAB (owner 2026-09-07): 'closed'/'final' are terminal, GL-posted settlement
+// statuses (and in the pay-run poster's POSTABLE_STATUSES) — a tour in either is closed, not open.
+// USMCA settlements close to 'closed', so they must be excluded from the "open tour" set here too.
+const OPEN_TOUR_STATUSES_EXCLUDED = new Set(["approved", "paid", "cancelled", "closed", "final"]);
 
 export type PostedWhileTourOpenRow = {
   doc_type: "expense" | "bill";

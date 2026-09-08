@@ -12,7 +12,8 @@
  *
  * Usage: DATABASE_URL=<Neon prod> node scripts/report-open-tour-posted-reversal-plan.mjs
  */
-const OPEN_TOUR_STATUSES_EXCLUDED = ["approved", "paid", "cancelled"];
+// EXP-CLOSED-TOUR-VOCAB (owner 2026-09-07): 'closed'/'final' are terminal, GL-posted statuses too.
+const OPEN_TOUR_STATUSES_EXCLUDED = ["approved", "paid", "cancelled", "closed", "final"];
 
 if (!process.env.DATABASE_URL) {
   console.error("report-open-tour-posted-reversal-plan: DATABASE_URL required (read-only report, no --apply flag exists)");
