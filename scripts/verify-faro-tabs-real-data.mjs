@@ -22,6 +22,9 @@
  *    Reserve Balance, Fees Paid total, Other Adjustments) are wired to the already-fetched
  *    summaryQuery (views.factoring_summary) / feesQuery (views.factoring_chargebacks_fees
  *    monthly_summary) data — not a fabricated new source.
+ *  - The Fees Paid tab is no longer a stub: its "Open Invoices" view is built on agingRows +
+ *    feesQuery history (accrued fees per invoice), and its "All Fees" view is built directly on
+ *    feesQuery.data.history — both already-fetched, no fabricated new source.
  *
  * Usage:
  *   node scripts/verify-faro-tabs-real-data.mjs            # scan
@@ -177,6 +180,39 @@ export function checkAccountSummaryReal(src) {
   return failures;
 }
 
+export function checkFeesPaidReal(src) {
+  const failures = [];
+  const stubMatch = src.match(/tab === "request_debtor_credit_check"[\s\S]*?data-testid=\{`factoring-stub-\$\{tab\}`\}/);
+  if (stubMatch && /tab === "fees_paid"/.test(stubMatch[0])) {
+    failures.push(`${HOME}: Fees Paid is still routed through the generic honest-stub block — must have its own real section (FAC-09a).`);
+  }
+  const marker = 'tab === "fees_paid" ?';
+  const idx = src.indexOf(marker);
+  if (idx === -1) {
+    failures.push(`${HOME}: could not find a dedicated Fees Paid ("tab === \"fees_paid\" ?") block.`);
+    return failures;
+  }
+  const section = src.slice(idx, idx + 8000);
+  const requiredRealBindings = [
+    { pattern: /feesPaidOpenInvoiceRows/, label: "Open Invoices view bound to feesPaidOpenInvoiceRows (agingRows + accrued fees)" },
+    { pattern: /accrued_fees/, label: "Accrued Fees column bound to the real per-invoice accrued_fees field" },
+    { pattern: /feesQuery\.data\?\.history/, label: "All Fees view bound to feesQuery.data.history" },
+    { pattern: /row\.factor_fee_amount/, label: "All Fees Amount column bound to row.factor_fee_amount" },
+  ];
+  for (const { pattern, label } of requiredRealBindings) {
+    if (!pattern.test(section)) {
+      failures.push(`${HOME}: Fees Paid missing real binding — ${label}.`);
+    }
+  }
+  const requiredTestIds = ["factoring-fees-paid-view-toggle", "factoring-fees-paid-view-open-invoices", "factoring-fees-paid-view-all-fees"];
+  for (const testId of requiredTestIds) {
+    if (!section.includes(testId)) {
+      failures.push(`${HOME}: Fees Paid missing required data-testid="${testId}".`);
+    }
+  }
+  return failures;
+}
+
 export function run() {
   const failures = [];
   const { ok, src, err } = read(HOME);
@@ -188,6 +224,7 @@ export function run() {
   failures.push(...checkInternalToolsPreserved(src));
   failures.push(...checkAgingReal(src));
   failures.push(...checkAccountSummaryReal(src));
+  failures.push(...checkFeesPaidReal(src));
   return { ok: failures.length === 0, failures };
 }
 
@@ -223,8 +260,7 @@ if (process.argv.includes("--selftest")) {
   const stubBlock = `
       {tab === "request_debtor_credit_check" ||
       tab === "funds_due" ||
-      tab === "payments_to_you" ||
-      tab === "fees_paid" ? (
+      tab === "payments_to_you" ? (
         <div data-testid={\`factoring-stub-\${tab}\`}>stub</div>
       ) : null}
   `;
@@ -238,6 +274,19 @@ if (process.argv.includes("--selftest")) {
         </div>
       ) : null}
   `;
+  const feesPaidBlock = `
+      {tab === "fees_paid" ? (
+        <div data-testid="factoring-fees-paid-view-toggle">
+          <button data-testid="factoring-fees-paid-view-open-invoices">x</button>
+          <button data-testid="factoring-fees-paid-view-all-fees">x</button>
+          {feesPaidView === "open_invoices" ? (
+            <span>{feesPaidOpenInvoiceRows.map((row) => row.accrued_fees)}</span>
+          ) : (
+            <span>{(feesQuery.data?.history ?? []).map((row) => fmtCurrency(row.factor_fee_amount))}</span>
+          )}
+        </div>
+      ) : null}
+  `;
   const goodSrc = `
 const SUBNAV = [
 ${idsBlock}
@@ -248,27 +297,38 @@ ${internalBlock}
 Internal Tools
 ${stubBlock}
 ${accountSummaryBlock}
+${feesPaidBlock}
 ${agingBlock}
   `;
   const badWrongOrder = goodSrc.replace('{ id: "aging", label: "x" },', '{ id: "zzz", label: "x" },');
   const badDeletedInternal = goodSrc.replace('{ id: "vendor_merges", label: "x" },', "");
   const badAgingMissingColumn = goodSrc.replace('{ key: "b4", label: "90+" },', "");
   const badAccountSummaryStillStub = goodSrc.replace(
-    'tab === "payments_to_you" ||\n      tab === "fees_paid" ? (',
-    'tab === "payments_to_you" ||\n      tab === "account_summary" ||\n      tab === "fees_paid" ? (',
+    'tab === "payments_to_you" ? (',
+    'tab === "payments_to_you" ||\n      tab === "account_summary" ? (',
   );
   const badAccountSummaryFakeBinding = goodSrc.replace(
     'data-testid="factoring-account-summary-reserve-balance">{fmtCurrency(summary?.reserve_balance)}</span>',
     'data-testid="factoring-account-summary-reserve-balance">{fmtCurrency(9999)}</span>',
   );
+  const badFeesPaidStillStub = goodSrc.replace(
+    'tab === "payments_to_you" ? (',
+    'tab === "payments_to_you" ||\n      tab === "fees_paid" ? (',
+  );
+  const badFeesPaidFakeBinding = goodSrc.replace(
+    '<span>{(feesQuery.data?.history ?? []).map((row) => fmtCurrency(row.factor_fee_amount))}</span>',
+    "<span>{fmtCurrency(9999)}</span>",
+  );
 
   const checks = [
-    ["clean source passes", checkNavOrder(goodSrc).length === 0 && checkInternalToolsPreserved(goodSrc).length === 0 && checkAgingReal(goodSrc).length === 0 && checkAccountSummaryReal(goodSrc).length === 0],
+    ["clean source passes", checkNavOrder(goodSrc).length === 0 && checkInternalToolsPreserved(goodSrc).length === 0 && checkAgingReal(goodSrc).length === 0 && checkAccountSummaryReal(goodSrc).length === 0 && checkFeesPaidReal(goodSrc).length === 0],
     ["wrong nav order fails", checkNavOrder(badWrongOrder).length > 0],
     ["deleted internal tab fails", checkInternalToolsPreserved(badDeletedInternal).length > 0],
     ["missing aging column fails", checkAgingReal(badAgingMissingColumn).length > 0],
     ["account summary still stub fails", checkAccountSummaryReal(badAccountSummaryStillStub).length > 0],
     ["account summary fake binding fails", checkAccountSummaryReal(badAccountSummaryFakeBinding).length > 0],
+    ["fees paid still stub fails", checkFeesPaidReal(badFeesPaidStillStub).length > 0],
+    ["fees paid fake binding fails", checkFeesPaidReal(badFeesPaidFakeBinding).length > 0],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
@@ -286,5 +346,5 @@ if (!ok) {
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — 15-item real nav order locked, internal-ops tabs preserved (Rule 07), Aging + Account Summary reports real (FAC-09a)`);
+console.log(`${LABEL}: OK — 15-item real nav order locked, internal-ops tabs preserved (Rule 07), Aging + Account Summary + Fees Paid reports real (FAC-09a)`);
 process.exit(0);
