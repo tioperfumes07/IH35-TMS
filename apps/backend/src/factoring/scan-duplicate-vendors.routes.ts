@@ -28,19 +28,34 @@ export async function registerScanDuplicateVendorRoutes(app: FastifyInstance) {
     await assertCompanyMembership(user.uuid, parsed.data.operating_company_id);
     const pairs = await withCurrentUser(user.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [parsed.data.operating_company_id]);
+      // VENDOR-MERGE-QBO-ID-MISMATCH (owner-live-tested 2026-09-08): the deep-link/merge form
+      // (POST /api/v1/integrations/qbo/driver-vendor-merges) validates fromQboVendorId/
+      // toQboVendorId against qbo_archive.entities_snapshot.qbo_entity_id -- QuickBooks' OWN
+      // entity id, a completely different value from mdata.vendors.id (this TMS's internal
+      // UUID). This query used to select only the internal id as from_vendor_id/to_vendor_id,
+      // which the banner's own EntityLink correctly uses for /vendors/<uuid> navigation but is
+      // NOT a valid input to the merge endpoint -- every deep-linked merge attempt 404'd with
+      // qbo_vendor_from_not_found/qbo_vendor_to_not_found, confirmed live. Added the real
+      // qbo_vendor_id (mdata.vendors' own FK-shaped link column, distinct from the internal id)
+      // as separate from_qbo_vendor_id/to_qbo_vendor_id fields -- additive, the existing
+      // from_vendor_id/to_vendor_id stay as the internal UUID for EntityLink, unchanged.
       const res = await client.query<{
         from_vendor_id: string;
         from_vendor_name: string;
+        from_qbo_vendor_id: string | null;
         to_vendor_id: string;
         to_vendor_name: string;
+        to_qbo_vendor_id: string | null;
         similarity: number;
       }>(
         `
           SELECT
             a.id AS from_vendor_id,
             a.vendor_name AS from_vendor_name,
+            a.qbo_vendor_id AS from_qbo_vendor_id,
             b.id AS to_vendor_id,
             b.vendor_name AS to_vendor_name,
+            b.qbo_vendor_id AS to_qbo_vendor_id,
             similarity(a.vendor_name, b.vendor_name) AS similarity
           FROM mdata.vendors a
           JOIN mdata.vendors b

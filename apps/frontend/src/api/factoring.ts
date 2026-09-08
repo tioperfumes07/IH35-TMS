@@ -538,8 +538,14 @@ export function createLetterOfRelease(
 export type DuplicateVendorPair = {
   from_vendor_id: string;
   from_vendor_name: string;
+  // VENDOR-MERGE-QBO-ID-MISMATCH: the actual QuickBooks entity id for this vendor, distinct from
+  // from_vendor_id (this TMS's internal UUID). Null when the vendor has never synced to QBO --
+  // the merge endpoint validates against this value, not the internal id, so a null here means
+  // no working deep-link can be built for this vendor yet.
+  from_qbo_vendor_id: string | null;
   to_vendor_id: string;
   to_vendor_name: string;
+  to_qbo_vendor_id: string | null;
   similarity: number;
 };
 

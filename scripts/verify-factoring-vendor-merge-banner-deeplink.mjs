@@ -1,4 +1,11 @@
 #!/usr/bin/env node
+// MATRIX-BUILT-OPTIONAL — this is a bug-regression guard (deep-link query-param wiring and an
+// id-namespace-mismatch class), not a Program-matrix EntityLink/reverse_link/FK wiring ratchet.
+// It mentions "EntityLink" only in passing commentary about where the internal uuid is used
+// elsewhere in the banner, which trips verify-matrix-built-tag-present's WIRING_HINT heuristic —
+// exempted rather than attaching an inaccurate @matrix-built module/leaf tag that doesn't
+// correspond to any real Program-matrix tracked surface.
+//
 // BANNER-MERGE-DEEPLINK-DROPS-CONTEXT — guard
 //
 // DuplicateVendorsBanner.tsx's scan (GET /api/v1/factoring/scan-duplicate-vendors) already
@@ -13,6 +20,14 @@
 // merge_from_vendor_name / merge_to_vendor_id / merge_to_vendor_name query params;
 // FactoringHome.tsx's vendor_merges tab reads them once on mount, prefills the merge form, and
 // switches to that tab. This guard fails if either half of that wiring disappears.
+//
+// VENDOR-MERGE-QBO-ID-MISMATCH (owner-live-tested 2026-09-08): the merge endpoint validates
+// fromQboVendorId/toQboVendorId against QuickBooks' own entity id (qbo_archive.entities_snapshot),
+// NOT the internal from_vendor_id/to_vendor_id uuid (that stays reserved for EntityLink
+// navigation) — deep-linking the internal uuid 404'd on every real merge attempt, confirmed live.
+// The deep-link must carry from_qbo_vendor_id/to_qbo_vendor_id instead, and must not offer a
+// merge link at all when either is null (a vendor never synced to QBO) — an honest fallback note
+// instead of a link that can only ever fail.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -27,14 +42,17 @@ const HOME_FILE = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
 export function check({ bannerText, homeText }) {
   const failures = [];
 
-  if (!/merge_from_vendor_id:\s*p\.from_vendor_id/.test(bannerText)) {
-    failures.push(`${BANNER_FILE}: pair row no longer carries merge_from_vendor_id from the scan's real from_vendor_id`);
+  if (!/merge_from_vendor_id:\s*p\.from_qbo_vendor_id/.test(bannerText)) {
+    failures.push(`${BANNER_FILE}: pair row no longer carries merge_from_vendor_id from the scan's real from_qbo_vendor_id (the QBO entity id, not the internal uuid) — this is the VENDOR-MERGE-QBO-ID-MISMATCH regression class`);
   }
-  if (!/merge_to_vendor_id:\s*p\.to_vendor_id/.test(bannerText)) {
-    failures.push(`${BANNER_FILE}: pair row no longer carries merge_to_vendor_id from the scan's real to_vendor_id`);
+  if (!/merge_to_vendor_id:\s*p\.to_qbo_vendor_id/.test(bannerText)) {
+    failures.push(`${BANNER_FILE}: pair row no longer carries merge_to_vendor_id from the scan's real to_qbo_vendor_id (the QBO entity id, not the internal uuid) — this is the VENDOR-MERGE-QBO-ID-MISMATCH regression class`);
   }
   if (!/data-testid="factoring-duplicate-vendors-banner-merge-pair-link"/.test(bannerText)) {
     failures.push(`${BANNER_FILE}: per-pair "Merge these" deep-link is gone`);
+  }
+  if (!/data-testid="factoring-duplicate-vendors-banner-merge-pair-unsynced"/.test(bannerText)) {
+    failures.push(`${BANNER_FILE}: missing the honest "not yet synced to QBO" fallback for pairs with no qbo_vendor_id on either side`);
   }
 
   if (!/searchParams\.get\("merge_from_vendor_id"\)/.test(homeText)) {
@@ -95,7 +113,7 @@ async function selftest() {
   const files = readAll();
 
   const offenderBanner = files.bannerText.replace(
-    /merge_from_vendor_id:\s*p\.from_vendor_id,/,
+    /merge_from_vendor_id:\s*p\.from_qbo_vendor_id as string,/,
     "merge_from_vendor_id: '',"
   );
   if (offenderBanner === files.bannerText) {
@@ -104,10 +122,27 @@ async function selftest() {
   }
   const f1 = check({ ...files, bannerText: offenderBanner });
   if (f1.length === 0) {
-    console.error("FAIL(selftest): planted banner regression (dropped real from_vendor_id) was NOT caught");
+    console.error("FAIL(selftest): planted banner regression (dropped real from_qbo_vendor_id) was NOT caught");
     process.exit(1);
   }
   console.log("PASS(selftest): planted banner regression correctly caught");
+
+  // VENDOR-MERGE-QBO-ID-MISMATCH regression: revert to the internal uuid (the actual historical
+  // bug — always 404'd live) instead of dropping the field outright.
+  const offenderQboIdMismatch = files.bannerText.replace(
+    /merge_from_vendor_id:\s*p\.from_qbo_vendor_id as string,/,
+    "merge_from_vendor_id: p.from_vendor_id,"
+  );
+  if (offenderQboIdMismatch === files.bannerText) {
+    console.error("FAIL(selftest): QBO-id-mismatch offender mutation did not change the source");
+    process.exit(1);
+  }
+  const fQbo = check({ ...files, bannerText: offenderQboIdMismatch });
+  if (fQbo.length === 0) {
+    console.error("FAIL(selftest): planted VENDOR-MERGE-QBO-ID-MISMATCH regression (internal uuid instead of qbo id) was NOT caught");
+    process.exit(1);
+  }
+  console.log("PASS(selftest): planted VENDOR-MERGE-QBO-ID-MISMATCH regression correctly caught");
 
   const offenderHome = files.homeText.replace(/setTab\("vendor_merges"\);/, "");
   if (offenderHome === files.homeText) {
@@ -140,7 +175,7 @@ async function selftest() {
   }
   console.log("PASS(selftest): planted mount-only deps regression correctly caught");
 
-  console.log("PASS: selftest 3/3 planted offenders caught; baseline clean");
+  console.log("PASS: selftest 4/4 planted offenders caught; baseline clean");
 }
 
 if (process.argv.includes("--selftest")) {
