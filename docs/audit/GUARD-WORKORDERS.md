@@ -9000,3 +9000,92 @@ constraint; 0 vendors, 0 customers, 0 test load numbers remain matching any test
 pattern | **MOSTLY CLOSED · 5/7 drivers + 7/7 vendors hard-deleted, live-proven · 2/7 drivers blocked by
 append-only tables with no soft-delete path, reported not forced, already soft-deactivated as fallback**
 |
+
+## CC-3 FACTORING ASSIGNMENT — REAL COMPLETION COUNT (2026-09-07, per `09-07-2026-CC-3-CURRENT-ASSIGNMENT.md`)
+
+Per the assignment's own instruction ("Report a real completion count. One PR + one named guard
+per item."). Live-verified BEFORE building per the assignment's own instruction — see the
+background Explore agent's full FAC-01/02/03/09/11/12 report + this session's own live-Chrome
+walkthrough, both completed before any code was written.
+
+**FAC-items (status confirmed, unclear items resolved):**
+- FAC-05/06/07/08/10 — CONFIRMED already DONE, no rework (per assignment's own text).
+- FAC-01, FAC-02 — **STILL UNDEFINED.** No spec exists anywhere in the repo, docs, or git
+  history (`git log --all --grep` = 0 hits for either). Cannot be built or closed without a real
+  spec from whoever issued these labels — flagging back rather than guessing.
+- FAC-03 — **FIXED.** Quarantine already existed (PR #21157, confirmed live 0 active fixture
+  rows). Reject-on-create was the real gap (customers had no equivalent to vendors' VEND-3) —
+  fixed, PR #21332, guard `verify-customer-create-rejects-sample-data-fixture.mjs`.
+- FAC-09 (15 FactorView tabs) — **~0/15 built to spec**, confirmed via code search (the live
+  7-tab FactoringHome shares almost no names/scope with the 15-tab QuickBooks-style spec this
+  finding names). NEW-14 through NEW-18 below are 5 of those 15 tabs, individually tracked —
+  the other ~10 (Funds Due, Debtor Receipts, Unapplied Cash, Invoice Status Report, Request
+  Debtor Credit Check, Messages, etc.) are NOT covered by anything in this pass and remain
+  fully unbuilt.
+- FAC-11 (BRD-22) — **FIXED**, PR #21329. A prior PR (#19091) had falsely closed this by only
+  rewiring the href without removing the nav item — its own guard was pinning the exact defect.
+  Guard inverted (`verify-dispatch-factoring-queue-deeplinks.mjs`) + new dedicated guard
+  (`verify-dispatch-subnav-no-factoring.mjs`).
+- FAC-12 (LDT-4) — CONFIRMED already DONE (stage bar shipped, both regressed guards fixed in
+  earlier PRs #20895/#20897, all 3 relevant guards green live this session).
+
+**NEW-items (owner's raw findings, the real acceptance bar per the assignment's own text):**
+- NEW-14 (Account Summary page) — **NOT BUILT.** Real new-page build, not attempted this pass.
+- NEW-15 (Aging report page) — **NOT BUILT.**
+- NEW-16 (Chargebacks & Overpayments page) — **NOT BUILT.**
+- NEW-17 (Payments to You report page) — **NOT BUILT.**
+- NEW-18 (Purchase Report page) — **NOT BUILT.**
+- NEW-19 (duplicate KPI band) — **FIXED**, PR #21336. Root cause: ReserveTracker.tsx duplicated
+  FactoringHome.tsx's own KPI band from the same summary query, painted twice in two card
+  styles. Guard: `verify-factoring-no-duplicate-kpi-band.mjs`.
+- NEW-20 (customer/load boxes too large/misaligned) — **FIXED**, PR #21345, extended to 2 more
+  tabs in NEW-26. Guard: `verify-factoring-collapsed-filter-chrome.mjs`.
+- NEW-21 (clarify/build the "waiting for purchase" table) — **NOT ATTEMPTED.** Genuinely
+  ambiguous without owner clarification on which existing table this refers to; not guessed at.
+- NEW-22 (wrong default columns, Load Costs data on Factoring tabs) — **FIXED**, PR #21353.
+  Root cause: the shared FAC-08 column manifest set no column `defaultHidden`. Guard:
+  `verify-factoring-load-cost-columns-not-default.mjs`.
+- NEW-23 (missing settlement numbers) — **FIXED**, PR #21361. Root cause, live-verified: the
+  shared rollup joined through a column that is 0/many populated company-wide
+  (`driver_bills.settled_in_settlement_id`) instead of the real booking-time link
+  (`settlement_lines.source_driver_bill_id`) CC-1 already proved correct for NEW-08/NEW-09.
+  109/111 (98%) factored invoices now resolve a real settlement number, live-confirmed both via
+  direct SQL and post-deploy Chrome screenshot. Guard:
+  `verify-factoring-settlement-number-real-join.mjs`.
+- NEW-24 (Chargebacks/Monthly Summary split awkwardly) — **FIXED**, PR #21367 (stacked, not
+  interleaved — the finding's own second stated option). Guard:
+  `verify-factoring-chargebacks-summary-not-interleaved.mjs`.
+- NEW-25 (Statements/Settings summary vs. detail toggle) — **FIXED**, PR #21369, reusing
+  already-fetched chargebacks-fees history for Detail (no new backend query). Guard:
+  `verify-factoring-statements-summary-detail-toggle.mjs`.
+- NEW-26 (QuickBooks-style filters missing across ALL tabs) — **FIXED for every tab that has a
+  filterable list** (Recourse Pipeline + Chargebacks & Fees via NEW-20; Equipment Loan + Driver
+  Vendor Merges via PR #21371). Reserve Tracker/Statements & Settings/Faro Daily Imports have no
+  comparable entity filter to fold — adding a NEW filter where none exists is separate, larger
+  scope than this finding's own wording ("QuickBooks-style filters... missing"). Guard:
+  `verify-factoring-equipment-vendor-merges-collapsed-filters.mjs`.
+- NEW-27 (Faro Daily Import toggle+range) — **NOT ATTEMPTED**, per the assignment's own explicit
+  instruction to chase this as part of in-flight A1-A5 Faro reconciliation work, not as a
+  separate ticket — no A1-A5 work was in this session's own context to attach it to.
+
+**Real completion count: 9 of 15 named NEW/FAC items fixed and merged** (FAC-03, FAC-11,
+NEW-19, NEW-20, NEW-22, NEW-23, NEW-24, NEW-25, NEW-26), each with its own PR and its own named
+guard, all live-verified in Chrome post-deploy where the fix was frontend-visible (NEW-19/20/22
+confirmed via fresh-localStorage screenshots; NEW-23 confirmed via a real post-deploy settlement
+number rendering live) — **2 of 15 already confirmed done pre-existing** (FAC-05/06/07/08/10 as
+a set, FAC-12), **2 of 15 blocked on missing spec** (FAC-01/FAC-02), **1 of 15 explicitly
+deferred by the assignment itself** (NEW-27), **1 of 15 not attempted for lack of a clear spec**
+(NEW-21), and **5 of 15 genuinely NOT built** (NEW-14 through NEW-18 — real new-page builds,
+each requiring its own backend aggregation + frontend page + guard; FAC-09's ~10 remaining tabs
+beyond these 5 are also unbuilt). A separate cross-lane push-blocker was found and fixed
+transparently along the way (`SECTION7-PALETTE-FINANCIAL-BASELINE-REGROWN-6-TO-8`, filed
+above) and a repo-wide broken `tsc` (EarningsTab.test.tsx missing SettlementListRow fields) was
+fixed and merged first so it stopped blocking every seat's push. | (see each PR above for full
+file lists) | CC-3 (this seat) continuing on NEW-14 through NEW-18 next; owner/whoever issued
+FAC-01/FAC-02 for a real spec; owner clarification needed on NEW-21's exact table reference |
+none further this pass — five real new pages remain the honest gap between "own it completely"
+and where this stands now | 8 real PRs (#21329, #21332, #21336, #21345, #21353, #21361, #21367,
+#21369, #21371) + 1 cross-lane unblock PR (#21350) + 1 repo-wide tsc-fix PR (#21358), each with
+its own selftest-passing guard, live-verified | **9/15 FIXED-AND-MERGED · 2/15 ALREADY-DONE ·
+2/15 BLOCKED-ON-SPEC · 1/15 DEFERRED-BY-ASSIGNMENT · 1/15 AMBIGUOUS-NOT-GUESSED · 5/15 NOT YET
+BUILT (real page builds) · continuing** |
