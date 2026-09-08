@@ -8323,5 +8323,10 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-08",
     "purpose": "verify-bank-recon-accept-closed-session-conflict"
+  },
+  "11078": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-08",
+    "purpose": "verify-settlement-net-pay-triple-figure-fixed (EVEN Cursor lane; ships Claude-authored settlement net-pay triple-figure display fix)"
   }
 }
