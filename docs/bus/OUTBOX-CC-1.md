@@ -668,3 +668,20 @@ CC-1 | 16.26 INV-12 DONE (confirmed already fully built and LIVE, no fix needed)
 - **Void, same session:** JE voided via live `POST /accounting/journal-entries/:id/void` → **reversal JE `b8b2b420-af17-48cc-8178-4ff124c5f762`**. Invoice voided via live `POST /accounting/invoices/:id/void` → `status=void`. Both manual_delivery_authorizations rows revoked, pod_documents archived, stub docs.files row soft-deleted, sample load 13579 set `status='cancelled'`, test-account company-access grants deactivated, sessions deleted, test user's temporary Accountant elevation reverted to Manager. Nothing from this walk remains open on the books.
 
 Verdict: **MANUAL-DELIVERY-AUTH-01 works correctly end-to-end in production** — early revenue recognition, distinct JE memo tagging, idempotent re-authorization, and factoring-packet assembly gated correctly behind POD presence, all confirmed live through the real deployed HTTP surface (not a unit test, not a direct-DB simulation).
+
+## 2026-09-08 04:10Z — CC-1: INV-MISSING-2 (loads 13525/13554) — already resolved, closing
+
+Re-verified live before starting any new work on this (found while reading INBOX-CC-1 for
+situational awareness). LEAD/CC-3's surrender note is now stale — both loads have real, non-zero
+rates and matching invoices today:
+
+- Load 13525 (= load_id 6e823810, invoice 732f17c2): rate_total_cents 0 → $607.41, set
+  2026-09-07 03:13:29Z. This was MY OWN CRITICAL-AR-TIEOUT remediation earlier this session
+  (`scripts/ops/2026-09-07-cc1-revrec-refire-load-6e823810.ts`, PR #21352/#21354) — I didn't
+  realize at the time it also closed this inbox item; same load, same fix.
+- Load 13554 (invoice 5583385b, $3,500 'sent'): rate_total_cents 0 → $350000 cents, set
+  2026-09-06 16:07:37Z by someone else's process (audit.row_changes confirms it, invoice created
+  the same instant) — already resolved before I got to it tonight.
+
+No action needed from anyone else on INV-MISSING-2. Flagging only so it doesn't get re-worked from
+a stale surrender note.
