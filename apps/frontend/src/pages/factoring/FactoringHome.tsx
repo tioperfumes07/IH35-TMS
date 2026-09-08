@@ -449,8 +449,8 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   const agingTotals = useMemo(() => {
     const totals: Record<AgingBucket | "balance", number> = { "0-30": 0, "31-60": 0, "61-90": 0, "90+": 0, balance: 0 };
     for (const row of agingRows) {
-      totals[row.bucket] += row.invoice_amount;
-      totals.balance += row.invoice_amount;
+      totals[row.bucket] += Number(row.invoice_amount ?? 0);
+      totals.balance += Number(row.invoice_amount ?? 0);
     }
     return totals;
   }, [agingRows]);
@@ -1105,11 +1105,11 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 storageKey="factoring-purchase-report"
                 footerCells={{
                   customer_name: `${purchaseReportRows.length} invoices`,
-                  purchase: fmtCurrency(purchaseReportRows.reduce((sum, row) => sum + row.invoice_amount, 0)),
-                  cash_rsv: fmtCurrency(purchaseReportRows.reduce((sum, row) => sum + row.reserve_amount, 0)),
-                  fees: fmtCurrency(purchaseReportRows.reduce((sum, row) => sum + row.fees, 0)),
-                  advance_amount: fmtCurrency(purchaseReportRows.reduce((sum, row) => sum + row.advance_amount, 0)),
-                  chargeback: fmtCurrency(purchaseReportRows.reduce((sum, row) => sum + row.chargeback, 0)),
+                  purchase: fmtCurrency(purchaseReportRows.reduce((sum, row) => sum + Number(row.invoice_amount ?? 0), 0)),
+                  cash_rsv: fmtCurrency(purchaseReportRows.reduce((sum, row) => sum + Number(row.reserve_amount ?? 0), 0)),
+                  fees: fmtCurrency(purchaseReportRows.reduce((sum, row) => sum + Number(row.fees ?? 0), 0)),
+                  advance_amount: fmtCurrency(purchaseReportRows.reduce((sum, row) => sum + Number(row.advance_amount ?? 0), 0)),
+                  chargeback: fmtCurrency(purchaseReportRows.reduce((sum, row) => sum + Number(row.chargeback ?? 0), 0)),
                 }}
               />
               <p className="mt-2 text-xs text-gray-500" data-testid="factoring-purchase-report-footnote">
@@ -1197,7 +1197,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   storageKey="factoring-fees-paid-open-invoices"
                   footerCells={{
                     customer_name: `${feesPaidOpenInvoiceRows.length} invoices`,
-                    accrued_fees: fmtCurrency(feesPaidOpenInvoiceRows.reduce((sum, row) => sum + row.accrued_fees, 0)),
+                    accrued_fees: fmtCurrency(feesPaidOpenInvoiceRows.reduce((sum, row) => sum + Number(row.accrued_fees ?? 0), 0)),
                   }}
                 />
                 <p className="mt-2 text-xs text-gray-500" data-testid="factoring-fees-paid-open-invoices-footnote">
