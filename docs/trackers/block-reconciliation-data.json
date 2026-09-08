@@ -1,6 +1,6 @@
 {
  "date": "2026-09-08",
- "generated_at_iso": "2026-09-08T11:28:11.255Z",
+ "generated_at_iso": "2026-09-08T16:44:20.947Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 30,
@@ -13727,6 +13727,18 @@
  ],
  "merged_prs": [
   {
+   "number": 21464,
+   "title": "Cursor- Phase 2 repost: 28/28 USMCA settlements tie to signed penny ($37,830.87)",
+   "mergedAt": "2026-09-08T15:20:37Z",
+   "branch": "cursor/settle-repost-phase2-2828"
+  },
+  {
+   "number": 21463,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-08T11:28:39Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 21462,
    "title": "Claude-3: docs(board) -- factoring scoreboard update, NEW-14 through NEW-27",
    "mergedAt": "2026-09-08T07:32:08Z",
@@ -17313,18 +17325,6 @@
    "title": "CLAIM-RESERVE: 10445 verify-load-costs-tour-tabs (LDT-TABS)",
    "mergedAt": "2026-09-06T02:58:49Z",
    "branch": "chore/claim-reserve-10445"
-  },
-  {
-   "number": 20849,
-   "title": "Cursor-CUR-3: top banner back to spec heights (row 51)",
-   "mergedAt": "2026-09-06T02:53:54Z",
-   "branch": "cursor/cur-3-top-banner-spec-heights"
-  },
-  {
-   "number": 20848,
-   "title": "Codex- TEL-44 project Samsara positions into fence events",
-   "mergedAt": "2026-09-06T02:52:40Z",
-   "branch": "codex/tel44"
   }
  ],
  "merged_pr_total": 3000,
