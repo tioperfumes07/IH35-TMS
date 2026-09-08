@@ -917,34 +917,40 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   <div className="mt-3 border-t border-gray-200 pt-2">
                     <div className="mb-1 text-xs font-medium text-gray-900">Beginning / Ending — Balance Sheet Items</div>
                     <div className="overflow-x-auto">
-                      <table className="w-full text-xs">
-                        <thead>
-                          <tr>
-                            <th className="pb-1 text-left font-medium uppercase tracking-wide text-gray-500">Item</th>
-                            <th className="pb-1 text-right font-medium uppercase tracking-wide text-gray-500">Beginning</th>
-                            <th className="pb-1 text-right font-medium uppercase tracking-wide text-gray-500">Ending</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {[
-                            { label: "AR Balance", ending: summaryQuery.isError ? null : summary?.outstanding_liability_balance, testId: "ar-balance" },
-                            { label: "Escrow Reserve", ending: null, testId: "escrow-reserve" },
-                            { label: "Cash Reserve", ending: null, testId: "cash-reserve" },
-                            { label: "Loan", ending: null, testId: "loan" },
-                            { label: "Savings", ending: null, testId: "savings" },
-                            { label: "Funds on Hold", ending: null, testId: "funds-on-hold" },
-                            { label: "NFE", ending: null, testId: "nfe" },
-                          ].map((row) => (
-                            <tr key={row.testId} className="border-t border-gray-100">
-                              <td className="py-1 text-gray-700">{row.label}</td>
-                              <td className="py-1 text-right text-gray-400" data-testid={`factoring-account-summary-${row.testId}-beginning`}>—</td>
-                              <td className="py-1 text-right font-medium text-gray-900" data-testid={`factoring-account-summary-${row.testId}-ending`}>
-                                {row.ending == null ? <span className="text-gray-400">—</span> : fmtCurrency(row.ending)}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                      <ParityTable
+                        columns={[
+                          { key: "label", label: "Item" },
+                          {
+                            key: "beginning",
+                            label: "Beginning",
+                            render: (row: { label: string; testId: string }) => (
+                              <span className="text-gray-400" data-testid={`factoring-account-summary-${row.testId}-beginning`}>—</span>
+                            ),
+                          },
+                          {
+                            key: "ending",
+                            label: "Ending",
+                            render: (row: { label: string; ending: unknown; testId: string }) =>
+                              row.ending == null ? (
+                                <span className="text-gray-400" data-testid={`factoring-account-summary-${row.testId}-ending`}>—</span>
+                              ) : (
+                                <span className="font-medium text-gray-900" data-testid={`factoring-account-summary-${row.testId}-ending`}>
+                                  {fmtCurrency(row.ending)}
+                                </span>
+                              ),
+                          },
+                        ]}
+                        rows={[
+                          { label: "AR Balance", ending: summaryQuery.isError ? null : summary?.outstanding_liability_balance, testId: "ar-balance" },
+                          { label: "Escrow Reserve", ending: null, testId: "escrow-reserve" },
+                          { label: "Cash Reserve", ending: null, testId: "cash-reserve" },
+                          { label: "Loan", ending: null, testId: "loan" },
+                          { label: "Savings", ending: null, testId: "savings" },
+                          { label: "Funds on Hold", ending: null, testId: "funds-on-hold" },
+                          { label: "NFE", ending: null, testId: "nfe" },
+                        ]}
+                        rowKey={(row) => row.testId}
+                      />
                     </div>
                     <p className="mt-2 text-xs text-gray-500" data-testid="factoring-account-summary-footnote">
                       * Payments to You includes all payments due on invoices purchased during the
