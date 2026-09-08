@@ -1334,6 +1334,43 @@
         "connectivity",
         "reverse_link"
       ]
+    },
+    {
+      "id": "accounting.panel.money_proof_trail",
+      "tab": "Panels",
+      "sub": "Panel: Money Proof Trail",
+      "route_hint": "surface://components/accounting/MoneyProofTrailPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/accounting/MoneyProofTrailPanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "accounting.panel.journal_postings",
+      "tab": "Panels",
+      "sub": "Panel: Journal Postings",
+      "route_hint": "surface://components/accounting/PostingGrid.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/accounting/PostingGrid.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.panel.expand",
+      "tab": "Panels",
+      "sub": "Panel: Load Costs Board Expand",
+      "route_hint": "surface://pages/accounting/LoadCostsBoardPage.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/accounting/LoadCostsBoardPage.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
     }
   ],
   "honesty_note": {

@@ -310,6 +310,18 @@
         "picker_law",
         "qbo_chrome"
       ]
+    },
+    {
+      "id": "cash-flow.popover.adjust",
+      "tab": "Popovers",
+      "sub": "Popover: Rolling Ledger Adjust",
+      "route_hint": "surface://pages/cash-flow/tabs/RollingLedgerTab.tsx",
+      "surface_kind": "popover",
+      "surface_path": "pages/cash-flow/tabs/RollingLedgerTab.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
     }
   ],
   "honesty_audit": {

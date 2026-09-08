@@ -574,6 +574,18 @@
         "connectivity"
       ],
       "surface_path": "pages/banking/CashGlSetupPage.tsx"
+    },
+    {
+      "id": "banking.panel.drift_alerts",
+      "tab": "Panels",
+      "sub": "Panel: Drift Alerts",
+      "route_hint": "surface://pages/banking/components/DriftAlertsPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/banking/components/DriftAlertsPanel.tsx",
+      "required": [
+        "connectivity",
+        "bank"
+      ]
     }
   ],
   "honesty_audit": {

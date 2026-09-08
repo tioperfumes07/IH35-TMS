@@ -11,6 +11,8 @@
  * This does NOT claim Built. It only proves the surface is on the matrix inventory.
  *
  * Run: node scripts/verify-surface-bar-create-drawer-inventory.mjs [--selftest]
+ *
+ * @matrix-built {"modules":["dispatch","drivers","customers","vendors","banking","safety","maintenance","lists","accounting"],"cols":["connectivity"],"leafRe":"^(dispatch\\.drawer\\.(book_load|interchange_trailer|location_picker)|drivers\\.drawer\\.(create_settlement_deduction|vendor_edit|customer_edit)|banking\\.drawer\\.(transfer|categorize)|safety\\.drawer\\.internal_fine_detail|maintenance\\.modal\\.(work_order_detail|status_change)|lists\\.modal\\.(locations|vendors)|accounting\\.modal\\.(customer_edit|vendor_edit))$","task":"SURFACE-BAR-CREATE-DRAWER-INVENTORY"}
  */
 import fs from "node:fs";
 import path from "node:path";
