@@ -179,9 +179,23 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   escrow 2500¢, proof {nonzero 0, residual 0}, run posted→void, posted_at cleared. It caught + fixed a
   real `uuid=text` bug on `escrow_postings.source_id` that would have thrown on prod settlement #1.
   **Re-run this harness on a fresh branch before any prod post.**
-- **OPEN — Claude gate: manual JE `15e0887f`** (S-13643 / load 13541 / doc 5796, −$389.66) is a
-  standalone JE NOT linked to `payrun_gl_runs`; the reversal engine only reverses the payrun-linked JE,
-  so the orchestration must explicitly reverse/fold `15e0887f` or 5796 double/under-corrects.
+- **PHASE 1 (REVERSAL) ORCHESTRATION BUILT + REHEARSED on an isolated Neon branch
+  (`br-royal-grass-ak4y2evz`, 2026-09-08).** Harness:
+  `apps/backend/scripts/rebuild-usmca-settlements-orchestration.mts` — scope is a PASSED-IN parameter
+  (`--settlements=…`, default = every posted `payrun_gl_runs` for USMCA = the 17); PREVIEW by default
+  (one txn, ROLLBACK), `--commit` gated behind `REBUILD_I_UNDERSTAND=yes`. It (A) reverses each
+  in-scope settlement via `reverseSettlementPayRunInClientTx` then voids its `settlement_lines`
+  (`is_active=false` + void register) + flips the header to `cancelled` with `reversed_at/by/reason` +
+  unmatches any bank txn — MIRRORING the live `/settlements/:id/reverse` route exactly (no invented
+  lifecycle); (B) explicitly folds the standalone manual correction JE `15e0887f` via
+  `reverseJournalEntryNoFlip`; (C) proves the WHOLE reversed set (all originals + all reversals + the
+  manual JE + its reversal) nets to ZERO at the (account, class, entity) grain with a hard throw.
+  **Rehearsal proof:** PREVIEW + COMMIT both green — 17 settlements reversed, escrow 2500¢ each unwound,
+  advances restored, lines voided; JE `15e0887f` folded; GLOBAL proof journals=36, nonzero_dims=0,
+  residual_cents=0. Post-commit branch state: 17 runs `void`, 0 posted, reversed settlements
+  `cancelled`, 0 active lines on them. **Idempotent:** a second pass found 0 posted runs and
+  `reverseJournalEntryNoFlip` returned the EXISTING reversal (no double-reverse). Prod UNTOUCHED.
+  **CLEARS the old "manual JE `15e0887f`" gate** — the fold is built + proven, not just planned.
 - **Rebuild bills: un-void 7, create 1.** 7 of the 8 "zero-pay" loads already have VOIDED
   `driver_finance.driver_bills` rows matching the signed docs (13540 is 1¢ off — trace, don't shrug);
   only 13554 has no bill row. The rebuild un-voids the 7, creates 13554 — it must NOT blindly create 8.
