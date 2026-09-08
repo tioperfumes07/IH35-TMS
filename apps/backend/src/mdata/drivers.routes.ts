@@ -364,6 +364,14 @@ const updateDriverBodySchema = z
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
+const deactivateDriverBodySchema = z.object({
+  quarantine_test_fixture: z.literal(true).optional(),
+}).strict();
+
+function unmistakableDriverFixtureName(firstName: string, lastName: string): boolean {
+  return /(^|\W)(test|codex)(\W|$)/i.test(`${firstName} ${lastName}`);
+}
+
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
   return req.user;
@@ -959,7 +967,7 @@ export async function createDriverCanonical(
           rehireState.is_rehire,
           resolvedOperatingCompanyId,
           authUser.uuid,
-          b.is_sample_data ?? false,
+          (b.is_sample_data ?? false) || unmistakableDriverFixtureName(b.first_name, b.last_name),
         ]
       );
       const row = res.rows[0];
@@ -2486,11 +2494,14 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedBody = deactivateDriverBodySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    const quarantineTestFixture = parsedBody.data.quarantine_test_fixture === true;
 
     const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
       const oldRes = await client.query(
         `
-          SELECT id, operating_company_id, deactivated_at, identity_user_id, status
+          SELECT id, operating_company_id, deactivated_at, identity_user_id, status, first_name, last_name
           FROM mdata.drivers
           WHERE id = $1
             AND operating_company_id IN (
@@ -2508,6 +2519,30 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       if (!oldRow) return null;
       if (oldRow.deactivated_at !== null) return { error: "mdata_driver_already_deactivated" as const };
 
+      if (quarantineTestFixture) {
+        if (!unmistakableDriverFixtureName(String(oldRow.first_name), String(oldRow.last_name))) {
+          return { error: "mdata_driver_not_test_fixture" as const };
+        }
+        const references = await client.query<{ reference_count: number }>(
+          `SELECT (
+             (SELECT count(*) FROM mdata.loads l WHERE $1::uuid IN (l.assigned_primary_driver_id, l.assigned_secondary_driver_id, l.accepted_by_driver_id)) +
+             (SELECT count(*) FROM mdata.units u WHERE u.assigned_driver_id = $1::uuid) +
+             (SELECT count(*) FROM mdata.equipment e WHERE e.assigned_driver_id = $1::uuid) +
+             (SELECT count(*) FROM driver_finance.driver_settlements s WHERE s.driver_id = $1::uuid) +
+             (SELECT count(*) FROM driver_finance.driver_bills b WHERE b.driver_id = $1::uuid) +
+             (SELECT count(*) FROM accounting.bills b WHERE b.driver_id = $1::uuid) +
+             (SELECT count(*) FROM accounting.expenses e WHERE e.driver_uuid = $1::uuid) +
+             (SELECT count(*) FROM maintenance.work_orders w WHERE w.driver_id = $1::uuid) +
+             (SELECT count(*) FROM safety.driver_documents d WHERE d.driver_id = $1::uuid) +
+             (SELECT count(*) FROM safety.driver_qualification_files q WHERE q.driver_id = $1::uuid)
+           )::int AS reference_count`,
+          [oldRow.id]
+        );
+        if ((references.rows[0]?.reference_count ?? 0) !== 0) {
+          return { error: "mdata_driver_test_fixture_has_real_activity" as const };
+        }
+      }
+
       // Set status -> 'Inactive' in the SAME update as deactivated_at. Every UI surface
       // (badge, Status field, Active/Inactive tab filter) reads the text `status` column, not
       // deactivated_at — so writing only deactivated_at left drivers reading "Active" forever.
@@ -2518,16 +2553,17 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         `
           UPDATE mdata.drivers
           SET deactivated_at = now(),
+              is_sample_data = CASE WHEN $4::boolean THEN true ELSE is_sample_data END,
               status = CASE WHEN status = 'Terminated' THEN status ELSE 'Inactive'::mdata.driver_status END,
               status_locked_at = now(),
-              status_locked_reason = 'manual_deactivate',
+              status_locked_reason = CASE WHEN $4::boolean THEN 'test_fixture_quarantine' ELSE 'manual_deactivate' END,
               updated_by_user_id = $2
           WHERE id = $1
             AND operating_company_id = $3::uuid
             AND deactivated_at IS NULL
           RETURNING id, deactivated_at, status
         `,
-        [parsedParams.data.id, authUser.uuid, oldRow.operating_company_id]
+        [parsedParams.data.id, authUser.uuid, oldRow.operating_company_id, quarantineTestFixture]
       );
       const changedRow = res.rows[0] ?? null;
       if (!changedRow) return { error: "mdata_driver_state_changed" as const };
@@ -2565,6 +2601,8 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         resource_id: oldRow.id,
         resource_type: "mdata.drivers",
         operating_company_id: oldRow.operating_company_id,
+        reason: quarantineTestFixture ? "test fixture quarantined per owner ruling — never delete" : "manual_deactivate",
+        is_sample_data: quarantineTestFixture || undefined,
       });
 
       return { id: oldRow.id, deactivated_at: changedRow.deactivated_at, status: changedRow.status, was_already_deactivated: false };
