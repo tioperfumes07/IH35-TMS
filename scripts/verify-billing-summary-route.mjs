@@ -2,6 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { setsTenantGuc } from "./lib/tenant-guc-match.mjs";
 
 const repoRoot = process.cwd();
 const indexPath = path.join(repoRoot, "apps/backend/src/index.ts");
@@ -23,7 +24,7 @@ if (!billingSource.includes('app.get("/api/v1/mdata/customers/:customer_id/billi
 if (!billingSource.includes("days_until_due AS credit_terms_days")) {
   failures.push("billing summary must join catalogs.payment_terms.days_until_due");
 }
-if (!billingSource.includes("set_config('app.operating_company_id'")) {
+if (!setsTenantGuc(billingSource)) {
   failures.push("billing summary must set app.operating_company_id via set_config");
 }
 if (!/payments[\s\S]*operating_company_id = \$2/.test(billingSource)) {

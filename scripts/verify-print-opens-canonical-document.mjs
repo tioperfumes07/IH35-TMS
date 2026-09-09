@@ -7,6 +7,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { setsTenantGuc } from "./lib/tenant-guc-match.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -74,7 +75,7 @@ function assertSource() {
   if (!shared.includes("org.user_accessible_company_ids()")) {
     fail("print company lookup must walk org.user_accessible_company_ids() then set app.operating_company_id (RLS GUC)");
   }
-  if (!shared.includes("set_config('app.operating_company_id'")) {
+  if (!setsTenantGuc(shared)) {
     fail("print company lookup must set app.operating_company_id before SELECT by UUID");
   }
 

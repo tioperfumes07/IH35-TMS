@@ -5,6 +5,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { setsTenantGuc } from "./lib/tenant-guc-match.mjs";
 
 const ROOT = process.cwd();
 const paths = {
@@ -68,7 +69,7 @@ function verifySharedDriverMessaging(messagesRoutes, messagesService, profileCom
     messagesRoutes.indexOf('app.get("/api/v1/driver/messages"'),
     messagesRoutes.indexOf('app.post("/api/v1/driver/messages"')
   );
-  if (pwaRoute.includes("set_config('app.operating_company_id'")) {
+  if (setsTenantGuc(pwaRoute)) {
     failures.push("driver PWA shared-company read must not collapse the inbox to the home-company GUC");
   }
   for (const needle of [

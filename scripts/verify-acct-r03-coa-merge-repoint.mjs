@@ -27,6 +27,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { runExecutableGuard } from "./guard-executable-contract.mjs";
+import { setsTenantGuc } from "./lib/tenant-guc-match.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-acct-r03-coa-merge-repoint";
@@ -146,7 +147,7 @@ function checkRoutes(src, failures) {
       `${ROUTES}: merge must be Owner-only (blueprint 3.18.12 catalogs/accounting.account.merge) — isCatalogWriteRole is too wide`
     );
   }
-  if (!/assertCompanyMembership/.test(src) || !/set_config\('app\.operating_company_id'/.test(src)) {
+  if (!/assertCompanyMembership/.test(src) || !setsTenantGuc(src)) {
     failures.push(`${ROUTES}: merge must assert company membership and set the entity GUC before touching catalogs.accounts`);
   }
   // CodeQL js/missing-rate-limiting: Owner-only authorization routes still need per-route throttling (global:false).

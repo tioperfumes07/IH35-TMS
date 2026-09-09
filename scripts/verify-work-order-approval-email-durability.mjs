@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import { setsTenantGuc } from "./lib/tenant-guc-match.mjs";
 
 const FILES = {
   workOrders: "apps/backend/src/work-orders/work-orders.routes.ts",
@@ -18,7 +19,7 @@ export function problems(s) {
   }
   if (!s.handler.includes('eventType = "work_order.approved"')) failures.push("work_order.approved handler missing");
   if (!s.handler.includes("enqueueEmailWithClient(ctx.client")) failures.push("WO email insert must share processor transaction");
-  if (!s.handler.includes("set_config('app.operating_company_id'")) failures.push("WO email handler missing selected-company RLS context");
+  if (!setsTenantGuc(s.handler)) failures.push("WO email handler missing selected-company RLS context");
   if (!s.registry.includes("new WorkOrderApprovedHandler()")) failures.push("WO approval handler not registered");
   if (!s.queue.includes("export async function enqueueEmailWithClient")) failures.push("client-scoped email queue primitive missing");
   return failures;

@@ -7,6 +7,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { countTenantGucCalls } from "./lib/tenant-guc-match.mjs";
 
 const ROOT = process.cwd();
 const FILES = {
@@ -41,8 +42,15 @@ function audit(sources) {
     const camel = ep.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
     if (!api.includes(camel)) failures.push(`API key missing: ${camel}`);
   }
-  if (/\bINSERT\b|\bUPDATE\b|\bDELETE\b/i.test(routes)) failures.push("audit routes must remain read-only");
-  const rlsCount = (routes.match(/set_config\(\s*['"]app\.operating_company_id['"]/g) || []).length;
+  // Strip JS (// and /* */) and embedded-SQL (--) comments before the read-only check — this file's own
+  // prose uses "void-not-delete" and "deactivated-but-not-deleted" inside SQL `--` comments explaining
+  // the RLS/void behaviour, which is not a DELETE statement and must not fail a code-shape check.
+  const routesNoComments = routes
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/(^|[^:])\/\/[^\n]*/g, "$1")
+    .replace(/--[^\n]*/g, "");
+  if (/\bINSERT\b|\bUPDATE\b|\bDELETE\b/i.test(routesNoComments)) failures.push("audit routes must remain read-only");
+  const rlsCount = countTenantGucCalls(routes);
   if (rlsCount < ENDPOINTS.length) failures.push(`only ${rlsCount}/7 routes set tenant RLS context`);
   if (!routes.includes("LIMIT") || !routes.includes("OFFSET")) failures.push("pagination missing");
   if (!index.includes("registerAuditReportRoutes")) failures.push("backend routes not mounted");
@@ -94,6 +102,9 @@ if (process.argv.includes("--selftest")) {
     ["load-link", { page: base.page.replace('load: "load"', 'load: "driver"') }],
     ["work-order-link", { page: base.page.replace('work_order: "work_order"', 'work_order: "task"') }],
     ["endpoint", { routes: base.routes.replace("/api/v1/audit/reports/activity-by-user", "/missing/activity-by-user") }],
+    // A real write outside a comment must still fail; only the "void-not-delete" prose inside SQL `--`
+    // comments (stripped above) is allowed to say the word.
+    ["real-write", { routes: base.routes.replace("LIMIT", "DELETE FROM audit.row_changes; LIMIT") }],
   ];
   for (const [name, override] of mutations) {
     if (!audit({ ...base, ...override }).length) {

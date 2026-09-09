@@ -20,6 +20,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { countTenantGucCalls } from "./lib/tenant-guc-match.mjs";
 
 const repoRoot = process.cwd();
 
@@ -50,7 +51,7 @@ function scan() {
     }
     const src = stripComments(fs.readFileSync(full, "utf8"));
     const asserts = countMatches(src, /assertCompanyMembership\s*\(/g);
-    const scopes = countMatches(src, /set_config\(\s*['"]app\.operating_company_id['"]/g);
+    const scopes = countTenantGucCalls(src);
     if (asserts < 1) {
       failures.push(`${rel} — no assertCompanyMembership() call (raw operating_company_id trusted; G2-2 leak)`);
       continue;
@@ -86,7 +87,7 @@ function selftest() {
     await client.query("SELECT set_config('app.operating_company_id', $1, true)", [ocId]);
   `;
   const asserts = (s) => (s.match(/assertCompanyMembership\s*\(/g) ?? []).length;
-  const scopes = (s) => (s.match(/set_config\(\s*['"]app\.operating_company_id['"]/g) ?? []).length;
+  const scopes = (s) => countTenantGucCalls(s);
   const passes = (s) => asserts(s) >= 1 && asserts(s) >= scopes(s);
   if (!passes(good)) {
     console.error("[verify-alerts-routes-membership] SELFTEST FAIL — guarded handler not recognized");

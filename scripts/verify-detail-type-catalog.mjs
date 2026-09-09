@@ -9,6 +9,7 @@
 //       resolve them (frontend vitest does not gate CI, so this .mjs is the real gate).
 import fs from "node:fs";
 import path from "node:path";
+import { setsTenantGuc } from "./lib/tenant-guc-match.mjs";
 
 const root = process.cwd();
 const read = (p) => (fs.existsSync(path.join(root, p)) ? fs.readFileSync(path.join(root, p), "utf8") : "");
@@ -58,7 +59,7 @@ if (!/path: "\/lists\/accounting\/detail-types"/.test(subnav)) {
 }
 
 const catalogRoute = read("apps/backend/src/catalogs/accounting/account-type-catalog.routes.ts");
-if (!/operating_company_id/.test(catalogRoute) || !/set_config\('app\.operating_company_id'/.test(catalogRoute)) {
+if (!/operating_company_id/.test(catalogRoute) || !setsTenantGuc(catalogRoute)) {
   failures.push("account-type-catalog route must accept operating_company_id and set app.operating_company_id GUC");
 }
 

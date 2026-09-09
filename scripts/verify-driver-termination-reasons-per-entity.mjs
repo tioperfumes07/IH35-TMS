@@ -11,6 +11,7 @@
 // in an in-memory copy of the REAL sources and asserts every one is caught, then asserts live clean.
 import fs from "node:fs";
 import path from "node:path";
+import { setsTenantGuc } from "./lib/tenant-guc-match.mjs";
 
 const ROOT = process.cwd();
 const LABEL = "verify:driver-termination-reasons-per-entity";
@@ -54,7 +55,7 @@ export function assertDriverTerminationReasonsPerEntity(sources) {
 
   const route = get(ROUTE);
   if (!/resolveOperatingCompanyId/.test(route)) errs.push("route must resolve the caller's company (catalog CRUD)");
-  if (!/set_config\('app\.operating_company_id'/.test(route)) errs.push("route must set the app.operating_company_id GUC");
+  if (!setsTenantGuc(route)) errs.push("route must set the app.operating_company_id GUC");
   // The referencing handlers must scope by the DRIVER's company, not the caller's.
   if (!/scopeToDriverCompany/.test(route)) errs.push("referencing safety-event handlers must set the GUC from the DRIVER's company (scopeToDriverCompany)");
   if (!/SELECT operating_company_id FROM mdata\.drivers WHERE id = \$1/.test(route)) errs.push("scopeToDriverCompany must read mdata.drivers.operating_company_id");
@@ -71,7 +72,7 @@ export function assertDriverTerminationReasonsPerEntity(sources) {
   if (!/\[opco\]/.test(route)) errs.push("catalog GET must bind the resolved selected company");
 
   const returning = get(RETURNING);
-  if (!/resolveOperatingCompanyId/.test(returning) || !/set_config\('app\.operating_company_id'/.test(returning))
+  if (!/resolveOperatingCompanyId/.test(returning) || !setsTenantGuc(returning))
     errs.push("returning-driver detection must set the entity GUC (its termination-reason JOIN is per-entity + FORCE RLS)");
 
   const api = get(API);

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
+import { setsTenantGuc } from "./lib/tenant-guc-match.mjs";
 
 const servicePath = path.join(process.cwd(), "apps/backend/src/accounting/collections.service.ts");
 const routesPath = path.join(process.cwd(), "apps/backend/src/accounting/collections.routes.ts");
@@ -21,7 +22,7 @@ const routeSource = fs.readFileSync(routesPath, "utf8");
 const cronSource = fs.readFileSync(cronPath, "utf8");
 const migrationSource = fs.readFileSync(migrationPath, "utf8");
 
-if (!serviceSource.includes("set_config('app.operating_company_id'")) {
+if (!setsTenantGuc(serviceSource)) {
   fail("service must set app.operating_company_id before SQL");
 }
 if (!serviceSource.includes("WHERE operating_company_id = $1::uuid")) {
