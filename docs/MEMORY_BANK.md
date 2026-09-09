@@ -291,6 +291,77 @@ lines to the specific advance rows. Net ties per tour; advance→tour attributio
 assert each net == signed `total_due` AND grand == 37830.87.** Prod post stays gated: `assertNotProd`
 blocks `--commit` at the code level; the real post needs Claude GO + owner yes.
 
+## Phase 2 PROVEN — 28/28 penny-exact reverse→repost on a fresh branch (2026-09-08, Cursor)
+
+Script: `apps/backend/scripts/repost-usmca-settlements-phase2.mts` (Phase 1 reverse runs first via the
+existing orchestration, then this reposts). Rehearsed on fresh branch `br-tiny-sky-aksnm3zj` off prod:
+**all 28 tours net == signed `total_due` to the penny; grand net = expected = $37,830.87. Prod untouched
+(0 `S-2026`, 17 original posted runs, 0 JEs after 07:00Z — re-verified on `br-fancy-credit`).**
+
+Corrections to the recipe above (what the live schema/poster actually required — believe THIS block):
+- **`trace_no` is AUTO** (`trg_assign_trace_no` BEFORE INSERT) on both `driver_settlements` and
+  `settlement_lines`/`driver_bills` — do NOT set it (recipe's "source it" note was wrong).
+- **`escrow_contribution` lines are stored `+25.00`**, not −25. The poster sums `SUM(amount)` as a
+  positive magnitude to withhold; live rows are +25.00. Write +25/load (the CSV's −25 is doc-net sign only).
+- **admin_fee** → `driver_settlement_deductions(deduction_type='other', amount_cents, applied_to_settlement_id)`
+  → resolves `other_recovery` → **7200 Driver Admin Fee & Chargeback Income**. There is NO `admin_fee`
+  deduction_type. All close CoA roles are bound for USMCA.
+- **Driver resolution must NOT use `mdata.drivers` directly** (it has duplicate rows + partial names).
+  Resolve against the DEDUP universe of drivers referenced by USMCA `driver_bills`∪`driver_settlements`,
+  with **bidirectional token-subset** matching (signed doc "HUGO GAYTAN SARABIA" vs DB "HUGO GAYTAN";
+  DB "…MORALES NOGUEZ" vs doc "…MORALES"). 17 real driver ids, each unique.
+- **3 in-scope loads had no `mdata.loads` row** (13502, 13507 = Pedro 5772; 13505 = 5776). Seeded minimal
+  `delivered_pending_docs` rows (template FKs: customer/flag/trailer from a neighbor USMCA load,
+  dispatcher = system actor) so earnings lines link. Full customer/revenue/factoring hydration = follow-on.
+- **Pedro (5772) was OMITTED from the `historical_backfill` cash-advance seeding every other driver
+  got** (CA-2026-0001..0004). That is the ENTIRE reason his net came out +$390. Seeding his $390 as the
+  same `historical_backfill` pattern (a `driver_advances` row `status='active'` + its `driver_liabilities`
+  row; NO disbursement JE because books start at $0) makes 5772 recover it → **net $997.08**. Opt-in via
+  `SEED_SIGNED_ADVANCES=1` so nobody silently mints a money record; per-driver it seeds
+  `max(0, Σ signed cash_advance − Σ available recoverable outstanding)` (a no-op for the other 27).
+- Net pay accrues to **Driver Net-Pay Clearing** payment method (`81f95ee0…`, GL 2170) — records-only,
+  no money moves; the bank payment is a separate reconciliation step.
+- Period dates: **`LEAST/GREATEST`** normalize the header start/end (doc 5779's signed dates are reversed).
+- **`closeSettlementPayRun` opens its OWN connection** (`withCurrentUser`) — it does NOT join the
+  script's tx, so there is no rollback-preview for the post. Point BOTH `REBUILD_DB_URL` and `DATABASE_URL`
+  at the SAME branch and rehearse on a disposable branch.
+- **Neon `reset_from_parent` did NOT reliably clear the compute** here (stale data survived a "ready"
+  reset). Use **delete + create a fresh branch** per rehearsal; use the DIRECT (non-`-pooler`) endpoint.
+- Direct RLS inserts need `operating_company_id` set explicitly on `settlement_lines` (session-level
+  `set_config('app.bypass_rls','lucia',false)` alone did NOT satisfy `is_lucia_bypass()` for FORCE-RLS
+  tables; the `operating_company_id = app.operating_company_id` clause does).
+
+## Phase 1 SCOPE FIX — reverse the 14 Faro settlements, NOT all 17 (2026-09-08, Cursor)
+
+**Defect found by live drift-check before the prod post (this is why you rehearse against current prod
+HEAD, not a stale branch).** Phase 1's `discoverScope` reversed EVERY posted `payrun_gl_runs`
+(17 settlements). Three of those are **ongoing September ops, not Faro-era**:
+`S-13725` (loads 13553, 13563), `S-13728` (13570), `S-13730` (13572) — all period_start ≥ 2026-09-01,
+all covering the in-progress/September **orphan loads** (no signed doc yet). Reversing them removed real
+September pay the 28-doc repost never restores. The correct reversal scope is the **14 Faro-era
+settlements** (period_start < 2026-09-01), which map exactly to the 28 signed tours (5769-5796).
+
+FIX (in `rebuild-usmca-settlements-orchestration.mts`): `discoverScope` now filters
+`ds.period_start < '2026-09-01'` (the owner's Faro/September line) and **prints the excluded September
+settlements every run** so the exclusion is never silent on a money post.
+
+**Scope corroborated 3 ways (all live):** (1) the signed-doc CSV grand for 5769-5796 = **$37,830.87**;
+(2) `ALL-TOURS-VS-APP.md` — "Faro factoring STARTS at load 13508 / tour 5769," so tours ≥ 5769 are the
+USMCA rebuild and 5753/5760-5768 (pre-Faro, $13,943.32) reconcile via QuickBooks; (3) 38 total signed
+tours $51,774.19 − 10 pre-Faro $13,943.32 = **$37,830.87**. The 6 orphan loads (13544, 13551, 13553,
+13563, 13570, 13572) have no signed doc and must NOT be settled in the rebuild.
+
+**Re-rehearsed on fresh branch `br-small-silence-akmbih3c` off prod (scope-fixed):**
+- `discoverScope: 14 Faro-era settlement(s) in scope; 3 September settlement(s) PRESERVED (excluded)`
+- manual JE 15e0887f folded; **global equal-and-opposite proof journals=30 nonzero_dims=0 residual=0**
+- Phase 2: **28/28 tie to signed penny, grand net = expected = $37,830.87**
+- Live-verified on the branch AFTER the run: S-13725/13728/13730 still `closed` with active lines +
+  pay-run posted (untouched); 28 `S-2026` settlements created; orphan loads 13544 & 13551 now have
+  **0 active earnings lines** (correctly un-bundled → back to unsettled/in-progress).
+
+Prod still gated: the Phase-1 script's `assertNotProd` is UNCONDITIONAL (no override) by design — the real
+prod post is a separate, intentional, owner-authorized action, not a repoint of this rehearsal script.
+
 ## PRs (this reconciliation effort)
 
 - #21403 — reversal poster (MERGED) · #21404 — reconciliation tie-outs (MERGED)

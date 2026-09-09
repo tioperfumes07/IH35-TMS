@@ -45,7 +45,7 @@ const PARITY_TABLE_PATH = "apps/frontend/src/components/parity/ParityTable.tsx";
 
 /** SORT-01 — the sortable header button must fill the <th> (w-full), not just its own label. */
 export function parityTableHitTargetOk(src) {
-  const m = src.match(/column\.sortable \? \(\s*<button[\s\S]{0,1200}?onClick=\{\(\) => toggleSort\(key\)\}/);
+  const m = src.match(/column\.sortable(?: !== false)? \? \(\s*<button[\s\S]{0,1200}?onClick=\{\(\) => toggleSort\(key\)\}/);
   if (!m) return { ok: false, reason: "could not locate the sortable header <button> at all — structure changed" };
   const block = m[0];
   if (!/className=\{`[^`]*\bw-full\b/.test(block)) {

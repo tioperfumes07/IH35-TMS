@@ -8,6 +8,7 @@ import { findCandidates, QBO_DAYS_AFTER, QBO_DAYS_BEFORE } from "../accounting/b
 import { bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
 import { supersedePlaidPendingByExactPostedCandidate } from "./bank-tx-dedup.js";
 import { runDriftDetectors } from "./drift-alerts.service.js";
+import { applyBankingRulesForCompany } from "./banking-rules.engine.js";
 
 const financeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
 
@@ -507,6 +508,34 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     });
     if (reply.sent) return;
     return { ok: true };
+  });
+
+  // RECON-USMCA-BANK-01 — bulk counterpart to refresh-suggestion above. Re-applies the CURRENT
+  // active accounting.banking_rules set against every not-yet-categorized transaction in the
+  // company, not just newly-synced ones — the missing piece that left most of USMCA's live
+  // history with no suggestion even when an existing rule already matched it byte-for-byte.
+  // Suggestion-only: applyBankingRulesForCompany/applyBankingRulesForTransaction never write
+  // categorized_at/matched_expense_id/matched_bill_id.
+  app.post("/api/v1/banking/rules/bulk-apply", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = financeUser(req, reply);
+    if (!user) return;
+    const body = companyQuerySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+
+    const result = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) =>
+      applyBankingRulesForCompany(client, body.data.operating_company_id)
+    );
+    await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "banking.rules_bulk_applied",
+        { operating_company_id: body.data.operating_company_id, scanned: result.scanned, matched: result.matched },
+        "info",
+        "RECON-USMCA-BANK-01"
+      );
+    });
+    return { ok: true, ...result };
   });
 
   app.post("/api/v1/banking/reconciliation-sessions", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {

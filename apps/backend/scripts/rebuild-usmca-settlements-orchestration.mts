@@ -86,13 +86,37 @@ function currentBusinessDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+// The Faro/September cutover line (owner: "reconcile through 08/31, September continues as normal ops").
+// The USMCA rebuild is ONLY the Faro-era tours (5769-5796); the live September settlements
+// (S-13725/13728/13730 — loads 13553/13563/13570/13572, all in-progress/September orphans with no signed
+// doc) are ongoing ops and MUST NOT be reversed. Scoping by "all posted pay-runs" over-reverses them.
+const SEPTEMBER_CUTOVER = "2026-09-01";
 async function discoverScope(client: pg.PoolClient): Promise<string[]> {
-  const res = await client.query<{ settlement_id: string }>(
-    `SELECT settlement_id::text
-       FROM driver_finance.payrun_gl_runs
-      WHERE operating_company_id = $1::uuid AND status = 'posted'
-      ORDER BY settlement_id`,
-    [OPCO]
+  // Only Faro-era mis-grouped settlements: posted pay-run AND tour started before the September line.
+  const res = await client.query<{ settlement_id: string; display_id: string | null; ps: string }>(
+    `SELECT r.settlement_id::text, ds.display_id, ds.period_start::date::text ps
+       FROM driver_finance.payrun_gl_runs r
+       JOIN driver_finance.driver_settlements ds ON ds.id = r.settlement_id
+      WHERE r.operating_company_id = $1::uuid AND r.status = 'posted'
+        AND ds.period_start < $2::date
+      ORDER BY r.settlement_id`,
+    [OPCO, SEPTEMBER_CUTOVER]
+  );
+  // Audit: loudly print the September settlements we are DELIBERATELY excluding, so the exclusion is
+  // visible in every run's log (never a silent scope decision on a money post).
+  const excluded = await client.query<{ display_id: string | null; ps: string }>(
+    `SELECT ds.display_id, ds.period_start::date::text ps
+       FROM driver_finance.payrun_gl_runs r
+       JOIN driver_finance.driver_settlements ds ON ds.id = r.settlement_id
+      WHERE r.operating_company_id = $1::uuid AND r.status = 'posted'
+        AND ds.period_start >= $2::date
+      ORDER BY ds.period_start`,
+    [OPCO, SEPTEMBER_CUTOVER]
+  );
+  console.log(
+    `discoverScope: ${res.rows.length} Faro-era settlement(s) in scope; ` +
+      `${excluded.rows.length} September settlement(s) PRESERVED (excluded): ` +
+      (excluded.rows.map((e) => `${e.display_id}@${e.ps}`).join(", ") || "none")
   );
   return res.rows.map((r) => r.settlement_id);
 }

@@ -764,3 +764,53 @@ against the real PDF, not just what's already in the DB) is 100% present somewhe
 vs. USMCA pay), not a USMCA data hole. Nothing voided, corrected, or reposted; read-only per the
 assignment. **This does not answer the larger 38-tour/36-missing-load question already raised in
 MEMORY_BANK.md — going there next.**
+
+## 2026-09-08 06:5xZ — CC-1 | BANK-BALANCE DONE | dd8d6c8cd8 | 34fff084d12b13ff11a35da44357fcc1e4df6bd3 | balance[i]-balance[i+1]==signedAmount(row[i]) for every row, USMCA FREIGHT, unfiltered | NEXT
+
+Re-verified per instruction before touching anything ("re-verify the exact numbers are still live before you fix"). Result: **already fixed and already deployed** — the exact same defect class (BANK-RUNNING-BALANCE-STILL-BROKEN-UNFILTERED) was root-caused and fixed earlier this session as BANK-F30002, PR #21374 (`dd8d6c8cd8`, merged 2026-09-07 20:18 CT). Confirmed the fix is not just merged but LIVE: `/api/v1/healthz/shallow` on the deployed backend returns `git_sha=34fff084d12b13ff11a35da44357fcc1e4df6bd3`, and `git merge-base --is-ancestor dd8d6c8cd8 34fff084...` confirms that commit is an ancestor of what's actually running.
+
+**Why this new report's exact cited numbers didn't match:** the report's snapshot (WIRE IN balance $11,592.73 / ZELLE-to-Marco-Olveradavila balance -$5,192.81, "two consecutive rows") is stale — the live Plaid feed synced additional 09/05–09/08 transactions between when that snapshot was taken and now, which is why those two rows are no longer adjacent (4 more real rows now sit between them) and their balance values have moved. This is normal bank-feed drift, not a bug.
+
+**Live re-proof just now** (get_page_text dump, account e83028a5-dcda-4233-b660-5b9923b3d39c, USMCA FREIGHT, unfiltered "All" tab — 287/287 rows shown are the same set as "For review", confirming this IS the unfiltered view): checked every adjacent row pair across the full first page (47 September rows, including the 8-row same-day cluster on 09/04 and the 6-row same-day cluster on 09/03 — the exact same-day-tiebreak scenario this bug class hits) — every single pair satisfies `balance[i] - balance[i+1] == signedAmount(row[i])` exactly, to the penny:
+- 09/04 WIRE IN (received $16,785.54, balance $19,287.07) → PMNT SENT (balance $2,501.53): 19287.07 − 16785.54 = 2501.53 ✓
+- PMNT SENT (spent $151.99) → ZELLE Alberto Lozano (balance $2,653.52): 2501.53 + 151.99 = 2653.52 ✓
+- ZELLE Alberto (spent $1,250.00) → ZELLE Laura Munoz (balance $3,903.52): 2653.52 + 1250.00 = 3903.52 ✓
+- ZELLE Laura (spent $3,000.00) → ZELLE Marco Olveradavila (balance $6,903.52): 3903.52 + 3000.00 = 6903.52 ✓
+- ZELLE Marco (spent $500.00) → Holiday Inn #1 (balance $7,403.52): 6903.52 + 500.00 = 7403.52 ✓
+- Holiday Inn #1 (spent $174.67) → Holiday Inn #2 (balance $7,578.19): 7403.52 + 174.67 = 7578.19 ✓
+- 09/03 WIRE IN (received $10,466.00, balance $7,742.45) → CHECK 1008 (balance -$2,723.55): 7742.45 − 10466.00 = −2723.55 ✓
+- CHECK 1008 (spent $979.05) → CHECK 1009 (balance -$1,744.50): −2723.55 + 979.05 = −1744.50 ✓
+- CHECK 1009 (spent $789.04) → WIRE FEE (balance -$955.46): −1744.50 + 789.04 = −955.46 ✓
+- WIRE FEE (spent $30.00) → ATM (balance -$925.46): −955.46 + 30.00 = −925.46 ✓
+- ATM (spent $300.00) → WIRE OUT (balance -$625.46): −925.46 + 300.00 = −625.46 ✓
+- WIRE OUT (spent $10,000.00) → CHECK 1005 (balance $9,374.54): −625.46 + 10000.00 = 9374.54 ✓
+- Newest row (CHECKCARD Hotels.com, spent $70.24, balance $2,089.70) matches the Current Balance tile exactly ✓
+
+Code confirmed correct at the source too: `runningBalanceById` (BankingTransactionsDesignView.tsx:1139) walks `fullHistoryQuery.data` sorted by `compareTxNewestFirst` (transaction_date, then created_at, then id — fully deterministic), starting from `selectedAccount.current_balance_cents`, one pass, no skip. Live Neon check: zero duplicate (date+amount+description) rows remain on this account (the BANK-F30002 root cause — 616 stale duplicate Plaid rows — stays fixed, none have regressed back in).
+
+No code change needed. No new PR. Nothing to merge under the fast-merge law here since there's no diff to ship — filing the DONE line that was missing, which is what caused this to look overdue.
+
+NEXT: moving to `09-08-2026-CC-1-ACCTF5723-BACKFILL-AND-REPOST.md` per the queue order.
+
+## 2026-09-09 02:3xZ — CC-1 | ACCT-F5723 DONE (already completed earlier this session, re-verified now)
+
+Per the handoff's own 3-step plan (`~/Downloads/09-08-2026-CC-1-ACCTF5723-BACKFILL-AND-REPOST.md`):
+already fully done, live-reconfirmed now rather than redone.
+
+- **Step 1 (FK backfill)** — confirmed live: JE `1bf5606c` has `reversed_by_je_id=df6dff65`, JE
+  `df6dff65` has `reverses_je_id=1bf5606c`, both directions linked exactly as specified.
+- **Step 2 (re-post invoice 1856d703's own A/R)** — confirmed live: invoice `1856d703-0c07-4cfb-8a7d-
+  39604a087d5e` status=`sent`, `amount_open_cents=250000` ($2,500.00), a real posted invoice, not a
+  raw JE.
+- **Step 3 (AR tie-out)** — confirmed live, exact match: `gl_cents = sub_cents = 16825241`
+  ($168,252.41), zero variance. `/api/v1/healthz` live right now: `ledger.ar_tieout` ok=true,
+  `ledger.posted_without_posting` ok=true, both critical-tier, both green.
+- **Guard** (`verify-void-reversal-links-non-batch-postings.mjs`, verify-step 10941): PASSED, live run
+  just now.
+
+No new work needed — this was completed as part of the CRITICAL-AR-TIEOUT-POSTED-WITHOUT-POSTING
+incident closed earlier in this same session (invoice 1856d703/load 13541, $2,500, along with the
+sibling load 6e823810/$607.41 case). The 2026-09-08 08:00 UTC deadline on this handoff predates that
+closure; filing this confirmation since the handoff doc itself wasn't marked done anywhere visible.
+
+NEXT: `09-08-2026-CC-1-REEFER-LUMPER-CONFIRMATION-WORKFLOW.md`.
