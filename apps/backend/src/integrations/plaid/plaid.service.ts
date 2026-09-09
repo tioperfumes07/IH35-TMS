@@ -465,6 +465,18 @@ export async function autoCategorize(
   let applied = false;
   await withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [transaction.operating_company_id]);
+    // BANK-F30022 (2026-09-09): this UPDATE previously carried a JS-style // comment block INSIDE
+    // the SQL template literal (GO-23's own note, below) -- // is not valid SQL syntax, so every
+    // non-dry-run call to autoCategorize() threw a live Postgres syntax error the moment it reached
+    // this statement. Confirmed live via EXPLAIN: "syntax error at or near //". Because the
+    // Plaid-sync caller (syncPlaidTransactionsForAccount) runs each row inside its own SAVEPOINT
+    // and rolls the WHOLE row back on any thrown error (not just the categorization), a newly
+    // ingested transaction that matched one of USMCA's 4 active banking.transaction_categories
+    // rules was silently dropped from banking.bank_transactions entirely, counted only as a
+    // generic rowError -- never surfaced as a categorization-specific failure. Fixed below by
+    // converting the note to a real SQL line comment; also added voided_at IS NULL to the WHERE
+    // clause (BANK-F30012 through F30021's class) since a voided row reaching this far should
+    // never be (re)categorized either.
     const updated = await client.query(
       `
         UPDATE banking.bank_transactions
@@ -475,10 +487,10 @@ export async function autoCategorize(
           categorization_gl_account_id = $2::uuid,
           coa_account_id = $2::uuid,
           categorized_at = COALESCE(categorized_at, now()),
-          // GO-23 (owner FINISH LAW 2026-09-03, "record who and when") -- opts.actorUserUuid is
-          // the human who clicked "Apply to Historical Transactions" (apply-historical route,
-          // dry_run=false); NULL here is honest, not a bug, for any future fully-automatic caller
-          // with no human in the loop -- COALESCE never overwrites an already-attributed row.
+          -- GO-23 (owner FINISH LAW 2026-09-03, "record who and when"): opts.actorUserUuid is
+          -- the human who clicked "Apply to Historical Transactions" (apply-historical route,
+          -- dry_run=false); NULL here is honest, not a bug, for any future fully-automatic caller
+          -- with no human in the loop -- COALESCE never overwrites an already-attributed row.
           categorized_by_user_id = COALESCE(categorized_by_user_id, $4::uuid),
           skip_reason = NULL,
           investigate_note = NULL,
@@ -487,6 +499,7 @@ export async function autoCategorize(
           AND operating_company_id = $3::uuid
           AND matched_journal_entry_id IS NULL
           AND categorization_gl_account_id IS NULL
+          AND voided_at IS NULL
           AND COALESCE(status, 'pending_categorization') IN ('pending_categorization', 'uncategorized')
       `,
       [transaction.id, matched.coa_account_id, transaction.operating_company_id, opts?.actorUserUuid ?? null]
