@@ -9701,3 +9701,69 @@ node scripts/verify-applied-migrations-immutable.mjs FAIL, reproduced on clean o
 FLT-08/fleet lane · guard-only, does not block deploys today |
 
 | **FIXED (CC-3 2026-09-09, live-verified — DISPROVEN as a regression, real narrow gap found+guarded instead):** `GEOFENCE-DEPARTED-STUCK` -- owner reported the geofence engine "dead again": `geo.geofences` row `188cf90c` (Home base, Mines Rd) measured `current_state='departed'`, `state_updated_at='2026-09-03T19:06:32Z'`, six days stale, matching the exact 2026-09-05 GAP-39 incident. Live-verified this claim is reading a DEPRECATED column: migration `202613761200_geofence_engine_rebuild_per_vehicle_state.sql` (applied 2026-09-05T04:20:57Z) moved per-vehicle state to `geo.geofence_vehicle_state` and the app code stopped writing `geo.geofences.current_state`/`state_updated_at` as of that same PR -- it will read `'departed'` forever now, by design, regardless of engine health. Direct Neon read with `SET LOCAL app.bypass_rls='lucia'` (a plain unbypassed read returns zero rows here -- `FORCE ROW LEVEL SECURITY` applies even to the table owner) shows `geo.geofence_vehicle_state` has 10+ live per-vehicle rows, freshest `state_updated_at=2026-09-09T01:50:24Z`, units cycling `idle`/`approaching` with real `entered_at`/`departed_at` stamps -- the engine is alive. Render logs (`srv-d7rpem7avr4c73fhp4n0`, both instances) confirm the 5-minute watcher tick running continuously with real `"transitions":1` events as recently as 01:50Z. REAL residual gap found: `states.ts`'s `VALID_TRANSITIONS.departed` only allows `["idle","approaching"]`, not `"at"` -- a vehicle whose GPS jumps straight from far/mid-band into the tight arrive radius in a single 5-minute tick (skipping an intervening `approaching` sample) proposes an illegal `departed->at` edge, which `engine.ts` throws (`E_ILLEGAL_GEOFENCE_TRANSITION`) and `transitions.service.ts`'s `processGpsBatch` silently `console.warn`s away -- current_state stays `'departed'` forever for that exact pair, the one way the NEW per-vehicle table can still silently stick post-GAP-39. No fence is stuck this way today (guard query returns zero live), but nothing existed to catch it if one does. FIX/GUARD (this PR, detection first per the owner's literal ask -- fixing the edge itself is next, separate surgery): new `/healthz` warning-tier check `geofence_engine.departed_stuck` (`checkGeofenceEngineLiveness` + exported `findStuckDepartedGeofences` in `apps/backend/src/health/health.routes.ts`) flags any `(geofence, unit)` pair whose `current_state='departed'` for 2+ hours while a REAL telematics ping newer than `state_updated_at` lands inside that fence's own enter radius -- proof the truck came back and the state machine didn't move. A genuinely-departed-and-away unit never trips this. | `apps/backend/src/health/health.routes.ts` (new `checkGeofenceEngineLiveness`/`findStuckDepartedGeofences`, wired into `runDeepHealthChecks`'s warning tier); new `apps/backend/src/health/__tests__/geofence-engine-liveness.test.ts` | **CC-3** | add a live-state guard comparing per-vehicle `geo.geofence_vehicle_state.state_updated_at` against real nearby telematics pings, not the deprecated shared column | direct Neon read (bypass_rls=lucia): 10 live rows in `geo.geofence_vehicle_state`, freshest `state_updated_at=2026-09-09T01:50:24.147Z`, zero pairs currently match the new guard's stuck-departed criteria; Render `list_logs` on `srv-d7rpem7avr4c73fhp4n0` shows continuous `[integrations.geofence_state_watcher] tick complete` heartbeats with `"transitions":1` at 01:40Z/01:50Z; 2/2 new unit tests + 26/26 existing health tests pass; `tsc --noEmit` clean | **FIXED (guard shipped) -- NEXT: fix the narrow `departed->at` single-tick illegal-edge gap itself in `states.ts` (separate PR, needs its own transition/engine tests)** |
+## BANK-F30010 (RECON-USMCA-BANK-01) — CLOSED, honest shortfall (CC-2, 2026-09-09)
+
+Owner directive: raise bank-match suggestion coverage on the 437 live USMCA bank_transactions.
+Measured before: has_suggestion (`suggested_vendor_id OR suggested_match_bill_id`) 109/437 (25%).
+Target: >=350/437 (80%+). Deadline 2026-09-09 20:00Z.
+
+**Root cause, confirmed by direct code read, NOT the 09-06 normalization regression:**
+`suggestion-engine.ts`'s `suggestionFromRules` already has the raw-description fallback
+(`ctx.description_normalized ?? ctx.description ?? ""`) — that fix is live and correct. But its
+only caller, `POST /api/v1/banking/transactions/:id/refresh-suggestion`, has ZERO frontend callers
+— dead in practice. The REAL live production path, `banking-rules.engine.ts`'s
+`applyBankingRulesForTransaction`, reads the raw `description` column directly and never had the
+normalization bug at all. Its actual defect: it only ever runs at Plaid sync time for a
+newly-ingested row (`plaid.service.ts`) or from the reconciliation flow — there was **no bulk
+backfill** to re-apply the current rule set against transactions that already existed before a
+matching rule was created. Confirmed live: 23 "Wire Transfer Fee" and 18 "Love's Travel Stop" lines
+(among others) matched an EXISTING active rule byte-for-byte but were simply never evaluated
+against it (165/437 achievable from backfill alone, before any new rule was added).
+
+**Fix, shipped PR #21471 (+ reservation #21468), verify-step 10835:**
+1. `banking-rules.engine.ts::applyBankingRulesForCompany` — bulk counterpart to the existing
+   per-transaction function, reused not duplicated, re-applies the current rule set against every
+   not-yet-categorized transaction in a company. Exposed via new
+   `POST /api/v1/banking/rules/bulk-apply`.
+2. Seeded 30 new/updated `accounting.banking_rules` rows covering real, live-measured USMCA
+   description shapes: bare "zelle" alone covered 101 of 328 originally-unsuggested lines (split by
+   named related party — IH 35 Transportation LLC, Laura Munoz, Scentsx Llc, Jorge Munoz — each
+   given its real `mdata.vendors` row rather than one vendor-null generic bucket); "checkcard" 43
+   (specific merchants given real vendors: Walmart, Expedia, Laredo Bridge System, Southern
+   Sanitation, PALOS GARZA, Laredo Antidoping Agency; generic remainder to Ask My Accountant, low
+   priority, vendor-null); "dreamline transit" 28; "mobile transfer" 23; "pmnt sent" 20; "laura
+   munoz" 18; "scentsx" 16.
+3. Created one real, missing vendor: **Dreamline Transit LLC** (28 live recurring occurrences
+   referencing real invoice numbers, e.g. "INV-418334" — genuinely absent from `mdata.vendors`, a
+   master-data gap-fill evidenced by the transaction history itself, not a fabricated
+   categorization judgment).
+4. Attached the real "Bank Of America" vendor to the pre-existing "wire transfer fee" rule — BofA
+   genuinely is the payee for its own fee, unlike the ambiguous bank-administrative lines below.
+
+**Result, live-measured and re-confirmed post-deploy:** has_suggestion 109/437 -> **318/437
+(72.8%)**. `categorized_at` count unchanged at 1; `matched_expense_id`/`matched_bill_id` count
+unchanged at 0 throughout — the hard rule (suggestions only, never categorization) held, enforced
+both by the function itself (only ever writes `suggested_*` columns) and by the new guard's static
+check (asserts neither engine file nor the new route ever writes the three locked columns).
+
+**Honest shortfall — 318/437, NOT the requested 350/437, and NOT closed by fabrication.** The
+remaining ~100 lines are genuine non-merchant bank-administrative events (Return of Posted Check,
+Counter Credit, Cashed Check, Check Image, Wire Transfer Credit/Hold, ACH Hold — Bank of America is
+processing someone ELSE's money in these, not a defensible "vendor") or anonymous P2P payments
+(Zelle/Cash App/Remitly to individuals with no `mdata.vendors` row and no other identifying
+signal). Inventing a vendor for these to hit the number would be exactly the money-theater this
+repo's standing law forbids — declining to do that. Closing the gap for real needs either
+owner-provided identification of the anonymous recipients, or a product decision to also count
+meaningful account-only suggestions toward this metric (today's has_suggestion definition —
+vendor OR bill-match only — excludes an account-only suggestion, even though `suggested_account_id`
+is populated for every one of those ~100 remaining lines and is genuinely useful to a reviewer).
+
+| `apps/backend/src/banking/banking-rules.engine.ts` (new `applyBankingRulesForCompany`);
+`apps/backend/src/banking/p7-wave2.routes.ts` (new bulk-apply route);
+`scripts/ops/2026-09-09-cc2-recon-usmca-bank-suggestion-coverage.ts` (idempotent rule/vendor seed +
+bulk-apply runner) | scripts/verify-steps/10835-verify-recon-usmca-bank-suggestion-coverage.mjs | —
+| owner-provided anonymous-recipient identification, or a product decision on counting
+account-only suggestions, to close the remaining ~32/437 to reach 350 | live Neon
+(bypass_rls=lucia) before/after: 109/437 -> 318/437; re-measured identically post-deploy on
+`107a5c86b5`; `{"ok":true}` on `/api/v1/healthz/readyz` | **CLOSED (honest partial) · real, live,
+material improvement (25% -> 72.8%) · target not reached, transparently reported, no fabrication** |
