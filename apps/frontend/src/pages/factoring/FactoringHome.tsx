@@ -1147,7 +1147,27 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   },
                   { key: "po", label: "PO", render: () => "—" },
                   { key: "other_ref", label: "Other Ref", render: (row: (typeof purchaseReportRows)[number]) => row.other_ref ?? "—" },
+                  // OWNER MEGA-REPORT 2026-09-09 ("settlement numbers are missing from Factoring
+                  // entirely"): real field, already fetched (FactoringRecourseInvoice carries the
+                  // same shared Load-Costs rollup lc_settlement_number RecoursePipelineTable
+                  // already renders) — no new backend query, just never surfaced on this tab.
+                  {
+                    key: "settlement_number",
+                    label: "Settlement #",
+                    render: (row: (typeof purchaseReportRows)[number]) => row.lc_settlement_number || "—",
+                  },
+                  // OWNER MEGA-REPORT 2026-09-09: "amount of the ORIGINAL invoice, then advance,
+                  // then reserve, then fees — in that order, every tab." The 4 real dollar columns
+                  // are grouped in that exact sequence here; every placeholder "—" column (no
+                  // backing field, per the footnote below) keeps its original real-Faro-portal
+                  // position around them, unchanged.
                   { key: "purchase", label: "Purchase", cellClass: "text-right", render: (row: (typeof purchaseReportRows)[number]) => fmtCurrency(row.invoice_amount) },
+                  {
+                    key: "advance_amount",
+                    label: "Net Adv",
+                    cellClass: "text-right",
+                    render: (row: (typeof purchaseReportRows)[number]) => fmtCurrency(row.advance_amount),
+                  },
                   { key: "escrow_rsv", label: "Escrow Rsv", render: () => "—" },
                   {
                     key: "cash_rsv",
@@ -1165,12 +1185,6 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   { key: "cash_advance_fee", label: "Cash Advance Fee", render: () => "—" },
                   { key: "processing_fee", label: "Processing Fee", render: () => "—" },
                   { key: "dispatch", label: "Dispatch", render: () => "—" },
-                  {
-                    key: "advance_amount",
-                    label: "Net Adv",
-                    cellClass: "text-right",
-                    render: (row: (typeof purchaseReportRows)[number]) => fmtCurrency(row.advance_amount),
-                  },
                   { key: "receipts", label: "Receipts", render: () => "—" },
                   { key: "sch_fee", label: "Sch Fee", render: () => "—" },
                   {
@@ -1403,6 +1417,14 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                     },
                     { key: "po_ref", label: "PO", render: () => "—" },
                     { key: "other_ref", label: "Other Ref", render: () => "—" },
+                    // OWNER MEGA-REPORT 2026-09-09 ("settlement numbers are missing from
+                    // Factoring entirely"): same real, already-fetched lc_settlement_number field
+                    // as Purchase Report's identical addition above -- no new backend query.
+                    {
+                      key: "settlement_number",
+                      label: "Settlement #",
+                      render: (row: (typeof agingRows)[number]) => row.lc_settlement_number || "—",
+                    },
                     { key: "factored_at", label: "Inv Date", sortable: true, render: (row: (typeof agingRows)[number]) => fmtDate(row.factored_at) },
                     { key: "recourse_expiry_date", label: "Due Date", sortable: true, render: (row: (typeof agingRows)[number]) => fmtDate(row.recourse_expiry_date) },
                     { key: "age", label: "Age", sortable: true, cellClass: "text-right", render: (row: (typeof agingRows)[number]) => row.age },
