@@ -635,7 +635,12 @@ export function LoadCostsBoardPage() {
     const map = new Map<string, { loadId: string; at: number }>();
     for (const r of visible) {
       if (!r.unit_number) continue;
-      const at = Date.parse(r.actual_delivery_at ?? r.pickup_date ?? "");
+      // A freshly-booked load (T163/13533 live-caught this: PU date not yet set, obviously no
+      // delivery date either) has neither actual_delivery_at nor pickup_date -- falling through to
+      // Date.parse("") = NaN silently dropped the row from this map entirely, so the idle unit's
+      // ONLY visible row never got picked as a badge carrier. created_at always exists and is
+      // exactly the tiebreak this board already uses elsewhere (see `matches()`'s this_week filter).
+      const at = Date.parse(r.actual_delivery_at ?? r.pickup_date ?? r.created_at);
       if (Number.isNaN(at)) continue;
       const current = map.get(r.unit_number);
       if (!current || at > current.at) map.set(r.unit_number, { loadId: r.load_id, at });
