@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+// MATRIX-BUILT-OPTIONAL — this is a bug-regression / real-data-shape guard for one page
+// (FactoringHome.tsx's FAC-09a rebuild), not a Program-matrix EntityLink/reverse_link/FK wiring
+// ratchet. checkReserveReal's real-column-EntityLink assertions trip
+// verify-matrix-built-tag-present's WIRING_HINT heuristic — exempted rather than attaching an
+// inaccurate @matrix-built module/leaf tag that doesn't correspond to any real Program-matrix
+// tracked surface.
 /**
  * verify-faro-tabs-real-data.mjs
  *
@@ -118,7 +124,10 @@ export function checkInternalToolsPreserved(src) {
 
 export function checkAgingReal(src) {
   const failures = [];
-  const agingSection = src.split('tab === "aging"')[1]?.slice(0, 6000) ?? "";
+  // Window bumped 6000->9000 (2026-09-09): the aging table has legitimately grown two real
+  // columns since this window was sized (Settlement EntityLink, real advance-linked when present
+  // + lc_settlement_number fallback) -- same content requirement, more real content to scan past.
+  const agingSection = src.split('tab === "aging"')[1]?.slice(0, 9000) ?? "";
   if (!agingSection) {
     failures.push(`${HOME}: could not find the aging tab block.`);
     return failures;
@@ -284,6 +293,45 @@ export function checkChargebacksOverpaymentsReal(src) {
   return failures;
 }
 
+// OWNER MEGA-REPORT 2026-09-09: "Reserve" (item 10 of the real 15-item nav) was still routed
+// through the generic honest-stub block. Now real: Total Reserve bound to the same
+// summary.reserve_balance every other tab uses, plus a real reserve-movement history table
+// (getReserveBalanceHistory, the same ledger ReserveTracker.tsx already proves correct).
+export function checkReserveReal(src) {
+  const failures = [];
+  const stubMatch = src.match(/tab === "request_debtor_credit_check"[\s\S]*?data-testid=\{`factoring-stub-\$\{tab\}`\}/);
+  if (stubMatch && /tab === "reserve"\s*\|\|/.test(stubMatch[0])) {
+    failures.push(`${HOME}: Reserve is still routed through the generic honest-stub block — must have its own real section (FAC-09a).`);
+  }
+  const marker = 'tab === "reserve" ?';
+  const idx = src.indexOf(marker);
+  if (idx === -1) {
+    failures.push(`${HOME}: could not find a dedicated Reserve ("tab === \"reserve\" ?") block.`);
+    return failures;
+  }
+  const section = src.slice(idx, idx + 4000);
+  // getReserveBalanceHistory is the query hook's own queryFn, defined once near the other
+  // useQuery() calls (not inline in the JSX section itself) — checked against the whole file,
+  // same as any other imported-function-usage check; the rest are checked in-section since they
+  // ARE rendered inline in this tab's own JSX.
+  if (!/getReserveBalanceHistory/.test(src)) {
+    failures.push(`${HOME}: Reserve missing real binding — reserve movement history bound to the real getReserveBalanceHistory ledger.`);
+  }
+  const requiredRealBindings = [
+    { pattern: /summary\?\.reserve_balance/, label: "Total Reserve bound to summary.reserve_balance" },
+    { pattern: /running_balance_cents/, label: "movement table renders the real running_balance_cents" },
+  ];
+  for (const { pattern, label } of requiredRealBindings) {
+    if (!pattern.test(section)) {
+      failures.push(`${HOME}: Reserve missing real binding — ${label}.`);
+    }
+  }
+  if (!section.includes("factoring-reserve-report")) {
+    failures.push(`${HOME}: Reserve missing required data-testid="factoring-reserve-report".`);
+  }
+  return failures;
+}
+
 export function run() {
   const failures = [];
   const { ok, src, err } = read(HOME);
@@ -297,6 +345,7 @@ export function run() {
   failures.push(...checkAccountSummaryReal(src));
   failures.push(...checkFeesPaidReal(src));
   failures.push(...checkPurchaseReportReal(src));
+  failures.push(...checkReserveReal(src));
   failures.push(...checkChargebacksOverpaymentsReal(src));
   return { ok: failures.length === 0, failures };
 }
@@ -402,6 +451,27 @@ if (process.argv.includes("--selftest")) {
         </div>
       ) : null}
   `;
+  const reserveHistoryQueryDef = `
+const reserveHistoryQuery = useQuery({
+  queryFn: () => getReserveBalanceHistory(factorId, companyId, { limit: 100 }),
+});
+  `;
+  const reserveBlock = `
+      {tab === "reserve" ? (
+        <div data-testid="factoring-reserve-report">
+          <span>{fmtCurrency(summary?.reserve_balance)}</span>
+          <ParityTable
+            columns={[
+              { key: "created_at", label: "Date" },
+              { key: "reason", label: "Note" },
+              { key: "signed_amount_cents", label: "Amount" },
+              { key: "running_balance_cents", label: "Balance", render: (row) => fmtCurrency(row.running_balance_cents / 100) },
+            ]}
+            rows={reserveHistoryQuery.data?.movements ?? []}
+          />
+        </div>
+      ) : null}
+  `;
   const goodSrc = `
 const SUBNAV = [
 ${idsBlock}
@@ -411,11 +481,13 @@ ${internalBlock}
 ] as const;
 Internal Tools
 ${stubBlock}
-${accountSummaryBlock}
 ${feesPaidBlock}
 ${purchaseReportBlock}
 ${chargebacksOverpaymentsBlock}
 ${agingBlock}
+${reserveHistoryQueryDef}
+${reserveBlock}
+${accountSummaryBlock}
   `;
   const badWrongOrder = goodSrc.replace('{ id: "aging", label: "x" },', '{ id: "zzz", label: "x" },');
   const badDeletedInternal = goodSrc.replace('{ id: "vendor_merges", label: "x" },', "");
@@ -453,9 +525,17 @@ ${agingBlock}
     '{fmtCurrency((feesQuery.data?.history ?? []).reduce((sum, row) => sum + Number(row.chargeback_amount ?? 0), 0))}',
     "{fmtCurrency(9999)}",
   );
+  const badReserveStillStub = goodSrc.replace(
+    'tab === "payments_to_you" ? (',
+    'tab === "payments_to_you" ||\n      tab === "reserve" ? (',
+  );
+  const badReserveFakeBinding = goodSrc.replace(
+    "queryFn: () => getReserveBalanceHistory(factorId, companyId, { limit: 100 }),",
+    "queryFn: () => Promise.resolve({ movements: [] }),",
+  );
 
   const checks = [
-    ["clean source passes", checkNavOrder(goodSrc).length === 0 && checkInternalToolsPreserved(goodSrc).length === 0 && checkAgingReal(goodSrc).length === 0 && checkAccountSummaryReal(goodSrc).length === 0 && checkFeesPaidReal(goodSrc).length === 0 && checkPurchaseReportReal(goodSrc).length === 0 && checkChargebacksOverpaymentsReal(goodSrc).length === 0],
+    ["clean source passes", checkNavOrder(goodSrc).length === 0 && checkInternalToolsPreserved(goodSrc).length === 0 && checkAgingReal(goodSrc).length === 0 && checkAccountSummaryReal(goodSrc).length === 0 && checkFeesPaidReal(goodSrc).length === 0 && checkPurchaseReportReal(goodSrc).length === 0 && checkReserveReal(goodSrc).length === 0 && checkChargebacksOverpaymentsReal(goodSrc).length === 0],
     ["wrong nav order fails", checkNavOrder(badWrongOrder).length > 0],
     ["deleted internal tab fails", checkInternalToolsPreserved(badDeletedInternal).length > 0],
     ["missing aging column fails", checkAgingReal(badAgingMissingColumn).length > 0],
@@ -468,6 +548,8 @@ ${agingBlock}
     ["purchase report fake binding fails", checkPurchaseReportReal(badPurchaseReportFakeBinding).length > 0],
     ["chargebacks & overpayments still stub fails", checkChargebacksOverpaymentsReal(badChargebacksOverpaymentsStillStub).length > 0],
     ["chargebacks & overpayments fake binding fails", checkChargebacksOverpaymentsReal(badChargebacksOverpaymentsFakeBinding).length > 0],
+    ["reserve still stub fails", checkReserveReal(badReserveStillStub).length > 0],
+    ["reserve fake binding fails", checkReserveReal(badReserveFakeBinding).length > 0],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
@@ -485,5 +567,5 @@ if (!ok) {
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — 15-item real nav order locked, internal-ops tabs preserved (Rule 07), Aging + Account Summary + Fees Paid + Purchase Report + Chargebacks & Overpayments real (FAC-09a)`);
+console.log(`${LABEL}: OK — 15-item real nav order locked, internal-ops tabs preserved (Rule 07), Aging + Account Summary + Fees Paid + Purchase Report + Reserve + Chargebacks & Overpayments real (FAC-09a)`);
 process.exit(0);

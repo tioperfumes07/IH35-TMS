@@ -11,9 +11,11 @@ import {
   getFactoringRecoursePipeline,
   getFactoringStatementsSettings,
   getFactoringSummary,
+  getReserveBalanceHistory,
   listFactors,
   updateFactor,
   type FactoringMonthlyFeeSummary,
+  type FactoringReserveBalanceHistoryEntry,
   type FactoringSettingsRow,
 } from "../../api/factoring";
 import { EntityPicker } from "../../components/EntityPicker";
@@ -545,6 +547,20 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     queryFn: () => getFactoringStatementsSettings(companyId),
     enabled: Boolean(companyId),
   });
+  // FAC-09a Reserve (owner mega-report 2026-09-09, real per the FAC09a-CORRECTED spec): the SAME
+  // real reserve-movement ledger ReserveTracker.tsx's "Reserve movement history" already renders
+  // (getReserveBalanceHistory), scoped to the page's own active factor instead of a picker -- no
+  // new backend query, no new table. This system tracks ONE combined reserve_balance with no
+  // Escrow/Cash type split (confirmed multiple times this session, e.g. Account Summary's own
+  // footnote) -- the spec's "Escrow Reserve / Cash Reserve" split and "Show Cash"/"Show Escrow"
+  // toggle are honestly not buildable without fabricating a split this schema doesn't have; Total
+  // Reserve (real) renders, the two split figures render "—" with the same honest footnote
+  // pattern already used elsewhere on this page.
+  const reserveHistoryQuery = useQuery({
+    queryKey: ["factoring", "reserves", "history", companyId, summaryQuery.data?.active_factor_id],
+    queryFn: () => getReserveBalanceHistory(summaryQuery.data!.active_factor_id!, companyId, { limit: 100 }),
+    enabled: Boolean(companyId && summaryQuery.data?.active_factor_id),
+  });
   const faroImportsQuery = useQuery({
     queryKey: ["data-infra", "faro-imports", companyId],
     queryFn: () => listFaroDailyImports(companyId),
@@ -910,7 +926,6 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       {tab === "request_debtor_credit_check" ||
       tab === "funds_due" ||
       tab === "debtor_receipts" ||
-      tab === "reserve" ||
       tab === "loan_save" ||
       tab === "unapplied_cash" ||
       tab === "invoice_status_report" ||
@@ -918,6 +933,97 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
         <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700" data-testid={`factoring-stub-${tab}`}>
           <div className="font-medium text-gray-900">{SUBNAV.find((item) => item.id === tab)?.label}</div>
           <p className="mt-1">Not yet wired to real data — this tab exists and is reachable, but its content is a placeholder for this pass. See docs/audit/GUARD-WORKORDERS.md (FAC-09a) for what is real vs. stub.</p>
+        </div>
+      ) : null}
+
+      {/* FAC-09a Reserve (real, this pass, owner mega-report 2026-09-09): Total Reserve is the
+          same real summary.reserve_balance every other tab already uses; the movement history
+          table below is the same real getReserveBalanceHistory ledger ReserveTracker.tsx already
+          proves correct, scoped to this page's own active factor. Escrow/Cash split and the
+          Show-Cash/Show-Escrow toggle are honestly not built -- this schema has no type split on
+          reserve_balance (same constraint as Account Summary's own Escrow/Cash rows above). */}
+      {tab === "reserve" ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-reserve-report">
+          <div className="mb-2 text-xs font-medium text-gray-900">Reserve</div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="factoring-reserve-summary-strip">
+            {/* verify-no-dead-kpi-cards: honest "—" values (no Escrow/Cash split, no distinct
+                available-for-release figure exist in this schema) still get a real drill target
+                rather than a dead click -- Reserve Tracker carries the combined balance and the
+                real release forecast these three would otherwise have no destination for. */}
+            <DrillKpiCard
+              testId="factoring-reserve-escrow"
+              label="Escrow Reserve"
+              value="—"
+              hint="No Escrow/Cash split in this schema"
+              to={FACTORING_TAB_PATH.reserve_tracker}
+            />
+            <DrillKpiCard
+              testId="factoring-reserve-cash"
+              label="Cash Reserve"
+              value="—"
+              hint="No Escrow/Cash split in this schema"
+              to={FACTORING_TAB_PATH.reserve_tracker}
+            />
+            <DrillKpiCard
+              testId="factoring-reserve-total"
+              label="Total Reserve"
+              value={summaryQuery.isError ? null : fmtCurrency(summary?.reserve_balance)}
+              to={FACTORING_TAB_PATH.reserve_tracker}
+            />
+            <DrillKpiCard
+              testId="factoring-reserve-available"
+              label="Available for Release"
+              value="—"
+              hint="See Reserve Tracker's release forecast"
+              to={FACTORING_TAB_PATH.reserve_tracker}
+            />
+          </div>
+          <div className="mt-3 text-xs font-medium text-gray-900">Reserve movement history</div>
+          {reserveHistoryQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load reserve movement history"
+              {...formatQueryErrorDetail(reserveHistoryQuery.error)}
+              onRetry={() => void reserveHistoryQuery.refetch()}
+            />
+          ) : !summary?.active_factor_id ? (
+            <div className="mt-2 rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-500">
+              No active factor configured — reserve movement history has no factor to scope to.
+            </div>
+          ) : (
+            <ParityTable
+              columns={[
+                { key: "created_at", label: "Date", sortable: true, render: (row: FactoringReserveBalanceHistoryEntry) => fmtDate(row.created_at) },
+                { key: "reason", label: "Note", render: (row: FactoringReserveBalanceHistoryEntry) => row.reason },
+                {
+                  key: "signed_amount_cents",
+                  label: "Amount",
+                  sortable: true,
+                  cellClass: "text-right",
+                  render: (row: FactoringReserveBalanceHistoryEntry) => fmtCurrency(row.signed_amount_cents / 100),
+                },
+                {
+                  key: "running_balance_cents",
+                  label: "Balance",
+                  sortable: true,
+                  cellClass: "text-right",
+                  render: (row: FactoringReserveBalanceHistoryEntry) => fmtCurrency(row.running_balance_cents / 100),
+                },
+              ]}
+              rows={reserveHistoryQuery.data?.movements ?? []}
+              rowKey={(row) => row.id}
+              loading={reserveHistoryQuery.isLoading}
+              emptyText="No reserve movements recorded yet."
+              storageKey="factoring-reserve-report"
+            />
+          )}
+          <p className="mt-2 text-xs text-gray-500" data-testid="factoring-reserve-footnote">
+            "Escrow Reserve" / "Cash Reserve" are shown separately in the real Faro portal; this
+            system tracks one combined reserve_balance with no type split, so both rows above are
+            honestly "—" rather than duplicating the combined figure into each. "ID", "Inv", "PO
+            Ref#", "Debtor", and "Pmt Ref" columns from the real portal's per-entry table have no
+            backing field on this batch-level movement ledger — the real Date/Note/Amount/Balance
+            columns above are never fabricated.
+          </p>
         </div>
       ) : null}
 
@@ -960,7 +1066,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                     { key: "customer_name", label: "Debtor", sortable: true, render: (row: (typeof agingRows)[number]) => row.customer_name },
                     { key: "invoice_amount", label: "Gross Advance Amount", sortable: true, cellClass: "text-right", render: (row: (typeof agingRows)[number]) => fmtCurrency(row.invoice_amount) },
                     { key: "advance_amount", label: "Net Paid to IH35", sortable: true, cellClass: "text-right font-semibold", render: (row: (typeof agingRows)[number]) => fmtCurrency(row.advance_amount) },
-                    { key: "running_total", label: "Running Total", cellClass: "text-right", render: (row: (typeof paymentsToYouRows)[number]) => fmtCurrency(row.running_total) },
+                    { key: "running_total", label: "Running Total", sortable: true, cellClass: "text-right", render: (row: (typeof paymentsToYouRows)[number]) => fmtCurrency(row.running_total) },
                   ]}
                   rows={paymentsToYouRows}
                   rowKey={(row) => row.factoring_advance_id}
@@ -1226,7 +1332,28 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   },
                   { key: "po", label: "PO", render: () => "—" },
                   { key: "other_ref", label: "Other Ref", render: (row: (typeof purchaseReportRows)[number]) => row.other_ref ?? "—" },
+                  // OWNER MEGA-REPORT 2026-09-09 ("settlement numbers are missing from Factoring
+                  // entirely"): real field, already fetched (FactoringRecourseInvoice carries the
+                  // same shared Load-Costs rollup lc_settlement_number RecoursePipelineTable
+                  // already renders) — no new backend query, just never surfaced on this tab.
+                  {
+                    key: "settlement_number",
+                    label: "Settlement #",
+                    sortable: true,
+                    render: (row: (typeof purchaseReportRows)[number]) => row.lc_settlement_number || "—",
+                  },
+                  // OWNER MEGA-REPORT 2026-09-09: "amount of the ORIGINAL invoice, then advance,
+                  // then reserve, then fees — in that order, every tab." The 4 real dollar columns
+                  // are grouped in that exact sequence here; every placeholder "—" column (no
+                  // backing field, per the footnote below) keeps its original real-Faro-portal
+                  // position around them, unchanged.
                   { key: "purchase", label: "Purchase", cellClass: "text-right", render: (row: (typeof purchaseReportRows)[number]) => fmtCurrency(row.invoice_amount) },
+                  {
+                    key: "advance_amount",
+                    label: "Net Adv",
+                    cellClass: "text-right",
+                    render: (row: (typeof purchaseReportRows)[number]) => fmtCurrency(row.advance_amount),
+                  },
                   { key: "escrow_rsv", label: "Escrow Rsv", render: () => "—" },
                   {
                     key: "cash_rsv",
@@ -1244,12 +1371,6 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   { key: "cash_advance_fee", label: "Cash Advance Fee", render: () => "—" },
                   { key: "processing_fee", label: "Processing Fee", render: () => "—" },
                   { key: "dispatch", label: "Dispatch", render: () => "—" },
-                  {
-                    key: "advance_amount",
-                    label: "Net Adv",
-                    cellClass: "text-right",
-                    render: (row: (typeof purchaseReportRows)[number]) => fmtCurrency(row.advance_amount),
-                  },
                   { key: "receipts", label: "Receipts", render: () => "—" },
                   { key: "sch_fee", label: "Sch Fee", render: () => "—" },
                   {
@@ -1459,15 +1580,12 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 <ParityTable
                   columns={[
                     {
-                      key: "settlement_display_id",
-                      label: "Settlement",
+                      key: "factoring_advance_id",
+                      label: "ID",
                       sortable: true,
-                      render: (row: (typeof agingRows)[number]) =>
-                        row.settlement_id ? (
-                          <EntityLink kind="settlement" id={row.settlement_id} label={row.settlement_display_id ?? "—"} />
-                        ) : (
-                          "—"
-                        ),
+                      render: (row: (typeof agingRows)[number]) => (
+                        <EntityLink kind="factoring_advance" id={row.factoring_advance_id} label={entityLabel(row.invoice_reference, row.factoring_advance_id, "Advance")} />
+                      ),
                     },
                     { key: "memos", label: "Memos", render: () => "—" },
                     {
@@ -1486,6 +1604,22 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                     },
                     { key: "po_ref", label: "PO", render: () => "—" },
                     { key: "other_ref", label: "Other Ref", render: () => "—" },
+                    // OWNER MEGA-REPORT 2026-09-09 ("settlement numbers are missing from
+                    // Factoring entirely"): a real settlement EntityLink where the advance has one
+                    // (settlement_id/settlement_display_id), falling back to the same
+                    // lc_settlement_number text Purchase Report's identical addition uses when the
+                    // advance has no linked settlement row yet -- no new backend query either way.
+                    {
+                      key: "settlement_number",
+                      label: "Settlement #",
+                      sortable: true,
+                      render: (row: (typeof agingRows)[number]) =>
+                        row.settlement_id ? (
+                          <EntityLink kind="settlement" id={row.settlement_id} label={row.settlement_display_id ?? row.lc_settlement_number ?? "—"} />
+                        ) : (
+                          row.lc_settlement_number || "—"
+                        ),
+                    },
                     { key: "factored_at", label: "Inv Date", sortable: true, render: (row: (typeof agingRows)[number]) => fmtDate(row.factored_at) },
                     { key: "recourse_expiry_date", label: "Due Date", sortable: true, render: (row: (typeof agingRows)[number]) => fmtDate(row.recourse_expiry_date) },
                     { key: "age", label: "Age", sortable: true, cellClass: "text-right", render: (row: (typeof agingRows)[number]) => row.age },
