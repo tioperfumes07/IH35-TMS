@@ -10228,3 +10228,44 @@ similarly-shaped query, flagged as the next candidate.
 
 | `apps/backend/src/cash-flow/cash-flow.service.ts` |
 **CC-2 · FIXED · live before/after (1/437 → 1/288, honest denominator)** |
+
+## BANK-F30022 — autoCategorize() SQL syntax error was silently dropping matched Plaid transactions (CC-2, 2026-09-09)
+
+**Highest-severity find in this session's sweep.** While investigating the next flagged voided_at
+candidate (`categorization-rules.routes.ts`), traced its bulk-apply flow into
+`integrations/plaid/plaid.service.ts`'s `autoCategorize()` and found the UPDATE statement's own SQL
+template literal contained a **JS-style `//` comment block instead of a SQL `--` comment**. `//` is
+not valid SQL — confirmed live via `EXPLAIN` (plan-only, zero write risk): `"syntax error at or near
+//"` against the exact pre-fix statement text.
+
+This is not a cosmetic bug. `autoCategorize()` is called from TWO places:
+1. **`syncPlaidTransactionsForAccount()`** — the live Plaid ingestion path, immediately after each
+   new `bank_transactions` row is inserted. That whole per-row block runs inside its own
+   `SAVEPOINT` with a catch that rolls the row back and counts a generic `rowErrors` on ANY thrown
+   error (a deliberate, correct anti-cascading-failure design). Consequence: whenever an incoming
+   transaction matched one of the company's active `banking.transaction_categories` rules (USMCA
+   currently has 4 active), the throw rolled back the SAVEPOINT — undoing the original INSERT too.
+   **The transaction was never recorded at all**, not merely left uncategorized, and the failure
+   was indistinguishable from any other generic sync row error.
+2. `categorization-rules.routes.ts`'s "Apply to Historical Transactions" bulk-apply route — would
+   throw identically on its first real match.
+
+**Fix:** converted the `//` block to a real SQL `--` comment (live-verified via `EXPLAIN` that the
+corrected text parses and plans clean). Also added `voided_at IS NULL` to the same WHERE clause
+while already touching it (this session's BANK-F30012-F30021 class).
+
+**Live proof:** `EXPLAIN` (plan-only, no ANALYZE — zero rows touched) on the pre-fix text threw the
+syntax error live; the post-fix text produced a valid Index Scan plan. Confirmed 4 active category
+rules exist for USMCA today, confirming this was genuinely reachable, not dormant.
+
+Shipped PR #21576 (claim #21574), verify-step 10879. Backend redeployed.
+
+**Honest gap:** did not quantify how many real transactions were historically dropped by this bug
+— `rowErrors` is a generic counter that doesn't distinguish cause from any other row-level failure.
+
+**REMAINING:** `categorization-rules.routes.ts`'s own 3 voided_at gaps (7-day matched/unmatched
+stats, recent-50 transaction list, and the candidate-selection query that calls this now-fixed
+`autoCategorize`) are still open — next in this sweep.
+
+| `apps/backend/src/integrations/plaid/plaid.service.ts` |
+**CC-2 · FIXED · live-confirmed via EXPLAIN before/after; blocked real Plaid ingestion + apply-historical-categorization** |

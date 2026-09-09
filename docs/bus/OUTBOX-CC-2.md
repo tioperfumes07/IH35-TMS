@@ -2073,3 +2073,24 @@ categorized, so the coverage % read worse than reality. Live: true ratio is 1/28
 
 NEXT — flagged categorization-rules.routes.ts's similar coverage metric as the next candidate;
 continuing the general sweep as idle time allows.
+
+## CC-2 — BANK-F30022: autoCategorize() had a live SQL syntax error dropping matched transactions (2026-09-09)
+
+Highest-severity find of this session's sweep. Investigating the next flagged categorization-rules
+candidate led to integrations/plaid/plaid.service.ts's autoCategorize() UPDATE — its SQL template
+literal had a JS `//` comment instead of a SQL `--` comment. Confirmed live via EXPLAIN (plan-only,
+zero write risk): a real Postgres syntax error, not theoretical.
+
+Impact: autoCategorize() is called live during Plaid sync ingestion, inside a per-row SAVEPOINT.
+When it threw, the WHOLE row rolled back — including the original bank_transactions INSERT that had
+already succeeded. A newly-synced transaction matching one of USMCA's 4 active category rules was
+silently dropped from the ledger entirely, not just left uncategorized, and counted only as a
+generic rowError with no distinguishing signal. Also broke the "Apply to Historical Transactions"
+bulk-apply route identically.
+
+Fixed (// -> --, verified via live EXPLAIN before/after), added voided_at IS NULL to the same clause
+while there. PR #21576. Backend redeployed. Did not quantify historical drop count — rowErrors
+doesn't distinguish cause, flagged honestly rather than guessed.
+
+NEXT — categorization-rules.routes.ts's own 3 voided_at gaps (matched_7d/unmatched_7d stats,
+recent-50 list, candidate-selection for the now-fixed autoCategorize) are the next fix in this sweep.
