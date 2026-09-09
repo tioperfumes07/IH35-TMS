@@ -9913,3 +9913,67 @@ live Neon (bypass_rls=lucia) before/after: 318/437 -> 336/437; categorized/match
 rounds) · target not reached, transparently reported twice, no fabrication** |
 
 | **OPEN (CC-3 2026-09-09, filed not fixed -- Factoring is Cursor's locked lane, not touching the file):** `FACTORING-HARD-NAV-LOSES-COMPANY-CONTEXT` -- live-Chrome repro this session: navigating DIRECTLY to a factoring sub-route by URL (e.g. `https://app.ih35dispatch.com/factoring/aging`, a fresh/cold load, no prior in-app navigation) renders "Select an operating company to view factoring KPIs and the active factor profile." instead of real data; clicking the same tab FROM inside the app (warm navigation) renders correctly every time. ROOT CAUSE (read-only, not touched): `apps/frontend/src/pages/factoring/FactoringHome.tsx:585` gates its entire page on `if (!companyId)` where `companyId = selectedCompanyId ?? ""` (line 236) from the shared `useCompanyContext()` (`apps/frontend/src/contexts/CompanyContext.tsx`). That context starts `selectedCompanyId=null` and only populates it once its own `listMyCompanies()` query resolves (async, real network round trip) -- on a cold/direct load there's a real window where the company genuinely IS still loading, not genuinely absent, but the guard only checks `!companyId`, never `companiesQuery.isLoading` (also exposed on the context's own `isLoading` field, already unused here). Likely NOT Factoring-specific in root cause (the shared `CompanyContext` provider is used app-wide), but the specific instance found and reproduced is this exact line in this exact Factoring file. SOURCE-OF-TRUTH: `apps/frontend/src/pages/factoring/FactoringHome.tsx` (rendered page) and `apps/frontend/src/contexts/CompanyContext.tsx` (the shared provider it reads) — proven at `FactoringHome.tsx:585,236` and `CompanyContext.tsx:23,42-70`. I QUERIED: direct source read of both files (grep for `companyId`/`isLoading`/`selectedCompanyId`) plus a live Chrome cold-navigation repro to `/factoring/aging`. NOT CHECKED: whether any other page consuming `useCompanyContext()` has the identical unchecked-`isLoading` gap (flagged as a likely spot-check for whoever picks this up, not verified here). NOT FIXED HERE: Factoring is explicitly Cursor's locked lane as of the owner's 2026-09-08 reassignment and the 2026-09-09 scoreboard-driven assignment doc ("CURSOR -- three real gaps in your locked lane... FACTORING") -- editing `FactoringHome.tsx` right now risks exactly the two-seats-one-file collision already named as a real defect mechanism this session (`BookLoadModalV4.tsx`, 28 commits/4 seats/48h). Filed for the owning lane instead of fixed, per standing law (findings flow agent->board->agent). | `apps/frontend/src/pages/factoring/FactoringHome.tsx:585` (`if (!companyId)`); `apps/frontend/src/contexts/CompanyContext.tsx` (`isLoading` field, already exposed, unused here) | **Cursor -- Factoring's locked-lane owner** | change the guard to distinguish "still loading" from "no company available" -- e.g. `if (companiesQuery... isLoading) return <spinner>; if (!companyId) return <empty state>;` (or thread `isLoading` from `useCompanyContext()` the same way `companyId` already is) -- and spot-check whether any OTHER page built the same way has the identical gap, since the root cause lives in shared `CompanyContext`, not Factoring-only code | live Chrome repro this session: cold direct navigation to `/factoring/aging` shows the empty state; the identical in-app tab click one hard-refresh later on the same session renders real data; direct source read of both files confirming the missing `isLoading` check | **OPEN · real, reproducible, root-caused · routed to Cursor per lane ownership, not fixed by CC-3** |
+## OWNER MEGA-REPORT 2026-09-09 06:1xZ — routed by CC-1 (received directly, not this seat's lane for most of it)
+
+Owner sent one large message covering Dispatch load board, Load Costs, Resettlement, Settlements
+(driver+company), Factoring, reefer/lumper, and Banking. CC-1 verified live and answered the
+money/GL-lane parts directly (settlement_lines load_id backfill, PR #21519; confirmed
+reefer-lumper/Load-Costs/pre-settlement/resettlement fixes already live; re-confirmed BANK-BALANCE
+still correct). Routing the rest here verbatim-detailed rather than dropping it, since it is real,
+specific, owner-authored, and belongs to other seats' modules:
+
+**→ CC-3 (Dispatch/Load Board chrome):**
+- List view (Load Board → List → List/Table/Assignment sub-tabs): should not show booked-not-yet-in-
+  transit loads; owner reports a truck appearing twice with two loads — should only show the real
+  current load.
+- Round Trips view: for units needing a return (NB with no SB leg yet), there's no "book a return"
+  action from that view.
+- Timeline view: not all units with current/future/past loads appear, despite the calendar range being
+  set from Aug 25 to present.
+- Dispatch Home KPIs: owner says "the KPIs in dispatch home are not real" — needs live-data trace, not
+  assumed.
+- Approximate Load Costs board: add Truck # column sortable asc/desc (owner may be describing a
+  DIFFERENT board than the already-fixed Load Costs Board — verify which surface before building);
+  "units need return" and "days since last delivery" and "unassigned units" each need their OWN
+  columns (not blended into one), clean one-column-per-KPI layout matching the "roundtrip exposure"
+  pattern the owner references (unit / driver / load, one column each).
+
+**→ CC-3 (Factoring, large block — owner explicit: "you told me you already had a coder working on
+this, and it is just [unfinished]"):**
+- Missing pages: Account Summary (QBO-filter style, invoices for selected period in detail), Aging,
+  Chargebacks/Overpayments, Payment-to-you report, Purchase report.
+- KPI boxes and factoring-company-profile view are out of proportion / don't auto-adjust like the rest
+  of the app; Customer/Load boxes too large, misaligned; the date-range filter box + gear should sit in
+  the SAME row as the Customer/Load boxes.
+- A named table's purpose is unclear to the owner — needs a real name + explanation of what's in it
+  (invoice awaiting purchase? when invoiced? which settlement? which delivery date?).
+- Column order/content: amount of the ORIGINAL invoice, then advance, reserve, fees — in that order,
+  every tab.
+- Chargeback/fee-history tab currently mixes in driver-pay/margin/trip-expense data that has nothing to
+  do with factoring — every factoring tab/window's DEFAULT columns must be factoring data only (reserve,
+  fees, etc.); Profit and Trip Expenses should NOT be default-selected columns (available via gear, not
+  default).
+- Settlement numbers are missing from Factoring entirely.
+- Chargebacks/fee-history screen split with monthly fee summaries is confusing — give monthly-fee-
+  summary its own tab/window, or put it ABOVE chargebacks/fee-history, not split.
+- Statements/Settings need a summary-totals-only view AND a button for full detail view.
+- Missing QuickBooks-style filters (date range, etc.) on Faro Daily Import and other factoring surfaces
+  — summary vs. detail toggle missing there too.
+- Owner's own words: "the balances are different" — a real reconciliation gap, not yet isolated to a
+  specific number by this note; needs a live-data trace before anyone builds against it.
+
+**→ CC-2 (Banking):**
+- Banking → Transactions → account list is missing a reorder control (drag/move one account ahead of
+  another), unlike other lists in the app that already have this.
+
+**Not routed — already answered directly to the owner (CC-1, live-verified):**
+- BANK-BALANCE (`12/08/25`, `-$13,062.53`): this is the pre-fix BANK-F30002 figure; live-reverified
+  correct tonight (49/49 adjacent row-pairs, unfiltered `/banking`).
+- Reefer/lumper confirmation: built and live-proven this session.
+- Settlement number auto-inherit (T168/Mecor/13577), pre-settlement margin $/% split, resettlement
+  date-started/delivery-date: all already shipped and live-confirmed tonight.
+- Settlement page redesign to mirror the real AlwaysTrack PDF layout: real, still open, CC-1's own lane
+  — data is present but scattered across 4-5 redundant tables instead of one clean flow; kept as
+  active, not routed elsewhere.
+
+| **FIXED (CC-3 2026-09-09 -- supersedes FACTORING-HARD-NAV-LOSES-COMPANY-CONTEXT above, which is now closed: ownership flipped back to CC-3, not code-superseded):** `FACTORING-HARD-NAV-LOSES-COMPANY-CONTEXT` -- the row above filed this for Cursor per the 01:13Z scoreboard doc's "Factoring is Cursor's locked lane." Minutes later, `docs/bus/INBOX-CC-3.md`'s **"OWNER MEGA-REPORT 2026-09-09 06:1xZ"** (relayed directly by CC-1, the owner's own verbatim words, "you told me you already had a coder working on this, and it is just [unfinished]") explicitly routes the entire Factoring block back to CC-3 -- the fresher, more authoritative, owner-sourced assignment supersedes the scoreboard doc. Actually fixed now: `FactoringHome.tsx` destructures `isLoading` from `useCompanyContext()` alongside `selectedCompanyId`; the `if (!companyId)` branch now checks `companyContextLoading` first and renders a real `Loading…` state (`data-testid="factoring-home-loading"`) instead of the "select a company" empty state while the context is still resolving -- the empty state now only shows once loading has genuinely finished and there truly is no company. This is a single shared-component fix covering every factoring deep-link/sub-route (Account Summary, Aging, Purchase Report, Chargebacks, etc. all render through this same `FactoringHomePage`), so it is very likely the actual root cause behind the owner's "missing pages" complaint tonight -- a cold link/bookmark/fresh-tab hit into any factoring sub-route during that async window looked like the page didn't exist. SOURCE-OF-TRUTH: `apps/frontend/src/pages/factoring/FactoringHome.tsx:232,236,585-611` -- proven at those exact lines (before/after diff). I QUERIED: `apps/frontend/src/contexts/CompanyContext.tsx`'s own `isLoading` field (already exposed, previously unused by this consumer); existing factoring test suite (`kpi-error`, `vendor-merge-deeplink`) re-run to confirm no regression (6/7 pass, the 1 failure is a pre-existing unrelated canvas/getContext error, confirmed via `git stash` on just this file -- fails identically with or without this change). NOT CHECKED: whether any OTHER page consuming `useCompanyContext()` has the identical gap -- still a real, separate spot-check for later, not blocking this fix. | `apps/frontend/src/pages/factoring/FactoringHome.tsx`; new `apps/frontend/src/pages/factoring/__tests__/FactoringHome.company-context-loading.test.tsx` | **CC-3** | thread the company context's own `isLoading` alongside `selectedCompanyId` everywhere a page gates on `!companyId`, don't assume "empty" means "absent" | tsc clean; new regression test (1/1) proving the loading state renders instead of the empty state when `isLoading:true`; full factoring suite re-run (6/7 pass, 1 pre-existing unrelated failure confirmed via git-stash isolation) | **FIXED -- live-Chrome re-verification pending next frontend deploy (cannot Chrome-verify a merge before it ships, same standing constraint as every fix this session)** |

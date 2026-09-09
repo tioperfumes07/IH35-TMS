@@ -229,7 +229,7 @@ function daysSince(dateIso: string): number {
 
 export function FactoringHomePage({ initialTab = "account_summary" }: FactoringHomeProps = {}) {
   const location = useLocation();
-  const { selectedCompanyId } = useCompanyContext();
+  const { selectedCompanyId, isLoading: companyContextLoading } = useCompanyContext();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -583,6 +583,24 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   const canDeactivate = user?.role === "Owner";
 
   if (!companyId) {
+    // FACTORING-HARD-NAV-LOSES-COMPANY-CONTEXT (owner mega-report 2026-09-09): a cold/direct
+    // navigation into this page (fresh tab, bookmark, hard refresh -- not an in-app click) races
+    // CompanyContext's own async listMyCompanies() -- companyId is legitimately still resolving,
+    // not genuinely absent, for the ~1 tick before that query settles. The old unconditional
+    // "select a company" message rendered during that window on every single hard entry, which
+    // read as the whole page (and by extension every factoring sub-tab) being "missing" rather
+    // than mid-load. Distinguishing the two states here fixes it for every deep-linked factoring
+    // route in one place, since they all render through this same component.
+    if (companyContextLoading) {
+      return (
+        <div className="space-y-3">
+          <PageHeader title="Factoring" subtitle="Deep-dive workspace for recourse pipeline, chargebacks, fees, and settings" />
+          <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-600" data-testid="factoring-home-loading">
+            Loading…
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="space-y-3">
         <PageHeader title="Factoring" subtitle="Deep-dive workspace for recourse pipeline, chargebacks, fees, and settings" />
