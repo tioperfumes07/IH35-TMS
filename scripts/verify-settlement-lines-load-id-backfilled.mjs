@@ -25,7 +25,17 @@ const LABEL = "verify-settlement-lines-load-id-backfilled";
 
 async function main() {
   const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_URL required (read-only check, live prod or a branch)");
+  // GATE-LIVELOCK-01 / dead-port-forbidden (verify-static.mjs's own rule): the DB-less static
+  // sweep deliberately runs with DATABASE_URL unset, never a dead-port sentinel -- an unscoped
+  // verify-*.mjs that throws instead of skipping on absence hard-blocks EVERY branch's local
+  // push, not just settlement-lines work (found 2026-09-09 blocking an unrelated docs push).
+  // Same skip convention as verify-driver-status-lock-blocks-reactivation.mjs's liveCheck(): log
+  // and exit 0 when there is no DB to check against; run for real (and fail loudly) whenever a
+  // caller deliberately sets DATABASE_URL, exactly as this file's own "Usage" comment intends.
+  if (!url) {
+    console.log(`${LABEL}: SKIPPED-DB-CHECK (DATABASE_URL is unset) -- static sweep only, no live check ran`);
+    return;
+  }
   const pool = new pg.Pool({ connectionString: url, ssl: { rejectUnauthorized: false } });
   const client = await pool.connect();
   try {
