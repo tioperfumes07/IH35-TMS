@@ -12,6 +12,7 @@ export type DriftReason =
 
 export interface MappingFinding {
   driver_uuid: string;
+  driver_name: string | null;
   qbo_vendor_uuid: string | null;
   drift_reason: DriftReason;
   severity: DriftSeverity;
@@ -74,6 +75,7 @@ export async function checkAllMappings(
     if (!vendor) {
       findings.push({
         driver_uuid: driver.id,
+        driver_name: driver.display_name,
         qbo_vendor_uuid: vendorId,
         drift_reason: "qbo_vendor_missing",
         severity: "critical",
@@ -89,6 +91,7 @@ export async function checkAllMappings(
       if (dist > 3) {
         findings.push({
           driver_uuid: driver.id,
+          driver_name: driver.display_name,
           qbo_vendor_uuid: vendorId,
           drift_reason: "qbo_vendor_name_drift",
           severity: dist > 8 ? "critical" : "warning",
@@ -107,6 +110,7 @@ export async function checkAllMappings(
       if (sRow && sRow.local_driver_id && sRow.local_driver_id !== driver.id) {
         findings.push({
           driver_uuid: driver.id,
+          driver_name: driver.display_name,
           qbo_vendor_uuid: vendorId,
           drift_reason: "samsara_id_drift",
           severity: "critical",

@@ -3,6 +3,8 @@ import { useMutation } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { createIftaPreparation } from "../../../api/ifta";
 import { PageHeader } from "../../../components/layout/PageHeader";
+import { useToast } from "../../../components/Toast";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { IFTAStepCSVExport } from "./IFTAStepCSVExport";
 import { IFTAStepGallons } from "./IFTAStepGallons";
@@ -13,6 +15,7 @@ import { filingQuarterLabel, parseQuarterLabel, recentQuarterOptions, toQuarterL
 export function IFTAPreparer() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const { pushToast } = useToast();
   // COMP-1: default to the quarter being FILED (most recently closed), not the
   // current calendar quarter. Filing Q1 during April must target Q1, not Q2.
   const [selectedLabel, setSelectedLabel] = useState(() => filingQuarterLabel());
@@ -23,6 +26,7 @@ export function IFTAPreparer() {
   const createMutation = useMutation({
     mutationFn: () => createIftaPreparation(companyId, { quarter, year }),
     onSuccess: (data) => setPreparationId(String(data.id)),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to create IFTA preparation"), "error"),
   });
 
   const prepReady = Boolean(preparationId);

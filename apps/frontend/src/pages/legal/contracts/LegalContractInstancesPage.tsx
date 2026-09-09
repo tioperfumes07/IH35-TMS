@@ -155,6 +155,7 @@ export function LegalContractInstancesPage() {
         key: "template_code",
         label: "Template",
         sortable: true,
+        sortValue: (row) => row.display_name_en ?? row.template_code ?? "",
         render: (row) => (
           <>
             <div className="font-medium">{row.display_name_en ?? row.template_code}</div>

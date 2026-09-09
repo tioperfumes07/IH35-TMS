@@ -145,6 +145,7 @@ export function EscrowPage() {
         key: "holder_id",
         label: "Holder",
         sortable: true,
+        sortValue: (row) => row.holder_label ?? "",
         render: (row) =>
           row.holder_type === "driver" ? (
             <EntityLink
