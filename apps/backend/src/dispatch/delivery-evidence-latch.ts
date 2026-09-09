@@ -39,6 +39,7 @@ import { enqueueAfterCommit } from "../lib/after-commit.js";
 import { convertProformaToOfficial } from "../accounting/proforma-convert.service.js";
 import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
 import { autoSubmitDeliveredLoadToFactor } from "../factoring/auto-submit-on-delivery.service.js";
+import { syncLoadStatusToBilling } from "./load-billing-lifecycle.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 // SYS-F5509 — moved to its own leaf module so accounting/posting-engine.service.ts can depend on the
 // status definition without depending on this whole latch module (which itself depends on
@@ -100,6 +101,24 @@ async function fireFactoringAutoSubmit(input: DeliveryEvidenceLatchInput): Promi
     });
   } catch (err) {
     console.warn({ err, load_id: input.loadId }, "fact_delivered_auto_submit_latch_failed");
+  }
+}
+
+/**
+ * LOAD-CLOSE-LIFECYCLE — after the delivery commits and the invoice is durably `sent`, advance the
+ * load's own status to `invoiced` so it stops sitting in `delivered_pending_docs` limbo (owner: a
+ * delivered load with docs in must progress). Own connection, idempotent, swallow-and-log. It closes
+ * the load later, off the factoring-advance / customer-payment hooks — never here.
+ */
+async function fireLoadBillingSync(input: DeliveryEvidenceLatchInput): Promise<void> {
+  try {
+    await syncLoadStatusToBilling({
+      operatingCompanyId: input.operatingCompanyId,
+      loadId: input.loadId,
+      actorUserId: input.actorUserId,
+    });
+  } catch (err) {
+    console.warn({ err, load_id: input.loadId }, "load_billing_lifecycle_latch_failed");
   }
 }
 
@@ -209,11 +228,20 @@ export async function latchOnDeliveryEvidence(
     label: `factoring-auto-submit:${input.loadId}`,
     run: () => fireFactoringAutoSubmit(input),
   });
+  // LOAD-CLOSE-LIFECYCLE — advance the load to `invoiced` once its invoice is durably sent. Ordered
+  // AFTER the factoring auto-submit enqueue so it runs after the purchase is created; both are
+  // deadlock-safe on their own connections.
+  const billingQueued = enqueueAfterCommit(client, {
+    label: `load-billing-sync:${input.loadId}`,
+    run: () => fireLoadBillingSync(input),
+  });
   if (queued) {
     if (!factoringQueued) await fireFactoringAutoSubmit(input);
+    if (!billingQueued) await fireLoadBillingSync(input);
     return "deferred";
   }
   await firePostLoadRevenueLatch(input);
   await fireFactoringAutoSubmit(input);
+  await fireLoadBillingSync(input);
   return "fired";
 }
