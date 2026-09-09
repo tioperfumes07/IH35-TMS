@@ -41,12 +41,21 @@ export async function runBankReconAutoMatchTick(
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
 
       // Fetch unmatched transactions for this company in the last 90 days
+      //
+      // BANK-F30018 (2026-09-09): banking.bank_transactions is void-not-delete (voided_at, set by
+      // bank-tx-dedup.ts::supersedePlaidPendingByExactPostedCandidate). findCandidates() itself
+      // already refuses a voided row (loadTransaction excludes voided_at, BANK-F9998) and returns
+      // [] for one -- so this was never a correctness bug, only wasted nightly work: every voided
+      // row that happens to be unmatched still occupies one of this query's 500-row LIMIT slots and
+      // one findCandidates() DB round trip that can only ever return nothing. Live-measured on
+      // USMCA: 106 of 327 (32%) rows this query returns are already voided.
       const txns = await client.query<{ id: string }>(
         `
           SELECT bt.id::text AS id
           FROM banking.bank_transactions bt
           WHERE bt.operating_company_id = $1::uuid
             AND bt.transaction_date >= (now() - interval '90 days')::date
+            AND bt.voided_at IS NULL
             AND NOT EXISTS (
               SELECT 1
               FROM banking.reconciliation_matches rm
