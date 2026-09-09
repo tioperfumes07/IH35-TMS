@@ -213,7 +213,11 @@ export function SettlementsTable({
         sortable: false,
         alwaysVisible: true,
         render: (row) => (
-          <button type="button" className="text-slate-700 underline" onClick={() => onOpen(row.id)}>
+          <button
+            type="button"
+            className="inline-flex h-7 items-center rounded-sm px-2 text-xs text-slate-700 underline"
+            onClick={() => onOpen(row.id)}
+          >
             Open →
           </button>
         ),
