@@ -16,7 +16,7 @@ import {
   listFactoringReserveBalances as listFactoringReserveBalancesByAdvance,
 } from "./factoring-posting/reserve-tracker.service.js";
 import { nextFactoringDisplayId } from "./display-id.js";
-import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope, INVOICE_PLEDGE_CENTS_SQL } from "./shared.js";
 import { requireVoidCancelExecutorWired } from "../lib/authz/void-cancel-authz.js";
 
 const idParamsSchema = z.object({
@@ -58,28 +58,8 @@ const createBodySchema = z.object({
 });
 
 /** FACT-PLEDGE-NET-CM — same net as ar-aging (payments + applied non-void credit memos), live not as-of. */
-const INVOICE_PLEDGE_CENTS_SQL = `
-GREATEST(
-  COALESCE(i.total_cents, 0)
-    - COALESCE((
-        SELECT SUM(COALESCE(pa.amount_cents, 0))
-        FROM accounting.payment_applications pa
-        JOIN accounting.payments p
-          ON p.id = pa.payment_id
-         AND p.operating_company_id = i.operating_company_id
-        WHERE pa.invoice_id = i.id
-          AND pa.operating_company_id = i.operating_company_id
-          AND p.voided_at IS NULL
-          AND pa.unapplied_at IS NULL
-      ), 0)
-    - COALESCE((
-        SELECT SUM(cma.applied_cents)
-        FROM accounting.credit_memo_applications cma
-        WHERE cma.invoice_id = i.id
-          AND cma.operating_company_id = i.operating_company_id
-          AND cma.voided_at IS NULL
-      ), 0)
-, 0)`;
+// FACT-DELIVERED-AUTO: INVOICE_PLEDGE_CENTS_SQL now lives in ./shared.js (single source of truth) so
+// the delivery auto-submit service computes the identical open-AR pledge base as this create route.
 
 const advanceBodySchema = z.object({
   advanced_at: z.string().datetime().optional(),

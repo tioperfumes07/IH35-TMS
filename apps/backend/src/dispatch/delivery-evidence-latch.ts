@@ -38,6 +38,7 @@ import { companyBusinessDate } from "../lib/company-business-date.js";
 import { enqueueAfterCommit } from "../lib/after-commit.js";
 import { convertProformaToOfficial } from "../accounting/proforma-convert.service.js";
 import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
+import { autoSubmitDeliveredLoadToFactor } from "../factoring/auto-submit-on-delivery.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 // SYS-F5509 — moved to its own leaf module so accounting/posting-engine.service.ts can depend on the
 // status definition without depending on this whole latch module (which itself depends on
@@ -81,6 +82,24 @@ async function firePostLoadRevenueLatch(input: DeliveryEvidenceLatchInput): Prom
       { err, load_id: input.loadId, target_status: input.targetStatus },
       "disp_wire_07_revrec_latch_failed"
     );
+  }
+}
+
+/**
+ * FACT-DELIVERED-AUTO — after the delivery commits and the customer invoice is durably `sent`,
+ * auto-submit it to the assigned factor as a submitted purchase (no funding JE — that posts at real
+ * Faro funding). Own connection, idempotent, swallow-and-log: mirrors the revenue latch exactly so a
+ * factoring hiccup never 500s the delivery. No-op when the customer is not factor-assigned.
+ */
+async function fireFactoringAutoSubmit(input: DeliveryEvidenceLatchInput): Promise<void> {
+  try {
+    await autoSubmitDeliveredLoadToFactor({
+      operatingCompanyId: input.operatingCompanyId,
+      loadId: input.loadId,
+      actorUserId: input.actorUserId,
+    });
+  } catch (err) {
+    console.warn({ err, load_id: input.loadId }, "fact_delivered_auto_submit_latch_failed");
   }
 }
 
@@ -177,11 +196,24 @@ export async function latchOnDeliveryEvidence(
   // ACCT-F351 — raise the receivable in the caller's transaction, BEFORE queueing the revenue latch,
   // so no delivery path can recognize revenue without also invoicing the customer.
   await convertAndSendInvoiceOnDelivery(client, input);
+  // FACT-DELIVERED-AUTO — the invoice was just converted+sent INLINE on the caller's txn above, so it
+  // is durably `sent` once this txn commits. Auto-submit it to the assigned factor on the SAME
+  // after-commit queue as the revenue latch (own connection, deadlock-safe). Enqueued alongside, not
+  // instead of, the revenue latch: recognizing revenue and creating the factoring purchase are both
+  // consequences of the one delivery event.
   const queued = enqueueAfterCommit(client, {
     label: `revrec-latch:${input.loadId}:${input.targetStatus}`,
     run: () => firePostLoadRevenueLatch(input),
   });
-  if (queued) return "deferred";
+  const factoringQueued = enqueueAfterCommit(client, {
+    label: `factoring-auto-submit:${input.loadId}`,
+    run: () => fireFactoringAutoSubmit(input),
+  });
+  if (queued) {
+    if (!factoringQueued) await fireFactoringAutoSubmit(input);
+    return "deferred";
+  }
   await firePostLoadRevenueLatch(input);
+  await fireFactoringAutoSubmit(input);
   return "fired";
 }

@@ -18,6 +18,36 @@ export function validationError(reply: FastifyReply, error: z.ZodError) {
   return sendZodValidation(reply, error);
 }
 
+/**
+ * FACT-DELIVERED-AUTO — the open-AR "pledge" a factoring advance is faced/reserved/feed against:
+ * invoice total minus applied non-void payments minus applied non-void credit memos. Lives here as the
+ * single source of truth so the manual create route (factoring-advances.routes.ts) and the delivery
+ * auto-submit service (factoring/auto-submit-on-delivery.service.ts) compute the identical base — never
+ * two formulas that can drift. `i` must be the aliased accounting.invoices row in the caller's query.
+ */
+export const INVOICE_PLEDGE_CENTS_SQL = `
+GREATEST(
+  COALESCE(i.total_cents, 0)
+    - COALESCE((
+        SELECT SUM(COALESCE(pa.amount_cents, 0))
+        FROM accounting.payment_applications pa
+        JOIN accounting.payments p
+          ON p.id = pa.payment_id
+         AND p.operating_company_id = i.operating_company_id
+        WHERE pa.invoice_id = i.id
+          AND pa.operating_company_id = i.operating_company_id
+          AND p.voided_at IS NULL
+          AND pa.unapplied_at IS NULL
+      ), 0)
+    - COALESCE((
+        SELECT SUM(cma.applied_cents)
+        FROM accounting.credit_memo_applications cma
+        WHERE cma.invoice_id = i.id
+          AND cma.operating_company_id = i.operating_company_id
+          AND cma.voided_at IS NULL
+      ), 0)
+, 0)`;
+
 export async function withCompanyScope<T>(userId: string, operatingCompanyId: string, fn: (client: any) => Promise<T>) {
   await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
