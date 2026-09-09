@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+// MATRIX-BUILT-OPTIONAL — this is a bug-regression / real-data-shape guard for one page
+// (FactoringHome.tsx's FAC-09a rebuild), not a Program-matrix EntityLink/reverse_link/FK wiring
+// ratchet. checkReserveReal's real-column-EntityLink assertions trip
+// verify-matrix-built-tag-present's WIRING_HINT heuristic — exempted rather than attaching an
+// inaccurate @matrix-built module/leaf tag that doesn't correspond to any real Program-matrix
+// tracked surface.
 /**
  * verify-faro-tabs-real-data.mjs
  *

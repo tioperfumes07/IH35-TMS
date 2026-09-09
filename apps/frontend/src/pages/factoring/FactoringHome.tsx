@@ -946,17 +946,23 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-reserve-report">
           <div className="mb-2 text-xs font-medium text-gray-900">Reserve</div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="factoring-reserve-summary-strip">
+            {/* verify-no-dead-kpi-cards: honest "—" values (no Escrow/Cash split, no distinct
+                available-for-release figure exist in this schema) still get a real drill target
+                rather than a dead click -- Reserve Tracker carries the combined balance and the
+                real release forecast these three would otherwise have no destination for. */}
             <DrillKpiCard
               testId="factoring-reserve-escrow"
               label="Escrow Reserve"
               value="—"
-              unavailable="This schema tracks one combined reserve balance, no Escrow/Cash type split."
+              hint="No Escrow/Cash split in this schema"
+              to={FACTORING_TAB_PATH.reserve_tracker}
             />
             <DrillKpiCard
               testId="factoring-reserve-cash"
               label="Cash Reserve"
               value="—"
-              unavailable="This schema tracks one combined reserve balance, no Escrow/Cash type split."
+              hint="No Escrow/Cash split in this schema"
+              to={FACTORING_TAB_PATH.reserve_tracker}
             />
             <DrillKpiCard
               testId="factoring-reserve-total"
@@ -968,7 +974,8 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
               testId="factoring-reserve-available"
               label="Available for Release"
               value="—"
-              unavailable="No distinct available-for-release figure exists in this schema yet -- see Reserve Tracker's release forecast for a projected estimate."
+              hint="See Reserve Tracker's release forecast"
+              to={FACTORING_TAB_PATH.reserve_tracker}
             />
           </div>
           <div className="mt-3 text-xs font-medium text-gray-900">Reserve movement history</div>
@@ -985,17 +992,19 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
           ) : (
             <ParityTable
               columns={[
-                { key: "created_at", label: "Date", render: (row: FactoringReserveBalanceHistoryEntry) => fmtDate(row.created_at) },
+                { key: "created_at", label: "Date", sortable: true, render: (row: FactoringReserveBalanceHistoryEntry) => fmtDate(row.created_at) },
                 { key: "reason", label: "Note", render: (row: FactoringReserveBalanceHistoryEntry) => row.reason },
                 {
                   key: "signed_amount_cents",
                   label: "Amount",
+                  sortable: true,
                   cellClass: "text-right",
                   render: (row: FactoringReserveBalanceHistoryEntry) => fmtCurrency(row.signed_amount_cents / 100),
                 },
                 {
                   key: "running_balance_cents",
                   label: "Balance",
+                  sortable: true,
                   cellClass: "text-right",
                   render: (row: FactoringReserveBalanceHistoryEntry) => fmtCurrency(row.running_balance_cents / 100),
                 },
@@ -1057,7 +1066,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                     { key: "customer_name", label: "Debtor", sortable: true, render: (row: (typeof agingRows)[number]) => row.customer_name },
                     { key: "invoice_amount", label: "Gross Advance Amount", sortable: true, cellClass: "text-right", render: (row: (typeof agingRows)[number]) => fmtCurrency(row.invoice_amount) },
                     { key: "advance_amount", label: "Net Paid to IH35", sortable: true, cellClass: "text-right font-semibold", render: (row: (typeof agingRows)[number]) => fmtCurrency(row.advance_amount) },
-                    { key: "running_total", label: "Running Total", cellClass: "text-right", render: (row: (typeof paymentsToYouRows)[number]) => fmtCurrency(row.running_total) },
+                    { key: "running_total", label: "Running Total", sortable: true, cellClass: "text-right", render: (row: (typeof paymentsToYouRows)[number]) => fmtCurrency(row.running_total) },
                   ]}
                   rows={paymentsToYouRows}
                   rowKey={(row) => row.factoring_advance_id}
@@ -1330,6 +1339,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   {
                     key: "settlement_number",
                     label: "Settlement #",
+                    sortable: true,
                     render: (row: (typeof purchaseReportRows)[number]) => row.lc_settlement_number || "—",
                   },
                   // OWNER MEGA-REPORT 2026-09-09: "amount of the ORIGINAL invoice, then advance,
@@ -1572,6 +1582,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                     {
                       key: "factoring_advance_id",
                       label: "ID",
+                      sortable: true,
                       render: (row: (typeof agingRows)[number]) => (
                         <EntityLink kind="factoring_advance" id={row.factoring_advance_id} label={entityLabel(row.invoice_reference, row.factoring_advance_id, "Advance")} />
                       ),
@@ -1601,6 +1612,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                     {
                       key: "settlement_number",
                       label: "Settlement #",
+                      sortable: true,
                       render: (row: (typeof agingRows)[number]) =>
                         row.settlement_id ? (
                           <EntityLink kind="settlement" id={row.settlement_id} label={row.settlement_display_id ?? row.lc_settlement_number ?? "—"} />
