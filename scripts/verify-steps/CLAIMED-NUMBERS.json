@@ -8413,5 +8413,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-09-09",
     "purpose": "verify-settlement-margin-pct-separate-columns"
+  },
+  "11096": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-09",
+    "purpose": "verify-driver-settlement-alwaystrack-layout"
   }
 }
