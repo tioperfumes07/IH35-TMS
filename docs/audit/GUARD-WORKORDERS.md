@@ -9977,3 +9977,101 @@ this, and it is just [unfinished]"):**
   active, not routed elsewhere.
 
 | **FIXED (CC-3 2026-09-09 -- supersedes FACTORING-HARD-NAV-LOSES-COMPANY-CONTEXT above, which is now closed: ownership flipped back to CC-3, not code-superseded):** `FACTORING-HARD-NAV-LOSES-COMPANY-CONTEXT` -- the row above filed this for Cursor per the 01:13Z scoreboard doc's "Factoring is Cursor's locked lane." Minutes later, `docs/bus/INBOX-CC-3.md`'s **"OWNER MEGA-REPORT 2026-09-09 06:1xZ"** (relayed directly by CC-1, the owner's own verbatim words, "you told me you already had a coder working on this, and it is just [unfinished]") explicitly routes the entire Factoring block back to CC-3 -- the fresher, more authoritative, owner-sourced assignment supersedes the scoreboard doc. Actually fixed now: `FactoringHome.tsx` destructures `isLoading` from `useCompanyContext()` alongside `selectedCompanyId`; the `if (!companyId)` branch now checks `companyContextLoading` first and renders a real `Loading…` state (`data-testid="factoring-home-loading"`) instead of the "select a company" empty state while the context is still resolving -- the empty state now only shows once loading has genuinely finished and there truly is no company. This is a single shared-component fix covering every factoring deep-link/sub-route (Account Summary, Aging, Purchase Report, Chargebacks, etc. all render through this same `FactoringHomePage`), so it is very likely the actual root cause behind the owner's "missing pages" complaint tonight -- a cold link/bookmark/fresh-tab hit into any factoring sub-route during that async window looked like the page didn't exist. SOURCE-OF-TRUTH: `apps/frontend/src/pages/factoring/FactoringHome.tsx:232,236,585-611` -- proven at those exact lines (before/after diff). I QUERIED: `apps/frontend/src/contexts/CompanyContext.tsx`'s own `isLoading` field (already exposed, previously unused by this consumer); existing factoring test suite (`kpi-error`, `vendor-merge-deeplink`) re-run to confirm no regression (6/7 pass, the 1 failure is a pre-existing unrelated canvas/getContext error, confirmed via `git stash` on just this file -- fails identically with or without this change). NOT CHECKED: whether any OTHER page consuming `useCompanyContext()` has the identical gap -- still a real, separate spot-check for later, not blocking this fix. | `apps/frontend/src/pages/factoring/FactoringHome.tsx`; new `apps/frontend/src/pages/factoring/__tests__/FactoringHome.company-context-loading.test.tsx` | **CC-3** | thread the company context's own `isLoading` alongside `selectedCompanyId` everywhere a page gates on `!companyId`, don't assume "empty" means "absent" | tsc clean; new regression test (1/1) proving the loading state renders instead of the empty state when `isLoading:true`; full factoring suite re-run (6/7 pass, 1 pre-existing unrelated failure confirmed via git-stash isolation) | **FIXED -- live-Chrome re-verification pending next frontend deploy (cannot Chrome-verify a merge before it ships, same standing constraint as every fix this session)** |
+
+## BANK-F30012 (BANK-VOIDED-RECON-01) — FIXED, live before/after (CC-2, 2026-09-09)
+
+Discovered independently via a vertical sweep of `banking.bank_transactions` read sites (not owner-
+prompted): `banking.bank_transactions.voided_at` is a void-not-delete column, set by
+`bank-tx-dedup.ts::supersedePlaidPendingByExactPostedCandidate` when a stale Plaid pending row is
+superseded by its posted successor (699 voided rows on prod today). `reconciliation.routes.ts`
+predates that mechanism: all 5 of its `SELECT`/`WITH` queries against `banking.bank_transactions`
+(worklist display, match-eligibility check, unmatch's prior-state CTE, complete-session variance
+calculator, QBO-sync-candidate selection) read every row in the window with no `voided_at` filter.
+
+**Fix:** added `AND bt.voided_at IS NULL` (or `AND voided_at IS NULL`) to all 5 sites.
+
+**Live proof:** one open USMCA reconciliation session (`fa95376a-20fb-4d16-aef5-5b207d169846`) had
+$44,833.89 across 38 voided rows silently included in its variance/worklist math before the fix;
+excluded after.
+
+Shipped PR #21520 (claim #21517), verify-step 10839
+(`scripts/verify-bank-recon-excludes-voided-transactions.mjs`, selftest 2/2). Backend redeployed,
+`healthz` confirmed live. | `apps/backend/src/banking/reconciliation.routes.ts` |
+**CC-2 · FIXED · live before/after ($44,833.89/38 rows excluded)** |
+
+## BANK-F30013 — Form 425C (bankruptcy MOR) excludes voided bank_transactions (CC-2, 2026-09-09)
+
+Same bug class as BANK-F30012, found continuing the same sweep, this time in a real U.S. Bankruptcy
+Court Monthly Operating Report calculation: `compliance/form-425c.routes.ts`'s flow-summary query
+and one query each in Exhibits A/B/C/D (`reports/form-425c/exhibits/exhibit-{a,b,c,d}-*.ts`) read
+`banking.bank_transactions` with no `voided_at` filter — voided/reversed rows were being counted as
+real receipts/disbursements in a filing whose own code comments already say results "must never
+reach a court filing" wrong and "must FAIL LOUD."
+
+**Fix:** added `AND bt.voided_at IS NULL` to the flow-summary query and each exhibit query (5 files).
+
+**Self-caught bug during the fix:** first attempt inserted the explanatory comment as a JS-style
+`// BANK-F30013: ...` literally inside a SQL template literal — `//` is not valid SQL and would have
+broken the query at runtime. Caught via the harness's automatic file-diff notification before any
+live verification ran; corrected to `-- ` (SQL line comment) across all 5 files, then re-verified by
+executing the exact post-fix SQL text live against Neon.
+
+**Live proof (one real USMCA company, exact SQL before/after):** pre-fix —
+receipts_cents=38804502, disbursements_cents=40132931, in_scope_txn_count=437. Post-fix:
+receipts_cents=28536464, disbursements_cents=28318755, in_scope_txn_count=288. A real
+**$102,680.38 receipts / $118,141.76 disbursements** overstatement corrected.
+
+Shipped PR #21526 (claim #21525), verify-step 10843
+(`scripts/verify-form425c-excludes-voided-transactions.mjs`). Backend redeployed, `healthz`
+confirmed live. | `apps/backend/src/compliance/form-425c.routes.ts`,
+`apps/backend/src/reports/form-425c/exhibits/exhibit-{a,b,c,d}-*.ts` |
+**CC-2 · FIXED · live before/after ($102,680.38 / $118,141.76 overstatement corrected)** |
+
+## BANK-F30014 (owner mega-report 2026-09-09, routed via INBOX-CC-2) — FIXED (CC-2, 2026-09-09)
+
+Owner report: Banking → Transactions account-selector list has no reorder control. **Root-caused
+as NOT a missing UI control** — the reorder feature already exists and already writes
+`banking.bank_accounts.display_order` (via `PATCH /api/v1/banking/accounts/reorder` and
+`POST /api/v1/banking/accounts/visibility`) — but `GET /api/v1/banking/plaid/accounts`, the read
+endpoint feeding the Transactions page's account-selector row, never read `display_order` back:
+its `ORDER BY` was `institution_name, account_name, created_at DESC`, ignoring the column entirely.
+
+**Fix:** added `display_order` to the SELECT list and `ORDER BY display_order, institution_name
+NULLS LAST, account_name NULLS LAST, created_at DESC`.
+
+**Live proof:** read-only Neon CTE simulation with hypothetical `display_order` values (no data
+mutated) — old ordering ignored them, new ordering honored them correctly. Confirmed live all 4
+current USMCA accounts have `display_order=0` (never reordered), so the fix is a no-op today until
+an operator actually uses the existing reorder feature — the bug was latent, not yet visibly wrong.
+
+Shipped PR #21529 (claim #21528), verify-step 10847
+(`scripts/verify-plaid-accounts-honor-display-order.mjs`). Backend redeployed, `healthz` confirmed
+live. | `apps/backend/src/integrations/plaid/link.routes.ts` |
+**CC-2 · FIXED · live-simulated before/after, currently a no-op pending first real reorder** |
+
+## BANK-F30015 — accounting/bank-recon worklist excludes voided bank_transactions (CC-2, 2026-09-09)
+
+Continuing the same sweep flagged in BANK-F30012/F30013's own REMAINING notes:
+`accounting/bank-recon/recon-worklist.service.ts` is a SIBLING, independently-built parallel
+reconciliation system (`banking.reconciliation_matches`/`match_state`, distinct from
+`banking/reconciliation.routes.ts`'s `reconciliation_sessions`/`reconciliation_cleared`, fixed as
+BANK-F30012) with the identical missing-`voided_at`-filter gap across 5 of its own
+`banking.bank_transactions` read sites: the "unmatched" worklist query, the "auto-matched"
+candidate query, the progress-coverage CTE, the month-coverage CTE, and the unmatch action's
+prior-state CTE.
+
+**Fix:** added `voided_at IS NULL` / `bt.voided_at IS NULL` to all 5 sites.
+
+**Live proof:** USMCA's own "unmatched, needs review" worklist count — the exact query an operator
+sees — went from **433 to 284** (149-row correction), an exact match to the known count of voided
+rows in scope for this account/date window.
+
+Shipped PR #21536 (claim #21532), verify-step 10851
+(`scripts/verify-recon-worklist-excludes-voided-transactions.mjs`, selftest 2/2). Backend redeployed.
+
+**REMAINING (same bug class, not yet checked):** `banking/categorization.routes.ts`'s
+`total_uncategorized_cents` KPI, `accounting/month-close.service.ts`'s coverage-check CTE,
+`cron/bank-recon-auto-match.cron.ts`'s unattended auto-match candidate list — next in the sweep.
+
+| `apps/backend/src/accounting/bank-recon/recon-worklist.service.ts` |
+**CC-2 · FIXED · live before/after (433 -> 284 unmatched, 149-row correction)** |
