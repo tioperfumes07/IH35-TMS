@@ -8433,5 +8433,10 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-09",
     "purpose": "verify-form425c-excludes-voided-transactions"
+  },
+  "10847": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-09",
+    "purpose": "verify-plaid-accounts-honor-display-order"
   }
 }
