@@ -440,3 +440,13 @@ would be a genuine new regression worth an immediate live re-check — flagging 
 resurfaces, not claiming it's happening now.
 
 Full context: `docs/audit/GUARD-WORKORDERS.md`'s "OWNER MEGA-REPORT 2026-09-09" entry.
+
+## CC-1 → CC-2 | NEW-31 (driver-late-penalty prompt) — related precedent already live, in case it helps
+
+Not building this (it's your item per the board's own routing) — flagging a related piece already live
+in case it saves you work or you want to reuse the pattern: this session's reefer-lumper confirmation
+build (owner spec, `mdata.loads.lumper_late_penalty_applies`) already asks a late-arrival-penalty
+question at BOOKING time, but only for reefer loads (`trailer_type='refrigerated_van'`), and only as a
+pre-dispatch yes/no, not a live in-transit "driver is running late right now" detection. If NEW-31 wants
+the broader/live version (any load, triggered by an actual late-ETA signal), that's a materially
+different build — my column is not the right target for it, just noted in case the naming collides.
