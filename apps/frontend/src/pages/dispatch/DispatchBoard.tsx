@@ -1497,6 +1497,59 @@ export function DispatchBoard({
       else if (!unitId && onRowClick) onRowClick(row.id);
     };
 
+    // REG-019 (owner 2026-09-09, verbatim: "IN DISPATCH IN LISTS, THEN TABLE, THE ASSIGNED AND
+    // UNASSIGNED UNITS ARE TOGETHER, THEY ARE EACH SUPPOSED TO HAVE THEIR OWN WINDOW. AND MOVE
+    // AUTOMATICALLY FROM ONE TO THE OTHER"). The Table sub-view was one flat grid mixing assigned
+    // trucks and free trucks. Split it into two labeled windows, partitioning the SAME sorted rows so
+    // nothing is dropped: a row is "assigned" iff it is a real load row (not a synthetic unit: row) that
+    // carries an assigned_unit_id — everything else (free units + loads not yet on a truck) is
+    // "unassigned". The split is derived from sortedRows on every render, so when an assignment changes
+    // and the loads / units-without-load queries refetch, a row moves between the two panels
+    // automatically with no manual refresh (pure presentation-layer derivation, no new endpoint).
+    const isUnitRow = (row: BoardLoad) => row.id.startsWith("unit:");
+    const isAssignedUnitRow = (row: BoardLoad) => !isUnitRow(row) && Boolean(row.assigned_unit_id);
+    const assignedRows = sortedRows.filter(isAssignedUnitRow);
+    const unassignedRows = sortedRows.filter((row) => !isAssignedUnitRow(row));
+
+    const renderUnitPanel = (
+      rows: BoardLoad[],
+      storageKey: string,
+      tableTestId: string,
+      gearButtonTestId: string,
+      emptyText: string,
+    ) => (
+      <ParityTable
+        columns={parityColumns}
+        columnGroups={boardColumnGroups}
+        stickyLeftCount={4}
+        columnLayout="auto"
+        frameColor={colors.tableColumnRule}
+        rows={rows}
+        rowKey={(row) => row.id}
+        loading={loading}
+        emptyText={emptyText}
+        onRowClick={handleRowClick}
+        selectable
+        selectedKeys={Array.from(selection.selectedIds)}
+        onSelectionChange={(keys) => selection.setSelectedIds(new Set(keys))}
+        maxSelectable={200}
+        onSelectionCapExceeded={() => pushToast("Cannot select more than 200 rows.", "error")}
+        sortKey={activeSort.key}
+        sortDirection={activeSort.direction}
+        onSortChange={(key, direction) => setTableSort({ key, direction })}
+        sortMode="external"
+        suppressToolbarSearch
+        suppressToolbarRange
+        hidePager
+        storageKey={storageKey}
+        enableColumnReorder
+        enableColumnResize
+        tableTestId={tableTestId}
+        gearButtonTestId={gearButtonTestId}
+        rowTestId={(row) => `dispatch-board-table-row-${row.id}`}
+      />
+    );
+
     return (
       <section className="space-y-3" data-testid="dispatch-board-table-view">
         <div className="flex items-center justify-between gap-3">
@@ -1520,36 +1573,25 @@ export function DispatchBoard({
           </div>
         </div>
 
-        <ParityTable
-          columns={parityColumns}
-          columnGroups={boardColumnGroups}
-          stickyLeftCount={4}
-          columnLayout="auto"
-          frameColor={colors.tableColumnRule}
-          rows={sortedRows}
-          rowKey={(row) => row.id}
-          loading={loading}
-          emptyText="No loads match your filters."
-          onRowClick={handleRowClick}
-          selectable
-          selectedKeys={Array.from(selection.selectedIds)}
-          onSelectionChange={(keys) => selection.setSelectedIds(new Set(keys))}
-          maxSelectable={200}
-          onSelectionCapExceeded={() => pushToast("Cannot select more than 200 rows.", "error")}
-          sortKey={activeSort.key}
-          sortDirection={activeSort.direction}
-          onSortChange={(key, direction) => setTableSort({ key, direction })}
-          sortMode="external"
-          suppressToolbarSearch
-          suppressToolbarRange
-          hidePager
-          storageKey="dispatch-board-table"
-          enableColumnReorder
-          enableColumnResize
-          tableTestId="dispatch-board-flat-table"
-          gearButtonTestId="dispatch-board-column-chooser"
-          rowTestId={(row) => `dispatch-board-table-row-${row.id}`}
-        />
+        <AssignmentBand title="Assigned Units" count={assignedRows.length}>
+          {renderUnitPanel(
+            assignedRows,
+            "dispatch-board-table-assigned",
+            "dispatch-board-table-assigned",
+            "dispatch-board-column-chooser-assigned",
+            "No assigned units match your filters.",
+          )}
+        </AssignmentBand>
+
+        <AssignmentBand title="Unassigned Units" count={unassignedRows.length}>
+          {renderUnitPanel(
+            unassignedRows,
+            "dispatch-board-table-unassigned",
+            "dispatch-board-table-unassigned",
+            "dispatch-board-column-chooser-unassigned",
+            "No unassigned units match your filters.",
+          )}
+        </AssignmentBand>
 
         <div className="flex items-center justify-between border-t border-gray-200 pt-2 text-xs">
           <Button type="button" variant="secondary" size="sm" disabled={!hasPrev} onClick={() => onPageChange(Math.max(0, offset - limit))}>

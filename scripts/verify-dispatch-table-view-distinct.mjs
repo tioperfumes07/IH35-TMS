@@ -1,10 +1,22 @@
 #!/usr/bin/env node
 /**
- * DISPATCH Table view (owner 2026-09-04: "THE TABLE VIEW DOES NOT RENDER ANYTHING"). List and Table
- * board-modes both routed through renderListOrTable(), so the Table toggle was dead — identical
- * grouped output. Table is now the DISTINCT flat view: every load/truck in ONE spreadsheet grid
- * (boardSections flat-mapped), one global sort, one pager. This guard fails if Table collapses back
- * into the grouped List render.
+ * DISPATCH Table view.
+ *
+ * (owner 2026-09-04: "THE TABLE VIEW DOES NOT RENDER ANYTHING") — List and Table board-modes both
+ * routed through renderListOrTable(), so the Table toggle was dead. Table became the DISTINCT flat
+ * view: every load/truck flat-mapped from boardSections, one global sort, one pager.
+ *
+ * EXTENDED — REG-019 (owner 2026-09-09: "IN DISPATCH IN LISTS, THEN TABLE, THE ASSIGNED AND UNASSIGNED
+ * UNITS ARE TOGETHER, THEY ARE EACH SUPPOSED TO HAVE THEIR OWN WINDOW. AND MOVE AUTOMATICALLY FROM ONE
+ * TO THE OTHER"). The one flat grid is now split into TWO labeled windows — "Assigned Units" and
+ * "Unassigned Units" — partitioning the SAME sortedRows by a single predicate so nothing is dropped and
+ * a row moves between panels automatically when the underlying queries refetch. This guard fails if:
+ *   - Table collapses back into the grouped List render (the original regression), OR
+ *   - the two-panel split is removed / a panel loses its labeled window, OR
+ *   - the partition stops being a strict complement (would silently drop rows from the Table view).
+ *
+ * Checks are scoped to the renderTable() body so they cannot be satisfied by the Assignment sub-view,
+ * which happens to use the same "Assigned Units" / "Unassigned Units" band titles.
  *
  * Self-testing static guard. Run: node scripts/verify-dispatch-table-view-distinct.mjs [--selftest]
  */
@@ -13,6 +25,14 @@ import fs from "node:fs";
 const file = "apps/frontend/src/pages/dispatch/DispatchBoard.tsx";
 const original = fs.readFileSync(file, "utf8");
 
+// Slice out just the renderTable() body so "Assigned Units" band-title checks can't be satisfied by
+// the Assignment sub-view (renderAssignmentView) which shares those labels.
+function renderTableBlock(s) {
+  const start = s.indexOf("const renderTable = () =>");
+  const end = s.indexOf("const renderAssignmentView", start);
+  return start >= 0 && end > start ? s.slice(start, end) : "";
+}
+
 const contracts = [
   [
     'board-mode "table" routes to renderTable(), not renderListOrTable()',
@@ -20,19 +40,52 @@ const contracts = [
     (s) => s.replace(/boardMode === "table"\s*\?\s*renderTable\(\)/, "false\n          ? renderTable()"),
   ],
   [
-    "renderTable exists and renders a distinct flat table grid",
-    (s) => /const renderTable = \(\) =>/.test(s) && /tableTestId="dispatch-board-flat-table"/.test(s),
-    (s) => s.replace('tableTestId="dispatch-board-flat-table"', 'tableTestId="dispatch-board-section-table-x"'),
-  ],
-  [
-    "the flat table concatenates every section (boardSections.flatMap), not one section",
+    "the table flat-maps every section (boardSections.flatMap), so both panels together drop no rows",
     (s) => /const renderTable[\s\S]*?boardSections\.flatMap\(/.test(s),
     (s) => s.replace(/boardSections\.flatMap\(/, "[].map("),
   ],
   [
-    "the flat table uses one global sort (tableSort), distinct from per-section sorts",
+    "the table uses one global sort (tableSort), distinct from per-section sorts",
     (s) => /const \[tableSort, setTableSort\] = useState/.test(s) && /onSortChange=\{\(key, direction\) => setTableSort\(/.test(s),
     (s) => s.replace("const [tableSort, setTableSort] = useState", "const [tableSortX, setTableSort] = useState"),
+  ],
+  [
+    'REG-019: renderTable renders both unit-panel grids (dispatch-board-table-assigned + -unassigned)',
+    (s) => {
+      const b = renderTableBlock(s);
+      return (
+        /tableTestId=\{tableTestId\}/.test(b) &&
+        /"dispatch-board-table-assigned"/.test(b) &&
+        /"dispatch-board-table-unassigned"/.test(b)
+      );
+    },
+    (s) => s.replace("tableTestId={tableTestId}", 'tableTestId="dispatch-board-flat-table"'),
+  ],
+  [
+    'REG-019: both panels are their own labeled window (AssignmentBand "Assigned Units" + "Unassigned Units")',
+    (s) => {
+      const b = renderTableBlock(s);
+      return /title="Assigned Units"/.test(b) && /title="Unassigned Units"/.test(b);
+    },
+    (s) => {
+      const b = renderTableBlock(s);
+      const mutatedBlock = b.replace('title="Assigned Units"', 'title="Units"');
+      return s.replace(b, mutatedBlock);
+    },
+  ],
+  [
+    "REG-019: the two panels are a strict complement of sortedRows (no row dropped, none double-shown)",
+    (s) => {
+      const b = renderTableBlock(s);
+      return (
+        /const assignedRows = sortedRows\.filter\(isAssignedUnitRow\);/.test(b) &&
+        /const unassignedRows = sortedRows\.filter\(\(row\) => !isAssignedUnitRow\(row\)\);/.test(b)
+      );
+    },
+    (s) => s.replace(
+      "const unassignedRows = sortedRows.filter((row) => !isAssignedUnitRow(row));",
+      "const unassignedRows = sortedRows.filter((row) => isUnitRow(row));",
+    ),
   ],
 ];
 
