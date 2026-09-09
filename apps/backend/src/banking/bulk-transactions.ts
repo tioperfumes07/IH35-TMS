@@ -27,8 +27,17 @@ export type BulkPostAsBillsInput = {
   psItem: string;
 };
 
+// BANK-F30019 (2026-09-09): banking.bank_transactions is void-not-delete (voided_at, set by
+// bank-tx-dedup.ts::supersedePlaidPendingByExactPostedCandidate when a stale Plaid pending row is
+// superseded by its posted successor). This predicate never filtered it, so a voided row that
+// still carried status='pending_categorization'/'uncategorized' could be bulk-categorized
+// (writes categorized_at) or — the real risk — bulk-posted as a REAL bill + bill_payment + GL
+// entry via bulkPostAsBills, double-booking a transaction that was already reversed/superseded.
+// This is a separate, non-shared duplicate of pending-categorization.ts's
+// pendingCategorizationPredicate (BANK-F30016, same file scoped differently) -- fixed independently
+// here rather than unified, to keep this change minimal and reviewable.
 function pendingStatusesSql(): string {
-  return `(bt.status = 'pending_categorization' OR bt.status = 'uncategorized')`;
+  return `(bt.status = 'pending_categorization' OR bt.status = 'uncategorized') AND bt.voided_at IS NULL`;
 }
 
 export async function resolveCoaAccountId(
