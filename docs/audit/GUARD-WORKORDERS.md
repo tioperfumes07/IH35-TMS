@@ -10205,3 +10205,26 @@ Shipped PR #21564 (claim #21563), verify-step 10871. Backend redeployed.
 
 | `apps/backend/src/integrations/qbo/qbo-sync.service.ts` |
 **CC-2 · FIXED · latent gap closed pre-incident (0/0 current impact, real race prevented)** |
+
+## BANK-F30021 — cash-flow categorization coverage excludes voided bank_transactions (CC-2, 2026-09-09)
+
+Continuing the sweep. `cash-flow.service.ts`'s `bank_categorization_coverage` query (CASH-FLOW-01,
+owner order 2026-09-06 — "zero is a claim") is the exact source of the user-facing honesty message
+"N of M bank lines categorized — actuals unavailable." Its `total_count` never excluded `voided_at`.
+A voided row can never be categorized (0 of 149 voided USMCA rows ever have been), so counting it
+toward the denominator only made the coverage percentage look worse than the truth — the opposite
+direction from most of this session's other findings, but still a real accuracy defect in a metric
+this file's own comments frame as a correctness-of-honesty concern.
+
+**Fix:** added `voided_at IS NULL` to the coverage query's WHERE clause.
+
+**Live proof:** categorized_count=1 (unaffected), total_count 437 → 288 once phantom voided rows
+are excluded — the true honest ratio is 1/288, not 1/437.
+
+Shipped PR #21568 (claim #21567), verify-step 10875. Backend redeployed.
+
+**REMAINING:** `categorization-rules.routes.ts`'s matched/unmatched coverage metric is a
+similarly-shaped query, flagged as the next candidate.
+
+| `apps/backend/src/cash-flow/cash-flow.service.ts` |
+**CC-2 · FIXED · live before/after (1/437 → 1/288, honest denominator)** |

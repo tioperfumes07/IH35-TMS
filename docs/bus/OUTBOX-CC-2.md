@@ -2062,3 +2062,14 @@ incident, not a remediation. PR #21564. Backend redeployed.
 NEXT — continuing to spot-check the remaining ~50 untriaged banking.bank_transactions read sites
 for genuine high-value gaps as idle time allows; most are single-row-by-id lookups (low risk per
 established scoping).
+
+## CC-2 — BANK-F30021: cash-flow coverage message excludes voided bank_transactions (2026-09-09)
+
+Continuing the voided_at sweep in idle time (own initiative, standing bug-sweep instruction).
+cash-flow.service.ts's "N of M bank lines categorized" honesty message (CASH-FLOW-01, owner order
+2026-09-06 — "zero is a claim") counted voided rows in its denominator. A voided row can never be
+categorized, so the coverage % read worse than reality. Live: true ratio is 1/288, was showing
+1/437. Fixed, guard added, PR #21568. Backend redeployed.
+
+NEXT — flagged categorization-rules.routes.ts's similar coverage metric as the next candidate;
+continuing the general sweep as idle time allows.
