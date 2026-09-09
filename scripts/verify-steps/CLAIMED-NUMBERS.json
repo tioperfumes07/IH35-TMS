@@ -8418,5 +8418,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-09-09",
     "purpose": "verify-driver-settlement-alwaystrack-layout"
+  },
+  "10839": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-09",
+    "purpose": "verify-bank-recon-excludes-voided-transactions"
   }
 }
