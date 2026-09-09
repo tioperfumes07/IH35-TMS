@@ -1,12 +1,14 @@
 // TABLE_DATE_OMIT: this table has no date column by design (not a time-series view).
 
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { mmmDd } from "../../lib/formatDate";
-import { listTours, type TourListRow } from "../../api/tourReadout";
+import { closeTour, getTourReadout, listTours, type TourListRow } from "../../api/tourReadout";
+import { userFacingApiError } from "../../lib/api-error-message";
+import { useToast } from "../../components/Toast";
 import { TourPreSettlementTab } from "../../components/dispatch/TourPreSettlementTab";
 import { TourSettlementTab } from "../../components/dispatch/TourSettlementTab";
 import { TourLegsCell, LEGS_HEADER_TITLE } from "../../components/dispatch/TourLegsCell";
@@ -21,7 +23,7 @@ const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD
 const fmt = (c: number) => money.format(c / 100);
 const DASH = "\u2014";
 
-const TOUR_COLUMNS = (state: "open" | "closed"): ParityColumn<TourListRow>[] => [
+const TOUR_COLUMNS = (state: "open" | "closed", companyId: string): ParityColumn<TourListRow>[] => [
   { key: "tour", label: "Tour", testId: "setl-tour-col-id", sortable: true, className: "whitespace-nowrap", minWidth: 90, sortValue: r => r.display_id ?? "", render: r => <Link className="ldt-link font-semibold" style={{ display: "inline" }} to={`/driver-finance/settlements?settlement_id=${encodeURIComponent(r.settlement_id)}`}>{r.display_id ?? "Settlement"}</Link> },
   { key: "driver", label: "Driver", testId: "setl-tour-col-driver", sortable: true, minWidth: 120, maxWidth: 200, cellClass: "whitespace-nowrap", sortValue: r => r.driver_name ?? "", render: r => <span className="block max-w-[200px] truncate" title={r.driver_name ?? ""}>{r.driver_name ?? DASH}</span> },
   { key: "unit", label: "Unit", testId: "setl-tour-col-unit", sortable: true, minWidth: 56, maxWidth: 64, className: "whitespace-nowrap", sortValue: r => r.unit_number ?? "", render: r => r.unit_number ?? DASH },
@@ -42,10 +44,77 @@ const TOUR_COLUMNS = (state: "open" | "closed"): ParityColumn<TourListRow>[] => 
   { key: "margin_pct", label: "Margin %", testId: "setl-tour-col-margin-pct", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 76, maxWidth: 100, sortValue: r => r.margin_pct ?? -Infinity, render: r => r.margin_pct == null ? DASH : <span className={r.margin_pct < 0 ? "text-[#991B1B]" : undefined}>{r.margin_pct.toFixed(1)}%</span> },
   { key: "miles", label: "Miles practical \u00b7 real", testId: "setl-tour-col-miles", cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 120, maxWidth: 170, render: r => `${r.miles_practical.toLocaleString("en-US")} \u00b7 ${r.miles_real == null ? DASH : r.miles_real.toLocaleString("en-US")}` },
   ...(state === "open"
-    ? [{ key: "ready", label: "Ready to close", testId: "setl-tour-col-ready", sortable: true, minWidth: 120, maxWidth: 200, sortValue: (r: TourListRow) => r.ready_ok, render: (r: TourListRow) => <span className={`ldt-pill ${r.can_close ? "ok" : r.ready_ok === 0 ? "bad" : "warn"}`} title={r.close_blockers.join("\n")}>{r.can_close ? `Ready \u00b7 ${r.ready_ok}/${r.ready_total}` : `${r.ready_ok}/${r.ready_total} \u00b7 ${r.close_blockers[0] ?? "open items"}`}</span> } as ParityColumn<TourListRow>]
+    ? [{ key: "ready", label: "Ready to close", testId: "setl-tour-col-ready", sortable: true, minWidth: 120, maxWidth: 200, sortValue: (r: TourListRow) => r.ready_ok, render: (r: TourListRow) => <span className={`ldt-pill ${r.can_close ? "ok" : r.ready_ok === 0 ? "bad" : "warn"}`} title={r.close_blockers.join("\n")}>{r.can_close ? `Ready \u00b7 ${r.ready_ok}/${r.ready_total}` : `${r.ready_ok}/${r.ready_total} \u00b7 ${r.close_blockers[0] ?? "open items"}`}</span> } as ParityColumn<TourListRow>,
+       // SETL-POST (owner 2026-09-09, "the pre-settlement should be verified and click post … we are
+       // missing that button, and that pre-settlement turns to a settlement"): a row-level Post action
+       // right next to the verify pill so the operator never has to expand the tab to find it. It reuses
+       // the SAME close-tour endpoint (open→closed) and the SAME can_close verification — no new money
+       // path; it just surfaces the existing one on the list where the owner looks for it.
+       { key: "post", label: "Post", testId: "setl-tour-col-post", minWidth: 120, maxWidth: 160, cellClass: "whitespace-nowrap", render: (r: TourListRow) => <PostTourAction row={r} companyId={companyId} /> } as ParityColumn<TourListRow>]
     : [{ key: "net", label: "Driver net", testId: "setl-tour-col-driver-net", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: (r: TourListRow) => r.driver_net_cents ?? 0, render: (r: TourListRow) => r.driver_net_cents == null ? DASH : fmt(r.driver_net_cents) } as ParityColumn<TourListRow>,
        { key: "company", label: "Company settlement", testId: "setl-tour-col-company", minWidth: 120, maxWidth: 160, cellClass: "whitespace-nowrap", render: (r: TourListRow) => r.company_settlement_display_id ? r.company_settlement_display_id : <span className="ldt-pill warn" data-testid="setl-tour-company-not-opened">not opened</span> } as ParityColumn<TourListRow>]),
 ];
+
+/**
+ * SETL-POST — row-level "Verify & Post" for an OPEN pre-settlement. Gated on r.can_close (the same
+ * hard-blocker verification the tour readout computes); on confirm it fetches the readout to name the
+ * soft warnings the operator is confirming (owner law: confirm open items BY NAME), then calls the
+ * existing close-tour endpoint (open→closed). No GL posts here — that is pay-run close on the detail
+ * page. Nothing about the money math is new; this only surfaces the existing action on the list.
+ */
+function PostTourAction({ row, companyId }: { row: TourListRow; companyId: string }) {
+  const qc = useQueryClient();
+  const { pushToast } = useToast();
+  const [confirming, setConfirming] = useState(false);
+  const readoutQ = useQuery({
+    queryKey: ["tour-readout", "settlement", companyId, row.settlement_id],
+    queryFn: () => getTourReadout(row.settlement_id, companyId),
+    enabled: confirming,
+  });
+  const post = useMutation({
+    mutationFn: () => closeTour(row.settlement_id, companyId),
+    onSuccess: async () => {
+      pushToast(`Pre-settlement ${row.display_id ?? ""} posted — settlement is now frozen`, "success");
+      setConfirming(false);
+      await qc.invalidateQueries({ queryKey: ["settlements-module", "tours"] });
+      await qc.invalidateQueries({ queryKey: ["tour-readout"] });
+      await qc.invalidateQueries({ queryKey: ["load-costs"] });
+    },
+    onError: (e) => pushToast(userFacingApiError(e, "Could not post the settlement."), "error"),
+  });
+  const soft = readoutQ.data?.soft_warnings ?? [];
+  return (
+    <>
+      <button
+        type="button"
+        className={`ldt-btn ${row.can_close ? "p" : "g"}`}
+        data-testid={`setl-tour-post-${row.settlement_id}`}
+        disabled={!row.can_close || post.isPending}
+        title={row.can_close ? "Verify the checklist, then post this pre-settlement into a settlement" : row.close_blockers.join(" \u00b7 ")}
+        onClick={(e) => { e.stopPropagation(); setConfirming(true); }}
+      >
+        Verify &amp; Post
+      </button>
+      {confirming ? (
+        <div className="ldt-modal-backdrop" onClick={(e) => { e.stopPropagation(); setConfirming(false); }} data-testid="setl-tour-post-confirm">
+          <div className="ldt-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <div className="ldt-modal-head"><span className="ldt-modal-title">Post {row.display_id ?? "pre-settlement"} → Settlement</span><button type="button" className="ldt-btn g" onClick={() => setConfirming(false)} aria-label="Close">×</button></div>
+            <div className="ldt-modal-body">
+              <p>This posts the pre-settlement for <b>{row.driver_name ?? "the driver"}</b> into a settlement: earnings and escrow lines are written and the company settlement for the period closes alongside. Nothing posts to the general ledger here — posting happens at pay-run close.</p>
+              {readoutQ.isLoading ? <div className="ldt-note">Checking open items…</div>
+                : soft.length ? <div className="ldt-note warn"><b>You are confirming these open items by name:</b><ul style={{ margin: "6px 0 0 16px" }}>{soft.map((w) => <li key={w}>{w}</li>)}</ul></div>
+                : <div className="ldt-note">Every readiness item is satisfied.</div>}
+              <div className="ldt-actions">
+                <button type="button" className="ldt-btn p" data-testid="setl-tour-post-confirm-button" disabled={post.isPending || readoutQ.isLoading} onClick={() => post.mutate()}>{post.isPending ? "Posting\u2026" : "Post settlement"}</button>
+                <button type="button" className="ldt-btn g" onClick={() => setConfirming(false)}>Not yet</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}
 
 export function SettlementsToursRegister({ companyId }: { companyId: string }) {
   const [state, setState] = useState<"open" | "closed">("open");
@@ -81,7 +150,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
         <ListErrorState status={0} message={activeQ.error instanceof Error ? activeQ.error.message : String(activeQ.error)} onRetry={() => void activeQ.refetch()} />
       ) : (
         <ParityTable
-          columns={TOUR_COLUMNS(state)}
+          columns={TOUR_COLUMNS(state, companyId)}
           rows={rows}
           rowKey={r => r.settlement_id}
           loading={activeQ.isLoading}
