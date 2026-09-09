@@ -8378,5 +8378,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-09-09",
     "purpose": "verify-settlements-list-button-height-uniform"
+  },
+  "11084": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-09",
+    "purpose": "verify-other-recovery-role-bound"
   }
 }
