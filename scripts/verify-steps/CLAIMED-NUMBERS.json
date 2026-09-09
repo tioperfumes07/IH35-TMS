@@ -8473,5 +8473,10 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-09",
     "purpose": "verify-qbo-sync-excludes-voided"
+  },
+  "10875": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-09",
+    "purpose": "verify-cash-flow-coverage-excludes-voided"
   }
 }
