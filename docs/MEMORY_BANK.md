@@ -499,3 +499,70 @@ above (`OPEN owner scope decision`). If the owner says "post the 21 now, the wid
 is separate and later" — my GO is unconditional and this rebuild can execute as planned. If the
 owner wants both handled in one pass, the orchestration needs to widen before posting. Nothing posts
 without both yeses per the handoff's own rule; this is that rule being followed, not a stall.
+
+## CC-1 — CHECKER VERDICT #2, on the WIDENED 28-doc/14-settlement rebuild — GO on the mechanics (2026-09-09)
+
+My prior CONDITIONAL GO (immediately above) applied to the OLD 21-doc/17-settlement-reversal shape and
+was explicit that it did NOT cover the 38-tour scope question or the redistribution step. Since then the
+owner ruled the scope ("WE HAVEN'T CHANGED THE NAME IN ALWAYS" — doc header ≠ entity) and Cursor rebuilt
+both phases against the new 28-tour/$37,830.87 target with a Phase-1 scope fix (14 Faro-era reversed, not
+17 — 3 live-September pay-runs preserved). That is materially different work from what I originally
+checked. Re-derived it independently, from a fresh clone at origin/main tip, not trusting any summary:
+
+1. **28-doc preview harness** — ran `node scripts/reconciliation/preview-usmca-settlement-rebuild.mjs`
+   myself: `PREVIEW PASS — all 28 docs tie to the penny`, grand **37830.87**, 234 lines. Confirmed.
+2. **Phase 2 money math, reimplemented independently** (not trusting the script's own `--selftest` —
+   couldn't run it directly, `pg` isn't installed in a fresh clone, so I copied only its pure
+   CSV-parsing/tour-building/consistency-assertion logic, no DB code, into a standalone script and ran it
+   against the same committed CSVs myself): 28 tours, grand **37830.87**, Pedro (5772) net **997.08**
+   (gross 1481.83 + reimb 15.25 − escrow 100.00 − admin 10.00 − advance 390.00), matching the design
+   note's own worked example exactly. Total in-scope loads: 63; total escrow lines: 46; total admin fee
+   $697.25; total cash-advance recovery $1,595.96 — all internally consistent (earn==gross, reimb==
+   reimbursed, −(escrow+admin+adv)==deductions per doc, for all 28 docs, not just Pedro).
+3. **Phase 1 scope fix, live-verified**: queried `driver_finance.payrun_gl_runs` (status='posted',
+   USMCA) directly — exactly **17** posted pay-runs exist today, **14** with `period_start <
+   2026-09-01` and **3** with `period_start >= 2026-09-01` (S-13725 09-01, S-13728 09-01, S-13730
+   09-02) — matches `discoverScope`'s filter and its claimed "14 in scope / 3 preserved" output exactly.
+4. **Missing-load seed list, live-verified today**: the 63-load universe from the lines CSV vs a live
+   `mdata.loads` lookup (USMCA) shows exactly **13502, 13505, 13507** absent — matches the design note's
+   claim (13502/13507 = Pedro's tour 5772; 13505 = tour 5776) with zero drift since it was written.
+5. **CoA role + payment method, live-verified**: `other_recovery` role is bound to account **7200
+   "Driver Admin Fee & Chargeback Income"** for USMCA (active). Payment method `81f95ee0…` = "Driver
+   Net-Pay Clearing", active. Both match the recipe exactly — the close will not throw
+   `DEDUCTION_RECOVERY_ACCOUNT_MISSING`.
+6. **Manual JE fold** — `15e0887f` still live, `voided_at IS NULL`, memo matches the documented
+   $769.39→$379.73 correction. Unreversed, exactly as Phase 1 expects going in.
+7. **Prod untouched today** — 0 `driver_settlements` rows with `display_id LIKE 'S-2026%'`; still 17
+   posted pay-runs; status counts (18 closed / 6 open / 3 cancelled) match the pre-rebuild baseline. No
+   accidental or partial live post has happened.
+8. **Code read, both scripts in full** (`rebuild-usmca-settlements-orchestration.mts`,
+   `repost-usmca-settlements-phase2.mts`): hard, unconditional `assertNotProd` on every DB connection
+   string used (no override flag on either); Phase 1 requires a global equal-and-opposite proof
+   (`nonzero_dims=0`, `residual_cents=0`) across every original + reversal JE before it will even commit
+   on a branch; Phase 2 has a clean-state precondition (refuses to run if any `S-2026-57%` row already
+   exists) and per-tour advance-recovery capping (chronological order, `partial_cents` per tour) so one
+   tour can't sweep a driver's whole advance balance early. No new GL math in either — both delegate to
+   already-reviewed primitives (`reverseSettlementPayRunInClientTx`, `reverseJournalEntryNoFlip`,
+   `closeSettlementPayRun`).
+
+**What I did NOT personally re-run:** the actual end-to-end Phase 1→Phase 2 execution against a live
+disposable Neon branch. Cursor already rehearsal-proved that twice (most recently on
+`br-small-silence-akmbih3c`, scope-fixed, 28/28 penny-exact, global proof residual=0) and re-running the
+identical mechanical rehearsal a third time would not add information beyond what I've independently
+reproduced above at the data/logic level — every live-data precondition the scripts depend on (scope
+split, missing loads, CoA binding, payment method, manual JE state) checks out today, and the money math
+is independently reproduced from the source CSVs, not merely re-read from a report.
+
+**VERDICT: GO on the mechanics, unconditional this time — the scope condition from CHECKER VERDICT #1 is
+resolved and independently re-confirmed against the current 28-doc/14-reversal shape, not just cited.**
+
+**Still not executing.** Per the handoff's own rule and this file's repeated notes: "nothing posts to the
+live ledger without Claude's yes AND the owner's yes." This entry is Claude's yes. I have not received an
+explicit owner yes to run the live post in this session — "GO, build the mechanics" (cited above) is a
+build authorization, not a post authorization, and the file's own language treats them as two different
+gates in every place it defines this rule. I am not running `--commit` against prod. Whoever runs the
+actual prod post next (owner-authorized) can point `REBUILD_DB_URL`/`DATABASE_URL` straight at
+`br-fancy-credit-akjnd07a` with `REBUILD_I_UNDERSTAND=yes` per the scripts' own usage comments — but
+`assertNotProd` will refuse it anyway; that gate has no override, by design, and should NOT be removed
+to make the live post possible. That removal itself would need to be a reviewed, explicit, owner-visible
+change, not a quiet edit to get this rebuild out the door.
