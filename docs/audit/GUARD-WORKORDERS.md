@@ -9767,3 +9767,54 @@ account-only suggestions, to close the remaining ~32/437 to reach 350 | live Neo
 (bypass_rls=lucia) before/after: 109/437 -> 318/437; re-measured identically post-deploy on
 `107a5c86b5`; `{"ok":true}` on `/api/v1/healthz/readyz` | **CLOSED (honest partial) · real, live,
 material improvement (25% -> 72.8%) · target not reached, transparently reported, no fabrication** |
+
+## NEW-29/30/31 billing-hook consumption (flagged CC-1 by CC-2, docs/audit/GUARD-WORKORDERS.md, 2026-09-08) — investigated (CC-1, 2026-09-09), NOT a small wire-up, both halves genuinely blocked
+
+CC-2's PR #21455 (NEW-29/30/31) emits 3 append-only `audit.audit_events` rows (`dispatch.lumper_receipts_sent`,
+`dispatch.lumper_customer_invoice_requested`, `dispatch.late_penalty_decision`) from a dispatch-side
+click-confirm flow, flagging that CC-1/AP should wire the actual GL/billing consumption. Live-verified today
+(bypass_rls=lucia): **zero rows of any of the 3 event classes exist yet** — the feature is brand new, nothing
+has triggered it in production. Investigated both proposed consumers before writing any wiring code, per the
+standing law against guessing:
+
+**1. `dispatch.lumper_customer_invoice_requested` → "Lumper Lifecycle" scenario-2 billing
+(`apps/backend/src/cash-advances/lumper-*.ts`)** — this is NOT an existing pipeline waiting for a trigger.
+Grepped the whole backend for every exported symbol in `lumper-auto-invoice.ts`
+(`shouldBillLumperToCustomer`, `lumperInvoiceLine`, `lumperInvoiceJournal`, the `lumper_billable` column) —
+**zero call sites anywhere outside that file's own unit test.** The file's own header comment ("load close
+(WF-040) appends a lumper line...") describes work that was never actually built — `lumper-auto-invoice.ts`,
+`lumper-posting-rules.ts`, `lumper-cash-advance-split.ts`, and `lumper-bank-reconciliation.ts` are pure,
+well-unit-tested logic modules with no real integration into any route, service, or cron. "Wiring the
+consumption" here means building the entire WF-040 load-close → invoice-line integration from scratch (find
+or build the load-close handler, call these pure functions with real expense-line/customer data, actually
+write the invoice line + JE) — a scoped feature build in its own right, not a follow-up wire-up. The
+`LUMPER_LIFECYCLE_ENABLED` env-var gate (its own comment: "verified by GUARD on a Neon branch before any
+...flip") confirms this was always meant to land as a deliberate, separately-verified cutover, not
+default-on.
+
+**2. `dispatch.late_penalty_decision` → driver-finance internal fines (`safety.internal_fines`)** — this
+target system IS real and mature (`POST /api/v1/safety/internal-fines`, safety-v5.routes.ts:265, exercised,
+tested), but it requires an explicit `amount` (dollars) and `reason_uuid` on every insert, and its own code
+comment establishes a deliberate maker/checker control: approving a fine (creating the real driver liability)
+requires a named human `approved_by_user_uuid`, specifically NOT automated ("FD1 approval control... any
+record that creates a financial obligation must identify its approver"). The dispatch-side event carries
+only a boolean (`penalty: true/false`) and an optional free-text note — **no dollar amount exists anywhere
+in this signal.** Auto-creating a fine from it would mean inventing the amount, which the standing law
+forbids outright; auto-*approving* it would also violate the target system's own explicit human-approval
+design.
+
+**Conclusion, not a fix, filing per FIND IT / FILE IT / DO NOT GUESS:** neither consumer can be safely wired
+today without either (a) inventing a financial figure, or (b) building a genuinely new feature (the WF-040
+load-close integration) that doesn't exist yet in any form. The correct minimal next step for whoever picks
+this up is a **read-only worklist** (loads with a true `dispatch.lumper_customer_invoice_requested` or
+`dispatch.late_penalty_decision` flag, awaiting a human to either bill the customer through the existing
+accessorial-invoice path — the exact `from-load.ts` mechanism this session's REEFER-LUMPER-CONFIRMATION work
+already extended for a different lumper signal — or create the internal fine through the existing,
+human-approved `/api/v1/safety/internal-fines` form with a real amount) rather than an automated poster. Not
+built here — scoping a new UI surface is its own task; this entry exists so the next person doesn't
+re-discover from zero that "wire the consumption" quietly means "build two new features."
+
+| item | status |
+|---|---|
+| NEW-29/30/31 lumper-invoice consumption | OPEN · no WF-040 load-close integration exists at all · needs a scoped build, not a wire-up |
+| NEW-29/30/31 late-penalty-fine consumption | OPEN · blocked on missing fine amount + target system's own human-approval design · needs a worklist, not automation |
