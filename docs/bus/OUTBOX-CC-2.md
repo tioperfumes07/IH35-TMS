@@ -2025,3 +2025,24 @@ single-choke-point pattern used for F30016-18. Will pick this up or continue the
 any other `banking.bank_transactions` read sites not yet triaged.
 
 NEXT — continuing bug sweeps per standing instruction.
+
+## CC-2 — BANK-F30019: bulk-transactions write-gate closes the voided_at sweep (2026-09-09)
+
+Last item in the voided_at bug class. `banking/bulk-transactions.ts` has its own separate
+`pendingStatusesSql()` (not the shared one fixed in BANK-F30016) gating bulk-categorize AND
+bulk-post-as-bills — the second one posts a REAL bill + bill_payment + GL entry. Neither filtered
+voided_at, so (unlike F30018, where a downstream check already protected it) a voided transaction
+id could actually be bulk-posted as a genuine bill/GL entry, double-booking an already-reversed
+transaction. Real write-path risk, not just KPI noise. Fixed with the same one-line pattern; live
+re-measure shows 101/388 (26%) USMCA rows now correctly refused. PR #21552. Backend redeployed.
+
+**Full voided_at sweep, start to finish this session:** BANK-F30012 (reconciliation.routes.ts) →
+F30013 (Form 425C) → F30014 (plaid/accounts ordering, different bug) → F30015
+(recon-worklist.service.ts) → F30016 (shared pendingCategorizationPredicate) → F30017
+(month-close coverage gate) → F30018 (nightly auto-match cron) → F30019 (bulk-transactions
+write-gate). Every site found via `grep -rl "banking.bank_transactions"` that read or wrote
+aggregated/multi-row data without excluding voided rows has now been checked and fixed. No further
+specific instance is currently flagged.
+
+NEXT — continuing general bug sweeps per standing instruction; will report if another instance of
+this class or a new class turns up.

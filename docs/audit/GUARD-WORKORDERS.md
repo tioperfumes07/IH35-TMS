@@ -10148,3 +10148,32 @@ superseded-duplicate exclusion), not the same single-choke-point fix pattern as 
 **CC-2 · FIXED · live before/after (106/327, 32% wasted nightly work removed)** |
 
 | **VERIFIED — no discrepancy found (CC-3 2026-09-09, owner mega-report "the balances are different" traced live, deploy c925e6d2a0):** `FACTORING-BALANCES-DIFFERENT-CLAIM` -- owner's mega-report flagged this as "a real reconciliation gap, not yet isolated to a specific number... needs a live-data trace before anyone builds against it." Traced live, post-deploy, cold navigation, every balance-bearing Factoring surface in one pass: Account Summary Ending Balance $151,740.00; Purchase Report totals row $151,740.00 / $147,187.78 advance / $2,276.11 reserve / $2,276.11 fees, 51 invoices; Aging totals $151,740.00 balance, 51 records, all in the 0-30 bucket; Reserve tab Total Reserve $2,276.11; Payments to You totals row $147,187.78 / $147,187.78, 51 records; Faro Daily Imports' one real batch row: Gross $151,740.00 / Advance $147,187.78 / Reserve $2,276.11 / Fee $2,276.11. Every figure matches every other figure exactly, to the penny, across all six surfaces, right now. This is the SAME exact match already found earlier this session for NEW-27 (Faro Daily Import specifically) -- re-confirmed fresh tonight across the FULL surface set, not just the one page. Most likely explanation for the owner hitting a mismatch: the `FACTORING-HARD-NAV-LOSES-COMPANY-CONTEXT` bug (fixed this session, PR #21531) -- a cold link/bookmark/fresh-tab hit during the loading race could plausibly have shown $0.00/empty on one page while another page (warm-navigated) showed real numbers, reading as "different balances" when both were actually the same real data, one just caught mid-load. Not proven as the specific cause (the owner's report doesn't name which two numbers looked different), but no other mechanism produces a real mismatch anywhere in the current code or data. | Account Summary, Purchase Report, Aging, Reserve, Payments to You, Faro Daily Imports (`apps/frontend/src/pages/factoring/FactoringHome.tsx`) | **CC-3 (verification only, no code change)** | if a specific mismatched pair of numbers is ever named again, trace that exact pair live before assuming a new defect -- this session's own pattern (FRONTEND-DEPLOY-ARTIFACT-STALE-PAST-BACKEND-SHA, NEW-27) shows "looks broken" repeatedly traced back to stale-view/hard-nav artifacts, not real data bugs | live Chrome, deploy c925e6d2a0 (confirmed via /version.json ancestry), cold navigation to all 6 surfaces this session, all six independently showing identical $151,740.00/$147,187.78/$2,276.11/$2,276.11/51-record totals | **VERIFIED · zero discrepancy found across every balance surface · not a code defect, nothing to fix** |
+## BANK-F30019 — bulk-transactions write-gate excludes voided bank_transactions (CC-2, 2026-09-09)
+
+Continuing the same sweep, past every item explicitly named in earlier REMAINING notes.
+`banking/bulk-transactions.ts` defines its OWN separate, non-shared `pendingStatusesSql()` (distinct
+from `pending-categorization.ts`'s `pendingCategorizationPredicate`, fixed as BANK-F30016) gating two
+write paths: `bulkCategorizeTransactions` (writes `categorized_at`) and `bulkPostAsBills` (posts a
+REAL bill + bill_payment + GL journal entry via `postSourceTransaction`). Neither filtered
+`voided_at` — unlike BANK-F30018 where `findCandidates()`'s own downstream check already closed the
+equivalent gap, THIS predicate had no such defense: a voided transaction id reaching either endpoint
+(stale page load, direct API call, or a void/select race) could be bulk-categorized or — the real
+risk — bulk-posted as a genuine bill/GL entry, double-booking an already-reversed transaction. A
+write-path/GL-posting risk, not just KPI inflation, though reachability is now reduced by BANK-F30016
+closing the UI list's own read side.
+
+**Fix:** added `voided_at IS NULL` to bulk-transactions.ts's local `pendingStatusesSql()`, the single
+choke point both write paths already share.
+
+**Live proof:** re-used BANK-F30016's measurement (same predicate shape, same table/company): 101 of
+388 (26%) USMCA "pending categorization" transactions are voided — all 101 are now refused by the
+existing "not all pending" guard instead of silently succeeding.
+
+Shipped PR #21552 (claim #21551), verify-step 10867. Backend redeployed.
+
+**This closes the full voided_at-sweep chain started with BANK-F30012.** No further specific items
+remain flagged; will continue scanning for any other unaudited `banking.bank_transactions` site as
+time allows per the standing bug-sweep instruction.
+
+| `apps/backend/src/banking/bulk-transactions.ts` |
+**CC-2 · FIXED · live before/after (101/388 voided rows now refused by both write paths)** |
