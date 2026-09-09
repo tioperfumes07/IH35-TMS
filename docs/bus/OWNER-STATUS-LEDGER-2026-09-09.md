@@ -129,3 +129,22 @@ merges that post-date that cutoff (61, 67, 69).
 ## STATUS UPDATE LOG
 
 *(append dated updates here, one `###` section per update, referencing item #s — never edit the table above in place)*
+
+### 2026-09-09 07:2xZ (CC-1)
+
+- **Item 1 (List view: booked-not-in-transit loads shouldn't show) — DONE.** PR #21538,
+  `DSP-LOADBOARD-LIFECYCLE`. Root cause was the reverse of what was assumed: the board was hiding
+  `delivered_pending_docs` loads entirely (7 of 71 real loads showed); owner ruling reversed the
+  2026-09-06 framing — a load stays live until explicitly closed. Fixed + guarded.
+- **Item 5 (truck showing twice with two loads) — DONE, same PR.** Explicitly preserved "no truck
+  duplication" while fixing item 1; the free-truck-in-Awaiting set is deduped.
+- **Items 2, 3, 4 (book-a-return on Round Trips, Timeline view unit coverage, Dispatch Home KPIs
+  "not real")** — still open, no matching PR found in the commit history as of this update.
+- Also landed since the ledger's baseline, all real and DONE: `GLB-25155` (settlement display_id was
+  literally `S-<load_number>`, wrong entity/sequence — fixed to the real
+  `next_settlement_display_id` sequence, PR #21530); `GLB-25156/25157` (Factoring Aging Settlement
+  column + a real Payments-to-You table, PR #21535 — partially answers items 11/16 above); `BANK-F30013/
+  14/15` (Form 425C bankruptcy MOR exhibits + Banking account-selector sort order + parallel-recon
+  voided-transaction exclusion, PRs #21526/21529/21536).
+- Backend redeployed to catch up on all of the above (`5966dfd8` and later, trigger in flight as of
+  this update).
