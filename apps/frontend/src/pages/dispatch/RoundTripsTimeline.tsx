@@ -11,10 +11,13 @@ import {
   loadSpanStartMs,
   orderedLegsForUnit,
   resolvedTripType,
-  RT_PAIRING_ACTIVE_STATUSES,
+  RT_TIMELINE_STATUSES,
   type TripKind,
 } from "./roundTripsLegs";
-const ACTIVE_LOAD = new Set<string>(RT_PAIRING_ACTIVE_STATUSES);
+// RT-TIMELINE-LIFECYCLE (owner 2026-09-09): the timeline shows every unit that worked in the window,
+// including legs already delivered / in the billing tail — see RT_TIMELINE_STATUSES. It is broader
+// than the pairing engine's active set on purpose; the pairing board still uses RT_PAIRING_ACTIVE_STATUSES.
+const ACTIVE_LOAD = new Set<string>(RT_TIMELINE_STATUSES);
 
 const NB = "#1f2a44";
 const SB = "#475569";
@@ -51,7 +54,8 @@ export function RoundTripsTimeline({ loads, rangeFrom, rangeTo, onLoadClick }: P
     const map = new Map<string, DispatchLoadRow[]>();
     for (const load of loads) {
       if (!load.assigned_unit_id) continue;
-      // Same active pairing set as Round Trips board — do not paint cancelled/closed rows as units.
+      // RT-TIMELINE-LIFECYCLE: include active + delivered/billing legs so a unit whose only visible
+      // load already delivered still appears; cancelled/closed rows are still excluded (not in the set).
       if (!ACTIVE_LOAD.has(load.status)) continue;
       map.set(load.assigned_unit_id, [...(map.get(load.assigned_unit_id) ?? []), load]);
     }

@@ -126,9 +126,12 @@ export function DispatchPage({
     bookLoadAutoOpenSuppressedRef.current = true;
     setNewLoadOpen(false);
     setBookUnitId(null);
+    setBookDriverId(null);
   }, []);
   // Dispatch "+ Book load" per Awaiting-assignment truck card — prefill that unit into the new booking.
   const [bookUnitId, setBookUnitId] = useState<string | null>(null);
+  // RT-BOOK-RETURN (owner 2026-09-09): Round Trips "+ Book return" also prefills the needy truck's driver.
+  const [bookDriverId, setBookDriverId] = useState<string | null>(null);
   const [subTab, setSubTab] = useState<DispatchSubTabId>(initialSubTab ?? (dispatchSecondaryTabFromPath(location.pathname) as DispatchSubTabId));
   const onLoadDetailPath = Boolean(pathLoadId);
   const loadsRoute = loadsDeepLink || onLoadDetailPath || location.pathname === "/dispatch/loads";
@@ -539,7 +542,11 @@ export function DispatchPage({
               next.set("load_id", id);
               setSearchParams(next);
             }}
-            onBookReturn={() => openBookLoadModal()}
+            onBookReturn={({ unitId, driverId }) => {
+              setBookUnitId(unitId);
+              setBookDriverId(driverId);
+              openBookLoadModal();
+            }}
             deepLink={roundTripsRoute}
           />
         ) : view === "list" ? (
@@ -575,6 +582,7 @@ export function DispatchPage({
             onExportCsv={exportCsv}
             onBookForUnit={(unitId) => {
               setBookUnitId(unitId);
+              setBookDriverId(null);
               openBookLoadModal();
             }}
           />
@@ -602,6 +610,7 @@ export function DispatchPage({
             }}
             onBookForUnit={(unitId) => {
               setBookUnitId(unitId);
+              setBookDriverId(null);
               openBookLoadModal();
             }}
             onStatusDrop={async (id, nextStatus) => {
@@ -719,6 +728,7 @@ export function DispatchPage({
         open={newLoadOpen}
         operatingCompanyId={defaultCompanyIds[0] ?? ""}
         prefillUnitId={bookUnitId}
+        prefillDriverId={bookDriverId}
         onClose={() => {
           dismissBookLoadModal();
           retractBookLoadUrl();
