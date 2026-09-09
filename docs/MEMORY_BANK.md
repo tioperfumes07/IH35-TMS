@@ -331,6 +331,37 @@ Corrections to the recipe above (what the live schema/poster actually required �
   `set_config('app.bypass_rls','lucia',false)` alone did NOT satisfy `is_lucia_bypass()` for FORCE-RLS
   tables; the `operating_company_id = app.operating_company_id` clause does).
 
+## Phase 1 SCOPE FIX — reverse the 14 Faro settlements, NOT all 17 (2026-09-08, Cursor)
+
+**Defect found by live drift-check before the prod post (this is why you rehearse against current prod
+HEAD, not a stale branch).** Phase 1's `discoverScope` reversed EVERY posted `payrun_gl_runs`
+(17 settlements). Three of those are **ongoing September ops, not Faro-era**:
+`S-13725` (loads 13553, 13563), `S-13728` (13570), `S-13730` (13572) — all period_start ≥ 2026-09-01,
+all covering the in-progress/September **orphan loads** (no signed doc yet). Reversing them removed real
+September pay the 28-doc repost never restores. The correct reversal scope is the **14 Faro-era
+settlements** (period_start < 2026-09-01), which map exactly to the 28 signed tours (5769-5796).
+
+FIX (in `rebuild-usmca-settlements-orchestration.mts`): `discoverScope` now filters
+`ds.period_start < '2026-09-01'` (the owner's Faro/September line) and **prints the excluded September
+settlements every run** so the exclusion is never silent on a money post.
+
+**Scope corroborated 3 ways (all live):** (1) the signed-doc CSV grand for 5769-5796 = **$37,830.87**;
+(2) `ALL-TOURS-VS-APP.md` — "Faro factoring STARTS at load 13508 / tour 5769," so tours ≥ 5769 are the
+USMCA rebuild and 5753/5760-5768 (pre-Faro, $13,943.32) reconcile via QuickBooks; (3) 38 total signed
+tours $51,774.19 − 10 pre-Faro $13,943.32 = **$37,830.87**. The 6 orphan loads (13544, 13551, 13553,
+13563, 13570, 13572) have no signed doc and must NOT be settled in the rebuild.
+
+**Re-rehearsed on fresh branch `br-small-silence-akmbih3c` off prod (scope-fixed):**
+- `discoverScope: 14 Faro-era settlement(s) in scope; 3 September settlement(s) PRESERVED (excluded)`
+- manual JE 15e0887f folded; **global equal-and-opposite proof journals=30 nonzero_dims=0 residual=0**
+- Phase 2: **28/28 tie to signed penny, grand net = expected = $37,830.87**
+- Live-verified on the branch AFTER the run: S-13725/13728/13730 still `closed` with active lines +
+  pay-run posted (untouched); 28 `S-2026` settlements created; orphan loads 13544 & 13551 now have
+  **0 active earnings lines** (correctly un-bundled → back to unsettled/in-progress).
+
+Prod still gated: the Phase-1 script's `assertNotProd` is UNCONDITIONAL (no override) by design — the real
+prod post is a separate, intentional, owner-authorized action, not a repoint of this rehearsal script.
+
 ## PRs (this reconciliation effort)
 
 - #21403 — reversal poster (MERGED) · #21404 — reconciliation tie-outs (MERGED)
