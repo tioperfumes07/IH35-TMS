@@ -6382,6 +6382,11 @@
     "claimed_at": "2026-09-09",
     "purpose": "verify-settlement-lines-load-id-backfilled"
   },
+  "11121": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-09",
+    "purpose": "verify-settlement-detail-line-number-spine"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
