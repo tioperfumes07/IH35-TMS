@@ -923,6 +923,12 @@ export async function getActualVsProjected(
   // CASH-FLOW-01 (owner order 2026-09-06): measured live 2026-09-06 -- 0 of 362 USMCA bank lines
   // categorized. A $0 actual on that footing is not "confirmed zero cash moved", it is "we cannot
   // see actuals yet" -- LAW §8 "zero is a claim". Company-wide (not date-range-scoped) on purpose.
+  //
+  // BANK-F30021 (2026-09-09): total_count previously included voided (reversed/superseded)
+  // bank_transactions rows, which can never be categorized (0 of 149 voided USMCA rows have ever
+  // been) -- inflating the denominator of this exact user-facing "N of M bank lines categorized"
+  // honesty message (per this function's own comment above). Live-measured: 1/437 pre-fix, the
+  // true honest figure is 1/288 once phantom voided rows are excluded.
   const coverageRes = await client.query<{ categorized_count: string; total_count: string }>(
     `
       SELECT
@@ -931,6 +937,7 @@ export async function getActualVsProjected(
       FROM banking.bank_transactions bt
       JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id
       WHERE ba.operating_company_id = $1::uuid
+        AND bt.voided_at IS NULL
     `,
     [operatingCompanyId]
   );
