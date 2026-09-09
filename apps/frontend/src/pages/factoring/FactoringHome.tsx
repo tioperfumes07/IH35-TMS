@@ -11,9 +11,11 @@ import {
   getFactoringRecoursePipeline,
   getFactoringStatementsSettings,
   getFactoringSummary,
+  getReserveBalanceHistory,
   listFactors,
   updateFactor,
   type FactoringMonthlyFeeSummary,
+  type FactoringReserveBalanceHistoryEntry,
   type FactoringSettingsRow,
 } from "../../api/factoring";
 import { EntityPicker } from "../../components/EntityPicker";
@@ -524,6 +526,20 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     queryFn: () => getFactoringStatementsSettings(companyId),
     enabled: Boolean(companyId),
   });
+  // FAC-09a Reserve (owner mega-report 2026-09-09, real per the FAC09a-CORRECTED spec): the SAME
+  // real reserve-movement ledger ReserveTracker.tsx's "Reserve movement history" already renders
+  // (getReserveBalanceHistory), scoped to the page's own active factor instead of a picker -- no
+  // new backend query, no new table. This system tracks ONE combined reserve_balance with no
+  // Escrow/Cash type split (confirmed multiple times this session, e.g. Account Summary's own
+  // footnote) -- the spec's "Escrow Reserve / Cash Reserve" split and "Show Cash"/"Show Escrow"
+  // toggle are honestly not buildable without fabricating a split this schema doesn't have; Total
+  // Reserve (real) renders, the two split figures render "—" with the same honest footnote
+  // pattern already used elsewhere on this page.
+  const reserveHistoryQuery = useQuery({
+    queryKey: ["factoring", "reserves", "history", companyId, summaryQuery.data?.active_factor_id],
+    queryFn: () => getReserveBalanceHistory(summaryQuery.data!.active_factor_id!, companyId, { limit: 100 }),
+    enabled: Boolean(companyId && summaryQuery.data?.active_factor_id),
+  });
   const faroImportsQuery = useQuery({
     queryKey: ["data-infra", "faro-imports", companyId],
     queryFn: () => listFaroDailyImports(companyId),
@@ -890,7 +906,6 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       tab === "funds_due" ||
       tab === "payments_to_you" ||
       tab === "debtor_receipts" ||
-      tab === "reserve" ||
       tab === "loan_save" ||
       tab === "unapplied_cash" ||
       tab === "invoice_status_report" ||
@@ -898,6 +913,88 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
         <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700" data-testid={`factoring-stub-${tab}`}>
           <div className="font-medium text-gray-900">{SUBNAV.find((item) => item.id === tab)?.label}</div>
           <p className="mt-1">Not yet wired to real data — this tab exists and is reachable, but its content is a placeholder for this pass. See docs/audit/GUARD-WORKORDERS.md (FAC-09a) for what is real vs. stub.</p>
+        </div>
+      ) : null}
+
+      {/* FAC-09a Reserve (real, this pass, owner mega-report 2026-09-09): Total Reserve is the
+          same real summary.reserve_balance every other tab already uses; the movement history
+          table below is the same real getReserveBalanceHistory ledger ReserveTracker.tsx already
+          proves correct, scoped to this page's own active factor. Escrow/Cash split and the
+          Show-Cash/Show-Escrow toggle are honestly not built -- this schema has no type split on
+          reserve_balance (same constraint as Account Summary's own Escrow/Cash rows above). */}
+      {tab === "reserve" ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-reserve-report">
+          <div className="mb-2 text-xs font-medium text-gray-900">Reserve</div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="factoring-reserve-summary-strip">
+            <DrillKpiCard
+              testId="factoring-reserve-escrow"
+              label="Escrow Reserve"
+              value="—"
+              unavailable="This schema tracks one combined reserve balance, no Escrow/Cash type split."
+            />
+            <DrillKpiCard
+              testId="factoring-reserve-cash"
+              label="Cash Reserve"
+              value="—"
+              unavailable="This schema tracks one combined reserve balance, no Escrow/Cash type split."
+            />
+            <DrillKpiCard
+              testId="factoring-reserve-total"
+              label="Total Reserve"
+              value={summaryQuery.isError ? null : fmtCurrency(summary?.reserve_balance)}
+              to={FACTORING_TAB_PATH.reserve_tracker}
+            />
+            <DrillKpiCard
+              testId="factoring-reserve-available"
+              label="Available for Release"
+              value="—"
+              unavailable="No distinct available-for-release figure exists in this schema yet -- see Reserve Tracker's release forecast for a projected estimate."
+            />
+          </div>
+          <div className="mt-3 text-xs font-medium text-gray-900">Reserve movement history</div>
+          {reserveHistoryQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load reserve movement history"
+              {...formatQueryErrorDetail(reserveHistoryQuery.error)}
+              onRetry={() => void reserveHistoryQuery.refetch()}
+            />
+          ) : !summary?.active_factor_id ? (
+            <div className="mt-2 rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-500">
+              No active factor configured — reserve movement history has no factor to scope to.
+            </div>
+          ) : (
+            <ParityTable
+              columns={[
+                { key: "created_at", label: "Date", render: (row: FactoringReserveBalanceHistoryEntry) => fmtDate(row.created_at) },
+                { key: "reason", label: "Note", render: (row: FactoringReserveBalanceHistoryEntry) => row.reason },
+                {
+                  key: "signed_amount_cents",
+                  label: "Amount",
+                  cellClass: "text-right",
+                  render: (row: FactoringReserveBalanceHistoryEntry) => fmtCurrency(row.signed_amount_cents / 100),
+                },
+                {
+                  key: "running_balance_cents",
+                  label: "Balance",
+                  cellClass: "text-right",
+                  render: (row: FactoringReserveBalanceHistoryEntry) => fmtCurrency(row.running_balance_cents / 100),
+                },
+              ]}
+              rows={reserveHistoryQuery.data?.movements ?? []}
+              rowKey={(row) => row.id}
+              loading={reserveHistoryQuery.isLoading}
+              emptyText="No reserve movements recorded yet."
+              storageKey="factoring-reserve-report"
+            />
+          )}
+          <p className="mt-2 text-xs text-gray-500" data-testid="factoring-reserve-footnote">
+            "Escrow Reserve" / "Cash Reserve" are shown separately in the real Faro portal; this
+            system tracks one combined reserve_balance with no type split, so both rows above are
+            honestly "—" rather than duplicating the combined figure into each. "ID", "Inv", "PO
+            Ref#", "Debtor", and "Pmt Ref" columns from the real portal's per-entry table have no
+            backing field on this batch-level movement ledger — the real Date/Note/Amount/Balance
+            columns above are never fabricated.
+          </p>
         </div>
       ) : null}
 
