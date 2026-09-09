@@ -39,6 +39,26 @@ export const RT_PAIRING_ACTIVE_STATUSES = [
   "at_delivery",
 ] as const;
 
+/**
+ * RT-TIMELINE-LIFECYCLE (owner ruling 2026-09-09, "all units with loads Aug-25→present must appear
+ * on the timeline"): the Round Trips TIMELINE is a read-only picture of every unit that did real
+ * work in the visible window — NOT the live pairing engine. RT_PAIRING_ACTIVE_STATUSES stays locked
+ * to trip-pairing-board.service.ts's 6-status set (one pairing engine, never widened here); the
+ * timeline is DELIBERATELY broader — it also paints a unit whose leg has already delivered or is in
+ * the factoring/billing tail (delivered … paid), the exact statuses the LOADBOARD-LIFECYCLE ruling
+ * keeps on the live board. Without these a truck whose only visible load already delivered silently
+ * dropped off the timeline (the "missing units" the owner measured). Closed/cancelled/abandoned/
+ * driver-walkoff/no-show and draft are still excluded — a dead row is never painted as an active unit.
+ */
+export const RT_TIMELINE_STATUSES = [
+  ...RT_PAIRING_ACTIVE_STATUSES,
+  "delivered",
+  "delivered_pending_docs",
+  "completed_docs_received",
+  "invoiced",
+  "paid",
+] as const;
+
 export function pairOutboundReturn(unitLoads: DispatchLoadRow[]): {
   outbound: DispatchLoadRow | null;
   returnLoad: DispatchLoadRow | null;

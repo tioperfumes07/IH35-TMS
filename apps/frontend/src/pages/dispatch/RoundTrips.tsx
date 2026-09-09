@@ -40,7 +40,10 @@ type Props = {
   loading: boolean;
   listError?: DataTableErrorState;
   onLoadClick: (loadId: string) => void;
-  onBookReturn: () => void;
+  // RT-BOOK-RETURN (owner 2026-09-09): the "+ Book return" action must carry the truck (and its
+  // driver) that needs the return so the booking prefills them — same as the Awaiting-assignment
+  // card's per-truck "+ Book load". A no-arg callback forgot which unit, opening a blank booking.
+  onBookReturn: (ctx: { unitId: string; driverId: string | null }) => void;
   /** BRD-10: the /dispatch/round-trips deep link should land on the timeline, not the load board. */
   deepLink?: boolean;
 };
@@ -111,14 +114,22 @@ function TripCard({
   );
 }
 
-function NeedsReturnCard({ onBookReturn }: { onBookReturn: () => void }) {
+function NeedsReturnCard({
+  unitId,
+  driverId,
+  onBookReturn,
+}: {
+  unitId: string;
+  driverId: string | null;
+  onBookReturn: (ctx: { unitId: string; driverId: string | null }) => void;
+}) {
   return (
     <div
       className="flex min-h-[120px] w-full flex-col items-center justify-center gap-2 rounded-sm border border-dashed border-slate-200 bg-slate-100/40 p-3 text-center"
       data-testid="round-trip-needs-return"
     >
       <span className="text-xs font-semibold text-slate-700">Needs return</span>
-      <Button type="button" size="sm" variant="secondary" onClick={onBookReturn}>
+      <Button type="button" size="sm" variant="secondary" onClick={() => onBookReturn({ unitId, driverId })}>
         + Book return
       </Button>
     </div>
@@ -432,7 +443,7 @@ export function RoundTrips({
                         onClick={onLoadClick}
                       />
                     ) : pair.needsReturn ? (
-                      <NeedsReturnCard onBookReturn={onBookReturn} />
+                      <NeedsReturnCard unitId={pair.unitId} driverId={pair.driverId} onBookReturn={onBookReturn} />
                     ) : (
                       <div className="rounded-sm border border-dashed border-gray-300 bg-white px-3 py-6 text-center text-xs text-gray-500">
                         No active outbound load

@@ -131,6 +131,24 @@ function analyze(src, timelineSrc) {
   if (!timelineSrc.includes('data-testid="round-trips-no-dates"'))
     errors.push("RoundTripsTimeline: the honest 'no dates' marker (round-trips-no-dates) is missing");
 
+  // 4) RT-TIMELINE-LIFECYCLE (owner 2026-09-09): the timeline must show every unit that worked in
+  // the window, including legs already delivered / in the billing tail. It filters by the BROADER
+  // RT_TIMELINE_STATUSES set — never the pairing engine's active-only set — and that set must carry
+  // delivered_pending_docs so a truck whose only visible load already delivered still appears.
+  const timelineSet = src.match(/export const RT_TIMELINE_STATUSES = \[[\s\S]*?\] as const;/);
+  if (!timelineSet) {
+    errors.push("roundTripsLegs: RT_TIMELINE_STATUSES set is missing (timeline lifecycle statuses)");
+  } else if (!/delivered_pending_docs/.test(timelineSet[0])) {
+    errors.push("roundTripsLegs: RT_TIMELINE_STATUSES no longer includes delivered_pending_docs — delivered units drop off the timeline");
+  }
+  // Parity lock: the pairing engine's active set stays narrow — never widened to delivered.
+  const pairingSet = src.match(/export const RT_PAIRING_ACTIVE_STATUSES = \[[\s\S]*?\] as const;/);
+  if (pairingSet && /delivered_pending_docs/.test(pairingSet[0])) {
+    errors.push("roundTripsLegs: RT_PAIRING_ACTIVE_STATUSES was widened to delivered_pending_docs — that breaks trip-pairing parity; broaden RT_TIMELINE_STATUSES instead");
+  }
+  if (!/new Set<string>\(RT_TIMELINE_STATUSES\)/.test(timelineSrc))
+    errors.push("RoundTripsTimeline: unit filter must use RT_TIMELINE_STATUSES (broader lifecycle set), not the pairing-only active set");
+
   return errors;
 }
 
@@ -166,6 +184,16 @@ if (process.argv.includes("--selftest")) {
       "drop the no-dates marker",
       src,
       timelineSrc.replace('data-testid="round-trips-no-dates"', 'data-testid="x"'),
+    ],
+    [
+      "timeline set drops delivered_pending_docs",
+      src.replace(/"delivered_pending_docs",\n/, ""),
+      timelineSrc,
+    ],
+    [
+      "timeline reverts to pairing-only active set",
+      src,
+      timelineSrc.replace("new Set<string>(RT_TIMELINE_STATUSES)", "new Set<string>(RT_PAIRING_ACTIVE_STATUSES)"),
     ],
   ];
   let caught = 0;
