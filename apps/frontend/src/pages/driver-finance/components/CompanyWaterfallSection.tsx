@@ -66,13 +66,13 @@ export function CompanyWaterfallSection({
           </div>
           {report.sections.pl_rollup.lines.map((line) => (
             <div className="ldt-row" key={line.line_type}>
-              <span>{line.label}</span>
+              <span>Less · {line.label}</span>
               <span className="ldt-m">{money(line.amount_cents)}</span>
             </div>
           ))}
           <div className="ldt-row" data-testid="waterfall-fuel-purchases">
             <span>
-              Fuel purchases
+              Less · Fuel purchases
               {report.sections.fuel_purchases.total_gallons > 0
                 ? ` (${report.sections.fuel_purchases.total_gallons.toLocaleString()} gal)`
                 : ""}
@@ -80,7 +80,7 @@ export function CompanyWaterfallSection({
             <span className="ldt-m">{money(report.sections.fuel_purchases.total_cents)}</span>
           </div>
           <div className="ldt-row" data-testid="waterfall-company-expenses">
-            <span>Company expenses</span>
+            <span>Less · Company expenses</span>
             <span className="ldt-m">{money(report.sections.expenses.total_cents)}</span>
           </div>
           <div className="ldt-row big">
