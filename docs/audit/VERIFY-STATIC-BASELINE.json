@@ -299,6 +299,7 @@
     "verify-seat-surface-ownership.mjs",
     "verify-selftests-can-fail.mjs",
     "verify-settlement-dispute-adjustment-lines-and-aggregation.mjs",
+    "verify-settlement-lines-load-id-backfilled.mjs",
     "verify-settlement-manual-paid-reopen-confirmed.mjs",
     "verify-settlement-void-cascade.mjs",
     "verify-settlements-qbo-chrome-surfaces.mjs",
