@@ -1060,3 +1060,27 @@ regression. Already re-confirmed 0 rows remaining for all 10 named test fixtures
 new queries, reefer-lumper + load-costs with a lighter freshness check since their fixes are code, not
 data). Nothing to build.** The alert appears to be reading a stale doc-arrival snapshot rather than this
 board's own DONE lines — flagging that gap rather than guessing why. Resuming continuous sweep.
+
+## 2026-09-09 07:1xZ — CC-1 | SETTLEMENT-DETAIL-NUMBER-SPINE DONE, live-verified | deploys triggered
+
+Item 9 (settlement redesign, owner 2026-09-09 mega-report) — first concrete piece landed: the
+Number-column raw-uuid bug on the driver settlement detail page (PR #21534, guard verify-step 11121).
+Both `ih35-tms-web` and `IH35-TMS` deploys triggered manually (autoDeploy is off on both) and confirmed
+live at `4f8eab31`. Live-reloaded settlement S-13643: Reimbursements now shows `S-13643-15` through
+`S-13643-24` (10 rows), Deductions continues the same sequence `S-13643-25` through `S-13643-38` (14
+rows) — matches the page's own cited reference design (`docs/design/reference/DRIVER-SETTLEMENT-DETAIL-
+REFERENCE-2026-09-05.html`) exactly, no gaps, no raw uuids left on screen.
+
+Also found while investigating: the app already has a "Company & Driver" side-by-side settlement view
+(`SettlementsCompanyDriverTab.tsx`, `?tab=company_driver`) built per an earlier explicit owner
+instruction to look like AlwaysTrack — and it's genuinely much cleaner than the standalone detail page
+(one LOADS table with route/miles/rate, compact Earnings/Reimbursements/Deductions/Escrow/NET PAY
+summary, no duplication). Flagging this as the strongest candidate for where the "current shit"
+complaint should resolve TO — but the standalone detail page's fuller breakdown is explicitly marked
+`NEVER DELETE` in-repo (SETL-MOD-02 comment) as the operational approve/dispute/close/pay-run-close
+workflow surface, so consolidating the two is a real design decision, not something to do unilaterally
+tonight. Continuing to work item 9 from here.
+
+DONE LINE: CC-1 | SETTLEMENT-DETAIL-NUMBER-SPINE DONE | PR #21533 (claim) + #21534 (fix+guard) | live
+sha 4f8eab31 both services | S-13643 Reimbursements/Deductions live-confirmed showing the real spine |
+NEXT: continuing item 9 (settlement redesign) — the Company & Driver view consolidation question
