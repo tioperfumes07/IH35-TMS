@@ -1084,3 +1084,39 @@ tonight. Continuing to work item 9 from here.
 DONE LINE: CC-1 | SETTLEMENT-DETAIL-NUMBER-SPINE DONE | PR #21533 (claim) + #21534 (fix+guard) | live
 sha 4f8eab31 both services | S-13643 Reimbursements/Deductions live-confirmed showing the real spine |
 NEXT: continuing item 9 (settlement redesign) — the Company & Driver view consolidation question
+
+## 2026-09-09 13:5xZ — CC-1 | COMPANY-WATERFALL-FUEL-EXPENSE-SPLIT DONE, correctly, after catching 2 bugs in my own first attempt
+
+Item 9 continued: the Company Waterfall's "not yet split" Costs placeholder now shows real Fuel
+Purchases / Company Expenses figures. This shipped in 3 PRs, not 1, because I re-checked my own work
+live after each deploy instead of assuming the fix was done once merged — worth recording plainly:
+
+1. **PR #21571** — first pass. Compiled clean, guard passed, but wiring the company-scoped report
+   ALONGSIDE the readout's `company_settlement` fields turned out to mix two different scopes:
+   `readout.company_settlement.{revenue,costs,driver_pay}_cents` are actually TOUR-scoped (computed
+   from just one driver's own legs, despite the field name), while the report is company-settlement-
+   scoped (all driver settlements under it). Live-caught within minutes on S-13643/CS-2026-0002 (a
+   company settlement covering 2 driver settlements) — the "Other costs" remainder came out negative
+   with a double-negative sign on screen.
+2. **PR #21573** — real fix. Once `report` has loaded, the whole waterfall now renders from
+   `report.sections` only (Invoiced, every `pl_rollup` line, Fuel, Expenses, Net) — one consistent
+   scope, matching exactly how `SettlementsCompanyDriverTab.tsx`'s own already-correct inline
+   waterfall does it. Verified the underlying math by hand: $39,000.00 − $19,007.37 (sum of every
+   subtracted line) = $19,992.63 Net, exact.
+3. **PR #21587** — caught immediately after re-checking #21573 live: the math was right but every
+   line read as a bare positive number with no cue it was a deduction (`pl_rollup` amounts are
+   positive magnitudes, not pre-signed negatives — the "Less ·" text prefix is the ONLY signal, and my
+   rewrite had dropped it). Restored it, matching the reference component exactly.
+
+Guard (`verify-company-waterfall-fuel-expense-split.mjs`, verify-step 11125) now pins both bugs: no
+mixing of `report.sections.*` with tour-scoped `cs.*` fields, and the "Less ·" prefix present on every
+line. 7/7 selftest.
+
+**Final live proof**, this settlement, this minute: `Invoiced $39,000.00 / Less · Deduction $265.00 /
+Less · Reimbursement $315.17 / Less · Empty Miles $570.78 / Less · Driver Salary $4,407.73 / Less ·
+Escrow Contribution $50.00 / Less · Fuel purchases $0.00 / Less · Company expenses $13,398.69 / Net ·
+51.3% $19,992.63` — footed by hand, correct.
+
+DONE LINE: CC-1 | COMPANY-WATERFALL-FUEL-EXPENSE-SPLIT DONE | PR #21571→#21573→#21587 (2 self-caught
+corrections same session) | live sha c7dbf727 | S-13643/CS-2026-0002 live-verified, math foots exactly
+| NEXT: continuing item 9 — the Company & Driver view consolidation question still needs an owner call
