@@ -1,10 +1,10 @@
 {
-  "healthzSha": "0284c1b",
-  "generated_at": "2026-09-08T07:28:28.872Z",
+  "healthzSha": "b44b5e1",
+  "generated_at": "2026-09-09T06:29:36.464Z",
   "meta": {
     "generatedAt": "2026-09-07T14:01:54-05:00",
     "sourceSha": "c8bffc7c01",
-    "deployedSha": "0284c1b",
+    "deployedSha": "b44b5e1",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -283,7 +283,7 @@
       "cells": [
         "AUDIT",
         "FAIL",
-        "UNV",
+        "AUDIT",
         "AUDIT",
         "AUDIT",
         "AUDIT",
@@ -295,12 +295,12 @@
         "UNV",
         "AUDIT"
       ],
-      "gap": "WO create #4091 merged (was 500) — pending deploy+live 201. Maintenance catalogs PASS (service-tasks 200, 5 rows on prod 109a212b).",
+      "gap": "WO create #4091 PROD-VERIFIED: live POST returned 201 and persisted work order 9bfd126b on backend b44b5e1. Maintenance catalogs PASS (service-tasks 200, 5 rows on prod 109a212b).",
       "cellsByEntity": {
         "TRANSP": [
           "AUDIT",
           "AUDIT",
-          "UNV",
+          "AUDIT",
           "AUDIT",
           "AUDIT",
           "AUDIT",
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 21460,
-      "title": "FINDING: Phase 2 (settlement repost) recipe was only in chat/summary, not in-repo — the next working session (or another seat) would re-derive the schema facts and dependency list from scratch, exactly the amnesia Rule 51 exists to stop.",
+      "number": 21516,
+      "title": "FINDING: GLB-25154 — CoA click-through chain + report figures reconcile to source GL guard",
       "state": "merged",
-      "mergedAtCt": "09/08/2026, 02:25 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21460",
-      "sha": "0d196be76d",
-      "committedAtIso": "2026-09-08T02:25:13-05:00"
+      "mergedAtCt": "09/09/2026, 01:21 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21516",
+      "sha": "fc75987e2f",
+      "committedAtIso": "2026-09-09T01:21:17-05:00"
     },
     {
-      "number": 21459,
-      "title": "FINDING: migration checksum \"modified after apply\" (placeholder ledger checksum from a manual CC-1 apply) blocking ALL production backend deploys, second/deeper layer under the LV-087 fix — recorded as a documented checksum override",
+      "number": 21515,
+      "title": "FINDING: GLB-25153 — SET-01 part 2: add EditSettlementDeductionDrawer to paritydrawer ALLOWED_NESTED",
       "state": "merged",
-      "mergedAtCt": "09/08/2026, 02:23 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21459",
-      "sha": "0284c1bc7a",
-      "committedAtIso": "2026-09-08T02:23:35-05:00"
+      "mergedAtCt": "09/09/2026, 01:07 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21515",
+      "sha": "07e28c9ba8",
+      "committedAtIso": "2026-09-09T01:07:25-05:00"
     },
     {
-      "number": 21458,
-      "title": "FINDING: NEW-16 -- Chargebacks & Overpayments page built real",
+      "number": 21514,
+      "title": "FINDING: N/A (claim-reserve verify-step 11096 for NEW-12 driver settlement AlwaysTrack layout)",
       "state": "merged",
-      "mergedAtCt": "09/08/2026, 02:17 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21458",
-      "sha": "40de2dd3a2",
-      "committedAtIso": "2026-09-08T02:17:01-05:00"
+      "mergedAtCt": "09/09/2026, 01:00 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21514",
+      "sha": "b44b5e1494",
+      "committedAtIso": "2026-09-09T01:00:05-05:00"
     },
     {
-      "number": 21457,
-      "title": "FINDING: LV-087 ledger-orphan mirror row blocking ALL production backend deploys — recorded as a documented exception (real DDL confirmed already applied, not an unapplied migration)",
+      "number": 21513,
+      "title": "FINDING: SAMSARA-REMOTE-COUNT-COLLECTOR-NEVER-TICKS-UNDER-DEPLOY-CHURN -- real root cause of the linkage gap's non-progress",
       "state": "merged",
-      "mergedAtCt": "09/08/2026, 02:16 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21457",
-      "sha": "306da1fb45",
-      "committedAtIso": "2026-09-08T02:16:42-05:00"
+      "mergedAtCt": "09/09/2026, 12:50 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21513",
+      "sha": "2b4ec9752e",
+      "committedAtIso": "2026-09-09T00:50:31-05:00"
     },
     {
-      "number": 21456,
-      "title": "FINDING: N/A (board closure — NEW-29/NEW-30/NEW-31 closed citing PR #21455; final GO/NO-GO report for owner's PRIORITY #1 directive posted to OUTBOX-CC-2.md, docs-only)",
+      "number": 21512,
+      "title": "FINDING: ACCT-F11 (NEW-11) — pre-settlement margin dollars and margin percentage were combined awkwardly in one column (\"$1,234 · 12.3%\") on every settlement/pre-settlement surface; owner asked for a real column redesign (separate, clearly formatted).",
       "state": "merged",
-      "mergedAtCt": "09/08/2026, 02:12 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21456",
-      "sha": "0b6bdc91aa",
-      "committedAtIso": "2026-09-08T02:12:16-05:00"
+      "mergedAtCt": "09/09/2026, 12:45 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21512",
+      "sha": "4453f5e2af",
+      "committedAtIso": "2026-09-09T00:45:57-05:00"
     },
     {
-      "number": 21455,
-      "title": "FINDING: NEW-29/30/31 — dispatch-side click-confirm prompts for reefer lumper receipts/customer-invoice and late-arrival penalty (owner PRIORITY #1 directive, Dispatch cross-cut, no reach into CC-1's billing files)",
+      "number": 21511,
+      "title": "FINDING: N/A (RECON-USMCA-BANK-01 round 2 DONE line + board closure posted, docs-only)",
       "state": "merged",
-      "mergedAtCt": "09/08/2026, 02:09 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21455",
-      "sha": "38fb28efc4",
-      "committedAtIso": "2026-09-08T02:09:39-05:00"
+      "mergedAtCt": "09/09/2026, 12:39 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21511",
+      "sha": "0ea4cab18b",
+      "committedAtIso": "2026-09-09T00:39:11-05:00"
     },
     {
-      "number": 21454,
-      "title": "FINDING: N/A (CLAIM-RESERVE 10831 -- reservation-only commit, no code fix)",
+      "number": 21510,
+      "title": "FINDING: BANK-F30011 (RECON-USMCA-BANK-01 round 2) — pushed USMCA bank-transaction suggestion coverage from 318/437 to 336/437 (76.9%), honest ceiling after exhausting real-vendor search, still short of the requested 350/437 (80%), zero writes to categorized_at/matched_*",
       "state": "merged",
-      "mergedAtCt": "09/08/2026, 02:05 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21454",
-      "sha": "e78020f275",
-      "committedAtIso": "2026-09-08T02:05:07-05:00"
+      "mergedAtCt": "09/09/2026, 12:36 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21510",
+      "sha": "57178527ab",
+      "committedAtIso": "2026-09-09T00:36:33-05:00"
     },
     {
-      "number": 21453,
-      "title": "FINDING: SETTLE-REBUILD-P1 orchestration script had no code-level block against running against prod (#21448 follow-up)",
+      "number": 21509,
+      "title": "FINDING: N/A (docs(audit) -- ENV-CENSUS-FAIL-02/13/14 stale, already fixed and already wired)",
       "state": "merged",
-      "mergedAtCt": "09/08/2026, 01:59 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21453",
-      "sha": "879fc16966",
-      "committedAtIso": "2026-09-08T01:59:34-05:00"
+      "mergedAtCt": "09/09/2026, 12:36 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21509",
+      "sha": "97df36e069",
+      "committedAtIso": "2026-09-09T00:36:05-05:00"
     },
     {
-      "number": 21452,
-      "title": "FINDING: NEW-21 -- Recourse Pipeline detail view was missing Invoice Amount entirely and its Fees column was hardcoded to null",
+      "number": 21507,
+      "title": "FINDING: N/A (docs(bus) report -- response to WAKE alert: all 5 named items re-verified already closed)",
       "state": "merged",
-      "mergedAtCt": "09/08/2026, 01:59 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21452",
-      "sha": "df194b1d4b",
-      "committedAtIso": "2026-09-08T01:59:02-05:00"
+      "mergedAtCt": "09/09/2026, 12:33 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21507",
+      "sha": "ac54a76efb",
+      "committedAtIso": "2026-09-09T00:33:51-05:00"
     },
     {
-      "number": 21451,
-      "title": "FINDING: NEW-33-UPDATE reopened — pagination tiebreaker live-proven fixed (BANK-F25150 already live), balance root cause narrowed to a real Feb-2026 transaction-history gap on account e83028a5 (docs-only, owner PRIORITY #1 directive)",
+      "number": 21508,
+      "title": "FINDING: N/A (claim-reserve verify-step 11094 for NEW-11 margin/percentage column split)",
       "state": "merged",
-      "mergedAtCt": "09/08/2026, 01:55 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21451",
-      "sha": "34e750ce79",
-      "committedAtIso": "2026-09-08T01:55:49-05:00"
+      "mergedAtCt": "09/09/2026, 12:33 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21508",
+      "sha": "af35a71390",
+      "committedAtIso": "2026-09-09T00:33:15-05:00"
     }
   ]
 }

@@ -29,12 +29,12 @@ export interface ProgramScoreboard {
 }
 
 export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
-  "healthzSha": "0284c1b",
-  "generated_at": "2026-09-08T07:28:28.872Z",
+  "healthzSha": "b44b5e1",
+  "generated_at": "2026-09-09T06:29:36.464Z",
   "meta": {
     "generatedAt": "2026-09-07T14:01:54-05:00",
     "sourceSha": "c8bffc7c01",
-    "deployedSha": "0284c1b",
+    "deployedSha": "b44b5e1",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -313,7 +313,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "cells": [
         "AUDIT",
         "FAIL",
-        "UNV",
+        "AUDIT",
         "AUDIT",
         "AUDIT",
         "AUDIT",
@@ -325,12 +325,12 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "WO create #4091 merged (was 500) — pending deploy+live 201. Maintenance catalogs PASS (service-tasks 200, 5 rows on prod 109a212b).",
+      "gap": "WO create #4091 PROD-VERIFIED: live POST returned 201 and persisted work order 9bfd126b on backend b44b5e1. Maintenance catalogs PASS (service-tasks 200, 5 rows on prod 109a212b).",
       "cellsByEntity": {
         "TRANSP": [
           "AUDIT",
           "AUDIT",
-          "UNV",
+          "AUDIT",
           "AUDIT",
           "AUDIT",
           "AUDIT",
