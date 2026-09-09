@@ -8393,5 +8393,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-09-09",
     "purpose": "verify-load-unit-cost-split-wired"
+  },
+  "11090": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-09",
+    "purpose": "verify-company-settlement-pdf-house-template"
   }
 }
