@@ -212,7 +212,6 @@ export async function openLoadBookendedSettlement(
     return { settlementId, settlementNumber };
   }
 
-  const settlementNumber = settlementDisplayIdFromLoadNumber(load.load_number);
   // BUG FOUND LIVE 2026-09-06 (DELIVER-SEED-40): pickupAt/tripStartedAt is typed `string | null`
   // above, but node-postgres auto-parses a timestamptz column (ls.actual_departure_at) into a
   // native JS Date object at runtime -- the TS annotation does not enforce that. String(dateObj)
@@ -223,6 +222,17 @@ export async function openLoadBookendedSettlement(
   // this line at all, which is why some loads silently succeeded and others didn't). new Date(...)
   // normalizes correctly whether tripStartedAt arrives as a Date object or an ISO string.
   const periodDate = new Date(tripStartedAt).toISOString().slice(0, 10);
+
+  // OWNER-NUMBERING-RULE (2026-09-08 permanent ruling): settlement display_id must be generated
+  // by driver_finance.next_settlement_display_id (S-YYYY-NNNN sequence), NEVER derived from the
+  // load number. The old settlementDisplayIdFromLoadNumber(load.load_number) produced S-<load_number>
+  // (e.g. S-13549 for load 13549), which is wrong — a settlement is its own entity with its own
+  // sequence. Same pattern as settlements.routes.ts:899 and weekly-close.routes.ts:102.
+  const displayRes = await client.query<{ next_id?: string }>(
+    `SELECT driver_finance.next_settlement_display_id($1::uuid, $2::date) AS next_id`,
+    [opts.operatingCompanyId, periodDate]
+  );
+  const settlementNumber = displayRes.rows[0]?.next_id ?? `S-${new Date(periodDate).getUTCFullYear()}-0001`;
 
   const inserted = await client.query<{ id: string; display_id: string | null }>(
     `

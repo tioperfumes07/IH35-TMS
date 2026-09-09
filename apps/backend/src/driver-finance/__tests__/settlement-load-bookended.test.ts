@@ -156,8 +156,11 @@ describe("load-bookended settlements", () => {
           // settlement_lines to attach — genuinely nothing reusable, per the ruling's own carve-out.
           return { rows: [] };
         }
+        if (sql.includes("next_settlement_display_id")) {
+          return { rows: [{ next_id: "S-2026-99001" }] };
+        }
         if (sql.includes("INSERT INTO driver_finance.driver_settlements")) {
-          return { rows: [{ id: "s-new", display_id: "S-99001" }] };
+          return { rows: [{ id: "s-new", display_id: "S-2026-99001" }] };
         }
         if (sql.includes("audit.append_event") || sql.includes("INSERT INTO outbox.events")) {
           return { rows: [] };
@@ -173,6 +176,50 @@ describe("load-bookended settlements", () => {
       actorUserId: "00000000-0000-4000-8000-0000000000a1",
     });
 
-    expect(result).toEqual({ settlementId: "s-new", settlementNumber: "S-99001" });
+    expect(result).toEqual({ settlementId: "s-new", settlementNumber: "S-2026-99001" });
+  });
+
+  it("OWNER-NUMBERING-RULE — new settlement display_id is generated, never S-<load_number>", async () => {
+    // The load number is L-99001. The old bug produced S-99001 (settlement = load number).
+    // The fix calls next_settlement_display_id which returns an independent S-YYYY-NNNN sequence.
+    // This test asserts the generated display_id is NOT S-99001 (the load-number-derived form)
+    // and IS the value from next_settlement_display_id (S-2026-0042 in this mock).
+    const client = {
+      query: vi.fn().mockImplementation(async (sql: string) => {
+        if (sql.includes("FROM mdata.loads") && sql.includes("WHERE id = $1")) {
+          return { rows: [makeLoadRow()] };
+        }
+        if (sql.includes("FROM mdata.load_stops")) {
+          return { rows: [{ pickup_at: "2026-08-07T00:00:00.000Z" }] };
+        }
+        if (sql.includes("FROM driver_finance.driver_settlements")) {
+          return { rows: [] };
+        }
+        if (sql.includes("next_settlement_display_id")) {
+          return { rows: [{ next_id: "S-2026-0042" }] };
+        }
+        if (sql.includes("INSERT INTO driver_finance.driver_settlements")) {
+          return { rows: [{ id: "s-new-42", display_id: "S-2026-0042" }] };
+        }
+        if (sql.includes("audit.append_event") || sql.includes("INSERT INTO outbox.events")) {
+          return { rows: [] };
+        }
+        throw new Error(`unexpected sql in test: ${sql}`);
+      }),
+    };
+
+    const result = await openLoadBookendedSettlement(client as never, {
+      driverId: DRIVER_ID,
+      operatingCompanyId: OPCO_ID,
+      firstLoadId: FIRST_LOAD_ID,
+      actorUserId: "00000000-0000-4000-8000-0000000000a1",
+    });
+
+    // The settlement number must NOT be the load-number-derived form (S-99001).
+    expect(result.settlementNumber).not.toBe("S-99001");
+    // The settlement number must NOT be S- prefixed load number in any form.
+    expect(result.settlementNumber).not.toBe(`S-${makeLoadRow().load_number.replace(/^L-/, "")}`);
+    // The settlement number MUST be the generated sequence value.
+    expect(result.settlementNumber).toBe("S-2026-0042");
   });
 });
