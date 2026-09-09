@@ -152,6 +152,15 @@ async function loadBankTxnContext(operatingCompanyId: string, entityId: string) 
     // inside processSyncQueueBatch — no request principal, no caller-supplied opco.
     // membership-scope-exempt: job-derived, no request principal
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    // BANK-F30020 (2026-09-09): banking.bank_transactions is void-not-delete (voided_at, set by
+    // bank-tx-dedup.ts::supersedePlaidPendingByExactPostedCandidate). A sync job can be enqueued for
+    // a pending transaction that is superseded/voided before this job actually runs; without this
+    // filter the voided row would still load here and get pushed to QuickBooks as a real, live
+    // transaction — an external-system integrity risk the caller already handles cleanly for a
+    // missing row (`if (!txn) throw new Error("bank_transaction_not_found_for_sync")`, an existing,
+    // already-monitored job-failure path), so excluding it here is a pure tightening, not new
+    // behavior to build. Live-checked prod: zero voided rows have ever reached qbo_id/synced (latent
+    // gap, no incident), and zero are currently queued — this closes the race before it fires.
     const res = await client.query<BankTxnContext>(
       `
         SELECT
@@ -178,6 +187,7 @@ async function loadBankTxnContext(operatingCompanyId: string, entityId: string) 
                                  AND d.operating_company_id = bt.operating_company_id
         WHERE bt.id = $2
           AND bt.operating_company_id = $1::uuid
+          AND bt.voided_at IS NULL
         LIMIT 1
       `,
       [operatingCompanyId, entityId]
