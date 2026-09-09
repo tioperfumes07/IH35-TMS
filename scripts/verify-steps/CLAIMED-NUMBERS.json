@@ -8388,5 +8388,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-09-09",
     "purpose": "verify-settlement-loan-recovery-modal-wired"
+  },
+  "11088": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-09",
+    "purpose": "verify-load-unit-cost-split-wired"
   }
 }
