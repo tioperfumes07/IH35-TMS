@@ -2062,9 +2062,9 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
           ocr_source_pdf_r2_key, miles_practical, miles_shortest, miles_deadhead,
           customer_wo_number, pickup_number, border_routing, is_sample_data, loaded_miles,
           load_trailer_equipment_id, commodity, cargo_weight_lbs,
-          mileage_source, stop_count
+          mileage_source, stop_count, trailer_type
         )
-        VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47)
+        VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47,$48)
         RETURNING *
       `,
       [
@@ -2122,6 +2122,14 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
         input.weight_lbs ?? null,
         input.mileage_source ?? null,
         input.stop_count ?? (Array.isArray(input.stops) ? String(input.stops.length) : null),
+        // REEFER-LUMPER-CONFIRMATION follow-up (live-caught 2026-09-09 booking a real reefer load
+        // end to end): trailer_type was declared on this input interface and driven the frontend's
+        // reefer/tarp panel gating (BookLoadEquipmentSection.tsx's isReefer), but this INSERT never
+        // wrote it -- every load ever booked through this form left mdata.loads.trailer_type NULL
+        // regardless of what the dispatcher picked, which silently made the dispatch-transition
+        // reefer-lumper gate in loads.routes.ts (and any other trailer_type-gated logic) dead code
+        // for every future booking. Additive: nullable column, no other row shape change.
+        input.trailer_type ?? null,
       ]
       );
       await client.query(`RELEASE SAVEPOINT book_load_insert`);
