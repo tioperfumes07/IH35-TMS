@@ -72,11 +72,18 @@ export function supersededDuplicatePredicate(alias = "bt"): string {
 }
 
 // SQL boolean predicate for the given `banking.bank_transactions` alias (default `bt`).
-// Status + not-a-superseded-copy. Both clauses live here on purpose: this function is the SINGLE
-// source shared by the Banking Home KPI and the For-review queue, so neither surface can end up
-// offering a duplicate the other hides.
+// Status + not-a-superseded-copy + not-voided. All three clauses live here on purpose: this
+// function is the SINGLE source shared by the Banking Home KPI and the For-review queue, so
+// neither surface can end up offering a duplicate — or a voided/reversed row — the other hides.
+//
+// BANK-F30016 (2026-09-09): banking.bank_transactions is void-not-delete (voided_at, set by
+// bank-tx-dedup.ts::supersedePlaidPendingByExactPostedCandidate when a stale Plaid pending row is
+// superseded by its posted successor). This predicate never filtered it, so a voided row that
+// happened to still carry status='pending_categorization'/'uncategorized' inflated both the
+// Banking Home UNCATEGORIZED KPI and the For-review queue with phantom work. Live-measured on
+// USMCA: 101 of 388 (26%) "needs review" transactions were actually voided.
 export function pendingCategorizationPredicate(alias = "bt"): string {
-  return `((${alias}.status = 'pending_categorization' OR ${alias}.status = 'uncategorized') AND ${supersededDuplicatePredicate(alias)})`;
+  return `((${alias}.status = 'pending_categorization' OR ${alias}.status = 'uncategorized') AND ${alias}.voided_at IS NULL AND ${supersededDuplicatePredicate(alias)})`;
 }
 
 // Entity-scoped count of transactions needing categorization, across ALL accounts — the exact
