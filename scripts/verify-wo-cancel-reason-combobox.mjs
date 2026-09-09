@@ -33,7 +33,7 @@ export function collectProblems(root = ROOT) {
       problems.push(`missing ${rel}`);
       continue;
     }
-    if (!/from ["'][^"']*\/shared\/Combobox["']/.test(src)) {
+    if (!/import\s*\{[^}]*\b(?:SimpleCombobox\s+as\s+)?Combobox\b[^}]*\}\s*from ["'][^"']*\/Combobox["']/.test(src)) {
       problems.push(`${rel}: must import shared Combobox for cancel reason`);
     }
     if (/SelectCombobox[\s\S]{0,300}woCancelReasonOptions/.test(src)) {
