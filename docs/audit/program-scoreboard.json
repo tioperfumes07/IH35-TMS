@@ -1,10 +1,10 @@
 {
-  "healthzSha": "b44b5e1",
-  "generated_at": "2026-09-09T06:29:36.464Z",
+  "healthzSha": "c540ed9",
+  "generated_at": "2026-09-09T15:01:54.325Z",
   "meta": {
-    "generatedAt": "2026-09-07T14:01:54-05:00",
-    "sourceSha": "c8bffc7c01",
-    "deployedSha": "b44b5e1",
+    "generatedAt": "2026-09-09T01:35:16-05:00",
+    "sourceSha": "936fd96538",
+    "deployedSha": "c540ed9",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 21516,
-      "title": "FINDING: GLB-25154 — CoA click-through chain + report figures reconcile to source GL guard",
+      "number": 21596,
+      "title": "FINDING: N/A (docs(bus) report — item 30/BNK-10 stale $686K figure corrected, live-verified, no code defect)",
       "state": "merged",
-      "mergedAtCt": "09/09/2026, 01:21 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21516",
-      "sha": "fc75987e2f",
-      "committedAtIso": "2026-09-09T01:21:17-05:00"
+      "mergedAtCt": "09/09/2026, 09:50 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21596",
+      "sha": "9d959fb716",
+      "committedAtIso": "2026-09-09T09:50:30-05:00"
     },
     {
-      "number": 21515,
-      "title": "FINDING: GLB-25153 — SET-01 part 2: add EditSettlementDeductionDrawer to paritydrawer ALLOWED_NESTED",
+      "number": 21595,
+      "title": "FINDING: N/A (Claude-3 — root-caused SAMSARA-TMS-DRIVER-LINKAGE-GAP-USMCA, docs-only, no code change)",
       "state": "merged",
-      "mergedAtCt": "09/09/2026, 01:07 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21515",
-      "sha": "07e28c9ba8",
-      "committedAtIso": "2026-09-09T01:07:25-05:00"
+      "mergedAtCt": "09/09/2026, 09:44 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21595",
+      "sha": "c540ed9802",
+      "committedAtIso": "2026-09-09T09:44:59-05:00"
     },
     {
-      "number": 21514,
-      "title": "FINDING: N/A (claim-reserve verify-step 11096 for NEW-12 driver settlement AlwaysTrack layout)",
+      "number": 21594,
+      "title": "FINDING: N/A (SET-29 investigated live, no defect found, permanent guard added — verify-step 11129)",
       "state": "merged",
-      "mergedAtCt": "09/09/2026, 01:00 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21514",
-      "sha": "b44b5e1494",
-      "committedAtIso": "2026-09-09T01:00:05-05:00"
+      "mergedAtCt": "09/09/2026, 09:19 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21594",
+      "sha": "9d845ad407",
+      "committedAtIso": "2026-09-09T09:19:11-05:00"
     },
     {
-      "number": 21513,
-      "title": "FINDING: SAMSARA-REMOTE-COUNT-COLLECTOR-NEVER-TICKS-UNDER-DEPLOY-CHURN -- real root cause of the linkage gap's non-progress",
+      "number": 21593,
+      "title": "FINDING: N/A (REG-020/021/022 milestone bus post — first pass complete across all 10 named modules, docs-only, no code change)",
       "state": "merged",
-      "mergedAtCt": "09/09/2026, 12:50 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21513",
-      "sha": "2b4ec9752e",
-      "committedAtIso": "2026-09-09T00:50:31-05:00"
+      "mergedAtCt": "09/09/2026, 09:11 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21593",
+      "sha": "cda728b162",
+      "committedAtIso": "2026-09-09T09:11:38-05:00"
     },
     {
-      "number": 21512,
-      "title": "FINDING: ACCT-F11 (NEW-11) — pre-settlement margin dollars and margin percentage were combined awkwardly in one column (\"$1,234 · 12.3%\") on every settlement/pre-settlement surface; owner asked for a real column redesign (separate, clearly formatted).",
+      "number": 21591,
+      "title": "FINDING: N/A (docs(bus) report — SET-16 resolved live no-code-needed, SET-25 stale board status corrected)",
       "state": "merged",
-      "mergedAtCt": "09/09/2026, 12:45 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21512",
-      "sha": "4453f5e2af",
-      "committedAtIso": "2026-09-09T00:45:57-05:00"
+      "mergedAtCt": "09/09/2026, 09:09 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21591",
+      "sha": "8113b41ee5",
+      "committedAtIso": "2026-09-09T09:09:22-05:00"
     },
     {
-      "number": 21511,
-      "title": "FINDING: N/A (RECON-USMCA-BANK-01 round 2 DONE line + board closure posted, docs-only)",
+      "number": 21592,
+      "title": "FINDING: N/A (REG-020/021/022 batch 6 — 6 findings incl. a HIGH-PRIORITY systemic back-arrow defect confirmed across 4 modules, docs-only, no code change)",
       "state": "merged",
-      "mergedAtCt": "09/09/2026, 12:39 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21511",
-      "sha": "0ea4cab18b",
-      "committedAtIso": "2026-09-09T00:39:11-05:00"
+      "mergedAtCt": "09/09/2026, 09:08 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21592",
+      "sha": "1ac73d3255",
+      "committedAtIso": "2026-09-09T09:08:26-05:00"
     },
     {
-      "number": 21510,
-      "title": "FINDING: BANK-F30011 (RECON-USMCA-BANK-01 round 2) — pushed USMCA bank-transaction suggestion coverage from 318/437 to 336/437 (76.9%), honest ceiling after exhausting real-vendor search, still short of the requested 350/437 (80%), zero writes to categorized_at/matched_*",
+      "number": 21590,
+      "title": "FINDING: N/A (docs(bus) report -- Company Waterfall fuel/expense split fully done, 2 self-caught bugs recorded)",
       "state": "merged",
-      "mergedAtCt": "09/09/2026, 12:36 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21510",
-      "sha": "57178527ab",
-      "committedAtIso": "2026-09-09T00:36:33-05:00"
+      "mergedAtCt": "09/09/2026, 09:02 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21590",
+      "sha": "6c08d5b181",
+      "committedAtIso": "2026-09-09T09:02:05-05:00"
     },
     {
-      "number": 21509,
-      "title": "FINDING: N/A (docs(audit) -- ENV-CENSUS-FAIL-02/13/14 stale, already fixed and already wired)",
+      "number": 21589,
+      "title": "FINDING: LST-F26062 — REG-019 Dispatch List/Table: split Assigned vs Unassigned units into own windows",
       "state": "merged",
-      "mergedAtCt": "09/09/2026, 12:36 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21509",
-      "sha": "97df36e069",
-      "committedAtIso": "2026-09-09T00:36:05-05:00"
+      "mergedAtCt": "09/09/2026, 08:54 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21589",
+      "sha": "1bde26fe47",
+      "committedAtIso": "2026-09-09T08:54:32-05:00"
     },
     {
-      "number": 21507,
-      "title": "FINDING: N/A (docs(bus) report -- response to WAKE alert: all 5 named items re-verified already closed)",
+      "number": 21588,
+      "title": "FINDING: N/A (REG-020/021/022 batch 5 — 4 findings incl. a high-priority back-arrow FAIL on Maintenance itself, docs-only, no code change)",
       "state": "merged",
-      "mergedAtCt": "09/09/2026, 12:33 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21507",
-      "sha": "ac54a76efb",
-      "committedAtIso": "2026-09-09T00:33:51-05:00"
+      "mergedAtCt": "09/09/2026, 08:52 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21588",
+      "sha": "aab19508be",
+      "committedAtIso": "2026-09-09T08:52:53-05:00"
     },
     {
-      "number": 21508,
-      "title": "FINDING: N/A (claim-reserve verify-step 11094 for NEW-11 margin/percentage column split)",
+      "number": 21587,
+      "title": "FINDING: N/A (COMPANY-WATERFALL-FUEL-EXPENSE-SPLIT -- clarity fix, caught live-checking PR #21573's own deploy minutes after it went live)",
       "state": "merged",
-      "mergedAtCt": "09/09/2026, 12:33 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21508",
-      "sha": "af35a71390",
-      "committedAtIso": "2026-09-09T00:33:15-05:00"
+      "mergedAtCt": "09/09/2026, 08:51 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21587",
+      "sha": "c7dbf727db",
+      "committedAtIso": "2026-09-09T08:51:52-05:00"
     }
   ]
 }
