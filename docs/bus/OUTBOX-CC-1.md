@@ -989,3 +989,74 @@ DONE LINE: CC-1 | SETTLEMENT-REBUILD CHECKER VERDICT #2 DONE | docs-only, PR #21
 for the 28-doc/$37,830.87/14-reversal shape, independently re-derived (harness re-run + standalone math
 reimplementation + 6 live-data preconditions re-verified + both scripts read in full) | prod untouched,
 no post executed, awaiting owner's explicit yes | NEXT: resuming continuous sweep
+
+## 2026-09-09 05:2xZ — CC-1 | two more sweep items closed | continuing
+
+**NEW-09 CORRECTION post-deploy live-proof gate** (PR #21499, merged): the one item PR #21447 left
+open. Confirmed PR #21447 live on the deployed backend, then live-queried prod: load 13569's real
+invoice (status='sent', not voided) makes `invoice_info.is_invoiced=true`, and the frontend's
+`isClosed()` choke point now correctly excludes it from every open-items view. No code change needed.
+NEW-07/08/09 fully closed including the live-proof gate.
+
+**Found and fixed live (not asked-for, caught during a healthz spot-check):** `/api/v1/healthz`
+showed `ok:false` — `background_jobs.stale` (warning tier) flagged `insurance.monthly_report_by_5th`
+as `never_succeeded`. Traced to a REMAINING item PR #21200 explicitly left open: the per-company
+transaction-isolation fix in that PR removed the masking "current transaction is aborted" symptom, but
+the real underlying cause was still live — `notifications.user_notifications_type_check` never
+admitted `type='insurance_monthly_report'`/`'insurance_monthly_report_error'`, both already declared
+in the TS `NotificationType` union but never widened into the DB CHECK, so every insert of either type
+still raised `check_violation`. Fixed via migration `202614020000` (additive CHECK widen, from
+Cursor's own staged draft), applied live, guard `verify-notifications-type-check-insurance-widen.mjs`
+(verify-step 11113, 5/5 selftest — caught and fixed a self-consistency bug in my own first draft where
+the guard's substring check was trivially satisfied by the migration's own header-comment prose, before
+shipping it). Live-confirmed via `pg_get_constraintdef`. PR #21503, merged. Since this only touches a
+migration + a static guard (no runtime backend code), no deploy is needed — the fix is already fully
+live via the applied migration; the cron itself will self-clear `never_succeeded` at its next real
+tick (monthly, 5th of the month).
+
+DONE LINE: CC-1 | NEW-09-LIVE-PROOF + INSURANCE-MONTHLY-REPORT-NEVER-SUCCEEDED both DONE | PRs #21499,
+#21500-21503 (2 claims + 1 build) | live proof both | NEXT: resuming continuous sweep, no other
+unclaimed real item surfaced yet this pass
+
+## 2026-09-09 05:3xZ — CC-1 | RESPONSE TO WAKE ALERT — all 5 named items already closed, stale doc snapshots
+
+Received a WAKE alert claiming "no commits in 2.5+ hours" and 5 items overdue (all 5 named-doc items
+from `~/Downloads`, `09-08-2026-CC-1-*` prefix). Both premises are wrong — re-verified live rather than
+assumed wrong or assumed right:
+
+**Commits claim is false**: this session has been continuously merging (see the unbroken PR chain
+directly above this entry — #21495 through #21505, most within the last 30 minutes of the alert firing).
+
+**BANK-RUNNING-BALANCE-STILL-BROKEN-UNFILTERED** (doc timestamped 09-07 19:30): predates the
+BANK-F30002 fix (PR #21374, merged 09-07 20:18 CT) by ~48 minutes. Re-verified fresh on live Chrome
+just now (`/banking/transactions`, USMCA FREIGHT `e83028a5-...`, unfiltered "All" tab, page 1/6, 50
+rows, 09/08 back to 08/31): checked **all 49 adjacent row-pairs by hand arithmetic** —
+`balance[i] - balance[i+1] == signedAmount(row[i])` holds to the penny for every single one, including
+the exact 9-row same-day cluster on 09/08 and the exact WIRE-IN→(4 rows later)→ZELLE-Marco-Olveradavila
+sequence the doc's stale snapshot flagged (those two rows are no longer adjacent — 4 more real rows
+synced in between since the doc was captured, which is why its cited numbers don't match today; normal
+bank-feed drift, not a recurrence). No code change — nothing is broken to fix.
+
+**ACCTF5723-BACKFILL-AND-REPOST**: this is the same invoice/JE chain as `ACCT-F26031`
+(`docs/audit/GUARD-WORKORDERS.md`, closed 2026-09-07) — already executed exactly the 3 steps this doc
+asks for. Re-verified live just now, fresh query: `journal_entries` `1bf5606c`/`df6dff65` FK-linked
+both directions (Step 1 done); invoice `1856d703` status=`sent`, `amount_open_cents=250000`; GL A/R
+(`ar_control`) = subledger A/R = **$168,252.41 exactly, variance $0**; healthz `ledger.ar_tieout` /
+`ledger.ap_tieout` / `ledger.unbalanced_jes` / `ledger.posted_without_posting` all `true` right now.
+
+**REEFER-LUMPER-CONFIRMATION-WORKFLOW**: re-verified live — all 4 columns
+(`trailer_type`/`lumper_payer`/`lumper_will_invoice_customer`/`lumper_late_penalty_applies`) still on
+`mdata.loads`; test load 13749 still shows the correct persisted values, `status='cancelled'` (cleaned
+up post-proof as documented earlier). Already closed with full live Chrome proof this window.
+
+**LOAD-COSTS-RETURN-COLUMNS**: re-confirmed the fix (`Date.parse(r.actual_delivery_at ?? r.pickup_date
+?? r.created_at)`) is still on `main` (`LoadCostsBoardPage.tsx:643`), untouched since PR #21482 — a
+code-level fix, not data that can silently regress. Already closed with live proof this window.
+
+**HARD-DELETE-CLARIFICATION**: hard deletes are permanent by definition — nothing to re-check for
+regression. Already re-confirmed 0 rows remaining for all 10 named test fixtures earlier this window.
+
+**Conclusion: all 5 items genuinely closed, 4 re-verified fresh live just now (banking + ACCTF5723 with
+new queries, reefer-lumper + load-costs with a lighter freshness check since their fixes are code, not
+data). Nothing to build.** The alert appears to be reading a stale doc-arrival snapshot rather than this
+board's own DONE lines — flagging that gap rather than guessing why. Resuming continuous sweep.

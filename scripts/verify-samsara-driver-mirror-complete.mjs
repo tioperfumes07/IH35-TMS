@@ -20,7 +20,12 @@ export function failures(files = canonical) {
   const out = [];
   if (!files.client.includes('["active", "deactivated"]') || !files.client.includes("driverActivationStatus: activationStatus") || !files.client.includes("after") || /listDriversAllActivationStatuses[\s\S]{0,1600}catch\s*\{/.test(files.client)) out.push("client must paginate active and deactivated status passes and fail closed on either pass");
   if (!files.collector.includes("listDriversAllActivationStatuses") || !files.collector.includes("driver_activation_status = EXCLUDED.driver_activation_status")) out.push("collector must upsert both-status mirror rows by canonical key");
-  if (!files.collector.includes("cdl_number") || !files.collector.includes("mexican_license_number") || !files.collector.includes("candidates.length === 1")) out.push("collector must link by license then unambiguous exact name without creating driver masters");
+  // SAMSARA-MIRROR-IGNORED-AUTHORITATIVE-LOCAL-LINKS (PR #21450, bb5521614e): resolveMirrorLocalDriverId
+  // renamed the single generic "candidates" local into three named ones (samsaraIdCandidates ->
+  // licenseCandidates -> nameCandidates, samsaraId-first per that fix), so the old bare
+  // "candidates.length === 1" substring this guard checked no longer appears anywhere -- a stale
+  // text-match, not a real regression (found+fixed 2026-09-09 chasing SAMSARA-TMS-DRIVER-LINKAGE-GAP-USMCA).
+  if (!files.collector.includes("cdl_number") || !files.collector.includes("mexican_license_number") || !/\w*Candidates\.length === 1/.test(files.collector)) out.push("collector must link by license then unambiguous exact name without creating driver masters");
   if (!files.cron.includes('"5 */12 * * *"') || !files.cron.includes("collectSamsaraDriverMirror")) out.push("existing twelve-hour collector schedule must run the mirror");
   if (!files.routes.includes('/api/v1/integrations/samsara/drivers/resync') || !files.routes.includes("adminRole") || !files.routes.includes("collectSamsaraDriverMirror")) out.push("admin resync endpoint must invoke the same collector");
   if (!files.roster.includes("sd.driver_activation_status") || !files.page.includes('"active", "deactivated", "all"')) out.push("roster must filter Active, Deactivated, and All from the canonical mirror column");
