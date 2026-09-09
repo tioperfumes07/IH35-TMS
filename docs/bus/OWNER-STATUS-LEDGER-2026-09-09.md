@@ -1,0 +1,131 @@
+# OWNER STATUS LEDGER — 2026-09-09
+
+**Shared, live status board for every seat (CC-1, CC-2, CC-3, Cursor, Codex, Cascade).** Combines two
+sources the owner sent directly tonight, numbered sequentially into one list. Compiled by CC-1
+(money/GL/settlements seat) from live repo state, live Neon queries, and live Chrome checks — every
+status below is a verified fact or an explicit "not found," never a guess.
+
+**How to update this file:** this table is the append-only baseline, written once. Do NOT edit rows in
+place — when you close or re-verify an item, append a dated `## STATUS UPDATE` section below the table
+(same convention as `GUARD-WORKORDERS.md`), referencing the item number, with your evidence. That keeps
+a real audit trail instead of silently overwriting someone else's read of the state. Always
+`git show origin/main:docs/bus/OWNER-STATUS-LEDGER-2026-09-09.md` fresh immediately before appending —
+this file will be edited concurrently.
+
+A rendered, easier-to-scan version of Part A + a stat summary is also published at
+https://claude.ai/code/artifact/583fa49e-fbdd-4d0e-9667-7a782c6c9097 (owner-owned artifact, not the
+source of truth — this repo file is).
+
+---
+
+## Part A — Owner's message, 2026-09-09 ~06:1xZ (items 1–23)
+
+| # | Item | Owner | Status |
+|---|---|---|---|
+| 1 | Load Board → List view: booked-but-not-in-transit loads shouldn't show; a truck showing twice with two loads should only show the real current load | CC-3 | NOT BUILT — routed |
+| 2 | Round Trips view: units with an NB leg and no return yet need a "book a return" action | CC-3 | NOT BUILT — routed |
+| 3 | Timeline view: not all units with loads in the Aug-25→present range appear | CC-3 | NOT BUILT — routed |
+| 4 | Dispatch Home KPIs "are not real" | CC-3 | NOT BUILT — routed, needs live-data trace first |
+| 5 | "Approximate load costs" board: Truck # sortable asc/desc; Units-Need-Return, Days-Since-Last-Delivery, Unassigned-Units each own column; roundtrip-exposure style (unit/driver/load) | CC-3 | NOT BUILT — routed, ambiguous which board, needs owner confirmation |
+| 6 | Every load out of Laredo gets a settlement # instantly; Load Costs Settlement # column; T168/Mecor/13577 auto-inherits its paired load's settlement | CC-1 | **DONE, LIVE** — PR #21318/#21447 |
+| 7 | Resettlement needs "date started" + "delivery date" from the original load | CC-1 | **DONE, LIVE** — PR #21504 |
+| 8 | Pre-settlement Margin $ and Margin % combined into one column — split into two | CC-1 | **DONE, LIVE** — PR #21512 |
+| 9 | Redesign driver + company settlement views to mirror the real AlwaysTrack PDFs — "do not give me this current shit" | CC-1 | **IN PROGRESS** — data present, scattered across redundant tables; real consolidation still needed |
+| 10 | Load/tour selection outline should make clear which load's expenses are shown, everywhere | CC-1 | NOT STARTED |
+| 11 | Factoring: Account Summary (QBO filters), Aging, Chargebacks/Overpayments, Payment-to-you report, Purchase report — all missing | CC-3 | NOT BUILT — routed |
+| 12 | Factoring: KPI boxes/profile view out of proportion; Customer/Load boxes too large + misaligned; filter+gear should share their row | CC-3 | NOT BUILT — routed |
+| 13 | Factoring: unclear what a named table is / shows | CC-3 | NOT BUILT — routed |
+| 14 | Factoring: column order should be original invoice → advance → reserve → fees | CC-3 | NOT BUILT — routed |
+| 15 | Factoring: chargeback/fee-history shows driver-pay/margin data unrelated to factoring; default columns must be factoring-only; Profit/Trip-Expenses off by default | CC-3 | NOT BUILT — routed |
+| 16 | Factoring: settlement numbers missing entirely | CC-3 | NOT BUILT — routed |
+| 17 | Factoring: chargebacks/fee-history shouldn't be split with monthly summaries inline | CC-3 | NOT BUILT — routed |
+| 18 | Factoring: Statements/Settings need summary-only view + a detail-view button | CC-3 | NOT BUILT — routed |
+| 19 | Factoring: missing QBO-style filters + summary/detail toggle everywhere, incl. Faro Daily Import | CC-3 | NOT BUILT — routed |
+| 20 | Factoring: "balances are different" — inspect all of Factoring | CC-3 | NOT BUILT — routed, needs live trace |
+| 21 | Reefer loads: always confirm lumper receipts sent; who pays; will customer be invoiced; late-arrival penalty prompt | CC-1 | **DONE, LIVE** — built + live-proven end-to-end this session |
+| 22 | Banking: missing account-reorder control on Transactions | CC-2 | NOT BUILT — routed |
+| 23 | Banking: running balance wrong — 12/08/25, received $100, balance -$13,062.53 | CC-2/CC-1 | **DISPROVEN, ALREADY FIXED** — pre-fix BANK-F30002 figure (PR #21374); 49/49 adjacent row-pairs re-checked live tonight, all correct |
+
+**Also found and fixed tonight, not asked for:** 152 settlement_lines (reimbursement/deduction) rows
+missing their Load # link — direct contributor to item 9 looking broken. Backfilled live, PR #21519.
+
+## Part B — "Claude Coder pending items list, 3:32pm" (items 24–72)
+
+Source: live 297-PR cross-reference against the 09-06 PENDING-MASTER-72H doc, pulled 2026-09-06 17:02Z
+→ 2026-09-09 20:17Z. Carries the source's own findings; 3 rows updated by CC-1 tonight with newer
+merges that post-date that cutoff (61, 67, 69).
+
+### Banking
+
+| # | ID | Item | Status |
+|---|---|---|---|
+| 24 | BNK-01 | Fuzzy/many-to-one fuel-card matching, vendor-alias matching | Still open, no PR found |
+| 25 | BNK-03 | Redundant toolbar (calendar/presets/gears duplicated) | DONE — PR #21057, #21153, #21161 |
+| 26 | BNK-06 | Description column collapsed to 0px | Still open, no PR found |
+| 27 | BNK-07 | Columns not adjustable, "Gap" naming, multi-select Show | DONE — PR #21007 |
+| 28 | BNK-08 | Missing Check No./Memo/Category/Match status/Reference/Posted JE columns | DONE — PR #21036 |
+| 29 | BNK-09 | KPI resize/borders | DONE — PR #21015 |
+| 30 | BNK-10 | 362 unposted bank transactions, −$686,503.95 live-proof owed | Still open, live proof never pulled |
+| 31 | BNK-11 = ACC-20 | Un-categorize both directions on match reversal | DONE — PR #21173 |
+| 32 | BNK-12 | No September reconciliation session, live proof owed | Still open |
+| 33 | BNK-13 | USMCA bank-rule authoring, 97.5% uncategorized | DONE (rules side) — PR #21035/#21050; 3,478-transfer routing count never re-measured live |
+| 34 | BNK-14 | Owner decision | Unchanged, waiting on owner |
+| 35 | BNK-15 | Data item, superseded by BNK-10 | Same live-proof gap |
+| 36 | BNK-17 | Bank-fee-recovery role live proof | Still open, no PR found |
+| 37 | BNK-18 | Owner's own categorization task | Unchanged |
+| 38 | BNK-20 | 5 txns matched to voided docs | Data item, no PR needed, live re-check never run |
+
+### Factoring
+
+| # | ID | Item | Status |
+|---|---|---|---|
+| 39 | FAC-01 | Factored column, live proof of 7 states | Still open (live proof), no new PR |
+| 40 | FAC-02 | Assign FARO to 5 real customers | Still open, no PR found |
+| 41 | FAC-03 | Quarantine 11 test customers + reject create | Not confirmed — related fix #21157 doesn't clearly match |
+| 42 | FAC-05/06 | Faro advance + seed purchases by load | DONE — PR #21229 |
+| 43 | FAC-07 | Profile full-screen, tabs on top | DONE — PR #21120 |
+| 44 | FAC-08 | Gear/columns from Load Costs manifest | DONE — PR #21136 |
+| 45 | FAC-09 | 15 FactorView tabs | Still open, no PR found — big, untouched |
+| 46 | FAC-10 | Duplicate-vendor CODEX TEST report | DONE — PR #21021/#21069 |
+| 47 | FAC-11 | Factoring out of Dispatch subnav (BRD-22) | Still open, no PR found |
+| 48 | FAC-12 | LDT-4 stage-bar guard | Still open, no PR found |
+
+### Cash Flow
+
+| # | ID | Item | Status |
+|---|---|---|---|
+| 49 | CF-01 | $0 everywhere | DONE — PR #20998/#20999 |
+| 50 | CF-02 | Proforma→cash-flow bucket live measure | Still open — source doc self-contradicts (both DONE and pending); treat as open |
+| 51 | (new) | 5 Rolling Ledger UI defects (factor-name, In/Days sign, unfiltered default, redundant Type/Status, missing invoice-date) | DONE — PR #21295/#21293 |
+
+### Settlements
+
+| # | ID | Item | Status |
+|---|---|---|---|
+| 52 | SET-01 | Proportions, +Add/create, editable lines | DONE — Add-deduction #21044 (part 1); editable lines #21480 (part 2, found tonight) |
+| 53 | SET-04 | Company Settlements FE page | DONE — PR #21051, itemized per-load #21147 |
+| 54 | SET-05 | Gross/Deductions/Net showing $0 | DONE — PR #21005 + guard #21088 |
+| 55 | SET-07 | 7 button heights | Still open, no PR found |
+| 56 | SET-11 | Closed pre-settlement without touching Laredo yard | DONE — PR #21218 |
+| 57 | SET-12 | 3-way cash-advance routing at close | DONE — PR #21243 |
+| 58 | SET-13 | Reopen disabled-not-hidden | DONE — PR #21047 |
+| 59 | SET-14 | Reimbursed vs Company Expense flags | DONE — PR #21246 |
+| 60 | SET-16 | Admin fee typed-deduction migration | Still open, no PR found |
+| 61 | SET-17 | other_recovery retype, live proof | **UPDATED tonight (CC-1):** live-verified — `other_recovery` role → account 7200, active, USMCA. Now confirmed DONE |
+| 62 | SET-18/20 | posted_at never written / close 7 tours, post 15 | DONE — PR #21177, 13/13 posted, $33,705.95 |
+| 63 | SET-21 | Tour-split plan | Resolved by ruling, nothing to build |
+| 64 | SET-24 | Duplicate deductions on 13568 | DONE across waves (#21093, #21105, #21124/25) — wants final zero-remaining confirm from CC-3 |
+| 65 | SET-25 | Non-deferrable loan pop-up | Still open, no PR found |
+| 66 | SET-27 | VOID/REVERSE cascade guard was RED | DONE — PR #21026 |
+| 67 | SET-28 | Vehicle-swap cost split | **UPDATED tonight (CC-1):** source said open, found PR #21490/#21491 (after cutoff) — now DONE |
+| 68 | SET-29 | Attribution rung 3, fixed-monthly-cost rule (CC-1's own seat) | **CONFIRMED still open** — grepped live codebase tonight, no match |
+| 69 | SET-30 | Company settlement PDF | **UPDATED tonight (CC-1):** source said open, found PR #21493 (printable letter) + #21496 (boot-crash fix) after cutoff. Live now, but a generic house-template letter — NOT the AlwaysTrack-format redesign item 9 above asks for |
+| 70 | SET-31 | "Build it like Load Costs" umbrella | Blocked on SET-01 — SET-01 now mostly done (52), worth re-checking |
+| 71 | SET-32 | Owner decision | Unchanged |
+| 72 | SET-33 | PAID chain | Partial — SET-20's application (13 posted) not re-measured against original "0 of 19 PAID" figure |
+
+---
+
+## STATUS UPDATE LOG
+
+*(append dated updates here, one `###` section per update, referencing item #s — never edit the table above in place)*
