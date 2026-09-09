@@ -207,6 +207,12 @@ const createDispatchLoadBodySchema = z.object({
   pre_cool: z.boolean().optional(),
   tarp_qty: z.number().int().min(0).optional(),
   tarp_size: z.string().trim().max(40).optional(),
+  // REEFER-LUMPER-CONFIRMATION (migration 202614010000, owner spec 2026-09-08). Accepted here but
+  // never DB-required at booking — the frontend requires all three for a reefer load before submit;
+  // the dispatch-transition gate below is the real backstop against a bypass.
+  lumper_payer: z.enum(["broker", "customer"]).optional(),
+  lumper_will_invoice_customer: z.boolean().optional(),
+  lumper_late_penalty_applies: z.boolean().optional(),
   // C9 (migration 202609170000, HOLD-FOR-JORGE — not yet applied to prod): the remaining five
   // equipment-requirement chips BookLoadEquipmentSection renders (requires_tarps above already has a
   // column). load_type is the Broker/Direct toggle; driver_pay_rate_per_mile is the driver's real
@@ -1783,9 +1789,14 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         status: string;
         load_number: string | null;
         assigned_primary_driver_id: string | null;
+        trailer_type: string | null;
+        lumper_payer: string | null;
+        lumper_will_invoice_customer: boolean | null;
+        lumper_late_penalty_applies: boolean | null;
       }>(
         `
-          SELECT status, load_number, assigned_primary_driver_id::text
+          SELECT status, load_number, assigned_primary_driver_id::text,
+                 trailer_type, lumper_payer, lumper_will_invoice_customer, lumper_late_penalty_applies
           FROM mdata.loads
           WHERE id = $1
             AND operating_company_id = $2::uuid
@@ -1804,6 +1815,20 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       }
 
       const mdataStatus = toMdataStatus(targetStatus);
+      // REEFER-LUMPER-CONFIRMATION (migration 202614010000, owner spec 2026-09-08) — a reefer load
+      // (trailer_type='refrigerated_van', the SAME signal BookLoadEquipmentSection.tsx's isReefer
+      // uses to show the reefer panel) must not reach 'dispatched' without all 3 lumper-confirmation
+      // fields set. Booking itself is never DB-blocked on this (frontend enforces it there); this is
+      // the real backstop against a bypass (API caller, legacy form, etc.).
+      if (mdataStatus === "dispatched" && current.trailer_type === "refrigerated_van") {
+        const missing =
+          current.lumper_payer == null ||
+          current.lumper_will_invoice_customer == null ||
+          current.lumper_late_penalty_applies == null;
+        if (missing) {
+          return { error: "reefer_lumper_confirmation_required" as const };
+        }
+      }
       const transitionUpdate = await client.query<{ id: string }>(
         `UPDATE mdata.loads
          SET status = $2
@@ -1948,6 +1973,12 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
     if ("error" in result) {
       if (result.error === "not_found") return reply.code(404).send({ error: "dispatch_load_not_found" });
+      if (result.error === "reefer_lumper_confirmation_required") {
+        return reply.code(409).send({
+          error: "reefer_lumper_confirmation_required",
+          message: "This reefer load can't be dispatched yet — confirm who pays the lumper, whether the customer is invoiced for it, and whether a late-arrival penalty applies.",
+        });
+      }
       // Owner order 2026-09-05: "refuse LOUDLY with the reason on screen. Silent no-op is a defect."
       const from = result.from;
       const to = result.to;

@@ -96,6 +96,10 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
   ]);
   const trailerType = watch ? String(watch("trailer_type") ?? "") : "";
   const temperatureType = watch ? String(watch("temperature_type") ?? "") : ""; // W-FIX-1 Frozen/Fresh segmented
+  // REEFER-LUMPER-CONFIRMATION (migration 202614010000, owner spec 2026-09-08).
+  const lumperPayer = watch ? String(watch("lumper_payer") ?? "") : "";
+  const lumperWillInvoiceCustomer = watch ? watch("lumper_will_invoice_customer") : undefined;
+  const lumperLatePenaltyApplies = watch ? watch("lumper_late_penalty_applies") : undefined;
   // Conditional equipment detail reveals (render-v6 §B): reefer detail only on a reefer trailer, tarp detail
   // only on a flatbed. Previously the reefer setpoint always showed and flatbed tarp detail never revealed.
   const isReefer = trailerType === "refrigerated_van";
@@ -489,6 +493,89 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           <Field
             label="Reefer temperature (°F)"
             input={<input data-testid="reefer-temp-field" type="number" step="0.1" {...register("reefer_temp_f", { valueAsNumber: true })} className="h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />}
+          />
+        </div>
+      ) : null}
+      {/* REEFER-LUMPER-CONFIRMATION (migration 202614010000, owner spec 2026-09-08): 3 click-confirm
+          questions, reefer loads only — captured at dispatch time, not discovered later in accounting.
+          Required before submit for a reefer load (see the required-field check in the parent form's
+          submit handler); the dispatch-transition endpoint is the real backstop if this is bypassed. */}
+      {isReefer ? (
+        <div data-testid="reefer-lumper-confirmation-panel" className="grid grid-cols-1 gap-2 rounded-sm border border-amber-300 bg-amber-50 p-2 md:grid-cols-3">
+          <Field
+            label="Who pays the lumper?"
+            input={
+              <div data-testid="lumper-payer-segmented" className="flex h-7 overflow-hidden rounded-sm border border-gray-300 text-xs">
+                <input type="hidden" {...register("lumper_payer")} />
+                {([
+                  { value: "broker", label: "Broker" },
+                  { value: "customer", label: "Customer" },
+                ] as const).map((opt, idx) => {
+                  const active = lumperPayer === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      data-testid={`lumper-payer-${opt.value}`}
+                      onClick={() => setValue?.("lumper_payer", opt.value, { shouldDirty: true })}
+                      className={`flex-1 px-2 ${idx === 0 ? "border-r border-gray-300" : ""} ${active ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700"}`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            }
+          />
+          <Field
+            label="Will the customer be invoiced?"
+            input={
+              <div data-testid="lumper-invoice-customer-segmented" className="flex h-7 overflow-hidden rounded-sm border border-gray-300 text-xs">
+                <input type="hidden" {...register("lumper_will_invoice_customer")} />
+                {([
+                  { value: true, label: "Yes" },
+                  { value: false, label: "No" },
+                ] as const).map((opt, idx) => {
+                  const active = lumperWillInvoiceCustomer === opt.value;
+                  return (
+                    <button
+                      key={String(opt.value)}
+                      type="button"
+                      data-testid={`lumper-invoice-customer-${opt.value ? "yes" : "no"}`}
+                      onClick={() => setValue?.("lumper_will_invoice_customer", opt.value, { shouldDirty: true })}
+                      className={`flex-1 px-2 ${idx === 0 ? "border-r border-gray-300" : ""} ${active ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700"}`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            }
+          />
+          <Field
+            label="Late-arrival penalty applies?"
+            input={
+              <div data-testid="lumper-late-penalty-segmented" className="flex h-7 overflow-hidden rounded-sm border border-gray-300 text-xs">
+                <input type="hidden" {...register("lumper_late_penalty_applies")} />
+                {([
+                  { value: true, label: "Yes" },
+                  { value: false, label: "No" },
+                ] as const).map((opt, idx) => {
+                  const active = lumperLatePenaltyApplies === opt.value;
+                  return (
+                    <button
+                      key={String(opt.value)}
+                      type="button"
+                      data-testid={`lumper-late-penalty-${opt.value ? "yes" : "no"}`}
+                      onClick={() => setValue?.("lumper_late_penalty_applies", opt.value, { shouldDirty: true })}
+                      className={`flex-1 px-2 ${idx === 0 ? "border-r border-gray-300" : ""} ${active ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700"}`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            }
           />
         </div>
       ) : null}

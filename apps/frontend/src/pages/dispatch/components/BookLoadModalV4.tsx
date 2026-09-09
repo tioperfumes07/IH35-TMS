@@ -138,6 +138,10 @@ type FormValues = BookLoadFormValues & {
   reefer_mode: string;
   pre_cool: "yes" | "no";
   tarp_qty: number | "";
+  // REEFER-LUMPER-CONFIRMATION (migration 202614010000, owner spec 2026-09-08).
+  lumper_payer: "" | "broker" | "customer";
+  lumper_will_invoice_customer: boolean | null;
+  lumper_late_penalty_applies: boolean | null;
   tarp_size: string;
   lumper_amount_cents: number;
   customer_chargeback_requested: boolean;
@@ -411,6 +415,9 @@ export function BookLoadModalV4({
       temperature_type: "",
       reefer_mode: "",
       pre_cool: "no",
+      lumper_payer: "",
+      lumper_will_invoice_customer: null,
+      lumper_late_penalty_applies: null,
       tarp_qty: "",
       tarp_size: "",
       lumper_amount_cents: 0,
@@ -1243,6 +1250,27 @@ export function BookLoadModalV4({
       pushToast("Select a Trip Type before booking", "error");
       return;
     }
+    // REEFER-LUMPER-CONFIRMATION (migration 202614010000, owner spec 2026-09-08): a reefer load
+    // (trailer_type='refrigerated_van') must capture all 3 lumper-confirmation questions before it
+    // can be booked — not DB-blocked (nullable columns), frontend-blocked here, matching the
+    // trip_type pattern above. The dispatch-transition endpoint is the real backstop if bypassed.
+    if (values.trailer_type === "refrigerated_van") {
+      if (!values.lumper_payer) {
+        form.setError("lumper_payer", { type: "required", message: "Confirm who pays the lumper (broker or customer)" });
+        pushToast("Confirm the lumper questions before booking a reefer load", "error");
+        return;
+      }
+      if (values.lumper_will_invoice_customer == null) {
+        form.setError("lumper_will_invoice_customer", { type: "required", message: "Confirm whether the customer will be invoiced for the lumper" });
+        pushToast("Confirm the lumper questions before booking a reefer load", "error");
+        return;
+      }
+      if (values.lumper_late_penalty_applies == null) {
+        form.setError("lumper_late_penalty_applies", { type: "required", message: "Confirm whether a late-arrival penalty applies" });
+        pushToast("Confirm the lumper questions before booking a reefer load", "error");
+        return;
+      }
+    }
     // WIZ border-capture: a cross-border (NB/SB) load MUST record where it crosses. Without this the
     // load saved with no stop_type='border' stop and LoadDetailDrawer correctly hid the Customs tab
     // (owner block, load 13508). Fail loud naming the field rather than dropping the crossing silently.
@@ -1345,6 +1373,10 @@ export function BookLoadModalV4({
         temperature_type: values.temperature_type || undefined,
         reefer_mode: values.reefer_mode || undefined,
         pre_cool: values.pre_cool === "yes" ? true : undefined,
+        // REEFER-LUMPER-CONFIRMATION (migration 202614010000, owner spec 2026-09-08).
+        lumper_payer: values.lumper_payer || undefined,
+        lumper_will_invoice_customer: values.lumper_will_invoice_customer ?? undefined,
+        lumper_late_penalty_applies: values.lumper_late_penalty_applies ?? undefined,
         tarp_qty: values.tarp_qty === "" ? undefined : Number(values.tarp_qty),
         tarp_size: values.tarp_size || undefined,
         lumper_amount_cents: values.lumper_amount_cents || 0,
