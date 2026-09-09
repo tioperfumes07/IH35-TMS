@@ -42,6 +42,19 @@ function analyze(reg, page) {
   if (!/settlements\?settlement_id=/.test(reg))
     errors.push("register Tour link does not route to ?settlement_id= (detail view would break)");
 
+  // 5b) SETL-POST (owner 2026-09-09, "the pre-settlement should be verified and click post … we are
+  // missing that button, and that pre-settlement turns to a settlement"): the OPEN pre-settlement
+  // register carries a row-level Verify & Post action that reuses the SAME close-tour endpoint
+  // (open→closed), gated on the readout's can_close — never a new money path.
+  if (!/import\s*\{[^}]*\bcloseTour\b[^}]*\bgetTourReadout\b[^}]*\}\s*from\s*["'][^"']*api\/tourReadout["']/.test(reg))
+    errors.push("register does not import closeTour + getTourReadout (Verify & Post must reuse the existing close-tour endpoint)");
+  if (!/key:\s*"post"/.test(reg) || !/<PostTourAction\b/.test(reg))
+    errors.push("register open view lacks the Post column / PostTourAction (owner's missing 'verify then post' button)");
+  if (!/disabled=\{!row\.can_close/.test(reg))
+    errors.push("Verify & Post is not gated on row.can_close — a not-ready pre-settlement could post");
+  if (!/closeTour\(row\.settlement_id,\s*companyId\)/.test(reg))
+    errors.push("PostTourAction does not call closeTour(row.settlement_id, companyId) — must reuse the existing endpoint, not a new money path");
+
   // 6) Page mounts the register AS THE DEFAULT view.
   if (!/import\s*\{[^}]*\bSettlementsToursRegister\b[^}]*\}\s*from\s*["']\.\/SettlementsToursRegister["']/.test(page))
     errors.push("SettlementsPage does not import SettlementsToursRegister");
@@ -71,6 +84,9 @@ if (process.argv.includes("--selftest")) {
     ["break detail link", [reg.replace(/settlements\?settlement_id=/g, "settlements?x="), page]],
     ["page default to payments", [reg, page.replace(/["']payments["']\s*\?\s*["']payments["']\s*:\s*["']tours["']/, '"payments" ? "tours" : "payments"')]],
     ["page drops register", [reg, page.replace(/<SettlementsToursRegister\b/g, "<Nope")]],
+    ["post action removed", [reg.replace(/<PostTourAction[^>]*\/>/, "null"), page]],
+    ["post ungated (can_close bypassed)", [reg.replace("disabled={!row.can_close", "disabled={false && !row.can_close"), page]],
+    ["post no longer reuses close-tour endpoint", [reg.replace("closeTour(row.settlement_id, companyId)", "Promise.resolve({})"), page]],
   ];
   let caught = 0;
   for (const [label, [r, p]] of mutations) {
