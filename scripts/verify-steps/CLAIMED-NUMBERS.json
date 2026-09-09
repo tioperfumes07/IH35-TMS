@@ -6172,10 +6172,20 @@
     "claimed_at": "2026-09-07",
     "purpose": "verify-payrun-close-requires-load-activity"
   },
+  "10831": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-08",
+    "purpose": "verify-dispatch-completion-prompts-wired"
+  },
   "10833": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-07",
     "purpose": "verify-cash-flow-row-adjustments-seq-grant"
+  },
+  "10835": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-09",
+    "purpose": "verify-recon-usmca-bank-suggestion-coverage"
   },
   "10837": {
     "claimed_by": "claude",
@@ -6332,6 +6342,11 @@
     "claimed_at": "2026-09-08",
     "purpose": "verify-settlement-net-pay-triple-figure-fixed (EVEN Cursor lane; ships Claude-authored settlement net-pay triple-figure display fix)"
   },
+  "11080": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-09",
+    "purpose": "verify-settlement-edit-deduction-wired"
+  },
   "11081": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-08",
@@ -6346,6 +6361,16 @@
     "claimed_by": "claude-1",
     "claimed_at": "2026-09-08",
     "purpose": "verify-maintenance-triage-queue-entity-scoped"
+  },
+  "11105": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-08",
+    "purpose": "verify-samsara-driver-linkage-match-rate"
+  },
+  "11109": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-09",
+    "purpose": "verify-reefer-lumper-confirmation-captured"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -8349,19 +8374,34 @@
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
   },
-  "11105": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-08",
-    "purpose": "verify-samsara-driver-linkage-match-rate"
-  },
-  "10831": {
-    "claimed_by": "cc-2",
-    "claimed_at": "2026-09-08",
-    "purpose": "verify-dispatch-completion-prompts-wired"
-  },
-  "10835": {
-    "claimed_by": "cc-2",
+  "11082": {
+    "claimed_by": "cursor",
     "claimed_at": "2026-09-09",
-    "purpose": "verify-recon-usmca-bank-suggestion-coverage"
+    "purpose": "verify-settlements-list-button-height-uniform"
+  },
+  "11084": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-09",
+    "purpose": "verify-other-recovery-role-bound"
+  },
+  "11086": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-09",
+    "purpose": "verify-settlement-loan-recovery-modal-wired"
+  },
+  "11088": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-09",
+    "purpose": "verify-load-unit-cost-split-wired"
+  },
+  "11090": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-09",
+    "purpose": "verify-company-settlement-pdf-house-template"
+  },
+  "11092": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-09",
+    "purpose": "verify-resettlement-origin-load-dates"
   }
 }

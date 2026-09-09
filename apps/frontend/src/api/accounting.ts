@@ -866,6 +866,38 @@ export function listLoadExpenses(operatingCompanyId: string, loadId: string, par
   );
 }
 
+/** SET-30 — company settlement letter on the house template (same shell as driver settlement/invoice). */
+export function companySettlementHtmlUrl(operatingCompanyId: string, companySettlementId: string) {
+  return withCompany(
+    `/api/v1/accounting/company-settlements/${encodeURIComponent(companySettlementId)}.html`,
+    operatingCompanyId
+  );
+}
+
+/** SET-28 — per-truck miles-weighted split of a load's cost pool when it was pulled by >1 truck. */
+export type UnitCostShare = {
+  unit_id: string;
+  unit_number: string | null;
+  miles: number;
+  miles_pct: number;
+  allocated_cost_cents: number;
+};
+export type LoadUnitCostSplit = {
+  load_id: string;
+  load_number: string | null;
+  is_multi_unit: boolean;
+  miles_basis: "telematics" | "time_window" | "equal";
+  pool_cents: number;
+  total_miles: number;
+  reconciled: boolean;
+  units: UnitCostShare[];
+};
+export function getLoadUnitCostSplit(operatingCompanyId: string, loadId: string) {
+  return apiRequest<LoadUnitCostSplit>(
+    withCompany(`/api/v1/accounting/loads/${encodeURIComponent(loadId)}/unit-cost-split`, operatingCompanyId)
+  );
+}
+
 /** ACCT-R-17 — duplicate expense fingerprint groups (vendor + date + amount). */
 export type ExpenseDuplicateMember = {
   id: string;

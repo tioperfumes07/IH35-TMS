@@ -41,6 +41,7 @@ import { DebtBanner } from "./components/DebtBanner";
 import { DeadheadPaySection } from "./components/DeadheadPaySection";
 import { DeductionsSection, type DeductionRow } from "./components/DeductionsSection";
 import { CreateSettlementDeductionDrawer } from "../drivers/components/CreateSettlementDeductionDrawer";
+import { EditSettlementDeductionDrawer } from "../drivers/components/EditSettlementDeductionDrawer";
 import { EarningsSection } from "./components/EarningsSection";
 import { EscrowVisualizer } from "./components/EscrowVisualizer";
 import { SETTLEMENT_DISPUTE_CATEGORY_OPTIONS } from "./settlementDisputeCategories";
@@ -115,6 +116,8 @@ export function SettlementDetailPage() {
   const [liabilityOpen, setLiabilityOpen] = useState(false);
   const [holdTarget, setHoldTarget] = useState<DeductionRow | null>(null);
   const [addDeductionOpen, setAddDeductionOpen] = useState(false);
+  // SET-01 part 2 — the deduction line currently open for in-place edit (null = drawer closed).
+  const [editDeductionTarget, setEditDeductionTarget] = useState<DeductionRow | null>(null);
   const [bankReference, setBankReference] = useState("");
   const [bounceReason, setBounceReason] = useState("");
   const [manualPaymentMethod, setManualPaymentMethod] = useState("check");
@@ -782,6 +785,7 @@ export function SettlementDetailPage() {
             onResume={(row) => void handleResumeDeduction(row)}
             isOpen={!settlementIsLocked}
             onAdd={driverId ? () => setAddDeductionOpen(true) : undefined}
+            onEdit={(row) => setEditDeductionTarget(row)}
           />
           {driverId && companyId ? (
             <CreateSettlementDeductionDrawer
@@ -791,6 +795,19 @@ export function SettlementDetailPage() {
               presetDriverName={String(settlement.driver_full_name ?? "")}
               onClose={() => setAddDeductionOpen(false)}
               onCreated={() => void detailQuery.refetch()}
+            />
+          ) : null}
+          {companyId ? (
+            <EditSettlementDeductionDrawer
+              open={Boolean(editDeductionTarget)}
+              operatingCompanyId={companyId}
+              deductionId={editDeductionTarget?.source_deduction_id ?? null}
+              initialAmountUsd={editDeductionTarget ? Number(editDeductionTarget.this_period_amount) : null}
+              initialType={editDeductionTarget?.deduction_type ?? null}
+              initialReason={editDeductionTarget?.description ?? null}
+              loadNumber={editDeductionTarget?.load_number ?? null}
+              onClose={() => setEditDeductionTarget(null)}
+              onSaved={() => void detailQuery.refetch()}
             />
           ) : null}
           {/* Settlement payout poster creates a real accounting.bills row + journal entry per

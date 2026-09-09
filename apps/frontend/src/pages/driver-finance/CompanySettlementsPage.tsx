@@ -19,8 +19,10 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import {
   listCompanySettlements,
   getCompanySettlementReport,
+  companySettlementHtmlUrl,
   type CompanySettlementListRow,
 } from "../../api/accounting";
+import { openPrintableDocument, openCanonicalDocument } from "../../lib/openPrintableDocument";
 import { formatUsdCents } from "../../lib/money";
 import { mmmDd } from "../../lib/formatDate";
 import { CompanySettlementItemizedByLoad } from "./components/CompanySettlementItemizedByLoad";
@@ -197,9 +199,28 @@ function CompanySettlementWaterfall({
         <span>
           Company Settlement · {row.display_id} · {date(row.period_start)} – {date(row.period_end)}
         </span>
-        <button type="button" className="ldt-link" onClick={onClose}>
-          Close
-        </button>
+        <span className="ldt-actions">
+          {/* SET-30 — company settlement on the house template, same shell as the driver settlement letter. */}
+          <button
+            type="button"
+            className="ldt-btn"
+            data-testid="company-settlement-pdf-view"
+            onClick={() => openCanonicalDocument(companySettlementHtmlUrl(companyId, row.id))}
+          >
+            View settlement PDF
+          </button>
+          <button
+            type="button"
+            className="ldt-btn"
+            data-testid="company-settlement-pdf-print"
+            onClick={() => openPrintableDocument(companySettlementHtmlUrl(companyId, row.id))}
+          >
+            Print
+          </button>
+          <button type="button" className="ldt-link" onClick={onClose}>
+            Close
+          </button>
+        </span>
       </div>
 
       {isVoided ? (

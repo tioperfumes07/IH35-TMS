@@ -611,20 +611,6 @@ export function LoadCostsBoardPage() {
     }
     return map;
   }, [unitsWithoutLoadQuery.data]);
-  /** A row only gets the days-since-delivery figure if it's the LATEST delivered row for that idle
-   * unit in this dataset -- otherwise an older load for the same now-idle unit would show the same
-   * "current" days-idle figure, which belongs to the unit's most recent delivery, not this one. */
-  const latestDeliveryRowIdByUnit = useMemo(() => {
-    const map = new Map<string, { loadId: string; at: number }>();
-    for (const r of rows) {
-      if (!r.unit_number || !r.actual_delivery_at) continue;
-      const at = Date.parse(r.actual_delivery_at);
-      if (Number.isNaN(at)) continue;
-      const current = map.get(r.unit_number);
-      if (!current || at > current.at) map.set(r.unit_number, { loadId: r.load_id, at });
-    }
-    return map;
-  }, [rows]);
   // LCB-REG — Broker advances/Documents registers aren't filtered by the board's status pills (an
   // advance or a document on a load that's since closed is still real); they resolve a load's
   // display number from the FULL unfiltered board, not `visible`.
@@ -632,6 +618,35 @@ export function LoadCostsBoardPage() {
   const statusFiltered = useMemo(() => rows.filter(r => matches(r, filter)), [rows, filter]);
   const activeTab = COST_TABS.find(t => t.id === costTab) ?? COST_TABS[0];
   const visible = useMemo(() => statusFiltered.filter(r => activeTab.has(r)), [statusFiltered, activeTab]);
+  /** LOAD-COSTS-RETURN-COLS-FIX (live-verified 2026-09-09): the original version of this map keyed
+   * off `rows` (unfiltered) matched against `r.load_id` from the actually-DISPLAYED `visible` row --
+   * but the load whose delivery made a unit idle is exactly the load NEW-09 correctly hides once
+   * invoiced (isClosed()), so it never appears in `visible` under ANY open filter tab. Live-checked
+   * on prod: 6/6 of today's real "Units Needing Return" cases (T163/170/173/148/175/174) already
+   * have their triggering load invoiced -- Days Since Delivery rendered a dash on every row, on
+   * every tab, for 100% of the feature's real live cases; a full-column reference file dump confirmed
+   * it. Fix: pick the badge carrier from the rows the operator can actually SEE (`visible`) instead of
+   * requiring an exact match to a row that structurally can never be visible once its load is closed
+   * -- the unit's newest visible row (e.g. its next booking) is a legitimate, useful place to surface
+   * "this truck has been idle N days", and is exactly where a dispatcher scanning this board would
+   * look for it. Still only one row per unit gets the value (the most recent by pickup/delivery date
+   * among the rows currently on screen), so an older visible row for the same unit still renders a dash. */
+  const latestVisibleRowIdByUnit = useMemo(() => {
+    const map = new Map<string, { loadId: string; at: number }>();
+    for (const r of visible) {
+      if (!r.unit_number) continue;
+      // A freshly-booked load (T163/13533 live-caught this: PU date not yet set, obviously no
+      // delivery date either) has neither actual_delivery_at nor pickup_date -- falling through to
+      // Date.parse("") = NaN silently dropped the row from this map entirely, so the idle unit's
+      // ONLY visible row never got picked as a badge carrier. created_at always exists and is
+      // exactly the tiebreak this board already uses elsewhere (see `matches()`'s this_week filter).
+      const at = Date.parse(r.actual_delivery_at ?? r.pickup_date ?? r.created_at);
+      if (Number.isNaN(at)) continue;
+      const current = map.get(r.unit_number);
+      if (!current || at > current.at) map.set(r.unit_number, { loadId: r.load_id, at });
+    }
+    return map;
+  }, [visible]);
   const [tourCounts, setTourCounts] = useState<{ open: number | null; closed: number | null }>({ open: null, closed: null });
   const onOpenCount = useCallback((n: number | null) => setTourCounts(c => (c.open === n ? c : { ...c, open: n })), []);
   const onClosedCount = useCallback((n: number | null) => setTourCounts(c => (c.closed === n ? c : { ...c, closed: n })), []);
@@ -695,12 +710,12 @@ export function LoadCostsBoardPage() {
       key: "days_since_delivery", label: "Days Since Delivery", testId: "col-days-since-delivery",
       sortable: true, className: NUM, defaultHidden: true,
       sortValue: r => {
-        const latest = r.unit_number ? latestDeliveryRowIdByUnit.get(r.unit_number) : undefined;
+        const latest = r.unit_number ? latestVisibleRowIdByUnit.get(r.unit_number) : undefined;
         if (!latest || latest.loadId !== r.load_id) return -1;
         return r.unit_number ? daysSinceDeliveryByUnit.get(r.unit_number) ?? -1 : -1;
       },
       render: r => {
-        const latest = r.unit_number ? latestDeliveryRowIdByUnit.get(r.unit_number) : undefined;
+        const latest = r.unit_number ? latestVisibleRowIdByUnit.get(r.unit_number) : undefined;
         if (!latest || latest.loadId !== r.load_id) return DASH;
         const days = r.unit_number ? daysSinceDeliveryByUnit.get(r.unit_number) : undefined;
         return days == null ? DASH : `${days}d`;

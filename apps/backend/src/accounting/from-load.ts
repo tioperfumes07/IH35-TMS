@@ -377,8 +377,36 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
     const accessorialResolution = await resolveInvoiceLineRevenueAccountId(input.operatingCompanyId, {
       line_type: "accessorial",
     });
+    // REEFER-LUMPER-CONFIRMATION (migration 202614010000, owner spec 2026-09-08): "wire
+    // lumper_will_invoice_customer=true + lumper_payer=customer into whatever generates the customer
+    // invoice line for lumper." dispatch.stop_extra_rates.rate_type already has a real 'lumper' value
+    // (CHECK constraint); this is the actual customer-invoice-line generation path for it. Reuses
+    // invoice-line-revenue-resolution.service.ts's existing 'lumper' revenue-code branch verbatim —
+    // no new GL math. Only fetched if at least one row here is rate_type='lumper', to avoid the extra
+    // query on the common (no-lumper-line) path.
+    const hasLumperRow = stopExtraRatesRes.rows.some((r) => r.rate_type === "lumper");
+    let lumperConfirmed = false;
+    let lumperResolution: { revenue_code: string; account_id: string } | null = null;
+    if (hasLumperRow) {
+      const lumperFlagsRes = await client.query<{ lumper_payer: string | null; lumper_will_invoice_customer: boolean | null }>(
+        `SELECT lumper_payer, lumper_will_invoice_customer FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+        [input.loadId, input.operatingCompanyId]
+      );
+      const flags = lumperFlagsRes.rows[0];
+      lumperConfirmed = flags?.lumper_payer === "customer" && flags?.lumper_will_invoice_customer === true;
+      if (lumperConfirmed) {
+        lumperResolution = await resolveInvoiceLineRevenueAccountId(input.operatingCompanyId, { line_type: "lumper" });
+      }
+    }
     for (let idx = 0; idx < stopExtraRatesRes.rows.length; idx += 1) {
       const rate = stopExtraRatesRes.rows[idx];
+      // The customer never confirmed they're on the hook for this lumper charge (or the broker pays
+      // it) — do not bill them. The charge still exists on dispatch.stop_extra_rates for the
+      // driver/settlement side; it just never becomes a customer invoice line. Not a silent drop:
+      // every other accessorial type is unaffected, and this is the exact "no invoice line" outcome
+      // the owner's own 3-question workflow is meant to gate.
+      if (rate.rate_type === "lumper" && !lumperConfirmed) continue;
+      const resolution = rate.rate_type === "lumper" && lumperResolution ? lumperResolution : accessorialResolution;
       const cents = Math.max(0, Number(rate.amount_cents ?? 0));
       const invoiceLineRes = await client.query<{ id: string }>(
         `
@@ -394,15 +422,15 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
             unit_amount_cents,
             line_total_cents,
             display_order
-          ) VALUES ($1,$2,$3,'accessorial',$4,$5,$6,1,$7,$7,$8)
+          ) VALUES ($1,$2,$3,$9,$4,$5,$6,1,$7,$7,$8)
           RETURNING id
         `,
         [
           input.operatingCompanyId,
           invoice.id,
           input.loadId,
-          accessorialResolution.revenue_code,
-          accessorialResolution.account_id,
+          resolution.revenue_code,
+          resolution.account_id,
           stopExtraDescription({
             sequence_number: Number(rate.sequence_number ?? 0) || null,
             stop_type: rate.stop_type,
@@ -411,6 +439,7 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
           }),
           cents,
           idx + 1,
+          rate.rate_type === "lumper" ? "lumper" : "accessorial",
         ]
       );
       const invoiceLineId = String(invoiceLineRes.rows[0]?.id ?? "");

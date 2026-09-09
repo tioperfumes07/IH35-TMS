@@ -6,6 +6,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { requireAuth } from "../auth/session-middleware.js";
 import { DeductionVoidError, voidSettlementDeduction } from "./settlement-deduction-void.service.js";
 import { createSettlementDeduction } from "./deductions.service.js";
+import { editSettlementDeduction, EditDeductionError, EDITABLE_DEDUCTION_TYPES } from "./edit-settlement-deduction.service.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 
@@ -37,6 +38,18 @@ const createDeductionBodySchema = z.object({
   load_id: z.string().uuid().optional(),
   attachment_draft_id: z.string().uuid().optional(),
 });
+// SET-01 part 2 — in-place edit of a saved deduction line. amount and/or type optional (omit to
+// keep current); reason always required (an edit states why). The service enforces the real
+// invariants (pending, manual-only, open settlement) and does the WORM void+recreate.
+const editDeductionBodySchema = z
+  .object({
+    amount_cents: z.number().int().positive().optional(),
+    deduction_type: z.enum(EDITABLE_DEDUCTION_TYPES).optional(),
+    reason: z.string().trim().min(10),
+  })
+  .refine((b) => b.amount_cents != null || b.deduction_type != null || b.reason.length > 0, {
+    message: "provide at least one of amount_cents / deduction_type, plus a reason",
+  });
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -226,6 +239,46 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
       });
       return reply.code(201).send(row);
     } catch (error) {
+      if (error instanceof Error && error.message.startsWith("E_INVALID_INPUT")) {
+        return reply.code(422).send({ error: "invalid_input", message: error.message });
+      }
+      throw error;
+    }
+  });
+
+  // SET-01 part 2 (owner LOCKED MANDATE 2026-09-09) — "true per-line editable inputs" for a saved
+  // deduction line. A thin auth+validation wrapper around the REAL editSettlementDeduction service,
+  // which does the WORM-safe void-old + recreate through the same writers create/void use — never a
+  // bare UPDATE of a money row. Fails closed inside the service (pending + manual-only + open
+  // settlement); the route maps its typed errors to HTTP codes.
+  app.patch("/api/v1/driver-finance/settlement-deductions/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = requireDeductionWriteRole(req, reply);
+    if (!user) return;
+    const params = deductionIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const body = editDeductionBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+
+    try {
+      const result = await withCompany(user.uuid, query.data.operating_company_id, (client) =>
+        editSettlementDeduction(client, {
+          operatingCompanyId: query.data.operating_company_id,
+          deductionId: params.data.id,
+          newAmountCents: body.data.amount_cents,
+          newType: body.data.deduction_type,
+          reason: body.data.reason,
+          actorUserId: user.uuid,
+        })
+      );
+      return reply.code(200).send(result);
+    } catch (error) {
+      if (error instanceof EditDeductionError) {
+        if (error.code === "deduction_not_found") return reply.code(404).send({ error: error.code });
+        if (error.code === "deduction_already_voided") return reply.code(409).send({ error: error.code, message: error.message });
+        return reply.code(422).send({ error: error.code, message: error.message });
+      }
       if (error instanceof Error && error.message.startsWith("E_INVALID_INPUT")) {
         return reply.code(422).send({ error: "invalid_input", message: error.message });
       }

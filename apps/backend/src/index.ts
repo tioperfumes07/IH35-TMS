@@ -991,6 +991,8 @@ async function main() {
   await registerSettlementPaymentRoutes(app);
   await registerAutoDeductionPolicyRoutes(app);
   await registerDriverFinanceSettlementHtmlRoutes(app);
+  // company-settlement-render.routes.ts is autoload-mounted (default fp) by the accounting-directory
+  // @fastify/autoload — do NOT also mount it here or boot crashes with a duplicate-GET route (SET-30).
   await registerDriverFinanceDriverBillsRoutes(app);
   await registerDriverFinanceDriverBillsListRoutes(app);
   await registerDriverFinanceDebtRoutes(app);

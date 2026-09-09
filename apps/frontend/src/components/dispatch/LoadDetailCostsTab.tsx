@@ -31,6 +31,7 @@ import { ReceiptAttach } from "../documents/ReceiptAttach";
 import { PAID_WITH_KIND_LABEL, paidWithAccounts, paidWithKind } from "../load-costs/paidWith";
 import { formatMoneyCents } from "./constants";
 import { formatDateUS } from "../../lib/formatDate";
+import { LoadUnitCostSplitPanel } from "./LoadUnitCostSplitPanel";
 
 // LDT-1 (owner order 2026-09-05 23:00Z, CURSOR-LOAD-DETAIL-TABS-BUILD § LDT-1; built by Claude Lead
 // 2026-09-06 on the owner's "you build all loads and finish all related"): the Costs tab is the
@@ -302,6 +303,9 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
         <Kpi label="Driver pay" value={formatMoneyCents(driverPay, currency)} />
         <Kpi label="Approximate margin" value={`${formatMoneyCents(margin, currency)} · ${pct}`} strong />
       </section>
+
+      {/* SET-28 — miles-weighted cost split across the truck(s) that ran this load (100% when one truck). */}
+      <LoadUnitCostSplitPanel loadId={load.id} operatingCompanyId={opco} currency={currency} />
 
       <div className="ldt-rowbar">
         <span>{entryCount === 0 ? "No costs on this load yet." : `${entryCount} cost${entryCount === 1 ? "" : "s"} on this load. Every one carries the load number.`} <span className="ldt-muted">Approximate · before settlement. Nothing here has posted to the general ledger — this tour is open.</span></span>

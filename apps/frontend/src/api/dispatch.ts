@@ -178,6 +178,10 @@ export type DispatchBookLoadPayload = {
   pre_cool?: boolean;
   tarp_qty?: number;
   tarp_size?: string;
+  // REEFER-LUMPER-CONFIRMATION (migration 202614010000, owner spec 2026-09-08).
+  lumper_payer?: "broker" | "customer";
+  lumper_will_invoice_customer?: boolean;
+  lumper_late_penalty_applies?: boolean;
   lumper_amount_cents?: number;
   customer_chargeback_requested?: boolean;
   customer_chargeback_reason?: string;

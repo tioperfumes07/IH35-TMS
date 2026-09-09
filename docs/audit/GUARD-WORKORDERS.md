@@ -9769,3 +9769,71 @@ account-only suggestions, to close the remaining ~32/437 to reach 350 | live Neo
 material improvement (25% -> 72.8%) · target not reached, transparently reported, no fabrication** |
 
 | **FIXED (CC-3 2026-09-09, real gap in the 2026-09-07 partial fix, live-confirmed):** `DRV-STATUS-LOCK-BULK-SET-STATUS-GAP` -- re-verified the owner's still-open "Drivers should be ~30 Active" complaint live: `mdata.drivers` for USMCA currently shows 80 Active (down from 89 on 09-07 -> 85 after that session's one-time remediation -> 80 now), 22 of those 80 updated_at=today, and **zero** of the 80 carry `status_locked_at` -- the exact fingerprint of the 09-07 `DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION` fix (PR #21326, deployed) not covering every write path. ROOT CAUSE: that fix locked the single-item `/deactivate`+`/reactivate` routes (`drivers.routes.ts`) and the Samsara mirror collector, but never touched `apps/backend/src/drivers/drivers-bulk.routes.ts`'s `handleSetStatus` -- the handler behind the multi-select **"Deactivate drivers"** bulk-action button in `DriversTable.tsx`, i.e. the exact UI surface the owner's own words describe ("I deactivated MANY drivers"). A driver bulk-deactivated through that button gets `status='Inactive'`+`deactivated_at` set but `status_locked_at` left NULL -- fully eligible for the nightly `mdata.driver_active_30d` cron (05:15 UTC) to silently flip it straight back to Active the next time its 30-day activity predicate re-matches, the identical mechanism the 09-07 fix was supposed to close everywhere. Same class of gap also found in `mdata/workflow-routes.ts`'s `WF-064-MDATA-001` approval action (sets `status='Active'` with no lock-clear, asymmetric with the direct `/reactivate` route). FIX: `handleSetStatus` now sets `status_locked_at=now()`/`status_locked_reason='manual_deactivate'` on Inactive/Terminated and clears both on Active, matching the single-item routes exactly; `WF-064-MDATA-001` now clears the lock on approval, matching `/reactivate`. Separately flagged, NOT fixed here (needs a migration CC-3 cannot author): `drivers.routes.ts`'s `/deactivate` route writes `status_locked_reason='test_fixture_quarantine'` when quarantining a test fixture, but the live `drivers_status_locked_reason_check` CHECK constraint only permits `('manual_deactivate','samsara_deactivated')` -- that specific branch would throw a CHECK violation at runtime; a real, separate, pre-existing bug, out of scope for this PR. | `apps/backend/src/drivers/drivers-bulk.routes.ts` (`handleSetStatus`); `apps/backend/src/mdata/workflow-routes.ts` (`WF-064-MDATA-001`); `apps/backend/src/drivers/__tests__/drivers-bulk.routes.test.ts` (new regression test) | **CC-3** | extend the exact same status_locked_at/reason set-on-deactivate/clear-on-activate pattern already proven correct on the single-item routes to every remaining direct writer of `mdata.drivers.status`, rather than special-casing one more surface at a time | live Neon read (bypass_rls=lucia) confirming 80 Active/0 locked/22 updated-today before the fix; direct source read of `DriversTable.tsx`'s bulk "Deactivate drivers" button confirming it calls exactly this `set_status` action; 6/6 existing + 1 new bulk-route unit test pass; drivers suite 27/27 pass; tsc clean | **FIXED -- NEXT: after deploy, re-run the bulk deactivate action live and confirm the locked drivers survive the next 05:15 UTC cron tick; separately chase `SAMSARA-TMS-DRIVER-LINKAGE-GAP-USMCA` (only 54/757 Samsara drivers linked) as the other real path toward the owner's ~30 figure; file the test_fixture_quarantine CHECK-constraint gap for a migration-authorized lane** |
+## NEW-29/30/31 billing-hook consumption (flagged CC-1 by CC-2, docs/audit/GUARD-WORKORDERS.md, 2026-09-08) — investigated (CC-1, 2026-09-09), NOT a small wire-up, both halves genuinely blocked
+
+CC-2's PR #21455 (NEW-29/30/31) emits 3 append-only `audit.audit_events` rows (`dispatch.lumper_receipts_sent`,
+`dispatch.lumper_customer_invoice_requested`, `dispatch.late_penalty_decision`) from a dispatch-side
+click-confirm flow, flagging that CC-1/AP should wire the actual GL/billing consumption. Live-verified today
+(bypass_rls=lucia): **zero rows of any of the 3 event classes exist yet** — the feature is brand new, nothing
+has triggered it in production. Investigated both proposed consumers before writing any wiring code, per the
+standing law against guessing:
+
+**1. `dispatch.lumper_customer_invoice_requested` → "Lumper Lifecycle" scenario-2 billing
+(`apps/backend/src/cash-advances/lumper-*.ts`)** — this is NOT an existing pipeline waiting for a trigger.
+Grepped the whole backend for every exported symbol in `lumper-auto-invoice.ts`
+(`shouldBillLumperToCustomer`, `lumperInvoiceLine`, `lumperInvoiceJournal`, the `lumper_billable` column) —
+**zero call sites anywhere outside that file's own unit test.** The file's own header comment ("load close
+(WF-040) appends a lumper line...") describes work that was never actually built — `lumper-auto-invoice.ts`,
+`lumper-posting-rules.ts`, `lumper-cash-advance-split.ts`, and `lumper-bank-reconciliation.ts` are pure,
+well-unit-tested logic modules with no real integration into any route, service, or cron. "Wiring the
+consumption" here means building the entire WF-040 load-close → invoice-line integration from scratch (find
+or build the load-close handler, call these pure functions with real expense-line/customer data, actually
+write the invoice line + JE) — a scoped feature build in its own right, not a follow-up wire-up. The
+`LUMPER_LIFECYCLE_ENABLED` env-var gate (its own comment: "verified by GUARD on a Neon branch before any
+...flip") confirms this was always meant to land as a deliberate, separately-verified cutover, not
+default-on.
+
+**2. `dispatch.late_penalty_decision` → driver-finance internal fines (`safety.internal_fines`)** — this
+target system IS real and mature (`POST /api/v1/safety/internal-fines`, safety-v5.routes.ts:265, exercised,
+tested), but it requires an explicit `amount` (dollars) and `reason_uuid` on every insert, and its own code
+comment establishes a deliberate maker/checker control: approving a fine (creating the real driver liability)
+requires a named human `approved_by_user_uuid`, specifically NOT automated ("FD1 approval control... any
+record that creates a financial obligation must identify its approver"). The dispatch-side event carries
+only a boolean (`penalty: true/false`) and an optional free-text note — **no dollar amount exists anywhere
+in this signal.** Auto-creating a fine from it would mean inventing the amount, which the standing law
+forbids outright; auto-*approving* it would also violate the target system's own explicit human-approval
+design.
+
+**Conclusion, not a fix, filing per FIND IT / FILE IT / DO NOT GUESS:** neither consumer can be safely wired
+today without either (a) inventing a financial figure, or (b) building a genuinely new feature (the WF-040
+load-close integration) that doesn't exist yet in any form. The correct minimal next step for whoever picks
+this up is a **read-only worklist** (loads with a true `dispatch.lumper_customer_invoice_requested` or
+`dispatch.late_penalty_decision` flag, awaiting a human to either bill the customer through the existing
+accessorial-invoice path — the exact `from-load.ts` mechanism this session's REEFER-LUMPER-CONFIRMATION work
+already extended for a different lumper signal — or create the internal fine through the existing,
+human-approved `/api/v1/safety/internal-fines` form with a real amount) rather than an automated poster. Not
+built here — scoping a new UI surface is its own task; this entry exists so the next person doesn't
+re-discover from zero that "wire the consumption" quietly means "build two new features."
+
+| item | status |
+|---|---|
+| NEW-29/30/31 lumper-invoice consumption | OPEN · no WF-040 load-close integration exists at all · needs a scoped build, not a wire-up |
+| NEW-29/30/31 late-penalty-fine consumption | OPEN · blocked on missing fine amount + target system's own human-approval design · needs a worklist, not automation |
+
+## NEW-09 CORRECTION — POST-DEPLOY LIVE PROOF CLOSED (CC-1, 2026-09-09)
+
+The one item the 2026-09-08 NEW-09 CORRECTION entry above left open ("Remaining: post-deploy live
+re-screenshot of load 13569 under 'All Open' -- should show 0 rows"). PR #21447 is now live (confirmed
+`git merge-base --is-ancestor` against the deployed `git_sha`, healthz `debc3d9d` and later).
+
+Live-verified end to end, not just re-read: queried `accounting.invoices` directly on prod
+(bypass_rls=lucia, USMCA) — invoice `e89484a6…` for load 13569 (`b3532955…`) is `status='sent'`,
+`voided_at IS NULL`, so `load-costs-board.routes.ts`'s `invoice_info` CTE (`i.status NOT IN
+('draft','proforma','void')`) correctly returns `is_invoiced=true` for this load on the live query
+today. Re-read the frontend choke point (`LoadCostsBoardPage.tsx:99`,
+`isClosed(r) = CLOSED.includes(r.status) || r.is_invoiced`) and confirmed the default/`all_open`
+filter branch (`matches()`, line 136) returns `!isClosed(r)` — with `is_invoiced=true`, load 13569 is
+excluded from every open-items view today, not just in theory. No code change needed; this closes the
+one remaining unverified claim from the correction above.
+
+**NEW-07/08/09 now fully CLOSED, including the post-deploy live-proof gate.**
