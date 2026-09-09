@@ -373,8 +373,12 @@ export async function registerMdataWorkflowRoutes(app: FastifyInstance) {
 
       let targetUpdated = 0;
       if (workflow.action_code === "WF-064-MDATA-001") {
+        // DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION: a human approved reactivation here, same as
+        // the direct /reactivate route — clear any prior lock (manual or Samsara-sourced) so this
+        // driver isn't left un-reactivatable, or (the actual gap this closes) left locked while
+        // showing Active because a prior deactivation's lock was never cleared.
         targetUpdated = (await client.query(
-          `UPDATE mdata.drivers SET status = 'Active', updated_by_user_id = $2 WHERE id = $1`,
+          `UPDATE mdata.drivers SET status = 'Active', status_locked_at = NULL, status_locked_reason = NULL, updated_by_user_id = $2 WHERE id = $1`,
           [workflow.target_resource_id, authUser.uuid]
         )).rowCount ?? 0;
       } else if (workflow.action_code === "WF-064-MDATA-002") {
