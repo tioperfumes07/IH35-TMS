@@ -196,7 +196,7 @@ export function BillPaymentsListPage() {
           <EntityLink kind="bill" id={row.bill_id} label={visibleDocumentLabel(row.bill_number, row.bill_id, "Bill")} />
         ),
       },
-      { key: "vendor_id", label: "Vendor ID", sortable: true, render: (row) => <EntityLink kind="vendor" id={row.mdata_vendor_id} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} /> },
+      { key: "vendor_id", label: "Vendor ID", sortable: true, sortValue: (row) => row.vendor_name ?? "", render: (row) => <EntityLink kind="vendor" id={row.mdata_vendor_id} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} /> },
       { key: "reference_number", label: "Reference", sortable: true, sortValue: (row) => row.reference_number ?? row.check_number ?? "", render: (row) => row.reference_number ?? row.check_number ?? "-" },
       { key: "memo", label: "Memo", sortable: true, sortValue: (row) => row.memo ?? "", render: (row) => row.memo ?? "-" },
       {

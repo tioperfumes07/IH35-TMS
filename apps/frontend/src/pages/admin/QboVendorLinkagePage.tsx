@@ -226,19 +226,28 @@ export function QboVendorLinkagePage() {
   async function autoLinkHighConfidence() {
     const candidates = (driversQuery.data?.rows ?? []).filter((row) => !row.qbo_vendor_id);
     let linkedCount = 0;
+    let failedCount = 0;
     for (const candidate of candidates) {
       const suggestions = await listQboVendorSuggestions(companyId, "driver", candidate.id);
       const top = suggestions.rows[0];
       if (!top || Number(top.score ?? 0) < 0.9) continue;
-      await linkDriverQboVendor(candidate.id, {
-        operating_company_id: companyId,
-        qbo_vendor_id: top.qbo_vendor_id,
-        reason: "bulk_auto_link_high_confidence",
-        force: false,
-      }).catch(() => undefined);
-      linkedCount += 1;
+      try {
+        await linkDriverQboVendor(candidate.id, {
+          operating_company_id: companyId,
+          qbo_vendor_id: top.qbo_vendor_id,
+          reason: "bulk_auto_link_high_confidence",
+          force: false,
+        });
+        linkedCount += 1;
+      } catch {
+        failedCount += 1;
+      }
     }
-    pushToast(`Auto-link complete: ${linkedCount} drivers linked`, "success");
+    if (failedCount > 0) {
+      pushToast(`Auto-link complete: ${linkedCount} drivers linked, ${failedCount} failed`, "info");
+    } else {
+      pushToast(`Auto-link complete: ${linkedCount} drivers linked`, "success");
+    }
     void queryClient.invalidateQueries({ queryKey: ["qbo-vendor-linkage", "drivers", companyId] });
   }
 

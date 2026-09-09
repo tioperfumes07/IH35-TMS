@@ -221,4 +221,49 @@ Cursor→Cascade | 2026-08-25T13:50CT | GO | GO-1350 items 101-125 WALK /program
 2026-08-16T20:57Z Cascade | P1 scan · 0 green mergeable PRs · 1 CONFLICTING (#7909) · 9 UNKNOWN · USMCA verify pending cursor lane
 2026-08-17T01:03Z Cursor LEAD SYNC → Cascade | INBOX rewritten · keep continuous-verify · never stop at 0 PRs
 
-2026-09-09T08:10Z Cascade | DONE | main=2ab999e984 | PR #21530 (GLB-25155 settlement display_id ≠ S-<load_number>) + PR #21535 (GLB-25156+25157 Factoring Aging Settlement column + Payments to You real table) | guards: 7/7 settlement tests PASS, backend tsc clean, frontend tsc clean, full pre-push gate READY TO PUSH, entity-link-adoption baseline regenerated | live proof: Neon USMCA SQL confirms (a) settlements S-13734/S-13733/S-13730 ≠ load numbers 13578/13576/13572 (sequence-generated, not S-<load_number>); (b) recourse-pipeline LATERAL join resolves settlements S-13645/S-13729/S-13728/S-13727/S-13726/S-13725/S-13649 for factored invoices, honest null for INV-2026-00008/INV-2026-00007/load 13573; (c) 51 factoring_advances with real advance_amount_cents + advanced_at feed Payments to You tab | NEXT: deploy + live UI spot-check /factoring/aging + /factoring/payments-to-you
+---
+
+CASCADE | DONE | 2026-09-09T06:10Z | GLB-25153 | PR #21515 squash-merged 07e28c9ba8 | LIVE=b44b5e1 (backend, pre-merge) | GUARD PASS 60 hosts on main | NEXT: lane clear
+
+## What landed
+- `scripts/verify-surface-bar-paritydrawer-inventory.mjs` — added `EditSettlementDeductionDrawer.tsx` to ALLOWED_NESTED per owner LOCKED MANDATE 2026-09-09 (SET-01 part 2)
+- Squash merge `07e28c9ba8` on origin/main — post-merge forensic check confirmed: guard file on main contains the entry (count: 1), guard PASS — 60 ParityDrawer hosts mapped
+
+## Confirmed closed (per lead, no re-report needed)
+- RPT-04: `verify-report-pages-use-staged-filters.mjs` green on main — all 28 target pages wired, 3 documented exclusions. Closed.
+- BANK-REORDER: `verify-bank-accounts-reorder-control.mjs` green on main — route, API, UI present in BankingHome.tsx. Closed.
+
+
+---
+
+CASCADE | DONE | 2026-09-09T06:40Z | GLB-25154 | PR #21516 squash-merged fc75987e2f | GUARD PASS on main | NEXT: lane clear
+
+## What landed
+- New guard `scripts/verify-coa-clickthrough-and-report-figures-reconcile.mjs` asserting 14 invariants:
+  - CoA list → register deep-link (BS accounts)
+  - CoA list → P&L report deep-link (P&L accounts)
+  - CoA list → Edit drawer
+  - P&L line → register deep-link (all account lines)
+  - Route manifest has both routes
+  - AccountRegisterPage consumes accountId param
+  - P&L service reads from `accounting.journal_entry_postings` (the GL source table)
+  - P&L service joins `accounting.journal_entries` + `catalogs.accounts`
+  - Revenue = credits - debits (Income/OtherIncome)
+  - COGS = debits - credits (CostOfGoodsSold)
+  - Expenses = debits - credits (Expense/OtherExpense)
+  - Excludes voided, sample, and retained-earnings closing entries
+
+## Live proof (Neon, USMCA branch, RLS-bypassed)
+- 1659 USMCA GL postings across 6 account types:
+  - Asset: 860 postings, debits $548,170.75, credits $301,810.84
+  - COGS: 584 postings, debits $160,562.37, credits $54,932.15
+  - Income: 72 postings, debits $3,500.00, credits $173,309.91
+  - Expense: 56 postings, debits $2,335.75, credits $3.60
+  - Liability: 86 postings, debits $389.66, credits $184,802.03
+  - Equity: 1 posting, credits $100.00
+- P&L report query reads from the same `accounting.journal_entry_postings` table → figures reconcile to source GL by construction
+
+## Post-merge forensic check
+- Squash `fc75987e2f` on origin/main contains the guard file (confirmed)
+- Guard PASS on main: `verify-coa-clickthrough-and-report-figures-reconcile PASS`
+

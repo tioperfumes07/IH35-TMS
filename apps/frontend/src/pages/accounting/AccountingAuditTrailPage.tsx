@@ -301,7 +301,7 @@ export function AccountingAuditTrailPage() {
   const lineageColumns = useMemo<ParityColumn<AccountingSourceLineageRow>[]>(
     () => [
       { key: "occurred_at", label: "Occurred", sortable: true, render: (row) => fmtDate(row.occurred_at) },
-      { key: "journal_entry_id", label: "JE", sortable: true, render: (row) => <EntityLink kind="journal_entry" id={row.journal_entry_id} label={row.journal_entry_id ? visibleDocumentLabel(row.memo, row.journal_entry_id, "Journal entry") : undefined} /> },
+      { key: "journal_entry_id", label: "JE", sortable: true, sortValue: (row) => row.memo ?? row.journal_entry_id ?? "", render: (row) => <EntityLink kind="journal_entry" id={row.journal_entry_id} label={row.journal_entry_id ? visibleDocumentLabel(row.memo, row.journal_entry_id, "Journal entry") : undefined} /> },
       {
         key: "account_number",
         label: "Account",

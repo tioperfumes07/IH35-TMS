@@ -7,7 +7,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 
-type FindingRow = { driver_uuid: string; severity: string; drift_reason: string; _rowId: string };
+type FindingRow = { driver_uuid: string; driver_name: string | null; severity: string; drift_reason: string; _rowId: string };
 
 async function fetchSnapshot(operatingCompanyId: string) {
   const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
@@ -60,7 +60,7 @@ export function DriverVendorMappingTab() {
     scanMutation.reset();
   }, [companyId]); // Mutation reset is stable; company transitions own a fresh integrity scan lifecycle.
 
-  const findings: Array<{ driver_uuid: string; severity: string; drift_reason: string }> =
+  const findings: Array<{ driver_uuid: string; driver_name: string | null; severity: string; drift_reason: string }> =
     query.data?.snapshot?.findings ?? [];
 
   const rows = useMemo<FindingRow[]>(
@@ -70,7 +70,7 @@ export function DriverVendorMappingTab() {
 
   const columns = useMemo<ParityColumn<FindingRow>[]>(
     () => [
-      { key: "driver_uuid", label: "Driver", sortable: true },
+      { key: "driver_uuid", label: "Driver", sortable: true, sortValue: (row) => row.driver_name ?? row.driver_uuid ?? "", render: (row) => row.driver_name ?? row.driver_uuid },
       { key: "severity", label: "Severity", sortable: true },
       { key: "drift_reason", label: "Drift reason" },
       {
