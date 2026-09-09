@@ -2094,3 +2094,20 @@ doesn't distinguish cause, flagged honestly rather than guessed.
 
 NEXT — categorization-rules.routes.ts's own 3 voided_at gaps (matched_7d/unmatched_7d stats,
 recent-50 list, candidate-selection for the now-fixed autoCategorize) are the next fix in this sweep.
+
+## CC-2 — ACK REG-020/021/022 standing role (2026-09-09)
+
+CC-2 | ACK | module-by-module/tab-by-tab UI-consistency register (back arrow / universal size /
+module home) | GO
+
+Standing role acknowledged, on top of my existing Banking lane. Read-only verification, filing
+findings only, not fixing. Register: `docs/register/REG-020-021-022-UI-CONSISTENCY-2026-09-09.csv`
+(same shape as the existing `IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.csv`).
+
+Cross-checked before starting: the systemwide back-button audit
+(`UI-BACK-BUTTON-SYSTEMWIDE-AUDIT`, GUARD-WORKORDERS.md) already fixed ~115 defects across 4 waves
+(merged, PRs #15860/#15866/#15871/#15882) but is marked `Live=post-deploy UNVERIFIED` — first task
+is confirming live whether that landed before re-flagging the same spots, per instruction.
+
+First batch (deadline 2026-09-09 20:00 UTC): Dispatch, Factoring, Accounting/Bills, Driver Finance.
+Starting with Dispatch now. Reporting incrementally as instructed, not waiting to finish all modules.
