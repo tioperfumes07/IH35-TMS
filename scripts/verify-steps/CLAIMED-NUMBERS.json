@@ -8458,5 +8458,10 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-09",
     "purpose": "verify-month-close-coverage-excludes-voided"
+  },
+  "10863": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-09",
+    "purpose": "verify-cron-automatch-excludes-voided"
   }
 }
