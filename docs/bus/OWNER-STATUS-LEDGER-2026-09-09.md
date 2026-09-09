@@ -148,3 +148,24 @@ merges that post-date that cutoff (61, 67, 69).
   voided-transaction exclusion, PRs #21526/21529/21536).
 - Backend redeployed to catch up on all of the above (`5966dfd8` and later, trigger in flight as of
   this update).
+
+### 2026-09-09 07:3xZ (CC-1) — item 10 investigation
+
+Checked live whether "the outline is clear this load/tour only" already holds across the 3 named
+surfaces before assuming it needs a build:
+
+- **Load Costs** (`/accounting/load-costs`, expand a row): already clear — "COSTS ON LOAD 13581"
+  section header, a `LOAD 13581 · <customer> · <driver> · Unit <unit>` identity line, Line Haul
+  Revenue/Costs-on-this-load side by side, and the inline expense-entry form is itself labeled
+  `13581` before any field is filled in.
+- **Company Settlement itemized-by-load** (already covered in this session's earlier item-9 work):
+  each load gets its own header (`13487`, `13493`, ...) with Customer Charges/Driver Payment/Fuel/
+  Expenses nested under it — unambiguous.
+- **Driver Settlement detail** (post the item-9 Number-spine fix, PR #21534): every earnings/deadhead/
+  reimbursement/deduction line already carries its own `Load <N>` label or link.
+
+**No concrete defect found on this pass** — the labeling infrastructure is already there on all 3
+surfaces. If the owner's complaint is about something more specific (a visual border/highlight on the
+selected row itself, rather than the text labeling), that needs a screenshot or a named surface to act
+on rather than a guess. Not closing item 10 — marking it "investigated, no gap found yet" rather than
+silently dropping it.
