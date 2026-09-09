@@ -866,6 +866,14 @@ export function listLoadExpenses(operatingCompanyId: string, loadId: string, par
   );
 }
 
+/** SET-30 — company settlement letter on the house template (same shell as driver settlement/invoice). */
+export function companySettlementHtmlUrl(operatingCompanyId: string, companySettlementId: string) {
+  return withCompany(
+    `/api/v1/accounting/company-settlements/${encodeURIComponent(companySettlementId)}.html`,
+    operatingCompanyId
+  );
+}
+
 /** SET-28 — per-truck miles-weighted split of a load's cost pool when it was pulled by >1 truck. */
 export type UnitCostShare = {
   unit_id: string;
