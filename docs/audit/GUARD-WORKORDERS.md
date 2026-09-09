@@ -9981,3 +9981,100 @@ this, and it is just [unfinished]"):**
 | **FIXED (CC-3 2026-09-09, part 2 of owner mega-report response):** `FACTORING-COLUMN-ORDER-AND-SETTLEMENT-NUMBERS-MISSING` -- two of the owner's mega-report items, real and additive, no new backend query for either. (1) "amount of the ORIGINAL invoice, then advance, then reserve, then fees -- in that order, every tab": Purchase Report's 4 real dollar columns (Purchase/Net Adv/Cash Rsv/Fees) were scattered per the real-Faro-portal's own column order (Purchase, then Escrow/Cash Rsv, then Discount/Fees, with Net Adv buried near the end after 9 placeholder columns) -- regrouped into the exact requested sequence; every placeholder "—" column keeps its original position around them. (2) "Settlement numbers are missing from Factoring entirely": `FactoringRecourseInvoice` already carries `lc_settlement_number` (the same shared Load-Costs rollup field `RecoursePipelineTable` already renders, from NEW-21 earlier this session) -- it was simply never surfaced on the two actual reporting tabs (Purchase Report, Aging); added as a real "Settlement #" column on both, sourced from data already fetched, never fabricated. | `apps/frontend/src/pages/factoring/FactoringHome.tsx` (Purchase Report + Aging column arrays); new `apps/frontend/src/pages/factoring/__tests__/FactoringHome.purchase-report-column-order.test.tsx` | **CC-3** | when a real field already exists on an already-fetched type (grep the API type first), surface it as a real column instead of treating a report as no-new-work-needed just because it currently under-uses its own payload | tsc clean; new regression test (1/1) proving Purchase Report's Purchase->Net Adv->Cash Rsv->Fees sequence; full factoring suite re-run (8/9 pass, the 1 failure the same pre-existing canvas/getContext error already confirmed unrelated in the prior PR) | **FIXED -- live-Chrome re-verification pending next frontend deploy** |
 
 | **FIXED (CC-3 2026-09-09, part 3 of owner mega-report response):** `FACTORING-RESERVE-TAB-STILL-STUB` -- "Reserve" (item 10 of the real 15-item Faro nav, per `09-08-2026-Cursor-FAC09a-CORRECTED-FROM-REAL-SCREENSHOTS.md`) was still routed through the generic honest-stub block despite the other 5 named report tabs (Account Summary/Fees Paid/Purchase Report/Aging/Chargebacks & Overpayments) being real. Built real: Total Reserve bound to the same `summary.reserve_balance` every other tab already uses; a real reserve-movement history table (Date/Note/Amount/Balance) sourced from `getReserveBalanceHistory` -- the SAME already-proven ledger `ReserveTracker.tsx`'s "Reserve movement history" renders (no new backend query), scoped to this page's own active factor instead of a picker. Honestly NOT built: the spec's "Escrow Reserve / Cash Reserve" split and "Show Cash"/"Show Escrow" toggle -- this schema tracks ONE combined `reserve_balance` with no type split (the identical, already-established constraint Account Summary's own Escrow/Cash rows carry); both render an honest "—" with the same footnote pattern rather than fabricating a split. The spec's per-entry columns (ID, Inv, PO Ref#, Debtor, Pmt Ref) also don't exist at this batch-level movement granularity -- honestly noted in-page, not guessed. | `apps/frontend/src/pages/factoring/FactoringHome.tsx` (new Reserve tab section + `reserveHistoryQuery`); `scripts/verify-faro-tabs-real-data.mjs` (new `checkReserveReal`, 15 selftest checks now, was 13); new `apps/frontend/src/pages/factoring/__tests__/FactoringHome.reserve-real.test.tsx` | **CC-3** | when a report tab's real backing data already exists in a SIBLING component (ReserveTracker.tsx's own proven queries), reuse the same API call instead of re-deriving or leaving it stubbed | tsc clean; 2/2 new Reserve tests + 1/1 purchase-report-column-order test pass; guard --selftest 15/15; full factoring suite 10/11 (the 1 failure the same pre-existing canvas/getContext error already confirmed unrelated); guard non-selftest run OK | **FIXED -- live-Chrome re-verification pending next frontend deploy** |
+## BANK-F30012 (BANK-VOIDED-RECON-01) — FIXED, live before/after (CC-2, 2026-09-09)
+
+Discovered independently via a vertical sweep of `banking.bank_transactions` read sites (not owner-
+prompted): `banking.bank_transactions.voided_at` is a void-not-delete column, set by
+`bank-tx-dedup.ts::supersedePlaidPendingByExactPostedCandidate` when a stale Plaid pending row is
+superseded by its posted successor (699 voided rows on prod today). `reconciliation.routes.ts`
+predates that mechanism: all 5 of its `SELECT`/`WITH` queries against `banking.bank_transactions`
+(worklist display, match-eligibility check, unmatch's prior-state CTE, complete-session variance
+calculator, QBO-sync-candidate selection) read every row in the window with no `voided_at` filter.
+
+**Fix:** added `AND bt.voided_at IS NULL` (or `AND voided_at IS NULL`) to all 5 sites.
+
+**Live proof:** one open USMCA reconciliation session (`fa95376a-20fb-4d16-aef5-5b207d169846`) had
+$44,833.89 across 38 voided rows silently included in its variance/worklist math before the fix;
+excluded after.
+
+Shipped PR #21520 (claim #21517), verify-step 10839
+(`scripts/verify-bank-recon-excludes-voided-transactions.mjs`, selftest 2/2). Backend redeployed,
+`healthz` confirmed live. | `apps/backend/src/banking/reconciliation.routes.ts` |
+**CC-2 · FIXED · live before/after ($44,833.89/38 rows excluded)** |
+
+## BANK-F30013 — Form 425C (bankruptcy MOR) excludes voided bank_transactions (CC-2, 2026-09-09)
+
+Same bug class as BANK-F30012, found continuing the same sweep, this time in a real U.S. Bankruptcy
+Court Monthly Operating Report calculation: `compliance/form-425c.routes.ts`'s flow-summary query
+and one query each in Exhibits A/B/C/D (`reports/form-425c/exhibits/exhibit-{a,b,c,d}-*.ts`) read
+`banking.bank_transactions` with no `voided_at` filter — voided/reversed rows were being counted as
+real receipts/disbursements in a filing whose own code comments already say results "must never
+reach a court filing" wrong and "must FAIL LOUD."
+
+**Fix:** added `AND bt.voided_at IS NULL` to the flow-summary query and each exhibit query (5 files).
+
+**Self-caught bug during the fix:** first attempt inserted the explanatory comment as a JS-style
+`// BANK-F30013: ...` literally inside a SQL template literal — `//` is not valid SQL and would have
+broken the query at runtime. Caught via the harness's automatic file-diff notification before any
+live verification ran; corrected to `-- ` (SQL line comment) across all 5 files, then re-verified by
+executing the exact post-fix SQL text live against Neon.
+
+**Live proof (one real USMCA company, exact SQL before/after):** pre-fix —
+receipts_cents=38804502, disbursements_cents=40132931, in_scope_txn_count=437. Post-fix:
+receipts_cents=28536464, disbursements_cents=28318755, in_scope_txn_count=288. A real
+**$102,680.38 receipts / $118,141.76 disbursements** overstatement corrected.
+
+Shipped PR #21526 (claim #21525), verify-step 10843
+(`scripts/verify-form425c-excludes-voided-transactions.mjs`). Backend redeployed, `healthz`
+confirmed live. | `apps/backend/src/compliance/form-425c.routes.ts`,
+`apps/backend/src/reports/form-425c/exhibits/exhibit-{a,b,c,d}-*.ts` |
+**CC-2 · FIXED · live before/after ($102,680.38 / $118,141.76 overstatement corrected)** |
+
+## BANK-F30014 (owner mega-report 2026-09-09, routed via INBOX-CC-2) — FIXED (CC-2, 2026-09-09)
+
+Owner report: Banking → Transactions account-selector list has no reorder control. **Root-caused
+as NOT a missing UI control** — the reorder feature already exists and already writes
+`banking.bank_accounts.display_order` (via `PATCH /api/v1/banking/accounts/reorder` and
+`POST /api/v1/banking/accounts/visibility`) — but `GET /api/v1/banking/plaid/accounts`, the read
+endpoint feeding the Transactions page's account-selector row, never read `display_order` back:
+its `ORDER BY` was `institution_name, account_name, created_at DESC`, ignoring the column entirely.
+
+**Fix:** added `display_order` to the SELECT list and `ORDER BY display_order, institution_name
+NULLS LAST, account_name NULLS LAST, created_at DESC`.
+
+**Live proof:** read-only Neon CTE simulation with hypothetical `display_order` values (no data
+mutated) — old ordering ignored them, new ordering honored them correctly. Confirmed live all 4
+current USMCA accounts have `display_order=0` (never reordered), so the fix is a no-op today until
+an operator actually uses the existing reorder feature — the bug was latent, not yet visibly wrong.
+
+Shipped PR #21529 (claim #21528), verify-step 10847
+(`scripts/verify-plaid-accounts-honor-display-order.mjs`). Backend redeployed, `healthz` confirmed
+live. | `apps/backend/src/integrations/plaid/link.routes.ts` |
+**CC-2 · FIXED · live-simulated before/after, currently a no-op pending first real reorder** |
+
+## BANK-F30015 — accounting/bank-recon worklist excludes voided bank_transactions (CC-2, 2026-09-09)
+
+Continuing the same sweep flagged in BANK-F30012/F30013's own REMAINING notes:
+`accounting/bank-recon/recon-worklist.service.ts` is a SIBLING, independently-built parallel
+reconciliation system (`banking.reconciliation_matches`/`match_state`, distinct from
+`banking/reconciliation.routes.ts`'s `reconciliation_sessions`/`reconciliation_cleared`, fixed as
+BANK-F30012) with the identical missing-`voided_at`-filter gap across 5 of its own
+`banking.bank_transactions` read sites: the "unmatched" worklist query, the "auto-matched"
+candidate query, the progress-coverage CTE, the month-coverage CTE, and the unmatch action's
+prior-state CTE.
+
+**Fix:** added `voided_at IS NULL` / `bt.voided_at IS NULL` to all 5 sites.
+
+**Live proof:** USMCA's own "unmatched, needs review" worklist count — the exact query an operator
+sees — went from **433 to 284** (149-row correction), an exact match to the known count of voided
+rows in scope for this account/date window.
+
+Shipped PR #21536 (claim #21532), verify-step 10851
+(`scripts/verify-recon-worklist-excludes-voided-transactions.mjs`, selftest 2/2). Backend redeployed.
+
+**REMAINING (same bug class, not yet checked):** `banking/categorization.routes.ts`'s
+`total_uncategorized_cents` KPI, `accounting/month-close.service.ts`'s coverage-check CTE,
+`cron/bank-recon-auto-match.cron.ts`'s unattended auto-match candidate list — next in the sweep.
+
+| `apps/backend/src/accounting/bank-recon/recon-worklist.service.ts` |
+**CC-2 · FIXED · live before/after (433 -> 284 unmatched, 149-row correction)** |

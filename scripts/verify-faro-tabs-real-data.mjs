@@ -118,7 +118,10 @@ export function checkInternalToolsPreserved(src) {
 
 export function checkAgingReal(src) {
   const failures = [];
-  const agingSection = src.split('tab === "aging"')[1]?.slice(0, 6000) ?? "";
+  // Window bumped 6000->9000 (2026-09-09): the aging table has legitimately grown two real
+  // columns since this window was sized (Settlement EntityLink, real advance-linked when present
+  // + lc_settlement_number fallback) -- same content requirement, more real content to scan past.
+  const agingSection = src.split('tab === "aging"')[1]?.slice(0, 9000) ?? "";
   if (!agingSection) {
     failures.push(`${HOME}: could not find the aging tab block.`);
     return failures;

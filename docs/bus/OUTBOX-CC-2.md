@@ -1962,3 +1962,36 @@ the same static guard check plus a fresh live measurement (categorized still 1, 
 No redeploy needed this round (data/guard-floor only, no apps/backend/src change).
 
 NEXT — nothing else claimed until re-measured, which is done above.
+
+## CC-2 — BANK-F30012/F30013/F30014/F30015 board writeups (2026-09-09)
+
+Board rows for 4 items shipped earlier this session but never posted to
+GUARD-WORKORDERS.md — filing them now per standing law (every finding gets a committed row),
+found while continuing the FIX AND CONTINUE bug sweep.
+
+All 4 are the same bug class, found via a vertical sweep of `banking.bank_transactions` read
+sites (not owner-prompted): the table is void-not-delete (`voided_at`, set when a stale Plaid
+pending row is superseded by its posted successor), and many read sites across the codebase never
+filtered it out, letting reversed/superseded rows silently corrupt sums, worklists, and reports.
+
+- **BANK-F30012** — `reconciliation.routes.ts` (5 sites). Live: $44,833.89/38 voided rows excluded
+  from one open session's variance/worklist math. PR #21520.
+- **BANK-F30013** — Form 425C bankruptcy MOR + all 4 exhibits (5 sites). Live: a real
+  $102,680.38 receipts / $118,141.76 disbursements overstatement corrected in a court-filing
+  calculation. Self-caught and fixed a `//`-vs-`--` SQL comment bug before it shipped. PR #21526.
+- **BANK-F30014** — `plaid/accounts` read endpoint ignored the already-shipped bank-account
+  reorder feature's `display_order` column. Root-caused as a missing ORDER BY key, not a missing
+  UI control. Currently a no-op (all 4 USMCA accounts still at display_order=0) until an operator
+  first uses the existing reorder control. PR #21529.
+- **BANK-F30015** — `accounting/bank-recon/recon-worklist.service.ts`, a sibling parallel
+  reconciliation system with the identical gap (5 sites). Live: USMCA's "unmatched, needs review"
+  worklist count went 433 -> 284 (149-row correction). PR #21536.
+
+Full writeups: GUARD-WORKORDERS.md. All 4 backend-redeployed and healthz-confirmed live at time of
+shipping.
+
+**REMAINING (same class, next in the sweep):** `banking/categorization.routes.ts`'s
+`total_uncategorized_cents` KPI, `accounting/month-close.service.ts`'s coverage-check CTE,
+`cron/bank-recon-auto-match.cron.ts`'s unattended auto-match candidate list.
+
+NEXT — continuing the sweep into `categorization.routes.ts`.

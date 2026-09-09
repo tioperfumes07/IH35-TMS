@@ -69,6 +69,9 @@ export type FactoringRecourseInvoice = {
   days_until_recourse_expiry: number;
   /** LINK-F5180: real FK, resolved via the same accounting.invoices join that resolves customer_id. */
   load_id: string | null;
+  /** GLB-25156: settlement resolved via settlement_lines.load_id -> driver_settlements LATERAL. */
+  settlement_id: string | null;
+  settlement_display_id: string | null;
 } & LoadCostRollupFields;
 
 export type FactoringChargebackFeeRow = {

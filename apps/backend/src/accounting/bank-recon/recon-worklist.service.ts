@@ -1,3 +1,12 @@
+// BANK-F30015 (2026-09-09, CC-2): every banking.bank_transactions read in this file now excludes
+// voided (reversed/superseded) rows -- the same class of gap already fixed in
+// banking/reconciliation.routes.ts (BANK-F30012). This is a SIBLING, parallel reconciliation
+// system (banking.reconciliation_matches / match_state, distinct from reconciliation_sessions /
+// reconciliation_cleared), and it had the identical gap independently. Live-confirmed: all 699
+// voided bank_transactions rows on prod are neither voided-aware-excluded nor
+// reconciliation_matches-linked, so every one of them was surfacing as a live, clickable
+// "unmatched, needs review" item in this worklist -- an operator working this queue would see 699
+// phantom line items for transactions that were already superseded and need no action at all.
 import { withLuciaBypass } from "../../auth/db.js";
 import { reverseJournalEntryNoFlip } from "../journal-entries.service.js";
 import { acceptMatchWithResolveDifference, previewMatchVariance, type LedgerEntryKind } from "./match.service.js";
@@ -39,6 +48,7 @@ export async function getReconWorklist(input: {
         WHERE bt.operating_company_id = $1::uuid
           AND bt.bank_account_id = $2::uuid
           AND bt.transaction_date BETWEEN $3::date AND $4::date
+          AND bt.voided_at IS NULL
           AND NOT EXISTS (
             SELECT 1
             FROM banking.reconciliation_matches rm
@@ -88,6 +98,7 @@ export async function getReconWorklist(input: {
           -- ("bank_transaction_already_matched") on every attempt, live-Chrome-confirmed via a direct
           -- fetch to /api/v1/bank-recon/accept-match, not just a client-side guess.
           AND bt.review_state <> 'matched'
+          AND bt.voided_at IS NULL
         ORDER BY bt.transaction_date ASC, bt.created_at ASC
       `,
       [input.operating_company_id, input.account_id, input.period_start, input.period_end]
@@ -145,6 +156,7 @@ export async function getReconWorklist(input: {
           WHERE operating_company_id = $1::uuid
             AND bank_account_id = $2::uuid
             AND transaction_date BETWEEN $3::date AND $4::date
+            AND voided_at IS NULL
         )
         SELECT
           COUNT(*)::int AS total_count,
@@ -297,6 +309,7 @@ export async function unmatchBankTransaction(input: {
                  matched_payment_id, matched_bill_payment_id
           FROM banking.bank_transactions
           WHERE id = $1::uuid AND operating_company_id = $2::uuid
+            AND voided_at IS NULL
         )
         UPDATE banking.bank_transactions bt
         SET matched_expense_id = NULL,
@@ -423,6 +436,7 @@ export async function closeReconPeriod(input: {
           WHERE operating_company_id = $1::uuid
             AND bank_account_id = $2::uuid
             AND transaction_date <= $3::date
+            AND voided_at IS NULL
         )
         SELECT
           COUNT(*)::int AS total_count,

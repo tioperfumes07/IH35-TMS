@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { DispatchLoadRow } from "../../api/loads";
+import { useUpdateLoadStatus, type DispatchLoadRow, type LoadStatus } from "../../api/loads";
 import { colors } from "../../design/tokens";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
@@ -89,6 +89,7 @@ import { STATUS_LABEL, formatMoneyCents, toRouteSummary } from "../../components
 import { InlineDriverPicker } from "../../components/dispatch/InlineDriverPicker";
 import { InlineUnitPicker } from "../../components/dispatch/InlineUnitPicker";
 import { InlineTrailerPicker } from "../../components/dispatch/InlineTrailerPicker";
+import { InlineStatusPicker } from "../../components/dispatch/InlineStatusPicker";
 import {
   DriverStatusColumn,
   LiveEtaFreshnessColumn,
@@ -136,6 +137,9 @@ type RowOverride = {
   driverLabel?: string;
   trailerId?: string | null;
   trailerLabel?: string;
+  // INLINE-STATUS-CHANGER (owner 2026-09-09): optimistic status while the money-aware transition
+  // write is in flight; rolled back on error so a rejected transition never lies on the board.
+  status?: LoadStatus;
 };
 
 const LOAD_TRANSITION_OPTIONS = [
@@ -241,6 +245,22 @@ function isAssignedLoad(load: DispatchLoadRow) {
   return Boolean(load.assigned_unit_id);
 }
 
+// LOADBOARD-LIFECYCLE (owner 2026-09-09): a delivered-but-not-closed load STAYS on the board, but it is
+// a paperwork/billing item, not an in-flight trip. It belongs in its own load-centric "Delivered –
+// pending docs / billing" band, NOT the in-flight "Booked" band — that keeps Booked showing only trucks
+// actively working (so a free/delivered truck never reads as "booked") while the load itself remains
+// visible and actionable until it is closed. Closed/cancelled loads leave the live board entirely.
+const BILLING_QUEUE_STATUSES = new Set([
+  "delivered",
+  "delivered_pending_docs",
+  "completed_docs_received",
+  "invoiced",
+  "paid",
+]);
+function isBillingQueueLoad(load: DispatchLoadRow) {
+  return BILLING_QUEUE_STATUSES.has(load.status);
+}
+
 // DISPATCH-REDESIGN Part C — TRUCK-CENTRIC sections (Jorge clarification 2026-06-17):
 // AWAITING ASSIGNMENT = every ACTIVE TRUCK with NO load right now (the fleet roster minus loaded
 //   trucks — derived from unitsWithoutLoad, NOT loads.filter). One row per truck; Unit/Trailer/
@@ -251,6 +271,11 @@ function isAssignedLoad(load: DispatchLoadRow) {
 const LIVE_SECTION_META: Array<{ key: string; title: string; placeholder?: string }> = [
   { key: "awaiting", title: "Awaiting assignment" },
   { key: "booked", title: "Booked" },
+  {
+    key: "billing",
+    title: "Delivered — pending docs / billing",
+    placeholder: "No delivered loads awaiting docs or billing.",
+  },
   { key: "in_shop", title: "In shop", placeholder: "No units in shop." },
 ];
 
@@ -542,6 +567,39 @@ export function DispatchBoard({
   const companyId = operatingCompanyId ?? loads[0]?.operating_company_id ?? "";
   const inlineQuicksaveEnabled = true;
 
+  // INLINE-STATUS-CHANGER (owner 2026-09-09): per-row status dropdown in every board view, writing
+  // through the SAME money-aware transition endpoint the bulk "Set status" modal uses
+  // (updateLoadStatus → dispatch transition / mdata lifecycle). Optimistic on the row, rolled back on
+  // a rejected transition, and onBulkComplete refetches so the parent's canonical list re-resolves.
+  const statusMutation = useUpdateLoadStatus(companyId || null);
+  const [statusPendingIds, setStatusPendingIds] = useState<Set<string>>(new Set());
+
+  const handleStatusChange = async (load: BoardLoad, next: LoadStatus) => {
+    if (load.id.startsWith("unit:")) return;
+    const prior = load.status;
+    if (next === prior) return;
+    setRowOverrides((current) => ({ ...current, [load.id]: { ...current[load.id], status: next } }));
+    setStatusPendingIds((current) => new Set(current).add(load.id));
+    try {
+      await statusMutation.mutateAsync({ id: load.id, body: { new_status: next } });
+      pushToast(`Load ${load.load_number || load.id} → ${STATUS_LABEL[next]}`, "success");
+      onBulkComplete?.();
+    } catch (error) {
+      setRowOverrides((current) => {
+        const nextOverrides = { ...current };
+        if (nextOverrides[load.id]) delete nextOverrides[load.id]!.status;
+        return nextOverrides;
+      });
+      pushToast(userFacingApiError(error, "Failed to change load status"), "error");
+    } finally {
+      setStatusPendingIds((current) => {
+        const nextSet = new Set(current);
+        nextSet.delete(load.id);
+        return nextSet;
+      });
+    }
+  };
+
   const openPreSettlementsQuery = useQuery({
     queryKey: ["pre-settlements-open", companyId],
     queryFn: () => listOpenPreSettlements(companyId),
@@ -610,6 +668,7 @@ export function DispatchBoard({
           assigned_primary_driver_id:
             override.driverId !== undefined ? override.driverId : load.assigned_primary_driver_id,
           assigned_primary_driver_name: override.driverLabel ?? load.assigned_primary_driver_name,
+          status: override.status ?? load.status,
         };
       }),
     [loads, rowOverrides]
@@ -689,16 +748,23 @@ export function DispatchBoard({
       .filter((unit) => !inShopUnitIds.has(unit.id))
       .map(unitToBoardRow);
     const inShopRows = inShopUnits.map(inShopUnitToBoardRow);
+    // LOADBOARD-LIFECYCLE (owner 2026-09-09): delivered-but-not-closed loads stay visible but sit in the
+    // billing band, never in Booked. Booked = trucks actively working (in-flight); billing = the
+    // paperwork/invoice/factoring queue. Both are load-centric (one row per load).
+    const billingRows = dedupedLoads.filter(isBillingQueueLoad);
+    const bookedRows = dedupedLoads.filter((load) => !isBillingQueueLoad(load));
     return LIVE_SECTION_META.map((meta) => ({
       ...meta,
       rows:
         meta.key === "awaiting"
           ? awaitingRows
           : meta.key === "booked"
-            ? dedupedLoads
-            : meta.key === "in_shop"
-              ? inShopRows
-              : [],
+            ? bookedRows
+            : meta.key === "billing"
+              ? billingRows
+              : meta.key === "in_shop"
+                ? inShopRows
+                : [],
     }));
   }, [isHistoryBoard, unassignedUnits, inShopUnits, inShopUnitIds, sortedLoads, effectiveLoads]);
 
@@ -997,16 +1063,30 @@ export function DispatchBoard({
     />
   );
 
-  const renderStatusCell = (load: DispatchLoadRow) => (
-    <div className="flex items-center gap-1">
-      <span className={`rounded-sm px-2 py-1 text-xs font-semibold ${statusVariant(load.status)}`}>
-        {STATUS_LABEL[load.status]}
-      </span>
-      {load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id) ? (
-        <span className="rounded-sm bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">Geofence alert</span>
-      ) : null}
-    </div>
-  );
+  const renderStatusCell = (load: DispatchLoadRow) => {
+    // Synthetic truck-centric rows ("unit:"/"unit:inshop:") carry no real load to transition — keep
+    // the static pill. Every real load gets the inline QuickBooks-style status dropdown.
+    const isSyntheticRow = load.id.startsWith("unit:");
+    return (
+      <div className="flex items-center gap-1">
+        {isSyntheticRow ? (
+          <span className={`rounded-sm px-2 py-1 text-xs font-semibold ${statusVariant(load.status)}`}>
+            {STATUS_LABEL[load.status]}
+          </span>
+        ) : (
+          <InlineStatusPicker
+            loadId={load.id}
+            status={load.status}
+            pending={statusPendingIds.has(load.id)}
+            onSelect={(next) => void handleStatusChange(load as BoardLoad, next)}
+          />
+        )}
+        {load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id) ? (
+          <span className="rounded-sm bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">Geofence alert</span>
+        ) : null}
+      </div>
+    );
+  };
 
   const renderPreSettlementPrompt = (load: DispatchLoadRow) => {
     const effectiveDriverId = rowOverrides[load.id]?.driverId ?? load.assigned_primary_driver_id;

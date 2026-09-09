@@ -14,6 +14,9 @@ import { mmmDd } from "../../../lib/formatDate";
 
 type Line = {
   id: string;
+  /** SEQ-NUMBER: the `S-<settlement>-<n>` line spine, assigned by SettlementDetailPage across every
+   *  line-item table on the page in render order. Falls back to the raw row id only if unset. */
+  seq_label?: string;
   load_id?: string | null;
   load_number?: string | null;
   line_date?: string | null;
@@ -27,9 +30,9 @@ type Props = { lines: Line[]; isOpen?: boolean };
 
 const COLUMNS: Array<ParityColumn<Line>> = [
   {
-    key: "id",
+    key: "seq_label",
     label: "Number",
-    render: (line) => line.id ?? "—",
+    render: (line) => line.seq_label ?? line.id ?? "—",
   },
   {
     key: "load_id",
