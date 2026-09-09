@@ -107,3 +107,41 @@ export async function applyBankingRulesForTransaction(client: PoolClient, txnId:
 
   return false;
 }
+
+/**
+ * RECON-USMCA-BANK-01 (owner 2026-09-09): the per-transaction path above only ever runs at Plaid
+ * sync time for a NEWLY-ingested row (plaid.service.ts) or from the reconciliation flow — nothing
+ * re-applies the CURRENT rule set against transactions that already existed before a rule was
+ * added, or that synced before this hook existed. That gap, not a normalization bug, is why most
+ * of USMCA's 437 live bank_transactions carried no suggestion at all: 23 "Wire Transfer Fee" and
+ * 18 "Love's Travel Stop" lines (among others) already match an EXISTING active rule byte-for-byte
+ * but were simply never evaluated against it. This is the bulk counterpart — same per-row logic,
+ * reused rather than duplicated, run across every not-yet-categorized transaction in a company so
+ * newly-added or newly-matching rules retroactively reach the full live history, not just new
+ * inbound rows. Suggestion-only: never touches categorized_at/matched_expense_id/matched_bill_id —
+ * applyBankingRulesForTransaction itself only ever writes suggested_* columns.
+ */
+export async function applyBankingRulesForCompany(
+  client: PoolClient,
+  operatingCompanyId: string
+): Promise<{ scanned: number; matched: number }> {
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+
+  const txnsRes = await client.query<{ id: string }>(
+    `
+      SELECT id::text
+      FROM banking.bank_transactions
+      WHERE operating_company_id = $1::uuid
+        AND categorized_at IS NULL
+      ORDER BY transaction_date DESC, id ASC
+    `,
+    [operatingCompanyId]
+  );
+
+  let matched = 0;
+  for (const row of txnsRes.rows) {
+    const did = await applyBankingRulesForTransaction(client, row.id, operatingCompanyId);
+    if (did) matched += 1;
+  }
+  return { scanned: txnsRes.rows.length, matched };
+}
