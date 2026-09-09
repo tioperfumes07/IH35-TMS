@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // RECON-USMCA-BANK-01 (owner 2026-09-09) — "raise bank-match suggestion coverage on the 437 live
-// USMCA bank transactions" from 109/437 (25%) to >=350/437 (80%+).
+// USMCA bank transactions" from 109/437 (25%) to >=350/437 (80%+). Achieved 336/437 (76.9%),
+// honestly short of 350 -- see the block below for why.
 //
 // Two parts, static + live:
 //   1. STATIC (always runs, no DB needed): the two target engine files
@@ -13,26 +14,31 @@
 //      (the REAL production function, not a reimplementation) against the live USMCA transactions,
 //      then asserts has_suggestion / total >= COVERAGE_FLOOR.
 //
-// HONEST NUMBER, NOT THE ASKED-FOR ONE: after seeding 30 new real-vendor-backed banking_rules and
-// creating one missing real vendor (Dreamline Transit LLC, 28 recurring live occurrences, no prior
-// mdata.vendors row), live coverage rose from 109/437 (25%) to 318/437 (72.8%) -- NOT the requested
-// 350/437 (80%). The remaining ~100 lines are genuine non-merchant bank-administrative events
-// (Return of Posted Check, Counter Credit, Cashed Check, Check Image, Wire Transfer Credit/Hold,
-// ACH Hold -- none of these have a real counterparty to suggest, BofA is processing someone else's
-// money, not receiving it) or anonymous P2P payments (Zelle/Cash App/Remitly to individuals with no
-// mdata.vendors row and no other identifying signal). Inventing a vendor for these to hit a number
-// would be exactly the "money theater" this repo's standing law forbids. COVERAGE_FLOOR is set as a
-// regression lock comfortably below the honestly-achieved 72.8%, not at the originally-requested
-// 80% -- closing that gap for real needs either owner-provided identification of the anonymous
-// recipients, or a product decision to count meaningful account-only suggestions (excluded today by
-// the task's own has_suggestion definition: suggested_vendor_id OR suggested_match_bill_id).
+// HONEST NUMBER, NOT THE ASKED-FOR ONE: across two rounds (round 1 pre-merge, round 2 after an
+// owner wake-up asking to push further), seeded ~40 new/updated real-vendor-backed banking_rules
+// and created one missing real vendor (Dreamline Transit LLC, 28 recurring live occurrences, no
+// prior mdata.vendors row). Live coverage rose from 109/437 (25%) to 336/437 (76.9%) -- NOT the
+// requested 350/437 (80%), after genuinely exhausting the identifiable-vendor search (re-read
+// every remaining unsuggested description twice, found real vendor rows for Sam's Club, H-E-B,
+// ED-HER Plastics, American Express, a second Faro Factoring wire direction, a broadened Laura
+// Munoz name match, and Bank Of America's own fee/ATM lines). The remaining ~101 lines are genuine
+// non-merchant bank-administrative events (Return of Posted Check, Counter Credit, Cashed Check,
+// Check Image, Wire Transfer Credit/Hold, ACH Hold -- BofA is processing someone ELSE's money in
+// these, not a defensible vendor) or anonymous P2P payments (Zelle/Cash App/Remitly to individuals
+// with no mdata.vendors row and no other identifying signal). Inventing a vendor for these to hit
+// a number would be exactly the "money theater" this repo's standing law forbids. COVERAGE_FLOOR
+// is set as a regression lock comfortably below the honestly-achieved 76.9%, not at the
+// originally-requested 80% -- closing that gap for real needs either owner-provided identification
+// of the anonymous recipients, or a product decision to count meaningful account-only suggestions
+// (excluded today by the task's own has_suggestion definition: suggested_vendor_id OR
+// suggested_match_bill_id).
 import fs from "node:fs";
 
 const ENGINE_REL = "apps/backend/src/banking/banking-rules.engine.ts";
 const SUGGESTION_REL = "apps/backend/src/banking/suggestion-engine.ts";
 const ROUTES_REL = "apps/backend/src/banking/p7-wave2.routes.ts";
 const USMCA_OPERATING_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
-const COVERAGE_FLOOR = 0.65; // honest regression lock; achieved 318/437 = 0.728 at write time.
+const COVERAGE_FLOOR = 0.72; // honest regression lock; achieved 336/437 = 0.769 at write time.
 
 const FORBIDDEN_WRITE_PATTERNS = [
   /SET[\s\S]{0,400}\bcategorized_at\s*=/i,
