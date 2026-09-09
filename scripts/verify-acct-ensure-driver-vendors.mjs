@@ -75,6 +75,15 @@ if (!/SELECT[\s\S]{0,400}?WHERE[\s\S]{0,300}?\bdriver_id\s*=\s*\$\d+::uuid/.test
 if (!/INSERT INTO mdata\.vendors[\s\S]{0,400}driver_id/.test(contractSrc)) {
   fail(`${contractLabel}: ensure-drivers INSERT must populate driver_id (FK), not just vendor_code`);
 }
+if (!/INSERT INTO mdata\.vendors[\s\S]{0,400}vendor_category[\s\S]{0,300}['"]driver['"]/.test(contractSrc)) {
+  fail(`${contractLabel}: driver payee INSERT must assign canonical vendor_category='driver'`);
+}
+if (!/UPDATE mdata\.vendors[\s\S]{0,240}vendor_type\s*=\s*['"]Driver['"][\s\S]{0,160}vendor_category\s*=\s*['"]driver['"]/.test(contractSrc)) {
+  fail(`${contractLabel}: existing driver-linked vendors must normalize type + category instead of returning stale`);
+}
+if (!/vendor\.driver_category_normalized/.test(contractSrc) || !/audit\.append_event/.test(contractSrc)) {
+  fail(`${contractLabel}: category normalization must append an audit event`);
+}
 
 // (4) 23505 absorbed, inside a SAVEPOINT. Match the actual error-code comparison, not a comment
 // that merely mentions the number.
@@ -105,6 +114,22 @@ for (const rel of PICKERS) {
   if (!/await\s+ensureDriverVendors\(/.test(src)) {
     fail(`${rel}: imports ensureDriverVendors but never CALLS it (dead import — picker not fixed)`);
   }
+}
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    ["insert category", /vendor_name, vendor_code, vendor_type, vendor_category, phone/, "vendor_name, vendor_code, vendor_type, phone", (src) => /vendor_name, vendor_code, vendor_type, vendor_category, phone/.test(src)],
+    ["canonical category literal", /'Driver', 'driver'/, "'Driver', 'other'", (src) => /INSERT INTO mdata\.vendors[\s\S]{0,400}['"]driver['"]/.test(src)],
+    ["legacy normalization", /vendor_category = 'driver'/, "vendor_category = 'other'", (src) => (src.match(/vendor_category = 'driver'/g) ?? []).length >= 2],
+    ["normalization audit", /vendor\.driver_category_normalized/, "vendor.driver_category_removed", (src) => /vendor\.driver_category_normalized/.test(src)],
+  ];
+  for (const [name, pattern, replacement, invariant] of mutations) {
+    const mutated = contractSrc.replace(pattern, replacement);
+    if (mutated === contractSrc) fail(`selftest setup did not plant ${name}`);
+    if (invariant(mutated)) fail(`selftest ${name} mutation stayed green`);
+  }
+  console.log(`PASS: verify-acct-ensure-driver-vendors --selftest ${mutations.length}/${mutations.length}`);
+  process.exit(0);
 }
 
 console.log("PASS: verify-acct-ensure-driver-vendors");
