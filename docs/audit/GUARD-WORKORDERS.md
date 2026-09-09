@@ -10146,3 +10146,33 @@ superseded-duplicate exclusion), not the same single-choke-point fix pattern as 
 
 | `apps/backend/src/cron/bank-recon-auto-match.cron.ts` |
 **CC-2 · FIXED · live before/after (106/327, 32% wasted nightly work removed)** |
+
+## BANK-F30019 — bulk-transactions write-gate excludes voided bank_transactions (CC-2, 2026-09-09)
+
+Continuing the same sweep, past every item explicitly named in earlier REMAINING notes.
+`banking/bulk-transactions.ts` defines its OWN separate, non-shared `pendingStatusesSql()` (distinct
+from `pending-categorization.ts`'s `pendingCategorizationPredicate`, fixed as BANK-F30016) gating two
+write paths: `bulkCategorizeTransactions` (writes `categorized_at`) and `bulkPostAsBills` (posts a
+REAL bill + bill_payment + GL journal entry via `postSourceTransaction`). Neither filtered
+`voided_at` — unlike BANK-F30018 where `findCandidates()`'s own downstream check already closed the
+equivalent gap, THIS predicate had no such defense: a voided transaction id reaching either endpoint
+(stale page load, direct API call, or a void/select race) could be bulk-categorized or — the real
+risk — bulk-posted as a genuine bill/GL entry, double-booking an already-reversed transaction. A
+write-path/GL-posting risk, not just KPI inflation, though reachability is now reduced by BANK-F30016
+closing the UI list's own read side.
+
+**Fix:** added `voided_at IS NULL` to bulk-transactions.ts's local `pendingStatusesSql()`, the single
+choke point both write paths already share.
+
+**Live proof:** re-used BANK-F30016's measurement (same predicate shape, same table/company): 101 of
+388 (26%) USMCA "pending categorization" transactions are voided — all 101 are now refused by the
+existing "not all pending" guard instead of silently succeeding.
+
+Shipped PR #21552 (claim #21551), verify-step 10867. Backend redeployed.
+
+**This closes the full voided_at-sweep chain started with BANK-F30012.** No further specific items
+remain flagged; will continue scanning for any other unaudited `banking.bank_transactions` site as
+time allows per the standing bug-sweep instruction.
+
+| `apps/backend/src/banking/bulk-transactions.ts` |
+**CC-2 · FIXED · live before/after (101/388 voided rows now refused by both write paths)** |
