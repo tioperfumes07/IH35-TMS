@@ -2111,3 +2111,36 @@ is confirming live whether that landed before re-flagging the same spots, per in
 
 First batch (deadline 2026-09-09 20:00 UTC): Dispatch, Factoring, Accounting/Bills, Driver Finance.
 Starting with Dispatch now. Reporting incrementally as instructed, not waiting to finish all modules.
+
+## CC-2 — REG-020/021/022 milestone: first pass complete across all 10 named modules (2026-09-09)
+
+35 live-verified findings now in `docs/register/REG-020-021-022-UI-CONSISTENCY-2026-09-09.csv`.
+Every named module (Dispatch, Fleet, Maintenance, Driver Finance/Settlements, Factoring,
+Accounting, Safety, Customers, Vendors, Drivers) has at least its module-home page and primary
+tab(s) checked. Owner's first-batch deadline modules (Dispatch/Factoring/Accounting/Driver Finance)
+were prioritized and completed first.
+
+**Headline finding, flagged HIGH PRIORITY:** a SYSTEMIC back-arrow defect confirmed independently
+across 4 modules (Maintenance, Vendors, Customers, Drivers) -- when any of these is entered via a
+direct URL navigation (not an in-app click), its back arrow lands on the identical unrelated
+`/driver-finance/settlements` page every time, not the module's own logical parent. Reproduced 4
+separate times, always the same destination -- one shared root cause, not 4 isolated bugs. Notably
+this is the OWNER'S OWN NAMED REFERENCE MODULE (Maintenance) that has this defect. Did NOT observe
+this pattern for in-app click navigation (Dispatch/Factoring/Accounting/Safety all correctly
+returned to their true prior page when reached by clicking through the app) -- appears specific to
+direct-URL entry, exactly how a user arrives via a bookmark or shared link.
+
+**REG-022 gaps found:** Driver Finance/Settlements, Vendors, and Customers all have NO KPI tile
+strip / no Home concept on their landing page (straight into a data table or master-detail list).
+
+**REG-022 PASS confirmed:** Dispatch, Factoring, Accounting, Fleet, Maintenance, Safety, Drivers.
+
+**REG-020 back-arrow FAILs also on file (component-level, not module-home):** the Load-detail side
+panel (Dispatch + Accounting entry points, same shared component) and the Book Load modal both
+lack any back-arrow icon.
+
+Full detail + exact routes/repro steps for every row: the register CSV. Continuing into
+sub-tab/modal/popup depth across all 10 modules next, per the standing (non-deadline-bound) part
+of the role.
+
+NEXT — deeper per-module sub-tab sweep; REG-021 (universal size) verdict once more samples land.
