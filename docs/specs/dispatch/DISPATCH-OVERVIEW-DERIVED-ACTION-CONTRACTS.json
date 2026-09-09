@@ -5,7 +5,13 @@
       "id": "active-loads",
       "label": "Active loads",
       "component": "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
-      "required_tokens": ["dashboardQ.data?.active_loads", "ACTIVE_LOAD_DRILL_HREF", "to={ACTIVE_LOAD_DRILL_HREF}"]
+      "required_tokens": ["dashboardQ.data?.on_load", "ACTIVE_LOAD_DRILL_HREF", "to={ACTIVE_LOAD_DRILL_HREF}"]
+    },
+    {
+      "id": "delivered-pending-docs",
+      "label": "Delivered — pending docs",
+      "component": "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
+      "required_tokens": ["dashboardQ.data?.delivered", "DELIVERED_DRILL_HREF", "to={DELIVERED_DRILL_HREF}"]
     },
     {
       "id": "at-risk-late",

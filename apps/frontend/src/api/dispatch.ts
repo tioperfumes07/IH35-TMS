@@ -83,6 +83,7 @@ export type DispatchLoad = {
 
 export type DispatchKpis = {
   active_loads: number;
+  on_load: number;
   dispatched: number;
   need_load: number;
   delivered: number;
