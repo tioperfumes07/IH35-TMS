@@ -134,6 +134,14 @@ async function loadChecklist(client: Client, input: { operatingCompanyId: string
 
   // BANK-ACCOUNT-HIDE: an account hidden for THIS entity is excluded from the month-close bank-recon
   // coverage requirement entirely (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+  //
+  // BANK-F30017 (2026-09-09): banking.bank_transactions is void-not-delete (voided_at, set by
+  // bank-tx-dedup.ts::supersedePlaidPendingByExactPostedCandidate when a stale Plaid pending row is
+  // superseded by its posted successor). The coverage CTE below counted voided rows toward
+  // total_transactions with no way to ever be "covered" (reconciliation_matches has no row for a
+  // superseded transaction), permanently blocking month-close on phantom uncovered work. Live-
+  // measured on USMCA: one bank account's ENTIRE transaction set (48/48) was voided, all counted
+  // uncovered; a second account had 101 of 385 uncovered rows voided.
   const hideOnForClose = await isBankAccountHideEnabled(client, input.operatingCompanyId);
   const bankReconRes = await client.query<{
     bank_account_id: string;
@@ -158,6 +166,7 @@ async function loadChecklist(client: Client, input: { operatingCompanyId: string
         FROM banking.bank_transactions bt
         WHERE bt.operating_company_id = $1::uuid
           AND bt.transaction_date BETWEEN $2::date AND $3::date
+          AND bt.voided_at IS NULL
           ${bankTransactionHiddenFilterSql(hideOnForClose, "bt")}
         GROUP BY bt.bank_account_id
       )
