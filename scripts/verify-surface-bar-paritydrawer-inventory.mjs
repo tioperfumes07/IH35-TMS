@@ -44,6 +44,10 @@ const ALLOWED_NESTED = new Set([
   // SETL-DED-UI nested create drawer — posts through driver_finance deductions
   // service; no standalone required.json leaf owns this shell.
   "pages/drivers/components/CreateSettlementDeductionDrawer.tsx",
+  // SET-01 part 2 (owner LOCKED MANDATE 2026-09-09) nested edit drawer for a saved
+  // deduction line — PATCH-based void-old+recreate through the same driver_finance
+  // deductions service as its create sibling above; no standalone required.json leaf.
+  "pages/drivers/components/EditSettlementDeductionDrawer.tsx",
 ]);
 
 /** Nested create pickers / twin banking JE — owned by an existing matrix leaf. */
