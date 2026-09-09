@@ -1995,3 +1995,33 @@ shipping.
 `cron/bank-recon-auto-match.cron.ts`'s unattended auto-match candidate list.
 
 NEXT — continuing the sweep into `categorization.routes.ts`.
+
+## CC-2 — BANK-F30016/F30017/F30018: voided_at sweep closes out (2026-09-09)
+
+Continuing "FIX AND CONTINUE" / the standing bug-sweep instruction. Closed the last 3 items
+explicitly named in the voided_at sweep's own REMAINING notes (BANK-F30012 through F30015, shipped
+earlier this session):
+
+- **BANK-F30016** — the shared `pendingCategorizationPredicate` (banking/pending-categorization.ts)
+  feeds BOTH the Banking Home UNCATEGORIZED KPI and the Transactions "For review" queue. It never
+  filtered `voided_at`. Live: 101/388 (26%) USMCA "pending categorization" rows were voided phantom
+  work. One-line fix at the shared choke point fixes both surfaces at once. PR #21543.
+- **BANK-F30017** — month-close's bank-recon coverage gate (blocks period close until every
+  transaction is reconciled) counted voided rows as permanently "uncovered" since they can never
+  get a real reconciliation_matches row. Live: one USMCA bank account's ENTIRE transaction set
+  (48/48) was voided and would have permanently blocked close on zero real work. PR #21546.
+- **BANK-F30018** — the nightly bank-recon auto-match cron wastes 32% of its work (106/327 on
+  USMCA) calling findCandidates() on already-voided rows. Confirmed NOT a correctness bug
+  (findCandidates already refuses voided rows via a prior fix, BANK-F9998) — pure waste + a latent
+  starvation risk on the 500-row nightly cap as voided volume grows. PR #21548.
+
+All 3 backend-redeployed, healthz-confirmed live. Full writeups: GUARD-WORKORDERS.md.
+
+**This closes every voided_at-class item explicitly flagged so far this session.** One lower-
+priority item remains open, not yet fixed: `banking/bulk-transactions.ts` has its own separately-
+defined `pendingStatusesSql()` that doesn't call the shared predicate at all — a definition-drift
+bug (also missing the BANK-F13 superseded-duplicate exclusion), different fix shape than the
+single-choke-point pattern used for F30016-18. Will pick this up or continue the broader sweep for
+any other `banking.bank_transactions` read sites not yet triaged.
+
+NEXT — continuing bug sweeps per standing instruction.

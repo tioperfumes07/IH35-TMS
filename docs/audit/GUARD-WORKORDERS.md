@@ -10075,3 +10075,71 @@ Shipped PR #21536 (claim #21532), verify-step 10851
 
 | `apps/backend/src/accounting/bank-recon/recon-worklist.service.ts` |
 **CC-2 · FIXED · live before/after (433 -> 284 unmatched, 149-row correction)** |
+
+## BANK-F30016 — shared pendingCategorizationPredicate excludes voided bank_transactions (CC-2, 2026-09-09)
+
+Continuing the voided_at sweep flagged in BANK-F30013/F30015's own REMAINING notes
+(categorization.routes.ts's KPI, named explicitly). Traced `categorization.routes.ts`'s local
+`pendingStatusesSql()` to `banking/pending-categorization.ts`'s `pendingCategorizationPredicate()`
+— the SINGLE shared definition of "needs categorization" used by BOTH the Banking Home
+UNCATEGORIZED KPI and the Transactions "For review" queue (per that file's own BANKING-1 comment,
+"so the headline count can never diverge from the list"). The predicate checked status + a
+superseded-duplicate exclusion but never `voided_at` — a voided/reversed row that still carried
+`status='pending_categorization'/'uncategorized'` inflated both surfaces with phantom review work.
+A separate helper, `bankTransactionActiveFilterSql`, already existed emitting the exact needed
+clause but was dead code, never called from either site.
+
+**Fix:** added `voided_at IS NULL` to `pendingCategorizationPredicate`'s returned expression — one
+shared choke point fixes both the KPI and the queue in a single edit.
+
+**Live proof:** 101 of 388 (26%) USMCA "pending categorization" transactions were actually voided.
+
+Shipped PR #21543 (claim #21540), verify-step 10855. Backend redeployed, healthz confirmed live.
+| `apps/backend/src/banking/pending-categorization.ts` |
+**CC-2 · FIXED · live before/after (101/388, 26% phantom backlog removed)** |
+
+## BANK-F30017 — month-close coverage gate excludes voided bank_transactions (CC-2, 2026-09-09)
+
+Continuing the same sweep. `accounting/month-close.service.ts`'s bank-recon coverage-check CTE (the
+gate that blocks `POST /api/v1/accounting/periods/:id/close` until every bank_transaction in the
+period is reconciled) counted every row toward `total_transactions` with no `voided_at` filter, but
+`covered_transactions` only counts rows with a real `reconciliation_matches` row — a voided
+transaction never gets matched (it isn't a real event needing reconciliation), so every voided row
+was permanently uncovered, capable of blocking month-close indefinitely on phantom work.
+
+**Fix:** added `voided_at IS NULL` to the coverage CTE's WHERE clause.
+
+**Live proof:** one USMCA bank account's ENTIRE transaction set (48/48) was voided and 100%
+"uncovered" pre-fix — that account alone would have permanently blocked close on zero real
+uncovered work. A second account had 101 of 385 uncovered rows voided.
+
+Shipped PR #21546 (claim #21545), verify-step 10859. Backend redeployed, healthz confirmed live.
+| `apps/backend/src/accounting/month-close.service.ts` |
+**CC-2 · FIXED · live before/after (one account 48/48 phantom-blocked, corrected to 0)** |
+
+## BANK-F30018 — nightly auto-match cron excludes voided bank_transactions (CC-2, 2026-09-09)
+
+Continuing the same sweep, the last item explicitly named in earlier REMAINING notes.
+`cron/bank-recon-auto-match.cron.ts`'s nightly job selects up to 500 "unmatched"
+`banking.bank_transactions` per company and calls `findCandidates()` on each; that query never
+filtered `voided_at`. Confirmed NOT a correctness bug — `findCandidates()`'s own `loadTransaction()`
+already excludes voided rows (BANK-F9998, a prior fix) and returns `[]` for one, so no voided
+transaction could ever get an incorrect match written. It IS real waste: every voided row that
+happens to be unmatched occupies one of the 500-row LIMIT slots and one wasted DB round trip every
+night forever, and is a latent starvation risk as voided volume grows.
+
+**Fix:** added `voided_at IS NULL` to the cron's candidate-selection query.
+
+**Live proof:** 106 of 327 (32%) of USMCA's 90-day "unmatched" candidate set was already voided.
+
+Shipped PR #21548 (claim #21547), verify-step 10863. Backend redeployed.
+
+**This closes out every voided_at-sweep item explicitly named in the owner's/board's earlier
+REMAINING notes** (categorization.routes.ts KPI, month-close.service.ts coverage,
+cron/bank-recon-auto-match.cron.ts). **Still open, lower priority, not measured:**
+`banking/bulk-transactions.ts`'s separately-defined, non-shared `pendingStatusesSql()` — a
+definition-drift issue (doesn't call the shared predicate, also missing the BANK-F13
+superseded-duplicate exclusion), not the same single-choke-point fix pattern as the others.
+
+| `apps/backend/src/cron/bank-recon-auto-match.cron.ts` |
+**CC-2 · FIXED · live before/after (106/327, 32% wasted nightly work removed)** |
