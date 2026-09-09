@@ -9911,3 +9911,66 @@ or owner-identified anonymous recipients (2 above), to close the remaining 14/43
 live Neon (bypass_rls=lucia) before/after: 318/437 -> 336/437; categorized/matched counts unchanged
 | **CLOSED (honest partial, round 2) · real, live, material improvement (25% -> 76.9% across both
 rounds) · target not reached, transparently reported twice, no fabrication** |
+
+## OWNER MEGA-REPORT 2026-09-09 06:1xZ — routed by CC-1 (received directly, not this seat's lane for most of it)
+
+Owner sent one large message covering Dispatch load board, Load Costs, Resettlement, Settlements
+(driver+company), Factoring, reefer/lumper, and Banking. CC-1 verified live and answered the
+money/GL-lane parts directly (settlement_lines load_id backfill, PR #21519; confirmed
+reefer-lumper/Load-Costs/pre-settlement/resettlement fixes already live; re-confirmed BANK-BALANCE
+still correct). Routing the rest here verbatim-detailed rather than dropping it, since it is real,
+specific, owner-authored, and belongs to other seats' modules:
+
+**→ CC-3 (Dispatch/Load Board chrome):**
+- List view (Load Board → List → List/Table/Assignment sub-tabs): should not show booked-not-yet-in-
+  transit loads; owner reports a truck appearing twice with two loads — should only show the real
+  current load.
+- Round Trips view: for units needing a return (NB with no SB leg yet), there's no "book a return"
+  action from that view.
+- Timeline view: not all units with current/future/past loads appear, despite the calendar range being
+  set from Aug 25 to present.
+- Dispatch Home KPIs: owner says "the KPIs in dispatch home are not real" — needs live-data trace, not
+  assumed.
+- Approximate Load Costs board: add Truck # column sortable asc/desc (owner may be describing a
+  DIFFERENT board than the already-fixed Load Costs Board — verify which surface before building);
+  "units need return" and "days since last delivery" and "unassigned units" each need their OWN
+  columns (not blended into one), clean one-column-per-KPI layout matching the "roundtrip exposure"
+  pattern the owner references (unit / driver / load, one column each).
+
+**→ CC-3 (Factoring, large block — owner explicit: "you told me you already had a coder working on
+this, and it is just [unfinished]"):**
+- Missing pages: Account Summary (QBO-filter style, invoices for selected period in detail), Aging,
+  Chargebacks/Overpayments, Payment-to-you report, Purchase report.
+- KPI boxes and factoring-company-profile view are out of proportion / don't auto-adjust like the rest
+  of the app; Customer/Load boxes too large, misaligned; the date-range filter box + gear should sit in
+  the SAME row as the Customer/Load boxes.
+- A named table's purpose is unclear to the owner — needs a real name + explanation of what's in it
+  (invoice awaiting purchase? when invoiced? which settlement? which delivery date?).
+- Column order/content: amount of the ORIGINAL invoice, then advance, reserve, fees — in that order,
+  every tab.
+- Chargeback/fee-history tab currently mixes in driver-pay/margin/trip-expense data that has nothing to
+  do with factoring — every factoring tab/window's DEFAULT columns must be factoring data only (reserve,
+  fees, etc.); Profit and Trip Expenses should NOT be default-selected columns (available via gear, not
+  default).
+- Settlement numbers are missing from Factoring entirely.
+- Chargebacks/fee-history screen split with monthly fee summaries is confusing — give monthly-fee-
+  summary its own tab/window, or put it ABOVE chargebacks/fee-history, not split.
+- Statements/Settings need a summary-totals-only view AND a button for full detail view.
+- Missing QuickBooks-style filters (date range, etc.) on Faro Daily Import and other factoring surfaces
+  — summary vs. detail toggle missing there too.
+- Owner's own words: "the balances are different" — a real reconciliation gap, not yet isolated to a
+  specific number by this note; needs a live-data trace before anyone builds against it.
+
+**→ CC-2 (Banking):**
+- Banking → Transactions → account list is missing a reorder control (drag/move one account ahead of
+  another), unlike other lists in the app that already have this.
+
+**Not routed — already answered directly to the owner (CC-1, live-verified):**
+- BANK-BALANCE (`12/08/25`, `-$13,062.53`): this is the pre-fix BANK-F30002 figure; live-reverified
+  correct tonight (49/49 adjacent row-pairs, unfiltered `/banking`).
+- Reefer/lumper confirmation: built and live-proven this session.
+- Settlement number auto-inherit (T168/Mecor/13577), pre-settlement margin $/% split, resettlement
+  date-started/delivery-date: all already shipped and live-confirmed tonight.
+- Settlement page redesign to mirror the real AlwaysTrack PDF layout: real, still open, CC-1's own lane
+  — data is present but scattered across 4-5 redundant tables instead of one clean flow; kept as
+  active, not routed elsewhere.
