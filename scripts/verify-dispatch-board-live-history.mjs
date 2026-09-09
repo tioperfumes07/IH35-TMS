@@ -59,11 +59,13 @@ function runChecks(rootDir) {
   if (!loadsRoutes.includes("pickup_scheduled_at")) {
     errors.push("loads list SELECT must project pickup_scheduled_at");
   }
-  if (!loadsRoutes.includes("TERMINAL_LOAD_STATUSES")) {
-    errors.push("loads list must define TERMINAL_LOAD_STATUSES for board_scope filtering");
+  if (!loadsRoutes.includes("CLOSED_LOAD_STATUSES")) {
+    // LOADBOARD-LIFECYCLE (owner 2026-09-09): the board_scope split now keys off the CLOSED cohort
+    // (closed/cancelled/abandoned/walkoff/no-show) — a load stays LIVE until it is closed.
+    errors.push("loads list must define CLOSED_LOAD_STATUSES for board_scope filtering");
   }
   if (!loadsRoutes.includes("NOT (l.status = ANY")) {
-    errors.push("board_scope=live must exclude terminal statuses when no explicit status filter");
+    errors.push("board_scope=live must exclude the closed cohort when no explicit status filter");
   }
 
   if (!dispatchBoard.includes('boardScope?: "live" | "history"')) {

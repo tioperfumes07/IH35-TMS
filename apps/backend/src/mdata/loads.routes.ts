@@ -90,29 +90,28 @@ const statusFilterSchema = z
   .optional();
 
 /**
- * Terminal load statuses — completed/cancelled cohort routed to Loads History (board_scope=history).
+ * CLOSED load statuses — the ONLY cohort that leaves the live load board and routes to Loads History.
  *
- * DSP-BAND-DUP (owner 2026-09-06 21:2xZ verbatim: "you messed up the vehicles in list view, you
- * duplicated some vehicles"): `delivered_pending_docs` is TERMINAL for the LIVE Booked band. The truck
- * has PHYSICALLY DELIVERED the load — it is free; the row is only pending paperwork/invoicing. Measured
- * live (Neon prod, RLS-bypassed): USMCA has a large delivered-pending-docs backlog (T152 8, T177 8,
- * T171 7, T175 7, …). The Booked band renders ONE ROW PER LOAD, so treating delivered_pending_docs as
- * LIVE made each truck repeat once per backlog load — the "duplicated vehicles" the owner saw.
+ * LOADBOARD-LIFECYCLE (owner 2026-09-09, verbatim: "the second a load is closed, it should disappear
+ * from the load board … delivered waiting docs, or the new one … where we send the bol and invoice to
+ * the factoring company while we are still delivering … but it creates the invoices etc but STAYS in
+ * the load board until we change the status or the driver changes the status"). This SUPERSEDES the
+ * 2026-09-06 DSP-BAND-DUP framing that made `delivered_pending_docs` terminal for the live board.
  *
- * The truck-centric board is fixed from the AWAITING side instead: a truck whose only open loads are
- * delivered_pending_docs is DROPPED from the units-without-load active set (dispatch/loads.routes.ts)
- * and surfaces ONCE in "Awaiting assignment" (available for the next dispatch). So the Booked band shows
- * only genuinely in-flight loads (assigned_not_dispatched/dispatched/in_transit) — one row per truck —
- * and every in-service truck still appears exactly once (Booked if in-flight, else Awaiting, else In
- * shop). History still shows delivered/delivered_pending_docs/completed_docs_received/invoiced/paid/
- * closed/cancelled/abandoned/walkoff/no-show.
+ * Industry standard (McLeod PowerBroker, Alvys, AlwaysTrack): the dispatch board is LOAD-CENTRIC — one
+ * row per load — and a load stays on the board through its whole lifecycle (dispatched → in transit →
+ * delivered → pending docs → invoiced → paid) and drops off ONLY when it is closed/cancelled/abandoned.
+ * So delivered_pending_docs / completed_docs_received / invoiced / paid all remain on the LIVE board.
+ *
+ * The 2026-09-06 truck-duplication concern is NOT reintroduced: it is handled entirely on the AWAITING
+ * (truck-roster) side in dispatch/loads.routes.ts, where a truck is "occupied" only by an IN-FLIGHT
+ * load (assigned_not_dispatched/dispatched/in_transit). A truck whose only open loads are
+ * delivered_pending_docs is FREE and surfaces ONCE in "Awaiting assignment". The delivered/pending-docs
+ * LOADS still each render as their own load row in the load-centric billing band — that is a distinct
+ * meaning (a billing/paperwork queue), not a repeated truck. History shows only closed/cancelled/
+ * abandoned/walkoff/no-show.
  */
-const TERMINAL_LOAD_STATUSES = [
-  "delivered",
-  "delivered_pending_docs",
-  "completed_docs_received",
-  "invoiced",
-  "paid",
+const CLOSED_LOAD_STATUSES = [
   "closed",
   "cancelled",
   "abandoned",
@@ -704,10 +703,13 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         values.push(status);
         filters.push(`l.status = ANY($${values.length}::mdata.load_status_enum[])`);
       } else if (board_scope === "live") {
-        values.push(TERMINAL_LOAD_STATUSES);
+        // LOADBOARD-LIFECYCLE (owner 2026-09-09): a load stays on the live board until it is CLOSED.
+        // Only the closed/cancelled/abandoned cohort is excluded — delivered_pending_docs / invoiced /
+        // paid remain live so the office can still see and act on them (send BOL, bill, factor).
+        values.push(CLOSED_LOAD_STATUSES);
         filters.push(`NOT (l.status = ANY($${values.length}::mdata.load_status_enum[]))`);
       } else if (board_scope === "history") {
-        values.push(TERMINAL_LOAD_STATUSES);
+        values.push(CLOSED_LOAD_STATUSES);
         filters.push(`l.status = ANY($${values.length}::mdata.load_status_enum[])`);
       }
       if (customer_id) {
