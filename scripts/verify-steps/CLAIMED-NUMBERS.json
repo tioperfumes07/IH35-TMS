@@ -8428,5 +8428,10 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-09",
     "purpose": "verify-bank-recon-excludes-voided-transactions"
+  },
+  "10843": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-09",
+    "purpose": "verify-form425c-excludes-voided-transactions"
   }
 }
