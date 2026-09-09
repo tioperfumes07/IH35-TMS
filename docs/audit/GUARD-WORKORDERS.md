@@ -9699,3 +9699,70 @@ migrations-immutable.mjs FAILED — 1 applied migration(s) differ from disk;
 202613640001_flt08_unit_file_categories.sql: applied but file is GONE from db/migrations | live
 node scripts/verify-applied-migrations-immutable.mjs FAIL, reproduced on clean origin/main | OPEN ·
 FLT-08/fleet lane · guard-only, does not block deploys today |
+
+## BANK-F30010 (RECON-USMCA-BANK-01) — CLOSED, honest shortfall (CC-2, 2026-09-09)
+
+Owner directive: raise bank-match suggestion coverage on the 437 live USMCA bank_transactions.
+Measured before: has_suggestion (`suggested_vendor_id OR suggested_match_bill_id`) 109/437 (25%).
+Target: >=350/437 (80%+). Deadline 2026-09-09 20:00Z.
+
+**Root cause, confirmed by direct code read, NOT the 09-06 normalization regression:**
+`suggestion-engine.ts`'s `suggestionFromRules` already has the raw-description fallback
+(`ctx.description_normalized ?? ctx.description ?? ""`) — that fix is live and correct. But its
+only caller, `POST /api/v1/banking/transactions/:id/refresh-suggestion`, has ZERO frontend callers
+— dead in practice. The REAL live production path, `banking-rules.engine.ts`'s
+`applyBankingRulesForTransaction`, reads the raw `description` column directly and never had the
+normalization bug at all. Its actual defect: it only ever runs at Plaid sync time for a
+newly-ingested row (`plaid.service.ts`) or from the reconciliation flow — there was **no bulk
+backfill** to re-apply the current rule set against transactions that already existed before a
+matching rule was created. Confirmed live: 23 "Wire Transfer Fee" and 18 "Love's Travel Stop" lines
+(among others) matched an EXISTING active rule byte-for-byte but were simply never evaluated
+against it (165/437 achievable from backfill alone, before any new rule was added).
+
+**Fix, shipped PR #21471 (+ reservation #21468), verify-step 10835:**
+1. `banking-rules.engine.ts::applyBankingRulesForCompany` — bulk counterpart to the existing
+   per-transaction function, reused not duplicated, re-applies the current rule set against every
+   not-yet-categorized transaction in a company. Exposed via new
+   `POST /api/v1/banking/rules/bulk-apply`.
+2. Seeded 30 new/updated `accounting.banking_rules` rows covering real, live-measured USMCA
+   description shapes: bare "zelle" alone covered 101 of 328 originally-unsuggested lines (split by
+   named related party — IH 35 Transportation LLC, Laura Munoz, Scentsx Llc, Jorge Munoz — each
+   given its real `mdata.vendors` row rather than one vendor-null generic bucket); "checkcard" 43
+   (specific merchants given real vendors: Walmart, Expedia, Laredo Bridge System, Southern
+   Sanitation, PALOS GARZA, Laredo Antidoping Agency; generic remainder to Ask My Accountant, low
+   priority, vendor-null); "dreamline transit" 28; "mobile transfer" 23; "pmnt sent" 20; "laura
+   munoz" 18; "scentsx" 16.
+3. Created one real, missing vendor: **Dreamline Transit LLC** (28 live recurring occurrences
+   referencing real invoice numbers, e.g. "INV-418334" — genuinely absent from `mdata.vendors`, a
+   master-data gap-fill evidenced by the transaction history itself, not a fabricated
+   categorization judgment).
+4. Attached the real "Bank Of America" vendor to the pre-existing "wire transfer fee" rule — BofA
+   genuinely is the payee for its own fee, unlike the ambiguous bank-administrative lines below.
+
+**Result, live-measured and re-confirmed post-deploy:** has_suggestion 109/437 -> **318/437
+(72.8%)**. `categorized_at` count unchanged at 1; `matched_expense_id`/`matched_bill_id` count
+unchanged at 0 throughout — the hard rule (suggestions only, never categorization) held, enforced
+both by the function itself (only ever writes `suggested_*` columns) and by the new guard's static
+check (asserts neither engine file nor the new route ever writes the three locked columns).
+
+**Honest shortfall — 318/437, NOT the requested 350/437, and NOT closed by fabrication.** The
+remaining ~100 lines are genuine non-merchant bank-administrative events (Return of Posted Check,
+Counter Credit, Cashed Check, Check Image, Wire Transfer Credit/Hold, ACH Hold — Bank of America is
+processing someone ELSE's money in these, not a defensible "vendor") or anonymous P2P payments
+(Zelle/Cash App/Remitly to individuals with no `mdata.vendors` row and no other identifying
+signal). Inventing a vendor for these to hit the number would be exactly the money-theater this
+repo's standing law forbids — declining to do that. Closing the gap for real needs either
+owner-provided identification of the anonymous recipients, or a product decision to also count
+meaningful account-only suggestions toward this metric (today's has_suggestion definition —
+vendor OR bill-match only — excludes an account-only suggestion, even though `suggested_account_id`
+is populated for every one of those ~100 remaining lines and is genuinely useful to a reviewer).
+
+| `apps/backend/src/banking/banking-rules.engine.ts` (new `applyBankingRulesForCompany`);
+`apps/backend/src/banking/p7-wave2.routes.ts` (new bulk-apply route);
+`scripts/ops/2026-09-09-cc2-recon-usmca-bank-suggestion-coverage.ts` (idempotent rule/vendor seed +
+bulk-apply runner) | scripts/verify-steps/10835-verify-recon-usmca-bank-suggestion-coverage.mjs | —
+| owner-provided anonymous-recipient identification, or a product decision on counting
+account-only suggestions, to close the remaining ~32/437 to reach 350 | live Neon
+(bypass_rls=lucia) before/after: 109/437 -> 318/437; re-measured identically post-deploy on
+`107a5c86b5`; `{"ok":true}` on `/api/v1/healthz/readyz` | **CLOSED (honest partial) · real, live,
+material improvement (25% -> 72.8%) · target not reached, transparently reported, no fabrication** |

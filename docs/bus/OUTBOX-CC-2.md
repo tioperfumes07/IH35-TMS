@@ -1892,3 +1892,40 @@ checksum). Redeployed and confirmed live: backend `srv-d7rpem7avr4c73fhp4n0` on 
 
 Flagged, not fixed (separate lane): `202613640001_flt08_unit_file_categories.sql` is applied on
 prod but deleted from db/migrations/ — FLT-08/fleet lane should restore it from git history.
+
+## CC-2 | RECON-USMCA-BANK-01 DONE | 107a5c86b5 | 107a5c86b5 | has_suggestion 318/437 (was 109/437) | 2026-09-09
+
+Full writeup: docs/audit/GUARD-WORKORDERS.md (BANK-F30010). PR #21471 (+ reservation #21468).
+
+Root cause was NOT a regression of the 09-06 description-normalization fix — that fix is live and
+correct in suggestion-engine.ts's `suggestionFromRules`, it's just unreachable (the only caller,
+`/refresh-suggestion`, has zero frontend callers). The real, live production path
+(`banking-rules.engine.ts::applyBankingRulesForTransaction`) already reads the raw `description`
+column directly and never had the normalization bug. The actual gap: it only ever runs at Plaid
+sync time for a newly-ingested row — there was NO bulk backfill to re-apply the rule set against
+already-existing transactions, so 23 "Wire Transfer Fee" and 18 "Love's Travel Stop" lines (among
+others) matched an EXISTING rule byte-for-byte but were simply never evaluated against it.
+
+Shipped: `applyBankingRulesForCompany` (bulk counterpart, reused not duplicated) +
+`POST /api/v1/banking/rules/bulk-apply`; seeded 30 new/updated `accounting.banking_rules` rows
+covering real USMCA description shapes (zelle-family split by named related party, dreamline
+transit, checkcard-family merchants, bank-administrative-noise fallbacks); created one real missing
+vendor (Dreamline Transit LLC, 28 live recurring occurrences, genuinely absent from master data).
+Ran the bulk-apply pass live against USMCA's 437 transactions. Guard: verify-step 10835
+(static: no categorized_at/matched_expense_id/matched_bill_id writes anywhere in the two engine
+files or the new route; live: re-runs the real function against live USMCA rows, asserts
+has_suggestion ratio >= 0.65). Redeployed, confirmed live: `{"ok":true}` on
+`/api/v1/healthz/readyz`, re-measured post-deploy has_suggestion = 318/437 (matches pre-deploy),
+categorized still 1, matched_expense_id/matched_bill_id still 0 — hard rule held throughout.
+
+**Honest shortfall, not fabricated to hit the number:** 318/437 (72.8%), not the requested 350/437
+(80%). The remaining ~100 lines are genuine non-merchant bank-administrative events (Return of
+Posted Check, Counter Credit, Cashed Check, Check Image, Wire Transfer Credit/Hold, ACH Hold — BofA
+is processing someone ELSE's money, not a defensible vendor) or anonymous P2P payments (Zelle/Cash
+App/Remitly to individuals with no vendor row and no other identifying signal). Inventing a vendor
+for these to close the gap would be exactly the money-theater this repo's standing law forbids.
+Closing it for real needs either owner-provided identification of the anonymous recipients, or a
+product decision to count meaningful account-only suggestions toward this metric (today's
+has_suggestion definition — suggested_vendor_id OR suggested_match_bill_id — excludes them).
+
+NEXT — nothing else claimed until this is confirmed live and re-measured, which is done above.
