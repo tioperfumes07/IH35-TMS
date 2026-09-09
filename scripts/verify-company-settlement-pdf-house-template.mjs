@@ -83,12 +83,15 @@ export function collectFailures(src = source) {
     failures.push(`${routePath}: no longer exports registerCompanySettlementHtmlRoutes`);
   }
 
-  // --- 3. Mounted in index.ts (built-but-unmounted is not done) ---
-  if (!/import \{ registerCompanySettlementHtmlRoutes \} from "\.\/accounting\/company-settlement-render\.routes\.js"/.test(src.index)) {
-    failures.push(`${indexPath}: registerCompanySettlementHtmlRoutes not imported`);
+  // --- 3. Mounted via the accounting-directory @fastify/autoload (default fp), NOT double-mounted ---
+  // The accounting/ directory is autoloaded by default-fp export (like invoice-render.routes.ts). The
+  // route MUST carry that default export to be mounted, and index.ts MUST NOT also call it explicitly
+  // (doing both crashes boot with "Method 'GET' already declared" — the exact SET-30 boot crash).
+  if (!/export default fp\(async \(app\) => \{[\s\S]*?registerCompanySettlementHtmlRoutes\(app\)/.test(src.route)) {
+    failures.push(`${routePath}: no default fp export — the accounting autoloader will not mount it (built-but-unmounted)`);
   }
-  if (!/await registerCompanySettlementHtmlRoutes\(app\)/.test(src.index)) {
-    failures.push(`${indexPath}: registerCompanySettlementHtmlRoutes not mounted`);
+  if (/registerCompanySettlementHtmlRoutes\(app\)/.test(src.index)) {
+    failures.push(`${indexPath}: must NOT explicitly mount registerCompanySettlementHtmlRoutes — it is autoload-mounted; double registration crashes boot`);
   }
 
   // --- 4. Frontend opens the canonical backend letter, never window.print() ---
@@ -125,8 +128,8 @@ if (process.argv.includes("--selftest")) {
     ["route path", "route", /"\/api\/v1\/accounting\/company-settlements\/:id\.html"/, '"/api/v1/accounting/company-settlements/:id.json"'],
     ["build report", "route", /buildCompanySettlementReport\(/g, "buildDISABLEDReport("],
     ["wrap shell", "route", /wrapPdfDocument\(\{/g, "rawHtml({"],
-    ["index import", "index", /import \{ registerCompanySettlementHtmlRoutes \} from "\.\/accounting\/company-settlement-render\.routes\.js";\n/, ""],
-    ["index mount", "index", /await registerCompanySettlementHtmlRoutes\(app\);\n/, ""],
+    ["route default fp export", "route", /export default fp\(async \(app\) => \{/, "const _unmounted = (async (app) => {"],
+    ["index double-mount", "index", /await registerDriverFinanceSettlementHtmlRoutes\(app\);\n/, "await registerDriverFinanceSettlementHtmlRoutes(app);\n  await registerCompanySettlementHtmlRoutes(app);\n"],
     ["api helper", "api", /export function companySettlementHtmlUrl/, "function companySettlementHtmlUrl"],
     ["page view btn", "page", /openCanonicalDocument\(companySettlementHtmlUrl/, "openNothing(companySettlementHtmlUrl"],
     ["page print btn", "page", /openPrintableDocument\(companySettlementHtmlUrl/, "openNothing(companySettlementHtmlUrl"],

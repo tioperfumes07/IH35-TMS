@@ -158,7 +158,6 @@ import { registerCustomerContractRoutes } from "./customer-contracts/customer-co
 import { registerPreSettlementRoutes } from "./driver-finance/pre-settlement.routes.js";
 import { registerTourReadoutRoutes } from "./driver-finance/tour-readout.routes.js";
 import { registerDriverFinanceSettlementHtmlRoutes } from "./driver-finance/settlement-render.routes.js";
-import { registerCompanySettlementHtmlRoutes } from "./accounting/company-settlement-render.routes.js";
 import { registerDriverFinanceDriverBillsRoutes } from "./driver-finance/driver-bills.routes.js";
 import { registerDriverFinanceDriverBillsListRoutes } from "./driver-finance/driver-bills-list.routes.js";
 import { registerDriverFinanceDebtRoutes } from "./driver-finance/debt.routes.js";
@@ -992,7 +991,8 @@ async function main() {
   await registerSettlementPaymentRoutes(app);
   await registerAutoDeductionPolicyRoutes(app);
   await registerDriverFinanceSettlementHtmlRoutes(app);
-  await registerCompanySettlementHtmlRoutes(app);
+  // company-settlement-render.routes.ts is autoload-mounted (default fp) by the accounting-directory
+  // @fastify/autoload — do NOT also mount it here or boot crashes with a duplicate-GET route (SET-30).
   await registerDriverFinanceDriverBillsRoutes(app);
   await registerDriverFinanceDriverBillsListRoutes(app);
   await registerDriverFinanceDebtRoutes(app);
