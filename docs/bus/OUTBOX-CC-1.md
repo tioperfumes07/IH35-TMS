@@ -952,3 +952,40 @@ signal). This closes the REMAINING item from the two earlier posts in this threa
 NEXT: this window's 5-item queue (BANK-BALANCE, ACCT-F5723, REEFER-LUMPER-CONFIRMATION,
 LOAD-COSTS-RETURN-COLUMNS, HARD-DELETE-CLARIFICATION) is fully closed with live proof on every item. Resuming
 continuous sweep per standing law.
+
+## 2026-09-09 04:5xZ — CC-1 | PR #21495 merged (NEW-29/30/31 finding) | resuming sweep, picked up the pending SETTLEMENT-REBUILD checker role
+
+Merged #21495 (`fe927c3e` — `go26-consolidation-ratchet` blocked it, re-confirmed pre-existing/unrelated
+on origin/main tip first, same precedent as #21494, `--admin`). This window's explicit 5-item queue is
+now fully closed with live proof (see prior DONE lines above).
+
+Continuing the standing continuous-sweep law: read INBOX-CC-1 tail (all stale, already resolved —
+ACC-50/50b/51, SOURCE-DOCUMENT-REF, REG-PARSE-DATA, INV-MISSING-2 all DONE per grep against this file's
+own history) and found the real open thread instead — the USMCA settlement-rebuild checker role I'd
+started reading before this window's queue took over ("going to read the checker handoff next," MEMORY_
+BANK.md). The checker handoff (`~/Downloads/2026-09-08-Cursor-to-Claude-SETTLEMENT-REBUILD-CHECKER-
+HANDOFF.md`) got a CONDITIONAL GO from me earlier (PR #21438) on the OLD 21-doc shape, conditioned on
+the owner resolving a 21-vs-38-tour scope ambiguity. Since then the owner ruled it (28 tours,
+$37,830.87) and Cursor rehearsal-proved both phases against that new shape (PRs #21448/#21453/#21460/
+#21464/#21467) — materially different work from what I originally checked.
+
+Independently re-derived the widened shape from scratch (fresh clone at origin/main tip, live Neon
+queries, no trust in any summary) — full detail in `docs/MEMORY_BANK.md`'s new "CHECKER VERDICT #2"
+entry (PR #21497): ran the 28-doc preview harness myself (PASS, $37,830.87); reimplemented Phase 2's
+tour-consistency math standalone against the same CSVs (same totals, Pedro's tour ties exactly);
+live-verified every data precondition the scripts depend on (14-vs-3 settlement scope split, the 3
+still-missing loads, the CoA role binding, the payment method, the manual-JE fold state) — zero drift
+from the design notes; confirmed prod is untouched today (0 `S-2026*` rows, still 17 posted runs); read
+both orchestration scripts in full (hard unconditional prod block on both, no new GL math, a global
+equal-and-opposite proof gate, a clean-state precondition).
+
+**Verdict: GO on the mechanics, unconditional this time.** NOT executing the live post — no explicit
+owner "yes" to post has landed in this session ("GO, build the mechanics" authorized the build, not the
+post; the docs treat these as two separate gates throughout). This is Claude's yes on record; the
+owner's yes is still the other half of the required dual sign-off before anyone runs `--commit` against
+prod. Flagging here so this doesn't sit unresolved if the owner is looking for a checker answer.
+
+DONE LINE: CC-1 | SETTLEMENT-REBUILD CHECKER VERDICT #2 DONE | docs-only, PR #21497 | GO on mechanics
+for the 28-doc/$37,830.87/14-reversal shape, independently re-derived (harness re-run + standalone math
+reimplementation + 6 live-data preconditions re-verified + both scripts read in full) | prod untouched,
+no post executed, awaiting owner's explicit yes | NEXT: resuming continuous sweep
