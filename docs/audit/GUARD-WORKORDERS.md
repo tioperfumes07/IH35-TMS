@@ -10177,3 +10177,31 @@ time allows per the standing bug-sweep instruction.
 
 | `apps/backend/src/banking/bulk-transactions.ts` |
 **CC-2 · FIXED · live before/after (101/388 voided rows now refused by both write paths)** |
+
+## BANK-F30020 — QBO sync job excludes voided bank_transactions (CC-2, 2026-09-09)
+
+Continuing the sweep with a fresh repo-wide re-scan (own initiative, per standing bug-sweep
+instruction — no owner report prompted this one). `integrations/qbo/qbo-sync.service.ts`'s
+`loadBankTxnContext` (the row loader for a queued QBO sync job) never filtered `voided_at`. A sync
+job can be enqueued for a pending transaction that is later superseded/voided before the job
+actually runs (a real race against `bank-tx-dedup.ts`'s Plaid-sync-time supersede path); without
+this filter the voided row would still load and get pushed to QuickBooks as a live transaction —
+an EXTERNAL-system integrity risk, harder to correct after the fact than an internal query result
+since QuickBooks has no concept of our `voided_at`. The caller already handles a missing row
+cleanly (existing `bank_transaction_not_found_for_sync` job-failure path), so excluding a voided
+row reuses that exact handling.
+
+**Fix:** added `voided_at IS NULL` to `loadBankTxnContext`'s WHERE clause.
+
+**Live proof:** checked before shipping — 0 voided bank_transactions have ever reached
+`qbo_id`/synced (no incident to date, a latent gap not an active corruption) and 0 are currently
+queued with a pending/queued/retrying sync status (no race in flight today). Honest preventive fix,
+not a remediation of an existing bad state.
+
+Shipped PR #21564 (claim #21563), verify-step 10871. Backend redeployed.
+
+**REMAINING:** did not audit the equivalent loaders for other `qbo_sync_queue` entity_type values
+(bill, payment, invoice, etc.) for the same class of gap — flagged as a possible next candidate.
+
+| `apps/backend/src/integrations/qbo/qbo-sync.service.ts` |
+**CC-2 · FIXED · latent gap closed pre-incident (0/0 current impact, real race prevented)** |

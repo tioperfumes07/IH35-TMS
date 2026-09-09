@@ -2046,3 +2046,19 @@ specific instance is currently flagged.
 
 NEXT — continuing general bug sweeps per standing instruction; will report if another instance of
 this class or a new class turns up.
+
+## CC-2 — BANK-F30020: QBO sync job excludes voided bank_transactions (2026-09-09)
+
+Found via a fresh repo-wide re-scan during an idle autonomous check (standing bug-sweep
+instruction, own initiative, no owner prompt) — I was careless once mid-scan: my primary working
+directory was checked out to another agent's branch, which gave a false-positive against Exhibit C
+(already fixed on origin/main, confirmed via a clean worktree before touching anything). Real find
+once re-scanned properly: `integrations/qbo/qbo-sync.service.ts`'s sync-job row loader never
+excluded voided bank_transactions — a queued sync job for a transaction later superseded/voided
+before the job runs would push it to QuickBooks as live. Checked live before shipping: 0 voided
+rows have ever synced, 0 currently queued — a real, preventable race closed before its first
+incident, not a remediation. PR #21564. Backend redeployed.
+
+NEXT — continuing to spot-check the remaining ~50 untriaged banking.bank_transactions read sites
+for genuine high-value gaps as idle time allows; most are single-row-by-id lookups (low risk per
+established scoping).
