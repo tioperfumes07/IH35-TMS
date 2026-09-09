@@ -56,6 +56,85 @@ async function isSamsaraEnabledForTenant(client: DbClient, operatingCompanyId: s
   return Boolean(res.rows[0]?.is_enabled);
 }
 
+/**
+ * SAMSARA-REMOTE-COUNT-COLLECTOR-NEVER-TICKS-UNDER-DEPLOY-CHURN (found 2026-09-09 chasing
+ * SAMSARA-TMS-DRIVER-LINKAGE-GAP-USMCA): node-cron computes its next fire time from the moment
+ * the schedule is created, not from a persisted absolute clock — a process that is replaced by a
+ * new deploy before the next "5 star-slash-12 * * *" boundary (00:05/12:05 America/Chicago) NEVER reaches
+ * it, and a fresh process just re-arms the same 12h-away target. In a repo that redeploys every
+ * 15-90 minutes (confirmed live: 16+ "[STARTUP] samsara-remote-count-collector-cron initialized"
+ * lines in under 24h on this exact service), a 12-hourly cron can go dark indefinitely even though
+ * the scheduler itself is healthy — exactly the class `in-process-startup-catchup.ts` already
+ * exists to fix for other jobs (comment there: "node-cron does not backfill ticks missed while the
+ * API was down"). Confirmed live: `_system.background_jobs.samsara.remote_count_collector.
+ * last_successful_run_at` stuck at 2026-09-07T17:05Z while every other samsara.* job (5-15min
+ * cadence, lucky often enough to survive the churn) shows runs from today. Extracted the tick body
+ * into this exported function so `initializeSamsaraRemoteCountCollectorCron`'s cron.schedule AND
+ * `in-process-startup-catchup.ts`'s boot-time catch-up call the identical logic — no behavior
+ * change to the scheduled path, only a name and a second caller.
+ */
+export async function runSamsaraRemoteCountCollectorTick(app: FastifyInstance): Promise<void> {
+  await withLuciaBypass(async (client) => {
+    const activeTenantIds = await listActiveTenantIds(client);
+    if (activeTenantIds.length === 0) {
+      await appendCronAuditEvent(client, "cron_no_active_tenants", "info", {
+        cron_name: CRON_NAME,
+      });
+      return;
+    }
+
+    for (const operatingCompanyId of activeTenantIds) {
+      assertTenantContext(operatingCompanyId, CRON_NAME);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+      const enabled = await isSamsaraEnabledForTenant(client, operatingCompanyId);
+      if (!enabled) {
+        await appendCronAuditEvent(client, "cron_skipped_samsara_disabled", "info", {
+          cron_name: CRON_NAME,
+          operating_company_id: operatingCompanyId,
+        });
+        continue;
+      }
+
+      const result = await collectSamsaraRemoteCounts(operatingCompanyId, {
+        collectionRunId: randomUUID(),
+      });
+      app.log.info(
+        {
+          operating_company_id: result.operating_company_id,
+          collection_run_id: result.collection_run_id,
+          collected_count: result.collected_count,
+          failed_entities: result.failed_entities,
+        },
+        "[SAMSARA_REMOTE_COUNT_COLLECTOR] company tick finished"
+      );
+
+      // ROW-39 (owner 2026-09-05 15:04Z) — reuses this SAME every-12h tick per the order's own
+      // wording ("runs on the existing 5 */12 * * * schedule and on demand"), isolated in its
+      // own try/catch so a driver-mirror failure never breaks the remote-count collection above.
+      try {
+        const mirrorResult = await collectSamsaraDriverMirror(operatingCompanyId, {
+          collectionRunId: randomUUID(),
+        });
+        app.log.info(
+          {
+            operating_company_id: mirrorResult.operating_company_id,
+            collection_run_id: mirrorResult.collection_run_id,
+            fetched_count: mirrorResult.fetched_count,
+            upserted_count: mirrorResult.upserted_count,
+            linked_count: mirrorResult.linked_count,
+          },
+          "[SAMSARA_DRIVER_MIRROR_COLLECTOR] company tick finished"
+        );
+      } catch (mirrorError) {
+        app.log.error(
+          { operating_company_id: operatingCompanyId, error: String((mirrorError as Error)?.message ?? mirrorError) },
+          "[SAMSARA_DRIVER_MIRROR_COLLECTOR] company tick FAILED"
+        );
+      }
+    }
+  });
+}
+
 export function initializeSamsaraRemoteCountCollectorCron(app: FastifyInstance) {
   if (initialized) return;
   initialized = true;
@@ -67,71 +146,7 @@ export function initializeSamsaraRemoteCountCollectorCron(app: FastifyInstance) 
   cron.schedule(
     "5 */12 * * *",
     async () => {
-      await wrapBackgroundJobTick(
-        CRON_NAME,
-        async () => {
-          await withLuciaBypass(async (client) => {
-            const activeTenantIds = await listActiveTenantIds(client);
-            if (activeTenantIds.length === 0) {
-              await appendCronAuditEvent(client, "cron_no_active_tenants", "info", {
-                cron_name: CRON_NAME,
-              });
-              return;
-            }
-
-            for (const operatingCompanyId of activeTenantIds) {
-              assertTenantContext(operatingCompanyId, CRON_NAME);
-              await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-              const enabled = await isSamsaraEnabledForTenant(client, operatingCompanyId);
-              if (!enabled) {
-                await appendCronAuditEvent(client, "cron_skipped_samsara_disabled", "info", {
-                  cron_name: CRON_NAME,
-                  operating_company_id: operatingCompanyId,
-                });
-                continue;
-              }
-
-              const result = await collectSamsaraRemoteCounts(operatingCompanyId, {
-                collectionRunId: randomUUID(),
-              });
-              app.log.info(
-                {
-                  operating_company_id: result.operating_company_id,
-                  collection_run_id: result.collection_run_id,
-                  collected_count: result.collected_count,
-                  failed_entities: result.failed_entities,
-                },
-                "[SAMSARA_REMOTE_COUNT_COLLECTOR] company tick finished"
-              );
-
-              // ROW-39 (owner 2026-09-05 15:04Z) — reuses this SAME every-12h tick per the order's own
-              // wording ("runs on the existing 5 */12 * * * schedule and on demand"), isolated in its
-              // own try/catch so a driver-mirror failure never breaks the remote-count collection above.
-              try {
-                const mirrorResult = await collectSamsaraDriverMirror(operatingCompanyId, {
-                  collectionRunId: randomUUID(),
-                });
-                app.log.info(
-                  {
-                    operating_company_id: mirrorResult.operating_company_id,
-                    collection_run_id: mirrorResult.collection_run_id,
-                    fetched_count: mirrorResult.fetched_count,
-                    upserted_count: mirrorResult.upserted_count,
-                    linked_count: mirrorResult.linked_count,
-                  },
-                  "[SAMSARA_DRIVER_MIRROR_COLLECTOR] company tick finished"
-                );
-              } catch (mirrorError) {
-                app.log.error(
-                  { operating_company_id: operatingCompanyId, error: String((mirrorError as Error)?.message ?? mirrorError) },
-                  "[SAMSARA_DRIVER_MIRROR_COLLECTOR] company tick FAILED"
-                );
-              }
-            }
-          });
-        },
-        app.log
-      );
+      await wrapBackgroundJobTick(CRON_NAME, () => runSamsaraRemoteCountCollectorTick(app), app.log);
     },
     {
       maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }

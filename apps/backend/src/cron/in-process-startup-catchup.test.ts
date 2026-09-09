@@ -16,6 +16,10 @@ describe("in-process startup catch-up windows", () => {
     expect(byName["idempotency.cleanup_cron"]).toBe(2880);
     expect(byName["email.queue_processor"]).toBe(5);
     expect(byName["chat.confirmation_escalation"]).toBe(5);
+    // SAMSARA-REMOTE-COUNT-COLLECTOR-NEVER-TICKS-UNDER-DEPLOY-CHURN (2026-09-09): matches
+    // health.routes.ts's own `samsara.remote_count_collector` rule (1440 = 2x its 720min/12h
+    // cron period) so the catch-up window and the /healthz staleness alarm agree on "late".
+    expect(byName["samsara.remote_count_collector"]).toBe(1440);
   });
 
   it("does not include QBO push or money poster jobs", () => {
