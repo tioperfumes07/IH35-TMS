@@ -416,6 +416,29 @@ export function SettlementDetailPage() {
   }));
   const deductions = toDeductionRows(activeLines);
 
+  // SEQ-NUMBER (docs/design/reference/DRIVER-SETTLEMENT-DETAIL-REFERENCE-2026-09-05.html): the
+  // reference design's "Number" column is a human line spine, `S-<settlement>-<n>`, incrementing
+  // across every line-item table on the page in render order (Earnings, Empty Miles, Additional Pay,
+  // Reimbursements, Deductions) -- "typed value wins, blank auto-assigns." ExtraPaySection,
+  // ReimbursementsSection, and DeductionsSection never implemented this and fell back to rendering
+  // the raw settlement_lines row uuid under "Number" instead -- meaningless to a reader, and the
+  // direct cause of the "current shit" complaint on this exact page (owner, 2026-09-09). Assign the
+  // spine here, once, in the same fixed order the sections already render in below, and thread it
+  // down as `seq_label` -- EarningsSection/DeadheadPaySection keep their own already-improved
+  // `source_label` (a real driver-bill number, better than an abstract spine number; C5) unchanged.
+  let seqCounter = 0;
+  const seqLabel = (): string => {
+    seqCounter += 1;
+    return settlementDisplayId ? `${settlementDisplayId}-${seqCounter}` : String(seqCounter);
+  };
+  const earningsSeq = earnings.map(() => seqLabel());
+  const deadheadSeq = deadhead.map(() => seqLabel());
+  const extraWithSeq = extra.map((row) => ({ ...row, seq_label: seqLabel() }));
+  const reimbursementsWithSeq = reimbursements.map((row) => ({ ...row, seq_label: seqLabel() }));
+  const deductionsWithSeq = deductions.map((row) => ({ ...row, seq_label: seqLabel() }));
+  void earningsSeq;
+  void deadheadSeq;
+
   const summary = useMemo(() => {
     const earningsTotal = earnings.reduce((sum, row) => sum + row.amount, 0);
     const deadheadTotal = deadhead.reduce((sum, row) => sum + row.amount, 0);
@@ -777,10 +800,10 @@ export function SettlementDetailPage() {
         <div className="space-y-2">
           <EarningsSection lines={earnings} isOpen={!settlementIsLocked} />
           <DeadheadPaySection lines={deadhead} isOpen={!settlementIsLocked} />
-          <ExtraPaySection lines={extra} isOpen={!settlementIsLocked} />
-          <ReimbursementsSection lines={reimbursements} isOpen={!settlementIsLocked} />
+          <ExtraPaySection lines={extraWithSeq} isOpen={!settlementIsLocked} />
+          <ReimbursementsSection lines={reimbursementsWithSeq} isOpen={!settlementIsLocked} />
           <DeductionsSection
-            rows={deductions}
+            rows={deductionsWithSeq}
             onHold={(row) => setHoldTarget(row)}
             onResume={(row) => void handleResumeDeduction(row)}
             isOpen={!settlementIsLocked}

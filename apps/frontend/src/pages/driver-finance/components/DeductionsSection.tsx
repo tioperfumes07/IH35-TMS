@@ -16,6 +16,9 @@ import { mmmDd } from "../../../lib/formatDate";
 
 export type DeductionRow = {
   id: string;
+  /** SEQ-NUMBER: the `S-<settlement>-<n>` line spine, assigned by SettlementDetailPage across every
+   *  line-item table on the page in render order. Falls back to the raw row id only if unset. */
+  seq_label?: string;
   description: string;
   /** S.1b — line_date (COALESCE of created_at), load_number, deduction_type, and posting
    *  account fields from the driver_settlement_deductions + catalogs.accounts joins. */
@@ -60,9 +63,9 @@ const EDITABLE_DEDUCTION_TYPES = new Set(["wire_fee", "ach_fee", "company_vehicl
 
 const COLUMNS: Array<ParityColumn<DeductionRow>> = [
   {
-    key: "id",
+    key: "seq_label",
     label: "Number",
-    render: (row) => row.id ?? "—",
+    render: (row) => row.seq_label ?? row.id ?? "—",
   },
   {
     key: "load_number",
