@@ -814,3 +814,81 @@ sibling load 6e823810/$607.41 case). The 2026-09-08 08:00 UTC deadline on this h
 closure; filing this confirmation since the handoff doc itself wasn't marked done anywhere visible.
 
 NEXT: `09-08-2026-CC-1-REEFER-LUMPER-CONFIRMATION-WORKFLOW.md`.
+
+## 2026-09-09 03:1xZ — CC-1 | REEFER-LUMPER-CONFIRMATION MERGED (deploy + live proof next)
+
+`09-08-2026-CC-1-REEFER-LUMPER-CONFIRMATION-WORKFLOW.md` — built, merged, migration applied live.
+
+- Live-verified the task doc's own field suggestion was imprecise before building: `mdata.loads.temperature_type`
+  is CHECK-constrained to ONLY `'frozen'`/`'fresh'` (no `'reefer'` value exists); the actual signal the existing
+  reefer-panel UI gates on is `trailer_type='refrigerated_van'` (confirmed in `BookLoadEquipmentSection.tsx`'s own
+  `isReefer` derivation). Built against the verified-correct signal, documented the discrepancy in code comments.
+- Migration `202614010000_loads_reefer_lumper_confirmation.sql` — 3 nullable columns on `mdata.loads`
+  (`lumper_payer`, `lumper_will_invoice_customer`, `lumper_late_penalty_applies`), applied live on Neon prod
+  (RESET ROLE first). Live-verified via `information_schema.columns` + `pg_constraint`: all 3 columns + comments
+  + the `chk_loads_lumper_payer` CHECK constraint present.
+- `book-load.service.ts` persists the 3 fields in the same post-insert UPDATE the existing reefer/tarp detail
+  already uses. `loads.routes.ts` gates the `dispatched` transition on a `refrigerated_van` load having all 3
+  set (`reefer_lumper_confirmation_required`, 409). `BookLoadEquipmentSection.tsx` renders the 3-question panel
+  inside the existing reefer panel. `BookLoadModalV4.tsx` requires all 3 before submit for a reefer load.
+  `from-load.ts` skips creating a customer invoice line for an unconfirmed/not-customer-billed lumper charge, and
+  routes a confirmed one through `invoice-line-revenue-resolution.service.ts`'s existing (previously-unreached)
+  `line_type:'lumper'` branch instead of the generic accessorial resolution — no new GL math.
+- Guard `scripts/verify-reefer-lumper-confirmation-captured.mjs` (verify-step 11109, claimed via merged PR
+  #21476) — 6/6 planted defects caught on `--selftest`, PASS on the real check.
+- PR #21478 merged (`8731d717`). Both backend (`IH35-TMS`) and frontend (`ih35-tms-web`) redeploys triggered
+  just now — both are `autoDeploy:no` on this repo, so this does not go live until those finish.
+
+REMAINING on this item: the task's own required live-proof (book a real reefer load through the UI, submit the
+3-question panel, confirm the 3 fields land on the load, and if `lumper_will_invoice_customer=true` show the
+resulting `line_type='lumper'` invoice line) — in progress, follows once the backend deploy confirms live by
+`healthz` SHA ancestry.
+
+## 2026-09-09 03:1xZ — CC-1 | LOAD-COSTS-RETURN-COLUMNS: found live-dead on re-verify, fixed, merged
+
+`09-08-2026-CC-1-LOAD-COSTS-RETURN-COLUMNS.md` — re-verified per the standing law before reporting DONE, since
+the previous summary of this session had this marked "not yet started" but the code + a merged PR (#21382,
+ACCT-F26050) already existed on `main`. Did NOT trust the merge — re-checked live per the standing law, and
+found a real gap the merged PR's own commit had flagged as `Live=UNVERIFIED until deploy`.
+
+- Live Dispatch Home confirmed 6 real "Units Needing Return" (T163 330h, T170 210h, T173 186h, T148 162h, T175
+  138h, T174 114h). Opened the deployed Load Costs board, enabled the two new columns via the gear toggle:
+  every one of the 6 units' triggering loads (13548/13561/13560/13563/13564/13573) returned 0 rows under every
+  open filter tab (In Motion / Delivered Open / All Open). Live Neon confirmed why: all 6 already have a
+  `status='sent'` invoice, so the board's own `isClosed()` (NEW-09, earlier this session) correctly excludes
+  them — but that meant the new Days Since Delivery column's row-matching (an exact match to that exact,
+  now-invisible, load_id) could never fire for 100% of today's real cases. Same class of gap as NEW-09 itself.
+- Fix (PR #21479, merged `f9e85b47`): `LoadCostsBoardPage.tsx`'s badge-carrier map rebuilt from `visible` (the
+  rows actually on screen) instead of the full unfiltered set, picking the unit's newest VISIBLE row (typically
+  its next booking) instead of requiring the exact delivering load's own row. `Return Booked` was confirmed
+  unaffected — it's a deliberately separate signal (active-dispatch-only) and was already working as designed.
+  Existing guard `scripts/verify-load-costs-return-columns.mjs` re-run clean (5/5 selftest, PASS) against the fix.
+- Frontend redeploy triggered just now (same batch as reefer-lumper above). REMAINING: post-deploy Chrome
+  screenshot showing T163's row (load 13533) with a Days Since Delivery value matching Dispatch Home's figure —
+  follows once the frontend deploy completes.
+
+## 2026-09-09 03:1xZ — CC-1 | HARD-DELETE-CLARIFICATION DONE (already completed earlier this session, re-verified now)
+
+`09-08-2026-CC-1-HARD-DELETE-CLARIFICATION.md` and its "prior box"
+(`09-08-2026-CC-1-HARD-DELETE-TEST-FIXTURES.md`) — re-verified live rather than re-run, per the standing law.
+This was NOT still waiting on a ruling — the doc itself already carried the owner's verbatim decision
+("all test demo, practice etc names must have been hard deleted already"), and the actual DELETEs were already
+executed earlier this session (PR #21365, commit `4001546388`).
+
+Live-reconfirmed just now: all 5 named drivers (`41f28f57`/`dab084fb`/`44398e9f`/`735281f8`/`e901be6e`) and all
+5 named vendors (`423ec4df`/`8e389a06`/`5b3d27fb`/`23048fd2`/`53474f24`) return **0 rows** — hard-deleted, not
+merely deactivated. A broader `ILIKE '%TEST%'/'%CODEX%'` sweep across `mdata.drivers`/`mdata.vendors` found no
+row matching any of the named fixtures — only a DIFFERENT, unrelated `TEST-DRIVER-N SEED`/`TEST-VENDOR-N` cohort
+remains, all already correctly `is_sample_data=true`, not in scope of this doc. The 2 explicitly-excluded
+drivers (`9f35cf21` "TEST DriverTESTMTDP79YF", `db37af23` "CODEX ACTIVE FLEET TEST 20260821") are still present,
+`is_sample_data=true`, `deactivated_at` set since 2026-09-01 — exactly as the doc instructed to leave them
+(blocked by append-only child tables per the prior commit's own REMAINING note; no forcing attempted, matches
+this doc's own explicit "leave those as-is").
+
+No code change, no new PR — nothing left to build or delete. DONE LINE: CC-1 | HARD-DELETE-CLARIFICATION DONE |
+0 rows remaining for all 10 named test fixtures (5 drivers + 5 vendors), live Neon re-check | 2 excluded drivers
+correctly left deactivated per doc's own instruction | NEXT
+
+NEXT: queue complete for this window's 5-item list (BANK-BALANCE, ACCT-F5723, REEFER-LUMPER-CONFIRMATION,
+LOAD-COSTS-RETURN-COLUMNS, HARD-DELETE-CLARIFICATION). Finishing REEFER-LUMPER + LOAD-COSTS-RETURN-COLUMNS
+post-deploy live proof now, then resuming continuous sweep per standing law.
