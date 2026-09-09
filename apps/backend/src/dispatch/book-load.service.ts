@@ -95,6 +95,14 @@ export type BookLoadInput = {
   pre_cool?: boolean;
   tarp_qty?: number;
   tarp_size?: string;
+  // REEFER-LUMPER-CONFIRMATION (migration 202614010000, owner spec 2026-09-08): captured at
+  // dispatch time for reefer loads only -- who pays the lumper, will the customer be invoiced for
+  // it, does a late-arrival penalty apply. Optional here (booking is never DB-blocked on this); the
+  // frontend requires all three for a reefer load before submit, and the dispatch-transition gate
+  // (loads.routes.ts) refuses to move a reefer load to 'dispatched' without them as the real backstop.
+  lumper_payer?: "broker" | "customer";
+  lumper_will_invoice_customer?: boolean;
+  lumper_late_penalty_applies?: boolean;
   // C9 (migration 202609170000, HOLD-FOR-JORGE — not yet applied to prod): the remaining five
   // equipment-requirement chips, the Broker/Direct toggle, the driver's real per-mile pay term, and
   // the load-level factoring override. See the writeC9HoldFieldsIfPresent() comment below for how
@@ -2290,18 +2298,24 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
 
     // render-v6 §B reefer/tarp detail (migration 202606231400) — persist post-insert (same pattern), so the
     // lockstep INSERT is untouched. All COALESCE-null; only writes when at least one field is present.
+    // REEFER-LUMPER-CONFIRMATION (migration 202614010000) rides in the SAME post-insert UPDATE — same
+    // trigger condition class (reefer-related detail present), same transaction, no second UPDATE.
     if (
       input.reefer_temp_f != null ||
       (input.reefer_mode ?? "").trim().length > 0 ||
       input.pre_cool != null ||
       input.tarp_qty != null ||
       (input.tarp_size ?? "").trim().length > 0 ||
-      input.temperature_type != null // W-FIX-1: Frozen/Fresh → mdata.loads.temperature_type (migration 202606231600)
+      input.temperature_type != null || // W-FIX-1: Frozen/Fresh → mdata.loads.temperature_type (migration 202606231600)
+      input.lumper_payer != null ||
+      input.lumper_will_invoice_customer != null ||
+      input.lumper_late_penalty_applies != null
     ) {
       const equipmentDetailsUpdate = await client.query<{ id: string }>(
         `UPDATE mdata.loads
            SET reefer_temp_f = $1, reefer_mode = $2, pre_cool = $3, tarp_qty = $4, tarp_size = $5,
-               temperature_type = $6, updated_at = now()
+               temperature_type = $6, lumper_payer = $9, lumper_will_invoice_customer = $10,
+               lumper_late_penalty_applies = $11, updated_at = now()
          WHERE id = $7::uuid AND operating_company_id = $8::uuid
          RETURNING id::text`,
         [
@@ -2313,6 +2327,9 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
           input.temperature_type ?? null,
           String(load.id),
           input.operating_company_id,
+          input.lumper_payer ?? null,
+          input.lumper_will_invoice_customer ?? null,
+          input.lumper_late_penalty_applies ?? null,
         ]
       );
       if (!equipmentDetailsUpdate.rows[0]?.id) throw new Error("book_load_equipment_details_update_failed");
