@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { HeadBucketCommand, S3Client } from "@aws-sdk/client-s3";
 import { withLuciaBypass } from "../auth/db.js";
+import { USMCA_COMPANY_ID } from "../org/companies.routes.js";
 import { getAppReady } from "../lib/startup-ready.js";
 import { createResilientRedis, type RedisHealthStatus } from "../lib/redis.client.js";
 import { logger } from "../observability/structured-logger.js";
@@ -261,6 +262,91 @@ async function checkEmailQueueDepth(): Promise<void> {
     const c = Number(res.rows[0]?.c ?? 0);
     if (c > 1000) {
       throw new HealthCheckError("queued_depth_high", String(c));
+    }
+  });
+}
+
+type GeofenceQueryClient = {
+  query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
+};
+
+export type StuckDepartedGeofence = {
+  geofence_id: string;
+  unit_id: string;
+  state_updated_at: string;
+  newest_nearby_ping: string;
+};
+
+/**
+ * GEOFENCE-DEPARTED-STUCK (owner 2026-09-09) — geo.geofences.current_state/state_updated_at were
+ * deprecated by the GAP-39 rebuild (2026-09-05, migration 202613761200): per-vehicle state now
+ * lives in geo.geofence_vehicle_state, and that new table CAN silently go stuck exactly the same
+ * way the old shared column once did (an illegal departed->at edge on a fast single-tick return —
+ * see states.ts VALID_TRANSITIONS.departed — gets caught and console.warn'd away in
+ * transitions.service.ts's processGpsBatch, leaving current_state='departed' forever even though
+ * the truck is back). This is the "engine cannot go silent without tripping a guard" check the
+ * shared-column staleness alone no longer catches once that column stopped being written.
+ *
+ * Definition of "stuck": a (geofence, unit) pair whose current_state is 'departed', unchanged for
+ * over 2 hours, while a REAL telematics ping for that same unit — newer than state_updated_at —
+ * lands inside the fence's own enter radius. Only that combination is flagged: a unit that is
+ * genuinely departed and away never trips this, no matter how long it stays 'departed'.
+ */
+export async function findStuckDepartedGeofences(
+  client: GeofenceQueryClient,
+  operatingCompanyId: string
+): Promise<StuckDepartedGeofence[]> {
+  const res = await client.query<StuckDepartedGeofence>(
+    `
+      WITH stuck AS (
+        SELECT
+          gvs.geofence_id,
+          gvs.unit_id,
+          gvs.state_updated_at,
+          g.center_lat::double precision AS center_lat,
+          g.center_lng::double precision AS center_lng,
+          COALESCE(g.enter_radius_m, g.radius_m, 402) AS enter_m
+        FROM geo.geofence_vehicle_state gvs
+        JOIN geo.geofences g ON g.id = gvs.geofence_id
+        WHERE gvs.operating_company_id = $1::uuid
+          AND gvs.current_state = 'departed'
+          AND gvs.state_updated_at < now() - interval '2 hours'
+          AND g.center_lat IS NOT NULL
+          AND g.center_lng IS NOT NULL
+      )
+      SELECT
+        s.geofence_id::text AS geofence_id,
+        s.unit_id::text AS unit_id,
+        s.state_updated_at::text AS state_updated_at,
+        MAX(v.captured_at)::text AS newest_nearby_ping
+      FROM stuck s
+      JOIN telematics.vehicle_locations v
+        ON v.operating_company_id = $1::uuid
+       AND v.unit_id = s.unit_id
+       AND v.captured_at > s.state_updated_at
+       AND v.captured_at > now() - interval '1 hour'
+       AND (
+             6371000 * acos(LEAST(1, GREATEST(-1,
+               cos(radians(s.center_lat)) * cos(radians(v.lat::float)) * cos(radians(v.lng::float) - radians(s.center_lng))
+               + sin(radians(s.center_lat)) * sin(radians(v.lat::float))
+             )))
+           ) <= s.enter_m
+      GROUP BY s.geofence_id, s.unit_id, s.state_updated_at
+      LIMIT 20
+    `,
+    [operatingCompanyId]
+  );
+  return res.rows;
+}
+
+async function checkGeofenceEngineLiveness(): Promise<void> {
+  await withLuciaBypass(async (client) => {
+    const reg = await client.query(`SELECT to_regclass('geo.geofence_vehicle_state') IS NOT NULL AS ok`);
+    if (!reg.rows[0]?.ok) return;
+    const stuck = await promiseTimeout(findStuckDepartedGeofences(client, USMCA_COMPANY_ID), 1500);
+    if (stuck.length > 0) {
+      const detail = stuck.map((r) => `${r.geofence_id}:${r.unit_id}:${r.state_updated_at}`).join("|");
+      throw new HealthCheckError("geofence_departed_stuck", detail);
     }
   });
 }
@@ -826,6 +912,7 @@ export async function runDeepHealthChecks(): Promise<HealthCheck[]> {
     () => timed("qbo.connections.oauth", "warning", checkQboOauthNeedsReauth),
     () => timed("email.queue.depth", "warning", checkEmailQueueDepth),
     () => timed("background_jobs.stale", "warning", checkBackgroundJobStaleness),
+    () => timed("geofence_engine.departed_stuck", "warning", checkGeofenceEngineLiveness),
     () => timed("sentry.heartbeat", "warning", checkSentryHeartbeat),
   ];
 
