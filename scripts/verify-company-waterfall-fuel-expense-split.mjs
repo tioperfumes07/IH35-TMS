@@ -31,7 +31,10 @@ export function detailPageFetchesAndPassesReport(src) {
 export function waterfallRendersFromReportSectionsOnly(src) {
   // Every waterfall figure in the report-loaded branch must come from report.sections.* -- never
   // mixed with readout.company_settlement's tour-scoped costs_cents/revenue_cents/driver_pay_cents
-  // inside that same branch (the exact regression this guard exists to catch).
+  // inside that same branch (the exact regression this guard exists to catch). Every pl_rollup /
+  // Fuel / Company-expenses line must also carry the "Less ·" text prefix -- the underlying amounts
+  // are positive magnitudes, not pre-signed negatives, so the prefix is the ONLY thing telling a
+  // reader these subtract from Invoiced (dropped once already, live-caught same day as the fix).
   const reportBranchStart = src.indexOf("if (report) {");
   const reportBranchEnd = src.indexOf("return (", src.indexOf("return (", reportBranchStart) + 1);
   if (reportBranchStart === -1 || reportBranchEnd === -1) return false;
@@ -43,7 +46,11 @@ export function waterfallRendersFromReportSectionsOnly(src) {
     /report\.sections\.fuel_purchases\.total_cents/.test(reportBranch) &&
     /report\.sections\.expenses\.total_cents/.test(reportBranch);
   const mixesTourScopedFields = /cs\.(revenue_cents|driver_pay_cents|costs_cents|margin_cents)/.test(reportBranch);
-  return usesReportFields && !mixesTourScopedFields;
+  const hasLessPrefix =
+    /Less · \{line\.label\}/.test(reportBranch) &&
+    /Less · Fuel purchases/.test(reportBranch) &&
+    /Less · Company expenses/.test(reportBranch);
+  return usesReportFields && !mixesTourScopedFields && hasLessPrefix;
 }
 
 function violations(files) {
@@ -86,6 +93,8 @@ if (process.argv.includes("--selftest")) {
         '<span className="ldt-m">{money(report.sections.expenses.total_cents - cs.driver_pay_cents)}</span>'
       ),
     },
+    { ...files, waterfall: files.waterfall.replace("Less · Company expenses", "Company expenses") },
+    { ...files, waterfall: files.waterfall.replace("Less · {line.label}", "{line.label}") },
   ];
   for (const mutated of mutations) {
     try {
