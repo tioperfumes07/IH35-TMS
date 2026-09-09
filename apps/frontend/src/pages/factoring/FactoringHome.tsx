@@ -212,6 +212,10 @@ const VENDOR_MERGE_COLUMNS: Array<ParityColumn<DriverVendorMergeRow>> = [
 // rows, sum(invoice_amount) = $151,740.00 exactly, matching the doc's own required proof point.
 // PO / Other Ref / Memos have no real backing field in this data model -- shown as an honest "—"
 // rather than fabricated, same convention as every other honest-empty-state column in this file.
+// GLB-25156 (owner 2026-09-09): the old "ID" column was a redundant EntityLink duplicating the
+// Invoice column — removed, replaced with a real "Settlement" column linking to the load's
+// actual driver_finance.driver_settlements row (resolved via settlement_lines.load_id LATERAL
+// in the recourse-pipeline route). Honest "—" when a load has no settlement line yet.
 type AgingBucket = "0-30" | "31-60" | "61-90" | "90+";
 
 function agingBucketFor(days: number): AgingBucket {
@@ -467,6 +471,23 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     }
     return totals;
   }, [agingRows]);
+
+  // GLB-25157: Payments to You — same recourseQuery rows sorted by factored_at (advanced_at)
+  // with a running total of advance_amount (the actual dollar Faro paid IH35 per advance).
+  const paymentsToYouRows = useMemo(() => {
+    let running = 0;
+    return [...agingRows]
+      .sort((a, b) => new Date(a.factored_at).getTime() - new Date(b.factored_at).getTime())
+      .map((row) => {
+        running += Number(row.advance_amount ?? 0);
+        return { ...row, running_total: running };
+      });
+  }, [agingRows]);
+  const paymentsToYouTotal = useMemo(
+    () => paymentsToYouRows.reduce((sum, row) => sum + Number(row.advance_amount ?? 0), 0),
+    [paymentsToYouRows],
+  );
+
   // FAC-09a Fees Paid "Open Invoices" view — Accrued Fees per invoice, summed from the same
   // feesQuery.data.history (views.factoring_chargebacks_fees) rows the "All Fees" view and the
   // Chargebacks & Fees internal tool tab already render, keyed by the shared factoring_advance_id
@@ -888,7 +909,6 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
           shipped as done; each says plainly what it is. Real builds continue as fast-follow PRs. */}
       {tab === "request_debtor_credit_check" ||
       tab === "funds_due" ||
-      tab === "payments_to_you" ||
       tab === "debtor_receipts" ||
       tab === "reserve" ||
       tab === "loan_save" ||
@@ -898,6 +918,65 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
         <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700" data-testid={`factoring-stub-${tab}`}>
           <div className="font-medium text-gray-900">{SUBNAV.find((item) => item.id === tab)?.label}</div>
           <p className="mt-1">Not yet wired to real data — this tab exists and is reachable, but its content is a placeholder for this pass. See docs/audit/GUARD-WORKORDERS.md (FAC-09a) for what is real vs. stub.</p>
+        </div>
+      ) : null}
+
+      {/* GLB-25157 (owner 2026-09-09): Factoring "Payments to You" — real table sourced from
+          the SAME recourseQuery rows already fetched for Aging (views.factoring_recourse_at_risk,
+          which is built on accounting.factoring_advances). The view's factored_at IS
+          COALESCE(fa.advanced_at, fa.created_at) and advance_amount IS
+          fa.advance_amount_cents / 100 — so these are the real advanced_at / advance_amount_cents
+          rows the owner asked for, no new backend query. Columns: Date, Advance/Invoice ref,
+          Gross advance amount (invoice_amount), Net paid to IH35 (advance_amount), running total.
+          No fabricated columns — every field has real backing from the advances table. */}
+      {tab === "payments_to_you" ? (
+        <div className="space-y-3">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <div className="mb-2 text-xs font-medium text-gray-900">Payments to You</div>
+            <div className="text-xs text-gray-500" data-testid="factoring-payments-to-you-note">
+              Dollar amounts Faro advanced to IH35 per factored invoice, sourced from
+              the factoring advance records (advance amount + advanced date).
+            </div>
+          </div>
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
+            {recourseQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load payments"
+                {...formatQueryErrorDetail(recourseQuery.error)}
+                onRetry={() => void recourseQuery.refetch()}
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <ParityTable
+                  columns={[
+                    { key: "factored_at", label: "Date", sortable: true, render: (row: (typeof agingRows)[number]) => fmtDate(row.factored_at) },
+                    {
+                      key: "invoice_reference",
+                      label: "Advance/Invoice Ref",
+                      sortable: true,
+                      render: (row: (typeof agingRows)[number]) =>
+                        row.invoice_id ? <EntityLink kind="invoice" id={row.invoice_id} label={row.invoice_reference} /> : row.invoice_reference,
+                    },
+                    { key: "customer_name", label: "Debtor", sortable: true, render: (row: (typeof agingRows)[number]) => row.customer_name },
+                    { key: "invoice_amount", label: "Gross Advance Amount", sortable: true, cellClass: "text-right", render: (row: (typeof agingRows)[number]) => fmtCurrency(row.invoice_amount) },
+                    { key: "advance_amount", label: "Net Paid to IH35", sortable: true, cellClass: "text-right font-semibold", render: (row: (typeof agingRows)[number]) => fmtCurrency(row.advance_amount) },
+                    { key: "running_total", label: "Running Total", cellClass: "text-right", render: (row: (typeof paymentsToYouRows)[number]) => fmtCurrency(row.running_total) },
+                  ]}
+                  rows={paymentsToYouRows}
+                  rowKey={(row) => row.factoring_advance_id}
+                  loading={recourseQuery.isLoading}
+                  emptyText="No advance payments recorded."
+                  storageKey="factoring-payments-to-you"
+                  tableTestId="factoring-payments-to-you-table"
+                  footerCells={{
+                    invoice_reference: `${paymentsToYouRows.length} records`,
+                    advance_amount: fmtCurrency(paymentsToYouTotal),
+                    running_total: fmtCurrency(paymentsToYouTotal),
+                  }}
+                />
+              </div>
+            )}
+          </div>
         </div>
       ) : null}
 
@@ -1380,11 +1459,15 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 <ParityTable
                   columns={[
                     {
-                      key: "factoring_advance_id",
-                      label: "ID",
-                      render: (row: (typeof agingRows)[number]) => (
-                        <EntityLink kind="factoring_advance" id={row.factoring_advance_id} label={entityLabel(row.invoice_reference, row.factoring_advance_id, "Advance")} />
-                      ),
+                      key: "settlement_display_id",
+                      label: "Settlement",
+                      sortable: true,
+                      render: (row: (typeof agingRows)[number]) =>
+                        row.settlement_id ? (
+                          <EntityLink kind="settlement" id={row.settlement_id} label={row.settlement_display_id ?? "—"} />
+                        ) : (
+                          "—"
+                        ),
                     },
                     { key: "memos", label: "Memos", render: () => "—" },
                     {
@@ -1420,7 +1503,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   storageKey="factoring-aging-report"
                   tableTestId="factoring-aging-table"
                   footerCells={{
-                    invoice_reference: `${agingRows.length} records`,
+                    settlement_display_id: `${agingRows.length} records`,
                     b0_30: fmtCurrency(agingTotals["0-30"]),
                     b31_60: fmtCurrency(agingTotals["31-60"]),
                     b61_90: fmtCurrency(agingTotals["61-90"]),
