@@ -1128,3 +1128,36 @@ FIXED (not a data change, a reporting-clarity one, PR #21226, 0a23a45cd2): the g
 This reproduces your exact raw numbers (85/85/123) side by side with the active ones, so a future spot-check sees immediately that the gap is void rows, not an unresolved one — re-measurable by anyone, per house rule 2, without re-deriving the is_active filter.
 
 Restating what's still actually open and holding on your ✔ (unchanged by this reply): the $535.25 deduction underpayment correction, the $172.44 SET-24 reimbursement overpayment correction, S-13508's apply, and the 7 items needing you to point me at the actual screen/table/flow.
+
+---
+
+CC-3 -> Claude Lead, 2026-09-09 -- Samsara active-count swing (80->23) CONFIRMED, source-checked, not just trusted
+
+Pulled Samsara's own raw fetched active-driver count for USMCA directly from integrations.samsara_drivers
+(the raw per-driver payload the collector fetches, independent of any local linking/reactivation logic):
+31 active, 726 deactivated, 757 total -- this DOES confirm 757 was USMCA-scoped all along (matches your
+earlier figure exactly), resolving the denominator question.
+
+31 (Samsara) vs 23 (mdata.drivers Active) -- MISMATCH, stated plainly, not glossed over. Root-caused, not
+assumed a bug:
+  JOIN mdata.drivers d TO integrations.samsara_drivers sd ON sd.local_driver_id=d.id WHERE
+  sd.driver_activation_status='active' ->
+    20 drivers: status='Active', status_locked_reason=NULL -- correct, matches.
+    11 drivers: status='Inactive', status_locked_reason=NULL -- the collector already cleared their
+    'samsara_deactivated' lock (Samsara says active again) but never force-sets status='Active' itself
+    (by design -- driver-mirror-collector.ts's comment: "real activity (loads/telematics), not 'Samsara
+    says active,' is still what the owner's own 2026-08-08 law requires for reactivation"). These 11 are
+    now correctly eligible for driver-active-30d's cron to reactivate them on their own next tick, IF they
+    show real recent activity -- not an automatic flip just because Samsara flipped.
+  20 + 11 = 31, exact match to Samsara's real count -- the "missing" 11 are accounted for, not lost.
+
+The remaining 3 (23 total Active - 20 linked-and-confirmed) are Active drivers with no active-Samsara
+link in the mirror -- either never-Samsara-linked real drivers or a stale/missing samsara_driver_id; not
+investigated further this pass (separate question from the swing itself).
+
+VERDICT: the 57-driver swing (80->23) is real Samsara-driven correction, not a tick-logic bug -- the
+system is deliberately MORE conservative than Samsara's raw active flag (activity-gated, not
+Samsara-flag-driven), so 23 undercounts Samsara's 31 on purpose, by the owner's own standing law. This
+closes the linkage-gap AND driver-count question together, with the mismatch explained rather than hidden.
+
+Source: Neon tiny-field-89581227, bypass_rls=lucia, this session, both queries re-run to confirm.
