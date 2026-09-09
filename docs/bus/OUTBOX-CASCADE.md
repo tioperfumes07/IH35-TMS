@@ -267,3 +267,5 @@ CASCADE | DONE | 2026-09-09T06:40Z | GLB-25154 | PR #21516 squash-merged fc75987
 - Squash `fc75987e2f` on origin/main contains the guard file (confirmed)
 - Guard PASS on main: `verify-coa-clickthrough-and-report-figures-reconcile PASS`
 
+
+2026-09-09T10:15Z Cascade | DONE | main=20f4cc5d48 | PR #21555 (50347 DQ-ROSTER-500: dqf_items CTE missing updated_at) + PR #21560 (LST-F50098: 7 audit rows 50098-50106 SORT-NO-OP + SILENT-NO-OP + DEAD-UX) | QA WALK: 50345 FIXED, 50346 FIXED, 50347 FIXED | guards: backend tsc clean, frontend tsc clean, full pre-push gate READY TO PUSH (5149 static guards) | fixes: (a) EscrowPage holder_id sortValue=holder_label; (b) BillPaymentsListPage vendor_id sortValue=vendor_name; (c) AccountingAuditTrailPage journal_entry_id sortValue=memo; (d) LegalContractInstancesPage template_code sortValue=display_name_en; (e) IFTAPreparer createMutation onError handler; (f) QboVendorLinkagePage bulk auto-link try/catch with failedCount; (g) DriverVendorMappingTab: backend adds driver_name to MappingFinding, frontend renders name not UUID | NEXT: deploy + live UI spot-check
