@@ -8463,5 +8463,10 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-09",
     "purpose": "verify-cron-automatch-excludes-voided"
+  },
+  "10867": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-09",
+    "purpose": "verify-bulk-transactions-excludes-voided"
   }
 }
