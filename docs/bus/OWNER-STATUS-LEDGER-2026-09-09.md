@@ -169,3 +169,36 @@ surfaces. If the owner's complaint is about something more specific (a visual bo
 selected row itself, rather than the text labeling), that needs a screenshot or a named surface to act
 on rather than a guess. Not closing item 10 — marking it "investigated, no gap found yet" rather than
 silently dropping it.
+
+### 2026-09-09 08:0xZ (CC-1) — SET-16 and SET-25 corrections
+
+- **SET-16 (Admin fee typed-deduction migration) — RESOLVED, verified live, no code needed.**
+  The board's "no PR found" was correct at the time it was written, but the blocking condition it
+  refers to (PR #20834's finding: `deduction_type='other'` → `bucketRecoveryRoleKey('other')` →
+  `'other_recovery'`, "not and can never be a bound CoA role" — i.e. these lines could never get a
+  `posting_account_id` and would sit permanently unresolved) was fixed as a **side effect of
+  tonight's separate SET-17 fix** (item 61 above: `other_recovery` role now binds to account 7200,
+  "Driver Admin Fee & Chargeback Income"). Live-verified just now on prod: `0 of 33` active
+  "Admin fee" `settlement_lines` rows are unbound (`posting_account_id IS NULL`) — every one,
+  including the 18 "Admin fee - GAS" rows and the 15 other Admin-fee variants (BASCULA, VUELO,
+  PAGO DE TELEFONO, and the plain unlabeled ones), already resolves to account 7200. Considered and
+  **declined** to force a further retype of the "- GAS" subset into the more specific
+  `company_vehicle_fuel` type: that would move real dollars from an Income account (7200) to a
+  different account tree, which is a GL-classification call, not a mechanical bug fix — and 27 of
+  the 33 rows have no such qualifier at all (`BASCULA`/`VUELO`/`PAGO DE TELEFONO`/unlabeled) and
+  don't map to any of the 4 existing typed-deduction options anyway. Flagging as an **owner-decidable
+  refinement**, not a defect: if the owner wants "Admin fee - GAS" split out of Admin-Fee-Income into
+  a fuel-expense-recovery account specifically, say so and it's a same-day mechanical change now that
+  the binding works. Not inventing that call myself.
+  (Side note, also checked and NOT a defect: 271 of 281 `settlement_lines` rows on closed
+  settlements are `approval_status='pending'` — this is by design,
+  `settlement-lines-materialize.service.ts`'s own header comment: "FORCES approval_status='pending'
+  regardless of the source row's own status — LAW: never a guessed approve." It's a
+  dispute/driver-acknowledgment field, unrelated to GL posting or settlement closure. Checked so it
+  isn't mistaken for a new gap by the next seat to look at this table.)
+
+- **SET-25 (Non-deferrable loan pop-up) — the board's "no PR found" was STALE, this is DONE.**
+  `Cursor-SET-25 lock the non-deferrable loan pop-up at settlement close` merged PR #21488
+  (2026-09-09 03:47Z, guard 11086 `verify-settlement-loan-recovery-modal-wired`), ahead of when the
+  board's source snapshot was taken. Confirmed merged and on `main`. No further action needed from
+  this seat.
