@@ -10269,3 +10269,63 @@ stats, recent-50 transaction list, and the candidate-selection query that calls 
 
 | `apps/backend/src/integrations/plaid/plaid.service.ts` |
 **CC-2 · FIXED · live-confirmed via EXPLAIN before/after; blocked real Plaid ingestion + apply-historical-categorization** |
+
+## USMCA-DRIVER-ROSTER-DUPLICATED-BY-BULK-REIMPORT — root cause of SAMSARA-TMS-DRIVER-LINKAGE-GAP-USMCA and the ~30-active-drivers mystery (CC-3, 2026-09-09)
+
+**Picked up the open follow-up `SAMSARA-TMS-DRIVER-LINKAGE-GAP-USMCA` (filed 2026-09-07: "only 54/757
+(7%) USMCA Samsara records linked... investigate the license/name matcher, different scope/skillset").
+That framing had the wrong denominator and missed the real root cause.**
+
+**Live-verified on Neon prod (`tiny-field-89581227`, `bypass_rls=lucia`, USMCA
+`operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80`), this session:**
+
+1. `mdata.drivers` for USMCA has only **163** total rows, not 757 — `integrations.samsara_drivers`
+   (757 rows) can never be more than ~163 linkable 1:1, so "54/757" and "94/757" (today's live recount)
+   were always measuring against the wrong ceiling. The real denominator is the local roster.
+2. Of those 163 rows, **65 name-groups (134 of 163 rows, 82% of the roster) are exact-duplicate
+   identities** — same normalized `first_name || last_name`, 2 (one group: 4) separate `mdata.drivers`
+   rows each. Two bulk-insert batches created almost the entire roster **twice**, at the exact same
+   literal millisecond timestamp per batch: **83 rows at `2026-07-04T04:07:38.114Z`** and **68 rows at
+   `2026-08-21T15:30:00.001Z`** — a reseed/reimport ran a second time 48 days later with no
+   identity-uniqueness check (no dedup on name/license before insert).
+3. **Concrete instance, fully traced:** "GENARO GUERRERO CHAVEZ" exists as THREE `mdata.drivers` rows:
+   `6edcb351-…` (USMCA, batch 07-04, `samsara_driver_id=NULL`, status Active), `6e908ee1-…` (USMCA,
+   batch 08-21, `samsara_driver_id='56507640'`, status Active — **the actual duplicate**), and
+   `bd56ad0d-…` (TRANSP, `samsara_driver_id='56507640'`, status Inactive — the shared-fleet TRANSP
+   original). `integrations.samsara_drivers` correctly has 2 rows for Samsara id `56507640` (one per
+   operating_company_id, TRANSP→`bd56ad0d`, USMCA→`6edcb351`) — so `6e908ee1` is a clean orphaned
+   duplicate with a Samsara id column that was never actually linkable because the real link already
+   went to its twin.
+4. **This is not a matcher bug.** `resolveMirrorLocalDriverId` (`driver-mirror-collector.ts:77`)
+   deliberately returns `null` on ambiguous name matches (`nameCandidates.length === 1 ? … : null`) to
+   avoid guessing among duplicate rows — correct, defensive behavior. With 82% of the roster duplicated,
+   most name-based fallback matches are ambiguous by construction, which is the real explanation for the
+   low link rate, not a normalization/fuzzy-matching gap as the 09-07 note speculated.
+5. **This is very likely also the real mechanism behind the still-open "owner expects ~30 Active,
+   sees 80" complaint** (`DRV-STATUS-LOCK-BULK-SET-STATUS-GAP`, fixed today, same file): 134 of 163
+   USMCA driver rows are duplicate shells of 65 real people — a roster inflated ~2x by identity, not
+   by genuinely-active headcount.
+
+**NOT FIXED HERE — checked and correctly held back, not a scope excuse:** neither batch is a clean
+"empty" duplicate I could safely quarantine — live-checked, the 07-04 batch has 10 rows with real
+`mdata.loads` assignments + 46 Samsara links, and the 08-21 batch **also** has 3 rows with real loads
++ 40 Samsara links of its own. A blind "keep the older batch, lock the newer one" merge would sever
+real load/Samsara continuity for some drivers. This needs a **per-identity merge** (pick the row with
+real activity per pair, reassign every FK reference — `mdata.loads.assigned_primary_driver_id`,
+`driver_finance.*` settlements, `hos.duty_status_events`, `integrations.samsara_drivers.local_driver_id`
+— to the surviving row, then lock the loser via `status_locked_reason` per void-not-delete law, never
+delete) across all 65 pairs, which is a real migration + reassignment script, not a one-line fix.
+
+| `mdata.drivers` (USMCA, 65 duplicate identity-groups / 134 of 163 rows); root import event(s) at
+`2026-07-04T04:07:38.114Z` and `2026-08-21T15:30:00.001Z`, source script not yet identified | **CC-3
+(picking up next)** | build a per-identity merge script: for each of the 65 duplicate groups, pick the
+surviving row (prefer the one with more/most-recent real activity across loads/settlements/HOS/samsara,
+not just "keep oldest"), reassign every FK table's references to it, then lock the loser rows
+(`status_locked_reason='duplicate_import_merged'` — needs adding to the
+`drivers_status_locked_reason_check` CHECK constraint, a small additive migration) rather than deleting
+them | live Neon reads this session (`tiny-field-89581227`, `bypass_rls=lucia`): 163 total USMCA
+drivers / 65 dup-groups / 134 dup rows; batch counts 83@07-04 + 68@08-21; GENARO GUERRERO CHAVEZ 3-row
+trace (`6edcb351`/`6e908ee1`/`bd56ad0d`) with matching `integrations.samsara_drivers` rows
+(`525dcacc`→USMCA, `1f4245dd`→TRANSP) confirming the TRANSP/USMCA shared-fleet link is correct and only
+the USMCA-side duplicate is spurious | **OPEN · root-caused live, not fixed · supersedes the 09-07
+license/name-matcher framing on `SAMSARA-TMS-DRIVER-LINKAGE-GAP-USMCA`** |
