@@ -9818,3 +9818,21 @@ re-discover from zero that "wire the consumption" quietly means "build two new f
 |---|---|
 | NEW-29/30/31 lumper-invoice consumption | OPEN · no WF-040 load-close integration exists at all · needs a scoped build, not a wire-up |
 | NEW-29/30/31 late-penalty-fine consumption | OPEN · blocked on missing fine amount + target system's own human-approval design · needs a worklist, not automation |
+
+## NEW-09 CORRECTION — POST-DEPLOY LIVE PROOF CLOSED (CC-1, 2026-09-09)
+
+The one item the 2026-09-08 NEW-09 CORRECTION entry above left open ("Remaining: post-deploy live
+re-screenshot of load 13569 under 'All Open' -- should show 0 rows"). PR #21447 is now live (confirmed
+`git merge-base --is-ancestor` against the deployed `git_sha`, healthz `debc3d9d` and later).
+
+Live-verified end to end, not just re-read: queried `accounting.invoices` directly on prod
+(bypass_rls=lucia, USMCA) — invoice `e89484a6…` for load 13569 (`b3532955…`) is `status='sent'`,
+`voided_at IS NULL`, so `load-costs-board.routes.ts`'s `invoice_info` CTE (`i.status NOT IN
+('draft','proforma','void')`) correctly returns `is_invoiced=true` for this load on the live query
+today. Re-read the frontend choke point (`LoadCostsBoardPage.tsx:99`,
+`isClosed(r) = CLOSED.includes(r.status) || r.is_invoiced`) and confirmed the default/`all_open`
+filter branch (`matches()`, line 136) returns `!isClosed(r)` — with `is_invoiced=true`, load 13569 is
+excluded from every open-items view today, not just in theory. No code change needed; this closes the
+one remaining unverified claim from the correction above.
+
+**NEW-07/08/09 now fully CLOSED, including the post-deploy live-proof gate.**
