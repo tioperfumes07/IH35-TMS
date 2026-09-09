@@ -243,11 +243,20 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
             last_synced_at,
             plaid_item_id,
             created_at,
-            updated_at
+            updated_at,
+            display_order
           FROM banking.bank_accounts
           WHERE operating_company_id = $1::uuid
             AND deactivated_at IS NULL
-          ORDER BY institution_name NULLS LAST, account_name NULLS LAST, created_at DESC
+          -- BANK-F30014: owner mega-report 2026-09-09 -- the Bank Accounts reorder (BANK-F25142,
+          -- PATCH /api/v1/banking/accounts/reorder + the Manage Accounts drag-reorder modal) writes
+          -- display_order, but THIS endpoint -- the one that feeds the account-selector row at the
+          -- top of Banking > Transactions -- ignored it and always sorted by
+          -- institution_name/account_name/created_at instead, so a reorder saved anywhere else in
+          -- the app was invisible on this surface. display_order is NOT NULL DEFAULT 0
+          -- (0177_p7_w2_bank_accounts_display_columns.sql), so untouched accounts (all still 0) are
+          -- unaffected -- this only changes ordering once an account has actually been reordered.
+          ORDER BY display_order, institution_name NULLS LAST, account_name NULLS LAST, created_at DESC
         `,
         [query.data.operating_company_id]
       );
