@@ -74,6 +74,8 @@ export async function buildExhibitC(
           AND bt.review_state IS DISTINCT FROM 'transfer'
           AND bt.transfer_kind IS NULL
           AND bt.destination_bank_account_id IS NULL
+          -- BANK-F30013: voided (reversed/superseded) bank_transactions rows must never reach a court filing.
+          AND bt.voided_at IS NULL
       ) flow ON TRUE
       LEFT JOIN LATERAL (
         SELECT rs.id, rs.beginning_balance_cents

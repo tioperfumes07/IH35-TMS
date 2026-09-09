@@ -362,6 +362,8 @@ export async function computeBankingSummary(client: { query: <R = Record<string,
         AND bt.review_state IS DISTINCT FROM 'transfer'
         AND bt.transfer_kind IS NULL
         AND bt.destination_bank_account_id IS NULL
+        -- BANK-F30013: voided (reversed/superseded) bank_transactions rows must never reach a court filing.
+        AND bt.voided_at IS NULL
     `,
     [companyId, startDate, endDate]
   );
