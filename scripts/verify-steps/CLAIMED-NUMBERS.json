@@ -8408,5 +8408,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-09-09",
     "purpose": "verify-resettlement-origin-load-dates"
+  },
+  "11094": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-09",
+    "purpose": "verify-settlement-margin-pct-separate-columns"
   }
 }
