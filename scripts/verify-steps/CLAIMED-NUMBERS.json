@@ -8383,5 +8383,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-09-09",
     "purpose": "verify-other-recovery-role-bound"
+  },
+  "11086": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-09",
+    "purpose": "verify-settlement-loan-recovery-modal-wired"
   }
 }
