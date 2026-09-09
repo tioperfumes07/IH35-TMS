@@ -1,7 +1,9 @@
 #!/usr/bin/env tsx
 // RECON-USMCA-BANK-01 (owner 2026-09-09) — raise bank-match suggestion coverage on USMCA's live
 // banking.bank_transactions. Measured before: has_suggestion (suggested_vendor_id OR
-// suggested_match_bill_id) 109/437 (25%). Measured after this script: 318/437 (72.8%).
+// suggested_match_bill_id) 109/437 (25%). Measured after round 1 of this script: 318/437 (72.8%).
+// Measured after round 2 (owner wake-up, more real vendor matches found by re-reading what was
+// still unsuggested): 336/437 (76.9%).
 //
 // TWO independent gaps, both real, neither is the previously-fixed normalization bug:
 //   1. NO BULK BACKFILL EXISTED. applyBankingRulesForTransaction (banking-rules.engine.ts) only
@@ -125,7 +127,29 @@ const NEW_RULES: NewRule[] = [
   { priority: 55, description_contains: "check image", then_account_number: ACCOUNTS.ASK_ACCOUNTANT, reason: "6 live occurrences, check number only, no payee detail." },
   { priority: 45, description_contains: "pmnt sent", then_account_number: ACCOUNTS.ASK_ACCOUNTANT, reason: "Generic BofA bill-pay/wire-out label prefix covering multiple different sub-merchants (Remitly, Cash App, opaque codes) -- 20 live occurrences, too heterogeneous for one specific vendor." },
   { priority: 40, description_contains: "checkcard", then_account_number: ACCOUNTS.ASK_ACCOUNTANT, reason: "Lowest-priority catch-all -- covers remaining CHECKCARD lines whose merchant text doesn't match any specific merchant rule already on this table." },
+
+  // ROUND 2 (owner wake, 2026-09-09 ~05:30Z): pushed further after the first live measurement
+  // (318/437) -- found more real vendor matches by re-reading what was still unsuggested, not by
+  // relaxing the no-fabrication standard. 109 -> 318 -> 336/437 (76.9%) across two rounds.
+  { priority: 86, description_regex: "laura.*munoz", then_account_number: ACCOUNTS.OWNER_RELATED_PARTY, then_vendor_name: "Laura Munoz", reason: "Broadens the exact 'laura munoz' rule -- catches 'LAURA YVETTE MUNOZ' and other middle-name variants the exact substring missed." },
+  { priority: 88, description_contains: "faro factoring", then_account_number: "2150" /* Factoring Advance, same account as the existing orig:faro factoring rule */, then_vendor_name: "Faro Factoring", reason: "Broadens the existing 'orig:faro factoring' (wire-IN only) rule -- catches the WIRE OUT direction too (BNF:1/FARO FACTORING), same real vendor, same Factoring Advance account." },
+  { priority: 90, description_contains: "h-e-b", then_account_number: ACCOUNTS.OFFICE_ADMIN, then_vendor_name: "Heb", reason: "H-E-B grocery purchase, real vendor row exists." },
+  { priority: 90, description_contains: "samsclub", then_account_number: ACCOUNTS.OFFICE_ADMIN, then_vendor_name: "Sam'S Club", reason: "Sam's Club purchase, real vendor row exists." },
+  { priority: 90, description_contains: "ed-her plastics", then_account_number: "6900" /* Miscellaneous */, then_vendor_name: "ED-HER PLASTICS INC", reason: "ACH HOLD ED-HER PLASTICS -- real vendor row exists." },
+  { priority: 90, description_contains: "american express", then_account_number: "6900" /* Miscellaneous */, then_vendor_name: "American Express", reason: "ACH payment to American Express (credit card payment), real vendor row exists." },
+  { priority: 45, description_contains: "bank of america atm", then_account_number: ACCOUNTS.ASK_ACCOUNTANT, then_vendor_name: "Bank Of America", reason: "Second Plaid description variant for the same ATM-withdrawal-at-BofA event the 'bkofamerica' rule already covers (that one is the concatenated form; this is the spelled-out 'BANK OF AMERICA ATM' form)." },
+  { priority: 100, description_contains: "monthly fee", then_account_number: "6300" /* Bank Service Charges & Wire Fees */, then_vendor_name: "Bank Of America", reason: "BofA's own monthly account fee -- BofA genuinely is the payee, same class as the existing wire-transfer-fee rule." },
+  { priority: 100, description_contains: "external transfer fee", then_account_number: "6300", then_vendor_name: "Bank Of America", reason: "BofA's own external-transfer fee -- same class as monthly fee / wire transfer fee." },
+  { priority: 100, description_contains: "overdraft item fee", then_account_number: "6300", then_vendor_name: "Bank Of America", reason: "BofA's own overdraft fee -- same class as monthly fee / wire transfer fee." },
 ];
+
+// NOT reproduced by this array (already permanently live on prod, applied as direct UPDATEs to
+// pre-existing rows during the live session rather than new INSERTs): the pre-existing
+// "wire transfer fee" rule (created 2026-08-12, before this task) had "Bank Of America" attached
+// as its vendor -- BofA genuinely is the payee for its own fee; and the pre-existing
+// "utility trailers lared" rule had its substring widened to plain "utility trailers" to also
+// catch a differently-truncated Plaid description variant. Both are idempotent, both are recorded
+// here for the audit trail only.
 
 async function main() {
   const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
