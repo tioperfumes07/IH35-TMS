@@ -53,7 +53,7 @@ function main() {
   if (!migration.includes("wo_id")) fail("migration must include wo_id FK");
   if (!migration.includes("bill_id")) fail("migration must include bill_id column");
 
-  if (!routes.includes('app.post("/api/v1/road-service-tickets"')) {
+  if (!/app\.post\(\s*["']\/api\/v1\/road-service-tickets["']/.test(routes)) {
     fail("routes must expose POST /api/v1/road-service-tickets");
   }
   if (!routes.includes('app.patch("/api/v1/road-service-tickets/:id/complete"')) {

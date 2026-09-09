@@ -224,8 +224,11 @@ function checkSafetyEventsPage(src) {
 }
 
 function checkDispatchOverview(src) {
-  if (!src.includes("dashboardQ.isLoading || dashboardQ.isError ? \"—\"")) {
+  if (!src.includes('dashboardQ.isLoading || dashboardQ.isError ? "—" : (dashboardQ.data?.on_load ?? 0)')) {
     fail(`${DISPATCH_OVERVIEW}: Active loads KPI must treat dashboardQ.isError like loading (show "—", not fabricated 0).`);
+  }
+  if (!src.includes('dashboardQ.isLoading || dashboardQ.isError ? "—" : (dashboardQ.data?.delivered ?? 0)')) {
+    fail(`${DISPATCH_OVERVIEW}: Delivered — pending docs KPI must treat dashboardQ.isError like loading (show "—", not fabricated 0).`);
   }
   if (!src.includes('atRiskLateQ.isLoading || atRiskLateQ.isError ? "—" : atRiskLateTotal')) {
     fail(`${DISPATCH_OVERVIEW}: At-risk / late KPI must branch on the canonical combined atRiskLateQ loading/error state.`);
@@ -508,8 +511,8 @@ function selftest() {
   {
     const original = fs.readFileSync(DISPATCH_OVERVIEW, "utf8");
     const mutated = original.replace(
-      /dashboardQ\.isLoading \|\| dashboardQ\.isError \? "—" : \(dashboardQ\.data\?\.active_loads \?\? 0\)/,
-      'dashboardQ.isLoading ? "—" : (dashboardQ.data?.active_loads ?? 0)'
+      /dashboardQ\.isLoading \|\| dashboardQ\.isError \? "—" : \(dashboardQ\.data\?\.on_load \?\? 0\)/,
+      'dashboardQ.isLoading ? "—" : (dashboardQ.data?.on_load ?? 0)'
     );
     if (mutated === original) {
       console.error("SELFTEST SETUP FAILED: DispatchOverview dashboardQ.isError pattern not found.");

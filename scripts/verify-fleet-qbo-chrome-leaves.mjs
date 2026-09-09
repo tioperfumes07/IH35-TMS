@@ -85,7 +85,7 @@ const CHECKS = [
   {
     name: "roster.row.edit_unit / roster.row.edit_trailer: FleetTable real per-row Edit -> EditVehicleModal + EditTrailerModal",
     file: "apps/frontend/src/components/FleetTable.tsx",
-    pattern: /w-14 px-2 py-1">Edit<[\s\S]{0,5500}<EditVehicleModal[\s\S]{0,700}<EditTrailerModal/,
+    pattern: /aria-label=\{[\s\S]{0,500}Edit trailer[\s\S]{0,500}setEditingUnitId\(row\.id\)[\s\S]{0,1500}<EditVehicleModal[\s\S]{0,700}<EditTrailerModal/,
   },
   {
     name: "unit.profile.identity: VehicleProfilePage real IdentityStatusHeader section",

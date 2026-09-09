@@ -45,19 +45,21 @@ type BorderCrossingEvent = {
 
 const PANEL_ROW_LIMIT = 6;
 
-// GO-07 COUNTING LAW: the tile is counted by countActiveDispatchLoads() on these six statuses.
-// Carry the identical set into the drill URL; the generic live board is a different population
-// (it includes other non-terminal states and excludes delivered_pending_docs), so linking there
-// without an explicit filter makes the tile and its table disagree.
+// DSP-KPI-ON-LOAD (owner ruling 2026-09-09): "Active loads" = only trucks that actually HAVE a load
+// out. countOnLoadDispatchLoads() (backend `on_load`) counts these same five statuses; the drill URL
+// carries the identical set so the tile and its table agree. delivered_pending_docs is DELIBERATELY
+// excluded here — with AlwaysTrack docs always in, a delivered load belongs to the factoring/billing
+// pipeline, surfaced by its own "Delivered — pending docs" tile drilling to /dispatch/factoring-queue.
 const ACTIVE_LOAD_DRILL_STATUSES = [
   "assigned_not_dispatched",
   "dispatched",
   "at_pickup",
   "in_transit",
   "at_delivery",
-  "delivered_pending_docs",
 ] as const;
 const ACTIVE_LOAD_DRILL_HREF = `/dispatch/loads?statuses=${ACTIVE_LOAD_DRILL_STATUSES.join(",")}`;
+// Delivered-but-not-closed loads: awaiting docs / factoring purchase. Drills into the factoring queue.
+const DELIVERED_DRILL_HREF = "/dispatch/factoring-queue";
 
 const CROSSING_LABELS: Record<string, string> = {
   "laredo-i": "Laredo I",
@@ -319,12 +321,18 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
         <p className="text-[11px] text-gray-500">
           Tile value must equal the drill table row count. At-risk / late counts each load once (union, not a sum).
         </p>
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-5">
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
         <KpiCard
           label="Active loads"
-          value={dashboardQ.isLoading || dashboardQ.isError ? "—" : (dashboardQ.data?.active_loads ?? 0)}
-          hint={dashboardQ.data ? `${dashboardQ.data.in_transit} in transit` : undefined}
+          value={dashboardQ.isLoading || dashboardQ.isError ? "—" : (dashboardQ.data?.on_load ?? 0)}
+          hint={dashboardQ.data ? `${dashboardQ.data.in_transit} in transit · trucks with a load out` : undefined}
           to={ACTIVE_LOAD_DRILL_HREF}
+        />
+        <KpiCard
+          label="Delivered — pending docs"
+          value={dashboardQ.isLoading || dashboardQ.isError ? "—" : (dashboardQ.data?.delivered ?? 0)}
+          hint="delivered — factoring / billing queue"
+          to={DELIVERED_DRILL_HREF}
         />
         <KpiCard
           label="At-risk / late"

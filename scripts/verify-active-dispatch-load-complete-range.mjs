@@ -28,8 +28,15 @@ function verify(s) {
     ["availability derives from complete set", /onLoadsCount = useMemo\([\s\S]*?dispatchLoadsQuery\.data\?\.loads/.test(s.drivers) && /availableCount = useMemo/.test(s.drivers)],
     ["dispatch OOS complete active set", /const oosLoadsQ = useQuery\([\s\S]*?listAllDispatchLoads\(\{[\s\S]*?delivered_pending_docs/.test(s.dispatch)],
     ["dispatch OOS filtering preserved", /oosLoadsQ\.data\?\.loads[\s\S]*?filter\(\(load\) => load\.is_dispatch_blocked\)/.test(s.dispatch)],
-    ["active tile uses exact filtered drill", /const ACTIVE_LOAD_DRILL_STATUSES = \[[\s\S]*?"assigned_not_dispatched",[\s\S]*?"dispatched",[\s\S]*?"at_pickup",[\s\S]*?"in_transit",[\s\S]*?"at_delivery",[\s\S]*?"delivered_pending_docs",[\s\S]*?\] as const;[\s\S]*?const ACTIVE_LOAD_DRILL_HREF = `\/dispatch\/loads\?statuses=\$\{ACTIVE_LOAD_DRILL_STATUSES\.join\(","\)\}`;[\s\S]*?label="Active loads"[\s\S]*?to=\{ACTIVE_LOAD_DRILL_HREF\}/.test(s.dispatch)],
-    ["active tile and service share exact statuses", /export const DISPATCH_ACTIVE_LOAD_STATUSES = \[[\s\S]*?"assigned_not_dispatched",[\s\S]*?"dispatched",[\s\S]*?"at_pickup",[\s\S]*?"in_transit",[\s\S]*?"at_delivery",[\s\S]*?"delivered_pending_docs",[\s\S]*?\] as const;/.test(s.activeCounts)],
+    // DSP-KPI-ON-LOAD (owner ruling 2026-09-09): "Active loads" = only trucks with a load out — the
+    // five on-load statuses, NOT the delivered_pending_docs billing backlog. Tile, drill URL, and the
+    // backend on-load counter must all carry the identical five-status set.
+    ["active tile uses exact on-load drill", /const ACTIVE_LOAD_DRILL_STATUSES = \[[\s\S]*?"assigned_not_dispatched",[\s\S]*?"dispatched",[\s\S]*?"at_pickup",[\s\S]*?"in_transit",[\s\S]*?"at_delivery",[\s\S]*?\] as const;[\s\S]*?const ACTIVE_LOAD_DRILL_HREF = `\/dispatch\/loads\?statuses=\$\{ACTIVE_LOAD_DRILL_STATUSES\.join\(","\)\}`;[\s\S]*?label="Active loads"[\s\S]*?to=\{ACTIVE_LOAD_DRILL_HREF\}/.test(s.dispatch)],
+    ["active drill excludes delivered_pending_docs", !/const ACTIVE_LOAD_DRILL_STATUSES = \[[\s\S]*?delivered_pending_docs[\s\S]*?\] as const;/.test(s.dispatch)],
+    ["active tile bound to on_load, not active_loads", /value=\{dashboardQ\.isLoading \|\| dashboardQ\.isError \? "—" : \(dashboardQ\.data\?\.on_load \?\? 0\)\}/.test(s.dispatch)],
+    ["delivered tile drills into factoring queue", /const DELIVERED_DRILL_HREF = "\/dispatch\/factoring-queue";[\s\S]*?label="Delivered — pending docs"[\s\S]*?value=\{dashboardQ\.isLoading \|\| dashboardQ\.isError \? "—" : \(dashboardQ\.data\?\.delivered \?\? 0\)\}[\s\S]*?to=\{DELIVERED_DRILL_HREF\}/.test(s.dispatch)],
+    ["on-load tile and service share exact statuses", /export const DISPATCH_ON_LOAD_STATUSES = \[[\s\S]*?"assigned_not_dispatched",[\s\S]*?"dispatched",[\s\S]*?"at_pickup",[\s\S]*?"in_transit",[\s\S]*?"at_delivery",[\s\S]*?\] as const;/.test(s.activeCounts)],
+    ["on-load service set excludes delivered_pending_docs", !/DISPATCH_ON_LOAD_STATUSES = \[[\s\S]*?delivered_pending_docs[\s\S]*?\] as const;/.test(s.activeCounts)],
     ["intentional exposure preview remains bounded", /const exposureLoadsQ = useQuery\([\s\S]*?listDispatchLoads\(\{[\s\S]*?limit:\s*20/.test(s.dispatch)],
   ];
   return checks.filter(([, ok]) => !ok).map(([label]) => label);
@@ -51,6 +58,10 @@ if (process.argv.includes("--selftest")) {
     ["OOS predicate lost", { ...live, dispatch: live.dispatch.replace("load.is_dispatch_blocked", "true") }],
     ["active drill loses a counted status", { ...live, dispatch: live.dispatch.replace('  "at_delivery",\n', "") }],
     ["active tile returns to generic board", { ...live, dispatch: live.dispatch.replace("to={ACTIVE_LOAD_DRILL_HREF}", 'to="/dispatch/loads"') }],
+    ["active drill re-admits delivered_pending_docs", { ...live, dispatch: live.dispatch.replace('  "at_delivery",\n] as const;', '  "at_delivery",\n  "delivered_pending_docs",\n] as const;') }],
+    ["active tile rebound to stale active_loads", { ...live, dispatch: live.dispatch.replace("dashboardQ.data?.on_load ?? 0", "dashboardQ.data?.active_loads ?? 0") }],
+    ["delivered tile loses its factoring drill", { ...live, dispatch: live.dispatch.replace("to={DELIVERED_DRILL_HREF}", 'to="/dispatch/loads"') }],
+    ["on-load service set re-admits delivered_pending_docs", { ...live, activeCounts: live.activeCounts.replace(/export const DISPATCH_ON_LOAD_STATUSES = \[\n  "assigned_not_dispatched",\n  "dispatched",\n  "at_pickup",\n  "in_transit",\n  "at_delivery",\n\] as const;/, 'export const DISPATCH_ON_LOAD_STATUSES = [\n  "assigned_not_dispatched",\n  "dispatched",\n  "at_pickup",\n  "in_transit",\n  "at_delivery",\n  "delivered_pending_docs",\n] as const;') }],
   ];
   for (const [label, mutation] of mutations) {
     if (verify(mutation).length === 0) {

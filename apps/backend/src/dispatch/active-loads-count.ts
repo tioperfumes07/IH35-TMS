@@ -12,6 +12,20 @@ export const DISPATCH_ACTIVE_LOAD_STATUSES = [
   "delivered_pending_docs",
 ] as const;
 
+// DSP-KPI-ON-LOAD (owner ruling 2026-09-09): the Dispatch Home "Active loads" tile must count only
+// trucks that actually HAVE a load out — assigned/dispatched/picking-up/in-transit/at-delivery.
+// A delivered_pending_docs load is DONE moving; with AlwaysTrack docs always in, it belongs to the
+// factoring/billing pipeline (its own tile drilling to /dispatch/factoring-queue), NOT the active
+// dispatch count. Excluding it here is what makes the tile read "real" (7 out, not 71 incl. billing
+// backlog). DISPATCH_ACTIVE_LOAD_STATUSES stays the 6-status "non-terminal" set for other consumers.
+export const DISPATCH_ON_LOAD_STATUSES = [
+  "assigned_not_dispatched",
+  "dispatched",
+  "at_pickup",
+  "in_transit",
+  "at_delivery",
+] as const;
+
 /** Movement-phase loads (kanban "In Transit" column). */
 export const DISPATCH_IN_TRANSIT_STATUSES = ["at_pickup", "in_transit", "at_delivery"] as const;
 
@@ -43,6 +57,11 @@ export async function countDispatchLoadsByStatuses(
 
 export async function countActiveDispatchLoads(client: Queryable, operatingCompanyId: string): Promise<number> {
   return countDispatchLoadsByStatuses(client, operatingCompanyId, DISPATCH_ACTIVE_LOAD_STATUSES);
+}
+
+/** DSP-KPI-ON-LOAD: trucks with a load currently out (excludes delivered_pending_docs). */
+export async function countOnLoadDispatchLoads(client: Queryable, operatingCompanyId: string): Promise<number> {
+  return countDispatchLoadsByStatuses(client, operatingCompanyId, DISPATCH_ON_LOAD_STATUSES);
 }
 
 export async function countInTransitDispatchLoads(client: Queryable, operatingCompanyId: string): Promise<number> {
