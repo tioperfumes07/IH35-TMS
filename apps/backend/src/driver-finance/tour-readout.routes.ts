@@ -251,6 +251,10 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
       settlement_id: s.id, display_id: s.display_id, status: s.status, approval_status: s.approval_status, settlement_model: s.settlement_model, tour_id: s.tour_id,
       driver_id: s.driver_id, driver_name: s.driver_name, unit_number: unitNumber, trip_started_at: s.trip_started_at, trip_closed_at: s.trip_closed_at,
       period_start: s.period_start, period_end: s.period_end, is_open: !closedAlready, locked_at: s.locked_at, paid_at: s.paid_at,
+      // NEW-10 — the ORIGINAL load that opened this (re)settlement, so the tours register can show its
+      // "date started" (first pickup) + "delivery date". first_load_id is the NB bookend for a
+      // load_bookended tour; listTours resolves the leg by it (NB fallback, then first leg).
+      first_load_id: s.first_load_id, last_load_id: s.last_load_id,
     },
     legs,
     totals: { ...totals, margin_cents: margin, margin_pct: totals.revenue_cents > 0 ? Math.round((margin / totals.revenue_cents) * 1000) / 10 : null,
@@ -285,6 +289,11 @@ export type TourListRow = {
    *  EntityLink to the load (needs the load_id the flat legs_label string never carried). READ-only
    *  projection off the same buildTourReadout legs; additive, never re-derived. */
   legs: { load_id: string; load_number: string; trip_type: string | null }[];
+  /** NEW-10 (owner 2026-09-07): the ORIGINAL load that created this (re)settlement — its number,
+   *  its "date started" (first pickup) and its "delivery date" (last delivery). READ-only projection
+   *  off the same buildTourReadout legs (NB bookend by first_load_id, then NB by trip_type, then the
+   *  first leg). Dash (null), never fabricated, when the original load carries no scheduled stop date. */
+  origin_load_number: string | null; origin_pickup_date: string | null; origin_delivery_date: string | null;
   revenue_cents: number; costs_cents: number; driver_pay_cents: number; margin_cents: number; margin_pct: number | null;
   miles_practical: number; miles_real: number | null; ready_ok: number; ready_total: number; can_close: boolean; close_blockers: string[];
   driver_net_cents: number | null; company_settlement_display_id: string | null;
@@ -310,11 +319,21 @@ export async function listTours(client: Db, companyId: string, state: "open" | "
     const r = await buildTourReadout(client, companyId, id, null);
     if (!r || !r.tour) continue;
     const live = r.legs.filter((l) => !l.is_cancelled);
+    // NEW-10 — the ORIGINAL load that created the (re)settlement: the NB bookend (first_load_id), else
+    // the NB leg, else the first leg in NB→TR→SB order. A cancelled original still counts as the origin
+    // (it happened), so resolve against ALL legs, not just the live ones.
+    const originLeg =
+      r.legs.find((l) => r.tour!.first_load_id != null && l.load_id === r.tour!.first_load_id) ??
+      r.legs.find((l) => l.trip_type === "NB") ??
+      r.legs[0] ?? null;
     out.push({
       settlement_id: r.tour.settlement_id, display_id: r.tour.display_id, status: r.tour.status, is_open: r.tour.is_open,
       driver_name: r.tour.driver_name, unit_number: r.tour.unit_number, trip_started_at: r.tour.trip_started_at, trip_closed_at: r.tour.trip_closed_at,
       leg_count: live.length, legs_label: live.map((l) => `${l.trip_type ?? "?"} ${l.load_number}`).join(" → "),
       legs: live.map((l) => ({ load_id: l.load_id, load_number: l.load_number, trip_type: l.trip_type })),
+      origin_load_number: originLeg?.load_number ?? null,
+      origin_pickup_date: originLeg?.pickup_date ?? null,
+      origin_delivery_date: originLeg?.delivery_date ?? null,
       revenue_cents: r.totals?.revenue_cents ?? 0, costs_cents: r.totals?.costs_cents ?? 0, driver_pay_cents: r.totals?.driver_pay_cents ?? 0,
       margin_cents: r.totals?.margin_cents ?? 0, margin_pct: r.totals?.margin_pct ?? null,
       miles_practical: r.totals?.miles_practical ?? 0, miles_real: r.totals?.miles_real ?? null,

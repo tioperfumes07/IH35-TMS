@@ -70,6 +70,9 @@ export type TourListRow = {
   /** ROUND 16.1 — the tour's live legs in order (load_id · load_number · trip_type) so the register
    *  can render each leg as a type-colored EntityLink pill. Downstream READ of the tour-readout model. */
   legs: TourLegBrief[];
+  /** NEW-10 — the ORIGINAL load that created this (re)settlement: its number, "date started" (first
+   *  pickup) and "delivery date" (last delivery). Dash when the load carries no scheduled stop date. */
+  origin_load_number: string | null; origin_pickup_date: string | null; origin_delivery_date: string | null;
   revenue_cents: number; costs_cents: number; driver_pay_cents: number; margin_cents: number; margin_pct: number | null;
   miles_practical: number; miles_real: number | null; ready_ok: number; ready_total: number; can_close: boolean; close_blockers: string[];
   driver_net_cents: number | null; company_settlement_display_id: string | null;
