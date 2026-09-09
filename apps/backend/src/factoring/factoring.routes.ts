@@ -176,6 +176,8 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
               inv.invoice_id,
               inv.customer_id,
               inv.load_id,
+              sett.settlement_id,
+              sett.settlement_display_id,
               ${LOAD_COST_ROLLUP_SELECT},
               COUNT(*) OVER()::int AS _total_count
             FROM views.factoring_recourse_at_risk rr
@@ -188,6 +190,16 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
               ORDER BY i.created_at DESC
               LIMIT 1
             ) inv ON true
+            LEFT JOIN LATERAL (
+              SELECT ds.id AS settlement_id, ds.display_id AS settlement_display_id
+              FROM driver_finance.settlement_lines sl
+              JOIN driver_finance.driver_settlements ds
+                ON ds.id = sl.settlement_id
+               AND ds.operating_company_id = sl.operating_company_id
+              WHERE sl.load_id = inv.load_id
+                AND sl.is_active = true
+              LIMIT 1
+            ) sett ON true
             ${loadCostRollupLateral("inv.load_id", "rr.operating_company_id")}
             WHERE rr.operating_company_id = $1::uuid
               ${customerFilter}
