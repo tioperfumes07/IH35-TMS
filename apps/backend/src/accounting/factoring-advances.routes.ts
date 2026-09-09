@@ -16,6 +16,7 @@ import {
   listFactoringReserveBalances as listFactoringReserveBalancesByAdvance,
 } from "./factoring-posting/reserve-tracker.service.js";
 import { nextFactoringDisplayId } from "./display-id.js";
+import { syncLoadsForFactoringAdvance } from "../dispatch/load-billing-lifecycle.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope, INVOICE_PLEDGE_CENTS_SQL } from "./shared.js";
 import { requireVoidCancelExecutorWired } from "../lib/authz/void-cancel-authz.js";
 
@@ -644,6 +645,16 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
       return { code: 200 as const, data: await fetchAdvanceDetail(client, params.data.id, query.data.operating_company_id) };
     });
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
+    // LOAD-CLOSE-LIFECYCLE — the advance just funded (`advanced`) and its invoice(s) were flipped to
+    // factoring_status='advanced' INSIDE the committed txn above. Now, post-commit on its own
+    // connection (so it observes the committed 'advanced' and never contends for the advance row's
+    // lock the poster just released — ACCT-F5651), close the delivered load(s) behind those invoices.
+    // Idempotent + swallow-and-log: a factoring hiccup here never fails the advance.
+    await syncLoadsForFactoringAdvance({
+      operatingCompanyId: query.data.operating_company_id,
+      factoringAdvanceId: params.data.id,
+      actorUserId: user.uuid,
+    });
     return result.data;
   });
 
