@@ -44,6 +44,20 @@ export function bookLoadPersistsLumperFields(src) {
   );
 }
 
+// FIX2 (live-caught 2026-09-09, booking a real reefer load end to end for the required live proof):
+// trailer_type was declared on BookLoadInput and drove the frontend's own isReefer gating, but the
+// main lockstep INSERT never wrote it -- every load ever booked left mdata.loads.trailer_type NULL
+// no matter what the dispatcher picked, silently making dispatchTransitionGatesOnLumperFields's own
+// `current.trailer_type === "refrigerated_van"` check dead for every future booking (confirmed live:
+// a freshly booked Reefer-trailer load queried right after INSERT had trailer_type=null). Additive
+// column write, no lockstep shape change otherwise.
+export function bookLoadPersistsTrailerType(src) {
+  return (
+    /trailer_type\s*\n\s*\)\s*\n\s*VALUES/.test(src) &&
+    /input\.trailer_type \?\? null,\s*\n\s*\]\s*\n\s*\);/.test(src)
+  );
+}
+
 export function dispatchTransitionGatesOnLumperFields(src) {
   return (
     /mdataStatus === "dispatched" && current\.trailer_type === "refrigerated_van"/.test(src) &&
@@ -88,6 +102,7 @@ function violations(files) {
   if (!fs.existsSync(MIGRATION_PATH)) errors.push(`${MIGRATION_PATH} not found`);
   if (!migrationAddsThreeColumns(files.migration)) errors.push("migration no longer adds all 3 lumper columns");
   if (!bookLoadPersistsLumperFields(files.bookLoad)) errors.push("book-load.service.ts no longer persists the 3 lumper fields post-insert");
+  if (!bookLoadPersistsTrailerType(files.bookLoad)) errors.push("book-load.service.ts no longer persists trailer_type on the main INSERT -- the dispatch-transition gate would go dead for every future booking");
   if (!dispatchTransitionGatesOnLumperFields(files.loadsRoutes)) errors.push("loads.routes.ts no longer gates the dispatched transition on a reefer load's 3 lumper fields");
   if (!frontendRequiresLumperFieldsBeforeSubmit(files.bookLoadModal)) errors.push("BookLoadModalV4.tsx no longer requires the 3 lumper fields before submit for a reefer load");
   if (!equipmentSectionRendersConfirmationPanel(files.equipmentSection)) errors.push("BookLoadEquipmentSection.tsx no longer renders the reefer-lumper confirmation panel");
@@ -118,6 +133,7 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     { ...files, migration: files.migration.replace("ADD COLUMN IF NOT EXISTS lumper_payer text NULL,", "") },
     { ...files, bookLoad: files.bookLoad.replace("input.lumper_payer != null ||\n", "") },
+    { ...files, bookLoad: files.bookLoad.replace("input.trailer_type ?? null,\n", "") },
     { ...files, loadsRoutes: files.loadsRoutes.replace('current.trailer_type === "refrigerated_van"', 'false') },
     {
       ...files,
