@@ -65,9 +65,9 @@ export async function ensureDriverVendor(
   // uq_vendors_driver_active_per_company. A `lower(vendor_name)` match is NOT identity: two drivers
   // sharing a name collapse onto one payee (paying the wrong person), and a renamed driver forks a
   // second one.
-  const linkedRow = await client.query<{ id: string }>(
+  const linkedRow = await client.query<{ id: string; vendor_type: string; vendor_category: string | null }>(
     `
-      SELECT id::text AS id
+      SELECT id::text AS id, vendor_type, vendor_category
         FROM mdata.vendors
        WHERE operating_company_id = $1::uuid
          AND deactivated_at IS NULL
@@ -76,7 +76,42 @@ export async function ensureDriverVendor(
     `,
     [input.operatingCompanyId, input.driverId]
   );
-  if (linkedRow.rows[0]?.id) return "already_present";
+  const existing = linkedRow.rows[0];
+  if (existing?.id) {
+    if (existing.vendor_type === "Driver" && existing.vendor_category === "driver") {
+      return "already_present";
+    }
+    await client.query(
+      `
+        UPDATE mdata.vendors
+           SET vendor_type = 'Driver',
+               vendor_category = 'driver',
+               updated_by_user_id = $3::uuid,
+               updated_at = now()
+         WHERE id = $1::uuid
+           AND operating_company_id = $2::uuid
+           AND driver_id = $4::uuid
+           AND deactivated_at IS NULL
+      `,
+      [existing.id, input.operatingCompanyId, input.actorUserId, input.driverId]
+    );
+    await client.query(`SELECT audit.append_event($1, $2, $3::jsonb, $4::uuid, $5)`, [
+      "vendor.driver_category_normalized",
+      "info",
+      JSON.stringify({
+        vendor_id: existing.id,
+        driver_id: input.driverId,
+        operating_company_id: input.operatingCompanyId,
+        vendor_type_from: existing.vendor_type,
+        vendor_type_to: "Driver",
+        vendor_category_from: existing.vendor_category,
+        vendor_category_to: "driver",
+      }),
+      input.actorUserId,
+      "REG-004-DRIVERS-ARE-VENDORS",
+    ]);
+    return "linked";
+  }
 
   const vendorCode = driverVendorCode(displayName, input.driverId);
 
@@ -87,6 +122,8 @@ export async function ensureDriverVendor(
     `
       UPDATE mdata.vendors
          SET driver_id = $2::uuid,
+             vendor_type = 'Driver',
+             vendor_category = 'driver',
              updated_by_user_id = $3::uuid,
              updated_at = now()
        WHERE operating_company_id = $1::uuid
@@ -144,10 +181,10 @@ export async function ensureDriverVendor(
     await client.query(
       `
         INSERT INTO mdata.vendors (
-          vendor_name, vendor_code, vendor_type, phone, email, driver_id,
+          vendor_name, vendor_code, vendor_type, vendor_category, phone, email, driver_id,
           operating_company_id, created_by_user_id, updated_by_user_id, is_sample_data
         )
-        VALUES ($1, $2, 'Driver', $3, $4, $7::uuid, $5::uuid, $6::uuid, $6::uuid, $8)
+        VALUES ($1, $2, 'Driver', 'driver', $3, $4, $7::uuid, $5::uuid, $6::uuid, $6::uuid, $8)
       `,
       [
         displayName,
