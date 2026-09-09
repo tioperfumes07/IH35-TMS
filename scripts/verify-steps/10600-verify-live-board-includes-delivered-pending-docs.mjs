@@ -1,9 +1,9 @@
-// DSP-BAND-GAP (owner 2026-09-06: "we should have 14-16 trucks ... I only have 10 units in the board").
-// Root cause (measured live, RLS-bypassed): 16 InService USMCA trucks exist (14 GPS-active + T122 + T124),
-// but the dispatch board showed 10. delivered_pending_docs was in TERMINAL_LOAD_STATUSES, so the LIVE
-// board hid those 6 loads (T156/T163/T170/T171/T173/T176) from Booked, while units-without-load treats
-// delivered_pending_docs as an ACTIVE load and drops the truck from Awaiting -> those 6 were in NEITHER
-// band. Fix: delivered_pending_docs is LIVE (shows in Booked). This step pins both sides in CI.
+// LOADBOARD-LIFECYCLE (owner 2026-09-09: "the second a load is closed, it should disappear from the
+// load board … delivered waiting docs … STAYS in the load board until we change the status"). A load
+// stays LIVE through its whole lifecycle and leaves only when closed/cancelled/abandoned. This pins:
+// (a) delivered_pending_docs NOT in CLOSED_LOAD_STATUSES (stays live), (b) Awaiting active set still
+// excludes it (free truck shows once, no dup), (c) DispatchBoard routes it to the load-centric billing
+// band (not the in-flight Booked band). Supersedes the 2026-09-06 DSP-BAND-DUP/GAP framing.
 // Claimed number 10600 (cursor EVEN lane, Rule 25/37).
 export default {
   name: "verify-live-board-includes-delivered-pending-docs",
