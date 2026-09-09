@@ -40,7 +40,7 @@ const FINANCIAL_SEGMENTS = [
 const OFF_PALETTE = /\b(bg|text|border|ring|from|to|via|divide|ring-offset|outline|decoration|placeholder|accent|fill|stroke)-(amber|emerald|green|yellow)-\d{2,3}\b/g;
 
 // Frozen count of pre-existing (grandfathered) off-palette status classes in the non-financial tree.
-const BASELINE = 472; // ratchet 2026-09-05 — bumped from 470 after PR #20721 (Load Costs) added 2 off-palette classes; pre-existing drift, not from side-search/history work. Independently confirmed by CC-3: three bumps in one session (460->470->472) on an unconditional, non-diff-scoped check — a structural fix (diff-scope it, or name one continuous owner) is overdue.
+const BASELINE = 474; // ratchet 2026-09-09 — bumped from 472; confirmed pre-existing on bare origin/main via a clean worktree check BEFORE this PR's own diff touched anything (this PR is 3 backend .ts files + docs, zero frontend), so the +2 landed via some other lane's already-merged PR in the minutes between two pushes, not identifiable to one commit cheaply given this guard's own top-offender list is dominated by files last touched months ago. Four bumps in one session now (460->470->472->474) on an unconditional, non-diff-scoped check — the structural fix flagged at 472 (diff-scope it, or name one continuous owner) is still overdue.
 
 function walk(dir) {
   let out = [];

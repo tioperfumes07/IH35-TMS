@@ -39,4 +39,20 @@ describe("drivers bulk-update route", () => {
     expect(routes).toMatch(/appendBulkCrudAudit/);
     expect(mdataIndex).toMatch(/registerDriversBulkRoutes/);
   });
+
+  // DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION (owner 2026-09-07 report; gap found 2026-09-09):
+  // the single-item /deactivate + /reactivate routes lock/unlock status_locked_at so the daily
+  // driver-active-30d cron can never silently reverse a human's decision -- this bulk set_status
+  // action (the "Deactivate drivers" multi-select button) never did, leaving every
+  // bulk-deactivated driver unlocked and eligible for the very next cron run to flip it straight
+  // back to Active. Guards the regression class, not just the one-time count.
+  it("set_status locks status_locked_at/reason on Inactive/Terminated and clears it on Active — same as the single-item routes", () => {
+    const setStatusUpdate = routes.slice(routes.indexOf("async function handleSetStatus"));
+    expect(setStatusUpdate).toMatch(
+      /status_locked_at = CASE\s+WHEN \$2 IN \('Inactive', 'Terminated'\) THEN now\(\)\s+WHEN \$2 = 'Active' THEN NULL/
+    );
+    expect(setStatusUpdate).toMatch(
+      /status_locked_reason = CASE\s+WHEN \$2 IN \('Inactive', 'Terminated'\) THEN 'manual_deactivate'\s+WHEN \$2 = 'Active' THEN NULL/
+    );
+  });
 });

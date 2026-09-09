@@ -126,6 +126,13 @@ async function handleSetStatus(ctx: BulkPerEntityContext<z.infer<typeof setStatu
     }
   }
 
+  // DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION (owner 2026-09-07, gap found 2026-09-09): the
+  // single-item /deactivate and /reactivate routes (drivers.routes.ts) already set/clear
+  // status_locked_at so the daily driver-active-30d cron can never silently reverse a human's own
+  // decision -- this BULK set_status action (the multi-select "Deactivate drivers" button the
+  // owner actually used) never did, leaving every bulk-deactivated driver unlocked and therefore
+  // eligible for the very next cron run to flip it straight back to Active. Same lock semantics as
+  // the single-item routes: Inactive/Terminated locks 'manual_deactivate'; Active clears it.
   const res = await ctx.client.query(
     `
       UPDATE mdata.drivers
@@ -139,6 +146,16 @@ async function handleSetStatus(ctx: BulkPerEntityContext<z.infer<typeof setStatu
           WHEN $2 IN ('Inactive', 'Terminated') THEN COALESCE(deactivated_at, now())
           WHEN $2 = 'Active' THEN NULL
           ELSE deactivated_at
+        END,
+        status_locked_at = CASE
+          WHEN $2 IN ('Inactive', 'Terminated') THEN now()
+          WHEN $2 = 'Active' THEN NULL
+          ELSE status_locked_at
+        END,
+        status_locked_reason = CASE
+          WHEN $2 IN ('Inactive', 'Terminated') THEN 'manual_deactivate'
+          WHEN $2 = 'Active' THEN NULL
+          ELSE status_locked_reason
         END,
         updated_by_user_id = $4,
         updated_at = now()
