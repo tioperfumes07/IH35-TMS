@@ -791,3 +791,26 @@ Code confirmed correct at the source too: `runningBalanceById` (BankingTransacti
 No code change needed. No new PR. Nothing to merge under the fast-merge law here since there's no diff to ship — filing the DONE line that was missing, which is what caused this to look overdue.
 
 NEXT: moving to `09-08-2026-CC-1-ACCTF5723-BACKFILL-AND-REPOST.md` per the queue order.
+
+## 2026-09-09 02:3xZ — CC-1 | ACCT-F5723 DONE (already completed earlier this session, re-verified now)
+
+Per the handoff's own 3-step plan (`~/Downloads/09-08-2026-CC-1-ACCTF5723-BACKFILL-AND-REPOST.md`):
+already fully done, live-reconfirmed now rather than redone.
+
+- **Step 1 (FK backfill)** — confirmed live: JE `1bf5606c` has `reversed_by_je_id=df6dff65`, JE
+  `df6dff65` has `reverses_je_id=1bf5606c`, both directions linked exactly as specified.
+- **Step 2 (re-post invoice 1856d703's own A/R)** — confirmed live: invoice `1856d703-0c07-4cfb-8a7d-
+  39604a087d5e` status=`sent`, `amount_open_cents=250000` ($2,500.00), a real posted invoice, not a
+  raw JE.
+- **Step 3 (AR tie-out)** — confirmed live, exact match: `gl_cents = sub_cents = 16825241`
+  ($168,252.41), zero variance. `/api/v1/healthz` live right now: `ledger.ar_tieout` ok=true,
+  `ledger.posted_without_posting` ok=true, both critical-tier, both green.
+- **Guard** (`verify-void-reversal-links-non-batch-postings.mjs`, verify-step 10941): PASSED, live run
+  just now.
+
+No new work needed — this was completed as part of the CRITICAL-AR-TIEOUT-POSTED-WITHOUT-POSTING
+incident closed earlier in this same session (invoice 1856d703/load 13541, $2,500, along with the
+sibling load 6e823810/$607.41 case). The 2026-09-08 08:00 UTC deadline on this handoff predates that
+closure; filing this confirmation since the handoff doc itself wasn't marked done anywhere visible.
+
+NEXT: `09-08-2026-CC-1-REEFER-LUMPER-CONFIRMATION-WORKFLOW.md`.
