@@ -14,6 +14,7 @@ import { runInsurancePaymentReminderTick } from "../insurance/payment-reminder.s
 import { runCashAdvanceExpiryTick } from "./cash-advance-request-expiry-cron.js";
 import { processEmailQueueTick } from "../email/cron.js";
 import { runChatConfirmationEscalationTick } from "./chat-confirmation-escalation.cron.js";
+import { runSamsaraRemoteCountCollectorTick } from "./samsara-remote-count-collector.cron.js";
 
 /**
  * SYSTEM-BACKGROUND-JOB-LEDGER-STALE-AFTER-SUCCESSFUL-TICKS
@@ -44,6 +45,11 @@ export const IN_PROCESS_CATCHUP_WINDOWS: ReadonlyArray<{
   { jobName: "idempotency.cleanup_cron", maxStaleMinutes: 2880, disabled: () => process.env.ENABLE_IDEMPOTENCY_CLEANUP_CRON === "false" },
   { jobName: "email.queue_processor", maxStaleMinutes: 5, disabled: () => process.env.EMAIL_CRON_ENABLED !== "true" },
   { jobName: "chat.confirmation_escalation", maxStaleMinutes: 5, disabled: () => process.env.ENABLE_CHAT_CONFIRMATION_ESCALATION_CRON === "false" },
+  // SAMSARA-REMOTE-COUNT-COLLECTOR-NEVER-TICKS-UNDER-DEPLOY-CHURN (2026-09-09): this is a
+  // metadata/telematics mirror sync (Samsara counts + the driver-mirror linkage collector), not a
+  // money poster or a QBO path — squarely the class this list exists to cover. 1440 = 2x its own
+  // 12h (720min) schedule, the same "two-period health window" convention already used above.
+  { jobName: "samsara.remote_count_collector", maxStaleMinutes: 1440, disabled: () => (process.env.SAMSARA_REMOTE_COUNT_COLLECTOR_ENABLED ?? "true").trim() === "false" },
 ];
 
 function tickFor(jobName: string, app: FastifyInstance): (() => Promise<void>) | null {
@@ -78,6 +84,8 @@ function tickFor(jobName: string, app: FastifyInstance): (() => Promise<void>) |
       return async () => {
         await runChatConfirmationEscalationTick();
       };
+    case "samsara.remote_count_collector":
+      return () => runSamsaraRemoteCountCollectorTick(app);
     default:
       return null;
   }
