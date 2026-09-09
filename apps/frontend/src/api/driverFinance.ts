@@ -587,6 +587,35 @@ export function createSettlementDeduction(input: CreateSettlementDeductionInput)
   );
 }
 
+// SET-01 part 2 — in-place edit of a saved deduction line. The backend does a WORM-safe
+// void-old + recreate, so the response carries the NEW deduction id (the old one is voided).
+export type EditSettlementDeductionInput = {
+  operating_company_id: string;
+  amount_cents?: number;
+  deduction_type?: CreateSettlementDeductionTypedType;
+  reason: string;
+};
+export type EditedSettlementDeductionResult = {
+  oldDeductionId: string;
+  newDeductionId: string;
+  voidedLineId: string | null;
+  newAmountCents: number;
+  newType: string;
+};
+export function editSettlementDeduction(id: string, input: EditSettlementDeductionInput) {
+  return apiRequest<EditedSettlementDeductionResult>(
+    `/api/v1/driver-finance/settlement-deductions/${id}?${q(input.operating_company_id)}`,
+    {
+      method: "PATCH",
+      body: {
+        amount_cents: input.amount_cents,
+        deduction_type: input.deduction_type,
+        reason: input.reason,
+      },
+    }
+  );
+}
+
 export function approvePendingEscrowDeduction(
   id: string,
   payload: { operating_company_id: string; override_amount_cents?: number; review_notes?: string }

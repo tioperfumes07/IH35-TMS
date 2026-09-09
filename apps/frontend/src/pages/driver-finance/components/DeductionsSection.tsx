@@ -48,7 +48,15 @@ type Props = {
   isOpen?: boolean;
   // SET-01 — the button rendered below always existed; it had no handler at all (a dead control).
   onAdd?: () => void;
+  // SET-01 part 2 — per-line edit. Offered only for editable rows (see EDITABLE_TYPES); the backend
+  // is the real gate (pending + manual-only + open settlement) and rejects anything else.
+  onEdit?: (row: DeductionRow) => void;
 };
+
+// SET-01 part 2 — the four typed, GL-bound kinds a saved line can be edited into (matches the
+// create/edit route's schema). Non-manual/system rows (advance recovery, escrow-pending, etc.)
+// carry other types and are not offered an Edit control here.
+const EDITABLE_DEDUCTION_TYPES = new Set(["wire_fee", "ach_fee", "company_vehicle_fuel", "escrow_contribution"]);
 
 const COLUMNS: Array<ParityColumn<DeductionRow>> = [
   {
@@ -122,29 +130,48 @@ const COLUMNS: Array<ParityColumn<DeductionRow>> = [
   },
 ];
 
-export function DeductionsSection({ rows, onHold, onResume, isOpen, onAdd }: Props) {
+export function DeductionsSection({ rows, onHold, onResume, isOpen, onAdd, onEdit }: Props) {
   const subtotal = rows.reduce((sum, row) => sum + Number(row.pending_ack ? 0 : row.this_period_amount || 0), 0);
 
-  // Build columns with working hold/resume handlers — ParityColumn render is a pure function of
-  // the row, so we close over the callbacks here rather than at module scope.
+  // Build columns with working hold/resume/edit handlers — ParityColumn render is a pure function
+  // of the row, so we close over the callbacks here rather than at module scope.
   const columns: Array<ParityColumn<DeductionRow>> = COLUMNS.map((col) => {
     if (col.key !== "_actions") return col;
     return {
       ...col,
-      render: (row: DeductionRow) =>
-        row.is_held ? (
-          <Button size="sm" variant="secondary" onClick={() => onResume?.(row)} disabled={!onResume}>
-            Resume
-          </Button>
-        ) : row.source_deduction_id ? (
-          <Button size="sm" variant="secondary" onClick={() => onHold(row)}>
-            Hold
-          </Button>
-        ) : (
-          <span className="text-slate-400" title="No linked deduction record to hold">
-            —
-          </span>
-        ),
+      render: (row: DeductionRow) => {
+        // SET-01 part 2 — Edit is offered for an editable (open settlement, manual-typed, not held,
+        // real backing deduction) line. The PATCH route is the real gate; this only decides the
+        // affordance.
+        const canEdit =
+          Boolean(onEdit) &&
+          isOpen === true &&
+          !row.is_held &&
+          Boolean(row.source_deduction_id) &&
+          EDITABLE_DEDUCTION_TYPES.has(String(row.deduction_type ?? ""));
+        return (
+          <div className="flex justify-end gap-1">
+            {canEdit ? (
+              <Button size="sm" variant="secondary" onClick={() => onEdit?.(row)} data-testid="deduction-row-edit">
+                Edit
+              </Button>
+            ) : null}
+            {row.is_held ? (
+              <Button size="sm" variant="secondary" onClick={() => onResume?.(row)} disabled={!onResume}>
+                Resume
+              </Button>
+            ) : row.source_deduction_id ? (
+              <Button size="sm" variant="secondary" onClick={() => onHold(row)}>
+                Hold
+              </Button>
+            ) : !canEdit ? (
+              <span className="text-slate-400" title="No linked deduction record to hold">
+                —
+              </span>
+            ) : null}
+          </div>
+        );
+      },
     };
   });
 
