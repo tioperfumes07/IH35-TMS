@@ -989,3 +989,31 @@ DONE LINE: CC-1 | SETTLEMENT-REBUILD CHECKER VERDICT #2 DONE | docs-only, PR #21
 for the 28-doc/$37,830.87/14-reversal shape, independently re-derived (harness re-run + standalone math
 reimplementation + 6 live-data preconditions re-verified + both scripts read in full) | prod untouched,
 no post executed, awaiting owner's explicit yes | NEXT: resuming continuous sweep
+
+## 2026-09-09 05:2xZ — CC-1 | two more sweep items closed | continuing
+
+**NEW-09 CORRECTION post-deploy live-proof gate** (PR #21499, merged): the one item PR #21447 left
+open. Confirmed PR #21447 live on the deployed backend, then live-queried prod: load 13569's real
+invoice (status='sent', not voided) makes `invoice_info.is_invoiced=true`, and the frontend's
+`isClosed()` choke point now correctly excludes it from every open-items view. No code change needed.
+NEW-07/08/09 fully closed including the live-proof gate.
+
+**Found and fixed live (not asked-for, caught during a healthz spot-check):** `/api/v1/healthz`
+showed `ok:false` — `background_jobs.stale` (warning tier) flagged `insurance.monthly_report_by_5th`
+as `never_succeeded`. Traced to a REMAINING item PR #21200 explicitly left open: the per-company
+transaction-isolation fix in that PR removed the masking "current transaction is aborted" symptom, but
+the real underlying cause was still live — `notifications.user_notifications_type_check` never
+admitted `type='insurance_monthly_report'`/`'insurance_monthly_report_error'`, both already declared
+in the TS `NotificationType` union but never widened into the DB CHECK, so every insert of either type
+still raised `check_violation`. Fixed via migration `202614020000` (additive CHECK widen, from
+Cursor's own staged draft), applied live, guard `verify-notifications-type-check-insurance-widen.mjs`
+(verify-step 11113, 5/5 selftest — caught and fixed a self-consistency bug in my own first draft where
+the guard's substring check was trivially satisfied by the migration's own header-comment prose, before
+shipping it). Live-confirmed via `pg_get_constraintdef`. PR #21503, merged. Since this only touches a
+migration + a static guard (no runtime backend code), no deploy is needed — the fix is already fully
+live via the applied migration; the cron itself will self-clear `never_succeeded` at its next real
+tick (monthly, 5th of the month).
+
+DONE LINE: CC-1 | NEW-09-LIVE-PROOF + INSURANCE-MONTHLY-REPORT-NEVER-SUCCEEDED both DONE | PRs #21499,
+#21500-21503 (2 claims + 1 build) | live proof both | NEXT: resuming continuous sweep, no other
+unclaimed real item surfaced yet this pass
