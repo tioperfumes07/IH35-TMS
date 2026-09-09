@@ -227,3 +227,41 @@ philosophy, added a new live-data guard (`scripts/verify-fixed-monthly-costs-nev
 verify-step 11129) so this invariant is asserted permanently instead of only true by accident — it
 will catch the first future bill/expense entry, import, or UI change that lets a fixed monthly cost
 get tagged to a load. PR: (see this commit).
+
+### 2026-09-09 14:1xZ — item 30 (BNK-10) — stale $ figure corrected, live-verified, no code defect
+
+**Item 30's `−$686,503.95` figure was already disproven on 2026-09-05** (`docs/bus/PENDING-REGISTER-
+5DAY-2026-09-05.md:147`: that number "summed other entities" — the real net was `−$6,567.73`, 355
+non-voided). This session's "live proof never pulled" note re-opened it without re-reading that prior
+correction. Re-measured live just now, Neon prod (`tiny-field-89581227`, `br-fancy-credit-akjnd07a`),
+`bypass_rls='lucia'`, `banking.bank_transactions` scoped to USMCA:
+
+```
+total 437 · non-voided 288 · non-voided net −$2,177.09 · posted to GL 1 · sample-data 0
+status breakdown (non-voided): uncategorized 235 · pending_categorization 52 · categorized 1
+of the 287 non-voided+uncategorized: 278 already carry a rule-engine suggestion, 9 do not
+```
+
+The population keeps moving night to night (355 → 288 non-voided) as rows sync/void, so the dollar
+figure was never going to hold still — treat any static `$` number on this row as a snapshot, not a
+target.
+
+**Root cause (unchanged from 09-05, still correct): this is a categorization backlog, not a code
+defect.** `bank-feed-gl-posting.service.ts` is built, tested and live-armed for USMCA and only posts a
+*categorized* line — 1 of 288 is categorized, so 1 has posted; that is the chain working exactly as
+designed, not evidence of a gap. Per `docs/LAW.md` §2 standing decision, categorizing the backlog is
+the **owner's** task ("Bank history to categorize: Dec 2025 – Jul 2026, by the owner"), not a coder fix.
+
+**What CC-2 already shipped today, live-confirmed, not duplicated here:** `RECON-USMCA-BANK-01`
+(`apps/backend/src/banking/banking-rules.engine.ts` `applyBankingRulesForCompany`, wired at
+`POST /api/v1/banking/rules/bulk-apply`, guarded by `scripts/verify-recon-usmca-bank-suggestion-
+coverage.mjs`) retroactively runs the existing rule set against every not-yet-categorized transaction
+and writes `suggested_*` columns only (never `categorized_at` — suggestion, not auto-post). That run
+already reached 278 of the 287 remaining uncategorized rows; the 9 without a suggestion have no
+matching rule yet and are the only rows that would need either a new rule or manual categorization to
+close the loop. Ran `node scripts/verify-recon-usmca-bank-suggestion-coverage.mjs` — static OK.
+
+**Closing item 30 as CONFIRMED (root cause: owner categorization backlog, chain armed and working) —
+not a code defect, no PR needed.** If the owner wants faster closure, the highest-leverage next step
+is either bulk owner categorization or a coder pass adding rules for the 9 unmatched merchants — not
+a fix to the posting engine, which already works.
