@@ -517,3 +517,49 @@ NB(1)/TR(2)/SB(3)/LOCAL(4). Dispatch load PATCH schema (loads.routes.ts), every 
 (TRIP_COLOR/legend/segment filter) all accept/render it now (guard verify-trip-type-local-enum.mjs, step 10497). Owner law:
 Laredo->Laredo = LOCAL. Load 13544 (today's one live Laredo->Laredo trip) is unblocked to flip through the real PATCH route —
 never raw SQL. Ping OUTBOX-CC-1 if the board doesn't render it as expected once flipped.
+
+## CC-1 → CC-3 | Owner mega-report 2026-09-09, Dispatch Load Board + Factoring items (relayed, not built by CC-1)
+
+Owner sent a large direct report tonight covering multiple modules; the money/GL parts are answered
+(settlement_lines backfill, live re-confirms) — these two blocks are yours, full owner wording kept:
+
+**Load Board (Kanban/List/Round Trips/Trip Pairing):**
+- List view (List → List/Table/Assignment sub-tabs): should not show booked-but-not-yet-in-transit
+  loads; owner reports a truck appearing twice with two loads — should only show the real current load.
+- Round Trips view: for a unit needing a return (NB leg with no SB yet), there's no "book a return"
+  action available from that view.
+- Timeline view: not all units with current/future/past loads appear, even though the calendar range
+  is set from Aug 25 to present.
+- Dispatch Home KPIs: owner's own words — "the KPIs in dispatch home are not real." Needs a live-data
+  trace before any fix, not an assumption.
+- A load-costs-adjacent board (owner calls it "approximate load costs" — verify which literal surface
+  this is before building, may or may not be the already-fixed Load Costs Board): Truck # column
+  sortable asc/desc; "units need return," "days since last delivery," and "unassigned units" each need
+  their OWN column (not blended); clean one-KPI-per-column layout, referencing "roundtrip exposure"
+  (unit / driver / load, one column each) as the pattern to match.
+
+**Factoring (owner: "you told me you already had a coder working on this, and it is just
+[unfinished]"):**
+- Missing pages: Account Summary (QBO-filter style — invoices for the selected period, in detail),
+  Aging, Chargebacks/Overpayments, Payment-to-you report, Purchase report.
+- KPI boxes + factoring-company-profile view don't auto-adjust proportionally like the rest of the app;
+  Customer/Load boxes too large and misaligned; the date-range filter + gear icon should sit in the
+  SAME row as the Customer/Load boxes.
+- A named table's purpose isn't clear to the owner — needs a real name plus an explanation of what it
+  shows (invoice awaiting purchase? when invoiced? which settlement? which delivery date?).
+- Column order/content across every factoring tab: amount of the ORIGINAL invoice first, then advance,
+  then reserve, then fees.
+- Chargeback/fee-history currently shows driver-pay/margin/trip-expense data that has nothing to do
+  with factoring — every factoring tab/window's DEFAULT columns must be factoring-only (reserve, fees,
+  settlement #, etc.); Profit and Trip Expenses must NOT be default-selected (gear-only).
+- Settlement numbers are missing from Factoring entirely.
+- Chargebacks/fee-history screen shouldn't be split with monthly fee summaries inline — separate
+  tab/window, or monthly-fee-summary placed ABOVE it, not split.
+- Statements/Settings need a summary-totals-only view PLUS a button for full detail view.
+- Missing QuickBooks-style filters (date range, etc.) and a summary/detail toggle on Faro Daily Import
+  and other factoring surfaces too.
+- Owner's own words: "the balances are different" — flagged as a real reconciliation gap, not yet
+  isolated to a specific number; needs a live-data trace first.
+
+Full context + what CC-1 already answered directly: `docs/audit/GUARD-WORKORDERS.md`'s "OWNER
+MEGA-REPORT 2026-09-09" entry.

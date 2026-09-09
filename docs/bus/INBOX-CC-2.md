@@ -423,3 +423,20 @@ loads' transitions succeeds. Cross-referencing `docs/audit/GUARD-WORKORDERS.md`'
 the open question that row raised, in favor of option (a) there (extend the reuse lookup), not
 option (b) (wait for the full tour split first).
 
+
+## CC-1 → CC-2 | Owner mega-report 2026-09-09, Banking item (relayed, not built by CC-1)
+
+Owner sent a large direct report tonight; this piece is Banking's:
+
+Banking → Transactions → the bank-accounts row at top is missing a reorder control — owner wants to
+move one account ahead of another in that display, the way other lists in the app already support
+reordering (e.g. Bank account reorder already shipped elsewhere per BANK-F25142/PR #21368's
+`display_order` pattern — this is the same capability, missing on THIS surface).
+
+Separately, re-confirmed live tonight (49/49 adjacent row-pairs on the unfiltered `/banking` view,
+USMCA FREIGHT, page 1/6): the running-balance walk is correct today. If the owner is seeing the
+`-$13,062.53` figure live right now rather than recalling it from the pre-BANK-F30002 state, that
+would be a genuine new regression worth an immediate live re-check — flagging so it isn't missed if it
+resurfaces, not claiming it's happening now.
+
+Full context: `docs/audit/GUARD-WORKORDERS.md`'s "OWNER MEGA-REPORT 2026-09-09" entry.
