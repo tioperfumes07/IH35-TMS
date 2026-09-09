@@ -1,3 +1,18 @@
+// BANK-VOIDED-RECON-01 (2026-09-09, CC-2): every SELECT/CTE in this file reading
+// banking.bank_transactions for reconciliation purposes (worklist, match-check, unmatch, the
+// complete-session variance calc, QBO sync candidates) is now filtered `voided_at IS NULL`. Live
+// on prod: 699 bank_transactions rows are voided (residue of BANK-F30002's Plaid pending/posted
+// dedup sweep and other supersedes), and one currently-open reconciliation session
+// (fa95376a-20fb-4d16-aef5-5b207d169846, period 2026-07-01..2026-07-31) has 38 voided rows —
+// net signed -$44,833.89 — inside its own date range. computeAdjustedBalanceSummary
+// (adjusted-balance-rec.ts) has no voided_at awareness of its own; it sums every row it is
+// handed into either the cleared or outstanding bucket, so a voided row was silently folding into
+// that session's variance/adjusted-balance math with no way to detect or exclude it downstream.
+// The QBO-sync-candidates query (bottom of this file) had the same gap: a voided-but-still-matched
+// transaction could be queued to sync to QBO, pushing a reversed transaction into an external
+// system. voided_at lives on banking.bank_transactions (set by bank-tx-dedup.ts's
+// supersedePlaidPendingByExactPostedCandidate, which already filters it correctly in its own
+// queries) — this file simply predates that void mechanism and was never updated to exclude it.
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type { PoolClient } from "pg";
 import { z } from "zod";
@@ -692,6 +707,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           WHERE bt.bank_account_id = $1
             AND bt.operating_company_id = $2::uuid
             AND bt.transaction_date BETWEEN $3 AND $4
+            AND bt.voided_at IS NULL
           ORDER BY bt.transaction_date DESC, bt.created_at DESC
         `,
         [session.bank_account_id, companyId, session.period_start, session.period_end]
@@ -1026,6 +1042,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
             AND bank_account_id = $2
             AND operating_company_id = $3::uuid
             AND transaction_date BETWEEN $4 AND $5
+            AND voided_at IS NULL
           LIMIT 1
         `,
         [
@@ -1159,6 +1176,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
               AND bank_account_id = $2
               AND operating_company_id = $3::uuid
               AND transaction_date BETWEEN $4 AND $5
+              AND voided_at IS NULL
           )
           UPDATE banking.bank_transactions bt
           SET
@@ -1298,6 +1316,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           WHERE bank_account_id = $1
             AND operating_company_id = $2::uuid
             AND transaction_date BETWEEN $3 AND $4
+            AND voided_at IS NULL
         `,
         [session.bank_account_id, query.data.operating_company_id, session.period_start, session.period_end]
       );
@@ -1450,6 +1469,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
             AND bt.transaction_date BETWEEN $3 AND $4
             AND (bt.matched_load_id IS NOT NULL OR bt.matched_bill_id IS NOT NULL OR bt.matched_settlement_id IS NOT NULL)
             AND bt.qbo_synced_at IS NULL
+            AND bt.voided_at IS NULL
         `,
         [session.bank_account_id, query.data.operating_company_id, session.period_start, session.period_end]
       );
