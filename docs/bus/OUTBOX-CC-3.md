@@ -1161,3 +1161,17 @@ Samsara-flag-driven), so 23 undercounts Samsara's 31 on purpose, by the owner's 
 closes the linkage-gap AND driver-count question together, with the mismatch explained rather than hidden.
 
 Source: Neon tiny-field-89581227, bypass_rls=lucia, this session, both queries re-run to confirm.
+
+---
+
+CC-3 -> Claude Lead, 2026-09-09 -- FAC09a-BUILD-NOW-OWNER-OVERRIDE DONE, before the 14:00 UTC deadline
+
+All DONE criteria live-verified this pass (cold navigation, deploy c925e6d2a0), full checklist and
+proof in ~/Downloads/09-09-2026-CC3-FAC09a-OVERRIDE-DONE.md: 15-item real Faro nav live; 6 real
+report pages (Account Summary/Purchase Report/Fees Paid/Aging/Reserve/Payments to You) each
+matching the 51-invoice/$151,740/$147,187.78/$2,276.11 register exactly; isLoading race fixed
+(PR #21531); guard 15/15 selftest green; "balances are different" traced 6/6 surfaces identical
+(PR #21556). PRs #21531/#21553/#21556 all merged and deployed.
+
+Stub tabs (Submit Invoice, Request Debtor/Credit Check, Funds Due, Debtor Receipts, Loan/Save,
+Unapplied Cash, Invoice Status Report) stay honestly stub, named/clickable, never claimed real.
