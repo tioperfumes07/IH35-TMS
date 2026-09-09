@@ -892,3 +892,63 @@ correctly left deactivated per doc's own instruction | NEXT
 NEXT: queue complete for this window's 5-item list (BANK-BALANCE, ACCT-F5723, REEFER-LUMPER-CONFIRMATION,
 LOAD-COSTS-RETURN-COLUMNS, HARD-DELETE-CLARIFICATION). Finishing REEFER-LUMPER + LOAD-COSTS-RETURN-COLUMNS
 post-deploy live proof now, then resuming continuous sweep per standing law.
+
+## 2026-09-09 04:2xZ — CC-1 | REEFER-LUMPER-CONFIRMATION DONE (full live proof) + LOAD-COSTS-RETURN-COLUMNS live-proof complete
+
+**REEFER-LUMPER-CONFIRMATION** — end-to-end live proof, booking a real reefer load through the deployed UI
+(Chrome), per the task's own required proof:
+
+- Load 13743 (id `fd4c8426-0d71-4328-bc51-2f715a06e054`), Trailer Type=Reefer, driver Genaro Guerrero Chavez,
+  customer Refrigerx Transportation LLC: the 3-question confirmation panel rendered inside the existing reefer
+  panel exactly as built (`WHO PAYS THE LUMPER?` / `WILL THE CUSTOMER BE INVOICED?` / `LATE ARRIVAL PENALTY
+  APPLIES?`), selected Customer / Yes / Yes, submitted. POST `/api/v1/dispatch/loads` → 201. Live Neon
+  (bypass_rls=lucia) confirmed `lumper_payer='customer'`, `lumper_will_invoice_customer=true`,
+  `lumper_late_penalty_applies=true` all persisted correctly — but `trailer_type` came back **NULL** despite
+  selecting Reefer, even though `load_trailer_equipment_id` (the catalog FK) was correctly populated.
+- **Root cause found and fixed live, mid-proof** (PR #21489, merged `581c8dca`, deployed): `book-load.service.ts`'s
+  main lockstep INSERT into `mdata.loads` never included `trailer_type` at all — declared on the input
+  interface, read by the frontend to gate the reefer panel, but never written to the database by ANY booking,
+  ever. This silently made the dispatch-transition gate (`current.trailer_type === "refrigerated_van"`, built
+  in PR #21478) unreachable for every future booking — the same "correct in isolation, never fires against real
+  data" class of gap already caught twice this session (NEW-09, LOAD-COSTS-RETURN-COLS). Fixed by adding
+  `trailer_type` as the INSERT's 49th column, `input.trailer_type ?? null`. Guard
+  `scripts/verify-reefer-lumper-confirmation-captured.mjs` extended with a `bookLoadPersistsTrailerType()`
+  assertion (7/7 selftest).
+- **Re-tested post-fix, post-deploy**: booked a second real reefer load, 13749 (id
+  `174268f6-c5ac-4457-900e-5498c36fc217`), driver Rafael Rogelio Rivero Reynoso (different driver — Genaro was
+  already dispatched on 13743, confirming the `409 dispatch_load_conflict` on 3 interim retry attempts was a
+  legitimate driver-double-booking guard, not a bug). Live Neon confirms **all fields correct on this load**:
+  `trailer_type='refrigerated_van'`, `lumper_payer='customer'`, `lumper_will_invoice_customer=true`,
+  `lumper_late_penalty_applies=true`, `reefer_temp_f=34`, `temperature_type='fresh'`. The fix works.
+- Both test loads cancelled live via the real UI (Cancel Load action, reason "Other (see notes)", notes
+  documenting the test purpose) immediately after live-proof was captured, so they stop polluting the real
+  Active Loads / Load Costs board figures for the dispatcher (13743's revenue no longer counts toward the
+  live totals; confirmed `status='cancelled'` on both via live Neon read). Void-not-delete honored — rows
+  stay in place with a real audit trail, per Rule 07. No financial postings existed to reverse (no invoice/JE
+  generated from either before cancellation).
+- **Invoice-line lumper wiring** (`from-load.ts` → `line_type='lumper'` via the existing revenue-resolver
+  branch): NOT separately live-tested end-to-end this pass (would require adding a `stop_extra_rates` row and
+  running invoice generation on a load — declined to fabricate an accessorial charge on a live load without a
+  real rate-confirmation source). Covered instead by the pre-existing unit test
+  `from-load.rate-guard.test.ts` (2/2 passing, re-run after the `from-load.ts` edit) and by static code review
+  confirming the exact reused resolver call. Flagging as the one live-data proof step not executed, per the
+  standing law against guessing rather than silently calling it done.
+- Also live-caught and documented (not a defect, working as designed): `Return Booked` stayed dash for both
+  test loads — confirmed correct, since that signal only applies while a unit's outbound leg is in an active
+  dispatch status (`NEEDS_RETURN_STATUSES`), not once a load reaches `dispatched` on a fresh direct booking.
+
+DONE LINE: CC-1 | REEFER-LUMPER-CONFIRMATION DONE | 8731d717 (feature) + 581c8dca (trailer_type fix) | live
+sha 581c8dcace1a055dce70dac8964a550bb2ef6d5c | 2 real reefer loads booked end-to-end (13743, 13749) via
+deployed UI, lumper_payer/lumper_will_invoice_customer/lumper_late_penalty_applies/trailer_type all confirmed
+persisted live via Neon | REMAINING: invoice-line line_type='lumper' end-to-end not separately live-tested
+(unit-test covered) | NEXT
+
+**LOAD-COSTS-RETURN-COLUMNS** — post-deploy live proof now complete (PR #21479 + follow-up fix PR #21482,
+both merged and deployed): reloaded the deployed Load Costs board (All Open tab), searched load 13533 (T163's
+newest visible row): **Days Since Delivery = 13d**, exactly matching Dispatch Home's live T163 figure (330h ÷
+24 = 13.75 → 13d). Screenshot captured. Return Booked confirmed unaffected (dash, correct per its own separate
+signal). This closes the REMAINING item from the two earlier posts in this thread.
+
+NEXT: this window's 5-item queue (BANK-BALANCE, ACCT-F5723, REEFER-LUMPER-CONFIRMATION,
+LOAD-COSTS-RETURN-COLUMNS, HARD-DELETE-CLARIFICATION) is fully closed with live proof on every item. Resuming
+continuous sweep per standing law.
