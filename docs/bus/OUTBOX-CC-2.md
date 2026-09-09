@@ -1929,3 +1929,36 @@ product decision to count meaningful account-only suggestions toward this metric
 has_suggestion definition — suggested_vendor_id OR suggested_match_bill_id — excludes them).
 
 NEXT — nothing else claimed until this is confirmed live and re-measured, which is done above.
+
+## CC-2 | RECON-USMCA-BANK-01 DONE (round 2) | 57178527ab | 57178527ab | has_suggestion 336/437 (was 109/437, round 1 landed 318/437) | 2026-09-09
+
+Full writeup: BANK-F30011 in docs/audit/GUARD-WORKORDERS.md. PR #21510.
+
+Confirmed nothing was "still landing" on its own — 318/437 was static (the bulk-apply pass runs
+once, on demand, not on a schedule). Went back in, re-read every remaining unsuggested description
+a second time, found 10 more real vendor matches I missed the first pass (Sam's Club, H-E-B,
+ED-HER Plastics Inc, American Express, a second Faro Factoring wire direction, a broadened Laura
+Munoz name variant, two more Plaid description variants for existing rules, and three more Bank Of
+America fee lines). Re-ran the same bulk-apply function (no code change, PR #21471's engine reused
+verbatim) live against USMCA's 437 transactions: 318 -> 336/437 (76.9%). Guard floor raised
+0.65 -> 0.72 to match, still honestly below the achieved number.
+
+**Did not reach 350/437, and stopped pushing rather than fabricate.** Genuinely exhausted the
+identifiable-vendor search this round (checked mdata.vendors AND mdata.drivers for every named
+individual still unsuggested — "David Trujillo"/"Justin Galvez" do not confidently match any
+existing record, so left alone rather than guessed). What's left (~101 lines) is Bank Of America
+processing someone ELSE's money (Return of Posted Check, Counter Credit, Cashed Check, Check
+Image, Wire Transfer Credit/Hold, ACH Hold) or anonymous P2P payments with no identifying signal.
+Attaching a vendor to those to hit 350 would be exactly the money-theater this repo's law forbids.
+
+Two REAL, honest, un-taken paths to close the rest, flagged not built (deadline): (1) the existing,
+separate bill-matching candidate-finder (match.service.ts::findCandidates) could legitimately set
+suggested_match_bill_id — the OTHER half of has_suggestion — for any of these that match a real
+open AP bill by amount+date, with zero vendor guessing; not attempted here. (2) owner identification
+of the anonymous Zelle/Cash App/Remitly recipients.
+
+Zero writes to categorized_at/matched_expense_id/matched_bill_id this round either — confirmed by
+the same static guard check plus a fresh live measurement (categorized still 1, matched still 0).
+No redeploy needed this round (data/guard-floor only, no apps/backend/src change).
+
+NEXT — nothing else claimed until re-measured, which is done above.
