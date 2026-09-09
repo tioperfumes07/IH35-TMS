@@ -59,11 +59,11 @@ export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId,
         {r.legs.map((l) => (
           <div key={l.load_id} className={`ldt-row click${l.is_this_load ? " this" : ""}${l.is_cancelled ? " cancelled" : ""}`} role="button" tabIndex={0} data-testid="tour-leg" onClick={() => setPopup({ title: `Leg ${l.trip_type ?? ""} · load ${l.load_number}`, body: <LegPop leg={l} cur={currencyCode} /> })}>
             <span>{l.trip_type ?? DASH}</span><span className="ldt-k"><EntityLink kind="load" id={l.load_id} label={l.load_number} /></span><span>{l.lane || DASH}<span className="ldt-sub">{l.status}{l.is_delivered ? " · delivered" : ""}{l.is_cancelled ? " · excluded from the tour totals" : ""}</span></span>
-            <span className="ldt-m">{money(l.revenue_cents, currencyCode)}</span><span className="ldt-m">{money(l.costs_cents, currencyCode)}</span><span className="ldt-m">{money(l.driver_pay_cents, currencyCode)}</span><span className="ldt-m">{money(l.margin_cents, currencyCode)} · {pct(l.margin_pct)}</span>
+            <span className="ldt-m">{money(l.revenue_cents, currencyCode)}</span><span className="ldt-m">{money(l.costs_cents, currencyCode)}</span><span className="ldt-m">{money(l.driver_pay_cents, currencyCode)}</span><span className="ldt-m">{money(l.margin_cents, currencyCode)}<span className="ldt-sub" data-testid="tour-leg-margin-pct">{pct(l.margin_pct)}</span></span>
           </div>
         ))}
         {!sb ? <div className="ldt-row"><span>SB</span><span className="ldt-k">{DASH}</span><span className="ldt-muted">awaiting return load to Laredo</span><span className="ldt-m">{DASH}</span><span className="ldt-m">{DASH}</span><span className="ldt-m">{DASH}</span><span className="ldt-m">{DASH}</span></div> : null}
-        <div className="ldt-row big" data-testid="tour-totals"><span>Tour so far</span><span /><span className="ldt-sub">{r.legs.length} leg{r.legs.length === 1 ? "" : "s"} · {miles(totals.miles_practical)} practical mi · real {miles(totals.miles_real)}</span><span className="ldt-m">{money(totals.revenue_cents, currencyCode)}</span><span className="ldt-m">{money(totals.costs_cents, currencyCode)}</span><span className="ldt-m">{money(totals.driver_pay_cents, currencyCode)}</span><span className="ldt-m">{money(totals.margin_cents, currencyCode)} · {pct(totals.margin_pct)}</span></div>
+        <div className="ldt-row big" data-testid="tour-totals"><span>Tour so far</span><span /><span className="ldt-sub">{r.legs.length} leg{r.legs.length === 1 ? "" : "s"} · {miles(totals.miles_practical)} practical mi · real {miles(totals.miles_real)}</span><span className="ldt-m">{money(totals.revenue_cents, currencyCode)}</span><span className="ldt-m">{money(totals.costs_cents, currencyCode)}</span><span className="ldt-m">{money(totals.driver_pay_cents, currencyCode)}</span><span className="ldt-m">{money(totals.margin_cents, currencyCode)}<span className="ldt-sub" data-testid="tour-totals-margin-pct">{pct(totals.margin_pct)}</span></span></div>
       </div>
     </div>
 
@@ -124,7 +124,7 @@ export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId,
 function LegPop({ leg, cur }: { leg: TourReadout["legs"][number]; cur: string }) {
   return <div className="ldt-rows">
     {([["Load", <EntityLink kind="load" id={leg.load_id} label={leg.load_number} />], ["Leg", leg.trip_type ?? DASH], ["Lane", leg.lane || DASH], ["Status", `${leg.status}${leg.is_delivered ? " · delivered" : ""}`],
-      ["Revenue (rate)", money(leg.revenue_cents, cur)], ["Costs", `${money(leg.costs_cents, cur)} · ${leg.cost_count} entries`], ["Driver pay", money(leg.driver_pay_cents, cur)], ["Margin", `${money(leg.margin_cents, cur)} · ${pct(leg.margin_pct)}`],
+      ["Revenue (rate)", money(leg.revenue_cents, cur)], ["Costs", `${money(leg.costs_cents, cur)} · ${leg.cost_count} entries`], ["Driver pay", money(leg.driver_pay_cents, cur)], ["Margin", money(leg.margin_cents, cur)], ["Margin %", pct(leg.margin_pct)],
       ["Practical · short · deadhead · real miles", `${miles(leg.miles_practical)} · ${miles(leg.miles_shortest)} · ${miles(leg.miles_deadhead)} · ${miles(leg.miles_real)}`], ["PODs on file", String(leg.pod_count)]] as Array<[string, ReactNode]>).map(([k, v]) => <div key={k} className="ldt-row"><span>{k}</span><span className="ldt-m">{v}</span></div>)}
     <div className="ldt-row"><span /><span className="ldt-m"><Link className="ldt-link" to={`/dispatch/loads/${leg.load_id}?tab=Costs`}>open the load's costs ↗</Link></span></div>
   </div>;
