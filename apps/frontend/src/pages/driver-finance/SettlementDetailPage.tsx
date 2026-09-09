@@ -63,6 +63,7 @@ import { ConfirmModal } from "../../components/shared/ConfirmModal";
 import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrailPanel";
 import { TourSettlementTab } from "../../components/dispatch/TourSettlementTab";
 import { getTourReadout } from "../../api/tourReadout";
+import { getCompanySettlementReport } from "../../api/accounting";
 import { SettlementLoadsSection } from "./components/SettlementLoadsSection";
 import { CompanyWaterfallSection } from "./components/CompanyWaterfallSection";
 import { SettlementNumberBox } from "./components/SettlementNumberBox";
@@ -146,6 +147,22 @@ export function SettlementDetailPage() {
     enabled: Boolean(settlementId && companyId),
   });
   const readout = readoutQuery.data;
+
+  // COMPANY-WATERFALL-FUEL-EXPENSE-SPLIT (owner 2026-09-09, settlement redesign): the tour readout's
+  // company_settlement carries one combined `costs_cents` figure, which is why CompanyWaterfallSection
+  // used to render an honest "not yet split into Additional/Fuel/Company-expenses sub-lines" gap
+  // instead of real numbers. The split already exists -- company-settlement-report.service.ts (the
+  // SAME read model SettlementsCompanyDriverTab.tsx's itemized-by-load view already uses) computes
+  // fuel_purchases and expenses as separate totals. Fetching it here too (same company_settlement_id,
+  // deduped by React Query same as every other shared-readout query on this page) so the waterfall can
+  // render the real split instead of re-deriving or inventing one.
+  const companySettlementId = readout?.company_settlement?.id ?? null;
+  const companyReportQuery = useQuery({
+    queryKey: ["company-settlement-report", companyId, companySettlementId],
+    queryFn: () => getCompanySettlementReport(companySettlementId!, companyId),
+    enabled: Boolean(companySettlementId && companyId),
+  });
+  const companyReport = companyReportQuery.data;
 
   // HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID: completes the hold/resume pair now that hold
   // actually persists real state (see HoldDeductionModal.tsx) — without this a held deduction had
@@ -677,7 +694,7 @@ export function SettlementDetailPage() {
         companyMarginSub={readout?.totals?.margin_pct == null ? "—" : `${readout.totals.margin_pct.toFixed(1)}%`}
       />
       {readout ? <SettlementLoadsSection legs={readout.legs} /> : null}
-      {readout ? <CompanyWaterfallSection readout={readout} /> : null}
+      {readout ? <CompanyWaterfallSection readout={readout} report={companyReport} /> : null}
       <MoneyProofTrailPanel operatingCompanyId={companyId} documentType="settlement" documentId={settlementId} />
       {settlementIsCancelled ? (
         <div className="rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800">
