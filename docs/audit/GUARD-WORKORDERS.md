@@ -9837,3 +9837,28 @@ excluded from every open-items view today, not just in theory. No code change ne
 one remaining unverified claim from the correction above.
 
 **NEW-07/08/09 now fully CLOSED, including the post-deploy live-proof gate.**
+
+## ENV-CENSUS-FAIL-02/13/14 (the 3 CC-1-routed rows) — STALE, already fixed and already wired (CC-1, 2026-09-09)
+
+Investigated these 3 rows (found while re-verifying a wake alert against the live board, not a fresh
+assignment) before building anything against them, per standing law. All 3 are stale:
+
+- **FAIL-02** (`verify-broker-advance-never-driver-liability-never-invoice-face.mjs`): ran it fresh —
+  `OK`. Also wired into CI at verify-step **10489**.
+- **FAIL-13** (`verify-settlement-deduction-void-branches.mjs`): ran it fresh — `OK`. Its own header
+  comment documents why the ROW's quoted failure text is stale: `ACCT-F25102` (2026-09-06) retracted
+  the reversing-JE-on-APPLIED design this row's failure message describes, and the guard itself was
+  corrected to the current owner ruling (record-only void on APPLIED, never a reversal) — the row
+  describes the OLD failure mode, before that correction landed.
+- **FAIL-14** (`verify-settlement-lines-driver-bill-miles-rate-join.mjs`): ran it fresh — `OK`.
+
+**All 3 are already wired into CI**, contrary to each row's own "guard not wired into CI" claim — they
+run as part of `scripts/verify-steps/10481-verify-census-orphans-wired.mjs`'s
+`CENSUS_ORPHAN_GUARDS` list (114 previously-orphan guards run in one claimed step, per that step's own
+design: "New guards get their own claimed step... this list is the backlog"). Ran the full census step
+fresh: `verify:census-orphans-wired PASS — 114/114 previously-orphan guards run in CI and pass` —
+confirms not just these 3 but the whole backlog is currently green.
+
+No code change here — nothing broken to fix. Marking these 3 CLOSED so they stop reading as open CC-1
+work on the board (this is exactly the kind of stale-board mismatch that generated a false-alarm wake
+this session). Not auditing the OTHER ENV-CENSUS-FAIL-* rows here (CC-3/Codex lanes, out of scope).
