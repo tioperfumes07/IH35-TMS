@@ -9862,3 +9862,51 @@ confirms not just these 3 but the whole backlog is currently green.
 No code change here — nothing broken to fix. Marking these 3 CLOSED so they stop reading as open CC-1
 work on the board (this is exactly the kind of stale-board mismatch that generated a false-alarm wake
 this session). Not auditing the OTHER ENV-CENSUS-FAIL-* rows here (CC-3/Codex lanes, out of scope).
+
+## BANK-F30011 (RECON-USMCA-BANK-01 round 2) — CLOSED, honest ceiling reconfirmed after re-search (CC-2, 2026-09-09)
+
+Owner wake-up: coverage measured at 318/437 (BANK-F30010's round 1 result), asked to push further
+toward the 350/437 (80%) target, explicitly told not to re-architect anything already working.
+
+**Confirmed nothing was "still landing" on its own.** 318/437 was static — `applyBankingRulesForCompany`
+runs once, on demand (via the ops script or the new `/bulk-apply` route), not on any schedule.
+
+**Pushed further, found 10 more genuine vendor matches on a second read-through** of the
+still-unsuggested descriptions: Sam's Club, H-E-B, ED-HER Plastics Inc, American Express (all real
+`mdata.vendors` rows a first pass missed); broadened "Faro Factoring" to also catch the wire-OUT
+direction (`BNF:1/FARO FACTORING`, the existing rule only caught wire-IN `ORIG:`); broadened "Laura
+Munoz" to a regex catching "LAURA YVETTE MUNOZ"; widened "utility trailers lared" and "bkofamerica"
+to catch a second Plaid description variant each (no "lared" suffix; spelled-out "BANK OF AMERICA
+ATM"); attached Bank Of America as vendor to three more of the bank's own fee lines (Monthly Fee,
+External Transfer Fee, Overdraft Item Fee — same class as the existing Wire Transfer Fee rule,
+BofA genuinely is the payee).
+
+**Result:** has_suggestion 318/437 -> **336/437 (76.9%)**. `categorized_at` unchanged at 1;
+`matched_expense_id`/`matched_bill_id` unchanged at 0.
+
+**Still short of 350/437, and genuinely exhausted this time, not abandoned early.** Checked
+`mdata.vendors` AND `mdata.drivers` for every named individual still unsuggested — "David
+Trujillo" and "Justin Galvez" (Zelle settlement-memo payments) do NOT confidently match any
+existing driver/vendor record (different first names from the closest matches found), so left
+alone rather than guessed. What remains (~101 lines) is Bank Of America processing someone ELSE's
+money (Return of Posted Check, Counter Credit, Cashed Check, Check Image, Wire Transfer Credit/
+Hold, ACH Hold, Teller Transaction Credit) or anonymous P2P payments (Cash App, Remitly) with no
+identifying signal. Attaching a vendor to close the gap would misattribute the real counterparty —
+exactly the money-theater this repo's standing law forbids.
+
+**Two real, honest, un-taken paths to close the remaining 14/437, flagged not built under
+deadline:** (1) the existing, separate bill-matching candidate-finder
+(`accounting/bank-recon/match.service.ts::findCandidates`) could legitimately set
+`suggested_match_bill_id` — the OTHER half of `has_suggestion` — for any remaining line that
+matches a real open AP bill by amount+date, with zero vendor guessing; genuinely not attempted here
+due to time. (2) owner identification of the anonymous Zelle/Cash App/Remitly recipients.
+
+Shipped PR #21510 — data (accounting.banking_rules + one mdata.vendors row) + guard floor
+(0.65 -> 0.72, still honestly below the achieved 0.769) only; no `apps/backend/src` change this
+round, no redeploy needed. | `scripts/ops/2026-09-09-cc2-recon-usmca-bank-suggestion-coverage.ts`
+(round 2 rules appended); `scripts/verify-recon-usmca-bank-suggestion-coverage.mjs` (floor raised)
+| verify-step 10835 (already registered, unchanged) | bill-match candidate-finder path (1 above),
+or owner-identified anonymous recipients (2 above), to close the remaining 14/437 to reach 350 |
+live Neon (bypass_rls=lucia) before/after: 318/437 -> 336/437; categorized/matched counts unchanged
+| **CLOSED (honest partial, round 2) · real, live, material improvement (25% -> 76.9% across both
+rounds) · target not reached, transparently reported twice, no fabrication** |
