@@ -284,6 +284,7 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
               f.effective_date,
               f.expiry_date,
               f.executed_at,
+              f.updated_at,
               CASE
                 WHEN f.expiry_date IS NULL THEN NULL
                 ELSE (f.expiry_date - CURRENT_DATE)
