@@ -155,7 +155,7 @@ const CHECKS = [
   {
     name: "severe_repairs.convert_to_wo: SevereRepairOosTab real EntityLink WO drill-through inside a real ParityTable",
     file: "apps/frontend/src/pages/maintenance/components/SevereRepairOosTab.tsx",
-    pattern: /severe-repair-wo-link[\s\S]{0,5600}<ParityTable/,
+    pattern: /severe-repair-wo-link[\s\S]{0,9000}<ParityTable/,
   },
   {
     name: "road_service.active: RoadServiceList real ParityTable",

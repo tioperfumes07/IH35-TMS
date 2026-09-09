@@ -59,7 +59,7 @@ export function unguardedWorkOrderReads(src) {
     // the filter). Kept as a plain OR — an earlier nested ternary here was simply wrong, and the
     // selftest caught it.
     const guarded =
-      /voided_at\s+IS\s+NULL/i.test(sql) || /openWorkOrderPredicate\s*\(/.test(sql);
+      /voided_at\s+IS\s+NULL/i.test(sql) || /openWorkOrderPredicate(?:Sql)?\s*\(/.test(sql);
     if (!guarded) out.push(sql.replace(/\s+/g, " ").trim().slice(0, 160));
   }
   return out;
@@ -73,6 +73,8 @@ function selftest() {
       src: "const q = `SELECT * FROM maintenance.work_orders WHERE operating_company_id = $1 AND voided_at IS NULL`;", expect: 0 },
     { name: "canonical predicate interpolation passes",
       src: "const q = `SELECT count(*) FILTER (WHERE ${openWorkOrderPredicate()}) FROM maintenance.work_orders`;", expect: 0 },
+    { name: "canonical SQL predicate interpolation passes",
+      src: "const q = `SELECT count(*) OVER () FROM maintenance.work_orders wo WHERE ${openWorkOrderPredicateSql(\"wo\")}`;", expect: 0 },
     { name: "an INSERT is not a display read",
       src: "const q = `INSERT INTO maintenance.work_orders (id) VALUES ($1)`;", expect: 0 },
   ];
