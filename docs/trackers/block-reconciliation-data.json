@@ -1,6 +1,6 @@
 {
- "date": "2026-09-08",
- "generated_at_iso": "2026-09-08T21:15:51.151Z",
+ "date": "2026-09-09",
+ "generated_at_iso": "2026-09-09T04:52:04.357Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 30,
@@ -816,10 +816,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #21461 title-match only, unverified",
+   "evidence": "PR #21474 title-match only, unverified",
    "name": "CC-2 cross-check signal for Codex/Cursor: ran verify-codex-vertical-nonmoney-zero-remainder.mjs directly, confirming rem",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc-2-claim-reports-0223",
@@ -827,10 +827,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #21461 title-match only, unverified",
+   "evidence": "PR #21474 title-match only, unverified",
    "name": "CC-2 claims POST-U14 leftover sequence order 5 (REPORTS, /reports) after driver-hub's unique-FINDING hunting came up emp",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc-2-codex-progress-check-fleet-sweep-0223",
@@ -838,10 +838,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #21461 title-match only, unverified",
+   "evidence": "PR #21474 title-match only, unverified",
    "name": "CC-2 confirms Codex is actively progressing (DRV-F6246-53 series, commit-message status not OUTBOX-CODEX.md) and reports",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc-2-customers-reverse-proof-0223",
@@ -849,10 +849,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #21461 title-match only, unverified",
+   "evidence": "PR #21474 title-match only, unverified",
    "name": "CC-2 helping Codex's MODULE=customers reverse SQL/GET hops (per U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md). Live SQL ",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc-2-dot-inspection-test-fixture-void-0223",
@@ -860,10 +860,10 @@
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #21461 title-match only, unverified",
+   "evidence": "PR #21474 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg: found and voided a stray test-fixture row (safety.dot_inspections) live in the DOT audit ",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc-2-driver-hub-chrome-law-note-0223",
@@ -871,10 +871,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #21461 title-match only, unverified",
+   "evidence": "PR #21474 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired sweep session close-out status: 3 PRs merged this leg (label-leak fix, sample-data-fixture-",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc-2-driver-hub-chrome-law-pass2-0223",
@@ -882,10 +882,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #21461 title-match only, unverified",
+   "evidence": "PR #21474 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: second chrome-law live pass. Leave Requests Range filter honest-empty state + Reset/Ca",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc-2-driver-hub-create-void-verified-0223",
@@ -893,10 +893,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #21461 title-match only, unverified",
+   "evidence": "PR #21474 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: live CREATE-TEST-THEN-VOID verification of the Assign Temp Cover control on production",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc-2-driver-hub-postdeploy-confirm-0223",
@@ -904,10 +904,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #21461 title-match only, unverified",
+   "evidence": "PR #21474 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: post-deploy live re-check confirms LV-DRIVER-HUB-REPORTING-STALE-NO-LOAD-FK's fix (#14",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc-2-driver-hub-responsive-checked-0223",
@@ -915,10 +915,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #21461 title-match only, unverified",
+   "evidence": "PR #21474 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: responsive-overflow check clean (Driver Scheduler + Reporting, ~500px viewport, 0 hori",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc-2-driver-hub-row3-done-0223",
@@ -926,10 +926,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #21461 title-match only, unverified",
+   "evidence": "PR #21474 title-match only, unverified",
    "name": "CC-2 marks POST-U14 leftover row 3 (DRIVER HUB) DONE with full close-out summary, correcting stale claim-only text so th",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc-2-driver-hub-sweep-status-0223",
@@ -937,10 +937,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #21461 title-match only, unverified",
+   "evidence": "PR #21474 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired sweep progress status. Documents that Overview/Driver Scheduler/Leave Requests tabs plus th",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc-2-drivers-fleet-reverse-proof-0223",
@@ -948,10 +948,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #21461 title-match only, unverified",
+   "evidence": "PR #21474 title-match only, unverified",
    "name": "CC-2 helping Codex's MODULE=drivers and MODULE=fleet reverse SQL/GET hops. Live SQL proof of forward+reverse FK chains f",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc-2-mdata-reverse-sweep-0223b",
@@ -959,10 +959,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #21461 title-match only, unverified",
+   "evidence": "PR #21474 title-match only, unverified",
    "name": "CC-2 mdata reverse SQL/GET sweep continuation on customers/drivers/fleet (help Codex CERTIFY, per INBOX-CC-2). This pass",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc-2-mdata-sweep-clean-0223c",
@@ -970,10 +970,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #21461 title-match only, unverified",
+   "evidence": "PR #21474 title-match only, unverified",
    "name": "CC-2 mdata reverse SQL/GET sweep continuation on customers/drivers/fleet (help Codex CERTIFY). This pass swept clean acr",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc-2-reports-full-category-sweep-0223",
@@ -981,10 +981,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #21461 title-match only, unverified",
+   "evidence": "PR #21474 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg session close-out: all 9 report categories walked, 8 reports run live, all genuinely wired",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc-2-reports-progress-status-0223",
@@ -992,10 +992,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #21461 title-match only, unverified",
+   "evidence": "PR #21474 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg progress status: IFTA Quarterly Preparer entry confirmed real and correctly wired; Generat",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc-2-reports-row-done-0223",
@@ -1003,10 +1003,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #21461 title-match only, unverified",
+   "evidence": "PR #21474 title-match only, unverified",
    "name": "CC-2 marks POST-U14 leftover row 5 (REPORTS) DONE, matching CC-3's table-exhausted close-out. Returning full attention t",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc-2-reports-sweep2-clean-0223",
@@ -1014,10 +1014,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #21461 title-match only, unverified",
+   "evidence": "PR #21474 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg: Fleet utilization and Internal inspection-point rollup reports spot-checked live, both cl",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc-2-sql-proof-rls-discriminator-0223",
@@ -1025,10 +1025,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #21461 title-match only, unverified",
+   "evidence": "PR #21474 title-match only, unverified",
    "name": "CC-2 delivers a hop-10 (RLS + completeness discriminator) SQL proof for Codex's MODULE=drivers and MODULE=fleet CERTIFIE",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc2-ack-go-0105-r1-guard-money-h4-after-live",
@@ -3072,7 +3072,7 @@
    "evidence": "all 1 file(s) on main",
    "name": "CC-2 /driver-hub Fully-Wired 1-12 Live Chrome leftover (POST-URGENT-14 sequence order 3), triggered by an empty unique-F",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc-2-driver-list-sample-data-exclusion-0223",
@@ -3083,7 +3083,7 @@
    "evidence": "all 3 file(s) on main",
    "name": "CC-2 /driver-hub Fully-Wired leg, CREATE-flow probe on Assign Temp Cover found other seats' test/QA fixture units and dr",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc-2-help-codex-certify-cdf-0223",
@@ -3094,7 +3094,7 @@
    "evidence": "all 2 file(s) on main",
    "name": "CC-2 mdata reverse SQL/GET hunt on customers/drivers/fleet (help Codex CERTIFY, per INBOX-CC-2). Found + root-caused + f",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "cc-2-reports-required-filter-indicator-0223",
@@ -3105,7 +3105,7 @@
    "evidence": "all 3 file(s) on main",
    "name": "CC-2 /reports Fully-Wired leg. Live probe on driver-pay-history found Run report silently disabled with zero visual expl",
    "registered_on": null,
-   "pr": 21461
+   "pr": 21474
   },
   {
    "id": "CC1-FINANCE-SETTLEMENTS-TOOLBAR-CONNECTIVITY-HONESTY-2026-08-16",
@@ -13727,6 +13727,192 @@
  ],
  "merged_prs": [
   {
+   "number": 21496,
+   "title": "Cursor- SET-30 boot-crash fix (duplicate route registration)",
+   "mergedAt": "2026-09-09T04:44:46Z",
+   "branch": "cursor/set-30-boot-crash-fix"
+  },
+  {
+   "number": 21495,
+   "title": "Claude-1-Finding: NEW-29/30/31 billing consumption blocked, not a quick wire-up",
+   "mergedAt": "2026-09-09T04:43:23Z",
+   "branch": "claude/cc-1-new29-30-31-consumption-finding"
+  },
+  {
+   "number": 21494,
+   "title": "Claude-1-Final queue report: reefer-lumper + load-costs live proof complete",
+   "mergedAt": "2026-09-09T04:30:58Z",
+   "branch": "claude/cc-1-final-queue-report"
+  },
+  {
+   "number": 21493,
+   "title": "Cursor- SET-30 company settlement PDF on the house template",
+   "mergedAt": "2026-09-09T04:23:40Z",
+   "branch": "cursor/set-30-company-settlement-pdf"
+  },
+  {
+   "number": 21492,
+   "title": "Cursor- CLAIM-RESERVE 11090 (verify-company-settlement-pdf-house-template)",
+   "mergedAt": "2026-09-09T04:21:19Z",
+   "branch": "chore/claim-reserve-11090"
+  },
+  {
+   "number": 21491,
+   "title": "Cursor-SET-28 vehicle-swap mid-trip cost split by miles each truck ran (guard 11088)",
+   "mergedAt": "2026-09-09T04:09:46Z",
+   "branch": "cursor/set28-vehicle-swap-split"
+  },
+  {
+   "number": 21490,
+   "title": "Cursor-CLAIM-RESERVE 11088 verify-load-unit-cost-split-wired",
+   "mergedAt": "2026-09-09T04:05:00Z",
+   "branch": "chore/claim-reserve-set28"
+  },
+  {
+   "number": 21489,
+   "title": "Claude-1-Fix trailer_type never persisted, made reefer dispatch-gate dead code",
+   "mergedAt": "2026-09-09T03:51:33Z",
+   "branch": "claude/cc-1-reefer-lumper-trailer-type-fix"
+  },
+  {
+   "number": 21488,
+   "title": "Cursor-SET-25 lock non-deferrable loan pop-up at settlement close (guard 11086)",
+   "mergedAt": "2026-09-09T03:47:11Z",
+   "branch": "cursor/set25-loan-recovery-guard"
+  },
+  {
+   "number": 21487,
+   "title": "Cursor-CLAIM-RESERVE 11086 verify-settlement-loan-recovery-modal-wired",
+   "mergedAt": "2026-09-09T03:44:16Z",
+   "branch": "chore/claim-reserve-set25"
+  },
+  {
+   "number": 21486,
+   "title": "Cursor-SET-17 other_recovery -> 7200 GL bind live-proof guard (step 11084)",
+   "mergedAt": "2026-09-09T03:39:31Z",
+   "branch": "cursor/set17-other-recovery-guard"
+  },
+  {
+   "number": 21485,
+   "title": "Cursor-CLAIM-RESERVE 11084 verify-other-recovery-role-bound",
+   "mergedAt": "2026-09-09T03:37:59Z",
+   "branch": "chore/claim-reserve-11084"
+  },
+  {
+   "number": 21484,
+   "title": "Cursor-SET-07 settlements list button heights on 28px scale + guard 11082",
+   "mergedAt": "2026-09-09T03:26:46Z",
+   "branch": "cursor/set07-settlements-button-height"
+  },
+  {
+   "number": 21483,
+   "title": "Cursor-CLAIM-RESERVE 11082 verify-settlements-list-button-height-uniform",
+   "mergedAt": "2026-09-09T03:23:43Z",
+   "branch": "chore/claim-reserve-11082"
+  },
+  {
+   "number": 21482,
+   "title": "Claude-1-Fix2 Days-Since-Delivery fallback-chain NaN bug caught live",
+   "mergedAt": "2026-09-09T03:20:36Z",
+   "branch": "claude/cc-1-load-costs-return-cols-fix2"
+  },
+  {
+   "number": 21481,
+   "title": "Claude-1-Queue report: reefer-lumper, load-costs-return-cols, hard-delete-clarification",
+   "mergedAt": "2026-09-09T03:16:33Z",
+   "branch": "claude/cc-1-outbox-queue-report"
+  },
+  {
+   "number": 21480,
+   "title": "Cursor-SET-01 part 2: true per-line editable inputs on settlement Deductions (WORM void+recreate)",
+   "mergedAt": "2026-09-09T03:14:31Z",
+   "branch": "cursor/set01-edit-deduction"
+  },
+  {
+   "number": 21479,
+   "title": "Claude-1-Fix Load Costs Days-Since-Delivery live-dead for real return-needed units",
+   "mergedAt": "2026-09-09T03:12:36Z",
+   "branch": "claude/cc-1-load-costs-return-cols-fix"
+  },
+  {
+   "number": 21478,
+   "title": "Claude-1-Reefer-lumper dispatch confirmation workflow (owner spec 09-08)",
+   "mergedAt": "2026-09-09T03:00:43Z",
+   "branch": "claude/cc-1-reefer-lumper-confirmation"
+  },
+  {
+   "number": 21477,
+   "title": "Cursor-CLAIM-RESERVE-11080 verify-settlement-edit-deduction-wired (SET-01 part 2)",
+   "mergedAt": "2026-09-09T03:00:14Z",
+   "branch": "chore/claim-reserve-11080"
+  },
+  {
+   "number": 21476,
+   "title": "CLAIM-RESERVE: verify-step 11109 (reefer-lumper confirmation guard)",
+   "mergedAt": "2026-09-09T02:55:17Z",
+   "branch": "chore/claim-reserve-11109"
+  },
+  {
+   "number": 21475,
+   "title": "Claude-3: GEOFENCE-DEPARTED-STUCK -- owner claim disproven, real gap guarded",
+   "mergedAt": "2026-09-09T02:51:44Z",
+   "branch": "claude-3/geofence-departed-stuck-guard"
+  },
+  {
+   "number": 21474,
+   "title": "CC-2- FINDING: N/A (RECON-USMCA-BANK-01 DONE line + board closure)",
+   "mergedAt": "2026-09-09T02:41:54Z",
+   "branch": "cc-2/recon-usmca-bank-01-done-line"
+  },
+  {
+   "number": 21473,
+   "title": "Cursor- F6 — fix verify-sort-law guard regex (column.sortable !== false structure change)",
+   "mergedAt": "2026-09-09T02:38:18Z",
+   "branch": "cascade-qa-walk-sort-law-fix"
+  },
+  {
+   "number": 21472,
+   "title": "Claude-1-docs: claim migration 202614010000 for reefer-lumper confirmation",
+   "mergedAt": "2026-09-09T02:38:12Z",
+   "branch": "claude/claim-202614010000-reefer-lumper"
+  },
+  {
+   "number": 21471,
+   "title": "CC-2- FINDING: BANK-F30010 RECON-USMCA-BANK-01 suggestion coverage 25%→72.8%",
+   "mergedAt": "2026-09-09T02:35:44Z",
+   "branch": "cc-2/recon-usmca-bank-01-suggestion-coverage"
+  },
+  {
+   "number": 21470,
+   "title": "Claude-1-docs: ACCT-F5723 DONE confirmation — already completed, re-verified",
+   "mergedAt": "2026-09-09T02:35:05Z",
+   "branch": "claude/acctf5723-done-confirm"
+  },
+  {
+   "number": 21469,
+   "title": "Claude-1-docs: BANK-BALANCE DONE line — already fixed/deployed (BANK-F30002/#21374)",
+   "mergedAt": "2026-09-09T02:33:09Z",
+   "branch": "claude/bank-balance-done-line"
+  },
+  {
+   "number": 21468,
+   "title": "FINDING: N/A (CLAIM-RESERVE 10835 -- reservation-only commit, no code fix)",
+   "mergedAt": "2026-09-09T02:29:56Z",
+   "branch": "cc-2/claim-reserve-10835"
+  },
+  {
+   "number": 21467,
+   "title": "Cursor- Phase 1 scope fix: reverse 14 Faro settlements, preserve 3 September",
+   "mergedAt": "2026-09-09T02:26:38Z",
+   "branch": "cursor/settle-scope-fix-14v28"
+  },
+  {
+   "number": 21466,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-08T21:16:52Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 21465,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-09-08T16:44:53Z",
@@ -17139,192 +17325,6 @@
    "title": "LDT-D Documents tab — unified table + shared BOL/POD read",
    "mergedAt": "2026-09-06T15:53:45Z",
    "branch": "cascade/ldt-d-documents-tab"
-  },
-  {
-   "number": 20881,
-   "title": "Claude-3: board post — TOUR-SPLIT-PLAN ruling + route migration to CC-1",
-   "mergedAt": "2026-09-06T04:22:16Z",
-   "branch": "claude-3-outbox-tour-split-ruling"
-  },
-  {
-   "number": 20880,
-   "title": "Claude-3: TOUR-SPLIT-PLAN — owner ruling applied, Q4 guardrail verified",
-   "mergedAt": "2026-09-06T04:21:20Z",
-   "branch": "claude-3-tour-split-ruling"
-  },
-  {
-   "number": 20879,
-   "title": "Claude-1- docs: BANK-FEE-ROLE DONE line",
-   "mergedAt": "2026-09-06T04:22:55Z",
-   "branch": "cc1-outbox-bank-fee-role-done"
-  },
-  {
-   "number": 20878,
-   "title": "feat(load-costs): the approved LOAD PAGE /accounting/load-costs/:loadId — breadcrumb · header stats · tabs (LDT-PAGE)",
-   "mergedAt": "2026-09-06T04:14:12Z",
-   "branch": "lead/ldt-page"
-  },
-  {
-   "number": 20877,
-   "title": "Claude-1- ACCT-F25081 bank_fee_recovery COA role bound to USMCA 6300",
-   "mergedAt": "2026-09-06T04:19:34Z",
-   "branch": "claude/cc1-bank-fee-role"
-  },
-  {
-   "number": 20876,
-   "title": "Cursor-docs: OUTBOX SETL-MOD-01 DONE",
-   "mergedAt": "2026-09-06T04:12:30Z",
-   "branch": "cursor/outbox-setl-mod-01-done"
-  },
-  {
-   "number": 20875,
-   "title": "CLAIM-RESERVE: 10449 verify-load-costs-load-page (LDT-PAGE)",
-   "mergedAt": "2026-09-06T04:12:16Z",
-   "branch": "chore/claim-reserve-10449"
-  },
-  {
-   "number": 20874,
-   "title": "CC-2-docs: SETL-DED-UI-RAW-FONT-SIZE DONE line + rate-per-mile fix note",
-   "mergedAt": "2026-09-06T04:14:23Z",
-   "branch": "cc2/outbox-setl-ded-font-done"
-  },
-  {
-   "number": 20873,
-   "title": "Cursor-SETL-MOD-01: Settlements module reads the same tour readout",
-   "mergedAt": "2026-09-06T04:11:33Z",
-   "branch": "cursor/setl-mod-01-settlements-readout"
-  },
-  {
-   "number": 20872,
-   "title": "CC-2-frontend: fix SETL-DED-UI raw text-[11px] font-size (own finding #20856 item 2)",
-   "mergedAt": "2026-09-06T04:10:35Z",
-   "branch": "cc2/setl-ded-ui-raw-font-size"
-  },
-  {
-   "number": 20871,
-   "title": "Cursor-CLAIM-RESERVE 3348 (verify-settlements-module-one-readout)",
-   "mergedAt": "2026-09-06T04:08:25Z",
-   "branch": "chore/claim-reserve-3348"
-  },
-  {
-   "number": 20870,
-   "title": "fix(load-costs): click anywhere on a board row expands its panel (cards / tour readout); 24px caret",
-   "mergedAt": "2026-09-06T04:05:38Z",
-   "branch": "lead/expand-on-row-click"
-  },
-  {
-   "number": 20869,
-   "title": "Cursor-docs: USMCA reconciliation Excel + lead rulings (no prod change)",
-   "mergedAt": "2026-09-06T03:59:59Z",
-   "branch": "cursor/usmca-reconciliation-xlsx-2026-09-06"
-  },
-  {
-   "number": 20868,
-   "title": "docs(bus): LEAD rulings on Cursor reconciliation §9",
-   "mergedAt": "2026-09-06T03:55:50Z",
-   "branch": "lead/cursor-rulings"
-  },
-  {
-   "number": 20867,
-   "title": "Cursor-docs: USMCA reconciliation 2026-09-06 (measured + QBO gap cross-check)",
-   "mergedAt": "2026-09-06T03:51:40Z",
-   "branch": "cursor/usmca-reconciliation-2026-09-06"
-  },
-  {
-   "number": 20866,
-   "title": "Codex- TEL-45 make TEL-42 fresh-database safe",
-   "mergedAt": "2026-09-06T03:50:34Z",
-   "branch": "codex/tel45"
-  },
-  {
-   "number": 20865,
-   "title": "Codex- fix design ratchet compliant-size redistribution",
-   "mergedAt": "2026-09-06T03:49:03Z",
-   "branch": "codex/ui-ratchet-compliant-file"
-  },
-  {
-   "number": 20864,
-   "title": "Claude-3: board post — TOUR-SPLIT-PLAN done",
-   "mergedAt": "2026-09-06T03:48:15Z",
-   "branch": "claude-3-outbox-tour-split"
-  },
-  {
-   "number": 20863,
-   "title": "Claude-3: TOUR-SPLIT-PLAN — mega-tour vs signed-per-trip mapping (READ-ONLY)",
-   "mergedAt": "2026-09-06T03:47:35Z",
-   "branch": "claude-3-tour-split-plan"
-  },
-  {
-   "number": 20862,
-   "title": "Claude-1- CLAIM-RESERVE: bank_fee_recovery migrations + guard number",
-   "mergedAt": "2026-09-06T03:57:31Z",
-   "branch": "chore/claim-bank-fee-role-202613810000-10453"
-  },
-  {
-   "number": 20861,
-   "title": "docs(bus): LEAD ✗ ACC-51 — duplicate route boot crash; journal",
-   "mergedAt": "2026-09-06T03:33:25Z",
-   "branch": "lead/cc1-verdict"
-  },
-  {
-   "number": 20860,
-   "title": "CC-2-dispatch: fix blended driver_bills.rate_per_mile_cents (CC-3 finding)",
-   "mergedAt": "2026-09-06T03:33:23Z",
-   "branch": "cc2/fix-blended-rate-per-mile"
-  },
-  {
-   "number": 20859,
-   "title": "CC-2-docs: CLAIM-RESERVE 10451 verify-driver-bill-rate-per-mile-not-blended",
-   "mergedAt": "2026-09-06T03:30:44Z",
-   "branch": "cc2/claim-10451-driver-bill-rate-per-mile"
-  },
-  {
-   "number": 20858,
-   "title": "fix(api): boot crash (duplicate route) — API deploys failed since 02:42Z · tour register entity link · Round 9",
-   "mergedAt": "2026-09-06T03:31:38Z",
-   "branch": "lead/ldt-tabs-link-round9"
-  },
-  {
-   "number": 20857,
-   "title": "CC-2-docs: DSP-49 DONE line",
-   "mergedAt": "2026-09-06T03:22:43Z",
-   "branch": "cc2/outbox-dsp49-done"
-  },
-  {
-   "number": 20856,
-   "title": "CC-2-docs: file LDT-TABS entity-link + SETL-DED-UI raw-font-size findings",
-   "mergedAt": "2026-09-06T03:20:06Z",
-   "branch": "cc2/board-ldt-tabs-setl-ded-findings"
-  },
-  {
-   "number": 20855,
-   "title": "CC-2-dispatch: DSP-49 — every load carries its pickup and delivery appointments",
-   "mergedAt": "2026-09-06T03:19:53Z",
-   "branch": "cc2/dsp-49-required-appointments"
-  },
-  {
-   "number": 20854,
-   "title": "Claude-3: board post — SETL-DED-UI done + migration handoff",
-   "mergedAt": "2026-09-06T03:03:30Z",
-   "branch": "claude-3-outbox-setl-ded-ui"
-  },
-  {
-   "number": 20853,
-   "title": "CC-2-docs: CLAIM-RESERVE 10447 verify-appointments-required-on-book",
-   "mergedAt": "2026-09-06T03:05:10Z",
-   "branch": "cc2/claim-10447-appointments-required"
-  },
-  {
-   "number": 20852,
-   "title": "Claude-3: SETL-DED-UI — deduction creator (typed kinds only) + bank_fee_recovery migration drafts",
-   "mergedAt": "2026-09-06T03:02:49Z",
-   "branch": "claude-3-setl-ded-ui"
-  },
-  {
-   "number": 20851,
-   "title": "feat(load-costs): Pre-Settlement + Settlement tabs on the Load costs board (tours register, Close tour) — LDT-TABS",
-   "mergedAt": "2026-09-06T03:05:19Z",
-   "branch": "lead/ldt-tabs"
   }
  ],
  "merged_pr_total": 3000,
