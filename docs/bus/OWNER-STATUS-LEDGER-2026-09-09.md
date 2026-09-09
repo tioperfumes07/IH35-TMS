@@ -202,3 +202,28 @@ silently dropping it.
   (2026-09-09 03:47Z, guard 11086 `verify-settlement-loan-recovery-modal-wired`), ahead of when the
   board's source snapshot was taken. Confirmed merged and on `main`. No further action needed from
   this seat.
+
+### 2026-09-09 08:2xZ (CC-1) — SET-29 investigated, live-verified no violation, guard added
+
+**SET-29 (Attribution rung 3, fixed-monthly-cost rule, CC-1's own seat)** — investigated live.
+`docs/LAW.md` §3: "Fixed monthly costs — insurance, plates, the truck note — do not belong on a trip
+at all. They are period costs on the unit." Searched every candidate code path (`load-unit-cost-
+split.math.ts`/`.routes.ts` — SET-28's rung-3 mile-allocation module, `load-cost-rollup.sql.ts` — the
+Load Costs report, `break-even.service.ts` — the fleet cost-per-mile analytics): none of them ever
+pull a fixed-monthly-cost account onto a load. The rule already holds structurally — none of the 9
+categories in `accounting.line_category_load_required` (diesel/DEF/toll/scale/lumper/parking/roadside
+repair/detention/over-road-other) are insurance/plates/registration/notes-payable, so nothing forces
+a `load_id` onto those accounts at entry either.
+
+**Live-verified on prod, zero violations:** every insurance/plates/registration account (`MX-Mexico
+Insurance`, `US-Cargo Insurance`, `US-Physical Damage Insurance`, `OC-Truck Insurance`, `OE-Tax-
+Vehicle Registration`, `OE-Tax-Vehicle-Tractor/Van License Plates`, `Permit-License Plates`, etc.) —
+**0 of 406** `accounting.expense_lines` rows and **0 of 3,974** `accounting.bill_lines` rows on those
+accounts carry a `load_id`. Equipment-loan/notes-payable accounts (`Equipment Loans / Notes Payable`,
+`CV-Note Payable BMW`, `EL-IBC Bank Equipment Loans`) have 0 lines posted at all yet.
+
+**Not a defect — nothing to fix.** Per LAW.md's own "guards land BEFORE the first transaction exists"
+philosophy, added a new live-data guard (`scripts/verify-fixed-monthly-costs-never-attach-to-load.mjs`,
+verify-step 11129) so this invariant is asserted permanently instead of only true by accident — it
+will catch the first future bill/expense entry, import, or UI change that lets a fixed monthly cost
+get tagged to a load. PR: (see this commit).
