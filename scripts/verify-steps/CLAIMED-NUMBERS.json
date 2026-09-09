@@ -8398,5 +8398,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-09-09",
     "purpose": "verify-company-settlement-pdf-house-template"
+  },
+  "11092": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-09",
+    "purpose": "verify-resettlement-origin-load-dates"
   }
 }
