@@ -179,7 +179,10 @@ export async function ensureDriverApVendor(
   // TEST-named driver auto-provisioned through this path minted an untagged vendor, feeding the
   // same real-trial-balance sample-debit leak INV-7 already tracks. Same shared word-boundary
   // helper as the other writers, so this can never drift from their pattern independently.
-  const isSampleData = looksLikeSampleDataName(name) || null;
+  // is_sample_data is NOT NULL on mdata.vendors. looksLikeSampleDataName always returns a boolean, so
+  // this must stay a boolean — the prior `|| null` collapsed a real driver's `false` into NULL and 500'd
+  // the insert (23502), which is exactly what blocked the driver-subaccount backfill's A/P-vendor step.
+  const isSampleData = looksLikeSampleDataName(name);
 
   const created = await client.query<{ id: string }>(
     `INSERT INTO mdata.vendors (operating_company_id, vendor_name, vendor_type, driver_id, qbo_vendor_id, is_sample_data)

@@ -17,6 +17,15 @@
  * vendor from the driver's own name and had never been swept into this guard -- it minted untagged
  * vendors for TEST-named drivers with zero derivation at all, the same INV-7 sample-debit leak this
  * guard exists to close off. Now covered as a fourth required writer.
+ *
+ * EXTENDED 2026-09-09 (owner-ordered driver-account backfill 500'd live): the previous version of THIS
+ * guard hard-required `looksLikeSampleDataName(name) || null`, which is itself a bug -- mdata.vendors.
+ * is_sample_data is NOT NULL, looksLikeSampleDataName always returns a boolean, and `false || null` is
+ * NULL, so every REAL-named driver's A/P vendor insert failed with 23502 and rolled back the whole
+ * driver-subaccount backfill (measured live: apply -> 500 "null value in column is_sample_data ...
+ * violates not-null constraint"). The derivation must stay a bare boolean. This guard now REQUIRES the
+ * boolean form and FORBIDS the `|| null` (and `|| undefined`) null-collapse so the NOT-NULL insert can
+ * never be re-broken the same way.
  */
 import { readFileSync } from "node:fs";
 
@@ -55,8 +64,14 @@ function analyze(src) {
   if (!src.driverVendorLink.includes('import { looksLikeSampleDataName } from "../mdata/sample-data-name-detection.js";')) {
     failures.push(`${FILES.driverVendorLink}: does not import looksLikeSampleDataName`);
   }
-  if (!src.driverVendorLink.includes("const isSampleData = looksLikeSampleDataName(name) || null;")) {
-    failures.push(`${FILES.driverVendorLink}: ensureDriverApVendor does not derive is_sample_data from the driver's name`);
+  if (!src.driverVendorLink.includes("const isSampleData = looksLikeSampleDataName(name);")) {
+    failures.push(`${FILES.driverVendorLink}: ensureDriverApVendor does not derive is_sample_data as a bare boolean from the driver's name`);
+  }
+  // NOT-NULL guard: is_sample_data is NOT NULL on mdata.vendors, so the derivation must never collapse a
+  // real name's `false` into NULL/undefined. Reintroducing `|| null` / `|| undefined` here is exactly the
+  // 23502 that 500'd the backfill live -- forbid it outright.
+  if (/looksLikeSampleDataName\(name\)\s*\|\|\s*(null|undefined)/.test(src.driverVendorLink)) {
+    failures.push(`${FILES.driverVendorLink}: is_sample_data derivation collapses false->NULL (|| null/undefined) -- violates mdata.vendors NOT NULL, 500s the insert`);
   }
   if (!src.driverVendorLink.includes("VALUES ($1::uuid, $2::text, 'Other', $3::uuid, NULL, $4)")) {
     failures.push(`${FILES.driverVendorLink}: ensureDriverApVendor's INSERT does not write the derived is_sample_data value`);
@@ -128,11 +143,21 @@ function selftest() {
       apply: (s) => ({
         ...s,
         driverVendorLink: s.driverVendorLink
-          .replace("const isSampleData = looksLikeSampleDataName(name) || null;\n\n", "")
+          .replace("const isSampleData = looksLikeSampleDataName(name);", "")
           .replace(
             "VALUES ($1::uuid, $2::text, 'Other', $3::uuid, NULL, $4)",
             "VALUES ($1::uuid, $2::text, 'Other', $3::uuid, NULL)"
           ),
+      }),
+    },
+    {
+      name: "ensureDriverApVendor reintroduces the `|| null` null-collapse (the live 23502 backfill 500)",
+      apply: (s) => ({
+        ...s,
+        driverVendorLink: s.driverVendorLink.replace(
+          "const isSampleData = looksLikeSampleDataName(name);",
+          "const isSampleData = looksLikeSampleDataName(name) || null;"
+        ),
       }),
     },
     {
