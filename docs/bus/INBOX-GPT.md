@@ -23,7 +23,30 @@ pass, 13569/13577 classify under the same settlement. **You are OFF REG-040.**
 Owner relayed: **REG-010/011, REG-040, REG-041, REG-009 all COMPLETE.** Your entire settlement-numbering
 queue is drained. Well done — do NOT rebuild any of them.
 
-## ★ ROW 1 (NEW, LIVE TOP) — SETTLEMENTS-MODULE STANDING SWEEP (deadline 2026-09-11 03:00 UTC · surrender Cursor)
+## ★★ ROW 1 (NEW, URGENT — owner live 2026-09-10 · ROOT-CAUSE FOUND by Cursor lead · deadline 2026-09-10 23:59 UTC · surrender CC-3)
+**TOUR NEVER SPLITS — every NB piles onto ONE open settlement.** Owner live-walked load 13525 and saw
+"historical data" in its Settlement + Pre-Settlement tabs. Lead measured on Neon (USMCA bypass_rls=lucia):
+tour `8b8cb2f2-df23-4de3-9ad1-205564bb0726` = settlement **S-2026-0011 carries 7 loads**
+(13494, 13500 cancelled · 13524 · **13525 NB** · 13540 · **13545 NB** · 13560), all same unit
+`82db522d` + same driver `3445cf68`, spanning 13494→13560 (weeks apart). **TWO NB legs on one
+settlement is definitionally wrong** — each round trip (NB + its SB return) must be its OWN tour/settlement
+that closes; a new NB must NOT inherit an already-OPEN tour.
+ROOT: `apps/backend/src/dispatch/presettlement-link.service.ts` — `findOpenPresettlementTourForUnit`
+(and the NB branch of `linkLoadToPresettlementAfterAssignmentInClientTx` line ~524) returns/reuses an
+**open** tour for a fresh NB, so `suggestPresettlementLink` sees a `tour_id` and JOINS the existing
+settlement instead of starting a new one. REG-040's continuation was meant for a **closed** settlement
+(resettlement), NOT to accumulate loads on an open one.
+EXACT TARGET: an NB leg starts a NEW tour/settlement UNLESS it is a REG-040 continuation of a **closed**
+settlement. It must NEVER join an open tour that already has an NB leg. TR/SB legs still join the open
+tour for their NB (unchanged). Then a data repair (idempotent, void-not-delete, reuse the existing
+allocator/linker — NO new GL math): split S-2026-0011's mis-joined loads onto their correct per-round-trip
+settlements. Owner money already closed on the real ones — preserve pay; re-derive identities, don't zero them.
+GUARD: verify-step asserting (a) two NB loads on the same unit never share one open settlement, (b) an NB
+after a CLOSED settlement still continues (REG-040 kept). LIVE PROOF: load 13525's Settlement tab shows only
+its own round trip, and S-2026-0011 no longer spans 7 loads / 2 NB legs. **This is the root cause of the
+owner's "historical data in the tabs" + the settlement-count confusion — do it FIRST, before the sweep.**
+
+## ROW 2 — SETTLEMENTS-MODULE STANDING SWEEP (deadline 2026-09-11 03:00 UTC · surrender Cursor)
 Your numbering lane is clean, so widen to a **live BUILD sweep of the whole Settlements module** on the
 deployed bundle (`app.ih35dispatch.com` @ `950bf263`, login is live). Walk every left-nav Settlements tab —
 Drivers · Profiles · **Pre-Settlements · Settlements · Company Settlements · Settlement Close · Settlement

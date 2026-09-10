@@ -56,6 +56,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { listDispatchFlagColors } from "../../api/catalogs";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { getOfficeTransitionButtons, loadCanMarkInvoiced, type OfficeTransitionButton } from "@ih35/shared-types";
+import { LoadStatusChanger } from "./LoadStatusChanger";
 
 const tabs = [
   "Overview",
@@ -691,9 +692,25 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
               <p className="text-xs text-gray-500">{routeSummary}</p>
               {load ? (
                 <div className="mt-1 flex flex-wrap items-center gap-1.5" data-testid="ldt0-header-chips">
-                  <span className="inline-block rounded-sm border border-gray-300 bg-gray-50 px-1.5 py-px text-xs font-semibold uppercase text-[#4B5563]">
-                    {load.status}
-                  </span>
+                  {/* REG-054 (owner 2026-09-10): QuickBooks-style Change Status dropdown rides the header
+                      so it is present on EVERY tab of EVERY load view (open + close). Replaces the old
+                      static status chip. Status-aware options + Mark invoiced + Cancel load, all through
+                      the one money-aware writer. */}
+                  <LoadStatusChanger
+                    loadId={load.id}
+                    status={load.status as LoadStatus}
+                    pending={statusMutation.isPending}
+                    disabled={!canEdit}
+                    onTransition={(target) =>
+                      void handleOfficeStatusTransition({
+                        target: target as OfficeTransitionButton["target"],
+                        label: STATUS_LABEL[target] ?? String(target),
+                        testId: `load-detail-transition-${String(target).replace(/_/g, "-")}`,
+                      })
+                    }
+                    onMarkInvoiced={() => void handleMarkInvoiced()}
+                    onCancelLoad={() => setCancelOpen(true)}
+                  />
                   {/* LDT-PAGE design chip (render § Shared header): TOUR OPEN · PRE-SETTLEMENT — read from
                       the one tour readout. The number itself now rides beside the load number above
                       (REG-032), so this chip carries only the open/closed state + tab navigation. */}
