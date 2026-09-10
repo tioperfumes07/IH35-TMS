@@ -175,6 +175,45 @@ APD-25→10870? and APD-28→FB-56710? (VINs differ by 1 char — not guessed). 
   penalty applies. Confirm lumper receipts everywhere possible.
 - **GUARD:** dispatching a reefer load surfaces the lumper prompt; a paid-by-customer lumper creates the
   invoice-charge intent.
+- **STATUS UPDATE (CC-1, 2026-09-10, live-verified):** most of this item is already built and live,
+  not new work:
+  1. **"Ask who pays, confirm with a click" — DONE, live, unconditional.** `mdata.loads.lumper_payer`
+     / `lumper_will_invoice_customer` / `lumper_late_penalty_applies` (migration
+     `202614010000_loads_reefer_lumper_confirmation.sql`) captured at booking
+     (`book-load.service.ts`); `loads.routes.ts` **blocks** a reefer load
+     (`trailer_type='refrigerated_van'`) from dispatching until all three are set
+     (`reefer_lumper_confirmation_required`). Guarded by
+     `verify-reefer-lumper-confirmation-captured.mjs`.
+  2. **"If customer pays, flag it for invoicing" (the invoice-charge intent) — DONE, live.**
+     `from-load.ts` (~L380-450): when a `dispatch.stop_extra_rates` row is `rate_type='lumper'` AND
+     `lumper_payer='customer'` AND `lumper_will_invoice_customer=true`, it creates the real customer
+     invoice line via the existing `invoice-line-revenue-resolution.service.ts` `'lumper'` branch —
+     no new GL math, reuses the existing poster. This is exactly the GUARD line's own "creates the
+     invoice-charge intent."
+  3. **"Confirm the lumper receipt was sent" + a second late-penalty ask, post-booking — DONE
+     (Cursor #21… "no reach into CC-1's billing files"), but write-only.**
+     `completion-prompts.routes.ts` asks (at dispatch/delivery time) whether receipts were sent,
+     whether to invoice the customer, and whether a late penalty applies — answers land as
+     `audit.audit_events` (`dispatch.lumper_receipts_sent`, `dispatch.lumper_customer_invoice_requested`,
+     `dispatch.late_penalty_decision`). Nothing currently consumes these three events downstream.
+  - **REMAINING — genuine, needs an OWNER DECISION before CC-1 builds it, not a guess (per §0):**
+    turning `dispatch.late_penalty_decision` (penalty=true) into an actual driver settlement
+    deduction is real, bounded, backend-only CC-1 work (the exact template already exists —
+    `safety/fines.routes.ts`'s `convert-to-liability` → `driver_finance.driver_liabilities` →
+    settlement-deduction pipeline) — **except no penalty DOLLAR AMOUNT exists anywhere in the
+    system.** Grepped for `penalty_amount`/`late_penalty_amount`: zero hits. The
+    `completion-prompts.routes.ts` late-penalty endpoint only ever captures `penalty: boolean` +
+    an optional note — never an amount. Posting a real financial deduction requires a real number;
+    inventing one would be fabricating a financial figure. Two real options, either buildable once
+    the owner picks: **(a)** a fixed/policy penalty amount (a financial/GL decision, could ship
+    without touching CC-3's UI), or **(b)** a dispatcher-entered amount per incident (needs a new
+    UI field — CC-3's surface, not backend-only). Item stays OPEN on this one point pending the
+    owner's choice.
+  - **Secondary note, not acted on:** a second, largely dormant lumper-billing mechanism exists
+    (`apps/backend/src/cash-advances/lumper-*.ts`, gated `LUMPER_LIFECYCLE_ENABLED=false`,
+    "HOLD-FOR-JORGE") sitting alongside the already-live path in item 2 above. Flagging the overlap
+    rather than wiring it — building a second live customer-billing rail without owner
+    clarification on which is canonical risks double-billing.
 
 ## REG-051 — Load detail: per-tab EDIT (not the full wizard)  ·  CC-3 / Cursor
 - **OWNER:** each tab gets its own Edit — Stops edit only adds/removes stops; Costs edit only this load;
