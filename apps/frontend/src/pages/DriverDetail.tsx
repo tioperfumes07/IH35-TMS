@@ -812,16 +812,38 @@ export function DriverDetailPage() {
     );
   }
 
-  const fields: Array<[string, string, string]> = [
-    ["first_name", "First Name", "text"],
-    ["last_name", "Last Name", "text"],
-    ["phone", "Phone", "text"],
-    ["email", "Email", "email"],
-    ["cdl_number", "CDL #", "text"],
-    ["cdl_expires_at", "CDL Expires", "date"],
-    ["hire_date", "Hire Date", "date"],
-    ["dot_medical_expires_at", "DOT Medical Expires", "date"],
-    ["hazmat_endorsement_expires_at", "Hazmat Endorsement Expires", "date"],
+  const profileFieldSections: Array<{
+    id: string;
+    title: string;
+    fields: Array<[string, string, string]>;
+  }> = [
+    {
+      id: "identity",
+      title: "Identity",
+      fields: [
+        ["first_name", "First Name", "text"],
+        ["last_name", "Last Name", "text"],
+      ],
+    },
+    {
+      id: "contact",
+      title: "Contact",
+      fields: [
+        ["phone", "Phone", "text"],
+        ["email", "Email", "email"],
+      ],
+    },
+    {
+      id: "credentials",
+      title: "Credentials & employment",
+      fields: [
+        ["cdl_number", "CDL #", "text"],
+        ["cdl_expires_at", "CDL Expires", "date"],
+        ["dot_medical_expires_at", "DOT Medical Expires", "date"],
+        ["hazmat_endorsement_expires_at", "Hazmat Endorsement Expires", "date"],
+        ["hire_date", "Hire Date", "date"],
+      ],
+    },
   ];
 
   // The identity FK intentionally survives disable so audit, settlement, message and reverse links
@@ -975,7 +997,7 @@ export function DriverDetailPage() {
       ) : null}
 
       {activeTab === "Profile" ? (
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="mx-auto grid w-full max-w-[1440px] gap-3 md:grid-cols-2" data-testid="driver-profile-layout">
           <div className="md:col-span-2">
             <FlatFieldGrid
               columns={4}
@@ -1002,32 +1024,43 @@ export function DriverDetailPage() {
               ) : null}
             </div>
           ) : null}
-          {fields.map(([key, label, type]) => (
-            <div key={key} className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-600">{label}</label>
-              {type === "date" ? (
-                <DatePicker
-                  value={hydratedForm[key] ?? ""}
-                  disabled={!editMode}
-                  onChange={(value) => setForm((current) => ({ ...current, [key]: value }))}
-                />
-              ) : (
-                <input
-                  type={type}
-                  value={hydratedForm[key] ?? ""}
-                  disabled={!editMode}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      // LV-DRIVER-PHONE-NO-LIVE-FORMAT: only a display-only mask existed
-                      // (`maskedPhone` below), never applied while actually typing.
-                      [key]: key === "phone" ? formatPhoneAsTyped(event.target.value) : event.target.value,
-                    }))
-                  }
-                  className={`${FORM_INPUT_CLASS} disabled:bg-gray-100`}
-                />
-              )}
-            </div>
+          {profileFieldSections.map((section) => (
+            <section
+              key={section.id}
+              className={`rounded-sm border border-gray-200 bg-white p-3 ${section.id === "credentials" ? "md:col-span-2" : ""}`}
+              data-testid={`driver-profile-${section.id}-section`}
+            >
+              <h2 className="mb-2 text-xs font-bold uppercase text-gray-600">{section.title}</h2>
+              <div className={`grid gap-2 ${section.id === "credentials" ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2"}`}>
+                {section.fields.map(([key, label, type]) => (
+                  <div key={key} className="flex min-w-0 flex-col gap-1">
+                    <label className="text-xs font-semibold text-gray-600">{label}</label>
+                    {type === "date" ? (
+                      <DatePicker
+                        value={hydratedForm[key] ?? ""}
+                        disabled={!editMode}
+                        onChange={(value) => setForm((current) => ({ ...current, [key]: value }))}
+                      />
+                    ) : (
+                      <input
+                        type={type}
+                        value={hydratedForm[key] ?? ""}
+                        disabled={!editMode}
+                        onChange={(event) =>
+                          setForm((current) => ({
+                            ...current,
+                            // LV-DRIVER-PHONE-NO-LIVE-FORMAT: only a display-only mask existed
+                            // (`maskedPhone` below), never applied while actually typing.
+                            [key]: key === "phone" ? formatPhoneAsTyped(event.target.value) : event.target.value,
+                          }))
+                        }
+                        className={`${FORM_INPUT_CLASS} disabled:bg-gray-100`}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
           ))}
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Hazmat Endorsement (H)</label>
