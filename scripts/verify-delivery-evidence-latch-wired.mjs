@@ -53,6 +53,16 @@ const EXEMPT = new Set([
   // checked individually rather than added to make the guard green.
   "apps/backend/src/dispatch/load-state-machine.ts",
   "apps/backend/src/driver/earnings.routes.ts",
+  // ACCT-F6011 LOAD-CLOSE-LIFECYCLE (2026-09-09): a non-literal `UPDATE mdata.loads SET status = $2`
+  // that names both evidence statuses in its BILLING_TAIL_ORDER array / FORWARD_STEP map — but never
+  // WRITES either one. FORWARD_STEP's only two values are "invoiced" and "closed"; every entry keyed
+  // by an evidence status (delivered, delivered_pending_docs, completed_docs_received) maps directly
+  // to "invoiced", so `stepTo` (the bound $2 parameter) is provably always "invoiced" or "closed" —
+  // never a delivery-evidence status. This service only WALKS FORWARD past delivery on the strength of
+  // an invoice/factoring status already recorded elsewhere (never fabricates delivery evidence
+  // itself), so it is exempt for the same reason load-state-machine.ts is: a status MAPPER that reads
+  // the evidence statuses as ranks, never assigns one.
+  "apps/backend/src/dispatch/load-billing-lifecycle.service.ts",
 ]);
 
 /**

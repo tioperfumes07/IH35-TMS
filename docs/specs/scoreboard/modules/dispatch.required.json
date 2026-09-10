@@ -1191,6 +1191,19 @@
       "required": [
         "connectivity"
       ]
+    },
+    {
+      "id": "dispatch.panel.load_unit_cost_split",
+      "tab": "Panels",
+      "sub": "Panel: Load Unit Cost Split (SET-28 vehicle-swap mid-trip cost split by miles)",
+      "route_hint": "surface://components/dispatch/LoadUnitCostSplitPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/dispatch/LoadUnitCostSplitPanel.tsx",
+      "required": [
+        "connectivity",
+        "load",
+        "unit"
+      ]
     }
   ],
   "honesty_audit": {

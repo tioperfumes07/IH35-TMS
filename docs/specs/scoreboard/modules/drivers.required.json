@@ -688,6 +688,19 @@
         "reverse_link",
         "driver"
       ]
+    },
+    {
+      "id": "drivers.drawer.edit_settlement_deduction",
+      "tab": "Drawers",
+      "sub": "Drawer: Edit Settlement Deduction (SET-01 part 2 — in-place editable line)",
+      "route_hint": "surface://pages/drivers/components/EditSettlementDeductionDrawer.tsx",
+      "surface_kind": "drawer",
+      "surface_path": "pages/drivers/components/EditSettlementDeductionDrawer.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver"
+      ]
     }
   ],
   "honesty_audit": {
