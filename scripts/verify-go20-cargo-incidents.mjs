@@ -31,8 +31,21 @@ function verify(service, routes, worker, page, aggregator, index) {
     if (!routes.includes(token)) errors.push(`routes missing ${token}`);
   }
   if (index.includes("./dispatch/cargo-sensor-incidents.routes.js")) errors.push("startup registers duplicate cargo incident routes");
-  if (index.includes("predictive-alerts-worker.js") || index.includes("predictive-alerts.routes.js")) {
-    errors.push("startup registers predictive-alert modules that do not exist");
+  // MAINT-GO20D-STALE-CHECK (2026-09-10): this check originally fired on PR #19518 mounting a
+  // predictive-alerts worker/routes pair that did not exist yet on disk (a premature/dangling
+  // startup mount). GO-20-B (#19541) later legitimately built that exact feature for Maintenance
+  // (apps/backend/src/jobs/predictive-alerts-worker.ts + apps/backend/src/maintenance/predictive-
+  // alerts.routes.ts, both real, both invoked below) — the bare substring match could no longer
+  // tell the two apart and has failed on every commit since, masking whatever real signal this
+  // check was meant to carry. Re-targeted at the actual invariant: an import of either symbol with
+  // no corresponding call is a dangling/premature mount; both existing today, both invoked, is not.
+  for (const [importPath, symbol] of [
+    ["./jobs/predictive-alerts-worker.js", "initializePredictiveAlertsWorker"],
+    ["./maintenance/predictive-alerts.routes.js", "registerMaintenancePredictiveAlertsRoutes"],
+  ]) {
+    if (!index.includes(`from "${importPath}"`)) continue; // not imported at all — nothing to mount
+    const callCount = (index.match(new RegExp(`\\b${symbol}\\s*\\(`, "g")) ?? []).length;
+    if (callCount === 0) errors.push(`${importPath} imported but ${symbol}(...) is never invoked — dangling/premature mount`);
   }
   if (!worker.includes("processCargoSensorIncidents(client, operatingCompanyId)")) errors.push("worker does not run incident lifecycle");
   if (!page.includes('data-testid="cargo-sensor-incidents"')) errors.push("load timeline does not render incidents above readings");
@@ -62,8 +75,8 @@ if (process.argv.includes("--selftest")) {
     console.error("verify-go20-cargo-incidents SELFTEST FAIL — duplicate route mutation escaped");
     process.exit(1);
   }
-  const danglingStartup = `${sources[5]}\nimport './jobs/predictive-alerts-worker.js';`;
-  if (!verify(...sources.slice(0, 5), danglingStartup).some((error) => error.includes("do not exist"))) {
+  const danglingStartup = sources[5].replace("initializePredictiveAlertsWorker(app);", "// (invocation removed by selftest)");
+  if (!verify(...sources.slice(0, 5), danglingStartup).some((error) => error.includes("dangling/premature mount"))) {
     console.error("verify-go20-cargo-incidents SELFTEST FAIL — dangling startup import mutation escaped");
     process.exit(1);
   }
