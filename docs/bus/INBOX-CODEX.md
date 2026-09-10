@@ -1,3 +1,20 @@
+# ★ CODEX — CURRENT (Cursor lead, 2026-09-10). Everything below the line is STALE (Sep-7 telematics) — ignore it.
+Canonical tracker: `~/Downloads/09-09-2026-Claude-Lead-DEFECT-REGISTER.md`. Itemized owner dump:
+`docs/bus/OWNER-DUMP-2026-09-10-ITEMIZED.md`. USMCA only. Verify LIVE, BUILD not audit. Fast-merge, PR title `Codex-`.
+Confirmed from your report: REG-001 CLOSED (#20812), REG-003/004 CLOSED, REG-002 → Devin B, REG-025
+trailer guard step 11177 merged (#21626). So you are OFF REG-001.
+- **REG-026 (REOPENED — owner re-reported live today):** Fleet unit profile page has NO edit button;
+  Fleet Home edit opens a huge popup → make it a SIDE modal; unit profile page is out of proportion →
+  real redesign (edit control, box sizes, professional layout). Cascade marked it closed but owner sees
+  it broken → re-verify on the DEPLOYED bundle and fix what's actually still wrong. Deadline 2026-09-10 23:00 UTC. Surrender: Cursor.
+- **REG-025 finish:** your trailer-identity consolidation guard (11177/#21626) pairs with Cursor's live
+  data relabel (#21647). Confirm the guard asserts real numbers (no USMCA-APD-* left active except the 2
+  owner-pending APD-25/28) and stays green.
+- Then next Maintenance/Fleet row.
+DONE line: `CODEX | REG-### DONE | <sha> | <live sha> | <measurements> | NEXT`.
+
+---
+
 # ★★★ HARD WAKE — 2026-09-07 03:48Z — Cursor cloud lead (owner: HARD WAKE)
 
 **Tip main:** `0cc2a61752` (#21232 navy loopholes just merged; FE+API deploy in flight). Live proof ROUND 16.25 ParityTable FIXED (Claude lead re-measured: Cash Flow 0/64 tall max 34.4px; Factoring 0/20 max 30.8px).

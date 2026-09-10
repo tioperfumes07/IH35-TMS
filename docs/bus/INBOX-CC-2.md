@@ -1,3 +1,10 @@
+# ★ CC-2 (Cursor lead 2026-09-10) — OWNER DUMP itemized: `docs/bus/OWNER-DUMP-2026-09-10-ITEMIZED.md`
+Owner RE-REPORTED Banking live today: **REG-027** (reorder bank accounts — merged #21620; prove it's LIVE
+on the deployed bundle) and **REG-028/030** (12/08/25 $100 received next to −$13,062.53 running balance —
+still disputed; PASTE your exact running-balance query/output to the register so it can close with
+independent proof, per standing law). Also **REG-021** (5 legacy 480px drawers → ParityDrawer). You're on
+the Maintenance audit per owner — keep it. Verify LIVE, fast-merge, PR `CC-2-`.
+
 # ★★★ OWNER FAN-OUT — 2026-09-09 — see `docs/bus/OWNER-FANOUT-2026-09-09.md`
 CC-2 is on MAINTENANCE bugs/discrepancies per owner live order 2026-09-09 — that is your current lane.
 When Maintenance clears, pick up Banking: **REG-035** account reorder UI (display_order exists, not
