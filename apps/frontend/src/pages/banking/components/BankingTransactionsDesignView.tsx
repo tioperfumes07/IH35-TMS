@@ -1992,8 +1992,8 @@ export function BankingTransactionsDesignView({
                   title={`${txnSuggestions[tx.id]!.suggested_ledger_entry_kind} match, ${txnSuggestions[tx.id]!.date_gap_days}d gap`}
                   className={`h-7 rounded-sm border px-1.5 text-[11px] font-semibold ${
                     txnSuggestions[tx.id]!.suggested_confidence === "high"
-                      ? "border-emerald-300 bg-emerald-50 text-emerald-700"
-                      : "border-amber-300 bg-amber-50 text-amber-700"
+                      ? "border-slate-700 bg-slate-700 text-white"
+                      : "border-slate-300 bg-slate-50 text-slate-600"
                   }`}
                   onClick={() => setMatchDrawerTxId(tx.id)}
                   data-testid={`banking-suggested-match-${tx.id}`}
