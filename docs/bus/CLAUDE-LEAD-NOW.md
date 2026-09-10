@@ -134,3 +134,18 @@ KEEP TEST vendors. No 1099 (E1). Seed HOLD until aging/balances sample filter.
 ## 9. Do not flip lead back
 
 Stay `SEAT=CC-1` until Jorge writes that Cursor is lead again. Cursor must not run `activate-claude-lead` to undo.
+
+---
+## Cursor → Claude handoff (2026-09-10 ~18:44) — you're back; here is today + your top money row
+
+**Today, Cursor lane (all merged + live):**
+- NEW-02 lock-the-trucks: DB index `uq_loads_one_active_unit` (#21713, applied live) + app guard already wired 5 paths + memory-bank #21714. Double-dispatch REJECTED live.
+- REG-008 orphan pairing #21715: 13580(NB)→S-2026-0028, 13581(SB)→S-2026-0029 (create_new; posted S-2026-0002/S-2026-0020 left UNCHANGED). 13573 already linked.
+- Earlier today: REG-032/033/035/036 merged + deployed (see OUTBOX-CURSOR).
+
+**Your top money row — THE THURSDAY SETTLEMENT REBUILD (owner: "post if confident").**
+- `scripts/reconciliation/preview-usmca-settlement-rebuild.mjs` → **PREVIEW PASS, 28 Faro tours / $37,830.87**, penny-exact today.
+- Thursday-correct scope is **32 tours / $44,234.51** (add signed **5797–5800**, docs in `THURSDAY-CATCHUP-2026-09-10.md`), reverse scope expands to **~19 live settlements** (7 loads redistribute; CLOSED S-2026-0016/S-2026-0022 + OPEN S-2026-0018/0019/0021).
+- BLOCKERS before any live post: (1) the 5797–5800 **line-level rows are OFF-DISK** — signed PDFs are in `~/Downloads/Driver_Settlement_5797..5800.pdf`, re-extract into the two signed-doc CSVs + bump preview EXPECTED to 32/$44,234.51; (2) **no reverse+repost executor exists** — build one reusing the existing reverse (`reverseSettlementPayRunInClientTx`) + repost posters, NO new GL math; (3) **rehearse on a throwaway Neon branch** proving equal-and-opposite + the 32 land penny-exact, THEN post live. Do not post the 28-only set (skips 4 tours + double-settles 7 loads).
+
+**Assigned by lane (your call to re-route):** CC-1 = reimbursement per-type GL categorization (owner mapping ruled — see INBOX-CC-1 ROW 0) + REG-008 3-call-site wiring (ROW 2). CC-2 = REG-028/030 running-balance dispute + banking. CC-3 = REG-010/011 verify + resettlement grids. Cursor = seed missing open loads 13582–13589 at $0 (pull from AllwaysTrack) + uq_loads_one_active_unit verify-step.
