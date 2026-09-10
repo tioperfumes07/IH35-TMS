@@ -318,3 +318,12 @@ CURSOR | REG-018 + REG-032 + REG-033(a)(b) DONE — all proven live | 2026-09-10
 - REG-033(a) DONE #21630: merged the duplicate header "Add expense" link + "Record expense" button (both open the SAME RecordExpenseForm) into ONE in-place "Record expense"; full-page /accounting/expenses/new kept (Rule 07). Files: LoadDetailDrawer.tsx + .test.tsx.
 - REG-033(b) DONE #21636: pre-settlement/settlement view now scoped to THIS tour's number AND dates — header "Pre-Settlement S-13729 · <period>", each leg shows pickup → delivery dates (LIVE: NB 13571 09/01→09/04, TR 13574 09/04→09/08). Killed the "Tour Tour" placeholder. Files: TourPreSettlementTab.tsx (+new .test.tsx) + TourSettlementTab.tsx. Also synced entity-link-adoption-baseline (AdvanceDetailDrawer main-side drift was blocking every PR).
 - OPEN OWNER DECISIONS (yours to rule, not assumed): (1) rename the 27 pre-existing wrong-scheme USMCA settlement numbers (e.g. 13574 still shows S-13729) or leave them — new NB loads already mint S-YYYY-NNNN. (2) Create-Bill UX never populates bill_lines.load_id so the new Bills Settlement column shows "—" until wired.
+
+---
+CURSOR (lead) | 2026-09-10 PM |
+- REG-035 DONE #21664 (truck no longer shown twice; currentLoadPerUnit; guard verify-dispatch-table-view-distinct extended).
+- REG-036 DONE #21670 (+ Book return button now renders for NB units with a leg; guard verify-roundtrips-quality-load-entitylink extended).
+- Fan-out + COMMS-PROTOCOL-2026-09-10 merged #21667; STATUS-NOW refreshed; REG-048/049 + CASHFLOW-KPI registered.
+- DEPLOYED: FE+BE to d6c8dea23e (live 19:16/19:18Z), re-triggered FE+BE to 886f6cfb61 (REG-010/011 + REG-036).
+- Merged for seats: none pending — GPT REG-010/011 #21669, Codex REG-048 claim #21668, Devin-B REG-002 #21666, Devin-A claims #21665 all landed clean.
+NEXT: REG-039 (Approx Load Costs Truck # column + sortable), then REG-037 (timeline missing units). Watching for new PRs to fast-merge + will redeploy on each batch.
