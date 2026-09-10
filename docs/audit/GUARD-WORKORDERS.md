@@ -10445,3 +10445,72 @@ nudge if the owner confirms that's the wanted fix | live Neon reads this session
 corrected pod_documents count and the true zero-rate-confirmation-for-USMCA figure (see I QUERIED
 above) | **REG-012 CLOSED (no build) · REG-013 VERIFIED — UX gap confirmed, Lead's verdict stands,
 one evidentiary correction made, recommendation filed not built** |
+## REG-030 — CLOSED, NOT A DEFECT (CC-2, 2026-09-10)
+
+**FINDING:** `09-10-2026-CC2-PRIORITY-REG030-THEN-REG021.md` characterized `banking.bank_transactions.is_credit`
+running opposite `amount_cents`'s sign on 313/314 non-voided USMCA rows as a "systemic sign
+contradiction" needing a migration + backfill + guard. Live-reverified before writing any migration
+SQL (Neon `tiny-field-89581227`, bypass_rls=lucia): the 313/314 count is real (237 rows
+`is_credit=false`+positive, 76 rows `is_credit=true`+negative, 1 zero-amount row), but every
+non-zero row is 100% internally consistent with Plaid's own documented sign convention (negative =
+money in). `apps/backend/src/integrations/plaid/plaid.service.ts` derives `is_credit` directly from
+the same signed `amount_cents` value at insert time (`transaction.amount < 0`) — the two columns
+share one source of truth by construction and cannot independently disagree for a Plaid-sourced
+row. This exact question was already settled twice in this repo before today: `BANK-F10005`
+(2026-09-04, `banking.routes.ts`) names `is_credit` the authoritative direction column over sign;
+`BANK-F10041` (2026-09-07, `BankingTransactionsDesignView.tsx`) states the running-balance code
+already handles this correctly and says verbatim "do not re-\"fix\" that." A third data point,
+`BANK-RUNNING-BALANCE-STILL-BROKEN-UNFILTERED`/`BANK-F30002` above (CLOSED 2026-09-08), records
+CC-1 independently hitting and correctly avoiding this same landmine. Full evidence and the
+company-wide (non-USMCA) `csv_import`-sourced 108-row aside: `docs/bus/OUTBOX-CC-2.md`, 2026-09-10
+entry. | `banking.bank_transactions`, `apps/backend/src/integrations/plaid/plaid.service.ts`,
+`apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx` (read-only this
+pass; no write) | **CC-2** | none — declining the requested migration/backfill; the existing guard
+(`verify-bank-running-balance-uses-full-history.mjs`) already covers the real invariant | live
+Neon grouped counts (is_credit × sign(amount_cents)), run against USMCA and company-wide, matches
+the owner's exact disputed row; cross-checked against 3 prior in-repo findings (BANK-F10005,
+BANK-F10041, BANK-F30002), all pre-dating this packet | **CLOSED · not a defect · re-verified live
+· declined the migration to avoid corrupting 313 correctly-encoded live transactions** |
+
+## Maintenance module audit (CC-2, 2026-09-10, owner request — read-only, routed to Codex)
+
+**FINDING:** owner asked CC-2 to check Maintenance for bugs/discrepancies. Full detail and every
+live query/API call: `docs/bus/OUTBOX-CC-2.md`, "Maintenance module audit" entry, same date.
+Summary of what's routed here (not built — Maintenance is Codex's module):
+1. **FIXED directly** (shared CI infra, not Maintenance code): `verify-go20-cargo-incidents.mjs`
+   stale guard false-positive on every PR since GO-20-B (#19541) — PR #21640, `GLB-25159`.
+2. **Test-fixture data cleanup needed:** the only `is_active=true` row in `maintenance.pm_schedules`
+   targets a deactivated, `is_sample_data=true` unit ("TEST DATA keep" / `T-TESTMTDP79YF`) — real
+   PM-schedule coverage for the fleet's 31 real, telemetry-active units is currently zero, even
+   though the auto-engine itself runs correctly and often (33,617 `pm_auto_wo_log` rows). Direct
+   consequence: `maintenance.predictive_alerts` and `maintenance.samsara_fault_code_history` both
+   have 0 rows ever — correctly silent given #2, not a code defect, but worth knowing before anyone
+   assumes the feature is broken.
+3. **Test-fixture data cleanup needed:** TRK's only "open" work order
+   (`WO-TEST-TRUCK-1-IS-08-03-2026-0001-PEND0`) and all 5 of USMCA's live "Parts Inventory" rows
+   (`TEST-CC3-BATTERY-PART-...`, `CC3-TEST-PART-CREATE-01`, `WAVE3-TEST-PART-...`,
+   `CODEX-REORDER-...`, `CODEX-LIVE-...`) are dev-session fixtures from earlier build work, none
+   `is_sample_data`-flagged, currently inflating the live Parts Inventory KPI tiles
+   (TOTAL PARTS/VALUE/2 REORDER flags) with fake inputs.
+4. **4 genuine Codex-lane code gaps** found by a parallel subagent's sweep of ~747 Maintenance CI
+   guards: `RecentActivityRow.tsx` missing the canonical recent-WO selector wiring;
+   `Form425CHome.tsx` missing all 3 required cross-module doors (one being
+   `/maintenance/compliance`); `scenario-registry.ts`'s `parts_receive` probe not verifying the
+   `PARTS_PURCHASE_GL_POSTING_ENABLED` flag chain; `FleetTable.tsx`'s unit-cell ternary missing its
+   required tripwire comment (doc-severity only). Plus 9 other stale/broken Maintenance guards
+   (self-test mutations no longer matching refactored code, or checks referencing pre-ParityDrawer/
+   pre-pagination code shapes) — full list in the OUTBOX entry so nobody re-diagnoses from scratch.
+5. **Ruled OUT after live verification, not a bug:** Fleet Table's "69 units" (16 real trucks +
+   53 real trailers, two different tables — `mdata.units` + `mdata.equipment`) and blank trailer
+   VIN/make/model columns — confirmed via direct API fetch this is real, if data-entry-incomplete
+   (~47% of trailers have a VIN on file), data. Initially suspected mock/fallback data; traced to
+   ground truth before reporting anything. | `maintenance.pm_schedules`, `maintenance.work_orders`,
+   `maintenance.parts_inventory`, `maintenance.predictive_alerts`,
+   `maintenance.samsara_fault_code_history`, `mdata.units`, `mdata.equipment`,
+   `telematics.vehicle_latest_position` (read-only; no write) | **Codex (Maintenance module owner)
+   + owner (test-data cleanup decision)** | (1) deactivate/clean the test-fixture PM schedule, work
+   order, and 5 parts-inventory rows named above; (2) Codex picks up the 4 genuine code gaps + 9
+   stale guards listed in the OUTBOX entry | live Neon reads (bypass_rls=lucia) + live Chrome
+   walkthrough of every Maintenance sub-tab against the deployed app + direct in-browser fetch()
+   against the real API + a parallel subagent's guard-sweep, all cited with exact numbers in the
+   OUTBOX entry | **OPEN — ROUTED TO CODEX + OWNER, ONE ITEM (GLB-25159) ALREADY FIXED** |

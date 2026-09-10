@@ -9,6 +9,17 @@ import { formatMoneyCents } from "./constants";
 // Company settlement (revenue · costs · driver pay · factoring · margin · $/mi practical AND real), FROZEN:
 // no editable field, corrections are a reversing entry. Numbers come from the same readout as Pre-Settlement.
 const DASH = "—";
+// REG-033(b) (owner 2026-09-09): the settlement must be scoped to THIS tour's number AND dates.
+const fmtDate = (d: string | null | undefined): string | null => {
+  if (!d) return null;
+  const [y, m, day] = d.slice(0, 10).split("-");
+  return y && m && day ? `${m}/${day}/${y}` : d.slice(0, 10);
+};
+const periodLabel = (t: TourReadout["tour"]): string | null => {
+  if (!t) return null;
+  if (t.period_start || t.period_end) return `${fmtDate(t.period_start) ?? "…"} – ${fmtDate(t.period_end) ?? "open"}`;
+  return t.trip_started_at ? `started ${fmtDate(t.trip_started_at)}` : null;
+};
 const money = (c: number | null | undefined, cur = "USD") => (c == null ? DASH : formatMoneyCents(c, cur));
 const miles = (m: number | null | undefined) => (m == null ? DASH : m.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }));
 const rate = (c: number | null | undefined) => (c == null ? DASH : `$${(c / 100).toFixed(4)}`);
@@ -45,7 +56,7 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
 
   return <div className="ldt-body" data-testid="tour-settlement-tab" data-surface="load-detail" data-frozen={!t.is_open}>
     <div className="ldt-rowbar">
-      <span>Settlement <EntityLink kind="settlement" id={t.settlement_id} label={t.display_id ?? "Settlement"} /> · {t.driver_name ?? "driver"} · <b>{t.is_open ? "open" : t.status}</b>{t.is_open ? " — fills when the tour closes; the figures below are the shape it will take from today's readout." : ` — closed ${t.trip_closed_at ? t.trip_closed_at.slice(0, 16).replace("T", " ") : ""}; frozen.`}</span>
+      <span>Settlement <EntityLink kind="settlement" id={t.settlement_id} label={t.display_id ?? "Settlement"} />{periodLabel(t) ? <> · <span className="ldt-k" data-testid="tour-settlement-dates">{periodLabel(t)}</span></> : null} · {t.driver_name ?? "driver"} · <b>{t.is_open ? "open" : t.status}</b>{t.is_open ? " — fills when the tour closes; the figures below are the shape it will take from today's readout." : ` — closed ${t.trip_closed_at ? t.trip_closed_at.slice(0, 16).replace("T", " ") : ""}; frozen.`}</span>
       <span className={`ldt-pill ${t.is_open ? "warn" : "ok"}`} data-testid="tour-settlement-state">{t.is_open ? "open · pre-settlement" : `${t.status}${t.paid_at ? " · paid" : ""}`}</span>
     </div>
 

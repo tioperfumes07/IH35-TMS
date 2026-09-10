@@ -288,6 +288,11 @@ export function VendorEditDrawer({ open, vendorId, vendorName, operatingCompanyI
             <p className="mt-1 text-xs text-gray-500">
               Suggested on new bills for this vendor. Never posted automatically.
             </p>
+            {!values.defaultExpenseAccountId && (
+              <p className="mt-1 rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700" data-testid="vendor-default-expense-account-prompt">
+                This vendor has no default expense account. Set one now to pre-fill bills correctly.
+              </p>
+            )}
           </label>
           <p className="border-t border-gray-100 pt-2 text-xs text-gray-500">
             Contacts, quality rating, accounting category and factor schedule are edited on the full vendor page.

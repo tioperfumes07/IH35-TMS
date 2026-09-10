@@ -1,6 +1,6 @@
 {
- "date": "2026-09-09",
- "generated_at_iso": "2026-09-09T21:01:22.578Z",
+ "date": "2026-09-10",
+ "generated_at_iso": "2026-09-10T11:30:29.460Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 30,
@@ -3116,7 +3116,7 @@
    "evidence": "all 8 file(s) on main",
    "name": "Settlements/finance toolbar search/range/gear repointed from compatibility aliases and a conditional-preview page to the",
    "registered_on": null,
-   "pr": 20508
+   "pr": 21632
   },
   {
    "id": "cc2-fix-home-quickjump-guard-prettier-linewrap-false-positive",
@@ -13727,6 +13727,264 @@
  ],
  "merged_prs": [
   {
+   "number": 21642,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-10T04:53:45Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 21641,
+   "title": "FINDING: N/A (docs only — Maintenance module bug/discrepancy audit, owner request)",
+   "mergedAt": "2026-09-10T04:22:17Z",
+   "branch": "cc2/maintenance-audit-findings"
+  },
+  {
+   "number": 21640,
+   "title": "FINDING: GLB-25159 -- fix stale verify-go20-cargo-incidents guard (false-positive since GO-20-B)",
+   "mergedAt": "2026-09-10T04:24:52Z",
+   "branch": "cc2/fix-go20-cargo-incidents-stale-guard"
+  },
+  {
+   "number": 21639,
+   "title": "Cursor- owner data-integrity finding + defect register REG-034…055 fan-out",
+   "mergedAt": "2026-09-10T04:13:49Z",
+   "branch": "cursor/owner-fanout-reg034-055-2026-09-09"
+  },
+  {
+   "number": 21638,
+   "title": "FINDING: N/A (docs only — REG-021 live click-through report)",
+   "mergedAt": "2026-09-10T03:57:42Z",
+   "branch": "cc2/reg021-live-verification-report"
+  },
+  {
+   "number": 21637,
+   "title": "Cursor- docs(bus): OUTBOX REG-018/032/033 done + live proof",
+   "mergedAt": "2026-09-10T03:41:51Z",
+   "branch": "cursor-outbox-reg018-032-033"
+  },
+  {
+   "number": 21636,
+   "title": "Cursor- REG-033(b): scope the load's pre-settlement/settlement view to its own number + dates",
+   "mergedAt": "2026-09-10T03:35:31Z",
+   "branch": "cursor-reg033b-presettlement-dates"
+  },
+  {
+   "number": 21635,
+   "title": "Cursor- REG-032: show the load's own settlement number (S-YYYY-NNNN) next to Load in the header",
+   "mergedAt": "2026-09-10T03:23:02Z",
+   "branch": "cursor-reg032-settlement-no-header"
+  },
+  {
+   "number": 21634,
+   "title": "FINDING: LST-F50099 (REG-021) -- 4 legacy drawers migrated to ParityDrawer",
+   "mergedAt": "2026-09-10T03:29:14Z",
+   "branch": "cc2/reg021-legacy-drawers-paritydrawer"
+  },
+  {
+   "number": 21633,
+   "title": "FINDING: REG-002 vendor default_expense_account_id backfill + edit prompt + guard",
+   "mergedAt": "2026-09-10T03:31:23Z",
+   "branch": "cascade/reg-002-vendor-data-completeness"
+  },
+  {
+   "number": 21632,
+   "title": "CC1-IN- docs(bus): REG-031 fully closed, live click-through confirmed",
+   "mergedAt": "2026-09-10T03:10:51Z",
+   "branch": "claude/reg031-live-proof-2026-09-10"
+  },
+  {
+   "number": 21631,
+   "title": "FINDING: N/A (docs only — REG-030 correction: not a defect, declining the migration/backfill)",
+   "mergedAt": "2026-09-10T03:12:43Z",
+   "branch": "cc2/reg030-correction-not-a-bug"
+  },
+  {
+   "number": 21630,
+   "title": "Cursor- REG-033: merge duplicate load-detail expense controls into one Record expense",
+   "mergedAt": "2026-09-10T03:08:09Z",
+   "branch": "cursor-reg033a-expense-merge"
+  },
+  {
+   "number": 21629,
+   "title": "CC3-IN- docs(bus): follow-up findings + OUTBOX from ACCT-F6350/LST-F26100",
+   "mergedAt": "2026-09-10T02:19:18Z",
+   "branch": "claude-3-followup-findings-board-update"
+  },
+  {
+   "number": 21628,
+   "title": "FINDING: GLB-25158 — fix shared integration-test fixture blocked by role-escalation guard (main's own CI RED, 144 test files)",
+   "mergedAt": "2026-09-10T02:45:22Z",
+   "branch": "cc2/fix-owner-bootstrap-test-fixture"
+  },
+  {
+   "number": 21627,
+   "title": "CC3-IN- FINDING: ACCT-F6350 (REG-010/011) settlement numbers no longer look like load numbers",
+   "mergedAt": "2026-09-10T02:09:41Z",
+   "branch": "claude-3-reg010-011-settlement-numbering-fix"
+  },
+  {
+   "number": 21626,
+   "title": "Codex- reserve Fleet APD trailer identity guard",
+   "mergedAt": "2026-09-10T01:56:39Z",
+   "branch": "claude/claim-reserve-11177"
+  },
+  {
+   "number": 21625,
+   "title": "FINDING: BANK-F30026 — BNK-01: fuzzy/many-to-one vendor matching on bank transaction categorization",
+   "mergedAt": "2026-09-10T02:57:17Z",
+   "branch": "cc2/wire-bnk01-fuzzy-match-guard"
+  },
+  {
+   "number": 21624,
+   "title": "CC3-IN- FINDING: LST-F26100 (REG-017) Bills Settlement/Tour column",
+   "mergedAt": "2026-09-10T01:52:11Z",
+   "branch": "claude-3-reg017-bills-settlement-column"
+  },
+  {
+   "number": 21623,
+   "title": "CC1-IN- docs(bus): REG-031 DONE, false-claim trace answered",
+   "mergedAt": "2026-09-10T01:51:03Z",
+   "branch": "claude/reg031-outbox-done-2026-09-10"
+  },
+  {
+   "number": 21621,
+   "title": "CC1-IN- fix(cash-flow): REG-031 — Cash Flow now lands on Home first, not a functional tab",
+   "mergedAt": "2026-09-10T01:49:18Z",
+   "branch": "claude/reg031-cash-flow-home-2026-09-10-api"
+  },
+  {
+   "number": 21620,
+   "title": "FINDING: BANK-F30024 — Banking Transactions account-reorder control + live-traced running-balance proof",
+   "mergedAt": "2026-09-10T01:39:55Z",
+   "branch": "CC2-IN-banking-reorder-and-balance-trace"
+  },
+  {
+   "number": 21619,
+   "title": "FINDING: N/A (author verify-steps 10883/10887/10891 -- wire the 3 orphaned guards, completing #21610)",
+   "mergedAt": "2026-09-10T01:33:10Z",
+   "branch": "cc2/wire-3-orphan-verify-steps-final"
+  },
+  {
+   "number": 21618,
+   "title": "chore(deps): bump browserslist from 4.28.4 to 4.28.9",
+   "mergedAt": "2026-09-10T01:32:01Z",
+   "branch": "dependabot/npm_and_yarn/browserslist-4.28.9"
+  },
+  {
+   "number": 21617,
+   "title": "chore(deps): bump the npm_and_yarn group across 3 directories with 5 updates",
+   "mergedAt": "2026-09-10T01:30:47Z",
+   "branch": "dependabot/npm_and_yarn/apps/backend/npm_and_yarn-ee82f3aa96"
+  },
+  {
+   "number": 21616,
+   "title": "chore(deps): bump baseline-browser-mapping from 2.10.41 to 2.11.21",
+   "mergedAt": "2026-09-10T01:32:08Z",
+   "branch": "dependabot/npm_and_yarn/baseline-browser-mapping-2.11.21"
+  },
+  {
+   "number": 21615,
+   "title": "Codex- compact and proportion the driver profile",
+   "mergedAt": "2026-09-10T00:57:35Z",
+   "branch": "claude/reg003-driver-profile-layout"
+  },
+  {
+   "number": 21614,
+   "title": "Claude-3-docs(bus): OUTBOX FUNDS-DUE-01 shipped",
+   "mergedAt": "2026-09-10T00:56:10Z",
+   "branch": "claude-3-outbox-funds-due-01"
+  },
+  {
+   "number": 21613,
+   "title": "Claude-3-FINDING: FUNDS-DUE-01 Factoring Funds Due tab wired to real data",
+   "mergedAt": "2026-09-10T00:51:08Z",
+   "branch": "claude-3-funds-due-01-apply"
+  },
+  {
+   "number": 21612,
+   "title": "Claude-1- docs(bus): P0 deploy-unblock DONE, confirmed live",
+   "mergedAt": "2026-09-10T00:50:07Z",
+   "branch": "claude/outbox-p0-deploy-unblock-done-2026-09-10"
+  },
+  {
+   "number": 21611,
+   "title": "Codex- reserve verify step 11161 for driver profile layout",
+   "mergedAt": "2026-09-10T00:49:29Z",
+   "branch": "chore/claim-reserve-11161"
+  },
+  {
+   "number": 21610,
+   "title": "FINDING: N/A (CLAIM-RESERVE 10883/10887/10891 -- reservation-only, no code fix)",
+   "mergedAt": "2026-09-10T01:21:41Z",
+   "branch": "cc2/wire-orphan-guards-11151-11159"
+  },
+  {
+   "number": 21609,
+   "title": "Claude-1- fix(deploy): P0 — stale migration checksum override blocking EVERY backend deploy",
+   "mergedAt": "2026-09-10T00:43:25Z",
+   "branch": "claude/fix-migration-checksum-guard-blocking-deploys-2026-09-10"
+  },
+  {
+   "number": 21608,
+   "title": "FINDING: CLS-GUC-NO-TXN drain + guard-hygiene sweep (7 pre-existing origin/main reds fixed)",
+   "mergedAt": "2026-09-10T01:21:21Z",
+   "branch": "claude-lead/cls-guc-no-txn-drain-and-guard-literal-sweep"
+  },
+  {
+   "number": 21607,
+   "title": "Claude-1- docs(bus): REG-008 DONE report + ledger corrections + ParityTable dedup finding",
+   "mergedAt": "2026-09-10T00:32:57Z",
+   "branch": "claude/outbox-reg008-done-2026-09-10"
+  },
+  {
+   "number": 21606,
+   "title": "Claude-1- fix(dispatch): REG-008 SET-01 presettlement auto-link gap on 4 post-booking driver-assignment paths",
+   "mergedAt": "2026-09-10T00:29:35Z",
+   "branch": "claude/reg008-presettlement-autolink-2026-09-10"
+  },
+  {
+   "number": 21605,
+   "title": "Cursor- fix: reverse erroneous re-quarantine of 7 real USMCA loads + record status/handoffs",
+   "mergedAt": "2026-09-10T00:28:28Z",
+   "branch": "cursor/loads-quarantine-fix-and-handoffs"
+  },
+  {
+   "number": 21604,
+   "title": "Codex- Fleet edit side drawers and proportional profiles",
+   "mergedAt": "2026-09-10T00:19:08Z",
+   "branch": "claude/codex-fleet-reg025-reg026"
+  },
+  {
+   "number": 21603,
+   "title": "Cursor- fix(dispatch): REG-018 — Kanban drag/drop resolves card droppable to target column",
+   "mergedAt": "2026-09-10T00:27:22Z",
+   "branch": "cascade/reg-018-kanban-drag-drop-fix"
+  },
+  {
+   "number": 21602,
+   "title": "Codex- reserve verify step 11145 for Fleet side drawer",
+   "mergedAt": "2026-09-10T00:11:35Z",
+   "branch": "codex/claim-reserve-11145"
+  },
+  {
+   "number": 21601,
+   "title": "Claude-1- docs(bus): correct stale BNK-20 ledger status, item 38 already closed 09-05",
+   "mergedAt": "2026-09-10T00:07:49Z",
+   "branch": "claude/bnk-20-ledger-correction-2026-09-09"
+  },
+  {
+   "number": 21600,
+   "title": "Claude-3-docs(bus): live-Chrome confirm factoring 'missing pages' resolved",
+   "mergedAt": "2026-09-10T00:05:52Z",
+   "branch": "claude-3-factoring-missing-pages-live-confirmed"
+  },
+  {
+   "number": 21599,
+   "title": "Claude-1- docs(bus): correct stale CF-02 ledger status, item 50 already closed",
+   "mergedAt": "2026-09-10T00:03:29Z",
+   "branch": "claude/cf-02-ledger-correction-2026-09-09"
+  },
+  {
    "number": 21598,
    "title": "Cursor- fix(dispatch): ACCT-F6011 — delivered loads auto-progress to invoiced/closed",
    "mergedAt": "2026-09-09T15:23:44Z",
@@ -13881,6 +14139,12 @@
    "title": "Claude-1-FINDING: N/A (Company Waterfall scope-mix bug fixed -- corrects PR #21571 same-day)",
    "mergedAt": "2026-09-09T13:40:17Z",
    "branch": "claude/cc-1-company-waterfall-scope-fix"
+  },
+  {
+   "number": 21572,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-10T01:21:46Z",
+   "branch": "chore/tracker-artifacts-sync"
   },
   {
    "number": 21571,
@@ -15203,6 +15467,12 @@
    "branch": "fix/wire-factoring-collapsed-filter-orphan"
   },
   {
+   "number": 21347,
+   "title": "chore(deps): bump the development-dependencies group across 1 directory with 14 updates",
+   "mergedAt": "2026-09-10T01:21:52Z",
+   "branch": "dependabot/npm_and_yarn/development-dependencies-5770593092"
+  },
+  {
    "number": 21346,
    "title": "Cursor-BUILD-VITEST5: align @vitest/coverage-v8 + @vitest/ui to ^5.0.0 (fix deploy ERESOLVE)",
    "mergedAt": "2026-09-07T23:30:20Z",
@@ -15699,6 +15969,12 @@
    "title": "chore(deps): bump plaid from 43.0.0 to 47.0.0",
    "mergedAt": "2026-09-07T23:16:04Z",
    "branch": "dependabot/npm_and_yarn/plaid-47.0.0"
+  },
+  {
+   "number": 21260,
+   "title": "chore(deps): bump the production-dependencies group across 1 directory with 22 updates",
+   "mergedAt": "2026-09-10T01:29:31Z",
+   "branch": "dependabot/npm_and_yarn/production-dependencies-cef08a79c2"
   },
   {
    "number": 21258,
@@ -17049,282 +17325,6 @@
    "title": "chore: renumber 10517/10521 -> 10533/10537 (duplicate-claim resolution)",
    "mergedAt": "2026-09-06T19:51:06Z",
    "branch": "chore/claim-reserve-10533-10537-renumber"
-  },
-  {
-   "number": 21029,
-   "title": "Claude-3: FINDING: RG-02 (partial) — settlements grid load-drill id fix",
-   "mergedAt": "2026-09-06T19:48:01Z",
-   "branch": "claude-3/rg02-settlements-grid-honest-labels"
-  },
-  {
-   "number": 21028,
-   "title": "Claude-1-FINDING: ACCT-F25113 VC-01 — vendor spend includes expenses+bills",
-   "mergedAt": "2026-09-06T19:45:03Z",
-   "branch": "claude/cc-1-vc01-fix"
-  },
-  {
-   "number": 21027,
-   "title": "CC-2-docs: CLAIM-RESERVE 10519 (B2 BANK-REGISTER-COLUMNS)",
-   "mergedAt": "2026-09-06T19:56:06Z",
-   "branch": "chore/claim-reserve-10519"
-  },
-  {
-   "number": 21026,
-   "title": "Claude-3: FINDING: RG-01 verify-settlement-void-cascade regression fix",
-   "mergedAt": "2026-09-06T19:42:49Z",
-   "branch": "claude-3/rg01-settlement-void-cascade"
-  },
-  {
-   "number": 21025,
-   "title": "Claude-1-CLAIM-RESERVE: verify-step 10529 (VC-01)",
-   "mergedAt": "2026-09-06T19:42:03Z",
-   "branch": "claude/cc-1-vc01-claim"
-  },
-  {
-   "number": 21024,
-   "title": "Codex- RG-10 repoint canonical in-shop feed guard",
-   "mergedAt": "2026-09-06T19:41:55Z",
-   "branch": "codex/rg10-in-shop-feed"
-  },
-  {
-   "number": 21023,
-   "title": "Claude-1-FINDING: ACCT-F25112 INV-06 — due_date=issue_date+terms invariant guard",
-   "mergedAt": "2026-09-06T19:39:48Z",
-   "branch": "claude/cc-1-inv06-fix"
-  },
-  {
-   "number": 21022,
-   "title": "Claude-3: FINDING: SETL-KPI-CENTS-01 — settlement detail KPI grid showed dollars as cents",
-   "mergedAt": "2026-09-06T19:40:06Z",
-   "branch": "claude-3/setl-kpi-cents-fix"
-  },
-  {
-   "number": 21021,
-   "title": "Codex- FAC-10 active TEST vendor detector",
-   "mergedAt": "2026-09-06T19:38:23Z",
-   "branch": "codex/fac10-test-vendor-guard"
-  },
-  {
-   "number": 21020,
-   "title": "Claude-1-docs(bus): CONSOLIDATED items 1/2 DONE",
-   "mergedAt": "2026-09-06T19:36:44Z",
-   "branch": "claude/cc-1-consolidated-outbox-1"
-  },
-  {
-   "number": 21019,
-   "title": "Claude-1-FINDING: ACCT-F25111 INV-03 — invoice issue_date from real load pickup date",
-   "mergedAt": "2026-09-06T19:35:04Z",
-   "branch": "claude/cc-1-inv03-fix"
-  },
-  {
-   "number": 21018,
-   "title": "Cursor-VC-DETAIL-01: vendor/customer detail Transactions tab + Active-Inactive status + rollup-sourced tiles",
-   "mergedAt": "2026-09-06T19:33:54Z",
-   "branch": "cursor/vc-detail-01-round14"
-  },
-  {
-   "number": 21017,
-   "title": "Claude-1-CLAIM-RESERVE: verify-steps 10517/10521/10525 (INV-03/06/13)",
-   "mergedAt": "2026-09-06T19:32:57Z",
-   "branch": "claude/cc-1-inv03-claim"
-  },
-  {
-   "number": 21016,
-   "title": "CC-2-docs: note — CONSOLIDATED 18:30Z item 1 stale, already done",
-   "mergedAt": "2026-09-06T19:36:06Z",
-   "branch": "cc2/outbox-note-18-30"
-  },
-  {
-   "number": 21015,
-   "title": "CC-2-dispatch: B3 BANK-KPI-CARDS — Accounts band adopts Factoring's KpiStatCard",
-   "mergedAt": "2026-09-06T19:29:02Z",
-   "branch": "cc2/bank-kpi-cards"
-  },
-  {
-   "number": 21014,
-   "title": "CC-2-dispatch: B1 EXPAND-BOX — ParityTable row-expand toggle 24x24→28x28",
-   "mergedAt": "2026-09-06T18:13:59Z",
-   "branch": "cc2/expand-box"
-  },
-  {
-   "number": 21013,
-   "title": "chore: claim verify-step 10514 for CV-TRANSACTION-COLUMNS",
-   "mergedAt": "2026-09-06T19:29:39Z",
-   "branch": "chore/claim-reserve-10514"
-  },
-  {
-   "number": 21012,
-   "title": "CC-2-docs: CLAIM-RESERVE 10515 (B1 EXPAND-BOX)",
-   "mergedAt": "2026-09-06T18:01:30Z",
-   "branch": "chore/claim-reserve-10515"
-  },
-  {
-   "number": 21011,
-   "title": "CC-2-dispatch: TPB-DATES-01 — Trip Pairing dates, pre-cutover NB badge, up-north-open badge, gear columns",
-   "mergedAt": "2026-09-06T17:48:01Z",
-   "branch": "cc2/tpb-dates-01"
-  },
-  {
-   "number": 21010,
-   "title": "Claude-3: FINDING: TRIP-TYPE-DERIVE completion — load 13544 to LOCAL",
-   "mergedAt": "2026-09-06T17:30:54Z",
-   "branch": "claude-3-trip-type-local-flip"
-  },
-  {
-   "number": 21009,
-   "title": "Claude-3: FINDING: SETL-CLOSE-POST-A re-dry-run 13/13 clean, real bucketRecoveryRoleKey fix",
-   "mergedAt": "2026-09-06T17:28:25Z",
-   "branch": "claude-3-setl-close-post-a-recheck"
-  },
-  {
-   "number": 21008,
-   "title": "CC-2-dispatch: LB-CHROME-1 §1 — merge board-view toolbars into one row",
-   "mergedAt": "2026-09-06T17:27:42Z",
-   "branch": "cc2/lb-chrome-1"
-  },
-  {
-   "number": 21007,
-   "title": "CC-2-banking: BANK-MATCH-QBO-c — ParityTable match register, multi-select Show, Difference/Days off",
-   "mergedAt": "2026-09-06T17:22:51Z",
-   "branch": "cc2/bank-match-qbo-c"
-  },
-  {
-   "number": 21006,
-   "title": "Claude-1-docs(bus): CONSOLIDATED items 4/5 DONE — all 5 ROUND 14 items closed",
-   "mergedAt": "2026-09-06T17:19:53Z",
-   "branch": "claude/cc-1-round14-outbox-final"
-  },
-  {
-   "number": 21005,
-   "title": "Claude-3: FINDING: SETTLEMENTS-LIST-TRUTH — Loads separator fix + Gross/Deductions/Net re-measure",
-   "mergedAt": "2026-09-06T17:19:06Z",
-   "branch": "claude-3-settlements-list-truth"
-  },
-  {
-   "number": 21004,
-   "title": "Claude-1-FINDING: ACCT-F25110 VENDOR-BALANCE-TRUTH — single read model for vendor open balance",
-   "mergedAt": "2026-09-06T17:18:22Z",
-   "branch": "claude/cc-1-vendor-balance-fix"
-  },
-  {
-   "number": 21003,
-   "title": "Codex- BILLS-DRIVER unified bills register",
-   "mergedAt": "2026-09-06T17:16:16Z",
-   "branch": "codex/bills-driver-union"
-  },
-  {
-   "number": 21002,
-   "title": "Claude-1-CLAIM-RESERVE: verify-step 10513 (VENDOR-BALANCE-TRUTH)",
-   "mergedAt": "2026-09-06T17:15:57Z",
-   "branch": "claude/cc-1-vendor-balance-claim"
-  },
-  {
-   "number": 21001,
-   "title": "Claude-3: FINDING: SETL-DETAIL-01 — KPI/header/LOADS/waterfall to the reference",
-   "mergedAt": "2026-09-06T17:14:49Z",
-   "branch": "claude-3-setl-detail-01"
-  },
-  {
-   "number": 21000,
-   "title": "Cursor- fix(dispatch): DISP-F21000 — DispatchBoard in-shop unit id used non-existent field (main typecheck red)",
-   "mergedAt": "2026-09-06T17:11:54Z",
-   "branch": "cursor/fix-dispatch-inshop-unit-id"
-  },
-  {
-   "number": 20999,
-   "title": "Claude-1-docs(bus): CONSOLIDATED items 1/2/3 DONE + Cash Flow day-by-day numbers",
-   "mergedAt": "2026-09-06T17:09:33Z",
-   "branch": "claude/cc-1-round14-outbox"
-  },
-  {
-   "number": 20998,
-   "title": "Claude-1-FINDING: ACCT-F25109 CASH-FLOW-01 — three root causes of $0 Cash Flow with real data behind it",
-   "mergedAt": "2026-09-06T17:07:17Z",
-   "branch": "claude/cc-1-cashflow-01-fix"
-  },
-  {
-   "number": 20997,
-   "title": "Claude-1-CLAIM-RESERVE: verify-steps 10501/10505/10509 (CASH-FLOW-01)",
-   "mergedAt": "2026-09-06T17:02:57Z",
-   "branch": "claude/cc-1-cashflow-01-claims"
-  },
-  {
-   "number": 20996,
-   "title": "Claude-3: FINDING: SETL-GATE-01 — gate tour-close-posting's expense path",
-   "mergedAt": "2026-09-06T17:00:44Z",
-   "branch": "claude-3-setl-gate-01"
-  },
-  {
-   "number": 20995,
-   "title": "Claude-3: FINDING: other_recovery unblocked + SETL-CLOSE-POST-A dry-run 8/8 clean",
-   "mergedAt": "2026-09-06T16:57:24Z",
-   "branch": "claude-3-other-recovery-retype"
-  },
-  {
-   "number": 20994,
-   "title": "Claude-1-docs(bus): TRIP-LOCAL-ENUM DONE report + ping CC-3",
-   "mergedAt": "2026-09-06T16:54:07Z",
-   "branch": "claude/cc-1-trip-local-outbox"
-  },
-  {
-   "number": 20993,
-   "title": "FINDING: LIVE-VERIFY-5D audit + fix DispatchBoard inShopUnitIds type error",
-   "mergedAt": "2026-09-06T17:56:18Z",
-   "branch": "cascade/live-verify-5d"
-  },
-  {
-   "number": 20992,
-   "title": "Claude-1-FINDING: DISP-F25108 TRIP-LOCAL-ENUM — mdata.trip_type_enum gains LOCAL",
-   "mergedAt": "2026-09-06T16:51:46Z",
-   "branch": "claude/cc-1-trip-local-enum-fix"
-  },
-  {
-   "number": 20991,
-   "title": "Claude-1-CLAIM-RESERVE: migration 202613850000 + verify-step 10497 (TRIP-LOCAL-ENUM)",
-   "mergedAt": "2026-09-06T16:47:26Z",
-   "branch": "claude/cc-1-trip-local-enum"
-  },
-  {
-   "number": 20990,
-   "title": "Claude-3: FINDING: TRIP-TYPE-DERIVE applied under lead approval",
-   "mergedAt": "2026-09-06T16:45:53Z",
-   "branch": "claude-3-trip-type-derive"
-  },
-  {
-   "number": 20989,
-   "title": "Codex- MAINT-INSHOP-01 wire canonical in-shop band",
-   "mergedAt": "2026-09-06T16:44:29Z",
-   "branch": "codex/maint-inshop-01"
-  },
-  {
-   "number": 20988,
-   "title": "CC-2-docs: DELIVER-HAND-9 DONE line",
-   "mergedAt": "2026-09-06T16:41:22Z",
-   "branch": "cc2/outbox-deliver-hand-9"
-  },
-  {
-   "number": 20987,
-   "title": "CC-2-dispatch: DELIVER-HAND-9 — 9 loads released and delivered (owner ruling)",
-   "mergedAt": "2026-09-06T16:40:30Z",
-   "branch": "cc2/deliver-hand-9"
-  },
-  {
-   "number": 20986,
-   "title": "Claude-1-docs(bus): FACT-02 continuation DONE report",
-   "mergedAt": "2026-09-06T16:31:36Z",
-   "branch": "claude/cc-1-fact02b-outbox"
-  },
-  {
-   "number": 20985,
-   "title": "Claude-3: FINDING: SETL-CLOSE-POST-A dry-run + 3 flags (other_recovery gap, DELIVER-HAND-9, SETL-GATE-01, TRIP-TYPE-DERIVE)",
-   "mergedAt": "2026-09-06T16:30:55Z",
-   "branch": "claude-3-setl-close-post-a-dryrun"
-  },
-  {
-   "number": 20984,
-   "title": "Claude-1-FINDING: ACCT-F25106 FACT-02 continuation — seed invoice 039 (load 13554) per lead ruling",
-   "mergedAt": "2026-09-06T16:30:13Z",
-   "branch": "claude/cc-1-fact-02b-invoice-039"
   }
  ],
  "merged_pr_total": 3000,

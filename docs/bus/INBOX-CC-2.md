@@ -1,3 +1,11 @@
+# ★★★ OWNER FAN-OUT — 2026-09-09 — see `docs/bus/OWNER-FANOUT-2026-09-09.md`
+CC-2 is on MAINTENANCE bugs/discrepancies per owner live order 2026-09-09 — that is your current lane.
+When Maintenance clears, pick up Banking: **REG-035** account reorder UI (display_order exists, not
+wired) + **REG-036** running-balance ($0 open, oldest-first cumulative; −$13,062.53 on a $100 receipt is
+wrong). Until then Cursor/CC-1 hold Banking interim. Register is the single source; verify LIVE. (HONEST-BUILT-LAUNCH-LAW-2026-08-14 in force) (HONEST-BUILT-LAUNCH-LAW-2026-08-14 in force)
+
+---
+
 # ★★★ HARD WAKE — 2026-09-07 03:48Z — Cursor cloud lead (owner: HARD WAKE)
 
 **Tip main:** `0cc2a61752` (#21232 navy loopholes just merged; FE+API deploy in flight). Live proof ROUND 16.25 ParityTable FIXED (Claude lead re-measured: Cash Flow 0/64 tall max 34.4px; Factoring 0/20 max 30.8px).

@@ -1,3 +1,13 @@
+# ★★★ OWNER FAN-OUT — 2026-09-09 — see `docs/bus/OWNER-FANOUT-2026-09-09.md`
+CC-3 owns (dispatch/settlement/fleet UI): **REG-037** load-board double-truck/booked-not-in-transit,
+**REG-038** round-trip Book-a-return + Timeline units + dispatch KPIs, **REG-039** Load-Costs columns,
+**REG-041** re-settlement dates + margin/% split, **REG-050** reefer lumper control, **REG-051** per-tab
+edit, **REG-052** dead More/Open-driver-bill, **REG-053** Fleet unit-profile edit + side-modal (verify
+#21604 first). Each row: measured + target + guard + UTC deadline + surrender seat. Verify LIVE. No prod
+data rewrite without owner go. Register is the single source. (HONEST-BUILT-LAUNCH-LAW-2026-08-14 in force) (HONEST-BUILT-LAUNCH-LAW-2026-08-14 in force)
+
+---
+
 # ★★★ HARD WAKE — 2026-09-07 03:48Z — Cursor cloud lead (owner: HARD WAKE)
 
 **Tip main:** `0cc2a61752` (#21232 navy loopholes just merged; FE+API deploy in flight). Live proof ROUND 16.25 ParityTable FIXED (Claude lead re-measured: Cash Flow 0/64 tall max 34.4px; Factoring 0/20 max 30.8px).

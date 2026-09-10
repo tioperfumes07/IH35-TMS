@@ -152,6 +152,13 @@ const FIXTURE_ACTOR_ID = "00000000-0000-4000-8000-0000000000dd";
   const seedClient = new Client(buildPgClientConfig(verifyUrl));
   try {
     await seedClient.connect();
+    // identity.guard_role_escalation() (202613312000_permission_model.sql) blocks any INSERT
+    // setting role='Owner' unless the acting session is already a primary owner — by design,
+    // NO lucia bypass_rls escape. This throwaway seed connection has no identity.current_user_id()
+    // at all, so it can never pass that check; the migration's own dedicated recovery GUC
+    // (app.allow_owner_bootstrap) is the sanctioned way to seed the very first Owner row. Session-
+    // scoped SET (not LOCAL) is fine here — this connection exists only for this one seed insert.
+    await seedClient.query(`SET app.allow_owner_bootstrap = '1'`);
     const res = await seedClient.query(
       `INSERT INTO identity.users (id, email, role)
        VALUES ($1::uuid, 'db-test-fixture-actor@example.test', 'Owner')

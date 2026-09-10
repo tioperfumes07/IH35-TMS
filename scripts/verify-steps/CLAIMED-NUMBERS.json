@@ -6332,15 +6332,30 @@
     "claimed_at": "2026-09-07",
     "purpose": "verify-invoices-no-load-id-column (orphan-guard wiring: written 2026-09-06, never wired into any verify-step -- flagged by verify-cc1-money-orphan-guard-registry-batch.mjs's own unaccounted-guards census). Static guard: draft-crew-status-selfheal.cron.ts reads accounting.invoices via the real column inv.source_load_id, never a nonexistent inv.load_id."
   },
+  "10895": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-10",
+    "purpose": "verify-bnk01-fuzzy-vendor-match"
+  },
   "10897": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-07",
     "purpose": "verify-round1621-rule-match-prefill (CI-execution wiring only -- content ownership stays cc-2's, who claimed 10791 for this same guard on 2026-09-06 but never authored a wrapper file. That guard's own orphan status is now a REQUIRED-check-level repo-wide blocker (locked-guards-heavy / verify-guard-wired.mjs) failing on origin/main and blocking every PR's merge, not just cc-2's -- so wiring its CI execution under a fresh cc-1-lane number, leaving 10791 untouched/unedited, unblocks the whole repo without touching cc-2's own claim.)"
   },
+  "10899": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-10",
+    "purpose": "verify-cash-flow-home-tab"
+  },
   "10901": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-07",
     "purpose": "verify-load-costs-settlement-column-and-invoiced-not-open (NEW-08 + NEW-09, owner raw findings dump 2026-09-07 ~21:00Z). Static guard: load-costs-board.routes.ts surfaces the already-real driver_finance settlement linkage (SET-01/SET-02) as a Settlement # board column; LoadCostsBoardPage.tsx has that column wired opt-in (margin's own defaultHidden precedent); 'invoiced' status moved from DELIVERED (open) to CLOSED so an already-invoiced load stops showing as open."
+  },
+  "10903": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-10",
+    "purpose": "verify-integration-fixture-owner-bootstrap"
   },
   "10905": {
     "claimed_by": "claude",
@@ -6516,6 +6531,11 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-10",
     "purpose": "verify-driver-profile-compact-layout"
+  },
+  "11177": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-10",
+    "purpose": "verify-fleet-apd-trailer-identity"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -8519,9 +8539,9 @@
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
   },
-  "11177": {
-    "claimed_by": "claude",
+  "10907": {
+    "claimed_by": "cc-2",
     "claimed_at": "2026-09-10",
-    "purpose": "verify-fleet-apd-trailer-identity"
+    "purpose": "verify-reg021-legacy-drawers-use-paritydrawer"
   }
 }

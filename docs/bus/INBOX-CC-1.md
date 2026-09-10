@@ -1,3 +1,12 @@
+# ★★★ OWNER FAN-OUT — 2026-09-09 — see `docs/bus/OWNER-FANOUT-2026-09-09.md`
+CC-1 owns (money/factoring/settlement math): **REG-036** banking running-balance ($0 open, oldest-first
+cumulative), **REG-040** auto-(pre)settlement at Laredo-departure + settlement column, **REG-046/048/049**
+factoring reports/columns/reconcile (BNK-01/10/12/17, FAC-01/02/03/09, SET-16/29). Each row: measured +
+target + guard + UTC deadline + surrender seat. Verify LIVE (Neon bypass_rls=lucia, USMCA). No seat
+rewrites prod data without owner go (see REG-034). Register is the single source; this banner points to it. (HONEST-BUILT-LAUNCH-LAW-2026-08-14 in force) (HONEST-BUILT-LAUNCH-LAW-2026-08-14 in force)
+
+---
+
 # ★★★ HARD WAKE — 2026-09-07 03:48Z — Cursor cloud lead (owner: HARD WAKE)
 
 **Tip main:** `0cc2a61752` (#21232 navy loopholes just merged; FE+API deploy in flight). Live proof ROUND 16.25 ParityTable FIXED (Claude lead re-measured: Cash Flow 0/64 tall max 34.4px; Factoring 0/20 max 30.8px).

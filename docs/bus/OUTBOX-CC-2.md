@@ -2144,3 +2144,204 @@ sub-tab/modal/popup depth across all 10 modules next, per the standing (non-dead
 of the role.
 
 NEXT — deeper per-module sub-tab sweep; REG-021 (universal size) verdict once more samples land.
+
+## CC-2 — REG-030 correction: NOT a bug, declining the migration/backfill (2026-09-10)
+
+`09-10-2026-CC2-PRIORITY-REG030-THEN-REG021.md` orders REG-030 first: "systemic is_credit/
+amount_cents sign contradiction ... 313/314 non-voided USMCA rows (99.7%) have the sign and the
+is_credit flag pointing opposite directions ... this needs a migration + backfill + a guard, not a
+single-row patch." Per standing law (verify live, never guess, never deviate on a false premise) I
+independently re-verified this fresh before writing a single line of migration SQL. **The 313/314
+count is real and reproduces exactly** — but it is not a contradiction, and I'm not building the
+migration. Four independent things, three of them already in this repo before today, all agree:
+
+1. **Live data (this session, Neon `tiny-field-89581227`, bypass_rls=lucia, USMCA non-voided,
+   314 rows):** 237 rows `is_credit=false` + `amount_cents>0`; 76 rows `is_credit=true` +
+   `amount_cents<0`; 1 row `amount_cents=0` (no sign to contradict). Every non-zero row pairs
+   `is_credit=true` with a NEGATIVE amount — 100% consistent, zero exceptions. The owner's own
+   disputed row (`430a34ce-88ee-4049-94c1-be0dd48e91fa`, 2025-12-08, `amount_cents=-10000`,
+   `is_credit=true`) is one of these 76, re-confirmed live just now.
+2. **The import code itself** (`apps/backend/src/integrations/plaid/plaid.service.ts`): stores
+   `amount_cents: toCents(transaction.amount)` (Plaid's own signed value, unmodified) and derives
+   `is_credit: transaction.amount < 0` from that SAME source value at insert time. The two columns
+   can never independently disagree for a Plaid-sourced row — `is_credit` is not a second opinion,
+   it's a stored copy of the sign's meaning. This is Plaid's documented convention: negative =
+   money in, positive = money out.
+3. **Two prior, dated, already-closed findings already say this in the repo:**
+   `BANK-F10005` (2026-09-04, `banking.routes.ts`) — "amount_cents's sign happens to run opposite
+   is_credit on this table (Plaid convention...) ... Read is_credit directly, the authoritative
+   direction column, instead of inferring from sign." `BANK-F10041` (2026-09-07,
+   `BankingTransactionsDesignView.tsx`) — "NOT the is_credit sign convention (that landmine is
+   already correctly handled by spentReceived() above and by banking.routes.ts's BANK-F10005 fix;
+   **do not re-"fix" that**)." Both are still live in the file today, unmodified.
+4. **CC-1 independently hit this exact landmine on 2026-09-08** (`BANK-RUNNING-BALANCE-STILL-
+   BROKEN-UNFILTERED` / `BANK-F30002`, GUARD-WORKORDERS.md, CLOSED): caught it before publishing,
+   re-derived with `abs()` matching `spentReceived()`'s convention, and recorded explicitly "not a
+   defect in the shipped code, which already used spentReceived() correctly throughout."
+
+The running-balance code (`spentReceived()`, `BankingTransactionsDesignView.tsx`) already reads
+`is_credit` (OR'd defensively with the sign as a redundant fallback, never the reverse) and has
+since 2026-09-07 — this is the same code + math I live-traced 313/313 self-consistent against the
+full transaction history earlier this session for the disputed account, before this new packet
+arrived. A migration flipping `amount_cents`'s sign or `is_credit` on these 313 real, correctly-
+encoded USMCA rows would not fix anything — it would corrupt 313 real transactions to match a
+wrong assumed convention (credit=positive), directly contradicting two dated in-repo findings that
+already settled this, plus a closed ticket where another coder already made and caught the same
+mistake.
+
+**The one thing I found that IS worth a note, not urgent:** company-wide (not USMCA), 108 rows —
+all `source='csv_import'` ("Relay deposit" manual card-deposit imports, TRANSP only) — have
+`is_credit=true` with a POSITIVE amount, i.e. csv_import's own native sign convention is the
+opposite of Plaid's. Also not a bug: `is_credit` is still the authoritative column and is set
+correctly for that source too; it's simply a second, differently-signed source coexisting with
+Plaid's, both correctly abstracted by `is_credit`. No fix needed unless something reads
+`amount_cents`'s sign directly for a mixed-source query, which I did not find.
+
+**REG-030 status: CLOSED — not a defect, already correctly handled, re-verified live.** No
+migration, no backfill, no new guard (the existing guard, `verify-bank-running-balance-uses-full-
+history.mjs`, already covers the real invariant). Declining to build the requested migration
+against a false premise; moving to REG-021 (legacy drawer → ParityDrawer migration) per the
+packet's stated fallback order.
+
+## CC-2 — REG-021 done + live click-through (2026-09-10)
+
+Migrated 4 of the 5 named legacy drawers to ParityDrawer (`AdvanceDetailDrawer.tsx`,
+`AccountDrawer.tsx`, `LiabilityDetailDrawer.tsx`, `DailyTasksPage.tsx`'s `TaskDetailDrawer`) —
+PR #21634, merged, guard `verify-reg021-legacy-drawers-use-paritydrawer.mjs` (verify-step 10907)
+locks it in. `CategorizeDrawer.tsx` (the 5th named file) deliberately left untouched: it's
+`@archived` Workflow-B dead code, never mounted, enforced present-but-frozen by
+`verify-banking-workflow-b-archived.mjs` — migrating a frozen audit-history file's markup for zero
+live benefit isn't in scope.
+
+Live click-through, confirmed after deploy caught up to the merge SHA (verified
+`f31685289d` is a descendant of the merge commit via `git merge-base --is-ancestor` before
+trusting anything I saw):
+- **AccountDrawer** (Lists → Chart of Accounts → + Create): "NEW ACCOUNT" renders in the shared
+  ParityDrawer chrome (uppercase title, single ✕ close, same header/footer treatment as every
+  other create drawer) — confirmed live, screenshot-zoomed the header to check.
+- **AdvanceDetailDrawer** (Cash Advances → View Detail on CA-2026-0006): "CASH ADVANCE DETAIL"
+  renders correctly, all body sections intact, footer shows Edit/Mark Disbursed/Reverse/Print
+  Receipt in the same 2x2 grid as before.
+- **LiabilityDetailDrawer** (Liabilities → View Detail on the one active civil_fine row):
+  "LIABILITY DETAIL" renders correctly, footer shows Hold/Resume/Mark Paid Off/Void.
+- **DailyTasksPage's TaskDetailDrawer**: could NOT click-through live — the Daily Tasks board
+  currently has 0 rows in every view (My Tasks/Team Tasks/Created by Me all show 0), so there is
+  no live task row to open right now. Not a regression: `DailyTasksPage.test.tsx` (1/1, exercises
+  this exact drawer with mocked data) passes unchanged after the migration, and the render path is
+  identical to the other 3 (same ParityDrawer wrapper, same body-content-unchanged pattern) — this
+  is the one DONE-criterion gap I'm flagging honestly rather than fabricating a task row to click.
+
+REG-021: 3 of 4 migrated drawers live-click-through-confirmed; the 4th has no live data to click
+through with, confirmed via passing tests instead. CategorizeDrawer.tsx correctly excluded (dead
+code). Standing by for next priority.
+
+## CC-2 — Maintenance module audit: bugs/discrepancies (owner request, 2026-09-10)
+
+Read-only audit per owner instruction ("check Maintenance for any bugs, discrepancies, etc.") —
+filing findings, not fixing (Maintenance is Codex's module per seat law). One item WAS fixed
+directly (see #1) because it's shared CI infrastructure blocking every PR, not Maintenance-specific
+code. Method: live Neon reads (bypass_rls=lucia), live Chrome walkthrough of every Maintenance
+sub-tab against the deployed app, direct in-browser `fetch()` of the real API endpoints to
+ground-truth what the UI showed against the actual backend response (caught myself about to
+misreport the Fleet Table as broken before verifying — see #6), plus a parallel subagent running
+all ~747 Maintenance-domain CI guards.
+
+**1. FIXED — stale `verify-go20-cargo-incidents.mjs` guard, false-positive since GO-20-B (PR #21640,
+FINDING GLB-25159).** Not Maintenance-specific data, but Maintenance-adjacent code (it about
+Maintenance's own `predictive-alerts` feature) tripped it. Full detail in the PR; summary: the
+guard's dangling-startup check has unconditionally failed on every single PR since GO-20-B
+(#19541) shipped a real predictive-alerts worker/routes pair with the same filenames an earlier,
+narrower check was written to ban. Re-targeted at "imported but never invoked" instead of a bare
+filename substring — now correctly passes the real, fully-wired feature.
+
+**2. Live data — the only active PM schedule in the entire system is test fixture data pointed at
+a deactivated unit.** `maintenance.pm_schedules` has 25 rows total, exactly 1 `is_active=true`
+(label "TEST DATA keep"), targeting `mdata.units` unit_number `T-TESTMTDP79YF`
+(`is_sample_data=true`, `deactivated_at='2026-08-31T22:36:04Z'`). Meanwhile 31 real, active units
+system-wide DO have real Samsara-fed odometer data in `telematics.vehicle_latest_position`
+(confirmed: `has_odometer=31` of `31` active units) — real telemetry is flowing, but exactly zero
+real PM schedules exist for any of those 31 real units. The PM auto-engine itself runs correctly
+and very frequently (`maintenance.pm_auto_wo_log` = 33,617 rows, most recent run 2026-09-10
+03:05 UTC, ~1h before this check) and its own skip-reason logging is honest and well-engineered
+("no_active_pm_schedules: ... This is a finding, not a quiet no-op.") — this is not an engine bug,
+it's that nobody has configured a real PM schedule for the real fleet yet, and the one schedule
+that exists is leftover test data that should have been deactivated alongside its unit. Suggested
+cleanup: deactivate this pm_schedules row (or cascade-deactivate a unit's schedules when the unit
+itself is deactivated, closing the gap for future test units too).
+
+**3. Direct consequence of #2 — `maintenance.predictive_alerts` and
+`maintenance.samsara_fault_code_history` both have ZERO rows, ever**, despite both being fully
+wired in code (confirmed both files real, both genuinely invoked in index.ts — see #1's history).
+Not a code defect: with zero real PM-schedule coverage, there is nothing for the predictive/fault
+pipeline to compute against yet. Flagging so it isn't misread as broken when Codex or the owner
+next looks at this feature — it's correctly silent, not failing.
+
+**4. Live data — TRK's only "open" work order is also test-fixture data**: `WO-TEST-TRUCK-1-IS-
+08-03-2026-0001-PEND0`, `wo_type=repair`, opened 2026-08-03, still `status=open` today. Same
+lingering-test-data pattern as #2. USMCA itself currently has 0 non-cancelled work orders (real,
+not a bug — confirmed the Maintenance Home KPI tiles correctly read 0 for USMCA's own scope).
+
+**5. Live data — USMCA's entire "Parts Inventory" (5 of 5 rows) is dev/test fixture data**, none
+of it `is_sample_data=true`-flagged so nothing currently excludes it: `TEST-CC3-BATTERY-PART-
+20260824`, `PART-8ED8FE62`/`CC3-TEST-PART-CREATE-01`, `WAVE3-TEST-PART-20260821`, `CODEX-REORDER-
+0815-1324`, `CODEX-LIVE-0815-1300` — all clearly named CC-3/WAVE3/Codex dev-session fixtures, not
+real parts. The dashboard's "TOTAL PARTS: 5" / "TOTAL INVENTORY VALUE: $1,108.43" / 2 REORDER flags
+are all real computations over fake rows — genuine numbers, fabricated inputs. Same class of issue
+as #2/#4: dev fixtures created during earlier build sessions were never cleaned up and are visible
+in what should be a clean USMCA production view.
+
+**6. Ruled OUT after verification — Fleet Table's "Total Fleet: 69" (16 trucks + 53 trailers) and
+blank VIN/make/model on trailer rows is REAL data, not a bug.** Initially suspected this was mock/
+fallback data (unit numbers like "0016"/"00121" don't exist in `mdata.units`) — traced it down with
+a direct in-browser `fetch()` against the real API before reporting anything: trailers come from a
+DIFFERENT table (`mdata.equipment`, 217 active rows) than trucks (`mdata.units`, 31 active rows),
+joined via `/api/v1/mdata/units?include=trailers`, not the `/api/v1/maintenance/fleet-table/*`
+endpoints I checked first (which only cover `mdata.units` and correctly return 16 — I'd tested the
+wrong endpoint). Genuine, if incomplete, real data: of 217 active `mdata.equipment` rows, 103
+(~47%) have a VIN on file, the rest don't — a real data-entry completeness gap on roughly half the
+trailer fleet, not a software defect. No action needed beyond noting it.
+
+**7-10. From a parallel subagent's sweep of ~747 Maintenance-domain CI guards** (both `--selftest`
+and live run each) — 4 genuine code gaps found, all Codex-lane (not fixed here):
+- `RecentActivityRow.tsx` doesn't route through the canonical "recent work order" selector guard
+  `verify-primary-record-selector-reverse-links` requires — real reverse-link wiring gap.
+- `Form425CHome.tsx` is missing all 3 required cross-module doors
+  (`/safety/audit-425c` / `/maintenance/compliance` / `/compliance`) that
+  `verify-operational-compliance-module-doors` checks for — confirmed by direct grep, none of the
+  3 target strings appear anywhere on that page; one leg is the missing door back into Maintenance
+  Compliance specifically.
+- `scenario-registry.ts`'s `parts_receive` Scenario Tracker probe verifies the JE/posting exists
+  and balances but never joins `lib.feature_flag_overrides` to confirm
+  `PARTS_PURCHASE_GL_POSTING_ENABLED` is actually ON for that company — the tracker's green dot for
+  this scenario could be misleading about flag scoping.
+- `FleetTable.tsx`'s unit-cell ternary (~line 503) is functionally correct (two genuinely distinct
+  branches) but missing the `LV-FLEETTABLE-IDENTICAL-TERNARY-BRANCHES` tripwire comment convention
+  the guard expects — doc-severity, not a live defect.
+
+**11. Same sweep — 9 stale/broken Maintenance guards** (not fixed here, listed so nobody re-
+diagnoses them from scratch): `verify-fleet-counters-match-rows`,
+`verify-fleet-roster-trailer-kind-wiring`, `verify-fleet-unit-roster-modals`,
+`verify-road-service-ticket-create-result`, `verify-fleet-table-failure-exclusion` (all 5:
+`--selftest`-only failures, live `RUN` passes clean — self-test mutation regexes no longer match
+refactored code, production unaffected); `verify-fleet-qbo-chrome-leaves` (expects `EditTrailerModal.tsx`
+to use `<Modal>`; it was migrated to `<ParityDrawer>` — guard predates that migration);
+`verify-lst-picker01-road-service-vendor-inline-create` (expects an EntityPicker import path,
+`../../components/parity/EntityPicker`, that has never existed in the repo — the real import is
+`../../components/EntityPicker`); `verify-vendor-parts-history-linkage` (expects an un-paginated
+call signature `VendorPartsHistorySection.tsx` was upgraded away from — real server pagination
+shipped, guard's exact-string check never updated); `verify-list-empty-settled`
+(`WorkOrdersTable.tsx` migrated to the shared `<ParityTable loading emptyText>` primitive, so the
+inline ternary pattern the self-test regex looks for is gone by design — live RUN still passes,
+110 correctly-migrated surfaces confirmed).
+
+**Not flagged as bugs after review:** 0 TODO/FIXME/HACK comments and 0 silently-swallowed
+exceptions found across all of `apps/backend/src/maintenance/` (36 catch blocks manually reviewed,
+every one logs/rethrows or degrades to a documented fallback); 0 raw hand-rolled `<table>` elements
+across all 88 Maintenance frontend pages (fully on shared table components already);
+`?? 0` on cost/days-OOS fields is the same repo-wide "$0.00 instead of blank" display convention
+used everywhere, backed by `COALESCE(SUM(...),0)` at the SQL layer already — redundant-but-harmless,
+not a live miscount.
+
+**Routing:** #1 shipped (PR #21640). #2/#4/#5 (test-fixture cleanup) and #7-10 (Codex-lane code
+gaps) and #11 (stale-guard list) are the owner's/Codex's to pick up — filed here and in
+GUARD-WORKORDERS.md, not built.
