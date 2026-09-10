@@ -1385,3 +1385,40 @@ DONE LINE: CC-1 | REG-049 (ACCT-F26062) FULLY CLOSED | PR #21655 merged 7ffe86a1
 Live=CONFIRMED — Chrome click-through + positive/negative-control proof on
 app.ih35dispatch.com/factoring/aging | NEXT: continue sweeping OWNER-FANOUT-2026-09-09.md for CC-1
 items (REG-050 — Reefer lumper control, joint with CC-3).
+
+## CC-1 | REG-050 — status correction, live-verified: lumper confirmation + invoice-charge intent already live, 1 owner-decision gap flagged (2026-09-10)
+
+Investigated REG-050 (Reefer LUMPER control). Confirmed live in code (not new work):
+
+- **"Ask who pays, confirm with a click"**: already captured at booking
+  (`mdata.loads.lumper_payer`/`lumper_will_invoice_customer`/`lumper_late_penalty_applies`,
+  migration `202614010000`), and `loads.routes.ts` blocks a reefer load from dispatching until all
+  three are set.
+- **"If customer pays, flag it for invoicing" (the GUARD line's own "invoice-charge intent")**:
+  already live — `from-load.ts` creates the real customer invoice line via the existing lumper
+  revenue-code branch when `lumper_payer='customer' AND lumper_will_invoice_customer=true`. No new
+  GL math needed; reuses the existing poster.
+- **Receipt-sent + late-penalty prompts**: already built by Cursor (`completion-prompts.routes.ts`,
+  explicitly scoped "no reach into CC-1's billing files") — write answers to `audit.audit_events`,
+  currently unconsumed downstream.
+
+Corrected the register with full evidence (`docs/bus/OWNER-FANOUT-2026-09-09.md` REG-050).
+
+**Genuine remaining gap, flagged as OWNER-DECISION GATE, not built blind:** turning a late-penalty
+"yes" into an actual driver settlement deduction is real, bounded, backend-only CC-1 work (the
+`safety/fines.routes.ts convert-to-liability` pattern is an almost-exact template) — except **no
+penalty dollar amount exists anywhere in the system** to post. Grepped for
+`penalty_amount`/`late_penalty_amount`: zero hits; the completion-prompts endpoint only ever
+captures a boolean. Posting a real deduction needs a real number — inventing one would be
+fabricating a financial figure, which I will not do. Two real paths once the owner decides: a fixed
+policy amount (CC-1 could ship this without touching CC-3's UI), or a dispatcher-entered per-incident
+amount (needs a new UI field, CC-3's surface).
+
+Also flagged, not acted on: a second, largely dormant lumper-billing mechanism
+(`cash-advances/lumper-*.ts`, gated `LUMPER_LIFECYCLE_ENABLED=false`) sits alongside the already-live
+invoice path — wiring it without owner clarification on which mechanism is canonical risks a
+double-billing rail.
+
+DONE LINE: CC-1 | REG-050 status correction | live code trace, no code change (item mostly already
+resolved) | register + outbox updated | 1 point (penalty amount source) left OPEN pending owner
+decision | NEXT: continuing the OWNER-FANOUT-2026-09-09.md sweep for remaining CC-1 items.
