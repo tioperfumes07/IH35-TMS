@@ -15,7 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
-import { TourLegsCell } from "../../components/dispatch/TourLegsCell";
+import { TourLegsCell, tourLoadColumns } from "../../components/dispatch/TourLegsCell";
 import { getTourReadout, listTours, type TourReadout, type TourLeg, type TourListRow } from "../../api/tourReadout";
 import {
   getCompanySettlementReport,
@@ -174,9 +174,11 @@ function CompanyDriverPicker({
   const rows = q.data?.rows ?? [];
   const columns = useMemo<ParityColumn<TourListRow>[]>(
     () => [
-      { key: "display_id", label: "Settlement", minWidth: 100, sortValue: (r) => r.display_id ?? "", render: (r) => <span className="ldt-mono">{displayLabel(r.display_id)}</span> },
+      { key: "display_id", label: "Settlement/Tour", alwaysVisible: true, minWidth: 100, sortValue: (r) => r.display_id ?? "", render: (r) => <span className="ldt-mono">{displayLabel(r.display_id)}</span> },
+      ...tourLoadColumns("company-driver-col"),
       { key: "driver_name", label: "Driver", minWidth: 120, maxWidth: 200, cellClass: "whitespace-nowrap", sortValue: (r) => r.driver_name ?? "", render: (r) => <span className="block max-w-[200px] truncate" title={r.driver_name ?? ""}>{r.driver_name ?? DASH}</span> },
-      { key: "period", label: "Period", minWidth: 150, sortValue: (r) => r.trip_started_at ?? "", render: (r) => `${date(r.trip_started_at)} – ${date(r.trip_closed_at)}` },
+      { key: "trip_started_at", label: "Started", sortable: true, sortValue: r => r.trip_started_at ?? "", render: r => date(r.trip_started_at) },
+      { key: "trip_closed_at", label: "Closed", sortable: true, sortValue: r => r.trip_closed_at ?? "", render: r => date(r.trip_closed_at) },
       { key: "driver_net_cents", label: "Driver net", cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: (r) => r.driver_net_cents ?? 0, render: (r) => money(r.driver_net_cents) },
       { key: "company", label: "Company settlement", minWidth: 120, maxWidth: 160, cellClass: "whitespace-nowrap", render: (r) => (r.company_settlement_display_id ? r.company_settlement_display_id : <span className="ldt-pill warn">not opened</span>) },
     ],
@@ -283,7 +285,8 @@ function DriverSettlementCard({ readout }: { readout: TourReadout }) {
       { key: "pickup_date", label: "Date", minWidth: 72, maxWidth: 96, className: "whitespace-nowrap", sortValue: (l) => l.pickup_date ?? "", render: (l) => date(l.pickup_date) },
       { key: "load_number", label: "Load", minWidth: 72, sortValue: (l) => l.load_number, render: (l) => <EntityLink kind="load" id={l.load_id} label={l.load_number} /> },
       { key: "lane", label: "Route", minWidth: 140, maxWidth: 240, cellClass: "truncate", sortValue: (l) => l.lane, render: (l) => <span className="block max-w-[240px] truncate" title={l.lane}>{l.lane || DASH}</span> },
-      { key: "miles", label: "Miles prac · short", cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 110, maxWidth: 150, sortValue: (l) => l.miles_practical ?? 0, render: (l) => `${l.miles_practical == null ? DASH : l.miles_practical.toLocaleString("en-US")} · ${l.miles_shortest == null ? DASH : l.miles_shortest.toLocaleString("en-US")}` },
+      { key: "miles_practical", label: "Practical miles", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: l => l.miles_practical ?? -Infinity, render: l => l.miles_practical == null ? DASH : l.miles_practical.toLocaleString("en-US") },
+      { key: "miles_shortest", label: "Short miles", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: l => l.miles_shortest ?? -Infinity, render: l => l.miles_shortest == null ? DASH : l.miles_shortest.toLocaleString("en-US") },
       { key: "rate", label: "Rate", cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 84, maxWidth: 110, sortValue: (l) => billByLoad.get(l.load_id)?.rate_per_mile_cents ?? -1, render: (l) => fmtRate(billByLoad.get(l.load_id)?.rate_per_mile_cents) },
       { key: "linehaul", label: "Linehaul", cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 96, maxWidth: 140, sortValue: (l) => billByLoad.get(l.load_id)?.loaded_pay_cents ?? l.revenue_cents, render: (l) => money(billByLoad.get(l.load_id)?.loaded_pay_cents ?? l.revenue_cents) },
     ],

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   PresettlementLinkError,
+  allocateNextSettlementDisplayId,
   confirmPresettlementLink,
   linkLoadToPresettlementAfterAssignmentInClientTx,
   linkLoadToPresettlementAtBookingInClientTx,
@@ -44,6 +45,7 @@ function makeClient(overrides: { openSettlement?: { id: string; display_id: stri
       }
       if (/COALESCE\(\s*\(SELECT ls\.scheduled_arrival_at/.test(sql)) return { rows: [{ trip_started_at: "2026-07-03T08:00:00.000Z", is_sample_data: false }] };
       if (/SELECT EXISTS \(SELECT 1 FROM lib\.trace_counters/.test(sql)) return { rows: [{ exists: true }] };
+      if (sql.includes("next_settlement_display_id")) return { rows: [{ next_id: "S-2026-0042" }] };
       if (/SELECT lib\.next_trace_no/.test(sql)) return { rows: [{ seq: "1" }] };
       if (/INSERT INTO driver_finance\.driver_settlements/.test(sql)) return { rows: [{ id: "new-settlement-id" }] };
       if (/SELECT id FROM driver_finance\.driver_settlements WHERE id = \$1::uuid/.test(sql)) return { rows: [{ id: OPEN_SETTLEMENT_ID }] };
@@ -121,6 +123,9 @@ describe("presettlement link — GO-22", () => {
     });
     expect(result.status).toBe("confirmed");
     expect(result.settlement_id).toBe("new-settlement-id");
+    const created = calls.find(c => /INSERT INTO driver_finance\.driver_settlements/.test(c.sql));
+    expect(created?.values[2]).toBe("S-2026-0042");
+    expect(calls.some(c => c.sql.includes("lib.next_trace_no"))).toBe(false);
     expect(calls.some((c) => /INSERT INTO driver_finance\.driver_settlements/.test(c.sql))).toBe(true);
     expect(calls.some((c) => /UPDATE mdata\.loads SET presettlement_link_id/.test(c.sql))).toBe(true);
   });
@@ -310,5 +315,19 @@ describe("presettlement link — GO-22", () => {
       expect(result?.settlement_id).toBe(OPEN_SETTLEMENT_ID);
       expect(calls.some((c) => /INSERT INTO driver_finance\.driver_settlements/.test(c.sql))).toBe(false);
     });
+  });
+});
+
+describe("REG-010/011 settlement identity", () => {
+  it("uses the settlement sequence without consuming a load number", async () => {
+    const { client, calls } = makeClient();
+    await expect(allocateNextSettlementDisplayId(client as never, OPCO, "2026-07-03")).resolves.toBe("S-2026-0042");
+    expect(calls).toHaveLength(1);
+    expect(calls[0].sql).toContain("driver_finance.next_settlement_display_id");
+    expect(calls[0].values).toEqual([OPCO, "2026-07-03"]);
+  });
+  it.each([undefined, null, "S-13734", "13734", "S-2026-42"])("rejects invalid allocator output %s instead of inventing an ID", async (next_id) => {
+    const client = { query: vi.fn().mockResolvedValue({ rows: [{ next_id }] }) };
+    await expect(allocateNextSettlementDisplayId(client, OPCO, "2026-07-03")).rejects.toThrow("Settlement number allocation failed");
   });
 });

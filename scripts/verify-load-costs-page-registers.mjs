@@ -24,7 +24,7 @@ function read(rel, root = ROOT) {
  *  (additive-only law: this task's OWN new work stays .ldt-* only; the older board section is out
  *  of scope and not touched here). */
 function newRegisterRegion(src) {
-  const start = src.indexOf("function milesRateCell");
+  const start = src.indexOf("const DRIVER_PAY_COLUMNS");
   const end = src.indexOf("const REGISTER_LIMIT");
   if (start < 0 || end < 0 || end <= start) return null;
   return src.slice(start, end);
@@ -121,7 +121,7 @@ if (process.argv.includes("--selftest")) {
     { name: "'which is which' labels removed", mutate: (src) => src.replace("Fuel cash advance", "Fuel row").replace("Company fuel expense", "Fuel row"), expectProblems: 1 },
     {
       name: "a new hex colour reintroduced into the new-register region",
-      mutate: (src) => src.replace('className="ldt-sub" style={{ display: "inline" }}>×', 'style={{ color: "#9CA3AF" }}>×'),
+      mutate: (src) => src.replace('const DRIVER_PAY_COLUMNS', 'const DRIVER_PAY_COLUMNS_COLOR = "#9CA3AF"; const DRIVER_PAY_COLUMNS'),
       expectProblems: 1,
     },
   ];

@@ -1,3 +1,4 @@
+import { allocateSettlementDisplayId } from "./settlement-display-id.js";
 // C6-MONEY-JE-EXEMPT: driver_finance.settlement_lines rows here are settlement-scoped LINE items,
 // not independent cash movements — the settlement HEADER posts one aggregate balanced JE at
 // finalize via settlement-payrun-close.service.ts's closeSettlementPayRun (createJournalEntry) -- CORRECTED 2026-09-02: postSettlementToGl was RETIRED (SET-01, 2026-07-26), never live in prod (verified 2026-09-02, GO-23 C6).
@@ -98,11 +99,7 @@ export async function buildWeeklyCloseDraftForDriver(
     periodEnd: opts.weekEnd,
   });
 
-  const displayRes = await client.query<{ next_id?: string }>(
-    `SELECT driver_finance.next_settlement_display_id($1::uuid, $2::date) AS next_id`,
-    [opts.operatingCompanyId, opts.weekStart]
-  );
-  const displayId = displayRes.rows[0]?.next_id ?? `S-${new Date(opts.weekStart).getUTCFullYear()}-0001`;
+  const displayId = await allocateSettlementDisplayId(client, opts.operatingCompanyId, opts.weekStart);
 
   // Insert with all-zero totals (mirrors the load-bookended INSERT). Real totals are computed
   // below by aggregateSettlementTotals, once every settlement_lines row exists — never composed
