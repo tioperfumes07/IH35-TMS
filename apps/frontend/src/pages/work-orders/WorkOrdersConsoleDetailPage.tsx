@@ -364,7 +364,13 @@ export function WorkOrdersConsoleDetailPage() {
         </div>
       </div>
 
-      {id && companyId ? <WOTimeTrackingPanel workOrderId={String(id)} operatingCompanyId={companyId} /> : null}
+      {id && companyId ? (
+        <WOTimeTrackingPanel
+          workOrderId={String(id)}
+          operatingCompanyId={companyId}
+          readOnly={["complete", "cancelled"].includes(status)}
+        />
+      ) : null}
 
       <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Line items</div>

@@ -158,10 +158,15 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
       if (!(await woTimeEntriesReady(client))) return { kind: "unavailable" as const };
 
       const wo = await client.query(
-        `SELECT id FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+        `SELECT id FROM maintenance.work_orders
+          WHERE id = $1
+            AND operating_company_id = $2::uuid
+            AND voided_at IS NULL
+            AND status NOT IN ('complete', 'cancelled')
+          LIMIT 1`,
         [params.data.woId, body.data.operating_company_id]
       );
-      if (!wo.rows[0]) return { kind: "missing_wo" as const };
+      if (!wo.rows[0]) return { kind: "non_writable_wo" as const };
       if (!(await laborVendorBelongsToCompany(client, body.data.actor_vendor_id, body.data.operating_company_id))) {
         return { kind: "invalid_vendor" as const };
       }
@@ -211,7 +216,7 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
     });
 
     if (payload.kind === "unavailable") return reply.code(501).send({ error: "wo_time_entries_schema_not_available" });
-    if (payload.kind === "missing_wo") return reply.code(404).send({ error: "work_order_not_found" });
+    if (payload.kind === "non_writable_wo") return reply.code(409).send({ error: "work_order_not_open_for_labor" });
     if (payload.kind === "invalid_vendor") return reply.code(400).send({ error: "linked_entity_not_in_operating_company" });
     return { time_entry: payload.entry };
   });
@@ -309,10 +314,15 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
       if (!(await woTimeEntriesReady(client))) return { kind: "unavailable" as const };
 
       const wo = await client.query(
-        `SELECT id FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+        `SELECT id FROM maintenance.work_orders
+          WHERE id = $1
+            AND operating_company_id = $2::uuid
+            AND voided_at IS NULL
+            AND status NOT IN ('complete', 'cancelled')
+          LIMIT 1`,
         [body.data.work_order_id, body.data.operating_company_id]
       );
-      if (!wo.rows[0]) return { kind: "missing_wo" as const };
+      if (!wo.rows[0]) return { kind: "non_writable_wo" as const };
       if (!(await laborVendorBelongsToCompany(client, body.data.actor_vendor_id, body.data.operating_company_id))) {
         return { kind: "invalid_vendor" as const };
       }
@@ -364,7 +374,7 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
     });
 
     if (payload.kind === "unavailable") return reply.code(501).send({ error: "wo_time_entries_schema_not_available" });
-    if (payload.kind === "missing_wo") return reply.code(404).send({ error: "work_order_not_found" });
+    if (payload.kind === "non_writable_wo") return reply.code(409).send({ error: "work_order_not_open_for_labor" });
     if (payload.kind === "invalid_vendor") return reply.code(400).send({ error: "linked_entity_not_in_operating_company" });
     return { time_entry: payload.entry };
   });

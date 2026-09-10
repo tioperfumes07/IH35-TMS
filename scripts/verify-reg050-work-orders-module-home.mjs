@@ -6,6 +6,8 @@ const page = fs.readFileSync("apps/frontend/src/pages/work-orders/WorkOrdersCons
 const api = fs.readFileSync("apps/frontend/src/api/workOrdersConsole.ts", "utf8");
 const route = fs.readFileSync("apps/backend/src/work-orders/work-orders.routes.ts", "utf8");
 const detail = fs.readFileSync("apps/frontend/src/pages/work-orders/WorkOrdersConsoleDetailPage.tsx", "utf8");
+const labor = fs.readFileSync("apps/backend/src/maintenance/labor.routes.ts", "utf8");
+const timePanel = fs.readFileSync("apps/frontend/src/pages/work-orders/WOTimeTrackingPanel.tsx", "utf8");
 
 const controls = [
   "work-orders-filter-billing",
@@ -54,10 +56,18 @@ function audit(parts) {
   if (!/WHERE id = \$1\s+AND operating_company_id = \$3::uuid[\s\S]*AND status = 'open'[\s\S]*AND voided_at IS NULL/.test(parts.route)) {
     failures.push("approve endpoint must reject terminal or voided work orders");
   }
+  if (!/WOTimeTrackingPanel[\s\S]*readOnly=\{\["complete", "cancelled"\]\.includes\(status\)\}/.test(parts.detail)) {
+    failures.push("terminal work orders must render labor tracking read-only");
+  }
+  if (!/readOnly\?: boolean/.test(parts.timePanel) || !/disabled=\{readOnly \|\| startMut\.isPending/.test(parts.timePanel)) {
+    failures.push("labor tracking create actions must honor terminal read-only state");
+  }
+  const writableWoPredicates = parts.labor.match(/SELECT id FROM maintenance\.work_orders[\s\S]{0,240}?voided_at IS NULL[\s\S]{0,120}?status NOT IN \('complete', 'cancelled'\)/g) ?? [];
+  if (writableWoPredicates.length < 2) failures.push("timer start and manual time entry must both reject terminal work orders");
   return failures;
 }
 
-const sources = { page, api, route, detail };
+const sources = { page, api, route, detail, labor, timePanel };
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ...controls.map((id) => ["page", id, "removed-filter-control"]),
@@ -68,6 +78,8 @@ if (process.argv.includes("--selftest")) {
     ["page", "key: \"total_actual_cost\"", "key: \"total_estimated_cost\""],
     ["detail", "const canComplete = status === \"in_progress\"", "const canComplete = true"],
     ["route", "AND status = 'open'", "AND status <> 'open'"],
+    ["detail", 'readOnly={["complete", "cancelled"].includes(status)}', "readOnly={false}"],
+    ["labor", "AND voided_at IS NULL", "AND voided_at IS NOT NULL"],
   ];
   for (const [key, from, to] of mutations) {
     const changed = { ...sources, [key]: sources[key].replace(from, to) };
