@@ -84,6 +84,10 @@ type Props = {
   legend?: boolean;
   testId?: string;
   style?: CSSProperties;
+  /// B-3: when loads fall outside the rendered date range, this callback is invoked with the
+  ///  earliest and latest outside-bar YMD dates so the parent can widen `days` (the rendered
+  ///  range/set). Must NOT merely scroll — the range itself must change.
+  onExpandRange?: (minOutsideYmd: string, maxOutsideYmd: string) => void;
 };
 
 export function ymdFromMs(ms: number): string {
@@ -222,6 +226,7 @@ export function PlannerGrid({
   legend = false,
   testId,
   style,
+  onExpandRange,
 }: Props) {
   const today = todayYmdAmericaChicago();
   const bands = plannerMonthBands(days);
@@ -272,12 +277,18 @@ export function PlannerGrid({
 
   const outside = useMemo(() => {
     let n = 0;
+    let minOutside = "";
+    let maxOutside = "";
     for (const row of rows) {
       for (const bar of row.bars) {
-        if ((rangeStart && bar.startYmd < rangeStart) || (rangeEnd && bar.endYmd > rangeEnd)) n += 1;
+        const isOutside = (rangeStart && bar.startYmd < rangeStart) || (rangeEnd && bar.endYmd > rangeEnd);
+        if (!isOutside) continue;
+        n += 1;
+        if (!minOutside || bar.startYmd < minOutside) minOutside = bar.startYmd;
+        if (!maxOutside || bar.endYmd > maxOutside) maxOutside = bar.endYmd;
       }
     }
-    return n;
+    return { count: n, minOutside, maxOutside };
   }, [rows, rangeStart, rangeEnd]);
 
   useEffect(() => {
@@ -339,16 +350,21 @@ export function PlannerGrid({
 
   return (
     <div className="planner-grid-canonical overflow-hidden rounded-sm border border-gray-200 bg-white" data-testid={testId} style={vars}>
-      {outside > 0 ? (
+      {outside.count > 0 ? (
         <button
           type="button"
           className="pg-outside"
+          data-testid="planner-outside-range-btn"
           onClick={() => {
-            const el = scrollRef.current;
-            if (el) el.scrollLeft = el.scrollWidth;
+            if (onExpandRange && outside.minOutside && outside.maxOutside) {
+              onExpandRange(outside.minOutside, outside.maxOutside);
+            } else {
+              const el = scrollRef.current;
+              if (el) el.scrollLeft = el.scrollWidth;
+            }
           }}
         >
-          {outside} load{outside === 1 ? "" : "s"} outside this range →
+          {outside.count} load{outside.count === 1 ? "" : "s"} outside this range →
         </button>
       ) : null}
       <div

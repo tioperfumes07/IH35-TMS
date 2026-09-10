@@ -10,7 +10,7 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
-import { addDaysIso } from "./planner-range";
+import { addDaysIso, widenPlannerRange } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
 import { BookLoadModalV4 } from "../components/BookLoadModalV4";
 import { PlannerAxisHead } from "./PlannerAxisHead";
@@ -91,7 +91,7 @@ function StatusPill({ status }: { status: string }) {
 export function UnifiedTimelinePlanner() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
-  const { range, days } = usePlannerRange();
+  const { range, days, setRange } = usePlannerRange();
   const [bookUnitId, setBookUnitId] = useState<string | null>(null);
   const [bookOpen, setBookOpen] = useState(false);
   const [viewMode, setViewMode] = useState<PlannerViewMode>("grid");
@@ -289,6 +289,7 @@ export function UnifiedTimelinePlanner() {
             actionLabel="Book"
             frozenPx={360}
             rows={toRows(inService)}
+            onExpandRange={(minYmd, maxYmd) => setRange(widenPlannerRange(range, minYmd, maxYmd))}
             empty={
               <span data-testid="dispatch-timeline-honest-empty">
                 No drivers in this range for this company. Active drivers from the dispatch planner week feed appear as
@@ -304,6 +305,7 @@ export function UnifiedTimelinePlanner() {
                 actionLabel="Book"
                 frozenPx={360}
                 rows={toRows(oos)}
+                onExpandRange={(minYmd, maxYmd) => setRange(widenPlannerRange(range, minYmd, maxYmd))}
                 empty={null}
               />
             </div>

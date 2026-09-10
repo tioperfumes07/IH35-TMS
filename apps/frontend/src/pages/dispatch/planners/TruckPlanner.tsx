@@ -10,6 +10,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { isOperatorVisibleUnit } from "../../../lib/operator-fleet-visibility";
 import { usePlannerRange } from "./PlannerRangeContext";
+import { widenPlannerRange } from "./planner-range";
 import { PlannerAxisHead } from "./PlannerAxisHead";
 import { PlannerGrid } from "./PlannerGrid";
 import { groupPlannerBarsByKey, usePlannerLoads } from "./planner-bars";
@@ -47,7 +48,7 @@ type TruckListRow = {
 export function TruckPlanner() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
-  const { range, days } = usePlannerRange();
+  const { range, days, setRange } = usePlannerRange();
   const [viewMode, setViewMode] = useState<PlannerViewMode>("grid");
 
   const gridQuery = useQuery({
@@ -227,6 +228,7 @@ export function TruckPlanner() {
           frozenPx={320}
           statusLabel="Status"
           actionLabel="Action"
+          onExpandRange={(minYmd, maxYmd) => setRange(widenPlannerRange(range, minYmd, maxYmd))}
           rows={truckRows
             .filter((row) => row.status !== "in-shop")
             .map((row) => {

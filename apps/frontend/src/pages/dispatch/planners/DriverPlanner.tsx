@@ -8,7 +8,7 @@ import { PlannerViewToggle, type PlannerViewMode } from "./PlannerViewToggle";
 export function DriverPlanner() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
-  const { range } = usePlannerRange();
+  const { range, setRange } = usePlannerRange();
   const [viewMode, setViewMode] = useState<PlannerViewMode>("grid");
 
   if (!operatingCompanyId) {
@@ -40,7 +40,7 @@ export function DriverPlanner() {
         </div>
         <PlannerViewToggle viewMode={viewMode} onChange={setViewMode} />
       </div>
-      <SafetyDriverSchedulerGrid operatingCompanyId={operatingCompanyId} range={range} testId="dispatch-driver-planner-grid" viewMode={viewMode} />
+      <SafetyDriverSchedulerGrid operatingCompanyId={operatingCompanyId} range={range} testId="dispatch-driver-planner-grid" viewMode={viewMode} onExpandRange={setRange} />
     </div>
   );
 }
