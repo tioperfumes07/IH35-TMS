@@ -1143,6 +1143,31 @@ export function BankingTransactionsDesignView({
   // signed = received - spent (cents). This is only meaningful in date order (the default sort) and when the
   // full history is present — guaranteed now by fullHistoryQuery, matching how a QuickBooks/bank register
   // behaves regardless of what the operator has filtered the visible list down to.
+  // REG-036 (owner live 2026-09-09/10, account e83028a5-...-b660-5b9923b3d39c): the earliest
+  // synced transaction (12/08/2025, +$100 received) shows a running balance of roughly -$6,608 --
+  // looks like a bug at a glance, but is arithmetically FORCED, not miscalculated. Live-verified
+  // (Neon): SUM of all 314 non-voided signed deltas for this account = +$8,797.84, while
+  // current_balance_cents (Plaid-fresh, synced minutes before this check) = +$2,089.70 -- a real
+  // $6,708.14 gap between "what our synced history adds up to" and "what the bank actually shows
+  // today." The backend calls Plaid's cursor-based /transactions/sync (plaid.service.ts) with no
+  // start_date -- there is no code-side window we're truncating; whatever Plaid's initial sync
+  // returned as "available" for this Item IS the earliest history obtainable through this
+  // connection. That means this real Bank of America account almost certainly had a real balance
+  // before 12/08/2025 that we have zero transaction-level visibility into -- the "$0 opening
+  // balance" standing law is about USMCA's own GL/books, not a claim that every linked real-world
+  // bank account started at $0. The backward walk below (anchor = today's REAL balance, walk
+  // backward through REAL deltas) is the only arithmetic that can be correct without inventing a
+  // number; a forward walk from an assumed $0 would be confidently WRONG whenever pre-sync history
+  // exists. What was genuinely missing is the LAW.md "zero is a claim" honesty: the UI showed this
+  // forced, unverifiable number with the exact same confidence as every other row, no caveat. This
+  // id is exposed so the render layer can flag it instead of presenting it as settled fact.
+  const earliestSyncedTransactionId = useMemo(() => {
+    const historyRows = fullHistoryQuery.data?.transactions ?? [];
+    if (historyRows.length === 0) return null;
+    const ordered = [...historyRows].sort(compareTxNewestFirst);
+    return ordered[ordered.length - 1]?.id ?? null;
+  }, [fullHistoryQuery.data]);
+
   const runningBalanceById = useMemo(() => {
     const map = new Map<string, number>();
     if (!selectedAccount) return map;
@@ -1763,13 +1788,21 @@ export function BankingTransactionsDesignView({
         cellClass: "whitespace-nowrap text-right tabular-nums",
         render: (tx) => {
           const bal = runningBalanceById.get(tx.id);
+          const isEarliestSynced = tx.id === earliestSyncedTransactionId;
           return (
             <span
               className={
                 sortBy.key !== "date" ? "text-gray-300" : bal != null && bal < 0 ? "text-red-700" : "text-gray-900"
               }
+              title={
+                isEarliestSynced
+                  ? "Earliest transaction available from the bank connection. This balance assumes no prior activity — it may not match the account's true history before this date."
+                  : undefined
+              }
+              data-testid={isEarliestSynced ? "banking-balance-earliest-synced-caveat" : undefined}
             >
               {bal == null ? "—" : USD.format(bal / 100)}
+              {isEarliestSynced && <sup className="ml-0.5 font-semibold text-slate-400">†</sup>}
             </span>
           );
         },
@@ -3563,6 +3596,17 @@ export function BankingTransactionsDesignView({
           { id: "export", label: "Export Selected", onClick: () => bulkExport() },
         ])}
       />
+
+      {earliestSyncedTransactionId != null &&
+      pagedRows.some((tx) => tx.id === earliestSyncedTransactionId) ? (
+        <p
+          className="mb-1 text-xs text-slate-500"
+          data-testid="banking-balance-earliest-synced-legend"
+        >
+          † Balance shown from the earliest transaction available through this bank connection — it
+          may not reflect the account&apos;s true history before that date.
+        </p>
+      ) : null}
 
       <ParityTable
         tableTestId="banking-transactions-parity-table"
