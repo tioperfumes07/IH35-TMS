@@ -1120,3 +1120,34 @@ Escrow Contribution $50.00 / Less · Fuel purchases $0.00 / Less · Company expe
 DONE LINE: CC-1 | COMPANY-WATERFALL-FUEL-EXPENSE-SPLIT DONE | PR #21571→#21573→#21587 (2 self-caught
 corrections same session) | live sha c7dbf727 | S-13643/CS-2026-0002 live-verified, math foots exactly
 | NEXT: continuing item 9 — the Company & Driver view consolidation question still needs an owner call
+
+## CC-1 | REG-008 DONE — SET-01 auto-link gap closed on 4 real write paths (2026-09-10, turbo mode)
+
+Owner box `09-09-2026-CC1-SET01-PRESETTLEMENT-AUTOLINK-GAP.md`, deadline 2026-09-10 06:00 UTC — taken up
+past-due per `09-10-2026-CC1-TURBO-MODE.md`. Fixed the real gap: `quick-assign.service.ts`,
+`planner.service.ts`, `dispatch-refinements.service.ts` all wrote `assigned_primary_driver_id`
+AFTER booking and never called the SET-01 linker book-load.service.ts uses at creation. Exhaustive
+grep while building the guard found a 4th unnamed write path too
+(`assignments/quicksave.service.ts`'s `reassignDriver`) — fixed, per "fix it everywhere it exists."
+New shared `linkLoadToPresettlementAfterAssignmentInClientTx` (idempotent, never guesses
+NB/TR/SB) wired into all 4; guard `scripts/verify-presettlement-autolink-all-paths.mjs` scans every
+`assigned_primary_driver_id` write site in the backend so a 5th can never ship unlinked.
+
+Ran the box's own verification query live (Neon prod, `bypass_rls='lucia'`, USMCA): exactly the 3
+loads the box named — 13580, 13581, 13508 — none else. **Not backfilled, flagged instead of
+guessed:** 13580/13581 have no `trip_type` ever captured (the real linker needs one; there is no
+honest NB/TR/SB to pass), and 13508 is already `closed`/past delivery (an SB leg closes an open
+tour, it doesn't retroactively open one). **Owner decision needed:** how should `trip_type` be
+inferred or backfilled for a load that skipped booking-time capture? Until then these 3 stay
+open by design, named in the guard's own exception list so they never silently vanish from view.
+
+DONE LINE: CC-1 | REG-008 DONE | PR #21606, merged `d1be089000` | live: Neon prod bypass_rls=lucia
+verification query = exactly 13580/13581/13508, apps/backend tsc -b exit 0, guard + selftest exit
+0 (5/5), 39/39 unit tests pass | NEXT: also corrected 3 stale ledger entries tonight (BNK-10 —
+#21596, CF-02 — #21599, BNK-20 — #21601) per `docs/bus/OWNER-STATUS-LEDGER-2026-09-09.md` and fixed
+a real shared-component bug (ParityTable persisted column width could load collapsed at 0px,
+BNK-06): built + tested a fix on `claude/paritytable-col-width-floor-2026-09-09`, pushed it, then
+found on rebase it had already landed on `main` — same patch-id, byte-identical to mine — as part
+of Cursor's PR #21605. Verified live before claiming it rather than assuming: `git rebase
+origin/main` reported "patch contents already upstream" and a diff against `origin/main` came back
+empty. No duplicate PR opened. Sweeping for the next genuine money-surface gap now.
