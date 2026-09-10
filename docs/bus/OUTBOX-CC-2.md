@@ -2234,3 +2234,114 @@ trusting anything I saw):
 REG-021: 3 of 4 migrated drawers live-click-through-confirmed; the 4th has no live data to click
 through with, confirmed via passing tests instead. CategorizeDrawer.tsx correctly excluded (dead
 code). Standing by for next priority.
+
+## CC-2 — Maintenance module audit: bugs/discrepancies (owner request, 2026-09-10)
+
+Read-only audit per owner instruction ("check Maintenance for any bugs, discrepancies, etc.") —
+filing findings, not fixing (Maintenance is Codex's module per seat law). One item WAS fixed
+directly (see #1) because it's shared CI infrastructure blocking every PR, not Maintenance-specific
+code. Method: live Neon reads (bypass_rls=lucia), live Chrome walkthrough of every Maintenance
+sub-tab against the deployed app, direct in-browser `fetch()` of the real API endpoints to
+ground-truth what the UI showed against the actual backend response (caught myself about to
+misreport the Fleet Table as broken before verifying — see #6), plus a parallel subagent running
+all ~747 Maintenance-domain CI guards.
+
+**1. FIXED — stale `verify-go20-cargo-incidents.mjs` guard, false-positive since GO-20-B (PR #21640,
+FINDING GLB-25159).** Not Maintenance-specific data, but Maintenance-adjacent code (it about
+Maintenance's own `predictive-alerts` feature) tripped it. Full detail in the PR; summary: the
+guard's dangling-startup check has unconditionally failed on every single PR since GO-20-B
+(#19541) shipped a real predictive-alerts worker/routes pair with the same filenames an earlier,
+narrower check was written to ban. Re-targeted at "imported but never invoked" instead of a bare
+filename substring — now correctly passes the real, fully-wired feature.
+
+**2. Live data — the only active PM schedule in the entire system is test fixture data pointed at
+a deactivated unit.** `maintenance.pm_schedules` has 25 rows total, exactly 1 `is_active=true`
+(label "TEST DATA keep"), targeting `mdata.units` unit_number `T-TESTMTDP79YF`
+(`is_sample_data=true`, `deactivated_at='2026-08-31T22:36:04Z'`). Meanwhile 31 real, active units
+system-wide DO have real Samsara-fed odometer data in `telematics.vehicle_latest_position`
+(confirmed: `has_odometer=31` of `31` active units) — real telemetry is flowing, but exactly zero
+real PM schedules exist for any of those 31 real units. The PM auto-engine itself runs correctly
+and very frequently (`maintenance.pm_auto_wo_log` = 33,617 rows, most recent run 2026-09-10
+03:05 UTC, ~1h before this check) and its own skip-reason logging is honest and well-engineered
+("no_active_pm_schedules: ... This is a finding, not a quiet no-op.") — this is not an engine bug,
+it's that nobody has configured a real PM schedule for the real fleet yet, and the one schedule
+that exists is leftover test data that should have been deactivated alongside its unit. Suggested
+cleanup: deactivate this pm_schedules row (or cascade-deactivate a unit's schedules when the unit
+itself is deactivated, closing the gap for future test units too).
+
+**3. Direct consequence of #2 — `maintenance.predictive_alerts` and
+`maintenance.samsara_fault_code_history` both have ZERO rows, ever**, despite both being fully
+wired in code (confirmed both files real, both genuinely invoked in index.ts — see #1's history).
+Not a code defect: with zero real PM-schedule coverage, there is nothing for the predictive/fault
+pipeline to compute against yet. Flagging so it isn't misread as broken when Codex or the owner
+next looks at this feature — it's correctly silent, not failing.
+
+**4. Live data — TRK's only "open" work order is also test-fixture data**: `WO-TEST-TRUCK-1-IS-
+08-03-2026-0001-PEND0`, `wo_type=repair`, opened 2026-08-03, still `status=open` today. Same
+lingering-test-data pattern as #2. USMCA itself currently has 0 non-cancelled work orders (real,
+not a bug — confirmed the Maintenance Home KPI tiles correctly read 0 for USMCA's own scope).
+
+**5. Live data — USMCA's entire "Parts Inventory" (5 of 5 rows) is dev/test fixture data**, none
+of it `is_sample_data=true`-flagged so nothing currently excludes it: `TEST-CC3-BATTERY-PART-
+20260824`, `PART-8ED8FE62`/`CC3-TEST-PART-CREATE-01`, `WAVE3-TEST-PART-20260821`, `CODEX-REORDER-
+0815-1324`, `CODEX-LIVE-0815-1300` — all clearly named CC-3/WAVE3/Codex dev-session fixtures, not
+real parts. The dashboard's "TOTAL PARTS: 5" / "TOTAL INVENTORY VALUE: $1,108.43" / 2 REORDER flags
+are all real computations over fake rows — genuine numbers, fabricated inputs. Same class of issue
+as #2/#4: dev fixtures created during earlier build sessions were never cleaned up and are visible
+in what should be a clean USMCA production view.
+
+**6. Ruled OUT after verification — Fleet Table's "Total Fleet: 69" (16 trucks + 53 trailers) and
+blank VIN/make/model on trailer rows is REAL data, not a bug.** Initially suspected this was mock/
+fallback data (unit numbers like "0016"/"00121" don't exist in `mdata.units`) — traced it down with
+a direct in-browser `fetch()` against the real API before reporting anything: trailers come from a
+DIFFERENT table (`mdata.equipment`, 217 active rows) than trucks (`mdata.units`, 31 active rows),
+joined via `/api/v1/mdata/units?include=trailers`, not the `/api/v1/maintenance/fleet-table/*`
+endpoints I checked first (which only cover `mdata.units` and correctly return 16 — I'd tested the
+wrong endpoint). Genuine, if incomplete, real data: of 217 active `mdata.equipment` rows, 103
+(~47%) have a VIN on file, the rest don't — a real data-entry completeness gap on roughly half the
+trailer fleet, not a software defect. No action needed beyond noting it.
+
+**7-10. From a parallel subagent's sweep of ~747 Maintenance-domain CI guards** (both `--selftest`
+and live run each) — 4 genuine code gaps found, all Codex-lane (not fixed here):
+- `RecentActivityRow.tsx` doesn't route through the canonical "recent work order" selector guard
+  `verify-primary-record-selector-reverse-links` requires — real reverse-link wiring gap.
+- `Form425CHome.tsx` is missing all 3 required cross-module doors
+  (`/safety/audit-425c` / `/maintenance/compliance` / `/compliance`) that
+  `verify-operational-compliance-module-doors` checks for — confirmed by direct grep, none of the
+  3 target strings appear anywhere on that page; one leg is the missing door back into Maintenance
+  Compliance specifically.
+- `scenario-registry.ts`'s `parts_receive` Scenario Tracker probe verifies the JE/posting exists
+  and balances but never joins `lib.feature_flag_overrides` to confirm
+  `PARTS_PURCHASE_GL_POSTING_ENABLED` is actually ON for that company — the tracker's green dot for
+  this scenario could be misleading about flag scoping.
+- `FleetTable.tsx`'s unit-cell ternary (~line 503) is functionally correct (two genuinely distinct
+  branches) but missing the `LV-FLEETTABLE-IDENTICAL-TERNARY-BRANCHES` tripwire comment convention
+  the guard expects — doc-severity, not a live defect.
+
+**11. Same sweep — 9 stale/broken Maintenance guards** (not fixed here, listed so nobody re-
+diagnoses them from scratch): `verify-fleet-counters-match-rows`,
+`verify-fleet-roster-trailer-kind-wiring`, `verify-fleet-unit-roster-modals`,
+`verify-road-service-ticket-create-result`, `verify-fleet-table-failure-exclusion` (all 5:
+`--selftest`-only failures, live `RUN` passes clean — self-test mutation regexes no longer match
+refactored code, production unaffected); `verify-fleet-qbo-chrome-leaves` (expects `EditTrailerModal.tsx`
+to use `<Modal>`; it was migrated to `<ParityDrawer>` — guard predates that migration);
+`verify-lst-picker01-road-service-vendor-inline-create` (expects an EntityPicker import path,
+`../../components/parity/EntityPicker`, that has never existed in the repo — the real import is
+`../../components/EntityPicker`); `verify-vendor-parts-history-linkage` (expects an un-paginated
+call signature `VendorPartsHistorySection.tsx` was upgraded away from — real server pagination
+shipped, guard's exact-string check never updated); `verify-list-empty-settled`
+(`WorkOrdersTable.tsx` migrated to the shared `<ParityTable loading emptyText>` primitive, so the
+inline ternary pattern the self-test regex looks for is gone by design — live RUN still passes,
+110 correctly-migrated surfaces confirmed).
+
+**Not flagged as bugs after review:** 0 TODO/FIXME/HACK comments and 0 silently-swallowed
+exceptions found across all of `apps/backend/src/maintenance/` (36 catch blocks manually reviewed,
+every one logs/rethrows or degrades to a documented fallback); 0 raw hand-rolled `<table>` elements
+across all 88 Maintenance frontend pages (fully on shared table components already);
+`?? 0` on cost/days-OOS fields is the same repo-wide "$0.00 instead of blank" display convention
+used everywhere, backed by `COALESCE(SUM(...),0)` at the SQL layer already — redundant-but-harmless,
+not a live miscount.
+
+**Routing:** #1 shipped (PR #21640). #2/#4/#5 (test-fixture cleanup) and #7-10 (Codex-lane code
+gaps) and #11 (stale-guard list) are the owner's/Codex's to pick up — filed here and in
+GUARD-WORKORDERS.md, not built.
