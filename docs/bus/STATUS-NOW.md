@@ -1,9 +1,24 @@
-# STATUS-NOW — 2026-09-07 03:48Z — HARD WAKE
+# STATUS-NOW — 2026-09-10 (Cursor lead) — ALL SEATS BUILDING, comms on
 
-- **Tip:** `0cc2a61752` (#21232 navy 16.28/16.29 + CC-3 finding relay)
-- **Live:** FE+API deploy in flight to tip (was `6c28b0b`; ParityTable fix already live-confirmed earlier on `ed6daf5`)
-- **ROUND 16.25:** CLOSED live (Claude lead DOM: CF 0/64 max 34.4px; Factoring 0/20 max 30.8px)
-- **Open PRs:** 0 after this wake PR
-- **Seats:** HARD WAKE posted to all INBOXes — deadline **07:00Z**
-- **Cursor desktop:** must finish Factoring 16.24 remainder then 16.27 Step 2; status relay still owed
-- **Cursor cloud:** nav-clip 0.5 → FAC-11/12/CF-02 → DSP-13..18
+Owner order: get Dispatch, Accounting, Banking, Factoring, Settlements to 100%. All seats communicate via
+`docs/bus/COMMS-PROTOCOL-2026-09-10.md` (post ship/blocker to your OUTBOX; read others' before editing).
+
+## Seat census (2026-09-10 PM)
+| Seat | Workspace | Lane | Live now? | Current row |
+|---|---|---|---|---|
+| Cursor (lead) | IH35-TMS-clean | Dispatch board + load detail + deploys | YES | REG-035 DONE #21664 → REG-036/037/039/023/024 |
+| GPT (ChatGPT) | IH35-TMS-cascade | Settlement numbering | YES | REG-010/011 (owner #1) |
+| Devin A | IH35-TMS-devin | ALL Factoring | YES | REG-015 → 046/043/044/045/042/047 |
+| Devin B | own clone | Vendors + Lists/Reports + PlannerGrid | YES | REG-002 → PlannerGrid → sweep |
+| Codex | own | Fleet + Maintenance | YES | REG-048 (WO PEND0/null-unit) → REG-049 |
+| CC-1 | — | Money | OUT until ~18:00 | REG-040 → 008/038/CASHFLOW-KPI/031 |
+| CC-2 | — | Banking + Maintenance | OUT until ~18:00 | REG-028/030 trace → 027 deploy → 021 |
+| CC-3 | — | Settlements | OUT until ~18:00 | REG-010/011 verify → 016/041/024 |
+
+## Merged today
+- #21660 (lead dispatch, 2 Devins), #21661 (owner dump itemized REG-035..047), #21664 (REG-035 truck-twice).
+
+## New rows minted 2026-09-10 PM
+REG-048, REG-049 (Codex, Fleet/Maintenance, measured live), CASHFLOW-KPI (CC-1). See OWNER-DUMP itemized.
+
+## Open PRs: fan-out/comms PR in flight (this change).

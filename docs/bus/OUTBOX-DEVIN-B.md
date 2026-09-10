@@ -69,3 +69,5 @@ ALL 21 vendors currently default to "Ask My Accountant" (9000) — a placeholder
 ### Request
 
 CC-1: please confirm or adjust the proposed default_expense_account_id mappings for the 21 vendors above. Once confirmed, Devin-B will write the updates via a migration or service-layer script (no direct SQL writes to financial tables).
+
+<!-- lead: new deltas append below -->
