@@ -19,12 +19,25 @@ Lead re-measured: your REG-040 continuation (`settlement-payrun-recovery.service
 reversal + recompute/repost path landed, closed tours split identity + continued loads handled, 11 tests
 pass, 13569/13577 classify under the same settlement. **You are OFF REG-040.**
 
-## ★ ROW 1 (TOP, LIVE) — REG-009 (deadline 2026-09-10 23:59 UTC · surrender Cursor)
-Load Costs "Settlement #" column exists but is hidden by default → **make it visible by default** (the
-canonical `S-YYYY-NNNN` you fixed in REG-010/011). Small, verifiable, guarded: verify-step asserting the
-Settlement # column renders by default on the Load Costs board and shows the canonical `S-YYYY-NNNN`.
-REG-041 (#21677 `8d8b4beec0`) is ALREADY MERGED — skip it. After REG-009, sweep your settlement-numbering
-lane for any remaining owner item and post DONE.
+## ✔ DONE — REG-009 (Settlement # column default-visible) + REG-041 (#21677) — owner confirmed complete 2026-09-10 21:1xZ
+Owner relayed: **REG-010/011, REG-040, REG-041, REG-009 all COMPLETE.** Your entire settlement-numbering
+queue is drained. Well done — do NOT rebuild any of them.
+
+## ★ ROW 1 (NEW, LIVE TOP) — SETTLEMENTS-MODULE STANDING SWEEP (deadline 2026-09-11 03:00 UTC · surrender Cursor)
+Your numbering lane is clean, so widen to a **live BUILD sweep of the whole Settlements module** on the
+deployed bundle (`app.ih35dispatch.com` @ `950bf263`, login is live). Walk every left-nav Settlements tab —
+Drivers · Profiles · **Pre-Settlements · Settlements · Company Settlements · Settlement Close · Settlement
+Disputes** · Cash Advance Requests · Cash Advances · Liabilities · Escrow · Pay Rate Templates · Deductions.
+For EACH surface assert (fix in-lane, one PR + one named guard per fix; register cross-lane, don't fix):
+1. **Numbering** — every settlement shows canonical `S-YYYY-NNNN` (never `S-<loadnum>`, never a 5-digit load
+   number); Company = `CS-YYYY-NNNN`. 2. **Three-date honesty** — incurred/due/paid never conflated; dates
+   are the real source-load dates. 3. **One datum per column**, centered + sortable (GLOBAL-TYPE-SIZE-BASELINE).
+4. **KPIs real** — every tile a live USMCA number, dash-never-zero, no confident-zero. 5. **No dead control** —
+   every button/link resolves; Back arrow present; picker dismisses on outside click. 6. **Settlement Close /
+   Disputes actually wired** (owner-flagged surfaces) — not an empty stub pretending to be built.
+MEASURE the defect (getComputedStyle/DOM on the named sha, or Neon USMCA bypass_rls=lucia), name file:line +
+the rule, ship ONE PR + guard per fix, deploy, re-measure. Post each as a DONE line to OUTBOX.
+DONE line: `GPT | SETTLE-SWEEP <surface> DONE | <sha> | <live sha> | <measured pass> | NEXT <surface>`.
 
 <details><summary>REG-040 original brief (kept for audit — DONE)</summary>
 **Owner 2026-09-10 (verbatim intent):** the Resettlement display + OPEN-tour inheritance you shipped are
