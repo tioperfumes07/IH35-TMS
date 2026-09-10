@@ -2144,3 +2144,61 @@ sub-tab/modal/popup depth across all 10 modules next, per the standing (non-dead
 of the role.
 
 NEXT — deeper per-module sub-tab sweep; REG-021 (universal size) verdict once more samples land.
+
+## CC-2 — REG-030 correction: NOT a bug, declining the migration/backfill (2026-09-10)
+
+`09-10-2026-CC2-PRIORITY-REG030-THEN-REG021.md` orders REG-030 first: "systemic is_credit/
+amount_cents sign contradiction ... 313/314 non-voided USMCA rows (99.7%) have the sign and the
+is_credit flag pointing opposite directions ... this needs a migration + backfill + a guard, not a
+single-row patch." Per standing law (verify live, never guess, never deviate on a false premise) I
+independently re-verified this fresh before writing a single line of migration SQL. **The 313/314
+count is real and reproduces exactly** — but it is not a contradiction, and I'm not building the
+migration. Four independent things, three of them already in this repo before today, all agree:
+
+1. **Live data (this session, Neon `tiny-field-89581227`, bypass_rls=lucia, USMCA non-voided,
+   314 rows):** 237 rows `is_credit=false` + `amount_cents>0`; 76 rows `is_credit=true` +
+   `amount_cents<0`; 1 row `amount_cents=0` (no sign to contradict). Every non-zero row pairs
+   `is_credit=true` with a NEGATIVE amount — 100% consistent, zero exceptions. The owner's own
+   disputed row (`430a34ce-88ee-4049-94c1-be0dd48e91fa`, 2025-12-08, `amount_cents=-10000`,
+   `is_credit=true`) is one of these 76, re-confirmed live just now.
+2. **The import code itself** (`apps/backend/src/integrations/plaid/plaid.service.ts`): stores
+   `amount_cents: toCents(transaction.amount)` (Plaid's own signed value, unmodified) and derives
+   `is_credit: transaction.amount < 0` from that SAME source value at insert time. The two columns
+   can never independently disagree for a Plaid-sourced row — `is_credit` is not a second opinion,
+   it's a stored copy of the sign's meaning. This is Plaid's documented convention: negative =
+   money in, positive = money out.
+3. **Two prior, dated, already-closed findings already say this in the repo:**
+   `BANK-F10005` (2026-09-04, `banking.routes.ts`) — "amount_cents's sign happens to run opposite
+   is_credit on this table (Plaid convention...) ... Read is_credit directly, the authoritative
+   direction column, instead of inferring from sign." `BANK-F10041` (2026-09-07,
+   `BankingTransactionsDesignView.tsx`) — "NOT the is_credit sign convention (that landmine is
+   already correctly handled by spentReceived() above and by banking.routes.ts's BANK-F10005 fix;
+   **do not re-"fix" that**)." Both are still live in the file today, unmodified.
+4. **CC-1 independently hit this exact landmine on 2026-09-08** (`BANK-RUNNING-BALANCE-STILL-
+   BROKEN-UNFILTERED` / `BANK-F30002`, GUARD-WORKORDERS.md, CLOSED): caught it before publishing,
+   re-derived with `abs()` matching `spentReceived()`'s convention, and recorded explicitly "not a
+   defect in the shipped code, which already used spentReceived() correctly throughout."
+
+The running-balance code (`spentReceived()`, `BankingTransactionsDesignView.tsx`) already reads
+`is_credit` (OR'd defensively with the sign as a redundant fallback, never the reverse) and has
+since 2026-09-07 — this is the same code + math I live-traced 313/313 self-consistent against the
+full transaction history earlier this session for the disputed account, before this new packet
+arrived. A migration flipping `amount_cents`'s sign or `is_credit` on these 313 real, correctly-
+encoded USMCA rows would not fix anything — it would corrupt 313 real transactions to match a
+wrong assumed convention (credit=positive), directly contradicting two dated in-repo findings that
+already settled this, plus a closed ticket where another coder already made and caught the same
+mistake.
+
+**The one thing I found that IS worth a note, not urgent:** company-wide (not USMCA), 108 rows —
+all `source='csv_import'` ("Relay deposit" manual card-deposit imports, TRANSP only) — have
+`is_credit=true` with a POSITIVE amount, i.e. csv_import's own native sign convention is the
+opposite of Plaid's. Also not a bug: `is_credit` is still the authoritative column and is set
+correctly for that source too; it's simply a second, differently-signed source coexisting with
+Plaid's, both correctly abstracted by `is_credit`. No fix needed unless something reads
+`amount_cents`'s sign directly for a mixed-source query, which I did not find.
+
+**REG-030 status: CLOSED — not a defect, already correctly handled, re-verified live.** No
+migration, no backfill, no new guard (the existing guard, `verify-bank-running-balance-uses-full-
+history.mjs`, already covers the real invariant). Declining to build the requested migration
+against a false premise; moving to REG-021 (legacy drawer → ParityDrawer migration) per the
+packet's stated fallback order.
