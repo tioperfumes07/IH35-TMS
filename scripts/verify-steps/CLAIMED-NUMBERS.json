@@ -8548,5 +8548,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-10",
     "purpose": "verify-banking-earliest-synced-balance-caveat"
+  },
+  "11185": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-10",
+    "purpose": "verify-factoring-report-date-filters"
   }
 }
