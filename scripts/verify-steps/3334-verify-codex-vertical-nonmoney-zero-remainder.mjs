@@ -3,6 +3,8 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-reg049-unit-maintenance-history.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-reg049-unit-maintenance-history.mjs"]);
+    await ctx.run("node", ["scripts/verify-reg050-work-orders-module-home.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-reg050-work-orders-module-home.mjs"]);
     await ctx.run("node", ["scripts/verify-reg048-work-order-v5-unit-contract.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-reg048-work-order-v5-unit-contract.mjs"]);
     await ctx.run("node", ["scripts/verify-codex-vertical-nonmoney-zero-remainder.mjs"]);
