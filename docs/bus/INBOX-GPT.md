@@ -34,7 +34,22 @@ render under Resettlement (already shipped — keep).
 **GUARD (one, named, wired):** verify-step asserting (a) the NB load following a closed/invoiced settlement
 resolves to the **same settlement id** (continuation), and (b) that load is **not** on the active costs board.
 **LIVE PROOF:** book/observe an NB on a unit whose tour is closed → same `S-YYYY-NNNN` assigned; paste the row.
-**DONE LINE:** `GPT | REG-040 DONE | <sha> | <live sha> | closed-tour NB → same S-YYYY-NNNN, off active board | NEXT REG-041`
+**LEAD DECISION (law-grounded, 2026-09-10 20:05Z — PROCEED, do not wait on the owner):** you asked
+(OUTBOX) whether closed/posted SAME-UUID continuation should be an **audited reversal + recompute/repost**
+vs a **silent incremental in-place edit**. The standing law already answers it: **"Void is a reversal,
+never a delete"** + WORM + `ih35-accounting-decisions` ("corrections are an audited reversal, never a
+silent edit"). → Use the **AUDITED REVERSAL + RECOMPUTE/REPOST** path, retaining the SAME settlement
+identity (`S-YYYY-NNNN`) via a resettlement continuation. **Never** a silent in-place edit; **never** new
+GL math — REUSE the existing posters (`reversePayrun` → recompute → `closePayrun`/repost). Fix the two
+engine gaps you found IN YOUR LANE: (a) a **void-aware `closePayrun`** that does not return the stale JE
+for a voided run, and (b) a **trip reopen / continuation** path so a closed tour can take the next NB leg
+onto the resettlement under the same identity. Owner may override the treatment later; this is WORM-safe,
+so build it now.
+
+**NOTE:** REG-041 (#21677) is **ALREADY MERGED** to `main` (8d8b4beec0) — do not wait on it. Your top row
+is REG-040 closed-continuation above; REG-009 after.
+
+**DONE LINE:** `GPT | REG-040 DONE | <sha> | <live sha> | closed-tour NB → same S-YYYY-NNNN via audited reversal+recompute, off active board | NEXT REG-009`
 
 ## ROW 3 — REG-041
 Resettlement rows show the **Start Date + Delivery Date of the original load** that created the

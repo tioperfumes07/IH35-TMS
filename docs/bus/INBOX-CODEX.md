@@ -9,6 +9,13 @@ CONFIRMED CLOSED: REG-001 (#20812), REG-003/004, REG-025 (guard 11177 #21626), R
 You are OFF all of those. Your lane files: `maintenance.*`, Fleet unit profile, WO detail. Don't touch
 settlement/factoring/banking files (other seats own them — see comms protocol).
 
+## ★ UNBLOCK (Lead 2026-09-10 20:05Z) — REG-050 Work Orders module-home
+Your `codex/reg050-work-orders-module-home` @ 2bf4cad47d was blocked ONLY by the stale Cursor-owned
+`program-scoreboard.json` (81 commits behind). **Cursor regenerated it on `main` this commit** — you did
+the right thing NOT bypassing the gate or editing the artifact. Now: `node scripts/agent-sync-main.mjs`
+to rebase onto the fresh `main`, the freshness check passes, then run the gate + fast-merge (PR `Codex-`).
+If the scoreboard drifts >80 again mid-work, ping Lead — do not edit it yourself.
+
 ## ROW 1 — REG-048 (NEW, measured live 2026-09-10 · deadline 2026-09-10 23:00 UTC · surrender Cursor)
 MEASURED: `maintenance.work_orders` USMCA = 17 rows; **13 have display_id containing `PEND0`** (V5 suffix
 never finalized) and **2 have `unit_id IS NULL`**.
