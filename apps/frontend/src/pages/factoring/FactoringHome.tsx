@@ -8,6 +8,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   deactivateFactoring,
   getFactoringChargebacksFees,
+  getFactoringFundsDue,
   getFactoringRecoursePipeline,
   getFactoringStatementsSettings,
   getFactoringSummary,
@@ -453,6 +454,15 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     enabled: Boolean(companyId),
   });
 
+  // FUNDS-DUE-01 (owner 2026-09-09): real query, own fetch (accounting.factoring_advances
+  // submitted-not-yet-advanced rows -- structurally cannot come from the same recourse-pipeline
+  // fetch every other tab reuses, since that view only carries already-advanced invoices).
+  const fundsDueQuery = useQuery({
+    queryKey: ["factoring", "funds-due", companyId],
+    queryFn: () => getFactoringFundsDue(companyId),
+    enabled: Boolean(companyId),
+  });
+
   // FAC-09a Aging Report — built on the same recourseQuery rows (no new fetch). Age = days since
   // factored_at (the closest real "when this invoice entered the factoring register" field this
   // data model has); Balance = invoice_amount (live-verified: sums to $151,740.00 across all 51
@@ -601,6 +611,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     if (requestedLoan) setSelectedLoanId(String(requestedLoan.id));
   }, [equipmentLoansQuery.data?.rows, loanIdFromUrl, selectedLoanId]);
   const invoices = recourseQuery.data?.invoices ?? [];
+  const fundsDueRows = fundsDueQuery.data?.invoices ?? [];
   const recourseTotals = useMemo(() => {
     return invoices.reduce(
       (acc, row) => {
@@ -919,12 +930,68 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             </Modal>
           )}
 
+      {/* FUNDS-DUE-01 (owner 2026-09-09, live-verified): "Funds Due" is real this pass -- invoices
+          submitted to the factor and not yet advanced (accounting.factoring_advances,
+          submitted_at set / advanced_at null). PROD-VERIFIED 2026-09-09: 51/51 live rows are
+          already 'advanced' -- zero rows currently match, which is an honest empty state (the
+          real portal shows the same "nothing due" once everything submitted has funded), never
+          fabricated. The moment a real submission is awaiting advance this table populates
+          automatically -- no further wiring required. */}
+      {tab === "funds_due" ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-funds-due-report">
+          <div className="mb-2 text-xs font-medium text-gray-900">Funds Due</div>
+          {fundsDueQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load funds due"
+              {...formatQueryErrorDetail(fundsDueQuery.error)}
+              onRetry={() => void fundsDueQuery.refetch()}
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <ParityTable
+                columns={[
+                  {
+                    key: "customer_name",
+                    label: "Debtor",
+                    sortable: true,
+                    render: (row: (typeof fundsDueRows)[number]) =>
+                      row.customer_id ? <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} /> : (row.customer_name ?? "—"),
+                  },
+                  {
+                    key: "display_id",
+                    label: "Invoice No",
+                    sortable: true,
+                    render: (row: (typeof fundsDueRows)[number]) =>
+                      row.invoice_id ? <EntityLink kind="invoice" id={row.invoice_id} label={row.display_id ?? row.invoice_id} /> : (row.display_id ?? "—"),
+                  },
+                  { key: "submitted_at", label: "Submitted", sortable: true, render: (row: (typeof fundsDueRows)[number]) => fmtDate(row.submitted_at) },
+                  { key: "invoice_total_cents", label: "Invoice Amount", sortable: true, cellClass: "text-right", render: (row: (typeof fundsDueRows)[number]) => fmtCurrency(row.invoice_total_cents / 100) },
+                  { key: "advance_amount_cents", label: "Expected Advance", sortable: true, cellClass: "text-right", render: (row: (typeof fundsDueRows)[number]) => fmtCurrency(row.advance_amount_cents / 100) },
+                ]}
+                rows={fundsDueRows}
+                rowKey={(row) => row.factoring_advance_id}
+                loading={fundsDueQuery.isLoading}
+                emptyText="No invoices currently awaiting advance -- everything submitted has already been funded."
+                storageKey="factoring-funds-due"
+                footerCells={{
+                  customer_name: `${fundsDueRows.length} invoice(s)`,
+                  advance_amount_cents: fmtCurrency(fundsDueRows.reduce((sum, row) => sum + Number(row.advance_amount_cents ?? 0), 0) / 100),
+                }}
+              />
+              <p className="mt-2 text-xs text-gray-500" data-testid="factoring-funds-due-footnote">
+                Invoices submitted to the factor but not yet advanced. Distinct from the other
+                tabs on this page, which only ever show invoices that have already been funded.
+              </p>
+            </div>
+          )}
+        </div>
+      ) : null}
+
       {/* FAC-09a 15-item real debtor-portal nav (owner 2026-09-08, screenshot-corrected). Aging
           is fully real this pass (built on the same recourse-pipeline data, no new backend
           query). The rest are honest, named, clickable stubs for this pass — never silently
           shipped as done; each says plainly what it is. Real builds continue as fast-follow PRs. */}
       {tab === "request_debtor_credit_check" ||
-      tab === "funds_due" ||
       tab === "debtor_receipts" ||
       tab === "loan_save" ||
       tab === "unapplied_cash" ||

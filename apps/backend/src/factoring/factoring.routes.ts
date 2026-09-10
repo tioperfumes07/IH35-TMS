@@ -216,6 +216,78 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
   },
   );
 
+  app.get(
+    "/api/v1/factoring/funds-due",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    const companyId = query.data.operating_company_id;
+
+    // FUNDS-DUE-01 (owner 2026-09-09, live-verified): "Funds Due" in the real Faro debtor portal
+    // is invoices already submitted to the factor but not yet advanced/funded -- distinct from
+    // views.factoring_recourse_at_risk (Aging/Purchase Report/Fees Paid/Payments to You's shared
+    // source), which is built only from ALREADY-advanced invoices (factored_at is non-null by
+    // construction there) and structurally cannot represent a pre-advance state. Queries
+    // accounting.factoring_advances directly (the same canonical table recourse-pipeline/
+    // chargebacks-fees resolve customer/load through via factoring_advance_id) for the one real
+    // distinguishing state: submitted_at set, advanced_at still null. PROD-VERIFIED 2026-09-09
+    // (Neon lucia bypass_rls, br-fancy-credit-akjnd07a): 51/51 live rows are status='advanced'
+    // with advanced_at populated, zero rows currently match this filter -- an honest empty state,
+    // not a missing feature; the moment a real submission is awaiting advance, this becomes
+    // non-empty automatically, no further wiring required.
+    const rows = await withCompanyScope(user.uuid, companyId, async (client) => {
+      const res = await client.query(
+        `
+            SELECT
+              fa.id AS factoring_advance_id,
+              fa.display_id,
+              fa.status,
+              fa.submitted_at,
+              fa.invoice_total_cents,
+              fa.advance_amount_cents,
+              fa.reserve_amount_cents,
+              fa.factor_fee_cents,
+              v.vendor_name AS active_factor_name,
+              inv.invoice_id,
+              inv.customer_id,
+              c.customer_name,
+              inv.load_id,
+              ${LOAD_COST_ROLLUP_SELECT}
+            FROM accounting.factoring_advances fa
+            LEFT JOIN mdata.vendors v
+              ON v.id = fa.factoring_company_vendor_id
+             AND v.operating_company_id = fa.operating_company_id
+            LEFT JOIN LATERAL (
+              SELECT i.id AS invoice_id, i.customer_id, i.source_load_id AS load_id
+              FROM accounting.invoices i
+              WHERE i.factoring_advance_id = fa.id
+                AND i.operating_company_id = fa.operating_company_id
+                AND i.status <> 'void'
+              ORDER BY i.created_at DESC
+              LIMIT 1
+            ) inv ON true
+            LEFT JOIN mdata.customers c
+              ON c.id = inv.customer_id
+             AND c.operating_company_id = fa.operating_company_id
+            ${loadCostRollupLateral("inv.load_id", "fa.operating_company_id")}
+            WHERE fa.operating_company_id = $1::uuid
+              AND fa.submitted_at IS NOT NULL
+              AND fa.advanced_at IS NULL
+            ORDER BY fa.submitted_at ASC
+            LIMIT 500
+          `,
+        [companyId]
+      );
+      return res.rows;
+    });
+
+    return { invoices: rows, total: rows.length };
+  },
+  );
+
   app.get("/api/v1/factoring/chargebacks-fees", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;

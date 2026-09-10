@@ -171,6 +171,31 @@ export function getFactoringRecoursePipeline(
   );
 }
 
+export type FactoringFundsDueRow = {
+  factoring_advance_id: string;
+  display_id: string | null;
+  status: string;
+  submitted_at: string;
+  invoice_total_cents: number;
+  advance_amount_cents: number;
+  reserve_amount_cents: number;
+  factor_fee_cents: number;
+  active_factor_name: string | null;
+  invoice_id: string | null;
+  customer_id: string | null;
+  customer_name: string | null;
+  load_id: string | null;
+} & LoadCostRollupFields;
+
+// FUNDS-DUE-01 (owner 2026-09-09): invoices submitted to the factor but not yet advanced --
+// distinct from getFactoringRecoursePipeline above, which is built only from ALREADY-advanced
+// invoices. See apps/backend/src/factoring/factoring.routes.ts for the real query.
+export function getFactoringFundsDue(companyId: string) {
+  return apiRequest<{ invoices: FactoringFundsDueRow[]; total: number }>(
+    `/api/v1/factoring/funds-due?${q(companyId)}`
+  );
+}
+
 export function getFactoringChargebacksFees(companyId: string, customerId?: string) {
   const params = new URLSearchParams({ operating_company_id: companyId });
   if (customerId) params.set("customer_id", customerId);

@@ -332,6 +332,36 @@ export function checkReserveReal(src) {
   return failures;
 }
 
+// FUNDS-DUE-01 (owner 2026-09-09): "Funds Due" (item 3 of the real 15-item nav) was still routed
+// through the generic honest-stub block. Now real: bound to a dedicated fundsDueQuery
+// (getFactoringFundsDue -> accounting.factoring_advances submitted-not-yet-advanced rows) --
+// deliberately its OWN fetch, not a reuse of recourseQuery, because that view only ever contains
+// already-advanced invoices and structurally cannot represent a pre-advance state.
+export function checkFundsDueReal(src) {
+  const failures = [];
+  const stubMatch = src.match(/tab === "request_debtor_credit_check"[\s\S]*?data-testid=\{`factoring-stub-\$\{tab\}`\}/);
+  if (stubMatch && /tab === "funds_due"\s*\|\|/.test(stubMatch[0])) {
+    failures.push(`${HOME}: Funds Due is still routed through the generic honest-stub block — must have its own real section (FUNDS-DUE-01).`);
+  }
+  const marker = 'tab === "funds_due" ?';
+  const idx = src.indexOf(marker);
+  if (idx === -1) {
+    failures.push(`${HOME}: could not find a dedicated Funds Due ("tab === \"funds_due\" ?") block.`);
+    return failures;
+  }
+  if (!/getFactoringFundsDue/.test(src)) {
+    failures.push(`${HOME}: Funds Due missing real binding — must call getFactoringFundsDue (own fetch, not a reuse of recourseQuery).`);
+  }
+  if (!/fundsDueQuery/.test(src)) {
+    failures.push(`${HOME}: Funds Due missing real binding — must be driven by a dedicated fundsDueQuery.`);
+  }
+  const section = src.slice(idx, idx + 200);
+  if (!section.includes("factoring-funds-due-report")) {
+    failures.push(`${HOME}: Funds Due missing required data-testid="factoring-funds-due-report".`);
+  }
+  return failures;
+}
+
 export function run() {
   const failures = [];
   const { ok, src, err } = read(HOME);
@@ -347,6 +377,7 @@ export function run() {
   failures.push(...checkPurchaseReportReal(src));
   failures.push(...checkReserveReal(src));
   failures.push(...checkChargebacksOverpaymentsReal(src));
+  failures.push(...checkFundsDueReal(src));
   return { ok: failures.length === 0, failures };
 }
 
@@ -381,10 +412,29 @@ if (process.argv.includes("--selftest")) {
   `;
   const stubBlock = `
       {tab === "request_debtor_credit_check" ||
-      tab === "funds_due" ||
       tab === "payments_to_you" ? (
         <div data-testid={\`factoring-stub-\${tab}\`}>stub</div>
       ) : null}
+  `;
+  const fundsDueBlock = `
+      {tab === "funds_due" ? (
+        <div data-testid="factoring-funds-due-report">
+          <ParityTable
+            columns={[
+              { key: "customer_name", label: "Debtor" },
+              { key: "display_id", label: "Invoice No" },
+              { key: "submitted_at", label: "Submitted" },
+              { key: "invoice_total_cents", label: "Invoice Amount" },
+              { key: "advance_amount_cents", label: "Expected Advance" },
+            ]}
+            rows={fundsDueRows}
+          />
+        </div>
+      ) : null}
+  `;
+  const fundsDueQueryDef = `
+const fundsDueQuery = useQuery({ queryFn: () => getFactoringFundsDue(companyId) });
+const fundsDueRows = fundsDueQuery.data?.invoices ?? [];
   `;
   const purchaseReportBlock = `
       {tab === "purchase_report" ? (
@@ -481,6 +531,8 @@ ${internalBlock}
 ] as const;
 Internal Tools
 ${stubBlock}
+${fundsDueQueryDef}
+${fundsDueBlock}
 ${feesPaidBlock}
 ${purchaseReportBlock}
 ${chargebacksOverpaymentsBlock}
@@ -534,8 +586,17 @@ ${accountSummaryBlock}
     "queryFn: () => Promise.resolve({ movements: [] }),",
   );
 
+  const badFundsDueStillStub = goodSrc.replace(
+    'tab === "payments_to_you" ? (',
+    'tab === "payments_to_you" ||\n      tab === "funds_due" ? (',
+  );
+  const badFundsDueMissingFetch = goodSrc.replace(
+    "const fundsDueQuery = useQuery({ queryFn: () => getFactoringFundsDue(companyId) });",
+    "const fundsDueQuery = useQuery({ queryFn: () => recourseQuery.data });",
+  );
+
   const checks = [
-    ["clean source passes", checkNavOrder(goodSrc).length === 0 && checkInternalToolsPreserved(goodSrc).length === 0 && checkAgingReal(goodSrc).length === 0 && checkAccountSummaryReal(goodSrc).length === 0 && checkFeesPaidReal(goodSrc).length === 0 && checkPurchaseReportReal(goodSrc).length === 0 && checkReserveReal(goodSrc).length === 0 && checkChargebacksOverpaymentsReal(goodSrc).length === 0],
+    ["clean source passes", checkNavOrder(goodSrc).length === 0 && checkInternalToolsPreserved(goodSrc).length === 0 && checkAgingReal(goodSrc).length === 0 && checkAccountSummaryReal(goodSrc).length === 0 && checkFeesPaidReal(goodSrc).length === 0 && checkPurchaseReportReal(goodSrc).length === 0 && checkReserveReal(goodSrc).length === 0 && checkChargebacksOverpaymentsReal(goodSrc).length === 0 && checkFundsDueReal(goodSrc).length === 0],
     ["wrong nav order fails", checkNavOrder(badWrongOrder).length > 0],
     ["deleted internal tab fails", checkInternalToolsPreserved(badDeletedInternal).length > 0],
     ["missing aging column fails", checkAgingReal(badAgingMissingColumn).length > 0],
@@ -550,6 +611,8 @@ ${accountSummaryBlock}
     ["chargebacks & overpayments fake binding fails", checkChargebacksOverpaymentsReal(badChargebacksOverpaymentsFakeBinding).length > 0],
     ["reserve still stub fails", checkReserveReal(badReserveStillStub).length > 0],
     ["reserve fake binding fails", checkReserveReal(badReserveFakeBinding).length > 0],
+    ["funds due still stub fails", checkFundsDueReal(badFundsDueStillStub).length > 0],
+    ["funds due missing fetch fails", checkFundsDueReal(badFundsDueMissingFetch).length > 0],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
