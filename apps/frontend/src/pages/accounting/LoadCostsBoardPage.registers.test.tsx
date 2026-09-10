@@ -246,4 +246,20 @@ describe("LoadCostsBoardPage — registers (LCB-REG)", () => {
     expect(screen.getByTestId("load-costs-tab-resettlement")).toHaveTextContent("2");
   });
 
+  it("REG-041 shows the original load start and delivery dates, not creation or tour dates", async () => {
+    apiRequestMock.mockImplementation(async () => ({ rows: [{ ...BOARD_ROW,
+      status: "invoiced", is_invoiced: true, pickup_date: "2026-08-21T12:00:00Z",
+      actual_delivery_at: "2026-08-24T12:00:00Z", created_at: "2026-09-09T12:00:00Z",
+    }], unmatched_bank_count: 0 }));
+    renderPage();
+    fireEvent.click(screen.getByTestId("load-costs-tab-resettlement"));
+    const load = await screen.findByRole("link", { name: "13508" });
+    const row = within(load.closest("tr")!);
+    expect(row.getByText("08/21/2026")).toBeInTheDocument();
+    expect(row.getByText("08/24/2026")).toBeInTheDocument();
+    expect(row.queryByText("09/09/2026")).not.toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: /Start Date/ })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: /Delivery Date/ })).toBeInTheDocument();
+  });
+
 });
