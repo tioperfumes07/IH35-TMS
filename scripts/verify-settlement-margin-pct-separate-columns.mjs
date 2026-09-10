@@ -78,7 +78,7 @@ if (process.argv.includes("--selftest")) {
     ["board drops pct testId", withField("board", (s) => s.replace(/tour-col-margin-pct/g, "gone"))],
     ["board drops pct key", withField("board", (s) => s.replace(/key: "tour_margin_pct"/g, 'key: "gone"'))],
     ["board drops pct render", withField("board", (s) => s.replace(/r\.margin_pct\.toFixed\(1\)\}%/g, '"x"}'))],
-    ["tab jams pct inline", withField("tab", (s) => s.replace(/\{money\(l\.margin_cents, currencyCode\)\}<span className="ldt-sub" data-testid="tour-leg-margin-pct">\{pct\(l\.margin_pct\)\}<\/span>/, '{money(l.margin_cents, currencyCode)} · {pct(l.margin_pct)}'))],
+    ["tab jams pct inline", withField("tab", (s) => s.replace('<span data-testid="tour-leg-margin-pct">{pct(l.margin_pct)}</span>', '<span data-testid="tour-leg-margin-pct">{money(l.margin_cents, currencyCode)} · {pct(l.margin_pct)}</span>'))],
     ["tab drops leg pct testid", withField("tab", (s) => s.replace(/tour-leg-margin-pct/g, "gone"))],
     ["tab drops totals pct testid", withField("tab", (s) => s.replace(/tour-totals-margin-pct/g, "gone"))],
     ["tab drops popup Margin % row", withField("tab", (s) => s.replace(/\["Margin %", pct\(leg\.margin_pct\)\]/g, ""))],

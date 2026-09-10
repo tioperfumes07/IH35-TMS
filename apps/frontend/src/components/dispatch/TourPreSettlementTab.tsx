@@ -5,6 +5,7 @@ import { closeTour, getTourReadout, getTourReadoutForLoad, type TourReadout } fr
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useToast } from "../Toast";
 import { EntityLink } from "../shared/EntityLink";
+import { ParityTable } from "../parity/ParityTable";
 import { formatMoneyCents } from "./constants";
 
 // LDT-5 · Pre-Settlement = the open TOUR this load is on (render § Pre-Settlement, owner 2026-09-05 23:06Z
@@ -67,17 +68,27 @@ export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId,
 
     {/* Per-leg readout — the same numbers the Costs footer and Settlement tab show */}
     <div className="ldt-card" data-testid="tour-legs">
-      <div className="ldt-rows ldt-rows-legs">
-        <div className="ldt-row head"><span>Leg</span><span>Load</span><span>Lane</span><span className="ldt-m">Revenue</span><span className="ldt-m">Costs</span><span className="ldt-m">Driver pay</span><span className="ldt-m">Margin</span></div>
-        {r.legs.map((l) => (
-          <div key={l.load_id} className={`ldt-row click${l.is_this_load ? " this" : ""}${l.is_cancelled ? " cancelled" : ""}`} role="button" tabIndex={0} data-testid="tour-leg" onClick={() => setPopup({ title: `Leg ${l.trip_type ?? ""} · load ${l.load_number}`, body: <LegPop leg={l} cur={currencyCode} /> })}>
-            <span>{l.trip_type ?? DASH}</span><span className="ldt-k"><EntityLink kind="load" id={l.load_id} label={l.load_number} /></span><span>{l.lane || DASH}<span className="ldt-sub">{[fmtDate(l.pickup_date), fmtDate(l.delivery_date)].filter(Boolean).join(" → ")}{l.pickup_date || l.delivery_date ? " · " : ""}{l.status}{l.is_delivered ? " · delivered" : ""}{l.is_cancelled ? " · excluded from the tour totals" : ""}</span></span>
-            <span className="ldt-m">{money(l.revenue_cents, currencyCode)}</span><span className="ldt-m">{money(l.costs_cents, currencyCode)}</span><span className="ldt-m">{money(l.driver_pay_cents, currencyCode)}</span><span className="ldt-m">{money(l.margin_cents, currencyCode)}<span className="ldt-sub" data-testid="tour-leg-margin-pct">{pct(l.margin_pct)}</span></span>
-          </div>
-        ))}
-        {!sb ? <div className="ldt-row"><span>SB</span><span className="ldt-k">{DASH}</span><span className="ldt-muted">awaiting return load to Laredo</span><span className="ldt-m">{DASH}</span><span className="ldt-m">{DASH}</span><span className="ldt-m">{DASH}</span><span className="ldt-m">{DASH}</span></div> : null}
-        <div className="ldt-row big" data-testid="tour-totals"><span>Tour so far</span><span /><span className="ldt-sub">{r.legs.length} leg{r.legs.length === 1 ? "" : "s"} · {miles(totals.miles_practical)} practical mi · real {miles(totals.miles_real)}</span><span className="ldt-m">{money(totals.revenue_cents, currencyCode)}</span><span className="ldt-m">{money(totals.costs_cents, currencyCode)}</span><span className="ldt-m">{money(totals.driver_pay_cents, currencyCode)}</span><span className="ldt-m">{money(totals.margin_cents, currencyCode)}<span className="ldt-sub" data-testid="tour-totals-margin-pct">{pct(totals.margin_pct)}</span></span></div>
-      </div>
+      <ParityTable rows={r.legs} rowKey={l => l.load_id} rowTestId={() => "tour-leg"}
+        onRowClick={l => setPopup({ title: `Leg ${l.trip_type ?? ""} · load ${l.load_number}`, body: <LegPop leg={l} cur={currencyCode} /> })}
+        columns={[
+          { key: "type", label: "Leg", sortable: true, sortValue: l => l.trip_type ?? "", render: l => l.trip_type ?? DASH },
+          { key: "load", label: "Load Number", sortable: true, sortValue: l => l.load_number, render: l => <EntityLink kind="load" id={l.load_id} label={l.load_number} /> },
+          { key: "lane", label: "Lane", sortable: true, sortValue: l => l.lane, render: l => l.lane || DASH },
+          { key: "pickup", label: "Pickup date", sortable: true, sortValue: l => l.pickup_date ?? "", render: l => fmtDate(l.pickup_date) || DASH },
+          { key: "delivery", label: "Delivery date", sortable: true, sortValue: l => l.delivery_date ?? "", render: l => fmtDate(l.delivery_date) || DASH },
+          { key: "status", label: "Status", sortable: true, sortValue: l => l.status, render: l => l.status },
+          { key: "excluded", label: "Excluded from totals", sortable: true, sortValue: l => Number(Boolean(l.is_cancelled)), render: l => l.is_cancelled ? "Yes" : "No" },
+          { key: "revenue", label: "Revenue", sortable: true, sortValue: l => l.revenue_cents, render: l => money(l.revenue_cents, currencyCode) },
+          { key: "costs", label: "Costs", sortable: true, sortValue: l => l.costs_cents, render: l => money(l.costs_cents, currencyCode) },
+          { key: "driver_pay", label: "Driver pay", sortable: true, sortValue: l => l.driver_pay_cents, render: l => money(l.driver_pay_cents, currencyCode) },
+          { key: "margin", label: "Margin", sortable: true, sortValue: l => l.margin_cents, render: l => money(l.margin_cents, currencyCode) },
+          { key: "margin_pct", label: "Margin %", sortable: true, sortValue: l => l.margin_pct ?? -Infinity, render: l => <span data-testid="tour-leg-margin-pct">{pct(l.margin_pct)}</span> },
+          { key: "practical", label: "Practical miles", sortable: true, sortValue: l => l.miles_practical ?? -Infinity, render: l => miles(l.miles_practical) },
+          { key: "real", label: "Real miles", sortable: true, sortValue: l => l.miles_real ?? -Infinity, render: l => miles(l.miles_real) },
+        ]}
+        footerCells={{ type: <span data-testid="tour-totals">Tour so far</span>, revenue: money(totals.revenue_cents, currencyCode), costs: money(totals.costs_cents, currencyCode), driver_pay: money(totals.driver_pay_cents, currencyCode), margin: money(totals.margin_cents, currencyCode), margin_pct: <span data-testid="tour-totals-margin-pct">{pct(totals.margin_pct)}</span>, practical: miles(totals.miles_practical), real: miles(totals.miles_real) }} />
+      {!sb ? <p className="ldt-muted">SB — awaiting return load to Laredo</p> : null}
+
     </div>
 
     <div className="ldt-grid2">

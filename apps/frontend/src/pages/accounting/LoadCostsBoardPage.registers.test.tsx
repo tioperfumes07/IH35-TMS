@@ -44,6 +44,7 @@ const getDownloadUrlMock = vi.fn<(...args: any[]) => Promise<{ presigned_url: st
 vi.mock("../../api/docs", () => ({ getDownloadUrl: (...args: unknown[]) => getDownloadUrlMock(...args) }));
 
 const BOARD_ROW = {
+  settlement_id: "settlement-42", settlement_display_id: "S-2026-0042",
   load_id: "load-1", load_number: "13508", status: "delivered", customer_name: "Acme", driver_name: "Pedro Lopez",
   unit_number: "T152", trailer_number: null, pickup_city: "SA", delivery_city: "DAL",
   pickup_date: "2026-09-01", scheduled_delivery_at: "2026-09-02T00:00:00Z", actual_delivery_at: "2026-09-02T00:00:00Z", created_at: "2026-09-01T00:00:00Z",
@@ -101,7 +102,9 @@ describe("LoadCostsBoardPage — registers (LCB-REG)", () => {
     });
     const table = screen.getByTestId("load-costs-register-broker_advances");
     expect(within(table).getByText("diesel")).toBeInTheDocument();
-    expect(within(table).getByText("Comchek · CK-9001")).toBeInTheDocument();
+    expect(within(table).getByText("Comchek").closest("td")).not.toHaveTextContent("CK-9001");
+    expect(within(table).getByText("CK-9001")).toBeInTheDocument();
+    expect(within(table).getByRole("link", {name:"S-2026-0042"})).toHaveAttribute("href", expect.stringContaining("settlement-42"));
     expect(within(table).getAllByText("$200.00").length).toBeGreaterThan(0); // row + footer total both show it (1 row)
     expect(within(table).getByText("Applied")).toBeInTheDocument();
     expect(within(table).getByText("13508")).toBeInTheDocument(); // load number resolved from the board's own rows
@@ -137,14 +140,14 @@ describe("LoadCostsBoardPage — registers (LCB-REG)", () => {
     expect(within(table).getByTestId("mock-receipt-attach")).toHaveTextContent("expense:exp-1");
   });
 
-  it("Driver pay shows the SET-RATE breakdown (loaded mi × rate, empty mi × rate, gross) from the real driver_bills field — the old .rows read left this register always empty", async () => {
+  it("Driver pay separates loaded miles, loaded rate, empty miles, empty rate, load and settlement from the real driver_bills field — the old .rows read left this register always empty", async () => {
     mockBoardRequest();
     listDriverBillsMock.mockResolvedValueOnce({
       total_count: 1,
       driver_bills: [{
         id: "db-1", bill_number: "DB-1", driver_id: "drv-1", driver_name: "Pedro Lopez", load_id: "load-1", load_number: "13508",
         miles_basis: "716.8", rate_per_mile_cents: 45, miles_deadhead: "222.0", rate_empty_per_mile_cents: 45,
-        gross_amount_cents: 42246, status: "pending", settled_in_settlement_id: null, settlement_display_id: null,
+        gross_amount_cents: 42246, status: "pending", settled_in_settlement_id: "settlement-42", settlement_display_id: "S-2026-0042",
         voided_at: null, created_at: "2026-09-01T00:00:00Z",
       }],
     });
@@ -156,8 +159,13 @@ describe("LoadCostsBoardPage — registers (LCB-REG)", () => {
       expect(table.textContent).toContain("716.8 mi");
     });
     const table = screen.getByTestId("load-costs-register-driver_pay");
-    // The loaded/empty cells are a fragment ("716.8 mi" + "×" + "$0.4500" as sibling text nodes,
-    // never merged into one element) so the cell's OWN combined textContent is asserted directly.
+    for (const label of ["Loaded miles", "Loaded rate", "Empty miles", "Empty rate", "Load Number", "Settlement/Tour"]) {
+      expect(within(table).getByRole("columnheader", { name: new RegExp(label, "i") })).toBeInTheDocument();
+    }
+    const loadedCell = within(table).getByText("716.8 mi").closest("td");
+    expect(loadedCell).not.toHaveTextContent("$0.4500");
+    expect(table.textContent).not.toContain("×");
+    expect(within(table).getByRole("link", { name: "S-2026-0042" })).toHaveAttribute("href", expect.stringContaining("settlement-42"));
     expect(table.textContent).toContain("716.8 mi");
     expect(table.textContent).toContain("222 mi");
     expect((table.textContent!.match(/\$0\.4500/g) ?? []).length).toBe(2); // loaded rate + empty rate, both $0.4500
@@ -192,4 +200,21 @@ describe("LoadCostsBoardPage — registers (LCB-REG)", () => {
     const table = screen.getByTestId("load-costs-register-fuel_advances");
     expect(within(table).getByText("Company fuel expense")).toBeInTheDocument();
   });
+  it("keeps a legacy expense source reference separate from its linked canonical settlement", async () => {
+    mockBoardRequest();
+    listExpensesMock.mockResolvedValueOnce({ rows: [{
+      id: "expense-source", expense_number: "E-42", transaction_date: "2026-09-01", total_amount_cents: 15000,
+      status: "posted", posting_status: "posted", memo: null, source_settlement_ref: "5795", merchant_address: "Laredo",
+      load_id: "load-1", load_number: "13508", vendor_name: "Vendor", category_account_name: "Fuel",
+    }] });
+    renderPage();
+    await openTab("load-costs-tab-expenses");
+    const source = await screen.findByText("5795");
+    const table = screen.getByTestId("load-costs-register-expenses");
+    const canonical = within(table).getByRole("link", {name:"S-2026-0042"});
+    expect(canonical).toHaveAttribute("href", expect.stringContaining("settlement-42"));
+    expect(canonical.closest("td")).not.toBe(source.closest("td"));
+    expect(within(table).getByRole("columnheader", {name:/Source settlement reference/i})).toBeInTheDocument();
+  });
+
 });

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built modules=settlements,accounting cols=connectivity task=REG-010-011 */
 /**
  * verify-load-costs-settlement-legs-columns — ROUND 16.1 (owner 2026-09-06 20:2xZ verbatim:
  * "I AM IN LOAD COSTS, SETTLEMENT. THE LEGS, WHAT IS THAT, THE COLUMNS NEED TO AUTO ADJUST, AND 8
@@ -14,10 +15,10 @@
  *   2. The Legs header explains itself (LEGS_HEADER_TITLE "Legs = the loads in this tour, in order…").
  *   3. ParityTable supports a per-column maxWidth (auto-fit ceiling) and a headerTitle tooltip — the
  *      mechanism that stops a column occupying the whole screen and lets the header explain itself.
- *   4. Both the Load-Costs register (LoadCostsBoardPage) and the /settlements register
- *      (SettlementsToursRegister) render the Legs column via TourLegsCell with minWidth 240 / maxWidth
- *      420 + the header tooltip, money cells whitespace-nowrap, compact mmmDd dates capped at 112, and
- *      the company-settlement empty state as a "not opened" pill.
+ *   4. REG-010/011 owner correction (2026-09-10): both registers use shared tourLoadColumns;
+ *      the first load number, first trip type and load count each have a separate column. A
+ *      summary never concatenates several loads; full leg rows remain in the expanded detail.
+ *      Existing money nowrap, compact date caps and honest company empty states remain required.
  *   5. The backend tour list (tour-readout.routes.ts listTours) projects a compact legs[] (load_id +
  *      load_number + trip_type) so each pill can be an EntityLink to the load.
  *
@@ -49,6 +50,18 @@ function analyze(src) {
     errors.push("LEGS_HEADER_TITLE must be exported and explain what a leg is (owner: 'WHAT IS THAT')");
   }
 
+  // Owner REG-010/011: retain links without mixing number, trip type and count in a cell.
+  const summary = cell.slice(cell.indexOf("export function tourLoadColumns"));
+  if (!/export function tourLoadColumns/.test(cell)) errors.push("shared tourLoadColumns is missing");
+  for (const label of ["Load Number", "Trip type", "Load count"]) {
+    if (!summary.includes(`label: "${label}"`)) errors.push(`summary missing separate ${label} column`);
+  }
+  if (!/headerTitle: "First load in this tour; expand the settlement to see every load"/.test(summary)) errors.push("summary must explain the first load and full detail");
+  if (!/render: r => r\.legs\?\.\[0\] \? <EntityLink kind="load" id=\{r\.legs\[0\]\.load_id\} label=\{r\.legs\[0\]\.load_number\}/.test(summary)) errors.push("summary must link exactly the first load using its canonical label");
+  if (/\.map\(|\.join\(/.test(summary)) errors.push("summary must not concatenate multiple load numbers/types in one cell");
+  if (!/render: r => r\.legs\?\.\[0\]\?\.trip_type \?\? DASH/.test(summary)) errors.push("trip type column must show the first load's type");
+  if (!/sortValue: r => r\.leg_count, render: r => r\.leg_count/.test(summary)) errors.push("load count must sort and render its own value");
+
   // 3. ParityTable maxWidth ceiling + headerTitle tooltip
   if (!/maxWidth\?\:\s*number/.test(parity)) errors.push("ParityColumn must declare an optional maxWidth (auto-fit ceiling)");
   if (!/column\.maxWidth/.test(parity)) errors.push("ParityTable auto-fit must honor column.maxWidth as the ceiling");
@@ -57,12 +70,8 @@ function analyze(src) {
 
   // 4. both registers wire it correctly
   for (const [label, s] of [["LoadCostsBoardPage", board], ["SettlementsToursRegister", setl]]) {
-    if (!/<TourLegsCell\b/.test(s)) errors.push(`${label} must render the Legs column via <TourLegsCell>`);
-    if (!/headerTitle:\s*LEGS_HEADER_TITLE/.test(s)) errors.push(`${label} Legs column must set headerTitle: LEGS_HEADER_TITLE`);
-    // Legs column capped 240–420 so it never occupies the whole screen.
-    if (!/key:\s*"legs"[\s\S]{0,200}?minWidth:\s*240[\s\S]{0,80}?maxWidth:\s*420/.test(s)) {
-      errors.push(`${label} Legs column must be capped minWidth 240 / maxWidth 420`);
-    }
+    if (!/\.\.\.tourLoadColumns\(/.test(s)) errors.push(`${label} must use the shared separate load/type/count columns`);
+    if (/<TourLegsCell\b/.test(s)) errors.push(`${label} must not restore the compound Legs summary cell`);
     // money cells never wrap.
     if (!/key:\s*"revenue"[\s\S]{0,160}?whitespace-nowrap text-right tabular-nums/.test(s)) {
       errors.push(`${label} money cells must be whitespace-nowrap (Revenue) so "$12,595.90" never wraps`);
@@ -110,12 +119,14 @@ if (process.argv.includes("--selftest")) {
     ["parity drops maxWidth type", withField("parity", (s) => s.replace(/maxWidth\?: number/g, "goneWidth?: number"))],
     ["parity drops maxWidth honor", withField("parity", (s) => s.replace(/column\.maxWidth/g, "column.gone"))],
     ["parity drops headerTitle render", withField("parity", (s) => s.replace(/title=\{column\.headerTitle\}/g, "data-x={column.headerTitle}"))],
-    ["board drops TourLegsCell", withField("board", (s) => s.replace(/<TourLegsCell\b/g, "<GoneCell"))],
-    ["board Legs uncapped", withField("board", (s) => s.replace(/minWidth: 240, maxWidth: 420/g, "minWidth: 240"))],
+    ["board drops separate columns", withField("board", (s) => s.replace(/\.\.\.tourLoadColumns\(/g, "...goneColumns("))],
+    ["summary restores multiple numbers", withField("cell", (s) => s + "\n// .map( multiple loads )")],
+    ["summary loses first-load link", withField("cell", (s) => s.replace(/id=\{r\.legs\[0\]\.load_id\}/g, "id={r.settlement_id}"))],
+    ["summary loses load count column", withField("cell", (s) => s.replace(/label: "Load count"/g, 'label: "Combined"'))],
     ["board money wraps", withField("board", (s) => s.replace(/key: "revenue", label: "Revenue", testId: "tour-col-revenue", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums"/g, 'key: "revenue", label: "Revenue", testId: "tour-col-revenue", sortable: true, cellClass: "text-right tabular-nums"'))],
     ["board dates uncapped", withField("board", (s) => s.replace(/maxWidth: 112/g, "maxWidth: 999"))],
     ["board company not-opened dropped", withField("board", (s) => s.replace(/not opened/g, "none"))],
-    ["setl drops TourLegsCell", withField("setl", (s) => s.replace(/<TourLegsCell\b/g, "<GoneCell"))],
+    ["setl drops separate columns", withField("setl", (s) => s.replace(/\.\.\.tourLoadColumns\(/g, "...goneColumns("))],
     ["setl money wraps", withField("setl", (s) => s.replace(/key: "revenue", label: "Revenue", testId: "setl-tour-col-revenue", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums"/g, 'key: "revenue", label: "Revenue", testId: "setl-tour-col-revenue", sortable: true, cellClass: "text-right tabular-nums"'))],
     ["backend drops legs projection", withField("backend", (s) => s.replace(/legs: live\.map\(\(l\) => \(\{ load_id: l\.load_id, load_number: l\.load_number, trip_type: l\.trip_type \}\)\),/g, ""))],
     ["backend drops legs type", withField("backend", (s) => s.replace(/legs: \{ load_id: string; load_number: string; trip_type: string \| null \}\[\];/g, ""))],

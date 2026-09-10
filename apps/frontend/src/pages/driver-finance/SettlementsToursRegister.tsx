@@ -11,7 +11,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { useToast } from "../../components/Toast";
 import { TourPreSettlementTab } from "../../components/dispatch/TourPreSettlementTab";
 import { TourSettlementTab } from "../../components/dispatch/TourSettlementTab";
-import { TourLegsCell, LEGS_HEADER_TITLE } from "../../components/dispatch/TourLegsCell";
+import { tourLoadColumns } from "../../components/dispatch/TourLegsCell";
 
 // SETL-MOD-01 (ROUND 9, owner "get to work on the real settlements module"): the SETTLEMENTS
 // module list reads the SAME readout as the Load-costs Pre-Settlement / Settlement tabs —
@@ -24,10 +24,10 @@ const fmt = (c: number) => money.format(c / 100);
 const DASH = "\u2014";
 
 const TOUR_COLUMNS = (state: "open" | "closed", companyId: string): ParityColumn<TourListRow>[] => [
-  { key: "tour", label: "Tour", testId: "setl-tour-col-id", sortable: true, className: "whitespace-nowrap", minWidth: 90, sortValue: r => r.display_id ?? "", render: r => <Link className="ldt-link font-semibold" style={{ display: "inline" }} to={`/driver-finance/settlements?settlement_id=${encodeURIComponent(r.settlement_id)}`}>{r.display_id ?? "Settlement"}</Link> },
+  { key: "tour", label: "Settlement/Tour", alwaysVisible: true, testId: "setl-tour-col-id", sortable: true, className: "whitespace-nowrap", minWidth: 90, sortValue: r => r.display_id ?? "", render: r => <Link className="ldt-link font-semibold" style={{ display: "inline" }} to={`/driver-finance/settlements?settlement_id=${encodeURIComponent(r.settlement_id)}`}>{r.display_id ?? "Settlement"}</Link> },
   { key: "driver", label: "Driver", testId: "setl-tour-col-driver", sortable: true, minWidth: 120, maxWidth: 200, cellClass: "whitespace-nowrap", sortValue: r => r.driver_name ?? "", render: r => <span className="block max-w-[200px] truncate" title={r.driver_name ?? ""}>{r.driver_name ?? DASH}</span> },
   { key: "unit", label: "Unit", testId: "setl-tour-col-unit", sortable: true, minWidth: 56, maxWidth: 64, className: "whitespace-nowrap", sortValue: r => r.unit_number ?? "", render: r => r.unit_number ?? DASH },
-  { key: "legs", label: "Legs", testId: "setl-tour-col-legs", sortable: true, minWidth: 240, maxWidth: 420, cellClass: "whitespace-nowrap overflow-hidden", headerTitle: LEGS_HEADER_TITLE, sortValue: r => r.leg_count, exportValue: r => (r.leg_count === 0 ? "" : `${r.leg_count} legs \u00b7 ${r.legs_label}`), render: r => <TourLegsCell legs={r.legs} legsLabel={r.legs_label} /> },
+  ...tourLoadColumns("setl-tour-col"),
   // NEW-10 (owner 2026-09-07): "date started" + "delivery date" of the ORIGINAL load that created the
   // (re)settlement. Distinct from the tour-level "Started" (trip-open) stamp below — these are the
   // original load's own first-pickup / last-delivery stop dates, tooltip-tagged with its load number.
@@ -42,9 +42,15 @@ const TOUR_COLUMNS = (state: "open" | "closed", companyId: string): ParityColumn
   // two clean, independently-sortable columns — money here, percentage in its own column below.
   { key: "margin", label: "Margin", testId: "setl-tour-col-margin", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.margin_cents, render: r => <span className={r.margin_cents < 0 ? "text-[#991B1B]" : undefined}>{fmt(r.margin_cents)}</span> },
   { key: "margin_pct", label: "Margin %", testId: "setl-tour-col-margin-pct", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 76, maxWidth: 100, sortValue: r => r.margin_pct ?? -Infinity, render: r => r.margin_pct == null ? DASH : <span className={r.margin_pct < 0 ? "text-[#991B1B]" : undefined}>{r.margin_pct.toFixed(1)}%</span> },
-  { key: "miles", label: "Miles practical \u00b7 real", testId: "setl-tour-col-miles", cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 120, maxWidth: 170, render: r => `${r.miles_practical.toLocaleString("en-US")} \u00b7 ${r.miles_real == null ? DASH : r.miles_real.toLocaleString("en-US")}` },
+  { key: "miles_practical", label: "Practical miles", testId: "setl-tour-col-miles_practical", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: r => r.miles_practical ?? -Infinity, render: r => r.miles_practical == null ? DASH : r.miles_practical.toLocaleString("en-US") },
+  { key: "miles_real", label: "Real miles", testId: "setl-tour-col-miles_real", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: r => r.miles_real ?? -Infinity, render: r => r.miles_real == null ? DASH : r.miles_real.toLocaleString("en-US") },
+  ...(state === "open" ? [
+    { key: "ready_ok", label: "Checks passed", testId: "setl-tour-col-checks-passed", sortable: true, sortValue: (r: TourListRow) => r.ready_ok, render: (r: TourListRow) => r.ready_ok } as ParityColumn<TourListRow>,
+    { key: "ready_total", label: "Checks required", testId: "setl-tour-col-checks-required", sortable: true, sortValue: (r: TourListRow) => r.ready_total, render: (r: TourListRow) => r.ready_total } as ParityColumn<TourListRow>,
+    { key: "close_blockers", label: "Open items", testId: "setl-tour-col-open-items", sortable: true, sortValue: (r: TourListRow) => r.close_blockers.join(", "), render: (r: TourListRow) => r.close_blockers.length ? <span className="flex flex-col">{r.close_blockers.map(item => <span key={item}>{item}</span>)}</span> : DASH } as ParityColumn<TourListRow>,
+  ] : []),
   ...(state === "open"
-    ? [{ key: "ready", label: "Ready to close", testId: "setl-tour-col-ready", sortable: true, minWidth: 120, maxWidth: 200, sortValue: (r: TourListRow) => r.ready_ok, render: (r: TourListRow) => <span className={`ldt-pill ${r.can_close ? "ok" : r.ready_ok === 0 ? "bad" : "warn"}`} title={r.close_blockers.join("\n")}>{r.can_close ? `Ready \u00b7 ${r.ready_ok}/${r.ready_total}` : `${r.ready_ok}/${r.ready_total} \u00b7 ${r.close_blockers[0] ?? "open items"}`}</span> } as ParityColumn<TourListRow>,
+    ? [{ key: "ready", label: "Ready to close", testId: "setl-tour-col-ready", sortable: true, minWidth: 120, maxWidth: 200, sortValue: (r: TourListRow) => r.ready_ok, render: (r: TourListRow) => <span className={`ldt-pill ${r.can_close ? "ok" : r.ready_ok === 0 ? "bad" : "warn"}`} title={r.close_blockers.join("\n")}>{r.can_close ? "Ready" : "Not ready"}</span> } as ParityColumn<TourListRow>,
        // SETL-POST (owner 2026-09-09, "the pre-settlement should be verified and click post … we are
        // missing that button, and that pre-settlement turns to a settlement"): a row-level Post action
        // right next to the verify pill so the operator never has to expand the tab to find it. It reuses

@@ -67,37 +67,31 @@ export function SettlementsTable({
         ),
       },
       {
-        // SETL-ATNUM — the driver + company settlements for a trip share ONE AlwaysTrack number
-        // (e.g. 5795). When source_document_ref carries that number it IS the settlement number the
-        // operator recognizes; the `S-{load}` display_id is only the internal auto-default fallback.
         key: "settlement_display_id",
-        label: "Settlement #",
+        label: "Settlement/Tour",
+        alwaysVisible: true,
         sortable: true,
-        sortValue: (row) => row.source_document_ref ?? entityLabel(row.display_id, row.id, "Settlement"),
+        sortValue: (row) => entityLabel(row.display_id, row.id, "Settlement"),
         render: (row) => (
           <EntityLinkOrTombstone
             kind="settlement"
             id={row.id}
-            name={row.source_document_ref ?? row.display_id}
+            name={row.display_id}
             noun="Settlement"
           />
         ),
       },
       {
-        key: "period",
-        label: "Period",
-        sortable: true,
-        sortValue: (row) => row.period_start ?? null,
-        // FAIL-SET1: these were rendered raw, so a settlement period read
-        // "2026-08-08T00:00:00.000Z → 2026-08-08T00:00:00.000Z" across three wrapped lines. The DB is
-        // correct — prod PROVE: `pg_typeof(period_start)` is `date`; the serializer widens it to a
-        // timestamp and the cell printed that. `formatDateUS` is the one display formatter and reads
-        // the calendar parts, so no timezone shift moves a settlement period across a day boundary.
-        render: (row) => (
-          <>
-            {formatDateUS(row.period_start)} → {formatDateUS(row.period_end)}
-          </>
-        ),
+        key: "source_document_ref", label: "Source reference", sortable: true,
+        sortValue: row => row.source_document_ref ?? "", render: row => row.source_document_ref ?? "—",
+      },
+      {
+        key: "period_start", label: "Period Begin", sortable: true,
+        sortValue: row => row.period_start ?? null, render: row => formatDateUS(row.period_start),
+      },
+      {
+        key: "period_end", label: "Period End", sortable: true,
+        sortValue: row => row.period_end ?? null, render: row => formatDateUS(row.period_end),
       },
       {
         // SETL-DATES (owner 2026-09-07): a settlement must always show when it opened and when it
@@ -118,34 +112,20 @@ export function SettlementsTable({
       },
       {
         key: "loads",
-        label: "Loads",
+        label: "Load Number",
+        alwaysVisible: true,
         sortable: true,
-        sortValue: (row) => Number(row.load_count ?? 0),
+        headerTitle: "First linked load; open the settlement to see every load",
+        sortValue: (row) => row.load_links?.[0]?.label ?? "",
         cellClass: "tabular-nums",
-        // SETTLEMENTS-LIST-TRUTH — a bare flex gap between adjacent load-number links reads as
-        // one run-on number ("1352513529"), not two loads. A visible separator between links
-        // (never between a link and nothing) makes the boundary unambiguous.
         render: (row) => {
-          const links = row.load_links ?? [];
-          if (links.length > 0) {
-            return (
-              <span className="flex flex-wrap items-center gap-1">
-                {links.map((link, i) => (
-                  <span key={link.id} className="flex items-center gap-1">
-                    {i > 0 ? <span className="text-gray-400">·</span> : null}
-                    <EntityLink
-                      kind="load"
-                      id={link.id}
-                      label={entityLabel(link.label, link.id, "Load")}
-                      className="tabular-nums text-slate-700 hover:underline"
-                    />
-                  </span>
-                ))}
-              </span>
-            );
-          }
-          return <>{Number(row.load_count ?? 0)}</>;
+          const link = row.load_links?.[0];
+          return link ? <EntityLink kind="load" id={link.id} label={entityLabel(link.label, link.id, "Load")} /> : "—";
         },
+      },
+      {
+        key: "load_count", label: "Load count", sortable: true,
+        sortValue: row => Number(row.load_count ?? 0), render: row => Number(row.load_count ?? 0),
       },
       {
         key: "gross",

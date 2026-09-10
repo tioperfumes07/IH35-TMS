@@ -75,7 +75,7 @@ describe("PreSettlementsPanel (DISP-S33)", () => {
     ] as SettlementListRow[];
 
     wrap(<PreSettlementsPanel rows={rows} loading={false} isError={false} />);
-    for (const header of ["Date", "Driver", "Load Number", "Settlement / Bill Number", "Amount", "Status"]) {
+    for (const header of ["Period Begin", "Period End", "Driver", "Load Number", "Settlement/Tour", "Amount", "Status"]) {
       expect(screen.getByRole("button", { name: new RegExp(`^${header}$`) })).toBeTruthy();
     }
 

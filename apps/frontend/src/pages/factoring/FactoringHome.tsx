@@ -1491,11 +1491,15 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   // entirely"): real field, already fetched (FactoringRecourseInvoice carries the
                   // same shared Load-Costs rollup lc_settlement_number RecoursePipelineTable
                   // already renders) — no new backend query, just never surfaced on this tab.
+                  { key: "load_number", label: "Load Number", sortable: true, alwaysVisible: true,
+                      sortValue: (row: (typeof purchaseReportRows)[number]) => row.lc_load_number ?? "",
+                      render: (row: (typeof purchaseReportRows)[number]) => row.load_id ? <EntityLink kind="load" id={row.load_id} label={row.lc_load_number ?? "—"} /> : row.lc_load_number ?? "—" },
                   {
                     key: "settlement_number",
-                    label: "Settlement #",
+                    label: "Settlement/Tour",
+                    alwaysVisible: true,
                     sortable: true,
-                    render: (row: (typeof purchaseReportRows)[number]) => row.lc_settlement_number || "—",
+                    render: (row: (typeof purchaseReportRows)[number]) => row.settlement_id ? <EntityLink kind="settlement" id={row.settlement_id} label={row.settlement_display_id ?? row.lc_settlement_number ?? "—"} /> : row.lc_settlement_number || "—",
                   },
                   // OWNER MEGA-REPORT 2026-09-09: "amount of the ORIGINAL invoice, then advance,
                   // then reserve, then fees — in that order, every tab." The 4 real dollar columns
@@ -1765,9 +1769,13 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                     // (settlement_id/settlement_display_id), falling back to the same
                     // lc_settlement_number text Purchase Report's identical addition uses when the
                     // advance has no linked settlement row yet -- no new backend query either way.
-                    {
+                    { key: "load_number", label: "Load Number", sortable: true, alwaysVisible: true,
+                      sortValue: (row: (typeof agingRows)[number]) => row.lc_load_number ?? "",
+                      render: (row: (typeof agingRows)[number]) => row.load_id ? <EntityLink kind="load" id={row.load_id} label={row.lc_load_number ?? "—"} /> : row.lc_load_number ?? "—" },
+                  {
                       key: "settlement_number",
-                      label: "Settlement #",
+                      label: "Settlement/Tour",
+                      alwaysVisible: true,
                       sortable: true,
                       render: (row: (typeof agingRows)[number]) =>
                         row.settlement_id ? (
