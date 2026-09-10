@@ -1297,3 +1297,34 @@ DONE LINE: CC-1 | REG-036 (BANK-F30027) FULLY CLOSED | PR #21649 merged 9287fefd
 Transactions, USMCA FREIGHT account, 12/08/2025 row shows the caveat + matching balance figure |
 Answers Lead's outstanding ask in the defect register for CC-2's running-balance query/output |
 NEXT: continue sweeping OWNER-FANOUT-2026-09-09.md for CC-1 items (REG-040/046/048/049/050).
+
+## CC-1 | REG-040 — status correction, live-verified: 3 of 4 symptoms already resolved, 1 genuine owner-decision gap (2026-09-10)
+
+Investigated REG-040 (Settlement assignment at creation + Load Costs settlement column + already-
+invoiced loads / re-settlement). Live-traced on Neon (`br-fancy-credit-akjnd07a`, bypass_rls=lucia):
+
+- **Settlement-at-creation:** already built + shipped this session as REG-008
+  (`linkLoadToPresettlementAtBookingInClientTx` wired into `book-load.service.ts`'s create
+  transaction, deferred-case fallback wired into all 4 post-booking assignment paths).
+- **"13577 not auto-assigned the same settlement":** does not reproduce — 13577's whole tour
+  (13569+13577) correctly shares one settlement; 13566's whole tour (8 loads) correctly shares a
+  different settlement. 13566 and 13577 are different tours/drivers — never expected to share.
+- **"13566/Mecor shows in pre-settlement instead of re-settlement":** does not reproduce — 13566's
+  tour is `trip_closed_at` SET (closed 2026-09-06), settlement status = closed, invoice status =
+  sent. The Pre-Settlement tab's own query excludes closed tours; a closed tour cannot show there.
+- **Load Costs settlement column:** already exists (`LoadCostsBoardPage.tsx`, `col-settlement`), just
+  `defaultHidden: true` per the locked 09-04 19-column default spec — a CC-3 visibility flip +
+  owner sign-off, not backend work.
+
+Corrected the register with full live evidence (`docs/bus/OWNER-FANOUT-2026-09-09.md` REG-040).
+
+**Genuine remaining gap, flagged as OWNER-DECISION GATE, not built blind:** there is no
+"re-settlement" concept anywhere in the codebase, and nothing links invoice status to tour-close
+state — an invoice can be sent while a tour is still open with zero reaction. Two real options
+(new third bucket for invoiced-but-open tours, vs. treating "invoiced" as an implicit tour-close
+trigger, which changes `trip_closed_at`'s existing human-confirmed-act semantics per SET-01) — I'll
+build whichever the owner picks once decided.
+
+DONE LINE: CC-1 | REG-040 status correction | live Neon trace, no code change (item mostly already
+resolved) | register + outbox updated | 1 point (re-settlement definition) left OPEN pending owner
+decision | NEXT: continuing OWNER-FANOUT-2026-09-09.md sweep (REG-046/048/049/050).

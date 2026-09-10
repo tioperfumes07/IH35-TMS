@@ -90,6 +90,43 @@ APD-25→10870? and APD-28→FB-56710? (VINs differ by 1 char — not guessed). 
   re-settlement; sibling loads auto-share the settlement.
 - **GUARD:** verify-step: new NB load ⇒ presettlement link exists at create; Load Costs row carries the
   settlement display id.
+- **STATUS UPDATE (CC-1, 2026-09-10, live-verified, Neon `br-fancy-credit-akjnd07a`):** three of the
+  four measured symptoms do not reproduce on current live data — most of this item is already built:
+  1. **Settlement assignment at creation — DONE, already shipped (REG-008 this session).**
+     `linkLoadToPresettlementAtBookingInClientTx` is wired into `book-load.service.ts`'s create
+     transaction (gated on driver+trip_type present at booking); a deferred case is picked up by
+     `linkLoadToPresettlementAfterAssignmentInClientTx`, wired into all 4 post-booking assignment
+     paths. Confirmed live: **both** 13566 and 13577 carry a non-null `presettlement_link_id`.
+  2. **"13577 not auto-assigned the same settlement" — does not reproduce.** Traced both tours live:
+     13566's tour (`00918f46-…`, 8 loads: 13471/13480/13565/13566/13492/13499/13503/13509) all share
+     settlement `6cd53f62-…`; 13577's tour (`4e78cfed-…`, 13569+13577) all share settlement
+     `68bfd169-…`. Every load in each tour has the correct shared settlement — sibling auto-share is
+     working. (13566 and 13577 are NOT siblings of each other — different tours/drivers — so they
+     were never expected to share one settlement with each other.)
+  3. **"13566/Mecor shows in pre-settlement instead of re-settlement" — does not reproduce.** Live:
+     13566's settlement `trip_closed_at = 2026-09-06T07:56:00Z` (closed), `driver_settlements.status
+     = 'closed'`, and it has a real sent invoice (`accounting.invoices.status='sent'`,
+     `source_load_id` = 13566). The Pre-Settlement tab's own query
+     (`pre-settlement.routes.ts`) filters `trip_closed_at IS NULL` — a closed tour cannot appear
+     there today. Whatever the owner saw, it isn't reproducible against current state (most likely
+     the tour closed in the ordinary course between the observation and now).
+  4. **Load Costs settlement-number column — already exists, just hidden by default.**
+     `LoadCostsBoardPage.tsx` has a real `Settlement #` column (`col-settlement`,
+     `r.settlement_display_id`, links to the settlement) wired to `load-costs-board.routes.ts`'s
+     `settlement_info` CTE — shipped in the 09-04-2026 locked 19-column default spec as
+     `defaultHidden: true` (opt-in via the column gear, not in the default view). If the ask is "show
+     it by default," that is a one-line CC-3 flip + needs owner sign-off (it's outside the locked
+     default set), not new backend build.
+  - **REMAINING — genuine, needs an OWNER DECISION, not a guess (per §0):** there is **no
+    "re-settlement" concept anywhere in the codebase** (grep: zero matches outside this doc's own
+    prose). Today a load only has two states — open tour (Pre-Settlement) or closed tour
+    (Settlement) — with **no link at all between invoice status and tour-close state**: an invoice
+    can be sent while a tour is still open, and nothing currently reacts to that. Two live options,
+    neither built without an owner ruling on what "re-settlement" should mean: **(a)** a new distinct
+    bucket/flag that an invoiced-but-still-open tour routes into (a third state alongside
+    open/closed), or **(b)** treat "invoiced" as an implicit auto-close trigger for the tour (changes
+    `trip_closed_at`'s existing meaning as a separate human-confirmed act — SET-01 spec). CC-1 will
+    build whichever the owner picks; not building either blind. Item stays OPEN on this one point.
 
 ## REG-041 — Re-settlement: show date-started + delivery-date of the ORIGINAL load that created it; fix incorrect pre-settlement data; margin & % must be SEPARATE columns  ·  CC-3 / Cursor
 - **MEASURED (owner, live):** re-settlement/pre-settlement omits the originating load's start+delivery
