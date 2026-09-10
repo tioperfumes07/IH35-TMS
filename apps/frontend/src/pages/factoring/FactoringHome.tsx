@@ -112,6 +112,12 @@ function fmtCurrency(value: unknown) {
   return currency.format(Number(value ?? 0));
 }
 
+// REG-049: shared From/To DatePicker label class. text-xs (the locked scale's semantic 12px
+// token) rather than an arbitrary-bracket size -- verify-ui-design-system-ratchet.mjs is
+// zero-tolerance on NET-NEW raw bracket font-size literals, and text-xs/sm/base/lg/xl/2xl/3xl are
+// the scale's own named exemptions (see that guard's own header comment).
+const DATE_FILTER_LABEL_CLASS = "flex flex-col gap-1 text-xs text-slate-600";
+
 function fmtDate(value: unknown) {
   if (!value) return "—";
   return formatDateUS(value);
@@ -330,6 +336,10 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   const vendorIdFromUrl = searchParams.get("vendor_id")?.trim() ?? "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const loanIdFromUrl = searchParams.get("loan_id")?.trim() ?? "";
+  // REG-049 (owner fan-out 2026-09-09/10, "QBO filters (date etc.) on ALL"): a date range,
+  // same URL-deep-link/staged-filter convention as customer_id/load_id above.
+  const dateFromFromUrl = searchParams.get("date_from")?.trim() ?? "";
+  const dateToFromUrl = searchParams.get("date_to")?.trim() ?? "";
 
   // BANNER-MERGE-DEEPLINK-DROPS-CONTEXT — the Duplicate factoring vendors banner
   // (DuplicateVendorsBanner.tsx) resolves real from/to vendor ids+names via its own scan and used
@@ -375,6 +385,8 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     loadId: "",
     vendorId: "",
     driverId: "",
+    dateFrom: "",
+    dateTo: "",
   };
 
   function patchListSearchParam(next: {
@@ -382,13 +394,17 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     loadId: string;
     vendorId: string;
     driverId: string;
+    dateFrom: string;
+    dateTo: string;
   }) {
     const p = new URLSearchParams(searchParams);
-    const pairs: Array<["customer_id" | "load_id" | "vendor_id" | "driver_id", string]> = [
+    const pairs: Array<["customer_id" | "load_id" | "vendor_id" | "driver_id" | "date_from" | "date_to", string]> = [
       ["customer_id", next.customerId],
       ["load_id", next.loadId],
       ["vendor_id", next.vendorId],
       ["driver_id", next.driverId],
+      ["date_from", next.dateFrom],
+      ["date_to", next.dateTo],
     ];
     for (const [key, value] of pairs) {
       if (value) p.set(key, value);
@@ -403,6 +419,8 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     loadId: loadIdFromUrl,
     vendorId: vendorIdFromUrl,
     driverId: driverIdFromUrl,
+    dateFrom: dateFromFromUrl,
+    dateTo: dateToFromUrl,
   }));
   const staged = useStagedListFilters({
     applied,
@@ -421,14 +439,68 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       loadId: loadIdFromUrl,
       vendorId: vendorIdFromUrl,
       driverId: driverIdFromUrl,
+      dateFrom: dateFromFromUrl,
+      dateTo: dateToFromUrl,
     }));
-  }, [customerIdFromUrl, loadIdFromUrl, vendorIdFromUrl, driverIdFromUrl]);
+  }, [customerIdFromUrl, loadIdFromUrl, vendorIdFromUrl, driverIdFromUrl, dateFromFromUrl, dateToFromUrl]);
 
   // Sibling guards (verify-factoring-recourse-chargebacks-reverse-section) pin deepLink* names.
   const deepLinkCustomerId = applied.customerId || null;
   const deepLinkLoadId = applied.loadId || null;
   const deepLinkVendorId = applied.vendorId || null;
   const deepLinkDriverId = applied.driverId || null;
+  const deepLinkDateFrom = applied.dateFrom || null;
+  const deepLinkDateTo = applied.dateTo || null;
+
+  // REG-049 (owner fan-out 2026-09-09/10, "QBO filters (date etc.) on ALL"): Aging, Purchase
+  // Report, Payments to You, Chargebacks & Overpayments, and Funds Due all read the SAME
+  // recourseQuery/feesQuery/fundsDueQuery rows the date range above already narrows (see those
+  // queries' queryKey/queryFn), but had no filterBar of their own at all -- an operator landing
+  // directly on any of those five tabs had no way to set or even see the date range. One shared
+  // render helper (not a separate component -- stays a closure over this page's own
+  // applied/staged/filterDraft state, same as every other CollapsedListFilters consumer on this
+  // page) keeps five tabs' worth of "From date"/"To date" controls from drifting out of sync with
+  // each other or with the Recourse Pipeline tab's own fuller filterBar above.
+  function dateRangeOnlyFilterBar(testIdPrefix: string) {
+    return (
+      <CollapsedListFilters
+        activeFilterCount={[applied.dateFrom, applied.dateTo].filter(Boolean).length}
+        onApply={staged.apply}
+        onCancel={staged.cancel}
+        onReset={() => {
+          staged.cancel();
+          setApplied(EMPTY_FILTERS);
+          patchListSearchParam(EMPTY_FILTERS);
+        }}
+        applyDisabled={!staged.dirty}
+        testIdPrefix={testIdPrefix}
+        applyTestId={`${testIdPrefix}-filter-apply`}
+        cancelTestId={`${testIdPrefix}-filter-cancel`}
+        resetTestId={`${testIdPrefix}-filter-reset`}
+      >
+        <div className="flex flex-wrap items-end gap-3">
+          <label className={DATE_FILTER_LABEL_CLASS}>
+            From date
+            <DatePicker
+              value={filterDraft.dateFrom}
+              onChange={(next) => staged.setDraft((d) => ({ ...d, dateFrom: next }))}
+              className="h-8"
+              data-testid={`${testIdPrefix}-filter-date-from`}
+            />
+          </label>
+          <label className={DATE_FILTER_LABEL_CLASS}>
+            To date
+            <DatePicker
+              value={filterDraft.dateTo}
+              onChange={(next) => staged.setDraft((d) => ({ ...d, dateTo: next }))}
+              className="h-8"
+              data-testid={`${testIdPrefix}-filter-date-to`}
+            />
+          </label>
+        </div>
+      </CollapsedListFilters>
+    );
+  }
 
   // NEW-20/NEW-26 (2026-09-07): setCustomerFilter/setLoadFilter/setVendorFilter/setDriverFilter
   // used to wrap staged.setDraft for each tab's own Customer/Load/Vendor/Driver pickers; every
@@ -440,17 +512,23 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   // functions removed as dead code once their last call site moved to the inline form.
 
   const recourseQuery = useQuery({
-    queryKey: ["factoring", "recourse", companyId, deepLinkCustomerId, deepLinkLoadId],
+    queryKey: ["factoring", "recourse", companyId, deepLinkCustomerId, deepLinkLoadId, deepLinkDateFrom, deepLinkDateTo],
     queryFn: () =>
       getFactoringRecoursePipeline(companyId, 200, {
         customer_id: deepLinkCustomerId ?? undefined,
         load_id: deepLinkLoadId ?? undefined,
+        date_from: deepLinkDateFrom ?? undefined,
+        date_to: deepLinkDateTo ?? undefined,
       }),
     enabled: Boolean(companyId),
   });
   const feesQuery = useQuery({
-    queryKey: ["factoring", "chargebacks-fees", companyId, deepLinkCustomerId],
-    queryFn: () => getFactoringChargebacksFees(companyId, deepLinkCustomerId ?? undefined),
+    queryKey: ["factoring", "chargebacks-fees", companyId, deepLinkCustomerId, deepLinkDateFrom, deepLinkDateTo],
+    queryFn: () =>
+      getFactoringChargebacksFees(companyId, deepLinkCustomerId ?? undefined, {
+        date_from: deepLinkDateFrom ?? undefined,
+        date_to: deepLinkDateTo ?? undefined,
+      }),
     enabled: Boolean(companyId),
   });
 
@@ -458,8 +536,12 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   // submitted-not-yet-advanced rows -- structurally cannot come from the same recourse-pipeline
   // fetch every other tab reuses, since that view only carries already-advanced invoices).
   const fundsDueQuery = useQuery({
-    queryKey: ["factoring", "funds-due", companyId],
-    queryFn: () => getFactoringFundsDue(companyId),
+    queryKey: ["factoring", "funds-due", companyId, deepLinkDateFrom, deepLinkDateTo],
+    queryFn: () =>
+      getFactoringFundsDue(companyId, {
+        date_from: deepLinkDateFrom ?? undefined,
+        date_to: deepLinkDateTo ?? undefined,
+      }),
     enabled: Boolean(companyId),
   });
 
@@ -940,6 +1022,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       {tab === "funds_due" ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-funds-due-report">
           <div className="mb-2 text-xs font-medium text-gray-900">Funds Due</div>
+          <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-funds-due")}</div>
           {fundsDueQuery.isError ? (
             <ListErrorState
               title="Couldn't load funds due"
@@ -1112,6 +1195,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             </div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-payments-to-you")}</div>
             {recourseQuery.isError ? (
               <ListErrorState
                 title="Couldn't load payments"
@@ -1190,6 +1274,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             </div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-chargebacks-overpayments")}</div>
             {feesQuery.isError ? (
               <ListErrorState
                 title="Couldn't load chargebacks & overpayments"
@@ -1371,9 +1456,12 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             <div className="text-xs font-medium text-gray-900">Purchase Report</div>
             <div className="text-xs text-gray-500">
               "Display Fee Detail" / "Include Non-Purchased Invoices" / "Filter by Debtor" are not
-              wired this pass — every invoice in the register is shown.
+              wired this pass — every invoice in the register is shown. (A Debtor/Load filter can
+              still be set from the Recourse Pipeline tab's own filterBar — it narrows this report
+              too, since both share the same underlying query.)
             </div>
           </div>
+          <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-purchase-report")}</div>
           {recourseQuery.isError ? (
             <ListErrorState
               title="Couldn't load purchase report"
@@ -1636,6 +1724,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             </div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-aging")}</div>
             {recourseQuery.isError ? (
               <ListErrorState
                 title="Couldn't load aging report"
@@ -1747,7 +1836,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 // search/range/gear, in the one bordered shell) instead of two full-width
                 // EntityPicker boxes floating in a separate outer div above it.
                 <CollapsedListFilters
-                  activeFilterCount={[applied.customerId, applied.loadId].filter(Boolean).length}
+                  activeFilterCount={[applied.customerId, applied.loadId, applied.dateFrom, applied.dateTo].filter(Boolean).length}
                   onApply={staged.apply}
                   onCancel={staged.cancel}
                   onReset={() => {
@@ -1786,6 +1875,28 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                         placeholder="All loads"
                         className="mt-1"
                         dataTestId="factoring-home-filter-load"
+                      />
+                    </label>
+                    {/* REG-049: this date range drives recourseQuery/feesQuery/fundsDueQuery
+                        together (one shared `applied` filter state), so it also narrows Aging,
+                        Purchase Report, Payments to You, Chargebacks & Overpayments, and Funds
+                        Due — every REG-046 report tab, not just this one. */}
+                    <label className={DATE_FILTER_LABEL_CLASS}>
+                      From date
+                      <DatePicker
+                        value={filterDraft.dateFrom}
+                        onChange={(next) => staged.setDraft((d) => ({ ...d, dateFrom: next }))}
+                        className="h-8"
+                        data-testid="factoring-home-filter-date-from"
+                      />
+                    </label>
+                    <label className={DATE_FILTER_LABEL_CLASS}>
+                      To date
+                      <DatePicker
+                        value={filterDraft.dateTo}
+                        onChange={(next) => staged.setDraft((d) => ({ ...d, dateTo: next }))}
+                        className="h-8"
+                        data-testid="factoring-home-filter-date-to"
                       />
                     </label>
                   </div>
@@ -1834,7 +1945,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   // NEW-20 — see the identical Recourse Pipeline filterBar above for the full
                   // rationale (CollapsedListFilters, the shared Accounting-module chrome).
                   <CollapsedListFilters
-                    activeFilterCount={applied.customerId ? 1 : 0}
+                    activeFilterCount={[applied.customerId, applied.dateFrom, applied.dateTo].filter(Boolean).length}
                     onApply={staged.apply}
                     onCancel={staged.cancel}
                     onReset={() => {
@@ -1859,6 +1970,24 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                         placeholder="All customers"
                         className="mt-1"
                         dataTestId="factoring-home-chargebacks-filter-customer"
+                      />
+                    </label>
+                    <label className={DATE_FILTER_LABEL_CLASS}>
+                      From date
+                      <DatePicker
+                        value={filterDraft.dateFrom}
+                        onChange={(next) => staged.setDraft((d) => ({ ...d, dateFrom: next }))}
+                        className="h-8"
+                        data-testid="factoring-home-chargebacks-filter-date-from"
+                      />
+                    </label>
+                    <label className={DATE_FILTER_LABEL_CLASS}>
+                      To date
+                      <DatePicker
+                        value={filterDraft.dateTo}
+                        onChange={(next) => staged.setDraft((d) => ({ ...d, dateTo: next }))}
+                        className="h-8"
+                        data-testid="factoring-home-chargebacks-filter-date-to"
                       />
                     </label>
                   </CollapsedListFilters>
