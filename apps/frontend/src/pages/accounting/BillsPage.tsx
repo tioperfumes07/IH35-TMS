@@ -19,6 +19,7 @@ import { BillAllocationPanel } from "../../components/allocation";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { ReferenceSelect, type ReferenceOption } from "../../components/parity/ReferenceSelect";
 import { vendorFilterReferenceOptions } from "../../components/parity/referenceOptionLabels";
 import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";
@@ -86,6 +87,21 @@ function parseBillCategory(raw: string | null): BillListCategory | "" {
 export function billTypeForCategory(category: BillListCategory | ""): BillListCategory | "vendor" {
   if (category) return category;
   return "vendor";
+}
+
+// REG-016 (owner 2026-09-10): the Type filter was a single-select <select>, forcing a re-query per
+// value to see vendor AND driver bills together. The wire-level query param
+// (bill_type: "all" | "vendor_bill" | "driver_bill") is unchanged -- listBillRegister already
+// returns the union for "all" -- this is purely a UI-boundary adapter to the app's canonical
+// MultiSelectDropdown (components/forms/MultiSelectDropdown.tsx), same component
+// AuditHistoryTab.tsx already uses for its own naturally-multi-valued filters. Both checked (or
+// neither) means "all"; exactly one checked narrows to that type -- selecting neither resets to
+// "all" rather than a confusing empty result, matching the dropdown's own "0 selected = All" summary.
+function billTypesToSelected(billType: "all" | "vendor_bill" | "driver_bill"): string[] {
+  return billType === "all" ? ["vendor_bill", "driver_bill"] : [billType];
+}
+function selectedToBillType(selected: string[]): "all" | "vendor_bill" | "driver_bill" {
+  return selected.length === 1 && (selected[0] === "vendor_bill" || selected[0] === "driver_bill") ? selected[0] : "all";
 }
 
 function billMatchesCategory(bill: VendorBill, category: BillListCategory): boolean {
@@ -789,16 +805,17 @@ export function BillsPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="text-gray-600">Type:</span>
-          <SelectCombobox
-            className="rounded-sm border border-gray-300 px-2 py-1"
-            value={staged.draft.billType}
-            onChange={(event) => staged.setDraft({ ...staged.draft, billType: event.target.value as typeof billType })}
+          <MultiSelectDropdown
+            label="Type"
+            options={[
+              { value: "vendor_bill", label: "Vendor bill" },
+              { value: "driver_bill", label: "Driver bill" },
+            ]}
+            selected={billTypesToSelected(staged.draft.billType)}
+            onChange={(next) => staged.setDraft({ ...staged.draft, billType: selectedToBillType(next) })}
+            allLabel="All bill types"
             data-testid="bills-type-filter"
-          >
-            <option value="all">All bill types</option>
-            <option value="vendor_bill">Vendor bill</option>
-            <option value="driver_bill">Driver bill</option>
-          </SelectCombobox>
+          />
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-xs">
