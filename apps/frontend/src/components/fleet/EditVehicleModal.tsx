@@ -4,7 +4,7 @@ import { useToast } from "../../components/Toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { patchUnit } from "../../api/mdata";
-import { Modal } from "../Modal";
+import { ParityDrawer } from "../parity/ParityDrawer";
 import { Button } from "../Button";
 import { FieldSet } from "../forms/FieldSet";
 import { FormField } from "../forms/FormField";
@@ -367,19 +367,28 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
     : String(unit?.unit_number ?? rowPreview?.unit_number ?? "Unit");
 
   return (
-    <Modal
+    <ParityDrawer
       open={open}
       onClose={resetAndClose}
       title={`Edit Vehicle · ${unitLabel}`}
+      size="wide"
       confirmDiscardOnClose
       isDirty={dirtyCount > 0}
       onRegisterAttemptClose={(attemptClose) => {
         attemptCloseRef.current = attemptClose;
       }}
-      modalKind="edit-vehicle"
-      sizePreset="lg"
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button variant="secondary" onClick={() => attemptCloseRef.current()} type="button">Cancel</Button>
+          <Button variant="primary" type="button" disabled={saveMutation.isPending || profileQuery.isError || companiesQuery.isError || !unitId} onClick={() => {
+            if (Object.keys(patchPayload).length === 0) { resetAndClose(); return; }
+            if (!unitId) return;
+            saveMutation.mutate({ unitId, companyId: operatingCompanyId, generation: actionGenerationRef.current, patch: { ...patchPayload } });
+          }}>Save Changes ({dirtyCount} fields modified)</Button>
+        </div>
+      }
     >
-      <div className="flex min-h-96 flex-col gap-3">
+      <div className="flex flex-col gap-3" data-testid="fleet-edit-vehicle-drawer">
         <div className="flex flex-wrap gap-1 border-b border-gray-200 pb-2">
           {visibleTabs.map((tab) => (
             <button
@@ -442,25 +451,8 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
           </FieldSet>
         ) : null}
 
-        <div className="mt-auto flex justify-end gap-2 border-t border-gray-200 pt-3">
-          <Button variant="secondary" onClick={() => attemptCloseRef.current()} type="button">Cancel</Button>
-          <Button
-            variant="primary"
-            type="button"
-            disabled={saveMutation.isPending || profileQuery.isError || companiesQuery.isError || !unitId}
-            onClick={() => {
-              if (Object.keys(patchPayload).length === 0) {
-                resetAndClose();
-                return;
-              }
-              saveMutation.mutate({ unitId: unitId!, companyId: operatingCompanyId, generation: actionGenerationRef.current, patch: { ...patchPayload } });
-            }}
-          >
-            Save Changes ({dirtyCount} fields modified)
-          </Button>
-        </div>
       </div>
-    </Modal>
+    </ParityDrawer>
   );
 }
 
