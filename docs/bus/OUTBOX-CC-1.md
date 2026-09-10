@@ -1151,3 +1151,26 @@ found on rebase it had already landed on `main` — same patch-id, byte-identica
 of Cursor's PR #21605. Verified live before claiming it rather than assuming: `git rebase
 origin/main` reported "patch contents already upstream" and a diff against `origin/main` came back
 empty. No duplicate PR opened. Sweeping for the next genuine money-surface gap now.
+
+## CC-1 | P0 DONE — stale migration checksum override was blocking EVERY backend deploy (2026-09-10)
+
+Found while re-triggering the backend deploy needed to make REG-008 live: Render deploy
+`dep-dagvltp42hec73e4t3jg` failed at the FIRST step of pre-deploy (`npm run db:migrate`) with
+"Migration 202613320000_go01_usmca_insurance_acv_trailers_drivers.sql was modified after apply" —
+a P0-class outage identical in shape to the 2026-07-23 and 2026-09-08 incidents this exact override
+mechanism exists to prevent. Root cause: an unrelated PR (#21604, Fleet-profiles UI) incidentally
+touched the migration file and added a comment-only documentation clarification, changing its disk
+checksum with no override update. Every backend deploy since that PR — mine and anyone else's —
+was blocked, silently, with a green health endpoint on a stale sha (the exact "nothing looked
+broken from the outside" pattern the guard's own header comment warns about).
+
+Fixed by updating the existing checksum-override entry in place (never a duplicate — the guard
+requires exactly one per filename) after verifying via `git diff` that the only change between the
+two disk states is that comment block — zero SQL/DDL/DML difference, so replaying it on prod
+remains the same guaranteed no-op the original override already established.
+
+DONE LINE: CC-1 | P0-DEPLOY-UNBLOCK DONE | PR #21609, merged `b199e5a8` | live: healthz
+`git_sha=b199e5a89c...` confirmed on 5 consecutive checks post-rollout, `verify-migration-checksum-
+overrides-match-disk.mjs` exit 0 (52/52) + `--selftest` exit 0 (6/6) | this also unblocked
+REG-008 (#21606) reaching prod — its deploy is now live too | NEXT: sweeping for the next genuine
+money-surface gap.
