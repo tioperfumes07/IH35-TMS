@@ -1,6 +1,6 @@
 {
  "date": "2026-09-10",
- "generated_at_iso": "2026-09-10T16:31:47.904Z",
+ "generated_at_iso": "2026-09-10T20:58:11.535Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 30,
@@ -13727,6 +13727,222 @@
  ],
  "merged_prs": [
   {
+   "number": 21695,
+   "title": "Codex- REG-050 split Work Orders estimated and actual costs",
+   "mergedAt": "2026-09-10T20:56:38Z",
+   "branch": "codex/reg050-one-datum-columns"
+  },
+  {
+   "number": 21693,
+   "title": "Devin-A docs(bus): OUTBOX REG-047 DONE line",
+   "mergedAt": "2026-09-10T20:56:15Z",
+   "branch": "cursor/devin-a-outbox-reg047-done"
+  },
+  {
+   "number": 21692,
+   "title": "GPT-REG-040 continue closed settlements under the same identity",
+   "mergedAt": "2026-09-10T20:51:57Z",
+   "branch": "codex/gpt-reg040-closed-continuation"
+  },
+  {
+   "number": 21691,
+   "title": "Cursor- REG-007: smart-back on the last 4 navigate(-1) sites",
+   "mergedAt": "2026-09-10T20:50:43Z",
+   "branch": "cursor/reg007-smart-back-last-4-sites"
+  },
+  {
+   "number": 21690,
+   "title": "Devin-A REG-047: Faro import summary/detail + date-range + reconciliation",
+   "mergedAt": "2026-09-10T20:41:35Z",
+   "branch": "cursor/reg-047-faro-import"
+  },
+  {
+   "number": 21689,
+   "title": "Codex- REG-050 exclude voided work orders from operator console",
+   "mergedAt": "2026-09-10T20:38:48Z",
+   "branch": "codex/reg050-voided-operator-list"
+  },
+  {
+   "number": 21688,
+   "title": "Cursor- REG-024: Settlement tab renders AlwaysTrack Company Settlement sections (customer charges · fuel+expenses · revenue waterfall)",
+   "mergedAt": "2026-09-10T20:37:40Z",
+   "branch": "cursor/reg024-settlement-alwaystrack-parity"
+  },
+  {
+   "number": 21687,
+   "title": "Devin-A REG-042: KPI/profile auto-sizing via flex, filter row already wired",
+   "mergedAt": "2026-09-10T20:29:35Z",
+   "branch": "cursor/reg-042-kpi-profile-sizing"
+  },
+  {
+   "number": 21686,
+   "title": "Codex- REG-050 wire Work Orders entity filters",
+   "mergedAt": "2026-09-10T20:27:34Z",
+   "branch": "codex/reg050-work-orders-module-home"
+  },
+  {
+   "number": 21685,
+   "title": "Devin-B2 Lists/Reports standing sweep — 4 dead controls fixed in Reports pages",
+   "mergedAt": "2026-09-10T20:37:59Z",
+   "branch": "Devin-B2-reports-dead-controls-sweep"
+  },
+  {
+   "number": 21684,
+   "title": "Devin-A REG-045: guard chargebacks not split-screen with monthly fee summaries",
+   "mergedAt": "2026-09-10T20:13:11Z",
+   "branch": "cursor/reg-045-chargebacks-layout"
+  },
+  {
+   "number": 21683,
+   "title": "Devin-A REG-044: QBO date filters + Summary/Detail toggle on all factoring tabs",
+   "mergedAt": "2026-09-10T20:09:01Z",
+   "branch": "cursor/reg-044-qb-filters-summary-toggle"
+  },
+  {
+   "number": 21682,
+   "title": "Cursor- bus: keep Devin-B working (B-1 write CC-1-blocked → ship unblocked half + B-3)",
+   "mergedAt": "2026-09-10T20:06:02Z",
+   "branch": "cursor/bus-devinb-no-idle"
+  },
+  {
+   "number": 21681,
+   "title": "Cursor- refresh program-scoreboard (unblock all seats) + REG-040 decision + Codex REG-050 unblock",
+   "mergedAt": "2026-09-10T20:03:46Z",
+   "branch": "cursor/scoreboard-refresh-and-coord"
+  },
+  {
+   "number": 21680,
+   "title": "Devin-A REG-043: default factoring columns, remove driver-pay/margin from Chargebacks",
+   "mergedAt": "2026-09-10T20:00:16Z",
+   "branch": "cursor/reg-043-default-factoring-columns"
+  },
+  {
+   "number": 21679,
+   "title": "Cursor- REG-023(b): wire Open driver bill → dedicated /driver-finance/driver-bills/:id route",
+   "mergedAt": "2026-09-10T19:56:52Z",
+   "branch": "cursor/reg-023b-driver-bill-detail-route"
+  },
+  {
+   "number": 21678,
+   "title": "Devin-A REG-046: invoice table money waterfall column order + label",
+   "mergedAt": "2026-09-10T19:52:51Z",
+   "branch": "cursor/reg-046-invoice-table-label"
+  },
+  {
+   "number": 21677,
+   "title": "GPT- REG-041 show original load dates in Resettlement",
+   "mergedAt": "2026-09-10T19:59:22Z",
+   "branch": "codex/gpt-reg041-source-load-dates"
+  },
+  {
+   "number": 21676,
+   "title": "Cursor- bus: re-open REG-040 closed-settlement continuation as GPT top row (owner order)",
+   "mergedAt": "2026-09-10T19:48:39Z",
+   "branch": "cursor/bus-reg040-reopen-to-gpt"
+  },
+  {
+   "number": 21675,
+   "title": "Devin-A REG-015: 6 dashed factoring stubs → real read-only report tabs",
+   "mergedAt": "2026-09-10T19:44:16Z",
+   "branch": "cursor/reg-015-factoring-six-stubs"
+  },
+  {
+   "number": 21674,
+   "title": "GPT- REG-040 invoiced-load view and open-tour inheritance",
+   "mergedAt": "2026-09-10T19:41:20Z",
+   "branch": "codex/gpt-reg040-resettlement-invoiced"
+  },
+  {
+   "number": 21673,
+   "title": "Codex- REG-049 unit Maintenance History linkage",
+   "mergedAt": "2026-09-10T19:40:41Z",
+   "branch": "codex/reg049-unit-maintenance-history"
+  },
+  {
+   "number": 21672,
+   "title": "Cursor- REG-037: Round Trips timeline fetches the full window (stop 50-row truncation)",
+   "mergedAt": "2026-09-10T19:29:16Z",
+   "branch": "cursor/reg-037-roundtrips-timeline-full-window"
+  },
+  {
+   "number": 21671,
+   "title": "Codex- REG-048 finalize work-order V5 and unit contract",
+   "mergedAt": "2026-09-10T19:27:06Z",
+   "branch": "claude/reg048-wo-display-id-unit-contract-build"
+  },
+  {
+   "number": 21670,
+   "title": "Cursor- REG-036: + Book return button for northbound units on Round Trips",
+   "mergedAt": "2026-09-10T19:20:57Z",
+   "branch": "cursor/reg-036-nb-book-return"
+  },
+  {
+   "number": 21669,
+   "title": "GPT- REG-010/011 independent settlement IDs and separate columns",
+   "mergedAt": "2026-09-10T19:19:38Z",
+   "branch": "codex/gpt-reg010-011-settlement-identity"
+  },
+  {
+   "number": 21668,
+   "title": "Codex- claim REG-048 work-order migration",
+   "mergedAt": "2026-09-10T19:17:46Z",
+   "branch": "claude/reg048-wo-display-id-unit-contract"
+  },
+  {
+   "number": 21667,
+   "title": "Cursor- seat fan-out + comms protocol (all coders build in parallel, REG-048/049 minted)",
+   "mergedAt": "2026-09-10T19:11:15Z",
+   "branch": "cursor/fanout-comms-2026-09-10"
+  },
+  {
+   "number": 21666,
+   "title": "Devin-B1: Vendor data-completeness audit + vendor->expense-account proposal for CC-1",
+   "mergedAt": "2026-09-10T19:08:10Z",
+   "branch": "claude/b1-vendor-proposal-outbox"
+  },
+  {
+   "number": 21665,
+   "title": "Devin-claim-reserve-factoring-regs",
+   "mergedAt": "2026-09-10T19:07:46Z",
+   "branch": "chore/claim-reserve-factoring-regs"
+  },
+  {
+   "number": 21664,
+   "title": "Cursor- REG-035: one current load per unit on the Dispatch board (no truck shown twice)",
+   "mergedAt": "2026-09-10T19:06:08Z",
+   "branch": "cursor/reg-035-one-current-load-per-unit"
+  },
+  {
+   "number": 21663,
+   "title": "Devin-B3: PlannerGrid outside-range widens rendered range, not just scrollLeft",
+   "mergedAt": "2026-09-10T19:04:54Z",
+   "branch": "claude/b3-planner-outside-range"
+  },
+  {
+   "number": 21662,
+   "title": "Codex- guard active APD trailer identities",
+   "mergedAt": "2026-09-10T18:56:37Z",
+   "branch": "claude/reg025-active-apd-guard"
+  },
+  {
+   "number": 21661,
+   "title": "Cursor- owner dump 2026-09-10 itemized: REG-035..047 + fan-out + Codex correction",
+   "mergedAt": "2026-09-10T18:29:40Z",
+   "branch": "cursor/owner-dump-2026-09-10-itemized-reg035-047"
+  },
+  {
+   "number": 21660,
+   "title": "Cursor- lead dispatch: 2 Devins (Cascade offline), REG-025 closed, REG-034 collision cleared",
+   "mergedAt": "2026-09-10T18:14:11Z",
+   "branch": "cursor/lead-dispatch-2devin-reg025-close-2026-09-10"
+  },
+  {
+   "number": 21659,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-10T16:33:15Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 21658,
    "title": "CC1-IN- docs: REG-050 status correction (lumper mechanism already live, 1 owner-decision gap)",
    "mergedAt": "2026-09-10T13:05:12Z",
@@ -17109,222 +17325,6 @@
    "title": "Claude-3: FINDING: RG-14 telemetry-honesty guard re-pin (not a real defect)",
    "mergedAt": "2026-09-06T21:38:32Z",
    "branch": "claude-3/rg14-telemetry-honesty-guard-repin"
-  },
-  {
-   "number": 21082,
-   "title": "Claude-1-FINDING: ACCT-F25120 CASH-FLOW-02 owner-corrected redesign",
-   "mergedAt": "2026-09-06T21:37:04Z",
-   "branch": "claude/cc-1-cash-flow-02-redesign"
-  },
-  {
-   "number": 21081,
-   "title": "Claude-3: FINDING: RG-09 locality chip missing on LoadDetailDrawer",
-   "mergedAt": "2026-09-06T21:35:37Z",
-   "branch": "claude-3/rg09-stops-locality-chip-drawer"
-  },
-  {
-   "number": 21080,
-   "title": "Claude-3: FINDING: RG-08 stop-geocode guard re-pin (not a real defect)",
-   "mergedAt": "2026-09-06T21:34:54Z",
-   "branch": "claude-3/rg08-stop-geocode-guard-repin"
-  },
-  {
-   "number": 21079,
-   "title": "tooling: CLAIM-HELPER-01 — one helper every seat runs to claim a verify-step number (origin/main + local read, per-seat stagger inside the lane band, textual re",
-   "mergedAt": "2026-09-06T21:55:48Z",
-   "branch": "claude/claim-helper-stagger"
-  },
-  {
-   "number": 21078,
-   "title": "FINDING: N/A (cross-lane CI fix — canonical-relations.json missing the two live cash-flow tables from #21067; phantom-relation-guard RED on every PR since 21:10",
-   "mergedAt": "2026-09-06T21:40:23Z",
-   "branch": "claude/canonical-relations-cash-flow-adjustments"
-  },
-  {
-   "number": 21077,
-   "title": "FINDING: N/A (CLAIM-RESERVE 10605 -- reservation-only commit, no code fix)",
-   "mergedAt": "2026-09-06T21:32:37Z",
-   "branch": "claude/claim-reserve-10605"
-  },
-  {
-   "number": 21076,
-   "title": "Cursor- SETL-R163 claim-reserve verify-step 10592 (ROUND 16.3)",
-   "mergedAt": "2026-09-06T21:27:02Z",
-   "branch": "chore/claim-reserve-10592"
-  },
-  {
-   "number": 21075,
-   "title": "Claude-3: FINDING: ROUND 16.4 anomaly detector 42P10 fix + cascade isolation",
-   "mergedAt": "2026-09-06T21:26:56Z",
-   "branch": "claude-3/anomaly-detector-distinct-orderby-fix"
-  },
-  {
-   "number": 21074,
-   "title": "Claude-1-FINDING: ACCT-F25119 CASH-FLOW-02 roll-over/hide backend",
-   "mergedAt": "2026-09-06T21:20:19Z",
-   "branch": "claude/cc-1-cash-flow-02-rollover-backend-v2"
-  },
-  {
-   "number": 21073,
-   "title": "Codex- FLT-04 bind single in-shop predicate guard",
-   "mergedAt": "2026-09-06T21:19:20Z",
-   "branch": "codex/flt04-single-predicate-guard"
-  },
-  {
-   "number": 21072,
-   "title": "Claude-3: FINDING: RG-02 remainder — period guard re-pin + load-drill guard fight",
-   "mergedAt": "2026-09-06T21:18:43Z",
-   "branch": "claude-3/rg02-remainder-period-guard-repin"
-  },
-  {
-   "number": 21071,
-   "title": "Codex- INV-01 bind Bills union guard",
-   "mergedAt": "2026-09-06T21:17:39Z",
-   "branch": "codex/inv01-bills-union-guard"
-  },
-  {
-   "number": 21070,
-   "title": "chore: claim-reserve 202613870000 (rollover seq column fix)",
-   "mergedAt": "2026-09-06T21:16:30Z",
-   "branch": "chore/claim-reserve-202613870000-cf-rollover-seq"
-  },
-  {
-   "number": 21069,
-   "title": "Codex- FAC-10 audited vendor quarantine route",
-   "mergedAt": "2026-09-06T21:16:09Z",
-   "branch": "codex/fac10-vendor-quarantine-route"
-  },
-  {
-   "number": 21067,
-   "title": "Claude-1-FINDING: ACCT-F25118 CASH-FLOW-02 roll-over/hide schema",
-   "mergedAt": "2026-09-06T21:10:53Z",
-   "branch": "claude/cc-1-cash-flow-02-rollover-schema"
-  },
-  {
-   "number": 21066,
-   "title": "Cursor-ROUND 16.1 — Load-Costs Settlement Legs pills + auto-fit columns",
-   "mergedAt": "2026-09-06T21:07:49Z",
-   "branch": "cursor/r161-load-costs-legs-columns"
-  },
-  {
-   "number": 21065,
-   "title": "chore: claim-reserve 202613860000 (CASH-FLOW-02 rollover/hide schema)",
-   "mergedAt": "2026-09-06T21:06:57Z",
-   "branch": "chore/claim-reserve-202613860000-cf-rollover"
-  },
-  {
-   "number": 21064,
-   "title": "chore: claim-reserve 10593 (INV-09 verify-one-void-convention)",
-   "mergedAt": "2026-09-06T21:03:47Z",
-   "branch": "claude/cc-1-inv09-void-convention"
-  },
-  {
-   "number": 21063,
-   "title": "Claude-1-FINDING: N/A (docs report — CASH-FLOW-02 fully closed)",
-   "mergedAt": "2026-09-06T20:59:40Z",
-   "branch": "claude/cc-1-outbox-cf02b"
-  },
-  {
-   "number": 21062,
-   "title": "Claude-1-FINDING: ACCT-F25117 CASH-FLOW-02(b) toolbar + overdue notifications",
-   "mergedAt": "2026-09-06T20:57:47Z",
-   "branch": "claude/cc-1-cash-flow-02b"
-  },
-  {
-   "number": 21061,
-   "title": "Cursor-CLAIM-RESERVE 10520 — verify-load-costs-settlement-legs-columns (ROUND 16.1)",
-   "mergedAt": "2026-09-06T20:56:10Z",
-   "branch": "chore/claim-reserve-10520"
-  },
-  {
-   "number": 21060,
-   "title": "CC-2-docs: flag — go26-consolidation-ratchet RED, cross-lane (CASH-FLOW-02)",
-   "mergedAt": "2026-09-06T20:50:57Z",
-   "branch": "cc2/outbox-go26-flag"
-  },
-  {
-   "number": 21059,
-   "title": "Claude-1-FINDING: ACCT-F25116 fix notification recipient lookup enum/text cast",
-   "mergedAt": "2026-09-06T20:49:48Z",
-   "branch": "claude/cc-1-fix-notify-role-cast-v2"
-  },
-  {
-   "number": 21058,
-   "title": "chore: claim-reserve 10573 (CASH-FLOW-02 rolling ledger, 4th renumber)",
-   "mergedAt": "2026-09-06T20:48:09Z",
-   "branch": "chore/claim-reserve-10573-cash-flow-rolling-ledger"
-  },
-  {
-   "number": 21057,
-   "title": "CC-2-dispatch: BNK-03 B4 BANK-TOOLBAR-ONE — first slice, dedupe register search",
-   "mergedAt": "2026-09-06T20:48:23Z",
-   "branch": "cc2/bnk03-toolbar-search-dedup"
-  },
-  {
-   "number": 21056,
-   "title": "Claude-1-FINDING: N/A (docs report — CASH-FLOW-02a DONE + collisions/defects filed)",
-   "mergedAt": "2026-09-06T20:39:51Z",
-   "branch": "claude/cc-1-outbox-cf02a"
-  },
-  {
-   "number": 21055,
-   "title": "Claude-1-FINDING: ACCT-F25115 CASH-FLOW-02 (a) rolling A/R+A/P ledger",
-   "mergedAt": "2026-09-06T20:37:44Z",
-   "branch": "claude/cc-1-cash-flow-02-v4"
-  },
-  {
-   "number": 21054,
-   "title": "Claude-1-FINDING: fix stale entity-link-adoption baseline blocking money-pr-local-gate",
-   "mergedAt": "2026-09-06T20:36:24Z",
-   "branch": "claude/cc-1-fix-stale-entity-link-baseline"
-  },
-  {
-   "number": 21053,
-   "title": "CC-2-docs: CLAIM-RESERVE 10547 (B4 toolbar-single-search slice)",
-   "mergedAt": "2026-09-06T20:37:18Z",
-   "branch": "chore/claim-reserve-10547"
-  },
-  {
-   "number": 21052,
-   "title": "Claude-3: FINDING: ROUND 16.2 close creates company settlement (items 1+2)",
-   "mergedAt": "2026-09-06T20:39:26Z",
-   "branch": "claude-3/round16-2-close-creates-company-settlement"
-  },
-  {
-   "number": 21051,
-   "title": "Cursor-SET-04 company settlements page (L.6) + guard 10518",
-   "mergedAt": "2026-09-06T20:30:18Z",
-   "branch": "cursor/set04-company-settlements-page"
-  },
-  {
-   "number": 21050,
-   "title": "CC-2-docs: BANK-RULES-USMCA APPLY DONE (rules 15/15, suggested 139/364)",
-   "mergedAt": "2026-09-06T20:31:03Z",
-   "branch": "cc2/outbox-bank-rules-apply"
-  },
-  {
-   "number": 21049,
-   "title": "chore: claim-reserve 10549 (CASH-FLOW-02 rolling ledger, 3rd renumber)",
-   "mergedAt": "2026-09-06T20:29:03Z",
-   "branch": "chore/claim-reserve-10549-v2"
-  },
-  {
-   "number": 21048,
-   "title": "Claude-1-FINDING: fix EntityLink regression blocking money-pr-local-gate for all lanes",
-   "mergedAt": "2026-09-06T20:27:46Z",
-   "branch": "claude/cc-1-fix-settlement-deduction-driver-entitylink"
-  },
-  {
-   "number": 21047,
-   "title": "Claude-3: FINDING: SET-13 Reopen control disabled-not-hidden",
-   "mergedAt": "2026-09-06T20:16:59Z",
-   "branch": "claude-3/set13-reopen-disabled-not-hidden"
-  },
-  {
-   "number": 21046,
-   "title": "Cursor-CLAIM-RESERVE 10518 verify-company-settlements-page (SET-04)",
-   "mergedAt": "2026-09-06T20:14:24Z",
-   "branch": "chore/claim-reserve-set04-10518"
   }
  ],
  "merged_pr_total": 3000,
@@ -17381,12 +17381,6 @@
    "number": 18738,
    "title": "Cursor- docs(bus): LEAD-TICK-0236 — PLAN-CONFIRM HOLD · deploy",
    "mergedAt": "2026-08-31T13:59:51Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 18566,
-   "title": "Claude-3- ACK UI-guards-hold, confirm AT-null revert 10/11",
-   "mergedAt": "2026-08-31T05:10:30Z",
    "category": "HOLD"
   }
  ]
