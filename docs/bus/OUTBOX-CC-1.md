@@ -1227,3 +1227,47 @@ DONE LINE: CC-1 | REG-031 FULLY CLOSED | PR #21621, merged `82a328c0`, deployed 
 live: backend healthz git_sha=f5982638 match, frontend Render status=live, cold-nav Chrome
 click-through confirmed (screenshot-verified: Home active, KPI strip real, card→tab nav works) |
 NEXT: sweeping for the next genuine money-surface gap.
+
+## CC-1 | REG-036 CLOSED — Banking earliest-synced running-balance caveat, live root-caused + shipped (2026-09-10)
+
+**Owner fan-out item (OWNER-FANOUT-2026-09-09.md):** "Banking: running balance wrong (received $100
+on 12/08/25 shows -$13,062.53, oldest→newest) · CC-1 / Cursor interim." Also answers Lead's own
+outstanding ask in the defect register for CC-2's exact running-balance query/output.
+
+**ROOT CAUSE (live-verified, Neon `br-fancy-credit-akjnd07a`, account
+`e83028a5-dcda-4233-b660-5b9923b3d39c`):** replicated the exact frontend algorithm
+(`spentReceived` sign resolution, `compareTxNewestFirst` sort, anchor-and-walk-backward from
+`current_balance_cents`) in SQL window functions — **no sign/sort/filter bug**, the arithmetic is
+internally consistent. The real finding: SUM(all 314 non-voided synced signed deltas) =
+**+$8,797.84**, while the account's live `current_balance_cents` (Plaid-fresh) = **+$2,089.70** —
+a genuine **$6,708.14 gap**. Traced `plaid.service.ts`: it calls `/transactions/sync` with no
+`start_date`, so there is no code-side truncation — the earliest synced row (2025-12-08) is
+whatever Plaid's Item made "available," even though the Item was linked 2026-06-30. This real
+Bank of America account almost certainly had real activity before 2025-12-08 that we have zero
+transaction-level visibility into. A forward walk from an assumed $0 opening balance would be
+confidently WRONG whenever pre-sync history exists (which it does here), so the existing
+anchor-and-walk-backward approach is the CORRECT arithmetic — not a bug to fix with different math.
+
+**FIX (honest UX, not a math change):** flagged the earliest-synced transaction's Balance cell with
+a hover tooltip + `data-testid` + dagger marker, plus a visible (non-hover-only) legend above the
+register when that row is in view. Additive-only — the computed dollar value expression is
+byte-for-byte unchanged; nothing was invented, hidden, or altered, only an honest caveat on the one
+row whose "before this" is structurally unverifiable. Per LAW.md "zero is a claim."
+
+**GUARD:** `scripts/verify-banking-earliest-synced-balance-caveat.mjs` (verify-step 11181, number
+claimed via #21646/CLAIM-RESERVE) — selftest 6/6, asserts the caveat wiring + that the computed
+value expression is untouched (fails if reverted or if it ever becomes a second/different number).
+
+**SHIPPED:** PR #21649 (`CC1-IN- REG-036...`), merged `9287fefd`, fast-merge law (local gate PASS →
+squash --admin, no CI wait). Both backend + frontend deploys triggered myself against `9287fefd`
+(`dep-dah9u4m1egvs73d72a10` / `dep-dah9u51t0dsc73f6rrcg`) — live-verify + Chrome click-through to
+follow in this same thread once Render reports `live`.
+
+**REMAINING — honest, not fully closed:** I have NOT independently confirmed with certainty this
+account had zero real-world activity before 2025-12-08 (only that Plaid's synced history and our
+code both start there). Owner/Jorge confirmation of the account's real pre-2025-12-08 balance would
+convert this from an honest caveat into a hard, bookable opening-balance fact.
+
+DONE LINE: CC-1 | REG-036 (BANK-F30027) — root-caused live, honest caveat shipped, deploy triggered
+| PR #21649 merged 9287fefd | Live=pending confirmation (deploy in progress at time of this post) |
+NEXT: confirm live Chrome, continue sweeping OWNER-FANOUT-2026-09-09.md for CC-1 items.
