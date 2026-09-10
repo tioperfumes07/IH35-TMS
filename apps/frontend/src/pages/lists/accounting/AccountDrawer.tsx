@@ -22,6 +22,7 @@ import { Button } from "../../../components/Button";
 import { type ComboboxOption } from "../../../components/Combobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 
 type Mode = "create" | "edit";
 
@@ -350,40 +351,28 @@ export function AccountDrawer({
 
   if (!open) return null;
 
+  // REG-021: the drawer's own header (title + close X) is now always supplied by an external
+  // ParityDrawer (embedded mode's parent already did this; the standalone !embedded path below now
+  // does too) — this component only ever renders body + footer. LOCKED/ARCHIVED, previously header
+  // pills, move into the body as a badge row so that information isn't lost.
   const formChrome = (
     <>
-        {!embedded ? (
-        <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xs font-semibold text-gray-900">
-              {mode === "create" ? "New Account" : "Edit Account"}
-            </h2>
-            {isLocked ? (
-              <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
-                LOCKED
-              </span>
-            ) : null}
-            {isArchived ? (
-              <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
-                ARCHIVED
-              </span>
-            ) : null}
-          </div>
-          <button
-            type="button"
-            className="rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-            aria-label="Close"
-            onClick={onClose}
-          >
-            <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-              <path d="M4.293 4.293a1 1 0 011.414 0L8 6.586l2.293-2.293a1 1 0 111.414 1.414L9.414 8l2.293 2.293a1 1 0 01-1.414 1.414L8 9.414l-2.293 2.293a1 1 0 01-1.414-1.414L6.586 8 4.293 5.707a1 1 0 010-1.414z" />
-            </svg>
-          </button>
-        </div>
-        ) : null}
-
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
+          {isLocked || isArchived ? (
+            <div className="mb-3 flex items-center gap-2">
+              {isLocked ? (
+                <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+                  LOCKED
+                </span>
+              ) : null}
+              {isArchived ? (
+                <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                  ARCHIVED
+                </span>
+              ) : null}
+            </div>
+          ) : null}
           {isLocked ? (
             <div className="mb-4 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
               This account is locked. It cannot be edited or archived. To unlock, contact an administrator.
@@ -699,21 +688,17 @@ export function AccountDrawer({
     );
   }
 
+  // REG-021 — standalone (Lists → CoA) usage now goes through the shared ParityDrawer shell
+  // (~576px "regular") instead of a hand-rolled fixed-480px-wide aside, matching every other
+  // create/edit drawer in the app.
   return (
-    <>
-      <div
-        className="fixed inset-0 z-40 bg-black/20"
-        aria-hidden="true"
-        onClick={onClose}
-      />
-      <aside
-        role="dialog"
-        aria-modal="true"
-        aria-label={mode === "create" ? "New Account" : "Edit Account"}
-        className="fixed right-0 top-0 z-50 flex h-full w-[480px] flex-col border-l border-gray-200 bg-white shadow-xl"
-      >
-        {formChrome}
-      </aside>
-    </>
+    <ParityDrawer
+      open={open}
+      title={mode === "create" ? "New Account" : "Edit Account"}
+      onClose={onClose}
+      size="regular"
+    >
+      {formChrome}
+    </ParityDrawer>
   );
 }

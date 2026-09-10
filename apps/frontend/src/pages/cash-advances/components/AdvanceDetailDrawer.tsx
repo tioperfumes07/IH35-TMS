@@ -6,6 +6,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { printLetterHtml } from "../../../lib/openPrintableDocument";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { DocumentsTab } from "../../../components/documents/DocumentsTab";
+import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 
 type Props = {
   open: boolean;
@@ -27,17 +28,87 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
     ? `Already ${status} — Mark Disbursed is not available`
     : undefined;
 
-  return (
-    <>
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      <aside className="fixed right-0 top-0 z-50 h-full w-[480px] overflow-y-auto border-l border-gray-200 bg-white p-4 text-xs">
-        <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-xs font-semibold">Cash Advance Detail</h3>
-          <button type="button" className="text-gray-500 underline" onClick={onClose}>
-            Close
-          </button>
-        </div>
+  const footer = (
+    <div className="grid grid-cols-2 gap-2">
+      <Button size="sm" variant="secondary" disabled onClick={() => pushToast("Edit cash advances is not available yet — reverse and create a new advance instead", "info")}>
+        Edit
+      </Button>
+      <Button
+        size="sm"
+        variant="secondary"
+        disabled={markDisbursedBlocked}
+        title={markDisbursedBlockedReason}
+        onClick={() => {
+          if (markDisbursedBlocked) {
+            pushToast(markDisbursedBlockedReason ?? "Cannot mark disbursed", "info");
+            return;
+          }
+          onMarkDisbursed();
+        }}
+      >
+        Mark Disbursed
+      </Button>
+      <Button
+        size="sm"
+        variant="danger"
+        onClick={() =>
+          void reverseCashAdvance(String(advance.id), operatingCompanyId)
+            .then(() => {
+              pushToast("Advance reversed", "success");
+              onUpdated();
+            })
+            .catch((error) => pushToast(userFacingApiError(error, "Failed"), "error"))
+        }
+      >
+        Reverse
+      </Button>
+      <Button
+        size="sm"
+        variant="secondary"
+        onClick={() => {
+          const esc = (v: unknown) =>
+            String(v ?? "—")
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;");
+          const id = esc(advance.display_id ?? advance.id ?? "—");
+          const amount = Number(advance.amount ?? 0).toFixed(2);
+          const purpose = esc(advance.purpose ?? "—");
+          const method = esc(advance.disbursement_method ?? "—");
+          const driver = esc(
+            entityLabel(
+              advance.driver_name as string | null | undefined,
+              advance.driver_id ? String(advance.driver_id) : null,
+              "Driver"
+            )
+          );
+          printLetterHtml({
+            title: `Cash advance ${String(advance.display_id ?? advance.id ?? "")}`,
+            bodyHtml: `
+              <h1>Cash advance receipt</h1>
+              <div class="meta">${id} · printed ${esc(new Date().toLocaleString())}</div>
+              <table>
+                <tbody>
+                  <tr><th>Advance</th><td>${id}</td></tr>
+                  <tr><th>Driver</th><td>${driver}</td></tr>
+                  <tr><th>Amount</th><td>$${amount}</td></tr>
+                  <tr><th>Purpose</th><td>${purpose}</td></tr>
+                  <tr><th>Method</th><td>${method}</td></tr>
+                  <tr><th>Status</th><td>${esc(status)}</td></tr>
+                </tbody>
+              </table>
+            `,
+          });
+        }}
+      >
+        Print Receipt
+      </Button>
+    </div>
+  );
 
+  return (
+    <ParityDrawer open title="Cash Advance Detail" onClose={onClose} size="regular" footer={footer}>
         <div className="space-y-1 rounded-sm border border-gray-200 bg-gray-50 p-2">
           <div>ID: {String(advance.display_id ?? "—")}</div>
           <div>Amount: ${Number(advance.amount ?? 0).toFixed(2)}</div>
@@ -167,84 +238,6 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
             </div>
           ))}
         </div>
-
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <Button size="sm" variant="secondary" disabled onClick={() => pushToast("Edit cash advances is not available yet — reverse and create a new advance instead", "info")}>
-            Edit
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            disabled={markDisbursedBlocked}
-            title={markDisbursedBlockedReason}
-            onClick={() => {
-              if (markDisbursedBlocked) {
-                pushToast(markDisbursedBlockedReason ?? "Cannot mark disbursed", "info");
-                return;
-              }
-              onMarkDisbursed();
-            }}
-          >
-            Mark Disbursed
-          </Button>
-          <Button
-            size="sm"
-            variant="danger"
-            onClick={() =>
-              void reverseCashAdvance(String(advance.id), operatingCompanyId)
-                .then(() => {
-                  pushToast("Advance reversed", "success");
-                  onUpdated();
-                })
-                .catch((error) => pushToast(userFacingApiError(error, "Failed"), "error"))
-            }
-          >
-            Reverse
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => {
-              const esc = (v: unknown) =>
-                String(v ?? "—")
-                  .replace(/&/g, "&amp;")
-                  .replace(/</g, "&lt;")
-                  .replace(/>/g, "&gt;")
-                  .replace(/"/g, "&quot;");
-              const id = esc(advance.display_id ?? advance.id ?? "—");
-              const amount = Number(advance.amount ?? 0).toFixed(2);
-              const purpose = esc(advance.purpose ?? "—");
-              const method = esc(advance.disbursement_method ?? "—");
-              const driver = esc(
-                entityLabel(
-                  advance.driver_name as string | null | undefined,
-                  advance.driver_id ? String(advance.driver_id) : null,
-                  "Driver"
-                )
-              );
-              printLetterHtml({
-                title: `Cash advance ${String(advance.display_id ?? advance.id ?? "")}`,
-                bodyHtml: `
-                  <h1>Cash advance receipt</h1>
-                  <div class="meta">${id} · printed ${esc(new Date().toLocaleString())}</div>
-                  <table>
-                    <tbody>
-                      <tr><th>Advance</th><td>${id}</td></tr>
-                      <tr><th>Driver</th><td>${driver}</td></tr>
-                      <tr><th>Amount</th><td>$${amount}</td></tr>
-                      <tr><th>Purpose</th><td>${purpose}</td></tr>
-                      <tr><th>Method</th><td>${method}</td></tr>
-                      <tr><th>Status</th><td>${esc(status)}</td></tr>
-                    </tbody>
-                  </table>
-                `,
-              });
-            }}
-          >
-            Print Receipt
-          </Button>
-        </div>
-      </aside>
-    </>
+    </ParityDrawer>
   );
 }

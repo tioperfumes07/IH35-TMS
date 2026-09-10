@@ -25,6 +25,7 @@ import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { SelectCombobox } from "../../components/Combobox";
@@ -565,15 +566,7 @@ function TaskDetailDrawer({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-40">
-      <button type="button" aria-label="Close detail drawer" className="absolute inset-0 bg-black/30" onClick={onClose} />
-      <aside className="absolute right-0 top-0 h-full w-full max-w-[520px] overflow-y-auto border-l border-slate-200 bg-white p-4 shadow-2xl">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-700">Task Detail</h2>
-          <Button size="sm" variant="secondary" onClick={onClose}>
-            Close
-          </Button>
-        </div>
+    <ParityDrawer open title="Task Detail" onClose={onClose} size="regular">
         {!task ? (
           <div className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">Loading task details…</div>
         ) : (
@@ -626,7 +619,6 @@ function TaskDetailDrawer({
             </div>
           </div>
         )}
-      </aside>
-    </div>
+    </ParityDrawer>
   );
 }
