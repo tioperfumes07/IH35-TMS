@@ -40,3 +40,10 @@ DEVIN-A is retired. Stop. No Book Load. No OUTBOX.
 - Added reconciliation section comparing Faro Advance/Reserve vs Factoring Summary
 - PR #21690 merged --admin --squash
 - ALL 7 REGS SHIPPED: 015, 046, 043, 044, 045, 042, 047
+
+## DEVIN-A | FACTORING REVIEW | 2f526f4002 | 2f526f4002 | GPT REG-010/011 factoring changes reviewed — clean | NEXT (awaiting assignment)
+- Reviewed GPT seat's REG-010/011 commit (2f526f4002) touching FactoringHome.tsx + loadCostColumnManifest.tsx
+- Purchase Report + Aging tabs: added separate Load Number column (EntityLink kind=load), renamed Settlement # → Settlement/Tour (EntityLink kind=settlement)
+- loadCostColumnManifest: Load → Load Number, Settlement # → Settlement/Tour, both alwaysVisible=true
+- No conflicts with REG-043/044/046 money waterfall or default column work
+- All 7 Devin A factoring REGs remain shipped and merged
