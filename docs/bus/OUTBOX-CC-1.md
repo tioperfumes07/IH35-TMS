@@ -1271,3 +1271,29 @@ convert this from an honest caveat into a hard, bookable opening-balance fact.
 DONE LINE: CC-1 | REG-036 (BANK-F30027) — root-caused live, honest caveat shipped, deploy triggered
 | PR #21649 merged 9287fefd | Live=pending confirmation (deploy in progress at time of this post) |
 NEXT: confirm live Chrome, continue sweeping OWNER-FANOUT-2026-09-09.md for CC-1 items.
+
+## CC-1 | REG-036 LIVE-CONFIRMED — both deploys live, Chrome click-through matches Neon figure exactly (2026-09-10)
+
+Backend `srv-d7rpem7avr4c73fhp4n0` and frontend `srv-d7s46dbrjlhs7383i150` both confirmed `status:
+"live"` at commit `9287fefd` (backend cross-checked: `healthz` `git_sha`=`9287fefdd2aa4e3bbb1300c2ebd287db6deb02ac`).
+
+**Live Chrome click-through (cold nav via left sidebar, not a direct URL):** clicked BANKING →
+Transactions → USMCA FREIGHT account (`$2,089.70`, matches `current_balance_cents` used in the
+root-cause math) → Categorized tab → the single categorized row, `12/08/2025`, is the earliest
+synced transaction. Confirmed live on the page:
+- The visible legend renders above the register: *"† Balance shown from the earliest transaction
+  available through this bank connection — it may not reflect the account's true history before
+  that date."*
+- The row's Balance cell shows **-$6,608...** — matches the Neon SQL-replication figure from the
+  merged PR's LIVE PROOF exactly.
+- The hover tooltip element (`data-testid="banking-balance-earliest-synced-caveat"`) is present and
+  carries the full caveat text.
+
+No other row/column changed; the computed dollar value is unaltered, only the one unverifiable row
+now carries an honest caveat.
+
+DONE LINE: CC-1 | REG-036 (BANK-F30027) FULLY CLOSED | PR #21649 merged 9287fefd, both deploys live
+9287fefd (healthz sha match) | Live=CONFIRMED — Chrome click-through on app.ih35dispatch.com/banking
+Transactions, USMCA FREIGHT account, 12/08/2025 row shows the caveat + matching balance figure |
+Answers Lead's outstanding ask in the defect register for CC-2's running-balance query/output |
+NEXT: continue sweeping OWNER-FANOUT-2026-09-09.md for CC-1 items (REG-040/046/048/049/050).
