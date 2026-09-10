@@ -697,11 +697,13 @@ export function LoadCostsBoardPage() {
     { key: "margin", label: "Margin", testId: "col-margin", sortable: true, className: NUM, defaultHidden: true, sortValue: r => rowMargin(r), render: r => Number(r.revenue_cents) ? `${(rowMargin(r) / Number(r.revenue_cents) * 100).toFixed(1)}%` : "—" },
     // NEW-08 (owner raw findings 2026-09-07): "every load leaving Laredo must be assigned a
     // settlement number the moment it's created -- Load Costs needs a Settlement # column." The
-    // assignment already happens at booking (SET-01/SET-02); this surfaces it. Kept opt-in/
-    // defaultHidden like Margin -- spec 09-04-2026 §5.1 locks the exact 19-column default set and
-    // additive-only law (Rule 07) forbids silently expanding it, so a net-new column joins the same
-    // way Margin did rather than being forced into the default view.
-    { key: "settlement", label: "Settlement #", testId: "col-settlement", sortable: true, className: "whitespace-nowrap", defaultHidden: true, sortValue: r => r.settlement_display_id ?? "", render: r => r.settlement_id ? <Link className="font-semibold text-slate-700 underline" to={`/driver-finance/settlements?settlement_id=${r.settlement_id}`}>{r.settlement_display_id}</Link> : "—" },
+    // assignment already happens at booking (SET-01/SET-02); this surfaces it. Was kept opt-in/
+    // defaultHidden like Margin (spec 09-04-2026 §5.1's 19-column default lock, additive-only law
+    // Rule 07) until REG-009 (owner, live, 2026-09-10): "the column exists but is hidden by
+    // default -- set it visible by default." An explicit, current owner decision overrides the
+    // prior 09-04 lock for this ONE column specifically (Margin stays defaultHidden -- that lock
+    // is unchanged for everything else); owner decisions win over a doc per standing precedence.
+    { key: "settlement", label: "Settlement #", testId: "col-settlement", sortable: true, className: "whitespace-nowrap", sortValue: r => r.settlement_display_id ?? "", render: r => r.settlement_id ? <Link className="font-semibold text-slate-700 underline" to={`/driver-finance/settlements?settlement_id=${r.settlement_id}`}>{r.settlement_display_id}</Link> : "—" },
     // LOAD-COSTS-RETURN-COLS (owner 2026-09-08): same source as Dispatch Home's "Units Needing
     // Return" tile (listUnitsWithoutLoad's own hours_since_last_delivery) -- never a second copy of
     // that math. Only the LATEST delivered row for a currently-idle unit gets a value; an older
