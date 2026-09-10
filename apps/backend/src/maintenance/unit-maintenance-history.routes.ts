@@ -32,7 +32,7 @@ export async function registerUnitMaintenanceHistoryRoutes(app: FastifyInstance)
                 w.load_id::text,
                 l.load_number,
                 COALESCE(b.vendor_id, w.external_vendor_id)::text AS vendor_id,
-                COALESCE(b.vendor_name, w.external_vendor_name) AS vendor_name,
+                COALESCE(b.vendor_name, wv.vendor_name) AS vendor_name,
                 COALESCE(b.amount_cents, 0) + COALESCE(e.amount_cents, 0) AS cost_cents,
                 COALESCE(b.document_count, 0) + COALESCE(e.document_count, 0) AS financial_document_count,
                 e.journal_entry_id::text AS journal_entry_id,
@@ -41,6 +41,9 @@ export async function registerUnitMaintenanceHistoryRoutes(app: FastifyInstance)
            FROM maintenance.work_orders w
            JOIN mdata.units u ON u.id = w.unit_id
            LEFT JOIN mdata.loads l ON l.id = w.load_id AND l.operating_company_id = w.operating_company_id
+           LEFT JOIN mdata.vendors wv
+             ON wv.id = COALESCE(w.external_vendor_id, w.vendor_id)
+            AND wv.operating_company_id = w.operating_company_id
            LEFT JOIN LATERAL (
              SELECT SUM(COALESCE(ab.amount_cents, 0))::bigint AS amount_cents,
                     COUNT(*)::int AS document_count,

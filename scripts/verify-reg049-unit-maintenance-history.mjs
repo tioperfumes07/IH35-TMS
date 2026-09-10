@@ -18,6 +18,8 @@ export function verify(read = (path) => fs.readFileSync(path, "utf8")) {
   require(backend.includes("/api/v1/maintenance/units/:unitId/work-order-history"), "missing canonical unit history route");
   require(backend.includes("w.operating_company_id = $1::uuid") && backend.includes("w.unit_id = $2::uuid"), "history must scope by company and unit");
   require(backend.includes("linked_work_order_uuid") && backend.includes("gl_account_id"), "history must derive cost and GL links from canonical financial documents");
+  require(!backend.includes("w.external_vendor_name"), "history must not read phantom maintenance.work_orders.external_vendor_name");
+  require(backend.includes("LEFT JOIN mdata.vendors wv") && backend.includes("COALESCE(b.vendor_name, wv.vendor_name)"), "history must resolve the WO vendor through mdata.vendors");
   require(frontend.includes('data-testid="unit-maintenance-history"'), "missing Maintenance History surface");
   require(frontend.includes('kind="work_order"') && frontend.includes('kind="vendor"') && frontend.includes('kind="journal_entry"'), "missing WO/vendor/GL EntityLinks");
   require(frontend.includes("formatMoneyFromCents") && frontend.includes("ParityTable"), "history must render canonical money and ParityTable");
@@ -32,6 +34,7 @@ if (process.argv.includes("--selftest")) {
     [files.backend, "/api/v1/maintenance/units/:unitId/work-order-history", "/broken"],
     [files.backend, "w.operating_company_id = $1::uuid", "TRUE"],
     [files.backend, "linked_work_order_uuid", "broken_link"],
+    [files.backend, "COALESCE(b.vendor_name, wv.vendor_name)", "w.external_vendor_name"],
     [files.frontend, 'data-testid="unit-maintenance-history"', 'data-testid="broken"'],
     [files.frontend, 'kind="journal_entry"', 'kind="work_order"'],
     [files.profile, "<UnitMaintenanceHistorySection", "<BrokenHistory"],
