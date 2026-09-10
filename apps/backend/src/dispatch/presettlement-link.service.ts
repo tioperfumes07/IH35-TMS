@@ -388,3 +388,75 @@ export async function linkLoadToPresettlementAtBookingInClientTx(
   }
   return { suggestion_id: suggestion.suggestion_id, settlement_id: confirmed.settlement_id, action };
 }
+
+export type LinkAfterAssignmentInput = {
+  operating_company_id: string;
+  load_id: string;
+  /** The load's presettlement_link_id as it stood BEFORE this driver-assignment write, read from
+   *  the same row-locked SELECT the caller already does. This is the idempotency gate: a load
+   *  that is already linked (from booking, or from an earlier assignment) is never re-linked here
+   *  -- driver reassignment on an already-open tour is a separate concern (vehicle-swap /
+   *  settlement-lines), not this function's job. */
+  presettlement_link_id_before: string | null;
+  driver_id: string;
+  unit_id?: string | null;
+  trip_type: TripType | null;
+  tour_id?: string | null;
+  actor_user_id: string;
+};
+
+/**
+ * REG-008 (SET-01 auto-link gap, 2026-09-09/10): book-load.service.ts links a load to a
+ * pre-settlement at booking time, but ONLY when a driver + trip_type are already present at that
+ * instant. The normal dispatcher workflow books first and assigns a driver later -- quick-assign,
+ * the planner reschedule/assign, and manual reassignment all write
+ * mdata.loads.assigned_primary_driver_id AFTER booking, and none of them ever called the linker,
+ * so those loads never joined a pre-settlement at all (owner-verified live: loads 13581, 13580,
+ * 13508).
+ *
+ * This is the shared "first time both conditions become true" gate for every POST-booking
+ * driver-assignment write path, so the SET-01 resolution logic (suggestPresettlementLink ->
+ * confirmPresettlementLink, same NB-opens/TR-SB-joins rule) is called from exactly one place for
+ * all of them, not reimplemented three times. Returns:
+ *   - `null` with no audit when the load is already linked (idempotent no-op: reassigning the
+ *     driver on an already-open tour is not this function's job).
+ *   - `null` with a "deferred" audit (mirrors book-load.service.ts's own booking-time branch)
+ *     when trip_type still isn't known -- never guesses NB/TR/SB.
+ *   - the real link result when both are now present for the first time.
+ *
+ * Caller contract: run inside the SAME transaction as the assigned_primary_driver_id UPDATE,
+ * using the trip_type/tour_id/unit_id/presettlement_link_id read from the SAME row-locked SELECT
+ * that transaction already does (this function does not re-read or re-lock the row itself).
+ */
+export async function linkLoadToPresettlementAfterAssignmentInClientTx(
+  client: DbClient,
+  input: LinkAfterAssignmentInput
+): Promise<LinkAtBookingResult | null> {
+  if (input.presettlement_link_id_before) return null;
+
+  if (!input.trip_type) {
+    await appendCrudAudit(
+      client,
+      input.actor_user_id,
+      "dispatch.load.presettlement_link_deferred",
+      {
+        load_uuid: input.load_id,
+        requested: true,
+        reason: "driver assigned post-booking but trip_type not yet captured — cannot suggest a pre-settlement match",
+      },
+      "info",
+      "REG-008"
+    );
+    return null;
+  }
+
+  return linkLoadToPresettlementAtBookingInClientTx(client, {
+    operating_company_id: input.operating_company_id,
+    load_id: input.load_id,
+    driver_id: input.driver_id,
+    unit_id: input.unit_id ?? null,
+    trip_type: input.trip_type,
+    tour_id: input.tour_id ?? null,
+    actor_user_id: input.actor_user_id,
+  });
+}

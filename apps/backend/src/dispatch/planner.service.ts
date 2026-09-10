@@ -4,6 +4,7 @@ import { getCurrentClocks, getCurrentClocksForDrivers } from "../telematics/hos-
 import { assertDriverQualifiedForLoad } from "./driver-qualification.service.js";
 import { advanceDraftStatusIfCrewed } from "./draft-crew-status-advance.js";
 import { addBusinessDateDays, companyBusinessDate, companyBusinessDateStartIso } from "../lib/company-business-date.js";
+import { linkLoadToPresettlementAfterAssignmentInClientTx, type TripType } from "./presettlement-link.service.js";
 
 const CONFLICT_WINDOW_MS = 4 * 60 * 60 * 1000;
 
@@ -307,6 +308,10 @@ export async function reschedulePlannerLoad(
           l.load_number,
           l.status::text AS status,
           l.assigned_primary_driver_id::text AS driver_id,
+          l.assigned_unit_id::text AS assigned_unit_id,
+          l.trip_type,
+          l.tour_id::text AS tour_id,
+          l.presettlement_link_id::text AS presettlement_link_id,
           COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)) AS customer_name,
           pu.id::text AS pickup_stop_id,
           COALESCE((l.quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat,
@@ -444,6 +449,21 @@ export async function reschedulePlannerLoad(
       // driver straight to mdata.loads without going through updateDispatchLoad()'s own status
       // advance; a draft load re-crewed here via a planner reschedule would otherwise stay draft.
       await advanceDraftStatusIfCrewed(client, loadId, operatingCompanyId);
+
+      // REG-008 (SET-01 auto-link gap) — a planner reschedule can be the FIRST time a load gets a
+      // driver (book first, assign later is the normal workflow); book-load.service.ts's own
+      // at-booking linker never sees this write. Same shared guard as every other post-booking
+      // assignment path: skip if already linked, defer if trip_type isn't known yet.
+      await linkLoadToPresettlementAfterAssignmentInClientTx(client, {
+        operating_company_id: operatingCompanyId,
+        load_id: loadId,
+        presettlement_link_id_before: (load.presettlement_link_id as string | null) ?? null,
+        driver_id: driverId,
+        unit_id: (load.assigned_unit_id as string | null) ?? null,
+        trip_type: (load.trip_type as TripType | null) ?? null,
+        tour_id: (load.tour_id as string | null) ?? null,
+        actor_user_id: userId,
+      });
     }
 
     const refreshed = await client.query(

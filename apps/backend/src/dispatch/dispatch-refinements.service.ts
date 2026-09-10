@@ -10,6 +10,7 @@ import {
 } from "./driver-qualification.service.js";
 import { bindLoadToGeofences } from "./geofences/load-geofence-binding.service.js";
 import { advanceDraftStatusIfCrewed } from "./draft-crew-status-advance.js";
+import { linkLoadToPresettlementAfterAssignmentInClientTx, type TripType } from "./presettlement-link.service.js";
 
 export type ReassignBody = {
   operating_company_id: string;
@@ -65,7 +66,8 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
       const loadRes = await client.query(
         `
           SELECT id, operating_company_id, assigned_primary_driver_id, assigned_unit_id, assigned_secondary_driver_id, load_number,
-                 COALESCE((quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat
+                 COALESCE((quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat,
+                 trip_type, tour_id, presettlement_link_id
           FROM mdata.loads
           WHERE id = $1
             AND operating_company_id = $2::uuid
@@ -83,6 +85,9 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
             assigned_secondary_driver_id: string | null;
             load_number: string | null;
             is_hazmat: boolean;
+            trip_type: TripType | null;
+            tour_id: string | null;
+            presettlement_link_id: string | null;
           }
         | undefined;
       if (!load) throw new Error("E_LOAD_NOT_FOUND");
@@ -205,6 +210,23 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
       // driver straight to mdata.loads without going through updateDispatchLoad()'s own status
       // advance; a draft load manually reassigned a driver here would otherwise stay draft forever.
       await advanceDraftStatusIfCrewed(client, input.load_id, input.operating_company_id);
+
+      // REG-008 (SET-01 auto-link gap) — a manual reassignment can be the FIRST time a load gets
+      // a driver (this route also serves the "no driver yet" case, not only true swaps);
+      // book-load.service.ts's own at-booking linker never sees this write. The shared helper's
+      // own idempotency gate (presettlement_link_id_before) makes this a no-op for a genuine
+      // driver SWAP on an already-open tour -- that is a separate vehicle-swap/settlement-lines
+      // concern, not this function's job.
+      await linkLoadToPresettlementAfterAssignmentInClientTx(client, {
+        operating_company_id: input.operating_company_id,
+        load_id: input.load_id,
+        presettlement_link_id_before: load.presettlement_link_id,
+        driver_id: input.new_driver_id,
+        unit_id: load.assigned_unit_id,
+        trip_type: load.trip_type,
+        tour_id: load.tour_id,
+        actor_user_id: userId,
+      });
 
       const assignmentHistory = await client.query<{ id: string }>(
         `
