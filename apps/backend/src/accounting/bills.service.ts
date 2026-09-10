@@ -1173,7 +1173,18 @@ export async function listAllBillsForCompany(
                    AND att.entity_type = 'bill'
                    AND att.entity_id = b.id
                    AND att.is_deleted = false
-               ) AS attachment_count
+               ) AS attachment_count,
+               -- REG-017 (owner 2026-09-09, "Accounting > Bills... missing Settlement/Tour
+               -- column"): the main bills list never carried this, but the per-vendor
+               -- transactions-tab query below (listBillsByVendor, CV-TRANSACTION-COLUMNS inv #46)
+               -- already resolves it correctly via bill_lines → loads → driver_settlements
+               -- (first_load_id/last_load_id) — same field names, same LATERAL shape, copied
+               -- verbatim rather than reinvented so BillsPage.tsx can reuse the exact column
+               -- definition Vendors.tsx/Customers.tsx already ship for "Settlement #".
+               load_link.load_id AS linked_load_id,
+               load_link.load_number AS linked_load_number,
+               settlement_link.settlement_id AS linked_settlement_id,
+               settlement_link.settlement_display_id AS linked_settlement_display_id
         FROM accounting.bills b
         ${BILL_VENDOR_RESOLVE_JOIN_SQL}
         LEFT JOIN catalogs.accounts coa ON coa.id = b.coa_account_id AND coa.operating_company_id = b.operating_company_id
@@ -1183,6 +1194,23 @@ export async function listAllBillsForCompany(
         LEFT JOIN insurance.claim claim
           ON claim.id = b.insurance_claim_id
          AND claim.tenant_id = b.operating_company_id
+        LEFT JOIN LATERAL (
+          SELECT bl.load_id, l.load_number
+          FROM accounting.bill_lines bl
+          JOIN mdata.loads l ON l.id = bl.load_id AND l.operating_company_id = b.operating_company_id
+          WHERE bl.bill_id = b.id AND bl.load_id IS NOT NULL
+          ORDER BY bl.line_sequence ASC
+          LIMIT 1
+        ) load_link ON true
+        LEFT JOIN LATERAL (
+          SELECT s.id::text AS settlement_id, s.display_id AS settlement_display_id
+          FROM driver_finance.driver_settlements s
+          WHERE s.operating_company_id = b.operating_company_id
+            AND s.voided_at IS NULL
+            AND (s.first_load_id = load_link.load_id OR s.last_load_id = load_link.load_id)
+          ORDER BY s.created_at DESC
+          LIMIT 1
+        ) settlement_link ON true
         WHERE b.operating_company_id = $1::uuid AND ${where.join(" AND ")}
         ORDER BY ${billListOrderBy(options.sort, options.dir)}
         LIMIT $${values.length - 1}

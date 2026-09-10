@@ -675,6 +675,23 @@ export function BillsPage() {
           ),
       },
       {
+        // REG-017 (owner 2026-09-09, "Accounting > Bills... missing Settlement/Tour column") —
+        // same field, same rendering as Vendors.tsx/Customers.tsx's own "Settlement #" column
+        // (CV-TRANSACTION-COLUMNS inv #46); resolved via bill_lines → loads → driver_settlements
+        // in bills.service.ts, reused here rather than a second query.
+        key: "linked_settlement_id",
+        label: "Settlement #",
+        sortable: true,
+        defaultHidden: true,
+        sortValue: (bill) => bill.linked_settlement_display_id || "",
+        render: (bill) =>
+          bill.linked_settlement_id ? (
+            <EntityLink kind="settlement" id={bill.linked_settlement_id} label={bill.linked_settlement_display_id ?? "—"} />
+          ) : (
+            "—"
+          ),
+      },
+      {
         key: "memo",
         label: "Memo",
         sortable: true,
