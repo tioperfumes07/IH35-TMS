@@ -40,7 +40,7 @@ export function CashFlowKpiStrip({ kpis, testId = "cash-flow-kpi-strip" }: { kpi
     { label: "Expenses due today", value: kpis.expensesToday, bad: kpis.expensesToday > 0 },
     { label: "Carried over", value: kpis.carriedOver, zero: kpis.carriedOver === 0 },
     { label: "Net today", value: kpis.netToday, sign: true, bad: kpis.netToday < 0 },
-    { label: "Projected closing", value: kpis.projectedClosing, sign: true, bad: (kpis.projectedClosing ?? 0) < 0 },
+    { label: "Projected closing", value: kpis.projectedClosing, sign: true, bad: kpis.projectedClosing !== null && kpis.projectedClosing < 0 },
     { label: "Open invoices (not factored)", value: kpis.incomeNotFactored, ok: true },
     { label: "Due next 10 days", value: kpis.dueNext10, ok: true },
   ];

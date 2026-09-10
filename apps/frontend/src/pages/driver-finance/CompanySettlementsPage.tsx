@@ -15,6 +15,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import {
   listCompanySettlements,
@@ -50,10 +51,23 @@ function statusLabel(row: CompanySettlementListRow): string {
   return row.status || "—";
 }
 
+// REG-005 — a settlement is "closed" when its status is a terminal state and it is not voided;
+// anything else non-voided is "open". Mirrors statusPillClass's ok-state list.
+function isClosedRow(row: CompanySettlementListRow): boolean {
+  if (row.voided_at) return false;
+  const s = (row.status || "").toLowerCase();
+  return s === "closed" || s === "final" || s === "paid";
+}
+function isOpenRow(row: CompanySettlementListRow): boolean {
+  return !row.voided_at && !isClosedRow(row);
+}
+
 export function CompanySettlementsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [selected, setSelected] = useState<CompanySettlementListRow | null>(null);
+  // REG-005 — presentation-only status filter driven by the KPI strip (no new query).
+  const [statusFilter, setStatusFilter] = useState<"all" | "open" | "closed">("all");
   // ROUND 16.2 item 3 — EntityLink kind="company_settlement" (EntityLink.tsx) drills here via
   // ?id=<company_settlement_id>. Auto-open that row's detail panel once the list loads, same
   // pattern SettlementDetailPage uses for ?settlement_id.
@@ -66,7 +80,23 @@ export function CompanySettlementsPage() {
     enabled: Boolean(companyId),
   });
 
-  const rows = listQuery.data?.company_settlements ?? [];
+  const allRows = listQuery.data?.company_settlements ?? [];
+  // REG-005 KPI strip — real numbers from the already-fetched list, "—" on load failure, dash-never-zero
+  // for a net revenue with no live figure. No new query (lane boundary: presentation-layer only).
+  const openCount: number | string = listQuery.isError ? "—" : allRows.filter(isOpenRow).length;
+  const closedCount: number | string = listQuery.isError ? "—" : allRows.filter(isClosedRow).length;
+  const liveNet = allRows.filter((r) => !r.voided_at && r.net_revenue_cents !== null);
+  const netRevenue: string = listQuery.isError
+    ? "—"
+    : liveNet.length === 0
+      ? DASH
+      : formatUsdCents(liveNet.reduce((sum, r) => sum + Number(r.net_revenue_cents ?? 0), 0));
+  const rows =
+    statusFilter === "open"
+      ? allRows.filter(isOpenRow)
+      : statusFilter === "closed"
+        ? allRows.filter(isClosedRow)
+        : allRows;
 
   useEffect(() => {
     if (!deepLinkId || selected) return;
@@ -142,6 +172,17 @@ export function CompanySettlementsPage() {
           { label: "Escrow", to: "/accounting/escrow" },
         ]}
       />
+
+      {/* REG-005 (owner "FOR ALL MODULES, THEY SHOULD ALL HAVE THEIR KPIS IN THEIR HOME PAGES") — a
+          real-number KPI strip at the top of the Company Settlements home, above the table. Reuses the
+          shared DrillKpiCard (same tile as Maintenance); Open/Closed toggle the presentation-only status
+          filter on the list below (active + onClick), Total clears it, Net Revenue states its scope. */}
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-4" data-testid="company-settlements-kpi-strip">
+        <DrillKpiCard label="Settlements" value={listQuery.isError ? "—" : allRows.length} active={statusFilter === "all"} onClick={() => setStatusFilter("all")} hint="All company settlement periods." testId="company-settlements-kpi-total" />
+        <DrillKpiCard label="Open" value={openCount} active={statusFilter === "open"} onClick={() => setStatusFilter("open")} hint="Not yet closed/final/paid." testId="company-settlements-kpi-open" />
+        <DrillKpiCard label="Closed" value={closedCount} active={statusFilter === "closed"} onClick={() => setStatusFilter("closed")} hint="Closed / final / paid, not voided." testId="company-settlements-kpi-closed" />
+        <DrillKpiCard label="Net Revenue" value={netRevenue} active={statusFilter === "all"} onClick={() => setStatusFilter("all")} hint="Sum of net revenue across the non-voided settlements listed." testId="company-settlements-kpi-net-revenue" />
+      </div>
 
       {listQuery.isError ? (
         <ListErrorBanner

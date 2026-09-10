@@ -16,6 +16,7 @@ import { DataPanel } from "../../components/layout/DataPanel";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { DataTable, type DataTableColumn } from "../../components/DataTable";
+import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { EntityPicker } from "../../components/EntityPicker";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
@@ -170,6 +171,14 @@ export function SettlementsPage() {
     ytd_settlements: kpiBaseQuery.isError ? "—" : kpiSettlements.filter(isYtd).length,
     open_driver_bills: openBillsQuery.isError ? "—" : openBillsSummary.total_count,
   };
+  // REG-005 — home KPI strip $ tile. net_pay is dollars (SettlementsTable renders $${net_pay.toFixed(2)}).
+  // Sum only the this-period, non-cancelled rows already fetched — no new query. "—" on load failure.
+  const driverPayThisPeriod: string = kpiBaseQuery.isError
+    ? "—"
+    : `$${kpiSettlements
+        .filter((s) => isInThisPeriod(s) && s.status !== "cancelled")
+        .reduce((sum, s) => sum + Number(s.net_pay ?? 0), 0)
+        .toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const focusedSettlements = useMemo(() => {
     if (focusFilter === "debt") {
       return settlements.filter((s) => typeof s.live_debt_flag === "number" && s.live_debt_flag > 0);
@@ -328,6 +337,19 @@ export function SettlementsPage() {
 
       {activeTab === "settlements" ? (
         <>
+      {/* REG-005 (owner "FOR ALL MODULES, THEY SHOULD ALL HAVE THEIR KPIS IN THEIR HOME PAGES") — a
+          real-number KPI strip at the TOP of the Driver Settlements home, above the table, visible in
+          BOTH the Tours (default) and Payments sub-views. Reuses the shared DrillKpiCard (same tile as
+          Maintenance's strip); every figure is derived from data already fetched (kpiBaseQuery +
+          openBills), never a placeholder, "—" on load failure. */}
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6" data-testid="settlements-home-kpi-strip">
+        <DrillKpiCard label="Total Unpaid" value={kpis.total_unpaid} to="/driver-finance/settlements?view=payments&payment_state=unpaid" hint="Settlements not yet paid." testId="settlements-kpi-total-unpaid" />
+        <DrillKpiCard label="This Period" value={kpis.this_period} to="/driver-finance/settlements" hint="Period end on/after this week's start." testId="settlements-kpi-this-period" />
+        <DrillKpiCard label="Driver Pay (Period)" value={driverPayThisPeriod} to="/driver-finance/settlements?view=payments" hint="Sum of net pay on this-period settlements." testId="settlements-kpi-driver-pay" />
+        <DrillKpiCard label="Drivers w/ Debt" value={kpis.drivers_with_debt} active={focusFilter === "debt"} to="/driver-finance/settlements?view=payments&focus=debt" hint="Settlements with a live debt balance." testId="settlements-kpi-debt" />
+        <DrillKpiCard label="YTD Settlements" value={kpis.ytd_settlements} to="/driver-finance/settlements" hint="Period end in the current calendar year." testId="settlements-kpi-ytd" />
+        <DrillKpiCard label="Open Driver Bills" value={kpis.open_driver_bills} to="/driver-finance/settlements?view=payments" hint="Unsettled driver pay — opens the open-bills panel." testId="settlements-kpi-open-bills" />
+      </div>
       <div className="flex items-center gap-2" data-testid="settlements-view-toggle">
         <Button
           size="sm"
@@ -411,19 +433,10 @@ export function SettlementsPage() {
           </label>
         </div>
       </CollapsedListFilters>
-      {/* B-A3: Total Unpaid / This Period / YTD → payment_state routes; Debt / Pending Acks / Held →
-          ?focus= predicates matching the KPI counts on this same list (real data, not guess-routes).
-          SETL-OPEN-BILLS: Open Driver Bills is a distinct KPI — unsettled driver pay that is not yet
-          represented in any settlement, surfaced so the page never looks "stuck at $0". */}
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-7">
-        <KpiCard label="Total Unpaid" value={kpis.total_unpaid} to="/driver-finance/settlements?payment_state=unpaid" />
-        <KpiCard label="This Period" value={kpis.this_period} to="/driver-finance/settlements" />
-        <KpiCard
-          label="Drivers w/ Debt"
-          value={kpis.drivers_with_debt}
-          active={focusFilter === "debt"}
-          onClick={() => setFocus(focusFilter === "debt" ? null : "debt")}
-        />
+      {/* B-A3: Pending Acks / Held Deductions focus filters live on the Payments view alongside the
+          payment pipeline (the top-of-page REG-005 KPI strip carries the summary tiles for both
+          views). These two set ?focus= predicates matching the KPI counts on this same list. */}
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
         <KpiCard
           label="Pending Acks"
           value={kpis.pending_acks}
@@ -436,8 +449,6 @@ export function SettlementsPage() {
           active={focusFilter === "held"}
           onClick={() => setFocus(focusFilter === "held" ? null : "held")}
         />
-        <KpiCard label="YTD Settlements" value={kpis.ytd_settlements} to="/driver-finance/settlements" />
-        <KpiCard label="Open Driver Bills" value={kpis.open_driver_bills} disabled disabledReason="Use the open-bills panel below to drill into unsettled driver pay" />
       </div>
       <div className="rounded-sm border border-gray-200 bg-white p-2">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Pipeline</p>
