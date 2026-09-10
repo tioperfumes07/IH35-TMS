@@ -248,6 +248,7 @@
   "verify-period-cash-basis-snapshot-readonly.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
   "verify-period-cash-basis-snapshot-shape.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
   "verify-photo-comparison-ai.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
+  "verify-planner-outside-range-widens.mjs": "added 2026-09-10 Devin-B B-3 — runs in verify-static suite (pre-push + CI); verify-step wiring pending CLAIM-RESERVE",
   "verify-pm-alerts-append-only.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
   "verify-pm-alerts-tenant-scope.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
   "verify-position-endpoints-no-pii-leak.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
@@ -281,6 +282,7 @@
   "verify-referenceselect-qbo-standard.mjs": "baselined 2026-07-16 B-D2 — package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",
   "verify-rename-fallout.mjs": "baselined 2026-07-16 B-D2 — package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",
   "verify-reports-hub-9-categories.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
+  "verify-reports-lists-no-dead-buttons.mjs": "added 2026-09-10 Devin-B B-2 — runs in verify-static suite (pre-push + CI); verify-step wiring pending CLAIM-RESERVE",
   "verify-required-document-types-entity-scope.mjs": "baselined 2026-07-16 B-D2 — package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",
   "verify-responsive-layout.mjs": "baselined 2026-07-16 B-D2 — package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",
   "verify-road-service-ticket-creates-wo.mjs": "baselined 2026-07-16 B-D2 — package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",
@@ -1236,5 +1238,6 @@
   "verify-bank-running-balance-uses-full-history.mjs": "pre-existing orphan — needs wiring by owner seat; not related to RPT-04",
   "verify-create-user-grants-company-access.mjs": "pre-existing orphan — needs wiring by owner seat; not related to RPT-04",
   "verify-vendor-default-expense-account.mjs": "baselined 2026-09-10 REG-002 — Cascade lane cannot author verify-steps (lane band restriction); guard runs via gate-step-map (gitignored/generated) and pre-commit. Wire into a banded verify-step when a banded seat adopts.",
-  "verify-dispatch-live-location.mjs": "baselined 2026-09-10 REG-002b — Cascade lane cannot author verify-steps (lane band restriction); guard runs via gate-step-map and pre-commit. Wire into a banded verify-step when a banded seat adopts."
+  "verify-dispatch-live-location.mjs": "baselined 2026-09-10 REG-002b — Cascade lane cannot author verify-steps (lane band restriction); guard runs via gate-step-map and pre-commit. Wire into a banded verify-step when a banded seat adopts.",
+  "verify-vendor-non-money-backfill.mjs": "added 2026-09-10 Devin-B B-1 — runs in verify-static suite (pre-push + CI); verify-step wiring pending CLAIM-RESERVE"
 }
