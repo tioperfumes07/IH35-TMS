@@ -47,3 +47,10 @@ DEVIN-A is retired. Stop. No Book Load. No OUTBOX.
 - loadCostColumnManifest: Load → Load Number, Settlement # → Settlement/Tour, both alwaysVisible=true
 - No conflicts with REG-043/044/046 money waterfall or default column work
 - All 7 Devin A factoring REGs remain shipped and merged
+
+## DEVIN-A | FAC INSPECTION | 72139b6d3c | 72139b6d3c | 4 FAC items inspected, 1 done, 3 other-seat/ops | NEXT (awaiting assignment)
+- FAC-02 (assign FARO to 5 real customers): OPEN — operational data task, not a code build, not Devin A scope
+- FAC-03 (quarantine 11 test customers): OPEN — operational data task, not Devin A scope
+- FAC-09 (= REG-015 stubs): DONE — all 6 stubs built and merged (PR #21675)
+- FAC-11 (factoring out of Dispatch subnav): OPEN — sidebar-config.ts:246 still has "Factoring Queue" under Dispatch; assigned to Cursor/CC-2 per INBOX-CURSOR.md
+- FAC-12 (LDT-4 stage-bar guard): DONE — verify-ldt-4-factoring-money.mjs exists, passes, wired in gate-step-map.json
