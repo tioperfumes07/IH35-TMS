@@ -29,15 +29,21 @@ export class PresettlementLinkError extends Error {
 export type TripType = "NB" | "TR" | "SB" | "LOCAL";
 
 /**
- * PS2 (claude/GO-22-PRESETTLEMENT-REGISTER-2026-09-02.md): "No settlement doc type in
- * lib.trace_counters. Allocator uses LOAD; existing rows LD. Do not invent a third. One
- * convention with LD/LOAD." — this is a direct, explicit instruction NOT to mint a new
- * doc_type='SETTLEMENT' counter (an earlier draft of this function did exactly that and was
- * corrected before shipping). Settlement display_ids reuse the SAME 'LOAD' counter and the SAME
- * allocator function (dispatch/load-id-reservation.service.ts's allocateNextLoadNumber) — no
- * second sequence, no duplicated seed-then-increment logic. The returned value is prefixed
- * `S-<n>` so a settlement display_id is never visually confused with a load_number even though
- * both numbers are drawn from the one shared counter.
+ * @deprecated REG-010/011 (owner 2026-09-10, live, repeated rejection of exactly this scheme's
+ * output) — SUPERSEDED by the OWNER-RULED 2026-09-08 permanent numbering rule (see
+ * driver-finance/settlements-load-bookended.service.ts's own comment, cited verbatim there):
+ * a settlement display_id must come from driver_finance.next_settlement_display_id
+ * (S-YYYY-NNNN, its own independent sequence), never derived from the load-number counter.
+ * confirmPresettlementLink (below) no longer calls this. Kept, not deleted (void-not-delete /
+ * never-delete law) — no other call site as of this fix (grep-verified), but a future accidental
+ * reintroduction would revert to producing exactly the owner-rejected S-<load-number-shaped>
+ * output this fix removes.
+ *
+ * Original rationale (PS2, claude/GO-22-PRESETTLEMENT-REGISTER-2026-09-02.md), for history: "No
+ * settlement doc type in lib.trace_counters. Allocator uses LOAD; existing rows LD. Do not invent
+ * a third. One convention with LD/LOAD." — read at the time as "reuse the load counter's numeric
+ * sequence," which is exactly what produced the owner-rejected behavior once observed live; the
+ * 2026-09-08 ruling settled the tension PS2 itself couldn't have anticipated.
  */
 export async function allocateNextSettlementDisplayId(client: DbClient, operatingCompanyId: string): Promise<string> {
   const seq = await allocateNextLoadNumber(client, operatingCompanyId);
@@ -214,7 +220,6 @@ export async function confirmPresettlementLink(client: DbClient, input: ConfirmI
 
   let settlementId: string;
   if (input.action === "create_new") {
-    const displayId = await allocateNextSettlementDisplayId(client, input.operating_company_id);
     // GAP-PRESETTLEMENT-PERIOD-NULL (found live 2026-09-05, seeding the settlement feed): this
     // branch never set period_start/period_end (both NOT NULL, no default on
     // driver_finance.driver_settlements) — every "create_new" confirmation crashed with a NOT
@@ -244,6 +249,21 @@ export async function confirmPresettlementLink(client: DbClient, input: ConfirmI
     );
     const periodDate = String(loadContext.rows[0]!.trip_started_at).slice(0, 10);
     const isSampleData = Boolean(loadContext.rows[0]!.is_sample_data);
+    // REG-010/011 (owner 2026-09-10, live, repeated: "STILL RENDERS S- AND [5] NUMBERES, THE
+    // LOAD, NOT EVEN THE TOUR/SETTLEMENT") — this call site was still using the deprecated
+    // allocateNextSettlementDisplayId() (S-<shared-load-counter-number>, see that function's own
+    // now-superseded comment), the ONLY reason a settlement number ever looked like a load
+    // number: it drew from the identical numeric sequence. driver_finance/
+    // settlements-load-bookended.service.ts already carries the correct, OWNER-RULED
+    // (2026-09-08 permanent ruling, its own comment cited verbatim) generator —
+    // driver_finance.next_settlement_display_id (S-YYYY-NNNN, its own independent sequence) —
+    // for its own settlement-open path; this was simply the one remaining call site never
+    // switched over. Same function, same fallback shape, not reinvented.
+    const displayRes = await client.query<{ next_id?: string }>(
+      `SELECT driver_finance.next_settlement_display_id($1::uuid, $2::date) AS next_id`,
+      [input.operating_company_id, periodDate]
+    );
+    const displayId = displayRes.rows[0]?.next_id ?? `S-${new Date(periodDate).getUTCFullYear()}-0001`;
     const insertRes = await client.query<{ id: string }>(
       `
         INSERT INTO driver_finance.driver_settlements (
