@@ -12,6 +12,8 @@ const routesPath = join(root, "apps/frontend/src/routes/manifest.tsx");
 const routes = readFileSync(routesPath, "utf-8");
 const manifestPath = join(root, "apps/frontend/src/router/route-manifest.ts");
 const manifest = readFileSync(manifestPath, "utf-8");
+const dispatchPath = join(root, "apps/frontend/src/pages/Dispatch.tsx");
+const dispatch = readFileSync(dispatchPath, "utf-8");
 const errors = [];
 
 if (!/const NB = "#1f2a44"/.test(timeline)) {
@@ -68,6 +70,18 @@ if (!/path="\/dispatch\/round-trips"/.test(routes)) {
 }
 if (!/roundTripsDeepLink/.test(routes)) {
   errors.push("routes/manifest.tsx must mount DispatchPage with roundTripsDeepLink for /dispatch/round-trips.");
+}
+
+// REG-037 (owner 2026-09-10: Round Trips timeline "Aug 25 → present is not rendering loads/units"):
+// the Round Trips board + timeline (view === "units") render from the same paginated `loads` the Load
+// Board uses. A 50-row page silently truncated the fleet, so units/loads past the first page never
+// reached the timeline. That view has no pager, so it must fetch the full window. Guard the widened
+// fetch so it can't regress back to the 50-row page.
+if (!/roundTripsFullFetch\s*=\s*subTab === "load_board" && view === "units"/.test(dispatch)) {
+  errors.push("Dispatch.tsx must flag the Round Trips view (roundTripsFullFetch = subTab load_board && view units) so its whole-fleet board+timeline are not paginated (REG-037).");
+}
+if (!/effectiveLoadsLimit\s*=\s*roundTripsFullFetch \? 1000 : limit/.test(dispatch) || !/limit:\s*effectiveLoadsLimit/.test(dispatch)) {
+  errors.push("Dispatch.tsx must fetch the full window (effectiveLoadsLimit) for the Round Trips view so the timeline is not truncated by the 50-row Load Board pager (REG-037).");
 }
 
 if (errors.length > 0) {
