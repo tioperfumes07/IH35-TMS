@@ -1,6 +1,6 @@
 {
  "date": "2026-09-10",
- "generated_at_iso": "2026-09-10T11:30:29.460Z",
+ "generated_at_iso": "2026-09-10T16:31:47.904Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 30,
@@ -3116,7 +3116,7 @@
    "evidence": "all 8 file(s) on main",
    "name": "Settlements/finance toolbar search/range/gear repointed from compatibility aliases and a conditional-preview page to the",
    "registered_on": null,
-   "pr": 21632
+   "pr": 21658
   },
   {
    "id": "cc2-fix-home-quickjump-guard-prettier-linewrap-false-positive",
@@ -13727,6 +13727,102 @@
  ],
  "merged_prs": [
   {
+   "number": 21658,
+   "title": "CC1-IN- docs: REG-050 status correction (lumper mechanism already live, 1 owner-decision gap)",
+   "mergedAt": "2026-09-10T13:05:12Z",
+   "branch": "claude/reg050-status-correction-2026-09-10"
+  },
+  {
+   "number": 21657,
+   "title": "CC1-IN- docs: REG-049 live-confirmed close-out",
+   "mergedAt": "2026-09-10T12:59:42Z",
+   "branch": "claude/cc1-outbox-reg049-close-2026-09-10"
+  },
+  {
+   "number": 21656,
+   "title": "CC1-IN- docs: REG-046/048/049 outbox report",
+   "mergedAt": "2026-09-10T12:49:27Z",
+   "branch": "claude/cc1-outbox-reg049-2026-09-10"
+  },
+  {
+   "number": 21655,
+   "title": "CC1-IN- REG-049: Factoring report date-range filters (ACCT-F26062)",
+   "mergedAt": "2026-09-10T12:47:38Z",
+   "branch": "claude/reg049-factoring-date-filters-2026-09-10"
+  },
+  {
+   "number": 21654,
+   "title": "CC1-IN- CLAIM-RESERVE 11185 (verify-factoring-report-date-filters)",
+   "mergedAt": "2026-09-10T12:38:59Z",
+   "branch": "claude/claim-reserve-11185"
+  },
+  {
+   "number": 21653,
+   "title": "CC1-IN- docs: REG-040 status correction (3/4 resolved, 1 owner-decision gap)",
+   "mergedAt": "2026-09-10T12:25:05Z",
+   "branch": "claude/reg040-status-correction-2026-09-10"
+  },
+  {
+   "number": 21652,
+   "title": "FINDING: dispatch live location — Samsara coordinates not turning into city/state",
+   "mergedAt": "2026-09-10T12:35:14Z",
+   "branch": "cascade/dispatch-live-location-fix"
+  },
+  {
+   "number": 21651,
+   "title": "CC1-IN- docs: REG-036 live-confirmed close-out",
+   "mergedAt": "2026-09-10T12:19:57Z",
+   "branch": "claude/cc1-outbox-reg036-closeout-2026-09-10"
+  },
+  {
+   "number": 21650,
+   "title": "CC1-IN- docs: REG-036 outbox report",
+   "mergedAt": "2026-09-10T12:16:34Z",
+   "branch": "claude/cc1-outbox-reg036-2026-09-10"
+  },
+  {
+   "number": 21649,
+   "title": "CC1-IN- REG-036: Banking earliest-synced running-balance caveat (BANK-F30027)",
+   "mergedAt": "2026-09-10T12:13:36Z",
+   "branch": "claude/reg036-banking-balance-caveat-2026-09-10"
+  },
+  {
+   "number": 21648,
+   "title": "CC3-IN- FINDING: LST-F26101 (REG-016) Bills Type filter multi-select",
+   "mergedAt": "2026-09-10T12:07:32Z",
+   "branch": "claude-3-reg016-bills-type-multiselect"
+  },
+  {
+   "number": 21647,
+   "title": "Cursor- REG-034 relabel USMCA-APD placeholder trailers to real owner numbers (live)",
+   "mergedAt": "2026-09-10T12:06:38Z",
+   "branch": "cursor/reg034-apd-trailer-relabel-live-2026-09-10"
+  },
+  {
+   "number": 21646,
+   "title": "CC1-IN- CLAIM-RESERVE 11181 (verify-banking-earliest-synced-balance-caveat)",
+   "mergedAt": "2026-09-10T12:06:03Z",
+   "branch": "claude/claim-reserve-11181"
+  },
+  {
+   "number": 21645,
+   "title": "CC3-IN- docs(bus): REG-012 closed + REG-013 verified, POD evidence corrected",
+   "mergedAt": "2026-09-10T11:55:42Z",
+   "branch": "claude-3-reg012-013-verify-report"
+  },
+  {
+   "number": 21644,
+   "title": "FINDING: N/A (docs only — REG-028/030 live trace requested by Lead)",
+   "mergedAt": "2026-09-10T11:57:24Z",
+   "branch": "cc2/reg030-independent-verification-trace"
+  },
+  {
+   "number": 21643,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-10T11:30:55Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 21642,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-09-10T04:53:45Z",
@@ -17229,102 +17325,6 @@
    "title": "Cursor-CLAIM-RESERVE 10518 verify-company-settlements-page (SET-04)",
    "mergedAt": "2026-09-06T20:14:24Z",
    "branch": "chore/claim-reserve-set04-10518"
-  },
-  {
-   "number": 21045,
-   "title": "chore: claim-reserve 10541 (CASH-FLOW-02 rolling ledger)",
-   "mergedAt": "2026-09-06T20:13:35Z",
-   "branch": "chore/claim-reserve-10541-cash-flow-rolling-ledger"
-  },
-  {
-   "number": 21044,
-   "title": "Claude-3: FINDING: SET-01 (part 1) settlement detail Add-deduction wired",
-   "mergedAt": "2026-09-06T20:12:39Z",
-   "branch": "claude-3/set01-settlement-add-deduction"
-  },
-  {
-   "number": 21043,
-   "title": "Claude-1-FINDING: N/A (docs report — INV-06/VC-01/INV-13 DONE + 10533 collision filed)",
-   "mergedAt": "2026-09-06T20:09:14Z",
-   "branch": "claude/cc-1-outbox-inv13"
-  },
-  {
-   "number": 21042,
-   "title": "chore: claim-reserve 10539 (BANK-RULES-USMCA renumber, duplicate-claim fix)",
-   "mergedAt": "2026-09-06T20:06:45Z",
-   "branch": "chore/claim-reserve-10539-bank-rules-renumber"
-  },
-  {
-   "number": 21041,
-   "title": "Cursor-VC-10 / VC-LIST-02: All page size + persisted size on vendor/customer lists",
-   "mergedAt": "2026-09-06T20:04:59Z",
-   "branch": "cursor/vc10-all-page-size"
-  },
-  {
-   "number": 21040,
-   "title": "Cursor-FIX: settlements Loads reverse-link guard drift (unblocks money gate for all seats)",
-   "mergedAt": "2026-09-06T20:04:25Z",
-   "branch": "cursor/settl-loadlinks-drift-fix"
-  },
-  {
-   "number": 21039,
-   "title": "Claude-3: FINDING: SETL-CLOSE-POST-A item 1 — 13-settlement close credits 2170 clearing",
-   "mergedAt": "2026-09-06T20:02:41Z",
-   "branch": "claude-3/setl-close-post-a-conditions"
-  },
-  {
-   "number": 21038,
-   "title": "Claude-1-FINDING: ACCT-F25114 INV-13 expense_number never NULL (recurring.worker.ts fix + guard)",
-   "mergedAt": "2026-09-06T20:01:40Z",
-   "branch": "claude/cc-1-inv13-fix"
-  },
-  {
-   "number": 21037,
-   "title": "CC-2-docs: note — CONSOLIDATED 18:30Z item 2 target archived",
-   "mergedAt": "2026-09-06T20:03:56Z",
-   "branch": "cc2/outbox-note2-18-30"
-  },
-  {
-   "number": 21036,
-   "title": "CC-2-dispatch: BNK-08 B2 BANK-REGISTER-COLUMNS — 5 new real register columns",
-   "mergedAt": "2026-09-06T20:03:53Z",
-   "branch": "cc2/bnk08-register-columns"
-  },
-  {
-   "number": 21035,
-   "title": "feat(banking): BANK-RULES-USMCA — suggestion engine falls back to the raw bank description (NULL on all 364 USMCA lines) + USMCA bank-rule seed via the real rou",
-   "mergedAt": "2026-09-06T19:58:58Z",
-   "branch": "lead/bank-rules-usmca"
-  },
-  {
-   "number": 21034,
-   "title": "CLAIM-RESERVE: verify-step 10533 (BANK-RULES-USMCA)",
-   "mergedAt": "2026-09-06T19:58:18Z",
-   "branch": "chore/claim-reserve-10533"
-  },
-  {
-   "number": 21033,
-   "title": "Cursor-CV-06 CV-TRANSACTION-COLUMNS — vendor/customer transaction columns render real data",
-   "mergedAt": "2026-09-06T19:58:31Z",
-   "branch": "cursor/cv-transaction-columns"
-  },
-  {
-   "number": 21032,
-   "title": "Cursor-CLAIM-RESERVE 10516 (VC-10 / VC-LIST-02 verify-step number)",
-   "mergedAt": "2026-09-06T19:56:53Z",
-   "branch": "chore/claim-reserve-vc10-10516"
-  },
-  {
-   "number": 21031,
-   "title": "Claude-3: FINDING: RG-22 driver_bill proof trail wired on Driver Pay tab",
-   "mergedAt": "2026-09-06T19:51:12Z",
-   "branch": "claude-3/rg22-driver-bill-proof-trail"
-  },
-  {
-   "number": 21030,
-   "title": "chore: renumber 10517/10521 -> 10533/10537 (duplicate-claim resolution)",
-   "mergedAt": "2026-09-06T19:51:06Z",
-   "branch": "chore/claim-reserve-10533-10537-renumber"
   }
  ],
  "merged_pr_total": 3000,
@@ -17387,12 +17387,6 @@
    "number": 18566,
    "title": "Claude-3- ACK UI-guards-hold, confirm AT-null revert 10/11",
    "mergedAt": "2026-08-31T05:10:30Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 18533,
-   "title": "Claude-3- correct: live_load_number still placeholder, hold inv link",
-   "mergedAt": "2026-08-31T04:26:18Z",
    "category": "HOLD"
   }
  ]
