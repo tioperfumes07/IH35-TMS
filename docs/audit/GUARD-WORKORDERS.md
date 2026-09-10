@@ -10403,3 +10403,45 @@ this session (tiny-field-89581227, bypass_rls=lucia): driver_finance.driver_sett
 rows all matching `^S-[0-9]{4,5}$` (old scheme); accounting.bill_lines count=155271,
 with_load_id=0 | **OPEN · both are decisions/investigations for the next picker-upper, not code
 defects** |
+
+## REG-012 re-verified · REG-013 upload-path traced, Lead's own evidence corrected — CC-3, 2026-09-10
+
+SOURCE-OF-TRUTH: apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx (REG-012); dispatch.pod_documents + docs.file_links/files/catalogs.file_categories (REG-013) — proven at AssignmentHistoryPage.tsx:10,136; apps/backend/src/factoring/submission-queue.service.ts:82-107 (the real gate SQL)
+I QUERIED: source read of AssignmentHistoryPage.tsx for PageHeader usage; Neon prod tiny-field-89581227 (bypass_rls=lucia) — `SELECT count(*) FROM dispatch.pod_documents` (all entities + USMCA-scoped), the exact load_id/invoice/rate-con state for the one USMCA pod_documents row found, and a full-system scan of docs.file_links/files/file_categories for code IN ('pod','rate_confirmation')
+NOT CHECKED: TRANSP/TRK's own delivered-but-undocumented load counts (USMCA only, this session); whether the driver-app POD capture UI itself has a reported bug preventing MORE drivers from completing it (only proved the path is reachable and has produced one real success, not why usage is otherwise near-zero)
+
+**REG-012 (Assignment History back arrow):** confirmed via direct source read —
+`AssignmentHistoryPage.tsx` renders through `PageHeader` (line 136), which Devin's independent
+REG-020 audit already confirmed provides smart-back/history-aware navigation on 216 pages
+system-wide. Matches Lead's 2026-09-09 finding exactly. **No build needed — CLOSED.**
+
+**REG-013 (Submit Factor missing eligible loads):** verified Lead's gate-logic reading is correct
+(submission-queue.service.ts's `is_submittable` gate is unchanged, correctly requires both an
+approved POD in `dispatch.pod_documents` AND a `rate_confirmation`-coded file in
+`docs.file_links`/`docs.files`/`catalogs.file_categories`) — but **one piece of Lead's supporting
+evidence needs correction, not the verdict itself.** Lead's report said "ZERO POD documents have
+EVER been uploaded/linked to ANY USMCA load" — that was checked against `docs.files` joined on
+`file_categories.code='pod'`, which is NOT where POD documents actually live (a completely
+different, dedicated table). The real POD storage, `dispatch.pod_documents`, has exactly ONE
+USMCA row (id `34b348ca…`, load 13579, status `approved`, created 2026-09-07) — proving the driver-
+app POD capture path IS reachable and has worked at least once, not zero times as reported. It
+doesn't change anything for the 7 delivered loads Lead investigated (that POD belongs to a
+DIFFERENT, since-cancelled load with a voided invoice, irrelevant to Submit Factor), so **Lead's
+verdict — this is an operational/UX gap, not a broken gate — still stands**, just on corrected
+evidence: for USMCA specifically, `docs.file_links`/`files` has **zero** `rate_confirmation`-coded
+rows on ANY load, ever (confirmed system-wide: real `rate_confirmation` files exist for a
+different, non-USMCA load-number format — `L-YYYYMMDD-NNNN`, batch-uploaded 2026-08-31 — proving
+that upload path also works in general, just never used for a USMCA load). **Both upload paths are
+proven functional; USMCA operationally has not completed either one for its 7 open loads.**
+
+Per the task's own instruction (report the recommendation, do not silently build): recommend a
+visible nudge/checklist on the load detail page for `delivered_pending_docs` loads — "this load
+can't move to Submit Factor until POD + Rate Confirmation are attached" — linking directly to
+each upload action. Not built here; this is a product decision for the owner/whoever owns the
+load-detail page next.
+
+| N/A — verification + corrected evidence, no code | **CC-3** | build the recommended load-detail
+nudge if the owner confirms that's the wanted fix | live Neon reads this session confirming the
+corrected pod_documents count and the true zero-rate-confirmation-for-USMCA figure (see I QUERIED
+above) | **REG-012 CLOSED (no build) · REG-013 VERIFIED — UX gap confirmed, Lead's verdict stands,
+one evidentiary correction made, recommendation filed not built** |
