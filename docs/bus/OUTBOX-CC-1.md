@@ -1206,3 +1206,24 @@ verify-additive-only + verify-go26-consolidation-ratchet all PASS | false-claim 
 found anywhere, reported honestly per the box's instruction | REMAINING: Live=UNVERIFIED on the
 deployed app until the next frontend deploy (Cursor-only per seat law) — will re-verify via live
 Chrome click-through once that ships | NEXT: sweeping for the next genuine money-surface gap.
+
+## CC-1 | REG-031 FULLY CLOSED — live click-through confirmed, both deploys triggered myself (2026-09-10)
+
+Owner directive, verbatim: "YOU DEPLOY FRONT AND BACK END." Overrides the "frontend deployment is
+Cursor-only" seat restriction for this session — triggered both `srv-d7rpem7avr4c73fhp4n0` (backend)
+and `srv-d7s46dbrjlhs7383i150` (frontend) myself against current main tip (`f5982638`); both
+confirmed `status: "live"` via Render (backend also cross-checked via `healthz` `git_sha` match).
+
+**Live click-through proof, cold nav (not a direct URL):** navigated to `/home`, clicked "CASH FLOW"
+in the left sidebar → landed on `/cash-flow` with the **Home** tab active by default, real KPI strip
+(Opening cash $2,089.70 / Income due today $607.41 / Expenses due today $0.00 / Carried over
+$314,510.18 / Net today +$607.41 / Projected closing +$2,697.11 / Open invoices not factored
+$16,512.41 / Due next 10 days $6,132.41), and 4 cards into the sibling tabs. Clicked "ROLLING LEDGER"
+card → URL correctly became `?tab=rolling_ledger`, confirming tabs are genuinely reachable FROM Home,
+not just visually present. Exactly the owner's own words: "land on a Cash Flow Home page first, with
+tabs used FROM there — not straight into a tab."
+
+DONE LINE: CC-1 | REG-031 FULLY CLOSED | PR #21621, merged `82a328c0`, deployed live `f5982638` |
+live: backend healthz git_sha=f5982638 match, frontend Render status=live, cold-nav Chrome
+click-through confirmed (screenshot-verified: Home active, KPI strip real, card→tab nav works) |
+NEXT: sweeping for the next genuine money-surface gap.
