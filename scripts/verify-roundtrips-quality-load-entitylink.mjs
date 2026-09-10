@@ -61,6 +61,14 @@ function auditRound(src) {
   if (!/RT_KANBAN_CARD_CLASS/.test(src)) {
     failures.push(`${ROUND}: trip cards must use Kanban card class constant`);
   }
+  // REG-036 (owner 2026-09-10 "NB units have no Book-a-Return"): the NeedsReturnCard's "+ Book return"
+  // button was reachable ONLY inside the empty cell (zero-leg units). A unit that already has an
+  // outbound NB/TR leg rendered its card but never the button, so a delivered/in-flight NB with no SB
+  // booked had no way to book the return. There must be a trailing NeedsReturnCard cell for a unit that
+  // HAS legs and still needs a return.
+  if (!/legs\.length > 0 && pair\.needsReturn && !pair\.returnLoad \?[\s\S]{0,160}<NeedsReturnCard/.test(src)) {
+    failures.push(`${ROUND}: REG-036 — a unit with legs that still needs a return must render a trailing "+ Book return" (NeedsReturnCard) cell`);
+  }
   return failures;
 }
 
@@ -175,6 +183,7 @@ if (process.argv.includes("--selftest")) {
     [round.replace("name={load.assigned_primary_driver_name}", "name={load.assigned_primary_driver_id}"), qual, api, route, timeline, legs],
     [round.replace("name={pair.unitNumber}", "name={pair.unitId}"), qual, api, route, timeline, legs],
     [round.replace("name={pair.driverName}", "name={pair.driverId}"), qual, api, route, timeline, legs],
+    [round.replace("legs.length > 0 && pair.needsReturn && !pair.returnLoad ?", "false ?"), qual, api, route, timeline, legs],
     [round, qual.replace("event.related_load_number", "null"), api, route, timeline, legs],
     [round, qual, api.replace("related_load_number: string | null", "related_load_number?: string | null"), route, timeline, legs],
     [round, qual, api, route.replace("rl.load_number AS related_load_number", "NULL AS related_load_number"), timeline, legs],
