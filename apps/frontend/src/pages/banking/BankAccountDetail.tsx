@@ -26,6 +26,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useListState } from "../../components/list-state";
 import type { PlaidBankTransaction } from "../../api/banking";
 import { formatUsdCents } from "../../lib/money";
+import { MoneyText } from "../../components/MoneyText";
 import { BankingTransactionsDesignView, spentReceived } from "./components/BankingTransactionsDesignView";
 import { TransferModal } from "./TransferModal";
 import { RecordTransferModal } from "./RecordTransferModal";
@@ -218,18 +219,14 @@ export function BankAccountDetailPage() {
         label: "Statement balance",
         className: "text-right",
         cellClass: "text-right",
-        render: (s) => (
-          <span className="text-gray-900">{formatUsdCents(Number(s.statement_balance_cents))}</span>
-        ),
+        render: (s) => <MoneyText cents={Number(s.statement_balance_cents)} className="text-gray-900" />,
       },
       {
         key: "variance_cents",
         label: "Variance",
         className: "text-right",
         cellClass: "text-right",
-        render: (s) => (
-          <span className="text-gray-900">{formatUsdCents(Number(s.variance_cents))}</span>
-        ),
+        render: (s) => <MoneyText cents={Number(s.variance_cents)} className="text-gray-900" />,
       },
       {
         key: "open",
@@ -332,11 +329,11 @@ export function BankAccountDetailPage() {
       <div className="grid grid-cols-1 gap-3 rounded-sm border border-gray-200 bg-white p-4 md:grid-cols-3">
         <div>
           <p className="text-xs uppercase tracking-wide text-gray-500">Current balance</p>
-          <p className="text-page-title font-semibold text-gray-900">{formatUsdCents(account?.current_balance_cents ?? 0)}</p>
+          <p className="text-page-title font-semibold text-gray-900"><MoneyText cents={account?.current_balance_cents ?? 0} /></p>
         </div>
         <div>
           <p className="text-xs uppercase tracking-wide text-gray-500">Available balance</p>
-          <p className="text-page-title font-semibold text-gray-900">{formatUsdCents(account?.available_balance_cents ?? 0)}</p>
+          <p className="text-page-title font-semibold text-gray-900"><MoneyText cents={account?.available_balance_cents ?? 0} /></p>
         </div>
         <div>
           <p className="text-xs uppercase tracking-wide text-gray-500">Sync status</p>

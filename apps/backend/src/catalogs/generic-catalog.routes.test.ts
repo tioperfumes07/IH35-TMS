@@ -167,7 +167,7 @@ vi.mock("../audit/crud-audit.js", () => ({
 
 const TEST_OPCO = "11111111-1111-4111-8111-111111111111";
 
-describe.sequential("generic catalog framework", () => {
+describe("generic catalog framework", () => {
   const apps: Array<ReturnType<typeof Fastify>> = [];
 
   afterEach(async () => {
@@ -319,7 +319,7 @@ describe.sequential("generic catalog framework", () => {
 // catalog never references the audit-user columns, and — as a control — that the DEFAULT catalog
 // (hasAuditUserColumns unset) still does, so a regression that re-couples the two flags is caught
 // either way.
-describe.sequential("generic catalog framework — hasAuditUserColumns", () => {
+describe("generic catalog framework — hasAuditUserColumns", () => {
   const apps: Array<ReturnType<typeof Fastify>> = [];
   // queryMock is the SAME shared mock the first describe block above uses (module-level, wired
   // through the "../auth/db.js" mock). Restore its original big-switch implementation after every
@@ -492,7 +492,7 @@ describe.sequential("generic catalog framework — hasAuditUserColumns", () => {
 // (apps/backend/src/catalogs/fleet/shared.ts) does: issue `set_config('app.operating_company_id',
 // ...)` before the mutation, and by checking the UPDATE's own WHERE clause carries the belt-and-
 // suspenders operating_company_id predicate.
-describe.sequential("generic catalog framework — entity-scoped mutations set company scope (CLS-CATALOG-MUTATION-RLS-SILENT-404)", () => {
+describe("generic catalog framework — entity-scoped mutations set company scope (CLS-CATALOG-MUTATION-RLS-SILENT-404)", () => {
   const apps: Array<ReturnType<typeof Fastify>> = [];
   const originalQueryImpl = queryMock.getMockImplementation();
 

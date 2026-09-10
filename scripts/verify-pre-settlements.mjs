@@ -6,6 +6,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { countTenantGucCalls } from "./lib/tenant-guc-match.mjs";
 
 const ROOT = process.cwd();
 const LABEL = "verify-pre-settlements";
@@ -79,7 +80,8 @@ for (const ep of ["/api/v1/settlements\"", "/api/v1/settlements/:id\"", "/api/v1
 //
 // So: every handler that actually queries must scope; handlers that only redirect must NOT be required to.
 const queryingHandlers = (routes.match(/client\.query\(/g) || []).length;
-const scopedHandlers = (routes.match(/(?:SET LOCAL app\.operating_company_id|set_config\(\s*['"]app\.operating_company_id['"])/g) || []).length;
+const scopedHandlers =
+  countTenantGucCalls(routes) + (routes.match(/SET LOCAL app\.operating_company_id/g) || []).length;
 if (queryingHandlers === 0) fail("no querying handler found — scope is wrong, refusing to pass vacuously");
 else if (scopedHandlers < 1) fail(`querying handlers present (${queryingHandlers}) but none sets the tenant GUC`);
 else pass(`tenant GUC set for the querying path (${scopedHandlers} site(s), ${queryingHandlers} query call(s))`);

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
+import { setsTenantGuc } from "./lib/tenant-guc-match.mjs";
 
 const servicePath = path.join(process.cwd(), "apps/backend/src/accounting/escrow/service.ts");
 const routePath = path.join(process.cwd(), "apps/backend/src/accounting/escrow/routes.ts");
@@ -19,7 +20,7 @@ const service = fs.readFileSync(servicePath, "utf8");
 const route = fs.readFileSync(routePath, "utf8");
 const migration = fs.readFileSync(migrationPath, "utf8");
 
-if (!service.includes("set_config('app.operating_company_id'")) fail("escrow service must set tenant scope");
+if (!setsTenantGuc(service)) fail("escrow service must set tenant scope");
 if (!service.includes("operating_company_id = $1::uuid") && !service.includes("operating_company_id = $2::uuid")) {
   fail("escrow service queries must filter by operating_company_id");
 }

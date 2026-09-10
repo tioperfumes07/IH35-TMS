@@ -27,6 +27,7 @@
  */
 import fs from "node:fs";
 import { createRequire } from "node:module";
+import { setsTenantGuc } from "./lib/tenant-guc-match.mjs";
 
 const require = createRequire(import.meta.url);
 const LABEL = "verify-no-duplicate-settlement-deductions";
@@ -35,7 +36,7 @@ const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 export function usesRealScopedWriter(src) {
   const noRawDelete = !/\bDELETE\s+FROM\s+driver_finance\.driver_reimbursements\b/i.test(src);
-  const scopedTransaction = /withCurrentUser\(/.test(src) && /set_config\('app\.operating_company_id'/.test(src);
+  const scopedTransaction = /withCurrentUser\(/.test(src) && setsTenantGuc(src);
   const setsVoidFields = /voided_at\s*=\s*now\(\)/.test(src) && /void_reason\s*=\s*\$2/.test(src);
   return noRawDelete && scopedTransaction && setsVoidFields;
 }

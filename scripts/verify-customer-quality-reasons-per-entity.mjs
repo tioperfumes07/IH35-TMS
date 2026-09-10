@@ -9,6 +9,7 @@
 // in an in-memory copy of the REAL sources and asserts every one is caught, then asserts live clean.
 import fs from "node:fs";
 import path from "node:path";
+import { countTenantGucCalls } from "./lib/tenant-guc-match.mjs";
 
 const ROOT = process.cwd();
 const LABEL = "verify:customer-quality-reasons-per-entity";
@@ -43,7 +44,7 @@ export function assertCustomerQualityReasonsPerEntity(sources) {
   const route = get(ROUTE);
   if (!/resolveOperatingCompanyId/.test(route)) errs.push("route must resolve the caller's company");
   // Three scoped paths: GET catalog, GET events JOIN, POST events lookup — each needs the GUC set.
-  const gucCount = (route.match(/set_config\('app\.operating_company_id'/g) || []).length;
+  const gucCount = countTenantGucCalls(route);
   if (gucCount < 3) errs.push(`route must set the app.operating_company_id GUC in all 3 handlers (catalog GET + events GET/POST); found ${gucCount}`);
   if (!/r\.operating_company_id = \$1/.test(route)) errs.push("catalog GET must filter by operating_company_id");
   if (!/WHERE id = \$1 AND operating_company_id = \$2/.test(route)) errs.push("POST customer check must be entity-scoped (WHERE id = $1 AND operating_company_id = $2)");

@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["banking"],"cols":["connectivity","qbo_chrome"],"leaves":["banking.modal.manage_accounts"],"task":"CLASS-MODAL-SIZE-PREFERENCE-FAILURE-VISIBLE","vertical":"class-sweep"} */
-/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["fleet.modal.edit_vehicle"],"task":"CLASS-MODAL-SIZE-PREFERENCE-FAILURE-VISIBLE","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["maintenance"],"cols":["connectivity"],"leaves":["maintenance.modal.work_order_detail"],"task":"CLASS-MODAL-SIZE-PREFERENCE-FAILURE-VISIBLE","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["tasks"],"cols":["connectivity","qbo_chrome"],"leaves":["tasks.drawer.task"],"task":"CLASS-MODAL-SIZE-PREFERENCE-FAILURE-VISIBLE","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["customers"],"cols":["connectivity","qbo_chrome"],"leaves":["customers.modal.customer_drill","customers.modal.customer_edit"],"task":"CLASS-MODAL-SIZE-PREFERENCE-FAILURE-VISIBLE","vertical":"class-sweep"} */
@@ -12,9 +11,14 @@ const ROOT = process.cwd();
 const FRONTEND_ROOT = path.join(ROOT, "apps/frontend/src");
 const SHARED_MODAL = path.join(FRONTEND_ROOT, "components/Modal.tsx");
 const SIZE_TEST = path.join(FRONTEND_ROOT, "components/__tests__/modal-size-preference-failure.test.tsx");
+// REG-025/026 (owner ruling, PR #21604, 2026-09-09): EditVehicleModal.tsx deliberately moved OFF
+// the shared <Modal modalKind="edit-vehicle"> — the owner called the centered modal "oversized"
+// and directed it to a side drawer (ParityDrawer) instead. ParityDrawer satisfies the X-close
+// contract on its own (see hasXCloseContract below) and carries no size-preference system of its
+// own to persist, so it is no longer a PERSISTED_SIZE_SURFACES member. Removed here, not left
+// stale, so a legitimate owner-directed redesign doesn't read as a regression forever.
 const PERSISTED_SIZE_SURFACES = [
   ["pages/banking/components/ManageAccountsModal.tsx", 'modalKind="banking-manage-accounts"'],
-  ["components/fleet/EditVehicleModal.tsx", 'modalKind="edit-vehicle"'],
   ["components/maintenance/WorkOrderDetailModal.tsx", 'modalKind="work_order_detail"'],
   ["components/tasks/TaskLinkPicker.tsx", 'modalKind="link-task"'],
   ["components/customers/CustomerEditModal.tsx", 'modalKind="customer-edit"'],

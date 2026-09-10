@@ -43,6 +43,18 @@ export function setsTenantGuc(src) {
   return DIRECT.test(src) || VIA_HELPER.test(src);
 }
 
+/**
+ * Count of tenant-GUC-scoping call sites in `src`, counting either form. For guards that compare a
+ * count (e.g. "N handlers x N assertCompanyMembership() calls" or "N returning-driver detections"),
+ * not just presence — same CLS-GUARD-LITERAL-GUC bug: a per-handler direct-only count undercounts
+ * (and can still flag SAFER code) the moment one handler adopts setScopedCompanyContext.
+ */
+export function countTenantGucCalls(src) {
+  const direct = src.match(new RegExp(DIRECT.source, "g")) ?? [];
+  const viaHelper = src.match(new RegExp(VIA_HELPER.source, "g")) ?? [];
+  return direct.length + viaHelper.length;
+}
+
 /** For guard failure messages, so the operator is told both accepted forms rather than one. */
 export const TENANT_GUC_HINT =
   "set the tenant GUC either with set_config('app.operating_company_id', …) or, preferably, via " +

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import { setsTenantGuc } from "./lib/tenant-guc-match.mjs";
 
 const FILES = {
   route: "apps/backend/src/identity/users.routes.ts",
@@ -17,7 +18,7 @@ function failuresFor(s) {
   if (!s.handler.includes('eventType = "identity.user.password_setup_invite"')) failures.push("required-delivery handler missing");
   if (!s.handler.includes("requiresDelivery = true")) failures.push("handler may falsely acknowledge unavailable delivery");
   if (!s.handler.includes("enqueueEmailWithClient(ctx.client")) failures.push("handler does not persist to canonical email queue on processor transaction");
-  if (!s.handler.includes("set_config('app.operating_company_id'")) failures.push("handler does not set selected-company RLS context");
+  if (!setsTenantGuc(s.handler)) failures.push("handler does not set selected-company RLS context");
   if (!s.registry.includes("new IdentityUserPasswordSetupHandler()")) failures.push("handler is not registered");
   return failures;
 }
