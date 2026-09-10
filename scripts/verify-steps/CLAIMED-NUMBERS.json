@@ -8493,5 +8493,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-09-09",
     "purpose": "verify-load-close-lifecycle-wired"
+  },
+  "11145": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-10",
+    "purpose": "verify-fleet-edit-is-side-drawer"
   }
 }
