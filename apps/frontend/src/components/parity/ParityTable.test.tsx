@@ -977,6 +977,20 @@ describe("ParityTable (A1 grammar)", () => {
       window.localStorage.clear();
     });
 
+    it("BNK-06: a persisted width below the resize floor (incl. 0px) loads clamped, never collapsed", () => {
+      window.localStorage.clear();
+      // Simulates a stale/corrupted stored width -- e.g. written before the resize floor existed,
+      // or edited outside the app. Every manual-resize path already floors at 48px; this proves the
+      // load path does too, so a column can never render permanently collapsed with no way for the
+      // user to grab a resize handle to fix it themselves.
+      window.localStorage.setItem("paritytable:test-collapsed-width", JSON.stringify({ colWidths: { name: 0 } }));
+      render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} storageKey="test-collapsed-width" />);
+      const nameHeader = screen.getAllByRole("columnheader")[0] as HTMLElement;
+      const width = parseFloat(nameHeader.style.width || "0");
+      expect(width).toBeGreaterThanOrEqual(48);
+      window.localStorage.clear();
+    });
+
     it("dragging a header onto another reorders the columns and persists the order", () => {
       window.localStorage.clear();
       render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} storageKey="test-reorder" />);
