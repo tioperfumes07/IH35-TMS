@@ -384,24 +384,39 @@ async function fetchSamsaraStatsPage(token: string, after: string | null): Promi
   hasNextPage: boolean;
   cursor: string | null;
 }> {
-  const url = new URL(`${SAMSARA_API_BASE}/fleet/vehicles/stats`);
   // VALID stats types only. driverAssignments is NOT a valid /fleet/vehicles/stats type — including it
   // 400s the whole request (the bug that left city/state blank). Driver login lives on the separate
   // /fleet/vehicles/driver-assignments feed (the pairing worker), not here.
-  // VALID stats types only (driverAssignments 400s — see above). obdOdometerMeters carries the live
-  // odometer (meters) for the PM countdown; it is a documented valid stats type and degrades to null if absent.
-  url.searchParams.set("types", "gps,engineStates,obdOdometerMeters,fuelPercents,obdEngineSeconds");
-  if (after) url.searchParams.set("after", after);
-  let res: Response;
-  try {
-    res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }));
-  } catch (error) {
-    throw new SamsaraApiError(`samsara_network_error:${String((error as Error)?.message ?? error)}`, null, null, true);
-  }
-  if (!res.ok) {
+  // obdOdometerMeters carries the live odometer (meters) for the PM countdown; it is a documented
+  // valid stats type and degrades to null if absent.
+  //
+  // FALLBACK: if the full types set 400s (some Samsara accounts don't support all types), retry with
+  // the minimal set (gps,engineStates) — the two that carry city/state + engine state. This keeps
+  // the dispatch board's live location working even when the account lacks obd/fuel stats.
+  const typesSets = [
+    "gps,engineStates,obdOdometerMeters,fuelPercents,obdEngineSeconds",
+    "gps,engineStates",
+  ];
+  let res: Response | null = null;
+  let lastError: SamsaraApiError | null = null;
+  for (const types of typesSets) {
+    const url = new URL(`${SAMSARA_API_BASE}/fleet/vehicles/stats`);
+    url.searchParams.set("types", types);
+    if (after) url.searchParams.set("after", after);
+    try {
+      res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }));
+    } catch (error) {
+      throw new SamsaraApiError(`samsara_network_error:${String((error as Error)?.message ?? error)}`, null, null, true);
+    }
+    if (res.ok) break;
     const body = await readJsonResponse(res);
     const retryable = res.status === 429 || res.status >= 500;
-    throw new SamsaraApiError(`samsara_http_${res.status}`, res.status, body, retryable);
+    lastError = new SamsaraApiError(`samsara_http_${res.status}`, res.status, body, retryable);
+    if (res.status !== 400) break; // only retry on 400 (bad types)
+    res = null;
+  }
+  if (!res || !res.ok) {
+    throw lastError ?? new SamsaraApiError("samsara_http_unknown", null, null, false);
   }
   const json = await readJsonResponse(res);
   const rows = Array.isArray(json.data)

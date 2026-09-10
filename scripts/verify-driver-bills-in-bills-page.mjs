@@ -47,7 +47,7 @@ if (process.argv.includes("--selftest")) {
     ["page", 'kind="settlement"', 'kind="driver"'],
   ];
   for (const [name, before, after] of mutations) {
-    const mutant = { ...real, [name]: real[name].replace(before, after) };
+    const mutant = { ...real, [name]: real[name].replaceAll(before, after) };
     if (failures(mutant).length === 0) {
       console.error(`verify-driver-bills-in-bills-page --selftest FAIL — mutation escaped: ${before}`);
       process.exit(1);
