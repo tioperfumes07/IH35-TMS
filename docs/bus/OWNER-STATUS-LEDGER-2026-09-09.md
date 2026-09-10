@@ -265,3 +265,26 @@ close the loop. Ran `node scripts/verify-recon-usmca-bank-suggestion-coverage.mj
 not a code defect, no PR needed.** If the owner wants faster closure, the highest-leverage next step
 is either bulk owner categorization or a coder pass adding rules for the 9 unmatched merchants — not
 a fix to the posting engine, which already works.
+
+### 2026-09-09 14:3xZ — item 50 (CF-02) stale, already closed 2026-09-07 (ROUND 16.24)
+
+**Item 50's "self-contradicts, treat as open" was itself stale.** `docs/bus/OUTBOX-CC-1.md` ROUND
+16.24 item 2 (2026-09-07) already live-verified this exact question end to end, not just read the
+guard: queried Neon directly for invoice 13570 (`created_at`=2026-09-07, delivery
+`scheduled_arrival_at`=2026-09-05, `factoring_eligible=true`) and walked the live Daily Prediction UI
+— the invoice bucketed on **Sep 6** (delivery + 1-day factoring receivable lag under
+`CASH_FOLLOWS_ETA_ENABLED`), never on its Sep 7 creation date; two sibling proformas created the same
+day landed on two different, correct days by the same delivery+lag rule. Verdict recorded then:
+"more precise than the directive's shorthand — delivery date + receivable lag, genuinely modeling
+when the cash lands." Four guards already lock this (`verify-acct-f9408-cash-forecast-proforma-eta-
+bucket.mjs`, `verify-cash-eta-rebucket-flag-gated.mjs`, `verify-cash-eta-forecast-only.mjs`,
+`verify-cash-flow-independent-of-proforma-timing.mjs`).
+
+**Re-confirmed tonight, not just trusted the old note:** ran all 4 guards against current `main` —
+all 4 PASS, unchanged. Pulled 5 fresh USMCA proformas live (Neon, `bypass_rls='lucia'`): all created
+`2026-09-07`, delivery dates `2026-09-08`/`08-27`/`09-06`/`09-05`/`09-08` — creation and delivery
+genuinely diverge on real current data, so the bucketing rule still has something real to prove itself
+against, not a degenerate same-day case.
+
+**Closing item 50 as DONE (verified correct 2026-09-07, re-confirmed live tonight) — no code change,
+no new guard needed; the 4 existing guards already cover it.**
