@@ -5,6 +5,7 @@ const LABEL = "verify-reg050-work-orders-module-home";
 const page = fs.readFileSync("apps/frontend/src/pages/work-orders/WorkOrdersConsoleListPage.tsx", "utf8");
 const api = fs.readFileSync("apps/frontend/src/api/workOrdersConsole.ts", "utf8");
 const route = fs.readFileSync("apps/backend/src/work-orders/work-orders.routes.ts", "utf8");
+const detail = fs.readFileSync("apps/frontend/src/pages/work-orders/WorkOrdersConsoleDetailPage.tsx", "utf8");
 
 const controls = [
   "work-orders-filter-billing",
@@ -38,10 +39,25 @@ function audit(parts) {
     failures.push("actual cost must have its own column");
   }
   if (/label:\s*"Est \/ Act"/.test(parts.page)) failures.push("estimated and actual costs may not share one column");
+  if (!/const canApprove = status === "open" && !wo\?\.approved_at/.test(parts.detail)) {
+    failures.push("Approve must only be enabled for an unapproved open work order");
+  }
+  if (!/const canStart = status === "open" && Boolean\(wo\?\.approved_at\)/.test(parts.detail)) {
+    failures.push("Start work must only be enabled for an approved open work order");
+  }
+  if (!/const canComplete = status === "in_progress"/.test(parts.detail)) {
+    failures.push("Complete must only be enabled for an in-progress work order");
+  }
+  if (!/const canCancel = \["open", "in_progress", "waiting_parts"\]\.includes\(status\)/.test(parts.detail)) {
+    failures.push("Cancel must be hidden for terminal work orders");
+  }
+  if (!/WHERE id = \$1\s+AND operating_company_id = \$3::uuid[\s\S]*AND status = 'open'[\s\S]*AND voided_at IS NULL/.test(parts.route)) {
+    failures.push("approve endpoint must reject terminal or voided work orders");
+  }
   return failures;
 }
 
-const sources = { page, api, route };
+const sources = { page, api, route, detail };
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ...controls.map((id) => ["page", id, "removed-filter-control"]),
@@ -50,6 +66,8 @@ if (process.argv.includes("--selftest")) {
     ["route", "operatorWorkOrderListSql(\"w\")", "\"TRUE\""],
     ["route", "where.push(\"w.voided_at IS NULL\")", "where.push(\"TRUE\")"],
     ["page", "key: \"total_actual_cost\"", "key: \"total_estimated_cost\""],
+    ["detail", "const canComplete = status === \"in_progress\"", "const canComplete = true"],
+    ["route", "AND status = 'open'", "AND status <> 'open'"],
   ];
   for (const [key, from, to] of mutations) {
     const changed = { ...sources, [key]: sources[key].replace(from, to) };

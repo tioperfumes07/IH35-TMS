@@ -975,7 +975,10 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
           SET approved_at = COALESCE(approved_at, now()),
               approved_by_user_id = COALESCE(approved_by_user_id, $2),
               updated_at = now()
-          WHERE id = $1 AND operating_company_id = $3::uuid
+          WHERE id = $1
+            AND operating_company_id = $3::uuid
+            AND status = 'open'
+            AND voided_at IS NULL
           RETURNING *
         `,
         [params.data.id, user.uuid, query.data.operating_company_id]
