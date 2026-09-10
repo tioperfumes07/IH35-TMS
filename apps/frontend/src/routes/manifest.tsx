@@ -310,6 +310,8 @@ const InvoiceDetailPage = React.lazy(() => import("../pages/accounting/InvoiceDe
 const PaymentsListPage = React.lazy(() => import("../pages/accounting/PaymentsListPage").then((m) => ({ default: m.PaymentsListPage })));
 const PaymentDetailPage = React.lazy(() => import("../pages/accounting/PaymentDetailPage").then((m) => ({ default: m.PaymentDetailPage })));
 const BillDetailPage = React.lazy(() => import("../pages/accounting/BillDetailPage").then((m) => ({ default: m.BillDetailPage })));
+// REG-023(b) — dedicated driver_finance.driver_bills detail page (kind="driver_bill" EntityLink target).
+const DriverBillDetailPage = React.lazy(() => import("../pages/driver-finance/DriverBillDetailPage").then((m) => ({ default: m.DriverBillDetailPage })));
 const FactoringListPage = React.lazy(() => import("../pages/accounting/FactoringListPage").then((m) => ({ default: m.FactoringListPage })));
 const FactoringDetailPage = React.lazy(() => import("../pages/accounting/FactoringDetailPage").then((m) => ({ default: m.FactoringDetailPage })));
 const FactorReconciliationPage = React.lazy(() => import("../pages/accounting/FactorReconciliationPage").then((m) => ({ default: m.FactorReconciliationPage })));
@@ -4384,6 +4386,16 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <BillDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* REG-023(b) — the load-detail "Open driver bill" button + every kind="driver_bill" EntityLink
+            resolve here (driver_finance.driver_bills, NOT accounting.bills). */}
+        <Route
+          path="/driver-finance/driver-bills/:id"
+          element={
+            <ProtectedRoute>
+              <DriverBillDetailPage />
             </ProtectedRoute>
           }
         />
