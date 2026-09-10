@@ -9,6 +9,7 @@
 // so a load can never exist without already being linked. A human can still separately reject/
 // re-link via listPendingPresettlementSuggestions + confirmPresettlementLink directly (unchanged),
 // but that path is no longer the ONLY writer.
+import { randomUUID } from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { allocateSettlementDisplayId } from "../driver-finance/settlement-display-id.js";
 import { reopenSettlementForContinuationInClientTx } from "../driver-finance/settlement-continuation.service.js";
@@ -55,8 +56,8 @@ export async function findOpenPresettlementTourForUnit(
   client: DbClient,
   input: { operating_company_id: string; driver_id: string; unit_id: string },
 ): Promise<string | null> {
-  // Held through the caller's booking transaction, including settlement creation. Concurrent NB
-  // bookings for the same unit cannot both observe "none" and open separate settlements.
+  // Held through booking and confirmation. Select the latest candidate first; suggestion
+  // resolution splits a fresh NB from an occupied open tour without falling back to an older closed one.
   await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [
     `presettlement-unit:${input.operating_company_id}:${input.unit_id}`,
   ]);
@@ -84,7 +85,8 @@ export async function findOpenPresettlementTourForUnit(
  * dispatch.load.presettlement_link_deferred log) — writes ONE suggestion row, never touches
  * mdata.loads.presettlement_link_id or driver_finance.driver_settlements directly.
  *
- * NB — reuse the same open unit/driver tour when booking resolved one; otherwise start one.
+ * NB — start a new tour if the candidate open settlement already has an NB. Closed
+ *      candidates retain the REG-040 audited continuation path.
  * TR/SB — look up an OPEN driver_settlements row (trip_closed_at IS NULL, voided_at IS NULL) for
  *      this driver with the SAME tour_id. Found -> suggest linking to it. Not found (e.g. the TR/SB
  *      leg was booked before its NB, or the NB's settlement was never confirmed yet) -> suggest
@@ -92,10 +94,20 @@ export async function findOpenPresettlementTourForUnit(
  *      "nothing to recommend yet."
  */
 export async function suggestPresettlementLink(client: DbClient, input: SuggestInput): Promise<SuggestResult> {
+  // All entry points (including manual suggestions) serialize unit before tour. A fresh NB
+  // cannot inherit a historical continuation marker from an already reopened settlement.
+  if (input.unit_id) await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [
+    `presettlement-unit:${input.operating_company_id}:${input.unit_id}`,
+  ]);
+  if (input.tour_id) await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [
+    `presettlement-tour:${input.operating_company_id}:${input.driver_id}:${input.tour_id}`,
+  ]);
+  let suggestionTourId = input.tour_id ?? null;
   let suggestedSettlementId: string | null = null;
   let reason: string;
 
   if (input.trip_type === "NB" && !input.tour_id) {
+    suggestionTourId = randomUUID();
     suggestedSettlementId = null;
     reason = "NB leg starts a new tour — recommend opening a new pre-settlement for this driver.";
   } else {
@@ -103,7 +115,7 @@ export async function suggestPresettlementLink(client: DbClient, input: SuggestI
       suggestedSettlementId = null;
       reason = `${input.trip_type} leg has no tour_id captured — cannot match it to an open pre-settlement automatically; needs manual attach.`;
     } else {
-      const openRes = await client.query<{ id: string; display_id: string | null; is_continuation: boolean }>(
+      const openRes = await client.query<{ id: string; display_id: string | null; is_continuation: boolean; is_closed: boolean; has_other_nb: boolean }>(
         `
           SELECT id, display_id,
                  (trip_closed_at IS NOT NULL OR status <> 'open' OR EXISTS (
@@ -111,7 +123,13 @@ export async function suggestPresettlementLink(client: DbClient, input: SuggestI
                    WHERE prior.operating_company_id = driver_settlements.operating_company_id
                      AND prior.assigned_settlement_id = driver_settlements.id AND prior.status = 'confirmed'
                      AND prior.suggested_reason LIKE 'REG-040 resettlement continuation%'
-                 )) AS is_continuation
+                 )) AS is_continuation,
+                 (trip_closed_at IS NOT NULL OR status <> 'open') AS is_closed,
+                 EXISTS (SELECT 1 FROM mdata.loads nb
+                   WHERE nb.operating_company_id = driver_settlements.operating_company_id
+                     AND (nb.presettlement_link_id = driver_settlements.id OR nb.id = driver_settlements.first_load_id)
+                     AND nb.id <> $5::uuid AND nb.trip_type = 'NB'
+                     AND nb.soft_deleted_at IS NULL AND nb.status::text <> 'cancelled') AS has_other_nb
             FROM driver_finance.driver_settlements
            WHERE operating_company_id = $1::uuid
              AND driver_id = $2::uuid
@@ -129,10 +147,13 @@ export async function suggestPresettlementLink(client: DbClient, input: SuggestI
            ORDER BY created_at DESC
            LIMIT 1
         `,
-        [input.operating_company_id, input.driver_id, input.tour_id, input.unit_id ?? null]
+        [input.operating_company_id, input.driver_id, input.tour_id, input.unit_id ?? null, input.load_id]
       );
       const open = openRes.rows[0];
-      if (open) {
+      if (open && input.trip_type === "NB" && !open.is_closed && open.has_other_nb) {
+        suggestionTourId = randomUUID();
+        reason = "NB leg starts a new tour — the open pre-settlement already has an NB leg.";
+      } else if (open) {
         suggestedSettlementId = open.id;
         reason = open.is_continuation
           ? `REG-040 resettlement continuation: ${input.trip_type} leg retains settlement ${open.display_id ?? open.id}.`
@@ -159,7 +180,7 @@ export async function suggestPresettlementLink(client: DbClient, input: SuggestI
                suggested_settlement_id = $5::uuid, suggested_reason = $6, updated_at = now()
          WHERE id = $7::uuid
       `,
-      [input.driver_id, input.unit_id ?? null, input.trip_type, input.tour_id ?? null, suggestedSettlementId, reason, existing.rows[0].id]
+      [input.driver_id, input.unit_id ?? null, input.trip_type, suggestionTourId, suggestedSettlementId, reason, existing.rows[0].id]
     );
     suggestionId = existing.rows[0].id;
   } else {
@@ -178,7 +199,7 @@ export async function suggestPresettlementLink(client: DbClient, input: SuggestI
         input.driver_id,
         input.unit_id ?? null,
         input.trip_type,
-        input.tour_id ?? null,
+        suggestionTourId,
         suggestedSettlementId,
         reason,
       ]
@@ -190,7 +211,7 @@ export async function suggestPresettlementLink(client: DbClient, input: SuggestI
     client,
     input.actor_user_id,
     "driver_finance.presettlement_link.suggested",
-    { suggestion_id: suggestionId, load_id: input.load_id, suggested_settlement_id: suggestedSettlementId, reason },
+    { suggestion_id: suggestionId, load_id: input.load_id, suggested_settlement_id: suggestedSettlementId, original_tour_id: input.tour_id ?? null, tour_id: suggestionTourId, reason },
     "info",
     "GO-22"
   );
@@ -215,6 +236,17 @@ type ConfirmInput = {
  * resolving a pending suggestion (e.g. the TR/SB "no open pre-settlement found" case).
  */
 export async function confirmPresettlementLink(client: DbClient, input: ConfirmInput) {
+  // Match booking's load-before-suggestion lock order. Suggestions are editable snapshots;
+  // the current load decides NB separation and driver/unit eligibility at confirmation.
+  const loadRes = await client.query<{ id: string; trip_type: TripType | null; driver_id: string | null; unit_id: string | null }>(`
+    SELECT l.id::text, l.trip_type, l.assigned_primary_driver_id::text AS driver_id,
+           l.assigned_unit_id::text AS unit_id
+    FROM mdata.loads l
+    JOIN driver_finance.presettlement_link_suggestions p
+      ON p.load_id = l.id AND p.operating_company_id = l.operating_company_id
+    WHERE p.id = $1::uuid AND p.operating_company_id = $2::uuid
+      AND l.soft_deleted_at IS NULL
+    FOR UPDATE OF l`, [input.suggestion_id, input.operating_company_id]);
   const res = await client.query<{
     id: string;
     load_id: string;
@@ -223,9 +255,10 @@ export async function confirmPresettlementLink(client: DbClient, input: ConfirmI
     suggested_settlement_id: string | null;
     status: string;
     unit_id: string | null;
+    trip_type: TripType;
   }>(
     `
-      SELECT id, load_id::text, driver_id::text, tour_id::text, suggested_settlement_id::text, status, unit_id::text
+      SELECT id, load_id::text, driver_id::text, tour_id::text, suggested_settlement_id::text, status, unit_id::text, trip_type
         FROM driver_finance.presettlement_link_suggestions
        WHERE id = $1::uuid AND operating_company_id = $2::uuid
        FOR UPDATE
@@ -247,8 +280,29 @@ export async function confirmPresettlementLink(client: DbClient, input: ConfirmI
     return { suggestion_id: input.suggestion_id, status: "rejected" as const, settlement_id: null };
   }
 
+  const currentLoad = loadRes.rows[0];
+  if (!currentLoad || currentLoad.id !== suggestion.load_id || !currentLoad.trip_type ||
+      currentLoad.driver_id !== suggestion.driver_id) {
+    throw new PresettlementLinkError("suggestion_load_changed", "The load assignment changed. Refresh its settlement suggestion.");
+  }
+  suggestion.trip_type = currentLoad.trip_type;
+  suggestion.unit_id = currentLoad.unit_id;
+  await client.query(`UPDATE driver_finance.presettlement_link_suggestions
+    SET trip_type = $1, unit_id = $2::uuid, updated_at = now()
+    WHERE id = $3::uuid AND operating_company_id = $4::uuid`,
+  [suggestion.trip_type, suggestion.unit_id, input.suggestion_id, input.operating_company_id]);
+
   let settlementId: string;
   if (input.action === "create_new") {
+    // A manual create_new can confirm an old suggestion carrying an occupied tour. Give every
+    // new NB settlement its own identity; never create two settlements on that old tour.
+    if (suggestion.trip_type === "NB") {
+      suggestion.tour_id = randomUUID();
+      await client.query(`UPDATE driver_finance.presettlement_link_suggestions
+        SET tour_id = $1::uuid, updated_at = now()
+        WHERE id = $2::uuid AND operating_company_id = $3::uuid`,
+      [suggestion.tour_id, input.suggestion_id, input.operating_company_id]);
+    }
     // GAP-PRESETTLEMENT-PERIOD-NULL (found live 2026-09-05, seeding the settlement feed): this
     // branch never set period_start/period_end (both NOT NULL, no default on
     // driver_finance.driver_settlements) — every "create_new" confirmation crashed with a NOT
@@ -322,7 +376,22 @@ export async function confirmPresettlementLink(client: DbClient, input: ConfirmI
     }
     settlementId = targetId;
     const target = targetRes.rows[0];
+    // The row lock above makes this authoritative even for stale/manual suggestions and
+    // concurrent confirmations. Closed REG-040 continuation still takes its audited path.
+    if (suggestion.trip_type === "NB" && target.status === "open" && !target.trip_closed_at) {
+      const occupied = await client.query<{ has_other_nb: boolean }>(`SELECT EXISTS (
+        SELECT 1 FROM mdata.loads nb
+        WHERE nb.operating_company_id = $1::uuid
+          AND (nb.presettlement_link_id = $2::uuid OR nb.id = (SELECT first_load_id
+            FROM driver_finance.driver_settlements WHERE id = $2::uuid AND operating_company_id = $1::uuid))
+          AND nb.id <> $3::uuid AND nb.trip_type = 'NB'
+          AND nb.soft_deleted_at IS NULL AND nb.status::text <> 'cancelled'
+      ) AS has_other_nb`, [input.operating_company_id, targetId, suggestion.load_id]);
+      if (occupied.rows[0]?.has_other_nb) throw new PresettlementLinkError(
+        "open_settlement_already_has_nb", "This open settlement already has an NB leg. Start a new tour.");
+    }
     if (input.override_settlement_id && target.tour_id !== undefined) {
+      suggestion.tour_id = target.tour_id;
       await client.query(`UPDATE mdata.loads SET tour_id = $1::uuid, updated_at = now()
         WHERE id = $2::uuid AND operating_company_id = $3::uuid`, [target.tour_id, suggestion.load_id, input.operating_company_id]);
       await client.query(`UPDATE driver_finance.presettlement_link_suggestions SET tour_id = $1::uuid, updated_at = now()
@@ -347,9 +416,12 @@ export async function confirmPresettlementLink(client: DbClient, input: ConfirmI
     );
   }
 
-  await client.query(`UPDATE mdata.loads SET presettlement_link_id = $1::uuid, updated_at = now() WHERE id = $2::uuid`, [
+  await client.query(`UPDATE mdata.loads SET presettlement_link_id = $1::uuid, tour_id = $3::uuid, updated_at = now()
+    WHERE id = $2::uuid AND operating_company_id = $4::uuid`, [
     settlementId,
     suggestion.load_id,
+    suggestion.tour_id,
+    input.operating_company_id,
   ]);
 
   await client.query(
@@ -366,7 +438,7 @@ export async function confirmPresettlementLink(client: DbClient, input: ConfirmI
     client,
     input.actor_user_id,
     "driver_finance.presettlement_link.confirmed",
-    { suggestion_id: input.suggestion_id, load_id: suggestion.load_id, settlement_id: settlementId, action: input.action },
+    { suggestion_id: input.suggestion_id, load_id: suggestion.load_id, settlement_id: settlementId, tour_id: suggestion.tour_id, action: input.action },
     "info",
     "GO-22"
   );
@@ -414,8 +486,8 @@ export type LinkAtBookingResult = {
  * code path is independently testable against a real Postgres (not a mock) without booking a real
  * load through the app.
  *
- * Calls suggestPresettlementLink first (all legs reuse the open unit/driver tour when present,
- * otherwise open a pre-settlement) then confirmPresettlementLink immediately
+ * Calls suggestPresettlementLink first (fresh NB splits occupied open tours; return legs
+ * join their tour and closed REG-040 continuation retains its identity) then confirmPresettlementLink immediately
  * after, in the SAME caller transaction -- the caller (book-load.service.ts) wraps both in its own
  * booking transaction, so a load can never exist without already being linked. This function does
  * not open or commit a transaction itself; that is the caller's responsibility, matching every
@@ -425,12 +497,6 @@ export async function linkLoadToPresettlementAtBookingInClientTx(
   client: DbClient,
   input: LinkAtBookingInput
 ): Promise<LinkAtBookingResult> {
-  if (input.tour_id) {
-    // Serialize the match/create decision for explicit tours as well as unit-inherited tours.
-    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [
-      `presettlement-tour:${input.operating_company_id}:${input.driver_id}:${input.tour_id}`,
-    ]);
-  }
   const suggestion = await suggestPresettlementLink(client, {
     operating_company_id: input.operating_company_id,
     load_id: input.load_id,
