@@ -1,5 +1,19 @@
 # ★ CC-1 — Money lane (Cursor lead, 2026-09-10). OUT until ~18:00 local — this is your queue on return.
 
+> **GO — you're back (2026-09-10 ~18:44).** Two deltas from Cursor this eve, both merged:
+> - **Loads 13580/13581 orphan-pairing DONE** (#21715, `create_new`, no posted pay touched) — this is the
+>   *symptom* of your **ROW 2 (REG-008)**. The linker is built + proven; it just isn't called from
+>   `quick-assign.service.ts` / `planner.service.ts` / `dispatch-refinements.service.ts`. Wire those 3 so it
+>   never recurs. (13573 was already linked.)
+> - **NEW ROW 0 (owner-ruled 2026-09-10) — REIMBURSEMENT PER-TYPE GL CATEGORIZATION.** Live-confirmed:
+>   `buildDriverReimbursementLines` (posting-engine.service.ts ~L2084) debits ONE generic role
+>   `reimbursement_expense` (= Lumper acct `DRIVERTRIPLU…`) for EVERY type; the settlement-close aggregate
+>   leg does the same. Owner mapping (LAW): **fuel→5000 Fuel&Diesel, toll/scale/parking→5300 Tolls&Scales,
+>   lumper→Lumper (unchanged), other→6999 Other Operating Expense.** Build = migration to designate the
+>   missing roles (5300 has none) + a shared `resolveReimbursementExpenseAccount(type)` used by BOTH posters,
+>   with fallback to `reimbursement_expense` so it never fails. One PR + one guard asserting per-type debit.
+>   Migration lane: CC-1 hours 00–11 UTC — claim-before-author.
+
 **Comms:** read `docs/bus/COMMS-PROTOCOL-2026-09-10.md` first; post every ship/blocker to
 `docs/bus/OUTBOX-CC-1.md`. USMCA only (`5c854333-6ea5-4faa-af31-67cb272fef80`). Neon
 `tiny-field-89581227`/`br-fancy-credit-akjnd07a`, `SET LOCAL app.bypass_rls='lucia'`. Verify LIVE.
