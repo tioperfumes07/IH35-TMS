@@ -288,3 +288,25 @@ against, not a degenerate same-day case.
 
 **Closing item 50 as DONE (verified correct 2026-09-07, re-confirmed live tonight) — no code change,
 no new guard needed; the 4 existing guards already cover it.**
+
+### 2026-09-09 19:0xZ — item 38 (BNK-20) stale, already closed 2026-09-05 as "does not reproduce"
+
+**Item 38 ("5 txns matched to voided docs, data item, live re-check never run") already has that
+live re-check on record.** `docs/bus/LAW-TRANSACTION-HEALTH-REGISTER-2026-09-01.md` row C3: "the
+2026-09-04 '5 ✗' no longer reproduces... 0 rows carry ANY match reference today (positive-controlled:
+355 real rows exist, not an RLS-masked read)" — re-run 2026-09-05, and `OUTBOX-CC-2.md`:
+"ACC-07 (5 bank txns matched to voided documents): DOES NOT REPRODUCE (already re-scored as C3...)".
+
+**Re-ran the live re-check myself tonight rather than just trust the note** (population has moved
+twice already this session — see item 30's 437→480 total rows note): Neon prod, `bypass_rls='lucia'`,
+USMCA-scoped `banking.bank_transactions`, checked every match column that could point at a voidable
+document — `matched_invoice_id`/`matched_bill_id`/`matched_bill_payment_id`/`matched_settlement_id`/
+`matched_expense_id`/`matched_load_id`/`matched_journal_entry_id`/`matched_transfer_id`/
+`matched_advance_id`/`review_state='matched'`/`reconciled_obligation_id`. Result: **480 total rows,
+314 non-voided, exactly ONE row with `review_state='matched'`** (matched to journal entry
+`b6b096c7-4c74-40c6-8a7e-662b688dcfff`, confirmed live NOT voided) — **zero rows matched to anything
+voided**, consistent with the 09-05 finding and with item 30's separate finding that almost nothing
+is categorized/matched yet at all.
+
+**Closing item 38 as CONFIRMED-CLOSED (does not reproduce, re-verified live a third time) — data
+item, no PR needed, nothing to fix.**
