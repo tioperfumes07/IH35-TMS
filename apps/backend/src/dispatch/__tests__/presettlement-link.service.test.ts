@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   PresettlementLinkError,
   allocateNextSettlementDisplayId,
+  findOpenPresettlementTourForUnit,
   confirmPresettlementLink,
   linkLoadToPresettlementAfterAssignmentInClientTx,
   linkLoadToPresettlementAtBookingInClientTx,
@@ -17,7 +18,7 @@ const OPEN_SETTLEMENT_ID = "44444444-4444-4444-4444-444444444444";
 const SUGGESTION_ID = "55555555-5555-5555-5555-555555555555";
 const USER_ID = "66666666-6666-6666-6666-666666666666";
 
-function makeClient(overrides: { openSettlement?: { id: string; display_id: string } | null; suggestionStatus?: string } = {}) {
+function makeClient(overrides: { openSettlement?: { id: string; display_id: string } | null; suggestionStatus?: string; targetClosed?: boolean } = {}) {
   const calls: { sql: string; values: unknown[] }[] = [];
   const client = {
     query: vi.fn(async (sql: string, values: unknown[] = []) => {
@@ -48,7 +49,7 @@ function makeClient(overrides: { openSettlement?: { id: string; display_id: stri
       if (sql.includes("next_settlement_display_id")) return { rows: [{ next_id: "S-2026-0042" }] };
       if (/SELECT lib\.next_trace_no/.test(sql)) return { rows: [{ seq: "1" }] };
       if (/INSERT INTO driver_finance\.driver_settlements/.test(sql)) return { rows: [{ id: "new-settlement-id" }] };
-      if (/SELECT id FROM driver_finance\.driver_settlements WHERE id = \$1::uuid/.test(sql)) return { rows: [{ id: OPEN_SETTLEMENT_ID }] };
+      if (/SELECT id FROM driver_finance\.driver_settlements WHERE id = \$1::uuid/.test(sql)) return { rows: overrides.targetClosed ? [] : [{ id: OPEN_SETTLEMENT_ID }] };
       if (/UPDATE driver_finance\.driver_settlements/.test(sql)) return { rows: [] };
       if (/UPDATE mdata\.loads SET presettlement_link_id/.test(sql)) return { rows: [] };
       return { rows: [] };
@@ -58,7 +59,7 @@ function makeClient(overrides: { openSettlement?: { id: string; display_id: stri
 }
 
 describe("presettlement link — GO-22", () => {
-  it("NB always suggests creating a new pre-settlement", async () => {
+  it("NB without an existing tour suggests creating a new pre-settlement", async () => {
     const { client } = makeClient();
     const result = await suggestPresettlementLink(client as never, {
       operating_company_id: OPCO,
@@ -329,5 +330,53 @@ describe("REG-010/011 settlement identity", () => {
   it.each([undefined, null, "S-13734", "13734", "S-2026-42"])("rejects invalid allocator output %s instead of inventing an ID", async (next_id) => {
     const client = { query: vi.fn().mockResolvedValue({ rows: [{ next_id }] }) };
     await expect(allocateNextSettlementDisplayId(client, OPCO, "2026-07-03")).rejects.toThrow("Settlement number allocation failed");
+  });
+});
+
+describe("REG-040 NB preserves the open unit/tour settlement", () => {
+  const unitId = "77777777-7777-4777-8777-777777777777";
+
+  it("inherits the open unit/driver tour under a transaction lock before any allocation", async () => {
+    const query = vi.fn().mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ tour_id: TOUR_ID }] });
+    const tour = await findOpenPresettlementTourForUnit({ query }, { operating_company_id: OPCO, driver_id: DRIVER_ID, unit_id: unitId });
+    expect(tour).toBe(TOUR_ID);
+    expect(query.mock.calls[0][0]).toContain("pg_advisory_xact_lock");
+    expect(query.mock.calls[0][1]).toEqual([`presettlement-unit:${OPCO}:${unitId}`]);
+    const [sql, params] = query.mock.calls[1];
+    expect(params).toEqual([OPCO, DRIVER_ID, unitId]);
+    expect(sql).toContain("s.trip_closed_at IS NULL");
+    expect(sql).toContain("s.voided_at IS NULL AND s.status = 'open'");
+    expect(sql).toContain("l.operating_company_id = s.operating_company_id");
+    expect(sql).toContain("l.assigned_unit_id = $3::uuid AND l.tour_id = s.tour_id");
+  });
+
+  it("leaves fresh-tour creation to booking when the unit has no open tour", async () => {
+    const query = vi.fn().mockResolvedValue({ rows: [] });
+    await expect(findOpenPresettlementTourForUnit({ query }, { operating_company_id: OPCO, driver_id: DRIVER_ID, unit_id: unitId })).resolves.toBeNull();
+    expect(query.mock.calls.some(([sql]) => /INSERT|UPDATE|next_settlement_display_id/.test(sql))).toBe(false);
+  });
+
+  it("NB on the same open unit/tour links the existing UUID without allocating a second number", async () => {
+    const { client, calls } = makeClient({ openSettlement: { id: OPEN_SETTLEMENT_ID, display_id: "S-2026-0042" } });
+    const result = await linkLoadToPresettlementAtBookingInClientTx(client as never, {
+      operating_company_id: OPCO, load_id: LOAD_ID, driver_id: DRIVER_ID, unit_id: unitId,
+      trip_type: "NB", tour_id: TOUR_ID, actor_user_id: USER_ID,
+    });
+    expect(result).toMatchObject({ action: "link_existing", settlement_id: OPEN_SETTLEMENT_ID });
+    expect(calls.some(c => /next_settlement_display_id|INSERT INTO driver_finance\.driver_settlements/.test(c.sql))).toBe(false);
+    const lookup = calls.find(c => /SELECT id, display_id/.test(c.sql))!;
+    expect(lookup.values).toEqual([OPCO, DRIVER_ID, TOUR_ID, unitId]);
+    const link = calls.find(c => /UPDATE mdata\.loads SET presettlement_link_id/.test(c.sql))!;
+    expect(link.values).toEqual([OPEN_SETTLEMENT_ID, LOAD_ID]);
+  });
+
+  it("refuses linking if the suggested settlement closes before confirmation", async () => {
+    const { client, calls } = makeClient({ openSettlement: { id: OPEN_SETTLEMENT_ID, display_id: "S-2026-0042" }, targetClosed: true });
+    await expect(linkLoadToPresettlementAtBookingInClientTx(client as never, {
+      operating_company_id: OPCO, load_id: LOAD_ID, driver_id: DRIVER_ID, unit_id: unitId,
+      trip_type: "NB", tour_id: TOUR_ID, actor_user_id: USER_ID,
+    })).rejects.toMatchObject({ code: "target_settlement_not_open" });
+    expect(calls.some(c => /UPDATE mdata\.loads SET presettlement_link_id/.test(c.sql))).toBe(false);
+    expect(calls.find(c => /SELECT id FROM driver_finance\.driver_settlements WHERE/.test(c.sql))?.sql).toContain("FOR UPDATE");
   });
 });

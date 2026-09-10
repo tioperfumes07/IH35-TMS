@@ -74,7 +74,7 @@ export function frontendIsClosedHonorsIsInvoiced(src) {
   return (
     /is_invoiced: boolean;/.test(src) &&
     /const isClosed = \(r: BoardRow\) => CLOSED\.includes\(r\.status\) \|\| r\.is_invoiced;/.test(src) &&
-    /function matches\(r: BoardRow, f: FilterPill\)[\s\S]*?isClosed\(r\)[\s\S]*?isClosed\(r\)[\s\S]*?isClosed\(r\)/.test(src)
+    /function matches\(r: BoardRow, f: FilterPill\)[\s\S]*?isClosed\(r\)[\s\S]*?isClosed\(r\)[\s\S]*?isClosed\(r\)[\s\S]*?isClosed\(r\)/.test(src)
   );
 }
 

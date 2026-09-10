@@ -217,4 +217,33 @@ describe("LoadCostsBoardPage — registers (LCB-REG)", () => {
     expect(within(table).getByRole("columnheader", {name:/Source settlement reference/i})).toBeInTheDocument();
   });
 
+  it("REG-040 moves invoiced loads from every active bucket into Resettlement with the same links", async () => {
+    apiRequestMock.mockImplementation(async (path: string) => {
+      if (path.includes("/api/v1/accounting/load-costs-board")) return { rows: [
+        { ...BOARD_ROW, load_id: "issued-load", load_number: "13601", status: "invoiced", is_invoiced: true },
+        { ...BOARD_ROW, load_id: "issued-motion", load_number: "13602", status: "dispatched", is_invoiced: true },
+        { ...BOARD_ROW, load_id: "active-load", load_number: "13603", status: "dispatched", is_invoiced: false },
+        { ...BOARD_ROW, load_id: "closed-load", load_number: "13604", status: "closed", is_invoiced: true },
+        { ...BOARD_ROW, load_id: "paid-load", load_number: "13605", status: "paid", is_invoiced: true },
+      ], unmatched_bank_count: 0 };
+      return { rows: [] };
+    });
+    renderPage();
+    await screen.findByRole("link", { name: "13603" });
+    for (const filter of ["in_motion", "delivered_open", "all_open", "this_week"]) {
+      fireEvent.click(screen.getByTestId(`load-costs-pill-${filter}`));
+      expect(screen.queryByRole("link", { name: "13601" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: "13602" })).not.toBeInTheDocument();
+    }
+    fireEvent.click(screen.getByTestId("load-costs-tab-resettlement"));
+    const original = await screen.findByRole("link", { name: "13601" });
+    expect(original).toHaveAttribute("href", expect.stringContaining("issued-load"));
+    expect(screen.getByRole("link", { name: "13602" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "13603" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "13604" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "13605" })).not.toBeInTheDocument();
+    expect(within(original.closest("tr")!).getByRole("link", { name: "S-2026-0042" })).toHaveAttribute("href", expect.stringContaining("settlement-42"));
+    expect(screen.getByTestId("load-costs-tab-resettlement")).toHaveTextContent("2");
+  });
+
 });
