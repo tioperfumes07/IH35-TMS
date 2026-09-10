@@ -19,3 +19,8 @@ DEVIN-A is retired. Stop. No Book Load. No OUTBOX.
 - Removed driver_pay and margin from Chargebacks & Fee History
 - Profit and Trip-Expenses already OFF by default via manifest defaultHidden
 - PR #21680 merged --admin --squash
+
+## DEVIN-A | REG-044 DONE | 79def7cfff | 79def7cfff | 7 tabs have Summary/Detail toggles, dateRangeOnlyFilterBar on all data tabs, guard 11198 PASS | NEXT REG-045
+- Added shared summaryDetailToggle helper + 6 new state variables
+- Wired toggle to Account Summary, Aging, Chargebacks/Overpayments, Payment-To-You, Purchase Report, Faro Import
+- PR #21683 merged --admin --squash
