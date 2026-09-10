@@ -7,24 +7,29 @@ import { DailyPredictionTab } from "./tabs/DailyPredictionTab";
 import { ActualVsProjectedTab } from "./tabs/ActualVsProjectedTab";
 import { ManualDailyProjectionsTab } from "./tabs/ManualDailyProjectionsTab";
 import { RollingLedgerTab } from "./tabs/RollingLedgerTab";
+import { CashFlowHomeTab } from "./tabs/CashFlowHomeTab";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { CASH_FORECAST_ENABLED_FLAG } from "../../api/forecast";
 
-type CashFlowTabId = "daily_prediction" | "actual_vs_projected" | "manual_daily_projections" | "rolling_ledger";
+export type CashFlowTabId = "home" | "daily_prediction" | "actual_vs_projected" | "manual_daily_projections" | "rolling_ledger";
 
 const ALL_TAB_IDS = new Set<CashFlowTabId>([
+  "home",
   "daily_prediction",
   "actual_vs_projected",
   "manual_daily_projections",
   "rolling_ledger",
 ]);
 
+// REG-031 (owner live 2026-09-09): landing on Cash Flow must show Home first, not a bare tab.
+// Every OTHER cash-flow tab still keeps its own direct ?tab= deep link (unchanged) — only the
+// no-param / unrecognized-param default moved from "daily_prediction" to "home".
 function parseCashFlowTab(raw: string | null, allowManual: boolean): CashFlowTabId {
   if (raw && ALL_TAB_IDS.has(raw as CashFlowTabId)) {
-    if (raw === "manual_daily_projections" && !allowManual) return "daily_prediction";
+    if (raw === "manual_daily_projections" && !allowManual) return "home";
     return raw as CashFlowTabId;
   }
-  return "daily_prediction";
+  return "home";
 }
 
 export function CashFlowPage() {
@@ -35,11 +40,12 @@ export function CashFlowPage() {
   const activeTab = parseCashFlowTab(searchParams.get("tab"), Boolean(manualForecastEnabled));
   const setActiveTab = (next: CashFlowTabId) => {
     const params = new URLSearchParams(searchParams);
-    if (next === "daily_prediction") params.delete("tab");
+    if (next === "home") params.delete("tab");
     else params.set("tab", next);
     setSearchParams(params, { replace: true });
   };
   const TABS: { id: CashFlowTabId; label: string }[] = [
+    { id: "home", label: "Home" },
     { id: "daily_prediction", label: "Projected (Auto)" },
     { id: "actual_vs_projected", label: "Actual vs Projected" },
     { id: "rolling_ledger", label: "Rolling Ledger" },
@@ -93,6 +99,13 @@ export function CashFlowPage() {
           Cash advances
         </Link>
       </nav>
+      {activeTab === "home" && (
+        <CashFlowHomeTab
+          operatingCompanyId={selectedCompanyId}
+          onNavigateToTab={setActiveTab}
+          showManualProjections={Boolean(manualForecastEnabled)}
+        />
+      )}
       {activeTab === "daily_prediction" && (
         <DailyPredictionTab operatingCompanyId={selectedCompanyId} />
       )}
