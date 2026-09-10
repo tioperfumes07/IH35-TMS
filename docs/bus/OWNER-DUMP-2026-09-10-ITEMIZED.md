@@ -185,3 +185,21 @@ SEAT FAN-OUT (who fixes what)
 - Devin B: REG-002 vendor data-completeness, Lists/Reports sweep, PlannerGrid outside-range.
 - Codex: REG-026 (Fleet edit/side-modal/redesign — REOPENED) + finish REG-025 trailer-identity guard
   (11177/#21626) + Maintenance.
+- GPT (ChatGPT seat, /Users/jorgemunoz/IH35-TMS-cascade): REG-010/011 (owner #1) then REG-040/041/009.
+
+═══════════════════════════════════════════════════════════════════════════════
+NEW ROWS MINTED 2026-09-10 PM (measured live, Neon USMCA, bypass_rls=lucia)
+═══════════════════════════════════════════════════════════════════════════════
+- REG-035 [Cursor] DONE #21664 — a truck no longer appears twice on the Dispatch board; Table +
+  Assignment views collapse to one CURRENT load per unit (currentLoadPerUnit). Guard
+  verify-dispatch-table-view-distinct extended (REG-019/REG-035). LIVE was T152/T156/T171/T173 each 2 rows.
+- REG-048 [Codex] — maintenance.work_orders USMCA = 17 rows; 13 have display_id containing PEND0 (V5 never
+  finalized) and 2 have unit_id IS NULL (Rule 03 §WO violation). Wire refresh_wo_display_id to set V5 from
+  first vendor/parts invoice + block null-unit WO creation (E_UNIT_HAS_NO_NUMBER). Guard + live proof.
+- REG-049 [Codex] — Fleet unit profile "Maintenance History" tab must list that unit's WOs (forward+reverse
+  linkage per Blueprint §9), each clickable to WO detail; WO detail back-links unit+load+vendor+GL.
+- CASHFLOW-KPI [CC-1] — apps/frontend/src/pages/cash-flow/tabs/CashFlowKpiStrip.tsx:43 "Projected closing"
+  renders a missing/failed value as a confident 0 (guard verify-no-dead-kpi-cards FAILS on main). Must be
+  null → "—". (Also blocks clean pushes until fixed.)
+- COMMS: docs/bus/COMMS-PROTOCOL-2026-09-10.md — all seats post ship/blocker deltas to OUTBOX-<SEAT>.md,
+  read others' OUTBOX + STATUS-NOW before starting, file cross-lane defects to the register (don't fix).
