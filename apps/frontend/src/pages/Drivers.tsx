@@ -6,6 +6,7 @@ import { getEscrowDriverBalances } from "../api/banking";
 import { cashAdvanceRequestsOfficeApi } from "../api/cashAdvanceRequests";
 import { listAllDispatchLoads } from "../api/dispatch";
 import { listPendingEscrowDeductions, listSettlements } from "../api/driverFinance";
+import { listOpenPreSettlements } from "../api/preSettlements";
 import { getActiveLiabilities } from "../api/liabilities";
 import { formatUsd, formatUsdCents } from "../lib/money";
 import {
@@ -423,6 +424,11 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
       return !Number.isNaN(createdAt) && createdAt >= threshold;
     }).length;
   }, [allDrivers]);
+  const preSettlementsQuery = useQuery({
+    queryKey: ["drivers", "open-pre-settlements", selectedCompanyId],
+    queryFn: () => listOpenPreSettlements(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId) && subnavTab === "pre_settlements",
+  });
   const settlementsReadyRows = useMemo(() => {
     return (settlementsQuery.data?.settlements ?? [])
       .filter((settlement) => ["presettle", "acked", "locked"].includes(String(settlement.status)))
@@ -780,7 +786,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             </div>
           ) : null}
           {subnavTab === "pre_settlements" ? (
-            <PreSettlementsPanel rows={settlementsReadyRows} loading={settlementsQuery.isLoading} isError={settlementsQuery.isError} />
+            <PreSettlementsPanel rows={preSettlementsQuery.data ?? []} loading={preSettlementsQuery.isLoading} isError={preSettlementsQuery.isError} title="Pre-settlements" emptyText="No open pre-settlements for this company." />
           ) : null}
           {subnavTab === "cash_advances" ? (
             <div className="space-y-2" data-testid="drivers-cash-advances-debt-alert">

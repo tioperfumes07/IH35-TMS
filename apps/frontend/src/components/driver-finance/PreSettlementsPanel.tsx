@@ -25,6 +25,7 @@ type Props = {
   isError?: boolean;
   title?: string;
   showTotal?: boolean;
+  emptyText?: string;
 };
 
 function renderLoadLinks(settlement: SettlementListRow) {
@@ -129,10 +130,10 @@ const preSettlementColumns: DataTableColumn<SettlementListRow>[] = [
   },
 ];
 
-export function PreSettlementsPanel({ rows, loading = false, isError = false, title = "Pre-settlements", showTotal = true }: Props) {
+export function PreSettlementsPanel({ rows, loading = false, isError = false, title = "Pre-settlements", showTotal = true, emptyText = "No payment-ready pre-settlements for this company." }: Props) {
   const total = rows.reduce((sum, row) => sum + Number(row.net_pay ?? 0), 0);
   return (
-    <DataPanel title={`${title} · ${rows.length} drivers`} accentColor={colors.accounting.strong}>
+    <DataPanel title={`${title} · ${loading || isError ? "—" : rows.length} settlements`} accentColor={colors.accounting.strong}>
       {loading ? <p className="px-2 py-2 text-xs text-gray-500">Loading pre-settlements…</p> : null}
       {!loading && isError ? (
         <p className="px-2 py-2 text-xs text-red-700" data-testid="pre-settlements-error">
@@ -153,11 +154,10 @@ export function PreSettlementsPanel({ rows, loading = false, isError = false, ti
           className="px-2 py-2 text-xs text-gray-500"
           data-testid="dispatch-pre-settlements-honest-empty"
         >
-          No pre-settlements in presettle/acked/locked for this company. Deliver loads and run
-          pre-settle in Driver Finance — rows appear here once settlements enter those statuses.
+          {emptyText}
         </p>
       ) : null}
-      {!isError && showTotal ? (
+      {!loading && !isError && showTotal ? (
         <DataPanelRow>
           <span className="font-semibold">Total payout this batch</span>
           <span className="font-semibold">{formatMoney(total)}</span>

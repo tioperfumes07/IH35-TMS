@@ -33,6 +33,13 @@ describe("PreSettlementsPanel (DISP-S33)", () => {
     expect(screen.queryByText("Total payout this batch")).toBeNull();
   });
 
+  it("does not invent a zero settlement count or payout while loading", () => {
+    wrap(<PreSettlementsPanel rows={[]} loading showTotal />);
+    expect(screen.getByText("Pre-settlements · — settlements")).toBeTruthy();
+    expect(screen.queryByText("Total payout this batch")).toBeNull();
+    expect(screen.queryByTestId("dispatch-pre-settlements-honest-empty")).toBeNull();
+  });
+
   it("renders real rows when the fetch succeeds", () => {
     const rows: SettlementListRow[] = [
       {

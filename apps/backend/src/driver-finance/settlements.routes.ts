@@ -287,7 +287,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
           -- directly on the join so it is visible as literal SQL, not only assembled JS.
           JOIN driver_finance.driver_settlements s ON s.id = v.id AND s.operating_company_id = $1::uuid
           WHERE ${where.join(" AND ")}
-          ORDER BY v.period_start DESC
+          ORDER BY v.period_start DESC, v.id DESC
           LIMIT $${values.length - 1} OFFSET $${values.length}
         `,
         values
