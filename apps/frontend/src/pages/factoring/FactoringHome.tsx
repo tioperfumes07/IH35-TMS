@@ -2648,17 +2648,106 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             />
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-xs font-medium text-gray-900">Recent Faro imports</div>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="text-xs font-medium text-gray-900">Recent Faro imports</div>
+              <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-faro-imports")}</div>
+            </div>
             {faroImportsQuery.isError ? (
               <ListErrorState
                 title="Couldn't load Faro imports"
                 {...formatQueryErrorDetail(faroImportsQuery.error)}
                 onRetry={() => void faroImportsQuery.refetch()}
               />
+            ) : faroImportView === "summary" ? (
+              <div data-testid="factoring-faro-import-summary-view">
+                <div className="mb-2 text-xs text-gray-500">
+                  Summary: aggregated totals across all Faro import batches, reconciled against the factoring summary.
+                </div>
+                {(() => {
+                  const faroRows = faroImportsQuery.data?.rows ?? [];
+                  const filtered = faroRows.filter((r) => {
+                    if (applied.dateFrom && r.statement_date < applied.dateFrom) return false;
+                    if (applied.dateTo && r.statement_date > applied.dateTo) return false;
+                    return true;
+                  });
+                  const faroGross = filtered.reduce((s, r) => s + Number(r.gross_total_cents ?? 0), 0);
+                  const faroAdvance = filtered.reduce((s, r) => s + Number(r.advance_total_cents ?? 0), 0);
+                  const faroReserve = filtered.reduce((s, r) => s + Number(r.reserve_total_cents ?? 0), 0);
+                  const faroFees = filtered.reduce((s, r) => s + Number(r.fee_total_cents ?? 0), 0);
+                  const faroChargebacks = filtered.reduce((s, r) => s + Number(r.chargeback_total_cents ?? 0), 0);
+                  const summaryAdvance = summary?.mtd_advanced_total ? Math.round(summary.mtd_advanced_total * 100) : 0;
+                  const summaryReserve = summary?.reserve_balance ? Math.round(summary.reserve_balance * 100) : 0;
+                  const advanceDiff = faroAdvance - summaryAdvance;
+                  const reserveDiff = faroReserve - summaryReserve;
+                  return (
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="factoring-faro-summary-totals">
+                        <div className="border border-gray-200 p-2 text-center">
+                          <div className="text-xs uppercase tracking-wide text-gray-500">Faro Gross</div>
+                          <div className="mt-1 font-semibold text-gray-900">{fmtCurrency(faroGross / 100)}</div>
+                        </div>
+                        <div className="border border-gray-200 p-2 text-center">
+                          <div className="text-xs uppercase tracking-wide text-gray-500">Faro Advance</div>
+                          <div className="mt-1 font-semibold text-gray-900">{fmtCurrency(faroAdvance / 100)}</div>
+                        </div>
+                        <div className="border border-gray-200 p-2 text-center">
+                          <div className="text-xs uppercase tracking-wide text-gray-500">Faro Reserve</div>
+                          <div className="mt-1 font-semibold text-gray-900">{fmtCurrency(faroReserve / 100)}</div>
+                        </div>
+                        <div className="border border-gray-200 p-2 text-center">
+                          <div className="text-xs uppercase tracking-wide text-gray-500">Faro Fees</div>
+                          <div className="mt-1 font-semibold text-gray-900">{fmtCurrency(faroFees / 100)}</div>
+                        </div>
+                        <div className="border border-gray-200 p-2 text-center">
+                          <div className="text-xs uppercase tracking-wide text-gray-500">Faro Chargebacks</div>
+                          <div className="mt-1 font-semibold text-gray-900">{fmtCurrency(faroChargebacks / 100)}</div>
+                        </div>
+                        <div className="border border-gray-200 p-2 text-center">
+                          <div className="text-xs uppercase tracking-wide text-gray-500">Batches</div>
+                          <div className="mt-1 font-semibold text-gray-900">{filtered.length}</div>
+                        </div>
+                      </div>
+                      <div className="mt-3 p-3" data-testid="factoring-faro-reconciliation">
+                        <div className="mb-2 text-xs font-medium text-gray-900">Reconciliation: Faro vs Factoring Summary</div>
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                            <span className="text-xs text-gray-600">Faro Advance Total</span>
+                            <span className="text-xs text-gray-900" data-testid="faro-recon-advance-faro">{fmtCurrency(faroAdvance / 100)}</span>
+                          </div>
+                          <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                            <span className="text-xs text-gray-600">Factoring Summary MTD Advanced</span>
+                            <span className="text-xs text-gray-900" data-testid="faro-recon-advance-summary">{fmtCurrency(summaryAdvance / 100)}</span>
+                          </div>
+                          <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                            <span className="text-xs text-gray-600">Advance Difference</span>
+                            <span className="text-xs font-semibold" data-testid="faro-recon-advance-diff">{fmtCurrency(advanceDiff / 100)}</span>
+                          </div>
+                          <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                            <span className="text-xs text-gray-600">Faro Reserve Total</span>
+                            <span className="text-xs text-gray-900" data-testid="faro-recon-reserve-faro">{fmtCurrency(faroReserve / 100)}</span>
+                          </div>
+                          <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                            <span className="text-xs text-gray-600">Factoring Summary Reserve Balance</span>
+                            <span className="text-xs text-gray-900" data-testid="faro-recon-reserve-summary">{fmtCurrency(summaryReserve / 100)}</span>
+                          </div>
+                          <div className="flex items-center justify-between py-1">
+                            <span className="text-xs text-gray-600">Reserve Difference</span>
+                            <span className="text-xs font-semibold" data-testid="faro-recon-reserve-diff">{fmtCurrency(reserveDiff / 100)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
             ) : (
               <ParityTable
                 columns={FARO_IMPORT_COLUMNS}
-                rows={faroImportsQuery.data?.rows ?? []}
+                rows={(faroImportsQuery.data?.rows ?? []).filter((r) => {
+                  if (applied.dateFrom && r.statement_date < applied.dateFrom) return false;
+                  if (applied.dateTo && r.statement_date > applied.dateTo) return false;
+                  return true;
+                })}
                 rowKey={(row) => row.id}
                 loading={faroImportsQuery.isLoading}
                 emptyText="No Faro imports recorded yet."

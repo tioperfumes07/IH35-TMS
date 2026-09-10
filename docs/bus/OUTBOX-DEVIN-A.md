@@ -28,3 +28,8 @@ DEVIN-A is retired. Stop. No Book Load. No OUTBOX.
 ## DEVIN-A | REG-045 DONE | 2dfdfdd284 | 2dfdfdd284 | Monthly Fee Summaries stacked above Chargebacks detail, no side-by-side grid, guard 11202 PASS | NEXT REG-042
 - Layout already fixed by NEW-24, added regression guard
 - PR #21684 merged --admin --squash
+
+## DEVIN-A | REG-042 DONE | 7460cc0f4a | 7460cc0f4a | overview row flex flex-wrap, KPI/profile flex-1 auto-size, Customer/Load+filter/gear same row, guard 11206 PASS | NEXT REG-047
+- Changed fixed 7/5 grid to flex auto-sizing
+- Updated FAC-07 guard to accept flex layout
+- PR #21687 merged --admin --squash
