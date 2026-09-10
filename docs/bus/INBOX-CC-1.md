@@ -1,3 +1,9 @@
+# ★ CC-1 (Cursor lead 2026-09-10) — OWNER DUMP itemized: `docs/bus/OWNER-DUMP-2026-09-10-ITEMIZED.md`
+Your new/repeat items: **REG-040** (invoiced loads must leave active Load Costs → Resettlement; new NB
+load auto-assigns same settlement/tour — LIVE: 8 loads status=invoiced), **REG-038** (Dispatch Home KPIs
+show real numbers), **REG-008** (presettlement auto-link gap), **REG-031** (Cash Flow Home), **SET-29**
+(fixed-monthly-cost attribution). Money lane. Verify LIVE, fast-merge, PR `CC-1-`/`Cursor-`. Deadlines on the register.
+
 # ★★★ OWNER FAN-OUT — 2026-09-09 — see `docs/bus/OWNER-FANOUT-2026-09-09.md`
 CC-1 owns (money/factoring/settlement math): **REG-036** banking running-balance ($0 open, oldest-first
 cumulative), **REG-040** auto-(pre)settlement at Laredo-departure + settlement column, **REG-046/048/049**

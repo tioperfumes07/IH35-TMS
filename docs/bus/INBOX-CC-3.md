@@ -1,3 +1,10 @@
+# ★ CC-3 (Cursor lead 2026-09-10) — OWNER DUMP itemized: `docs/bus/OWNER-DUMP-2026-09-10-ITEMIZED.md`
+TOP items, owner re-reported LIVE today (immediate, no new clock): **REG-010/011** — systemic: the whole
+app still renders settlement/tour as "S-"+load-number and packs multiple data in one column; move the
+live path to the real S-YYYY-NNNN sequence and give EACH datum its own column (Costs, Pre-Settlements,
+Settlements, Factoring, Bills). Owner CONFIRMED S-<loadnumber> is rejected. Also **REG-009/016** and
+**REG-041** (Resettlement start/delivery dates). Verify LIVE, fast-merge, PR `CC-3-`.
+
 # ★★★ OWNER FAN-OUT — 2026-09-09 — see `docs/bus/OWNER-FANOUT-2026-09-09.md`
 CC-3 owns (dispatch/settlement/fleet UI): **REG-037** load-board double-truck/booked-not-in-transit,
 **REG-038** round-trip Book-a-return + Timeline units + dispatch KPIs, **REG-039** Load-Costs columns,
