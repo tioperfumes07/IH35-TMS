@@ -1,4 +1,14 @@
-# OWNER FAN-OUT — defect register 2026-09-09 (REG-034…REG-055)
+> **⚠ DEPRECATED NUMBERING (2026-09-10, Cursor lead).** This file's `REG-034…055` COLLIDES with the
+> canonical `~/Downloads/09-09-2026-Claude-Lead-DEFECT-REGISTER.md` (REG-001..034). **The canonical
+> register is authoritative — cite it, not these numbers.** Mapping of this file's unique items to
+> canonical: trailer relabel = canonical **REG-025** (CLOSED live by Cursor #21647); `bill_lines.load_id`
+> gap keeps canonical **REG-034** (CC-3's, unassigned). Everything else here already has a canonical
+> number (banking reorder=REG-027, running balance=REG-028/030, load-costs settlement col=REG-009,
+> S-number=REG-010/011, load-detail edit=REG-023, settlement PDF match+lumper=REG-024, fleet=REG-025/026,
+> settlement-number-auto=REG-032, add/record expense=REG-033, factoring stubs=REG-015). Kept for history;
+> do not open new work off these numbers.
+
+# OWNER FAN-OUT — defect register 2026-09-09 (REG-034…REG-055) — DEPRECATED, see banner above
 
 Source: owner live message 2026-09-09 ~22:58Z (Cursor lead intake) + the Claude-coder BNK/FAC/SET
 pending-items reconciliation the owner pasted the same night. Every row is a verbatim owner issue,
