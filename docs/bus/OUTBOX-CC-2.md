@@ -2202,3 +2202,35 @@ migration, no backfill, no new guard (the existing guard, `verify-bank-running-b
 history.mjs`, already covers the real invariant). Declining to build the requested migration
 against a false premise; moving to REG-021 (legacy drawer → ParityDrawer migration) per the
 packet's stated fallback order.
+
+## CC-2 — REG-021 done + live click-through (2026-09-10)
+
+Migrated 4 of the 5 named legacy drawers to ParityDrawer (`AdvanceDetailDrawer.tsx`,
+`AccountDrawer.tsx`, `LiabilityDetailDrawer.tsx`, `DailyTasksPage.tsx`'s `TaskDetailDrawer`) —
+PR #21634, merged, guard `verify-reg021-legacy-drawers-use-paritydrawer.mjs` (verify-step 10907)
+locks it in. `CategorizeDrawer.tsx` (the 5th named file) deliberately left untouched: it's
+`@archived` Workflow-B dead code, never mounted, enforced present-but-frozen by
+`verify-banking-workflow-b-archived.mjs` — migrating a frozen audit-history file's markup for zero
+live benefit isn't in scope.
+
+Live click-through, confirmed after deploy caught up to the merge SHA (verified
+`f31685289d` is a descendant of the merge commit via `git merge-base --is-ancestor` before
+trusting anything I saw):
+- **AccountDrawer** (Lists → Chart of Accounts → + Create): "NEW ACCOUNT" renders in the shared
+  ParityDrawer chrome (uppercase title, single ✕ close, same header/footer treatment as every
+  other create drawer) — confirmed live, screenshot-zoomed the header to check.
+- **AdvanceDetailDrawer** (Cash Advances → View Detail on CA-2026-0006): "CASH ADVANCE DETAIL"
+  renders correctly, all body sections intact, footer shows Edit/Mark Disbursed/Reverse/Print
+  Receipt in the same 2x2 grid as before.
+- **LiabilityDetailDrawer** (Liabilities → View Detail on the one active civil_fine row):
+  "LIABILITY DETAIL" renders correctly, footer shows Hold/Resume/Mark Paid Off/Void.
+- **DailyTasksPage's TaskDetailDrawer**: could NOT click-through live — the Daily Tasks board
+  currently has 0 rows in every view (My Tasks/Team Tasks/Created by Me all show 0), so there is
+  no live task row to open right now. Not a regression: `DailyTasksPage.test.tsx` (1/1, exercises
+  this exact drawer with mocked data) passes unchanged after the migration, and the render path is
+  identical to the other 3 (same ParityDrawer wrapper, same body-content-unchanged pattern) — this
+  is the one DONE-criterion gap I'm flagging honestly rather than fabricating a task row to click.
+
+REG-021: 3 of 4 migrated drawers live-click-through-confirmed; the 4th has no live data to click
+through with, confirmed via passing tests instead. CategorizeDrawer.tsx correctly excluded (dead
+code). Standing by for next priority.
