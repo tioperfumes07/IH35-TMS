@@ -5,7 +5,7 @@
 // (a recovered duplicate reimbursement reverses an expense, never routes through 'other' ->
 // other_recovery -> 7200 income) and decomposed the correction from ONE row per driver/settlement
 // (with a joined list of voided ids) to ONE row per voided reimbursement — matching
-// driver_settlement_deductions.reversed_reimbursement_id's singular-FK shape. Pins:
+// driver_settlement_deductions.reversed_reimbursement_id's singular-foreign-key shape. Pins:
 //   1. STATIC — the correction script uses the real createSettlementDeduction service (never raw
 //      SQL), creates a genuinely PENDING deduction (no settlement pre-selected — applied_to_
 //      settlement_id resolves later, at the driver's actual next settlement, never guessed here),
@@ -50,7 +50,7 @@ export function verifyStatic(src) {
     f.push("must never raw-INSERT into driver_settlement_deductions");
   }
   if (!/sourceType:\s*"reimbursement_reversal"/.test(src)) f.push("deduction_type must be 'reimbursement_reversal' per ROUND 16.13 (never 'other')");
-  if (!/reversedReimbursementId:\s*c\.voided_reimbursement_id/.test(src)) f.push("must pass reversedReimbursementId through to createSettlementDeduction (the real FK column, not just prose)");
+  if (!/reversedReimbursementId:\s*c\.voided_reimbursement_id/.test(src)) f.push("must pass reversedReimbursementId through to createSettlementDeduction (the real database column, not just prose)");
   if (!/voided id:\s*\$\{c\.voided_reimbursement_id\}/.test(src)) f.push("reason must name the voided reimbursement id it corrects");
   return f;
 }
@@ -107,7 +107,7 @@ async function liveCheck() {
     }
     const missingIdRef = res.rows.filter((r) => !r.reversed_reimbursement_id);
     if (missingIdRef.length > 0) {
-      console.error(`${LABEL} FAIL — ${missingIdRef.length} row(s) have no reversed_reimbursement_id set (the real FK column, not just reason prose).`);
+      console.error(`${LABEL} FAIL — ${missingIdRef.length} row(s) have no reversed_reimbursement_id set (the real database column, not just reason prose).`);
       return 1;
     }
     const total = res.rows.reduce((sum, r) => sum + Number(r.amount_cents), 0);

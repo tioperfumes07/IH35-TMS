@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["accounting"],"cols":["connectivity","reverse_link"],"leafRe":"^catalogs\\.accounts\\.merge$","task":"ACCT-R-03-COA-MERGE-REPOINT"} */
 /**
  * ACCT-R-03 (ranked ACCT-F13) guard — the Chart-of-Accounts "Merge accounts" action must perform a
  * REAL merge, not a rename for "archive the other rows".

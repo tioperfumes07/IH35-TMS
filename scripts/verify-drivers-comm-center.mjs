@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["drivers"],"cols":["connectivity"],"leafRe":"^drivers\\.messages\\.inbox$","task":"A24-10-DRIVER-COMM-CENTER"} */
 /**
  * Block A24-10: Driver communication center (office inbox + PWA + SMS/email bridge).
  */
