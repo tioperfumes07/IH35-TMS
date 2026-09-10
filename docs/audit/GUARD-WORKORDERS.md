@@ -10368,3 +10368,38 @@ polish items, not "missing," and remain queued in `docs/bus/INBOX-CC-3.md`.
 **CC-3** | none — confirmed working | live-Chrome cold-navigation screenshots this session, all 5
 named pages, all rendering real rows (51 each) | **CONFIRMED LIVE · "missing pages" complaint closed ·
 remaining owner items are layout/polish, tracked separately in INBOX-CC-3** |
+
+## Follow-up findings filed from ACCT-F6350 (REG-010/011) and LST-F26100 (REG-017) — CC-3, 2026-09-09/10
+
+SOURCE-OF-TRUTH: driver_finance.driver_settlements.display_id (item 1) and accounting.bill_lines.load_id (item 2) — proven at apps/backend/src/dispatch/presettlement-link.service.ts:217 (the fixed generator call) and apps/backend/src/accounting/bills.service.ts:2559-2568 (the INSERT column that never receives a value from any live caller)
+I QUERIED: Neon prod tiny-field-89581227 (bypass_rls=lucia) — `SELECT display_id FROM driver_finance.driver_settlements WHERE operating_company_id='5c854333-...'` (27 rows, all `^S-[0-9]{4,5}$`); `SELECT count(*), count(load_id) FROM accounting.bill_lines` (155271 / 0)
+NOT CHECKED: TRANSP/TRK entities' own driver_settlements rows for the same old-scheme pattern (USMCA only, this session); whether any non-bill write path (e.g. a script) has ever set bill_lines.load_id outside the createBill() flow read here
+
+**1. The 27 pre-existing USMCA driver_settlements rows already created under the old, owner-
+rejected S-<load-number> scheme (S-13508 .. S-13750) are NOT renamed by the ACCT-F6350 fix.**
+Renaming a live settlement's display_id is a real, separate, higher-risk decision — it can appear
+on already-printed/shared driver settlement statements, and external references (driver
+communications, disputes) may already cite the old number. Options for whoever picks this up:
+(a) leave the 27 as a historical cohort, exempt/annotated, going-forward-only fix is enough; (b)
+owner-authorized rename pass, re-numbering them S-2026-0001 through S-2026-0027 in creation order
+(needs a migration + audit trail, never a silent UPDATE); (c) something else the owner decides.
+Not assumed here — filed as an open question, not fixed.
+
+**2. `accounting.bill_lines.load_id` is 0/155,271 populated system-wide (all entities), live-
+verified this session.** The column is real, wired correctly into createBill()'s INSERT, and read
+correctly by three surfaces now (Vendors.tsx/Customers.tsx transactions tabs, plus the new Bills
+page Settlement # column from LST-F26100) — but no live caller (Create Bill UI, recurring-bill
+generation, WO-close postings, bank-split bills) currently supplies a per-line `loadId`, so all
+three surfaces will show "—" for effectively every bill until that changes. This is honest,
+going-forward-only behavior per the LINKAGE LAW, not a defect in the read side — but it means the
+Settlement/Tour column work (REG-011's systemic ask) will look empty in practice until the
+write-side gap is separately addressed. Worth a look for whoever owns Create-Bill UX next: does
+the "Create Bill" form even offer a per-line Load picker today? (Not investigated here — read-side
+only, this session.)
+
+| N/A — findings only, no code | **CC-3** | (1) owner decision on renaming the 27 old-scheme
+settlements; (2) investigate Create-Bill UX for a missing per-line Load picker | live Neon reads
+this session (tiny-field-89581227, bypass_rls=lucia): driver_finance.driver_settlements 27 USMCA
+rows all matching `^S-[0-9]{4,5}$` (old scheme); accounting.bill_lines count=155271,
+with_load_id=0 | **OPEN · both are decisions/investigations for the next picker-upper, not code
+defects** |
