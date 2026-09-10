@@ -161,11 +161,13 @@ export function getFactoringSummary(companyId: string) {
 export function getFactoringRecoursePipeline(
   companyId: string,
   limit = 200,
-  filters: { customer_id?: string; load_id?: string } = {}
+  filters: { customer_id?: string; load_id?: string; date_from?: string; date_to?: string } = {}
 ) {
   const params = new URLSearchParams({ operating_company_id: companyId, limit: String(limit) });
   if (filters.customer_id) params.set("customer_id", filters.customer_id);
   if (filters.load_id) params.set("load_id", filters.load_id);
+  if (filters.date_from) params.set("date_from", filters.date_from);
+  if (filters.date_to) params.set("date_to", filters.date_to);
   return apiRequest<{ invoices: FactoringRecourseInvoice[]; total: number }>(
     `/api/v1/factoring/recourse-pipeline?${params.toString()}`
   );
@@ -190,15 +192,24 @@ export type FactoringFundsDueRow = {
 // FUNDS-DUE-01 (owner 2026-09-09): invoices submitted to the factor but not yet advanced --
 // distinct from getFactoringRecoursePipeline above, which is built only from ALREADY-advanced
 // invoices. See apps/backend/src/factoring/factoring.routes.ts for the real query.
-export function getFactoringFundsDue(companyId: string) {
+export function getFactoringFundsDue(companyId: string, filters: { date_from?: string; date_to?: string } = {}) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  if (filters.date_from) params.set("date_from", filters.date_from);
+  if (filters.date_to) params.set("date_to", filters.date_to);
   return apiRequest<{ invoices: FactoringFundsDueRow[]; total: number }>(
-    `/api/v1/factoring/funds-due?${q(companyId)}`
+    `/api/v1/factoring/funds-due?${params.toString()}`
   );
 }
 
-export function getFactoringChargebacksFees(companyId: string, customerId?: string) {
+export function getFactoringChargebacksFees(
+  companyId: string,
+  customerId?: string,
+  filters: { date_from?: string; date_to?: string } = {}
+) {
   const params = new URLSearchParams({ operating_company_id: companyId });
   if (customerId) params.set("customer_id", customerId);
+  if (filters.date_from) params.set("date_from", filters.date_from);
+  if (filters.date_to) params.set("date_to", filters.date_to);
   return apiRequest<{
     history: FactoringChargebackFeeRow[];
     history_total: number;

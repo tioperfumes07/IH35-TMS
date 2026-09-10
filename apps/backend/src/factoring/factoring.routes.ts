@@ -12,7 +12,16 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
-const recourseQuerySchema = companyQuerySchema.extend({
+// REG-049 (owner fan-out 2026-09-09/10, "QBO filters (date etc.) on ALL"): shared date-range
+// extension, same regex convention as accounting/expenses.routes.ts's date_from/date_to. Applied
+// to every real Factoring report endpoint below so the module has one consistent filter surface,
+// same idiom used elsewhere in Accounting.
+const dateRangeQuerySchema = z.object({
+  date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+});
+
+const recourseQuerySchema = companyQuerySchema.extend(dateRangeQuerySchema.shape).extend({
   limit: z.coerce.number().int().min(1).max(500).default(200),
   // LINK-F5171/LINK-F5180: reverse_link — customer_id/load_id are real FKs already resolvable via
   // the accounting.invoices LATERAL join below (i.customer_id, i.source_load_id); this just exposes
@@ -25,9 +34,12 @@ const recourseQuerySchema = companyQuerySchema.extend({
 // vendor_id/load_id at all; resolve customer_id via the same accounting.invoices LATERAL join
 // pattern used for recourse-pipeline above, and vendor_id via
 // accounting.factoring_advances.factoring_company_vendor_id (the factor entity).
-const chargebacksFeesQuerySchema = companyQuerySchema.extend({
+const chargebacksFeesQuerySchema = companyQuerySchema.extend(dateRangeQuerySchema.shape).extend({
   customer_id: z.string().uuid().optional(),
 });
+
+// REG-049: /funds-due previously used the bare companyQuerySchema with no filters at all.
+const fundsDueQuerySchema = companyQuerySchema.extend(dateRangeQuerySchema.shape);
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -148,7 +160,14 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
     if (!user) return;
     const query = recourseQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
-    const { operating_company_id: companyId, limit, customer_id: customerId, load_id: loadId } = query.data;
+    const {
+      operating_company_id: companyId,
+      limit,
+      customer_id: customerId,
+      load_id: loadId,
+      date_from: dateFrom,
+      date_to: dateTo,
+    } = query.data;
 
     const invoices = await withCompanyScope(user.uuid, companyId, async (client) => {
       // LINK-F5180: server-side customer_id/load_id scoping (not a client-side filter of this
@@ -164,6 +183,17 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
       if (loadId) {
         params.push(loadId);
         loadFilter = `AND inv.load_id = $${params.length}::uuid`;
+      }
+      // REG-049: date range on factored_at, the same column the table is already sorted/aged by.
+      let dateFromFilter = "";
+      if (dateFrom) {
+        params.push(dateFrom);
+        dateFromFilter = `AND rr.factored_at >= $${params.length}::date`;
+      }
+      let dateToFilter = "";
+      if (dateTo) {
+        params.push(dateTo);
+        dateToFilter = `AND rr.factored_at < ($${params.length}::date + interval '1 day')`;
       }
       params.push(limit);
       // BANK-F9518: this used to .catch(() => ({ rows: [] })) — same fake-empty-200 class as the
@@ -204,6 +234,8 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
             WHERE rr.operating_company_id = $1::uuid
               ${customerFilter}
               ${loadFilter}
+              ${dateFromFilter}
+              ${dateToFilter}
             ORDER BY rr.days_until_recourse_expiry ASC, rr.factored_at DESC
             LIMIT $${params.length}
           `,
@@ -222,9 +254,9 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
     async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    const query = companyQuerySchema.safeParse(req.query ?? {});
+    const query = fundsDueQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
-    const companyId = query.data.operating_company_id;
+    const { operating_company_id: companyId, date_from: dateFrom, date_to: dateTo } = query.data;
 
     // FUNDS-DUE-01 (owner 2026-09-09, live-verified): "Funds Due" in the real Faro debtor portal
     // is invoices already submitted to the factor but not yet advanced/funded -- distinct from
@@ -239,6 +271,18 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
     // not a missing feature; the moment a real submission is awaiting advance, this becomes
     // non-empty automatically, no further wiring required.
     const rows = await withCompanyScope(user.uuid, companyId, async (client) => {
+      // REG-049: date range on submitted_at, the same column the table is already sorted by.
+      const params: Array<string> = [companyId];
+      let dateFromFilter = "";
+      if (dateFrom) {
+        params.push(dateFrom);
+        dateFromFilter = `AND fa.submitted_at >= $${params.length}::date`;
+      }
+      let dateToFilter = "";
+      if (dateTo) {
+        params.push(dateTo);
+        dateToFilter = `AND fa.submitted_at < ($${params.length}::date + interval '1 day')`;
+      }
       const res = await client.query(
         `
             SELECT
@@ -276,10 +320,12 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
             WHERE fa.operating_company_id = $1::uuid
               AND fa.submitted_at IS NOT NULL
               AND fa.advanced_at IS NULL
+              ${dateFromFilter}
+              ${dateToFilter}
             ORDER BY fa.submitted_at ASC
             LIMIT 500
           `,
-        [companyId]
+        params
       );
       return res.rows;
     });
@@ -293,7 +339,7 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
     if (!user) return;
     const query = chargebacksFeesQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
-    const { operating_company_id: companyId, customer_id: customerId } = query.data;
+    const { operating_company_id: companyId, customer_id: customerId, date_from: dateFrom, date_to: dateTo } = query.data;
 
     const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
       // LINK-F5180: views.factoring_chargebacks_fees carries no customer_id -- resolve it via the
@@ -305,6 +351,19 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
       if (customerId) {
         historyParams.push(customerId);
         customerFilter = `AND inv.customer_id = $${historyParams.length}::uuid`;
+      }
+      // REG-049: date range on created_at (the same column history is already sorted by). The
+      // monthly_summary aggregate below deliberately stays unfiltered -- it is the standing
+      // all-time-by-month overview, not the itemized list a date range is meant to narrow.
+      let dateFromFilter = "";
+      if (dateFrom) {
+        historyParams.push(dateFrom);
+        dateFromFilter = `AND cf.created_at >= $${historyParams.length}::date`;
+      }
+      let dateToFilter = "";
+      if (dateTo) {
+        historyParams.push(dateTo);
+        dateToFilter = `AND cf.created_at < ($${historyParams.length}::date + interval '1 day')`;
       }
       // BANK-F9518: both queries below used to .catch(() => ({ rows: [] })) — same fake-empty-200
       // class as /summary and /recourse-pipeline above. views.factoring_chargebacks_fees is
@@ -351,6 +410,8 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
             ${loadCostRollupLateral("inv.load_id", "cf.operating_company_id")}
             WHERE cf.operating_company_id = $1::uuid
               ${customerFilter}
+              ${dateFromFilter}
+              ${dateToFilter}
             ORDER BY cf.created_at DESC
             LIMIT 500
           `,
