@@ -12,6 +12,7 @@ import { SelectCombobox } from "../../components/Combobox";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityPicker } from "../../components/EntityPicker";
 
 type SegmentId = "all" | "open" | "in_progress" | "completed" | "cancelled";
 type WoSort = "created_desc" | "cost_desc" | "wo_number_asc" | "labor_cost_desc";
@@ -102,6 +103,8 @@ export function WorkOrdersConsoleListPage() {
     "all" | "pm" | "corrective" | "accident" | "inspection_dot" | "inspection_state" | "warranty" | "other"
   >("all");
   const [search, setSearch] = useState("");
+  const [unitId, setUnitId] = useState<string | null>(null);
+  const [driverId, setDriverId] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const { onSortChange } = useUrlSort();
   // Page reads its own ?sort= directly (WO-CONSOLE-PARITYTABLE contract) — same underlying
@@ -131,16 +134,18 @@ export function WorkOrdersConsoleListPage() {
 
   useEffect(() => {
     setPage(0);
-  }, [segment, billing, svc, search, effectiveSortKey, effectiveSortDir]);
+  }, [segment, billing, svc, unitId, driverId, search, effectiveSortKey, effectiveSortDir]);
 
   const listQuery = useQuery({
-    queryKey: ["work-orders-console", companyId, segment, billing, svc, search, serverSort, page],
+    queryKey: ["work-orders-console", companyId, segment, billing, svc, unitId, driverId, search, serverSort, page],
     queryFn: () =>
       listWorkOrdersConsole({
         operating_company_id: companyId,
         status: segment,
         wo_billing_type: billing === "all" ? undefined : billing,
         wo_service_class: svc === "all" ? undefined : svc,
+        unit_id: unitId ?? undefined,
+        driver_id: driverId ?? undefined,
         search: search.trim() || undefined,
         sort: serverSort,
         limit: PAGE_SIZE,
@@ -331,6 +336,7 @@ export function WorkOrdersConsoleListPage() {
   const filterBar = (
     <div className="flex flex-wrap items-center gap-2">
       <SelectCombobox
+        data-testid="work-orders-filter-billing"
         value={billing}
         onChange={(event) => setBilling(event.target.value as typeof billing)}
         className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
@@ -340,6 +346,7 @@ export function WorkOrdersConsoleListPage() {
         <option value="external">External</option>
       </SelectCombobox>
       <SelectCombobox
+        data-testid="work-orders-filter-service-class"
         value={svc}
         onChange={(event) => setSvc(event.target.value as typeof svc)}
         className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
@@ -353,7 +360,31 @@ export function WorkOrdersConsoleListPage() {
         <option value="warranty">Warranty</option>
         <option value="other">Other</option>
       </SelectCombobox>
+      <EntityPicker
+        kind="unit"
+        operatingCompanyId={companyId}
+        value={unitId}
+        onChange={setUnitId}
+        allowCreate={false}
+        allowClear
+        placeholder="All units"
+        ariaLabel="Filter work orders by unit"
+        dataTestId="work-orders-filter-unit"
+      />
+      <EntityPicker
+        kind="driver"
+        operatingCompanyId={companyId}
+        value={driverId}
+        onChange={setDriverId}
+        allowCreate={false}
+        allowClear
+        placeholder="All drivers"
+        ariaLabel="Filter work orders by driver"
+        dataTestId="work-orders-filter-driver"
+      />
       <input
+        data-testid="work-orders-filter-search"
+        aria-label="Search work orders"
         value={search}
         onChange={(event) => setSearch(event.target.value)}
         placeholder="Search WO #, unit, vendor, driver…"
