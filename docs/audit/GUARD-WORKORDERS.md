@@ -10517,3 +10517,25 @@ Summary of what's routed here (not built — Maintenance is Codex's module):
    walkthrough of every Maintenance sub-tab against the deployed app + direct in-browser fetch()
    against the real API + a parallel subagent's guard-sweep, all cited with exact numbers in the
    OUTBOX entry | **OPEN — ROUTED TO CODEX + OWNER, ONE ITEM (GLB-25159) ALREADY FIXED** |
+
+## REG-027 deploy proof + BNK-06/10/12/17 — CC-2, 2026-09-10 (live proof, no new code needed)
+
+**FINDING:** Cursor-lead's inbox row 2/4 asked for deploy proof on REG-027 and live proof on 4
+carried-forward Banking items. Full detail in `docs/bus/OUTBOX-CC-2.md`, same date. Summary:
+REG-027 (bank-account reorder) confirmed live AND functional on deployed SHA `f6caec9` (clicked
+the reorder buttons, order changed, then restored). BNK-06 (Description column 0px) was already
+fixed by Cursor's PR #21605 (`ParityTable.tsx`'s `MIN_COL_WIDTH_PX` floor, cited by name in its own
+comment) — confirmed no 0px column live. BNK-10 (uncategorized backlog) re-measured fresh: 322
+non-voided, 321 uncategorized, net -$140.62 (shrinking from -$2,177.09 on 09-09) — unchanged root
+cause, owner's categorization task, not a code defect. BNK-12 (no reconciliation session)
+confirmed live: 0 `banking.reconciliation_sessions` rows ever for USMCA, and the reconciliation
+page's own banner already discloses this honestly — same gating cause as BNK-10. BNK-17
+(bank-fee-recovery role) confirmed already fully live: `accounting.chart_of_accounts_roles` has
+`role='bank_fee_recovery'` bound to USMCA account 6300, `is_active=true`; guard
+`verify-bank-fee-recovery-role-bound.mjs` (step 10453) selftest re-run 6/6 PASS. | `banking.bank_accounts`,
+`banking.bank_transactions`, `banking.reconciliation_sessions`, `accounting.chart_of_accounts_roles`
+(read-only + one reversible reorder click-test, restored) | **CC-2** | none — all 4 BNK items were
+already correctly shipped or already correctly root-caused; no fix needed | live Chrome
+click-through (REG-027 reorder, restored after), live Neon reads (bypass_rls=lucia), guard selftest
+re-run, all exact numbers in the OUTBOX entry | **CLOSED — ALL 5 ITEMS LIVE-VERIFIED, NO DEFECT
+FOUND** |
