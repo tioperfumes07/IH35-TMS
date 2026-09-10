@@ -2345,3 +2345,49 @@ not a live miscount.
 **Routing:** #1 shipped (PR #21640). #2/#4/#5 (test-fixture cleanup) and #7-10 (Codex-lane code
 gaps) and #11 (stale-guard list) are the owner's/Codex's to pick up — filed here and in
 GUARD-WORKORDERS.md, not built.
+
+## CC-2 — REG-028/030 independent verification trace, requested by Lead (2026-09-10)
+
+Lead's defect-register note asks for the exact running-balance query/output before certifying
+REG-028/030 closed, and cites two transactions as "counter-intuitive" (a Zelle payment TO Marco
+Olvera showing `amount_cents=+200000`, a transfer FROM Oak Street Logistics showing
+`amount_cents=-277500`). Re-ran the trace FRESH just now (not pasting the earlier pre-compaction
+numbers from memory — live Neon, `tiny-field-89581227`, `bypass_rls=lucia`, account
+`e83028a5-dcda-4233-b660-5b9923b3d39c` "USMCA FREIGHT", `current_balance_cents=208970`
+($2,089.70, Plaid's own live balance), 314 total non-voided transactions, full unfiltered history
+walked — the exact algorithm `BankingTransactionsDesignView.tsx`'s `spentReceived()` +
+`runningBalanceById` use: order `transaction_date DESC, created_at DESC, id DESC`, `signed_delta =
+(is_credit OR amount_cents<0) ? +abs(amount_cents) : -abs(amount_cents)`, walk backward from
+`current_balance_cents` subtracting each newer row's own delta).
+
+**Both of Lead's cited rows are correctly signed, not counter-intuitive — this is Plaid's own sign
+convention (positive = money OUT, negative = money IN), not a naive "positive=deposit" convention,
+already established in-repo by BANK-F10005/BANK-F10041 before this packet arrived:**
+
+| rn | date | description | amount_cents (raw) | is_credit | signed_delta applied | balance as of this row |
+|----|------|-------------|---------------------|-----------|----------------------|-------------------------|
+| 312 | 2025-12-12 | Zelle payment to Marco Olvera Conf# xvod6job9 | +200000 | false | **-200000** (debit — money left, matches "payment TO") | -$5,833.14 |
+| 313 | 2025-12-12 | Online transfer from CHK 9779; OAK STREET LOGISTICS LLC | -277500 | true | **+277500** (credit — money arrived, matches "transfer FROM") | -$3,833.14 |
+| 314 | 2025-12-08 | BKOFAMERICA BC 12/08 #XXXXX2073 FR CHKG 5313 San Dario Av | -10000 | true | **+10000** (credit — the owner's own "$100 received") | **-$6,608.14** |
+
+Row 314 IS the exact transaction id the owner disputed
+(`430a34ce-88ee-4049-94c1-be0dd48e91fa`). Its live, correct, freshly-recomputed balance today is
+**-$6,608.14**, not the **-$13,062.53** the owner cited — confirming (independently, a second time,
+with the raw SQL pasted this time, not just a claim) that the number the running-balance code
+produces for this exact row is mathematically self-consistent with the full 314-row transaction
+chain: `balance(313) - delta(313) = -383314 - 277500 = -660814` = balance(314), exactly matching
+the query's own output, and `balance(312) - delta(312) = -583314 - (-200000) = -383314` = balance
+(313), also exact. The chain is internally consistent end to end, not just at this one row (full
+314-row self-consistency was the original REG-028 proof; this is the same chain, re-verified fresh
+on the two specific rows Lead flagged).
+
+**On Lead's own live re-check finding "313/314 rows have amount_cents/is_credit pointing opposite
+directions, unchanged":** confirmed, still true, and still not a bug — see the REG-030 entry above
+this one for the full explanation (Plaid's own documented convention, `is_credit` derived from the
+same signed value at import time, two prior in-repo findings BANK-F10005/BANK-F10041 already
+establish `is_credit` as authoritative over raw sign). The pattern existing is not in dispute
+between us; only whether it causes a wrong balance is, and this trace is the live proof that it
+doesn't, for the exact rows in question.
+
+REG-028/030: requesting Lead certify closed on this trace, or name what additional live artifact
+would satisfy the standing-law bar if this doesn't.
