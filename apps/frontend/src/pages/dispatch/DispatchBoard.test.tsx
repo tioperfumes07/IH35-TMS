@@ -5,7 +5,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { DispatchLoadRow } from "../../api/loads";
 import "../../design/design-tokens.css";
 import { ToastProvider } from "../../components/Toast";
-import { DispatchBoard } from "./DispatchBoard";
+import { DispatchBoard, currentLoadPerUnit } from "./DispatchBoard";
 import { listOpenPreSettlements } from "../../api/driverFinance";
 
 vi.mock("../../api/dispatch", async (importOriginal) => {
@@ -329,5 +329,37 @@ describe("DispatchBoard ETA chip (P5-T20)", () => {
 
     expect(await screen.findByText("Couldn't load open pre-settlements")).toBeTruthy();
     expect(screen.getByRole("button", { name: /retry/i })).toBeTruthy();
+  });
+});
+
+// REG-035 (owner 2026-09-10): a truck must appear once as its real current load, never twice for a
+// trailing billing-queue load. Live-confirmed offenders: T152/T156/T171/T173 each carried a
+// delivered_pending_docs load + a dispatched load.
+describe("currentLoadPerUnit (REG-035 one current load per unit)", () => {
+  it("keeps the in-flight load and drops the trailing delivered_pending_docs one for the same unit", () => {
+    const rows = [
+      { id: "load-a", status: "delivered_pending_docs", assigned_unit_id: "unit-1" },
+      { id: "load-b", status: "dispatched", assigned_unit_id: "unit-1" },
+      { id: "load-c", status: "dispatched", assigned_unit_id: "unit-2" },
+    ];
+    const result = currentLoadPerUnit(rows);
+    expect(result).toHaveLength(2);
+    expect(result.find((r) => r.assigned_unit_id === "unit-1")?.id).toBe("load-b");
+    expect(result.find((r) => r.assigned_unit_id === "unit-2")?.id).toBe("load-c");
+  });
+
+  it("collapses a unit whose loads are all billing-queue to a single row (truck still shows once)", () => {
+    const rows = [
+      { id: "load-a", status: "delivered_pending_docs", assigned_unit_id: "unit-3" },
+      { id: "load-b", status: "delivered_pending_docs", assigned_unit_id: "unit-3" },
+    ];
+    const result = currentLoadPerUnit(rows);
+    expect(result).toHaveLength(1);
+    expect(result[0].assigned_unit_id).toBe("unit-3");
+  });
+
+  it("ignores rows without an assigned unit", () => {
+    const rows = [{ id: "load-a", status: "booked", assigned_unit_id: null }];
+    expect(currentLoadPerUnit(rows)).toHaveLength(0);
   });
 });
