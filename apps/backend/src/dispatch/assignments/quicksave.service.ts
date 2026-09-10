@@ -5,6 +5,7 @@ import { withCurrentUser } from "../../auth/db.js";
 import { assertDriverQualifiedForLoad, DriverNotQualifiedError } from "../driver-qualification.service.js";
 import { advanceDraftStatusIfCrewed } from "../draft-crew-status-advance.js";
 import { ACTIVE_UNIT_STATUSES, assertUnitNotActiveOnAnotherLoad } from "../unit-active-load-guard.js";
+import { linkLoadToPresettlementAfterAssignmentInClientTx, type TripType } from "../presettlement-link.service.js";
 
 type LoadRow = {
   id: string;
@@ -15,6 +16,9 @@ type LoadRow = {
   load_number: string | null;
   is_hazmat: boolean;
   status: string;
+  trip_type: TripType | null;
+  tour_id: string | null;
+  presettlement_link_id: string | null;
 };
 
 async function fetchLoadForUpdate(client: PoolClient, loadId: string, operatingCompanyId: string): Promise<LoadRow | null> {
@@ -22,7 +26,7 @@ async function fetchLoadForUpdate(client: PoolClient, loadId: string, operatingC
     `
       SELECT id, operating_company_id, assigned_primary_driver_id, assigned_unit_id, assigned_secondary_driver_id, load_number,
              COALESCE((quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat,
-             status
+             status, trip_type, tour_id, presettlement_link_id
       FROM mdata.loads
       WHERE id = $1
         AND operating_company_id = $2::uuid
@@ -341,6 +345,22 @@ export async function reassignDriver(
       // driver straight to mdata.loads without going through updateDispatchLoad()'s own status
       // advance; a draft load reassigned a driver here would otherwise stay draft forever.
       await advanceDraftStatusIfCrewed(client, input.load_uuid, input.operating_company_id);
+
+      // REG-008 (SET-01 auto-link gap) — a 4th post-booking driver-assignment write path, not
+      // named in the original board row (found by an exhaustive grep for every
+      // `SET assigned_primary_driver_id` site while building the guard, per "fix it everywhere it
+      // exists, not on the screen it was found on"). Same shared guard as quick-assign/planner/
+      // manual-reassign: skip if already linked, defer if trip_type isn't known yet.
+      await linkLoadToPresettlementAfterAssignmentInClientTx(client, {
+        operating_company_id: input.operating_company_id,
+        load_id: input.load_uuid,
+        presettlement_link_id_before: load.presettlement_link_id,
+        driver_id: input.driver_uuid,
+        unit_id: load.assigned_unit_id,
+        trip_type: load.trip_type,
+        tour_id: load.tour_id,
+        actor_user_id: userId,
+      });
 
       // DISP-F6157: driver reassignment doesn't touch the trailer — carry the canonical current
       // trailer through unchanged rather than the co-driver uuid.

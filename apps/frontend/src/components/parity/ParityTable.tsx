@@ -429,6 +429,14 @@ export const ALL_PAGE_SIZE = 1_000_000;
 const LARGE_RENDER_ROW_THRESHOLD = 1000;
 const AUTO_FIT_MIN_WIDTH = 64;
 const AUTO_FIT_MAX_WIDTH = 320;
+// COL-WIDTH-FLOOR (BNK-06) — every manual-resize write path (drag, touch-drag, keyboard nudge)
+// already clamps to this floor so a user can never shrink a column to unusable/invisible. The one
+// path that did NOT clamp was the initial load from localStorage (`persisted.colWidths`): a value
+// written before this floor existed, or corrupted/edited outside the app, loaded verbatim and
+// rendered a permanently collapsed column (0px reproduces this way) with no self-healing — the
+// column looked broken until the user cleared storage, since drag-resize needs a visible handle
+// to grab and a 0-width column has none. Named so every write path can share one number.
+const MIN_COL_WIDTH_PX = 48;
 // Cell horizontal padding (px-2 = 0.5rem each side) + the sort arrow glyph + a small buffer so a
 // freshly-measured column isn't immediately re-truncated by its own chrome.
 const AUTO_FIT_CHROME_PX = 28;
@@ -500,6 +508,19 @@ function loadPersisted(storageKey?: string): Persisted {
   } catch {
     return {};
   }
+}
+
+// COL-WIDTH-FLOOR (BNK-06) — re-clamps every persisted width to MIN_COL_WIDTH_PX so a stale/
+// corrupted stored value below the floor (including 0, the reported "collapsed" symptom) can
+// never load collapsed again. Every manual-resize write path already enforces this floor; this is
+// the missing read-path counterpart.
+function clampColWidths(colWidths: Record<string, number> | undefined): Record<string, number> {
+  if (!colWidths) return {};
+  const clamped: Record<string, number> = {};
+  for (const [key, w] of Object.entries(colWidths)) {
+    clamped[key] = Math.max(MIN_COL_WIDTH_PX, w);
+  }
+  return clamped;
 }
 
 function savePersisted(storageKey: string | undefined, value: Persisted) {
@@ -655,7 +676,9 @@ export function ParityTable<T>({
     () => (isCollapseControlled ? new Set(controlledCollapsedKeys ?? []) : internalCollapsed),
     [isCollapseControlled, controlledCollapsedKeys, internalCollapsed],
   );
-  const [colWidths, setColWidths] = useState<Record<string, number>>(persisted.colWidths ?? {});
+  const [colWidths, setColWidths] = useState<Record<string, number>>(() =>
+    clampColWidths(persisted.colWidths),
+  );
   // REORDER — drag-to-move columns. `colOrder` holds ONLY keys the user has explicitly reordered
   // into a non-default position; `dragKey`/`dragOverKey` are transient drag-in-progress state, not
   // persisted.
@@ -958,7 +981,7 @@ export function ParityTable<T>({
     const onMove = (ev: MouseEvent) => {
       if (!resizing.current) return;
       const delta = ev.clientX - resizing.current.startX;
-      const w = Math.max(48, Math.round(resizing.current.startW + delta));
+      const w = Math.max(MIN_COL_WIDTH_PX, Math.round(resizing.current.startW + delta));
       setColWidths((prev) => ({ ...prev, [resizing.current!.key]: w }));
     };
     const onUp = () => {
@@ -984,7 +1007,7 @@ export function ParityTable<T>({
     const startW = colWidths[key] || th?.getBoundingClientRect().width || 120;
     const onMove = (ev: TouchEvent) => {
       const delta = (ev.touches[0]?.clientX ?? startX) - startX;
-      const w = Math.max(48, Math.round(startW + delta));
+      const w = Math.max(MIN_COL_WIDTH_PX, Math.round(startW + delta));
       setColWidths((prev) => ({ ...prev, [key]: w }));
     };
     const onEnd = () => {
@@ -1004,7 +1027,7 @@ export function ParityTable<T>({
   function nudgeWidth(key: string, delta: number, thEl: HTMLElement | null) {
     setColWidths((prev) => {
       const base = prev[key] || thEl?.getBoundingClientRect().width || 120;
-      const w = Math.max(48, Math.round(base + delta));
+      const w = Math.max(MIN_COL_WIDTH_PX, Math.round(base + delta));
       const next = { ...prev, [key]: w };
       savePersisted(storageKey, { hidden: [...hidden], density, pageSize, colWidths: next, colOrder });
       return next;

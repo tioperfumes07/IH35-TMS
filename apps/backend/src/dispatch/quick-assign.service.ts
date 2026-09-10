@@ -10,6 +10,7 @@ import {
 } from "./driver-qualification.service.js";
 import { advanceDraftStatusIfCrewed } from "./draft-crew-status-advance.js";
 import { ACTIVE_UNIT_STATUSES, assertUnitNotActiveOnAnotherLoad } from "./unit-active-load-guard.js";
+import { linkLoadToPresettlementAfterAssignmentInClientTx, type TripType } from "./presettlement-link.service.js";
 
 type QuickAssignInput = {
   operating_company_id: string;
@@ -63,7 +64,7 @@ export async function quickAssignLoad(
         `
           SELECT id, operating_company_id, assigned_primary_driver_id, assigned_unit_id, assigned_secondary_driver_id, load_number,
                  COALESCE((quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat,
-                 status
+                 status, trip_type, tour_id, presettlement_link_id
           FROM mdata.loads
           WHERE id = $1
             AND operating_company_id = $2::uuid
@@ -288,6 +289,22 @@ export async function quickAssignLoad(
       // driver straight to mdata.loads without going through updateDispatchLoad()'s own status
       // advance; a draft load quick-assigned a driver here would otherwise stay draft forever.
       await advanceDraftStatusIfCrewed(client, input.load_id, input.operating_company_id);
+
+      // REG-008 (SET-01 auto-link gap) — this write path sets assigned_primary_driver_id AFTER
+      // the load was already booked (the normal dispatcher workflow: book first, assign later),
+      // which book-load.service.ts's own at-booking linker never sees. Same guard/idempotency as
+      // every other post-booking assignment path: skip if already linked, defer (never guess) if
+      // trip_type still isn't known, otherwise run the SAME resolution logic booking uses.
+      await linkLoadToPresettlementAfterAssignmentInClientTx(client, {
+        operating_company_id: input.operating_company_id,
+        load_id: input.load_id,
+        presettlement_link_id_before: (load.presettlement_link_id as string | null) ?? null,
+        driver_id: input.driver_id,
+        unit_id: input.unit_id ?? load.assigned_unit_id ?? null,
+        trip_type: (load.trip_type as TripType | null) ?? null,
+        tour_id: (load.tour_id as string | null) ?? null,
+        actor_user_id: userId,
+      });
 
       const previousTrailerId = await resolveCurrentTrailerId(
         client,

@@ -278,9 +278,11 @@ export function VehicleProfilePage() {
   const showBackhaul = quickAvailability === "available" && !profile?.current_load;
 
   return (
-    <div className="space-y-3 p-4 pb-24">
-      <div className="flex items-center justify-between gap-2">
-        <PageHeader backHref="/fleet" breadcrumb={["Fleet", `Unit ${unitNumber}`]} title={`Unit ${unitNumber}`} subtitle="Vehicle profile" />
+    <div className="mx-auto w-full max-w-[1600px] space-y-3 p-4 pb-24">
+      <div className="flex items-start justify-between gap-2">
+        <PageHeader backHref="/fleet" breadcrumb={["Fleet", `Unit ${unitNumber}`]} title={`Unit ${unitNumber}`} subtitle="Vehicle profile" actions={profile ? (
+          <Button size="sm" variant="secondary" data-testid="vehicle-profile-edit" onClick={() => setEditModalOpen(true)}>Edit unit</Button>
+        ) : null} />
         {unit ? <MissingRequiredChip operatingCompanyId={companyId} entityKind="unit" entityId={id} /> : null}
       </div>
       {companyLoading && !companyId ? (
@@ -305,9 +307,9 @@ export function VehicleProfilePage() {
       ) : null}
 
       {profile ? (
-        <>
+        <div data-testid="vehicle-profile-grid" className="grid grid-cols-1 items-start gap-3 xl:grid-cols-2">
           <MaintenanceAlertsBanner alerts={profile.maintenance_alerts ?? []} unitId={id} />
-          <div data-testid="vp-section-1-identity">
+          <div data-testid="vp-section-1-identity" className="xl:col-span-2">
             <IdentityStatusHeader
               unitId={id}
               companyId={companyId}
@@ -353,7 +355,7 @@ export function VehicleProfilePage() {
             ) : null}
             <TripCostCalculator unitId={id} companyId={companyId} unitNumber={unit?.unit_number != null ? String(unit.unit_number) : null} />
           </div>
-          <div data-testid="vp-section-5-maintenance">
+          <div data-testid="vp-section-5-maintenance" className="xl:col-span-2">
             {faultSummaryQuery.isError ? (
               <ListErrorState
                 title="Couldn't load active fault summary"
@@ -390,7 +392,7 @@ export function VehicleProfilePage() {
               <p className="text-xs text-gray-500">No attached reefer trailer.</p>
             )}
           </div>
-          <div data-testid="vp-section-8-financial">
+          <div data-testid="vp-section-8-financial" className="xl:col-span-2">
             <FinancialUnitPLSection
               unitId={id}
               companyId={companyId}
@@ -415,7 +417,7 @@ export function VehicleProfilePage() {
               widget was removed from the live render path — ServiceTimeline (vp-section-5-maintenance,
               above) is the sole canonical activity surface. RecentActivitySection.tsx is archived
               (ARCHIVE-not-DELETE), not deleted, per Rule 07. */}
-          <div data-testid="vp-section-10-documents">
+          <div data-testid="vp-section-10-documents" className="xl:col-span-2">
           <DocumentsSection
             unitId={id}
             unitNumber={unitNumber}
@@ -554,7 +556,7 @@ export function VehicleProfilePage() {
               </div>
             </section>
           </div>
-          <div data-testid="vp-section-11-action-bar">
+          <div data-testid="vp-section-11-action-bar" className="xl:col-span-2">
             <ActionBar
               unitId={id}
               companyId={companyId}
@@ -577,11 +579,11 @@ export function VehicleProfilePage() {
               entityLabel={`Unit ${unitNumber}`}
             />
           </div>
-          <div data-testid="vp-section-12-audit-history" className="rounded-sm border border-gray-200 bg-white p-4">
+          <div data-testid="vp-section-12-audit-history" className="rounded-sm border border-gray-200 bg-white p-3 xl:col-span-2">
             <h3 className="mb-2 text-xs font-semibold text-slate-900">Audit History</h3>
             <EntityAuditHistoryTab operatingCompanyId={companyId} entityType="unit" entityId={id} />
           </div>
-        </>
+        </div>
       ) : null}
 
       {profile ? <div id="asset-financial" className="max-w-2xl scroll-mt-4 space-y-3 rounded-sm border border-gray-200 bg-white p-4">

@@ -14,12 +14,10 @@ import {
   getFactoringSummary,
   getReserveBalanceHistory,
   listFactors,
-  listSubmissionQueue,
   updateFactor,
   type FactoringMonthlyFeeSummary,
   type FactoringReserveBalanceHistoryEntry,
   type FactoringSettingsRow,
-  type SubmissionQueueItem,
 } from "../../api/factoring";
 import { EntityPicker } from "../../components/EntityPicker";
 import { useStagedListFilters } from "../../components/table";
@@ -578,16 +576,6 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     queryFn: () => listFaroDailyImports(companyId),
     enabled: Boolean(companyId),
   });
-  // REG-014 (owner 2026-09-09, "the Funds Due is not wired"): reuses the exact same
-  // submission-queue query Submit Factor already runs (no new backend route, no new money math --
-  // a raw SUM over total_cents, the only aggregation the lane boundary allows for this item). No
-  // funds-due/factoring_purchases endpoint exists yet (confirmed this pass), so this is honestly
-  // scoped to "what's eligible to submit right now," not a funded/receivable ledger figure.
-  const fundsDueQuery = useQuery({
-    queryKey: ["factoring", "submission-queue", "funds-due", companyId],
-    queryFn: () => listSubmissionQueue(companyId),
-    enabled: Boolean(companyId) && tab === "funds_due",
-  });
   // LINK-F5171/LINK-F5182 — reverse_link: factoring:home.equipment_loans (vendor side). The unit
   // side already reverse-links via UnitFinanceLinkageTab; VendorDetail links here as
   // ?vendor_id=<id>, now honored server-side.
@@ -1103,80 +1091,6 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             backing field on this batch-level movement ledger — the real Date/Note/Amount/Balance
             columns above are never fabricated.
           </p>
-        </div>
-      ) : null}
-
-      {/* REG-014 (owner 2026-09-09, "the Funds Due is not wired"): real, this pass. Reuses the SAME
-          submission-queue query Submit Factor already runs (listSubmissionQueue) -- no new backend
-          route. Funds Due here is scoped honestly to "eligible to submit right now" (is_submittable
-          rows), a raw SUM(total_cents), the only aggregation the lane boundary allows -- not a
-          funded/receivable ledger figure, which would need a real funds-due/factoring_purchases
-          endpoint that does not exist yet (confirmed this pass, zero backend matches). */}
-      {tab === "funds_due" ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-funds-due-report">
-          <div className="mb-2 text-xs font-medium text-gray-900">Funds Due</div>
-          {fundsDueQuery.isError ? (
-            <ListErrorState
-              title="Couldn't load eligible invoices"
-              {...formatQueryErrorDetail(fundsDueQuery.error)}
-              onRetry={() => void fundsDueQuery.refetch()}
-            />
-          ) : (
-            <>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="factoring-funds-due-summary-strip">
-                <DrillKpiCard
-                  testId="factoring-funds-due-total"
-                  label="Funds due (eligible now)"
-                  value={
-                    fundsDueQuery.isLoading
-                      ? null
-                      : fmtCurrency(
-                          (fundsDueQuery.data?.items ?? [])
-                            .filter((item) => item.is_submittable)
-                            .reduce((sum, item) => sum + Number(item.total_cents ?? 0), 0) / 100
-                        )
-                  }
-                  hint="Sum of eligible-to-submit invoices, not a funded/receivable ledger"
-                  to={FACTORING_TAB_PATH.submit}
-                />
-                <DrillKpiCard
-                  testId="factoring-funds-due-count"
-                  label="Eligible invoices"
-                  value={
-                    fundsDueQuery.isLoading
-                      ? null
-                      : String((fundsDueQuery.data?.items ?? []).filter((item) => item.is_submittable).length)
-                  }
-                  to={FACTORING_TAB_PATH.submit}
-                />
-              </div>
-              <div className="mt-3 text-xs font-medium text-gray-900">Eligible invoices</div>
-              <ParityTable
-                columns={[
-                  { key: "display_id", label: "Invoice", sortable: true, render: (row: SubmissionQueueItem) => row.display_id ?? "—" },
-                  { key: "customer_name", label: "Customer", sortable: true, render: (row: SubmissionQueueItem) => row.customer_name ?? "—" },
-                  { key: "due_date", label: "Due date", sortable: true, render: (row: SubmissionQueueItem) => (row.due_date ? fmtDate(row.due_date) : "—") },
-                  {
-                    key: "total_cents",
-                    label: "Amount",
-                    sortable: true,
-                    cellClass: "text-right",
-                    render: (row: SubmissionQueueItem) => fmtCurrency(row.total_cents / 100),
-                  },
-                ]}
-                rows={(fundsDueQuery.data?.items ?? []).filter((item) => item.is_submittable)}
-                rowKey={(row) => row.invoice_id}
-                loading={fundsDueQuery.isLoading}
-                emptyText="No invoices currently eligible for submission."
-                storageKey="factoring-funds-due-report"
-              />
-              <p className="mt-2 text-xs text-gray-500" data-testid="factoring-funds-due-footnote">
-                This is the same eligible-invoice set Submit Factor uses, summed — not a separate
-                funded/receivable ledger. IH35-TMS has no funds-due/factoring_purchases backend
-                surface yet; once submitted (Submit Factor), an invoice moves out of this list.
-              </p>
-            </>
-          )}
         </div>
       ) : null}
 

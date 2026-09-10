@@ -165,9 +165,12 @@ export function TrailerProfilePage() {
   const trailerLabel = entityLabel(equipment.equipment_number, id, "Trailer");
 
   return (
-    <div className="space-y-4 pb-20">
-      <PageHeader backHref="/fleet" breadcrumb={["Fleet", trailerLabel]} title={trailerLabel} subtitle="Trailer profile" />
-      <div data-testid="tp-section-1-identity">
+    <div className="mx-auto w-full max-w-[1600px] space-y-3 p-4 pb-20">
+      <PageHeader backHref="/fleet" breadcrumb={["Fleet", trailerLabel]} title={trailerLabel} subtitle="Trailer profile" actions={
+        <button type="button" data-testid="trailer-profile-edit" className="inline-flex h-7 items-center rounded-sm border border-gray-300 bg-white px-2 text-xs font-semibold text-gray-800 hover:bg-gray-50" onClick={() => setEditModalOpen(true)}>Edit trailer</button>
+      } />
+      <div data-testid="trailer-profile-grid" className="grid grid-cols-1 items-start gap-3 xl:grid-cols-2">
+      <div data-testid="tp-section-1-identity" className="xl:col-span-2">
         <IdentityStatusHeader
           equipment={equipment}
           onChangeStatus={(next) => {
@@ -207,7 +210,7 @@ export function TrailerProfilePage() {
           <TrailerReeferSection trailerId={id} companyId={companyId} />
         </>
       ) : null}
-      <div data-testid="tp-section-5-maintenance">
+      <div data-testid="tp-section-5-maintenance" className="xl:col-span-2">
         <MaintenanceSnapshotSection maintenance={aggregate.maintenance} />
         <div className="mt-3">
           <ServiceTimeline companyId={companyId} equipmentId={id} showUnitEventTypes={false} />
@@ -265,7 +268,7 @@ export function TrailerProfilePage() {
           data-testid="trailer-profile-bills"
         />
       </div>
-      <div data-testid="tp-section-7-documents">
+      <div data-testid="tp-section-7-documents" className="xl:col-span-2">
         <DocumentsSection
           equipmentId={id}
           equipmentNumber={trailerLabel}
@@ -302,7 +305,7 @@ export function TrailerProfilePage() {
           widget was removed from the live render path — ServiceTimeline (tp-section-5-maintenance,
           above, already equipment_id-filtered per B26) is the sole canonical activity surface.
           TrailerRecentActivitySection.tsx is archived (ARCHIVE-not-DELETE), not deleted, per Rule 07. */}
-      <div data-testid="tp-section-8-action-bar">
+      <div data-testid="tp-section-8-action-bar" className="xl:col-span-2">
         <ActionBar
           equipmentId={id}
           companyId={companyId}
@@ -312,6 +315,7 @@ export function TrailerProfilePage() {
           onChangeStatus={() => setStatusModalOpen(true)}
           onArchive={handleArchive}
         />
+      </div>
       </div>
       <StatusChangeModal
         open={statusModalOpen}

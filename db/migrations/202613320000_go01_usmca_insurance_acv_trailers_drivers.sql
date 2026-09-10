@@ -56,7 +56,10 @@ UPDATE mdata.assets SET insured_value_cents = 5950000, updated_at = now() WHERE 
 UPDATE mdata.assets SET insured_value_cents = 5950000, updated_at = now() WHERE id = '378d7550-c3cd-40e8-bd29-c01bc9549eca'; -- T177
 
 -- ---------------------------------------------------------------------------------------------------
--- TASK 1 + TASK 3 -- insert one mdata.assets row per APD trailer (USMCA-APD-16..35), asset_type derived
+-- TASK 1 + TASK 3 -- insert one mdata.assets row per APD trailer. `USMCA-APD-16..35` is the
+-- equipment_number copied from the insurance intake staging labels; it is NOT an owner-assigned
+-- trailer number. The signed schedule supplies VIN/year/make/type/ACV but no fleet trailer number,
+-- and this migration must never synthesize or overwrite that missing owner data. asset_type derived
 -- from mdata.equipment.equipment_type (Reefer/Flatbed), equipment_id/vin/make/year copied from
 -- mdata.equipment, insured_value_cents from the signed APD schedule. ON CONFLICT (tenant_id, unit_code)
 -- keeps this idempotent and self-healing on re-run.

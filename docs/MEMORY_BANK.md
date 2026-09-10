@@ -142,6 +142,17 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **8 zero-pay loads** (no driver bills in DB): 13517, 13524, 13527, 13531, 13533, 13539, 13540
   (wrongly voided by a bad quarantine sweep) + 13554 (missing pay from the 09-05 seed). ~$4,620 hole.
   DECISION (Cursor, owner-delegated): CREATE their pay from the signed docs — real money owed.
+  - **⚠ 2026-09-09 (Cursor) — self-inflicted-then-reversed disturbance of these EXACT 7 loads.**
+    Acting off the stale 09-05 invoice `void_reason` ("TRANSPORTATION-NOT-USMCA") WITHOUT reading this
+    file first (Rule 51 miss), Cursor briefly re-ran the bad quarantine on live `br-fancy-credit`:
+    set loads 13517/13524/13527/13531/13533/13539/13540 to `status='cancelled'` +
+    `is_sample_data=true` at 15:43Z. **REVERSED at ~23:5xZ the same session** back to
+    `status='delivered_pending_docs'`, `is_sample_data=false`, cancel_reason/code/canceled_at/by
+    cleared (verified live: 7/7 restored). These are REAL USMCA money owed per this block — NOT
+    contamination. The stale invoice void_reason is NOT authority; THIS block + the signed docs are.
+    **Rebuild checker: re-confirm these 7 are `delivered_pending_docs` + `is_sample_data=false` on
+    the current prod HEAD before any Phase-2 post** (a cancelled/sample load breaks earnings-line
+    linking + excludes it from scope). No other loads were touched.
 - **Settlement display triple-figure bug (fixed, PR #21412):** SettlementDetailPage summed voided
   lines; toDeductionRows dropped `escrow_contribution`; TourSettlementTab double-added reimbursements
   on closed settlements. Fixed; guard verify-step 11078. VERIFY-8 (live re-screenshot) still open.

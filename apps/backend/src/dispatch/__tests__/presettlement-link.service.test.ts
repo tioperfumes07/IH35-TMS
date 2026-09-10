@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   PresettlementLinkError,
   confirmPresettlementLink,
+  linkLoadToPresettlementAfterAssignmentInClientTx,
   linkLoadToPresettlementAtBookingInClientTx,
   suggestPresettlementLink,
 } from "../presettlement-link.service.js";
@@ -239,6 +240,75 @@ describe("presettlement link — GO-22", () => {
           actor_user_id: USER_ID,
         })
       ).rejects.toBeInstanceOf(PresettlementLinkError);
+    });
+  });
+
+  // REG-008 (SET-01 auto-link gap, 2026-09-09/10): quick-assign, planner reschedule, and manual
+  // reassignment all write assigned_primary_driver_id AFTER a load is already booked, and none of
+  // them ever called the linker. These tests exercise the shared gate the fix adds, against the
+  // same mock client shape as the at-booking tests above.
+  describe("linkLoadToPresettlementAfterAssignmentInClientTx — REG-008 (called from post-booking driver-assignment paths)", () => {
+    it("already linked: is a no-op, never re-suggests or re-confirms", async () => {
+      const { client, calls } = makeClient();
+      const result = await linkLoadToPresettlementAfterAssignmentInClientTx(client as never, {
+        operating_company_id: OPCO,
+        load_id: LOAD_ID,
+        presettlement_link_id_before: "already-linked-settlement-id",
+        driver_id: DRIVER_ID,
+        trip_type: "NB",
+        tour_id: TOUR_ID,
+        actor_user_id: USER_ID,
+      });
+      expect(result).toBeNull();
+      expect(calls.some((c) => /INSERT INTO driver_finance\.presettlement_link_suggestions/.test(c.sql))).toBe(false);
+      expect(calls.some((c) => /UPDATE mdata\.loads SET presettlement_link_id/.test(c.sql))).toBe(false);
+    });
+
+    it("trip_type not yet known: defers with an audit event, never guesses NB/TR/SB", async () => {
+      const { client, calls } = makeClient();
+      const result = await linkLoadToPresettlementAfterAssignmentInClientTx(client as never, {
+        operating_company_id: OPCO,
+        load_id: LOAD_ID,
+        presettlement_link_id_before: null,
+        driver_id: DRIVER_ID,
+        trip_type: null,
+        tour_id: null,
+        actor_user_id: USER_ID,
+      });
+      expect(result).toBeNull();
+      expect(calls.some((c) => /SELECT audit\.append_event/.test(c.sql))).toBe(true);
+      expect(calls.some((c) => /INSERT INTO driver_finance\.presettlement_link_suggestions/.test(c.sql))).toBe(false);
+    });
+
+    it("not yet linked + trip_type known: runs the SAME at-booking resolution logic (NB opens new)", async () => {
+      const { client } = makeClient();
+      const result = await linkLoadToPresettlementAfterAssignmentInClientTx(client as never, {
+        operating_company_id: OPCO,
+        load_id: LOAD_ID,
+        presettlement_link_id_before: null,
+        driver_id: DRIVER_ID,
+        trip_type: "NB",
+        tour_id: TOUR_ID,
+        actor_user_id: USER_ID,
+      });
+      expect(result?.action).toBe("create_new");
+      expect(result?.settlement_id).toBe("new-settlement-id");
+    });
+
+    it("not yet linked, TR/SB with an open tour settlement: joins it (never opens a second one)", async () => {
+      const { client, calls } = makeClient({ openSettlement: { id: OPEN_SETTLEMENT_ID, display_id: "S-1" } });
+      const result = await linkLoadToPresettlementAfterAssignmentInClientTx(client as never, {
+        operating_company_id: OPCO,
+        load_id: LOAD_ID,
+        presettlement_link_id_before: null,
+        driver_id: DRIVER_ID,
+        trip_type: "TR",
+        tour_id: TOUR_ID,
+        actor_user_id: USER_ID,
+      });
+      expect(result?.action).toBe("link_existing");
+      expect(result?.settlement_id).toBe(OPEN_SETTLEMENT_ID);
+      expect(calls.some((c) => /INSERT INTO driver_finance\.driver_settlements/.test(c.sql))).toBe(false);
     });
   });
 });
