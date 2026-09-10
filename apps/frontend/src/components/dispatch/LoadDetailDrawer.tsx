@@ -688,14 +688,13 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
               ) : null}
             </div>
             <div className="flex items-center gap-2">
-              {/* N1: ExpenseCreatePage at /accounting/expenses/new plus RecordExpenseModal, both load-scoped. */}
-              <Link
-                className="text-xs font-semibold text-slate-700 underline"
-                to={`/accounting/expenses/new?load_id=${encodeURIComponent(load?.id ?? loadId)}${load?.load_number ? `&load_number=${encodeURIComponent(load.load_number)}` : ""}`}
-                data-testid="load-detail-add-expense"
-              >
-                Add expense
-              </Link>
+              {/* REG-033 (owner 2026-09-09 "WHAT IS THE DIFFERENCE?"): "Add expense" and "Record
+                  expense" were two controls that opened the IDENTICAL load-scoped RecordExpenseForm —
+                  the link navigated away to the full-page ExpenseCreatePage, the button opened the same
+                  form in place. There is no functional difference, so per the owner's own "merge them
+                  into one clearly-labeled control" they collapse to ONE in-place "Record expense" here
+                  (stays on the load — best UX). The full-page creator (/accounting/expenses/new) is NOT
+                  removed — it remains reachable from Accounting, so no creator surface is lost (Rule 07). */}
               <Button
                 type="button"
                 variant="secondary"

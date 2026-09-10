@@ -517,7 +517,7 @@ describe("DISP-F6XXX — delivered_pending_docs must not dead-click the invoice 
 });
 
 describe("LoadDetailDrawer N1 expense-from-load", () => {
-  it("exposes ExpenseCreate and RecordExpenseModal from the dispatch load drawer header", () => {
+  it("REG-033: exposes ONE merged Record expense control (in-place modal) from the load drawer header", () => {
     mockUseDispatchLoad.mockReturnValue({
       data: mockLoadDetail(),
       isLoading: false,
@@ -538,8 +538,8 @@ describe("LoadDetailDrawer N1 expense-from-load", () => {
       <LoadDetailDrawer loadId="load-1" isOpen canEdit operatingCompanyId="co-1" onClose={vi.fn()} />,
     );
 
-    const add = screen.getByTestId("load-detail-add-expense");
-    expect(add).toHaveAttribute("href", "/accounting/expenses/new?load_id=load-1&load_number=L-100");
+    // REG-033: the duplicate full-page "Add expense" link is gone — one clearly-labeled control remains.
+    expect(screen.queryByTestId("load-detail-add-expense")).toBeNull();
     fireEvent.click(screen.getByTestId("load-detail-record-expense"));
     expect(screen.getByTestId("record-expense-modal")).toBeInTheDocument();
   });
