@@ -8,24 +8,33 @@ BUILD not audit. Fast-merge, PR title `GPT-`. One PR + one named guard each.
 Tracker: `~/Downloads/09-09-2026-Claude-Lead-DEFECT-REGISTER.md` · dump: `docs/bus/OWNER-DUMP-2026-09-10-ITEMIZED.md`.
 You own the settlement-numbering + presettlement grid files — no other seat edits them until you post DONE.
 
-## ROW 1 — REG-010/011 (owner #1 fury · IN PROGRESS · deadline 2026-09-10 18:00 local · surrender CC-3)
-ROOT CAUSE (verify live, don't re-derive): `presettlement-link.service.ts:39-44` mints `S-${seq}` off
-`allocateNextLoadNumber()` (the LOAD counter) — that's why every Number/Settlement-Tour column shows a
-load-shaped `S-13xxx`. The correct scheme exists in `settlements-load-bookended.service.ts` via
-`driver_finance.next_settlement_display_id` → `S-YYYY-NNNN`. `driver_finance.driver_settlements` = 0 rows
-live, so `S-13xxx` is computed, not real. Owner REJECTED `S-<loadnumber>`.
-Read `claude/GO-22-PRESETTLEMENT-REGISTER-2026-09-02.md` FIRST, then:
-(1) move the live presettlement/booking path to `S-YYYY-NNNN` everywhere the number renders (load header,
-Load Costs, Pre-Settlements, Settlements, Factoring, Bills); (2) ONE datum per column across those grids
-— split every compound cell; Load Number and Settlement/Tour are two distinct columns.
-GUARD: verify-step asserting the live path returns `S-YYYY-NNNN` (not `S-<loadnum>`) AND grids expose the
-two columns with no compound cell. LIVE PROOF: a settlement/booking producing `S-2026-####` + a grid
-screenshot with 2 columns.
+## ✔ DONE — REG-010/011 (merged #21669, live-verified 2026-09-10)
+Canonical `S-YYYY-NNNN` moved onto the live path; correction `scripts/ops/reg010-011-settlement-display-ids.sql`
+applied. LIVE PROOF (Cursor re-measured Neon USMCA bypass_rls=lucia): **27/27 settlements canonical
+`S-YYYY-NNNN`, 0 load-shaped, 0 null.** Grids split into distinct columns. Keep the guard (verify-step 10891).
 
-## ROW 2 — REG-040 (deadline 2026-09-11 02:00 UTC · surrender CC-1)
-Invoiced loads must leave the active Load Costs board → **Resettlement**; a new NB load on the same
-unit/tour auto-assigns the SAME settlement. LIVE: 8 loads `status=invoiced`. Guard asserts an invoiced
-load is excluded from active costs and appears in resettlement.
+## ★ ROW 1 (TOP — owner RE-OPENED 2026-09-10 19:45Z · do BEFORE REG-041/REG-009) — REG-040 CLOSED-SETTLEMENT CONTINUATION (NOT DONE · deadline 2026-09-10 23:30 UTC · surrender CC-1)
+**Owner 2026-09-10 (verbatim intent):** the Resettlement display + OPEN-tour inheritance you shipped are
+ACCEPTED — but **REG-040 is NOT done.** The **closed / invoiced-settlement continuation** is unresolved and
+the owner ordered it COMPLETED **before** you touch REG-041 or REG-009. "COMPLETE IT OR HAVE A CODER
+COMPLETE IT." You are the coder — this is your settlement lane, you are already in the code.
+
+**MEASURED (Neon USMCA bypass_rls=lucia, 2026-09-10):** 8 loads `status=invoiced`; `driver_finance.driver_settlements`
+= 0 live rows (the tour/settlement identity is the presettlement readout, not a driver_settlements row).
+**DEFECT:** a new NB load on a unit/tour whose prior settlement is already **closed / invoiced** does NOT
+inherit that settlement — the auto-assign continues an **OPEN** tour only. Owner example: "unit 168 / Mecor /
+1356 was already invoiced, so it should be in Resettlement, and **13577 should already be automatically
+assigned that same settlement.**"
+
+**EXACT TARGET:** in `apps/backend/src/**/presettlement-link.service.ts` (the auto-assign path), when a new NB
+books on a unit whose most-recent tour settlement is closed/invoiced, auto-assign it to the **SAME settlement
+identity via a resettlement continuation** — carry the same `S-YYYY-NNNN` (NEVER a fresh unrelated `S-`,
+NEVER `S-<loadnum>` — Rule 03 + REG-010/011). Invoiced/closed loads stay OFF the active Load Costs board and
+render under Resettlement (already shipped — keep).
+**GUARD (one, named, wired):** verify-step asserting (a) the NB load following a closed/invoiced settlement
+resolves to the **same settlement id** (continuation), and (b) that load is **not** on the active costs board.
+**LIVE PROOF:** book/observe an NB on a unit whose tour is closed → same `S-YYYY-NNNN` assigned; paste the row.
+**DONE LINE:** `GPT | REG-040 DONE | <sha> | <live sha> | closed-tour NB → same S-YYYY-NNNN, off active board | NEXT REG-041`
 
 ## ROW 3 — REG-041
 Resettlement rows show the **Start Date + Delivery Date of the original load** that created the
