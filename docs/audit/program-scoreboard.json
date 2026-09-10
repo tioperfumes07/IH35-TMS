@@ -1,6 +1,6 @@
 {
   "healthzSha": "f1ec645",
-  "generated_at": "2026-09-10T19:58:02.874Z",
+  "generated_at": "2026-09-10T20:01:37.370Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 21677,
+      "title": "FINDING: ACCT-F6350 (REG-041 owner follow-up) Resettlement needs explicit original-load date columns",
+      "state": "merged",
+      "mergedAtCt": "09/10/2026, 02:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21677",
+      "sha": "8d8b4beec0",
+      "committedAtIso": "2026-09-10T14:59:22-05:00"
+    },
+    {
       "number": 21679,
       "title": "FINDING: REG-023(b) — \"Open driver bill\" is unwired (no driver_bills/:id route)",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21670",
       "sha": "886f6cfb61",
       "committedAtIso": "2026-09-10T14:20:57-05:00"
-    },
-    {
-      "number": 21669,
-      "title": "FINDING: ACCT-F6350 (REG-010/011) settlement identity and separate grid columns",
-      "state": "merged",
-      "mergedAtCt": "09/10/2026, 02:19 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21669",
-      "sha": "2f526f4002",
-      "committedAtIso": "2026-09-10T14:19:38-05:00"
     }
   ]
 }
