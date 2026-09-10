@@ -11,6 +11,10 @@ if (!/resolvedTourId = tourId/.test(booking) || !/linkLoadToPresettlementAtBooki
 }
 for (const [cwd, config, file] of [
   [root, 'apps/backend/vitest.config.ts', 'apps/backend/src/dispatch/__tests__/presettlement-link.service.test.ts'],
+  [root, 'apps/backend/vitest.config.ts', 'apps/backend/src/driver-finance/__tests__/settlement-continuation.test.ts'],
+  [root, 'apps/backend/vitest.config.ts', 'apps/backend/src/driver-finance/__tests__/settlement-payrun-recovery.test.ts'],
+  [root, 'apps/backend/vitest.config.ts', 'apps/backend/src/accounting/__tests__/company-settlement-close.service.test.ts'],
+  [root, 'apps/backend/vitest.config.ts', 'apps/backend/src/accounting/__tests__/load-costs-margin-sort.test.ts'],
   [root + 'apps/frontend', 'apps/frontend/vitest.config.ts', 'src/pages/accounting/LoadCostsBoardPage.registers.test.tsx'],
 ]) {
   const result = spawnSync(process.execPath, [root + 'node_modules/vitest/vitest.mjs', 'run', '--config', root + config, file], { cwd, stdio: 'inherit', timeout: 120000 });

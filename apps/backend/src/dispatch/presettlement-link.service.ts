@@ -11,6 +11,7 @@
 // but that path is no longer the ONLY writer.
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { allocateSettlementDisplayId } from "../driver-finance/settlement-display-id.js";
+import { reopenSettlementForContinuationInClientTx } from "../driver-finance/settlement-continuation.service.js";
 
 export type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -49,7 +50,7 @@ type SuggestResult = {
   suggested_reason: string;
 };
 
-/** REG-040: inherit an unfinished unit/driver tour before booking invents a new tour UUID. */
+/** REG-040: inherit the latest unit/driver tour, including a closed tour's continuation. */
 export async function findOpenPresettlementTourForUnit(
   client: DbClient,
   input: { operating_company_id: string; driver_id: string; unit_id: string },
@@ -63,8 +64,8 @@ export async function findOpenPresettlementTourForUnit(
     SELECT s.tour_id::text
     FROM driver_finance.driver_settlements s
     WHERE s.operating_company_id = $1::uuid AND s.driver_id = $2::uuid
-      AND s.tour_id IS NOT NULL AND s.trip_closed_at IS NULL
-      AND s.voided_at IS NULL AND s.status = 'open'
+      AND s.tour_id IS NOT NULL
+      AND s.voided_at IS NULL AND s.status IN ('open', 'closed', 'locked', 'approved', 'paid', 'final')
       AND EXISTS (
         SELECT 1 FROM mdata.loads l
         WHERE l.operating_company_id = s.operating_company_id
@@ -102,16 +103,21 @@ export async function suggestPresettlementLink(client: DbClient, input: SuggestI
       suggestedSettlementId = null;
       reason = `${input.trip_type} leg has no tour_id captured — cannot match it to an open pre-settlement automatically; needs manual attach.`;
     } else {
-      const openRes = await client.query<{ id: string; display_id: string | null }>(
+      const openRes = await client.query<{ id: string; display_id: string | null; is_continuation: boolean }>(
         `
-          SELECT id, display_id
+          SELECT id, display_id,
+                 (trip_closed_at IS NOT NULL OR status <> 'open' OR EXISTS (
+                   SELECT 1 FROM driver_finance.presettlement_link_suggestions prior
+                   WHERE prior.operating_company_id = driver_settlements.operating_company_id
+                     AND prior.assigned_settlement_id = driver_settlements.id AND prior.status = 'confirmed'
+                     AND prior.suggested_reason LIKE 'REG-040 resettlement continuation%'
+                 )) AS is_continuation
             FROM driver_finance.driver_settlements
            WHERE operating_company_id = $1::uuid
              AND driver_id = $2::uuid
              AND tour_id = $3::uuid
-             AND trip_closed_at IS NULL
              AND voided_at IS NULL
-             AND status = 'open'
+             AND status IN ('open', 'closed', 'locked', 'approved', 'paid', 'final')
              AND ($4::uuid IS NULL OR EXISTS (
                SELECT 1 FROM mdata.loads l
                WHERE l.operating_company_id = driver_settlements.operating_company_id
@@ -128,7 +134,9 @@ export async function suggestPresettlementLink(client: DbClient, input: SuggestI
       const open = openRes.rows[0];
       if (open) {
         suggestedSettlementId = open.id;
-        reason = `${input.trip_type} leg joins the open pre-settlement ${open.display_id ?? open.id} already started for this tour.`;
+        reason = open.is_continuation
+          ? `REG-040 resettlement continuation: ${input.trip_type} leg retains settlement ${open.display_id ?? open.id}.`
+          : `${input.trip_type} leg joins the open pre-settlement ${open.display_id ?? open.id} already started for this tour.`;
       } else {
         suggestedSettlementId = null;
         reason = `${input.trip_type} leg's tour has no open pre-settlement for this driver yet (no NB confirmed, or it already closed) — needs manual attach or a new pre-settlement.`;
@@ -214,9 +222,10 @@ export async function confirmPresettlementLink(client: DbClient, input: ConfirmI
     tour_id: string | null;
     suggested_settlement_id: string | null;
     status: string;
+    unit_id: string | null;
   }>(
     `
-      SELECT id, load_id::text, driver_id::text, tour_id::text, suggested_settlement_id::text, status
+      SELECT id, load_id::text, driver_id::text, tour_id::text, suggested_settlement_id::text, status, unit_id::text
         FROM driver_finance.presettlement_link_suggestions
        WHERE id = $1::uuid AND operating_company_id = $2::uuid
        FOR UPDATE
@@ -296,14 +305,42 @@ export async function confirmPresettlementLink(client: DbClient, input: ConfirmI
         "link_existing requires either the suggested_settlement_id or an explicit override_settlement_id."
       );
     }
-    const targetRes = await client.query<{ id: string }>(
-      `SELECT id FROM driver_finance.driver_settlements WHERE id = $1::uuid AND operating_company_id = $2::uuid AND trip_closed_at IS NULL AND voided_at IS NULL AND status = 'open' FOR UPDATE`,
-      [targetId, input.operating_company_id]
+    const targetRes = await client.query<{ id: string; status?: string; trip_closed_at?: string | null; tour_id?: string | null }>(
+      `SELECT id, status, trip_closed_at::text, tour_id::text FROM driver_finance.driver_settlements
+       WHERE id = $1::uuid AND operating_company_id = $2::uuid
+         AND driver_id = $3::uuid AND ($6::boolean OR tour_id IS NOT DISTINCT FROM $4::uuid)
+         AND voided_at IS NULL AND status IN ('open', 'closed', 'locked', 'approved', 'paid', 'final')
+         AND ($5::uuid IS NULL OR EXISTS (SELECT 1 FROM mdata.loads l
+           WHERE l.operating_company_id = driver_settlements.operating_company_id
+             AND l.tour_id = driver_settlements.tour_id AND l.assigned_unit_id = $5::uuid
+             AND (l.presettlement_link_id = driver_settlements.id OR l.id = driver_settlements.first_load_id)
+             AND l.soft_deleted_at IS NULL AND l.status::text <> 'cancelled')) FOR UPDATE`,
+      [targetId, input.operating_company_id, suggestion.driver_id, suggestion.tour_id, suggestion.unit_id ?? null, Boolean(input.override_settlement_id)]
     );
     if (!targetRes.rows[0]) {
       throw new PresettlementLinkError("target_settlement_not_open", "The target pre-settlement is not open (already closed, voided, or does not exist).");
     }
     settlementId = targetId;
+    const target = targetRes.rows[0];
+    if (input.override_settlement_id && target.tour_id !== undefined) {
+      await client.query(`UPDATE mdata.loads SET tour_id = $1::uuid, updated_at = now()
+        WHERE id = $2::uuid AND operating_company_id = $3::uuid`, [target.tour_id, suggestion.load_id, input.operating_company_id]);
+      await client.query(`UPDATE driver_finance.presettlement_link_suggestions SET tour_id = $1::uuid, updated_at = now()
+        WHERE id = $2::uuid AND operating_company_id = $3::uuid`, [target.tour_id, input.suggestion_id, input.operating_company_id]);
+    }
+    if (target.trip_closed_at || (target.status && target.status !== "open")) {
+      await reopenSettlementForContinuationInClientTx(client, {
+        operatingCompanyId: input.operating_company_id, settlementId,
+        loadId: suggestion.load_id, actorUserId: input.actor_user_id,
+      });
+      // The target may have closed between suggest and confirm. Persist the classification in
+      // the existing relation, so every read model recognizes continuation after status reopens.
+      await client.query(`UPDATE driver_finance.presettlement_link_suggestions
+        SET suggested_reason = $1, updated_at = now()
+        WHERE id = $2::uuid AND operating_company_id = $3::uuid`, [
+        "REG-040 resettlement continuation: same settlement after audited reversal", input.suggestion_id, input.operating_company_id,
+      ]);
+    }
     await client.query(
       `UPDATE driver_finance.driver_settlements SET last_load_id = $1::uuid, updated_at = now() WHERE id = $2::uuid`,
       [suggestion.load_id, settlementId]
@@ -483,13 +520,39 @@ export async function linkLoadToPresettlementAfterAssignmentInClientTx(
     return null;
   }
 
+  let tourId = input.tour_id ?? null;
+  if (input.unit_id && (input.trip_type === "NB" || !tourId)) {
+    const existingTour = tourId ? await client.query<{ id: string }>(`
+      SELECT id FROM driver_finance.driver_settlements
+      WHERE operating_company_id = $1::uuid AND driver_id = $2::uuid
+        AND tour_id = $3::uuid AND voided_at IS NULL
+        AND status IN ('open', 'closed', 'locked', 'approved', 'paid', 'final')
+        AND EXISTS (SELECT 1 FROM mdata.loads l
+          WHERE l.operating_company_id = driver_settlements.operating_company_id
+            AND l.tour_id = driver_settlements.tour_id AND l.assigned_unit_id = $4::uuid
+            AND (l.presettlement_link_id = driver_settlements.id OR l.id = driver_settlements.first_load_id)
+            AND l.soft_deleted_at IS NULL AND l.status::text <> 'cancelled') LIMIT 1
+    `, [input.operating_company_id, input.driver_id, tourId, input.unit_id]) : { rows: [] };
+    if (!existingTour.rows.length) {
+      const inheritedTour = await findOpenPresettlementTourForUnit(client, {
+        operating_company_id: input.operating_company_id, driver_id: input.driver_id, unit_id: input.unit_id,
+      });
+      if (inheritedTour) {
+        tourId = inheritedTour;
+        await client.query(`UPDATE mdata.loads SET tour_id = $1::uuid, updated_at = now()
+          WHERE id = $2::uuid AND operating_company_id = $3::uuid AND presettlement_link_id IS NULL`,
+        [tourId, input.load_id, input.operating_company_id]);
+      }
+    }
+  }
+
   return linkLoadToPresettlementAtBookingInClientTx(client, {
     operating_company_id: input.operating_company_id,
     load_id: input.load_id,
     driver_id: input.driver_id,
     unit_id: input.unit_id ?? null,
     trip_type: input.trip_type,
-    tour_id: input.tour_id ?? null,
+    tour_id: tourId,
     actor_user_id: input.actor_user_id,
   });
 }

@@ -101,8 +101,8 @@ export async function closeCompanySettlementAlongsideDriverSettlement(
   }
 
   const beforeRes = await client.query<{ status: string; voided_at: string | null }>(
-    `SELECT status, voided_at::text FROM accounting.company_settlements WHERE id = $1::uuid`,
-    [companySettlementId]
+    `SELECT status, voided_at::text FROM accounting.company_settlements WHERE id = $1::uuid AND operating_company_id = $2::uuid FOR UPDATE`,
+    [companySettlementId, input.operatingCompanyId]
   );
   if (beforeRes.rows[0]?.voided_at) {
     // void-not-delete: never silently resurrect a voided company settlement back to closed.
@@ -112,15 +112,26 @@ export async function closeCompanySettlementAlongsideDriverSettlement(
 
   const closeRes = await client.query<{ id: string; display_id: string; status: string }>(
     `
+      WITH linked_period AS (
+        SELECT MIN(ds.period_start) AS period_start, MAX(ds.period_end) AS period_end,
+          BOOL_AND(ds.status IN ('closed', 'locked', 'final', 'paid', 'approved', 'ready')
+            AND (ds.settlement_model IS DISTINCT FROM 'load_bookended' OR ds.trip_closed_at IS NOT NULL)) AS all_closed
+        FROM accounting.company_settlement_driver_settlements link
+        JOIN driver_finance.driver_settlements ds ON ds.id = link.driver_settlement_id
+        WHERE link.company_settlement_id = $1::uuid AND ds.operating_company_id = $3::uuid
+          AND ds.voided_at IS NULL
+      )
       UPDATE accounting.company_settlements
-      SET status = 'closed',
-          closed_at = COALESCE(closed_at, now()),
-          closed_by_user_id = COALESCE(closed_by_user_id, $2::uuid),
+      SET status = CASE WHEN (SELECT all_closed FROM linked_period) THEN 'closed' ELSE 'open' END,
+          period_start = COALESCE((SELECT period_start FROM linked_period), period_start),
+          period_end = COALESCE((SELECT period_end FROM linked_period), period_end),
+          closed_at = CASE WHEN (SELECT all_closed FROM linked_period) THEN COALESCE(closed_at, now()) ELSE NULL END,
+          closed_by_user_id = CASE WHEN (SELECT all_closed FROM linked_period) THEN COALESCE(closed_by_user_id, $2::uuid) ELSE NULL END,
           updated_at = now()
-      WHERE id = $1::uuid AND voided_at IS NULL
+      WHERE id = $1::uuid AND operating_company_id = $3::uuid AND voided_at IS NULL
       RETURNING id::text, display_id, status
     `,
-    [companySettlementId, input.actorUserId]
+    [companySettlementId, input.actorUserId, input.operatingCompanyId]
   );
   const closed = closeRes.rows[0];
   return {

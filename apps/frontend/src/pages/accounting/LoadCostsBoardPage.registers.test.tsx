@@ -246,6 +246,29 @@ describe("LoadCostsBoardPage — registers (LCB-REG)", () => {
     expect(screen.getByTestId("load-costs-tab-resettlement")).toHaveTextContent("2");
   });
 
+  it("REG-040 keeps a closed-tour continuation off every active filter with the SAME settlement link", async () => {
+    apiRequestMock.mockImplementation(async () => ({ rows: [
+      { ...BOARD_ROW, load_id: "original", load_number: "13569", status: "closed", is_invoiced: true, is_resettlement: true },
+      { ...BOARD_ROW, load_id: "continuation", load_number: "13577", status: "dispatched", is_invoiced: false, is_resettlement: true },
+      { ...BOARD_ROW, load_id: "unrelated", load_number: "13999", status: "dispatched", is_invoiced: false, is_resettlement: false },
+    ], unmatched_bank_count: 0 }));
+    renderPage();
+    await screen.findByRole("link", { name: "13999" });
+    for (const filter of ["in_motion", "delivered_open", "all_open", "this_week"]) {
+      fireEvent.click(screen.getByTestId(`load-costs-pill-${filter}`));
+      expect(screen.queryByRole("link", { name: "13577" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: "13569" })).not.toBeInTheDocument();
+    }
+    fireEvent.click(screen.getByTestId("load-costs-tab-resettlement"));
+    for (const number of ["13569", "13577"]) {
+      const load = await screen.findByRole("link", { name: number });
+      expect(within(load.closest("tr")!).getByRole("link", { name: "S-2026-0042" }))
+        .toHaveAttribute("href", "/driver-finance/settlements?settlement_id=settlement-42");
+    }
+    expect(screen.queryByRole("link", { name: "13999" })).not.toBeInTheDocument();
+    expect(screen.getByTestId("load-costs-tab-resettlement")).toHaveTextContent("2");
+  });
+
   it("REG-041 shows the original load start and delivery dates, not creation or tour dates", async () => {
     apiRequestMock.mockImplementation(async () => ({ rows: [{ ...BOARD_ROW,
       status: "invoiced", is_invoiced: true, pickup_date: "2026-08-21T12:00:00Z",

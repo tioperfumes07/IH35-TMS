@@ -56,6 +56,7 @@ type BoardRow = {
    * open items." mdata.loads.status never actually reaches 'invoiced' (0 rows system-wide), so
    * that literal string in CLOSED below never matched anything -- this is the real signal. */
   is_invoiced: boolean;
+  is_resettlement?: boolean;
 };
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const fmt = (c: number) => money.format(c / 100);
@@ -98,9 +99,9 @@ const NUM = "text-center whitespace-nowrap [font-variant-numeric:tabular-nums]";
 const CLOSED = ["cancelled", "abandoned", "closed", "paid", "invoiced", "driver_walkoff", "driver_no_show"];
 const MOTION = ["draft", "booked", "planned", "unassigned", "assigned", "assigned_not_dispatched", "dispatched", "at_pickup", "in_transit", "at_delivery"];
 const DELIVERED = ["delivered", "delivered_pending_docs", "completed_docs_received"];
-const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || r.is_invoiced;
+const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || r.is_invoiced || r.is_resettlement === true;
 // An issued invoice moves the original load out of every active bucket, independent of tour close.
-const isResettlement = (r: BoardRow) => r.status === "invoiced" || (r.is_invoiced && !CLOSED.includes(r.status));
+const isResettlement = (r: BoardRow) => r.is_resettlement === true || r.status === "invoiced" || (r.is_invoiced && !CLOSED.includes(r.status));
 export const LOAD_COSTS_ELEMENT_MANIFEST = [
   "load-costs-shell", "load-costs-back", "load-costs-title", "load-costs-topbar",
   "load-costs-pill-in_motion", "load-costs-pill-delivered_open", "load-costs-pill-all_open", "load-costs-pill-this_week",

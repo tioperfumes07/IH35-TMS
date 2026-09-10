@@ -1,3 +1,4 @@
+import { claimSettlementPayRunInClientTx } from "./settlement-payrun-claim.service.js";
 // SETTLEMENT PAY-RUN CLOSE — net + escrow-cap + advance-recovery + records-only disbursement (Phase 2b).
 // TIER-1 FINANCIAL, BUILD-AND-HOLD. Flag SETTLEMENT_GL_POSTING_ENABLED (default OFF) => PREVIEW ONLY,
 // post NOTHING (compute + return the balanced JE preview; zero journal entries / financial rows written).
@@ -449,7 +450,9 @@ export async function closeSettlementPayRun(
       reason?: string | null;
     } | null;
   },
-  actor: Actor
+  actor: Actor,
+  /** Internal orchestration/proof only: caller owns commit and after-commit side effects. */
+  transaction?: { client: DbClient }
 ): Promise<SettlementPayRunResult> {
   const opco = input.operatingCompanyId;
   const settlementId = input.settlementId;
@@ -457,9 +460,9 @@ export async function closeSettlementPayRun(
   const flagOn =
     input.previewOnly === true
       ? false
-      : await scoped(actor, opco, (client) =>
+      : await (transaction ? isEnabled(transaction.client as never, SETTLEMENT_GL_POSTING_FLAG_KEY, { operating_company_id: opco, user_uuid: actor.userId }) : scoped(actor, opco, (client) =>
           isEnabled(client as never, SETTLEMENT_GL_POSTING_FLAG_KEY, { operating_company_id: opco, user_uuid: actor.userId })
-        );
+        ));
 
   // ACCT-F5652 — deferred JE side-effects (QBO sync-job enqueue + immediate best-effort push) travel
   // out via an extra field on the scoped callback's own return value (stripped before the public
@@ -467,7 +470,7 @@ export async function closeSettlementPayRun(
   // reliably widen a `let` back to its declared union type across an intervening callback boundary, so
   // routing it through the return value avoids that pitfall entirely. See the createJournalEntry call
   // further down for why the side effects must be deferred at all.
-  const scopedResult = await scoped(actor, opco, async (client) => {
+  const execute = async (client: DbClient) => {
     const settlement = await loadSettlement(client, opco, settlementId);
     if (settlement.locked_at == null && !POSTABLE_STATUSES.has(settlement.status)) {
       throw new SettlementPayRunError(
@@ -828,23 +831,12 @@ export async function closeSettlementPayRun(
     //   FIRST (UNIQUE (operating_company_id, settlement_id), ON CONFLICT DO NOTHING). If the row already
     //   exists (rowCount 0), a prior pay-run close already posted the balanced JE for this settlement — SKIP
     //   posting entirely and return the already-posted run (never double-post, never double-recover). ──────
-    const claim = await client.query<{ id: string; journal_entry_id: string | null }>(
-      `
-        INSERT INTO driver_finance.payrun_gl_runs
-          (operating_company_id, settlement_id, status, created_by_user_id)
-        VALUES ($1::uuid, $2::uuid, 'posted', $3::uuid)
-        ON CONFLICT (operating_company_id, settlement_id) DO NOTHING
-        RETURNING id::text, journal_entry_id::text
-      `,
-      [opco, settlementId, actor.userId]
-    );
-    if ((claim.rowCount ?? 0) === 0) {
+    const claim = await claimSettlementPayRunInClientTx(client, {
+      operatingCompanyId: opco, settlementId, actorUserId: actor.userId,
+    });
+    if (!claim.claimed) {
       // Already posted by an earlier close — read back the existing run's JE and return it unchanged.
-      const existing = await client.query<{ id: string; journal_entry_id: string | null }>(
-        `SELECT id::text, journal_entry_id::text FROM driver_finance.payrun_gl_runs
-          WHERE operating_company_id = $1::uuid AND settlement_id = $2::uuid LIMIT 1`,
-        [opco, settlementId]
-      );
+      const existing = { rows: [claim.run] };
       let trip_close_stamp: Awaited<ReturnType<typeof stampTripClosedForBookendedSettlement>> | null = null;
       if (settlement.settlement_model === "load_bookended" && !settlement.trip_closed_at) {
         trip_close_stamp = await stampTripClosedForBookendedSettlement(client, {
@@ -880,7 +872,7 @@ export async function closeSettlementPayRun(
         trip_close_stamp,
       };
     }
-    const payrunRunId = claim.rows[0]!.id;
+    const payrunRunId = claim.run.id;
 
     // GO-22 B7 — recover oldest-first, capped at appliedAdvanceRecoveryCents (the loan decision's
     // choice, or the full total by default). A row fully covered by the remaining cap is closed
@@ -892,6 +884,7 @@ export async function closeSettlementPayRun(
     // loop's behavior for that path is byte-identical to before this change.
     const recoveredIds: string[] = [];
     let remainingRecoveryCapCents = appliedAdvanceRecoveryCents;
+    const recoverySnapshots: Array<{ id: string; liability_id: string | null; recovered_cents: number }> = [];
     for (const adv of recoverable) {
       if (remainingRecoveryCapCents <= 0) break;
       const takeCents = Math.min(remainingRecoveryCapCents, adv.amount_cents);
@@ -905,7 +898,10 @@ export async function closeSettlementPayRun(
           `,
           [adv.id, settlementId, opco]
         );
-        if ((upd.rowCount ?? 0) > 0) recoveredIds.push(adv.id);
+        if ((upd.rowCount ?? 0) > 0) {
+          recoveredIds.push(adv.id);
+          recoverySnapshots.push({ id: adv.id, liability_id: adv.liability_id, recovered_cents: takeCents });
+        }
         // LIABILITY-BALANCE-SYNC-AT-CLOSE (item 6, this pass): driver_finance.driver_liabilities is
         // the GL-facing liability record created alongside this advance at disbursement
         // (cash-advance-create.ts createDriverCashAdvanceCore), but until now nothing here ever
@@ -936,7 +932,10 @@ export async function closeSettlementPayRun(
           `,
           [adv.id, (remainingBalanceCents / 100).toFixed(2), opco]
         );
-        if ((upd.rowCount ?? 0) > 0) recoveredIds.push(adv.id);
+        if ((upd.rowCount ?? 0) > 0) {
+          recoveredIds.push(adv.id);
+          recoverySnapshots.push({ id: adv.id, liability_id: adv.liability_id, recovered_cents: takeCents });
+        }
         // LIABILITY-BALANCE-SYNC-AT-CLOSE — partial recovery: current_balance mirrors the advance's
         // remaining outstanding_balance; paid_to_date is derived from original_amount so it always
         // reflects the true cumulative recovery across every close that has touched this liability,
@@ -1081,6 +1080,7 @@ export async function closeSettlementPayRun(
         journal_entry_id: je.id,
         ...breakdown,
         recovered_advance_ids: recoveredIds,
+        recovery_snapshots: recoverySnapshots,
         payment_method_id: paymentMethod?.id ?? null,
       },
       "info",
@@ -1120,7 +1120,8 @@ export async function closeSettlementPayRun(
       __freshJeInput: jeInput,
       __freshJeId: je.id,
     };
-  });
+  };
+  const scopedResult = transaction ? await execute(transaction.client) : await scoped(actor, opco, execute);
 
   // ACCT-F5652 — run the freshly-posted JE's QBO sync-job/push side effects only now, AFTER the
   // transaction above has committed, so a rolled-back JE (this branch never ran) never leaves a sync
@@ -1132,7 +1133,7 @@ export async function closeSettlementPayRun(
     __freshJeInput?: CreateJournalEntryInput;
     __freshJeId?: string;
   };
-  if (__freshJeInput && __freshJeId) {
+  if (__freshJeInput && __freshJeId && !transaction) {
     await enqueueJournalEntrySideEffects(__freshJeInput, __freshJeId, actor.userId);
   }
 
