@@ -74,7 +74,7 @@ CC-1: please confirm or adjust the proposed default_expense_account_id mappings 
 
 ---
 
-DEVIN-B | B-2 Lists/Reports standing sweep — first pass | 4 dead controls fixed in Reports | PR #21685 | sha 9a16035859
+DEVIN-B | B-2 Lists/Reports standing sweep — first pass | 4 dead controls fixed in Reports | PR #21685 MERGED | sha 706a5c74cc | live sha d3427cd54a
 
 ## Sweep summary
 
@@ -117,4 +117,41 @@ None found in this pass.
 - `npm run typecheck` (apps/frontend): exit 0
 - `node scripts/verify-reports-lists-no-dead-buttons.mjs`: OK (exit 0)
 - `node scripts/verify-no-prod-stubs.mjs`: ok (exit 0)
+
+---
+
+DEVIN-B | B-2 Lists/Reports standing sweep — pass 2 | no new defects | sweep clean
+
+## Pass 2 sweep summary
+
+Deep-checked all remaining surfaces not fully inspected in pass 1.
+
+### Filter bar control counts (≥5 wired controls standard)
+- All report pages using `ReportFilterBar` meet the standard: From + To + 4 presets (This week/This month/Last month/YTD) + Search + Apply + Cancel + Reset = 9+ controls, plus any children (Unit, Driver, Status).
+- `FuelReconciliationPage`: 10 controls (9 + Unit filter child).
+- `SettlementSummaryPage`: 10 controls (9 + Driver filter child).
+- `APAgingPage`: 10+ controls (9 + vendor selector + status).
+- `InvoiceSearchReportPage`: 10+ controls (9 + status + dateRange).
+- `CatalogTable` (Lists): 5+ controls (status filter, show-inactive checkbox, free-text search, sort, page-size, export).
+
+### Remaining dead controls
+- None found. All `<Button>` elements without onClick on the same line are multi-line JSX with onClick on the next line (false positives from line-based grep).
+- All `disabled` attributes in Lists/Reports are conditional (`disabled={expr}`), not permanently disabled.
+- `RunnerFilters.tsx`: `disabled={isRunning}` and `disabled={requiredMissing || isRunning}` — legitimate conditional disables.
+
+### Toast-only onClick handlers
+- `ReportsHome.tsx:138` — detention-claims stub report shows "Detention billing report ships in Phase 4." toast. This is an honest stub: the report row is visually marked with a "P4" badge in `FrequentlyRunTable`. Not a dead control.
+
+### TODO wire comments
+- Lists: 0 found.
+- Reports: 0 remaining (all 3 fixed in pass 1).
+
+### KPI placeholders
+- None found. `ReportsHome` shows "—" while loading (not fake zeros). No hardcoded zero KPIs in any report page.
+
+### One-datum columns
+- All report tables use `ParityTable` which renders "—" for null/empty cells. Columns are data-backed (one datum per column).
+
+### Conclusion
+Pass 2 sweep is clean. No new in-lane defects found. No cross-lane defects found. B-2 sweep continues — next pass will focus on any newly added surfaces or regressions.
 
