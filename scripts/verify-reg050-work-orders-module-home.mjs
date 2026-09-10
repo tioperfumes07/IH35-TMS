@@ -28,6 +28,9 @@ function audit(parts) {
   if (!/if \(q\.unit_id\)[\s\S]*w\.unit_id = \$\$\{values\.length\}/.test(parts.route)) failures.push("route must scope unit_id");
   if (!/if \(q\.driver_id\)[\s\S]*w\.driver_id = \$\$\{values\.length\}/.test(parts.route)) failures.push("route must scope driver_id");
   if (!/operatorWorkOrderListSql\("w"\)/.test(parts.route)) failures.push("operator list visibility predicate must remain wired");
+  if (!/where\.push\("w\.voided_at IS NULL"\)/.test(parts.route)) {
+    failures.push("operator list rows and tab counts must exclude voided work orders");
+  }
   return failures;
 }
 
@@ -38,6 +41,7 @@ if (process.argv.includes("--selftest")) {
     ["page", "unit_id: unitId", "unit_id: undefined"],
     ["page", "driver_id: driverId", "driver_id: undefined"],
     ["route", "operatorWorkOrderListSql(\"w\")", "\"TRUE\""],
+    ["route", "where.push(\"w.voided_at IS NULL\")", "where.push(\"TRUE\")"],
   ];
   for (const [key, from, to] of mutations) {
     const changed = { ...sources, [key]: sources[key].replace(from, to) };

@@ -461,6 +461,9 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       const where: string[] = ["w.operating_company_id = $1::uuid"];
       // MAINT-1: hide DEMO-/TEST- seed work orders from operator lists (shared work-order-visibility.ts).
       where.push(operatorWorkOrderListSql("w"));
+      // REG-050 module-home honesty: voided work orders remain in the WORM ledger but are not
+      // operator-visible. Keep this in the shared WHERE so rows and every tab count agree.
+      where.push("w.voided_at IS NULL");
 
       if (q.wo_billing_type) {
         values.push(q.wo_billing_type);
