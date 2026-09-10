@@ -268,6 +268,14 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   // FAC-09a Fees Paid — "View Closed Invoices" (open-invoices, per the doc's own confusing real
   // button label) / "View All Fees" toggle, per the real portal's screenshot.
   const [feesPaidView, setFeesPaidView] = useState<"open_invoices" | "all_fees">("all_fees");
+  // REG-044: Summary/Detail toggle for all factoring tabs (Account Summary, Aging,
+  // Chargebacks/Overpayments, Payment-To-You, Purchase Report, Faro Import).
+  const [accountSummaryView, setAccountSummaryView] = useState<"summary" | "detail">("summary");
+  const [agingView, setAgingView] = useState<"summary" | "detail">("detail");
+  const [chargebacksOverpaymentsView, setChargebacksOverpaymentsView] = useState<"summary" | "detail">("detail");
+  const [paymentsToYouView, setPaymentsToYouView] = useState<"summary" | "detail">("detail");
+  const [purchaseReportView, setPurchaseReportView] = useState<"summary" | "detail">("detail");
+  const [faroImportView, setFaroImportView] = useState<"summary" | "detail">("detail");
   const [faroCsvText, setFaroCsvText] = useState("");
   const [faroFileName, setFaroFileName] = useState("");
   const [showFaroJsonFallback, setShowFaroJsonFallback] = useState(false);
@@ -505,6 +513,36 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
           </label>
         </div>
       </CollapsedListFilters>
+    );
+  }
+
+  // REG-044: Shared Summary/Detail toggle for all factoring tabs.
+  function summaryDetailToggle(
+    view: "summary" | "detail",
+    setView: (v: "summary" | "detail") => void,
+    testIdPrefix: string,
+  ) {
+    return (
+      <div className="inline-flex" data-testid={`${testIdPrefix}-view-toggle`}>
+        <button
+          type="button"
+          data-testid={`${testIdPrefix}-view-summary`}
+          className={`px-2.5 py-1 text-xs font-semibold ${view === "summary" ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
+          aria-pressed={view === "summary"}
+          onClick={() => setView("summary")}
+        >
+          Summary
+        </button>
+        <button
+          type="button"
+          data-testid={`${testIdPrefix}-view-detail`}
+          className={`border-l border-gray-300 px-2.5 py-1 text-xs font-semibold ${view === "detail" ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
+          aria-pressed={view === "detail"}
+          onClick={() => setView("detail")}
+        >
+          Detail
+        </button>
+      </div>
     );
   }
 
@@ -1585,7 +1623,10 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             </div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-payments-to-you")}</div>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              {dateRangeOnlyFilterBar("factoring-home-payments-to-you")}
+              {summaryDetailToggle(paymentsToYouView, setPaymentsToYouView, "factoring-payments-to-you")}
+            </div>
             {recourseQuery.isError ? (
               <ListErrorState
                 title="Couldn't load payments"
@@ -1639,7 +1680,10 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       {tab === "chargebacks_overpayments" ? (
         <div className="space-y-3">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-xs font-medium text-gray-900">Chargebacks &amp; Overpayments</div>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="text-xs font-medium text-gray-900">Chargebacks &amp; Overpayments</div>
+              {summaryDetailToggle(chargebacksOverpaymentsView, setChargebacksOverpaymentsView, "factoring-chargebacks-overpayments")}
+            </div>
             {/* UI-01 (flat containers, no box-in-box): unlike the Aging tab's summary strip
                 (individually-bordered tiles, already the file's one grandfathered instance of
                 this shape), this strip's tiles stay borderless -- divided by a thin border
@@ -1699,10 +1743,13 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-account-summary">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <div className="text-xs font-medium text-gray-900">Account Summary</div>
-                    <div className="text-xs text-gray-500">
+                    <div className="flex items-center gap-2">
+                      {summaryDetailToggle(accountSummaryView, setAccountSummaryView, "factoring-account-summary")}
+                      <div className="text-xs text-gray-500">
                       No date-range picker this pass — this schema has no historical period-close
                       snapshot for factoring balances, so a date range could not change any of the
                       point-in-time figures below without fabricating history.
+                    </div>
                     </div>
                   </div>
 
@@ -1851,7 +1898,10 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
               too, since both share the same underlying query.)
             </div>
           </div>
-          <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-purchase-report")}</div>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            {dateRangeOnlyFilterBar("factoring-home-purchase-report")}
+            {summaryDetailToggle(purchaseReportView, setPurchaseReportView, "factoring-purchase-report")}
+          </div>
           {recourseQuery.isError ? (
             <ListErrorState
               title="Couldn't load purchase report"
@@ -2090,10 +2140,13 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <div className="text-xs font-medium text-gray-900">Aging Report — as of {fmtDate(new Date().toISOString())}</div>
-              <div className="text-xs text-gray-500" data-testid="factoring-aging-date-basis-note">
+              <div className="flex items-center gap-2">
+                {summaryDetailToggle(agingView, setAgingView, "factoring-aging")}
+                <div className="text-xs text-gray-500" data-testid="factoring-aging-date-basis-note">
                 Aged by factored date (the date each invoice entered the factoring register) —
                 the real portal's "View by Invoice Date / Purchase Date / Fund Date" toggle is not
                 wired this pass; this data model has one real date field to age against.
+                </div>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6" data-testid="factoring-aging-summary-strip">
@@ -2518,7 +2571,10 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       {tab === "faro_imports" ? (
         <div className="space-y-3">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-xs font-medium text-gray-900">Upsert Faro daily import batch</div>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="text-xs font-medium text-gray-900">Upsert Faro daily import batch</div>
+              {summaryDetailToggle(faroImportView, setFaroImportView, "factoring-faro-import")}
+            </div>
             <div className="grid gap-2 md:grid-cols-3 mb-3">
               <DatePicker
                 className=""
