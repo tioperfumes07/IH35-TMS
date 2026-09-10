@@ -24,3 +24,7 @@ DEVIN-A is retired. Stop. No Book Load. No OUTBOX.
 - Added shared summaryDetailToggle helper + 6 new state variables
 - Wired toggle to Account Summary, Aging, Chargebacks/Overpayments, Payment-To-You, Purchase Report, Faro Import
 - PR #21683 merged --admin --squash
+
+## DEVIN-A | REG-045 DONE | 2dfdfdd284 | 2dfdfdd284 | Monthly Fee Summaries stacked above Chargebacks detail, no side-by-side grid, guard 11202 PASS | NEXT REG-042
+- Layout already fixed by NEW-24, added regression guard
+- PR #21684 merged --admin --squash
