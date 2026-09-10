@@ -17,6 +17,7 @@ import { EntityLink, resolveEntityRoute } from "../../../components/shared/Entit
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { Combobox } from "../../../components/Combobox";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { CashFlowKpiStrip } from "./CashFlowKpiStrip";
 
 // CASH-FLOW-02 (owner order 2026-09-06 20:1x/20:2x/20:5xZ). A daily snapshot with roll-over:
 // every expected dollar carries its own due date and stays until paid/matched.
@@ -929,71 +930,10 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
 
       {data && kpis && (
         <>
-          {/* KPI strip — ONE row, 8 tiles at the exact Load-Costs reference spec (owner:
-          "I WANT THE DESIGN AS YOU DESIGN THE LOAD COSTS" / STATE-AFTER-#21082 correction: 60px
-          tall, bg #F4F7FA, 1px #C7D2DC border, radius 2px, padding 4px 8px, label 11px uppercase
-          letter-spacing .275px muted, value 11px/600 ink). Inline-styled like
-          SettlementKpiGrid.tsx's own Tile — deliberately NOT Tailwind bracket-notation, so the
-          exact pixel spec never trips verify-ui-design-system-ratchet's raw-size count. */}
-          <div
-            className="grid grid-cols-4 sm:grid-cols-8"
-            style={{ gap: 6 }}
-            data-testid="rolling-ledger-kpi-strip"
-          >
-            {[
-              { label: "Opening cash", value: kpis.opening },
-              { label: "Income due today", value: kpis.incomeToday, zero: kpis.incomeToday === 0 },
-              { label: "Expenses due today", value: kpis.expensesToday, bad: kpis.expensesToday > 0 },
-              { label: "Carried over", value: kpis.carriedOver, zero: kpis.carriedOver === 0 },
-              { label: "Net today", value: kpis.netToday, sign: true, bad: kpis.netToday < 0 },
-              { label: "Projected closing", value: kpis.projectedClosing, sign: true, bad: (kpis.projectedClosing ?? 0) < 0 },
-              { label: "Open invoices (not factored)", value: kpis.incomeNotFactored, ok: true },
-              { label: "Due next 10 days", value: kpis.dueNext10, ok: true },
-            ].map((tile) => (
-              <div
-                key={tile.label}
-                title={tile.label}
-                style={{
-                  height: 60,
-                  boxSizing: "border-box",
-                  background: "#F4F7FA",
-                  border: "1px solid #C7D2DC",
-                  borderRadius: 2,
-                  padding: "4px 8px",
-                  overflow: "hidden",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: ".275px",
-                    color: "#4B5563",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {tile.label}
-                </div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    fontVariantNumeric: "tabular-nums",
-                    whiteSpace: "nowrap",
-                    color: tile.bad ? "#111827" : tile.ok ? "#4B5563" : tile.zero ? "#9CA3AF" : "#111827",
-                  }}
-                >
-                  {tile.value === null ? "—" : formatCents(tile.value, { sign: tile.sign })}
-                </div>
-              </div>
-            ))}
-          </div>
+          {/* KPI strip — extracted to CashFlowKpiStrip.tsx (REG-031) so the new Cash Flow Home
+          tab can show the SAME real KPI tiles without duplicating the markup. Output is
+          byte-identical to the previous inline block; only the JSX source moved. */}
+          <CashFlowKpiStrip kpis={kpis} testId="rolling-ledger-kpi-strip" />
 
           {/* Split layout: LEFT Expected Income 38% / RIGHT Expected Expenses 62% (owner
           correction) — the segmented All/Income/Expenses filter widens one side to full width
