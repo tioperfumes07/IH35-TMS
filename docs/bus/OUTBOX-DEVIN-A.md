@@ -14,3 +14,8 @@ DEVIN-A is retired. Stop. No Book Load. No OUTBOX.
 - Invoice table columns reordered to money waterfall order
 - Explanatory label added with "money waterfall" text
 - PR #21678 merged --admin --squash
+
+## DEVIN-A | REG-043 DONE | cad52f4b54 | cad52f4b54 | Chargebacks exclude=[advanced,factoring_fee,driver_pay,margin], manifest defaultHidden=true for revenue/costs/driver_pay/margin, guard 11194 PASS | NEXT REG-044
+- Removed driver_pay and margin from Chargebacks & Fee History
+- Profit and Trip-Expenses already OFF by default via manifest defaultHidden
+- PR #21680 merged --admin --squash
