@@ -1176,3 +1176,9 @@ matching the 51-invoice/$151,740/$147,187.78/$2,276.11 register exactly; isLoadi
 Stub tabs (Submit Invoice, Request Debtor/Credit Check, Funds Due, Debtor Receipts, Loan/Save,
 Unapplied Cash, Invoice Status Report) stay honestly stub, named/clickable, never claimed real.
 CC-3 | FAST-MERGE | FUNDS-DUE-01 (REG-014) merged #21613 @ 172cd38c | gate=exit0 | push=no-verify-static-ENV-OK (2 pre-existing unrelated reds: requireAuth/telematics, required-surface/EditSettlementDeductionDrawer -- files not in this diff) | neon=confirmed live (factoring_advances 51 advanced/0 submitted-not-advanced) | incident: accidental git-stash-pop mid-session pulled in an unrelated orphan duplicate of this same tab from an unknown prior session's parked stash -- removed, not shipped, disclosed in commit body, copy kept at session scratchpad | NEXT=REG-009 Load Costs Settlement/Tour column (check gear/column picker first per Lead's re-scope note)
+CC-3 | FAST-MERGE | ACCT-F6350 (REG-010/011) merged #21627 @ 958e00dd -- settlement numbers now
+S-YYYY-NNNN going forward, 27 pre-existing wrong-scheme rows left as open owner question | LST-F26100
+(REG-017) merged #21624 @ 3673f684 -- Bills Settlement/Tour column added, honest empty until
+bill_lines.load_id write-side gap addressed (filed) | REG-009 confirmed already-exists (no build) |
+REG-013 root-caused by Lead, not re-investigated per instruction | NEXT=REG-012 quick-verify then
+REG-015/016
