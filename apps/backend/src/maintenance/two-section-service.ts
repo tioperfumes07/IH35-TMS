@@ -258,7 +258,18 @@ export async function createWorkOrderWithLines(
       header.vendor_qbo_id ?? null,
     ]
   );
-  const wo = woRes.rows[0];
+  let wo = woRes.rows[0];
+
+  // REG-048: this shared creator is used by the two-section UI, roadside service, and safety
+  // integrations. Finalize V5 here as well as in the legacy route so a vendor invoice supplied at
+  // creation cannot remain PEND0. The database function preserves the first non-PEND0 identity.
+  const refreshedDisplay = await client.query<{ display_id: string }>(
+    `SELECT maintenance.refresh_wo_display_id($1) AS display_id`,
+    [wo.id]
+  );
+  if (refreshedDisplay.rows[0]?.display_id) {
+    wo = { ...wo, display_id: refreshedDisplay.rows[0].display_id };
+  }
 
   // Block 8 (migration 202606221100) — persist VMRS repair detail post-insert (same pattern as the dispatch
   // load post-insert updates; keeps the 28-column lockstep INSERT above untouched). Additive, no-op if absent.
