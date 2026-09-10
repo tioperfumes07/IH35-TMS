@@ -31,6 +31,13 @@ function audit(parts) {
   if (!/where\.push\("w\.voided_at IS NULL"\)/.test(parts.route)) {
     failures.push("operator list rows and tab counts must exclude voided work orders");
   }
+  if (!/key:\s*"total_estimated_cost"[\s\S]*label:\s*"Estimated"/.test(parts.page)) {
+    failures.push("estimated cost must have its own column");
+  }
+  if (!/key:\s*"total_actual_cost"[\s\S]*label:\s*"Actual"/.test(parts.page)) {
+    failures.push("actual cost must have its own column");
+  }
+  if (/label:\s*"Est \/ Act"/.test(parts.page)) failures.push("estimated and actual costs may not share one column");
   return failures;
 }
 
@@ -42,6 +49,7 @@ if (process.argv.includes("--selftest")) {
     ["page", "driver_id: driverId", "driver_id: undefined"],
     ["route", "operatorWorkOrderListSql(\"w\")", "\"TRUE\""],
     ["route", "where.push(\"w.voided_at IS NULL\")", "where.push(\"TRUE\")"],
+    ["page", "key: \"total_actual_cost\"", "key: \"total_estimated_cost\""],
   ];
   for (const [key, from, to] of mutations) {
     const changed = { ...sources, [key]: sources[key].replace(from, to) };
