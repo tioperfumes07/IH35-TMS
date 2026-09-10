@@ -1370,8 +1370,9 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       {tab === "invoice_status_report" ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-invoice-status-report">
           <div className="mb-2 text-xs font-medium text-gray-900">Invoice Status Report</div>
-          <div className="mb-1 text-xs text-gray-500">
-            Each row shows: invoiced date, settlement number, delivery date, original invoice amount, advance, reserve, and fees.
+          <div className="mb-2 text-xs text-gray-500" data-testid="factoring-invoice-status-label">
+            Each row shows the money waterfall: invoiced date → settlement # → delivery date → Original Invoice Amount → Advance → Reserve → Fees.
+            Invoice, Customer, and Factoring Status columns follow for reference.
           </div>
           <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-invoice-status")}</div>
           {invoiceStatusQuery.isError ? (
@@ -1394,6 +1395,10 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 { key: "issue_date", label: "Invoiced Date", sortable: true, render: (row) => fmtDate(row.issue_date) },
                 { key: "lc_settlement_number", label: "Settlement #", sortable: true, render: (row) => row.lc_settlement_number || "—" },
                 { key: "delivery_date", label: "Delivery Date", sortable: true, render: (row) => fmtDate(row.delivery_date) },
+                { key: "total_cents", label: "Original Invoice Amount", sortable: true, render: (row) => fmtCurrency(row.total_cents) },
+                { key: "advance_amount_cents", label: "Advance", sortable: true, render: (row) => row.advance_amount_cents != null ? fmtCurrency(row.advance_amount_cents) : "—" },
+                { key: "reserve_amount_cents", label: "Reserve", sortable: true, render: (row) => row.reserve_amount_cents != null ? fmtCurrency(row.reserve_amount_cents) : "—" },
+                { key: "factor_fee_cents", label: "Fees", sortable: true, render: (row) => row.factor_fee_cents != null ? fmtCurrency(row.factor_fee_cents) : "—" },
                 { key: "invoice_display_id", label: "Invoice", render: (row) => (
                   <EntityLink kind="invoice" id={row.invoice_id} label={entityLabel(row.invoice_display_id, row.invoice_id, "Invoice")} />
                 ) },
@@ -1401,10 +1406,6 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
                 ) : "—" },
                 { key: "factoring_status", label: "Factoring Status", sortable: true, render: (row) => row.factoring_status ?? "—" },
-                { key: "total_cents", label: "Original Invoice", sortable: true, render: (row) => fmtCurrency(row.total_cents) },
-                { key: "advance_amount_cents", label: "Advance", sortable: true, render: (row) => row.advance_amount_cents != null ? fmtCurrency(row.advance_amount_cents) : "—" },
-                { key: "reserve_amount_cents", label: "Reserve", sortable: true, render: (row) => row.reserve_amount_cents != null ? fmtCurrency(row.reserve_amount_cents) : "—" },
-                { key: "factor_fee_cents", label: "Fees", sortable: true, render: (row) => row.factor_fee_cents != null ? fmtCurrency(row.factor_fee_cents) : "—" },
               ];
               return (
                 <ParityTable
