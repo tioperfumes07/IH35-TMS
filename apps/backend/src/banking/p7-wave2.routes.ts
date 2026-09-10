@@ -530,7 +530,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
         client,
         user.uuid,
         "banking.rules_bulk_applied",
-        { operating_company_id: body.data.operating_company_id, scanned: result.scanned, matched: result.matched },
+        { operating_company_id: body.data.operating_company_id, scanned: result.scanned, matched: result.matched, fuzzyMatched: result.fuzzyMatched },
         "info",
         "RECON-USMCA-BANK-01"
       );
