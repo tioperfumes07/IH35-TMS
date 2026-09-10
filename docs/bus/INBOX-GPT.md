@@ -13,7 +13,20 @@ Canonical `S-YYYY-NNNN` moved onto the live path; correction `scripts/ops/reg010
 applied. LIVE PROOF (Cursor re-measured Neon USMCA bypass_rls=lucia): **27/27 settlements canonical
 `S-YYYY-NNNN`, 0 load-shaped, 0 null.** Grids split into distinct columns. Keep the guard (verify-step 10891).
 
-## ★ ROW 1 (TOP — owner RE-OPENED 2026-09-10 19:45Z · do BEFORE REG-041/REG-009) — REG-040 CLOSED-SETTLEMENT CONTINUATION (NOT DONE · deadline 2026-09-10 23:30 UTC · surrender CC-1)
+## ✔ DONE — REG-040 CLOSED-SETTLEMENT CONTINUATION (merged #21692 `c03ec09489`, LIVE 2026-09-10 21:05Z)
+Lead re-measured: your REG-040 continuation (`settlement-payrun-recovery.service.ts`, ACCT-F6350) is on
+`origin/main @ 950bf263` and **live** — `GET /api/v1/healthz/shallow` → `git_sha=950bf263`. Audited
+reversal + recompute/repost path landed, closed tours split identity + continued loads handled, 11 tests
+pass, 13569/13577 classify under the same settlement. **You are OFF REG-040.**
+
+## ★ ROW 1 (TOP, LIVE) — REG-009 (deadline 2026-09-10 23:59 UTC · surrender Cursor)
+Load Costs "Settlement #" column exists but is hidden by default → **make it visible by default** (the
+canonical `S-YYYY-NNNN` you fixed in REG-010/011). Small, verifiable, guarded: verify-step asserting the
+Settlement # column renders by default on the Load Costs board and shows the canonical `S-YYYY-NNNN`.
+REG-041 (#21677 `8d8b4beec0`) is ALREADY MERGED — skip it. After REG-009, sweep your settlement-numbering
+lane for any remaining owner item and post DONE.
+
+<details><summary>REG-040 original brief (kept for audit — DONE)</summary>
 **Owner 2026-09-10 (verbatim intent):** the Resettlement display + OPEN-tour inheritance you shipped are
 ACCEPTED — but **REG-040 is NOT done.** The **closed / invoiced-settlement continuation** is unresolved and
 the owner ordered it COMPLETED **before** you touch REG-041 or REG-009. "COMPLETE IT OR HAVE A CODER
@@ -51,9 +64,10 @@ is REG-040 closed-continuation above; REG-009 after.
 
 **DONE LINE:** `GPT | REG-040 DONE | <sha> | <live sha> | closed-tour NB → same S-YYYY-NNNN via audited reversal+recompute, off active board | NEXT REG-009`
 
-## ROW 3 — REG-041
-Resettlement rows show the **Start Date + Delivery Date of the original load** that created the
-resettlement (join the grid to the source load). Guard asserts the two dates render from the source load.
+</details>
+
+## ROW 3 — REG-041 ✔ MERGED (#21677 `8d8b4beec0`) — skip
+Resettlement rows show the Start Date + Delivery Date of the original load — already shipped.
 
 ## ROW 4 — REG-009
 Load Costs "Settlement #" column exists but is hidden by default → make it visible by default. Small,
