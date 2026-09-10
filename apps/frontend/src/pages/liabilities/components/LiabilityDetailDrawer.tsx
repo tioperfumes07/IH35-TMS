@@ -4,6 +4,7 @@ import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
+import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 
 type Props = {
   open: boolean;
@@ -34,14 +35,80 @@ export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onC
   const originId = liability.origin_id ? String(liability.origin_id) : null;
   const originKind = origin ? ORIGIN_TO_ENTITY_KIND[origin] : undefined;
 
+  const footer = (
+    <div className="grid grid-cols-2 gap-2">
+      <Button
+        size="sm"
+        variant="secondary"
+        onClick={() =>
+          void holdLiability(id, operatingCompanyId, "Held from liability detail drawer")
+            .then(() => {
+              pushToast("Liability held", "success");
+              onUpdated();
+            })
+            .catch((error) => pushToast(userFacingApiError(error, "Request failed"), "error"))
+        }
+      >
+        Hold
+      </Button>
+      <Button
+        size="sm"
+        variant="secondary"
+        onClick={() =>
+          void resumeLiability(id, operatingCompanyId)
+            .then(() => {
+              pushToast("Liability resumed", "success");
+              onUpdated();
+            })
+            .catch((error) => pushToast(userFacingApiError(error, "Request failed"), "error"))
+        }
+      >
+        Resume
+      </Button>
+      <Button
+        size="sm"
+        variant="secondary"
+        onClick={() =>
+          void markLiabilityPaidOff(id, operatingCompanyId)
+            .then(() => {
+              pushToast("Liability marked paid off", "success");
+              onUpdated();
+            })
+            .catch((error) => pushToast(userFacingApiError(error, "Request failed"), "error"))
+        }
+      >
+        Mark Paid Off
+      </Button>
+      {
+        // ACCT-SETL-LIAB-VOID-GAP — reason prompt required, always, matching this app's existing
+        // reversal-reason-capture precedent (SettlementDetailPage.tsx's handleReverseSettlement).
+      }
+      <Button
+        size="sm"
+        variant="danger"
+        onClick={() => {
+          const reason = window.prompt("Reason for voiding this liability (required):", "");
+          if (reason == null) return;
+          const trimmed = reason.trim();
+          if (!trimmed) {
+            pushToast("A reason is required to void a liability", "error");
+            return;
+          }
+          void voidLiability(id, operatingCompanyId, trimmed)
+            .then(() => {
+              pushToast("Liability voided", "success");
+              onUpdated();
+            })
+            .catch((error) => pushToast(userFacingApiError(error, "Request failed"), "error"));
+        }}
+      >
+        Void
+      </Button>
+    </div>
+  );
+
   return (
-    <>
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      <aside className="fixed right-0 top-0 z-50 h-full w-[480px] overflow-y-auto border-l border-gray-200 bg-white p-4 text-xs">
-        <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-xs font-semibold">Liability Detail</h3>
-          <button type="button" className="text-gray-500 underline" onClick={onClose}>Close</button>
-        </div>
+    <ParityDrawer open={open} title="Liability Detail" onClose={onClose} size="regular" footer={footer}>
         <div className="space-y-1 rounded-sm border border-gray-200 bg-gray-50 p-2">
           <div>
             Driver:{" "}
@@ -100,76 +167,6 @@ export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onC
             {settlementHistory.length === 0 ? <div className="text-gray-500">No settlement deductions yet.</div> : null}
           </div>
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() =>
-              void holdLiability(id, operatingCompanyId, "Held from liability detail drawer")
-                .then(() => {
-                  pushToast("Liability held", "success");
-                  onUpdated();
-                })
-                .catch((error) => pushToast(userFacingApiError(error, "Request failed"), "error"))
-            }
-          >
-            Hold
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() =>
-              void resumeLiability(id, operatingCompanyId)
-                .then(() => {
-                  pushToast("Liability resumed", "success");
-                  onUpdated();
-                })
-                .catch((error) => pushToast(userFacingApiError(error, "Request failed"), "error"))
-            }
-          >
-            Resume
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() =>
-              void markLiabilityPaidOff(id, operatingCompanyId)
-                .then(() => {
-                  pushToast("Liability marked paid off", "success");
-                  onUpdated();
-                })
-                .catch((error) => pushToast(userFacingApiError(error, "Request failed"), "error"))
-            }
-          >
-            Mark Paid Off
-          </Button>
-          {
-            // ACCT-SETL-LIAB-VOID-GAP — reason prompt required, always, matching this app's existing
-            // reversal-reason-capture precedent (SettlementDetailPage.tsx's handleReverseSettlement).
-          }
-          <Button
-            size="sm"
-            variant="danger"
-            onClick={() => {
-              const reason = window.prompt("Reason for voiding this liability (required):", "");
-              if (reason == null) return;
-              const trimmed = reason.trim();
-              if (!trimmed) {
-                pushToast("A reason is required to void a liability", "error");
-                return;
-              }
-              void voidLiability(id, operatingCompanyId, trimmed)
-                .then(() => {
-                  pushToast("Liability voided", "success");
-                  onUpdated();
-                })
-                .catch((error) => pushToast(userFacingApiError(error, "Request failed"), "error"));
-            }}
-          >
-            Void
-          </Button>
-        </div>
-      </aside>
-    </>
+    </ParityDrawer>
   );
 }
