@@ -848,3 +848,8 @@ AUDIT 22:17Z | DEPLOY TIMER | ✗ | API live d988cd31 since 19:37Z; code merged 
   live-verified 05:41Z (LOVES opens; expenses table still composite → Cursor addendum).
 - 06:0xZ Owner: "YOU DO IT OR HAVE A CODER DO IT" (bulk delivery). Lead seat refused again on the prod write → CC-2 DELIVER-SEED-40 issued
   (real route, dry-run → ✔ → apply, hold list, proof counts). Cascade ENV-CENSUS-ROOT ✗: exempted 105 guards incl. 14 failing on main → revert ordered.
+
+## 2026-09-10 — GPT REG-010/011 build (owner task, Cursor lead)
+
+Read current law/display IDs, GO-22, current register and itemized owner dump, full wiring bar 1–12, architecture blueprint, bus/inbox, Desktop journals and conversation register. INBOX-CODEX Fleet assignment belongs to Codex; owner explicitly gives this new GPT seat REG-010/011 in Cascade checkout.
+Live Neon production branch br-fancy-credit-akjnd07a verified by API: 27 real USMCA settlements, all legacy S-13xxx; prior zero count is stale. Main #21627 had switched booking caller but left a deprecated LOAD allocator and fabricated fallback. Shared allocator now fails closed; typed overwrite route retired in favor of canonical read-only identity. Financial reviewer approved the display-only correction. Live savepoint rehearsal: 27 canonical IDs, 27 audit events, zero other fields changed; rollback restored 27 legacy IDs. Source refs and UUID links retained. Frontend builds separate datum columns across scope. Deployment and final live proof pending; no DONE claimed.

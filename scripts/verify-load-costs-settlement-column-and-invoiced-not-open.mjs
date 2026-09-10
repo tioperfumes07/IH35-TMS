@@ -42,7 +42,7 @@ export function backendSurfacesSettlementColumn(src) {
 
 export function frontendHasSettlementColumn(src) {
   return (
-    /key: "settlement", label: "Settlement #", testId: "col-settlement"/.test(src) &&
+    /key: "settlement", label: "Settlement\/Tour", testId: "col-settlement"/.test(src) &&
     /settlement_display_id: string \| null;/.test(src) &&
     /settlement_id: string \| null;/.test(src)
   );
@@ -101,7 +101,7 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     [backendSrc.replace("LEFT JOIN settlement_info si ON si.load_id=l.id", ""), boardSrc],
     [backendSrc.replace('"settlement",\n      ]).default("load"),', ']).default("load"),'), boardSrc],
-    [backendSrc, boardSrc.replace('key: "settlement", label: "Settlement #", testId: "col-settlement"', 'key: "settlement_removed"')],
+    [backendSrc, boardSrc.replace('key: "settlement", label: "Settlement/Tour", testId: "col-settlement"', 'key: "settlement_removed"')],
     [backendSrc, boardSrc.replace('const CLOSED = ["cancelled", "abandoned", "closed", "paid", "invoiced", "driver_walkoff", "driver_no_show"];', 'const CLOSED = ["cancelled", "abandoned", "closed", "paid", "driver_walkoff", "driver_no_show"];')],
     [backendSrc, boardSrc.replace('const DELIVERED = ["delivered", "delivered_pending_docs", "completed_docs_received"];', 'const DELIVERED = ["delivered", "delivered_pending_docs", "completed_docs_received", "invoiced"];').replace('const CLOSED = ["cancelled", "abandoned", "closed", "paid", "invoiced", "driver_walkoff", "driver_no_show"];', 'const CLOSED = ["cancelled", "abandoned", "closed", "paid", "driver_walkoff", "driver_no_show"];')],
     [backendSrc.replace("i.status NOT IN ('draft', 'proforma', 'void')", "i.status <> 'void'"), boardSrc],

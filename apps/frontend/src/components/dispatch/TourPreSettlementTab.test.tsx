@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import * as jestDomMatchers from "@testing-library/jest-dom/matchers";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
+import { TourSettlementTab } from "./TourSettlementTab";
 import { TourPreSettlementTab } from "./TourPreSettlementTab";
 
 expect.extend(jestDomMatchers);
@@ -62,6 +63,32 @@ describe("REG-033(b) — pre-settlement is scoped to this tour's number and date
     expect(dates).toHaveTextContent("09/01/2026");
     expect(dates).toHaveTextContent("09/08/2026");
     // Per-leg dates render in the legs table.
-    await waitFor(() => expect(screen.getByText(/09\/01\/2026 → 09\/05\/2026/)).toBeInTheDocument());
+    const leg = screen.getByTestId("tour-leg");
+    const pickup = within(leg).getByText("09/01/2026").closest("td");
+    expect(pickup).not.toHaveTextContent("09/05/2026");
+    expect(within(leg).getByText("09/05/2026").closest("td")).not.toBe(pickup);
+    expect(within(leg).getByTestId("tour-leg-margin-pct").closest("td")).not.toHaveTextContent("$4,077.26");
+  });
+});
+
+
+describe("REG-010/011 settlement detail grid", () => {
+  it("keeps driver loaded and empty miles, rates and pay in individual columns", async () => {
+    mockGetTourReadoutForLoad.mockResolvedValue({
+      tour: { settlement_id: "s1", display_id: "S-2026-0042", is_open: false, status: "closed" },
+      legs: [], costs: [], totals: {margin_pct: 10},
+      driver_settlement: { gross_cents: 60000, net_cents: 60000, escrow_cents: 0, recoveries_cents: 0, lines: [], pdf_path: "/pdf", driver_bills: [
+        {id: "bill-1",load_id: "load-1",load_number: "13508",miles_basis: 1000,rate_per_mile_cents: 45, loaded_pay_cents:45000,miles_deadhead:100,rate_empty_per_mile_cents:40,deadhead_pay_cents:4000,gross_amount_cents:49000},
+      ] },
+      company_settlement: { factoring: {factored_invoices:0}, margin_cents:1000 },
+    });
+    const qc = new QueryClient({defaultOptions:{queries:{retry:false}}});
+    render(<QueryClientProvider client={qc}><MemoryRouter><TourSettlementTab loadId="load-1" operatingCompanyId="co-1" /></MemoryRouter></QueryClientProvider>);
+    const table = await screen.findByTestId("settlement-driver-bills");
+    for (const label of ["Loaded miles", "Loaded rate", "Loaded pay", "Empty miles", "Empty rate", "Empty pay", "Load Number"]) {
+      expect(within(table).getByRole("columnheader", {name:new RegExp(label,"i")})).toBeInTheDocument();
+    }
+    expect(within(table).getByText("1,000.0").closest("td")).not.toHaveTextContent("$0.4500");
+    expect(table).not.toHaveTextContent("×");
   });
 });

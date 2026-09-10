@@ -35,7 +35,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
       load_costs_sort: z.enum([
         "load", "unit", "driver_name", "pu_date", "del_date", "status", "revenue",
         "late_fee", "lumper", "fuel", "repairs_maintenance", "other",
-        "short_miles", "rate_loaded", "loaded_pay", "empty_miles", "rate_empty", "deadhead_pay", "gross", "margin",
+        "short_miles", "rate_loaded", "loaded_pay", "empty_miles", "rate_empty", "deadhead_pay", "gross", "margin", "margin_pct",
         "settlement",
       ]).default("load"),
       sort_direction: z.enum(["asc", "desc"]).default("desc"),
@@ -50,6 +50,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
       // own serviceStatus() branch order (LoadCostsBoardPage.tsx): In transit(0) < Delivered-no-
       // appt(1) < On Time(2) < Late(3), so ascending server sort visually matches ascending column
       // click same as every other column.
+      const marginSql = "(l.rate_total_cents-COALESCE(ec.expense_cents,0)-COALESCE(bc.bill_cents,0)-COALESCE(dp.driver_pay_cents,0))";
       const sortColumns = {
         load: "l.load_number",
         unit: "u.unit_number",
@@ -70,7 +71,8 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
         rate_empty: "dpd.rate_empty_cents",
         deadhead_pay: "CASE WHEN COALESCE(dpa.has_deadhead_miles,false) THEN COALESCE(dpa.deadhead_pay_cents,0) END",
         gross: "COALESCE(dp.driver_pay_cents,0)",
-        margin: "(l.rate_total_cents-COALESCE(ec.expense_cents,0)-COALESCE(bc.bill_cents,0)-COALESCE(dp.driver_pay_cents,0))",
+        margin: marginSql,
+        margin_pct: `(${marginSql}::numeric / NULLIF(l.rate_total_cents, 0))`,
         settlement: "si.settlement_display_id",
       } as const;
       const sortSql = `${sortColumns[parsed.data.load_costs_sort]} ${parsed.data.sort_direction.toUpperCase()} NULLS LAST, l.load_number ASC`;

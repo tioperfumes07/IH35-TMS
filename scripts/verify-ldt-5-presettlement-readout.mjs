@@ -61,7 +61,8 @@ function audit(f) {
     if (HEX.test(code)) p.push(`${label}: hex colour literal — use --ldt-* tokens`);
   }
   for (const [label, re] of [
-    ["legs rows", /data-testid="tour-leg"/],
+    ["legs rows", /<ParityTable rows=\{r\.legs\} rowKey=\{l => l\.load_id\} rowTestId=\{\(\) => "tour-leg"\}/],
+    ["individual leg load and date columns", /key: "load", label: "Load Number"[\s\S]*key: "pickup", label: "Pickup date"[\s\S]*key: "delivery", label: "Delivery date"/],
     ["tour totals row", /data-testid="tour-totals"/],
     ["Costs on this tour", /data-testid="tour-costs"[\s\S]*Costs on this tour/],
     ["Ready to close? card", /data-testid="tour-ready"[\s\S]*Ready to close\?/],
@@ -95,6 +96,8 @@ if (process.argv.includes("--selftest")) {
     ["close without confirm", mut(ROUTE, "confirm: z.literal(true)", "confirm: z.boolean().optional()")],
     ["close ignores can_close", mut(ROUTE, "if (!before.can_close) return reply.code(422)", "if (false) return reply.code(422)")],
     ["close writes a JE", { ...files, [ROUTE]: files[ROUTE] + "\n// createJournalEntry(client)" }],
+    ["leg rows dropped", mut(PRE, "rows={r.legs}", "rows={[]}")],
+    ["pickup column dropped", mut(PRE, 'label: "Pickup date"', 'label: "Period"')],
     ["FE button not gated", mut(PRE, "disabled={!r.can_close || close.isPending}", "disabled={close.isPending}")],
     ["Settlement tab second model", { ...files, [SET]: files[SET] + "\n// getPreSettlementForDriver()" }],
     ["old empty-state text", { ...files, [PRE]: files[PRE] + '\nconst LEGACY = "No active pre-settlement found";' }],

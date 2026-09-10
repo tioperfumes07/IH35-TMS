@@ -3,7 +3,7 @@
  * LDT-6 guard — Settlement tab: driver + company settlement from the SAME tour readout as Pre-Settlement; closed = frozen.
  * Register § LDT-6 (owner order 2026-09-05 23:00Z). Lead build 2026-09-06.
  *   - no <input>/<select>/<textarea> in the Settlement tab (frozen; corrections are reversing entries)
- *   - driver card: loaded × rate · empty × rate · gross · escrow · recoveries · net; company card: revenue · costs · driver pay
+ *   - driver card: loaded miles / rate / pay · empty miles / rate / pay · gross · escrow · recoveries · net; company card: revenue · costs · driver pay
  *     · factoring · margin with $/mi practical AND real; every settlement line shows its GL account or "no account"
  *   - both readouts sum from the readout (company margin = readout margin; driver gross = bills or header)
  *   - state chip + frozen note; PDF link to the settlement PDF route; unknown numbers render "—" never 0
@@ -20,21 +20,32 @@ function audit(src) {
   for (const [label, re] of [
     ["driver settlement card", /data-testid="driver-settlement-card"/],
     ["company settlement card", /data-testid="company-settlement-card"/],
-    ["loaded × rate lines", /Loaded \{miles\(b\.miles_basis\)\} × \{rate\(b\.rate_per_mile_cents\)\}/],
-    ["empty × rate lines", /Empty \{miles\(b\.miles_deadhead\)\} × \{rate\(b\.rate_empty_per_mile_cents\)\}/],
+    ["driver bills use distinct data columns", /<ParityTable rows=\{bills\} rowKey=\{b => b\.id\}/],
+    ["loaded miles column", /key: "loaded_miles", label: "Loaded miles"[^\n]*render: b => miles\(b\.miles_basis\)/],
+    ["loaded rate column", /key: "loaded_rate", label: "Loaded rate"[^\n]*render: b => rate\(b\.rate_per_mile_cents\)/],
+    ["loaded pay column", /key: "loaded_pay", label: "Loaded pay"[^\n]*render: b => money\(b\.loaded_pay_cents, currencyCode\)/],
+    ["empty miles column", /key: "empty_miles", label: "Empty miles"[^\n]*render: b => miles\(b\.miles_deadhead\)/],
+    ["empty rate column", /key: "empty_rate", label: "Empty rate"[^\n]*render: b => rate\(b\.rate_empty_per_mile_cents\)/],
+    ["empty pay column", /key: "empty_pay", label: "Empty pay"[^\n]*render: b => money\(b\.deadhead_pay_cents, currencyCode\)/],
     ["gross · escrow · recoveries · net", /data-testid="driver-gross"[\s\S]*Escrow contribution[\s\S]*Recoveries[\s\S]*data-testid="driver-net"/],
     ["company revenue · costs · driver pay · factoring · margin", /Revenue \(\{r\.legs\.length\}[\s\S]*Costs \(\{r\.costs\.length\}[\s\S]*Driver pay[\s\S]*Factoring[\s\S]*data-testid="company-margin"/],
-    ["$/mi practical and real", /perMile\(tot\.per_mile_practical_cents\)\} practical · \{perMile\(tot\.per_mile_real_cents\)\} real/],
+    ["$/mi practical row", /<span>Per practical mile<\/span><span className="ldt-m">\{perMile\(tot\.per_mile_practical_cents\)\}/],
+    ["$/mi real row", /<span>Per real mile<\/span><span className="ldt-m">\{perMile\(tot\.per_mile_real_cents\)\}/],
     ["GL account per line", /l\.account_label \?\? <span className="ldt-pill bad">no account<\/span>/],
     ["frozen note", /Closed = frozen: no editable field; corrections are a reversing entry\./],
     ["PDF link", /data-testid="settlement-pdf-link"/],
     ["dash never zero for unknown miles", /const miles = \(m: number \| null \| undefined\) => \(m == null \? DASH/],
   ]) if (!re.test(src)) p.push(`${label} missing`);
+  if (/Loaded \{miles\([^\n]*×|Empty \{miles\([^\n]*×/.test(src)) p.push("compound miles × rate cell is forbidden by REG-010/011");
   return p;
 }
 const src = read(SET);
 if (process.argv.includes("--selftest")) {
   const plants = [
+    ["loaded rate column missing", src.replace('label: "Loaded rate"', 'label: "Loaded"')],
+    ["empty miles column missing", src.replace('label: "Empty miles"', 'label: "Empty"')],
+    ["real per-mile row missing", src.replace("Per real mile", "Per mile")],
+    ["compound rate cell restored", src + "\nLoaded {miles(b.miles_basis)} × {rate(b.rate_per_mile_cents)}"],
     ["editable field planted", src + '\n// <input value="x" />'],
     ["second read model", src + "\n// getPreSettlementForDriver()"],
     ["frozen note removed", src.replace("Closed = frozen: no editable field; corrections are a reversing entry.", "Closed.")],

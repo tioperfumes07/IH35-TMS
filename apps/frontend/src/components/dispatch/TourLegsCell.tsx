@@ -7,6 +7,8 @@
 // BOTH the Load-Costs Settlement/Pre-Settlement register and the /settlements Tours register so the
 // two surfaces stay identical.
 import { EntityLink } from "../shared/EntityLink";
+import type { ParityColumn } from "../parity/ParityTable";
+import type { TourListRow } from "../../api/tourReadout";
 import type { TourLegBrief } from "../../api/tourReadout";
 
 const DASH = "\u2014";
@@ -61,4 +63,19 @@ export function TourLegsCell({ legs, legsLabel }: { legs: TourLegBrief[] | null 
       ) : null}
     </span>
   );
+}
+
+/** REG-010/011: load identity, trip type and count are separate data columns. */
+export function tourLoadColumns(prefix: string): ParityColumn<TourListRow>[] {
+  return [
+    { key: "load_numbers", label: "Load Number", headerTitle: "First load in this tour; expand the settlement to see every load", testId: `${prefix}-load-number`, sortable: true, alwaysVisible: true,
+      sortValue: r => r.legs?.[0]?.load_number ?? "",
+      exportValue: r => r.legs?.[0]?.load_number ?? "",
+      render: r => r.legs?.[0] ? <EntityLink kind="load" id={r.legs[0].load_id} label={r.legs[0].load_number} /> : DASH },
+    { key: "trip_types", label: "Trip type", headerTitle: "Trip type of the first load", testId: `${prefix}-trip-type`, sortable: true,
+      sortValue: r => r.legs?.[0]?.trip_type ?? "",
+      render: r => r.legs?.[0]?.trip_type ?? DASH },
+    { key: "load_count", label: "Load count", testId: `${prefix}-load-count`, sortable: true,
+      sortValue: r => r.leg_count, render: r => r.leg_count },
+  ];
 }

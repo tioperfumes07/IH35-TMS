@@ -1,3 +1,4 @@
+import { allocateSettlementDisplayId } from "./settlement-display-id.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { recordPostingFlagSkip } from "../accounting/posting-flag-skip-audit.js";
@@ -30,10 +31,9 @@ type DbClient = {
 
 type TeamLoadSplitContext = NonNullable<Awaited<ReturnType<typeof fetchTeamDriversForLoad>>>;
 
-export function settlementDisplayIdFromLoadNumber(loadNumber: string): string {
-  const trimmed = String(loadNumber ?? "").trim();
-  const suffix = trimmed.replace(/^[Ll]-/, "");
-  return `S-${suffix}`;
+/** @deprecated Load numbers cannot identify settlements. Use allocateSettlementDisplayId in a transaction. */
+export function settlementDisplayIdFromLoadNumber(_loadNumber: string): never {
+  throw new Error("Settlement numbers must be allocated independently of load numbers");
 }
 
 async function emitOutbox(client: DbClient, eventType: string, payload: Record<string, unknown>) {
@@ -228,11 +228,7 @@ export async function openLoadBookendedSettlement(
   // load number. The old settlementDisplayIdFromLoadNumber(load.load_number) produced S-<load_number>
   // (e.g. S-13549 for load 13549), which is wrong — a settlement is its own entity with its own
   // sequence. Same pattern as settlements.routes.ts:899 and weekly-close.routes.ts:102.
-  const displayRes = await client.query<{ next_id?: string }>(
-    `SELECT driver_finance.next_settlement_display_id($1::uuid, $2::date) AS next_id`,
-    [opts.operatingCompanyId, periodDate]
-  );
-  const settlementNumber = displayRes.rows[0]?.next_id ?? `S-${new Date(periodDate).getUTCFullYear()}-0001`;
+  const settlementNumber = await allocateSettlementDisplayId(client, opts.operatingCompanyId, periodDate);
 
   const inserted = await client.query<{ id: string; display_id: string | null }>(
     `

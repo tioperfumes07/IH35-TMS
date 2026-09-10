@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built modules=settlements,accounting cols=connectivity task=REG-010-011 */
 // SETL-DETAIL-01 GUARD — driver settlement detail transcribes the 2026-09-05 reference render +
 // Load-Costs palette per the lead ROUND 14 instruction (owner: "the Settlements module must be
 // created in the correct format, following much of Load Costs"). Static-source guard (no live
@@ -11,7 +12,7 @@
 //      bespoke, unrelated design system.
 //   3. no raw <table> anywhere in the new sections this round added (ParityTable / .ldt-rows only —
 //      the §14 table contract, never a hand-rolled <table>).
-//   4. a NUMBER box exists (typed-wins settlement display_id control).
+//   4. a NUMBER box exists (server-generated read-only settlement display_id).
 //   5. the new LOADS and COMPANY WATERFALL sections exist with their testids.
 //   6. every new section drills to its source via EntityLink (never a bare id/uuid).
 import { readFileSync } from "node:fs";
@@ -45,9 +46,10 @@ function verify(files) {
   }
   if (!/<ParityTable[\s\n]/.test(loadsSection)) f.push("loads-section-no-paritytable");
 
-  // 4 — NUMBER box: typed-wins settlement display_id control.
+  // 4 — NUMBER box: server-generated read-only settlement display_id.
   if (!/data-testid="settlement-number-box"/.test(numberBox)) f.push("number-box-missing");
-  if (!/patchSettlementDisplayId/.test(numberBox)) f.push("number-box-not-wired");
+  if (!/\{displayId \?\?/.test(numberBox)) f.push("number-box-not-wired");
+  if (/<input[\s>]|patchSettlementDisplayId/.test(numberBox)) f.push("number-box-must-be-read-only");
   if (!/<SettlementNumberBox/.test(page)) f.push("number-box-not-mounted");
 
   // 5 — LOADS + COMPANY WATERFALL sections exist with testids, mounted on the page.
@@ -85,18 +87,20 @@ if (process.argv.includes("--selftest")) {
     { ...base, loadsSection: base.loadsSection.replace(/<ParityTable/g, "<table") },
     { ...base, loadsSection: base.loadsSection.replace(/<ParityTable/g, "<NotAParityTable") },
     { ...base, numberBox: base.numberBox.replace('data-testid="settlement-number-box"', 'data-testid="oops"') },
-    { ...base, numberBox: base.numberBox.replace(/patchSettlementDisplayId/g, "doesNothing") },
+    { ...base, numberBox: base.numberBox.replace(/displayId/g, "missingIdentity") },
+    { ...base, numberBox: base.numberBox + "<input />" },
+    { ...base, numberBox: base.numberBox + "patchSettlementDisplayId()" },
     { ...base, page: base.page.replace("<SettlementNumberBox", "<Nope") },
     { ...base, loadsSection: base.loadsSection.replace('data-testid="settlement-loads-section"', 'data-testid="oops"') },
     { ...base, page: base.page.replace("<SettlementLoadsSection", "<Nope") },
-    { ...base, waterfallSection: base.waterfallSection.replace('data-testid="settlement-company-waterfall-section"', 'data-testid="oops"') },
-    { ...base, page: base.page.replace("<CompanyWaterfallSection", "<Nope") },
+    { ...base, waterfallSection: base.waterfallSection.replaceAll('data-testid="settlement-company-waterfall-section"', 'data-testid="oops"') },
+    { ...base, page: base.page.replaceAll("<CompanyWaterfallSection", "<Nope") },
     { ...base, loadsSection: base.loadsSection.replace(/EntityLink/g, "NotALink") },
   ];
-  for (const mutated of mutations) {
+  for (const [index, mutated] of mutations.entries()) {
     const changed = Object.keys(base).some((k) => mutated[k] !== base[k]);
     if (!changed) fail("a selftest mutation did not change the source — the check is stale");
-    if (verify(mutated).length === 0) fail("a mutation still passed — a check is too weak");
+    if (verify(mutated).length === 0) fail(`mutation ${index + 1} still passed — a check is too weak`);
   }
   console.log(`OK verify-settlement-detail-reference --selftest: baseline green, ${mutations.length} mutations all caught.`);
   process.exit(0);

@@ -6,9 +6,9 @@ import {
 } from "../settlements-load-bookended.service.js";
 
 describe("load-bookended settlements", () => {
-  it("maps settlement display ids from load numbers", () => {
-    expect(settlementDisplayIdFromLoadNumber("L-13518")).toBe("S-13518");
-    expect(settlementDisplayIdFromLoadNumber("l-999")).toBe("S-999");
+  it("rejects legacy load-derived settlement identity", () => {
+    expect(() => settlementDisplayIdFromLoadNumber("L-13518")).toThrow("allocated independently");
+    expect(() => settlementDisplayIdFromLoadNumber("l-999")).toThrow("allocated independently");
   });
 
   it("aggregates settlement totals from settlement_lines", async () => {
@@ -157,10 +157,10 @@ describe("load-bookended settlements", () => {
           return { rows: [] };
         }
         if (sql.includes("next_settlement_display_id")) {
-          return { rows: [{ next_id: "S-2026-99001" }] };
+          return { rows: [{ next_id: "S-2026-9901" }] };
         }
         if (sql.includes("INSERT INTO driver_finance.driver_settlements")) {
-          return { rows: [{ id: "s-new", display_id: "S-2026-99001" }] };
+          return { rows: [{ id: "s-new", display_id: "S-2026-9901" }] };
         }
         if (sql.includes("audit.append_event") || sql.includes("INSERT INTO outbox.events")) {
           return { rows: [] };
@@ -176,7 +176,7 @@ describe("load-bookended settlements", () => {
       actorUserId: "00000000-0000-4000-8000-0000000000a1",
     });
 
-    expect(result).toEqual({ settlementId: "s-new", settlementNumber: "S-2026-99001" });
+    expect(result).toEqual({ settlementId: "s-new", settlementNumber: "S-2026-9901" });
   });
 
   it("OWNER-NUMBERING-RULE — new settlement display_id is generated, never S-<load_number>", async () => {

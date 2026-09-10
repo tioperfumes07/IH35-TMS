@@ -28,24 +28,8 @@ type Props = {
 };
 
 function renderLoadLinks(settlement: SettlementListRow) {
-  return (settlement.load_links ?? []).length > 0 ? (
-    <span className="flex flex-wrap gap-1">
-      {(settlement.load_links ?? []).map((link) => (
-        <EntityLink
-          key={link.id}
-          kind="load"
-          id={link.id}
-          label={entityLabel(link.label, link.id, "Load")}
-        />
-      ))}
-    </span>
-  ) : (
-    <span>
-      {settlement.load_count > 0
-        ? `${settlement.load_count} load${settlement.load_count === 1 ? "" : "s"}`
-        : "—"}
-    </span>
-  );
+  const link = settlement.load_links?.[0];
+  return link ? <EntityLink kind="load" id={link.id} label={entityLabel(link.label, link.id, "Load")} title="First linked load; open the settlement to see every load" /> : "—";
 }
 
 function renderSettlementLinks(settlement: SettlementListRow) {
@@ -56,19 +40,7 @@ function renderSettlementLinks(settlement: SettlementListRow) {
         id={settlement.id}
         label={entityLabel(settlement.display_id, settlement.id, "Settlement")}
       />
-      {(settlement.liability_ids ?? []).length > 0 ? (
-        <span className="flex flex-wrap gap-1">
-          {(settlement.liability_ids ?? []).map((id, index) => (
-            <EntityLink
-              key={id}
-              kind="liability"
-              id={id}
-              label={(settlement.liability_ids?.length ?? 0) > 1 ? `debt #${index + 1}` : "debt →"}
-              className="text-xs text-red-600 hover:underline"
-            />
-          ))}
-        </span>
-      ) : null}
+
     </span>
   );
 }
@@ -109,15 +81,36 @@ const preSettlementColumns: DataTableColumn<SettlementListRow>[] = [
     key: "load_number",
     label: "Load Number",
     sortable: true,
-    sortValue: (row) => row.load_links?.[0]?.label ?? row.load_count,
+    sortValue: (row) => row.load_links?.[0]?.label ?? "",
     render: renderLoadLinks,
   },
   {
     key: "settlement_number",
-    label: "Settlement #",
+    label: "Settlement/Tour",
     sortable: true,
     sortValue: (row) => row.display_id ?? row.id,
     render: renderSettlementLinks,
+  },
+  {
+    key: "load_count", label: "Load count", sortable: true,
+    sortValue: row => row.load_count, render: row => row.load_count,
+  },
+  {
+    key: "liabilities", label: "Liabilities", sortable: true,
+    sortValue: row => row.liability_ids?.length ?? 0,
+    render: settlement => <span>      {(settlement.liability_ids ?? []).length > 0 ? (
+        <span className="flex flex-wrap gap-1">
+          {(settlement.liability_ids ?? []).map((id, index) => (
+            <EntityLink
+              key={id}
+              kind="liability"
+              id={id}
+              label={(settlement.liability_ids?.length ?? 0) > 1 ? `debt #${index + 1}` : "debt →"}
+              className="text-xs text-red-600 hover:underline"
+            />
+          ))}
+        </span>
+      ) : null}</span>,
   },
   {
     key: "amount",
