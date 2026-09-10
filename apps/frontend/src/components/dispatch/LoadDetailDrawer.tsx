@@ -204,6 +204,9 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
     queryFn: () => getTourReadoutForLoad(loadId!, operatingCompanyId!),
     enabled: Boolean(isOpen && loadId && operatingCompanyId),
   });
+  // REG-032 (owner 2026-09-09): the tour's own settlement number rides beside the load number at the
+  // top. Captured as a const so the click handler narrows without re-reading the query.
+  const headerTour = tourChip.data?.tour ?? null;
   useEffect(() => {
     if (isOpen) setActiveTab(initialTab);
   }, [initialTab, isOpen, loadId]);
@@ -661,9 +664,29 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
           ) : null}
           <div className="flex items-center justify-between">
             <div>
+              {/* REG-032 (owner 2026-09-09, verbatim: "IN THE TOP. NEXT TO LOAD IT SHOULD ALREADY HAVE
+                  THE PRE-SETTLEMENT-SETTLEMENT NUMBER ASSIGNED ... AUTOMATICALLY WHEN YOU CREATE A NB
+                  LOAD"): the tour's own settlement number (S-YYYY-NNNN, minted at booking by
+                  confirmPresettlementLink → driver_finance.next_settlement_display_id, #21627) sits
+                  directly beside the load number — sourced from the ONE tour readout (display_id), never
+                  the retired S-<load#> counter. Clickable → the matching Pre-Settlement / Settlement tab. */}
               <h2 className="text-page-title font-semibold text-gray-900">
                 Load{" "}
                 <EntityLinkOrTombstone kind="load" id={load?.id ?? loadId} name={load?.load_number} noun="Load" />
+                {headerTour?.display_id ? (
+                  <>
+                    {" · "}
+                    <button
+                      type="button"
+                      className="font-semibold text-[#14314F] hover:underline"
+                      data-testid="ldt0-header-settlement-no"
+                      onClick={() => headerTour && setActiveTab(headerTour.is_open ? "Pre-Settlement" : "Settlement")}
+                      title={`Open the ${headerTour.is_open ? "Pre-Settlement" : "Settlement"} tab`}
+                    >
+                      {headerTour.display_id}
+                    </button>
+                  </>
+                ) : null}
               </h2>
               <p className="text-xs text-gray-500">{routeSummary}</p>
               {load ? (
@@ -671,17 +694,19 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                   <span className="inline-block rounded-sm border border-gray-300 bg-gray-50 px-1.5 py-px text-xs font-semibold uppercase text-[#4B5563]">
                     {load.status}
                   </span>
-                  {/* LDT-PAGE design chip (render § Shared header): TOUR OPEN · PRE-SETTLEMENT S-… — read from the one tour readout. */}
-                  {tourChip.data?.tour ? (
+                  {/* LDT-PAGE design chip (render § Shared header): TOUR OPEN · PRE-SETTLEMENT — read from
+                      the one tour readout. The number itself now rides beside the load number above
+                      (REG-032), so this chip carries only the open/closed state + tab navigation. */}
+                  {headerTour ? (
                     <button
                       type="button"
                       className="ldt-pill warn"
                       style={{ textTransform: "uppercase", fontWeight: 700 }}
                       data-testid="ldt0-tour-chip"
-                      onClick={() => setActiveTab("Pre-Settlement")}
-                      title="Open the Pre-Settlement tab"
+                      onClick={() => headerTour && setActiveTab(headerTour.is_open ? "Pre-Settlement" : "Settlement")}
+                      title={`Open the ${headerTour.is_open ? "Pre-Settlement" : "Settlement"} tab`}
                     >
-                      Tour {tourChip.data.tour.is_open ? "open" : "closed"} · {tourChip.data.tour.is_open ? "pre-settlement" : "settlement"} {tourChip.data.tour.display_id ?? ""}
+                      Tour {headerTour.is_open ? "open" : "closed"} · {headerTour.is_open ? "pre-settlement" : "settlement"}
                     </button>
                   ) : null}
                 </div>

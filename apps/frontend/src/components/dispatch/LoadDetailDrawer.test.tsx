@@ -71,6 +71,14 @@ vi.mock("./LoadDetailSettlementTab", () => ({
   LoadDetailSettlementTab: () => null,
 }));
 
+// This card's own completion-prompts query hits the real apiRequest (no api-module mock), which in
+// jsdom resolves a shapeless object and crashes on `prompts.late_stops.length` — an async unhandled
+// error that fails any test in this file that awaits (findBy/waitFor). It is not under test here, so
+// stub it to null like the other child surfaces (also un-breaks the 4 pre-existing invoice tests).
+vi.mock("./LoadCompletionPromptsCard", () => ({
+  LoadCompletionPromptsCard: () => null,
+}));
+
 vi.mock("./LoadDetailGeofenceTimelineTab", () => ({
   LoadDetailGeofenceTimelineTab: () => null,
 }));
@@ -132,6 +140,18 @@ vi.mock("../documents/DocumentsTab", () => ({
 vi.mock("../expenses/RecordExpenseModal", () => ({
   RecordExpenseModal: ({ open }: { open: boolean }) =>
     open ? <div data-testid="record-expense-modal">RecordExpenseModal</div> : null,
+}));
+
+// REG-032: the header reads the tour's own settlement number from the ONE tour readout. Default to a
+// no-tour readout so unrelated tests keep their prior behaviour; the REG-032 test overrides it.
+const mockGetTourReadoutForLoad = vi.fn().mockResolvedValue({
+  tour: null, legs: [], costs: [], ready: [], can_close: false, close_blockers: [], soft_warnings: [],
+});
+vi.mock("../../api/tourReadout", () => ({
+  getTourReadoutForLoad: (...args: unknown[]) => mockGetTourReadoutForLoad(...args),
+  getTourReadout: vi.fn(),
+  closeTour: vi.fn(),
+  listTours: vi.fn(),
 }));
 
 vi.mock("../insurance/InsuranceClaimsReverseSection", () => ({
@@ -542,5 +562,33 @@ describe("LoadDetailDrawer N1 expense-from-load", () => {
     expect(screen.queryByTestId("load-detail-add-expense")).toBeNull();
     fireEvent.click(screen.getByTestId("load-detail-record-expense"));
     expect(screen.getByTestId("record-expense-modal")).toBeInTheDocument();
+  });
+});
+
+describe("REG-032 — settlement number rides beside the load number in the header", () => {
+  it("shows the tour's own S-YYYY-NNNN settlement number next to Load, from the tour readout", async () => {
+    mockGetTourReadoutForLoad.mockResolvedValueOnce({
+      tour: {
+        settlement_id: "set-1", display_id: "S-2026-0007", status: "open", approval_status: null,
+        settlement_model: null, tour_id: "tour-1", driver_id: "drv-1", driver_name: "Driver One",
+        unit_number: "T169", trip_started_at: null, trip_closed_at: null, period_start: null,
+        period_end: null, is_open: true, locked_at: null, paid_at: null,
+      },
+      legs: [], costs: [], ready: [], can_close: false, close_blockers: [], soft_warnings: [],
+    });
+    mockUseDispatchLoad.mockReturnValue({
+      data: mockLoadDetail({ load_number: "13571" }),
+      isLoading: false, isError: false, error: null, refetch: vi.fn(),
+    });
+    mockUseLoad.mockReturnValue({ data: undefined, isLoading: false, isError: false, error: null, refetch: vi.fn() });
+    mockUseLoadAudit.mockReturnValue({ data: [], refetch: vi.fn() });
+
+    renderDrawer(<LoadDetailDrawer loadId="load-1" isOpen canEdit operatingCompanyId="co-1" onClose={vi.fn()} />);
+
+    // The number appears once, beside the load number, sourced from the tour readout display_id (never S-<load#>).
+    const settlementNo = await screen.findByTestId("ldt0-header-settlement-no");
+    expect(settlementNo).toHaveTextContent("S-2026-0007");
+    // It is NOT the load number: a load-number-shaped value (13571) would be the retired scheme this fixes.
+    expect(settlementNo).not.toHaveTextContent("13571");
   });
 });
