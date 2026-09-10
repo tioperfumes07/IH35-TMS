@@ -3,6 +3,7 @@ import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { createNotification, listCompanyNotifyUserIds } from "../notifications/notification.service.js";
+import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
 const CRON_NAME = "insurance.monthly_report_by_5th";
 const CRON_TZ = "America/Chicago";
@@ -197,6 +198,7 @@ export async function runInsuranceMonthlyReportTick(app: FastifyInstance) {
     // company's failure never poisons another's, and the error-alarm below opens a FRESH connection so
     // it can always record the coverage gap even when the report transaction aborted.
     try {
+      assertTenantContext(operatingCompanyId, CRON_NAME);
       await withLuciaBypass(async (client) => {
         const report = await gatherReportData(client, operatingCompanyId);
         await alarmReport(client, operatingCompanyId, report);
