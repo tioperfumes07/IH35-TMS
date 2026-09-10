@@ -1,3 +1,4 @@
+import { assertNoHistoricalSettlementCoverage } from "./settlement-historical-attribution.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { reverseSettlementPayRunInClientTx } from "./settlement-payrun-reverse.service.js";
@@ -20,6 +21,7 @@ export async function reopenSettlementForContinuationInClientTx(client: Client, 
   if (!row || row.voided_at || !["open", "closed", "locked", "approved", "paid", "final"].includes(row.status)) {
     throw new Error("Settlement cannot continue: missing, voided or cancelled");
   }
+  await assertNoHistoricalSettlementCoverage(client, input.operatingCompanyId, input.settlementId);
   if (row.status === "open" && !row.trip_closed_at) return false;
   const otherPoster = await client.query<{ id: string }>(`
     SELECT id FROM driver_finance.driver_settlement_gl_runs

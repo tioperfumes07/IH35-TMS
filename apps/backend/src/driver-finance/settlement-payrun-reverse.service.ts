@@ -1,3 +1,4 @@
+import { assertNoHistoricalSettlementCoverage } from "./settlement-historical-attribution.service.js";
 // SETTLEMENT-PAYRUN-REVERSE — the missing reverse counterpart for closeSettlementPayRun.
 //
 // closeSettlementPayRun (settlement-payrun-close.service.ts) is the ONLY poster that ever posted the
@@ -98,6 +99,8 @@ export async function reverseSettlementPayRunInClientTx(
   // Same lock order as close and continuation: settlement first, then the pay-run anchor.
   await client.query(`SELECT id FROM driver_finance.driver_settlements
     WHERE id = $1::uuid AND operating_company_id = $2::uuid FOR UPDATE`, [settlementId, opco]);
+
+  await assertNoHistoricalSettlementCoverage(client, opco, settlementId);
 
   // ── Lock the pay-run GL run. Only a 'posted' run with a JE is reversible. ─────────────────────────
   const runRes = await client.query<{ id: string; status: string; journal_entry_id: string | null }>(

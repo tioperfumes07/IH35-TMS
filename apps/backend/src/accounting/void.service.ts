@@ -1,3 +1,4 @@
+import { assertNoHistoricalJournalCoverage } from "../driver-finance/settlement-historical-attribution.service.js";
 // VOID-EVERYWHERE PR-1 — shared void engine (gated behind VOID_ENFORCEMENT_ENABLED, default OFF).
 //
 // When the flag is ON, voiding an invoice or journal entry posts an equal-and-opposite REVERSING
@@ -529,7 +530,17 @@ export async function postVoidReversal(
   },
   actor: { userId: string }
 ): Promise<VoidReversalResult> {
-  // BANK-ORPHAN-01 — runs FIRST and unconditionally, before the "nothing to reverse" early return
+  // Lock the same original journals that readOriginalGlPostings reverses, before any bank
+  // unmatch or posting. Historical attribution captures those journal locks too.
+  const journals = await client.query<{ id: string }>(`SELECT je.id::text FROM accounting.journal_entries je
+    WHERE je.operating_company_id = $1::uuid AND (
+      ($3 = 'journal_entry' AND je.id::text = $2) OR
+      ($3 <> 'journal_entry' AND je.id IN (SELECT p.journal_entry_uuid FROM accounting.journal_entry_postings p
+        WHERE p.operating_company_id = $1::uuid AND p.source_transaction_type = $3 AND p.source_transaction_id = $2)))
+    ORDER BY je.id FOR UPDATE`, [params.operatingCompanyId, params.entityId, params.entityType]);
+  for (const journal of journals.rows) await assertNoHistoricalJournalCoverage(client, params.operatingCompanyId, journal.id);
+
+  // BANK-ORPHAN-01 — runs before the "nothing to reverse" early return
   // below. A bank match is a property of the entity being voided, not of its GL postings — a draft
   // document with zero posted lines could still (in principle) carry a bank match, and the owner's
   // rule has no "only if something reversed" exception: "no voided document may leave a bank

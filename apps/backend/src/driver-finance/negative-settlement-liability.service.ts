@@ -1,3 +1,4 @@
+import { assertNoHistoricalSettlementCoverage } from "./settlement-historical-attribution.service.js";
 // C6-MONEY-JE-EXEMPT: this books the driver_liabilities row (type='negative_settlement') at
 // settlement /finalize (status -> 'locked', locked_at stamped) — a REQUIRED precondition for the
 // real GL post, which runs later at /payrun-close via settlement-payrun-close.service.ts's
@@ -44,6 +45,7 @@ export async function postNegativeSettlementLiabilityIfNeeded(
   }
 ): Promise<NegativeSettlementLiabilityResult> {
   if (!(input.netPay < 0)) return { outcome: "not_negative" };
+  await assertNoHistoricalSettlementCoverage(client, input.operatingCompanyId, input.settlementId);
 
   const existing = await client.query<{ id: string }>(
     `SELECT id::text FROM driver_finance.driver_liabilities
