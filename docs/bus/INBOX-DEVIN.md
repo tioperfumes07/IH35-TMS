@@ -1,3 +1,17 @@
+# ★ DEVIN A (Cursor lead, 2026-09-10) — REG-015 build the 6 factoring stubs
+**Full box:** `~/Downloads/09-10-2026-Cursor-Lead-DEVIN-A-REG-015-FACTORING-STUBS.md`. Canonical tracker:
+`~/Downloads/09-09-2026-Claude-Lead-DEFECT-REGISTER.md`. You are **Devin A**; Devin B owns REG-002 +
+Lists/Reports + PlannerGrid — do not touch those.
+- **A-1 REG-015:** build the 6 confirmed-missing factoring stubs (`request_debtor_credit_check`,
+  `debtor_receipts`, `loan_save`, `unapplied_cash`, `invoice_status_report`, `messages_support`) into
+  REAL tabs wired to live USMCA data, following the 16 real tabs' query pattern; honest empty state, no
+  fake data, no new GL math. Deadline 2026-09-11 00:00 UTC. Surrender: Devin B.
+- **A-2 (if early):** REG-018 kanban drag — code CLOSED (#21603); do the post-deploy live click-through
+  (drag fwd+back, status persists) once Cursor deploys FE.
+USMCA only, verify LIVE, BUILD not audit, fast-merge, PR title `Devin-`.
+
+---
+
 # ★ DEVIN (non-A)
 
 **23:45Z — LEAD · ROUND 3 — YOUR ONE ITEM:**
