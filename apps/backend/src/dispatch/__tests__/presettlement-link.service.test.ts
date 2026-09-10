@@ -17,15 +17,17 @@ const TOUR_ID = "33333333-3333-3333-3333-333333333333";
 const OPEN_SETTLEMENT_ID = "44444444-4444-4444-4444-444444444444";
 const SUGGESTION_ID = "55555555-5555-5555-5555-555555555555";
 const USER_ID = "66666666-6666-6666-6666-666666666666";
+const { reopen } = vi.hoisted(() => ({ reopen: vi.fn().mockResolvedValue(true) }));
+vi.mock("../../driver-finance/settlement-continuation.service.js", () => ({ reopenSettlementForContinuationInClientTx: reopen }));
 
-function makeClient(overrides: { openSettlement?: { id: string; display_id: string } | null; suggestionStatus?: string; targetClosed?: boolean } = {}) {
+function makeClient(overrides: { openSettlement?: { id: string; display_id: string } | null; suggestionStatus?: string; targetClosed?: boolean; closedContinuation?: boolean; suggestionTour?: string | null } = {}) {
   const calls: { sql: string; values: unknown[] }[] = [];
   const client = {
     query: vi.fn(async (sql: string, values: unknown[] = []) => {
       calls.push({ sql, values });
       if (/SELECT audit\.append_event/.test(sql)) return { rows: [] };
-      if (/SELECT id, display_id\s+FROM driver_finance\.driver_settlements/.test(sql)) {
-        return { rows: overrides.openSettlement ? [overrides.openSettlement] : [] };
+      if (/SELECT id, display_id[\s\S]*FROM driver_finance\.driver_settlements/.test(sql)) {
+        return { rows: overrides.openSettlement ? [{ ...overrides.openSettlement, is_continuation: overrides.closedContinuation ?? false }] : [] };
       }
       if (/SELECT id FROM driver_finance\.presettlement_link_suggestions WHERE/.test(sql)) return { rows: [] };
       if (/INSERT INTO driver_finance\.presettlement_link_suggestions/.test(sql)) return { rows: [{ id: SUGGESTION_ID }] };
@@ -37,7 +39,7 @@ function makeClient(overrides: { openSettlement?: { id: string; display_id: stri
               id: SUGGESTION_ID,
               load_id: LOAD_ID,
               driver_id: DRIVER_ID,
-              tour_id: TOUR_ID,
+              tour_id: overrides.suggestionTour === undefined ? TOUR_ID : overrides.suggestionTour,
               suggested_settlement_id: overrides.openSettlement?.id ?? null,
               status: overrides.suggestionStatus ?? "pending",
             },
@@ -49,7 +51,7 @@ function makeClient(overrides: { openSettlement?: { id: string; display_id: stri
       if (sql.includes("next_settlement_display_id")) return { rows: [{ next_id: "S-2026-0042" }] };
       if (/SELECT lib\.next_trace_no/.test(sql)) return { rows: [{ seq: "1" }] };
       if (/INSERT INTO driver_finance\.driver_settlements/.test(sql)) return { rows: [{ id: "new-settlement-id" }] };
-      if (/SELECT id FROM driver_finance\.driver_settlements WHERE id = \$1::uuid/.test(sql)) return { rows: overrides.targetClosed ? [] : [{ id: OPEN_SETTLEMENT_ID }] };
+      if (/SELECT id, status, trip_closed_at::text, tour_id::text FROM driver_finance\.driver_settlements\s+WHERE id = \$1::uuid/.test(sql)) return { rows: overrides.targetClosed ? [] : [{ id: OPEN_SETTLEMENT_ID, tour_id: TOUR_ID, status: overrides.closedContinuation ? "closed" : "open", trip_closed_at: overrides.closedContinuation ? "2026-09-10" : null }] };
       if (/UPDATE driver_finance\.driver_settlements/.test(sql)) return { rows: [] };
       if (/UPDATE mdata\.loads SET presettlement_link_id/.test(sql)) return { rows: [] };
       return { rows: [] };
@@ -148,6 +150,21 @@ describe("presettlement link — GO-22", () => {
     // query returns 2026-07-03, so both params must carry that date, not undefined/null.
     expect(insertCall!.values).toContain("2026-07-03");
     expect(insertCall!.values.some((v) => v == null)).toBe(false);
+  });
+
+  it("manual no-tour override keeps the chosen same-driver/unit settlement and persists its tour", async () => {
+    const { client, calls } = makeClient({ suggestionTour: null });
+    const result = await confirmPresettlementLink(client as never, {
+      operating_company_id: OPCO, suggestion_id: SUGGESTION_ID,
+      action: "link_existing", override_settlement_id: OPEN_SETTLEMENT_ID, actor_user_id: USER_ID,
+    });
+    expect(result.settlement_id).toBe(OPEN_SETTLEMENT_ID);
+    const target = calls.find(c => c.sql.includes("SELECT id, status, trip_closed_at"))!;
+    expect(target.values).toEqual([OPEN_SETTLEMENT_ID, OPCO, DRIVER_ID, null, null, true]);
+    expect(target.sql).toContain("driver_id = $3::uuid");
+    expect(target.sql).toContain("l.assigned_unit_id = $5::uuid");
+    expect(calls.find(c => c.sql.includes("UPDATE mdata.loads SET tour_id"))?.values).toEqual([TOUR_ID, LOAD_ID, OPCO]);
+    expect(calls.some(c => c.sql.includes("INSERT INTO driver_finance.driver_settlements"))).toBe(false);
   });
 
   it("confirmPresettlementLink link_existing refuses when there is no target settlement at all", async () => {
@@ -336,6 +353,19 @@ describe("REG-010/011 settlement identity", () => {
 describe("REG-040 NB preserves the open unit/tour settlement", () => {
   const unitId = "77777777-7777-4777-8777-777777777777";
 
+  it("closed NB reopens through the reversal service and confirms the SAME UUID with continuation classification", async () => {
+    reopen.mockClear();
+    const { client, calls } = makeClient({ openSettlement: { id: OPEN_SETTLEMENT_ID, display_id: "S-2026-0042" }, closedContinuation: true });
+    const result = await linkLoadToPresettlementAtBookingInClientTx(client as never, {
+      operating_company_id: OPCO, load_id: LOAD_ID, driver_id: DRIVER_ID, unit_id: unitId,
+      trip_type: "NB", tour_id: TOUR_ID, actor_user_id: USER_ID,
+    });
+    expect(result).toMatchObject({ action: "link_existing", settlement_id: OPEN_SETTLEMENT_ID });
+    expect(reopen).toHaveBeenCalledWith(client, { operatingCompanyId: OPCO, settlementId: OPEN_SETTLEMENT_ID, loadId: LOAD_ID, actorUserId: USER_ID });
+    expect(calls.some(c => /next_settlement_display_id|INSERT INTO driver_finance\.driver_settlements/.test(c.sql))).toBe(false);
+    expect(calls.find(c => /INSERT INTO driver_finance\.presettlement_link_suggestions/.test(c.sql))?.values[7]).toMatch(/^REG-040 resettlement continuation/);
+  });
+
   it("inherits the open unit/driver tour under a transaction lock before any allocation", async () => {
     const query = vi.fn().mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ tour_id: TOUR_ID }] });
     const tour = await findOpenPresettlementTourForUnit({ query }, { operating_company_id: OPCO, driver_id: DRIVER_ID, unit_id: unitId });
@@ -344,8 +374,8 @@ describe("REG-040 NB preserves the open unit/tour settlement", () => {
     expect(query.mock.calls[0][1]).toEqual([`presettlement-unit:${OPCO}:${unitId}`]);
     const [sql, params] = query.mock.calls[1];
     expect(params).toEqual([OPCO, DRIVER_ID, unitId]);
-    expect(sql).toContain("s.trip_closed_at IS NULL");
-    expect(sql).toContain("s.voided_at IS NULL AND s.status = 'open'");
+    expect(sql).toContain("s.tour_id IS NOT NULL");
+    expect(sql).toContain("s.voided_at IS NULL AND s.status IN ('open', 'closed'");
     expect(sql).toContain("l.operating_company_id = s.operating_company_id");
     expect(sql).toContain("l.assigned_unit_id = $3::uuid AND l.tour_id = s.tour_id");
   });
@@ -370,13 +400,13 @@ describe("REG-040 NB preserves the open unit/tour settlement", () => {
     expect(link.values).toEqual([OPEN_SETTLEMENT_ID, LOAD_ID]);
   });
 
-  it("refuses linking if the suggested settlement closes before confirmation", async () => {
+  it("refuses linking if the suggested settlement becomes unavailable before confirmation", async () => {
     const { client, calls } = makeClient({ openSettlement: { id: OPEN_SETTLEMENT_ID, display_id: "S-2026-0042" }, targetClosed: true });
     await expect(linkLoadToPresettlementAtBookingInClientTx(client as never, {
       operating_company_id: OPCO, load_id: LOAD_ID, driver_id: DRIVER_ID, unit_id: unitId,
       trip_type: "NB", tour_id: TOUR_ID, actor_user_id: USER_ID,
     })).rejects.toMatchObject({ code: "target_settlement_not_open" });
     expect(calls.some(c => /UPDATE mdata\.loads SET presettlement_link_id/.test(c.sql))).toBe(false);
-    expect(calls.find(c => /SELECT id FROM driver_finance\.driver_settlements WHERE/.test(c.sql))?.sql).toContain("FOR UPDATE");
+    expect(calls.find(c => /SELECT id, status, trip_closed_at::text, tour_id::text FROM driver_finance\.driver_settlements\s+WHERE/.test(c.sql))?.sql).toContain("FOR UPDATE");
   });
 });

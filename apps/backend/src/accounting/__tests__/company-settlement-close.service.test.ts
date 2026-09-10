@@ -8,7 +8,7 @@ const ACTOR = "u1";
 function makeClient(handlers: Record<string, (sql: string, values?: unknown[]) => { rows: unknown[] }>) {
   return {
     query: vi.fn().mockImplementation(async (sql: string, values?: unknown[]) => {
-      for (const [needle, handler] of Object.entries(handlers)) {
+      for (const [needle, handler] of Object.entries(handlers).sort(([a], [b]) => Number(b.startsWith("UPDATE")) - Number(a.startsWith("UPDATE")))) {
         if (sql.includes(needle)) return handler(sql, values);
       }
       throw new Error(`unexpected sql in test: ${sql}`);
@@ -151,4 +151,30 @@ describe("closeCompanySettlementAlongsideDriverSettlement — 25-TASK #4", () =>
       })
     ).rejects.toMatchObject({ code: "company_settlement_voided" });
   });
+});
+
+
+it("REG-040 shared company remains open until every nonvoid linked tour closes", async () => {
+  const client = makeClient({
+    "FROM driver_finance.driver_settlements": () => ({ rows: [{ period_start: "2026-08-01", period_end: "2026-08-07", status: "closed" }] }),
+    "FROM accounting.company_settlement_driver_settlements": () => ({ rows: [{ company_settlement_id: "shared-cs" }] }),
+    "SELECT status, voided_at::text FROM accounting.company_settlements": (sql, values) => {
+      expect(sql).toContain("operating_company_id = $2::uuid FOR UPDATE");
+      expect(values).toEqual(["shared-cs", OPCO]);
+      return { rows: [{ status: "open", voided_at: null }] };
+    },
+    "UPDATE accounting.company_settlements": (sql, values) => {
+      expect(sql).toContain("BOOL_AND(ds.status IN");
+      expect(sql).toContain("ds.trip_closed_at IS NOT NULL");
+      expect(sql).toContain("ds.voided_at IS NULL");
+      expect(sql).toContain("MIN(ds.period_start)");
+      expect(sql).toContain("MAX(ds.period_end)");
+      expect(sql).toContain("THEN 'closed' ELSE 'open'");
+      expect(values).toEqual(["shared-cs", ACTOR, OPCO]);
+      return { rows: [{ id: "shared-cs", display_id: "CS-2026-0003", status: "open" }] };
+    },
+  });
+  const result = await closeCompanySettlementAlongsideDriverSettlement(client as never, { operatingCompanyId: OPCO, driverSettlementId: DS_ID, actorUserId: ACTOR });
+  expect(result.status).toBe("open");
+  expect(result.company_settlement_id).toBe("shared-cs");
 });
