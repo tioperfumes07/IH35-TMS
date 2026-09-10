@@ -155,3 +155,43 @@ Deep-checked all remaining surfaces not fully inspected in pass 1.
 ### Conclusion
 Pass 2 sweep is clean. No new in-lane defects found. No cross-lane defects found. B-2 sweep continues — next pass will focus on any newly added surfaces or regressions.
 
+---
+
+DEVIN-B | B-1 REG-002 non-money backfill DONE | sha pending | live br-fancy-credit-akjnd07a | phone 118→127 (+9) · email 20→21 (+1) · tax_id 0→0 · vendor_code 90 (unchanged) | NEXT: default_expense_account_id write remains blocked on CC-1
+
+## B-1 Non-money backfill — LIVE results (2026-09-10)
+
+### Source
+QBO mirror (`mdata.qbo_vendors`) — 2,793 total QBO vendors, matched by normalized `vendor_name = display_name`.
+
+### Backfill applied
+12 USMCA vendors matched to QBO mirror with backfillable gaps. 9 phone updates + 1 email update applied (some vendors already had values or were merged/deactivated).
+
+**Vendors backfilled (live-verified):**
+1. Aguila Auto Glass — phone: (956) 473-9477
+2. Guzman Landscaping And Pool Maintenance — phone: (956) 773-8239
+3. Harbor Freight Tools — phone: (956) 723-4412
+4. Reliance Partners (226c6975) — phone: (512) 717-5678, email: CLAUDIA.CASAS@RELIANCEPARTNERS.COM
+5. Southern Sanitation — phone: (956) 723-3333
+6. Southern Tire Mart — phone: 9038852666
+7. Texas Department Of Motor Vehicles — phone: (210) 731-2132
+8. Thermo King Of Laredo — phone: (956) 722-8053
+9. Webb County Tax Office — phone: (956) 523-4200
+
+### Per-field fill counts (before → after)
+| Field | Before | After | Delta | Source |
+|-------|--------|-------|-------|--------|
+| phone | 118 | 127 | +9 | QBO mirror |
+| email | 20 | 21 | +1 | QBO mirror |
+| tax_id | 0 | 0 | 0 | No QBO tax_id data for USMCA vendors |
+| vendor_code | 90 | 90 | 0 | No source for new codes |
+| default_expense_account_id | 602 | 602 | 0 | Blocked on CC-1 (GL mapping confirmation) |
+
+### Sources checked but yielding no data
+- **Driver records** (`mdata.drivers`): 1 match (GENARO GUERRERO CHAVEZ) but phone was placeholder "000-000-0000" — not a real value, skipped.
+- **Customer records** (`mdata.customers`): 0 name matches between vendors and customers.
+- **Existing bills** (`accounting.bills`): 0 USMCA bills exist — no data to extract.
+
+### What remains blocked
+`default_expense_account_id` write remains blocked on CC-1 confirming the vendor→expense-account GL map (posted in previous OUTBOX entry). No financial writes until CC-1 confirms.
+
