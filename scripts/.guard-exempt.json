@@ -1235,5 +1235,6 @@
   "verify-round1621-rule-match-prefill.mjs": "pre-existing orphan — needs wiring by owner seat; not related to RPT-04",
   "verify-bank-running-balance-uses-full-history.mjs": "pre-existing orphan — needs wiring by owner seat; not related to RPT-04",
   "verify-create-user-grants-company-access.mjs": "pre-existing orphan — needs wiring by owner seat; not related to RPT-04",
-  "verify-vendor-default-expense-account.mjs": "baselined 2026-09-10 REG-002 — Cascade lane cannot author verify-steps (lane band restriction); guard runs via gate-step-map (gitignored/generated) and pre-commit. Wire into a banded verify-step when a banded seat adopts."
+  "verify-vendor-default-expense-account.mjs": "baselined 2026-09-10 REG-002 — Cascade lane cannot author verify-steps (lane band restriction); guard runs via gate-step-map (gitignored/generated) and pre-commit. Wire into a banded verify-step when a banded seat adopts.",
+  "verify-dispatch-live-location.mjs": "baselined 2026-09-10 REG-002b — Cascade lane cannot author verify-steps (lane band restriction); guard runs via gate-step-map and pre-commit. Wire into a banded verify-step when a banded seat adopts."
 }

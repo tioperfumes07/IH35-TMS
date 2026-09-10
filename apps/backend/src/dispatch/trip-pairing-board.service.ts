@@ -90,9 +90,22 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
 
   // C1b: live unit position (latest Samsara fix) — same source as fleet-location-hos. Powers the
   // unbooked pool "now: <city>" label. NEVER fabricated — null when there is no recent fix.
+  // REG-002b: COALESCE city/state from the most recent vehicle_locations row that HAS them,
+  // because the locations poll (lat/lng only, no city/state) can be the latest row.
   const locRes = await client.query<{ unit_id: string; city: string | null; state: string | null }>(
-    `SELECT p.unit_id::text AS unit_id, p.city, p.state
+    `SELECT p.unit_id::text AS unit_id,
+            COALESCE(p.city, g.city) AS city,
+            COALESCE(p.state, g.state) AS state
        FROM telematics.vehicle_latest_position p
+       LEFT JOIN LATERAL (
+         SELECT g2.city, g2.state
+         FROM telematics.vehicle_locations g2
+         WHERE g2.operating_company_id = p.operating_company_id
+           AND g2.unit_id = p.unit_id
+           AND (g2.city IS NOT NULL OR g2.state IS NOT NULL)
+         ORDER BY g2.captured_at DESC
+         LIMIT 1
+       ) g ON (p.city IS NULL AND p.state IS NULL)
       WHERE p.operating_company_id = $1::uuid`,
     [operatingCompanyId]
   );
