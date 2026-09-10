@@ -242,6 +242,15 @@ export async function ensureIntegrationPrerequisites(): Promise<string> {
     // NOT accept an operating_company_id override, so an unset default made them resolve the wrong
     // entity → the seeded TRANSP customer was "not found" → 404 instead of the real 400 validation.
     // Production Owners always have default_company_id set (migration 0014); the fixture must mirror that.
+    // identity.guard_role_escalation() (202613312000_permission_model.sql) blocks any INSERT/UPDATE
+    // setting role='Owner' unless the acting session is already a primary owner. A fresh integration
+    // test connection has no identity.current_user_id() at all, so it can never satisfy that check --
+    // by design (NO lucia escape; the trigger comment is explicit that app.bypass_rls must not apply
+    // here). The migration's own dedicated recovery GUC (app.allow_owner_bootstrap) exists precisely
+    // for seeding an Owner outside the normal actor-authorized path; scoped SET LOCAL to this one
+    // statement/transaction only, mirroring the documented Neon/DBA recovery procedure for this
+    // disposable per-test database (never set in real request-serving application code).
+    await client.query(`SET LOCAL app.allow_owner_bootstrap = '1'`);
     await client.query(
       `
         INSERT INTO identity.users (id, email, google_user_id, role, preferred_language, default_company_id)
