@@ -2,8 +2,6 @@ type Props = {
   value: Record<string, unknown>;
 };
 
-import { useState } from "react";
-import { DatePicker } from "../../../components/forms/DatePicker";
 import { mmmDdTime } from "../../../lib/formatDate";
 
 const BASICS: Array<{ key: string; label: string; sortable?: boolean }> = [
@@ -17,10 +15,6 @@ const BASICS: Array<{ key: string; label: string; sortable?: boolean }> = [
 ];
 
 export function CsaFleetScoreCard({ value }: Props) {
-  // K.9 inline filter pattern — direct useState, no staging. Visible on first load (0 clicks).
-  const [filterFrom, setFilterFrom] = useState("");
-  const [filterTo, setFilterTo] = useState("");
-  const [filterUnit, setFilterUnit] = useState("");
   const toNullableNumber = (input: unknown) => {
     if (input == null || input === "") return null;
     const parsed = Number(input);
@@ -35,29 +29,6 @@ export function CsaFleetScoreCard({ value }: Props) {
   const totalOos = toNullableNumber(value.total_oos);
   return (
     <section className="space-y-3">
-      {/* K.9 inline filter bar — visible on first load, 0 clicks */}
-      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white p-3">
-        <label className="text-xs text-gray-600">
-          From
-          <DatePicker className="mt-1 block h-9" value={filterFrom} onChange={setFilterFrom} />
-        </label>
-        <label className="text-xs text-gray-600">
-          To
-          <DatePicker className="mt-1 block h-9" value={filterTo} onChange={setFilterTo} />
-        </label>
-        <label className="text-xs text-gray-600">
-          Unit
-          <input
-            type="text"
-            className="mt-1 block h-9 w-32 rounded-sm border border-gray-300 px-2 text-xs"
-            value={filterUnit}
-            onChange={(e) => setFilterUnit(e.target.value)}
-            placeholder="All units"
-            data-testid="csa-fleet-scorecard-unit-filter"
-            // TODO: wire to backend filter
-          />
-        </label>
-      </div>
       <section className="rounded-sm border border-slate-200 bg-white p-4">
       <div className="flex items-center justify-between">
         <div>
