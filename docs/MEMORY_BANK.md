@@ -639,6 +639,23 @@ equipment_number / owner_company_id / currently_leased_to_company_id); no FK any
    claim-before-write) — defense against a future DROP. Not yet claimed.
 2. Settlement/pre-settlement number pairing (owner same message): SET-01/GO-22 already auto-links every
    load to a pre-settlement at creation (NB opens a new one, TR/SB join the truck's open tour); REG-008
-   is the going-forward fix for the "driver assigned AFTER booking" gap. **Loads 13573, 13580, 13581
-   still carry NO settlement/tour live** (the exact REG-008 case) — apply the link to those 3 existing
-   rows via `confirmPresettlementLink`.
+   is the going-forward fix for the "driver assigned AFTER booking" gap. **RESOLVED 2026-09-10** via
+   `scripts/ops/link-orphan-loads-presettlement.ts` (real service, no new GL math):
+   - 13573 was a FALSE alarm — it already had `trip_type=NB`, a `tour_id`, and a `presettlement_link_id`
+     (the prior "unlinked" reading only checked `settlement_lines`, a different link).
+   - 13580 (Laredo TX→Edison NJ = NB) and 13581 (Battleboro NC→Laredo TX = SB) had `trip_type=NULL`, so
+     the booking-time auto-link never fired (book-load links only when trip_type is present). Set the
+     trip_type from each load's own Laredo-anchored stops, then linked via the REAL service.
+   - **MONEY-SAFE CHOICE (`create_new`, NOT the auto link-existing):** both drivers' prior tours on
+     those units are already CLOSED and **GL-POSTED** (S-2026-0002 $2,016.92 posted 09-07; S-2026-0020
+     $752.96 posted 09-08, both unpaid). The linker's automatic REG-040 continuation would REOPEN and
+     REVERSE those posted pay-runs (`reverseSettlementPayRunInClientTx`) to fold the new leg in — a
+     posted-money movement + an owner decision, so this pass opened a FRESH pre-settlement per load
+     instead. Result live-proven: 13580→**S-2026-0028** (open), 13581→**S-2026-0029** (open);
+     S-2026-0002/S-2026-0020 UNCHANGED (same status/posted_at/net_pay). If the owner wants these legs
+     to CONTINUE the prior posted tours (REG-040 reverse+repost), that is a one-word switch to
+     `action="link_existing"`, done in-app.
+   - **KNOWN DEFECT surfaced, NOT yet fixed:** `findOpenPresettlementTourForUnit` returns closed/paid/
+     final tours, so the auto REG-008/booking path CAN silently REG-040-reverse a posted settlement on
+     a routine driver assignment. Tests (`presettlement-link.service.test.ts` lines 363/474) assert the
+     closed-tour reopen is INTENTIONAL, so this is an owner design decision, not a unilateral code flip.
