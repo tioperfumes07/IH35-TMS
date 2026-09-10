@@ -1,6 +1,6 @@
 {
  "date": "2026-09-10",
- "generated_at_iso": "2026-09-10T04:53:16.248Z",
+ "generated_at_iso": "2026-09-10T11:30:29.460Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 30,
@@ -13727,6 +13727,12 @@
  ],
  "merged_prs": [
   {
+   "number": 21642,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-10T04:53:45Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 21641,
    "title": "FINDING: N/A (docs only — Maintenance module bug/discrepancy audit, owner request)",
    "mergedAt": "2026-09-10T04:22:17Z",
@@ -17319,12 +17325,6 @@
    "title": "chore: renumber 10517/10521 -> 10533/10537 (duplicate-claim resolution)",
    "mergedAt": "2026-09-06T19:51:06Z",
    "branch": "chore/claim-reserve-10533-10537-renumber"
-  },
-  {
-   "number": 21029,
-   "title": "Claude-3: FINDING: RG-02 (partial) — settlements grid load-drill id fix",
-   "mergedAt": "2026-09-06T19:48:01Z",
-   "branch": "claude-3/rg02-settlements-grid-honest-labels"
   }
  ],
  "merged_pr_total": 3000,
