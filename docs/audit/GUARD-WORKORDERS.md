@@ -10329,3 +10329,42 @@ trace (`6edcb351`/`6e908ee1`/`bd56ad0d`) with matching `integrations.samsara_dri
 (`525dcacc`→USMCA, `1f4245dd`→TRANSP) confirming the TRANSP/USMCA shared-fleet link is correct and only
 the USMCA-side duplicate is spurious | **OPEN · root-caused live, not fixed · supersedes the 09-07
 license/name-matcher framing on `SAMSARA-TMS-DRIVER-LINKAGE-GAP-USMCA`** |
+
+## FACTORING "MISSING PAGES" — live-Chrome CONFIRMED resolved by the loading-race fix (CC-3, 2026-09-09)
+
+**Closes the loop on the FACTORING-HARD-NAV-LOSES-COMPANY-CONTEXT fix above, which was shipped but only
+marked "pending next frontend deploy — cannot Chrome-verify a merge before it ships."** Deploy has since
+happened (`/api/v1/healthz/shallow` `git_sha=c2dd10bfcc`, `main` tip, built `2026-09-09T21:05Z` —
+confirmed the fix commit `7d01c9cad7` is an ancestor). Did the real live-Chrome walkthrough the owner's
+mega-report asked for, cold direct navigation (fresh tab, no in-app click) to every page the owner
+named as "missing":
+
+- `/factoring/aging` — **real data**, 51-row Aging Report, no empty state.
+- `/factoring/account-summary` — **real data**, Beginning/Ending Balance Sheet Items (7 rows) + Fees
+  Paid + Other Adjustments, with an honest inline disclosure ("No date-range picker this pass — this
+  schema has no historical period-close snapshot… without fabricating history") instead of a fake
+  filter.
+- `/factoring/chargebacks-overpayments` — **real data**, 51 rows, default columns are Advance/Date/
+  Invoice/Customer/Statement Ref/Chargeback/Fee/Load — factoring-only, no driver-pay/margin/trip-expense
+  columns visible by default (that specific owner complaint is also already resolved, not just the nav
+  race).
+- `/factoring/purchase-report` — **real data**, 51 rows.
+- `/factoring/payments-to-you` — **real data**, 51 rows, running total column.
+
+**None of these pages were ever actually missing** — every one of them rendered correctly once the
+company-context loading race (fixed in #21531) stopped painting the "select a company" empty state
+during the ~1-tick async window on a cold/direct load. The owner's "you told me you already had a
+coder working on this, and it is just [unfinished]" reading of a fresh bookmark/link hit during that
+window is now explained and closed, not just asserted fixed.
+
+**Still genuinely open from the same owner mega-report block (not touched this pass):** KPI-box/company-
+profile proportions, date-range-filter+gear row placement, the unnamed table needing a real name,
+column-order (invoice→advance→reserve→fees), monthly-fee-summary split, Statements/Settings summary-vs-
+detail toggle, Faro Daily Import filters, and the "balances are different" claim (separately already
+traced to zero discrepancy per `FACTORING-BALANCES-DIFFERENT-CLAIM`, PR #21556) — these are UI-layout/
+polish items, not "missing," and remain queued in `docs/bus/INBOX-CC-3.md`.
+
+| `apps/frontend/src/pages/factoring/FactoringHome.tsx` (no new code this pass — verification only) |
+**CC-3** | none — confirmed working | live-Chrome cold-navigation screenshots this session, all 5
+named pages, all rendering real rows (51 each) | **CONFIRMED LIVE · "missing pages" complaint closed ·
+remaining owner items are layout/polish, tracked separately in INBOX-CC-3** |
