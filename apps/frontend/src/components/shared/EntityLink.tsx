@@ -315,14 +315,17 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/dispatch/loads/${id}`;
     case "bill":
       return `/accounting/bills/${id}`;
-    // driver_bill is deliberately NOT routed here. ACCT-F5870: a same-day 4th-emergency
+    // driver_bill must NEVER share the accounting.bills route. ACCT-F5870: a same-day 4th-emergency
     // compile-error fix wrongly merged `case "bill": case "driver_bill":` sharing this route --
     // driver_finance.driver_bills (settlement_lines.source_driver_bill_id, S.1b/L5) is a DIFFERENT
     // table from accounting.bills with a disjoint id space (see the
     // driver-finance-driver-bills-not-accounting-bills landmine: kind="bill" 404s on a real
-    // driver_finance.driver_bills id). No dedicated driver_bills/:id detail page/route exists yet --
-    // falls through to `default: return null` below (plain text, never a fabricated/wrong route),
-    // same as every other not-yet-linked kind.
+    // driver_finance.driver_bills id). REG-023(b) (owner 2026-09-10) built the dedicated
+    // driver_finance driver-bill detail page + route, so driver_bill now resolves to ITS OWN path
+    // (never /accounting/bills/:id): /driver-finance/driver-bills/:id (DriverBillDetailPage → the
+    // canonical Driver Pay detail keyed by the bill's load).
+    case "driver_bill":
+      return `/driver-finance/driver-bills/${id}`;
     case "invoice":
       return `/accounting/invoices/${id}`;
     case "journal_entry":

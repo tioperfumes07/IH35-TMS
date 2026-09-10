@@ -1,6 +1,6 @@
 {
   "healthzSha": "f1ec645",
-  "generated_at": "2026-09-10T19:47:32.437Z",
+  "generated_at": "2026-09-10T19:54:52.019Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 21678,
+      "title": "FINDING: REG-046 — invoice table columns not in money waterfall order",
+      "state": "merged",
+      "mergedAtCt": "09/10/2026, 02:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21678",
+      "sha": "35a20f2852",
+      "committedAtIso": "2026-09-10T14:52:50-05:00"
+    },
+    {
+      "number": 21676,
+      "title": "FINDING: N/A (docs/bus only) — re-open REG-040 closed-settlement continuation as GPT top row (owner order)",
+      "state": "merged",
+      "mergedAtCt": "09/10/2026, 02:48 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21676",
+      "sha": "66e62236a2",
+      "committedAtIso": "2026-09-10T14:48:39-05:00"
+    },
+    {
       "number": 21675,
       "title": "FINDING: REG-015 — 6 dashed factoring stubs were placeholders, not real tabs",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21668",
       "sha": "6901e10f48",
       "committedAtIso": "2026-09-10T14:17:45-05:00"
-    },
-    {
-      "number": 21667,
-      "title": "FINDING: N/A (docs/bus only) — full seat fan-out + comms protocol so all coders build in parallel",
-      "state": "merged",
-      "mergedAtCt": "09/10/2026, 02:11 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21667",
-      "sha": "d6c8dea23e",
-      "committedAtIso": "2026-09-10T14:11:14-05:00"
-    },
-    {
-      "number": 21666,
-      "title": "FINDING: B-1 REG-002 vendor data-completeness audit + vendor→expense-account proposal for CC-1 (no writes)",
-      "state": "merged",
-      "mergedAtCt": "09/10/2026, 02:08 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21666",
-      "sha": "66a7159052",
-      "committedAtIso": "2026-09-10T14:08:09-05:00"
     }
   ]
 }
