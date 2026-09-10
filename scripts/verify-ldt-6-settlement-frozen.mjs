@@ -32,6 +32,15 @@ function audit(src) {
     ["$/mi practical row", /<span>Per practical mile<\/span><span className="ldt-m">\{perMile\(tot\.per_mile_practical_cents\)\}/],
     ["$/mi real row", /<span>Per real mile<\/span><span className="ldt-m">\{perMile\(tot\.per_mile_real_cents\)\}/],
     ["GL account per line", /l\.account_label \?\? <span className="ldt-pill bad">no account<\/span>/],
+    // REG-024 (owner 2026-09-10) — AlwaysTrack Company Settlement parity: the four PDF sections must
+    // be on-screen (CUSTOMER CHARGES · DRIVER PAYMENT is the driver card above · FUEL + EXPENSES · REVENUE
+    // waterfall). Every figure is DERIVED from the same readout (no second sum), so this only asserts the
+    // sections render — the numbers are guarded by the readout's own tests.
+    ["REG-024 customer charges section", /data-testid="settlement-customer-charges"/],
+    ["REG-024 customer charges total line haul", /data-testid="customer-charges-total-amount"/],
+    ["REG-024 fuel & expenses section", /data-testid="settlement-fuel-expenses"/],
+    ["REG-024 revenue waterfall section", /data-testid="settlement-revenue-waterfall"/],
+    ["REG-024 revenue net row (% + per-mile)", /data-testid="revenue-row-net"/],
     ["frozen note", /Closed = frozen: no editable field; corrections are a reversing entry\./],
     ["PDF link", /data-testid="settlement-pdf-link"/],
     ["dash never zero for unknown miles", /const miles = \(m: number \| null \| undefined\) => \(m == null \? DASH/],
@@ -49,6 +58,9 @@ if (process.argv.includes("--selftest")) {
     ["editable field planted", src + '\n// <input value="x" />'],
     ["second read model", src + "\n// getPreSettlementForDriver()"],
     ["frozen note removed", src.replace("Closed = frozen: no editable field; corrections are a reversing entry.", "Closed.")],
+    ["REG-024 customer charges removed", src.replace('data-testid="settlement-customer-charges"', 'data-testid="x"')],
+    ["REG-024 fuel & expenses removed", src.replace('data-testid="settlement-fuel-expenses"', 'data-testid="x"')],
+    ["REG-024 revenue waterfall removed", src.replace('data-testid="settlement-revenue-waterfall"', 'data-testid="x"')],
     ["dash rule removed", src.replace("const miles = (m: number | null | undefined) => (m == null ? DASH", "const miles = (m: number | null | undefined) => (m == null ? 0")],
   ];
   let escaped = 0; for (const [l, m] of plants) if (audit(m).length === 0) { console.error(`SELFTEST FAIL — not caught: ${l}`); escaped++; }
