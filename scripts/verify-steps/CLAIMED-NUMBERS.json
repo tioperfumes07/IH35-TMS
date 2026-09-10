@@ -8498,5 +8498,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-10",
     "purpose": "verify-fleet-edit-is-side-drawer"
+  },
+  "11161": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-10",
+    "purpose": "verify-driver-profile-compact-layout"
   }
 }
