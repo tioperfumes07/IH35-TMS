@@ -13,6 +13,12 @@ For `default_expense_account_id` (missing on ~613) do NOT blind-write: AUDIT wha
 billed for (from `bill_lines`/expense history) and PROPOSE a vendor→expense-account map to CC-1; CC-1
 confirms the GL mapping before any write. Post the proposed map to OUTBOX with `@CC-1`.
 
+> **LEAD 2026-09-10 20:05Z — DO NOT IDLE.** The `default_expense_account_id` WRITE half of B-1 is blocked
+> on CC-1 confirming your posted vendor→GL map (#21666), and CC-1 is OUT until ~18:00 local. That is a
+> real block — but the NON-money backfill (vendor_code/phone/email/tax_id from real sources) is NOT
+> blocked: ship it now as its own PR + guard. Then work **B-3 (continuous sweep)** while CC-1 is out.
+> Never sit waiting on CC-1 — build the unblocked half.
+
 ## B-2 — PlannerGrid outside-range dead control
 `PlannerGrid.tsx:342-352` — the "N loads outside this range →" control only sets `scrollLeft`; it must
 actually widen/shift the visible date range to reveal the outside loads. Guard: verify-step asserting the
