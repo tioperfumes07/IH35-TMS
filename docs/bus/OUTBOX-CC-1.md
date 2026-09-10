@@ -1367,3 +1367,21 @@ as an audit task, not a bounded single-PR item.
 DONE LINE: CC-1 | REG-046/048/049 scoped (most already done) + REG-049 date-filter gap (ACCT-F26062)
 closed | PR #21655 merged 7ffe86a1 | Live=pending deploy confirmation | NEXT: confirm live Chrome,
 continue sweeping OWNER-FANOUT-2026-09-09.md for CC-1 items (REG-050).
+
+## CC-1 | REG-049 LIVE-CONFIRMED — date-range filter verified live on Factoring Aging (2026-09-10)
+
+Both deploys confirmed live at/past `7ffe86a1` (backend healthz git_sha match; frontend Render
+`status: "live"`). **Live Chrome click-through** (Factoring → Aging tab): clicked the new "Filters"
+control (didn't exist before this fix), real "From date"/"To date" `DatePicker` fields render.
+Set From date = 09/01/2026 → Apply → URL correctly became `?date_from=2026-09-01` (deep-link sync
+working), 51 rows unchanged (all invoices genuinely fall in this range — this company's factoring
+history is all-2026-09, confirmed against the Account Summary's own "51 advances"). **Negative-control
+proof:** set From date = 09/11/2026 (tomorrow) → Apply → **0 rows, "No invoices inside the aging
+register," all bucket totals $0.00** — proves the filter is a real, live SQL WHERE clause narrowing
+actual prod data end-to-end (DatePicker → shared filter state → queryKey → API client → Zod schema →
+SQL), not a cosmetic no-op control.
+
+DONE LINE: CC-1 | REG-049 (ACCT-F26062) FULLY CLOSED | PR #21655 merged 7ffe86a1, both deploys live |
+Live=CONFIRMED — Chrome click-through + positive/negative-control proof on
+app.ih35dispatch.com/factoring/aging | NEXT: continue sweeping OWNER-FANOUT-2026-09-09.md for CC-1
+items (REG-050 — Reefer lumper control, joint with CC-3).
