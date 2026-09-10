@@ -388,9 +388,9 @@ export function APAgingPage() {
             >
               Vendor profile
             </Button>
-            <Button size="sm" variant="secondary" disabled onClick={() => pushToast("Scheduled payments ship Phase 6+", "info")}>
-              Schedule payment
-            </Button>
+            <span className="inline-flex items-center rounded-sm bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500" title="Scheduled payments ship Phase 6+">
+              Schedule payment · Phase 6+
+            </span>
           </div>
         )}
       />
