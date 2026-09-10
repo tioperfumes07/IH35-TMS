@@ -577,3 +577,22 @@ actual prod post next (owner-authorized) can point `REBUILD_DB_URL`/`DATABASE_UR
 `assertNotProd` will refuse it anyway; that gate has no override, by design, and should NOT be removed
 to make the live post possible. That removal itself would need to be a reviewed, explicit, owner-visible
 change, not a quiet edit to get this rebuild out the door.
+
+## Fleet trailer identity — APD placeholders relabeled to real numbers (Cursor, 2026-09-10, REG-034)
+
+The 20 `USMCA-APD-16..35` `mdata.equipment`/`mdata.assets` rows were NOT owner trailer numbers — they were
+insurance-intake placeholder labels from the SIGNED Lloyd's APD quote 437539 (loaded 2026-08-31 by Claude
+GO-01 #19315). The owner's real numbers map to them BY VIN in `docs/reconcile/AT-TMS-TRAILERS-2026-09-01.csv`,
+and 12 had been created as SEPARATE duplicate rows (vin=NULL, dry_van, 2026-09-05/07). Owner-authorized
+2026-09-10 ("REG-034 TO THEIR REAL NUMBERS"). Applied live (USMCA `br-fancy-credit`, one atomic tx):
+- retired the 12 duplicate vin=NULL rows (equipment_number/unit_code `…-DUP-VOID-20260910`,
+  equipment `status='OutOfService'`+`deactivated_at`, asset `status='retired'`+`out_of_service=true`) —
+  **void-not-delete**;
+- relabeled the 18 VIN-matched APD rows (equipment+asset) to real numbers.
+Post-state proven: `active_apd_left=2`, `retired_dups=12`. Full map + SQL + proof:
+`docs/reconcile/REG-034-APD-TRAILER-RELABEL-2026-09-10.md`. **STILL OPEN:** APD-25 (VIN …965870) and
+APD-28 (VIN …394706) have NO CSV mapping — nearest real numbers 10870 / FB-56710 differ by one VIN char;
+left as-is pending owner confirm, NOT guessed. `equipment_status` enum has NO 'Retired' value (use
+`OutOfService`); `mdata.equipment` has neither `is_active` nor `operating_company_id` (scope by
+equipment_number / owner_company_id / currently_leased_to_company_id); no FK anywhere references
+`mdata.equipment`/`mdata.assets`, so retiring duplicates orphans nothing.

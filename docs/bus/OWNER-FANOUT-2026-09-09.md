@@ -18,7 +18,14 @@ frontend lane + lead coordination.
 
 ---
 
-## REG-034 — DATA INTEGRITY: `USMCA-APD-*` trailers are insurance placeholders duplicating the real 10xxx trailers  ·  OWNER-DECISION + CC-3/Cursor
+## REG-034 — DATA INTEGRITY: `USMCA-APD-*` trailers relabeled to real numbers + duplicates retired  ·  DONE (Cursor, live 2026-09-10)
+**RESOLVED — owner authorized "REG-034 TO THEIR REAL NUMBERS" 2026-09-10.** Applied live on Neon USMCA:
+18 VIN-matched APD trailers relabeled to real numbers (equipment+asset), 12 duplicate vin=NULL dry_van
+rows retired (void-not-delete). Post-state: 2 APD left (APD-25/28, no CSV map — owner confirm), 12 dups
+retired. Record + proof: `docs/reconcile/REG-034-APD-TRAILER-RELABEL-2026-09-10.md`. OPEN: confirm
+APD-25→10870? and APD-28→FB-56710? (VINs differ by 1 char — not guessed). Original detail below.
+
+
 - **MEASURED (Neon, bypass_rls=lucia, USMCA):** `mdata.equipment` holds 20 rows `USMCA-APD-16..35`
   (created 2026-08-31, all with VIN, Reefer/Flatbed, `is_sample_data=false`) AND separate real-number
   rows `10202/10209/10218/10222/10224/10380/10870/10876…` (created 2026-09-05/07, `vin=NULL`). The
