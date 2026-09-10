@@ -1,3 +1,14 @@
+# ★★★ OWNER FAN-OUT — 2026-09-09 — see `docs/bus/OWNER-FANOUT-2026-09-09.md`
+Cursor lead + frontend lane. Data-integrity finding done: REG-034 (USMCA-APD trailers = insurance
+placeholders duplicating real 10xxx by VIN, NOT Cursor, NOT tampering — owner go needed before relabel).
+Cursor NOW (in order): **REG-054** re-verify settlement-number-everywhere on cefe071ba0 + extend;
+**REG-052** dead More/Open-driver-bill; **REG-044** compound-column guard + first offenders; **REG-047**
+factoring UI proportions; **REG-053** Fleet edit/side-modal. Owner-decision gates before writing:
+REG-034 (trailer relabel), REG-045 (tour vs per-load), REG-042 (needs the Downloads PDF). CC-2 is on
+MAINTENANCE — Banking (REG-035/036) sits with Cursor/CC-1 interim. Register is the single source. (HONEST-BUILT-LAUNCH-LAW-2026-08-14 in force) (HONEST-BUILT-LAUNCH-LAW-2026-08-14 in force)
+
+---
+
 # ★★★ HARD WAKE — 2026-09-07 03:48Z — Cursor cloud lead (owner: HARD WAKE)
 
 **Tip main:** `0cc2a61752` (#21232 navy loopholes just merged; FE+API deploy in flight). Live proof ROUND 16.25 ParityTable FIXED (Claude lead re-measured: Cash Flow 0/64 tall max 34.4px; Factoring 0/20 max 30.8px).
