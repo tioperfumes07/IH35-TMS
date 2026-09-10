@@ -38,6 +38,16 @@ export function listPlannerDays(range: PlannerRange): string[] {
   return out;
 }
 
+/** B-3: widen the planner range to include the given min/max YMD dates.
+ *  Only expands — never shrinks the existing range. Returns the new range
+ *  so the caller can pass it to setRange(). */
+export function widenPlannerRange(range: PlannerRange, minYmd: string, maxYmd: string): PlannerRange {
+  return {
+    start: minYmd < range.start ? minYmd : range.start,
+    end: maxYmd > range.end ? maxYmd : range.end,
+  };
+}
+
 export function usePlannerRangeState(initialDays: PlannerRangeDays = DEFAULT_PLANNER_RANGE_DAYS) {
   const [range, setRangeState] = useState<PlannerRange>(() => buildPlannerRange(initialDays));
   const rangeLength = useMemo(() => {
