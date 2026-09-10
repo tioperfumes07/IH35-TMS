@@ -16,6 +16,18 @@ const DASH = "—";
 const money = (c: number | null | undefined, cur = "USD") => (c == null ? DASH : formatMoneyCents(c, cur));
 const pct = (p: number | null | undefined) => (p == null ? DASH : `${p.toFixed(1)}%`);
 const miles = (m: number | null | undefined) => (m == null ? DASH : m.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }));
+// REG-033(b) (owner 2026-09-09): the pre-settlement must be scoped to THIS tour's number AND dates.
+// Format a date-only / timestamp string as MM/DD/YYYY without a Date() timezone shift.
+const fmtDate = (d: string | null | undefined): string | null => {
+  if (!d) return null;
+  const [y, m, day] = d.slice(0, 10).split("-");
+  return y && m && day ? `${m}/${day}/${y}` : d.slice(0, 10);
+};
+const periodLabel = (t: TourReadout["tour"]): string | null => {
+  if (!t) return null;
+  if (t.period_start || t.period_end) return `${fmtDate(t.period_start) ?? "…"} – ${fmtDate(t.period_end) ?? "open"}`;
+  return t.trip_started_at ? `started ${fmtDate(t.trip_started_at)}` : null;
+};
 
 /** Keyed by a load (drawer) OR by a settlement (Load costs board → Pre-Settlement tab, LDT-TABS). Same readout either way. */
 export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId, currencyCode = "USD" }: { loadId?: string; settlementId?: string; operatingCompanyId: string; currencyCode?: "USD" | "MXN" }) {
@@ -47,7 +59,8 @@ export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId,
 
   return <div className="ldt-body" data-testid="tour-presettlement-tab" data-surface="load-detail">
     <div className="ldt-rowbar">
-      <span>Tour <span className="ldt-k">{t.tour_id ? "Tour" : DASH}</span> · pre-settlement <EntityLink kind="settlement" id={t.settlement_id} label={t.display_id ?? "Settlement"} />{" "}
+      <span>Pre-Settlement <EntityLink kind="settlement" id={t.settlement_id} label={t.display_id ?? "Settlement"} />
+        {periodLabel(t) ? <> · <span className="ldt-k" data-testid="tour-presettlement-dates">{periodLabel(t)}</span></> : null}{" "}
         · {r.legs.map((l) => `${l.trip_type ?? "leg"} ${l.load_number}${l.is_this_load ? " (this load)" : ""}`).join(" · ")}{sb ? "" : " · SB —"} · {t.driver_name ?? "driver"}{t.unit_number ? ` · ${t.unit_number}` : ""}</span>
       <span className={`ldt-pill ${t.is_open ? "warn" : "ok"}`} data-testid="tour-state-chip">{t.is_open ? "open · nothing posted" : `closed · ${t.status}`}</span>
     </div>
@@ -58,7 +71,7 @@ export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId,
         <div className="ldt-row head"><span>Leg</span><span>Load</span><span>Lane</span><span className="ldt-m">Revenue</span><span className="ldt-m">Costs</span><span className="ldt-m">Driver pay</span><span className="ldt-m">Margin</span></div>
         {r.legs.map((l) => (
           <div key={l.load_id} className={`ldt-row click${l.is_this_load ? " this" : ""}${l.is_cancelled ? " cancelled" : ""}`} role="button" tabIndex={0} data-testid="tour-leg" onClick={() => setPopup({ title: `Leg ${l.trip_type ?? ""} · load ${l.load_number}`, body: <LegPop leg={l} cur={currencyCode} /> })}>
-            <span>{l.trip_type ?? DASH}</span><span className="ldt-k"><EntityLink kind="load" id={l.load_id} label={l.load_number} /></span><span>{l.lane || DASH}<span className="ldt-sub">{l.status}{l.is_delivered ? " · delivered" : ""}{l.is_cancelled ? " · excluded from the tour totals" : ""}</span></span>
+            <span>{l.trip_type ?? DASH}</span><span className="ldt-k"><EntityLink kind="load" id={l.load_id} label={l.load_number} /></span><span>{l.lane || DASH}<span className="ldt-sub">{[fmtDate(l.pickup_date), fmtDate(l.delivery_date)].filter(Boolean).join(" → ")}{l.pickup_date || l.delivery_date ? " · " : ""}{l.status}{l.is_delivered ? " · delivered" : ""}{l.is_cancelled ? " · excluded from the tour totals" : ""}</span></span>
             <span className="ldt-m">{money(l.revenue_cents, currencyCode)}</span><span className="ldt-m">{money(l.costs_cents, currencyCode)}</span><span className="ldt-m">{money(l.driver_pay_cents, currencyCode)}</span><span className="ldt-m">{money(l.margin_cents, currencyCode)}<span className="ldt-sub" data-testid="tour-leg-margin-pct">{pct(l.margin_pct)}</span></span>
           </div>
         ))}
