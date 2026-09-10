@@ -892,8 +892,8 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
 
       <DuplicateVendorsBanner companyId={companyId} />
 
-      <div className="grid grid-cols-1 gap-2 lg:grid-cols-12" data-testid="factoring-home-overview-row">
-        <div className="lg:col-span-7" data-testid="factoring-home-kpi-col">
+      <div className="flex flex-wrap items-start gap-2" data-testid="factoring-home-overview-row">
+        <div className="flex-1 min-w-0" data-testid="factoring-home-kpi-col">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="factoring-home-kpi-row">
             <DrillKpiCard
               testId="factoring-kpi-active-factor"
@@ -938,7 +938,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             />
           </div>
         </div>
-        <div className="lg:col-span-5" data-testid="factoring-home-profile-col">
+        <div className="flex-1 min-w-0" data-testid="factoring-home-profile-col">
           {activeFactor ? (
             <FactoringProfilePanel
               variant="compact"
