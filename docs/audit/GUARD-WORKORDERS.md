@@ -2,6 +2,7 @@
 <!-- FINDINGS-TRIPLE-LOCK-LAW: every finding here follows board + register + Desktop routing + OUTBOX in one turn -->
 
 - **REG-050-WO-TERMINAL-ACTIONS — OPEN (CODEX, 2026-09-10):** authenticated live Work Orders console detail for cancelled `WO-T150-AC-08-29-2026-0001-PEND0` rendered enabled Approve, Start work, Complete, and Cancel WO actions. `WorkOrdersConsoleDetailPage.tsx` rendered them without status predicates; `work-orders.routes.ts` approve SQL had no terminal/void predicate and could stamp a cancelled row approved. Routed=CODEX Fleet/Maintenance. Fix in current block: one canonical action matrix in the UI and approve restricted to open/non-voided rows, guarded by `verify-reg050-work-orders-module-home.mjs`.
+- **REG-050-WO-TERMINAL-LABOR — OPEN (CODEX, 2026-09-10):** the same authenticated cancelled Work Order rendered enabled timer/manual labor creators. Both labor INSERT routes only checked WO identity/company and could add economic labor after cancellation. Routed=CODEX Fleet/Maintenance. Fix in current block: terminal detail is read-only, both create routes require `voided_at IS NULL` and nonterminal status, while Stop remains available to close a timer that was already running.
 
 ## Active Architectural Decisions & Known Quirks (owner 2026-09-08: folded into this board instead
 of a separate memory file, so it stays next to the findings it explains and inherits this board's

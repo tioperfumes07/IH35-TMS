@@ -23,6 +23,7 @@ import { SelectCombobox } from "../../components/Combobox";
 type Props = {
   workOrderId: string;
   operatingCompanyId: string;
+  readOnly?: boolean;
 };
 
 const ACTORS = ["vendor", "internal_mechanic", "driver", "admin"] as const;
@@ -42,7 +43,7 @@ function laborEntryCodeLabel(row: WoTimeEntryRow, codes: LaborCodeOption[]): str
   return "General labor";
 }
 
-export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) {
+export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId, readOnly = false }: Props) {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const auth = useAuth();
@@ -231,6 +232,7 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
             className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={actorKind}
             onChange={(e) => setActorKind(e.target.value as (typeof ACTORS)[number])}
+            disabled={readOnly}
           >
             {ACTORS.map((a) => (
               <option key={a} value={a}>
@@ -246,16 +248,17 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
             value={laborRate}
             onChange={(e) => setLaborRate(e.target.value.replace(/[^\d]/g, ""))}
             placeholder="optional"
+            disabled={readOnly}
           />
         </label>
         <label className="text-xs text-slate-600 md:col-span-1">
           Notes
-          <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" value={notes} onChange={(e) => setNotes(e.target.value)} disabled={readOnly} />
         </label>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        <Button type="button" size="sm" onClick={() => void startMut.mutateAsync()} disabled={startMut.isPending || openEntries.length > 0}>
+        <Button type="button" size="sm" onClick={() => void startMut.mutateAsync()} disabled={readOnly || startMut.isPending || openEntries.length > 0}>
           Start timer
         </Button>
         {openEntries.length > 0 ? <span className="text-xs text-slate-600">An open timer exists — stop it before starting another.</span> : null}
@@ -266,15 +269,15 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
         <div className="mt-2 grid gap-2 md:grid-cols-2">
           <label className="text-xs text-slate-600">
             Started (ISO)
-            <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" value={manualStart} onChange={(e) => setManualStart(e.target.value)} />
+            <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" value={manualStart} onChange={(e) => setManualStart(e.target.value)} disabled={readOnly} />
           </label>
           <label className="text-xs text-slate-600">
             Ended (ISO)
-            <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" value={manualEnd} onChange={(e) => setManualEnd(e.target.value)} />
+            <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" value={manualEnd} onChange={(e) => setManualEnd(e.target.value)} disabled={readOnly} />
           </label>
         </div>
         <div className="mt-2">
-          <Button type="button" size="sm" variant="secondary" onClick={() => void manualMut.mutateAsync()} disabled={manualMut.isPending}>
+          <Button type="button" size="sm" variant="secondary" onClick={() => void manualMut.mutateAsync()} disabled={readOnly || manualMut.isPending}>
             Save manual entry
           </Button>
         </div>
@@ -308,7 +311,7 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
                       Stop
                     </Button>
                   ) : null}
-                  {isOwnerAdmin ? (
+                  {isOwnerAdmin && !readOnly ? (
                     <>
                       <Button
                         type="button"
