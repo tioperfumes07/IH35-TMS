@@ -9,3 +9,8 @@ DEVIN-A is retired. Stop. No Book Load. No OUTBOX.
 - 3 new backend endpoints + 3 new API functions + 3 new React Query hooks
 - Fixed pre-existing selftest bug in verify-customer-factoring-reverse-section.mjs
 - PR #21675 merged --admin --squash
+
+## DEVIN-A | REG-046 DONE | 35a20f2852 | 35a20f2852 | column order = Invoiced Date→Settlement #→Delivery Date→Original Invoice Amount→Advance→Reserve→Fees, guard 11190 PASS | NEXT REG-043
+- Invoice table columns reordered to money waterfall order
+- Explanatory label added with "money waterfall" text
+- PR #21678 merged --admin --squash
