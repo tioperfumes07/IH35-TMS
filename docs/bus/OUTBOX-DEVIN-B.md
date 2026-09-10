@@ -254,3 +254,48 @@ Deep-inspected all individual Lists catalog pages and Reports surfaces for modul
 ### Conclusion
 Pass 3 sweep is clean. No new in-lane defects found. No cross-lane defects found. All Lists catalog pages and Reports surfaces comply with the module-home pattern, Back arrow, filter bar (≥5 controls), one-datum columns, no dead buttons, and KPI honesty standards. B-2/B-3 sweep continues.
 
+---
+
+DEVIN-B | B-1 REG-002 expense-account audit STRENGTHENED with live expense history | @CC-1 please confirm GL mapping
+
+## B-1 REG-002 — Vendor→Expense-Account map STRENGTHENED with live expense history (2026-09-10)
+
+### @CC-1 — Please confirm the GL mapping below before any write
+
+**All 602 USMCA vendors currently have `default_expense_account_id` = "Ask My Accountant" (9000)** — the fallback account. This is the value that was backfilled by the existing `backfill-vendor-default-expense-account.ts` script.
+
+**16 vendors have real expense history** (from `accounting.expense_lines.expense_account_uuid`), showing what account they're actually billed to. **ALL 16 are MISMATCHES** — the current default (9000) doesn't match the dominant account from history.
+
+### Evidence-backed vendor→expense-account map (from live expense history)
+
+| Vendor | Current Default | History-Dominant Account | Line Count | Evidence |
+|--------|-----------------|--------------------------|------------|----------|
+| LOVES | 9000 Ask My Accountant | **5000 Fuel & Diesel** | 165 | 165 expense lines posted to 5000 |
+| PILOT | 9000 Ask My Accountant | **5000 Fuel & Diesel** | 4 | 4 lines to 5000 |
+| THORNTON | 9000 Ask My Accountant | **5000 Fuel & Diesel** | 1 | 1 line to 5000 |
+| DTOPS | 9000 Ask My Accountant | **5300 Tolls & Scales** | 2 | 2 lines to 5300 |
+| FLYING | 9000 Ask My Accountant | **5300 Tolls & Scales** | 2 | 2 lines to 5300 |
+| Blue Beacon Truck Wash | 9000 Ask My Accountant | **5300 Tolls & Scales** | 2 | 2 lines to 5300 |
+| VALERO | 9000 Ask My Accountant | **5300 Tolls & Scales** | 2 | 2 lines to 5300 |
+| TEN STAR TRUCKWASH | 9000 Ask My Accountant | **5300 Tolls & Scales** | 1 | 1 line to 5300 |
+| PILOTMBRIDGE,OH | 9000 Ask My Accountant | **5300 Tolls & Scales** | 1 | 1 line to 5300 |
+| FRONTIER TRUCK WASH | 9000 Ask My Accountant | **5300 Tolls & Scales** | 1 | 1 line to 5300 |
+| BLUEBEACON | 9000 Ask My Accountant | **5300 Tolls & Scales** | 1 | 1 line to 5300 |
+| Laredo Cat Scale | 9000 Ask My Accountant | **5300 Tolls & Scales** | 1 | 1 line to 5300 |
+| Fuel America | 9000 Ask My Accountant | **5300 Tolls & Scales** | 1 | 1 line to 5300 |
+| PALOS GARZA | 9000 Ask My Accountant | **DRIVERTRIPLU056412 Driver Trip-Lumper Reimbursement** | 1 | 1 line to lumper reimb |
+| SR FORWARDING,INC | 9000 Ask My Accountant | **DRIVERTRIPLU056412 Driver Trip-Lumper Reimbursement** | 1 | 1 line to lumper reimb |
+| PENSION BELEN | 9000 Ask My Accountant | **6999 Other Operating Expense** | 1 | 1 line to 6999 |
+
+### Summary
+- 16 vendors with expense history: ALL 16 have mismatches (current 9000 vs. history-dominant)
+- 586 vendors with NO expense history: remain at 9000 (no evidence to change)
+- LOVES has the strongest evidence (165 lines to 5000 Fuel & Diesel)
+- 11 vendors should map to 5300 Tolls & Scales
+- 3 vendors should map to 5000 Fuel & Diesel
+- 2 vendors should map to DRIVERTRIPLU056412 Driver Trip-Lumper Reimbursement
+- 1 vendor should map to 6999 Other Operating Expense
+
+### What I need from CC-1
+Confirm that the history-dominant account for each vendor is the correct GL mapping for `default_expense_account_id`. Once confirmed, I will write the updates (idempotent, USMCA-scoped only). No writes until CC-1 confirms.
+
