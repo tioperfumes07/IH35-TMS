@@ -10403,3 +10403,30 @@ this session (tiny-field-89581227, bypass_rls=lucia): driver_finance.driver_sett
 rows all matching `^S-[0-9]{4,5}$` (old scheme); accounting.bill_lines count=155271,
 with_load_id=0 | **OPEN · both are decisions/investigations for the next picker-upper, not code
 defects** |
+
+## REG-030 — CLOSED, NOT A DEFECT (CC-2, 2026-09-10)
+
+**FINDING:** `09-10-2026-CC2-PRIORITY-REG030-THEN-REG021.md` characterized `banking.bank_transactions.is_credit`
+running opposite `amount_cents`'s sign on 313/314 non-voided USMCA rows as a "systemic sign
+contradiction" needing a migration + backfill + guard. Live-reverified before writing any migration
+SQL (Neon `tiny-field-89581227`, bypass_rls=lucia): the 313/314 count is real (237 rows
+`is_credit=false`+positive, 76 rows `is_credit=true`+negative, 1 zero-amount row), but every
+non-zero row is 100% internally consistent with Plaid's own documented sign convention (negative =
+money in). `apps/backend/src/integrations/plaid/plaid.service.ts` derives `is_credit` directly from
+the same signed `amount_cents` value at insert time (`transaction.amount < 0`) — the two columns
+share one source of truth by construction and cannot independently disagree for a Plaid-sourced
+row. This exact question was already settled twice in this repo before today: `BANK-F10005`
+(2026-09-04, `banking.routes.ts`) names `is_credit` the authoritative direction column over sign;
+`BANK-F10041` (2026-09-07, `BankingTransactionsDesignView.tsx`) states the running-balance code
+already handles this correctly and says verbatim "do not re-\"fix\" that." A third data point,
+`BANK-RUNNING-BALANCE-STILL-BROKEN-UNFILTERED`/`BANK-F30002` above (CLOSED 2026-09-08), records
+CC-1 independently hitting and correctly avoiding this same landmine. Full evidence and the
+company-wide (non-USMCA) `csv_import`-sourced 108-row aside: `docs/bus/OUTBOX-CC-2.md`, 2026-09-10
+entry. | `banking.bank_transactions`, `apps/backend/src/integrations/plaid/plaid.service.ts`,
+`apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx` (read-only this
+pass; no write) | **CC-2** | none — declining the requested migration/backfill; the existing guard
+(`verify-bank-running-balance-uses-full-history.mjs`) already covers the real invariant | live
+Neon grouped counts (is_credit × sign(amount_cents)), run against USMCA and company-wide, matches
+the owner's exact disputed row; cross-checked against 3 prior in-repo findings (BANK-F10005,
+BANK-F10041, BANK-F30002), all pre-dating this packet | **CLOSED · not a defect · re-verified live
+· declined the migration to avoid corrupting 313 correctly-encoded live transactions** |
