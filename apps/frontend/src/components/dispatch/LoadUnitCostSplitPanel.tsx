@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getLoadUnitCostSplit } from "../../api/accounting";
 import { formatMoneyCents } from "./constants";
+import { ResizableTable } from "../shared/ResizableTable";
 
 /**
  * SET-28 — vehicle-swap mid-trip cost split by miles each truck ran.
@@ -9,6 +10,10 @@ import { formatMoneyCents } from "./constants";
  * attributed across the truck(s) that ran it, weighted by miles. One truck → a single 100% row
  * (the normal case). A mid-trip swap → one row per truck, each with its miles and miles-weighted
  * dollar share, reconciling exactly to the pool. Driver pay is NOT here — it follows the driver.
+ *
+ * GO-26-CONSOLIDATION-RATCHET: renders through the shared ResizableTable/ResizableTh (same
+ * infrastructure CustomerListSidebar/VendorListSidebar use), never a hand-rolled table element —
+ * that would have been new sprawl behind the owner's "consolidate every screen" ruling.
  */
 
 const BASIS_LABEL: Record<string, string> = {
@@ -16,6 +21,9 @@ const BASIS_LABEL: Record<string, string> = {
   time_window: "practical miles by time each truck was assigned",
   equal: "split evenly — no miles captured yet",
 };
+
+const TD_CLASS = "border-b border-gray-100 px-2 py-1 tabular-nums";
+const TOTAL_TD_CLASS = `${TD_CLASS} font-bold`;
 
 export function LoadUnitCostSplitPanel({
   loadId,
@@ -54,38 +62,43 @@ export function LoadUnitCostSplitPanel({
           {formatMoneyCents(data.pool_cents, currency)} · basis: {BASIS_LABEL[data.miles_basis] ?? data.miles_basis}
         </span>
       </div>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }} data-testid="load-unit-cost-split-table">
-        <thead>
-          <tr>
-            <th style={thStyle("left")}>Truck</th>
-            <th style={thStyle("right")}>Miles</th>
-            <th style={thStyle("right")}>Share</th>
-            <th style={thStyle("right")}>Cost</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.units.map((u) => (
-            <tr key={u.unit_id} data-testid="load-unit-cost-split-row">
-              <td style={tdStyle("left")}>{u.unit_number ?? "—"}</td>
-              <td style={tdStyle("right")}>{u.miles > 0 ? u.miles.toFixed(1) : "—"}</td>
-              <td style={tdStyle("right")} data-testid="load-unit-cost-split-pct">{u.miles_pct.toFixed(1)}%</td>
-              <td style={tdStyle("right")} data-testid="load-unit-cost-split-cost">{formatMoneyCents(u.allocated_cost_cents, currency)}</td>
-            </tr>
-          ))}
-        </tbody>
-        {multi ? (
-          <tfoot>
-            <tr>
-              <td style={{ ...tdStyle("left"), fontWeight: 700 }}>Total</td>
-              <td style={{ ...tdStyle("right"), fontWeight: 700 }}>{data.total_miles > 0 ? data.total_miles.toFixed(1) : "—"}</td>
-              <td style={{ ...tdStyle("right"), fontWeight: 700 }}>100.0%</td>
-              <td style={{ ...tdStyle("right"), fontWeight: 700 }} data-testid="load-unit-cost-split-total">
-                {formatMoneyCents(data.pool_cents, currency)}
-              </td>
-            </tr>
-          </tfoot>
-        ) : null}
-      </table>
+      <ResizableTable
+        tableId="load-unit-cost-split"
+        tableClassName="w-full text-xs"
+        columns={[
+          { id: "truck", label: "Truck", defaultWidth: 120, align: "left" },
+          { id: "miles", label: "Miles", defaultWidth: 90, align: "right" },
+          { id: "share", label: "Share", defaultWidth: 80, align: "right" },
+          { id: "cost", label: "Cost", defaultWidth: 100, align: "right" },
+        ]}
+      >
+        {(widths) => (
+          <>
+            <tbody data-testid="load-unit-cost-split-table">
+              {data.units.map((u) => (
+                <tr key={u.unit_id} data-testid="load-unit-cost-split-row">
+                  <td style={{ width: widths.truck }} className={TD_CLASS}>{u.unit_number ?? "—"}</td>
+                  <td style={{ width: widths.miles }} className={`${TD_CLASS} text-right`}>{u.miles > 0 ? u.miles.toFixed(1) : "—"}</td>
+                  <td style={{ width: widths.share }} className={`${TD_CLASS} text-right`} data-testid="load-unit-cost-split-pct">{u.miles_pct.toFixed(1)}%</td>
+                  <td style={{ width: widths.cost }} className={`${TD_CLASS} text-right`} data-testid="load-unit-cost-split-cost">{formatMoneyCents(u.allocated_cost_cents, currency)}</td>
+                </tr>
+              ))}
+            </tbody>
+            {multi ? (
+              <tfoot>
+                <tr>
+                  <td style={{ width: widths.truck }} className={TOTAL_TD_CLASS}>Total</td>
+                  <td style={{ width: widths.miles }} className={`${TOTAL_TD_CLASS} text-right`}>{data.total_miles > 0 ? data.total_miles.toFixed(1) : "—"}</td>
+                  <td style={{ width: widths.share }} className={`${TOTAL_TD_CLASS} text-right`}>100.0%</td>
+                  <td style={{ width: widths.cost }} className={`${TOTAL_TD_CLASS} text-right`} data-testid="load-unit-cost-split-total">
+                    {formatMoneyCents(data.pool_cents, currency)}
+                  </td>
+                </tr>
+              </tfoot>
+            ) : null}
+          </>
+        )}
+      </ResizableTable>
       {!data.reconciled ? (
         <div style={{ fontSize: 11, color: "#B91C1C", marginTop: 4 }} data-testid="load-unit-cost-split-unreconciled">
           Split does not reconcile to the cost pool — do not trust these figures.
@@ -93,24 +106,4 @@ export function LoadUnitCostSplitPanel({
       ) : null}
     </section>
   );
-}
-
-function thStyle(align: "left" | "right"): React.CSSProperties {
-  return {
-    textAlign: align,
-    fontSize: 11,
-    fontWeight: 700,
-    textTransform: "uppercase",
-    color: "#4B5563",
-    padding: "4px 8px",
-    borderBottom: "1px solid #E5E7EB",
-  };
-}
-function tdStyle(align: "left" | "right"): React.CSSProperties {
-  return {
-    textAlign: align,
-    padding: "4px 8px",
-    borderBottom: "1px solid #F3F4F6",
-    fontVariantNumeric: "tabular-nums",
-  };
 }
