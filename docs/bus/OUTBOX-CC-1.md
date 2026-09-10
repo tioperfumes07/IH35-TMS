@@ -1328,3 +1328,42 @@ build whichever the owner picks once decided.
 DONE LINE: CC-1 | REG-040 status correction | live Neon trace, no code change (item mostly already
 resolved) | register + outbox updated | 1 point (re-settlement definition) left OPEN pending owner
 decision | NEXT: continuing OWNER-FANOUT-2026-09-09.md sweep (REG-046/048/049/050).
+
+## CC-1 | REG-046/048/049 scoped + REG-049 date-filter gap closed (ACCT-F26062), deploy triggered (2026-09-10)
+
+Scoped REG-046 (Factoring report pages), REG-048 (default columns), REG-049 (chargebacks split +
+QBO filters + reconcile). Live code investigation: **REG-046's 6 named report pages were already
+built and shipped** (FAC-09a/NEW-20..26/FUNDS-DUE-01, merged 2026-09-07..09, all reachable at
+`/factoring/<tab>` in `FactoringHome.tsx`'s 15-tab SUBNAV) — Accounts Summary, Aging, Chargebacks &
+Overpayments, Payment-to-You, Purchase Report all real; "Invoices-for-period detail" has no exact
+named-tab match (closest analogs Aging/Purchase Report) — flagged, not guessed at.
+**REG-048's default columns were already correct** — `loadCostColumnManifest.tsx` already orders
+Invoice → Customer → Invoice Amount → Advance → Reserve → Fee → Settlement # by default, with
+Revenue/Costs/Driver-pay/Margin explicitly `defaultHidden: true`.
+**REG-049: chargebacks split-screen already fixed** (vertical stack, Monthly Summaries above
+detail) and **summary/detail toggle already exists** (Statements/Settings tab). The one confirmed,
+reproducible gap: **"QBO filters (date etc.) on ALL" — zero of the 7 Factoring recourse/report tabs
+had a date-range filter**, and none of the 3 backing backend endpoints (recourse-pipeline,
+chargebacks-fees, funds-due) accepted a `date_from`/`date_to` param at all (confirmed by reading
+the Zod schemas directly — customer_id/load_id only, or bare `companyQuerySchema`).
+
+**FIX (ACCT-F26062):** shared `date_from`/`date_to` Zod schema extended onto all 3 backend query
+schemas, applied as real SQL WHERE filters on `factored_at`/`submitted_at`/`created_at`
+respectively; frontend threads the same range through the page's existing shared filter state into
+all 3 queries (`recourseQuery`/`feesQuery`/`fundsDueQuery`), with real From/To DatePicker controls
+added to all 7 tabs (2 existing filterBars extended, 5 new ones added via a shared render helper).
+
+Shipped PR #21655 (`CC1-IN-...`), merged `7ffe86a1`, fast-merge law (claim-reserve #21654 first,
+local gate PASS → squash --admin). Guard: `scripts/verify-factoring-report-date-filters.mjs`
+(verify-step 11185), selftest 5/5. tsc (frontend + backend) clean. Both deploys triggered against
+`7ffe86a1`; live-verify to follow.
+
+**Explicitly NOT built here (flagged, not fixed blind):** "balances differ — reconcile" per REG-049's
+own "INSPECT ALL FACTORING" instruction — a real reconciliation subsystem already exists
+(`apps/backend/src/accounting/factor-reconciliation/`) but isn't linked from Factoring's own nav;
+unclear whether that's the owner's actual "balances differ" complaint or a separate issue. Flagged
+as an audit task, not a bounded single-PR item.
+
+DONE LINE: CC-1 | REG-046/048/049 scoped (most already done) + REG-049 date-filter gap (ACCT-F26062)
+closed | PR #21655 merged 7ffe86a1 | Live=pending deploy confirmation | NEXT: confirm live Chrome,
+continue sweeping OWNER-FANOUT-2026-09-09.md for CC-1 items (REG-050).
