@@ -761,6 +761,13 @@ export function LoadCostsBoardPage() {
       },
     },
   ];
+  if (costTab === "resettlement") {
+    // These are the original load's first pickup and actual final delivery, never tour/creation dates.
+    for (const column of columns) {
+      if (column.key === "pu_date") { column.label = "Start Date"; column.alwaysVisible = true; }
+      if (column.key === "del_date") { column.label = "Delivery Date"; column.alwaysVisible = true; }
+    }
+  }
   // Spec §2.2 "the piece the owner keeps pointing at" -- a second header row banding the 19 columns.
   // Hex values are the design law's own literal tokens (--grp-bg / --rev / --cost / --pay), applied
   // directly here because design/tokens.ts (CC-2's file) has not landed them yet -- do not hard-code
