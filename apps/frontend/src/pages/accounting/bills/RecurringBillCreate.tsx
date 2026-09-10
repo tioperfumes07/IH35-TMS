@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
+import { hasInAppHistory } from "../../../lib/smart-back";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { createRecurringBillTemplate, type RecurringBillFrequency, type RecurringBillLineItem } from "../../../api/accounting";
 import { listCatalogAccounts } from "../../../api/catalog-accounts";
@@ -44,6 +45,9 @@ export function RecurringBillCreate() {
   const { pushToast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  // REG-007 — smart back: honor real in-app history, else land on the recurring-bill list (never a
+  // bare navigate(-1) that leaves the SPA on a direct load/refresh). Reuses lib/smart-back.ts.
+  const goBack = () => { if (hasInAppHistory(window.history.state)) { navigate(-1); return; } navigate("/accounting/bills/recurring"); };
 
   const [vendorUuid, setVendorUuid] = useState("");
   const [templateName, setTemplateName] = useState("");
@@ -147,7 +151,7 @@ export function RecurringBillCreate() {
       <div className="flex items-center gap-3">
         <button
           type="button"
-          onClick={() => navigate(-1)}
+          onClick={goBack}
           className="inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-[11px] font-semibold text-gray-500 hover:bg-gray-100 hover:text-gray-700"
           aria-label="Back"
         >
@@ -342,7 +346,7 @@ export function RecurringBillCreate() {
       <div className="flex items-center justify-end gap-3">
         <button
           type="button"
-          onClick={() => navigate(-1)}
+          onClick={goBack}
           className="rounded-sm border border-gray-300 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
         >
           Cancel

@@ -524,7 +524,7 @@ export function SettlementDetailPage() {
   if (detailQuery.isError) {
     return (
       <div className="space-y-3">
-        <BackButton label="Driver Settlements" />
+        <BackButton label="Driver Settlements" fallbackTo="/driver-finance/settlements" />
         <PageHeader title="Settlement Detail" subtitle="Debt-alert invariant enforced" />
         <ListErrorState
           title="Couldn't load this settlement"
@@ -547,7 +547,7 @@ export function SettlementDetailPage() {
   if (detailQuery.data && String((detailQuery.data as Record<string, unknown>).id ?? "") !== String(settlementId)) {
     return (
       <div className="space-y-3">
-        <BackButton label="Driver Settlements" />
+        <BackButton label="Driver Settlements" fallbackTo="/driver-finance/settlements" />
         <PageHeader title="Settlement Detail" subtitle="Loading…" />
       </div>
     );
@@ -555,7 +555,7 @@ export function SettlementDetailPage() {
 
   return (
     <div className="space-y-3">
-      <BackButton label="Driver Settlements" />
+      <BackButton label="Driver Settlements" fallbackTo="/driver-finance/settlements" />
       <Breadcrumb
         items={[
           { label: "Driver Settlements", href: "/driver-finance/settlements" },
