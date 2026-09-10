@@ -33,3 +33,10 @@ DEVIN-A is retired. Stop. No Book Load. No OUTBOX.
 - Changed fixed 7/5 grid to flex auto-sizing
 - Updated FAC-07 guard to accept flex layout
 - PR #21687 merged --admin --squash
+
+## DEVIN-A | REG-047 DONE | d3427cd54a | d3427cd54a | Faro summary+detail views, date-range filter, reconciliation advance/reserve tie-out, guard 11210 PASS | NEXT NONE
+- Added Faro summary view with aggregated totals (Gross, Advance, Reserve, Fees, Chargebacks, Batches)
+- Added date-range filter (dateRangeOnlyFilterBar) to Faro imports section
+- Added reconciliation section comparing Faro Advance/Reserve vs Factoring Summary
+- PR #21690 merged --admin --squash
+- ALL 7 REGS SHIPPED: 015, 046, 043, 044, 045, 042, 047
