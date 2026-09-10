@@ -15,7 +15,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityPicker } from "../../components/EntityPicker";
 
 type SegmentId = "all" | "open" | "in_progress" | "completed" | "cancelled";
-type WoSort = "created_desc" | "cost_desc" | "wo_number_asc" | "labor_cost_desc";
+type WoSort = "created_desc" | "estimated_cost_desc" | "actual_cost_desc" | "wo_number_asc" | "labor_cost_desc";
 type ConsoleView = "list" | "kanban";
 type KanbanSortKey = "unit_number" | "display_id";
 
@@ -25,7 +25,8 @@ const PAGE_SIZE = 100;
 
 function mapHeaderSortToServer(sortKey: string, sortDir: "asc" | "desc"): WoSort {
   if (sortKey === "display_id" && sortDir === "asc") return "wo_number_asc";
-  if (sortKey === "total_estimated_cost" && sortDir === "desc") return "cost_desc";
+  if (sortKey === "total_estimated_cost" && sortDir === "desc") return "estimated_cost_desc";
+  if (sortKey === "total_actual_cost" && sortDir === "desc") return "actual_cost_desc";
   if (sortKey === "labor_cost_cents" && sortDir === "desc") return "labor_cost_desc";
   return "created_desc";
 }
@@ -40,6 +41,8 @@ function consoleSortValue(row: WoConsoleRow, key: string): string | number {
       return String(row.opened_at ?? row.created_at ?? "");
     case "total_estimated_cost":
       return Number(row.total_estimated_cost ?? 0);
+    case "total_actual_cost":
+      return Number(row.total_actual_cost ?? 0);
     case "labor_cost_cents":
       return Number(row.labor_cost_cents ?? 0);
     default:
@@ -268,18 +271,21 @@ export function WorkOrdersConsoleListPage() {
       },
       {
         key: "total_estimated_cost",
-        label: "Est / Act",
+        label: "Estimated",
         sortable: true,
         sortValue: (row) => consoleSortValue(row, "total_estimated_cost"),
-        render: (row) => {
-          const est = row.total_estimated_cost ?? "—";
-          const act = row.total_actual_cost ?? "—";
-          return (
-            <>
-              {String(est)} / {String(act)}
-            </>
-          );
-        },
+        className: "text-right",
+        cellClass: "text-right font-mono text-xs text-slate-700",
+        render: (row) => String(row.total_estimated_cost ?? "—"),
+      },
+      {
+        key: "total_actual_cost",
+        label: "Actual",
+        sortable: true,
+        sortValue: (row) => consoleSortValue(row, "total_actual_cost"),
+        className: "text-right",
+        cellClass: "text-right font-mono text-xs text-slate-700",
+        render: (row) => String(row.total_actual_cost ?? "—"),
       },
       {
         key: "labor_cost_cents",

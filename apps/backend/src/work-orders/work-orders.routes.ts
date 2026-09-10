@@ -90,7 +90,7 @@ const listQuerySchema = companyQuerySchema.extend({
   unit_id: z.string().uuid().optional(),
   driver_id: z.string().uuid().optional(),
   search: z.string().trim().max(160).optional(),
-  sort: z.enum(["created_desc", "cost_desc", "wo_number_asc", "labor_cost_desc"]).default("created_desc"),
+  sort: z.enum(["created_desc", "estimated_cost_desc", "actual_cost_desc", "wo_number_asc", "labor_cost_desc"]).default("created_desc"),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -543,13 +543,10 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       const laborSelect = timeReady ? `, COALESCE(te_agg.labor_cost_cents, 0)::bigint AS labor_cost_cents` : `, 0::bigint AS labor_cost_cents`;
 
       const orderBy =
-        q.sort === "cost_desc"
-          ? `ORDER BY COALESCE(
-               w.actual_cost_cents::numeric / 100.0,
-               w.total_actual_cost,
-               w.estimated_cost_cents::numeric / 100.0,
-               0
-             ) DESC NULLS LAST, w.created_at DESC`
+        q.sort === "estimated_cost_desc"
+          ? `ORDER BY COALESCE(w.estimated_cost_cents::numeric / 100.0, w.total_estimated_cost, 0) DESC NULLS LAST, w.created_at DESC`
+          : q.sort === "actual_cost_desc"
+            ? `ORDER BY COALESCE(w.actual_cost_cents::numeric / 100.0, w.total_actual_cost, 0) DESC NULLS LAST, w.created_at DESC`
           : q.sort === "wo_number_asc"
             ? "ORDER BY w.display_id ASC NULLS LAST, w.created_at DESC"
             : q.sort === "labor_cost_desc" && timeReady
