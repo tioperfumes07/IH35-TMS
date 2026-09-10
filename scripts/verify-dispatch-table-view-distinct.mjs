@@ -74,17 +74,23 @@ const contracts = [
     },
   ],
   [
-    "REG-019: the two panels are a strict complement of sortedRows (no row dropped, none double-shown)",
+    // REG-019 kept its intent (a labeled Assigned + Unassigned window, rows move automatically), but
+    // REG-035 (owner 2026-09-10: "a truck appears twice with two loads") supersedes the old strict
+    // "no row dropped" rule for the ASSIGNED panel: each unit shows exactly its ONE current load via
+    // currentLoadPerUnit(), and Unassigned is the complement MINUS anything already shown in Assigned
+    // (so a row is never double-shown, and a collapsed trailing billing-queue load is not re-surfaced).
+    "REG-019/REG-035: Assigned = one current load per unit; Unassigned = complement, none double-shown",
     (s) => {
       const b = renderTableBlock(s);
       return (
-        /const assignedRows = sortedRows\.filter\(isAssignedUnitRow\);/.test(b) &&
-        /const unassignedRows = sortedRows\.filter\(\(row\) => !isAssignedUnitRow\(row\)\);/.test(b)
+        /const assignedRows = currentLoadPerUnit\(sortedRows\.filter\(isAssignedUnitRow\)\);/.test(b) &&
+        /const assignedRowIds = new Set\(assignedRows\.map\(\(row\) => row\.id\)\);/.test(b) &&
+        /const unassignedRows = sortedRows\.filter\(\s*\(row\) => !isAssignedUnitRow\(row\) && !assignedRowIds\.has\(row\.id\),?\s*\);/.test(b)
       );
     },
     (s) => s.replace(
-      "const unassignedRows = sortedRows.filter((row) => !isAssignedUnitRow(row));",
-      "const unassignedRows = sortedRows.filter((row) => isUnitRow(row));",
+      "(row) => !isAssignedUnitRow(row) && !assignedRowIds.has(row.id),",
+      "(row) => !isAssignedUnitRow(row),",
     ),
   ],
 ];

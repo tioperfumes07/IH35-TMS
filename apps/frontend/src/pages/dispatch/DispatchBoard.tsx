@@ -261,6 +261,50 @@ function isBillingQueueLoad(load: DispatchLoadRow) {
   return BILLING_QUEUE_STATUSES.has(load.status);
 }
 
+// REG-035 (owner 2026-09-10, live-confirmed T152/T156/T171/T173 each rendering 2 rows): the load-centric
+// "Assigned Units" panels (Table + Assignment views) showed a truck TWICE when it carried a trailing
+// delivered-but-not-closed (billing-queue) load AND a new in-flight load. Owner: "how can a truck appear
+// twice and have two loads, it should only be the real current load." Collapse assigned loads to ONE row
+// per unit, keeping the most-current load: in-flight outranks billing-queue outranks closed/paid. The
+// dropped billing-queue loads stay visible in the List view's own dedicated billing band (unchanged).
+const ASSIGNMENT_CURRENCY_RANK: Record<string, number> = {
+  in_transit: 5,
+  dispatched: 5,
+  assigned: 4,
+  booked: 4,
+  planned: 4,
+  unassigned: 4,
+  draft: 4,
+  delivered: 2,
+  delivered_pending_docs: 2,
+  completed_docs_received: 2,
+  invoiced: 1,
+  paid: 1,
+};
+function assignmentCurrencyRank(status: string) {
+  return ASSIGNMENT_CURRENCY_RANK[status] ?? 3;
+}
+export function currentLoadPerUnit<T extends { id: string; status: string; assigned_unit_id?: string | null }>(
+  loads: T[],
+): T[] {
+  const best = new Map<string, T>();
+  const order: string[] = [];
+  for (const load of loads) {
+    const unit = load.assigned_unit_id;
+    if (!unit) continue;
+    const existing = best.get(unit);
+    if (!existing) {
+      best.set(unit, load);
+      order.push(unit);
+      continue;
+    }
+    if (assignmentCurrencyRank(load.status) > assignmentCurrencyRank(existing.status)) {
+      best.set(unit, load);
+    }
+  }
+  return order.map((unit) => best.get(unit) as T);
+}
+
 // DISPATCH-REDESIGN Part C — TRUCK-CENTRIC sections (Jorge clarification 2026-06-17):
 // AWAITING ASSIGNMENT = every ACTIVE TRUCK with NO load right now (the fleet roster minus loaded
 //   trucks — derived from unitsWithoutLoad, NOT loads.filter). One row per truck; Unit/Trailer/
@@ -1508,8 +1552,14 @@ export function DispatchBoard({
     // automatically with no manual refresh (pure presentation-layer derivation, no new endpoint).
     const isUnitRow = (row: BoardLoad) => row.id.startsWith("unit:");
     const isAssignedUnitRow = (row: BoardLoad) => !isUnitRow(row) && Boolean(row.assigned_unit_id);
-    const assignedRows = sortedRows.filter(isAssignedUnitRow);
-    const unassignedRows = sortedRows.filter((row) => !isAssignedUnitRow(row));
+    // REG-035: one row per unit in Assigned Units — its real current load, never a duplicate for a
+    // trailing billing-queue load. Billing-queue loads for a truck that also has an in-flight load are
+    // collapsed away here (they remain in the List view's billing band).
+    const assignedRows = currentLoadPerUnit(sortedRows.filter(isAssignedUnitRow));
+    const assignedRowIds = new Set(assignedRows.map((row) => row.id));
+    const unassignedRows = sortedRows.filter(
+      (row) => !isAssignedUnitRow(row) && !assignedRowIds.has(row.id),
+    );
 
     const renderUnitPanel = (
       rows: BoardLoad[],
@@ -1764,7 +1814,9 @@ export function DispatchBoard({
     ];
 
     const sortedBookedLoads = sortAssignmentBandRows(bookedLoads, "booked");
-    const sortedAssignedLoads = sortAssignmentBandRows(assignedLoads, "assigned");
+    // REG-035: one row per unit — the real current load, not a duplicate for a trailing billing-queue load.
+    const currentAssignedLoads = currentLoadPerUnit(assignedLoads);
+    const sortedAssignedLoads = sortAssignmentBandRows(currentAssignedLoads, "assigned");
     const bookedSort = assignmentBandSorts.booked ?? { key: "load", direction: "asc" as const };
     const assignedSort = assignmentBandSorts.assigned ?? { key: "unit", direction: "asc" as const };
 
@@ -1818,7 +1870,7 @@ export function DispatchBoard({
           )}
         </AssignmentBand>
 
-        <AssignmentBand title="Assigned Units" count={assignedLoads.length}>
+        <AssignmentBand title="Assigned Units" count={currentAssignedLoads.length}>
           {renderAssignmentParityTable(
             "assigned",
             assignedAssignmentColumns,
