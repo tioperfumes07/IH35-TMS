@@ -195,3 +195,62 @@ QBO mirror (`mdata.qbo_vendors`) — 2,793 total QBO vendors, matched by normali
 ### What remains blocked
 `default_expense_account_id` write remains blocked on CC-1 confirming the vendor→expense-account GL map (posted in previous OUTBOX entry). No financial writes until CC-1 confirms.
 
+---
+
+DEVIN-B | B-2/B-3 pass 3 sweep clean | no new defects | sweep continues
+
+## Pass 3 sweep summary (2026-09-10)
+
+Deep-inspected all individual Lists catalog pages and Reports surfaces for module-home pattern, Back arrow, filter bar compliance, one-datum columns, dead buttons, and KPI honesty.
+
+### New surfaces since pass 2
+- 0 new files in Lists/Reports since pass 2 merge (3515d12344).
+
+### Lists catalog pages — module-home pattern
+- All Lists pages use either `BackArrowHeader` directly or delegate to a shared parent (`AccountingCatalogListPage`, `FuelCatalogListPage`, `GenericCatalogPage`) that uses `BackArrowHeader`.
+- `ListsHubPage` uses `ListsSubNav` + `PageHeader` (top-level hub — no back arrow needed).
+- `LocationsListPage` uses `BackArrowHeader` + 5+ filter controls (search, state, geocoded, geofence, source).
+
+### Lists catalog pages — filter bar controls (≥5 standard)
+- `CatalogTable` (used by GenericCatalogPage): 6 controls (search via ParityTable, status filter, show-inactive checkbox, sort, page-size, export).
+- `AccountingCatalogListPage`: 5+ controls (search, status select, sort, page-size, export).
+- `FuelCatalogListPage`: 5+ controls (search, status select, show-inactive checkbox, sort, page-size).
+- `LocationsListPage`: 5+ controls (search, state, geocoded, geofence, source).
+
+### Reports pages — module-home pattern
+- All Reports pages use `ReportsSubNav` + `PageHeader` (or `BackArrowHeader` where appropriate).
+- `ReportsHome` uses `ReportsSubNav` + `PageHeader` (top-level hub).
+- `ReportsHub` uses `PageHeader` (top-level hub).
+- `ReportsRunner` uses `PageHeader` with Back button.
+- All audit pages delegate to `AuditReportPage` which uses `PageHeader` with `backHref`.
+
+### Reports pages — filter bar controls (≥5 standard)
+- All report pages using `ReportFilterBar` meet the ≥5 standard (9+ controls: From + To + 4 presets + Search + Apply + Cancel + Reset, plus children).
+- `AuditReportPage`: 5+ controls (From, To, module filter, driver filter when applicable, CSV export, pagination).
+- `RunnerFilters`: conditional disables only (`disabled={isRunning}`, `disabled={requiredMissing || isRunning}`).
+
+### Dead controls
+- 0 permanently disabled buttons in Lists/Reports (guard `verify-reports-lists-no-dead-buttons.mjs` PASS).
+- 0 empty onClick handlers.
+- 0 dead links (href="#").
+- 1 toast-only onClick (ReportsHome detention-claims stub — honestly marked with "P4" badge, not a dead control).
+
+### TODO wire comments
+- 0 in Lists.
+- 0 in Reports (all 3 fixed in pass 1).
+
+### KPI honesty
+- `ReportsHome`: shows "—" while loading, "Failed to load" on error, real values when ready. No fake zeros.
+- `APAgingPage`/`ARAgingPage`: KPIs computed from real data via `useMemo`.
+- `DriverQualificationReportPage`: shows "—" when summary not loaded, real values when ready.
+- `CashFlowOverviewPage`: KPI sparkline computed from real data.
+- 0 hardcoded zero KPIs.
+- 0 fake placeholder KPIs.
+
+### One-datum columns
+- All tables use `ParityTable` which renders "—" for null/empty cells.
+- 0 columns with empty/null render functions.
+
+### Conclusion
+Pass 3 sweep is clean. No new in-lane defects found. No cross-lane defects found. All Lists catalog pages and Reports surfaces comply with the module-home pattern, Back arrow, filter bar (≥5 controls), one-datum columns, no dead buttons, and KPI honesty standards. B-2/B-3 sweep continues.
+
