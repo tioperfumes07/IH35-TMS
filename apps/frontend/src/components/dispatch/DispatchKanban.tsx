@@ -1163,7 +1163,23 @@ export function DispatchKanban({
       return;
     }
     const loadId = String(activeId);
-    const targetColumnKey = String(overId).replace("column:", "");
+    // REG-018 (owner-live): dnd-kit's pointerWithin collision detection resolves the DEEPEST
+    // droppable under the pointer. Every card registers itself as a droppable (droppable:load:<id>)
+    // INSIDE the column droppable (column:<key>). When a card is dropped onto a lane that already
+    // has cards, event.over resolves to the CARD, not the column. The old code only stripped
+    // "column:" and then failed to find the target group — showing "Could not move that card"
+    // and reverting. To the dispatcher the drag "did not work" on any non-empty lane, which is
+    // exactly what the owner reported. Resolve the target column from the load the card was
+    // dropped onto: that load IS in the target column.
+    const overIdStr = String(overId);
+    let targetColumnKey = overIdStr.replace("column:", "");
+    if (overIdStr.startsWith("droppable:load:")) {
+      const overLoadId = overData.loadId ?? overIdStr.replace("droppable:load:", "");
+      const overLoad = optimisticLoads.find((item) => item.id === overLoadId);
+      if (overLoad) {
+        targetColumnKey = resolveKanbanColumnKey(overLoad);
+      }
+    }
     const targetGroup = KANBAN_STATUS_GROUPS.find((group) => group.key === targetColumnKey);
     const load = optimisticLoads.find((item) => item.id === loadId);
     if (!load && isSyntheticKanbanCardId(loadId)) {

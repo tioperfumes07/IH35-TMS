@@ -260,6 +260,54 @@ export function auditPlannerDropSilentNoop(plannerSrc) {
   return problems;
 }
 
+/**
+ * REG-018 (owner-live): handleDragEnd must resolve `droppable:load:<id>` overIds to a target column.
+ *
+ * dnd-kit's pointerWithin collision detection resolves the DEEPEST droppable under the pointer.
+ * Every Kanban card registers itself as a droppable (`droppable:load:<id>`) INSIDE the column
+ * droppable (`column:<key>`). When a card is dropped onto a lane that already has cards,
+ * `event.over` resolves to the CARD, not the column. The old code only stripped the `column:`
+ * prefix and then failed to find the target group — showing "Could not move that card" and
+ * reverting. To the dispatcher the drag "did not work" on any non-empty lane, which is exactly
+ * what the owner reported ("IN KANBAN VIEW IN DISPATCH, THE LOADS ARE SUPPOSED TO BE DRAGGABLE
+ * FORWARD AND BACKWARDS").
+ *
+ * This guard asserts the handler contains the `droppable:load:` resolution branch. It FAILS on
+ * the old code (which only does `.replace("column:", "")`) and PASSES on the fix (which checks
+ * `startsWith("droppable:load:")` and resolves via `resolveKanbanColumnKey`).
+ */
+export function auditDragEndResolvesCardDroppable(kanbanSrc) {
+  const problems = [];
+  const src = kanbanSrc.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  const start = src.indexOf("const handleDragEnd");
+  if (start === -1) {
+    problems.push(`DispatchKanban.tsx: no handleDragEnd found — refusing to pass vacuously.`);
+    return problems;
+  }
+  const body = src.slice(start, src.indexOf("\n  };", start) + 1);
+  if (body.length < 40) {
+    problems.push(`DispatchKanban.tsx: could not read the handleDragEnd body — refusing to pass vacuously.`);
+    return problems;
+  }
+  if (!/droppable:load/.test(body)) {
+    problems.push(
+      `DispatchKanban.tsx: handleDragEnd does not resolve \`droppable:load:\` overIds to a target ` +
+        `column. dnd-kit's pointerWithin resolves the deepest droppable — a card inside a column — ` +
+        `so dropping onto a non-empty lane sets event.over to the CARD droppable, not the column. ` +
+        `Without this resolution the handler shows "Could not move that card" and reverts, which is ` +
+        `the exact "drag doesn't work" the owner reported (REG-018).`,
+    );
+  }
+  if (!/resolveKanbanColumnKey/.test(body)) {
+    problems.push(
+      `DispatchKanban.tsx: handleDragEnd references \`droppable:load:\` but does not call ` +
+        `resolveKanbanColumnKey to find the target column from the dropped-onto load. The ` +
+        `resolution is incomplete — the card droppable branch must map to a real column key (REG-018).`,
+    );
+  }
+  return problems;
+}
+
 export function audit(frontendSrc, backendSrc, apiSrc) {
   const accepted = acceptedStatuses(backendSrc);
   if (!accepted || accepted.length === 0) {
@@ -393,6 +441,32 @@ if (process.argv.includes("--selftest")) {
       failed++;
     }
   }
+  // REG-018 selftest: the card-droppable resolution guard
+  const resolveOk = `const handleDragEnd = async (event) => {
+    const overIdStr = String(overId);
+    let targetColumnKey = overIdStr.replace("column:", "");
+    if (overIdStr.startsWith("droppable:load:")) {
+      const overLoad = optimisticLoads.find((item) => item.id === overLoadId);
+      if (overLoad) { targetColumnKey = resolveKanbanColumnKey(overLoad); }
+    }
+    setOptimisticLoads(x);
+  };`;
+  const resolveBad = `const handleDragEnd = async (event) => {
+    const targetColumnKey = String(overId).replace("column:", "");
+    setOptimisticLoads(x);
+  };`;
+  const resolveCases = [
+    ["kanban: handler resolves droppable:load: to column (correct — the fix)", resolveOk, 0],
+    ["REGRESSION BAR — handler only strips column: (the shipped defect)", resolveBad, 2],
+    ["kanban: handler missing — must not pass vacuously", `no handler here`, 1],
+  ];
+  for (const [name, kanbanSrc, want] of resolveCases) {
+    const got = auditDragEndResolvesCardDroppable(kanbanSrc).length;
+    if (got !== want) {
+      console.error(`SELFTEST FAIL: ${name} — expected ${want}, got ${got}`);
+      failed++;
+    }
+  }
   for (const [name, kanbanSrc, want] of syntheticCases) {
     const got = auditSyntheticCardNotDraggable(kanbanSrc).length;
     if (got !== want) {
@@ -415,7 +489,7 @@ if (process.argv.includes("--selftest")) {
     }
   }
   if (failed) process.exit(1);
-  console.log(`${LABEL} SELFTEST PASS — ${cases.length + dropCases.length + syntheticCases.length + plannerCases.length + speakCases.length} mutations detected correctly`);
+  console.log(`${LABEL} SELFTEST PASS — ${cases.length + dropCases.length + syntheticCases.length + plannerCases.length + speakCases.length + resolveCases.length} mutations detected correctly`);
   process.exit(0);
 }
 
@@ -434,6 +508,7 @@ const problems = [
   ...auditDropErrorHandling(fs.readFileSync(path.join(ROOT, PAGE), "utf8")),
   ...auditSyntheticCardNotDraggable(feSrc),
   ...auditDragEndBranchesSpeak(feSrc),
+  ...auditDragEndResolvesCardDroppable(feSrc),
   ...auditPlannerDropSilentNoop(fs.readFileSync(path.join(ROOT, PLANNER), "utf8")),
 ];
 if (problems.length) {
