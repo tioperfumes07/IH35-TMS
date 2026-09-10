@@ -8,16 +8,22 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   deactivateFactoring,
   getFactoringChargebacksFees,
+  getFactoringDebtorReceipts,
   getFactoringFundsDue,
+  getFactoringInvoiceStatus,
   getFactoringRecoursePipeline,
   getFactoringStatementsSettings,
   getFactoringSummary,
+  getFactoringUnappliedCash,
   getReserveBalanceHistory,
   listFactors,
   updateFactor,
+  type FactoringDebtorReceipt,
+  type FactoringInvoiceStatusRow,
   type FactoringMonthlyFeeSummary,
   type FactoringReserveBalanceHistoryEntry,
   type FactoringSettingsRow,
+  type FactoringUnappliedCashRow,
 } from "../../api/factoring";
 import { EntityPicker } from "../../components/EntityPicker";
 import { useStagedListFilters } from "../../components/table";
@@ -539,6 +545,39 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     queryKey: ["factoring", "funds-due", companyId, deepLinkDateFrom, deepLinkDateTo],
     queryFn: () =>
       getFactoringFundsDue(companyId, {
+        date_from: deepLinkDateFrom ?? undefined,
+        date_to: deepLinkDateTo ?? undefined,
+      }),
+    enabled: Boolean(companyId),
+  });
+
+  // REG-015 (owner 2026-09-10): Three new real read-only factoring report endpoints.
+  // Each uses the same shared date/customer filters as every other tab (REG-049 fan-out).
+  const debtorReceiptsQuery = useQuery({
+    queryKey: ["factoring", "debtor-receipts", companyId, deepLinkCustomerId, deepLinkDateFrom, deepLinkDateTo],
+    queryFn: () =>
+      getFactoringDebtorReceipts(companyId, {
+        customer_id: deepLinkCustomerId ?? undefined,
+        date_from: deepLinkDateFrom ?? undefined,
+        date_to: deepLinkDateTo ?? undefined,
+      }),
+    enabled: Boolean(companyId),
+  });
+  const unappliedCashQuery = useQuery({
+    queryKey: ["factoring", "unapplied-cash", companyId, deepLinkCustomerId, deepLinkDateFrom, deepLinkDateTo],
+    queryFn: () =>
+      getFactoringUnappliedCash(companyId, {
+        customer_id: deepLinkCustomerId ?? undefined,
+        date_from: deepLinkDateFrom ?? undefined,
+        date_to: deepLinkDateTo ?? undefined,
+      }),
+    enabled: Boolean(companyId),
+  });
+  const invoiceStatusQuery = useQuery({
+    queryKey: ["factoring", "invoice-status", companyId, deepLinkCustomerId, deepLinkDateFrom, deepLinkDateTo],
+    queryFn: () =>
+      getFactoringInvoiceStatus(companyId, {
+        customer_id: deepLinkCustomerId ?? undefined,
         date_from: deepLinkDateFrom ?? undefined,
         date_to: deepLinkDateTo ?? undefined,
       }),
@@ -1070,19 +1109,369 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
         </div>
       ) : null}
 
-      {/* FAC-09a 15-item real debtor-portal nav (owner 2026-09-08, screenshot-corrected). Aging
-          is fully real this pass (built on the same recourse-pipeline data, no new backend
-          query). The rest are honest, named, clickable stubs for this pass — never silently
-          shipped as done; each says plainly what it is. Real builds continue as fast-follow PRs. */}
-      {tab === "request_debtor_credit_check" ||
-      tab === "debtor_receipts" ||
-      tab === "loan_save" ||
-      tab === "unapplied_cash" ||
-      tab === "invoice_status_report" ||
-      tab === "messages_support" ? (
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700" data-testid={`factoring-stub-${tab}`}>
-          <div className="font-medium text-gray-900">{SUBNAV.find((item) => item.id === tab)?.label}</div>
-          <p className="mt-1">Not yet wired to real data — this tab exists and is reachable, but its content is a placeholder for this pass. See docs/audit/GUARD-WORKORDERS.md (FAC-09a) for what is real vs. stub.</p>
+      {/* REG-015 (owner 2026-09-10): Six real read-only factoring report tabs — replacing the
+          former dashed stubs. Each tab uses real backend data (3 new endpoints + reuse of
+          existing recourse/summary queries) with honest empty states where Neon has 0 rows. */}
+
+      {/* Request Debtor / Credit Check — reuses recourseQuery grouped by customer (debtor),
+          showing each debtor's factored invoice count, total invoice amount, advance, reserve,
+          and fees. No separate backend endpoint needed — the recourse pipeline already carries
+          all the per-invoice factoring data keyed by customer. */}
+      {tab === "request_debtor_credit_check" ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-request-debtor-credit-check">
+          <div className="mb-2 text-xs font-medium text-gray-900">Request Debtor / Credit Check</div>
+          <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-debtor-credit-check")}</div>
+          {recourseQuery.isError ? (
+            <ListErrorBanner onRetry={() => void recourseQuery.refetch()} />
+          ) : null}
+          {recourseQuery.isLoading ? (
+            <div className="py-4 text-center text-xs text-gray-500">Loading…</div>
+          ) : null}
+          {!recourseQuery.isLoading && !recourseQuery.isError ? (
+            (() => {
+              const rows = (recourseQuery.data?.invoices ?? []).reduce<
+                Array<{
+                  customer_id: string;
+                  customer_name: string;
+                  invoice_count: number;
+                  total_invoice: number;
+                  total_advance: number;
+                  total_reserve: number;
+                  total_fees: number;
+                }>
+              >((acc, row) => {
+                const key = row.customer_id ?? "unknown";
+                const existing = acc.find((r) => r.customer_id === key);
+                if (existing) {
+                  existing.invoice_count += 1;
+                  existing.total_invoice += Number(row.invoice_amount ?? 0);
+                  existing.total_advance += Number(row.advance_amount ?? 0);
+                  existing.total_reserve += Number(row.reserve_amount ?? 0);
+                  existing.total_fees += Number(row.invoice_amount ?? 0) - Number(row.advance_amount ?? 0) - Number(row.reserve_amount ?? 0);
+                } else {
+                  acc.push({
+                    customer_id: key,
+                    customer_name: row.customer_name ?? "—",
+                    invoice_count: 1,
+                    total_invoice: Number(row.invoice_amount ?? 0),
+                    total_advance: Number(row.advance_amount ?? 0),
+                    total_reserve: Number(row.reserve_amount ?? 0),
+                    total_fees: Number(row.invoice_amount ?? 0) - Number(row.advance_amount ?? 0) - Number(row.reserve_amount ?? 0),
+                  });
+                }
+                return acc;
+              }, []);
+              if (rows.length === 0) {
+                return (
+                  <div className="py-4 text-center text-xs text-gray-500" data-testid="factoring-debtor-credit-check-empty">
+                    No factored invoices — no debtors to show credit check data for.
+                  </div>
+                );
+              }
+              const debtorColumns: Array<ParityColumn<(typeof rows)[number]>> = [
+                { key: "customer_name", label: "Debtor (Customer)", sortable: true, render: (row) => (
+                  <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
+                ) },
+                { key: "invoice_count", label: "Invoices", sortable: true, render: (row) => String(row.invoice_count) },
+                { key: "total_invoice", label: "Original Invoice", sortable: true, render: (row) => fmtCurrency(row.total_invoice) },
+                { key: "total_advance", label: "Advance", sortable: true, render: (row) => fmtCurrency(row.total_advance) },
+                { key: "total_reserve", label: "Reserve", sortable: true, render: (row) => fmtCurrency(row.total_reserve) },
+                { key: "total_fees", label: "Fees", sortable: true, render: (row) => fmtCurrency(row.total_fees) },
+              ];
+              return (
+                <ParityTable
+                  columns={debtorColumns}
+                  rows={rows}
+                  rowKey={(row) => row.customer_id}
+                  storageKey="factoring-debtor-credit-check"
+                  tableTestId="factoring-debtor-credit-check-table"
+                  emptyText="No factored invoices — no debtors to show credit check data for."
+                />
+              );
+            })()
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Debtor Receipts — payments received from customers on factored invoices. New backend
+          endpoint GET /api/v1/factoring/debtor-receipts. Live-verified 2026-09-10: 0 rows
+          (USMCA has no customer payments yet — honest empty state). */}
+      {tab === "debtor_receipts" ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-debtor-receipts">
+          <div className="mb-2 text-xs font-medium text-gray-900">Debtor Receipts</div>
+          <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-debtor-receipts")}</div>
+          {debtorReceiptsQuery.isError ? (
+            <ListErrorBanner onRetry={() => void debtorReceiptsQuery.refetch()} />
+          ) : null}
+          {debtorReceiptsQuery.isLoading ? (
+            <div className="py-4 text-center text-xs text-gray-500">Loading…</div>
+          ) : null}
+          {!debtorReceiptsQuery.isLoading && !debtorReceiptsQuery.isError ? (
+            (() => {
+              const rows = debtorReceiptsQuery.data?.receipts ?? [];
+              if (rows.length === 0) {
+                return (
+                  <div className="py-4 text-center text-xs text-gray-500" data-testid="factoring-debtor-receipts-empty">
+                    No debtor receipts — no customer payments on factored invoices yet.
+                  </div>
+                );
+              }
+              const receiptColumns: Array<ParityColumn<FactoringDebtorReceipt>> = [
+                { key: "payment_date", label: "Payment Date", sortable: true, render: (row) => fmtDate(row.payment_date) },
+                { key: "customer_name", label: "Customer", render: (row) => row.customer_id ? (
+                  <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
+                ) : "—" },
+                { key: "invoice_display_id", label: "Invoice", render: (row) => row.invoice_id ? (
+                  <EntityLink kind="invoice" id={row.invoice_id} label={entityLabel(row.invoice_display_id, row.invoice_id, "Invoice")} />
+                ) : "—" },
+                { key: "advance_display_id", label: "Advance", render: (row) => row.factoring_advance_id ? (
+                  <EntityLink kind="factoring_advance" id={row.factoring_advance_id} label={row.advance_display_id ?? "—"} />
+                ) : "—" },
+                { key: "amount_cents", label: "Payment Amount", sortable: true, render: (row) => fmtCurrency(row.amount_cents) },
+                { key: "amount_applied_cents", label: "Applied", sortable: true, render: (row) => fmtCurrency(row.amount_applied_cents) },
+                { key: "amount_unapplied_cents", label: "Unapplied", sortable: true, render: (row) => fmtCurrency(row.amount_unapplied_cents) },
+                { key: "payment_reference", label: "Reference", render: (row) => row.payment_reference || "—" },
+              ];
+              return (
+                <ParityTable
+                  columns={receiptColumns}
+                  rows={rows}
+                  rowKey={(row) => row.payment_id}
+                  storageKey="factoring-debtor-receipts"
+                  tableTestId="factoring-debtor-receipts-table"
+                  emptyText="No debtor receipts — no customer payments on factored invoices yet."
+                />
+              );
+            })()
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Loan / Save — reuses recourseQuery showing each factoring advance as a loan (advance
+          amount = principal borrowed) with the reserve as the savings holdback. Also shows the
+          total reserve balance from summaryQuery. No new backend endpoint needed. */}
+      {tab === "loan_save" ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-loan-save">
+          <div className="mb-2 text-xs font-medium text-gray-900">Loan / Save</div>
+          <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-loan-save")}</div>
+          <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="factoring-loan-save-summary">
+            <div className="bg-gray-50 p-2">
+              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Total Loan Balance</div>
+              <div className="text-xs font-medium text-gray-900">{fmtCurrency(summary?.outstanding_liability_balance)}</div>
+            </div>
+            <div className="bg-gray-50 p-2">
+              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Total Reserve (Savings)</div>
+              <div className="text-xs font-medium text-gray-900">{fmtCurrency(summary?.reserve_balance)}</div>
+            </div>
+            <div className="bg-gray-50 p-2">
+              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Active Advances</div>
+              <div className="text-xs font-medium text-gray-900">{String((recourseQuery.data?.invoices ?? []).length)}</div>
+            </div>
+          </div>
+          {recourseQuery.isError ? (
+            <ListErrorBanner onRetry={() => void recourseQuery.refetch()} />
+          ) : null}
+          {recourseQuery.isLoading ? (
+            <div className="py-4 text-center text-xs text-gray-500">Loading…</div>
+          ) : null}
+          {!recourseQuery.isLoading && !recourseQuery.isError ? (
+            (() => {
+              const rows = recourseQuery.data?.invoices ?? [];
+              if (rows.length === 0) {
+                return (
+                  <div className="py-4 text-center text-xs text-gray-500" data-testid="factoring-loan-save-empty">
+                    No active loans — no factoring advances on file.
+                  </div>
+                );
+              }
+              const loanColumns: Array<ParityColumn<(typeof rows)[number]>> = [
+                { key: "factoring_advance_id", label: "Advance", sortable: true, render: (row) => (
+                  <EntityLink kind="factoring_advance" id={row.factoring_advance_id} label={row.invoice_reference ?? row.factoring_advance_id} />
+                ) },
+                { key: "customer_name", label: "Customer", render: (row) => row.customer_id ? (
+                  <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
+                ) : "—" },
+                { key: "invoice_id", label: "Invoice", render: (row) => row.invoice_id ? (
+                  <EntityLink kind="invoice" id={row.invoice_id} label={entityLabel(row.invoice_reference, row.invoice_id, "Invoice")} />
+                ) : "—" },
+                { key: "invoice_amount", label: "Original Invoice", sortable: true, render: (row) => fmtCurrency(row.invoice_amount) },
+                { key: "advance_amount", label: "Loan (Advance)", sortable: true, render: (row) => fmtCurrency(row.advance_amount) },
+                { key: "reserve_amount", label: "Reserve (Savings)", sortable: true, render: (row) => fmtCurrency(row.reserve_amount) },
+                { key: "factored_at", label: "Advanced Date", sortable: true, render: (row) => fmtDate(row.factored_at) },
+              ];
+              return (
+                <ParityTable
+                  columns={loanColumns}
+                  rows={rows}
+                  rowKey={(row) => row.factoring_advance_id}
+                  storageKey="factoring-loan-save"
+                  tableTestId="factoring-loan-save-table"
+                  emptyText="No active loans — no factoring advances on file."
+                />
+              );
+            })()
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Unapplied Cash — payments with unapplied balances. New backend endpoint
+          GET /api/v1/factoring/unapplied-cash. Live-verified 2026-09-10: 0 rows. */}
+      {tab === "unapplied_cash" ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-unapplied-cash">
+          <div className="mb-2 text-xs font-medium text-gray-900">Unapplied Cash</div>
+          <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-unapplied-cash")}</div>
+          {unappliedCashQuery.isError ? (
+            <ListErrorBanner onRetry={() => void unappliedCashQuery.refetch()} />
+          ) : null}
+          {unappliedCashQuery.isLoading ? (
+            <div className="py-4 text-center text-xs text-gray-500">Loading…</div>
+          ) : null}
+          {!unappliedCashQuery.isLoading && !unappliedCashQuery.isError ? (
+            (() => {
+              const rows = unappliedCashQuery.data?.rows ?? [];
+              if (rows.length === 0) {
+                return (
+                  <div className="py-4 text-center text-xs text-gray-500" data-testid="factoring-unapplied-cash-empty">
+                    No unapplied cash — all received payments are fully applied to invoices.
+                  </div>
+                );
+              }
+              const unappliedColumns: Array<ParityColumn<FactoringUnappliedCashRow>> = [
+                { key: "payment_date", label: "Payment Date", sortable: true, render: (row) => fmtDate(row.payment_date) },
+                { key: "customer_name", label: "Customer", render: (row) => row.customer_id ? (
+                  <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
+                ) : "—" },
+                { key: "amount_cents", label: "Payment Amount", sortable: true, render: (row) => fmtCurrency(row.amount_cents) },
+                { key: "amount_applied_cents", label: "Applied", sortable: true, render: (row) => fmtCurrency(row.amount_applied_cents) },
+                { key: "amount_unapplied_cents", label: "Unapplied", sortable: true, render: (row) => fmtCurrency(row.amount_unapplied_cents) },
+                { key: "payment_reference", label: "Reference", render: (row) => row.payment_reference || "—" },
+                { key: "notes", label: "Notes", render: (row) => row.notes || "—" },
+              ];
+              return (
+                <ParityTable
+                  columns={unappliedColumns}
+                  rows={rows}
+                  rowKey={(row) => row.payment_id}
+                  storageKey="factoring-unapplied-cash"
+                  tableTestId="factoring-unapplied-cash-table"
+                  emptyText="No unapplied cash — all received payments are fully applied to invoices."
+                />
+              );
+            })()
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Invoice Status Report — all non-void invoices with their factoring_status, joined to
+          factoring_advances for advance/reserve/fee amounts. New backend endpoint
+          GET /api/v1/factoring/invoice-status. Live-verified 2026-09-10: 64 non-void invoices
+          (51 advanced, 8 not_factored sent, 5 proforma). REG-046: each row shows invoiced date,
+          settlement number, delivery date, Original Invoice Amount, Advance, Reserve, Fees. */}
+      {tab === "invoice_status_report" ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-invoice-status-report">
+          <div className="mb-2 text-xs font-medium text-gray-900">Invoice Status Report</div>
+          <div className="mb-1 text-xs text-gray-500">
+            Each row shows: invoiced date, settlement number, delivery date, original invoice amount, advance, reserve, and fees.
+          </div>
+          <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-invoice-status")}</div>
+          {invoiceStatusQuery.isError ? (
+            <ListErrorBanner onRetry={() => void invoiceStatusQuery.refetch()} />
+          ) : null}
+          {invoiceStatusQuery.isLoading ? (
+            <div className="py-4 text-center text-xs text-gray-500">Loading…</div>
+          ) : null}
+          {!invoiceStatusQuery.isLoading && !invoiceStatusQuery.isError ? (
+            (() => {
+              const rows = invoiceStatusQuery.data?.invoices ?? [];
+              if (rows.length === 0) {
+                return (
+                  <div className="py-4 text-center text-xs text-gray-500" data-testid="factoring-invoice-status-empty">
+                    No invoices found for the selected filters.
+                  </div>
+                );
+              }
+              const invoiceStatusColumns: Array<ParityColumn<FactoringInvoiceStatusRow>> = [
+                { key: "issue_date", label: "Invoiced Date", sortable: true, render: (row) => fmtDate(row.issue_date) },
+                { key: "lc_settlement_number", label: "Settlement #", sortable: true, render: (row) => row.lc_settlement_number || "—" },
+                { key: "delivery_date", label: "Delivery Date", sortable: true, render: (row) => fmtDate(row.delivery_date) },
+                { key: "invoice_display_id", label: "Invoice", render: (row) => (
+                  <EntityLink kind="invoice" id={row.invoice_id} label={entityLabel(row.invoice_display_id, row.invoice_id, "Invoice")} />
+                ) },
+                { key: "customer_name", label: "Customer", render: (row) => row.customer_id ? (
+                  <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
+                ) : "—" },
+                { key: "factoring_status", label: "Factoring Status", sortable: true, render: (row) => row.factoring_status ?? "—" },
+                { key: "total_cents", label: "Original Invoice", sortable: true, render: (row) => fmtCurrency(row.total_cents) },
+                { key: "advance_amount_cents", label: "Advance", sortable: true, render: (row) => row.advance_amount_cents != null ? fmtCurrency(row.advance_amount_cents) : "—" },
+                { key: "reserve_amount_cents", label: "Reserve", sortable: true, render: (row) => row.reserve_amount_cents != null ? fmtCurrency(row.reserve_amount_cents) : "—" },
+                { key: "factor_fee_cents", label: "Fees", sortable: true, render: (row) => row.factor_fee_cents != null ? fmtCurrency(row.factor_fee_cents) : "—" },
+              ];
+              return (
+                <ParityTable
+                  columns={invoiceStatusColumns}
+                  rows={rows}
+                  rowKey={(row) => row.invoice_id}
+                  storageKey="factoring-invoice-status"
+                  tableTestId="factoring-invoice-status-table"
+                  emptyText="No invoices found for the selected filters."
+                />
+              );
+            })()
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Messages & Support — contact information for the active factor company. Read-only
+          display of the factor's name, email, phone, and address from the factor profile.
+          No message-writing capability (read-only report, no external system submission). */}
+      {tab === "messages_support" ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-messages-support">
+          <div className="mb-2 text-xs font-medium text-gray-900">Messages &amp; Support</div>
+          {summaryQuery.isError ? (
+            <ListErrorBanner onRetry={() => void summaryQuery.refetch()} />
+          ) : null}
+          {summaryQuery.isLoading ? (
+            <div className="py-4 text-center text-xs text-gray-500">Loading…</div>
+          ) : null}
+          {!summaryQuery.isLoading && !summaryQuery.isError ? (
+            (() => {
+              const factor = activeFactor;
+              if (!factor) {
+                return (
+                  <div className="py-4 text-center text-xs text-gray-500" data-testid="factoring-messages-support-empty">
+                    No active factor company — contact information is unavailable until a factor is configured.
+                  </div>
+                );
+              }
+              return (
+                <div className="space-y-3" data-testid="factoring-messages-support-content">
+                  <div className="bg-gray-50 p-3">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Factor Company</div>
+                    <div className="text-xs font-medium text-gray-900">{factor.name}</div>
+                    {factor.noa_remit_to_name ? (
+                      <div className="mt-1 text-xs text-gray-700">Remit To: {factor.noa_remit_to_name}</div>
+                    ) : null}
+                    {factor.noa_remit_to_addr ? (
+                      <div className="mt-1 text-xs text-gray-700">Address: {factor.noa_remit_to_addr}</div>
+                    ) : null}
+                    {factor.noa_remit_to_wire_ref ? (
+                      <div className="mt-1 text-xs text-gray-700">Wire Ref: {factor.noa_remit_to_wire_ref}</div>
+                    ) : null}
+                    {factor.notes ? (
+                      <div className="mt-1 text-xs text-gray-700">Notes: {factor.notes}</div>
+                    ) : null}
+                  </div>
+                  <div className="bg-gray-50 p-3">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Send a Message</div>
+                    <p className="mt-1 text-xs text-gray-600">
+                      To contact {factor.name} about your factoring account, use the contact information above.
+                      In-app messaging to the factor company is not available — this is a read-only contact reference.
+                    </p>
+                  </div>
+                </div>
+              );
+            })()
+          ) : null}
         </div>
       ) : null}
 

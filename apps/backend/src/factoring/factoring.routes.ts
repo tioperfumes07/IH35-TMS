@@ -555,4 +555,237 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
     }
     return { ok: true };
   });
+
+  // REG-015 (owner 2026-09-10): Debtor Receipts — payments received from debtors (customers) on
+  // factored invoices. Joins accounting.payments → payment_applications → invoices (where the
+  // invoice has a factoring_advance_id). Read-only report. Live-verified 2026-09-10: 0 rows
+  // currently (USMCA has no customer payments yet — honest empty state, not a missing feature).
+  app.get(
+    "/api/v1/factoring/debtor-receipts",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      const query = chargebacksFeesQuerySchema.safeParse(req.query ?? {});
+      if (!query.success) return sendValidationError(reply, query.error);
+      const { operating_company_id: companyId, customer_id: customerId, date_from: dateFrom, date_to: dateTo } = query.data;
+
+      const rows = await withCompanyScope(user.uuid, companyId, async (client) => {
+        const params: Array<string> = [companyId];
+        let customerFilter = "";
+        if (customerId) {
+          params.push(customerId);
+          customerFilter = `AND p.customer_id = $${params.length}::uuid`;
+        }
+        let dateFromFilter = "";
+        if (dateFrom) {
+          params.push(dateFrom);
+          dateFromFilter = `AND p.payment_date >= $${params.length}::date`;
+        }
+        let dateToFilter = "";
+        if (dateTo) {
+          params.push(dateTo);
+          dateToFilter = `AND p.payment_date < ($${params.length}::date + interval '1 day')`;
+        }
+        const res = await client.query(
+          `
+            SELECT
+              p.id AS payment_id,
+              p.display_id AS payment_display_id,
+              p.payment_date,
+              p.reference AS payment_reference,
+              p.amount_cents,
+              p.amount_applied_cents,
+              p.amount_unapplied_cents,
+              p.payment_method,
+              p.customer_id,
+              c.customer_name,
+              i.id AS invoice_id,
+              i.display_id AS invoice_display_id,
+              i.factoring_advance_id,
+              i.total_cents AS invoice_total_cents,
+              fa.display_id AS advance_display_id,
+              pa.amount_cents AS applied_amount_cents,
+              pa.applied_at
+            FROM accounting.payments p
+            LEFT JOIN mdata.customers c
+              ON c.id = p.customer_id
+             AND c.operating_company_id = p.operating_company_id
+            JOIN accounting.payment_applications pa
+              ON pa.payment_id = p.id
+             AND pa.operating_company_id = p.operating_company_id
+             AND pa.unapplied_at IS NULL
+            JOIN accounting.invoices i
+              ON i.id = pa.invoice_id
+             AND i.operating_company_id = p.operating_company_id
+             AND i.factoring_advance_id IS NOT NULL
+             AND i.status <> 'void'
+            LEFT JOIN accounting.factoring_advances fa
+              ON fa.id = i.factoring_advance_id
+             AND fa.operating_company_id = p.operating_company_id
+            WHERE p.operating_company_id = $1::uuid
+              AND p.voided_at IS NULL
+              AND p.is_sample_data IS NOT TRUE
+              ${customerFilter}
+              ${dateFromFilter}
+              ${dateToFilter}
+            ORDER BY p.payment_date DESC, p.created_at DESC
+            LIMIT 500
+          `,
+          params
+        );
+        return res.rows;
+      });
+
+      return { receipts: rows, total: rows.length };
+    }
+  );
+
+  // REG-015 (owner 2026-09-10): Unapplied Cash — payments received but not fully applied to
+  // invoices (amount_unapplied_cents > 0). Read-only report. Live-verified 2026-09-10: 0 rows
+  // currently (USMCA has no customer payments yet — honest empty state, not a missing feature).
+  app.get(
+    "/api/v1/factoring/unapplied-cash",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      const query = chargebacksFeesQuerySchema.safeParse(req.query ?? {});
+      if (!query.success) return sendValidationError(reply, query.error);
+      const { operating_company_id: companyId, customer_id: customerId, date_from: dateFrom, date_to: dateTo } = query.data;
+
+      const rows = await withCompanyScope(user.uuid, companyId, async (client) => {
+        const params: Array<string> = [companyId];
+        let customerFilter = "";
+        if (customerId) {
+          params.push(customerId);
+          customerFilter = `AND p.customer_id = $${params.length}::uuid`;
+        }
+        let dateFromFilter = "";
+        if (dateFrom) {
+          params.push(dateFrom);
+          dateFromFilter = `AND p.payment_date >= $${params.length}::date`;
+        }
+        let dateToFilter = "";
+        if (dateTo) {
+          params.push(dateTo);
+          dateToFilter = `AND p.payment_date < ($${params.length}::date + interval '1 day')`;
+        }
+        const res = await client.query(
+          `
+            SELECT
+              p.id AS payment_id,
+              p.display_id AS payment_display_id,
+              p.payment_date,
+              p.reference AS payment_reference,
+              p.amount_cents,
+              p.amount_applied_cents,
+              p.amount_unapplied_cents,
+              p.payment_method,
+              p.customer_id,
+              c.customer_name,
+              p.notes
+            FROM accounting.payments p
+            LEFT JOIN mdata.customers c
+              ON c.id = p.customer_id
+             AND c.operating_company_id = p.operating_company_id
+            WHERE p.operating_company_id = $1::uuid
+              AND p.voided_at IS NULL
+              AND p.is_sample_data IS NOT TRUE
+              AND p.amount_unapplied_cents > 0
+              ${customerFilter}
+              ${dateFromFilter}
+              ${dateToFilter}
+            ORDER BY p.payment_date DESC, p.created_at DESC
+            LIMIT 500
+          `,
+          params
+        );
+        return res.rows;
+      });
+
+      return { rows, total: rows.length };
+    }
+  );
+
+  // REG-015 (owner 2026-09-10): Invoice Status Report — all non-void invoices with their
+  // factoring_status, joined to factoring_advances for advance/reserve/fee amounts. Read-only
+  // report. Live-verified 2026-09-10: 64 non-void invoices (51 advanced, 8 not_factored sent,
+  // 5 proforma).
+  app.get(
+    "/api/v1/factoring/invoice-status",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      const query = chargebacksFeesQuerySchema.safeParse(req.query ?? {});
+      if (!query.success) return sendValidationError(reply, query.error);
+      const { operating_company_id: companyId, customer_id: customerId, date_from: dateFrom, date_to: dateTo } = query.data;
+
+      const rows = await withCompanyScope(user.uuid, companyId, async (client) => {
+        const params: Array<string> = [companyId];
+        let customerFilter = "";
+        if (customerId) {
+          params.push(customerId);
+          customerFilter = `AND i.customer_id = $${params.length}::uuid`;
+        }
+        let dateFromFilter = "";
+        if (dateFrom) {
+          params.push(dateFrom);
+          dateFromFilter = `AND i.issue_date >= $${params.length}::date`;
+        }
+        let dateToFilter = "";
+        if (dateTo) {
+          params.push(dateTo);
+          dateToFilter = `AND i.issue_date < ($${params.length}::date + interval '1 day')`;
+        }
+        const res = await client.query(
+          `
+            SELECT
+              i.id AS invoice_id,
+              i.display_id AS invoice_display_id,
+              i.status AS invoice_status,
+              i.factoring_status,
+              i.issue_date,
+              i.due_date,
+              i.delivery_date,
+              i.total_cents,
+              i.customer_id,
+              c.customer_name,
+              i.source_load_id AS load_id,
+              fa.id AS factoring_advance_id,
+              fa.display_id AS advance_display_id,
+              fa.status AS advance_status,
+              fa.advance_amount_cents,
+              fa.reserve_amount_cents,
+              fa.factor_fee_cents,
+              fa.advanced_at,
+              fa.submitted_at,
+              fa.collected_at,
+              ${LOAD_COST_ROLLUP_SELECT}
+            FROM accounting.invoices i
+            LEFT JOIN mdata.customers c
+              ON c.id = i.customer_id
+             AND c.operating_company_id = i.operating_company_id
+            LEFT JOIN accounting.factoring_advances fa
+              ON fa.id = i.factoring_advance_id
+             AND fa.operating_company_id = i.operating_company_id
+            ${loadCostRollupLateral("i.source_load_id", "i.operating_company_id")}
+            WHERE i.operating_company_id = $1::uuid
+              AND i.status <> 'void'
+              AND i.is_sample_data IS NOT TRUE
+              ${customerFilter}
+              ${dateFromFilter}
+              ${dateToFilter}
+            ORDER BY i.issue_date DESC, i.created_at DESC
+            LIMIT 500
+          `,
+          params
+        );
+        return res.rows;
+      });
+
+      return { invoices: rows, total: rows.length };
+    }
+  );
 }

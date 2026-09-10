@@ -74,7 +74,7 @@ if (process.argv.includes("--selftest")) {
     const original = sources[check.file];
     const planted = check.banned
       ? `${original}\n/* planted */ <Link to="/factoring/factors"><EntityLink kind="factoring_advance" id={row.id} /></Link>\n`
-      : original.replace(check.pattern, "/* planted FACT-F5836 customer/invoice reverse defect */");
+      : original.replace(new RegExp(check.pattern.source, check.pattern.flags + (check.pattern.global ? "" : "g")), "/* planted FACT-F5836 customer/invoice reverse defect */");
     if (planted === original || !collectFailures({ ...sources, [check.file]: planted }).includes(check.name)) inert.push(check.name);
   }
   if (inert.length) {
