@@ -20,17 +20,22 @@ const USER_ID = "66666666-6666-6666-6666-666666666666";
 const { reopen } = vi.hoisted(() => ({ reopen: vi.fn().mockResolvedValue(true) }));
 vi.mock("../../driver-finance/settlement-continuation.service.js", () => ({ reopenSettlementForContinuationInClientTx: reopen }));
 
-function makeClient(overrides: { openSettlement?: { id: string; display_id: string } | null; suggestionStatus?: string; targetClosed?: boolean; closedContinuation?: boolean; suggestionTour?: string | null } = {}) {
+function makeClient(overrides: { openSettlement?: { id: string; display_id: string } | null; suggestionStatus?: string; targetClosed?: boolean; closedContinuation?: boolean; suggestionTour?: string | null; hasOtherNb?: boolean; historicalContinuation?: boolean; suggestionTripType?: "NB" | "TR" | "SB"; currentTripType?: "NB" | "TR" | "SB"; currentDriver?: string } = {}) {
   const calls: { sql: string; values: unknown[] }[] = [];
+  let pending: unknown[] | undefined;
   const client = {
     query: vi.fn(async (sql: string, values: unknown[] = []) => {
       calls.push({ sql, values });
+      if (sql.includes("SELECT l.id::text, l.trip_type, l.assigned_primary_driver_id")) return { rows: [{
+        id: LOAD_ID, trip_type: overrides.currentTripType ?? pending?.[4] ?? overrides.suggestionTripType ?? "TR",
+        driver_id: overrides.currentDriver ?? DRIVER_ID, unit_id: pending?.[3] ?? null,
+      }] };
       if (/SELECT audit\.append_event/.test(sql)) return { rows: [] };
       if (/SELECT id, display_id[\s\S]*FROM driver_finance\.driver_settlements/.test(sql)) {
-        return { rows: overrides.openSettlement ? [{ ...overrides.openSettlement, is_continuation: overrides.closedContinuation ?? false }] : [] };
+        return { rows: overrides.openSettlement ? [{ ...overrides.openSettlement, is_continuation: overrides.closedContinuation || overrides.historicalContinuation || false, is_closed: overrides.closedContinuation ?? false, has_other_nb: overrides.hasOtherNb ?? false }] : [] };
       }
       if (/SELECT id FROM driver_finance\.presettlement_link_suggestions WHERE/.test(sql)) return { rows: [] };
-      if (/INSERT INTO driver_finance\.presettlement_link_suggestions/.test(sql)) return { rows: [{ id: SUGGESTION_ID }] };
+      if (/INSERT INTO driver_finance\.presettlement_link_suggestions/.test(sql)) { pending = values; return { rows: [{ id: SUGGESTION_ID }] }; }
       if (/UPDATE driver_finance\.presettlement_link_suggestions/.test(sql)) return { rows: [] };
       if (/SELECT id, load_id::text, driver_id::text, tour_id::text, suggested_settlement_id::text, status/.test(sql)) {
         return {
@@ -39,8 +44,9 @@ function makeClient(overrides: { openSettlement?: { id: string; display_id: stri
               id: SUGGESTION_ID,
               load_id: LOAD_ID,
               driver_id: DRIVER_ID,
-              tour_id: overrides.suggestionTour === undefined ? TOUR_ID : overrides.suggestionTour,
-              suggested_settlement_id: overrides.openSettlement?.id ?? null,
+              tour_id: pending ? pending[5] : overrides.suggestionTour === undefined ? TOUR_ID : overrides.suggestionTour,
+              trip_type: pending ? pending[4] : overrides.suggestionTripType ?? "TR",
+              suggested_settlement_id: pending ? pending[6] : overrides.openSettlement?.id ?? null,
               status: overrides.suggestionStatus ?? "pending",
             },
           ],
@@ -52,6 +58,7 @@ function makeClient(overrides: { openSettlement?: { id: string; display_id: stri
       if (/SELECT lib\.next_trace_no/.test(sql)) return { rows: [{ seq: "1" }] };
       if (/INSERT INTO driver_finance\.driver_settlements/.test(sql)) return { rows: [{ id: "new-settlement-id" }] };
       if (/SELECT id, status, trip_closed_at::text, tour_id::text FROM driver_finance\.driver_settlements\s+WHERE id = \$1::uuid/.test(sql)) return { rows: overrides.targetClosed ? [] : [{ id: OPEN_SETTLEMENT_ID, tour_id: TOUR_ID, status: overrides.closedContinuation ? "closed" : "open", trip_closed_at: overrides.closedContinuation ? "2026-09-10" : null }] };
+      if (sql.includes(") AS has_other_nb")) return { rows: [{ has_other_nb: overrides.hasOtherNb ?? false }] };
       if (/UPDATE driver_finance\.driver_settlements/.test(sql)) return { rows: [] };
       if (/UPDATE mdata\.loads SET presettlement_link_id/.test(sql)) return { rows: [] };
       return { rows: [] };
@@ -350,7 +357,7 @@ describe("REG-010/011 settlement identity", () => {
   });
 });
 
-describe("REG-040 NB preserves the open unit/tour settlement", () => {
+describe("NB tour separation and REG-040 closed continuation", () => {
   const unitId = "77777777-7777-4777-8777-777777777777";
 
   it("closed NB reopens through the reversal service and confirms the SAME UUID with continuation classification", async () => {
@@ -386,7 +393,7 @@ describe("REG-040 NB preserves the open unit/tour settlement", () => {
     expect(query.mock.calls.some(([sql]) => /INSERT|UPDATE|next_settlement_display_id/.test(sql))).toBe(false);
   });
 
-  it("NB on the same open unit/tour links the existing UUID without allocating a second number", async () => {
+  it("first NB can join an open tour that has no other NB", async () => {
     const { client, calls } = makeClient({ openSettlement: { id: OPEN_SETTLEMENT_ID, display_id: "S-2026-0042" } });
     const result = await linkLoadToPresettlementAtBookingInClientTx(client as never, {
       operating_company_id: OPCO, load_id: LOAD_ID, driver_id: DRIVER_ID, unit_id: unitId,
@@ -395,9 +402,9 @@ describe("REG-040 NB preserves the open unit/tour settlement", () => {
     expect(result).toMatchObject({ action: "link_existing", settlement_id: OPEN_SETTLEMENT_ID });
     expect(calls.some(c => /next_settlement_display_id|INSERT INTO driver_finance\.driver_settlements/.test(c.sql))).toBe(false);
     const lookup = calls.find(c => /SELECT id, display_id/.test(c.sql))!;
-    expect(lookup.values).toEqual([OPCO, DRIVER_ID, TOUR_ID, unitId]);
+    expect(lookup.values).toEqual([OPCO, DRIVER_ID, TOUR_ID, unitId, LOAD_ID]);
     const link = calls.find(c => /UPDATE mdata\.loads SET presettlement_link_id/.test(c.sql))!;
-    expect(link.values).toEqual([OPEN_SETTLEMENT_ID, LOAD_ID]);
+    expect(link.values).toEqual([OPEN_SETTLEMENT_ID, LOAD_ID, TOUR_ID, OPCO]);
   });
 
   it("refuses linking if the suggested settlement becomes unavailable before confirmation", async () => {
@@ -408,5 +415,66 @@ describe("REG-040 NB preserves the open unit/tour settlement", () => {
     })).rejects.toMatchObject({ code: "target_settlement_not_open" });
     expect(calls.some(c => /UPDATE mdata\.loads SET presettlement_link_id/.test(c.sql))).toBe(false);
     expect(calls.find(c => /SELECT id, status, trip_closed_at::text, tour_id::text FROM driver_finance\.driver_settlements\s+WHERE/.test(c.sql))?.sql).toContain("FOR UPDATE");
+  });
+});
+
+
+describe("NB-OPEN-TOUR-SPLIT", () => {
+  const input = { operating_company_id: OPCO, load_id: LOAD_ID, driver_id: DRIVER_ID,
+    unit_id: "77777777-7777-4777-8777-777777777777", trip_type: "NB" as const,
+    tour_id: TOUR_ID, actor_user_id: USER_ID };
+  it.each([false, true])("fresh NB splits occupied open tour even with historical continuation=%s", async (historicalContinuation) => {
+    reopen.mockClear();
+    const { client, calls } = makeClient({ openSettlement: { id: OPEN_SETTLEMENT_ID, display_id: "S-2026-0042" }, hasOtherNb: true, historicalContinuation });
+    const result = await linkLoadToPresettlementAtBookingInClientTx(client as never, input);
+    expect(result).toMatchObject({ action: "create_new", settlement_id: "new-settlement-id" });
+    const created = calls.find(c => /INSERT INTO driver_finance\.driver_settlements/.test(c.sql))!;
+    expect(created.values[3]).toMatch(/^[a-f0-9-]{36}$/);
+    expect(created.values[3]).not.toBe(TOUR_ID);
+    const linked = calls.find(c => /UPDATE mdata\.loads SET presettlement_link_id/.test(c.sql))!;
+    expect(linked.values).toEqual(["new-settlement-id", LOAD_ID, created.values[3], OPCO]);
+    expect(reopen).not.toHaveBeenCalled();
+  });
+  it("post-booking NB assignment splits an explicit occupied tour", async () => {
+    const { client, calls } = makeClient({ openSettlement: { id: OPEN_SETTLEMENT_ID, display_id: "S-2026-0042" }, hasOtherNb: true });
+    expect(await linkLoadToPresettlementAfterAssignmentInClientTx(client as never, { ...input, presettlement_link_id_before: null }))
+      .toMatchObject({ action: "create_new" });
+    expect(calls.find(c => /INSERT INTO driver_finance\.driver_settlements/.test(c.sql))!.values[3]).not.toBe(TOUR_ID);
+  });
+  it.each([undefined, OPEN_SETTLEMENT_ID])("stale/manual confirmation rejects a second NB (override=%s)", async (override_settlement_id) => {
+    const { client, calls } = makeClient({ openSettlement: { id: OPEN_SETTLEMENT_ID, display_id: "S-2026-0042" }, hasOtherNb: true, suggestionTripType: "NB" });
+    await expect(confirmPresettlementLink(client as never, { operating_company_id: OPCO, suggestion_id: SUGGESTION_ID,
+      action: "link_existing", override_settlement_id, actor_user_id: USER_ID })).rejects.toMatchObject({ code: "open_settlement_already_has_nb" });
+    expect(calls.some(c => /UPDATE mdata\.loads/.test(c.sql))).toBe(false);
+  });
+  it.each(["TR", "SB"] as const)("%s still joins an occupied open tour", async (trip_type) => {
+    const { client } = makeClient({ openSettlement: { id: OPEN_SETTLEMENT_ID, display_id: "S-2026-0042" }, hasOtherNb: true });
+    expect(await linkLoadToPresettlementAtBookingInClientTx(client as never, { ...input, trip_type }))
+      .toMatchObject({ action: "link_existing", settlement_id: OPEN_SETTLEMENT_ID });
+  });
+  it("stale TR suggestion cannot attach a load now edited to NB", async () => {
+    const { client, calls } = makeClient({ openSettlement: { id: OPEN_SETTLEMENT_ID, display_id: "S-2026-0042" },
+      hasOtherNb: true, suggestionTripType: "TR", currentTripType: "NB" });
+    await expect(confirmPresettlementLink(client as never, { operating_company_id: OPCO, suggestion_id: SUGGESTION_ID,
+      action: "link_existing", actor_user_id: USER_ID })).rejects.toMatchObject({ code: "open_settlement_already_has_nb" });
+    expect(calls.some(c => /UPDATE mdata\.loads/.test(c.sql))).toBe(false);
+    expect(calls.find(c => c.sql.includes("SELECT l.id::text, l.trip_type"))!.sql).toContain("FOR UPDATE OF l");
+  });
+  it("stale driver assignment cannot confirm a settlement for the old driver", async () => {
+    const { client } = makeClient({ currentDriver: USER_ID });
+    await expect(confirmPresettlementLink(client as never, { operating_company_id: OPCO, suggestion_id: SUGGESTION_ID,
+      action: "create_new", actor_user_id: USER_ID })).rejects.toMatchObject({ code: "suggestion_load_changed" });
+  });
+  it("manual create_new on an old NB suggestion creates a distinct tour", async () => {
+    const { client, calls } = makeClient({ openSettlement: { id: OPEN_SETTLEMENT_ID, display_id: "S-2026-0042" }, suggestionTripType: "NB" });
+    expect(await confirmPresettlementLink(client as never, { operating_company_id: OPCO, suggestion_id: SUGGESTION_ID,
+      action: "create_new", actor_user_id: USER_ID })).toMatchObject({ settlement_id: "new-settlement-id" });
+    expect(calls.find(c => /INSERT INTO driver_finance\.driver_settlements/.test(c.sql))!.values[3]).not.toBe(TOUR_ID);
+  });
+  it("closed occupied NB tour still uses audited REG-040 continuation", async () => {
+    reopen.mockClear();
+    const { client } = makeClient({ openSettlement: { id: OPEN_SETTLEMENT_ID, display_id: "S-2026-0042" }, hasOtherNb: true, closedContinuation: true });
+    expect(await linkLoadToPresettlementAtBookingInClientTx(client as never, input)).toMatchObject({ action: "link_existing", settlement_id: OPEN_SETTLEMENT_ID });
+    expect(reopen).toHaveBeenCalledTimes(1);
   });
 });
