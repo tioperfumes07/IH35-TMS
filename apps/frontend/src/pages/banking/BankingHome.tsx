@@ -337,6 +337,25 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       pushToast("Failed to reorder account", "error");
     }
   };
+  // BNK-account-reorder-on-transactions (owner 09-07: "banking transactions view needs a way to
+  // reorder bank accounts") — the Accounts tab's reorder (handleReorderAccount above) already
+  // persists a real display_order via reorderBankAccounts(), but the Transactions tab's own account
+  // selector reads straight off plaidAccountsQuery, which carries no display_order at all, so a
+  // reorder made on Accounts was invisible here. Re-derive the same order bankAccountsPanelRows
+  // already resolved (tiles' display_order when tiles exist, else the raw query order) instead of
+  // adding a second, divergent ordering source.
+  const sortedTransactionAccounts = useMemo(() => {
+    const accounts = plaidAccountsQuery.data?.accounts ?? [];
+    const order = new Map(bankAccountsPanelRows.map((row, i) => [row.id, i]));
+    return [...accounts].sort((a, b) => {
+      const ai = order.get(a.id);
+      const bi = order.get(b.id);
+      if (ai == null && bi == null) return 0;
+      if (ai == null) return 1;
+      if (bi == null) return -1;
+      return ai - bi;
+    });
+  }, [plaidAccountsQuery.data?.accounts, bankAccountsPanelRows]);
   const factoringTile = useMemo(
     () => tiles.find((t) => String(t.tile_kind) === "virtual" || t.display_name.toLowerCase().includes("factoring")) ?? null,
     [tiles]
@@ -827,9 +846,10 @@ export function BankingHomePage({ initialTab }: Props = {}) {
           ) : null}
           <BankingTransactionsDesignView
             companyId={companyId}
-            accounts={plaidAccountsQuery.data?.accounts ?? []}
+            accounts={sortedTransactionAccounts}
             selectedAccountId={selectedAccountId}
             onSelectAccount={setSelectedAccountId}
+            onReorderAccount={handleReorderAccount}
             onManageConnections={() => navigate(BANKING_TAB_PATH.plaid_connections)}
             initialTransactionType={transactionsInitialFilter}
             highlightTransactionId={deepLinkTxnId}

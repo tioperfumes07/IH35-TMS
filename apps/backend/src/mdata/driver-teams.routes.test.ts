@@ -88,7 +88,7 @@ vi.mock("../audit/crud-audit.js", () => ({
   buildPatchChanges: vi.fn(() => ({})),
 }));
 
-describe.sequential("driver-teams.routes -- driverBelongsToCompany company scope", () => {
+describe("driver-teams.routes -- driverBelongsToCompany company scope", () => {
   const apps: Array<ReturnType<typeof Fastify>> = [];
 
   afterEach(async () => {

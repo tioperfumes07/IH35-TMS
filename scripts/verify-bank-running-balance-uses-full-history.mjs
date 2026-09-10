@@ -21,6 +21,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-bank-running-balance-uses-full-history";
@@ -118,6 +121,97 @@ export function checkRunningBalanceUsesFullHistory(source) {
   return failures;
 }
 
+/**
+ * LIVE HALF (owner 09-07 rider: "must be traced to its actual running-balance computation — do not
+ * just re-sort and call it fixed"). The static half above only proves the CODE reads full,
+ * comparator-sorted history; it cannot prove the WALK is arithmetically self-consistent against
+ * real prod rows. This replicates runningBalanceById's exact algorithm in SQL for every bank
+ * account: starting from current_balance_cents, walk the account's full non-voided history ordered
+ * (transaction_date DESC, created_at DESC, id DESC — the same compareTxNewestFirst tiebreak), and
+ * assert every adjacent pair's balance difference equals the older row's own signed delta
+ * (is_credit or amount_cents<0 -> +abs(amount), else -abs(amount) — spentReceived()'s exact rule).
+ * A single silent break anywhere in an account's chain fails this. Never touches data: SELECT only.
+ */
+async function liveCheck() {
+  const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
+  if (!connectionString) {
+    console.log(`[${LABEL}] LIVE SKIP — no DATABASE_URL/DATABASE_DIRECT_URL; live check not possible here.`);
+    return 0;
+  }
+  const liveRequested = process.env.BANK_RUNNING_BALANCE_LIVE === "1";
+  if (!liveRequested && (process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true")) {
+    console.log(`[${LABEL}] LIVE SKIP — CI's database is a fixture playground; run with BANK_RUNNING_BALANCE_LIVE=1 against prod.`);
+    return 0;
+  }
+
+  const { buildPgClientConfig } = require("./lib/pg-connection-options.cjs");
+  const pg = require("pg");
+  const client = new pg.Client(buildPgClientConfig(connectionString));
+  try {
+    await client.connect();
+  } catch (error) {
+    console.log(`[${LABEL}] LIVE SKIP — database unreachable (${error.code ?? error.message}).`);
+    await client.end().catch(() => {});
+    return 0;
+  }
+
+  try {
+    await client.query("BEGIN");
+    await client.query("RESET ROLE");
+    await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
+    // Every non-voided (bank_account_id, tx_id) chain, self-consistency checked in one query so a
+    // single mismatched pair anywhere fails the guard by name.
+    const res = await client.query(`
+      WITH ordered AS (
+        SELECT
+          bank_account_id, id, transaction_date, created_at,
+          CASE WHEN is_credit OR amount_cents < 0 THEN abs(amount_cents) ELSE -abs(amount_cents) END AS delta
+        FROM banking.bank_transactions
+        WHERE voided_at IS NULL
+      ),
+      walked AS (
+        SELECT
+          o.bank_account_id, o.id,
+          ba.current_balance_cents
+            - COALESCE(SUM(delta) OVER (
+                PARTITION BY o.bank_account_id
+                ORDER BY o.transaction_date DESC, o.created_at DESC, o.id DESC
+                ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+              ), 0) AS running_balance_cents,
+          LEAD(o.id) OVER (PARTITION BY o.bank_account_id ORDER BY o.transaction_date DESC, o.created_at DESC, o.id DESC) AS next_id_older,
+          o.delta
+        FROM ordered o
+        JOIN banking.bank_accounts ba ON ba.id = o.bank_account_id
+      ),
+      pairs AS (
+        SELECT
+          w.bank_account_id, w.id,
+          w.running_balance_cents - w2.running_balance_cents AS actual_diff,
+          w.delta
+        FROM walked w
+        JOIN walked w2 ON w2.id = w.next_id_older
+      )
+      SELECT bank_account_id, id, actual_diff, delta
+      FROM pairs
+      WHERE actual_diff <> delta
+      LIMIT 20
+    `);
+    await client.query("ROLLBACK");
+
+    if (res.rows.length > 0) {
+      console.error(`[${LABEL}] LIVE FAIL — ${res.rows.length} adjacent-pair mismatch(es) found (showing up to 20):`);
+      for (const row of res.rows) {
+        console.error(`  account=${row.bank_account_id} tx=${row.id} actual_diff=${row.actual_diff} expected_delta=${row.delta}`);
+      }
+      return 1;
+    }
+    console.log(`[${LABEL}] LIVE PASS — every bank account's full non-voided transaction history walks self-consistently (every adjacent pair's balance diff equals that row's own signed delta).`);
+    return 0;
+  } finally {
+    await client.end().catch(() => {});
+  }
+}
+
 function main() {
   if (process.argv.includes("--selftest")) {
     const good = `
@@ -198,7 +292,8 @@ function main() {
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`[${LABEL}] PASS`);
+  console.log(`[${LABEL}] STATIC PASS`);
+  return liveCheck();
 }
 
-main();
+main().then((code) => process.exit(code ?? 0));

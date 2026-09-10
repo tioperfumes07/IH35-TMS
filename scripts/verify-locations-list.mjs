@@ -14,6 +14,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { setsTenantGuc } from "./lib/tenant-guc-match.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-locations-list";
@@ -52,7 +53,7 @@ function assertBackendRoute(src) {
   if (!src.includes("withCurrentUser")) {
     errors.push(`${BACKEND_ROUTE}: must use withCurrentUser for scoped DB client`);
   }
-  if (!src.includes("set_config('app.operating_company_id'")) {
+  if (!setsTenantGuc(src)) {
     errors.push(`${BACKEND_ROUTE}: must set app.operating_company_id via set_config`);
   }
   return errors;

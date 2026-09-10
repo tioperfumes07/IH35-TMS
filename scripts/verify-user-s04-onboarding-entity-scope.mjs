@@ -7,6 +7,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { setsTenantGuc } from "./lib/tenant-guc-match.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-user-s04-onboarding-entity-scope";
@@ -104,7 +105,7 @@ function assertLive(overrides = {}) {
   if (!backend.includes("operating_company_id: z.string().uuid()")) {
     problems.push("onboarding state.routes must require operating_company_id uuid");
   }
-  if (!backend.includes("set_config('app.operating_company_id'")) {
+  if (!setsTenantGuc(backend)) {
     problems.push("onboarding state.routes must set app.operating_company_id GUC");
   }
   if (!backend.includes('FROM onboarding.onboarding_state') || !backend.includes("WHERE company_id = $1")) {

@@ -80,7 +80,7 @@ vi.mock("./deprecation.js", () => ({
 
 const TEST_OPCO = "11111111-1111-4111-8111-111111111111";
 
-describe.sequential("driver catalog factory -- optional enum insert", () => {
+describe("driver catalog factory -- optional enum insert", () => {
   const apps: Array<ReturnType<typeof Fastify>> = [];
 
   afterEach(async () => {

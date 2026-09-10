@@ -102,6 +102,8 @@
     "apps/frontend/src/pages/reports/ifta/IFTAStepCSVExport.tsx",
     "apps/frontend/src/pages/reports/ifta/IFTAStepGallons.tsx",
     "apps/frontend/src/pages/reports/ifta/IFTAStepMiles.tsx",
-    "apps/frontend/src/pages/reports/ifta/IFTAStepTax.tsx"
+    "apps/frontend/src/pages/reports/ifta/IFTAStepTax.tsx",
+    "_comment_multistopeditor: @archived — superseded by LDT-2 (GLB-13526): LoadDetailDrawer.tsx's Stops tab is now a read-only RECORD of what happened (arrivals/departures/dwell/detention/geofence events), with editing routed through the Book Load wizard (onEditStops -> setEditWizardOpen), not this drag-and-drop editor. Confirmed dead by code read, not just the guard: LoadDetailDrawer.tsx no longer imports MultiStopEditor at all (its own test file still vi.mock()s the module path, a stale leftover from before the LDT-2 rework). Retained archive-not-delete (§7) — dispatch/Load Detail is Cascade's module; a delete-vs-rewire call belongs to that lane.",
+    "apps/frontend/src/pages/dispatch/MultiStopEditor.tsx"
   ]
 }

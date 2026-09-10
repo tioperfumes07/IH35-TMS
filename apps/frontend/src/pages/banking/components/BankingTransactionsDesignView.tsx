@@ -74,6 +74,12 @@ type Props = {
   accounts: PlaidBankAccount[];
   selectedAccountId: string | null;
   onSelectAccount: (accountId: string) => void;
+  /** BNK account-reorder-on-transactions (owner 09-07) — "put one ahead of another" directly from
+   *  this tab's own account row, not only the Accounts tab. "up"/"down" match the same earlier/later
+   *  position semantics as the Accounts tab's own reorder (moves left/right in this horizontal row).
+   *  Optional so a caller with no reorderable order (e.g. a future read-only embed) can omit it and
+   *  the arrows just don't render. */
+  onReorderAccount?: (accountId: string, direction: "up" | "down") => void;
   onManageConnections: () => void;
   onDataChanged: () => void;
   // Optional initial value for the Transaction type filter (e.g. "uncategorized") so a caller — the
@@ -540,6 +546,7 @@ export function BankingTransactionsDesignView({
   accounts,
   selectedAccountId,
   onSelectAccount,
+  onReorderAccount,
   onManageConnections,
   onDataChanged,
   initialTransactionType,
@@ -3112,22 +3119,47 @@ export function BankingTransactionsDesignView({
       ) : null}
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="flex flex-wrap items-start gap-2">
-          {accounts.map((account) => (
-            <button
-              key={account.id}
-              type="button"
-              className={`rounded border px-2 py-1 text-left text-xs transition ${
-                account.id === selectedAccount?.id
-                  ? "border-[#1f2a44] bg-[#1f2a44] text-white"
-                  : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-              }`}
-              onClick={() => onSelectAccount(account.id)}
-            >
-              <div>{account.account_name || "Account"} {account.account_mask ? `••••${account.account_mask}` : ""}</div>
-              <div className={`mt-0.5 text-[11px] ${account.id === selectedAccount?.id ? "text-white/90" : "text-gray-500"}`}>
-                {USD.format(Number(account.current_balance_cents ?? 0) / 100)}
-              </div>
-            </button>
+          {accounts.map((account, accountIdx) => (
+            <div key={account.id} className="flex items-stretch">
+              {onReorderAccount ? (
+                <button
+                  type="button"
+                  className="rounded-l border border-r-0 border-gray-300 bg-white px-1 text-xs leading-none text-gray-400 hover:text-gray-700 disabled:opacity-30"
+                  disabled={accountIdx === 0}
+                  onClick={() => onReorderAccount(account.id, "up")}
+                  aria-label={`Move ${account.account_name || "account"} earlier`}
+                  data-testid={`banking-tx-account-reorder-left-${account.id}`}
+                >
+                  ‹
+                </button>
+              ) : null}
+              <button
+                type="button"
+                className={`border px-2 py-1 text-left text-xs transition ${onReorderAccount ? "" : "rounded"} ${
+                  account.id === selectedAccount?.id
+                    ? "border-[#1f2a44] bg-[#1f2a44] text-white"
+                    : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+                onClick={() => onSelectAccount(account.id)}
+              >
+                <div>{account.account_name || "Account"} {account.account_mask ? `••••${account.account_mask}` : ""}</div>
+                <div className={`mt-0.5 text-[11px] ${account.id === selectedAccount?.id ? "text-white/90" : "text-gray-500"}`}>
+                  {USD.format(Number(account.current_balance_cents ?? 0) / 100)}
+                </div>
+              </button>
+              {onReorderAccount ? (
+                <button
+                  type="button"
+                  className="rounded-r border border-l-0 border-gray-300 bg-white px-1 text-xs leading-none text-gray-400 hover:text-gray-700 disabled:opacity-30"
+                  disabled={accountIdx === accounts.length - 1}
+                  onClick={() => onReorderAccount(account.id, "down")}
+                  aria-label={`Move ${account.account_name || "account"} later`}
+                  data-testid={`banking-tx-account-reorder-right-${account.id}`}
+                >
+                  ›
+                </button>
+              ) : null}
+            </div>
           ))}
           <div className="relative ml-auto">
             <button

@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-import { pool } from "../auth/db.js";
+import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
@@ -46,15 +46,15 @@ export function registerEscrowDeductionPendingRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
 
     await assertCompanyMembership(user.uuid, query.data.operating_company_id);
-    const client = await pool.connect();
-    try {
+    const rows = await withCurrentUser(user.uuid, async (client) => {
+      // CLS-GUC-NO-TXN: set_config(..., true) is transaction-local — it must run inside the
+      // withCurrentUser BEGIN/COMMIT, never on a bare pool.connect(), or the GUC is discarded
+      // before the next statement and every FORCED-RLS policy sees an empty tenant scope.
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [query.data.operating_company_id]);
       await processEscrowPendingExpiryReminders(client, user.uuid, query.data.operating_company_id);
-      const rows = await listPendingDeductions(client, query.data.operating_company_id);
-      return reply.send({ data: rows });
-    } finally {
-      client.release();
-    }
+      return listPendingDeductions(client, query.data.operating_company_id);
+    });
+    return reply.send({ data: rows });
   });
 
   app.post("/api/v1/driver-finance/escrow-deductions-pending/:id/approve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
@@ -114,13 +114,11 @@ export function registerEscrowDeductionPendingRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
 
     await assertCompanyMembership(user.uuid, query.data.operating_company_id);
-    const client = await pool.connect();
-    try {
+    const rows = await withCurrentUser(user.uuid, async (client) => {
+      // CLS-GUC-NO-TXN: see the sibling handler above — same transaction-local requirement.
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [query.data.operating_company_id]);
-      const rows = await listLoadAbandonments(client, query.data.operating_company_id, query.data.since_date);
-      return reply.send({ data: rows });
-    } finally {
-      client.release();
-    }
+      return listLoadAbandonments(client, query.data.operating_company_id, query.data.since_date);
+    });
+    return reply.send({ data: rows });
   });
 }

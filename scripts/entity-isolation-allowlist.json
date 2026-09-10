@@ -394,18 +394,37 @@
       "schema": "reference",
       "table": "non_ifta_jurisdictions",
       "reason": "global static list of non-IFTA jurisdictions (Mexican states) this carrier's lanes cross; a universal reference catalog, not per-entity business data"
+    },
+    {
+      "schema": "accounting",
+      "table": "company_settlement_driver_settlements",
+      "reason": "junction table, no operating_company_id of its own by design (db/migrations/202613560001_company_settlements_header_table.sql) — FORCE RLS with an EXISTS policy scoping through the parent accounting.company_settlements(company_settlement_id) row's own operating_company_id; verified: append-only (GRANT SELECT, INSERT only; UPDATE/DELETE revoked)"
+    },
+    {
+      "schema": "catalogs",
+      "table": "cash_flow_adjustment_reasons",
+      "reason": "global reference catalog of cash-flow roll-over/hide reasons (db/migrations/202613860000_cash_flow_row_adjustments.sql) — entity-neutral like catalogs.lane_mileage; FORCE RLS with a SELECT-to-all policy, no write grant beyond the seed"
+    },
+    {
+      "schema": "catalogs",
+      "table": "point_mileage",
+      "reason": "coordinate-keyed reference mileage cache (db/migrations/202613600001_point_mileage_table.sql, owner ruling 2026-09-03) — a distance between two lat/lng points is not tenant-scoped by design, same convention as catalogs.lane_mileage"
+    },
+    {
+      "schema": "identity",
+      "table": "permissions",
+      "reason": "global catalog of permission-model actions (resource + optional field_name), db/migrations/202613312000_permission_model.sql — the set of possible permissions is not per-entity; entity scope lives on identity.role_permissions/identity.user_permissions grants, not on this catalog"
+    },
+    {
+      "schema": "notifications",
+      "table": "suppression_rules",
+      "reason": "per-USER notification suppression (db/migrations/202608161400_notifications_suppression_rules.sql) — FORCE RLS scoped by user_uuid = app.current_user_id/app.user_id, a valid isolation boundary this guard's operating_company_id/tenant_id/company_id column check does not recognize; a user's own suppression window is not a per-company concept"
     }
   ],
   "remediation_backlog": [
     {
       "schema": "accounting",
       "table": "ar_collection_contacts",
-      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
-      "phase": "P1"
-    },
-    {
-      "schema": "accounting",
-      "table": "bill_lines",
       "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
       "phase": "P1"
     },
@@ -651,6 +670,12 @@
     },
     {
       "schema": "dispatch",
+      "table": "manual_delivery_authorizations",
+      "reason": "needs FORCE ROW LEVEL SECURITY (RLS on but FORCE off)",
+      "phase": "RLS-force-tail"
+    },
+    {
+      "schema": "dispatch",
       "table": "ratecon_extractions",
       "reason": "needs FK from 'operating_company_id' to org.companies(id)",
       "phase": "P4"
@@ -699,6 +724,12 @@
     },
     {
       "schema": "forecast",
+      "table": "cash_flow_projection_snapshots",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "forecast",
       "table": "opening_balance",
       "reason": "needs FK from 'operating_company_id' to org.companies(id)",
       "phase": "P4"
@@ -725,6 +756,18 @@
       "schema": "geofence",
       "table": "fence",
       "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "identity",
+      "table": "role_permissions",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id) | needs opco-scoped RLS policy (currently: 2 policies, none scope 'operating_company_id' against current_setting('app.operating_company_id'|'app.current_operating_company_id') OR org.user_accessible_company_ids()/org.user_company_access membership)",
+      "phase": "P4"
+    },
+    {
+      "schema": "identity",
+      "table": "user_permissions",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id) | needs opco-scoped RLS policy (currently: 2 policies, none scope 'operating_company_id' against current_setting('app.operating_company_id'|'app.current_operating_company_id') OR org.user_accessible_company_ids()/org.user_company_access membership)",
       "phase": "P4"
     },
     {
@@ -773,6 +816,12 @@
       "schema": "integrity",
       "table": "anomalies",
       "reason": "needs FK from 'tenant_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "lib",
+      "table": "trace_counters",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
       "phase": "P4"
     },
     {

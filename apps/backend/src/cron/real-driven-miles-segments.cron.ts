@@ -3,6 +3,7 @@ import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { getRealDrivenMilesSegmentStatus, materializeRealDrivenMilesSegments } from "../integrations/samsara/geofences/real-driven-miles.service.js";
+import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const CRON_NAME = "telematics.real_driven_miles_segments";
@@ -13,6 +14,7 @@ export function initializeRealDrivenMilesSegmentsCron(app: FastifyInstance) {
   initialized = true;
   cron.schedule("*/15 * * * *", async () => {
     await wrapBackgroundJobTick(CRON_NAME, async () => {
+      assertTenantContext(USMCA_COMPANY_ID, CRON_NAME);
       const rows = await withLuciaBypass((client) => materializeRealDrivenMilesSegments(client, {
         operatingCompanyId: USMCA_COMPANY_ID,
       }));
