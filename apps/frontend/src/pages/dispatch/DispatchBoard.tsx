@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useUpdateLoadStatus, type DispatchLoadRow, type LoadStatus } from "../../api/loads";
 import { colors } from "../../design/tokens";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -84,7 +84,7 @@ import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { dataTableErrorState } from "../../lib/tableError";
 import { useToast } from "../../components/Toast";
-import { addLoadToPreSettlement, listOpenPreSettlements, type OpenPreSettlement } from "../../api/driverFinance";
+import { listOpenPreSettlements, type OpenPreSettlement } from "../../api/driverFinance";
 import { STATUS_LABEL, formatMoneyCents, toRouteSummary } from "../../components/dispatch/constants";
 import { InlineDriverPicker } from "../../components/dispatch/InlineDriverPicker";
 import { InlineUnitPicker } from "../../components/dispatch/InlineUnitPicker";
@@ -889,19 +889,6 @@ export function DispatchBoard({
     </>
   );
 
-  const addLoadMutation = useMutation({
-    mutationFn: ({ settlementId, loadId, ocId }: { settlementId: string; loadId: string; ocId: string }) =>
-      addLoadToPreSettlement(settlementId, { operating_company_id: ocId, load_id: loadId }),
-    onSuccess: () => {
-      pushToast("Load linked to pre-settlement", "success");
-      void openPreSettlementsQuery.refetch();
-      void queryClient.invalidateQueries({ queryKey: ["pre-settlements-open"] });
-    },
-    onError: (err) => {
-      pushToast(userFacingApiError(err, "Failed to link load to pre-settlement"), "error");
-    },
-  });
-
   const exportSelectedCsv = () => {
     const selected = sortedLoads.filter((load) => selection.selectedIds.has(load.id));
     const headers = ["load_number", "customer_name", "lane", "unit", "driver", "risk", "status"];
@@ -1132,41 +1119,29 @@ export function DispatchBoard({
     );
   };
 
-  const renderPreSettlementPrompt = (load: DispatchLoadRow) => {
+  // OWNER CORRECTION (2026-09-11): this column used to render a warning naming the driver's
+  // pre-settlement as "open" plus an inline add-to-it prompt -- a pre-settlement is BY DEFINITION
+  // not closed, so flagging one that way was a contradiction, not information (owner's own words).
+  // Replaced with a plain
+  // pre-settlement number, the same shape as Load Costs' own "Settlement/Tour" column -- no
+  // warning language, no conditional "not the anchor load" suppression. Shown whenever the load's
+  // assigned driver currently has an open pre-settlement and this load's own status is still open
+  // (an already-delivered/closed/invoiced/cancelled load's real settlement may differ from the
+  // driver's CURRENT open one, so the number is withheld there rather than shown misleadingly).
+  const renderPreSettlementNumber = (load: DispatchLoadRow) => {
     const effectiveDriverId = rowOverrides[load.id]?.driverId ?? load.assigned_primary_driver_id;
     const openPreSettlement = effectiveDriverId ? openPreSettlementsMap.get(effectiveDriverId) : undefined;
-    const showPreSettlementPrompt = Boolean(
+    const showNumber = Boolean(
       openPreSettlement &&
-        openPreSettlement.first_load_id !== load.id &&
         !["delivered", "delivered_pending_docs", "completed_docs_received", "closed", "paid", "invoiced", "cancelled"].includes(
           load.status
         )
     );
-    if (!showPreSettlementPrompt || !openPreSettlement) return null;
+    if (!showNumber || !openPreSettlement || !openPreSettlement.settlement_number) return null;
     return (
-      <div className="flex items-center gap-2 text-xs text-slate-700">
-        <span className="font-semibold">Driver has open pre-settlement</span>
-        {openPreSettlement.settlement_number ? (
-          <span className="font-mono text-slate-700">
-            <EntityLink kind="settlement" id={openPreSettlement.settlement_id} label={entityLabel(openPreSettlement.settlement_number, openPreSettlement.settlement_id, "Settlement")} />
-          </span>
-        ) : null}
-        <span className="text-slate-700">· add this load to it?</span>
-        <button
-          type="button"
-          className="rounded-sm bg-slate-300 px-2 py-0.5 text-xs font-semibold text-slate-700 hover:bg-slate-300"
-          onClick={(event) => {
-            event.stopPropagation();
-            addLoadMutation.mutate({
-              settlementId: openPreSettlement.settlement_id,
-              loadId: load.id,
-              ocId: load.operating_company_id,
-            });
-          }}
-        >
-          Add to it
-        </button>
-      </div>
+      <span className="font-mono text-xs text-slate-700">
+        <EntityLink kind="settlement" id={openPreSettlement.settlement_id} label={entityLabel(openPreSettlement.settlement_number, openPreSettlement.settlement_id, "Settlement")} />
+      </span>
     );
   };
 
@@ -1174,7 +1149,7 @@ export function DispatchBoard({
   // Order: Unit · Trailer · Driver · [6 Samsara HOS clocks] · Load # · Customer · Commodity · Pickup ·
   // Delivery · WO # · Cargo temp · Linehaul · Status signal · Live GPS · Risk · Status. Lane is split
   // into Pickup (City, ST) + Delivery (City, ST).
-  const boardColumns: Array<{ key: string; header: string; cell: (load: BoardLoad) => ReactNode; defaultHidden?: boolean }> = [
+  const boardColumns: Array<{ key: string; header: string; cell: (load: BoardLoad) => ReactNode; defaultHidden?: boolean; alwaysVisible?: boolean }> = [
     { key: "unit", header: "Unit", cell: (load) => renderUnitCell(load) },
     { key: "trailer", header: "Trailer", cell: (load) => renderTrailerCell(load) },
     // DB-6: Load # sits immediately after Trailer in the shared column model (app-wide list + table).
@@ -1251,7 +1226,7 @@ export function DispatchBoard({
     { key: "status_signal", header: "Status signal", cell: (load) => renderTriSignalCell(load) },
     { key: "risk", header: "Risk", cell: (load) => <RiskCell load={load} /> },
     { key: "status", header: "Status", cell: (load) => renderStatusCell(load), defaultHidden: true },
-    { key: "pre_settlement", header: "Pre-settlement", cell: (load) => renderPreSettlementPrompt(load), defaultHidden: true },
+    { key: "pre_settlement", header: "Pre-settlement", cell: (load) => renderPreSettlementNumber(load), alwaysVisible: true },
   ];
 
   // DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05 §A — the 5 named group-header bands, in order,
@@ -1311,6 +1286,7 @@ export function DispatchBoard({
     // still widens further for a longer value, per the shared columnLayout="auto" contract).
     minWidth: column.key === "location" ? 180 : undefined,
     defaultHidden: column.defaultHidden,
+    alwaysVisible: column.alwaysVisible,
     sortable: DISPATCH_SORTABLE_COLS.has(column.key),
     sortValue: DISPATCH_SORTABLE_COLS.has(column.key)
       ? (load: BoardLoad) => dispatchSortValue(load, column.key)
