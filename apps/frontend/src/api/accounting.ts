@@ -1060,6 +1060,8 @@ export type DriverBillListRow = {
   gross_amount_cents: number | null;
   status: string;
   settled_in_settlement_id: string | null;
+  settlement_id?: string | null;
+  settlement_number?: string | null;
   settlement_display_id: string | null;
   voided_at: string | null;
   created_at: string;

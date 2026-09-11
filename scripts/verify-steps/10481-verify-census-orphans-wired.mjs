@@ -4,6 +4,8 @@
 // hidden. Every guard runs; failures are aggregated and reported together (not first-failure-only). A guard that fails
 // here is a real open defect or a stale pin — fix the code or re-pin the guard to the owner's ruling; never remove a name
 // from this list to make CI green. New guards get their own claimed step (claim-before-write) — this list is the backlog.
+// MATRIX-BUILT-OPTIONAL: this aggregate runner executes guards; it asserts no module/leaf
+// linkage itself and must not auto-green unrelated matrix cells from its filename inventory.
 import { spawnSync } from "node:child_process";
 
 export const CENSUS_ORPHAN_GUARDS = [
@@ -55,6 +57,7 @@ export const CENSUS_ORPHAN_GUARDS = [
   "verify-driver-bill-linked-to-settlement-at-creation.mjs",
   "verify-driver-bill-number-no-b-prefix.mjs",
   "verify-driver-bills-in-bills-page.mjs",
+  "verify-bills-settlement-column-linkage.mjs",
   "verify-driver-bills-void-cascade-stamps-register.mjs",
   "verify-driver-instruction-sheet-no-pay.mjs",
   "verify-driver-liability-void-route-wired.mjs",

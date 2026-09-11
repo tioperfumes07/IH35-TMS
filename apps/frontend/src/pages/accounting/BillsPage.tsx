@@ -526,13 +526,13 @@ export function BillsPage() {
       { key: "gross_amount_cents", label: "Gross", sortable: true, render: (b) => (b.gross_amount_cents != null ? money(b.gross_amount_cents) : "—") },
       { key: "status", label: "Status", sortable: true, render: (b) => <span className="capitalize">{b.status}</span> },
       {
-        key: "settlement_display_id",
-        label: "Settlement/Tour",
+        key: "settlement_number",
+        label: "Settlement Number",
         alwaysVisible: true,
         sortable: true,
         render: (b) =>
-          b.settled_in_settlement_id ? (
-            <EntityLink kind="settlement" id={b.settled_in_settlement_id} label={b.settlement_display_id ?? "—"} />
+          b.settlement_id ? (
+            <EntityLink kind="settlement" id={b.settlement_id} label={b.settlement_number ?? "—"} />
           ) : (
             "—"
           ),
