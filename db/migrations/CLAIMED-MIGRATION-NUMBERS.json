@@ -916,6 +916,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-09-11",
       "purpose": "ACCT-F6350 metadata-only canonical declaration for already-live driver_finance.historical_settlement_attributions and historical_settlement_attribution_items. Re-declares their identical CREATE TABLE IF NOT EXISTS shapes with CANONICAL-CHECK blocks; no schema or data change."
+    },
+    "202614090000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-11",
+      "purpose": "Lead-assigned ITEM 1 (2026-09-11 22:30 UTC, deadline 23:30 UTC): catalogs.load_exception_reasons CREATE-only migration -- id/operating_company_id/code/name/applies_to/linked_module/sort_order/is_active/created_at, UNIQUE(operating_company_id, code), FORCED RLS, 0065 grants to ih35_app, USMCA-only seed of 11 exception reasons (breakdown_roadside, breakdown_towed, accident, weather, border_hold, detention, layover, driver_rest, reroute, customer_cancelled, other). CC-1 morning band (HH=00); lane-time-of-day waived by the Lead for this item only, band number stays in the normal CC-1 HH 00-11 range."
     }
   },
   "202613590001": {
