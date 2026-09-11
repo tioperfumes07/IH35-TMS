@@ -30,8 +30,8 @@ const DIR = path.join(ROOT, "docs/reconciliation/2026-09-07-usmca");
 const HEADERS_CSV = path.join(DIR, "usmca-settlements-from-signed-docs.csv");
 const LINES_CSV = path.join(DIR, "usmca-settlement-lines-from-signed-docs.csv");
 
-const EXPECTED_GRAND_TOTAL = 37830.87; // 28 in-scope USMCA tours 5769-5796 (Faro-era). Was 27487.36 for the 21-doc subset before the 7 pre-window Faro-era tours (5769-5773,5775,5776) were added.
-const EXPECTED_DOC_COUNT = 28;
+const EXPECTED_GRAND_TOTAL = 44234.51; // 32 in-scope USMCA tours 5769-5800 (Faro-era). 5797-5800 added 2026-09-11 (rebuild blocker 1, hand-extracted from the 4 signed PDFs Driver_Settlement_5797..5800.pdf, each tied to its own header TOTAL DUE to the penny). Was 37830.87/28 docs before.
+const EXPECTED_DOC_COUNT = 32;
 
 /** RFC-4180-ish CSV parser (handles quoted fields with embedded commas). */
 function parseCsv(text) {
