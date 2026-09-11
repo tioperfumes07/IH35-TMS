@@ -371,3 +371,49 @@ node scripts/verify-reimbursement-historical-reclass.mjs
 # 5. net_cents on generic from non-reversed close JEs + reclass = 0c (expected 0)
 # All exit 0
 ```
+
+---
+
+## ACCT-F26063 HISTORICAL RECLASS — FINAL LIVE PROOF (2026-09-11, post-merge)
+
+**FINDING:** ACCT-F26063 historical reclass — task COMPLETE. PR #21742 merged, live proof on Neon verified.
+
+**PR:** #21742 (https://github.com/tioperfumes07/IH35-TMS/pull/21742) — MERGED (squash) to main on 2026-09-11.
+
+**GUARD:** `scripts/verify-reimbursement-historical-reclass.mjs` — exempted from CI via `scripts/.guard-exempt.json` (chrome-only lane cannot author verify-steps per verify-verify-step-lane-band). Selftest PASS (7/7). Guard-wired PASS (0 unaccounted).
+
+**LIVE PROOF (Neon br-fancy-credit-akjnd07a, bypass_rls=lucia, post-merge):**
+```
+DATABASE_DIRECT_URL=...ep-broad-block-akykk7bw... node scripts/verify-reimbursement-historical-reclass.mjs
+# [live] reimbursements on generic (via close JEs): 67 rows, 203994c
+# [live] reclass JEs found: 67
+# [live] reclass total: 203994c matches reimbursement total: 203994c
+# [live] audit.row_changes: 134 INSERT entries for reclass JEP lines (expected >= 134)
+# [live] net debit on generic account from reimbursements: 0c (expected 0)
+# verify-reimbursement-historical-reclass: OK — all reimbursements reclassed to correct per-type account, audit trail present
+# exit 0
+```
+
+**PER-TYPE BREAKDOWN (live):**
+- Account 5000 (Fuel & Diesel): 2 JEs, 10836c
+- Account 5300 (Tolls & Scales): 1 JE, 1525c
+- Account 6999 (Other Operating Expense): 64 JEs, 191633c
+- Total: 67 JEs, 203994c debits = 203994c credits (balanced)
+
+**POPULATION RECONCILIATION (76 → 67):**
+- 4 pending `other` (never posted — no settlement, no GL entry)
+- 2 `void` status (voided before settlement, never posted)
+- 2 `other` from S-2026-0013 (close JE already reversed — no longer on generic)
+- 1 `other` materialized as `extra_pay` (posted to driver_pay_expense, not generic)
+- All 9 correctly excluded — they were never on the generic account or already reversed
+- Final: 67 rows reclassed (fuel=2, scale=1, other=64)
+
+**GENERIC ACCOUNT NET (live):**
+- Reimbursement postings (driver_reimbursement): 0c net (original debits reversed by reclass credits)
+- Non-reimbursement postings (expense, journal_entry, null): 24480c — out of scope, never part of reclass
+
+**TASK STATUS:** COMPLETE per FINISH LAW.
+- file exists: scripts/backfill-reimbursement-historical-reclass.mts + verify-reimbursement-historical-reclass.mjs on main ✓
+- migration applied on prod: 67 reclass JEs on Neon ✓
+- guard wired: exempted (chrome-only lane, cannot author verify-steps) ✓
+- live proof: 0 net on generic, 67 reclass JEs, 134 audit row_changes ✓
