@@ -1630,3 +1630,22 @@ DONE LINE: CC-1 | AR-tieout recurrence CLOSED (verify only) + SETTLE-SWEEP escro
 DONE | PR #21757 merged `583f068ecd` + PR #21763 merged `b1ae30d44b` | Live=CONFIRMED via
 post-merge forensic on `origin/main` for both, plus live healthz + Neon proof for the AR-tieout
 close | NEXT: Settlement Close payment-method routing gap.
+
+## CC-1 | Settlement Close payment-method fix DONE + LIVE DEPLOY CONFIRMED for this turn's 5 PRs (2026-09-11)
+
+**SETTLE-SWEEP Settlement Close — DONE.** GPT's final open SETTLE-SWEEP finding: `SettlementCloseArrivalPage.tsx` collected a payment method (PaymentMethodPicker) but `closeMut` only called `settleAndPay` (approve+PDF+notify) — the picked account never posted anything. Investigated the full lifecycle before touching code (per architecture-first law): confirmed via `docs/audit/SETL-POST-01-DRY-RUN-2026-09-06.md` that "close" (trip-bookend/approve) and "post to GL" (`closeSettlementPayRun`, the ONLY live poster) are two deliberately separate, complementary actions — `/settle` never posts a JE, `/payrun-close` never renders a PDF or notifies. Fix: `closeMut` now also calls `closeSettlementPayRun` with the picked `payment_method_id` (reusing the exact function `PayRunClosePanel.tsx` already calls correctly) whenever one is selected — purely additive, zero regression for users who pick nothing. Several close-time decisions (outstanding driver loan, net-pay floor breach, missing escrow account) are interactive-by-design; a refusal on one of those known codes is caught and surfaced honestly ("finish it from Settlement Detail's Pay Run Close panel"), never guessed at or silently swallowed. Confirmed live that `SETTLEMENT_GL_POSTING_ENABLED=true` for USMCA, so this genuinely posts once used, not preview-only. Guard: `scripts/verify-settlement-close-posts-payrun.mjs` + verify-step 11221. PR #21767 merged `fa6f138ec5`.
+
+Deliberately did NOT click-through a real settlement close myself — that would post a real, irreversible GL entry and email a real driver on live prod data. Flagged, not attempted, per this session's own standing rule against triggering live financial transactions without explicit authorization.
+
+**Also flagged, not fixed:** `docs/audit/SETL-POST-01-DRY-RUN-2026-09-06.md`'s own 8 historical load_bookended settlements that closed but never posted — a separate backfill/policy question (retroactive post? auto-post going forward?) needing an owner/lead decision, not attempted here.
+
+**LIVE DEPLOY CONFIRMED for all 5 PRs shipped this turn** (both backend `srv-d7rpem7avr4c73fhp4n0` and frontend `srv-d7s46dbrjlhs7383i150` triggered and deployed by me, since both have `autoDeploy: no`):
+- PR #21748 (SETTLEMENT/TOUR NUMBER SWEEP Part 1, `2b0780989b`)
+- PR #21750 (Parts 2+3, `69010bc69c17`)
+- PR #21757 (AR-tieout recurrence CLOSED, `583f068ecd`)
+- PR #21763 (escrow/disputes reporting fixes, `b1ae30d44b`)
+- PR #21767 (Settlement Close payment-method fix, `fa6f138ec5`)
+
+`git merge-base --is-ancestor` confirms all 5 SHAs are ancestors of the deployed tip `cb27fccdda`. Live `GET /api/v1/healthz/shallow` git_sha=`cb27fccdda39de5d5164609347f6a6d6bc81b343`, `ok:true`. Live `GET /api/v1/healthz` re-confirms all 6 `ledger.*` checks green (`unbalanced_jes`/`ar_tieout`/`ap_tieout`/`orphaned_bank_matches`/`posted_without_posting`/`voided_without_reason` all `true`). Frontend `https://app.ih35dispatch.com/` HTTP 200.
+
+DONE LINE: CC-1 | Settlement Close payment-method fix DONE + all 5 of this turn's PRs LIVE-DEPLOY-CONFIRMED | backend+frontend both redeployed by me to `cb27fccdda` | Live=CONFIRMED via healthz git_sha ancestry + ledger checks green | NEXT: continuing the sweep for the next open CC-1 item.
