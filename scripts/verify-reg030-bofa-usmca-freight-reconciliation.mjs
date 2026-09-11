@@ -18,8 +18,13 @@
  *     negative=IN) established repeatedly this session (BANK-F10005 2026-09-04, BANK-F10041
  *     2026-09-07, BANK-F30002 2026-09-08).
  * (2) SEPARATELY, PR #21744 (Cursor, merged 2026-09-11 as a second, independently-authored fix
- *     reusing the SAME finding id "BANK-F10005" for a different claim -- a finding-registry
- *     collision worth its own note) took the opposite design choice: it redefined
+ *     that ORIGINALLY reused the SAME finding id "BANK-F10005" for a different claim -- a
+ *     finding-registry collision with the established 2026-09-04 finding of that id (see BANK-F10005's
+ *     own citations across docs/specs/CURSOR-OPERATING-CONSTITUTION.md, verify-bank-transactions-
+ *     direction-uses-is-credit.mjs, verify-steps/10307). Resolved 2026-09-11: the 2026-09-04 finding
+ *     KEEPS "BANK-F10005" (deeply embedded, guard code + multiple docs cite it by that exact id); this
+ *     PR #21744 finding is reassigned the fresh, unclaimed id **BANK-F30051** going forward -- see
+ *     docs/audit/GUARD-WORKORDERS.md's id-map row. PR #21744 took the opposite design choice: it redefined
  *     banking.bank_transactions.amount_cents' storage convention GOING FORWARD, for every account
  *     and every entity, to money-in-positive ("statement-signed") via a new
  *     plaidAmountToStatementCents() helper in plaid.service.ts, and retroactively re-signed this

@@ -10645,3 +10645,29 @@ NOT CHECKED: TRANSP/TRK boards (USMCA only, per lane scope); every possible colu
 **KANBAN ROW INTEGRITY + STATUS-DROPDOWN SWEEP — RE-CONFIRMED LIVE, COMPLETE, including the one previously-disclosed gap now closed.** REG-048 dedup still holds (Dispatched column: 8 real units, no duplicates). The QuickBooks-style status dropdown still opens with the real option list (In Transit / Delivered (pending docs) / Invoiced / Docs received) on a live production card (T176/13589). **Drag-to-status, previously reported as "source-confirmed unchanged, live full-drag-completion UNVERIFIED this pass (automation limitation)"**: closed this gap. A proper synthetic PointerEvent sequence (pointerdown on the card, 10 incremental pointermoves crossing dnd-kit's activation-distance threshold, pointerup over the target column) — matching dnd-kit's real browser event protocol, unlike a single-jump `left_click_drag` which this session had already found gets ignored — was dispatched against a real production Kanban card. The card visually lifted/detached and the target column's drop-zone highlighted, live-confirming `DndContext`/`useDraggable`/`useDroppable`/`handleDragEnd` are genuinely wired end-to-end on the deployed build, not just present in source. The specific Dispatched→At-pickup drop reverted with no console error afterward — read as that column pair not being a valid direct manual-drag target under the app's own transition rules (At pickup likely populates from geofence/telematics arrival, not manual drag), not a mechanism failure; no other column pairing was tried, and no production load's status was left changed by this test.
 
 | N/A — both are verification/live-proof passes; REG-038's code shipped in #21792, Kanban/REG-048/status-sweep code shipped earlier in #21734/#21756 | **CC-3** | none — both tasks fully live-verified, no defect found | live-Chrome screenshots of all 8 Dispatch Home KPI tiles + Round-trip exposure's real columns; live-Chrome status-dropdown click; live synthetic drag-event sequence proving DndContext response; `git merge-base --is-ancestor` against the live deployed sha (observed twice, mid-rolling-deploy, both containing all 3 merges) | **REG-038 COMPLETE (live-verified) · KANBAN ROW INTEGRITY + STATUS-DROPDOWN SWEEP COMPLETE (live-verified, drag-to-status gap closed)** |
+## FINDING-ID COLLISION RESOLVED: BANK-F10005 vs PR #21744 — CC-2, 2026-09-11
+
+Per owner instruction (sign-convention backfill task): the `BANK-F10005` finding-id collision flagged
+in the REG-028/030 row above is resolved with a clean id map, not just a flagged note.
+
+**BANK-F10005 (unchanged, keeps the id)** — the established 2026-09-04 finding:
+`BANK-F10005-USMCA-BANK-ACTIVITY-NEVER-POSTED-TO-GL` (also amended same day to restate net/gross —
+see the two rows earlier in this file dated 2026-09-04) and its later "sign runs opposite `is_credit`"
+amendment (`docs/specs/CURSOR-OPERATING-CONSTITUTION.md`, `scripts/verify-bank-transactions-direction-
+uses-is-credit.mjs`, `scripts/verify-steps/10307-verify-bank-transactions-direction-uses-is-credit.mjs`,
+`scripts/verify-steps/CLAIMED-NUMBERS.json`'s own purpose text for step 10307). Kept as-is because it
+is the id every one of those files already cites by exact string — renaming it would mean editing guard
+code, a claimed verify-step's registered purpose, and multiple docs for no benefit.
+
+**BANK-F30051 (new id, reassigned)** — PR #21744's finding, "BofA statement-signed Plaid amounts and
+phantom void" (the sign-convention-going-forward + phantom-void fix on USMCA FREIGHT's BofA account,
+`e83028a5-...`). Originally shipped citing "BANK-F10005" (see that PR's own title in
+`docs/trackers/block-reconciliation-data.json` — left as-is, an immutable historical PR-title record,
+not rewritten). Grep-confirmed unclaimed before assignment (no prior `BANK-F30051` anywhere in
+`docs/` or `scripts/`). `scripts/verify-reg030-bofa-usmca-freight-reconciliation.mjs`'s docstring
+updated to cite `BANK-F30051` going forward for this finding.
+
+No code change from this id-map — `banking.bank_transactions`, `plaid.service.ts`, and the reg030
+guard's actual pinned-id/reconciliation logic are untouched; this is a documentation/registry-hygiene
+fix only, per the owner's explicit instruction to resolve the collision "so the id is unique going
+forward."
