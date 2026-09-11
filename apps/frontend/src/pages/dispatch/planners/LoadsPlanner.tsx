@@ -13,6 +13,8 @@ import { PlannerAxisHead } from "./PlannerAxisHead";
 import { PlannerGrid } from "./PlannerGrid";
 import { usePlannerLoads } from "./planner-bars";
 import { PlannerViewToggle, type PlannerViewMode } from "./PlannerViewToggle";
+import { SettlementReferenceCell } from "../../../components/settlements/SettlementReferenceCell";
+import { useSettlementReferences } from "../../../hooks/useSettlementReferences";
 
 void PlannerAxisHead;
 
@@ -68,6 +70,7 @@ export function LoadsPlanner() {
 
   // Richer load rows (DispatchLoadRow) for the list view — includes driver name, unit, rate.
   const listLoadsQuery = usePlannerLoads(operatingCompanyId, range.start, range.end);
+  const settlementReferences = useSettlementReferences(operatingCompanyId, (listLoadsQuery.data ?? []).map((load) => load.id));
 
   const rows = useMemo(() => loadsQuery.data ?? [], [loadsQuery.data]);
 
@@ -112,6 +115,7 @@ export function LoadsPlanner() {
           }));
           const columns: Array<ParityColumn<LoadListRow>> = [
             { key: "loadNumber", label: "Load #", sortable: true, render: (row) => <EntityLinkOrTombstone kind="load" id={row.id} name={row.loadNumber} noun="Load" /> },
+            { key: "settlementReference", label: "Settlement / Presettlement", testId: "settlement-reference-column", render: (row) => <SettlementReferenceCell reference={settlementReferences.get(row.id)} /> },
             { key: "driver", label: "Driver", sortable: true },
             { key: "unit", label: "Unit", sortable: true },
             { key: "customer", label: "Customer", sortable: true },

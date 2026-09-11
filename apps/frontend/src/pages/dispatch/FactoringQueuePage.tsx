@@ -21,6 +21,8 @@ import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../components/table";
 import { entityLabel } from "../../lib/entity-label";
+import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
+import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 
 const EMPTY_FILTERS = {
   customerId: "",
@@ -192,6 +194,7 @@ export function FactoringQueuePage() {
     if (stageFilter !== "ALL" && row.packet_stage !== stageFilter) return false;
     return true;
   });
+  const settlementReferences = useSettlementReferences(companyId, filtered.map((row) => row.load_id));
 
   // counts per stage for tab badges
   const countByStage = rows.reduce<Record<string, number>>((acc, r) => {
@@ -215,6 +218,7 @@ export function FactoringQueuePage() {
         className: "font-medium",
         render: (row) => <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} />,
       },
+      { key: "settlement_reference", label: "Settlement / Presettlement", testId: "settlement-reference-column", render: (row) => <SettlementReferenceCell reference={settlementReferences.get(row.load_id)} /> },
       {
         key: "customer_name",
         label: "Customer",
@@ -290,7 +294,7 @@ export function FactoringQueuePage() {
           ),
       },
     ],
-    [],
+    [settlementReferences],
   );
 
   if (!companyId) {

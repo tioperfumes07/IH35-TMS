@@ -13,6 +13,8 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityPicker } from "../../components/EntityPicker";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useStagedListFilters } from "../../components/table";
+import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
+import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 
 type Filters = {
   driverId: string;
@@ -57,11 +59,12 @@ export function AssignmentHistoryPage() {
     enabled: Boolean(companyId),
   });
 
+  const rows = historyQ.data?.rows ?? [];
+  const settlementReferences = useSettlementReferences(companyId, rows.map((row) => row.load_id));
   if (!companyId) {
     return <div className="rounded-sm border bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
   }
 
-  const rows = historyQ.data?.rows ?? [];
   type AssignmentHistoryRow = (typeof rows)[number];
 
   const columns: Array<ParityColumn<AssignmentHistoryRow>> = [
@@ -79,6 +82,7 @@ render: (row) => {
         return <EntityLink kind="load" id={row.load_id} label={label} data-testid="assignment-history-load-link" />;
       },
     },
+    { key: "settlement_reference", label: "Settlement / Presettlement", testId: "settlement-reference-column", render: (row) => <SettlementReferenceCell reference={row.load_id ? settlementReferences.get(row.load_id) : null} /> },
     { key: "assignment_method", label: "Method", sortable: true },
     {
       key: "previous_driver_name",

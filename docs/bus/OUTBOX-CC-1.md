@@ -1957,3 +1957,39 @@ Chrome and via direct API — no regressions found | Task D BUG 2's deeper tour_
 still open, handed back with findings (2 distinct gaps, needs a scoped follow-up) | Load Costs'
 "Settlement" subtab scope left untouched pending owner confirmation (see above) | NEXT: resuming
 the standing idle-loop — re-checking INBOX-CC-1.md/OUTBOX-GPT.md for any new CC-1-lane item.
+
+---
+
+## CC-1 — IDLE-LOOP SWEEP (2026-09-11): background_jobs.stale investigated, no new CC-1 work found
+
+INBOX-CC-1.md / OUTBOX-GPT.md: unchanged since 2026-09-10, nothing new addressed to CC-1. Recent
+main-log activity since my last check (#21812/#21814/#21817/#21818/#21819/#21820) is all CC-3's own
+lane (Kanban dedup/status-dropdown fix + its own verify-step/migration claims) — no overlap, no
+action needed from me. Confirmed 0 open PRs.
+
+Re-ran both of today's guards against the current `origin/main` tip (post-CC-3 commits): PASS on
+both (`verify-settlement-load-linkage-render-fix.mjs`, `verify-dispatch-open-only-scope.mjs`) — no
+regression from other seats' pushes.
+
+`GET /api/v1/healthz` — all 6 critical checks green (postgres, migrations ledger, unbalanced_jes,
+ar_tieout, ap_tieout, orphaned_bank_matches, posted_without_posting, voided_without_reason). One
+warning-tier flag remains: `background_jobs.stale` = `never_succeeded_jobs`. INVESTIGATED (not a new
+regression, not deploy-restart noise): live Neon `_system.background_jobs` shows exactly one job in
+this state — `insurance.monthly_report_by_5th`, `last_successful_run_at=NULL`,
+`last_failed_run_at=2026-09-05`, error `"current transaction is aborted, commands ignored until end
+of transaction block"` (the classic cross-company transaction-abort cascade). Root cause already
+FIXED live: commit `07c6033dcb` (merged 2026-09-06, the day AFTER this job's last failed run) gave
+each company its own isolated transaction in `insurance-monthly-report.cron.ts` (the
+INSURANCE-CRON-ABORT-CASCADE comment there documents the exact fix). This cron only fires on the 5th
+of the month (`0 7 5 * *` America/Chicago) — it has had no chance to re-run and record a success
+since the fix landed; next scheduled tick is 2026-10-05. Did NOT manually force-run it: doing so
+would fire real "uncovered units/trailers/drivers" notifications to Owner/Administrator/Safety users
+outside its intended monthly cadence, a user-facing side effect I don't have a clear mandate to
+trigger early for a warning-tier, already-fixed, self-healing check. Flagging for awareness only —
+no code change needed; this clears itself on 2026-10-05 (or sooner if any coder is authorized to
+manually re-trigger the cron and wants the notification to fire now instead of waiting).
+
+DONE LINE: CC-1 | Idle-loop sweep clean — no new CC-1 work, 0 open PRs, both guards green on latest
+main | background_jobs.stale root-caused (insurance monthly report, already fixed 09-06, self-heals
+2026-10-05, not manually forced due to real notification side effects) | NEXT: continuing the
+standing idle-loop.

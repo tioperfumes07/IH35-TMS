@@ -4,6 +4,8 @@ import { formatUsdCents } from "../../lib/money";
 import { useQuery } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
+import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { ApiError } from "../../api/client";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -161,6 +163,7 @@ function LeakagePanel({ operatingCompanyId }: { operatingCompanyId: string }) {
     enabled: Boolean(operatingCompanyId),
   });
   const s = q.data;
+  const settlementReferences = useSettlementReferences(operatingCompanyId, (s?.rows ?? []).map((row) => row.load_id));
   const gapLabel = (gap: RevenueLeakageRow["gap"]) =>
     gap === "missing_earn" ? "Missing earn latch" : "Earn without bill latch";
 
@@ -175,6 +178,7 @@ function LeakagePanel({ operatingCompanyId }: { operatingCompanyId: string }) {
           <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} />
         ),
       },
+      { key: "settlement_reference", label: "Settlement / Presettlement", testId: "settlement-reference-column", render: (row) => <SettlementReferenceCell reference={settlementReferences.get(row.load_id)} /> },
       {
         key: "status",
         label: "Status",
@@ -213,7 +217,7 @@ function LeakagePanel({ operatingCompanyId }: { operatingCompanyId: string }) {
           ),
       },
     ],
-    [],
+    [settlementReferences],
   );
 
   return (

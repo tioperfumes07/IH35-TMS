@@ -107,6 +107,17 @@ function assignsEvidenceStatus(src) {
   return null;
 }
 
+// The scan intentionally inspects SQL held in template strings, so a JavaScript AST alone is not
+// enough. Remove all three comment forms before classifying either a transition or a latch marker:
+// JS block/line comments and PostgreSQL `--` comments embedded in SQL templates. Executable SQL on
+// the same line remains intact; only text after the comment delimiter is discarded.
+export function stripCommentsForLatchScan(src) {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/(^|\n)\s*\/\/[^\n]*/g, "$1")
+    .replace(/(^|\n)([^\n]*?)--[^\n]*/g, "$1$2");
+}
+
 function walk(rel, out) {
   const abs = join(ROOT, rel);
   if (!existsSync(abs)) return;
@@ -127,13 +138,14 @@ export function auditSources(files) {
   let widened = 0;
   for (const { rel, src } of files) {
     if (EXEMPT.has(rel)) continue;
-    const status = assignsEvidenceStatus(src);
+    const executable = stripCommentsForLatchScan(src);
+    const status = assignsEvidenceStatus(executable);
     if (!status) continue;
     scanned++;
     // Count files in scope ONLY because of the 2026-08-07 widening — see the vacuous-pass check in
     // auditTree(). A literal-status match does not count.
     if (!status.startsWith("assigns the literal status")) widened++;
-    if (!LATCH_MARKERS.some((m) => src.includes(m))) {
+    if (!LATCH_MARKERS.some((m) => executable.includes(m))) {
       problems.push(
         `${rel}: ${status}, but never references the revenue latch ` +
           `(${LATCH_MARKERS.join(" / ")}). Delivery evidence would be recorded while the ledger hears ` +
@@ -233,6 +245,20 @@ function selftest() {
   if (auditSources([{ rel: "apps/backend/src/mdata/x-team.service.ts", src: otherColumn }]).problems.length !== 0)
     failures.push("case8 FAIL — a non-status writer that only READS an evidence status was flagged");
 
+  // SQL/JS comments are evidence prose, not executable transitions. This is the exact ACCT-F26135
+  // false positive: a template-query comment said `status='delivered_pending_docs'` while the route
+  // only reads costs and never updates mdata.loads.status.
+  const commentOnly = `const sql = \`SELECT 1
+    -- a load can be status='delivered_pending_docs' while costs remain open\`;
+    // next = "completed_docs_received"
+    /* status = "delivered_pending_docs" */`;
+  if (auditSources([{ rel: "apps/backend/src/accounting/read-model.routes.ts", src: commentOnly }]).problems.length !== 0)
+    failures.push("case9a FAIL — comment-only delivery status was treated as executable");
+
+  // A commented latch marker must not make a real writer look protected.
+  if (auditSources([{ rel: "apps/backend/src/driver/commented-latch.routes.ts", src: bare + "\n// latchOnDeliveryEvidence({});" }]).problems.length === 0)
+    failures.push("case9b FAIL — a commented latch marker satisfied a real transition");
+
   // case9 — MUTATION AGAINST THE REAL FILE, not a reduced fixture. Every case above is a string this
   // same author wrote, so they prove the matcher is self-consistent, not that it holds on the actual
   // source. The whole history of this guard is a fixture-clean matcher that missed the real file. So:
@@ -264,7 +290,7 @@ function selftest() {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: selftest PASS — bare transition caught, helper/poster forms accepted, exempts honoured`);
+  console.log(`${LABEL}: selftest PASS — 11/11 writer, latch, comment, and real-file mutation cases`);
 }
 
 function main() {
