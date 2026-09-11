@@ -69,13 +69,31 @@ export type DeliveryEvidenceLatchInput = {
 
 async function firePostLoadRevenueLatch(input: DeliveryEvidenceLatchInput): Promise<void> {
   try {
+    // AR-TIEOUT-POSTED-WITHOUT-POSTING-RECURRENCE (2026-09-10): invoice conversion/send happens
+    // inside the delivery transaction. sendDraftInvoice therefore queues its Event-2 attempt before
+    // this delivery task is queued. On commit, Event 2 ran first, correctly returned
+    // earn_missing_for_bill, then this task posted Event 1. Nothing retried Event 2. Four real USMCA
+    // invoices (13574/13575/13578/13580) reached `sent` with an earn row but no invoice-tagged A/R
+    // posting through that ordering hole.
+    //
+    // Run the existing two-event poster in economic order from the shared delivery task: earn first,
+    // then bill. Both calls retain the poster's existing idempotency/gates, so the earlier send-time
+    // Event-2 callback may still run without double-posting. This adds no GL math and no second poster.
+    const entryDateIso = input.entryDateIso ?? companyBusinessDate();
     await postLoadRevenueLatch({
       operating_company_id: input.operatingCompanyId,
       load_id: input.loadId,
-      target_status: input.targetStatus,
+      target_status: "delivered_pending_docs",
       // Resolved at FIRE time, not enqueue time: the business date the entry belongs to is the date
       // the write became durable.
-      entry_date_iso: input.entryDateIso ?? companyBusinessDate(),
+      entry_date_iso: entryDateIso,
+      actor_user_id: input.actorUserId,
+    });
+    await postLoadRevenueLatch({
+      operating_company_id: input.operatingCompanyId,
+      load_id: input.loadId,
+      target_status: "completed_docs_received",
+      entry_date_iso: entryDateIso,
       actor_user_id: input.actorUserId,
     });
   } catch (err) {
