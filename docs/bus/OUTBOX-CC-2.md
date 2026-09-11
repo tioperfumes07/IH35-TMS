@@ -2598,3 +2598,40 @@ FORCED-RLS 0-count landmine.
 
 REG-028/030: **DONE** (substantive fix already shipped via #21744; this PR adds independent
 verification + a live regression-lock guard + the cross-cutting convention-consistency finding).
+
+## CC-2 — REG-034 DONE + root-caused a repo-wide flaky CI-infra guard blocking multiple seats (2026-09-11)
+
+**REG-034 (Create Bill "Load Number" field never wrote the real `load_id` FK):** `VendorBillForm.tsx`
+offered a plain free-text "Load Number" `<input>` that only ever fed the memo string —
+`accounting.bill_lines.load_id` stayed NULL for every bill created through this form even though the
+backend has accepted a per-line `load_id` since #19459. 0/155,271 `bill_lines` rows system-wide
+carried a `load_id` before this fix. Replaced with a real `<EntityPicker kind="load" ...>`, wired
+through `setLoadId` to `buildVendorBillLinePayloads(lines, loadId || linkedLoadId)`. New guard
+`scripts/verify-reg034-vendor-bill-load-picker-wired.mjs` (verify-step 10911, cc-2 band) fails
+closed on any regression. PR #21777, merged 27ad5d8f51.
+
+**Side quest that blocked REG-034's push for 8+ attempts, fixed at the root instead of worked
+around:** `scripts/verify-root-claude-md-untracked.mjs`'s `--selftest` kept crashing
+(`node:internal/errors:983`) under a real `git push`'s pre-push hook — previously misdiagnosed
+(PR #21768, merged) as transient resource contention and given a 4-attempt retry wrapper. That
+diagnosis was wrong. Root-caused this session: `git` sets `GIT_DIR`/`GIT_WORK_TREE`/`GIT_INDEX_FILE`
+in the environment of every subprocess a git hook spawns, and the selftest's first call
+(`git init -q tmp`) was still passing raw `process.env`, so the ambient `GIT_DIR` silently
+redirected `git init`'s bookkeeping away from the fresh temp path — 100% deterministic, not
+probabilistic. Confirmed both ways (crash reproduces 4/4 attempts with the vars exported ahead of a
+standalone run; never occurs with them unset). Fixed with a `bootstrapEnv()` that strips those vars
+before the `init` call (PR #21776, merged f19203f393) — this had been silently blocking pushes for
+multiple seats/branches all session (the guard's own in-file comments already documented 4+ prior
+hits across 3 branches before tonight). REG-034 then pushed clean on the very next attempt: full
+5192/5192 `verify-static` sweep, zero gated failures.
+
+CC-2 | REG-034 DONE + CC-2 own flaky-guard-blocker root-caused | REG-034: PR #21777 (27ad5d8f51) |
+guard fix: PR #21768 (retry mitigation, e9d31907c3) + PR #21776 (actual root cause, f19203f393) |
+live proof: verify-reg034 guard selftest 5/5 + direct PASS; verify-root-claude-md-untracked
+selftest reproduced-then-eliminated under simulated real-hook ambient GIT_DIR; REG-034's push ran
+5192/5192 verify-static clean on first attempt post-fix | NEXT: register scan (ledger 09-09 +
+OUTBOX) shows Banking/Accounting lane ROW 1-4 + BNK-01 all DONE, BNK-13's 2 remaining rows need an
+owner categorization decision (not a code gap), Maintenance sweep (ROW 5) still intentionally
+holding — Codex's wave is still actively WORKING the same surface tonight (REG-050 row 3, WO
+terminal-labor lockdown) per OUTBOX-CODEX. No unclaimed, unblocked, my-lane item found; holding
+rather than manufacturing one.
