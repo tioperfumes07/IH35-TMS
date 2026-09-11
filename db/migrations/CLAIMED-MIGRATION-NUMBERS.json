@@ -921,6 +921,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-09-11",
       "purpose": "Lead-assigned ITEM 1 (2026-09-11 22:30 UTC, deadline 23:30 UTC): catalogs.load_exception_reasons CREATE-only migration -- id/operating_company_id/code/name/applies_to/linked_module/sort_order/is_active/created_at, UNIQUE(operating_company_id, code), FORCED RLS, 0065 grants to ih35_app, USMCA-only seed of 11 exception reasons (breakdown_roadside, breakdown_towed, accident, weather, border_hold, detention, layover, driver_rest, reroute, customer_cancelled, other). CC-1 morning band (HH=00); lane-time-of-day waived by the Lead for this item only, band number stays in the normal CC-1 HH 00-11 range."
+    },
+    "202614100000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-11",
+      "purpose": "SELF-FOUND FIX (live Chrome re-check, 2026-09-11 22:2xZ): catalogs.load_exception_reasons's SELECT/INSERT/UPDATE policies from 202614090000 checked current_setting('app.operating_company_id', true) -- but load-exception-reasons.routes.ts uses withCurrentUser (only sets app.current_user_id, confirmed live via auth/db.ts), never withCompanyScope/setOperatingCompanyScope, so that GUC is never set and the policy always evaluated false for a real authenticated request -- live proof: the new Lists page rendered 0 rows despite 11 real USMCA rows. Repoints all 3 policies to the SAME proven-working org.user_company_access membership pattern catalogs.load_cancellation_reasons already uses successfully under the identical withCurrentUser code path (confirmed live via pg_policies before writing this)."
     }
   },
   "202613590001": {
