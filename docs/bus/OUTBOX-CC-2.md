@@ -2391,3 +2391,51 @@ doesn't, for the exact rows in question.
 
 REG-028/030: requesting Lead certify closed on this trace, or name what additional live artifact
 would satisfy the standing-law bar if this doesn't.
+
+## CC-2 — REG-027 deploy proof + BNK-06/10/12/17 live proof (2026-09-10, Cursor-lead ROW 2/4)
+
+**ROW 2 — REG-027 deploy proof: LIVE, functional, confirmed by clicking it, not just rendered.**
+Deployed SHA `f6caec9` (`built_at` 2026-09-10T23:50:09Z). Live Chrome, USMCA, Banking →
+Transactions: found all 8 reorder buttons for the 4 accounts
+(`banking-tx-account-reorder-left/right-<id>`, one pair per account, real account UUIDs incl.
+`e83028a5-...` = USMCA FREIGHT). Clicked `reorder-right` on USMCA FREIGHT — it swapped from
+position 1 to position 2 (Faro Factoring moved to position 1) — then clicked `reorder-left` to
+restore the original order. Confirmed working end-to-end, not just present in the DOM; live order
+restored afterward so nothing was left changed.
+
+**ROW 4 — Banking carried-forward, live proof for all 4, no new code needed (all 4 were already
+either shipped elsewhere or previously root-caused as not-a-code-defect):**
+
+- **BNK-06 (Description column 0px) — already fixed, confirmed live.** `ParityTable.tsx` already
+  carries the fix, cited by name in its own comment: `// COL-WIDTH-FLOOR (BNK-06) — re-clamps every
+  persisted width to MIN_COL_WIDTH_PX so a stale/...`, `MIN_COL_WIDTH_PX = 48`. Shipped via Cursor's
+  PR #21605 (CC-1 independently built the same patch, found it byte-identical on rebase, did not
+  duplicate — see CC-1's own OUTBOX). Live-checked Banking → Transactions ("For review" and
+  "Categorized" tabs): the description column renders at full width on both, no 0px collapse.
+- **BNK-10 (unposted/uncategorized transactions) — re-measured fresh live, not the stale figure.**
+  Neon, USMCA, right now: 322 non-voided bank_transactions (up from 288 on 2026-09-09 — the
+  population keeps moving as CC-1 already noted), 321 `review_state='for_review'`
+  (uncategorized), 1 `matched`. Net dollar impact of the 321 uncategorized, correct sign
+  convention (`is_credit`-based, not raw `amount_cents`): **-$140.62** (down sharply from
+  2026-09-09's -$2,177.09 — the backlog is shrinking, not growing). 249 of the 321 already carry a
+  rule-engine suggestion from `RECON-USMCA-BANK-01`. Root cause unchanged from the 09-05/09-09
+  findings: this is a categorization backlog the owner works through
+  (`docs/LAW.md` §2), not a code defect — `bank-feed-gl-posting.service.ts` correctly posts a JE
+  for every row that IS categorized (1 of 322 today) and correctly does nothing for the rest.
+- **BNK-12 (no reconciliation session) — confirmed live, still true, still expected.** Neon:
+  `banking.reconciliation_sessions` has **0 rows total** for USMCA (not just September — zero,
+  ever). Live Chrome, `/banking/reconciliation`: the page's own banner already discloses this
+  honestly — "No reconciliation sessions or matches proven live for this company... Neon truth:
+  reconciliation_matches/sessions can be empty while the bank feed still has a large for-review
+  backlog... Do not treat this screen as period close." Gated on BNK-10's same categorization
+  backlog — not a separate code defect.
+- **BNK-17 (bank-fee-recovery role live proof) — already fully shipped (ROUND 9), live-confirmed.**
+  `accounting.chart_of_accounts_roles` has a live row: `role='bank_fee_recovery'`,
+  `operating_company_id`=USMCA, bound to account `6300 "Bank Service Charges & Wire Fees"`
+  (`id=de553cc4-160c-4dec-8256-dfb28e9d4989`), `is_active=true` — exactly the account the original
+  migration draft named. Guard `scripts/verify-bank-fee-recovery-role-bound.mjs` (verify-step
+  10453) static half passes; ran its selftest fresh too (6/6 PASS). No PR needed — nothing to fix,
+  this was already live before today.
+
+**No new code shipped in this entry** — all 4 items were live-verification-only per the standing
+law (never guess, verify live), and none turned up a real defect requiring a fix.
