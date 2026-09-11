@@ -6402,6 +6402,11 @@
     "claimed_at": "2026-09-11",
     "purpose": "verify-driver-bill-settlement-resolution-uses-settlement-lines"
   },
+  "10927": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-settlement-resolution-shared-predicate-and-tour-assignment"
+  },
   "10941": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-08",
@@ -6702,6 +6707,16 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-11",
     "purpose": "verify-settlement-presettlement-column-systemwide"
+  },
+  "11305": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-driver-licence-documents-linked"
+  },
+  "11313": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-driver-licence-documents-linked"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -8704,10 +8719,5 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
-  },
-  "10927": {
-    "claimed_by": "cc-2",
-    "claimed_at": "2026-09-11",
-    "purpose": "verify-settlement-resolution-shared-predicate-and-tour-assignment"
   }
 }
