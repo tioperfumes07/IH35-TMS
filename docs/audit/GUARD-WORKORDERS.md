@@ -10558,4 +10558,34 @@ account for the 2 named transfer rows above, then a rule can be authored via the
 `POST /api/v1/banking/rules` route | live Neon reads (bypass_rls=lucia), exact transaction ids and
 dollar amounts cited above and in the OUTBOX entry | **LIVE-PROOF CLOSED · 2 NAMED ROWS OPEN,
 PENDING AN OWNER CATEGORIZATION DECISION, NOT A CODE GAP** |
+
+## REG-010/011 + REG-041 resettlement grids — live verification, CC-3 2026-09-10
+
+SOURCE-OF-TRUTH: driver_finance.driver_settlements.display_id — proven at apps/backend/src/dispatch/presettlement-link.service.ts:263 (the fixed generator, PR #21627) and live-Chrome at https://app.ih35dispatch.com/driver-finance/settlements
+I QUERIED: Neon prod tiny-field-89581227 (bypass_rls=lucia) — `SELECT display_id, created_at FROM driver_finance.driver_settlements WHERE operating_company_id='5c854333-...' ORDER BY created_at DESC LIMIT 15` and a full-table regex count (`^S-[0-9]{4}-[0-9]{4}$` vs `^S-[0-9]{4,5}$`); live-Chrome cold navigation to the Driver Settlements → Tours grid; `node scripts/verify-reg010-011-settlement-identity.mjs` and `node scripts/verify-reg041-source-load-dates.mjs`
+NOT CHECKED: TRANSP/TRK entities' own settlement numbering (USMCA only, this session); the resettlement-specific sub-view beyond the Pre-Settlement/Settlement tours grid (did not click into an individual resettlement's own detail panel)
+
+**REG-010/011: FULLY RESOLVED, live-verified.** All 29 of 29 USMCA `driver_finance.driver_settlements`
+rows now match the correct `S-YYYY-NNNN` scheme, 0 remain on the old `S-<load-number>` shape — the
+27 historical wrong-scheme rows were backfilled (not just the generator fixed going forward;
+someone applied `scripts/ops/reg010-011-settlement-display-ids.sql`, present in main's recent
+history). The newest row, created 2026-09-10T23:25:56 (minutes before this check), already shows
+`S-2026-0029`, confirming the live generator is correct on new writes too. Live-Chrome screenshot
+of `/driver-finance/settlements` (Tours → Pre-Settlement/Settlement) confirms the "Settlement/Tour"
+column renders `S-2026-####` for every row — no `S-<load-number>` anywhere. `node
+scripts/verify-reg010-011-settlement-identity.mjs` passes (54 backend + 19 frontend tests). The
+"one datum per column" half of REG-010/011's ask (item 1 part 2 in the Cursor-Lead packet) is
+**also already satisfied on this grid**: Load Number and Settlement/Tour are already separate
+columns, and Margin$/Margin% are already separate columns too — nothing combined into one cell.
+
+**REG-041 (resettlement grid Start/Delivery dates from the originating load): already built and
+guard-verified by another lane** — `node scripts/verify-reg041-source-load-dates.mjs` passes
+(asserts `load-costs-board.routes.ts`'s pickup/delivery-stop wiring AND the exact rendered test
+`"REG-041 shows the original load start and delivery dates, not creation or tour dates"` in
+`LoadCostsBoardPage.registers.test.tsx`). Not built here — confirmed pre-existing and green.
+
+| N/A — verification only, no code | **CC-3** | none — both confirmed resolved | live Neon query
+(29/29 correct scheme) + live-Chrome screenshot of the Settlements Tours grid + both named guards
+passing | **REG-010/011 CONFIRMED FULLY RESOLVED (generator + historical backfill + column
+separation) · REG-041 CONFIRMED ALREADY DONE, not mine to build** |
 | **OPEN (CC-1 2026-09-11, found live-checking healthz after an unrelated deploy):** `AR-TIEOUT-POSTED-WITHOUT-POSTING-RECURRENCE` — live `GET /api/v1/healthz` shows `ledger.ar_tieout` and `ledger.posted_without_posting` both RED again, after this exact incident class was fully closed 2026-09-07 (see the `CRITICAL-AR-TIEOUT-POSTED-WITHOUT-POSTING` row above — "both flipped from red", 10/10 remediated). Live-verified (bypass_rls=lucia): **4 real USMCA `accounting.invoices` rows at `status='sent'` have ZERO `accounting.journal_entry_postings` rows** — `13580` (created 2026-09-11T00:24:40Z, same session as the "orphan-load pairing DONE" #21715 work), and `13574`/`13575`/`13578` (all created 2026-09-07T18:3x-18:5xZ, same session as REG-040's resettlement rebuild work). The rest of the unposted-invoice set (~10 more rows) is entirely TRANSP (`operating_company_id 91e0bf0a-...`, `INV-2022/2024/2025-*` display ids, created 2026-07-29) — TRANSP is a frozen historical ledger per standing law, out of session scope, not counted as new. **Confirmed NOT caused by this session's own ACCT-F26063 (ROW 0 reimbursement-per-type-GL) deploy** — that migration only touches `accounting.chart_of_accounts_roles` (a designation/config table with zero relationship to `accounting.invoices` or `journal_entry_postings`); the healthz RED predates that deploy (the 09-07 invoices are 4 days old). | `accounting.invoices` (4 named USMCA rows), `accounting.journal_entry_postings`, whatever revrec-delivery-posting entry point normally fires on load-status-transition/invoice-send for these loads (per the CLOSED precedent's own root-cause file, `apps/backend/src/accounting/invoices-bulk.routes.ts` / the revrec poster) | **CC-1 (money/GL, my own lane) — filing per FIND IT/FILE IT, not fixed here (out of ROW 0's own scope, this session's turn already carries a large unrelated PR)** | trace why these 4 specific loads' invoices never got a revrec/GL posting despite being `sent` — same investigation shape as the CLOSED ACCT-F26031 precedent (10 named invoices, same symptom, closed via `scripts/ops/2026-09-07-cc1-revrec-refire-load-*.ts`-style targeted re-fire scripts); likely the same root cause recurring on new loads, not a new defect class | live `GET https://ih35-tms.onrender.com/api/v1/healthz` (post-deploy `53f8a46`): `ledger.ar_tieout` `ok:false` `error:"ar_tieout_variance"`, `ledger.posted_without_posting` `ok:false` `error:"posted_without_posting"`; Neon bypass_rls=lucia query naming all 4 USMCA rows + their `created_at` timestamps | **OPEN · CC-1's own lane · CRITICAL healthz RED, filed so it is never silently lost, NOT part of ACCT-F26063/ROW 0's own scope or LIVE PROOF** |
