@@ -12,6 +12,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
+import { RESOLVE_ACTIVE_SETTLEMENT_LATERAL_SQL } from "./settlement-resolution.sql.js";
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -83,7 +84,7 @@ export async function registerDriverFinanceDriverBillsListRoutes(app: FastifyIns
               db.gross_amount_cents,
               db.status,
               db.settled_in_settlement_id::text AS settled_in_settlement_id,
-              ds.id::text AS settlement_id, ds.display_id AS settlement_display_id,
+              settlement.settlement_id, settlement.settlement_number AS settlement_display_id,
               db.voided_at::text AS voided_at,
               db.created_at::text AS created_at
             FROM driver_finance.driver_bills db
@@ -93,15 +94,13 @@ export async function registerDriverFinanceDriverBillsListRoutes(app: FastifyIns
             -- settlement_info CTE, NEW-08/NEW-09/NEW-23, PR #21318): the real settlement is
             -- assigned at BOOKING time into driver_finance.settlement_lines via
             -- source_driver_bill_id, in the same transaction that creates the load's driver
-            -- bill. Reuse that proven join instead of the dead column.
-            LEFT JOIN LATERAL (
-              SELECT ds2.id, ds2.display_id
-              FROM driver_finance.settlement_lines sl2
-              JOIN driver_finance.driver_settlements ds2 ON ds2.id = sl2.settlement_id
-              WHERE sl2.source_driver_bill_id = db.id
-              ORDER BY sl2.created_at DESC
-              LIMIT 1
-            ) ds ON true
+            -- bill. ACCT-F26140 follow-up (2026-09-11, Lead-directed): this used to be a bare
+            -- "latest settlement_lines row wins" LATERAL with no void/cancelled exclusion, so a
+            -- bill whose ONLY settlement_lines row pointed at a CANCELLED settlement (12 cancelled
+            -- by the 2026-09-11 reverse+repost rebuild) still showed as "settled" — 60/66 here vs
+            -- the register's correct 27/66. Now imports the SAME shared predicate the register
+            -- (bills.routes.ts) uses, so the two surfaces can never drift apart again.
+            ${RESOLVE_ACTIVE_SETTLEMENT_LATERAL_SQL}
             WHERE db.operating_company_id = $1::uuid
               ${voidFilter}
             ORDER BY db.created_at DESC

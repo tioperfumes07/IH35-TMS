@@ -1,10 +1,10 @@
 {
-  "healthzSha": "c2438bd",
-  "generated_at": "2026-09-11T20:51:45.359Z",
+  "healthzSha": "bcaa4cd",
+  "generated_at": "2026-09-11T21:50:52.595Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "c2438bd",
+    "deployedSha": "bcaa4cd",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,87 @@
   },
   "recentActivity": [
     {
+      "number": 21841,
+      "title": "FINDING: N/A (CLAIM-RESERVE 11305 -- reservation-only commit, no code fix)",
+      "state": "merged",
+      "mergedAtCt": "09/11/2026, 04:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21841",
+      "sha": "11ba99b55e",
+      "committedAtIso": "2026-09-11T16:49:15-05:00"
+    },
+    {
+      "number": 21839,
+      "title": "FINDING: N/A (docs — Dispatch Line Board design reference + contract, owner request 2026-09-11)",
+      "state": "merged",
+      "mergedAtCt": "09/11/2026, 04:44 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21839",
+      "sha": "bcaa4cd78d",
+      "committedAtIso": "2026-09-11T16:44:49-05:00"
+    },
+    {
+      "number": 21840,
+      "title": "FINDING: N/A (CLAIM-RESERVE 10927 -- reservation-only commit, no code fix)",
+      "state": "merged",
+      "mergedAtCt": "09/11/2026, 04:43 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21840",
+      "sha": "0a50923b95",
+      "committedAtIso": "2026-09-11T16:43:38-05:00"
+    },
+    {
+      "number": 21838,
+      "title": "FINDING: N/A (docs — CC-1 response to all-seats freeze on S-2026-5769-5800, self-report per order item 2)",
+      "state": "merged",
+      "mergedAtCt": "09/11/2026, 04:34 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21838",
+      "sha": "f7e605abee",
+      "committedAtIso": "2026-09-11T16:34:18-05:00"
+    },
+    {
+      "number": 21837,
+      "title": "FINDING: N/A (docs — INBOX-CC-3 DRIVER-COMPLIANCE-01 assignment, measured live 2026-09-11 20:52Z)",
+      "state": "merged",
+      "mergedAtCt": "09/11/2026, 04:17 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21837",
+      "sha": "bbf4e60f0f",
+      "committedAtIso": "2026-09-11T16:17:14-05:00"
+    },
+    {
+      "number": 21836,
+      "title": "FINDING: N/A (docs only — ACCT-F26140 live Chrome screenshot proof, closes task DONE criterion)",
+      "state": "merged",
+      "mergedAtCt": "09/11/2026, 04:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21836",
+      "sha": "bfd0f8d14e",
+      "committedAtIso": "2026-09-11T16:15:22-05:00"
+    },
+    {
+      "number": 21835,
+      "title": "FINDING: N/A (docs only — ACCT-F26140 backend deploy proof, healthz confirms live SHA)",
+      "state": "merged",
+      "mergedAtCt": "09/11/2026, 04:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21835",
+      "sha": "243e8602b1",
+      "committedAtIso": "2026-09-11T16:08:22-05:00"
+    },
+    {
+      "number": 21834,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "state": "merged",
+      "mergedAtCt": "09/11/2026, 04:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21834",
+      "sha": "10a144cc8d",
+      "committedAtIso": "2026-09-11T21:04:00Z"
+    },
+    {
+      "number": 21833,
+      "title": "FINDING: ACCT-F26140 (system-wide settlement/tour column sweep, post-#21826 reconciliation)",
+      "state": "merged",
+      "mergedAtCt": "09/11/2026, 03:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21833",
+      "sha": "5a599ac388",
+      "committedAtIso": "2026-09-11T15:59:16-05:00"
+    },
+    {
       "number": 21832,
       "title": "FINDING: N/A (docs — CANCEL LOAD GREY-OUT + CROSS-TAB CONSISTENCY final live proof, post-deploy Chrome walkthrough)",
       "state": "merged",
@@ -2130,87 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21832",
       "sha": "c250f94259",
       "committedAtIso": "2026-09-11T15:46:49-05:00"
-    },
-    {
-      "number": 21830,
-      "title": "FINDING: N/A (docs — LEAD handoff: Claude Lead seat, census, INBOX mirrors for Devin/Devin-B/Codex/GPT 2026-09-11)",
-      "state": "merged",
-      "mergedAtCt": "09/11/2026, 03:40 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21830",
-      "sha": "c2438bdd1d",
-      "committedAtIso": "2026-09-11T15:40:52-05:00"
-    },
-    {
-      "number": 21831,
-      "title": "FINDING: ACCT-F6350 | register attribution canonical metadata",
-      "state": "merged",
-      "mergedAtCt": "09/11/2026, 03:39 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21831",
-      "sha": "17053427ae",
-      "committedAtIso": "2026-09-11T15:39:10-05:00"
-    },
-    {
-      "number": 21829,
-      "title": "FINDING: N/A (docs — file SORTABLE-COLUMNS-BASELINE-DRIFT-4, pre-existing on origin/main, unrelated to PR #21827, not fixed here per Seat Ownership Law)",
-      "state": "merged",
-      "mergedAtCt": "09/11/2026, 03:36 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21829",
-      "sha": "f7667af33f",
-      "committedAtIso": "2026-09-11T15:36:17-05:00"
-    },
-    {
-      "number": 21825,
-      "title": "FINDING: KANBAN-SWIM-LANE (Dispatch Kanban columns were independent per-lane lists with no shared row grid — cards for different units collided/stacked inconsistently across lanes, and a unit's vertical position differed by lane).",
-      "state": "merged",
-      "mergedAtCt": "09/11/2026, 03:36 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21825",
-      "sha": "b82c5ffd96",
-      "committedAtIso": "2026-09-11T15:36:07-05:00"
-    },
-    {
-      "number": 21828,
-      "title": "FINDING: N/A (CLAIM-RESERVE 202614080000 — attribution canonical metadata)",
-      "state": "merged",
-      "mergedAtCt": "09/11/2026, 03:35 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21828",
-      "sha": "5f37a755d7",
-      "committedAtIso": "2026-09-11T15:35:40-05:00"
-    },
-    {
-      "number": 21822,
-      "title": "FINDING: KANBAN-CROSS-COLUMN-DRAG — loaded-truck cards not moving live (owner 2026-09-11)",
-      "state": "merged",
-      "mergedAtCt": "09/11/2026, 03:35 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21822",
-      "sha": "3d0cc87647",
-      "committedAtIso": "2026-09-11T15:35:13-05:00"
-    },
-    {
-      "number": 21826,
-      "title": "FINDING: ACCT-F26140",
-      "state": "merged",
-      "mergedAtCt": "09/11/2026, 03:34 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21826",
-      "sha": "cb6645fb2b",
-      "committedAtIso": "2026-09-11T15:34:06-05:00"
-    },
-    {
-      "number": 21827,
-      "title": "FINDING: DISP-F26141 (CROSS-TAB CONSISTENCY: List/Table view had its own awaitingTrucks/loads duplicate-unit bug, same class as the already-shipped Kanban fix, in a different file) + CANCEL LOAD GREY-OUT SCOPE (Cancel Load stayed clickable on closed/settled/invoiced loads)",
-      "state": "merged",
-      "mergedAtCt": "09/11/2026, 03:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21827",
-      "sha": "1081a6cdb7",
-      "committedAtIso": "2026-09-11T15:31:08-05:00"
-    },
-    {
-      "number": 21824,
-      "title": "FINDING: ACCT-F26135 | ignore comment-only delivery statuses",
-      "state": "merged",
-      "mergedAtCt": "09/11/2026, 03:19 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21824",
-      "sha": "856766f67e",
-      "committedAtIso": "2026-09-11T15:19:34-05:00"
     }
   ]
 }

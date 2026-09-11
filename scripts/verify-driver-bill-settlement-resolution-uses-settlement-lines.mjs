@@ -62,6 +62,14 @@ function fileUsesSettlementLinesJoin(src) {
   return /settlement_lines[\s\S]{0,400}source_driver_bill_id|source_driver_bill_id[\s\S]{0,400}settlement_lines/.test(src);
 }
 
+// ACCT-F26140 follow-up (2026-09-11): bills.routes.ts/driver-bills-list.routes.ts/cash-flow.
+// service.ts now IMPORT the join from a shared module (settlement-resolution.sql.ts) instead of
+// each carrying its own literal copy — the exact fix for the drift that let two of these three
+// silently disagree with the register on cancelled settlements. A file that imports the shared
+// predicate module is checked against the SHARED module's text, not required to re-embed the raw
+// SQL tokens itself.
+const SHARED_MODULE_REL_PATH = "apps/backend/src/driver-finance/settlement-resolution.sql.ts";
+
 function checkFile(relPath, root) {
   const abs = `${root}/${relPath}`;
   let src;
@@ -69,6 +77,18 @@ function checkFile(relPath, root) {
     src = readFileSync(abs, "utf8");
   } catch {
     return `${relPath}: FILE NOT FOUND (moved/renamed? update this guard)`;
+  }
+  if (/from\s+"[^"]*settlement-resolution\.sql\.js"/.test(src)) {
+    let shared;
+    try {
+      shared = readFileSync(`${root}/${SHARED_MODULE_REL_PATH}`, "utf8");
+    } catch {
+      return `${relPath}: imports settlement-resolution.sql.js but ${SHARED_MODULE_REL_PATH} is missing`;
+    }
+    if (!fileUsesSettlementLinesJoin(shared)) {
+      return `${SHARED_MODULE_REL_PATH}: no settlement_lines/source_driver_bill_id join found in the shared predicate — regressed back to the dead settled_in_settlement_id column?`;
+    }
+    return null;
   }
   if (!fileUsesSettlementLinesJoin(src)) {
     return `${relPath}: no settlement_lines/source_driver_bill_id join found — regressed back to the dead settled_in_settlement_id column?`;
