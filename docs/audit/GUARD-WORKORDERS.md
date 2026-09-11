@@ -10558,3 +10558,33 @@ account for the 2 named transfer rows above, then a rule can be authored via the
 `POST /api/v1/banking/rules` route | live Neon reads (bypass_rls=lucia), exact transaction ids and
 dollar amounts cited above and in the OUTBOX entry | **LIVE-PROOF CLOSED · 2 NAMED ROWS OPEN,
 PENDING AN OWNER CATEGORIZATION DECISION, NOT A CODE GAP** |
+
+## REG-010/011 + REG-041 resettlement grids — live verification, CC-3 2026-09-10
+
+SOURCE-OF-TRUTH: driver_finance.driver_settlements.display_id — proven at apps/backend/src/dispatch/presettlement-link.service.ts:263 (the fixed generator, PR #21627) and live-Chrome at https://app.ih35dispatch.com/driver-finance/settlements
+I QUERIED: Neon prod tiny-field-89581227 (bypass_rls=lucia) — `SELECT display_id, created_at FROM driver_finance.driver_settlements WHERE operating_company_id='5c854333-...' ORDER BY created_at DESC LIMIT 15` and a full-table regex count (`^S-[0-9]{4}-[0-9]{4}$` vs `^S-[0-9]{4,5}$`); live-Chrome cold navigation to the Driver Settlements → Tours grid; `node scripts/verify-reg010-011-settlement-identity.mjs` and `node scripts/verify-reg041-source-load-dates.mjs`
+NOT CHECKED: TRANSP/TRK entities' own settlement numbering (USMCA only, this session); the resettlement-specific sub-view beyond the Pre-Settlement/Settlement tours grid (did not click into an individual resettlement's own detail panel)
+
+**REG-010/011: FULLY RESOLVED, live-verified.** All 29 of 29 USMCA `driver_finance.driver_settlements`
+rows now match the correct `S-YYYY-NNNN` scheme, 0 remain on the old `S-<load-number>` shape — the
+27 historical wrong-scheme rows were backfilled (not just the generator fixed going forward;
+someone applied `scripts/ops/reg010-011-settlement-display-ids.sql`, present in main's recent
+history). The newest row, created 2026-09-10T23:25:56 (minutes before this check), already shows
+`S-2026-0029`, confirming the live generator is correct on new writes too. Live-Chrome screenshot
+of `/driver-finance/settlements` (Tours → Pre-Settlement/Settlement) confirms the "Settlement/Tour"
+column renders `S-2026-####` for every row — no `S-<load-number>` anywhere. `node
+scripts/verify-reg010-011-settlement-identity.mjs` passes (54 backend + 19 frontend tests). The
+"one datum per column" half of REG-010/011's ask (item 1 part 2 in the Cursor-Lead packet) is
+**also already satisfied on this grid**: Load Number and Settlement/Tour are already separate
+columns, and Margin$/Margin% are already separate columns too — nothing combined into one cell.
+
+**REG-041 (resettlement grid Start/Delivery dates from the originating load): already built and
+guard-verified by another lane** — `node scripts/verify-reg041-source-load-dates.mjs` passes
+(asserts `load-costs-board.routes.ts`'s pickup/delivery-stop wiring AND the exact rendered test
+`"REG-041 shows the original load start and delivery dates, not creation or tour dates"` in
+`LoadCostsBoardPage.registers.test.tsx`). Not built here — confirmed pre-existing and green.
+
+| N/A — verification only, no code | **CC-3** | none — both confirmed resolved | live Neon query
+(29/29 correct scheme) + live-Chrome screenshot of the Settlements Tours grid + both named guards
+passing | **REG-010/011 CONFIRMED FULLY RESOLVED (generator + historical backfill + column
+separation) · REG-041 CONFIRMED ALREADY DONE, not mine to build** |
