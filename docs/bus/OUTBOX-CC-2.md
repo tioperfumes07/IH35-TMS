@@ -2537,3 +2537,62 @@ standing law. Filing precisely instead of guessing.
 BNK-13: **live-proof gap closed** (96% real coverage confirmed, stale 3,478 figure corrected to
 50/322); **2 named rows remain, need an owner/bookkeeper decision on target account**, not a code
 gap.
+
+---
+
+## REG-028/030 FINAL FIX — verified, one hypothesis corrected (2026-09-11)
+
+Owner packet (`09-11-2026 CC-2 — REG-028/030 FINAL FIX SCOPE`) supplied the real source of truth:
+`~/Downloads/stmt.csv`, a genuine Bank of America CSV for USMCA FREIGHT checking (mask 3224,
+`bank_account_id e83028a5-dcda-4233-b660-5b9923b3d39c`), 288 transactions, 03/10/2025-09/09/2026,
+statement's own printed ending-balance line: `09/09/2026, "Wire Transfer Fee", -15.00, "6,389.72"`.
+Independently re-derived from scratch (not assumed from the packet) by parsing that CSV and
+matching every row against a live pull of all 448 `banking.bank_transactions` rows on this account.
+
+**Item #1 in the packet — "SIGN INVERSION is 100% systemic" — is INCORRECT, with proof, not just a
+disagreement.** Matching CSV rows to Neon rows by `(transaction_date, real_signed_amount)` where
+`real_signed_amount = is_credit ? +abs(amount_cents) : -abs(amount_cents)` (i.e. USING the existing
+`is_credit` flag exactly as stored, no correction) matched **286 of 288** real transactions exactly.
+A control run using raw `amount_cents` with NO `is_credit` correction matched only **6 of 288**. This
+is the opposite of what a real sign-inversion bug would show — it's direct proof `is_credit` already
+encodes the correct direction, and what the packet is calling an "inversion" is Plaid's own
+documented convention (positive=OUT, negative=IN) established three times already this session
+(`BANK-F10005` 2026-09-04, `BANK-F10041` 2026-09-07, `BANK-RUNNING-BALANCE-STILL-BROKEN-UNFILTERED`/
+`BANK-F30002` 2026-09-08, the last one CC-1 independently avoiding the exact same misreading). **No
+sign was flipped by this fix — flipping it would have corrupted 322 correctly-classified
+transactions**, reintroducing a bug this repo has now correctly avoided four times.
+
+**Items #2 and #3 were exactly right, independently confirmed:** the reconciliation found precisely
+**2 missing transactions** (06/01/2026 $377.45 wire to Love's Travel Stop; 08/27/2026 $15 wire fee)
+and precisely **36 phantom live rows** with no match anywhere in the real statement. Root-caused the
+36: almost all carry `pending=true, dedup_hash=null` — stale Plaid PENDING duplicates never retired
+when their POSTED successor arrived. This is the exact failure mode `bank-tx-dedup.ts`'s
+`supersedePlaidPendingByExactPostedCandidate` exists to fix, and the exact class CC-1's own
+`scripts/ops/2026-09-07-cc1-bank-running-balance-plaid-pending-dedup-sweep.ts` already swept
+system-wide on 2026-09-07 — this account's 36 are residue from before/after that one-shot sweep's
+window (some created as early as 08-02, some as late as 09-10), not a new code defect.
+
+**Fix already applied live (Neon, 2026-09-11T01:06:09Z, verified independently, not assumed):** the
+36 rows voided (`voided_reason='reg030_bofa_statement_unmatched_phantom'`, void-not-delete, WORM-
+preserved), the 2 missing rows backfilled (`source='csv_import'`, same path the app's own Statement
+Import feature already uses for a manually-supplied row). **Direct live re-query after the fix: the
+signed sum (`is_credit`-based, unchanged convention) over every non-voided row on this account
+through 09/09/2026 = 638972 cents = $6,389.72 — the statement's own printed line, to the penny.**
+
+**Guard added, verify-step 10915 (cc-2 band):**
+`scripts/verify-reg030-bofa-usmca-freight-reconciliation.mjs` — pins the 36 voided ids + 2 backfilled
+ids by id (regression lock: they can never silently un-void or disappear) and re-derives the
+point-in-time reconciliation total through the statement's own cutoff date, so it stays green as new,
+later-dated activity keeps posting. Live-DB half skips cleanly when `DATABASE_URL` is unset (never
+blocks the CI ephemeral-DB suite), matching the existing `verify-acc13-no-test-accounts-in-usmca-coa.mjs`
+convention; a positive control (non-zero row count for this account) guards the FORCED-RLS 0-count
+landmine.
+
+**Bonus correction to BNK-13 (item 33, this OUTBOX, above):** one of the "2 remaining transfer rows"
+named there — `f2df847d-a255-4430-b7f5-8038def5a960` ("Zelle Transfer CONF# UFKXHK986; TIO PERFUMES 2
+LLC", $800.00, dated 09/10) — is one of the 36 phantom rows voided by this fix (a stale pending
+duplicate dated after the real statement's cutoff, never a real, live transaction needing a transfer
+rule). BNK-13's live remaining-gap count is now **1**, not 2 (`46665118-ce14-48bb-b1ea-4ccaf7361b0b`
+only).
+
+REG-028/030: **DONE** — live proof posted above, PR incoming (guard + this write-up).
