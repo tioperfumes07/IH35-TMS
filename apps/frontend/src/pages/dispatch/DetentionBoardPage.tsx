@@ -22,6 +22,8 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { DispatchAlertServerControls, type DispatchAlertRange } from "../../components/dispatch/DispatchAlertServerControls";
 import { DispatchSubnav } from "../../components/dispatch/DispatchSubnav";
 import { serverDispatchAlertQueryFromSortState, sortDispatchAlertBoardRows } from "./dispatchAlertBoardSort";
+import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
+import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 
 function formatMoney(cents: number): string {
   return formatUsdCents(Math.max(0, cents));
@@ -163,6 +165,7 @@ export function DetentionBoardPage() {
     () => sortDispatchAlertBoardRows(boardQ.data?.events ?? [], paritySortKey, sortDirection),
     [boardQ.data?.events, paritySortKey, sortDirection],
   );
+  const settlementReferences = useSettlementReferences(companyId, events.map((event) => event.load_id));
   type DetentionRow = (typeof events)[number];
 
   if (!companyId) {
@@ -179,6 +182,7 @@ export function DetentionBoardPage() {
       className: "font-medium",
       render: (event) => <EntityLinkOrTombstone kind="load" id={event.load_id} name={event.load_number} noun="Load" />,
     },
+    { key: "settlement_reference", label: "Settlement / Presettlement", testId: "settlement-reference-column", render: (event) => <SettlementReferenceCell reference={settlementReferences.get(event.load_id)} /> },
     {
       key: "customer_name",
       label: "Customer",

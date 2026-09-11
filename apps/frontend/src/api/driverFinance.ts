@@ -834,6 +834,21 @@ export type SettlementForLoad = {
   paid_at: string | null;
 };
 
+export type SettlementReference = {
+  load_id: string;
+  settlement_id: string | null;
+  settlement_display_id: string | null;
+  presettlement_id: string | null;
+  presettlement_display_id: string | null;
+};
+
+export function getSettlementReferences(companyId: string, loadIds: string[]) {
+  return apiRequest<{ references: SettlementReference[] }>(
+    "/api/v1/driver-finance/settlement-references",
+    { method: "POST", body: { operating_company_id: companyId, load_ids: [...new Set(loadIds)] } }
+  );
+}
+
 /** Drawer: load-aware reverse hop — which settlement(s) actually cover this load. */
 export function getSettlementsForLoad(loadId: string, companyId: string) {
   return apiRequest<{ settlements: SettlementForLoad[] }>(

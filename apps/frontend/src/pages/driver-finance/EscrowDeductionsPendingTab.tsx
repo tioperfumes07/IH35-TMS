@@ -19,6 +19,8 @@ import { formatUsdCents } from "../../lib/money";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
+import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 
 function formatMoney(cents: number) {
   return formatUsdCents(cents);
@@ -56,6 +58,7 @@ export function EscrowDeductionsPendingTab() {
   });
 
   const rows = pendingQuery.data?.data ?? [];
+  const settlementReferences = useSettlementReferences(companyId, rows.map((row) => row.load_id));
   const isOwner = auth.user?.role === "Owner";
 
   const approveMutation = useMutation({
@@ -128,6 +131,11 @@ export function EscrowDeductionsPendingTab() {
           ),
       },
       {
+        key: "settlement_reference",
+        label: "Settlement / Presettlement", testId: "settlement-reference-column",
+        render: (row) => <SettlementReferenceCell reference={row.load_id ? settlementReferences.get(row.load_id) : null} />,
+      },
+      {
         key: "proposed_amount_cents",
         label: "Proposed Amount",
         sortable: true,
@@ -158,7 +166,7 @@ export function EscrowDeductionsPendingTab() {
         },
       },
     ],
-    [],
+    [settlementReferences],
   );
 
   return (

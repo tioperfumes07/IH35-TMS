@@ -15,6 +15,8 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 
 import { formatUsdCents } from "../../lib/money";
+import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
+import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -66,10 +68,12 @@ export function DispatchMarginPage() {
       return String(r.load_number ?? "").toLowerCase().includes(q) || String(r.customer_name ?? "").toLowerCase().includes(q);
     });
   }, [query.data?.rows, reportSearch]);
+  const settlementReferences = useSettlementReferences(companyId, filtered.map((row) => row.load_id));
 
   const columns = useMemo<ParityColumn<DispatchMarginRow>[]>(
     () => [
       { key: "load_number", label: "Load", sortable: true, render: (row) => <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} /> },
+      { key: "settlement_reference", label: "Settlement / Presettlement", testId: "settlement-reference-column", render: (row) => <SettlementReferenceCell reference={settlementReferences.get(row.load_id)} /> },
       {
         key: "customer_name",
         label: "Customer",
@@ -91,7 +95,7 @@ export function DispatchMarginPage() {
       { key: "margin_cents", label: "Margin", sortable: true, className: "text-right", cellClass: "text-right", render: (row) => money(row.margin_cents) },
       { key: "margin_pct", label: "Margin %", sortable: true, className: "text-right", cellClass: "text-right", render: (row) => `${row.margin_pct.toFixed(1)}%` },
     ],
-    [],
+    [settlementReferences],
   );
 
   return (

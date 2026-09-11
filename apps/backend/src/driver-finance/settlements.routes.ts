@@ -51,6 +51,10 @@ const listQuerySchema = z.object({
   driver_id: z.string().uuid().optional(),
 });
 const idParamsSchema = z.object({ id: z.string().uuid() });
+const settlementReferencesBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  load_ids: z.array(z.string().uuid()).min(1).max(250),
+});
 const createBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   driver_id: z.string().uuid(),
@@ -165,6 +169,48 @@ async function recomputeDebtSync(client: any, driverId: string) {
 }
 
 export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance) {
+  // SETTLEMENT-REFERENCE-SYSTEMWIDE: one company-scoped read model for every load/money table.
+  // Closed identity is derived only through settlement_lines.load_id; an open cycle is the load's
+  // canonical presettlement_link_id. Never use driver_bills.settled_in_settlement_id here.
+  app.post("/api/v1/driver-finance/settlement-references", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const parsed = settlementReferencesBodySchema.safeParse(req.body ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+    const { operating_company_id: companyId, load_ids: loadIds } = parsed.data;
+    const rows = await withCompany(user.uuid, companyId, async (client) => {
+      if (!(await hasSettlementSchema(client))) return [];
+      const result = await client.query(`
+        SELECT l.id::text AS load_id,
+               CASE WHEN closed.id IS NOT NULL THEN closed.id::text END AS settlement_id,
+               CASE WHEN closed.id IS NOT NULL THEN closed.display_id END AS settlement_display_id,
+               CASE WHEN closed.id IS NULL THEN open_cycle.id::text END AS presettlement_id,
+               CASE WHEN closed.id IS NULL THEN open_cycle.display_id END AS presettlement_display_id
+          FROM mdata.loads l
+          LEFT JOIN LATERAL (
+            SELECT s.id, s.display_id
+              FROM driver_finance.settlement_lines sl
+              JOIN driver_finance.driver_settlements s
+                ON s.id = sl.settlement_id
+               AND s.operating_company_id = l.operating_company_id
+             WHERE sl.load_id = l.id
+               AND sl.operating_company_id = l.operating_company_id
+               AND sl.is_active = true
+               AND (s.locked_at IS NOT NULL OR s.paid_at IS NOT NULL OR s.status IN ('closed','final','paid'))
+             ORDER BY s.locked_at DESC NULLS LAST, s.created_at DESC
+             LIMIT 1
+          ) closed ON true
+          LEFT JOIN driver_finance.driver_settlements open_cycle
+            ON open_cycle.id = l.presettlement_link_id
+           AND open_cycle.operating_company_id = l.operating_company_id
+         WHERE l.operating_company_id = $1::uuid
+           AND l.id = ANY($2::uuid[])
+      `, [companyId, loadIds]);
+      return result.rows;
+    });
+    return { references: rows };
+  });
+
   app.get("/api/v1/driver-finance/settlements", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;

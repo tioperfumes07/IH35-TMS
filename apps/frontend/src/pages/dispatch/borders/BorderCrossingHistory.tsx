@@ -8,6 +8,8 @@ import { formatDateTimeUS } from "../../../lib/formatDate";
 import { resolveApiUrl } from "../../../api/client";
 import { addDaysIso, companyToday } from "../../../lib/businessDate";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { SettlementReferenceCell } from "../../../components/settlements/SettlementReferenceCell";
+import { useSettlementReferences } from "../../../hooks/useSettlementReferences";
 // NOTE (EntityLink adoption sweep): `vehicle_id` here is the raw Samsara external vehicle id
 // (dispatch.border_crossing_events.vehicle_id, sourced from integrations.samsara_positions —
 // verified against apps/backend/src/integrations/samsara/border-crossings), NOT mdata.units.id.
@@ -62,11 +64,13 @@ export function BorderCrossingHistory() {
   });
 
   const events = data?.data ?? [];
+  const settlementReferences = useSettlementReferences(operatingCompanyId, events.map((event) => event.load_uuid));
 
   // Migrated to the shared QBO-parity grid — columns and order preserved verbatim (§7 additive-only).
   const columns = useMemo<ParityColumn<CrossingEvent>[]>(
     () => [
       { key: "vehicle_id", label: "Vehicle", sortable: true },
+      { key: "settlement_reference", label: "Settlement / Presettlement", testId: "settlement-reference-column", render: (event) => <SettlementReferenceCell reference={event.load_uuid ? settlementReferences.get(event.load_uuid) : null} /> },
       {
         key: "crossing_point",
         label: "Bridge",
@@ -93,7 +97,7 @@ export function BorderCrossingHistory() {
         render: (ev) => ev.customs_clearance_minutes ?? "—",
       },
     ],
-    [],
+    [settlementReferences],
   );
 
   const filterBar = (

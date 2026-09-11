@@ -2435,9 +2435,12 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
              ORDER BY created_at DESC LIMIT 1`,
           [input.assigned_unit_id, input.operating_company_id]
         );
-        tourId = t.rows[0]?.tour_id ?? null;
+        // AUTO-TOUR-ALL-LOADS (owner 2026-09-11): an SB/TR with no active NB predecessor still
+        // starts a real tour. Leaving this NULL orphaned both the load and its canonical open
+        // presettlement header from every tour-level financial/dispatch read model.
+        tourId = t.rows[0]?.tour_id ?? randomUUID();
       } else {
-        tourId = null;
+        tourId = randomUUID();
       }
       const tripDetailsUpdate = await client.query<{ id: string }>(
         `UPDATE mdata.loads SET trip_type = $1::mdata.trip_type_enum, tour_id = $2::uuid, updated_at = now()

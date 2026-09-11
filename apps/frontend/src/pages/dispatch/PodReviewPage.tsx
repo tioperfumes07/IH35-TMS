@@ -12,6 +12,8 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
+import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 
 function PodRowActions({
   doc,
@@ -114,6 +116,7 @@ export function PodReviewPage() {
   });
 
   const documents = podsQuery.data?.documents ?? [];
+  const settlementReferences = useSettlementReferences(companyId, documents.map((doc) => doc.load_id));
 
   // Migrated to the shared QBO-parity grid — every column + the Approve/Reject row action preserved
   // verbatim (§7 additive-only).
@@ -125,6 +128,7 @@ export function PodReviewPage() {
         sortable: true,
         render: (doc) => <EntityLinkOrTombstone kind="load" id={doc.load_id} name={doc.load_number} noun="Load" />,
       },
+      { key: "settlement_reference", label: "Settlement / Presettlement", testId: "settlement-reference-column", render: (doc) => <SettlementReferenceCell reference={doc.load_id ? settlementReferences.get(doc.load_id) : null} /> },
       {
         key: "driver_name",
         label: "Driver",
@@ -162,7 +166,7 @@ export function PodReviewPage() {
         ),
       },
     ],
-    [companyId, queryClient],
+    [companyId, queryClient, settlementReferences],
   );
 
   const filterBar = (
