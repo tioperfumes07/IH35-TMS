@@ -440,8 +440,12 @@ fetches `useLoad(loadId)` / `useDispatchLoad(loadId)` only — no sibling NB/TR/
 timeline default window **2026-08-25 → today**; `RT_TIMELINE_STATUSES` includes booked/planned/
 unassigned; pairing set stays narrow. Round Trips fetch is `listAllLoads` (200/page) — a `limit=1000`
 one-shot 400s (`Too big: expected number to be <=200`). `GET /dispatch/units-without-load` GROUP BY
-must include `loc.city/state/formatted_location` (SELECT COALESCE(p, loc) 500s without them). Approximate load costs (Dispatch Home) has sortable **Truck**.
+must include `loc.city/state/formatted_location` (SELECT COALESCE(p, loc) 500s without them). Idle-units
+WHERE is **lease-only** (`currently_leased_to_company_id = company`, never `owner OR lease`) plus sample/
+sold/disposed/OOS excluded (Rule 49). Approximate load costs (Dispatch Home) has sortable **Truck**.
 Create Bill load picker → `bill_lines.load_id` remains `verify-reg034-vendor-bill-load-picker-wired`.
+Load 13553 Driver Pay **Open driver bill** live-clicks to `/driver-finance/driver-bills/3207db84-…`.
+`+ Add Bill` from that load is load-scoped (`?load_id=&load_number=13553`); picker hidden; no POST.
 
 ## Known Quirks & Blockers — Banking (CC-2, 2026-09-08)
 

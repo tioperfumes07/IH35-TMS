@@ -47,6 +47,15 @@ function check(legs, timeline, dispatch, routes) {
   if (!/GROUP BY[\s\S]{0,400}loc\.city[\s\S]{0,80}loc\.state[\s\S]{0,80}loc\.formatted_location/.test(routes)) {
     errors.push("units-without-load GROUP BY must include loc.city/state/formatted_location (COALESCE(p, loc) 500s without them)");
   }
+  if (!/u\.currently_leased_to_company_id = \$1::uuid/.test(routes)) {
+    errors.push("units-without-load must scope units by currently_leased_to_company_id (Rule 49), not owner");
+  }
+  if (/u\.owner_company_id = \$1 OR u\.currently_leased_to_company_id = \$1/.test(routes)) {
+    errors.push("units-without-load must not use owner OR lease (Rule 49 — lease only)");
+  }
+  if (!/u\.is_sample_data IS NOT TRUE/.test(routes) || !/u\.sold_date IS NULL/.test(routes) || !/u\.is_oos IS NOT TRUE/.test(routes)) {
+    errors.push("units-without-load must exclude sample / sold / OOS units (Rule 49)");
+  }
   return errors;
 }
 
@@ -71,6 +80,14 @@ function selftest() {
   );
   if (check(legs, timeline, dispatch, badGroup).length === 0) {
     console.error("SELFTEST FAIL — loc GROUP BY mutation not caught");
+    process.exit(1);
+  }
+  const badLease = routes.replace(
+    "AND u.currently_leased_to_company_id = $1::uuid",
+    "AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)",
+  );
+  if (check(legs, timeline, dispatch, badLease).length === 0) {
+    console.error("SELFTEST FAIL — owner-OR-lease mutation not caught");
     process.exit(1);
   }
   console.log("PASS verify-reg037-roundtrips-timeline-window --selftest");
