@@ -55,7 +55,7 @@ import {
   classifyDeductionTarget,
   dollarsToCents,
 } from "../accounting/settlement-posting/settlement-bill-payment.math.js";
-import { isCoaRole, resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
+import { isCoaRole, resolveRoleAccountOptional, resolveReimbursementExpenseAccount } from "../accounting/coa-roles/resolver.service.js";
 
 /**
  * The escrow cap rendered for human-readable ledger text. DERIVED from ESCROW_CAP_CENTS — never a
@@ -291,20 +291,45 @@ async function loadAccruedEscrowContributionCents(client: DbClient, settlementId
  * never read settlement_lines('reimbursement') at all. A driver's settlement header/PDF showed a net
  * that included reimbursements while the check that went out silently excluded them.
  */
-async function loadReimbursementsCents(client: DbClient, operatingCompanyId: string, settlementId: string): Promise<number> {
-  const res = await client.query<{ total: string | null }>(
+/**
+ * ROW 0 REIMBURSEMENT-PER-TYPE-GL (owner ruling 2026-09-10): grouped by the REAL
+ * driver_finance.driver_reimbursements.reimbursement_type (via a LEFT JOIN back through
+ * settlement_lines.source_reference_id), not by whatever posting_account_id happened to be
+ * stamped on the line — a settlement_lines row can be a bare test/legacy insert with no
+ * driver_reimbursements link at all (reimbursement_type resolves to NULL in that case, exactly
+ * like the pre-existing behavior of always live-resolving 'reimbursement_expense' regardless of
+ * the line's own stored account). The account for each type is resolved FRESH at close time via
+ * the shared resolveReimbursementExpenseAccount — matching the pre-existing "always resolve live,
+ * never trust a stored value" convention this function already had before this fix, just per type
+ * instead of once for the whole settlement.
+ */
+async function loadReimbursementsByType(
+  client: DbClient,
+  operatingCompanyId: string,
+  settlementId: string
+): Promise<Map<string | null, number>> {
+  const res = await client.query<{ reimbursement_type: string | null; total: string | null }>(
     `
-      SELECT COALESCE(SUM(ABS(sl.amount)), 0)::text AS total
+      SELECT dr.reimbursement_type, COALESCE(SUM(ABS(sl.amount)), 0)::text AS total
       FROM driver_finance.settlement_lines sl
       JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
+      LEFT JOIN driver_finance.driver_reimbursements dr
+        ON dr.id::text = sl.source_reference_id::text
+       AND sl.source_table = 'driver_finance.driver_reimbursements'
       WHERE sl.settlement_id = $2::uuid
         AND ds.operating_company_id = $1::uuid
         AND sl.line_type = 'reimbursement'
         AND sl.is_active = true
+      GROUP BY dr.reimbursement_type
     `,
     [operatingCompanyId, settlementId]
   );
-  return dollarsToCents(res.rows[0]?.total ?? 0);
+  const byType = new Map<string | null, number>();
+  for (const row of res.rows) {
+    const cents = dollarsToCents(row.total ?? 0);
+    if (cents > 0) byType.set(row.reimbursement_type, cents);
+  }
+  return byType;
 }
 
 /**
@@ -543,7 +568,8 @@ export async function closeSettlementPayRun(
 
     // ── Compute each net term from a single authoritative source (no double counting). ────────────────
     const grossCents = dollarsToCents(settlement.gross_pay);
-    const reimbursementsCents = await loadReimbursementsCents(client, opco, settlementId);
+    const reimbursementsByType = await loadReimbursementsByType(client, opco, settlementId);
+    const reimbursementsCents = Array.from(reimbursementsByType.values()).reduce((s, v) => s + v, 0);
     const detentionPayCents = await loadDetentionPayCents(client, opco, settlementId);
     const deductionsByRole = await loadOtherDeductionsByRole(client, opco, settlementId);
     const deductionsCents = Array.from(deductionsByRole.values()).reduce((s, v) => s + v, 0);
@@ -703,18 +729,32 @@ export async function closeSettlementPayRun(
       { account_id: driverPayAccount, debit_or_credit: "debit", amount_cents: grossCents, description: `${label} — driver pay (gross)` },
     ];
 
-    if (reimbursementsCents > 0) {
-      // Dr reimbursement_expense — mirrors settlement-posting.service.ts's own reimbursement leg and
-      // lifts net pay by the same amount, matching the header net (gross - deductions + reimbursements)
-      // this JE must reconcile to.
-      const reimbAcct = await resolvePayRunRoleAccount(client, opco, "reimbursement_expense");
-      if (!reimbAcct) {
-        throw new SettlementPayRunError(
-          "REIMBURSEMENT_EXPENSE_ACCOUNT_MISSING",
-          "No active 'reimbursement_expense' CoA role designation for settlement reimbursements"
-        );
+    if (reimbursementsByType.size > 0) {
+      // Dr reimbursement_expense (per type) — mirrors settlement-posting.service.ts's own
+      // reimbursement leg and lifts net pay by the same amount, matching the header net
+      // (gross - deductions + reimbursements) this JE must reconcile to. ROW 0
+      // REIMBURSEMENT-PER-TYPE-GL (owner ruling 2026-09-10): resolve the SHARED per-type account
+      // for each type present, then fan out one leg PER DISTINCT ACCOUNT (types sharing an account,
+      // e.g. toll/scale/parking all -> toll_scale_expense, collapse into one leg) — fuel/toll/
+      // scale/parking/other each debit their own owner-mapped account; lumper (and any
+      // undesignated type/company) still debits the original generic reimbursement_expense
+      // account, matching this function's pre-existing behavior exactly. Fails CLOSED (never
+      // silently drops the reimbursement from the JE) if even the fallback account is unresolved —
+      // same failure this function already raised before this fix.
+      const reimbursementsByAccount = new Map<string, number>();
+      for (const [reimbType, cents] of reimbursementsByType) {
+        const acctId = await resolveReimbursementExpenseAccount(client, opco, reimbType);
+        if (!acctId) {
+          throw new SettlementPayRunError(
+            "REIMBURSEMENT_EXPENSE_ACCOUNT_MISSING",
+            `No active reimbursement expense account resolved for type '${reimbType ?? "unknown"}'`
+          );
+        }
+        reimbursementsByAccount.set(acctId, (reimbursementsByAccount.get(acctId) ?? 0) + cents);
       }
-      legs.push({ account_id: reimbAcct, debit_or_credit: "debit", amount_cents: reimbursementsCents, description: `${label} — driver reimbursement` });
+      for (const [accountId, cents] of reimbursementsByAccount) {
+        legs.push({ account_id: accountId, debit_or_credit: "debit", amount_cents: cents, description: `${label} — driver reimbursement` });
+      }
     }
 
     if (detentionPayCents > 0) {
