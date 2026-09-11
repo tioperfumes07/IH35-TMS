@@ -70,7 +70,15 @@
    height around it. :not(.dp-input):not(.dp-select) excludes DatePicker's internal elements
    app-wide (Load Detail, Banking, everywhere .ldt-fld wraps a <DatePicker>) instead of patching
    one page. */
-.ldt-inp, .ldt-fld input:not(.dp-input), .ldt-fld select:not(.dp-select) { width: 100%; height: 28px; border: 1px solid var(--ldt-rule); border-radius: 2px; background: var(--ldt-card); color: var(--ldt-ink); font-size: 12px; padding: 0 7px; font-family: var(--ldt-body); }
+.ldt-inp, .ldt-fld input:not(.dp-input):not([type="checkbox"]):not([type="radio"]), .ldt-fld select:not(.dp-select) { width: 100%; height: 28px; border: 1px solid var(--ldt-rule); border-radius: 2px; background: var(--ldt-card); color: var(--ldt-ink); font-size: 12px; padding: 0 7px; font-family: var(--ldt-body); }
+/* BANK-F26150 (owner live 2026-09-11 17:40 CT, Banking › Transactions › Categorized › Match Candidates
+   "Show" row): the rule above also reached <input type="checkbox"> inside .ldt-fld — every checkbox
+   became 100% wide × 28px and the six labels painted on top of each other. Root fix at the token,
+   not per page: checkboxes/radios are excluded from the text-input rule, and a label that wraps a
+   checkbox renders as an inline row in sentence case (the uppercase 10px .ldt-fld label style is for
+   field captions, not for choice labels). Same defect class as the DatePicker box-in-a-box (09-06). */
+.ldt-fld input[type="checkbox"], .ldt-fld input[type="radio"] { width: 14px; height: 14px; margin: 0; accent-color: var(--ldt-ink); flex: 0 0 auto; }
+.ldt-fld label:has(> input[type="checkbox"]), .ldt-fld label:has(> input[type="radio"]) { display: inline-flex; align-items: center; gap: 5px; text-transform: none; letter-spacing: 0; font-size: 11px; color: var(--ldt-ink); margin: 0; }
 .ldt-inp { display: flex; align-items: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .ldt-inp.ro { background: var(--ldt-paper); color: var(--ldt-ink2); }
 .ldt-inp.mono, .ldt-mono { font-family: var(--ldt-mono); font-variant-numeric: tabular-nums; }
