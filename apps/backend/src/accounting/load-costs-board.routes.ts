@@ -175,8 +175,29 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
            -- Legacy bill linkage is a fallback only; it cannot override a continued tour's identity.
            SELECT linked.id AS load_id, ds.display_id AS settlement_display_id,
                   ds.id::text AS settlement_id,
-                  (ds.trip_closed_at IS NOT NULL OR ds.status IN ('closed', 'approved', 'paid')
-                   OR EXISTS (
+                  -- SETTLEMENT-NUMBER-SWEEP correction (owner 2026-09-11): removed the blunt
+                  -- settlement-timestamp/status short-circuit branch (checking ds directly, no
+                  -- load-level signal at all) that PR #21692 (ACCT-F6350/REG-040) added here.
+                  -- Live-verified that branch was
+                  -- both REDUNDANT for the case it was built to solve AND the actual root cause of
+                  -- a new bug: a load_bookended settlement auto-closes (status='closed',
+                  -- trip_closed_at set) the moment its FINAL leg reaches delivered_pending_docs --
+                  -- that is the TRIGGERING event for settlement closure, not something that happens
+                  -- strictly after it, so a load can be status='delivered_pending_docs' (still
+                  -- genuinely open -- docs/paperwork/costs tracking not done) while its OWN
+                  -- settlement already reads 'closed'. Confirmed live (USMCA, 2026-09-11): 5 of 8
+                  -- live delivered_pending_docs loads (13517/13531/13533/13539/13584) were wrongly
+                  -- excluded from every open Costs tab this way, though none of them, their own
+                  -- tour's first load, nor any invoice was ever actually finalized. The REG-040
+                  -- continuation case this branch was added for (PR #21692's own worked example,
+                  -- S-2026-0019/loads 13569+13577) does not need it -- that settlement's own
+                  -- first_load (13569) is independently status='closed', already caught by the
+                  -- EXISTS block below; live-reconfirmed removing this branch changes nothing for
+                  -- that example. The EXISTS block (first_load/invoice check) and the REG-040
+                  -- continuation EXISTS block below are the correct, load-specific signals for
+                  -- "this settlement's own economics are finalized" and "a new load joined an
+                  -- already-closed settlement" -- kept unchanged.
+                  (EXISTS (
                      SELECT 1 FROM mdata.loads original
                      WHERE original.id = ds.first_load_id
                        AND original.operating_company_id = ds.operating_company_id
