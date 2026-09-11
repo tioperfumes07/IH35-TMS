@@ -10539,3 +10539,22 @@ already correctly shipped or already correctly root-caused; no fix needed | live
 click-through (REG-027 reorder, restored after), live Neon reads (bypass_rls=lucia), guard selftest
 re-run, all exact numbers in the OUTBOX entry | **CLOSED — ALL 5 ITEMS LIVE-VERIFIED, NO DEFECT
 FOUND** |
+
+## BNK-13 transfer-routing coverage — CC-2, 2026-09-11 (next unclaimed register item, live re-measure)
+
+**FINDING:** `OWNER-STATUS-LEDGER-2026-09-09.md` item 33 (BNK-13) said "3,478-transfer routing
+count never re-measured live." That figure is stale/wrong for USMCA — the entity has only 322
+total non-voided `banking.bank_transactions`, so a 3,478-row transfer subset was never plausible.
+Re-measured live (Neon, bypass_rls=lucia): 50 of 322 non-voided transactions have "transfer" in
+their description; 48 of those 50 (96%) already carry a `suggested_account_id` from the 8
+transfer-pattern rules seeded in #21035/#21050. 2 remain unsuggested, named exactly (not
+estimated): `46665118-...` ("TRANSFER USMCA FREIGHT SOLUTI:Juan Hernandez...", $345.00) and
+`f2df847d-...` ("Zelle Transfer... TIO PERFUMES 2 LLC", $800.00) — neither matches any of the 8
+existing rule patterns. Not building a rule for either: a `banking_rules` row requires a real
+`then_account_id` categorization decision, which is a bookkeeping call this seat should not invent.
+| `banking.bank_transactions`, `accounting.banking_rules` (read-only; no write) | **CC-2 (live-proof
+closed) / owner or bookkeeper (2 named rows need a real target-account decision)** | decide the GL
+account for the 2 named transfer rows above, then a rule can be authored via the existing
+`POST /api/v1/banking/rules` route | live Neon reads (bypass_rls=lucia), exact transaction ids and
+dollar amounts cited above and in the OUTBOX entry | **LIVE-PROOF CLOSED · 2 NAMED ROWS OPEN,
+PENDING AN OWNER CATEGORIZATION DECISION, NOT A CODE GAP** |

@@ -2501,3 +2501,39 @@ for account `...3224` covering December 2025 (downloaded from BofA's own online 
 will not log into per the standing rule against ever entering credentials) that could be supplied
 for a genuine document cross-check? Without that document, or an explicit instruction to accept the
 Plaid-anchored trace as sufficient, this specific ask cannot be completed further from this seat.
+
+## CC-2 — BNK-13 next-register-item pick: transfer-routing coverage re-measured live (2026-09-11)
+
+Per "pick next open register item not claimed by another seat": scanned the register, the itemized
+owner dump, and `OWNER-STATUS-LEDGER-2026-09-09.md`'s 72-item numbered list. Almost everything open
+is already named to a specific seat (Cursor/CC-1/CC-3/Devin A/Codex). The one clean, unclaimed,
+Banking-lane item still marked "live proof never re-measured": **item 33, BNK-13** — "USMCA
+bank-rule authoring, 97.5% uncategorized... DONE (rules side) — PR #21035/#21050; **3,478-transfer
+routing count never re-measured live**."
+
+**Re-measured live, Neon, USMCA, right now — the "3,478" figure is stale/wrong for this entity**
+(same class of issue as the session's other "board numbers are the least reliable part" findings):
+USMCA has 322 total non-voided `banking.bank_transactions` — nowhere near 3,478 at any point in its
+history a "transfer" subset could plausibly be. The real, current numbers: **50 of 322** non-voided
+transactions have "transfer" in their description; **48 of those 50 (96%)** already carry a
+`suggested_account_id` from the 8 transfer-pattern rules seeded in #21035/#21050
+(`mobile/online/wire transfer...`, `munoz`/`scentsx`-specific regexes, `external/wire transfer fee`).
+This is the honest current coverage — not the stale figure, and not a claim of 100%.
+
+**The 2 remaining, named precisely, not guessed at:**
+- `46665118-ce14-48bb-b1ea-4ccaf7361b0b` — "TRANSFER USMCA FREIGHT SOLUTI:Juan Hernandez
+  Confirmation# XXXXX02883", $345.00 — doesn't match any of the 8 seeded patterns (none target this
+  exact phrasing).
+- `f2df847d-a255-4430-b7f5-8038def5a960` — "Zelle Transfer CONF# UFKXHK986; TIO PERFUMES 2 LLC",
+  $800.00 — same gap, different phrasing.
+
+**Not building a rule for these 2 in this entry.** A `banking_rules` row needs a `then_account_id`
+— i.e. a real categorization decision about which GL account "a transfer to Juan Hernandez" or "a
+Zelle transfer from TIO PERFUMES 2 LLC" belongs to. That is a real business/bookkeeping call, not
+something inferable from the description string alone, and guessing one would be inventing a
+categorization the same way inventing a load FK or a GL posting is barred elsewhere in this repo's
+standing law. Filing precisely instead of guessing.
+
+BNK-13: **live-proof gap closed** (96% real coverage confirmed, stale 3,478 figure corrected to
+50/322); **2 named rows remain, need an owner/bookkeeper decision on target account**, not a code
+gap.
