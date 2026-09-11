@@ -1,134 +1,165 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>Dispatch Line Board — design reference 2026-09-11</title>
+<html lang="en"><head><meta charset="utf-8"><title>Dispatch Line Board — design reference 2026-09-11 v3</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-:root{--navy:#14314F;--navy2:#1f2a44;--ink:#131820;--mute:#6B7280;--paper:#F7F8FA;--tile:#F4F7FA;--line:#C7D2DC;--th:rgb(228,234,241);--rule:#E5E7EB;--accent:#2b5f52;--ok:#16A34A;--warn:#b45309;--bad:#B42318;--sb:#475569;--nb:#1f2a44;--tr:#b45309}
+:root{--navy:#14314F;--navy2:#1f2a44;--ink:#1F2937;--mute:#6B7280;--paper:#F7F8FA;--tile:#F4F7FA;--line:#C7D2DC;--th:rgb(228,234,241);--rule:#E5E7EB;
+ --ok:#16A34A;--s1:var(--ok);--s2:var(--ok);--s3:var(--ok);--s4:var(--ok);--s5:#DC2626;--s6:var(--ok);--s7:var(--ok);--s8:var(--ok);--s9:var(--ok);--late:#DC2626;--bad:#DC2626;--sb:#475569;--nb:#1f2a44;--tr:#b45309}
 *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:12px/1.35 -apple-system,"Segoe UI",Inter,Roboto,Arial,sans-serif}
 .top{background:var(--navy);color:#fff;height:44px;display:flex;align-items:center;gap:18px;padding:0 16px;font-size:12px}
-.top b{font-weight:600;letter-spacing:.02em}.top .tabs{display:flex;gap:2px;margin-left:8px}.top .tabs span{padding:6px 10px;border-radius:3px;opacity:.75}.top .tabs span.on{background:rgba(255,255,255,.14);opacity:1}
+.top b{font-weight:600;letter-spacing:.02em}.top .tabs{display:flex;gap:2px;margin-left:8px}.top .tabs span{padding:6px 10px;border-radius:3px;opacity:.75}.top .tabs span.on{background:rgba(255,255,255,.16);opacity:1}
 .bar{height:36px;display:flex;align-items:center;gap:8px;padding:0 16px;border-bottom:1px solid var(--line);background:#fff}
 .seg{display:flex;border:1px solid var(--line);border-radius:4px;overflow:hidden;height:28px}.seg span{padding:0 10px;display:flex;align-items:center;font-size:11px;color:var(--mute)}.seg span.on{background:var(--navy2);color:#fff}
 .btn{height:28px;padding:0 10px;border:1px solid var(--line);background:#fff;border-radius:4px;font-size:11px;display:inline-flex;align-items:center;gap:6px}.btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
-.kpis{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;padding:10px 16px 0}
-.kpi{background:var(--tile);border:1px solid var(--line);height:44px;padding:5px 10px;border-radius:3px}.kpi small{display:block;font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}.kpi b{font-size:14px;font-weight:600}
+.kpis{display:grid;grid-template-columns:repeat(9,1fr);gap:8px;padding:10px 16px 0}
+.kpi{background:var(--tile);border:1px solid var(--line);height:46px;padding:5px 10px;border-radius:3px}.kpi small{display:block;font-size:10.5px;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}.kpi b{font-size:15px;font-weight:600;color:var(--ink)}
 .wrap{padding:10px 16px 24px}
-table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--line);table-layout:fixed;min-width:1180px}
-th{height:24px;background:var(--th);font-size:11px;font-weight:600;color:#374151;text-align:left;padding:0 8px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);white-space:nowrap}
-th.st{text-align:center;padding:0}
-td{height:44px;padding:0 8px;border-bottom:1px solid var(--rule);border-right:1px solid var(--rule);vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--line);table-layout:fixed;min-width:1240px;border-radius:4px}
+th{height:30px;background:var(--th);font-size:11px;font-weight:600;color:#374151;text-align:left;padding:0 8px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);white-space:nowrap}
+th.st{padding:0 6px}
+.stations{position:relative;height:30px}.stations span{position:absolute;top:0;transform:translateX(-50%);font-size:11px;font-weight:600;color:#374151;white-space:nowrap;line-height:30px;background:none!important}
+td{height:46px;padding:0 8px;border-bottom:1px solid var(--rule);border-right:1px solid var(--rule);vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 tr:hover td{background:#FBFCFD}
-.unit{font-weight:600;font-size:12px}.sub{color:var(--mute);font-size:11px}
+.sub{color:var(--mute);font-size:11px}
 .pill{display:inline-block;border-radius:2px;color:#fff;font-size:10px;font-weight:600;padding:1px 5px;margin-left:6px;vertical-align:middle}.NB{background:var(--nb)}.SB{background:var(--sb)}.TR{background:var(--tr)}
-.card{display:inline-block;border:1px solid var(--line);background:var(--tile);border-radius:3px;padding:4px 8px;line-height:1.25;cursor:pointer;min-width:190px}
+.card{display:inline-block;border:1px solid var(--line);background:var(--tile);border-radius:4px;padding:4px 8px;line-height:1.25;cursor:pointer;min-width:200px}
 .card:hover{border-color:var(--navy)}.card.empty{color:var(--mute);border-style:dashed;background:#fff}
 .card .l1{font-weight:600}.card .l2{font-size:11px;color:var(--mute)}
 td.line{padding:0 6px}
-.track{position:relative;height:44px}
-.track .rail{position:absolute;left:0;right:0;top:21px;height:2px;background:var(--line)}
-.track .done{position:absolute;left:0;top:21px;height:2px;background:var(--accent)}
-.node{position:absolute;top:14px;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--line);transform:translateX(-50%);cursor:pointer}
-.node.done{background:var(--accent);border-color:var(--accent)}
-.node.cur{background:#fff;border:3px solid var(--accent);box-shadow:0 0 0 3px rgba(43,95,82,.18)}
-.node.next{border-color:var(--navy);border-style:dashed}
+.track{position:relative;height:46px}
+.track .rail{position:absolute;left:0;right:0;top:22px;height:3px;background:#E8EDF5;border-radius:2px}
+.track .done{position:absolute;left:0;top:22px;height:3px;border-radius:2px;background:var(--ok)}
+.node{position:absolute;top:15px;width:17px;height:17px;border-radius:50%;background:#fff;border:2px solid #D3DAE6;transform:translateX(-50%);cursor:pointer}
+.node.done{background:var(--c);border-color:var(--c)}
+.node.cur{background:#fff;border:3px solid var(--c);box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 22%,transparent)}
+.node.next{border:2px dashed var(--c)}
+.node.other{border-radius:4px;transform:translateX(-50%) rotate(45deg)}
 .node:hover{transform:translateX(-50%) scale(1.15)}
-.node .tip{display:none;position:absolute;top:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:10px;padding:4px 6px;border-radius:3px;white-space:nowrap;z-index:2}
+.node .tip{display:none;position:absolute;top:22px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;font-size:10px;padding:4px 6px;border-radius:3px;white-space:nowrap;z-index:2}
 .node:hover .tip{display:block}
-.stamp{position:absolute;top:31px;font-size:9px;color:var(--mute);transform:translateX(-50%);white-space:nowrap}
-.gps{font-size:11px}.gps b{font-weight:600}.stale{color:var(--warn)}.nogps{color:var(--bad)}
-.legend{display:flex;gap:16px;align-items:center;font-size:11px;color:var(--mute);padding:8px 16px}
+.stamp{position:absolute;top:33px;font-size:9px;color:var(--mute);transform:translateX(-50%);white-space:nowrap}
+.reason{position:absolute;top:33px;font-size:9px;color:var(--s5);font-weight:600;transform:translateX(-50%);white-space:nowrap}
+.gps{font-size:11px}.gps b{font-weight:600}.late{color:var(--late);font-weight:600}.nogps{color:var(--bad)}
+.legend{display:flex;gap:16px;align-items:center;font-size:11px;color:var(--mute);padding:8px 16px;flex-wrap:wrap}
 .legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:middle;margin-right:4px}
-.pop{position:fixed;right:24px;top:110px;width:340px;background:#fff;border:1px solid var(--line);box-shadow:0 8px 24px rgba(0,0,0,.12);border-radius:4px;font-size:12px}
-.pop .hd{background:var(--th);height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 10px;font-weight:600;font-size:11px}
-.pop .bd{padding:10px}.pop .row{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid var(--rule)}.pop .row:last-child{border:0}
+.pop{position:fixed;right:24px;top:118px;width:350px;background:#fff;border:1px solid var(--line);box-shadow:0 8px 24px rgba(0,0,0,.14);border-radius:6px;font-size:12px;overflow:hidden}
+.pop .hd{background:var(--th);color:#374151;height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 10px;font-weight:600;font-size:11px}
+.pop .bd{padding:10px}.pop .row{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--rule);align-items:center}.pop .row:last-child{border:0}
 .pop input,.pop select{height:28px;border:1px solid var(--line);border-radius:3px;padding:0 6px;font-size:12px;width:100%}
 .pop .ft{padding:8px 10px;display:flex;justify-content:flex-end;gap:6px;border-top:1px solid var(--rule)}
-.spec{max-width:1180px;margin:18px 16px;background:#fff;border:1px solid var(--line);padding:14px 16px;font-size:12px}
+.reasons{border:1px solid var(--line);border-radius:4px;margin-top:4px}.reasons div{padding:5px 8px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between}.reasons div:last-child{border:0}.reasons div.on{background:#FEF2F2;font-weight:600}
+.spec{max-width:1240px;margin:18px 16px;background:#fff;border:1px solid var(--line);padding:14px 16px;font-size:12px}
 .spec h2{font-size:13px;margin:0 0 8px}.spec h3{font-size:12px;margin:12px 0 4px}
-.spec table{min-width:0;table-layout:auto}.spec td,.spec th{height:auto;padding:4px 8px;white-space:normal}
+.spec table{min-width:0;table-layout:auto;border-radius:0}.spec td,.spec th{height:auto;padding:4px 8px;white-space:normal}
 code{font:11px ui-monospace,Menlo,monospace;background:#F1F5F9;padding:0 3px;border-radius:2px}
 </style></head><body>
-<style>th.st{padding:0 6px}.stations{position:relative;height:24px}.stations span{position:absolute;top:0;line-height:24px;transform:translateX(-50%);font-size:11px;font-weight:600;color:#374151;white-space:nowrap}</style>
-<div class="top"><b>IH35 DISPATCH</b><span class="tabs"><span>Overview</span><span>List</span><span>Kanban</span><span class="on">Line Board</span><span>Round Trips</span><span>Trip Pairing</span></span><span style="margin-left:auto;opacity:.8">USMCA Freight Solutions · Fri 09/11/2026 16:30 CT</span></div>
+<div class="top"><b>IH35 DISPATCH</b><span class="tabs"><span>Overview</span><span>Kanban</span><span>List</span><span>Round Trips</span><span>Trip Pairing</span><span class="on">Truck Line</span></span><span style="margin-left:auto;opacity:.8">USMCA Freight Solutions · Fri 09/11/2026 16:50 CT</span></div>
 <div class="bar">
- <div class="seg"><span>List</span><span>Kanban</span><span class="on">Line Board</span><span>Round Trips</span></div>
+ <div class="seg"><span>Kanban</span><span>List</span><span>Round Trips</span><span>Trip Pairing</span><span class="on">Truck Line</span></div>
  <span class="btn">Trucks ▾ In service (19)</span><span class="btn">Driver ▾</span><span class="btn">Customer ▾</span><span class="btn">Search unit / load #</span>
  <span class="btn">Sort ▾ Unit</span><span class="btn">⚙ Columns</span>
  <span class="btn primary" style="margin-left:auto">+ Book Load</span>
 </div>
 <div class="kpis">
- <div class="kpi"><small>In service</small><b>19</b></div><div class="kpi"><small>Awaiting assignment</small><b>16</b></div><div class="kpi"><small>Dispatched</small><b>3</b></div><div class="kpi"><small>At pickup</small><b>0</b></div><div class="kpi"><small>In transit</small><b>0</b></div><div class="kpi"><small>At delivery</small><b>0</b></div><div class="kpi"><small>Delivered · docs pending</small><b>3</b></div><div class="kpi"><small>Late vs appointment</small><b>1</b></div>
+ <div class="kpi" style="--k:var(--navy)"><small>In service</small><b>19</b></div><div class="kpi" style="--k:#94A3B8"><small>Awaiting</small><b>16</b></div><div class="kpi" style="--k:var(--s2)"><small>Dispatched</small><b>3</b></div><div class="kpi" style="--k:var(--s3)"><small>At pickup</small><b>0</b></div><div class="kpi" style="--k:var(--s4)"><small>In transit</small><b>0</b></div><div class="kpi" style="--k:var(--s5)"><small>Other · exception</small><b>0</b></div><div class="kpi" style="--k:var(--s6)"><small>At delivery</small><b>0</b></div><div class="kpi" style="--k:var(--s7)"><small>Delivered</small><b>3</b></div><div class="kpi" style="--k:var(--late)"><small>Late vs appt</small><b>3</b></div>
 </div>
-<div class="legend"><span><i style="background:var(--accent)"></i>reached (stamped)</span><span><i style="border:3px solid var(--accent);background:#fff"></i>current station</span><span><i style="border:2px dashed var(--navy);background:#fff"></i>next — click to advance</span><span><i style="border:2px solid var(--line);background:#fff"></i>not reached</span><span>Double-click the truck box → opens the load (Accounting › Load costs › load). Single-click a station → stamp it.</span></div>
+<div class="legend"><span><i style="background:var(--ok)"></i>reached — green</span><span><i style="border:3px solid var(--ok);background:#fff"></i>current station</span><span><i style="border:2px dashed var(--ok);background:#fff"></i>next — click to stamp</span><span><i style="border:2px solid #D3DAE6;background:#fff"></i>not reached</span><span><i style="border:2px solid var(--bad);background:#fff;border-radius:3px;transform:rotate(45deg)"></i>Other — an issue, red, with a reason</span><span>Double-click the truck box → opens the load. Single-click a station → stamp it.</span></div>
 <div class="wrap"><table>
-<colgroup><col style="width:236px"><col style="width:auto"><col style="width:168px"><col style="width:120px"></colgroup>
-<thead><tr><th>Truck · Driver · Load</th><th class="st"><div class="stations"><span style="left:0%;transform:none">Assigned</span><span style="left:14.3%">Dispatched</span><span style="left:28.6%">At pickup</span><span style="left:42.9%">In transit</span><span style="left:57.2%">At delivery</span><span style="left:71.5%">Delivered</span><span style="left:85.8%">Docs received</span><span style="left:100%;transform:translateX(-100%)">Invoiced</span></div></th><th>Live position (Samsara)</th><th>Next appointment</th></tr></thead>
+<colgroup><col style="width:246px"><col style="width:auto"><col style="width:168px"><col style="width:130px"></colgroup>
+<thead><tr><th>Truck · Driver · Load</th><th class="st"><div class="stations">
+<span style="left:0%;transform:none;background:var(--s1)">Assigned</span><span style="left:12.5%;background:var(--s2)">Dispatched</span><span style="left:25%;background:var(--s3)">At pickup</span><span style="left:37.5%;background:var(--s4)">In transit</span><span style="left:50%;background:var(--s5)">Other ▾</span><span style="left:62.5%;background:var(--s6)">At delivery</span><span style="left:75%;background:var(--s7)">Delivered</span><span style="left:87.5%;background:var(--s8)">Docs received</span><span style="left:100%;transform:translateX(-100%);background:var(--s9)">Invoiced</span>
+</div></th><th>Live position (Samsara)</th><th>Next appointment</th></tr></thead>
 <tbody>
-<tr><td><div class="card" title="double-click opens load 13587"><div class="l1">T156 <span class="pill NB">NB</span> · 13587</div><div class="l2">ANGEL ALFONSO SOSA · KEY GLOBAL LOGISTICS</div><div class="l2">Delphi, IN → Laredo, TX · $4,000.00</div></div></td>
-<td class="line"><div class="track"><div class="rail"></div><div class="done" style="width:14.3%"></div>
-<div class="node done" style="left:0%"><span class="tip">Assigned 09/11 14:15 CT · dispatcher</span></div><span class="stamp" style="left:0%">09/11 14:15</span>
-<div class="node cur" style="left:14.3%"><span class="tip">Dispatched 09/11 14:15 CT · dispatcher</span></div><span class="stamp" style="left:14.3%">09/11 14:15</span>
-<div class="node next" style="left:28.6%"><span class="tip">At pickup — click to stamp arrival (Delphi, IN · appt 09/10 08:00)</span></div>
-<div class="node" style="left:42.9%"></div><div class="node" style="left:57.2%"></div><div class="node" style="left:71.5%"></div><div class="node" style="left:85.8%"></div><div class="node" style="left:100%"></div>
+<!-- REAL USMCA rows read from Neon 21:35Z; the three live loads are real -->
+<tr><td><div class="card" style="--c:var(--s2)" title="double-click opens load 13587"><div class="l1">T156 <span class="pill NB">NB</span> · 13587</div><div class="l2">ANGEL ALFONSO SOSA · KEY GLOBAL LOGISTICS</div><div class="l2">Delphi, IN → Laredo, TX · $4,000.00</div></div></td>
+<td class="line"><div class="track"><div class="rail"></div><div class="done" style="width:12.5%"></div>
+<div class="node done" style="left:0%;--c:var(--s1)"><span class="tip">Assigned 09/11 14:15 CT · dispatcher</span></div><span class="stamp" style="left:0%">09/11 14:15</span>
+<div class="node cur" style="left:12.5%;--c:var(--s2)"><span class="tip">Dispatched 09/11 14:15 CT · dispatcher</span></div><span class="stamp" style="left:12.5%">09/11 14:15</span>
+<div class="node next" style="left:25%;--c:var(--s3)"><span class="tip">At pickup — click to stamp arrival (Delphi, IN · appt 09/10 08:00)</span></div>
+<div class="node" style="left:37.5%"></div><div class="node other" style="left:50%"></div><div class="node" style="left:62.5%"></div><div class="node" style="left:75%"></div><div class="node" style="left:87.5%"></div><div class="node" style="left:100%"></div>
 </div></td>
 <td class="gps"><b>No ping</b> <span class="nogps">— last position unavailable</span><div class="sub">Samsara: T156 not reporting</div></td>
-<td><span class="stale">Pickup 09/10 08:00 — late</span><div class="sub">Delivery 09/14 07:00</div></td></tr>
-<tr><td><div class="card"><div class="l1">T174 <span class="pill NB">NB</span> · 13586</div><div class="l2">Leonel Antonio Morales · Mode Transportation</div><div class="l2">Austinville, VA → San Antonio, TX · $3,600.00</div></div></td>
-<td class="line"><div class="track"><div class="rail"></div><div class="done" style="width:14.3%"></div>
-<div class="node done" style="left:0%"><span class="tip">Assigned 09/11 14:15 CT</span></div><span class="stamp" style="left:0%">09/11 14:15</span>
-<div class="node cur" style="left:14.3%"><span class="tip">Dispatched 09/11 14:15 CT</span></div><span class="stamp" style="left:14.3%">09/11 14:15</span>
-<div class="node next" style="left:28.6%"></div><div class="node" style="left:42.9%"></div><div class="node" style="left:57.2%"></div><div class="node" style="left:71.5%"></div><div class="node" style="left:85.8%"></div><div class="node" style="left:100%"></div>
+<td><span class="late">Pickup 09/10 08:00 — late</span><div class="sub">Delivery 09/14 07:00</div></td></tr>
+
+<!-- T174: shown at OTHER to demonstrate the exception station (design illustration on a real load; live status is dispatched) -->
+<tr><td><div class="card" style="--c:var(--s5)"><div class="l1">T174 <span class="pill NB">NB</span> · 13586</div><div class="l2">Leonel Antonio Morales · Mode Transportation</div><div class="l2">Austinville, VA → San Antonio, TX · $3,600.00</div></div></td>
+<td class="line"><div class="track"><div class="rail"></div><div class="done" style="width:50%"></div>
+<div class="node done" style="left:0%;--c:var(--s1)"></div><span class="stamp" style="left:0%">09/11 14:15</span>
+<div class="node done" style="left:12.5%;--c:var(--s2)"></div><span class="stamp" style="left:12.5%">09/11 14:15</span>
+<div class="node done" style="left:25%;--c:var(--s3)"></div><span class="stamp" style="left:25%">09/11 15:02</span>
+<div class="node done" style="left:37.5%;--c:var(--s4)"></div><span class="stamp" style="left:37.5%">09/11 15:40</span>
+<div class="node cur other" style="left:50%;--c:var(--s5)"><span class="tip">Other · Breakdown — roadside · 09/11 16:20 CT · dispatcher</span></div><span class="reason" style="left:50%">Breakdown — roadside</span>
+<div class="node next" style="left:62.5%;--c:var(--s6)"></div><div class="node" style="left:75%"></div><div class="node" style="left:87.5%"></div><div class="node" style="left:100%"></div>
 </div></td>
 <td class="gps"><b>No ping</b> <span class="nogps">— last position unavailable</span></td>
-<td><span class="stale">Pickup 09/08 08:00 — late</span><div class="sub">Delivery 09/10 08:00</div></td></tr>
-<tr><td><div class="card"><div class="l1">T176 <span class="pill NB">NB</span> · 13589</div><div class="l2">Neftali Coronado Urbano · Kirsch Transportation</div><div class="l2">Clarks Summit, PA → Houston, TX · $4,120.00</div></div></td>
-<td class="line"><div class="track"><div class="rail"></div><div class="done" style="width:14.3%"></div>
-<div class="node done" style="left:0%"></div><span class="stamp" style="left:0%">09/11 14:15</span>
-<div class="node cur" style="left:14.3%"></div><span class="stamp" style="left:14.3%">09/11 14:15</span>
-<div class="node next" style="left:28.6%"></div><div class="node" style="left:42.9%"></div><div class="node" style="left:57.2%"></div><div class="node" style="left:71.5%"></div><div class="node" style="left:85.8%"></div><div class="node" style="left:100%"></div>
+<td><span class="late">Delivery 09/10 08:00 — late</span><div class="sub">Pickup 09/08 08:00</div></td></tr>
+
+<tr><td><div class="card" style="--c:var(--s2)"><div class="l1">T176 <span class="pill NB">NB</span> · 13589</div><div class="l2">Neftali Coronado Urbano · Kirsch Transportation</div><div class="l2">Clarks Summit, PA → Houston, TX · $4,120.00</div></div></td>
+<td class="line"><div class="track"><div class="rail"></div><div class="done" style="width:12.5%"></div>
+<div class="node done" style="left:0%;--c:var(--s1)"></div><span class="stamp" style="left:0%">09/11 14:15</span>
+<div class="node cur" style="left:12.5%;--c:var(--s2)"></div><span class="stamp" style="left:12.5%">09/11 14:15</span>
+<div class="node next" style="left:25%;--c:var(--s3)"></div><div class="node" style="left:37.5%"></div><div class="node other" style="left:50%"></div><div class="node" style="left:62.5%"></div><div class="node" style="left:75%"></div><div class="node" style="left:87.5%"></div><div class="node" style="left:100%"></div>
 </div></td>
 <td class="gps"><b>No ping</b> <span class="nogps">— last position unavailable</span></td>
-<td><span class="stale">Pickup 09/09 08:00 — late</span><div class="sub">Delivery 09/14 07:00</div></td></tr>
-<tr><td><div class="card empty"><div class="l1">T120</div><div class="l2">Awaiting assignment · no load</div></div></td><td class="line"><div class="track"><div class="rail" style="background:var(--rule)"></div><span class="sub" style="position:absolute;top:15px;left:8px">— no load on this truck · <u>Book Load</u> on T120</span></div></td><td class="gps">—</td><td>—</td></tr>
-<tr><td><div class="card empty"><div class="l1">T122</div><div class="l2">Awaiting assignment · no load</div></div></td><td class="line"><div class="track"><div class="rail" style="background:var(--rule)"></div><span class="sub" style="position:absolute;top:15px;left:8px">— no load on this truck · <u>Book Load</u> on T122</span></div></td><td class="gps">—</td><td>—</td></tr>
-<tr><td><div class="card empty"><div class="l1">T124</div><div class="l2">Awaiting assignment · no load</div></div></td><td class="line"><div class="track"><div class="rail" style="background:var(--rule)"></div></div></td><td class="gps">—</td><td>—</td></tr>
-<tr><td><div class="card empty"><div class="l1">T147</div><div class="l2">Awaiting assignment · no load</div></div></td><td class="line"><div class="track"><div class="rail" style="background:var(--rule)"></div></div></td><td class="gps">—</td><td>—</td></tr>
-<tr><td><div class="card empty"><div class="l1">T148</div><div class="l2">Awaiting assignment · no load</div></div></td><td class="line"><div class="track"><div class="rail" style="background:var(--rule)"></div></div></td><td class="gps">—</td><td>—</td></tr>
-<tr><td><div class="card empty"><div class="l1">T149</div><div class="l2">Awaiting assignment · no load</div></div></td><td class="line"><div class="track"><div class="rail" style="background:var(--rule)"></div></div></td><td class="gps">—</td><td>—</td></tr>
-<tr><td><div class="card empty"><div class="l1">T150</div><div class="l2">Awaiting assignment · no load</div></div></td><td class="line"><div class="track"><div class="rail" style="background:var(--rule)"></div></div></td><td class="gps">—</td><td>—</td></tr>
-<tr><td><div class="card empty"><div class="l1">T151 … T177</div><div class="l2">9 more awaiting trucks render the same way</div></div></td><td class="line"><div class="track"><div class="rail" style="background:var(--rule)"></div></div></td><td class="gps">—</td><td>—</td></tr>
+<td><span class="late">Pickup 09/09 08:00 — late</span><div class="sub">Delivery 09/14 07:00</div></td></tr>
+
+<tr><td><div class="card empty"><div class="l1">T120</div><div class="l2">Awaiting assignment · no load</div></div></td><td class="line"><div class="track"><div class="rail"></div><span class="sub" style="position:absolute;top:16px;left:8px">— no load on this truck · <u style="color:var(--s2)">Book Load</u> on T120</span></div></td><td class="gps">—</td><td>—</td></tr>
+<tr><td><div class="card empty"><div class="l1">T122</div><div class="l2">Awaiting assignment · no load</div></div></td><td class="line"><div class="track"><div class="rail"></div><span class="sub" style="position:absolute;top:16px;left:8px">— no load on this truck · <u style="color:var(--s2)">Book Load</u> on T122</span></div></td><td class="gps">—</td><td>—</td></tr>
+<tr><td><div class="card empty"><div class="l1">T124</div><div class="l2">Awaiting assignment · no load</div></div></td><td class="line"><div class="track"><div class="rail"></div></div></td><td class="gps">—</td><td>—</td></tr>
+<tr><td><div class="card empty"><div class="l1">T147</div><div class="l2">Awaiting assignment · no load</div></div></td><td class="line"><div class="track"><div class="rail"></div></div></td><td class="gps">—</td><td>—</td></tr>
+<tr><td><div class="card empty"><div class="l1">T148</div><div class="l2">Awaiting assignment · no load</div></div></td><td class="line"><div class="track"><div class="rail"></div></div></td><td class="gps">—</td><td>—</td></tr>
+<tr><td><div class="card empty"><div class="l1">T149 … T177</div><div class="l2">11 more awaiting trucks render the same way</div></div></td><td class="line"><div class="track"><div class="rail"></div></div></td><td class="gps">—</td><td>—</td></tr>
 </tbody></table></div>
-<div class="pop"><div class="hd"><span>T156 · 13587 · Stamp: AT PICKUP</span><span>✕</span></div>
+
+<!-- the OTHER pop-up: reason list visible, from a catalog -->
+<div class="pop"><div class="hd"><span>T174 · 13586 · OTHER — pick the reason</span><span>✕</span></div>
 <div class="bd">
- <div class="row"><span>Stop</span><b>Pickup · Delphi, IN · KEY GLOBAL LOGISTICS</b></div>
- <div class="row"><span>Appointment</span><b>09/10 08:00 CT</b></div>
- <div class="row"><span>Arrived at</span><span style="width:170px"><input value="09/11/2026 04:31 PM" placeholder="MM/DD/YYYY hh:mm"></span></div>
- <div class="row"><span>Evidence</span><span style="width:170px"><select><option>Dispatcher confirmed by phone</option><option>Driver app arrival</option><option>Geofence entry (Samsara)</option></select></span></div>
- <div class="row"><span>Samsara position</span><span class="nogps">No ping — cannot auto-stamp</span></div>
+ <div class="row"><span>Where</span><b>In transit · after Austinville, VA pickup</b></div>
+ <div class="row"><span>Reason (catalog)</span><span></span></div>
+ <div class="reasons">
+  <div class="on"><span>Breakdown — roadside</span><span>opens Maintenance › Work order</span></div>
+  <div><span>Breakdown — towed to shop</span><span>opens Work order</span></div>
+  <div><span>Accident / incident</span><span>opens Safety › Incident</span></div>
+  <div><span>Weather / road closure</span><span></span></div>
+  <div><span>Border / customs hold</span><span>opens Border crossing</span></div>
+  <div><span>Detention at shipper / receiver</span><span>starts detention clock</span></div>
+  <div><span>Layover</span><span>accessorial 4220</span></div>
+  <div><span>Driver rest / HOS</span><span></span></div>
+  <div><span>Reroute / new appointment</span><span>edits the stop</span></div>
+  <div><span>Load cancelled by customer</span><span>Cancel Load (TONU)</span></div>
+ </div>
+ <div class="row"><span>Started at</span><span style="width:170px"><input value="09/11/2026 04:20 PM"></span></div>
+ <div class="row"><span>Note</span><span style="width:170px"><input placeholder="what happened, where"></span></div>
  <div class="row"><span>Recorded by</span><b>tioperfumes07@gmail.com</b></div>
 </div>
-<div class="ft"><span class="btn">Cancel</span><span class="btn primary">Stamp arrival → load_stops.actual_arrival_at</span></div></div>
+<div class="ft"><span class="btn">Cancel</span><span class="btn primary">Record exception</span></div></div>
+
 <div class="spec">
-<h2>Design contract — Dispatch › Line Board (owner request 2026-09-11 16:30 CT)</h2>
-<p>Owner, verbatim: “a new kanban format design page almost the same as it is here. but it will be instead of dragging the truck box, it will be like a line map of a truck … when we double click on that rows box, for instance if we have a load on T122, we input all data etc. we double click on dispatch, and it shows the line and that it is currently at dispatched, we then click on at pick up etc.” Follow-up: “we are missing in the design the status names on top.” → station names are the column header, aligned to the nodes.</p>
+<h2>Design contract — Dispatch › <b>Truck Line</b> (owner request 2026-09-11 16:30–16:50 CT) · v3</h2>
+<p>Owner, verbatim: “a new kanban format design page almost the same as it is here. but it will be instead of dragging the truck box, it will be like a line map of a truck … double click on that rows box … it shows the line and that it is currently at dispatched, we then click on at pick up etc.” · “we are missing in the design the status names on top.” · “we need to have after in transit one for Other, and in that one, a drop down list of reasons so it can be visible.” · “colors, i want this a little more lively and happy” → then “nevermind, remove these colors. in the line maybe green, red if any issues etc.” — the second ruling stands.</p>
+<h3>Name</h3>
+<p>Colors (owner 16:55 CT): app palette unchanged — navy, greys, the Load Costs tokens. The LINE is the only colored element: green for every station reached, red for an issue (Other/exception, late appointment, no ping). No per-station colors.</p><p>The four existing views are Kanban, List, Round Trips, Trip Pairing. This one is <b>Truck Line</b> — one line per truck. (Alternates if the owner prefers: “Status Line”, “Progress Board”. The name must be plain English, one idea, no machine words.) It is the 5th segment in the same control; nothing removed.</p>
 <h3>What it is</h3>
-<p>The Kanban's data, one row per truck, no dragging. Every truck gets ONE row for as long as it is in service. The row shows the truck's current load and a horizontal line of stations under the station-name header. The line fills to the station the load has reached; the next station is the only clickable advance; clicking it stamps the real event on the real row (never a free-text status). Double-clicking the truck box opens the load page (Accounting › Load costs › &lt;load&gt;, the LDT-PAGE route). Additive — the Kanban stays; this is a 4th segment in the same List | Kanban | Line Board | Round Trips control.</p>
-<h3>Stations (left → right) and what each click writes</h3>
-<table><tr><th>Station</th><th>Source of truth</th><th>Click writes (through the existing service, never raw SQL)</th></tr>
-<tr><td>Assigned</td><td><code>mdata.loads.status = assigned_not_dispatched</code>, assignment history</td><td>n/a — set by Book Load / Quick Assign</td></tr>
-<tr><td>Dispatched</td><td><code>status = dispatched</code></td><td>the same transition the Dispatch button uses (load state machine; 400 reason shown on refusal)</td></tr>
-<tr><td>At pickup</td><td><code>load_stops.actual_arrival_at</code> on the pickup stop (+ <code>actual_arrival_source</code>)</td><td>arrival stamp (time · evidence · actor). Geofence entry may auto-stamp; dispatcher stamp is the manual path</td></tr>
-<tr><td>In transit</td><td><code>load_stops.actual_departure_at</code> on the pickup stop → <code>status = in_transit</code></td><td>departure stamp; speed-based auto-departure (law §2) may pre-fill</td></tr>
-<tr><td>At delivery</td><td><code>actual_arrival_at</code> on the delivery stop</td><td>arrival stamp</td></tr>
-<tr><td>Delivered</td><td><code>actual_departure_at</code> on delivery → <code>delivered_pending_docs</code></td><td>the existing Mark Delivered transition → revenue Event 1 fires from the poster, unchanged</td></tr>
-<tr><td>Docs received</td><td><code>completed_docs_received</code> (POD/RateCon in docs.files)</td><td>opens the document upload; station cannot be stamped without the document (REG-013 root cause)</td></tr>
-<tr><td>Invoiced</td><td><code>status = invoiced</code>, invoice display_id</td><td>read-only here — invoicing happens in Accounting; node shows the invoice number</td></tr></table>
+<p>One row per in-service truck, no dragging. Station names are the column header, each in its own color; the row's line fills with the same colors as far as the load has reached; the next station is the only clickable advance; clicking it stamps the real event on the real row through the existing service. Double-clicking the truck box opens the load page (Accounting › Load costs › &lt;load&gt;). A truck with no load keeps its row (grey rail, “Book Load on Txxx”).</p>
+<h3>Stations (left → right), color, source of truth, what a click writes</h3>
+<table><tr><th>Station</th><th>Line color</th><th>Source of truth</th><th>Click writes (existing service, never raw SQL)</th></tr>
+<tr><td>Assigned</td><td>green when reached</td><td><code>mdata.loads.status = assigned_not_dispatched</code></td><td>n/a — set by Book Load / Quick Assign</td></tr>
+<tr><td>Dispatched</td><td>green when reached</td><td><code>status = dispatched</code></td><td>the Dispatch transition (state machine; refusal reason shown on the node)</td></tr>
+<tr><td>At pickup</td><td>green when reached</td><td>pickup stop <code>actual_arrival_at</code> + <code>actual_arrival_source</code></td><td>arrival stamp: time · evidence · actor (geofence may auto-stamp)</td></tr>
+<tr><td>In transit</td><td>green when reached</td><td>pickup stop <code>actual_departure_at</code> → <code>status = in_transit</code></td><td>departure stamp (speed-based auto-departure may pre-fill, law §2)</td></tr>
+<tr><td><b>Other</b> (exception)</td><td><b>red</b> diamond while open</td><td>NEW <code>dispatch.load_exceptions</code> (load_id, unit_id, reason_id → <code>catalogs.load_exception_reasons</code>, started_at, ended_at, note, created_by) — append-only</td><td>records the exception with a reason from the catalog; the reason prints under the node. Does NOT change <code>loads.status</code>; the line keeps its place and the diamond stays lit until “ended”. Reasons that have a home open it: breakdown → Maintenance work order; accident → Safety incident; border hold → Border crossing; detention → detention clock (4210); layover → 4220; cancelled → Cancel Load (TONU 4240).</td></tr>
+<tr><td>At delivery</td><td>green when reached</td><td>delivery stop <code>actual_arrival_at</code></td><td>arrival stamp</td></tr>
+<tr><td>Delivered</td><td>green when reached</td><td>delivery <code>actual_departure_at</code> → <code>delivered_pending_docs</code></td><td>Mark Delivered → revenue Event 1 from the existing poster, unchanged</td></tr>
+<tr><td>Docs received</td><td>green when reached</td><td><code>completed_docs_received</code> (POD/RateCon in docs.files)</td><td>opens document upload; cannot be stamped without the document</td></tr>
+<tr><td>Invoiced</td><td>green when reached</td><td><code>status = invoiced</code>, invoice display_id</td><td>read-only; node shows the invoice number</td></tr></table>
+<h3>The reason catalog (one catalog, additive, plain English — same pattern as <code>catalogs.load_cancellation_reasons</code>)</h3>
+<p><code>catalogs.load_exception_reasons</code>: Breakdown — roadside · Breakdown — towed to shop · Accident / incident · Weather / road closure · Border / customs hold · Detention at shipper / receiver · Layover · Driver rest / HOS · Reroute / new appointment · Load cancelled by customer · Other (note required). Each row: name, applies_to, linked module, active flag; owner may add rows from Lists without code. The dropdown in the pop-up lists them visibly (not a hidden select) so the reason is chosen by name.</p>
 <h3>Rules</h3>
-<p>1. Stations advance only forward, one at a time, by the same state machine the Kanban drop uses; a refused transition shows the server's reason on the node, never a silent no-op. 2. Every stamp records time, actor and evidence source; the hover tip shows all three. Nothing is inferred from a GPS ping without saying so. 3. A truck with no load renders the row with a grey rail and “Book Load on Txxx” — a row is never dropped because it is empty (additive-only). 4. Live position column reads <code>telematics.vehicle_latest_position</code>; no ping = “No ping — last position unavailable” in red, never a blank. 5. Late vs appointment = <code>now() &gt; appointment</code> with no arrival stamp — amber, with the appointment time shown. 6. Multi-stop loads: the line adds one “At stop n” node per extra stop between pickup and delivery. 7. Team loads: both drivers on the card; one row per truck, not per driver. 8. Sorting: Unit (default), Driver, Customer, Next appointment; the gear controls columns exactly like the Load Costs board (ParityTable). 9. Density toggle Compact 32px / Standard 44px rows.</p>
-<h3>Measured tokens (from the live app, journal 09-05/09-06)</h3>
-<p>Top bar navy <code>#14314F</code> 44px · segmented control 28px active <code>rgb(31,42,68)</code> · th 24px <code>rgb(228,234,241)</code> 11px/600 · KPI tile <code>#F4F7FA</code> 1px <code>#C7D2DC</code> 44px, 8 per row · rows 44px (Standard) · borders <code>#C7D2DC</code> / <code>#E5E7EB</code> · trip pills NB <code>#1f2a44</code> SB <code>#475569</code> TR <code>#b45309</code> · reached-station accent <code>#2b5f52</code> (Load Costs palette) · node 16px, current 3px ring · buttons 28px.</p>
+<p>1. Forward only, one station at a time, via the same state machine as the Kanban drop; refused = server reason on the node, never silent. 2. Every stamp stores time, actor, evidence; hover shows all three. 3. No-ping = red “No ping — last position unavailable”, never blank. 4. Late = appointment passed with no arrival stamp — orange, appointment shown. 5. Multi-stop loads add one “At stop n” node per extra stop. 6. Team loads: both drivers on the card, one row per truck. 7. Gear / sort / density exactly like the Load Costs board (ParityTable). 8. Colors: the app's own palette everywhere; the line alone is green (reached) / red (issue). No station colors.</p>
+<h3>Measured app tokens kept</h3>
+<p>Top bar <code>#14314F</code> 44px · segmented control 28px active <code>rgb(31,42,68)</code> · th <code>rgb(228,234,241)</code> 11px/600 · borders <code>#C7D2DC</code> / <code>#E5E7EB</code> · trip pills NB <code>#1f2a44</code> SB <code>#475569</code> TR <code>#b45309</code> · buttons 28px · rows 46px Standard / 32px Compact.</p>
 <h3>Data in this render</h3>
-<p>All rows are real USMCA rows read from Neon at 21:35Z 09/11: loads 13587 (T156, Angel Alfonso Sosa, Key Global, Delphi IN → Laredo TX, $4,000), 13586 (T174, Leonel Antonio Morales, Mode, Austinville VA → San Antonio TX, $3,600), 13589 (T176, Neftali Coronado Urbano, Kirsch, Clarks Summit PA → Houston TX, $4,120) — all three <code>dispatched</code>, no arrival stamps, appointments already past (late); in-service trucks with no load: T120, T122, T124, T147, T148, T149, T150, T151, T152, T163, T164, T168, T170, T171, T173, T175, T177. Samsara: none of the three loaded trucks has a current ping.</p>
+<p>Real USMCA rows (Neon 21:35Z 09/11): 13587 T156 Angel Alfonso Sosa · Key Global · Delphi IN → Laredo TX · $4,000; 13586 T174 Leonel Antonio Morales · Mode · Austinville VA → San Antonio TX · $3,600; 13589 T176 Neftali Coronado Urbano · Kirsch · Clarks Summit PA → Houston TX · $4,120 — all three are <code>dispatched</code> live with no arrival stamps and past appointments. The T174 row is drawn at “Other · Breakdown — roadside” only to SHOW the exception station; its live status is dispatched. Trucks with no load: T120, T122, T124, T147, T148, T149, T150, T151, T152, T163, T164, T168, T170, T171, T173, T175, T177.</p>
 <h3>Guard (for the builder)</h3>
-<p><code>scripts/verify-dispatch-line-board.mjs</code>: (a) one row per in-service truck — row count = in-service USMCA trucks; (b) a node click calls the same transition/stamp service the Kanban/List use (no new status writer); (c) a refused transition renders the server reason; (d) no-ping renders the red “No ping” text, never empty; (e) double-click routes to <code>/accounting/load-costs/:loadId</code>; (f) additive: Kanban segment still present; (g) station header labels = node count and positions. <code>--selftest</code> with planted failures.</p>
+<p><code>scripts/verify-dispatch-truck-line.mjs</code>: (a) one row per in-service USMCA truck; (b) node clicks call the existing transition/stamp services — no new status writer; (c) refused transition renders the server reason; (d) no-ping renders the red text; (e) double-click routes to <code>/accounting/load-costs/:loadId</code>; (f) Kanban/List/Round Trips/Trip Pairing segments still present (additive); (g) station header labels = node count and positions; (h) Other requires a reason from <code>catalogs.load_exception_reasons</code> and never changes <code>loads.status</code>. <code>--selftest</code> with planted failures.</p>
 </div>
 </body></html>
