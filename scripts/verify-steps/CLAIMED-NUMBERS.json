@@ -8664,5 +8664,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-11",
     "purpose": "verify-round-trips-timeline-row-height-cap"
+  },
+  "11257": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-settlement-load-linkage-render-fix"
   }
 }
