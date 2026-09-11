@@ -1,10 +1,10 @@
 {
-  "healthzSha": "d90940f",
-  "generated_at": "2026-09-11T02:46:19.496Z",
+  "healthzSha": "633a82c",
+  "generated_at": "2026-09-11T03:40:47.956Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "d90940f",
+    "deployedSha": "633a82c",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 21761,
-      "title": "FINDING: BANK-F10007 | register Date column ellipsizes 09/09/2026 to 09/09...",
+      "number": 21776,
+      "title": "FINDING: N/A (docs/CI-infra only — verify-root-claude-md-untracked's own selftest crash root-caused: not transient load, an ambient-GIT_DIR bug that fires 100% of the time inside a real git hook)",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 09:45 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21761",
-      "sha": "cccc197cd2",
-      "committedAtIso": "2026-09-10T21:45:17-05:00"
+      "mergedAtCt": "09/10/2026, 10:40 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21776",
+      "sha": "f19203f393",
+      "committedAtIso": "2026-09-10T22:40:38-05:00"
     },
     {
-      "number": 21759,
-      "title": "FINDING: N/A (CLAIM-RESERVE 11217 -- reservation-only commit, no code fix)",
+      "number": 21775,
+      "title": "FINDING: N/A (docs — presettlement deferred-suggestions root-cause fix DONE + live deploy + Chrome-verified)",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 09:43 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21759",
-      "sha": "b3bff65868",
-      "committedAtIso": "2026-09-10T21:43:07-05:00"
+      "mergedAtCt": "09/10/2026, 10:29 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21775",
+      "sha": "d3545c15c0",
+      "committedAtIso": "2026-09-10T22:29:40-05:00"
     },
     {
-      "number": 21758,
-      "title": "FINDING: N/A (CLAIM-RESERVE 11213 -- reservation-only commit, no code fix)",
+      "number": 21774,
+      "title": "FINDING: ACCT-F26133 (SETTLEMENT-TOUR-NUMBER-SWEEP root-cause fix — a deferred load never got a review-queue row, and the human-confirm queue's backend had zero frontend caller anywhere in the app)",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 09:42 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21758",
-      "sha": "d45fe34abb",
-      "committedAtIso": "2026-09-10T21:42:20-05:00"
+      "mergedAtCt": "09/10/2026, 10:24 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21774",
+      "sha": "633a82c382",
+      "committedAtIso": "2026-09-10T22:24:22-05:00"
     },
     {
-      "number": 21757,
-      "title": "FINDING: N/A (docs — AR-TIEOUT-POSTED-WITHOUT-POSTING-RECURRENCE CLOSED, live-reverified)",
+      "number": 21773,
+      "title": "FINDING: N/A (CLAIM-RESERVE 11225 -- reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 09:37 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21757",
-      "sha": "583f068ecd",
-      "committedAtIso": "2026-09-10T21:37:45-05:00"
+      "mergedAtCt": "09/10/2026, 10:20 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21773",
+      "sha": "6e150cacca",
+      "committedAtIso": "2026-09-10T22:20:54-05:00"
     },
     {
-      "number": 21756,
-      "title": "FINDING: LST-F26105 (REG-054 STATUS-DROPDOWN SWEEP) | LANE: NON-FINANCIAL (CC-3 mechanical)",
+      "number": 21768,
+      "title": "FINDING: N/A (docs/CI-infra only — verify-root-claude-md-untracked's own selftest crashed under concurrent load, blocking unrelated pushes; hardened with a retry, no change to the guard's real check)",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 09:35 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21756",
-      "sha": "269c269bd5",
-      "committedAtIso": "2026-09-10T21:35:46-05:00"
+      "mergedAtCt": "09/10/2026, 10:12 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21768",
+      "sha": "e9d31907c3",
+      "committedAtIso": "2026-09-10T22:12:18-05:00"
     },
     {
-      "number": 21755,
-      "title": "FINDING: REG-050 Work Orders sortable headers were page-only",
+      "number": 21772,
+      "title": "GPT- Preserve original pay-run attribution for historical settlement identities",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 09:34 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21755",
-      "sha": "d90940ffa8",
-      "committedAtIso": "2026-09-10T21:34:03-05:00"
+      "mergedAtCt": "09/10/2026, 10:10 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21772",
+      "sha": "b919642d21",
+      "committedAtIso": "2026-09-10T22:10:52-05:00"
     },
     {
-      "number": 21754,
-      "title": "FINDING: N/A (CLAIM-RESERVE 202614060000 — historical settlement attribution)",
+      "number": 21771,
+      "title": "FINDING: N/A (docs — Settlement Close payment-method fix DONE + live-deploy confirmation for this turn's 5 PRs)",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 09:33 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21754",
-      "sha": "5f1a94dd58",
-      "committedAtIso": "2026-09-10T21:33:48-05:00"
+      "mergedAtCt": "09/10/2026, 10:07 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21771",
+      "sha": "6ebb315665",
+      "committedAtIso": "2026-09-10T22:07:17-05:00"
     },
     {
-      "number": 21753,
-      "title": "FINDING: reverse+repost executor live-Neon fixes (Blocker 2 follow-up)",
+      "number": 21770,
+      "title": "FINDING: N/A (KANBAN ROW INTEGRITY + STATUS-DROPDOWN SWEEP -- live-verification report, docs-only, no code change)",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 09:29 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21753",
-      "sha": "53b621020e",
-      "committedAtIso": "2026-09-10T21:29:51-05:00"
+      "mergedAtCt": "09/10/2026, 10:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21770",
+      "sha": "75c7ffd752",
+      "committedAtIso": "2026-09-10T22:05:21-05:00"
     },
     {
-      "number": 21752,
-      "title": "FINDING: BANK-F10006 | register default For review hid the 12/08 $100; Plaid snapshot can overwrite BofA header",
+      "number": 21769,
+      "title": "FINDING: BANK-F10012 | register pager is Previous/Next only so 12/08 $100 is 5 Next clicks away",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 09:29 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21752",
-      "sha": "4a29072504",
-      "committedAtIso": "2026-09-10T21:29:32-05:00"
+      "mergedAtCt": "09/10/2026, 10:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21769",
+      "sha": "6023f17500",
+      "committedAtIso": "2026-09-10T22:02:19-05:00"
     },
     {
-      "number": 21746,
-      "title": "CC2-FINDING: BANK-F30050 (REG-028/030) -- USMCA BofA checking reconciled to statement's own printed balance",
+      "number": 21766,
+      "title": "FINDING: ACCT-F6350 | detect multi-event WORM triggers",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 09:07 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21746",
-      "sha": "d50ea38cc5",
-      "committedAtIso": "2026-09-10T21:07:23-05:00"
+      "mergedAtCt": "09/10/2026, 10:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21766",
+      "sha": "cb27fccdda",
+      "committedAtIso": "2026-09-10T22:02:00-05:00"
     }
   ]
 }

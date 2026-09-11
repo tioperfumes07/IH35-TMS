@@ -163,7 +163,15 @@ export function VendorBillForm({
   const [isSampleData, setIsSampleData] = useState(false);
   const [terms, setTerms] = useState("net_30");
   const [vendorId, setVendorId] = useState("");
-  const [loadNumber, setLoadNumber] = useState(linkedLoadDisplayId ?? "");
+  // GLB-034 (REG-034, register-flagged 2026-09-09) — this used to be a plain free-text "Load
+  // Number" input: it looked like it linked the bill to a load, but only ever fed the memo string
+  // (see buildMemoContext's `load:` token below), never accounting.bill_lines.load_id — the real
+  // FK the backend has fully accepted since #19459 (bills.routes.ts createBillLineSchema,
+  // buildVendorBillLinePayloads's defaultLoadId param) but which no caller ever populated. Real
+  // EntityPicker now, same pattern as Driver/Unit/Legal matter beside it and as
+  // RecordExpenseForm.tsx's own kind="load" picker (accounting.expenses' sibling FK).
+  const [loadId, setLoadId] = useState(linkedLoadId ?? "");
+  const [loadLabel, setLoadLabel] = useState(linkedLoadDisplayId ?? "");
   const [driverId, setDriverId] = useState("");
   const [unitId, setUnitId] = useState(linkedUnitId ?? "");
   const [legalMatterId, setLegalMatterId] = useState(linkedLegalMatterId ?? "");
@@ -274,8 +282,8 @@ export function VendorBillForm({
   const subtotal = lineSubtotal(lines);
   const taxAmount = (subtotal * taxRate) / 100;
   const linePayloads = useMemo(
-    () => buildVendorBillLinePayloads(lines, linkedLoadId),
-    [lines, linkedLoadId]
+    () => buildVendorBillLinePayloads(lines, loadId || linkedLoadId),
+    [lines, loadId, linkedLoadId]
   );
   const lineSumCents = linePayloads.reduce((sum, line) => sum + line.amount_cents, 0);
   // Bill amount = SUM(line amounts). Tax is display-only until a tax expense line with a real
@@ -334,7 +342,7 @@ export function VendorBillForm({
         taxAmount,
         accountLabel: accountDisplay || undefined,
         linkedWoDisplayId,
-        loadNumber,
+        loadNumber: loadLabel,
         driverId,
         unitId,
         className,
@@ -541,14 +549,26 @@ export function VendorBillForm({
         </Field>
 
         <div className="md:col-span-6 h-2" />
-        <Field label="Load Number">
-          <input
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
-            placeholder="Load Number"
-            value={loadNumber}
-            onChange={(event) => setLoadNumber(event.target.value)}
-          />
-        </Field>
+        {linkedLoadId ? null : (
+          <Field label="Load">
+            <EntityPicker
+              kind="load"
+              operatingCompanyId={operatingCompanyId}
+              value={loadId || null}
+              selectedOption={loadId && loadLabel ? { value: loadId, label: loadLabel } : null}
+              onChange={(next, option) => {
+                setLoadId(next ?? "");
+                setLoadLabel(next ? entityLabel(option?.label ?? null, next, "Load") : "");
+              }}
+              placeholder="Select load (optional)…"
+              disabled={!operatingCompanyId}
+              // Load create belongs on Book Load, not inline from a bill — same rule
+              // border-crossing/WizardStep1.tsx's own load picker already follows.
+              allowCreate={false}
+              dataTestId="vendor-bill-load-picker"
+            />
+          </Field>
+        )}
         <div className="md:col-span-4" />
 
         <div className="md:col-span-6 h-2" />
