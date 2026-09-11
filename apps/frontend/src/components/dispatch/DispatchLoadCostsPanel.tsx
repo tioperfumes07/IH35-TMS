@@ -17,7 +17,7 @@ type CostAggregate = {
   unpaid_bill_count: number;
 };
 
-type SortKey = "load" | "revenue" | "costs" | "driver" | "margin";
+type SortKey = "load" | "unit" | "revenue" | "costs" | "driver" | "margin";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const formatMoney = (cents: number) => money.format(cents / 100);
@@ -90,6 +90,9 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
     const dir = sortDir === "asc" ? 1 : -1;
     return [...joined].sort((a, b) => {
       if (sortKey === "load") return dir * a.load.load_number.localeCompare(b.load.load_number, undefined, { numeric: true });
+      if (sortKey === "unit") {
+        return dir * (a.load.assigned_unit_number ?? "").localeCompare(b.load.assigned_unit_number ?? "", undefined, { numeric: true });
+      }
       if (sortKey === "revenue") return dir * (a.revenue - b.revenue);
       if (sortKey === "costs") return dir * (a.costSoFar - b.costSoFar);
       if (sortKey === "driver") return dir * (a.driverPay - b.driverPay);
@@ -158,10 +161,11 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
         <div className="overflow-x-auto">
           <div className="min-w-[640px]">
             <div
-              className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1.2fr] border-b"
+              className="grid grid-cols-[1.1fr_0.8fr_1fr_1fr_1.1fr_1.1fr] border-b"
               style={{ backgroundColor: colors.tableHeaderBg, borderColor: colors.tableColumnRule }}
             >
               <div className="px-[7px] py-[7px] sticky left-0" style={{ backgroundColor: colors.tableHeaderBg }}>{headerBtn("load", "Load")}</div>
+              <div className="border-l px-[7px] py-[7px]" style={{ borderColor: colors.tableColumnRule }}>{headerBtn("unit", "Truck")}</div>
               <div className="border-l px-[7px] py-[7px]" style={{ borderColor: colors.tableColumnRule }}>{headerBtn("revenue", "Revenue")}</div>
               <div className="border-l px-[7px] py-[7px]" style={{ borderColor: colors.tableColumnRule }}>{headerBtn("costs", "Costs so far")}</div>
               <div className="border-l px-[7px] py-[7px]" style={{ borderColor: colors.tableColumnRule }}>{headerBtn("driver", "Driver pay so far")}</div>
@@ -170,7 +174,7 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
             {rows.map((row, i) => (
               <div
                 key={row.load.id}
-                className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1.2fr] border-b last:border-b-0"
+                className="grid grid-cols-[1.1fr_0.8fr_1fr_1fr_1.1fr_1.1fr] border-b last:border-b-0"
                 style={{ borderColor: colors.tableColumnRule, backgroundColor: i % 2 === 1 ? colors.tableRowStripe : undefined }}
               >
                 <div
@@ -184,6 +188,9 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
                   >
                     Costs
                   </Link>
+                </div>
+                <div className="border-l px-[7px] py-[7px] text-center whitespace-nowrap" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219", borderColor: colors.tableColumnRule }}>
+                  {row.load.assigned_unit_number ?? "Unassigned"}
                 </div>
                 <div className="border-l px-[7px] py-[7px] text-center tabular-nums" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219", borderColor: colors.tableColumnRule }}>
                   {formatMoney(row.revenue)}
