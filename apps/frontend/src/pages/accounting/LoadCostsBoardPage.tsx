@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { listBills, listBrokerAdvances, listCoaRoles, listDriverBills, listExpenses, type BrokerAdvanceRow } from "../../api/accounting";
 import { listCashAdvances } from "../../api/cashAdvances";
@@ -12,7 +12,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { hasInAppHistory } from "../../lib/smart-back";
 import { formatDateUS, mmmDd } from "../../lib/formatDate";
-import { useDispatchLoad, listAllLoads, type DispatchLoadRow } from "../../api/loads";
+import { useDispatchLoad, listAllLoads, updateLoadStatus, type DispatchLoadRow, type LoadStatus } from "../../api/loads";
 import { listUnitsWithoutLoad } from "../../api/dispatch";
 import { pairOutboundReturn, NEEDS_RETURN_STATUSES } from "../dispatch/roundTripsLegs";
 import { LoadDetailCostsTab } from "../../components/dispatch/LoadDetailCostsTab";
@@ -24,6 +24,9 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { ReceiptAttach } from "../../components/documents/ReceiptAttach";
 import { useToast } from "../../components/Toast";
 import { parseExpenseMemo } from "../../lib/expense-memo";
+import { STATUS_LABEL } from "../../components/dispatch/constants";
+import { InlineStatusPicker } from "../../components/dispatch/InlineStatusPicker";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type FilterPill = "in_motion" | "delivered_open" | "all_open" | "this_week";
 // LOAD-COSTS-COMPLETE item (3) (owner's exact board-column list, 2026-09-04): Load · Unit · Driver ·
@@ -570,6 +573,7 @@ function TourRegister({ state, companyId, onCount }: { state: "open" | "closed";
 
 export function LoadCostsBoardPage() {
   const navigate = useNavigate(); const { selectedCompanyId } = useCompanyContext(); const companyId = selectedCompanyId ?? "";
+  const { pushToast } = useToast();
   const [filter, setFilter] = useState<FilterPill>("in_motion");
   const [showVoided, setShowVoided] = useState(false);
   const [costTab, setCostTab] = useState<CostTab>("costs");
@@ -583,6 +587,34 @@ export function LoadCostsBoardPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const query = useQuery({ queryKey: ["accounting", "load-costs-board", companyId, showVoided, sortKey, sortDirection], queryFn: () => apiRequest<{ rows: BoardRow[]; unmatched_bank_count: number }>(`/api/v1/accounting/load-costs-board?operating_company_id=${encodeURIComponent(companyId)}&show_voided=${showVoided}&load_costs_sort=${encodeURIComponent(sortKey)}&sort_direction=${sortDirection}`), enabled: Boolean(companyId), retry: false });
   const rows = query.data?.rows ?? [];
+  // STATUS-DROPDOWN SWEEP (owner 2026-09-10, verbatim: "the button like quickbooks has drop down
+  // everywhere to change status wherever necessary") -- this board's own Status column only ever
+  // rendered a derived on-time/late performance pill (serviceStatus()), never a change control, so
+  // an operator scanning Load Costs had to leave the board to change a load's real lifecycle status.
+  // Reuses the SAME money-aware writer (api/loads.ts updateLoadStatus) InlineStatusPicker already
+  // calls on the Dispatch List/Table view -- no second status-write path.
+  const queryClientForStatus = useQueryClient();
+  const [statusPendingIds, setStatusPendingIds] = useState<Set<string>>(new Set());
+  const handleBoardStatusChange = useCallback(
+    async (row: BoardRow, next: LoadStatus) => {
+      if (next === row.status) return;
+      setStatusPendingIds((current) => new Set(current).add(row.load_id));
+      try {
+        await updateLoadStatus(row.load_id, { new_status: next }, companyId);
+        pushToast(`Load ${row.load_number} → ${STATUS_LABEL[next] ?? next}`, "success");
+        await queryClientForStatus.invalidateQueries({ queryKey: ["accounting", "load-costs-board"] });
+      } catch (error) {
+        pushToast(userFacingApiError(error, "Failed to change load status"), "error");
+      } finally {
+        setStatusPendingIds((current) => {
+          const nextSet = new Set(current);
+          nextSet.delete(row.load_id);
+          return nextSet;
+        });
+      }
+    },
+    [companyId, pushToast, queryClientForStatus]
+  );
   // LOAD-COSTS-RETURN-COLS (owner 2026-09-08): Days Since Delivery / Return Booked reuse the SAME
   // computed data Dispatch Home's "Units Needing Return" / round-trip pairing already produce --
   // never a second copy of the hours-since-delivery math or the NB/TR/SB pairing logic.
@@ -696,7 +728,31 @@ export function LoadCostsBoardPage() {
     { key: "driver_name", label: "Driver", testId: "col-driver-name", sortable: true, className: "whitespace-nowrap", sortValue: r => r.driver_name ?? "", render: r => r.driver_name ?? "Not assigned" },
     { key: "pu_date", label: "PU Date", testId: "col-pu-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.pickup_date ?? "", render: r => r.pickup_date ? formatDateUS(r.pickup_date) : "—" },
     { key: "del_date", label: "Del Date", testId: "col-del-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.actual_delivery_at ?? "", render: r => r.actual_delivery_at ? formatDateUS(r.actual_delivery_at) : "—" },
-    { key: "status", label: "Status", testId: "col-status", sortable: true, className: "whitespace-nowrap", sortValue: r => serviceStatus(r).label, render: r => { const s = serviceStatus(r); return <span className="inline-block rounded-[9px] border px-2 py-px font-bold uppercase tracking-[0.3px]" style={{ ...chip(s.style), fontSize: 10 }}>{s.label}</span>; } },
+    {
+      key: "status",
+      label: "Status",
+      testId: "col-status",
+      sortable: true,
+      className: "whitespace-nowrap",
+      sortValue: r => serviceStatus(r).label,
+      render: r => {
+        const s = serviceStatus(r);
+        return (
+          <div className="flex items-center gap-1">
+            <span className="inline-block rounded-[9px] border px-2 py-px font-bold uppercase tracking-[0.3px]" style={{ ...chip(s.style), fontSize: 10 }}>{s.label}</span>
+            {/* STATUS-DROPDOWN SWEEP (owner 2026-09-10) -- the pill above stays (on-time/late
+                delivery performance, a different signal from lifecycle status); this adds the
+                QuickBooks-style change control alongside it, never replacing it. */}
+            <InlineStatusPicker
+              loadId={r.load_id}
+              status={r.status as LoadStatus}
+              pending={statusPendingIds.has(r.load_id)}
+              onSelect={next => void handleBoardStatusChange(r, next)}
+            />
+          </div>
+        );
+      },
+    },
     { key: "revenue", label: "Revenue", testId: "col-revenue", sortable: true, className: NUM, sortValue: r => Number(r.revenue_cents), render: r => fmt(Number(r.revenue_cents)) },
     { key: "late_fee", label: "Late Fee", testId: "col-late-fee", sortable: true, className: NUM, sortValue: r => Number(r.late_fee_cents), render: r => fmtDash(Number(r.late_fee_cents)) },
     { key: "lumper", label: "Lumper", testId: "col-lumper", sortable: true, className: NUM, sortValue: r => Number(r.lumper_cents), render: r => fmtDash(Number(r.lumper_cents)) },

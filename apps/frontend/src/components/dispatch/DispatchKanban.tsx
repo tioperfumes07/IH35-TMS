@@ -26,6 +26,7 @@ import { ListErrorState } from "../ListErrorState";
 import { useToast } from "../Toast";
 import { ChevronDown, ChevronRight, ChevronUp } from "lucide-react";
 import { canDragLoad, flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, toRouteSummary } from "./constants";
+import { InlineStatusPicker } from "./InlineStatusPicker";
 
 function combineRefs<T>(...refs: Array<React.Ref<T> | undefined>) {
   return (node: T | null) => {
@@ -412,16 +413,41 @@ function DeliveredProfitBadge({ load }: { load: KanbanLoad }) {
   );
 }
 
+// STATUS-DROPDOWN SWEEP (owner 2026-09-10, verbatim: "the button like quickbooks has drop down
+// everywhere to change status wherever necessary") -- shared pending/toast wrapper around the ONE
+// money-aware onStatusDrop writer (handleDragEnd already calls it too), reused by every Kanban card
+// density that mounts InlineStatusPicker so there is exactly one status-change code path per card,
+// not one duplicated per density.
+function useInlineStatusChange(load: KanbanLoad, onStatusDrop: Props["onStatusDrop"] | undefined) {
+  const { pushToast } = useToast();
+  const [pending, setPending] = useState(false);
+  const handleSelect = async (next: LoadStatus) => {
+    if (!onStatusDrop || next === load.status) return;
+    setPending(true);
+    try {
+      await onStatusDrop(load.id, next);
+      pushToast(`Load ${load.load_number} → ${next}`, "success");
+    } catch (error) {
+      pushToast(userFacingApiError(error, "Failed to change load status"), "error");
+    } finally {
+      setPending(false);
+    }
+  };
+  return { pending, handleSelect };
+}
+
 function KanbanDispatchCard({
   load,
   columnKey,
   hasActiveGeofenceBreach,
   onClick,
+  onStatusDrop,
 }: {
   load: KanbanLoad;
   columnKey: string;
   hasActiveGeofenceBreach?: boolean;
   onClick: (id: string) => void;
+  onStatusDrop?: Props["onStatusDrop"];
 }) {
   const draggableEnabled = canDragLoad(load.status) && !isSyntheticKanbanCardId(load.id);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -442,6 +468,7 @@ function KanbanDispatchCard({
   const dwell = dwellMetrics(load, columnKey);
   const factoring = factoringStatusLabel(load.factoring_status);
   const isDeliveredColumn = columnKey === "delivered";
+  const { pending: statusChangePending, handleSelect: handleInlineStatusSelect } = useInlineStatusChange(load, onStatusDrop);
 
   return (
     <div
@@ -541,6 +568,17 @@ function KanbanDispatchCard({
             <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold capitalize text-slate-700">{factoring}</span>
           ) : null}
           <DeliveredProfitBadge load={load} />
+        </div>
+      ) : null}
+      {/* QuickBooks-style Change Status, alongside drag (owner 2026-09-10 STATUS-DROPDOWN SWEEP) */}
+      {onStatusDrop && !isSyntheticKanbanCardId(load.id) ? (
+        <div className="mt-2 flex items-center" data-testid="kanban-dispatch-card-status-picker">
+          <InlineStatusPicker
+            loadId={load.id}
+            status={load.status}
+            pending={statusChangePending}
+            onSelect={next => void handleInlineStatusSelect(next)}
+          />
         </div>
       ) : null}
     </div>
@@ -656,10 +694,12 @@ function KanbanStandardCard({
   load,
   hasActiveGeofenceBreach,
   onClick,
+  onStatusDrop,
 }: {
   load: KanbanLoad;
   hasActiveGeofenceBreach?: boolean;
   onClick: (id: string) => void;
+  onStatusDrop?: Props["onStatusDrop"];
 }) {
   const draggableEnabled = canDragLoad(load.status) && !isSyntheticKanbanCardId(load.id);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -674,6 +714,13 @@ function KanbanStandardCard({
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
   const lane = toRouteSummary(load.first_pickup_city, load.first_delivery_city);
   const secondaryLoad = cardSecondaryLoadNumber(load);
+  // STATUS-DROPDOWN SWEEP (owner 2026-09-10, verbatim: "the button like quickbooks has drop down
+  // everywhere to change status wherever necessary") -- drag-to-change-status already exists on
+  // this card, but a dispatcher without a free hand for drag-and-drop (or on a touch device) had no
+  // other way to change status without opening the full drawer. useInlineStatusChange wraps the
+  // SAME onStatusDrop prop handleDragEnd already calls -- the one money-aware write path, shared with
+  // the Detailed-density card below, never a second one.
+  const { pending: statusChangePending, handleSelect: handleInlineStatusSelect } = useInlineStatusChange(load, onStatusDrop);
 
   return (
     <div
@@ -745,6 +792,17 @@ function KanbanStandardCard({
         )}
         <span className="hidden min-w-0 max-w-[90px] shrink truncate xl:inline">· {lane}</span>
       </div>
+      {/* line 3 — QuickBooks-style Change Status, alongside drag (owner 2026-09-10) */}
+      {onStatusDrop && !isSyntheticKanbanCardId(load.id) ? (
+        <div className="flex items-center" data-testid="kanban-standard-card-status-picker">
+          <InlineStatusPicker
+            loadId={load.id}
+            status={load.status}
+            pending={statusChangePending}
+            onSelect={next => void handleInlineStatusSelect(next)}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -889,6 +947,7 @@ function KanbanDispatchColumn({
   onToggleColumnSort,
   width,
   onResize,
+  onStatusDrop,
 }: {
   column: KanbanColumnDef;
   loads: DispatchLoadRow[];
@@ -900,6 +959,7 @@ function KanbanDispatchColumn({
   onToggleColumnSort: (columnKey: string, sortKey: "unit" | "load") => void;
   width?: number;
   onResize?: (columnKey: string, width: number) => void;
+  onStatusDrop?: Props["onStatusDrop"];
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `column:${column.key}` });
   // DSP-12 (owner 2026-09-04): "each individual column we cannot adjust width." Lanes were fixed at a
@@ -1036,7 +1096,7 @@ function KanbanDispatchColumn({
             return <KanbanCompactCard key={load.id} load={readExtras(load)} hasActiveGeofenceBreach={breach} onClick={onLoadClick} />;
           }
           if (density === "standard") {
-            return <KanbanStandardCard key={load.id} load={readExtras(load)} hasActiveGeofenceBreach={breach} onClick={onLoadClick} />;
+            return <KanbanStandardCard key={load.id} load={readExtras(load)} hasActiveGeofenceBreach={breach} onClick={onLoadClick} onStatusDrop={onStatusDrop} />;
           }
           return (
             <KanbanDispatchCard
@@ -1045,6 +1105,7 @@ function KanbanDispatchColumn({
               columnKey={column.key}
               hasActiveGeofenceBreach={breach}
               onClick={onLoadClick}
+              onStatusDrop={onStatusDrop}
             />
           );
         })}
@@ -1353,6 +1414,7 @@ export function DispatchKanban({
                 onToggleColumnSort={toggleKanbanColumnSort}
                 width={columnWidths[group.key]}
                 onResize={setColumnWidth}
+                onStatusDrop={onStatusDrop}
               />
             );
           })}
