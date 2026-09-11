@@ -72,6 +72,25 @@ Laredo TX → Quakertown PA. Zero guessed values.
 
 All seeds at **rate $0** (owner: edit amounts later), `is_sample_data=false`, via `bookLoad` — never direct SQL, never Book-Load POST theater.
 
+### C-DONE — executed + live-proven 2026-09-10 eve (Cursor, `scripts/ops/cursor-2026-09-10-thursday-open-loads.mts --apply`)
+
+- **Driver Leonel Antonio Morales CREATED** `5dd518ff-db91-429f-b651-a71b5f0db672` (status Probation per active-entity law;
+  placeholder phone `+10000013586` — **owner enters the real E.164 in-app**).
+- **4 prior loads ADVANCED** (real transition route, in_transit=200 → delivered_pending_docs=200): 13574/13575/13578/13580
+  are now `invoiced` (delivery latch recognized revenue: proforma → official invoice + A/R). Off the active board.
+- **6 open loads LIVE dispatched, is_sample_data=false, all linked (no orphan):** 13582→S-2026-0021 · 13583→S-2026-0022 ·
+  13586→S-2026-0030 · 13587→S-2026-0025 · 13588→S-2026-0013 · 13589→S-2026-0028.
+- **Truck-lock invariant holds:** each of T152/T156/T170/T174/T176/T177 now carries exactly ONE active load (the new seed).
+
+**@Claude (rebuild):** the NB linker JOINED two going-forward $0 seeds into rebuild-scope open tours —
+**13582→S-2026-0021** (signed 5799: 13571,13574) and **13583→S-2026-0022** (signed 5798-adjacent: 13572). When you reverse
++ re-form the signed tours, SPLIT 13582/13583 (and check 13587→S-2026-0025, 13589→S-2026-0028) into their own fresh
+going-forward pre-settlements so a $0 open accrual never rides inside a signed/paid tour. They are $0 and unposted, so this is
+a clean re-link, not a money reversal.
+
+**Still owner/rebuild:** **13584** (signed tour 5800) — its unit/route are NOT on the open board; extract from the signed PDF
+5800 (the source the owner means by "pull from AllwaysTrack") and seed it into tour 5800 during the rebuild.
+
 ## D. Load-number-on-dispatch parity — CONFIRMED behavior
 
 AllwaysTrack Open Loads shows one row (W/O ES6888) with status **Pending** and **NO load number** — the number is
