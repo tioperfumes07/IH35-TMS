@@ -1422,3 +1422,28 @@ double-billing rail.
 DONE LINE: CC-1 | REG-050 status correction | live code trace, no code change (item mostly already
 resolved) | register + outbox updated | 1 point (penalty amount source) left OPEN pending owner
 decision | NEXT: continuing the OWNER-FANOUT-2026-09-09.md sweep for remaining CC-1 items.
+
+## CC-1 | REBUILD BLOCKER 1 CLEARED + PUSHED (on behalf of blocked Claude Lead session) — 2026-09-11
+
+Applied exactly per `~/Downloads/09-11-2026-CC1-REBUILD-BLOCKER1-CLEARED-PUSH-THIS.md` (a sibling
+Claude Lead session had the extraction fully done and penny-verified but had no git push/PR access
+this turn — GitHub App 403 + proxy 403 both confirmed dead on their end). Appended settlements
+5797-5800 (38 lines, hand-extracted from the 4 signed PDFs `Driver_Settlement_5797..5800.pdf`) to
+`docs/reconciliation/2026-09-07-usmca/usmca-settlements-from-signed-docs.csv` +
+`usmca-settlement-lines-from-signed-docs.csv`, updated
+`scripts/reconciliation/preview-usmca-settlement-rebuild.mjs`'s `EXPECTED_GRAND_TOTAL` (37830.87 ->
+44234.51) and `EXPECTED_DOC_COUNT` (28 -> 32) to match.
+
+**Verified exactly as instructed before shipping** — did NOT redo the extraction, only ran the
+specified verify command: `node scripts/reconciliation/preview-usmca-settlement-rebuild.mjs` ->
+`docs: 32   lines: 274   grand net total: 44234.51   expected: 44234.51   PREVIEW PASS — all 32
+docs tie to the penny; grand total matches.` — exact match to the instruction's own expected output,
+no forcing.
+
+Shipped PR #21724 (`CC1-IN-...`), merged `82c6fd1d`, fast-merge law (local gate PASS -> squash
+--admin). Writes NOTHING to Neon — preview-data only, confirmed by the script's own header comment.
+
+DONE LINE: CC-1 | Rebuild blocker 1 CLEARED (5797-5800 preview data) | PR #21724 merged 82c6fd1d |
+PREVIEW PASS docs=32 lines=274 grand=44234.51/44234.51 | REMAINING (explicitly NOT this PR, stays
+with Lead/next): rebuild blocker 2 (audited reverse+repost executor) + blocker 3 (rehearse on
+throwaway Neon branch) | NEXT: resuming ROW 0 (reimbursement per-type GL) in progress.
