@@ -8669,5 +8669,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-11",
     "purpose": "verify-settlement-load-linkage-render-fix"
+  },
+  "10923": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-driver-bill-settlement-resolution-uses-settlement-lines"
   }
 }
