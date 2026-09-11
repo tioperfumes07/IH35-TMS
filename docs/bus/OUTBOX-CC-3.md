@@ -1182,3 +1182,11 @@ S-YYYY-NNNN going forward, 27 pre-existing wrong-scheme rows left as open owner 
 bill_lines.load_id write-side gap addressed (filed) | REG-009 confirmed already-exists (no build) |
 REG-013 root-caused by Lead, not re-investigated per instruction | NEXT=REG-012 quick-verify then
 REG-015/016
+CC-3 | REG-010/011 DONE | 958e00dd | live-pending | driver_finance.next_settlement_display_id
+returns S-2026-0001 live-tested for USMCA | CC-3 | REG-009 DONE | 6b420f1a | live-pending |
+Settlement/Tour col alwaysVisible (Cursor's concurrent stronger fix, merged after resolving
+conflict with my own weaker attempt) | CC-3 | REG-016 DONE | 5515b6a9 | live-pending | Type
+filter (Vendor bill/Driver bill) is now MultiSelectDropdown, owner-confirmed which filter |
+CC-3 | REG-041 ALREADY DONE (not built by me) | n/a | n/a | guard verify-reg041-source-load-dates
++ LoadCostsBoardPage.registers.test.tsx REG-041 test both pass on main already | NEXT=awaiting
+next INBOX assignment; no open PRs
