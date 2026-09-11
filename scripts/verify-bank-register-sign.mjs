@@ -51,6 +51,12 @@ if (!/data-testid="banking-pager-last"/.test(viewSrc) || !/onClick=\{\(\) => set
 if (!/\["Oldest first"/.test(viewSrc) || !/setSortBy\(\{ key: "date", dir: "asc" \}\)/.test(viewSrc)) {
   fail("Presets must include Oldest first (date ASC + page 1) for the 12/08 walk");
 }
+if (!/key: "description"[\s\S]{0,280}allowWrap: true/.test(viewSrc)) {
+  fail("Full bank description must allowWrap so CHECKCARD merchants are not XXXX...");
+}
+if (/<p className="truncate text-gray-900">\{transactionLabel\(tx\)\}<\/p>/.test(viewSrc)) {
+  fail("description line must not truncate; wrap + title so the BofA memo is readable");
+}
 if (!/export async function applyPostedSignedCurrentBalance/.test(plaidSrc)) {
   fail("Plaid must re-anchor current_balance_cents from posted signed SUM, not leave Plaid's snapshot");
 }

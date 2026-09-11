@@ -427,7 +427,9 @@ tab is **All** so the statement walk includes that row next to 12/12 Oak Street 
 `accountsBalanceGet` / reconnect must not overwrite `current_balance_cents` once posted rows exist
 (`applyPostedSignedCurrentBalance`). Date cells nowrap so `09/09/2026` is not `09/09...`. Pager
 is First / Previous / Next / Last (date desc + Last = statement start). Preset **Oldest first**
-sets date ASC + page 1. Live 2026-09-10: All · 288, header $6,389.72, Date full on first page.
+sets date ASC + page 1. Description column `allowWrap` + no inner `truncate` so CHECKCARD memos
+are not `XXXX...` (ParityTable nowrap+ellipsis is the default unless allowWrap). Live 2026-09-10:
+All · 288, header $6,389.72, Date full on first page.
 
 ## Known Quirks & Blockers — Banking (CC-2, 2026-09-08)
 
