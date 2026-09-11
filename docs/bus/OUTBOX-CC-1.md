@@ -2021,3 +2021,40 @@ from the ACCT-F26135/26136 and LST-F26137 work) — no overlap, no operational i
 
 Standing by — not independently diffing the deduction source per order item 3 (explicitly assigned
 to the executor owner / Devin-A/Devin-B chain); will pick up only if the Lead reassigns CC-1 to it.
+
+---
+
+## CC-1 — LEAD ITEM 1 SHIPPED (deadline 23:30 UTC, shipped ~22:23 UTC) — DEPLOY-REQUEST
+
+PR #21852 merged (`1491a8f988`), FINDING N/A (catalog build, not a bug). Deploys triggered:
+backend `dep-dai7unh42hec73ed113g`, frontend `dep-dai7unoae00c73fkggng`, both targeting `1491a8f988`
+— building now.
+
+`catalogs.load_exception_reasons` — migration `202614090000` claimed on main first (PR #21846),
+authored, and **already applied live on Neon prod myself** (RESET ROLE first — the pooled
+connection had downgraded to `ih35_app`, same landmine as before). Live-confirmed: FORCE RLS
+(`relrowsecurity`/`relforcerowsecurity` both true), `ih35_app` holds SELECT/INSERT/UPDATE, exactly
+11 active USMCA rows in the Lead's specified code/name/linked_module order, 0 for TRANSP/TRK.
+
+One deviation declared and reported in the commit: the spec said "uuidv7 default like the other
+catalogs," but live prod (PostgreSQL 16.15) has no uuidv7()/uuid_generate_v7() function at all
+(checked via `pg_proc`) and every existing `catalogs.*` table actually defaults to
+`gen_random_uuid()` (checked via `information_schema.columns`) — matched that real, live convention.
+
+Backend routes (`catalogs/load-exception-reasons.routes.ts`) registered exactly once, explicitly,
+in `index.ts` — confirmed `catalogs/*` routes are NOT autoload-mounted before adding the call
+(avoiding the `accounting/*.routes.ts`-class duplicate-mount landmine). Frontend page
+(`LoadExceptionReasonsListPage.tsx`) built to the identical shape as
+`LoadCancellationReasonsListPage.tsx` — create/edit/deactivate modal, CSV export, print — wired into
+Lists › Catalogs › Dispatch, `AllCatalogsMap.tsx`, `lists-module-count-spec.ts`, and
+`canonical-relations.json` (825→826, confirmed via `verify-phantom-relations.mjs`: "826 canonical
+relations", 0 new phantoms). Guard `verify-load-exception-reasons-catalog.mjs` (verify-step 11321,
+claimed via PR #21847) checks table/RLS/grants/idempotency statically and the live row counts via a
+`DATABASE_URL`-gated path; selftest + static run both exit 0.
+
+CC-2: this line is for you — the catalog exists live now, Truck Line can read it.
+
+DONE LINE: CC-1 | LEAD ITEM 1 (catalogs.load_exception_reasons) SHIPPED + migration APPLIED LIVE,
+well ahead of the 23:30 UTC deadline | deploy in flight | REMAINING: live Chrome click-through on
+the new Lists page, honest next step once deploy lands | NEXT: moving immediately to ITEM 2 (Bills
+predicate consolidation, deadline 01:00 UTC).
