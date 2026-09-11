@@ -36,6 +36,10 @@ function check(legs, timeline, dispatch) {
   if (!/listAllLoads\(loadListFilters\)/.test(dispatch)) {
     errors.push("Round Trips must page via listAllLoads (GET /mdata/loads max 200; 1000 one-shot 400s)");
   }
+  const rt = readFileSync("apps/frontend/src/pages/dispatch/RoundTrips.tsx", "utf8");
+  if (!/pairingReadFailed && boardView !== "timeline"/.test(rt)) {
+    errors.push("idle-unit pairing 500 must not hide Timeline (REG-037)");
+  }
   if (/effectiveLoadsLimit\s*=\s*roundTripsFullFetch \? 1000/.test(dispatch)) {
     errors.push("limit:1000 one-shot must not return (API zod max 200)");
   }

@@ -289,45 +289,7 @@ export function RoundTrips({
   const isLoading = loading || preSettlementsQuery.isLoading || idleUnitsQuery.isLoading;
   const pairingReadFailed = preSettlementsQuery.isError || idleUnitsQuery.isError;
 
-  if (pairingReadFailed) {
-    const failedFeeds = [
-      preSettlementsQuery.isError ? "pre-settlement pairings" : null,
-      idleUnitsQuery.isError ? "idle units" : null,
-    ].filter(Boolean).join(" and ");
-    return (
-      <ListErrorState
-        title="Round-trip pairing unavailable"
-        status={0}
-        message={`Could not load ${failedFeeds}. Existing loads were not treated as an honest empty pairing.`}
-        onRetry={() => {
-          if (preSettlementsQuery.isError) void preSettlementsQuery.refetch();
-          if (idleUnitsQuery.isError) void idleUnitsQuery.refetch();
-        }}
-      />
-    );
-  }
-
-  return (
-    <div className="overflow-x-hidden space-y-2" data-testid="dispatch-round-trips-view">
-      <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
-        <span>Load board orders NB, then triangulation, then SB. TR sits between NB and SB.</span>
-        <label className="ml-auto inline-flex items-center gap-1">
-          Sort
-          <select
-            className="rounded-sm border border-gray-200 bg-white px-1 py-0.5"
-            data-testid="round-trips-sort"
-            value={sort}
-            onChange={(e) => {
-              const next = e.target.value as SortMode;
-              setSort(next);
-              localStorage.setItem(SORT_KEY, next);
-            }}
-          >
-            <option value="truck">by truck</option>
-            <option value="date">by date</option>
-            <option value="load">by load</option>
-          </select>
-        </label>
+  const viewToggle = (
         <div className="inline-flex rounded-sm border border-gray-200">
           <button
             type="button"
@@ -352,6 +314,55 @@ export function RoundTrips({
             Timeline
           </button>
         </div>
+  );
+
+  // Timeline paints assigned loads in the date window. Idle-unit / pre-settlement feed
+  // failures must not hide it (REG-037: Aug-25→present units). Pairing board stays fail-closed.
+  if (pairingReadFailed && boardView !== "timeline") {
+    const failedFeeds = [
+      preSettlementsQuery.isError ? "pre-settlement pairings" : null,
+      idleUnitsQuery.isError ? "idle units" : null,
+    ].filter(Boolean).join(" and ");
+    return (
+      <div className="space-y-2" data-testid="dispatch-round-trips-view">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
+          {viewToggle}
+        </div>
+        <ListErrorState
+          title="Round-trip pairing unavailable"
+          status={0}
+          message={`Could not load ${failedFeeds}. Existing loads were not treated as an honest empty pairing.`}
+          onRetry={() => {
+            if (preSettlementsQuery.isError) void preSettlementsQuery.refetch();
+            if (idleUnitsQuery.isError) void idleUnitsQuery.refetch();
+          }}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-hidden space-y-2" data-testid="dispatch-round-trips-view">
+      <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
+        <span>Load board orders NB, then triangulation, then SB. TR sits between NB and SB.</span>
+        <label className="ml-auto inline-flex items-center gap-1">
+          Sort
+          <select
+            className="rounded-sm border border-gray-200 bg-white px-1 py-0.5"
+            data-testid="round-trips-sort"
+            value={sort}
+            onChange={(e) => {
+              const next = e.target.value as SortMode;
+              setSort(next);
+              localStorage.setItem(SORT_KEY, next);
+            }}
+          >
+            <option value="truck">by truck</option>
+            <option value="date">by date</option>
+            <option value="load">by load</option>
+          </select>
+        </label>
+        {viewToggle}
         {boardView === "timeline" ? (
           <span className="inline-flex items-center gap-1">
             <DatePicker
