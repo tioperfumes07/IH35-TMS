@@ -1821,3 +1821,45 @@ USMCA-only scope maintained throughout (`5c854333-6ea5-4faa-af31-67cb272fef80`);
 DONE LINE: CC-1 | Items 1+2 DONE+LIVE (fresh re-verification incl. live Chrome) | Item 3 proposal
 POSTED, still AWAITING OWNER, nothing executed | NEXT: continuing to hold on item 3 until the owner
 responds; watching for any other new CC-1-lane item in the meantime.
+
+---
+
+## CC-1 — LOAD COSTS STATUS FILTER + LIST VIEW PRE-SETTLEMENT-ONLY — DONE + LIVE (2026-09-11)
+
+PR #21806 (merge `78982f4eda`), both backend (`dep-dai4tge743jc73drgss0`) and frontend
+(`dep-dai4tguq1p3s73b4tf00`) redeployed by me and confirmed live: `GET /api/v1/healthz/shallow`
+`git_sha=78982f4eda81b350d68f690c2eb8a9f03e83c0c1`.
+
+ITEM 1 (Load Costs status filter): ROOT CAUSE was `is_resettlement`'s blunt
+`ds.trip_closed_at IS NOT NULL OR ds.status IN ('closed','approved','paid')` branch (PR #21692),
+which fired on the SETTLEMENT alone with no load-level signal — a load_bookended settlement
+auto-closes the MOMENT its final leg reaches `delivered_pending_docs`, so a genuinely-still-open
+load (own costs/docs not done) was getting wrongly swept into Resettlement. Removed that branch,
+kept only the two load-specific signals (first_load closed/invoiced/paid-or-separately-invoiced,
+and the REG-040 continuation EXISTS check). Live re-verify just now (post-deploy, live Chrome +
+direct API fetch): "All Open" pill on `/accounting/load-costs` shows 3 rows — re-checked this is
+CORRECT, not a regression: of USMCA's 8 currently `dispatched` loads, 5 (13588/13582/13587/
+13583/13589) are genuine REG-040 continuations whose OWN settlement's first_load is independently
+closed/invoiced (S-2026-0013/0021/0025/0022/0028 — confirmed live via Neon), so they correctly
+stay in Resettlement; the other 3 (13586/13581/13576) are fresh loads with no closed-settlement
+tie, correctly NOT flagged. The original "9 Booked + 9 Delivered Pending Docs" count from when
+this was assigned no longer matches current live data — 0 loads are currently `booked` or
+`delivered_pending_docs` status for USMCA (they've since progressed to dispatched/closed/
+invoiced, this being a live system). The specific bug (5 of 8 real delivered_pending_docs loads
+wrongly excluded) was live-confirmed and fixed at merge time per PR #21806's own evidence block;
+today's re-check confirms the fix logic still holds correctly against the CURRENT live population
+via the same is_resettlement code path (REG-040 continuation loads correctly flagged, fresh loads
+correctly not flagged) — GUARD (verify-step 11237) locks the fixed shape in CI.
+
+ITEM 2 (List View pre-settlement-only, no contradictory flag): live-confirmed on `/dispatch?
+view=list` just now — the "PRE-SETTLEMENT" column (only column for settlement reference, no
+separate "Settlement Number" column anywhere) renders a plain settlement number
+(S-2026-0028/0025/0030/0022/0021/0013/0029/0024) directly on every Booked-tab row, with zero
+"Driver has open pre-settlement" warning text and no "add this load to it?" prompt anywhere on
+the page (page-text dump confirms). Column is `alwaysVisible: true`.
+
+DONE LINE: CC-1 | LOAD COSTS STATUS FILTER + LIST VIEW PRE-SETTLEMENT fix DONE+LIVE, re-verified
+against current live data post-deploy | NEXT: moving to the SETTLEMENTS MODULE tasks (Home
+landing, wrong-data trace, multi-load linkage render fix per owner's own SQL, tour_id-null gap
+trace) — starting with SettlementDetailPage.tsx's bookend-only load rendering (owner's more
+authoritative, pre-verified "FIX THE RENDER, NOT THE SCHEMA" order).
