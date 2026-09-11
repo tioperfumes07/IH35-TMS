@@ -457,8 +457,8 @@ operators track and seed later. `createDriverBillArtifacts` still never copies c
 team is seated (Book Load / Edit Load already did). Quick-assign, inline quicksave, planner
 reschedule, and manual reassign now call the same mint. An open $0 bill is **upgraded in place** when
 pay later resolves — not stuck as `already_exists`. Voided bills stay un-reminted (ACCT-F277).
-Thursday assigned loads without bills: remint after API deploy via
-`POST /api/v1/mdata/loads/:id/remint-driver-bill` (Owner/Accountant).
+Thursday assigned loads without bills: Remint driver bill (Owner/Accountant) is allowed as soon as
+a driver is seated — not only after delivery evidence. Same mint; $0 tracking if still unpriced.
 
 ## Known Quirks & Blockers — Banking (CC-2, 2026-09-08)
 

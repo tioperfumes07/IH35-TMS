@@ -411,12 +411,14 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
     // load_has_no_rate), so this FE check was strictly narrower than the real business rule.
     return ["delivered", "delivered_pending_docs", "completed_docs_received", "invoiced", "paid", "closed"].includes(load.status);
   }, [load]);
-  // ACCT-F10164 — matches the backend's own loadStatusRequiresDeliveryDepartureStamp gate exactly
-  // (delivery-evidence-status.ts), the same predicate the status-PATCH route uses to decide whether
-  // ensureDriverBillArtifactsForLoad should even run.
+  // DSP-F23111 — Remint is for any seated driver, not only delivery-evidence statuses.
+  // Thursday dispatched loads with no bill are the live class this button must reach.
   const canRemintDriverBill = useMemo(() => {
     if (!load) return false;
-    return ["delivered_pending_docs", "completed_docs_received"].includes(load.status);
+    if (["cancelled", "abandoned", "driver_walkoff", "driver_no_show"].includes(String(load.status ?? ""))) {
+      return false;
+    }
+    return Boolean(load.assigned_primary_driver_id || load.team_id);
   }, [load]);
   const packageState = useMemo(() => parseFactoringPackageNotes(load?.notes), [load?.notes]);
   const loadDocsQuery = useQuery({
