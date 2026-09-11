@@ -1792,3 +1792,32 @@ sign-off**, per the order's own instruction. Full write-up:
 DONE LINE: CC-1 | Items 1+2 CONFIRMED DONE+LIVE (re-verified) | Item 3 proposal POSTED, AWAITING
 OWNER, nothing executed | docs/audit/LOAD-13508-REVERSAL-PROPOSAL-2026-09-11.md | NEXT: hold on item
 3 until owner responds; continuing the sweep for other open CC-1 items in the meantime.
+
+## CC-1 | Standing-assignment wake-up: fresh live re-confirmation, all 3 items (2026-09-11 ~11:50Z)
+
+Re-verified all 3 items live per the standing law's "never guess, verify live" rule (not trusting
+earlier-session claims), several hours after original ship:
+
+**Item 1 (Settlement Close routing) — CONFIRMED DONE + LIVE, fresh proof.** `fa6f138ec5` confirmed
+still an ancestor of the currently-deployed healthz `git_sha` (`1bb4a43c73`). Guard
+`scripts/verify-settlement-close-posts-payrun.mjs` re-run fresh: selftest + live both PASS.
+`/driver-finance/settlement-close` confirmed live/reachable via fresh Chrome screenshot just now.
+
+**Item 2 (presettlement blind spot) — CONFIRMED DONE + LIVE, fresh proof.** `633a82c382` confirmed
+still an ancestor of the deployed SHA. Guard
+`scripts/verify-presettlement-deferred-suggestions-visible.mjs` re-run fresh: selftest + live both
+PASS. Fresh Chrome screenshot of `/driver-finance/settlements?tab=needs_review` just now: the
+"Needs Review" tab still renders correctly (full ParityTable surface, honest empty state — 0 rows,
+correct since no load is currently deferred in the live queue).
+
+**Item 3 (load 13508 misattribution) — still correctly PARKED, awaiting owner.** Proposal
+(`docs/audit/LOAD-13508-REVERSAL-PROPOSAL-2026-09-11.md`) still on `origin/main`, unexecuted —
+verified nothing has been applied. No response from the owner yet. S-2026-0011 confirmed untouched
+(separately parked, its executor-scope exclusion already shipped, PR #21779).
+
+No regression on any of the 3 items across multiple hours and multiple live-verification sweeps.
+USMCA-only scope maintained throughout (`5c854333-6ea5-4faa-af31-67cb272fef80`); TRANSP untouched.
+
+DONE LINE: CC-1 | Items 1+2 DONE+LIVE (fresh re-verification incl. live Chrome) | Item 3 proposal
+POSTED, still AWAITING OWNER, nothing executed | NEXT: continuing to hold on item 3 until the owner
+responds; watching for any other new CC-1-lane item in the meantime.
