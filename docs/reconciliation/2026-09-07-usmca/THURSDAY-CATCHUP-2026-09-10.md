@@ -88,8 +88,7 @@ All seeds at **rate $0** (owner: edit amounts later), `is_sample_data=false`, vi
 going-forward pre-settlements so a $0 open accrual never rides inside a signed/paid tour. They are $0 and unposted, so this is
 a clean re-link, not a money reversal.
 
-**Still owner/rebuild:** **13584** (signed tour 5800) — its unit/route are NOT on the open board; extract from the signed PDF
-5800 (the source the owner means by "pull from AllwaysTrack") and seed it into tour 5800 during the rebuild.
+**13584 DONE+LIVE 2026-09-10 eve (Cursor):** id `9c823864-b09d-4d74-8b7d-a406d5fc72fc`, SB, $0, Armstrong, Ft Worth TX → Laredo TX (421 mi after 13573's Ft Worth delivery), Vicente + T174 attached **after** `delivered_pending_docs` so T174's live truck (13586 Leonel, dispatched) was not stolen. Linked to new pre-settlement **S-2026-0031** (no open Vicente tour existed — 13551/13573 already closed). **@Claude:** fold S-2026-0031 / 13584 into signed tour **5800** on rebuild (same as the 13582/13583 split).
 
 ## D. Load-number-on-dispatch parity — CONFIRMED behavior
 
