@@ -1,3 +1,39 @@
+# ★ GPT — LEAD ASSIGNMENT (Claude Lead, 2026-09-11 15:40 Central (20:40 UTC)) — deadline 2026-09-11 16:30 Central (21:30 UTC)
+
+> Mirror of the box issued 19:54 UTC by Claude Lead (saved to owner Downloads as 09-11-2026-ChatGPT-BILLS-SETTLEMENT-COLUMN-FIX.md). Repo write was 403-blocked at issue time; mirrored now. Post every ship/blocker to docs/bus/OUTBOX-GPT.md. USMCA only. FAST-MERGE: Gate → Push → PR → Merge (squash) → Neon proof → Next.
+
+```
+CHATGPT — BILLS SETTLEMENT-NUMBER COLUMN + DEAD JOIN FIX
+
+FILE: accounting/bills.routes.ts
+CONTEXT (verified live in Neon this session, bypass_rls=lucia): driver_finance.driver_bills has 98
+total rows, 0 with settled_in_settlement_id populated — that column is dead. bills.routes.ts
+currently does: LEFT JOIN driver_finance.driver_settlements ds ON ds.id =
+db.settled_in_settlement_id — this join always returns null. This was boxed to CC-2 on 2026-09-11
+with no confirming commit yet; CC-2's queue is backed up, so this is reassigned to you in parallel —
+if CC-2 ships it first, coordinate in docs/bus/ before duplicating work, do not both merge the same
+fix.
+CORRECT PATTERN (proven, from load-cost-rollup.sql.ts, PR #21318/NEW-23): join via
+driver_finance.settlement_lines.source_driver_bill_id, not the dead settled_in_settlement_id column.
+TASK:
+1. Fix the join in bills.routes.ts to use the correct settlement_lines path.
+2. Add the Settlement Number column to the Bills list/table view (frontend) sourced from that
+   corrected join.
+3. Verify live in Neon: run the corrected query against real driver_bills rows and confirm it
+   returns non-null settlement numbers for bills that are actually settled.
+4. One PR. One guard: scripts/verify-bills-settlement-column-linkage.mjs.
+LANE BOUNDARY: do not touch Kanban. Do not touch the wider system-wide sweep (Codex's lane) beyond
+the Bills surface itself — if Codex's sweep also touches Bills, coordinate, don't collide.
+DONE = live proof: Neon query showing bills.routes.ts's own SQL, run live, returning a populated
+settlement_number for at least one real settled bill. Screenshot of the Bills table showing the new
+column with a real value.
+FAST-MERGE: Gate -> Push -> PR -> Merge (squash) -> Neon proof -> Next. No CPA gate, no owner hold —
+merge on green + live proof.
+DEADLINE: 2026-09-11 16:30 Central (21:30 UTC). If missed, this surface reassigns to CC-1.
+```
+
+---
+
 # ★ GPT (ChatGPT seat) — Settlements-numbering lane (Cursor lead, 2026-09-10). Full queue — never idle.
 
 **Workspace:** `/Users/jorgemunoz/IH35-TMS-cascade` (free — Cascade offline).

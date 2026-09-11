@@ -1,14 +1,15 @@
-# LEAD CENSUS — GO-23 · 2026-09-02 09:45 CT
+# LEAD CENSUS — Claude Lead · 2026-09-11 15:40 Central (20:40 UTC)
 
-**Queue:** GO-23. Never POST. Never `catalogs.locations`. Mileage closed.
+Live API `953e4fd` (built 20:02Z, direct curl). origin/main tip `f7667af33f`. Open PRs: 0. Neon USMCA (bypass lucia, 20:36Z): loads 107 · active non-cancelled/draft loads with tour_id NULL = **3** · driver_bills 100 · `settled_in_settlement_id` populated **0** · bills linked via `settlement_lines.source_driver_bill_id` **93**.
 
-| Seat | NOW | Must not |
-|------|-----|----------|
-| **CC-1** | Purge-tail · C6 · B8 · B5 | locations table; remake N1 expense/Pay |
-| **CC-3** | C1 UUIDs | remake GO-24 / A1 / B1 |
-| **CC-2** | J1 162 · K2 · Chrome | remake #19641; expense POST |
-| **Codex** | A3/B12 | POST; merge #19657 red |
-| **Cascade** | recount + specs-vs-live | build |
-| **Cursor** | FAST-MERGE | #19485; Dependabot |
+| Seat | NOW (deadline 21:30 UTC unless noted) | Last self-report on bus | Lead verdict | Surrender |
+|---|---|---|---|---|
+| **Devin** | Kanban cross-column drag fix (loaded cards) — `DispatchKanban.tsx` | none on OUTBOX-DEVIN since 09-06 | NOT STARTED on the bus; no PR | CC-1 |
+| **Devin-B** | Kanban one-row-per-unit build | none for this task | NOT STARTED on the bus; no PR | Cursor |
+| **Codex** | System-wide Settlement/Presettlement column sweep (Bills excluded) | CLAIM-RESERVE 11297 merged #21818 20:01Z | WIP — claim only, no code PR yet | CC-2 |
+| **GPT** | Bills settlement-number column + dead `settled_in_settlement_id` join | OUTBOX-GPT WIP, base 953e4fdee | WIP — no PR yet. Neon confirms the premise: 0/100 bills have settled_in populated, 93 link via settlement_lines | CC-1 |
+| **CC-1** | INBOX-CC-1 ROW 0 (reimbursement per-type GL) → ROW 6 | not re-verified this census | queue untouched per handoff | — |
+| **CC-2** | REG-028/030 sign-inversion backfill (#e584272c 18:29Z "complete") | OUTBOX-CC-2 | DONE claim not yet re-measured by lead | — |
+| **CC-3 / Cursor / Cascade / Devin-A** | per their INBOX | not re-verified this census | — | — |
 
-**GO-24:** #19661 on main. **N1 Pay:** #19660. **J1 git:** ratchet ruleset 22111758.
+Every DONE is re-measured by the lead against Neon + the deployed sha before ✔. Silence past a deadline = surrender.

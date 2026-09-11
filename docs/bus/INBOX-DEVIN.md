@@ -1,3 +1,46 @@
+# ★ DEVIN — LEAD ASSIGNMENT (Claude Lead, 2026-09-11 15:40 Central (20:40 UTC)) — deadline 2026-09-11 16:30 Central (21:30 UTC)
+
+> Mirror of the box issued 19:54 UTC by Claude Lead (saved to owner Downloads as 09-11-2026-Devin-KANBAN-CROSS-COLUMN-DRAG-FIX.md). Repo write was 403-blocked at issue time; mirrored now. Post every ship/blocker to docs/bus/OUTBOX-DEVIN.md. USMCA only. FAST-MERGE: Gate → Push → PR → Merge (squash) → Neon proof → Next.
+
+```
+DEVIN — KANBAN CROSS-COLUMN DRAG: LOADED-TRUCK CARDS NOT MOVING LIVE
+
+FILE: apps/frontend/src/components/dispatch/DispatchKanban.tsx
+CONTEXT (verified on main this session, commit 7b09f669e8ccd9710ac23061cd0fd65a9f87a0c6):
+- Real load cards (any card that is NOT a synthetic "unit:" truck tile — i.e. any truck that HAS a
+  load assigned) are supposed to be draggable across lanes: DndContext -> handleDragEnd (line ~1255)
+  -> onStatusDrop(loadId, nextStatus) -> PATCH transition, with optimistic UI + revert-on-failure +
+  toast either way. This code exists and reads correctly.
+- Owner reports live (3 screenshots, Compact/Standard/Detailed density, Dispatch > Kanban): dragging
+  does NOT work — cards do not move from one column to the next. This is the OWNER'S LIVE REPRO,
+  treat it as ground truth over the static code read.
+RULE: any truck/card that has a load assigned to it MUST be draggable between lanes. Only the
+synthetic no-load truck tile (isSyntheticKanbanCardId, "unit:" prefix, Awaiting Assignment column)
+stays drag-locked to a lane move — that one is correct as-is, do NOT touch its lock.
+TASK:
+1. Reproduce live in Chrome against the deployed app (or local dev pointed at prod data) — actually
+   drag a loaded card (e.g. any card in "Dispatched") to another lane. Capture exactly what fails:
+   no cursor change / drag starts but drop is a no-op / toast fires but status doesn't persist /
+   network call never fires / network call fires and 4xx/5xx's.
+2. Root-cause it in the code (sensors config, collisionDetection=pointerWithin resolving wrong
+   target, PointerSensor activationConstraint eating the drag, the onStatusDrop wiring from the
+   parent DispatchBoard page into DispatchKanban, or the transition endpoint itself rejecting).
+3. Fix it. Do not paper over with a workaround — root cause per owner law, no patches.
+4. Add/extend a guard script (scripts/verify-dispatch-kanban-cross-column-drag.mjs or similar) that
+   proves a load with an assigned unit can transition lanes via the same code path drag uses.
+LANE BOUNDARY: do not touch the Awaiting Assignment synthetic-card drag-lock (BRD-12,
+LV-KANBAN-SYNTHETIC-CARD-INERT-DRAG) — that stays disabled by design. Do not touch settlement/
+bills work — that's Codex/ChatGPT's lane this round.
+DONE = live proof: a real drag of a loaded card from one Kanban lane to another, on the deployed
+app, actually changes lane and the new status is confirmed in Neon (bypass_rls=lucia) on
+mdata.loads for that load id. Guard script passing in CI.
+FAST-MERGE: Gate -> Push -> PR -> Merge (squash) -> Neon proof -> Next. No CPA gate, no owner
+hold, no JORGE-APPROVED label — merge on green + your own live proof.
+DEADLINE: 2026-09-11 16:30 Central (21:30 UTC). If missed, this surface reassigns to CC-1.
+```
+
+---
+
 # ★ DEVIN A (Cursor lead, 2026-09-10) — REG-015 build the 6 factoring stubs
 **Full box:** `~/Downloads/09-10-2026-Cursor-Lead-DEVIN-A-REG-015-FACTORING-STUBS.md`. Canonical tracker:
 `~/Downloads/09-09-2026-Claude-Lead-DEFECT-REGISTER.md`. You are **Devin A**; Devin B owns REG-002 +
