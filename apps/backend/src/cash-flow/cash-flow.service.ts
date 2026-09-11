@@ -26,6 +26,7 @@ import { sumAuthoritativeDepositoryCashCents } from "../banking/internal-wallet-
 import { projectedCashDateSql } from "./projected-cash-date.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { isFactoringPathLoadStatus, DELIVERY_EVIDENCE_MDATA_STATUSES } from "../dispatch/delivery-evidence-status.js";
+import { BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL } from "../driver-finance/settlement-resolution.sql.js";
 
 type Queryable = pg.PoolClient;
 
@@ -1190,10 +1191,11 @@ export async function getRollingLedgerRows(
         -- PR #21318): the real settlement attachment lives in driver_finance.settlement_lines
         -- via source_driver_bill_id, assigned at BOOKING time. The old dead-column check let
         -- every already-settled bill still show up here as an "open" upcoming cash outflow.
-        AND NOT EXISTS (
-          SELECT 1 FROM driver_finance.settlement_lines sl2
-          WHERE sl2.source_driver_bill_id = db.id
-        )
+        -- ACCT-F26140 follow-up (2026-09-11, Lead-directed): a bare NOT EXISTS(settlement_lines)
+        -- also wrongly excluded a bill whose ONLY settlement_lines row pointed at a CANCELLED
+        -- settlement (that bill IS still an open obligation — the cancellation didn't pay it).
+        -- Now uses the same shared active-settlement predicate the register/list routes use.
+        AND NOT ${BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL}
         AND db.voided_at IS NULL
         AND COALESCE(db.gross_amount_cents, 0) > 0
       ORDER BY db.created_at ASC

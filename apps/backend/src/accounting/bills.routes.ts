@@ -32,10 +32,15 @@ import {
 } from "../lib/qbo-custom-document-number.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { requireVoidCancelExecutorWired } from "../lib/authz/void-cancel-authz.js";
+import { RESOLVE_ACTIVE_SETTLEMENT_LATERAL_SQL } from "../driver-finance/settlement-resolution.sql.js";
 
 // Resolve the register's settlement through current source lines, not the unpopulated bill stamp.
 // Aggregate to one identity: repeated lines cannot duplicate bills; conflicting active identities
-// remain unknown rather than selecting an arbitrary settlement. Original settlement stamps stay intact.
+// remain unknown rather than selecting an arbitrary settlement. Original settlement stamps stay
+// intact. ACCT-F26140 follow-up (2026-09-11): the active-settlement LATERAL is now the single
+// shared predicate in settlement-resolution.sql.ts — every driver-bill settlement resolver in the
+// codebase must import it from there, never re-type it (that drift is exactly what let
+// driver-bills-list.routes.ts/cash-flow.service.ts show cancelled settlements as "settled").
 export const DRIVER_BILL_REGISTER_SQL = `SELECT db.id::text, db.bill_number, db.driver_id::text,
                 concat_ws(' ', d.first_name, d.last_name) AS driver_name,
                 db.load_id::text, db.load_number, db.miles_basis, db.rate_per_mile_cents,
@@ -45,17 +50,7 @@ export const DRIVER_BILL_REGISTER_SQL = `SELECT db.id::text, db.bill_number, db.
                 settlement.settlement_number AS settlement_display_id, db.voided_at::text, db.created_at::text
            FROM driver_finance.driver_bills db
            LEFT JOIN mdata.drivers d ON d.id = db.driver_id AND d.operating_company_id = db.operating_company_id
-           LEFT JOIN LATERAL (
-             SELECT min(ds.id::text) AS settlement_id, min(ds.display_id) AS settlement_number
-               FROM driver_finance.settlement_lines sl
-               JOIN driver_finance.driver_settlements ds
-                 ON ds.id = sl.settlement_id AND ds.operating_company_id = db.operating_company_id
-              WHERE sl.source_driver_bill_id = db.id
-                AND sl.operating_company_id = db.operating_company_id
-                AND sl.is_active = true AND sl.voided_at IS NULL
-                AND ds.voided_at IS NULL AND ds.status NOT IN ('void', 'voided', 'cancelled')
-             HAVING count(DISTINCT ds.id) = 1
-           ) settlement ON true
+           ${RESOLVE_ACTIVE_SETTLEMENT_LATERAL_SQL}
           WHERE db.operating_company_id = $1::uuid
             AND ($2::boolean OR (db.status <> 'void' AND db.voided_at IS NULL))
           ORDER BY db.created_at DESC, db.id DESC

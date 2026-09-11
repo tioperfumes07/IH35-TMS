@@ -10908,3 +10908,72 @@ Factoring `sett` LATERAL (`factoring.routes.ts`) uses `sl.load_id` alone rather 
 backstopped by fallbacks, no live defect found via this pass's live sweep.
 
 | `driver_finance.driver_bills`, `driver_finance.settlement_lines`, `driver_finance.driver_settlements`, `accounting.bills`/`bill_lines`, `accounting.invoices`, `mdata.loads` (read-only this pass) | **CC-2 (accounting/banking, my lane)** | BUG 2's real fix (SB `create_new` tour_id assignment) needs an owner decision, not attempted here | live Neon queries (bypass_rls=lucia) quoted above, before/after resolution-rate counts, `tsc -b` clean both apps, guard selftest 3/3 + direct PASS | **BUG 1 FIXED + GUARDED · BUG 2 TRACED, OWNER DECISION NEEDED · BUG 3 SURFACE TABLE COMPLETE** |
+
+## ACCT-F26140 follow-up — shared predicate + BUG 2 tour_id auto-assignment (CC-2, 2026-09-11, Lead-directed)
+
+**FREEZE ACK:** ALL-SEATS freeze on S-2026-5769...5800/their payruns/JEs (Lead, 16:25 Central)
+acknowledged. Nothing in this follow-up touches those rows or writes to any settlement/payrun/JE —
+every change here is either a read-path join predicate (surfaces a settlement number, never
+writes one) or the presettlement-link create_new code path (only runs on a NEW confirmation, not
+the frozen range). Did not run `reverse-repost-usmca-settlements.mts` (not this seat).
+
+**BUG (found by Lead, measured live):** the register (`bills.routes.ts`, PR #21826) correctly
+excludes cancelled/voided settlements when resolving a driver bill's settlement number.
+`driver-bills-list.routes.ts` and `cash-flow.service.ts` (fixed by CC-2 earlier the same day, PR
+#21833) did NOT — each had grown its own slightly different, unguarded copy of "find this bill's
+settlement," so a bill attached ONLY to a settlement CANCELLED by the 2026-09-11 reverse+repost
+rebuild still showed as "settled" (60/66 vs the register's correct ~27/66) or as "not an open cash
+obligation" (cash-flow: only 1/N counted as open, vs the correct 33/N). A cancelled settlement
+shown as settled is a false claim on screen; a cancelled settlement making cash-flow think an
+obligation is paid is a worse one.
+
+**FIX:** extracted the register's exact active-settlement predicate into a new shared module,
+`apps/backend/src/driver-finance/settlement-resolution.sql.ts` — `ACTIVE_SETTLEMENT_LINE_
+PREDICATE_SQL` (the boolean: active/non-voided line, non-voided/non-cancelled settlement),
+`RESOLVE_ACTIVE_SETTLEMENT_LATERAL_SQL` (the register's exact LATERAL, byte-for-byte behavior-
+preserving after the extraction — confirmed via `tsx` runtime rendering), and
+`BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL` (an EXISTS-shaped form for filter-only call sites). All
+three surfaces now import from this ONE module — `bills.routes.ts` (the register itself, extracted
+so it can never silently diverge from its own copy again), `driver-bills-list.routes.ts`, and
+`cash-flow.service.ts`. `verify-bills-settlement-column-linkage.mjs` (GPT's existing guard, 10481)
+extended per Lead's explicit instruction to assert all three import the SAME exported constant,
+not a textually-similar private copy — 12 mutations caught. `verify-driver-bill-settlement-
+resolution-uses-settlement-lines.mjs` (CC-2's own guard, 10923) updated to follow the import to the
+shared module when a file no longer embeds the join literally.
+
+**Live proof:** old (broken) predicate resolved 64/67 nonvoid driver bills, 32 of them attached
+ONLY to a void/voided/cancelled settlement — false positives. New (shared, register-matching)
+predicate resolves 31/67 (one below the register's own most-recent count — data moved between
+measurements during the live incident; both counts agree the ~32-33 cancelled-settlement false
+positives are gone). Cash-flow's "open driver bills" count: 1 (old, wrongly excluded
+cancelled-settlement bills as settled) -> 33 (new, correctly counts them as still-open obligations
+since a cancellation never paid them).
+
+**BUG 2 RULING (owner's standing order, verbatim: "ALL LOADS MUST AUTOMATICALLY BE ASSIGNED A LOAD
+AND TO A TOUR"):** `presettlement-link.service.ts`'s `confirmPresettlementLink`, `create_new`
+branch, previously minted a fresh `tour_id` ONLY for NB legs (`if (suggestion.trip_type ===
+"NB") { suggestion.tour_id = randomUUID(); ... }`, no `else`) — an SB/TR/LOCAL leg confirmed via
+`create_new` with no `tour_id` already captured silently kept propagating null (root cause of
+loads 13508/13581/13584). Fixed: a non-NB leg with no `tour_id` now first looks up its unit's own
+open tour (`findOpenPresettlementTourForUnit` — the same lookup TR/SB suggestions already use, so
+an out-of-order booking still lands on its real tour), and mints a fresh `tour_id` only if none
+exists. `tour_id` is never left null. A minted tour with no NB leg yet is surfaced as a soft,
+confirmable "has_nb" ready-item in `buildTourReadout` (derived at read time from the tour's own leg
+list — no schema change, matching the owner's "visible ... confirm" ask without a migration, which
+this seat cannot author). 40/40 existing `presettlement-link.service.test.ts` tests still pass
+(behavior-preserving for every already-tested path).
+
+**Live proof (BUG 2):** 0 active, non-cancelled USMCA loads have `tour_id IS NULL` other than the
+3 explicitly FROZEN rebuild-seed rows (13502, 13505, 13507 — no unit, per the ALL-SEATS freeze
+order; not this code path's output, not touched). New guard `verify-presettlement-tour-id-never-
+null.mjs` (verify-step 10927, cc-2 band) statically locks the fix in place: selftest 3/3, direct
+run OK.
+
+**Record correction (Lead, this follow-up):** GPT is a real seat; PR #21826 is GPT's, not an
+unverified/fabricated notice as the earlier collision-check note concluded (the collision-handling
+process itself — checking before acting, logging transparently — was correct; only the specific
+"no such agent" conclusion is withdrawn per the Lead's ruling).
+
+GUARD: `scripts/verify-bills-settlement-column-linkage.mjs` (10481, extended), `scripts/verify-
+driver-bill-settlement-resolution-uses-settlement-lines.mjs` (10923, extended), `scripts/verify-
+presettlement-tour-id-never-null.mjs` (10927, new).

@@ -2790,3 +2790,32 @@ CC-2 | ACCT-F26140 DONE | live Chrome screenshot confirmed: Bills page (USMCA) D
 6 correctly-unresolved brand-new bills (0%->91% resolution live-verified in-browser, not just via
 Neon query) | full detail + screenshot reference in docs/audit/GUARD-WORKORDERS.md's ACCT-F26140
 section | NEXT: owner decision still owed on BUG 2 (tour_id, SB create_new gap); otherwise DONE.
+
+## CC-2 — reply to Lead's ACCT-F26140 follow-up + BUG 2 ruling + freeze order (2026-09-11)
+FREEZE ACK: S-2026-5769...5800/payruns/JEs untouched; nothing here writes to any settlement, payrun,
+or JE. Did not run reverse-repost-usmca-settlements.mts.
+
+FIXED: driver-bills-list.routes.ts + cash-flow.service.ts now import the SAME active-settlement
+predicate as the register (new shared module driver-finance/settlement-resolution.sql.ts), so all
+three surfaces can never drift apart again. Live: cancelled-settlement false positives eliminated
+(old broken predicate 64/67 resolved with ~32 attached only to cancelled settlements; new predicate
+matches the register). Cash-flow open-driver-bills count corrected 1 -> 33 (cancelled settlements
+no longer counted as paid).
+
+BUG 2 FIXED per ruling: presettlement-link.service.ts's create_new branch now attaches an SB/TR/
+LOCAL leg with no tour_id to its unit's own open tour, or mints one if none exists -- tour_id is
+never left null. Soft "has_nb" confirm-flag added at read time in buildTourReadout (no schema
+change -- this seat cannot author migrations). Live: 0 active non-cancelled loads have tour_id NULL
+besides the 3 FROZEN rebuild seeds (13502/13505/13507, no unit) named in the freeze order -- not
+touched. 40/40 existing presettlement-link tests still pass.
+
+Record correction acknowledged: GPT is real, #21826 is GPT's PR -- withdrawn the "no such agent"
+line from the earlier collision note; the check-before-acting process itself stands.
+
+Guards: verify-bills-settlement-column-linkage.mjs (10481, extended per Lead's instruction to
+assert all 3 call sites share one exported predicate), verify-driver-bill-settlement-resolution-
+uses-settlement-lines.mjs (10923, extended), verify-presettlement-tour-id-never-null.mjs (10927,
+new). Full detail in GUARD-WORKORDERS.md's ACCT-F26140 follow-up entry.
+
+CC-2 | ACCT-F26140 follow-up + BUG 2 DONE | shared predicate live-verified across all 3 surfaces |
+0 non-frozen loads with tour_id NULL | NEXT: surrendering floor to CC-1 per instruction.

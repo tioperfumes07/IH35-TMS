@@ -389,6 +389,29 @@ export async function confirmPresettlementLink(client: DbClient, input: ConfirmI
         SET tour_id = $1::uuid, updated_at = now()
         WHERE id = $2::uuid AND operating_company_id = $3::uuid`,
       [suggestion.tour_id, input.suggestion_id, input.operating_company_id]);
+    } else if (!suggestion.tour_id) {
+      // BUG 2 fix (owner's standing order, verbatim: "ALL LOADS MUST AUTOMATICALLY BE ASSIGNED A
+      // LOAD AND TO A TOUR" — Lead ruling 2026-09-11). Previously ONLY the NB branch above minted
+      // a tour_id; an SB/TR/LOCAL leg confirmed via create_new with no tour_id already captured
+      // silently kept propagating null (root cause of loads 13508/13581/13584 having tour_id
+      // NULL). tour_id IS NULL is never a valid outcome. First try this unit's own open tour (the
+      // same lookup suggestPresettlementLink already uses for TR/SB — an SB/TR leg booked out of
+      // order should still land on its unit's real tour, not a fresh orphan one); only mint a
+      // brand-new tour_id if no open tour exists for this unit. A minted tour with no NB leg is
+      // surfaced as a soft, confirmable flag at read time (buildTourReadout's "has_nb" ready item)
+      // — no schema change needed, derived from the tour's own leg list.
+      suggestion.tour_id = suggestion.unit_id
+        ? await findOpenPresettlementTourForUnit(client, {
+            operating_company_id: input.operating_company_id,
+            driver_id: suggestion.driver_id,
+            unit_id: suggestion.unit_id,
+          })
+        : null;
+      if (!suggestion.tour_id) suggestion.tour_id = randomUUID();
+      await client.query(`UPDATE driver_finance.presettlement_link_suggestions
+        SET tour_id = $1::uuid, updated_at = now()
+        WHERE id = $2::uuid AND operating_company_id = $3::uuid`,
+      [suggestion.tour_id, input.suggestion_id, input.operating_company_id]);
     }
     // GAP-PRESETTLEMENT-PERIOD-NULL (found live 2026-09-05, seeding the settlement feed): this
     // branch never set period_start/period_end (both NOT NULL, no default on
