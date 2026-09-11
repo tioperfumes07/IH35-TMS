@@ -8609,5 +8609,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-11",
     "purpose": "verify-settlement-number-always-visible"
+  },
+  "11209": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-status-dropdown-sweep"
   }
 }
