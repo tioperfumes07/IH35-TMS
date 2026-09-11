@@ -1032,6 +1032,7 @@
   "verify-reefer-hours-archive-failure-truth.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
   "verify-reefer-persistence-identity-class.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
   "verify-reefer-specs-update-failure-truth.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
+  "verify-reimbursement-historical-reclass.mjs": "added 2026-09-11 Devin-B (ACCT-F26063) — one-time historical reclass backfill guard with selftest; runs locally before/after the backfill and is not a recurring CI guard. Wiring into a verify-step would require a CLAIMED number this lane does not hold (Rule 37 claim->merge->author).",
   "verify-relay-deposit-review-company-lifecycle.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
   "verify-relay-history-import-company-scope.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
   "verify-report-export-buttons-await-and-catch.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
