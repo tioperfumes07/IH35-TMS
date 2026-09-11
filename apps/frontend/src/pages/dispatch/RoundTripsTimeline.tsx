@@ -26,6 +26,17 @@ const LONG_LEG_OUTLINE = "#dc2626";
 
 const COLOR: Record<TripKind, string> = { NB, SB, TR };
 
+// RT-ROW-HEIGHT-CAP (owner correction 2026-09-11, verbatim: "cap the row-height... so 16 units fit in
+// view"). Each leg/undated load stacks as its own bar within a unit's row (top: 14 + li*20), and the
+// row's own minHeight grew UNBOUNDED with leg count (40 + legs*22px) -- a single busy unit with many
+// legs could dwarf its neighbors and push the "16 units visible without excess scrolling" goal out of
+// reach. ROW_MAX_VISIBLE_LEGS caps how tall any ONE row grows; a unit with more legs than that gets an
+// internally-scrollable bar area (see the bars container below) instead of an ever-taller row -- no
+// leg is ever hidden, it just scrolls within its own row rather than inflating the whole page.
+const ROW_HEADER_HEIGHT = 40;
+const LEG_ROW_HEIGHT = 22;
+const ROW_MAX_VISIBLE_LEGS = 4;
+
 function dayList(fromIso: string, toIso: string): string[] {
   const out: string[] = [];
   let cur = fromIso;
@@ -92,11 +103,15 @@ export function RoundTripsTimeline({ loads, rangeFrom, rangeTo, onLoadClick }: P
             const undated = unitLoads.filter((l) => !hasSpanDates(l));
             const chrono = [...dated].sort((a, b) => (loadSpanStartMs(a) ?? 0) - (loadSpanStartMs(b) ?? 0));
             const legs = orderedLegsForUnit(dated);
+            const totalLegRows = legs.length + undated.length;
+            const visibleLegRows = Math.min(totalLegRows, ROW_MAX_VISIBLE_LEGS);
+            const rowMinHeight = ROW_HEADER_HEIGHT + visibleLegRows * LEG_ROW_HEIGHT;
+            const barsOverflow = totalLegRows > ROW_MAX_VISIBLE_LEGS;
             return (
               <div
                 key={unitId}
                 className="relative border-b border-gray-100"
-                style={{ minHeight: 40 + (legs.length + undated.length) * 22 }}
+                style={{ minHeight: rowMinHeight }}
                 data-testid={`round-trips-timeline-unit-${unitId}`}
               >
                 <div
@@ -111,7 +126,12 @@ export function RoundTripsTimeline({ loads, rangeFrom, rangeTo, onLoadClick }: P
                       noun="Unit"
                     />
                   </div>
-                  <div className="relative min-h-10" style={{ gridColumn: `2 / span ${days.length}` }}>
+                  <div
+                    className={`relative min-h-10 ${barsOverflow ? "overflow-y-auto" : ""}`}
+                    style={{ gridColumn: `2 / span ${days.length}`, maxHeight: barsOverflow ? rowMinHeight : undefined }}
+                    data-testid={barsOverflow ? `round-trips-timeline-unit-${unitId}-scroll` : undefined}
+                    title={barsOverflow ? `${totalLegRows} legs — scroll within this row to see all` : undefined}
+                  >
                     {chrono.slice(0, -1).map((load, i) => {
                       const next = chrono[i + 1];
                       const gapStart = loadSpanEndMs(load);

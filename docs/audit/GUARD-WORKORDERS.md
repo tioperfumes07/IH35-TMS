@@ -10671,3 +10671,52 @@ No code change from this id-map — `banking.bank_transactions`, `plaid.service.
 guard's actual pinned-id/reconciliation logic are untouched; this is a documentation/registry-hygiene
 fix only, per the owner's explicit instruction to resolve the collision "so the id is unique going
 forward."
+
+## OPEN (CC-3 2026-09-11, found tracing the assigned "Add to it" button): ADD-LOAD-500-EMPTY-ACTOR-UUID
+
+**FINDING:** Owner assignment: "LIST VIEW: an 'Add to it' button does not work. Trace it, wire it to
+the real endpoint, prove it live." Traced fully: the FRONTEND is already 100% correctly wired
+(`DispatchBoard.tsx`'s `renderPreSettlementPrompt` → `addLoadMutation` → `addLoadToPreSettlement()`
+→ `POST /api/v1/driver-finance/pre-settlements/:id/add-load` with the correct
+`{operating_company_id, load_id}` body, confirmed via a `window.fetch` instrumentation live in
+Chrome). The backend endpoint itself fails every time with **HTTP 500,
+`{"code":"22P02","message":"invalid input syntax for type uuid: \"\""}`** — reproduced live 5/5 times
+on 5 different real USMCA settlements/loads (S-2026-0028/load 13589, S-2026-0025/13587,
+S-2026-0022/13583, S-2026-0021/13582, S-2026-0013/13588), confirmed via direct `fetch()` call in the
+live Chrome console bypassing any UI/automation-tool ambiguity.
+
+**ROOT CAUSE (exact, verified by source read):** `pre-settlement.routes.ts`'s add-load handler calls
+`appendSettlementLineFromDriverBillIfMissing(client, { settlementId, operatingCompanyId, driverId,
+loadId, teamId, lineType })` — note: **no `actorUserId` passed**. Inside that function
+(`settlement-engine.ts:91`), when no eligible (non-void) `driver_finance.driver_bills` row exists yet
+for the driver/load (the documented ACCT-F206 "record the skip, don't return silently" path, line
+149), it calls `appendCrudAudit(client, String(input.actorUserId ?? ""), ...)`. Since
+`actorUserId` was never passed by the caller, `input.actorUserId` is `undefined`, and
+`String(undefined ?? "")` evaluates to the literal empty string `""` — which `appendCrudAudit`
+presumably casts `::uuid` internally, and Postgres rejects an empty string as an invalid UUID,
+throwing `22P02` and rolling back the WHOLE add-load transaction (confirmed no partial
+`settlement_lines` rows were left behind — clean rollback, not a data-integrity risk, just a total
+functional failure of the feature). **All 5 loads I tested happen to be dispatched-but-not-yet-billed
+(no `driver_bills` row exists for them yet)**, which is presumably the COMMON case for "add a load
+that's still in transit to an open pre-settlement" (the whole point of the button) — so this is not
+an edge case, it plausibly fails on every real use of the button today.
+
+**SUGGESTED FIX (not applied — CC-1's lane, money/GL/settlement-engine):** the call site two lines
+below the broken one (`appendEscrowContributionLineIfMissing`, in the SAME route handler) already
+correctly passes `actorUserId: user.uuid` — the identical fix just needs to be added to the
+`appendSettlementLineFromDriverBillIfMissing` call above it:
+```
+await appendSettlementLineFromDriverBillIfMissing(client, {
+  settlementId: params.data.id,
+  operatingCompanyId: body.operating_company_id,
+  driverId,
+  loadId: body.load_id,
+  teamId: team?.teamId ?? null,
+  lineType,
+  actorUserId: user.uuid,   // <-- missing; causes the ACCT-F206 skip-audit path to cast "" to ::uuid
+});
+```
+
+Per Seat Ownership Law, filing rather than fixing — this is `apps/backend/src/driver-finance/{pre-settlement.routes.ts,settlement-engine.ts}`, driver-finance/settlement-engine money code, CC-1's lane, not CC-3's (mechanical/FE/CI-guards). The frontend half of my assignment (trace + confirm correct wiring) is DONE; this backend defect is the reason "it does not work" and needs CC-1's fix + re-verify before the button can be proven working end-to-end.
+
+| `driver_finance.settlement_lines` (read-only this pass — the bug PREVENTS any write, confirmed via clean-rollback check), `driver_finance.driver_bills`, `mdata.loads` | **CC-1 (driver-finance/settlement-engine money code, my own lane boundary — filing per FIND IT/FILE IT, not fixed here)** | apply the one-line `actorUserId: user.uuid` fix above, then re-verify live that "Add to it" succeeds on a real dispatched-but-not-yet-billed load | live Chrome `window.fetch` instrumentation + direct fetch() call reproducing the exact 500 on 5/5 real settlements; Neon confirms zero partial `settlement_lines` writes (clean rollback) | **OPEN · CC-1's own lane · frontend wiring confirmed correct, backend defect precisely root-caused, not fixed here** |
