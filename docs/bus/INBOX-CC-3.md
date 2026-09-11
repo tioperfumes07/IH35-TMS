@@ -1,3 +1,26 @@
+# ★ CC-3 — NEXT AFTER DRIVER-COMPLIANCE-01: B6 BANKING HOME SINGLE BAR (Claude Lead, 2026-09-11 17:45 Central) — deadline 20:30 Central (01:30 UTC), surrender CC-1
+
+```
+CC-3 — BANKING HOME: KILL THE HEADER LINK ROW, FOLD EVERY ACTION INTO THE TABS BAR (B6, owner ruled 2026-09-06, re-demanded live 2026-09-11 17:40 CT). Claude Lead. Take this the moment DRIVER-COMPLIANCE-01 posts DONE; do not interleave.
+
+OWNER (verbatim, 17:40 CT, on the live page): "in banking home we have tabs, on top, why the fuck do these appear. QBO mirrored accounts + categorization / Bank Register / Chart of Accounts / + Record Transfer / + Record Deposit / View Transfers / + Import Statement / Cash GL setup / Email Queue / + Create Account / Manage Accounts / + Petty Cash / Connect Bank / + Connect Credit Card". Owner ruling 2026-09-06 (Banking toolbar-one + B6): ONE bar; actions live under "Go to ▾" and "+ Create ▾".
+
+MEASURED (main 47391481, apps/frontend/src/pages/banking/BankingHome.tsx): L487 <PageHeader title="Banking Home" subtitle="QBO mirrored accounts + categorization" actions={headerActions}/>; L393–470 navActions (Bank Register, Chart of Accounts, + Record Transfer [testid banking-home-record-transfer], + Record Deposit, View Transfers, + Import Statement, Cash GL setup, Email Queue, + Create Account / Manage Accounts, + Petty Cash, Connect Bank, + Connect Credit Card, + Connect Other) + tabActions per tab (+ Manual JE, + Pay Credit Card on Transactions; + Reconcile, Open Reconcile Queue on Reconciliation); L490 <NavyPageSubNav items=BANKING_MODULE_TABS/>. The row has existed since 85063bc1e3 (2026-05-06) and grew on 09-06/09-07 (f370c200, c71726a1, fb245434). Not a regression from today — an unexecuted ruling.
+
+BUILD (one PR, one guard):
+1. Remove the subtitle text "QBO mirrored accounts + categorization" (QBO is reconcile-only by law; the phrase is a machine label). PageHeader keeps the title only.
+2. The header action row is REMOVED from PageHeader. Every action moves, additive, into TWO menus at the right end of the NavyPageSubNav tabs bar: "Go to ▾" = Bank Register · Chart of Accounts · View Transfers · Cash GL setup · Email Queue · Open Reconcile Queue; "+ Create ▾" = Record Transfer · Record Deposit · Import Statement · Create Account / Manage Accounts · Petty Cash · Connect Bank · Connect Credit Card · Connect Other · Manual JE · Pay Credit Card · Reconcile. Tab-specific items stay enabled on every tab (no hiding — additive law). Same handlers, same testids (banking-home-record-transfer etc. must still render inside the open menu so the existing reachability guards keep passing; adjust those guards to open the menu first, never delete them).
+3. Menu component: build ONE reusable <HeaderMenu label items/> (button 28px like the tabs bar controls, list 1px --line border, 28px rows, click-outside + Esc close, keyboard arrows) under components/ui and use it for BOTH menus; Load Detail's "More ▾" pattern (LoadDetailDrawer.tsx:814) is the visual precedent. No Tailwind soup — the app's tokens.
+4. Measure before/after with getComputedStyle: PageHeader height, tabs-bar height; the page above the KPI tiles must shrink by the removed row. Paste both numbers.
+5. Guard scripts/verify-banking-home-single-bar.mjs: BankingHome renders 0 ActionButtons outside the two menus; both menus present; every action label from the list above reachable inside a menu; subtitle absent; existing record-transfer reachability guard green. --selftest with planted failures. Claim a verify-step number.
+LANE BOUNDARY: BankingHome.tsx + the new ui component + guards. Do NOT touch BankingTransactionsDesignView.tsx (lead shipped BANK-F26150 there via CSS), banking routes, or money code.
+DONE LINE (OUTBOX-CC-3): CC-3 | B6 BANKING-HOME-SINGLE-BAR DONE | <sha> | live FE <sha> | PageHeader h <before>→<after> px · tabs bar h <n> px · ActionButtons outside menus 0 | guard n/n | screenshot /banking with both menus, one open | NEXT
+FAST-MERGE: Gate → Push → PR → Merge (squash) → DEPLOY-REQUEST (FE) on OUTBOX-CC-3 → live proof → Next.
+DEADLINE: 2026-09-11 20:30 Central (01:30 UTC 09/12). Surrender CC-1.
+```
+
+---
+
 # ★ CC-3 — LEAD ASSIGNMENT (Claude Lead, 2026-09-11 15:55 Central / 20:55 UTC) — deadline 18:00 Central (23:00 UTC), surrender Codex
 
 > Owner-saved copy: ~/Downloads/09-11-2026-CC-3-DRIVER-COMPLIANCE-01-LICENSE-PDFS-AND-ACTIVE-ROSTER.md. Post every ship/blocker to docs/bus/OUTBOX-CC-3.md.
