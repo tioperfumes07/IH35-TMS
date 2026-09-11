@@ -2058,3 +2058,47 @@ DONE LINE: CC-1 | LEAD ITEM 1 (catalogs.load_exception_reasons) SHIPPED + migrat
 well ahead of the 23:30 UTC deadline | deploy in flight | REMAINING: live Chrome click-through on
 the new Lists page, honest next step once deploy lands | NEXT: moving immediately to ITEM 2 (Bills
 predicate consolidation, deadline 01:00 UTC).
+
+---
+
+## CC-1 — ITEMS 2 & 3 ALREADY SHIPPED (found on arrival, independently re-verified, not duplicated)
+
+Before starting ITEM 2's build, checked `git log` per standing law ("sync first, local clone lags
+main") and found both ITEM 2 (Bills predicate) and ITEM 3 (BUG 2 tour_id auto-assignment) were
+**already shipped in full** by PR #21843 (`30b38ab027`), merged **21:58 UTC — 32 minutes before**
+the Lead's 22:30 UTC message assigning them to me. Not duplicating that work; independently
+re-verified it live instead, since a second author touching the same predicate/logic is exactly how
+drift like this happens in the first place.
+
+**ITEM 2 verified live, just now:** `apps/backend/src/driver-finance/settlement-resolution.sql.ts`
+exports the one shared predicate (`ACTIVE_SETTLEMENT_LINE_PREDICATE_SQL` /
+`RESOLVE_ACTIVE_SETTLEMENT_LATERAL_SQL` / `BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL`) exactly matching
+the Lead's spec (`sl.is_active AND sl.voided_at IS NULL AND ds.voided_at IS NULL AND ds.status NOT
+IN ('void','voided','cancelled')`, `HAVING count(DISTINCT ds.id)=1`). Confirmed all three call
+sites import it: `bills.routes.ts` (via `RESOLVE_ACTIVE_SETTLEMENT_LATERAL_SQL`),
+`driver-finance/driver-bills-list.routes.ts` (same), `cash-flow/cash-flow.service.ts` (via
+`BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL`, confirmed by direct grep, not the accounting/ file of the
+same name which doesn't touch driver bills). `verify-bills-settlement-column-linkage.mjs` PASS
+("ALL THREE call sites... share the one exported predicate; 12 mutations caught");
+`verify-driver-bill-settlement-resolution-uses-settlement-lines.mjs` PASS. Independently re-ran the
+live predicate against current USMCA data myself (Neon, bypass_rls=lucia): 73 total non-void driver
+bills, 40 resolve to a real active settlement under the shared predicate — internally consistent
+across the shape all three surfaces now share (numbers differ from the commit's own 31/67 simply
+because this is a live, continuously-changing dataset, not a discrepancy in the fix).
+
+**ITEM 3 verified live, just now:** direct Neon query for active, non-cancelled USMCA loads with
+`tour_id IS NULL` returns exactly the 3 explicitly FROZEN rebuild-seed rows (13502, 13505, 13507,
+all `delivered_pending_docs`, no unit) — zero others. `verify-presettlement-tour-id-never-null.mjs
+--selftest` PASS (3/3). Matches the Lead's own guard target ("0 active non-cancelled loads with
+tour_id NULL after link") exactly.
+
+**Deploy confirmed live:** `30b38ab027` is a git ancestor of `1491a8f988` (this turn's ITEM 1
+merge), and `GET /api/v1/healthz/shallow` confirms `1491a8f988` is the currently deployed backend
+SHA — so ITEMS 2 and 3 are not just merged, they are live in production right now, no separate
+deploy-request needed from me.
+
+DONE LINE: CC-1 | ITEMS 2 (Bills predicate) + 3 (BUG 2 tour_id) FOUND ALREADY SHIPPED on arrival
+(PR #21843, another authorized seat, 32 min before assignment) | independently re-verified live,
+not duplicated — both guards PASS, both live measurements match spec exactly | already deployed
+(ancestor of the currently-live SHA) | NEXT: resuming the standing idle-loop; all 3 Lead items are
+now closed, none past deadline.
