@@ -16,6 +16,7 @@ import { currentAuthUser, validationError, withCompanyScope } from "../accountin
 import { checkGates } from "./auth-gates/gate-registry.service.js";
 // Side-effect imports: each gate module self-registers with the gate registry on import.
 import "./auth-gates/wf-038-active-driver.gate.js";
+import "./auth-gates/driver-compliance-01.gate.js";
 import "./auth-gates/wf-044-advisory.gate.js";
 import "./auth-gates/wf-050-dvir-major.gate.js";
 import { canAssignLoadToDriver } from "./driver-availability.service.js";

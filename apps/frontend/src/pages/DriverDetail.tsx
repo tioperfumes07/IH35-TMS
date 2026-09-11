@@ -605,7 +605,11 @@ export function DriverDetailPage() {
 
   const deactivateMutation = useMutation({
     mutationFn: () => deactivateDriver(id, {
-      quarantineTestFixture: /(^|\W)(test|codex)(\W|$)/i.test(`${driver?.first_name ?? ""} ${driver?.last_name ?? ""}`),
+      // DRIVER-COMPLIANCE-01: kept in lockstep with the backend's unmistakableDriverFixtureName()
+      // (apps/backend/src/mdata/drivers.routes.ts) -- zztest/"SAFETY —" added there too.
+      quarantineTestFixture:
+        /(^|\W)(test|codex|zztest)(\W|$)/i.test(`${driver?.first_name ?? ""} ${driver?.last_name ?? ""}`) ||
+        (driver?.first_name?.trim().toLowerCase() === "safety" && driver?.last_name?.trim() === "—"),
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["driver", id] });
