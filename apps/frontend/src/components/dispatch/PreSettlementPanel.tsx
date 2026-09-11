@@ -64,7 +64,25 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
     );
   }
 
-  const { settlement, lines } = query.data;
+  const { settlement, lines, legs } = query.data;
+
+  // SETTLEMENT LOAD LINKAGE: FIX THE RENDER, NOT THE SCHEMA (owner 2026-09-11) — prefer the
+  // backend's presettlement_link_id-sourced `legs` (every load actually linked to this tour);
+  // fall back to the first_load/last_load bookend pair only when `legs` is empty (a settlement
+  // whose legs predate presettlement_link_id).
+  const linkedTripRows: { loadId: string; loadNumber: string; tripType: string }[] =
+    legs.length > 0
+      ? legs.map((leg) => ({ loadId: leg.load_id, loadNumber: leg.load_number, tripType: leg.trip_type ?? "?" }))
+      : [
+          settlement.first_load_id && settlement.first_load_number
+            ? { loadId: settlement.first_load_id, loadNumber: settlement.first_load_number, tripType: "NB" }
+            : null,
+          settlement.last_load_id &&
+          settlement.last_load_number &&
+          settlement.last_load_number !== settlement.first_load_number
+            ? { loadId: settlement.last_load_id, loadNumber: settlement.last_load_number, tripType: "SB" }
+            : null,
+        ].filter((row): row is { loadId: string; loadNumber: string; tripType: string } => row !== null);
 
   const earningLines = lines.filter((l) =>
     ["earnings", "extra_pay", "team_split_primary", "team_split_secondary"].includes(l.line_type)
@@ -115,37 +133,29 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
         </span>
       </div>
 
-      {/* Linked trips */}
+      {/* Linked trips — SETTLEMENT LOAD LINKAGE: FIX THE RENDER, NOT THE SCHEMA (owner 2026-09-11).
+          This used to render ONLY the first_load/last_load bookend pair (NB/SB), which drops every
+          middle leg (e.g. a TR triangle) a tour can genuinely have — the "1 load per settlement"
+          render bug. Render every load the backend's `legs` reverse-lookup actually found; fall back
+          to the bookend pair only if `legs` came back empty (a settlement whose legs predate
+          presettlement_link_id). One shared row renderer for both paths — no duplicated markup. */}
       <div className="space-y-1">
         <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Linked Trips</div>
-        {settlement.first_load_number ? (
-          <div className="flex items-center gap-2 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1.5">
-            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[11px] font-bold uppercase text-slate-700">
-              NB
-            </span>
-            <EntityLinkOrTombstone
-              kind="load"
-              id={settlement.first_load_id}
-              name={settlement.first_load_number}
-              noun="Load"
-              className="font-mono text-xs font-semibold text-slate-700"
-            />
-          </div>
-        ) : null}
-        {settlement.last_load_number &&
-        settlement.last_load_number !== settlement.first_load_number ? (
-          <div className="flex items-center gap-2 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1.5">
-            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[11px] font-bold uppercase text-slate-700">
-              SB
-            </span>
-            <EntityLinkOrTombstone
-              kind="load"
-              id={settlement.last_load_id}
-              name={settlement.last_load_number}
-              noun="Load"
-              className="font-mono text-xs font-semibold text-slate-700"
-            />
-          </div>
+        {linkedTripRows.length > 0 ? (
+          linkedTripRows.map((row) => (
+            <div key={row.loadId} className="flex items-center gap-2 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1.5">
+              <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[11px] font-bold uppercase text-slate-700">
+                {row.tripType}
+              </span>
+              <EntityLinkOrTombstone
+                kind="load"
+                id={row.loadId}
+                name={row.loadNumber}
+                noun="Load"
+                className="font-mono text-xs font-semibold text-slate-700"
+              />
+            </div>
+          ))
         ) : (
           <div className="rounded-sm border border-dashed border-gray-200 px-2 py-1.5 text-xs text-gray-400">
             Return (SB) load not yet linked — use "Add to it" from the board

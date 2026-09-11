@@ -44,6 +44,53 @@ export function SettlementsTable({
   const columns = useMemo<Array<ParityColumn<SettlementListRow>>>(
     () => [
       {
+        // COLUMN-ORDERING LAW (owner 2026-09-11): Settlement number renders on the LEFT side of the
+        // row — was buried second, behind Driver. Now first, matching every other Settlements surface.
+        key: "settlement_display_id",
+        label: "Settlement/Tour",
+        alwaysVisible: true,
+        sortable: true,
+        sortValue: (row) => entityLabel(row.display_id, row.id, "Settlement"),
+        render: (row) => (
+          <EntityLinkOrTombstone
+            kind="settlement"
+            id={row.id}
+            name={row.display_id}
+            noun="Settlement"
+          />
+        ),
+      },
+      {
+        // COLUMN-ORDERING LAW (owner 2026-09-11): Load renders immediately next to Settlement.
+        // RENDER FIX (owner 2026-09-11, "FIX THE RENDER, NOT THE SCHEMA"): this cell used to show
+        // only `load_links[0]` ("First linked load; open the settlement to see every load") — the
+        // exact "1 load per settlement" render bug. The backend already returns every distinct
+        // linked load in `load_links` (settlements.routes.ts's own comment: "so the FE can render a
+        // real EntityLink per covered load"); the bug was purely this cell throwing the rest away.
+        key: "loads",
+        label: "Load Number",
+        alwaysVisible: true,
+        sortable: true,
+        headerTitle: "Every load linked to this settlement",
+        sortValue: (row) => row.load_links?.[0]?.label ?? "",
+        cellClass: "whitespace-nowrap",
+        render: (row) => {
+          const links = row.load_links ?? [];
+          if (links.length === 0) return "—";
+          return (
+            <span className="flex flex-wrap items-center gap-1">
+              {links.map((link) => (
+                <EntityLink key={link.id} kind="load" id={link.id} label={entityLabel(link.label, link.id, "Load")} />
+              ))}
+            </span>
+          );
+        },
+      },
+      {
+        key: "load_count", label: "Load count", sortable: true,
+        sortValue: row => Number(row.load_count ?? 0), render: row => Number(row.load_count ?? 0),
+      },
+      {
         key: "driver",
         label: "Driver",
         sortable: true,
@@ -64,21 +111,6 @@ export function SettlementsTable({
               noun="Driver"
             />
           </div>
-        ),
-      },
-      {
-        key: "settlement_display_id",
-        label: "Settlement/Tour",
-        alwaysVisible: true,
-        sortable: true,
-        sortValue: (row) => entityLabel(row.display_id, row.id, "Settlement"),
-        render: (row) => (
-          <EntityLinkOrTombstone
-            kind="settlement"
-            id={row.id}
-            name={row.display_id}
-            noun="Settlement"
-          />
         ),
       },
       {
@@ -109,23 +141,6 @@ export function SettlementsTable({
         sortable: true,
         sortValue: (row) => row.trip_closed_at ?? null,
         render: (row) => (row.trip_closed_at ? formatDateUS(row.trip_closed_at) : <span className="text-gray-500">—</span>),
-      },
-      {
-        key: "loads",
-        label: "Load Number",
-        alwaysVisible: true,
-        sortable: true,
-        headerTitle: "First linked load; open the settlement to see every load",
-        sortValue: (row) => row.load_links?.[0]?.label ?? "",
-        cellClass: "tabular-nums",
-        render: (row) => {
-          const link = row.load_links?.[0];
-          return link ? <EntityLink kind="load" id={link.id} label={entityLabel(link.label, link.id, "Load")} /> : "—";
-        },
-      },
-      {
-        key: "load_count", label: "Load count", sortable: true,
-        sortValue: row => Number(row.load_count ?? 0), render: row => Number(row.load_count ?? 0),
       },
       {
         key: "gross",

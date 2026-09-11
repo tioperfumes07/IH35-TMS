@@ -25,9 +25,11 @@ const DASH = "\u2014";
 
 const TOUR_COLUMNS = (state: "open" | "closed", companyId: string): ParityColumn<TourListRow>[] => [
   { key: "tour", label: "Settlement/Tour", alwaysVisible: true, testId: "setl-tour-col-id", sortable: true, className: "whitespace-nowrap", minWidth: 90, sortValue: r => r.display_id ?? "", render: r => <Link className="ldt-link font-semibold" style={{ display: "inline" }} to={`/driver-finance/settlements?settlement_id=${encodeURIComponent(r.settlement_id)}`}>{r.display_id ?? "Settlement"}</Link> },
+  // COLUMN-ORDERING LAW (owner 2026-09-11): Load renders immediately next to Settlement, same as
+  // every other surface this rule is applied to — before Driver/Unit, not after.
+  ...tourLoadColumns("setl-tour-col"),
   { key: "driver", label: "Driver", testId: "setl-tour-col-driver", sortable: true, minWidth: 120, maxWidth: 200, cellClass: "whitespace-nowrap", sortValue: r => r.driver_name ?? "", render: r => <span className="block max-w-[200px] truncate" title={r.driver_name ?? ""}>{r.driver_name ?? DASH}</span> },
   { key: "unit", label: "Unit", testId: "setl-tour-col-unit", sortable: true, minWidth: 56, maxWidth: 64, className: "whitespace-nowrap", sortValue: r => r.unit_number ?? "", render: r => r.unit_number ?? DASH },
-  ...tourLoadColumns("setl-tour-col"),
   // NEW-10 (owner 2026-09-07): "date started" + "delivery date" of the ORIGINAL load that created the
   // (re)settlement. Distinct from the tour-level "Started" (trip-open) stamp below — these are the
   // original load's own first-pickup / last-delivery stop dates, tooltip-tagged with its load number.
