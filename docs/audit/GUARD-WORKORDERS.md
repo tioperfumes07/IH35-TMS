@@ -10720,3 +10720,19 @@ await appendSettlementLineFromDriverBillIfMissing(client, {
 Per Seat Ownership Law, filing rather than fixing — this is `apps/backend/src/driver-finance/{pre-settlement.routes.ts,settlement-engine.ts}`, driver-finance/settlement-engine money code, CC-1's lane, not CC-3's (mechanical/FE/CI-guards). The frontend half of my assignment (trace + confirm correct wiring) is DONE; this backend defect is the reason "it does not work" and needs CC-1's fix + re-verify before the button can be proven working end-to-end.
 
 | `driver_finance.settlement_lines` (read-only this pass — the bug PREVENTS any write, confirmed via clean-rollback check), `driver_finance.driver_bills`, `mdata.loads` | **CC-1 (driver-finance/settlement-engine money code, my own lane boundary — filing per FIND IT/FILE IT, not fixed here)** | apply the one-line `actorUserId: user.uuid` fix above, then re-verify live that "Add to it" succeeds on a real dispatched-but-not-yet-billed load | live Chrome `window.fetch` instrumentation + direct fetch() call reproducing the exact 500 on 5/5 real settlements; Neon confirms zero partial `settlement_lines` writes (clean rollback) | **OPEN · CC-1's own lane · frontend wiring confirmed correct, backend defect precisely root-caused, not fixed here** |
+
+## OPEN (CC-3 2026-09-11, found while gating the CANCEL LOAD/CROSS-TAB PR): SORTABLE-COLUMNS-BASELINE-DRIFT-4
+
+**FINDING:** `scripts/verify-sortable-columns-and-void-visibility.mjs` FAILs on bare `origin/main` — unrelated to any change in this session's PR #21827 (confirmed via `git stash` back to a clean tree, ran the guard again, same failure):
+```
+verify:sortable-columns-and-void-visibility — A1 missing-sortable=1162 (baseline 1158) · A2 internal-sort-on-paginated=3 (baseline 4) · B1 missing-void-banner=5/6 (baseline 6) · B2 missing-void-filter=1/6 (baseline 1)
+verify:sortable-columns-and-void-visibility FAIL — new regressions above baseline:
+  ✗ A1: 4 NEW ParityTable/DataTable column(s) with a label but no `sortable` — above baseline 1158.
+```
+4 new labeled ParityTable/DataTable columns landed somewhere on `main` (between roughly commit `856766f67e` and whenever this baseline was last bumped) without a `sortable` key, pushing the missing-sortable count from 1158 to 1162. This guard is part of `branch:precheck-push`'s block-ready/verify-static-fallback path — it will BLOCK every seat's next push until either the baseline is deliberately bumped (if the 4 new columns are intentionally non-sortable) or `sortable` is added to whichever 4 columns caused it.
+
+**NOT INVESTIGATED FURTHER:** did not identify which file(s)/seat introduced the 4 columns — the guard script has no verbose/offender-listing mode I could find quickly, and bisecting main's recent history wasn't conclusive in a quick pass. This is outside my (CC-3 mechanical/FE/CI-guards, currently also covering reassigned Dispatch work) surface to root-cause blind; filing per FIND IT/FILE IT rather than guessing which table.
+
+**SUGGESTED NEXT STEP (not applied):** run `node scripts/verify-sortable-columns-and-void-visibility.mjs` locally with the script extended to print the actual offending column entries (file + label), or bisect the last ~10-15 merged PRs touching any `pages/**`/`components/**` ParityTable/DataTable usage for a new column definition missing `sortable: true`.
+
+| N/A (guard/static-analysis finding, no data touched) | **Unassigned — whichever seat's recent PR added the 4 columns** | add `sortable` to the 4 new columns, or deliberately bump the A1 baseline in the guard if they are intentionally non-sortable | `git stash` + re-run `node scripts/verify-sortable-columns-and-void-visibility.mjs` on a clean `origin/main` checkout, confirmed failing before any of this session's changes | **OPEN · blocks every seat's next push via branch:precheck-push until resolved** |
