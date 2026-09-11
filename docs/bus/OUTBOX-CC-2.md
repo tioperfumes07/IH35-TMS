@@ -2819,3 +2819,21 @@ new). Full detail in GUARD-WORKORDERS.md's ACCT-F26140 follow-up entry.
 
 CC-2 | ACCT-F26140 follow-up + BUG 2 DONE | shared predicate live-verified across all 3 surfaces |
 0 non-frozen loads with tour_id NULL | NEXT: surrendering floor to CC-1 per instruction.
+
+## CC-2 — TRUCK LINE WIP (backend complete)
+Backend done: GET /api/v1/dispatch/truck-line (read model, station derivation pure function +
+unit-tested for all 9 states + multi-stop, live-verified: 16 in-service USMCA trucks, 7 dispatched).
+POST .../intransit-issues/office gains reason_id (validates catalogs.load_exception_reasons when
+present, gracefully no-ops until CC-1's migration lands). New office-facing stop-arrive/depart
+endpoints (/api/v1/dispatch/truck-line/loads/:id/stops/:id/arrive|depart) -- the ONLY existing
+writer (driver-pwa/dispatch-view.routes.ts) is driver-session-only, uncallable from a dispatcher
+browser, so extracted its exact logic (incl. revenue/settlement side effects) into a shared
+apps/backend/src/dispatch/stop-stamp.service.ts both routes now call -- zero duplicated logic, all
+6 existing driver-pwa tests still pass. Source tag 'manual' (not a new 'dispatcher_truck_line'
+value -- that needs a migration, this seat cannot author DDL; 'manual' matches the design's own
+"dispatcher phone" evidence option). No new status writer (same shared function, same mdata.loads
+write the driver-pwa route already made), no second exceptions table, no DDL.
+
+Now building the frontend Truck Line view (5th segment, /dispatch?view=truck-line).
+
+CC-2 | TRUCK-LINE WIP | backend done (read model + writes) | NEXT: frontend page + guard + deploy
