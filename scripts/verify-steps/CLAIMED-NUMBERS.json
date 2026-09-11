@@ -8704,5 +8704,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
+  },
+  "10927": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-settlement-resolution-shared-predicate-and-tour-assignment"
   }
 }
