@@ -55,7 +55,12 @@ import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
 import { listDispatchFlagColors } from "../../api/catalogs";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
-import { getOfficeTransitionButtons, loadCanMarkInvoiced, type OfficeTransitionButton } from "@ih35/shared-types";
+import {
+  getOfficeTransitionButtons,
+  isTerminalLoadStatus,
+  loadCanMarkInvoiced,
+  type OfficeTransitionButton,
+} from "@ih35/shared-types";
 import { LoadStatusChanger } from "./LoadStatusChanger";
 
 const tabs = [
@@ -325,7 +330,15 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
     enabled: Boolean(load?.operating_company_id && activeTab === "Overview"),
   });
   // d-02: Cancel Load is only for persisted, non-cancelled loads — unsaved/loading/not-found get plain Close.
-  const canCancelPersistedLoad = Boolean(load && load.status !== "cancelled");
+  // CANCEL-GREYOUT (owner 2026-09-11): the plain `!== "cancelled"` check only greyed the button once a
+  // load was ALREADY cancelled — it stayed clickable on delivered/invoiced/paid/closed loads too. Once a
+  // load is closed/settled/invoiced there is nothing left to cancel: isTerminalLoadStatus (shared
+  // office state machine, @ih35/shared-types) is the SAME canonical mapping this session's Dispatch
+  // open-only-scope fix (LST-F26137, verify-dispatch-open-only-scope.mjs) relies on for "post-delivery" —
+  // fromMdataStatus maps invoiced/paid/closed all onto the terminal completed_docs_received bucket, so
+  // reusing it here means this button can never disagree with that box about what counts as closed.
+  // delivered/delivered_pending_docs stay open (ALLOWED_TRANSITIONS still allows -> cancelled from there).
+  const canCancelPersistedLoad = Boolean(load && !isTerminalLoadStatus(load.status));
   const assignmentHistoryQuery = useQuery({
     queryKey: ["dispatch", "assignment-history", loadId, load?.operating_company_id],
     queryFn: () => getDispatchAssignmentHistory(loadId as string, load?.operating_company_id as string),

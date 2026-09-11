@@ -273,6 +273,56 @@ describe("LoadDetailDrawer footer cancel vs close (d-02)", () => {
     expect(primary).toHaveTextContent("Cancel Load");
     expect(primary.className).toMatch(/border-crit/);
   });
+
+  // CANCEL-GREYOUT (owner 2026-09-11): canCancelPersistedLoad used to only swap Cancel Load out for
+  // status==="cancelled" -- it stayed the live danger action on closed/settled/invoiced loads too.
+  // These cases prove the real fix (isTerminalLoadStatus, @ih35/shared-types) swaps it out for the
+  // same plain "Close" the d-02 not-yet-persisted case already uses, for every terminal status, while
+  // leaving Cancel Load live for the open ones, including delivered_pending_docs (still cancellable
+  // per ALLOWED_TRANSITIONS).
+  it.each(["completed_docs_received", "invoiced", "paid", "closed"])(
+    "swaps Cancel Load out for plain Close once the load is terminal (status=%s) — closed/settled/invoiced, not just already-cancelled",
+    (status) => {
+      mockUseDispatchLoad.mockReturnValue({
+        data: mockLoadDetail({ status: status as LoadDetail["status"] }),
+        isLoading: false,
+        isError: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+      mockUseLoad.mockReturnValue({ data: undefined, isLoading: false, isError: false, error: null, refetch: vi.fn() });
+      mockUseLoadAudit.mockReturnValue({ data: [], refetch: vi.fn() });
+
+      renderDrawer(
+        <LoadDetailDrawer loadId="load-1" isOpen canEdit operatingCompanyId="co-1" onClose={vi.fn()} />,
+      );
+
+      const primary = footerPrimaryAction();
+      expect(primary).toHaveTextContent("Close");
+      expect(primary.className).toMatch(/border-gray-300/);
+      expect(screen.queryByRole("button", { name: "Cancel Load" })).not.toBeInTheDocument();
+    },
+  );
+
+  it("keeps Cancel Load live on delivered_pending_docs (still open per ALLOWED_TRANSITIONS)", () => {
+    mockUseDispatchLoad.mockReturnValue({
+      data: mockLoadDetail({ status: "delivered_pending_docs" }),
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    mockUseLoad.mockReturnValue({ data: undefined, isLoading: false, isError: false, error: null, refetch: vi.fn() });
+    mockUseLoadAudit.mockReturnValue({ data: [], refetch: vi.fn() });
+
+    renderDrawer(
+      <LoadDetailDrawer loadId="load-1" isOpen canEdit operatingCompanyId="co-1" onClose={vi.fn()} />,
+    );
+
+    const primary = footerPrimaryAction();
+    expect(primary).toHaveTextContent("Cancel Load");
+    expect(primary.className).toMatch(/border-crit/);
+  });
 });
 
 describe("P31 load hub forward links", () => {

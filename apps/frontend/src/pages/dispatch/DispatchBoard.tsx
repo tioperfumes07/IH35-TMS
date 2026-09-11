@@ -788,15 +788,26 @@ export function DispatchBoard({
         rows: meta.key === "history" ? dedupedLoads : [],
       }));
     }
-    const awaitingRows = unassignedUnits
-      .filter((unit) => !inShopUnitIds.has(unit.id))
-      .map(unitToBoardRow);
-    const inShopRows = inShopUnits.map(inShopUnitToBoardRow);
     // LOADBOARD-LIFECYCLE (owner 2026-09-09): delivered-but-not-closed loads stay visible but sit in the
     // billing band, never in Booked. Booked = trucks actively working (in-flight); billing = the
     // paperwork/invoice/factoring queue. Both are load-centric (one row per load).
     const billingRows = dedupedLoads.filter(isBillingQueueLoad);
     const bookedRows = dedupedLoads.filter((load) => !isBillingQueueLoad(load));
+    // KANBAN-DUP-UNIT-2 (owner correction 2026-09-11) applies here too -- confirmed live: this List
+    // view's own "Awaiting assignment" section (built from `unassignedUnits` = listUnitsWithoutLoad,
+    // a SEPARATE backend query) never reconciled against the loads already shown in Booked/Billing.
+    // A unit whose only load is delivered_pending_docs/invoiced (outside listUnitsWithoutLoad's own
+    // "no active load" exclusion set) rendered TWICE on this exact page: once in Booked/Billing, once
+    // again in Awaiting assignment (measured live: T163/T173/T148 all did this). Same fix as
+    // DispatchKanban.tsx -- one unit, one row, regardless of which source found it first.
+    const rowedUnitIds = new Set<string>();
+    for (const load of [...bookedRows, ...billingRows]) {
+      if (load.assigned_unit_id) rowedUnitIds.add(load.assigned_unit_id);
+    }
+    const awaitingRows = unassignedUnits
+      .filter((unit) => !inShopUnitIds.has(unit.id) && !rowedUnitIds.has(unit.id))
+      .map(unitToBoardRow);
+    const inShopRows = inShopUnits.map(inShopUnitToBoardRow);
     return LIVE_SECTION_META.map((meta) => ({
       ...meta,
       rows:

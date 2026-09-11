@@ -8,8 +8,14 @@ const fail = (m) => {
 
 const drawer = readFileSync("apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx", "utf8");
 
-if (!/canCancelPersistedLoad\s*=\s*Boolean\(load && load\.status !== "cancelled"\)/.test(drawer)) {
-  fail("LoadDetailDrawer must derive canCancelPersistedLoad from persisted load + non-cancelled status");
+// CANCEL-GREYOUT (owner 2026-09-11): the bare `load.status !== "cancelled"` check only greyed the
+// button once a load was ALREADY cancelled -- it stayed clickable on closed/settled/invoiced loads
+// too. canCancelPersistedLoad now derives from isTerminalLoadStatus (the shared office state machine,
+// @ih35/shared-types) instead, which subsumes "cancelled" (terminal) plus every other terminal
+// status -- still gated on `load` being persisted, still the same underlying d-02 invariant this
+// guard checks. See scripts/verify-cancel-load-terminal-status-greyout.mjs for the correctness half.
+if (!/canCancelPersistedLoad\s*=\s*Boolean\(load && !isTerminalLoadStatus\(load\.status\)\)/.test(drawer)) {
+  fail("LoadDetailDrawer must derive canCancelPersistedLoad from persisted load + non-terminal status");
 }
 
 if (!/canCancelPersistedLoad \? \([\s\S]*variant="danger"[\s\S]*Cancel Load[\s\S]*\) : \([\s\S]*variant="secondary"[\s\S]*Close/.test(drawer)) {
