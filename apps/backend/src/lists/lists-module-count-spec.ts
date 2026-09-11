@@ -46,6 +46,8 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "additional_charges", activeFilter: "is_active", companyScoped: true },
     // Prod-verified: operating_company_id + is_active + FORCE RLS, 12 active codes per entity.
     { table: "load_cancellation_reasons", activeFilter: "is_active", companyScoped: true },
+    // LEAD ITEM 1 (2026-09-11): operating_company_id + is_active + FORCE RLS, 11 active USMCA rows.
+    { table: "load_exception_reasons", activeFilter: "is_active", companyScoped: true },
     // LST-COUNT-01: both are LIVE and per-entity on prod (verified 2026-07-28 under lucia —
     // dispatcher_error_reasons 75 rows, customer_quality_event_reasons 72 rows, each with
     // operating_company_id + is_active) and were absent from this spec entirely, so the DISPATCH badge

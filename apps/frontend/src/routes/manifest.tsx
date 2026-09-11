@@ -401,6 +401,7 @@ const AbandonmentDefaultsPage = React.lazy(() => import("../pages/lists/accounti
 const AdditionalChargesListPage = React.lazy(() => import("../pages/lists/dispatch/AdditionalChargesListPage").then((m) => ({ default: m.AdditionalChargesListPage })));
 const DetentionReasonsListPage = React.lazy(() => import("../pages/lists/dispatch/DetentionReasonsListPage").then((m) => ({ default: m.DetentionReasonsListPage })));
 const LoadCancellationReasonsListPage = React.lazy(() => import("../pages/lists/dispatch/LoadCancellationReasonsListPage").then((m) => ({ default: m.LoadCancellationReasonsListPage })));
+const LoadExceptionReasonsListPage = React.lazy(() => import("../pages/lists/dispatch/LoadExceptionReasonsListPage").then((m) => ({ default: m.LoadExceptionReasonsListPage })));
 const LoadTypesListPage = React.lazy(() => import("../pages/lists/dispatch/LoadTypesListPage").then((m) => ({ default: m.LoadTypesListPage })));
 const PickupTimeTypesListPage = React.lazy(() => import("../pages/lists/dispatch/PickupTimeTypesListPage").then((m) => ({ default: m.PickupTimeTypesListPage })));
 const DriverDeductionTypesListPage = React.lazy(() => import("../pages/lists/driver/DriverDeductionTypesListPage").then((m) => ({ default: m.DriverDeductionTypesListPage })));
@@ -2631,6 +2632,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <LoadCancellationReasonsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/dispatch/load-exception-reasons"
+          element={
+            <ProtectedRoute>
+              <LoadExceptionReasonsListPage />
             </ProtectedRoute>
           }
         />
