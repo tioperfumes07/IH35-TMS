@@ -6392,6 +6392,16 @@
     "claimed_by": "claude-1",
     "purpose": "verify-invoice-sent-requires-gl-posting"
   },
+  "10919": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-bank-sign-convention-per-account-audit"
+  },
+  "10923": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-driver-bill-settlement-resolution-uses-settlement-lines"
+  },
   "10941": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-08",
@@ -6617,7 +6627,72 @@
     "claimed_by": "devin",
     "purpose": "verify-factoring-faro-detailed-summary-reg047"
   },
+  "11213": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-settlement-reporting-classification-fixes"
+  },
   "11214": "devin-reverse-repost-usmca-executor",
+  "11217": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-historical-settlement-attribution-schema"
+  },
+  "11221": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-settlement-close-posts-payrun"
+  },
+  "11225": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-presettlement-deferred-suggestions-visible"
+  },
+  "11233": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-reg038-dispatch-home-kpi-columns"
+  },
+  "11237": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-load-costs-open-status-and-list-view-presettlement"
+  },
+  "11245": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-kanban-status-correctness-fix"
+  },
+  "11253": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-round-trips-timeline-row-height-cap"
+  },
+  "11257": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-settlement-load-linkage-render-fix"
+  },
+  "11261": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-dispatch-open-only-scope"
+  },
+  "11265": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-dispatch-open-only-scope"
+  },
+  "11273": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-dispatch-board-awaiting-reconciliation"
+  },
+  "11281": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-dispatch-board-awaiting-reconciliation"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -8619,75 +8694,5 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
-  },
-  "11213": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-11",
-    "purpose": "verify-settlement-reporting-classification-fixes"
-  },
-  "11217": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-11",
-    "purpose": "verify-historical-settlement-attribution-schema"
-  },
-  "11221": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-11",
-    "purpose": "verify-settlement-close-posts-payrun"
-  },
-  "11225": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-11",
-    "purpose": "verify-presettlement-deferred-suggestions-visible"
-  },
-  "10919": {
-    "claimed_by": "cc-2",
-    "claimed_at": "2026-09-11",
-    "purpose": "verify-bank-sign-convention-per-account-audit"
-  },
-  "11233": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-11",
-    "purpose": "verify-reg038-dispatch-home-kpi-columns"
-  },
-  "11237": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-11",
-    "purpose": "verify-load-costs-open-status-and-list-view-presettlement"
-  },
-  "11245": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-11",
-    "purpose": "verify-kanban-status-correctness-fix"
-  },
-  "11253": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-11",
-    "purpose": "verify-round-trips-timeline-row-height-cap"
-  },
-  "11257": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-11",
-    "purpose": "verify-settlement-load-linkage-render-fix"
-  },
-  "11261": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-11",
-    "purpose": "verify-dispatch-open-only-scope"
-  },
-  "11265": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-11",
-    "purpose": "verify-dispatch-open-only-scope"
-  },
-  "11273": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-11",
-    "purpose": "verify-dispatch-board-awaiting-reconciliation"
-  },
-  "11281": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-11",
-    "purpose": "verify-dispatch-board-awaiting-reconciliation"
   }
 }
