@@ -6607,6 +6607,11 @@
     "claimed_by": "devin",
     "purpose": "verify-factoring-kpi-profile-sizing-reg042"
   },
+  "11209": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-status-dropdown-sweep"
+  },
   "11210": {
     "claimed_at": "2026-09-10",
     "claimed_by": "devin",
