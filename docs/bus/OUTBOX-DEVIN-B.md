@@ -299,3 +299,75 @@ DEVIN-B | B-1 REG-002 expense-account audit STRENGTHENED with live expense histo
 ### What I need from CC-1
 Confirm that the history-dominant account for each vendor is the correct GL mapping for `default_expense_account_id`. Once confirmed, I will write the updates (idempotent, USMCA-scoped only). No writes until CC-1 confirms.
 
+
+---
+
+## ACCT-F26063 Historical Reclass — 67 USMCA Reimbursements (2026-09-11)
+
+**FINDING:** ACCT-F26063 — PR #21730 (commit 53f8a46d) fixed reimbursement GL categorization going forward (fuel/toll/scale/parking/other route to per-type accounts via `resolveReimbursementExpenseAccount()`). ~76 already-posted USMCA reimbursements were intentionally not changed by that PR. This is the historical correction.
+
+**LANE:** Devin B — USMCA only. Does not touch going-forward code path (already shipped). Does not touch banking/dispatch/factoring.
+
+**DOD-A:** Historical backfill script created: `scripts/backfill-reimbursement-historical-reclass.mts`
+- Calls `resolveReimbursementExpenseAccount()` from `coa-roles/resolver.service.ts` (never hand-picks account IDs)
+- Uses `createJournalEntry()` from `journal-entries.service.ts` (never raw SQL INSERT into GL tables)
+- Idempotent (checks for existing reclass JE by memo pattern before creating)
+- USMCA-scoped (hardcodes operating_company_id)
+- Fail-closed (refuses if resolver returns null)
+
+**DOD-B:** Guard script created: `scripts/verify-reimbursement-historical-reclass.mjs`
+- Selftest (7/7 pass): detects missing script, missing resolver import, raw SQL writes, non-USMCA scope, non-idempotent, missing audit, missing reversal/repost legs
+- Static guard: passes
+- Live guard: verifies reclass JE count, balance, audit trail, net effect on generic account
+
+**DOD-C:** Live proof on Neon (tiny-field-89581227 / br-fancy-credit-akjnd07a):
+- 67 reclass JEs created (134 posting lines), balanced at 203994c
+- Per-type breakdown:
+  - 5000 Fuel & Diesel: 2 JEs, 10836c (fuel)
+  - 5300 Tolls & Scales: 1 JE, 1525c (scale)
+  - 6999 Other Operating Expense: 64 JEs, 191633c (other)
+- audit.row_changes: 134 INSERT entries for reclass JEP lines
+- audit.audit_events: 67 events for `accounting.reimbursement_historical_reclass`
+- Net debit on generic account from non-reversed close JEs + reclass credits: 0c (expected 0)
+
+**DOD-D:** Population reconciliation:
+- User stated "approximately 76" (fuel=2, scale=1, other=73)
+- Actual on generic account from non-reversed close JEs: 67 (fuel=2, scale=1, other=64)
+- Difference of 9 explained:
+  - 4 pending `other` reimbursements (never posted — no settlement, no GL entry)
+  - 2 `void` (status='void') `other` reimbursements (voided before settlement, never posted)
+  - 2 `other` reimbursements from S-2026-0013 (close JE already reversed — no longer on generic)
+  - 1 `other` reimbursement materialized as `extra_pay` (posted to driver_pay_expense, not generic)
+- All 9 are correctly excluded from the reclass — they were never on the generic account or already reversed
+
+**DOD-E:** No going-forward code modified. No banking/dispatch/factoring touched. No migrations needed.
+
+**VERIFY-1:** `node scripts/verify-reimbursement-historical-reclass.mjs --selftest` → SELFTEST PASS (7/7)
+**VERIFY-2:** `node scripts/verify-reimbursement-historical-reclass.mjs` → OK (static only)
+**VERIFY-3:** Live: 67 reclass JEs, 134 posting lines, balanced at 203994c
+**VERIFY-4:** Live: per-type accounts correct (5000=2, 5300=1, 6999=64)
+**VERIFY-5:** Live: audit.row_changes = 134 INSERT entries for reclass JEP lines
+**VERIFY-6:** Live: audit.audit_events = 67 events for `accounting.reimbursement_historical_reclass`
+**VERIFY-7:** Live: net debit on generic account from non-reversed close JEs + reclass = 0c
+**VERIFY-8:** Live: idempotency — rerun of DO block would skip all 67 (existing reclass JE check)
+
+**MODULE_PROGRESS:** ACCT-F26063 historical reclass COMPLETE. 67 of ~76 reimbursements reclassed (9 correctly excluded). 0 remain on generic account from non-reversed close JEs.
+
+**LIVE PROOF:**
+```
+# Selftest
+node scripts/verify-reimbursement-historical-reclass.mjs --selftest
+# exit 0 — SELFTEST PASS (7/7)
+
+# Static guard
+node scripts/verify-reimbursement-historical-reclass.mjs
+# exit 0 — OK (static only)
+
+# Live verification (via Neon MCP run_sql_transaction):
+# 1. reclass_je_count=134 posting lines, total_debits=203994c, total_credits=203994c (balanced)
+# 2. Per-type: 5000=2 JEs/10836c, 5300=1 JE/1525c, 6999=64 JEs/191633c
+# 3. audit.row_changes=134 INSERT entries for reclass JEP lines
+# 4. audit.audit_events=67 events for accounting.reimbursement_historical_reclass
+# 5. net_cents on generic from non-reversed close JEs + reclass = 0c (expected 0)
+# All exit 0
+```
