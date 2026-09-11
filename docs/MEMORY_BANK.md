@@ -439,7 +439,8 @@ wizard. More ▾ still `setActiveTab`. Open driver bill → `/driver-finance/dri
 fetches `useLoad(loadId)` / `useDispatchLoad(loadId)` only — no sibling NB/TR/SB legs. Round Trips
 timeline default window **2026-08-25 → today**; `RT_TIMELINE_STATUSES` includes booked/planned/
 unassigned; pairing set stays narrow. Round Trips fetch is `listAllLoads` (200/page) — a `limit=1000`
-one-shot 400s (`Too big: expected number to be <=200`). Approximate load costs (Dispatch Home) has sortable **Truck**.
+one-shot 400s (`Too big: expected number to be <=200`). `GET /dispatch/units-without-load` GROUP BY
+must include `loc.city/state/formatted_location` (SELECT COALESCE(p, loc) 500s without them). Approximate load costs (Dispatch Home) has sortable **Truck**.
 Create Bill load picker → `bill_lines.load_id` remains `verify-reg034-vendor-bill-load-picker-wired`.
 
 ## Known Quirks & Blockers — Banking (CC-2, 2026-09-08)
