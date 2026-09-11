@@ -1915,6 +1915,16 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           });
         }
 
+        // Owner 2026-09-11: mint (or upgrade a $0 tracking bill) the moment a driver is seated
+        // on the office PATCH path. Book Load and Edit Load already call this; office assign did not.
+        if (row.assigned_primary_driver_id || row.team_id) {
+          await ensureDriverBillArtifactsForLoad(client, {
+            loadId: String(row.id),
+            operatingCompanyId: String(row.operating_company_id),
+            actorUserId: authUser.uuid,
+          });
+        }
+
         return row;
       });
 

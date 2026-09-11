@@ -11,6 +11,7 @@ import {
 import { bindLoadToGeofences } from "./geofences/load-geofence-binding.service.js";
 import { advanceDraftStatusIfCrewed } from "./draft-crew-status-advance.js";
 import { linkLoadToPresettlementAfterAssignmentInClientTx, type TripType } from "./presettlement-link.service.js";
+import { ensureDriverBillArtifactsForLoad } from "./book-load.service.js";
 
 export type ReassignBody = {
   operating_company_id: string;
@@ -226,6 +227,12 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
         trip_type: load.trip_type,
         tour_id: load.tour_id,
         actor_user_id: userId,
+      });
+
+      await ensureDriverBillArtifactsForLoad(client, {
+        loadId: input.load_id,
+        operatingCompanyId: input.operating_company_id,
+        actorUserId: userId,
       });
 
       const assignmentHistory = await client.query<{ id: string }>(

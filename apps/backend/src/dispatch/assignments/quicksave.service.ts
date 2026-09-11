@@ -6,6 +6,7 @@ import { assertDriverQualifiedForLoad, DriverNotQualifiedError } from "../driver
 import { advanceDraftStatusIfCrewed } from "../draft-crew-status-advance.js";
 import { ACTIVE_UNIT_STATUSES, assertUnitNotActiveOnAnotherLoad } from "../unit-active-load-guard.js";
 import { linkLoadToPresettlementAfterAssignmentInClientTx, type TripType } from "../presettlement-link.service.js";
+import { ensureDriverBillArtifactsForLoad } from "../book-load.service.js";
 
 type LoadRow = {
   id: string;
@@ -360,6 +361,12 @@ export async function reassignDriver(
         trip_type: load.trip_type,
         tour_id: load.tour_id,
         actor_user_id: userId,
+      });
+
+      await ensureDriverBillArtifactsForLoad(client, {
+        loadId: input.load_uuid,
+        operatingCompanyId: input.operating_company_id,
+        actorUserId: userId,
       });
 
       // DISP-F6157: driver reassignment doesn't touch the trailer — carry the canonical current

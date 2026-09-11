@@ -447,6 +447,19 @@ Create Bill load picker → `bill_lines.load_id` remains `verify-reg034-vendor-b
 Load 13553 Driver Pay **Open driver bill** live-clicks to `/driver-finance/driver-bills/3207db84-…`.
 `+ Add Bill` from that load is load-scoped (`?load_id=&load_number=13553`); picker hidden; no POST.
 
+## Active Architectural Decisions — Driver bill on assign (Cursor, 2026-09-11)
+
+Owner: a driver bill must exist the second a driver is seated, even when miles/rate are missing —
+operators track and seed later. `createDriverBillArtifacts` still never copies customer linehaul
+(WIRE-02 / ACCT-F63). Unpriced path: audit `skipped_no_pay_rate` AND INSERT `status=open`
+`gross_amount_cents=0` with tracking notes. Open $0 is not a settled load. Office PATCH
+(`mdata/loads.routes.ts`) now calls `ensureDriverBillArtifactsForLoad` whenever a primary driver or
+team is seated (Book Load / Edit Load already did). Quick-assign, inline quicksave, planner
+reschedule, and manual reassign now call the same mint. An open $0 bill is **upgraded in place** when
+pay later resolves — not stuck as `already_exists`. Voided bills stay un-reminted (ACCT-F277).
+Thursday assigned loads without bills: remint after API deploy via
+`POST /api/v1/mdata/loads/:id/remint-driver-bill` (Owner/Accountant).
+
 ## Known Quirks & Blockers — Banking (CC-2, 2026-09-08)
 
 - **CC-2 (Banking seat) cannot author `db/migrations/*.sql`** — `verify-migration-lane-band.mjs`

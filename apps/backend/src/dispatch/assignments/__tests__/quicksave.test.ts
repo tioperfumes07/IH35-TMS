@@ -72,6 +72,30 @@ function makeClient(credRow: Record<string, unknown>, log: QueryLog, isHazmat = 
               assigned_secondary_driver_id: null,
               load_number: "L-1",
               is_hazmat: isHazmat,
+              status: "assigned",
+              trip_type: null,
+              tour_id: null,
+              presettlement_link_id: null,
+            },
+          ],
+        };
+      }
+      if (sql.includes("FROM mdata.loads")) {
+        return {
+          rows: [
+            {
+              id: LOAD,
+              operating_company_id: OPCO,
+              load_number: "L-1",
+              customer_id: "55555555-5555-4555-8555-555555555555",
+              status: "assigned",
+              assigned_primary_driver_id: DRIVER,
+              assigned_secondary_driver_id: null,
+              team_id: null,
+              requires_tarps: false,
+              miles_shortest: null,
+              miles_practical: null,
+              driver_pay_rate_per_mile: null,
             },
           ],
         };
@@ -91,6 +115,18 @@ function makeClient(credRow: Record<string, unknown>, log: QueryLog, isHazmat = 
       }
       if (sql.includes("INSERT INTO dispatch.load_assignment_history")) {
         return { rows: [{ id: "66666666-6666-4666-8666-666666666666" }] };
+      }
+      if (sql.includes("to_regclass")) return { rows: [{ exists: true }] };
+      if (sql.includes("pg_advisory_xact_lock")) return { rows: [] };
+      if (sql.includes("FROM driver_finance.driver_bills") && sql.includes("SELECT id::text")) {
+        return { rows: [] };
+      }
+      if (sql.includes("INSERT INTO driver_finance.driver_bills")) {
+        return { rows: [{ id: "77777777-7777-4777-8777-777777777777" }] };
+      }
+      if (sql.includes("driver_finance.driver_pay_rates")) return { rows: [] };
+      if (sql.includes("RETURNING") && sql.includes("id")) {
+        return { rows: [{ id: "88888888-8888-4888-8888-888888888888" }] };
       }
       return { rows: [] };
     })),

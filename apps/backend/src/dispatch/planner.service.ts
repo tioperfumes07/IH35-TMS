@@ -5,6 +5,7 @@ import { assertDriverQualifiedForLoad } from "./driver-qualification.service.js"
 import { advanceDraftStatusIfCrewed } from "./draft-crew-status-advance.js";
 import { addBusinessDateDays, companyBusinessDate, companyBusinessDateStartIso } from "../lib/company-business-date.js";
 import { linkLoadToPresettlementAfterAssignmentInClientTx, type TripType } from "./presettlement-link.service.js";
+import { ensureDriverBillArtifactsForLoad } from "./book-load.service.js";
 
 const CONFLICT_WINDOW_MS = 4 * 60 * 60 * 1000;
 
@@ -463,6 +464,12 @@ export async function reschedulePlannerLoad(
         trip_type: (load.trip_type as TripType | null) ?? null,
         tour_id: (load.tour_id as string | null) ?? null,
         actor_user_id: userId,
+      });
+
+      await ensureDriverBillArtifactsForLoad(client, {
+        loadId,
+        operatingCompanyId,
+        actorUserId: userId,
       });
     }
 
