@@ -214,10 +214,52 @@ function resolveKanbanColumnKey(load: DispatchLoadRow): string {
   return group?.key ?? "assigned";
 }
 
+// REG-048 (owner live 2026-09-10, T164/T156 duplicated across Dispatched/Delivered): a unit with
+// more than one open load rendered as separate competing cards on DIFFERENT columns -- e.g. an
+// old delivered_pending_docs load (allowed to sit open per the lock-the-trucks NEW-02 backstop)
+// AND a newly-dispatched load for the SAME unit both showing at once. groupLoadsByColumn buckets
+// purely by each load's OWN status; nothing before it ever deduped by assigned_unit_id.
+// Display/aggregation fix ONLY -- uq_loads_one_active_unit and
+// assertUnitNotActiveOnAnotherLoad (the real DB guard letting a unit legitimately carry more than
+// one non-void load row) are untouched; this only decides which ONE wins the single Kanban card.
+// "Current" = the unit's most recently created load that isn't cancelled/abandoned -- the
+// historical delivered/backlog load collapses out of view here (still fully visible/actionable on
+// the List/Table view and Load Costs board, never hidden from the app, just not a second
+// competing Kanban card). A unit whose only loads are all cancelled still shows its (cancelled)
+// card rather than vanishing. Loads with no assigned_unit_id never compete against each other.
+const KANBAN_TERMINAL_CANCELLED_STATUSES = new Set(["cancelled", "abandoned", "driver_walkoff", "driver_no_show"]);
+function dedupeLoadsByUnit(loads: DispatchLoadRow[]): DispatchLoadRow[] {
+  const byUnit = new Map<string, DispatchLoadRow[]>();
+  const unassigned: DispatchLoadRow[] = [];
+  for (const load of loads) {
+    if (!load.assigned_unit_id) {
+      unassigned.push(load);
+      continue;
+    }
+    const list = byUnit.get(load.assigned_unit_id) ?? [];
+    list.push(load);
+    byUnit.set(load.assigned_unit_id, list);
+  }
+  const current: DispatchLoadRow[] = [...unassigned];
+  for (const list of byUnit.values()) {
+    if (list.length === 1) {
+      current.push(list[0]!);
+      continue;
+    }
+    const active = list.filter((load) => !KANBAN_TERMINAL_CANCELLED_STATUSES.has(String(load.status)));
+    const pool = active.length > 0 ? active : list;
+    const winner = pool.reduce((latest, load) =>
+      new Date(load.created_at).getTime() > new Date(latest.created_at).getTime() ? load : latest
+    );
+    current.push(winner);
+  }
+  return current;
+}
+
 function groupLoadsByColumn(loads: DispatchLoadRow[]) {
   const grouped = new Map<string, DispatchLoadRow[]>();
   for (const group of KANBAN_STATUS_GROUPS) grouped.set(group.key, []);
-  for (const load of loads) {
+  for (const load of dedupeLoadsByUnit(loads)) {
     const key = resolveKanbanColumnKey(load);
     grouped.set(key, [...(grouped.get(key) ?? []), load]);
   }
