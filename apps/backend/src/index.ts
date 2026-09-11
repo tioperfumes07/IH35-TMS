@@ -84,6 +84,7 @@ import { registerEquipmentTypeRoutes } from "./catalogs/equipment-types.routes.j
 import { registerStatesRoutes } from "./catalogs/states.routes.js";
 import { registerCatalogsWorkflowRoutes } from "./catalogs/workflow-routes.js";
 import { registerLoadCancellationReasonRoutes } from "./catalogs/load-cancellation-reasons.routes.js";
+import { registerLoadExceptionReasonRoutes } from "./catalogs/load-exception-reasons.routes.js";
 import { registerVoidCancelReasonRoutes } from "./catalogs/void-cancel-reasons.routes.js";
 import { registerDispatchFlagColorRoutes } from "./catalogs/dispatch-flag-colors.routes.js";
 import { registerDispatchCatalogRoutes } from "./catalogs/dispatch/index.js";
@@ -903,6 +904,7 @@ async function main() {
   await registerDriverLoadStatusRoutes(app);
   await registerStatesRoutes(app);
   await registerLoadCancellationReasonRoutes(app);
+  await registerLoadExceptionReasonRoutes(app);
   await registerVoidCancelReasonRoutes(app);
   await registerDispatchFlagColorRoutes(app);
   // ─── Safety catalog routes (T11.21.2A) ───

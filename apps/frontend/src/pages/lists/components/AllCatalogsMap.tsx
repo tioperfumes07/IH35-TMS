@@ -51,6 +51,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
       { name: "Pickup Time Types", description: "Pickup scheduling semantics", live: true, catalogKey: "pickup-time-types" },
       { name: "Additional Charges", description: "Accessorial and surcharge templates", live: true, catalogKey: "additional-charges" },
       { name: "Load Cancellation Reasons", description: "Cancellation root-cause reporting taxonomy", live: true, catalogKey: "load-cancellation-reasons" },
+      { name: "Load Exception Reasons", description: "Operational exception taxonomy for loads still active (breakdown, accident, weather, border hold, detention)", live: true, catalogKey: "load-exception-reasons" },
       // LST-A-01: per-entity + FORCE RLS, 75 live rows on prod, previously reachable only as a
       // read-only picker inside UserDetail — never from the hub, and with no write path at all.
       { name: "Dispatcher Error Reasons", description: "Dispatcher accountability event reason codes", live: true, catalogKey: "dispatcher-error-reasons" },
@@ -341,6 +342,8 @@ export function buildCatalogPath(domain: string, catalogKey: string): string {
       additional_charges: "/lists/dispatch/additional-charges",
       "load-cancellation-reasons": "/lists/dispatch/load-cancellation-reasons",
       load_cancellation_reasons: "/lists/dispatch/load-cancellation-reasons",
+      "load-exception-reasons": "/lists/dispatch/load-exception-reasons",
+      load_exception_reasons: "/lists/dispatch/load-exception-reasons",
     };
     const dispatchPath = dispatchRouteMap[catalogKey];
     if (dispatchPath) return dispatchPath;

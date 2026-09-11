@@ -318,6 +318,66 @@ export function deactivateLoadCancellationReason(id: string) {
   });
 }
 
+export type LoadExceptionReason = {
+  id: string;
+  operating_company_id: string;
+  code: string;
+  name: string;
+  applies_to: string;
+  linked_module: string | null;
+  sort_order: number;
+  is_active: boolean;
+};
+
+export type CreateLoadExceptionReasonInput = {
+  operating_company_id: string;
+  code: string;
+  name: string;
+  applies_to?: string;
+  linked_module?: string | null;
+  sort_order?: number;
+};
+
+export type UpdateLoadExceptionReasonInput = Partial<{
+  code: string;
+  name: string;
+  applies_to: string;
+  linked_module: string | null;
+  sort_order: number;
+}>;
+
+export function listLoadExceptionReasons(operatingCompanyId: string, includeInactive = false) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (includeInactive) query.set("include_inactive", "true");
+  return apiRequest<{ reasons: LoadExceptionReason[] }>(`/api/v1/catalogs/load-exception-reasons?${query.toString()}`);
+}
+
+export function createLoadExceptionReason(payload: CreateLoadExceptionReasonInput) {
+  return apiRequest<{ reason: LoadExceptionReason }>("/api/v1/catalogs/load-exception-reasons", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function updateLoadExceptionReason(id: string, payload: UpdateLoadExceptionReasonInput) {
+  return apiRequest<{ reason: LoadExceptionReason }>(`/api/v1/catalogs/load-exception-reasons/${id}`, {
+    method: "PATCH",
+    body: payload,
+  });
+}
+
+export function deactivateLoadExceptionReason(id: string) {
+  return apiRequest<{ reason: LoadExceptionReason }>(`/api/v1/catalogs/load-exception-reasons/${id}/deactivate`, {
+    method: "POST",
+  });
+}
+
+export function reactivateLoadExceptionReason(id: string) {
+  return apiRequest<{ reason: LoadExceptionReason }>(`/api/v1/catalogs/load-exception-reasons/${id}/reactivate`, {
+    method: "POST",
+  });
+}
+
 export function reactivateLoadCancellationReason(id: string) {
   return apiRequest<{ reason: LoadCancellationReason }>(`/api/v1/catalogs/load-cancellation-reasons/${id}/reactivate`, {
     method: "POST",
