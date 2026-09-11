@@ -2635,3 +2635,49 @@ owner categorization decision (not a code gap), Maintenance sweep (ROW 5) still 
 holding — Codex's wave is still actively WORKING the same surface tonight (REG-050 row 3, WO
 terminal-labor lockdown) per OUTBOX-CODEX. No unclaimed, unblocked, my-lane item found; holding
 rather than manufacturing one.
+
+## CC-2 — BNK-13 follow-up: row 1 already voided (not live), row 2 investigated, no decision made (2026-09-11)
+
+**Row 1 — $800.00 Zelle to "TIO PERFUMES 2 LLC" (`f2df847d-a255-4430-b7f5-8038def5a960`): the owner's
+instruction to leave it untouched/uncategorized is already moot — this row is not live.** Live-checked
+just now: `voided_at='2026-09-11T01:06:09.177Z'`, `voided_reason='reg030_bofa_statement_unmatched_phantom'`.
+It was voided during REG-028/030's own phantom cleanup (one of the 36 stale-pending Plaid duplicate
+stubs, `pending=true, dedup_hash=null`, confirmed absent from the real BofA statement) — it is not sitting
+in the for-review/uncategorized queue and was never a real transaction the bank actually settled. There is
+nothing to categorize or leave alone because it isn't live; I have NOT added a "loan-related" tag or any
+other note to it — doing that to a voided phantom would attach a false narrative to a row already
+determined not to represent a real transaction. Separately confirmed there is no OTHER live "TIO PERFUMES
+2 LLC" row this could refer to on this account. For the record, "TIO PERFUMES"/"SCENTSX, LLC DBA TIO
+PERFUMES"/"TIO PERFUMES 2 LLC" is a real, large, recurring related-party pattern on this account
+(multiple live, non-voided rows, both directions, largest single wire $23,500.00 on 2026-05-15) — so the
+owner's "this is loan-related, related-party" characterization is well corroborated by the live data in
+general, just not by this specific (voided) row.
+
+**Row 2 — Juan Hernandez $345.00 (`46665118-ce14-48bb-b1ea-4ccaf7361b0b`): investigated, findings below,
+no categorization decision made.**
+- Full description (live): `TRANSFER USMCA FREIGHT SOLUTI:Juan Hernandez Confirmation# XXXXX02883`.
+  2026-01-14, $345.00 out (`is_credit=false`), `plaid_transaction_id=OYxKmZ8ZjvIwN7OAROBVfqyb65ERd6iZ4VRMZ`,
+  `dedup_hash` present (not a phantom), not voided — genuinely live.
+- **Recurring pattern found, strong:** the SAME account carries 10 separate international wires
+  (`WT FED#..R.. INTERNATIONAL BANK /FTR/BNF=JUAN P HERNANDEZ SRF#...`) to a beneficiary named
+  "JUAN P HERNANDEZ", weekly-ish cadence, 2025-12-29 through 2026-02-04, amounts $245.00-$459.20 (two of
+  them exactly $345.00, matching this row). The row under investigation sits chronologically right in the
+  middle of that sequence (2026-01-14, between the 01-08 and 01-16 wires) but uses a different description
+  format ("TRANSFER...Confirmation#" vs "WT FED#...BNF="), consistent with either the same recurring
+  international-wire payee captured once under an alternate Plaid label, or a distinct 12th payment in the
+  same series — genuinely ambiguous from the data alone, not resolved here.
+- **No exact "Juan Hernandez" match** in `mdata.drivers`, `mdata.vendors`, or `identity.users` (queried all
+  three live, USMCA + TRANSP + TRK). Closest candidates: driver + vendor records for "Juan Pablo Hernandez
+  Estrada" (multiple duplicate rows across entities) — but that is a longer, different full name (the wire
+  memo's middle initial "P" is consistent with "Pablo" but not confirmed), and every one of those driver
+  records is `status='Inactive'`. No plain "Juan Hernandez" (no middle name) record exists anywhere.
+- **Not deciding a target account or vendor match from this.** The recurring-wire pattern is real and
+  worth the owner's attention (11 payments total, ~$3,800 combined, to a payee with no clean roster match),
+  but "Juan Pablo Hernandez Estrada" being the same person as "Juan Hernandez"/"JUAN P HERNANDEZ" is a
+  judgment call this seat is not making. Posting for the owner's decision, per instruction.
+
+CC-2 | BNK-13 follow-up DONE (investigation only, no categorization) | row 1: already voided
+`reg030_bofa_statement_unmatched_phantom`, nothing to tag | row 2: 10 recurring same-payee international
+wires found ($245-$459.20, 2025-12-29 to 2026-02-04), no exact roster match (closest: inactive "Juan Pablo
+Hernandez Estrada" driver/vendor, unconfirmed) | NEXT: awaiting owner decision on row 2's payee identity;
+resuming the sign-convention backfill task in parallel.
