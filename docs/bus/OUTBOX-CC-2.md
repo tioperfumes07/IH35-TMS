@@ -2454,3 +2454,50 @@ shipping fixes across the exact same surface (REG-048/049/050, live in OUTBOX-CO
 on a second active sweep right now to avoid colliding with that in-flight work rather than filing
 duplicate/stale findings; will resume once Codex's current wave lands or on an explicit re-ask for
 a specific area.
+
+## CC-2 — REG-028/030 statement crosscheck: the referenced file is NOT this account's bank statement (2026-09-11)
+
+Per `09-11-2026-CC2-REG028-030-BANK-STATEMENT-CROSSCHECK.md`, opened
+`~/Downloads/transactions_2026-06-30_2026-09-12.xlsx` before writing anything else. **It is not a
+bank statement for the disputed account, and cannot be used to cross-check the -$6,608.14 figure.**
+Verified, not assumed:
+
+- **Wrong dataset entirely.** Header row: `Transaction Date, Driver Name, Unit Number, Card Number,
+  Unit Price, Fees, Quantity, Discount, Amount, State, City, Location` — this is a **fuel-card
+  purchase export** (Love's Travel Stop gallons/price/fees per driver+unit), not a checking-account
+  statement. It carries no balance column of any kind, per-transaction or otherwise — a running
+  balance cannot be read off it under any interpretation.
+- **Wrong date range.** Actual data rows run 2026-07-03 to 2026-09-04 (476 rows) — confirmed by
+  reading every row, not just the file's own title line. The disputed transaction is dated
+  2025-12-08 — 7 months before this file's earliest row. It cannot contain the date in question.
+- **Wrong account/entity even if the dates matched** — this is fuel-card spend across many drivers
+  and units, not Bank of America account `...3224` ("USMCA FREIGHT", confirmed live:
+  `banking.bank_accounts.institution_name='Bank of America'`, `account_mask='3224'`).
+
+**Searched Downloads for a real match, found none.** No file named or shaped like a Bank of America
+statement for account `...3224` covering December 2025 exists in `~/Downloads` (closest name-alike
+hit, `July-2024-PNC-2778.pdf`, is a different bank, different account, different year).
+
+**Checked whether the live system stores an independent per-date balance anywhere, so a statement
+document isn't the only route — it doesn't.** `information_schema.columns` for the `banking`
+schema has no per-transaction balance field anywhere (`bank_transactions` carries none;
+`bank_accounts.current_balance_cents` is the ONLY balance Plaid supplies, and it is always
+"as of last sync," never a historical/dated snapshot). The "Statement Import" feature
+(`BankingHome.tsx`, `+ Import Statement`) only writes imported rows into `bank_transactions` as
+ordinary `pending_categorization` transactions — it does not retain a separate stored statement
+with its own balance line either. There is no artifact anywhere in this system, live or archived,
+that prints "the balance on 12/08/2025" independent of the derived walk I already did.
+
+**What this means for REG-028/030, honestly:** I cannot produce the specific artifact asked for
+(a statement's own printed balance line for 12/08/2025) because no such artifact exists in
+`~/Downloads` or in the live system — not because I didn't look, and not standing in for it with a
+guess. The strongest anchor actually available is unchanged from the original trace: Plaid's own
+live `current_balance_cents` (fetched directly from Bank of America via Plaid's Balance API, not
+computed by this app) walked backward through the complete, unfiltered 314-row transaction history
+using each row's own signed amount — which is the bank's own data at the one point it's ever
+captured (now), propagated backward by arithmetic, not the bank's own data at the disputed date
+itself. **Asking, not guessing:** does the owner have the actual Bank of America statement/export
+for account `...3224` covering December 2025 (downloaded from BofA's own online banking, which I
+will not log into per the standing rule against ever entering credentials) that could be supplied
+for a genuine document cross-check? Without that document, or an explicit instruction to accept the
+Plaid-anchored trace as sufficient, this specific ask cannot be completed further from this seat.
