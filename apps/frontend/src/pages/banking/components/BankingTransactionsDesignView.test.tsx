@@ -173,7 +173,8 @@ describe("BankingTransactionsDesignView date formatting", () => {
       )
     );
 
-    expect(await screen.findByRole("button", { name: "For review · 1" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "All · 1" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "For review · 1" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Categorized · 0" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Excluded · 0" })).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Filter by description")).toBeInTheDocument();
@@ -218,12 +219,12 @@ describe("BankingTransactionsDesignView date formatting", () => {
           bank_account_id: "acct-1",
           transaction_date: "2026-05-18T00:00:00.000Z",
           posted_date: null,
-          amount_cents: -4550,
+          amount_cents: 4550,
           description: "ONLINE PAYMENT - THANK YOU",
           merchant_name: null,
           plaid_category: ["Transfer"],
           pending: false,
-          is_credit: false,
+          is_credit: true,
           matched_load_id: null,
           matched_bill_id: null,
           matched_settlement_id: null,
@@ -301,12 +302,9 @@ describe("BankingTransactionsDesignView date formatting", () => {
       created_at: "2026-05-18T10:00:00.000Z",
     })).toEqual({ spent: 200000, received: 0 });
 
-    expect(await screen.findByText("For review · 2")).toBeInTheDocument();
-    // Amount-filter "Received" (not the ParityTable sortable column header of the same name).
-    const amountFilterReceived = screen
-      .getAllByRole("button", { name: "Received" })
-      .find((btn) => btn.className.includes("px-2.5") || btn.closest(".inline-flex"));
-    fireEvent.click(amountFilterReceived ?? screen.getAllByRole("button", { name: "Received" })[0]);
+    expect(await screen.findByRole("button", { name: "All · 2" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "For review · 2" })).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("banking-amount-filter-received"));
     expect(screen.getByText("1-1 of 1")).toBeInTheDocument();
     expect(screen.getByText("Page 1 of 1")).toBeInTheDocument();
     expect(screen.getByText("$45.50")).toBeInTheDocument();
@@ -372,7 +370,8 @@ describe("BankingTransactionsDesignView date formatting", () => {
       )
     );
 
-    expect(await screen.findByRole("button", { name: "For review · 620" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "All · 620" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "For review · 620" })).toBeInTheDocument();
     expect(screen.getByText("1-50 of 620")).toBeInTheDocument();
     expect(screen.getByText("Page 1 of 13")).toBeInTheDocument();
     expect(vi.mocked(bankingApi.getPlaidCompanyTransactions)).toHaveBeenCalledWith(
@@ -382,7 +381,8 @@ describe("BankingTransactionsDesignView date formatting", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Business Platinum Card/i }));
 
-    expect(await screen.findByRole("button", { name: "For review · 1" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "All · 1" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "For review · 1" })).toBeInTheDocument();
     expect(screen.getByText("1-1 of 1")).toBeInTheDocument();
     expect(screen.getAllByText("Acct2 only row").length).toBeGreaterThan(0);
     await waitFor(() =>
@@ -468,9 +468,8 @@ describe("BankingTransactionsDesignView B2 register columns", () => {
   };
 
   it("Check No. and Payee (Vendor) render by default; the 5 new columns stay hidden until toggled on", async () => {
-    // Un-matched, so it stays on the default "For review" tab (a matched transaction is bucketed
-    // out of that tab entirely — hasPersistedMatch/matched_kind — a different, real behavior this
-    // test isn't exercising).
+    // Un-matched, so it is in both All (default) and For review. A matched transaction is
+    // bucketed to Categorized (hasPersistedMatch/matched_kind) and still appears on All.
     vi.mocked(bankingApi.getPlaidCompanyTransactions).mockResolvedValue({
       transactions: [
         {

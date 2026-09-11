@@ -421,6 +421,11 @@ Plaid amount < 0). `spentReceived()` reads **is_credit only**. Live repair on US
 `e83028a5-…`: voided 36 unmatched pending phantoms (WORM), inserted 2 missing statement rows
 (6/1 Love's $377.45, 8/27 $15 wire fee), flipped 286 Plaid `amount_cents` signs. Posted signed sum
 = **$6,389.72** = statement ending. 12/08 deposit is now `amount_cents=+10000` / `is_credit=true`.
+The 12/08 $100 is **categorized** (Owner's Capital, JE `b6b096c7`, 2026-09-07) so it sits on
+Categorized (1) while For review is 287 — live-verified 2026-09-10 on app.ih35dispatch.com. Default
+tab is **All** so the statement walk includes that row next to 12/12 Oak Street $2,775. Plaid
+`accountsBalanceGet` / reconnect must not overwrite `current_balance_cents` once posted rows exist
+(`applyPostedSignedCurrentBalance`).
 
 ## Known Quirks & Blockers — Banking (CC-2, 2026-09-08)
 
