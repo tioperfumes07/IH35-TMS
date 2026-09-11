@@ -1552,10 +1552,14 @@ export function BankingTransactionsDesignView({
         label: "Full bank description",
         sortable: true,
         className: REGISTER_COLUMN_HEADER_CLASS,
+        allowWrap: true,
+        minWidth: 280,
         render: (tx) => (
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="truncate text-gray-900">{transactionLabel(tx)}</p>
+              <p className="break-words text-gray-900" title={transactionLabel(tx)}>
+                {transactionLabel(tx)}
+              </p>
               {tx.relay_fuel_lines && tx.relay_fuel_lines.length > 0 ? (
                 <p
                   className="mt-0.5 truncate text-[11px] text-gray-500"

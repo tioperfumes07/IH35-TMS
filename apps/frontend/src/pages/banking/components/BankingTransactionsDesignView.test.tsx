@@ -124,7 +124,7 @@ describe("BankingTransactionsDesignView date formatting", () => {
           transaction_date: "2026-05-17T00:00:00.000Z",
           posted_date: null,
           amount_cents: 12500,
-          description: "Fuel station",
+          description: "CHECKCARD 0908 IN *SAM ROADSIDE SERVICE LAREDO TX",
           merchant_name: null,
           plaid_category: [],
           pending: false,
@@ -182,6 +182,9 @@ describe("BankingTransactionsDesignView date formatting", () => {
     expect(screen.getByRole("button", { name: "Collapse all groupings" })).toBeInTheDocument();
     expect(screen.getByText("May 2026 (1)")).toBeInTheDocument();
     expect(await screen.findByText("05/17/2026")).toBeInTheDocument();
+    expect(
+      screen.getByText("CHECKCARD 0908 IN *SAM ROADSIDE SERVICE LAREDO TX"),
+    ).toBeInTheDocument();
     expect(screen.getByText("1-1 of 1")).toBeInTheDocument();
     expect(screen.getByText("Page 1 of 1")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "First" })).toBeDisabled();
