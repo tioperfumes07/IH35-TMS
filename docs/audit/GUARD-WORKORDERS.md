@@ -10977,3 +10977,62 @@ process itself — checking before acting, logging transparently — was correct
 GUARD: `scripts/verify-bills-settlement-column-linkage.mjs` (10481, extended), `scripts/verify-
 driver-bill-settlement-resolution-uses-settlement-lines.mjs` (10923, extended), `scripts/verify-
 presettlement-tour-id-never-null.mjs` (10927, new).
+
+## DISPATCH-TRUCK-LINE — new 5th board view, complete end-to-end (CC-2, 2026-09-11, Lead assignment)
+
+Owner ruling: a new dispatch board view — a line/timeline per truck instead of Kanban drag —
+showing each in-service truck's current load progressing through 9 stations (Assigned →
+Dispatched → At pickup → In transit → Other (exception) → At delivery → Delivered → Docs
+received → Invoiced), additive alongside Kanban/List/Round Trips/Trip Pairing. THE DESIGN IS THE
+CONTRACT: `docs/design/reference/DISPATCH-LINE-BOARD-REFERENCE-2026-09-11.html` +
+`docs/design/DESIGN-CONTRACT-DISPATCH-LINE-BOARD-2026-09-11.md`.
+
+**BUILD A (read model):** `GET /api/v1/dispatch/truck-line` — one row per in-service USMCA truck,
+SAME unit predicate as `GET /api/v1/dispatch/units-without-load` (Rule 49 lease-scoped, excludes
+sold/disposed/OOS/in-shop/sample/demo units). Station reached is derived by a new PURE function,
+`apps/backend/src/dispatch/truck-line/station.ts` — status + load_stops arrival/departure stamps
++ `dispatch.pod_documents` existence + `accounting.invoices` existence, NEVER a stored "station"
+column. Unit-tested for all 9 states + multi-stop (12 cases, `station.test.ts`).
+
+**BUILD B (writes):** `POST /api/v1/dispatch/intransit-issues/office` gains `reason_id` (validates
+`catalogs.load_exception_reasons`, active + same company, copies `code` → `issue_category`;
+gracefully no-ops until the table exists — it now does, CC-1 shipped it live with all 11 seeded
+reasons). New office-facing stop-arrive/depart endpoints
+(`/api/v1/dispatch/truck-line/loads/:id/stops/:id/arrive|depart`) — the only existing writer
+(`driver-pwa/dispatch-view.routes.ts`) requires a driver session, uncallable from a dispatcher's
+browser. Extracted the exact write + revenue/settlement side-effect chain
+(`latchOnDeliveryEvidence`, `pingSettlementOnLoadEvent`, `mintProformaInvoiceOnFirstPickup`) into a
+new shared `apps/backend/src/dispatch/stop-stamp.service.ts` — BOTH driver-pwa and Truck Line call
+the identical functions, zero duplicated money-adjacent logic. All 6 pre-existing driver-pwa tests
+still pass unchanged. Stamps are tagged `'manual'` (an existing CHECK-allowed value) rather than a
+new `'dispatcher_truck_line'` value, since adding a 4th CHECK value needs a migration this seat
+cannot author.
+
+**BUILD C (frontend):** `apps/frontend/src/pages/dispatch/TruckLineBoard.tsx`, wired as a 5th
+`view=truck-line` segment in `Dispatch.tsx` (additive — Kanban/List/Round Trips/Trip Pairing all
+still present, `verify-dispatch-trip-pairing-in-board-view-row.mjs` still passes). Rail grey,
+reached green, current = 3px ring, next = dashed and the ONLY clickable-to-advance node, Other =
+red diamond with the reason printed under it, late/no-ping in red. Double-click → `/accounting/
+load-costs/:loadId`. Gear/sort/density via `ParityTable` (same component as Load Costs); its
+`label` is a plain string with no custom-header hook, so the positioned station-name bar the owner
+asked for ("we are missing in the design the status names on top") renders as its own strip
+directly above the table body — a deliberate, documented deviation from a pixel-locked overlay,
+not a silent gap. A refused stamp/exception surfaces the server's own reason via
+`userFacingApiError`, never fails silently.
+
+**Deliberately NOT built (out of BUILD A-E's scope, or a hard constraint):** no `dispatch.
+load_exceptions` table (an earlier v3 design-doc mention superseded by the INBOX's explicit "reuse
+`dispatch.intransit_issues`, do not create a second exceptions table" instruction); no full Lists
+› Catalogs admin page for `load_exception_reasons` (DONE line only requires the reason list
+visible in the Other pop-up, which the new read-only `GET /api/v1/catalogs/load-exception-reasons`
+satisfies); no reason-name hardcoding anywhere in React (the fallback state before the catalog
+existed was an honest "not yet available" message, never a guessed list).
+
+**GUARD:** `scripts/verify-dispatch-truck-line.mjs` (verify-step 10931, cc-2 band) — 8 planted
+mutations across items (a),(c),(d),(e),(f),(g),(i); selftest 3/3 on `station.ts`'s own guard-
+adjacent test; direct run OK.
+
+**Live proof:** 16 in-service USMCA trucks (matches the read model's own predicate query run
+directly against Neon), 7 dispatched (T148/13595, T156/13587, T164/13590, T168/13591, T170/13593,
+T171/13594, T177/13592). `catalogs.load_exception_reasons`: 11 active rows, live. Full Chrome
+screenshot + double-click proof in `docs/bus/OUTBOX-CC-2.md`.

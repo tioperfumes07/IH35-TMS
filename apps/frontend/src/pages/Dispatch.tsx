@@ -20,6 +20,7 @@ import { LoadDetailDrawer } from "../components/dispatch/LoadDetailDrawer";
 import { BookLoadModal } from "./dispatch/components/BookLoadModal";
 import { AssignmentHistoryPage } from "./dispatch/AssignmentHistoryPage";
 import { DispatchOverview } from "./dispatch/DispatchOverview";
+import { TruckLineBoard } from "./dispatch/TruckLineBoard";
 import { RoundTrips } from "./dispatch/RoundTrips";
 import { DispatchSubnav } from "../components/dispatch/DispatchSubnav";
 import { PreSettlementsPanel } from "../components/driver-finance/PreSettlementsPanel";
@@ -28,13 +29,14 @@ import { userFacingApiError } from "../lib/api-error-message";
 import { companyToday, addDaysIso } from "../lib/businessDate";
 import { dispatchSecondaryTabFromPath } from "../router/route-manifest";
 
-type ViewMode = "overview" | "list" | "kanban" | "units";
+type ViewMode = "overview" | "list" | "kanban" | "units" | "truck-line";
 
 function parseViewMode(raw: string | null, loadsRoute: boolean): ViewMode {
-  // Honor an explicit load-board view (list/kanban/units) even on the loads route — previously this
-  // hard-returned "list" on loadsRoute, which made the Kanban (and Units) view tab a dead no-op. The
-  // loads route only defaults to list when no board view (or "overview", not a board view) is selected.
-  if (raw === "kanban" || raw === "units" || raw === "list") return raw;
+  // Honor an explicit load-board view (list/kanban/units/truck-line) even on the loads route --
+  // previously this hard-returned "list" on loadsRoute, which made the Kanban (and Units) view tab
+  // a dead no-op. The loads route only defaults to list when no board view (or "overview", not a
+  // board view) is selected.
+  if (raw === "kanban" || raw === "units" || raw === "list" || raw === "truck-line") return raw;
   if (raw === "loads") return "kanban";
   if (raw === "overview" && !loadsRoute) return "overview";
   return loadsRoute ? "list" : "overview";
@@ -157,7 +159,7 @@ export function DispatchPage({
   }, [loadsRoute, roundTripsRoute, searchParams, setSearchParams]);
 
   const view = roundTripsRoute ? "units" : parseViewMode(searchParams.get("view"), loadsRoute);
-  const showLoadBoard = view === "kanban" || view === "list" || view === "units";
+  const showLoadBoard = view === "kanban" || view === "list" || view === "units" || view === "truck-line";
   // DSP-8 (owner 2026-09-04): "THE FLEET OOS IN SHOP AT THE VERY BOTTOM IS UNNECESSARY YOU ALREADY
   // HAVE AN IN SHOP SECTION" + "we do not need to see the vehicles out of service" in dispatch. The
   // bottom Fleet OOS/In-Shop strip is ARCHIVED behind this flag — Rule 07, never delete: the
@@ -468,6 +470,11 @@ export function DispatchPage({
                 setSearchParams(next);
               } },
               { id: "trip-pairing", label: "Trip Pairing", active: location.pathname === "/dispatch/trip-pairing", liveOnly: false, onClick: () => navigate("/dispatch/trip-pairing") },
+              { id: "truck-line", label: "Truck Line", active: view === "truck-line", liveOnly: true, onClick: () => {
+                const next = new URLSearchParams(searchParams);
+                next.set("view", "truck-line");
+                setSearchParams(next);
+              } },
             ] as const
           ).map((tab) => {
             const disabled = tab.liveOnly && boardScope === "history";
@@ -546,7 +553,17 @@ export function DispatchPage({
       ) : null}
 
       {subTab === "load_board" && showLoadBoard ? (
-        view === "units" ? (
+        view === "truck-line" ? (
+          <TruckLineBoard
+            operatingCompanyId={defaultCompanyIds[0] ?? ""}
+            onLoadClick={(loadId) => navigate(`/accounting/load-costs/${loadId}`)}
+            onBookForUnit={(unitId) => {
+              setBookUnitId(unitId);
+              setBookDriverId(null);
+              openBookLoadModal();
+            }}
+          />
+        ) : view === "units" ? (
           <RoundTrips
             loads={loads}
             operatingCompanyId={defaultCompanyIds[0] ?? ""}

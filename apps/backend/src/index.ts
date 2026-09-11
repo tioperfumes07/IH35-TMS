@@ -126,6 +126,9 @@ import { registerDispatchRefinementsRoutes } from "./dispatch/dispatch-refinemen
 import { registerDeadheadOptimizerRoutes } from "./dispatch/deadhead/routes.js";
 import { registerIntransitIssuesRoutes } from "./dispatch/intransit-issues.routes.js";
 import { registerDispatchArchTabsRoutes } from "./dispatch/arch-tabs.routes.js";
+import { registerTruckLineRoutes } from "./dispatch/truck-line/truck-line.routes.js";
+import { registerTruckLineStopStampRoutes } from "./dispatch/truck-line/stop-stamp.routes.js";
+import { registerLoadExceptionReasonsRoutes } from "./dispatch/truck-line/load-exception-reasons.routes.js";
 import { registerDriverDispatchEligibilityRoutes } from "./dispatch/driver-eligibility.routes.js";
 import { registerDispatchAlertsRoutes } from "./dispatch/alerts.routes.js";
 import { registerDispatchPlannerRoutes } from "./dispatch/planner.routes.js";
@@ -944,6 +947,9 @@ async function main() {
   await registerDeadheadOptimizerRoutes(app);
   await registerIntransitIssuesRoutes(app);
   await registerDispatchArchTabsRoutes(app);
+  await registerTruckLineRoutes(app);
+  await registerTruckLineStopStampRoutes(app);
+  await registerLoadExceptionReasonsRoutes(app);
   await registerDriverDispatchEligibilityRoutes(app);
   await registerDispatchAlertsRoutes(app);
   await registerDispatchPlannerRoutes(app);
