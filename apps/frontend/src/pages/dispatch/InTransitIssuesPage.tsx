@@ -20,6 +20,8 @@ import { useStagedListFilters } from "../../components/table";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
+import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 
 const EMPTY_FILTERS = {
   driverId: "",
@@ -166,6 +168,7 @@ export function InTransitIssuesPage() {
   });
 
   const issues = issuesQ.data?.issues ?? [];
+  const settlementReferences = useSettlementReferences(companyId, issues.map((issue) => issue.load_id));
 
   // Migrated to the shared QBO-parity grid — columns, load deep-link, and the Resolve row action are
   // preserved verbatim (§7 additive-only). Declared BEFORE the `!companyId` early return below so the
@@ -184,6 +187,7 @@ export function InTransitIssuesPage() {
         sortable: true,
         render: (issue) => <EntityLinkOrTombstone kind="load" id={issue.load_id} name={issue.load_number} noun="Load" />,
       },
+      { key: "settlement_reference", label: "Settlement / Presettlement", testId: "settlement-reference-column", render: (issue) => <SettlementReferenceCell reference={issue.load_id ? settlementReferences.get(issue.load_id) : null} /> },
       { key: "driver_name", label: "Driver", sortable: true, render: (issue) => <EntityLinkOrTombstone kind="driver" id={issue.driver_id} name={issue.driver_name} noun="Driver" /> },
       { key: "unit_number", label: "Unit", sortable: true, render: (issue) => <EntityLinkOrTombstone kind="unit" id={issue.unit_id} name={issue.unit_number} noun="Unit" /> },
       { key: "issue_category", label: "Category", sortable: true },
@@ -208,7 +212,7 @@ export function InTransitIssuesPage() {
           ),
       },
     ],
-    [resolveMutation],
+    [resolveMutation, settlementReferences],
   );
 
   if (!companyId) {

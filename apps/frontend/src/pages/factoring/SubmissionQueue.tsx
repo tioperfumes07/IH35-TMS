@@ -13,6 +13,8 @@ import { useStagedListFilters } from "../../components/table";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
+import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
+import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 function asMoney(cents: number) {
@@ -103,6 +105,7 @@ export function SubmissionQueue() {
   });
 
   const items = queueQuery.data ?? [];
+  const settlementReferences = useSettlementReferences(companyId, items.map((item) => item.load_id));
   const submittable = items.filter((item) => item.is_submittable);
   const selected = selectedIds.filter((id) => submittable.some((item) => item.invoice_id === id));
 
@@ -166,6 +169,11 @@ export function SubmissionQueue() {
         ),
       },
       {
+        key: "settlement_reference",
+        label: "Settlement / Presettlement", testId: "settlement-reference-column",
+        render: (item) => <SettlementReferenceCell reference={item.load_id ? settlementReferences.get(item.load_id) : null} />,
+      },
+      {
         key: "customer_id",
         label: "Customer",
         render: (item) => (
@@ -208,7 +216,7 @@ export function SubmissionQueue() {
         render: (item) => <DocGateBadge item={item} />,
       },
     ],
-    [selected, submittable.length],
+    [selected, submittable.length, settlementReferences],
   );
 
   if (!companyId) {

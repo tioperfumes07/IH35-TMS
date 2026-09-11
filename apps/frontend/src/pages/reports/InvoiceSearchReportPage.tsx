@@ -13,6 +13,8 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { useStagedListFilters } from "../../components/table";
 
 import { formatUsdCents } from "../../lib/money";
+import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
+import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 
 function mmmDd(iso: string | null | undefined): string {
   if (!iso) return "—";
@@ -101,6 +103,7 @@ export function InvoiceSearchReportPage() {
 
   const rows = invoicesQ.data?.invoices ?? [];
   const total = invoicesQ.data?.total ?? 0;
+  const settlementReferences = useSettlementReferences(operatingCompanyId, rows.map((row) => row.source_load_id));
 
   const columns = useMemo<ParityColumn<Invoice>[]>(() => [
     {
@@ -131,6 +134,11 @@ export function InvoiceSearchReportPage() {
       ) : (
         <span className="font-mono text-gray-600">{r.source_load_number ?? "—"}</span>
       ),
+    },
+    {
+      key: "settlement_reference",
+      label: "Settlement / Presettlement", testId: "settlement-reference-column",
+      render: (r) => <SettlementReferenceCell reference={r.source_load_id ? settlementReferences.get(r.source_load_id) : null} />,
     },
     {
       key: "status",
@@ -175,7 +183,7 @@ export function InvoiceSearchReportPage() {
       sortValue: (r) => r.factoring_status ?? "",
       render: (r) => <span className="text-gray-600">{r.factoring_status && r.factoring_status !== "not_factored" ? r.factoring_status : "—"}</span>,
     },
-  ], []);
+  ], [settlementReferences]);
 
   if (!operatingCompanyId) {
     return (
