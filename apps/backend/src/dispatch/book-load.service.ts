@@ -24,7 +24,11 @@ import { toMdataStatus, type DispatchStatus } from "./load-state-machine.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import { bindLoadToGeofences } from "./geofences/load-geofence-binding.service.js";
 import { buildLoadSaveProof } from "./load-save-proof.js";
-import { findOpenPresettlementTourForUnit, linkLoadToPresettlementAtBookingInClientTx } from "./presettlement-link.service.js";
+import {
+  findOpenPresettlementTourForUnit,
+  linkLoadToPresettlementAtBookingInClientTx,
+  recordDeferredPresettlementSuggestion,
+} from "./presettlement-link.service.js";
 import { geocodeStopsBackfill } from "../telematics/stops-geocode-backfill.service.js";
 import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.js";
 import { computeAndPersistGoogleReferenceMilesForLoad } from "./google-reference-miles.service.js";
@@ -2528,6 +2532,25 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
           actor_user_id: input.requestingUserUuid,
         });
         settlementIdForBillLink = presettlementLink.settlement_id;
+      } else if (input.assigned_primary_driver_id) {
+        // A driver IS known (only trip_type is missing) -- a real review-queue row can be written.
+        // See recordDeferredPresettlementSuggestion's own doc comment (SETTLEMENT-TOUR-NUMBER-SWEEP
+        // root-cause fix, 2026-09-11): this replaces the audit-log-only defer for the one case
+        // (driver known) that CAN produce a row; the "driver also unknown" case below still cannot
+        // (driver_id is NOT NULL on the suggestions table) and falls through to book-load's own
+        // post-assignment hook, linkLoadToPresettlementAfterAssignmentInClientTx, once a driver is
+        // assigned later.
+        await recordDeferredPresettlementSuggestion(client, {
+          operating_company_id: input.operating_company_id,
+          load_id: String(load.id),
+          driver_id: input.assigned_primary_driver_id,
+          unit_id: input.assigned_unit_id ?? null,
+          tour_id: resolvedTourId,
+          actor_user_id: input.requestingUserUuid,
+          reason: "Load booked with a driver assigned but trip type (NB/TR/SB) not yet captured — cannot suggest a pre-settlement match until it's set on the load.",
+          audit_event_type: "dispatch.load.presettlement_link_deferred",
+          audit_finding_ref: "P6-D2",
+        });
       } else {
         await appendCrudAudit(
           client,

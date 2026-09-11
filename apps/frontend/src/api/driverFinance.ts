@@ -687,6 +687,51 @@ export function withdrawSettlementDispute(id: string, payload: { operating_compa
   });
 }
 
+// ── Pre-settlement link suggestions (GO-22 human-confirm queue) ────────────
+// SETTLEMENT-TOUR-NUMBER-SWEEP root-cause fix (2026-09-11): the backend routes
+// (presettlement-link.routes.ts) already existed with zero frontend caller anywhere in the app —
+// a load that reached the "trip_type unknown, cannot suggest yet" or "TR/SB with no open tour"
+// state sat in this table forever with no way for a human to ever see or act on it. These are the
+// first frontend functions calling GET/POST /driver-finance/presettlement-suggestions.
+
+export type PresettlementSuggestionRow = {
+  id: string;
+  load_id: string;
+  load_number: string | null;
+  driver_id: string;
+  first_name: string | null;
+  last_name: string | null;
+  unit_id: string | null;
+  trip_type: "NB" | "TR" | "SB" | "LOCAL" | null;
+  tour_id: string | null;
+  suggested_settlement_id: string | null;
+  suggested_settlement_display_id: string | null;
+  suggested_reason: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export function listPresettlementSuggestions(companyId: string) {
+  return apiRequest<{ rows: PresettlementSuggestionRow[] }>(
+    `/api/v1/driver-finance/presettlement-suggestions?${q(companyId)}`
+  );
+}
+
+export function confirmPresettlementSuggestion(
+  id: string,
+  payload: {
+    operating_company_id: string;
+    action: "create_new" | "link_existing" | "reject";
+    override_settlement_id?: string | null;
+  }
+) {
+  return apiRequest<{ suggestion_id: string; status: string; settlement_id: string | null }>(
+    `/api/v1/driver-finance/presettlement-suggestions/${encodeURIComponent(id)}/confirm`,
+    { method: "POST", body: payload }
+  );
+}
+
 // ── Pre-settlement NB→SB trip-linking (MUST 8a.0.5.12) ─────────────────────
 
 export type OpenPreSettlement = {

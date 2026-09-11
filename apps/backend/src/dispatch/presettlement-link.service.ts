@@ -219,6 +219,93 @@ export async function suggestPresettlementLink(client: DbClient, input: SuggestI
   return { suggestion_id: suggestionId, suggested_settlement_id: suggestedSettlementId, suggested_reason: reason };
 }
 
+export type DeferredSuggestionInput = {
+  operating_company_id: string;
+  load_id: string;
+  driver_id: string;
+  unit_id?: string | null;
+  tour_id?: string | null;
+  actor_user_id: string;
+  reason: string;
+  audit_event_type: string;
+  audit_finding_ref: string;
+};
+
+/**
+ * SETTLEMENT-TOUR-NUMBER-SWEEP root-cause fix (2026-09-11 — docs/audit/SETTLEMENT-TOUR-NUMBER-SWEEP-2026-09-11.md
+ * "REMAINING", named as the exact mechanism that produced orphan loads 13581/13580/13508). Both
+ * call sites below used to write ONLY a dispatch.load.presettlement_link_deferred audit-log entry
+ * when trip_type was unknown -- never a row in the human-review queue table
+ * driver_finance.presettlement_link_suggestions, and nothing ever read that audit event back. A
+ * load could sit deferred forever with no visible trace anywhere in the app.
+ *
+ * suggestPresettlementLink cannot be called here -- it requires a real NB/TR/SB/LOCAL trip_type to
+ * compute a recommendation, which by definition isn't known yet in this branch. This writes the
+ * same "one pending suggestion per load" row shape, but honestly with trip_type AND
+ * suggested_settlement_id both NULL (both columns are nullable) -- there is nothing to recommend
+ * yet, only enough information (a driver) to make the load visible instead of invisible.
+ *
+ * confirmPresettlementLink already handles a NULL-trip_type suggestion row correctly with ZERO
+ * changes needed there: on confirm it re-reads the CURRENT load's trip_type fresh (never trusts a
+ * stale suggestion snapshot) and refuses with "suggestion_load_changed" if trip_type is still
+ * unknown, or silently adopts the now-known trip_type and proceeds normally once it's been
+ * captured. This function only makes the load visible in the queue; it never guesses NB/TR/SB.
+ */
+export async function recordDeferredPresettlementSuggestion(
+  client: DbClient,
+  input: DeferredSuggestionInput
+): Promise<{ suggestion_id: string }> {
+  const existing = await client.query<{ id: string }>(
+    `SELECT id FROM driver_finance.presettlement_link_suggestions WHERE operating_company_id = $1::uuid AND load_id = $2::uuid AND status = 'pending'`,
+    [input.operating_company_id, input.load_id]
+  );
+  let suggestionId: string;
+  if (existing.rows[0]?.id) {
+    await client.query(
+      `
+        UPDATE driver_finance.presettlement_link_suggestions
+           SET driver_id = $1::uuid, unit_id = $2::uuid, tour_id = $3::uuid, suggested_reason = $4, updated_at = now()
+         WHERE id = $5::uuid
+      `,
+      [input.driver_id, input.unit_id ?? null, input.tour_id ?? null, input.reason, existing.rows[0].id]
+    );
+    suggestionId = existing.rows[0].id;
+  } else {
+    const insertRes = await client.query<{ id: string }>(
+      `
+        INSERT INTO driver_finance.presettlement_link_suggestions (
+          operating_company_id, load_id, driver_id, unit_id, trip_type, tour_id,
+          suggested_settlement_id, suggested_reason
+        )
+        VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5, $6::uuid, $7::uuid, $8)
+        RETURNING id
+      `,
+      [
+        input.operating_company_id,
+        input.load_id,
+        input.driver_id,
+        input.unit_id ?? null,
+        null, // trip_type — unknown by definition in this deferred path, never guessed
+        input.tour_id ?? null,
+        null, // suggested_settlement_id — nothing to recommend yet
+        input.reason,
+      ]
+    );
+    suggestionId = insertRes.rows[0]!.id;
+  }
+
+  await appendCrudAudit(
+    client,
+    input.actor_user_id,
+    input.audit_event_type,
+    { suggestion_id: suggestionId, load_id: input.load_id, driver_id: input.driver_id, reason: input.reason, deferred: true },
+    "info",
+    input.audit_finding_ref
+  );
+
+  return { suggestion_id: suggestionId };
+}
+
 type ConfirmInput = {
   operating_company_id: string;
   suggestion_id: string;
@@ -571,18 +658,19 @@ export async function linkLoadToPresettlementAfterAssignmentInClientTx(
   if (input.presettlement_link_id_before) return null;
 
   if (!input.trip_type) {
-    await appendCrudAudit(
-      client,
-      input.actor_user_id,
-      "dispatch.load.presettlement_link_deferred",
-      {
-        load_uuid: input.load_id,
-        requested: true,
-        reason: "driver assigned post-booking but trip_type not yet captured — cannot suggest a pre-settlement match",
-      },
-      "info",
-      "REG-008"
-    );
+    // driver_id is always known here (a required input to this function) — unlike book-load's own
+    // booking-time defer branch, every deferral reaching this point CAN get a real review-queue row.
+    await recordDeferredPresettlementSuggestion(client, {
+      operating_company_id: input.operating_company_id,
+      load_id: input.load_id,
+      driver_id: input.driver_id,
+      unit_id: input.unit_id ?? null,
+      tour_id: input.tour_id ?? null,
+      actor_user_id: input.actor_user_id,
+      reason: "Driver assigned post-booking but trip type (NB/TR/SB) not yet captured — cannot suggest a pre-settlement match until it's set on the load.",
+      audit_event_type: "dispatch.load.presettlement_link_deferred",
+      audit_finding_ref: "REG-008",
+    });
     return null;
   }
 

@@ -8,6 +8,7 @@ import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SettlementDetailPage } from "./SettlementDetailPage";
 import { SettlementDisputesTab } from "./components/SettlementDisputesTab";
+import { PresettlementSuggestionsTab } from "./components/PresettlementSuggestionsTab";
 import { SettlementsTable } from "./components/SettlementsTable";
 import { SettlementsToursRegister } from "./SettlementsToursRegister";
 import { SettlementsCompanyDriverTab, CompanySettlementsRegisterTab } from "./SettlementsCompanyDriverTab";
@@ -61,7 +62,9 @@ export function SettlementsPage() {
         ? "company_driver"
         : tabParam === "company_settlements"
           ? "company_settlements"
-          : "settlements";
+          : tabParam === "needs_review"
+            ? "needs_review"
+            : "settlements";
   // Drill target from the Company settlements register → the side-by-side (resolves to a driver settlement).
   const companySettlementParam = searchParams.get("company_settlement_id");
   // SETL-MOD-01 — the Settlements list defaults to the tour readout (one row per tour, the SAME
@@ -303,6 +306,20 @@ export function SettlementsPage() {
           }}
         >
           Settlement Disputes
+        </Button>
+        <Button
+          size="sm"
+          variant={activeTab === "needs_review" ? "primary" : "secondary"}
+          data-testid="tab-needs-review"
+          onClick={() => {
+            const next = new URLSearchParams(searchParams);
+            next.set("tab", "needs_review");
+            next.delete("settlement_id");
+            next.delete("company_settlement_id");
+            setSearchParams(next);
+          }}
+        >
+          Needs Review
         </Button>
       </div>
 
@@ -582,6 +599,8 @@ export function SettlementsPage() {
         </>
       )}
         </>
+      ) : activeTab === "needs_review" ? (
+        <PresettlementSuggestionsTab companyId={companyId} />
       ) : (
         <SettlementDisputesTab companyId={companyId} />
       )}
