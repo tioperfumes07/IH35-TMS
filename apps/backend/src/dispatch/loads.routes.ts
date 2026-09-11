@@ -2167,10 +2167,14 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             LIMIT 1
           ) loc ON (p.city IS NULL AND p.state IS NULL)
           WHERE u.deactivated_at IS NULL
-            -- Entity scope (USMCA cross-entity leak fix): mdata.units has no operating_company_id and
-            -- its RLS is identity/role-scoped, so the GUC alone does not filter units. Scope by the
-            -- owner/leased pair so another entity's trucks never appear in this dispatcher picker.
-            AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
+            -- Rule 49: USMCA in-service is the LEASE, never owner_company_id. TRANSP owns the
+            -- trucks; USMCA leases them. owner OR lease inflates Awaiting with Transportation
+            -- in-service units that are not leased to this company.
+            AND u.currently_leased_to_company_id = $1::uuid
+            AND u.is_sample_data IS NOT TRUE
+            AND u.sold_date IS NULL
+            AND u.disposed_date IS NULL
+            AND u.is_oos IS NOT TRUE
             -- ACTIVE trucks only. Excludes Sold/Totaled (some are not deactivated_at — a known
             -- active/inactive desync that inflated "Awaiting assignment" to ~49 vs ~32 active) and
             -- OutOfService/InMaintenance (those belong to the In-shop / Fleet-OOS surfaces, not Awaiting).
