@@ -227,6 +227,7 @@
     "verify-money-proof-trail-click-to-ledger.mjs",
     "verify-money-text-component-adoption-ratchet.mjs",
     "verify-moneyinput-single-frame-vertical.mjs",
+    "verify-nav-integrity.mjs",
     "verify-netpay-floor-at-close.mjs",
     "verify-no-bare-health-references.mjs",
     "verify-no-boot-throwing-env-checks.mjs",

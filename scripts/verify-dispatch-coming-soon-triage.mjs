@@ -70,7 +70,10 @@ function main() {
     failures.push("manifest dropped DispatchLoadLegacyPathRedirect — legacy /loads/:id must keep resolving");
   }
 
-  for (const label of ["Border Crossing", "Border History", "Factoring Packets"]) {
+  // FAC-11 (BRD-22): "Factoring Packets" and "Factoring Queue" were removed from the dispatch
+  // flyout and moved to the accounting flyout. Only "Border Crossing" and "Border History" remain
+  // as required dispatch flyout labels here.
+  for (const label of ["Border Crossing", "Border History"]) {
     if (!sidebar.includes(label)) {
       failures.push(`sidebar dispatch flyout missing "${label}" link`);
     }
