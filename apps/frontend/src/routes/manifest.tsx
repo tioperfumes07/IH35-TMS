@@ -4398,6 +4398,18 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
+        {/* NAV-F26151 — verify-nav-integrity flagged /driver-finance/driver-bills/:id as an orphan detail
+            route (REG-023(b) shipped the detail page with no list parent). The list of driver bills IS the
+            Bills register (BILLS-DRIVER union read model), so the bare parent redirects there rather than
+            growing a second list. */}
+        <Route
+          path="/driver-finance/driver-bills"
+          element={
+            <ProtectedRoute>
+              <PreserveSearchNavigate to="/accounting/bills" />
+            </ProtectedRoute>
+          }
+        />
         {/* REG-023(b) — the load-detail "Open driver bill" button + every kind="driver_bill" EntityLink
             resolve here (driver_finance.driver_bills, NOT accounting.bills). */}
         <Route
