@@ -3372,6 +3372,12 @@ export function BankingTransactionsDesignView({
                           setDateFrom(start.toISOString().slice(0, 10));
                           setDateTo(end.toISOString().slice(0, 10));
                         }],
+                        ["Oldest first", () => {
+                          setDateFrom("");
+                          setDateTo("");
+                          setSortBy({ key: "date", dir: "asc" });
+                          setCurrentPage(1);
+                        }],
                       ] as Array<[string, () => void]>
                     ).map(([label, apply]) => (
                       <button
@@ -3531,7 +3537,17 @@ export function BankingTransactionsDesignView({
             <div className="inline-flex h-7 items-center gap-1 rounded-sm border border-gray-300 bg-white px-1 text-xs text-gray-700">
               <button
                 type="button"
-                className="rounded-sm px-1.5 py-0.5 hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400"
+                data-testid="banking-pager-first"
+                className="h-7 rounded-sm px-1.5 text-xs hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400"
+                disabled={safeCurrentPage <= 1}
+                onClick={() => setCurrentPage(1)}
+              >
+                First
+              </button>
+              <button
+                type="button"
+                data-testid="banking-pager-previous"
+                className="h-7 rounded-sm px-1.5 text-xs hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400"
                 disabled={safeCurrentPage <= 1}
                 onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
               >
@@ -3540,11 +3556,21 @@ export function BankingTransactionsDesignView({
               <span className="px-1 text-gray-500">{`Page ${safeCurrentPage} of ${totalPages}`}</span>
               <button
                 type="button"
-                className="rounded-sm px-1.5 py-0.5 hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400"
+                data-testid="banking-pager-next"
+                className="h-7 rounded-sm px-1.5 text-xs hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400"
                 disabled={safeCurrentPage >= totalPages}
                 onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
               >
                 Next
+              </button>
+              <button
+                type="button"
+                data-testid="banking-pager-last"
+                className="h-7 rounded-sm px-1.5 text-xs hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400"
+                disabled={safeCurrentPage >= totalPages}
+                onClick={() => setCurrentPage(totalPages)}
+              >
+                Last
               </button>
             </div>
             <div className="relative">

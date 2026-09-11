@@ -425,7 +425,9 @@ The 12/08 $100 is **categorized** (Owner's Capital, JE `b6b096c7`, 2026-09-07) s
 Categorized (1) while For review is 287 — live-verified 2026-09-10 on app.ih35dispatch.com. Default
 tab is **All** so the statement walk includes that row next to 12/12 Oak Street $2,775. Plaid
 `accountsBalanceGet` / reconnect must not overwrite `current_balance_cents` once posted rows exist
-(`applyPostedSignedCurrentBalance`).
+(`applyPostedSignedCurrentBalance`). Date cells nowrap so `09/09/2026` is not `09/09...`. Pager
+is First / Previous / Next / Last (date desc + Last = statement start). Preset **Oldest first**
+sets date ASC + page 1. Live 2026-09-10: All · 288, header $6,389.72, Date full on first page.
 
 ## Known Quirks & Blockers — Banking (CC-2, 2026-09-08)
 
