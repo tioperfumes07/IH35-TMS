@@ -25,4 +25,16 @@ if (/amount_cents >= 0 THEN[^\n]*AS deposits/.test(src)) {
   fail("the SWAPPED mapping (amount_cents >= 0 -> deposits) must not reappear");
 }
 
+const plaidSrc = readFileSync(join(root, "apps/backend/src/integrations/plaid/plaid.service.ts"), "utf8");
+if (!/export function plaidAmountToStatementCents/.test(plaidSrc) || !/amount_cents: -plaidCents/.test(plaidSrc)) {
+  fail("Plaid sync must store statement-signed cents (negate Plaid amount) via plaidAmountToStatementCents");
+}
+if (/toCents\(transaction\.amount\)/.test(plaidSrc)) {
+  fail("Plaid sync must not write raw toCents(transaction.amount) — use plaidAmountToStatementCents");
+}
+const viewSrc = readFileSync(join(root, "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx"), "utf8");
+if (/tx\.is_credit \|\| Number\(tx\.amount_cents/.test(viewSrc)) {
+  fail("spentReceived/from-to must not treat negative amount_cents as money-in (BofA outflows are negative)");
+}
+
 console.log("PASS verify-bank-register-sign");

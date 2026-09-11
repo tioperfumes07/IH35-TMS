@@ -469,8 +469,10 @@ export function formatBankTransactionDate(rawDate: string | null | undefined) {
 export function spentReceived(tx: PlaidBankTransaction) {
   const amount = Math.abs(Number(tx.amount_cents ?? 0));
   if (amount <= 0) return { spent: 0, received: 0 };
-  const isMoneyIn = tx.is_credit || Number(tx.amount_cents ?? 0) < 0;
-  if (isMoneyIn) return { spent: 0, received: amount };
+  // REG-028/030: is_credit is the only direction flag. Never infer money-in from a negative
+  // amount_cents — that was Plaid's inverted storage and it classified BofA outflows (negative)
+  // as deposits once we store statement-signed cents.
+  if (tx.is_credit) return { spent: 0, received: amount };
   return { spent: amount, received: 0 };
 }
 
@@ -1288,7 +1290,7 @@ export function BankingTransactionsDesignView({
       (draft.vendorId ? draft.payee.trim() : "") ||
       (draft.customerId ? draft.customerProject.trim() : "");
     const otherSide = target || "Uncategorized";
-    const isMoneyIn = tx.is_credit || Number(tx.amount_cents ?? 0) < 0;
+    const isMoneyIn = tx.is_credit === true;
     return isMoneyIn ? `${otherSide} → ${bank}` : `${bank} → ${otherSide}`;
   }
 
