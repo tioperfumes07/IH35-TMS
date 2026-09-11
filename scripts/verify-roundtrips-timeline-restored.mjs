@@ -80,8 +80,8 @@ if (!/roundTripsDeepLink/.test(routes)) {
 if (!/roundTripsFullFetch\s*=\s*subTab === "load_board" && view === "units"/.test(dispatch)) {
   errors.push("Dispatch.tsx must flag the Round Trips view (roundTripsFullFetch = subTab load_board && view units) so its whole-fleet board+timeline are not paginated (REG-037).");
 }
-if (!/effectiveLoadsLimit\s*=\s*roundTripsFullFetch \? 1000 : limit/.test(dispatch) || !/limit:\s*effectiveLoadsLimit/.test(dispatch)) {
-  errors.push("Dispatch.tsx must fetch the full window (effectiveLoadsLimit) for the Round Trips view so the timeline is not truncated by the 50-row Load Board pager (REG-037).");
+if (!/listAllLoads\(loadListFilters\)/.test(dispatch) || /effectiveLoadsLimit\s*=\s*roundTripsFullFetch \? 1000/.test(dispatch)) {
+  errors.push("Dispatch.tsx must page Round Trips with listAllLoads (API limit max 200); a 1000 one-shot 400s the board.");
 }
 
 if (errors.length > 0) {

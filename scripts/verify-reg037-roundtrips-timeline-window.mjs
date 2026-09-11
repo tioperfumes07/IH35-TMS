@@ -33,6 +33,12 @@ function check(legs, timeline, dispatch) {
   if (!/roundTripsFullFetch\s*=\s*subTab === "load_board" && view === "units"/.test(dispatch)) {
     errors.push("Dispatch.tsx must un-page the Round Trips fetch");
   }
+  if (!/listAllLoads\(loadListFilters\)/.test(dispatch)) {
+    errors.push("Round Trips must page via listAllLoads (GET /mdata/loads max 200; 1000 one-shot 400s)");
+  }
+  if (/effectiveLoadsLimit\s*=\s*roundTripsFullFetch \? 1000/.test(dispatch)) {
+    errors.push("limit:1000 one-shot must not return (API zod max 200)");
+  }
   return errors;
 }
 

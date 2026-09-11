@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { type LoadStatus, useLoadsList, useUpdateLoadStatus } from "../api/loads";
+import { type LoadStatus, listAllLoads, listLoads, useUpdateLoadStatus } from "../api/loads";
 import { listSettlements } from "../api/driverFinance";
 import { listGeofenceBreaches } from "../api/safetyGeofence";
 import { useCompanyContext } from "../contexts/CompanyContext";
@@ -176,10 +176,10 @@ export function DispatchPage({
   // Load Board's 50-row pagination silently truncated the fleet — every unit/load past the first page
   // never reached the timeline (94 assigned USMCA loads exist since Aug 25 alone, far past 50). That
   // view has no pager (it is a whole-fleet board + a windowed timeline), so it must fetch the full
-  // window, not a single 50-row page. Widen the fetch for that view only; the paginated List view keeps
-  // its page size. Terminal closed/cancelled rows are still filtered out client-side by RT_TIMELINE_STATUSES.
+  // window, not a single 50-row page. GET /mdata/loads rejects limit>200 (zod max 200) — a 1000
+  // one-shot 400s the whole board ("Too big: expected number to be <=200"). Page with listAllLoads
+  // (200/page). Terminal closed/cancelled rows are still filtered out client-side by RT_TIMELINE_STATUSES.
   const roundTripsFullFetch = subTab === "load_board" && view === "units";
-  const effectiveLoadsLimit = roundTripsFullFetch ? 1000 : limit;
   const [sortField, sortDirection] = sort.split(":") as [
     "created_at" | "load_number" | "status" | "rate_total_cents",
     "asc" | "desc",
@@ -219,9 +219,7 @@ export function DispatchPage({
     setSearchParams(next, { replace: true });
   }, [boardScope, searchParams, setSearchParams]);
 
-  const loadsQuery = useLoadsList({
-    limit: effectiveLoadsLimit,
-    offset: roundTripsFullFetch ? 0 : offset,
+  const loadListFilters = {
     sort,
     search: filters.search || undefined,
     customer_id: filters.customerId,
@@ -235,6 +233,14 @@ export function DispatchPage({
     include_progress: true,
     include_live_eta: true,
     board_scope: boardScope,
+  };
+  const loadsQuery = useQuery({
+    queryKey: ["loads", "list", roundTripsFullFetch ? "all" : "page", loadListFilters, roundTripsFullFetch ? null : { limit, offset }],
+    queryFn: () =>
+      roundTripsFullFetch
+        ? listAllLoads(loadListFilters)
+        : listLoads({ ...loadListFilters, limit, offset }),
+    refetchInterval: 60000,
   });
 
   const preSettlementsQuery = useQuery({
