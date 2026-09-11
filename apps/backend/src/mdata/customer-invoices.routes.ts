@@ -108,12 +108,22 @@ export async function registerCustomerInvoicesRoutes(app: FastifyInstance) {
             WHERE load_id = l.id AND stop_type::text = 'delivery' AND soft_deleted_at IS NULL
             ORDER BY sequence_number DESC LIMIT 1
           ) delivery ON true
+          -- ACCT-F26140 — bookend-only (first_load_id OR last_load_id) misses any load that is a
+          -- MIDDLE leg of a multi-load settlement. Dual-path resolve, same shape as
+          -- load-settlement-summary.routes.ts: bookend OR settlement_lines/driver_bills.load_id.
           LEFT JOIN LATERAL (
             SELECT ds.id, ds.display_id
             FROM driver_finance.driver_settlements ds
             WHERE ds.operating_company_id = i.operating_company_id
               AND ds.voided_at IS NULL
-              AND (ds.first_load_id = i.source_load_id OR ds.last_load_id = i.source_load_id)
+              AND (
+                ds.first_load_id = i.source_load_id OR ds.last_load_id = i.source_load_id
+                OR EXISTS (
+                  SELECT 1 FROM driver_finance.settlement_lines sl
+                  LEFT JOIN driver_finance.driver_bills db2 ON db2.id = sl.source_driver_bill_id
+                  WHERE sl.settlement_id = ds.id AND COALESCE(db2.load_id, sl.load_id) = i.source_load_id
+                )
+              )
             ORDER BY ds.created_at DESC
             LIMIT 1
           ) s ON true

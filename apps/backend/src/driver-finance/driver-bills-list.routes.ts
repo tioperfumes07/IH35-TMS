@@ -34,6 +34,7 @@ export type DriverBillListRow = {
   gross_amount_cents: number | null;
   status: string;
   settled_in_settlement_id: string | null;
+  settlement_id: string | null;
   settlement_display_id: string | null;
   voided_at: string | null;
   created_at: string;
@@ -82,12 +83,25 @@ export async function registerDriverFinanceDriverBillsListRoutes(app: FastifyIns
               db.gross_amount_cents,
               db.status,
               db.settled_in_settlement_id::text AS settled_in_settlement_id,
-              ds.display_id AS settlement_display_id,
+              ds.id::text AS settlement_id, ds.display_id AS settlement_display_id,
               db.voided_at::text AS voided_at,
               db.created_at::text AS created_at
             FROM driver_finance.driver_bills db
             LEFT JOIN mdata.drivers d ON d.id = db.driver_id AND d.operating_company_id = db.operating_company_id
-            LEFT JOIN driver_finance.driver_settlements ds ON ds.id = db.settled_in_settlement_id AND ds.operating_company_id = db.operating_company_id
+            -- ACCT-F26140 — db.settled_in_settlement_id is 0/many populated company-wide
+            -- (live-verified, matches load-cost-rollup.sql.ts / load-costs-board.routes.ts's
+            -- settlement_info CTE, NEW-08/NEW-09/NEW-23, PR #21318): the real settlement is
+            -- assigned at BOOKING time into driver_finance.settlement_lines via
+            -- source_driver_bill_id, in the same transaction that creates the load's driver
+            -- bill. Reuse that proven join instead of the dead column.
+            LEFT JOIN LATERAL (
+              SELECT ds2.id, ds2.display_id
+              FROM driver_finance.settlement_lines sl2
+              JOIN driver_finance.driver_settlements ds2 ON ds2.id = sl2.settlement_id
+              WHERE sl2.source_driver_bill_id = db.id
+              ORDER BY sl2.created_at DESC
+              LIMIT 1
+            ) ds ON true
             WHERE db.operating_company_id = $1::uuid
               ${voidFilter}
             ORDER BY db.created_at DESC

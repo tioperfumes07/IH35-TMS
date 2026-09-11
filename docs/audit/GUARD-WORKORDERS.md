@@ -10752,3 +10752,151 @@ verify:sortable-columns-and-void-visibility FAIL — new regressions above basel
 **Reload caveat (disclosed, not a bug):** the live app serves a cached JS bundle until the user/tester clicks its own "A new version is available — Reload" banner; the FIRST post-deploy check (before clicking Reload) showed the OLD pre-fix behavior on a CLOSED load, which would have read as a false regression — clicking Reload picked up the new bundle and the fix then verified correctly. Noting this since it can mislead any future live-Chrome check on this app if the reload banner is missed.
 
 DONE = live-Chrome proof for both items, 2 real entry views (Kanban, List) into the shared drawer, per owner's DONE bar.
+## ACCT-F26140 — Bills settlement column + system-wide settlement/tour column sweep (CC-2, 2026-09-11)
+
+**COLLISION RECONCILED (2026-09-11, mid-sweep):** this branch originally also fixed
+`bills.routes.ts`/`BillsPage.tsx`/`accounting.ts` directly. While rebasing onto `origin/main`, PR
+#21826 (owner + Cursor, same finding ID `ACCT-F26140`, live commit `cb6645fb2b`) merged first,
+fixing those exact 3 files — confirmed via `git log`, independent of (and unrelated to) the earlier
+unverifiable `INBOX-CC-2.md` "GPT reassignment" notice, whose named branch never existed on origin
+and whose named agent is not in the live roster (treated as unverified, not acted on, per standing
+law). #21826's fix is at least as correct as mine: it collapses ambiguous/conflicting settlement
+identities to unknown rather than picking one, and excludes voided/cancelled settlements and lines
+(mine did not exclude voided settlements). Rather than re-apply a redundant, inferior duplicate,
+this branch now takes `origin/main`'s version of those 3 files verbatim and carries only the
+non-overlapping fixes below.
+
+**BUG 1 — FIXED (jointly: #21826 + this branch).** `driver_finance.driver_bills.
+settled_in_settlement_id` is a dead column (live-verified 0/94 populated company-wide; matches the
+already-fixed comment in `load-cost-rollup.sql.ts`, NEW-08/NEW-09/NEW-23, PR #21318). The real
+settlement attachment is assigned at booking time into `driver_finance.settlement_lines` via
+`source_driver_bill_id`.
+- `apps/backend/src/accounting/bills.routes.ts` + `apps/frontend/src/pages/accounting/
+  BillsPage.tsx` — **fixed by PR #21826**, not this branch (see collision note above).
+- `apps/backend/src/driver-finance/driver-bills-list.routes.ts` (feeds `LoadCostsBoardPage.tsx`'s
+  "Driver pay" rows via `listDriverBills`) — fixed here: same LATERAL-join pattern as #21826's
+  `bills.routes.ts` fix, plus added a real `settlement_id` to the response type. **Not wired into
+  `LoadCostsBoardPage.tsx` itself in this PR** — that file is CC-1's §0b surface
+  (`verify-seat-surface-ownership.mjs` correctly flagged the touch); routed as a one-line follow-up
+  to CC-1 via `docs/bus/INBOX-CC-1.md` instead of crossing lanes. The backend field is live and
+  correct; only the frontend consumer on CC-1's page still reads the dead
+  `settled_in_settlement_id` for that one row mapping.
+- `apps/backend/src/cash-flow/cash-flow.service.ts` (rolling-ledger "open driver bills" section) —
+  fixed here: replaced the `AND db.settled_in_settlement_id IS NULL` filter with a real
+  `NOT EXISTS (settlement_lines WHERE source_driver_bill_id = db.id)` check. Before this fix, every
+  driver bill already attached to a settlement (even an open pre-settlement) was still counted as
+  an "open, upcoming" cash-flow obligation — overstating projected driver-pay outflows.
+
+**Live proof:** #21826's own commit reports USMCA `driver_finance.driver_bills` (non-void): 66
+total, 60/66 (91%) resolved via the real `settlement_lines` join — independently corroborating my
+own pre-collision measurement of the same underlying join shape (0/66 dead column -> 60/66 real
+join). The 6 unresolved are brand-new bills (`created_at` within seconds of each other,
+`status='open'`),
+correctly not-yet-attributed, not a defect.
+
+**A related but distinct defect class found during the BUG-3 sweep, also fixed:** NOT the dead
+column, but a bookend-only (`first_load_id OR last_load_id`) settlement join with no
+`settlement_lines` fallback — silently misses any load that is a MIDDLE leg of a multi-load
+settlement (the exact gap `load-profitability.service.ts`'s own comment already names:
+"first_load_id/last_load_id are only bookend conveniences; they are not the settlement grain").
+Fixed by adding the same dual-path resolve `load-settlement-summary.routes.ts` already used
+(bookend OR `settlement_lines`/`driver_bills.load_id`) to:
+- `apps/backend/src/accounting/bills.service.ts` (`listBillsByVendor` + `listAllBillsForCompany` —
+  feeds `Vendors.tsx`'s transaction-drill table and `BillsPage.tsx`'s **vendor-bill** rows, a
+  different column from the driver-bill fix above)
+- `apps/backend/src/mdata/customer-invoices.routes.ts` (feeds `Customers.tsx`'s transaction-drill
+  table)
+
+Both already gated their frontend render on the real `linked_settlement_id` field (not a dead
+column), so no separate frontend fix was needed for these two — the backend join fix alone
+completes them.
+
+**Live proof:** USMCA `accounting.invoices` with a `source_load_id` (voided excluded): 69 total,
+37/69 (54%) resolved via bookend-only, 69/69 (100%) resolved via the dual-path fix — 32 previously
+invisible customer-invoice settlement numbers now correctly resolve. (Vendor bills currently have 0
+USMCA rows with a load line to demonstrate the same live delta on, but the fix is symmetric and
+`tsc -b`-clean.)
+
+**GUARD:** `scripts/verify-driver-bill-settlement-resolution-uses-settlement-lines.mjs` (verify-step
+10923, cc-2 band) — static source check locking all 5 fixed files to a real `settlement_lines`/
+`source_driver_bill_id` join, never a bare dead-column join/filter. selftest 3/3, direct run OK.
+
+---
+
+**BUG 2 — 4 USMCA loads with `tour_id IS NULL`, TRACED, NOT FIXED (per instruction).**
+Live-verified: `926f4142` (13508, closed), `a8cb63e1` (13556, cancelled), `639b38d8` (13581,
+dispatched), `9c823864` (13584, closed). `13556` has no driver/unit assigned and `trip_type IS
+NULL` — legitimately never reached the trip-type step (matches
+`docs/audit/SETTLEMENT-TOUR-NUMBER-SWEEP-2026-09-11.md`'s own note that this exact load is
+"legitimately expected state"). The other 3 all have `trip_type='SB'` and a populated
+`presettlement_link_id` (so they are NOT the `presettlement_link_id` orphans that doc already
+swept and fixed — this is a narrower, previously-unswept residual gap on the `tour_id` column
+specifically) — and, critically, their OWN `driver_finance.driver_settlements` rows (S-2026-0007,
+S-2026-0029, S-2026-0031) also carry `tour_id IS NULL`.
+
+**Root cause, traced to the exact code path (not touched):**
+`presettlement-link.service.ts`'s `confirmPresettlementLink`, `action === "create_new"` branch:
+```js
+if (suggestion.trip_type === "NB") {
+  suggestion.tour_id = randomUUID();
+  ...
+}
+```
+This only mints a new `tour_id` when the confirming leg's trip_type is `"NB"`. For an `"SB"` leg
+confirmed via `create_new` (as opposed to joining an existing open tour), `suggestion.tour_id` stays
+whatever it already was on the underlying `presettlement_link_suggestions` row — which is `NULL`
+for all 3 of these loads. That `NULL` then propagates through the final
+`UPDATE mdata.loads SET presettlement_link_id = $1, tour_id = $3 ...` (line ~506) to both the load
+and, separately, to the new settlement's own `tour_id` at creation. `presettlement_link_id` gets
+set correctly (matching the already-closed orphan sweep's "0 orphans" result); `tour_id` does not
+— two different columns, two different fates, from the same write.
+
+This is the SAME underlying mechanism the sweep doc's own header comment already names as having
+produced "loads 13581, 13580, and 13508 as live incidents" (in the context of the deferred
+`trip_type`-unknown path) — this pass found a second, narrower manifestation of the identical root
+cause (an SB `create_new` never generating a `tour_id`) that the sweep's `presettlement_link_id`-
+only guard does not catch, since `presettlement_link_id` is populated correctly on these 3; only
+`tour_id` is missing.
+
+**Not fixed this pass, per instruction ("report which write path missed it before touching
+anything").** A real fix needs an owner call on whether SB `create_new` should ALSO mint a fresh
+`tour_id` (mirroring the NB branch) or inherit one from elsewhere — not this seat's call to make
+unilaterally on 3 already-closed/dispatched settlements.
+
+---
+
+**BUG 3 — system-wide settlement/tour column sweep.** Full pass/fail table below (Correct = resolves
+via the proven `settlement_lines` join, the canonical 3-tier COALESCE, or a native settlement-row/FK
+lookup that never needed the dead column; Fixed = found broken this pass, now correct; N/A = no
+settlement-number concept applies to that surface).
+
+| Surface | Verdict |
+|---|---|
+| Bills — driver-bill rows | **FIXED** (dead column → settlement_lines join, frontend gate fixed) |
+| Bills — vendor-bill rows | **FIXED** (bookend-only → dual-path) |
+| Vendors.tsx transaction-drill | **FIXED** (bookend-only → dual-path) |
+| Customers.tsx transaction-drill | **FIXED** (bookend-only → dual-path) |
+| Load Costs Board — driver-pay rows | **FIXED** (same backend fix as Bills driver-bill; link now real) |
+| Load Costs Board — factored-invoice rows | Correct (already the proven-join reference) |
+| Cash Flow — driver-bills "open" filter | **FIXED** (dead column → settlement_lines NOT EXISTS) |
+| Cash Flow — Rolling Ledger / Daily Prediction settlement rows | Correct (native settlement row, not attribution) |
+| Expenses (list/detail) | N/A — no settlement/tour number surfaced on this page at all |
+| Banking reconciliation (all surfaces) | Correct — native FK on the matched row; no load/bill→settlement attribution occurs here |
+| Factoring — Purchase Report / Aging / Invoice Status | Correct (proven join + reference rollup fallback) |
+| Dispatch — Load Detail Drawer (header, Pre-Settlement/Settlement/Costs tabs) | Correct — `tour-readout.routes.ts`'s 3-tier COALESCE (presettlement_link_id → bookend → settlement_lines/driver_bills), a strict superset of the proven join |
+| Dispatch — Load Detail Settlement Tab (standalone) | Correct — explicit dual-path resolve |
+| Dispatch — board/Kanban "open pre-settlement" prompt, Round Trips | Correct/N-A — native settlement-by-driver lookup, not load attribution |
+| Dispatch — Trip Pairing Board | N/A — status enum, not a settlement number |
+| Dispatch — Trip Profitability report | Correct — canonical UNION shape (ACCT-F275/F290) |
+| Dispatch — single-load profitability, Cancel Load modal, Load Banking Linkage, Driver Bill Remint | N/A — no settlement number field on any of these |
+| Driver profile (Settlements / Finance reverse / Deductions reverse sections) | Correct — native FK on the row's own settlement_id |
+| Settlement Disputes, Abandonment Queue, Historical Settlement Attributions | Correct — native FK, or already named as correct by the owner packet |
+
+Also flagged, pre-existing, out of scope (no live defect observed, not part of this pass's 5 fixed
+files): `dispatch/cancellation.service.ts:337-345` uses a narrower `settlement_lines.load_id`-only
+shape (no `driver_bills.load_id` COALESCE) resolving a cancelled load's settlement lines; and the
+Factoring `sett` LATERAL (`factoring.routes.ts`) uses `sl.load_id` alone rather than the full
+`COALESCE(driver_bills.load_id, sl.load_id)` shape — both narrower variants of the canonical join,
+backstopped by fallbacks, no live defect found via this pass's live sweep.
+
+| `driver_finance.driver_bills`, `driver_finance.settlement_lines`, `driver_finance.driver_settlements`, `accounting.bills`/`bill_lines`, `accounting.invoices`, `mdata.loads` (read-only this pass) | **CC-2 (accounting/banking, my lane)** | BUG 2's real fix (SB `create_new` tour_id assignment) needs an owner decision, not attempted here | live Neon queries (bypass_rls=lucia) quoted above, before/after resolution-rate counts, `tsc -b` clean both apps, guard selftest 3/3 + direct PASS | **BUG 1 FIXED + GUARDED · BUG 2 TRACED, OWNER DECISION NEEDED · BUG 3 SURFACE TABLE COMPLETE** |

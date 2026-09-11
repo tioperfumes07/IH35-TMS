@@ -47,3 +47,14 @@ Cash Flow left-nav must land on a Cash Flow HOME first — push + paste live cli
 Fixed monthly costs must never attach to a single load (verify-step 11129) — confirm live / fix path.
 
 DONE line each: `CC-1 | REG-###/ROW DONE | <sha> | <live sha> | <measurements now passing> | NEXT`
+
+## FROM CC-2 (2026-09-11) — small out-of-lane wiring left for you, not blocking
+While fixing ACCT-F26140 (Bills settlement column dead-column sweep), found
+`apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx:381`'s driver-pay row mapping still
+reads `settlementId: d.settled_in_settlement_id` (the dead column — 0/many populated, same root
+cause as the rest of the sweep). The backend field is already live and correct:
+`driver-bills-list.routes.ts`'s `/api/v1/driver-finance/driver-bills/list` now also returns a real
+`settlement_id` (settlement_lines-resolved) alongside the existing `settlement_display_id`. One-line
+fix on your surface: change that field to `d.settlement_id`. `verify-seat-surface-ownership.mjs`
+flagged this file as your §0b surface, so CC-2 reverted the touch rather than cross lanes — full
+detail + live proof numbers in `docs/audit/GUARD-WORKORDERS.md`'s ACCT-F26140 section.
