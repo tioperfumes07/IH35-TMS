@@ -1,10 +1,10 @@
 {
-  "healthzSha": "f1ec645",
-  "generated_at": "2026-09-10T20:01:37.370Z",
+  "healthzSha": "d90940f",
+  "generated_at": "2026-09-11T02:44:06.923Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "f1ec645",
+    "deployedSha": "d90940f",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 21677,
-      "title": "FINDING: ACCT-F6350 (REG-041 owner follow-up) Resettlement needs explicit original-load date columns",
+      "number": 21759,
+      "title": "FINDING: N/A (CLAIM-RESERVE 11217 -- reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 02:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21677",
-      "sha": "8d8b4beec0",
-      "committedAtIso": "2026-09-10T14:59:22-05:00"
+      "mergedAtCt": "09/10/2026, 09:43 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21759",
+      "sha": "b3bff65868",
+      "committedAtIso": "2026-09-10T21:43:07-05:00"
     },
     {
-      "number": 21679,
-      "title": "FINDING: REG-023(b) — \"Open driver bill\" is unwired (no driver_bills/:id route)",
+      "number": 21758,
+      "title": "FINDING: N/A (CLAIM-RESERVE 11213 -- reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 02:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21679",
-      "sha": "75517b329b",
-      "committedAtIso": "2026-09-10T14:56:51-05:00"
+      "mergedAtCt": "09/10/2026, 09:42 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21758",
+      "sha": "d45fe34abb",
+      "committedAtIso": "2026-09-10T21:42:20-05:00"
     },
     {
-      "number": 21678,
-      "title": "FINDING: REG-046 — invoice table columns not in money waterfall order",
+      "number": 21757,
+      "title": "FINDING: N/A (docs — AR-TIEOUT-POSTED-WITHOUT-POSTING-RECURRENCE CLOSED, live-reverified)",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 02:52 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21678",
-      "sha": "35a20f2852",
-      "committedAtIso": "2026-09-10T14:52:50-05:00"
+      "mergedAtCt": "09/10/2026, 09:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21757",
+      "sha": "583f068ecd",
+      "committedAtIso": "2026-09-10T21:37:45-05:00"
     },
     {
-      "number": 21676,
-      "title": "FINDING: N/A (docs/bus only) — re-open REG-040 closed-settlement continuation as GPT top row (owner order)",
+      "number": 21756,
+      "title": "FINDING: LST-F26105 (REG-054 STATUS-DROPDOWN SWEEP) | LANE: NON-FINANCIAL (CC-3 mechanical)",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 02:48 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21676",
-      "sha": "66e62236a2",
-      "committedAtIso": "2026-09-10T14:48:39-05:00"
+      "mergedAtCt": "09/10/2026, 09:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21756",
+      "sha": "269c269bd5",
+      "committedAtIso": "2026-09-10T21:35:46-05:00"
     },
     {
-      "number": 21675,
-      "title": "FINDING: REG-015 — 6 dashed factoring stubs were placeholders, not real tabs",
+      "number": 21755,
+      "title": "FINDING: REG-050 Work Orders sortable headers were page-only",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 02:44 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21675",
-      "sha": "ff14176df9",
-      "committedAtIso": "2026-09-10T14:44:16-05:00"
+      "mergedAtCt": "09/10/2026, 09:34 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21755",
+      "sha": "d90940ffa8",
+      "committedAtIso": "2026-09-10T21:34:03-05:00"
     },
     {
-      "number": 21674,
-      "title": "FINDING: ACCT-F6350 (REG-040 owner follow-up) invoiced loads lack a Resettlement view and new northbound bookings split open tour identity",
+      "number": 21754,
+      "title": "FINDING: N/A (CLAIM-RESERVE 202614060000 — historical settlement attribution)",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 02:41 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21674",
-      "sha": "f1ec6457a6",
-      "committedAtIso": "2026-09-10T14:41:20-05:00"
+      "mergedAtCt": "09/10/2026, 09:33 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21754",
+      "sha": "5f1a94dd58",
+      "committedAtIso": "2026-09-10T21:33:48-05:00"
     },
     {
-      "number": 21673,
-      "title": "FINDING: REG-049 unit profile had no canonical cost-linked maintenance history",
+      "number": 21753,
+      "title": "FINDING: reverse+repost executor live-Neon fixes (Blocker 2 follow-up)",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 02:40 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21673",
-      "sha": "5c552b4735",
-      "committedAtIso": "2026-09-10T14:40:41-05:00"
+      "mergedAtCt": "09/10/2026, 09:29 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21753",
+      "sha": "53b621020e",
+      "committedAtIso": "2026-09-10T21:29:51-05:00"
     },
     {
-      "number": 21672,
-      "title": "FINDING: REG-037 — Round Trips timeline (Aug 25 → present) is missing units/loads",
+      "number": 21752,
+      "title": "FINDING: BANK-F10006 | register default For review hid the 12/08 $100; Plaid snapshot can overwrite BofA header",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 02:29 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21672",
-      "sha": "d0554381cf",
-      "committedAtIso": "2026-09-10T14:29:15-05:00"
+      "mergedAtCt": "09/10/2026, 09:29 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21752",
+      "sha": "4a29072504",
+      "committedAtIso": "2026-09-10T21:29:32-05:00"
     },
     {
-      "number": 21671,
-      "title": "FINDING: REG-048 finalize work-order V5 and unit contract",
+      "number": 21746,
+      "title": "CC2-FINDING: BANK-F30050 (REG-028/030) -- USMCA BofA checking reconciled to statement's own printed balance",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 02:27 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21671",
-      "sha": "421ced785e",
-      "committedAtIso": "2026-09-10T14:27:06-05:00"
+      "mergedAtCt": "09/10/2026, 09:07 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21746",
+      "sha": "d50ea38cc5",
+      "committedAtIso": "2026-09-10T21:07:23-05:00"
     },
     {
-      "number": 21670,
-      "title": "FINDING: REG-036 — northbound units on Round Trips have no \"+ Book return\" button",
+      "number": 21751,
+      "title": "FINDING: N/A (docs — SETTLEMENT/TOUR NUMBER SWEEP 3-part DONE report to OUTBOX-CC-1)",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 02:20 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21670",
-      "sha": "886f6cfb61",
-      "committedAtIso": "2026-09-10T14:20:57-05:00"
+      "mergedAtCt": "09/10/2026, 08:42 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21751",
+      "sha": "933c2c7a82",
+      "committedAtIso": "2026-09-10T20:42:04-05:00"
     }
   ]
 }
