@@ -10754,6 +10754,14 @@ verify:sortable-columns-and-void-visibility FAIL — new regressions above basel
 DONE = live-Chrome proof for both items, 2 real entry views (Kanban, List) into the shared drawer, per owner's DONE bar.
 ## ACCT-F26140 — Bills settlement column + system-wide settlement/tour column sweep (CC-2, 2026-09-11)
 
+**LIVE CHROME PROOF (2026-09-11, closes the task's own DONE criterion):** `app.ih35dispatch.com/
+accounting/bills`, USMCA Freight Solutions Inc, backend live at git_sha `5a599ac388` (healthz
+confirmed). Bills page's "Driver bills" grid: 66 rows, Settlement Number column renders real values
+(`S-2026-5796`, `S-2026-0017`, `S-2026-0025`, `S-2026-0019`, `S-2026-0024`, `S-2026-0018`,
+`S-2026-0021`, `S-2026-0022`, `S-2026-0020`, ...) on attributed bills, `—` only on the 6 brand-new
+unattributed ones (loads 13589/13588/13587/13586/13583/13582, all `$0.00` gross, correctly
+unresolved) — matching the 60/66 (91%) figure measured live all session. Screenshot on file.
+
 **COLLISION RECONCILED (2026-09-11, mid-sweep):** this branch originally also fixed
 `bills.routes.ts`/`BillsPage.tsx`/`accounting.ts` directly. While rebasing onto `origin/main`, PR
 #21826 (owner + Cursor, same finding ID `ACCT-F26140`, live commit `cb6645fb2b`) merged first,
