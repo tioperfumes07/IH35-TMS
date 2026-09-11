@@ -1732,3 +1732,63 @@ historical-attribution runtime is now unblocked to ship on your side.
 DONE LINE: CC-1 | ROW1 executor scope protection DONE | PR #21779 merged `ecb76b7021` | Live=CONFIRMED
 via post-merge forensic on `origin/main` + live Neon re-verification (13 raw matches, 12 after
 filter) | NEXT: continuing the sweep for the next open CC-1 item.
+
+## CC-1 | THREE ITEMS response: items 1+2 already DONE (re-verified live), item 3 proposal posted (2026-09-11)
+
+Responding to the owner order "CC-1 — THREE ITEMS: SETTLEMENT CLOSE ROUTING, PRESETTLEMENT BLIND
+SPOT, MISATTRIBUTED LINES":
+
+**Item 1 (Settlement Close payment-method routing) — ALREADY DONE this session, re-verified live
+just now.** Fixed in PR #21767 (`ACCT-F26132`), merged `fa6f138ec5`. `SettlementCloseArrivalPage.tsx`
+now calls `closeSettlementPayRun` with the picked `payment_method_id` (the exact function
+`PayRunClosePanel` already used correctly), instead of discarding the selection. Guard
+`scripts/verify-settlement-close-posts-payrun.mjs` re-run just now: PASS. Confirmed the fix commit
+is an ancestor of the currently-deployed healthz `git_sha` (`ec9511ad9c`) — live.
+
+**Item 2 (presettlement deferred-load blind spot) — ALREADY DONE this session, re-verified live
+just now.** Fixed in PR #21774 (`ACCT-F26133`), merged `633a82c382`. Added
+`recordDeferredPresettlementSuggestion` — a shared writer that creates the missing
+`driver_finance.presettlement_link_suggestions` review-queue row (trip_type + suggested_settlement_id
+both honestly NULL) instead of only logging an audit event — wired into both deferred-write call
+sites (`presettlement-link.service.ts`'s post-assignment hook and `book-load.service.ts`'s own
+booking-time branch). Also built the first-ever frontend surface for this queue (a new "Needs
+Review" tab on `/driver-finance/settlements`) since the backend confirm/reject routes had zero
+caller anywhere in the app before this. Guard
+`scripts/verify-presettlement-deferred-suggestions-visible.mjs` re-run just now: PASS. Confirmed
+ancestor of the currently-deployed SHA — live. Already Chrome-verified earlier this session (see
+this outbox's own "presettlement deferred-suggestions root-cause fix DONE + live deploy +
+Chrome-verified" entry).
+
+**Item 3 (load 13508's misattributed lines) — proposal posted, NOTHING executed, awaiting owner
+sign-off**, per the order's own instruction. Full write-up:
+`docs/audit/LOAD-13508-REVERSAL-PROPOSAL-2026-09-11.md`. Key corrections to the original framing:
+
+- The two settlements belong to the **same driver** (Angel Alfonso Sosa), not different drivers —
+  this is a wrong-tour-assignment bug within one driver's own settlement history, not a cross-driver
+  misattribution.
+- Live investigation found the defect runs **deeper** than the 2 originally-flagged
+  `settlement_lines` display rows: it traces to 2 **live, active**
+  `driver_finance.driver_settlement_deductions` records (a $10.00 admin fee, a $25.00
+  escrow-claims deduction) still wrongly `applied_to_settlement_id`'d to S-2026-0015 instead of
+  S-2026-0007, plus 2 already-voided duplicate records whose `settlement_lines` display rows were
+  never cleaned up (the originally-flagged residue).
+- The $10.00 admin fee has a **real, live effect on both settlements' already-posted GL** (confirmed
+  via full JE reconstruction) — S-2026-0015 currently over-credits its admin-fee-recovery leg by
+  $10, S-2026-0007 is missing that same $10. The $25.00 escrow-claims deduction currently has
+  **zero GL effect on either side** (excluded from this settlement model's deduction-recovery
+  aggregation entirely) — a pure provenance fix, not a money movement.
+- Found and explicitly separated out a **pre-existing, already-known, already-reported** compounding
+  bug on the same JE (the "ROUND 16.24" voided-row-inclusion issue named in
+  `settlement-payrun-close.service.ts`'s own code comment, S-2026-0015/S-13652 is one of its named
+  8 settlements) — NOT re-proposed here, flagged only so it isn't confused with the new finding or
+  double-counted.
+- Proposal gives the owner 3 explicit options (full fix incl. the $10/$10 corrective JE pair /
+  metadata-only fix, no JE / hold entirely) and describes (but does not build — "Item 3 needs no
+  guard yet") the guard design that would catch a repeat: cross-checking each deduction's `load_id`
+  tour against its `applied_to_settlement_id`'s own tour.
+- S-2026-0011 (separately parked) reconfirmed untouched, exactly as ruled — its executor-scope
+  exclusion already shipped (PR #21779).
+
+DONE LINE: CC-1 | Items 1+2 CONFIRMED DONE+LIVE (re-verified) | Item 3 proposal POSTED, AWAITING
+OWNER, nothing executed | docs/audit/LOAD-13508-REVERSAL-PROPOSAL-2026-09-11.md | NEXT: hold on item
+3 until owner responds; continuing the sweep for other open CC-1 items in the meantime.
