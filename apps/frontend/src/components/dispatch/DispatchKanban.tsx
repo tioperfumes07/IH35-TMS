@@ -161,10 +161,18 @@ const KANBAN_STATUS_GROUPS: KanbanColumnDef[] = [
   // two lanes without a new owner instruction (Rule 4 -- do not invent a rule that isn't theirs).
   { key: "assigned", title: "Assigned", statuses: ["draft", "planned", "unassigned", "booked", "assigned", "assigned_not_dispatched"], dropStatus: "assigned" },
   { key: "dispatched", title: "Dispatched", statuses: ["dispatched"], dropStatus: "dispatched" },
-  { key: "at_pickup", title: "At pickup", statuses: ["at_pickup"], dropStatus: "at_pickup", showDwell: true },
+  // KANBAN-CROSS-COLUMN-DRAG: at_pickup and at_delivery are geofence-derived micro-states within
+  // the dispatched/in_transit lifecycle stages (resolveKanbanColumnKey overrides status→column via
+  // pickup/delivery geofence state). Their dropStatus values (at_pickup, at_delivery) map to the
+  // SAME dispatch state as their parent (dispatched, in_transit) via toDispatchTransitionStatus, so
+  // a drop always produces a same-state transition (dispatched→dispatched or in_transit→in_transit)
+  // which the backend rejects as invalid_transition. Marking them derivedOnly (like "Loaded") refuses
+  // the drop with a telematics explanation instead of a silent server rejection — the operator is
+  // told these lanes are set by geofence/driver PWA, not by office drag.
+  { key: "at_pickup", title: "At pickup", statuses: ["at_pickup"], dropStatus: "at_pickup", showDwell: true, derivedOnly: true },
   { key: "loaded", title: "Loaded", statuses: [], dropStatus: "in_transit", derivedOnly: true },
   { key: "in_transit", title: "In transit", statuses: ["in_transit"], dropStatus: "in_transit" },
-  { key: "at_delivery", title: "At delivery", statuses: ["at_delivery"], dropStatus: "at_delivery", showDwell: true },
+  { key: "at_delivery", title: "At delivery", statuses: ["at_delivery"], dropStatus: "at_delivery", showDwell: true, derivedOnly: true },
   // WIRE-07: drop must use delivered_pending_docs so mdata status stamps actual_departure_at.
   // Bare "delivered" skips loadStatusRequiresDeliveryDepartureStamp (backend stamp helper).
   { key: "delivered", title: "Delivered", statuses: ["delivered", "delivered_pending_docs"], dropStatus: "delivered_pending_docs" },
@@ -1319,11 +1327,13 @@ export function DispatchKanban({
       return;
     }
     if (targetGroup.derivedOnly) {
-      // FAIL-K1: refuse the write rather than perform a misleading one. Dropping here used to set
-      // `in_transit`; with no `departed` geofence the card then rendered in "In transit", so the operator
-      // saw their card jump to a lane they did not choose and had no idea why.
+      // FAIL-K1 + KANBAN-CROSS-COLUMN-DRAG: refuse the write rather than perform a misleading one.
+      // Loaded is set by pickup-departure telematics; At pickup / At delivery are set by geofence
+      // dwell or driver PWA stop arrivals. All three map to the same dispatch state as their parent
+      // (dispatched or in_transit), so a drop always produces a same-state transition the backend
+      // rejects as invalid_transition. Refuse with a clear explanation instead.
       pushToast(
-        `${targetGroup.title} is set by telematics (pickup departure), not by dragging. Move the load to In transit instead.`,
+        `${targetGroup.title} is set by telematics (geofence/driver PWA), not by dragging. Move the load to ${targetGroup.key === "at_pickup" ? "Dispatched or In transit" : targetGroup.key === "at_delivery" ? "In transit or Delivered" : "In transit"} instead.`,
         "info"
       );
       return;
