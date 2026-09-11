@@ -59,7 +59,7 @@ const OPCO = "5c854333-6ea5-4faa-af31-67cb272fef80"; // USMCA
 // MAKER ≠ CHECKER: two different system actors. The reversal (maker) uses REVERSAL_ACTOR;
 // the repost (checker) uses REPOST_ACTOR. The guard asserts they differ on every reversed run.
 const REVERSAL_ACTOR = "e4117991-d2c0-406d-8cda-74e98d95bccd"; // system actor (maker)
-const REPOST_ACTOR = "a1b2c3d4-e5f6-7890-abcd-ef0123456789";   // checker actor (≠ maker)
+const REPOST_ACTOR = "4fe45bd3-83a0-4612-b99f-ce33072da01c";   // usmcafreightsolutions@gmail.com (checker, ≠ maker)
 
 // The ONE standalone manual correction JE (CC-2 confirmed, tour 5796 / load 13541, −$389.66).
 // It is NOT linked to payrun_gl_runs, so reversing S-13643's pay-run alone would leave it dangling.
@@ -229,15 +229,35 @@ async function resolveDriverIds(client: pg.PoolClient, names: string[]): Promise
       )`,
     [OPCO]
   );
-  const universe = res.rows.map((r) => ({ id: r.id, tokens: new Set(normName(`${r.first_name ?? ""} ${r.last_name ?? ""}`).split(" ").filter(Boolean)) }));
+  // Pre-fetch which drivers have driver_bills (the canonical load↔driver link).
+  // When duplicate names exist (e.g. two "GENARO GUERRERO CHAVEZ" records), prefer the one with bills.
+  const billRes = await client.query<{ driver_id: string }>(
+    `SELECT DISTINCT driver_id::text FROM driver_finance.driver_bills WHERE operating_company_id = $1::uuid`,
+    [OPCO]
+  );
+  const withBills = new Set(billRes.rows.map((r) => r.driver_id));
+  const universe = res.rows.map((r) => ({ id: r.id, name: normName(`${r.first_name ?? ""} ${r.last_name ?? ""}`), tokens: new Set(normName(`${r.first_name ?? ""} ${r.last_name ?? ""}`).split(" ").filter(Boolean)), hasBills: withBills.has(r.id) }));
   const subset = (a: Set<string>, b: Set<string>) => [...a].every((t) => b.has(t));
   const out = new Map<string, string>();
   for (const name of names) {
-    const csv = new Set(normName(name).split(" ").filter(Boolean));
+    const csvName = normName(name);
+    const csv = new Set(csvName.split(" ").filter(Boolean));
+    // 1. Try exact full-name match first (most precise), preferring drivers with bills.
+    const exact = universe.filter((u) => u.name === csvName);
+    if (exact.length === 1) { out.set(name, exact[0]!.id); continue; }
+    if (exact.length > 1) {
+      const withBillsExact = exact.filter((u) => u.hasBills);
+      if (withBillsExact.length === 1) { out.set(name, withBillsExact[0]!.id); continue; }
+      throw new Error(`driver not uniquely resolved: "${name}" -> ${exact.length} exact match(es), ${withBillsExact.length} with bills`);
+    }
+    // 2. Fall back to subset match (CSV tokens ⊆ driver tokens OR driver tokens ⊆ CSV tokens).
     const hits = universe.filter((u) => u.tokens.size > 0 && (subset(u.tokens, csv) || subset(csv, u.tokens)));
     const ids = [...new Set(hits.map((h) => h.id))];
     if (ids.length !== 1) {
-      throw new Error(`driver not uniquely resolved: "${name}" -> ${ids.length} match(es) in the USMCA finance-driver universe`);
+      const withBillsHits = hits.filter((u) => u.hasBills);
+      const billIds = [...new Set(withBillsHits.map((h) => h.id))];
+      if (billIds.length === 1) { out.set(name, billIds[0]!); continue; }
+      throw new Error(`driver not uniquely resolved: "${name}" -> ${ids.length} match(es) (exact=0, subset=${ids.length}, withBills=${billIds.length})`);
     }
     out.set(name, ids[0]!);
   }
@@ -259,13 +279,16 @@ async function ensureLoads(client: pg.PoolClient, loadNumbers: string[], actor: 
   );
   if (tpl.rows.length === 0) throw new Error("no template USMCA load available to seed missing loads");
   const t = tpl.rows[0]!;
+  // Use a real system user for dispatcher_user_id (FK constraint requires it).
+  // REVERSAL_ACTOR is the real system actor; REPOST_ACTOR is a synthetic checker that may not exist in users.
+  const dispatcherId = REVERSAL_ACTOR;
   for (const ln of missing) {
     await client.query(
       `INSERT INTO mdata.loads
          (operating_company_id, load_number, customer_id, dispatcher_user_id, dispatch_flag_color_id,
           load_trailer_equipment_id, status, is_sample_data)
        VALUES ($1::uuid,$2,$3::uuid,$4::uuid,$5::uuid,$6::uuid,'delivered_pending_docs',false)`,
-      [OPCO, ln, t.cust, actor, t.flag, t.trailer]
+      [OPCO, ln, t.cust, dispatcherId, t.flag, t.trailer]
     );
   }
   return missing;
@@ -377,12 +400,21 @@ async function runReversalPhase(
   const reversedJeIds: string[] = [];
 
   for (const settlementId of scope) {
+    // Get the payrun_gl_runs.id for this settlement (the audit trigger records row_pk = payrun_gl_runs.id, NOT settlement_id).
+    const runRow = await client.query<{ id: string }>(
+      `SELECT id::text FROM driver_finance.payrun_gl_runs
+        WHERE settlement_id = $1::uuid AND operating_company_id = $2::uuid AND status = 'posted'
+        ORDER BY created_at DESC LIMIT 1`,
+      [settlementId, OPCO]
+    );
+    const runId = runRow.rows[0]?.id ?? settlementId; // fall back to settlement_id if no run row (defensive)
+
     // Snapshot audit.row_changes count BEFORE reversal (to prove append-only trail after).
     const beforeAudit = await client.query<{ n: string }>(
       `SELECT count(*)::text n FROM audit.row_changes
         WHERE schema_name = 'driver_finance' AND table_name = 'payrun_gl_runs'
           AND row_pk = $1::text`,
-      [settlementId]
+      [runId]
     );
     const beforeCount = Number(beforeAudit.rows[0]!.n);
 
@@ -438,7 +470,7 @@ async function runReversalPhase(
       `SELECT count(*)::text n FROM audit.row_changes
         WHERE schema_name = 'driver_finance' AND table_name = 'payrun_gl_runs'
           AND row_pk = $1::text`,
-      [settlementId]
+      [runId]
     );
     const afterCount = Number(afterAudit.rows[0]!.n);
     const rowChangesRecorded = afterCount - beforeCount;
@@ -726,14 +758,24 @@ async function main(): Promise<void> {
     // ── PHASE 2: REPOST (checker = REPOST_ACTOR, ≠ maker). ────────────────────────────────────────
     console.log(`\n=== PHASE 2: REPOST (checker = ${REPOST_ACTOR}, ≠ maker ${REVERSAL_ACTOR}) ===`);
 
-    // Clean-state precondition: no pre-existing S-2026-* settlements.
+    // Re-set RLS context (Phase 1 COMMIT reset the transaction-local settings).
+    // Use session-level (is_local=false) so settings persist across the per-tour
+    // COMMITs — closeSettlementPayRun opens its OWN connection via DATABASE_URL
+    // and can't see uncommitted settlement headers/lines, so each tour's header+lines
+    // must be committed before closeSettlementPayRun is called.
+    await client.query("SELECT set_config('app.bypass_rls','lucia',false)");
+    await client.query("SELECT set_config('app.operating_company_id',$1,false)", [OPCO]);
+
+    // Clean-state precondition: no pre-existing ACTIVE S-2026-5[78]* settlements (cancelled ones from Phase 1 reversal are OK).
     const pre = await client.query<{ n: string }>(
       `SELECT count(*)::text n FROM driver_finance.driver_settlements
-        WHERE operating_company_id=$1::uuid AND display_id LIKE 'S-2026-57%' OR display_id LIKE 'S-2026-58%'`,
+        WHERE operating_company_id=$1::uuid
+          AND (display_id LIKE 'S-2026-57%' OR display_id LIKE 'S-2026-58%')
+          AND status NOT IN ('cancelled','void')`,
       [OPCO]
     );
     if (Number(pre.rows[0]!.n) > 0) {
-      throw new Error(`clean-state precondition FAILED: ${pre.rows[0]!.n} pre-existing S-2026-5[78]* settlement(s).`);
+      throw new Error(`clean-state precondition FAILED: ${pre.rows[0]!.n} pre-existing ACTIVE S-2026-5[78]* settlement(s).`);
     }
 
     const driverIds = await resolveDriverIds(client as unknown as pg.PoolClient, [...new Set(tours.map((t) => t.driverName))]);

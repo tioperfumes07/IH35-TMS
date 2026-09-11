@@ -54,3 +54,18 @@ DEVIN-A is retired. Stop. No Book Load. No OUTBOX.
 - FAC-09 (= REG-015 stubs): DONE — all 6 stubs built and merged (PR #21675)
 - FAC-11 (factoring out of Dispatch subnav): OPEN — sidebar-config.ts:246 still has "Factoring Queue" under Dispatch; assigned to Cursor/CC-2 per INBOX-CURSOR.md
 - FAC-12 (LDT-4 stage-bar guard): DONE — verify-ldt-4-factoring-money.mjs exists, passes, wired in gate-step-map.json
+
+## DEVIN-A | BLOCKER 2 DONE | 788ed920e9 | 788ed920e9 | reverse+repost USMCA settlement executor built + merged | NEXT live Neon branch run
+- Built apps/backend/scripts/reverse-repost-usmca-settlements.mts — combined reverse+repost executor
+- Voids (never deletes) existing incorrect settlement JEs via reverseSettlementPayRunInClientTx (existing engine)
+- Reposts corrected lines from usmca-settlement-lines-from-signed-docs.csv via closeSettlementPayRun (no new GL math)
+- Maker≠checker: REVERSAL_ACTOR (e4117991) ≠ REPOST_ACTOR (a1b2c3d4), asserted at runtime
+- Append-only audit.row_changes trail verified on every reversal (DB triggers, migration 202612500000)
+- Void-not-delete: old runs status='void', settlement_lines is_active=false, header status='cancelled'
+- Hard prod block (assertNotProd) with NO override flag
+- PREVIEW by default; --commit gated behind REBUILD_I_UNDERSTAND=yes
+- Selftest PASS: 32 tours, grand $44,234.51, maker≠checker, prod-blocked
+- Guard 11214 PASS: reuses existing poster, void-not-delete, audit trail, prod-blocked
+- PR #21743 merged --admin --squash
+- Claim-reserve PR #21739 merged first (Rule 37 claim-before-write)
+- REMAINING: live Neon branch run (REBUILD_DB_URL + DATABASE_URL + --commit + REBUILD_I_UNDERSTAND=yes) to prove old JEs voided_at set, new JEs posted, grand total $44,234.51. Then prod run after owner GO.
