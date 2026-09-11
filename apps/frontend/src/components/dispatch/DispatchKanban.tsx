@@ -275,6 +275,70 @@ function groupLoadsByColumn(loads: DispatchLoadRow[]) {
   return grouped;
 }
 
+// SWIM-LANE ROW ALIGNMENT (owner 2026-09-11): one row per UNIT, computed once across the whole board.
+// Each unit's card renders in whichever lane matches its current load's status; every OTHER lane on
+// that same row is empty space at that row's height. The row key is unit-derived (assigned_unit_id or
+// load id for unassigned), NOT column-local-index-derived — so the same unit is always at the same
+// vertical position no matter which lane it's currently in.
+type UnitRow = {
+  unitKey: string;
+  unitId?: string;
+  unitNumber?: string | null;
+  load: DispatchLoadRow;
+  columnKey: string;
+};
+
+function computeAllUnits(
+  loads: DispatchLoadRow[],
+  awaitingTruckCards: DispatchLoadRow[],
+): UnitRow[] {
+  const rows: UnitRow[] = [];
+  const seenUnits = new Set<string>();
+
+  // Awaiting trucks (trucks without loads) go in the "awaiting_assignment" lane
+  for (const truck of awaitingTruckCards) {
+    const unitId = truck.assigned_unit_id ?? truck.id;
+    if (seenUnits.has(unitId)) continue;
+    rows.push({
+      unitKey: `unit:${unitId}`,
+      unitId,
+      unitNumber: truck.assigned_unit_number,
+      load: truck,
+      columnKey: "awaiting_assignment",
+    });
+    seenUnits.add(unitId);
+  }
+
+  // Loads (deduped by unit) go in their resolved lane
+  for (const load of dedupeLoadsByUnit(loads)) {
+    const unitId = load.assigned_unit_id;
+    if (unitId && seenUnits.has(unitId)) continue;
+    const key = unitId ?? `load:${load.id}`;
+    rows.push({
+      unitKey: key,
+      unitId: unitId ?? undefined,
+      unitNumber: load.assigned_unit_number,
+      load,
+      columnKey: resolveKanbanColumnKey(load),
+    });
+    if (unitId) seenUnits.add(unitId);
+  }
+
+  return rows;
+}
+
+function sortAllUnits(units: UnitRow[], sort?: KanbanColumnSort): UnitRow[] {
+  if (!sort) return units;
+  return [...units].sort((a, b) => {
+    const cmp = compareKanbanSortValue(a.load, sort.key).localeCompare(
+      compareKanbanSortValue(b.load, sort.key),
+      undefined,
+      { numeric: true, sensitivity: "base" },
+    );
+    return sort.direction === "asc" ? cmp : -cmp;
+  });
+}
+
 function loadModeLabel(load: KanbanLoad): string {
   const trailer = String(load.trailer_type ?? "").toLowerCase();
   if (trailer.includes("reefer")) return "Reefer";
@@ -944,7 +1008,12 @@ function KanbanColumnSortControls({
   );
 }
 
-function KanbanDispatchColumn({
+// SWIM-LANE: KanbanDispatchColumn is the legacy per-column renderer, replaced by
+// KanbanSwimLaneColumn for the main board. Kept (not deleted) because
+// verify-kanban-awaiting-truck-entitylinks.mjs uses its `function KanbanDispatchColumn`
+// line as a boundary marker to locate the AwaitingTruckCard body above it.
+// Exported so TypeScript does not flag it as unused (Rule: never delete modules).
+export function KanbanDispatchColumn({
   column,
   loads,
   density,
@@ -1132,6 +1201,217 @@ function KanbanDispatchColumn({
   );
 }
 
+// SWIM-LANE ROW ALIGNMENT (owner 2026-09-11): one row per UNIT, computed once across the whole board.
+// Each column renders ALL unit rows; a unit's card appears in whichever lane matches its current
+// load's status, and every OTHER lane on that same row is empty space at that row's height. The row
+// key is unit-derived (assigned_unit_id or load id for unassigned), NOT column-local-index-derived.
+// Per-density row min-heights keep rows aligned across columns at Standard density (the default).
+const SWIM_LANE_ROW_MIN_HEIGHT: Record<KanbanDensity, number> = {
+  compact: 44,
+  standard: 64,
+  detailed: 150,
+};
+
+function KanbanSwimLaneColumn({
+  column,
+  allUnits,
+  density,
+  activeGeofenceBreachVehicleIds,
+  onLoadClick,
+  onColumnHeaderClick,
+  boardSort,
+  onToggleColumnSort,
+  width,
+  onResize,
+  onStatusDrop,
+}: {
+  column: KanbanColumnDef;
+  allUnits: UnitRow[];
+  density: KanbanDensity;
+  activeGeofenceBreachVehicleIds?: Set<string>;
+  onLoadClick: (loadId: string) => void;
+  onColumnHeaderClick?: (statuses: string[]) => void;
+  boardSort?: KanbanColumnSort;
+  onToggleColumnSort: (columnKey: string, sortKey: "unit" | "load") => void;
+  width?: number;
+  onResize?: (columnKey: string, width: number) => void;
+  onStatusDrop?: Props["onStatusDrop"];
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: `column:${column.key}` });
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const onResizePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (!onResize) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const startX = e.clientX;
+      const startWidth = sectionRef.current?.getBoundingClientRect().width ?? width ?? 290;
+      const handleMove = (ev: PointerEvent) => onResize(column.key, startWidth + (ev.clientX - startX));
+      const handleUp = () => {
+        window.removeEventListener("pointermove", handleMove);
+        window.removeEventListener("pointerup", handleUp);
+      };
+      window.addEventListener("pointermove", handleMove);
+      window.addEventListener("pointerup", handleUp);
+    },
+    [column.key, onResize, width],
+  );
+  const [expanded, setExpanded] = useState(false);
+
+  const headerLink =
+    onColumnHeaderClick && column.statuses.length > 0 ? (
+      <button
+        type="button"
+        onClick={() => onColumnHeaderClick(column.statuses)}
+        className="text-center text-xs font-semibold text-gray-700 hover:text-slate-900 hover:underline"
+        data-testid={`kanban-column-header-link-${column.key}`}
+        title={`View ${column.title} loads in the list`}
+      >
+        {column.title}
+      </button>
+    ) : (
+      <h3 className="text-xs font-semibold text-gray-700">{column.title}</h3>
+    );
+
+  // Count of cards actually in this column (for the badge)
+  const columnCardCount = allUnits.filter((u) => u.columnKey === column.key).length;
+
+  if (column.collapsedByDefault && !expanded) {
+    return (
+      <section className="min-w-[270px] rounded-sm border border-gray-300 bg-white p-2" data-testid={`kanban-column-${column.key}`}>
+        <header className="grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-sm border border-gray-300 bg-gray-50 px-2 pb-2 pt-1">
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            className="inline-flex items-center rounded p-0.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+            data-testid={`kanban-column-expander-${column.key}`}
+            aria-expanded={false}
+            title={`Show ${column.title} loads`}
+          >
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+          </button>
+          <div className="text-center">{headerLink}</div>
+          <span className="justify-self-end rounded-sm bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{columnCardCount}</span>
+        </header>
+        <KanbanColumnSortControls columnKey={column.key} sort={boardSort} onToggleSort={onToggleColumnSort} />
+      </section>
+    );
+  }
+
+  const detailed = density === "detailed";
+  const minWidth = density === "compact" ? "min-w-[200px]" : density === "standard" ? "min-w-[230px]" : "min-w-[290px]";
+  const rowMinH = SWIM_LANE_ROW_MIN_HEIGHT[density];
+  const rowGap = detailed ? "8px" : "4px";
+
+  return (
+    <section
+      ref={sectionRef}
+      className={`relative ${width ? "" : `${minWidth} flex-1`} rounded-sm border border-gray-300 bg-white p-2`}
+      style={width ? { width: `${width}px`, flex: "0 0 auto" } : undefined}
+      data-testid={`kanban-column-${column.key}`}
+    >
+      <header className="mb-2 rounded-sm border border-gray-300 bg-gray-50 px-2 pb-2 pt-1">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+          {column.collapsedByDefault ? (
+            <button
+              type="button"
+              onClick={() => setExpanded(false)}
+              className="inline-flex w-fit items-center rounded p-0.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+              data-testid={`kanban-column-collapser-${column.key}`}
+              aria-expanded={true}
+              title={`Collapse ${column.title}`}
+            >
+              <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+            </button>
+          ) : (
+            <span />
+          )}
+          <div className="flex items-center justify-center gap-1 text-center">
+            {headerLink}
+            {column.derivedOnly ? (
+              <span
+                className="rounded-sm bg-slate-100 px-1 py-0.5 text-xs font-semibold uppercase text-slate-500"
+                data-testid={`kanban-column-auto-badge-${column.key}`}
+                title="Set automatically from pickup-departure telematics — not drag-droppable"
+              >
+                Auto
+              </span>
+            ) : null}
+          </div>
+          <span className="justify-self-end rounded-sm bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{columnCardCount}</span>
+        </div>
+        <KanbanColumnSortControls columnKey={column.key} sort={boardSort} onToggleSort={onToggleColumnSort} />
+      </header>
+      <div
+        ref={setNodeRef}
+        className={`max-h-[68vh] overflow-y-auto rounded-sm p-1 ${isOver ? "bg-slate-100" : "bg-transparent"}`}
+        style={{ display: "flex", flexDirection: "column", gap: rowGap }}
+        data-testid={`kanban-swim-lane-body-${column.key}`}
+      >
+        {allUnits.length === 0 ? (
+          <div className="rounded-sm border border-dashed border-gray-300 p-3 text-xs text-gray-500">
+            {column.derivedOnly
+              ? "Set automatically from pickup-departure telematics — you can't drag a card here."
+              : "(empty)"}
+          </div>
+        ) : null}
+        {allUnits.map((unit) => {
+          if (unit.columnKey !== column.key) {
+            // Empty placeholder — same min-height as a card row so the same unit aligns across all lanes
+            return (
+              <div
+                key={`empty:${unit.unitKey}:${column.key}`}
+                style={{ minHeight: `${rowMinH}px` }}
+                data-testid={`kanban-swim-lane-empty-${column.key}-${unit.unitKey}`}
+                data-kanban-swim-lane-row-key={unit.unitKey}
+                data-kanban-swim-lane-empty="true"
+              />
+            );
+          }
+          const load = unit.load;
+          const breach = Boolean(load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id));
+          if (column.key === "awaiting_assignment") {
+            return (
+              <div key={unit.unitKey} style={{ minHeight: `${rowMinH}px` }} data-kanban-swim-lane-row-key={unit.unitKey}>
+                <AwaitingTruckCard load={load} onBook={onLoadClick} />
+              </div>
+            );
+          }
+          if (density === "compact") {
+            return (
+              <div key={unit.unitKey} style={{ minHeight: `${rowMinH}px` }} data-kanban-swim-lane-row-key={unit.unitKey}>
+                <KanbanCompactCard load={readExtras(load)} hasActiveGeofenceBreach={breach} onClick={onLoadClick} />
+              </div>
+            );
+          }
+          if (density === "standard") {
+            return (
+              <div key={unit.unitKey} style={{ minHeight: `${rowMinH}px` }} data-kanban-swim-lane-row-key={unit.unitKey}>
+                <KanbanStandardCard load={readExtras(load)} hasActiveGeofenceBreach={breach} onClick={onLoadClick} onStatusDrop={onStatusDrop} />
+              </div>
+            );
+          }
+          return (
+            <div key={unit.unitKey} style={{ minHeight: `${rowMinH}px` }} data-kanban-swim-lane-row-key={unit.unitKey}>
+              <KanbanDispatchCard load={readExtras(load)} columnKey={column.key} hasActiveGeofenceBreach={breach} onClick={onLoadClick} onStatusDrop={onStatusDrop} />
+            </div>
+          );
+        })}
+      </div>
+      {onResize ? (
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          data-testid={`kanban-column-resize-${column.key}`}
+          onPointerDown={onResizePointerDown}
+          className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none hover:bg-slate-300"
+          title="Drag to resize this lane"
+        />
+      ) : null}
+    </section>
+  );
+}
+
 type PendingKanbanAssign = {
   unitId: string;
   unitNumber?: string | null;
@@ -1156,6 +1436,10 @@ export function DispatchKanban({
   // (~5-line) remain available via the toggle (additive). Standard balances fleet density vs readability.
   const [density, setDensity] = useState<KanbanDensity>(KANBAN_DEFAULT_DENSITY);
   const [columnSorts, setColumnSorts] = useState<Record<string, KanbanColumnSort>>({});
+  // SWIM-LANE ROW ALIGNMENT (owner 2026-09-11): the board-wide sort controls row ORDER across all
+  // columns. The per-column sort toggle (KanbanColumnSortControls) updates this single sort — sort
+  // changes row ORDER, not the one-row-per-unit rule (the row key is always unit-derived).
+  const [boardSort, setBoardSort] = useState<KanbanColumnSort | undefined>(undefined);
   // DSP-12 (owner 2026-09-04): per-lane widths, persisted so the dispatcher's board layout survives a
   // reload. Clamped 180–560px so a lane can't be dragged to zero or off the board.
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
@@ -1199,16 +1483,24 @@ export function DispatchKanban({
   });
 
   const toggleKanbanColumnSort = (columnKey: string, sortKey: "unit" | "load") => {
-    setColumnSorts((current) => {
-      const prior = current[columnKey] ?? { key: sortKey, direction: "asc" as const };
-      return {
-        ...current,
-        [columnKey]: {
-          key: sortKey,
-          direction: prior.key === sortKey && prior.direction === "asc" ? "desc" : "asc",
-        },
-      };
-    });
+    // SWIM-LANE: board columns share a single board-wide sort (row order). The OOS strip keeps its own.
+    if (columnKey === "oos_strip") {
+      setColumnSorts((current) => {
+        const prior = current[columnKey] ?? { key: sortKey, direction: "asc" as const };
+        return {
+          ...current,
+          [columnKey]: {
+            key: sortKey,
+            direction: prior.key === sortKey && prior.direction === "asc" ? "desc" : "asc",
+          },
+        };
+      });
+      return;
+    }
+    setBoardSort((prior) => ({
+      key: sortKey,
+      direction: prior?.key === sortKey && prior?.direction === "asc" ? "desc" : "asc",
+    }));
   };
 
   useEffect(() => {
@@ -1239,6 +1531,13 @@ export function DispatchKanban({
   const awaitingTruckCards = useMemo(
     () => awaitingTrucks.filter((unit) => !dedupedUnitIds.has(unit.id)).map(truckToKanbanLoad),
     [awaitingTrucks, dedupedUnitIds]
+  );
+  // SWIM-LANE ROW ALIGNMENT (owner 2026-09-11): compute ALL units once across the whole board
+  // (loads + awaiting trucks), then sort by the board-wide sort. Each column renders ALL rows;
+  // a unit's card appears in its lane, every other lane has an empty placeholder at that row's height.
+  const allUnits = useMemo(
+    () => sortAllUnits(computeAllUnits(optimisticLoads, awaitingTruckCards), boardSort),
+    [optimisticLoads, awaitingTruckCards, boardSort],
   );
   // Fleet out-of-service strip (Part D). No fleet-OOS feed reaches this board yet, so we
   // surface breakdown loads best-effort and flag that the full OOS feed is held — same gate
@@ -1425,15 +1724,13 @@ export function DispatchKanban({
           ))}
         </div>
 
-        <div className="flex gap-3 overflow-x-auto pb-2">
+        <div className="flex gap-3 overflow-x-auto pb-2" data-testid="kanban-swim-lane-board">
           {KANBAN_STATUS_GROUPS.map((group) => {
-            const rawLoads = group.key === "awaiting_assignment" ? awaitingTruckCards : grouped.get(group.key) ?? [];
-            const columnLoads = sortKanbanColumnLoads(rawLoads, columnSorts[group.key]);
             return (
-              <KanbanDispatchColumn
+              <KanbanSwimLaneColumn
                 key={group.key}
                 column={group}
-                loads={columnLoads}
+                allUnits={allUnits}
                 density={density}
                 activeGeofenceBreachVehicleIds={activeGeofenceBreachVehicleIds}
                 onLoadClick={
@@ -1442,7 +1739,7 @@ export function DispatchKanban({
                     : onLoadClick
                 }
                 onColumnHeaderClick={onColumnHeaderClick}
-                columnSort={columnSorts[group.key]}
+                boardSort={boardSort}
                 onToggleColumnSort={toggleKanbanColumnSort}
                 width={columnWidths[group.key]}
                 onResize={setColumnWidth}

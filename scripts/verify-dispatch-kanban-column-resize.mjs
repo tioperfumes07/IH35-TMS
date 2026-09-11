@@ -17,17 +17,17 @@ const contracts = [
   [
     "each lane renders a resize handle on its right edge",
     (s) => /kanban-column-resize-\$\{column\.key\}/.test(s) && /cursor-col-resize/.test(s),
-    (s) => s.replace("cursor-col-resize", "cursor-default"),
+    (s) => s.replaceAll("cursor-col-resize", "cursor-default"),
   ],
   [
     "resize handle drives onResize via a pointer-drag gesture",
     (s) => /onPointerDown=\{onResizePointerDown\}/.test(s) && /onResize\(column\.key,/.test(s),
-    (s) => s.replace("onResize(column.key,", "void (column.key,"),
+    (s) => s.replaceAll("onResize(column.key,", "void (column.key,"),
   ],
   [
     "a set width overrides flex-1 min-width with an explicit px width",
     (s) => /flex:\s*"0 0 auto"/.test(s) && /width\s*\?\s*\{\s*width:\s*`\$\{width\}px`/.test(s),
-    (s) => s.replace('flex: "0 0 auto"', "flex: undefined"),
+    (s) => s.replaceAll('flex: "0 0 auto"', "flex: undefined"),
   ],
   [
     "parent owns a persisted per-lane width map (clamped)",
@@ -35,12 +35,12 @@ const contracts = [
       /const\s*\[\s*columnWidths\s*,\s*setColumnWidths\s*\]\s*=\s*useState/.test(s) &&
       /localStorage\.setItem\("ih35\.kanban\.columnWidths"/.test(s) &&
       /Math\.max\(180,\s*Math\.min\(560,/.test(s),
-    (s) => s.replace('localStorage.setItem("ih35.kanban.columnWidths"', 'void ("ih35.kanban.columnWidths"'),
+    (s) => s.replaceAll('localStorage.setItem("ih35.kanban.columnWidths"', 'void ("ih35.kanban.columnWidths"'),
   ],
   [
     "width + onResize are wired into every mapped lane",
     (s) => /width=\{columnWidths\[group\.key\]\}/.test(s) && /onResize=\{setColumnWidth\}/.test(s),
-    (s) => s.replace("onResize={setColumnWidth}", "onResize={undefined}"),
+    (s) => s.replaceAll("onResize={setColumnWidth}", "onResize={undefined}"),
   ],
 ];
 

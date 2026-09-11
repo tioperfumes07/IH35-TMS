@@ -25,7 +25,7 @@ const contracts = [
   [
     "groupLoadsByColumn actually calls dedupeLoadsByUnit (not just defined and unused)",
     (s) => /for \(const load of dedupeLoadsByUnit\(loads\)\)/.test(s),
-    (s) => s.replace("for (const load of dedupeLoadsByUnit(loads))", "for (const load of loads)"),
+    (s) => s.replaceAll("for (const load of dedupeLoadsByUnit(loads))", "for (const load of loads)"),
   ],
   [
     "a cancelled/abandoned load never wins the unit's card over a real active one",
