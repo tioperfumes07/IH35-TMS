@@ -901,6 +901,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-09-10",
       "purpose": "ROW 0 REIMBURSEMENT-PER-TYPE-GL, depends on 202614050000 (CHECK widen) running first: seeds accounting.chart_of_accounts_roles for USMCA, binding 'toll_scale_expense' to existing account 5300 Tolls & Scales and 'other_operating_expense' to existing account 6999 Other Operating Expense (owner mapping: fuel->5000 Fuel&Diesel via the existing company_fuel_advance_expense role, toll/scale/parking->5300, lumper unchanged, other->6999). No new account created. Resolved by org.companies.code='USMCA' + catalogs.accounts.account_number, never a hardcoded UUID."
+    },
+    "202614060000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-10",
+      "purpose": "ACCT-F6350 historical settlement attribution: CREATE-only driver_finance.historical_settlement_attributions and historical_settlement_attribution_items evidence tables linking an original posted settlement/payrun/JE to corrected per-round-trip settlement identities and source loads. Append-only, FORCE RLS, no seed/backfill, allocated amounts remain NULL, and original posted money is untouched."
     }
   },
   "202613590001": {
