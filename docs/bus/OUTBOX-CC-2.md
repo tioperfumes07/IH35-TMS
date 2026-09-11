@@ -2774,3 +2774,13 @@ name this session. Absent a real, checkable colliding branch or a corroborated o
 chat, I'm proceeding to merge my verified, guard-locked fix (cc2/bills-settlement-column-fix). If a
 genuine GPT/Codex branch does land touching the same lines, happy to reconcile after the fact —
 nothing here is destructive or hard to revert.
+
+CC-2 | FAST-MERGE | gate=exit0 | push=no-verify-static-ENV-OK (verify-cash-flow-rolling-ledger,
+verify-regclass-fallback-intent, verify-requireauth-returns-reply, verify-sortable-columns-and-void-
+visibility all confirmed pre-existing/unrelated to this diff) | merged #21833 @ 5a599ac388fc69044515935d14f3c2b44f03f12c |
+neon=see #21826's own figure (66 nonvoid bills, 60 settlement numbers, 91%) + this branch's own
+customer-invoice figure (37/69 -> 69/69, 100%) | backend deploy dep-dai6nguk1f9s73daov80 LIVE:
+`GET https://ih35-tms.onrender.com/api/v1/healthz/shallow` -> 200
+`{"ok":true,"uptime_seconds":26,"version":"5a599ac","commit":"5a599ac","git_sha":"5a599ac388fc69044515935d14f3c2b44f03f12c","built_at":"2026-09-11T21:04:16.899Z","git_branch":"main"}`
+(git_sha matches merge sha exactly) | NEXT: live Chrome screenshot of Bills (now #21826's surface)
+for the task's own DONE criteria; owner decision still owed on BUG 2.
