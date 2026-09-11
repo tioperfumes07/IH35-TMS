@@ -6683,6 +6683,16 @@
     "claimed_at": "2026-09-11",
     "purpose": "verify-dispatch-open-only-scope"
   },
+  "11273": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-dispatch-board-awaiting-reconciliation"
+  },
+  "11281": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-dispatch-board-awaiting-reconciliation"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
