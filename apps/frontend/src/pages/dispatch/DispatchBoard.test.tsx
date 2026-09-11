@@ -363,3 +363,50 @@ describe("currentLoadPerUnit (REG-035 one current load per unit)", () => {
     expect(currentLoadPerUnit(rows)).toHaveLength(0);
   });
 });
+
+// KANBAN-DUP-UNIT-2 (owner correction 2026-09-11) applies to the List/Table view's own "Awaiting
+// assignment" section, not just Kanban -- live-confirmed cross-tab: T163/T173/T148 each rendered
+// TWICE on this exact page (once in Booked/Billing via a real load, once again in Awaiting
+// assignment via the separate listUnitsWithoutLoad source, which doesn't know about
+// delivered_pending_docs/invoiced loads). The module-level mock above always returns exactly one
+// unit ("unit-1"); these two tests use that SAME id to construct the overlap case directly.
+describe("DispatchBoard — KANBAN-DUP-UNIT-2 List/Table Awaiting-assignment reconciliation", () => {
+  function renderBoard(loads: DispatchLoadRow[]) {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter>
+          <ToastProvider>
+            <DispatchBoard
+              loads={loads}
+              totalCount={loads.length}
+              limit={50}
+              offset={0}
+              loading={false}
+              sortField="created_at"
+              sortDirection="desc"
+              onSortChange={vi.fn()}
+              onPageChange={vi.fn()}
+              onRowClick={vi.fn()}
+              onExportCsv={vi.fn()}
+              operatingCompanyId="00000000-0000-4000-8000-0000000000bb"
+            />
+          </ToastProvider>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+  }
+
+  it("baseline: with no load referencing unit-1, it renders once in Awaiting assignment (the mocked idle unit)", async () => {
+    renderBoard([]);
+    const header = await screen.findByTestId("dispatch-board-section-awaiting");
+    expect(header).toHaveTextContent("1");
+  });
+
+  it("a unit whose only load is delivered_pending_docs (outside listUnitsWithoutLoad's own exclusion set) does NOT also render in Awaiting assignment", async () => {
+    renderBoard([mockLoad({ id: "load-x", status: "delivered_pending_docs", assigned_unit_id: "unit-1", assigned_unit_number: "T-1" })]);
+    const header = await screen.findByTestId("dispatch-board-section-awaiting");
+    // unit-1 already has a real row via Booked/Billing -- Awaiting assignment must drop to 0, not 1.
+    expect(header).toHaveTextContent("0");
+  });
+});
