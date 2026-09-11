@@ -17,22 +17,22 @@ const contracts = [
   [
     "collapsed branch is gated by !expanded (not unconditional)",
     (s) => /if\s*\(\s*column\.collapsedByDefault\s*&&\s*!expanded\s*\)/.test(s),
-    (s) => s.replace(/if\s*\(\s*column\.collapsedByDefault\s*&&\s*!expanded\s*\)/, "if (column.collapsedByDefault)"),
+    (s) => s.replaceAll(/if\s*\(\s*column\.collapsedByDefault\s*&&\s*!expanded\s*\)/g, "if (column.collapsedByDefault)"),
   ],
   [
     "expander button opens the lane (setExpanded(true))",
     (s) => /kanban-column-expander-\$\{column\.key\}/.test(s) && /setExpanded\(true\)/.test(s),
-    (s) => s.replace("setExpanded(true)", "void 0"),
+    (s) => s.replaceAll("setExpanded(true)", "void 0"),
   ],
   [
     "collapser button closes the lane (setExpanded(false))",
     (s) => /kanban-column-collapser-\$\{column\.key\}/.test(s) && /setExpanded\(false\)/.test(s),
-    (s) => s.replace("setExpanded(false)", "void 0"),
+    (s) => s.replaceAll("setExpanded(false)", "void 0"),
   ],
   [
     "expand state hook exists",
     (s) => /const\s*\[\s*expanded\s*,\s*setExpanded\s*\]\s*=\s*useState\(/.test(s),
-    (s) => s.replace(/const\s*\[\s*expanded\s*,\s*setExpanded\s*\]\s*=\s*useState\(false\);?/, "const expanded = false;"),
+    (s) => s.replaceAll(/const\s*\[\s*expanded\s*,\s*setExpanded\s*\]\s*=\s*useState\(false\);?/g, "const expanded = false;"),
   ],
 ];
 

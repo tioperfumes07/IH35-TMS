@@ -17,17 +17,17 @@ const contracts = [
   [
     "derivedOnly lane renders an Auto badge in its header",
     (s) => /kanban-column-auto-badge-\$\{column\.key\}/.test(s) && /column\.derivedOnly\s*\?/.test(s),
-    (s) => s.replace("kanban-column-auto-badge-", "kanban-column-NO-badge-"),
+    (s) => s.replaceAll("kanban-column-auto-badge-", "kanban-column-NO-badge-"),
   ],
   [
     "derivedOnly empty state explains it is telematics-set / not drag-droppable",
     (s) => /you can't drag a card here/.test(s),
-    (s) => s.replace("you can't drag a card here", "is empty"),
+    (s) => s.replaceAll("you can't drag a card here", "is empty"),
   ],
   [
     "the drop handler still refuses derivedOnly drops (FAIL-K1 preserved)",
     (s) => /targetGroup\.derivedOnly/.test(s) && /set by telematics/i.test(s),
-    (s) => s.replace("targetGroup.derivedOnly", "false /* removed */"),
+    (s) => s.replaceAll("targetGroup.derivedOnly", "false /* removed */"),
   ],
 ];
 

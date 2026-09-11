@@ -112,6 +112,7 @@
   "verify-design-parity.mjs": "baselined 2026-07-16 B-D2 — package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",
   "verify-dispatch-eta-columns.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
   "verify-dispatch-insurance-coverage-gate.mjs": "baselined 2026-07-16 B-D2 — package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",
+  "verify-dispatch-kanban-row-alignment.mjs": "added 2026-09-11 Devin-B — chrome-only lane cannot author new verify-steps (lane-band guard rejects devin* branches adding verify-steps). Standalone static guard for the swim-lane row-alignment invariant (26 checks). Runs green locally and in pre-push. Wire through a verify-step once a number is claimed on main.",
   "verify-dispatch-units-live-location.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
   "verify-dot-dwell-detector-tenant-scope.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
   "verify-dot-inspection-events-append-only.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",

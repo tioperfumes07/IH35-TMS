@@ -6,6 +6,8 @@
  * FAIL: plain unit/driver labels on awaiting-assignment synthetic truck cards.
  * PASS: data-testid awaiting-truck-unit-link + awaiting-truck-driver-link with EntityLink.
  *
+ * @matrix-built {"modules":["dispatch"],"cols":["connectivity","reverse_link"],"leafRe":"^/dispatch/kanban$","task":"LV-DISPATCH-KANBAN-AWAITING-TRUCK-ENTITYLINK","vertical":"class-sweep"}
+ *
  * Self-test: node scripts/verify-kanban-awaiting-truck-entitylinks.mjs --selftest
  */
 import fs from "node:fs";
@@ -24,7 +26,10 @@ function check() {
   const src = fs.readFileSync(FILE, "utf8");
   assert(/function AwaitingTruckCard/.test(src), "AwaitingTruckCard must exist");
   const start = src.indexOf("function AwaitingTruckCard");
-  const end = src.indexOf("\nfunction KanbanDispatchColumn", start);
+  // Boundary: the next function declaration after AwaitingTruckCard. Handle both
+  // `function Foo` and `export function Foo` (KanbanDispatchColumn was exported to
+  // suppress TS6133 when it became dead code after the swim-lane refactor).
+  const end = src.search(/\n(?:export\s+)?function KanbanDispatchColumn/, start);
   assert(start >= 0 && end > start, "must locate AwaitingTruckCard body");
   const body = src.slice(start, end);
   assert(/data-testid=["']awaiting-truck-unit-link["']/.test(body), "must expose awaiting-truck-unit-link");
