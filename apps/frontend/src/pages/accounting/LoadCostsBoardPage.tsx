@@ -519,7 +519,11 @@ function TransactionRegister({ tab, companyId, loadsById, settlementsByLoad, nav
 // so this register and the /settlements Tours register render identical leg pills. Column caps
 // (min 240 / max 420 on Legs; 96px dates; nowrap money) below keep any one column off the whole screen.
 const TOUR_COLUMNS = (state: "open" | "closed"): ParityColumn<TourListRow>[] => [
-  { key: "tour", label: "Settlement/Tour", alwaysVisible: true, testId: "tour-col-id", sortable: true, className: "whitespace-nowrap", minWidth: 90, sortValue: r => r.display_id ?? "", render: r => <Link className="ldt-link font-semibold" style={{ display: "inline" }} to={`/driver-finance/settlements?settlement_id=${encodeURIComponent(r.settlement_id)}`}>{r.display_id ?? "Settlement"}</Link> },
+  // SETTLEMENT-NUMBER-IS-ALWAYSTRACK-DOC (owner 2026-09-11): the settlement/tour number is the AlwaysTrack
+  // 4-digit document number (settlement_number = source_document_ref: 5769…5800, next 5801…), NEVER the
+  // retired auto-generated S-YYYY-NNNN display_id. An unsettled (open) tour has no number yet — it shows a
+  // dash, exactly like AlwaysTrack "Unsettled Loads". The row still opens the tour on click.
+  { key: "tour", label: "Settlement/Tour", alwaysVisible: true, testId: "tour-col-id", sortable: true, className: "whitespace-nowrap", minWidth: 90, sortValue: r => r.settlement_number ?? "", render: r => r.settlement_number ? <Link className="ldt-link font-semibold" style={{ display: "inline" }} to={`/driver-finance/settlements?settlement_id=${encodeURIComponent(r.settlement_id)}`}>{r.settlement_number}</Link> : <span className="text-[#6B7280]">{DASH}</span> },
   // ROUND 16.1 — leg pills, one line, count-first, EntityLink each, "+N more" overflow, capped 240–420.
   // COLUMN-ORDERING LAW (owner 2026-09-11): Load renders immediately next to Settlement — before
   // Driver/Unit, not after.

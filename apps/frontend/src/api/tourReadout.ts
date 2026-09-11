@@ -25,7 +25,12 @@ export type DriverBillRow = {
 };
 export type TourReadout = {
   tour: {
-    settlement_id: string; display_id: string | null; status: string; approval_status: string | null; settlement_model: string | null; tour_id: string | null;
+    settlement_id: string; display_id: string | null;
+    /** SETTLEMENT-NUMBER-IS-ALWAYSTRACK-DOC (owner 2026-09-11): the ONLY settlement/tour number — the
+     *  AlwaysTrack 4-digit doc (source_document_ref). null while unsettled; render nothing then. The
+     *  retired auto-generated S-YYYY-NNNN display_id is NEVER shown as a settlement number. */
+    settlement_number: string | null;
+    status: string; approval_status: string | null; settlement_model: string | null; tour_id: string | null;
     driver_id: string; driver_name: string | null; unit_number: string | null; trip_started_at: string | null; trip_closed_at: string | null;
     period_start: string | null; period_end: string | null; is_open: boolean; locked_at: string | null; paid_at: string | null;
   } | null;
@@ -65,7 +70,11 @@ export function closeTour(settlementId: string, operatingCompanyId: string) {
 /** LDT-TABS · Load costs board → Pre-Settlement (open tours) / Settlement (closed tours) registers; rows come from the same readout. */
 export type TourLegBrief = { load_id: string; load_number: string; trip_type: string | null };
 export type TourListRow = {
-  settlement_id: string; display_id: string | null; status: string; is_open: boolean; driver_name: string | null; unit_number: string | null;
+  settlement_id: string; display_id: string | null;
+  /** SETTLEMENT-NUMBER-IS-ALWAYSTRACK-DOC (owner 2026-09-11): the AlwaysTrack 4-digit doc number
+   *  (source_document_ref). null while unsettled — render a dash, never the retired S-YYYY-NNNN counter. */
+  settlement_number: string | null;
+  status: string; is_open: boolean; driver_name: string | null; unit_number: string | null;
   trip_started_at: string | null; trip_closed_at: string | null; leg_count: number; legs_label: string;
   /** ROUND 16.1 — the tour's live legs in order (load_id · load_number · trip_type) so the register
    *  can render each leg as a type-colored EntityLink pill. Downstream READ of the tour-readout model. */
