@@ -41,6 +41,27 @@ function audit(parts) {
     failures.push("actual cost must have its own column");
   }
   if (/label:\s*"Est \/ Act"/.test(parts.page)) failures.push("estimated and actual costs may not share one column");
+  for (const [key, asc, desc] of [
+    ["unit_number", "unit_number_asc", "unit_number_desc"],
+    ["display_id", "wo_number_asc", "wo_number_desc"],
+    ["total_estimated_cost", "estimated_cost_asc", "estimated_cost_desc"],
+    ["total_actual_cost", "actual_cost_asc", "actual_cost_desc"],
+    ["labor_cost_cents", "labor_cost_asc", "labor_cost_desc"],
+    ["opened_at", "created_asc", "created_desc"],
+  ]) {
+    if (!parts.page.includes(`sortKey === "${key}"`) || !parts.page.includes(`"${asc}"`) || !parts.page.includes(`"${desc}"`)) {
+      failures.push(`${key} must map both directions to the server sort contract`);
+    }
+    if (!parts.api.includes(`| "${asc}"`) || !parts.api.includes(`| "${desc}"`)) {
+      failures.push(`frontend API must accept ${asc}/${desc}`);
+    }
+    if (!parts.route.includes(`"${asc}"`) || !parts.route.includes(`"${desc}"`)) {
+      failures.push(`backend route must accept ${asc}/${desc}`);
+    }
+  }
+  if (!/case "unit_number_asc": return "ORDER BY wu\.unit_number ASC/.test(parts.route)) failures.push("unit ascending must order the joined unit number");
+  if (!/case "actual_cost_asc": return costOrder\("actual", "ASC"\)/.test(parts.route)) failures.push("actual-cost ascending must have a real server order");
+  if (/const sortedRows = useMemo\(/.test(parts.page)) failures.push("server-paginated list must not browser-sort only the current page");
   if (!/const canApprove = status === "open" && !wo\?\.approved_at/.test(parts.detail)) {
     failures.push("Approve must only be enabled for an unapproved open work order");
   }
@@ -76,6 +97,8 @@ if (process.argv.includes("--selftest")) {
     ["route", "operatorWorkOrderListSql(\"w\")", "\"TRUE\""],
     ["route", "where.push(\"w.voided_at IS NULL\")", "where.push(\"TRUE\")"],
     ["page", "key: \"total_actual_cost\"", "key: \"total_estimated_cost\""],
+    ["page", 'if (sortKey === "unit_number")', 'if (sortKey === "not_unit_number")'],
+    ["route", 'case "actual_cost_asc": return costOrder("actual", "ASC")', 'case "actual_cost_asc": return "ORDER BY w.created_at DESC"'],
     ["detail", "const canComplete = status === \"in_progress\"", "const canComplete = true"],
     ["route", "AND status = 'open'", "AND status <> 'open'"],
     ["detail", 'readOnly={["complete", "cancelled"].includes(status)}', "readOnly={false}"],

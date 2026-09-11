@@ -90,7 +90,20 @@ const listQuerySchema = companyQuerySchema.extend({
   unit_id: z.string().uuid().optional(),
   driver_id: z.string().uuid().optional(),
   search: z.string().trim().max(160).optional(),
-  sort: z.enum(["created_desc", "estimated_cost_desc", "actual_cost_desc", "wo_number_asc", "labor_cost_desc"]).default("created_desc"),
+  sort: z.enum([
+    "created_asc",
+    "created_desc",
+    "estimated_cost_asc",
+    "estimated_cost_desc",
+    "actual_cost_asc",
+    "actual_cost_desc",
+    "wo_number_asc",
+    "wo_number_desc",
+    "labor_cost_asc",
+    "labor_cost_desc",
+    "unit_number_asc",
+    "unit_number_desc",
+  ]).default("created_desc"),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -542,16 +555,30 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
         : "";
       const laborSelect = timeReady ? `, COALESCE(te_agg.labor_cost_cents, 0)::bigint AS labor_cost_cents` : `, 0::bigint AS labor_cost_cents`;
 
-      const orderBy =
-        q.sort === "estimated_cost_desc"
-          ? `ORDER BY COALESCE(w.estimated_cost_cents::numeric / 100.0, w.total_estimated_cost, 0) DESC NULLS LAST, w.created_at DESC`
-          : q.sort === "actual_cost_desc"
-            ? `ORDER BY COALESCE(w.actual_cost_cents::numeric / 100.0, w.total_actual_cost, 0) DESC NULLS LAST, w.created_at DESC`
-          : q.sort === "wo_number_asc"
-            ? "ORDER BY w.display_id ASC NULLS LAST, w.created_at DESC"
-            : q.sort === "labor_cost_desc" && timeReady
+      const costOrder = (column: "estimated" | "actual", direction: "ASC" | "DESC") =>
+        `ORDER BY COALESCE(w.${column}_cost_cents::numeric / 100.0, w.total_${column}_cost, 0) ${direction} NULLS LAST, w.created_at DESC`;
+      const orderBy = (() => {
+        switch (q.sort) {
+          case "created_asc": return "ORDER BY w.created_at ASC, w.id ASC";
+          case "estimated_cost_asc": return costOrder("estimated", "ASC");
+          case "estimated_cost_desc": return costOrder("estimated", "DESC");
+          case "actual_cost_asc": return costOrder("actual", "ASC");
+          case "actual_cost_desc": return costOrder("actual", "DESC");
+          case "wo_number_asc": return "ORDER BY w.display_id ASC NULLS LAST, w.created_at DESC";
+          case "wo_number_desc": return "ORDER BY w.display_id DESC NULLS LAST, w.created_at DESC";
+          case "labor_cost_asc":
+            return timeReady
+              ? "ORDER BY COALESCE(te_agg.labor_cost_cents, 0) ASC NULLS LAST, w.created_at DESC"
+              : "ORDER BY w.created_at DESC";
+          case "labor_cost_desc":
+            return timeReady
               ? "ORDER BY COALESCE(te_agg.labor_cost_cents, 0) DESC NULLS LAST, w.created_at DESC"
               : "ORDER BY w.created_at DESC";
+          case "unit_number_asc": return "ORDER BY wu.unit_number ASC NULLS LAST, w.created_at DESC";
+          case "unit_number_desc": return "ORDER BY wu.unit_number DESC NULLS LAST, w.created_at DESC";
+          default: return "ORDER BY w.created_at DESC, w.id DESC";
+        }
+      })();
 
       const countSql = `
         SELECT
