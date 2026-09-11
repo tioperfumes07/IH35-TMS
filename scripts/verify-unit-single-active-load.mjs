@@ -10,9 +10,11 @@
  * the same call goes red instead of silently reopening this exact bug.
  *
  * This is the application-level backstop. The permanent DB-level backstop (a partial unique index
- * on assigned_unit_id WHERE status IN (...active...) AND soft_deleted_at IS NULL) is a migration —
- * CC-2 is barred from db/migrations/*.sql by verify-migration-lane-band.mjs — handed off separately
- * (docs/audit/GUARD-WORKORDERS.md, NEW-02-URGENT) to a migration-authorized lane.
+ * on assigned_unit_id WHERE status IN (...active...) AND soft_deleted_at IS NULL) LANDED as migration
+ * 202614042200_loads_one_active_unit_lock.sql (Cursor, #21713, applied live 2026-09-10). This guard
+ * now also asserts that migration keeps the index with the correct predicate AND that the index's
+ * status set stays in LOCKSTEP with ACTIVE_UNIT_STATUSES — so the app guard and its DB backstop can
+ * never silently drift apart (the migration's own comment requires exactly that lockstep).
  *
  * Run: node scripts/verify-unit-single-active-load.mjs [--selftest]
  */
@@ -24,6 +26,15 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-unit-single-active-load";
 
 const GUARD_FILE = "apps/backend/src/dispatch/unit-active-load-guard.ts";
+const MIGRATION_FILE = "db/migrations/202614042200_loads_one_active_unit_lock.sql";
+
+/** Parse the ACTIVE_UNIT_STATUSES string literals out of the guard source so the lockstep check is
+ *  driven by the single source of truth, never a re-hardcoded copy that could itself drift. */
+function parseActiveStatuses(guardSrc) {
+  const block = guardSrc.match(/export const ACTIVE_UNIT_STATUSES\s*=\s*\[([^\]]*)\]/s);
+  if (!block) return [];
+  return [...block[1].matchAll(/["']([a-z_]+)["']/g)].map((m) => m[1]);
+}
 
 /** file -> the call-site shape that must be present. */
 const WRITE_PATHS = [
@@ -57,6 +68,7 @@ const WRITE_PATHS = [
 function readSources() {
   const sources = { [GUARD_FILE]: fs.readFileSync(path.join(ROOT, GUARD_FILE), "utf8") };
   for (const wp of WRITE_PATHS) sources[wp.file] = fs.readFileSync(path.join(ROOT, wp.file), "utf8");
+  sources[MIGRATION_FILE] = fs.readFileSync(path.join(ROOT, MIGRATION_FILE), "utf8");
   return sources;
 }
 
@@ -99,6 +111,38 @@ export function audit(sources) {
     }
   }
 
+  // DB-level backstop (#21713): the partial unique index must exist with the correct predicate, and
+  // its status set must stay in lockstep with ACTIVE_UNIT_STATUSES — otherwise the app guard and the
+  // DB index could silently diverge (one narrower than the other reopens the double-dispatch class).
+  const migSrc = sources[MIGRATION_FILE];
+  if (!migSrc) {
+    failures.push(`${MIGRATION_FILE}: not found — the DB-level double-dispatch backstop is missing`);
+  } else {
+    if (!/CREATE UNIQUE INDEX IF NOT EXISTS\s+uq_loads_one_active_unit/i.test(migSrc)) {
+      failures.push(`${MIGRATION_FILE}: uq_loads_one_active_unit unique index missing (double-dispatch DB backstop removed)`);
+    }
+    if (!/ON\s+mdata\.loads\s*\(\s*assigned_unit_id\s*\)/i.test(migSrc)) {
+      failures.push(`${MIGRATION_FILE}: index no longer keyed ON mdata.loads (assigned_unit_id)`);
+    }
+    if (!/assigned_unit_id IS NOT NULL/.test(migSrc)) {
+      failures.push(`${MIGRATION_FILE}: index predicate no longer requires assigned_unit_id IS NOT NULL`);
+    }
+    if (!/soft_deleted_at IS NULL/.test(migSrc)) {
+      failures.push(`${MIGRATION_FILE}: index predicate no longer excludes soft_deleted_at IS NULL (would lock deleted rows)`);
+    }
+    const activeStatuses = parseActiveStatuses(guardSrc);
+    if (activeStatuses.length === 0) {
+      failures.push(`${GUARD_FILE}: could not parse ACTIVE_UNIT_STATUSES for the lockstep check`);
+    } else {
+      const idxWhere = (migSrc.match(/status\s*=\s*ANY\(ARRAY\[([\s\S]*?)\]/) || [])[1] ?? "";
+      for (const st of activeStatuses) {
+        if (!new RegExp(`["']${st}["']`).test(idxWhere)) {
+          failures.push(`${MIGRATION_FILE}: index status set is out of lockstep with ACTIVE_UNIT_STATUSES — missing '${st}'`);
+        }
+      }
+    }
+  }
+
   return failures;
 }
 
@@ -138,7 +182,25 @@ if (process.argv.includes("--selftest")) {
     }
   }
 
-  console.log(`${LABEL} SELFTEST PASS — active-status-filter mutation and all ${WRITE_PATHS.length} write-path removals caught`);
+  // Planted regression: drop the DB-level unique index from the migration (removing the backstop).
+  const mutatedMig = live[MIGRATION_FILE].replace(/CREATE UNIQUE INDEX IF NOT EXISTS\s+uq_loads_one_active_unit/i, "CREATE INDEX IF NOT EXISTS uq_loads_removed");
+  if (mutatedMig === live[MIGRATION_FILE]) {
+    console.error(`${LABEL} SELFTEST FAIL — uq_loads_one_active_unit anchor not found in migration to mutate`);
+    process.exit(1);
+  }
+  if (!audit({ ...live, [MIGRATION_FILE]: mutatedMig }).some((f) => f.includes("uq_loads_one_active_unit unique index missing"))) {
+    console.error(`${LABEL} SELFTEST FAIL — planted removal of the DB unique index escaped`);
+    process.exit(1);
+  }
+
+  // Planted regression: narrow the index status set (drop 'dispatched') — must trip the lockstep check.
+  const mutatedLockstep = live[MIGRATION_FILE].replace(/^\s*'dispatched',\n/m, "");
+  if (mutatedLockstep !== live[MIGRATION_FILE] && !audit({ ...live, [MIGRATION_FILE]: mutatedLockstep }).some((f) => f.includes("out of lockstep"))) {
+    console.error(`${LABEL} SELFTEST FAIL — planted index/ACTIVE_UNIT_STATUSES drift escaped`);
+    process.exit(1);
+  }
+
+  console.log(`${LABEL} SELFTEST PASS — active-status-filter mutation, all ${WRITE_PATHS.length} write-path removals, DB-index removal, and index lockstep-drift all caught`);
   process.exit(0);
 }
 

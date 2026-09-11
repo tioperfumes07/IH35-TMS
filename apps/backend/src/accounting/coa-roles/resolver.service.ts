@@ -161,6 +161,18 @@ export const COA_ROLE_VALUES = [
   // resolveRoleAccountOptional correctly returns null (never guessed) until then.
   // DELIBERATELY absent from ROLE_FALLBACKS — owner designates; fails closed until then.
   "bank_fee_recovery",
+  // ROW 0 REIMBURSEMENT-PER-TYPE-GL (owner ruling 2026-09-10, INBOX-CC-1): driver_reimbursements.
+  // reimbursement_type ('toll','fuel','scale','parking','lumper','other') was collapsing every type
+  // onto the SAME generic 'reimbursement_expense' role (account "Driver Trip-Lumper Reimbursement")
+  // -- a fuel or toll reimbursement posted identically to a lumper charge. Owner mapping: fuel ->
+  // 5000 Fuel & Diesel (reuses the EXISTING company_fuel_advance_expense role above, no new role
+  // needed); toll/scale/parking -> 5300 Tolls & Scales (this new role); lumper -> unchanged, stays
+  // on reimbursement_expense; other -> 6999 Other Operating Expense (this new role). Migration
+  // 202614050000 (CHECK widen) + 202614050001 (USMCA seed). See resolveReimbursementExpenseAccount
+  // below, used by every reimbursement-posting call site -- falls back to reimbursement_expense so
+  // an undesignated company/type never fails to post, per the owner's own "never fails" instruction.
+  "toll_scale_expense",
+  "other_operating_expense",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];
@@ -454,4 +466,44 @@ export async function resolveRoleAccount(client: DbClient, operatingCompanyId: s
   const resolved = await resolveRoleAccountOptional(client, operatingCompanyId, role);
   if (!resolved) throw new CoaRoleResolutionError(operatingCompanyId, role);
   return resolved;
+}
+
+// ROW 0 REIMBURSEMENT-PER-TYPE-GL (owner ruling 2026-09-10) — the ONE shared per-type resolver
+// every reimbursement-posting call site uses (posting-engine.service.ts's immediate pay-out,
+// settlement-lines-materialize.service.ts's per-line materialization, settlement-payrun-close.
+// service.ts's settlement-close JE), so the three posters can never drift onto three different
+// mappings. Reuses the EXISTING company_fuel_advance_expense role for fuel (already bound to 5000
+// Fuel & Diesel for USMCA) rather than a new fuel-specific role -- one less role to designate, and
+// the owner's own mapping treats it as the same economic event. lumper is deliberately absent from
+// REIMBURSEMENT_TYPE_ROLE: it falls through to the generic reimbursement_expense fallback below,
+// matching the owner's own "lumper -> Lumper (unchanged)".
+const REIMBURSEMENT_TYPE_ROLE: Partial<Record<string, CoaRole>> = {
+  fuel: "company_fuel_advance_expense",
+  toll: "toll_scale_expense",
+  scale: "toll_scale_expense",
+  parking: "toll_scale_expense",
+  other: "other_operating_expense",
+};
+
+/**
+ * Resolve the debit expense account for a driver reimbursement, by its reimbursement_type.
+ * FALLS BACK to the generic 'reimbursement_expense' role (never fails to post) when: the type has
+ * no per-type mapping (lumper, or an unrecognized/null type), OR the per-type role IS mapped in
+ * code but this company hasn't designated an account for it yet (e.g. toll_scale_expense/
+ * other_operating_expense on a company other than USMCA, before that company's own seed lands).
+ * This is the owner's own explicit instruction: "with fallback to reimbursement_expense so it
+ * never fails" -- a missing per-type designation degrades to the old (correct-for-lumper, honest-
+ * about-not-yet-split-for-others) behavior instead of blocking the reimbursement from posting.
+ */
+export async function resolveReimbursementExpenseAccount(
+  client: DbClient,
+  operatingCompanyId: string,
+  reimbursementType: string | null
+): Promise<string | null> {
+  const preferredRole = reimbursementType ? REIMBURSEMENT_TYPE_ROLE[reimbursementType] : undefined;
+  if (preferredRole) {
+    const preferred = await resolveRoleAccountOptional(client, operatingCompanyId, preferredRole);
+    if (preferred) return preferred;
+  }
+  return resolveRoleAccountOptional(client, operatingCompanyId, "reimbursement_expense");
 }

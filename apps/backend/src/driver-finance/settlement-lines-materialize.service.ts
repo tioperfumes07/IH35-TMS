@@ -58,7 +58,7 @@
  * mints no new money, no new liability, and no new GL fact of its own.
  */
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { resolveRoleAccountOptional, isCoaRole } from "../accounting/coa-roles/resolver.service.js";
+import { resolveRoleAccountOptional, resolveReimbursementExpenseAccount, isCoaRole } from "../accounting/coa-roles/resolver.service.js";
 import { bucketRecoveryRoleKey } from "../accounting/settlement-posting/settlement-bill-payment.math.js";
 import { SETTLEMENT_DEDUCTION_SOURCE_TABLE } from "./deductions.service.js";
 import { resolveDriverEscrowLiabilityAccount } from "./escrow-resolver.service.js";
@@ -224,8 +224,16 @@ export async function materializeSettlementLines(
     if (amountCents <= 0) continue;
     const isExtraPay = r.reimbursement_type === "other" && EXTRA_PAY_REASON_PATTERN.test(r.reason ?? "");
     const lineType = isExtraPay ? "extra_pay" : "reimbursement";
-    const role = isExtraPay ? "driver_pay_expense" : "reimbursement_expense";
-    const postingAccountId = await resolveRoleAccountOptional(client, input.operatingCompanyId, role);
+    // ROW 0 REIMBURSEMENT-PER-TYPE-GL (owner ruling 2026-09-10): extra_pay stays on
+    // driver_pay_expense (a distinct business rule, unrelated to reimbursement-type GL mapping); a
+    // real reimbursement resolves via the shared per-type resolver (fuel/toll/scale/parking/other
+    // each get their own owner-mapped account, lumper unchanged) instead of the flat generic role.
+    const postingAccountId = isExtraPay
+      ? await resolveRoleAccountOptional(client, input.operatingCompanyId, "driver_pay_expense")
+      : await resolveReimbursementExpenseAccount(client, input.operatingCompanyId, r.reimbursement_type);
+    // Diagnostic-only label for accountRoleAttempted/reason below — never used to resolve an
+    // account, only to explain a null postingAccountId in the audit trail / MaterializedLine result.
+    const roleAttempted = isExtraPay ? "driver_pay_expense" : `reimbursement_expense (type=${r.reimbursement_type ?? "null"})`;
     const sourceApproved = r.status === "paid" || r.status === "settled";
     const approvalStatus: "pending" | "approved" = postingAccountId && sourceApproved ? "approved" : "pending";
 
@@ -271,8 +279,8 @@ export async function materializeSettlementLines(
       amountCents,
       postingAccountId,
       approvalStatus,
-      accountRoleAttempted: role,
-      reason: postingAccountId ? undefined : `no COA role account bound for role '${role}'`,
+      accountRoleAttempted: roleAttempted,
+      reason: postingAccountId ? undefined : `no COA role account bound for role '${roleAttempted}'`,
     });
   }
 
@@ -434,20 +442,39 @@ export async function backfillExistingSettlementLineAccounts(
 ): Promise<BackfillExistingLinesResult> {
   const driverPayUpdated = await backfillDriverPayAccountOnExistingLines(client, input);
 
-  const reimbAccountId = await resolveRoleAccountOptional(client, input.operatingCompanyId, "reimbursement_expense");
+  // ROW 0 REIMBURSEMENT-PER-TYPE-GL (owner ruling 2026-09-10): this backfill used to bulk-set EVERY
+  // still-unresolved reimbursement line to the one generic account, regardless of type — the exact
+  // bug this fix corrects, just on the repair path instead of the create path. Group the stuck lines
+  // by their real driver_finance.driver_reimbursements.reimbursement_type first, then resolve +
+  // apply the shared per-type account per group, so a repaired row lands on the SAME account a
+  // freshly-materialized row of the same type would get.
+  const reimbTypesRes = await client.query<{ reimbursement_type: string | null; line_ids: string[] }>(
+    `
+      SELECT dr.reimbursement_type, array_agg(sl.id::text) AS line_ids
+        FROM driver_finance.settlement_lines sl
+        JOIN driver_finance.driver_reimbursements dr
+          ON dr.id::text = sl.source_reference_id::text
+       WHERE sl.settlement_id = $1::uuid AND sl.operating_company_id = $2::uuid
+         AND sl.line_type = 'reimbursement' AND sl.posting_account_id IS NULL AND sl.is_active = true
+         AND sl.source_table = 'driver_finance.driver_reimbursements'
+       GROUP BY dr.reimbursement_type
+    `,
+    [input.settlementId, input.operatingCompanyId]
+  );
   let reimbursementUpdated = 0;
-  if (reimbAccountId) {
+  for (const group of reimbTypesRes.rows) {
+    const accountId = await resolveReimbursementExpenseAccount(client, input.operatingCompanyId, group.reimbursement_type);
+    if (!accountId) continue;
     const res = await client.query<{ id: string }>(
       `
         UPDATE driver_finance.settlement_lines
-           SET posting_account_id = $3::uuid
-         WHERE settlement_id = $1::uuid AND operating_company_id = $2::uuid
-           AND line_type = 'reimbursement' AND posting_account_id IS NULL AND is_active = true
+           SET posting_account_id = $2::uuid
+         WHERE id = ANY($1::uuid[])
          RETURNING id::text
       `,
-      [input.settlementId, input.operatingCompanyId, reimbAccountId]
+      [group.line_ids, accountId]
     );
-    reimbursementUpdated = res.rows.length;
+    reimbursementUpdated += res.rows.length;
   }
 
   const extraPayAccountId = await resolveRoleAccountOptional(client, input.operatingCompanyId, "driver_pay_expense");
