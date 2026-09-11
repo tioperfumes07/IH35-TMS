@@ -6,6 +6,15 @@
  * just enabled), ih35_app carries the expected grants, and the seed produced exactly 11 active rows
  * for USMCA and 0 for TRANSP/TRK (per-entity catalog, USMCA-only seed by design).
  *
+ * SELF-FOUND FIX (same day, live Chrome re-check): 202614090000's own RLS policies checked
+ * current_setting('app.operating_company_id', true) — a GUC the route's withCurrentUser code path
+ * never sets — so the live page rendered 0 rows despite 11 real ones. 202614100000 repoints all 3
+ * policies to the SAME proven-working org.user_company_access membership pattern
+ * catalogs.load_cancellation_reasons already uses under the identical code path. The ORIGINAL
+ * migration file is never edited (checksum-frozen, already applied) — this guard checks the FOLLOW-
+ * UP fix migration's text and the actual live policy qual, not the original file's now-superseded
+ * policy clause.
+ *
  * Target: Neon project tiny-field-89581227, branch br-fancy-credit-akjnd07a (prod).
  * Usage: DATABASE_URL=<prod conn string> node scripts/verify-load-exception-reasons-catalog.mjs
  *        node scripts/verify-load-exception-reasons-catalog.mjs --selftest
@@ -19,6 +28,7 @@ const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(__dirname, "..");
 const MIGRATION_PATH = path.join(repoRoot, "db/migrations/202614090000_load_exception_reasons.sql");
+const RLS_FIX_MIGRATION_PATH = path.join(repoRoot, "db/migrations/202614100000_load_exception_reasons_rls_fix.sql");
 const ROUTES_PATH = path.join(repoRoot, "apps/backend/src/catalogs/load-exception-reasons.routes.ts");
 const INDEX_PATH = path.join(repoRoot, "apps/backend/src/index.ts");
 
@@ -38,6 +48,19 @@ export function auditMigrationSource(src) {
   for (const code of seedCodes) {
     if (!src.includes(`'${code}'`)) failures.push(`seed is missing code '${code}'`);
   }
+  return failures;
+}
+
+/** Pure: does the RLS-fix migration repoint all 3 policies to the proven org.user_company_access
+ *  membership pattern (not the broken current_setting('app.operating_company_id') GUC check)? */
+export function auditRlsFixMigrationSource(src) {
+  const failures = [];
+  for (const policy of ["load_exception_reasons_select", "load_exception_reasons_insert", "load_exception_reasons_update"]) {
+    if (!src.includes(policy)) failures.push(`RLS fix migration is missing policy ${policy}`);
+  }
+  if (!/org\.user_company_access/.test(src)) failures.push("RLS fix migration does not reference org.user_company_access — still using the broken GUC-only pattern");
+  if (!/identity\.current_user_id\(\)/.test(src)) failures.push("RLS fix migration does not reference identity.current_user_id()");
+  if (/current_setting\('app\.operating_company_id'/.test(src)) failures.push("RLS fix migration still contains the broken current_setting('app.operating_company_id') pattern");
   return failures;
 }
 
@@ -72,6 +95,12 @@ function selftest() {
   const dupIndex = `${goodIndex}\n${goodIndex}\n${goodIndex}`;
   assert.ok(auditRouteRegistration(dupIndex).length >= 1, "a triple (autoload + explicit x2) registration must be caught");
 
+  const goodRlsFix = fs.readFileSync(RLS_FIX_MIGRATION_PATH, "utf8");
+  assert.ok(auditRlsFixMigrationSource(goodRlsFix).length === 0, "the real RLS fix migration must pass: " + JSON.stringify(auditRlsFixMigrationSource(goodRlsFix)));
+
+  const brokenRlsFix = goodRlsFix.replace(/org\.user_company_access[\s\S]*?deactivated_at IS NULL\s*\)/g, "current_setting('app.operating_company_id', true)");
+  assert.ok(auditRlsFixMigrationSource(brokenRlsFix).length >= 1, "a regression back to the broken GUC pattern must be caught");
+
   console.log(`${LABEL} --selftest PASS`);
 }
 
@@ -82,6 +111,10 @@ async function run() {
   else failures.push(...auditMigrationSource(migrationSrc));
 
   if (!fs.existsSync(ROUTES_PATH)) failures.push(`${path.relative(repoRoot, ROUTES_PATH)}: missing`);
+
+  const rlsFixSrc = fs.existsSync(RLS_FIX_MIGRATION_PATH) ? fs.readFileSync(RLS_FIX_MIGRATION_PATH, "utf8") : null;
+  if (!rlsFixSrc) failures.push(`${path.relative(repoRoot, RLS_FIX_MIGRATION_PATH)}: missing`);
+  else failures.push(...auditRlsFixMigrationSource(rlsFixSrc));
 
   const indexSrc = fs.existsSync(INDEX_PATH) ? fs.readFileSync(INDEX_PATH, "utf8") : null;
   if (!indexSrc) failures.push(`${path.relative(repoRoot, INDEX_PATH)}: missing`);
@@ -124,6 +157,21 @@ async function run() {
     }
     if (!tableRows[0].relrowsecurity || !tableRows[0].relforcerowsecurity) {
       console.error(`${LABEL}: FAIL — RLS is not enabled+forced live (relrowsecurity=${tableRows[0].relrowsecurity}, relforcerowsecurity=${tableRows[0].relforcerowsecurity})`);
+      process.exitCode = 1;
+      return;
+    }
+
+    const { rows: policyRows } = await client.query(
+      `SELECT policyname, qual FROM pg_policies WHERE schemaname = 'catalogs' AND tablename = 'load_exception_reasons'`
+    );
+    const selectPolicy = policyRows.find((r) => r.policyname === "load_exception_reasons_select");
+    if (!selectPolicy || !/org\.user_company_access/.test(selectPolicy.qual ?? "")) {
+      console.error(`${LABEL}: FAIL — live SELECT policy does not use org.user_company_access (still the broken GUC pattern, or missing): ${selectPolicy?.qual}`);
+      process.exitCode = 1;
+      return;
+    }
+    if (/current_setting\('app\.operating_company_id'/.test(selectPolicy.qual ?? "")) {
+      console.error(`${LABEL}: FAIL — live SELECT policy still contains the broken current_setting('app.operating_company_id') pattern`);
       process.exitCode = 1;
       return;
     }
