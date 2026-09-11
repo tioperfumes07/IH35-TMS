@@ -8654,5 +8654,15 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-11",
     "purpose": "verify-load-costs-open-status-and-list-view-presettlement"
+  },
+  "11245": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-kanban-status-correctness-fix"
+  },
+  "11253": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-round-trips-timeline-row-height-cap"
   }
 }
