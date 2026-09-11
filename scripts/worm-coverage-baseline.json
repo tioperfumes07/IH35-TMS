@@ -48,6 +48,8 @@
     "driver_finance.driver_settlement_disputes",
     "driver_finance.driver_settlement_gl_bills",
     "driver_finance.driver_settlements",
+    "driver_finance.historical_settlement_attribution_items",
+    "driver_finance.historical_settlement_attributions",
     "driver_finance.escrow_balances",
     "driver_finance.escrow_deductions_pending",
     "driver_finance.escrow_ledger",
@@ -61,5 +63,5 @@
     "factoring.letter_of_release",
     "factoring.reserve_movement"
   ],
-  "unprotected_count": 91
+  "unprotected_count": 89
 }
