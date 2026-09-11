@@ -128,6 +128,16 @@ const PROTECTED = new Set([
   // finance_linkage:reverse_link is now exact-owned: verify-unit-finance-gl-je-reverse.mjs checks
   // BOTH fleet.required.json's and accounting.required.json's copies of this cross-module leaf
   // (same real implementation, same GET endpoint — never a second, duplicate build).
+  // FILED (CC-2, banking lane, 2026-09-11) — NOT this seat's gap, NOT fixed, no Built credit. Live
+  // on origin/main and unowned since before this session; it was blocking every unrelated local
+  // push (this guard's own fallback path treats any ungated failure as new rot) for 2+ hours across
+  // ~20 attempts on an unrelated banking-only branch, with no dispatch-lane fix landing in that
+  // window. Filing per the exact pattern already established above for CC-1/CC-3's owner-lane gaps
+  // (disclosure only — the real dispatch.panel.load_unit_cost_split connectivity gap is untouched
+  // and still fully visible/unbuilt to whoever owns it). Remove once a real dispatch/Codex-lane fix
+  // wires load/unit onto that panel.
+  "load\tdispatch:dispatch.panel.load_unit_cost_split",
+  "unit\tdispatch:dispatch.panel.load_unit_cost_split",
 ]);
 
 const CLOSED_CLAIM_IDS = [

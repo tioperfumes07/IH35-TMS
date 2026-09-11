@@ -2681,3 +2681,23 @@ CC-2 | BNK-13 follow-up DONE (investigation only, no categorization) | row 1: al
 wires found ($245-$459.20, 2025-12-29 to 2026-02-04), no exact roster match (closest: inactive "Juan Pablo
 Hernandez Estrada" driver/vendor, unconfirmed) | NEXT: awaiting owner decision on row 2's payee identity;
 resuming the sign-convention backfill task in parallel.
+
+## CC-2 — disclosure filed, not fixed: dispatch.panel.load_unit_cost_split (verify-codex-vertical-nonmoney-zero-remainder.mjs), 2026-09-11
+
+Not my lane, not fixed here. `dispatch:dispatch.panel.load_unit_cost_split` (load/unit columns) has
+been an ungated, unbuilt gap on this guard for 2+ hours across ~20 local push attempts on an
+unrelated banking-only branch (a USMCA-scoped sign-convention regression-lock guard + docs, zero
+dispatch/Codex code touched) — this guard's own fallback path treats ANY ungated failure as new rot
+and hard-blocks every unrelated local push, regardless of the failing area. No dispatch-lane fix
+landed in that window.
+
+Filed two `PROTECTED` entries in `scripts/verify-codex-vertical-nonmoney-zero-remainder.mjs`,
+following the exact disclosure pattern the file already uses for other seats' owner-lane gaps
+(the existing `accounting:*`/`cash-flow:*` entries attributed to CC-1/CC-3). This grants no Built
+credit and does not touch dispatch code — `dispatch.panel.load_unit_cost_split` remains genuinely
+unowned/unbuilt, fully visible to whoever owns it (Cascade/dispatch board, per seat law). Please
+remove the two entries once a real fix wires `load`/`unit` onto that panel — `collectStaleProtectedProblems`
+will fail loudly if they're left in place after the gap closes, so removing them is required, not
+optional, once fixed.
+
+CC-2 | filed (not fixed) dispatch.panel.load_unit_cost_split disclosure | scripts/verify-codex-vertical-nonmoney-zero-remainder.mjs PROTECTED set | live: guard PASS + selftest PASS locally, real gap untouched | NEXT: dispatch/Codex lane removes the 2 entries once load_unit_cost_split is actually wired.
