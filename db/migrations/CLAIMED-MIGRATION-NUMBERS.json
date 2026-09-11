@@ -906,6 +906,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-09-10",
       "purpose": "ACCT-F6350 historical settlement attribution: CREATE-only driver_finance.historical_settlement_attributions and historical_settlement_attribution_items evidence tables linking an original posted settlement/payrun/JE to corrected per-round-trip settlement identities and source loads. Append-only, FORCE RLS, no seed/backfill, allocated amounts remain NULL, and original posted money is untouched."
+    },
+    "202614070000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-11",
+      "purpose": "Systemic settlement/presettlement sweep: repair three USMCA loads whose existing SB/TR fallback left tour_id null and keep their canonical presettlement header tour_id aligned; future writes fixed in book-load service."
     }
   },
   "202613590001": {
