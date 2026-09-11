@@ -478,7 +478,7 @@ export function VendorsPage() {
         render: (r) => fmtMoney(Number(r.balance_cents ?? Number(r.amount_cents ?? 0) - Number(r.paid_cents ?? 0))),
       },
       { key: "load_no", label: "Load #", sortable: true, sortValue: (r) => r.linked_load_number ?? "", render: (r) => r.linked_load_id ? <EntityLinkOrTombstone kind="load" id={r.linked_load_id} name={r.linked_load_number} noun="Load" /> : "—" },
-      { key: "settlement_no", label: "Settlement #", defaultHidden: true, sortable: true, sortValue: (r) => r.linked_settlement_display_id ?? "", render: (r) => r.linked_settlement_id ? <EntityLink kind="settlement" id={r.linked_settlement_id} label={r.linked_settlement_display_id ?? "—"} /> : "—" },
+      { key: "settlement_no", label: "Settlement #", alwaysVisible: true, sortable: true, sortValue: (r) => r.linked_settlement_display_id ?? "", render: (r) => r.linked_settlement_id ? <EntityLink kind="settlement" id={r.linked_settlement_id} label={r.linked_settlement_display_id ?? "—"} /> : "—" },
       { key: "truck_no", label: "Truck #", defaultHidden: true, sortable: true, sortValue: (r) => r.linked_unit_number ?? "", render: (r) => r.linked_unit_number ?? "—" },
       { key: "pickup_date", label: "Pick-up date", defaultHidden: true, sortable: true, sortValue: (r) => r.linked_pickup_date ?? "", render: (r) => mmmDd(r.linked_pickup_date) || "—" },
       { key: "delivery_date", label: "Delivery date", defaultHidden: true, sortable: true, sortValue: (r) => r.linked_delivery_date ?? "", render: (r) => mmmDd(r.linked_delivery_date) || "—" },

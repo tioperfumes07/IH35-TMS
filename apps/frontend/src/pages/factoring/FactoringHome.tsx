@@ -1431,7 +1431,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
               }
               const invoiceStatusColumns: Array<ParityColumn<FactoringInvoiceStatusRow>> = [
                 { key: "issue_date", label: "Invoiced Date", sortable: true, render: (row) => fmtDate(row.issue_date) },
-                { key: "lc_settlement_number", label: "Settlement #", sortable: true, render: (row) => row.lc_settlement_number || "—" },
+                { key: "lc_settlement_number", label: "Settlement #", alwaysVisible: true, sortable: true, render: (row) => row.lc_settlement_number || "—" },
                 { key: "delivery_date", label: "Delivery Date", sortable: true, render: (row) => fmtDate(row.delivery_date) },
                 { key: "total_cents", label: "Original Invoice Amount", sortable: true, render: (row) => fmtCurrency(row.total_cents) },
                 { key: "advance_amount_cents", label: "Advance", sortable: true, render: (row) => row.advance_amount_cents != null ? fmtCurrency(row.advance_amount_cents) : "—" },
