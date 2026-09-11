@@ -2188,7 +2188,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             )
           GROUP BY u.id, u.unit_number, tr.id, tr.equipment_number, ud.id, ud.first_name, ud.last_name,
             last_delivery.last_drop_at, last_delivery.load_id, last_delivery.load_number,
-            p.city, p.state, p.formatted_location, p.lat, p.lng, p.captured_at
+            p.city, p.state, p.formatted_location, p.lat, p.lng, p.captured_at,
+            loc.city, loc.state, loc.formatted_location
           ORDER BY COALESCE(last_delivery.last_drop_at, now() - interval '999 days') ASC
         `,
         [operatingCompanyId]

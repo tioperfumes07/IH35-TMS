@@ -9,8 +9,9 @@ import { readFileSync } from "node:fs";
 const LEGS = "apps/frontend/src/pages/dispatch/roundTripsLegs.ts";
 const TIMELINE = "apps/frontend/src/pages/dispatch/RoundTripsTimeline.tsx";
 const DISPATCH = "apps/frontend/src/pages/Dispatch.tsx";
+const ROUTES = "apps/backend/src/dispatch/loads.routes.ts";
 
-function check(legs, timeline, dispatch) {
+function check(legs, timeline, dispatch, routes) {
   const errors = [];
   if (!/"booked"/.test(legs) || !/"planned"/.test(legs) || !/"unassigned"/.test(legs)) {
     errors.push("RT_TIMELINE_STATUSES must include booked, planned, unassigned (future + current legs)");
@@ -43,6 +44,9 @@ function check(legs, timeline, dispatch) {
   if (/effectiveLoadsLimit\s*=\s*roundTripsFullFetch \? 1000/.test(dispatch)) {
     errors.push("limit:1000 one-shot must not return (API zod max 200)");
   }
+  if (!/GROUP BY[\s\S]{0,400}loc\.city[\s\S]{0,80}loc\.state[\s\S]{0,80}loc\.formatted_location/.test(routes)) {
+    errors.push("units-without-load GROUP BY must include loc.city/state/formatted_location (COALESCE(p, loc) 500s without them)");
+  }
   return errors;
 }
 
@@ -50,14 +54,23 @@ function selftest() {
   const legs = readFileSync(LEGS, "utf8");
   const timeline = readFileSync(TIMELINE, "utf8");
   const dispatch = readFileSync(DISPATCH, "utf8");
-  const good = check(legs, timeline, dispatch);
+  const routes = readFileSync(ROUTES, "utf8");
+  const good = check(legs, timeline, dispatch, routes);
   if (good.length) {
     console.error("SELFTEST FAIL — clean:\n  " + good.join("\n  "));
     process.exit(1);
   }
   const badTimeline = timeline.replace("2026-08-25", "2026-09-01");
-  if (check(legs, badTimeline, dispatch).length === 0) {
+  if (check(legs, badTimeline, dispatch, routes).length === 0) {
     console.error("SELFTEST FAIL — window start mutation not caught");
+    process.exit(1);
+  }
+  const badGroup = routes.replace(
+    /p\.captured_at,\s*loc\.city, loc\.state, loc\.formatted_location/,
+    "p.captured_at",
+  );
+  if (check(legs, timeline, dispatch, badGroup).length === 0) {
+    console.error("SELFTEST FAIL — loc GROUP BY mutation not caught");
     process.exit(1);
   }
   console.log("PASS verify-reg037-roundtrips-timeline-window --selftest");
@@ -72,6 +85,7 @@ const errors = check(
   readFileSync(LEGS, "utf8"),
   readFileSync(TIMELINE, "utf8"),
   readFileSync(DISPATCH, "utf8"),
+  readFileSync(ROUTES, "utf8"),
 );
 if (errors.length) {
   console.error("FAIL verify-reg037-roundtrips-timeline-window:\n  " + errors.join("\n  "));
