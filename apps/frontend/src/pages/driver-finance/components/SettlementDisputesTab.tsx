@@ -165,13 +165,28 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
         ),
       },
       {
-        key: "period",
-        label: "Settlement Period",
+        key: "settlement_display_id",
+        label: "Settlement #",
+        alwaysVisible: true,
         render: (row) => (
-          <span>
-            {row.period_start ? formatDateUS(row.period_start) : "—"} to {row.period_end ? formatDateUS(row.period_end) : "—"}
-          </span>
+          <EntityLink
+            kind="settlement"
+            id={row.settlement_id}
+            label={entityLabel(row.settlement_display_id, row.settlement_id, "Settlement")}
+          />
         ),
+      },
+      {
+        key: "period_start",
+        label: "Period Start",
+        sortable: true,
+        render: (row) => (row.period_start ? formatDateUS(row.period_start) : "—"),
+      },
+      {
+        key: "period_end",
+        label: "Period End",
+        sortable: true,
+        render: (row) => (row.period_end ? formatDateUS(row.period_end) : "—"),
       },
       { key: "dispute_category", label: "Category", render: (row) => row.dispute_category },
       {

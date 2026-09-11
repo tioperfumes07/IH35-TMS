@@ -1,6 +1,6 @@
 {
   "healthzSha": "d90940f",
-  "generated_at": "2026-09-11T02:42:32.834Z",
+  "generated_at": "2026-09-11T02:46:19.496Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 21761,
+      "title": "FINDING: BANK-F10007 | register Date column ellipsizes 09/09/2026 to 09/09...",
+      "state": "merged",
+      "mergedAtCt": "09/10/2026, 09:45 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21761",
+      "sha": "cccc197cd2",
+      "committedAtIso": "2026-09-10T21:45:17-05:00"
+    },
+    {
+      "number": 21759,
+      "title": "FINDING: N/A (CLAIM-RESERVE 11217 -- reservation-only commit, no code fix)",
+      "state": "merged",
+      "mergedAtCt": "09/10/2026, 09:43 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21759",
+      "sha": "b3bff65868",
+      "committedAtIso": "2026-09-10T21:43:07-05:00"
+    },
+    {
       "number": 21758,
       "title": "FINDING: N/A (CLAIM-RESERVE 11213 -- reservation-only commit, no code fix)",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21746",
       "sha": "d50ea38cc5",
       "committedAtIso": "2026-09-10T21:07:23-05:00"
-    },
-    {
-      "number": 21751,
-      "title": "FINDING: N/A (docs — SETTLEMENT/TOUR NUMBER SWEEP 3-part DONE report to OUTBOX-CC-1)",
-      "state": "merged",
-      "mergedAtCt": "09/10/2026, 08:42 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21751",
-      "sha": "933c2c7a82",
-      "committedAtIso": "2026-09-10T20:42:04-05:00"
-    },
-    {
-      "number": 21749,
-      "title": "FINDING: N/A (CLAIM-RESERVE 11209 -- reservation-only commit, no code fix)",
-      "state": "merged",
-      "mergedAtCt": "09/10/2026, 08:41 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21749",
-      "sha": "b6c432c3fc",
-      "committedAtIso": "2026-09-10T20:41:32-05:00"
     }
   ]
 }
