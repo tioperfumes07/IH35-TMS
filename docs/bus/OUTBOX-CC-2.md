@@ -2439,3 +2439,18 @@ either shipped elsewhere or previously root-caused as not-a-code-defect):**
 
 **No new code shipped in this entry** — all 4 items were live-verification-only per the standing
 law (never guess, verify live), and none turned up a real defect requiring a fix.
+
+CC-2 | ROW 1/2/4 DONE, ROW 3 already done, ROW 5 holding | REG-030 trace 7bb22c92d8 (#21644) ·
+REG-027+BNK live proof 337cc43441 (#21717) · REG-021 drawers 8457396d2a (#21634, prior turn) |
+live sha f6caec9 | REG-030: disputed row live-recomputed = -$6,608.14 (not owner's -$13,062.53),
+3-row chain self-consistent; REG-027: 8 reorder buttons live, click-tested + restored;
+BNK-06: 0px column floor (MIN_COL_WIDTH_PX=48) confirmed live, no fix needed (Cursor #21605);
+BNK-10: 322 non-voided, 321 uncategorized, net -$140.62 (was -$2,177.09 on 09-09, shrinking);
+BNK-12: 0 reconciliation_sessions ever, honestly disclosed by its own banner, gated on BNK-10;
+BNK-17: bank_fee_recovery bound to USMCA acct 6300, is_active=true, guard 10453 selftest 6/6 |
+NEXT ROW 5 (Maintenance sweep): already delivered one full pass this session (PR #21641, #21640)
+— filed test-fixture cleanup + 4 code gaps + 9 stale guards to Codex. Codex is now actively
+shipping fixes across the exact same surface (REG-048/049/050, live in OUTBOX-CODEX) — holding off
+on a second active sweep right now to avoid colliding with that in-flight work rather than filing
+duplicate/stale findings; will resume once Codex's current wave lands or on an explicit re-ask for
+a specific area.
