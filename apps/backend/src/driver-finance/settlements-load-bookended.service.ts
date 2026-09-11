@@ -1,3 +1,4 @@
+import { assertNoHistoricalSettlementCoverage } from "./settlement-historical-attribution.service.js";
 import { allocateSettlementDisplayId } from "./settlement-display-id.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
@@ -841,6 +842,7 @@ export async function stampTripClosedForBookendedSettlement(
   if (!row) return { stamped: false, reason: "not_found" };
   if (row.settlement_model !== "load_bookended") return { stamped: false, reason: "not_load_bookended" };
   if (row.voided_at || row.status === "cancelled") return { stamped: false, reason: "cancelled" };
+  await assertNoHistoricalSettlementCoverage(client, opts.operatingCompanyId, opts.settlementId);
 
   const anchorLoadId = row.last_load_id ?? row.first_load_id;
   const anchorLoadNumber = row.last_load_number ?? row.first_load_number ?? anchorLoadId;

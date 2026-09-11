@@ -1,3 +1,4 @@
+import { HistoricalSettlementAttributions, type HistoricalSettlementAttributionRow } from "../../components/driver-finance/HistoricalSettlementAttributions";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
@@ -843,6 +844,7 @@ export function SettlementDetailPage() {
               onSaved={() => void detailQuery.refetch()}
             />
           ) : null}
+          <HistoricalSettlementAttributions rows={(settlement.historical_attributions ?? []) as HistoricalSettlementAttributionRow[]} />
           {/* Settlement payout poster creates a real accounting.bills row + journal entry per
               load this settlement pays out — drill-through into that posting. Empty when no
               bills were posted yet (honest-empty, not fabricated). */}

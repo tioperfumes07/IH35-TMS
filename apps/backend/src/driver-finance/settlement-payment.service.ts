@@ -1,3 +1,4 @@
+import { assertNoHistoricalSettlementCoverage } from "./settlement-historical-attribution.service.js";
 import crypto from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
@@ -64,6 +65,7 @@ async function loadSettlement(
     `,
     [settlementId, operatingCompanyId]
   );
+  if (options.forUpdate && res.rows[0]) await assertNoHistoricalSettlementCoverage(client, operatingCompanyId, settlementId);
   return res.rows[0] ?? null;
 }
 

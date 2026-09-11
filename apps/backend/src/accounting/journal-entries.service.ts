@@ -1,3 +1,4 @@
+import { assertNoHistoricalJournalCoverage } from "../driver-finance/settlement-historical-attribution.service.js";
 import crypto from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
@@ -467,6 +468,7 @@ export async function reverseJournalEntryNoFlip(
   const existing = existingRes.rows[0];
   if (!existing) throw new Error("journal_entry_not_found");
   if (existing.status !== "posted") throw new Error("journal_entry_not_postable");
+  await assertNoHistoricalJournalCoverage(client, operatingCompanyId, journalEntryId);
 
   // Deterministic retry/recovery lookup. Header linkage is preferred when the additive columns exist;
   // transaction_source_links is the canonical pre-migration fallback written by postVoidReversal.

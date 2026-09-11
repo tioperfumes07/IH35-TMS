@@ -27,10 +27,10 @@ describe("REG-040 audited same-identity continuation", () => {
 
   it("open continuation is idempotent and does not reverse twice", async () => {
     reverse.mockReset();
-    const query = vi.fn().mockResolvedValue({ rows: [{ status: "open", trip_closed_at: null, voided_at: null, snapshot: {} }] });
+    const query = vi.fn(async (sql: string) => ({ rows: sql.includes("to_jsonb(s)") ? [{ status: "open", trip_closed_at: null, voided_at: null, snapshot: {} }] : [] }));
     expect(await reopenSettlementForContinuationInClientTx({ query }, input)).toBe(false);
     expect(reverse).not.toHaveBeenCalled();
-    expect(query).toHaveBeenCalledTimes(1);
+    expect(query).toHaveBeenCalledTimes(3);
   });
 
   it("does not reopen when the real reversal fails", async () => {
@@ -47,6 +47,7 @@ describe("REG-040 void-aware repost idempotency anchor", () => {
     let journal: string | null = "original-je";
     const audits: unknown[][] = [];
     const query = vi.fn(async (sql: string, values?: unknown[]) => {
+      if (sql.includes("historical_settlement_attributions") || sql.includes("SELECT id FROM driver_finance.driver_settlements")) return { rows: [] };
       if (sql.includes("INSERT INTO")) return { rows: [] };
       if (sql.includes("SELECT reversal.id")) return { rows: [{ id: "reversal-je" }] };
       if (sql.includes("SELECT id::text")) return { rows: [{ id: "run", status, journal_entry_id: journal }] };
@@ -65,15 +66,15 @@ describe("REG-040 void-aware repost idempotency anchor", () => {
     expect(query.mock.calls.filter(([sql]) => sql.includes("UPDATE driver_finance.payrun_gl_runs"))).toHaveLength(1);
   });
   it("never reclaims an already posted run", async () => {
-    const query = vi.fn().mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: "run", status: "posted", journal_entry_id: "current-je" }] });
+    const query = vi.fn().mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [{ id: "run", status: "posted", journal_entry_id: "current-je" }] });
     expect((await claimSettlementPayRunInClientTx({ query }, input)).claimed).toBe(false);
-    expect(query).toHaveBeenCalledTimes(2);
+    expect(query).toHaveBeenCalledTimes(4);
   });
   it("refuses a void anchor whose original money has no immutable reversal", async () => {
-    const query = vi.fn().mockResolvedValueOnce({ rows: [] })
+    const query = vi.fn().mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [{ id: "run", status: "void", journal_entry_id: "original-je" }] })
       .mockResolvedValueOnce({ rows: [] });
     await expect(claimSettlementPayRunInClientTx({ query }, input)).rejects.toThrow();
-    expect(query).toHaveBeenCalledTimes(3);
+    expect(query).toHaveBeenCalledTimes(5);
   });
 });

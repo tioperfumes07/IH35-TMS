@@ -1,3 +1,4 @@
+import { readHistoricalSettlementAttributions, assertNoHistoricalSettlementCoverage } from "./settlement-historical-attribution.service.js";
 import { allocateSettlementDisplayId } from "./settlement-display-id.js";
 // C6-MONEY-JE-EXEMPT: driver_finance.settlement_lines rows here are settlement-scoped LINE items,
 // not independent cash movements — the settlement HEADER posts one aggregate balanced JE at
@@ -742,6 +743,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
         lines: linesRes.rows,
         debt_summary: debt,
         linked_bills: linkedBillsRes.rows,
+        historical_attributions: await readHistoricalSettlementAttributions(client, companyId, params.data.id),
       };
     });
     if (detail && "unavailable" in detail) return reply.code(501).send({ error: "driver_finance_schema_not_available" });
@@ -978,6 +980,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
 
     const result = await withCompany(user.uuid, companyId, async (client) => {
       if (!(await hasSettlementSchema(client))) return { unavailable: true as const };
+      await assertNoHistoricalSettlementCoverage(client, companyId, params.data.id);
       const currentRes = await client.query(
         `SELECT s.*, v.has_pending_acks FROM driver_finance.driver_settlements s JOIN views.driver_settlement_with_debt v ON v.id = s.id WHERE s.id = $1 AND s.operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, companyId]

@@ -1,3 +1,4 @@
+import { assertNoHistoricalSettlementCoverage } from "./settlement-historical-attribution.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 type Client = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }> };
 type Run = { id: string; journal_entry_id: string | null; status?: string };
@@ -6,6 +7,7 @@ type Run = { id: string; journal_entry_id: string | null; status?: string };
 export async function claimSettlementPayRunInClientTx(client: Client, input: {
   operatingCompanyId: string; settlementId: string; actorUserId: string;
 }): Promise<{ claimed: boolean; run: Run }> {
+  await assertNoHistoricalSettlementCoverage(client, input.operatingCompanyId, input.settlementId);
   const args = [input.operatingCompanyId, input.settlementId, input.actorUserId];
   const inserted = await client.query<Run>(`
     INSERT INTO driver_finance.payrun_gl_runs

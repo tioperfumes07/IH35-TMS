@@ -1,3 +1,4 @@
+import { assertNoHistoricalSettlementCoverage } from "./settlement-historical-attribution.service.js";
 import { claimSettlementPayRunInClientTx } from "./settlement-payrun-claim.service.js";
 // SETTLEMENT PAY-RUN CLOSE — net + escrow-cap + advance-recovery + records-only disbursement (Phase 2b).
 // TIER-1 FINANCIAL, BUILD-AND-HOLD. Flag SETTLEMENT_GL_POSTING_ENABLED (default OFF) => PREVIEW ONLY,
@@ -190,6 +191,7 @@ async function loadSettlement(client: DbClient, operatingCompanyId: string, sett
   );
   const row = res.rows[0];
   if (!row) throw new SettlementPayRunError("SETTLEMENT_NOT_FOUND", `Settlement ${settlementId} not found`);
+  await assertNoHistoricalSettlementCoverage(client, operatingCompanyId, settlementId);
   return row;
 }
 

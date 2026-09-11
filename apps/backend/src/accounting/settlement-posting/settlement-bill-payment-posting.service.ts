@@ -1,3 +1,4 @@
+import { assertNoHistoricalSettlementCoverage } from "../../driver-finance/settlement-historical-attribution.service.js";
 // SETTLEMENT-BILL-PAYMENT — the canonical driver-settlement GL posting engine (blueprint §3, LOCKED).
 // TIER-1 FINANCIAL, BUILD-AND-HOLD. Flag SETTLEMENT_GL_POSTING_ENABLED (default OFF) => NO-OP.
 //
@@ -234,6 +235,7 @@ async function loadSettlement(client: DbClient, operatingCompanyId: string, sett
   );
   const row = res.rows[0];
   if (!row) throw new SettlementBillPaymentError("SETTLEMENT_NOT_FOUND", `Settlement ${settlementId} not found`);
+  await assertNoHistoricalSettlementCoverage(client, operatingCompanyId, settlementId);
   return row;
 }
 
@@ -899,6 +901,7 @@ export async function reverseSettlementBillPaymentInClientTx(
 ): Promise<SettlementBillPaymentReversalResult> {
     const opco = input.operatingCompanyId;
     const settlementId = input.settlementId;
+    await assertNoHistoricalSettlementCoverage(client, opco, settlementId);
     const runRes = await client.query<{ id: string; status: string; deduction_journal_entry_id: string | null }>(
       `SELECT id::text, status, deduction_journal_entry_id::text
          FROM driver_finance.driver_settlement_gl_runs
