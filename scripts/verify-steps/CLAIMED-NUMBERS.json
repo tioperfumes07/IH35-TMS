@@ -8588,5 +8588,10 @@
     "claimed_at": "2026-09-10",
     "claimed_by": "devin",
     "purpose": "verify-factoring-faro-detailed-summary-reg047"
+  },
+  "11189": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-reimbursement-per-type-gl"
   }
 }
