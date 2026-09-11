@@ -351,6 +351,23 @@ async function resolveLoadIds(client: pg.PoolClient, loadNumbers: string[]): Pro
 // ── Phase 1: Reversal (maker = REVERSAL_ACTOR). ───────────────────────────────────────────────────
 const SEPTEMBER_CUTOVER = "2026-09-01";
 
+// ROW1 executor scope protection (GPT, docs/bus/OUTBOX-GPT.md "ROW1 immediate executor scope
+// protection request" + "ROW1 SCHEMA LIVE / RUNTIME PUSH BLOCKED", 2026-09-10): S-2026-0011's
+// period_start (2026-08-17) and posted payrun_gl_runs status both satisfy this function's own
+// Faro-era predicate, so an unmodified run WOULD sweep it into the reversal scope. Live-reconfirmed
+// 2026-09-11 (still true, nothing changed): status='closed', payrun status='posted', original JE
+// 6e51e682-5064-4ff2-bf8c-9d2b10476e6f status='posted'. GPT's forensic replay found the ordinary
+// reverse+repost math would change this settlement's POSTED economics (fees $80.50 -> $45.25, a
+// real $35.25 delta) because its original source loads/lines don't cleanly reconstruct — a genuine
+// historical-attribution question, not a data-entry error this executor's normal CSV-driven repost
+// can resolve. The lead ACK'd (per GPT's own report): "preserve original payment attribution, do
+// not recompute/repost." driver_finance.historical_settlement_attributions (migration 202614060000,
+// PR #21760, live) is the durable record for resolving this once treatment is decided — until then,
+// this settlement must never enter this executor's reversal scope by accident.
+const EXCLUDED_FROM_REVERSAL_SETTLEMENT_IDS = new Set([
+  "c7edc017-9696-41c3-a3b0-bb0c903e0d07", // S-2026-0011 — historical attribution pending, do not reverse/recompute/repost
+]);
+
 async function discoverReversalScope(client: pg.PoolClient): Promise<string[]> {
   const res = await client.query<{ settlement_id: string; display_id: string | null; ps: string }>(
     `SELECT r.settlement_id::text, ds.display_id, ds.period_start::date::text ps
@@ -370,12 +387,16 @@ async function discoverReversalScope(client: pg.PoolClient): Promise<string[]> {
       ORDER BY ds.period_start`,
     [OPCO, SEPTEMBER_CUTOVER]
   );
+  const inScope = res.rows.filter((r) => !EXCLUDED_FROM_REVERSAL_SETTLEMENT_IDS.has(r.settlement_id));
+  const historicalAttributionExcluded = res.rows.filter((r) => EXCLUDED_FROM_REVERSAL_SETTLEMENT_IDS.has(r.settlement_id));
   console.log(
-    `discoverReversalScope: ${res.rows.length} Faro-era settlement(s) in scope; ` +
+    `discoverReversalScope: ${inScope.length} Faro-era settlement(s) in scope; ` +
       `${excluded.rows.length} September settlement(s) PRESERVED (excluded): ` +
-      (excluded.rows.map((e) => `${e.display_id}@${e.ps}`).join(", ") || "none")
+      (excluded.rows.map((e) => `${e.display_id}@${e.ps}`).join(", ") || "none") +
+      `; ${historicalAttributionExcluded.length} settlement(s) PRESERVED (historical attribution pending, ROW1): ` +
+      (historicalAttributionExcluded.map((e) => `${e.display_id}@${e.ps}`).join(", ") || "none")
   );
-  return res.rows.map((r) => r.settlement_id);
+  return inScope.map((r) => r.settlement_id);
 }
 
 type ReversalRow = {
