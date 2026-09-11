@@ -4582,6 +4582,33 @@
       "updated_at",
       "updated_by_user_id"
     ],
+    "driver_finance.historical_settlement_attribution_items": [
+      "attribution_id",
+      "created_at",
+      "evidence",
+      "id",
+      "load_id",
+      "operating_company_id",
+      "source_settlement_line_id"
+    ],
+    "driver_finance.historical_settlement_attributions": [
+      "allocated_net_cents",
+      "allocation_basis",
+      "created_at",
+      "created_by_user_id",
+      "evidence",
+      "evidence_sha256",
+      "id",
+      "idempotency_key",
+      "is_void",
+      "operating_company_id",
+      "source_document_ref",
+      "source_journal_entry_id",
+      "source_payrun_id",
+      "source_settlement_id",
+      "supersedes_id",
+      "target_settlement_id"
+    ],
     "driver_finance.payrun_gl_runs": [
       "created_at",
       "created_by_user_id",

@@ -1444,6 +1444,12 @@ jobs:
       - name: verify:go20-late-arrival-honesty
         run: node scripts/verify-go20-late-arrival-honesty.mjs
 
+      # ACCT-F6350 — historical settlement repair is append-only identity evidence, never a money rewrite
+      - name: verify:historical-settlement-attribution-schema --selftest
+        run: node scripts/verify-historical-settlement-attribution-schema.mjs --selftest
+      - name: verify:historical-settlement-attribution-schema
+        run: node scripts/verify-historical-settlement-attribution-schema.mjs
+
   # Thin aggregator — required context `locked-guards / locked-guards` always reports.
   locked-guards:
     name: locked-guards
