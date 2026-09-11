@@ -911,6 +911,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-09-11",
       "purpose": "Systemic settlement/presettlement sweep: repair three USMCA loads whose existing SB/TR fallback left tour_id null and keep their canonical presettlement header tour_id aligned; future writes fixed in book-load service."
+    },
+    "202614080000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-11",
+      "purpose": "ACCT-F6350 metadata-only canonical declaration for already-live driver_finance.historical_settlement_attributions and historical_settlement_attribution_items. Re-declares their identical CREATE TABLE IF NOT EXISTS shapes with CANONICAL-CHECK blocks; no schema or data change."
     }
   },
   "202613590001": {
