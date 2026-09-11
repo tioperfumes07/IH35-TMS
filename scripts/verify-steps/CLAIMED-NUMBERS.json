@@ -8649,5 +8649,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-11",
     "purpose": "verify-reg038-dispatch-home-kpi-columns"
+  },
+  "11237": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-load-costs-open-status-and-list-view-presettlement"
   }
 }
