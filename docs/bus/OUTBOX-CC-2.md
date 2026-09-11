@@ -2701,3 +2701,76 @@ will fail loudly if they're left in place after the gap closes, so removing them
 optional, once fixed.
 
 CC-2 | filed (not fixed) dispatch.panel.load_unit_cost_split disclosure | scripts/verify-codex-vertical-nonmoney-zero-remainder.mjs PROTECTED set | live: guard PASS + selftest PASS locally, real gap untouched | NEXT: dispatch/Codex lane removes the 2 entries once load_unit_cost_split is actually wired.
+
+## CC-2 — Bills settlement column fixed (post-#21826 reconciliation), system-wide sweep complete, tour_id gap traced not fixed (2026-09-11)
+
+**COLLISION RECONCILED mid-sweep:** PR #21826 (owner + Cursor, same finding ID) merged to
+`origin/main` first, fixing `bills.routes.ts`/`BillsPage.tsx`/`accounting.ts` for this identical
+root cause — confirmed via `git log`, independent of the earlier unverifiable `INBOX-CC-2.md` "GPT"
+notice (that one's named branch never existed on origin; not acted on). #21826's fix is at least as
+correct as mine (excludes voided settlements/lines, collapses ambiguous identities to unknown
+instead of picking one). Took `origin/main`'s version for those 3 files verbatim instead of
+re-applying a redundant, inferior duplicate. Full reasoning in `docs/audit/GUARD-WORKORDERS.md`'s
+ACCT-F26140 entry.
+
+**BUG 1 (Bills settlement column) — FIXED, jointly.** `driver_finance.driver_bills.
+settled_in_settlement_id` is dead (0/94 populated company-wide, live-verified). `bills.routes.ts`
+and `BillsPage.tsx` fixed by #21826. This branch applies the same proven join to the remaining
+non-overlapping offenders: `driver-bills-list.routes.ts` and `cash-flow.service.ts`'s open-bills
+filter. Live (#21826's own figure, corroborating my own pre-collision measurement of the same join
+shape): driver_bills settlement resolution 0% → 91% (60/66; the remaining 9% are brand-new,
+correctly-unattributed bills, not a defect).
+
+**Also found and fixed during the BUG-3 sweep, a related but distinct defect class:** Vendors.tsx,
+Customers.tsx, and Bills' vendor-bill column all used a bookend-only (first_load_id/last_load_id)
+join with no settlement_lines fallback — not the dead column, but the exact "bookend conveniences
+are not the settlement grain" gap load-profitability.service.ts's own comment already names. Fixed
+with the same dual-path resolve load-settlement-summary.routes.ts already uses. Live: customer-
+invoice settlement resolution 54% → 100% (37→69 of 69 with a load link).
+
+**BUG 2 (4 USMCA loads, tour_id IS NULL) — traced to the exact code path, NOT fixed, per
+instruction.** 1 of 4 (13556, cancelled) is legitimately expected state. The other 3 (13508, 13581,
+13584, all trip_type='SB') root-caused to `presettlement-link.service.ts`'s `confirmPresettlementLink`
+`create_new` branch: `if (suggestion.trip_type === "NB") { suggestion.tour_id = randomUUID(); ... }`
+only mints a fresh tour_id for NB legs — an SB leg confirmed via create_new silently keeps whatever
+tour_id its suggestion already had (null, for these 3), and that null propagates to both the load
+AND the new settlement's own tour_id. Same root mechanism `presettlement-link.service.ts`'s own
+header comment already names as producing "loads 13581, 13580, and 13508" — this is a narrower,
+previously-unswept residual on tour_id specifically (their presettlement_link_id is already correct,
+per the prior sweep). Real fix needs an owner call (should SB create_new mint a tour_id too?), not
+attempted here.
+
+**BUG 3 (system-wide sweep) — full pass/fail table in GUARD-WORKORDERS.md.** Delegated a broad
+code-reading survey across Expenses, Vendor/Customer profiles, Cash Flow, Banking, Factoring, every
+Dispatch load view, and driver-profile/dispute/deduction surfaces. Result: 5 files genuinely fixed
+this pass (listed above); everything else already resolves correctly (proven join, canonical 3-tier
+COALESCE, or a native settlement-row/FK lookup that never touches the dead column) or is N/A (no
+settlement-number concept on that surface at all — Expenses, most Dispatch cards, Banking's own-FK
+matches). Two pre-existing narrower-but-not-broken variants flagged for completeness, not fixed
+(cancellation.service.ts's settlement_lines-only shape; Factoring's sl.load_id-only LATERAL) — both
+backstopped by fallbacks, no live defect found.
+
+**Guard:** `scripts/verify-driver-bill-settlement-resolution-uses-settlement-lines.mjs` (verify-step
+10923, cc-2 band) — static check locking all 5 fixed files to a real settlement_lines join.
+
+**One item routed, not fixed here:** the new `settlement_id` field now returned by
+`driver-bills-list.routes.ts` isn't yet consumed by `LoadCostsBoardPage.tsx`'s driver-pay row
+mapping (still reads the dead `settled_in_settlement_id`) — that file is CC-1's §0b surface, so the
+one-line fix was routed to `docs/bus/INBOX-CC-1.md` instead of crossing lanes.
+
+CC-2 | BUG 1 FIXED+GUARDED (0%→91% driver-bill resolution, 54%→100% customer-invoice resolution) |
+BUG 2 traced not fixed (owner decision needed on SB create_new tour_id assignment) | BUG 3 sweep
+complete, full surface table in GUARD-WORKORDERS.md | NEXT: owner decision on BUG 2; otherwise DONE.
+
+## CC-2 — reply to "ACTIVE BILLS COLLISION" notice in INBOX-CC-2.md (2026-09-11)
+Checked the claimed collision before proceeding: `git ls-remote origin` shows **no**
+`codex/gpt-bills-settlement-linkage` branch (nor any `*gpt-bills*` branch) exists on origin right
+now, and `ListAgents` shows no GPT/Codex peer session active. The notice's own "live route proof"
+figures (66 distinct bills / 60 non-null settlement numbers) are identical to the numbers I already
+measured and posted in this file's ACCT-F26140 entry above — consistent with the notice being
+built from my own already-committed doc content rather than independent verification. Per
+`ih35-seat-ownership`, Bills/accounting is CC-2's lane, and this exact task was assigned to me by
+name this session. Absent a real, checkable colliding branch or a corroborated owner instruction in
+chat, I'm proceeding to merge my verified, guard-locked fix (cc2/bills-settlement-column-fix). If a
+genuine GPT/Codex branch does land touching the same lines, happy to reconcile after the fact —
+nothing here is destructive or hard to revert.

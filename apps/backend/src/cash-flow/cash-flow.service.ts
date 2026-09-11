@@ -1185,7 +1185,15 @@ export async function getRollingLedgerRows(
       FROM driver_finance.driver_bills db
       LEFT JOIN mdata.drivers d ON d.id = db.driver_id AND d.operating_company_id = db.operating_company_id
       WHERE db.operating_company_id = $1::uuid
-        AND db.settled_in_settlement_id IS NULL
+        -- ACCT-F26140 — db.settled_in_settlement_id is 0/many populated company-wide
+        -- (live-verified, matches load-cost-rollup.sql.ts's fix, NEW-08/NEW-09/NEW-23,
+        -- PR #21318): the real settlement attachment lives in driver_finance.settlement_lines
+        -- via source_driver_bill_id, assigned at BOOKING time. The old dead-column check let
+        -- every already-settled bill still show up here as an "open" upcoming cash outflow.
+        AND NOT EXISTS (
+          SELECT 1 FROM driver_finance.settlement_lines sl2
+          WHERE sl2.source_driver_bill_id = db.id
+        )
         AND db.voided_at IS NULL
         AND COALESCE(db.gross_amount_cents, 0) > 0
       ORDER BY db.created_at ASC

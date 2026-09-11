@@ -1061,12 +1061,24 @@ export async function listBillsByVendor(
           ORDER BY bl.line_sequence ASC
           LIMIT 1
         ) load_link ON true
+        -- ACCT-F26140 — bookend-only (first_load_id OR last_load_id) misses any load that is a
+        -- MIDDLE leg of a multi-load settlement (load-profitability.service.ts's own comment:
+        -- "first_load_id/last_load_id are only bookend conveniences; they are not the settlement
+        -- grain"). Dual-path resolve, same shape as load-settlement-summary.routes.ts: bookend OR
+        -- settlement_lines/driver_bills.load_id.
         LEFT JOIN LATERAL (
           SELECT s.id::text AS settlement_id, s.display_id AS settlement_display_id
           FROM driver_finance.driver_settlements s
           WHERE s.operating_company_id = b.operating_company_id
             AND s.voided_at IS NULL
-            AND (s.first_load_id = load_link.load_id OR s.last_load_id = load_link.load_id)
+            AND (
+              s.first_load_id = load_link.load_id OR s.last_load_id = load_link.load_id
+              OR EXISTS (
+                SELECT 1 FROM driver_finance.settlement_lines sl
+                LEFT JOIN driver_finance.driver_bills db2 ON db2.id = sl.source_driver_bill_id
+                WHERE sl.settlement_id = s.id AND COALESCE(db2.load_id, sl.load_id) = load_link.load_id
+              )
+            )
           ORDER BY s.created_at DESC
           LIMIT 1
         ) settlement_link ON true
@@ -1202,12 +1214,24 @@ export async function listAllBillsForCompany(
           ORDER BY bl.line_sequence ASC
           LIMIT 1
         ) load_link ON true
+        -- ACCT-F26140 — bookend-only (first_load_id OR last_load_id) misses any load that is a
+        -- MIDDLE leg of a multi-load settlement (load-profitability.service.ts's own comment:
+        -- "first_load_id/last_load_id are only bookend conveniences; they are not the settlement
+        -- grain"). Dual-path resolve, same shape as load-settlement-summary.routes.ts: bookend OR
+        -- settlement_lines/driver_bills.load_id.
         LEFT JOIN LATERAL (
           SELECT s.id::text AS settlement_id, s.display_id AS settlement_display_id
           FROM driver_finance.driver_settlements s
           WHERE s.operating_company_id = b.operating_company_id
             AND s.voided_at IS NULL
-            AND (s.first_load_id = load_link.load_id OR s.last_load_id = load_link.load_id)
+            AND (
+              s.first_load_id = load_link.load_id OR s.last_load_id = load_link.load_id
+              OR EXISTS (
+                SELECT 1 FROM driver_finance.settlement_lines sl
+                LEFT JOIN driver_finance.driver_bills db2 ON db2.id = sl.source_driver_bill_id
+                WHERE sl.settlement_id = s.id AND COALESCE(db2.load_id, sl.load_id) = load_link.load_id
+              )
+            )
           ORDER BY s.created_at DESC
           LIMIT 1
         ) settlement_link ON true
