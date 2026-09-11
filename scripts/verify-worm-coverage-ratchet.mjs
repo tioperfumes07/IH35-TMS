@@ -36,7 +36,7 @@
  * is every regression a PR can introduce. It does not replace a live prod read.
  *
  * Both attach forms are parsed, because ACCT-F141 uses the second and a naive scan misses it entirely:
- *   - literal   CREATE TRIGGER <n> BEFORE DELETE ON <schema>.<table>
+ *   - literal   CREATE TRIGGER <n> BEFORE <event list containing DELETE> ON <schema>.<table>
  *   - array     FOREACH t IN ARRAY ARRAY[ '<schema>.<table>', ... ] LOOP ... trg_worm_refuse_delete
  */
 import fs from "node:fs";
@@ -51,7 +51,7 @@ const BASELINE = path.join(ROOT, "scripts", "worm-coverage-baseline.json");
 const FINANCIAL_SCHEMAS = ["accounting", "banking", "driver_finance", "factoring"];
 
 const CREATE_TABLE = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-z_]+)\.([a-z_0-9]+)/gi;
-const LITERAL_TRIGGER = /CREATE\s+TRIGGER\s+\S+\s+BEFORE\s+DELETE\s+ON\s+([a-z_]+)\.([a-z_0-9]+)/gi;
+const LITERAL_TRIGGER = /CREATE\s+TRIGGER\s+\S+\s+BEFORE\s+((?:UPDATE|DELETE|TRUNCATE|INSERT)(?:\s+OR\s+(?:UPDATE|DELETE|TRUNCATE|INSERT))*)\s+ON\s+([a-z_]+)\.([a-z_0-9]+)/gi;
 const ARRAY_BLOCK = /FOREACH\s+\w+\s+IN\s+ARRAY\s+ARRAY\[(.*?)\]/gis;
 const QUALIFIED = /'([a-z_]+\.[a-z_0-9]+)'/gi;
 
@@ -68,7 +68,8 @@ export function scanMigrations(dir = path.join(ROOT, "db", "migrations")) {
       if (FINANCIAL_SCHEMAS.includes(schema)) financial.add(`${schema}.${table}`);
     }
     for (const m of sql.matchAll(LITERAL_TRIGGER)) {
-      protectedTables.add(`${m[1].toLowerCase()}.${m[2].toLowerCase()}`);
+      const events = m[1].toUpperCase().split(/\s+OR\s+/);
+      if (events.includes("DELETE")) protectedTables.add(`${m[2].toLowerCase()}.${m[3].toLowerCase()}`);
     }
     // Array-driven attach: only trust it when the file actually installs the WORM trigger, so an
     // unrelated FOREACH over table names cannot be mistaken for protection.
@@ -153,11 +154,20 @@ function selftest() {
   const better = { ...scan, protectedTables: new Set([...scan.protectedTables, "accounting.staging"]) };
   if (evaluate(better, base).problems.length !== 0) failures.push("case4 FAIL — improving coverage must stay GREEN.");
 
+  const multiEvent = "CREATE TRIGGER t BEFORE UPDATE OR DELETE OR TRUNCATE ON accounting.bills FOR EACH STATEMENT EXECUTE FUNCTION block();";
+  const deleteOnly = "CREATE TRIGGER t BEFORE DELETE ON accounting.bills FOR EACH ROW EXECUTE FUNCTION block();";
+  const updateOnly = "CREATE TRIGGER t BEFORE UPDATE ON accounting.bills FOR EACH ROW EXECUTE FUNCTION block();";
+  const afterDelete = "CREATE TRIGGER t AFTER DELETE ON accounting.bills FOR EACH ROW EXECUTE FUNCTION audit();";
+  if (![...multiEvent.matchAll(LITERAL_TRIGGER)].some((m) => m[1].toUpperCase().split(/\s+OR\s+/).includes("DELETE"))) failures.push("case5 FAIL — multi-event BEFORE DELETE protection must be detected.");
+  if (![...deleteOnly.matchAll(LITERAL_TRIGGER)].some((m) => m[1].toUpperCase() === "DELETE")) failures.push("case6 FAIL — DELETE-only protection must remain detected.");
+  if ([...updateOnly.matchAll(LITERAL_TRIGGER)].some((m) => m[1].toUpperCase().split(/\s+OR\s+/).includes("DELETE"))) failures.push("case7 FAIL — UPDATE-only trigger must not count.");
+  if ([...afterDelete.matchAll(LITERAL_TRIGGER)].length !== 0) failures.push("case8 FAIL — AFTER DELETE audit trigger must not count.");
+
   if (failures.length) {
     for (const f of failures) console.error(`${LABEL} ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — GREEN at baseline; RED on lost protection; RED on rising debt; GREEN on improvement`);
+  console.log(`${LABEL} SELFTEST PASS — 8/8 ratchet and literal-trigger parser cases`);
   return 0;
 }
 
