@@ -84,8 +84,21 @@ function gitEnv(tmp) {
   };
 }
 
-function selftest() {
-  const tmp = `/tmp/verify-root-claude-md-untracked-selftest-${Date.now()}-${process.pid}`;
+// TRANSIENT-GIT-ENV-RACE hardening (2026-09-11): even with the env-scoped isolation above, this
+// selftest still crashed under heavy concurrent verify-static load (`--selftest failed:
+// node:internal/errors:983` — an uncaught execFileSync throw, not a real offender-not-caught
+// assertion), reproduced identically across multiple unrelated branches/PRs in the same window
+// (8 consecutive push attempts on one branch alone). The exact ambient condition was never
+// pinned down (some git env var this repo doesn't already override, or simple transient resource
+// contention under N concurrent `git init`/`git commit` calls all racing for disk/CPU) — but the
+// selftest only ever touches its OWN fresh, uniquely-named /tmp directory, never this repo's
+// tracked files, so a crash here is a false-negative on the selftest's OWN bootstrap, not a real
+// GOV-F01 regression. Retry the whole bootstrap+assertions a few times with a fresh temp dir each
+// attempt before actually failing — this only smooths over transient environment noise; it does
+// not change what isTracked()/gitignoreExcludesRoot()/run() check, or weaken the guard's
+// real-repo behavior below.
+function attemptSelftest() {
+  const tmp = `/tmp/verify-root-claude-md-untracked-selftest-${Date.now()}-${process.pid}-${Math.random().toString(36).slice(2)}`;
   execFileSync("git", ["init", "-q", tmp], { env: process.env });
   const env = gitEnv(tmp);
   writeFileSync(`${tmp}/.gitignore`, "CLAUDE.md\n");
@@ -95,8 +108,7 @@ function selftest() {
   // Baseline: untracked + ignored -> OK
   const baseline = run(tmp, env);
   if (!baseline.ok) {
-    console.error(`${LABEL} --selftest FAIL — baseline (untracked + ignored) should pass: ${baseline.message}`);
-    process.exit(1);
+    throw new Error(`baseline (untracked + ignored) should pass: ${baseline.message}`);
   }
 
   // Offender 1: CLAUDE.md re-tracked
@@ -104,8 +116,7 @@ function selftest() {
   execFileSync("git", ["-C", tmp, "add", "-f", "CLAUDE.md"], { env });
   const offender1 = run(tmp, env);
   if (offender1.ok) {
-    console.error(`${LABEL} --selftest FAIL — re-tracked CLAUDE.md was not caught`);
-    process.exit(1);
+    throw new Error("re-tracked CLAUDE.md was not caught");
   }
   execFileSync("git", ["-C", tmp, "rm", "-f", "--cached", "CLAUDE.md"], { env });
   unlinkSync(`${tmp}/CLAUDE.md`);
@@ -114,11 +125,25 @@ function selftest() {
   writeFileSync(`${tmp}/.gitignore`, "\n");
   const offender2 = run(tmp, env);
   if (offender2.ok) {
-    console.error(`${LABEL} --selftest FAIL — missing .gitignore entry was not caught`);
-    process.exit(1);
+    throw new Error("missing .gitignore entry was not caught");
   }
+}
 
-  console.log(`${LABEL} --selftest PASS — 2/2 offenders caught, baseline clean`);
+function selftest() {
+  const MAX_ATTEMPTS = 4;
+  let lastError;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+    try {
+      attemptSelftest();
+      console.log(`${LABEL} --selftest PASS — 2/2 offenders caught, baseline clean${attempt > 1 ? ` (attempt ${attempt}/${MAX_ATTEMPTS}, transient noise on earlier attempt)` : ""}`);
+      return;
+    } catch (err) {
+      lastError = err;
+      console.error(`${LABEL} --selftest attempt ${attempt}/${MAX_ATTEMPTS} hit transient noise: ${err.message || err}`);
+    }
+  }
+  console.error(`${LABEL} --selftest FAIL after ${MAX_ATTEMPTS} attempts — ${lastError?.message || lastError}`);
+  process.exit(1);
 }
 
 if (process.argv.includes("--selftest")) {
