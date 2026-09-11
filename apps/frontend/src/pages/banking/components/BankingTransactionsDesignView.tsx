@@ -1518,6 +1518,8 @@ export function BankingTransactionsDesignView({
         label: "Date",
         sortable: true,
         className: REGISTER_COLUMN_HEADER_CLASS,
+        cellClass: "whitespace-nowrap",
+        minWidth: 92,
         render: (tx) => {
           const expanded = expandedTxId === tx.id;
           if (viewSettings.editableDateField && expanded) {

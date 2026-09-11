@@ -39,6 +39,9 @@ if (/tx\.is_credit \|\| Number\(tx\.amount_cents/.test(viewSrc)) {
 if (!/\{ id: "all", label: "All" \}/.test(viewSrc) || !/useState<ReviewTabId>\("all"\)/.test(viewSrc)) {
   fail("register default must be All so categorized rows (e.g. 12/08 $100) stay on the statement walk");
 }
+if (!/key: "date"[\s\S]{0,220}cellClass: "whitespace-nowrap"/.test(viewSrc)) {
+  fail("Date column must whitespace-nowrap so 09/09/2026 is not ellipsized to 09/09...");
+}
 if (!/export async function applyPostedSignedCurrentBalance/.test(plaidSrc)) {
   fail("Plaid must re-anchor current_balance_cents from posted signed SUM, not leave Plaid's snapshot");
 }
