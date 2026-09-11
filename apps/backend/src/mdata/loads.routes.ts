@@ -92,24 +92,20 @@ const statusFilterSchema = z
 /**
  * CLOSED load statuses — the ONLY cohort that leaves the live load board and routes to Loads History.
  *
- * LOADBOARD-LIFECYCLE (owner 2026-09-09, verbatim: "the second a load is closed, it should disappear
- * from the load board … delivered waiting docs, or the new one … where we send the bol and invoice to
- * the factoring company while we are still delivering … but it creates the invoices etc but STAYS in
- * the load board until we change the status or the driver changes the status"). This SUPERSEDES the
- * 2026-09-06 DSP-BAND-DUP framing that made `delivered_pending_docs` terminal for the live board.
- *
- * Industry standard (McLeod PowerBroker, Alvys, AlwaysTrack): the dispatch board is LOAD-CENTRIC — one
- * row per load — and a load stays on the board through its whole lifecycle (dispatched → in transit →
- * delivered → pending docs → invoiced → paid) and drops off ONLY when it is closed/cancelled/abandoned.
- * So delivered_pending_docs / completed_docs_received / invoiced / paid all remain on the LIVE board.
+ * LOADBOARD-LIFECYCLE (owner 2026-09-09) — SUPERSEDED 2026-09-11 ("DISPATCH/LOAD-COSTS: STRIP CLOSED
+ * LOADS EVERYWHERE, NO EXCEPTIONS"): the 09-09 instruction to keep delivered/pending-docs/invoiced/paid
+ * loads on the live board was a narrow, rare exception tied to one specific factoring-advance
+ * arrangement with certain customers — it does not mean delivered loads stay visible on Dispatch
+ * generally, and per the owner's own 2026-09-11 words it does NOT override the open-only law: "Dispatch
+ * and every tab living inside it … render ONLY current/open loads … Nothing closed or settled renders
+ * anywhere in Dispatch. Closed data belongs exclusively in the Settlements module." Once delivery has
+ * happened, a load is no longer "current" for Dispatch's purpose (it is a billing/paperwork item that
+ * belongs on the Load Costs / Settlements side, not the operational trucking board) — kept here only as
+ * history for why the broader set was ever narrow.
  *
  * The 2026-09-06 truck-duplication concern is NOT reintroduced: it is handled entirely on the AWAITING
  * (truck-roster) side in dispatch/loads.routes.ts, where a truck is "occupied" only by an IN-FLIGHT
- * load (assigned_not_dispatched/dispatched/in_transit). A truck whose only open loads are
- * delivered_pending_docs is FREE and surfaces ONCE in "Awaiting assignment". The delivered/pending-docs
- * LOADS still each render as their own load row in the load-centric billing band — that is a distinct
- * meaning (a billing/paperwork queue), not a repeated truck. History shows only closed/cancelled/
- * abandoned/walkoff/no-show.
+ * load (assigned_not_dispatched/dispatched/in_transit) — unaffected by this change.
  */
 const CLOSED_LOAD_STATUSES = [
   "closed",
@@ -117,6 +113,19 @@ const CLOSED_LOAD_STATUSES = [
   "abandoned",
   "driver_walkoff",
   "driver_no_show",
+] as const satisfies readonly z.infer<typeof loadStatusSchema>[];
+
+// OPEN-ONLY LAW (owner 2026-09-11): the Dispatch live board excludes every post-delivery/billing-tail
+// status on top of the always-closed cohort above — a load stops being "current" the moment delivery
+// happens, not only when it is formally closed. History becomes the exact complement (every load is in
+// live XOR history, never neither) so a delivered load is never invisible everywhere.
+const DISPATCH_LIVE_EXCLUDED_STATUSES = [
+  ...CLOSED_LOAD_STATUSES,
+  "delivered",
+  "delivered_pending_docs",
+  "completed_docs_received",
+  "invoiced",
+  "paid",
 ] as const satisfies readonly z.infer<typeof loadStatusSchema>[];
 
 const listLoadsQuerySchema = z.object({
@@ -703,13 +712,13 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         values.push(status);
         filters.push(`l.status = ANY($${values.length}::mdata.load_status_enum[])`);
       } else if (board_scope === "live") {
-        // LOADBOARD-LIFECYCLE (owner 2026-09-09): a load stays on the live board until it is CLOSED.
-        // Only the closed/cancelled/abandoned cohort is excluded — delivered_pending_docs / invoiced /
-        // paid remain live so the office can still see and act on them (send BOL, bill, factor).
-        values.push(CLOSED_LOAD_STATUSES);
+        // OPEN-ONLY LAW (owner 2026-09-11, supersedes 2026-09-09): a load stops being "current" for
+        // Dispatch the moment delivery happens, not only when formally closed — see the comment above
+        // DISPATCH_LIVE_EXCLUDED_STATUSES.
+        values.push(DISPATCH_LIVE_EXCLUDED_STATUSES);
         filters.push(`NOT (l.status = ANY($${values.length}::mdata.load_status_enum[]))`);
       } else if (board_scope === "history") {
-        values.push(CLOSED_LOAD_STATUSES);
+        values.push(DISPATCH_LIVE_EXCLUDED_STATUSES);
         filters.push(`l.status = ANY($${values.length}::mdata.load_status_enum[])`);
       }
       if (customer_id) {

@@ -330,3 +330,80 @@ describe("DispatchKanban — REG-048 one card per unit", () => {
     expect(screen.getByTestId("kanban-standard-card-13405")).toBeInTheDocument();
   });
 });
+
+// KANBAN-DUP-UNIT-2 (owner correction 2026-09-11, verbatim): "dedupeLoadsByUnit() only dedupes the
+// `loads` array. The Awaiting-Assignment lane renders a SEPARATE source, `awaitingTrucks` ...
+// Reconcile the two ... One unit, one card, period, regardless of which source found it." Live-
+// confirmed on the deployed build BEFORE this fix: real units T163/T173/T148 each carry a load whose
+// status (delivered_pending_docs / invoiced) both wins a real Kanban card AND still satisfies
+// listUnitsWithoutLoad's own "no active load" definition (which only excludes
+// assigned_not_dispatched/dispatched/in_transit) — rendering the SAME unit twice. This suite asserts
+// the CORRECTNESS property the owner named directly: zero unit_ids ever appear in both the
+// loads-card set and the awaitingTrucks-card set simultaneously.
+describe("DispatchKanban — KANBAN-DUP-UNIT-2 loads/awaitingTrucks reconciliation", () => {
+  it("a unit that already won a real card via dedupeLoadsByUnit does NOT also get an Awaiting-Assignment ghost card", () => {
+    const loads = [
+      // Mirrors the live T163 case: a delivered_pending_docs load wins a real card AND the same
+      // unit_id is also (incorrectly, pre-fix) present in awaitingTrucks.
+      mockLoad({ id: "load-h", load_number: "13533", status: "delivered_pending_docs", assigned_unit_id: "u-163", assigned_unit_number: "T163", created_at: "2026-09-05T12:58:54.000Z" }),
+    ];
+    const awaitingTrucks: UnitsWithoutLoad[] = [
+      { ...truck, id: "u-163", unit_number: "T163" }, // same unit as the real card above
+      { ...truck, id: "u-idle-1", unit_number: "T900" }, // genuinely idle unit, unrelated
+    ];
+    renderWithClient(
+      <MemoryRouter>
+        <DispatchKanban loads={loads} awaitingTrucks={awaitingTrucks} loading={false} onLoadClick={vi.fn()} onStatusDrop={vi.fn()} />
+      </MemoryRouter>
+    );
+
+    // Real card renders once, in its own status column.
+    expect(screen.getByTestId("kanban-standard-card-13533")).toBeInTheDocument();
+    // T163 must NOT also render as an Awaiting-Assignment ghost card.
+    expect(screen.queryByTestId("awaiting-truck-card-unit:u-163")).not.toBeInTheDocument();
+    // The genuinely idle unit (no real card anywhere) still gets its Awaiting-Assignment card.
+    expect(screen.getByTestId("awaiting-truck-card-unit:u-idle-1")).toBeInTheDocument();
+
+    // CORRECTNESS assertion, stated the way the owner named it: zero unit_ids appear in both sets.
+    const loadsCardUnitIds = new Set(loads.map((l) => l.assigned_unit_id).filter(Boolean));
+    const ghostUnitIds = [...document.querySelectorAll('[data-testid^="awaiting-truck-card-unit:"]')].map((el) =>
+      el.getAttribute("data-testid")!.replace("awaiting-truck-card-unit:", "")
+    );
+    const overlap = ghostUnitIds.filter((id) => loadsCardUnitIds.has(id));
+    expect(overlap).toEqual([]);
+  });
+
+  it("a unit with an ACTIVE (dispatched/in_transit) load never gets a ghost card either (baseline, unchanged)", () => {
+    const loads = [
+      mockLoad({ id: "load-i", load_number: "13576", status: "dispatched", assigned_unit_id: "u-171", assigned_unit_number: "T171", created_at: "2026-09-07T18:40:16.000Z" }),
+    ];
+    renderWithClient(
+      <MemoryRouter>
+        <DispatchKanban loads={loads} awaitingTrucks={[]} loading={false} onLoadClick={vi.fn()} onStatusDrop={vi.fn()} />
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId("kanban-standard-card-13576")).toBeInTheDocument();
+    expect(screen.queryByTestId("awaiting-truck-card-unit:u-171")).not.toBeInTheDocument();
+  });
+
+  it("a unit with an older invoiced/closed load AND a newer active load (a second leg assigned later) still renders exactly one card, the newest", () => {
+    // Mirrors the live T171 case: an older invoiced load plus a much newer dispatched load for the
+    // same unit — dedupeLoadsByUnit's unit-scoped winner-pick is unconditional (recomputed from
+    // whatever `loads` currently holds, not an "initial render only" snapshot), so a second leg
+    // assigned to an already-active unit collapses to the single newest non-terminal card, never two.
+    const loads = [
+      mockLoad({ id: "load-j", load_number: "13541", status: "invoiced", assigned_unit_id: "u-171", assigned_unit_number: "T171", created_at: "2026-09-05T14:46:32.000Z" }),
+      mockLoad({ id: "load-k", load_number: "13576", status: "dispatched", assigned_unit_id: "u-171", assigned_unit_number: "T171", created_at: "2026-09-07T18:40:16.000Z" }),
+    ];
+    renderWithClient(
+      <MemoryRouter>
+        <DispatchKanban loads={loads} awaitingTrucks={[{ ...truck, id: "u-171", unit_number: "T171" }]} loading={false} onLoadClick={vi.fn()} onStatusDrop={vi.fn()} />
+      </MemoryRouter>
+    );
+    // Exactly one real card, the newest (dispatched).
+    expect(screen.getByTestId("kanban-standard-card-13576")).toBeInTheDocument();
+    expect(screen.queryByTestId("kanban-standard-card-13541")).not.toBeInTheDocument();
+    // No ghost card either, since the unit already won a real card.
+    expect(screen.queryByTestId("awaiting-truck-card-unit:u-171")).not.toBeInTheDocument();
+  });
+});
