@@ -1863,3 +1863,56 @@ against current live data post-deploy | NEXT: moving to the SETTLEMENTS MODULE t
 landing, wrong-data trace, multi-load linkage render fix per owner's own SQL, tour_id-null gap
 trace) — starting with SettlementDetailPage.tsx's bookend-only load rendering (owner's more
 authoritative, pre-verified "FIX THE RENDER, NOT THE SCHEMA" order).
+
+---
+
+## CC-1 — SETTLEMENT LOAD LINKAGE: FIX THE RENDER, NOT THE SCHEMA — SHIPPED, DEPLOY IN FLIGHT (2026-09-11)
+
+PR #21810 (merge `6820bcc185`), FINDING ACCT-F26136. Deploys triggered: backend
+`dep-dai5bk0jo6nc73ff9a90`, frontend `dep-dai5bkgae00c73dpnudg` — building, not yet
+live-reverified in Chrome (next action once live).
+
+INVESTIGATION FIRST (per owner's own instruction, code-read before touching anything):
+`SettlementDetailPage.tsx`'s own "Loads in cycle" (SettlementHeader) and its `TourSettlementTab`/
+`SettlementLoadsSection` (backed by `tour-readout.routes.ts`'s `buildTourReadout`, which already
+queries `mdata.loads WHERE presettlement_link_id = $1 OR id IN (first_load_id, last_load_id)`) were
+ALREADY correct — fixed in an earlier PR (#9380, 2026-08-18) and never bookend-only. The REAL,
+still-live "1 load per settlement" bug was in 3 DIFFERENT places sharing the identical pattern:
+
+1. `components/dispatch/TourLegsCell.tsx`'s `tourLoadColumns()` "Load Number" column — used by
+   the Settlements Tours register (Driver + Company/Driver combined), the Load Costs
+   Pre-Settlement/Settlement tabs, and the Company/Driver picker — rendered ONLY `legs[0]` by
+   REG-010/011's own deliberate prior design ("expand the settlement to see every load"). Live
+   Chrome on `/driver-finance/settlements` confirmed S-2026-0025 (Load count=2), S-2026-0019/
+   0006/0009 (counts 2/8/7) all showing exactly one Load Number.
+2. `SettlementsTable.tsx` (the Payments view) — same pattern on `load_links[0]`, even though the
+   backend already returns the FULL array.
+3. `PreSettlementPanel.tsx`'s "Linked Trips" — rendered ONLY `first_load_number`/`last_load_number`
+   (NB/SB bookend), dropping any TR/middle leg. Backend now computes a `legs` array via
+   `presettlement_link_id` reverse-lookup (same source as tour-readout) for this panel to use.
+
+FIXED: all 3 render surfaces now show every load; Load column moved immediately next to Settlement
+(SettlementsToursRegister.tsx, LoadCostsBoardPage.tsx); Settlement moved to the LEFT of the row on
+SettlementsTable.tsx (was behind Driver).
+
+TASK D BUG 2 (5 of 31 non-voided USMCA driver_settlements with tour_id IS NULL: S-2026-0007/0026/
+0027/0029/0031) — per your own conditional instruction, checked before touching anything: live Neon
+confirms ALL 5 have their load correctly reachable via `presettlement_link_id`
+(loads_via_presettlement_link=1 each) — the render fix above (which keys off presettlement_link_id,
+never tour_id) already closes the DISPLAY gap for all 5 without touching their historical data.
+The DEEPER root cause of why tour_id itself was skipped is NOT a single clean path — live evidence
+is mixed: 2 of the 5 (S-2026-0026/0027) are NB legs whose OWN load DOES carry a real tour_id that
+was never copied onto the settlement row (a gap in `confirmPresettlementLink`'s create_new insert);
+the other 3 (S-2026-0007/0029/0031) are SB legs whose load itself has no tour_id at all (a different,
+upstream gap). Handing this back with findings rather than guessing a fix that could touch two
+different code paths incorrectly — recommend a follow-up task scoped specifically to trace
+`presettlement-link.service.ts`'s NB-leg tour_id assignment (currently gated on
+`trip_type === "NB"` at `create_new` confirm time) separately from why some SB-first loads never
+got a tour_id from dispatch/booking in the first place.
+
+DONE LINE: CC-1 | SETTLEMENT LOAD LINKAGE render fix (3 surfaces + column ordering) SHIPPED
+(#21810), deploy in flight | BUG 2 display gap CONFIRMED CLOSED for all 5 null-tour_id settlements
+via presettlement_link_id | BUG 2 root cause reported back (2 distinct gaps, not fixed — needs a
+scoped follow-up) | NEXT: live Chrome re-verify on S-2026-0018 once deploy is live, then pivoting
+directly to the owner's newest, more urgent DISPATCH OPEN-ONLY SCOPE order (RT_TIMELINE_STATUSES
+delivered_pending_docs removal + full per-surface status-filter audit).
