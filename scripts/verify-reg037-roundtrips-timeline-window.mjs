@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["connectivity"],"leafRe":"^dispatch\\.parity\\.round_trips_timeline$","task":"REG-037-TIMELINE-WINDOW"} */
 /**
  * REG-037 — Round Trips Timeline: default window is Aug 25 2026 → today; booked/planned
  * loads in-window are painted; pairing statuses stay narrow.

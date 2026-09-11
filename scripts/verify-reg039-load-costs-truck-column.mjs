@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["connectivity"],"leafRe":"^dispatch\\.parity\\.load_costs$","task":"REG-039-TRUCK-COLUMN"} */
 /**
  * REG-039 — Approximate load costs (Dispatch Home) has a sortable Truck/unit column.
  */

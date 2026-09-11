@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["connectivity"],"leafRe":"^dispatch\\.parity\\.load_detail$","task":"REG-023-SCOPED-EDIT"} */
 /**
  * REG-023 — load detail: per-tab scoped Edit, More menu switches tabs, Open driver bill
  * has a real route, single-load fetch (no sibling NB/TR/SB bleed).

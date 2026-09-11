@@ -1,3 +1,4 @@
+// MATRIX-BUILT-OPTIONAL — CI-registration infrastructure; does not claim product Built credit.
 const guards = [
   "verify-load-column-guard-registry-batch.mjs",
   "verify-border-crossing-load-linkage.mjs", "verify-dispatch-required-load-honest.mjs",
