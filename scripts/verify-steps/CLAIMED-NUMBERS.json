@@ -8593,5 +8593,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-11",
     "purpose": "verify-reimbursement-per-type-gl"
+  },
+  "11197": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-reg048-kanban-unit-dedup"
   }
 }
