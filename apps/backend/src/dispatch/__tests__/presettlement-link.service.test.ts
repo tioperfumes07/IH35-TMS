@@ -7,6 +7,7 @@ import {
   confirmPresettlementLink,
   linkLoadToPresettlementAfterAssignmentInClientTx,
   linkLoadToPresettlementAtBookingInClientTx,
+  recordDeferredPresettlementSuggestion,
   suggestPresettlementLink,
 } from "../presettlement-link.service.js";
 
@@ -294,7 +295,7 @@ describe("presettlement link — GO-22", () => {
       expect(calls.some((c) => /UPDATE mdata\.loads SET presettlement_link_id/.test(c.sql))).toBe(false);
     });
 
-    it("trip_type not yet known: defers with an audit event, never guesses NB/TR/SB", async () => {
+    it("trip_type not yet known: defers with an audit event AND a visible review-queue row (SETTLEMENT-TOUR-NUMBER-SWEEP root-cause fix — never guesses NB/TR/SB, but never silently invisible either)", async () => {
       const { client, calls } = makeClient();
       const result = await linkLoadToPresettlementAfterAssignmentInClientTx(client as never, {
         operating_company_id: OPCO,
@@ -307,7 +308,38 @@ describe("presettlement link — GO-22", () => {
       });
       expect(result).toBeNull();
       expect(calls.some((c) => /SELECT audit\.append_event/.test(c.sql))).toBe(true);
+      const insertCall = calls.find((c) => /INSERT INTO driver_finance\.presettlement_link_suggestions/.test(c.sql));
+      expect(insertCall).toBeDefined();
+      // trip_type (index 4) and suggested_settlement_id (index 6) both NULL — nothing to
+      // recommend yet, only enough to make the load visible instead of invisible.
+      expect(insertCall!.values[4]).toBeNull();
+      expect(insertCall!.values[6]).toBeNull();
+      expect(insertCall!.values[2]).toBe(DRIVER_ID);
+    });
+
+    it("recordDeferredPresettlementSuggestion: refreshes (never duplicates) an existing pending row for the same load", async () => {
+      const { client, calls } = makeClient();
+      client.query.mockImplementation(async (sql: string, values: unknown[] = []) => {
+        calls.push({ sql, values });
+        if (/SELECT id FROM driver_finance\.presettlement_link_suggestions WHERE/.test(sql)) return { rows: [{ id: SUGGESTION_ID }] };
+        if (/UPDATE driver_finance\.presettlement_link_suggestions/.test(sql)) return { rows: [] };
+        if (/SELECT audit\.append_event/.test(sql)) return { rows: [] };
+        return { rows: [] };
+      });
+      const result = await recordDeferredPresettlementSuggestion(client as never, {
+        operating_company_id: OPCO,
+        load_id: LOAD_ID,
+        driver_id: DRIVER_ID,
+        unit_id: null,
+        tour_id: null,
+        actor_user_id: USER_ID,
+        reason: "test reason",
+        audit_event_type: "dispatch.load.presettlement_link_deferred",
+        audit_finding_ref: "REG-008",
+      });
+      expect(result.suggestion_id).toBe(SUGGESTION_ID);
       expect(calls.some((c) => /INSERT INTO driver_finance\.presettlement_link_suggestions/.test(c.sql))).toBe(false);
+      expect(calls.some((c) => /UPDATE driver_finance\.presettlement_link_suggestions/.test(c.sql))).toBe(true);
     });
 
     it("not yet linked + trip_type known: runs the SAME at-booking resolution logic (NB opens new)", async () => {
