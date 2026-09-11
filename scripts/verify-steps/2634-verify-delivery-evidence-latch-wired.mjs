@@ -8,5 +8,7 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-delivery-evidence-latch-wired.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-delivery-evidence-latch-wired.mjs"]);
+    await ctx.run("node", ["scripts/verify-ar-tieout-delivery-latch-order.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-ar-tieout-delivery-latch-order.mjs"]);
   },
 };
