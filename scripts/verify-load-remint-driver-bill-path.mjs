@@ -1,12 +1,9 @@
 #!/usr/bin/env node
 /**
- * ACCT-F10164 — live-verified 39 of 78 USMCA loads reached delivery-evidence status with zero
- * driver_bills (19 with a resolvable rate that never minted, the ACCT-F10159 stale-object class at
- * historical scale). ensureDriverBillArtifactsForLoad (ACCT-F277) is already the canonical,
- * idempotent, re-entrant mint, but the only caller was the status-PATCH route, gated on a status
- * TRANSITION — a load already SITTING at completed_docs_received/delivered_pending_docs had no live
- * re-entry point at all. This guard locks the fix: a dedicated route + button that call the SAME
- * function directly, gated by the same delivery-evidence predicate, never hand-writing driver_bills.
+ * ACCT-F10164 + DSP-F23111 — remint path for loads with a seated driver and no driver_bills row.
+ * Delivery-evidence was the original class (39 USMCA loads past delivery with zero bills). Owner
+ * 2026-09-11 also requires a tracking bill at assignment, so remint must reach dispatched/assigned
+ * loads too. Same canonical mint (ensureDriverBillArtifactsForLoad), never a second INSERT path.
  *
  *   node scripts/verify-load-remint-driver-bill-path.mjs
  *   node scripts/verify-load-remint-driver-bill-path.mjs --selftest
@@ -38,8 +35,8 @@ export function assertGuard({ routes, feApi, feDrawer }) {
   }
   const routeBlockMatch = routes?.match(/"\/api\/v1\/mdata\/loads\/:id\/remint-driver-bill"[\s\S]*?\n  \}\s*\);/);
   const routeBlock = routeBlockMatch ? routeBlockMatch[0] : routes ?? "";
-  if (!/loadStatusRequiresDeliveryDepartureStamp\(current\.status\)/.test(routeBlock)) {
-    errs.push(`${ROUTES}: the remint route must gate on loadStatusRequiresDeliveryDepartureStamp, the same predicate the status-PATCH route uses to decide whether to mint`);
+  if (!/assigned_primary_driver_id/.test(routeBlock) || !/no_driver_assigned/.test(routeBlock)) {
+    errs.push(`${ROUTES}: the remint route must require a seated driver (assigned_primary_driver_id / team), not only delivery-evidence status`);
   }
   if (!/appendCrudAudit\(/.test(routeBlock) || !/driver_bill_remint_attempted/.test(routeBlock)) {
     errs.push(`${ROUTES}: every remint attempt must be audited`);
@@ -68,10 +65,10 @@ export function assertGuard({ routes, feApi, feDrawer }) {
     errs.push(`${FE_DRAWER}: LoadDetailDrawer must wire the remint mutation`);
   }
   if (!feDrawer?.includes("canRemintDriverBill")) {
-    errs.push(`${FE_DRAWER}: must gate the button on the same delivery-evidence predicate as the backend`);
+    errs.push(`${FE_DRAWER}: must gate the button on a seated driver, matching the backend remint route`);
   }
-  if (!feDrawer?.includes('"delivered_pending_docs", "completed_docs_received"')) {
-    errs.push(`${FE_DRAWER}: canRemintDriverBill must match the backend's exact status set, not a wider/narrower one`);
+  if (!feDrawer?.includes("assigned_primary_driver_id") || !/canRemintDriverBill[\s\S]{0,400}assigned_primary_driver_id/.test(feDrawer)) {
+    errs.push(`${FE_DRAWER}: canRemintDriverBill must require assigned_primary_driver_id (or team_id), not only delivery-evidence statuses`);
   }
   if (!feDrawer?.includes("Remint driver bill")) {
     errs.push(`${FE_DRAWER}: the button must actually be reachable — no live UI, no live click, no fix`);
@@ -91,8 +88,8 @@ function selftest() {
         const authUser = currentAuthUser(req, reply);
         if (!REMINT_ROLES.has(authUser.role)) return reply.code(403).send({ error: "forbidden" });
         const body = remintBodySchema.safeParse(req.body ?? {});
-        if (!loadStatusRequiresDeliveryDepartureStamp(current.status)) {
-          return { error: "load_not_past_delivery_evidence" };
+        if (!current.assigned_primary_driver_id && !current.team_id) {
+          return { error: "no_driver_assigned" };
         }
         const outcome = await ensureDriverBillArtifactsForLoad(client, {});
         await appendCrudAudit(client, authUser.uuid, "mdata.loads.driver_bill_remint_attempted", { reason: body.data.reason }, "info", "X");
@@ -108,7 +105,7 @@ function selftest() {
   `;
   const goodFeDrawer = `
     const remintDriverBillMutation = useRemintDriverBill(x);
-    const canRemintDriverBill = useMemo(() => ["delivered_pending_docs", "completed_docs_received"].includes(load.status), [load]);
+    const canRemintDriverBill = useMemo(() => Boolean(load.assigned_primary_driver_id || load.team_id), [load]);
     <Button>Remint driver bill</Button>
   `;
 
@@ -119,10 +116,10 @@ function selftest() {
   }
 
   const bad1 = assertGuard({ routes: goodRoutes.replace("ensureDriverBillArtifactsForLoad(client, {})", "await client.query(`INSERT INTO driver_finance.driver_bills ...`)"), feApi: goodFeApi, feDrawer: goodFeDrawer });
-  const bad2 = assertGuard({ routes: goodRoutes.replace("if (!loadStatusRequiresDeliveryDepartureStamp(current.status)) {\n          return { error: \"load_not_past_delivery_evidence\" };\n        }", ""), feApi: goodFeApi, feDrawer: goodFeDrawer });
+  const bad2 = assertGuard({ routes: goodRoutes.replace("if (!current.assigned_primary_driver_id && !current.team_id) {\n          return { error: \"no_driver_assigned\" };\n        }", ""), feApi: goodFeApi, feDrawer: goodFeDrawer });
   const bad3 = assertGuard({ routes: goodRoutes.replace(/await appendCrudAudit[\s\S]*?"X"\);/, ""), feApi: goodFeApi, feDrawer: goodFeDrawer });
   const bad4 = assertGuard({ routes: goodRoutes, feApi: goodFeApi, feDrawer: goodFeDrawer.replace("<Button>Remint driver bill</Button>", "") });
-  const bad5 = assertGuard({ routes: goodRoutes, feApi: goodFeApi, feDrawer: goodFeDrawer.replace('["delivered_pending_docs", "completed_docs_received"]', '["completed_docs_received"]') });
+  const bad5 = assertGuard({ routes: goodRoutes, feApi: goodFeApi, feDrawer: goodFeDrawer.replace("load.assigned_primary_driver_id || load.team_id", "load.status === \"completed_docs_received\"") });
   const bad6 = assertGuard({ routes: goodRoutes.replace('"Accountant"', '"Manager"'), feApi: goodFeApi, feDrawer: goodFeDrawer });
   const bad7 = assertGuard({ routes: goodRoutes.replace(".min(1).max(2000)", ".optional()"), feApi: goodFeApi, feDrawer: goodFeDrawer });
   const bad8 = assertGuard({ routes: goodRoutes.replace("{ reason: body.data.reason }", "{}"), feApi: goodFeApi, feDrawer: goodFeDrawer });

@@ -1443,9 +1443,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           operating_company_id: string;
           load_number: string;
           assigned_primary_driver_id: string | null;
+          team_id: string | null;
           driver_pay_rate_per_mile: string | null;
         }>(
-          `SELECT id, status, operating_company_id, load_number, assigned_primary_driver_id, driver_pay_rate_per_mile
+          `SELECT id, status, operating_company_id, load_number, assigned_primary_driver_id, team_id, driver_pay_rate_per_mile
              FROM mdata.loads
             WHERE id = $1 AND soft_deleted_at IS NULL AND operating_company_id = $2::uuid
             LIMIT 1`,
@@ -1453,10 +1454,15 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         );
         const current = currentRes.rows[0] ?? null;
         if (!current) return { error: "mdata_load_not_found" as const };
-        // Only meaningful once delivery evidence exists — matches the same gate the status-PATCH
-        // route uses to decide whether to mint in the first place.
-        if (!loadStatusRequiresDeliveryDepartureStamp(current.status)) {
-          return { error: "load_not_past_delivery_evidence" as const, status: current.status };
+        // DSP-F23111 — tracking bill at assignment, not only after delivery evidence. A dispatched
+        // load with a driver and no bill (Thursday seed class) must remint. Voided / cancelled loads
+        // are not a mint surface. No driver/team → not_applicable, never a fabricated wage.
+        const seated = Boolean(current.assigned_primary_driver_id || current.team_id);
+        if (!seated) return { error: "no_driver_assigned" as const };
+        if (
+          ["cancelled", "abandoned", "driver_walkoff", "driver_no_show"].includes(String(current.status))
+        ) {
+          return { error: "load_not_assignable_for_driver_bill" as const, status: current.status };
         }
 
         const outcome = await ensureDriverBillArtifactsForLoad(client, {
@@ -1502,7 +1508,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
   // delivered loads with zero driver_bills, ~16 real, $14,789.50). The single-load remint route
   // above (ACCT-F10164) closed the code gap; this closes the OPERATIONAL one — nobody could see
   // the 16 real affected loads as a set, only click through them one at a time if they already
-  // knew each load number. GET lists every load at rest past delivery-evidence with no
+  // knew each load number. GET lists every load with a seated driver and no
   // driver_bills row (read-only, no writes, no calls into ensureDriverBillArtifactsForLoad — that
   // function has no dry-run mode, so "would this resolve" is answerable only by actually running
   // it, which the POST does). POST reuses the IDENTICAL ensureDriverBillArtifactsForLoad the
@@ -1540,7 +1546,8 @@ export async function registerLoadRoutes(app: FastifyInstance) {
               LEFT JOIN driver_finance.driver_bills db ON db.load_id = l.id
              WHERE l.operating_company_id = $1::uuid
                AND l.soft_deleted_at IS NULL
-               AND l.status IN ('delivered_pending_docs', 'completed_docs_received')
+               AND l.status NOT IN ('cancelled', 'abandoned', 'driver_walkoff', 'driver_no_show')
+               AND (l.assigned_primary_driver_id IS NOT NULL OR l.team_id IS NOT NULL)
                AND db.id IS NULL
              ORDER BY l.is_sample_data ASC, l.load_number ASC
           `,
@@ -1578,7 +1585,8 @@ export async function registerLoadRoutes(app: FastifyInstance) {
               LEFT JOIN driver_finance.driver_bills db ON db.load_id = l.id
              WHERE l.operating_company_id = $1::uuid
                AND l.soft_deleted_at IS NULL
-               AND l.status IN ('delivered_pending_docs', 'completed_docs_received')
+               AND l.status NOT IN ('cancelled', 'abandoned', 'driver_walkoff', 'driver_no_show')
+               AND (l.assigned_primary_driver_id IS NOT NULL OR l.team_id IS NOT NULL)
                AND db.id IS NULL
              ORDER BY l.load_number ASC
           `,
