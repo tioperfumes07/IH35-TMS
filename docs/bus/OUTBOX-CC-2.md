@@ -2784,3 +2784,9 @@ customer-invoice figure (37/69 -> 69/69, 100%) | backend deploy dep-dai6nguk1f9s
 `{"ok":true,"uptime_seconds":26,"version":"5a599ac","commit":"5a599ac","git_sha":"5a599ac388fc69044515935d14f3c2b44f03f12c","built_at":"2026-09-11T21:04:16.899Z","git_branch":"main"}`
 (git_sha matches merge sha exactly) | NEXT: live Chrome screenshot of Bills (now #21826's surface)
 for the task's own DONE criteria; owner decision still owed on BUG 2.
+
+CC-2 | ACCT-F26140 DONE | live Chrome screenshot confirmed: Bills page (USMCA) Driver bills grid,
+66 rows, Settlement Number column shows real S-2026-XXXX values on attributed bills, "-" only on
+6 correctly-unresolved brand-new bills (0%->91% resolution live-verified in-browser, not just via
+Neon query) | full detail + screenshot reference in docs/audit/GUARD-WORKORDERS.md's ACCT-F26140
+section | NEXT: owner decision still owed on BUG 2 (tour_id, SB create_new gap); otherwise DONE.
