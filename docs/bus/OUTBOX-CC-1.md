@@ -1580,3 +1580,53 @@ DONE LINE: CC-1 | SETTLEMENT/TOUR NUMBER SWEEP all 3 parts DONE | PR #21748 merg
 company-wide) | NEXT: deferred-loads-invisible root-cause fix + the 2 misattached-line reversal are
 real follow-on work, tracked in `docs/audit/SETTLEMENT-TOUR-NUMBER-SWEEP-2026-09-11.md`, continuing
 sweep for the next open CC-1 item.
+
+## CC-1 | AR-tieout recurrence CLOSED + SETTLE-SWEEP escrow/disputes reporting fixes (2026-09-11)
+
+Continuing the sweep for the next open CC-1 item after the SETTLEMENT/TOUR NUMBER SWEEP closed.
+Read-only recon confirmed which SETTLE-SWEEP/register items were genuinely still open vs already
+resolved by other seats before picking these up (details below).
+
+**AR-TIEOUT-POSTED-WITHOUT-POSTING-RECURRENCE — CLOSED (verification only).** Confirmed live that
+Codex's fix (`766e95f392`) is deployed and the remediation already ran: `GET /api/v1/healthz` shows
+`ledger.ar_tieout` and `ledger.posted_without_posting` both `ok:true` (previously RED); live Neon
+confirms all 4 named invoices (13574, 13575, 13578, 13580) now have balanced, `posted` journal
+entries. Closed the `docs/audit/GUARD-WORKORDERS.md` row. PR #21757 merged `583f068ecd`.
+
+**SETTLE-SWEEP escrow/disputes reporting fixes — DONE.** Two findings GPT measured live and no one
+had picked up since:
+1. `company-settlement-report.service.ts`'s P&L rollup subtracted `escrow`/`escrow_contribution`
+   settlement_lines as if they were company expenses. Confirmed live that escrow_contribution posts
+   as a CREDIT to the driver's own escrow LIABILITY sub-account (never a debit to an expense) —
+   owner-locked law (driver escrow = liability, not expense). This double-counted a pure driver-pay
+   withholding, understating `netRevenueCents` (live example: CS-2026-0013 $2,639.85 displayed vs
+   correct $2,664.85, a $25 distortion). Fixed by excluding escrow types from the deduction set.
+   No journal entry or posted GL amount touched — reporting classification only.
+2. `SettlementDisputesTab.tsx`'s "Settlement Period" column string-concatenated period_start/
+   period_end into one cell with no settlement-identity column — the same "one datum per column"
+   pattern the owner named loudest under REG-010/011, on a driver-finance settlements surface (my
+   lane, not CC-3's dispatch UI). Fixed: split into Period Start/Period End + added a Settlement #
+   column (`alwaysVisible`, `EntityLink`), matching this sweep's own established pattern.
+
+Guard: `scripts/verify-settlement-reporting-classification-fixes.mjs` + verify-step 11213. PR
+#21763 merged `b1ae30d44b` (superseded an earlier PR #21762 that hit a stale-base conflict on the
+generated program-scoreboard files — rebuilt clean on fresh main, no force-push used). Post-merge
+forensic confirmed both fixes + the guard live on `origin/main`.
+
+**Explicitly NOT picked up, correctly left to other seats/owner:**
+- Blocker 2 (reverse+repost USMCA settlement executor) — Devin A's chain, only remaining step is
+  owner-authorized prod run, not a coding gap.
+- REG-028/030, BANK-F10005/F10006/F10007 (banking reconciliation) — CC-2's lane, several commits
+  landed in the hour before this sweep.
+- REG-010/011 systemic sweep, Dispatch Home KPIs — CC-3's lane.
+
+**Next candidate identified, not yet started:** Settlement Close (`SettlementCloseArrivalPage.tsx`)
+silently discards the user's selected payment-method GL account — `settleAndPay` never receives it,
+only uses it for a display label. GPT measured this live and recommended threading the selected
+account into the existing `CloseTripPanel`/`PayRunClosePanel` posting path; no new GL math needed.
+This is the meatier genuinely-open item — picking it up next.
+
+DONE LINE: CC-1 | AR-tieout recurrence CLOSED (verify only) + SETTLE-SWEEP escrow/disputes fixes
+DONE | PR #21757 merged `583f068ecd` + PR #21763 merged `b1ae30d44b` | Live=CONFIRMED via
+post-merge forensic on `origin/main` for both, plus live healthz + Neon proof for the AR-tieout
+close | NEXT: Settlement Close payment-method routing gap.
