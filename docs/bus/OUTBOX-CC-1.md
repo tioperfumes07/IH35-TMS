@@ -1447,3 +1447,47 @@ DONE LINE: CC-1 | Rebuild blocker 1 CLEARED (5797-5800 preview data) | PR #21724
 PREVIEW PASS docs=32 lines=274 grand=44234.51/44234.51 | REMAINING (explicitly NOT this PR, stays
 with Lead/next): rebuild blocker 2 (audited reverse+repost executor) + blocker 3 (rehearse on
 throwaway Neon branch) | NEXT: resuming ROW 0 (reimbursement per-type GL) in progress.
+
+## CC-1 | ROW 0 CLOSED — Reimbursement per-type GL categorization (ACCT-F26063), migration LIVE + code deployed (2026-09-11)
+
+Owner-ruled ROW 0 (INBOX-CC-1): driver reimbursements (fuel/toll/scale/parking/lumper/other) were
+ALL debiting the same generic Lumper account regardless of type — live-verified 76 already-
+materialized USMCA reimbursements misclassified. Traced all 3 real posting call sites
+(`posting-engine.service.ts`'s immediate pay-out, `settlement-lines-materialize.service.ts`'s
+per-line materializer + its own backfill repair path, `settlement-payrun-close.service.ts`'s
+canonical live settlement-close JE — `settlement-posting.service.ts` is explicitly DEPRECATED, not
+the live path). Built ONE shared `resolveReimbursementExpenseAccount(type)` per the owner's exact
+mapping (fuel→5000 reuses the existing `company_fuel_advance_expense` role, toll/scale/parking→5300
+new `toll_scale_expense` role, lumper unchanged, other→6999 new `other_operating_expense` role),
+with a fallback so it never fails to post. **Caught and fixed a real regression during review**: an
+early draft grouped the settlement-close JE by `posting_account_id` directly, which broke the
+existing flag-off preview test (a bare `settlement_lines` row with no `driver_reimbursements` link)
+— redesigned to resolve fresh per real `reimbursement_type` at close time instead.
+
+Shipped PR #21730 (`CC1-IN-...`, ACCT-F26063), merged `53f8a46d`. Guard:
+`scripts/verify-reimbursement-per-type-gl.mjs` (verify-step 11189), selftest 8/8. tsc clean; 28 pure
+unit tests pass unchanged; full non-`.db.test.ts` suite shows the identical 56 pre-existing failures
+on bare `origin/main` (confirmed via `git stash` before/after) — zero new failures.
+
+**Migrations 202614050000/202614050001 REHEARSED on a Neon branch forked from prod, then applied
+LIVE on Neon prod directly** (owner law: coders apply migrations themselves) — confirmed live:
+`toll_scale_expense`→account 5300, `other_operating_expense`→account 6999, both for USMCA. Backend
+deploy triggered + confirmed live at `53f8a46d` (healthz git_sha match).
+
+**Explicitly NOT in scope here (flagged, not built blind):** the ~76 already-misclassified
+historical reimbursements (most already posted/closed) — correcting already-posted GL entries needs
+the same audited reversal→recompute→repost treatment used elsewhere, filed separately.
+
+**Unrelated finding surfaced while confirming deploy health, filed not fixed**: live `/healthz`
+shows `ledger.ar_tieout`/`ledger.posted_without_posting` RED again — 4 real USMCA invoices
+(13580, 13574, 13575, 13578) have zero GL postings despite `status='sent'`. Confirmed this predates
+and is unrelated to this deploy (my migration only touches `chart_of_accounts_roles`; the 3 older
+invoices are from 2026-09-07, 4 days before this deploy). Same incident CLASS as the CLOSED
+`CRITICAL-AR-TIEOUT-POSTED-WITHOUT-POSTING` row from 2026-09-07 (10/10 remediated then) —
+recurring on new loads, filed as `AR-TIEOUT-POSTED-WITHOUT-POSTING-RECURRENCE` in
+`docs/audit/GUARD-WORKORDERS.md`, not fixed in this turn (real, separate investigation).
+
+DONE LINE: CC-1 | ROW 0 (ACCT-F26063) FULLY CLOSED | PR #21730 merged 53f8a46d, migration LIVE on
+Neon prod, backend deploy live 53f8a46d | Live=CONFIRMED for the migration + healthz git_sha match
+for the code | NEXT: AR-tieout recurrence filed (not this session's scope to fix blind), continuing
+sweep for other CC-1 items.
