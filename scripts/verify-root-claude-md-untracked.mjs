@@ -84,22 +84,41 @@ function gitEnv(tmp) {
   };
 }
 
-// TRANSIENT-GIT-ENV-RACE hardening (2026-09-11): even with the env-scoped isolation above, this
-// selftest still crashed under heavy concurrent verify-static load (`--selftest failed:
-// node:internal/errors:983` — an uncaught execFileSync throw, not a real offender-not-caught
-// assertion), reproduced identically across multiple unrelated branches/PRs in the same window
-// (8 consecutive push attempts on one branch alone). The exact ambient condition was never
-// pinned down (some git env var this repo doesn't already override, or simple transient resource
-// contention under N concurrent `git init`/`git commit` calls all racing for disk/CPU) — but the
-// selftest only ever touches its OWN fresh, uniquely-named /tmp directory, never this repo's
-// tracked files, so a crash here is a false-negative on the selftest's OWN bootstrap, not a real
-// GOV-F01 regression. Retry the whole bootstrap+assertions a few times with a fresh temp dir each
-// attempt before actually failing — this only smooths over transient environment noise; it does
-// not change what isTracked()/gitignoreExcludesRoot()/run() check, or weaken the guard's
-// real-repo behavior below.
+// ACTUAL ROOT CAUSE, FOUND 2026-09-11 (supersedes the "transient noise" retry-wrapper mitigation
+// below, which was a real improvement but treated a symptom): the crash was NEVER transient or
+// load-related. `git` itself sets GIT_DIR/GIT_WORK_TREE/GIT_INDEX_FILE in the environment of every
+// subprocess a git hook spawns (pre-push, pre-commit, ...), pointed at the REAL invoking repo. The
+// very first call below — `git init -q tmp` — was still passing raw `process.env`, so when this
+// guard runs from inside a real pre-push hook (its actual, universal call site — see
+// husky/pre-push -> verify:local-ci -> branch-precheck-push.mjs -> verify-static), that ambient
+// GIT_DIR silently redirects `git init`'s bookkeeping away from the fresh `tmp` path, so `tmp/.git`
+// is never actually created. Every subsequent call then fails with "fatal: not a git repository:
+// '<tmp>/.git'" — 100% reproducible, not probabilistic, confirmed by exporting
+// GIT_DIR/GIT_WORK_TREE/GIT_INDEX_FILE ahead of a standalone `--selftest` run (4/4 attempts failed
+// identically) and by the crash's total absence when run without those ambient vars set (multiple
+// clean passes). The retry loop below "worked" only when the guard happened to run outside a hook
+// (isolation, CI's own `npm run verify:...` step) and did nothing when it ran inside one — which is
+// exactly backwards from a real hook-context guard. Fix: `bootstrapEnv()` strips the three ambient
+// vars (plus GIT_CEILING_DIRECTORIES, which can equally redirect `git init`) before the `init` call,
+// so it is never influenced by whatever repo context invoked this script.
+function bootstrapEnv() {
+  const env = { ...process.env };
+  delete env.GIT_DIR;
+  delete env.GIT_WORK_TREE;
+  delete env.GIT_INDEX_FILE;
+  delete env.GIT_CEILING_DIRECTORIES;
+  return env;
+}
+
+// TRANSIENT-GIT-ENV-RACE hardening (2026-09-11, retained as defense-in-depth): kept as a safety
+// net for genuine transient noise (disk/CPU contention), even though the actual crash this comment
+// originally described was the deterministic ambient-GIT_DIR bug fixed above, not load. Retry the
+// whole bootstrap+assertions a few times with a fresh temp dir each attempt before actually
+// failing — this does not change what isTracked()/gitignoreExcludesRoot()/run() check, or weaken
+// the guard's real-repo behavior below.
 function attemptSelftest() {
   const tmp = `/tmp/verify-root-claude-md-untracked-selftest-${Date.now()}-${process.pid}-${Math.random().toString(36).slice(2)}`;
-  execFileSync("git", ["init", "-q", tmp], { env: process.env });
+  execFileSync("git", ["init", "-q", tmp], { env: bootstrapEnv() });
   const env = gitEnv(tmp);
   writeFileSync(`${tmp}/.gitignore`, "CLAUDE.md\n");
   execFileSync("git", ["-C", tmp, "add", ".gitignore"], { env });
