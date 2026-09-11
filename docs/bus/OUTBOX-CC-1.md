@@ -1916,3 +1916,44 @@ via presettlement_link_id | BUG 2 root cause reported back (2 distinct gaps, not
 scoped follow-up) | NEXT: live Chrome re-verify on S-2026-0018 once deploy is live, then pivoting
 directly to the owner's newest, more urgent DISPATCH OPEN-ONLY SCOPE order (RT_TIMELINE_STATUSES
 delivered_pending_docs removal + full per-surface status-filter audit).
+
+---
+
+## CC-1 — BOTH TASKS LIVE-VERIFIED (2026-09-11)
+
+Both backend (`dep-dai5gsss728c73a6ibb0`) and frontend (`dep-dai5gt6743jc739ekjig`) confirmed live
+via `GET /api/v1/healthz/shallow` `git_sha=7b09f669e8ccd9710ac23061cd0fd65a9f87a0c6`.
+
+**SETTLEMENT LOAD LINKAGE (PR #21810) — live Chrome + direct API proof:**
+- S-2026-0018 settlement detail: DRIVER SETTLEMENT register shows BOTH loads (13564, 13575), each
+  with its own Loaded Miles/Empty Miles rows; CUSTOMER CHARGES shows both loads (2 rows, $3,000 +
+  $2,200 = $5,200 total). Screenshot confirmed.
+- Driver Settlements "Tours" list (Pre-Settlement Open tab): Load Number column now renders EVERY
+  leg as a pill strip — S-2026-0028 "2 legs NB 13580 NB 13589", S-2026-0025 "2 legs NB 13578 NB
+  13587", S-2026-0021 "3 legs NB 13571 NB 13582 TR 13...", S-2026-0013 "5 legs NB 13561 NB 13588 TR
+  13..." — column renders immediately next to Settlement/Tour, before Driver/Unit. Screenshot
+  confirmed. (S-2026-0027 correctly shows 0 legs — its only load is itself `status='cancelled'`,
+  filtered from the live-leg count by listTours' own pre-existing `!is_cancelled` filter, not a
+  defect.)
+
+**DISPATCH OPEN-ONLY SCOPE (PR #21815) — live Chrome + direct API proof:**
+- `GET /api/v1/mdata/loads?board_scope=live`: now returns exactly 8 rows, all `status=dispatched` —
+  zero delivered/delivered_pending_docs/completed_docs_received/invoiced/paid loads. Direct API
+  fetch confirmed (`distinctStatuses: ["dispatched"]`).
+- `GET /api/v1/mdata/loads?board_scope=history`: now returns the exact complement — 96 rows
+  (closed=67, cancelled=26, invoiced=3) — every load lands in live XOR history, none invisible.
+- Dispatch Home KPI "Delivered — Pending Docs" tile now reads 0 (was previously counting
+  post-delivery loads as "live"). Screenshot confirmed.
+- Round Trips Timeline: now paints exactly 8 units (T152/T156/T164/T170/T171/T174/T176/T177), one
+  per currently-dispatched load (13583/13587/13581/13588/13576/13586/13589/13582) — zero
+  delivered/invoiced/paid units on the timeline. Screenshot confirmed.
+- Dispatch's own embedded Load Costs "Settlement" subtab left UNTOUCHED (flagged tension with this
+  session's own Task C/D "Settlement=closed tour" law — see PR #21815's own I QUERIED section for
+  the full reasoning) — awaiting owner confirmation before any further change there.
+
+DONE LINE: CC-1 | Both PR #21810 (settlement load linkage, 3 surfaces + ordering) and PR #21815
+(Dispatch open-only scope, main board + Round Trips Timeline) SHIPPED + DEPLOYED + LIVE-VERIFIED in
+Chrome and via direct API — no regressions found | Task D BUG 2's deeper tour_id-write root cause
+still open, handed back with findings (2 distinct gaps, needs a scoped follow-up) | Load Costs'
+"Settlement" subtab scope left untouched pending owner confirmation (see above) | NEXT: resuming
+the standing idle-loop — re-checking INBOX-CC-1.md/OUTBOX-GPT.md for any new CC-1-lane item.
