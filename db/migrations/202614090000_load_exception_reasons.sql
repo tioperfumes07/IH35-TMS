@@ -73,11 +73,15 @@ WITH seed(code, name, linked_module, sort_order) AS (
     ('customer_cancelled',   'Load cancelled by customer',  'cancel_load',      100),
     ('other',                'Other (note required)',       NULL,               110)
 )
+-- DRIVER-COMPLIANCE-01 (CC-3, 2026-09-11): the bare hardcoded UUID broke a fresh/CI-replayed DB
+-- (org.companies_operating_company_id_fkey, 0 companies seeded there) -- prod already has this row
+-- so this WHERE EXISTS changes nothing there, only makes the seed skip cleanly on an empty DB.
 INSERT INTO catalogs.load_exception_reasons (
   operating_company_id, code, name, applies_to, linked_module, sort_order
 )
 SELECT '5c854333-6ea5-4faa-af31-67cb272fef80'::uuid, s.code, s.name, 'load', s.linked_module, s.sort_order
 FROM seed s
+WHERE EXISTS (SELECT 1 FROM org.companies WHERE id = '5c854333-6ea5-4faa-af31-67cb272fef80'::uuid)
 ON CONFLICT (operating_company_id, code) DO NOTHING;
 
 COMMIT;

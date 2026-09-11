@@ -32,6 +32,7 @@ const AUTH_GATE_ROUTES = "apps/backend/src/dispatch/auth-gates/routes.ts";
 const ELIGIBILITY_ROUTES = "apps/backend/src/dispatch/driver-eligibility.routes.ts";
 const DRIVERS_ROUTES = "apps/backend/src/mdata/drivers.routes.ts";
 const DRIVER_PROFILE_PAGE = "apps/frontend/src/pages/drivers/DriverProfilePage.tsx";
+const MEDICAL_CARD_SECTION = "apps/frontend/src/components/driver-profile/MedicalCardSection.tsx";
 
 // ---- pure functions under selftest -----------------------------------------------------------
 
@@ -68,6 +69,13 @@ export function medicalCardShowsHonestMissingState(profilePageSrc) {
   return (
     /Missing — no document/.test(profilePageSrc) &&
     !/Expires \{formatDateUS\(profileDriver\.dot_medical_expires_at as string \| null\) \|\| "—"\}/.test(profilePageSrc)
+  );
+}
+
+export function medicalCardSectionShowsHonestMissingState(sectionSrc) {
+  return (
+    /Missing — no document/.test(sectionSrc) &&
+    !/Expires \{formatDateUS\(medical\.expiration as string \| null\) \|\| "—"\}/.test(sectionSrc)
   );
 }
 
@@ -125,6 +133,13 @@ function selftest() {
     medicalCardShowsHonestMissingState('Expires {formatDateUS(profileDriver.dot_medical_expires_at as string | null) || "—"}')
   );
 
+  const goodSection = 'medical.expiration ? (\n  <>Expires {formatDateUS(medical.expiration as string)}</>\n) : (\n  <span>Missing — no document</span>\n)';
+  expectTrue("medical card section honest (good)", medicalCardSectionShowsHonestMissingState(goodSection));
+  expectFalse(
+    "medical card section honest (reverted to bare dash)",
+    medicalCardSectionShowsHonestMissingState('Expires {formatDateUS(medical.expiration as string | null) || "—"}')
+  );
+
   if (failures.length) {
     console.error(`${LABEL}: SELFTEST FAILED\n${failures.map((f) => ` - ${f}`).join("\n")}`);
     process.exit(1);
@@ -137,7 +152,7 @@ if (process.argv.includes("--selftest")) selftest();
 
 // ---- static half --------------------------------------------------------------------------
 
-for (const f of [GATE_FILE, AUTH_GATE_ROUTES, ELIGIBILITY_ROUTES, DRIVERS_ROUTES, DRIVER_PROFILE_PAGE]) {
+for (const f of [GATE_FILE, AUTH_GATE_ROUTES, ELIGIBILITY_ROUTES, DRIVERS_ROUTES, DRIVER_PROFILE_PAGE, MEDICAL_CARD_SECTION]) {
   if (!fs.existsSync(f)) {
     console.error(`${LABEL}: FAIL — ${f} not found`);
     process.exit(1);
@@ -148,12 +163,14 @@ const authGateRoutesSrc = fs.readFileSync(AUTH_GATE_ROUTES, "utf8");
 const eligibilityRoutesSrc = fs.readFileSync(ELIGIBILITY_ROUTES, "utf8");
 const driversRoutesSrc = fs.readFileSync(DRIVERS_ROUTES, "utf8");
 const profilePageSrc = fs.readFileSync(DRIVER_PROFILE_PAGE, "utf8");
+const medicalCardSectionSrc = fs.readFileSync(MEDICAL_CARD_SECTION, "utf8");
 
 const staticChecks = [
   ["gate blocks on missing credentials", gateFileBlocksOnMissingCredentials(gateSrc)],
   ["gate wired at the real service boundary (not just the read-only eligibility endpoint)", gateWiredAtServiceBoundary(authGateRoutesSrc, eligibilityRoutesSrc)],
   ["quarantine heuristic catches ZZTEST AUTOACCT PROBE and SAFETY — by exact/whole-word match", quarantineHeuristicCatchesNamedJunkRows(driversRoutesSrc)],
   ["driver profile Medical card shows an honest 'Missing — no document' state", medicalCardShowsHonestMissingState(profilePageSrc)],
+  ["Safety/DQF MedicalCardSection (the actual roster component) shows an honest 'Missing — no document' state", medicalCardSectionShowsHonestMissingState(medicalCardSectionSrc)],
 ];
 const staticFailures = staticChecks.filter(([, ok]) => !ok).map(([name]) => name);
 if (staticFailures.length) {
