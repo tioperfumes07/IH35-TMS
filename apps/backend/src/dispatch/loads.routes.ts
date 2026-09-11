@@ -2073,6 +2073,11 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             -- prod have no assigned driver, so this was every row in the panel.
             NULLIF(CONCAT_WS(' ', ud.first_name, ud.last_name), '') AS driver_name,
             last_delivery.last_drop_at,
+            -- REG-038: the "Units needing return" / "Unassigned units" / "Days since last delivery"
+            -- panels need a real Load reference in their own column (not a placeholder string) --
+            -- the specific load that produced last_drop_at, not just its timestamp.
+            last_delivery.load_id AS last_delivered_load_id,
+            last_delivery.load_number AS last_delivered_load_number,
             -- LIVE location for EVERY unit (Jorge: show it whether dispatched or not). Reverse-geo'd
             -- city/state come from the Samsara stats ingest via telematics.vehicle_latest_position
             -- (the same source that powers the fleet board) — NOT positions/latest, which lacks city/state.
@@ -2128,7 +2133,11 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           -- made every available unit's last_drop_at null forever. Derive the last completed delivery
           -- independently from the unit's historical loads instead.
           LEFT JOIN LATERAL (
-            SELECT MAX(delivery_stop.actual_departure_at) AS last_drop_at
+            -- REG-038: was SELECT MAX(actual_departure_at) AS last_drop_at (an aggregate with no
+            -- GROUP BY on the delivered_load/delivery_stop columns, so it could only ever return the
+            -- timestamp -- never WHICH load produced it). ORDER BY ... DESC LIMIT 1 returns the single
+            -- most-recent delivery's own row instead, so load_id/load_number ride along for free.
+            SELECT delivered_load.id AS load_id, delivered_load.load_number, delivery_stop.actual_departure_at AS last_drop_at
               FROM mdata.loads delivered_load
               JOIN mdata.load_stops delivery_stop
                 ON delivery_stop.load_id = delivered_load.id
@@ -2138,6 +2147,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                AND delivered_load.operating_company_id = $1::uuid
                AND delivered_load.soft_deleted_at IS NULL
                AND delivery_stop.actual_departure_at IS NOT NULL
+             ORDER BY delivery_stop.actual_departure_at DESC
+             LIMIT 1
           ) last_delivery ON true
           LEFT JOIN telematics.vehicle_latest_position p
             ON p.unit_id = u.id
@@ -2176,7 +2187,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                 AND ${openWorkOrderPredicateSql("awaiting_wo")}
             )
           GROUP BY u.id, u.unit_number, tr.id, tr.equipment_number, ud.id, ud.first_name, ud.last_name,
-            last_delivery.last_drop_at,
+            last_delivery.last_drop_at, last_delivery.load_id, last_delivery.load_number,
             p.city, p.state, p.formatted_location, p.lat, p.lng, p.captured_at
           ORDER BY COALESCE(last_delivery.last_drop_at, now() - interval '999 days') ASC
         `,
@@ -2197,6 +2208,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           driver_id: row.driver_id,
           driver_name: row.driver_name,
           last_drop_at: row.last_drop_at,
+          last_delivered_load_id: row.last_delivered_load_id,
+          last_delivered_load_number: row.last_delivered_load_number,
           hours_since_last_delivery: row.last_drop_at ? Math.floor((Date.now() - new Date(row.last_drop_at as string).getTime()) / 3600000) : null,
           // Live location is independent of load state — present whenever Samsara has a recent fix for the unit.
           location: capUtc

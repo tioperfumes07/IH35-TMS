@@ -113,6 +113,10 @@ export type UnitsWithoutLoad = {
   driver_id: string | null;
   driver_name: string | null;
   last_drop_at: string | null;
+  /** REG-038: the specific load that produced last_drop_at, so drill panels can show a real Load
+   * column (EntityLink) instead of a placeholder string. Null when the unit has never delivered. */
+  last_delivered_load_id: string | null;
+  last_delivered_load_number: string | null;
   hours_since_last_delivery: number | null;
   location: UnitLiveLocation | null; // live Samsara position, present whether dispatched or not
 };

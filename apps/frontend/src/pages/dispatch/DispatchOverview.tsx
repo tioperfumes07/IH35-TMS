@@ -170,6 +170,80 @@ function PanelRow({
   return <DataPanelRow>{content}</DataPanelRow>;
 }
 
+// REG-038 (owner 2026-09-10/11, verbatim: "each kpi must have its own columns and look clean" /
+// "one column each for Unit, Driver, Load"): PanelRow above concatenates unit/driver/load into ONE
+// span joined by " · " -- readable, but not actually columns. KpiColumnHeader + KpiColumnRow render a
+// real CSS grid with a labeled header row, reused by every REG-038 panel below (Units needing return,
+// Unassigned units, Round-trip exposure, Days since last delivery) so all four share one column
+// contract instead of four hand-rolled layouts.
+function KpiColumnHeader({ columns }: { columns: string[] }) {
+  return (
+    <div
+      className="grid gap-2 border-b pb-1"
+      style={{
+        gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))`,
+        borderBottomColor: colors.cardBorder,
+        marginBottom: 2,
+      }}
+    >
+      {columns.map((column) => (
+        <span
+          key={column}
+          className="truncate uppercase"
+          style={{ fontSize: typography.panelHeader, fontWeight: 700, letterSpacing: typography.tightUpper, color: colors.columnHeader }}
+        >
+          {column}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function KpiColumnRow({ cells, onClick }: { cells: ReactNode[]; onClick?: () => void }) {
+  const content = (
+    <div className="grid min-w-0 flex-1 items-center gap-2" style={{ gridTemplateColumns: `repeat(${cells.length}, minmax(0, 1fr))` }}>
+      {cells.map((cell, i) => (
+        <span key={i} className="truncate" style={{ color: colors.bodyText }}>
+          {cell}
+        </span>
+      ))}
+    </div>
+  );
+  return (
+    <DataPanelRow>
+      {content}
+      {/* GLOBAL-TYPE-SIZE-BASELINE ratchet (verify-ui-design-system-ratchet.mjs): no NEW raw
+          text-[Npx] bracket class, even an on-scale one -- token-driven inline style instead,
+          matching this same "open →" affordance's own token elsewhere in this file. */}
+      {onClick ? (
+        <button
+          type="button"
+          onClick={onClick}
+          className="shrink-0 text-slate-700 hover:underline"
+          style={{ fontSize: typography.bodyTextSmall }}
+        >
+          open →
+        </button>
+      ) : null}
+    </DataPanelRow>
+  );
+}
+
+/** Real Load reference for a unit's last delivery, or an honest "—" when the unit has never
+ * delivered one (a brand-new/leased-in truck). REG-038: replaces the placeholder strings
+ * "Return load not booked" / "Need load" that told the dispatcher nothing concrete to click. */
+function LastLoadCell({ unit }: { unit: UnitsWithoutLoad }) {
+  if (!unit.last_delivered_load_id) return <span style={{ color: colors.mutedText }}>—</span>;
+  return (
+    <EntityLinkOrTombstone
+      kind="load"
+      id={unit.last_delivered_load_id}
+      name={unit.last_delivered_load_number}
+      noun="Load"
+    />
+  );
+}
+
 function PanelLoading() {
   return (
     <DataPanelRow>
@@ -246,7 +320,12 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
       listDispatchLoads({
         operating_company_id: operatingCompanyId,
         view: "home",
-        limit: 20,
+        // REG-038: "Round-trip exposure" becomes a top-level KPI tile below, and this file's own law
+        // is "tile value must equal the drill table row count" -- the panel can no longer slice to
+        // PANEL_ROW_LIMIT, so the query itself must not silently cap a real fleet below its true
+        // count either. 20 was sized for a "top few" preview; 200 comfortably exceeds any fleet size
+        // this entity operates while still being a real bound, not "unlimited".
+        limit: 200,
         offset: 0,
         status: ["dispatched", "in_transit"],
       }),
@@ -293,6 +372,14 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
     () => unitsWithoutLoad.filter((unit) => unit.last_drop_at != null),
     [unitsWithoutLoad]
   );
+  // REG-038: "Days since last delivery" -- worst-case (longest-idle) unit is the single headline
+  // number a dispatcher acts on; the full sorted breakdown (every idle unit, not a top-N slice --
+  // same "no separate list page" law as the panels above) lives in its own drill panel below.
+  const sortedByDaysIdle = useMemo(
+    () => [...returnUnits].sort((a, b) => (b.hours_since_last_delivery ?? 0) - (a.hours_since_last_delivery ?? 0)),
+    [returnUnits]
+  );
+  const maxDaysIdle = sortedByDaysIdle.length > 0 ? Math.floor((sortedByDaysIdle[0]!.hours_since_last_delivery ?? 0) / 24) : null;
 
   const atRiskLateTotal = atRiskLateQ.data?.count ?? 0;
 
@@ -321,7 +408,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
         <p className="text-[11px] text-gray-500">
           Tile value must equal the drill table row count. At-risk / late counts each load once (union, not a sum).
         </p>
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-8">
         <KpiCard
           label="Active loads"
           value={dashboardQ.isLoading || dashboardQ.isError ? "—" : (dashboardQ.data?.on_load ?? 0)}
@@ -360,6 +447,24 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
           hint="recent drop, no return booked"
           to="/dispatch#units-needing-return"
         />
+        {/* REG-038 (owner 2026-09-10/11): "Round-trip exposure" already existed as a drill panel
+            below with real data, but had no top-level tile of its own -- a dispatcher scanning the
+            KPI strip could not see the count without scrolling. */}
+        <KpiCard
+          label="Round-trip exposure"
+          value={exposureLoadsQ.isLoading || exposureLoadsQ.isError ? "—" : exposureLoads.length}
+          hint="dispatched/in-transit, no return leg confirmed"
+          to="/dispatch#round-trip-exposure"
+        />
+        {/* REG-038: net-new KPI. hours_since_last_delivery was already computed live by the backend
+            but only ever shown as inline text inside "Units needing return"; it had no tile and no
+            own breakdown. maxDaysIdle is null (never a fake 0) when no unit is currently idle. */}
+        <KpiCard
+          label="Days since last delivery"
+          value={unitsWithoutLoadQ.isLoading || unitsWithoutLoadQ.isError ? "—" : maxDaysIdle == null ? "—" : `${maxDaysIdle}d`}
+          hint={maxDaysIdle == null ? "no idle units" : "longest idle unit, no return booked"}
+          to="/dispatch#days-since-last-delivery"
+        />
       </div>
       </section>
 
@@ -381,18 +486,25 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
             ) : returnUnits.length === 0 ? (
               PanelEmpty("No delivered units are waiting for a return load.")
             ) : (
-              // Tile-value law (this file, above): the "Units needing return" KPI drills straight to
-              // THIS panel (no separate list page exists for a fleet-bounded dataset), so the panel
-              // must render every row the tile counted -- a PANEL_ROW_LIMIT slice here would silently
-              // hide units past the 6th once the fleet has more than that many, breaking the promise.
-              returnUnits.map((unit) => (
-                <PanelRow
-                  key={unit.id}
-                  unit={<EntityLinkOrTombstone kind="unit" id={unit.id} name={unit.unit_number} noun="Unit" />}
-                  driver={<EntityLinkOrTombstone kind="driver" id={unit.driver_id} name={unit.driver_name} noun="Driver" />}
-                  loadCustomer={`${unit.hours_since_last_delivery ?? "—"}h since delivery · Return load not booked`}
-                />
-              ))
+              <>
+                {/* REG-038: own columns (Unit/Driver/Load), Load = the real last-delivered load via
+                    LastLoadCell -- replaces the old "Return load not booked" placeholder string. */}
+                <KpiColumnHeader columns={["Unit", "Driver", "Load"]} />
+                {/* Tile-value law (this file, above): the "Units needing return" KPI drills straight to
+                    THIS panel (no separate list page exists for a fleet-bounded dataset), so the panel
+                    must render every row the tile counted -- a PANEL_ROW_LIMIT slice here would silently
+                    hide units past the 6th once the fleet has more than that many, breaking the promise. */}
+                {returnUnits.map((unit) => (
+                  <KpiColumnRow
+                    key={unit.id}
+                    cells={[
+                      <EntityLinkOrTombstone kind="unit" id={unit.id} name={unit.unit_number} noun="Unit" />,
+                      <EntityLinkOrTombstone kind="driver" id={unit.driver_id} name={unit.driver_name} noun="Driver" />,
+                      <LastLoadCell unit={unit} />,
+                    ]}
+                  />
+                ))}
+              </>
             )}
           </DataPanel>
         </div>
@@ -405,48 +517,108 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
             ) : unitsWithoutLoad.length === 0 ? (
               PanelEmpty("All units currently have active loads.")
             ) : (
-              // Tile-value law: the "Units available" KPI (unitsAvailable = unitsWithoutLoad.length)
-              // now drills straight to THIS panel via #unassigned-units, so every counted unit must
-              // render here -- see the matching comment on "Units needing return" above.
-              unitsWithoutLoad.map((unit: UnitsWithoutLoad) => (
-                // driver uses `||`, not `??`. CONCAT_WS never returns NULL — with all args NULL it returns
-                // the EMPTY STRING — so a driverless unit arrived as "" and ?? let it straight through,
-                // rendering "T171 · · Need load". The API now sends NULL, but `||` also absorbs "" if any
-                // other producer regresses.
-                <PanelRow
-                  key={unit.id}
-                  unit={<EntityLinkOrTombstone kind="unit" id={unit.id} name={unit.unit_number} noun="Unit" />}
-                  driver={<EntityLinkOrTombstone kind="driver" id={unit.driver_id} name={unit.driver_name} noun="Driver" />}
-                  loadCustomer="Need load"
-                />
-              ))
+              <>
+                {/* REG-038: own columns (Unit/Driver/Load); Load shows the unit's real last-delivered
+                    load (LastLoadCell), an honest "—" for a unit that has never delivered one --
+                    replaces the old unconditional "Need load" placeholder string. */}
+                <KpiColumnHeader columns={["Unit", "Driver", "Load"]} />
+                {/* Tile-value law: the "Units available" KPI (unitsAvailable = unitsWithoutLoad.length)
+                    now drills straight to THIS panel via #unassigned-units, so every counted unit must
+                    render here -- see the matching comment on "Units needing return" above. */}
+                {unitsWithoutLoad.map((unit: UnitsWithoutLoad) => (
+                  <KpiColumnRow
+                    key={unit.id}
+                    cells={[
+                      <EntityLinkOrTombstone kind="unit" id={unit.id} name={unit.unit_number} noun="Unit" />,
+                      <EntityLinkOrTombstone kind="driver" id={unit.driver_id} name={unit.driver_name} noun="Driver" />,
+                      <LastLoadCell unit={unit} />,
+                    ]}
+                  />
+                ))}
+              </>
+            )}
+          </DataPanel>
+        </div>
+        <div id="days-since-last-delivery" data-testid="dispatch-days-since-last-delivery-panel">
+          {/* REG-038: net-new KPI + panel. hours_since_last_delivery was already computed live by the
+              backend but had no tile and no breakdown of its own -- only ever inline text buried
+              inside "Units needing return". Own columns per the owner's ask, PLUS a 4th "Days idle"
+              column since the day-count IS this KPI's whole point, sorted worst-first so the unit
+              most overdue for a return is always the top row. Same "must render every counted row,
+              no PANEL_ROW_LIMIT slice" law as the two panels above -- the tile is this list's own
+              worst-case entry, not a separately-fetched count, so they can never disagree. */}
+          <DataPanel
+            title="Days since last delivery"
+            accentColor={colors.dispatch.strong}
+            titleHint="Idle units (no active load), sorted by longest since their last confirmed delivery first."
+          >
+            {unitsWithoutLoadQ.isLoading ? (
+              <PanelLoading />
+            ) : unitsWithoutLoadQ.isError ? (
+              PanelError("Couldn't load days since last delivery.", () => void unitsWithoutLoadQ.refetch())
+            ) : sortedByDaysIdle.length === 0 ? (
+              PanelEmpty("No idle units — every unit either has a load or has never delivered one yet.")
+            ) : (
+              <>
+                <KpiColumnHeader columns={["Unit", "Driver", "Load", "Days idle"]} />
+                {sortedByDaysIdle.map((unit) => (
+                  <KpiColumnRow
+                    key={unit.id}
+                    cells={[
+                      <EntityLinkOrTombstone kind="unit" id={unit.id} name={unit.unit_number} noun="Unit" />,
+                      <EntityLinkOrTombstone kind="driver" id={unit.driver_id} name={unit.driver_name} noun="Driver" />,
+                      <LastLoadCell unit={unit} />,
+                      `${Math.floor((unit.hours_since_last_delivery ?? 0) / 24)}d`,
+                    ]}
+                  />
+                ))}
+              </>
             )}
           </DataPanel>
         </div>
 
-        <DataPanel
-          title="Round-trip exposure" viewAllHref="/dispatch?view=list"
-          titleHint="Loads whose truck is currently dispatched or in transit — out on the road, no return leg confirmed complete yet."
-          accentColor={colors.dispatch.strong}
-        >
-          {exposureLoadsQ.isLoading ? (
-            <PanelLoading />
-          ) : exposureLoadsQ.isError ? (
-            PanelError("Couldn't load round-trip exposure.", () => void exposureLoadsQ.refetch())
-          ) : exposureLoads.length === 0 ? (
-            PanelEmpty("No in-transit or dispatched loads.")
-          ) : (
-            exposureLoads.slice(0, PANEL_ROW_LIMIT).map((load: DispatchLoad) => (
-              <PanelRow
-                key={load.id}
-                unit={<EntityLinkOrTombstone kind="unit" id={load.assigned_unit_id} name={load.unit_number} noun="Unit" />}
-                driver={<EntityLinkOrTombstone kind="driver" id={load.assigned_primary_driver_id} name={load.driver_short_name} noun="Driver" />}
-                loadCustomer={<><EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} /> · <EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" /></>}
-                onClick={onLoadClick ? () => onLoadClick(load.id) : undefined}
-              />
-            ))
-          )}
-        </DataPanel>
+        <div id="round-trip-exposure" data-testid="dispatch-round-trip-exposure-panel">
+          <DataPanel
+            title="Round-trip exposure" viewAllHref="/dispatch?view=list"
+            titleHint="Loads whose truck is currently dispatched or in transit — out on the road, no return leg confirmed complete yet."
+            accentColor={colors.dispatch.strong}
+          >
+            {exposureLoadsQ.isLoading ? (
+              <PanelLoading />
+            ) : exposureLoadsQ.isError ? (
+              PanelError("Couldn't load round-trip exposure.", () => void exposureLoadsQ.refetch())
+            ) : exposureLoads.length === 0 ? (
+              PanelEmpty("No in-transit or dispatched loads.")
+            ) : (
+              <>
+                {/* REG-038: own columns (Unit/Driver/Load) -- was one PanelRow concatenating unit ·
+                    driver · load · customer into a single span. Customer now rides as a muted
+                    parenthetical inside the Load cell so no information is dropped, while the KPI
+                    still keeps exactly the three columns the owner named as the reference pattern.
+                    Tile-value law: the top "Round-trip exposure" KPI tile is exposureLoads.length,
+                    so this panel can no longer PANEL_ROW_LIMIT-slice -- see the query limit bump on
+                    exposureLoadsQ above. */}
+                <KpiColumnHeader columns={["Unit", "Driver", "Load"]} />
+                {exposureLoads.map((load: DispatchLoad) => (
+                  <KpiColumnRow
+                    key={load.id}
+                    cells={[
+                      <EntityLinkOrTombstone kind="unit" id={load.assigned_unit_id} name={load.unit_number} noun="Unit" />,
+                      <EntityLinkOrTombstone kind="driver" id={load.assigned_primary_driver_id} name={load.driver_short_name} noun="Driver" />,
+                      <>
+                        <EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} />{" "}
+                        <span style={{ color: colors.mutedText }}>
+                          (<EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" />)
+                        </span>
+                      </>,
+                    ]}
+                    onClick={onLoadClick ? () => onLoadClick(load.id) : undefined}
+                  />
+                ))}
+              </>
+            )}
+          </DataPanel>
+        </div>
 
         <DataPanel title="At-risk / late loads" viewAllHref="/dispatch/at-risk" accentColor={colors.crit.strong}>
           {atRiskLateQ.isLoading ? (

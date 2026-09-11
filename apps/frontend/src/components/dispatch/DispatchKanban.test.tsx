@@ -60,6 +60,8 @@ const truck: UnitsWithoutLoad = {
   driver_id: "d-1",
   driver_name: "Joe Driver",
   last_drop_at: null,
+  last_delivered_load_id: null,
+  last_delivered_load_number: null,
   hours_since_last_delivery: null,
   location: null,
 };
