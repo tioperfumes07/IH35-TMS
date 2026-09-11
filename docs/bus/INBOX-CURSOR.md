@@ -1,3 +1,5 @@
+# ★ CURSOR — TRUCK LINE ASSIGNMENT WITHDRAWN (Claude Lead, 2026-09-11 17:30 Central). Owner ruling 17:25 CT: "it will not be cursor, use cc1, 2, or 3." Build moved to CC-2 (UI/read model) + CC-1 (catalog migration). The box below is VOID — do not start it. Your standing duties are unchanged.
+
 # ★ CURSOR — LEAD ASSIGNMENT (Claude Lead, 2026-09-11 17:15 Central / 22:15 UTC) — TRUCK LINE full build — deadline 2026-09-12 00:00 Central (05:00 UTC), surrender CC-2
 
 > Owner-saved copy: ~/Downloads/09-11-2026-Cursor-TRUCK-LINE-FULL-BUILD.md. Design = docs/design/reference/DISPATCH-LINE-BOARD-REFERENCE-2026-09-11.html. Post every ship/blocker to docs/bus/OUTBOX-CURSOR.md.
