@@ -211,9 +211,14 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
   useEffect(() => {
     if (isOpen) setActiveTab(initialTab);
   }, [initialTab, isOpen, loadId]);
-  // Block 7 — Edit opens the FULL Book/Edit wizard (BookLoadModalV4) pre-filled, replacing the old
-  // rate+notes inline stub (which could only edit those two fields). The wizard is a superset.
+  // REG-023(a) — footer Edit is tab-scoped. Overview/Stops open the wizard (stops scrolls to
+  // BookLoadStopsSection). Costs / Driver Pay / money tabs keep their own in-tab editors.
   const [editWizardOpen, setEditWizardOpen] = useState(false);
+  const [editFocus, setEditFocus] = useState<"full" | "stops">("full");
+  const openScopedEdit = (focus: "full" | "stops") => {
+    setEditFocus(focus);
+    setEditWizardOpen(true);
+  };
   const [cancelOpen, setCancelOpen] = useState(false);
   const [reassignOpen, setReassignOpen] = useState(false);
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
@@ -845,7 +850,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
               <div className="space-y-3 text-xs">
                 {/* §A — Customer · Invoice · Charges (charges = single total; line-item split is the gated
                     charge line-items block, NOT fabricated here). */}
-                <OverviewWizardSection title="Customer · Invoice · Charges" canEdit={canEdit} onEdit={() => setEditWizardOpen(true)}>
+                <OverviewWizardSection title="Customer · Invoice · Charges" canEdit={canEdit} onEdit={() => openScopedEdit("full")}>
                   <FlatFieldGrid
                     columns={2}
                     fields={[
@@ -1006,7 +1011,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                 {/* §B — Equipment · Driver · Trailer. The trailer is resolved from the canonical
                     load_assignment_history.new_trailer_id link. Driver pay rate stays "—"
                     (the load-specific rate isn't persisted on the load — not fabricated). */}
-                <OverviewWizardSection title="Equipment · Driver · Trailer" canEdit={canEdit} onEdit={() => setEditWizardOpen(true)}>
+                <OverviewWizardSection title="Equipment · Driver · Trailer" canEdit={canEdit} onEdit={() => openScopedEdit("full")}>
                   <FlatFieldGrid
                     columns={2}
                     fields={[
@@ -1048,7 +1053,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                   <p className="mt-1 text-xs text-gray-400">Trailer type/unit come from the latest persisted trailer assignment. Driver pay rate is the load-specific rate, not stored on the load yet.</p>
                 </OverviewWizardSection>
 
-                <OverviewWizardSection title="Miles" canEdit={canEdit} onEdit={() => setEditWizardOpen(true)}>
+                <OverviewWizardSection title="Miles" canEdit={canEdit} onEdit={() => openScopedEdit("full")}>
                   <FlatFieldGrid
                     columns={2}
                     fields={[
@@ -1073,7 +1078,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                 </OverviewWizardSection>
 
                 {/* §C — Stops · PC*MILER Routing (per-stop, from the live payload). */}
-                <OverviewWizardSection title="Stops · PC*MILER Routing" canEdit={canEdit} onEdit={() => setEditWizardOpen(true)}>
+                <OverviewWizardSection title="Stops · PC*MILER Routing" canEdit={canEdit} onEdit={() => openScopedEdit("stops")}>
                   <div className="space-y-2">
                     {(load.stops ?? []).map((stop) => (
                       <div key={stop.id} className="rounded-sm border border-gray-100 p-2">
@@ -1376,7 +1381,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
               <LoadStopsRecordTab
                 loadId={load.id}
                 operatingCompanyId={load.operating_company_id}
-                onEditStops={canEdit ? () => setEditWizardOpen(true) : undefined}
+                onEditStops={canEdit ? () => openScopedEdit("stops") : undefined}
               />
             ) : (
               <div className="text-xs text-gray-500">Loading stops…</div>
@@ -1683,18 +1688,17 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
             </Button>
           )}
           <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              disabled={!canEdit || !load}
-              onClick={() => {
-                if (!load) return;
-                setEditWizardOpen(true);
-              }}
-            >
-              Edit
-            </Button>
+            {canEdit && load && (activeTab === "Overview" || activeTab === "Stops") ? (
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                data-testid="load-detail-scoped-edit"
+                onClick={() => openScopedEdit(activeTab === "Stops" ? "stops" : "full")}
+              >
+                {activeTab === "Stops" ? "Edit stops" : "Edit load"}
+              </Button>
+            ) : null}
             {isPage ? null : (
               <Button type="button" size="sm" onClick={onClose}>
                 Close
@@ -1709,6 +1713,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
           open={editWizardOpen}
           operatingCompanyId={load.operating_company_id}
           editLoadId={load.id}
+          editFocus={editFocus}
           onClose={() => setEditWizardOpen(false)}
           onCreated={() => {
             setEditWizardOpen(false);

@@ -51,6 +51,9 @@ export const RT_PAIRING_ACTIVE_STATUSES = [
  * driver-walkoff/no-show and draft are still excluded — a dead row is never painted as an active unit.
  */
 export const RT_TIMELINE_STATUSES = [
+  "booked",
+  "planned",
+  "unassigned",
   ...RT_PAIRING_ACTIVE_STATUSES,
   "delivered",
   "delivered_pending_docs",

@@ -29,7 +29,7 @@ const COLOR: Record<TripKind, string> = { NB, SB, TR };
 function dayList(fromIso: string, toIso: string): string[] {
   const out: string[] = [];
   let cur = fromIso;
-  for (let i = 0; i < 60; i += 1) {
+  for (let i = 0; i < 180; i += 1) {
     out.push(cur);
     if (cur === toIso) break;
     cur = addDaysIso(cur, 1);
@@ -234,8 +234,9 @@ export function RoundTripsTimeline({ loads, rangeFrom, rangeTo, onLoadClick }: P
   );
 }
 
+export const RT_TIMELINE_WINDOW_START = "2026-08-25";
+
 export function defaultTimelineRange(): { from: string; to: string } {
   const to = companyToday();
-  const from = addDaysIso(to, -13);
-  return { from, to };
+  return { from: RT_TIMELINE_WINDOW_START, to };
 }

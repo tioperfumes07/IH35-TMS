@@ -431,6 +431,16 @@ sets date ASC + page 1. Description column `allowWrap` + no inner `truncate` so 
 are not `XXXX...` (ParityTable nowrap+ellipsis is the default unless allowWrap). Live 2026-09-10:
 All · 288, header $6,389.72, Date full on first page.
 
+## Active Architectural Decisions — Dispatch REG-023 / 037 / 039 (Cursor, 2026-09-11)
+
+Load detail footer **Edit** is tab-scoped: Overview → Edit load (full wizard), Stops → Edit stops
+(`editFocus=stops` scrolls `book-load-stops-section`). Costs / Driver Pay do not open the Book Load
+wizard. More ▾ still `setActiveTab`. Open driver bill → `/driver-finance/driver-bills/:id`. Drawer
+fetches `useLoad(loadId)` / `useDispatchLoad(loadId)` only — no sibling NB/TR/SB legs. Round Trips
+timeline default window **2026-08-25 → today**; `RT_TIMELINE_STATUSES` includes booked/planned/
+unassigned; pairing set stays narrow. Approximate load costs (Dispatch Home) has sortable **Truck**.
+Create Bill load picker → `bill_lines.load_id` remains `verify-reg034-vendor-bill-load-picker-wired`.
+
 ## Known Quirks & Blockers — Banking (CC-2, 2026-09-08)
 
 - **CC-2 (Banking seat) cannot author `db/migrations/*.sql`** — `verify-migration-lane-band.mjs`

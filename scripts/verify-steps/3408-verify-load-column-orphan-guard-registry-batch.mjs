@@ -1,3 +1,4 @@
+// MATRIX-BUILT-OPTIONAL — CI-registration infrastructure; does not claim product Built credit.
 const guards = [
   "verify-load-column-guard-registry-batch.mjs",
   "verify-border-crossing-load-linkage.mjs", "verify-dispatch-required-load-honest.mjs",
@@ -5,5 +6,7 @@ const guards = [
   "verify-dispatch-trailer-board-and-book-load.mjs", "verify-internal-fine-load-reverse.mjs",
   "verify-intransit-issue-load-linkage.mjs", "verify-load-drill-route-vertical-sweep.mjs",
   "verify-load-inline-surface-linkage.mjs", "verify-roundtrips-quality-load-entitylink.mjs",
+  "verify-reg023-load-detail-scoped-edit.mjs", "verify-reg037-roundtrips-timeline-window.mjs",
+  "verify-reg039-load-costs-truck-column.mjs",
 ];
 export default { name: "verify-load-column-orphan-guard-registry-batch", async run(ctx) { for (const guard of guards) await ctx.run("node", [`scripts/${guard}`]); } };

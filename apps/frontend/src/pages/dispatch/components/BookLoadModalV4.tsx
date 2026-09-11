@@ -228,6 +228,8 @@ type Props = {
   prefillUnitId?: string | null;
   /** If the entry point already knows the driver for that unit, prefill it too. */
   prefillDriverId?: string | null;
+  /** REG-023(a) — Stops-tab Edit scrolls to stops; never a blank full-wizard hunt. */
+  editFocus?: "full" | "stops";
 };
 
 function driverBillMintSkippedMessage(
@@ -315,6 +317,7 @@ export function BookLoadModalV4({
   editLoadId,
   prefillUnitId,
   prefillDriverId,
+  editFocus = "full",
 }: Props) {
   const auth = useAuth();
   const queryClient = useQueryClient();
@@ -592,6 +595,13 @@ export function BookLoadModalV4({
     form.reset({ ...form.getValues(), ...(buildEditPrefill(editLoad) as Partial<FormValues>) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, isEditMode, editLoad, editLoadId]);
+  useEffect(() => {
+    if (!open || editFocus !== "stops") return;
+    const timer = window.setTimeout(() => {
+      document.querySelector("[data-testid='book-load-stops-section']")?.scrollIntoView({ block: "start" });
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [open, editFocus, editLoad]);
 
   const finalizeBookLoadClose = useCallback(() => {
     setShowDiscardConfirm(false);
@@ -2512,6 +2522,7 @@ export function BookLoadModalV4({
                     form.setValue("miles_deadhead", n, { shouldDirty: true, shouldValidate: true });
                   }}
                 />
+                <div data-testid="book-load-stops-section">
                 <BookLoadStopsSection
                   operatingCompanyId={operatingCompanyId}
                   pickupTimeTypeOptions={pickupTimeTypeOptions}
@@ -2523,6 +2534,7 @@ export function BookLoadModalV4({
                   register={form.register as never}
                   setValue={form.setValue as never}
                 />
+                </div>
                 {milesLookupNote ? (
                   <p className="blw-note" data-testid="book-load-miles-lookup-note">
                     {milesLookupNote}
