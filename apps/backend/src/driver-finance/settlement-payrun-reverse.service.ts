@@ -32,6 +32,7 @@ import { companyBusinessDate } from "../lib/company-business-date.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
 import { recordEscrowPostingOnly } from "../accounting/escrow/service.js";
+import { loadPayRunRecoveryReversal } from "./settlement-payrun-recovery.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -94,6 +95,10 @@ export async function reverseSettlementPayRunInClientTx(
     throw new SettlementPayRunReversalError("REASON_REQUIRED", "A non-empty reason is required to reverse a settlement");
   }
 
+  // Same lock order as close and continuation: settlement first, then the pay-run anchor.
+  await client.query(`SELECT id FROM driver_finance.driver_settlements
+    WHERE id = $1::uuid AND operating_company_id = $2::uuid FOR UPDATE`, [settlementId, opco]);
+
   // ── Lock the pay-run GL run. Only a 'posted' run with a JE is reversible. ─────────────────────────
   const runRes = await client.query<{ id: string; status: string; journal_entry_id: string | null }>(
     `SELECT id::text, status, journal_entry_id::text
@@ -127,6 +132,9 @@ export async function reverseSettlementPayRunInClientTx(
     throw new SettlementPayRunReversalError("SETTLEMENT_NOT_FOUND", `Settlement ${settlementId} not found`);
   }
   const label = `Settlement ${settlement.display_id ?? settlementId}`;
+  const recoveries = await loadPayRunRecoveryReversal(client, {
+    operatingCompanyId: opco, settlementId, journalEntryId: originalJeId,
+  });
 
   // ── (1) Reverse the ENTIRE pay-run JE via the existing linked-reversal primitive. One reversing JE
   //        nets every original leg (pay, reimbursement, detention, deductions, chargeback, advance
@@ -184,22 +192,16 @@ export async function reverseSettlementPayRunInClientTx(
   //        Full-recovery only ever sets recovered_in_settlement_id (partial recoveries keep it NULL and
   //        only move outstanding_balance) — so this inverse is exact for every row we can attribute.
   //        Relative adjustments (+ amount / − amount) keep cross-settlement liability history correct. ─
-  const advRes = await client.query<{ id: string; amount: string; liability_id: string | null }>(
-    `SELECT id::text, amount::text, liability_id::text
-       FROM driver_finance.driver_advances
-      WHERE operating_company_id = $1::uuid AND recovered_in_settlement_id = $2::uuid
-      FOR UPDATE`,
-    [opco, settlementId]
-  );
-  for (const adv of advRes.rows) {
+  for (const adv of recoveries) {
     await client.query(
       `UPDATE driver_finance.driver_advances
           SET recovered_in_settlement_id = NULL,
               status = 'active',
               outstanding_balance = outstanding_balance + $3::numeric,
               updated_at = now()
-        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND recovered_in_settlement_id = $4::uuid`,
-      [adv.id, opco, adv.amount, settlementId]
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid
+          AND (recovered_in_settlement_id = $4::uuid OR recovered_in_settlement_id IS NULL)`,
+      [adv.id, opco, (adv.recovered_cents / 100).toFixed(2), settlementId]
     );
     if (adv.liability_id) {
       await client.query(
@@ -209,7 +211,7 @@ export async function reverseSettlementPayRunInClientTx(
                 status = 'active',
                 updated_at = now()
           WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-        [adv.liability_id, opco, adv.amount]
+        [adv.liability_id, opco, (adv.recovered_cents / 100).toFixed(2)]
       );
     }
   }
@@ -225,8 +227,9 @@ export async function reverseSettlementPayRunInClientTx(
       WHERE operating_company_id = $1::uuid
         AND source_type = 'driver_settlement'
         AND source_id = $2::uuid
-        AND posting_type = 'deposit'`,
-    [opco, settlementId]
+        AND posting_type = 'deposit'
+        AND linked_journal_entry_id = $3::uuid`,
+    [opco, settlementId, originalJeId]
   );
   const escrowCents = Number(escRes.rows[0]?.total ?? 0);
   if (escrowCents > 0) {
@@ -313,7 +316,7 @@ export async function reverseSettlementPayRunInClientTx(
       reason,
       original_journal_entry_id: originalJeId,
       reversal_journal_entry_id: reversalJeId,
-      advances_restored: advRes.rows.length,
+      advances_restored: recoveries.length,
       escrow_reversed_cents: escrowCents,
       reconciliation: { journal_count: 2, nonzero_dimensions: 0, absolute_residual_cents: 0 },
     },
@@ -326,7 +329,7 @@ export async function reverseSettlementPayRunInClientTx(
     settlement_id: settlementId,
     run_id: run.id,
     reversal_journal_entry_id: reversalJeId,
-    advances_restored: advRes.rows.length,
+    advances_restored: recoveries.length,
     escrow_reversed_cents: escrowCents,
   };
 }

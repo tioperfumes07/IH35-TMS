@@ -596,3 +596,66 @@ left as-is pending owner confirm, NOT guessed. `equipment_status` enum has NO 'R
 `OutOfService`); `mdata.equipment` has neither `is_active` nor `operating_company_id` (scope by
 equipment_number / owner_company_id / currently_leased_to_company_id); no FK anywhere references
 `mdata.equipment`/`mdata.assets`, so retiring duplicates orphans nothing.
+
+## Active Architectural Decisions — Dispatch / Lock-the-trucks (Cursor, 2026-09-10)
+
+- **A truck (`mdata.loads.assigned_unit_id`) can be on AT MOST ONE active load — enforced at TWO
+  layers (owner order 2026-09-10: "lock the trucks … once a truck is dispatched on a load it can't be
+  silently reassigned or double-booked").**
+  1. **App layer (NEW-02, already live):** `assertUnitNotActiveOnAnotherLoad`
+     (`apps/backend/src/dispatch/unit-active-load-guard.ts`) is called BEFORE the write in ALL FIVE
+     unit-assignment paths — book-load create, quick-assign, quicksave reassign, the generic
+     load-edit PATCH (`update-load.service.ts`), and the office `loads.routes.ts` PATCH. Gives the
+     friendly `unit_already_active_on_load` error.
+  2. **DB layer (migration `202614042200_loads_one_active_unit_lock.sql`, merged #21713, APPLIED LIVE
+     on `br-fancy-credit-akjnd07a` 2026-09-10):** partial unique index `uq_loads_one_active_unit`
+     ON `mdata.loads(assigned_unit_id)` WHERE `assigned_unit_id IS NOT NULL AND soft_deleted_at IS
+     NULL AND status = ANY(ACTIVE_UNIT_STATUSES)`. Defense-in-depth NEW-02 explicitly deferred to a
+     migration lane — a truck physically cannot be double-dispatched even if a future write path
+     forgets the app check.
+- **`ACTIVE_UNIT_STATUSES` = `assigned, assigned_not_dispatched, dispatched, at_pickup, in_transit,
+  at_delivery`.** The index predicate mirrors this list EXACTLY — keep them in lockstep if it changes.
+  `delivered_pending_docs` / completed / draft / terminal / cancelled are EXCLUDED on purpose: a truck
+  legitimately carries a backlog of many loads waiting on paperwork.
+- **"Not silently reassigned" = every unit/driver change is logged** to
+  `dispatch.load_assignment_history` (guard `verify-mdata-loads-patch-writes-assignment-history`,
+  gated write, `assignment_method='full_form'`), so a swap to a *free* truck is allowed but never
+  silent.
+- **PROOF (2026-09-10):** rehearsed on throwaway branch `br-bitter-cake-akkjlzdf` and re-proven on the
+  live branch — a 2nd active load on the same unit is REJECTED (`duplicate key value violates unique
+  constraint "uq_loads_one_active_unit"`, tx aborts, no change); a legit swap to a free unit and the
+  delivered_pending_docs backlog (2 loads on one truck) are BOTH allowed. Live-verified 0 pre-existing
+  active duplicates before authoring.
+- **Applying an index migration to the live branch:** the Neon MCP role (`ih35_app`) and the POOLED
+  `neondb_owner` endpoint both fail `CREATE INDEX` with "must be owner of table loads"; apply via the
+  **DIRECT** (non-`-pooler`) `neondb_owner` endpoint, then insert the ledger rows
+  (`_system._schema_migrations` + `ih35_migrations.applied_migrations`) with `sha256(fileContents)` so
+  a later `db:migrate` SKIPs it (no drift). `db:migrate` itself REFUSES this endpoint unless
+  `ALLOW_PROD_MIGRATE=1` (it matches the prod host marker `ep-broad-block-akykk7bw`).
+
+## Next Immediate Milestones — Dispatch (Cursor, 2026-09-10)
+
+1. Numbered verify-step asserting `uq_loads_one_active_unit` exists (Cursor EVEN band; verify-step
+   claim-before-write) — defense against a future DROP. Not yet claimed.
+2. Settlement/pre-settlement number pairing (owner same message): SET-01/GO-22 already auto-links every
+   load to a pre-settlement at creation (NB opens a new one, TR/SB join the truck's open tour); REG-008
+   is the going-forward fix for the "driver assigned AFTER booking" gap. **RESOLVED 2026-09-10** via
+   `scripts/ops/link-orphan-loads-presettlement.ts` (real service, no new GL math):
+   - 13573 was a FALSE alarm — it already had `trip_type=NB`, a `tour_id`, and a `presettlement_link_id`
+     (the prior "unlinked" reading only checked `settlement_lines`, a different link).
+   - 13580 (Laredo TX→Edison NJ = NB) and 13581 (Battleboro NC→Laredo TX = SB) had `trip_type=NULL`, so
+     the booking-time auto-link never fired (book-load links only when trip_type is present). Set the
+     trip_type from each load's own Laredo-anchored stops, then linked via the REAL service.
+   - **MONEY-SAFE CHOICE (`create_new`, NOT the auto link-existing):** both drivers' prior tours on
+     those units are already CLOSED and **GL-POSTED** (S-2026-0002 $2,016.92 posted 09-07; S-2026-0020
+     $752.96 posted 09-08, both unpaid). The linker's automatic REG-040 continuation would REOPEN and
+     REVERSE those posted pay-runs (`reverseSettlementPayRunInClientTx`) to fold the new leg in — a
+     posted-money movement + an owner decision, so this pass opened a FRESH pre-settlement per load
+     instead. Result live-proven: 13580→**S-2026-0028** (open), 13581→**S-2026-0029** (open);
+     S-2026-0002/S-2026-0020 UNCHANGED (same status/posted_at/net_pay). If the owner wants these legs
+     to CONTINUE the prior posted tours (REG-040 reverse+repost), that is a one-word switch to
+     `action="link_existing"`, done in-app.
+   - **KNOWN DEFECT surfaced, NOT yet fixed:** `findOpenPresettlementTourForUnit` returns closed/paid/
+     final tours, so the auto REG-008/booking path CAN silently REG-040-reverse a posted settlement on
+     a routine driver assignment. Tests (`presettlement-link.service.test.ts` lines 363/474) assert the
+     closed-tour reopen is INTENTIONAL, so this is an owner design decision, not a unilateral code flip.

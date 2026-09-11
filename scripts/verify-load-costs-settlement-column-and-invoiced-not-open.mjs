@@ -33,7 +33,7 @@ export function backendSurfacesSettlementColumn(src) {
   return (
     /settlement_info AS \(/.test(src) &&
     /JOIN driver_finance\.settlement_lines sl ON sl\.source_driver_bill_id = db\.id/.test(src) &&
-    /JOIN driver_finance\.driver_settlements ds ON ds\.id = sl\.settlement_id/.test(src) &&
+    /ds\.id = COALESCE\(linked\.presettlement_link_id, bill_link\.settlement_id\)/.test(src) &&
     /si\.settlement_display_id,\s*si\.settlement_id/.test(src) &&
     /LEFT JOIN settlement_info si ON si\.load_id=l\.id/.test(src) &&
     /"settlement",\s*\n\s*\]\)\.default\("load"\)/.test(src)
@@ -42,7 +42,7 @@ export function backendSurfacesSettlementColumn(src) {
 
 export function frontendHasSettlementColumn(src) {
   return (
-    /key: "settlement", label: "Settlement #", testId: "col-settlement"/.test(src) &&
+    /key: "settlement", label: "Settlement\/Tour", testId: "col-settlement"/.test(src) &&
     /settlement_display_id: string \| null;/.test(src) &&
     /settlement_id: string \| null;/.test(src)
   );
@@ -73,8 +73,8 @@ export function backendComputesIsInvoicedFromRealInvoices(src) {
 export function frontendIsClosedHonorsIsInvoiced(src) {
   return (
     /is_invoiced: boolean;/.test(src) &&
-    /const isClosed = \(r: BoardRow\) => CLOSED\.includes\(r\.status\) \|\| r\.is_invoiced;/.test(src) &&
-    /function matches\(r: BoardRow, f: FilterPill\)[\s\S]*?isClosed\(r\)[\s\S]*?isClosed\(r\)[\s\S]*?isClosed\(r\)/.test(src)
+    /const isClosed = \(r: BoardRow\) => CLOSED\.includes\(r\.status\) \|\| r\.is_invoiced \|\| r\.is_resettlement === true;/.test(src) &&
+    /function matches\(r: BoardRow, f: FilterPill\)[\s\S]*?isClosed\(r\)[\s\S]*?isClosed\(r\)[\s\S]*?isClosed\(r\)[\s\S]*?isClosed\(r\)/.test(src)
   );
 }
 
@@ -99,20 +99,22 @@ const boardSrc = fs.readFileSync(BOARD_FILE, "utf8");
 if (process.argv.includes("--selftest")) {
   let caught = 0;
   const mutations = [
+    [backendSrc.replace("ds.id = COALESCE(linked.presettlement_link_id, bill_link.settlement_id)", "ds.id = bill_link.settlement_id"), boardSrc],
+    [backendSrc, boardSrc.replace(" || r.is_resettlement === true;", ";")],
     [backendSrc.replace("LEFT JOIN settlement_info si ON si.load_id=l.id", ""), boardSrc],
     [backendSrc.replace('"settlement",\n      ]).default("load"),', ']).default("load"),'), boardSrc],
-    [backendSrc, boardSrc.replace('key: "settlement", label: "Settlement #", testId: "col-settlement"', 'key: "settlement_removed"')],
+    [backendSrc, boardSrc.replace('key: "settlement", label: "Settlement/Tour", testId: "col-settlement"', 'key: "settlement_removed"')],
     [backendSrc, boardSrc.replace('const CLOSED = ["cancelled", "abandoned", "closed", "paid", "invoiced", "driver_walkoff", "driver_no_show"];', 'const CLOSED = ["cancelled", "abandoned", "closed", "paid", "driver_walkoff", "driver_no_show"];')],
     [backendSrc, boardSrc.replace('const DELIVERED = ["delivered", "delivered_pending_docs", "completed_docs_received"];', 'const DELIVERED = ["delivered", "delivered_pending_docs", "completed_docs_received", "invoiced"];').replace('const CLOSED = ["cancelled", "abandoned", "closed", "paid", "invoiced", "driver_walkoff", "driver_no_show"];', 'const CLOSED = ["cancelled", "abandoned", "closed", "paid", "driver_walkoff", "driver_no_show"];')],
-    [backendSrc.replace("i.status NOT IN ('draft', 'proforma', 'void')", "i.status <> 'void'"), boardSrc],
+    [backendSrc.replaceAll("i.status NOT IN ('draft', 'proforma', 'void')", "i.status <> 'void'"), boardSrc],
     [backendSrc.replace("LEFT JOIN invoice_info ii ON ii.load_id=l.id\n", ""), boardSrc],
-    [backendSrc, boardSrc.replace("const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || r.is_invoiced;", "const isClosed = (r: BoardRow) => CLOSED.includes(r.status);")],
+    [backendSrc, boardSrc.replace("const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || r.is_invoiced || r.is_resettlement === true;", "const isClosed = (r: BoardRow) => CLOSED.includes(r.status);")],
     [backendSrc, boardSrc.replace('if (f === "delivered_open") return DELIVERED.includes(r.status) && !isClosed(r);', 'if (f === "delivered_open") return DELIVERED.includes(r.status);')],
   ];
-  for (const [b, f] of mutations) {
+  for (const [index, [b, f]] of mutations.entries()) {
     try { check(b, f); }
     catch { caught += 1; continue; }
-    throw new Error("a mutation escaped detection");
+    throw new Error(`mutation ${index + 1} escaped detection`);
   }
   check(backendSrc, boardSrc);
   console.log(`${LABEL} SELFTEST PASS (${caught}/${mutations.length} planted defects caught)`);

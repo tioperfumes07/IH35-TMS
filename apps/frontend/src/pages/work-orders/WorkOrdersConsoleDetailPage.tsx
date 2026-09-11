@@ -40,6 +40,11 @@ export function WorkOrdersConsoleDetailPage() {
   });
 
   const wo = detailQuery.data?.work_order;
+  const status = String(wo?.status ?? "").toLowerCase();
+  const canApprove = status === "open" && !wo?.approved_at;
+  const canStart = status === "open" && Boolean(wo?.approved_at);
+  const canComplete = status === "in_progress";
+  const canCancel = ["open", "in_progress", "waiting_parts"].includes(status);
 
   const title = useMemo(
     () => `Work order ${entityLabel(wo?.display_id, id, "Work order")}`,
@@ -199,29 +204,31 @@ export function WorkOrdersConsoleDetailPage() {
         <Button variant="secondary" type="button" onClick={() => window.open(pdfHref, "_blank", "noopener,noreferrer")}>
           Download PDF (HTML print)
         </Button>
-        <Button variant="secondary" type="button" onClick={() => void approveMut.mutateAsync()} disabled={approveMut.isPending}>
+        <Button variant="secondary" type="button" onClick={() => void approveMut.mutateAsync()} disabled={!canApprove || approveMut.isPending}>
           Approve
         </Button>
-        <Button variant="secondary" type="button" onClick={() => void startMut.mutateAsync()} disabled={startMut.isPending}>
+        <Button variant="secondary" type="button" onClick={() => void startMut.mutateAsync()} disabled={!canStart || startMut.isPending}>
           Start work
         </Button>
-        <Button variant="primary" type="button" onClick={() => void completeMut.mutateAsync()} disabled={completeMut.isPending}>
+        <Button variant="primary" type="button" onClick={() => void completeMut.mutateAsync()} disabled={!canComplete || completeMut.isPending}>
           Complete
         </Button>
         {canCancelVoid ? (
           <>
-            <Button
-              variant="danger"
-              type="button"
-              onClick={() => {
-                setCancelReasonCode(null);
-                setCancelNotes("");
-                setReasonModal({ kind: "cancel" });
-              }}
-              disabled={cancelMut.isPending}
-            >
-              Cancel WO
-            </Button>
+            {canCancel ? (
+              <Button
+                variant="danger"
+                type="button"
+                onClick={() => {
+                  setCancelReasonCode(null);
+                  setCancelNotes("");
+                  setReasonModal({ kind: "cancel" });
+                }}
+                disabled={cancelMut.isPending}
+              >
+                Cancel WO
+              </Button>
+            ) : null}
             <Button
               variant="danger"
               type="button"
@@ -357,7 +364,13 @@ export function WorkOrdersConsoleDetailPage() {
         </div>
       </div>
 
-      {id && companyId ? <WOTimeTrackingPanel workOrderId={String(id)} operatingCompanyId={companyId} /> : null}
+      {id && companyId ? (
+        <WOTimeTrackingPanel
+          workOrderId={String(id)}
+          operatingCompanyId={companyId}
+          readOnly={["complete", "cancelled"].includes(status)}
+        />
+      ) : null}
 
       <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Line items</div>

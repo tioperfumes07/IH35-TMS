@@ -161,11 +161,13 @@ export function getFactoringSummary(companyId: string) {
 export function getFactoringRecoursePipeline(
   companyId: string,
   limit = 200,
-  filters: { customer_id?: string; load_id?: string } = {}
+  filters: { customer_id?: string; load_id?: string; date_from?: string; date_to?: string } = {}
 ) {
   const params = new URLSearchParams({ operating_company_id: companyId, limit: String(limit) });
   if (filters.customer_id) params.set("customer_id", filters.customer_id);
   if (filters.load_id) params.set("load_id", filters.load_id);
+  if (filters.date_from) params.set("date_from", filters.date_from);
+  if (filters.date_to) params.set("date_to", filters.date_to);
   return apiRequest<{ invoices: FactoringRecourseInvoice[]; total: number }>(
     `/api/v1/factoring/recourse-pipeline?${params.toString()}`
   );
@@ -190,15 +192,24 @@ export type FactoringFundsDueRow = {
 // FUNDS-DUE-01 (owner 2026-09-09): invoices submitted to the factor but not yet advanced --
 // distinct from getFactoringRecoursePipeline above, which is built only from ALREADY-advanced
 // invoices. See apps/backend/src/factoring/factoring.routes.ts for the real query.
-export function getFactoringFundsDue(companyId: string) {
+export function getFactoringFundsDue(companyId: string, filters: { date_from?: string; date_to?: string } = {}) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  if (filters.date_from) params.set("date_from", filters.date_from);
+  if (filters.date_to) params.set("date_to", filters.date_to);
   return apiRequest<{ invoices: FactoringFundsDueRow[]; total: number }>(
-    `/api/v1/factoring/funds-due?${q(companyId)}`
+    `/api/v1/factoring/funds-due?${params.toString()}`
   );
 }
 
-export function getFactoringChargebacksFees(companyId: string, customerId?: string) {
+export function getFactoringChargebacksFees(
+  companyId: string,
+  customerId?: string,
+  filters: { date_from?: string; date_to?: string } = {}
+) {
   const params = new URLSearchParams({ operating_company_id: companyId });
   if (customerId) params.set("customer_id", customerId);
+  if (filters.date_from) params.set("date_from", filters.date_from);
+  if (filters.date_to) params.set("date_to", filters.date_to);
   return apiRequest<{
     history: FactoringChargebackFeeRow[];
     history_total: number;
@@ -584,5 +595,103 @@ export function scanDuplicateVendors(companyId: string, driverId?: string) {
       operating_company_id: companyId,
       driver_id: driverId,
     })}`
+  );
+}
+
+// ── REG-015: Six real factoring tabs (owner 2026-09-10) ─────────────────────
+
+export type FactoringDebtorReceipt = {
+  payment_id: string;
+  payment_display_id: string | null;
+  payment_date: string | null;
+  payment_reference: string | null;
+  amount_cents: string | number;
+  amount_applied_cents: string | number;
+  amount_unapplied_cents: string | number;
+  payment_method: string | null;
+  customer_id: string | null;
+  customer_name: string | null;
+  invoice_id: string | null;
+  invoice_display_id: string | null;
+  factoring_advance_id: string | null;
+  invoice_total_cents: string | number;
+  advance_display_id: string | null;
+  applied_amount_cents: string | number;
+  applied_at: string | null;
+};
+
+export function getFactoringDebtorReceipts(
+  companyId: string,
+  filters: { customer_id?: string; date_from?: string; date_to?: string } = {}
+) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  if (filters.customer_id) params.set("customer_id", filters.customer_id);
+  if (filters.date_from) params.set("date_from", filters.date_from);
+  if (filters.date_to) params.set("date_to", filters.date_to);
+  return apiRequest<{ receipts: FactoringDebtorReceipt[]; total: number }>(
+    `/api/v1/factoring/debtor-receipts?${params.toString()}`
+  );
+}
+
+export type FactoringUnappliedCashRow = {
+  payment_id: string;
+  payment_display_id: string | null;
+  payment_date: string | null;
+  payment_reference: string | null;
+  amount_cents: string | number;
+  amount_applied_cents: string | number;
+  amount_unapplied_cents: string | number;
+  payment_method: string | null;
+  customer_id: string | null;
+  customer_name: string | null;
+  notes: string | null;
+};
+
+export function getFactoringUnappliedCash(
+  companyId: string,
+  filters: { customer_id?: string; date_from?: string; date_to?: string } = {}
+) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  if (filters.customer_id) params.set("customer_id", filters.customer_id);
+  if (filters.date_from) params.set("date_from", filters.date_from);
+  if (filters.date_to) params.set("date_to", filters.date_to);
+  return apiRequest<{ rows: FactoringUnappliedCashRow[]; total: number }>(
+    `/api/v1/factoring/unapplied-cash?${params.toString()}`
+  );
+}
+
+export type FactoringInvoiceStatusRow = {
+  invoice_id: string;
+  invoice_display_id: string | null;
+  invoice_status: string;
+  factoring_status: string | null;
+  issue_date: string | null;
+  due_date: string | null;
+  delivery_date: string | null;
+  total_cents: string | number;
+  customer_id: string | null;
+  customer_name: string | null;
+  load_id: string | null;
+  factoring_advance_id: string | null;
+  advance_display_id: string | null;
+  advance_status: string | null;
+  advance_amount_cents: string | number | null;
+  reserve_amount_cents: string | number | null;
+  factor_fee_cents: string | number | null;
+  advanced_at: string | null;
+  submitted_at: string | null;
+  collected_at: string | null;
+} & LoadCostRollupFields;
+
+export function getFactoringInvoiceStatus(
+  companyId: string,
+  filters: { customer_id?: string; date_from?: string; date_to?: string } = {}
+) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  if (filters.customer_id) params.set("customer_id", filters.customer_id);
+  if (filters.date_from) params.set("date_from", filters.date_from);
+  if (filters.date_to) params.set("date_to", filters.date_to);
+  return apiRequest<{ invoices: FactoringInvoiceStatusRow[]; total: number }>(
+    `/api/v1/factoring/invoice-status?${params.toString()}`
   );
 }

@@ -23,6 +23,7 @@ import { DriverAssignmentSection } from "../../components/vehicle-profile/Driver
 import { CurrentLoadSection } from "../../components/vehicle-profile/CurrentLoadSection";
 import { TripCostCalculator } from "../../components/vehicle-profile/TripCostCalculator";
 import { MaintenanceSnapshotSection } from "../../components/vehicle-profile/MaintenanceSnapshotSection";
+import { UnitMaintenanceHistorySection } from "../../components/vehicle-profile/UnitMaintenanceHistorySection";
 import { ComplianceSection } from "../../components/vehicle-profile/ComplianceSection";
 import {
   InsuranceSummarySection,
@@ -373,6 +374,7 @@ export function VehicleProfilePage() {
               pendingFaultDraftCount={faultSummaryQuery.isError ? 0 : faultSummaryQuery.data?.auto_wo_count ?? 0}
               workOrders={profile.recent_activity?.work_orders ?? []}
             />
+            <UnitMaintenanceHistorySection operatingCompanyId={companyId} unitId={id} />
             <div className="mt-3">
               <ServiceTimeline companyId={companyId} unitId={id} />
             </div>

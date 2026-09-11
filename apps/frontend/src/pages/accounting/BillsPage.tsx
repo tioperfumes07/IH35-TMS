@@ -518,7 +518,7 @@ export function BillsPage() {
       { key: "bill_type", label: "Type", sortable: true, render: () => "Driver bill" },
       { key: "bill_number", label: "Bill #", sortable: true, render: (b) => b.bill_number ?? "—" },
       { key: "driver_name", label: "Driver", sortable: true, render: (b) => <EntityLink kind="driver" id={b.driver_id} label={b.driver_name ?? "—"} /> },
-      { key: "load_number", label: "Load", sortable: true, render: (b) => (b.load_id ? <EntityLink kind="load" id={b.load_id} label={b.load_number ?? "—"} /> : b.load_number ?? "—") },
+      { key: "load_number", label: "Load Number", alwaysVisible: true, sortable: true, render: (b) => (b.load_id ? <EntityLink kind="load" id={b.load_id} label={b.load_number ?? "—"} /> : b.load_number ?? "—") },
       { key: "miles_basis", label: "Loaded mi", sortable: true, render: (b) => (b.miles_basis != null ? Number(b.miles_basis).toLocaleString(undefined, { maximumFractionDigits: 1 }) : "—") },
       { key: "rate_per_mile_cents", label: "Rate", sortable: true, render: (b) => (b.rate_per_mile_cents != null ? `$${(b.rate_per_mile_cents / 100).toFixed(4)}` : "—") },
       { key: "miles_deadhead", label: "Empty mi", sortable: true, render: (b) => (b.miles_deadhead != null ? Number(b.miles_deadhead).toLocaleString(undefined, { maximumFractionDigits: 1 }) : "—") },
@@ -527,7 +527,8 @@ export function BillsPage() {
       { key: "status", label: "Status", sortable: true, render: (b) => <span className="capitalize">{b.status}</span> },
       {
         key: "settlement_display_id",
-        label: "Settlement",
+        label: "Settlement/Tour",
+        alwaysVisible: true,
         sortable: true,
         render: (b) =>
           b.settled_in_settlement_id ? (
@@ -568,6 +569,9 @@ export function BillsPage() {
           return <span className="text-slate-800">{number !== "" ? number : "—"}</span>;
         },
       },
+      { key: "linked_load_number", label: "Load Number", sortable: true, alwaysVisible: true,
+        sortValue: bill => bill.linked_load_number ?? "",
+        render: bill => bill.linked_load_id ? <EntityLink kind="load" id={bill.linked_load_id} label={bill.linked_load_number ?? "—"} /> : bill.linked_load_number ?? "—" },
       { key: "bill_date", label: "Date", sortable: true, render: (bill) => formatDateUS(bill.bill_date) },
       { key: "amount_cents", label: "Total", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (bill) => money(bill.amount_cents) },
       {
@@ -696,9 +700,9 @@ export function BillsPage() {
         // (CV-TRANSACTION-COLUMNS inv #46); resolved via bill_lines → loads → driver_settlements
         // in bills.service.ts, reused here rather than a second query.
         key: "linked_settlement_id",
-        label: "Settlement #",
+        label: "Settlement/Tour",
         sortable: true,
-        defaultHidden: true,
+        alwaysVisible: true,
         sortValue: (bill) => bill.linked_settlement_display_id || "",
         render: (bill) =>
           bill.linked_settlement_id ? (

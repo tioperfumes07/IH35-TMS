@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built modules=settlements,users cols=connectivity task=REG-010-011 */
 /**
  * verify-setl-users-paritytable — Settlements + Users primary list tables (verify-step 2010)
  *
@@ -15,7 +16,7 @@ const LABEL = "verify-setl-users-paritytable";
 const SETTLEMENTS = "apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx";
 const USERS = "apps/frontend/src/pages/Users.tsx";
 
-const SETTLEMENT_LABELS = ["Driver", "Period", "Loads", "Gross", "Deductions", "Net Pay", "Status", "Debt Flag", "Action"];
+const SETTLEMENT_LABELS = ["Driver", "Period Begin", "Period End", "Load Number", "Load count", "Settlement/Tour", "Gross", "Deductions", "Net Pay", "Status", "Debt Flag", "Action"];
 const USER_LABELS = ["Name", "Email", "Role", "Status", "Auth method", "Last Login", "Actions"];
 
 function assertSettlements(src) {
@@ -45,7 +46,7 @@ function assertSettlements(src) {
     errors.push(`${SETTLEMENTS}: must keep emptyText "No settlements found."`);
   }
   if (!/\bload_count\b/.test(src)) {
-    errors.push(`${SETTLEMENTS}: Loads column must bind row.load_count (no phantom placeholder)`);
+    errors.push(`${SETTLEMENTS}: Load count column must bind row.load_count (no phantom placeholder)`);
   }
   if (!src.includes("EntityLink")) {
     errors.push(`${SETTLEMENTS}: Driver cell must keep EntityLink drill-down`);
@@ -111,8 +112,11 @@ function selftest() {
     import { useUrlSort } from "../../../hooks/useUrlSort";
     const columns = [
       { key: "driver", label: "Driver" },
-      { key: "period", label: "Period" },
-      { key: "loads", label: "Loads", render: (row) => Number(row.load_count ?? 0) },
+      { key: "period_start", label: "Period Begin" },
+      { key: "period_end", label: "Period End" },
+      { key: "settlement", label: "Settlement/Tour" },
+      { key: "load", label: "Load Number" },
+      { key: "load_count", label: "Load count", render: (row) => Number(row.load_count ?? 0) },
       { key: "gross", label: "Gross" },
       { key: "deductions", label: "Deductions" },
       { key: "net_pay", label: "Net Pay" },
@@ -154,6 +158,12 @@ function selftest() {
   if (badErrors.length < 4) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
     process.exit(1);
+  }
+  for (const label of ["Period Begin", "Period End", "Load Number", "Load count", "Settlement/Tour"]) {
+    if (!assertSettlements(goodSettlements.replace(`label: "${label}"`, 'label: "Combined"')).length) {
+      console.error(`${LABEL} --selftest FAIL missing separate ${label} escaped`);
+      process.exit(1);
+    }
   }
   console.log(`${LABEL} --selftest PASS`);
 }

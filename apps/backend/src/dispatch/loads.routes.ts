@@ -2076,9 +2076,12 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             -- LIVE location for EVERY unit (Jorge: show it whether dispatched or not). Reverse-geo'd
             -- city/state come from the Samsara stats ingest via telematics.vehicle_latest_position
             -- (the same source that powers the fleet board) — NOT positions/latest, which lacks city/state.
-            p.city AS location_city,
-            p.state AS location_state,
-            p.formatted_location AS location_formatted,
+            -- COALESCE city/state/formatted from the most recent vehicle_locations row that HAS them,
+            -- because the locations poll (lat/lng only, no city/state) can be the latest row and would
+            -- leave the dispatch board showing coordinates with no human-readable location.
+            COALESCE(p.city, loc.city) AS location_city,
+            COALESCE(p.state, loc.state) AS location_state,
+            COALESCE(p.formatted_location, loc.formatted_location) AS location_formatted,
             p.lat::float8 AS location_lat,
             p.lng::float8 AS location_lng,
             p.captured_at::text AS location_captured_at
@@ -2139,6 +2142,19 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           LEFT JOIN telematics.vehicle_latest_position p
             ON p.unit_id = u.id
             AND p.operating_company_id = COALESCE(u.currently_leased_to_company_id, u.owner_company_id)
+          -- REG-002b: coalesce city/state from the most recent vehicle_locations row that HAS them.
+          -- The locations poll inserts lat/lng with NO city/state; if it's the latest row, the view
+          -- shows no human-readable location. This LATERAL join finds the most recent row with
+          -- city/state and fills the gap — so the dispatch board always shows a city/state.
+          LEFT JOIN LATERAL (
+            SELECT g.city, g.state, g.formatted_location
+            FROM telematics.vehicle_locations g
+            WHERE g.operating_company_id = COALESCE(u.currently_leased_to_company_id, u.owner_company_id)
+              AND g.unit_id = u.id
+              AND (g.city IS NOT NULL OR g.state IS NOT NULL)
+            ORDER BY g.captured_at DESC
+            LIMIT 1
+          ) loc ON (p.city IS NULL AND p.state IS NULL)
           WHERE u.deactivated_at IS NULL
             -- Entity scope (USMCA cross-entity leak fix): mdata.units has no operating_company_id and
             -- its RLS is identity/role-scoped, so the GUC alone does not filter units. Scope by the

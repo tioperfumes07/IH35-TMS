@@ -524,7 +524,7 @@ export function SettlementDetailPage() {
   if (detailQuery.isError) {
     return (
       <div className="space-y-3">
-        <BackButton label="Driver Settlements" />
+        <BackButton label="Driver Settlements" fallbackTo="/driver-finance/settlements" />
         <PageHeader title="Settlement Detail" subtitle="Debt-alert invariant enforced" />
         <ListErrorState
           title="Couldn't load this settlement"
@@ -547,7 +547,7 @@ export function SettlementDetailPage() {
   if (detailQuery.data && String((detailQuery.data as Record<string, unknown>).id ?? "") !== String(settlementId)) {
     return (
       <div className="space-y-3">
-        <BackButton label="Driver Settlements" />
+        <BackButton label="Driver Settlements" fallbackTo="/driver-finance/settlements" />
         <PageHeader title="Settlement Detail" subtitle="Loading…" />
       </div>
     );
@@ -555,7 +555,7 @@ export function SettlementDetailPage() {
 
   return (
     <div className="space-y-3">
-      <BackButton label="Driver Settlements" />
+      <BackButton label="Driver Settlements" fallbackTo="/driver-finance/settlements" />
       <Breadcrumb
         items={[
           { label: "Driver Settlements", href: "/driver-finance/settlements" },
@@ -635,16 +635,9 @@ export function SettlementDetailPage() {
           Team split lines detected (primary/co-driver)
         </div>
       ) : null}
-      {/* SETL-DETAIL-01 (lead ROUND 14) — NUMBER box (typed wins) + unit(s) + tour legs NB→TR→SB
-          with dates, additive alongside the pre-existing SettlementHeader (never deleted, §7). */}
+      {/* Server-assigned settlement identity, units and linked tour loads. */}
       <div className="ldt-card" data-testid="settlement-detail-identity-strip" style={{ padding: 10, display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-start" }}>
-        <SettlementNumberBox
-          settlementId={settlementId}
-          companyId={companyId}
-          displayId={settlementDisplayId}
-          isOpen={String(settlement.status ?? "") === "open"}
-          onSaved={() => void detailQuery.refetch()}
-        />
+        <SettlementNumberBox displayId={settlementDisplayId} />
         <div>
           <div className="text-[11px] uppercase text-gray-500">Unit(s)</div>
           <div className="text-xs font-semibold" data-testid="settlement-detail-unit">

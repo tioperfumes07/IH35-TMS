@@ -289,6 +289,96 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
   });
 
   /**
+   * GET /api/v1/driver-finance/driver-bills/:id — REG-023(b) (owner 2026-09-10: the load-detail
+   * "Open driver bill" button was unwired because NO driver_bills/:id route existed and the
+   * kind="driver_bill" EntityLink fell through to plain text). This read-only resolver takes a
+   * driver_finance.driver_bills id (a DIFFERENT table + disjoint id space from accounting.bills — see
+   * the driver-finance-driver-bills-not-accounting-bills landmine; never /accounting/bills/:id) and
+   * returns the bill's load so the standalone Driver Bill page can render the SAME canonical Driver Pay
+   * detail (loads/:loadId/driver-pay-detail, LDT-3). Entity-scoped + the same driver-access check as
+   * the load-keyed route; never new GL math, never posts. Static /driver-bills/open + /driver-bills/list
+   * are matched ahead of this :id param route by the radix router (uuid-only param, so no shadowing).
+   */
+  app.get("/api/v1/driver-finance/driver-bills/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+
+    const params = z.object({ id: z.string().uuid() }).safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const parsed = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+
+    const payload = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
+      const reg = await client.query(`SELECT to_regclass('driver_finance.driver_bills') IS NOT NULL AS ok`);
+      if (!Boolean(reg.rows[0]?.ok)) return { kind: "unavailable" as const };
+
+      const res = await client.query(
+        `
+          SELECT db.id::text, db.bill_number, db.status, db.gross_amount_cents::text AS gross_amount_cents,
+            db.load_id::text AS load_id, l.load_number,
+            concat_ws(' ', d.first_name, d.last_name) AS driver_name,
+            -- ENTITY PREDICATES (CLS-JOIN-ENTITY-UNSCOPED): identity_user_id feeds the WHO-may-see-this
+            -- authorization check below, so these driver joins are load-bearing, not decorative labels.
+            d1.identity_user_id AS primary_identity_user_id,
+            d2.identity_user_id AS secondary_identity_user_id
+          FROM driver_finance.driver_bills db
+          LEFT JOIN mdata.loads l ON l.id = db.load_id AND l.operating_company_id = db.operating_company_id
+          LEFT JOIN mdata.drivers d ON d.id = db.driver_id AND d.operating_company_id = db.operating_company_id
+          LEFT JOIN mdata.drivers d1 ON d1.id = l.assigned_primary_driver_id AND d1.operating_company_id = l.operating_company_id
+          LEFT JOIN mdata.drivers d2 ON d2.id = l.assigned_secondary_driver_id AND d2.operating_company_id = l.operating_company_id
+          WHERE db.id = $1::uuid AND db.operating_company_id = $2::uuid
+          LIMIT 1
+        `,
+        [params.data.id, parsed.data.operating_company_id]
+      );
+      const row = res.rows[0] ?? null;
+      if (!row) return { kind: "not_found" as const };
+      if (
+        !canAccessDriverLoadBills(
+          String(user.role ?? ""),
+          user.uuid,
+          row.primary_identity_user_id,
+          row.secondary_identity_user_id
+        )
+      ) {
+        return { kind: "forbidden" as const };
+      }
+
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "driver_finance.driver_bill.viewed",
+        {
+          operating_company_id: parsed.data.operating_company_id,
+          driver_bill_id: row.id,
+          load_id: row.load_id,
+          load_number: row.load_number ?? null,
+        },
+        "info",
+        "REG-023b"
+      );
+
+      return {
+        kind: "ok" as const,
+        id: row.id,
+        bill_number: row.bill_number,
+        status: row.status,
+        gross_amount_cents: Number(row.gross_amount_cents ?? 0),
+        load_id: row.load_id,
+        load_number: row.load_number ?? null,
+        driver_name: row.driver_name ?? null,
+      };
+    });
+
+    if (!payload) return reply.code(500).send({ error: "driver_bill_ref_failed" });
+    if (payload.kind === "unavailable") return reply.code(501).send({ error: "driver_finance_schema_not_available" });
+    if (payload.kind === "not_found") return reply.code(404).send({ error: "driver_bill_not_found" });
+    if (payload.kind === "forbidden") return reply.code(403).send({ error: "forbidden" });
+
+    return payload;
+  });
+
+  /**
    * GET /api/v1/driver-finance/driver-bills/open
    * Returns all open (unsettled) driver bills for the company, optionally filtered by driver.
    * Powers the Settlements page KPI + list/detail "open driver bills" bands so unsettled driver

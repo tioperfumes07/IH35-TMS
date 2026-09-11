@@ -12,6 +12,9 @@
     "node": "22.x"
   },
   "scripts": {
+    "verify:reg010-011-settlement-identity": "node scripts/verify-reg010-011-settlement-identity.mjs",
+    "verify:reg040-resettlement": "node scripts/verify-reg040-resettlement.mjs",
+    "verify:reg041-source-load-dates": "node scripts/verify-reg041-source-load-dates.mjs",
     "prepare": "husky && node scripts/setup-git-merge-drivers.mjs",
     "setup:git-drivers": "node scripts/setup-git-merge-drivers.mjs",
     "export:tracker": "node scripts/export-tracker-xlsx.mjs",

@@ -1,4 +1,14 @@
-# OWNER FAN-OUT — defect register 2026-09-09 (REG-034…REG-055)
+> **⚠ DEPRECATED NUMBERING (2026-09-10, Cursor lead).** This file's `REG-034…055` COLLIDES with the
+> canonical `~/Downloads/09-09-2026-Claude-Lead-DEFECT-REGISTER.md` (REG-001..034). **The canonical
+> register is authoritative — cite it, not these numbers.** Mapping of this file's unique items to
+> canonical: trailer relabel = canonical **REG-025** (CLOSED live by Cursor #21647); `bill_lines.load_id`
+> gap keeps canonical **REG-034** (CC-3's, unassigned). Everything else here already has a canonical
+> number (banking reorder=REG-027, running balance=REG-028/030, load-costs settlement col=REG-009,
+> S-number=REG-010/011, load-detail edit=REG-023, settlement PDF match+lumper=REG-024, fleet=REG-025/026,
+> settlement-number-auto=REG-032, add/record expense=REG-033, factoring stubs=REG-015). Kept for history;
+> do not open new work off these numbers.
+
+# OWNER FAN-OUT — defect register 2026-09-09 (REG-034…REG-055) — DEPRECATED, see banner above
 
 Source: owner live message 2026-09-09 ~22:58Z (Cursor lead intake) + the Claude-coder BNK/FAC/SET
 pending-items reconciliation the owner pasted the same night. Every row is a verbatim owner issue,
@@ -90,6 +100,43 @@ APD-25→10870? and APD-28→FB-56710? (VINs differ by 1 char — not guessed). 
   re-settlement; sibling loads auto-share the settlement.
 - **GUARD:** verify-step: new NB load ⇒ presettlement link exists at create; Load Costs row carries the
   settlement display id.
+- **STATUS UPDATE (CC-1, 2026-09-10, live-verified, Neon `br-fancy-credit-akjnd07a`):** three of the
+  four measured symptoms do not reproduce on current live data — most of this item is already built:
+  1. **Settlement assignment at creation — DONE, already shipped (REG-008 this session).**
+     `linkLoadToPresettlementAtBookingInClientTx` is wired into `book-load.service.ts`'s create
+     transaction (gated on driver+trip_type present at booking); a deferred case is picked up by
+     `linkLoadToPresettlementAfterAssignmentInClientTx`, wired into all 4 post-booking assignment
+     paths. Confirmed live: **both** 13566 and 13577 carry a non-null `presettlement_link_id`.
+  2. **"13577 not auto-assigned the same settlement" — does not reproduce.** Traced both tours live:
+     13566's tour (`00918f46-…`, 8 loads: 13471/13480/13565/13566/13492/13499/13503/13509) all share
+     settlement `6cd53f62-…`; 13577's tour (`4e78cfed-…`, 13569+13577) all share settlement
+     `68bfd169-…`. Every load in each tour has the correct shared settlement — sibling auto-share is
+     working. (13566 and 13577 are NOT siblings of each other — different tours/drivers — so they
+     were never expected to share one settlement with each other.)
+  3. **"13566/Mecor shows in pre-settlement instead of re-settlement" — does not reproduce.** Live:
+     13566's settlement `trip_closed_at = 2026-09-06T07:56:00Z` (closed), `driver_settlements.status
+     = 'closed'`, and it has a real sent invoice (`accounting.invoices.status='sent'`,
+     `source_load_id` = 13566). The Pre-Settlement tab's own query
+     (`pre-settlement.routes.ts`) filters `trip_closed_at IS NULL` — a closed tour cannot appear
+     there today. Whatever the owner saw, it isn't reproducible against current state (most likely
+     the tour closed in the ordinary course between the observation and now).
+  4. **Load Costs settlement-number column — already exists, just hidden by default.**
+     `LoadCostsBoardPage.tsx` has a real `Settlement #` column (`col-settlement`,
+     `r.settlement_display_id`, links to the settlement) wired to `load-costs-board.routes.ts`'s
+     `settlement_info` CTE — shipped in the 09-04-2026 locked 19-column default spec as
+     `defaultHidden: true` (opt-in via the column gear, not in the default view). If the ask is "show
+     it by default," that is a one-line CC-3 flip + needs owner sign-off (it's outside the locked
+     default set), not new backend build.
+  - **REMAINING — genuine, needs an OWNER DECISION, not a guess (per §0):** there is **no
+    "re-settlement" concept anywhere in the codebase** (grep: zero matches outside this doc's own
+    prose). Today a load only has two states — open tour (Pre-Settlement) or closed tour
+    (Settlement) — with **no link at all between invoice status and tour-close state**: an invoice
+    can be sent while a tour is still open, and nothing currently reacts to that. Two live options,
+    neither built without an owner ruling on what "re-settlement" should mean: **(a)** a new distinct
+    bucket/flag that an invoiced-but-still-open tour routes into (a third state alongside
+    open/closed), or **(b)** treat "invoiced" as an implicit auto-close trigger for the tour (changes
+    `trip_closed_at`'s existing meaning as a separate human-confirmed act — SET-01 spec). CC-1 will
+    build whichever the owner picks; not building either blind. Item stays OPEN on this one point.
 
 ## REG-041 — Re-settlement: show date-started + delivery-date of the ORIGINAL load that created it; fix incorrect pre-settlement data; margin & % must be SEPARATE columns  ·  CC-3 / Cursor
 - **MEASURED (owner, live):** re-settlement/pre-settlement omits the originating load's start+delivery
@@ -138,6 +185,45 @@ APD-25→10870? and APD-28→FB-56710? (VINs differ by 1 char — not guessed). 
   penalty applies. Confirm lumper receipts everywhere possible.
 - **GUARD:** dispatching a reefer load surfaces the lumper prompt; a paid-by-customer lumper creates the
   invoice-charge intent.
+- **STATUS UPDATE (CC-1, 2026-09-10, live-verified):** most of this item is already built and live,
+  not new work:
+  1. **"Ask who pays, confirm with a click" — DONE, live, unconditional.** `mdata.loads.lumper_payer`
+     / `lumper_will_invoice_customer` / `lumper_late_penalty_applies` (migration
+     `202614010000_loads_reefer_lumper_confirmation.sql`) captured at booking
+     (`book-load.service.ts`); `loads.routes.ts` **blocks** a reefer load
+     (`trailer_type='refrigerated_van'`) from dispatching until all three are set
+     (`reefer_lumper_confirmation_required`). Guarded by
+     `verify-reefer-lumper-confirmation-captured.mjs`.
+  2. **"If customer pays, flag it for invoicing" (the invoice-charge intent) — DONE, live.**
+     `from-load.ts` (~L380-450): when a `dispatch.stop_extra_rates` row is `rate_type='lumper'` AND
+     `lumper_payer='customer'` AND `lumper_will_invoice_customer=true`, it creates the real customer
+     invoice line via the existing `invoice-line-revenue-resolution.service.ts` `'lumper'` branch —
+     no new GL math, reuses the existing poster. This is exactly the GUARD line's own "creates the
+     invoice-charge intent."
+  3. **"Confirm the lumper receipt was sent" + a second late-penalty ask, post-booking — DONE
+     (Cursor #21… "no reach into CC-1's billing files"), but write-only.**
+     `completion-prompts.routes.ts` asks (at dispatch/delivery time) whether receipts were sent,
+     whether to invoice the customer, and whether a late penalty applies — answers land as
+     `audit.audit_events` (`dispatch.lumper_receipts_sent`, `dispatch.lumper_customer_invoice_requested`,
+     `dispatch.late_penalty_decision`). Nothing currently consumes these three events downstream.
+  - **REMAINING — genuine, needs an OWNER DECISION before CC-1 builds it, not a guess (per §0):**
+    turning `dispatch.late_penalty_decision` (penalty=true) into an actual driver settlement
+    deduction is real, bounded, backend-only CC-1 work (the exact template already exists —
+    `safety/fines.routes.ts`'s `convert-to-liability` → `driver_finance.driver_liabilities` →
+    settlement-deduction pipeline) — **except no penalty DOLLAR AMOUNT exists anywhere in the
+    system.** Grepped for `penalty_amount`/`late_penalty_amount`: zero hits. The
+    `completion-prompts.routes.ts` late-penalty endpoint only ever captures `penalty: boolean` +
+    an optional note — never an amount. Posting a real financial deduction requires a real number;
+    inventing one would be fabricating a financial figure. Two real options, either buildable once
+    the owner picks: **(a)** a fixed/policy penalty amount (a financial/GL decision, could ship
+    without touching CC-3's UI), or **(b)** a dispatcher-entered amount per incident (needs a new
+    UI field — CC-3's surface, not backend-only). Item stays OPEN on this one point pending the
+    owner's choice.
+  - **Secondary note, not acted on:** a second, largely dormant lumper-billing mechanism exists
+    (`apps/backend/src/cash-advances/lumper-*.ts`, gated `LUMPER_LIFECYCLE_ENABLED=false`,
+    "HOLD-FOR-JORGE") sitting alongside the already-live path in item 2 above. Flagging the overlap
+    rather than wiring it — building a second live customer-billing rail without owner
+    clarification on which is canonical risks double-billing.
 
 ## REG-051 — Load detail: per-tab EDIT (not the full wizard)  ·  CC-3 / Cursor
 - **OWNER:** each tab gets its own Edit — Stops edit only adds/removes stops; Costs edit only this load;

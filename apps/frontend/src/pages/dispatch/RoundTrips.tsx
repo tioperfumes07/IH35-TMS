@@ -451,6 +451,15 @@ export function RoundTrips({
                     )}
                   </div>
                 ))}
+                {/* REG-036 (owner 2026-09-10: "NB units have no Book-a-Return"): a unit that ALREADY has an
+                    outbound leg (so cells rendered its NB/TR card, never the empty-cell NeedsReturnCard) but
+                    still needs a southbound return gets its own trailing "+ Book return" slot next to the NB
+                    card — the button was previously reachable only on units with zero legs. */}
+                {legs.length > 0 && pair.needsReturn && !pair.returnLoad ? (
+                  <div className={`flex min-w-0 shrink-0 flex-col gap-1 ${RT_KANBAN_COL_MIN.compact}`}>
+                    <NeedsReturnCard unitId={pair.unitId} driverId={pair.driverId} onBookReturn={onBookReturn} />
+                  </div>
+                ) : null}
               </div>
             );
           })}

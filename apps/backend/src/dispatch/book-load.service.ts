@@ -24,7 +24,7 @@ import { toMdataStatus, type DispatchStatus } from "./load-state-machine.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import { bindLoadToGeofences } from "./geofences/load-geofence-binding.service.js";
 import { buildLoadSaveProof } from "./load-save-proof.js";
-import { linkLoadToPresettlementAtBookingInClientTx } from "./presettlement-link.service.js";
+import { findOpenPresettlementTourForUnit, linkLoadToPresettlementAtBookingInClientTx } from "./presettlement-link.service.js";
 import { geocodeStopsBackfill } from "../telematics/stops-geocode-backfill.service.js";
 import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.js";
 import { computeAndPersistGoogleReferenceMilesForLoad } from "./google-reference-miles.service.js";
@@ -2344,12 +2344,19 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
     }
 
     // Trip Pairing (Block 04): set trip_type + tour_id post-insert (additive; avoids touching the
-    // 39-column lockstep INSERT above). NB starts a NEW tour (generate a tour_id when none supplied);
+    // 39-column lockstep INSERT above). NB inherits the unit/driver's open tour, or starts a new one;
     // TR/SB JOIN the tour_id chosen in the wizard. Entity-scoped row (already the inserted load).
+    let resolvedTourId: string | null = input.tour_id ?? null;
     if (input.trip_type) {
       let tourId: string | null;
       if (input.trip_type === "NB") {
-        tourId = input.tour_id ?? randomUUID(); // NB starts a tour
+        const inheritedTour = !input.tour_id && input.assigned_unit_id && input.assigned_primary_driver_id
+          ? await findOpenPresettlementTourForUnit(client, {
+            operating_company_id: input.operating_company_id,
+            driver_id: input.assigned_primary_driver_id,
+            unit_id: input.assigned_unit_id,
+          }) : null;
+        tourId = input.tour_id ?? inheritedTour ?? randomUUID();
       } else if (input.tour_id) {
         tourId = input.tour_id; // explicit join (the wizard's tour picker, when present)
       } else if (input.assigned_unit_id) {
@@ -2373,6 +2380,7 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
         [input.trip_type, tourId, String(load.id), input.operating_company_id]
       );
       if (!tripDetailsUpdate.rows[0]?.id) throw new Error("book_load_trip_details_update_failed");
+      resolvedTourId = tourId;
     }
 
     // WIZ-43 (owner ruling 2026-09-04): booking no longer creates a cash-advance request or a fuel-advance
@@ -2504,7 +2512,7 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
       // (input.addToOpenPresettlement is now ignored; every load with a driver+trip_type links)
       // and no longer waits on a human confirm call. linkLoadToPresettlementAtBookingInClientTx
       // (presettlement-link.service.ts) runs suggestPresettlementLink then confirmPresettlementLink
-      // back to back -- SAME resolution logic (NB opens new, TR/SB joins the open tour settlement)
+      // back to back -- all legs reuse the same open unit/driver tour settlement when present
       // -- inside THIS transaction, so a load can never exist without already being linked.
       // Closing a settlement (trip_closed_at) remains a separate, human-confirmed step this does
       // not touch. Extracted to its own function (not inlined here) so the exact production call
@@ -2516,7 +2524,7 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
           driver_id: input.assigned_primary_driver_id,
           unit_id: input.assigned_unit_id ?? null,
           trip_type: input.trip_type,
-          tour_id: input.tour_id ?? null,
+          tour_id: resolvedTourId,
           actor_user_id: input.requestingUserUuid,
         });
         settlementIdForBillLink = presettlementLink.settlement_id;

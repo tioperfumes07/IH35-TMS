@@ -90,7 +90,7 @@ const listQuerySchema = companyQuerySchema.extend({
   unit_id: z.string().uuid().optional(),
   driver_id: z.string().uuid().optional(),
   search: z.string().trim().max(160).optional(),
-  sort: z.enum(["created_desc", "cost_desc", "wo_number_asc", "labor_cost_desc"]).default("created_desc"),
+  sort: z.enum(["created_desc", "estimated_cost_desc", "actual_cost_desc", "wo_number_asc", "labor_cost_desc"]).default("created_desc"),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -461,6 +461,9 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       const where: string[] = ["w.operating_company_id = $1::uuid"];
       // MAINT-1: hide DEMO-/TEST- seed work orders from operator lists (shared work-order-visibility.ts).
       where.push(operatorWorkOrderListSql("w"));
+      // REG-050 module-home honesty: voided work orders remain in the WORM ledger but are not
+      // operator-visible. Keep this in the shared WHERE so rows and every tab count agree.
+      where.push("w.voided_at IS NULL");
 
       if (q.wo_billing_type) {
         values.push(q.wo_billing_type);
@@ -540,13 +543,10 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       const laborSelect = timeReady ? `, COALESCE(te_agg.labor_cost_cents, 0)::bigint AS labor_cost_cents` : `, 0::bigint AS labor_cost_cents`;
 
       const orderBy =
-        q.sort === "cost_desc"
-          ? `ORDER BY COALESCE(
-               w.actual_cost_cents::numeric / 100.0,
-               w.total_actual_cost,
-               w.estimated_cost_cents::numeric / 100.0,
-               0
-             ) DESC NULLS LAST, w.created_at DESC`
+        q.sort === "estimated_cost_desc"
+          ? `ORDER BY COALESCE(w.estimated_cost_cents::numeric / 100.0, w.total_estimated_cost, 0) DESC NULLS LAST, w.created_at DESC`
+          : q.sort === "actual_cost_desc"
+            ? `ORDER BY COALESCE(w.actual_cost_cents::numeric / 100.0, w.total_actual_cost, 0) DESC NULLS LAST, w.created_at DESC`
           : q.sort === "wo_number_asc"
             ? "ORDER BY w.display_id ASC NULLS LAST, w.created_at DESC"
             : q.sort === "labor_cost_desc" && timeReady
@@ -975,7 +975,10 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
           SET approved_at = COALESCE(approved_at, now()),
               approved_by_user_id = COALESCE(approved_by_user_id, $2),
               updated_at = now()
-          WHERE id = $1 AND operating_company_id = $3::uuid
+          WHERE id = $1
+            AND operating_company_id = $3::uuid
+            AND status = 'open'
+            AND voided_at IS NULL
           RETURNING *
         `,
         [params.data.id, user.uuid, query.data.operating_company_id]

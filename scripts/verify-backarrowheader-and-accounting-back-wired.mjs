@@ -22,6 +22,12 @@ import fs from "node:fs";
 
 const BACK_ARROW_HEADER = "apps/frontend/src/components/layout/BackArrowHeader.tsx";
 const ACCOUNTING_WRAPPER = "apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx";
+// REG-007 (Cursor 2026-09-10) — the last 4 unconditional navigate(-1) sites migrated to smart-back.
+const REG007_FILES = [
+  "apps/frontend/src/components/shared/BackButton.tsx",
+  "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx",
+  "apps/frontend/src/pages/accounting/bills/RecurringBillCreate.tsx",
+];
 
 function stripComments(text) {
   return text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|\s)\/\/.*$/gm, "$1");
@@ -72,10 +78,21 @@ function auditAccountingWrapper(source) {
   return failures;
 }
 
+// REG-007 — each migrated file must import + call hasInAppHistory and carry NO unconditional
+// `navigate(-1)` back handler (`onClick={() => navigate(-1)}`) left behind.
+function auditReg007(file, source) {
+  const { failures, stripped } = auditImportsHelper(file, source);
+  if (/onClick=\{\(\)\s*=>\s*navigate\(-1\)\}/.test(stripped)) {
+    failures.push(`${file}: still has an unconditional onClick={() => navigate(-1)} — migrate it to the hasInAppHistory smart-back pattern`);
+  }
+  return failures;
+}
+
 const backArrowSource = fs.readFileSync(BACK_ARROW_HEADER, "utf8");
 const accountingSource = fs.readFileSync(ACCOUNTING_WRAPPER, "utf8");
 
 let failures = [...auditBackArrowHeader(backArrowSource), ...auditAccountingWrapper(accountingSource)];
+for (const f of REG007_FILES) failures.push(...auditReg007(f, fs.readFileSync(f, "utf8")));
 
 if (failures.length) {
   console.error(`verify-backarrowheader-and-accounting-back-wired FAIL\n- ${failures.join("\n- ")}`);
@@ -157,7 +174,23 @@ if (process.argv.includes("--selftest")) {
     if (mutFailures.length === 0) throw new Error(`mutation escaped: "${name}" was not caught`);
     caught += 1;
   }
-  console.log(`verify-backarrowheader-and-accounting-back-wired SELFTEST PASS — ${caught}/${mutations.length} mutations detected`);
+  // REG-007 mutations: each migrated file must fail if its smart-back import is stripped or a bare
+  // navigate(-1) handler is reintroduced.
+  let reg007Caught = 0;
+  const reg007Mutations = [];
+  for (const f of REG007_FILES) {
+    const src = fs.readFileSync(f, "utf8");
+    reg007Mutations.push({ name: `strip smart-back import from ${f}`, file: f, mutate: (t) => t.replace(/import\s*\{\s*hasInAppHistory\s*\}\s*from\s*["'][./]*lib\/smart-back["'];?\n/, "") });
+    reg007Mutations.push({ name: `reintroduce bare navigate(-1) in ${f}`, file: f, mutate: (t) => `${t}\n<button onClick={() => navigate(-1)} />` });
+  }
+  for (const { name, file, mutate } of reg007Mutations) {
+    const orig = fs.readFileSync(file, "utf8");
+    const mutated = mutate(orig);
+    if (mutated === orig) throw new Error(`REG-007 mutation "${name}" did not change source — inert`);
+    if (auditReg007(file, mutated).length === 0) throw new Error(`REG-007 mutation escaped: "${name}"`);
+    reg007Caught += 1;
+  }
+  console.log(`verify-backarrowheader-and-accounting-back-wired SELFTEST PASS — ${caught}/${mutations.length} + REG-007 ${reg007Caught}/${reg007Mutations.length} mutations detected`);
 }
 
 console.log(

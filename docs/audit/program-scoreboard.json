@@ -1,10 +1,10 @@
 {
-  "healthzSha": "f6caec9",
-  "generated_at": "2026-09-10T23:59:44.145Z",
+  "healthzSha": "f1ec645",
+  "generated_at": "2026-09-10T20:01:37.370Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "f6caec9",
+    "deployedSha": "f1ec645",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 21716,
-      "title": "FINDING: seats back 2026-09-10 eve with no current dispatch of today's two merged money deltas or the reimbursement/rebuild owner rulings",
+      "number": 21677,
+      "title": "FINDING: ACCT-F6350 (REG-041 owner follow-up) Resettlement needs explicit original-load date columns",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 06:53 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21716",
-      "sha": "45d44cb317",
-      "committedAtIso": "2026-09-10T18:53:20-05:00"
+      "mergedAtCt": "09/10/2026, 02:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21677",
+      "sha": "8d8b4beec0",
+      "committedAtIso": "2026-09-10T14:59:22-05:00"
     },
     {
-      "number": 21715,
-      "title": "FINDING: loads 13580/13581 dispatched with trip_type=NULL never linked a pre-settlement (REG-008 gap) — 2 active trucks carried no settlement number",
+      "number": 21679,
+      "title": "FINDING: REG-023(b) — \"Open driver bill\" is unwired (no driver_bills/:id route)",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 06:38 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21715",
-      "sha": "f6caec9411",
-      "committedAtIso": "2026-09-10T18:38:04-05:00"
+      "mergedAtCt": "09/10/2026, 02:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21679",
+      "sha": "75517b329b",
+      "committedAtIso": "2026-09-10T14:56:51-05:00"
     },
     {
-      "number": 21714,
-      "title": "docs(memory-bank): record lock-the-trucks DB backstop (uq_loads_one_active_unit)",
+      "number": 21678,
+      "title": "FINDING: REG-046 — invoice table columns not in money waterfall order",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 06:03 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21714",
-      "sha": "043f736cf9",
-      "committedAtIso": "2026-09-10T18:03:52-05:00"
+      "mergedAtCt": "09/10/2026, 02:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21678",
+      "sha": "35a20f2852",
+      "committedAtIso": "2026-09-10T14:52:50-05:00"
     },
     {
-      "number": 21713,
-      "title": "FINDING: NEW-02 — lock the trucks: DB backstop against double-dispatch (owner order 2026-09-10)",
+      "number": 21676,
+      "title": "FINDING: N/A (docs/bus only) — re-open REG-040 closed-settlement continuation as GPT top row (owner order)",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 05:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21713",
-      "sha": "002add505b",
-      "committedAtIso": "2026-09-10T17:57:30-05:00"
+      "mergedAtCt": "09/10/2026, 02:48 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21676",
+      "sha": "66e62236a2",
+      "committedAtIso": "2026-09-10T14:48:39-05:00"
     },
     {
-      "number": 21712,
-      "title": "FINDING: NEW-02 — CLAIM-RESERVE 202614042200 (lock-the-trucks DB backstop, owner 2026-09-10)",
+      "number": 21675,
+      "title": "FINDING: REG-015 — 6 dashed factoring stubs were placeholders, not real tabs",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 05:53 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21712",
-      "sha": "610154be3c",
-      "committedAtIso": "2026-09-10T17:53:43-05:00"
+      "mergedAtCt": "09/10/2026, 02:44 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21675",
+      "sha": "ff14176df9",
+      "committedAtIso": "2026-09-10T14:44:16-05:00"
     },
     {
-      "number": 21711,
-      "title": "FINDING: B-1 REG-002 expense-account audit strengthened with live expense history",
+      "number": 21674,
+      "title": "FINDING: ACCT-F6350 (REG-040 owner follow-up) invoiced loads lack a Resettlement view and new northbound bookings split open tour identity",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 05:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21711",
-      "sha": "4afc061e69",
-      "committedAtIso": "2026-09-10T17:32:22-05:00"
+      "mergedAtCt": "09/10/2026, 02:41 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21674",
+      "sha": "f1ec6457a6",
+      "committedAtIso": "2026-09-10T14:41:20-05:00"
     },
     {
-      "number": 21710,
-      "title": "FINDING: cancelled work orders accept labor time writes",
+      "number": 21673,
+      "title": "FINDING: REG-049 unit profile had no canonical cost-linked maintenance history",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 05:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21710",
-      "sha": "2c7f1047b5",
-      "committedAtIso": "2026-09-10T17:26:53-05:00"
+      "mergedAtCt": "09/10/2026, 02:40 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21673",
+      "sha": "5c552b4735",
+      "committedAtIso": "2026-09-10T14:40:41-05:00"
     },
     {
-      "number": 21709,
-      "title": "FINDING: NB-OPEN-TOUR-SPLIT — fresh NB loads join an occupied open round trip",
+      "number": 21672,
+      "title": "FINDING: REG-037 — Round Trips timeline (Aug 25 → present) is missing units/loads",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 05:24 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21709",
-      "sha": "eb1b56a33e",
-      "committedAtIso": "2026-09-10T17:24:31-05:00"
+      "mergedAtCt": "09/10/2026, 02:29 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21672",
+      "sha": "d0554381cf",
+      "committedAtIso": "2026-09-10T14:29:15-05:00"
     },
     {
-      "number": 21707,
-      "title": "FINDING: B-2/B-3 pass 3 sweep clean (no new defects)",
+      "number": 21671,
+      "title": "FINDING: REG-048 finalize work-order V5 and unit contract",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 05:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21707",
-      "sha": "254537c29d",
-      "committedAtIso": "2026-09-10T17:18:44-05:00"
+      "mergedAtCt": "09/10/2026, 02:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21671",
+      "sha": "421ced785e",
+      "committedAtIso": "2026-09-10T14:27:06-05:00"
     },
     {
-      "number": 21708,
-      "title": "FINDING: REG-050 cancelled work order exposes live lifecycle mutations",
+      "number": 21670,
+      "title": "FINDING: REG-036 — northbound units on Round Trips have no \"+ Book return\" button",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 05:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21708",
-      "sha": "0e31422d4f",
-      "committedAtIso": "2026-09-10T17:15:53-05:00"
+      "mergedAtCt": "09/10/2026, 02:20 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21670",
+      "sha": "886f6cfb61",
+      "committedAtIso": "2026-09-10T14:20:57-05:00"
     }
   ]
 }

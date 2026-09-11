@@ -11,7 +11,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import type { PlannerRange } from "./planner-range";
-import { listPlannerDays } from "./planner-range";
+import { listPlannerDays, widenPlannerRange } from "./planner-range";
 import { PlannerAxisHead } from "./PlannerAxisHead";
 import { dwellsFromDayMap, PlannerGrid } from "./PlannerGrid";
 import { groupPlannerBarsByKey, usePlannerLoads } from "./planner-bars";
@@ -25,6 +25,7 @@ type SafetyDriverSchedulerGridProps = {
   range: PlannerRange;
   testId?: string;
   viewMode?: PlannerViewMode;
+  onExpandRange?: (range: PlannerRange) => void;
 };
 
 type DriverListRow = {
@@ -55,7 +56,7 @@ export function formatLastDispatchActivity(iso: string | null | undefined): stri
   return `${mm}/${dd}/${dt.getFullYear()} ${hh}:${min}`;
 }
 
-export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = "safety-driver-scheduler-grid", viewMode = "grid" }: SafetyDriverSchedulerGridProps) {
+export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = "safety-driver-scheduler-grid", viewMode = "grid", onExpandRange }: SafetyDriverSchedulerGridProps) {
   const days = useMemo(() => listPlannerDays(range), [range.start, range.end]);
 
   const query = useQuery({
@@ -172,6 +173,7 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
         frozenPx={280}
         statusLabel="Status"
         actionLabel="Action"
+        onExpandRange={onExpandRange ? (minYmd, maxYmd) => onExpandRange(widenPlannerRange(range, minYmd, maxYmd)) : undefined}
         rows={drivers.map((dr) => {
           const driverId = String(dr.driver_id);
           const name = String(dr.driver_name ?? "");

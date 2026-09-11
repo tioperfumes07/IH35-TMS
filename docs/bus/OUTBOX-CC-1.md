@@ -1227,3 +1227,198 @@ DONE LINE: CC-1 | REG-031 FULLY CLOSED | PR #21621, merged `82a328c0`, deployed 
 live: backend healthz git_sha=f5982638 match, frontend Render status=live, cold-nav Chrome
 click-through confirmed (screenshot-verified: Home active, KPI strip real, card→tab nav works) |
 NEXT: sweeping for the next genuine money-surface gap.
+
+## CC-1 | REG-036 CLOSED — Banking earliest-synced running-balance caveat, live root-caused + shipped (2026-09-10)
+
+**Owner fan-out item (OWNER-FANOUT-2026-09-09.md):** "Banking: running balance wrong (received $100
+on 12/08/25 shows -$13,062.53, oldest→newest) · CC-1 / Cursor interim." Also answers Lead's own
+outstanding ask in the defect register for CC-2's exact running-balance query/output.
+
+**ROOT CAUSE (live-verified, Neon `br-fancy-credit-akjnd07a`, account
+`e83028a5-dcda-4233-b660-5b9923b3d39c`):** replicated the exact frontend algorithm
+(`spentReceived` sign resolution, `compareTxNewestFirst` sort, anchor-and-walk-backward from
+`current_balance_cents`) in SQL window functions — **no sign/sort/filter bug**, the arithmetic is
+internally consistent. The real finding: SUM(all 314 non-voided synced signed deltas) =
+**+$8,797.84**, while the account's live `current_balance_cents` (Plaid-fresh) = **+$2,089.70** —
+a genuine **$6,708.14 gap**. Traced `plaid.service.ts`: it calls `/transactions/sync` with no
+`start_date`, so there is no code-side truncation — the earliest synced row (2025-12-08) is
+whatever Plaid's Item made "available," even though the Item was linked 2026-06-30. This real
+Bank of America account almost certainly had real activity before 2025-12-08 that we have zero
+transaction-level visibility into. A forward walk from an assumed $0 opening balance would be
+confidently WRONG whenever pre-sync history exists (which it does here), so the existing
+anchor-and-walk-backward approach is the CORRECT arithmetic — not a bug to fix with different math.
+
+**FIX (honest UX, not a math change):** flagged the earliest-synced transaction's Balance cell with
+a hover tooltip + `data-testid` + dagger marker, plus a visible (non-hover-only) legend above the
+register when that row is in view. Additive-only — the computed dollar value expression is
+byte-for-byte unchanged; nothing was invented, hidden, or altered, only an honest caveat on the one
+row whose "before this" is structurally unverifiable. Per LAW.md "zero is a claim."
+
+**GUARD:** `scripts/verify-banking-earliest-synced-balance-caveat.mjs` (verify-step 11181, number
+claimed via #21646/CLAIM-RESERVE) — selftest 6/6, asserts the caveat wiring + that the computed
+value expression is untouched (fails if reverted or if it ever becomes a second/different number).
+
+**SHIPPED:** PR #21649 (`CC1-IN- REG-036...`), merged `9287fefd`, fast-merge law (local gate PASS →
+squash --admin, no CI wait). Both backend + frontend deploys triggered myself against `9287fefd`
+(`dep-dah9u4m1egvs73d72a10` / `dep-dah9u51t0dsc73f6rrcg`) — live-verify + Chrome click-through to
+follow in this same thread once Render reports `live`.
+
+**REMAINING — honest, not fully closed:** I have NOT independently confirmed with certainty this
+account had zero real-world activity before 2025-12-08 (only that Plaid's synced history and our
+code both start there). Owner/Jorge confirmation of the account's real pre-2025-12-08 balance would
+convert this from an honest caveat into a hard, bookable opening-balance fact.
+
+DONE LINE: CC-1 | REG-036 (BANK-F30027) — root-caused live, honest caveat shipped, deploy triggered
+| PR #21649 merged 9287fefd | Live=pending confirmation (deploy in progress at time of this post) |
+NEXT: confirm live Chrome, continue sweeping OWNER-FANOUT-2026-09-09.md for CC-1 items.
+
+## CC-1 | REG-036 LIVE-CONFIRMED — both deploys live, Chrome click-through matches Neon figure exactly (2026-09-10)
+
+Backend `srv-d7rpem7avr4c73fhp4n0` and frontend `srv-d7s46dbrjlhs7383i150` both confirmed `status:
+"live"` at commit `9287fefd` (backend cross-checked: `healthz` `git_sha`=`9287fefdd2aa4e3bbb1300c2ebd287db6deb02ac`).
+
+**Live Chrome click-through (cold nav via left sidebar, not a direct URL):** clicked BANKING →
+Transactions → USMCA FREIGHT account (`$2,089.70`, matches `current_balance_cents` used in the
+root-cause math) → Categorized tab → the single categorized row, `12/08/2025`, is the earliest
+synced transaction. Confirmed live on the page:
+- The visible legend renders above the register: *"† Balance shown from the earliest transaction
+  available through this bank connection — it may not reflect the account's true history before
+  that date."*
+- The row's Balance cell shows **-$6,608...** — matches the Neon SQL-replication figure from the
+  merged PR's LIVE PROOF exactly.
+- The hover tooltip element (`data-testid="banking-balance-earliest-synced-caveat"`) is present and
+  carries the full caveat text.
+
+No other row/column changed; the computed dollar value is unaltered, only the one unverifiable row
+now carries an honest caveat.
+
+DONE LINE: CC-1 | REG-036 (BANK-F30027) FULLY CLOSED | PR #21649 merged 9287fefd, both deploys live
+9287fefd (healthz sha match) | Live=CONFIRMED — Chrome click-through on app.ih35dispatch.com/banking
+Transactions, USMCA FREIGHT account, 12/08/2025 row shows the caveat + matching balance figure |
+Answers Lead's outstanding ask in the defect register for CC-2's running-balance query/output |
+NEXT: continue sweeping OWNER-FANOUT-2026-09-09.md for CC-1 items (REG-040/046/048/049/050).
+
+## CC-1 | REG-040 — status correction, live-verified: 3 of 4 symptoms already resolved, 1 genuine owner-decision gap (2026-09-10)
+
+Investigated REG-040 (Settlement assignment at creation + Load Costs settlement column + already-
+invoiced loads / re-settlement). Live-traced on Neon (`br-fancy-credit-akjnd07a`, bypass_rls=lucia):
+
+- **Settlement-at-creation:** already built + shipped this session as REG-008
+  (`linkLoadToPresettlementAtBookingInClientTx` wired into `book-load.service.ts`'s create
+  transaction, deferred-case fallback wired into all 4 post-booking assignment paths).
+- **"13577 not auto-assigned the same settlement":** does not reproduce — 13577's whole tour
+  (13569+13577) correctly shares one settlement; 13566's whole tour (8 loads) correctly shares a
+  different settlement. 13566 and 13577 are different tours/drivers — never expected to share.
+- **"13566/Mecor shows in pre-settlement instead of re-settlement":** does not reproduce — 13566's
+  tour is `trip_closed_at` SET (closed 2026-09-06), settlement status = closed, invoice status =
+  sent. The Pre-Settlement tab's own query excludes closed tours; a closed tour cannot show there.
+- **Load Costs settlement column:** already exists (`LoadCostsBoardPage.tsx`, `col-settlement`), just
+  `defaultHidden: true` per the locked 09-04 19-column default spec — a CC-3 visibility flip +
+  owner sign-off, not backend work.
+
+Corrected the register with full live evidence (`docs/bus/OWNER-FANOUT-2026-09-09.md` REG-040).
+
+**Genuine remaining gap, flagged as OWNER-DECISION GATE, not built blind:** there is no
+"re-settlement" concept anywhere in the codebase, and nothing links invoice status to tour-close
+state — an invoice can be sent while a tour is still open with zero reaction. Two real options
+(new third bucket for invoiced-but-open tours, vs. treating "invoiced" as an implicit tour-close
+trigger, which changes `trip_closed_at`'s existing human-confirmed-act semantics per SET-01) — I'll
+build whichever the owner picks once decided.
+
+DONE LINE: CC-1 | REG-040 status correction | live Neon trace, no code change (item mostly already
+resolved) | register + outbox updated | 1 point (re-settlement definition) left OPEN pending owner
+decision | NEXT: continuing OWNER-FANOUT-2026-09-09.md sweep (REG-046/048/049/050).
+
+## CC-1 | REG-046/048/049 scoped + REG-049 date-filter gap closed (ACCT-F26062), deploy triggered (2026-09-10)
+
+Scoped REG-046 (Factoring report pages), REG-048 (default columns), REG-049 (chargebacks split +
+QBO filters + reconcile). Live code investigation: **REG-046's 6 named report pages were already
+built and shipped** (FAC-09a/NEW-20..26/FUNDS-DUE-01, merged 2026-09-07..09, all reachable at
+`/factoring/<tab>` in `FactoringHome.tsx`'s 15-tab SUBNAV) — Accounts Summary, Aging, Chargebacks &
+Overpayments, Payment-to-You, Purchase Report all real; "Invoices-for-period detail" has no exact
+named-tab match (closest analogs Aging/Purchase Report) — flagged, not guessed at.
+**REG-048's default columns were already correct** — `loadCostColumnManifest.tsx` already orders
+Invoice → Customer → Invoice Amount → Advance → Reserve → Fee → Settlement # by default, with
+Revenue/Costs/Driver-pay/Margin explicitly `defaultHidden: true`.
+**REG-049: chargebacks split-screen already fixed** (vertical stack, Monthly Summaries above
+detail) and **summary/detail toggle already exists** (Statements/Settings tab). The one confirmed,
+reproducible gap: **"QBO filters (date etc.) on ALL" — zero of the 7 Factoring recourse/report tabs
+had a date-range filter**, and none of the 3 backing backend endpoints (recourse-pipeline,
+chargebacks-fees, funds-due) accepted a `date_from`/`date_to` param at all (confirmed by reading
+the Zod schemas directly — customer_id/load_id only, or bare `companyQuerySchema`).
+
+**FIX (ACCT-F26062):** shared `date_from`/`date_to` Zod schema extended onto all 3 backend query
+schemas, applied as real SQL WHERE filters on `factored_at`/`submitted_at`/`created_at`
+respectively; frontend threads the same range through the page's existing shared filter state into
+all 3 queries (`recourseQuery`/`feesQuery`/`fundsDueQuery`), with real From/To DatePicker controls
+added to all 7 tabs (2 existing filterBars extended, 5 new ones added via a shared render helper).
+
+Shipped PR #21655 (`CC1-IN-...`), merged `7ffe86a1`, fast-merge law (claim-reserve #21654 first,
+local gate PASS → squash --admin). Guard: `scripts/verify-factoring-report-date-filters.mjs`
+(verify-step 11185), selftest 5/5. tsc (frontend + backend) clean. Both deploys triggered against
+`7ffe86a1`; live-verify to follow.
+
+**Explicitly NOT built here (flagged, not fixed blind):** "balances differ — reconcile" per REG-049's
+own "INSPECT ALL FACTORING" instruction — a real reconciliation subsystem already exists
+(`apps/backend/src/accounting/factor-reconciliation/`) but isn't linked from Factoring's own nav;
+unclear whether that's the owner's actual "balances differ" complaint or a separate issue. Flagged
+as an audit task, not a bounded single-PR item.
+
+DONE LINE: CC-1 | REG-046/048/049 scoped (most already done) + REG-049 date-filter gap (ACCT-F26062)
+closed | PR #21655 merged 7ffe86a1 | Live=pending deploy confirmation | NEXT: confirm live Chrome,
+continue sweeping OWNER-FANOUT-2026-09-09.md for CC-1 items (REG-050).
+
+## CC-1 | REG-049 LIVE-CONFIRMED — date-range filter verified live on Factoring Aging (2026-09-10)
+
+Both deploys confirmed live at/past `7ffe86a1` (backend healthz git_sha match; frontend Render
+`status: "live"`). **Live Chrome click-through** (Factoring → Aging tab): clicked the new "Filters"
+control (didn't exist before this fix), real "From date"/"To date" `DatePicker` fields render.
+Set From date = 09/01/2026 → Apply → URL correctly became `?date_from=2026-09-01` (deep-link sync
+working), 51 rows unchanged (all invoices genuinely fall in this range — this company's factoring
+history is all-2026-09, confirmed against the Account Summary's own "51 advances"). **Negative-control
+proof:** set From date = 09/11/2026 (tomorrow) → Apply → **0 rows, "No invoices inside the aging
+register," all bucket totals $0.00** — proves the filter is a real, live SQL WHERE clause narrowing
+actual prod data end-to-end (DatePicker → shared filter state → queryKey → API client → Zod schema →
+SQL), not a cosmetic no-op control.
+
+DONE LINE: CC-1 | REG-049 (ACCT-F26062) FULLY CLOSED | PR #21655 merged 7ffe86a1, both deploys live |
+Live=CONFIRMED — Chrome click-through + positive/negative-control proof on
+app.ih35dispatch.com/factoring/aging | NEXT: continue sweeping OWNER-FANOUT-2026-09-09.md for CC-1
+items (REG-050 — Reefer lumper control, joint with CC-3).
+
+## CC-1 | REG-050 — status correction, live-verified: lumper confirmation + invoice-charge intent already live, 1 owner-decision gap flagged (2026-09-10)
+
+Investigated REG-050 (Reefer LUMPER control). Confirmed live in code (not new work):
+
+- **"Ask who pays, confirm with a click"**: already captured at booking
+  (`mdata.loads.lumper_payer`/`lumper_will_invoice_customer`/`lumper_late_penalty_applies`,
+  migration `202614010000`), and `loads.routes.ts` blocks a reefer load from dispatching until all
+  three are set.
+- **"If customer pays, flag it for invoicing" (the GUARD line's own "invoice-charge intent")**:
+  already live — `from-load.ts` creates the real customer invoice line via the existing lumper
+  revenue-code branch when `lumper_payer='customer' AND lumper_will_invoice_customer=true`. No new
+  GL math needed; reuses the existing poster.
+- **Receipt-sent + late-penalty prompts**: already built by Cursor (`completion-prompts.routes.ts`,
+  explicitly scoped "no reach into CC-1's billing files") — write answers to `audit.audit_events`,
+  currently unconsumed downstream.
+
+Corrected the register with full evidence (`docs/bus/OWNER-FANOUT-2026-09-09.md` REG-050).
+
+**Genuine remaining gap, flagged as OWNER-DECISION GATE, not built blind:** turning a late-penalty
+"yes" into an actual driver settlement deduction is real, bounded, backend-only CC-1 work (the
+`safety/fines.routes.ts convert-to-liability` pattern is an almost-exact template) — except **no
+penalty dollar amount exists anywhere in the system** to post. Grepped for
+`penalty_amount`/`late_penalty_amount`: zero hits; the completion-prompts endpoint only ever
+captures a boolean. Posting a real deduction needs a real number — inventing one would be
+fabricating a financial figure, which I will not do. Two real paths once the owner decides: a fixed
+policy amount (CC-1 could ship this without touching CC-3's UI), or a dispatcher-entered per-incident
+amount (needs a new UI field, CC-3's surface).
+
+Also flagged, not acted on: a second, largely dormant lumper-billing mechanism
+(`cash-advances/lumper-*.ts`, gated `LUMPER_LIFECYCLE_ENABLED=false`) sits alongside the already-live
+invoice path — wiring it without owner clarification on which mechanism is canonical risks a
+double-billing rail.
+
+DONE LINE: CC-1 | REG-050 status correction | live code trace, no code change (item mostly already
+resolved) | register + outbox updated | 1 point (penalty amount source) left OPEN pending owner
+decision | NEXT: continuing the OWNER-FANOUT-2026-09-09.md sweep for remaining CC-1 items.

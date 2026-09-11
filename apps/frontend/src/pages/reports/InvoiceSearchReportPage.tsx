@@ -52,6 +52,25 @@ const STATUS_OPTIONS = [
 
 type InvoiceSearchFilters = { search: string; statusFilter: string; dateRange: string };
 
+function dateRangeToFromTo(range: string): { from_date?: string; to_date?: string } {
+  if (range === "all") return {};
+  const now = new Date();
+  const to = now.toISOString().slice(0, 10);
+  if (range === "last_30") {
+    const from = new Date(now.getTime() - 30 * 86_400_000).toISOString().slice(0, 10);
+    return { from_date: from, to_date: to };
+  }
+  if (range === "last_90") {
+    const from = new Date(now.getTime() - 90 * 86_400_000).toISOString().slice(0, 10);
+    return { from_date: from, to_date: to };
+  }
+  if (range === "this_year") {
+    const from = `${now.getFullYear()}-01-01`;
+    return { from_date: from, to_date: to };
+  }
+  return {};
+}
+
 export function InvoiceSearchReportPage() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
@@ -64,13 +83,15 @@ export function InvoiceSearchReportPage() {
     onApply: setAppliedFilters,
   });
 
+  const dateRange = dateRangeToFromTo(appliedFilters.dateRange);
   const invoicesQ = useQuery({
-    queryKey: ["reports", "invoice-search", operatingCompanyId, appliedFilters.search, appliedFilters.statusFilter, sortKey, sortDirection],
+    queryKey: ["reports", "invoice-search", operatingCompanyId, appliedFilters.search, appliedFilters.statusFilter, appliedFilters.dateRange, sortKey, sortDirection],
     enabled: Boolean(operatingCompanyId),
     queryFn: () =>
       listInvoices(operatingCompanyId, {
         search: appliedFilters.search || undefined,
         status: appliedFilters.statusFilter || undefined,
+        ...dateRange,
         sort: sortKey || undefined,
         dir: sortDirection || undefined,
         limit: 100,
@@ -208,7 +229,6 @@ export function InvoiceSearchReportPage() {
             onChange={(e) => staged.setDraft((p) => ({ ...p, dateRange: e.target.value }))}
             className="h-7 rounded-sm border border-gray-300 px-2 text-xs"
             data-testid="invoice-search-date-range"
-            // TODO: wire to backend filter
           >
             <option value="all">All time</option>
             <option value="last_30">Last 30 days</option>

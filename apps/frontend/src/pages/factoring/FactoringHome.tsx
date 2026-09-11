@@ -8,16 +8,22 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   deactivateFactoring,
   getFactoringChargebacksFees,
+  getFactoringDebtorReceipts,
   getFactoringFundsDue,
+  getFactoringInvoiceStatus,
   getFactoringRecoursePipeline,
   getFactoringStatementsSettings,
   getFactoringSummary,
+  getFactoringUnappliedCash,
   getReserveBalanceHistory,
   listFactors,
   updateFactor,
+  type FactoringDebtorReceipt,
+  type FactoringInvoiceStatusRow,
   type FactoringMonthlyFeeSummary,
   type FactoringReserveBalanceHistoryEntry,
   type FactoringSettingsRow,
+  type FactoringUnappliedCashRow,
 } from "../../api/factoring";
 import { EntityPicker } from "../../components/EntityPicker";
 import { useStagedListFilters } from "../../components/table";
@@ -111,6 +117,12 @@ const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "
 function fmtCurrency(value: unknown) {
   return currency.format(Number(value ?? 0));
 }
+
+// REG-049: shared From/To DatePicker label class. text-xs (the locked scale's semantic 12px
+// token) rather than an arbitrary-bracket size -- verify-ui-design-system-ratchet.mjs is
+// zero-tolerance on NET-NEW raw bracket font-size literals, and text-xs/sm/base/lg/xl/2xl/3xl are
+// the scale's own named exemptions (see that guard's own header comment).
+const DATE_FILTER_LABEL_CLASS = "flex flex-col gap-1 text-xs text-slate-600";
 
 function fmtDate(value: unknown) {
   if (!value) return "—";
@@ -256,6 +268,14 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   // FAC-09a Fees Paid — "View Closed Invoices" (open-invoices, per the doc's own confusing real
   // button label) / "View All Fees" toggle, per the real portal's screenshot.
   const [feesPaidView, setFeesPaidView] = useState<"open_invoices" | "all_fees">("all_fees");
+  // REG-044: Summary/Detail toggle for all factoring tabs (Account Summary, Aging,
+  // Chargebacks/Overpayments, Payment-To-You, Purchase Report, Faro Import).
+  const [accountSummaryView, setAccountSummaryView] = useState<"summary" | "detail">("summary");
+  const [agingView, setAgingView] = useState<"summary" | "detail">("detail");
+  const [chargebacksOverpaymentsView, setChargebacksOverpaymentsView] = useState<"summary" | "detail">("detail");
+  const [paymentsToYouView, setPaymentsToYouView] = useState<"summary" | "detail">("detail");
+  const [purchaseReportView, setPurchaseReportView] = useState<"summary" | "detail">("detail");
+  const [faroImportView, setFaroImportView] = useState<"summary" | "detail">("detail");
   const [faroCsvText, setFaroCsvText] = useState("");
   const [faroFileName, setFaroFileName] = useState("");
   const [showFaroJsonFallback, setShowFaroJsonFallback] = useState(false);
@@ -330,6 +350,10 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   const vendorIdFromUrl = searchParams.get("vendor_id")?.trim() ?? "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const loanIdFromUrl = searchParams.get("loan_id")?.trim() ?? "";
+  // REG-049 (owner fan-out 2026-09-09/10, "QBO filters (date etc.) on ALL"): a date range,
+  // same URL-deep-link/staged-filter convention as customer_id/load_id above.
+  const dateFromFromUrl = searchParams.get("date_from")?.trim() ?? "";
+  const dateToFromUrl = searchParams.get("date_to")?.trim() ?? "";
 
   // BANNER-MERGE-DEEPLINK-DROPS-CONTEXT — the Duplicate factoring vendors banner
   // (DuplicateVendorsBanner.tsx) resolves real from/to vendor ids+names via its own scan and used
@@ -375,6 +399,8 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     loadId: "",
     vendorId: "",
     driverId: "",
+    dateFrom: "",
+    dateTo: "",
   };
 
   function patchListSearchParam(next: {
@@ -382,13 +408,17 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     loadId: string;
     vendorId: string;
     driverId: string;
+    dateFrom: string;
+    dateTo: string;
   }) {
     const p = new URLSearchParams(searchParams);
-    const pairs: Array<["customer_id" | "load_id" | "vendor_id" | "driver_id", string]> = [
+    const pairs: Array<["customer_id" | "load_id" | "vendor_id" | "driver_id" | "date_from" | "date_to", string]> = [
       ["customer_id", next.customerId],
       ["load_id", next.loadId],
       ["vendor_id", next.vendorId],
       ["driver_id", next.driverId],
+      ["date_from", next.dateFrom],
+      ["date_to", next.dateTo],
     ];
     for (const [key, value] of pairs) {
       if (value) p.set(key, value);
@@ -403,6 +433,8 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     loadId: loadIdFromUrl,
     vendorId: vendorIdFromUrl,
     driverId: driverIdFromUrl,
+    dateFrom: dateFromFromUrl,
+    dateTo: dateToFromUrl,
   }));
   const staged = useStagedListFilters({
     applied,
@@ -421,14 +453,98 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       loadId: loadIdFromUrl,
       vendorId: vendorIdFromUrl,
       driverId: driverIdFromUrl,
+      dateFrom: dateFromFromUrl,
+      dateTo: dateToFromUrl,
     }));
-  }, [customerIdFromUrl, loadIdFromUrl, vendorIdFromUrl, driverIdFromUrl]);
+  }, [customerIdFromUrl, loadIdFromUrl, vendorIdFromUrl, driverIdFromUrl, dateFromFromUrl, dateToFromUrl]);
 
   // Sibling guards (verify-factoring-recourse-chargebacks-reverse-section) pin deepLink* names.
   const deepLinkCustomerId = applied.customerId || null;
   const deepLinkLoadId = applied.loadId || null;
   const deepLinkVendorId = applied.vendorId || null;
   const deepLinkDriverId = applied.driverId || null;
+  const deepLinkDateFrom = applied.dateFrom || null;
+  const deepLinkDateTo = applied.dateTo || null;
+
+  // REG-049 (owner fan-out 2026-09-09/10, "QBO filters (date etc.) on ALL"): Aging, Purchase
+  // Report, Payments to You, Chargebacks & Overpayments, and Funds Due all read the SAME
+  // recourseQuery/feesQuery/fundsDueQuery rows the date range above already narrows (see those
+  // queries' queryKey/queryFn), but had no filterBar of their own at all -- an operator landing
+  // directly on any of those five tabs had no way to set or even see the date range. One shared
+  // render helper (not a separate component -- stays a closure over this page's own
+  // applied/staged/filterDraft state, same as every other CollapsedListFilters consumer on this
+  // page) keeps five tabs' worth of "From date"/"To date" controls from drifting out of sync with
+  // each other or with the Recourse Pipeline tab's own fuller filterBar above.
+  function dateRangeOnlyFilterBar(testIdPrefix: string) {
+    return (
+      <CollapsedListFilters
+        activeFilterCount={[applied.dateFrom, applied.dateTo].filter(Boolean).length}
+        onApply={staged.apply}
+        onCancel={staged.cancel}
+        onReset={() => {
+          staged.cancel();
+          setApplied(EMPTY_FILTERS);
+          patchListSearchParam(EMPTY_FILTERS);
+        }}
+        applyDisabled={!staged.dirty}
+        testIdPrefix={testIdPrefix}
+        applyTestId={`${testIdPrefix}-filter-apply`}
+        cancelTestId={`${testIdPrefix}-filter-cancel`}
+        resetTestId={`${testIdPrefix}-filter-reset`}
+      >
+        <div className="flex flex-wrap items-end gap-3">
+          <label className={DATE_FILTER_LABEL_CLASS}>
+            From date
+            <DatePicker
+              value={filterDraft.dateFrom}
+              onChange={(next) => staged.setDraft((d) => ({ ...d, dateFrom: next }))}
+              className="h-8"
+              data-testid={`${testIdPrefix}-filter-date-from`}
+            />
+          </label>
+          <label className={DATE_FILTER_LABEL_CLASS}>
+            To date
+            <DatePicker
+              value={filterDraft.dateTo}
+              onChange={(next) => staged.setDraft((d) => ({ ...d, dateTo: next }))}
+              className="h-8"
+              data-testid={`${testIdPrefix}-filter-date-to`}
+            />
+          </label>
+        </div>
+      </CollapsedListFilters>
+    );
+  }
+
+  // REG-044: Shared Summary/Detail toggle for all factoring tabs.
+  function summaryDetailToggle(
+    view: "summary" | "detail",
+    setView: (v: "summary" | "detail") => void,
+    testIdPrefix: string,
+  ) {
+    return (
+      <div className="inline-flex" data-testid={`${testIdPrefix}-view-toggle`}>
+        <button
+          type="button"
+          data-testid={`${testIdPrefix}-view-summary`}
+          className={`px-2.5 py-1 text-xs font-semibold ${view === "summary" ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
+          aria-pressed={view === "summary"}
+          onClick={() => setView("summary")}
+        >
+          Summary
+        </button>
+        <button
+          type="button"
+          data-testid={`${testIdPrefix}-view-detail`}
+          className={`border-l border-gray-300 px-2.5 py-1 text-xs font-semibold ${view === "detail" ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
+          aria-pressed={view === "detail"}
+          onClick={() => setView("detail")}
+        >
+          Detail
+        </button>
+      </div>
+    );
+  }
 
   // NEW-20/NEW-26 (2026-09-07): setCustomerFilter/setLoadFilter/setVendorFilter/setDriverFilter
   // used to wrap staged.setDraft for each tab's own Customer/Load/Vendor/Driver pickers; every
@@ -440,17 +556,23 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   // functions removed as dead code once their last call site moved to the inline form.
 
   const recourseQuery = useQuery({
-    queryKey: ["factoring", "recourse", companyId, deepLinkCustomerId, deepLinkLoadId],
+    queryKey: ["factoring", "recourse", companyId, deepLinkCustomerId, deepLinkLoadId, deepLinkDateFrom, deepLinkDateTo],
     queryFn: () =>
       getFactoringRecoursePipeline(companyId, 200, {
         customer_id: deepLinkCustomerId ?? undefined,
         load_id: deepLinkLoadId ?? undefined,
+        date_from: deepLinkDateFrom ?? undefined,
+        date_to: deepLinkDateTo ?? undefined,
       }),
     enabled: Boolean(companyId),
   });
   const feesQuery = useQuery({
-    queryKey: ["factoring", "chargebacks-fees", companyId, deepLinkCustomerId],
-    queryFn: () => getFactoringChargebacksFees(companyId, deepLinkCustomerId ?? undefined),
+    queryKey: ["factoring", "chargebacks-fees", companyId, deepLinkCustomerId, deepLinkDateFrom, deepLinkDateTo],
+    queryFn: () =>
+      getFactoringChargebacksFees(companyId, deepLinkCustomerId ?? undefined, {
+        date_from: deepLinkDateFrom ?? undefined,
+        date_to: deepLinkDateTo ?? undefined,
+      }),
     enabled: Boolean(companyId),
   });
 
@@ -458,8 +580,45 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   // submitted-not-yet-advanced rows -- structurally cannot come from the same recourse-pipeline
   // fetch every other tab reuses, since that view only carries already-advanced invoices).
   const fundsDueQuery = useQuery({
-    queryKey: ["factoring", "funds-due", companyId],
-    queryFn: () => getFactoringFundsDue(companyId),
+    queryKey: ["factoring", "funds-due", companyId, deepLinkDateFrom, deepLinkDateTo],
+    queryFn: () =>
+      getFactoringFundsDue(companyId, {
+        date_from: deepLinkDateFrom ?? undefined,
+        date_to: deepLinkDateTo ?? undefined,
+      }),
+    enabled: Boolean(companyId),
+  });
+
+  // REG-015 (owner 2026-09-10): Three new real read-only factoring report endpoints.
+  // Each uses the same shared date/customer filters as every other tab (REG-049 fan-out).
+  const debtorReceiptsQuery = useQuery({
+    queryKey: ["factoring", "debtor-receipts", companyId, deepLinkCustomerId, deepLinkDateFrom, deepLinkDateTo],
+    queryFn: () =>
+      getFactoringDebtorReceipts(companyId, {
+        customer_id: deepLinkCustomerId ?? undefined,
+        date_from: deepLinkDateFrom ?? undefined,
+        date_to: deepLinkDateTo ?? undefined,
+      }),
+    enabled: Boolean(companyId),
+  });
+  const unappliedCashQuery = useQuery({
+    queryKey: ["factoring", "unapplied-cash", companyId, deepLinkCustomerId, deepLinkDateFrom, deepLinkDateTo],
+    queryFn: () =>
+      getFactoringUnappliedCash(companyId, {
+        customer_id: deepLinkCustomerId ?? undefined,
+        date_from: deepLinkDateFrom ?? undefined,
+        date_to: deepLinkDateTo ?? undefined,
+      }),
+    enabled: Boolean(companyId),
+  });
+  const invoiceStatusQuery = useQuery({
+    queryKey: ["factoring", "invoice-status", companyId, deepLinkCustomerId, deepLinkDateFrom, deepLinkDateTo],
+    queryFn: () =>
+      getFactoringInvoiceStatus(companyId, {
+        customer_id: deepLinkCustomerId ?? undefined,
+        date_from: deepLinkDateFrom ?? undefined,
+        date_to: deepLinkDateTo ?? undefined,
+      }),
     enabled: Boolean(companyId),
   });
 
@@ -733,8 +892,8 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
 
       <DuplicateVendorsBanner companyId={companyId} />
 
-      <div className="grid grid-cols-1 gap-2 lg:grid-cols-12" data-testid="factoring-home-overview-row">
-        <div className="lg:col-span-7" data-testid="factoring-home-kpi-col">
+      <div className="flex flex-wrap items-start gap-2" data-testid="factoring-home-overview-row">
+        <div className="flex-1 min-w-0" data-testid="factoring-home-kpi-col">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="factoring-home-kpi-row">
             <DrillKpiCard
               testId="factoring-kpi-active-factor"
@@ -779,7 +938,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             />
           </div>
         </div>
-        <div className="lg:col-span-5" data-testid="factoring-home-profile-col">
+        <div className="flex-1 min-w-0" data-testid="factoring-home-profile-col">
           {activeFactor ? (
             <FactoringProfilePanel
               variant="compact"
@@ -940,6 +1099,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       {tab === "funds_due" ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-funds-due-report">
           <div className="mb-2 text-xs font-medium text-gray-900">Funds Due</div>
+          <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-funds-due")}</div>
           {fundsDueQuery.isError ? (
             <ListErrorState
               title="Couldn't load funds due"
@@ -987,19 +1147,370 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
         </div>
       ) : null}
 
-      {/* FAC-09a 15-item real debtor-portal nav (owner 2026-09-08, screenshot-corrected). Aging
-          is fully real this pass (built on the same recourse-pipeline data, no new backend
-          query). The rest are honest, named, clickable stubs for this pass — never silently
-          shipped as done; each says plainly what it is. Real builds continue as fast-follow PRs. */}
-      {tab === "request_debtor_credit_check" ||
-      tab === "debtor_receipts" ||
-      tab === "loan_save" ||
-      tab === "unapplied_cash" ||
-      tab === "invoice_status_report" ||
-      tab === "messages_support" ? (
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700" data-testid={`factoring-stub-${tab}`}>
-          <div className="font-medium text-gray-900">{SUBNAV.find((item) => item.id === tab)?.label}</div>
-          <p className="mt-1">Not yet wired to real data — this tab exists and is reachable, but its content is a placeholder for this pass. See docs/audit/GUARD-WORKORDERS.md (FAC-09a) for what is real vs. stub.</p>
+      {/* REG-015 (owner 2026-09-10): Six real read-only factoring report tabs — replacing the
+          former dashed stubs. Each tab uses real backend data (3 new endpoints + reuse of
+          existing recourse/summary queries) with honest empty states where Neon has 0 rows. */}
+
+      {/* Request Debtor / Credit Check — reuses recourseQuery grouped by customer (debtor),
+          showing each debtor's factored invoice count, total invoice amount, advance, reserve,
+          and fees. No separate backend endpoint needed — the recourse pipeline already carries
+          all the per-invoice factoring data keyed by customer. */}
+      {tab === "request_debtor_credit_check" ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-request-debtor-credit-check">
+          <div className="mb-2 text-xs font-medium text-gray-900">Request Debtor / Credit Check</div>
+          <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-debtor-credit-check")}</div>
+          {recourseQuery.isError ? (
+            <ListErrorBanner onRetry={() => void recourseQuery.refetch()} />
+          ) : null}
+          {recourseQuery.isLoading ? (
+            <div className="py-4 text-center text-xs text-gray-500">Loading…</div>
+          ) : null}
+          {!recourseQuery.isLoading && !recourseQuery.isError ? (
+            (() => {
+              const rows = (recourseQuery.data?.invoices ?? []).reduce<
+                Array<{
+                  customer_id: string;
+                  customer_name: string;
+                  invoice_count: number;
+                  total_invoice: number;
+                  total_advance: number;
+                  total_reserve: number;
+                  total_fees: number;
+                }>
+              >((acc, row) => {
+                const key = row.customer_id ?? "unknown";
+                const existing = acc.find((r) => r.customer_id === key);
+                if (existing) {
+                  existing.invoice_count += 1;
+                  existing.total_invoice += Number(row.invoice_amount ?? 0);
+                  existing.total_advance += Number(row.advance_amount ?? 0);
+                  existing.total_reserve += Number(row.reserve_amount ?? 0);
+                  existing.total_fees += Number(row.invoice_amount ?? 0) - Number(row.advance_amount ?? 0) - Number(row.reserve_amount ?? 0);
+                } else {
+                  acc.push({
+                    customer_id: key,
+                    customer_name: row.customer_name ?? "—",
+                    invoice_count: 1,
+                    total_invoice: Number(row.invoice_amount ?? 0),
+                    total_advance: Number(row.advance_amount ?? 0),
+                    total_reserve: Number(row.reserve_amount ?? 0),
+                    total_fees: Number(row.invoice_amount ?? 0) - Number(row.advance_amount ?? 0) - Number(row.reserve_amount ?? 0),
+                  });
+                }
+                return acc;
+              }, []);
+              if (rows.length === 0) {
+                return (
+                  <div className="py-4 text-center text-xs text-gray-500" data-testid="factoring-debtor-credit-check-empty">
+                    No factored invoices — no debtors to show credit check data for.
+                  </div>
+                );
+              }
+              const debtorColumns: Array<ParityColumn<(typeof rows)[number]>> = [
+                { key: "customer_name", label: "Debtor (Customer)", sortable: true, render: (row) => (
+                  <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
+                ) },
+                { key: "invoice_count", label: "Invoices", sortable: true, render: (row) => String(row.invoice_count) },
+                { key: "total_invoice", label: "Original Invoice", sortable: true, render: (row) => fmtCurrency(row.total_invoice) },
+                { key: "total_advance", label: "Advance", sortable: true, render: (row) => fmtCurrency(row.total_advance) },
+                { key: "total_reserve", label: "Reserve", sortable: true, render: (row) => fmtCurrency(row.total_reserve) },
+                { key: "total_fees", label: "Fees", sortable: true, render: (row) => fmtCurrency(row.total_fees) },
+              ];
+              return (
+                <ParityTable
+                  columns={debtorColumns}
+                  rows={rows}
+                  rowKey={(row) => row.customer_id}
+                  storageKey="factoring-debtor-credit-check"
+                  tableTestId="factoring-debtor-credit-check-table"
+                  emptyText="No factored invoices — no debtors to show credit check data for."
+                />
+              );
+            })()
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Debtor Receipts — payments received from customers on factored invoices. New backend
+          endpoint GET /api/v1/factoring/debtor-receipts. Live-verified 2026-09-10: 0 rows
+          (USMCA has no customer payments yet — honest empty state). */}
+      {tab === "debtor_receipts" ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-debtor-receipts">
+          <div className="mb-2 text-xs font-medium text-gray-900">Debtor Receipts</div>
+          <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-debtor-receipts")}</div>
+          {debtorReceiptsQuery.isError ? (
+            <ListErrorBanner onRetry={() => void debtorReceiptsQuery.refetch()} />
+          ) : null}
+          {debtorReceiptsQuery.isLoading ? (
+            <div className="py-4 text-center text-xs text-gray-500">Loading…</div>
+          ) : null}
+          {!debtorReceiptsQuery.isLoading && !debtorReceiptsQuery.isError ? (
+            (() => {
+              const rows = debtorReceiptsQuery.data?.receipts ?? [];
+              if (rows.length === 0) {
+                return (
+                  <div className="py-4 text-center text-xs text-gray-500" data-testid="factoring-debtor-receipts-empty">
+                    No debtor receipts — no customer payments on factored invoices yet.
+                  </div>
+                );
+              }
+              const receiptColumns: Array<ParityColumn<FactoringDebtorReceipt>> = [
+                { key: "payment_date", label: "Payment Date", sortable: true, render: (row) => fmtDate(row.payment_date) },
+                { key: "customer_name", label: "Customer", render: (row) => row.customer_id ? (
+                  <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
+                ) : "—" },
+                { key: "invoice_display_id", label: "Invoice", render: (row) => row.invoice_id ? (
+                  <EntityLink kind="invoice" id={row.invoice_id} label={entityLabel(row.invoice_display_id, row.invoice_id, "Invoice")} />
+                ) : "—" },
+                { key: "advance_display_id", label: "Advance", render: (row) => row.factoring_advance_id ? (
+                  <EntityLink kind="factoring_advance" id={row.factoring_advance_id} label={row.advance_display_id ?? "—"} />
+                ) : "—" },
+                { key: "amount_cents", label: "Payment Amount", sortable: true, render: (row) => fmtCurrency(row.amount_cents) },
+                { key: "amount_applied_cents", label: "Applied", sortable: true, render: (row) => fmtCurrency(row.amount_applied_cents) },
+                { key: "amount_unapplied_cents", label: "Unapplied", sortable: true, render: (row) => fmtCurrency(row.amount_unapplied_cents) },
+                { key: "payment_reference", label: "Reference", render: (row) => row.payment_reference || "—" },
+              ];
+              return (
+                <ParityTable
+                  columns={receiptColumns}
+                  rows={rows}
+                  rowKey={(row) => row.payment_id}
+                  storageKey="factoring-debtor-receipts"
+                  tableTestId="factoring-debtor-receipts-table"
+                  emptyText="No debtor receipts — no customer payments on factored invoices yet."
+                />
+              );
+            })()
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Loan / Save — reuses recourseQuery showing each factoring advance as a loan (advance
+          amount = principal borrowed) with the reserve as the savings holdback. Also shows the
+          total reserve balance from summaryQuery. No new backend endpoint needed. */}
+      {tab === "loan_save" ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-loan-save">
+          <div className="mb-2 text-xs font-medium text-gray-900">Loan / Save</div>
+          <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-loan-save")}</div>
+          <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="factoring-loan-save-summary">
+            <div className="bg-gray-50 p-2">
+              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Total Loan Balance</div>
+              <div className="text-xs font-medium text-gray-900">{fmtCurrency(summary?.outstanding_liability_balance)}</div>
+            </div>
+            <div className="bg-gray-50 p-2">
+              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Total Reserve (Savings)</div>
+              <div className="text-xs font-medium text-gray-900">{fmtCurrency(summary?.reserve_balance)}</div>
+            </div>
+            <div className="bg-gray-50 p-2">
+              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Active Advances</div>
+              <div className="text-xs font-medium text-gray-900">{String((recourseQuery.data?.invoices ?? []).length)}</div>
+            </div>
+          </div>
+          {recourseQuery.isError ? (
+            <ListErrorBanner onRetry={() => void recourseQuery.refetch()} />
+          ) : null}
+          {recourseQuery.isLoading ? (
+            <div className="py-4 text-center text-xs text-gray-500">Loading…</div>
+          ) : null}
+          {!recourseQuery.isLoading && !recourseQuery.isError ? (
+            (() => {
+              const rows = recourseQuery.data?.invoices ?? [];
+              if (rows.length === 0) {
+                return (
+                  <div className="py-4 text-center text-xs text-gray-500" data-testid="factoring-loan-save-empty">
+                    No active loans — no factoring advances on file.
+                  </div>
+                );
+              }
+              const loanColumns: Array<ParityColumn<(typeof rows)[number]>> = [
+                { key: "factoring_advance_id", label: "Advance", sortable: true, render: (row) => (
+                  <EntityLink kind="factoring_advance" id={row.factoring_advance_id} label={row.invoice_reference ?? row.factoring_advance_id} />
+                ) },
+                { key: "customer_name", label: "Customer", render: (row) => row.customer_id ? (
+                  <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
+                ) : "—" },
+                { key: "invoice_id", label: "Invoice", render: (row) => row.invoice_id ? (
+                  <EntityLink kind="invoice" id={row.invoice_id} label={entityLabel(row.invoice_reference, row.invoice_id, "Invoice")} />
+                ) : "—" },
+                { key: "invoice_amount", label: "Original Invoice", sortable: true, render: (row) => fmtCurrency(row.invoice_amount) },
+                { key: "advance_amount", label: "Loan (Advance)", sortable: true, render: (row) => fmtCurrency(row.advance_amount) },
+                { key: "reserve_amount", label: "Reserve (Savings)", sortable: true, render: (row) => fmtCurrency(row.reserve_amount) },
+                { key: "factored_at", label: "Advanced Date", sortable: true, render: (row) => fmtDate(row.factored_at) },
+              ];
+              return (
+                <ParityTable
+                  columns={loanColumns}
+                  rows={rows}
+                  rowKey={(row) => row.factoring_advance_id}
+                  storageKey="factoring-loan-save"
+                  tableTestId="factoring-loan-save-table"
+                  emptyText="No active loans — no factoring advances on file."
+                />
+              );
+            })()
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Unapplied Cash — payments with unapplied balances. New backend endpoint
+          GET /api/v1/factoring/unapplied-cash. Live-verified 2026-09-10: 0 rows. */}
+      {tab === "unapplied_cash" ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-unapplied-cash">
+          <div className="mb-2 text-xs font-medium text-gray-900">Unapplied Cash</div>
+          <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-unapplied-cash")}</div>
+          {unappliedCashQuery.isError ? (
+            <ListErrorBanner onRetry={() => void unappliedCashQuery.refetch()} />
+          ) : null}
+          {unappliedCashQuery.isLoading ? (
+            <div className="py-4 text-center text-xs text-gray-500">Loading…</div>
+          ) : null}
+          {!unappliedCashQuery.isLoading && !unappliedCashQuery.isError ? (
+            (() => {
+              const rows = unappliedCashQuery.data?.rows ?? [];
+              if (rows.length === 0) {
+                return (
+                  <div className="py-4 text-center text-xs text-gray-500" data-testid="factoring-unapplied-cash-empty">
+                    No unapplied cash — all received payments are fully applied to invoices.
+                  </div>
+                );
+              }
+              const unappliedColumns: Array<ParityColumn<FactoringUnappliedCashRow>> = [
+                { key: "payment_date", label: "Payment Date", sortable: true, render: (row) => fmtDate(row.payment_date) },
+                { key: "customer_name", label: "Customer", render: (row) => row.customer_id ? (
+                  <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
+                ) : "—" },
+                { key: "amount_cents", label: "Payment Amount", sortable: true, render: (row) => fmtCurrency(row.amount_cents) },
+                { key: "amount_applied_cents", label: "Applied", sortable: true, render: (row) => fmtCurrency(row.amount_applied_cents) },
+                { key: "amount_unapplied_cents", label: "Unapplied", sortable: true, render: (row) => fmtCurrency(row.amount_unapplied_cents) },
+                { key: "payment_reference", label: "Reference", render: (row) => row.payment_reference || "—" },
+                { key: "notes", label: "Notes", render: (row) => row.notes || "—" },
+              ];
+              return (
+                <ParityTable
+                  columns={unappliedColumns}
+                  rows={rows}
+                  rowKey={(row) => row.payment_id}
+                  storageKey="factoring-unapplied-cash"
+                  tableTestId="factoring-unapplied-cash-table"
+                  emptyText="No unapplied cash — all received payments are fully applied to invoices."
+                />
+              );
+            })()
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Invoice Status Report — all non-void invoices with their factoring_status, joined to
+          factoring_advances for advance/reserve/fee amounts. New backend endpoint
+          GET /api/v1/factoring/invoice-status. Live-verified 2026-09-10: 64 non-void invoices
+          (51 advanced, 8 not_factored sent, 5 proforma). REG-046: each row shows invoiced date,
+          settlement number, delivery date, Original Invoice Amount, Advance, Reserve, Fees. */}
+      {tab === "invoice_status_report" ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-invoice-status-report">
+          <div className="mb-2 text-xs font-medium text-gray-900">Invoice Status Report</div>
+          <div className="mb-2 text-xs text-gray-500" data-testid="factoring-invoice-status-label">
+            Each row shows the money waterfall: invoiced date → settlement # → delivery date → Original Invoice Amount → Advance → Reserve → Fees.
+            Invoice, Customer, and Factoring Status columns follow for reference.
+          </div>
+          <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-invoice-status")}</div>
+          {invoiceStatusQuery.isError ? (
+            <ListErrorBanner onRetry={() => void invoiceStatusQuery.refetch()} />
+          ) : null}
+          {invoiceStatusQuery.isLoading ? (
+            <div className="py-4 text-center text-xs text-gray-500">Loading…</div>
+          ) : null}
+          {!invoiceStatusQuery.isLoading && !invoiceStatusQuery.isError ? (
+            (() => {
+              const rows = invoiceStatusQuery.data?.invoices ?? [];
+              if (rows.length === 0) {
+                return (
+                  <div className="py-4 text-center text-xs text-gray-500" data-testid="factoring-invoice-status-empty">
+                    No invoices found for the selected filters.
+                  </div>
+                );
+              }
+              const invoiceStatusColumns: Array<ParityColumn<FactoringInvoiceStatusRow>> = [
+                { key: "issue_date", label: "Invoiced Date", sortable: true, render: (row) => fmtDate(row.issue_date) },
+                { key: "lc_settlement_number", label: "Settlement #", sortable: true, render: (row) => row.lc_settlement_number || "—" },
+                { key: "delivery_date", label: "Delivery Date", sortable: true, render: (row) => fmtDate(row.delivery_date) },
+                { key: "total_cents", label: "Original Invoice Amount", sortable: true, render: (row) => fmtCurrency(row.total_cents) },
+                { key: "advance_amount_cents", label: "Advance", sortable: true, render: (row) => row.advance_amount_cents != null ? fmtCurrency(row.advance_amount_cents) : "—" },
+                { key: "reserve_amount_cents", label: "Reserve", sortable: true, render: (row) => row.reserve_amount_cents != null ? fmtCurrency(row.reserve_amount_cents) : "—" },
+                { key: "factor_fee_cents", label: "Fees", sortable: true, render: (row) => row.factor_fee_cents != null ? fmtCurrency(row.factor_fee_cents) : "—" },
+                { key: "invoice_display_id", label: "Invoice", render: (row) => (
+                  <EntityLink kind="invoice" id={row.invoice_id} label={entityLabel(row.invoice_display_id, row.invoice_id, "Invoice")} />
+                ) },
+                { key: "customer_name", label: "Customer", render: (row) => row.customer_id ? (
+                  <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
+                ) : "—" },
+                { key: "factoring_status", label: "Factoring Status", sortable: true, render: (row) => row.factoring_status ?? "—" },
+              ];
+              return (
+                <ParityTable
+                  columns={invoiceStatusColumns}
+                  rows={rows}
+                  rowKey={(row) => row.invoice_id}
+                  storageKey="factoring-invoice-status"
+                  tableTestId="factoring-invoice-status-table"
+                  emptyText="No invoices found for the selected filters."
+                />
+              );
+            })()
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Messages & Support — contact information for the active factor company. Read-only
+          display of the factor's name, email, phone, and address from the factor profile.
+          No message-writing capability (read-only report, no external system submission). */}
+      {tab === "messages_support" ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-messages-support">
+          <div className="mb-2 text-xs font-medium text-gray-900">Messages &amp; Support</div>
+          {summaryQuery.isError ? (
+            <ListErrorBanner onRetry={() => void summaryQuery.refetch()} />
+          ) : null}
+          {summaryQuery.isLoading ? (
+            <div className="py-4 text-center text-xs text-gray-500">Loading…</div>
+          ) : null}
+          {!summaryQuery.isLoading && !summaryQuery.isError ? (
+            (() => {
+              const factor = activeFactor;
+              if (!factor) {
+                return (
+                  <div className="py-4 text-center text-xs text-gray-500" data-testid="factoring-messages-support-empty">
+                    No active factor company — contact information is unavailable until a factor is configured.
+                  </div>
+                );
+              }
+              return (
+                <div className="space-y-3" data-testid="factoring-messages-support-content">
+                  <div className="bg-gray-50 p-3">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Factor Company</div>
+                    <div className="text-xs font-medium text-gray-900">{factor.name}</div>
+                    {factor.noa_remit_to_name ? (
+                      <div className="mt-1 text-xs text-gray-700">Remit To: {factor.noa_remit_to_name}</div>
+                    ) : null}
+                    {factor.noa_remit_to_addr ? (
+                      <div className="mt-1 text-xs text-gray-700">Address: {factor.noa_remit_to_addr}</div>
+                    ) : null}
+                    {factor.noa_remit_to_wire_ref ? (
+                      <div className="mt-1 text-xs text-gray-700">Wire Ref: {factor.noa_remit_to_wire_ref}</div>
+                    ) : null}
+                    {factor.notes ? (
+                      <div className="mt-1 text-xs text-gray-700">Notes: {factor.notes}</div>
+                    ) : null}
+                  </div>
+                  <div className="bg-gray-50 p-3">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Send a Message</div>
+                    <p className="mt-1 text-xs text-gray-600">
+                      To contact {factor.name} about your factoring account, use the contact information above.
+                      In-app messaging to the factor company is not available — this is a read-only contact reference.
+                    </p>
+                  </div>
+                </div>
+              );
+            })()
+          ) : null}
         </div>
       ) : null}
 
@@ -1112,6 +1623,10 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             </div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              {dateRangeOnlyFilterBar("factoring-home-payments-to-you")}
+              {summaryDetailToggle(paymentsToYouView, setPaymentsToYouView, "factoring-payments-to-you")}
+            </div>
             {recourseQuery.isError ? (
               <ListErrorState
                 title="Couldn't load payments"
@@ -1165,7 +1680,10 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       {tab === "chargebacks_overpayments" ? (
         <div className="space-y-3">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-xs font-medium text-gray-900">Chargebacks &amp; Overpayments</div>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="text-xs font-medium text-gray-900">Chargebacks &amp; Overpayments</div>
+              {summaryDetailToggle(chargebacksOverpaymentsView, setChargebacksOverpaymentsView, "factoring-chargebacks-overpayments")}
+            </div>
             {/* UI-01 (flat containers, no box-in-box): unlike the Aging tab's summary strip
                 (individually-bordered tiles, already the file's one grandfathered instance of
                 this shape), this strip's tiles stay borderless -- divided by a thin border
@@ -1190,6 +1708,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             </div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-chargebacks-overpayments")}</div>
             {feesQuery.isError ? (
               <ListErrorState
                 title="Couldn't load chargebacks & overpayments"
@@ -1224,10 +1743,13 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-account-summary">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <div className="text-xs font-medium text-gray-900">Account Summary</div>
-                    <div className="text-xs text-gray-500">
+                    <div className="flex items-center gap-2">
+                      {summaryDetailToggle(accountSummaryView, setAccountSummaryView, "factoring-account-summary")}
+                      <div className="text-xs text-gray-500">
                       No date-range picker this pass — this schema has no historical period-close
                       snapshot for factoring balances, so a date range could not change any of the
                       point-in-time figures below without fabricating history.
+                    </div>
                     </div>
                   </div>
 
@@ -1371,8 +1893,14 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             <div className="text-xs font-medium text-gray-900">Purchase Report</div>
             <div className="text-xs text-gray-500">
               "Display Fee Detail" / "Include Non-Purchased Invoices" / "Filter by Debtor" are not
-              wired this pass — every invoice in the register is shown.
+              wired this pass — every invoice in the register is shown. (A Debtor/Load filter can
+              still be set from the Recourse Pipeline tab's own filterBar — it narrows this report
+              too, since both share the same underlying query.)
             </div>
+          </div>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            {dateRangeOnlyFilterBar("factoring-home-purchase-report")}
+            {summaryDetailToggle(purchaseReportView, setPurchaseReportView, "factoring-purchase-report")}
           </div>
           {recourseQuery.isError ? (
             <ListErrorState
@@ -1403,11 +1931,15 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   // entirely"): real field, already fetched (FactoringRecourseInvoice carries the
                   // same shared Load-Costs rollup lc_settlement_number RecoursePipelineTable
                   // already renders) — no new backend query, just never surfaced on this tab.
+                  { key: "load_number", label: "Load Number", sortable: true, alwaysVisible: true,
+                      sortValue: (row: (typeof purchaseReportRows)[number]) => row.lc_load_number ?? "",
+                      render: (row: (typeof purchaseReportRows)[number]) => row.load_id ? <EntityLink kind="load" id={row.load_id} label={row.lc_load_number ?? "—"} /> : row.lc_load_number ?? "—" },
                   {
                     key: "settlement_number",
-                    label: "Settlement #",
+                    label: "Settlement/Tour",
+                    alwaysVisible: true,
                     sortable: true,
-                    render: (row: (typeof purchaseReportRows)[number]) => row.lc_settlement_number || "—",
+                    render: (row: (typeof purchaseReportRows)[number]) => row.settlement_id ? <EntityLink kind="settlement" id={row.settlement_id} label={row.settlement_display_id ?? row.lc_settlement_number ?? "—"} /> : row.lc_settlement_number || "—",
                   },
                   // OWNER MEGA-REPORT 2026-09-09: "amount of the ORIGINAL invoice, then advance,
                   // then reserve, then fees — in that order, every tab." The 4 real dollar columns
@@ -1608,10 +2140,13 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <div className="text-xs font-medium text-gray-900">Aging Report — as of {fmtDate(new Date().toISOString())}</div>
-              <div className="text-xs text-gray-500" data-testid="factoring-aging-date-basis-note">
+              <div className="flex items-center gap-2">
+                {summaryDetailToggle(agingView, setAgingView, "factoring-aging")}
+                <div className="text-xs text-gray-500" data-testid="factoring-aging-date-basis-note">
                 Aged by factored date (the date each invoice entered the factoring register) —
                 the real portal's "View by Invoice Date / Purchase Date / Fund Date" toggle is not
                 wired this pass; this data model has one real date field to age against.
+                </div>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6" data-testid="factoring-aging-summary-strip">
@@ -1636,6 +2171,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             </div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-aging")}</div>
             {recourseQuery.isError ? (
               <ListErrorState
                 title="Couldn't load aging report"
@@ -1676,9 +2212,13 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                     // (settlement_id/settlement_display_id), falling back to the same
                     // lc_settlement_number text Purchase Report's identical addition uses when the
                     // advance has no linked settlement row yet -- no new backend query either way.
-                    {
+                    { key: "load_number", label: "Load Number", sortable: true, alwaysVisible: true,
+                      sortValue: (row: (typeof agingRows)[number]) => row.lc_load_number ?? "",
+                      render: (row: (typeof agingRows)[number]) => row.load_id ? <EntityLink kind="load" id={row.load_id} label={row.lc_load_number ?? "—"} /> : row.lc_load_number ?? "—" },
+                  {
                       key: "settlement_number",
-                      label: "Settlement #",
+                      label: "Settlement/Tour",
+                      alwaysVisible: true,
                       sortable: true,
                       render: (row: (typeof agingRows)[number]) =>
                         row.settlement_id ? (
@@ -1747,7 +2287,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 // search/range/gear, in the one bordered shell) instead of two full-width
                 // EntityPicker boxes floating in a separate outer div above it.
                 <CollapsedListFilters
-                  activeFilterCount={[applied.customerId, applied.loadId].filter(Boolean).length}
+                  activeFilterCount={[applied.customerId, applied.loadId, applied.dateFrom, applied.dateTo].filter(Boolean).length}
                   onApply={staged.apply}
                   onCancel={staged.cancel}
                   onReset={() => {
@@ -1786,6 +2326,28 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                         placeholder="All loads"
                         className="mt-1"
                         dataTestId="factoring-home-filter-load"
+                      />
+                    </label>
+                    {/* REG-049: this date range drives recourseQuery/feesQuery/fundsDueQuery
+                        together (one shared `applied` filter state), so it also narrows Aging,
+                        Purchase Report, Payments to You, Chargebacks & Overpayments, and Funds
+                        Due — every REG-046 report tab, not just this one. */}
+                    <label className={DATE_FILTER_LABEL_CLASS}>
+                      From date
+                      <DatePicker
+                        value={filterDraft.dateFrom}
+                        onChange={(next) => staged.setDraft((d) => ({ ...d, dateFrom: next }))}
+                        className="h-8"
+                        data-testid="factoring-home-filter-date-from"
+                      />
+                    </label>
+                    <label className={DATE_FILTER_LABEL_CLASS}>
+                      To date
+                      <DatePicker
+                        value={filterDraft.dateTo}
+                        onChange={(next) => staged.setDraft((d) => ({ ...d, dateTo: next }))}
+                        className="h-8"
+                        data-testid="factoring-home-filter-date-to"
                       />
                     </label>
                   </div>
@@ -1834,7 +2396,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   // NEW-20 — see the identical Recourse Pipeline filterBar above for the full
                   // rationale (CollapsedListFilters, the shared Accounting-module chrome).
                   <CollapsedListFilters
-                    activeFilterCount={applied.customerId ? 1 : 0}
+                    activeFilterCount={[applied.customerId, applied.dateFrom, applied.dateTo].filter(Boolean).length}
                     onApply={staged.apply}
                     onCancel={staged.cancel}
                     onReset={() => {
@@ -1859,6 +2421,24 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                         placeholder="All customers"
                         className="mt-1"
                         dataTestId="factoring-home-chargebacks-filter-customer"
+                      />
+                    </label>
+                    <label className={DATE_FILTER_LABEL_CLASS}>
+                      From date
+                      <DatePicker
+                        value={filterDraft.dateFrom}
+                        onChange={(next) => staged.setDraft((d) => ({ ...d, dateFrom: next }))}
+                        className="h-8"
+                        data-testid="factoring-home-chargebacks-filter-date-from"
+                      />
+                    </label>
+                    <label className={DATE_FILTER_LABEL_CLASS}>
+                      To date
+                      <DatePicker
+                        value={filterDraft.dateTo}
+                        onChange={(next) => staged.setDraft((d) => ({ ...d, dateTo: next }))}
+                        className="h-8"
+                        data-testid="factoring-home-chargebacks-filter-date-to"
                       />
                     </label>
                   </CollapsedListFilters>
@@ -1991,7 +2571,10 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       {tab === "faro_imports" ? (
         <div className="space-y-3">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-xs font-medium text-gray-900">Upsert Faro daily import batch</div>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="text-xs font-medium text-gray-900">Upsert Faro daily import batch</div>
+              {summaryDetailToggle(faroImportView, setFaroImportView, "factoring-faro-import")}
+            </div>
             <div className="grid gap-2 md:grid-cols-3 mb-3">
               <DatePicker
                 className=""
@@ -2065,17 +2648,106 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             />
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-xs font-medium text-gray-900">Recent Faro imports</div>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="text-xs font-medium text-gray-900">Recent Faro imports</div>
+              <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-faro-imports")}</div>
+            </div>
             {faroImportsQuery.isError ? (
               <ListErrorState
                 title="Couldn't load Faro imports"
                 {...formatQueryErrorDetail(faroImportsQuery.error)}
                 onRetry={() => void faroImportsQuery.refetch()}
               />
+            ) : faroImportView === "summary" ? (
+              <div data-testid="factoring-faro-import-summary-view">
+                <div className="mb-2 text-xs text-gray-500">
+                  Summary: aggregated totals across all Faro import batches, reconciled against the factoring summary.
+                </div>
+                {(() => {
+                  const faroRows = faroImportsQuery.data?.rows ?? [];
+                  const filtered = faroRows.filter((r) => {
+                    if (applied.dateFrom && r.statement_date < applied.dateFrom) return false;
+                    if (applied.dateTo && r.statement_date > applied.dateTo) return false;
+                    return true;
+                  });
+                  const faroGross = filtered.reduce((s, r) => s + Number(r.gross_total_cents ?? 0), 0);
+                  const faroAdvance = filtered.reduce((s, r) => s + Number(r.advance_total_cents ?? 0), 0);
+                  const faroReserve = filtered.reduce((s, r) => s + Number(r.reserve_total_cents ?? 0), 0);
+                  const faroFees = filtered.reduce((s, r) => s + Number(r.fee_total_cents ?? 0), 0);
+                  const faroChargebacks = filtered.reduce((s, r) => s + Number(r.chargeback_total_cents ?? 0), 0);
+                  const summaryAdvance = summary?.mtd_advanced_total ? Math.round(summary.mtd_advanced_total * 100) : 0;
+                  const summaryReserve = summary?.reserve_balance ? Math.round(summary.reserve_balance * 100) : 0;
+                  const advanceDiff = faroAdvance - summaryAdvance;
+                  const reserveDiff = faroReserve - summaryReserve;
+                  return (
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="factoring-faro-summary-totals">
+                        <div className="border border-gray-200 p-2 text-center">
+                          <div className="text-xs uppercase tracking-wide text-gray-500">Faro Gross</div>
+                          <div className="mt-1 font-semibold text-gray-900">{fmtCurrency(faroGross / 100)}</div>
+                        </div>
+                        <div className="border border-gray-200 p-2 text-center">
+                          <div className="text-xs uppercase tracking-wide text-gray-500">Faro Advance</div>
+                          <div className="mt-1 font-semibold text-gray-900">{fmtCurrency(faroAdvance / 100)}</div>
+                        </div>
+                        <div className="border border-gray-200 p-2 text-center">
+                          <div className="text-xs uppercase tracking-wide text-gray-500">Faro Reserve</div>
+                          <div className="mt-1 font-semibold text-gray-900">{fmtCurrency(faroReserve / 100)}</div>
+                        </div>
+                        <div className="border border-gray-200 p-2 text-center">
+                          <div className="text-xs uppercase tracking-wide text-gray-500">Faro Fees</div>
+                          <div className="mt-1 font-semibold text-gray-900">{fmtCurrency(faroFees / 100)}</div>
+                        </div>
+                        <div className="border border-gray-200 p-2 text-center">
+                          <div className="text-xs uppercase tracking-wide text-gray-500">Faro Chargebacks</div>
+                          <div className="mt-1 font-semibold text-gray-900">{fmtCurrency(faroChargebacks / 100)}</div>
+                        </div>
+                        <div className="border border-gray-200 p-2 text-center">
+                          <div className="text-xs uppercase tracking-wide text-gray-500">Batches</div>
+                          <div className="mt-1 font-semibold text-gray-900">{filtered.length}</div>
+                        </div>
+                      </div>
+                      <div className="mt-3 p-3" data-testid="factoring-faro-reconciliation">
+                        <div className="mb-2 text-xs font-medium text-gray-900">Reconciliation: Faro vs Factoring Summary</div>
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                            <span className="text-xs text-gray-600">Faro Advance Total</span>
+                            <span className="text-xs text-gray-900" data-testid="faro-recon-advance-faro">{fmtCurrency(faroAdvance / 100)}</span>
+                          </div>
+                          <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                            <span className="text-xs text-gray-600">Factoring Summary MTD Advanced</span>
+                            <span className="text-xs text-gray-900" data-testid="faro-recon-advance-summary">{fmtCurrency(summaryAdvance / 100)}</span>
+                          </div>
+                          <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                            <span className="text-xs text-gray-600">Advance Difference</span>
+                            <span className="text-xs font-semibold" data-testid="faro-recon-advance-diff">{fmtCurrency(advanceDiff / 100)}</span>
+                          </div>
+                          <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                            <span className="text-xs text-gray-600">Faro Reserve Total</span>
+                            <span className="text-xs text-gray-900" data-testid="faro-recon-reserve-faro">{fmtCurrency(faroReserve / 100)}</span>
+                          </div>
+                          <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                            <span className="text-xs text-gray-600">Factoring Summary Reserve Balance</span>
+                            <span className="text-xs text-gray-900" data-testid="faro-recon-reserve-summary">{fmtCurrency(summaryReserve / 100)}</span>
+                          </div>
+                          <div className="flex items-center justify-between py-1">
+                            <span className="text-xs text-gray-600">Reserve Difference</span>
+                            <span className="text-xs font-semibold" data-testid="faro-recon-reserve-diff">{fmtCurrency(reserveDiff / 100)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
             ) : (
               <ParityTable
                 columns={FARO_IMPORT_COLUMNS}
-                rows={faroImportsQuery.data?.rows ?? []}
+                rows={(faroImportsQuery.data?.rows ?? []).filter((r) => {
+                  if (applied.dateFrom && r.statement_date < applied.dateFrom) return false;
+                  if (applied.dateTo && r.statement_date > applied.dateTo) return false;
+                  return true;
+                })}
                 rowKey={(row) => row.id}
                 loading={faroImportsQuery.isLoading}
                 emptyText="No Faro imports recorded yet."

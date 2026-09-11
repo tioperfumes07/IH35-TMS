@@ -6,7 +6,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { entityLabel } from "../../../lib/entity-label";
-import { addDaysIso } from "./planner-range";
+import { addDaysIso, widenPlannerRange } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { PlannerAxisHead } from "./PlannerAxisHead";
@@ -57,7 +57,7 @@ async function fetchLoadsForRange(operatingCompanyId: string, rangeStart: string
 export function LoadsPlanner() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
-  const { range, days } = usePlannerRange();
+  const { range, days, setRange } = usePlannerRange();
   const [viewMode, setViewMode] = useState<PlannerViewMode>("grid");
 
   const loadsQuery = useQuery({
@@ -142,6 +142,7 @@ export function LoadsPlanner() {
           frozenLabel="Load"
           frozenPx={260}
           statusLabel="Status"
+          onExpandRange={(minYmd, maxYmd) => setRange(widenPlannerRange(range, minYmd, maxYmd))}
           rows={rows.map((load) => {
             const start = toDayKey(load.start_at) ?? days[0];
             const end = toDayKey(load.end_at) ?? start;

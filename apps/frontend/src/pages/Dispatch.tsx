@@ -171,6 +171,15 @@ export function DispatchPage({
   const sort = searchParams.get("sort") ?? "created_at:desc";
   const offset = Number(searchParams.get("offset") ?? "0");
   const limit = Number(searchParams.get("limit") ?? "50");
+  // REG-037 (owner 2026-09-10: Round Trips timeline "Aug 25 → present is not rendering loads/units"):
+  // the Round Trips board AND timeline (view === "units") render from this same `loads` array, but the
+  // Load Board's 50-row pagination silently truncated the fleet — every unit/load past the first page
+  // never reached the timeline (94 assigned USMCA loads exist since Aug 25 alone, far past 50). That
+  // view has no pager (it is a whole-fleet board + a windowed timeline), so it must fetch the full
+  // window, not a single 50-row page. Widen the fetch for that view only; the paginated List view keeps
+  // its page size. Terminal closed/cancelled rows are still filtered out client-side by RT_TIMELINE_STATUSES.
+  const roundTripsFullFetch = subTab === "load_board" && view === "units";
+  const effectiveLoadsLimit = roundTripsFullFetch ? 1000 : limit;
   const [sortField, sortDirection] = sort.split(":") as [
     "created_at" | "load_number" | "status" | "rate_total_cents",
     "asc" | "desc",
@@ -211,8 +220,8 @@ export function DispatchPage({
   }, [boardScope, searchParams, setSearchParams]);
 
   const loadsQuery = useLoadsList({
-    limit,
-    offset,
+    limit: effectiveLoadsLimit,
+    offset: roundTripsFullFetch ? 0 : offset,
     sort,
     search: filters.search || undefined,
     customer_id: filters.customerId,

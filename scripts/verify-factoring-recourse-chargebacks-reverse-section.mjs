@@ -65,7 +65,7 @@ export function assertFactoringRecourseChargebacksReverse(sources) {
     if (!entry?.required?.includes("reverse_link")) problems.push(`${REQUIRED}: ${leaf} must remain a Required reverse_link leaf`);
   }
 
-  if (!/recourseQuerySchema = companyQuerySchema\.extend\(\{[\s\S]*?customer_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(routes)) {
+  if (!/recourseQuerySchema = companyQuerySchema\.extend\([\s\S]*?customer_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(routes)) {
     problems.push(`${ROUTES}: recourseQuerySchema must accept optional customer_id`);
   }
   if (!/load_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(routes)) {

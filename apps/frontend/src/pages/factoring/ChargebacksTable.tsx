@@ -127,7 +127,7 @@ export function ChargebacksTable({ rows, fmtCurrency, fmtDate, filterBar }: Prop
         advancedCents: null,
         dueCents: null,
       }),
-      { exclude: ["advanced", "factoring_fee"] },
+      { exclude: ["advanced", "factoring_fee", "driver_pay", "margin"] },
     ),
   ];
 

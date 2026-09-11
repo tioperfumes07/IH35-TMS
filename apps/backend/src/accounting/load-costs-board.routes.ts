@@ -35,7 +35,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
       load_costs_sort: z.enum([
         "load", "unit", "driver_name", "pu_date", "del_date", "status", "revenue",
         "late_fee", "lumper", "fuel", "repairs_maintenance", "other",
-        "short_miles", "rate_loaded", "loaded_pay", "empty_miles", "rate_empty", "deadhead_pay", "gross", "margin",
+        "short_miles", "rate_loaded", "loaded_pay", "empty_miles", "rate_empty", "deadhead_pay", "gross", "margin", "margin_pct",
         "settlement",
       ]).default("load"),
       sort_direction: z.enum(["asc", "desc"]).default("desc"),
@@ -50,6 +50,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
       // own serviceStatus() branch order (LoadCostsBoardPage.tsx): In transit(0) < Delivered-no-
       // appt(1) < On Time(2) < Late(3), so ascending server sort visually matches ascending column
       // click same as every other column.
+      const marginSql = "(l.rate_total_cents-COALESCE(ec.expense_cents,0)-COALESCE(bc.bill_cents,0)-COALESCE(dp.driver_pay_cents,0))";
       const sortColumns = {
         load: "l.load_number",
         unit: "u.unit_number",
@@ -70,7 +71,8 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
         rate_empty: "dpd.rate_empty_cents",
         deadhead_pay: "CASE WHEN COALESCE(dpa.has_deadhead_miles,false) THEN COALESCE(dpa.deadhead_pay_cents,0) END",
         gross: "COALESCE(dp.driver_pay_cents,0)",
-        margin: "(l.rate_total_cents-COALESCE(ec.expense_cents,0)-COALESCE(bc.bill_cents,0)-COALESCE(dp.driver_pay_cents,0))",
+        margin: marginSql,
+        margin_pct: `(${marginSql}::numeric / NULLIF(l.rate_total_cents, 0))`,
         settlement: "si.settlement_display_id",
       } as const;
       const sortSql = `${sortColumns[parsed.data.load_costs_sort]} ${parsed.data.sort_direction.toUpperCase()} NULLS LAST, l.load_number ASC`;
@@ -165,34 +167,51 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
               AND db.status <> 'void'
               AND db.team_driver_id IS NULL
             ORDER BY db.load_id, db.created_at DESC
-         -- NEW-08 (owner raw findings 2026-09-07): "every load leaving Laredo must be assigned a
-         -- settlement number the moment it's created". That assignment already happens at booking
-         -- time (SET-01/SET-02, book-load.service.ts) -- driver_finance.driver_settlements.display_id
-         -- (format S-<n>) is written into driver_finance.settlement_lines via source_driver_bill_id
-         -- inside the SAME transaction that creates the load's driver bill. This CTE surfaces that
-         -- already-real linkage as a board column; it does not create any new settlement logic.
-         -- DISTINCT ON keeps one settlement per load even if a load's bill carries >1 settlement_line
-         -- row (never expected today, but the board must not duplicate a load row if it ever does).
+         -- REG-010/040: display the canonical S-YYYY-NNNN assigned at booking. Continuation
+         -- keeps the same UUID after a closed/invoiced source load and remains Resettlement
+         -- even while the settlement is reopened for its next leg.
          ), settlement_info AS (
-           SELECT DISTINCT ON (db.load_id)
-                  db.load_id,
-                  ds.display_id AS settlement_display_id,
-                  ds.id::text AS settlement_id
-             FROM driver_finance.driver_bills db
-             JOIN driver_finance.settlement_lines sl ON sl.source_driver_bill_id = db.id
-             JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
-            WHERE db.operating_company_id = $1::uuid
-              AND db.load_id IS NOT NULL
-            ORDER BY db.load_id, db.created_at DESC
-         -- NEW-09 (owner raw findings 2026-09-07): "a load already invoiced should not still sit in
-         -- Load Costs as an open item -- it belongs in resettlement." The board's own open/closed
-         -- split (matches(), LoadCostsBoardPage.tsx) checked mdata.loads.status against a literal
-         -- 'invoiced' value -- but live-confirmed nothing anywhere in the codebase ever sets
-         -- mdata.loads.status = 'invoiced' (0 rows system-wide carry it); dispatch status stays
-         -- delivered_pending_docs/completed_docs_received forever, so an invoiced load never left
-         -- the open buckets. Fixed at the real signal instead: does this load have a real, issued
-         -- (non-draft, non-proforma, non-void) invoice -- the same "genuinely invoiced" bar
-         -- ux_invoices_source_load_active already enforces one-active-per-load for.
+           -- The booking link is authoritative even before a driver bill/settlement line exists.
+           -- Legacy bill linkage is a fallback only; it cannot override a continued tour's identity.
+           SELECT linked.id AS load_id, ds.display_id AS settlement_display_id,
+                  ds.id::text AS settlement_id,
+                  (ds.trip_closed_at IS NOT NULL OR ds.status IN ('closed', 'approved', 'paid')
+                   OR EXISTS (
+                     SELECT 1 FROM mdata.loads original
+                     WHERE original.id = ds.first_load_id
+                       AND original.operating_company_id = ds.operating_company_id
+                       AND original.soft_deleted_at IS NULL
+                       AND (original.status::text IN ('closed', 'invoiced', 'paid') OR EXISTS (
+                         SELECT 1 FROM accounting.invoices oi
+                         WHERE oi.operating_company_id = ds.operating_company_id
+                           AND oi.source_load_id = original.id AND oi.voided_at IS NULL
+                           AND oi.status NOT IN ('draft', 'proforma', 'void')
+                       ))
+                   ) OR EXISTS (
+                     SELECT 1 FROM driver_finance.presettlement_link_suggestions continuation
+                     WHERE continuation.operating_company_id = ds.operating_company_id
+                       AND continuation.assigned_settlement_id = ds.id
+                       AND continuation.status = 'confirmed'
+                       AND continuation.suggested_reason LIKE 'REG-040 resettlement continuation%'
+                   )) AS is_resettlement
+             FROM mdata.loads linked
+             LEFT JOIN LATERAL (
+               SELECT sl.settlement_id
+               FROM driver_finance.driver_bills db
+               JOIN driver_finance.settlement_lines sl ON sl.source_driver_bill_id = db.id
+               JOIN driver_finance.driver_settlements legacy ON legacy.id = sl.settlement_id
+                 AND legacy.operating_company_id = linked.operating_company_id
+                 AND legacy.voided_at IS NULL
+               WHERE db.operating_company_id = linked.operating_company_id
+                 AND db.load_id = linked.id AND db.status <> 'void' AND db.voided_at IS NULL
+               ORDER BY db.created_at DESC, sl.id LIMIT 1
+             ) bill_link ON linked.presettlement_link_id IS NULL
+             JOIN driver_finance.driver_settlements ds
+               ON ds.id = COALESCE(linked.presettlement_link_id, bill_link.settlement_id)
+              AND ds.operating_company_id = linked.operating_company_id AND ds.voided_at IS NULL
+            WHERE linked.operating_company_id = $1::uuid
+         -- Issued invoices are independent of dispatch status. Keep this signal alongside
+         -- the tour-continuation flag so invoiced loads cannot re-enter an active bucket.
          ), invoice_info AS (
            SELECT i.source_load_id AS load_id, true AS is_invoiced
              FROM accounting.invoices i
@@ -279,6 +298,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                 COALESCE(dpa.loaded_pay_cents, 0)::text AS loaded_pay_cents,
                 CASE WHEN COALESCE(dpa.has_deadhead_miles, false) THEN COALESCE(dpa.deadhead_pay_cents, 0)::text ELSE NULL END AS deadhead_pay_cents,
                 si.settlement_display_id, si.settlement_id,
+                COALESCE(si.is_resettlement, false) AS is_resettlement,
                 COALESCE(ii.is_invoiced, false) AS is_invoiced
            FROM views.dispatch_load_with_driver_status l
            LEFT JOIN expense_costs ec ON ec.load_id=l.id LEFT JOIN bill_costs bc ON bc.load_id=l.id LEFT JOIN repair_costs rm ON rm.load_id=l.id LEFT JOIN driver_pay dp ON dp.load_id=l.id

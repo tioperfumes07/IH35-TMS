@@ -33,6 +33,13 @@ describe("PreSettlementsPanel (DISP-S33)", () => {
     expect(screen.queryByText("Total payout this batch")).toBeNull();
   });
 
+  it("does not invent a zero settlement count or payout while loading", () => {
+    wrap(<PreSettlementsPanel rows={[]} loading showTotal />);
+    expect(screen.getByText("Pre-settlements · — settlements")).toBeTruthy();
+    expect(screen.queryByText("Total payout this batch")).toBeNull();
+    expect(screen.queryByTestId("dispatch-pre-settlements-honest-empty")).toBeNull();
+  });
+
   it("renders real rows when the fetch succeeds", () => {
     const rows: SettlementListRow[] = [
       {
@@ -75,7 +82,7 @@ describe("PreSettlementsPanel (DISP-S33)", () => {
     ] as SettlementListRow[];
 
     wrap(<PreSettlementsPanel rows={rows} loading={false} isError={false} />);
-    for (const header of ["Date", "Driver", "Load Number", "Settlement / Bill Number", "Amount", "Status"]) {
+    for (const header of ["Period Begin", "Period End", "Driver", "Load Number", "Settlement/Tour", "Amount", "Status"]) {
       expect(screen.getByRole("button", { name: new RegExp(`^${header}$`) })).toBeTruthy();
     }
 

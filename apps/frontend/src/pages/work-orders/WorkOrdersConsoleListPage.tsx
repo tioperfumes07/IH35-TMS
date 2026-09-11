@@ -12,9 +12,10 @@ import { SelectCombobox } from "../../components/Combobox";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityPicker } from "../../components/EntityPicker";
 
 type SegmentId = "all" | "open" | "in_progress" | "completed" | "cancelled";
-type WoSort = "created_desc" | "cost_desc" | "wo_number_asc" | "labor_cost_desc";
+type WoSort = "created_desc" | "estimated_cost_desc" | "actual_cost_desc" | "wo_number_asc" | "labor_cost_desc";
 type ConsoleView = "list" | "kanban";
 type KanbanSortKey = "unit_number" | "display_id";
 
@@ -24,7 +25,8 @@ const PAGE_SIZE = 100;
 
 function mapHeaderSortToServer(sortKey: string, sortDir: "asc" | "desc"): WoSort {
   if (sortKey === "display_id" && sortDir === "asc") return "wo_number_asc";
-  if (sortKey === "total_estimated_cost" && sortDir === "desc") return "cost_desc";
+  if (sortKey === "total_estimated_cost" && sortDir === "desc") return "estimated_cost_desc";
+  if (sortKey === "total_actual_cost" && sortDir === "desc") return "actual_cost_desc";
   if (sortKey === "labor_cost_cents" && sortDir === "desc") return "labor_cost_desc";
   return "created_desc";
 }
@@ -39,6 +41,8 @@ function consoleSortValue(row: WoConsoleRow, key: string): string | number {
       return String(row.opened_at ?? row.created_at ?? "");
     case "total_estimated_cost":
       return Number(row.total_estimated_cost ?? 0);
+    case "total_actual_cost":
+      return Number(row.total_actual_cost ?? 0);
     case "labor_cost_cents":
       return Number(row.labor_cost_cents ?? 0);
     default:
@@ -102,6 +106,8 @@ export function WorkOrdersConsoleListPage() {
     "all" | "pm" | "corrective" | "accident" | "inspection_dot" | "inspection_state" | "warranty" | "other"
   >("all");
   const [search, setSearch] = useState("");
+  const [unitId, setUnitId] = useState<string | null>(null);
+  const [driverId, setDriverId] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const { onSortChange } = useUrlSort();
   // Page reads its own ?sort= directly (WO-CONSOLE-PARITYTABLE contract) — same underlying
@@ -131,16 +137,18 @@ export function WorkOrdersConsoleListPage() {
 
   useEffect(() => {
     setPage(0);
-  }, [segment, billing, svc, search, effectiveSortKey, effectiveSortDir]);
+  }, [segment, billing, svc, unitId, driverId, search, effectiveSortKey, effectiveSortDir]);
 
   const listQuery = useQuery({
-    queryKey: ["work-orders-console", companyId, segment, billing, svc, search, serverSort, page],
+    queryKey: ["work-orders-console", companyId, segment, billing, svc, unitId, driverId, search, serverSort, page],
     queryFn: () =>
       listWorkOrdersConsole({
         operating_company_id: companyId,
         status: segment,
         wo_billing_type: billing === "all" ? undefined : billing,
         wo_service_class: svc === "all" ? undefined : svc,
+        unit_id: unitId ?? undefined,
+        driver_id: driverId ?? undefined,
         search: search.trim() || undefined,
         sort: serverSort,
         limit: PAGE_SIZE,
@@ -263,18 +271,21 @@ export function WorkOrdersConsoleListPage() {
       },
       {
         key: "total_estimated_cost",
-        label: "Est / Act",
+        label: "Estimated",
         sortable: true,
         sortValue: (row) => consoleSortValue(row, "total_estimated_cost"),
-        render: (row) => {
-          const est = row.total_estimated_cost ?? "—";
-          const act = row.total_actual_cost ?? "—";
-          return (
-            <>
-              {String(est)} / {String(act)}
-            </>
-          );
-        },
+        className: "text-right",
+        cellClass: "text-right font-mono text-xs text-slate-700",
+        render: (row) => String(row.total_estimated_cost ?? "—"),
+      },
+      {
+        key: "total_actual_cost",
+        label: "Actual",
+        sortable: true,
+        sortValue: (row) => consoleSortValue(row, "total_actual_cost"),
+        className: "text-right",
+        cellClass: "text-right font-mono text-xs text-slate-700",
+        render: (row) => String(row.total_actual_cost ?? "—"),
       },
       {
         key: "labor_cost_cents",
@@ -331,6 +342,7 @@ export function WorkOrdersConsoleListPage() {
   const filterBar = (
     <div className="flex flex-wrap items-center gap-2">
       <SelectCombobox
+        data-testid="work-orders-filter-billing"
         value={billing}
         onChange={(event) => setBilling(event.target.value as typeof billing)}
         className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
@@ -340,6 +352,7 @@ export function WorkOrdersConsoleListPage() {
         <option value="external">External</option>
       </SelectCombobox>
       <SelectCombobox
+        data-testid="work-orders-filter-service-class"
         value={svc}
         onChange={(event) => setSvc(event.target.value as typeof svc)}
         className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
@@ -353,7 +366,31 @@ export function WorkOrdersConsoleListPage() {
         <option value="warranty">Warranty</option>
         <option value="other">Other</option>
       </SelectCombobox>
+      <EntityPicker
+        kind="unit"
+        operatingCompanyId={companyId}
+        value={unitId}
+        onChange={setUnitId}
+        allowCreate={false}
+        allowClear
+        placeholder="All units"
+        ariaLabel="Filter work orders by unit"
+        dataTestId="work-orders-filter-unit"
+      />
+      <EntityPicker
+        kind="driver"
+        operatingCompanyId={companyId}
+        value={driverId}
+        onChange={setDriverId}
+        allowCreate={false}
+        allowClear
+        placeholder="All drivers"
+        ariaLabel="Filter work orders by driver"
+        dataTestId="work-orders-filter-driver"
+      />
       <input
+        data-testid="work-orders-filter-search"
+        aria-label="Search work orders"
         value={search}
         onChange={(event) => setSearch(event.target.value)}
         placeholder="Search WO #, unit, vendor, driver…"

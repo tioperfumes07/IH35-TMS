@@ -8,6 +8,16 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00–11 / 12–23) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202614042200": {
+      "claimed_by": "cursor",
+      "claimed_at": "2026-09-10",
+      "purpose": "LOCK-THE-TRUCKS DB backstop (owner order 2026-09-10, NEW-02 deferred-to-migration-lane item): partial unique index uq_loads_one_active_unit on mdata.loads (assigned_unit_id) WHERE assigned_unit_id IS NOT NULL AND soft_deleted_at IS NULL AND status = ANY(ACTIVE_UNIT_STATUSES: assigned/assigned_not_dispatched/dispatched/at_pickup/in_transit/at_delivery). The application-level guard assertUnitNotActiveOnAnotherLoad (unit-active-load-guard.ts) is already wired into all 5 unit-assignment write paths (book-load, quick-assign, loads PATCH, quicksave reassign, update-load); this is the defense-in-depth DB constraint NEW-02's comment explicitly handed off to a migration lane so a truck physically cannot be double-dispatched even if a future write path skips the app check. delivered_pending_docs/completed statuses excluded (a truck legitimately carries many loads waiting on paperwork). Live-verified 0 current active duplicates before claiming; rehearsed on throwaway branch br-bitter-cake-akkjlzdf (index REJECTS a 2nd active load on the same unit, ALLOWS a legit swap to a free unit, ALLOWS the delivered_pending_docs backlog). Cursor afternoon band (HH=22 UTC)."
+    },
+    "202614030000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-10",
+      "purpose": "REG-048 maintenance work-order display-id V5 finalization and active-unit invariant: redefine refresh source priority to first vendor/parts invoice with lock-on-first-non-PEND0, block new active null-unit work orders, and permit the two explicitly authorized legacy null-unit rows to be repaired through the audited void route."
+    },
     "202614020000": {
       "claimed_by": "claude-1",
       "claimed_at": "2026-09-09",

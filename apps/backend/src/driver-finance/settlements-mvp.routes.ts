@@ -1,3 +1,4 @@
+import { allocateSettlementDisplayId } from "./settlement-display-id.js";
 // C6-MONEY-JE-EXEMPT: driver_finance.settlement_lines rows here are settlement-scoped LINE items,
 // not independent cash movements — the settlement HEADER posts one aggregate balanced JE at
 // finalize via settlement-payrun-close.service.ts's closeSettlementPayRun (createJournalEntry) -- CORRECTED 2026-09-02: postSettlementToGl was RETIRED (SET-01, 2026-07-26), never live in prod (verified 2026-09-02, GO-23 C6).
@@ -145,12 +146,7 @@ export async function registerSettlementsMvpRoutes(app: FastifyInstance) {
     const created = await withCompany(user.uuid, body.operating_company_id, async (client) => {
       if (!(await hasSettlementSchema(client))) return { unavailable: true as const };
 
-      const displayRes = await client.query(
-        `SELECT driver_finance.next_settlement_display_id($1::uuid, $2::date) AS next_id`,
-        [body.operating_company_id, body.period_start]
-      );
-      const displayId =
-        (displayRes.rows[0] as { next_id?: string } | undefined)?.next_id ?? `S-${new Date(body.period_start).getFullYear()}-0001`;
+      const displayId = await allocateSettlementDisplayId(client, body.operating_company_id, body.period_start);
 
       const settlementRes = await client.query(
         `

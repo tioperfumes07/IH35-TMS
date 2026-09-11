@@ -108,7 +108,8 @@ export function buildLoadCostColumns<R>(
   const all: Array<ParityColumn<R>> = [
     {
       key: "lc_load",
-      label: "Load",
+      label: "Load Number",
+      alwaysVisible: true,
       testId: "lc-col-load",
       sortable: true,
       cellClass: "whitespace-nowrap",
@@ -149,7 +150,8 @@ export function buildLoadCostColumns<R>(
     },
     {
       key: "lc_settlement",
-      label: "Settlement #",
+      label: "Settlement/Tour",
+      alwaysVisible: true,
       testId: "lc-col-settlement",
       sortable: true,
       cellClass: "whitespace-nowrap",

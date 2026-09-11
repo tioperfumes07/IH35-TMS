@@ -12,7 +12,16 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
-const recourseQuerySchema = companyQuerySchema.extend({
+// REG-049 (owner fan-out 2026-09-09/10, "QBO filters (date etc.) on ALL"): shared date-range
+// extension, same regex convention as accounting/expenses.routes.ts's date_from/date_to. Applied
+// to every real Factoring report endpoint below so the module has one consistent filter surface,
+// same idiom used elsewhere in Accounting.
+const dateRangeQuerySchema = z.object({
+  date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+});
+
+const recourseQuerySchema = companyQuerySchema.extend(dateRangeQuerySchema.shape).extend({
   limit: z.coerce.number().int().min(1).max(500).default(200),
   // LINK-F5171/LINK-F5180: reverse_link — customer_id/load_id are real FKs already resolvable via
   // the accounting.invoices LATERAL join below (i.customer_id, i.source_load_id); this just exposes
@@ -25,9 +34,12 @@ const recourseQuerySchema = companyQuerySchema.extend({
 // vendor_id/load_id at all; resolve customer_id via the same accounting.invoices LATERAL join
 // pattern used for recourse-pipeline above, and vendor_id via
 // accounting.factoring_advances.factoring_company_vendor_id (the factor entity).
-const chargebacksFeesQuerySchema = companyQuerySchema.extend({
+const chargebacksFeesQuerySchema = companyQuerySchema.extend(dateRangeQuerySchema.shape).extend({
   customer_id: z.string().uuid().optional(),
 });
+
+// REG-049: /funds-due previously used the bare companyQuerySchema with no filters at all.
+const fundsDueQuerySchema = companyQuerySchema.extend(dateRangeQuerySchema.shape);
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -148,7 +160,14 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
     if (!user) return;
     const query = recourseQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
-    const { operating_company_id: companyId, limit, customer_id: customerId, load_id: loadId } = query.data;
+    const {
+      operating_company_id: companyId,
+      limit,
+      customer_id: customerId,
+      load_id: loadId,
+      date_from: dateFrom,
+      date_to: dateTo,
+    } = query.data;
 
     const invoices = await withCompanyScope(user.uuid, companyId, async (client) => {
       // LINK-F5180: server-side customer_id/load_id scoping (not a client-side filter of this
@@ -164,6 +183,17 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
       if (loadId) {
         params.push(loadId);
         loadFilter = `AND inv.load_id = $${params.length}::uuid`;
+      }
+      // REG-049: date range on factored_at, the same column the table is already sorted/aged by.
+      let dateFromFilter = "";
+      if (dateFrom) {
+        params.push(dateFrom);
+        dateFromFilter = `AND rr.factored_at >= $${params.length}::date`;
+      }
+      let dateToFilter = "";
+      if (dateTo) {
+        params.push(dateTo);
+        dateToFilter = `AND rr.factored_at < ($${params.length}::date + interval '1 day')`;
       }
       params.push(limit);
       // BANK-F9518: this used to .catch(() => ({ rows: [] })) — same fake-empty-200 class as the
@@ -204,6 +234,8 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
             WHERE rr.operating_company_id = $1::uuid
               ${customerFilter}
               ${loadFilter}
+              ${dateFromFilter}
+              ${dateToFilter}
             ORDER BY rr.days_until_recourse_expiry ASC, rr.factored_at DESC
             LIMIT $${params.length}
           `,
@@ -222,9 +254,9 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
     async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    const query = companyQuerySchema.safeParse(req.query ?? {});
+    const query = fundsDueQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
-    const companyId = query.data.operating_company_id;
+    const { operating_company_id: companyId, date_from: dateFrom, date_to: dateTo } = query.data;
 
     // FUNDS-DUE-01 (owner 2026-09-09, live-verified): "Funds Due" in the real Faro debtor portal
     // is invoices already submitted to the factor but not yet advanced/funded -- distinct from
@@ -239,6 +271,18 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
     // not a missing feature; the moment a real submission is awaiting advance, this becomes
     // non-empty automatically, no further wiring required.
     const rows = await withCompanyScope(user.uuid, companyId, async (client) => {
+      // REG-049: date range on submitted_at, the same column the table is already sorted by.
+      const params: Array<string> = [companyId];
+      let dateFromFilter = "";
+      if (dateFrom) {
+        params.push(dateFrom);
+        dateFromFilter = `AND fa.submitted_at >= $${params.length}::date`;
+      }
+      let dateToFilter = "";
+      if (dateTo) {
+        params.push(dateTo);
+        dateToFilter = `AND fa.submitted_at < ($${params.length}::date + interval '1 day')`;
+      }
       const res = await client.query(
         `
             SELECT
@@ -276,10 +320,12 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
             WHERE fa.operating_company_id = $1::uuid
               AND fa.submitted_at IS NOT NULL
               AND fa.advanced_at IS NULL
+              ${dateFromFilter}
+              ${dateToFilter}
             ORDER BY fa.submitted_at ASC
             LIMIT 500
           `,
-        [companyId]
+        params
       );
       return res.rows;
     });
@@ -293,7 +339,7 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
     if (!user) return;
     const query = chargebacksFeesQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
-    const { operating_company_id: companyId, customer_id: customerId } = query.data;
+    const { operating_company_id: companyId, customer_id: customerId, date_from: dateFrom, date_to: dateTo } = query.data;
 
     const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
       // LINK-F5180: views.factoring_chargebacks_fees carries no customer_id -- resolve it via the
@@ -305,6 +351,19 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
       if (customerId) {
         historyParams.push(customerId);
         customerFilter = `AND inv.customer_id = $${historyParams.length}::uuid`;
+      }
+      // REG-049: date range on created_at (the same column history is already sorted by). The
+      // monthly_summary aggregate below deliberately stays unfiltered -- it is the standing
+      // all-time-by-month overview, not the itemized list a date range is meant to narrow.
+      let dateFromFilter = "";
+      if (dateFrom) {
+        historyParams.push(dateFrom);
+        dateFromFilter = `AND cf.created_at >= $${historyParams.length}::date`;
+      }
+      let dateToFilter = "";
+      if (dateTo) {
+        historyParams.push(dateTo);
+        dateToFilter = `AND cf.created_at < ($${historyParams.length}::date + interval '1 day')`;
       }
       // BANK-F9518: both queries below used to .catch(() => ({ rows: [] })) — same fake-empty-200
       // class as /summary and /recourse-pipeline above. views.factoring_chargebacks_fees is
@@ -351,6 +410,8 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
             ${loadCostRollupLateral("inv.load_id", "cf.operating_company_id")}
             WHERE cf.operating_company_id = $1::uuid
               ${customerFilter}
+              ${dateFromFilter}
+              ${dateToFilter}
             ORDER BY cf.created_at DESC
             LIMIT 500
           `,
@@ -494,4 +555,237 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
     }
     return { ok: true };
   });
+
+  // REG-015 (owner 2026-09-10): Debtor Receipts — payments received from debtors (customers) on
+  // factored invoices. Joins accounting.payments → payment_applications → invoices (where the
+  // invoice has a factoring_advance_id). Read-only report. Live-verified 2026-09-10: 0 rows
+  // currently (USMCA has no customer payments yet — honest empty state, not a missing feature).
+  app.get(
+    "/api/v1/factoring/debtor-receipts",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      const query = chargebacksFeesQuerySchema.safeParse(req.query ?? {});
+      if (!query.success) return sendValidationError(reply, query.error);
+      const { operating_company_id: companyId, customer_id: customerId, date_from: dateFrom, date_to: dateTo } = query.data;
+
+      const rows = await withCompanyScope(user.uuid, companyId, async (client) => {
+        const params: Array<string> = [companyId];
+        let customerFilter = "";
+        if (customerId) {
+          params.push(customerId);
+          customerFilter = `AND p.customer_id = $${params.length}::uuid`;
+        }
+        let dateFromFilter = "";
+        if (dateFrom) {
+          params.push(dateFrom);
+          dateFromFilter = `AND p.payment_date >= $${params.length}::date`;
+        }
+        let dateToFilter = "";
+        if (dateTo) {
+          params.push(dateTo);
+          dateToFilter = `AND p.payment_date < ($${params.length}::date + interval '1 day')`;
+        }
+        const res = await client.query(
+          `
+            SELECT
+              p.id AS payment_id,
+              p.display_id AS payment_display_id,
+              p.payment_date,
+              p.reference AS payment_reference,
+              p.amount_cents,
+              p.amount_applied_cents,
+              p.amount_unapplied_cents,
+              p.payment_method,
+              p.customer_id,
+              c.customer_name,
+              i.id AS invoice_id,
+              i.display_id AS invoice_display_id,
+              i.factoring_advance_id,
+              i.total_cents AS invoice_total_cents,
+              fa.display_id AS advance_display_id,
+              pa.amount_cents AS applied_amount_cents,
+              pa.applied_at
+            FROM accounting.payments p
+            LEFT JOIN mdata.customers c
+              ON c.id = p.customer_id
+             AND c.operating_company_id = p.operating_company_id
+            JOIN accounting.payment_applications pa
+              ON pa.payment_id = p.id
+             AND pa.operating_company_id = p.operating_company_id
+             AND pa.unapplied_at IS NULL
+            JOIN accounting.invoices i
+              ON i.id = pa.invoice_id
+             AND i.operating_company_id = p.operating_company_id
+             AND i.factoring_advance_id IS NOT NULL
+             AND i.status <> 'void'
+            LEFT JOIN accounting.factoring_advances fa
+              ON fa.id = i.factoring_advance_id
+             AND fa.operating_company_id = p.operating_company_id
+            WHERE p.operating_company_id = $1::uuid
+              AND p.voided_at IS NULL
+              AND p.is_sample_data IS NOT TRUE
+              ${customerFilter}
+              ${dateFromFilter}
+              ${dateToFilter}
+            ORDER BY p.payment_date DESC, p.created_at DESC
+            LIMIT 500
+          `,
+          params
+        );
+        return res.rows;
+      });
+
+      return { receipts: rows, total: rows.length };
+    }
+  );
+
+  // REG-015 (owner 2026-09-10): Unapplied Cash — payments received but not fully applied to
+  // invoices (amount_unapplied_cents > 0). Read-only report. Live-verified 2026-09-10: 0 rows
+  // currently (USMCA has no customer payments yet — honest empty state, not a missing feature).
+  app.get(
+    "/api/v1/factoring/unapplied-cash",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      const query = chargebacksFeesQuerySchema.safeParse(req.query ?? {});
+      if (!query.success) return sendValidationError(reply, query.error);
+      const { operating_company_id: companyId, customer_id: customerId, date_from: dateFrom, date_to: dateTo } = query.data;
+
+      const rows = await withCompanyScope(user.uuid, companyId, async (client) => {
+        const params: Array<string> = [companyId];
+        let customerFilter = "";
+        if (customerId) {
+          params.push(customerId);
+          customerFilter = `AND p.customer_id = $${params.length}::uuid`;
+        }
+        let dateFromFilter = "";
+        if (dateFrom) {
+          params.push(dateFrom);
+          dateFromFilter = `AND p.payment_date >= $${params.length}::date`;
+        }
+        let dateToFilter = "";
+        if (dateTo) {
+          params.push(dateTo);
+          dateToFilter = `AND p.payment_date < ($${params.length}::date + interval '1 day')`;
+        }
+        const res = await client.query(
+          `
+            SELECT
+              p.id AS payment_id,
+              p.display_id AS payment_display_id,
+              p.payment_date,
+              p.reference AS payment_reference,
+              p.amount_cents,
+              p.amount_applied_cents,
+              p.amount_unapplied_cents,
+              p.payment_method,
+              p.customer_id,
+              c.customer_name,
+              p.notes
+            FROM accounting.payments p
+            LEFT JOIN mdata.customers c
+              ON c.id = p.customer_id
+             AND c.operating_company_id = p.operating_company_id
+            WHERE p.operating_company_id = $1::uuid
+              AND p.voided_at IS NULL
+              AND p.is_sample_data IS NOT TRUE
+              AND p.amount_unapplied_cents > 0
+              ${customerFilter}
+              ${dateFromFilter}
+              ${dateToFilter}
+            ORDER BY p.payment_date DESC, p.created_at DESC
+            LIMIT 500
+          `,
+          params
+        );
+        return res.rows;
+      });
+
+      return { rows, total: rows.length };
+    }
+  );
+
+  // REG-015 (owner 2026-09-10): Invoice Status Report — all non-void invoices with their
+  // factoring_status, joined to factoring_advances for advance/reserve/fee amounts. Read-only
+  // report. Live-verified 2026-09-10: 64 non-void invoices (51 advanced, 8 not_factored sent,
+  // 5 proforma).
+  app.get(
+    "/api/v1/factoring/invoice-status",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      const query = chargebacksFeesQuerySchema.safeParse(req.query ?? {});
+      if (!query.success) return sendValidationError(reply, query.error);
+      const { operating_company_id: companyId, customer_id: customerId, date_from: dateFrom, date_to: dateTo } = query.data;
+
+      const rows = await withCompanyScope(user.uuid, companyId, async (client) => {
+        const params: Array<string> = [companyId];
+        let customerFilter = "";
+        if (customerId) {
+          params.push(customerId);
+          customerFilter = `AND i.customer_id = $${params.length}::uuid`;
+        }
+        let dateFromFilter = "";
+        if (dateFrom) {
+          params.push(dateFrom);
+          dateFromFilter = `AND i.issue_date >= $${params.length}::date`;
+        }
+        let dateToFilter = "";
+        if (dateTo) {
+          params.push(dateTo);
+          dateToFilter = `AND i.issue_date < ($${params.length}::date + interval '1 day')`;
+        }
+        const res = await client.query(
+          `
+            SELECT
+              i.id AS invoice_id,
+              i.display_id AS invoice_display_id,
+              i.status AS invoice_status,
+              i.factoring_status,
+              i.issue_date,
+              i.due_date,
+              i.delivery_date,
+              i.total_cents,
+              i.customer_id,
+              c.customer_name,
+              i.source_load_id AS load_id,
+              fa.id AS factoring_advance_id,
+              fa.display_id AS advance_display_id,
+              fa.status AS advance_status,
+              fa.advance_amount_cents,
+              fa.reserve_amount_cents,
+              fa.factor_fee_cents,
+              fa.advanced_at,
+              fa.submitted_at,
+              fa.collected_at,
+              ${LOAD_COST_ROLLUP_SELECT}
+            FROM accounting.invoices i
+            LEFT JOIN mdata.customers c
+              ON c.id = i.customer_id
+             AND c.operating_company_id = i.operating_company_id
+            LEFT JOIN accounting.factoring_advances fa
+              ON fa.id = i.factoring_advance_id
+             AND fa.operating_company_id = i.operating_company_id
+            ${loadCostRollupLateral("i.source_load_id", "i.operating_company_id")}
+            WHERE i.operating_company_id = $1::uuid
+              AND i.status <> 'void'
+              AND i.is_sample_data IS NOT TRUE
+              ${customerFilter}
+              ${dateFromFilter}
+              ${dateToFilter}
+            ORDER BY i.issue_date DESC, i.created_at DESC
+            LIMIT 500
+          `,
+          params
+        );
+        return res.rows;
+      });
+
+      return { invoices: rows, total: rows.length };
+    }
+  );
 }

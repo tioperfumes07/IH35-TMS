@@ -13,6 +13,8 @@
 **Last updated:** Wed May 6, 2026 evening · Jorge + Claude
 **Status:** LOCKED — to be added to repo as `docs/specs/IH35_ARCHITECTURAL_DESIGN.md`
 
+**Owner addition 2026-09-10, REG-040:** Accounting → Load Costs includes a **Resettlement** tab. It shows original invoiced loads with their existing load and settlement links and source dates. Issued invoices are excluded from every active Costs filter. Closed/paid load records remain outside this outstanding-invoice view. This tab is read-only; continuing a posted settlement requires the separately resolved correction lifecycle and does not unfreeze or rewrite posted money.
+
 ---
 
 ## TABLE OF CONTENTS

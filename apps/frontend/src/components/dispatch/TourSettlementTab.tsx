@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getTourReadout, getTourReadoutForLoad, type TourReadout } from "../../api/tourReadout";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { EntityLink } from "../shared/EntityLink";
+import { ParityTable } from "../parity/ParityTable";
 import { formatMoneyCents } from "./constants";
 
 // LDT-6 · Settlement (render § Settlement): while the tour is open — one sentence + the shape it will take;
@@ -54,6 +55,32 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
   const net = t.is_open ? gross - ds.escrow_cents - ds.recoveries_cents : ds.net_cents;
   const netTotal = t.is_open ? net + (ds.reimbursements_cents || 0) : net;
 
+  // REG-024 (owner 2026-09-10: "render EXACTLY like the AlwaysTrack company/driver settlement PDFs").
+  // The AlwaysTrack Company Settlement is four sections — CUSTOMER CHARGES · DRIVER PAYMENT · FUEL +
+  // EXPENSES · REVENUE (a P&L waterfall with a % and a per-practical-mile column). Every figure below
+  // is DERIVED from the same buildTourReadout the two cards already use — never a second sum, never a
+  // fabricated number: a figure the readout doesn't carry (fuel gallons/MPG, the quick-pay fee) renders
+  // a dash, exactly like the board's own untracked-mileage cells.
+  const liveLegs = r.legs.filter((l) => !l.is_cancelled);
+  const isFuel = (c: TourReadout["costs"][number]) => /fuel|diesel|\bdef\b|reefer/i.test(`${c.category ?? ""} ${c.vendor_name ?? ""}`);
+  const fuelCosts = r.costs.filter(isFuel);
+  const otherCosts = r.costs.filter((c) => !isFuel(c));
+  const fuelTotal = fuelCosts.reduce((s, c) => s + c.amount_cents, 0);
+  const otherTotal = otherCosts.reduce((s, c) => s + c.amount_cents, 0);
+  const invoicedCents = cs.revenue_cents;
+  const chargeMiles = liveLegs.reduce((s, l) => s + (l.miles_practical ?? 0), 0);
+  const totalMiles = tot.miles_practical || chargeMiles;
+  // per practical mile, dollars, 3 decimals (AlwaysTrack "p/m") — dash when there are no miles to divide by.
+  const pm = (c: number) => (totalMiles > 0 ? `${(c / 100 / totalMiles).toFixed(3)} p/m` : DASH);
+  const pct = (c: number) => (invoicedCents > 0 ? `${((c / invoicedCents) * 100).toFixed(2)}%` : DASH);
+  const legRate = (l: TourReadout["legs"][number]) => (l.miles_practical && l.miles_practical > 0 ? l.revenue_cents / 100 / l.miles_practical : null);
+  const waterfall: Array<{ label: string; amount_cents: number; sign: -1 | 1 }> = [
+    { label: "Invoiced", amount_cents: invoicedCents, sign: 1 },
+    { label: "Driver salary", amount_cents: tot.driver_pay_cents, sign: -1 },
+    { label: "Fuel", amount_cents: fuelTotal, sign: -1 },
+    { label: "Company expenses", amount_cents: otherTotal, sign: -1 },
+  ];
+
   return <div className="ldt-body" data-testid="tour-settlement-tab" data-surface="load-detail" data-frozen={!t.is_open}>
     <div className="ldt-rowbar">
       <span>Settlement <EntityLink kind="settlement" id={t.settlement_id} label={t.display_id ?? "Settlement"} />{periodLabel(t) ? <> · <span className="ldt-k" data-testid="tour-settlement-dates">{periodLabel(t)}</span></> : null} · {t.driver_name ?? "driver"} · <b>{t.is_open ? "open" : t.status}</b>{t.is_open ? " — fills when the tour closes; the figures below are the shape it will take from today's readout." : ` — closed ${t.trip_closed_at ? t.trip_closed_at.slice(0, 16).replace("T", " ") : ""}; frozen.`}</span>
@@ -64,9 +91,16 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
       <div className="ldt-card" data-testid="driver-settlement-card">
         <div className="ldt-ch"><span>Driver settlement {t.is_open ? "(on close)" : ""}</span><span className="ldt-open">{bills.length} bill{bills.length === 1 ? "" : "s"}</span></div>
         <div className="ldt-rows">
-          {bills.map((b) => <div key={b.id} className="ldt-row"><span>Loaded {miles(b.miles_basis)} × {rate(b.rate_per_mile_cents)}<span className="ldt-sub">load {b.load_number ?? DASH} · basis {b.miles_basis_type ?? "unknown"} (law: short miles)</span></span><span className="ldt-m">{money(b.loaded_pay_cents ?? (b.deadhead_pay_cents == null ? b.gross_amount_cents : b.gross_amount_cents - b.deadhead_pay_cents), currencyCode)}</span></div>)}
-          {bills.map((b) => <div key={`${b.id}-e`} className="ldt-row"><span>Empty {miles(b.miles_deadhead)} × {rate(b.rate_empty_per_mile_cents)}<span className="ldt-sub">load {b.load_number ?? DASH} · deadhead attributed to the pickup</span></span><span className="ldt-m">{b.deadhead_pay_cents == null ? DASH : money(b.deadhead_pay_cents, currencyCode)}</span></div>)}
-          {bills.length === 0 ? <div className="ldt-row"><span className="ldt-muted">No driver bill on this tour yet.</span><span /></div> : null}
+          <ParityTable rows={bills} rowKey={b => b.id} tableTestId="settlement-driver-bills" emptyText="No driver bill on this tour yet." columns={[
+            { key: "load", label: "Load Number", sortable: true, sortValue: b => b.load_number ?? "", render: b => <EntityLink kind="load" id={b.load_id} label={b.load_number ?? "Load"} /> },
+            { key: "basis", label: "Miles basis", sortable: true, sortValue: b => b.miles_basis_type ?? "", render: b => b.miles_basis_type ?? DASH },
+            { key: "loaded_miles", label: "Loaded miles", sortable: true, sortValue: b => b.miles_basis ?? -Infinity, render: b => miles(b.miles_basis) },
+            { key: "loaded_rate", label: "Loaded rate", sortable: true, sortValue: b => b.rate_per_mile_cents ?? -Infinity, render: b => rate(b.rate_per_mile_cents) },
+            { key: "loaded_pay", label: "Loaded pay", sortable: true, sortValue: b => b.loaded_pay_cents ?? -Infinity, render: b => money(b.loaded_pay_cents, currencyCode) },
+            { key: "empty_miles", label: "Empty miles", sortable: true, sortValue: b => b.miles_deadhead ?? -Infinity, render: b => miles(b.miles_deadhead) },
+            { key: "empty_rate", label: "Empty rate", sortable: true, sortValue: b => b.rate_empty_per_mile_cents ?? -Infinity, render: b => rate(b.rate_empty_per_mile_cents) },
+            { key: "empty_pay", label: "Empty pay", sortable: true, sortValue: b => b.deadhead_pay_cents ?? -Infinity, render: b => money(b.deadhead_pay_cents, currencyCode) },
+          ]} />
           <div className="ldt-row tot"><span>Gross</span><span className="ldt-m" data-testid="driver-gross">{money(gross, currencyCode)}</span></div>
           <div className="ldt-row"><span>Escrow contribution<span className="ldt-sub">$25 per load, capped at $2,500 on account</span></span><span className="ldt-m">−{money(ds.escrow_cents, currencyCode)}</span></div>
           <div className="ldt-row"><span>Recoveries (fuel overage / damage / fees)</span><span className="ldt-m">−{money(ds.recoveries_cents, currencyCode)}</span></div>
@@ -102,8 +136,65 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
           <div className="ldt-row"><span>Costs ({r.costs.length} entries)</span><span className="ldt-m">−{money(cs.costs_cents, currencyCode)}</span></div>
           <div className="ldt-row"><span>Driver pay</span><span className="ldt-m">−{money(cs.driver_pay_cents, currencyCode)}</span></div>
           <div className="ldt-row"><span>Factoring<span className="ldt-sub">{cs.factoring.factored_invoices ? `${cs.factoring.factored_invoices} invoice(s) factored · face ${money(cs.factoring.face_cents, currencyCode)}` : "not factored"}{cs.factoring.broker_advance_applied_cents ? ` · broker advance applied ${money(cs.factoring.broker_advance_applied_cents, currencyCode)}` : ""}</span></span><span className="ldt-m">{cs.factoring.factored_invoices ? "see Factoring tab" : "−$0.00"}</span></div>
-          <div className="ldt-row big"><span>Margin · {tot.margin_pct == null ? DASH : `${tot.margin_pct.toFixed(1)}%`} · {perMile(tot.per_mile_practical_cents)} practical · {perMile(tot.per_mile_real_cents)} real</span><span className="ldt-m" data-testid="company-margin">{money(cs.margin_cents, currencyCode)}</span></div>
+          <div className="ldt-row big"><span>Margin</span><span className="ldt-m" data-testid="company-margin">{money(cs.margin_cents, currencyCode)}</span></div>
+          <div className="ldt-row"><span>Margin %</span><span className="ldt-m">{tot.margin_pct == null ? DASH : `${tot.margin_pct.toFixed(1)}%`}</span></div>
+          <div className="ldt-row"><span>Per practical mile</span><span className="ldt-m">{perMile(tot.per_mile_practical_cents)}</span></div>
+          <div className="ldt-row"><span>Per real mile</span><span className="ldt-m">{perMile(tot.per_mile_real_cents)}</span></div>
         </div>
+      </div>
+    </div>
+
+    {/* REG-024 — AlwaysTrack Company Settlement parity: CUSTOMER CHARGES · FUEL + EXPENSES · REVENUE. */}
+    <div className="ldt-card" data-testid="settlement-customer-charges">
+      <div className="ldt-ch"><span>Customer charges</span><span className="ldt-open">{liveLegs.length} load{liveLegs.length === 1 ? "" : "s"}</span></div>
+      <div className="ldt-rows">
+        <ParityTable rows={liveLegs} rowKey={l => l.load_id} tableTestId="settlement-customer-charges-table" emptyText="No loads on this tour yet." columns={[
+          { key: "load", label: "Load Number", sortable: true, sortValue: l => l.load_number ?? "", render: l => <EntityLink kind="load" id={l.load_id} label={l.load_number ?? "Load"} /> },
+          { key: "lane", label: "Lane", sortable: true, sortValue: l => l.lane, render: l => <span className="ldt-sub">{l.lane || DASH}</span> },
+          { key: "desc", label: "Description", sortable: false, render: () => "Line haul" },
+          { key: "miles", label: "Miles", sortable: true, sortValue: l => l.miles_practical ?? -Infinity, render: l => miles(l.miles_practical) },
+          { key: "rate", label: "Rate", sortable: true, sortValue: l => legRate(l) ?? -Infinity, render: l => { const rt = legRate(l); return rt == null ? DASH : `$${rt.toFixed(3)}`; } },
+          { key: "amount", label: "Amount", sortable: true, sortValue: l => l.revenue_cents, render: l => money(l.revenue_cents, currencyCode) },
+        ]} footerCells={{
+          load: () => <span className="ldt-sub" data-testid="customer-charges-total-label">Total line haul</span>,
+          miles: () => <span data-testid="customer-charges-total-miles">{miles(chargeMiles)}</span>,
+          rate: () => <span>{chargeMiles > 0 ? `$${(invoicedCents / 100 / chargeMiles).toFixed(3)}` : DASH}</span>,
+          amount: () => <span className="ldt-m" data-testid="customer-charges-total-amount">{money(invoicedCents, currencyCode)}</span>,
+        }} />
+      </div>
+    </div>
+
+    <div className="ldt-card" data-testid="settlement-fuel-expenses">
+      <div className="ldt-ch"><span>Fuel &amp; expenses</span><span className="ldt-open">{r.costs.length} entr{r.costs.length === 1 ? "y" : "ies"}</span></div>
+      <div className="ldt-rows">
+        <ParityTable rows={r.costs} rowKey={c => `${c.kind}:${c.id}`} tableTestId="settlement-fuel-expenses-table" emptyText="No fuel or expenses recorded on this tour." columns={[
+          { key: "date", label: "Date", sortable: true, sortValue: c => c.date ?? "", render: c => fmtDate(c.date) ?? DASH },
+          { key: "kind", label: "Kind", sortable: true, sortValue: c => isFuel(c) ? "Fuel" : "Expense", render: c => isFuel(c) ? "Fuel" : "Expense" },
+          { key: "vendor", label: "Vendor", sortable: true, sortValue: c => c.vendor_name ?? "", render: c => c.vendor_name ?? DASH },
+          { key: "load", label: "Load Number", sortable: true, sortValue: c => c.load_number ?? "", render: c => c.load_number ?? DASH },
+          { key: "category", label: "Category", sortable: true, sortValue: c => c.category ?? "", render: c => c.category ?? DASH },
+          { key: "amount", label: "Amount", sortable: true, sortValue: c => c.amount_cents, render: c => money(c.amount_cents, currencyCode) },
+        ]} footerCells={{
+          date: () => <span className="ldt-sub" data-testid="fuel-expenses-total-label">Fuel {money(fuelTotal, currencyCode)} · expenses {money(otherTotal, currencyCode)}</span>,
+          amount: () => <span className="ldt-m" data-testid="fuel-expenses-total-amount">{money(fuelTotal + otherTotal, currencyCode)}</span>,
+        }} />
+      </div>
+    </div>
+
+    <div className="ldt-card" data-testid="settlement-revenue-waterfall">
+      <div className="ldt-ch"><span>Revenue</span><span className="ldt-open">% of invoiced · per practical mile</span></div>
+      <div className="ldt-rows">
+        {waterfall.map((w) => (
+          <div className="ldt-row" key={w.label} data-testid={`revenue-row-${w.label.toLowerCase().replace(/\s+/g, "-")}`}>
+            <span>{w.label}<span className="ldt-sub">{pct(w.amount_cents)} · {pm(w.amount_cents)}</span></span>
+            <span className="ldt-m">{w.sign === -1 ? "−" : ""}{money(w.amount_cents, currencyCode)}</span>
+          </div>
+        ))}
+        <div className="ldt-row big" data-testid="revenue-row-net">
+          <span>Net revenue<span className="ldt-sub">{pct(tot.margin_cents)} · {pm(tot.margin_cents)}</span></span>
+          <span className="ldt-m" data-testid="revenue-net-amount">{money(tot.margin_cents, currencyCode)}</span>
+        </div>
+        <div className="ldt-row"><span>Miles ({miles(totalMiles)} practical)<span className="ldt-sub">M.P.G. not tracked on-screen — see the fuel card</span></span><span className="ldt-m">{DASH}</span></div>
       </div>
     </div>
 

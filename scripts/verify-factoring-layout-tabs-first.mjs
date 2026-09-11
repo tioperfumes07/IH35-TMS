@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["factoring"],"cols":["layout"],"leafRe":"FactoringHome.*overview-row","task":"FAC-07-LAYOUT-TABS-FIRST"} */
 /**
  * verify-factoring-layout-tabs-first — FAC-07 (owner 2026-09-06 22:3xZ verbatim:
  * "THE FACTORING PROFILE OCCUPIES THE ENTIRE SCREEN … TABS ROW SHOULD BE ON TOP").
@@ -54,12 +55,15 @@ function analyze(src) {
     errors.push("FAC-07: the duplicate-vendor banner must sit below the tabs and above the overview row");
   }
 
-  // 3. LAYOUT 7/12 + 5/12.
-  if (!/lg:col-span-7"\s+data-testid="factoring-home-kpi-col"/.test(home)) {
-    errors.push("FAC-07: KPI column must be lg:col-span-7 (left 7/12)");
+  // 3. LAYOUT — KPI column left, profile column right. Accepts either the original
+  //    lg:col-span-7/5 grid or the REG-042 flex-1 auto-sizing layout.
+  if (!/lg:col-span-7"\s+data-testid="factoring-home-kpi-col"/.test(home) &&
+      !/flex-1[^"]*"\s+data-testid="factoring-home-kpi-col"/.test(home)) {
+    errors.push("FAC-07: KPI column must be lg:col-span-7 or flex-1 (left column)");
   }
-  if (!/lg:col-span-5"\s+data-testid="factoring-home-profile-col"/.test(home)) {
-    errors.push("FAC-07: profile column must be lg:col-span-5 (right 5/12)");
+  if (!/lg:col-span-5"\s+data-testid="factoring-home-profile-col"/.test(home) &&
+      !/flex-1[^"]*"\s+data-testid="factoring-home-profile-col"/.test(home)) {
+    errors.push("FAC-07: profile column must be lg:col-span-5 or flex-1 (right column)");
   }
 
   // 4. shared DrillKpiCard tiles.
@@ -112,8 +116,8 @@ if (process.argv.includes("--selftest")) {
       return s.replace(/<NavyPageSubNav[\s\S]*?\/>\n/, "");
     })],
     ["home drops duplicate-vendor banner", withField("home", (s) => s.replace(/<DuplicateVendorsBanner/g, "<GoneBanner"))],
-    ["home KPI col not 7/12", withField("home", (s) => s.replace(/lg:col-span-7"/g, 'lg:col-span-4"'))],
-    ["home profile col not 5/12", withField("home", (s) => s.replace(/lg:col-span-5"/g, 'lg:col-span-8"'))],
+    ["home KPI col not left", withField("home", (s) => s.replace(/lg:col-span-7"/g, 'lg:col-span-4"').replace(/flex-1 min-w-0"\s+data-testid="factoring-home-kpi-col"/g, 'flex-none min-w-0" data-testid="factoring-home-kpi-col"'))],
+    ["home profile col not right", withField("home", (s) => s.replace(/lg:col-span-5"/g, 'lg:col-span-8"').replace(/flex-1 min-w-0"\s+data-testid="factoring-home-profile-col"/g, 'flex-none min-w-0" data-testid="factoring-home-profile-col"'))],
     ["home drops DrillKpiCard import", withField("home", (s) => s.replace(/import\s*\{\s*DrillKpiCard\s*\}/g, "import { GoneCard }"))],
     ["home drops a KPI tile", withField("home", (s) => s.replace(/testId="factoring-kpi-reserve-balance"/g, 'testId="gone"'))],
     ["home drops compact variant use", withField("home", (s) => s.replace(/variant="compact"/g, 'variant="full"'))],

@@ -1,3 +1,25 @@
+# ★ DEVIN A (Cursor lead, 2026-09-10) — REG-015 build the 6 factoring stubs
+**Full box:** `~/Downloads/09-10-2026-Cursor-Lead-DEVIN-A-REG-015-FACTORING-STUBS.md`. Canonical tracker:
+`~/Downloads/09-09-2026-Claude-Lead-DEFECT-REGISTER.md`. You are **Devin A**; Devin B owns REG-002 +
+Lists/Reports + PlannerGrid — do not touch those.
+- **A-1 REG-015:** build the 6 confirmed-missing factoring stubs (`request_debtor_credit_check`,
+  `debtor_receipts`, `loan_save`, `unapplied_cash`, `invoice_status_report`, `messages_support`) into
+  REAL tabs wired to live USMCA data, following the 16 real tabs' query pattern; honest empty state, no
+  fake data, no new GL math. Deadline 2026-09-11 00:00 UTC. Surrender: Devin B.
+- **A-2 ALL-FACTORING REBUILD (owner 2026-09-10 "you must inspect all factoring") — see
+  `docs/bus/OWNER-DUMP-2026-09-10-ITEMIZED.md`:** after the 6 stubs, do REG-042 (proportions: KPI boxes +
+  Factor Profile auto-adjust; Customer/Load boxes sizing+alignment; filter range box + gear in same row),
+  REG-043 (default columns = factoring data Orig-Invoice→Advance→Reserve→Fees; Profit+Trip-Expenses OFF by
+  default; remove fees/driver-pay/margin from Chargebacks&Fee-History; add settlement #), REG-044 (QBO
+  date/period filters + Summary/Detail toggle on ALL tabs), REG-045 (Chargebacks&Fee-History not
+  split-screen with Monthly Fee Summaries), REG-046 (invoice table labeled + invoiced-date/settlement/
+  delivery-date + Orig-Invoice→Advance→Reserve→Fees), REG-047 (Faro Daily Import Summary/Detail + range +
+  reconcile balances). One PR per REG, each green + live-proven.
+- **A-3 (if early):** REG-018 kanban drag post-deploy live click-through.
+USMCA only, verify LIVE, BUILD not audit, fast-merge, PR title `Devin-`.
+
+---
+
 # ★ DEVIN (non-A)
 
 **23:45Z — LEAD · ROUND 3 — YOUR ONE ITEM:**

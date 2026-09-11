@@ -16,6 +16,7 @@ function assert(cond, msg, errors) {
 export function run() {
   const errors = [];
   const page = read("apps/frontend/src/pages/driver-finance/SettlementsPage.tsx");
+  const companyPage = read("apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx");
   const detail = read("apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx");
   const header = read("apps/frontend/src/pages/driver-finance/components/SettlementHeader.tsx");
   const vendor = read("apps/frontend/src/components/vendors/VendorCreateModal.tsx");
@@ -36,6 +37,23 @@ export function run() {
       page.includes("allowCreate={false}") &&
       page.includes('searchParams.get("driver_id")'),
     "SettlementsPage must render EntityPicker kind=driver filter (allowCreate=false) and honor ?driver_id=",
+    errors
+  );
+
+  // REG-005 — both settlement home pages must render a real-number KPI strip at the top, using the
+  // shared DrillKpiCard (not a locally-invented tile), derived from data already fetched.
+  assert(
+    page.includes('data-testid="settlements-home-kpi-strip"') &&
+      page.includes("DrillKpiCard") &&
+      page.includes("driverPayThisPeriod"),
+    "SettlementsPage must render the REG-005 home KPI strip (settlements-home-kpi-strip) with DrillKpiCard + a real Driver Pay (Period) $ tile",
+    errors
+  );
+  assert(
+    companyPage.includes('data-testid="company-settlements-kpi-strip"') &&
+      companyPage.includes("DrillKpiCard") &&
+      companyPage.includes("netRevenue"),
+    "CompanySettlementsPage must render the REG-005 home KPI strip (company-settlements-kpi-strip) with DrillKpiCard + a real Net Revenue tile",
     errors
   );
 
@@ -73,7 +91,9 @@ export function run() {
 
 function selftest() {
   const pagePath = path.join(ROOT, "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx");
+  const companyPath = path.join(ROOT, "apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx");
   const backup = fs.readFileSync(pagePath, "utf8");
+  const companyBackup = fs.readFileSync(companyPath, "utf8");
   try {
     const patched = backup.replace(/const kpiBaseQuery = useQuery\(\{[\s\S]*?\n  \}\);\n/, "");
     fs.writeFileSync(pagePath, patched, "utf8");
@@ -81,9 +101,23 @@ function selftest() {
     if (!planted.some((e) => e.includes("unfiltered list for KPI base"))) {
       throw new Error("planted kpiBaseQuery removal not detected");
     }
-    console.log(`[verify-settlement-fe-honesty] SELFTEST PASS (${planted.length} planted failures detected)`);
+    fs.writeFileSync(pagePath, backup, "utf8");
+
+    // REG-005 — removing the home KPI strip from either page must be caught.
+    fs.writeFileSync(pagePath, backup.replace('data-testid="settlements-home-kpi-strip"', 'data-testid="x"'), "utf8");
+    if (!run().some((e) => e.includes("settlements-home-kpi-strip"))) {
+      throw new Error("planted driver-settlements KPI strip removal not detected");
+    }
+    fs.writeFileSync(pagePath, backup, "utf8");
+
+    fs.writeFileSync(companyPath, companyBackup.replace('data-testid="company-settlements-kpi-strip"', 'data-testid="x"'), "utf8");
+    if (!run().some((e) => e.includes("company-settlements-kpi-strip"))) {
+      throw new Error("planted company-settlements KPI strip removal not detected");
+    }
+    console.log(`[verify-settlement-fe-honesty] SELFTEST PASS — kpiBaseQuery + REG-005 driver/company strip mutations detected`);
   } finally {
     fs.writeFileSync(pagePath, backup, "utf8");
+    fs.writeFileSync(companyPath, companyBackup, "utf8");
   }
 }
 
