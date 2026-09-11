@@ -8629,5 +8629,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-11",
     "purpose": "verify-historical-settlement-attribution-schema"
+  },
+  "11221": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-settlement-close-posts-payrun"
   }
 }
