@@ -8,35 +8,64 @@
  * (638972 cents). Owner Law #9: the signed doc / live table / bank statement is the source, never a
  * derived query alone -- this guard checks against that printed line, not a recomputed one.
  *
- * CORRECTION TO THE ORIGINAL PACKET: the packet's item #1 hypothesized a systemic Plaid
- * sign-inversion bug on this account ("every credit row stored negative, every debit row stored
- * positive"). That is Plaid's own documented convention (positive = OUT, negative = IN -- BANK-F10005
- * 2026-09-04, BANK-F10041 2026-09-07, BANK-F30002 2026-09-08), not a defect. Direct row-by-row
- * reconciliation against the real CSV (matching by transaction_date + a real-world-signed amount
- * derived from the EXISTING is_credit flag: is_credit ? +abs(amount_cents) : -abs(amount_cents))
- * matched 286/288 real transactions exactly; the SAME match using raw amount_cents with no is_credit
- * correction matched only 6/288. is_credit is correct as stored; no sign was flipped by this fix.
- * The only two real defects were (b) 36 stale Plaid PENDING duplicate rows never retired when their
- * POSTED successor arrived (bank-tx-dedup.ts's own documented failure mode -- CC-1 already swept this
- * class system-wide on 2026-09-07 per scripts/ops/2026-09-07-cc1-bank-running-balance-plaid-pending-
- * dedup-sweep.ts; this account's leftovers are residue the timing of that one-shot sweep didn't
- * reach) and (c) 2 real transactions Plaid never imported at all (06/01/2026 $377.45 wire to Love's
- * Travel Stop; 08/27/2026 $15 wire fee).
+ * TWO INDEPENDENT FIXES CONVERGED ON THIS ACCOUNT (both true, not contradictory):
+ * (1) This guard's own author (CC-2) independently re-derived, matching CSV rows to Neon rows by
+ *     (transaction_date, is_credit ? +abs(amount_cents) : -abs(amount_cents)) -- i.e. using the
+ *     is_credit flag exactly as Plaid originally stored it, no sign change -- and got 286/288 exact
+ *     matches (vs only 6/288 using raw amount_cents with no is_credit correction). This proved
+ *     is_credit was always correct and a correct reconciliation NEVER REQUIRED changing amount_cents'
+ *     stored sign -- consistent with Plaid's documented native convention (positive=OUT,
+ *     negative=IN) established repeatedly this session (BANK-F10005 2026-09-04, BANK-F10041
+ *     2026-09-07, BANK-F30002 2026-09-08).
+ * (2) SEPARATELY, PR #21744 (Cursor, merged 2026-09-11 as a second, independently-authored fix
+ *     reusing the SAME finding id "BANK-F10005" for a different claim -- a finding-registry
+ *     collision worth its own note) took the opposite design choice: it redefined
+ *     banking.bank_transactions.amount_cents' storage convention GOING FORWARD, for every account
+ *     and every entity, to money-in-positive ("statement-signed") via a new
+ *     plaidAmountToStatementCents() helper in plaid.service.ts, and retroactively re-signed this
+ *     ONE account's 286 non-phantom rows to match (confirmed live: raw sum now equals the
+ *     is_credit-based sum, both 638972 -- the 12/08 deposit that used to read
+ *     amount_cents=-10000/is_credit=true now reads amount_cents=+10000/is_credit=true). Both
+ *     conventions are internally consistent and BOTH reconcile to the same $6,389.72 -- the
+ *     disagreement was purely "what should the column's stored sign mean", not a factual dispute
+ *     about the data or about is_credit (both fixes agree is_credit was always correct).
  *
- * FIX APPLIED (live Neon, 2026-09-11T01:06:09Z, verified by this guard): the 36 phantom rows were
+ * BLAST-RADIUS NOTE (filed to OUTBOX/GUARD-WORKORDERS as its own owner-attention item, not
+ * re-litigated here): PR #21744's convention flip applies to the Plaid ingest path for EVERY
+ * account/entity going forward, but its repair script only re-signed this ONE account's historical
+ * rows. Every other pre-existing Plaid-sourced row system-wide (~9,839 at last count, other USMCA
+ * accounts + TRANSP + TRK) is still on the OLD (native Plaid) sign convention and has no plan to be
+ * revisited. Every consumer this session actually checked (posting-engine.service.ts's
+ * buildBankCategorizationLines, BankingTransactionsDesignView.tsx's spentReceived,
+ * bank-tx-dedup.ts's dedup hash, bank-recon/match.service.ts's candidate matching) already derives
+ * direction from is_credit alone and magnitude from Math.abs(amount_cents) alone -- both
+ * convention-agnostic by construction -- so this guard (and, as far as this session could verify,
+ * the live app) is NOT broken by the resulting cross-row inconsistency. But any FUTURE code that
+ * reads amount_cents' raw sign directly, without going through is_credit, will get a different
+ * answer depending on which account/era a row is from -- a real, durable landmine this note exists
+ * to flag, not fix (fixing it means either reverting the going-forward convention change or
+ * backfilling ~9,839 more rows across every entity, both real decisions for the owner, not a
+ * unilateral call from either fix).
+ *
+ * FIX THIS GUARD LOCKS (live Neon, first observed 2026-09-11T01:06:09Z): the 36 phantom rows were
  * voided (void-not-delete; voided_reason='reg030_bofa_statement_unmatched_phantom') and the 2 missing
  * transactions were backfilled (source='csv_import', status='pending_categorization' -- same path the
- * app's own Statement Import feature uses for a manually-supplied row). No amount_cents or is_credit
- * value was changed on any of the 322 pre-existing rows.
+ * app's own Statement Import feature uses for a manually-supplied row). Root cause of the 36: almost
+ * all carry pending=true/dedup_hash=null -- stale Plaid PENDING duplicates never retired when their
+ * POSTED successor arrived (bank-tx-dedup.ts's own documented failure mode; CC-1 already swept this
+ * class system-wide on 2026-09-07 per scripts/ops/2026-09-07-cc1-bank-running-balance-plaid-pending-
+ * dedup-sweep.ts -- this account's 36 are residue outside that one-shot sweep's window).
  *
- * PROOF: live signed sum (is_credit ? +abs : -abs) over every non-voided row on this account now
- * equals 638972 cents -- the statement's own printed ending-balance line, to the penny.
+ * PROOF: live signed sum (is_credit ? +abs : -abs) over every non-voided row on this account equals
+ * 638972 cents -- the statement's own printed ending-balance line, to the penny -- REGARDLESS of
+ * which of the two conventions above amount_cents' raw sign follows on a given row, since this
+ * formula never reads that raw sign.
  *
  * This guard is a REGRESSION lock, not a daily balance check (the balance moves every day as new
  * transactions post) -- it pins the 36 voided ids + 2 backfilled ids by id and re-derives the
  * point-in-time reconciliation total using ONLY those pinned rows plus every OTHER row dated on or
  * before 2026-09-09 (the statement's own cutoff), so it stays green as new, later-dated activity
- * arrives.
+ * arrives, and green regardless of which sign convention any given row uses.
  */
 
 const LABEL = "verify-reg030-bofa-usmca-freight-reconciliation";
