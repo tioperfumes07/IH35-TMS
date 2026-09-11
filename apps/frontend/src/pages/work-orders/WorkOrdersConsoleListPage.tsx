@@ -15,20 +15,33 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityPicker } from "../../components/EntityPicker";
 
 type SegmentId = "all" | "open" | "in_progress" | "completed" | "cancelled";
-type WoSort = "created_desc" | "estimated_cost_desc" | "actual_cost_desc" | "wo_number_asc" | "labor_cost_desc";
+type WoSort =
+  | "created_asc"
+  | "created_desc"
+  | "estimated_cost_asc"
+  | "estimated_cost_desc"
+  | "actual_cost_asc"
+  | "actual_cost_desc"
+  | "wo_number_asc"
+  | "wo_number_desc"
+  | "labor_cost_asc"
+  | "labor_cost_desc"
+  | "unit_number_asc"
+  | "unit_number_desc";
 type ConsoleView = "list" | "kanban";
 type KanbanSortKey = "unit_number" | "display_id";
 
-const WO_CONSOLE_HEADER_SORTABLE = new Set(["unit_number", "display_id", "opened_at"]);
 const DEFAULT_HEADER_SORT_KEY = "opened_at";
 const PAGE_SIZE = 100;
 
 function mapHeaderSortToServer(sortKey: string, sortDir: "asc" | "desc"): WoSort {
-  if (sortKey === "display_id" && sortDir === "asc") return "wo_number_asc";
-  if (sortKey === "total_estimated_cost" && sortDir === "desc") return "estimated_cost_desc";
-  if (sortKey === "total_actual_cost" && sortDir === "desc") return "actual_cost_desc";
-  if (sortKey === "labor_cost_cents" && sortDir === "desc") return "labor_cost_desc";
-  return "created_desc";
+  if (sortKey === "unit_number") return sortDir === "asc" ? "unit_number_asc" : "unit_number_desc";
+  if (sortKey === "display_id") return sortDir === "asc" ? "wo_number_asc" : "wo_number_desc";
+  if (sortKey === "total_estimated_cost") return sortDir === "asc" ? "estimated_cost_asc" : "estimated_cost_desc";
+  if (sortKey === "total_actual_cost") return sortDir === "asc" ? "actual_cost_asc" : "actual_cost_desc";
+  if (sortKey === "labor_cost_cents") return sortDir === "asc" ? "labor_cost_asc" : "labor_cost_desc";
+  if (sortKey === "opened_at") return sortDir === "asc" ? "created_asc" : "created_desc";
+  return sortDir === "asc" ? "created_asc" : "created_desc";
 }
 
 function consoleSortValue(row: WoConsoleRow, key: string): string | number {
@@ -159,19 +172,10 @@ export function WorkOrdersConsoleListPage() {
 
   const rows = useMemo(() => listQuery.data?.work_orders ?? [], [listQuery.data?.work_orders]);
 
-  const sortedRows = useMemo(() => {
-    if (
-      !WO_CONSOLE_HEADER_SORTABLE.has(effectiveSortKey) &&
-      effectiveSortKey !== "total_estimated_cost" &&
-      effectiveSortKey !== "labor_cost_cents"
-    ) {
-      return rows;
-    }
-    return [...rows].sort((a, b) => {
-      const cmp = compareConsoleRows(a, b, effectiveSortKey);
-      return effectiveSortDir === "asc" ? cmp : -cmp;
-    });
-  }, [rows, effectiveSortKey, effectiveSortDir]);
+  // List mode is server-paginated, so the server is the only honest sorting authority. Re-sorting
+  // one 100-row page in the browser makes a header look wired while the next page remains out of
+  // order. Kanban keeps its explicit per-column browser sort because it only presents this page.
+  const sortedRows = rows;
 
   const tabCounts = listQuery.data?.tab_counts;
   const total = tabCounts?.[segment] ?? 0;
