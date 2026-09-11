@@ -56,6 +56,40 @@ export function plaidAmountToStatementCents(plaidAmount: number): { amount_cents
   return { amount_cents: -plaidCents, is_credit: plaidAmount < 0 };
 }
 
+/** REG-030: header/register current = SUM of posted (non-pending, non-void) statement-signed cents.
+ * Plaid's accounts.balance.current is a different snapshot and overwrote USMCA FREIGHT (~$2,089)
+ * while the BofA statement ended at $6,389.72. Never clobber a real posted walk with that snapshot
+ * once the account has posted rows. */
+export async function applyPostedSignedCurrentBalance(
+  client: { query: (sql: string, params?: unknown[]) => Promise<unknown> },
+  bankAccountId: string,
+): Promise<void> {
+  await client.query(
+    `
+      UPDATE banking.bank_accounts a
+      SET
+        current_balance_cents = posted.sum_cents,
+        updated_at = now()
+      FROM (
+        SELECT COALESCE(SUM(t.amount_cents), 0)::bigint AS sum_cents
+        FROM banking.bank_transactions t
+        WHERE t.bank_account_id = $1::uuid
+          AND t.voided_at IS NULL
+          AND t.pending IS NOT TRUE
+      ) posted
+      WHERE a.id = $1::uuid
+        AND EXISTS (
+          SELECT 1
+          FROM banking.bank_transactions t
+          WHERE t.bank_account_id = a.id
+            AND t.voided_at IS NULL
+            AND t.pending IS NOT TRUE
+        )
+    `,
+    [bankAccountId],
+  );
+}
+
 function mapPlaidTypeToAccountType(input: string | null | undefined) {
   const normalized = (input ?? "").toLowerCase();
   if (normalized.includes("checking")) return "checking";
@@ -364,6 +398,7 @@ export async function exchangePublicToken(publicToken: string, operatingCompanyI
           "info",
           "P5-T1.2-PLAID"
         );
+        await applyPostedSignedCurrentBalance(client, accountId);
       } else {
         const inserted = await client.query<{ id: string }>(
           `
@@ -812,6 +847,12 @@ export async function syncTransactions(itemId: string, opts?: { actorUserUuid?: 
     });
   }
 
+  await withLuciaBypass(async (client) => {
+    for (const row of accountRows) {
+      await applyPostedSignedCurrentBalance(client, row.id);
+    }
+  });
+
   await markPlaidItemSyncSucceeded(itemId);
 
   await appendSystemAudit(
@@ -868,7 +909,7 @@ export async function getAccountBalance(bankAccountId: string) {
   if (!plaidAccount) throw new Error("plaid_account_not_found");
 
   const updated = await withLuciaBypass(async (client) => {
-    const res = await client.query(
+    await client.query(
       `
         UPDATE banking.bank_accounts
         SET
@@ -877,10 +918,11 @@ export async function getAccountBalance(bankAccountId: string) {
           last_synced_at = now(),
           updated_at = now()
         WHERE id = $1
-        RETURNING *
       `,
       [bankAccountId, toCents(plaidAccount.balances.current), toCents(plaidAccount.balances.available ?? plaidAccount.balances.current)]
     );
+    await applyPostedSignedCurrentBalance(client, bankAccountId);
+    const res = await client.query(`SELECT * FROM banking.bank_accounts WHERE id = $1 LIMIT 1`, [bankAccountId]);
     return res.rows[0] ?? null;
   });
 

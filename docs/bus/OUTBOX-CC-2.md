@@ -2537,3 +2537,64 @@ standing law. Filing precisely instead of guessing.
 BNK-13: **live-proof gap closed** (96% real coverage confirmed, stale 3,478 figure corrected to
 50/322); **2 named rows remain, need an owner/bookkeeper decision on target account**, not a code
 gap.
+
+---
+
+## REG-028/030 — independently verified, two fixes converged, one cross-cutting concern filed (2026-09-11)
+
+Owner packet (`09-11-2026 CC-2 — REG-028/030 FINAL FIX SCOPE`) supplied the real source of truth:
+`~/Downloads/stmt.csv`, a genuine Bank of America CSV for USMCA FREIGHT checking (mask 3224,
+`bank_account_id e83028a5-dcda-4233-b660-5b9923b3d39c`), 288 transactions, 03/10/2025-09/09/2026,
+statement's own printed ending-balance line: `09/09/2026, "Wire Transfer Fee", -15.00, "6,389.72"`.
+Independently re-derived from scratch (not assumed from the packet) by parsing that CSV and
+matching every row against a live pull of `banking.bank_transactions` on this account.
+
+**My own reconciliation (matching by `(transaction_date, is_credit ? +abs(amount_cents) :
+-abs(amount_cents))` -- i.e. is_credit exactly as Plaid originally stored it, no sign change)
+matched 286/288 real transactions exactly; the same match on raw `amount_cents` with no `is_credit`
+correction matched only 6/288.** This proved `is_credit` was always correct and that a correct
+reconciliation never required changing `amount_cents`'s stored sign -- consistent with Plaid's
+documented native convention (positive=OUT, negative=IN) established repeatedly this session
+(`BANK-F10005` 2026-09-04, `BANK-F10041` 2026-09-07, `BANK-F30002` 2026-09-08). The 2 missing
+transactions (06/01 $377.45 Love's Travel Stop wire; 08/27 $15 wire fee) and 36 phantom rows (stale
+Plaid PENDING duplicates never retired when their POSTED successor arrived, `pending=true,
+dedup_hash=null` on nearly all of them) were both confirmed exactly.
+
+**While this was in progress, PR #21744 (Cursor, merged 2026-09-11) landed as a second,
+independently-authored fix on the same finding id `BANK-F10005` — reusing an id already claimed by
+an established, differently-conclusioned 2026-09-04 finding, worth a registry-hygiene note on its
+own.** That PR took the opposite design choice on the sign question: it redefines
+`banking.bank_transactions.amount_cents`'s stored convention **going forward, for every account and
+every entity**, to money-in-positive, via a new `plaidAmountToStatementCents()` in
+`plaid.service.ts`, and retroactively re-signed this one account's 286 non-phantom rows to match
+(confirmed live: raw `sum(amount_cents)` now equals the `is_credit`-based sum, both 638972 cents).
+**Both conventions are internally consistent and both reconcile to the exact same $6,389.72** — the
+two fixes disagree on "what the column's sign should mean," not on any fact about the data; both
+agree `is_credit` was always correct.
+
+**Cross-cutting concern, filed for owner attention, not re-litigated or unilaterally reverted here:**
+PR #21744's convention flip applies to every future Plaid sync system-wide, but its repair script
+only re-signed history for this ONE account. Every other pre-existing Plaid-sourced row (~9,839 at
+last count: other USMCA accounts, TRANSP, TRK) stays on the old native-Plaid convention indefinitely,
+with no backfill plan. Checked every real consumer of `banking.bank_transactions.amount_cents` this
+session could find — `posting-engine.service.ts`'s `buildBankCategorizationLines`,
+`BankingTransactionsDesignView.tsx`'s `spentReceived`, `bank-tx-dedup.ts`'s dedup hash,
+`bank-recon/match.service.ts`'s candidate matching — and every one already derives direction from
+`is_credit` alone and magnitude from `Math.abs(amount_cents)` alone, so nothing found is actually
+broken by the resulting cross-row sign inconsistency. But any future code reading `amount_cents`'s
+raw sign directly (bypassing `is_credit`) will get a different answer depending on which
+account/era a row is from — a durable landmine, not something either fix's author fully scoped.
+Flagging it rather than guessing whether to revert PR #21744's convention choice or backfill the
+other ~9,839 rows — both are real decisions, not a coder call.
+
+**Guard added, verify-step 10915 (cc-2 band):**
+`scripts/verify-reg030-bofa-usmca-freight-reconciliation.mjs` — pins the 36 voided ids + 2 backfilled
+ids by id (regression lock) and re-derives the point-in-time reconciliation total through the
+statement's own cutoff date using the `is_credit`/`abs()` formula, which is convention-agnostic by
+construction — it passes regardless of which of the two sign conventions above a given row follows.
+Live-DB half skips cleanly when `DATABASE_URL` is unset, matching the existing
+`verify-acc13-no-test-accounts-in-usmca-coa.mjs` convention; a positive control guards the
+FORCED-RLS 0-count landmine.
+
+REG-028/030: **DONE** (substantive fix already shipped via #21744; this PR adds independent
+verification + a live regression-lock guard + the cross-cutting convention-consistency finding).

@@ -1527,3 +1527,56 @@ categorization decision remaining, not a CC-1 code gap. Nothing actionable there
 DONE LINE: CC-1 | INBOX-CC-1 ROW 0-6 status sweep | ROW 0 shipped this session, ROWs 1/4/5/6
 confirmed already done by other work, ROW 2 confirmed already wired, ROW 3 correctly left to CC-3 |
 NEXT: continuing to sweep the register for the next genuinely open CC-1 item.
+
+## CC-1 | SETTLEMENT/TOUR NUMBER SWEEP: COLUMN SWEEP + AUTO-ASSIGN + AUTO-DETECT (2026-09-11) — all 3 parts DONE
+
+Owner order (verbatim): "make sure anywhere settlements, load costs, pre settlements exist that a
+column has the settlement/tour number, that the settlement or presettlement number is assigned
+automatically when a new load is created and that all loads detect and set/add loads to the
+correct settlement." Full writeup with every query: `docs/audit/SETTLEMENT-TOUR-NUMBER-SWEEP-2026-09-11.md`.
+
+**Part 1 — COLUMN SWEEP.** 39 surfaces checked (every settlement/pre-settlement/load-cost
+list-or-detail surface in `apps/frontend`). 37/39 already correct (`alwaysVisible: true`,
+REG-017's `BillsPage.tsx` pattern). 2 genuine gaps fixed: `Vendors.tsx`/`Customers.tsx`
+transaction-drill tables (`defaultHidden: true` → `alwaysVisible: true`) and `FactoringHome.tsx`'s
+Invoice Status tab (no flag → `alwaysVisible: true`). Guard: `scripts/verify-settlement-number-always-visible.mjs`
++ verify-step 11201. PR #21748 merged `2b0780989b`; post-merge forensic confirmed all 3 fixes +
+both guard files live on `origin/main`.
+
+**Part 2 — AUTO-ASSIGN TIMING.** Verified against the architecture FIRST, not assumed:
+`docs/audit/TOUR-SPLIT-PLAN-2026-09-06.md` §7 (owner ruling) confirms booking-time assignment via
+`confirmPresettlementLink` is the correct, already-built trigger point — no conflict with the
+locked architecture. Live-tested: the 10 most-recently-created USMCA loads (through load 13584,
+2026-09-11T00:54Z) are 10/10 linked at booking time. No code change needed.
+
+**Part 3 — AUTO-DETECT + ATTACH.** Company-wide live audit found exactly 1 orphan (load 13508,
+closed, had its own real settlement S-2026-0007 with `first_load_id`/`last_load_id` both exactly
+matching it — never written back) and 2 misattached deduction lines (load 13508's $10+$25 sitting
+on a different driver's closed settlement S-2026-0015). Backfilled 13508's link via a single
+additive, safety-guarded UPDATE, applied directly on Neon prod, independently re-verified
+read-only afterward — **company-wide re-sweep: 0 orphaned non-cancelled USMCA loads.** Shipped the
+first-ever general orphan-detection mechanism (`scripts/verify-load-settlement-linkage.mjs`, wired
+into `.github/workflows/prod-postdeploy-verify.yml`'s live-prod post-deploy check) — none existed
+before (confirmed: no cron/health-route/API endpoint; only prior art was a 2-load hardcoded one-off
+repair script). The 2 misattached lines are flagged (guard's own ratchet baseline, count 2), not
+fixed — correcting money inside an already-CLOSED settlement is an audited-reversal-class change,
+tracked for owner review, not attempted blind. PR #21750 merged `69010bc69c17`; post-merge
+forensic confirmed all files + the workflow step live on `origin/main`.
+
+**Also identified (documented, not fixed this pass — REMAINING, not deferred-and-forgotten):**
+the root-cause mechanism that lets orphans like 13508 occur — `presettlement-link.service.ts`'s
+deferred path writes only an audit-log entry when `trip_type` is unknown, never a
+`driver_finance.presettlement_link_suggestions` review-queue row, so nothing ever surfaces it for
+human review. A real fix, but a separate, larger-scoped change (new write path + review-queue UI)
+than this sweep's "detect and fix current loads" mandate. Also flagged:
+`dispatch/cancellation.service.ts:337-345`'s non-canonical load-resolution shape (no live defect
+found from it).
+
+Lane boundary respected throughout: no banking/reconciliation (CC-2) or Kanban UI (CC-3) touched.
+
+DONE LINE: CC-1 | SETTLEMENT/TOUR NUMBER SWEEP all 3 parts DONE | PR #21748 merged `2b0780989b`
+(Part 1) + PR #21750 merged `69010bc69c17` (Parts 2+3) | Live=CONFIRMED via post-merge forensic on
+`origin/main` for both PRs + live Neon before/after proof for the Part 3 backfill (0 orphans
+company-wide) | NEXT: deferred-loads-invisible root-cause fix + the 2 misattached-line reversal are
+real follow-on work, tracked in `docs/audit/SETTLEMENT-TOUR-NUMBER-SWEEP-2026-09-11.md`, continuing
+sweep for the next open CC-1 item.

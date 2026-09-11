@@ -364,7 +364,7 @@ function buildMatchCandidateColumns(
   ];
 }
 
-type ReviewTabId = "for_review" | "categorized" | "excluded";
+type ReviewTabId = "all" | "for_review" | "categorized" | "excluded";
 type AmountFilter = "all" | "spent" | "received";
 type CategorizeBy = "category" | "item";
 
@@ -409,6 +409,7 @@ type ViewSettings = {
 };
 
 export const BANKING_REVIEW_TABS = [
+  { id: "all", label: "All" },
   { id: "for_review", label: "For review" },
   { id: "categorized", label: "Categorized" },
   { id: "excluded", label: "Excluded" },
@@ -564,7 +565,7 @@ export function BankingTransactionsDesignView({
   // matchCandidatesQuery runs) and scrolls this pane into view, surfacing the ranked candidates that were
   // previously only reachable by manually expanding the row.
   const matchPaneRef = useRef<HTMLDivElement | null>(null);
-  const [activeReviewTab, setActiveReviewTab] = useState<ReviewTabId>("for_review");
+  const [activeReviewTab, setActiveReviewTab] = useState<ReviewTabId>("all");
   const [descriptionFilter, setDescriptionFilter] = useState("");
   const [amountFilter, setAmountFilter] = useState<AmountFilter>("all");
   // B.2 — multi-select: an empty array means "All transaction types" (no filter, same meaning the
@@ -929,6 +930,7 @@ export function BankingTransactionsDesignView({
 
   const reviewTabBuckets = useMemo(() => {
     const out: Record<ReviewTabId, PlaidBankTransaction[]> = {
+      all: [],
       for_review: [],
       categorized: [],
       excluded: [],
@@ -940,6 +942,7 @@ export function BankingTransactionsDesignView({
       const looksCategorized =
         hasPersistedMatch(tx) ||
         (tx.matched_kind != null && String(tx.matched_kind).toLowerCase() !== "excluded");
+      out.all.push(tx);
       if (looksExcluded) {
         out.excluded.push(tx);
       } else if (looksCategorized) {
@@ -3299,6 +3302,7 @@ export function BankingTransactionsDesignView({
               <button
                 key={option}
                 type="button"
+                data-testid={`banking-amount-filter-${option}`}
                 className={`flex h-7 items-center px-2.5 ${option !== "all" ? "border-l border-gray-300" : ""} ${
                   amountFilter === option ? "bg-[#1f2a44] text-white" : "text-gray-700"
                 }`}

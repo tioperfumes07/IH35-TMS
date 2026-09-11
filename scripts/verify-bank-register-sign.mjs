@@ -36,5 +36,11 @@ const viewSrc = readFileSync(join(root, "apps/frontend/src/pages/banking/compone
 if (/tx\.is_credit \|\| Number\(tx\.amount_cents/.test(viewSrc)) {
   fail("spentReceived/from-to must not treat negative amount_cents as money-in (BofA outflows are negative)");
 }
+if (!/\{ id: "all", label: "All" \}/.test(viewSrc) || !/useState<ReviewTabId>\("all"\)/.test(viewSrc)) {
+  fail("register default must be All so categorized rows (e.g. 12/08 $100) stay on the statement walk");
+}
+if (!/export async function applyPostedSignedCurrentBalance/.test(plaidSrc)) {
+  fail("Plaid must re-anchor current_balance_cents from posted signed SUM, not leave Plaid's snapshot");
+}
 
 console.log("PASS verify-bank-register-sign");
