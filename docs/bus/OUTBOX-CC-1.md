@@ -1491,3 +1491,39 @@ DONE LINE: CC-1 | ROW 0 (ACCT-F26063) FULLY CLOSED | PR #21730 merged 53f8a46d, 
 Neon prod, backend deploy live 53f8a46d | Live=CONFIRMED for the migration + healthz git_sha match
 for the code | NEXT: AR-tieout recurrence filed (not this session's scope to fix blind), continuing
 sweep for other CC-1 items.
+
+## CC-1 | INBOX-CC-1 ROW 0-6 consolidated status (2026-09-11) — 5 of 6 already resolved, 1 not CC-1's lane
+
+Live-checked every row in the current `INBOX-CC-1.md` before starting new work (per its own "check
+main + OUTBOX-GPT before starting" instruction):
+
+- **ROW 0 (reimbursement per-type GL) — DONE this session.** ACCT-F26063, PR #21730 merged
+  `53f8a46d`, migration live on Neon prod, backend deployed live. Full report above.
+- **ROW 1 (REG-040 resettlement) — DONE by GPT**, per `OUTBOX-GPT.md`'s own "REG-040 DONE —
+  2026-09-10 21:12Z" entry (audited reversal→recompute→repost, closed/posted-settlement
+  continuation, live Chrome proof). Superseded this session's own earlier REG-040 status-correction
+  (which had flagged the "re-settlement doesn't exist" gap as an owner-decision point — the owner
+  ruled on it and GPT built the full engine while that correction was in flight).
+- **ROW 2 (REG-008, 3 call sites) — already wired, confirmed live on `origin/main`.**
+  `grep -c linkLoadToPresettlementAfterAssignmentInClientTx` on `quick-assign.service.ts`,
+  `planner.service.ts`, `dispatch-refinements.service.ts` = 2 each (import + call) — this was
+  shipped earlier this session's own REG-008 work, already on main. No action needed.
+- **ROW 3 (Dispatch Home KPIs REAL + own columns) — CC-3's surface** (Dispatch UI, not money/GL).
+  Not investigated/touched — filing here only to record it wasn't silently skipped; per seat law
+  ("FIND IT, FILE IT, DO NOT FIX IT" for another lane's surface) this is CC-3's to confirm/build.
+- **ROW 4 (CashFlowKpiStrip confident-0) — already fixed**, confirmed live:
+  `node scripts/verify-no-dead-kpi-cards.mjs` → PASS (221 KPI cards, 0 zero-faked). Whoever fixed
+  this did so before this check; no action needed.
+- **ROW 5 (REG-031 Cash Flow Home) — DONE by me earlier this session**, live Chrome click-through
+  already proven + reported (see this outbox's own earlier REG-031 entry).
+- **ROW 6 (SET-29 fixed-monthly-costs) — already DONE**, PR #21594 (merged before this session),
+  "investigated live 2026-09-09, no defect found, permanent guard added — verify-step 11129". Guard
+  file confirmed present + passing its static sweep on `origin/main`.
+
+Also checked REG-030/BNK-13 (flagged "blocked on you" in a standing broadcast) — both are already
+CLOSED by CC-2's own live re-measurement (`OUTBOX-CC-2.md`), each with only an owner/bookkeeper
+categorization decision remaining, not a CC-1 code gap. Nothing actionable there for this seat.
+
+DONE LINE: CC-1 | INBOX-CC-1 ROW 0-6 status sweep | ROW 0 shipped this session, ROWs 1/4/5/6
+confirmed already done by other work, ROW 2 confirmed already wired, ROW 3 correctly left to CC-3 |
+NEXT: continuing to sweep the register for the next genuinely open CC-1 item.
