@@ -7,6 +7,7 @@ import { checkGates, DISPATCH_MUTATION_ACTIONS, type GateContext } from "./gate-
 import "./wf-044-advisory.gate.js";
 import "./wf-050-dvir-major.gate.js";
 import "./wf-038-active-driver.gate.js";
+import "./driver-compliance-01.gate.js";
 
 const checkQuery = z.object({
   action: z.enum(DISPATCH_MUTATION_ACTIONS),

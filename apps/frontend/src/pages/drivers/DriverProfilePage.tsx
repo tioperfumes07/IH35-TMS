@@ -223,7 +223,11 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
       await (isHidden
         ? reactivateDriver(driverId)
         : deactivateDriver(driverId, {
-            quarantineTestFixture: /(^|\W)(test|codex)(\W|$)/i.test(`${driver?.first_name ?? ""} ${driver?.last_name ?? ""}`),
+            // DRIVER-COMPLIANCE-01: kept in lockstep with the backend's unmistakableDriverFixtureName()
+            // (apps/backend/src/mdata/drivers.routes.ts) -- zztest/"SAFETY —" added there too.
+            quarantineTestFixture:
+              /(^|\W)(test|codex|zztest)(\W|$)/i.test(`${driver?.first_name ?? ""} ${driver?.last_name ?? ""}`) ||
+              (driver?.first_name?.trim().toLowerCase() === "safety" && driver?.last_name?.trim() === "—"),
           }));
       refreshDriver();
     } catch (err) {
@@ -611,7 +615,12 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           <div>
             <div className="font-semibold text-slate-800">Medical card</div>
             <div>
-              Expires {formatDateUS(profileDriver.dot_medical_expires_at as string | null) || "—"}
+              {/* DRIVER-COMPLIANCE-01 (owner/Claude Lead 2026-09-11): a bare "—" reads as N/A, not
+                  as "this driver has no medical certificate on file" -- say it plainly instead of
+                  inventing a date or hiding the gap behind a dash. */}
+              {profileDriver.dot_medical_expires_at
+                ? `Expires ${formatDateUS(profileDriver.dot_medical_expires_at as string)}`
+                : <span className="font-medium text-slate-700">Missing — no document</span>}
             </div>
           </div>
           <div>

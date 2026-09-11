@@ -47,7 +47,7 @@ export function audit(src) {
   if (authorizationJoins.length !== 2) {
     failures.push(`${FILES.routes}: canonical driver count and row reads must both admit active selected-company driver authorizations`);
   }
-  if (!/function unmistakableDriverFixtureName[\s\S]{0,180}\(test\|codex\)/.test(src.routes) ||
+  if (!/function unmistakableDriverFixtureName[\s\S]{0,260}\(test\|codex\|zztest\)/.test(src.routes) ||
       !/\(b\.is_sample_data \?\? false\) \|\| unmistakableDriverFixtureName\(b\.first_name, b\.last_name\)/.test(src.routes)) {
     failures.push(`${FILES.routes}: unmistakable TEST/CODEX onboarding names must be marked is_sample_data at the canonical create write`);
   }
@@ -65,7 +65,7 @@ export function audit(src) {
     failures.push(`${FILES.api}: canonical driver API must expose the audited fixture-quarantine flag`);
   }
   for (const key of ["detail", "profile"]) {
-    if (!/deactivateDriver\([\s\S]{0,180}quarantineTestFixture:[\s\S]{0,100}\(test\|codex\)/.test(src[key])) {
+    if (!/deactivateDriver\([\s\S]{0,400}quarantineTestFixture:[\s\S]{0,200}\(test\|codex\|zztest\)/.test(src[key])) {
       failures.push(`${FILES[key]}: unmistakable TEST/CODEX driver deactivation must use fixture quarantine mode`);
     }
   }

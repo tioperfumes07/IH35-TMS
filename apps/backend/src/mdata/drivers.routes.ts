@@ -369,7 +369,14 @@ const deactivateDriverBodySchema = z.object({
 }).strict();
 
 function unmistakableDriverFixtureName(firstName: string, lastName: string): boolean {
-  return /(^|\W)(test|codex)(\W|$)/i.test(`${firstName} ${lastName}`);
+  const full = `${firstName} ${lastName}`;
+  if (/(^|\W)(test|codex|zztest)(\W|$)/i.test(full)) return true;
+  // DRIVER-COMPLIANCE-01 (owner/Claude Lead 2026-09-11): "SAFETY —" (first_name=Safety,
+  // last_name=an em-dash) is a known junk placeholder row, not a generic "test" fixture, so the
+  // regex above never catches it -- exact-match both fields (never a substring) so this can't ever
+  // quarantine a real driver whose name happens to contain the word "safety".
+  if (firstName.trim().toLowerCase() === "safety" && lastName.trim() === "—") return true;
+  return false;
 }
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
