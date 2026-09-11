@@ -241,3 +241,90 @@ describe("DispatchKanban — REG-018 drag/drop wiring", () => {
     expect(screen.getByTestId("kanban-column-cancelled")).toBeInTheDocument();
   });
 });
+
+describe("DispatchKanban — REG-048 one card per unit", () => {
+  it("owner-reported scenario: a unit with an old delivered_pending_docs load AND a new dispatched load renders exactly ONE card, the newer one", () => {
+    const loads = [
+      mockLoad({
+        id: "load-old",
+        load_number: "13400",
+        status: "delivered_pending_docs",
+        assigned_unit_id: "u-164",
+        assigned_unit_number: "T164",
+        created_at: "2026-01-01T00:00:00.000Z",
+      }),
+      mockLoad({
+        id: "load-new",
+        load_number: "13600",
+        status: "dispatched",
+        assigned_unit_id: "u-164",
+        assigned_unit_number: "T164",
+        created_at: "2026-02-01T00:00:00.000Z",
+      }),
+    ];
+    renderWithClient(
+      <MemoryRouter>
+        <DispatchKanban loads={loads} loading={false} onLoadClick={vi.fn()} onStatusDrop={vi.fn()} />
+      </MemoryRouter>
+    );
+    // Exactly one card for unit T164 across the whole board — the newer (dispatched) one wins,
+    // the old delivered_pending_docs backlog load collapses out of view rather than competing.
+    expect(screen.getByTestId("kanban-standard-card-13600")).toBeInTheDocument();
+    expect(screen.queryByTestId("kanban-standard-card-13400")).not.toBeInTheDocument();
+  });
+
+  it("a unit with two DIFFERENT non-cancelled loads still resolves to exactly one card (latest wins) even when both are 'active'-looking", () => {
+    const loads = [
+      mockLoad({ id: "load-a", load_number: "13401", status: "assigned", assigned_unit_id: "u-165", created_at: "2026-01-01T00:00:00.000Z" }),
+      mockLoad({ id: "load-b", load_number: "13601", status: "assigned", assigned_unit_id: "u-165", created_at: "2026-03-01T00:00:00.000Z" }),
+    ];
+    renderWithClient(
+      <MemoryRouter>
+        <DispatchKanban loads={loads} loading={false} onLoadClick={vi.fn()} onStatusDrop={vi.fn()} />
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId("kanban-standard-card-13601")).toBeInTheDocument();
+    expect(screen.queryByTestId("kanban-standard-card-13401")).not.toBeInTheDocument();
+  });
+
+  it("a unit whose only load is cancelled still counts toward the Cancelled lane rather than vanishing (lane is collapsedByDefault, so the card itself is not rendered until expanded — same as every other cancelled load)", () => {
+    const loads = [
+      mockLoad({ id: "load-c", load_number: "13402", status: "cancelled", assigned_unit_id: "u-166" }),
+    ];
+    renderWithClient(
+      <MemoryRouter>
+        <DispatchKanban loads={loads} loading={false} onLoadClick={vi.fn()} onStatusDrop={vi.fn()} />
+      </MemoryRouter>
+    );
+    const column = screen.getByTestId("kanban-column-cancelled");
+    expect(column.textContent).toContain("1");
+  });
+
+  it("a cancelled load never wins over a real active load for the same unit, even if it is the most recently created", () => {
+    const loads = [
+      mockLoad({ id: "load-d", load_number: "13403", status: "dispatched", assigned_unit_id: "u-167", created_at: "2026-01-01T00:00:00.000Z" }),
+      mockLoad({ id: "load-e", load_number: "13603", status: "cancelled", assigned_unit_id: "u-167", created_at: "2026-05-01T00:00:00.000Z" }),
+    ];
+    renderWithClient(
+      <MemoryRouter>
+        <DispatchKanban loads={loads} loading={false} onLoadClick={vi.fn()} onStatusDrop={vi.fn()} />
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId("kanban-standard-card-13403")).toBeInTheDocument();
+    expect(screen.queryByTestId("kanban-standard-card-13603")).not.toBeInTheDocument();
+  });
+
+  it("loads with no assigned unit never dedupe against each other", () => {
+    const loads = [
+      mockLoad({ id: "load-f", load_number: "13404", status: "assigned", assigned_unit_id: null, assigned_unit_number: null }),
+      mockLoad({ id: "load-g", load_number: "13405", status: "assigned", assigned_unit_id: null, assigned_unit_number: null }),
+    ];
+    renderWithClient(
+      <MemoryRouter>
+        <DispatchKanban loads={loads} loading={false} onLoadClick={vi.fn()} onStatusDrop={vi.fn()} />
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId("kanban-standard-card-13404")).toBeInTheDocument();
+    expect(screen.getByTestId("kanban-standard-card-13405")).toBeInTheDocument();
+  });
+});
