@@ -2102,3 +2102,36 @@ DONE LINE: CC-1 | ITEMS 2 (Bills predicate) + 3 (BUG 2 tour_id) FOUND ALREADY SH
 not duplicated — both guards PASS, both live measurements match spec exactly | already deployed
 (ancestor of the currently-live SHA) | NEXT: resuming the standing idle-loop; all 3 Lead items are
 now closed, none past deadline.
+
+---
+
+## CC-1 — SELF-FOUND-AND-FIXED: ITEM 1's RLS policy was unreachable — PR #21856 (deploy in flight)
+
+Per the DEFINITION OF DONE law ("DONE = live Chrome click-through"), re-checked Item 1's Lists page
+live after its deploy landed — it rendered **0 rows** despite the 11 real USMCA rows I'd confirmed
+in Neon. Root-caused and fixed immediately, not left for later:
+
+The Lead's spec for Item 1's RLS text was `current_setting('app.operating_company_id', true)` — I
+followed it literally. But `load-exception-reasons.routes.ts` uses `withCurrentUser`, which
+(confirmed live in `auth/db.ts`) only ever sets `app.current_user_id`, never
+`app.operating_company_id` — so that policy could never be satisfied by a real request.
+`catalogs.load_cancellation_reasons` — the exact sibling the spec named as the model — actually
+uses a different, already-proven pattern (`org.user_company_access` membership +
+`identity.current_user_id()`), confirmed live via `pg_policies` before writing the fix.
+
+PR #21856 (`4bc625a858`) repoints all 3 policies to that proven pattern via migration
+`202614100000` (claimed on main first, PR #21855) — applied live on Neon immediately, live Chrome
+re-check now shows all 11 rows correctly. Guard extended to check the actual live
+`pg_policies.qual` text (the earlier version only checked `relrowsecurity`/`relforcerowsecurity`,
+which were already true and would have stayed green through this entire bug). Backend deploy
+`dep-dai84gek1f9s73cnn6bg` in flight.
+
+Flagging this pattern for the Lead and other seats: a migration spec's literal RLS clause text
+should be cross-checked against the actual GUC-setting convention the target route's own code path
+uses (`withCurrentUser` vs `withCompanyScope`/`setOperatingCompanyScope`) before shipping — not
+assumed correct just because it matches the DoD checklist's wording.
+
+DONE LINE: CC-1 | ALL 3 LEAD ITEMS NOW GENUINELY CLOSED with live proof — Item 1 shipped + self-
+found RLS bug fixed same-cycle (PR #21852 + #21856), Items 2/3 found already shipped by another
+seat and independently re-verified (PR #21843) | 0 items past deadline | NEXT: confirming Item 1's
+fix deploy lands, then resuming the standing idle-loop.
