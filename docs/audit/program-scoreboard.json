@@ -1,10 +1,10 @@
 {
-  "healthzSha": "633a82c",
-  "generated_at": "2026-09-11T03:40:47.956Z",
+  "healthzSha": "6eb62cf",
+  "generated_at": "2026-09-11T17:16:25.163Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "633a82c",
+    "deployedSha": "6eb62cf",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 21776,
-      "title": "FINDING: N/A (docs/CI-infra only — verify-root-claude-md-untracked's own selftest crash root-caused: not transient load, an ambient-GIT_DIR bug that fires 100% of the time inside a real git hook)",
+      "number": 21802,
+      "title": "FINDING: DSP-F23112 | remint refused dispatched loads that already have a driver",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 10:40 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21776",
-      "sha": "f19203f393",
-      "committedAtIso": "2026-09-10T22:40:38-05:00"
+      "mergedAtCt": "09/11/2026, 11:58 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21802",
+      "sha": "6eb62cf12c",
+      "committedAtIso": "2026-09-11T11:58:21-05:00"
     },
     {
-      "number": 21775,
-      "title": "FINDING: N/A (docs — presettlement deferred-suggestions root-cause fix DONE + live deploy + Chrome-verified)",
+      "number": 21801,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 10:29 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21775",
-      "sha": "d3545c15c0",
-      "committedAtIso": "2026-09-10T22:29:40-05:00"
+      "mergedAtCt": "09/11/2026, 11:36 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21801",
+      "sha": "259197ce08",
+      "committedAtIso": "2026-09-11T11:36:43-05:00"
     },
     {
-      "number": 21774,
-      "title": "FINDING: ACCT-F26133 (SETTLEMENT-TOUR-NUMBER-SWEEP root-cause fix — a deferred load never got a review-queue row, and the human-confirm queue's backend had zero frontend caller anywhere in the app)",
+      "number": 21800,
+      "title": "FINDING: DSP-F23111 | assigned loads had no driver bill when miles/rate missing",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 10:24 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21774",
-      "sha": "633a82c382",
-      "committedAtIso": "2026-09-10T22:24:22-05:00"
+      "mergedAtCt": "09/11/2026, 10:27 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21800",
+      "sha": "787738befb",
+      "committedAtIso": "2026-09-11T10:27:34-05:00"
     },
     {
-      "number": 21773,
-      "title": "FINDING: N/A (CLAIM-RESERVE 11225 -- reservation-only commit, no code fix)",
+      "number": 21799,
+      "title": "FINDING: DSP-F23049 | units-without-load scoped by owner OR lease",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 10:20 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21773",
-      "sha": "6e150cacca",
-      "committedAtIso": "2026-09-10T22:20:54-05:00"
+      "mergedAtCt": "09/11/2026, 09:41 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21799",
+      "sha": "9fb97be8ff",
+      "committedAtIso": "2026-09-11T09:41:17-05:00"
     },
     {
-      "number": 21768,
-      "title": "FINDING: N/A (docs/CI-infra only — verify-root-claude-md-untracked's own selftest crashed under concurrent load, blocking unrelated pushes; hardened with a retry, no change to the guard's real check)",
+      "number": 21798,
+      "title": "FINDING: N/A (REG-038 + KANBAN ROW INTEGRITY/STATUS-SWEEP -- final live-proof report, docs-only, no code change)",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 10:12 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21768",
-      "sha": "e9d31907c3",
-      "committedAtIso": "2026-09-10T22:12:18-05:00"
+      "mergedAtCt": "09/11/2026, 08:16 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21798",
+      "sha": "715c719e2e",
+      "committedAtIso": "2026-09-11T08:16:00-05:00"
     },
     {
-      "number": 21772,
-      "title": "GPT- Preserve original pay-run attribution for historical settlement identities",
+      "number": 21797,
+      "title": "FINDING: ACCT-F26063 historical reclass — FINAL LIVE PROOF, task COMPLETE",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 10:10 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21772",
-      "sha": "b919642d21",
-      "committedAtIso": "2026-09-10T22:10:52-05:00"
+      "mergedAtCt": "09/11/2026, 08:07 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21797",
+      "sha": "18fcff8b1d",
+      "committedAtIso": "2026-09-11T08:07:25-05:00"
     },
     {
-      "number": 21771,
-      "title": "FINDING: N/A (docs — Settlement Close payment-method fix DONE + live-deploy confirmation for this turn's 5 PRs)",
+      "number": 21742,
+      "title": "Devin-F26063 historical reclass — 67 USMCA reimbursements",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 10:07 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21771",
-      "sha": "6ebb315665",
-      "committedAtIso": "2026-09-10T22:07:17-05:00"
+      "mergedAtCt": "09/11/2026, 08:01 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21742",
+      "sha": "03c195b588",
+      "committedAtIso": "2026-09-11T08:01:41-05:00"
     },
     {
-      "number": 21770,
-      "title": "FINDING: N/A (KANBAN ROW INTEGRITY + STATUS-DROPDOWN SWEEP -- live-verification report, docs-only, no code change)",
+      "number": 21796,
+      "title": "FINDING: N/A (docs — standing-assignment wake-up: fresh live re-confirmation of all 3 items)",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 10:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21770",
-      "sha": "75c7ffd752",
-      "committedAtIso": "2026-09-10T22:05:21-05:00"
+      "mergedAtCt": "09/11/2026, 08:00 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21796",
+      "sha": "f03fa22cf7",
+      "committedAtIso": "2026-09-11T08:00:33-05:00"
     },
     {
-      "number": 21769,
-      "title": "FINDING: BANK-F10012 | register pager is Previous/Next only so 12/08 $100 is 5 Next clicks away",
+      "number": 21795,
+      "title": "Cursor- DSP-F23037 units-without-load GROUP BY loc columns",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 10:02 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21769",
-      "sha": "6023f17500",
-      "committedAtIso": "2026-09-10T22:02:19-05:00"
+      "mergedAtCt": "09/11/2026, 07:58 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21795",
+      "sha": "3d1842310b",
+      "committedAtIso": "2026-09-11T07:58:57-05:00"
     },
     {
-      "number": 21766,
-      "title": "FINDING: ACCT-F6350 | detect multi-event WORM triggers",
+      "number": 21794,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "09/10/2026, 10:02 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21766",
-      "sha": "cb27fccdda",
-      "committedAtIso": "2026-09-10T22:02:00-05:00"
+      "mergedAtCt": "09/11/2026, 06:32 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21794",
+      "sha": "1bb4a43c73",
+      "committedAtIso": "2026-09-11T11:32:19Z"
     }
   ]
 }
