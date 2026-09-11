@@ -1,6 +1,6 @@
 import { withCurrentUser } from "../auth/db.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
-import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
+import { resolveRoleAccountOptional, resolveReimbursementExpenseAccount } from "./coa-roles/resolver.service.js";
 import { STANDING_LATCH_JE_PREDICATE } from "./revrec-delivery-posting/poster.service.js";
 import { resolveAccountForCategory } from "./expense-category-map/resolver.service.js";
 import { resolveBillLineDebitAccount, BillLineAccountError } from "./bill-account-resolver.js";
@@ -2077,11 +2077,12 @@ async function buildDriverReimbursementLines(
     );
   }
 
-  // reimbursement_expense is resolved via the CoA-roles resolver: PRIMARY accounting.chart_of_accounts_roles
-  // first, then the legacy catalogs.account_role_bindings binding as a fallback tier (the same account the
-  // settlement poster resolves for its aggregate reimbursement leg) — entity-pinned, so an immediate
-  // pay-out and a settlement-close pay-out hit the SAME expense account.
-  const debitAccountId = await resolveRoleAccountOptional(client, operatingCompanyId, "reimbursement_expense");
+  // ROW 0 REIMBURSEMENT-PER-TYPE-GL (owner ruling 2026-09-10): resolved via the SHARED per-type
+  // resolver (resolveReimbursementExpenseAccount), so an immediate pay-out and a settlement-close
+  // pay-out hit the SAME expense account FOR THE SAME TYPE — fuel/toll/scale/parking/other each get
+  // their own owner-mapped account; lumper (and any undesignated type/company) falls back to the
+  // original generic 'reimbursement_expense' role, matching the pre-existing behavior exactly.
+  const debitAccountId = await resolveReimbursementExpenseAccount(client, operatingCompanyId, reimb.reimbursement_type);
   if (!debitAccountId) {
     throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "No 'reimbursement_expense' role designation for driver reimbursement");
   }
