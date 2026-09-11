@@ -2,6 +2,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  closeSettlementPayRun,
   getDebtSummary,
   getPreSettlementForDriver,
   listOpenPreSettlements,
@@ -9,6 +10,7 @@ import {
   type PreSettlementLine,
 } from "../../api/driverFinance";
 import { getCoaAccounts } from "../../api/banking";
+import { ApiError } from "../../api/client";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { Combobox } from "../../components/Combobox";
@@ -43,6 +45,45 @@ const REIMBURSEMENT_LINE_TYPES = new Set(["reimbursement"]);
 // Roles permitted to Close a settlement on this screen — mirrors the review-role set used
 // elsewhere in driver-finance (cash-advance-requests office review, settlement finalize).
 const CLOSE_ROLES = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
+
+// SETTLE-SWEEP (GPT financial review, docs/bus/OUTBOX-GPT.md "SETTLE-SWEEP Settlement Close
+// MEASURED/CONFIRMED"): this page collected a payment method (PaymentMethodPicker below) but
+// `closeMut` only ever called `settleAndPay` (approve + PDF + notify) -- the picked account was
+// never used to actually post the GL entry. `closeSettlementPayRun` (the ONLY live GL poster for a
+// driver settlement, per docs/audit/SETL-POST-01-DRY-RUN-2026-09-06.md) is a SEPARATE, complementary
+// action, not a duplicate: /settle never posts a JE, /payrun-close never renders a PDF or notifies
+// the driver. Recommendation: "existing CloseTripPanel/PayRunClosePanel; no new GL math" -- this
+// reuses the exact same poster PayRunClosePanel already calls, adding no new posting logic.
+// Several close-time decisions (an outstanding driver loan, a net-pay floor breach, a missing
+// per-driver escrow account) are interactive/human decisions by design (SET-05, GO-22 B7) that
+// PayRunClosePanel has dedicated UI for; this page does not attempt to rebuild that UI -- when the
+// poster refuses for one of those reasons, the settle (approve+notify) already succeeded and stays
+// in place, and the user is told plainly to finish posting from Settlement Detail's Pay Run Close
+// panel instead of silently failing or guessing at a decision.
+const PAYRUN_NEEDS_HUMAN_REVIEW_CODES = new Set([
+  "OUTSTANDING_LOAN_DECISION_REQUIRED",
+  "NET_PAY_FLOOR_BREACH",
+  "NET_PAY_NEGATIVE",
+  "SETTLEMENT_ALREADY_POSTED_BY_OTHER_POSTER",
+  "DRIVER_ESCROW_ACCOUNT_UNBOUND",
+  "DRIVER_PAY_ACCOUNT_MISSING",
+  "REIMBURSEMENT_EXPENSE_ACCOUNT_MISSING",
+  "DETENTION_PAY_EXPENSE_ACCOUNT_MISSING",
+  "DEDUCTION_RECOVERY_ACCOUNT_MISSING",
+  "CHARGEBACK_RECOVERY_ACCOUNT_MISSING",
+  "ADVANCE_CLEARING_ACCOUNT_MISSING",
+  "PAYMENT_METHOD_NO_GL_ACCOUNT",
+  "UNBALANCED_ENTRY",
+  "SETTLEMENT_HAS_NO_LOAD_ACTIVITY",
+  "SETTLEMENT_NOT_POSTABLE",
+]);
+
+function extractPayRunErrorCode(error: unknown): string {
+  if (error instanceof ApiError && error.data && typeof error.data === "object") {
+    return String((error.data as { error?: string }).error ?? `HTTP_${error.status}`);
+  }
+  return "UNKNOWN";
+}
 
 function sumLines(lines: PreSettlementLine[], types: Set<string>): number {
   return lines.filter((l) => types.has(l.line_type)).reduce((sum, l) => sum + Number(l.amount ?? 0), 0);
@@ -112,9 +153,36 @@ export function SettlementCloseArrivalPage() {
   }, [accountsQuery.data, paymentMethodGlAccountId]);
 
   const closeMut = useMutation({
-    mutationFn: () => settleAndPay(String(detailQuery.data?.settlement?.id), companyId),
-    onSuccess: () => {
-      pushToast("Settlement closed and driver notified", "success");
+    mutationFn: async () => {
+      const settlementId = String(detailQuery.data?.settlement?.id);
+      await settleAndPay(settlementId, companyId);
+      // Additive only: unchanged behavior when no payment method is picked (canSubmitClose never
+      // required one). When one IS picked, actually post the GL entry through the same poster
+      // PayRunClosePanel uses -- see PAYRUN_NEEDS_HUMAN_REVIEW_CODES above for why a refusal here
+      // does not roll back or fail the settle that already succeeded.
+      if (!paymentMethodId) return { posted: false as const, needsReview: null };
+      try {
+        await closeSettlementPayRun(settlementId, { operating_company_id: companyId, payment_method_id: paymentMethodId });
+        return { posted: true as const, needsReview: null };
+      } catch (err) {
+        const code = extractPayRunErrorCode(err);
+        if (PAYRUN_NEEDS_HUMAN_REVIEW_CODES.has(code)) {
+          return { posted: false as const, needsReview: code };
+        }
+        throw err;
+      }
+    },
+    onSuccess: (outcome) => {
+      if (outcome.posted) {
+        pushToast("Settlement closed, driver notified, and payment posted to GL", "success");
+      } else if (outcome.needsReview) {
+        pushToast(
+          `Settlement closed and driver notified. GL posting needs review (${outcome.needsReview}) — finish it from Settlement Detail's Pay Run Close panel.`,
+          "info"
+        );
+      } else {
+        pushToast("Settlement closed and driver notified", "success");
+      }
       setSelectedDriverId(null);
       void qc.invalidateQueries({ queryKey: ["driver-finance", "pre-settlements"] });
     },
