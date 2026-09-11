@@ -1,16 +1,12 @@
 # LEAD SEAT (one line of truth)
 
-**SEAT=CURSOR**
-**SINCE=2026-08-30T21:35:00.000Z**
-**REASON=OWNER-DIRECT-INSTRUCTION**
-**LIVE=`800a082`**
-**PACKET=`docs/lockdown/PASTE-ALL-SEATS-GO-23-2026-09-02.md`**
-**TXH-04=`docs/lockdown/TXH-04-COMPLETE-LINK-INVENTORY.md`**
-**HONESTY=`docs/lockdown/HONESTY-PROGRAM-2026-08-29.md`**
-**SCEN-01=`docs/lockdown/SCEN-01-ACCIDENT-CHAIN-GO-2026-08-29.md`**
-**RIDER=`docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md`**
-**STANDING=`docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md`**
-**QUEUE=`docs/lockdown/GO-QUEUE-0055-0104-INDEX.md`**
+**SEAT=CLAUDE-LEAD**
+**SINCE=2026-09-11T20:32:00Z**
+**REASON=OWNER-DIRECT-INSTRUCTION (Lead handoff to the new Claude session, 2026-09-11 15:32 Central)**
+**LIVE-API=`953e4fd` (healthz built_at 2026-09-11T20:02:49Z, read by direct curl 20:35Z)**
+**CENSUS=`docs/bus/LEAD-CENSUS.md`**
+**LAW=project doc `claude/00-IH35-CURRENT-STATE-AND-LAW-READ-FIRST.md` + `docs/bus/09-11-2026-Claude-Lead-CODER-HANDOFF-MASTER-STANDARD.md`**
 
-GO-WAKE-ALL. Live 485c52d. Idle named in LEAD-CENSUS. Packet docs/lockdown/GO-WAKE-ALL-2026-08-30.md. No Devin.
-
+Claude Lead = census · coder boxes · live Neon/repo verification of every DONE · journal · conversation register.
+Cursor = worker + deploy lieutenant (FE + API are TWO Render services, each triggered separately). CC-1 = money coder with its own queue (INBOX-CC-1.md) — never re-designate an existing seat's identity onto a new session.
+The earlier lines "SEAT=CURSOR since 2026-08-30" and the INBOX-CC-1 header "Cursor lead, 2026-09-10" are SUPERSEDED by this file.
