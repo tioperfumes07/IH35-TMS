@@ -154,6 +154,18 @@ jobs:
           DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
         run: node scripts/verify-no-unmanifested-prod-financial-fixtures.mjs
 
+      - name: verify:load-settlement-linkage
+        id: load_settlement_linkage
+        # SETTLEMENT/TOUR NUMBER SWEEP owner order (2026-09-11) Part 3: "every load must be
+        # detectable and correctly attached to its owning settlement." Baselines are live-measured
+        # at introduction, 2026-09-11: 0 orphans (load 13508 backfilled same PR) and 2 misattached
+        # settlement_lines (load 13508's $10/$25 deduction lines, flagged not fixed — correcting a
+        # line inside an already-CLOSED settlement is an audited-reversal-class change, out of
+        # scope here). Any count above baseline is a genuine NEW regression.
+        env:
+          DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+        run: node scripts/verify-load-settlement-linkage.mjs
+
       - name: Smoke PRODUCTION
         id: smoke
         continue-on-error: true

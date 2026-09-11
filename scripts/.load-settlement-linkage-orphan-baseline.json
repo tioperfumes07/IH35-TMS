@@ -1,0 +1,4 @@
+{
+  "count": 0,
+  "note": "Live-measured 2026-09-11 after backfilling load 13508's presettlement_link_id to S-2026-0007 (its own settlement, first_load_id/last_load_id already matched it exactly). Load 13556 (cancelled before driver assignment) is correctly excluded by detectOrphans' status!='cancelled' filter, not counted here."
+}

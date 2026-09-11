@@ -1,0 +1,4 @@
+{
+  "count": 2,
+  "note": "Live-measured 2026-09-11: load 13508's 2 deduction lines ($10, $25) sit on settlement S-2026-0015 instead of 13508's own S-2026-0007. Flagged, NOT auto-fixed in this pass -- S-2026-0015 is a CLOSED settlement belonging to a different driver; correcting a line inside already-settled/closed money is an audited-reversal-class change, tracked separately for owner review. This baseline must shrink to 0 only via that reviewed reversal, never a silent bulk update."
+}
