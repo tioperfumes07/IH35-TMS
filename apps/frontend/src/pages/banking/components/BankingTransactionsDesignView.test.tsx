@@ -184,8 +184,10 @@ describe("BankingTransactionsDesignView date formatting", () => {
     expect(await screen.findByText("05/17/2026")).toBeInTheDocument();
     expect(screen.getByText("1-1 of 1")).toBeInTheDocument();
     expect(screen.getByText("Page 1 of 1")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "First" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Previous" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Next" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Last" })).toBeDisabled();
     expect(screen.queryByText("2026-05-17T00:00:00.000Z")).not.toBeInTheDocument();
     vi.unstubAllGlobals();
   });

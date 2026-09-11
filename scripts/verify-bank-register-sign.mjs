@@ -42,6 +42,15 @@ if (!/\{ id: "all", label: "All" \}/.test(viewSrc) || !/useState<ReviewTabId>\("
 if (!/key: "date"[\s\S]{0,220}cellClass: "whitespace-nowrap"/.test(viewSrc)) {
   fail("Date column must whitespace-nowrap so 09/09/2026 is not ellipsized to 09/09...");
 }
+if (!/data-testid="banking-pager-first"/.test(viewSrc) || !/onClick=\{\(\) => setCurrentPage\(1\)\}/.test(viewSrc)) {
+  fail("register pager must have First → page 1 so newest/oldest ends are one click");
+}
+if (!/data-testid="banking-pager-last"/.test(viewSrc) || !/onClick=\{\(\) => setCurrentPage\(totalPages\)\}/.test(viewSrc)) {
+  fail("register pager must have Last → last page (date desc = statement start / Dec 2025)");
+}
+if (!/\["Oldest first"/.test(viewSrc) || !/setSortBy\(\{ key: "date", dir: "asc" \}\)/.test(viewSrc)) {
+  fail("Presets must include Oldest first (date ASC + page 1) for the 12/08 walk");
+}
 if (!/export async function applyPostedSignedCurrentBalance/.test(plaidSrc)) {
   fail("Plaid must re-anchor current_balance_cents from posted signed SUM, not leave Plaid's snapshot");
 }
