@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { LoadStatus } from "../../api/loads";
+import { getOfficeTransitionButtons } from "@ih35/shared-types";
 import { STATUS_LABEL } from "./constants";
 
 // INLINE-STATUS-CHANGER (owner 2026-09-09, verbatim): "in all views in loadboard, there must be like
@@ -8,20 +9,25 @@ import { STATUS_LABEL } from "./constants";
 // factoring company while we are still delivering ... but it creates the invoices etc but stays in the
 // load board until we change the status or the driver changes the status."
 //
-// The dispatcher-facing set below is the QuickBooks-style short list the owner named. The backend
-// money-aware transition endpoint (api/loads.ts updateLoadStatus → dispatch transition / mdata
-// lifecycle) is the single writer and validates whether a specific transition is legal from the load's
-// current status; an illegal pick surfaces its server error as a toast rather than being pre-hidden, so
-// the operator always sees why. `invoiced` is the "invoice created / sent to factoring while still
-// delivering" case — selecting it creates the invoice but the load stays on the board.
-export const DISPATCHER_STATUS_OPTIONS: LoadStatus[] = [
-  "dispatched",
-  "in_transit",
-  "delivered_pending_docs",
-  "invoiced",
-  "completed_docs_received",
-];
-
+// STATUS-DROPDOWN-CORRECTNESS (owner correction 2026-09-11, verbatim: "InlineStatusPicker.tsx ...
+// has a HARDCODED array DISPATCHER_STATUS_OPTIONS with only 5 statuses. Replace it with the same
+// getOfficeTransitionButtons(status) call that LoadStatusChanger.tsx already correctly uses — one
+// state-machine-derived source for status options everywhere, not two components with different
+// truths."). The old hardcoded 5-status list didn't vary by current status at all — filtering out
+// only the CURRENT status meant a load sitting at e.g. "cancelled" was still offered "Dispatched" /
+// "In transit" as if those were legal moves backward. getOfficeTransitionButtons(status) is the
+// SAME shared state machine LoadStatusChanger (the load-detail header control) already uses, so the
+// two controls can never again disagree about which transitions are legal from a given status.
+//
+// "invoiced" was in the old hardcoded list but is NOT part of the office transition state machine
+// (ALLOWED_TRANSITIONS) at all — LoadStatusChanger treats it as a separate action
+// (loadCanMarkInvoiced + its own onMarkInvoiced callback, a distinct write path from a bare status
+// flip, since marking invoiced has its own side effects). InlineStatusPicker has no equivalent
+// separate callback (row/card-level surfaces only ever passed one onSelect), so it correctly no
+// longer offers "invoiced" as a plain transition — offering it as a bare status write here would
+// have skipped whatever LoadStatusChanger's dedicated mark-invoiced path actually performs.
+// The backend money-aware transition endpoint (api/loads.ts updateLoadStatus → dispatch transition /
+// mdata lifecycle) remains the single writer and still validates server-side.
 function statusPillClass(status: LoadStatus): string {
   if (
     status === "cancelled" ||
@@ -64,27 +70,28 @@ export function InlineStatusPicker({ loadId, status, disabled, pending, onSelect
     };
   }, [open]);
 
-  const options = DISPATCHER_STATUS_OPTIONS.filter((option) => option !== status);
+  const transitions = useMemo(() => getOfficeTransitionButtons(String(status ?? "").trim()), [status]);
+  const interactive = !disabled && !pending && transitions.length > 0;
 
   return (
     <div ref={rootRef} className="relative inline-block" onClick={(event) => event.stopPropagation()}>
       <button
         type="button"
-        disabled={disabled || pending}
+        disabled={!interactive}
         data-testid={`inline-status-picker-${loadId}`}
         className={`inline-flex items-center gap-1 rounded-sm px-2 py-1 text-xs font-semibold ${statusPillClass(status)} ${
-          disabled || pending ? "cursor-default opacity-70" : "cursor-pointer hover:brightness-95"
+          interactive ? "cursor-pointer hover:brightness-95" : "cursor-default opacity-70"
         }`}
         onClick={(event) => {
           event.stopPropagation();
-          if (!disabled && !pending) setOpen((value) => !value);
+          if (interactive) setOpen((value) => !value);
         }}
         aria-haspopup="listbox"
         aria-expanded={open}
-        title="Change load status"
+        title={interactive ? "Change load status" : "Status"}
       >
         <span>{STATUS_LABEL[status]}</span>
-        <span aria-hidden className="text-xs leading-none">{pending ? "…" : "▾"}</span>
+        {interactive ? <span aria-hidden className="text-xs leading-none">{pending ? "…" : "▾"}</span> : null}
       </button>
       {open ? (
         <div
@@ -92,21 +99,21 @@ export function InlineStatusPicker({ loadId, status, disabled, pending, onSelect
           data-testid={`inline-status-menu-${loadId}`}
           className="absolute left-0 z-30 mt-1 min-w-[180px] rounded-sm border border-gray-200 bg-white py-1 shadow-lg"
         >
-          {options.map((option) => (
+          {transitions.map((t) => (
             <button
-              key={option}
+              key={t.target}
               type="button"
               role="option"
               aria-selected={false}
-              data-testid={`inline-status-option-${loadId}-${option}`}
+              data-testid={`inline-status-option-${loadId}-${t.target}`}
               className="block w-full px-3 py-1 text-left text-xs text-gray-800 hover:bg-slate-100"
               onClick={(event) => {
                 event.stopPropagation();
                 setOpen(false);
-                onSelect(option);
+                onSelect(t.target as LoadStatus);
               }}
             >
-              {STATUS_LABEL[option]}
+              {STATUS_LABEL[t.target as LoadStatus] ?? t.label}
             </button>
           ))}
         </div>

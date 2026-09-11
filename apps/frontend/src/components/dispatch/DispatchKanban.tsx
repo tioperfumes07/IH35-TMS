@@ -1208,8 +1208,30 @@ export function DispatchKanban({
   }, [loads]);
 
   const grouped = useMemo(() => groupLoadsByColumn(optimisticLoads), [optimisticLoads]);
-  // Lane 1 cards = trucks-without-a-load (roster minus loaded), one compact card per truck.
-  const awaitingTruckCards = useMemo(() => awaitingTrucks.map(truckToKanbanLoad), [awaitingTrucks]);
+  // KANBAN-DUP-UNIT-2 (owner correction 2026-09-11, verbatim: "the Awaiting-Assignment lane renders
+  // a SEPARATE source ... Reconcile the two"). dedupeLoadsByUnit() only ever collapsed duplicates
+  // WITHIN the `loads` array (PR #21729's own scope). It never reconciled against `awaitingTrucks` --
+  // a SEPARATE backend query (listUnitsWithoutLoad) whose own "no active load" definition only
+  // excludes assigned_not_dispatched/dispatched/in_transit. A unit whose only load is e.g.
+  // delivered_pending_docs is correctly OUTSIDE that exclusion (truly not "on an active load" by
+  // that query's own contract) AND still wins a real Kanban card via dedupeLoadsByUnit -- so it
+  // rendered TWICE: once as its real card, once again as a synthetic Awaiting-Assignment card. One
+  // unit, one card, regardless of which source found it first.
+  const dedupedUnitIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const list of grouped.values()) {
+      for (const load of list) {
+        if (load.assigned_unit_id) ids.add(load.assigned_unit_id);
+      }
+    }
+    return ids;
+  }, [grouped]);
+  // Lane 1 cards = trucks-without-a-load (roster minus loaded), one compact card per truck --
+  // minus any unit that already won a real card on the loads side (see dedupedUnitIds above).
+  const awaitingTruckCards = useMemo(
+    () => awaitingTrucks.filter((unit) => !dedupedUnitIds.has(unit.id)).map(truckToKanbanLoad),
+    [awaitingTrucks, dedupedUnitIds]
+  );
   // Fleet out-of-service strip (Part D). No fleet-OOS feed reaches this board yet, so we
   // surface breakdown loads best-effort and flag that the full OOS feed is held — same gate
   // as HOS/geofence. Once Jorge wires the OOS source this strip lists every down unit.
