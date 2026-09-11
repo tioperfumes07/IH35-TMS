@@ -44,6 +44,18 @@ function toCents(value: number | null | undefined) {
   return Math.round(value * 100);
 }
 
+/**
+ * REG-028/030 (owner BofA statement, Claude recon 2026-09-11e): the register and the real bank
+ * statement use money-in POSITIVE / money-out NEGATIVE. Plaid's Transaction.amount is the opposite
+ * (positive = money leaving the account). Storing Plaid's signed cents verbatim inverted every
+ * USMCA FREIGHT row vs the statement while is_credit (amount < 0) stayed correct.
+ * Store the statement-signed cents. is_credit stays the direction flag from Plaid's sign.
+ */
+export function plaidAmountToStatementCents(plaidAmount: number): { amount_cents: number; is_credit: boolean } {
+  const plaidCents = toCents(plaidAmount);
+  return { amount_cents: -plaidCents, is_credit: plaidAmount < 0 };
+}
+
 function mapPlaidTypeToAccountType(input: string | null | undefined) {
   const normalized = (input ?? "").toLowerCase();
   if (normalized.includes("checking")) return "checking";
@@ -628,10 +640,11 @@ export async function syncTransactions(itemId: string, opts?: { actorUserUuid?: 
         if (!bankAccount) return;
         const descParts = [transaction.name, transaction.merchant_name].filter(Boolean).join(" ");
         const normalizedDescription = normalizeBankTransactionDescription(descParts);
+        const signed = plaidAmountToStatementCents(transaction.amount);
         const dedupHash = computeBankTransactionDedupHash({
           bank_account_id: bankAccount.id,
           transaction_date: transaction.date,
-          amount_cents: Math.abs(toCents(transaction.amount)),
+          amount_cents: Math.abs(signed.amount_cents),
           normalized_description: normalizedDescription,
         });
         const insert = await client.query(
@@ -671,7 +684,7 @@ export async function syncTransactions(itemId: string, opts?: { actorUserUuid?: 
             transaction.transaction_id,
             transaction.date,
             transaction.authorized_date ?? null,
-            toCents(transaction.amount),
+            signed.amount_cents,
             transaction.name ?? null,
             transaction.merchant_name ?? null,
             transaction.personal_finance_category
@@ -681,7 +694,7 @@ export async function syncTransactions(itemId: string, opts?: { actorUserUuid?: 
                 ]
               : [],
             Boolean(transaction.pending),
-            transaction.amount < 0,
+            signed.is_credit,
             normalizedDescription,
             dedupHash,
           ]
@@ -706,7 +719,7 @@ export async function syncTransactions(itemId: string, opts?: { actorUserUuid?: 
               operatingCompanyId: row.operating_company_id,
               bankAccountId: bankAccount.id,
               transactionDate: transaction.date,
-              amountCents: Math.abs(toCents(transaction.amount)),
+              amountCents: Math.abs(signed.amount_cents),
               normalizedDescription,
             });
             counts.autoCategorizeTotal += 1;
@@ -734,10 +747,11 @@ export async function syncTransactions(itemId: string, opts?: { actorUserUuid?: 
         if (!bankAccount) return;
         const modDescParts = [transaction.name, transaction.merchant_name].filter(Boolean).join(" ");
         const modNormalized = normalizeBankTransactionDescription(modDescParts);
+        const modSigned = plaidAmountToStatementCents(transaction.amount);
         const modDedupHash = computeBankTransactionDedupHash({
           bank_account_id: bankAccount.id,
           transaction_date: transaction.date,
-          amount_cents: Math.abs(toCents(transaction.amount)),
+          amount_cents: Math.abs(modSigned.amount_cents),
           normalized_description: modNormalized,
         });
         const update = await client.query(
@@ -761,7 +775,7 @@ export async function syncTransactions(itemId: string, opts?: { actorUserUuid?: 
             transaction.transaction_id,
             transaction.date,
             transaction.authorized_date ?? null,
-            toCents(transaction.amount),
+            modSigned.amount_cents,
             transaction.name ?? null,
             transaction.merchant_name ?? null,
             transaction.personal_finance_category
@@ -771,7 +785,7 @@ export async function syncTransactions(itemId: string, opts?: { actorUserUuid?: 
                 ]
               : [],
             Boolean(transaction.pending),
-            transaction.amount < 0,
+            modSigned.is_credit,
             modNormalized,
             modDedupHash,
           ]

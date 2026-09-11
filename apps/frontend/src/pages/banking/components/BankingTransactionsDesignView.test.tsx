@@ -272,7 +272,23 @@ describe("BankingTransactionsDesignView date formatting", () => {
       id: "money-in-sign",
       transaction_date: "2026-05-18",
       posted_date: null,
-      amount_cents: -4550,
+      amount_cents: 4550,
+      description: null,
+      merchant_name: null,
+      plaid_category: [],
+      pending: false,
+      is_credit: true,
+      matched_load_id: null,
+      matched_bill_id: null,
+      matched_settlement_id: null,
+      notes: null,
+      created_at: "2026-05-18T10:00:00.000Z",
+    })).toEqual({ spent: 0, received: 4550 });
+    expect(spentReceived({
+      id: "money-out-sign",
+      transaction_date: "2026-05-18",
+      posted_date: null,
+      amount_cents: -200000,
       description: null,
       merchant_name: null,
       plaid_category: [],
@@ -283,7 +299,7 @@ describe("BankingTransactionsDesignView date formatting", () => {
       matched_settlement_id: null,
       notes: null,
       created_at: "2026-05-18T10:00:00.000Z",
-    })).toEqual({ spent: 0, received: 4550 });
+    })).toEqual({ spent: 200000, received: 0 });
 
     expect(await screen.findByText("For review · 2")).toBeInTheDocument();
     // Amount-filter "Received" (not the ParityTable sortable column header of the same name).

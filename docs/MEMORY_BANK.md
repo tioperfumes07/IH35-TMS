@@ -413,6 +413,15 @@ prod post is a separate, intentional, owner-authorized action, not a repoint of 
   (the fourth) — none dynamically parse `FROM`/`JOIN` into a table-lookup map the way
   `verify-sql-column-existence.mjs`/`verify-enum-literals.mjs` did. No further guard fix needed.
 
+## Active Architectural Decisions — Banking REG-028/030 (Cursor, 2026-09-10)
+
+BofA statement (in = +, out = −) is the register convention. Plaid's Transaction.amount is the
+opposite. Import now stores `plaidAmountToStatementCents` (negate Plaid cents; `is_credit` from
+Plaid amount < 0). `spentReceived()` reads **is_credit only**. Live repair on USMCA FREIGHT
+`e83028a5-…`: voided 36 unmatched pending phantoms (WORM), inserted 2 missing statement rows
+(6/1 Love's $377.45, 8/27 $15 wire fee), flipped 286 Plaid `amount_cents` signs. Posted signed sum
+= **$6,389.72** = statement ending. 12/08 deposit is now `amount_cents=+10000` / `is_credit=true`.
+
 ## Known Quirks & Blockers — Banking (CC-2, 2026-09-08)
 
 - **CC-2 (Banking seat) cannot author `db/migrations/*.sql`** — `verify-migration-lane-band.mjs`
