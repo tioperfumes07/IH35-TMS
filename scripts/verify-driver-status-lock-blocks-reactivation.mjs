@@ -52,7 +52,7 @@ export function checkSources({ rule, routes, collector, migrations }) {
   }
 
   const deactivateBlock = routes.match(/app\.post\("\/api\/v1\/mdata\/drivers\/:id\/deactivate"[\s\S]*?\n {2}\}\);/)?.[0] ?? "";
-  if (!/SET deactivated_at = now\(\),[\s\S]{0,200}status_locked_at = now\(\),[\s\S]{0,100}status_locked_reason = 'manual_deactivate'/.test(deactivateBlock)) {
+  if (!/SET deactivated_at = now\(\),[\s\S]{0,280}status_locked_at = now\(\),[\s\S]{0,160}status_locked_reason = (?:'manual_deactivate'|CASE WHEN \$4::boolean THEN 'test_fixture_quarantine' ELSE 'manual_deactivate' END)/.test(deactivateBlock)) {
     problems.push(`${ROUTES_FILE}: /deactivate no longer sets status_locked_at/status_locked_reason='manual_deactivate' — a manual deactivation would no longer be protected from the 30d cron`);
   }
 

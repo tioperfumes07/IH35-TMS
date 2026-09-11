@@ -227,6 +227,13 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
   const missingAccount = costs.filter((c) => !c.has_account).length; const missingVendor = costs.filter((c) => !c.has_vendor).length; const missingReceipt = costs.filter((c) => c.receipt_count === 0).length;
   const payIncomplete = active.filter((l) => !driverBills.some((b) => b.load_id === l.load_id && b.loaded_pay_cents != null && b.deadhead_pay_cents != null));
   const ready: ReadyItem[] = [
+    // BUG 2 fix (owner's standing order: "ALL LOADS MUST AUTOMATICALLY BE ASSIGNED A LOAD AND TO
+    // A TOUR" — Lead ruling 2026-09-11): presettlement-link.service.ts now mints a tour for an
+    // SB/TR/LOCAL leg with no open tour on its unit, rather than ever leaving tour_id NULL. That
+    // minted tour has no NB leg yet — derived, read-time flag (no schema change) surfaces it as a
+    // soft, confirmable item wherever tours render, matching the owner's "visible ... confirm" ask.
+    { key: "has_nb", label: "Tour has a confirmed NB leg", hard: false, ok: active.some((l) => l.trip_type === "NB"),
+      detail: active.some((l) => l.trip_type === "NB") ? "yes" : "missing NB — confirm this tour's outbound leg" },
     { key: "sb_delivered", label: "SB load delivered at Laredo", hard: true, ok: sb.length > 0 && sb.every((l) => l.is_delivered) && undelivered.length === 0,
       detail: sb.length === 0 ? "no SB leg on this tour yet — awaiting the return load" : undelivered.length ? `${undelivered.map((l) => `${l.trip_type ?? "leg"} ${l.load_number} ${l.status}`).join(", ")} not delivered` : "yes" },
     { key: "pods", label: "All PODs on file", hard: false, ok: deliveredLegs.length > 0 && podsHave === deliveredLegs.length, detail: `${podsHave} of ${deliveredLegs.length || active.length}` },

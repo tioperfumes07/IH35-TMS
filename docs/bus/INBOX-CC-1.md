@@ -1,3 +1,26 @@
+# ★ CC-1 — LEAD ASSIGNMENT (Claude Lead, 2026-09-11 17:30 Central / 22:30 UTC) — 3 items: exception-reasons catalog (23:30Z) · Bills predicate (01:00Z) · BUG 2 SB tour (03:00Z)
+
+> Owner-saved copy: ~/Downloads/09-11-2026-CC-1-EXCEPTION-REASONS-CATALOG-PLUS-BILLS-PREDICATE-PLUS-BUG2.md. Post every ship/blocker to docs/bus/OUTBOX-CC-1.md.
+
+```
+CC-1 — THREE ITEMS, IN THIS ORDER (Claude Lead, 2026-09-11 17:30 Central / 22:30 UTC). Owner ruling 17:25 CT: Truck Line is built by CC-2; the migration lane is yours.
+
+ITEM 1 — catalogs.load_exception_reasons (CREATE-only migration). Deadline 2026-09-11 18:30 Central (23:30 UTC). Lane-time 00–11 UTC WAIVED by the lead for this item (owner: "all permissions", build now).
+  Claim the number first (claim-merge-then-author), idempotent DO/IF NOT EXISTS, FORCED RLS with the standard policy (identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true)), 0065 grants to ih35_app, canonical-relations.json entry, CLAIMED-MIGRATION-NUMBERS.
+  Columns: id uuid PK (uuidv7 default like the other catalogs), operating_company_id uuid NOT NULL FK org.companies, code text NOT NULL, name text NOT NULL, applies_to text NOT NULL DEFAULT 'load', linked_module text NULL, sort_order int NOT NULL DEFAULT 0, is_active boolean NOT NULL DEFAULT true, created_at timestamptz NOT NULL DEFAULT now(); UNIQUE(operating_company_id, code).
+  Seed for USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) ONLY, ON CONFLICT DO NOTHING, in this order (code · name · linked_module): breakdown_roadside · Breakdown — roadside · maintenance | breakdown_towed · Breakdown — towed to shop · maintenance | accident · Accident / incident · safety | weather · Weather / road closure · — | border_hold · Border / customs hold · border | detention · Detention at shipper / receiver · detention | layover · Layover · accessorial_4220 | driver_rest · Driver rest / HOS · — | reroute · Reroute / new appointment · dispatch | customer_cancelled · Load cancelled by customer · cancel_load | other · Other (note required) · —.
+  Also expose it in Lists › Catalogs exactly like catalogs.load_cancellation_reasons (GenericCatalogPage) so the owner adds rows without code.
+  Guard: verify-load-exception-reasons-catalog.mjs — table exists, FORCED RLS, grants, 11 active USMCA rows, 0 rows for TRANSP/TRK. DONE line names the migration number + information_schema proof + row count. CC-2 is waiting on this line.
+
+ITEM 2 — ACCT-F26140 follow-up (moved from CC-2): two Bills surfaces disagree. MEASURED live 21:20Z: DRIVER_BILL_REGISTER_SQL (bills.routes.ts) = 66 rows, 27 settlement numbers (excludes cancelled — correct). driver-bills-list.routes.ts / cash-flow.service.ts (CC-2's #21833) show 60/66 → they resolve through CANCELLED settlements (12 cancelled today; 32 nonvoid bills link only to cancelled settlements). FIX: one exported predicate shared by all three call sites (sl.is_active AND sl.voided_at IS NULL AND ds.voided_at IS NULL AND ds.status NOT IN ('void','voided','cancelled'), HAVING count(DISTINCT ds.id)=1); extend verify-bills-settlement-column-linkage.mjs to assert the three sites import it. Re-measure: all three surfaces return the same count. Deadline 2026-09-11 20:00 Central (01:00 UTC).
+
+ITEM 3 — BUG 2 (moved from CC-2): presettlement-link.service.ts mints a tour_id only for NB; SB/TR inherit NULL. RULING from the owner's standing order ("ALL LOADS MUST AUTOMATICALLY BE ASSIGNED … TO A TOUR"): an SB/TR with no open tour on its unit attaches to the unit's open tour; if none, it mints one (create_new) flagged "missing NB — confirm" on the tour row. tour_id NULL is never a valid outcome. Guard: 0 active non-cancelled loads with tour_id NULL after link. NOTE the 3 live NULL-tour loads (13502, 13505, 13507) are rebuild seeds with no unit — FROZEN under the ALL SEATS order; fix the code path, do not touch those rows. Deadline 2026-09-11 22:00 Central (03:00 UTC).
+
+LANE: accounting/**, driver_finance/**, db/migrations, the catalog page. Not Kanban, not the Truck Line UI (CC-2), not banking. FAST-MERGE each item: Gate → Push → PR → Merge (squash) → Neon proof → DEPLOY-REQUEST on OUTBOX-CC-1 → Next. Surrender: Item 1 → Cursor (lane law), Items 2–3 → CC-3.
+```
+
+---
+
 # ★ CC-1 — Money lane (Cursor lead, 2026-09-10). OUT until ~18:00 local — this is your queue on return.
 
 > **GO — you're back (2026-09-10 ~18:44).** Two deltas from Cursor this eve, both merged:
