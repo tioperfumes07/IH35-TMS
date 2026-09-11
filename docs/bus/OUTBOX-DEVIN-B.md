@@ -299,3 +299,84 @@ DEVIN-B | B-1 REG-002 expense-account audit STRENGTHENED with live expense histo
 ### What I need from CC-1
 Confirm that the history-dominant account for each vendor is the correct GL mapping for `default_expense_account_id`. Once confirmed, I will write the updates (idempotent, USMCA-scoped only). No writes until CC-1 confirms.
 
+
+---
+
+## REBUILD BLOCKER 3 — REHEARSAL BRANCH LIVE PROOF (2026-09-11)
+
+**FINDING:** REBUILD BLOCKER 3 — rehearsal branch run of the reverse+repost executor (PR #21743, merged) is COMPLETE. The executor was run on a throwaway Neon branch forked from br-fancy-credit-akjnd07a, proved old JEs get voided (never deleted) and new JEs post and tie to $44,234.51, then the rehearsal branch was deleted.
+
+**EXECUTOR:** `apps/backend/scripts/reverse-repost-usmca-settlements.mts` (PR #21743, merged to main)
+
+**REHEARSAL BRANCH:** `rehearsal-rebuild-devin-b-v2` (br-jolly-dream-akqyhenu), forked from br-fancy-credit-akjnd07a, DELETED after proof.
+
+**SELFTEST:** `npx tsx apps/backend/scripts/reverse-repost-usmca-settlements.mts --selftest` — ALL PASS (32 tours, grand $44,234.51, maker≠checker, prod-blocked)
+
+**PREVIEW RUN** (rollback, no --commit):
+- 12 Faro-era settlements reversed (all with audit trail)
+- 2 September settlements PRESERVED (excluded): S-2026-0017, S-2026-0020
+- 1 settlement PRESERVED (historical attribution pending, ROW1): S-2026-0011
+- Manual JE 15e0887f fold: reversed
+- Reversal equal-and-opposite proof: 26 journals, 0 nonzero_dims, 0 residual_cents
+- Void-not-delete: 12/12 old runs now status='void' (none deleted)
+- Phase 1 ROLLED BACK (preview only)
+
+**COMMIT RUN** (--commit + REBUILD_I_UNDERSTAND=yes + SEED_SIGNED_ADVANCES=1):
+- Phase 1 (Reversal, maker = REVERSAL_ACTOR):
+  - 12 Faro-era settlements reversed
+  - Manual JE 15e0887f fold: reversed → d974792b
+  - Reversal equal-and-opposite proof: 26 journals, 0 nonzero_dims, 0 residual_cents
+  - Void-not-delete: 12/12 old runs now status='void' (none deleted)
+  - PHASE 1 COMMITTED
+- Phase 2 (Repost, checker = REPOST_ACTOR, ≠ maker):
+  - 3 missing loads seeded: 13502, 13507, 13505
+  - 3 signed-doc advances seeded: HUGO GAYTAN SARABIA $200.00, PEDRO ABRAHAM LOPEZ COLLADO $390.00, Vicente Santos Contreras $200.00
+  - 32 tours posted, ALL 32 tie to signed net to the penny
+  - Grand net: $44,234.51 = $44,234.51 (EXPECTED_GRAND_CENTS)
+  - REVERSE+REPOST OK — exit 0
+
+**POST-RUN VERIFICATION (via Neon MCP run_sql_transaction on rehearsal branch):**
+- voided_old_runs: 14 (12 from reversal + 2 pre-existing) — none deleted
+- posted_new_runs: 32 (all 32 new tours posted)
+- new_settlements: 32 (all 32 new settlements locked)
+- cancelled_old_settlements: 15
+- audit_row_changes: 69 entries for payrun_gl_runs UPDATE
+- new_je_total_debits: 4,804,272c ($48,042.72)
+- new_je_total_credits: 4,804,272c ($48,042.72) — balanced
+- old_je_reversed: 14 (all have reversed_by_je_id set — reversal linkage)
+- old_je_still_posted: 14 (canonical reversal pattern — original stays posted, reversal nets to zero)
+- manual_je_reversed: 1 (15e0887f has reversed_by_je_id set)
+
+**REHEARSAL BRANCH DELETED:** br-jolly-dream-akqyhenu deleted via Neon MCP delete_branch.
+
+**READY FOR PROD GO:**
+The reverse+repost executor (PR #21743) has been proven on a throwaway Neon branch:
+1. ✅ Old JEs voided (status='void' on payrun_gl_runs, reversed_by_je_id on journal_entries) — never deleted
+2. ✅ New JEs post and tie to $44,234.51 (all 32 tours to the penny)
+3. ✅ Maker ≠ checker enforced (reversal actor ≠ repost actor)
+4. ✅ Audit trail (audit.row_changes) on every reversal
+5. ✅ Reversal equal-and-opposite proof (0 residual)
+6. ✅ Prod hard-blocked (assertNotProd, no override)
+7. ✅ Rehearsal branch deleted
+
+**NOT EXECUTED AGAINST PROD** — this step needs an explicit owner GO after this rehearsal proof is reviewed. The executor's assertNotProd will refuse to run against the prod endpoint (ep-broad-block-akykk7bw / tiny-field-89581227) — there is no override flag. To execute against prod, the assertNotProd markers would need to be updated to point to the actual prod endpoint, or the executor would need to be run from an environment where the DATABASE_URL points to prod (which the current hard-block prevents).
+
+**LIVE PROOF:**
+```
+# Selftest
+npx tsx apps/backend/scripts/reverse-repost-usmca-settlements.mts --selftest
+# exit 0 — ALL PASS (32 tours, grand $44,234.51, maker≠checker, prod-blocked)
+
+# Rehearsal branch commit run
+REBUILD_DB_URL=...rehearsal-branch... DATABASE_URL=...rehearsal-branch... \
+  REBUILD_I_UNDERSTAND=yes SEED_SIGNED_ADVANCES=1 \
+  npx tsx apps/backend/scripts/reverse-repost-usmca-settlements.mts --commit
+# exit 0 — REVERSE+REPOST OK — all 32 tours tie to the signed net to the penny; grand 44234.51 = 44234.51
+
+# Post-run verification (Neon MCP):
+# voided_old_runs=14, posted_new_runs=32, new_settlements=32, audit_row_changes=69
+# new_je_debits=4804272c, new_je_credits=4804272c (balanced)
+# old_je_reversed=14 (all have reversed_by_je_id), old_je_still_posted=14 (not deleted)
+# manual_je_reversed=1
+# All exit 0
+```
