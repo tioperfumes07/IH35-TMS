@@ -356,7 +356,7 @@
     },
     {
       "path": "/lists/drivers/driver-load-statuses",
-      "reason": "LST-A-01 — Driver Load Statuses reachable from Lists hub (same DriverLoadStatusesPage)"
+      "reason": "LST-A-01 \u2014 Driver Load Statuses reachable from Lists hub (same DriverLoadStatusesPage)"
     },
     {
       "path": "/catalogs/accounts",
@@ -620,11 +620,11 @@
   "REDIRECT_ROUTES": [
     {
       "path": "/settings/company",
-      "reason": "LV-SETTINGS-COMPANY-REDIRECT (manifest.tsx) — pure legacy-URL redirect to /system, not a real page; the subnav lives on the real destination /system, not on the redirect stub itself"
+      "reason": "LV-SETTINGS-COMPANY-REDIRECT (manifest.tsx) \u2014 pure legacy-URL redirect to /system, not a real page; the subnav lives on the real destination /system, not on the redirect stub itself"
     },
     {
       "path": "/api/*",
-      "reason": "ApiDocumentPassthrough catch-all for API-served document links (manifest.tsx:4558) — not a page, never a nav target"
+      "reason": "ApiDocumentPassthrough catch-all for API-served document links (manifest.tsx:4558) \u2014 not a page, never a nav target"
     },
     {
       "path": "/driver-finance",
@@ -633,6 +633,10 @@
     {
       "path": "/finance/cash-flow",
       "reason": "Legacy-URL redirect (Navigate replace) to the canonical /cash-flow, which sidebar-config.ts already links to directly; the redirect stub itself is not a nav target"
+    },
+    {
+      "path": "/driver-finance/driver-bills",
+      "reason": "NAV-F26151 \u2014 bare parent of the REG-023(b) detail route; PreserveSearchNavigate to /accounting/bills (the BILLS-DRIVER union register, already in the accounting subnav); the redirect stub itself is not a nav target"
     }
   ]
 }
