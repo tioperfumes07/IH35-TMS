@@ -38,6 +38,20 @@
       "source": "apps/backend/src/dispatch/loads.routes.ts",
       "required_tokens": ["to=\"/dispatch#units-needing-return\"", "data-testid=\"dispatch-units-needing-return-panel\""],
       "source_tokens": ["last_delivery.last_drop_at", "LEFT JOIN LATERAL (", "delivery_stop.stop_type = 'delivery'", "delivered_load.operating_company_id = $1::uuid", "delivery_stop.actual_departure_at IS NOT NULL"]
+    },
+    {
+      "id": "round-trip-exposure",
+      "label": "Round-trip exposure",
+      "component": "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
+      "required_tokens": ["to=\"/dispatch#round-trip-exposure\"", "data-testid=\"dispatch-round-trip-exposure-panel\"", "exposureLoads.length"]
+    },
+    {
+      "id": "days-since-last-delivery",
+      "label": "Days since last delivery",
+      "component": "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
+      "source": "apps/backend/src/dispatch/loads.routes.ts",
+      "required_tokens": ["to=\"/dispatch#days-since-last-delivery\"", "data-testid=\"dispatch-days-since-last-delivery-panel\"", "maxDaysIdle"],
+      "source_tokens": ["last_delivery.load_id AS last_delivered_load_id", "last_delivery.load_number AS last_delivered_load_number"]
     }
   ]
 }
