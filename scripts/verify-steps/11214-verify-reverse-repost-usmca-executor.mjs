@@ -93,7 +93,19 @@ assert(headersGrand === EXPECTED_GRAND_CENTS, `headers CSV grand ${headersGrand 
 const linesGrand = parseCsvTotal(LINES_CSV, 0);
 assert(linesGrand === EXPECTED_GRAND_CENTS, `lines CSV grand ${linesGrand / 100} != expected ${EXPECTED_GRAND_CENTS / 100}`);
 
-// ── 9. Selftest passes (offline CSV + invariant checks). ──────────────────────────────────────────
+// ── 9. ROW1 executor scope protection (GPT's "ROW1 immediate executor scope protection request",
+//       2026-09-10/11): S-2026-0011's period_start/posted-payrun-status both satisfy this
+//       executor's own Faro-era predicate, but its historical attribution is unresolved (the lead
+//       ACK'd "preserve original payment attribution, do not recompute/repost") — it must never
+//       enter the reversal scope by accident. ─────────────────────────────────────────────────────
+assert(src.includes("EXCLUDED_FROM_REVERSAL_SETTLEMENT_IDS"), "executor must define an explicit exclusion set for settlements pending historical-attribution treatment");
+assert(src.includes("c7edc017-9696-41c3-a3b0-bb0c903e0d07"), "executor must exclude S-2026-0011 (c7edc017-...) by UUID — its historical attribution is unresolved");
+assert(
+  /EXCLUDED_FROM_REVERSAL_SETTLEMENT_IDS\.has/.test(src),
+  "discoverReversalScope must actually filter its query results by EXCLUDED_FROM_REVERSAL_SETTLEMENT_IDS, not just declare it"
+);
+
+// ── 10. Selftest passes (offline CSV + invariant checks). ─────────────────────────────────────────
 try {
   const out = execSync("npx tsx scripts/reverse-repost-usmca-settlements.mts --selftest", {
     cwd: path.join(REPO, "apps/backend"),
