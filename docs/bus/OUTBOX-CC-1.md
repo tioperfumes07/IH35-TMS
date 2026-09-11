@@ -1649,3 +1649,52 @@ Deliberately did NOT click-through a real settlement close myself — that would
 `git merge-base --is-ancestor` confirms all 5 SHAs are ancestors of the deployed tip `cb27fccdda`. Live `GET /api/v1/healthz/shallow` git_sha=`cb27fccdda39de5d5164609347f6a6d6bc81b343`, `ok:true`. Live `GET /api/v1/healthz` re-confirms all 6 `ledger.*` checks green (`unbalanced_jes`/`ar_tieout`/`ap_tieout`/`orphaned_bank_matches`/`posted_without_posting`/`voided_without_reason` all `true`). Frontend `https://app.ih35dispatch.com/` HTTP 200.
 
 DONE LINE: CC-1 | Settlement Close payment-method fix DONE + all 5 of this turn's PRs LIVE-DEPLOY-CONFIRMED | backend+frontend both redeployed by me to `cb27fccdda` | Live=CONFIRMED via healthz git_sha ancestry + ledger checks green | NEXT: continuing the sweep for the next open CC-1 item.
+
+## CC-1 | Presettlement deferred-suggestions root-cause fix DONE + LIVE DEPLOY + Chrome-verified (2026-09-11)
+
+**SETTLEMENT-TOUR-NUMBER-SWEEP root-cause fix — DONE.** This closes the "REMAINING" item that
+sweep's own doc named: `presettlement-link.service.ts`'s deferred path (trip_type unknown) and
+`book-load.service.ts`'s own booking-time defer branch both used to write ONLY a
+`dispatch.load.presettlement_link_deferred` audit-log entry, never a
+`driver_finance.presettlement_link_suggestions` row — the exact mechanism that produced orphan
+loads 13581/13580/13508. Separately (found while investigating): the GO-22 human-confirm queue's
+backend routes (`GET`/`POST /driver-finance/presettlement-suggestions`) had **zero frontend caller
+anywhere in the app** — built, never surfaced, so even a normal "TR/SB leg with no open tour yet"
+suggestion sat invisible forever.
+
+**Fix, both halves:**
+1. New shared writer `recordDeferredPresettlementSuggestion` (reuses the same "one pending
+   suggestion per load" upsert pattern as `suggestPresettlementLink`, honestly with `trip_type`
+   AND `suggested_settlement_id` both NULL — nothing to recommend yet, only enough to make the
+   load visible). Wired into both defer branches — full coverage in the post-assignment hook
+   (driver always known there), and the booking-time branch when a driver is known but trip_type
+   isn't (the "driver also unknown" case still can't produce a row — `driver_id` is `NOT NULL` —
+   and correctly falls through to the post-assignment hook once a driver is later assigned).
+   `confirmPresettlementLink` needed **zero changes** — it already re-reads the load's current
+   `trip_type` fresh on every confirm and refuses honestly until it's known, then proceeds
+   normally once captured.
+2. First-ever frontend surface for the queue: `listPresettlementSuggestions`/
+   `confirmPresettlementSuggestion` (driverFinance.ts) + a new `PresettlementSuggestionsTab.tsx`,
+   wired as a new "Needs Review" tab on the existing `/driver-finance/settlements` page (the
+   established query-param tab pattern — no new sidebar item, no locked-nav change).
+
+Guard: `scripts/verify-presettlement-deferred-suggestions-visible.mjs` + verify-step 11225. 40/40
+vitest passing (2 new cases, 1 existing case updated to assert the new correct behavior instead of
+the old audit-only-invisible behavior it used to lock in). PR #21774 merged `633a82c382`; post-merge
+forensic confirmed both fixes + the guard live on `origin/main`.
+
+**Live deploy + Chrome-verified:** backend + frontend both redeployed by me (both `autoDeploy: no`).
+`GET /api/v1/healthz/shallow` `git_sha=633a82c38206a71517d1e9d8c6ecbb4d9f7bd80e` `ok:true`. Live
+Chrome click-through of `/driver-finance/settlements?tab=needs_review`: the new "Needs Review" tab
+renders correctly among the existing tabs, full `ParityTable` surface (search/range/gear), all 6
+columns (Load #, Driver, Trip Type, Suggested Settlement, Reason, Created), honest empty state "No
+pre-settlement suggestions awaiting review" (0 rows — correct, no load is currently deferred in the
+live queue; not a false-empty, the underlying table genuinely has 0 pending rows right now).
+
+**Flagged, not fixed (unchanged from the earlier sweep):** `dispatch/cancellation.service.ts:337-345`'s
+non-canonical load-resolution shape (no live defect found from it), and load 13508's 2 misattached
+deduction lines needing an owner-reviewed audited reversal.
+
+DONE LINE: CC-1 | Presettlement deferred-suggestions root-cause fix DONE | PR #21774 merged
+`633a82c382` | Live=CONFIRMED via healthz git_sha match + live Chrome click-through of the new
+Needs Review tab | NEXT: continuing the sweep for the next open CC-1 item.
