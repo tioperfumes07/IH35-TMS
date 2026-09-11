@@ -43,6 +43,35 @@ Plus **13584** (on settled tour 5800 — seed so its earnings line links).
 Loads 13576/13580/13581 already exist in-app; 13577/13584 are settled (5797/5800); 13585 not on the open board
 (likely delivered/completed — confirm).
 
+### C-EXEC — measured resolution 2026-09-10 eve (Cursor, live on br-fancy-credit, bypass_rls=lucia)
+
+**13588 — DONE + LIVE** (`scripts/ops/cursor-2026-09-10-seed-13588.mts --apply`): booked id `0a20a60d-c652-433b-9cfd-4d4e017c05cc`,
+`status=dispatched trip_type=NB is_sample_data=false`, driver Luis Armando Sosa `4ff53886…`, unit T170 `f4430f58…`,
+customer Refrigerx **canonical `684f5776…`** (the row 11 existing loads use), pre-settlement **S-2026-0013 (open)**,
+Laredo TX → Quakertown PA. Zero guessed values.
+
+**The other 6 are entangled with the rebuild → do them INSIDE the rebuild (same loads, correct order), never race them:**
+
+1. **Advance 4 delivered prior loads** (free the trucks; they have pickup evidence, NO delivery evidence):
+   - 13574 (T177) → S-2026-0021 open · 13575 (T152) → S-2026-0018 open · 13578 (T156) → S-2026-0025 open · 13580 (T176) → S-2026-0028 open.
+   - Stamp delivery evidence from the AllwaysTrack delivery date, then transition `dispatched → in_transit → delivered_pending_docs`
+     via the real route (mirror `scripts/ops/deliver-seeded-usmca-loads.ts`). 13574/13575 are in the rebuild reverse scope —
+     so the delivery-revrec (customer invoice + A/R) must post AFTER/with the driver-settlement reversal, not before.
+   - 13580 has NO pickup evidence either → stamp both stops.
+2. **Then seed the 4 truck-blocked open loads** (trucks now free; `uq_loads_one_active_unit` will accept):
+   | load | driver (id) | unit | customer (canonical decision) | route | trip |
+   |---|---|---|---|---|---|
+   | 13582 | Jorge Luis Infante `3e138476…` | T177 `e15c43f8…` | Semares **`04b65d8b…`** (10 loads, canonical) | Laredo→Edison NJ | NB |
+   | 13583 | Genaro Guerrero **(DUP driver `6edcb351…`/`6e908ee1…` — pick one)** | T152 `19d29860…` | Hawkeye **`ba40f2bf…`** (2 loads) | Laredo→Stoughton MA | NB |
+   | 13587 | Angel Alfonso Sosa `fba21d80…` | T156 `a10cd288…` | Key Global **(no canonical — owner: most-recent)** | Delphi IN→Laredo TX | SB |
+   | 13589 | Neftali Coronado `a32a35c8…` | T176 `f439def3…` | Kirsch **(no canonical — owner: most-recent)** | Clarks Summit PA→Houston TX | SB |
+3. **13586** — CREATE driver **Leonel Antonio Morales** (POST /mdata/drivers, status Probation per active-entity law; no real
+   phone on file → owner enters the real E.164, use a flagged placeholder meanwhile), customer "Mode Transportation"
+   **(no canonical — owner: most-recent)**, unit T174 `8a842d23…` (free), Austinville VA→San Antonio TX. Then seed.
+4. **13584** — seed as part of signed tour **5800** (rebuild owns it; earnings line must link to the tour).
+
+All seeds at **rate $0** (owner: edit amounts later), `is_sample_data=false`, via `bookLoad` — never direct SQL, never Book-Load POST theater.
+
 ## D. Load-number-on-dispatch parity — CONFIRMED behavior
 
 AllwaysTrack Open Loads shows one row (W/O ES6888) with status **Pending** and **NO load number** — the number is
