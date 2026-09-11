@@ -891,6 +891,16 @@
       "claimed_by": "claude",
       "claimed_at": "2026-09-07",
       "purpose": "ACCT-RECONCILIATION-FINDINGS-CHECK-CONSTRAINT-MISSING-6-TYPES (CC-2 finding, routed to CC-1 -- migration authority). Widens _system.reconciliation_findings_finding_type_check to add the 6 finding_type values ledger-integrity-detectors.service.ts already tries to persist and the constraint currently rejects: test_named_account_in_coa, journal_entry_fewer_than_two_postings, posting_orphan_or_cross_company_account, voided_document_reversal_broken, void_metadata_incomplete, is_sample_data_not_explicit. Additive-only: DROP+ADD CHECK with the fuller list, never narrows."
+    },
+    "202614050000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-10",
+      "purpose": "ROW 0 REIMBURSEMENT-PER-TYPE-GL (owner ruling 2026-09-10, INBOX-CC-1): widens accounting.chart_of_accounts_roles_role_check to admit 2 new role values -- 'toll_scale_expense' and 'other_operating_expense' -- so per-type driver-reimbursement GL categorization (fuel/toll/scale/parking/other, distinct from the existing generic 'reimbursement_expense'=Lumper role) can be designated. Additive-only, same DROP+ADD CHECK pattern as 202613810000."
+    },
+    "202614050001": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-10",
+      "purpose": "ROW 0 REIMBURSEMENT-PER-TYPE-GL, depends on 202614050000 (CHECK widen) running first: seeds accounting.chart_of_accounts_roles for USMCA, binding 'toll_scale_expense' to existing account 5300 Tolls & Scales and 'other_operating_expense' to existing account 6999 Other Operating Expense (owner mapping: fuel->5000 Fuel&Diesel via the existing company_fuel_advance_expense role, toll/scale/parking->5300, lumper unchanged, other->6999). No new account created. Resolved by org.companies.code='USMCA' + catalogs.accounts.account_number, never a hardcoded UUID."
     }
   },
   "202613590001": {
