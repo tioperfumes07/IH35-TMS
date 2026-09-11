@@ -27,15 +27,16 @@ describe("REG-010/011 canonical settlement identity and one datum per column", (
     expect(settlement.closest("td")).not.toHaveTextContent("5795");
     expect(screen.getByText("5795").closest("td")).not.toBe(settlement.closest("td"));
   });
-  it("shows one originating load and trip type with the full load count separately", () => {
+  it("renders EVERY load in the tour in the Load Number cell, not just the first (owner 2026-09-11: 'FIX THE RENDER, NOT THE SCHEMA' — a settlement/tour can cover multiple loads)", () => {
     const row = { settlement_id: "s1", leg_count: 2, legs: [{load_id:"l1", load_number:"13508", trip_type:"NB"},{load_id:"l2",load_number:"13509",trip_type:"SB"}] } as TourListRow;
     render(<MemoryRouter><ParityTable rows={[row]} rowKey={r=>r.settlement_id} columns={tourLoadColumns("proof")} /></MemoryRouter>);
-    const loadCell = screen.getByText("13508").closest("td")!;
-    expect(within(loadCell).queryByText("13509")).not.toBeInTheDocument();
-    expect(screen.getByText("2").closest("td")).not.toBe(loadCell);
-    expect(loadCell).not.toHaveTextContent("NB");
-    expect(loadCell).not.toHaveTextContent("SB");
-    expect(screen.getByText("NB").closest("td")).not.toBe(loadCell);
+    const loadCell = screen.getByTestId("tour-legs-cell");
+    // Both loads render in the same cell now — neither is dropped.
+    expect(within(loadCell).getByText(/13508/)).toBeInTheDocument();
+    expect(within(loadCell).getByText(/13509/)).toBeInTheDocument();
+    // Load count stays its own, separately-sortable column alongside the full load list.
+    expect(screen.getByText("2").closest("td")).not.toBe(loadCell.closest("td"));
     expect(screen.getByRole("columnheader", {name:/Load count/i})).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", {name:/Load Number/i})).toBeInTheDocument();
   });
 });

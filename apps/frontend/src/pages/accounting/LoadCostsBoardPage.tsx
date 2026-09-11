@@ -516,10 +516,12 @@ function TransactionRegister({ tab, companyId, loadsById, settlementsByLoad, nav
 // (min 240 / max 420 on Legs; 96px dates; nowrap money) below keep any one column off the whole screen.
 const TOUR_COLUMNS = (state: "open" | "closed"): ParityColumn<TourListRow>[] => [
   { key: "tour", label: "Settlement/Tour", alwaysVisible: true, testId: "tour-col-id", sortable: true, className: "whitespace-nowrap", minWidth: 90, sortValue: r => r.display_id ?? "", render: r => <Link className="ldt-link font-semibold" style={{ display: "inline" }} to={`/driver-finance/settlements?settlement_id=${encodeURIComponent(r.settlement_id)}`}>{r.display_id ?? "Settlement"}</Link> },
+  // ROUND 16.1 — leg pills, one line, count-first, EntityLink each, "+N more" overflow, capped 240–420.
+  // COLUMN-ORDERING LAW (owner 2026-09-11): Load renders immediately next to Settlement — before
+  // Driver/Unit, not after.
+  ...tourLoadColumns("tour-col"),
   { key: "driver", label: "Driver", testId: "tour-col-driver", sortable: true, minWidth: 120, maxWidth: 200, cellClass: "whitespace-nowrap", sortValue: r => r.driver_name ?? "", render: r => <span className="block max-w-[200px] truncate" title={r.driver_name ?? ""}>{r.driver_name ?? DASH}</span> },
   { key: "unit", label: "Unit", testId: "tour-col-unit", sortable: true, minWidth: 56, maxWidth: 64, className: "whitespace-nowrap", sortValue: r => r.unit_number ?? "", render: r => r.unit_number ?? DASH },
-  // ROUND 16.1 — leg pills, one line, count-first, EntityLink each, "+N more" overflow, capped 240–420.
-  ...tourLoadColumns("tour-col"),
   { key: "started", label: "Started", testId: "tour-col-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, sortValue: r => r.trip_started_at ?? "", render: r => r.trip_started_at ? mmmDd(r.trip_started_at) : DASH },
   ...(state === "closed" ? [{ key: "closed", label: "Closed", testId: "tour-col-closed", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, sortValue: (r: TourListRow) => r.trip_closed_at ?? "", render: (r: TourListRow) => r.trip_closed_at ? mmmDd(r.trip_closed_at) : DASH } as ParityColumn<TourListRow>] : []),
   // ROUND 16.1 — money cells: nowrap + right + mono, auto-fit to the widest value (never wraps "$12,595.90").

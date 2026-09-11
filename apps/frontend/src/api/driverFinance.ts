@@ -787,6 +787,11 @@ export type PreSettlementDetail = {
     period_start: string;
     period_end: string;
   } | null;
+  /** SETTLEMENT LOAD LINKAGE: FIX THE RENDER, NOT THE SCHEMA (owner 2026-09-11) — every load
+   *  actually linked to this open tour (presettlement_link_id reverse-lookup + bookend fallback,
+   *  same source tour-readout.routes.ts's buildTourReadout uses), not just the first_load/last_load
+   *  bookend pair. PreSettlementPanel.tsx renders this instead of the two bookend fields alone. */
+  legs: { load_id: string; load_number: string; trip_type: string | null }[];
   lines: PreSettlementLine[];
 };
 

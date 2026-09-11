@@ -65,13 +65,20 @@ export function TourLegsCell({ legs, legsLabel }: { legs: TourLegBrief[] | null 
   );
 }
 
-/** REG-010/011: load identity, trip type and count are separate data columns. */
+/** REG-010/011, corrected (owner 2026-09-11, "SETTLEMENT LOAD LINKAGE: FIX THE RENDER, NOT THE
+ *  SCHEMA"): REG-010/011 originally made this "Load Number" cell show ONLY the first leg by design
+ *  ("expand the settlement to see every load") -- that is the exact "only 1 load per settlement"
+ *  render bug the owner is now overturning. A settlement/tour can and should cover multiple loads
+ *  (locked architecture); this cell renders every leg the tour actually has (the same TourLegsCell
+ *  pill strip already built for this purpose, count pill + up to LEGS_VISIBLE loads + "+N more"),
+ *  never a single bookend/first-load stand-in. Trip type and count stay their own columns. */
 export function tourLoadColumns(prefix: string): ParityColumn<TourListRow>[] {
   return [
-    { key: "load_numbers", label: "Load Number", headerTitle: "First load in this tour; expand the settlement to see every load", testId: `${prefix}-load-number`, sortable: true, alwaysVisible: true,
+    { key: "load_numbers", label: "Load Number", headerTitle: "Every load in this tour", testId: `${prefix}-load-number`, sortable: true, alwaysVisible: true,
+      minWidth: 160, maxWidth: 420, cellClass: "whitespace-nowrap",
       sortValue: r => r.legs?.[0]?.load_number ?? "",
-      exportValue: r => r.legs?.[0]?.load_number ?? "",
-      render: r => r.legs?.[0] ? <EntityLink kind="load" id={r.legs[0].load_id} label={r.legs[0].load_number} /> : DASH },
+      exportValue: r => (r.legs ?? []).map(l => l.load_number).join(" / "),
+      render: r => <TourLegsCell legs={r.legs} /> },
     { key: "trip_types", label: "Trip type", headerTitle: "Trip type of the first load", testId: `${prefix}-trip-type`, sortable: true,
       sortValue: r => r.legs?.[0]?.trip_type ?? "",
       render: r => r.legs?.[0]?.trip_type ?? DASH },

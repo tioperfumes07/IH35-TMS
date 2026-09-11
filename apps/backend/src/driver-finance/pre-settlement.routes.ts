@@ -180,11 +180,37 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
       if (!settlement) {
         return {
           settlement: null,
+          legs: [],
           lines: [],
           deductions: [],
           reconciliation: { gross_pay: 0, deductions_total: 0, escrow_contribution_total: 0, reimbursements_total: 0, net_pay: 0 },
         };
       }
+
+      // SETTLEMENT LOAD LINKAGE: FIX THE RENDER, NOT THE SCHEMA (owner 2026-09-11) — this panel's
+      // "Linked Trips" section used to render ONLY settlement.first_load_number/last_load_number
+      // (an NB/SB bookend pair), which is the exact "only 1 load per settlement" render bug on a
+      // tour with a TR leg or more than 2 legs in between: those loads never appeared. Query every
+      // load actually linked to this open tour the SAME way tour-readout.routes.ts's buildTourReadout
+      // does (the owner-verified-correct source: a load whose presettlement_link_id points here, plus
+      // the bookend loads as a fallback for a settlement whose legs predate presettlement_link_id) —
+      // do NOT redesign the schema, this is a read, not a new linkage.
+      type LegRow = { load_id: string; load_number: string; trip_type: string | null };
+      const legsRes = (await client.query(
+        `
+          SELECT l.id AS load_id, l.load_number, l.trip_type::text
+          FROM mdata.loads l
+          WHERE l.operating_company_id = $2::uuid AND l.soft_deleted_at IS NULL
+            AND (l.presettlement_link_id = $1::uuid OR l.id = $3::uuid OR l.id = $4::uuid)
+          ORDER BY CASE l.trip_type::text WHEN 'NB' THEN 1 WHEN 'TR' THEN 2 WHEN 'SB' THEN 3 ELSE 4 END, l.created_at ASC
+        `,
+        [
+          (settlement as Record<string, unknown>).id,
+          companyId,
+          (settlement as Record<string, unknown>).first_load_id,
+          (settlement as Record<string, unknown>).last_load_id,
+        ]
+      )) as { rows: LegRow[] };
 
       type SettlementLineRow = { id: string; line_type: string; description: string; amount: string | number; created_at: string };
       const linesRes = (await client.query(
@@ -222,6 +248,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
 
       return {
         settlement,
+        legs: legsRes.rows,
         lines: linesRes.rows,
         deductions,
         reconciliation: {
