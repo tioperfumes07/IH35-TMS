@@ -337,9 +337,17 @@ export async function buildCompanySettlementReport(
 
   // 6) P&L ROLLUP net -- Revenue minus every non-earnings-positive settlement_lines deduction,
   // minus Fuel, minus Expenses. Ties to the cent by construction (real rows, real sum).
+  // "escrow"/"escrow_contribution" are DELIBERATELY EXCLUDED: driver escrow is a LIABILITY, not an
+  // expense (owner-locked law, driver-escrow-is-liability.md) -- settlement-lines-materialize.service.ts
+  // and settlement-payrun-close.service.ts both post escrow_contribution as a credit to the
+  // driver's own escrow liability sub-account, never a debit to an expense account. Subtracting it
+  // here double-counted a pure driver-pay withholding as if it were an additional company cost,
+  // understating netRevenueCents by the escrowed amount (live example: CS-2026-0013 displayed
+  // $2,639.85 vs the correct $2,664.85, a $25 escrow-driven distortion). This does NOT touch any
+  // journal entry or posted GL amount -- reporting classification only.
   const deductionLineTypes = new Set([
-    "extra_pay", "reimbursement", "deduction", "advance_recovery", "escrow",
-    "abandonment_chargeback", "auto_deduction", "dispute_adjustment", "escrow_contribution",
+    "extra_pay", "reimbursement", "deduction", "advance_recovery",
+    "abandonment_chargeback", "auto_deduction", "dispute_adjustment",
     "detention_pay", "deadhead_pay",
   ]);
   const driverSalaryCents = allLines
