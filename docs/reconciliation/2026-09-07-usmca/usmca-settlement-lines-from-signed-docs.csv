@@ -233,3 +233,43 @@ doc_no,driver,load,category,description,amount
 5776,Leonel Antonio Morales,13515,escrow,Load 13515 2026-08-14 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00,-25.00
 5776,Leonel Antonio Morales,13515,admin_fee,Load 13515 2026-08-14 - Admin fee - GAS -10.00,-10.00
 5776,Leonel Antonio Morales,13520,escrow,Load 13520 2026-08-14 - Driver-Escrow For Claims - Driver-Escrow For Claims -25.00,-25.00
+5797,Fernando Mecor Hernandez,13569,loaded_pay,"Loaded Miles 1,397.8 @ $0.50 698.90",698.90
+5797,Fernando Mecor Hernandez,13577,loaded_pay,"Loaded Miles 1,313.2 @ $0.50 656.60",656.60
+5797,Fernando Mecor Hernandez,13577,empty_pay,"Empty Miles 122.7 @ $0.50 61.35",61.35
+5797,Fernando Mecor Hernandez,13577,additional_pay,Driver Pay-Enlonada,25
+5797,Fernando Mecor Hernandez,13577,additional_pay,Driver Pay-Desenlonada,25
+5797,Fernando Mecor Hernandez,13569,additional_pay,Driver Pay-Enlonada,25
+5797,Fernando Mecor Hernandez,13569,additional_pay,Driver Pay-Desenlonada,25
+5797,Fernando Mecor Hernandez,13569,deduction,LOVES 2AS20WINDSHIELD,37.63
+5797,Fernando Mecor Hernandez,13577,admin_fee,2026-09-07 - Admin fee - GAS,-10
+5798,Genaro Guerrero Chavez,13572,loaded_pay,"Loaded Miles 1,079.7 @ $0.45 485.87",485.87
+5798,Genaro Guerrero Chavez,13575,loaded_pay,"Loaded Miles 1,004.7 @ $0.45 452.12",452.12
+5798,Genaro Guerrero Chavez,13575,empty_pay,"Empty Miles 110.8 @ $0.45 49.86",49.86
+5798,Genaro Guerrero Chavez,13572,escrow,2026-09-08 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5798,Genaro Guerrero Chavez,13575,escrow,2026-09-08 - Driver-Escrow For Claims - Driver-Escrow For Claims,-25
+5798,Genaro Guerrero Chavez,13575,admin_fee,2026-09-08 - Admin fee - GAS,-10
+5799,Jorge Luis Infante Corona,13571,loaded_pay,"Loaded Miles 1,890.2 @ $0.50 945.10",945.10
+5799,Jorge Luis Infante Corona,13574,loaded_pay,"Loaded Miles 1,807.7 @ $0.50 903.85",903.85
+5799,Jorge Luis Infante Corona,13574,empty_pay,"Empty Miles 107.4 @ $0.50 53.70",53.70
+5799,Jorge Luis Infante Corona,13571,additional_pay,Driver Pay-Enlonada,25
+5799,Jorge Luis Infante Corona,13571,additional_pay,Driver Pay-Desenlonada,25
+5799,Jorge Luis Infante Corona,13574,additional_pay,Driver Pay-Enlonada,25
+5799,Jorge Luis Infante Corona,13574,additional_pay,Driver Pay-Desenlonada,25
+5799,Jorge Luis Infante Corona,13574,deduction,LOVES Road Service-Truck Tire Expense,531.26
+5799,Jorge Luis Infante Corona,13574,admin_fee,2026-09-08 - Admin fee - GAS,-10
+5800,Vicente Santos Contreras,13551,loaded_pay,"Loaded Miles 1,397.8 @ $0.50 698.90",698.90
+5800,Vicente Santos Contreras,13573,loaded_pay,"Loaded Miles 1,066.1 @ $0.50 533.05",533.05
+5800,Vicente Santos Contreras,13584,loaded_pay,"Loaded Miles 421.0 @ $0.50 210.50",210.50
+5800,Vicente Santos Contreras,13584,empty_pay,"Empty Miles 39.3 @ $0.50 19.65",19.65
+5800,Vicente Santos Contreras,13551,additional_pay,Driver Pay-Enlonada,25
+5800,Vicente Santos Contreras,13551,additional_pay,Driver Pay-Desenlonada,25
+5800,Vicente Santos Contreras,13573,additional_pay,Driver Pay-Enlonada,25
+5800,Vicente Santos Contreras,13573,additional_pay,Driver Pay-Desenlonada,25
+5800,Vicente Santos Contreras,13584,additional_pay,Driver Pay-Enlonada,25
+5800,Vicente Santos Contreras,13584,additional_pay,Driver Pay-Desenlonada,25
+5800,Vicente Santos Contreras,13584,additional_pay,Driver Pay-Desenlonada,25
+5800,Vicente Santos Contreras,13584,additional_pay,Driver Pay-Enlonada,25
+5800,Vicente Santos Contreras,13551,reimbursement,LOVES Driver Reimbursement-Fuel-Def,30.30
+5800,Vicente Santos Contreras,13584,admin_fee,2026-09-05 - Admin fee - GAS,-10
+5800,Vicente Santos Contreras,13584,cash_advance,2026-09-09 - CASH ADVANCE WIRE TRANSFER - CASH ADVANCE WIRE TRANSFER,-200
+5800,Vicente Santos Contreras,13584,admin_fee,2026-09-09 - Admin fee - PAGO DE TELEFONO PERSONAL,-75
