@@ -238,7 +238,7 @@ function driverBillMintSkippedMessage(
 ): string {
   const missing = Array.isArray(missingInputs) ? missingInputs.filter(Boolean) : [];
   const missingLabel = missing.length > 0 ? missing.join(", ") : "a configured driver pay rate";
-  return `Load ${action}, but driver pay was NOT minted — missing ${missingLabel}. Review driver pay rate / mile and the load's pay-basis miles before delivery so the driver bill can be created.`;
+  return `Load ${action}, but driver pay was NOT priced — missing ${missingLabel}. Review driver pay rate / mile and the load's pay-basis miles. A $0 tracking driver bill was created so you can seed those and remint. Never invent pay from the customer rate.`;
 }
 
 function numOrUndef(v: unknown): number | undefined {
@@ -1213,9 +1213,9 @@ export function BookLoadModalV4({
         const loadNumber = String(editLoad?.load_number ?? "") || editLoadId;
         pushToast(`Load ${loadNumber} is saved.`, "success");
         const mint = (
-          patchResult as { driver_bill_mint?: { outcome?: string; missing?: string[] } | null }
+          patchResult as { driver_bill_mint?: { outcome?: string; missing?: string[]; unpriced?: boolean } | null }
         ).driver_bill_mint;
-        if (mint?.outcome === "skipped_no_pay_rate") {
+        if (mint?.outcome === "skipped_no_pay_rate" || (mint?.outcome === "minted" && mint.unpriced)) {
           pushToast(driverBillMintSkippedMessage("updated", mint.missing), "info");
         }
         if (applyPostSaveIntent(editLoadId, loadNumber)) return;
@@ -1544,8 +1544,8 @@ export function BookLoadModalV4({
           : bookLoadToastMessage(saveMode, serverStatus),
         bookLoadToastTone(saveMode, serverStatus)
       );
-      const mint = (payload as { driver_bill_mint?: { outcome?: string; missing?: string[] } }).driver_bill_mint;
-      if (mint?.outcome === "skipped_no_pay_rate") {
+      const mint = (payload as { driver_bill_mint?: { outcome?: string; missing?: string[]; unpriced?: boolean } }).driver_bill_mint;
+      if (mint?.outcome === "skipped_no_pay_rate" || (mint?.outcome === "minted" && mint.unpriced)) {
         pushToast(driverBillMintSkippedMessage("booked", mint.missing), "info");
       }
       // GO-23 A1 — trailer_interchanges.load_id is a real FK, so this can only be created AFTER the

@@ -1156,7 +1156,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                             const messages: Record<string, string> = {
                               minted: "Driver bill minted",
                               already_exists: "Driver bill already exists — nothing to remint",
-                              skipped_no_pay_rate: "Still no pay rate/miles for this driver — recorded a durable skip",
+                              skipped_no_pay_rate: "Still no pay rate/miles — tracking $0 bill stays open to seed later",
                               not_applicable: "No driver assigned to this load",
                             };
                             pushToast(messages[outcome] ?? `Remint outcome: ${outcome}`, outcome === "minted" ? "success" : "info");

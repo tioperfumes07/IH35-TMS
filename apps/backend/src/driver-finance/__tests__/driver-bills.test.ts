@@ -102,11 +102,16 @@ describe("driver bills schema separation (P6-T11172)", () => {
   it("GO-21 B5: a typed per-load rate with NO override reason is never used — never a bare editable box that looks like data entry", async () => {
     const statements: string[] = [];
     const client = {
-      async query<T = Record<string, unknown>>(sql: string): Promise<{ rows: T[] }> {
+      async query<T = Record<string, unknown>>(sql: string, values?: unknown[]): Promise<{ rows: T[] }> {
         statements.push(sql);
         if (sql.includes("to_regclass")) return { rows: [{ exists: true }] as T[] };
         // No driver_finance.driver_pay_rates row either — nothing to resolve pay from.
         if (sql.includes("driver_finance.driver_pay_rates")) return { rows: [] as T[] };
+        if (sql.includes("INSERT INTO driver_finance.driver_bills")) {
+          // Typed $1.00/mi with NO override reason must never become the gross (250*100=25000).
+          expect(values?.[6]).toBe(0);
+          return { rows: [{ id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb" }] as T[] };
+        }
         return { rows: [] };
       },
     };
@@ -136,8 +141,19 @@ describe("driver bills schema separation (P6-T11172)", () => {
       []
     );
 
-    expect(statements.some((s) => s.includes("INSERT INTO driver_finance.driver_bills"))).toBe(false);
-    expect(outcome.outcome).toBe("skipped_no_pay_rate");
+    expect(statements.some((s) => s.includes("INSERT INTO driver_finance.driver_bills"))).toBe(true);
+    expect(outcome.outcome).toBe("minted");
+    if (outcome.outcome === "minted") {
+      expect(outcome.unpriced).toBe(true);
+    }
+    expect(vi.mocked(appendCrudAudit)).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.any(String),
+      "driver_finance.driver_bill.skipped_no_pay_rate",
+      expect.objectContaining({ load_number: "L-20260513-0997", tracking_bill: true }),
+      "warning",
+      "WIRE-02"
+    );
   });
 
   it("GO-21 B5: a typed per-load rate WITH a real override reason is used, and the override is logged", async () => {
@@ -485,18 +501,21 @@ describe("driver bills schema separation (P6-T11172)", () => {
     expect(secondary?.loaded).toBe(9600); // 10800 - 1200
   });
 
-  it("ACCT-F63: refuses to mint a driver bill when no pay rate resolves, and records the skip", async () => {
+  it("ACCT-F63: unpriced loads still mint a $0 tracking bill (never customer rate) and record the skip", async () => {
     const statements: string[] = [];
     const client = {
-      async query<T = Record<string, unknown>>(sql: string): Promise<{ rows: T[] }> {
+      async query<T = Record<string, unknown>>(sql: string, values?: unknown[]): Promise<{ rows: T[] }> {
         statements.push(sql);
         if (sql.includes("to_regclass")) return { rows: [{ exists: true }] as T[] };
-        // No driver_pay_rates row -> pay cannot be sourced.
+        if (sql.includes("INSERT INTO driver_finance.driver_bills")) {
+          expect(values?.[6]).toBe(0);
+          return { rows: [{ id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb" }] as T[] };
+        }
         return { rows: [] };
       },
     };
 
-    await createDriverBillArtifacts(
+    const outcome = await createDriverBillArtifacts(
       client,
       {
         requestingUserUuid: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
@@ -519,18 +538,88 @@ describe("driver bills schema separation (P6-T11172)", () => {
       []
     );
 
-    // The whole point: an unpriceable bill is NOT written at the customer rate (or at all)...
-    expect(statements.some((s) => s.includes("INSERT INTO driver_finance.driver_bills"))).toBe(false);
-    // ...and the refusal is countable rather than silent (appendCrudAudit is mocked in this suite,
-    // so assert the call itself rather than its SQL text).
+    // Unpriced: still write an open $0 tracking bill (never the customer $125.00 linehaul)...
+    expect(statements.some((s) => s.includes("INSERT INTO driver_finance.driver_bills"))).toBe(true);
+    expect(outcome.outcome).toBe("minted");
+    if (outcome.outcome === "minted") expect(outcome.unpriced).toBe(true);
+    // ...and the refusal to invent a wage is countable rather than silent.
     expect(vi.mocked(appendCrudAudit)).toHaveBeenCalledWith(
       expect.anything(),
       expect.any(String),
       "driver_finance.driver_bill.skipped_no_pay_rate",
-      expect.objectContaining({ load_number: "L-20260513-0998" }),
+      expect.objectContaining({ load_number: "L-20260513-0998", tracking_bill: true }),
       "warning",
       "WIRE-02"
     );
+  });
+
+  it("upgrades an open $0 tracking bill once a real rate resolves (never already_exists forever)", async () => {
+    const statements: string[] = [];
+    const client = {
+      async query<T = Record<string, unknown>>(sql: string, values?: unknown[]): Promise<{ rows: T[] }> {
+        statements.push(sql);
+        if (sql.includes("to_regclass")) return { rows: [{ exists: true }] as T[] };
+        if (sql.includes("pg_advisory_xact_lock")) return { rows: [] };
+        if (sql.includes("FROM driver_finance.driver_bills") && sql.includes("SELECT id::text")) {
+          return {
+            rows: [
+              {
+                id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                status: "open",
+                gross_amount_cents: 0,
+                voided_at: null,
+              },
+            ] as T[],
+          };
+        }
+        if (sql.includes("driver_finance.driver_pay_rates")) {
+          return {
+            rows: [
+              {
+                basis_type: "per_mile_pay",
+                rate_per_mile_cents: "45",
+                flat_per_load_cents: null,
+                miles_basis: "short_miles",
+                is_test_data: false,
+                rate_empty_per_mile_cents: null,
+              },
+            ] as T[],
+          };
+        }
+        if (sql.includes("UPDATE driver_finance.driver_bills")) {
+          expect(values?.[3]).toBe(22500); // 45c * 500 miles
+          return { rows: [] };
+        }
+        return { rows: [] };
+      },
+    };
+
+    const outcome = await createDriverBillArtifacts(
+      client,
+      {
+        requestingUserUuid: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        requestingUserRole: "Owner",
+        operating_company_id: "cccccccc-cccc-cccc-cccc-cccccccccccc",
+        customer_id: "dddddddd-dddd-dddd-dddd-dddddddddddd",
+        status: "dispatched",
+        charges: [{ code: "LH", amount_cents: 990000 }],
+        stops: [],
+        save_mode: "book_dispatch",
+        assigned_primary_driver_id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+      },
+      {
+        id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+        load_number: "13588",
+        miles_shortest: 500,
+        miles_practical: null,
+      },
+      "13588",
+      []
+    );
+
+    expect(statements.some((s) => s.includes("UPDATE driver_finance.driver_bills"))).toBe(true);
+    expect(statements.some((s) => s.includes("INSERT INTO driver_finance.driver_bills"))).toBe(false);
+    expect(outcome.outcome).toBe("minted");
   });
 
   it("aggregates settlement-period bills with UNION dedupe against migrated legacy rows", async () => {

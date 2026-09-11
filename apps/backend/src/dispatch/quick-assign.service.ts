@@ -11,6 +11,7 @@ import {
 import { advanceDraftStatusIfCrewed } from "./draft-crew-status-advance.js";
 import { ACTIVE_UNIT_STATUSES, assertUnitNotActiveOnAnotherLoad } from "./unit-active-load-guard.js";
 import { linkLoadToPresettlementAfterAssignmentInClientTx, type TripType } from "./presettlement-link.service.js";
+import { ensureDriverBillArtifactsForLoad } from "./book-load.service.js";
 
 type QuickAssignInput = {
   operating_company_id: string;
@@ -304,6 +305,12 @@ export async function quickAssignLoad(
         trip_type: (load.trip_type as TripType | null) ?? null,
         tour_id: (load.tour_id as string | null) ?? null,
         actor_user_id: userId,
+      });
+
+      await ensureDriverBillArtifactsForLoad(client, {
+        loadId: input.load_id,
+        operatingCompanyId: input.operating_company_id,
+        actorUserId: userId,
       });
 
       const previousTrailerId = await resolveCurrentTrailerId(

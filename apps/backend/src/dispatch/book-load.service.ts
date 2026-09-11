@@ -676,7 +676,7 @@ const skipReason =
 export type DriverBillMintOutcome =
   | { outcome: "not_applicable" }
   | { outcome: "already_exists" }
-  | { outcome: "minted"; bill_number: string | null }
+  | { outcome: "minted"; bill_number: string | null; unpriced?: boolean }
   | { outcome: "skipped_no_pay_rate"; reason: string; missing: string[] };
 
 export async function createDriverBillArtifacts(
@@ -697,15 +697,25 @@ export async function createDriverBillArtifacts(
   // at booking (and retries cannot duplicate either). A voided bill remains evidence of an
   // intentional reversal and is not silently re-minted.
   await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [String(load.id)]);
-  const existingBill = await client.query<{ id: string }>(
-    `SELECT id::text
+  const existingBill = await client.query<{
+    id: string;
+    status: string;
+    gross_amount_cents: string | number | null;
+    voided_at: string | null;
+  }>(
+    `SELECT id::text, status, gross_amount_cents, voided_at
        FROM driver_finance.driver_bills
       WHERE operating_company_id = $1::uuid
         AND load_id = $2::uuid
+      ORDER BY created_at ASC
       LIMIT 1`,
     [input.operating_company_id, String(load.id)]
   );
-  if (existingBill.rows[0]) return { outcome: "already_exists" };
+  const existing = existingBill.rows[0] ?? null;
+  // ACCT-F277 — a voided bill is an intentional reversal. Never remint over it.
+  if (existing && (String(existing.status) === "void" || existing.voided_at != null)) {
+    return { outcome: "already_exists" };
+  }
 
   const extraPickupCount = stops.filter((s) => s.stop_type === "pickup").length > 1 ? stops.filter((s) => s.stop_type === "pickup").length - 1 : 0;
   const extraDropCount = stops.filter((s) => s.stop_type === "delivery").length > 1 ? stops.filter((s) => s.stop_type === "delivery").length - 1 : 0;
@@ -731,8 +741,9 @@ export async function createDriverBillArtifacts(
   // There is no configured rate to substitute: mdata.drivers.pay_basis is the MILES-measurement
   // enum (short_miles / practical_miles), not a money rate, and driver_finance.driver_pay_rates /
   // driver_pay_basis do not exist (verified on prod). Inventing a rate here would be fabricating
-  // financial data, so this refuses to mint a payable it cannot source. Dispatch still books the
-  // load; the missing bill is recorded durably below so it is countable, not silent.
+  // financial data. Owner 2026-09-11: still INSERT a tracking driver_bills row at assignment
+  // (status=open, $0) so operators can seed miles/rate later. Never copy customer linehaul.
+  // skipped_no_pay_rate remains the countable audit; open $0 is not a settled load.
   const basePayCents = await resolveDriverBasePayCents(
     client,
     input.operating_company_id,
@@ -740,9 +751,8 @@ export async function createDriverBillArtifacts(
     load,
     input.requestingUserUuid
   );
-  if (basePayCents === null) {
-    // Repeated delivery/status events may retry after an unpriced booking. Keep one durable skip
-    // record per load until real miles/rate data appears; once it does, the same path mints the bill.
+  const unpriced = basePayCents === null;
+  if (unpriced) {
     const priorSkip = await client.query<{ exists: boolean }>(
       `SELECT EXISTS (
          SELECT 1
@@ -753,44 +763,42 @@ export async function createDriverBillArtifacts(
        ) AS exists`,
       [String(load.id), input.operating_company_id]
     );
-    if (priorSkip.rows[0]?.exists) {
-      return {
-        outcome: "skipped_no_pay_rate",
-        reason: skipReason,
-        missing: missingPayInputs(load),
-      };
+    if (!priorSkip.rows[0]?.exists) {
+      await appendCrudAudit(
+        client,
+        input.requestingUserUuid,
+        "driver_finance.driver_bill.skipped_no_pay_rate",
+        {
+          load_id: String(load.id),
+          load_number: String(load.load_number ?? loadNumber),
+          operating_company_id: input.operating_company_id,
+          reason: skipReason,
+          driver_id: primaryDriverForPay,
+          miles_shortest: load.miles_shortest ?? null,
+          extra_stop_bonus_cents: extraStopBonusCents,
+          tarp_pay_cents: tarpPayCents,
+          driver_lumper_cents: driverLumperCents,
+          tracking_bill: true,
+        },
+        "warning",
+        "WIRE-02"
+      );
     }
-
-    await appendCrudAudit(
-      client,
-      input.requestingUserUuid,
-      "driver_finance.driver_bill.skipped_no_pay_rate",
-      {
-        load_id: String(load.id),
-        load_number: String(load.load_number ?? loadNumber),
-        operating_company_id: input.operating_company_id,
-        reason: skipReason,
-        driver_id: primaryDriverForPay,
-        miles_shortest: load.miles_shortest ?? null,
-        extra_stop_bonus_cents: extraStopBonusCents,
-        tarp_pay_cents: tarpPayCents,
-        driver_lumper_cents: driverLumperCents,
-      },
-      "warning",
-      "WIRE-02"
-    );
-    return {
-      outcome: "skipped_no_pay_rate",
-      reason: skipReason,
-      missing: missingPayInputs(load),
-    };
   }
-  const totalBillCents = basePayCents.totalCents + extraStopBonusCents + tarpPayCents + driverLumperCents;
+  const pay: DriverPayResolution = basePayCents ?? {
+    totalCents: 0,
+    loadedCents: 0,
+    deadheadCents: 0,
+    milesDeadheadUsed: null,
+    rateEmptyPerMileCentsUsed: null,
+    rateLoadedPerMileCentsUsed: null,
+  };
+  const totalBillCents = pay.totalCents + extraStopBonusCents + tarpPayCents + driverLumperCents;
   // MILES SPEC — the loaded/deadhead breakdown driver_bills now snapshots, so it can render as two
   // settlement lines. Stop bonuses/tarp/lumper stay folded into the loaded side (they are not a
   // property of empty miles).
-  const loadedPayCentsForBill = basePayCents.loadedCents + extraStopBonusCents + tarpPayCents + driverLumperCents;
-  const deadheadPayCentsForBill = basePayCents.deadheadCents;
+  const loadedPayCentsForBill = pay.loadedCents + extraStopBonusCents + tarpPayCents + driverLumperCents;
+  const deadheadPayCentsForBill = pay.deadheadCents;
 
   const resolvedLoadNumber = String(load.load_number ?? loadNumber);
   const billNumber = driverBillNumberFromLoadNumber(resolvedLoadNumber);
@@ -805,6 +813,57 @@ export async function createDriverBillArtifacts(
     milesBasis = milesPrac;
     milesBasisType = "practical";
   }
+
+  const trackingNotes = unpriced
+    ? `Tracking bill for load ${resolvedLoadNumber} — unpriced (no miles or pay rate yet). Open $0 is not a settled load. Seed miles/rate and remint.`
+    : `Auto-created from load ${resolvedLoadNumber}${lastResolvedRateWasTestData ? " — priced from a TEST pay rate (§7 placeholder), not an owner-entered rate" : ""}`;
+  const mintOutcome = (billNo: string | null): DriverBillMintOutcome =>
+    unpriced ? { outcome: "minted", bill_number: billNo, unpriced: true } : { outcome: "minted", bill_number: billNo };
+
+  if (existing && !input.team_id) {
+    const existingGross = Number(existing.gross_amount_cents ?? 0);
+    if (existingGross > 0 || String(existing.status) !== "open") {
+      return { outcome: "already_exists" };
+    }
+    if (unpriced || totalBillCents <= 0) {
+      return { outcome: "already_exists" };
+    }
+    await client.query(
+      `
+        UPDATE driver_finance.driver_bills
+           SET driver_id = $2::uuid,
+               team_driver_id = $3::uuid,
+               gross_amount_cents = $4,
+               miles_basis = $5,
+               miles_basis_type = $6,
+               rate_per_mile_cents = $7,
+               notes = $8,
+               miles_deadhead = $9,
+               rate_empty_per_mile_cents = $10,
+               loaded_pay_cents = $11,
+               deadhead_pay_cents = $12
+         WHERE id = $1::uuid
+           AND status = 'open'
+           AND COALESCE(gross_amount_cents, 0) = 0
+      `,
+      [
+        existing.id,
+        input.assigned_primary_driver_id,
+        input.assigned_secondary_driver_id ?? null,
+        totalBillCents,
+        milesBasis,
+        milesBasisType,
+        pay.rateLoadedPerMileCentsUsed,
+        `Auto-created from load ${resolvedLoadNumber}${lastResolvedRateWasTestData ? " — priced from a TEST pay rate (§7 placeholder), not an owner-entered rate" : ""}`,
+        deadheadPayCentsForBill > 0 ? pay.milesDeadheadUsed : null,
+        deadheadPayCentsForBill > 0 ? pay.rateEmptyPerMileCentsUsed : null,
+        loadedPayCentsForBill,
+        deadheadPayCentsForBill,
+      ]
+    );
+    return mintOutcome(billNumber);
+  }
+  if (existing) return { outcome: "already_exists" };
 
   const customerLumperCents = stops.reduce((sum, stop) => {
     if (!stop.lumper_required) return sum;
@@ -856,15 +915,16 @@ export async function createDriverBillArtifacts(
     ];
 
     for (const row of inserts) {
-      if (row.cents <= 0) continue;
+      // Unpriced tracking: still INSERT $0 rows so each seated driver has a bill. Never skip the
+      // insert because cents are 0 — that left Thursday assigned loads with no bill at all.
       // CC-3 ROOT-CAUSE FIX (2026-09-05 finding, docs/bus/INBOX-CC-2.md): this used to be
       // Math.round(row.cents / milesBasis) — row.cents is this driver's SHARE of loaded+deadhead
       // pay, milesBasis is loaded-ONLY miles, so dividing one by the other produced a blended
       // figure that was neither the loaded nor the empty rate. The real per-mile rate is a
-      // load-level configured/override value (basePayCents.rateLoadedPerMileCentsUsed), not
+      // load-level configured/override value (pay.rateLoadedPerMileCentsUsed), not
       // something to re-derive from a driver's split share — both team-split rows report the
       // SAME rate, exactly like rate_empty_per_mile_cents already does below.
-      const ratePerMileCents = basePayCents.rateLoadedPerMileCentsUsed;
+      const ratePerMileCents = pay.rateLoadedPerMileCentsUsed;
       const rowLoadedCents = row.cents - row.deadheadCents;
       const billRes = await client.query<{ id: string }>(
         `
@@ -901,10 +961,12 @@ export async function createDriverBillArtifacts(
           milesBasis,
           milesBasisType,
           ratePerMileCents,
-          `Auto-created from load ${resolvedLoadNumber} (team split ${row.suffix})`,
+          unpriced
+            ? `${trackingNotes} (team split ${row.suffix})`
+            : `Auto-created from load ${resolvedLoadNumber} (team split ${row.suffix})`,
           input.requestingUserUuid,
-          row.deadheadCents > 0 ? basePayCents.milesDeadheadUsed : null,
-          row.deadheadCents > 0 ? basePayCents.rateEmptyPerMileCentsUsed : null,
+          row.deadheadCents > 0 ? pay.milesDeadheadUsed : null,
+          row.deadheadCents > 0 ? pay.rateEmptyPerMileCentsUsed : null,
           rowLoadedCents,
           row.deadheadCents,
         ]
@@ -913,7 +975,7 @@ export async function createDriverBillArtifacts(
       if (billId && !firstBillId) firstBillId = billId;
     }
 
-    if (!firstBillId) return { outcome: "minted", bill_number: billNumber };
+    if (!firstBillId) return mintOutcome(billNumber);
 
     await appendCrudAudit(
       client,
@@ -936,7 +998,7 @@ export async function createDriverBillArtifacts(
       "info",
       "P6-D2"
     );
-    return { outcome: "minted", bill_number: billNumber };
+    return mintOutcome(billNumber);
   }
 
   if (!input.assigned_primary_driver_id) return { outcome: "not_applicable" };
@@ -948,7 +1010,7 @@ export async function createDriverBillArtifacts(
   // 13526: rate_per_mile_cents=60 while the real card rate was $0.45/mi). The real per-mile rate
   // is the configured card rate or GO-21-B5 override, resolved once in resolveDriverBasePayCents()
   // and never re-derived from totals.
-  const ratePerMileCents = basePayCents.rateLoadedPerMileCentsUsed;
+  const ratePerMileCents = pay.rateLoadedPerMileCentsUsed;
 
   const billRes = await client.query<{ id: string }>(
     `
@@ -985,16 +1047,16 @@ export async function createDriverBillArtifacts(
       milesBasis,
       milesBasisType,
       ratePerMileCents,
-      `Auto-created from load ${resolvedLoadNumber}${lastResolvedRateWasTestData ? " — priced from a TEST pay rate (§7 placeholder), not an owner-entered rate" : ""}`,
+      trackingNotes,
       input.requestingUserUuid,
-      deadheadPayCentsForBill > 0 ? basePayCents.milesDeadheadUsed : null,
-      deadheadPayCentsForBill > 0 ? basePayCents.rateEmptyPerMileCentsUsed : null,
+      deadheadPayCentsForBill > 0 ? pay.milesDeadheadUsed : null,
+      deadheadPayCentsForBill > 0 ? pay.rateEmptyPerMileCentsUsed : null,
       loadedPayCentsForBill,
       deadheadPayCentsForBill,
     ]
   );
   const billId = billRes.rows[0]?.id;
-  if (!billId) return { outcome: "minted", bill_number: billNumber };
+  if (!billId) return mintOutcome(billNumber);
 
   await appendCrudAudit(
     client,
@@ -1015,7 +1077,7 @@ export async function createDriverBillArtifacts(
     "info",
     "P6-D2"
   );
-  return { outcome: "minted", bill_number: billNumber };
+  return mintOutcome(billNumber);
 }
 
 /**

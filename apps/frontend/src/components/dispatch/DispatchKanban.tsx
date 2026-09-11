@@ -1321,12 +1321,12 @@ export function DispatchKanban({
     try {
       const dropResult = await onStatusDrop(loadId, nextStatus);
       pushToast(`Load ${load.load_number} moved to ${targetGroup.title}`, "success");
-      const mint = (dropResult as { driver_bill_mint?: { outcome?: string; missing?: string[] } } | null)?.driver_bill_mint;
-      if (mint?.outcome === "skipped_no_pay_rate") {
+      const mint = (dropResult as { driver_bill_mint?: { outcome?: string; missing?: string[]; unpriced?: boolean } } | null)?.driver_bill_mint;
+      if (mint?.outcome === "skipped_no_pay_rate" || (mint?.outcome === "minted" && mint.unpriced)) {
         const missing =
           Array.isArray(mint.missing) && mint.missing.length > 0 ? mint.missing.join(", ") : "pay inputs";
         pushToast(
-          `Driver pay NOT minted for ${load.load_number} — missing ${missing}. Enter shortest miles so pay can be priced (never invent from customer rate).`,
+          `Tracking driver bill for ${load.load_number} is $0 — missing ${missing}. Seed miles/rate and remint (never invent from customer rate).`,
           "info"
         );
       }

@@ -49,7 +49,7 @@ function fakeClient(opts: { rateRow?: Record<string, unknown> | null; teamRow?: 
   const query = vi.fn(async (sql: string, values: unknown[] = []) => {
     if (/to_regclass/.test(sql)) return { rows: [{ exists: true }] };
     if (/pg_advisory_xact_lock/.test(sql)) return { rows: [] };
-    if (/SELECT id::text\s+FROM driver_finance\.driver_bills/.test(sql)) return { rows: [] };
+    if (/SELECT id::text/.test(sql) && /FROM driver_finance\.driver_bills/.test(sql)) return { rows: [] };
     if (/FROM driver_finance\.driver_pay_rates/.test(sql)) return { rows: opts.rateRow ? [opts.rateRow] : [] };
     if (/FROM mdata\.driver_teams/.test(sql)) return { rows: opts.teamRow ? [opts.teamRow] : [] };
     if (/INSERT INTO driver_finance\.driver_bills/.test(sql)) {

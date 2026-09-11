@@ -42,6 +42,12 @@ function makeClient(driverExists: boolean, log: QueryLog) {
       if (normalized.includes("FROM org.companies") && normalized.includes("user_accessible_company_ids")) {
         return { rows: [{ ok: 1 }], rowCount: 1 };
       }
+      if (normalized.includes("presettlement_link_suggestions")) {
+        if (normalized.includes("INSERT")) {
+          return { rows: [{ id: "44444444-4444-4444-8444-444444444444" }] };
+        }
+        return { rows: [] };
+      }
       if (normalized.includes("FROM mdata.loads") && normalized.includes("FOR UPDATE")) {
         return {
           rows: [
@@ -53,6 +59,28 @@ function makeClient(driverExists: boolean, log: QueryLog) {
               assigned_secondary_driver_id: null,
               load_number: "L-20260809-0007",
               is_hazmat: false,
+              trip_type: null,
+              tour_id: null,
+              presettlement_link_id: null,
+            },
+          ],
+        };
+      }
+      if (normalized.includes("FROM mdata.loads")) {
+        return {
+          rows: [
+            {
+              id: LOAD,
+              operating_company_id: OPCO,
+              load_number: "L-20260809-0007",
+              customer_id: "55555555-5555-4555-8555-555555555555",
+              status: "assigned",
+              assigned_primary_driver_id: REAL_DRIVER,
+              assigned_secondary_driver_id: null,
+              team_id: null,
+              requires_tarps: false,
+              miles_shortest: null,
+              miles_practical: null,
             },
           ],
         };
@@ -65,6 +93,15 @@ function makeClient(driverExists: boolean, log: QueryLog) {
       }
       if (normalized.includes("INSERT INTO dispatch.load_assignment_history")) {
         return { rows: [{ id: "33333333-3333-4333-8333-333333333333" }] };
+      }
+      if (normalized.includes("to_regclass")) return { rows: [{ exists: true }] };
+      if (normalized.includes("pg_advisory_xact_lock")) return { rows: [] };
+      if (normalized.includes("INSERT INTO driver_finance.driver_bills")) {
+        return { rows: [{ id: "77777777-7777-4777-8777-777777777777" }] };
+      }
+      if (normalized.includes("driver_finance.driver_pay_rates")) return { rows: [] };
+      if (normalized.includes("RETURNING") && normalized.includes("id")) {
+        return { rows: [{ id: "88888888-8888-4888-8888-888888888888" }] };
       }
       if (normalized.includes("SELECT id FROM identity.users")) {
         return { rows: [{ id: USER }] };
