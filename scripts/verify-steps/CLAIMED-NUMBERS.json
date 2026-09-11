@@ -6693,6 +6693,16 @@
     "claimed_at": "2026-09-11",
     "purpose": "verify-dispatch-board-awaiting-reconciliation"
   },
+  "11289": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-cancel-load-terminal-status-greyout"
+  },
+  "11297": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-settlement-presettlement-column-systemwide"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -8694,10 +8704,5 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
-  },
-  "11297": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-09-11",
-    "purpose": "verify-settlement-presettlement-column-systemwide"
   }
 }
