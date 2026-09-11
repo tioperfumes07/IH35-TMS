@@ -8604,5 +8604,10 @@
     "claimed_at": "2026-09-11",
     "purpose": "verify-reg034-vendor-bill-load-picker-wired"
   },
-  "11214": "devin-reverse-repost-usmca-executor"
+  "11214": "devin-reverse-repost-usmca-executor",
+  "11201": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-11",
+    "purpose": "verify-settlement-number-always-visible"
+  }
 }
