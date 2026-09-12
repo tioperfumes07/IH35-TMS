@@ -8764,5 +8764,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-12",
     "purpose": "verify-dispatch-list-trip-type"
+  },
+  "11365": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-12",
+    "purpose": "verify-customers-vendors-list-view-no-duplicate-sidebar"
   }
 }
