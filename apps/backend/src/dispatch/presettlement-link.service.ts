@@ -578,7 +578,7 @@ export async function listPendingPresettlementSuggestions(client: DbClient, oper
   const res = await client.query(
     `
       SELECT s.*, l.load_number, d.first_name, d.last_name,
-             ds.display_id AS suggested_settlement_display_id
+             ds.source_document_ref AS suggested_settlement_display_id
         FROM driver_finance.presettlement_link_suggestions s
         JOIN mdata.loads l ON l.id = s.load_id
         LEFT JOIN mdata.drivers d ON d.id = s.driver_id

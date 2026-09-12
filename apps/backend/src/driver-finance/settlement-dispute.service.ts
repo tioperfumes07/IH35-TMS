@@ -310,7 +310,7 @@ export async function listDisputes(
         SELECT
           d.*,
           concat_ws(' ', dr.first_name, dr.last_name) AS driver_name,
-          s.display_id AS settlement_display_id,
+          s.source_document_ref AS settlement_display_id,
           s.period_start::text AS period_start,
           s.period_end::text AS period_end
         FROM driver_finance.driver_settlement_disputes d
@@ -339,7 +339,7 @@ export async function getDispute(userId: string, input: { operating_company_id: 
         SELECT
           d.*,
           concat_ws(' ', dr.first_name, dr.last_name) AS driver_name,
-          s.display_id AS settlement_display_id,
+          s.source_document_ref AS settlement_display_id,
           s.period_start::text AS period_start,
           s.period_end::text AS period_end,
           s.gross_pay, s.deductions_total, s.net_pay
@@ -696,7 +696,7 @@ export async function listMyDisputes(userId: string) {
           d.id,
           d.operating_company_id::text,
           d.settlement_id,
-          s.display_id AS settlement_display_id,
+          s.source_document_ref AS settlement_display_id,
           s.period_start::text,
           s.period_end::text,
           d.dispute_category,

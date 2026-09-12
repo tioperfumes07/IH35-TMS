@@ -136,7 +136,7 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
               d.load_id::text                   AS load_id,
               l.load_number                     AS load_number,
               d.applied_to_settlement_id::text  AS applied_to_settlement_id,
-              s.display_id                      AS applied_to_settlement_display_id,
+              s.source_document_ref             AS applied_to_settlement_display_id,
               d.reversed_reimbursement_id::text AS reversed_reimbursement_id,
               d.created_at::text                AS created_at
             FROM driver_finance.driver_settlement_deductions d

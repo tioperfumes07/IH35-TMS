@@ -203,7 +203,7 @@ async function loadDriverAdvanceAndSettlementHistory(
   if (reg.rows[0]?.ok) {
     const st = await client.query(
       `
-        SELECT id, display_id, status, payment_state, period_start, period_end, created_at
+        SELECT id, display_id, source_document_ref, status, payment_state, period_start, period_end, created_at
         FROM driver_finance.driver_settlements
         WHERE operating_company_id = $1::uuid
           AND driver_id = $2

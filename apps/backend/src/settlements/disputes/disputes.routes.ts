@@ -241,7 +241,7 @@ export async function listSettlementDisputes(userId: string, query: z.infer<type
         SELECT
           ${PLURAL_CONTRACT_COLUMNS},
           dr.first_name || ' ' || dr.last_name AS driver_name,
-          s.display_id AS settlement_display_id
+          s.source_document_ref AS settlement_display_id
         FROM driver_finance.driver_settlement_disputes d
         JOIN mdata.drivers dr ON dr.id = d.driver_id AND dr.operating_company_id = $1::uuid
         JOIN driver_finance.driver_settlements s ON s.id = d.settlement_id AND s.operating_company_id = $1::uuid

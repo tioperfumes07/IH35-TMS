@@ -7,6 +7,7 @@
  * Reuses existing driver-finance APIs only — no new backend services.
  */
 import { entityLabel } from "../../../lib/entity-label";
+import { settlementLabel } from "../../../lib/settlementNumber";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLinkOrTombstone } from "../../shared/EntityLinkOrTombstone";
@@ -296,7 +297,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
         <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="load-settlement-resolved">
           <h4 className="mb-2 text-xs font-semibold uppercase text-gray-600">
             Settlement for this load (
-            <EntityLinkOrTombstone kind="settlement" id={resolvedSettlement.settlement_id} name={resolvedSettlement.display_id} noun="Record" />
+            <EntityLinkOrTombstone kind="settlement" id={resolvedSettlement.settlement_id} name={settlementLabel(resolvedSettlement)} noun="Record" />
             )
           </h4>
           <div className="flex items-center justify-between text-xs">
@@ -312,7 +313,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
       ) : preSettlementQ.data?.settlement ? (
         <section className="rounded-sm border border-gray-200 bg-white p-3">
           <h4 className="mb-2 text-xs font-semibold uppercase text-gray-600">
-            Open pre-settlement, no lines yet (<EntityLinkOrTombstone kind="settlement" id={preSettlementQ.data.settlement.id} name={preSettlementQ.data.settlement.display_id} noun="Record" />)
+            Open pre-settlement, no lines yet (<EntityLinkOrTombstone kind="settlement" id={preSettlementQ.data.settlement.id} name={settlementLabel(preSettlementQ.data.settlement)} noun="Record" />)
           </h4>
           <p className="mb-2 text-xs text-slate-700">
             This is the driver's current open cycle — it does not necessarily mean this load is unpaid; check the

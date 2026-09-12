@@ -677,7 +677,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
             bt.matched_bill_id,
             bill.bill_number AS matched_bill_number,
             bt.matched_settlement_id,
-            settlement.display_id AS matched_settlement_display_id,
+            settlement.source_document_ref AS matched_settlement_display_id,
             bt.matched_expense_id,
             expense.expense_number AS matched_expense_number,
             bt.matched_transfer_id,
