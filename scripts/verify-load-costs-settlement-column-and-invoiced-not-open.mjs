@@ -70,10 +70,20 @@ export function backendComputesIsInvoicedFromRealInvoices(src) {
   );
 }
 
+// ROUND 18.1 (owner ruling 2026-09-11/09-12, overturns REG-040/#21692's is_resettlement inclusion
+// here): a load's own state decides whether it is current, never a sibling load's tour-level flag.
+// isClosed() must honor is_invoiced but must NEVER again treat is_resettlement as closing a load --
+// the extracted arrow-body capture (up to the first `;`) is checked in isolation so this negative
+// assertion can't false-positive on isResettlement()'s own, separate, legitimate use of the field
+// one line below.
 export function frontendIsClosedHonorsIsInvoiced(src) {
+  const isClosedMatch = src.match(/const isClosed = \(r: BoardRow\) => ([^;]+);/);
+  if (!isClosedMatch) return false;
+  const isClosedBody = isClosedMatch[1];
   return (
     /is_invoiced: boolean;/.test(src) &&
-    /const isClosed = \(r: BoardRow\) => CLOSED\.includes\(r\.status\) \|\| r\.is_invoiced \|\| r\.is_resettlement === true;/.test(src) &&
+    /CLOSED\.includes\(r\.status\) \|\| r\.is_invoiced/.test(isClosedBody) &&
+    !/is_resettlement/.test(isClosedBody) &&
     /function matches\(r: BoardRow, f: FilterPill\)[\s\S]*?isClosed\(r\)[\s\S]*?isClosed\(r\)[\s\S]*?isClosed\(r\)[\s\S]*?isClosed\(r\)/.test(src)
   );
 }
@@ -100,7 +110,13 @@ if (process.argv.includes("--selftest")) {
   let caught = 0;
   const mutations = [
     [backendSrc.replace("ds.id = COALESCE(linked.presettlement_link_id, bill_link.settlement_id)", "ds.id = bill_link.settlement_id"), boardSrc],
-    [backendSrc, boardSrc.replace(" || r.is_resettlement === true;", ";")],
+    // ROUND 18.1 regression check: reintroducing is_resettlement into isClosed must be caught --
+    // this is the exact defect that hid 7 in-route USMCA loads (13587/13590-13595) from every
+    // Costs pill until the owner overturned REG-040's inclusion of it here.
+    [backendSrc, boardSrc.replace(
+      "const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || r.is_invoiced;",
+      "const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || r.is_invoiced || r.is_resettlement === true;"
+    )],
     [backendSrc.replace("LEFT JOIN settlement_info si ON si.load_id=l.id", ""), boardSrc],
     [backendSrc.replace('"settlement",\n      ]).default("load"),', ']).default("load"),'), boardSrc],
     [backendSrc, boardSrc.replace('key: "settlement", label: "Settlement/Tour", testId: "col-settlement"', 'key: "settlement_removed"')],
@@ -108,7 +124,10 @@ if (process.argv.includes("--selftest")) {
     [backendSrc, boardSrc.replace('const DELIVERED = ["delivered", "delivered_pending_docs", "completed_docs_received"];', 'const DELIVERED = ["delivered", "delivered_pending_docs", "completed_docs_received", "invoiced"];').replace('const CLOSED = ["cancelled", "abandoned", "closed", "paid", "invoiced", "driver_walkoff", "driver_no_show"];', 'const CLOSED = ["cancelled", "abandoned", "closed", "paid", "driver_walkoff", "driver_no_show"];')],
     [backendSrc.replaceAll("i.status NOT IN ('draft', 'proforma', 'void')", "i.status <> 'void'"), boardSrc],
     [backendSrc.replace("LEFT JOIN invoice_info ii ON ii.load_id=l.id\n", ""), boardSrc],
-    [backendSrc, boardSrc.replace("const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || r.is_invoiced || r.is_resettlement === true;", "const isClosed = (r: BoardRow) => CLOSED.includes(r.status);")],
+    [backendSrc, boardSrc.replace(
+      "const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || r.is_invoiced;",
+      "const isClosed = (r: BoardRow) => CLOSED.includes(r.status);"
+    )],
     [backendSrc, boardSrc.replace('if (f === "delivered_open") return DELIVERED.includes(r.status) && !isClosed(r);', 'if (f === "delivered_open") return DELIVERED.includes(r.status);')],
   ];
   for (const [index, [b, f]] of mutations.entries()) {

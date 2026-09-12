@@ -246,19 +246,31 @@ describe("LoadCostsBoardPage — registers (LCB-REG)", () => {
     expect(screen.getByTestId("load-costs-tab-resettlement")).toHaveTextContent("2");
   });
 
-  it("REG-040 keeps a closed-tour continuation off every active filter with the SAME settlement link", async () => {
+  it("ROUND 18.1 (owner ruling 2026-09-12, OVERTURNS REG-040's is_resettlement inclusion): a dispatched continuation on a closed tour stays on every active filter; the closed+invoiced original still moves to Resettlement, both with the SAME settlement link", async () => {
+    // A load's own state decides whether it is current, never a sibling load's tour-level flag.
+    // Live incident: 7 in-route USMCA loads (13587/13590-13595) went invisible on every Costs pill
+    // because is_resettlement (set whenever the tour's FIRST load is closed/invoiced) used to close
+    // ALL of that load's siblings too. created_at is relative-to-now so this assertion never rots.
+    const recentCreatedAt = new Date(Date.now() - 86_400_000).toISOString();
     apiRequestMock.mockImplementation(async () => ({ rows: [
       { ...BOARD_ROW, load_id: "original", load_number: "13569", status: "closed", is_invoiced: true, is_resettlement: true },
-      { ...BOARD_ROW, load_id: "continuation", load_number: "13577", status: "dispatched", is_invoiced: false, is_resettlement: true },
-      { ...BOARD_ROW, load_id: "unrelated", load_number: "13999", status: "dispatched", is_invoiced: false, is_resettlement: false },
+      { ...BOARD_ROW, load_id: "continuation", load_number: "13577", status: "dispatched", is_invoiced: false, is_resettlement: true, created_at: recentCreatedAt },
+      { ...BOARD_ROW, load_id: "unrelated", load_number: "13999", status: "dispatched", is_invoiced: false, is_resettlement: false, created_at: recentCreatedAt },
     ], unmatched_bank_count: 0 }));
     renderPage();
     await screen.findByRole("link", { name: "13999" });
-    for (const filter of ["in_motion", "delivered_open", "all_open", "this_week"]) {
+
+    for (const filter of ["in_motion", "all_open", "this_week"]) {
       fireEvent.click(screen.getByTestId(`load-costs-pill-${filter}`));
-      expect(screen.queryByRole("link", { name: "13577" })).not.toBeInTheDocument();
+      expect(await screen.findByRole("link", { name: "13577" })).toBeInTheDocument();
       expect(screen.queryByRole("link", { name: "13569" })).not.toBeInTheDocument();
     }
+    // "dispatched" is never in DELIVERED, so delivered_open correctly shows neither — this pill's
+    // membership test, not is_resettlement, is what excludes an in-route load here.
+    fireEvent.click(screen.getByTestId("load-costs-pill-delivered_open"));
+    expect(screen.queryByRole("link", { name: "13577" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "13569" })).not.toBeInTheDocument();
+
     fireEvent.click(screen.getByTestId("load-costs-tab-resettlement"));
     for (const number of ["13569", "13577"]) {
       const load = await screen.findByRole("link", { name: number });
