@@ -1225,28 +1225,16 @@ export function CustomersPage() {
         />
       ) : null}
       {viewMode === "list" ? (
-        <div className="flex flex-col gap-3 xl:flex-row">
-          <CustomerListSidebar
-            customers={visibleCustomers}
-            status={customersStatus}
-            totalCount={customersServerTotal}
-            page={sidebarPage}
-            pageSize={sidebarPageSize}
-            search={search}
-            sortByName={sortByName}
-            selectedCustomerId={selectedCustomer?.id ?? ""}
-            openByCustomerId={openByCustomerId}
-            openBalancesAvailable={!allInvoicesQuery.isError}
-            onSearchChange={setSearch}
-            onSortChange={setSortByName}
-            onPageChange={setSidebarPage}
-            onPageSizeChange={setSidebarPageSize}
-            onSelectCustomer={(customerId) => {
-              setSelectedCustomerId(customerId);
-              setViewMode("master-detail");
-            }}
-          />
-          <main className="min-w-0 flex-1 space-y-3">
+        // ROUND 18.1 Item D (owner-directed re-measure against TAB-COMPLETION-STANDARD.md,
+        // 2026-09-12): "List view" used to ALSO mount the master-detail rolodex sidebar's own
+        // hand-rolled, non-ParityTable list (own Name/Open Balance/Status/Quality columns, own pagination)
+        // right next to CustomersListView's full ParityTable -- the exact same 1,218-row roster
+        // rendered twice, unsynchronized, wasting ~300px of width for a panel that offers nothing
+        // once the sortable/filterable/exportable table is present. "List view" vs "Master-detail"
+        // are meant to be alternate full layouts, not additive -- the sidebar belongs to
+        // Master-detail only (see the other branch below), never to List view.
+        <div className="space-y-3">
+          <main className="min-w-0 space-y-3">
             <CustomersListView
               companyId={companyId}
               customers={customersSorted}

@@ -721,27 +721,13 @@ export function VendorsPage() {
         </div>
       ) : null}
       {viewMode === "list" ? (
-        <div className="flex flex-col gap-3 xl:flex-row">
-          <VendorListSidebar
-            vendors={visibleVendors}
-            status={vendorsStatus}
-            totalCount={vendorsServerTotal}
-            page={sidebarPage}
-            pageSize={sidebarPageSize}
-            search={search}
-            sortByName={sortByName}
-            selectedVendorId={selectedVendor?.id ?? ""}
-            openByVendorId={openByVendorId}
-            onSearchChange={setSearch}
-            onSortChange={setSortByName}
-            onPageChange={setSidebarPage}
-            onPageSizeChange={setSidebarPageSize}
-            onSelectVendor={(vendorId) => {
-              setSelectedVendorId(vendorId);
-              setViewMode("master-detail");
-            }}
-          />
-          <main className="min-w-0 flex-1 space-y-3">
+        // ROUND 18.1 Item D (owner-directed re-measure against TAB-COMPLETION-STANDARD.md,
+        // 2026-09-12) -- same defect as Customers.tsx's identical pattern: "List view" also mounted
+        // the master-detail rolodex sidebar's own hand-rolled, non-ParityTable list right next to
+        // VendorsListView's full ParityTable, duplicating the same roster twice, unsynchronized.
+        // The sidebar belongs to Master-detail only (see the other branch below).
+        <div className="space-y-3">
+          <main className="min-w-0 space-y-3">
             <VendorsListView
               companyId={companyId}
               vendors={vendorsSorted}
