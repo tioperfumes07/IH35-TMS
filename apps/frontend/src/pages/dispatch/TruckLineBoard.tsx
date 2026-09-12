@@ -108,10 +108,13 @@ const EXCEPTION_RED = "#991B1B";
 
 // V7/V8 AUTO-FIT GRID (ROUND 18.5, owner ruling) — Truck | Load | Line (1fr) | Next appointment |
 // Live signal. Never a ParityTable, never resizable/reorderable, no stored column state. Below
-// 860px, columns 2 (Load) and 5 (Live signal) are hidden outright (not folded elsewhere).
-const GRID_TEMPLATE_COLUMNS = "minmax(104px,7vw) minmax(118px,9vw) 1fr minmax(158px,13vw) minmax(150px,12vw)";
-const GRID_TEMPLATE_COLUMNS_NARROW = "minmax(92px,22vw) 1fr minmax(132px,27vw)";
+// 860px, columns 2 (Load) and 5 (Live signal) are hidden outright (not folded elsewhere). Columns
+// 1-2 widened in V10 (ROUND 18.6, owner ruling 21:30 CT) so unit/driver/load-number/lane never
+// truncate; columns 4-5 are center-aligned, header and cells both (same ruling).
+const GRID_TEMPLATE_COLUMNS = "minmax(140px,10vw) minmax(160px,12vw) 1fr minmax(158px,12vw) minmax(156px,12vw)";
+const GRID_TEMPLATE_COLUMNS_NARROW = "minmax(108px,26vw) 1fr minmax(132px,27vw)";
 const FOLD_BREAKPOINT_PX = 860;
+const AVAILABLE_ROW_TINT = "color-mix(in srgb, #16A34A 4%, #fff)";
 
 function pct(index: number) {
   return (index / (V7_COUNT - 1)) * 100;
@@ -135,6 +138,18 @@ function fmtDuration(ms: number): string {
   const days = Math.floor(totalHours / 24);
   const hours = totalHours % 24;
   return days > 0 ? `${days}d ${hours}h` : `${hours}h`;
+}
+
+// V10 (ROUND 18.6) — samsara.hos_snapshots' driving_hours_remaining/cycle_hours_remaining columns
+// are misleadingly named: verified live (schema + real values, e.g. 660.00 for an 11-hour driver,
+// 2560.00 for 42h40m) that they store MINUTES. The backend exposes the raw minutes as-is; this is
+// the ONE place that converts to "11h 00m", so server and client formatting can never drift apart.
+function fmtHoursMinutes(totalMinutes: number | null): string | null {
+  if (totalMinutes == null || Number.isNaN(totalMinutes)) return null;
+  const whole = Math.max(0, Math.round(totalMinutes));
+  const hours = Math.floor(whole / 60);
+  const minutes = whole % 60;
+  return `${hours}h ${String(minutes).padStart(2, "0")}m`;
 }
 
 /** Backend reachedIndex (0-8, station.ts's own model) -> the furthest V7 visual index reached
@@ -196,14 +211,18 @@ function deriveLiveStation(row: TruckLineRow, v7ReachedIndex: number): LiveStati
   return { v7Index: 3, rolling: false, signalLabel: "Live", signalDetail: null };
 }
 
-/** TRACTOR-TRAILER (74x34) — verbatim from the Lead's locked V7 render, CAB/CABDARK substituted. */
-function TractorTrailerSvg({ hasIssue, rolling }: { hasIssue: boolean; rolling: boolean }) {
-  const cab = hasIssue ? RED : NAVY;
-  const cabDark = hasIssue ? RED_DARK : NAVY_DARK;
-  const gid = hasIssue ? "cgIssue" : "cgOk";
+/** TRACTOR-TRAILER (74x34) — verbatim from the Lead's locked V7 render, CAB/CABDARK substituted.
+ * V10's `parked` variant (THE AVAILABLE TRUCK) mutes the cab to #2F5069/#22394C and desaturates the
+ * whole graphic (grayscale(.15)) — never rolling, never puffing, regardless of the `rolling` prop. */
+function TractorTrailerSvg({ hasIssue, rolling, parked }: { hasIssue: boolean; rolling: boolean; parked?: boolean }) {
+  const cab = parked ? "#2F5069" : hasIssue ? RED : NAVY;
+  const cabDark = parked ? "#22394C" : hasIssue ? RED_DARK : NAVY_DARK;
+  const gid = parked ? "cgParked" : hasIssue ? "cgIssue" : "cgOk";
+  const isRolling = rolling && !parked;
   return (
     <svg
-      className={`truck-line-vehicle-svg${rolling ? " truck-line-rolling" : ""}`}
+      className={`truck-line-vehicle-svg${isRolling ? " truck-line-rolling" : ""}`}
+      style={parked ? { filter: "grayscale(.15)" } : undefined}
       width="74"
       height="34"
       viewBox="0 0 74 34"
@@ -272,6 +291,28 @@ function WarehouseDockSvg({ roof }: { roof: string }) {
   );
 }
 
+/** YARD DOCK (34x26) — THE AVAILABLE TRUCK's own dock icon (V10, ROUND 18.6). No verbatim
+ * reference file for this one exists on this machine (checked: only a same-day .md relay of the
+ * Lead's written instructions, no HTML render) — built directly from the spec's own description
+ * (green, 34x26, at left:0% of the track), sharing WarehouseDockSvg's structure/proportions so the
+ * two dock icons read as one family, with a green roof honestly marking "yard", not a shipper. */
+function YardDockSvg() {
+  return (
+    <svg width="34" height="26" viewBox="0 0 34 26" aria-hidden="true">
+      <ellipse cx="17" cy="24.2" rx="13.6" ry="1.5" fill="#0F172A" opacity=".12" />
+      <path d="M2.3 10 17 2.6 31.7 10v1.7H2.3z" fill="#16A34A" />
+      <rect x="3.9" y="11.6" width="26.2" height="12.2" rx="1" fill="#F0FBF4" stroke="#86D2A3" strokeWidth=".8" />
+      <rect x="6.4" y="14.4" width="6" height="9.4" rx=".6" fill="#DCF3E4" stroke="#8FCDA8" strokeWidth=".6" />
+      <path d="M6.4 16.6h6M6.4 18.8h6M6.4 21h6" stroke="#A9DDBB" strokeWidth=".6" />
+      <rect x="14" y="14.4" width="6" height="9.4" rx=".6" fill="#DCF3E4" stroke="#8FCDA8" strokeWidth=".6" />
+      <path d="M14 16.6h6M14 18.8h6M14 21h6" stroke="#A9DDBB" strokeWidth=".6" />
+      <rect x="21.6" y="14.4" width="6" height="9.4" rx=".6" fill="#DCF3E4" stroke="#8FCDA8" strokeWidth=".6" />
+      <path d="M21.6 16.6h6M21.6 18.8h6M21.6 21h6" stroke="#A9DDBB" strokeWidth=".6" />
+      <rect x="3.9" y="23" width="26.2" height="1.3" fill="#6FAE84" />
+    </svg>
+  );
+}
+
 type StampPromptState = { row: TruckLineRow; label: string; kind: "arrival" | "departure" | "transition" } | null;
 type OtherPromptState = { row: TruckLineRow } | null;
 
@@ -310,10 +351,16 @@ function TruckLineTrack({
   onClearException: () => void;
 }) {
   if (!row.load || !row.station) {
+    // V10 (ROUND 18.6): this board no longer draws a bare unit row at all when there is neither an
+    // active load nor a qualifying available driver (see the file header) — a "loaded" kind row is
+    // only ever produced with both load and station present. This branch is therefore defensive,
+    // unreachable dead code kept only so TruckLineTrack degrades honestly instead of crashing if
+    // that invariant were ever violated — it must NEVER render the retired "no load on this truck"
+    // string (the guard checks the whole file for it).
     return (
       <div className="relative h-[62px]" data-testid={`truck-line-track-empty-${row.unit_id}`}>
         <div className="absolute left-0 right-0 top-[41px] h-[3px] rounded bg-[#C7D2DC]" />
-        <span className="truck-line-v4-sub absolute left-2 top-6 text-[#6B7280]">— no load on this truck</span>
+        <span className="truck-line-v4-sub absolute left-2 top-6 text-[#6B7280]">— unexpected: this row has no load data</span>
       </div>
     );
   }
@@ -486,14 +533,72 @@ function TruckLineTrack({
   );
 }
 
+/** THE AVAILABLE TRUCK (V10, ROUND 18.6) — the owner's favourite: a truck with no load NEVER
+ * prints "no load on this truck" (that literal string must never render on this board — asserted
+ * statically by the guard). Same 62px track, a different honest story: a parked truck, muted and
+ * still, with the route ahead drawn as a GHOST (dashed rail, hollow nodes) because nothing has
+ * been booked yet, a speech bubble naming the driver's real remaining drive time, and a real
+ * "Assign a load →" action wired to the SAME BookLoadModal flow the rest of Dispatch uses (never a
+ * dead button). */
+function AvailableTruckTrack({ row, onAssign }: { row: TruckLineRow; onAssign: (driverId: string, unitId: string | null) => void }) {
+  const a = row.available;
+  if (!a) return null;
+  const driveLabel = fmtHoursMinutes(a.driving_minutes_remaining);
+  return (
+    <div className="relative h-[80px]" data-testid={`truck-line-available-track-${a.driver_id}`}>
+      <div className="absolute" style={{ left: "0%", top: 2 }}>
+        <YardDockSvg />
+      </div>
+
+      <div className="truck-line-ghost-rail absolute left-0 right-0 top-[41px] h-[3px]" />
+      {V7_STATIONS.map((st, i) => (
+        <div key={i} className="absolute" style={{ left: `${pct(i)}%`, top: 0 }}>
+          <div className="truck-line-ghost-node absolute rounded-full" style={{ top: 34, width: 17, height: 17, transform: "translateX(-50%)" }} />
+          <span className="truck-line-v4-cap absolute whitespace-nowrap" style={{ top: 54, left: "50%", transform: "translateX(-50%)", color: "#AEB8C2" }}>
+            <span className="truck-line-v4-cap-full">{st.name === "status" ? "Status" : st.name}</span>
+            <span className="truck-line-v4-cap-narrow">{st.name === "status" ? "Status" : NARROW_STATION_CAPTIONS[st.name] ?? st.name}</span>
+          </span>
+        </div>
+      ))}
+
+      <div className="truck-line-vehicle" style={{ left: "7%", top: 15 }} data-testid={`truck-line-vehicle-available-${a.driver_id}`} data-rolling="false">
+        <TractorTrailerSvg hasIssue={false} rolling={false} parked />
+        {driveLabel ? (
+          <div className="truck-line-speech-bubble absolute whitespace-nowrap rounded-[13px] border-[1.5px] border-[#16A34A] bg-white px-2 py-1 font-semibold text-[#166534]" style={{ bottom: 38, left: 0 }}>
+            Load me — {driveLabel} drive left
+          </div>
+        ) : null}
+      </div>
+
+      <button
+        type="button"
+        className="absolute rounded-[13px] bg-[#16A34A] px-3 font-semibold text-white"
+        style={{ right: 4, top: 18, height: 26 }}
+        onClick={() => onAssign(a.driver_id, row.unit_id)}
+        data-testid={`truck-line-assign-${a.driver_id}`}
+      >
+        Assign a load →
+      </button>
+
+      <span className="truck-line-v4-sub absolute whitespace-nowrap text-[#6B7280]" style={{ top: 64, left: 0 }}>
+        parked at {a.parked_city ?? "—"}
+        {a.parked_state ? `, ${a.parked_state}` : ""} · waiting on dispatch
+      </span>
+    </div>
+  );
+}
+
 export function TruckLineBoard({
   operatingCompanyId,
   onLoadClick,
-  onBookForUnit,
+  onAssignDriver,
 }: {
   operatingCompanyId: string;
   onLoadClick: (loadId: string) => void;
-  onBookForUnit: (unitId: string) => void;
+  // V10 (ROUND 18.6) — THE AVAILABLE TRUCK's "Assign a load →" pill opens the REAL assignment flow
+  // (the same BookLoadModal every other Dispatch surface uses, prefilled by driver AND unit — a
+  // dead button fails this box, per the Lead's own spec).
+  onAssignDriver: (driverId: string, unitId: string | null) => void;
 }) {
   const qc = useQueryClient();
   const query = useQuery({
@@ -542,6 +647,31 @@ export function TruckLineBoard({
       return haystack.includes(q);
     });
   }, [allRows, search]);
+
+  // V10 (ROUND 18.6) — top-bar counts, ALL computed from the live rows just fetched, none
+  // hardcoded. Counted against the full unfiltered set (allRows), not the search-narrowed one, so
+  // the summary always describes the whole board.
+  const topBarStats = useMemo(() => {
+    let rolling = 0;
+    let stopped = 0;
+    let signalStale = 0;
+    let appointmentPast = 0;
+    let available = 0;
+    for (const r of allRows) {
+      if (r.kind === "available") {
+        available++;
+        continue;
+      }
+      if (r.load && r.station) {
+        const live = deriveLiveStation(r, mapReachedIndexToV7(r.station.reached_index));
+        if (live.signalLabel === "Stale") signalStale++;
+        else if (live.rolling) rolling++;
+        else stopped++;
+      }
+      if (r.next_appointment?.late) appointmentPast++;
+    }
+    return { allTrucks: allRows.length, rolling, stopped, signalStale, appointmentPast, available };
+  }, [allRows]);
 
   const openStamp = (row: TruckLineRow, label: string, backendIndex: number) => {
     if (!row.load) return;
@@ -642,12 +772,39 @@ export function TruckLineBoard({
         .truck-line-v4-row {
           padding: 6px 10px;
           border-bottom: 1px solid #E5E7EB;
+          min-height: 88px;
         }
+        /* V10 (ROUND 18.6, owner ruling 21:30 CT) — Next appointment and Live signal are centered,
+           header and cells both. */
+        .truck-line-v4-appt-header, .truck-line-v4-signal-header,
+        .truck-line-v4-appt-cell, .truck-line-v4-signal-cell { text-align: center; }
         .truck-line-v4-unit { font-size: clamp(12px, 0.85vw, 14px); }
         .truck-line-v4-sub { font-size: clamp(10px, 0.72vw, 12px); }
         .truck-line-v4-cap { font-size: clamp(9px, 0.72vw, 11px); }
         .truck-line-v4-appt { font-size: clamp(11px, 0.8vw, 13px); }
         .truck-line-v4-cap-narrow { display: none; }
+        /* THE AVAILABLE TRUCK (V10) — ghost route: dashed rail, hollow nodes, muted captions. */
+        .truck-line-ghost-rail {
+          background-image: repeating-linear-gradient(to right, #D8DFE6 0 6px, transparent 6px 11px);
+        }
+        .truck-line-ghost-node { background: #fff; border: 2px dashed #D8DFE6; }
+        .truck-line-speech-bubble {
+          font-size: clamp(9px, 0.72vw, 11px);
+          box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+        }
+        .truck-line-speech-bubble::after {
+          content: "";
+          position: absolute;
+          bottom: -6px;
+          left: 14px;
+          width: 10px;
+          height: 10px;
+          background: #fff;
+          border-right: 1.5px solid #16A34A;
+          border-bottom: 1.5px solid #16A34A;
+          transform: rotate(45deg);
+        }
+        .truck-line-speech-bubble { animation: truck-line-bubble-nudge 2.6s ease-in-out infinite; }
         /* This media block must stay AFTER the base rules above — equal-specificity CSS resolves
            by SOURCE ORDER, not by whether a media query matches, so a later base rule would win
            over an earlier media-scoped override even while the query is active. (Found live: both
@@ -677,9 +834,14 @@ export function TruckLineBoard({
           0% { opacity: 0.55; transform: translate(0, 0) scale(1); }
           100% { opacity: 0; transform: translate(-7px, -7px) scale(1.9); }
         }
+        @keyframes truck-line-bubble-nudge {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-3px); }
+        }
         @media (prefers-reduced-motion: reduce) {
           .truck-line-vehicle { transition: none; }
           .truck-line-rolling, .truck-line-rolling .wheel, .truck-line-rolling .puff { animation: none; }
+          .truck-line-speech-bubble { animation: none; }
         }
       `}</style>
 
@@ -693,6 +855,27 @@ export function TruckLineBoard({
           <ListErrorBanner message={userFacingApiError(query.error, "Could not load Truck Line")} onRetry={() => void query.refetch()} />
         </div>
       ) : null}
+
+      <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#374151]" data-testid="truck-line-top-bar">
+        <span>
+          All trucks (<b>{topBarStats.allTrucks}</b>)
+        </span>
+        <span>
+          Rolling (<b>{topBarStats.rolling}</b>)
+        </span>
+        <span>
+          Stopped (<b>{topBarStats.stopped}</b>)
+        </span>
+        <span>
+          Signal stale (<b style={{ color: RED }}>{topBarStats.signalStale}</b>)
+        </span>
+        <span>
+          Appointment past (<b style={{ color: RED }}>{topBarStats.appointmentPast}</b>)
+        </span>
+        <span>
+          Available (<b style={{ color: GREEN }}>{topBarStats.available}</b>)
+        </span>
+      </div>
 
       <div className="mb-2">
         <input
@@ -711,7 +894,7 @@ export function TruckLineBoard({
           <span>Truck</span>
           <span className="truck-line-v4-load-header">Load</span>
           <span>Line</span>
-          <span>Next appointment</span>
+          <span className="truck-line-v4-appt-header">Next appointment</span>
           <span className="truck-line-v4-signal-header">Live signal</span>
         </div>
 
@@ -731,8 +914,46 @@ export function TruckLineBoard({
                     : { text: `in ${fmtDuration(ms)}`, color: GREEN };
                 })()
               : null;
+            const rowKey = `${r.kind}-${r.unit_id ?? r.available?.driver_id ?? "row"}`;
+            if (r.kind === "available" && r.available) {
+              const a = r.available;
+              const hosAgeLabel = a.hos_polled_minutes_ago != null ? `HOS polled ${a.hos_polled_minutes_ago} min ago` : "HOS polled — min ago";
+              return (
+                <div key={rowKey} className="truck-line-v4-row" style={{ background: AVAILABLE_ROW_TINT }} data-testid={`truck-line-row-available-${a.driver_id}`}>
+                  <div>
+                    <div className="truck-line-v4-unit font-semibold text-[#1F2937]">{r.unit_number ?? "—"}</div>
+                    <div className="truck-line-v4-sub text-[#6B7280]">
+                      {r.drivers[0]?.name ?? "Driver"}
+                      {r.unit_number == null ? " · no unit assigned" : ""}
+                    </div>
+                  </div>
+
+                  <div className="truck-line-v4-load-cell">
+                    <span className="truck-line-v4-sub text-[#6B7280]">
+                      {a.last_closed_load_number ? `Last load ${a.last_closed_load_number}` : "no load yet"}
+                    </span>
+                  </div>
+
+                  <div>
+                    <AvailableTruckTrack row={r} onAssign={onAssignDriver} />
+                  </div>
+
+                  <div className="truck-line-v4-appt-cell">
+                    <div className="truck-line-v4-appt font-semibold">—</div>
+                    <div className="truck-line-v4-cap text-[#6B7280]">nothing booked</div>
+                  </div>
+
+                  <div className="truck-line-v4-signal-cell">
+                    <span className="truck-line-v4-sub">
+                      <b style={{ color: GREEN }}>available now</b>
+                    </span>
+                    <div className="truck-line-v4-cap text-[#6B7280]">{hosAgeLabel}</div>
+                  </div>
+                </div>
+              );
+            }
             return (
-              <div key={r.unit_id} className="truck-line-v4-row" data-testid={`truck-line-row-${r.unit_id}`}>
+              <div key={rowKey} className="truck-line-v4-row" data-testid={`truck-line-row-${r.unit_id}`}>
                 <div>
                   <div className="truck-line-v4-unit font-semibold text-[#1F2937]">
                     {r.unit_number}
@@ -745,16 +966,7 @@ export function TruckLineBoard({
                       </span>
                     ) : null}
                   </div>
-                  {r.load ? (
-                    <div className="truck-line-v4-sub text-[#6B7280]">{r.drivers.map((d) => d.name ?? "Driver").join(" / ") || "No driver"}</div>
-                  ) : (
-                    <div className="truck-line-v4-sub">
-                      Awaiting assignment ·{" "}
-                      <button type="button" className="underline" style={{ color: "#1f2a44" }} onClick={() => onBookForUnit(r.unit_id)} data-testid={`truck-line-book-load-${r.unit_id}`}>
-                        Book Load
-                      </button>
-                    </div>
-                  )}
+                  <div className="truck-line-v4-sub text-[#6B7280]">{r.drivers.map((d) => d.name ?? "Driver").join(" / ") || "No driver"}</div>
                 </div>
 
                 <div
@@ -777,32 +989,25 @@ export function TruckLineBoard({
                 </div>
 
                 <div>
-                  {r.load ? (
-                    <TruckLineTrack
-                      row={r}
-                      reasons={reasons}
-                      otherPrompt={otherPrompt}
-                      otherReasonId={otherReasonId}
-                      otherNote={otherNote}
-                      otherBusy={otherBusy}
-                      otherError={otherError}
-                      onAdvance={openStamp}
-                      onOpenOther={openOther}
-                      onCloseOther={closeOther}
-                      onPickReason={setOtherReasonId}
-                      onNoteChange={setOtherNote}
-                      onConfirmException={confirmException}
-                      onClearException={clearException}
-                    />
-                  ) : (
-                    <div className="relative h-[62px]" data-testid={`truck-line-track-empty-${r.unit_id}`}>
-                      <div className="absolute left-0 right-0 top-[41px] h-[3px] rounded bg-[#C7D2DC]" />
-                      <span className="truck-line-v4-sub absolute left-2 top-6 text-[#6B7280]">— no load on this truck</span>
-                    </div>
-                  )}
+                  <TruckLineTrack
+                    row={r}
+                    reasons={reasons}
+                    otherPrompt={otherPrompt}
+                    otherReasonId={otherReasonId}
+                    otherNote={otherNote}
+                    otherBusy={otherBusy}
+                    otherError={otherError}
+                    onAdvance={openStamp}
+                    onOpenOther={openOther}
+                    onCloseOther={closeOther}
+                    onPickReason={setOtherReasonId}
+                    onNoteChange={setOtherNote}
+                    onConfirmException={confirmException}
+                    onClearException={clearException}
+                  />
                 </div>
 
-                <div>
+                <div className="truck-line-v4-appt-cell">
                   {r.next_appointment ? (
                     <div>
                       <div className="truck-line-v4-appt font-semibold" title={r.next_appointment.at_source ?? undefined}>

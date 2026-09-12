@@ -43,14 +43,31 @@ export type TruckLineLoad = {
   delivery: { city: string | null; state: string | null };
 };
 
+// V10 (ROUND 18.6) — a row is either a loaded truck (unit_id always present) or an available
+// driver (unit_id may be null — "Unit = the unit on their most recent load, may be null"). Raw
+// HOS minutes are exposed as-is (samsara.hos_snapshots' *_hours_remaining columns are misleadingly
+// named; verified live they store minutes) so the frontend's own "11h 00m" formatting is the ONLY
+// place that conversion happens.
+export type TruckLineAvailable = {
+  driver_id: string;
+  driving_minutes_remaining: number | null;
+  cycle_minutes_remaining: number | null;
+  hos_polled_minutes_ago: number | null;
+  last_closed_load_number: string | null;
+  parked_city: string | null;
+  parked_state: string | null;
+};
+
 export type TruckLineRow = {
-  unit_id: string;
-  unit_number: string;
+  kind: "loaded" | "available";
+  unit_id: string | null;
+  unit_number: string | null;
   load: TruckLineLoad | null;
   drivers: TruckLineDriver[];
   station: TruckLineStation | null;
   position: TruckLinePosition | null;
   next_appointment: TruckLineNextAppointment | null;
+  available?: TruckLineAvailable;
 };
 
 export type TruckLineStationDef = { key: string; index: number; label: string };
@@ -58,6 +75,8 @@ export type TruckLineStationDef = { key: string; index: number; label: string };
 export type TruckLineResponse = {
   rows: TruckLineRow[];
   total_count: number;
+  loaded_count: number;
+  available_count: number;
   stations: TruckLineStationDef[];
   catalog_ready: boolean;
 };

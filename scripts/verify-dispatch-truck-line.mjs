@@ -133,10 +133,10 @@ export function verify(files) {
   // prose in comments, which may legitimately mention "ParityTable" or "storageKey" while
   // explaining the V4 change without either being wired up.
   const gridColumnsConst = boardTsx.match(/const GRID_TEMPLATE_COLUMNS\s*=\s*(["'`])([\s\S]*?)\1/);
-  if (!gridColumnsConst || !/minmax\(104px,7vw\)\s*minmax\(118px,9vw\)\s*1fr\s*minmax\(158px,13vw\)\s*minmax\(150px,12vw\)/.test(gridColumnsConst[2])) {
+  if (!gridColumnsConst || !/minmax\(140px,10vw\)\s*minmax\(160px,12vw\)\s*1fr\s*minmax\(158px,12vw\)\s*minmax\(156px,12vw\)/.test(gridColumnsConst[2])) {
     problems.push(
       "(j) TruckLineBoard.tsx must define a GRID_TEMPLATE_COLUMNS constant with a 1fr Line column " +
-        "(minmax(104px,7vw) minmax(118px,9vw) 1fr minmax(158px,13vw) minmax(150px,12vw))"
+        "(minmax(140px,10vw) minmax(160px,12vw) 1fr minmax(158px,12vw) minmax(156px,12vw))"
     );
   }
   if (!gridColumnsConst || !/grid-template-columns:\s*\$\{GRID_TEMPLATE_COLUMNS\}/.test(boardTsx)) {
@@ -163,6 +163,27 @@ export function verify(files) {
   }
   if (!/open_exception_id/.test(boardTsx)) {
     problems.push("(k) TruckLineBoard.tsx must read station.open_exception_id so the clear action resolves the EXACT open row, not a guessed one");
+  }
+
+  // (l) V10 (ROUND 18.6) -- THE AVAILABLE TRUCK. A truck with no load never prints the retired
+  // "no load on this truck" string ANYWHERE in this file (checked on the raw source, not just the
+  // render path, so a reintroduced dead branch is caught too); Next appointment/Live signal are
+  // center-aligned; a real "Assign a load" action exists and is wired to a real callback prop
+  // (never a no-op/dead button).
+  // Checked on comment-stripped source (codeOnly, computed above for the ParityTable/storageKey
+  // checks) — this file's own comments legitimately quote the retired phrase while explaining why
+  // it must never render; only a literal in actual render/string code counts as a violation.
+  if (/no load on this truck/.test(codeOnly)) {
+    problems.push('(l) TruckLineBoard.tsx must never render the retired "no load on this truck" string — THE AVAILABLE TRUCK replaces every such row');
+  }
+  if (!/text-align:\s*center/.test(boardTsx) || !/truck-line-v4-appt-header|truck-line-v4-appt-cell/.test(boardTsx)) {
+    problems.push("(l) TruckLineBoard.tsx must center-align the Next appointment / Live signal columns (owner ruling 21:30 CT)");
+  }
+  if (!/Assign a load/.test(codeOnly) || !/onAssignDriver/.test(codeOnly)) {
+    problems.push('(l) TruckLineBoard.tsx must render a real "Assign a load" action wired to an onAssignDriver callback — a dead button fails this box');
+  }
+  if (!/kind === "available"/.test(boardTsx) && !/kind ===\s*"available"/.test(boardTsx)) {
+    problems.push('(l) TruckLineBoard.tsx must branch on row.kind === "available" to render THE AVAILABLE TRUCK — the row scope change is not optional styling');
   }
 
   return problems;
@@ -208,12 +229,17 @@ function runSelftest() {
     ["(i) reason validation removed", { ...good, archTabsService: good.archTabsService.replace("reason_not_found", "REMOVED") }],
     ["(h) mapReachedIndexToV7 removed", { ...good, boardTsx: good.boardTsx.replace("function mapReachedIndexToV7", "function REMOVEDmapReachedIndexToV7") }],
     ["(h) an 8th V7 station planted", { ...good, boardTsx: good.boardTsx.replace('{ name: "Delivered", backendIndex: 6 },', '{ name: "Delivered", backendIndex: 6 },\n  { name: "Extra", backendIndex: 7 },') }],
-    ["(j) 1fr Line column removed from the grid", { ...good, boardTsx: good.boardTsx.replace("minmax(118px,9vw) 1fr minmax(158px,13vw)", "minmax(118px,9vw) minmax(200px,20vw) minmax(158px,13vw)") }],
+    ["(j) 1fr Line column removed from the grid", { ...good, boardTsx: good.boardTsx.replace("minmax(160px,12vw) 1fr minmax(158px,12vw)", "minmax(160px,12vw) minmax(200px,20vw) minmax(158px,12vw)") }],
     ["(j) narrow-grid fold removed", { ...good, boardTsx: good.boardTsx.replace("const GRID_TEMPLATE_COLUMNS_NARROW", "const REMOVED_GRID_TEMPLATE_COLUMNS_NARROW").replace(/@media \(max-width: \$\{FOLD_BREAKPOINT_PX\}px\)/, "@media (max-width: 999999px) /* REMOVED */") }],
     ["(j) ParityTable reintroduced", { ...good, boardTsx: good.boardTsx + '\nimport { ParityTable } from "../../components/parity/ParityTable";\n' }],
     ["(j) storageKey column state reintroduced", { ...good, boardTsx: good.boardTsx + '\nconst x = { storageKey: "dispatch-truck-line-v1" };\n' }],
     ["(k) resolveTruckLineException removed", { ...good, boardTsx: good.boardTsx.replaceAll("resolveTruckLineException", "REMOVED") }],
     ["(k) open_exception_id no longer read", { ...good, boardTsx: good.boardTsx.replaceAll("open_exception_id", "REMOVED") }],
+    ["(l) retired 'no load on this truck' string reintroduced", { ...good, boardTsx: good.boardTsx.replace("— unexpected: this row has no load data", "— no load on this truck") }],
+    ["(l) center-align removed", { ...good, boardTsx: good.boardTsx.replace("text-align: center;", "text-align: left;") }],
+    ["(l) Assign a load pill removed", { ...good, boardTsx: good.boardTsx.replaceAll("Assign a load →", "REMOVED") }],
+    ["(l) onAssignDriver wiring removed", { ...good, boardTsx: good.boardTsx.replaceAll("onAssignDriver", "REMOVED") }],
+    ["(l) available-row branch removed", { ...good, boardTsx: good.boardTsx.replaceAll('r.kind === "available"', "false") }],
   ];
   let failed = 0;
   for (const [name, mutated] of cases) {
@@ -243,4 +269,4 @@ if (problems.length) {
   for (const p of problems) console.error(`  ✗ ${p}`);
   process.exit(1);
 }
-console.log(`${LABEL} OK — read model scope matches the Kanban predicate, station derivation is pure+tested, no new status writer, refused transitions surface the server reason, no-ping is honest, double-click routes to Load Costs, all 5 board segments present, the 7-station V7 line maps honestly from station.ts's own 9-index model, V7/V8 auto-fit grid (1fr Line column, narrow fold, no ParityTable/storageKey) held, status-station reason list is live + clears via resolve (void-not-delete).`);
+console.log(`${LABEL} OK — read model scope matches the Kanban predicate, station derivation is pure+tested, no new status writer, refused transitions surface the server reason, no-ping is honest, double-click routes to Load Costs, all 5 board segments present, the 7-station V7 line maps honestly from station.ts's own 9-index model, V7/V8/V10 auto-fit grid (1fr Line column, narrow fold, no ParityTable/storageKey, center-aligned appt/signal) held, status-station reason list is live + clears via resolve (void-not-delete), THE AVAILABLE TRUCK (V10) never prints the retired "no load" string and wires a real Assign-a-load action.`);
