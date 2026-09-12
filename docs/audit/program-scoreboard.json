@@ -1,10 +1,10 @@
 {
-  "healthzSha": "bcaa4cd",
-  "generated_at": "2026-09-11T21:50:52.595Z",
+  "healthzSha": "8bb5e57",
+  "generated_at": "2026-09-11T22:45:08.631Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "bcaa4cd",
+    "deployedSha": "8bb5e57",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 21841,
-      "title": "FINDING: N/A (CLAIM-RESERVE 11305 -- reservation-only commit, no code fix)",
+      "number": 21858,
+      "title": "FINDING: N/A (CLAIM-RESERVE 10931 -- reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "09/11/2026, 04:49 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21841",
-      "sha": "11ba99b55e",
-      "committedAtIso": "2026-09-11T16:49:15-05:00"
+      "mergedAtCt": "09/11/2026, 05:36 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21858",
+      "sha": "8bb5e578f4",
+      "committedAtIso": "2026-09-11T17:36:51-05:00"
     },
     {
-      "number": 21839,
-      "title": "FINDING: N/A (docs — Dispatch Line Board design reference + contract, owner request 2026-09-11)",
+      "number": 21857,
+      "title": "FINDING: N/A (docs — all 3 Lead items closed, self-found RLS bug reported + fixed)",
       "state": "merged",
-      "mergedAtCt": "09/11/2026, 04:44 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21839",
-      "sha": "bcaa4cd78d",
-      "committedAtIso": "2026-09-11T16:44:49-05:00"
+      "mergedAtCt": "09/11/2026, 05:36 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21857",
+      "sha": "e549ea8064",
+      "committedAtIso": "2026-09-11T17:36:40-05:00"
     },
     {
-      "number": 21840,
-      "title": "FINDING: N/A (CLAIM-RESERVE 10927 -- reservation-only commit, no code fix)",
+      "number": 21856,
+      "title": "FINDING: N/A (SELF-FOUND FIX -- LEAD ITEM 1's catalogs.load_exception_reasons RLS policy was unreachable, live page showed 0 rows)",
       "state": "merged",
-      "mergedAtCt": "09/11/2026, 04:43 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21840",
-      "sha": "0a50923b95",
-      "committedAtIso": "2026-09-11T16:43:38-05:00"
+      "mergedAtCt": "09/11/2026, 05:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21856",
+      "sha": "4bc625a858",
+      "committedAtIso": "2026-09-11T17:35:31-05:00"
     },
     {
-      "number": 21838,
-      "title": "FINDING: N/A (docs — CC-1 response to all-seats freeze on S-2026-5769-5800, self-report per order item 2)",
+      "number": 21849,
+      "title": "FINDING: BANK-F26150 — .ldt-fld input rule swallowed checkboxes (Match Candidates Show row)",
       "state": "merged",
-      "mergedAtCt": "09/11/2026, 04:34 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21838",
-      "sha": "f7e605abee",
-      "committedAtIso": "2026-09-11T16:34:18-05:00"
+      "mergedAtCt": "09/11/2026, 05:33 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21849",
+      "sha": "cfa206c842",
+      "committedAtIso": "2026-09-11T17:33:52-05:00"
     },
     {
-      "number": 21837,
-      "title": "FINDING: N/A (docs — INBOX-CC-3 DRIVER-COMPLIANCE-01 assignment, measured live 2026-09-11 20:52Z)",
+      "number": 21855,
+      "title": "FINDING: N/A (CLAIM-MIGRATION 202614100000 -- fix catalogs.load_exception_reasons RLS policy)",
       "state": "merged",
-      "mergedAtCt": "09/11/2026, 04:17 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21837",
-      "sha": "bbf4e60f0f",
-      "committedAtIso": "2026-09-11T16:17:14-05:00"
+      "mergedAtCt": "09/11/2026, 05:30 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21855",
+      "sha": "2c52a4edca",
+      "committedAtIso": "2026-09-11T17:30:33-05:00"
     },
     {
-      "number": 21836,
-      "title": "FINDING: N/A (docs only — ACCT-F26140 live Chrome screenshot proof, closes task DONE criterion)",
+      "number": 21854,
+      "title": "FINDING: N/A (docs — Items 2 and 3 found already shipped on arrival, independently re-verified)",
       "state": "merged",
-      "mergedAtCt": "09/11/2026, 04:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21836",
-      "sha": "bfd0f8d14e",
-      "committedAtIso": "2026-09-11T16:15:22-05:00"
+      "mergedAtCt": "09/11/2026, 05:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21854",
+      "sha": "10efd2df3d",
+      "committedAtIso": "2026-09-11T17:27:34-05:00"
     },
     {
-      "number": 21835,
-      "title": "FINDING: N/A (docs only — ACCT-F26140 backend deploy proof, healthz confirms live SHA)",
+      "number": 21853,
+      "title": "FINDING: N/A (docs — LEAD ITEM 1 SHIPPED report + DEPLOY-REQUEST)",
       "state": "merged",
-      "mergedAtCt": "09/11/2026, 04:08 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21835",
-      "sha": "243e8602b1",
-      "committedAtIso": "2026-09-11T16:08:22-05:00"
+      "mergedAtCt": "09/11/2026, 05:24 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21853",
+      "sha": "462c044b7e",
+      "committedAtIso": "2026-09-11T17:24:22-05:00"
     },
     {
-      "number": 21834,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "number": 21852,
+      "title": "FINDING: N/A (LEAD ITEM 1 -- catalogs.load_exception_reasons CREATE-only migration + catalog page)",
       "state": "merged",
-      "mergedAtCt": "09/11/2026, 04:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21834",
-      "sha": "10a144cc8d",
-      "committedAtIso": "2026-09-11T21:04:00Z"
+      "mergedAtCt": "09/11/2026, 05:23 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21852",
+      "sha": "1491a8f988",
+      "committedAtIso": "2026-09-11T17:23:17-05:00"
     },
     {
-      "number": 21833,
-      "title": "FINDING: ACCT-F26140 (system-wide settlement/tour column sweep, post-#21826 reconciliation)",
+      "number": 21851,
+      "title": "FINDING: DRIVER-COMPLIANCE-01 (dispatch's WF-038 gate silently allows a driver with no CDL#/CDL-expiry/DOT-medical to be assigned+dispatched; 2 unmistakable junk rows carried status=Active with is_sample_data≠true; driver profile collapsed a missing medical cert into a bare dash)",
       "state": "merged",
-      "mergedAtCt": "09/11/2026, 03:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21833",
-      "sha": "5a599ac388",
-      "committedAtIso": "2026-09-11T15:59:16-05:00"
+      "mergedAtCt": "09/11/2026, 05:21 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21851",
+      "sha": "fc127723e1",
+      "committedAtIso": "2026-09-11T17:21:40-05:00"
     },
     {
-      "number": 21832,
-      "title": "FINDING: N/A (docs — CANCEL LOAD GREY-OUT + CROSS-TAB CONSISTENCY final live proof, post-deploy Chrome walkthrough)",
+      "number": 21850,
+      "title": "FINDING: N/A (docs — INBOX-CC-3 B6 Banking Home single bar, owner live 17:40 CT)",
       "state": "merged",
-      "mergedAtCt": "09/11/2026, 03:46 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21832",
-      "sha": "c250f94259",
-      "committedAtIso": "2026-09-11T15:46:49-05:00"
+      "mergedAtCt": "09/11/2026, 05:21 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21850",
+      "sha": "dc946008fa",
+      "committedAtIso": "2026-09-11T17:21:08-05:00"
     }
   ]
 }

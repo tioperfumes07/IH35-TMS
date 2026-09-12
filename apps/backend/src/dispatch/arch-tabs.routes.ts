@@ -27,6 +27,11 @@ const companyQuerySchema = z.object({
 const createIssueBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   load_id: z.string().uuid(),
+  // TRUCK LINE (2026-09-11): reason_id, when present, is validated against
+  // catalogs.load_exception_reasons (active, same company) and its code overrides issue_category
+  // server-side — the caller no longer free-types a category string for a Truck Line "Other" stop.
+  // issue_category stays required for back-compat with the pre-existing office-issue caller(s).
+  reason_id: z.string().uuid().optional(),
   issue_category: z.string().trim().min(1).max(80),
   issue_description: z.string().trim().min(10).max(4000),
   severity: z.enum(["info", "warning", "severe"]),
@@ -91,7 +96,10 @@ export async function registerDispatchArchTabsRoutes(app: FastifyInstance) {
     const body = createIssueBodySchema.safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
     const result = await createOfficeIntransitIssue(user.uuid, body.data.operating_company_id, body.data);
-    if (!result.ok) return reply.code(result.error === "load_not_found" ? 404 : 409).send({ error: result.error });
+    if (!result.ok) {
+      const code = result.error === "load_not_found" ? 404 : result.error === "reason_not_found" ? 400 : 409;
+      return reply.code(code).send({ error: result.error });
+    }
     return reply.code(201).send(result.issue);
   });
 
