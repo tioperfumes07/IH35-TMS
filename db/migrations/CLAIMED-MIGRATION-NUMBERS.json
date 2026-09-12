@@ -926,6 +926,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-09-11",
       "purpose": "SELF-FOUND FIX (live Chrome re-check, 2026-09-11 22:2xZ): catalogs.load_exception_reasons's SELECT/INSERT/UPDATE policies from 202614090000 checked current_setting('app.operating_company_id', true) -- but load-exception-reasons.routes.ts uses withCurrentUser (only sets app.current_user_id, confirmed live via auth/db.ts), never withCompanyScope/setOperatingCompanyScope, so that GUC is never set and the policy always evaluated false for a real authenticated request -- live proof: the new Lists page rendered 0 rows despite 11 real USMCA rows. Repoints all 3 policies to the SAME proven-working org.user_company_access membership pattern catalogs.load_cancellation_reasons already uses successfully under the identical withCurrentUser code path (confirmed live via pg_policies before writing this)."
+    },
+    "202614110000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-11",
+      "purpose": "Claude Lead ROUND 18.3 ITEM A (P1 SETTLEMENT NUMBERING, deadline 06:00Z 09-12): additive migration adding uq_driver_settlements_source_document_ref_live -- UNIQUE(operating_company_id, source_document_ref) WHERE source_document_ref IS NOT NULL AND voided_at IS NULL AND reversed_at IS NULL AND status <> 'cancelled', mirroring the existing uq_driver_settlements_one_open_per_driver partial-index pattern. NOT yet applied on prod pending the Lead's decision on the S-2026-0011 / S-2026-5782 source_document_ref='5782' collision (evidence posted to OUTBOX-CC-3.md, both rows are real+posted, not a guessable pick)."
     }
   },
   "202613590001": {
