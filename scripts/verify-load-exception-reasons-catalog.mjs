@@ -20,6 +20,7 @@
  *        node scripts/verify-load-exception-reasons-catalog.mjs --selftest
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -31,6 +32,49 @@ const MIGRATION_PATH = path.join(repoRoot, "db/migrations/202614090000_load_exce
 const RLS_FIX_MIGRATION_PATH = path.join(repoRoot, "db/migrations/202614100000_load_exception_reasons_rls_fix.sql");
 const ROUTES_PATH = path.join(repoRoot, "apps/backend/src/catalogs/load-exception-reasons.routes.ts");
 const INDEX_PATH = path.join(repoRoot, "apps/backend/src/index.ts");
+const BACKEND_SRC = path.join(repoRoot, "apps/backend/src");
+const ROUTE_URL = "/api/v1/catalogs/load-exception-reasons";
+
+/** node_modules-free directory walk for .routes.ts files, mirroring scripts/verify-no-duplicate-routes.mjs. */
+function walkRoutesFiles(dir, out = []) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) { walkRoutesFiles(full, out); continue; }
+    if (entry.isFile() && entry.name.endsWith(".routes.ts")) out.push(full);
+  }
+  return out;
+}
+
+/**
+ * BOOT-CRASH FOUND LIVE 2026-09-12 ("Method 'GET' already declared for route
+ * '/api/v1/catalogs/load-exception-reasons'"): dispatch/truck-line/load-exception-reasons.routes.ts
+ * independently registered app.get() on this EXACT literal path (a deliberate temporary shim,
+ * "degrades gracefully ... until [this] table exists" per its own header) under a DIFFERENT function
+ * name (registerLoadExceptionReasonsRoutes, note the plural), so auditRouteRegistration above (which
+ * only greps for the literal string "registerLoadExceptionReasonRoutes") never saw it, and
+ * scripts/verify-no-duplicate-routes.mjs only indexes .routes.ts files under accounting/ — this
+ * route lives in catalogs/. Both files were manually `await`ed in index.ts; Fastify does not allow
+ * two handlers on the same method+path and the app exited early on every deploy after Truck Line
+ * merged. Removed as part of this fix (the real table/route now exists, so the shim's own reason
+ * for existing is gone) -- this scans the WHOLE backend src tree so any FUTURE file that reintroduces
+ * a route on this literal path, under any function name, fails loudly instead of booting to a crash.
+ */
+export function auditNoCollidingRouteFile(backendSrc, ownRoutesPath) {
+  const failures = [];
+  if (!fs.existsSync(backendSrc)) return failures;
+  const pathRe = new RegExp(`app\\.(get|post|put|patch|delete)\\(\\s*["'\`]${ROUTE_URL.replace(/\//g, "\\/")}["'\`]`);
+  for (const filePath of walkRoutesFiles(backendSrc)) {
+    if (path.resolve(filePath) === path.resolve(ownRoutesPath)) continue;
+    const src = fs.readFileSync(filePath, "utf8");
+    if (pathRe.test(src)) {
+      failures.push(
+        `${path.relative(repoRoot, filePath)} also registers a route on ${ROUTE_URL} — this is the exact ` +
+          `2026-09-12 boot-crash shape (two .routes.ts files, two function names, same literal path)`
+      );
+    }
+  }
+  return failures;
+}
 
 /** Pure: does the migration file declare the required columns, FORCED RLS, and grants? */
 export function auditMigrationSource(src) {
@@ -101,6 +145,41 @@ function selftest() {
   const brokenRlsFix = goodRlsFix.replace(/org\.user_company_access[\s\S]*?deactivated_at IS NULL\s*\)/g, "current_setting('app.operating_company_id', true)");
   assert.ok(auditRlsFixMigrationSource(brokenRlsFix).length >= 1, "a regression back to the broken GUC pattern must be caught");
 
+  // auditNoCollidingRouteFile — reproduces the 2026-09-12 boot-crash shape in a scratch tree: a
+  // second .routes.ts file, under a different function name, registering the same literal path.
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "load-exception-reasons-collision-"));
+  try {
+    fs.mkdirSync(path.join(scratch, "catalogs"), { recursive: true });
+    fs.mkdirSync(path.join(scratch, "dispatch", "truck-line"), { recursive: true });
+    const ownRoutes = path.join(scratch, "catalogs", "load-exception-reasons.routes.ts");
+    fs.writeFileSync(
+      ownRoutes,
+      `export async function registerLoadExceptionReasonRoutes(app) {\n  app.get("${ROUTE_URL}", async () => ({}));\n}\n`
+    );
+    const collidingRoutes = path.join(scratch, "dispatch", "truck-line", "load-exception-reasons.routes.ts");
+    fs.writeFileSync(
+      collidingRoutes,
+      `export async function registerLoadExceptionReasonsRoutes(app) {\n  app.get("${ROUTE_URL}", async () => ({}));\n}\n`
+    );
+    assert.ok(
+      auditNoCollidingRouteFile(scratch, ownRoutes).length === 1,
+      "a second .routes.ts file registering the same literal path must be caught"
+    );
+
+    fs.rmSync(collidingRoutes);
+    assert.ok(
+      auditNoCollidingRouteFile(scratch, ownRoutes).length === 0,
+      "with the colliding file removed (the actual fix), no failure should remain"
+    );
+  } finally {
+    fs.rmSync(scratch, { recursive: true, force: true });
+  }
+
+  assert.ok(
+    auditNoCollidingRouteFile(BACKEND_SRC, ROUTES_PATH).length === 0,
+    "the real backend src tree must have no other file registering this route right now"
+  );
+
   console.log(`${LABEL} --selftest PASS`);
 }
 
@@ -120,12 +199,14 @@ async function run() {
   if (!indexSrc) failures.push(`${path.relative(repoRoot, INDEX_PATH)}: missing`);
   else failures.push(...auditRouteRegistration(indexSrc));
 
+  failures.push(...auditNoCollidingRouteFile(BACKEND_SRC, ROUTES_PATH));
+
   if (failures.length) {
     console.error(`${LABEL} FAILED (static):`);
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: static OK — migration, route file, and single registration all present`);
+  console.log(`${LABEL}: static OK — migration, route file, single registration, and no colliding route file`);
 
   if (!process.env.DATABASE_URL) {
     console.log(`${LABEL}: DATABASE_URL not set — skipping the live check (static check above still ran).`);

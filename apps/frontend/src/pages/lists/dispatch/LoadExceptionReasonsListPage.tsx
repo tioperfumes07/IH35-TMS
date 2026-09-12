@@ -13,7 +13,8 @@ import {
   type UpdateLoadExceptionReasonInput,
 } from "../../../api/catalogs";
 import { Button } from "../../../components/Button";
-import { DataTable } from "../../../components/DataTable";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { Modal } from "../../../components/Modal";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { SelectCombobox } from "../../../components/Combobox";
@@ -25,6 +26,11 @@ import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 // (breakdown, accident, weather, border hold, detention, etc.) is a SEPARATE operational domain from
 // a load CANCELLATION (catalogs.load_cancellation_reasons) — the load stays active/in-motion through
 // an exception, it does not terminate the way a cancellation does.
+//
+// ROUND 17.2 (Lead, 2026-09-12 00:30 UTC): switched from components/DataTable to
+// components/parity/ParityTable — the go26-consolidation-ratchet (owner ruling 2026-09-02) freezes
+// DataTable importer count; this file was NEW sprawl behind that freeze. Matches
+// DispatchCatalogListPage.tsx's ParityTable usage (columns/sort/storageKey/export/empty state).
 const CATALOG_KEY = "load-exception-reasons";
 
 type StatusFilter = "active" | "inactive" | "all";
@@ -33,34 +39,6 @@ const CODE_REGEX = /^[a-z][a-z0-9_]+$/;
 
 function statusPill(isActive: boolean) {
   return `inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold ${isActive ? "text-slate-700" : "text-slate-600"}`;
-}
-
-/** Export the visible exception reason rows as CSV. */
-function exportExceptionReasonsCsv(rows: LoadExceptionReason[]) {
-  const headers = ["Code", "Name", "Applies To", "Linked Module", "Order", "Status"];
-  const data = rows.map((r) => [
-    csvCell(r.code),
-    csvCell(r.name),
-    csvCell(r.applies_to),
-    csvCell(r.linked_module ?? ""),
-    String(r.sort_order),
-    r.is_active ? "Active" : "Inactive",
-  ]);
-  const csv = [headers, ...data].map((r) => r.join(",")).join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `load-exception-reasons-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function csvCell(value: string): string {
-  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
 }
 
 function parseConflict(error: unknown): string | null {
@@ -169,13 +147,19 @@ export function LoadExceptionReasonsListPage() {
   const isSaving = createMutation.isPending || updateMutation.isPending || deactivateMutation.isPending;
   const breadcrumb = useMemo(() => ["Lists & Catalogs", "Dispatch", "Load Exception Reasons"], []);
 
-  const columns = [
-    { key: "code", label: "Code", sortable: true, render: (row: LoadExceptionReason) => <span className="font-semibold text-slate-800">{row.code}</span> },
-    { key: "name", label: "Name", sortable: true, render: (row: LoadExceptionReason) => <span className="text-slate-800">{row.name}</span> },
-    { key: "applies_to", label: "Applies To", sortable: true, render: (row: LoadExceptionReason) => <span className="text-slate-700">{row.applies_to}</span> },
-    { key: "linked_module", label: "Linked Module", sortable: true, render: (row: LoadExceptionReason) => <span className="text-slate-600">{row.linked_module ?? "—"}</span> },
-    { key: "sort_order", label: "Order", sortable: true, numeric: true, render: (row: LoadExceptionReason) => <span className="text-slate-700">{row.sort_order}</span> },
-    { key: "is_active", label: "Status", sortable: true, render: (row: LoadExceptionReason) => <span className={statusPill(row.is_active)}>{row.is_active ? "Active" : "Inactive"}</span> },
+  const columns: Array<ParityColumn<LoadExceptionReason>> = [
+    { key: "code", label: "Code", sortable: true, render: (row) => <span className="font-semibold text-slate-800">{row.code}</span> },
+    { key: "name", label: "Name", sortable: true, render: (row) => <span className="text-slate-800">{row.name}</span> },
+    { key: "applies_to", label: "Applies To", sortable: true, render: (row) => <span className="text-slate-700">{row.applies_to}</span> },
+    { key: "linked_module", label: "Linked Module", sortable: true, render: (row) => <span className="text-slate-600">{row.linked_module ?? "—"}</span> },
+    { key: "sort_order", label: "Order", sortable: true, render: (row) => <span className="text-slate-700">{row.sort_order}</span> },
+    {
+      key: "is_active",
+      label: "Status",
+      sortable: true,
+      sortValue: (row) => (row.is_active ? 1 : 0),
+      render: (row) => <span className={statusPill(row.is_active)}>{row.is_active ? "Active" : "Inactive"}</span>,
+    },
   ];
 
   return (
@@ -196,13 +180,6 @@ export function LoadExceptionReasonsListPage() {
             >
               + Create Entry
             </Button>
-            <button
-              type="button"
-              onClick={() => exportExceptionReasonsCsv(rows)}
-              className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Export CSV
-            </button>
             <button
               type="button"
               onClick={() => window.print()}
@@ -249,23 +226,31 @@ export function LoadExceptionReasonsListPage() {
         Show inactive
       </label>
 
-      <DataTable
-        columns={columns}
-        rows={rows}
-        rowKey={(row) => row.id}
-        onRowClick={(row) => {
-          setConflictError(null);
-          setActiveRow(row);
-          setModalMode("edit");
-        }}
-        loading={listQuery.isLoading}
-        tableKey="load-exception-reasons"
-        errorState={
-          listQuery.isError
-            ? { status: 0, message: "Failed to load exception reasons.", onRetry: () => { void listQuery.refetch(); } }
-            : undefined
-        }
-      />
+      {listQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load exception reasons"
+          status={listQuery.error instanceof ApiError ? listQuery.error.status : 0}
+          message={(listQuery.error as Error | null)?.message}
+          onRetry={() => void listQuery.refetch()}
+        />
+      ) : (
+        <ParityTable
+          rows={rows}
+          columns={columns}
+          rowKey={(row) => row.id}
+          loading={listQuery.isLoading}
+          emptyText="No exception reasons match these filters"
+          storageKey="load-exception-reasons"
+          tableTestId="load-exception-reasons-table"
+          exportFilename={`load-exception-reasons-${new Date().toISOString().slice(0, 10)}`}
+          suppressToolbarSearch
+          onRowClick={(row) => {
+            setConflictError(null);
+            setActiveRow(row);
+            setModalMode("edit");
+          }}
+        />
+      )}
 
       <div className="text-xs text-slate-500">Total rows: {rows.length}</div>
 
