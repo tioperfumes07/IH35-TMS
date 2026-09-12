@@ -2887,3 +2887,18 @@ ENOENT repair). Live Chrome verification of `/dispatch?view=truck-line` found an
 defect (TRUCK-LINE-01, see GUARD-WORKORDERS.md) before declaring done.
 
 CC-2 | TRUCK-LINE DONE | 9334295389 | live API 9334295 / FE 9334295 | GET truck-line rows=16 = in-service trucks 16 (7 dispatched: 13595/13587/13590/13591/13593/13594/13592) | catalogs.load_exception_reasons USMCA rows=11 | migration N/A this PR (no schema change; catalog migration #21852 already applied, confirmed via the 11-row live catalog fetch) | guard verify-dispatch-truck-line.mjs selftest 8/8 + live PASS | Chrome on app.ih35dispatch.com/dispatch?view=truck-line: 13595/13587/13590/13591/13593/13594/13592 green to node 2 (Dispatched), header names aligned to station.ts's 9-station list, Other pop-up on load 13587 shows all 11 real catalog reasons (Breakdown — roadside/towed to shop, Accident/incident, Weather/road closure, Border/customs hold, Detention at shipper/receiver, Layover, Driver rest/HOS, Reroute/new appointment, Load cancelled by customer, Other (note required)) — confirmed BEFORE fix only 10 of 11 were visually legible (Driver rest/HOS hidden under the sticky "Next appointment" header, z-index:auto vs the table's z-10), confirmed AFTER fix (PR #21874, z-50) all 11 render cleanly | double-click 13587 → /accounting/load-costs/0b3589e5-f09d-4b2b-9b2a-78134d2b2839 (real Load Costs page, S-2026-0025, DISPATCHED · TOUR CLOSED · SETTLEMENT) | NEXT: surrendering this seat's Truck Line assignment as complete; ACCT-F26140 follow-up + BUG 2 were reassigned to CC-1 per the Lead's own instruction, so this seat is idle pending the next assignment.
+
+## CC-2 — ROUND 18.2 ITEM A DONE (03:xx UTC 09-12, well inside 03:30Z deadline)
+
+Merged PR #21878 (`a4b357e16d`). `scripts/verify-driver-pwa-load-status-gate.mjs` was stale after
+Truck Line's own stop-stamp.service.ts extraction (#21859) -- re-pointed the arrival/departure
+lifecycle assertions (compare-and-set UPDATEs, already-recorded/lost-transition rejections,
+company-bound params) at stop-stamp.service.ts where they now live; dispatch-view.routes.ts's route
+blocks are asserted for what's still true there (row lock + auth JOIN) plus two NEW checks
+(delegates to the shared stamp function; contains no direct `UPDATE mdata.loads` of its own).
+`driver/loads.routes.ts` (never touched by the Truck Line refactor) is unchanged. --selftest: 22
+mutation cases (10 scope + 1 reinline + 4 service-arrival + 5 driver-arrival + 4 service-departure +
+5 driver-departure) all caught, 0 weakened/skipped/deleted (Rule 30). Live proof: guard exit 0 "OK",
+--selftest exit 0 PASS, `cd apps/backend && npx tsc --noEmit` exit 0.
+
+Moving to ROUND 18.2 ITEM B + the owner's V4 autofit/moving-truck ruling next (deadline 06:00Z).
