@@ -50,12 +50,15 @@ describe("Dispatch planners (DISP-PLANNERS)", () => {
   // child, which only renders if the parent calls <Outlet />. DispatchPlannersLayout renders {children}
   // and contains no Outlet at all, so the nested route never rendered and the planner testids were
   // simply absent. The layout is right for production; the test was mounting a shape the app never uses.
-  it("renders driver planner with shared range toolbar default 30d", async () => {
+  // ROUND 20.6 S6 (owner-live 2026-09-12): default range is now 7d, not 30d -- 30d put every real
+  // bar in the last 2 of 30 columns (28 empty every time) because most planner data clusters near
+  // "today" on this end-anchored window.
+  it("renders driver planner with shared range toolbar default 7d", async () => {
     wrap(<DispatchPlannersLayout><DriverPlanner /></DispatchPlannersLayout>);
     expect(await screen.findByTestId("dispatch-planners-layout")).toBeTruthy();
     expect(await screen.findByTestId("dispatch-driver-planner-page")).toBeTruthy();
     expect(screen.getByTestId("dispatch-planner-range-toolbar")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "30d" }).className).toContain("bg-[var(--planner-active)]");
+    expect(screen.getByRole("button", { name: "7d" }).className).toContain("bg-[var(--planner-active)]");
   });
 
   it("switches shared range to 7d", async () => {

@@ -73,8 +73,6 @@ export function TruckPlanner() {
 
   const truckRows = useMemo(() => {
     const rows = new Map<string, TruckRow>();
-    const vacantIds = new Set((gridQuery.data?.vacant_units ?? []).map((u) => String(u.unit_id)));
-    const reservedIds = new Set((reservedQuery.data?.units ?? []).map((u) => u.id));
 
     for (const dr of gridQuery.data?.drivers ?? []) {
       const unitId = dr.unit_id ? String(dr.unit_id) : "";
@@ -93,12 +91,18 @@ export function TruckPlanner() {
       const unitId = String(u.unit_id);
       const unitNumber = String(u.unit_number ?? unitId);
       if (rows.has(unitId)) continue;
+      // ROUND 20.6 K2 (owner-live 2026-09-12): this inverted `reservedIds` (from
+      // listUnitsWithoutLoad -- an AVAILABILITY signal: "here are units with no active load") into a
+      // RESERVATION signal. A vacant unit (no driver in the scheduler grid) that this OTHER endpoint
+      // independently confirms has no active load is unambiguously available, not reserved -- there
+      // is no genuine reservation/hold source wired into this component at all. Live-confirmed: 11
+      // idle units with no driver, no load and nothing that reserved them were reading "Reserved".
       rows.set(unitId, {
         unitId,
         unitNumber,
         driverId: null,
         driverName: null,
-        status: reservedIds.has(unitId) ? "reserved-hold" : "available",
+        status: "available",
       });
     }
 
@@ -131,18 +135,45 @@ export function TruckPlanner() {
           status: "in-shop",
         });
       } else if (!rows.has(unitId)) {
+        // ROUND 20.6 K2 (owner-live 2026-09-12): this branch only runs for units NOT already found
+        // in gridQuery's own drivers/vacant_units lists (that's what `!rows.has(unitId)` gates on) --
+        // so `vacantIds.has(unitId)` here can never be true, and every one of these units silently
+        // fell to "reserved-hold" ("Reserved" on screen) with no driver, no load, and nothing that
+        // actually reserved them. There is no real reservation signal wired into this component at
+        // all (reservedIds, above, comes from listUnitsWithoutLoad -- an AVAILABILITY signal, not a
+        // reservation one). A unit the scheduler grid has no driver/vacant record for and that is
+        // not in-shop is, honestly, just available.
         rows.set(unitId, {
           unitId,
           unitNumber,
           driverId: null,
           driverName: null,
-          status: vacantIds.has(unitId) ? "available" : "reserved-hold",
+          status: "available",
         });
       }
     }
 
     return [...rows.values()].sort((a, b) => a.unitNumber.localeCompare(b.unitNumber));
   }, [gridQuery.data, reservedQuery.data, unitsQuery.data]);
+
+  // ROUND 20.6 K3 (owner-live 2026-09-12): "16 units render, the fleet is 31, 15 are missing with
+  // no message saying why" -- the missing units are the ones PLANNER_UNIT_STATUSES / isOperatorVisibleUnit
+  // filter out above (a status outside InService/InMaintenance/OutOfService, a test fixture, or a
+  // sample-data row). That filtering is correct (this board is not a full fleet roster), but it was
+  // silent. Name the gap instead of leaving it unexplained.
+  const excludedUnitCount = useMemo(() => {
+    let excluded = 0;
+    for (const raw of unitsQuery.data?.units ?? []) {
+      const unit = raw as Record<string, unknown>;
+      const unitNumber = String(unit.unit_number ?? unit.id ?? "");
+      if (!isOperatorVisibleUnit({ unit_number: unitNumber, is_sample_data: unit.is_sample_data as boolean | null | undefined })) {
+        excluded += 1;
+        continue;
+      }
+      if (!PLANNER_UNIT_STATUSES.has(String(unit.status ?? ""))) excluded += 1;
+    }
+    return excluded;
+  }, [unitsQuery.data]);
 
   const isLoading = gridQuery.isLoading || unitsQuery.isLoading || reservedQuery.isLoading || loadsQuery.isLoading;
   const isError = gridQuery.isError || unitsQuery.isError || reservedQuery.isError || loadsQuery.isError;
@@ -166,7 +197,15 @@ export function TruckPlanner() {
 
   return (
     <div data-testid="dispatch-truck-planner-page" className="space-y-2">
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {!isLoading && !isError && excludedUnitCount > 0 ? (
+          <span className="text-xs text-slate-500" data-testid="dispatch-truck-planner-excluded-count">
+            {excludedUnitCount} unit{excludedUnitCount === 1 ? "" : "s"} not shown (status outside In
+            Service / In Maintenance / Out of Service, or a test fixture)
+          </span>
+        ) : (
+          <span />
+        )}
         <PlannerViewToggle viewMode={viewMode} onChange={setViewMode} />
       </div>
       {isLoading ? <div className="text-xs text-gray-500">Loading truck grid…</div> : null}

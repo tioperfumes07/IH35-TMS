@@ -6,6 +6,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { entityLabel } from "../../../lib/entity-label";
+import { STATUS_LABEL } from "../../../components/dispatch/constants";
 import { addDaysIso, widenPlannerRange } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
@@ -106,7 +107,9 @@ export function LoadsPlanner() {
             driver: load.assigned_primary_driver_name ?? "—",
             unit: load.assigned_unit_number ?? "—",
             customer: load.customer_name ?? "—",
-            status: load.status,
+            // ROUND 20.6 L1 (owner-live 2026-09-12): raw enum values ("in_transit", "dispatched")
+            // were shown to the user -- every other surface renders STATUS_LABEL.
+            status: STATUS_LABEL[load.status as keyof typeof STATUS_LABEL] ?? load.status,
             pickupDate: load.pickup_scheduled_at ? load.pickup_scheduled_at.slice(0, 10) : "—",
             deliveryDate: load.scheduled_delivery_date ?? (load.delivery_appointment_start_at ? load.delivery_appointment_start_at.slice(0, 10) : "—"),
             rate: load.rate_total_cents != null
@@ -163,7 +166,8 @@ export function LoadsPlanner() {
                   <EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" />
                 </>
               ),
-              status: load.status,
+              // ROUND 20.6 L1 -- same STATUS_LABEL mapping as the list view above.
+              status: STATUS_LABEL[load.status as keyof typeof STATUS_LABEL] ?? load.status,
               bars: [
                 {
                   id: `${load.id}-bar`,

@@ -17,6 +17,7 @@ import { PlannerAxisHead } from "./PlannerAxisHead";
 import { formatPlannerDwell } from "./plannerTimeAxis";
 import { dwellsFromDayMap, PlannerGrid, type PlannerGridRow } from "./PlannerGrid";
 import { PlannerViewToggle, type PlannerViewMode } from "./PlannerViewToggle";
+import { usePlannerLoads, barKind } from "./planner-bars";
 
 void PlannerAxisHead;
 
@@ -106,6 +107,19 @@ export function UnifiedTimelinePlanner() {
     queryFn: () => fetchTimelineForRange(operatingCompanyId, range.start, range.end),
   });
 
+  // ROUND 20.6 S7 (owner-live 2026-09-12): "same object, two colours across sibling tabs" -- Driver
+  // /Truck/Loads Planner all derive each bar's kind (nb/sb/tr, which drives its colour) from the
+  // load's real trip_type via the shared groupPlannerBarsByKey helper; Timeline hardcoded every bar
+  // to "nb" because its own feed (getDispatchPlannerWeek) never exposed trip_type at all. Fetch the
+  // same richer load rows the other 3 tabs already use (usePlannerLoads) purely to read trip_type,
+  // so the SAME load renders the SAME colour on every tab.
+  const tripTypeQuery = usePlannerLoads(operatingCompanyId, range.start, range.end);
+  const tripTypeByLoadId = useMemo(() => {
+    const m = new Map<string, string | null | undefined>();
+    for (const load of tripTypeQuery.data ?? []) m.set(load.id, load.trip_type);
+    return m;
+  }, [tripTypeQuery.data]);
+
   const leaveQuery = useQuery({
     queryKey: ["dispatch", "planners", "timeline-leave", operatingCompanyId, range.start, range.end],
     enabled: Boolean(operatingCompanyId),
@@ -130,6 +144,25 @@ export function UnifiedTimelinePlanner() {
     return m;
   }, [timelineQuery.data]);
   const leaveByCell = useMemo(() => parseLeaveCells(leaveQuery.data?.leave_day_cells), [leaveQuery.data]);
+  // ROUND 20.6 T2 (owner-live 2026-09-12): getDispatchPlannerWeek's own driver rows never carry
+  // unit_number/unit_id (confirmed live -- every row read "—"), so the column the "Driver / Unit"
+  // header promises had nothing to show. driverSchedulerOfficeApi.getGrid() (already fetched above,
+  // for leave/dwell data) is the SAME scheduler-grid source TruckPlanner.tsx reads its own
+  // unit_id/unit_number fields from -- reuse it here as a frontend-only enrichment, no new fetch,
+  // no mdata.loads touch.
+  const unitByDriverId = useMemo(() => {
+    const m = new Map<string, { unitId: string | null; unitNumber: string | null }>();
+    for (const raw of leaveQuery.data?.drivers ?? []) {
+      const dr = raw as Record<string, unknown>;
+      const driverId = dr.driver_id != null ? String(dr.driver_id) : dr.id != null ? String(dr.id) : null;
+      if (!driverId) continue;
+      m.set(driverId, {
+        unitId: dr.unit_id != null ? String(dr.unit_id) : null,
+        unitNumber: dr.unit_number != null ? String(dr.unit_number) : null,
+      });
+    }
+    return m;
+  }, [leaveQuery.data]);
 
   const openBookForUnit = (unitId: string | null | undefined) => {
     setBookUnitId(unitId ?? null);
@@ -174,18 +207,31 @@ export function UnifiedTimelinePlanner() {
         secondary: sorted[0] ? <LoadCustomerLink load={sorted[0]} /> : null,
         unit: (
           <span data-testid={`timeline-util-${driver.id}`}>
-            {driver.unit_number ? (
-              <EntityLinkOrTombstone kind="unit" id={driver.unit_id} name={driver.unit_number} noun="Unit" />
-            ) : (
-              "—"
-            )}
+            {(() => {
+              // ROUND 20.6 T2 (owner-live 2026-09-12): getDispatchPlannerWeek's own driver rows
+              // never carry unit_number/unit_id (live-confirmed: every row read "—" despite drivers
+              // having active loads) -- fall back to driverSchedulerOfficeApi.getGrid() (already
+              // fetched above for leave/dwell data), the SAME scheduler-grid source TruckPlanner.tsx
+              // reads its own unit fields from.
+              const fallback = unitByDriverId.get(driver.id);
+              const unitId = driver.unit_id ?? fallback?.unitId ?? null;
+              const unitNumber = driver.unit_number ?? fallback?.unitNumber ?? null;
+              return unitNumber ? (
+                <EntityLinkOrTombstone kind="unit" id={unitId ?? undefined} name={unitNumber} noun="Unit" />
+              ) : (
+                "—"
+              );
+            })()}
           </span>
         ),
-        action: driver.unit_id ? (
+        // ROUND 20.6 T5 -- same root cause as T2's unit column: driver.unit_id was always empty
+        // from this feed, so the button's own enable-check silently failed on every row and it
+        // rendered "—" for every driver, including ones with a real assigned unit.
+        action: (driver.unit_id ?? unitByDriverId.get(driver.id)?.unitId) ? (
           <button
             type="button"
             data-testid={`timeline-book-${driver.id}`}
-            onClick={() => openBookForUnit(driver.unit_id)}
+            onClick={() => openBookForUnit(driver.unit_id ?? unitByDriverId.get(driver.id)?.unitId ?? null)}
             className="flex h-7 items-center rounded-sm bg-[var(--planner-active)] px-2 text-xs font-semibold text-white"
           >
             + Book
@@ -197,7 +243,8 @@ export function UnifiedTimelinePlanner() {
           label: entityLabel(load.load_number, load.id, "Load"),
           startYmd: toDayKey(load.start_at) ?? days[0],
           endYmd: toDayKey(load.end_at) ?? toDayKey(load.start_at) ?? days[0],
-          kind: "nb" as const,
+          // ROUND 20.6 S7 -- real trip_type (from the enrichment query above), not a hardcoded "nb".
+          kind: barKind(tripTypeByLoadId.get(load.id)),
           testId: `timeline-load-${load.id}`,
         })),
       };
@@ -224,8 +271,14 @@ export function UnifiedTimelinePlanner() {
     );
   }
 
+  // ROUND 20.6 T1 (owner-live 2026-09-12): this group was labelled "OUT OF SERVICE" but the
+  // predicate is hos_status === "violation" -- an HOURS-OF-SERVICE violation, which says nothing
+  // about whether the driver/unit is out of service. Live-confirmed: 10 working drivers with open
+  // tours and live loads were rendered under "OUT OF SERVICE". Renamed to match what the predicate
+  // actually is; the grouping/predicate itself is correct (HOS violations genuinely need their own
+  // visual group), only the label was a lie.
   const inService = drivers.filter((d) => d.hos_status !== "violation");
-  const oos = drivers.filter((d) => d.hos_status === "violation");
+  const hosViolation = drivers.filter((d) => d.hos_status === "violation");
 
   return (
     <div data-testid="dispatch-unified-timeline-page" className="space-y-2 [&_.pg-r]:h-[34px]">
@@ -297,16 +350,17 @@ export function UnifiedTimelinePlanner() {
               </span>
             }
           />
-          {oos.length > 0 ? (
-            <div className="mt-3" data-testid="planner-oos-group">
+          {hosViolation.length > 0 ? (
+            <div className="mt-3" data-testid="planner-hos-violation-group">
               <PlannerGrid
                 days={days}
-                frozenLabel="Out of service"
+                frozenLabel="HOS violation"
                 actionLabel="Book"
                 frozenPx={360}
-                rows={toRows(oos)}
+                rows={toRows(hosViolation)}
                 onExpandRange={(minYmd, maxYmd) => setRange(widenPlannerRange(range, minYmd, maxYmd))}
                 empty={null}
+                showAxisHeader={false}
               />
             </div>
           ) : null}

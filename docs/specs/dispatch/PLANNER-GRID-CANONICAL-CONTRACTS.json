@@ -52,12 +52,12 @@
       "id": "A7_OOS_SEPARATED_NOT_STICKY",
       "file": "apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx",
       "required_tokens": [
-        "className=\"mt-3\" data-testid=\"planner-oos-group\"",
-        "frozenLabel=\"Out of service\""
+        "className=\"mt-3\" data-testid=\"planner-hos-violation-group\"",
+        "frozenLabel=\"HOS violation\""
       ],
       "forbidden_tokens": [
-        "className=\"sticky mt-3\" data-testid=\"planner-oos-group\"",
-        "className=\"mt-3 sticky\" data-testid=\"planner-oos-group\""
+        "className=\"sticky mt-3\" data-testid=\"planner-hos-violation-group\"",
+        "className=\"mt-3 sticky\" data-testid=\"planner-hos-violation-group\""
       ]
     }
   ],

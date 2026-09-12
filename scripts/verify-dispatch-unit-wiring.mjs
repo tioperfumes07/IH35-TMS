@@ -29,7 +29,13 @@ const CHECKS = [
   ["apps/frontend/src/pages/dispatch/LateArrivalsPage.tsx", /kind="unit" id=\{load\.unit_id\}/],
   ["apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx", /kind="unit" id=\{u\.unit_id\}/],
   ["apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx", /EntityLinkOrTombstone kind="unit" id=\{issue\.unit_id\} name=\{issue\.unit_number\} noun="Unit"/],
-  ["apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx", /<EntityLinkOrTombstone kind="unit" id=\{driver\.unit_id\} name=\{driver\.unit_number\} noun="Unit"/],
+  // ROUND 20.6 T2 (owner-live 2026-09-12): getDispatchPlannerWeek's own driver.unit_id/unit_number
+  // were always empty live -- this now resolves through a scheduler-grid fallback (unitByDriverId,
+  // the SAME source TruckPlanner.tsx reads its own unit fields from) before rendering. Assert the
+  // real EntityLinkOrTombstone call + that it reads from resolved unitId/unitNumber values (still
+  // sourced from driver.unit_id/unit_number first, never a hardcoded id), not the bare pre-fix
+  // literal this guard used to require.
+  ["apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx", /const unitId = driver\.unit_id \?\? fallback\?\.unitId \?\? null;\s*\n\s*const unitNumber = driver\.unit_number \?\? fallback\?\.unitNumber \?\? null;\s*\n\s*return unitNumber \? \(\s*\n\s*<EntityLinkOrTombstone kind="unit" id=\{unitId \?\? undefined\} name=\{unitNumber\} noun="Unit"/],
   ["apps/frontend/src/pages/dispatch/planners/SafetyDriverSchedulerGrid.tsx", /EntityLinkOrTombstone kind="unit" id=\{unitId\} name=\{unit\} noun="Unit"/],
   ["apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx", /EntityLinkOrTombstone kind="unit" id=\{row\.unitId\} name=\{row\.unitNumber\} noun="Unit"/],
   ["apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx", /kind="unit" id=\{driver\.unit_id \?\? null\}/],
