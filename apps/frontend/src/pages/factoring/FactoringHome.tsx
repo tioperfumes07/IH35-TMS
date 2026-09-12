@@ -1268,7 +1268,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 { key: "amount_cents", label: "Payment Amount", sortable: true, render: (row) => fmtCurrency(row.amount_cents) },
                 { key: "amount_applied_cents", label: "Applied", sortable: true, render: (row) => fmtCurrency(row.amount_applied_cents) },
                 { key: "amount_unapplied_cents", label: "Unapplied", sortable: true, render: (row) => fmtCurrency(row.amount_unapplied_cents) },
-                { key: "payment_reference", label: "Reference", render: (row) => row.payment_reference || "—" },
+                { key: "payment_reference", label: "Reference", sortable: true, sortValue: (row) => row.payment_reference ?? "", render: (row) => row.payment_reference || "—" },
               ];
               return (
                 <ParityTable
@@ -1382,8 +1382,8 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 { key: "amount_cents", label: "Payment Amount", sortable: true, render: (row) => fmtCurrency(row.amount_cents) },
                 { key: "amount_applied_cents", label: "Applied", sortable: true, render: (row) => fmtCurrency(row.amount_applied_cents) },
                 { key: "amount_unapplied_cents", label: "Unapplied", sortable: true, render: (row) => fmtCurrency(row.amount_unapplied_cents) },
-                { key: "payment_reference", label: "Reference", render: (row) => row.payment_reference || "—" },
-                { key: "notes", label: "Notes", render: (row) => row.notes || "—" },
+                { key: "payment_reference", label: "Reference", sortable: true, sortValue: (row) => row.payment_reference ?? "", render: (row) => row.payment_reference || "—" },
+                { key: "notes", label: "Notes", sortable: true, sortValue: (row) => row.notes ?? "", render: (row) => row.notes || "—" },
               ];
               return (
                 <ParityTable
@@ -1571,7 +1571,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             <ParityTable
               columns={[
                 { key: "created_at", label: "Date", sortable: true, render: (row: FactoringReserveBalanceHistoryEntry) => fmtDate(row.created_at) },
-                { key: "reason", label: "Note", render: (row: FactoringReserveBalanceHistoryEntry) => row.reason },
+                { key: "reason", label: "Note", sortable: true, sortValue: (row: FactoringReserveBalanceHistoryEntry) => row.reason ?? "", render: (row: FactoringReserveBalanceHistoryEntry) => row.reason },
                 {
                   key: "signed_amount_cents",
                   label: "Amount",

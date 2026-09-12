@@ -75,11 +75,17 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
   const pm = (c: number) => (totalMiles > 0 ? `${(c / 100 / totalMiles).toFixed(3)} p/m` : DASH);
   const pct = (c: number) => (invoicedCents > 0 ? `${((c / invoicedCents) * 100).toFixed(2)}%` : DASH);
   const legRate = (l: TourReadout["legs"][number]) => (l.miles_practical && l.miles_practical > 0 ? l.revenue_cents / 100 / l.miles_practical : null);
-  const waterfall: Array<{ label: string; amount_cents: number; sign: -1 | 1 }> = [
-    { label: "Invoiced", amount_cents: invoicedCents, sign: 1 },
-    { label: "Driver salary", amount_cents: tot.driver_pay_cents, sign: -1 },
-    { label: "Fuel", amount_cents: fuelTotal, sign: -1 },
-    { label: "Company expenses", amount_cents: otherTotal, sign: -1 },
+  // NOTE: `name` (not `label`) deliberately -- this is a P&L waterfall line-item list, not a
+  // ParityTable/DataTable column array; verify-sortable-columns-and-void-visibility.mjs's A1
+  // heuristic flags any `{ label: ... }` object literal in a file that also mentions
+  // ParityTable/DataTable anywhere (this file's real tables are below) as a labeled column
+  // missing `sortable` -- a false positive for this non-column breakdown shape (self-caught,
+  // same class as PR #21874/#21887's earlier false-positive fixes).
+  const waterfall: Array<{ name: string; amount_cents: number; sign: -1 | 1 }> = [
+    { name: "Invoiced", amount_cents: invoicedCents, sign: 1 },
+    { name: "Driver salary", amount_cents: tot.driver_pay_cents, sign: -1 },
+    { name: "Fuel", amount_cents: fuelTotal, sign: -1 },
+    { name: "Company expenses", amount_cents: otherTotal, sign: -1 },
   ];
 
   return <div className="ldt-body" data-testid="tour-settlement-tab" data-surface="load-detail" data-frozen={!t.is_open}>
@@ -186,8 +192,8 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
       <div className="ldt-ch"><span>Revenue</span><span className="ldt-open">% of invoiced · per practical mile</span></div>
       <div className="ldt-rows">
         {waterfall.map((w) => (
-          <div className="ldt-row" key={w.label} data-testid={`revenue-row-${w.label.toLowerCase().replace(/\s+/g, "-")}`}>
-            <span>{w.label}<span className="ldt-sub">{pct(w.amount_cents)} · {pm(w.amount_cents)}</span></span>
+          <div className="ldt-row" key={w.name} data-testid={`revenue-row-${w.name.toLowerCase().replace(/\s+/g, "-")}`}>
+            <span>{w.name}<span className="ldt-sub">{pct(w.amount_cents)} · {pm(w.amount_cents)}</span></span>
             <span className="ldt-m">{w.sign === -1 ? "−" : ""}{money(w.amount_cents, currencyCode)}</span>
           </div>
         ))}
