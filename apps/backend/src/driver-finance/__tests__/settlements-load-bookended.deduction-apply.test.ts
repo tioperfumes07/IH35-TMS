@@ -178,6 +178,14 @@ function makeMockClient(state: State & { _pendingEarnings?: number }) {
       // close UPDATE
       if (sql.includes("UPDATE driver_finance.driver_settlements") && sql.includes("trip_closed_at")) return rows([]);
 
+      // P1 settlement numbering — overwrite-guard read + canonical allocator + writer
+      if (sql.includes("SELECT source_document_ref FROM driver_finance.driver_settlements")) {
+        return rows([{ source_document_ref: null }]);
+      }
+      if (sql.includes("pg_advisory_xact_lock")) return rows([]);
+      if (sql.includes("COALESCE(MAX((source_document_ref)::int)")) return rows([{ next: "5804" }]);
+      if (sql.includes("SET source_document_ref = $3")) return rows([{ id: "settlement-1", display_id: "S-2026-0001", source_document_ref: "5804" }]);
+
       // aggregate read
       if (sql.includes("SUM(CASE WHEN line_type") && sql.includes("AS earnings")) {
         const earnings = state.lines.filter((l) => ["earnings", "extra_pay", "team_split_primary", "team_split_secondary"].includes(l.line_type)).reduce((a, l) => a + l.amount, 0);
