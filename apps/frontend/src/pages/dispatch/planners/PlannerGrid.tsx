@@ -199,17 +199,21 @@ function FrozenName({
       <div className="pg-col-name" title={typeof row.name === "string" ? row.name : undefined}>
         <CellOrDash>{row.name}</CellOrDash>
       </div>
+      {/* ROUND-20.7 (APP-WIDE AUTOFIT LAW) item 4 -- these columns share pg-col-name's own
+          overflow:hidden + white-space:nowrap (PlannerGrid.css), so a long secondary/unit/status
+          value clips exactly the same way a long name does; title= is the same one-hover-away
+          fallback pg-col-name already had. */}
       {row.secondary !== undefined ? (
-        <div className="pg-col-sec"><CellOrDash>{row.secondary}</CellOrDash></div>
+        <div className="pg-col-sec" title={typeof row.secondary === "string" ? row.secondary : undefined}><CellOrDash>{row.secondary}</CellOrDash></div>
       ) : null}
       {row.unit !== undefined ? (
-        <div className="pg-col-unit"><CellOrDash>{row.unit}</CellOrDash></div>
+        <div className="pg-col-unit" title={typeof row.unit === "string" ? row.unit : undefined}><CellOrDash>{row.unit}</CellOrDash></div>
       ) : null}
       {hasStatusColumn ? (
-        <div className="pg-col-status" data-testid="planner-row-status"><CellOrDash>{row.status}</CellOrDash></div>
+        <div className="pg-col-status" data-testid="planner-row-status" title={typeof row.status === "string" ? row.status : undefined}><CellOrDash>{row.status}</CellOrDash></div>
       ) : null}
       {hasActionColumn ? (
-        <div className="pg-col-action" data-testid="planner-row-action"><CellOrDash>{row.action}</CellOrDash></div>
+        <div className="pg-col-action" data-testid="planner-row-action" title={typeof row.action === "string" ? row.action : undefined}><CellOrDash>{row.action}</CellOrDash></div>
       ) : null}
     </div>
   );
