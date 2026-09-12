@@ -3127,3 +3127,70 @@ guard verify-dispatch-truck-line.mjs 21/21 + apps/frontend tsc -b exit 0 (unchan
 REMAINING: 3 pre-existing data gaps (geocoded stops/arrival-departure stamps/un-linked geofence rows),
 tracked as next PR, not blocking | NEXT: ROUND 18.2 ITEM D -- re-measure Dispatch end to end and open
 the next defect.
+
+## CC-2 — ROUND 20.2 DONE, FULLY LIVE-PROVEN — Round Trips renders the whole tour
+
+Owner ruling: "it is only showing the current trip, the sb, but not the nb trip... an OPEN tour
+renders whole... A CLOSED tour never renders here at all." Shipped in 3 PRs (one root fix + two
+self-caught live follow-ups, all found during this seat's own post-deploy Chrome proof, not by the
+Lead or CC-1):
+
+- **#21922** — the root fix. `apps/backend/src/mdata/loads.routes.ts` (the LIST endpoint Round Trips
+  actually calls -- traced the real call chain rather than assuming; CC-1's own ROUND 20.1 spec named
+  a sibling file, `dispatch/loads.routes.ts`, that this page never calls, flagged live, resolved by
+  the time CC-1's #21921 merged since their migration backfilled the DATA both endpoints depend on
+  regardless of which one projects it) now projects trip_type/presettlement_link_id/tour_id and gains
+  an opt-in `include_open_tour_legs` param (Round Trips' own fetch only -- Kanban/List/Trip Pairing
+  untouched) that ORs in a terminal-status leg exactly when its presettlement_link_id points at a
+  still-open `driver_finance.driver_settlements` row. `RoundTrips.tsx`'s `buildUnitPairs` now keeps a
+  leg on active-status OR that same open-tour link. New `TourRail` (bead per leg, green+check
+  delivered / blue+halo running / hollow pending, hollow "SB not booked" trailing bead) and
+  `BillingChip` (green "Invoiced <EntityLink>" / amber "Pro forma" / amber "Delivered · not invoiced",
+  reusing the existing per-load invoices endpoint). Card redesign to the owner's exact spec (navy/
+  green border-left, gradient header band, dashed leg dividers). New guard
+  `scripts/verify-round-trips-full-tour.mjs` (backend SELECT/scope assertions + buildUnitPairs
+  extracted from real source and RUN against a T148-shaped fixture) — --selftest 4/4, RED confirmed on
+  bare origin/main, GREEN here. Also fixed live during verify-static, all self-caught: REG-036's
+  trailing "+Book return" cell tripped its own guard's 160-char source-distance window after the new
+  markup (shortened, zero behavior change); go26/ui-design-system ratchets regressed +5 on new
+  off-scale `text-[10px]`/`text-[7px]` (switched to `text-xs`, which maps to the locked 12px scale,
+  plus an SVG check icon instead of a glyph needing its own size); entity-link-adoption flagged the
+  invoice `display_id` rendered as bare text (fixed properly, not baseline-bumped, by wrapping it in a
+  real `<EntityLink kind="invoice">` — the chip's number is now clickable).
+- **#21926** — self-caught in THIS seat's own live Chrome proof, immediately after #21922 deployed:
+  T148 still showed only 1 card. Root cause: `mdata/loads.routes.ts`'s explicit-`operating_company_id`
+  branch (the one Dispatch.tsx always hits) never called `set_config('app.operating_company_id', ...)`
+  — invisible on `mdata.loads` itself (its own RLS doesn't depend on that GUC), but
+  `driver_finance.driver_settlements` is FORCED RLS on exactly that GUC (confirmed via `pg_policy`
+  live), so `include_open_tour_legs`'s correlated subquery silently matched zero rows in production
+  even though the identical SQL matched 4/4 under `bypass_rls`. Fixed by setting the GUC in that
+  branch too — a general correctness fix for the whole handler, not narrowly scoped to this feature.
+- **#21929** — self-caught in the SAME live proof pass, one deploy later: T148's 3 cards were correct
+  but the header showed a corrupted dollar figure ("$600,001,500,000.00"). `rate_total_cents`/
+  `total_cents` arrive as STRINGS from node-postgres (the same NUMERIC-column landmine hit repeatedly
+  elsewhere this session); the new header-level `.reduce` summed them before any `Number()` cast,
+  string-concatenating instead of adding. `formatMoneyCents` itself already casts internally, which is
+  why the per-card amount never showed the bug. Fixed by casting each value before summing.
+
+LIVE PROOF (all 4 DONE items, this session, against the fully-deployed stack — FE 1fb49357cf / API
+b3c3e1e0e1):
+  a) `document.querySelectorAll('[data-testid^="round-trip-row-"]')` on T148:
+     `data-rt-sequence="NB-TR-SB"`, cards `round-trip-load-13563`/`-13553`/`-13595`, in that order.
+     Same 3-leg pattern independently reproduced on T168 (13569/13577/13591).
+  b) 13563 renders the green "Invoiced 13563" chip (screenshot captured; 13563's own invoice
+     display_id, now a real clickable `EntityLink kind="invoice"`).
+  c) Direct API check (not just the fixture guard): of 16 rows returned, exactly 9 terminal-status
+     legs came back, every one carrying a non-null presettlement_link_id to an OPEN settlement; the
+     one KNOWN closed-tour leg named in CC-1's own spec (13581, T164, linked to CLOSED settlement
+     5813) is confirmed ABSENT from the response.
+  d) Guard RED on bare origin/main (both audits fail with the exact measured-defect text), GREEN on
+     the merged branch; --selftest 4/4 caught.
+  Bonus: the header money line is now correct too ("2 of 3 delivered · Invoiced $2,100.00 · Tour
+  $3,600.00" for T148 — $600+$1,500 invoiced, $600+$1,500+$1,500 tour, both exactly right).
+
+CC-2 | ROUND-20.2 FULLY DONE, LIVE, PROVEN (#21922, #21926, #21929) | all 4 required DONE items
+confirmed live against the deployed stack | guard verify-round-trips-full-tour.mjs red→green +
+--selftest 4/4 | apps/frontend + apps/backend tsc both exit 0, full verify-static clean (only the
+same ~25 pre-existing/unrelated reds) | REMAINING: the settlement-number "<ref>" in the header and the
+3 T170 historical residuals are out of this seat's lane, tracked, not silently dropped | NEXT: ROUND
+18.2 ITEM D (re-measure Dispatch end to end) unless redirected.
