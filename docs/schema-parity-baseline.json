@@ -2883,6 +2883,17 @@
       "sort_order",
       "updated_at"
     ],
+    "catalogs.load_exception_reasons": [
+      "applies_to",
+      "code",
+      "created_at",
+      "id",
+      "is_active",
+      "linked_module",
+      "name",
+      "operating_company_id",
+      "sort_order"
+    ],
     "catalogs.maintenance_part_locations": [
       "applies_to",
       "category",

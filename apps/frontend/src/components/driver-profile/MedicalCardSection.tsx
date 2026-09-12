@@ -12,8 +12,16 @@ export function MedicalCardSection({ medical, unavailable = false }: { medical: 
       {unavailable ? <p className="mb-2 text-xs font-medium text-red-700">Medical card data could not be loaded.</p> : null}
       <p className="text-xs text-slate-700">
         {/* LV-DRIVER-PROFILE-RAW-ISO-DATES-REOPEN — display chrome only; day counts stay raw. */}
-        Expires {formatDateUS(medical.expiration as string | null) || "—"}
-        {days != null ? ` · ${days} days` : ""}
+        {/* DRIVER-COMPLIANCE-01 (owner/Claude Lead 2026-09-11): a bare "—" reads as N/A, not as
+            "this driver has no medical certificate on file" -- say it plainly instead. */}
+        {medical.expiration ? (
+          <>
+            Expires {formatDateUS(medical.expiration as string)}
+            {days != null ? ` · ${days} days` : ""}
+          </>
+        ) : (
+          <span className="font-medium">Missing — no document</span>
+        )}
       </p>
       <p className="text-xs text-slate-600">Examiner {String(medical.examiner ?? "—")}</p>
       <p className="text-xs text-slate-600">Restrictions {String(medical.restrictions ?? "—")}</p>
