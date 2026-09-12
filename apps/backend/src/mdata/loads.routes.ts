@@ -703,6 +703,16 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       let scopedCompanyIds: string[];
       if (operating_company_id && operating_company_id.length > 0) {
         scopedCompanyIds = operating_company_id;
+        // ROUND-20.2 fix (found live, self-caught): this branch never set app.operating_company_id,
+        // so any FORCED-RLS table this handler touches under a policy keyed on that GUC (e.g.
+        // driver_finance.driver_settlements, read by the include_open_tour_legs correlated subquery
+        // below) silently saw zero rows in production even though the exact same SQL, run with
+        // bypass_rls, returned the right ones -- the app-level `l.operating_company_id = ANY(...)`
+        // predicate on mdata.loads itself doesn't depend on this GUC, so the gap was invisible on
+        // the loads themselves and only broke a query that also touches a second FORCED-RLS table.
+        // membership-scope-exempt: transaction-resolved-user-company (same predicate class as the
+        // else branch below; the request already asked for exactly these companies).
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyIds[0]]);
       } else {
         const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
         if (!scopedCompanyId) return { rows: [], totalCount: 0 };
