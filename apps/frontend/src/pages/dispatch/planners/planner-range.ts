@@ -5,7 +5,10 @@ import { companyToday } from "../../../lib/businessDate";
 // operators who need a custom span pick Custom and use the date pickers.
 export const PLANNER_RANGE_OPTIONS = [7, 14, 30] as const;
 export type PlannerRangeDays = (typeof PLANNER_RANGE_OPTIONS)[number];
-export const DEFAULT_PLANNER_RANGE_DAYS: PlannerRangeDays = 30;
+// ROUND 20.6 S6 (owner-live 2026-09-12): 30d put every real bar in the last two columns on all
+// four tabs -- 28 of 30 day columns empty every time, because most planner data clusters near
+// "today" (an end-anchored window). 7d actually matches where the data lives.
+export const DEFAULT_PLANNER_RANGE_DAYS: PlannerRangeDays = 7;
 
 export type PlannerRange = {
   start: string;

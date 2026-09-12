@@ -17,9 +17,11 @@ const TABS = [
 ] as const;
 
 /**
- * K.9 pattern — 0 clicks to see controls. The filter bar (period + date range) is
- * visible on first load via defaultOpen={true} on the CollapsedListFilters inside
- * UniversalFilterBar.
+ * ROUND 20.6 S4 (owner-live 2026-09-12, supersedes the earlier K.9 "0 clicks to see controls"
+ * intent below): defaultOpen={true} meant the Filters popover was open on every first load AND
+ * re-opened on every tab switch (this component remounts per tab), covering the top-left quadrant
+ * including the first three data rows on every single tab visit. It must open closed and stay
+ * closed until the operator asks for it.
  */
 function PlannerControls() {
   const { range, setRange } = usePlannerRange();
@@ -44,7 +46,7 @@ function PlannerControls() {
 
   return (
     <>
-      <UniversalFilterBar value={filters} onChange={applyFilters} defaultPeriod="custom" defaultOpen={true} />
+      <UniversalFilterBar value={filters} onChange={applyFilters} defaultPeriod="custom" defaultOpen={false} />
       <PlannerRangeToolbar />
     </>
   );

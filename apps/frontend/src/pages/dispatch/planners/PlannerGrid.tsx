@@ -88,6 +88,13 @@ type Props = {
   ///  earliest and latest outside-bar YMD dates so the parent can widen `days` (the rendered
   ///  range/set). Must NOT merely scroll — the range itself must change.
   onExpandRange?: (minOutsideYmd: string, maxOutsideYmd: string) => void;
+  /// ROUND 20.6 T4 (owner-live 2026-09-12): a page that stacks two PlannerGrid instances (one row
+  /// group per driver sub-section, e.g. in-service vs HOS-violation) got TWO identical month/day
+  /// axis headers and two identical frozen-column headers, one per section. Set false on every
+  /// instance after the first shared board so only one axis header renders. Each instance still
+  /// scrolls independently -- this only suppresses the duplicate header chrome, not a full
+  /// scroll-sync (out of scope for this pass).
+  showAxisHeader?: boolean;
 };
 
 export function ymdFromMs(ms: number): string {
@@ -172,7 +179,11 @@ function frozenGridTemplate(
   hasAction: boolean
 ): string {
   const cols = ["minmax(100px, 1fr)"];
-  if (hasSecondary) cols.push("minmax(0, 1fr)");
+  // ROUND 20.6 D2 (owner-live 2026-09-12): minmax(0, 1fr) let the Safety Profile link/timestamp
+  // squeeze to a single visible letter ("S") whenever the frozen box was tight -- a 0 floor means
+  // "shrink to nothing before anything else does." A real floor keeps it readable; the full fix
+  // (the box itself being too narrow) is ROUND 20.7's autofit law, not a column-template value.
+  if (hasSecondary) cols.push("minmax(90px, 1fr)");
   if (hasUnit) cols.push("56px");
   if (hasStatus) cols.push("64px");
   if (hasAction) cols.push("72px");
@@ -231,6 +242,7 @@ export function PlannerGrid({
   testId,
   style,
   onExpandRange,
+  showAxisHeader = true,
 }: Props) {
   const today = todayYmdAmericaChicago();
   const bands = plannerMonthBands(days);
@@ -385,6 +397,7 @@ export function PlannerGrid({
         style={{ cursor: drag?.active ? "grabbing" : "grab" }}
       >
         <div className="pg-grid">
+          {showAxisHeader ? (
           <div className="pg-axis" data-testid="planner-time-axis">
             <div className="pg-arow" data-testid="planner-axis-month-row">
               <div
@@ -462,6 +475,7 @@ export function PlannerGrid({
               })}
             </div>
           </div>
+          ) : null}
           {sortedRows.length === 0 ? (
             <div className="pg-empty">{empty}</div>
           ) : (

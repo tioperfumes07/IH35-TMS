@@ -7,7 +7,10 @@ function ymdFromIso(iso: string | null | undefined, fallback: string): string {
   return iso.slice(0, 10);
 }
 
-function barKind(tripType: string | null | undefined): PlannerBarKind {
+// ROUND 20.6 S7: exported so callers building their own PlannerGridBar[] (e.g. UnifiedTimelinePlanner,
+// which has to read trip_type from a separately-fetched richer load row) apply the identical
+// nb/sb/tr normalization groupPlannerBarsByKey uses, instead of a second, possibly-diverging copy.
+export function barKind(tripType: string | null | undefined): PlannerBarKind {
   const t = (tripType ?? "").toLowerCase();
   if (t === "nb" || t === "sb" || t === "tr") return t as PlannerBarKind;
   return "tr";
