@@ -2219,3 +2219,52 @@ Settlement Detail page) | ROUND 17.2 ratchet fix included in the same PR | 2 pre
 regressions flagged for CC-2 (driver-pwa-load-status-gate, pass-7 Customers-pagination) | freeze
 on S-2026-5769–5800 respected throughout (read-only view of 5779 only) | NEXT: resuming the
 standing idle-loop sweep.
+
+## CC-1 — ROUND 18.1 Item A SHIPPED+LIVE, Item B measured, 2026-09-12 01:50 UTC
+
+**ITEM A (ACCT-F26142, deadline 03:30Z — MET):** PR #21877 merged (squash
+`8dcea11015787317cacfdfff5c479159372f2311`). Root cause exactly as the Lead measured:
+`LoadCostsBoardPage.tsx`'s `isClosed()` included `|| r.is_resettlement === true`, a TOUR-level flag
+that closed every load on a tour the instant the tour's FIRST load closed/invoiced — hiding 7
+genuinely in-route loads. Fix: `isClosed()` now checks only `CLOSED.includes(r.status) ||
+r.is_invoiced`; `isResettlement()` (the Resettlement tab's own test) is untouched, so the original
+closed load and its dispatched continuation still list there with the same settlement link.
+`verify-load-costs-settlement-column-and-invoiced-not-open.mjs`'s `frontendIsClosedHonorsIsInvoiced()`
+extended with a negative assertion (scoped to `isClosed()`'s own arrow body only, so it can't
+false-positive on `isResettlement()`'s legitimate separate use of the field) — selftest 11/11, one
+mutation now plants this exact regression shape. `LoadCostsBoardPage.registers.test.tsx`'s REG-040
+continuation test rewritten to assert the opposite of the old (overturned) behavior — 8/8 tests pass.
+
+Both deploys triggered post-merge (backend `dep-daiatkojo6nc73932vpg`, frontend
+`dep-daiatlfqj5pc73fp0grg`), both confirmed LIVE. **Live Chrome proof** (Load Costs → Costs tab →
+In Motion pill): `LOADS IN MOTION: 7`, `1–7 of 7`, and all seven named loads render —
+13587/13590/13591/13592/13593/13594/13595 — exactly the set the Lead measured. Screenshot-equivalent
+page-text capture taken; no other load bled into the view.
+
+**ITEM B (deadline 04:15Z — MET), both measured lines:**
+1. `node scripts/verify-go26-consolidation-ratchet.mjs` → `PASS`; `--worklist` shows
+   `components/DataTable (20 files)` — the frozen baseline, unchanged, and
+   `LoadExceptionReasonsListPage.tsx` is NOT among them (it uses ParityTable since the earlier
+   ROUND 17.2 fix, PR #21868). No regression line.
+2. `202614090000_load_exception_reasons.sql` replays clean on a genuinely fresh DB (Postgres 16,
+   Docker, matching CI's `postgres:16-alpine` service exactly — `catalogs.load_exception_reasons`
+   created, seed correctly inserts 0 rows since `org.companies` is empty on a fresh DB, the
+   `WHERE EXISTS` guard from #21864 working as intended). Full migrate log:
+   `APPLY 202614090000_load_exception_reasons.sql` with no error, `Migrations applied
+   successfully.` at the end.
+
+**ITEM C (deadline 06:30Z — in progress, PR open):** Reproduced pass-7's AUDIT-FIX-13. The failure
+was NEVER about Customers — `verify-audit-fix-13-customers-pagination-works.mjs` chains
+`verify:list-cards-are-anchors` (genuinely Customers-scoped, already passing) with
+`verify:header-counts-match-actual` (unrelated), and the real failure was
+`"dispatch module count spec has 12 tables, expected 11"` — a ratchet baseline this seat's own
+Item 1 PR (#21852) grew the real dispatch count-spec array to 12 without bumping in the same PR, per
+that guard's own documented process. No live product bug ever existed (the real badge always read
+the correct live count). PR #21880 open: bumps the ratchet to 12, extracts the check into a testable
+pure function with a new selftest proving the ratchet actually fires on drift, full pass-7 suite
+17/17 green. Awaiting CI required-checks-gate before merge.
+
+DONE LINE: CC-1 | ROUND 18.1 Item A SHIPPED+LIVE (#21877, `8dcea110`, live Chrome 7/7 loads
+confirmed) | Item B measured (both lines above, no regression) | Item C root-caused (own earlier
+PR's stale ratchet, not Customers) and PR #21880 open, merging on green | NEXT: Item D
+(Customers/Vendors re-measure against TAB-COMPLETION-STANDARD.md) once C merges+deploys.
