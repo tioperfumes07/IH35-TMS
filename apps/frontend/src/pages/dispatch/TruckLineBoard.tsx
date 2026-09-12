@@ -643,6 +643,15 @@ export function TruckLineBoard({
           padding: 6px 10px;
           border-bottom: 1px solid #E5E7EB;
         }
+        .truck-line-v4-unit { font-size: clamp(12px, 0.85vw, 14px); }
+        .truck-line-v4-sub { font-size: clamp(10px, 0.72vw, 12px); }
+        .truck-line-v4-cap { font-size: clamp(9px, 0.72vw, 11px); }
+        .truck-line-v4-appt { font-size: clamp(11px, 0.8vw, 13px); }
+        .truck-line-v4-cap-narrow { display: none; }
+        /* This media block must stay AFTER the base rules above — equal-specificity CSS resolves
+           by SOURCE ORDER, not by whether a media query matches, so a later base rule would win
+           over an earlier media-scoped override even while the query is active. (Found live: both
+           spans rendered display:none at 856px until this block was moved below its base rules.) */
         @media (max-width: ${FOLD_BREAKPOINT_PX}px) {
           .truck-line-v4-header, .truck-line-v4-row {
             grid-template-columns: ${GRID_TEMPLATE_COLUMNS_NARROW};
@@ -652,11 +661,6 @@ export function TruckLineBoard({
           .truck-line-v4-cap-full { display: none; }
           .truck-line-v4-cap-narrow { display: inline; }
         }
-        .truck-line-v4-unit { font-size: clamp(12px, 0.85vw, 14px); }
-        .truck-line-v4-sub { font-size: clamp(10px, 0.72vw, 12px); }
-        .truck-line-v4-cap { font-size: clamp(9px, 0.72vw, 11px); }
-        .truck-line-v4-appt { font-size: clamp(11px, 0.8vw, 13px); }
-        .truck-line-v4-cap-narrow { display: none; }
         .truck-line-vehicle {
           position: absolute;
           transform: translateX(-50%);
