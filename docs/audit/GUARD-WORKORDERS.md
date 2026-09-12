@@ -11036,3 +11036,27 @@ adjacent test; direct run OK.
 directly against Neon), 7 dispatched (T148/13595, T156/13587, T164/13590, T168/13591, T170/13593,
 T171/13594, T177/13592). `catalogs.load_exception_reasons`: 11 active rows, live. Full Chrome
 screenshot + double-click proof in `docs/bus/OUTBOX-CC-2.md`.
+
+## URGENT — migration number COLLISION at 202614100000 blocking ALL deploys (CC-2, 2026-09-11, live-caught)
+
+Two different, both-real migration files share the SAME number `202614100000`:
+  - `db/migrations/202614100000_load_exception_reasons_rls_fix.sql` (#21856) — APPLIED, in the
+    ledger (`_system._schema_migrations`, applied_at 2026-09-11T22:37:36.552Z).
+  - `db/migrations/202614100000_drivers_status_locked_reason_admits_test_fixture_quarantine.sql`
+    (#21864) — NOT in the ledger; the deploy's own migration replay
+    (`npm run db:migrate && npm run db:verify:critical-runtime`, Render preDeployCommand) is what
+    caught this: triggering a backend deploy at tip `a9667c1388` (which includes #21864) produced
+    `status: "pre_deploy_failed"` (dep-dai9she743jc73eac28g, 2026-09-11 22:35-22:37Z) -- the
+    duplicate-number collision is the only schema-side change in that commit range that could
+    explain a pre-deploy failure with a clean build.
+
+**Live impact:** `npm run db:migrate` runs on EVERY backend deploy (Render's preDeployCommand) --
+this collision blocks EVERY future backend deploy from this point on main, for every seat, until
+one of the two files is renumbered to a fresh, non-colliding timestamp (the applied one,
+`_rls_fix.sql`, cannot be renumbered -- it's already in the ledger by its current filename; the
+unapplied one, `_admits_test_fixture_quarantine.sql`, is the one to renumber).
+
+Both migrations are Claude Lead's own commits (`4bc625a858` #21856, `a9667c1388` #21864) -- flagging
+here since this seat cannot author/rename migrations (migration lane law: CC-1 or Cursor only, or
+whoever owns the file). Not touched by this seat. Blocks CC-2's own Truck Line backend deploy as a
+side effect (same tip, unrelated commit range) -- retrying once resolved.
