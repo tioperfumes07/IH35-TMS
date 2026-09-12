@@ -165,7 +165,9 @@ export function TrailerProfilePage() {
   const trailerLabel = entityLabel(equipment.equipment_number, id, "Trailer");
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] space-y-3 p-4 pb-20">
+    // ROUND-20.7 (APP-WIDE AUTOFIT LAW) -- profile/detail layout, not a data board; comfort cap
+    // stays, expressed in rem per the law's own §1 exception, never a raw px cap.
+    <div className="mx-auto w-full max-w-[100rem] space-y-3 p-4 pb-20">
       <PageHeader backHref="/fleet" breadcrumb={["Fleet", trailerLabel]} title={trailerLabel} subtitle="Trailer profile" actions={
         <button type="button" data-testid="trailer-profile-edit" className="inline-flex h-7 items-center rounded-sm border border-gray-300 bg-white px-2 text-xs font-semibold text-gray-800 hover:bg-gray-50" onClick={() => setEditModalOpen(true)}>Edit trailer</button>
       } />

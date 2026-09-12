@@ -279,7 +279,9 @@ export function VehicleProfilePage() {
   const showBackhaul = quickAvailability === "available" && !profile?.current_load;
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] space-y-3 p-4 pb-24">
+    // ROUND-20.7 (APP-WIDE AUTOFIT LAW) -- profile/detail layout, not a data board; comfort cap
+    // stays, expressed in rem per the law's own §1 exception, never a raw px cap.
+    <div className="mx-auto w-full max-w-[100rem] space-y-3 p-4 pb-24">
       <div className="flex items-start justify-between gap-2">
         <PageHeader backHref="/fleet" breadcrumb={["Fleet", `Unit ${unitNumber}`]} title={`Unit ${unitNumber}`} subtitle="Vehicle profile" actions={profile ? (
           <Button size="sm" variant="secondary" data-testid="vehicle-profile-edit" onClick={() => setEditModalOpen(true)}>Edit unit</Button>

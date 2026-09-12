@@ -27,16 +27,25 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-// Registry, not a total inventory — extend as more data-board pages are converted.
+// Registry, not a total inventory — extend as more data-board pages are converted. The 4 entries
+// below already carry no page-level max-w[NNNpx] cap (built that way from the start this session,
+// not converted here) — added to LOCK that in, so none of them regrows one later.
 const DATA_BOARD_FILES = [
   "apps/frontend/src/pages/dispatch/planners/DispatchPlannersLayout.tsx",
   "apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx",
+  "apps/frontend/src/pages/dispatch/TruckLineBoard.tsx",
+  "apps/frontend/src/pages/dispatch/RoundTrips.tsx",
+  "apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx",
+  "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
 ];
 
 const PLANNER_GRID_FILE = "apps/frontend/src/pages/dispatch/planners/PlannerGrid.tsx";
 const TITLED_COL_CLASSES = ["pg-col-sec", "pg-col-unit", "pg-col-status", "pg-col-action"];
 
-const MAX_W_PX_RE = /max-w-\[[0-9]+px\]/;
+// Page-shell scale only (>= 900px) — DispatchKanban.tsx (in this registry) legitimately carries
+// small component-level max-w-[90px]/[110px] caps (a lane-label span, a driver-name truncation),
+// unrelated to "no page-level px cap"; a bare any-digit-count regex would false-positive on those.
+const MAX_W_PX_RE = /max-w-\[(9[0-9]{2}|[1-9][0-9]{3,})px\]/;
 
 function read(relPath) {
   return fs.readFileSync(path.join(ROOT, relPath), "utf8");
