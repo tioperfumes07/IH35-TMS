@@ -1,6 +1,13 @@
 // TABLE_DATE_OMIT: this table has no date column by design (not a time-series view).
 
 import { useEffect, useState } from "react";
+import { settlementNumber } from "../../lib/settlementNumber";
+
+// SETTLEMENT-NUMBER-IS-ALWAYSTRACK-DOC (owner 2026-09-11/12): the register shows the AlwaysTrack 4-digit
+// document number and nothing else. An OPEN tour has no document yet ("Open"); a CLOSED tour that was
+// never given one reads "No number" — honest, never the retired S-YYYY-NNNN counter, never a bare dash
+// the owner cannot act on. The number is allocated at tour close by the P1 numbering work.
+const tourLabel = (r: TourListRow) => settlementNumber(r) ?? (r.is_open ? "Open" : "No number");
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -24,7 +31,7 @@ const fmt = (c: number) => money.format(c / 100);
 const DASH = "\u2014";
 
 const TOUR_COLUMNS = (state: "open" | "closed", companyId: string): ParityColumn<TourListRow>[] => [
-  { key: "tour", label: "Settlement/Tour", alwaysVisible: true, testId: "setl-tour-col-id", sortable: true, className: "whitespace-nowrap", minWidth: 90, sortValue: r => r.display_id ?? "", render: r => <Link className="ldt-link font-semibold" style={{ display: "inline" }} to={`/driver-finance/settlements?settlement_id=${encodeURIComponent(r.settlement_id)}`}>{r.display_id ?? "Settlement"}</Link> },
+  { key: "tour", label: "Settlement/Tour", alwaysVisible: true, testId: "setl-tour-col-id", sortable: true, className: "whitespace-nowrap", minWidth: 90, sortValue: r => tourLabel(r), render: r => <Link className="ldt-link font-semibold" style={{ display: "inline" }} to={`/driver-finance/settlements?settlement_id=${encodeURIComponent(r.settlement_id)}`}>{tourLabel(r)}</Link> },
   // COLUMN-ORDERING LAW (owner 2026-09-11): Load renders immediately next to Settlement, same as
   // every other surface this rule is applied to — before Driver/Unit, not after.
   ...tourLoadColumns("setl-tour-col"),
@@ -33,10 +40,10 @@ const TOUR_COLUMNS = (state: "open" | "closed", companyId: string): ParityColumn
   // NEW-10 (owner 2026-09-07): "date started" + "delivery date" of the ORIGINAL load that created the
   // (re)settlement. Distinct from the tour-level "Started" (trip-open) stamp below — these are the
   // original load's own first-pickup / last-delivery stop dates, tooltip-tagged with its load number.
-  { key: "origin_started", label: "Date started", testId: "setl-tour-col-origin-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "First pickup date of the ORIGINAL load that created this settlement", sortValue: r => r.origin_pickup_date ?? "", exportValue: r => (r.origin_pickup_date ? mmmDd(r.origin_pickup_date) : ""), render: r => r.origin_pickup_date ? <span title={r.origin_load_number ? `Load ${r.origin_load_number}` : undefined}>{mmmDd(r.origin_pickup_date)}</span> : DASH },
-  { key: "origin_delivered", label: "Delivery date", testId: "setl-tour-col-origin-delivered", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "Delivery date of the ORIGINAL load that created this settlement", sortValue: r => r.origin_delivery_date ?? "", exportValue: r => (r.origin_delivery_date ? mmmDd(r.origin_delivery_date) : ""), render: r => r.origin_delivery_date ? <span title={r.origin_load_number ? `Load ${r.origin_load_number}` : undefined}>{mmmDd(r.origin_delivery_date)}</span> : DASH },
-  { key: "started", label: "Started", testId: "setl-tour-col-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "When this tour/settlement opened (trip-start stamp) — see Date started for the original load's pickup", sortValue: r => r.trip_started_at ?? "", render: r => r.trip_started_at ? mmmDd(r.trip_started_at) : DASH },
-  ...(state === "closed" ? [{ key: "closed", label: "Closed", testId: "setl-tour-col-closed", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, sortValue: (r: TourListRow) => r.trip_closed_at ?? "", render: (r: TourListRow) => r.trip_closed_at ? mmmDd(r.trip_closed_at) : DASH } as ParityColumn<TourListRow>] : []),
+  { key: "origin_started", label: "Original load pickup", testId: "setl-tour-col-origin-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "First pickup date of the ORIGINAL load that created this settlement", sortValue: r => r.origin_pickup_date ?? "", exportValue: r => (r.origin_pickup_date ? mmmDd(r.origin_pickup_date) : ""), render: r => r.origin_pickup_date ? <span title={r.origin_load_number ? `Load ${r.origin_load_number}` : undefined}>{mmmDd(r.origin_pickup_date)}</span> : DASH },
+  { key: "origin_delivered", label: "Original load delivery", testId: "setl-tour-col-origin-delivered", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "Delivery date of the ORIGINAL load that created this settlement", sortValue: r => r.origin_delivery_date ?? "", exportValue: r => (r.origin_delivery_date ? mmmDd(r.origin_delivery_date) : ""), render: r => r.origin_delivery_date ? <span title={r.origin_load_number ? `Load ${r.origin_load_number}` : undefined}>{mmmDd(r.origin_delivery_date)}</span> : DASH },
+  { key: "started", label: "Date started", testId: "setl-tour-col-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "When this tour/settlement opened (trip-start stamp) — see Date started for the original load's pickup", sortValue: r => r.trip_started_at ?? "", render: r => r.trip_started_at ? mmmDd(r.trip_started_at) : DASH },
+  ...(state === "closed" ? [{ key: "closed", label: "Date ended", testId: "setl-tour-col-closed", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, sortValue: (r: TourListRow) => r.trip_closed_at ?? "", render: (r: TourListRow) => r.trip_closed_at ? mmmDd(r.trip_closed_at) : DASH } as ParityColumn<TourListRow>] : []),
   { key: "revenue", label: "Revenue", testId: "setl-tour-col-revenue", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.revenue_cents, render: r => fmt(r.revenue_cents) },
   { key: "costs", label: "Costs", testId: "setl-tour-col-costs", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.costs_cents, render: r => fmt(r.costs_cents) },
   { key: "driver_pay", label: "Driver pay", testId: "setl-tour-col-driver-pay", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.driver_pay_cents, render: r => fmt(r.driver_pay_cents) },
@@ -82,7 +89,7 @@ function PostTourAction({ row, companyId }: { row: TourListRow; companyId: strin
   const post = useMutation({
     mutationFn: () => closeTour(row.settlement_id, companyId),
     onSuccess: async () => {
-      pushToast(`Pre-settlement ${row.display_id ?? ""} posted — settlement is now frozen`, "success");
+      pushToast(`Pre-settlement ${tourLabel(row)} posted — settlement is now frozen`, "success");
       setConfirming(false);
       await qc.invalidateQueries({ queryKey: ["settlements-module", "tours"] });
       await qc.invalidateQueries({ queryKey: ["tour-readout"] });
@@ -106,7 +113,7 @@ function PostTourAction({ row, companyId }: { row: TourListRow; companyId: strin
       {confirming ? (
         <div className="ldt-modal-backdrop" onClick={(e) => { e.stopPropagation(); setConfirming(false); }} data-testid="setl-tour-post-confirm">
           <div className="ldt-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-            <div className="ldt-modal-head"><span className="ldt-modal-title">Post {row.display_id ?? "pre-settlement"} → Settlement</span><button type="button" className="ldt-btn g" onClick={() => setConfirming(false)} aria-label="Close">×</button></div>
+            <div className="ldt-modal-head"><span className="ldt-modal-title">Post {tourLabel(row)} → Settlement</span><button type="button" className="ldt-btn g" onClick={() => setConfirming(false)} aria-label="Close">×</button></div>
             <div className="ldt-modal-body">
               <p>This posts the pre-settlement for <b>{row.driver_name ?? "the driver"}</b> into a settlement: earnings and escrow lines are written and the company settlement for the period closes alongside. Nothing posts to the general ledger here — posting happens at pay-run close.</p>
               {readoutQ.isLoading ? <div className="ldt-note">Checking open items…</div>
