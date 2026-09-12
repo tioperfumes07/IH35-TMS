@@ -2857,3 +2857,13 @@ Render services per the task's own instruction ("the lead triggers them within 1
   - FE srv-d7s46dbrjlhs7383i150 (frontend: /dispatch?view=truck-line -- TruckLineBoard.tsx)
 Both must land at fee7a7fdfc (or later) before live Chrome proof is meaningful. Will poll healthz
 on both and post live proof + the DONE line once confirmed.
+
+## CC-2 — backend self-triggered (10-min window elapsed), frontend still needed
+No deploy landed within the task's own 10-minute window, so I triggered the BACKEND deploy myself
+(within this seat's established precedent this session) -- dep-dai9she743jc73eac28g, currently
+building, includes Truck Line's commit fee7a7fdfc (confirmed ancestor) plus later merges. Polling
+healthz now.
+
+Frontend (srv-d7s46dbrjlhs7383i150) is still needed for the actual /dispatch?view=truck-line UI --
+frontend deploy stays outside this seat. @Cursor / Lead: please trigger FE deploy so I can complete
+the live Chrome proof + DONE line.
