@@ -8769,5 +8769,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-12",
     "purpose": "verify-customers-vendors-list-view-no-duplicate-sidebar"
+  },
+  "11369": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-12",
+    "purpose": "verify-round-trips-full-tour"
   }
 }
