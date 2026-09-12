@@ -21,10 +21,18 @@ const MINT = "apps/backend/src/accounting/proforma-mint-on-first-pickup.ts";
 const FROM_LOAD = "apps/backend/src/accounting/from-load.ts";
 const CALLERS = [
   "apps/backend/src/mdata/loads.routes.ts",
-  "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts",
   "apps/backend/src/driver/loads.routes.ts",
   "apps/backend/src/telematics/geofence-detector.service.ts",
 ];
+// TRUCK LINE (2026-09-11): driver-pwa/dispatch-view.routes.ts's arrival/departure handlers no
+// longer call mintProformaInvoiceOnFirstPickup directly — that call, and the whole write+side-
+// effect chain, moved into a shared apps/backend/src/dispatch/stop-stamp.service.ts so a second
+// caller (Truck Line's office-facing stop-stamp.routes.ts) can reuse the IDENTICAL logic instead
+// of re-typing it. Checked separately below: the shared file still calls the mint, and driver-pwa
+// still calls the shared functions that call it — never re-verify plain text presence in
+// dispatch-view.routes.ts itself, which is exactly the drift this guard exists to prevent.
+const SHARED_STAMP_SERVICE = "apps/backend/src/dispatch/stop-stamp.service.ts";
+const SHARED_STAMP_CALLER = "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts";
 
 function stripComments(src) {
   return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
@@ -88,12 +96,20 @@ function check(s) {
       errors.push(`${caller}: does not call mintProformaInvoiceOnFirstPickup — a pickup path can skip the mint`);
     }
   }
+  if (!/mintProformaInvoiceOnFirstPickup\(/.test(s[SHARED_STAMP_SERVICE])) {
+    errors.push(`${SHARED_STAMP_SERVICE}: does not call mintProformaInvoiceOnFirstPickup — a pickup path can skip the mint`);
+  }
+  if (!/\bstampStopArrival\b/.test(s[SHARED_STAMP_CALLER]) || !/\bstampStopDeparture\b/.test(s[SHARED_STAMP_CALLER])) {
+    errors.push(`${SHARED_STAMP_CALLER}: does not call the shared stampStopArrival/stampStopDeparture — reinvented its own write path`);
+  }
   return errors;
 }
 
 function loadAll() {
   const files = { [BOOK]: read(BOOK), [MINT]: read(MINT), [FROM_LOAD]: read(FROM_LOAD) };
   for (const c of CALLERS) files[c] = read(c);
+  files[SHARED_STAMP_SERVICE] = read(SHARED_STAMP_SERVICE);
+  files[SHARED_STAMP_CALLER] = read(SHARED_STAMP_CALLER);
   return files;
 }
 

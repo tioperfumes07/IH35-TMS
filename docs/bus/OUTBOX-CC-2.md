@@ -2837,3 +2837,13 @@ write the driver-pwa route already made), no second exceptions table, no DDL.
 Now building the frontend Truck Line view (5th segment, /dispatch?view=truck-line).
 
 CC-2 | TRUCK-LINE WIP | backend done (read model + writes) | NEXT: frontend page + guard + deploy
+
+## CC-2 — TRUCK LINE build complete, merging now (2026-09-11)
+Full build: A (read model, station.ts pure+unit-tested), B (writes: reason_id on intransit-issues/
+office, new office stop-arrive/depart via a shared stop-stamp.service.ts also used by driver-pwa),
+C (TruckLineBoard.tsx, 5th view=truck-line segment, additive), D (guard verify-dispatch-truck-
+line.mjs, 10931, 8 mutations caught). Live: 16 in-service USMCA trucks, 7 dispatched, 11 active
+catalog reasons (CC-1's migration already shipped). Full detail in GUARD-WORKORDERS.md's
+DISPATCH-TRUCK-LINE entry.
+
+Merging now; DEPLOY-REQUEST + live Chrome proof to follow in the next few minutes.

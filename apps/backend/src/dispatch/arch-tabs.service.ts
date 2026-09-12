@@ -285,6 +285,7 @@ export async function createOfficeIntransitIssue(
   operatingCompanyId: string,
   body: {
     load_id: string;
+    reason_id?: string;
     issue_category: string;
     issue_description: string;
     severity: "info" | "warning" | "severe";
@@ -313,6 +314,28 @@ export async function createOfficeIntransitIssue(
     const unitId = body.unit_id ?? load.assigned_unit_id;
     if (!driverId || !unitId) return { ok: false as const, error: "load_missing_assignment" };
 
+    // TRUCK LINE (2026-09-11) — reason_id, when the caller supplies one, must resolve to an
+    // ACTIVE catalogs.load_exception_reasons row in the SAME company; its code then overrides
+    // issue_category so the stored category always matches a real catalog entry, never a
+    // hand-typed string a future reader can't join back to the catalog. Gracefully tolerates the
+    // catalog table not existing yet (build-ahead-of-migration, per the Lead's own instruction) —
+    // reason_id is simply ignored (issue_category as supplied by the caller is used) until CC-1's
+    // migration lands.
+    let issueCategory = body.issue_category;
+    if (body.reason_id) {
+      const reasonTableRes = await client.query(`SELECT to_regclass('catalogs.load_exception_reasons') IS NOT NULL AS ok`);
+      const reasonTableExists = Boolean((reasonTableRes.rows[0] as { ok?: boolean } | undefined)?.ok);
+      if (reasonTableExists) {
+        const reasonRes = await client.query<{ code: string }>(
+          `SELECT code FROM catalogs.load_exception_reasons WHERE id = $1::uuid AND operating_company_id = $2::uuid AND is_active = true LIMIT 1`,
+          [body.reason_id, operatingCompanyId]
+        );
+        const reason = reasonRes.rows[0];
+        if (!reason) return { ok: false as const, error: "reason_not_found" as const };
+        issueCategory = reason.code;
+      }
+    }
+
     const insertRes = await client.query<{ id: string; reported_at: string }>(
       `
         INSERT INTO dispatch.intransit_issues (
@@ -321,7 +344,7 @@ export async function createOfficeIntransitIssue(
         VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, 'open', now())
         RETURNING id, reported_at
       `,
-      [operatingCompanyId, body.load_id, driverId, unitId, body.issue_category, body.issue_description, body.severity]
+      [operatingCompanyId, body.load_id, driverId, unitId, issueCategory, body.issue_description, body.severity]
     );
     const issue = insertRes.rows[0];
     if (!issue) return { ok: false as const, error: "create_failed" as const };

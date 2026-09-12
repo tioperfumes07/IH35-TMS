@@ -9,12 +9,10 @@
 
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
-import { latchOnDeliveryEvidence } from "../delivery-evidence-latch.js";
-import { mintProformaInvoiceOnFirstPickup } from "../../accounting/proforma-mint-on-first-pickup.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireDriverSession } from "../../driver/auth.js";
-import { validateLoadStopStatusWrite } from "../load-state-machine.js";
+import { stampStopArrival, stampStopDeparture } from "../stop-stamp.service.js";
 // ACCT-F166 — settlement half of a delivery; see the call site for why this route needs it.
 import { pingSettlementOnLoadEvent } from "../../driver-finance/settlements-load-bookended.service.js";
 
@@ -364,58 +362,20 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
       const stop = stopRes.rows[0] ?? null;
       if (!stop) return { error: "forbidden" as const };
 
-      const nextLoadStatus = stop.stop_type === "pickup" ? "at_pickup" : "at_delivery";
-      const transition = validateLoadStopStatusWrite(stop.load_status, nextLoadStatus);
-      if (!transition.ok) return { error: "invalid_load_state" as const, from: transition.from, to: transition.to };
-
       if (stop.latitude != null && stop.longitude != null) {
         const distance = haversineMiles(body.data.geo_lat, body.data.geo_lng, Number(stop.latitude), Number(stop.longitude));
         if (distance > 25) return { error: "outside_geofence" as const, distance };
       }
 
-      const arrivalUpdate = await client.query(
-        `
-          UPDATE mdata.load_stops
-          SET actual_arrival_at = now(),
-              actual_arrival_source = 'driver_app',
-              status = 'arrived'
-          WHERE id = $1
-            AND load_id = $2
-            AND actual_arrival_at IS NULL
-          RETURNING id
-        `,
-        [params.data.stop_uuid, params.data.uuid]
-      );
-      if (!arrivalUpdate.rows[0]?.id) return { error: "arrival_already_recorded" as const };
-
-      const loadUpdate = await client.query(
-        `UPDATE mdata.loads
-         SET status = $2
-         WHERE id = $1
-           AND operating_company_id = $3::uuid
-           AND status::text = $4
-         RETURNING id`,
-        [params.data.uuid, nextLoadStatus, stop.operating_company_id, stop.load_status]
-      );
-      if (!loadUpdate.rows[0]?.id) return { error: "load_transition_conflict" as const };
-
-      await appendCrudAudit(client, req.user!.uuid, "dispatch.driver_pwa.stop_arrival", {
-        load_id: params.data.uuid,
-        stop_id: params.data.stop_uuid,
-      });
-
-      const pickupMint = await mintProformaInvoiceOnFirstPickup(client, {
-        operatingCompanyId: stop.operating_company_id,
+      const result = await stampStopArrival(client, stop, {
         loadId: params.data.uuid,
         actorUserId: req.user!.uuid,
-        stopId: params.data.stop_uuid,
+        source: "driver_app",
+        auditEvent: "dispatch.driver_pwa.stop_arrival",
       });
-      const proformaInvoice =
-        pickupMint.outcome === "minted" || pickupMint.outcome === "idempotent"
-          ? pickupMint.invoice
-          : null;
+      if (!result.ok) return { error: result.error, from: "from" in result ? result.from : undefined, to: "to" in result ? result.to : undefined };
 
-      return { ok: true, geofence_status: "entered" as const, proforma_invoice: proformaInvoice };
+      return { ok: true, geofence_status: "entered" as const, proforma_invoice: result.proforma_invoice };
     });
 
     if ("error" in updated) {
@@ -478,85 +438,20 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
       );
       const stop = stopRes.rows[0] ?? null;
       if (!stop) return { error: "forbidden" as const };
-      if (!["arrived", "loaded", "unloaded"].includes(stop.status)) return { error: "invalid_stop_state" as const };
-
-      const nextLoadStatus = stop.stop_type === "delivery" ? "delivered_pending_docs" : "in_transit";
-      const transition = validateLoadStopStatusWrite(stop.load_status, nextLoadStatus);
-      if (!transition.ok) return { error: "invalid_load_state" as const, from: transition.from, to: transition.to };
-
       if (stop.latitude != null && stop.longitude != null) {
         const distance = haversineMiles(body.data.geo_lat, body.data.geo_lng, Number(stop.latitude), Number(stop.longitude));
         if (distance > 25) return { error: "outside_geofence" as const, distance };
       }
 
-      const departureUpdate = await client.query(
-        `
-          UPDATE mdata.load_stops
-          SET actual_departure_at = now(),
-              actual_departure_source = 'driver_app',
-              status = 'departed'
-          WHERE id = $1
-            AND load_id = $2
-            AND actual_departure_at IS NULL
-          RETURNING id
-        `,
-        [params.data.stop_uuid, params.data.uuid]
-      );
-      if (!departureUpdate.rows[0]?.id) return { error: "departure_already_recorded" as const };
-
-      const loadUpdate = await client.query(
-        `UPDATE mdata.loads
-         SET status = $2
-         WHERE id = $1
-           AND operating_company_id = $3::uuid
-           AND status::text = $4
-         RETURNING id`,
-        [params.data.uuid, nextLoadStatus, stop.operating_company_id, stop.load_status]
-      );
-      if (!loadUpdate.rows[0]?.id) return { error: "load_transition_conflict" as const };
-
-      // CLS-DISP-WIRE-07 — the driver's departure is the delivery evidence. Without this the office
-      // transition was the ONLY path that latched revenue, so a load delivered in the field never
-      // reached hops 6-9. Shared helper: no-op unless nextLoadStatus is a delivery-evidence status.
-      await latchOnDeliveryEvidence(client, {
-        operatingCompanyId: stop.operating_company_id,
-        loadId: params.data.uuid,
-        targetStatus: nextLoadStatus,
-        actorUserId: req.user!.uuid,
-      });
-
-      // ACCT-F166 — the settlement half. `pingSettlementOnLoadEvent` on `delivered_pending_docs` calls
-      // closeSettlementForFinalLoad, so a delivery path that latches revenue WITHOUT pinging leaves the
-      // driver's trip settlement OPEN FOREVER: revenue recognised, the settlement that pays the driver
-      // never closed. Non-fatal — a settlement failure must never 500 the driver's departure tap.
-      try {
-        await pingSettlementOnLoadEvent(client, {
-          loadId: params.data.uuid,
-          operatingCompanyId: stop.operating_company_id,
-          dispatchTargetStatus: nextLoadStatus,
-          actorUserId: req.user!.uuid,
-        });
-      } catch (err) {
-        console.warn({ err, load_id: params.data.uuid }, "driver_pwa_settlement_ping_failed");
-      }
-
-      await appendCrudAudit(client, req.user!.uuid, "dispatch.driver_pwa.stop_departure", {
-        load_id: params.data.uuid,
-        stop_id: params.data.stop_uuid,
-      });
-
-      const pickupMint = await mintProformaInvoiceOnFirstPickup(client, {
-        operatingCompanyId: stop.operating_company_id,
+      const result = await stampStopDeparture(client, stop, {
         loadId: params.data.uuid,
         actorUserId: req.user!.uuid,
-        stopId: params.data.stop_uuid,
+        source: "driver_app",
+        auditEvent: "dispatch.driver_pwa.stop_departure",
       });
-      const proformaInvoice =
-        pickupMint.outcome === "minted" || pickupMint.outcome === "idempotent"
-          ? pickupMint.invoice
-          : null;
+      if (!result.ok) return { error: result.error, from: "from" in result ? result.from : undefined, to: "to" in result ? result.to : undefined };
 
-      return { ok: true, geofence_status: "exited" as const, proforma_invoice: proformaInvoice };
+      return { ok: true, geofence_status: "exited" as const, proforma_invoice: result.proforma_invoice };
     });
 
     if ("error" in updated) {
