@@ -56,6 +56,7 @@ export async function registerLoadSettlementSummaryRoutes(app: FastifyInstance) 
         `SELECT
            s.id,
            s.display_id,
+           s.source_document_ref,
            s.driver_id,
            s.status,
            s.trip_closed_at,
@@ -111,6 +112,7 @@ export async function registerLoadSettlementSummaryRoutes(app: FastifyInstance) 
         settlement: {
           id: String(s.id ?? ""),
           display_id: s.display_id ? String(s.display_id) : null,
+          source_document_ref: s.source_document_ref ? String(s.source_document_ref) : null,
           status: String(s.status ?? ""),
           is_open: s.trip_closed_at === null,
           driver_id: String(s.driver_id ?? ""),

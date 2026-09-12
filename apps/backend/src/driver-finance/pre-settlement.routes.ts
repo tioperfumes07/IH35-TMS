@@ -80,7 +80,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
         `
           SELECT
             s.id            AS settlement_id,
-            s.display_id    AS settlement_number,
+            s.source_document_ref AS settlement_number,
             s.driver_id,
             trim(both from concat_ws(' ', d.first_name, d.last_name)) AS driver_name,
             s.first_load_id,
@@ -142,6 +142,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
           SELECT
             s.id,
             s.display_id,
+            s.source_document_ref,
             s.driver_id,
             trim(both from concat_ws(' ', d.first_name, d.last_name)) AS driver_name,
             s.status,
@@ -427,7 +428,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
       const rowRes = await client.query(
         `
           SELECT
-            s.id, s.display_id, s.status, s.trip_closed_at, s.net_pay, s.driver_id,
+            s.id, s.display_id, s.source_document_ref, s.status, s.trip_closed_at, s.net_pay, s.driver_id,
             d.first_name, d.last_name, d.phone,
             d.email      AS driver_row_email,
             d.identity_user_id,
@@ -525,7 +526,8 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
     const { row, pdf } = result as { row: Record<string, unknown>; pdf: { filename: string; pdfBuffer: Buffer; mimeType: string } };
 
     const driverName = `${String(row.first_name ?? "").trim()} ${String(row.last_name ?? "").trim()}`.trim() || "Driver";
-    const settlementNo = String(row.display_id ?? row.id);
+    // ACCT-F20260911: the AlwaysTrack document number is the settlement number; never the S-YYYY-NNNN counter.
+    const settlementNo = row.source_document_ref ? String(row.source_document_ref) : "pending settlement number";
     const netPay = row.net_pay != null ? Number(row.net_pay) : null;
     const amountLabel = netPay != null && Number.isFinite(netPay) ? `USD ${netPay.toFixed(2)}` : "";
     const net = netPay != null && Number.isFinite(netPay) ? netPay.toFixed(2) : "";

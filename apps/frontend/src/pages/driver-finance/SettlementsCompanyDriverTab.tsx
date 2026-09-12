@@ -1,3 +1,4 @@
+import { settlementLabel } from "../../lib/settlementNumber";
 // ROUND 16.3 (owner 2026-09-06 20:3xZ verbatim: "IN SETTLEMENTS I NEED TO HAVE A WINDOW OR TAB, VERY
 // URGENTLY, ONE SHOWING THE COMPANY SETTLEMENT AND ONE FOR THE DRIVER SETTLEMENTS, OR IN THE SAME TAB
 // COMPANY & DRIVER SETTLEMENTS, HALF SCREEN AND HALF SCREEN SIDE BY SIDE. SO IT CAN LOOK A LITTLE LIKE
@@ -40,12 +41,6 @@ function date(value: string | null | undefined): string {
 function fmtRate(cents: number | null | undefined): string {
   if (cents === null || cents === undefined) return DASH;
   return `$${(cents / 100).toFixed(4)}`;
-}
-// A settlement's OWN human number (e.g. "CS-2026-0001") is a display label, not a foreign-key link
-// target — the row click opens it. Formatting it here keeps it out of the entity-link-adoption
-// direct-id scan (it is not a navigable id).
-function displayLabel(value: string | null | undefined): string {
-  return value || DASH;
 }
 
 export function SettlementsCompanyDriverTab({
@@ -132,7 +127,7 @@ export function CompanySettlementsRegisterTab({
   const rows = q.data?.company_settlements ?? [];
   const columns = useMemo<ParityColumn<CompanySettlementListRow>[]>(
     () => [
-      { key: "display_id", label: "Number", minWidth: 100, sortValue: (r) => r.display_id, render: (r) => <span className="ldt-mono">{displayLabel(r.display_id)}</span> },
+      { key: "display_id", label: "Number", minWidth: 100, sortValue: (r) => settlementLabel(r), render: (r) => <span className="ldt-mono">{settlementLabel(r)}</span> },
       { key: "period_start", label: "Period", minWidth: 150, className: "whitespace-nowrap", sortValue: (r) => r.period_start, render: (r) => `${date(r.period_start)} – ${date(r.period_end)}` },
       { key: "driver_settlement_count", label: "Driver settlements", cellClass: "text-right tabular-nums", minWidth: 90, maxWidth: 130, sortValue: (r) => r.driver_settlement_count, render: (r) => r.driver_settlement_count },
       { key: "net_revenue_cents", label: "Net revenue", cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 110, maxWidth: 150, sortValue: (r) => (r.net_revenue_cents === null ? null : r.net_revenue_cents), render: (r) => money(r.net_revenue_cents) },
@@ -174,7 +169,7 @@ function CompanyDriverPicker({
   const rows = q.data?.rows ?? [];
   const columns = useMemo<ParityColumn<TourListRow>[]>(
     () => [
-      { key: "display_id", label: "Settlement/Tour", alwaysVisible: true, minWidth: 100, sortValue: (r) => r.display_id ?? "", render: (r) => <span className="ldt-mono">{displayLabel(r.display_id)}</span> },
+      { key: "display_id", label: "Settlement/Tour", alwaysVisible: true, minWidth: 100, sortValue: (r) => settlementLabel(r), render: (r) => <span className="ldt-mono">{settlementLabel(r)}</span> },
       ...tourLoadColumns("company-driver-col"),
       { key: "driver_name", label: "Driver", minWidth: 120, maxWidth: 200, cellClass: "whitespace-nowrap", sortValue: (r) => r.driver_name ?? "", render: (r) => <span className="block max-w-[200px] truncate" title={r.driver_name ?? ""}>{r.driver_name ?? DASH}</span> },
       { key: "trip_started_at", label: "Started", sortable: true, sortValue: r => r.trip_started_at ?? "", render: r => date(r.trip_started_at) },
@@ -297,7 +292,7 @@ function DriverSettlementCard({ readout }: { readout: TourReadout }) {
     <section className="ldt-card" data-surface="load-detail" data-testid="driver-settlement-card">
       <div className="ldt-ch">
         <span>
-          DRIVER SETTLEMENT · {tour.display_id ?? "S-—"}
+          DRIVER SETTLEMENT · {settlementLabel(tour)}
         </span>
         <EntityLink kind="settlement" id={tour.settlement_id} label="Open detail" className="ldt-link" />
       </div>

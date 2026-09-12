@@ -770,6 +770,7 @@ export type PreSettlementDetail = {
   settlement: {
     id: string;
     display_id: string | null;
+    source_document_ref?: string | null;
     driver_id: string;
     /** ACCT-F5071 — joined from mdata.drivers on by-driver detail. */
     driver_name?: string | null;

@@ -41,7 +41,7 @@ export function loadCostRollupLateral(loadIdExpr: string, companyExpr: string): 
           -- PR #21318). Live-verified: 109 of 111 factored invoices (98%) resolve a real
           -- settlement number via THIS join; 0 resolved via the old settled_in_settlement_id
           -- path. Same fix, same join, now shared instead of duplicated a third time.
-          SELECT ds.display_id
+          SELECT ds.source_document_ref
           FROM driver_finance.driver_bills db2
           JOIN driver_finance.settlement_lines sl2 ON sl2.source_driver_bill_id = db2.id
           JOIN driver_finance.driver_settlements ds ON ds.id = sl2.settlement_id

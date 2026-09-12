@@ -1,3 +1,4 @@
+import { settlementLabel } from "../../lib/settlementNumber";
 import { useQuery } from "@tanstack/react-query";
 import { getTourReadout, getTourReadoutForLoad, type TourReadout } from "../../api/tourReadout";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -83,7 +84,7 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
 
   return <div className="ldt-body" data-testid="tour-settlement-tab" data-surface="load-detail" data-frozen={!t.is_open}>
     <div className="ldt-rowbar">
-      <span>Settlement <EntityLink kind="settlement" id={t.settlement_id} label={t.display_id ?? "Settlement"} />{periodLabel(t) ? <> · <span className="ldt-k" data-testid="tour-settlement-dates">{periodLabel(t)}</span></> : null} · {t.driver_name ?? "driver"} · <b>{t.is_open ? "open" : t.status}</b>{t.is_open ? " — fills when the tour closes; the figures below are the shape it will take from today's readout." : ` — closed ${t.trip_closed_at ? t.trip_closed_at.slice(0, 16).replace("T", " ") : ""}; frozen.`}</span>
+      <span>Settlement <EntityLink kind="settlement" id={t.settlement_id} label={settlementLabel(t)} />{periodLabel(t) ? <> · <span className="ldt-k" data-testid="tour-settlement-dates">{periodLabel(t)}</span></> : null} · {t.driver_name ?? "driver"} · <b>{t.is_open ? "open" : t.status}</b>{t.is_open ? " — fills when the tour closes; the figures below are the shape it will take from today's readout." : ` — closed ${t.trip_closed_at ? t.trip_closed_at.slice(0, 16).replace("T", " ") : ""}; frozen.`}</span>
       <span className={`ldt-pill ${t.is_open ? "warn" : "ok"}`} data-testid="tour-settlement-state">{t.is_open ? "open · pre-settlement" : `${t.status}${t.paid_at ? " · paid" : ""}`}</span>
     </div>
 

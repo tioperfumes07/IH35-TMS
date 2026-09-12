@@ -167,13 +167,18 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
               AND db.status <> 'void'
               AND db.team_driver_id IS NULL
             ORDER BY db.load_id, db.created_at DESC
-         -- REG-010/040: display the canonical S-YYYY-NNNN assigned at booking. Continuation
-         -- keeps the same UUID after a closed/invoiced source load and remains Resettlement
+         -- SETTLEMENT-NUMBER-IS-ALWAYSTRACK-DOC (owner 2026-09-11, verbatim: "remove and delete any
+         -- fucking autogenerating number … have the settlement autogenerate based on the numbers we have
+         -- here from always … follow sequence"). The settlement number surfaced anywhere is the AlwaysTrack
+         -- 4-digit document number (ds.source_document_ref: 5769…5800, next 5801…), NOT the retired
+         -- auto-generated S-YYYY-NNNN counter (ds.display_id). A load whose tour is not yet settled carries
+         -- NO number (source_document_ref NULL → dash), exactly like AlwaysTrack "Unsettled Loads".
+         -- Continuation keeps the same UUID after a closed/invoiced source load and remains Resettlement
          -- even while the settlement is reopened for its next leg.
          ), settlement_info AS (
            -- The booking link is authoritative even before a driver bill/settlement line exists.
            -- Legacy bill linkage is a fallback only; it cannot override a continued tour's identity.
-           SELECT linked.id AS load_id, ds.display_id AS settlement_display_id,
+           SELECT linked.id AS load_id, ds.source_document_ref AS settlement_display_id,
                   ds.id::text AS settlement_id,
                   -- SETTLEMENT-NUMBER-SWEEP correction (owner 2026-09-11): removed the blunt
                   -- settlement-timestamp/status short-circuit branch (checking ds directly, no

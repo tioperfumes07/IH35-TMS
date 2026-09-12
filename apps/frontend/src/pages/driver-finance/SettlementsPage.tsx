@@ -1,3 +1,4 @@
+import { settlementLabel } from "../../lib/settlementNumber";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
@@ -539,7 +540,7 @@ export function SettlementsPage() {
               setPendingReverseIds(selected.map((row) => row.id));
               setPendingReverseLabels(
                 bulkRowLabelsFromRows(selected, (row: SettlementListRow) =>
-                  entityLabel(row.display_id, row.id, "Settlement")
+                  settlementLabel(row)
                 )
               );
               setReverseOpen(true);

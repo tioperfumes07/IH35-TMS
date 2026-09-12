@@ -26,7 +26,7 @@ export async function registerDriverReimbursementDetailRoutes(app: FastifyInstan
                 r.evidence_doc_id::text, r.voided_at::text, r.void_reason,
                 r.from_bank_account_id::text, r.created_at::text, r.updated_at::text,
                 NULLIF(TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), '') AS driver_name,
-                l.load_number, s.display_id AS settlement_number, ba.account_name AS bank_account_name
+                l.load_number, s.source_document_ref AS settlement_number, ba.account_name AS bank_account_name
            FROM driver_finance.driver_reimbursements r
            JOIN mdata.drivers d ON d.id = r.driver_id AND d.operating_company_id = r.operating_company_id
            LEFT JOIN mdata.loads l ON l.id = r.load_id AND l.operating_company_id = r.operating_company_id

@@ -1,3 +1,4 @@
+import { settlementNumber, isOpenSettlement } from "../../lib/settlementNumber";
 import { HistoricalSettlementAttributions, type HistoricalSettlementAttributionRow } from "../../components/driver-finance/HistoricalSettlementAttributions";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
@@ -188,7 +189,7 @@ export function SettlementDetailPage() {
   const paymentState = String(settlement.payment_state ?? "unpaid");
   const approvalStatus = String(settlement.approval_status ?? "needs_review");
   const settlementDisplayId =
-    typeof settlement.display_id === "string" && settlement.display_id ? settlement.display_id : null;
+    settlementNumber(settlement) ?? (isOpenSettlement(settlement) ? "Open" : null);
   const isFinalSettlement = String(settlement.status ?? "") === "locked" || String(settlement.status ?? "") === "final";
   const showFinalizeBlock = !isFinalSettlement;
   const showManualPaidDraftBanner = paymentState === "manual_paid" && !isFinalSettlement;

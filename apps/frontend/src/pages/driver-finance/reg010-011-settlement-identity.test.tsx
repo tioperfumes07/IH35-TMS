@@ -21,11 +21,13 @@ describe("REG-010/011 canonical settlement identity and one datum per column", (
     for (const label of ["Settlement/Tour", "Load Number", "Source reference", "Period Begin", "Period End"]) {
       expect(screen.getByRole("columnheader", {name: new RegExp(label, "i")})).toBeInTheDocument();
     }
-    const settlement = screen.getByText("S-2026-0042");
-    expect(settlement.closest("a")).toHaveAttribute("href", expect.stringContaining("settlement-1"));
-    expect(settlement.closest("td")).not.toHaveTextContent("13508");
-    expect(settlement.closest("td")).not.toHaveTextContent("5795");
-    expect(screen.getByText("5795").closest("td")).not.toBe(settlement.closest("td"));
+    // SETTLEMENT-NUMBER-IS-ALWAYSTRACK-DOC (owner 2026-09-11): the Settlement/Tour cell IS the AlwaysTrack
+    // doc (source_document_ref 5795). The retired S-YYYY-NNNN counter is never rendered anywhere on the row.
+    expect(screen.queryByText("S-2026-0042")).not.toBeInTheDocument();
+    const settlement = screen.getAllByText("5795").map((el) => el.closest("a")).find(Boolean);
+    expect(settlement).toHaveAttribute("href", expect.stringContaining("settlement-1"));
+    expect(settlement!.closest("td")).not.toHaveTextContent("13508");
+    expect(settlement!.closest("td")).not.toHaveTextContent("2026-09-01");
   });
   it("renders EVERY load in the tour in the Load Number cell, not just the first (owner 2026-09-11: 'FIX THE RENDER, NOT THE SCHEMA' — a settlement/tour can cover multiple loads)", () => {
     const row = { settlement_id: "s1", leg_count: 2, legs: [{load_id:"l1", load_number:"13508", trip_type:"NB"},{load_id:"l2",load_number:"13509",trip_type:"SB"}] } as TourListRow;

@@ -35,7 +35,10 @@ export function legPillClass(tripType: string | null): string {
   }
 }
 
-export function TourLegsCell({ legs, legsLabel }: { legs: TourLegBrief[] | null | undefined; legsLabel?: string }) {
+/** The pill strip needs only identity + type; callers may pass the full TourLegBrief or this minimal shape. */
+export type TourLegPill = Pick<TourLegBrief, "load_id" | "load_number" | "trip_type">;
+
+export function TourLegsCell({ legs, legsLabel }: { legs: TourLegPill[] | null | undefined; legsLabel?: string }) {
   const list = legs ?? [];
   if (list.length === 0) return <span className="ldt-muted">{DASH}</span>;
   const shown = list.slice(0, LEGS_VISIBLE);

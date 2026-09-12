@@ -72,12 +72,12 @@ export type ReadyItem = { key: string; label: string; ok: boolean; detail: strin
 
 export async function buildTourReadout(client: Db, companyId: string, settlementId: string, thisLoadId: string | null) {
   const sRes = await client.query<{
-    id: string; display_id: string | null; status: string; settlement_model: string | null; trip_started_at: string | null; trip_closed_at: string | null;
+    id: string; display_id: string | null; source_document_ref: string | null; status: string; settlement_model: string | null; trip_started_at: string | null; trip_closed_at: string | null;
     period_start: string | null; period_end: string | null; driver_id: string; driver_name: string | null; tour_id: string | null;
     gross_pay: unknown; deductions_total: unknown; reimbursements_total: unknown; net_pay: unknown; locked_at: string | null; paid_at: string | null; approval_status: string | null;
     first_load_id: string | null; last_load_id: string | null; voided_at: string | null;
   }>(
-    `SELECT s.id::text, s.display_id, s.status, s.settlement_model, s.trip_started_at::text, s.trip_closed_at::text, s.period_start::text, s.period_end::text,
+    `SELECT s.id::text, s.display_id, s.source_document_ref, s.status, s.settlement_model, s.trip_started_at::text, s.trip_closed_at::text, s.period_start::text, s.period_end::text,
             s.driver_id::text, concat_ws(' ', d.first_name, d.last_name) AS driver_name, s.tour_id::text,
             s.gross_pay, s.deductions_total, s.reimbursements_total, s.net_pay, s.locked_at::text, s.paid_at::text, s.approval_status,
             s.first_load_id::text, s.last_load_id::text, s.voided_at::text
@@ -107,6 +107,19 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
        SELECT l.* FROM mdata.loads l
         WHERE l.operating_company_id = $2::uuid AND l.soft_deleted_at IS NULL
           AND (l.presettlement_link_id = $1::uuid OR l.id = $3::uuid OR l.id = $4::uuid)
+          -- DISPATCH-NO-HISTORY (owner 2026-09-11: "only current pre settlements, and all those loads
+          -- related to it … nothing historical"). While the tour is OPEN, a load that already carries an
+          -- active settlement line on ANOTHER locked/closed live settlement is SETTLED history — it must
+          -- not ride on the open tour. Measured on USMCA prod 2026-09-11 22:5xZ: 8 such legs (13526/13527/
+          -- 13561/13567 on locked 5779/5795, 13569/13577 on 5797, 13571/13574 on 5799) still pointed at
+          -- open tours S-2026-0013/0019/0021 through a stale presettlement_link_id. Closed tours untouched.
+          AND ($5::boolean IS FALSE OR NOT EXISTS (
+                SELECT 1 FROM driver_finance.settlement_lines sl
+                JOIN driver_finance.driver_settlements s2 ON s2.id = sl.settlement_id
+               WHERE sl.load_id = l.id AND sl.is_active AND sl.voided_at IS NULL
+                 AND s2.id <> $1::uuid AND s2.operating_company_id = $2::uuid
+                 AND s2.reversed_at IS NULL AND s2.voided_at IS NULL AND s2.status <> 'cancelled'
+                 AND (s2.trip_closed_at IS NOT NULL OR s2.locked_at IS NOT NULL)))
      )
      SELECT l.id::text AS load_id, l.load_number, l.trip_type::text, l.status::text, l.rate_total_cents,
             l.miles_practical, l.miles_shortest, l.miles_deadhead,
@@ -128,7 +141,7 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
        FROM legs l
        LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
       ORDER BY CASE l.trip_type::text WHEN 'NB' THEN 1 WHEN 'TR' THEN 2 WHEN 'SB' THEN 3 ELSE 4 END, l.created_at ASC`,
-    [settlementId, companyId, s.first_load_id, s.last_load_id]
+    [settlementId, companyId, s.first_load_id, s.last_load_id, s.trip_closed_at == null]
   );
   // A cancelled leg stays visible (it happened) but carries no money into the tour: measured live 02:19Z, TR 13527
   // (cancelled) was adding $3,000 revenue and 100% margin to S-13646's totals.
@@ -255,7 +268,14 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
 
   return {
     tour: {
-      settlement_id: s.id, display_id: s.display_id, status: s.status, approval_status: s.approval_status, settlement_model: s.settlement_model, tour_id: s.tour_id,
+      settlement_id: s.id, display_id: s.display_id,
+      // SETTLEMENT-NUMBER-IS-ALWAYSTRACK-DOC (owner 2026-09-11, verbatim: "remove and delete any
+      // fucking autogenerating number … have the settlement autogenerate based on the numbers we have
+      // here from always … follow sequence"). The ONLY settlement/tour number is the AlwaysTrack 4-digit
+      // document number carried in source_document_ref (5769…5800, next 5801…). The S-YYYY-NNNN value in
+      // display_id is a retired internal counter and is NEVER rendered as a settlement number. A tour with
+      // no AlwaysTrack number yet (open / unsettled) shows NO number — exactly AlwaysTrack "Unsettled Loads".
+      settlement_number: s.source_document_ref, status: s.status, approval_status: s.approval_status, settlement_model: s.settlement_model, tour_id: s.tour_id,
       driver_id: s.driver_id, driver_name: s.driver_name, unit_number: unitNumber, trip_started_at: s.trip_started_at, trip_closed_at: s.trip_closed_at,
       period_start: s.period_start, period_end: s.period_end, is_open: !closedAlready, locked_at: s.locked_at, paid_at: s.paid_at,
       // NEW-10 — the ORIGINAL load that opened this (re)settlement, so the tours register can show its
@@ -289,13 +309,26 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
 const toursQuery = z.object({ operating_company_id: z.string().uuid(), state: z.enum(["open", "closed"]).default("open"), limit: z.coerce.number().int().min(1).max(200).default(60) });
 
 export type TourListRow = {
-  settlement_id: string; display_id: string | null; status: string; is_open: boolean; driver_name: string | null; unit_number: string | null;
+  settlement_id: string; display_id: string | null;
+  /** SETTLEMENT-NUMBER-IS-ALWAYSTRACK-DOC (owner 2026-09-11): the ONLY settlement/tour number — the
+   *  AlwaysTrack 4-digit doc (source_document_ref). null while unsettled. The retired S-YYYY-NNNN
+   *  display_id is NEVER shown as a settlement number. */
+  settlement_number: string | null;
+  status: string; is_open: boolean; driver_name: string | null; unit_number: string | null;
   trip_started_at: string | null; trip_closed_at: string | null; leg_count: number; legs_label: string;
   /** ROUND 16.1 (owner 2026-09-06): the tour's live legs in order, compact — so the Load-Costs
    *  Settlement/Pre-Settlement register can render each leg as a type-colored pill that is an
    *  EntityLink to the load (needs the load_id the flat legs_label string never carried). READ-only
    *  projection off the same buildTourReadout legs; additive, never re-derived. */
-  legs: { load_id: string; load_number: string; trip_type: string | null }[];
+  legs: {
+    load_id: string; load_number: string; trip_type: string | null; status: string;
+    /** DISPATCH-ONE-ROW-PER-LOAD (owner 2026-09-11): the Pre-Settlement/Settlement register projects ONE ROW
+     *  PER LOAD, so each leg carries its own money and miles (same buildTourReadout leg numbers; the tour totals
+     *  are exactly the sum of these live legs — no second sum). */
+    lane: string; pickup_date: string | null; delivery_date: string | null;
+    revenue_cents: number; costs_cents: number; driver_pay_cents: number; margin_cents: number; margin_pct: number | null;
+    miles_practical: number | null; miles_real: number | null;
+  }[];
   /** NEW-10 (owner 2026-09-07): the ORIGINAL load that created this (re)settlement — its number,
    *  its "date started" (first pickup) and its "delivery date" (last delivery). READ-only projection
    *  off the same buildTourReadout legs (NB bookend by first_load_id, then NB by trip_type, then the
@@ -312,9 +345,19 @@ export type TourListRow = {
  * the Settlement tab every CLOSED one, each row built from the SAME buildTourReadout — one read model, no second sum.
  */
 export async function listTours(client: Db, companyId: string, state: "open" | "closed", limit: number): Promise<TourListRow[]> {
+  // SETL-REVERSED-HIDE (owner 2026-09-11, live-measured on USMCA prod): "in settlements i have 12 …
+  // the numbers do not add up." The Settlement/Pre-Settlement register keyed CLOSED/OPEN purely off
+  // `trip_closed_at`, with NO status filter — so a REVERSED settlement (status='cancelled',
+  // reversed_at set: the 12 wrong groupings reversed by the 2026-09-11 rebuild, display_id
+  // S-2026-0001…0016) still counted as "Settlement (closed) = 12", and 3 cancelled pre-settlements
+  // still counted as open. A reversed/cancelled settlement is economically void (void-not-delete: the
+  // row is retained, never shown as a live settlement) — the same treatment `voided_at IS NULL`
+  // already gives. is_sample_data is excluded per Rule 49 (sample never counts in a real list).
+  // Measured BEFORE: closed 51 / open 12. AFTER: reversed+cancelled+sample drop out.
   const ids = await client.query<{ id: string }>(
     `SELECT s.id FROM driver_finance.driver_settlements s
       WHERE s.operating_company_id = $1::uuid AND s.voided_at IS NULL
+        AND s.reversed_at IS NULL AND s.status <> 'cancelled' AND s.is_sample_data IS NOT TRUE
         AND (s.settlement_model = 'load_bookended' OR s.first_load_id IS NOT NULL)
         AND ${state === "open" ? "s.trip_closed_at IS NULL" : "s.trip_closed_at IS NOT NULL"}
       ORDER BY ${state === "open" ? "s.trip_started_at DESC NULLS LAST, s.created_at DESC" : "s.trip_closed_at DESC"}
@@ -326,6 +369,11 @@ export async function listTours(client: Db, companyId: string, state: "open" | "
     const r = await buildTourReadout(client, companyId, id, null);
     if (!r || !r.tour) continue;
     const live = r.legs.filter((l) => !l.is_cancelled);
+    // DISPATCH-NO-HISTORY (owner 2026-09-11): an OPEN tour whose every leg is cancelled or already settled
+    // elsewhere (measured: S-2026-0026 = only cancelled 13743) has nothing current on it — it is not a
+    // pre-settlement the dispatcher can act on, so it does not appear in the dispatch-visible register.
+    // The row itself is retained (void-not-delete); only the projection skips it.
+    if (state === "open" && live.length === 0) continue;
     // NEW-10 — the ORIGINAL load that created the (re)settlement: the NB bookend (first_load_id), else
     // the NB leg, else the first leg in NB→TR→SB order. A cancelled original still counts as the origin
     // (it happened), so resolve against ALL legs, not just the live ones.
@@ -334,10 +382,15 @@ export async function listTours(client: Db, companyId: string, state: "open" | "
       r.legs.find((l) => l.trip_type === "NB") ??
       r.legs[0] ?? null;
     out.push({
-      settlement_id: r.tour.settlement_id, display_id: r.tour.display_id, status: r.tour.status, is_open: r.tour.is_open,
+      settlement_id: r.tour.settlement_id, display_id: r.tour.display_id, settlement_number: r.tour.settlement_number, status: r.tour.status, is_open: r.tour.is_open,
       driver_name: r.tour.driver_name, unit_number: r.tour.unit_number, trip_started_at: r.tour.trip_started_at, trip_closed_at: r.tour.trip_closed_at,
       leg_count: live.length, legs_label: live.map((l) => `${l.trip_type ?? "?"} ${l.load_number}`).join(" → "),
-      legs: live.map((l) => ({ load_id: l.load_id, load_number: l.load_number, trip_type: l.trip_type })),
+      legs: live.map((l) => ({
+        load_id: l.load_id, load_number: l.load_number, trip_type: l.trip_type, status: l.status,
+        lane: l.lane, pickup_date: l.pickup_date, delivery_date: l.delivery_date,
+        revenue_cents: l.revenue_cents, costs_cents: l.costs_cents, driver_pay_cents: l.driver_pay_cents, margin_cents: l.margin_cents, margin_pct: l.margin_pct,
+        miles_practical: l.miles_practical, miles_real: l.miles_real,
+      })),
       origin_load_number: originLeg?.load_number ?? null,
       origin_pickup_date: originLeg?.pickup_date ?? null,
       origin_delivery_date: originLeg?.delivery_date ?? null,
@@ -376,9 +429,19 @@ export async function registerTourReadoutRoutes(app: FastifyInstance) {
     const p = loadParams.safeParse(req.params ?? {}); if (!p.success) return validationError(reply, p.error);
     const q = companyQuery.safeParse(req.query ?? {}); if (!q.success) return validationError(reply, q.error);
     return withCompany(user.uuid, q.data.operating_company_id, async (client) => {
-      // The load's own link first; then the dual path load-settlement-summary uses (bookend or a settlement line).
+      // DISPATCH-NO-HISTORY (owner 2026-09-11): the load's Settlement tab shows the load's OWN tour only. A load
+      // that already carries an active line on a locked/closed LIVE settlement is settled — that settlement is
+      // its tour, even when a stale presettlement_link_id still points at a later open tour (measured on prod:
+      // 13526/13527 → open S-2026-0013 while settled on locked 5779). Then the load's own link; then the dual
+      // path load-settlement-summary uses (bookend or any settlement line).
       const r = await client.query<{ settlement_id: string | null; reason: string }>(
         `SELECT COALESCE(
+            (SELECT sl.settlement_id::text FROM driver_finance.settlement_lines sl
+               JOIN driver_finance.driver_settlements s2 ON s2.id = sl.settlement_id
+              WHERE sl.operating_company_id = $2::uuid AND sl.load_id = $1::uuid AND sl.is_active AND sl.voided_at IS NULL
+                AND s2.reversed_at IS NULL AND s2.voided_at IS NULL AND s2.status <> 'cancelled'
+                AND (s2.trip_closed_at IS NOT NULL OR s2.locked_at IS NOT NULL)
+              ORDER BY s2.locked_at DESC NULLS LAST, s2.trip_closed_at DESC NULLS LAST LIMIT 1),
             (SELECT l.presettlement_link_id::text FROM mdata.loads l WHERE l.id = $1::uuid AND l.operating_company_id = $2::uuid),
             (SELECT s.id::text FROM driver_finance.driver_settlements s WHERE s.operating_company_id = $2::uuid AND s.voided_at IS NULL AND (s.first_load_id = $1::uuid OR s.last_load_id = $1::uuid) ORDER BY s.created_at DESC LIMIT 1),
             (SELECT sl.settlement_id::text FROM driver_finance.settlement_lines sl LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id WHERE sl.operating_company_id = $2::uuid AND COALESCE(db.load_id, sl.load_id) = $1::uuid ORDER BY sl.created_at DESC LIMIT 1)
