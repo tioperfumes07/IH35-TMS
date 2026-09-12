@@ -35,7 +35,7 @@ describe("REG-033(b) — pre-settlement is scoped to this tour's number and date
   it("shows the settlement number and the tour period dates + per-leg dates", async () => {
     mockGetTourReadoutForLoad.mockResolvedValue({
       tour: {
-        settlement_id: "set-1", display_id: "S-2026-0007", status: "open", approval_status: null,
+        settlement_id: "set-1", display_id: "S-2026-0007", source_document_ref: "5804", status: "open", approval_status: null,
         settlement_model: null, tour_id: "tour-1", driver_id: "drv-1", driver_name: "Driver One",
         unit_number: "T177", trip_started_at: "2026-09-01T00:00:00.000Z", trip_closed_at: null,
         period_start: "2026-09-01", period_end: "2026-09-08", is_open: true, locked_at: null, paid_at: null,
@@ -56,8 +56,11 @@ describe("REG-033(b) — pre-settlement is scoped to this tour's number and date
 
     renderTab();
 
-    // The tour's own settlement number is present (not a generic "Settlements").
-    expect(await screen.findByText("S-2026-0007")).toBeInTheDocument();
+    // The tour's own settlement number is present (not a generic "Settlements"). ACCT-F20260911 +
+    // INSTANT PRE-SETTLEMENT NUMBER (owner 2026-09-11): the number rendered is the AllwaysTrack doc
+    // (source_document_ref), minted the instant the tour opens — NEVER the retired S-YYYY-NNNN display_id.
+    expect(await screen.findByText("5804")).toBeInTheDocument();
+    expect(screen.queryByText("S-2026-0007")).not.toBeInTheDocument();
     // The tour period dates are shown, scoped to THIS tour.
     const dates = await screen.findByTestId("tour-presettlement-dates");
     expect(dates).toHaveTextContent("09/01/2026");
