@@ -8774,5 +8774,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-12",
     "purpose": "verify-round-trips-full-tour"
+  },
+  "11377": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-12",
+    "purpose": "verify-planners-layout"
   }
 }
