@@ -102,7 +102,17 @@ const NUM = "text-center whitespace-nowrap [font-variant-numeric:tabular-nums]";
 const CLOSED = ["cancelled", "abandoned", "closed", "paid", "invoiced", "driver_walkoff", "driver_no_show"];
 const MOTION = ["draft", "booked", "planned", "unassigned", "assigned", "assigned_not_dispatched", "dispatched", "at_pickup", "in_transit", "at_delivery"];
 const DELIVERED = ["delivered", "delivered_pending_docs", "completed_docs_received"];
-const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || r.is_invoiced || r.is_resettlement === true;
+// ROUND 18.1 (owner ruling, 2026-09-11 20:40 CT / 01:40 UTC 09-12 — OVERTURNS REG-040/#21692's
+// is_resettlement inclusion here): 7 genuinely in-route USMCA loads (13587 SB, 13590 NB, 13591 SB,
+// 13592 SB, 13593 SB, 13594 SB, 13595 SB — all status='dispatched', none invoiced) went INVISIBLE
+// on every Costs pill because is_resettlement is a TOUR-level flag load-costs-board.routes.ts's
+// settlement_info CTE sets whenever the tour's FIRST load is closed/invoiced (13578/13569/13571/
+// 13526/13576/13563 respectively) — a load that is still in route must show as current regardless
+// of what already happened to an earlier load on the same tour. A load's own state decides whether
+// it is current, never a sibling load's state. is_resettlement stays load-costs-board.routes.ts's
+// signal for the SEPARATE Resettlement tab (isResettlement() below, unchanged) — just no longer a
+// reason to hide an otherwise-active load from Costs.
+const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || r.is_invoiced;
 // An issued invoice moves the original load out of every active bucket, independent of tour close.
 const isResettlement = (r: BoardRow) => r.is_resettlement === true || r.status === "invoiced" || (r.is_invoiced && !CLOSED.includes(r.status));
 export const LOAD_COSTS_ELEMENT_MANIFEST = [
