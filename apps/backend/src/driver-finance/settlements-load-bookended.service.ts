@@ -1,6 +1,9 @@
 import { assertNoHistoricalSettlementCoverage } from "./settlement-historical-attribution.service.js";
 import { allocateSettlementDisplayId } from "./settlement-display-id.js";
-import { allocateSettlementDocumentNumberIfMissing } from "./settlement-document-number-allocator.js";
+import {
+  allocateNextSettlementSourceDocumentRef,
+  setSettlementSourceDocumentRef,
+} from "./settlement-source-document-ref.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { recordPostingFlagSkip } from "../accounting/posting-flag-skip-audit.js";
@@ -560,11 +563,28 @@ async function closeLoadBookendedSettlementForDriver(
     [settlementId, closedAt, opts.load.id, opts.load.load_number]
   );
 
-  // P1 SETTLEMENT NUMBERING (Claude Lead, ROUND 18.3, Item A) — the AlwaysTrack document
-  // number is allocated HERE, in the same transaction as the trip_closed_at/status='closed'
-  // stamp above, so a crash before COMMIT never burns a number. No-ops if the settlement
-  // already carries one (e.g. entered by hand).
-  await allocateSettlementDocumentNumberIfMissing(client, settlementId, opts.operatingCompanyId);
+  // P1 SETTLEMENT NUMBERING (Claude Lead, ROUND 18.3, Item A) — CORRECTED 2026-09-11: reuses the
+  // SAME canonical allocator+writer presettlement-link.service.ts already uses at tour OPEN
+  // (allocateNextSettlementSourceDocumentRef / setSettlementSourceDocumentRef,
+  // settlement-source-document-ref.service.ts), rather than a second, independent
+  // implementation — an earlier version of this commit introduced its own
+  // allocateSettlementDocumentNumberIfMissing with a DIFFERENT advisory-lock key, which does not
+  // mutually exclude against the open-time allocator and could race it. Reusing the one real
+  // writer also gets its audit trail for free. No-ops if the settlement already carries a number
+  // (e.g. stamped instantly at open, per owner ruling 2026-09-11 "assigns when the load is
+  // closed... assigned instantly").
+  if (!(await client.query<{ source_document_ref: string | null }>(
+    `SELECT source_document_ref FROM driver_finance.driver_settlements WHERE id = $1`,
+    [settlementId]
+  )).rows[0]?.source_document_ref) {
+    const nextRef = await allocateNextSettlementSourceDocumentRef(client, opts.operatingCompanyId);
+    await setSettlementSourceDocumentRef(client, {
+      operatingCompanyId: opts.operatingCompanyId,
+      settlementId,
+      sourceDocumentRef: nextRef,
+      actorUserId: opts.actorUserId,
+    });
+  }
 
   const lineType =
     opts.team && opts.driverId === opts.team.primaryDriverId
@@ -925,10 +945,22 @@ export async function stampTripClosedForBookendedSettlement(
     [opts.settlementId, closedAt, anchorLoadId, anchorLoadNumber]
   );
 
-  // P1 SETTLEMENT NUMBERING (Claude Lead, ROUND 18.3, Item A) — same allocator, same
-  // in-transaction placement as closeLoadBookendedSettlementForDriver above. No-ops if
-  // the settlement already carries a number (e.g. entered by hand).
-  await allocateSettlementDocumentNumberIfMissing(client, opts.settlementId, opts.operatingCompanyId);
+  // P1 SETTLEMENT NUMBERING (Claude Lead, ROUND 18.3, Item A) — same canonical allocator+writer,
+  // same in-transaction placement, as closeLoadBookendedSettlementForDriver above (see its comment
+  // for why this reuses settlement-source-document-ref.service.ts instead of a second
+  // implementation). No-ops if the settlement already carries a number.
+  if (!(await client.query<{ source_document_ref: string | null }>(
+    `SELECT source_document_ref FROM driver_finance.driver_settlements WHERE id = $1`,
+    [opts.settlementId]
+  )).rows[0]?.source_document_ref) {
+    const nextRef = await allocateNextSettlementSourceDocumentRef(client, opts.operatingCompanyId);
+    await setSettlementSourceDocumentRef(client, {
+      operatingCompanyId: opts.operatingCompanyId,
+      settlementId: opts.settlementId,
+      sourceDocumentRef: nextRef,
+      actorUserId: opts.actorUserId,
+    });
+  }
 
   await appendEarningsForAnchor();
 
