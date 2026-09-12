@@ -2268,3 +2268,49 @@ DONE LINE: CC-1 | ROUND 18.1 Item A SHIPPED+LIVE (#21877, `8dcea110`, live Chrom
 confirmed) | Item B measured (both lines above, no regression) | Item C root-caused (own earlier
 PR's stale ratchet, not Customers) and PR #21880 open, merging on green | NEXT: Item D
 (Customers/Vendors re-measure against TAB-COMPLETION-STANDARD.md) once C merges+deploys.
+
+## CC-1 — ROUND 18.1 COMPLETE (Items A–D), 2026-09-12 02:15 UTC
+
+All four continuous-queue items closed, in order, none skipped:
+
+- **Item A** (ACCT-F26142) — SHIPPED+LIVE #21877 (`8dcea110`). Load Costs `isClosed()` no longer
+  honors tour-level `is_resettlement`; 7 in-route loads (13587/13590/13591/13592/13593/13594/13595)
+  confirmed back on the In Motion pill via live Chrome (`LOADS IN MOTION: 7`, `1–7 of 7`).
+- **Item B** — measured, both lines posted earlier this cycle: `verify-go26-consolidation-ratchet`
+  PASS with `components/DataTable (20 files)` (frozen baseline, no regression); `202614090000_
+  load_exception_reasons.sql` replays clean on a genuinely fresh Postgres 16 DB (table created, seed
+  correctly 0-rows since `org.companies` is empty).
+- **Item C** — SHIPPED #21880 (`9aa8b93f`). pass-7's AUDIT-FIX-13 "Customers pagination" was never
+  a Customers bug — it chains `verify:header-counts-match-actual`, which was red because this seat's
+  own earlier Item 1 PR (#21852) grew the real dispatch count-spec array to 12 without bumping the
+  guard's mirrored `EXPECTED_TABLE_COUNTS.dispatch` ratchet in the same PR. No live behavior was ever
+  wrong (the real badge always read 12); fixed the stale ratchet, extracted it into a testable pure
+  function with a new selftest proving it fires on drift. Full pass-7 suite now 17/17 green
+  (unblocks `locked-guards` on every other PR in the repo, as the Lead's message warned).
+- **Item D** (LST-F26143) — SHIPPED+LIVE #21883 (`7d31478a`). Re-measured Customers/Vendors against
+  `TAB-COMPLETION-STANDARD.md`; found and fixed a real, live, source-confirmed defect: "List view"
+  on BOTH pages also mounted the legacy master-detail rolodex sidebar (its own hand-rolled, non-
+  ParityTable Name/Balance/Status/Quality list) right next to the real ParityTable, duplicating the
+  identical 1,218-row (604 for vendors) roster twice, unsynchronized. Fixed both files so List view
+  renders only the ParityTable; Master-detail is untouched. New guard
+  `verify-customers-vendors-list-view-no-duplicate-sidebar.mjs` (selftest covers the regression, the
+  over-correction, and a missing-shape fail-loud case). Live Chrome re-confirmed on the deployed fix:
+  both `/customers` and `/vendors` List view now render exactly one panel.
+  — Also checked TAB-COMPLETION-STANDARD.md's "H. Header row" (navy #14314F/white) against the live
+  page and found the doc itself is STALE: an owner ruling on 2026-09-04 (TABLE-HEADER-RETIRE-NAVY
+  LAW, "the blue is too aggressive") explicitly superseded that wording the very next day; the live
+  page correctly follows the newer ruling. Not a live defect — flagging the standard's own text as
+  due for a documentation-only cleanup, separately, non-urgently.
+
+**FLAGGED, NOT FIXED (pre-existing, unrelated, out of this seat's Item D scope):**
+`scripts/verify-customers-list-master-detail.mjs` is red on main right now (confirmed via git stash
+to predate all of today's work) — "roster filters must stage canonical segment/type/status state",
+"transaction_list must query invoices scoped by real customer_id", "roster sidebar must release its
+desktop width below xl". Whoever owns that surface should pick it up.
+
+Both deploys for today confirmed live and holding: backend `8dcea110` → `9334295` (Item C,
+scripts-only, no deploy needed) → still current; frontend `7d31478a` LIVE (finished 02:12:10Z).
+
+DONE LINE: CC-1 | ROUND 18.1 Items A–D ALL SHIPPED, A/D LIVE-CHROME-VERIFIED, B measured, C unblocks
+repo-wide locked-guards | 1 pre-existing unrelated red flagged (verify-customers-list-master-detail)
+| NEXT: resuming the standing idle-loop sweep.
