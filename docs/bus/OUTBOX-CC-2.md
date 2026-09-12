@@ -2938,3 +2938,50 @@ NEXT: ROUND 18.6 (V10) -- owner-approved final spec superseding V7/V8: 5-column 
 4-5 center-aligned + widened Truck/Load columns, plus a full "Available Truck" row build (parked-
 truck graphic, ghost route, speech-bubble CTA, live HOS-driven driver matching, real Assign-a-load
 flow, top-bar computed stats) -- starting now, deadline 08:00Z.
+
+## CC-2 — TRUCK-LINE V10 MERGED + GUARD-VERIFIED, LIVE BLOCKED BY AN UNRELATED CROSS-SEAT ISSUE (03:5x UTC 09-12)
+
+Merged PR #21899 (`7225dcc0a3`) implementing ROUND 18.6's final V10 spec (THE AVAILABLE TRUCK, five-
+column layout with centered Next-appointment/Live-signal, real Assign-a-load flow) on top of the
+already-shipped V7/V8. FRONTEND deployed and confirmed live at `7225dcc`. BACKEND is NOT live yet --
+blocked by an unrelated migration failure from another seat's own work in flight tonight:
+`Migration failed: could not create unique index "uq_driver_settlements_source_document_ref_live"`
+(a real duplicate-data problem in `driver_finance.driver_settlements.source_document_ref`, tracked in
+that seat's own commits c4d3ad74b6/e45c983b5c/dc2071d7f6 -- "STOP-AND-ASK on the 5782-family
+duplicates... awaiting the Lead's ruling"). This blocks EVERY backend deploy on `main` right now, not
+just mine -- confirmed by retrying twice (once on the original merge commit, once on a newer commit
+that fixed a *related* code-level race but explicitly left the underlying duplicate DATA untouched)
+and hitting the identical pre_deploy_failed both times. Per this seat's own migration-lane law (CC-2
+cannot author/fix migrations or the duplicate-settlement cleanup itself), I am not attempting a third
+fix and am not retrying further -- I will retry the backend deploy once that other seat's own fix
+closes.
+
+CURRENT LIVE SIDE EFFECT (temporary, self-resolving once backend catches up): the V10 FRONTEND is
+already live and expects the V10 backend's `kind`/`available` row fields; the OLD backend (`f2c07b3`,
+V8-shaped rows, no `kind`) is still serving. Verified in Chrome: the board does not crash -- it
+renders 16 rows same as before, but the 5 units with no current load show a defensive fallback line
+("— unexpected: this row has no load data") instead of their previous "Awaiting assignment · Book
+Load" text (that TRUCK-cell text is preserved and still says "No driver"/awaiting; only the LINE
+cell's inline text and its Book-Load-in-that-cell shortcut are temporarily unavailable for those 5
+rows -- the top-level "+ Book Load" button and Kanban's own flow are unaffected). Loaded rows
+(T148/13595, T156/13587, T164/13590, T168/13591, T170/13593, T171/13594, and 13592) are unaffected and
+render/interact normally on the OLD backend since their shape didn't change.
+
+CC-2 | TRUCK-LINE V10 CODE DONE, LIVE PENDING | 7225dcc0a3 | FE live 7225dcc / API still f2c07b3
+(blocked) | guard verify-dispatch-truck-line.mjs (verify-step 10931) --selftest 21/21 + live PASS |
+apps/frontend tsc -b exit 0 · apps/backend tsc -b exit 0 · 18/18 unit tests unchanged | qualifying-
+available-driver query + the HOS-minutes-not-hours finding both verified live against Neon
+(tiny-field-89581227) before writing code -- live count today is 16 available drivers (not the
+spec's snapshot of 4; all 4 named drivers, incl. Luis Corona with no unit, are present in that 16;
+evidence is a fleet-wide mass HOS re-poll between the Lead's 02:4xZ measurement and this build,
+documented in the PR) | 2 self-caught regressions found+fixed pre-merge (a cross-guard collision with
+verify-round-trips-default-and-list-dates.mjs's own onBookReturn mutation test, and the same
+non-global-.replace()-only-hits-first-of-three-occurrences class of guard-selftest bug already seen
+in PR #21874/#21887) | BLOCKED: backend deploy retried twice (dep-daicml3m8hqs73caifr0,
+dep-daicokdg1s2s73eq8nj0), both pre_deploy_failed on an unrelated cross-seat migration/duplicate-data
+issue, not caused by or fixable from this seat's lane | REMAINING: full live proof (5 breakpoints on
+the matched V10 pair, Available Truck row screenshot, Assign-a-load → real BookLoadModal open, station
+glide, exception write+clear) deferred until the backend catches up -- will post as a follow-up
+comment here, not a new PR, once retried successfully | NEXT: holding on Truck Line pending the other
+seat's migration fix; will pick up the next queue item (ITEM C, SORTABLE-COLUMNS-BASELINE-DRIFT-4) if
+no wakeup/instruction arrives first.
