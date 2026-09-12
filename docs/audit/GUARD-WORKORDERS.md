@@ -11090,4 +11090,8 @@ boot-crash file) — the guard's check (c) still read that path. Re-pointed at C
 PASS. No new static guard for the z-index defect itself — a source-text guard cannot assert paint
 order; the control is the live Chrome re-check.
 
-**Live proof:** re-verification after deploy pending — see `docs/bus/OUTBOX-CC-2.md` DONE line.
+**Live proof — CLOSED:** merged as PR #21874 (`9334295389`), both Render services redeployed and
+confirmed live at that SHA (`/api/v1/healthz/shallow` → `9334295`). Re-verified in Chrome on
+`app.ih35dispatch.com/dispatch?view=truck-line`: the Other pop-up on load 13587 now shows all 11
+active reasons legibly, including "Driver rest / HOS" (previously hidden under the sticky "Next
+appointment" header). Full detail in `docs/bus/OUTBOX-CC-2.md`'s TRUCK-LINE DONE line.
