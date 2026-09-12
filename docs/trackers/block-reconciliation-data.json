@@ -1,6 +1,6 @@
 {
  "date": "2026-09-12",
- "generated_at_iso": "2026-09-12T15:38:08.474Z",
+ "generated_at_iso": "2026-09-12T20:39:33.839Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 30,
@@ -13727,6 +13727,12 @@
  ],
  "merged_prs": [
   {
+   "number": 21912,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-12T15:38:31Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 21911,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-09-12T10:57:04Z",
@@ -17319,12 +17325,6 @@
    "title": "Claude-1- docs(bus): MANUAL-DELIVERY-AUTH-01 live end-to-end proof CLOSED",
    "mergedAt": "2026-09-07T20:23:24Z",
    "branch": "claude/manual-delivery-auth-01-live-proof-report"
-  },
-  {
-   "number": 21304,
-   "title": "Cursor- SETL-F26043 load 13541 driver-pay corrected to signed $379.73 inside posted S-13643",
-   "mergedAt": "2026-09-07T20:17:12Z",
-   "branch": "cursor/13541-driver-pay-correction"
   }
  ],
  "merged_pr_total": 3000,
