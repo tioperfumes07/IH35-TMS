@@ -1,9 +1,10 @@
 /** Linkage: mdata.loads · mdata.units · mdata.drivers · mdata.customers. Live=BLOCKED until Chrome on current healthz. */
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
 import { listOpenPreSettlements } from "../../api/driverFinance";
 import { listUnitsWithoutLoad, type UnitsWithoutLoad } from "../../api/dispatch";
+import { listLoadInvoices } from "../../api/accounting";
 import { flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, STATUS_LABEL, formatMoneyCents, toRouteSummary } from "../../components/dispatch/constants";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { Button } from "../../components/Button";
@@ -19,6 +20,20 @@ const SORT_KEY = "ih35.roundTrips.sort";
 const VIEW_KEY = "ih35.roundTrips.view";
 
 const ACTIVE_STATUSES = new Set<string>(RT_PAIRING_ACTIVE_STATUSES);
+
+// ROUND-20.2 (RT-FULL-TOUR) — a leg past this point has actually delivered; the billing chip only
+// makes sense here (an active leg has no invoice yet by definition, and showing "not invoiced"
+// next to a still-moving load would read as a defect that isn't one).
+const DASHED_DIVIDER_CLASS = "border-l border-dashed border-[#C7D2DC]";
+
+const DELIVERED_OR_BEYOND_STATUSES = new Set<string>([
+  "delivered",
+  "delivered_pending_docs",
+  "completed_docs_received",
+  "invoiced",
+  "paid",
+  "closed",
+]);
 
 type UnitPair = {
   unitId: string;
@@ -48,13 +63,152 @@ type Props = {
   deepLink?: boolean;
 };
 
+/** ROUND-20.2 — billing state beside the load number for a delivered-or-beyond leg. Live invoice
+ * data (accounting.invoices via the existing GET /api/v1/loads/:id/invoices, WAVE-H2's own reverse
+ * drill — no new backend endpoint needed). Never blank, never green without a real invoice number:
+ * sent -> green "Invoiced <display_id>"; proforma -> amber "Pro forma <display_id>"; delivered with
+ * no non-voided invoice at all -> amber "Delivered · not invoiced". An active (not-yet-delivered)
+ * leg renders nothing here — it has no billing state to show yet. */
+function BillingChip({ load, operatingCompanyId }: { load: DispatchLoadRow; operatingCompanyId: string }) {
+  const isDeliveredOrBeyond = DELIVERED_OR_BEYOND_STATUSES.has(load.status);
+  const invoicesQuery = useQuery({
+    queryKey: ["round-trips", "load-invoices", load.id],
+    queryFn: () => listLoadInvoices(operatingCompanyId, load.id, { limit: 10 }),
+    enabled: isDeliveredOrBeyond,
+    staleTime: 30_000,
+  });
+
+  if (!isDeliveredOrBeyond) return null;
+  if (invoicesQuery.isLoading) {
+    return (
+      <span className="rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs font-semibold text-gray-400" data-testid="round-trip-billing-chip-loading">
+        …
+      </span>
+    );
+  }
+
+  const invoices = (invoicesQuery.data?.invoices ?? []).filter((inv) => !inv.voided_at);
+  const sent = invoices.find((inv) => inv.status === "sent");
+  const proforma = invoices.find((inv) => inv.status === "proforma");
+
+  if (sent) {
+    return (
+      <span className="rounded-sm bg-green-100 px-1.5 py-0.5 text-xs font-semibold text-green-800" data-testid="round-trip-billing-chip-invoiced">
+        Invoiced{" "}
+        <EntityLink kind="invoice" id={sent.id} label={sent.display_id} className="underline" onClick={(e) => e.stopPropagation()} />
+      </span>
+    );
+  }
+  if (proforma) {
+    return (
+      <span className="rounded-sm bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-800" data-testid="round-trip-billing-chip-proforma">
+        Pro forma{" "}
+        <EntityLink kind="invoice" id={proforma.id} label={proforma.display_id} className="underline" onClick={(e) => e.stopPropagation()} />
+      </span>
+    );
+  }
+  return (
+    <span className="rounded-sm bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-800" data-testid="round-trip-billing-chip-unbilled">
+      Delivered · not invoiced
+    </span>
+  );
+}
+
+/** ROUND-20.2 — one bead per leg on a rail above a tour's cards: delivered = solid green with a
+ * check, the leg running now = blue with a halo, everything else hollow. A tour with no SB booked
+ * yet ends in a trailing hollow "SB not booked" bead. Rail fill = delivered legs / total beads. */
+function TourRail({ legs, hasSb }: { legs: DispatchLoadRow[]; hasSb: boolean }) {
+  const deliveredCount = legs.filter((leg) => DELIVERED_OR_BEYOND_STATUSES.has(leg.status)).length;
+  const totalBeads = legs.length + (hasSb ? 0 : 1);
+  const fillPct = totalBeads > 0 ? Math.round((deliveredCount / totalBeads) * 100) : 0;
+  return (
+    <div className="flex items-center gap-2" data-testid="round-trip-rail" data-rt-rail-fill={fillPct}>
+      <div className="relative h-1 w-16 shrink-0 overflow-hidden rounded-full bg-gray-200">
+        <div className="absolute inset-y-0 left-0 rounded-full bg-[#16A34A]" style={{ width: `${fillPct}%` }} />
+      </div>
+      <div className="flex items-center gap-1">
+        {legs.map((leg) => {
+          const delivered = DELIVERED_OR_BEYOND_STATUSES.has(leg.status);
+          const running = ACTIVE_STATUSES.has(leg.status);
+          return (
+            <span
+              key={leg.id}
+              title={`${leg.load_number} · ${STATUS_LABEL[leg.status] ?? leg.status}`}
+              data-testid={`round-trip-rail-bead-${leg.load_number}`}
+              data-rt-bead-state={delivered ? "delivered" : running ? "running" : "pending"}
+              className="inline-flex h-3 w-3 items-center justify-center rounded-full leading-none text-white"
+              style={
+                delivered
+                  ? { backgroundColor: "#16A34A" }
+                  : running
+                    ? { backgroundColor: "#2a78d6", boxShadow: "0 0 0 3px rgba(42,120,214,0.28)" }
+                    : { backgroundColor: "#fff", border: "1.5px solid #C7D2DC" }
+              }
+            >
+              {delivered ? (
+                <svg viewBox="0 0 12 12" width="7" height="7" aria-hidden="true">
+                  <path d="M2.5 6.2l2.2 2.2 4.3-4.8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              ) : null}
+            </span>
+          );
+        })}
+        {!hasSb ? (
+          <span
+            title="SB not booked"
+            data-testid="round-trip-rail-bead-sb-not-booked"
+            className="inline-flex h-3 w-3 rounded-full border border-dashed border-gray-400 bg-white"
+          />
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+/** ROUND-20.2 — card-header money: legs delivered, invoiced $ (sum of `sent`, non-voided invoice
+ * totals across the tour's delivered legs — the SAME per-load query BillingChip already runs, same
+ * queryKey, so react-query dedupes to one network call per load id, not a second fetch), and tour
+ * revenue (sum of each leg's own booked rate_total_cents — already on the load row, no fetch). */
+function TourHeaderMoney({
+  legs,
+  deliveredCount,
+  operatingCompanyId,
+}: {
+  legs: DispatchLoadRow[];
+  deliveredCount: number;
+  operatingCompanyId: string;
+}) {
+  const deliveredLegs = useMemo(() => legs.filter((leg) => DELIVERED_OR_BEYOND_STATUSES.has(leg.status)), [legs]);
+  const invoiceQueries = useQueries({
+    queries: deliveredLegs.map((leg) => ({
+      queryKey: ["round-trips", "load-invoices", leg.id],
+      queryFn: () => listLoadInvoices(operatingCompanyId, leg.id, { limit: 10 }),
+      staleTime: 30_000,
+    })),
+  });
+  const invoicedCents = invoiceQueries.reduce((sum, q) => {
+    const invoices = (q.data?.invoices ?? []).filter((inv) => !inv.voided_at && inv.status === "sent");
+    return sum + invoices.reduce((s, inv) => s + inv.total_cents, 0);
+  }, 0);
+  const tourRevenueCents = legs.reduce((sum, leg) => sum + (leg.rate_total_cents || 0), 0);
+  const currencyCode = legs[0]?.currency_code ?? "USD";
+  return (
+    <span className="text-xs text-gray-500" data-testid="round-trip-header-money">
+      {deliveredCount} of {legs.length} delivered · Invoiced {formatMoneyCents(invoicedCents, currencyCode)} · Tour{" "}
+      {formatMoneyCents(tourRevenueCents, currencyCode)}
+    </span>
+  );
+}
+
 function TripCard({
   load,
   tag,
+  operatingCompanyId,
   onClick,
 }: {
   load: DispatchLoadRow;
   tag?: string;
+  operatingCompanyId: string;
   onClick: (loadId: string) => void;
 }) {
   return (
@@ -71,6 +225,7 @@ function TripCard({
       <div className="flex items-center justify-between gap-2">
         <EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} className="font-semibold text-gray-900" onClick={(event) => event.stopPropagation()} />
         <div className="flex items-center gap-1">
+          <BillingChip load={load} operatingCompanyId={operatingCompanyId} />
           {tag ? (
             <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">{tag}</span>
           ) : null}
@@ -139,6 +294,7 @@ function NeedsReturnCard({
 function buildUnitPairs(
   loads: DispatchLoadRow[],
   preSettlements: Array<{
+    settlement_id: string;
     driver_id: string;
     first_load_id: string | null;
     last_load_id: string | null;
@@ -148,10 +304,28 @@ function buildUnitPairs(
   const loadById = new Map(loads.map((load) => [load.id, load]));
   const loadsByUnit = new Map<string, DispatchLoadRow[]>();
 
+  // ROUND-20.2 (RT-FULL-TOUR) — owner ruling 2026-09-12: "Round Trips is the ONE exception [to
+  // OPEN-ONLY] ... an OPEN tour renders whole, including its already-delivered legs. A CLOSED tour
+  // never renders here at all." Resolve each open pre-settlement's unit the SAME way the idle-unit
+  // pairing below already does (via its first_load_id's assigned_unit_id, falling back to
+  // last_load_id) so a unit currently mid-tour keeps ALL its legs, not just the still-active one.
+  const openSettlementIdByUnit = new Map<string, string>();
+  for (const pre of preSettlements) {
+    const anchor = (pre.first_load_id && loadById.get(pre.first_load_id)) || (pre.last_load_id && loadById.get(pre.last_load_id)) || null;
+    const unitId = anchor?.assigned_unit_id;
+    if (unitId) openSettlementIdByUnit.set(unitId, pre.settlement_id);
+  }
+
   for (const load of loads) {
     const unitId = load.assigned_unit_id;
     if (!unitId) continue;
-    if (!ACTIVE_STATUSES.has(load.status)) continue;
+    const isActive = ACTIVE_STATUSES.has(load.status);
+    // A terminal-status leg (delivered/invoiced/closed/...) is kept ONLY when it is linked to THIS
+    // unit's still-open pre-settlement — never by status alone, never for a different unit's tour,
+    // never once the tour itself has closed (openSettlementIdByUnit only holds OPEN settlements).
+    const linkedToOpenTour =
+      load.presettlement_link_id != null && load.presettlement_link_id === openSettlementIdByUnit.get(unitId);
+    if (!isActive && !linkedToOpenTour) continue;
     loadsByUnit.set(unitId, [...(loadsByUnit.get(unitId) ?? []), load]);
   }
 
@@ -390,27 +564,37 @@ export function RoundTrips({
           No open tours. A tour opens when a northbound load is booked from the yard.
         </div>
       ) : (
-        <div className="overflow-x-auto overflow-y-auto max-h-[70vh] space-y-2 pr-1" data-testid="round-trips-load-board">
+        <div className="overflow-x-auto overflow-y-auto max-h-[70vh] space-y-3 pr-1" data-testid="round-trips-load-board">
           {pairs.map((pair) => {
             const legs = orderedLegsForUnit(pair.unitLoads);
             const chrono = [...pair.unitLoads].sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
             const sequence = legs.map((load) => resolvedTripType(load, chrono.indexOf(load), chrono)).join("-");
             const cells = legs.length ? legs : [null];
+            const hasSb = legs.some((load) => resolvedTripType(load, chrono.indexOf(load), chrono) === "SB");
+            const deliveredCount = legs.filter((load) => DELIVERED_OR_BEYOND_STATUSES.has(load.status)).length;
+            // ROUND-20.2 border-left law: the tour card stays the standing navy #14314F until every
+            // leg has delivered AND an SB actually exists (a tour with only NB/TR delivered but no
+            // SB booked yet is not "done" — it still needs its return leg before it can close).
+            const tourComplete = legs.length > 0 && hasSb && deliveredCount === legs.length;
             return (
               <div
                 key={pair.unitId}
-                className="flex min-w-max gap-2 rounded-sm border border-gray-200 bg-gray-50/80 p-2"
+                className="overflow-hidden rounded-[9px] bg-white"
+                style={{ border: "1px solid #C7D2DC", borderLeft: `5px solid ${tourComplete ? "#16A34A" : "#14314F"}` }}
                 data-testid={`round-trip-row-${pair.unitNumber ?? pair.unitId}`}
                 data-rt-sequence={sequence || "empty"}
               >
-                <div className="flex w-36 shrink-0 flex-col justify-start pt-1">
-                  <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                <div
+                  className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 py-1.5"
+                  style={{ background: "linear-gradient(180deg,#f6f9fc,#e9eff5)", borderBottom: "1px solid #C7D2DC" }}
+                >
+                  <div className="flex flex-wrap items-center gap-x-1 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                     <EntityLinkOrTombstone
                       kind="unit"
                       id={pair.unitId}
                       name={pair.unitNumber}
                       noun="Unit"
-                      className="text-gray-500 hover:underline"
+                      className="text-gray-600 hover:underline"
                       data-testid="round-trip-unit-link"
                       onClick={(e) => e.stopPropagation()}
                     />
@@ -422,55 +606,65 @@ export function RoundTrips({
                           id={pair.driverId ?? undefined}
                           name={pair.driverName}
                           noun="Driver"
-                          className="text-gray-500 hover:underline"
+                          className="text-gray-600 hover:underline"
                           data-testid="round-trip-driver-link"
                           onClick={(e) => e.stopPropagation()}
                         />
                       </>
                     ) : null}
+                    <span className="normal-case text-gray-400">·</span>
+                    <span className="normal-case text-gray-500" data-testid="round-trip-tour-state">
+                      {legs.length === 0
+                        ? pair.needsReturn
+                          ? "Needs return"
+                          : "Open"
+                        : tourComplete
+                          ? "Tour delivered"
+                          : "Tour Open"}
+                    </span>
                   </div>
-                  <div className="mt-2 hidden md:block">
-                    {pair.needsReturn && !pair.returnLoad ? (
-                      <span className="rounded-sm bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">Needs return</span>
-                    ) : pair.returnLoad ? (
-                      <span className="rounded-sm bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">Paired</span>
-                    ) : (
-                      <span className="rounded-sm bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">Open</span>
-                    )}
-                  </div>
+                  {legs.length > 0 ? <TourRail legs={legs} hasSb={hasSb} /> : null}
+                  {legs.length > 0 ? (
+                    <TourHeaderMoney legs={legs} deliveredCount={deliveredCount} operatingCompanyId={operatingCompanyId} />
+                  ) : null}
                 </div>
-                {cells.map((load, idx) => (
-                  <div key={load?.id ?? `empty-${idx}`} className={`flex min-w-0 shrink-0 flex-col gap-1 ${RT_KANBAN_COL_MIN.compact}`}>
-                    {load ? (
-                      <TripCard
-                        load={load}
-                        tag={
-                          load.trip_type === "SB" || (!load.trip_type && pair.returnLoad?.id === load.id)
-                            ? "RETURN·SB"
-                            : load.trip_type === "TR"
-                              ? "TR"
-                              : "NB"
-                        }
-                        onClick={onLoadClick}
-                      />
-                    ) : pair.needsReturn ? (
-                      <NeedsReturnCard unitId={pair.unitId} driverId={pair.driverId} onBookReturn={onBookReturn} />
-                    ) : (
-                      <div className="rounded-sm border border-dashed border-gray-300 bg-white px-3 py-6 text-center text-xs text-gray-500">
-                        No active outbound load
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {/* REG-036 (owner 2026-09-10: "NB units have no Book-a-Return"): a unit that ALREADY has an
-                    outbound leg (so cells rendered its NB/TR card, never the empty-cell NeedsReturnCard) but
-                    still needs a southbound return gets its own trailing "+ Book return" slot next to the NB
-                    card — the button was previously reachable only on units with zero legs. */}
-                {legs.length > 0 && pair.needsReturn && !pair.returnLoad ? (
-                  <div className={`flex min-w-0 shrink-0 flex-col gap-1 ${RT_KANBAN_COL_MIN.compact}`}>
-                    <NeedsReturnCard unitId={pair.unitId} driverId={pair.driverId} onBookReturn={onBookReturn} />
-                  </div>
-                ) : null}
+                <div className="flex min-w-max gap-0 p-2">
+                  {cells.map((load, idx) => (
+                    <div
+                      key={load?.id ?? `empty-${idx}`}
+                      className={`flex min-w-0 shrink-0 flex-col gap-1 px-2 first:pl-0 ${RT_KANBAN_COL_MIN.compact} ${idx > 0 ? DASHED_DIVIDER_CLASS : ""}`}
+                    >
+                      {load ? (
+                        <TripCard
+                          load={load}
+                          operatingCompanyId={operatingCompanyId}
+                          tag={
+                            load.trip_type === "SB" || (!load.trip_type && pair.returnLoad?.id === load.id)
+                              ? "RETURN·SB"
+                              : load.trip_type === "TR"
+                                ? "TR"
+                                : "NB"
+                          }
+                          onClick={onLoadClick}
+                        />
+                      ) : pair.needsReturn ? (
+                        <NeedsReturnCard unitId={pair.unitId} driverId={pair.driverId} onBookReturn={onBookReturn} />
+                      ) : (
+                        <div className="rounded-sm border border-dashed border-gray-300 bg-white px-3 py-6 text-center text-xs text-gray-500">
+                          No active outbound load
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {/* REG-036 (owner 2026-09-10: "NB units have no Book-a-Return"): a unit that ALREADY has an
+                      outbound leg (so cells rendered its NB/TR card, never the empty-cell NeedsReturnCard) but
+                      still needs a southbound return gets its own trailing "+ Book return" slot next to the NB
+                      card — the button was previously reachable only on units with zero legs. */}
+                  {legs.length > 0 && pair.needsReturn && !pair.returnLoad ? (
+                    <div className={`flex min-w-0 shrink-0 flex-col gap-1 px-2 ${RT_KANBAN_COL_MIN.compact} ${DASHED_DIVIDER_CLASS}`}><NeedsReturnCard unitId={pair.unitId} driverId={pair.driverId} onBookReturn={onBookReturn} />
+                    </div>
+                  ) : null}
+                </div>
               </div>
             );
           })}

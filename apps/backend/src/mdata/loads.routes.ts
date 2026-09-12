@@ -173,6 +173,12 @@ const listLoadsQuerySchema = z.object({
   include_progress: z.coerce.boolean().default(false),
   include_live_eta: z.coerce.boolean().default(false),
   board_scope: z.enum(["live", "history"]).optional(),
+  // ROUND-20.2 (RT-FULL-TOUR) — owner ruling: "DISPATCH OPEN-ONLY stands everywhere else. Round
+  // Trips is the ONE exception, because the tour IS the unit of this view." An opt-in flag, not a
+  // behavior change to board_scope=live itself: every OTHER board_scope=live consumer (Kanban,
+  // List, Trip Pairing) is unaffected unless it explicitly asks for this. Round Trips is the only
+  // caller that passes it (apps/frontend/src/pages/Dispatch.tsx's roundTripsFullFetch gate).
+  include_open_tour_legs: z.coerce.boolean().default(false),
 });
 
 const loadStatusTransitionBodySchema = z.object({
@@ -670,6 +676,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       include_progress,
       include_live_eta,
       board_scope,
+      include_open_tour_legs,
     } = parsedQuery.data;
     // DISP-FILTER-01: FE URL uses `statuses=` (plural); API historically only documented `status=`.
     // Accept both and merge (dedupe) so pending-docs filters do not 400 or no-op.
@@ -716,7 +723,30 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         // Dispatch the moment delivery happens, not only when formally closed — see the comment above
         // DISPATCH_LIVE_EXCLUDED_STATUSES.
         values.push(DISPATCH_LIVE_EXCLUDED_STATUSES);
-        filters.push(`NOT (l.status = ANY($${values.length}::mdata.load_status_enum[]))`);
+        const excludedIdx = values.length;
+        if (include_open_tour_legs) {
+          // ROUND-20.2 (RT-FULL-TOUR) — owner ruling 2026-09-12: "Round Trips is the ONE exception
+          // [to OPEN-ONLY], because the tour IS the unit of this view: an OPEN tour renders whole,
+          // including its already-delivered legs. A CLOSED tour never renders here at all." Scoped
+          // exactly: a terminal-status leg is let through ONLY when its presettlement_link_id points
+          // at a settlement that is still open (same "open" predicate as pre-settlement.routes.ts's
+          // own open-by-driver endpoint — trip_closed_at IS NULL and status not in the closed set).
+          // Correlated subquery, not a param list, so a closed/approved/paid settlement's legs never
+          // leak back in once the tour settles. Opt-in via include_open_tour_legs; every other
+          // board_scope=live caller (Kanban/List/Trip Pairing) does not pass it and is unaffected.
+          filters.push(`(
+            NOT (l.status = ANY($${excludedIdx}::mdata.load_status_enum[]))
+            OR l.presettlement_link_id IN (
+              SELECT s.id FROM driver_finance.driver_settlements s
+              WHERE s.operating_company_id = l.operating_company_id
+                AND s.settlement_model = 'load_bookended'
+                AND s.trip_closed_at IS NULL
+                AND s.status NOT IN ('approved', 'paid', 'cancelled', 'closed', 'final')
+            )
+          )`);
+        } else {
+          filters.push(`NOT (l.status = ANY($${excludedIdx}::mdata.load_status_enum[]))`);
+        }
       } else if (board_scope === "history") {
         values.push(DISPATCH_LIVE_EXCLUDED_STATUSES);
         filters.push(`l.status = ANY($${values.length}::mdata.load_status_enum[])`);
@@ -817,6 +847,18 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             l.id, l.operating_company_id, l.load_number, l.customer_id, l.status, l.rate_total_cents, l.currency_code,
             l.assigned_unit_id, l.assigned_primary_driver_id, l.assigned_secondary_driver_id, l.team_id,
             l.dispatcher_user_id, l.notes, l.dispatch_flag_color_id, l.created_at, l.updated_at, l.soft_deleted_at, l.deleted_by_user_id,
+            -- ROUND-20.2 (RT-FULL-TOUR, found while wiring the Round Trips full-tour render): this
+            -- LIST select never projected trip_type/presettlement_link_id/tour_id, so every list row
+            -- reaching the frontend (DispatchLoadRow) had them undefined -- resolvedTripType() fell
+            -- back to positional NB/TR/SB inference (measured live: all 7 Round Trips rows tagged
+            -- "NB" regardless of real trip_type), and buildUnitPairs had no presettlement_link_id to
+            -- match a delivered/invoiced leg back to its still-open tour. The columns already exist
+            -- on mdata.loads (verified live, Neon tiny-field-89581227) -- this is a pure SELECT
+            -- projection gap, not a schema change. (A separate GET /api/v1/dispatch/loads in
+            -- dispatch/loads.routes.ts already had a same-shaped trip_type gap, tracked by another
+            -- seat -- that route is not the one this page calls; confirmed via listLoads/listAllLoads
+            -- in api/loads.ts, both hitting /api/v1/mdata/loads, i.e. this file.)
+            l.trip_type, l.presettlement_link_id, l.tour_id,
             c.customer_name AS customer_name,
             u.unit_number AS assigned_unit_number,
             tr.id AS trailer_id,
