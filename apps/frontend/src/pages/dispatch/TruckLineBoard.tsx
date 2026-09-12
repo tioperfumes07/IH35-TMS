@@ -83,6 +83,20 @@ const V7_STATIONS = [
 const V7_COUNT = V7_STATIONS.length;
 const STATUS_STATION_INDEX = 4;
 
+// Below the fold breakpoint, the Line column is too narrow for the full station names to sit
+// one-per-node without touching their neighbor (measured: "Dispatched"/"At pickup" and "At
+// delivery"/"Delivered" collide at 860px even at the .cap clamp() floor) — a shorter caption at
+// that width is a documented, honest adaptation (the same "different rendering below the
+// breakpoint" pattern the Load/Live-signal columns already use), never a guess at meaning.
+const NARROW_STATION_CAPTIONS: Record<string, string> = {
+  Dispatched: "Disp.",
+  "At pickup": "Pickup",
+  Loaded: "Loaded",
+  "In transit": "Transit",
+  "At delivery": "Delivery",
+  Delivered: "Del.",
+};
+
 const GREEN = "#16A34A";
 const RED = "#DC2626";
 const NAVY = "#14314F";
@@ -453,7 +467,8 @@ function TruckLineTrack({
               }}
             />
             <span className="truck-line-v4-cap absolute whitespace-nowrap text-[#374151]" style={{ top: 54, left: "50%", transform: "translateX(-50%)" }}>
-              {st.name}
+              <span className="truck-line-v4-cap-full">{st.name}</span>
+              <span className="truck-line-v4-cap-narrow">{NARROW_STATION_CAPTIONS[st.name] ?? st.name}</span>
             </span>
           </div>
         );
@@ -634,11 +649,14 @@ export function TruckLineBoard({
           }
           .truck-line-v4-load-cell, .truck-line-v4-load-header,
           .truck-line-v4-signal-cell, .truck-line-v4-signal-header { display: none; }
+          .truck-line-v4-cap-full { display: none; }
+          .truck-line-v4-cap-narrow { display: inline; }
         }
         .truck-line-v4-unit { font-size: clamp(12px, 0.85vw, 14px); }
         .truck-line-v4-sub { font-size: clamp(10px, 0.72vw, 12px); }
         .truck-line-v4-cap { font-size: clamp(9px, 0.72vw, 11px); }
         .truck-line-v4-appt { font-size: clamp(11px, 0.8vw, 13px); }
+        .truck-line-v4-cap-narrow { display: none; }
         .truck-line-vehicle {
           position: absolute;
           transform: translateX(-50%);
