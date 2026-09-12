@@ -147,6 +147,9 @@ export type DispatchLoadRow = {
   loaded_miles?: number | null;
   /** mdata.loads.trip_type — never infer from geography. */
   trip_type?: "NB" | "TR" | "SB" | "LOCAL" | null;
+  /** ROUND 20.1 — mdata.loads.presettlement_link_id/tour_id, §F linkage law (both ways or defect). */
+  presettlement_link_id?: string | null;
+  tour_id?: string | null;
 };
 
 export type LoadsListResponse = {
