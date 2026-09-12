@@ -46,7 +46,14 @@ const EXPECTED_TABLE_COUNTS = {
   // LIVE and per-entity on prod (75 and 72 rows, verified under lucia) and were absent from the count
   // spec entirely, so the DISPATCH badge understated by their whole contents.
   // LST-F20: +dispatch_flag_colors +load_trailer_equipment +lumper_providers +mx_customs_brokers
-  dispatch: 11, // +load_cancellation_reasons +dispatcher_error_reasons +customer_quality_event_reasons
+  // ROUND 18.1 Item C (2026-09-12): +load_exception_reasons (LEAD ITEM 1, #21852) -- this ratchet
+  // was not bumped in that PR, so it silently reddened every pass-7 run since (surfaced under
+  // AUDIT-FIX-13 "Customers pagination" only because run-pass-7-smoke-verify.mjs chains
+  // verify:header-counts-match-actual after the actual Customers/pagination check in the same
+  // script -- the title is misleading, the real failure was always this dispatch mismatch, never
+  // Customers). No product behavior changed: the live badge already read 12 from the real spec
+  // array; only this static "did-you-forget-to-bump-it" mirror was stale.
+  dispatch: 12, // +load_cancellation_reasons +dispatcher_error_reasons +customer_quality_event_reasons +load_exception_reasons
   drivers: 13, // +driver_termination_reasons +driver_load_statuses (LST-A-01 hub); LST-F20: +cash_advance_types +leave_types
   accounting: 16, // +journal_entry_types, +account_types, +detail_types, +void_cancel_reasons
   customers: 3,
@@ -80,19 +87,27 @@ function read(rel) {
 
 const specSource = read("apps/backend/src/lists/lists-module-count-spec.ts");
 
-function countTablesInSpec(domain) {
+export function countTablesInSpec(domain, source = specSource) {
   const blockPattern = new RegExp(`${domain}:\\s*\\[([\\s\\S]*?)\\],`, "m");
-  const block = specSource.match(blockPattern)?.[1] ?? "";
+  const block = source.match(blockPattern)?.[1] ?? "";
   const matches = block.match(/table:\s*["'][^"']+["']/g) ?? [];
   return matches.length;
 }
 
-for (const [domain, expected] of Object.entries(EXPECTED_TABLE_COUNTS)) {
-  const actual = countTablesInSpec(domain);
-  if (actual !== expected) {
-    fail(`${domain} module count spec has ${actual} tables, expected ${expected}`);
+// ROUND 18.1 Item C (2026-09-12): pulled out of the top-level loop so a selftest can prove the
+// ratchet actually catches a stale count -- the exact class of bug that reddened this guard for a
+// full day (LEAD ITEM 1, #21852, added load_exception_reasons to the dispatch count spec array
+// without bumping EXPECTED_TABLE_COUNTS.dispatch in the same PR).
+export function expectedTableCountProblems(source, expectedCounts) {
+  const problems = [];
+  for (const [domain, expected] of Object.entries(expectedCounts)) {
+    const actual = countTablesInSpec(domain, source);
+    if (actual !== expected) problems.push(`${domain} module count spec has ${actual} tables, expected ${expected}`);
   }
+  return problems;
 }
+
+for (const problem of expectedTableCountProblems(specSource, EXPECTED_TABLE_COUNTS)) fail(problem);
 
 // The literal must STAY dead. If an exported *_COUNT constant is ever re-added to the count spec and
 // summed into a module total, that is the defect this file now guards against — not a value to check.
@@ -153,7 +168,20 @@ if (process.argv.includes("--selftest")) {
     domainCoverageProblems(domainKeys, mappedKeys, [...optedOutKeys, "fleet"]),
   ];
   if (mutations.some((problems) => problems.length === 0)) fail("selftest mutation escaped domain coverage ratchet");
-  console.log("verify:header-counts-match-actual SELFTEST PASS — 3/3 domain coverage mutations caught");
+
+  // ROUND 18.1 Item C: prove the EXPECTED_TABLE_COUNTS ratchet itself actually fires on a stale
+  // count -- the real defect class this whole item was about (a spec array grows, the mirrored
+  // literal here doesn't, and it silently reddens pass-7's AUDIT-FIX-13 for anyone who happens to
+  // run it, under a misleading title, for as long as nobody notices).
+  const staleCount = expectedTableCountProblems(specSource, { ...EXPECTED_TABLE_COUNTS, dispatch: EXPECTED_TABLE_COUNTS.dispatch + 1 });
+  if (staleCount.length === 0) fail("selftest mutation escaped the EXPECTED_TABLE_COUNTS ratchet (a stale dispatch count was not caught)");
+  if (!/dispatch module count spec has \d+ tables, expected \d+/.test(staleCount[0])) {
+    fail(`selftest: ratchet failure message shape changed unexpectedly: ${staleCount[0]}`);
+  }
+  const currentCount = expectedTableCountProblems(specSource, EXPECTED_TABLE_COUNTS);
+  if (currentCount.length !== 0) fail(`selftest: the real, unmutated spec must currently pass the ratchet: ${currentCount.join("; ")}`);
+
+  console.log("verify:header-counts-match-actual SELFTEST PASS — 3/3 domain coverage mutations + 1/1 stale-count-ratchet mutation caught");
 }
 
 console.log(
