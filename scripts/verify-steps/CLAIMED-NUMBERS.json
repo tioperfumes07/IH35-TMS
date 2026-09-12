@@ -8749,5 +8749,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-12",
     "purpose": "verify-settlement-document-number-allocator-wired"
+  },
+  "11353": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-12",
+    "purpose": "verify-kanban-drag-touch-action"
   }
 }
