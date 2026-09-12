@@ -58,11 +58,15 @@ export function PresettlementSuggestionsTab({ companyId }: { companyId: string }
         key: "load_number",
         label: "Load #",
         alwaysVisible: true,
+        sortable: true,
+        sortValue: (row) => row.load_number ?? "",
         render: (row) => <EntityLink kind="load" id={row.load_id} label={row.load_number ?? entityLabel(null, row.load_id, "Load")} />,
       },
       {
         key: "driver_id",
         label: "Driver",
+        sortable: true,
+        sortValue: (row) => [row.first_name, row.last_name].filter(Boolean).join(" ") || "",
         render: (row) => (
           <EntityLink
             kind="driver"
@@ -75,6 +79,8 @@ export function PresettlementSuggestionsTab({ companyId }: { companyId: string }
       {
         key: "trip_type",
         label: "Trip Type",
+        sortable: true,
+        sortValue: (row) => row.trip_type ?? "",
         render: (row) =>
           row.trip_type ?? (
             <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">Unknown — needs classification</span>
@@ -84,6 +90,8 @@ export function PresettlementSuggestionsTab({ companyId }: { companyId: string }
         key: "suggested_settlement_display_id",
         label: "Suggested Settlement",
         alwaysVisible: true,
+        sortable: true,
+        sortValue: (row) => row.suggested_settlement_display_id ?? "",
         render: (row) =>
           row.suggested_settlement_id ? (
             <EntityLink
@@ -98,6 +106,8 @@ export function PresettlementSuggestionsTab({ companyId }: { companyId: string }
       {
         key: "suggested_reason",
         label: "Reason",
+        sortable: true,
+        sortValue: (row) => row.suggested_reason ?? "",
         render: (row) => (
           <span className="max-w-[320px] truncate" title={row.suggested_reason}>
             {row.suggested_reason}

@@ -107,7 +107,7 @@ export function TOUR_LOAD_COLUMNS(state: "open" | "closed"): ParityColumn<TourLo
       { key: "ready", label: "Ready to close", testId: "tour-col-ready", sortable: true, minWidth: 120, maxWidth: 200, sortValue: (r: TourLoadRow) => r.ready_ok, render: (r: TourLoadRow) => <span className={`ldt-pill ${r.can_close ? "ok" : r.ready_ok === 0 ? "bad" : "warn"}`} title={r.close_blockers.join("\n")}>{r.can_close ? "Ready" : "Not ready"}</span> } as ParityColumn<TourLoadRow>,
     ] : [
       { key: "net", label: "Driver net", headerTitle: "Tour-level: the driver's net for the whole settlement", testId: "tour-col-driver-net", sortable: true, cellClass: MONEY, minWidth: 100, maxWidth: 140, sortValue: (r: TourLoadRow) => r.driver_net_cents ?? 0, render: (r: TourLoadRow) => r.driver_net_cents == null ? DASH : fmt(r.driver_net_cents) } as ParityColumn<TourLoadRow>,
-      { key: "company", label: "Company settlement", testId: "tour-col-company", minWidth: 120, maxWidth: 160, cellClass: "whitespace-nowrap", render: (r: TourLoadRow) => r.company_settlement_display_id ? r.company_settlement_display_id : <span className="ldt-pill warn" data-testid="tour-company-not-opened">not opened</span> } as ParityColumn<TourLoadRow>,
+      { key: "company", label: "Company settlement", testId: "tour-col-company", sortable: true, minWidth: 120, maxWidth: 160, cellClass: "whitespace-nowrap", sortValue: (r: TourLoadRow) => r.company_settlement_display_id ?? "", render: (r: TourLoadRow) => r.company_settlement_display_id ? r.company_settlement_display_id : <span className="ldt-pill warn" data-testid="tour-company-not-opened">not opened</span> } as ParityColumn<TourLoadRow>,
     ]),
   ];
 }
