@@ -2161,3 +2161,61 @@ DONE LINE: CC-1 | ACCT-F26140 follow-up (LoadCostsBoardPage.tsx driver_pay settl
 SHIPPED (#21860), deploy in flight | picked up a genuinely open, unclaimed §0b-lane item from the
 standing INBOX rather than leaving it idle | NEXT: live Chrome verify once deploy lands, then
 resuming the standing idle-loop.
+
+## CC-1 — P0 boot-crash found + fixed (PR #21860's own deploy investigation), 2026-09-12 01:05 UTC
+
+Following up on the #21860 deploy-in-flight note above: it FAILED. `dep-dai9n22d0e5s73fs18o0`
+(backend, targeting `e3884492c5`) came back `status: "update_failed"`. Logs (`list_logs`,
+`srv-d7rpem7avr4c73fhp4n0`, 00:24-00:27Z): build succeeded, pre-deploy migrations ran successfully,
+then the app process itself threw `FastifyError: Method 'GET' already declared for route
+'/api/v1/catalogs/load-exception-reasons'` and `Application exited early` — a genuine boot crash,
+not anything wrong with #21860's own one-line change. Root cause traced to `origin/main`:
+`dispatch/truck-line/load-exception-reasons.routes.ts` (#21859, Truck Line) was a temporary GET
+shim written before this seat's real catalog migration/route existed ("degrades gracefully ...
+until CC-1's migration lands," its own header said) and was never removed once #21852 shipped the
+real table + full CRUD route on the exact same path. Two `app.get()` registrations on one literal
+path → Fastify rejects the second at boot → every deploy since #21859 merged crash-looped, and
+Render kept serving old pre-fix instances (healthz stuck on `8bb5e578` through the whole window).
+Independently confirmed on `origin/main`'s own CI: `build-typecheck-heavy`'s `lint-fastify-routes`
+step has been failing on every push to main since #21859 for this exact reason
+("Duplicate literal Fastify routes detected ... GET /api/v1/catalogs/load-exception-reasons").
+
+FIX shipped as PR #21868 (squash `b04df68c31de634f883cabe952962aefdb7357b8`, merged per owner's
+explicit fast-merge directive): removed the dead shim file + its import/registration in
+`index.ts`; the real catalog route already returns a superset of its fields, plus a
+`catalog_ready: true` literal added for exact type-contract compatibility with Truck Line's
+`listLoadExceptionReasons()` (verified unused there — `TruckLineBoard.tsx`'s own `catalogReady`
+reads from the separate `getTruckLine` endpoint, not this one, so no observed UI behavior changed).
+Also folded in Lead's ROUND 17.2 ask in the same PR: `LoadExceptionReasonsListPage.tsx` switched
+from `components/DataTable` to `components/parity/ParityTable` (go26-consolidation-ratchet
+regression, `import_data_table` back to the frozen 20). ROUND 17.1's fresh-DB seed FK gap was
+already fixed by #21864 before this PR branched — no migration edit needed. Extended this seat's
+own guard (`verify-load-exception-reasons-catalog.mjs`) with `auditNoCollidingRouteFile()` so a
+future re-introduction of a colliding route on this path fails the gate instead of booting to a
+crash; selftest reproduces the exact two-file bug shape in a scratch tree.
+
+Two PRE-EXISTING, UNRELATED regressions also from #21859 surfaced during this investigation (not
+touched, not my lane — flagging for CC-2): `verify:driver-pwa-load-status-gate` (11 assertion
+failures on `apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts`, git-blamed to #21859)
+and the `pass-7` smoke suite's `AUDIT-FIX-13: Customers pagination + card links` check — both
+red on `main` right now, independent of this fix.
+
+DEPLOY: both backend (`dep-daia7ajl550s73flbhdg`) and frontend (`dep-daia7b5g1s2s738n49pg`)
+triggered post-merge; backend confirmed LIVE via `/api/v1/healthz/shallow` →
+`git_sha: b04df68c31de634f883cabe952962aefdb7357b8` (boot succeeded — proves the crash is fixed);
+frontend LIVE (finished 01:00:25Z, HTTP 200).
+
+LIVE CHROME PROOF (the original #21860 ask): Load Costs board → Driver pay tab → clicked a
+populated settlement link ("5779" on load 13593). `href` carried the real
+`settlement_id=3c81e7d5-3a59-4d85-9a16-585d0de05893` (not the dead `settled_in_settlement_id`
+column) and navigated to a fully-populated Settlement Detail page (dates, driver, GL lines, net
+pay) — no 404, no blank state. Note: settlement 5779 falls inside the ALL-SEATS FREEZE range
+(S-2026-5769–5800). This was a read-only navigation/view only to prove the link resolves — no
+edit, no reverse, no write of any kind, and I left the page immediately. Freeze respected.
+
+DONE LINE: CC-1 | P0 boot-crash SHIPPED+LIVE (#21868, `b04df68c`) | ACCT-F26140 driver_pay
+settlement link (#21860) now LIVE-VERIFIED (Load Costs → Driver pay → real settlement_id → real
+Settlement Detail page) | ROUND 17.2 ratchet fix included in the same PR | 2 pre-existing #21859
+regressions flagged for CC-2 (driver-pwa-load-status-gate, pass-7 Customers-pagination) | freeze
+on S-2026-5769–5800 respected throughout (read-only view of 5779 only) | NEXT: resuming the
+standing idle-loop sweep.
