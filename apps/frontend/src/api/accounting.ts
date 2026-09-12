@@ -1,6 +1,9 @@
 import { apiRequest } from "./client";
 
-export type InvoiceStatus = "draft" | "sent" | "partial" | "paid" | "void" | "factored";
+// ROUND-20.2 — "proforma" added: verified live (Neon tiny-field-89581227, accounting.invoices)
+// this is a real, currently-used status value the prior union never declared; the Round Trips
+// billing chip needs to distinguish it from "sent" and this type is the honest source for both.
+export type InvoiceStatus = "draft" | "proforma" | "sent" | "partial" | "paid" | "void" | "factored";
 export type InvoiceLineType = "linehaul" | "fsc" | "detention" | "layover" | "lumper" | "tonu" | "accessorial" | "tax" | "adjustment" | "other";
 export type PaymentMethod = "ach" | "wire" | "check" | "cash" | "factoring_advance" | "factoring_reserve" | "credit_card" | "other";
 export type FactoringStatus = "submitted" | "advanced" | "reserve_held" | "collected" | "released" | "recourse_returned" | "voided";

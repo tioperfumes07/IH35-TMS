@@ -147,7 +147,9 @@ export type DispatchLoadRow = {
   loaded_miles?: number | null;
   /** mdata.loads.trip_type — never infer from geography. */
   trip_type?: "NB" | "TR" | "SB" | "LOCAL" | null;
-  /** ROUND 20.1 — mdata.loads.presettlement_link_id/tour_id, §F linkage law (both ways or defect). */
+  /** ROUND 20.1 — mdata.loads.presettlement_link_id/tour_id, §F linkage law (both ways or defect).
+   * ROUND-20.2 (Round Trips) uses presettlement_link_id to keep a delivered/invoiced leg on-board
+   * while its tour's pre-settlement is still open. */
   presettlement_link_id?: string | null;
   tour_id?: string | null;
 };
@@ -221,6 +223,9 @@ export type LoadsListFilters = {
   include_progress?: boolean;
   include_live_eta?: boolean;
   board_scope?: "live" | "history";
+  /** ROUND-20.2 (RT-FULL-TOUR) — Round Trips-only opt-in; every other board_scope=live caller must
+   * leave this unset so OPEN-ONLY stays unchanged for them. See mdata/loads.routes.ts. */
+  include_open_tour_legs?: boolean;
 };
 
 type CreateLoadWizardBody = {
@@ -268,6 +273,7 @@ export function listLoads(filters: LoadsListFilters) {
   if (filters.include_progress !== undefined) query.set("include_progress", String(filters.include_progress));
   if (filters.include_live_eta !== undefined) query.set("include_live_eta", String(filters.include_live_eta));
   if (filters.board_scope) query.set("board_scope", filters.board_scope);
+  if (filters.include_open_tour_legs) query.set("include_open_tour_legs", "true");
   const qs = query.toString();
   return apiRequest<LoadsListResponse>(`/api/v1/mdata/loads${qs ? `?${qs}` : ""}`);
 }
