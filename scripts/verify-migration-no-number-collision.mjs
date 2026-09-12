@@ -200,6 +200,17 @@ const KNOWN_COLLISIONS = new Map(Object.entries({
   "202613311300": [
     "202613311300_insurance_driver_schedule_revoke_delete_grants.sql",
     "202613311300_insurance_schedule_confirmations_unit_only.sql"
+  ],
+  // PROD-VERIFIED 2026-09-11/12 (bypass_rls=lucia, _system._schema_migrations, CC-3 correction to
+  // #21869's collision report + independently confirmed by CC-2's own report): both files carry
+  // their exact committed sha256 on prod, applied 2026-09-11T22:37:36Z and 2026-09-12T00:51:36Z
+  // respectively (the second AFTER the collision was first reported — db:migrate applies by exact
+  // filename, not numeric-prefix uniqueness, so both landed cleanly). Renaming either is forbidden
+  // (checksum freeze — applied migrations are immutable); frozen here per this guard's own
+  // documented remedy for a real, already-applied, unrenameable pair.
+  "202614100000": [
+    "202614100000_drivers_status_locked_reason_admits_test_fixture_quarantine.sql",
+    "202614100000_load_exception_reasons_rls_fix.sql"
   ]
 }));
 
