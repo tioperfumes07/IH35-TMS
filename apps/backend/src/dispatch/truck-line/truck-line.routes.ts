@@ -34,6 +34,7 @@ type Row = {
   pickup_city: string | null;
   pickup_state: string | null;
   pickup_scheduled_at: string | null;
+  pickup_appointment_start_at: string | null;
   pickup_arrival_at: string | null;
   pickup_arrival_source: StampSource;
   pickup_departure_at: string | null;
@@ -41,6 +42,7 @@ type Row = {
   delivery_city: string | null;
   delivery_state: string | null;
   delivery_scheduled_at: string | null;
+  delivery_appointment_start_at: string | null;
   delivery_arrival_at: string | null;
   delivery_arrival_source: StampSource;
   delivery_departure_at: string | null;
@@ -53,12 +55,16 @@ type Row = {
   issue_reason_name: string | null;
   pos_lat: number | null;
   pos_lng: number | null;
+  pos_speed_mph: number | null;
+  pos_engine_state: string | null;
   pos_city: string | null;
   pos_state: string | null;
   pos_captured_at: string | null;
 };
 
-const LOC_STALE_MIN = 10;
+// V7 (ROUND 18.5) — the owner's own LIVE POSITION RULE names 60 minutes as the staleness cutoff
+// ("ping older than 60 min -> red 'signal stale'"); was 10 before this view had a rule of its own.
+const LOC_STALE_MIN = 60;
 
 export async function registerTruckLineRoutes(app: FastifyInstance) {
   app.get("/api/v1/dispatch/truck-line", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
@@ -84,9 +90,11 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
           d1.id::text AS driver1_id, NULLIF(CONCAT_WS(' ', d1.first_name, d1.last_name), '') AS driver1_name,
           d2.id::text AS driver2_id, NULLIF(CONCAT_WS(' ', d2.first_name, d2.last_name), '') AS driver2_name,
           pu.city AS pickup_city, pu.state AS pickup_state, pu.scheduled_arrival_at::text AS pickup_scheduled_at,
+          pu.appointment_start_at::text AS pickup_appointment_start_at,
           pu.actual_arrival_at::text AS pickup_arrival_at, pu.actual_arrival_source AS pickup_arrival_source,
           pu.actual_departure_at::text AS pickup_departure_at, pu.actual_departure_source AS pickup_departure_source,
           de.city AS delivery_city, de.state AS delivery_state, de.scheduled_arrival_at::text AS delivery_scheduled_at,
+          de.appointment_start_at::text AS delivery_appointment_start_at,
           de.actual_arrival_at::text AS delivery_arrival_at, de.actual_arrival_source AS delivery_arrival_source,
           de.actual_departure_at::text AS delivery_departure_at, de.actual_departure_source AS delivery_departure_source,
           pod.cnt AS delivery_pod_count,
@@ -94,6 +102,7 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
           issue.id::text AS issue_id, issue.issue_category, issue.reported_at::text AS issue_started_at,
           ${reasonsTableExists ? "reason.name" : "NULL"} AS issue_reason_name,
           p.lat::float8 AS pos_lat, p.lng::float8 AS pos_lng,
+          p.speed_mph::float8 AS pos_speed_mph, p.engine_state AS pos_engine_state,
           COALESCE(p.city, loc.city) AS pos_city, COALESCE(p.state, loc.state) AS pos_state,
           p.captured_at::text AS pos_captured_at
         FROM mdata.units u
@@ -193,19 +202,30 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
           })
         : null;
 
-      let nextAppointment: { type: "pickup" | "delivery"; at: string | null; late: boolean } | null = null;
+      // V7 (ROUND 18.5): "use appointment_start_at when present, else scheduled_arrival_at, and
+      // say which in the cell's title attribute" — appointment_start_at is NULL on every measured
+      // USMCA stop today (a real, documented data gap), so this currently always falls back to
+      // scheduled_arrival_at, but never silently prefers the wrong one once appointment_start_at
+      // is populated.
+      let nextAppointment:
+        | { type: "pickup" | "delivery"; at: string | null; at_source: "appointment_start_at" | "scheduled_arrival_at" | null; late: boolean }
+        | null = null;
       if (r.load_id) {
         if (!r.pickup_arrival_at) {
+          const at = r.pickup_appointment_start_at ?? r.pickup_scheduled_at;
           nextAppointment = {
             type: "pickup",
-            at: r.pickup_scheduled_at,
-            late: r.pickup_scheduled_at != null && new Date(r.pickup_scheduled_at).getTime() < now,
+            at,
+            at_source: r.pickup_appointment_start_at ? "appointment_start_at" : r.pickup_scheduled_at ? "scheduled_arrival_at" : null,
+            late: at != null && new Date(at).getTime() < now,
           };
         } else if (!r.delivery_arrival_at) {
+          const at = r.delivery_appointment_start_at ?? r.delivery_scheduled_at;
           nextAppointment = {
             type: "delivery",
-            at: r.delivery_scheduled_at,
-            late: r.delivery_scheduled_at != null && new Date(r.delivery_scheduled_at).getTime() < now,
+            at,
+            at_source: r.delivery_appointment_start_at ? "appointment_start_at" : r.delivery_scheduled_at ? "scheduled_arrival_at" : null,
+            late: at != null && new Date(at).getTime() < now,
           };
         }
       }
@@ -238,12 +258,20 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
               stamps: station.stamps,
               has_open_exception: station.hasOpenException,
               exception_reason_label: station.exceptionReasonLabel,
+              // V8 (ROUND 18.5 addendum): the "Other" status station's clear action resolves this
+              // EXACT open dispatch.intransit_issues row (POST .../intransit-issues/:id/resolve) —
+              // the frontend cannot resolve what it cannot name.
+              open_exception_id: r.issue_id,
             }
           : null,
         position: r.pos_captured_at
           ? {
               lat: r.pos_lat,
               lng: r.pos_lng,
+              // V7 LIVE POSITION RULE inputs — speed/engine decide "moving" vs "parked", never
+              // fabricated; NULL when Samsara hasn't reported either on this ping.
+              speed_mph: r.pos_speed_mph,
+              engine_state: r.pos_engine_state,
               city: r.pos_city,
               state: r.pos_state,
               captured_at: r.pos_captured_at,
