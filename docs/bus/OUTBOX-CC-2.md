@@ -2847,3 +2847,13 @@ catalog reasons (CC-1's migration already shipped). Full detail in GUARD-WORKORD
 DISPATCH-TRUCK-LINE entry.
 
 Merging now; DEPLOY-REQUEST + live Chrome proof to follow in the next few minutes.
+
+## CC-2 — DEPLOY-REQUEST fee7a7fdfc (TRUCK LINE merged, PR #21859)
+Merged PR #21859 (squash sha fee7a7fdfca6ceec6e98632f5c7ec52bf73b12ec). Requesting deploy for BOTH
+Render services per the task's own instruction ("the lead triggers them within 10 minutes"):
+  - API srv-d7rpem7avr4c73fhp4n0 (backend: GET /api/v1/dispatch/truck-line, POST .../intransit-
+    issues/office reason_id, POST .../truck-line/loads/:id/stops/:id/arrive|depart, GET /api/v1/
+    catalogs/load-exception-reasons)
+  - FE srv-d7s46dbrjlhs7383i150 (frontend: /dispatch?view=truck-line -- TruckLineBoard.tsx)
+Both must land at fee7a7fdfc (or later) before live Chrome proof is meaningful. Will poll healthz
+on both and post live proof + the DONE line once confirmed.
