@@ -3194,3 +3194,65 @@ confirmed live against the deployed stack | guard verify-round-trips-full-tour.m
 same ~25 pre-existing/unrelated reds) | REMAINING: the settlement-number "<ref>" in the header and the
 3 T170 historical residuals are out of this seat's lane, tracked, not silently dropped | NEXT: ROUND
 18.2 ITEM D (re-measure Dispatch end to end) unless redirected.
+
+## CC-2 — ROUND 20.7 (APP-WIDE AUTOFIT LAW) — planners sub-piece SHIPPED, LIVE, PROVEN (sub-deadline
+## 12:00Z item); the rest of the sweep is still open
+
+Owner standing ruling: "i told you to make all pages in the app autoadjustable to size of the page,
+so things do not look out of proportion." Named violation: DispatchPlannersLayout.tsx and
+PlannerCalendarPage.tsx both capped at a fixed `max-w-[1400px]` regardless of window size — measured
+live at a 2234px content shell, 834px thrown away.
+
+**Re-measured honestly before building (this repo's own "board numbers are the least reliable part"
+law):** the spec's claimed "19 files carry max-w-[1xxx], 22 carry max-w-[2xxx]" does not match a
+direct `grep -rlnE 'max-w-\[[0-9]+px\]'` against the live tree — that found 28 files total with ANY
+fixed-px max-w, and only 6 at page-shell scale (900px+): the 2 named planner files, plus
+DriverDetail.tsx (940px/1440px), VehicleProfilePage.tsx (1600px), TrailerProfilePage.tsx (1600px).
+The other 22 files' caps (240px/200px/320px/etc.) are component-level sizing (dropdown widths,
+avatar/tooltip caps), not page-level containers — outside this law's own stated scope. Not forcing
+the claimed count; reporting the real one.
+
+**SHIPPED (#21933), the time-critical sub-piece (items 2+3, sub-deadline 12:00Z so CC-3's ROUND
+20.6 can build on top):**
+- Removed the `max-w-[1400px]` cap from both planner pages. No grid rewrite was needed to make the
+  day-column track fluid: `PlannerGrid.tsx` already computes
+  `dayPx = Math.max(44, Math.min(120, Math.floor((measuredWidth - frozenPx) / days.length)))` via a
+  `ResizeObserver` on its own scroll container — it was already filling whatever width it was
+  actually given; the page shell was the only thing capping that width. Verified this was the real
+  fix before touching PlannerGrid.tsx's own layout logic.
+- Added `title=` to the 4 planner columns that were missing it (`pg-col-sec`/`-unit`/`-status`/
+  `-action` — they share `pg-col-name`'s own `overflow:hidden`+`white-space:nowrap` rule and clipped
+  the same way with no one-hover-away fallback; `pg-col-name` already had `title=`).
+- Applied the TruckLineBoard V8 `clamp()` type-scale convention to every font-size in
+  `PlannerGrid.css`.
+- New guard `scripts/verify-page-autofit.mjs` (a `DATA_BOARD_FILES` registry — currently these 2
+  pages — that must never carry a fixed `max-w-[NNNpx]`, plus the 4-column title= check), wired into
+  `scripts/money-pr-local-gate.mjs` per the spec's own explicit instruction — runs on every push from
+  here on. `--selftest` 2/2 planted mutations caught; RED confirmed on bare origin/main via a clean
+  `git stash` comparison (all 6 real violations caught with the exact messages this PR fixes).
+
+**LIVE PROOF, all 4 planner tabs + the standalone PlannerCalendarPage, same-origin-iframe technique
+at the owner's own measured 2368×1160 window:**
+  Timeline: pageRootWidth 2233px (was capped at 1400), `.pg-scroll` scrollWidth===clientWidth
+  (2230===2230, zero horizontal overflow for the default range shown).
+  Driver Planner / Truck Planner / Loads Planner: identical (2233 / 2230===2230 on all three).
+  PlannerCalendarPage (`/dispatch/planner`): pageRootWidth 2233px.
+  Re-measured Timeline at 1440px and 1024px too: pageRootWidth correctly shrinks with the window
+  (1305px, 889px) rather than staying frozen — `.pg-scroll` correctly falls back to horizontal
+  scroll at these narrower widths for the same ~30-day range (expected: the 44px/day floor means a
+  fixed range can't shrink infinitely; the container itself still exactly matches its own box at
+  every width, confirmed by clientWidth tracking the iframe width exactly each time).
+
+CC-2 | ROUND-20.7 PLANNERS SUB-PIECE DONE, LIVE, PROVEN (#21933) | all DONE items confirmed live at
+2368/1440/1024px across all 4 planner tabs + PlannerCalendarPage | guard verify-page-autofit.mjs
+red→green + --selftest 2/2, wired into money-pr-local-gate | apps/frontend tsc -b exit 0, 11/11
+existing planner tests unchanged | REMAINING (this seat's own honest scope note, not silently
+dropped): (1) the 4 profile-page caps (DriverDetail/VehicleProfilePage/TrailerProfilePage) — keep,
+convert px→rem as a small follow-up, not urgent, filed with reasoning in #21933's own body; (2) the
+guard's DATA_BOARD_FILES registry covers only these 2 planner pages so far — Round Trips/Truck
+Line/Trip Pairing/Kanban are already autofit from this session's own earlier work but not yet added
+to THIS specific guard's registry; (3) items (d) "zero clipped cells without title= across converted
+pages" and (e) is scoped to what's actually been converted (the planners), not an app-wide sweep —
+the full 19/22-file exhaustive sweep the spec described does not match what's actually in the tree
+today. | NEXT: will pick up the guard-registry expansion + the 3 profile-page conversions next
+unless redirected to something more urgent.
