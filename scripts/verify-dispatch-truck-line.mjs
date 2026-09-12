@@ -117,7 +117,11 @@ function loadFiles() {
     stopStampRoutes: read("apps/backend/src/dispatch/truck-line/stop-stamp.routes.ts"),
     stopStampService: read("apps/backend/src/dispatch/stop-stamp.service.ts"),
     driverPwaRoutes: read("apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts"),
-    reasonsRoutes: read("apps/backend/src/dispatch/truck-line/load-exception-reasons.routes.ts"),
+    // The shim this seat first wrote here was deleted by #21868 (its duplicate route registration
+    // caused the boot crash) — CC-1's real, independently-built catalog route at
+    // apps/backend/src/catalogs/load-exception-reasons.routes.ts is the live one Truck Line's
+    // frontend now calls; re-point (c)'s no-status-writer check at it instead of the deleted file.
+    reasonsRoutes: read("apps/backend/src/catalogs/load-exception-reasons.routes.ts"),
     archTabsService: read("apps/backend/src/dispatch/arch-tabs.service.ts"),
     stationTs: read("apps/backend/src/dispatch/truck-line/station.ts"),
     stationTest: read("apps/backend/src/dispatch/truck-line/__tests__/station.test.ts"),
