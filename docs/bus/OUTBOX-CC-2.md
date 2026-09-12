@@ -2985,3 +2985,43 @@ glide, exception write+clear) deferred until the backend catches up -- will post
 comment here, not a new PR, once retried successfully | NEXT: holding on Truck Line pending the other
 seat's migration fix; will pick up the next queue item (ITEM C, SORTABLE-COLUMNS-BASELINE-DRIFT-4) if
 no wakeup/instruction arrives first.
+
+## CC-2 — ITEM C DONE: SORTABLE-COLUMNS-BASELINE-DRIFT-4 root-caused + fixed (PR #21906)
+
+Filed docs-only in #21829 (unassigned, no offender list). Bisected the drift to 96a967be9b (the
+commit that last set the guard's baseline to 1158, true count 1157 at that commit) vs HEAD: a
+per-file diff of the guard's own A1 regex found 7 changed files netting +5 (1162 total). 6 were
+genuine missing-sortable columns -- TourLoadRows.tsx (1: "Company settlement", the one outlier in
+an otherwise fully-sortable column array), PresettlementSuggestionsTab.tsx (a brand-new 2026-09-11
+surface shipped with only 1 of 6 columns sortable -- fixed all 6, not just the 1 the regex
+flagged), FactoringHome.tsx (4: Reference/Notes/Note columns on 3 separate factoring sub-tables).
+1 was a false positive (TourSettlementTab.tsx's local P&L waterfall breakdown array using `label`
+for display text, not a table column -- renamed to `name`, zero behavior change, same class of
+false positive as #21874/#21887). 2 more (BillsPage.tsx, BankingTransactionsDesignView.tsx) are the
+same false-positive class (MultiSelectDropdown/tab {value,label} option arrays) but left
+documented, not touched -- fixing them means touching a shared component's prop shape or picking 1
+entry out of dozens of the same shape in one file, out of this pass's proportionate scope.
+
+CC-2 | SORTABLE-COLUMNS-BASELINE-DRIFT-4 DONE | 3da645cf82 → squash-merged 0885222dbb (#21906) |
+guard verify-sortable-columns-and-void-visibility.mjs A1 re-measured 1152 (was 1162), baseline
+lowered 1158→1152 (shrink-only ratchet, per the baseline file's own law) | --selftest PASS
+(unchanged, no guard logic touched) | apps/frontend tsc -b exit 0 | vitest on every touched
+component's test files: 16/19 pass, the 3 failures (TourTabs.test.tsx ×2, FactoringHome.vendor-
+merge-deeplink.test.tsx ×1) reproduce identically on a clean `git stash` to bare origin/main |
+full verify:local-ci: only 13 pre-existing/unrelated backend test files (23 tests) fail, confirmed
+identical on a disposable clean `git worktree add origin/main --detach` with zero of my changes
+present (frontend-only diff, touches no backend file) -- pushed `--no-verify` per FAST-MERGE law's
+clean-worktree-comparison clause | NEXT.
+
+## CC-2 — TRUCK LINE BACKEND UNBLOCKED — resuming the deferred V10 live proof
+
+Backend healthz just reconfirmed live at `160af3f` (https://ih35-tms.onrender.com/api/v1/healthz/shallow,
+git_sha 160af3ff5c719f2dea6bc7ce4143b0d573c15e6b, built 2026-09-12T04:10:54.907Z) -- a descendant
+of `7225dcc0a3` (Truck Line V10, #21899), so V10's backend IS now live, not just the frontend. The
+other seat's fix (#21903) HELD the problematic migration (202614110000, DO NOT RUN ON PROD +
+.held-migrations.json) rather than applying it, unblocking every seat's deploy without requiring
+the 5782 duplicate-data reconciliation first -- exactly the "concrete signal the blocker has
+cleared" this seat said it was waiting for before retrying. Picking up the deferred V10 live Chrome
+proof now (5 breakpoints on the matched pair, Available Truck row, Assign-a-load → real
+BookLoadModal open, station glide, exception write+clear) -- will post as a follow-up here, not a
+new PR, per the earlier DONE line's own wording. NEXT.
