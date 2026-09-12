@@ -126,6 +126,15 @@ const FOLD_BREAKPOINT_PX = 860;
 const CAPTION_FOLD_BREAKPOINT_PX = 1180;
 const AVAILABLE_ROW_TINT = "color-mix(in srgb, #16A34A 4%, #fff)";
 
+// ROUND-20.4 -- 3px left spine per row, colored by the unit's current trip leg, so a unit's row is
+// identifiable at a glance without reading its text. No load (including the available-truck rows,
+// which never carry r.load) gets the neutral border color, never a semantic one.
+const ROW_SPINE_NO_LOAD = "#C7D2DC";
+const ROW_SPINE_BY_TRIP_TYPE: Record<string, string> = { NB: "#1f2a44", TR: "#b45309", SB: "#475569" };
+function rowSpineColor(tripType: string | null | undefined): string {
+  return (tripType && ROW_SPINE_BY_TRIP_TYPE[tripType]) || ROW_SPINE_NO_LOAD;
+}
+
 function pct(index: number) {
   return (index / (V7_COUNT - 1)) * 100;
 }
@@ -649,7 +658,6 @@ export function TruckLineBoard({
         r.load?.customer_name,
         r.load?.pickup.city,
         r.load?.delivery.city,
-        ...r.drivers.map((d) => d.name),
       ]
         .filter(Boolean)
         .join(" ")
@@ -780,10 +788,16 @@ export function TruckLineBoard({
           color: #374151;
         }
         .truck-line-v4-row {
-          padding: 6px 10px;
-          border-bottom: 1px solid #E5E7EB;
+          padding: 6px 10px 6px 13px;
+          border-bottom: 1px solid #C7D2DC;
           min-height: 88px;
         }
+        /* ROUND-20.4 -- row rules the owner can actually see: an every-other-row tint and a hover
+           state so one unit's row is visibly distinct from its neighbors, plus a 3px left spine per
+           row (inline style, colored by trip-type -- see rowSpineColor()) so a unit's row is
+           identifiable at a glance without reading its text. */
+        .truck-line-v4-row:nth-child(even) { background: #FAFCFE; }
+        .truck-line-v4-row:hover { background: #F2F7FC; }
         /* V10 (ROUND 18.6, owner ruling 21:30 CT) — Next appointment and Live signal are centered,
            header and cells both. */
         .truck-line-v4-appt-header, .truck-line-v4-signal-header,
@@ -938,13 +952,15 @@ export function TruckLineBoard({
               const a = r.available;
               const hosAgeLabel = a.hos_polled_minutes_ago != null ? `HOS polled ${a.hos_polled_minutes_ago} min ago` : "HOS polled — min ago";
               return (
-                <div key={rowKey} className="truck-line-v4-row" style={{ background: AVAILABLE_ROW_TINT }} data-testid={`truck-line-row-available-${a.driver_id}`}>
+                <div
+                  key={rowKey}
+                  className="truck-line-v4-row"
+                  style={{ background: AVAILABLE_ROW_TINT, borderLeft: `3px solid ${rowSpineColor(null)}` }}
+                  data-testid={`truck-line-row-available-${a.driver_id}`}
+                >
                   <div>
                     <div className="truck-line-v4-unit font-semibold text-[#1F2937]">{r.unit_number ?? "—"}</div>
-                    <div className="truck-line-v4-sub text-[#6B7280]">
-                      {r.drivers[0]?.name ?? "Driver"}
-                      {r.unit_number == null ? " · no unit assigned" : ""}
-                    </div>
+                    <div className="truck-line-v4-sub text-[#6B7280]">{r.unit_number == null ? "no unit assigned" : "available truck"}</div>
                   </div>
 
                   <div className="truck-line-v4-load-cell">
@@ -972,7 +988,12 @@ export function TruckLineBoard({
               );
             }
             return (
-              <div key={rowKey} className="truck-line-v4-row" data-testid={`truck-line-row-${r.unit_id}`}>
+              <div
+                key={rowKey}
+                className="truck-line-v4-row"
+                style={{ borderLeft: `3px solid ${rowSpineColor(r.load?.trip_type)}` }}
+                data-testid={`truck-line-row-${r.unit_id}`}
+              >
                 <div>
                   <div className="truck-line-v4-unit font-semibold text-[#1F2937]">
                     {r.unit_number}
@@ -985,7 +1006,6 @@ export function TruckLineBoard({
                       </span>
                     ) : null}
                   </div>
-                  <div className="truck-line-v4-sub text-[#6B7280]">{r.drivers.map((d) => d.name ?? "Driver").join(" / ") || "No driver"}</div>
                 </div>
 
                 <div
