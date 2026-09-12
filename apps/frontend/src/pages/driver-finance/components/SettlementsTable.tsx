@@ -131,14 +131,14 @@ export function SettlementsTable({
         // closed. trip_started_at is stamped when the first load is dispatched (open); trip_closed_at
         // when the payrun closes it. An open settlement has no close date yet, so show a dash.
         key: "trip_started_at",
-        label: "Started",
+        label: "Date started",
         sortable: true,
         sortValue: (row) => row.trip_started_at ?? null,
         render: (row) => (row.trip_started_at ? formatDateUS(row.trip_started_at) : <span className="text-gray-500">—</span>),
       },
       {
         key: "trip_closed_at",
-        label: "Closed",
+        label: "Date ended",
         sortable: true,
         sortValue: (row) => row.trip_closed_at ?? null,
         render: (row) => (row.trip_closed_at ? formatDateUS(row.trip_closed_at) : <span className="text-gray-500">—</span>),
