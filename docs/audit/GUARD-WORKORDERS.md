@@ -11060,3 +11060,34 @@ Both migrations are Claude Lead's own commits (`4bc625a858` #21856, `a9667c1388`
 here since this seat cannot author/rename migrations (migration lane law: CC-1 or Cursor only, or
 whoever owns the file). Not touched by this seat. Blocks CC-2's own Truck Line backend deploy as a
 side effect (same tip, unrelated commit range) -- retrying once resolved.
+
+## TRUCK-LINE-01 — Other/stamp popover z-index:auto hides one reason under the sticky header (CC-2, 2026-09-11, own post-merge live Chrome verification)
+
+Live Chrome verification of `/dispatch?view=truck-line` (per the standing "wire first, verify live
+last" law, run after Truck Line's own merge + the boot-crash fix, PR #21859/#21868) found: the
+"Other" reason pop-up for a real dispatched load (13587) visually listed only 10 of the 11 active
+`catalogs.load_exception_reasons` rows. A direct DOM query in the live tab confirmed all 11
+`[data-testid^="truck-line-reason-"]` rows ARE rendered (`truck-line-reason-driver_rest` /
+"Driver rest / HOS", `sort_order` 80, present in the DOM) — the data layer is correct. The gap is
+purely visual: `document.elementFromPoint` at that row's screen coordinates returned the
+ParityTable's own sticky `<th>Next appointment</th>` (`ParityTable.tsx` uses `z-10` on its sticky
+header), not the popover row, because `TruckLineBoard.tsx`'s two fixed-position popovers
+(`truck-line-other-popover`, `truck-line-stamp-popover`) were never given an explicit z-index
+(computed `z-index: auto`) — whichever popover row's on-screen position happens to fall under the
+sticky header band loses the paint order to it.
+
+**FIX:** added `z-50` (matching this repo's existing convention for fixed overlays, e.g.
+`LoadStopsRecordTab.tsx`, `PhotoEvidenceViewer.tsx`, `SubscriptionEditor.tsx`) to both popovers in
+`apps/frontend/src/pages/dispatch/TruckLineBoard.tsx`.
+
+**Also found + fixed in the same pass:** `scripts/verify-dispatch-truck-line.mjs` (the guard for
+this build) had gone silently unrunnable (`ENOENT`) since #21868 deleted this seat's original
+`apps/backend/src/dispatch/truck-line/load-exception-reasons.routes.ts` shim (the duplicate-route
+boot-crash file) — the guard's check (c) still read that path. Re-pointed at CC-1's real, live
+`apps/backend/src/catalogs/load-exception-reasons.routes.ts`.
+
+**GUARD:** `scripts/verify-dispatch-truck-line.mjs` --selftest 8/8 PASS (ENOENT fixed); direct run
+PASS. No new static guard for the z-index defect itself — a source-text guard cannot assert paint
+order; the control is the live Chrome re-check.
+
+**Live proof:** re-verification after deploy pending — see `docs/bus/OUTBOX-CC-2.md` DONE line.

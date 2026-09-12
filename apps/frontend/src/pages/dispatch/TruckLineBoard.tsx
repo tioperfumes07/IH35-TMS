@@ -356,7 +356,7 @@ export function TruckLineBoard({
       />
 
       {stampPrompt ? (
-        <div className="fixed right-6 top-[118px] w-[350px] rounded-md border border-[#C7D2DC] bg-white text-xs shadow-lg" data-testid="truck-line-stamp-popover">
+        <div className="fixed right-6 top-[118px] z-50 w-[350px] rounded-md border border-[#C7D2DC] bg-white text-xs shadow-lg" data-testid="truck-line-stamp-popover">
           <div className="flex h-[30px] items-center justify-between bg-[rgb(228,234,241)] px-2.5 font-semibold text-[#374151]">
             <span>
               {stampPrompt.row.unit_number} · {stampPrompt.row.load?.load_number} · {STATION_LABELS[stampPrompt.stationIndex]}
@@ -420,7 +420,7 @@ export function TruckLineBoard({
       ) : null}
 
       {otherPrompt ? (
-        <div className="fixed right-6 top-[118px] w-[350px] rounded-md border border-[#C7D2DC] bg-white text-xs shadow-lg" data-testid="truck-line-other-popover">
+        <div className="fixed right-6 top-[118px] z-50 w-[350px] rounded-md border border-[#C7D2DC] bg-white text-xs shadow-lg" data-testid="truck-line-other-popover">
           <div className="flex h-[30px] items-center justify-between bg-[rgb(228,234,241)] px-2.5 font-semibold text-[#374151]">
             <span>
               {otherPrompt.row.unit_number} · {otherPrompt.row.load?.load_number} · OTHER — pick the reason
