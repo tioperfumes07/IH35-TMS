@@ -8,6 +8,11 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00–11 / 12–23) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202614120000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-12",
+      "purpose": "ROUND 20.1 (Claude Lead, 2026-09-12 21:41Z) MEASURED DEFECT A backfill: 9 orphaned tour legs (13563/13553 on T148->5809, 13578/13579 on T156->5810, 13569/13577 on T168->5805, 13588 on T170->5807, 13576 on T171->5808, 13582 on T177->5806) have presettlement_link_id IS NULL despite belonging to the SAME unit/driver round trip as the currently-open pre-settlement -- an explicit, hand-verified load-number list (not a generic same-unit pattern sweep: live investigation found T170's own historical tour_id 61f298ed spans 3 additional unlinked loads across multiple real trip cycles that were NOT named by the Lead and are explicitly out of scope for this backfill)."
+    },
     "202614042200": {
       "claimed_by": "cursor",
       "claimed_at": "2026-09-10",
