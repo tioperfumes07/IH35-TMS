@@ -128,7 +128,6 @@ import { registerIntransitIssuesRoutes } from "./dispatch/intransit-issues.route
 import { registerDispatchArchTabsRoutes } from "./dispatch/arch-tabs.routes.js";
 import { registerTruckLineRoutes } from "./dispatch/truck-line/truck-line.routes.js";
 import { registerTruckLineStopStampRoutes } from "./dispatch/truck-line/stop-stamp.routes.js";
-import { registerLoadExceptionReasonsRoutes } from "./dispatch/truck-line/load-exception-reasons.routes.js";
 import { registerDriverDispatchEligibilityRoutes } from "./dispatch/driver-eligibility.routes.js";
 import { registerDispatchAlertsRoutes } from "./dispatch/alerts.routes.js";
 import { registerDispatchPlannerRoutes } from "./dispatch/planner.routes.js";
@@ -949,7 +948,14 @@ async function main() {
   await registerDispatchArchTabsRoutes(app);
   await registerTruckLineRoutes(app);
   await registerTruckLineStopStampRoutes(app);
-  await registerLoadExceptionReasonsRoutes(app);
+  // registerLoadExceptionReasonsRoutes (dispatch/truck-line/load-exception-reasons.routes.ts) removed
+  // 2026-09-12: it was a temporary GET /api/v1/catalogs/load-exception-reasons shim that degraded
+  // gracefully while catalogs.load_exception_reasons did not exist yet (see the file's own header
+  // comment). That table and its full route now exist (the catalogs.routes.ts registration a few
+  // lines up, catalogs/load-exception-reasons.routes.ts) and BOOT-CRASHED every deploy since Truck Line
+  // merged ("Method 'GET' already declared for route '/api/v1/catalogs/load-exception-reasons'" —
+  // Fastify does not allow two handlers on the same method+path). The real route already returns a
+  // superset of fields the shim did, plus catalog_ready for the same Truck Line frontend contract.
   await registerDriverDispatchEligibilityRoutes(app);
   await registerDispatchAlertsRoutes(app);
   await registerDispatchPlannerRoutes(app);

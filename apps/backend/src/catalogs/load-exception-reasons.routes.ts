@@ -96,7 +96,12 @@ export async function registerLoadExceptionReasonRoutes(app: FastifyInstance) {
       return res.rows;
     });
 
-    return { reasons: rows };
+    // catalog_ready: true is a fixed literal, not a live probe -- this route only exists because
+    // the table exists (registered right after the migration that creates it), so "ready" is always
+    // true here. Kept for Truck Line's listLoadExceptionReasons() response-shape contract, which this
+    // route now serves directly after the temporary dispatch/truck-line shim route was removed (it
+    // boot-crashed on a duplicate GET registration for the same path -- see index.ts).
+    return { reasons: rows, catalog_ready: true };
   });
 
   app.post("/api/v1/catalogs/load-exception-reasons", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
