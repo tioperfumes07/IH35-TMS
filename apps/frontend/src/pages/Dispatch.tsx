@@ -557,9 +557,9 @@ export function DispatchPage({
           <TruckLineBoard
             operatingCompanyId={defaultCompanyIds[0] ?? ""}
             onLoadClick={(loadId) => navigate(`/accounting/load-costs/${loadId}`)}
-            onBookForUnit={(unitId) => {
-              setBookUnitId(unitId);
-              setBookDriverId(null);
+            onAssignDriver={(assignDriverId, assignUnitId) => {
+              setBookDriverId(assignDriverId);
+              setBookUnitId(assignUnitId);
               openBookLoadModal();
             }}
           />
