@@ -17,6 +17,15 @@ import {
   DriverNotQualifiedError,
 } from "./driver-qualification.service.js";
 import { ACTIVE_UNIT_STATUSES, assertUnitNotActiveOnAnotherLoad } from "./unit-active-load-guard.js";
+// ROUND 20.1 MEASURED DEFECT A (Claude Lead, 2026-09-12) source-path fix: Edit Load could set
+// trip_type (SCALAR_COLUMNS, below) on a load booked with a driver already seated but trip_type
+// deferred (book-load.service.ts's own "driver known, trip_type not yet captured" branch writes a
+// deferred-suggestion row, never a link) -- and NOTHING here ever re-entered the presettlement
+// linker once trip_type was filled in later. quick-assign/planner/dispatch-refinements/quicksave
+// all call this exact function on a driver (re)assignment; Edit Load never did, for either a driver
+// change OR a later trip_type fill-in. 9 real loads orphaned this way (13563/13553/13578/13579/
+// 13569/13577/13588/13576/13582 -- ROUND 20.1 Item A backfill, migration 202614120000).
+import { linkLoadToPresettlementAfterAssignmentInClientTx, type TripType } from "./presettlement-link.service.js";
 // DRV-BILL-SKIP-PATHS — Edit Load is the ONLY writer of miles_shortest/miles_practical/miles_deadhead
 // on mdata/loads.routes.ts's generic PATCH surface (that schema has no miles fields at all — see
 // createLoadBodySchema/updateLoadBodySchema), and it can also change assigned_primary_driver_id /
@@ -876,6 +885,32 @@ export async function updateDispatchLoad(
     "info",
     "P6-BLOCK06-LOAD-PATCH"
   );
+
+  // ROUND 20.1 MEASURED DEFECT A source fix — same "re-enter on every edit" principle as
+  // ensureDriverBillArtifactsForLoad directly below, applied to presettlement linking: a load
+  // booked with a driver seated but trip_type still unknown gets a deferred-suggestion row at
+  // booking (book-load.service.ts), and until now NOTHING re-checked that once trip_type (or the
+  // driver) was filled in later via Edit Load. linkLoadToPresettlementAfterAssignmentInClientTx is
+  // itself the idempotency gate (no-ops instantly if presettlement_link_id_before is already set,
+  // defers again if trip_type is still missing) — safe to call unconditionally here, exactly like
+  // quick-assign/planner/dispatch-refinements/quicksave already do on a driver (re)assignment.
+  // Reads the FRESH post-write row (updatedLoadRes), not the pre-edit `old`/`fields` diff, so this
+  // also covers the case this bug actually hit: trip_type changing with the driver untouched.
+  const freshLoadForLink = updatedLoadRes.rows[0] as
+    | { assigned_primary_driver_id?: string | null; assigned_unit_id?: string | null; trip_type?: TripType | null; tour_id?: string | null }
+    | undefined;
+  if (freshLoadForLink?.assigned_primary_driver_id) {
+    await linkLoadToPresettlementAfterAssignmentInClientTx(client, {
+      operating_company_id: operatingCompanyId,
+      load_id: loadId,
+      presettlement_link_id_before: (old.presettlement_link_id as string | null | undefined) ?? null,
+      driver_id: String(freshLoadForLink.assigned_primary_driver_id),
+      unit_id: freshLoadForLink.assigned_unit_id ?? null,
+      trip_type: freshLoadForLink.trip_type ?? null,
+      tour_id: freshLoadForLink.tour_id ?? null,
+      actor_user_id: requestingUserUuid,
+    });
+  }
 
   // DRV-BILL-SKIP-PATHS — re-enter the canonical idempotent driver-pay path on every edit that could
   // seat a driver or supply the pay inputs (miles_shortest/miles_practical/driver_pay_rate_per_mile,

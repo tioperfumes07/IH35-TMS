@@ -990,7 +990,15 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             -- rather than widening the shared view). Feeds DispatchBoard/DispatchKanban's Commodity
             -- column + isReeferCommodity() badge, previously always "—"/false (no source column existed).
             ml.commodity AS commodity,
-            ml.cargo_weight_lbs AS cargo_weight_lbs
+            ml.cargo_weight_lbs AS cargo_weight_lbs,
+            -- ROUND 20.1 MEASURED DEFECT B (2026-09-12): the view has no trip_type/presettlement_link_id/
+            -- tour_id cols either, and this projection was removed at some point (the "trip_type below"
+            -- comment above referred to THIS block, which is why it went stale) -- DispatchLoadRow.trip_type
+            -- resolved undefined on every list row, resolvedTripType() fell back to positional inference,
+            -- and Round Trips tagged every row NB regardless of the real value. Same ml alias, no view widen.
+            ml.trip_type AS trip_type,
+            ml.presettlement_link_id AS presettlement_link_id,
+            ml.tour_id AS tour_id
           FROM views.dispatch_load_with_driver_status l
           LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                 AND c.operating_company_id = l.operating_company_id

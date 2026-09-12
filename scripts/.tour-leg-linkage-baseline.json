@@ -1,0 +1,4 @@
+{
+  "count": 3,
+  "note": "Live-measured 2026-09-12 after migration 202614120000 backfilled the 9 named orphans (13563/13553/13578/13579/13569/13577/13588/13576/13582). The 3 remaining are unit T170's (f4430f58) OWN historical loads 13527/13561/13567 -- all on the same unit/driver as currently-open tour 5807, all presettlement_link_id IS NULL, but sitting on unit T170's own OLDER, CANCELLED tour (61f298ed / S-2026-0013, source_document_ref=5779, trip_closed_at NULL) from real trip cycles between 2026-09-05 and 2026-09-11 that the Lead's ROUND 20.1 measurement did not name. A related but separate historical-attribution question (not this item's scope) -- tracked here, not silently fixed and not silently ignored, exactly like this guard's sibling verify-load-settlement-linkage.mjs already tracks its own known load-13508 misattached-line pair."
+}

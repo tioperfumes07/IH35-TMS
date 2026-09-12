@@ -477,3 +477,71 @@ describe("updateDispatchLoad — evidence-safe stops replace", () => {
     })).rejects.toMatchObject({ code: "E_LOAD_STOP_ARCHIVE_CONFLICT" });
   });
 });
+
+// ROUND 20.1 MEASURED DEFECT A (Claude Lead, 2026-09-12) source-path fix: Edit Load never re-entered
+// presettlement linking on ANY edit -- unlike quick-assign/planner/dispatch-refinements/quicksave,
+// which all call linkLoadToPresettlementAfterAssignmentInClientTx on a driver (re)assignment. 9 real
+// loads orphaned this way (driver seated, trip_type deferred at booking, later filled in via Edit
+// Load, never re-checked). These two handlers use distinct SQL text (the pre-edit SELECT carries
+// "AND soft_deleted_at IS NULL", the post-edit re-read does not) so old vs. fresh rows differ, exactly
+// like the real function's own two separate reads.
+const DRIVER_ID = "33333333-3333-3333-3333-333333333333";
+const UNIT_ID = "44444444-4444-4444-4444-444444444444";
+
+describe("updateDispatchLoad — ROUND 20.1 presettlement re-linking on edit", () => {
+  it("re-checks presettlement linking on every edit when a driver is seated, even if trip_type is still unknown (records a deferred suggestion instead of staying silently unlinked forever)", async () => {
+    const seatedNoTripType = {
+      id: LOAD_ID, operating_company_id: OCI, rate_total_cents: 100000, status: "assigned_not_dispatched",
+      assigned_primary_driver_id: DRIVER_ID, assigned_unit_id: UNIT_ID,
+      trip_type: null, tour_id: null, presettlement_link_id: null,
+    };
+    const { client, sqls } = makeClient([
+      { match: /SELECT \* FROM mdata\.loads WHERE id = \$1::uuid AND operating_company_id = \$2::uuid AND soft_deleted_at IS NULL LIMIT 1/, rows: [seatedNoTripType] },
+      noSettlement,
+      noInvoice,
+      noBill,
+      { match: /UPDATE mdata\.loads SET/, rows: [{ id: LOAD_ID }] },
+      { match: /SELECT \* FROM mdata\.loads WHERE id = \$1::uuid AND operating_company_id = \$2::uuid LIMIT 1/, rows: [seatedNoTripType] },
+      { match: /SELECT \* FROM mdata\.load_stops WHERE load_id/, rows: [] },
+      { match: /presettlement_link_suggestions WHERE/, rows: [] },
+      { match: /INSERT INTO driver_finance\.presettlement_link_suggestions/, rows: [{ id: "sugg-1" }] },
+      driverBillReentryNoDriver,
+    ]);
+
+    await updateDispatchLoad(client, {
+      loadId: LOAD_ID,
+      operatingCompanyId: OCI,
+      requestingUserUuid: USER,
+      fields: { notes: "dispatcher note — driver already seated at booking, trip_type still not captured" },
+    });
+
+    expect(sqls.some((s) => /driver_finance\.presettlement_link_suggestions/.test(s))).toBe(true);
+  });
+
+  it("never calls the presettlement linker when no driver is seated (nothing to link)", async () => {
+    const unseated = {
+      id: LOAD_ID, operating_company_id: OCI, rate_total_cents: 100000, status: "draft",
+      assigned_primary_driver_id: null, assigned_unit_id: null,
+      trip_type: null, tour_id: null, presettlement_link_id: null,
+    };
+    const { client, sqls } = makeClient([
+      { match: /SELECT \* FROM mdata\.loads WHERE id = \$1::uuid AND operating_company_id = \$2::uuid AND soft_deleted_at IS NULL LIMIT 1/, rows: [unseated] },
+      noSettlement,
+      noInvoice,
+      noBill,
+      { match: /UPDATE mdata\.loads SET/, rows: [{ id: LOAD_ID }] },
+      { match: /SELECT \* FROM mdata\.loads WHERE id = \$1::uuid AND operating_company_id = \$2::uuid LIMIT 1/, rows: [unseated] },
+      { match: /SELECT \* FROM mdata\.load_stops WHERE load_id/, rows: [] },
+      driverBillReentryNoDriver,
+    ]);
+
+    await updateDispatchLoad(client, {
+      loadId: LOAD_ID,
+      operatingCompanyId: OCI,
+      requestingUserUuid: USER,
+      fields: { notes: "no driver seated" },
+    });
+
+    expect(sqls.some((s) => /presettlement_link_suggestions/.test(s))).toBe(false);
+  });
+});

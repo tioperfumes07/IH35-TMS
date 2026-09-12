@@ -1,4 +1,4 @@
 {
-  "count": 0,
-  "note": "Live-measured 2026-09-11 after backfilling load 13508's presettlement_link_id to S-2026-0007 (its own settlement, first_load_id/last_load_id already matched it exactly). Load 13556 (cancelled before driver assignment) is correctly excluded by detectOrphans' status!='cancelled' filter, not counted here."
+  "count": 3,
+  "note": "Live-measured 2026-09-11 after backfilling load 13508's presettlement_link_id to S-2026-0007 (its own settlement, first_load_id/last_load_id already matched it exactly). Load 13556 (cancelled before driver assignment) is correctly excluded by detectOrphans' status!='cancelled' filter, not counted here. UPDATED 2026-09-12 (ROUND 20.1 MEASURED DEFECT A): this baseline had drifted stale at 0 while 12 real orphans existed live (this guard never ran with a real DATABASE_URL to catch it). Migration 202614120000 backfilled 9 of them; the remaining 3 (13527/13561/13567, unit T170) are a known, tracked, separate historical-attribution question -- see scripts/.tour-leg-linkage-baseline.json and verify-tour-leg-linkage.mjs for the full writeup."
 }
