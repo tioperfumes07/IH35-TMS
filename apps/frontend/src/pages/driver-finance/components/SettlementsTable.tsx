@@ -1,3 +1,4 @@
+import { settlementLabel } from "../../../lib/settlementNumber";
 import { useMemo } from "react";
 import type { ReactNode } from "react";
 import type { SettlementListRow } from "../../../api/driverFinance";
@@ -50,12 +51,12 @@ export function SettlementsTable({
         label: "Settlement/Tour",
         alwaysVisible: true,
         sortable: true,
-        sortValue: (row) => entityLabel(row.display_id, row.id, "Settlement"),
+        sortValue: (row) => settlementLabel(row),
         render: (row) => (
           <EntityLinkOrTombstone
             kind="settlement"
             id={row.id}
-            name={row.display_id}
+            name={settlementLabel(row)}
             noun="Settlement"
           />
         ),

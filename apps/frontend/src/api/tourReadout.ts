@@ -68,7 +68,13 @@ export function closeTour(settlementId: string, operatingCompanyId: string) {
 }
 
 /** LDT-TABS · Load costs board → Pre-Settlement (open tours) / Settlement (closed tours) registers; rows come from the same readout. */
-export type TourLegBrief = { load_id: string; load_number: string; trip_type: string | null };
+export type TourLegBrief = {
+  load_id: string; load_number: string; trip_type: string | null; status: string;
+  /** DISPATCH-ONE-ROW-PER-LOAD (2026-09-11): per-leg money/miles so the register renders one row per load. */
+  lane: string; pickup_date: string | null; delivery_date: string | null;
+  revenue_cents: number; costs_cents: number; driver_pay_cents: number; margin_cents: number; margin_pct: number | null;
+  miles_practical: number | null; miles_real: number | null;
+};
 export type TourListRow = {
   settlement_id: string; display_id: string | null;
   /** SETTLEMENT-NUMBER-IS-ALWAYSTRACK-DOC (owner 2026-09-11): the AlwaysTrack 4-digit doc number

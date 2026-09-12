@@ -1,3 +1,4 @@
+import { settlementLabel } from "../../lib/settlementNumber";
 import type { SettlementListRow } from "../../api/driverFinance";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
@@ -39,7 +40,7 @@ function renderSettlementLinks(settlement: SettlementListRow) {
       <EntityLink
         kind="settlement"
         id={settlement.id}
-        label={entityLabel(settlement.display_id, settlement.id, "Settlement")}
+        label={settlementLabel(settlement)}
       />
 
     </span>
@@ -89,7 +90,7 @@ const preSettlementColumns: DataTableColumn<SettlementListRow>[] = [
     key: "settlement_number",
     label: "Settlement/Tour",
     sortable: true,
-    sortValue: (row) => row.display_id ?? row.id,
+    sortValue: (row) => settlementLabel(row),
     render: renderSettlementLinks,
   },
   {

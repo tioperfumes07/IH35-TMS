@@ -47,7 +47,7 @@ export async function getDriverSettlementHistory(
         id::text AS uuid,
         driver_id::text,
         operating_company_id::text,
-        display_id AS settlement_number,
+        source_document_ref AS settlement_number,
         period_start::text,
         period_end::text,
         net_pay::text AS total_amount,

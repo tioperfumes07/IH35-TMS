@@ -183,12 +183,15 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
       const result = await client.query(`
         SELECT l.id::text AS load_id,
                CASE WHEN closed.id IS NOT NULL THEN closed.id::text END AS settlement_id,
-               CASE WHEN closed.id IS NOT NULL THEN closed.display_id END AS settlement_display_id,
+               -- ACCT-F20260911 (owner 2026-09-11): the only settlement number is the AlwaysTrack
+               -- document (source_document_ref). The internal S-YYYY-NNNN counter is never shown; an
+               -- open pre-settlement has no number yet, so presettlement_display_id is NULL (dash).
+               CASE WHEN closed.id IS NOT NULL THEN closed.source_document_ref END AS settlement_display_id,
                CASE WHEN closed.id IS NULL THEN open_cycle.id::text END AS presettlement_id,
-               CASE WHEN closed.id IS NULL THEN open_cycle.display_id END AS presettlement_display_id
+               CASE WHEN closed.id IS NULL THEN open_cycle.source_document_ref END AS presettlement_display_id
           FROM mdata.loads l
           LEFT JOIN LATERAL (
-            SELECT s.id, s.display_id
+            SELECT s.id, s.source_document_ref
               FROM driver_finance.settlement_lines sl
               JOIN driver_finance.driver_settlements s
                 ON s.id = sl.settlement_id

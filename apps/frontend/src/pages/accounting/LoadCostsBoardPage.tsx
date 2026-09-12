@@ -11,15 +11,15 @@ import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { hasInAppHistory } from "../../lib/smart-back";
-import { formatDateUS, mmmDd } from "../../lib/formatDate";
+import { formatDateUS } from "../../lib/formatDate";
 import { useDispatchLoad, listAllLoads, updateLoadStatus, type DispatchLoadRow, type LoadStatus } from "../../api/loads";
 import { listUnitsWithoutLoad } from "../../api/dispatch";
 import { pairOutboundReturn, NEEDS_RETURN_STATUSES } from "../dispatch/roundTripsLegs";
 import { LoadDetailCostsTab } from "../../components/dispatch/LoadDetailCostsTab";
 import { TourPreSettlementTab } from "../../components/dispatch/TourPreSettlementTab";
 import { TourSettlementTab } from "../../components/dispatch/TourSettlementTab";
-import { listTours, type TourListRow } from "../../api/tourReadout";
-import { tourLoadColumns } from "../../components/dispatch/TourLegsCell";
+import { listTours } from "../../api/tourReadout";
+import { flattenTourRows, TOUR_LOAD_COLUMNS, tourLoadFooter } from "../../components/dispatch/TourLoadRows";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ReceiptAttach } from "../../components/documents/ReceiptAttach";
 import { useToast } from "../../components/Toast";
@@ -518,52 +518,20 @@ function TransactionRegister({ tab, companyId, loadsById, settlementsByLoad, nav
 // ROUND 16.1 — the Legs cell (TourLegsCell) + header tooltip live in components/dispatch/TourLegsCell
 // so this register and the /settlements Tours register render identical leg pills. Column caps
 // (min 240 / max 420 on Legs; 96px dates; nowrap money) below keep any one column off the whole screen.
-const TOUR_COLUMNS = (state: "open" | "closed"): ParityColumn<TourListRow>[] => [
-  // SETTLEMENT-NUMBER-IS-ALWAYSTRACK-DOC (owner 2026-09-11): the settlement/tour number is the AlwaysTrack
-  // 4-digit document number (settlement_number = source_document_ref: 5769…5800, next 5801…), NEVER the
-  // retired auto-generated S-YYYY-NNNN display_id. An unsettled (open) tour has no number yet — it shows a
-  // dash, exactly like AlwaysTrack "Unsettled Loads". The row still opens the tour on click.
-  { key: "tour", label: "Settlement/Tour", alwaysVisible: true, testId: "tour-col-id", sortable: true, className: "whitespace-nowrap", minWidth: 90, sortValue: r => r.settlement_number ?? "", render: r => r.settlement_number ? <Link className="ldt-link font-semibold" style={{ display: "inline" }} to={`/driver-finance/settlements?settlement_id=${encodeURIComponent(r.settlement_id)}`}>{r.settlement_number}</Link> : <span className="text-[#6B7280]">{DASH}</span> },
-  // ROUND 16.1 — leg pills, one line, count-first, EntityLink each, "+N more" overflow, capped 240–420.
-  // COLUMN-ORDERING LAW (owner 2026-09-11): Load renders immediately next to Settlement — before
-  // Driver/Unit, not after.
-  ...tourLoadColumns("tour-col"),
-  { key: "driver", label: "Driver", testId: "tour-col-driver", sortable: true, minWidth: 120, maxWidth: 200, cellClass: "whitespace-nowrap", sortValue: r => r.driver_name ?? "", render: r => <span className="block max-w-[200px] truncate" title={r.driver_name ?? ""}>{r.driver_name ?? DASH}</span> },
-  { key: "unit", label: "Unit", testId: "tour-col-unit", sortable: true, minWidth: 56, maxWidth: 64, className: "whitespace-nowrap", sortValue: r => r.unit_number ?? "", render: r => r.unit_number ?? DASH },
-  { key: "started", label: "Started", testId: "tour-col-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, sortValue: r => r.trip_started_at ?? "", render: r => r.trip_started_at ? mmmDd(r.trip_started_at) : DASH },
-  ...(state === "closed" ? [{ key: "closed", label: "Closed", testId: "tour-col-closed", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, sortValue: (r: TourListRow) => r.trip_closed_at ?? "", render: (r: TourListRow) => r.trip_closed_at ? mmmDd(r.trip_closed_at) : DASH } as ParityColumn<TourListRow>] : []),
-  // ROUND 16.1 — money cells: nowrap + right + mono, auto-fit to the widest value (never wraps "$12,595.90").
-  { key: "revenue", label: "Revenue", testId: "tour-col-revenue", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.revenue_cents, render: r => fmt(r.revenue_cents) },
-  { key: "costs", label: "Costs", testId: "tour-col-costs", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.costs_cents, render: r => fmt(r.costs_cents) },
-  { key: "driver_pay", label: "Driver pay", testId: "tour-col-driver-pay", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.driver_pay_cents, render: r => fmt(r.driver_pay_cents) },
-  // NEW-11 (owner 2026-09-07): split the combined margin $/% cell into two clean, independently-sortable columns.
-  { key: "tour_margin", label: "Margin", testId: "tour-col-margin", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.margin_cents, render: r => <span className={r.margin_cents < 0 ? "text-[#991B1B]" : undefined}>{fmt(r.margin_cents)}</span> },
-  { key: "tour_margin_pct", label: "Margin %", testId: "tour-col-margin-pct", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 76, maxWidth: 100, sortValue: r => r.margin_pct ?? -Infinity, render: r => r.margin_pct == null ? DASH : <span className={r.margin_pct < 0 ? "text-[#991B1B]" : undefined}>{r.margin_pct.toFixed(1)}%</span> },
-  { key: "miles_practical", label: "Practical miles", testId: "tour-col-miles_practical", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: r => r.miles_practical ?? -Infinity, render: r => r.miles_practical == null ? DASH : r.miles_practical.toLocaleString("en-US") },
-  { key: "miles_real", label: "Real miles", testId: "tour-col-miles_real", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: r => r.miles_real ?? -Infinity, render: r => r.miles_real == null ? DASH : r.miles_real.toLocaleString("en-US") },
-  ...(state === "open" ? [
-    { key: "ready_ok", label: "Checks passed", testId: "tour-col-checks-passed", sortable: true, sortValue: (r: TourListRow) => r.ready_ok, render: (r: TourListRow) => r.ready_ok } as ParityColumn<TourListRow>,
-    { key: "ready_total", label: "Checks required", testId: "tour-col-checks-required", sortable: true, sortValue: (r: TourListRow) => r.ready_total, render: (r: TourListRow) => r.ready_total } as ParityColumn<TourListRow>,
-    { key: "close_blockers", label: "Open items", testId: "tour-col-open-items", sortable: true, sortValue: (r: TourListRow) => r.close_blockers.join(", "), render: (r: TourListRow) => r.close_blockers.length ? <span className="flex flex-col">{r.close_blockers.map(item => <span key={item}>{item}</span>)}</span> : DASH } as ParityColumn<TourListRow>,
-  ] : []),
-  ...(state === "open"
-    ? [{ key: "ready", label: "Ready to close", testId: "tour-col-ready", sortable: true, minWidth: 120, maxWidth: 200, sortValue: (r: TourListRow) => r.ready_ok, render: (r: TourListRow) => <span className={`ldt-pill ${r.can_close ? "ok" : r.ready_ok === 0 ? "bad" : "warn"}`} title={r.close_blockers.join("\n")}>{r.can_close ? "Ready" : "Not ready"}</span> } as ParityColumn<TourListRow>]
-    : [{ key: "net", label: "Driver net", testId: "tour-col-driver-net", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: (r: TourListRow) => r.driver_net_cents ?? 0, render: (r: TourListRow) => r.driver_net_cents == null ? DASH : fmt(r.driver_net_cents) } as ParityColumn<TourListRow>,
-       // ROUND 16.1 — "none" was a bare warn chip; the owner asked for a clear "not opened" state.
-       { key: "company", label: "Company settlement", testId: "tour-col-company", minWidth: 120, maxWidth: 160, cellClass: "whitespace-nowrap", render: (r: TourListRow) => r.company_settlement_display_id ? r.company_settlement_display_id : <span className="ldt-pill warn" data-testid="tour-company-not-opened">not opened</span> } as ParityColumn<TourListRow>]),
-];
 function TourRegister({ state, companyId, onCount }: { state: "open" | "closed"; companyId: string; onCount: (n: number | null) => void }) {
   const q = useQuery({ queryKey: ["load-costs-board", "tours", state, companyId], queryFn: () => listTours(companyId, state), enabled: Boolean(companyId) });
-  const rows = q.data?.rows ?? [];
+  // DISPATCH-ONE-ROW-PER-LOAD (owner 2026-09-11): the register is ONE ROW PER LOAD — flattened off the
+  // same /tours read model (components/dispatch/TourLoadRows). The tab count stays the TOUR count.
+  const rows = useMemo(() => flattenTourRows(q.data?.rows ?? []), [q.data]);
   useEffect(() => { onCount(q.data ? q.data.count : null); }, [q.data, onCount]);
   if (q.isError) return <ListErrorState status={0} message={q.error instanceof Error ? q.error.message : String(q.error)} onRetry={() => void q.refetch()} />;
   return <div data-testid={`load-costs-tours-${state}`} data-surface="load-detail"><ParityTable
-    columns={TOUR_COLUMNS(state)}
+    columns={TOUR_LOAD_COLUMNS(state)}
     rows={rows}
-    rowKey={r => r.settlement_id}
+    rowKey={r => r.row_key}
     loading={q.isLoading}
     emptyText={state === "open" ? "No open tours — a tour opens when a driver is assigned to a load." : "No closed tours yet — close a tour from the Pre-Settlement tab."}
-    storageKey={`load-costs-tours-${state}`}
+    storageKey={`load-costs-tours-${state}-v2`}
     exportFilename={`load-costs-tours-${state}`}
     tableTestId={`load-costs-tours-table-${state}`}
     enableColumnReorder
@@ -571,13 +539,7 @@ function TourRegister({ state, companyId, onCount }: { state: "open" | "closed";
     expandMode="single"
     expandOnRowClick
     renderExpanded={r => <div className="p-3" data-testid={`tour-expand-${state}`}>{state === "open" ? <TourPreSettlementTab settlementId={r.settlement_id} operatingCompanyId={companyId} /> : <TourSettlementTab settlementId={r.settlement_id} operatingCompanyId={companyId} />}</div>}
-    footerCells={{
-      tour: (v: TourListRow[]) => <span className="font-semibold uppercase tracking-[0.4px] text-gray-600" style={{ fontSize: 11 }} data-testid="tour-totals-label">Totals ({v.length})</span>,
-      revenue: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.revenue_cents, 0)),
-      costs: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.costs_cents, 0)),
-      driver_pay: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.driver_pay_cents, 0)),
-      tour_margin: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.margin_cents, 0)),
-    }}
+    footerCells={tourLoadFooter(state)}
   /></div>;
 }
 

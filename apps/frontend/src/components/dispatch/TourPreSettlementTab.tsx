@@ -1,3 +1,4 @@
+import { settlementLabel } from "../../lib/settlementNumber";
 import { useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -60,7 +61,7 @@ export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId,
 
   return <div className="ldt-body" data-testid="tour-presettlement-tab" data-surface="load-detail">
     <div className="ldt-rowbar">
-      <span>Pre-Settlement <EntityLink kind="settlement" id={t.settlement_id} label={t.display_id ?? "Settlement"} />
+      <span>Pre-Settlement <EntityLink kind="settlement" id={t.settlement_id} label={settlementLabel(t)} />
         {periodLabel(t) ? <> · <span className="ldt-k" data-testid="tour-presettlement-dates">{periodLabel(t)}</span></> : null}{" "}
         · {r.legs.map((l) => `${l.trip_type ?? "leg"} ${l.load_number}${l.is_this_load ? " (this load)" : ""}`).join(" · ")}{sb ? "" : " · SB —"} · {t.driver_name ?? "driver"}{t.unit_number ? ` · ${t.unit_number}` : ""}</span>
       <span className={`ldt-pill ${t.is_open ? "warn" : "ok"}`} data-testid="tour-state-chip">{t.is_open ? "open · nothing posted" : `closed · ${t.status}`}</span>
@@ -124,7 +125,7 @@ export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId,
 
     {confirming ? <div className="ldt-modal-backdrop" onClick={() => setConfirming(false)} data-testid="tour-close-confirm">
       <div className="ldt-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-        <div className="ldt-modal-head"><span className="ldt-modal-title">Close tour {t.display_id ?? ""} → Settlement</span><button type="button" className="ldt-btn g" onClick={() => setConfirming(false)} aria-label="Close">×</button></div>
+        <div className="ldt-modal-head"><span className="ldt-modal-title">Close tour {settlementLabel(t)} → Settlement</span><button type="button" className="ldt-btn g" onClick={() => setConfirming(false)} aria-label="Close">×</button></div>
         <div className="ldt-modal-body">
           <p>This closes the tour for <b>{t.driver_name ?? "the driver"}</b>: the driver settlement freezes with {r.legs.length} leg{r.legs.length === 1 ? "" : "s"} ({r.legs.map((l) => l.load_number).join(", ")}), earnings and escrow lines are written, and the company settlement for the period is closed alongside. Nothing posts to the general ledger here — posting happens at pay-run close.</p>
           {r.soft_warnings.length ? <div className="ldt-note warn"><b>You are confirming these open items by name:</b><ul style={{ margin: "6px 0 0 16px" }}>{r.soft_warnings.map((w) => <li key={w}>{w}</li>)}</ul></div> : <div className="ldt-note">Every readiness item is satisfied.</div>}

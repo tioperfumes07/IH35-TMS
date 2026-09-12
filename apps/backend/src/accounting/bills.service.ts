@@ -1067,7 +1067,7 @@ export async function listBillsByVendor(
         -- grain"). Dual-path resolve, same shape as load-settlement-summary.routes.ts: bookend OR
         -- settlement_lines/driver_bills.load_id.
         LEFT JOIN LATERAL (
-          SELECT s.id::text AS settlement_id, s.display_id AS settlement_display_id
+          SELECT s.id::text AS settlement_id, s.source_document_ref AS settlement_display_id
           FROM driver_finance.driver_settlements s
           WHERE s.operating_company_id = b.operating_company_id
             AND s.voided_at IS NULL
@@ -1220,7 +1220,7 @@ export async function listAllBillsForCompany(
         -- grain"). Dual-path resolve, same shape as load-settlement-summary.routes.ts: bookend OR
         -- settlement_lines/driver_bills.load_id.
         LEFT JOIN LATERAL (
-          SELECT s.id::text AS settlement_id, s.display_id AS settlement_display_id
+          SELECT s.id::text AS settlement_id, s.source_document_ref AS settlement_display_id
           FROM driver_finance.driver_settlements s
           WHERE s.operating_company_id = b.operating_company_id
             AND s.voided_at IS NULL

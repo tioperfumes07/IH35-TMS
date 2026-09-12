@@ -27,7 +27,7 @@ export const ACTIVE_SETTLEMENT_LINE_PREDICATE_SQL =
  * settlement resolves to NULL rather than guessing. Aliases `settlement`.
  */
 export const RESOLVE_ACTIVE_SETTLEMENT_LATERAL_SQL = `LEFT JOIN LATERAL (
-             SELECT min(ds.id::text) AS settlement_id, min(ds.display_id) AS settlement_number
+             SELECT min(ds.id::text) AS settlement_id, min(ds.source_document_ref) AS settlement_number
                FROM driver_finance.settlement_lines sl
                JOIN driver_finance.driver_settlements ds
                  ON ds.id = sl.settlement_id AND ds.operating_company_id = db.operating_company_id

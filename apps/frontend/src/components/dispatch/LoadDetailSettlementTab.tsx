@@ -1,3 +1,4 @@
+import { settlementLabel } from "../../lib/settlementNumber";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { formatMoneyDollars } from "./constants";
@@ -11,6 +12,7 @@ type SettlementLeg = {
 type SettlementSummary = {
   id: string;
   display_id: string | null;
+  source_document_ref?: string | null;
   status: string;
   is_open: boolean;
   driver_id: string;
@@ -108,7 +110,7 @@ export function LoadDetailSettlementTab({ loadId, operatingCompanyId, currencyCo
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="text-xs text-gray-500">Settlement</div>
-          <div className="font-semibold text-gray-900"><EntityLinkOrTombstone kind="settlement" id={settlement.id} name={settlement.display_id} noun="Record" /></div>
+          <div className="font-semibold text-gray-900"><EntityLinkOrTombstone kind="settlement" id={settlement.id} name={settlementLabel(settlement)} noun="Record" /></div>
           {settlement.driver_id ? (
             <div className="text-xs text-gray-600" data-testid="load-settlement-tab-driver-entitylink">
               <EntityLinkOrTombstone

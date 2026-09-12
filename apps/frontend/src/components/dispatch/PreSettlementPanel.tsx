@@ -1,3 +1,4 @@
+import { settlementLabel } from "../../lib/settlementNumber";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getPreSettlementForDriver, settleAndPay } from "../../api/driverFinance";
 import { formatDateUS } from "../../lib/formatDate";
@@ -102,7 +103,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Pre-Settlement</div>
           <div className="font-semibold text-gray-900">
-            <EntityLinkOrTombstone kind="settlement" id={settlement.id} name={settlement.display_id} noun="Record" />
+            <EntityLinkOrTombstone kind="settlement" id={settlement.id} name={settlementLabel(settlement)} noun="Record" />
           </div>
           {/* Exact Leaves secondary.pre_settlements:driver / reverse — panel was scoped by driverId but never drilled */}
           <div className="mt-0.5 text-xs text-slate-600" data-testid="pre-settlement-panel-driver-entitylink">
