@@ -15,6 +15,9 @@
  * (g) all 4 existing view segments (Kanban/List/Round Trips/Trip Pairing) still present, additive
  * (h) station header labels = node positions (same 9, same order, as station.ts's own list)
  * (i) Other requires an active catalog reason and never changes loads.status
+ * (j) V4 (ROUND 18.4, owner ruling 2026-09-11 20:55 CT) -- the board is an auto-fit CSS grid, never
+ *     a ParityTable, for this one view: the Line column is `1fr` (re-spaces at every screen size)
+ *     and there is no column resize/reorder/storageKey state to drag
  */
 import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -107,6 +110,27 @@ export function verify(files) {
   if (!/is_active = true/.test(archTabsService)) problems.push("(i) the reason_id lookup must filter is_active = true");
   if (/UPDATE\s+mdata\.loads\b/i.test(archTabsService)) problems.push("(i) arch-tabs.service.ts (intransit-issues) must never write mdata.loads — Other never changes loads.status");
 
+  // (j) V4 auto-fit grid (ROUND 18.4) -- the Line column must be `1fr` so it re-spaces at every
+  // screen size, and this board must never regress back to a resizable/reorderable/stateful
+  // ParityTable (the owner's explicit ruling: "this one time the columns do not need to adjust").
+  // Checks are on actual CODE (a JS string constant, an import statement, a JSX prop) — not on
+  // prose in comments, which may legitimately mention "ParityTable" or "storageKey" while
+  // explaining the V4 change without either being wired up.
+  const gridColumnsConst = boardTsx.match(/const GRID_TEMPLATE_COLUMNS\s*=\s*(["'`])([\s\S]*?)\1/);
+  if (!gridColumnsConst || !/minmax\(104px,7vw\)\s*minmax\(112px,9vw\)\s*1fr\s*minmax\(96px,8vw\)/.test(gridColumnsConst[2])) {
+    problems.push("(j) TruckLineBoard.tsx must define a GRID_TEMPLATE_COLUMNS constant with a 1fr Line column (minmax(104px,7vw) minmax(112px,9vw) 1fr minmax(96px,8vw))");
+  }
+  if (!gridColumnsConst || !/grid-template-columns:\s*\$\{GRID_TEMPLATE_COLUMNS\}/.test(boardTsx)) {
+    problems.push("(j) TruckLineBoard.tsx defines GRID_TEMPLATE_COLUMNS but never wires it into an actual grid-template-columns rule");
+  }
+  const codeOnly = boardTsx.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+  if (/from\s+["']\.\.\/\.\.\/components\/parity\/ParityTable(?:\.js)?["']|<ParityTable\b/.test(codeOnly)) {
+    problems.push("(j) TruckLineBoard.tsx must not import/render ParityTable — V4 is a plain CSS grid, never a resizable/reorderable table, for this one view");
+  }
+  if (/\bstorageKey\s*[:=]/.test(codeOnly)) {
+    problems.push("(j) TruckLineBoard.tsx must not persist any column-resize/reorder state (storageKey) — the grid has no such state to persist");
+  }
+
   return problems;
 }
 
@@ -148,6 +172,9 @@ function runSelftest() {
     ["(f) double-click destination changed", { ...good, dispatchTsx: good.dispatchTsx.replace("/accounting/load-costs/${loadId}", "/somewhere/else") }],
     ["(g) a board-view segment removed", { ...good, dispatchTsx: good.dispatchTsx.replace('id: "kanban"', 'id: "REMOVED"') }],
     ["(i) reason validation removed", { ...good, archTabsService: good.archTabsService.replace("reason_not_found", "REMOVED") }],
+    ["(j) 1fr Line column removed from the grid", { ...good, boardTsx: good.boardTsx.replace("minmax(112px,9vw) 1fr minmax(96px,8vw)", "minmax(112px,9vw) minmax(200px,20vw) minmax(96px,8vw)") }],
+    ["(j) ParityTable reintroduced", { ...good, boardTsx: good.boardTsx + '\nimport { ParityTable } from "../../components/parity/ParityTable";\n' }],
+    ["(j) storageKey column state reintroduced", { ...good, boardTsx: good.boardTsx + '\nconst x = { storageKey: "dispatch-truck-line-v1" };\n' }],
   ];
   let failed = 0;
   for (const [name, mutated] of cases) {
@@ -177,4 +204,4 @@ if (problems.length) {
   for (const p of problems) console.error(`  ✗ ${p}`);
   process.exit(1);
 }
-console.log(`${LABEL} OK — read model scope matches the Kanban predicate, station derivation is pure+tested, no new status writer, refused transitions surface the server reason, no-ping is honest, double-click routes to Load Costs, all 5 board segments present, header/reason law held.`);
+console.log(`${LABEL} OK — read model scope matches the Kanban predicate, station derivation is pure+tested, no new status writer, refused transitions surface the server reason, no-ping is honest, double-click routes to Load Costs, all 5 board segments present, header/reason law held, V4 auto-fit grid (1fr Line column, no ParityTable/storageKey) held.`);
