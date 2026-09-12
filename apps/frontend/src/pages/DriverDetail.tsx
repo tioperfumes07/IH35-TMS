@@ -1000,8 +1000,11 @@ export function DriverDetailPage() {
         })()
       ) : null}
 
+      {/* ROUND-20.7 (APP-WIDE AUTOFIT LAW) -- a profile/field-grid layout, not a data board grid/
+          table/timeline/kanban/planner, so a reading-comfort cap stays -- expressed in rem, never
+          a raw px cap, per the law's own §1 exception. */}
       {activeTab === "Profile" ? (
-        <div className="mx-auto grid w-full max-w-[1440px] gap-3 md:grid-cols-2" data-testid="driver-profile-layout">
+        <div className="mx-auto grid w-full max-w-[90rem] gap-3 md:grid-cols-2" data-testid="driver-profile-layout">
           <div className="md:col-span-2">
             <FlatFieldGrid
               columns={4}
