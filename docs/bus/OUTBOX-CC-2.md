@@ -3025,3 +3025,62 @@ cleared" this seat said it was waiting for before retrying. Picking up the defer
 proof now (5 breakpoints on the matched pair, Available Truck row, Assign-a-load → real
 BookLoadModal open, station glide, exception write+clear) -- will post as a follow-up here, not a
 new PR, per the earlier DONE line's own wording. NEXT.
+
+## CC-2 — TRUCK-LINE V10 LIVE PROOF: BOARD CONFIRMED LIVE + TRUCK-LINE-04 FOUND, FIXED, DEPLOYED; full interactive proof BLOCKED this pass by a Chrome-tab environment stall, not an app defect
+
+Re-opened the live board post-deploy (app.ih35dispatch.com/dispatch?view=truck-line). Confirmed via
+screenshot: 23 rows (7 loaded + 16 available), top bar `All trucks (23) · Rolling (6) · Stopped (0)
+· Signal stale (1) · Appointment past (6) · Available (16)` -- matches the direct GET
+/api/v1/dispatch/truck-line response (total_count 23, loaded_count 7, available_count 16,
+catalog_ready true) fetched straight from the page. The 7 loaded rows render the 5-column grid with
+the moving-truck line, the 7-station status line, live signal/next-appointment columns exactly per
+V10 spec. THE AVAILABLE TRUCK rows (Antonio Noguez/no unit, Cuauhtemoc Lopez Tirado/no unit, T164
+Carlos Mauricio Carvallo, T163 Concepcion Cordova Dominguez, ...) each show the green yard dock,
+parked muted truck, "Load me — Xh Ym drive left" speech bubble, dashed ghost route with the same 7
+station captions, "parked at <city>, <ST> · waiting on dispatch" (or "parked at — · waiting on
+dispatch" when no unit/position exists), green "Assign a load →" pill, "—/nothing booked" next
+appointment, "available now"/"HOS polled N min ago" live signal -- all screenshotted and zoomed in
+directly against production, matching the spec named drivers (Hugo Gaytan/Vicente Santos
+Contreras/Concepcion Cordova Dominguez/Luis Corona all present in the live 16, as already reported
+in the #21899 PR body).
+
+TRUCK-LINE-04 (own catch, PR #21909, already merged+deployed): while sweeping the 5 required
+breakpoints via the same-origin-iframe technique, found and precisely measured (getBoundingClientRect
+on every `.truck-line-v4-cap`) real station-caption collisions at 1024px -- "Dispatched"/"At pickup"
+10px, "At pickup"/"Loaded" 1px, "At delivery"/"Delivered" 8px -- and at 1050px (6px/4px), clean at
+1090px+. Root cause: V10's own column-1/2 widening (ROUND 18.6) shrank the Line column's 1fr share
+below what the full captions need at the existing clamp() floor, at widths well above the
+whole-grid FOLD_BREAKPOINT_PX (860px). Fixed with a new, wider, caption-only breakpoint
+(CAPTION_FOLD_BREAKPOINT_PX=1180, margin above the measured 1080px crossover) that swaps to the
+SAME narrow captions already proven collision-free at 860px, without collapsing the Load/Live-signal
+columns. tsc -b exit 0, guard --selftest 21/21 unchanged, deployed live (dep-daidjmvqj5pc739lp3v0,
+FE sha b8266bbaef). 1920/1440/1280/860 were all measured/screenshotted clean on the PRE-fix build
+before this defect was found (no regression there); 1024 is now covered by the same deterministic
+media-query logic and the identical narrow-caption class already measured clean at 860px, but a
+fresh live pixel re-measurement of 1024px specifically ON the post-fix build could not be completed
+this pass -- see BLOCKED below.
+
+BLOCKED (environment, not app): every attempt to re-open a fresh Chrome tab on this board after the
+TRUCK-LINE-04 deploy (5 separate attempts, 3 different tabs) hit the same wall: the page's own
+Runtime.evaluate-dependent operations (screenshot, JS eval) timed out for 60-110+ seconds per
+attempt while CDP-only reads (console/network) kept responding instantly -- meaning the renderer's
+JS thread specifically was starved, not the browser or network. Root-caused via `ps aux`, not
+guessed: an unrelated macOS system process (`mediaanalysisd`, Photos/Spotlight media indexing) was
+consuming 210-270% CPU throughout these attempts, worsening over the session, confirmed present
+before, during, and after every stalled attempt -- a machine-level resource contention issue on this
+session's host, external to this app and this seat's code. The FIRST post-deploy load (before this
+contention worsened) DID succeed and is the basis of the confirmed-live paragraph above; every
+attempt after that to get a fresh 1024px-specific measurement stalled. Not claiming false certainty
+either way -- will re-attempt the 1024px live re-measurement, the Assign-a-load → BookLoadModal open
+proof, a station-click glide reconfirmation, and an exception write+clear reconfirmation as a fast
+follow-up (same OUTBOX thread, not a new PR) once this session's Chrome tooling responds normally
+again.
+
+CC-2 | TRUCK-LINE V10 DONE, backend+frontend BOTH live (160af3f / b8266bbaef) | board confirmed
+live with real data (23/7/16, top-bar stats match direct API) | Available Truck row rendering
+confirmed exactly to spec | TRUCK-LINE-04 (1024px caption collision, own catch) found+fixed+deployed,
+guard 21/21 + tsc unchanged | REMAINING: 1024px post-fix pixel re-measurement + Assign-a-load open +
+glide + exception reconfirm, blocked this pass by a machine-level Chrome resource-contention stall
+(ps aux-confirmed, not an app defect) -- will finish as a follow-up comment on this same thread |
+NEXT: retry the blocked interactive proof once the environment recovers; then ITEM D (re-measure
+Dispatch end to end).
