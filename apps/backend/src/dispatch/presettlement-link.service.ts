@@ -13,6 +13,10 @@ import { randomUUID } from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { allocateSettlementDisplayId } from "../driver-finance/settlement-display-id.js";
 import { reopenSettlementForContinuationInClientTx } from "../driver-finance/settlement-continuation.service.js";
+import {
+  allocateNextSettlementSourceDocumentRef,
+  setSettlementSourceDocumentRef,
+} from "../driver-finance/settlement-source-document-ref.service.js";
 
 export type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -460,6 +464,20 @@ export async function confirmPresettlementLink(client: DbClient, input: ConfirmI
       [input.operating_company_id, suggestion.driver_id, displayId, suggestion.tour_id, suggestion.load_id, periodDate, input.actor_user_id, isSampleData]
     );
     settlementId = insertRes.rows[0]!.id;
+    // INSTANT PRE-SETTLEMENT NUMBER (owner 2026-09-11): the tour is born HERE (a new open
+    // settlement). Mint the next number in the AllwaysTrack sequence (5804+) now and keep it through
+    // close, so Pre-Settlement shows a real number instead of a dash. AllwaysTrack numbers only at
+    // close; we number at open for tighter control.
+    const sourceDocRef = await allocateNextSettlementSourceDocumentRef(
+      client as never,
+      input.operating_company_id
+    );
+    await setSettlementSourceDocumentRef(client as never, {
+      operatingCompanyId: input.operating_company_id,
+      settlementId,
+      sourceDocumentRef: sourceDocRef,
+      actorUserId: input.actor_user_id,
+    });
   } else {
     // link_existing
     const targetId = input.override_settlement_id ?? suggestion.suggested_settlement_id;

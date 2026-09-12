@@ -32,6 +32,9 @@ function makeClient(overrides: { openSettlement?: { id: string; display_id: stri
         driver_id: overrides.currentDriver ?? DRIVER_ID, unit_id: pending?.[3] ?? null,
       }] };
       if (/SELECT audit\.append_event/.test(sql)) return { rows: [] };
+      // INSTANT PRE-SETTLEMENT NUMBER (owner 2026-09-11): allocateNextSettlementSourceDocumentRef
+      // mints the next AllwaysTrack doc number (floor 5803 -> 5804) when a new tour opens.
+      if (/AS next[\s\S]*FROM driver_finance\.driver_settlements/.test(sql) && sql.includes("source_document_ref")) return { rows: [{ next: "5804" }] };
       if (/SELECT id, display_id[\s\S]*FROM driver_finance\.driver_settlements/.test(sql)) {
         return { rows: overrides.openSettlement ? [{ ...overrides.openSettlement, is_continuation: overrides.closedContinuation || overrides.historicalContinuation || false, is_closed: overrides.closedContinuation ?? false, has_other_nb: overrides.hasOtherNb ?? false }] : [] };
       }
@@ -139,6 +142,10 @@ describe("presettlement link — GO-22", () => {
     expect(calls.some(c => c.sql.includes("lib.next_trace_no"))).toBe(false);
     expect(calls.some((c) => /INSERT INTO driver_finance\.driver_settlements/.test(c.sql))).toBe(true);
     expect(calls.some((c) => /UPDATE mdata\.loads SET presettlement_link_id/.test(c.sql))).toBe(true);
+    // INSTANT PRE-SETTLEMENT NUMBER (owner 2026-09-11): opening a new tour mints the next
+    // AllwaysTrack doc number (allocator) and writes it to source_document_ref right away.
+    expect(calls.some((c) => c.sql.includes("AS next") && c.sql.includes("source_document_ref"))).toBe(true);
+    expect(calls.some((c) => /SET source_document_ref = \$3/.test(c.sql))).toBe(true);
   });
 
   it("GAP-PRESETTLEMENT-PERIOD-NULL: create_new derives period_start/period_end from the load's own trip-start date, never leaves them NULL", async () => {

@@ -36,6 +36,39 @@ export type SetSettlementSourceDocumentRefInput = {
  * is a no-op re-write, not an error. Returns the updated row, or null if no row matched (wrong id /
  * wrong company — never silently succeeds on a miss).
  */
+/**
+ * INSTANT PRE-SETTLEMENT NUMBER (owner ruling 2026-09-11, verbatim: "we do assign a presettlement
+ * number instantly, always assigns when the load is closed. i want it assigned instantly i think
+ * it is better control."). AllwaysTrack mints the settlement number only at CLOSE; we mint it the
+ * instant a tour OPENS and keep it through close — so Pre-Settlement shows a real number, not a dash.
+ *
+ * The number CONTINUES the AllwaysTrack sequence: the imported closed tours end at 5803
+ * (source_document_ref 5769..5803), so the first instant-minted open tour is 5804. Floor 5803 keeps
+ * that invariant even if the max-imported row is ever voided. Company-scoped; a per-company advisory
+ * lock serializes concurrent NB opens so two tours can never grab the same number. Returns the
+ * allocated number as a string; the caller writes it via setSettlementSourceDocumentRef.
+ */
+const SETTLEMENT_SOURCE_DOC_REF_FLOOR = 5803; // last AllwaysTrack-imported closed tour; first minted = 5804
+
+export async function allocateNextSettlementSourceDocumentRef(
+  client: Queryable,
+  operatingCompanyId: string
+): Promise<string> {
+  await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [
+    `settlement-source-doc-ref:${operatingCompanyId}`,
+  ]);
+  const res = await client.query<{ next: string }>(
+    `
+      SELECT (GREATEST($2::int, COALESCE(MAX((source_document_ref)::int), 0)) + 1)::text AS next
+        FROM driver_finance.driver_settlements
+       WHERE operating_company_id = $1::uuid
+         AND source_document_ref ~ '^[0-9]+$'
+    `,
+    [operatingCompanyId, SETTLEMENT_SOURCE_DOC_REF_FLOOR]
+  );
+  return res.rows[0]!.next;
+}
+
 export async function setSettlementSourceDocumentRef(
   client: Queryable,
   input: SetSettlementSourceDocumentRefInput
