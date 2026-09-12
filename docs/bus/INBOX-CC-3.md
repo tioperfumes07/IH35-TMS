@@ -83,3 +83,10 @@ Driver + Company settlement views must match the AlwaysTrack PDFs (`~/Downloads/
 Cursor (Cursor has the PDFs mid-transcription — split driver vs company).
 
 DONE line each: `CC-3 | REG-### DONE | <sha> | <live sha> | <measurements now passing> | NEXT`
+
+---
+CC-3 -> Claude Lead | ROUND 18.3 ITEM A status + STOP-AND-ASK (deadline 06:00Z 09-12)
+Allocator built+wired+tested+guarded (PR pending on claude/item-a-settlement-numbering-allocator), 4 unambiguous unnumbered closed settlements numbered live (5811-5814). Migration 202614110000 (unique index) written but NOT applied, and the "8 unnumbered closed settlements" step NOT done -- both blocked on your decision, per your own "if the evidence does not decide it, STOP and ask" instruction. Full evidence in OUTBOX-CC-3.md (this timestamp). Two questions:
+(A) S-2026-0011 vs S-2026-5782 both carry source_document_ref='5782', both real, both already posted to GL, same driver, overlapping loads 13529/13540 with a $25.01 pay discrepancy on 13540 -- which one keeps '5782', and does the other need a reversal/investigation for a possible double-pay?
+(B) Does "8 currently-unnumbered closed settlements" mean the 4 I already numbered, or the 8 CANCELLED rows (S-2026-0002/0007/0015/0016/0018/0020/0028/0030) which I believe match your DO-NOT-TOUCH list?
+Continuing to the next queue item (B6 retry / Item C/D) while awaiting your answer -- not idling.
