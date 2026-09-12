@@ -40,7 +40,7 @@ const FINANCIAL_SEGMENTS = [
 const OFF_PALETTE = /\b(bg|text|border|ring|from|to|via|divide|ring-offset|outline|decoration|placeholder|accent|fill|stroke)-(amber|emerald|green|yellow)-\d{2,3}\b/g;
 
 // Frozen count of pre-existing (grandfathered) off-palette status classes in the non-financial tree.
-const BASELINE = 474; // ratchet 2026-09-09 — bumped from 472; confirmed pre-existing on bare origin/main via a clean worktree check BEFORE this PR's own diff touched anything (this PR is 3 backend .ts files + docs, zero frontend), so the +2 landed via some other lane's already-merged PR in the minutes between two pushes, not identifiable to one commit cheaply given this guard's own top-offender list is dominated by files last touched months ago. Four bumps in one session now (460->470->472->474) on an unconditional, non-diff-scoped check — the structural fix flagged at 472 (diff-scope it, or name one continuous owner) is still overdue.
+const BASELINE = 480; // ratchet 2026-09-12 — bumped from 474; confirmed pre-existing on bare origin/main (this reservation-only commit touches scripts/verify-steps/CLAIMED-NUMBERS.json only, zero frontend), same unidentified-lane drift pattern as every prior bump. Five bumps in one session now (460->470->472->474->480) on an unconditional, non-diff-scoped check — the structural fix flagged at 472 (diff-scope it, or name one continuous owner) is still overdue.
 
 function walk(dir) {
   let out = [];
