@@ -114,6 +114,16 @@ const EXCEPTION_RED = "#991B1B";
 const GRID_TEMPLATE_COLUMNS = "minmax(140px,10vw) minmax(160px,12vw) 1fr minmax(158px,12vw) minmax(156px,12vw)";
 const GRID_TEMPLATE_COLUMNS_NARROW = "minmax(108px,26vw) 1fr minmax(132px,27vw)";
 const FOLD_BREAKPOINT_PX = 860;
+// TRUCK-LINE-04 (found live at 1024px, one of the 5 required breakpoints, during this seat's own
+// V10 verification pass): V10's ROUND 18.6 widening of columns 1-2 (Truck/Load) shrank the Line
+// column's own share of the grid, so the FULL 7-station captions (still at the .cap clamp() floor
+// of 9px) started colliding again well above the whole-grid FOLD_BREAKPOINT_PX -- measured live via
+// getBoundingClientRect on every `.truck-line-v4-cap`, first real overlap at 1080px, clean at 1090+.
+// A SEPARATE, wider breakpoint swaps to the SAME narrow captions (Disp./Pickup/Transit/etc.) that
+// already exist for the 860px whole-grid fold, WITHOUT collapsing the Load/Live-signal columns --
+// this is a caption-only response, not a column-count change, so it stays inside the owner's
+// "auto-adjust to screen size" ruling rather than hiding columns earlier than necessary.
+const CAPTION_FOLD_BREAKPOINT_PX = 1180;
 const AVAILABLE_ROW_TINT = "color-mix(in srgb, #16A34A 4%, #fff)";
 
 function pct(index: number) {
@@ -809,6 +819,15 @@ export function TruckLineBoard({
            by SOURCE ORDER, not by whether a media query matches, so a later base rule would win
            over an earlier media-scoped override even while the query is active. (Found live: both
            spans rendered display:none at 856px until this block was moved below its base rules.) */
+        /* TRUCK-LINE-04 -- caption-only fold, wider than the whole-grid fold below: same narrow
+           captions, columns stay at full width/count. Placed BEFORE the whole-grid fold block so
+           the narrower block's agreeing display rules for cap-full/cap-narrow win by source order
+           in the overlapping range (both blocks want the same outcome there, so this is not the
+           TRUCK-LINE-03 ordering hazard -- no property disagreement between the two). */
+        @media (max-width: ${CAPTION_FOLD_BREAKPOINT_PX}px) {
+          .truck-line-v4-cap-full { display: none; }
+          .truck-line-v4-cap-narrow { display: inline; }
+        }
         @media (max-width: ${FOLD_BREAKPOINT_PX}px) {
           .truck-line-v4-header, .truck-line-v4-row {
             grid-template-columns: ${GRID_TEMPLATE_COLUMNS_NARROW};
