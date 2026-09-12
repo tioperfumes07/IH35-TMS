@@ -9,11 +9,14 @@ export type TruckLineStation = {
   stamps: (TruckLineStamp | null)[];
   has_open_exception: boolean;
   exception_reason_label: string | null;
+  open_exception_id: string | null;
 };
 
 export type TruckLinePosition = {
   lat: number | null;
   lng: number | null;
+  speed_mph: number | null;
+  engine_state: string | null;
   city: string | null;
   state: string | null;
   captured_at: string;
@@ -24,6 +27,7 @@ export type TruckLinePosition = {
 export type TruckLineNextAppointment = {
   type: "pickup" | "delivery";
   at: string | null;
+  at_source: "appointment_start_at" | "scheduled_arrival_at" | null;
   late: boolean;
 };
 

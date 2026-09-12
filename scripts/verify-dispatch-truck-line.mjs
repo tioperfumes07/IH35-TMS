@@ -13,11 +13,15 @@
  * (e) no-ping renders the red text
  * (f) double-click routes to /accounting/load-costs/:loadId
  * (g) all 4 existing view segments (Kanban/List/Round Trips/Trip Pairing) still present, additive
- * (h) station header labels = node positions (same 9, same order, as station.ts's own list)
+ * (h) V7 (ROUND 18.5, owner ruling 2026-09-11 20:55 CT) -- station.ts's own 9-index model is
+ *     UNCHANGED (other surfaces/tests depend on that shape); the board's 7-label V7_STATIONS is a
+ *     DOCUMENTED frontend-only regrouping of that same signal, never a second derivation
  * (i) Other requires an active catalog reason and never changes loads.status
- * (j) V4 (ROUND 18.4, owner ruling 2026-09-11 20:55 CT) -- the board is an auto-fit CSS grid, never
- *     a ParityTable, for this one view: the Line column is `1fr` (re-spaces at every screen size)
+ * (j) V4/V7 (ROUND 18.4/18.5, owner rulings) -- the board is an auto-fit CSS grid, never a
+ *     ParityTable, for this one view: the Line column is `1fr` (re-spaces at every screen size)
  *     and there is no column resize/reorder/storageKey state to drag
+ * (k) V8 (ROUND 18.5 addendum) -- the status station's reason list is the LIVE catalog (never
+ *     hardcoded reason names) and a clear action resolves the open dispatch.intransit_issues row
  */
 import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -97,13 +101,25 @@ export function verify(files) {
     if (!dispatchTsx.includes(`id: "${id}"`)) problems.push(`(g) Dispatch.tsx's board-view-row is missing segment "${id}" — must be additive, nothing removed`);
   }
 
-  // (h) station header labels = node positions — same 9 names, same order, as station.ts's own
-  // canonical list (the ONE place that decides station identity/order).
+  // (h) station.ts's own 9-index model stays the ONE pure derivation (unchanged shape, still
+  // depended on by its own unit tests and by (b) above). The board's 7-label V7_STATIONS is a
+  // documented, honest FRONTEND regrouping of that same signal (never a second station.ts) — this
+  // asserts BOTH sides of that documented divergence hold: station.ts still has 9, the board still
+  // maps through real mapping functions (not a re-typed guess at reachedIndex).
   const stationKeysMatch = stationTs.match(/export const STATION_KEYS = \[([\s\S]*?)\] as const;/);
   assert(stationKeysMatch, "(h) station.ts must export STATION_KEYS");
   const keyCount = (stationKeysMatch[1].match(/"/g) ?? []).length / 2;
   if (keyCount !== 9) problems.push(`(h) station.ts STATION_KEYS must have exactly 9 stations, found ${keyCount}`);
-  if (!/STATION_LABELS = \[/.test(boardTsx)) problems.push("(h) TruckLineBoard.tsx must define its own STATION_LABELS in the same 9-station order for the header strip");
+  const v7StationsMatch = boardTsx.match(/const V7_STATIONS = \[([\s\S]*?)\] as const;/);
+  if (!v7StationsMatch) {
+    problems.push("(h) TruckLineBoard.tsx must define its own V7_STATIONS list for the 7-station line");
+  } else {
+    const nameCount = (v7StationsMatch[1].match(/name:/g) ?? []).length;
+    if (nameCount !== 7) problems.push(`(h) TruckLineBoard.tsx's V7_STATIONS must have exactly 7 stations, found ${nameCount}`);
+  }
+  if (!/function mapReachedIndexToV7/.test(boardTsx) || !/function mapNextIndexToV7/.test(boardTsx)) {
+    problems.push("(h) TruckLineBoard.tsx must map station.ts's 9-index model onto the 7-station line through real functions, not a re-typed guess");
+  }
 
   // (i) Other requires an ACTIVE catalog reason and NEVER changes loads.status.
   if (!/reason_not_found/.test(archTabsService)) problems.push("(i) createOfficeIntransitIssue must reject an unknown/inactive reason_id (reason_not_found)");
@@ -117,18 +133,36 @@ export function verify(files) {
   // prose in comments, which may legitimately mention "ParityTable" or "storageKey" while
   // explaining the V4 change without either being wired up.
   const gridColumnsConst = boardTsx.match(/const GRID_TEMPLATE_COLUMNS\s*=\s*(["'`])([\s\S]*?)\1/);
-  if (!gridColumnsConst || !/minmax\(104px,7vw\)\s*minmax\(112px,9vw\)\s*1fr\s*minmax\(96px,8vw\)/.test(gridColumnsConst[2])) {
-    problems.push("(j) TruckLineBoard.tsx must define a GRID_TEMPLATE_COLUMNS constant with a 1fr Line column (minmax(104px,7vw) minmax(112px,9vw) 1fr minmax(96px,8vw))");
+  if (!gridColumnsConst || !/minmax\(104px,7vw\)\s*minmax\(118px,9vw\)\s*1fr\s*minmax\(158px,13vw\)\s*minmax\(150px,12vw\)/.test(gridColumnsConst[2])) {
+    problems.push(
+      "(j) TruckLineBoard.tsx must define a GRID_TEMPLATE_COLUMNS constant with a 1fr Line column " +
+        "(minmax(104px,7vw) minmax(118px,9vw) 1fr minmax(158px,13vw) minmax(150px,12vw))"
+    );
   }
   if (!gridColumnsConst || !/grid-template-columns:\s*\$\{GRID_TEMPLATE_COLUMNS\}/.test(boardTsx)) {
     problems.push("(j) TruckLineBoard.tsx defines GRID_TEMPLATE_COLUMNS but never wires it into an actual grid-template-columns rule");
   }
+  if (!/const GRID_TEMPLATE_COLUMNS_NARROW/.test(boardTsx) || !/@media \(max-width: \$\{FOLD_BREAKPOINT_PX\}px\)/.test(boardTsx)) {
+    problems.push("(j) TruckLineBoard.tsx must fold to a narrower grid below its own FOLD_BREAKPOINT_PX (owner ruling: no horizontal scroll at any width)");
+  }
   const codeOnly = boardTsx.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
   if (/from\s+["']\.\.\/\.\.\/components\/parity\/ParityTable(?:\.js)?["']|<ParityTable\b/.test(codeOnly)) {
-    problems.push("(j) TruckLineBoard.tsx must not import/render ParityTable — V4 is a plain CSS grid, never a resizable/reorderable table, for this one view");
+    problems.push("(j) TruckLineBoard.tsx must not import/render ParityTable — V4/V7 is a plain CSS grid, never a resizable/reorderable table, for this one view");
   }
   if (/\bstorageKey\s*[:=]/.test(codeOnly)) {
     problems.push("(j) TruckLineBoard.tsx must not persist any column-resize/reorder state (storageKey) — the grid has no such state to persist");
+  }
+
+  // (k) V8 -- the status station's reason list is the live catalog and a clear action resolves the
+  // exact open exception row, never a hardcoded reason list and never a delete.
+  if (!/reasons\.map\(/.test(boardTsx)) {
+    problems.push("(k) TruckLineBoard.tsx's status-station reason list must map over the LIVE `reasons` query result, never a hardcoded array");
+  }
+  if (!/resolveTruckLineException/.test(boardTsx)) {
+    problems.push("(k) TruckLineBoard.tsx must call resolveTruckLineException to clear an open exception — void-not-delete, never a raw delete");
+  }
+  if (!/open_exception_id/.test(boardTsx)) {
+    problems.push("(k) TruckLineBoard.tsx must read station.open_exception_id so the clear action resolves the EXACT open row, not a guessed one");
   }
 
   return problems;
@@ -172,9 +206,14 @@ function runSelftest() {
     ["(f) double-click destination changed", { ...good, dispatchTsx: good.dispatchTsx.replace("/accounting/load-costs/${loadId}", "/somewhere/else") }],
     ["(g) a board-view segment removed", { ...good, dispatchTsx: good.dispatchTsx.replace('id: "kanban"', 'id: "REMOVED"') }],
     ["(i) reason validation removed", { ...good, archTabsService: good.archTabsService.replace("reason_not_found", "REMOVED") }],
-    ["(j) 1fr Line column removed from the grid", { ...good, boardTsx: good.boardTsx.replace("minmax(112px,9vw) 1fr minmax(96px,8vw)", "minmax(112px,9vw) minmax(200px,20vw) minmax(96px,8vw)") }],
+    ["(h) mapReachedIndexToV7 removed", { ...good, boardTsx: good.boardTsx.replace("function mapReachedIndexToV7", "function REMOVEDmapReachedIndexToV7") }],
+    ["(h) an 8th V7 station planted", { ...good, boardTsx: good.boardTsx.replace('{ name: "Delivered", backendIndex: 6 },', '{ name: "Delivered", backendIndex: 6 },\n  { name: "Extra", backendIndex: 7 },') }],
+    ["(j) 1fr Line column removed from the grid", { ...good, boardTsx: good.boardTsx.replace("minmax(118px,9vw) 1fr minmax(158px,13vw)", "minmax(118px,9vw) minmax(200px,20vw) minmax(158px,13vw)") }],
+    ["(j) narrow-grid fold removed", { ...good, boardTsx: good.boardTsx.replace("const GRID_TEMPLATE_COLUMNS_NARROW", "const REMOVED_GRID_TEMPLATE_COLUMNS_NARROW").replace(/@media \(max-width: \$\{FOLD_BREAKPOINT_PX\}px\)/, "@media (max-width: 999999px) /* REMOVED */") }],
     ["(j) ParityTable reintroduced", { ...good, boardTsx: good.boardTsx + '\nimport { ParityTable } from "../../components/parity/ParityTable";\n' }],
     ["(j) storageKey column state reintroduced", { ...good, boardTsx: good.boardTsx + '\nconst x = { storageKey: "dispatch-truck-line-v1" };\n' }],
+    ["(k) resolveTruckLineException removed", { ...good, boardTsx: good.boardTsx.replaceAll("resolveTruckLineException", "REMOVED") }],
+    ["(k) open_exception_id no longer read", { ...good, boardTsx: good.boardTsx.replaceAll("open_exception_id", "REMOVED") }],
   ];
   let failed = 0;
   for (const [name, mutated] of cases) {
@@ -204,4 +243,4 @@ if (problems.length) {
   for (const p of problems) console.error(`  ✗ ${p}`);
   process.exit(1);
 }
-console.log(`${LABEL} OK — read model scope matches the Kanban predicate, station derivation is pure+tested, no new status writer, refused transitions surface the server reason, no-ping is honest, double-click routes to Load Costs, all 5 board segments present, header/reason law held, V4 auto-fit grid (1fr Line column, no ParityTable/storageKey) held.`);
+console.log(`${LABEL} OK — read model scope matches the Kanban predicate, station derivation is pure+tested, no new status writer, refused transitions surface the server reason, no-ping is honest, double-click routes to Load Costs, all 5 board segments present, the 7-station V7 line maps honestly from station.ts's own 9-index model, V7/V8 auto-fit grid (1fr Line column, narrow fold, no ParityTable/storageKey) held, status-station reason list is live + clears via resolve (void-not-delete).`);
