@@ -8744,5 +8744,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-12",
     "purpose": "verify-banking-home-single-bar"
+  },
+  "11345": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-12",
+    "purpose": "verify-settlement-document-number-allocator-wired"
   }
 }
