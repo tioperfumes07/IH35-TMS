@@ -8779,5 +8779,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-12",
     "purpose": "verify-planners-layout"
+  },
+  "11381": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-12",
+    "purpose": "verify-pl-cost-of-revenue"
   }
 }
