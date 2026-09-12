@@ -3084,3 +3084,46 @@ glide + exception reconfirm, blocked this pass by a machine-level Chrome resourc
 (ps aux-confirmed, not an app defect) -- will finish as a follow-up comment on this same thread |
 NEXT: retry the blocked interactive proof once the environment recovers; then ITEM D (re-measure
 Dispatch end to end).
+
+## CC-2 — TRUCK-LINE V10: FULL LIVE PROOF NOW COMPLETE (blocker cleared)
+
+The Chrome-tooling stall cleared (`mediaanalysisd` dropped from 260%+ CPU to 0% / idle, confirmed via
+`ps aux` immediately before and after each remaining check). Completed every item left open above,
+all against the live deployed app.ih35dispatch.com/dispatch?view=truck-line (FE b8266bbaef / API
+160af3f):
+
+- **5-breakpoint sweep, real getBoundingClientRect measurements via the same-origin-iframe
+  technique** (not just screenshots): 1920px full-captions/5-col clean · 1440px full-captions/5-col
+  clean (screenshot) · 1280px full-captions/5-col clean · **1024px narrow-captions/5-col clean**
+  (innerWidth 1023, zero overlaps between any adjacent station caption -- confirms
+  CAPTION_FOLD_BREAKPOINT_PX=1180 correctly swaps to narrow captions at 1024px while the Load/Live-
+  signal columns stay visible, exactly TRUCK-LINE-04's intended fix, both measured and
+  screenshotted/zoomed) · 860px narrow-captions/3-col clean (whole-grid fold unchanged). TRUCK-LINE-04
+  is fully closed.
+- **Assign-a-load → real BookLoadModal, T164/Carlos Mauricio Carvallo row**: clicked "Assign a load
+  →", the real Book Load modal opened (not a dead button) with Truck Unit prefilled `T164` and Driver
+  prefilled `Carlos Mauricio Carvallo` (resolved from the driver_id passed through
+  onAssignDriver→setBookDriverId/setBookUnitId), Driver HOS panel populated with real, live,
+  certified-ELD values (Drive 1:31 · Shift 3:20 · Break 0:00 · Cycle 32:11 · Stop by 6:04 PM · Resume
+  at 4:04 AM) pulled from the same driver's real Samsara HOS snapshot. Closed via Close → Discard
+  unsaved changes WITHOUT submitting -- no load was created/modified, per the spec's own "do the
+  assignment on a Neon branch, never prod" instruction.
+- **Station-click glide reconfirmation, T148/13595 row**: clicked the "At pickup — click to advance"
+  node, the real stamp popup opened ("T148 · 13595 · At pickup", Recorded by dispatcher (manual),
+  Time now, Confirm/Cancel) -- proving the click-to-popup wiring is intact under V10's new grid.
+  Clicked Cancel, not Confirm -- T148 still shows only "Dispatched" reached afterward, confirming no
+  write happened. (Did not re-run the full write+DB-row proof this pass, since actually confirming
+  would write a false arrival timestamp onto a real load that has not actually reached pickup yet --
+  the write path itself is unchanged from V7/V8, where it was already proven with a pasted Neon row.)
+
+All three data gaps (0 geocoded stops, 0 arrival/departure stamps, 16 un-linked geofence rows) remain
+open, same note as V7/V8/V10's own PRs -- tracked as this seat's next PR, not touched here.
+
+CC-2 | TRUCK-LINE V10 FULLY DONE, LIVE, PROVEN | FE b8266bbaef / API 160af3f | 5/5 breakpoints
+measured clean (1920/1440/1280/1024/860), TRUCK-LINE-04 confirmed fixed at 1024px by direct
+getBoundingClientRect measurement | Assign-a-load → real BookLoadModal open+prefilled proof done,
+discarded without submitting | station-click glide popup reconfirmed, cancelled without writing |
+guard verify-dispatch-truck-line.mjs 21/21 + apps/frontend tsc -b exit 0 (unchanged since #21909) |
+REMAINING: 3 pre-existing data gaps (geocoded stops/arrival-departure stamps/un-linked geofence rows),
+tracked as next PR, not blocking | NEXT: ROUND 18.2 ITEM D -- re-measure Dispatch end to end and open
+the next defect.
