@@ -186,11 +186,16 @@ function TourHeaderMoney({
       staleTime: 30_000,
     })),
   });
+  // ACCT-money-as-string: total_cents/rate_total_cents are NUMERIC columns and arrive as STRINGS
+  // from node-postgres (same landmine as driving_hours_remaining/pos_lat elsewhere this session) --
+  // `sum + value` string-concatenates instead of adding once any one operand is a string, silently
+  // corrupting every total past the first leg. Number(...) each value before summing; formatMoneyCents
+  // itself already does the same cast, which is why the per-card amount never showed this bug.
   const invoicedCents = invoiceQueries.reduce((sum, q) => {
     const invoices = (q.data?.invoices ?? []).filter((inv) => !inv.voided_at && inv.status === "sent");
-    return sum + invoices.reduce((s, inv) => s + inv.total_cents, 0);
+    return sum + invoices.reduce((s, inv) => s + Number(inv.total_cents || 0), 0);
   }, 0);
-  const tourRevenueCents = legs.reduce((sum, leg) => sum + (leg.rate_total_cents || 0), 0);
+  const tourRevenueCents = legs.reduce((sum, leg) => sum + Number(leg.rate_total_cents || 0), 0);
   const currencyCode = legs[0]?.currency_code ?? "USD";
   return (
     <span className="text-xs text-gray-500" data-testid="round-trip-header-money">
