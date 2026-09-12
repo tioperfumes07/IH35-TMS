@@ -123,7 +123,7 @@ export function selftestPlannerGridCanonical() {
     ["A4 evidence hook", mutate(good, grid, "data-load-id={bar.loadId ?? bar.id}", "data-load-key={bar.loadId ?? bar.id}")],
     ["A5 Available in track", mutate(good, grid, "<TrackOverlays days={days}", '<span>Available</span><TrackOverlays days={days}')],
     ["A6 dwell label", mutate(good, grid, "<i>{w.label}</i>", "<i />")],
-    ["A7 OOS sticky flush", mutate(good, timeline, 'className="mt-3" data-testid="planner-oos-group"', 'className="sticky mt-3" data-testid="planner-oos-group"')],
+    ["A7 OOS sticky flush", mutate(good, timeline, 'className="mt-3" data-testid="planner-hos-violation-group"', 'className="sticky mt-3" data-testid="planner-hos-violation-group"')],
     ["PLN-06 empty action cell", mutate(good, grid, '{hasActionColumn ? (', '{row.action != null ? (')],
     ["PLN-06 Book header", mutate(good, timeline, 'actionLabel="Book"', 'actionLabel=""')],
     ...good.registry.route_contracts.map((contract) => [
