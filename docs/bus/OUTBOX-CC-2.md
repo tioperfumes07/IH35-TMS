@@ -3256,3 +3256,4 @@ pages" and (e) is scoped to what's actually been converted (the planners), not a
 the full 19/22-file exhaustive sweep the spec described does not match what's actually in the tree
 today. | NEXT: will pick up the guard-registry expansion + the 3 profile-page conversions next
 unless redirected to something more urgent.
+CC-2 | MERGED #21935 | ROUND-20.7 follow-up (profile-page px->rem + guard registry 2->6 entries) | app-wide page-shell max-w-[NNNpx] sweep now COMPLETE (zero remaining, verified by direct grep across apps/frontend/src) | NEXT=cc2/truck-line-units-only (ROUND-20.4)
