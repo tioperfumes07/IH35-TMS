@@ -2877,3 +2877,13 @@ preDeployCommand runs `npm run db:migrate` on every deploy, and the duplicate nu
 EVERYONE going forward, not just this deploy. Full detail in GUARD-WORKORDERS.md. Not touched by
 this seat (migration lane law: CC-1/Cursor only) -- flagging for whoever owns #21864 to renumber it
 to a fresh timestamp. Will retry Truck Line's backend deploy once resolved.
+
+## CC-2 — TRUCK-LINE DONE
+
+Both Render services deployed and live at the Truck Line merge (`fee7a7fdfc`) plus the boot-crash
+fix (`b04df68c31`, PR #21868, merged by this seat per explicit fast-merge instruction) plus this
+seat's own post-merge live-verification fix (`9334295389`, PR #21874: popover z-index + guard
+ENOENT repair). Live Chrome verification of `/dispatch?view=truck-line` found and closed one real
+defect (TRUCK-LINE-01, see GUARD-WORKORDERS.md) before declaring done.
+
+CC-2 | TRUCK-LINE DONE | 9334295389 | live API 9334295 / FE 9334295 | GET truck-line rows=16 = in-service trucks 16 (7 dispatched: 13595/13587/13590/13591/13593/13594/13592) | catalogs.load_exception_reasons USMCA rows=11 | migration N/A this PR (no schema change; catalog migration #21852 already applied, confirmed via the 11-row live catalog fetch) | guard verify-dispatch-truck-line.mjs selftest 8/8 + live PASS | Chrome on app.ih35dispatch.com/dispatch?view=truck-line: 13595/13587/13590/13591/13593/13594/13592 green to node 2 (Dispatched), header names aligned to station.ts's 9-station list, Other pop-up on load 13587 shows all 11 real catalog reasons (Breakdown — roadside/towed to shop, Accident/incident, Weather/road closure, Border/customs hold, Detention at shipper/receiver, Layover, Driver rest/HOS, Reroute/new appointment, Load cancelled by customer, Other (note required)) — confirmed BEFORE fix only 10 of 11 were visually legible (Driver rest/HOS hidden under the sticky "Next appointment" header, z-index:auto vs the table's z-10), confirmed AFTER fix (PR #21874, z-50) all 11 render cleanly | double-click 13587 → /accounting/load-costs/0b3589e5-f09d-4b2b-9b2a-78134d2b2839 (real Load Costs page, S-2026-0025, DISPATCHED · TOUR CLOSED · SETTLEMENT) | NEXT: surrendering this seat's Truck Line assignment as complete; ACCT-F26140 follow-up + BUG 2 were reassigned to CC-1 per the Lead's own instruction, so this seat is idle pending the next assignment.
