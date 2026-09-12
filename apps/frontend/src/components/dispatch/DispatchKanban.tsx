@@ -8,6 +8,7 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragCancelEvent,
 } from "@dnd-kit/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -532,7 +533,16 @@ function KanbanDispatchCard({
     data: { type: "load", loadId: load.id },
   });
 
-  const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
+  // ROUND 20.3 DRAG ACTIVATION (owner-live 2026-09-12): dnd-kit REQUIRES touch-action:none on the
+  // draggable node itself — without it, a human-speed press-and-move gets raced by the browser's own
+  // native text-selection/scroll gesture, which wins and silently swallows the drag (pickup fires,
+  // no over/drop ever follows). user-select:none on the class list backs it up so a slow drag can't
+  // highlight the card's text instead of moving it. Only set while this card is actually draggable —
+  // a non-draggable card (terminal status, synthetic id) keeps normal text selection/scroll.
+  const style = {
+    ...(transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : {}),
+    ...(draggableEnabled ? { touchAction: "none" as const } : {}),
+  };
   const lane = toRouteSummary(load.first_pickup_city, load.first_delivery_city);
   const commodity = load.commodity?.trim() || "—";
   const weight = formatWeight(load.weight_lbs);
@@ -552,7 +562,7 @@ function KanbanDispatchCard({
       className={`relative cursor-pointer rounded border border-gray-200 bg-white p-3 text-left shadow-xs transition hover:-translate-y-0.5 hover:shadow-sm ${
         isDragging ? "opacity-60" : ""
       } ${isOver ? "ring-2 ring-slate-400" : ""} ${
-        draggableEnabled ? "cursor-grab active:cursor-grabbing" : "cursor-default"
+        draggableEnabled ? "cursor-grab select-none active:cursor-grabbing" : "cursor-default"
       }`}
       data-testid={`kanban-card-${load.load_number}`}
     >
@@ -679,7 +689,11 @@ function KanbanCompactCard({
     id: `droppable:load:${load.id}`,
     data: { type: "load", loadId: load.id },
   });
-  const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
+  // ROUND 20.3 DRAG ACTIVATION — see KanbanDispatchCard's identical comment above.
+  const style = {
+    ...(transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : {}),
+    ...(draggableEnabled ? { touchAction: "none" as const } : {}),
+  };
   const lane = toRouteSummary(load.first_pickup_city, load.first_delivery_city);
 
   return (
@@ -702,7 +716,7 @@ function KanbanCompactCard({
       className={`flex h-10 items-center gap-2 rounded border border-gray-200 bg-white px-2 text-[11px] shadow-xs transition hover:bg-gray-50 ${
         isDragging ? "opacity-60" : ""
       } ${isOver ? "ring-2 ring-slate-400" : ""} ${
-        draggableEnabled ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+        draggableEnabled ? "cursor-grab select-none active:cursor-grabbing" : "cursor-pointer"
       }`}
       data-testid={`kanban-compact-card-${load.load_number}`}
       data-kanban-card-compact="true"
@@ -783,7 +797,11 @@ function KanbanStandardCard({
     id: `droppable:load:${load.id}`,
     data: { type: "load", loadId: load.id },
   });
-  const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
+  // ROUND 20.3 DRAG ACTIVATION — see KanbanDispatchCard's identical comment above.
+  const style = {
+    ...(transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : {}),
+    ...(draggableEnabled ? { touchAction: "none" as const } : {}),
+  };
   const lane = toRouteSummary(load.first_pickup_city, load.first_delivery_city);
   const secondaryLoad = cardSecondaryLoadNumber(load);
   // STATUS-DROPDOWN SWEEP (owner 2026-09-10, verbatim: "the button like quickbooks has drop down
@@ -805,7 +823,7 @@ function KanbanStandardCard({
       className={`flex flex-col gap-0.5 rounded border border-gray-200 bg-white px-2 py-1.5 text-[11px] shadow-xs transition hover:bg-gray-50 ${
         isDragging ? "opacity-60" : ""
       } ${isOver ? "ring-2 ring-slate-400" : ""} ${
-        draggableEnabled ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+        draggableEnabled ? "cursor-grab select-none active:cursor-grabbing" : "cursor-pointer"
       }`}
       data-testid={`kanban-standard-card-${load.load_number}`}
       data-kanban-card-standard="true"
@@ -902,7 +920,12 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
       driverName: load.assigned_primary_driver_name,
     },
   });
-  const transformStyle = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
+  // ROUND 20.3 DRAG ACTIVATION — see KanbanDispatchCard's identical comment above. This card is
+  // unconditionally draggable (no disabled flag), so touch-action is unconditional too.
+  const transformStyle = {
+    ...(transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : {}),
+    touchAction: "none" as const,
+  };
   // Clicking anywhere on the card OR the explicit "+ Book load" button opens the Book wizard pre-filled with
   // this truck. The button is a real <button> (not a span) so it's an unmistakable, findable affordance; it
   // stops propagation only to avoid a harmless double-fire with the card click.
@@ -923,7 +946,7 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
           onBook(load.id);
         }
       }}
-      className={`cursor-pointer rounded-sm border border-gray-200 bg-white p-2 hover:border-slate-400 hover:bg-slate-50 ${
+      className={`cursor-pointer select-none rounded-sm border border-gray-200 bg-white p-2 hover:border-slate-400 hover:bg-slate-50 ${
         isDragging ? "opacity-60" : ""
       } ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
     >
@@ -1302,6 +1325,22 @@ function KanbanSwimLaneColumn({
   const minWidth = density === "compact" ? "min-w-[200px]" : density === "standard" ? "min-w-[230px]" : "min-w-[290px]";
   const rowMinH = SWIM_LANE_ROW_MIN_HEIGHT[density];
   const rowGap = detailed ? "8px" : "4px";
+  // ROUND 20.3 SWIM-LANE BLOAT (owner-live 2026-09-12): SWIM-LANE ROW ALIGNMENT (2026-09-11) renders
+  // an empty placeholder for EVERY unit on the whole board (~32) in EVERY column, so a lightly-loaded
+  // column (e.g. 6 real cards) still carries ~26 leading/trailing placeholder rows before/after its
+  // own cards — measured live: 6 Dispatched cards started at y≈999 with ~800px of empty space above
+  // them. Trim the run of placeholders BEFORE the first and AFTER the last real card THIS column
+  // owns — interior placeholders between two of this column's own cards are kept, so cross-column row
+  // alignment still holds for the units that matter to this column's own visible range. A column with
+  // zero real cards renders none (falls through to the existing "(empty)" state below).
+  const firstOwnIndex = allUnits.findIndex((unit) => unit.columnKey === column.key);
+  const lastOwnIndex = (() => {
+    for (let i = allUnits.length - 1; i >= 0; i -= 1) {
+      if (allUnits[i]!.columnKey === column.key) return i;
+    }
+    return -1;
+  })();
+  const visibleUnits = firstOwnIndex === -1 ? [] : allUnits.slice(firstOwnIndex, lastOwnIndex + 1);
 
   return (
     <section
@@ -1348,14 +1387,14 @@ function KanbanSwimLaneColumn({
         style={{ display: "flex", flexDirection: "column", gap: rowGap }}
         data-testid={`kanban-swim-lane-body-${column.key}`}
       >
-        {allUnits.length === 0 ? (
+        {visibleUnits.length === 0 ? (
           <div className="rounded-sm border border-dashed border-gray-300 p-3 text-xs text-gray-500">
             {column.derivedOnly
               ? "Set automatically from pickup-departure telematics — you can't drag a card here."
               : "(empty)"}
           </div>
         ) : null}
-        {allUnits.map((unit) => {
+        {visibleUnits.map((unit) => {
           if (unit.columnKey !== column.key) {
             // Empty placeholder — same min-height as a card row so the same unit aligns across all lanes
             return (
@@ -1554,12 +1593,42 @@ export function DispatchKanban({
   // nothing — while DRAGGING worked perfectly, which is exactly the asymmetry the owner reported.
   // A distance constraint makes a stationary press stay a click and anything past 8px become a drag.
   // KeyboardSensor is kept so the board stays operable without a pointer.
+  // ROUND 20.3 DRAG ACTIVATION (owner-live 2026-09-12): distance:8 combined with the missing
+  // touch-action fixed above still left a real mouse press racing the browser's native
+  // selection/scroll gesture for slightly longer than it needed to — lowering the distance to 4 (and
+  // adding tolerance so a slightly wobbly real-world press still counts) means a genuine drag crosses
+  // the activation threshold before that native gesture has a chance to start. delay:0 keeps clicks
+  // (which rely on distance, not time) working exactly as KANBAN-CLICK-DEAD fixed them.
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 4, tolerance: 5, delay: 0 } }),
     useSensor(KeyboardSensor)
   );
 
+  // ROUND 20.3 DRAG ACTIVATION (owner-live 2026-09-12): once a real drag activates, the browser's
+  // native text-selection can still highlight page text as the pointer moves (touch-action:none on
+  // the card only stops the browser from starting its OWN gesture on that node — it does not stop an
+  // in-progress OS selection drag from a press that started a hair before activation). Force
+  // user-select:none on <body> for the duration of a drag; always clear it in BOTH the success path
+  // (onDragEnd, via handleDragEnd's own return paths below) and the cancel path (onDragCancel) so a
+  // drag that never resolves (Escape, drop outside the window) can never leave the page permanently
+  // unselectable.
+  const handleDragStart = () => {
+    document.body.style.userSelect = "none";
+  };
+  const clearDragUserSelect = () => {
+    document.body.style.userSelect = "";
+  };
+  // LV-KANBAN-DROP-OUTSIDE-DROPPABLE-IS-SILENT's sibling case: a CANCELLED drag (Escape key, or the
+  // pointer leaving the window) fires neither onDragEnd's over-is-null branch nor any toast at all —
+  // from the dispatcher's seat this is indistinguishable from "nothing happened," which is exactly
+  // the missed-drop confusion that toast was built to close. Same neutral tone, same message.
+  const handleDragCancel = (_event: DragCancelEvent) => {
+    clearDragUserSelect();
+    pushToast("Drop the card onto a lane to change its status.", "info");
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
+    clearDragUserSelect();
     const activeId = event.active.id;
     const overId = event.over?.id;
     const activeData = (event.active.data.current ?? {}) as { type?: string; unitId?: string; unitNumber?: string | null };
@@ -1690,7 +1759,13 @@ export function DispatchKanban({
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={pointerWithin}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
+    >
       <div className="relative" data-testid="dispatch-kanban-board">
         <ConfirmModal
           open={Boolean(pendingAssign)}
