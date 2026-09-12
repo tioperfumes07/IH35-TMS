@@ -54,6 +54,9 @@ const STEPS = [
   ["verify-data-migrations-rehearsed", "scripts/verify-data-migrations-rehearsed.mjs"],
   // EntityLink adoption ratchet — #4010 FactoringHome AST shift + bare UUID (~1.5s).
   ["verify-entity-link-adoption", "scripts/verify-entity-link-adoption.mjs"],
+  // ROUND-20.7 (APP-WIDE AUTOFIT LAW, owner 2026-09-12) — a data-board page never regrows a
+  // fixed page-level max-w-[NNNpx] cap; a converted planner column never loses its title=.
+  ["verify-page-autofit", "scripts/verify-page-autofit.mjs"],
   // Rule 30 — soft-reset onto newer main deleted other PRs' verify-steps (2026-08-02).
   ["verify-no-guard-file-deletion", "scripts/verify-no-guard-file-deletion.mjs"],
   // Rule 30 — tip commit LIVE PROOF must be Claude-green (not "UNVERIFIED browser" theater).

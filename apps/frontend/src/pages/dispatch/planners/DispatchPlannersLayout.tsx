@@ -128,7 +128,14 @@ export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
 
   return (
     <PlannerRangeProvider>
-      <div data-testid="dispatch-planners-layout" className="mx-auto max-w-[1400px] space-y-3">
+      {/* ROUND-20.7 (APP-WIDE AUTOFIT LAW, owner 2026-09-12): this shell used to cap at a fixed
+          1400px width regardless of window size -- measured live at a 2234px content width,
+          that threw away 834px and forced the planner grid's own horizontal scroll to kick in for
+          date ranges that would otherwise have fit. A data board (this is one) gets no page-level
+          px cap; PlannerGrid.tsx's own dayPx sizing (Math.max(44, Math.min(120, available /
+          days.length))) already fills whatever width it's actually given -- it just needed the
+          real width, not 1400px, to work with. */}
+      <div data-testid="dispatch-planners-layout" className="w-full space-y-3">
         <PageHeader
           title="Dispatch Planners"
           subtitle="Driver leave, truck availability, and load timeline — shared date range"

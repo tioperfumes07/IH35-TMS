@@ -202,7 +202,9 @@ export function PlannerCalendarPage() {
   const drivers = weekQ.data?.drivers ?? [];
 
   return (
-    <div data-testid="dispatch-planner-calendar-page" className="mx-auto max-w-[1400px] space-y-4">
+    // ROUND-20.7 (APP-WIDE AUTOFIT LAW) -- same fix as DispatchPlannersLayout.tsx: a week-at-a-
+    // glance data board gets no page-level max-w[NNNpx] cap.
+    <div data-testid="dispatch-planner-calendar-page" className="w-full space-y-4">
       <PageHeader
         title="Planner Calendar"
         subtitle="Week-at-a-glance driver rows with drag-drop reschedule and HOS overlay"

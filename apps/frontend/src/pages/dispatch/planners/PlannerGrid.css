@@ -20,7 +20,9 @@
   --day: 52px;
   --rowh: 34px;
   color: var(--ink);
-  font-size: 12px;
+  /* ROUND-20.7 (APP-WIDE AUTOFIT LAW) item 4 -- type scales with the box via clamp(), copying
+     TruckLineBoard V8's own convention (.truck-line-v4-unit { font-size: clamp(12px, 0.85vw, 14px) }). */
+  font-size: clamp(11px, 0.85vw, 13px);
   line-height: 1.45;
 }
 .planner-grid-canonical .pg-scroll {
@@ -45,7 +47,7 @@
   border-bottom: 1px solid var(--th-border);
   background: var(--th-bg);
   color: var(--ink);
-  font-size: 11px;
+  font-size: clamp(10px, 0.72vw, 12px);
   font-weight: 700;
   padding: 4px 10px;
   text-align: center;
@@ -73,7 +75,7 @@
   background: var(--th-bg);
   border-right: 1px solid var(--th-border);
   padding: 3px 10px;
-  font-size: 11px;
+  font-size: clamp(10px, 0.72vw, 12px);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -114,7 +116,7 @@
 }
 .planner-grid-canonical .pg-mon {
   flex: 0 0 auto;
-  font-size: 11px;
+  font-size: clamp(10px, 0.72vw, 12px);
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -147,7 +149,7 @@
 }
 .planner-grid-canonical .pg-dh .w {
   display: block;
-  font-size: 11px;
+  font-size: clamp(10px, 0.72vw, 12px);
   font-weight: 700;
   line-height: 1;
   color: var(--ink);
@@ -155,7 +157,7 @@
 }
 .planner-grid-canonical .pg-dh .n {
   display: block;
-  font-size: 12px;
+  font-size: clamp(11px, 0.85vw, 13px);
   line-height: 1.15;
   font-weight: 600;
   color: var(--ink);
@@ -190,7 +192,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: clamp(11px, 0.85vw, 13px);
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -226,17 +228,17 @@
 .planner-grid-canonical .pg-col-sec {
   font-weight: 500;
   gap: 4px;
-  font-size: 12px;
+  font-size: clamp(11px, 0.85vw, 13px);
 }
 .planner-grid-canonical .pg-col-unit {
   justify-content: flex-end;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
-  font-size: 12px;
+  font-size: clamp(11px, 0.85vw, 13px);
 }
 .planner-grid-canonical .pg-col-status {
   justify-content: center;
-  font-size: 11px;
+  font-size: clamp(10px, 0.72vw, 12px);
   font-weight: 600;
   color: var(--ink);
 }
@@ -310,7 +312,7 @@
   align-items: center;
   padding: 0 7px;
   color: #fff;
-  font-size: 12px;
+  font-size: clamp(11px, 0.85vw, 13px);
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -364,12 +366,12 @@
   padding: 7px 12px;
   border-top: 1px solid var(--th-border);
   background: var(--th-bg);
-  font-size: 11px;
+  font-size: clamp(10px, 0.72vw, 12px);
   color: var(--ink);
   flex-wrap: wrap;
 }
 .planner-grid-canonical .pg-empty {
   padding: 16px 12px;
-  font-size: 12px;
+  font-size: clamp(11px, 0.85vw, 13px);
   color: var(--ink);
 }
