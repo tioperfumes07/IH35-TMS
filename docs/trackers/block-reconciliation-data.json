@@ -1,6 +1,6 @@
 {
  "date": "2026-09-12",
- "generated_at_iso": "2026-09-12T10:56:23.134Z",
+ "generated_at_iso": "2026-09-12T15:38:08.474Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 30,
@@ -13727,6 +13727,12 @@
  ],
  "merged_prs": [
   {
+   "number": 21911,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-12T10:57:04Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 21910,
    "title": "CC-2-FINDING: N/A (docs only -- TRUCK-LINE V10 live-proof status update)",
    "mergedAt": "2026-09-12T05:19:39Z",
@@ -17319,12 +17325,6 @@
    "title": "Cursor- SETL-F26043 load 13541 driver-pay corrected to signed $379.73 inside posted S-13643",
    "mergedAt": "2026-09-07T20:17:12Z",
    "branch": "cursor/13541-driver-pay-correction"
-  },
-  {
-   "number": 21303,
-   "title": "Claude-1- fix(load-costs): ACCT-F26036 LOAD-COSTS-EXPENSE-CATEGORY-FUEL-ROW-ROOT-CAUSE — category disambiguation, reimbursable flag, Paid With + Create",
-   "mergedAt": "2026-09-07T20:07:38Z",
-   "branch": "claude/load-costs-expense-category-fuel-row-fixes-authored"
   }
  ],
  "merged_pr_total": 3000,
