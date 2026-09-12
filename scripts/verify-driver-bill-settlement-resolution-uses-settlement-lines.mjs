@@ -41,6 +41,14 @@
  *   - apps/backend/src/accounting/void-tree.service.ts
  *   - apps/backend/src/driver-finance/tour-readout.routes.ts (and its frontend pass-through,
  *     apps/frontend/src/api/tourReadout.ts — confirmed no consumer renders the field)
+ *
+ * FIXED (frontend consumer, 2026-09-11, INBOX-CC-1 "FROM CC-2" item): even after
+ * driver-bills-list.routes.ts started returning a real, settlement_lines-resolved settlement_id
+ * alongside settlement_display_id, its own consumer — LoadCostsBoardPage.tsx's driver_pay register
+ * row mapping — still read the dead settled_in_settlement_id for the row's settlementId (the field
+ * an EntityLink actually navigates on). The backend fix alone did not complete this surface; the
+ * frontend had to be told to use the field that was already sitting right next to it.
+ *   - apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx (driver_pay register mapping)
  */
 import { readFileSync } from "node:fs";
 
@@ -69,6 +77,14 @@ function fileUsesSettlementLinesJoin(src) {
 // predicate module is checked against the SHARED module's text, not required to re-embed the raw
 // SQL tokens itself.
 const SHARED_MODULE_REL_PATH = "apps/backend/src/driver-finance/settlement-resolution.sql.ts";
+
+const FRONTEND_CONSUMER_PATH = "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx";
+
+/** Pure: does the driver_pay register mapping assign settlementId from the dead column instead of
+ *  the real, backend-resolved settlement_id field? */
+export function frontendAssignsDeadSettlementId(src) {
+  return /settlementId:\s*d\.settled_in_settlement_id/.test(src);
+}
 
 function checkFile(relPath, root) {
   const abs = `${root}/${relPath}`;
@@ -124,11 +140,25 @@ function runSelftest() {
       console.log(`  ok    ${c.name}`);
     }
   }
+  const frontendCases = [
+    { name: "frontend assigns dead settled_in_settlement_id — fails", src: `settlementId: d.settled_in_settlement_id,`, wantBad: true },
+    { name: "frontend assigns real settlement_id — passes", src: `settlementId: d.settlement_id,`, wantBad: false },
+  ];
+  for (const c of frontendCases) {
+    const bad = frontendAssignsDeadSettlementId(c.src);
+    if (bad !== c.wantBad) {
+      failed++;
+      console.error(`  ✗ ${c.name}: expected bad=${c.wantBad}, got bad=${bad}`);
+    } else {
+      console.log(`  ok    ${c.name}`);
+    }
+  }
+
   if (failed > 0) {
     console.error(`${LABEL} --selftest FAILED (${failed} case(s))`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS (${cases.length}/${cases.length} cases)`);
+  console.log(`${LABEL} --selftest PASS (${cases.length + frontendCases.length}/${cases.length + frontendCases.length} cases)`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -138,9 +168,21 @@ if (process.argv.includes("--selftest")) {
 
 const root = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
 const problems = MUST_USE_SETTLEMENT_LINES_JOIN.map((f) => checkFile(f, root)).filter(Boolean);
+
+let frontendSrc;
+try {
+  frontendSrc = readFileSync(`${root}/${FRONTEND_CONSUMER_PATH}`, "utf8");
+} catch {
+  problems.push(`${FRONTEND_CONSUMER_PATH}: FILE NOT FOUND (moved/renamed? update this guard)`);
+  frontendSrc = null;
+}
+if (frontendSrc && frontendAssignsDeadSettlementId(frontendSrc)) {
+  problems.push(`${FRONTEND_CONSUMER_PATH}: driver_pay register still assigns settlementId from the dead settled_in_settlement_id column, not the real settlement_id field driver-bills-list.routes.ts already returns`);
+}
+
 if (problems.length > 0) {
   console.error(`${LABEL} FAIL:`);
   for (const p of problems) console.error(`  ✗ ${p}`);
   process.exit(1);
 }
-console.log(`${LABEL} OK — all ${MUST_USE_SETTLEMENT_LINES_JOIN.length} known-fixed files still resolve settlement numbers via settlement_lines, not the dead settled_in_settlement_id column.`);
+console.log(`${LABEL} OK — all ${MUST_USE_SETTLEMENT_LINES_JOIN.length} known-fixed backend files still resolve settlement numbers via settlement_lines, not the dead settled_in_settlement_id column, and the frontend consumer uses the real settlement_id field.`);

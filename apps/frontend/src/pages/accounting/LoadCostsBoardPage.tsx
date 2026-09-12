@@ -378,7 +378,11 @@ function TransactionRegister({ tab, companyId, loadsById, settlementsByLoad, nav
         return (res.driver_bills ?? []).filter(d => d.voided_at == null).map(d => ({
           id: d.id, number: d.bill_number ?? d.load_number ?? "—", date: d.created_at,
           party: d.driver_name ?? "Driver", loadNumber: d.load_number, loadId: d.load_id,
-          settlementNumber: d.settlement_display_id, settlementId: d.settled_in_settlement_id, detail: "Driver pay", amountCents: Number(d.gross_amount_cents ?? 0), status: d.status,
+          // ACCT-F26140 (CC-2, 2026-09-11): settled_in_settlement_id is the dead column (0/many
+          // populated company-wide, same root cause the rest of the sweep fixed) -- the backend's
+          // driver-bills-list.routes.ts already resolves the real, settlement_lines-backed
+          // settlement_id alongside settlement_display_id; use that instead.
+          settlementNumber: d.settlement_display_id, settlementId: d.settlement_id, detail: "Driver pay", amountCents: Number(d.gross_amount_cents ?? 0), status: d.status,
           loadedMiles: d.miles_basis == null ? null : String(d.miles_basis), loadedRateCents: d.rate_per_mile_cents == null ? null : String(d.rate_per_mile_cents),
           emptyMiles: d.miles_deadhead == null ? null : String(d.miles_deadhead), emptyRateCents: d.rate_empty_per_mile_cents == null ? null : String(d.rate_empty_per_mile_cents),
           grossCents: d.gross_amount_cents ?? undefined,
