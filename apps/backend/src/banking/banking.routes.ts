@@ -490,7 +490,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
                 'synced'::text AS status,
                 CASE WHEN ea.holder_type = 'driver' THEN ea.holder_id::text ELSE NULL END AS driver_id,
                 CASE WHEN ep.source_type = 'driver_settlement' THEN ep.source_id::text ELSE NULL END AS settlement_id,
-                ds.display_id AS settlement_display_id,
+                ds.source_document_ref AS settlement_display_id,
                 ep.linked_journal_entry_id::text AS journal_entry_id,
                 je.memo AS journal_entry_memo
               FROM accounting.escrow_postings ep

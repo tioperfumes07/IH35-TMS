@@ -828,6 +828,7 @@ export function addLoadToPreSettlement(
 export type SettlementForLoad = {
   settlement_id: string;
   display_id: string | null;
+  source_document_ref: string | null;
   status: string;
   gross_pay: number;
   net_pay: number;

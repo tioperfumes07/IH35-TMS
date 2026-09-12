@@ -41,9 +41,9 @@ export type HistoricalAttribution = {
 /** Both source and target drill through the same immutable attribution records. */
 export async function readHistoricalSettlementAttributions(client: Client, operatingCompanyId: string, settlementId: string) {
   const result = await client.query<HistoricalAttribution>(`
-    SELECT a.id::text, a.source_settlement_id::text, original.display_id AS source_settlement_display_id,
+    SELECT a.id::text, a.source_settlement_id::text, original.source_document_ref AS source_settlement_display_id,
       a.source_payrun_id::text, a.source_journal_entry_id::text,
-      a.target_settlement_id::text, target.display_id AS target_settlement_display_id,
+      a.target_settlement_id::text, target.source_document_ref AS target_settlement_display_id,
       a.source_document_ref, a.allocation_basis, a.allocated_net_cents::text, a.evidence_sha256
     FROM driver_finance.historical_settlement_attributions a
     JOIN driver_finance.driver_settlements original

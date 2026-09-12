@@ -124,7 +124,7 @@ export async function getLoadVoidTree(
     paid_at: string | null;
     reversed_at: string | null;
   }>(
-    `SELECT sl.id::text AS line_id, s.id::text AS settlement_id, s.display_id AS settlement_display_id,
+    `SELECT sl.id::text AS line_id, s.id::text AS settlement_id, s.source_document_ref AS settlement_display_id,
             s.status AS settlement_status, s.locked_at::text, s.paid_at::text, s.reversed_at::text
        FROM driver_finance.settlement_lines sl
        JOIN driver_finance.driver_settlements s

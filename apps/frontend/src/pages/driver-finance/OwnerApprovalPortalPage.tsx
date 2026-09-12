@@ -10,6 +10,7 @@ import {
 import { Button } from "../../components/Button";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { settlementLabel } from "../../lib/settlementNumber";
 
 function money(n: number) {
   return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(n);
@@ -160,7 +161,10 @@ export function OwnerApprovalPortalPage() {
                             <EntityLink
                               kind="settlement"
                               id={settlementId}
-                              label={entityLabel(String(s.display_id ?? ""), settlementId, "Settlement")}
+                              label={settlementLabel({
+                                source_document_ref: s.source_document_ref as string | null | undefined,
+                                status: s.status as string | null | undefined,
+                              })}
                             />{" "}
                             · {String(s.status ?? "")} · {String(s.created_at ?? "").slice(0, 10)}
                           </li>

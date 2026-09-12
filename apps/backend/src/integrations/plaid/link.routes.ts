@@ -382,7 +382,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           bt.matched_bill_id,
           bill.bill_number AS matched_bill_number,
           bt.matched_settlement_id,
-          settlement.display_id AS matched_settlement_display_id,
+          settlement.source_document_ref AS matched_settlement_display_id,
           bt.matched_journal_entry_id::text AS matched_journal_entry_id,
           je.memo AS matched_journal_entry_memo,
           bt.matched_transfer_id::text AS matched_transfer_id,
@@ -720,7 +720,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           -- joins below.
           bill.bill_number AS matched_bill_number,
           bt.matched_settlement_id,
-          settlement.display_id AS matched_settlement_display_id,
+          settlement.source_document_ref AS matched_settlement_display_id,
           bt.matched_journal_entry_id::text AS matched_journal_entry_id,
           -- Same ACCT-F5153 human-label convention as bill/settlement above: the JE id was selected
           -- but never joined to a label, so the FE's entityLabel(null, …) rendered every matched JE

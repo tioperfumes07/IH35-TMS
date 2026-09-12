@@ -1,4 +1,5 @@
 import { entityLabel } from "../../lib/entity-label";
+import { settlementLabel } from "../../lib/settlementNumber";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -352,7 +353,7 @@ export function SettlementCloseArrivalPage() {
                     <EntityLink
                       kind="settlement"
                       id={settlement.id}
-                      label={entityLabel(settlement.display_id, settlement.id, "Settlement")}
+                      label={settlementLabel(settlement)}
                     />
                   </div>
                   <div className="text-xs text-gray-600">

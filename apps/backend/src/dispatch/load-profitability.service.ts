@@ -300,6 +300,7 @@ export async function computeTripProfitabilityReport(
       SELECT
         s.id,
         s.display_id,
+        s.source_document_ref,
         s.driver_id,
         s.period_start,
         s.period_end,
@@ -395,7 +396,7 @@ export async function computeTripProfitabilityReport(
     )
     SELECT
       sip.id::text AS settlement_id,
-      sip.display_id::text AS settlement_display_id,
+      sip.source_document_ref AS settlement_display_id,
       sip.driver_id::text AS driver_id,
       NULLIF(trim(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name,
       sip.period_start::text,

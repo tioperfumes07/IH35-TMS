@@ -880,6 +880,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
           SELECT DISTINCT
             s.id::text AS settlement_id,
             s.display_id,
+            s.source_document_ref,
             s.status::text AS status,
             s.gross_pay,
             s.net_pay,

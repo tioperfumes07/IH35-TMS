@@ -221,7 +221,7 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
               LIMIT 1
             ) inv ON true
             LEFT JOIN LATERAL (
-              SELECT ds.id AS settlement_id, ds.display_id AS settlement_display_id
+              SELECT ds.id AS settlement_id, ds.source_document_ref AS settlement_display_id
               FROM driver_finance.settlement_lines sl
               JOIN driver_finance.driver_settlements ds
                 ON ds.id = sl.settlement_id

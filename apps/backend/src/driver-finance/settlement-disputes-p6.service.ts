@@ -362,7 +362,7 @@ export async function listSettlementDisputeQueueP6(
         SELECT
           ${P6_WIRE_SELECT},
           concat_ws(' ', dr.first_name, dr.last_name) AS driver_name,
-          s.display_id AS settlement_display_id
+          s.source_document_ref AS settlement_display_id
         FROM driver_finance.driver_settlement_disputes d
         JOIN mdata.drivers dr
           ON dr.id = d.driver_id

@@ -65,7 +65,7 @@ export async function registerAbandonmentRoutes(app: FastifyInstance) {
           SELECT ac.*,
                  l.load_number,
                  NULLIF(trim(concat_ws(' ', d.first_name, d.last_name)), '') AS driver_name,
-                 ds.display_id AS settlement_display_id
+                 ds.source_document_ref AS settlement_display_id
           FROM driver_finance.abandonment_chargebacks ac
           LEFT JOIN mdata.loads l
             ON l.id = ac.load_id
