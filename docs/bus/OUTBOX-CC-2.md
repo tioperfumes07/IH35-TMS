@@ -2902,3 +2902,39 @@ mutation cases (10 scope + 1 reinline + 4 service-arrival + 5 driver-arrival + 4
 --selftest exit 0 PASS, `cd apps/backend && npx tsc --noEmit` exit 0.
 
 Moving to ROUND 18.2 ITEM B + the owner's V4 autofit/moving-truck ruling next (deadline 06:00Z).
+
+## CC-2 — TRUCK-LINE V7/V8 DONE (03:1x UTC 09-12)
+
+Merged PR #21886 (V7/V8 rebuild, `ebe9d5f327`), #21887 (own-caught TRUCK-LINE-02 caption-collision
+fix, `07f65e0427`), #21890 (own-caught TRUCK-LINE-03 CSS cascade-order fix, `f2c07b3168`), #21888
+(docs -- urgent 26-guard main-red finding, routed to the Lead, not fixed here per lane law). All
+Render services confirmed live at `f2c07b3168` (`/api/v1/healthz/shallow` -> `f2c07b3`).
+
+CC-2 | TRUCK-LINE V7/V8 DONE | f2c07b3168 | live API f2c07b3 / FE f2c07b3 | 5-column auto-fit grid
+(Truck/Load/Line 1fr/Next appointment/Live signal), 7-station line (Dispatched/At pickup/Loaded/In
+transit/status/At delivery/Delivered) mapped honestly from station.ts's unchanged 9-index model
+(mapReachedIndexToV7/mapNextIndexToV7) | verbatim tractor-trailer(74x34)+warehouse-dock(30x24) SVGs,
+glide transition 1s, wheels/cab/exhaust motion gated on rolling, prefers-reduced-motion respected |
+breakpoints 1920/1440/1280/1024/860 all confirmed no-horizontal-scroll via same-origin-iframe
+technique (this environment's resize_window does not change the real render viewport --
+window.innerWidth stayed fixed at 1920 after every resize_window call, verified before relying on
+iframes instead) | STATION-CLICK GLIDE PROOF: unit T156, load 13587, clicked "At pickup" -- POST
+.../truck-line/loads/{id}/stops/{id}/arrive wrote a real pickup arrival stamp, rail extended green
+Dispatched->At pickup, truck glided from 0% to 16.6667% (pct(1)), Next appointment flipped from
+"Pickup - Delphi IN - past due 1d 19h" to "Delivery - Laredo TX - in 2d 3h" | EXCEPTION WRITE+CLEAR
+PROOF: unit T148, load 13595 -- picked "Breakdown - roadside" with a note, status station + rail +
+cab turned red, dispatch.intransit_issues row written live (id a6d4e295-6f88-4d2a-a57d-b2a50e22cffe,
+issue_category=breakdown_roadside, status=open, reported_at 2026-09-12T03:07:00.309Z) -- cleared via
+"✓ No exception - on time", row RETAINED not deleted (same id, status=resolved,
+updated_at 2026-09-12T03:07:56.934Z), rail back to green "On time" | reason list confirmed live (11
+active catalogs.load_exception_reasons rows rendered in the popover, matches GET .../load-exception-
+reasons) | guard verify-dispatch-truck-line.mjs (verify-step 10931) --selftest 16/16 + live PASS |
+apps/frontend tsc -b exit 0 | 2 self-caught regressions found+fixed in the same session before/
+immediately after their own deploy (TRUCK-LINE-02 caption collision at 860px, TRUCK-LINE-03 CSS
+cascade-order bug that briefly hid all captions at 860px) -- both documented, both re-verified live |
+URGENT finding routed, not fixed (out of lane): origin/main itself red on 26 guards, confirmed on a
+clean worktree, unrelated to any of this seat's PRs (docs/audit/GUARD-WORKORDERS.md) |
+NEXT: ROUND 18.6 (V10) -- owner-approved final spec superseding V7/V8: 5-column layout with columns
+4-5 center-aligned + widened Truck/Load columns, plus a full "Available Truck" row build (parked-
+truck graphic, ghost route, speech-bubble CTA, live HOS-driven driver matching, real Assign-a-load
+flow, top-bar computed stats) -- starting now, deadline 08:00Z.
