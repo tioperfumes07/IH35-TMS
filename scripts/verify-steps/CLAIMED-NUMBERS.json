@@ -8754,5 +8754,15 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-12",
     "purpose": "verify-kanban-drag-touch-action"
+  },
+  "11357": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-12",
+    "purpose": "verify-tour-leg-linkage"
+  },
+  "11361": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-12",
+    "purpose": "verify-dispatch-list-trip-type"
   }
 }
