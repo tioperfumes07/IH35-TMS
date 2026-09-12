@@ -88,6 +88,13 @@ const HISTORICAL_TIMESTAMP_DUP_ALLOWLIST = new Set([
   // third file on either number.
   "202613210000",
   "202613311300",
+  // Both exact files already applied on prod before the duplicate was detected: ...load_exception_
+  // reasons_rls_fix.sql at 2026-09-11T22:37:36.552Z, ...drivers_status_locked_reason_admits_test_
+  // fixture_quarantine.sql at 2026-09-12T00:51:36.435Z (ih35_migrations.applied_migrations). Renaming
+  // either would create a second ledger identity and re-run its body -- forbidden by the checksum
+  // freeze. The exact-pair ratchet in verify-migration-no-number-collision freezes these filenames
+  // and still rejects a third file landing on 202614100000.
+  "202614100000",
 ]);
 
 function fail(lines) {
