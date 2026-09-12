@@ -1,5 +1,6 @@
 import { assertNoHistoricalSettlementCoverage } from "./settlement-historical-attribution.service.js";
 import { allocateSettlementDisplayId } from "./settlement-display-id.js";
+import { allocateSettlementDocumentNumberIfMissing } from "./settlement-document-number-allocator.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { recordPostingFlagSkip } from "../accounting/posting-flag-skip-audit.js";
@@ -559,6 +560,12 @@ async function closeLoadBookendedSettlementForDriver(
     [settlementId, closedAt, opts.load.id, opts.load.load_number]
   );
 
+  // P1 SETTLEMENT NUMBERING (Claude Lead, ROUND 18.3, Item A) — the AlwaysTrack document
+  // number is allocated HERE, in the same transaction as the trip_closed_at/status='closed'
+  // stamp above, so a crash before COMMIT never burns a number. No-ops if the settlement
+  // already carries one (e.g. entered by hand).
+  await allocateSettlementDocumentNumberIfMissing(client, settlementId, opts.operatingCompanyId);
+
   const lineType =
     opts.team && opts.driverId === opts.team.primaryDriverId
       ? ("team_split_primary" as const)
@@ -917,6 +924,11 @@ export async function stampTripClosedForBookendedSettlement(
     `,
     [opts.settlementId, closedAt, anchorLoadId, anchorLoadNumber]
   );
+
+  // P1 SETTLEMENT NUMBERING (Claude Lead, ROUND 18.3, Item A) — same allocator, same
+  // in-transaction placement as closeLoadBookendedSettlementForDriver above. No-ops if
+  // the settlement already carries a number (e.g. entered by hand).
+  await allocateSettlementDocumentNumberIfMissing(client, opts.settlementId, opts.operatingCompanyId);
 
   await appendEarningsForAnchor();
 
