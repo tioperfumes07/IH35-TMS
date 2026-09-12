@@ -43,6 +43,7 @@ const settlementStatusSchema = z.enum([
 ]);
 const paymentStateSchema = z.enum(["unpaid", "queued", "sent_to_bank", "cleared", "bounced", "manual_paid"]);
 const listQuerySchema = z.object({
+  include_reversed: z.coerce.boolean().default(false),
   operating_company_id: z.string().uuid(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
@@ -225,6 +226,13 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
       if (!(await hasSettlementSchema(client))) return { rows: [], total: 0 };
       const values: unknown[] = [q.operating_company_id];
       const where = ["s.operating_company_id = $1::uuid"];
+      // SETL-LIST-LIVE-ONLY (owner 2026-09-12, /settlements "the data is incorrect"): the register listed
+      // 53 rows — every reversed (status='cancelled', reversed_at set), voided and sample row alongside the
+      // live settlements. Void-not-delete: the rows stay; the default list shows LIVE settlements only.
+      // ?include_reversed=true brings the reversed/voided history back for audit.
+      if (!q.include_reversed) {
+        where.push("s.voided_at IS NULL", "s.reversed_at IS NULL", "s.status <> 'cancelled'", "s.is_sample_data IS NOT TRUE");
+      }
       if (q.status) {
         values.push(q.status);
         where.push(`s.status = $${values.length}`);
@@ -281,6 +289,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
               FROM driver_finance.settlement_lines sl
               LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
               WHERE sl.settlement_id = s.id
+                AND sl.is_active AND sl.voided_at IS NULL
                 AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
             ) AS load_count,
             (
@@ -292,6 +301,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
               FROM driver_finance.settlement_lines sl
               LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
               WHERE sl.settlement_id = s.id
+                AND sl.is_active AND sl.voided_at IS NULL
                 AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
             ) AS load_ids,
             (
@@ -304,7 +314,16 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
                 FROM driver_finance.settlement_lines sl
                 LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
                 WHERE sl.settlement_id = s.id
+                  AND sl.is_active AND sl.voided_at IS NULL
                   AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
+                UNION
+                -- SETL-LIST-OPEN-LEGS (owner 2026-09-12): an OPEN tour has no settlement lines yet — its
+                -- loads are the ones booked onto it (presettlement_link_id), minus cancelled ones.
+                SELECT ol.id AS load_id
+                FROM mdata.loads ol
+                WHERE s.trip_closed_at IS NULL AND ol.presettlement_link_id = s.id
+                  AND ol.operating_company_id = s.operating_company_id AND ol.soft_deleted_at IS NULL
+                  AND ol.status::text NOT IN ('cancelled', 'canceled', 'abandoned', 'driver_walkoff', 'driver_no_show')
               ) linked
               JOIN mdata.loads l
                 ON l.id = linked.load_id
@@ -465,6 +484,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
               FROM driver_finance.settlement_lines sl
               LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
               WHERE sl.settlement_id = s.id
+                AND sl.is_active AND sl.voided_at IS NULL
                 AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
             ) AS load_count,
             (
@@ -476,6 +496,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
               FROM driver_finance.settlement_lines sl
               LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
               WHERE sl.settlement_id = s.id
+                AND sl.is_active AND sl.voided_at IS NULL
                 AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
             ) AS load_ids,
             (
@@ -488,7 +509,16 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
                 FROM driver_finance.settlement_lines sl
                 LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
                 WHERE sl.settlement_id = s.id
+                  AND sl.is_active AND sl.voided_at IS NULL
                   AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
+                UNION
+                -- SETL-LIST-OPEN-LEGS (owner 2026-09-12): an OPEN tour has no settlement lines yet — its
+                -- loads are the ones booked onto it (presettlement_link_id), minus cancelled ones.
+                SELECT ol.id AS load_id
+                FROM mdata.loads ol
+                WHERE s.trip_closed_at IS NULL AND ol.presettlement_link_id = s.id
+                  AND ol.operating_company_id = s.operating_company_id AND ol.soft_deleted_at IS NULL
+                  AND ol.status::text NOT IN ('cancelled', 'canceled', 'abandoned', 'driver_walkoff', 'driver_no_show')
               ) linked
               JOIN mdata.loads l
                 ON l.id = linked.load_id

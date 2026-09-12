@@ -106,7 +106,16 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
     `WITH legs AS (
        SELECT l.* FROM mdata.loads l
         WHERE l.operating_company_id = $2::uuid AND l.soft_deleted_at IS NULL
-          AND (l.presettlement_link_id = $1::uuid OR l.id = $3::uuid OR l.id = $4::uuid)
+          AND (l.presettlement_link_id = $1::uuid OR l.id = $3::uuid OR l.id = $4::uuid
+               -- SETL-LEGS-FROM-LINES (owner 2026-09-12: "wrong loads, profit" on /settlements): a CLOSED
+               -- settlement's legs are the loads on its ACTIVE settlement lines, not only the loads whose
+               -- presettlement_link_id still points at it. Measured on USMCA prod 00:5xZ: all 32 rebuilt
+               -- locked settlements 5769–5800 have linked_loads = 0, so the readout showed only the two
+               -- bookends — 5772 (4 line loads), 5775/5776/5784/5785/5788/5792/5800 (3 each) lost legs
+               -- and their revenue/costs/pay/margin were wrong.
+               OR EXISTS (SELECT 1 FROM driver_finance.settlement_lines sl
+                           WHERE sl.settlement_id = $1::uuid AND sl.operating_company_id = $2::uuid
+                             AND sl.load_id = l.id AND sl.is_active AND sl.voided_at IS NULL))
           -- DISPATCH-NO-HISTORY (owner 2026-09-11: "only current pre settlements, and all those loads
           -- related to it … nothing historical"). While the tour is OPEN, a load that already carries an
           -- active settlement line on ANOTHER locked/closed live settlement is SETTLED history — it must
