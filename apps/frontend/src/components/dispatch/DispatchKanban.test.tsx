@@ -244,6 +244,81 @@ describe("DispatchKanban — REG-018 drag/drop wiring", () => {
   });
 });
 
+describe("DispatchKanban — ROUND 20.3 drag activation + swim-lane bloat (owner-live 2026-09-12)", () => {
+  it("a draggable card sets touchAction:none inline (dnd-kit requires it — a human-speed drag was silently swallowed by native text-selection without it)", () => {
+    const loads = [
+      mockLoad({ id: "load-1", load_number: "13595", status: "dispatched", assigned_unit_id: "u-1", assigned_unit_number: "T148" }),
+    ];
+    renderWithClient(
+      <MemoryRouter>
+        <DispatchKanban loads={loads} loading={false} onLoadClick={vi.fn()} onStatusDrop={vi.fn()} />
+      </MemoryRouter>
+    );
+    const card = screen.getByTestId("kanban-standard-card-13595");
+    expect(card.style.touchAction).toBe("none");
+  });
+
+  it("a non-draggable (terminal status) card does NOT force touchAction:none — normal scroll/selection stays available", () => {
+    const loads = [
+      mockLoad({ id: "load-1", load_number: "13596", status: "cancelled", assigned_unit_id: "u-1", assigned_unit_number: "T149" }),
+    ];
+    renderWithClient(
+      <MemoryRouter>
+        <DispatchKanban loads={loads} loading={false} onLoadClick={vi.fn()} onStatusDrop={vi.fn()} />
+      </MemoryRouter>
+    );
+    // Cancelled is collapsedByDefault — expand it first to reach the card.
+    const expander = screen.queryByTestId("kanban-column-expander-cancelled");
+    if (expander) expander.click();
+    const card = screen.queryByTestId("kanban-standard-card-13596");
+    if (card) expect(card.style.touchAction).not.toBe("none");
+  });
+
+  it("swim-lane alignment: a lightly-loaded column renders ONLY its own leading/trailing range, not every unit board-wide (SWIM-LANE-BLOAT)", () => {
+    // 3 units, one row each (insertion order = render order, no boardSort applied): a booked unit,
+    // the single dispatched unit under test, and a delivered unit. Before this fix, "dispatched"
+    // rendered ALL 3 rows (2 of them dead placeholder space); after, it must render exactly its own
+    // 1 real row — no leading placeholder for "booked", no trailing one for "delivered".
+    const loads = [
+      mockLoad({ id: "load-booked", load_number: "13590", status: "booked", assigned_unit_id: "u-booked", assigned_unit_number: "T100" }),
+      mockLoad({ id: "load-dispatched", load_number: "13595", status: "dispatched", assigned_unit_id: "u-dispatched", assigned_unit_number: "T148" }),
+      mockLoad({ id: "load-delivered", load_number: "13599", status: "delivered", assigned_unit_id: "u-delivered", assigned_unit_number: "T200" }),
+    ];
+    renderWithClient(
+      <MemoryRouter>
+        <DispatchKanban loads={loads} loading={false} onLoadClick={vi.fn()} onStatusDrop={vi.fn()} />
+      </MemoryRouter>
+    );
+    const dispatchedBody = screen.getByTestId("kanban-swim-lane-body-dispatched");
+    const rows = dispatchedBody.querySelectorAll("[data-kanban-swim-lane-row-key]");
+    expect(rows.length).toBe(1);
+    expect(screen.getByTestId("kanban-standard-card-13595")).toBeInTheDocument();
+    expect(dispatchedBody.querySelector('[data-kanban-swim-lane-empty="true"]')).toBeNull();
+  });
+
+  it("swim-lane alignment: an INTERIOR placeholder between two of a column's own cards is preserved (cross-column row alignment still holds where it matters)", () => {
+    // Two units both in "dispatched", with a third unit (a different column) sorted BETWEEN them by
+    // insertion order. The interior placeholder row keeps D1 and D2 at their true global row
+    // positions relative to each other; only the (nonexistent, here) leading/trailing runs are cut.
+    const loads = [
+      mockLoad({ id: "load-d1", load_number: "13591", status: "dispatched", assigned_unit_id: "u-d1", assigned_unit_number: "T101" }),
+      mockLoad({ id: "load-mid", load_number: "13592", status: "booked", assigned_unit_id: "u-mid", assigned_unit_number: "T102" }),
+      mockLoad({ id: "load-d2", load_number: "13593", status: "dispatched", assigned_unit_id: "u-d2", assigned_unit_number: "T103" }),
+    ];
+    renderWithClient(
+      <MemoryRouter>
+        <DispatchKanban loads={loads} loading={false} onLoadClick={vi.fn()} onStatusDrop={vi.fn()} />
+      </MemoryRouter>
+    );
+    const dispatchedBody = screen.getByTestId("kanban-swim-lane-body-dispatched");
+    const rows = dispatchedBody.querySelectorAll("[data-kanban-swim-lane-row-key]");
+    expect(rows.length).toBe(3);
+    expect(dispatchedBody.querySelectorAll('[data-kanban-swim-lane-empty="true"]').length).toBe(1);
+    expect(screen.getByTestId("kanban-standard-card-13591")).toBeInTheDocument();
+    expect(screen.getByTestId("kanban-standard-card-13593")).toBeInTheDocument();
+  });
+});
+
 describe("DispatchKanban — REG-048 one card per unit", () => {
   it("owner-reported scenario: a unit with an old delivered_pending_docs load AND a new dispatched load renders exactly ONE card, the newer one", () => {
     const loads = [
