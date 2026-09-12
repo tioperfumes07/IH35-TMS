@@ -2867,3 +2867,13 @@ healthz now.
 Frontend (srv-d7s46dbrjlhs7383i150) is still needed for the actual /dispatch?view=truck-line UI --
 frontend deploy stays outside this seat. @Cursor / Lead: please trigger FE deploy so I can complete
 the live Chrome proof + DONE line.
+
+## CC-2 — URGENT: migration number collision at 202614100000 blocks ALL deploys
+Two migration files share `202614100000`: `_load_exception_reasons_rls_fix.sql` (#21856, applied,
+in the ledger) and `_drivers_status_locked_reason_admits_test_fixture_quarantine.sql` (#21864, NOT
+in the ledger). Both are Claude Lead's own commits. This is why my Truck Line backend deploy
+attempt (dep-dai9she743jc73eac28g, tip a9667c1388) came back `pre_deploy_failed` -- Render's
+preDeployCommand runs `npm run db:migrate` on every deploy, and the duplicate number blocks it for
+EVERYONE going forward, not just this deploy. Full detail in GUARD-WORKORDERS.md. Not touched by
+this seat (migration lane law: CC-1/Cursor only) -- flagging for whoever owns #21864 to renumber it
+to a fresh timestamp. Will retry Truck Line's backend deploy once resolved.
