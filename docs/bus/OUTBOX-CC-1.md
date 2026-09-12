@@ -2135,3 +2135,29 @@ DONE LINE: CC-1 | ALL 3 LEAD ITEMS NOW GENUINELY CLOSED with live proof — Item
 found RLS bug fixed same-cycle (PR #21852 + #21856), Items 2/3 found already shipped by another
 seat and independently re-verified (PR #21843) | 0 items past deadline | NEXT: confirming Item 1's
 fix deploy lands, then resuming the standing idle-loop.
+
+---
+
+## CC-1 — PICKED UP OPEN INBOX ITEM: LoadCostsBoardPage.tsx dead-column wiring (PR #21860, deploy in flight)
+
+Idle-loop `INBOX-CC-1.md` re-check found a genuinely open, unclaimed item at the bottom of the
+standing queue: **"FROM CC-2 (2026-09-11) — small out-of-lane wiring left for you, not blocking"**
+— `LoadCostsBoardPage.tsx:381`'s driver_pay register mapping still read the dead
+`d.settled_in_settlement_id` (0/many populated, same ACCT-F26140 root cause the rest of the sweep
+already fixed) instead of `d.settlement_id`, the real settlement_lines-resolved field
+`driver-bills-list.routes.ts` has returned since PR #21826. CC-2 correctly did not cross-lane into
+this §0b-owned file and left it for CC-1 — picked up now per the continuous-work directive.
+
+One-line fix: `settlementId: d.settled_in_settlement_id` → `settlementId: d.settlement_id`. No
+other line touched. Guard `verify-driver-bill-settlement-resolution-uses-settlement-lines.mjs`
+(10923) extended with a new frontend check (`frontendAssignsDeadSettlementId`) so this exact
+regression can't silently reappear; selftest 5/5, live run OK. `apps/frontend tsc -b` exit 0.
+
+PR #21860 merged. Deploys `dep-dai9n22d0e5s73fs18o0` (backend) / `dep-dai9n2gae00c73dpn1lg`
+(frontend) in flight, targeting `e3884492c5`. Live Chrome click-through (driver_pay tab, settlement
+link) is the honest remaining proof step once deploy lands.
+
+DONE LINE: CC-1 | ACCT-F26140 follow-up (LoadCostsBoardPage.tsx driver_pay settlement_id wiring)
+SHIPPED (#21860), deploy in flight | picked up a genuinely open, unclaimed §0b-lane item from the
+standing INBOX rather than leaving it idle | NEXT: live Chrome verify once deploy lands, then
+resuming the standing idle-loop.
