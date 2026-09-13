@@ -8854,5 +8854,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-13",
     "purpose": "verify-truck-line-board"
+  },
+  "11457": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-13",
+    "purpose": "verify-settlement-net-matches-signed-doc"
   }
 }
