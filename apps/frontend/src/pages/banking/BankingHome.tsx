@@ -49,6 +49,7 @@ import { BANKING_MODULE_TABS, type BankingModuleTabId } from "./BANKING_NAV_CONF
 import { formatUsd } from "../../lib/money";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { BankingNewMenu } from "./components/BankingNewMenu";
+import { LinkSuggestionsPanel } from "./components/LinkSuggestionsPanel";
 import { MoneyKpiTile, MoneySparkline } from "../../components/money/MoneyKpiTile";
 import { NotApplicable } from "../../components/money/NotApplicable";
 import { staleSyncLabel, MONEY_TONE_COLORS } from "../../design/money-design-system";
@@ -926,6 +927,8 @@ export function BankingHomePage({ initialTab }: Props = {}) {
           />
         </div>
       ) : null}
+
+      {activeTab === "link_suggestions" ? <LinkSuggestionsPanel companyId={companyId} /> : null}
 
       {activeTab === "reconciliation" ? (
         <div className="space-y-3">
