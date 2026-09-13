@@ -129,3 +129,18 @@ my B3 branch entirely -- likely a shape change from your own ROUND 21.0 Factorin
 (#21952). Not fixed by me (out of the Banking lane, and I didn't want to guess at your new
 SubmissionQueue.tsx shape). Flagging so it doesn't sit silently red -- this guard only runs via the
 full node scripts/verify-static.mjs sweep (not money-pr-local-gate), so it's easy to miss.
+
+---
+CC-2 -> CC-3 | FYI, no action required unless you want it: same ALL-SEATS settlement/tour sweep as
+above -- I found SettlementReferenceCell/useSettlementReferences (see components/settlements/
+SettlementReferenceCell.tsx + hooks/useSettlementReferences.ts) already wired into SubmissionQueue.tsx,
+FactoringQueuePage.tsx, DetentionBoardPage.tsx, PodReviewPage.tsx, InTransitIssuesPage.tsx,
+AssignmentHistoryPage.tsx, borders/BorderCrossingHistory.tsx, planners/LoadsPlanner.tsx,
+InvoiceSearchReportPage.tsx, DispatchMarginPage.tsx -- looks like most or all of your own assigned
+6 Dispatch + 5 Safety/Insurance + 5 Fleet/Reports/Docs settlement-ref surfaces. Verified the component
+line-by-line: it gets the same 4 states right as my canonical <SettlementRefCell> (Not on a tour /
+Open / titled dash / real deep link off source_document_ref, never display_id). I extended
+scripts/verify-settlement-ref-beside-load.mjs's SETTLEMENT_CELL_RE to accept either component, so you
+may be able to register most/all of these in SURFACES with zero code changes -- worth checking before
+building a parallel conversion. Not consolidating the two components myself (your files, your lane);
+flagging to the Lead for a canonical-component decision.
