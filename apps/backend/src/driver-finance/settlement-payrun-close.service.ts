@@ -1078,6 +1078,37 @@ export async function closeSettlementPayRun(
       [settlementId, opco, actor.userId]
     );
 
+    // ACCT-F26307 — same gap as SETL-POST-01 immediately above, on the header's MONEY fields this
+    // time: this function computes grossCents/deductionsCents(+escrow+advance+chargeback)/
+    // reimbursementsCents(+detentionPayCents)/netCents and posts a JE that is BY CONSTRUCTION
+    // correct (the JE's own postings ARE these numbers), but never wrote any of them back onto
+    // driver_finance.driver_settlements — the fields the driver statement, every report, and the
+    // owner's own live reads actually show. Measured live 2026-09-13 USMCA: settlements 5772/5801/
+    // 5802/5803 all posted a fully correct, penny-exact-to-the-signed-document JE through this exact
+    // path and then sat at net_pay=0.00 (or a stale value) on the header forever — a reader had no
+    // way to tell "posted correctly, header never synced" apart from "never posted; broken." This is
+    // the SAME root cause pattern ACCT-F26307 in settlement-bill-payment-posting.service.ts fixes for
+    // the sibling canonical Bill+BillPayment poster. Unconditional overwrite is correct here for the
+    // identical reason: these fields are not owner-entered facts, they are exactly what this
+    // transaction just computed and is about to (or already did) make true on the ledger.
+    // detentionPayCents folds into reimbursements_total (no separate header column exists for it,
+    // and it is a debit-side addition to net exactly like a reimbursement) so a settlement that pays
+    // detention still satisfies the header's own net = gross - deductions + reimbursements identity.
+    await client.query(
+      `UPDATE driver_finance.driver_settlements
+          SET gross_pay = $2::numeric, deductions_total = $3::numeric, reimbursements_total = $4::numeric,
+              net_pay = $5::numeric, updated_at = now()
+        WHERE id = $1::uuid AND operating_company_id = $6::uuid`,
+      [
+        settlementId,
+        (grossCents / 100).toFixed(2),
+        ((deductionsCents + escrowContributionCents + appliedAdvanceRecoveryCents + chargebacksCents) / 100).toFixed(2),
+        ((reimbursementsCents + detentionPayCents) / 100).toFixed(2),
+        (netCents / 100).toFixed(2),
+        opco,
+      ]
+    );
+
     // ACCT-R-01: keep accounting.escrow_accounts.balance_cents (the GL-linked liability balance
     // releaseDriverEscrowSeparation() trusts) in sync with the driver_finance.escrow_balances /
     // escrow_ledger contribution just recorded above. The JE leg already credited the driver's escrow
