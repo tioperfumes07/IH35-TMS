@@ -14,12 +14,17 @@ import {
 } from "../../api/accounting";
 import { getQboSyncQueue, getQboSyncQueueStats } from "../../api/banking";
 import { listSettlements } from "../../api/driverFinance";
+import { getQboConnectionStatus } from "../../api/forensic";
 import { getProfitLossReport, getTrialBalanceReport } from "../../api/reports";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
+// ROUND-20.8 B11 — single derivation shared with Banking's own SyncStatusStrip so /accounting and
+// /banking can never show two different QBO-sync verdicts at the same moment again (see the
+// helper's own header comment for the full contradiction history).
+import { describeQboSyncStatus } from "../../lib/qbo-sync-status";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
@@ -184,7 +189,7 @@ export function AccountingHubPage() {
   const monthRange = useMemo(() => monthBoundsIso(companyToday()), []);
   const quarterRange = useMemo(() => currentQuarterRange(), []);
 
-  const [billsQ, billPaymentsQ, paymentsQ, settlementsQ, invoicesQ, qboStatsQ, qboQueueQ, trialBalanceQ, profitLossQ, expensesQ] = useQueries({
+  const [billsQ, billPaymentsQ, paymentsQ, settlementsQ, invoicesQ, qboStatsQ, qboConnectionQ, qboQueueQ, trialBalanceQ, profitLossQ, expensesQ] = useQueries({
     queries: [
       {
         queryKey: ["accounting-proto", "bills", companyId],
@@ -214,6 +219,14 @@ export function AccountingHubPage() {
       {
         queryKey: ["accounting-proto", "qbo-sync-stats", companyId],
         queryFn: () => getQboSyncQueueStats(companyId),
+        enabled: Boolean(companyId),
+      },
+      {
+        // ROUND-20.8 B11 — the OAuth connection half Banking's SyncStatusStrip already fetches;
+        // this page previously only had the queue-backlog half, so it could read "0 pending — queue
+        // healthy" while Banking read "Not connected" at the exact same moment.
+        queryKey: ["accounting-proto", "qbo-connection", companyId],
+        queryFn: () => getQboConnectionStatus(companyId),
         enabled: Boolean(companyId),
       },
       {
@@ -303,6 +316,17 @@ export function AccountingHubPage() {
   const unmatchedItems = qboItems.filter((item) => item.sync_status === "failed" || item.sync_status === "blocked");
   const qboPending = Number(qboStatsQ.data?.pending ?? 0);
   const qboFailed = Number(qboStatsQ.data?.failed ?? 0);
+  // ROUND-20.8 B11 — same derivation Banking's SyncStatusStrip calls, fed the connection half this
+  // page was missing, so the two screens can never disagree again.
+  const qboSyncSummary = describeQboSyncStatus({
+    connected: qboConnectionQ.data?.connected ?? false,
+    pending: qboPending,
+    failed: qboFailed,
+  });
+  // kpiCard only has neutral/warn/danger (no "good" state) — every other tile on this page maps its
+  // own OK case to "neutral", so "good" collapses the same way here rather than inventing a 4th tone.
+  const qboSyncTone: "neutral" | "warn" | "danger" =
+    qboSyncSummary.tone === "bad" ? "danger" : qboSyncSummary.tone === "warn" ? "warn" : "neutral";
 
   const settlementsRows: AmountRow[] = settlements
     .slice(0, 5)
@@ -451,9 +475,9 @@ export function AccountingHubPage() {
         {qboQueueQ.isError
           ? kpiCard("Unmatched", "—", "Error loading")
           : kpiCard("Unmatched", String(unmatchedItems.length), "failed / blocked queue")}
-        {qboStatsQ.isError
+        {qboStatsQ.isError || qboConnectionQ.isError
           ? kpiCard("QBO Sync", "—", "Error loading")
-          : kpiCard("QBO Sync", `${qboPending} pending`, qboFailed ? `${qboFailed} failed` : "queue healthy", qboFailed ? "danger" : qboPending ? "warn" : "neutral")}
+          : kpiCard("QBO Sync", qboSyncSummary.label, qboSyncSummary.sub, qboSyncTone)}
       </div>
   );
 

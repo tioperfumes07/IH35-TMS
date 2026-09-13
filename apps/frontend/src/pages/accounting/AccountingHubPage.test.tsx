@@ -24,6 +24,12 @@ vi.mock("../../api/banking", () => ({
   getQboSyncQueueStats: vi.fn().mockResolvedValue({ pending: 0, failed: 0 }),
 }));
 
+// ROUND-20.8 B11 — this page's own qboConnectionQ query (added alongside the pre-existing
+// qbo-sync-stats query) hits this module; without a mock it would fire a real apiRequest in tests.
+vi.mock("../../api/forensic", () => ({
+  getQboConnectionStatus: vi.fn().mockResolvedValue({ connected: true }),
+}));
+
 vi.mock("../../api/driverFinance", () => ({
   listSettlements: vi.fn().mockResolvedValue({ settlements: [] }),
 }));
