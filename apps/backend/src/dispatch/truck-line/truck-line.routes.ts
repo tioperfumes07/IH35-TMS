@@ -73,6 +73,7 @@ type Row = {
   pos_engine_state: string | null;
   pos_city: string | null;
   pos_state: string | null;
+  pos_formatted_location: string | null;
   pos_captured_at: string | null;
 };
 
@@ -138,6 +139,11 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
           p.lat::float8 AS pos_lat, p.lng::float8 AS pos_lng,
           p.speed_mph::float8 AS pos_speed_mph, p.engine_state AS pos_engine_state,
           COALESCE(p.city, loc.city) AS pos_city, COALESCE(p.state, loc.state) AS pos_state,
+          -- ROUND 23.1 D3 (owner, 2026-09-13: "i also need it with the state") — formatted_location
+          -- is the richest position string (37/41 USMCA rows carry it vs 33/34 for city/state
+          -- alone); exposed alongside city/state so the frontend's one shared location helper can
+          -- prefer it and fall back to city+state only when it is null.
+          COALESCE(p.formatted_location, loc.formatted_location) AS pos_formatted_location,
           p.captured_at::text AS pos_captured_at
         FROM mdata.units u
         LEFT JOIN LATERAL (
@@ -183,7 +189,7 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
         LEFT JOIN telematics.vehicle_latest_position p
           ON p.unit_id = u.id AND p.operating_company_id = COALESCE(u.currently_leased_to_company_id, u.owner_company_id)
         LEFT JOIN LATERAL (
-          SELECT g.city, g.state FROM telematics.vehicle_locations g
+          SELECT g.city, g.state, g.formatted_location FROM telematics.vehicle_locations g
           WHERE g.operating_company_id = COALESCE(u.currently_leased_to_company_id, u.owner_company_id)
             AND g.unit_id = u.id AND (g.city IS NOT NULL OR g.state IS NOT NULL)
           ORDER BY g.captured_at DESC LIMIT 1
@@ -331,6 +337,34 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
         }
       }
 
+      // ROUND 23.1 D4 (owner, 2026-09-13: "next appointment should show pick up and delivery") —
+      // BOTH of the load's own appointments, independent of which leg is still outstanding
+      // (nextAppointment above stays exactly as-is for one release so nothing else breaks). Each
+      // leg is null only when it has no derivable timestamp at all (never a blank placeholder for
+      // a leg that simply has not happened yet).
+      type AppointmentLeg = { at: string; at_source: "appointment_start_at" | "scheduled_arrival_at" | null; late: boolean } | null;
+      let appointments: { pickup: AppointmentLeg; delivery: AppointmentLeg } | null = null;
+      if (r.load_id) {
+        const pickupAt = r.pickup_appointment_start_at ?? r.pickup_scheduled_at;
+        const deliveryAt = r.delivery_appointment_start_at ?? r.delivery_scheduled_at;
+        appointments = {
+          pickup: pickupAt != null
+            ? {
+                at: pickupAt,
+                at_source: r.pickup_appointment_start_at ? "appointment_start_at" : "scheduled_arrival_at",
+                late: new Date(pickupAt).getTime() < now,
+              }
+            : null,
+          delivery: deliveryAt != null
+            ? {
+                at: deliveryAt,
+                at_source: r.delivery_appointment_start_at ? "appointment_start_at" : "scheduled_arrival_at",
+                late: new Date(deliveryAt).getTime() < now,
+              }
+            : null,
+        };
+      }
+
       const capMs = r.pos_captured_at ? new Date(r.pos_captured_at).getTime() : NaN;
       const staleMinutes = Number.isNaN(capMs) ? null : Math.floor((now - capMs) / 60000);
 
@@ -376,19 +410,27 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
               engine_state: r.pos_engine_state,
               city: r.pos_city,
               state: r.pos_state,
+              formatted_location: r.pos_formatted_location,
               captured_at: r.pos_captured_at,
               stale_minutes: staleMinutes,
               stale: staleMinutes != null && staleMinutes > LOC_STALE_MIN,
             }
           : null,
         next_appointment: nextAppointment,
+        appointments,
       };
     });
 
     // V10 (ROUND 18.6) — one row per available driver. driving/cycle minutes are exposed RAW
     // (never pre-formatted here) so the frontend's own "11h 00m" rendering can never silently
     // drift from a server-side copy of the same conversion.
-    const availableRows = payload.availableRows.map((r) => {
+    // ROUND 23.1 D1 (owner, twice: "remove the drivers it is only the trucks") — THIS IS A UNIT
+    // BOARD. A driver with no unit is not a row on this board in any state; filtered in the row
+    // builder (here, not the renderer) so the top-bar counts and the rendered row count can never
+    // disagree — both read the same `availableRows` array this filter produces.
+    const availableRows = payload.availableRows
+      .filter((r) => r.unit_id != null && r.unit_number != null)
+      .map((r) => {
       const polledMs = new Date(r.hos_polled_at).getTime();
       const hosPolledMinutesAgo = Number.isNaN(polledMs) ? null : Math.max(0, Math.floor((now - polledMs) / 60000));
       return {
@@ -400,6 +442,7 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
         station: null,
         position: null,
         next_appointment: null,
+        appointments: null,
         available: {
           driver_id: r.driver_id,
           driving_minutes_remaining: r.driving_minutes_remaining,

@@ -159,6 +159,38 @@ function fmtDuration(ms: number): string {
   return days > 0 ? `${days}d ${hours}h` : `${hours}h`;
 }
 
+// ROUND 23.1 D3 (owner, 2026-09-13: "i see the city or county of the live signal, but i also need
+// it with the state") — ONE helper, every call site that prints a position (Live signal, Stale
+// signal, THE AVAILABLE TRUCK's parked-at line, a load stop's pickup/delivery city). Prefers
+// formatted_location (the richest string Samsara gives — 37 of 41 USMCA rows carry it) over a
+// hand-built "city, state" concatenation; degrades honestly (city alone, then state alone, then
+// "—") rather than ever printing a dangling ", " when one half is null.
+function formatLocationLabel(loc: { city: string | null; state: string | null; formatted_location?: string | null } | null | undefined): string {
+  if (!loc) return "—";
+  if (loc.formatted_location) return loc.formatted_location;
+  if (loc.city && loc.state) return `${loc.city}, ${loc.state}`;
+  if (loc.city) return loc.city;
+  if (loc.state) return loc.state;
+  return "—";
+}
+
+// ROUND 23.1 D2a (owner: "there is a gps with stale minutes, fix that") — never print raw minutes
+// past 60; reuse the SAME fmtDuration every other duration on this board already uses.
+function formatStaleAge(staleMinutes: number | null): string | null {
+  if (staleMinutes == null) return null;
+  if (staleMinutes <= 60) return `${staleMinutes} min ago`;
+  return `${fmtDuration(staleMinutes * 60_000)} ago`;
+}
+
+// ROUND 23.1 D4 (owner: "next appointment should show pick up and delivery") — the SAME past-due/
+// in-N chip logic the old single-leg cell used, now callable once per leg so both the pickup line
+// and the delivery line carry their own chip.
+function apptChip(at: string, late: boolean): { text: string; color: string } | null {
+  const ms = new Date(at).getTime() - Date.now();
+  if (Number.isNaN(ms)) return null;
+  return late || ms < 0 ? { text: `past due ${fmtDuration(ms)}`, color: RED } : { text: `in ${fmtDuration(ms)}`, color: GREEN };
+}
+
 // V10 (ROUND 18.6) — samsara.hos_snapshots' driving_hours_remaining/cycle_hours_remaining columns
 // are misleadingly named: verified live (schema + real values, e.g. 660.00 for an 11-hour driver,
 // 2560.00 for 42h40m) that they store MINUTES. The backend exposes the raw minutes as-is; this is
@@ -202,7 +234,6 @@ type LiveStation = {
   v7Index: number; // where the truck GRAPHIC sits (may be ahead of the dashed/stamped rail)
   rolling: boolean;
   signalLabel: "Live" | "Stale" | "No ping";
-  signalDetail: string | null;
 };
 
 /** LIVE POSITION RULE (V7, own section) — see the file header. Never fabricates a position: a
@@ -210,24 +241,24 @@ type LiveStation = {
 function deriveLiveStation(row: TruckLineRow, v7ReachedIndex: number): LiveStation {
   const parkedFallback = Math.max(v7ReachedIndex, 0);
   const pos = row.position;
-  if (!pos) return { v7Index: parkedFallback, rolling: false, signalLabel: "No ping", signalDetail: null };
+  if (!pos) return { v7Index: parkedFallback, rolling: false, signalLabel: "No ping" };
   if (pos.stale) {
-    return { v7Index: parkedFallback, rolling: false, signalLabel: "Stale", signalDetail: pos.stale_minutes != null ? `${pos.stale_minutes} min ago` : null };
+    return { v7Index: parkedFallback, rolling: false, signalLabel: "Stale" };
   }
   const engineOn = typeof pos.engine_state === "string" && /on|running/i.test(pos.engine_state);
   const speed = pos.speed_mph ?? 0;
   if (speed > 0 && engineOn) {
-    return { v7Index: 3, rolling: true, signalLabel: "Live", signalDetail: null };
+    return { v7Index: 3, rolling: true, signalLabel: "Live" };
   }
   const pickupCity = row.load?.pickup.city;
   const deliveryCity = row.load?.delivery.city;
   if (pos.city && pickupCity && pos.city === pickupCity) {
-    return { v7Index: 1, rolling: false, signalLabel: "Live", signalDetail: null };
+    return { v7Index: 1, rolling: false, signalLabel: "Live" };
   }
   if (pos.city && deliveryCity && pos.city === deliveryCity) {
-    return { v7Index: 5, rolling: false, signalLabel: "Live", signalDetail: null };
+    return { v7Index: 5, rolling: false, signalLabel: "Live" };
   }
-  return { v7Index: 3, rolling: false, signalLabel: "Live", signalDetail: null };
+  return { v7Index: 3, rolling: false, signalLabel: "Live" };
 }
 
 /** TRACTOR-TRAILER (74x34) — verbatim from the Lead's locked V7 render, CAB/CABDARK substituted.
@@ -329,6 +360,124 @@ function YardDockSvg() {
       <path d="M21.6 16.6h6M21.6 18.8h6M21.6 21h6" stroke="#A9DDBB" strokeWidth=".6" />
       <rect x="3.9" y="23" width="26.2" height="1.3" fill="#6FAE84" />
     </svg>
+  );
+}
+
+// ROUND 23.1 D5 (owner, twice: "there is no ascending and descending order on the columns...i am
+// clicking and it is not moving") — the identical sortable-header CONTRACT ParityTable already
+// uses elsewhere (sortable: true / sortValue(row), see EntityActivityFeed.tsx) implemented
+// directly on this grid, since this one view is deliberately never a ParityTable (V4/V7 owner
+// ruling, guard item (j)). Sort is a VIEW PREFERENCE only — never persisted, never re-fetched, the
+// row COUNT never changes. Three-state per column: ascending -> descending -> back to the board's
+// own default order (the array the backend/search already produced).
+type TruckLineSortKey = "truck" | "load" | "line" | "appt" | "signal";
+type TruckLineSortDir = "asc" | "desc";
+type TruckLineSortState = { key: TruckLineSortKey; dir: TruckLineSortDir } | null;
+
+/** T9 sorts before T10 — split into digit/non-digit runs and compare each run numerically when
+ * both sides are numeric, lexically otherwise. */
+function naturalCompare(a: string, b: string): number {
+  const runRe = /(\d+|\D+)/g;
+  const pa = a.match(runRe) ?? [a];
+  const pb = b.match(runRe) ?? [b];
+  const len = Math.max(pa.length, pb.length);
+  for (let i = 0; i < len; i++) {
+    const x = pa[i] ?? "";
+    const y = pb[i] ?? "";
+    if (x === y) continue;
+    const nx = Number(x);
+    const ny = Number(y);
+    if (!Number.isNaN(nx) && !Number.isNaN(ny) && x !== "" && y !== "") return nx - ny;
+    return x < y ? -1 : 1;
+  }
+  return 0;
+}
+
+/** A timestamp, or +Infinity when absent — sorts nulls last ascending / first descending for free
+ * once the caller negates the comparator for "desc" (the same trick every column below relies on,
+ * so null-handling never has to be special-cased per direction). */
+function tsOrInfinity(at: string | null | undefined): number {
+  if (!at) return Infinity;
+  const t = new Date(at).getTime();
+  return Number.isNaN(t) ? Infinity : t;
+}
+
+/** Live before Stale before No ping, then by staleness age within the Stale group — one click
+ * puts the trucks you have lost at the top. THE AVAILABLE TRUCK carries no live-signal concept at
+ * all and always sorts last, in either direction (it is not part of "how stale is my fleet"). */
+function signalSortRank(row: TruckLineRow): number {
+  if (row.kind === "available" || !row.load || !row.station) return 4_000_000;
+  const live = deriveLiveStation(row, mapReachedIndexToV7(row.station.reached_index));
+  if (live.signalLabel === "Live") return 0;
+  if (live.signalLabel === "Stale") return 1_000_000 + (row.position?.stale_minutes ?? 0);
+  return 2_000_000; // No ping
+}
+
+function compareTruckLineRows(a: TruckLineRow, b: TruckLineRow, key: TruckLineSortKey): number {
+  switch (key) {
+    case "truck":
+      return naturalCompare(a.unit_number ?? "", b.unit_number ?? "");
+    case "load": {
+      // Numeric on the load number; a row with no load sorts last ascending (Infinity, per the
+      // same null-last convention as the appointment/timestamp columns below).
+      const numOf = (n: string | null | undefined) => (n ? parseInt(n.replace(/\D/g, ""), 10) : NaN);
+      const la = a.load?.load_number != null && !Number.isNaN(numOf(a.load.load_number)) ? numOf(a.load.load_number) : Infinity;
+      const lb = b.load?.load_number != null && !Number.isNaN(numOf(b.load.load_number)) ? numOf(b.load.load_number) : Infinity;
+      return la - lb;
+    }
+    case "line": {
+      // The timeline position (station.reached_index) — "everything still at pickup" through
+      // "everything delivered". A row with no station (THE AVAILABLE TRUCK) has not started the
+      // line at all, so it sorts before "Dispatched".
+      const va = a.station ? a.station.reached_index : -1;
+      const vb = b.station ? b.station.reached_index : -1;
+      return va - vb;
+    }
+    case "appt": {
+      // Pickup timestamp, then delivery as the tiebreak — both null-last via tsOrInfinity.
+      const pa = tsOrInfinity(a.appointments?.pickup?.at);
+      const pb = tsOrInfinity(b.appointments?.pickup?.at);
+      if (pa !== pb) return pa - pb;
+      return tsOrInfinity(a.appointments?.delivery?.at) - tsOrInfinity(b.appointments?.delivery?.at);
+    }
+    case "signal":
+      return signalSortRank(a) - signalSortRank(b);
+    default:
+      return 0;
+  }
+}
+
+/** ROUND 23.1 D5 — a real button per header, aria-sort set for screen readers AND for the guard
+ * to assert against. Three-state: ascending -> descending -> back to default (this board's own
+ * order, never persisted). The button-chrome reset (background/border/padding/font) is the
+ * MINIMUM needed to make a native <button> read as plain header text — not a restyle of the
+ * board's actual content. */
+function TruckLineSortHeader({
+  label,
+  sortKey,
+  active,
+  onClick,
+  className,
+}: {
+  label: string;
+  sortKey: TruckLineSortKey;
+  active: TruckLineSortDir | null;
+  onClick: (key: TruckLineSortKey) => void;
+  className?: string;
+}) {
+  const ariaSort = active === "asc" ? "ascending" : active === "desc" ? "descending" : "none";
+  return (
+    <button
+      type="button"
+      className={`font-semibold ${className ?? ""}`}
+      style={{ display: "block", width: "100%", background: "transparent", border: "none", padding: 0, margin: 0, font: "inherit", color: "inherit", cursor: "pointer" }}
+      aria-sort={ariaSort}
+      data-testid={`truck-line-sort-${sortKey}`}
+      onClick={() => onClick(sortKey)}
+    >
+      {label}
+      {active ? <span aria-hidden="true"> {active === "asc" ? "▲" : "▼"}</span> : null}
+    </button>
   );
 }
 
@@ -600,8 +749,7 @@ function AvailableTruckTrack({ row, onAssign }: { row: TruckLineRow; onAssign: (
       </button>
 
       <span className="truck-line-v4-sub absolute whitespace-nowrap text-[#6B7280]" style={{ top: 64, left: 0 }}>
-        parked at {a.parked_city ?? "—"}
-        {a.parked_state ? `, ${a.parked_state}` : ""} · waiting on dispatch
+        parked at {formatLocationLabel({ city: a.parked_city, state: a.parked_state })} · waiting on dispatch
       </span>
     </div>
   );
@@ -633,6 +781,17 @@ export function TruckLineBoard({
   });
 
   const [search, setSearch] = useState("");
+  // ROUND 23.1 D5 — a view preference only, never persisted (no storageKey — this board has none
+  // by design and that stays true) and never re-fetched (sorting is client-side over rows already
+  // in hand).
+  const [sort, setSort] = useState<TruckLineSortState>(null);
+  const cycleSort = (key: TruckLineSortKey) => {
+    setSort((prev) => {
+      if (!prev || prev.key !== key) return { key, dir: "asc" };
+      if (prev.dir === "asc") return { key, dir: "desc" };
+      return null;
+    });
+  };
   const [stampPrompt, setStampPrompt] = useState<StampPromptState>(null);
   const [otherPrompt, setOtherPrompt] = useState<OtherPromptState>(null);
   const [otherReasonId, setOtherReasonId] = useState<string | null>(null);
@@ -648,7 +807,7 @@ export function TruckLineBoard({
   const catalogReady = query.data?.catalog_ready ?? false;
   const reasons = reasonsQuery.data?.reasons ?? [];
 
-  const rows = useMemo(() => {
+  const searchedRows = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return allRows;
     return allRows.filter((r) => {
@@ -665,6 +824,20 @@ export function TruckLineBoard({
       return haystack.includes(q);
     });
   }, [allRows, search]);
+
+  // ROUND 23.1 D5 — sorting never changes the row count or re-fetches; it re-orders the SAME
+  // searched set. Stable (ties keep their original relative order) via the original-index
+  // tiebreak, and `null` sort restores exactly the board's default order (search-narrowed, but
+  // otherwise untouched).
+  const rows = useMemo(() => {
+    if (!sort) return searchedRows;
+    const withIndex = searchedRows.map((r, i) => ({ r, i }));
+    withIndex.sort((a, b) => {
+      const cmp = compareTruckLineRows(a.r, b.r, sort.key) || a.i - b.i;
+      return sort.dir === "desc" ? -cmp : cmp;
+    });
+    return withIndex.map((x) => x.r);
+  }, [searchedRows, sort]);
 
   // V10 (ROUND 18.6) — top-bar counts, ALL computed from the live rows just fetched, none
   // hardcoded. Counted against the full unfiltered set (allRows), not the search-narrowed one, so
@@ -924,11 +1097,11 @@ export function TruckLineBoard({
 
       <div className="rounded border border-[#C7D2DC] bg-white" data-testid="truck-line-board-v4">
         <div className="truck-line-v4-header">
-          <span>Truck</span>
-          <span className="truck-line-v4-load-header">Load</span>
-          <span>Line</span>
-          <span className="truck-line-v4-appt-header">Next appointment</span>
-          <span className="truck-line-v4-signal-header">Live signal</span>
+          <TruckLineSortHeader label="Truck" sortKey="truck" active={sort?.key === "truck" ? sort.dir : null} onClick={cycleSort} />
+          <TruckLineSortHeader label="Load" sortKey="load" active={sort?.key === "load" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-load-header" />
+          <TruckLineSortHeader label="Line" sortKey="line" active={sort?.key === "line" ? sort.dir : null} onClick={cycleSort} />
+          <TruckLineSortHeader label="Next appointment" sortKey="appt" active={sort?.key === "appt" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-appt-header" />
+          <TruckLineSortHeader label="Live signal" sortKey="signal" active={sort?.key === "signal" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-signal-header" />
         </div>
 
         {query.isLoading ? (
@@ -938,15 +1111,6 @@ export function TruckLineBoard({
         ) : (
           rows.map((r) => {
             const live = r.load && r.station ? deriveLiveStation(r, mapReachedIndexToV7(r.station.reached_index)) : null;
-            const chip = r.next_appointment?.at
-              ? (() => {
-                  const ms = new Date(r.next_appointment!.at as string).getTime() - Date.now();
-                  if (Number.isNaN(ms)) return null;
-                  return r.next_appointment!.late || ms < 0
-                    ? { text: `past due ${fmtDuration(ms)}`, color: RED }
-                    : { text: `in ${fmtDuration(ms)}`, color: GREEN };
-                })()
-              : null;
             const rowKey = `${r.kind}-${r.unit_id ?? r.available?.driver_id ?? "row"}`;
             if (r.kind === "available" && r.available) {
               const a = r.available;
@@ -959,8 +1123,13 @@ export function TruckLineBoard({
                   data-testid={`truck-line-row-available-${a.driver_id}`}
                 >
                   <div>
-                    <div className="truck-line-v4-unit font-semibold text-[#1F2937]">{r.unit_number ?? "—"}</div>
-                    <div className="truck-line-v4-sub text-[#6B7280]">{r.unit_number == null ? "no unit assigned" : "available truck"}</div>
+                    {/* ROUND 23.1 D1 (owner, twice: "remove the drivers it is only the trucks") —
+                        THIS IS A UNIT BOARD. The backend now filters every "available" row to one
+                        with a real unit before this component ever sees it (row builder, not the
+                        renderer) — r.unit_number is never null here. The retired "no unit
+                        assigned" string is gone entirely, not just hidden. */}
+                    <div className="truck-line-v4-unit font-semibold text-[#1F2937]">{r.unit_number}</div>
+                    <div className="truck-line-v4-sub text-[#6B7280]">available truck</div>
                   </div>
 
                   <div className="truck-line-v4-load-cell">
@@ -1047,19 +1216,46 @@ export function TruckLineBoard({
                 </div>
 
                 <div className="truck-line-v4-appt-cell">
-                  {r.next_appointment ? (
+                  {/* ROUND 23.1 D4 (owner: "next appointment should show pick up and delivery") —
+                      two stacked lines, pickup above delivery, each with its own timestamp/label/
+                      chip. A load with only one remaining appointment renders that one line only —
+                      never a blank placeholder for the leg that has no derivable timestamp. */}
+                  {r.appointments?.pickup || r.appointments?.delivery ? (
                     <div>
-                      <div className="truck-line-v4-appt font-semibold" title={r.next_appointment.at_source ?? undefined}>
-                        {fmtStamp(r.next_appointment.at) ?? "—"}
-                      </div>
-                      <div className="truck-line-v4-cap text-[#6B7280]">
-                        {r.next_appointment.type === "pickup" ? "Pickup" : "Delivery"} · {r.next_appointment.type === "pickup" ? r.load?.pickup.city : r.load?.delivery.city}
-                        {" "}
-                        {r.next_appointment.type === "pickup" ? r.load?.pickup.state : r.load?.delivery.state}
-                      </div>
-                      {chip ? (
-                        <div className="truck-line-v4-cap font-semibold" style={{ color: chip.color }}>
-                          {chip.text}
+                      {r.appointments.pickup ? (
+                        <div data-testid={`truck-line-appt-pickup-${r.unit_id}`}>
+                          <div className="truck-line-v4-appt font-semibold" title={r.appointments.pickup.at_source ?? undefined}>
+                            {fmtStamp(r.appointments.pickup.at) ?? "—"}
+                          </div>
+                          <div className="truck-line-v4-cap text-[#6B7280]">
+                            Pickup · {formatLocationLabel({ city: r.load?.pickup.city ?? null, state: r.load?.pickup.state ?? null })}
+                          </div>
+                          {(() => {
+                            const c = apptChip(r.appointments.pickup.at, r.appointments.pickup.late);
+                            return c ? (
+                              <div className="truck-line-v4-cap font-semibold" style={{ color: c.color }}>
+                                {c.text}
+                              </div>
+                            ) : null;
+                          })()}
+                        </div>
+                      ) : null}
+                      {r.appointments.delivery ? (
+                        <div data-testid={`truck-line-appt-delivery-${r.unit_id}`} className={r.appointments.pickup ? "mt-1.5" : undefined}>
+                          <div className="truck-line-v4-appt font-semibold" title={r.appointments.delivery.at_source ?? undefined}>
+                            {fmtStamp(r.appointments.delivery.at) ?? "—"}
+                          </div>
+                          <div className="truck-line-v4-cap text-[#6B7280]">
+                            Delivery · {formatLocationLabel({ city: r.load?.delivery.city ?? null, state: r.load?.delivery.state ?? null })}
+                          </div>
+                          {(() => {
+                            const c = apptChip(r.appointments.delivery.at, r.appointments.delivery.late);
+                            return c ? (
+                              <div className="truck-line-v4-cap font-semibold" style={{ color: c.color }}>
+                                {c.text}
+                              </div>
+                            ) : null;
+                          })()}
                         </div>
                       ) : null}
                     </div>
@@ -1072,11 +1268,17 @@ export function TruckLineBoard({
                   {live ? (
                     live.signalLabel === "Live" ? (
                       <span className="truck-line-v4-sub">
-                        <b>Live</b> {r.position?.city ?? "—"}
+                        <b>Live</b> · {formatLocationLabel(r.position)}
                       </span>
                     ) : live.signalLabel === "Stale" ? (
+                      // ROUND 23.1 D2 (owner: "there is a gps with stale minutes, fix that") — the
+                      // location is a FACT (default color), never fabricated; only the word
+                      // "Stale" and the age carry red. Age never prints raw minutes past 60
+                      // (formatStaleAge hands off to the SAME fmtDuration every other duration on
+                      // this board already uses).
                       <span className="truck-line-v4-sub">
-                        <b style={{ color: RED }}>Stale</b> {live.signalDetail ?? ""}
+                        <b style={{ color: RED }}>Stale</b> · {formatLocationLabel(r.position)} ·{" "}
+                        <span style={{ color: RED }}>{formatStaleAge(r.position?.stale_minutes ?? null) ?? "—"}</span>
                       </span>
                     ) : (
                       <span className="truck-line-v4-sub">
