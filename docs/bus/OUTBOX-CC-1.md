@@ -145,3 +145,32 @@ tiles (no confirmed target file — `ArApAgingPage.tsx` has a different bucket-c
 `AccountsPayableAgingPage.tsx`, `CollectionsPage.tsx` is a task list with a single `aging_bucket`
 tag, not a full matrix — not building against a guess).
 
+---
+
+## 2026-09-13 cycle (cont'd) — A5 item 3 (Paid vs Deposited split), shipped, Live=BLOCKED honestly
+
+**A5 item 3 — DONE, built + unit-tested, Live=BLOCKED.** `accounting.payments.cleared_date` has
+existed since before this session (THREE-DATES-COVERAGE-GAP, migration `202613310400`, owner ruling
+2026-09-01) — "the date the bank cleared this payment... never used for GL period/cash-basis/tax
+year (that is `payment_date`)" — but Invoice Detail's Payment Applications panel only ever rendered
+`payment_date`/`applied_at`, never `cleared_date`. Fixed: the invoice detail query now also selects
+`cleared_date` + `deposited_to_account_id` (LEFT JOIN to `catalogs.accounts` for the account name,
+the exact same join shape `PaymentDetailPage.tsx` already uses for the identical column). The panel
+now shows the existing "Paid `<applied_at>`" text UNCHANGED, plus a new "Deposited `<cleared_date>`
+to `<account>`" when set, or an honest "Not yet deposited" (neutral gray, not a warning color) when
+null. Two source-assertion regression tests added, following this exact file's own established
+testing convention (`invoices-has-balance-filter.test.ts`'s pattern) rather than a live-DB test.
+
+**Honestly flagged, not hidden**: USMCA currently has 0 paid invoices, so every invoice's Payment
+Applications panel renders the pre-existing "No payments applied yet" empty state right now — there
+is nothing to click through in the browser today, on any real invoice. Marked `Live=BLOCKED` in the
+commit, the PR, and the register (not `Live=UNVERIFIED` glossed over, not silently deferred). Built
+now anyway per the owner's explicit ask for forward-looking infrastructure — ready the moment a real
+payment exists and clears. PR #22003, merged, both backend + frontend deploys triggered.
+
+**Remaining A5 items 2 (validation-errors counted column) and 5 (reconciliation pinned Difference)
+still pending scope clarification** — same open questions as posted in the previous cycle's report,
+unchanged: no confirmed `validation_error` data source for item 2; unclear whether AP Aging's
+existing per-page QBO-mirror Δ strip already satisfies item 5's "one pinned Difference" ask or a new
+dedicated surface is wanted. Not building either speculatively.
+
