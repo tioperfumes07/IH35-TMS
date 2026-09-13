@@ -1615,11 +1615,15 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
+        {/* ROUND-20.8 B3 — the Factoring tab is deleted; Factoring owns its own module. This
+            redirect preserves any existing bookmark/deep link (same convention as the
+            /banking/uncategorized alias just below) rather than a bare 404. The Accounts tab's own
+            "Factoring · virtual bank" card is the surviving summary entry point. */}
         <Route
           path="/banking/factoring"
           element={
             <ProtectedRoute>
-              <BankingHomePage initialTab="factoring" />
+              <Navigate to="/banking" replace />
             </ProtectedRoute>
           }
         />

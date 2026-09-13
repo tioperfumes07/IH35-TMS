@@ -4,7 +4,6 @@ export const BANKING_MODULE_TABS = [
   { id: "transactions", label: "Transactions" },
   { id: "link_suggestions", label: "Link Suggestions" },
   { id: "reconciliation", label: "Reconciliation" },
-  { id: "factoring", label: "Factoring (Faro)" },
   { id: "driver_escrow", label: "Driver Escrow" },
   { id: "relay_card", label: "Relay Card" },
   { id: "reports", label: "Reports" },

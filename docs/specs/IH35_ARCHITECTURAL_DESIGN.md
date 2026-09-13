@@ -269,7 +269,7 @@ routes under the grouped nav above (not ComingSoon twins for money leaves).
 | **All Transactions** | Unified ledger across all accounts · `/banking/transactions` | Phase 3 ✅ |
 | **BOA Checking** | Bank of America operating account (reachable via Accounts tile → account detail) | Phase 3 ✅ |
 | **IBC Checking** | IBC operating account (reachable via Accounts tile → account detail) | Phase 3 ✅ |
-| **Factoring (Faro)** | Entry tab inside Banking (`/banking/factoring`) — thin summary + navigates to standalone `/factoring` deep-dive. `/factoring` sub-tabs: **Recourse Pipeline**, **Chargebacks & Fees**, **Statements & Settings** | T11.12 + Banking entry ✅ |
+| ~~Factoring (Faro)~~ | **REMOVED 2026-09-13 (ROUND-20.8 B3, owner-approved, coordinated with CC-3 ROUND 21.0 item 6)** — was a duplicate entry point into the standalone `/factoring` module, itself a full 6-tab surface; `/banking/factoring` now redirects to Accounts. The Accounts tab's own "Factoring · virtual bank" summary card (unchanged) is the surviving read-only entry point. | T11.12 + Banking entry ✅ (retired) |
 | **Escrow (virtual)** | Per-driver escrow balances · `/banking/driver-escrow` | Phase 3 ✅ |
 | **Categorize Drawer** | Uncategorized transactions queue (8 actions) — live inside Transactions Match/Categorize register | Phase 3 ✅ |
 | **Reconciliation Workspace** | Match bank txns to GL entries · sign-off · `/banking/reconciliation` (+ workspace) | Phase 6 (P6) |

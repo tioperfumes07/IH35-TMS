@@ -33,8 +33,12 @@ const FILES = {
   sidebar: "apps/frontend/src/components/layout/sidebar-config.ts",
 };
 
+// ROUND-20.8 B3 (2026-09-13) — Factoring is no longer one of the five never-delete entry tabs;
+// /banking/factoring now redirects to Accounts (routes/manifest.tsx) rather than mounting
+// BankingHomePage with initialTab="factoring", so it is deliberately excluded from ENTRY_ROUTES/
+// SIDEBAR_PATHS below. The frozen historical surface map doc still names it (a record of what was
+// built, not a live requirement) and is intentionally left unedited.
 const ENTRY_ROUTES = [
-  { path: "/banking/factoring", initialTab: "factoring", tabId: "factoring" },
   { path: "/banking/driver-escrow", initialTab: "driver_escrow", tabId: "driver_escrow" },
   { path: "/banking/relay", initialTab: "relay_card", tabId: "relay_card" },
   { path: "/banking/plaid-connections", initialTab: "plaid_connections", tabId: "plaid_connections" },
@@ -42,7 +46,6 @@ const ENTRY_ROUTES = [
 ];
 
 const SIDEBAR_PATHS = [
-  "/banking/factoring",
   "/banking/driver-escrow",
   "/banking/relay",
   "/banking/plaid-connections",
@@ -103,7 +106,6 @@ function contractErrors(src) {
   }
 
   const tabBodies = [
-    ['activeTab === "factoring"', "factoring tab body"],
     ["DriverEscrowTabContent", "Driver Escrow tab content"],
     ['activeTab === "relay_card"', "Relay Card tab body"],
     ["StatementUpload", "Statement Import uploader"],
@@ -115,8 +117,13 @@ function contractErrors(src) {
     }
   }
 
-  if (!src.home.includes('navigate("/factoring"') && !src.home.includes('to="/factoring"')) {
-    errors.push("DOD-A: Factoring tab must deep-link into /factoring module (thin entry, not orphan)");
+  // ROUND-20.8 B3 — the Factoring TAB is gone, but the Accounts tab's own read-only "Factoring ·
+  // virtual bank" summary card must still deep-link into /factoring (additive, never removed).
+  if (!src.home.includes('to="/factoring"')) {
+    errors.push("DOD-A: Accounts tab's Factoring summary card must deep-link into /factoring module (never orphaned)");
+  }
+  if (!src.home.includes("Factoring · virtual bank")) {
+    errors.push("DOD-A: Accounts tab must keep its Factoring · virtual bank summary card (Rule 07 additive, never delete)");
   }
 
   return errors;
@@ -135,12 +142,12 @@ function selftest() {
     routes: SIDEBAR_PATHS.map((p) => `"${p}"`).join("\n"),
     sidebar: SIDEBAR_PATHS.join("\n"),
     home: [
-      'activeTab === "factoring"',
       "DriverEscrowTabContent",
       'activeTab === "relay_card"',
       "StatementUpload",
       "BankingPlaidConnectionsPanel",
       'to="/factoring"',
+      "Factoring · virtual bank",
     ].join("\n"),
   };
   if (contractErrors(good).length) {
@@ -149,7 +156,7 @@ function selftest() {
   }
   const twin = {
     ...good,
-    manifest: 'path="/banking/factoring"\n<ComingSoonPage />\n',
+    manifest: 'path="/banking/driver-escrow"\n<ComingSoonPage />\n',
   };
   if (!contractErrors(twin).some((e) => e.includes("ComingSoon"))) {
     console.error(`${LABEL} --selftest FAIL ComingSoon twin not caught`);
