@@ -1,6 +1,6 @@
 {
   "healthzSha": "1185086",
-  "generated_at": "2026-09-13T18:56:10.585Z",
+  "generated_at": "2026-09-13T19:02:36.151Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 22022,
+      "title": "FINDING: N/A (docs only — OUTBOX status + migration-authority escalation to CC-1)",
+      "state": "merged",
+      "mergedAtCt": "09/13/2026, 01:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22022",
+      "sha": "4443f35b78",
+      "committedAtIso": "2026-09-13T13:59:08-05:00"
+    },
+    {
+      "number": 22021,
+      "title": "CC-2-FINDING: BANK-F30130 (ROUND 23.3 DELTA — Faro linkage backfill + maker!=checker)",
+      "state": "merged",
+      "mergedAtCt": "09/13/2026, 01:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22021",
+      "sha": "ebdaa709a4",
+      "committedAtIso": "2026-09-13T13:57:54-05:00"
+    },
+    {
       "number": 22020,
       "title": "FINDING: BANK-F30120 (ROUND 23.3 SUPPLEMENT -- master AlwaysTrack parity guard + orphaned invoice-dispute routes wired)",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22014",
       "sha": "3b22f9fdfa",
       "committedAtIso": "2026-09-13T13:10:58-05:00"
-    },
-    {
-      "number": 22012,
-      "title": "docs(alwaystrack): CORRECTION - withdraw D1 and D2, rescope the gap to real USMCA loads",
-      "state": "merged",
-      "mergedAtCt": "09/13/2026, 12:58 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22012",
-      "sha": "170e7cf6c5",
-      "committedAtIso": "2026-09-13T12:58:54-05:00"
-    },
-    {
-      "number": 22011,
-      "title": "docs(alwaystrack): measured parity gap register + validated PDF extractor + truth JSON",
-      "state": "merged",
-      "mergedAtCt": "09/13/2026, 12:12 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22011",
-      "sha": "82c225fd27",
-      "committedAtIso": "2026-09-13T12:12:14-05:00"
     }
   ]
 }
