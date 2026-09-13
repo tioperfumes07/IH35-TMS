@@ -5,26 +5,20 @@
 // same expense number as the load and all bills related to that load." A feature that does not
 // carry the load's identity forward is NOT DONE.
 //
-// Three checks, all against LIVE Neon (bypass_rls='lucia' — these are cross-entity/company reads by
-// design, not a single-tenant RLS-scoped read):
-//   LINK 2 (presettlement/tour link) — a non-cancelled load older than 24h with
-//     mdata.loads.presettlement_link_id IS NULL. HARD FAIL. Verified live against the Lead's own
-//     88-load chain audit: this exact WHERE clause + column reproduced 74/88 exactly.
+// Three HARD-FAIL checks, all against LIVE Neon (bypass_rls='lucia' — these are cross-entity/
+// company reads by design, not a single-tenant RLS-scoped read):
+//   LINK 1 (driver bill) — driver_finance.driver_bills.load_id (NOT accounting.bills, which has no
+//     load_id column at all — that was this guard's own first-draft mistake, corrected by the Lead
+//     2026-09-13: "THAT IS THE WRONG TABLE. My figure came from driver_finance.driver_bills.load_id").
+//     Live-verified this exact query reproduces 81/88 exactly, unfiltered by driver_bills.status —
+//     adding a status filter was tried and it under-counts (74/88), so this stays a bare EXISTS.
+//   LINK 2 (presettlement/tour link) — mdata.loads.presettlement_link_id IS NULL. Live-verified to
+//     reproduce 74/88 exactly.
 //   LINK 3 (expense_number off the load) — accounting.expenses with a non-null load_id whose
-//     expense_number does not start with that load's load_number. HARD FAIL — the Lead's own
-//     measurement found this ALREADY at 385/385 and said "DO NOT TOUCH IT... any refactor that
-//     weakens this is a regression." This check is what keeps it there.
-//   LINK 1 (driver bill) — REPORTED, NOT FAILED, in this version. accounting.bills has no load_id
-//     column at all (confirmed via a full schema read), so "load -> driver bill" can only be
-//     reached indirectly, and the exact path the Lead's own 81/88 figure used could not be
-//     reproduced live during authoring (the obvious candidate join —
-//     driver_finance.driver_settlements.accounting_bill_id via presettlement_link_id — was
-//     attempted but the live connection was too unstable this session to get a confirmed,
-//     reproducible match to 81/88; two consecutive identical queries returned 88 and then 0 total
-//     rows with no code change). Shipping a HARD FAIL on an unverified join risks blocking every
-//     other seat's push on a guard that is wrong by construction — worse than not having it yet.
-//     Reported here as a metric so it's visible; promote to HARD FAIL once Cursor/CC-1 confirm the
-//     real linkage column (Cursor owns the auto-create hook this check protects).
+//     expense_number does not start with that load's load_number. The Lead's own measurement found
+//     this ALREADY at 385/385 and said "DO NOT TOUCH IT... any refactor that weakens this is a
+//     regression." This check is what keeps it there.
+// All three scoped identically: non-cancelled, non-soft-deleted, older than 24h.
 //
 // Skips gracefully (prints, exits 0) when DATABASE_URL is not set — same convention every other
 // live-Neon guard in this repo uses, so a coder without a live connection configured is never
@@ -53,8 +47,11 @@ async function live() {
     const chainRes = await client.query(`
       SELECT
         COUNT(*)::int AS total,
-        COUNT(*) FILTER (WHERE presettlement_link_id IS NULL)::int AS missing_presettlement
-      FROM mdata.loads
+        COUNT(*) FILTER (WHERE presettlement_link_id IS NULL)::int AS missing_presettlement,
+        COUNT(*) FILTER (
+          WHERE NOT EXISTS (SELECT 1 FROM driver_finance.driver_bills db WHERE db.load_id = l.id)
+        )::int AS missing_driver_bill
+      FROM mdata.loads l
       WHERE soft_deleted_at IS NULL
         AND status <> 'cancelled'
         AND created_at < now() - interval '24 hours'
@@ -66,6 +63,11 @@ async function live() {
     }
 
     const failures = [];
+    if (Number(chain.missing_driver_bill) > 0) {
+      failures.push(
+        `LINK 1 — ${chain.missing_driver_bill} of ${chain.total} non-cancelled load(s) older than 24h have no driver_finance.driver_bills row (no driver bill auto-created)`
+      );
+    }
     if (Number(chain.missing_presettlement) > 0) {
       failures.push(
         `LINK 2 — ${chain.missing_presettlement} of ${chain.total} non-cancelled load(s) older than 24h have no presettlement_link_id (no pre-settlement/settlement/tour assignment)`
@@ -86,39 +88,14 @@ async function live() {
       );
     }
 
-    // LINK 1 — reported only, see header. Best-available hypothesis join; unverified live this
-    // session (connection instability, not a query error). Never gates the build.
-    let link1Note = "LINK 1 (driver bill) — SKIPPED (join unverified live, see header comment)";
-    try {
-      const billRes = await client.query(`
-        SELECT
-          COUNT(*)::int AS total,
-          COUNT(*) FILTER (
-            WHERE EXISTS (
-              SELECT 1 FROM driver_finance.driver_settlements s
-              WHERE s.id = mdata_loads.presettlement_link_id AND s.accounting_bill_id IS NOT NULL
-            )
-          )::int AS via_settlement_bill
-        FROM mdata.loads AS mdata_loads
-        WHERE soft_deleted_at IS NULL
-          AND status <> 'cancelled'
-          AND created_at < now() - interval '24 hours'
-      `);
-      const bill = billRes.rows[0];
-      if (bill && bill.total !== "0") {
-        link1Note = `LINK 1 (driver bill, via settlement.accounting_bill_id — UNCONFIRMED join) — ${bill.via_settlement_bill} of ${bill.total} reported, informational only`;
-      }
-    } catch {
-      // Leave the SKIPPED note — never fail the build on an experimental, non-gating query.
-    }
-
     if (failures.length > 0) {
       console.error(`${LABEL}: LIVE FAIL`);
       for (const f of failures) console.error(`  ✗ ${f}`);
-      console.error(`  (${link1Note})`);
       process.exit(1);
     }
-    console.log(`${LABEL}: LIVE PASS — ${chain.total} eligible load(s), 0 missing presettlement_link_id, 0 expense_number mismatches. ${link1Note}`);
+    console.log(
+      `${LABEL}: LIVE PASS — ${chain.total} eligible load(s), 0 missing driver_bills row, 0 missing presettlement_link_id, 0 expense_number mismatches.`
+    );
   } finally {
     await client.end();
   }
