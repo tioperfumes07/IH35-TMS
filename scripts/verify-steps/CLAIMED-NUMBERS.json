@@ -8839,5 +8839,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-13",
     "purpose": "verify-saved-query-chips"
+  },
+  "11441": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-13",
+    "purpose": "verify-one-saved-query-three-surfaces"
   }
 }
