@@ -733,3 +733,37 @@ Owner "close it identical … cash flow same data day by day". Full writeup:
   and has no `total_cents` input, so raising a sent+factored invoice is an owner money workflow, not a
   field edit; and 3 Faro purchases with NO advance ($8,000: Sethmar 013 $4,900 08/14, Direct Connect
   061 $2,100 09/10, Tennessee Steel 062 $1,000 09/10) — loads never entered, cannot fabricate.
+
+## Active Architectural Decisions — Load-to-cash chain C1/C2/C3 (Cursor, 2026-09-13)
+
+Owner law: a load booked → driver bill auto-created for that driver → load auto-assigned to a
+pre-settlement/tour. Guard `scripts/verify-load-to-cash-chain.mjs`. Full forensic:
+`docs/reconcile/CHAIN-C1-C2-BACKFILL-2026-09-13.md`. Durable facts:
+- **The hooks EXIST.** Driver-bill mint = `ensureDriverBillArtifactsForLoad`
+  (`book-load.service.ts:1091`), returns `not_applicable` with no seated driver
+  (`driver_bills.driver_id` NOT NULL). Presettlement link = `linkLoadToPresettlementAtBookingInClientTx`
+  (`presettlement-link.service.ts:624`) / REG-008 `linkLoadToPresettlementAfterAssignmentInClientTx`
+  (`:695`). Both wired into book-load + quick-assign + quicksave + planner + reassign (bill convergence
+  2026-09-11). A gap for a specific load is a backlog/data issue, not a missing hook.
+- **`uq_driver_settlements_one_open_per_driver` is a PARTIAL unique index on `status='open'`** — a
+  driver may hold only ONE open pre-settlement. This blocks create_new for a driver who already has an
+  open tour, and is why cancelled OPEN historical settlements whose driver has moved on cannot be
+  mechanically re-opened.
+- **C1 backlog (13554/13573/13579/13580) minted** via the real hook (3 open $0 unpriced tracking +
+  13579 priced) — they predated the 2026-09-11 mint convergence. LINK 1 = 0 driver-having loads unbilled.
+- **C2 root cause was NOT a hook miss — it was an UNATTRIBUTED SCRIPT that CANCELLED 6 pre-settlements**
+  on 2026-09-12 (01:21:49Z S-2026-0013/0021 from `open`; 01:46:49Z S-2026-0018/0020/0028/0030 from
+  `closed`), blank `changed_by_role`/no `session_id`, clearing `loads.presettlement_link_id`. None
+  posted (open/closed pre-settlements). **C2a restored the 4 owner-CLOSED ones to `closed` + re-pointed
+  13564/13570/13580/13589/13586** (root-cause reversal, partial-index-safe). **C2b (13526/13527/13561/
+  13567/13571/13574) is an owner decision** (the 2 were OPEN, drivers moved to newer tours S-2026-5806/
+  5807; re-open violates one-open-per-driver, `closed` is an owner close; 13526 never had one).
+- **Guard corrections:** USMCA-scoped (was counting frozen Transportation `L-2026…`); LINK 1 hard-fails
+  only on driver-HAVING loads; driverless-delivered (13502/13505/13507 — no driver ever seated, owner
+  data fix) + owner-pending (`OWNER_PENDING_UNLINKED`) are REPORTs not fake-red; **`set_config(bypass_rls,
+  …,false)`** — the `true`/transaction-local form was lost under pg autocommit → every read RLS-filtered
+  to 0 ("0 eligible loads" false FAIL). Guard now LIVE PASS at 88 USMCA loads.
+- **C4 13595 already reverted** (`in_transit→dispatched` 23:52:05Z, audit-confirmed); **C5 13593 reads
+  `dispatched`** live (planner `in_transit` render ≠ persisted state) — no anomaly.
+- **LOADS FENCE reminder:** only Cursor writes load status / tour_id / trip_type / presettlement_link_id.
+  Restoring a never-posted pre-settlement's status is tour-linkage (Cursor), not GL/posting (CC-1).
