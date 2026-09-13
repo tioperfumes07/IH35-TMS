@@ -219,25 +219,46 @@ export async function createPolicyBillSchedule(
 
   try {
     for (const row of planned) {
+      // ROUND 20.9 ITEM 1 — createBill()'s `billNumber` is dual-purpose: it is stored verbatim
+      // into the free-text accounting.bills.bill_number column AND separately re-used as a
+      // MANUAL OVERRIDE for accounting.bills.display_id, which resolveBillDisplayId() (display-
+      // id.ts) validates against the strict BILL-YYYY-NNNNN shape (the same shape it auto-
+      // generates). row.billNumber's own shape ("INS-<policy_number>-<suffix>") NEVER matches
+      // that pattern, so every createBill() call this function has ever made — for every policy,
+      // create or renew, in this codebase's history (confirmed live: 0 "INS-%" bills exist
+      // anywhere, on any entity) — threw InvalidDisplayIdShapeError before a single row was ever
+      // written. Omitting billNumber lets resolveBillDisplayId auto-generate the real sequential
+      // BILL-YYYY-NNNNN id (the same one every other bill in the system gets); the human-readable
+      // INS-<policy>-<suffix> reference is kept, prefixed onto the memo instead, where it belongs
+      // as a free-text cross-reference rather than a display-id override.
       const bill = await createBill(
         {
           operatingCompanyId: policy.operating_company_id,
           vendorId: policy.vendor_id,
-          billNumber: row.billNumber,
           billDate: row.dueDate,
           dueDate: row.dueDate,
           amountCents: row.amountCents,
-          memo: row.memo,
+          memo: `${row.billNumber} — ${row.memo}`,
           coaAccountId: insuranceExpenseAccountId,
         },
         userId
       );
       committedBillIds.push(bill.id);
 
+      // ROUND 20.9 ITEM 1 — insurance.payment_schedule's RLS policy (payment_schedule_opco_scope)
+      // enforces on operating_company_id, not tenant_id; this INSERT set only tenant_id, leaving
+      // operating_company_id NULL (the column is nullable, no default) and the WITH CHECK clause
+      // (`operating_company_id::text = current_setting('app.operating_company_id', true)`)
+      // evaluating NULL = <uuid> -> NULL -> reject. Every real, non-bypass-scoped call (i.e. every
+      // production request) hit this — confirmed live via a real bypass-free tenant-scoped
+      // transaction, the same shape a genuine API request runs under. insurance.policy's own
+      // INSERT already sets both columns to the identical value (see policy.routes.ts); mirrored
+      // here.
       const schedRes = await client.query<{ id: string }>(
         `
           INSERT INTO insurance.payment_schedule (
             tenant_id,
+            operating_company_id,
             policy_id,
             due_date,
             amount_cents,
@@ -245,7 +266,7 @@ export async function createPolicyBillSchedule(
             bill_status,
             bill_uuid
           )
-          VALUES ($1::uuid, $2::uuid, $3::date, $4, 'scheduled', 'issued', $5::uuid)
+          VALUES ($1::uuid, $1::uuid, $2::uuid, $3::date, $4, 'scheduled', 'issued', $5::uuid)
           RETURNING id::text
         `,
         [policy.operating_company_id, policyId, row.dueDate, row.amountCents, bill.id]
