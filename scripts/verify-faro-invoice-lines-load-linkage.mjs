@@ -34,7 +34,11 @@ async function live() {
   const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
   await client.connect();
   try {
-    await client.query("SELECT set_config('app.bypass_rls','lucia',false)");
+    // BANK-F30150 (found this session, verify-alwaystrack-parity.mjs): a bare session-level
+    // set_config is unreliable through Neon's POOLED endpoint — wrap every read in one explicit
+    // transaction with a transaction-scoped bypass so a pooler can't split it across backends.
+    await client.query("BEGIN");
+    await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
 
     const res = await client.query(
       `SELECT invoice_number, customer_name, gross_amount_cents
@@ -59,6 +63,7 @@ async function live() {
       }
       process.exit(1);
     }
+    await client.query("COMMIT");
     console.log(`${LABEL}: LIVE PASS — ${total}/${total} live USMCA faro_invoice_lines rows carry a real load_id.`);
   } finally {
     await client.end();

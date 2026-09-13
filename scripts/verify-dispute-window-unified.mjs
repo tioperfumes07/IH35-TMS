@@ -38,7 +38,11 @@ async function live() {
   const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
   await client.connect();
   try {
-    await client.query("SELECT set_config('app.bypass_rls','lucia',false)");
+    // BANK-F30150 (found this session, verify-alwaystrack-parity.mjs): a bare session-level
+    // set_config is unreliable through Neon's POOLED endpoint — wrap every read in one explicit
+    // transaction with a transaction-scoped bypass so a pooler can't split it across backends.
+    await client.query("BEGIN");
+    await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
     let failures = 0;
 
     // completeness discriminator — an empty result is an instrument claim, not a verdict, unless
@@ -87,6 +91,7 @@ async function live() {
     }
     if (uncovered > 0) failures++;
 
+    await client.query("COMMIT");
     if (failures > 0) process.exit(1);
     console.log(
       `${LABEL}: LIVE PASS — 0/${total} null load_id; ${varianceRes.rows.length} Faro-vs-face variance(s) found, ` +
