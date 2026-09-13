@@ -67,6 +67,13 @@ const STEPS = [
   // ALL-SEATS LAW (owner, 2026-09-13) — every load-number column carries a settlement/tour column
   // beside it; only source_document_ref (never display_id) is ever the human-visible number.
   ["verify-settlement-ref-beside-load", "scripts/verify-settlement-ref-beside-load.mjs"],
+  // LOAD-TO-CASH CHAIN, LINK 4 PR 3 (owner precedence, 2026-09-12) — "money-in excluded from
+  // auto-categorization." Covers both pre-existing rule engines + the human refresh-suggestion route.
+  ["verify-money-in-excluded-from-auto-categorization", "scripts/verify-money-in-excluded-from-auto-categorization.mjs"],
+  // B6 (owner, 2026-09-12) — customer record tab bar position fix + data-dot feature.
+  ["verify-customer-tab-bar-position-and-data-dot", "scripts/verify-customer-tab-bar-position-and-data-dot.mjs"],
+  // B4/ROUND 21.2 (owner, 2026-09-12) — relationship-health-score honesty for the 1-4-of-5-signals case.
+  ["verify-customer-relationship-score-partial-honesty", "scripts/verify-customer-relationship-score-partial-honesty.mjs"],
   // Rule 30 — soft-reset onto newer main deleted other PRs' verify-steps (2026-08-02).
   ["verify-no-guard-file-deletion", "scripts/verify-no-guard-file-deletion.mjs"],
   // Rule 30 — tip commit LIVE PROOF must be Claude-green (not "UNVERIFIED browser" theater).

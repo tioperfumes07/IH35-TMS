@@ -11,6 +11,16 @@ export interface NavyPageSubNavItem {
   label: string;
   to: string;
   children?: readonly NavySubNavChild[];
+  /** B6 (owner, 2026-09-12) — "a dot on any tab that contains data." Optional and additive: a
+   *  consumer that never sets this renders exactly as before. White, not an amber/emerald/yellow/
+   *  green status hue — §7 (verify-section7-palette-nonfinancial.mjs) reserves those colors for the
+   *  Class pill/delete-only red; white is this nav's own existing text color, so a solid dot in it
+   *  is visible against the navy bar without adding an off-palette status color. */
+  hasData?: boolean;
+}
+
+function DataDot() {
+  return <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-white" />;
 }
 
 interface NavyPageSubNavProps {
@@ -165,10 +175,11 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
                 key={id}
                 type="button"
                 aria-current={active ? "page" : undefined}
-                className={active ? "border-b border-white pb-0.5 font-semibold" : ""}
+                className={`inline-flex items-center gap-1 ${active ? "border-b border-white pb-0.5 font-semibold" : ""}`}
                 onClick={() => onTabChange(id)}
               >
                 {item.label}
+                {item.hasData ? <DataDot /> : null}
               </button>
             );
           }
@@ -177,9 +188,10 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
               key={item.to}
               to={item.to}
               aria-current={isActive(pathname, item.to) ? "page" : undefined}
-              className={isActive(pathname, item.to) ? "border-b border-white pb-0.5 font-semibold" : ""}
+              className={`inline-flex items-center gap-1 ${isActive(pathname, item.to) ? "border-b border-white pb-0.5 font-semibold" : ""}`}
             >
               {item.label}
+              {item.hasData ? <DataDot /> : null}
             </NavLink>
           );
         })}

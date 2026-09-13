@@ -736,6 +736,20 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           bt.source,
           bt.source_ref,
           bt.plaid_transaction_id,
+          bt.categorized_at,
+          -- LINK4-PR3 (owner ask, 2026-09-12) — AUTO-SUGGESTED filter: applyBankingRulesForTransaction
+          -- / autoCategorize's dry-run / the fuzzy fallback have ALWAYS written these 4 columns
+          -- (banking-rules.engine.ts), but nothing on this list ever selected them, so a computed
+          -- suggestion sat on the row invisibly until a human happened to open the categorize drawer
+          -- for that exact transaction (ACCT-F375's per-transaction rule_match, same gap one level
+          -- up). Same human-label convention as every other FK on this SELECT.
+          bt.suggested_vendor_id::text,
+          sv.vendor_name AS suggested_vendor_name,
+          bt.suggested_account_id::text,
+          sa.account_number AS suggested_account_number,
+          sa.account_name AS suggested_account_name,
+          bt.suggested_confidence,
+          bt.suggested_source,
           bt.categorization_driver_id::text AS categorization_driver_id,
           NULLIF(TRIM(CONCAT(d.first_name, ' ', d.last_name)), '') AS categorization_driver_name,
           bt.categorization_unit_id::text AS categorization_unit_id,
@@ -842,6 +856,12 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
         LEFT JOIN accounting.expenses expense
           ON expense.id = bt.matched_expense_id
          AND expense.operating_company_id = bt.operating_company_id
+        LEFT JOIN mdata.vendors sv
+          ON sv.id = bt.suggested_vendor_id
+         AND sv.operating_company_id = bt.operating_company_id
+        LEFT JOIN catalogs.accounts sa
+          ON sa.id = bt.suggested_account_id
+         AND sa.operating_company_id = bt.operating_company_id
         WHERE ${predicates.join(" AND ")}
         ORDER BY ${sortSql}
         LIMIT $${limitIdx} OFFSET $${offsetIdx}

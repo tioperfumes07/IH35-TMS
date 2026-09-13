@@ -2931,6 +2931,19 @@
       ]
     },
     {
+      "id": "lists.modal.load_exception_reason",
+      "tab": "Dispatch catalogs",
+      "sub": "Load exception reason modal",
+      "route_hint": "/lists/dispatch/load-exception-reasons",
+      "surface_kind": "modal",
+      "surface_path": "pages/lists/dispatch/LoadExceptionReasonsListPage.tsx",
+      "required": [
+        "connectivity",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
       "id": "lists.modal.termination_reason",
       "tab": "Driver catalogs",
       "sub": "Termination reason modal",

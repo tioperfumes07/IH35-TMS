@@ -15,8 +15,13 @@ const ROUTES = "apps/backend/src/driver-finance/tour-readout.routes.ts";
 const PRE = "apps/frontend/src/components/dispatch/TourPreSettlementTab.tsx";
 const SET = "apps/frontend/src/components/dispatch/TourSettlementTab.tsx";
 const API = "apps/frontend/src/api/tourReadout.ts";
+// DISPATCH-ONE-ROW-PER-LOAD (owner 2026-09-11): TOUR_LOAD_COLUMNS (incl. the "Ready to close"
+// column, testId "tour-col-ready") moved out of LoadCostsBoardPage.tsx and into its own file when
+// the board switched from one-row-per-tour to one-row-per-load. Read separately so the column
+// check below still asserts the real, current location instead of the page file it used to live in.
+const ROWS = "apps/frontend/src/components/dispatch/TourLoadRows.tsx";
 const read = (p) => fs.readFileSync(p, "utf8");
-function audit({ page, routes, pre, set, api }) {
+function audit({ page, routes, pre, set, api, rows }) {
   const p = [];
   for (const [label, re] of [
     ["pre_settlement tab", /id: "pre_settlement", label: "Pre-Settlement"/],
@@ -26,8 +31,12 @@ function audit({ page, routes, pre, set, api }) {
     ["rows from listTours", /queryFn: \(\) => listTours\(companyId, state\)/],
     ["expanded row = TourPreSettlementTab by settlement", /<TourPreSettlementTab settlementId=\{r\.settlement_id\}/],
     ["expanded row = TourSettlementTab by settlement", /<TourSettlementTab settlementId=\{r\.settlement_id\}/],
-    ["Ready to close column", /testId: "tour-col-ready"/],
   ]) if (!re.test(page)) p.push(`page: ${label} missing`);
+  // See the ROWS comment above: the "Ready to close" column now lives in TourLoadRows.tsx's
+  // TOUR_LOAD_COLUMNS (which LoadCostsBoardPage imports and passes to ParityTable), not inline in
+  // the page file itself — checking `page` directly for this testId was pinned to the pre-refactor
+  // shape and could never pass again after the column moved.
+  if (!/testId: "tour-col-ready"/.test(rows)) p.push("tour load rows: Ready to close column missing");
   if (!/app\.get\("\/api\/v1\/driver-finance\/tours"/.test(routes)) p.push("backend: GET /api/v1/driver-finance/tours missing");
   if (!/const r = await buildTourReadout\(client, companyId, id, null\);/.test(routes)) p.push("backend: tours list not built from buildTourReadout (second sum)");
   if (!/state === "open" \? "s\.trip_closed_at IS NULL" : "s\.trip_closed_at IS NOT NULL"/.test(routes)) p.push("backend: open/closed not keyed on trip_closed_at");
@@ -37,7 +46,7 @@ function audit({ page, routes, pre, set, api }) {
   }
   return p;
 }
-const clean = { page: read(PAGE), routes: read(ROUTES), pre: read(PRE), set: read(SET), api: read(API) };
+const clean = { page: read(PAGE), routes: read(ROUTES), pre: read(PRE), set: read(SET), api: read(API), rows: read(ROWS) };
 if (process.argv.includes("--selftest")) {
   const plants = [
     ["Pre-Settlement tab removed", { ...clean, page: clean.page.replace('id: "pre_settlement", label: "Pre-Settlement"', 'id: "pre_settlement", label: "Tours"') }],
@@ -46,6 +55,7 @@ if (process.argv.includes("--selftest")) {
     ["backend route removed", { ...clean, routes: clean.routes.replace('app.get("/api/v1/driver-finance/tours"', 'app.get("/api/v1/driver-finance/tour-list"') }],
     ["backend second sum", { ...clean, routes: clean.routes.replace("const r = await buildTourReadout(client, companyId, id, null);", "const r = await sumTour(client, id);") }],
     ["tab ignores settlementId", { ...clean, pre: clean.pre.replace("settlementId ? getTourReadout(settlementId, operatingCompanyId) : getTourReadoutForLoad(loadId!, operatingCompanyId)", "getTourReadoutForLoad(loadId!, operatingCompanyId)") }],
+    ["Ready to close column removed", { ...clean, rows: clean.rows.replace('testId: "tour-col-ready"', 'testId: "tour-col-ready-removed"') }],
   ];
   let escaped = 0;
   for (const [l, m] of plants) if (audit(m).length === 0) { console.error(`SELFTEST FAIL — not caught: ${l}`); escaped++; }

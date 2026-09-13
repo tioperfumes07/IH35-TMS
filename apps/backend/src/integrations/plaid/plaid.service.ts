@@ -481,9 +481,20 @@ export async function exchangePublicToken(publicToken: string, operatingCompanyI
  * invisible to the poster and starved matched_journal_entry_id density.
  */
 export async function autoCategorize(
-  transaction: Pick<BankTransaction, "operating_company_id" | "id" | "plaid_category"> & { description?: string | null },
+  transaction: Pick<BankTransaction, "operating_company_id" | "id" | "plaid_category"> & {
+    description?: string | null;
+    // LINK4-PR3 (owner precedence, 2026-09-12): "money-in excluded from auto-categorization." A
+    // deposit/refund/customer-payment is a business event a human should categorize deliberately,
+    // never an auto-applied guess. Optional so a caller that genuinely cannot know direction yet
+    // (none exist today — both real callers already have is_credit in scope, see
+    // scripts/verify-money-in-excluded-from-auto-categorization.mjs) fails safe: undefined is
+    // treated as "unknown, do not guess", not as "assume debit".
+    is_credit?: boolean;
+  },
   opts?: { actorUserUuid?: string; dryRun?: boolean }
 ) {
+  if (transaction.is_credit !== false) return null;
+
   const rules = await loadCategoryRules(transaction.operating_company_id);
   if (rules.length === 0) return null;
 
@@ -766,6 +777,7 @@ export async function syncTransactions(itemId: string, opts?: { actorUserUuid?: 
                 // BANK-F02 — the merchant condition needs the bank text; without it a
                 // description_pattern rule can never fire.
                 description: normalizedDescription,
+                is_credit: signed.is_credit,
               },
               { actorUserUuid: opts?.actorUserUuid }
             );

@@ -2,18 +2,20 @@
 /** @matrix-built {"modules":["accounting","dispatch","safety","reports"],"cols":["load"],"leafRe":"^(expenses\\.create|load\\.drawer\\.pre_settlement|dispatch\\.wizard\\.border_crossing_wizard_page|cargo_claims\\.create|report\\.dispatch_margin)$","task":"WAVE-A-load-exact-surfaces","vertical":"column-wave"} */
 import fs from "node:fs";
 
-// The real rows use <EntityLinkOrTombstone kind="load" id={settlement.X_load_id}
-// name={settlement.X_load_number} noun="Load" /> (not a bare <EntityLink label={...}>) —
-// EntityLinkOrTombstone additionally withholds the drill when the load is unresolved (own
-// component contract), a strictly stronger guarantee than a raw EntityLink. Accept either
-// component name and either the `label=` or `name=` prop. Bounded with `[^>]` (never crosses a
-// `>`) so the match stays inside ONE JSX tag — PreSettlementPanel.tsx has two near-identical
-// <EntityLink.../> blocks (first-load and last-load) back to back; an unbounded `[\s\S]*` window
-// would let a check for one block's id/kind pair up with the OTHER block's label, silently
-// passing even if a block's own kind/label were wrong.
+// SETTLEMENT LOAD LINKAGE: FIX THE RENDER, NOT THE SCHEMA (owner 2026-09-11) — the panel no longer
+// renders a bare <EntityLink id={settlement.first_load_id}>/<... last_load_id}> pair directly (that
+// dropped every middle leg of a tour that isn't a simple 2-load bookend). It now builds a
+// `linkedTripRows` array (legs.length > 0 ? every real leg : the first_load/last_load bookend
+// fallback, still reading settlement.first_load_id/first_load_number and
+// settlement.last_load_id/last_load_number as its fallback source) and renders EVERY row through
+// one shared <EntityLinkOrTombstone kind="load" id={row.loadId} name={row.loadNumber} .../> call —
+// so the real assertion is (a) the fallback array construction still reads the real settlement
+// bookend fields, and (b) the shared row renderer uses a real EntityLinkOrTombstone load drill, not
+// that any longer-obsolete direct settlement.X_load_id JSX prop still exists verbatim.
 const checks = [
-  ["pre-settlement first-load drill", "apps/frontend/src/components/dispatch/PreSettlementPanel.tsx", /<EntityLink(?:OrTombstone)?[^>]{0,300}?kind="load"[^>]{0,300}?id=\{settlement\.first_load_id\}[^>]{0,300}?(?:label|name)=\{settlement\.first_load_number\}/],
-  ["pre-settlement last-load drill", "apps/frontend/src/components/dispatch/PreSettlementPanel.tsx", /<EntityLink(?:OrTombstone)?[^>]{0,300}?kind="load"[^>]{0,300}?id=\{settlement\.last_load_id\}[^>]{0,300}?(?:label|name)=\{settlement\.last_load_number\}/],
+  ["pre-settlement first-load fallback source", "apps/frontend/src/components/dispatch/PreSettlementPanel.tsx", /settlement\.first_load_id\s*&&\s*settlement\.first_load_number[\s\S]{0,120}?loadId:\s*settlement\.first_load_id,\s*loadNumber:\s*settlement\.first_load_number/],
+  ["pre-settlement last-load fallback source", "apps/frontend/src/components/dispatch/PreSettlementPanel.tsx", /settlement\.last_load_id\s*&&[\s\S]{0,200}?loadId:\s*settlement\.last_load_id,\s*loadNumber:\s*settlement\.last_load_number/],
+  ["pre-settlement linked-trip row drill", "apps/frontend/src/components/dispatch/PreSettlementPanel.tsx", /<EntityLink(?:OrTombstone)?[^>]{0,200}?kind="load"[^>]{0,200}?id=\{row\.loadId\}[^>]{0,200}?(?:label|name)=\{row\.loadNumber\}/],
   // BANK-F5765 — the old assertion pointed at BankingPlaidConnectionsPanel's connection-management
   // shell and a retired `t.matched_load_id` row shape. The mounted transaction register now resolves
   // categorization_load_id OR matched_load_id into one canonical id/number pair, then renders that

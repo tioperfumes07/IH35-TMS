@@ -8819,5 +8819,20 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-13",
     "purpose": "verify-truck-line-units-only"
+  },
+  "11417": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-13",
+    "purpose": "verify-money-in-excluded-from-auto-categorization"
+  },
+  "11421": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-13",
+    "purpose": "verify-customer-relationship-score-partial-honesty"
+  },
+  "11425": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-13",
+    "purpose": "verify-customer-tab-bar-position-and-data-dot"
   }
 }
