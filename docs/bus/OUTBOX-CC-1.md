@@ -368,3 +368,24 @@ confirmed: loads 13463/13475 stay soft-deleted, untouched, never reused; the old
 voided, only renamed.
 
 PR #22052, shipping via fast-merge now.
+
+## 2026-09-13 — ROUND 23.5 follow-up: WO DE-GHOST + last 2 unlinked USMCA driver bills, EXECUTED
+
+**WO DE-GHOST.** The prior wrong-attempt loads (13463, 13475, both soft-deleted) still carried the
+real customer WO numbers (68747, MPHC261334) that belong on live rows — a lookup for either WO
+found only the dead row, while the real load (13524) carried no WO at all. Three UPDATEs, no
+reverses: `mdata.loads` 13524.customer_wo_number → 'MPHC261334' (the one that matters); 13463 and
+13475 (both stay soft-deleted, void-not-delete holds) → NULL, with a note appended pointing at
+where each WO actually belongs. Live proof, bypass properly referenced, no soft-delete filter:
+68747 → INV-2026-00007 (live, exactly 1 row); MPHC261334 → 13524 (live, exactly 1 row).
+
+**Last 2 unlinked USMCA driver bills.** Bills 13571 ($822.74) and 13574 ($780.61), both driver Hugo
+Gaytan's teammate (3e138476...), had `settled_in_settlement_id` NULL. Settlement S-2026-5799
+(status=locked, same driver) has first_load_number=13571 / last_load_number=13574 — an exact
+bookend match on the settlement's own recorded range, not a guess — and had ZERO bills linked to it
+at all (same ingestion-time gap already diagnosed for other USMCA settlements this session). Linked
+both bills to S-2026-5799; no GL/money recompute (its net_pay was already fixed by the B4 backfill
+earlier this session). Live proof: 0 USMCA open/unlinked bills remain (was 2). 2 TRANSP-scoped
+unlinked bills found in the same query are out of this round's USMCA scope, untouched.
+
+Both pushed as follow-up commits to PR #22052, shipping together via fast-merge.
