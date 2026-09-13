@@ -1,10 +1,10 @@
 {
-  "healthzSha": "8bb5e57",
-  "generated_at": "2026-09-11T22:45:08.631Z",
+  "healthzSha": "f447d5f",
+  "generated_at": "2026-09-13T00:05:17.228Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "8bb5e57",
+    "deployedSha": "f447d5f",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 21858,
-      "title": "FINDING: N/A (CLAIM-RESERVE 10931 -- reservation-only commit, no code fix)",
+      "number": 21939,
+      "title": "FINDING: N/A (ROUND-20.4 -- Truck Line: remove drivers, make the row rules visible)",
       "state": "merged",
-      "mergedAtCt": "09/11/2026, 05:36 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21858",
-      "sha": "8bb5e578f4",
-      "committedAtIso": "2026-09-11T17:36:51-05:00"
+      "mergedAtCt": "09/12/2026, 06:58 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21939",
+      "sha": "f447d5f901",
+      "committedAtIso": "2026-09-12T18:58:20-05:00"
     },
     {
-      "number": 21857,
-      "title": "FINDING: N/A (docs — all 3 Lead items closed, self-found RLS bug reported + fixed)",
+      "number": 21938,
+      "title": "FINDING: N/A (docs -- ROUND 20.3 UPDATED fan-out confirmed already-shipped, no code change)",
       "state": "merged",
-      "mergedAtCt": "09/11/2026, 05:36 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21857",
-      "sha": "e549ea8064",
-      "committedAtIso": "2026-09-11T17:36:40-05:00"
+      "mergedAtCt": "09/12/2026, 06:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21938",
+      "sha": "eba08dd208",
+      "committedAtIso": "2026-09-12T18:55:39-05:00"
     },
     {
-      "number": 21856,
-      "title": "FINDING: N/A (SELF-FOUND FIX -- LEAD ITEM 1's catalogs.load_exception_reasons RLS policy was unreachable, live page showed 0 rows)",
+      "number": 21937,
+      "title": "FINDING: N/A (CLAIM-RESERVE 11381 -- reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "09/11/2026, 05:35 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21856",
-      "sha": "4bc625a858",
-      "committedAtIso": "2026-09-11T17:35:31-05:00"
+      "mergedAtCt": "09/12/2026, 06:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21937",
+      "sha": "a72e109b55",
+      "committedAtIso": "2026-09-12T18:52:46-05:00"
     },
     {
-      "number": 21849,
-      "title": "FINDING: BANK-F26150 — .ldt-fld input rule swallowed checkboxes (Match Candidates Show row)",
+      "number": 0,
+      "title": "FINDING: N/A (docs only -- OUTBOX line, PR #21935 merged, ROUND-20.7 sweep complete)",
       "state": "merged",
-      "mergedAtCt": "09/11/2026, 05:33 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21849",
-      "sha": "cfa206c842",
-      "committedAtIso": "2026-09-11T17:33:52-05:00"
+      "mergedAtCt": "09/12/2026, 06:49 PM CT",
+      "url": "",
+      "sha": "6d129bfd68",
+      "committedAtIso": "2026-09-12T18:49:35-05:00"
     },
     {
-      "number": 21855,
-      "title": "FINDING: N/A (CLAIM-MIGRATION 202614100000 -- fix catalogs.load_exception_reasons RLS policy)",
+      "number": 21935,
+      "title": "FINDING: N/A (ROUND-20.7 follow-up -- profile-page px->rem conversion + guard registry expansion)",
       "state": "merged",
-      "mergedAtCt": "09/11/2026, 05:30 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21855",
-      "sha": "2c52a4edca",
-      "committedAtIso": "2026-09-11T17:30:33-05:00"
+      "mergedAtCt": "09/12/2026, 06:48 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21935",
+      "sha": "a8b6fe8cee",
+      "committedAtIso": "2026-09-12T18:48:38-05:00"
     },
     {
-      "number": 21854,
-      "title": "FINDING: N/A (docs — Items 2 and 3 found already shipped on arrival, independently re-verified)",
+      "number": 21936,
+      "title": "Claude-3-IN-round-20.6-planners-labels-columns",
       "state": "merged",
-      "mergedAtCt": "09/11/2026, 05:27 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21854",
-      "sha": "10efd2df3d",
-      "committedAtIso": "2026-09-11T17:27:34-05:00"
+      "mergedAtCt": "09/12/2026, 06:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21936",
+      "sha": "ed6239a3e0",
+      "committedAtIso": "2026-09-12T18:47:48-05:00"
     },
     {
-      "number": 21853,
-      "title": "FINDING: N/A (docs — LEAD ITEM 1 SHIPPED report + DEPLOY-REQUEST)",
+      "number": 21934,
+      "title": "FINDING: N/A (docs only -- ROUND-20.7 planners sub-piece DONE line, live-confirmed at 2368/1440/1024px)",
       "state": "merged",
-      "mergedAtCt": "09/11/2026, 05:24 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21853",
-      "sha": "462c044b7e",
-      "committedAtIso": "2026-09-11T17:24:22-05:00"
+      "mergedAtCt": "09/12/2026, 06:34 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21934",
+      "sha": "78490eae7e",
+      "committedAtIso": "2026-09-12T18:34:43-05:00"
     },
     {
-      "number": 21852,
-      "title": "FINDING: N/A (LEAD ITEM 1 -- catalogs.load_exception_reasons CREATE-only migration + catalog page)",
+      "number": 21933,
+      "title": "FINDING: N/A (ROUND-20.7 -- APP-WIDE AUTOFIT LAW: Dispatch Planners no longer capped at 1400px)",
       "state": "merged",
-      "mergedAtCt": "09/11/2026, 05:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21852",
-      "sha": "1491a8f988",
-      "committedAtIso": "2026-09-11T17:23:17-05:00"
+      "mergedAtCt": "09/12/2026, 06:25 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21933",
+      "sha": "836f61a854",
+      "committedAtIso": "2026-09-12T18:25:07-05:00"
     },
     {
-      "number": 21851,
-      "title": "FINDING: DRIVER-COMPLIANCE-01 (dispatch's WF-038 gate silently allows a driver with no CDL#/CDL-expiry/DOT-medical to be assigned+dispatched; 2 unmistakable junk rows carried status=Active with is_sample_data≠true; driver profile collapsed a missing medical cert into a bare dash)",
+      "number": 21932,
+      "title": "Claude-3-IN-claim-reserve-11377",
       "state": "merged",
-      "mergedAtCt": "09/11/2026, 05:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21851",
-      "sha": "fc127723e1",
-      "committedAtIso": "2026-09-11T17:21:40-05:00"
+      "mergedAtCt": "09/12/2026, 06:23 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21932",
+      "sha": "150b607e02",
+      "committedAtIso": "2026-09-12T18:23:42-05:00"
     },
     {
-      "number": 21850,
-      "title": "FINDING: N/A (docs — INBOX-CC-3 B6 Banking Home single bar, owner live 17:40 CT)",
+      "number": 21931,
+      "title": "FINDING: N/A (docs -- bus post: ROUND 20.1 DONE + loads/tours reassignment discovered + 2 repo-wide CI P0s fixed + 2 more flagged + void still blocked)",
       "state": "merged",
-      "mergedAtCt": "09/11/2026, 05:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21850",
-      "sha": "dc946008fa",
-      "committedAtIso": "2026-09-11T17:21:08-05:00"
+      "mergedAtCt": "09/12/2026, 06:18 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21931",
+      "sha": "4a3b021dca",
+      "committedAtIso": "2026-09-12T18:18:26-05:00"
     }
   ]
 }
