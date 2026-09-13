@@ -36,8 +36,15 @@ export async function listExpenseDuplicateGroups(
   client: PoolClient,
   operatingCompanyId: string,
   limit = 50,
+  vendorId?: string,
 ): Promise<ExpenseDuplicateSummary> {
   const lim = Math.min(Math.max(limit, 1), 200);
+  // D2 (owner law, 2026-09-13, "ONE saved query, published three ways") — the SAME definition
+  // powers the full list (ExpensesListPage.tsx), the dashboard chip (OwnerHome.tsx's "Duplicate
+  // expenses"), and a vendor-scoped sublist (VendorDetail's own duplicate-expenses panel). The
+  // vendor filter is additive and optional — never a second query, never a re-derived fingerprint.
+  const vendorFilter = vendorId ? "AND e.vendor_uuid = $2::uuid" : "";
+  const vendorParams = vendorId ? [vendorId] : [];
 
   const groupsRes = await client.query<{
     vendor_uuid: string;
@@ -60,12 +67,13 @@ export async function listExpenseDuplicateGroups(
         AND e.deleted_at IS NULL
         AND coalesce(e.is_active, true) = true
         AND e.vendor_uuid IS NOT NULL
+        ${vendorFilter}
       GROUP BY e.vendor_uuid, v.vendor_name, e.transaction_date, e.total_amount_cents
       HAVING COUNT(*) > 1
       ORDER BY COUNT(*) DESC, e.transaction_date DESC
-      LIMIT $2
+      LIMIT $${vendorId ? 3 : 2}
     `,
-    [operatingCompanyId, lim],
+    [operatingCompanyId, ...vendorParams, lim],
   );
 
   const countRes = await client.query<{ group_count: string; expense_count: string }>(
@@ -81,11 +89,12 @@ export async function listExpenseDuplicateGroups(
           AND e.deleted_at IS NULL
           AND coalesce(e.is_active, true) = true
           AND e.vendor_uuid IS NOT NULL
+          ${vendorFilter}
         GROUP BY e.vendor_uuid, e.transaction_date, e.total_amount_cents
         HAVING COUNT(*) > 1
       ) d
     `,
-    [operatingCompanyId],
+    [operatingCompanyId, ...vendorParams],
   );
 
   const groups: ExpenseDuplicateGroup[] = [];

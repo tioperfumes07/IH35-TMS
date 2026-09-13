@@ -928,8 +928,11 @@ export type ExpenseDuplicateSummary = {
   groups: ExpenseDuplicateGroup[];
 };
 
-export function listExpenseDuplicates(operatingCompanyId: string, limit = 50) {
+// D2 (owner law, 2026-09-13, "ONE saved query, published three ways") — the SAME definition, one
+// optional vendor scope. Never a second query.
+export function listExpenseDuplicates(operatingCompanyId: string, limit = 50, vendorId?: string) {
   const q = new URLSearchParams({ limit: String(limit) });
+  if (vendorId) q.set("vendor_id", vendorId);
   return apiRequest<ExpenseDuplicateSummary>(
     withCompany(`/api/v1/expenses/duplicates?${q}`, operatingCompanyId),
   );

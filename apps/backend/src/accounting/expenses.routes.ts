@@ -511,7 +511,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
 
       const parsed = companyQuerySchema
-        .extend({ limit: z.coerce.number().int().min(1).max(200).default(50) })
+        .extend({ limit: z.coerce.number().int().min(1).max(200).default(50), vendor_id: z.string().uuid().optional() })
         .safeParse(req.query ?? {});
       if (!parsed.success) return validationError(reply, parsed.error);
 
@@ -519,7 +519,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         if (!(await relationExists(client, "accounting.expenses"))) {
           return { group_count: 0, expense_count: 0, groups: [] };
         }
-        return listExpenseDuplicateGroups(client, parsed.data.operating_company_id, parsed.data.limit);
+        return listExpenseDuplicateGroups(client, parsed.data.operating_company_id, parsed.data.limit, parsed.data.vendor_id);
       });
     },
   );
