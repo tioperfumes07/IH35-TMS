@@ -1107,6 +1107,24 @@ export function CustomerDetailPage() {
   const customerLoads = customerLoadsQuery.data ?? [];
   const customerLoadsListState = useListState(customerLoadsQuery, customerLoads.length === 0);
 
+  // B6 (owner, 2026-09-12) — "a dot on any tab that contains data," named the highest-value item
+  // in this box, build first. Wired only for the tabs whose data this page already fetches eagerly
+  // (zero new network calls) — Profile is deliberately excluded (every customer record has SOME
+  // identity data, so a dot there would always be on and carry no signal). The other 7 tabs
+  // (Documents, COI, Contracts, Portal Users, Tasks, Per-Customer P&L, Audit History) fetch their
+  // data lazily, only once that tab is opened — this does not add an eager fetch per tab just to
+  // compute a dot; a disclosed, real limitation, not silently claimed complete.
+  const tabHasData = useMemo<Partial<Record<CustomerTab, boolean>>>(
+    () => ({
+      Contacts: contacts.length > 0,
+      "Billing & Receivables": hasOpenInvoices || recentInvoices.length > 0,
+      "Quality & History": qualityStats.totalEvents > 0,
+      "Lanes & Pricing": customerLanes.length > 0,
+      Loads: customerLoads.length > 0,
+    }),
+    [contacts.length, hasOpenInvoices, recentInvoices.length, qualityStats.totalEvents, customerLanes.length, customerLoads.length]
+  );
+
   if (detailQuery.isLoading) return <div className="text-xs text-gray-500">Loading customer...</div>;
   if (detailQuery.isError) {
     return (
@@ -1245,6 +1263,20 @@ export function CustomerDetailPage() {
         ) : null}
       </div>
 
+      {/* B6 (owner, 2026-09-12) — "tab bar moved under customer name": a position fix, not a
+          restyle. Previously rendered below the relationship score / reverse-linkage sections /
+          financial overview, several screens below the name — moved here, directly under the
+          header + status/verification badge row, matching NetSuite/QBO record-page convention.
+          No new component, no token change; everything that used to render above it (relationship
+          score, reverse sections, financial overview) still renders in the same relative order,
+          just below the tab bar instead of above it, and still above every tab's own content. */}
+      <NavyPageSubNav
+        items={visibleTabs.map((tab) => ({ label: tab, to: `#${tab}`, hasData: tabHasData[tab] === true }))}
+        activeId={activeTab}
+        onTabChange={(nextTab) => setActiveTab(nextTab as CustomerTab)}
+        itemIds={visibleTabs}
+      />
+
       {saferStatusQuery.isError ? (
         <ListErrorState
           title="Couldn't load customer SAFER status"
@@ -1293,13 +1325,6 @@ export function CustomerDetailPage() {
       )}
 
       <CustomerFinancialOverviewSection summary={financialSummaryQuery.data} loading={financialSummaryQuery.isLoading} error={financialSummaryQuery.isError} onRetry={() => void financialSummaryQuery.refetch()} />
-
-      <NavyPageSubNav
-        items={visibleTabs.map((tab) => ({ label: tab, to: `#${tab}` }))}
-        activeId={activeTab}
-        onTabChange={(nextTab) => setActiveTab(nextTab as CustomerTab)}
-        itemIds={visibleTabs}
-      />
 
       {activeTab === "Profile" ? (
         <div className="grid gap-3 lg:grid-cols-2">
