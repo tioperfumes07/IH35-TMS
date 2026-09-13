@@ -127,3 +127,64 @@ Re-running must converge to the same state, never duplicate. It creates what is 
 ## OPEN DECISION FOR THE OWNER
 
 Fuel currently lives in `accounting.expenses`, not `fuel.fuel_transactions`. Both hold money correctly, but IFTA, MPG, the fuel planner and fuel-card overage recovery all read `fuel.fuel_transactions`, which is empty. Recommendation: the importer writes each fuel purchase to `fuel.fuel_transactions` as the record of the purchase and posts the expense from it, so there is one row per receipt and one posting per row. That is how McLeod and Alvys hold it, and it is what makes IFTA and MPG real instead of decorative. Say the word and it goes in Stage 2; otherwise fuel stays as expense rows and the fuel module stays empty.
+
+---
+
+# CORRECTION — 2026-09-13, same day, supersedes D1 and D2 above
+
+The owner corrected me: **USMCA began operating 2026-08-07**, on the same QuickBooks account and the same AlwaysTrack account as IH35 Transportation. A reconciliation already exists — Cursor's `2026-09-07-Cursor-USMCA-AlwaysTrack-Reconciliation-State.md` — covering QuickBooks, Faro for Transportation and Faro for USMCA. I wrote the section above without consulting it. Two of the seven defects are withdrawn, and the headline numbers were wrong because the comparison basis was wrong.
+
+## WITHDRAWN — D1 "ten settlements were never created"
+
+Not a defect. Those ten documents are pre-cutover IH35 Transportation settlements. Tested against every document:
+
+> **Rule: a settlement whose END date is on or after 2026-08-07 belongs to USMCA.**
+> 44 documents, **0 exceptions.** Every document ending on or before 2026-08-06 (5753, 5760–5768) is absent from USMCA. Every document ending 2026-08-10 or later (5769–5803) is present.
+
+Those ten documents carry 69,698.00 invoiced, 13,873.82 driver pay, 29,072.80 fuel and 1,881.91 expenses. That money belongs to Transportation, which is frozen. It is correctly not on the USMCA books.
+
+## WITHDRAWN — D2 "three loads do not exist"
+
+13481 (2026-07-27), 13489 (2026-07-29) and 13501 (2026-08-04) are all pre-cutover Transportation loads. Correctly absent, exactly like 13502/13507 were called out in Cursor's reconciliation.
+
+## THE COMPARISON BASIS WAS WRONG
+
+An AlwaysTrack tour that opened in July and closed in August appears on a USMCA settlement document but carries legs from both sides of the cutover. The app holds the pre-cutover legs as `is_sample_data = true, cancelled` placeholders — deliberate, and correct. Comparing a whole document to the app therefore counts Transportation money as a USMCA shortfall.
+
+Of the 95 loads named on the 44 documents: **69 are real USMCA loads, 26 are pre-cutover legs** (23 present as sample placeholders, 3 absent). The 26 carry 103,698.00 line haul, 19,761.73 driver pay and 38,785.40 fuel that must never reach USMCA.
+
+## THE REAL GAP — 69 REAL USMCA LOADS ONLY
+
+All 69 exist in `mdata.loads`. None are missing.
+
+| Dimension | Document | App | Gap | Loads wrong |
+|---|---|---|---|---|
+| Line haul | 204,810.00 | 181,222.41 | **−23,587.59** | 14 / 69 |
+| Driver pay | 42,895.60 | 37,043.30 | **−5,852.30** | 57 / 69 |
+| Fuel | 100,359.73 | 65,931.56 | **−34,428.17** | — |
+| Fuel rows | 157 | 163 | +6 net, but wrong on both sides | 24 with none, 37 with duplicates |
+| Expense lines (34 USMCA docs) | 178 | 42 | **−136 lines** | 18 docs with none |
+
+## WHAT IS ACTUALLY STILL WRONG
+
+**R1 — Nine shell loads.** Real USMCA loads carrying no invoice, no driver bill and no fuel at all: **13502, 13505, 13507, 13517, 13524, 13527, 13531, 13533, 13539**. Same nine in all three mismatch lists.
+
+**R2 — Driver pay is wrong on 57 of 69 loads.** The settlement totals are close; the per-load split is not. Fifteen real loads carry zero driver pay: 13502, 13505, 13507, 13517, 13524, 13527, 13531, 13533, 13539, 13554, 13573, 13580, 13584, 13586, 13589.
+
+**R3 — Fuel is wrong in both directions.** 24 real loads have no fuel row at all while the document shows receipts; 37 real loads have more fuel rows than the document — 13515 has 7 for 4, 13523 has 7 for 3, 13568 has 7 for 4.
+
+**R4 — Revenue on the wrong leg.** 13554 (document 0.00) carries 3,500.00 in the app; 13564 (document 0.00) carries 3,000.00; 13525 (document 0.00) carries 607.41. 13570 shows 6,115.00 against a document 5,900.00; 13580 shows 4,900.00 against 3,300.00.
+
+**R5 — Seven loads sit on the wrong side of the cutover flag.** 13502, 13505, 13507, 13508 and 13511 are flagged real but their first stop is before 2026-08-07 (13511 is 2026-07-07). 13509 is flagged sample but its first stop is 2026-08-07. **13579 is `is_sample_data = true` and its status is `invoiced`** — a sample-flagged row carrying a live invoice, which the entity law does not permit either way.
+
+**R6 — No driver bill is attached to any settlement.** `settled_in_settlement_id` is NULL on all 79 live driver bills. Unchanged, real.
+
+**R7 — Three settlements report net pay 0.00 on a non-zero gross.** 5801, 5802, 5803.
+
+## FACTORING — MOVED SINCE THE 09-07 RECONCILIATION
+
+Cursor reconciled 51 invoices / 151,740.00 on 2026-09-07 with factoring GL posting OFF. Live today: **114 advances, 356,900.00 invoice total, 346,192.96 advanced, 5,353.52 reserve, 5,353.52 fee**, and **440 factoring journal-entry postings** exist. Factoring is now in the GL, not only the register. Whether GL ties to register to the cent is its own check and is not claimed here.
+
+## WHAT I GOT WRONG, PLAINLY
+
+I read the documents as the whole truth for USMCA without asking which side of the cutover each one fell on, and without reading the reconciliation that already answered it. The result over-stated the gap by roughly 70,000 of invoiced revenue and called two non-defects defects. The gap that is real is the five rows above, and it is a per-load attribution problem inside USMCA, not a wholesale failure to load the data.
