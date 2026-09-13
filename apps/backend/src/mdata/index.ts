@@ -17,6 +17,7 @@ import { registerEquipmentTransferRoutes } from "./equipment-transfer.routes.js"
 import { registerMdataItemsRoutes } from "./items.routes.js";
 import { registerLocationRoutes } from "./locations.routes.js";
 import { registerLoadRoutes } from "./loads.routes.js";
+import { registerSettlementRefRoutes } from "./settlement-ref.routes.js";
 import { registerLoadAbandonmentRoutes } from "./load-abandonment.routes.js";
 import { registerCustomerBulkRoutes } from "./customers-bulk.routes.js";
 import { registerEquipmentBulkUpdateRoutes } from "./equipment-bulk-update.routes.js";
@@ -55,6 +56,7 @@ export async function registerMdataRoutes(app: FastifyInstance) {
   await registerVendorBulkRoutes(app);
   await registerLocationRoutes(app);
   await registerLoadRoutes(app);
+  await registerSettlementRefRoutes(app);
   await registerLoadAbandonmentRoutes(app);
   await registerEquipmentRoutes(app);
   await registerEquipmentLogRoutes(app);
