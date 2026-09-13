@@ -305,7 +305,7 @@ export async function loadObligationCandidates(
 // ACCT-F5573: table + extra predicate for each obligation_type, so POST /reconcile can verify the
 // caller-supplied obligation_id actually exists and belongs to this company BEFORE writing it onto
 // a real bank transaction. Mirrors loadObligationCandidates' own WHERE predicates exactly.
-const OBLIGATION_EXISTENCE_SQL: Record<z.infer<typeof reconcileBodySchema.shape.obligation_type>, string | null> = {
+export const OBLIGATION_EXISTENCE_SQL: Record<z.infer<typeof reconcileBodySchema.shape.obligation_type>, string | null> = {
   load: `SELECT 1 FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL`,
   settlement: `SELECT 1 FROM driver_finance.driver_settlements WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
   fuel: `SELECT 1 FROM fuel.fuel_transactions WHERE id = $1::uuid AND operating_company_id = $2::uuid`,

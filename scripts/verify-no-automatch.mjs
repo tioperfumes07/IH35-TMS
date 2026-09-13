@@ -66,10 +66,20 @@ const KNOWN_AUTOMATCH_DEBT = [
 //     banking.reconciliation_matches row in the SAME handler, plus appendCrudAudit — the
 //     accountability trail Owner Law B requires, just under this table's own column name rather
 //     than the literal string "categorized_by_user_id".
+//   - link-suggestions-actions.routes.ts's POST /api/v1/banking/link-suggestions/accept (LINK-4 PR
+//     2, the human decision UI) is the same shape as reconciliation.routes.ts's /match above: real
+//     requireAuth + role-gated (canDecide/LINK_SUGGESTION_ROLES) route, one column set per an
+//     explicit obligation_type switch (never a scored/fuzzy guess — obligation_id + type both come
+//     from the request body, validated to exist first via OBLIGATION_EXISTENCE_SQL), writes
+//     categorized_by_user_id + categorized_at + review_state='matched' in the same statement, plus
+//     a mirrored user_matched upsert into banking.reconciliation_matches and an appendCrudAudit —
+//     the identical accountability trail. Its /undo route only ever clears these columns to NULL
+//     (same as recon-worklist.service.ts, exempt from this audit for the same reason).
 const TARGET_COLUMN_WRITE_ALLOWLIST = new Set([
   "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts",
   "apps/backend/src/accounting/payments/bank-invoice-backlink.service.ts",
   "apps/backend/src/banking/reconciliation.routes.ts",
+  "apps/backend/src/banking/link-suggestions-actions.routes.ts",
 ]);
 
 const TARGET_COLUMNS = ["matched_expense_id", "matched_bill_id", "matched_load_id", "matched_settlement_id", "matched_invoice_id"];

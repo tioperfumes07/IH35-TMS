@@ -61,7 +61,15 @@ export async function registerBankingLinkSuggestionsRoutes(app: FastifyInstance)
 
         // Only transactions still missing ALL FIVE columns the Lead's chain audit measured at
         // 0/518 populated — a row already matched on any one of them is not a suggestion target.
-        // review_state/voided_at excluded the same way every other banking read excludes them.
+        // voided_at excluded the same way every other banking read excludes it.
+        //
+        // PR 2 addition: also require review_state = 'for_review'. A row can leave this queue
+        // without ever touching the 5 matched_* columns above — Exclude (PR 2's own action) sets
+        // review_state='excluded' with nothing else changed, and a separate flow can set
+        // 'categorized'/'matched'/'transfer' via matched_payment_id/matched_transfer_id/
+        // matched_journal_entry_id, none of which this route's candidate pool covers (see the
+        // scorable-types comment below). Without this filter an Excluded transaction would
+        // silently reappear here forever, making the Exclude action look like it did nothing.
         const txnRes = await client.query<{
           id: string;
           transaction_date: string;
@@ -75,6 +83,7 @@ export async function registerBankingLinkSuggestionsRoutes(app: FastifyInstance)
           FROM banking.bank_transactions
           WHERE operating_company_id = $1::uuid
             AND voided_at IS NULL
+            AND review_state = 'for_review'
             AND matched_expense_id IS NULL
             AND matched_bill_id IS NULL
             AND matched_load_id IS NULL
@@ -95,6 +104,21 @@ export async function registerBankingLinkSuggestionsRoutes(app: FastifyInstance)
           ["expense", "bill", "ar_invoice", "settlement", "load"].includes(c.obligation_type)
         );
 
+        // PR 2 addition: a Reject records match_state='rejected' on banking.reconciliation_matches
+        // so "the same bad suggestion does not resurface" is actually true, not just a docstring
+        // claim. ar_invoice has no ledger_entry_kind slot on that table (see PR 2's own header
+        // comment on the schema gap) so a rejected invoice candidate cannot be remembered here —
+        // a disclosed, real limitation, not silently dropped.
+        const rejected = await client.query<{ bank_transaction_id: string; ledger_entry_kind: string; ledger_entry_id: string }>(
+          `
+          SELECT bank_transaction_id, ledger_entry_kind, ledger_entry_id
+          FROM banking.reconciliation_matches
+          WHERE operating_company_id = $1::uuid AND match_state = 'rejected' AND voided_at IS NULL
+          `,
+          [q.data.operating_company_id]
+        );
+        const rejectedKeys = new Set(rejected.rows.map((r) => `${r.bank_transaction_id}:${r.ledger_entry_kind}:${r.ledger_entry_id}`));
+
         const rows: LinkSuggestionTransactionRow[] = txnRes.rows.map((t) => {
           const amount = Math.abs(Math.round(Number(t.amount_cents)));
           const ranked = rankLinkCandidates(
@@ -112,7 +136,7 @@ export async function registerBankingLinkSuggestionsRoutes(app: FastifyInstance)
               event_date: c.event_date,
               counterparty_name: c.counterparty_name,
             }))
-          );
+          ).filter((c) => !rejectedKeys.has(`${t.id}:${c.obligation_type}:${c.obligation_id}`));
           return {
             bank_transaction_id: t.id,
             transaction_date: String(t.transaction_date).slice(0, 10),

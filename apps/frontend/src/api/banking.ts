@@ -1671,6 +1671,58 @@ export function getLinkSuggestions(operatingCompanyId: string, limit = 600) {
   );
 }
 
+// LOAD-TO-CASH CHAIN, LINK 4 — PR 2. The human decision: accept, reject, exclude, or undo one link
+// suggestion. Owner law B: "it should never automatch, it suggests and we accept it or change the
+// transactions" — these four calls are the ONLY way any of the matched_* columns get written from
+// this surface; there is no automatic acceptance path anywhere in this file.
+export function acceptLinkSuggestion(
+  companyId: string,
+  bankTransactionId: string,
+  obligationType: string,
+  obligationId: string
+) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/banking/link-suggestions/accept`, {
+    method: "POST",
+    body: {
+      operating_company_id: companyId,
+      bank_transaction_id: bankTransactionId,
+      obligation_type: obligationType,
+      obligation_id: obligationId,
+    },
+  });
+}
+
+export function rejectLinkSuggestion(
+  companyId: string,
+  bankTransactionId: string,
+  obligationType: string,
+  obligationId: string
+) {
+  return apiRequest<{ ok: boolean; persisted: boolean }>(`/api/v1/banking/link-suggestions/reject`, {
+    method: "POST",
+    body: {
+      operating_company_id: companyId,
+      bank_transaction_id: bankTransactionId,
+      obligation_type: obligationType,
+      obligation_id: obligationId,
+    },
+  });
+}
+
+export function excludeLinkSuggestionTransaction(companyId: string, bankTransactionId: string, reason: string) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/banking/link-suggestions/exclude`, {
+    method: "POST",
+    body: { operating_company_id: companyId, bank_transaction_id: bankTransactionId, reason },
+  });
+}
+
+export function undoLinkSuggestionDecision(companyId: string, bankTransactionId: string) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/banking/link-suggestions/undo`, {
+    method: "POST",
+    body: { operating_company_id: companyId, bank_transaction_id: bankTransactionId },
+  });
+}
+
 export function getReconcileSuggestions(operatingCompanyId: string, bankTransactionId: string) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId, bank_transaction_id: bankTransactionId });
   return apiRequest<{
