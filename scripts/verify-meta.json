@@ -62,6 +62,7 @@
     "verify:usmca-compliance-neon-pv",
     "verify:usmca-fleet-fuel-tasks-neon-pv",
     "verify:usmca-load-cutover-floor",
+    "verify:usmca-settlement-cutover",
     "verify:migration-empty-db-safe",
     "verify:migration-idempotency",
     "verify:migration-no-unknown-roles",
