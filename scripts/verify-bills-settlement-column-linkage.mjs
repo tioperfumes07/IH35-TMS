@@ -29,9 +29,12 @@ function verifySharedModule(shared) {
     "ds.status NOT IN ('void', 'voided', 'cancelled')"]) {
     assert(predicate.includes(token), `shared predicate missing ${token}`);
   }
+  // SETTLEMENT-NUMBER-IS-ALWAYSTRACK-DOC (owner 2026-09-11): settlement_number now resolves from
+  // ds.source_document_ref (the AlwaysTrack doc), never the retired display_id counter -- this
+  // guard's literal was pinned to the pre-correction column and never updated.
   for (const token of ['LEFT JOIN LATERAL', 'sl.source_driver_bill_id = db.id',
     'sl.operating_company_id = db.operating_company_id', 'ds.operating_company_id = db.operating_company_id',
-    'HAVING count(DISTINCT ds.id) = 1', 'AS settlement_id, min(ds.display_id) AS settlement_number',
+    'HAVING count(DISTINCT ds.id) = 1', 'AS settlement_id, min(ds.source_document_ref) AS settlement_number',
     '${ACTIVE_SETTLEMENT_LINE_PREDICATE_SQL}']) {
     assert(lateral.includes(token), `shared LATERAL missing ${token}`);
   }
