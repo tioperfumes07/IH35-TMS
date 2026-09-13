@@ -1,6 +1,6 @@
 {
  "date": "2026-09-13",
- "generated_at_iso": "2026-09-13T04:57:42.983Z",
+ "generated_at_iso": "2026-09-13T12:01:21.738Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -5842,7 +5842,7 @@
    "evidence": "all 2 file(s) on main",
    "name": "Two-sided item model: sell side (income account, defaults to Service income) + buy side (expense account + preferred ven",
    "registered_on": null,
-   "pr": 21856
+   "pr": 21998
   },
   {
    "id": "item18-bills-mdata-vendor-fk",
@@ -13727,6 +13727,90 @@
  ],
  "merged_prs": [
   {
+   "number": 22008,
+   "title": "Cursor- fix push-gate: repoint 2 stale settlement guards to TourLoadRows + complete 2 Required-surface leaves (CI-F20260913-PUSHGATE)",
+   "mergedAt": "2026-09-13T10:26:05Z",
+   "branch": "cursor/fix-pushgate-guards-2026-09-13"
+  },
+  {
+   "number": 22007,
+   "title": "Cursor- AlwaysTrack source_document_ref is the sole settlement/tour identity + guard (ACCT-F20260911)",
+   "mergedAt": "2026-09-13T09:28:49Z",
+   "branch": "cursor/alwaystrack-settlement-identity-2026-09-13"
+  },
+  {
+   "number": 22006,
+   "title": "Claude-1- docs: MASTER REGISTER + OUTBOX — ROUND-20.8 B11 closed",
+   "mergedAt": "2026-09-13T06:30:33Z",
+   "branch": "cc-1/register-b11-closed"
+  },
+  {
+   "number": 22005,
+   "title": "Claude-1- ROUND-20.8 B11 — QBO Sync tile single source of truth with Banking (ACCT-F26306)",
+   "mergedAt": "2026-09-13T06:25:32Z",
+   "branch": "cc-1/b11-qbo-sync-single-source"
+  },
+  {
+   "number": 22004,
+   "title": "Claude-1- docs: MASTER REGISTER — A5 item 3 (Paid/Deposited split) shipped, Live=BLOCKED noted",
+   "mergedAt": "2026-09-13T06:15:12Z",
+   "branch": "cc-1/register-a5-item3-done"
+  },
+  {
+   "number": 22003,
+   "title": "Claude-1- A5 item 3 — Invoice detail: split Paid from Deposited (ACCT-F26305)",
+   "mergedAt": "2026-09-13T06:12:08Z",
+   "branch": "cc-1/a5-item3-paid-deposited-split"
+  },
+  {
+   "number": 22002,
+   "title": "Claude-1- docs: MASTER REGISTER — A5 item 4 (aging-bucket tiles) shipped, remaining 3 items scope-noted",
+   "mergedAt": "2026-09-13T06:04:05Z",
+   "branch": "cc-1/register-a5-item4-done"
+  },
+  {
+   "number": 22001,
+   "title": "Claude-1- A5 item 4 — AP aging clickable bucket-filter tiles (ACCT-F26304)",
+   "mergedAt": "2026-09-13T05:56:29Z",
+   "branch": "cc-1/a5-aging-bucket-filter-tiles-v2"
+  },
+  {
+   "number": 21999,
+   "title": "Claude-1- CLAIM-RESERVE 11445 (verify-ap-aging-bucket-filter-tiles)",
+   "mergedAt": "2026-09-13T05:46:36Z",
+   "branch": "claude/claim-reserve-11445"
+  },
+  {
+   "number": 21998,
+   "title": "Claude-1-Docs: MASTER REGISTER close A1/A2-item1/A4, confirm Part 3/4 rulings executed",
+   "mergedAt": "2026-09-13T05:09:45Z",
+   "branch": "claude/register-close-a1-a2-a4-cc1"
+  },
+  {
+   "number": 21997,
+   "title": "Claude-3-IN: docs(bus) status — D2 shipped, D1+D2 both closed",
+   "mergedAt": "2026-09-13T05:08:26Z",
+   "branch": "claude/outbox-d2-status"
+  },
+  {
+   "number": 21996,
+   "title": "Claude-3-IN: D2 -- one saved query, published three ways + 2 more guard fixes",
+   "mergedAt": "2026-09-13T05:05:06Z",
+   "branch": "claude/d2-one-saved-query-three-surfaces"
+  },
+  {
+   "number": 21995,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-13T04:58:06Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 21994,
+   "title": "Claude-1-A4: settlement-ref-beside-load for 6 Accounting/Cash-Flow surfaces + 3 stale guard fixes",
+   "mergedAt": "2026-09-13T05:01:24Z",
+   "branch": "claude/a4-settlement-ref-beside-load-cc1"
+  },
+  {
    "number": 21993,
    "title": "Claude-3-IN: CLAIM-RESERVE 11441 (verify-one-saved-query-three-surfaces)",
    "mergedAt": "2026-09-13T04:24:23Z",
@@ -17241,90 +17325,6 @@
    "title": "CC-2-FINDING: N/A — CLAIM-RESERVE 10823 for verify-bank-recon-accept-closed-session-conflict",
    "mergedAt": "2026-09-08T03:49:29Z",
    "branch": "cc-2/claim-reserve-10823"
-  },
-  {
-   "number": 21401,
-   "title": "Claude-3- FINDING: FAC-09a -- Purchase Report built real (3 of 5 remaining Faro report pages)",
-   "mergedAt": "2026-09-08T03:47:05Z",
-   "branch": "claude-3/fac09a-purchase-report"
-  },
-  {
-   "number": 21400,
-   "title": "CC-2-FINDING: N/A — wire orphaned verify-petty-cash-check-transfer guard into CI (verify-step 10819)",
-   "mergedAt": "2026-09-08T03:36:19Z",
-   "branch": "cc-2/wire-petty-cash-guard-10819"
-  },
-  {
-   "number": 21399,
-   "title": "Claude-3- FINDING: FAC-09a -- Fees Paid built real (2 of 5 remaining Faro report pages)",
-   "mergedAt": "2026-09-08T03:36:04Z",
-   "branch": "claude-3/fac09a-fees-paid-report"
-  },
-  {
-   "number": 21398,
-   "title": "CC-2-FINDING: N/A — CLAIM-RESERVE 10819 for verify-petty-cash-check-transfer",
-   "mergedAt": "2026-09-08T03:30:38Z",
-   "branch": "cc-2/claim-reserve-10819"
-  },
-  {
-   "number": 21397,
-   "title": "Claude-3- FINDING: FAC-09a -- Account Summary built real (1 of 5 remaining Faro report pages)",
-   "mergedAt": "2026-09-08T03:24:15Z",
-   "branch": "claude-3/fac09a-account-summary-report"
-  },
-  {
-   "number": 21396,
-   "title": "CC-2-FINDING: N/A — close orphaned verify-step 10103 claim as moot",
-   "mergedAt": "2026-09-08T03:22:17Z",
-   "branch": "cc2/claimed-numbers-catchup-10103"
-  },
-  {
-   "number": 21395,
-   "title": "Claude-1-ACCT-F26053: INV-11 wire financial checks into /api/v1/admin/health/deep",
-   "mergedAt": "2026-09-08T03:21:21Z",
-   "branch": "claude/inv11-health-deep-financial-checks-v2"
-  },
-  {
-   "number": 21394,
-   "title": "CC-2-FINDING: BANK-F26053 — wire cleared_date into reconciliation match-accept/unmatch",
-   "mergedAt": "2026-09-08T03:12:33Z",
-   "branch": "cc2/bank-f26053-cleared-date-match-wiring"
-  },
-  {
-   "number": 21393,
-   "title": "Claude-3- FINDING: FAC-09a -- verify-faro-tabs-real-data.mjs baselined-exempt (CC-3 cannot author its own verify-step)",
-   "mergedAt": "2026-09-08T03:10:38Z",
-   "branch": "claude-3/wire-verify-faro-tabs-11069"
-  },
-  {
-   "number": 21392,
-   "title": "Claude-1-CLAIM-RESERVE 11069 (verify-health-deep-financial-checks-wired)",
-   "mergedAt": "2026-09-08T03:07:55Z",
-   "branch": "chore/claim-reserve-11069-health-deep-v2"
-  },
-  {
-   "number": 21391,
-   "title": "Claude-3- FINDING: N/A (claim verify-step 11069 for verify-faro-tabs-real-data)",
-   "mergedAt": "2026-09-08T03:04:50Z",
-   "branch": "chore/claim-reserve-verify-faro-tabs-real-data"
-  },
-  {
-   "number": 21390,
-   "title": "Claude-1-ACCT-F26052: VC-08 MD-WIDTH-0 regression guard",
-   "mergedAt": "2026-09-08T02:58:58Z",
-   "branch": "claude/vc-08-md-width-0-guard-v2"
-  },
-  {
-   "number": 21389,
-   "title": "CC-2-FINDING: N/A — close NEW-32/NEW-33 board rows + unrelated typecheck unblock",
-   "mergedAt": "2026-09-08T02:52:47Z",
-   "branch": "cc2/banking-next"
-  },
-  {
-   "number": 21388,
-   "title": "Claude-1-CLAIM-RESERVE 11065 (verify-md-width-0-vendors-customers)",
-   "mergedAt": "2026-09-08T02:47:55Z",
-   "branch": "chore/claim-reserve-11065-md-width-0-v2"
   }
  ],
  "merged_pr_total": 3000,
