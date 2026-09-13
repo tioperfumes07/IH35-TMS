@@ -333,3 +333,38 @@ output, before and after the comment edit.
 ingest + Faro-advances DELTA (13584/13585; load 039 already resolved by CC-2). B5's reverse+repost
 campaign and extending the canonical poster for reimbursements stay owner-gated per GO order, not
 authorized today.
+
+## 2026-09-13 — ROUND 23.5 CORRECTED — 2 orphan Faro invoices closed, EXECUTED on prod
+
+**Owner ruling, executed against real prod** (`br-fancy-credit-akjnd07a`). The two Faro-purchased
+invoices with no load link are closed:
+
+- **MPH $3,800 (INV-2026-00008) → EXISTING load 13524, LINK ONLY.** Cursor's own resolution
+  (Faro PO MPHC261334 = AllwaysTrack load 13524, gross $4,200) is correct; the ORIGINAL (uncorrected)
+  ROUND 23.5 box that told me to create a second MPH load was withdrawn by the Lead before I acted
+  on it — no second load was ever created. Linked the invoice, opened an under-billing dispute
+  ($3,800 invoiced / $4,200 expected / $400 disputed — invoice itself never written up or down),
+  created a new live $853.61 driver bill (old voided bill stays voided, only its `bill_number`
+  tombstoned to avoid a unique-index collision), linked the new bill to settlement S-2026-0011.
+- **ITS $350 (INV-2026-00007) → ONE genuinely new load.** Confirmed absent everywhere (WO 68747 =
+  0 rows anywhere in the app; no $300-$400 customer-charge line on any of the 44 AllwaysTrack
+  documents). Created load_number = "INV-2026-00007" (the invoice's own number, per explicit owner
+  instruction — deliberately invoice-shaped, never AlwaysTrack-shaped). Linked the invoice. Memo:
+  "Placeholder number — Faro-purchased load never entered in AllwaysTrack. Owner to reconcile."
+
+**Both Faro advances (FAC-2026-00113, FAC-2026-00114) were already attached to their invoices
+before this PR ran** — verified, not written.
+
+**NOT done, reported not guessed:** the ITS settlement + driver bill.
+`driver_finance.driver_settlements.driver_id` is NOT NULL (schema-verified live) and the driver is
+genuinely unknown — WO 68747 returns 0 rows on every number column anywhere in the app. The owner's
+"do not guess a driver" instruction for the bill binds the settlement's driver_id the same way.
+Flagged here, not invented.
+
+**Live proof**: 73 of 73 live USMCA invoices now carry a load (was 71 of 73). Both loads read live
+with their invoice and Faro advance attached; load 13524 carries its new bill linked to S-2026-0011;
+the dispute reads open at invoiced $3,800.00 / expected $4,200.00 / disputed $400.00. Guardrail
+confirmed: loads 13463/13475 stay soft-deleted, untouched, never reused; the old $853.61 bill stays
+voided, only renamed.
+
+PR #22052, shipping via fast-merge now.
