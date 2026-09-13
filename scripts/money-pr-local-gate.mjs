@@ -74,6 +74,9 @@ const STEPS = [
   ["verify-customer-tab-bar-position-and-data-dot", "scripts/verify-customer-tab-bar-position-and-data-dot.mjs"],
   // B4/ROUND 21.2 (owner, 2026-09-12) — relationship-health-score honesty for the 1-4-of-5-signals case.
   ["verify-customer-relationship-score-partial-honesty", "scripts/verify-customer-relationship-score-partial-honesty.mjs"],
+  // ROUND 23.3 SUPPLEMENT (owner/Lead, 2026-09-13) — the master parity guard: proves the WHOLE
+  // AlwaysTrack absorption/ingest chain against prod, not one seat's own slice.
+  ["verify-alwaystrack-parity", "scripts/verify-alwaystrack-parity.mjs"],
   // Rule 30 — soft-reset onto newer main deleted other PRs' verify-steps (2026-08-02).
   ["verify-no-guard-file-deletion", "scripts/verify-no-guard-file-deletion.mjs"],
   // Rule 30 — tip commit LIVE PROOF must be Claude-green (not "UNVERIFIED browser" theater).
