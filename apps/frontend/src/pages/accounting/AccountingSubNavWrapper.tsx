@@ -4,6 +4,9 @@ import { Button } from "../../components/Button";
 import { HoverDropdownNav } from "../../components/forms/shared/HoverDropdownNav";
 import { ACCOUNTING_SUB_NAV_ITEMS } from "./subnav-manifest";
 import { hasInAppHistory } from "../../lib/smart-back";
+import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useAccountingNavKpis } from "./useAccountingNavKpis";
+import { formatUsdCents } from "../../lib/money";
 
 // ACCT-F6322 — hub + Create ▾ must open the same ?create=1 wizards as Topbar
 // (ACCT-F5053–5056). Bare list hrefs are silent no-ops when already on that list.
@@ -68,8 +71,26 @@ export function AccountingSubNavWrapper({
   const navigate = useNavigate();
   const [createMenuOpen, setCreateMenuOpen] = useState(false);
   const createMenuRef = useRef<HTMLDivElement | null>(null);
+  const { selectedCompanyId } = useCompanyContext();
+  const navKpis = useAccountingNavKpis(selectedCompanyId);
 
   const activeHref = useMemo(() => activeHrefFor(pathname), [pathname]);
+
+  // ALL-SEATS RESEARCH-BEHAVIOR (2026-09-13, McLeod) — "money lives in the navigation": count +
+  // dollar total in the tab label, e.g. "Bills (27) $271,280.41". Text-only change on the two
+  // group labels that carry an open-balance concept (Bills, Invoices) — every other label, the
+  // dropdown children, and all styling are untouched.
+  const navItems = useMemo(() => {
+    return ACCOUNTING_SUB_NAV_ITEMS.map((item) => {
+      if (item.label === "Bills" && navKpis.bills.count > 0) {
+        return { ...item, label: `Bills (${navKpis.bills.count}) ${formatUsdCents(navKpis.bills.openAmountCents)}` };
+      }
+      if (item.label === "Invoices" && navKpis.invoices.count > 0) {
+        return { ...item, label: `Invoices (${navKpis.invoices.count}) ${formatUsdCents(navKpis.invoices.openAmountCents)}` };
+      }
+      return item;
+    });
+  }, [navKpis]);
 
   useEffect(() => {
     const onDown = (event: MouseEvent) => {
@@ -142,7 +163,7 @@ export function AccountingSubNavWrapper({
       </div>
 
       <div className="relative z-10">
-        <HoverDropdownNav items={ACCOUNTING_SUB_NAV_ITEMS} activeHref={activeHref} openOn="click" />
+        <HoverDropdownNav items={navItems} activeHref={activeHref} openOn="click" />
       </div>
 
       {kpiStrip}

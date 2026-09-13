@@ -1,3 +1,5 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactElement } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -13,6 +15,26 @@ vi.mock("react-router-dom", async (importOriginal) => {
   return { ...actual, useNavigate: () => navigateSpy };
 });
 
+// ALL-SEATS RESEARCH-BEHAVIOR (2026-09-13) — the wrapper now reads live nav-KPI counts/totals for
+// its Bills/Invoices labels (useAccountingNavKpis), which needs a company id + a QueryClient.
+// This suite is about the back-button, not the KPI feature (that has its own tests) — mock the
+// company context to a fixed id and stub the KPI hook to an empty/zero result so these tests stay
+// focused on navigation behavior.
+vi.mock("../../../contexts/CompanyContext", () => ({
+  useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
+}));
+vi.mock("../useAccountingNavKpis", () => ({
+  useAccountingNavKpis: () => ({ bills: { count: 0, openAmountCents: 0 }, invoices: { count: 0, openAmountCents: 0 } }),
+}));
+
+function wrap(ui: ReactElement) {
+  return (
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>
+  );
+}
+
 beforeEach(() => navigateSpy.mockClear());
 
 describe("AccountingSubNavWrapper back button", () => {
@@ -21,11 +43,11 @@ describe("AccountingSubNavWrapper back button", () => {
 
   it("renders a back button", () => {
     render(
-      <MemoryRouter>
+      wrap(
         <AccountingSubNavWrapper title="Invoices">
           <div>content</div>
-        </AccountingSubNavWrapper>
-      </MemoryRouter>,
+        </AccountingSubNavWrapper>,
+      ),
     );
     expect(screen.getByLabelText("Back")).toBeInTheDocument();
   });
@@ -33,11 +55,11 @@ describe("AccountingSubNavWrapper back button", () => {
   it("falls back to /home on a direct load/refresh (idx 0)", () => {
     window.history.replaceState({ idx: 0 }, "");
     render(
-      <MemoryRouter>
+      wrap(
         <AccountingSubNavWrapper title="Invoices">
           <div>content</div>
-        </AccountingSubNavWrapper>
-      </MemoryRouter>,
+        </AccountingSubNavWrapper>,
+      ),
     );
     fireEvent.click(screen.getByLabelText("Back"));
     expect(navigateSpy).toHaveBeenCalledWith("/home");
@@ -46,11 +68,11 @@ describe("AccountingSubNavWrapper back button", () => {
   it("prefers real history once the user has navigated in-app", () => {
     window.history.replaceState({ idx: 1, key: "def456", usr: null }, "");
     render(
-      <MemoryRouter>
+      wrap(
         <AccountingSubNavWrapper title="Invoices">
           <div>content</div>
-        </AccountingSubNavWrapper>
-      </MemoryRouter>,
+        </AccountingSubNavWrapper>,
+      ),
     );
     fireEvent.click(screen.getByLabelText("Back"));
     expect(navigateSpy).toHaveBeenCalledWith(-1);
