@@ -712,7 +712,19 @@ export function InvoiceDetailPage() {
               <DataPanelRow key={application.id}>
                 <span className="text-xs text-gray-600"><EntityLink kind="payment" id={application.payment_id ?? undefined} label={entityLabel(application.payment_display_id, application.payment_id, "Payment")} /></span>
                 <span className="text-xs text-gray-900">
-                  {money(application.amount_cents)} · {new Date(application.applied_at).toLocaleString()}
+                  {money(application.amount_cents)} · Paid {new Date(application.applied_at).toLocaleString()}
+                  {" · "}
+                  {/* A5 item 3 — split Paid from Deposited: applied_at/payment_date above is when the
+                      company recorded the payment; cleared_date is the separate, later date the bank
+                      actually cleared it (null until then — that gap is expected, not an error). */}
+                  {application.cleared_date ? (
+                    <span className="text-gray-900">
+                      Deposited {formatDateUS(application.cleared_date)}
+                      {application.deposited_to_account_name ? ` to ${application.deposited_to_account_name}` : ""}
+                    </span>
+                  ) : (
+                    <span className="text-gray-500">Not yet deposited</span>
+                  )}
                 </span>
               </DataPanelRow>
             ))}
