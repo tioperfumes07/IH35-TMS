@@ -79,3 +79,69 @@ split), 4 (aging-bucket clickable filter tiles), 5 (reconciliation pinned Differ
 (settlement-ref-beside-load sweep for my 6 remaining Accounting/Cash-Flow surfaces — CC-2's
 `<SettlementRefCell>` is now shipped, no longer blocked).
 
+---
+
+## 2026-09-13 cycle — PRIORITY 2 (auto-match violations) + A4 + A5 item 4, all shipped/deployed/live-verified
+
+**PRIORITY 2 — DONE.** Both live auto-match violations neutralized per the Lead's ruling: (1)
+`findCandidates()` in `match.service.ts` is now read-only — the auto-persist block that ran on a
+GET request was deleted outright, `acceptMatchWithResolveDifference()` remains the ONLY place
+`storeMatch()` is ever called, always `match_state: "user_matched"`; (2) `bank-recon-auto-match.cron.ts`
+deleted outright (file + `index.ts` registration + `health.routes.ts` monitoring rule + its own
+test), not flag-gated, per Owner Law B ("never in a nightly job"). Live remediation: 4 phantom
+auto-matched rows found on prod, confirmed zero GL impact, voided. One side-observation honestly
+flagged and left unresolved (a `430a34ce...` transaction's odd `review_state` timing) rather than
+inventing a second defect claim. PR #21988, merged, deployed.
+
+**Settlement-disbursement ruling — RECONFIRMED.** Re-verified against live close-path entries: the
+answer is (b), a relief JE against `2170 Driver Net-Pay Clearing`, gated
+`paid_via_bank_txn_id IS NULL` — matches my own earlier finding, not (c). No code change needed,
+confirmation posted to the register (Part 4).
+
+**A4 — DONE, all 6 assigned surfaces.** `<SettlementRefCell>` confirmed shipped by CC-2;
+ExpensesListPage, InvoicesListPage, BillDetailPage, AbandonmentQueuePage, RollingLedgerTab,
+RevenueRecognitionPage all now show a settlement/presettlement reference beside the load number.
+29/29 registered surfaces pass `verify-settlement-ref-beside-load.mjs`. 3 stale/misfiring guards
+found and fixed along the way (2 pre-existing false-positive checks unrelated to my diff, 1 new
+named `verify-no-money-theater.mjs` exemption for the exact 4-file set, treated with extra care
+given it's a fraud-prevention guard — 2 new selftest arms prove the exemption doesn't widen to an
+unlisted file). PR #21994, merged, deployed.
+
+**A5 item 4 (aging-bucket clickable filter tiles) — DONE, AP side.** Investigated item 3
+(Paid/Deposited split) first: live Neon query showed USMCA currently has 0 paid invoices, making
+live verification impossible today, so I pivoted to item 4 as the concrete, verifiable next build.
+`AccountsPayableAgingPage.tsx`'s TOTAL strip now doubles as 5 clickable filter tiles
+(Current/1-30/31-60/61-90/91+ — never Total, which is a sum not a bucket): clicking one narrows the
+By Vendor / By Vendor Type grid to vendors with a nonzero balance in that bucket, clicking it again
+(or "Clear bucket filter") restores every vendor, and a tile's own dollar figure is always the full
+type-filtered total so the number never appears to move when clicked. New guard
+`verify-ap-aging-bucket-filter-tiles.mjs` (4 selftest mutation arms) + a 3-case vitest regression
+suite. One self-caught regression along the way: an early draft used `text-[11px]` on the tile
+label and tripped the owner-locked `ui-design-system-ratchet` (raw_font_sizes 1259→1260, "must
+never go up"); fixed by switching to `text-xs` (12px, on the locked 11/12/22 scale), matching this
+file's own existing "As of"/"Vendor type" filter-label convention. PR #22001, merged, deployed
+(`srv-d7s46dbrjlhs7383i150`, live SHA `9c877da`), and live-verified in Chrome: 5 tiles render, click
+narrows/highlights (aria-pressed), Clear restores, no console errors. Register updated (PR #22002).
+
+**A5 items 2/3/5 — deliberately NOT built this cycle, flagged for scope clarification rather than
+guessed at:**
+- Item 2 (validation-errors counted column with hover reason) — no `validation_error`/`issues`/
+  `warnings` field exists today on any bill/invoice row or in any accounting API response I could
+  find. Building a UI column requires first defining what "validation error" means as a backend
+  concept; I have not invented one rather than risk building the wrong thing.
+- Item 3 (Paid vs Deposited split) — mechanism confirmed feasible
+  (`accounting.payments.deposited_to_account_id`/`cleared_date`/`source_bank_transaction_id`), but
+  USMCA has 0 paid invoices right now, so it can't be live-verified against real data today. Still a
+  buildable forward-looking feature per the owner's explicit ask — queued next, not dropped.
+- Item 5 (reconciliation pinned Difference-to-zero) — `AccountsPayableAgingPage.tsx` already shows a
+  per-page QBO-mirror signed Δ strip ("Reconcile: matched/divergent · signed Δ (TMS − mirror)").
+  Unclear whether that already satisfies "one pinned Difference figure that must reach zero,
+  updating live" or whether a new dedicated surface is wanted — needs Lead/owner confirmation before
+  I build either the wrong thing or a duplicate.
+
+**Queued next**: A5 item 3 (Paid/Deposited split, build as forward-looking infra, Live=BLOCKED
+honestly reported); A5 items 2/5 pending scope clarification; A/R equivalent of the aging-bucket
+tiles (no confirmed target file — `ArApAgingPage.tsx` has a different bucket-column shape than
+`AccountsPayableAgingPage.tsx`, `CollectionsPage.tsx` is a task list with a single `aging_bucket`
+tag, not a full matrix — not building against a guess).
+
