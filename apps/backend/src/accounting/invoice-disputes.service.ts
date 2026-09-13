@@ -20,8 +20,21 @@ export const INVOICE_DISPUTE_REASONS = [
   "short_pay",
   "chargeback",
   "other",
+  // ROUND 23.3 DELTA (owner, 2026-09-13): over/under-payment both open disputes. Ship reason
+  // codes + relaxed validation FIRST (this commit; db/migrations/... already added both values to
+  // accounting.invoice_disputes' chk_invoice_disputes_reason CHECK, confirmed live), THEN open
+  // disputes against them — never a dispute against a reason code that doesn't exist yet.
+  "over_payment",
+  "under_billing",
 ] as const;
 export type InvoiceDisputeReason = (typeof INVOICE_DISPUTE_REASONS)[number];
+
+// The pre-existing reasons all describe a shortfall CAPPED at the invoice face (a short-pay,
+// discount, or fine can never exceed what was actually billed). over_payment/under_billing are the
+// opposite shape — the CUSTOMER/FACTOR's stated true amount differs from our face in either
+// direction, and that variance can legitimately exceed the invoice face (e.g. a large under-billing
+// correction on a small invoice). These two reasons alone skip the "disputed <= invoiced" cap below.
+const VARIANCE_REASONS = new Set<InvoiceDisputeReason>(["over_payment", "under_billing"]);
 
 export const INVOICE_DISPUTE_RESOLUTIONS = [
   "invoice_corrected",
@@ -95,11 +108,22 @@ export async function openInvoiceDispute(
     }
 
     const invoiced = Number(inv.total_cents ?? 0);
+    const isVariance = VARIANCE_REASONS.has(input.reasonCode);
     const disputed = Math.round(Number(input.disputedAmountCents));
     if (!Number.isFinite(disputed) || disputed <= 0) return { error: "invalid_disputed_amount" };
-    if (disputed > invoiced) return { error: "dispute_exceeds_invoice_face", invoiced_amount_cents: invoiced };
+    if (!isVariance && disputed > invoiced) {
+      return { error: "dispute_exceeds_invoice_face", invoiced_amount_cents: invoiced };
+    }
     const expected =
       input.expectedAmountCents == null ? invoiced - disputed : Math.round(Number(input.expectedAmountCents));
+    if (isVariance) {
+      // over_payment/under_billing: disputed must equal the actual variance, not an arbitrary
+      // caller-supplied number — derive it from expected vs invoiced so the two can never drift.
+      if (input.expectedAmountCents == null) return { error: "expected_amount_required_for_variance" };
+      const trueDelta = Math.abs(expected - invoiced);
+      if (trueDelta === 0) return { error: "no_variance_to_dispute" };
+      if (disputed !== trueDelta) return { error: "disputed_amount_must_equal_variance", expected_delta_cents: trueDelta };
+    }
 
     try {
       const ins = await client.query(

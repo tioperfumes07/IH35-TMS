@@ -19,6 +19,7 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { statusPill } from "../../components/shared/statusPill";
 
 const DECIDE_ROLES = new Set(["Owner", "Administrator", "Accountant"]);
 
@@ -34,16 +35,6 @@ const STATUS_OPTIONS = [
 function money(cents: number | null | undefined) {
   if (cents == null || !Number.isFinite(Number(cents))) return "—";
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(cents) / 100);
-}
-
-function statusPill(status: string) {
-  const base = "rounded-sm px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide";
-  // §7 financial UI: slate status pills only (red reserved for delete/Accident).
-  if (status === "denied") return `${base} border border-slate-200 bg-slate-100 text-slate-700`;
-  if (status === "submitted" || status === "under_review" || status === "approved") {
-    return `${base} border border-slate-200 bg-slate-100 text-slate-700`;
-  }
-  return `${base} border border-slate-200 bg-slate-50 text-slate-700`;
 }
 
 function errorCode(err: unknown): string | null {
