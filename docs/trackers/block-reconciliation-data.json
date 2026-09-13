@@ -1,6 +1,6 @@
 {
  "date": "2026-09-13",
- "generated_at_iso": "2026-09-13T12:01:21.738Z",
+ "generated_at_iso": "2026-09-13T16:27:15.278Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13727,6 +13727,12 @@
  ],
  "merged_prs": [
   {
+   "number": 22009,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-13T12:01:46Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 22008,
    "title": "Cursor- fix push-gate: repoint 2 stale settlement guards to TourLoadRows + complete 2 Required-surface leaves (CI-F20260913-PUSHGATE)",
    "mergedAt": "2026-09-13T10:26:05Z",
@@ -17319,12 +17325,6 @@
    "title": "Cursor- settlement pay-run reversal poster (missing reverse for closeSettlementPayRun)",
    "mergedAt": "2026-09-08T03:51:19Z",
    "branch": "cursor/settlement-payrun-reversal-poster"
-  },
-  {
-   "number": 21402,
-   "title": "CC-2-FINDING: N/A — CLAIM-RESERVE 10823 for verify-bank-recon-accept-closed-session-conflict",
-   "mergedAt": "2026-09-08T03:49:29Z",
-   "branch": "cc-2/claim-reserve-10823"
   }
  ],
  "merged_pr_total": 3000,
