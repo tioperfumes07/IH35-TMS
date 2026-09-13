@@ -177,6 +177,7 @@ import { registerOwnerApprovalPortalRoutes } from "./driver-finance/owner-approv
 import { registerAbandonmentRoutes } from "./driver-finance/abandonment.routes.js";
 import { registerDetentionPayPostingRoutes } from "./driver-finance/detention-pay-posting.routes.js";
 import { registerSettlementsDisputesRoutes } from "./settlements/disputes/disputes.routes.js";
+import { registerInvoiceDisputeRoutes } from "./accounting/invoice-disputes.routes.js";
 import { registerSettlementApprovalRoutes } from "./settlements/approval.routes.js";
 import { registerAutoDeductionPolicyRoutes } from "./settlements/auto-deductions/policy.routes.js";
 import { registerSettlementDisputeRoutes } from "./driver-finance/settlement-dispute.routes.js";
@@ -999,6 +1000,12 @@ async function main() {
   await registerCustomerContractRoutes(app);
   await registerWeeklyCloseRoutes(app);
   await registerSettlementsDisputesRoutes(app);
+  // ROUND 23.3 Part C — this route file has existed since the owner's 2026-09-12 A/R dispute
+  // ruling (db/migrations/202614131200_invoice_disputes.sql, already applied — accounting.
+  // invoice_disputes holds 2 real live open USMCA rows today) but was never wired into the app;
+  // registerInvoiceDisputeRoutes had no caller anywhere. $1,900.00 of open customer short-pay
+  // (invoices 13581/13586) has had no API surface at all until this line.
+  await registerInvoiceDisputeRoutes(app);
   // ACCT-R-13 (2026-07-25): built but never mounted (live 404 on all 9 endpoints). SettlementsMvp
   // (registerSettlementsMvpRoutes) stays UNMOUNTED — see scripts/verify-no-orphan-routes.mjs.
   await registerSettlementApprovalRoutes(app);
