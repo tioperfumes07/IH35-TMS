@@ -1,0 +1,163 @@
+# MASTER REGISTER — WHAT IS DONE, WHAT IS OPEN, AND THE STANDING LAWS
+Issued 2026-09-13 by Claude Lead · USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80)
+Measured against `origin/main` at `0f9acdbe`. Every status below is a merged PR number or an
+explicit OPEN. Nothing here is "probably done."
+
+**Owner's instruction that created this file:** *"i do not want anything lost, post to repo, so they
+all have it and nothing gets lost. make sure all previous jobs have been completed by them or are in
+queue."*
+
+This file is the single index. If a job is not in this file it does not exist. If a seat finishes a
+job, it updates its own row here in the same PR.
+
+---
+
+## PART 1 — SHIPPED AND VERIFIED
+
+| Round | Work | PR | Verified how |
+|---|---|---|---|
+| 20.1 | Tour linkage + `trip_type` projection; 9 orphaned legs backfilled | #21921 | Lead, live Chrome |
+| 20.2 | Round Trips renders the whole tour | #21922 · #21926 · #21929 | Lead: T148 `NB-TR-SB`, 13563/13553/13595, green `Invoiced 13563` chip |
+| 20.3 | Kanban drag + swim-lane bloat | #21918 | Lead, live: `touchAction:"none"` on all 3 card variants (was `auto`), empty lanes **128 → 0**, Dispatched column **~1100px → 562px** |
+| 20.4 | Truck Line units-only + visible row rules | #21939 | Lead, live: 23 rows, border `rgb(199,210,220)`, 2.5px trip-colour spine, zero driver names in labels |
+| 20.5 | Zone 1 reverse transitions (draggable columns send back) | #21942 | Cursor |
+| 20.6 | Planners, all four tabs | #21936 · #21954 | CC-3, live-Chrome verified all 4 tabs |
+| 20.7 | App-wide autofit law + guard in the money gate | #21933 · #21935 | CC-2, live at 2368/1440/1024px; sweep complete, zero page-shell caps remain |
+| 20.8 A | The Money Design System (define-once tokens + components) | #21941 | CC-2 |
+| 20.8 B | Banking header/KPI/design rebuild (B1/B2/B4–B11) | #21946 | CC-2 |
+| 20.9 #1 | **P&L root cause**: insurance policy CREATE route never generated a bill schedule — had never succeeded for any policy, ever | #21940 | CC-1 |
+| 20.9 a/b/c/e | Period-mismatch root cause named: revenue posts dated to **processing time** via `companyBusinessDate()`, never the load's real delivery/invoice date — all 5 call sites of `latchOnDeliveryEvidence` | #21945 | CC-1 |
+| 20.9 d | Insurance treatment: **NO CHANGE** — each installment already posts on its own future `bill_date`, which is correct matching | #21951 | CC-1 |
+| 20.9 g | `verify-pl-cost-of-revenue.mjs` revised to catch date-range non-overlap, not merely zero postings | #21947 | CC-1 |
+| 21.0 | Factoring: 16 tabs → 6, 22 bare em-dashes, 2 developer schema notes removed | #21952 | CC-3 |
+| Chain | Posting contract for a human-confirmed bank match — 5 of 6 match types cited to existing functions | #21948 | CC-1 |
+| Chain L4 | **PR 1 of 3**: read-only bank suggestion engine, zero writes, + `verify-no-automatch.mjs` and `verify-load-to-cash-chain.mjs` both wired into the money gate | #21955 | CC-2 |
+
+### Two corrections the Lead owes the record
+1. **The "27 open bills / $271,280.41 vs $0.00" I reported as a cross-screen contradiction was not a
+   defect.** It was CC-1's dry-run leak in flight (~35 minutes). The Accounting home reading $0.00
+   was *correct*. Verified clean: `accounting.bills` USMCA = **28 total, 0 live, 28 voided,
+   $0.00 live**. CC-1 caught it himself, voided all 27, restored the GL and disclosed it (#21944)
+   before doing anything else.
+2. **My Prepaid-Insurance recommendation was wrong.** I told the owner account 5600 was booked
+   incorrectly and needed capitalising and amortising. CC-1 checked live: each installment already
+   posts on its own future `bill_date`. His verdict — no change — is right. Facts win.
+
+---
+
+## PART 2 — OPEN QUEUE, BY SEAT
+
+### CURSOR — loads, tours, trip linkage, load status (absolute fence, no other seat touches it)
+| # | Job | Status |
+|---|---|---|
+| C1 | **Chain Link 1** — 7 loads with no driver bill: `13502`, `13505`, `13507` (all `delivered_pending_docs` with **no driver, no unit, no tour, no bill**), plus `13554`, `13573`, `13579`, `13580` | OPEN |
+| C2 | **Chain Link 2** — 14 loads with no tour link: `13502 13505 13507 13526 13527 13561 13564 13567 13570 13571 13574 13580 13586 13589` | OPEN |
+| C3 | **The auto-create HOOK** for both, named by file and line. A backfill alone means it recurs. | OPEN |
+| C4 | Load **13595** (T148 SB) — Lead moved it `dispatched → in_transit` with a test drag at 21:40:48Z. Evidence it is NOT rolling: Samsara puts T148 on Mines Road, Laredo, engine OFF, 0 mph at 21:59:50Z; both stops `pending` with no actuals; `audit.row_changes` shows that update is the only status change the row has ever had. Revert SQL issued. | OPEN — owner passed to Cursor |
+| C5 | Load **13593** rendered `in_transit` on the Loads Planner at 18:15 CT; Lead read `dispatched` at 16:30 CT. Worth a look. | OPEN |
+
+### CC-1 — money / GL / migrations / posting
+| # | Job | Status |
+|---|---|---|
+| A1 | ROUND 20.9 item (f) — reconcile the 3 AlwaysTrack accessorial files against posted: Report (57) driver Enlonada/Desenlonada/Layover **$950.00** / 35 rows · Report (59) admin fees + escrow claims **$1,753.99** / 44 rows · Report (58) vendor fuel/DEF/reimbursement (LOVES, real invoice numbers) **$3,218.70** / 57 rows | OPEN, next cycle |
+| A2 | ROUND 21.1 — Accounting tabs: counts + dollar totals in tab labels, validation errors as a counted column with hover reason, **split `Paid` from `Deposited`**, aging buckets as clickable filter tiles, live reconciling Difference that must reach zero | OPEN |
+| A3 | ROUND 21.1 item 1 (the open-bills contradiction) — **CLOSED AS MOOT**, it was the 27-bill leak | CLOSED |
+| A4 | Settlement-number-beside-load sweep — the 5 Accounting surfaces + Cash Flow rolling ledger | OPEN |
+| A5 | Behaviour-only research items: Paid/Deposited split, aging-bucket filter tiles, reconciliation Difference | OPEN |
+
+### CC-2 — banking / frontend / design system
+| # | Job | Status |
+|---|---|---|
+| B1 | Chain Link 4 **PR 2** — accept/reject/change. A human decision writes `matched_*` AND `categorized_by_user_id` AND `categorized_at` in one transaction. **Modify-selected-then-accept.** Shift+click ranges. | OPEN |
+| B2 | Chain Link 4 **PR 3** — rules with QuickBooks' precedence: money-in excluded from any automation, user rules first, suggestions second, remainder uncategorized. Drag-reorderable, order = priority. Plus an **`Auto-suggested` filter** isolating what the machine decided. | OPEN |
+| B3 | Banking "Factoring (Faro)" tab deletion → read-only summary card. CC-3 acked via #21952. | IN FLIGHT |
+| B4 | ROUND 21.2 — Customers & Vendors: the 13-tab bar at `top: 2273px`, seven empty panels, the health score built on missing inputs, four LOVES records, Type=Other/Category=null audit | OPEN |
+| B5 | `<SettlementRefCell>` shared component + `verify-settlement-ref-beside-load.mjs` guard, then the 11 Driver/Finance + 2 Fuel surfaces | OPEN |
+| B6 | NetSuite tab pattern: fixed tab vocabulary, conditional rendering, **the data-present dot**, expand-all/rollup | OPEN |
+
+### CC-3 — dispatch / planners / factoring / safety
+| # | Job | Status |
+|---|---|---|
+| D1 | Saved queries as chips with **live counts** — `Unmatched fuel (307)` · `Insurance schedule (27)` · `Loads without a driver bill (7)` · `Loads without a tour (14)` · `Duplicate expenses (5)` | OPEN |
+| D2 | One saved query published three ways (list view · sublist view · dashboard/reminder count) | OPEN |
+| D3 | Settlement-number-beside-load sweep — 6 Dispatch + 5 Safety/Insurance + 5 Fleet/Reports/Docs surfaces | OPEN |
+
+---
+
+## PART 3 — TWO LIVE AUTO-MATCH VIOLATIONS. LEAD RULING.
+CC-2 found these while authoring `verify-no-automatch.mjs` (#21955) and correctly did **not** rush a
+fix into a ~1300-line surface shared with the money lane. Requested Lead direction. Here it is.
+
+**Violation 1 — `apps/backend/src/accounting/bank-recon/match.service.ts` → `findCandidates()`
+auto-persists a `banking.reconciliation_matches` row with `match_state='auto_matched'` on a bare
+GET.** Opening the Match drawer writes an auto-match.
+**RULING: neutralize. CC-1 and CC-2 together, one reviewed PR, CC-1 leads because it is the money
+lane.** This is wrong on two counts, and the second one stands even without Owner Law B: a GET must
+never write. Split it — `findCandidates()` returns candidates and persists nothing; persistence
+moves to the explicit accept handler that already records `categorized_by_user_id`.
+
+**Violation 2 — `apps/backend/src/cron/bank-recon-auto-match.cron.ts`**, a nightly cron literally
+named "auto-match", calling the same path for every company, gated off by
+`BANK_RECON_AUTO_MATCH_CRON_ENABLED` (default false).
+**RULING: DELETE THE CRON. Do not leave it flag-gated.** Owner Law B says "not in a nightly job"
+verbatim. A default-false flag is one environment variable from violating the law, and nobody will
+remember why the flag exists in six months. Remove the file, remove the flag, remove the schedule
+entry. If a suggestion *refresh* job is ever wanted it is a new, differently-named job that writes
+only to a suggestions table and never to `matched_*`.
+
+Both are tracked as ratchet debt in the new guard so no third site can appear silently. Good catch
+and the right call to escalate rather than edit.
+
+## PART 4 — THE SETTLEMENT-DISBURSEMENT GAP. LEAD RULING.
+CC-1's posting contract covers 5 of 6 match types and flagged the sixth — a bank line matching a
+**settlement disbursement** — rather than inventing a JE. Correct.
+**RULING: it posts nothing new.** A driver settlement already produced its own entries when it
+closed; the bank line landing later is the *cash* side clearing an existing liability, not a new
+expense. The match therefore: (a) links the bank transaction to the settlement, (b) relieves
+`2170 Driver Net-Pay Clearing` against the bank account **only if that clearing entry has not
+already been relieved**, (c) posts nothing at all if it has. Idempotency key on the settlement id +
+bank transaction id. **CC-1 confirms this against the existing close-path entries before CC-2
+builds against it** — if the close path already credits the bank directly, the answer is (c) always,
+and the match is link-only.
+
+---
+
+## PART 5 — STANDING LAWS (every seat, every PR)
+1. **OWNER LAW B — bank matching is SUGGEST-ONLY.** *"it should never automatch, it suggests and we
+   accept it or change the transactions."* Nothing auto-writes a `matched_*` or `categorization_*`
+   column — not at high confidence, not on an exact hit, not in a job, hook, importer, migration or
+   cron. Every write records **who** and **when**. **There is no future auto-confirm phase.**
+   Guard: `scripts/verify-no-automatch.mjs`.
+2. **THE LOAD-TO-CASH CHAIN.** Load booked → driver bill auto-created → load assigned to a
+   pre-settlement/tour → expenses carry the load's number → it all renders in bills, expenses, P&L,
+   cash flow, bank matching and projections. Guard: `scripts/verify-load-to-cash-chain.mjs`.
+   Link 3 is at **385/385** today — every expense carries a `load_id` and a load-derived
+   `expense_number`. Protect it.
+3. **A SETTLEMENT/TOUR NUMBER BESIDE EVERY LOAD NUMBER.** ~30 surfaces are missing it today. One
+   shared `<SettlementRefCell>` through `settlementNumber.ts`. Only `source_document_ref` is ever
+   human-visible; `display_id` is never rendered. Open tour reads "Open"; no link reads
+   "Not on a tour" — never an empty cell. Guard: `verify-settlement-ref-beside-load.mjs`.
+4. **AUTOFIT.** No page-level fixed pixel cap on a data board. Nothing clips silently — truncate
+   with an ellipsis *and* a `title`. Guard: `verify-page-autofit.mjs`.
+5. **NO RESTYLE RIGHT NOW.** Owner, 2026-09-13: *"on the screens lets not change yet."* Build
+   behaviour with the components that exist. Adding a field or a column is allowed; changing a hex,
+   a type scale, a spacing value or a page layout is not.
+6. **NO CHARTS ON TRANSACTIONAL ACCOUNTING SCREENS.** Alvys, McLeod and QuickBooks all agree —
+   charts live on a dashboard or in a separate analytics surface, never on Bills/Expenses/Invoices.
+   Research: `claude/09-13-2026-COMPETITOR-UI-RESEARCH-ALVYS-MCLEOD-QBO-NETSUITE.md`.
+7. **Every screen showing money answers, per row: which load, driver, unit, tour, bill, expense,
+   bank line.** Where a link is genuinely absent the screen says so — never a blank, never a zero
+   standing in for unknown.
+
+## PART 6 — OPEN QUESTION BACK TO THE SEATS
+CC-2 could not reproduce Link 1 (driver bills, 81/88) because `accounting.bills` has no `load_id`.
+**That is the wrong table.** The Lead's figure came from `driver_finance.driver_bills.load_id`.
+CC-2: re-run against `driver_finance.driver_bills` and make the guard's LINK-1 check hard-fail like
+LINK-2 and LINK-3. If it still will not reproduce, say so here rather than leaving it non-gating.
+
+---
+
+## HOW THIS FILE STAYS TRUE
+Any seat that finishes a job in Part 2 moves its own row to Part 1 **in the same PR**, with the PR
+number and how it was verified. A job that is not in this file does not exist. A job in Part 2 with
+no movement for two cycles gets escalated to the owner by the Lead, by name.
