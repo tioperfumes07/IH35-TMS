@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["safety"],"cols":["driver","load"],"leafRe":"^safety\\.internal_fines\\.detail$","task":"SAFETY-INTERNAL-FINES-DETAIL-CHROME"} */
 /** SAFETY-INTERNAL-FINES-DETAIL-CHROME — drawer drill-through, display #, load/settlement, QBO format, flat layout. */
 import fs from "node:fs";
 
