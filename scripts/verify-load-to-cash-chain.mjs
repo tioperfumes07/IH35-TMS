@@ -25,7 +25,23 @@
 // blocked locally; CI / a session with the real connection string sees the real check.
 import pg from "pg";
 
+/** @matrix-built {"modules":["dispatch"],"cols":["connectivity"],"leafRe":"^(loads|driver_bills|presettlement|expenses)$","task":"LOAD-TO-CASH-CHAIN-C1-C3","vertical":"class-sweep"} */
+
 const LABEL = "verify-load-to-cash-chain";
+
+// USMCA only (00-IH35-LAW.mdc). The first draft of this guard counted EVERY company under
+// bypass_rls, so frozen Transportation loads (L-2026… under 91e0bf0a) landed in LINK 1/2 as
+// cross-entity false positives — corrected to scope on operating_company_id 2026-09-13 (Cursor).
+const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+
+// LINK 2 owner-pending baseline (consciously baselined, orphan-fk-inventory convention). These
+// driver-having loads cannot be auto-linked — their pre-settlement was script-cancelled on
+// 2026-09-12 while OPEN and the driver has since opened a NEWER tour, so the old one can only be
+// owner-CLOSED (never re-opened: one-open-per-driver), or it never had a pre-settlement at all. Full
+// forensic + the safe restore of the 4 owner-CLOSED siblings: docs/reconcile/CHAIN-C1-C2-BACKFILL-
+// 2026-09-13.md. A driver-having unlinked load NOT in this set is a real regression and fails.
+const OWNER_PENDING_UNLINKED = new Set(["13526", "13527", "13561", "13567", "13571", "13574"]);
+const DELIVERED_STATUSES = ["delivered_pending_docs", "completed_docs_received", "closed", "invoiced"];
 
 export function expenseNumberMismatch(loadNumber, expenseNumber) {
   if (!expenseNumber) return false; // no expense_number at all is a separate, pre-existing gap class, not this check's concern
@@ -42,35 +58,65 @@ async function live() {
   const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
   await client.connect();
   try {
-    await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
+    // is_local MUST be false — pg autocommits each statement, so a transaction-local (true) GUC is
+    // gone by the next query and every read then RLS-filters to 0 ("0 eligible loads" false FAIL).
+    // Session-level persists across the client's statements. (neondb_owner does not auto-bypass RLS.)
+    await client.query("SELECT set_config('app.bypass_rls','lucia',false)");
 
-    const chainRes = await client.query(`
-      SELECT
-        COUNT(*)::int AS total,
-        COUNT(*) FILTER (WHERE presettlement_link_id IS NULL)::int AS missing_presettlement,
-        COUNT(*) FILTER (
-          WHERE NOT EXISTS (SELECT 1 FROM driver_finance.driver_bills db WHERE db.load_id = l.id)
-        )::int AS missing_driver_bill
-      FROM mdata.loads l
-      WHERE soft_deleted_at IS NULL
-        AND status <> 'cancelled'
-        AND created_at < now() - interval '24 hours'
-    `);
-    const chain = chainRes.rows[0];
-    if (!chain || chain.total === "0") {
-      console.error(`${LABEL}: LIVE FAIL — 0 eligible loads found; completeness discriminator says this is an instrument problem, not a real zero (see verify-zero-count-completeness-discriminator convention) — re-run before trusting this`);
+    const loadsRes = await client.query(
+      `
+      SELECT l.load_number, l.status::text AS status,
+             (l.assigned_primary_driver_id IS NOT NULL OR l.assigned_secondary_driver_id IS NOT NULL) AS has_driver,
+             (l.presettlement_link_id IS NOT NULL) AS has_presettlement,
+             EXISTS (SELECT 1 FROM driver_finance.driver_bills db WHERE db.load_id = l.id) AS has_bill
+        FROM mdata.loads l
+       WHERE l.soft_deleted_at IS NULL
+         AND l.status <> 'cancelled'
+         AND l.created_at < now() - interval '24 hours'
+         AND l.operating_company_id = $1::uuid
+    `,
+      [USMCA_COMPANY_ID]
+    );
+    const loads = loadsRes.rows;
+    if (loads.length === 0) {
+      console.error(`${LABEL}: LIVE FAIL — 0 eligible USMCA loads found; completeness discriminator says this is an instrument problem, not a real zero (see verify-zero-count-completeness-discriminator convention) — re-run before trusting this`);
       process.exit(1);
     }
 
+    // LINK 1 — owner law is "a bill for THAT DRIVER". driver_finance.driver_bills.driver_id is NOT
+    // NULL, so a load with no seated driver CANNOT have a driver bill — LINK 1 hard-fails only on
+    // loads that HAVE a driver and still lack a bill. A load that reached a delivered/closed status
+    // with no driver at all is a separate DATA anomaly, reported below (not conflated into LINK 1).
+    const link1Fail = loads.filter((r) => r.has_driver && !r.has_bill).map((r) => r.load_number);
+    const driverlessDelivered = loads
+      .filter((r) => !r.has_driver && DELIVERED_STATUSES.includes(r.status))
+      .map((r) => r.load_number);
+
+    // LINK 2 — every driver-having load must be on a pre-settlement/tour. The owner-pending baseline
+    // (see const above) is excluded; a driver-having unlinked load NOT in it is a real regression.
+    const link2Fail = loads
+      .filter((r) => r.has_driver && !r.has_presettlement && !OWNER_PENDING_UNLINKED.has(r.load_number))
+      .map((r) => r.load_number);
+    const ownerPendingPresent = loads
+      .filter((r) => !r.has_presettlement && OWNER_PENDING_UNLINKED.has(r.load_number))
+      .map((r) => r.load_number);
+
+    if (driverlessDelivered.length > 0) {
+      console.log(`${LABEL}: REPORT — ${driverlessDelivered.length} delivered/closed load(s) with NO driver (cannot mint a bill or join a tour; owner data fix): ${driverlessDelivered.join(", ")}`);
+    }
+    if (ownerPendingPresent.length > 0) {
+      console.log(`${LABEL}: REPORT — ${ownerPendingPresent.length} owner-pending unlinked load(s) baselined (script-cancelled OPEN pre-settlement, driver moved on): ${ownerPendingPresent.join(", ")}`);
+    }
+
     const failures = [];
-    if (Number(chain.missing_driver_bill) > 0) {
+    if (link1Fail.length > 0) {
       failures.push(
-        `LINK 1 — ${chain.missing_driver_bill} of ${chain.total} non-cancelled load(s) older than 24h have no driver_finance.driver_bills row (no driver bill auto-created)`
+        `LINK 1 — ${link1Fail.length} of ${loads.length} USMCA driver-having load(s) older than 24h have no driver_finance.driver_bills row: ${link1Fail.join(", ")}`
       );
     }
-    if (Number(chain.missing_presettlement) > 0) {
+    if (link2Fail.length > 0) {
       failures.push(
-        `LINK 2 — ${chain.missing_presettlement} of ${chain.total} non-cancelled load(s) older than 24h have no presettlement_link_id (no pre-settlement/settlement/tour assignment)`
+        `LINK 2 — ${link2Fail.length} of ${loads.length} USMCA driver-having load(s) older than 24h have no presettlement_link_id and are not in the owner-pending baseline: ${link2Fail.join(", ")}`
       );
     }
 
@@ -94,7 +140,7 @@ async function live() {
       process.exit(1);
     }
     console.log(
-      `${LABEL}: LIVE PASS — ${chain.total} eligible load(s), 0 missing driver_bills row, 0 missing presettlement_link_id, 0 expense_number mismatches.`
+      `${LABEL}: LIVE PASS — ${loads.length} eligible USMCA load(s); every driver-having load has a driver_bill and a presettlement_link_id; 0 expense_number mismatches.`
     );
   } finally {
     await client.end();
