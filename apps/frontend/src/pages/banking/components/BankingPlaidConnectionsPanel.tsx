@@ -17,7 +17,9 @@ import { PlaidReconnectButton } from "./PlaidReconnectButton";
 import { PlaidItemCard } from "./PlaidItemCard";
 import { derivePlaidConnectionBadgeLabel } from "./plaid-item-display";
 import { ActionButton } from "../../../components/shared/ActionButton";
+import { PlaidLinkButton } from "../../../components/banking/PlaidLinkButton";
 import { useToast } from "../../../components/Toast";
+import { MONEY_DESTRUCTIVE_CLASS } from "../../../design/money-design-system";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { filterPlaidBankAccountsForCompany } from "../../../lib/banking-company-filter";
 import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
@@ -162,14 +164,36 @@ export function BankingPlaidConnectionsPanel({
 
   return (
     <div className="rounded-sm border border-gray-200 bg-white p-3">
-      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">Plaid connections</div>
+      {/* ROUND-20.8 B2/B9 — this panel is now the SOLE place Banking connects a new Plaid item.
+          The header used to carry three separate "Connect Bank" / "+Connect Credit Card" /
+          "+Connect Other" links that duplicated this tab outright; deleted from the header, kept
+          here, co-located with the connections list they affect. */}
+      {canConnect ? (
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">Plaid connections</div>
+          <div className="flex flex-wrap gap-2">
+            <PlaidLinkButton operatingCompanyId={companyId} accountType="bank" label="+ Connect bank" onSuccess={() => void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] })} />
+            <PlaidLinkButton operatingCompanyId={companyId} accountType="credit_card" label="+ Connect credit card" onSuccess={() => void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] })} />
+            <PlaidLinkButton operatingCompanyId={companyId} accountType="all" label="+ Connect other" onSuccess={() => void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] })} />
+          </div>
+        </div>
+      ) : (
+        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">Plaid connections</div>
+      )}
       {plaidQuery.isError ? <ListErrorBanner onRetry={() => void plaidQuery.refetch()} /> : null}
       {plaidQuery.isLoading ? <p className="text-xs text-gray-600">Loading connections…</p> : null}
       {!plaidQuery.isLoading && groups.length > 0 && visibleGroups.length === 0 ? (
         <p className="text-xs text-gray-600">No active Plaid connections for this company filter. Enable history below.</p>
       ) : null}
       {plaidListState.isEmpty ? (
-        <p className="text-xs text-gray-600">No bank accounts connected yet. Use <span className="font-medium">Connect Bank</span> above.</p>
+        <p className="text-xs text-gray-600">
+          No bank accounts connected yet.{" "}
+          {canConnect ? (
+            <>Use <span className="font-medium">+ Connect bank</span> above.</>
+          ) : (
+            "Ask an Owner/Administrator to connect one."
+          )}
+        </p>
       ) : null}
       <div className="space-y-3">
         {visibleGroups.map((g) => {
@@ -214,13 +238,13 @@ export function BankingPlaidConnectionsPanel({
                         {syncingItemId === itemId ? "Syncing…" : "Sync now"}
                       </ActionButton>
                       {canDisconnect ? (
-                        <ActionButton
-                          type="button"
-                          className="border border-red-200 bg-red-50 text-red-800 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-600"
-                          onClick={() => setDisconnectTarget(itemId)}
-                        >
+                        // ROUND-20.8 A4 — DESTRUCTIVE NEVER THE LOUDEST THING. This was a red button
+                        // at rest, the most prominent control on the row next to "Sync now." Now
+                        // neutral text at rest; MONEY_DESTRUCTIVE_CLASS binds the bad color only on
+                        // hover/focus.
+                        <button type="button" className={MONEY_DESTRUCTIVE_CLASS} onClick={() => setDisconnectTarget(itemId)}>
                           Disconnect
-                        </ActionButton>
+                        </button>
                       ) : null}
                     </div>
                   ) : null

@@ -14,6 +14,14 @@ function isRelayWalletTile(tile: BankingTile) {
   return tile.is_relay_wallet === true || tile.system_purpose === "relay_fuel_wallet";
 }
 
+// ROUND-20.8 B8 — the real/virtual distinction is material (a real bank account a bank actually
+// holds vs. a virtual ledger bucket this system tracks) and was rendered as 7px gray text
+// (`text-xs text-gray-500` reading small next to the balance). Now a real visible chip, matching
+// the reference build's c-real/c-virt styling.
+function tileKindChipClass(tile: BankingTile) {
+  return String(tile.tile_kind) === "virtual" ? "bg-[#f1f4f7] text-[#5d6b7a]" : "bg-[#e7f0fb] text-[#1c5ba8]";
+}
+
 function badgeClass(tile: BankingTile) {
   if (tile.tag?.includes("DIP")) return "bg-slate-100 text-slate-700";
   // BANK-SURF-05: never style off phantom is_relay — use CoA system_purpose enrichment.
@@ -37,7 +45,12 @@ export function AccountTile({ tile, selected, onSelect, onView, onInspect }: Pro
           <span className={`rounded-sm px-2 py-0.5 text-xs ${badgeClass(tile)}`}>
             {isRelayWalletTile(tile) ? tile.tag || "Relay" : tile.tag || tile.account_type}
           </span>
-          <span className="text-xs text-gray-500">{tile.tile_kind}</span>
+          <span
+            className={`rounded-sm px-1.5 py-0.5 font-extrabold uppercase tracking-[.05em] ${tileKindChipClass(tile)}`}
+            style={{ fontSize: "9.5px" }}
+          >
+            {String(tile.tile_kind) === "virtual" ? "Virtual" : "Real"}
+          </span>
         </div>
         <div className="truncate text-xs font-semibold text-gray-900">{tile.display_name}</div>
         <div className="mt-1 text-xs font-bold tabular-nums text-gray-900">${Number(tile.current_balance ?? 0).toFixed(2)}</div>

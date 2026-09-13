@@ -39,7 +39,7 @@ export function MoneyKpiTile({ label, value, tone, sub, sparkline, action, onCli
       <div className="font-bold uppercase text-[#5d6b7a]" style={{ fontSize: "10.5px", letterSpacing: ".065em" }}>
         {label}
       </div>
-      <div className="mt-1 font-bold" style={{ fontSize: "27px", letterSpacing: "-1px", color: valueColor, fontVariantNumeric: "tabular-nums" }}>
+      <div className="mt-1 font-bold" style={{ fontSize: "27px", letterSpacing: "-1px", color: valueColor, fontVariantNumeric: "tabular-nums" }} title={value}>
         {value}
       </div>
       <div className="mt-0.5 text-[#5d6b7a]" style={{ fontSize: "11.5px" }}>
@@ -62,10 +62,25 @@ export function MoneyKpiTile({ label, value, tone, sub, sparkline, action, onCli
     </div>
   );
   if (!onClick) return <div data-testid={testId}>{body}</div>;
+  // A real <button> here would put the "action" button (when present) inside another button —
+  // invalid HTML, broken a11y semantics. A div with role="button" stays a single valid button
+  // wherever action also renders, and getByRole("button", ...) still finds it.
   return (
-    <button type="button" onClick={onClick} className="block w-full text-left" data-testid={testId}>
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      className="block w-full cursor-pointer text-left"
+      data-testid={testId}
+    >
       {body}
-    </button>
+    </div>
   );
 }
 
