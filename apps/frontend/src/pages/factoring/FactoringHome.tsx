@@ -68,6 +68,8 @@ import { apiRequest } from "../../api/client";
 import { FACTORING_TAB_PATH, factoringTabFromPath } from "../../router/route-manifest";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
+import { NotApplicable } from "../../components/money/NotApplicable";
+import type { NaReason } from "../../design/money-design-system";
 import { CollapsedListFilters } from "../../components/table/CollapsedListFilters";
 
 // FAC-09a (owner 2026-09-08, "CORRECTED FROM REAL SCREENSHOTS"): the real Faro debtor portal's
@@ -87,7 +89,12 @@ const SUBNAV = [
   { id: "chargebacks_overpayments", label: "Chargebacks & Overpayments" },
   { id: "loan_save", label: "Loan / Save" },
   { id: "unapplied_cash", label: "Unapplied Cash" },
-  { id: "invoice_status_report", label: "Invoice Status Report (BETA)" },
+  // ROUND 21.0 item 2 (owner ruling: "either it is trustworthy and the tag comes off, or it is
+  // not and it is behind a flag" -- decided, not deferred): this report is real, sourced (invoice
+  // + settlement + advance/reserve/fee join, same query already exercised by Aging/Purchase
+  // Report), and every missing field renders the same honest "—" convention as every other tab in
+  // this file -- no different from its siblings that never carried a BETA tag. Tag removed.
+  { id: "invoice_status_report", label: "Invoice Status Report" },
   { id: "messages_support", label: "✉ Messages & Support" },
 ] as const;
 
@@ -127,6 +134,59 @@ const DATE_FILTER_LABEL_CLASS = "flex flex-col gap-1 text-xs text-slate-600";
 function fmtDate(value: unknown) {
   if (!value) return "—";
   return formatDateUS(value);
+}
+
+/** A real money field that legitimately has a value most of the time — the canonical
+ *  NotApplicable("not_loaded") dash only while the query is loading or after it fails, never a
+ *  fabricated $0.00 in either state (the pre-fix bug: the same bare "$0.00" for "still loading"
+ *  as for "the real balance is zero"). */
+function summaryMoneyOrDash(opts: {
+  isLoading: boolean;
+  isError: boolean;
+  value: unknown;
+  testId: string;
+  emphasis?: boolean;
+}) {
+  const { isLoading, isError, value, testId, emphasis } = opts;
+  if (isLoading || isError) return <NotApplicable reason="not_loaded" data-testid={testId} />;
+  return (
+    <span className={`text-xs ${emphasis ? "font-semibold" : "font-medium"} text-gray-900`} data-testid={testId}>
+      {fmtCurrency(value)}
+    </span>
+  );
+}
+
+// ROUND 21.0 item 4: the two developer-facing schema-honesty notes (why there's no date-range
+// picker, why several rows are dashes) move here, rewritten for the owner rather than the next
+// developer, behind a "?" info popover on the Account Summary section header instead of sitting
+// inline on the rendered page. <details>/<summary> gives real click-to-open + keyboard/focus
+// behavior with no extra state or outside-click handler to wire.
+function AccountSummaryInfoPopover() {
+  return (
+    <details className="relative inline-block" data-testid="factoring-account-summary-info">
+      {/* eslint-disable-next-line jsx-a11y/no-redundant-roles */}
+      <summary
+        className="flex h-5 w-5 cursor-pointer list-none items-center justify-center rounded-full border border-gray-300 text-xs font-semibold text-gray-500 hover:bg-gray-50 [&::-webkit-details-marker]:hidden"
+        aria-label="Why some values are blank"
+      >
+        ?
+      </summary>
+      <div className="absolute right-0 z-20 mt-1 w-72 rounded-sm border border-gray-200 bg-white p-3 text-xs leading-snug text-gray-700 shadow-md">
+        <div className="mb-1 font-semibold text-gray-900">Why some values are blank</div>
+        <p>
+          Some numbers below show "—" instead of an amount. That isn't a bug — for those figures
+          (like Beginning Balance or the individual Discount/Schedule/Wire fees) our data feed only
+          gives us a combined running total, which is already shown elsewhere on this page. Hover
+          any "—" for the specific reason. We never fill a blank with a made-up number.
+        </p>
+        <p className="mt-2">
+          There's also no date-range picker on this page yet: factoring balances are point-in-time
+          only, so a past date range couldn't change any figure below without inventing history we
+          don't have.
+        </p>
+      </div>
+    </details>
+  );
 }
 
 // ParityTable migration (display-only): column order, labels, and cell formatting
@@ -575,6 +635,10 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       }),
     enabled: Boolean(companyId),
   });
+  // Hoisted out of the Account Summary tab body (ROUND 21.0 item 5a) so the KPI strip above every
+  // tab can also read the same real most-recent-posted-month chargeback figure for the
+  // "Chargebacks & fees" tile, instead of that tile always rendering a fixed null.
+  const latestMonthlyFeeSummary = feesQuery.data?.monthly_summary?.[0] ?? null;
 
   // FUNDS-DUE-01 (owner 2026-09-09): real query, own fetch (accounting.factoring_advances
   // submitted-not-yet-advanced rows -- structurally cannot come from the same recourse-pipeline
@@ -789,6 +853,22 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   );
   const canDeactivate = user?.role === "Owner";
 
+  // ROUND 21.0 item 5a (real KPI thresholds, CC-2 ROUND 20.8 Part A tokens — DrillKpiCard's
+  // existing valueTone, never a new palette): the recourse agreement's real window is 96 days.
+  const FACTORING_RECOURSE_LIMIT_DAYS = 96;
+  const FACTORING_RECOURSE_WARN_MARGIN_DAYS = 6;
+  const recourseDaysRaw = summaryQuery.isError ? null : Number(summary?.recourse_days ?? 95);
+  const recourseDaysTone: "default" | "critical" | "warning" =
+    recourseDaysRaw == null
+      ? "default"
+      : recourseDaysRaw >= FACTORING_RECOURSE_LIMIT_DAYS
+        ? "critical"
+        : recourseDaysRaw >= FACTORING_RECOURSE_LIMIT_DAYS - FACTORING_RECOURSE_WARN_MARGIN_DAYS
+          ? "warning"
+          : "default";
+  const chargebacksTone: "default" | "critical" =
+    !feesQuery.isError && Number(latestMonthlyFeeSummary?.chargeback_total ?? 0) !== 0 ? "critical" : "default";
+
   if (!companyId) {
     // FACTORING-HARD-NAV-LOSES-COMPANY-CONTEXT (owner mega-report 2026-09-09): a cold/direct
     // navigation into this page (fresh tab, bookmark, hard refresh -- not an in-app click) races
@@ -832,38 +912,58 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
               FACT-PAR1: Submit-to-Factor is NOT an arch-design Factoring sub-tab
               (design lists Recourse Pipeline / Chargebacks & Fees / Statements & Settings).
               Reachable via deep-link button — does not change SUBNAV tab count (Rule 05).
+              ROUND 21.0 item 5b (owner ruling: "FIVE navigation buttons dressed as actions...
+              four of them leave the module. One primary action, the rest become a Related menu"):
+              Submit to Factor is the one real primary action taken ON this page; the other three
+              are cross-module deep-links (they leave Factoring entirely) plus Refresh, now under
+              a single "Related" disclosure instead of four buttons of equal visual weight.
             */}
             <Link
               to="/factoring/submit"
-              className="inline-flex items-center rounded-sm border border-slate-300 bg-white px-2.5 py-2 text-xs font-medium text-slate-800 hover:bg-slate-50"
+              className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-800 px-2.5 py-2 text-xs font-medium text-white hover:bg-slate-700"
               data-testid="factoring-submit-to-factor-link"
             >
               Submit to Factor
             </Link>
-            <Link
-              to="/dispatch/factoring-queue"
-              className="inline-flex items-center rounded-sm border border-slate-300 bg-white px-2.5 py-2 text-xs font-medium text-slate-800 hover:bg-slate-50"
-              data-testid="factoring-hub-dispatch-queue-reverse-link"
-            >
-              Dispatch queue
-            </Link>
-            <Link
-              to="/accounting/factoring"
-              className="inline-flex items-center rounded-sm border border-slate-300 bg-white px-2.5 py-2 text-xs font-medium text-slate-800 hover:bg-slate-50"
-              data-testid="factoring-hub-accounting-advances-reverse-link"
-            >
-              Accounting advances
-            </Link>
-            <Link
-              to="/banking/factoring"
-              className="inline-flex items-center rounded-sm border border-slate-300 bg-white px-2.5 py-2 text-xs font-medium text-slate-800 hover:bg-slate-50"
-              data-testid="factoring-hub-banking-entry-reverse-link"
-            >
-              Banking entry
-            </Link>
-            <Button size="sm" variant="secondary" onClick={() => void queryClient.invalidateQueries({ queryKey: ["factoring"] })}>
-              Refresh
-            </Button>
+            <details className="relative inline-block">
+              <summary
+                className="flex cursor-pointer list-none items-center gap-1 rounded-sm border border-slate-300 bg-white px-2.5 py-2 text-xs font-medium text-slate-800 hover:bg-slate-50 [&::-webkit-details-marker]:hidden"
+                data-testid="factoring-header-related-menu"
+              >
+                Related ▾
+              </summary>
+              <div className="absolute right-0 z-20 mt-1 w-48 rounded-sm border border-gray-200 bg-white p-1 text-xs shadow-md">
+                <Link
+                  to="/dispatch/factoring-queue"
+                  className="block rounded-sm px-2 py-1.5 text-slate-800 hover:bg-slate-50"
+                  data-testid="factoring-hub-dispatch-queue-reverse-link"
+                >
+                  Dispatch queue
+                </Link>
+                <Link
+                  to="/accounting/factoring"
+                  className="block rounded-sm px-2 py-1.5 text-slate-800 hover:bg-slate-50"
+                  data-testid="factoring-hub-accounting-advances-reverse-link"
+                >
+                  Accounting advances
+                </Link>
+                <Link
+                  to="/banking/factoring"
+                  className="block rounded-sm px-2 py-1.5 text-slate-800 hover:bg-slate-50"
+                  data-testid="factoring-hub-banking-entry-reverse-link"
+                >
+                  Banking entry
+                </Link>
+                <button
+                  type="button"
+                  className="block w-full rounded-sm px-2 py-1.5 text-left text-slate-800 hover:bg-slate-50"
+                  onClick={() => void queryClient.invalidateQueries({ queryKey: ["factoring"] })}
+                  data-testid="factoring-header-refresh"
+                >
+                  Refresh
+                </button>
+              </div>
+            </details>
           </div>
         }
       />
@@ -873,19 +973,49 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       ) : null}
 
       {/* FAC-07 (owner 2026-09-06 22:3xZ): navy tab strip is FIRST — same shape as Banking Home —
-          so the profile card can no longer push the tabs below the fold. */}
+          so the profile card can no longer push the tabs below the fold.
+          ROUND 21.0 item 1 (owner target: 16 -> 6): this is a NAVIGATION regroup only — every
+          FactoringTabId in SUBNAV/INTERNAL_TOOLS_SUBNAV above is unchanged, every route in
+          FACTORING_TAB_PATH still resolves, every tab body below still renders exactly as before
+          (Rule 07, never delete). Only the top-level strip collapses from 16 entries (15 flat +
+          "Internal Tools") down to 6 real groups, using the SAME NavyDropdown "children" mechanism
+          the old Internal Tools entry already used — Submit / Chargebacks / Messages stay direct
+          links (each was already exactly one tab); Cash / Statement / Settings become dropdowns
+          over their real sub-views, mapped below with the deleted tab -> new home for each. */}
       <NavyPageSubNav
         items={[
-          ...SUBNAV.map((item) => ({
-            label: item.label,
-            // "Submit Invoice" reuses the existing real SubmissionQueue page rather than a new
-            // stub — that workflow already exists and works; no reason to reinvent it here.
-            to: item.id === "submit_invoice" ? "/factoring/submit" : FACTORING_TAB_PATH[item.id],
-          })),
+          { label: "Submit", to: "/factoring/submit" },
           {
-            label: "Internal Tools",
+            // was: Funds Due · Payments to You · Debtor Receipts · Unapplied Cash (4 top-level tabs)
+            label: "Cash",
             to: "",
-            children: INTERNAL_TOOLS_SUBNAV.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] })),
+            children: (["funds_due", "payments_to_you", "debtor_receipts", "unapplied_cash"] as const).map((id) => ({
+              label: SUBNAV.find((i) => i.id === id)!.label,
+              to: FACTORING_TAB_PATH[id],
+            })),
+          },
+          {
+            // was: Purchase Report · Account Summary · Fees Paid · Aging · Reserve · Invoice
+            // Status Report (6 top-level tabs)
+            label: "Statement",
+            to: "",
+            children: (["purchase_report", "account_summary", "fees_paid", "aging", "reserve", "invoice_status_report"] as const).map(
+              (id) => ({ label: SUBNAV.find((i) => i.id === id)!.label, to: FACTORING_TAB_PATH[id] })
+            ),
+          },
+          { label: "Chargebacks", to: FACTORING_TAB_PATH.chargebacks_overpayments },
+          { label: "Messages", to: FACTORING_TAB_PATH.messages_support },
+          {
+            // was: Request Debtor/Credit Check + Loan/Save (2 top-level tabs) + the whole former
+            // "Internal Tools" dropdown (7 more) — all settings/admin/credit-check actions, none
+            // of them a debtor-facing report.
+            label: "Settings",
+            to: "",
+            children: [
+              { label: SUBNAV.find((i) => i.id === "request_debtor_credit_check")!.label, to: FACTORING_TAB_PATH.request_debtor_credit_check },
+              { label: SUBNAV.find((i) => i.id === "loan_save")!.label, to: FACTORING_TAB_PATH.loan_save },
+              ...INTERNAL_TOOLS_SUBNAV.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] })),
+            ],
           },
         ]}
       />
@@ -909,11 +1039,17 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             />
             {/* FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY: this is Advance +
                 Reserve still owed to the factor (outstanding_liability_signed_cents), not a real
-                chargeback figure — honest label locked by verify-factoring-outstanding-liability-honest-label. */}
+                chargeback figure — honest label locked by verify-factoring-outstanding-liability-honest-label.
+                ROUND 21.0 item 5a: the owner's spec asked for a 30-day sparkline here (CC-2 ROUND
+                20.8 Part A money design system) — honestly NOT built this pass. This schema has no
+                daily point-in-time snapshot for outstanding liability (same constraint documented
+                on the Account Summary tab's own info popover, not a new one invented here); a
+                sparkline would have to fabricate the missing days. Flagged, not guessed. */}
             <DrillKpiCard
               testId="factoring-kpi-outstanding-liability"
               label="Outstanding Liability Balance"
               value={summaryQuery.isError ? null : fmtCurrency(summary?.outstanding_liability_balance)}
+              hint="Point-in-time only — no daily history to trend"
               to={FACTORING_TAB_PATH.recourse_pipeline}
             />
             <DrillKpiCard
@@ -923,17 +1059,25 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
               hint={summary ? `${summary.mtd_advances_count} advances` : undefined}
               to="/accounting/factoring"
             />
+            {/* ROUND 21.0 item 5a real thresholds (CC-2 ROUND 20.8 Part A tokens — DrillKpiCard's
+                existing valueTone, no new palette): the factoring agreement's real recourse window
+                is FACTORING_RECOURSE_LIMIT_DAYS days; "warning" once a receivable is within
+                FACTORING_RECOURSE_LIMIT_DAYS - FACTORING_RECOURSE_WARN_MARGIN_DAYS of it, "critical"
+                at or past it. */}
             <DrillKpiCard
               testId="factoring-kpi-recourse-days"
               label="Recourse days"
-              value={summaryQuery.isError ? null : Number(summary?.recourse_days ?? 95)}
+              value={summaryQuery.isError ? null : recourseDaysRaw}
+              valueTone={recourseDaysTone}
+              hint={`Recourse limit: ${FACTORING_RECOURSE_LIMIT_DAYS}d`}
               to={FACTORING_TAB_PATH.recourse_pipeline}
             />
             <DrillKpiCard
               testId="factoring-kpi-chargebacks"
               label="Chargebacks & fees"
-              value={null}
-              hint="Open statements"
+              value={feesQuery.isError ? null : fmtCurrency(latestMonthlyFeeSummary?.chargeback_total ?? 0)}
+              valueTone={chargebacksTone}
+              hint="Most recent posted month"
               to={FACTORING_TAB_PATH.chargebacks_fees}
             />
           </div>
@@ -1734,7 +1878,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
           than a fabricated number, same standard as the Aging tab's PO/Other Ref/Memos columns. */}
       {tab === "account_summary" ? (
         (() => {
-          const latestMonth = feesQuery.data?.monthly_summary?.[0] ?? null;
+          const latestMonth = latestMonthlyFeeSummary;
           return (
             <div className="space-y-3">
               {summaryQuery.isError ? (
@@ -1745,42 +1889,44 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                     <div className="text-xs font-medium text-gray-900">Account Summary</div>
                     <div className="flex items-center gap-2">
                       {summaryDetailToggle(accountSummaryView, setAccountSummaryView, "factoring-account-summary")}
-                      <div className="text-xs text-gray-500">
-                      No date-range picker this pass — this schema has no historical period-close
-                      snapshot for factoring balances, so a date range could not change any of the
-                      point-in-time figures below without fabricating history.
-                    </div>
+                      <AccountSummaryInfoPopover />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2">
                     <div className="flex items-center justify-between border-b border-gray-100 py-1">
                       <span className="text-xs text-gray-600">Beginning Balance</span>
-                      <span className="text-xs text-gray-400" data-testid="factoring-account-summary-beginning-balance">—</span>
+                      <NotApplicable reason="no_source" data-testid="factoring-account-summary-beginning-balance" />
                     </div>
                     <div className="flex items-center justify-between border-b border-gray-100 py-1">
                       <span className="text-xs text-gray-600">Ending Balance (AR)</span>
-                      <span className="text-xs font-medium text-gray-900" data-testid="factoring-account-summary-ending-balance">
-                        {summaryQuery.isError ? "—" : fmtCurrency(summary?.outstanding_liability_balance)}
-                      </span>
+                      {summaryMoneyOrDash({
+                        isLoading: summaryQuery.isLoading,
+                        isError: summaryQuery.isError,
+                        value: summary?.outstanding_liability_balance,
+                        testId: "factoring-account-summary-ending-balance",
+                      })}
                     </div>
                     <div className="flex items-center justify-between border-b border-gray-100 py-1">
                       <span className="text-xs text-gray-600">Payments to You *</span>
-                      <span className="text-xs text-gray-400" data-testid="factoring-account-summary-payments-to-you">—</span>
+                      <NotApplicable reason="no_source" data-testid="factoring-account-summary-payments-to-you" />
                     </div>
                     <div className="flex items-center justify-between border-b border-gray-100 py-1">
                       <span className="text-xs text-gray-600">Debtor Receipts</span>
-                      <span className="text-xs text-gray-400" data-testid="factoring-account-summary-debtor-receipts">—</span>
+                      <NotApplicable reason="no_source" data-testid="factoring-account-summary-debtor-receipts" />
                     </div>
                     <div className="flex items-center justify-between border-b border-gray-100 py-1">
                       <span className="text-xs text-gray-600">Payments from You</span>
-                      <span className="text-xs text-gray-400" data-testid="factoring-account-summary-payments-from-you">—</span>
+                      <NotApplicable reason="no_source" data-testid="factoring-account-summary-payments-from-you" />
                     </div>
                     <div className="flex items-center justify-between border-b border-gray-100 py-1">
                       <span className="text-xs text-gray-600">Reserve Balance (combined)</span>
-                      <span className="text-xs font-medium text-gray-900" data-testid="factoring-account-summary-reserve-balance">
-                        {summaryQuery.isError ? "—" : fmtCurrency(summary?.reserve_balance)}
-                      </span>
+                      {summaryMoneyOrDash({
+                        isLoading: summaryQuery.isLoading,
+                        isError: summaryQuery.isError,
+                        value: summary?.reserve_balance,
+                        testId: "factoring-account-summary-reserve-balance",
+                      })}
                     </div>
                   </div>
 
@@ -1791,21 +1937,25 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                     <div className="mt-1 grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2">
                       <div className="flex items-center justify-between border-b border-gray-100 py-1">
                         <span className="text-xs text-gray-600">Discount Fee</span>
-                        <span className="text-xs text-gray-400" data-testid="factoring-account-summary-fee-discount">—</span>
+                        <NotApplicable reason="no_source" data-testid="factoring-account-summary-fee-discount" />
                       </div>
                       <div className="flex items-center justify-between border-b border-gray-100 py-1">
                         <span className="text-xs text-gray-600">Schedule Fee</span>
-                        <span className="text-xs text-gray-400" data-testid="factoring-account-summary-fee-schedule">—</span>
+                        <NotApplicable reason="no_source" data-testid="factoring-account-summary-fee-schedule" />
                       </div>
                       <div className="flex items-center justify-between border-b border-gray-100 py-1">
                         <span className="text-xs text-gray-600">Wire Fee</span>
-                        <span className="text-xs text-gray-400" data-testid="factoring-account-summary-fee-wire">—</span>
+                        <NotApplicable reason="no_source" data-testid="factoring-account-summary-fee-wire" />
                       </div>
                       <div className="flex items-center justify-between border-b border-gray-100 py-1">
                         <span className="text-xs text-gray-600">Total Fees (all types combined)</span>
-                        <span className="text-xs font-medium text-gray-900" data-testid="factoring-account-summary-fees-total">
-                          {feesQuery.isError ? "—" : fmtCurrency(latestMonth?.factor_fee_total)}
-                        </span>
+                        {summaryMoneyOrDash({
+                          isLoading: feesQuery.isLoading,
+                          isError: feesQuery.isError,
+                          value: latestMonth?.factor_fee_total,
+                          testId: "factoring-account-summary-fees-total",
+                          emphasis: true,
+                        })}
                       </div>
                     </div>
                   </div>
@@ -1813,13 +1963,17 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   <div className="mt-3 border-t border-gray-200 pt-2">
                     <div className="flex items-center justify-between border-b border-gray-100 py-1">
                       <span className="text-xs text-gray-600">Other Adjustments (Chargebacks/Overpayments, most recent posted month)</span>
-                      <span className="text-xs font-medium text-gray-900" data-testid="factoring-account-summary-adjustments">
-                        {feesQuery.isError ? "—" : fmtCurrency(latestMonth?.chargeback_total)}
-                      </span>
+                      {summaryMoneyOrDash({
+                        isLoading: feesQuery.isLoading,
+                        isError: feesQuery.isError,
+                        value: latestMonth?.chargeback_total,
+                        testId: "factoring-account-summary-adjustments",
+                        emphasis: true,
+                      })}
                     </div>
                     <div className="flex items-center justify-between border-b border-gray-100 py-1">
                       <span className="text-xs text-gray-600">Total Change in NFE</span>
-                      <span className="text-xs text-gray-400" data-testid="factoring-account-summary-nfe-change">—</span>
+                      <NotApplicable reason="no_source" data-testid="factoring-account-summary-nfe-change" />
                     </div>
                   </div>
 
@@ -1833,15 +1987,15 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                             key: "beginning",
                             label: "Beginning",
                             render: (row: { label: string; testId: string }) => (
-                              <span className="text-gray-400" data-testid={`factoring-account-summary-${row.testId}-beginning`}>—</span>
+                              <NotApplicable reason="no_source" data-testid={`factoring-account-summary-${row.testId}-beginning`} />
                             ),
                           },
                           {
                             key: "ending",
                             label: "Ending",
-                            render: (row: { label: string; ending: unknown; testId: string }) =>
+                            render: (row: { label: string; ending: unknown; endingReason: NaReason; testId: string }) =>
                               row.ending == null ? (
-                                <span className="text-gray-400" data-testid={`factoring-account-summary-${row.testId}-ending`}>—</span>
+                                <NotApplicable reason={row.endingReason} data-testid={`factoring-account-summary-${row.testId}-ending`} />
                               ) : (
                                 <span className="font-medium text-gray-900" data-testid={`factoring-account-summary-${row.testId}-ending`}>
                                   {fmtCurrency(row.ending)}
@@ -1850,26 +2004,25 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                           },
                         ]}
                         rows={[
-                          { label: "AR Balance", ending: summaryQuery.isError ? null : summary?.outstanding_liability_balance, testId: "ar-balance" },
-                          { label: "Escrow Reserve", ending: null, testId: "escrow-reserve" },
-                          { label: "Cash Reserve", ending: null, testId: "cash-reserve" },
-                          { label: "Loan", ending: null, testId: "loan" },
-                          { label: "Savings", ending: null, testId: "savings" },
-                          { label: "Funds on Hold", ending: null, testId: "funds-on-hold" },
-                          { label: "NFE", ending: null, testId: "nfe" },
+                          {
+                            label: "AR Balance",
+                            ending: summaryQuery.isError || summaryQuery.isLoading ? null : summary?.outstanding_liability_balance,
+                            endingReason: "not_loaded" as NaReason,
+                            testId: "ar-balance",
+                          },
+                          // Escrow/Cash: this system tracks one combined reserve balance with no
+                          // Escrow/Cash type split — the concept itself doesn't apply here.
+                          { label: "Escrow Reserve", ending: null, endingReason: "not_applicable" as NaReason, testId: "escrow-reserve" },
+                          { label: "Cash Reserve", ending: null, endingReason: "not_applicable" as NaReason, testId: "cash-reserve" },
+                          // Loan/Savings/Funds on Hold/NFE: no backing field exists in this schema yet.
+                          { label: "Loan", ending: null, endingReason: "no_source" as NaReason, testId: "loan" },
+                          { label: "Savings", ending: null, endingReason: "no_source" as NaReason, testId: "savings" },
+                          { label: "Funds on Hold", ending: null, endingReason: "no_source" as NaReason, testId: "funds-on-hold" },
+                          { label: "NFE", ending: null, endingReason: "no_source" as NaReason, testId: "nfe" },
                         ]}
                         rowKey={(row) => row.testId}
                       />
                     </div>
-                    <p className="mt-2 text-xs text-gray-500" data-testid="factoring-account-summary-footnote">
-                      * Payments to You includes all payments due on invoices purchased during the
-                      selected date range (real portal definition). "Escrow Reserve" / "Cash
-                      Reserve" are shown separately in the real Faro portal; this system tracks one
-                      combined reserve_balance with no type split, so both rows above are honestly
-                      "—" rather than duplicating the combined figure into each. Loan / Savings /
-                      Funds on Hold / NFE and all Beginning-column figures have no backing field in
-                      this schema yet (no factoring period-close snapshot exists) — never fabricated.
-                    </p>
                   </div>
                 </div>
               )}
