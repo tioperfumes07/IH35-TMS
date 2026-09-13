@@ -2510,3 +2510,87 @@ outer scope alone. Will not repeat this shape of test again.
 Pivoting immediately to ROUND 20.9's revised Items (a)(b)(c) — the period-mismatch diagnosis — due
 2026-09-13 12:00Z, and will report ROUND 21.1's real Item 1 (open-bills contradiction) separately
 once investigated on its own merits.
+
+---
+
+## CC-1 — ROUND 20.9 revised Items (a)(b)(c)(e) — the period-mismatch root cause, named and quantified (2026-09-13 00:5x UTC)
+
+**Confirming your correction: agreed, the costs are posted (mostly — see the one real, separate
+insurance gap fixed in PR #21940). The 84.5% margin is a matching-principle failure, not a missing-
+posting failure.** Root-caused below.
+
+**(a) THE P&L PERIOD FILTER COLUMN:** `je.entry_date` — `apps/backend/src/accounting/
+profit-loss.service.ts:51` (`dateFilters.push(\`je.entry_date >= $${values.length}::date\`)`) and
+`:55` (same, `<=`). Confirmed by direct grep, no ambiguity — there is exactly one date-filtering
+mechanism in this file and it is `entry_date`.
+
+**(b) WHY LINE-HAUL REVENUE STARTS 09-06 AND WHERE THE $112,953.05 (08-28→09-11) WENT — POSTING
+PATH NAMED:** `apps/backend/src/dispatch/delivery-evidence-latch.ts:82`:
+```
+const entryDateIso = input.entryDateIso ?? companyBusinessDate();
+```
+`entryDateIso` is optional on `latchOnDeliveryEvidence`'s input, defaulting to `companyBusinessDate()`
+— **today's date, the moment the code runs** — when the caller omits it. I grepped **every** call
+site of `latchOnDeliveryEvidence` in the backend (5 total: `apps/backend/src/dispatch/loads.routes.ts:1935`,
+`apps/backend/src/dispatch/loads-bulk.routes.ts:183`, `apps/backend/src/mdata/loads.routes.ts:1324`,
+`apps/backend/src/driver/loads.routes.ts:711`, `apps/backend/src/dispatch/stop-stamp.service.ts:125`)
+— **none of the five ever pass `entryDateIso`.** Every single revenue-recognition trigger in this
+codebase dates itself to the moment the status-transition API call executes, never to the load's
+real delivery date, the invoice's real issue date, or the signed settlement's real date.
+
+This is NOT a dead hook (you're right, Unbilled Revenue's 145 postings netting $3,200 already told
+you the latch fires) — it is a **live latch stamping the wrong date every time**. The $112,953.05
+in AlwaysTrack settlements 5787-5803 (real dates 08-28→09-11) only shows up as 4000 credits dated
+09-06→09-11 because that is the SIX-DAY WINDOW when this week's settlement-rebuild/reconciliation
+activity actually triggered these loads' status transitions in the system — not when the trucks
+delivered or the invoices issued. Batch/backfill processing compresses months of real history into
+whatever narrow window the batch happened to run in.
+
+**(e) THE FUTURE-DATED FUEL ROW, IDENTIFIED:** `accounting.expenses` id `2d5f4c1b-9d3f-4f9f-b2a6-
+ae5d9be57549` — memo cites "inv 99460605 — 2026-09-27 — $42.38 (settlement 5789)" — the future date
+is baked into the **source data itself** (the AlwaysTrack/LOVES feed's own invoice date field), not
+a code bug that invented a date. `transaction_date=2026-09-27`, `created_at=2026-09-05`. **Already
+found and voided by someone before tonight** (`voided_at=2026-09-06T05:47:53Z`, next day). Its
+reversal JE carries the same 2026-09-27 date (net $0.00, correctly non-fatal) — that reversal pair
+is the ONLY future-dated 5000 activity; I confirmed no other future-dated fuel rows exist (queried
+`entry_date > 2026-09-13`, exactly 2 rows, the original+reversal pair, net zero). Not a live
+problem; a closed one. Worth a source-feed-side date-sanity check on future AlwaysTrack imports,
+not a code fix here.
+
+**(c) A P&L OVER A WINDOW BRACKETING BOTH REVENUE AND COST — with an honest gap flagged, not
+forced to match:**
+
+*All-time (inception-to-date), unaffected by the entry_date/processing-date artifact since it
+captures every posting regardless of what date got stamped on it:*
+- Revenue: 4000 $217,522.41 + 4200 $4,150.00 + 7200 $922.75 = **$222,595.16**
+- COGS: 5000 $67,644.88 + 5300 $726.35 + 5500 (Tires) $1,701.97 + 6890 $55,225.57 + DRIVERTRIPLU
+  -$398.13 = **$124,900.64** → Gross profit $97,694.52 (43.9% gross margin)
+- Expenses: 6400 $2,276.11 + 6999 $1,972.37 = $4,248.48 → **Net income $93,446.04 (42.0% net margin)**
+
+**This does NOT match your 25.1% sanity check, and I am reporting that gap honestly rather than
+picking a window that hits 25.1%.** I also computed a LOAD-SCOPED cross-check specific to
+settlements 5787-5803 (the exact set your AlwaysTrack Report(53) covers), joining
+`driver_finance.settlement_lines.load_id` → `mdata.loads` directly (bypassing entry_date entirely):
+36 distinct loads, revenue (`rate_total_cents`) **$122,775.00** (vs. AlwaysTrack's own $112,953.05 —
+an $9,821.95 delta itself worth reconciling separately, possibly a different in/out-of-scope load
+set), against driver-pay-only cost of $25,516.16 (79.2% margin using JUST driver pay, no fuel/tolls
+allocated). Fuel, tolls, and tires are NOT tracked per-load or per-settlement anywhere in this
+schema — they post to company-wide COGS accounts with no load/settlement FK — so there is currently
+**no mechanism to allocate them into a load- or settlement-scoped margin** the way the all-time
+company P&L can. That missing allocation is very likely the rest of the gap between my 42-79% range
+and your 25.1% benchmark, but I cannot prove that number without inventing an allocation
+methodology (miles-based? per-load flat rate?) that doesn't exist in code today — flagging this as
+the honest remaining question rather than guessing at one.
+
+**REMAINING for (c):** the true fix here is probably a THIRD date field for revenue recognition —
+capturing the load's real delivered/POD date at the moment `latchOnDeliveryEvidence` fires (the
+load row already carries `actual_arrival_at`/`actual_departure_at` timestamps per stop) instead of
+defaulting to "today" — so a batch-triggered latch still dates the JE to the real event, not the
+processing moment. That is a real code change (all 5 call sites need to pass a real `entryDateIso`
+sourced from the load's own delivery evidence), which I have NOT built yet — reporting the root
+cause and the fix shape now per the 12:00Z deadline for (a)(b)(c), building the actual fix next
+unless you want it scoped differently first given the size (5 call sites × sourcing the right
+timestamp from load_stops per site).
+
+**Items (d)(f)(g) and ROUND 21.1's real Item 1 (open-bills contradiction) continue after this —
+see the separate URGENT SELF-CORRECTION post above for the insurance-bill-void incident context.**
