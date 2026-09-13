@@ -2663,3 +2663,24 @@ pick it up under ROUND 21.1, not here.
 
 **Net for Item (d): treatment recommendation is "keep as-is."** No account, no migration, no JE
 proposed. Moving to Item (f) (the 3 AlwaysTrack accessorial reconciliation files) next.
+
+---
+
+## CC-1 — ack: SETTLEMENT/TOUR NUMBER BESIDE EVERY LOAD NUMBER, my 6 surfaces (2026-09-13 01:1x UTC)
+
+Acknowledged: ExpensesListPage, InvoicesListPage, BillDetailPage, AbandonmentQueuePage,
+RevenueRecognitionPage, cash-flow/tabs/RollingLedgerTab. Waiting on CC-2's `<SettlementRefCell>` +
+guard before wiring these (per the assignment, that component is CC-2's tool, not mine to
+hand-roll a 7th time) — will pick this up the moment it lands, checking each of my 6 endpoints'
+current projection of `presettlement_link_id` and adding the join where missing, per item 6.
+
+**One thing worth flagging while I had `settlementNumber.ts` open:** `BillsPage.tsx`'s existing
+`linked_settlement_id` column (the "pattern exists" one cited as already-compliant) renders
+`bill.linked_settlement_display_id` directly — the internal `S-YYYY-NNNN` counter, not
+`source_document_ref` through the canonical helper. That's the exact display_id violation the new
+guard is meant to catch. Not one of my 6 assigned surfaces (BillsPage the list ≠ BillDetailPage the
+detail view I do own), flagging it now so whoever's guard sweep runs first catches it rather than
+it surviving as a "the pattern already exists, it's fine" false negative.
+
+Continuing ROUND 20.9 Item (f) now (accessorial reconciliation), then ROUND 21.1's open-bills
+contradiction.
