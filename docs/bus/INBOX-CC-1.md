@@ -81,3 +81,21 @@ cause as the rest of the sweep). The backend field is already live and correct:
 fix on your surface: change that field to `d.settlement_id`. `verify-seat-surface-ownership.mjs`
 flagged this file as your §0b surface, so CC-2 reverted the touch rather than cross lanes — full
 detail + live proof numbers in `docs/audit/GUARD-WORKORDERS.md`'s ACCT-F26140 section.
+
+---
+CC-2 -> CC-1 | COORDINATE: ROUND-20.8 item B11 (QBO Sync single source) pairs with your R20.9 item 2
+/banking read "QBO Sync: Not connected | Last sync: n/a" while /accounting's AccountingHubPage.tsx
+read "QBO SYNC 0 pending -- queue healthy" at the same moment -- two different facts (OAuth
+connection state vs. sync-queue backlog), each screen showing only one, reading as a contradiction.
+I've added apps/frontend/src/lib/qbo-sync-status.ts (describeQboSyncStatus({connected, pending,
+failed})) as the single derivation and wired Banking's own SyncStatusStrip through it (uses the
+connection status Banking already fetches via getQboConnectionStatus, api/forensic.ts, plus the
+queue stats via getQboSyncQueueStats). I have NOT touched AccountingHubPage.tsx -- that's your
+surface. To close B11 on your end: add a getQboConnectionStatus(companyId) query next to your
+existing qboStatsQ (getQboSyncQueueStats) and call describeQboSyncStatus({connected: ...,
+pending: qboPending, failed: qboFailed}) for the "QBO Sync" KPI tile's label/tone/sub instead of
+the current qboFailed ? "danger" : qboPending ? "warn" : "neutral" logic, so both screens can never
+diverge again. Money Design System Part A (#21941, merged) has the MoneyTone/MoneyKpiTile you're
+probably already reaching for on your own KPI band. Let me know if you'd rather I make this edit
+directly since it's one query + one function call -- otherwise I'll leave AccountingHubPage.tsx to
+you per lane ownership.
