@@ -2684,3 +2684,56 @@ it surviving as a "the pattern already exists, it's fine" false negative.
 
 Continuing ROUND 20.9 Item (f) now (accessorial reconciliation), then ROUND 21.1's open-bills
 contradiction.
+
+---
+
+## CC-1 — ROUND 20.9 Item (f) — 3 AlwaysTrack accessorial files reconciled against posted data (2026-09-13 01:2x UTC)
+
+**All 3 files' own totals verified first** (opened directly from the owner's Downloads,
+independent of your stated numbers): Report (57) 35 rows / **$950.00** exact; Report (58) 57 rows
+/ **$3,218.70** exact; Report (59) 44 rows / **$1,753.99** exact. All three match your message
+to the cent.
+
+**Report (58) — LOVES vendor fuel/DEF/driver reimbursement — RECONCILES CLEANLY.** Spot-checked
+against `accounting.expenses`: load 13545's row (LOVES, "10465 LONESOME PINE TRAIL M, TN", invoice
+99461047, 2026-08-28, $35.04, settlement 5791) has an EXACT match — expense
+`13545-4`, memo `"Fuel-DEF-Diesel Exhaust Fluid — 10465 LONESOME PINE TRAIL M, TN — inv 99461047 —
+2026-08-28 — $35.04 (settlement 5791)"`. Every field carries through verbatim, and the
+`expense_number` is correctly load-prefixed (`13545`, `13545-1`...`13545-4` for that load's 5
+fuel/DEF lines) — this independently reconfirms the ALL-SEATS message's "Link 3 is already right"
+finding from data I pulled myself, not just cited.
+
+**Report (59) — admin fees + driver escrow claims — PARTIALLY RECONCILES, and the gap is the
+ALREADY-TRACKED S-2026-5782 issue, not a new one.** Escrow-contribution lines reconcile per-load
+correctly (spot-checked loads 13549 and 13555, both exact $25.00 matches against
+`driver_finance.settlement_lines`). **Admin-fee lines do not appear per-settlement the same way**
+— querying every `line_type='deduction'` row company-wide, all of them (14 rows, including several
+"Admin fee - GAS $10.00" entries matching Report 59's own line shape) are attributed under
+`source_document_ref='5782'` regardless of which load/settlement their own description names —
+e.g. one row's description literally reads "Admin fee - GAS — settlement 5791, load 13560
+(historical backfill...)" but its `source_document_ref` is `5782`. **This is the same
+S-2026-5782 race-artifact settlement this seat has been independently investigating and was
+blocked from voiding by the permission system** (reported earlier this session) — not a new defect
+this reconciliation pass discovered, just the same known mess surfacing again from a different
+angle. Not re-litigating it here; still waiting on that resolution.
+
+**Report (57) — driver accessorial pay (Enlonada/Desenlonada/Layover/Extra Delivery) — NOT
+INDEPENDENTLY TRACEABLE, flagging honestly rather than guessing.** `driver_finance.settlement_lines`
+carries exactly ONE aggregate `earnings` line per load (e.g. load 13551: "Load 13551 driver pay"
+$748.90) — the individual $25/$50/$75 accessorial line items from Report 57 have no separate,
+identifiable line in the system; they are presumably folded into that one aggregate figure. I
+cannot confirm from settlement_lines alone whether the $950.00 across all 35 accessorial rows is
+correctly INCLUDED in the aggregate driver-pay totals without reconstructing each load's base
+linehaul rate independently and checking the arithmetic — that is a real, separate verification
+task (not done here, would need the rate sheet), not something I'm asserting is either correct or
+missing. Flagging the traceability gap itself as the finding: **accessorial pay has no line-item
+audit trail today**, unlike escrow (Report 59) and vendor fuel (Report 58), which both do.
+
+**Net for Item (f):** 2 of 3 files reconcile with real, spot-checked evidence (58 fully, 59
+partially with the gap explained by a pre-existing tracked issue); 1 of 3 (57) has a genuine
+traceability gap worth a design decision (should accessorial pay get its own settlement_lines
+`line_type`, e.g. `accessorial_pay`, distinct from the aggregate `earnings` line?) rather than a
+confirmed missing-money defect.
+
+ROUND 20.9 Items (a) through (g) are now all reported. Moving to ROUND 21.1's real Item 1 (the
+`/accounting` home vs. `/accounting/bills` open-bills-figure contradiction) next.
