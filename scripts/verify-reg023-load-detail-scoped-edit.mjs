@@ -67,7 +67,12 @@ function selftest() {
   const planted = [
     check(drawer.replace("load-detail-scoped-edit", "GONE"), pay, manifest, link, wizard).length > 0,
     check(drawer, pay.replace('label="Open driver bill"', 'label="View"'), manifest, link, wizard).length > 0,
-    check(drawer, pay, manifest.replace("/driver-finance/driver-bills/:id", "/gone"), link, wizard).length > 0,
+    // NAV-F26151's own comment ("flagged /driver-finance/driver-bills/:id as an orphan detail…")
+    // also contains this literal path string, ABOVE the real `path="…"` route line. A bare
+    // (non-global) .replace() on just the path text hits that comment first and leaves the real
+    // route attribute untouched, so the mutation silently no-ops and the check keeps passing --
+    // matching against the full quoted `path="…"` attribute targets the actual route, not prose.
+    check(drawer, pay, manifest.replace('path="/driver-finance/driver-bills/:id"', 'path="/gone"'), link, wizard).length > 0,
   ];
   if (planted.some((ok) => !ok)) {
     console.error("SELFTEST FAIL — planted mutation not caught");
