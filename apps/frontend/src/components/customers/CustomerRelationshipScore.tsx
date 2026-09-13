@@ -15,20 +15,43 @@ type Props = {
 // client-side (every subscore is null, not one of them being a real 0) and label it honestly
 // instead of asserting a tier -- no backend/schema change needed, all 5 subscores already ship
 // in the response.
-function hasAnyData(score: CustomerRelationshipScore | null | undefined) {
-  if (!score) return false;
-  return (
-    typeof score.engagement_subscore === "number" ||
-    typeof score.payment_behavior_subscore === "number" ||
-    typeof score.service_quality_subscore === "number" ||
-    typeof score.margin_trend_subscore === "number" ||
-    typeof score.complaint_subscore === "number"
-  );
+const SUBSCORE_KEYS = [
+  "engagement_subscore",
+  "payment_behavior_subscore",
+  "service_quality_subscore",
+  "margin_trend_subscore",
+  "complaint_subscore",
+] as const;
+
+function presentSubscoreCount(score: CustomerRelationshipScore | null | undefined): number {
+  if (!score) return 0;
+  return SUBSCORE_KEYS.filter((key) => typeof score[key] === "number").length;
 }
 
-function tierLabel(tier: CustomerRelationshipScore["health_tier"] | null | undefined, unavailable = false, noData = false) {
+function hasAnyData(score: CustomerRelationshipScore | null | undefined) {
+  return presentSubscoreCount(score) > 0;
+}
+
+// B4 (owner, 2026-09-12) — "relationship-health-score honesty: exclude missing inputs, label
+// partial, or remove." CUST-01 C3(b) already removed the false "At Risk" tier when EVERY subscore
+// is null (a brand-new customer). This closes the remaining gap: 1-4 of 5 subscores present still
+// asserted a definitive tier (Thriving/Healthy/Watch/At Risk) exactly as confidently as a fully
+// scored customer, with no way to tell the two apart. A missing input is not the same as a good
+// input — label it "Partial" instead of a definitive tier until all 5 signals are in.
+function isPartial(score: CustomerRelationshipScore | null | undefined): boolean {
+  const present = presentSubscoreCount(score);
+  return present > 0 && present < SUBSCORE_KEYS.length;
+}
+
+function tierLabel(
+  tier: CustomerRelationshipScore["health_tier"] | null | undefined,
+  unavailable = false,
+  noData = false,
+  partial = false
+) {
   if (unavailable) return "Unavailable";
   if (noData) return "No data yet";
+  if (partial) return "Partial";
   if (!tier) return "Unknown";
   if (tier === "at_risk") return "At Risk";
   if (tier === "thriving") return "Thriving";
@@ -36,8 +59,13 @@ function tierLabel(tier: CustomerRelationshipScore["health_tier"] | null | undef
   return "Watch";
 }
 
-function tierClass(tier: CustomerRelationshipScore["health_tier"] | null | undefined, unavailable = false, noData = false) {
-  if (unavailable || noData) return "bg-slate-100 text-slate-700";
+function tierClass(
+  tier: CustomerRelationshipScore["health_tier"] | null | undefined,
+  unavailable = false,
+  noData = false,
+  partial = false
+) {
+  if (unavailable || noData || partial) return "bg-slate-100 text-slate-700";
   if (tier === "thriving") return "bg-slate-100 text-slate-700";
   if (tier === "healthy") return "bg-teal-100 text-teal-800";
   if (tier === "watch") return "bg-slate-100 text-slate-700";
@@ -52,24 +80,31 @@ function subscoreValue(value: number | null | undefined) {
 
 export function CustomerRelationshipScore({ score, loading = false, error = null, onRetry }: Props) {
   const noData = !loading && !error && !hasAnyData(score);
+  const partial = !loading && !error && !noData && isPartial(score);
+  const presentCount = presentSubscoreCount(score);
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-xs font-semibold text-gray-900">Relationship Health</h3>
-        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${tierClass(score?.health_tier, Boolean(error), noData)}`}>
-          {tierLabel(score?.health_tier, Boolean(error), noData)}
+        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${tierClass(score?.health_tier, Boolean(error), noData, partial)}`}>
+          {tierLabel(score?.health_tier, Boolean(error), noData, partial)}
         </span>
       </div>
 
       {loading ? <p className="text-xs text-gray-500">Loading relationship score...</p> : null}
       {!loading && error && onRetry ? <ListErrorState status={0} message={error} onRetry={onRetry} /> : null}
       {noData ? <p className="text-xs text-gray-500">Not enough activity yet to score this customer.</p> : null}
+      {partial ? (
+        <p className="text-xs text-gray-500">
+          Only {presentCount} of {SUBSCORE_KEYS.length} signals available yet — not a full score.
+        </p>
+      ) : null}
 
       {!loading && !error && !noData ? (
         <>
           <div className="mb-2 flex items-end gap-2">
             <p className="text-page-title font-semibold text-gray-900">
-              {typeof score?.overall_health_score === "number" ? score.overall_health_score.toFixed(1) : "—"}
+              {!partial && typeof score?.overall_health_score === "number" ? score.overall_health_score.toFixed(1) : "—"}
             </p>
             <span className="pb-1 text-xs text-gray-500">/ 100</span>
           </div>
