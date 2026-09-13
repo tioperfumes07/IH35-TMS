@@ -1,6 +1,23 @@
 # GUARD WORK-ORDERS — the live fix board (read after AUDIT-COVERAGE-LIVE.md, before any block)
 <!-- FINDINGS-TRIPLE-LOCK-LAW: every finding here follows board + register + Desktop routing + OUTBOX in one turn -->
 
+- **VENDOR-QBO-CHROME-AND-CREDITS-GAP — OPEN (whichever lane owns Vendors.tsx/VendorDetail.tsx/
+  VendorCreditsPage.tsx, filed by CC-3, 2026-09-13):** pushing an unrelated D2 branch surfaced 4
+  guard failures, all confirmed pre-existing on `origin/main` via an isolated `git worktree`
+  checkout, none caused by this session's own diff:
+  - `verify-vendors-qbo-chrome-leaves.mjs` FAILS with 5 problems: `Vendors.tsx` missing its
+    roster `CollapsedListFilters` (Status/Category), missing the `+ Create Vendor` ActionButton
+    mounting `VendorCreateModal`, missing the transaction-list `ParityTable`+filter bar;
+    `VendorDetail.tsx` missing a real A/P tab `ParityTable` and missing the W-9/1099 tab's real
+    field grid + Documents drill-through. Real FAIL, not just a stale selftest.
+  - `verify-vendor-credits-ui-linkage.mjs` --selftest FAILS: `VendorCreditsPage.tsx`'s create
+    drawer doesn't preview the next document number and doesn't show "QBO Ref no." top-right.
+  - `verify-vend-s03-s04-dedup-and-types.mjs` --selftest FAILS ("2-arg PATCH resolve not caught"),
+    which cascades `verify-vend-verify-01.mjs`'s own selftest to FAIL too (it composes the sibling).
+  Given the number and spread of these (3 different vendor-domain pages, none inside CC-3's
+  tonight-assigned lane), not fixed here — routed to whichever lane currently owns the Vendors
+  module. Live evidence: each command above, run directly, on a clean `origin/main` worktree.
+
 - **BANK-MATCHED-STATE-GAP — CLOSED (CC-1, 2026-09-13, PR #21977):** CC-3's diagnosis correctly
   identified the live red (`scripts/verify-matched-state-requires-matched-id.mjs` failing on
   `origin/main`) but misidentified WHERE the bug lives. Traced live: every one of

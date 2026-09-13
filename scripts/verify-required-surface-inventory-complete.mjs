@@ -13,7 +13,7 @@
  *   node scripts/verify-required-surface-inventory-complete.mjs
  *   node scripts/verify-required-surface-inventory-complete.mjs --selftest
  *
- * @matrix-built {"modules":["accounting","cash-flow","dispatch","settlements","drivers","lists","program","tasks"],"cols":["connectivity"],"leafRe":"^(accounting\\.(panel\\.(reallocate|trk_bulk_register|detail|period_status|class_cost_center_variance|schedule|receipt_detail|leakage)|modal\\.(decide|create))|cash-flow\\.panel\\.projection|dispatch\\.modal\\.save_load_template|settlements\\.panel\\.open_driver_bills|drivers\\.panel\\.(auto_deduction_policies|team_split_config)|lists\\.modal\\.(detail_type|void_cancel_reason|load_cancellation_reason|termination_reason|oem_parts_create)|program\\.panel\\.thread|tasks\\.drawer\\.task)$","task":"REQUIRED-MAP-INLINE-SURFACES"}
+ * @matrix-built {"modules":["accounting","cash-flow","dispatch","settlements","drivers","lists","program","tasks"],"cols":["connectivity"],"leafRe":"^(accounting\\.(panel\\.(reallocate|trk_bulk_register|detail|period_status|class_cost_center_variance|schedule|receipt_detail|leakage)|modal\\.(decide|create))|cash-flow\\.panel\\.projection|dispatch\\.modal\\.save_load_template|settlements\\.panel\\.open_driver_bills|drivers\\.panel\\.(auto_deduction_policies|team_split_config)|lists\\.modal\\.(detail_type|void_cancel_reason|load_cancellation_reason|load_exception_reason|termination_reason|oem_parts_create)|program\\.panel\\.thread|tasks\\.drawer\\.task)$","task":"REQUIRED-MAP-INLINE-SURFACES"}
  */
 import fs from "node:fs";
 import path from "node:path";
