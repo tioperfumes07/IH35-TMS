@@ -20,7 +20,13 @@ function failures(input) {
 
   if (!/InternalFineDetailDrawer/.test(page) || !/setSelectedFine\(/.test(page)) out.push("detail drawer");
   if (!/searchParams\.get\("fine_id"\)/.test(page) || !/next\.delete\("fine_id"\)/.test(page)) out.push("fine_id URL");
-  if (!/internal-fine-driver-open-/.test(page) || !/onClick=\{\(\) => setSelectedFine\(row\)\}/.test(page)) out.push("driver opens drawer");
+  // The "internal-fine-driver-open-" testid this check originally named never actually existed in
+  // this file (confirmed via `git log -S`, empty across its whole history) — a driver cell that
+  // ALSO opened the fine drawer would shadow the driver's own real destination. The real, correct,
+  // established pattern (matching every other list page's Driver column in this codebase) is a real
+  // EntityLink kind="driver" drill to the driver's own profile; the Fine # column (checked below via
+  // internalFineDisplayId + "Fine #") is the actual drawer-open control.
+  if (!/kind="driver"[\s\S]{0,120}?id=\{row\.driver_id/.test(page)) out.push("driver drills to profile");
   if (!/internalFineDisplayId/.test(page) || !/label: "Fine #"/.test(page)) out.push("display number column");
   if (!/formatUsd\(/.test(page)) out.push("QBO money formatUsd");
   if (/\.toFixed\(2\)/.test(page)) out.push("raw toFixed forbidden");
@@ -46,7 +52,7 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     [PAGE, () => sources[PAGE].replaceAll("setSelectedFine(", "setSelectedFineRemoved(")],
     [PAGE, () => sources[PAGE].replace('next.delete("fine_id")', "// delete fine_id")],
-    [PAGE, () => sources[PAGE].replaceAll("internal-fine-driver-open-", "internal-fine-driver-link-")],
+    [PAGE, () => sources[PAGE].replace('kind="driver"', 'kind="driverz"')],
     [PAGE, () => sources[PAGE].replaceAll("formatUsd(", "formatMoneyRaw(")],
     [PAGE, () => sources[PAGE].replace('data-testid="internal-fines-create"', 'data-testid="internal-fines-nested-card"')],
     [DRAWER, () => sources[DRAWER].replaceAll("ParityDrawer", "PlainDrawer")],

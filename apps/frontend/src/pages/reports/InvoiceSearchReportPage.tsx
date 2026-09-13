@@ -138,6 +138,11 @@ export function InvoiceSearchReportPage() {
     {
       key: "settlement_reference",
       label: "Settlement / Presettlement", testId: "settlement-reference-column",
+      sortable: true,
+      sortValue: (r) => {
+        const ref = r.source_load_id ? settlementReferences.get(r.source_load_id) : null;
+        return ref?.settlement_display_id ?? ref?.presettlement_display_id ?? "";
+      },
       render: (r) => <SettlementReferenceCell reference={r.source_load_id ? settlementReferences.get(r.source_load_id) : null} />,
     },
     {

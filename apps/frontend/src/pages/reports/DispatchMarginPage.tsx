@@ -73,7 +73,17 @@ export function DispatchMarginPage() {
   const columns = useMemo<ParityColumn<DispatchMarginRow>[]>(
     () => [
       { key: "load_number", label: "Load", sortable: true, render: (row) => <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} /> },
-      { key: "settlement_reference", label: "Settlement / Presettlement", testId: "settlement-reference-column", render: (row) => <SettlementReferenceCell reference={settlementReferences.get(row.load_id)} /> },
+      {
+        key: "settlement_reference",
+        label: "Settlement / Presettlement",
+        testId: "settlement-reference-column",
+        sortable: true,
+        sortValue: (row) => {
+          const ref = settlementReferences.get(row.load_id);
+          return ref?.settlement_display_id ?? ref?.presettlement_display_id ?? "";
+        },
+        render: (row) => <SettlementReferenceCell reference={settlementReferences.get(row.load_id)} />,
+      },
       {
         key: "customer_name",
         label: "Customer",
