@@ -2737,3 +2737,51 @@ confirmed missing-money defect.
 
 ROUND 20.9 Items (a) through (g) are now all reported. Moving to ROUND 21.1's real Item 1 (the
 `/accounting` home vs. `/accounting/bills` open-bills-figure contradiction) next.
+
+---
+
+## CC-1 — ROUND 21.1 Items 1-2 — root cause found for Item 2, Item 1 partially traced (2026-09-13 01:3x UTC)
+
+**Item 2 — "Past 90 days"/"MTD" bucketing future-dated bills — ROOT CAUSE FOUND, confirmed in
+code.** `apps/frontend/src/pages/accounting/BillsPage.tsx:401` (`billKpis` useMemo):
+```
+const past90Bills = all.filter((bill) => (bill.bill_date ?? "") >= past90Start);
+```
+**No upper bound.** `past90Start = daysAgoIso(90)` only sets the FLOOR of the window; any bill
+dated in the FUTURE (e.g. `2026-09-19`, `2027-05-19`) is `>= past90Start` and gets counted as
+"Past 90 days" — exactly the shape you measured live (all 27 future-dated bills landing in that
+bucket). Same file, `mtdBills` (line 400) has the identical defect:
+`(bill.bill_date ?? "") >= mtdStart` with no `<= today` ceiling — explains "MTD BILLS incl. May
+2027" too. The fix (not yet built, reporting root cause first per this item's own scope): both
+filters need `&& (bill.bill_date ?? "") <= companyToday()` added — the file already imports
+`companyToday()` (used one line below for `overdueBills`), so no new date-utility import is
+needed.
+
+**Item 1 — home `/accounting` reads $0.00/0 open bills vs. `/accounting/bills` reads
+$271,280.41/27 — traced, not fully closed; reporting honestly rather than guessing the rest.**
+Both pages compute "Open Bills" with the textually IDENTICAL client-side filter:
+`AccountingHubPage.tsx:278` and `BillsPage.tsx:399` both use
+`bill.status === "open" || bill.status === "partial"`. Checked live (bypass_rls=lucia) what a real
+bill's `status` column actually holds: **`"unpaid"`**, never `"open"` — confirmed on the 27 bills
+from tonight's incident before I voided them. `BillsPage.tsx`'s own status-filter dropdown
+(`STATUS_FILTER_VALUES`, line 259) doesn't even list `"open"` as a valid value — only
+`unpaid/partial/paid/voided/active/all/posted`. **If this filter is genuinely dead code checking a
+status string real bills never carry, BOTH pages' "Open Bills" KPI should read $0/0 — not one of
+them showing 27.** I cannot explain the Bills-page's specific "27" from this filter alone, and my
+own 27 bills are now voided so I can't reproduce live to trace the ACTUAL data source of that
+number further tonight (it may come from a separate vendor-balance/AP-aging query on the Bills page
+I have not yet located, not `billKpis.openAmount` as I assumed). **Flagging as UNVERIFIED past this
+point** rather than asserting a fix — will pick this back up with a live repro (a real open/unpaid
+test bill, not another accidental leak) if this stays open. One more confirming data point:
+`apps/frontend/src/api/accounting.ts:253` declares `export type BillStatus = "open" | "partial" |
+"paid" | "voided"` — "open" IS the frontend's own documented type, but real stored data uses
+`"unpaid"` instead (that string only appears as an accepted FILTER param value elsewhere, never as
+part of `BillStatus` itself). That mismatch alone means the `status === "open"` check is checking
+for a value real bills never carry — structurally it should read 0 on BOTH pages. The "27" the Bills
+page actually showed must come from somewhere else on that page (a separate vendor-balance/AP query,
+not `billKpis`) that I have not yet located — naming that gap honestly rather than guessing which
+query it is.
+
+Both fixes are small (a date-ceiling clause; a status-string correction) — holding off building
+either until Item 1's actual data source is confirmed, so the fix targets the real mechanism, not
+a guess.
