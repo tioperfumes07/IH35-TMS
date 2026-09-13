@@ -822,6 +822,24 @@ export async function postSettlementBillPayment(
         WHERE id = $1::uuid`,
       [settlementId, actor.userId]
     );
+    // ACCT-F26307 — this poster computed gross/deductions/net for the JUST-CREATED
+    // driver_settlement_gl_runs row (line ~809 above) but never wrote them back onto the settlement
+    // HEADER itself (driver_settlements.gross_pay/deductions_total/net_pay) — the fields every report,
+    // the driver statement, and the owner's own live reads actually show. A settlement could post
+    // successfully through this exact path and its header would keep reading net_pay=0.00 forever,
+    // indistinguishable from "never posted." Measured live 2026-09-13, USMCA: true of every settlement
+    // this poster has ever touched (0 of them show a header net_pay derived from a driver_settlement_gl_runs
+        // row). Unconditional overwrite (not COALESCE) is correct here: gross/deductions/net are NOT
+    // owner-entered facts this could clobber — they are exactly what THIS transaction just computed
+    // and is about to make true on the ledger, and re-running the same posted run is idempotent (same
+    // inputs -> same numbers). Reimbursements are NOT part of this poster's model (see REMAINING in
+    // the shipping commit) so reimbursements_total is intentionally left untouched here.
+    await client.query(
+      `UPDATE driver_finance.driver_settlements
+          SET gross_pay = $2::numeric, deductions_total = $3::numeric, net_pay = $4::numeric, updated_at = now()
+        WHERE id = $1::uuid`,
+      [settlementId, (gross / 100).toFixed(2), (totalDeductions / 100).toFixed(2), ((gross - totalDeductions) / 100).toFixed(2)]
+    );
     // SETL-HEADER-05 — the missing header back-link, in the SAME transaction as the run finalize so
     // it can never disagree with what actually posted. COALESCE keeps a re-entrant/idempotent call
     // (already-posted bills, headerAccountingBillId null) from clobbering a previously-written link.
