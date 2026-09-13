@@ -29,6 +29,7 @@ const MATCHED_ID_COLUMNS = [
   "matched_bill_id",
   "matched_settlement_id",
   "matched_expense_id",
+  "matched_invoice_id",
   "matched_transfer_id",
   "matched_journal_entry_id",
 ];
@@ -100,6 +101,19 @@ function runSelftest() {
   ];
   if (checkMatchedStateRequiresMatchedId(dynamic).length !== 0) {
     throw new Error(`selftest: a whitelist-driven dynamic \${matchedColumn} assignment must pass — got ${JSON.stringify(checkMatchedStateRequiresMatchedId(dynamic))}`);
+  }
+
+  // BANK-F30111 (2026-09-13) — MATCHED_ID_COLUMNS was missing matched_invoice_id, so
+  // link-suggestions-actions.routes.ts's ar_invoice case (a correct UPDATE that DOES set
+  // matched_invoice_id alongside review_state='matched') false-positived. Regression-proofed here.
+  const invoiceColumn = [
+    {
+      relPath: "apps/backend/src/banking/link-suggestions-actions.routes.ts",
+      source: "`UPDATE banking.bank_transactions SET matched_invoice_id = $1::uuid, review_state = 'matched' WHERE id = $3::uuid`",
+    },
+  ];
+  if (checkMatchedStateRequiresMatchedId(invoiceColumn).length !== 0) {
+    throw new Error(`selftest: an UPDATE setting matched_invoice_id alongside review_state='matched' must pass — got ${JSON.stringify(checkMatchedStateRequiresMatchedId(invoiceColumn))}`);
   }
 
   const unrelated = [

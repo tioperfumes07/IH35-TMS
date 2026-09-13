@@ -16,7 +16,9 @@ vi.mock("./components/ManageAccountsModal", () => ({
   ManageAccountsModal: () => null,
 }));
 vi.mock("../accounting/ManualJEModal", () => ({ ManualJEModal: () => null }));
-vi.mock("./TransferModal", () => ({ TransferModal: () => null }));
+vi.mock("./TransferModal", () => ({
+  TransferModal: (props: { open: boolean }) => (props.open ? <div data-testid="transfer-modal-stub" /> : null),
+}));
 vi.mock("./RecordTransferModal", () => ({
   RecordTransferModal: (props: { open: boolean; defaultTransferType?: string }) =>
     props.open ? <div data-testid="record-transfer-modal-stub" data-default-type={props.defaultTransferType} /> : null,
@@ -236,5 +238,36 @@ describe("DISP-F6XXX — Record Deposit reaches Cash Deposit (undeposited funds 
     await userEvent.click(await screen.findByTestId("banking-new-menu-item-record-deposit"));
     const stub = await screen.findByTestId("record-transfer-modal-stub");
     expect(stub).toHaveAttribute("data-default-type", "cash_deposit");
+  });
+});
+
+describe("BANK-F02 — Record Transfer trigger reachable from the + New menu", () => {
+  // verify-bank-record-transfer-trigger-wired.mjs — ROUND-20.8 B1/B2 folded the standalone
+  // "+ Record Transfer" button into this "+ New" grouped menu; the trigger must keep a stable,
+  // dedicated testid (not the generic banking-new-menu-item-<key> pattern) and must still open
+  // TransferModal from every Banking tab, not just Transactions.
+  it("opens TransferModal via the dedicated banking-home-record-transfer trigger in the + New menu", async () => {
+    vi.mocked(bankingApi.getBankingKpis).mockResolvedValue({
+      total_cash: 0,
+      dip_operating: 0,
+      dip_payroll: 0,
+      total_uncategorized: 0,
+      factoring_reserve: 0,
+      driver_escrow: 0,
+      drivers_with_escrow_balance: 0,
+      active_drivers: 0,
+    });
+    vi.mocked(bankingApi.getBankingTiles).mockResolvedValue({ tiles: [] });
+    vi.mocked(bankingApi.getBankingUncategorized).mockResolvedValue({ transactions: [], meta: { uncategorized_count: 0 } });
+    vi.mocked(bankingApi.getReconciliationSessions).mockResolvedValue({ open_sessions: [], completed_sessions: [] });
+    vi.mocked(bankingApi.getAllAccounts).mockResolvedValue({ accounts: [] });
+    vi.mocked(bankingApi.getPlaidBankAccounts).mockResolvedValue({ accounts: [] });
+
+    render(wrap(<BankingHomePage />));
+
+    expect(screen.queryByTestId("transfer-modal-stub")).not.toBeInTheDocument();
+    await userEvent.click(await screen.findByTestId("banking-new-menu-trigger"));
+    await userEvent.click(await screen.findByTestId("banking-home-record-transfer"));
+    expect(await screen.findByTestId("transfer-modal-stub")).toBeInTheDocument();
   });
 });

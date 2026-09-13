@@ -109,10 +109,20 @@ const CHECKS = [
       /activeTab === "statement_import"[\s\S]*data-testid="banking-statement-import-not-recon-proof-banner"[\s\S]*StatementUpload/,
   },
   {
-    name: "plaid: BankingHome mounts BankingPlaidConnectionsPanel + PlaidSyncStatusPanel",
+    name: "plaid: BankingHome mounts BankingPlaidConnectionsPanel on the plaid_connections tab",
     file: "apps/frontend/src/pages/banking/BankingHome.tsx",
-    pattern:
-      /activeTab === "plaid_connections"[\s\S]*BankingPlaidConnectionsPanel[\s\S]*PlaidSyncStatusPanel/,
+    pattern: /activeTab === "plaid_connections"[\s\S]*BankingPlaidConnectionsPanel/,
+  },
+  {
+    // ROUND-20.8 B9 (2026-09-13) — PlaidSyncStatusPanel was deliberately retired (BankingHome.tsx's
+    // own comment: "that panel is gone now — B9"); it is now fully orphaned (no importer anywhere
+    // except its own test file). BankingPlaidConnectionsPanel is the one canonical panel, and the
+    // last_synced_at data PlaidSyncStatusPanel used to read now feeds the "Bank feed" KPI tile via
+    // bankFeedLastSync — so this check proves that data path survived the consolidation instead of
+    // asserting a mount that was intentionally removed.
+    name: "plaid: retired PlaidSyncStatusPanel's last_synced_at feed lives on via bankFeedLastSync",
+    file: "apps/frontend/src/pages/banking/BankingHome.tsx",
+    pattern: /const bankFeedLastSync\s*=[\s\S]*last_synced_at/,
   },
   {
     name: "plaid panel: ParityTable on BankingPlaidConnectionsPanel",

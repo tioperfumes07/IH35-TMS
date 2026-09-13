@@ -34,9 +34,19 @@ if (!/CREATE OR REPLACE VIEW telematics\.vehicle_latest_position[\s\S]*v\.city[\
 //    (it 400s the whole request — the original city/state bug).
 const client = read("apps/backend/src/integrations/samsara/samsara-client.ts");
 if (!/\/fleet\/vehicles\/stats/.test(client)) fail("client must call /fleet/vehicles/stats");
-if (!/set\("types", "gps,engineStates(,[A-Za-z]+)*"\)/.test(client))
+// A 400-retry fallback (multiple accounts don't support every stats type) turned the single inline
+// `.set("types", "gps,engineStates,...")` literal into `.set("types", types)`, with `types` iterating
+// a typesSets array of literals instead — a legitimate robustness improvement the original
+// single-literal regex couldn't see. Accept either shape: a `.set("types", ...)` call must exist, AND
+// at least one type-list STRING LITERAL anywhere in the file (inline or inside an array) must begin
+// with the required gps,engineStates prefix, and NONE of them may contain driverAssignments.
+if (!/set\("types",/.test(client)) fail("stats fetch must call .set(\"types\", ...)");
+const typeListLiterals = [...client.matchAll(/"((?:gps|engineStates|obdOdometerMeters|fuelPercents|obdEngineSeconds|driverAssignments)(?:,(?:gps|engineStates|obdOdometerMeters|fuelPercents|obdEngineSeconds|driverAssignments))*)"/g)].map(
+  (m) => m[1]
+);
+if (!typeListLiterals.some((t) => /^gps,engineStates(,[A-Za-z]+)*$/.test(t)))
   fail("stats fetch must request VALID types beginning gps,engineStates");
-if (/set\("types", "[^"]*driverAssignments[^"]*"\)/.test(client))
+if (typeListLiterals.some((t) => t.includes("driverAssignments")))
   fail("stats fetch must NOT request driverAssignments on /fleet/vehicles/stats (invalid type -> 400)");
 if (!/reverseGeo/.test(client)) fail("client must parse reverseGeo");
 if (!/engineStates/.test(client)) fail("client must parse engineStates (real engine_state, not derived from speed)");
