@@ -729,10 +729,19 @@ Owner "close it identical … cash flow same data day by day". Full writeup:
   identical to the projection.** Re-date advances got NEW FAC display_ids (void-not-delete leaves the
   old ones voided in the register) — expected, not a regression.
 - **RESIDUALS = owner/data decisions (flagged, NOT auto-touched):** 13581/13586 disputes (Faro < face,
-  advances held submitted); 13578 (+$560) / 13589 (+$30) under-billings — invoice PATCH is DRAFT-ONLY
-  and has no `total_cents` input, so raising a sent+factored invoice is an owner money workflow, not a
-  field edit; and 3 Faro purchases with NO advance ($8,000: Sethmar 013 $4,900 08/14, Direct Connect
-  061 $2,100 09/10, Tennessee Steel 062 $1,000 09/10) — loads never entered, cannot fabricate.
+  advances held submitted); 13578 (+$560) / 13589 (+$30) under-billings — **now OPEN as invoice
+    disputes 2026-09-13** (437bda1f / 12b7313a, reason mis_entry, faces $4,650/$4,120 untouched, A/R open),
+    per owner over/under→dispute ruling; invoice PATCH is DRAFT-ONLY and has no `total_cents` input, so
+    raising the sent+factored invoice (dispute resolution `invoice_corrected`) is an owner money workflow, not a
+    field edit; and 3 Faro purchases with NO advance ($8,000: Sethmar 013 $4,900 08/14, Direct Connect
+  061 $2,100 09/10, Tennessee Steel 062 $1,000 09/10). **CORRECTED 2026-09-13 (owner: "if there is a Faro
+    purchase there is a load"):** these are REAL loads, not fabrication — match by AllwaysTrack WO→amount→
+    debtor→date. inv 062 = **load 13584** (already in app: corrected to Tennessee Steel $1,000, proforma
+    inv; needs its Faro advance + invoice sent). inv 061 = **load 13585** (ran per AllwaysTrack WO 6492969
+    $2,100, never keyed — create from AllwaysTrack). inv 013 = an **08/14** load in the pre-08/28
+    AllwaysTrack window not yet ingested (ingest 08/07–08/27). Never say "load never entered". See
+    `claude/2026-09-13-ABSORPTION-INGEST-AND-DISPUTE-WINDOW-INSTRUCTIONS.md` §B8 + §C.11 (over/under-payment
+    both open a dispute).
 
 ## Active Architectural Decisions — Load-to-cash chain C1/C2/C3 (Cursor, 2026-09-13)
 
