@@ -215,10 +215,20 @@ export async function enrichInvoice(client: { query: (sql: string, values?: unkn
   );
   const applicationsRes = await client.query(
     `
-      SELECT pa.*, p.display_id AS payment_display_id, p.payment_date
+      -- A5 item 3 (ROUND 21.1) -- split Paid from Deposited: p.payment_date/pa.applied_at is when
+      -- the company recorded the payment as received; p.cleared_date (THREE-DATES-COVERAGE-GAP,
+      -- 202613310400) is the separate, later date the bank actually cleared it -- "drives ONLY
+      -- which reconciliation session it settles in," per that migration's own comment. A payment
+      -- can be Paid (recorded) for weeks before it is Deposited (cleared) or never clear at all.
+      SELECT pa.*, p.display_id AS payment_display_id, p.payment_date,
+             p.cleared_date, p.deposited_to_account_id,
+             dep_acct.account_name AS deposited_to_account_name
       FROM accounting.payment_applications pa
       JOIN accounting.payments p ON p.id = pa.payment_id
                                  AND p.operating_company_id = $2::uuid
+      LEFT JOIN catalogs.accounts dep_acct
+        ON dep_acct.id::text = p.deposited_to_account_id
+       AND dep_acct.operating_company_id = p.operating_company_id
       WHERE pa.invoice_id = $1
       ORDER BY pa.applied_at DESC
       LIMIT 50

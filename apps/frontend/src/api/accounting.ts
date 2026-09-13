@@ -96,6 +96,10 @@ export type Invoice = {
     applied_at: string;
     payment_display_id?: string | null;
     payment_date?: string | null;
+    /** A5 item 3 — THREE-DATES-COVERAGE-GAP's cleared_date: Paid (payment_date/applied_at) vs
+     * Deposited (cleared_date, null until the bank actually clears it). Never collapse the two. */
+    cleared_date?: string | null;
+    deposited_to_account_name?: string | null;
   }>;
   /** GL journal entries posted from this invoice and/or customer payments applied to it (Law §9). */
   journal_entries?: InvoiceJournalEntryLink[];
