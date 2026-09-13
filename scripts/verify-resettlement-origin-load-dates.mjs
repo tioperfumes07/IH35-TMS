@@ -60,10 +60,15 @@ function analyze(src) {
   }
 
   // 5. the register renders BOTH columns off the origin dates via mmmDd.
-  if (!/setl-tour-col-origin-started/.test(setl)) errors.push('register must render the "Date started" column (testId setl-tour-col-origin-started)');
-  if (!/setl-tour-col-origin-delivered/.test(setl)) errors.push('register must render the "Delivery date" column (testId setl-tour-col-origin-delivered)');
-  if (!/label:\s*"Date started"/.test(setl)) errors.push('register "Date started" column must carry the owner label "Date started"');
-  if (!/label:\s*"Delivery date"/.test(setl)) errors.push('register "Delivery date" column must carry the owner label "Delivery date"');
+  // Labels renamed from the original "Date started"/"Delivery date" to "Original load pickup"/
+  // "Original load delivery" so they read distinctly from the TOUR-level "Date started" column
+  // (trip_started_at, a different concept — when the tour/settlement itself opened) that sits a
+  // few columns over in this same register. TestIds/data source are unchanged; only the label text
+  // moved, and this guard's checks were never updated to match.
+  if (!/setl-tour-col-origin-started/.test(setl)) errors.push('register must render the "Original load pickup" column (testId setl-tour-col-origin-started)');
+  if (!/setl-tour-col-origin-delivered/.test(setl)) errors.push('register must render the "Original load delivery" column (testId setl-tour-col-origin-delivered)');
+  if (!/label:\s*"Original load pickup"/.test(setl)) errors.push('register origin-pickup column must carry the owner label "Original load pickup"');
+  if (!/label:\s*"Original load delivery"/.test(setl)) errors.push('register origin-delivery column must carry the owner label "Original load delivery"');
   if (!/r\.origin_pickup_date\s*\?\s*<span[\s\S]{0,120}?mmmDd\(r\.origin_pickup_date\)/.test(setl)) {
     errors.push('register "Date started" cell must render mmmDd(origin_pickup_date)');
   }
@@ -101,8 +106,8 @@ if (process.argv.includes("--selftest")) {
     ["frontend drops origin type", withField("feapi", (s) => s.replace(/origin_load_number: string \| null; origin_pickup_date: string \| null; origin_delivery_date: string \| null;/g, ""))],
     ["register drops started testId", withField("setl", (s) => s.replace(/setl-tour-col-origin-started/g, "gone-started"))],
     ["register drops delivered testId", withField("setl", (s) => s.replace(/setl-tour-col-origin-delivered/g, "gone-delivered"))],
-    ["register drops Date started label", withField("setl", (s) => s.replace(/label: "Date started"/g, 'label: "X"'))],
-    ["register drops Delivery date label", withField("setl", (s) => s.replace(/label: "Delivery date"/g, 'label: "X"'))],
+    ["register drops Original load pickup label", withField("setl", (s) => s.replace(/label: "Original load pickup"/g, 'label: "X"'))],
+    ["register drops Original load delivery label", withField("setl", (s) => s.replace(/label: "Original load delivery"/g, 'label: "X"'))],
     ["register drops pickup mmmDd render", withField("setl", (s) => s.replace(/mmmDd\(r\.origin_pickup_date\)/g, '"x"'))],
     ["register drops delivery mmmDd render", withField("setl", (s) => s.replace(/mmmDd\(r\.origin_delivery_date\)/g, '"x"'))],
   ];
