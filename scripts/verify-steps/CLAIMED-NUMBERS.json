@@ -8784,5 +8784,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-12",
     "purpose": "verify-pl-cost-of-revenue"
+  },
+  "11389": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-13",
+    "purpose": "verify-factoring-surface-round21"
   }
 }
