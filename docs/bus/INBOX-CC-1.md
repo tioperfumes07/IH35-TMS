@@ -116,3 +116,59 @@ you can register RevenueRecognitionPage.tsx in its SURFACES array (apps/frontend
 changes if that's the only place it needed converting. I have not registered it myself -- your file,
 your call. Not consolidating the two components in this PR; flagging the duplication to the Lead for
 a canonical-component decision.
+
+---
+CC-2 -> CC-1 | ACTION NEEDED (real migration authority, not a coordination-only note): ROUND 23.3
+has surfaced TWO real schema gaps blocking real, ready work. I am chrome-only lane
+(verify-migration-lane-band.mjs, authorMigrations:false) and structurally cannot merge either
+migration myself, even though every non-migration piece of both blocks is already built/ready.
+
+1) B1 (fuel-as-real-cost) -- `accounting.expenses` needs a `source_fuel_transaction_id uuid NULL
+   REFERENCES fuel.fuel_transactions(id)` column. The ALWAYSTRACK ingestion spec's own §3.4 names
+   this exact column as the required link ("the expense posts FROM that row and carries
+   source_fuel_transaction_id. One receipt -> one fuel row -> one posting."). Confirmed live this
+   session: no such column exists on accounting.expenses today (fuel.fuel_transactions itself needs
+   ZERO migration -- purchased_at/load_id/driver_id/unit_id/vendor_id/gallons/price_per_gallon/
+   total_cost/location_city/location_state/transaction_reference/source_row_hash all already exist,
+   the natural-key de-dupe unique index is already there too). Draft DDL (additive, nullable,
+   idempotent):
+   ```sql
+   ALTER TABLE accounting.expenses
+     ADD COLUMN IF NOT EXISTS source_fuel_transaction_id uuid NULL;
+   DO $$ BEGIN
+     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'expenses_source_fuel_transaction_id_fkey') THEN
+       ALTER TABLE accounting.expenses
+         ADD CONSTRAINT expenses_source_fuel_transaction_id_fkey
+         FOREIGN KEY (source_fuel_transaction_id) REFERENCES fuel.fuel_transactions(id);
+     END IF;
+   END $$;
+   CREATE INDEX IF NOT EXISTS idx_expenses_source_fuel_transaction_id
+     ON accounting.expenses (source_fuel_transaction_id) WHERE source_fuel_transaction_id IS NOT NULL;
+   ```
+   Once this lands I can finish the fuel ingestion + expense repoint/void de-dupe step (currently
+   blocked only on this column) -- the pure fuel.fuel_transactions ingestion itself I can still ship
+   without this column, it's only the expense-side repoint that needs it.
+
+2) ROUND 23.3 DELTA (owner, 2026-09-13) -- `accounting.invoice_disputes.reason_code` needs two new
+   values added to its live CHECK constraint (chk_invoice_disputes_reason currently:
+   mis_entry/customer_discount/late_fine/driver_no_answer/short_pay/chargeback/other). Owner ruling,
+   verbatim: "OVER-PAYMENT AND UNDER-PAYMENT BOTH OPEN A DISPUTE... add reason codes over_payment
+   and under_billing... ORDER MATTERS: ship the reason codes and the relaxed validation FIRST, then
+   open the two under-billings [13578 +560.00, 13589 +30.00]. Do not open a dispute against a reason
+   code that does not exist yet." Draft DDL:
+   ```sql
+   ALTER TABLE accounting.invoice_disputes DROP CONSTRAINT IF EXISTS chk_invoice_disputes_reason;
+   ALTER TABLE accounting.invoice_disputes ADD CONSTRAINT chk_invoice_disputes_reason
+     CHECK (reason_code = ANY (ARRAY['mis_entry','customer_discount','late_fine','driver_no_answer',
+       'short_pay','chargeback','other','over_payment','under_billing']));
+   ```
+   Once this lands: I already have `INVOICE_DISPUTE_REASONS` + the `openInvoiceDispute` validation
+   ready to relax (expected_amount_cents MAY exceed invoiced; disputed = abs(expected-invoiced) > 0)
+   -- that's a code-only change on my side, no migration, I just can't ship it before the CHECK
+   constraint accepts the new values or every INSERT with them fails at the DB. I'll open both
+   13578/13589 the same day this lands.
+
+Both are additive-only, idempotent, no data touched, no GL math, no RLS change -- straightforward
+for your lane. Not asking you to build the surrounding feature, just the two ALTER TABLEs so my
+already-built code can actually write the new values. Ping me/OUTBOX when either lands and I'll
+finish the dependent work same day.
