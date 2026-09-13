@@ -68,6 +68,8 @@ const GeofencesPage = React.lazy(() => import("../pages/operations/GeofencesPage
 const DispatchAlertsPage = React.lazy(() => import("../pages/dispatch/DispatchAlertsPage").then((m) => ({ default: m.DispatchAlertsPage })));
 const LateArrivalsPage = React.lazy(() => import("../pages/dispatch/LateArrivalsPage").then((m) => ({ default: m.LateArrivalsPage })));
 const AtRiskQueuePage = React.lazy(() => import("../pages/dispatch/AtRiskQueuePage").then((m) => ({ default: m.AtRiskQueuePage })));
+const LoadsWithoutDriverBillPage = React.lazy(() => import("../pages/dispatch/LoadsWithoutDriverBillPage").then((m) => ({ default: m.LoadsWithoutDriverBillPage })));
+const LoadsWithoutTourPage = React.lazy(() => import("../pages/dispatch/LoadsWithoutTourPage").then((m) => ({ default: m.LoadsWithoutTourPage })));
 const FactoringQueuePage = React.lazy(() => import("../pages/dispatch/FactoringQueuePage").then((m) => ({ default: m.FactoringQueuePage })));
 const DriverBillRemintScreen = React.lazy(() => import("../pages/dispatch/DriverBillRemintScreen").then((m) => ({ default: m.DriverBillRemintScreen })));
 const InTransitIssuesPage = React.lazy(() => import("../pages/dispatch/InTransitIssuesPage").then((m) => ({ default: m.InTransitIssuesPage })));
@@ -1210,6 +1212,22 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <AtRiskQueuePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/loads-without-driver-bill"
+          element={
+            <ProtectedRoute>
+              <LoadsWithoutDriverBillPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/loads-without-tour"
+          element={
+            <ProtectedRoute>
+              <LoadsWithoutTourPage />
             </ProtectedRoute>
           }
         />

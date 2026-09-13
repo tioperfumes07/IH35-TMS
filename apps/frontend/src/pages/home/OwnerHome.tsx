@@ -30,8 +30,11 @@ import {
   fetchHomeWosOpenCount,
   type HomeKpiRange,
 } from "../../api/home";
-import { getKpiSummary } from "../../api/reports";
+import { getKpiSummary, getExceptionQueueCounts } from "../../api/reports";
+import { getInsuranceSummary } from "../../api/insurance";
+import { listExpenseDuplicates } from "../../api/accounting";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { Button } from "../../components/Button";
 import { SectionQuickJump } from "../../components/home/SectionQuickJump";
 import { FleetSnapshotPanel } from "../../components/home/FleetSnapshotPanel";
@@ -184,6 +187,25 @@ export function OwnerHome({ auth }: Props) {
     enabled: Boolean(selectedCompanyId),
   });
   const ownerCashPending = ownerCashPendingQuery.data?.requests ?? [];
+
+  // D1 (owner law, 2026-09-13, verbatim: "the exception queue BECOMES the navigation") — 5 named
+  // saved-query chips with live counts. Each count is read straight off its own canonical source
+  // (exception-queue-counts / insurance summary / expense duplicates); never a literal.
+  const exceptionQueueCountsQuery = useQuery({
+    queryKey: ["reports", "exception-queue-counts", selectedCompanyId],
+    queryFn: () => getExceptionQueueCounts(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
+  });
+  const insuranceSummaryQuery = useQuery({
+    queryKey: ["home", "saved-query-insurance-summary", selectedCompanyId],
+    queryFn: () => getInsuranceSummary(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
+  });
+  const expenseDuplicatesQuery = useQuery({
+    queryKey: ["home", "saved-query-expense-duplicates", selectedCompanyId],
+    queryFn: () => listExpenseDuplicates(selectedCompanyId!, 1),
+    enabled: Boolean(selectedCompanyId),
+  });
 
   function refreshAll() {
     void queryClient.invalidateQueries({ queryKey: ["home"] });
@@ -350,6 +372,46 @@ export function OwnerHome({ auth }: Props) {
         <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-900">Attention</div>
         <div className="px-3 py-1">
           <AttentionList operatingCompanyId={selectedCompanyId} maxVisibleWhenCollapsed={5} />
+        </div>
+      </section>
+
+      {/* D1 (owner law, 2026-09-13): 5 named saved-query chips, live counts, the existing
+          DrillKpiCard chip component — no restyle. Each count is read straight off its own
+          canonical source (never a literal), so a chip's number always matches the list it drills
+          into (verify-saved-query-chips.mjs). */}
+      <section className="saved-query-chips order-1 lg:order-2" data-testid="saved-query-chips">
+        <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Saved queries</div>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+          <DrillKpiCard
+            testId="saved-query-chip-unmatched-fuel"
+            label="Unmatched fuel"
+            value={exceptionQueueCountsQuery.data?.unmatched_fuel_count}
+            to="/reports/fuel-reconciliation"
+          />
+          <DrillKpiCard
+            testId="saved-query-chip-insurance-schedule"
+            label="Insurance schedule"
+            value={insuranceSummaryQuery.data?.summary.policies_expiring_30d}
+            to="/safety/insurance/policies"
+          />
+          <DrillKpiCard
+            testId="saved-query-chip-loads-without-driver-bill"
+            label="Loads without a driver bill"
+            value={exceptionQueueCountsQuery.data?.loads_without_driver_bill_count}
+            to="/reports/loads-without-driver-bill"
+          />
+          <DrillKpiCard
+            testId="saved-query-chip-loads-without-tour"
+            label="Loads without a tour"
+            value={exceptionQueueCountsQuery.data?.loads_without_tour_count}
+            to="/reports/loads-without-tour"
+          />
+          <DrillKpiCard
+            testId="saved-query-chip-duplicate-expenses"
+            label="Duplicate expenses"
+            value={expenseDuplicatesQuery.data?.group_count}
+            to="/accounting/expenses"
+          />
         </div>
       </section>
 

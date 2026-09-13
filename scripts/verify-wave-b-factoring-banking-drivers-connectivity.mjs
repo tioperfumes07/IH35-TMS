@@ -44,7 +44,11 @@ const CHECKS = [
   // owns its own module). Updated in place rather than removed so a future regression back to a
   // bare 404 (or a reintroduced duplicate tab) still gets caught.
   { name: "banking factoring entry route (redirect)", file: MANIFEST, pattern: /path="\/banking\/factoring"[\s\S]{0,220}Navigate to="\/banking"/ },
-  { name: "submission queue invoice+customer drills", file: "apps/frontend/src/pages/factoring/SubmissionQueue.tsx", pattern: /kind="invoice"[\s\S]{0,100}id=\{item\.invoice_id\}[\s\S]{0,500}kind="customer"[\s\S]{0,100}id=\{item\.customer_id\}/ },
+  // ALL-SEATS settlement/tour law (owner, 2026-09-13): a new "Settlement / Presettlement" column
+  // (SettlementReferenceCell) was legitimately inserted BETWEEN the Invoice and Customer columns,
+  // pushing the gap between the two drills past this pattern's old 500-char budget (549 measured
+  // 2026-09-13) -- widened to fit that real, disclosed addition, not to paper over a lost drill.
+  { name: "submission queue invoice+customer drills", file: "apps/frontend/src/pages/factoring/SubmissionQueue.tsx", pattern: /kind="invoice"[\s\S]{0,100}id=\{item\.invoice_id\}[\s\S]{0,800}kind="customer"[\s\S]{0,100}id=\{item\.customer_id\}/ },
   { name: "batch wizard invoice+customer drills", file: "apps/frontend/src/pages/factoring/BatchWizard.tsx", pattern: /kind="invoice" id=\{invoice\.id\}[\s\S]{0,500}kind="customer"[\s\S]{0,100}id=\{invoice\.customer_id\}/ },
   { name: "faro import invoice+customer drills", file: "apps/frontend/src/pages/factoring/FaroImportPage.tsx", pattern: /kind="invoice"[\s\S]{0,100}id=\{row\.invoice_id\}[\s\S]{0,500}kind="customer"[\s\S]{0,100}id=\{row\.customer_id\}/ },
   // banking

@@ -1304,3 +1304,39 @@ export function getPostedWhileTourOpenReport(operatingCompanyId: string) {
     withCompany(`/api/v1/accounting/reports/posted-while-tour-open`, operatingCompanyId),
   );
 }
+
+// D1 (owner law, 2026-09-13, "the exception queue BECOMES the navigation"): the 3 standing counts
+// this seat's backend owns (unmatched fuel / loads without a driver bill / loads without a tour).
+// The other 2 chips (insurance schedule / duplicate expenses) reuse getInsuranceSummary() and
+// listExpenseDuplicates() — never duplicated here.
+export type ExceptionQueueCounts = {
+  loads_without_driver_bill_count: number;
+  loads_without_tour_count: number;
+  unmatched_fuel_count: number;
+};
+
+export function getExceptionQueueCounts(operatingCompanyId: string) {
+  return apiRequest<ExceptionQueueCounts>(withCompany(`/api/v1/reports/exception-queue-counts`, operatingCompanyId));
+}
+
+export type ExceptionQueueLoadRow = {
+  id: string;
+  load_number: string;
+  status: string;
+  driver_id: string | null;
+  driver_name: string | null;
+  unit_id: string | null;
+  unit_number: string | null;
+};
+
+export function listLoadsWithoutDriverBill(operatingCompanyId: string) {
+  return apiRequest<{ loads: ExceptionQueueLoadRow[]; total_count: number }>(
+    withCompany(`/api/v1/reports/loads-without-driver-bill`, operatingCompanyId),
+  );
+}
+
+export function listLoadsWithoutTour(operatingCompanyId: string) {
+  return apiRequest<{ loads: ExceptionQueueLoadRow[]; total_count: number }>(
+    withCompany(`/api/v1/reports/loads-without-tour`, operatingCompanyId),
+  );
+}

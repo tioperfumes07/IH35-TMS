@@ -322,12 +322,19 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx",
     bad: /display_id\s*\?\?\s*"—"|label=\{row\.display_id\s*\?\?/,
-    good: /entityLabel\(\s*row\.display_id\s*,\s*row\.id\s*,\s*"Settlement"\s*\)|<EntityLinkOrTombstone kind="settlement" id=\{row\.id\} name=\{row\.display_id\} noun="Settlement"/,
+    // SETTLEMENT-NUMBER-IS-ALWAYSTRACK-DOC (owner 2026-09-11): this column no longer prints
+    // row.display_id directly (the retired S-YYYY-NNNN counter) -- it renders settlementLabel(row)
+    // (the AlwaysTrack doc number, or "Open"), still through a real EntityLinkOrTombstone. The
+    // literal `name={row.display_id}` this check pinned predates that correction.
+    good: /entityLabel\(\s*row\.display_id\s*,\s*row\.id\s*,\s*"Settlement"\s*\)|<EntityLinkOrTombstone kind="settlement" id=\{row\.id\} name=\{row\.display_id\} noun="Settlement"|<EntityLinkOrTombstone\s+kind="settlement"\s+id=\{row\.id\}\s+name=\{settlementLabel\(row\)\}/,
   },
   {
     rel: "apps/frontend/src/pages/drivers/SettlementDisputeModal.tsx",
     bad: /driver_display_id\s*\?\?\s*settlement\.id/,
-    good: /entityLabel\(\s*settlement\.display_id\s*,\s*settlement\.id\s*,\s*"Settlement"\s*\)/,
+    // SETTLEMENT-NUMBER-IS-ALWAYSTRACK-DOC (owner 2026-09-11): the settlement link now labels
+    // itself via settlementLabel(...) (the AlwaysTrack doc number / "Open"), same correction as
+    // SettlementsTable.tsx above -- never the retired settlement.display_id counter directly.
+    good: /entityLabel\(\s*settlement\.display_id\s*,\s*settlement\.id\s*,\s*"Settlement"\s*\)|label=\{settlementLabel\(/,
   },
   {
     rel: "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx",
@@ -1180,7 +1187,13 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx",
     bad: /\{driver\.unit_number \?\? "—"\}/,
-    good: /entityLabel\(\s*driver\.unit_number\s*,\s*driver\.unit_id\s*,\s*"Unit"\s*\)|EntityLinkOrTombstone kind="unit" id=\{driver\.unit_id\} name=\{driver\.unit_number\} noun="Unit"/,
+    // ROUND 20.6 T2 (owner-live 2026-09-12): the planner's own driver rows never carry
+    // unit_number/unit_id from getDispatchPlannerWeek, so the render now falls back to a
+    // scheduler-grid lookup (unitByDriverId) into local `unitId`/`unitNumber` variables before
+    // calling EntityLinkOrTombstone -- the literal `driver.unit_id`/`driver.unit_number` props
+    // this check originally pinned no longer appear verbatim at the call site even though the real
+    // drill-through is present and correct.
+    good: /entityLabel\(\s*driver\.unit_number\s*,\s*driver\.unit_id\s*,\s*"Unit"\s*\)|EntityLinkOrTombstone kind="unit" id=\{driver\.unit_id\} name=\{driver\.unit_number\} noun="Unit"|EntityLinkOrTombstone kind="unit" id=\{unitId[^}]*\} name=\{unitNumber\} noun="Unit"/,
   },
   {
     rel: "apps/frontend/src/components/vehicle-profile/IdentityStatusHeader.tsx",

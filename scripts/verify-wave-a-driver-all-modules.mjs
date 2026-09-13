@@ -57,7 +57,11 @@ const composedGuards = [
 export function auditDriverColumn(sources, leaves) {
   const failures = [];
   const p10Leaves = leaves.filter((leaf) => P10.has(leaf.module));
-  if (p10Leaves.length < 142) failures.push(`priority-10 driver inventory unexpectedly shrank to ${p10Leaves.length}`);
+  // Floor re-verified live 2026-09-13 (CC-3, same class of fix as verify-wave-a-load-all-modules.mjs
+  // this same night): real count is 143 -- a genuine leaf was legitimately added by another lane
+  // after this floor was last set to 142, so removing one planted leaf from the real 143 landed
+  // exactly on the stale 142 floor and the selftest's own mutation-detection stopped catching it.
+  if (p10Leaves.length < 143) failures.push(`priority-10 driver inventory unexpectedly shrank to ${p10Leaves.length}`);
   if (leaves.length < 210) failures.push(`all-module driver inventory unexpectedly shrank to ${leaves.length}`);
   const modules = new Set(leaves.map((leaf) => leaf.module));
   if (modules.size < 23) failures.push(`driver module inventory unexpectedly shrank to ${modules.size}`);
