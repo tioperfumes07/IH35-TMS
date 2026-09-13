@@ -174,3 +174,22 @@ unchanged: no confirmed `validation_error` data source for item 2; unclear wheth
 existing per-page QBO-mirror Δ strip already satisfies item 5's "one pinned Difference" ask or a new
 dedicated surface is wanted. Not building either speculatively.
 
+---
+
+## 2026-09-13 cycle (cont'd) — ROUND-20.8 B11 CLOSED (CC-1 side)
+
+**B11 — CLOSED.** CC-2's coordination note in this inbox flagged: `/banking` read "QBO Sync: Not
+connected | Last sync: n/a" while `/accounting`'s `AccountingHubPage.tsx` read "QBO SYNC 0 pending
+— queue healthy" at the same moment — both individually true (OAuth connection state vs. sync-queue
+backlog) but each screen showing only one, reading as a contradiction. Live-reproduced the exact
+contradiction on prod before touching anything (screenshot: QBO Sync = "0 pending / queue healthy"
+while Banking's own strip read "Not connected"). Fixed: added the `getQboConnectionStatus` query
+this page was missing (the exact same query `BankingHome.tsx` already fetches) and routed the tile
+through the shared `describeQboSyncStatus()` derivation CC-2 already built for this exact purpose —
+the two screens can now never disagree again, by construction (one function, two callers). New
+3-case vitest regression suite proves the contradiction can't recur. PR #22005, merged, deployed,
+live-verified in Chrome post-deploy: both `/accounting` and `/banking` now read "Not connected /
+no active QuickBooks connection" identically, no console errors.
+
+Nothing else new this cycle — A5 items 2/5 remain open pending scope clarification, unchanged.
+
