@@ -8859,5 +8859,15 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-13",
     "purpose": "verify-settlement-net-matches-signed-doc"
+  },
+  "11461": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-13",
+    "purpose": "verify-alwaystrack-parity"
+  },
+  "11465": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-13",
+    "purpose": "verify-faro-invoice-lines-load-linkage"
   }
 }
