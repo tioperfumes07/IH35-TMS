@@ -48,6 +48,12 @@ const MONEY_LABELS: Record<(typeof MONEY_KEYS)[number], string> = {
   total: "Total",
 };
 const RED_KEYS = new Set(["d61_90", "d90_plus"]);
+// A5 item 4 — the 5 real aging buckets a vendor can be filtered by (excludes "total", which is a
+// sum, not a bucket). "The tile IS the filter": clicking a bucket tile narrows the vendor grid to
+// only vendors carrying a nonzero balance in that bucket; the tile's own dollar figure always shows
+// the full (type-filtered) total so the number never moves when you click it.
+const BUCKET_FILTER_KEYS = ["current", "d1_30", "d31_60", "d61_90", "d90_plus"] as const;
+type BucketFilterKey = (typeof BUCKET_FILTER_KEYS)[number] | "all";
 const GROUP_ORDER: ApAgingDisplayGroup[] = ["Driver", "Repair", "Diesel", "Insurance", "Intercompany", "Other"];
 const GROUP_CHIP: Record<ApAgingDisplayGroup, string> = {
   Driver: "bg-slate-100 text-slate-700",
@@ -177,6 +183,7 @@ export function AccountsPayableAgingPage() {
     setSearchParams(params, { replace: true });
   };
   const [typeFilter, setTypeFilter] = useState<ApAgingDisplayGroup | "all">("all");
+  const [bucketFilter, setBucketFilter] = useState<BucketFilterKey>("all");
   const staged = useStagedListFilters({ applied: { asOf, typeFilter }, empty: { asOf: today(), typeFilter: "all" as const }, onApply: (next) => { setAsOf(next.asOf); setTypeFilter(next.typeFilter); } });
 
   const query = useQuery({
@@ -186,6 +193,10 @@ export function AccountsPayableAgingPage() {
     staleTime: 30_000,
   });
   const vendors = useMemo(() => query.data?.vendors ?? [], [query.data?.vendors]);
+  const typeFiltered = useMemo(
+    () => (typeFilter === "all" ? vendors : vendors.filter((v) => v.display_group === typeFilter)),
+    [vendors, typeFilter]
+  );
 
   // ACCOUNTING-2: TMS bills are the internal aging basis. QBO mirror status is separate provenance —
   // never invent a QBO tie; never claim matched when as_of is historical or mirror N/A.
@@ -193,6 +204,11 @@ export function AccountsPayableAgingPage() {
   const qboSyncedAt = qboMirror?.last_synced_at ?? query.data?.qbo_synced_at ?? null;
   const apSubtitle = "What we owe vendors — from TMS bills (canonical A/P subledger).";
   const emptyMessage = (() => {
+    // A5 item 4 — the bucket-tile filter has its own honest empty state (distinct from "no A/P at
+    // all"): a vendor CAN exist in Current but have $0 in 61-90, that's not a mirror-provenance gap.
+    if (bucketFilter !== "all" && typeFiltered.length > 0) {
+      return `No vendors with a balance in the ${MONEY_LABELS[bucketFilter]} bucket.`;
+    }
     switch (query.data?.empty_state) {
       case "no_unpaid_bills_mirror_disabled":
         return "No open A/P in TMS bills. QBO A/P mirror pull is OFF for this entity — empty is not proof QBO has $0.";
@@ -223,13 +239,18 @@ export function AccountsPayableAgingPage() {
     return "divergent";
   })();
 
-  const typeFiltered = useMemo(
-    () => (typeFilter === "all" ? vendors : vendors.filter((v) => v.display_group === typeFilter)),
-    [vendors, typeFilter]
-  );
   // Both views: ParityTable owns Search+Range+gear (ACCT-F3464 / ACCT-F3568).
-  const vendorTableRows = typeFiltered;
+  // vendorTotals is the tile strip's own number — always the full type-filtered sum, so a tile's
+  // dollar figure never changes when it's clicked (it's the source the tile reads FROM, not a
+  // result OF the bucket filter).
   const vendorTotals = useMemo(() => typeFiltered.reduce(addBuckets, emptyBuckets()), [typeFiltered]);
+  // A5 item 4 — "the tile IS the filter": selecting a bucket narrows the grid to vendors carrying a
+  // nonzero balance in that bucket. "all" (no tile selected, or the active tile clicked again) shows
+  // every type-filtered vendor, same as before this feature existed.
+  const vendorTableRows = useMemo(
+    () => (bucketFilter === "all" ? typeFiltered : typeFiltered.filter((v) => amount(v, bucketFilter) !== 0)),
+    [typeFiltered, bucketFilter]
+  );
 
   // BANK-SORT-ROLLOUT-ACCT-AP2 — ?sort=/?dir= URL persistence via the shared useUrlSort hook
   // (same contract as FleetTable / dispatch board), now feeding ParityTable's controlled-sort
@@ -372,6 +393,50 @@ export function AccountsPayableAgingPage() {
             <span className="ml-1 text-slate-500">— no match claim when source N/A or as-of is historical</span>
           )}
         </div>
+      </div>
+
+      {/* A5 item 4 — clickable aging-bucket tiles double as the totals strip and the filter: click
+          a bucket to narrow the grid to vendors with a nonzero balance there, click it again (or
+          Clear) to go back to every vendor. Same palette tokens as the TOTAL strip below (no
+          restyle) — only new interactive affordance is the button + active/pressed state. */}
+      <div
+        className="mb-3 flex flex-wrap gap-2 print:hidden"
+        data-testid="ap-aging-bucket-filter-tiles"
+        role="group"
+        aria-label="Filter vendors by aging bucket"
+      >
+        {BUCKET_FILTER_KEYS.map((k) => {
+          const active = bucketFilter === k;
+          return (
+            <button
+              key={k}
+              type="button"
+              data-testid={`ap-aging-bucket-tile-${k}`}
+              aria-pressed={active}
+              onClick={() => setBucketFilter(active ? "all" : k)}
+              className={`flex flex-col items-start rounded-sm border px-3 py-1.5 text-left text-xs ${
+                active ? "border-slate-800 bg-slate-800 text-white" : "border-slate-200 bg-white text-slate-700 hover:border-slate-400"
+              }`}
+            >
+              <span className={`text-xs font-semibold uppercase tracking-wide ${active ? "text-slate-200" : "text-slate-500"}`}>
+                {MONEY_LABELS[k]}
+              </span>
+              <span className={`tabular-nums font-semibold ${!active && RED_KEYS.has(k) ? "text-red-600" : ""}`}>
+                {money(amount(vendorTotals, k))}
+              </span>
+            </button>
+          );
+        })}
+        {bucketFilter !== "all" ? (
+          <button
+            type="button"
+            data-testid="ap-aging-bucket-tile-clear"
+            onClick={() => setBucketFilter("all")}
+            className="self-center px-2 text-xs font-medium text-slate-500 underline hover:text-slate-700"
+          >
+            Clear bucket filter
+          </button>
+        ) : null}
       </div>
 
       {query.isLoading ? (
