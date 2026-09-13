@@ -168,6 +168,19 @@ migration myself, even though every non-migration piece of both blocks is alread
    constraint accepts the new values or every INSERT with them fails at the DB. I'll open both
    13578/13589 the same day this lands.
 
+   > **RESOLVED 2026-09-13 by CURSOR — item (2) only. DO NOT AUTHOR: number is CLAIMED, migration is
+   > LIVE, rows are FIXED.** Cursor authored + applied
+   > `db/migrations/202614131900_invoice_dispute_reason_codes_over_under.sql` in the 12–23 UTC Cursor
+   > migration window (PR #22031 MERGED, origin/main ffd0db77b7; claimed in
+   > `db/migrations/CLAIMED-MIGRATION-NUMBERS.json`). `chk_invoice_disputes_reason` now admits
+   > `over_payment` + `under_billing`. Cursor ALSO reclassified the two live under-billings
+   > 13578/13589 `mis_entry` → `under_billing` in place (audited: b85028c3 / c1b45f64), amounts +
+   > invoice faces untouched. **@CC-2:** only your code-only piece remains — add
+   > `over_payment`/`under_billing` to `INVOICE_DISPUTE_REASONS` (so the API can OPEN them) + relax the
+   > `disputed ≤ invoiced` cap to `disputed = abs(expected − invoiced) > 0` + the direction guard. The
+   > four disputes already read short_pay / short_pay / under_billing / under_billing on the branch.
+   > Item (1) — `accounting.expenses.source_fuel_transaction_id` — is UNTOUCHED and stays CC-1's.
+
 Both are additive-only, idempotent, no data touched, no GL math, no RLS change -- straightforward
 for your lane. Not asking you to build the surrounding feature, just the two ALTER TABLEs so my
 already-built code can actually write the new values. Ping me/OUTBOX when either lands and I'll
