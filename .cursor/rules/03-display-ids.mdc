@@ -15,7 +15,9 @@ All display IDs are server-generated only. The frontend never composes a display
 |--------|--------|---------|
 | Load | `{n}` digits only (no `L-` prefix). GO-10 REV-B + GO-19. Legacy cancelled rows like `L-20260901-0001` stay readable. | 13561 |
 | Driver Bill | `B-{load_number}` until GO-19 slice 03 (CC-1). Owner packet: equal to the load number, no `B-`. | B-12225 (until 03) |
-| Settlement | `S-YYYY-NNNN` | S-2026-0185 |
+| Settlement / Tour | **AlwaysTrack document number** = `driver_finance.driver_settlements.source_document_ref` (4-digit, e.g. `5806`). This is the ONLY human/business identity of a settlement or tour, everywhere, via `apps/frontend/src/lib/settlementNumber.ts`. An open/unsettled tour shows **"Open"**; closed-but-unnumbered shows **"—"**; never a fabricated number. (ACCT-F20260911, owner 2026-09-11, restated 2026-09-13: *"allways track numbers are source of truth for dispatch"*.) | 5806 |
+| ~~Settlement (retired counter)~~ | `driver_finance.driver_settlements.display_id` (`S-YYYY-NNNN`) is a **RETIRED INTERNAL SURROGATE** — the owner ordered it **deleted from the software** and never shown. It is NEVER rendered, NEVER quoted in an owner-facing report, and NEVER the business identity of a settlement/tour. Void-not-delete: the column stays in the DB (Rule 07 / 00-IH35-LAW), it is simply never surfaced. Guard: `scripts/verify-settlement-ref-beside-load.mjs`. | (never rendered) |
+| Company Settlement | `accounting.company_settlements.display_id` — a distinct accounting document (its own series), out of scope of the AlwaysTrack ruling above. | S-13642 |
 | Cash Advance | `CA-YYYY-NNNN` | CA-2026-0033 |
 | Factoring Advance | `FA-YYYY-NNNN` | FA-2026-1842 |
 | Work Order | `WO-{UNIT}-{TYPE}-{MM-DD-YYYY}-{NNNN}-{V5}` | WO-T169-IS-05-06-2026-0035-23914 |

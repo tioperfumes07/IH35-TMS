@@ -11,6 +11,7 @@ import { resolveApiUrl } from "../../api/client";
 import { openPrintableDocument } from "../../lib/openPrintableDocument";
 import { useToast } from "../Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { settlementLabel } from "../../lib/settlementNumber";
 import { Button } from "../Button";
 import { ListErrorState } from "../ListErrorState";
 import { FlatFieldGrid } from "../layout/FlatFieldGrid";
@@ -687,14 +688,17 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
             <div>
               {/* REG-032 (owner 2026-09-09, verbatim: "IN THE TOP. NEXT TO LOAD IT SHOULD ALREADY HAVE
                   THE PRE-SETTLEMENT-SETTLEMENT NUMBER ASSIGNED ... AUTOMATICALLY WHEN YOU CREATE A NB
-                  LOAD"): the tour's own settlement number (S-YYYY-NNNN, minted at booking by
-                  confirmPresettlementLink → driver_finance.next_settlement_display_id, #21627) sits
-                  directly beside the load number — sourced from the ONE tour readout (display_id), never
-                  the retired S-<load#> counter. Clickable → the matching Pre-Settlement / Settlement tab. */}
+                  LOAD"): the tour's own settlement number sits directly beside the load number.
+                  ACCT-F20260911 (owner 2026-09-11, restated angrily 2026-09-13): that number is the
+                  AlwaysTrack document (driver_finance.driver_settlements.source_document_ref), rendered
+                  through the ONE settlementLabel() helper — "Open" while the tour is unsettled, a dash
+                  when closed-unnumbered, and NEVER the retired S-YYYY-NNNN display_id counter (the owner
+                  ordered that counter deleted from every rendered/business surface). Clickable → the
+                  matching Pre-Settlement / Settlement tab. */}
               <h2 className="text-page-title font-semibold text-gray-900">
                 Load{" "}
                 <EntityLinkOrTombstone kind="load" id={load?.id ?? loadId} name={load?.load_number} noun="Load" />
-                {headerTour?.display_id ? (
+                {headerTour ? (
                   <>
                     {" · "}
                     <button
@@ -704,7 +708,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                       onClick={() => headerTour && setActiveTab(headerTour.is_open ? "Pre-Settlement" : "Settlement")}
                       title={`Open the ${headerTour.is_open ? "Pre-Settlement" : "Settlement"} tab`}
                     >
-                      {headerTour.display_id}
+                      {settlementLabel(headerTour)}
                     </button>
                   </>
                 ) : null}
