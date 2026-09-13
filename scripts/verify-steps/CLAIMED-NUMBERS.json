@@ -8879,5 +8879,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-13",
     "purpose": "verify-fuel-transactions-per-load"
+  },
+  "11481": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-13",
+    "purpose": "verify-usmca-settlement-cutover"
   }
 }
