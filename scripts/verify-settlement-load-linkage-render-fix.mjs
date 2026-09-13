@@ -1,4 +1,11 @@
 #!/usr/bin/env node
+// MATRIX-BUILT-OPTIONAL — this is a render-correctness ratchet (all-legs / column-ordering on the
+// settlement-load surfaces), NOT a Program-matrix Box-3 EntityLink/FK adoption feed. It carried no
+// @matrix-built tag on origin/main (legacy, never a matrix contributor); the 2026-09-13 stale-guard
+// repoint below (LoadCostsBoardPage.tsx → TourLoadRows.tsx) only followed moved code and did not
+// change its wiring scope, so it stays out of the auto-matrix rather than fabricating Built credit
+// for settlements/dispatch reverse_link leaves it doesn't census. verify-matrix-built-tag-present's
+// own sanctioned exemption; assertions below are unchanged (guard NOT weakened).
 // SETTLEMENT LOAD LINKAGE: FIX THE RENDER, NOT THE SCHEMA (owner order, 2026-09-11).
 //
 // The data model was already correct (owner-verified live on Neon, USMCA): a settlement/tour can
@@ -19,6 +26,18 @@
 // 4. Column ordering: Load renders immediately next to Settlement (SettlementsToursRegister.tsx,
 //    LoadCostsBoardPage.tsx), and Settlement renders on the LEFT of the row, not behind Driver
 //    (SettlementsTable.tsx).
+//
+// STALE-GUARD REPOINT (2026-09-13, push-gate rot fix): the DISPATCH-ONE-ROW-PER-LOAD refactor
+// (#21862 ACCT-F20260911-SETL, 2026-09-11 19:49 — landed AFTER this guard's last edit, #21810
+// 2026-09-11 14:25) extracted LoadCostsBoardPage's inline tour columns into TOUR_LOAD_COLUMNS in
+// components/dispatch/TourLoadRows.tsx. LoadCostsBoardPage.tsx no longer defines key:"tour" /
+// ...tourLoadColumns( / key:"driver", so the old auditColumnOrderSource() check on that file could
+// never locate them and failed on origin/main's OWN committed code. The ordering law it protects
+// (Settlement/Tour → Load → Driver) now lives — correctly and un-regressed — in TourLoadRows.tsx as
+// key:"tour" → key:"load_number" → key:"driver" (auditTourLoadRowsOrderSource below). This is a
+// pure re-point to the true current surface, NOT a weakening: the same ordering is still asserted.
+// SettlementsToursRegister.tsx STILL uses ...tourLoadColumns("setl-tour-col") (TourLegsCell.tsx),
+// so its check keeps using auditColumnOrderSource() unchanged.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -29,7 +48,9 @@ const TOUR_LEGS_CELL = path.join(repoRoot, "apps/frontend/src/components/dispatc
 const SETTLEMENTS_TABLE = path.join(repoRoot, "apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx");
 const PRE_SETTLEMENT_PANEL = path.join(repoRoot, "apps/frontend/src/components/dispatch/PreSettlementPanel.tsx");
 const TOURS_REGISTER = path.join(repoRoot, "apps/frontend/src/pages/driver-finance/SettlementsToursRegister.tsx");
-const LOAD_COSTS_BOARD = path.join(repoRoot, "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx");
+// STALE-GUARD REPOINT (2026-09-13): the Load-Costs board's tour column ordering now lives in
+// TOUR_LOAD_COLUMNS (TourLoadRows.tsx), not inline in LoadCostsBoardPage.tsx (#21862 refactor).
+const TOUR_LOAD_ROWS = path.join(repoRoot, "apps/frontend/src/components/dispatch/TourLoadRows.tsx");
 const PRE_SETTLEMENT_ROUTE = path.join(repoRoot, "apps/backend/src/driver-finance/pre-settlement.routes.ts");
 const DRIVER_FINANCE_API = path.join(repoRoot, "apps/frontend/src/api/driverFinance.ts");
 
@@ -93,6 +114,23 @@ export function auditColumnOrderSource(src, label) {
   return failures;
 }
 
+/** Pure: does TOUR_LOAD_COLUMNS (TourLoadRows.tsx — the Load-Costs board's tour register since the
+ *  #21862 one-row-per-load refactor) render Load immediately after Settlement/Tour, ahead of Driver?
+ *  Same ordering law as auditColumnOrderSource(), but the columns are now explicit
+ *  key:"tour" → key:"load_number" → key:"driver" defs, not an inline ...tourLoadColumns() spread. */
+export function auditTourLoadRowsOrderSource(src) {
+  const failures = [];
+  const tourIdx = src.indexOf('key: "tour"');
+  const loadIdx = src.indexOf('key: "load_number"');
+  const driverIdx = src.indexOf('key: "driver"');
+  if (tourIdx === -1 || loadIdx === -1 || driverIdx === -1) {
+    failures.push("TourLoadRows.tsx: could not locate tour/load_number/driver column definitions to check ordering");
+  } else if (!(tourIdx < loadIdx && loadIdx < driverIdx)) {
+    failures.push("TourLoadRows.tsx: Load Number must render immediately after the Settlement/Tour column, ahead of Driver");
+  }
+  return failures;
+}
+
 /** Pure: does the pre-settlement by-driver backend route compute and return `legs`? */
 export function auditPreSettlementRouteSource(src) {
   const failures = [];
@@ -128,6 +166,11 @@ function selftest() {
   const goodOrder = `{ key: "tour", label: "x" },\n...tourLoadColumns("p"),\n{ key: "driver", label: "y" },`;
   assert.ok(auditColumnOrderSource(goodOrder, "test").length === 0, "Load-next-to-Settlement ordering must pass");
 
+  const badRows = `{ key: "tour", label: "x" },\n{ key: "driver", label: "y" },\n{ key: "load_number", label: "z" },`;
+  assert.ok(auditTourLoadRowsOrderSource(badRows).length >= 1, "TourLoadRows Load-after-Driver ordering must be caught");
+  const goodRows = `{ key: "tour", label: "x" },\n{ key: "load_number", label: "z" },\n{ key: "driver", label: "y" },`;
+  assert.ok(auditTourLoadRowsOrderSource(goodRows).length === 0, "TourLoadRows tour→load→driver ordering must pass");
+
   const badRoute = `return { settlement, lines: linesRes.rows };`;
   assert.ok(auditPreSettlementRouteSource(badRoute).length >= 1, "missing legs in route response must be caught");
   const goodRoute = `WHERE l.presettlement_link_id = $1::uuid OR l.id = $3::uuid OR l.id = $4::uuid\nreturn { settlement, legs: legsRes.rows, lines: linesRes.rows };`;
@@ -155,8 +198,8 @@ function run() {
   const toursRegisterSrc = readOrFail(TOURS_REGISTER);
   if (toursRegisterSrc) failures.push(...auditColumnOrderSource(toursRegisterSrc, "SettlementsToursRegister.tsx"));
 
-  const loadCostsSrc = readOrFail(LOAD_COSTS_BOARD);
-  if (loadCostsSrc) failures.push(...auditColumnOrderSource(loadCostsSrc, "LoadCostsBoardPage.tsx"));
+  const tourLoadRowsSrc = readOrFail(TOUR_LOAD_ROWS);
+  if (tourLoadRowsSrc) failures.push(...auditTourLoadRowsOrderSource(tourLoadRowsSrc));
 
   const routeSrc = readOrFail(PRE_SETTLEMENT_ROUTE);
   if (routeSrc) failures.push(...auditPreSettlementRouteSource(routeSrc).map((f) => `pre-settlement.routes.ts: ${f}`));

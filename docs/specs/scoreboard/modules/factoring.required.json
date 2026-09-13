@@ -471,6 +471,15 @@
       ]
     },
     {
+      "id": "factoring.popover.account_summary_info",
+      "tab": "Panels",
+      "sub": "Popover: Account Summary Info (static explanatory \u201cwhy some values are blank\u201d popover on the Account Summary header \u2014 no data fetch, no linked record)",
+      "route_hint": "surface://pages/factoring/FactoringHome.tsx",
+      "surface_kind": "popover",
+      "surface_path": "pages/factoring/FactoringHome.tsx",
+      "required": []
+    },
+    {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
       "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",

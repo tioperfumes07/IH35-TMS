@@ -528,6 +528,15 @@
       ]
     },
     {
+      "id": "banking.panel.link_suggestions",
+      "tab": "Panels",
+      "sub": "Panel: Link Suggestions Panel (Load-to-Cash Chain Link 4 \u2014 read-only bank-transaction match suggestions; human accept/exclude/undo, never auto-match)",
+      "route_hint": "surface://pages/banking/components/LinkSuggestionsPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/banking/components/LinkSuggestionsPanel.tsx",
+      "required": []
+    },
+    {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
       "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
