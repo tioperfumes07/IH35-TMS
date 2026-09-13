@@ -8789,5 +8789,35 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-13",
     "purpose": "verify-factoring-surface-round21"
+  },
+  "11393": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-13",
+    "purpose": "verify-load-to-cash-chain"
+  },
+  "11397": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-13",
+    "purpose": "verify-money-module-design"
+  },
+  "11401": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-13",
+    "purpose": "verify-no-automatch"
+  },
+  "11405": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-13",
+    "purpose": "verify-page-autofit"
+  },
+  "11409": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-13",
+    "purpose": "verify-settlement-ref-beside-load"
+  },
+  "11413": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-13",
+    "purpose": "verify-truck-line-units-only"
   }
 }
