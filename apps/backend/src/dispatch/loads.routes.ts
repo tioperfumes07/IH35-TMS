@@ -11,6 +11,7 @@ import {
   toMdataStatus,
   validateLoadStatusTransition,
   describeInvalidTransition,
+  isReverseTransition,
 } from "./load-state-machine.js";
 import {
   updateDispatchLoad,
@@ -169,6 +170,11 @@ const transitionBodySchema = z.object({
   // observation (the audit trigger records who, via withCompanyScope). Supplying a fabricated past
   // date is a human act we cannot prevent in code; inventing one automatically is not, so we don't.
   delivered_at: z.string().datetime({ offset: true }).optional(),
+  // ZONE 1 REVERSE TRANSITIONS (owner ruling 2026-09-12): a backward drag (in_transit→dispatched,
+  // dispatched→assigned_not_dispatched, assigned_not_dispatched→unassigned) must carry a reason so the
+  // undo is exactly as traceable as the forward move it reverses. Enforced only when the move is a
+  // reversal (see isReverseTransition) — forward moves never require it.
+  reason: z.string().trim().min(10).max(500).optional(),
 });
 
 const dispatchLoadReservationParamsSchema = z.object({
@@ -1822,13 +1828,26 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         return { error: "invalid_transition" as const, from: transition.from, to: transition.to };
       }
 
+      // ZONE 1 REVERSE TRANSITION (owner ruling 2026-09-12 "a draggable column should be able to be
+      // sent back etc."). A backward move within the operational zone (in_transit→dispatched,
+      // dispatched→assigned_not_dispatched, assigned_not_dispatched→unassigned) is now a legal edge
+      // (see REVERSIBLE_BACK_EDGES). It REQUIRES a reason so the undo is as traceable as the forward
+      // move, and it posts nothing — none of its targets stamp stop actuals, mint driver bills, emit
+      // escrow events, or fire the revenue latch, so every forward-only side effect below is skipped.
+      const isReverse = isReverseTransition(current.status, targetStatus);
+      if (isReverse && !body.data.reason) {
+        return { error: "reversal_reason_required" as const, from: currentStatus, to: targetStatus };
+      }
+
       const mdataStatus = toMdataStatus(targetStatus);
       // REEFER-LUMPER-CONFIRMATION (migration 202614010000, owner spec 2026-09-08) — a reefer load
       // (trailer_type='refrigerated_van', the SAME signal BookLoadEquipmentSection.tsx's isReefer
       // uses to show the reefer panel) must not reach 'dispatched' without all 3 lumper-confirmation
       // fields set. Booking itself is never DB-blocked on this (frontend enforces it there); this is
-      // the real backstop against a bypass (API caller, legacy form, etc.).
-      if (mdataStatus === "dispatched" && current.trailer_type === "refrigerated_van") {
+      // the real backstop against a bypass (API caller, legacy form, etc.). Skipped on a REVERSE move:
+      // a load reversing in_transit→dispatched already cleared this gate on its way forward, and
+      // re-blocking it would strand the very mis-drag the reversal exists to undo.
+      if (!isReverse && mdataStatus === "dispatched" && current.trailer_type === "refrigerated_van") {
         const missing =
           current.lumper_payer == null ||
           current.lumper_will_invoice_customer == null ||
@@ -1846,6 +1865,28 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         [params.data.id, mdataStatus, operatingCompanyId]
       );
       if (!transitionUpdate.rows[0]?.id) return { error: "not_found" as const };
+
+      // ZONE 1 REVERSE audit — record the undo with its reason so it is exactly as traceable as any
+      // forward transition (the row-mutation trigger already captures who/when; this names WHY and
+      // that it was a deliberate reversal). No GL, no posting — an operational correction only.
+      if (isReverse) {
+        await appendCrudAudit(
+          client,
+          authUser.uuid,
+          "dispatch.load.status_reversed",
+          {
+            load_uuid: params.data.id,
+            operating_company_id: operatingCompanyId,
+            load_number: current.load_number ?? null,
+            from_status: currentStatus,
+            to_status: targetStatus,
+            reason: body.data.reason,
+          },
+          "warning",
+          "REVERSE-TRANSITIONS-ZONE1"
+        );
+      }
+
       if (mdataStatus === "abandoned" || mdataStatus === "driver_walkoff" || mdataStatus === "driver_no_show") {
         await emitAutoProposedEscrowEvents({
           client,
@@ -1985,6 +2026,16 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         return reply.code(409).send({
           error: "reefer_lumper_confirmation_required",
           message: "This reefer load can't be dispatched yet — confirm who pays the lumper, whether the customer is invoiced for it, and whether a late-arrival penalty applies.",
+        });
+      }
+      if (result.error === "reversal_reason_required") {
+        // Owner ruling 2026-09-12: a backward move is allowed but must say WHY. Refuse loudly with a
+        // clear ask rather than silently accepting an unexplained reversal.
+        return reply.code(400).send({
+          error: "reversal_reason_required",
+          from_status: result.from,
+          to_status: result.to,
+          message: "Moving a load back a step needs a reason (at least 10 characters) so the undo is on the record.",
         });
       }
       // Owner order 2026-09-05: "refuse LOUDLY with the reason on screen. Silent no-op is a defect."
