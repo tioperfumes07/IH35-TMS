@@ -389,3 +389,22 @@ earlier this session). Live proof: 0 USMCA open/unlinked bills remain (was 2). 2
 unlinked bills found in the same query are out of this round's USMCA scope, untouched.
 
 Both pushed as follow-up commits to PR #22052, shipping together via fast-merge.
+
+## 2026-09-13 — ROUND 24.1 — driver_bills → settlement FK repoint, EXECUTED on prod (blocks CC-3 B3)
+
+**7 open, non-voided driver_bills repointed off stale GEN-A settlements onto their correct GEN-B
+settlement.** Two generations of USMCA driver settlements exist: GEN-B (correct, locked,
+`source_document_ref` = an AllwaysTrack doc 5769-5803, net_pay matches signed TOTAL DUE — the same
+set the B4 backfill fixed earlier this session) and GEN-A (stale, cancelled/closed, ref NULL or out
+of range). Every live driver_bill was pointed at GEN-A; 33 of 45 GEN-B settlements had zero bills.
+
+Repointed loads 13524→S-2026-5778(doc 5778), 13554→S-2026-5790(doc 5790), 13573 and 13584→
+S-2026-5800(doc 5800), 13580→S-2026-5801(doc 5801), 13589→S-2026-5802(doc 5802), 13586→
+S-2026-5803(doc 5803). Every (load, doc) pair cross-checked against
+`data/alwaystrack/settlements-truth-2026-09-13.json`'s own `loads[]` array before writing — nothing
+inferred. Pure FK correction: nothing voided/un-voided/deleted, no GEN-A settlement touched, no
+GL written, `gross_amount_cents`/miles/rates untouched (CC-3's B3, out of scope here).
+
+Live proof, independent fresh read: all 7 rows now read their correct GEN-B settlement, `status=
+'locked'`, `source_document_ref` in (5778,5790,5800,5801,5802,5803) — exact match to the round's
+own DONE-proof query. PR #22055, shipping via fast-merge.
