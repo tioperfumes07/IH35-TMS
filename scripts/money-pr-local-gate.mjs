@@ -57,6 +57,13 @@ const STEPS = [
   // ROUND-20.7 (APP-WIDE AUTOFIT LAW, owner 2026-09-12) — a data-board page never regrows a
   // fixed page-level max-w-[NNNpx] cap; a converted planner column never loses its title=.
   ["verify-page-autofit", "scripts/verify-page-autofit.mjs"],
+  // ROUND-20.8 PART A (owner 2026-09-12) — MoneyKpiTile requires tone+sub, MoneySparkline stays on
+  // the 3-color dataviz palette, no registered money-module page's header link duplicates a tab.
+  ["verify-money-module-design", "scripts/verify-money-module-design.mjs"],
+  // LOAD-TO-CASH CHAIN (owner law, 2026-09-12) — "it should never automatch, it suggests and we
+  // accept it or change the transactions." All seats bound by these two.
+  ["verify-no-automatch", "scripts/verify-no-automatch.mjs"],
+  ["verify-load-to-cash-chain", "scripts/verify-load-to-cash-chain.mjs"],
   // Rule 30 — soft-reset onto newer main deleted other PRs' verify-steps (2026-08-02).
   ["verify-no-guard-file-deletion", "scripts/verify-no-guard-file-deletion.mjs"],
   // Rule 30 — tip commit LIVE PROOF must be Claude-green (not "UNVERIFIED browser" theater).

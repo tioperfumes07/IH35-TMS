@@ -79,6 +79,7 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
 export const BANKING_TAB_PATH: Record<string, string> = {
   accounts: "/banking",
   transactions: "/banking/transactions",
+  link_suggestions: "/banking/link-suggestions",
   reconciliation: "/banking/reconciliation",
   factoring: "/banking/factoring",
   driver_escrow: "/banking/driver-escrow",
@@ -91,6 +92,7 @@ export const BANKING_TAB_PATH: Record<string, string> = {
 
 export function bankingTabFromPath(pathname: string): string {
   if (pathname === "/banking/transactions") return "transactions";
+  if (pathname === "/banking/link-suggestions") return "link_suggestions";
   if (pathname === "/banking/reconciliation") return "reconciliation";
   if (pathname === "/banking/factoring") return "factoring";
   if (pathname === "/banking/driver-escrow") return "driver_escrow";

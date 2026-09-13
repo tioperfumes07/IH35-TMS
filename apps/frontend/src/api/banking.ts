@@ -1640,6 +1640,37 @@ export function listReconcileObligations(operatingCompanyId: string) {
   }>(`/api/v1/banking/reconcile/obligations?${q}`);
 }
 
+// LOAD-TO-CASH CHAIN, LINK 4 — PR 1 (READ-ONLY). Owner law B: "it should never automatch, it
+// suggests and we accept it or change the transactions." This type/call renders ranked candidates
+// only; there is no accept/reject wiring here yet (that is a later, separate PR).
+export type LinkSuggestionCandidate = {
+  obligation_type: string;
+  obligation_id: string;
+  label: string;
+  amount_cents: number;
+  event_date: string;
+  score: number;
+  confidence: "high" | "medium" | "low";
+  reason: string;
+};
+
+export type LinkSuggestionTransaction = {
+  bank_transaction_id: string;
+  transaction_date: string;
+  amount_cents: number;
+  is_credit: boolean;
+  description: string | null;
+  merchant_name: string | null;
+  candidates: LinkSuggestionCandidate[];
+};
+
+export function getLinkSuggestions(operatingCompanyId: string, limit = 600) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId, limit: String(limit) });
+  return apiRequest<{ transactions: LinkSuggestionTransaction[]; candidate_pool_size: number }>(
+    `/api/v1/banking/link-suggestions?${q}`
+  );
+}
+
 export function getReconcileSuggestions(operatingCompanyId: string, bankTransactionId: string) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId, bank_transaction_id: bankTransactionId });
   return apiRequest<{

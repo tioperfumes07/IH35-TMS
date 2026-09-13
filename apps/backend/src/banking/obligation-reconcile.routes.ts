@@ -68,15 +68,20 @@ async function withCompanyScope<T>(
   });
 }
 
-type ObligationRow = {
+export type ObligationRow = {
   obligation_type: z.infer<typeof reconcileBodySchema.shape.obligation_type>;
   obligation_id: string;
   label: string;
   amount_cents: number;
   event_date: string;
+  /** LINK-4 — the vendor/customer/driver name behind this obligation, when one exists, so a
+   * suggestion consumer can build a "same vendor" reason without a second round-trip. Optional and
+   * additive: every existing caller of this function destructures only the 5 fields above and is
+   * unaffected by this new one being present on the object. */
+  counterparty_name?: string | null;
 };
 
-async function loadObligationCandidates(
+export async function loadObligationCandidates(
   client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
   companyId: string
 ): Promise<ObligationRow[]> {
@@ -122,12 +127,14 @@ async function loadObligationCandidates(
     client,
     "obligation_reconcile_settlements",
     () =>
-      client.query<{ id: string; net_pay: unknown; created_at: string }>(
+      client.query<{ id: string; net_pay: unknown; created_at: string; driver_name: string | null }>(
         `
-        SELECT id, net_pay, created_at::text
-        FROM driver_finance.driver_settlements
-        WHERE operating_company_id = $1::uuid
-        ORDER BY created_at DESC
+        SELECT s.id, s.net_pay, s.created_at::text,
+               (d.first_name || ' ' || d.last_name) AS driver_name
+        FROM driver_finance.driver_settlements s
+        LEFT JOIN mdata.drivers d ON d.id = s.driver_id
+        WHERE s.operating_company_id = $1::uuid
+        ORDER BY s.created_at DESC
         LIMIT 200
       `,
         [companyId]
@@ -140,6 +147,7 @@ async function loadObligationCandidates(
       obligation_id: r.id,
       label: `Settlement ${r.id.slice(0, 8)}`,
       amount_cents: Math.abs(Math.round(Number(r.net_pay ?? 0) * 100)),
+      counterparty_name: r.driver_name?.trim() || null,
       event_date: String(r.created_at).slice(0, 10),
     });
   }
@@ -202,13 +210,14 @@ async function loadObligationCandidates(
     client,
     "obligation_reconcile_invoices",
     () =>
-      client.query<{ id: string; display_id: string; total_cents: number | null; issue_date: string }>(
+      client.query<{ id: string; display_id: string; total_cents: number | null; issue_date: string; customer_name: string | null }>(
         `
-        SELECT id, display_id, total_cents, issue_date::text
-        FROM accounting.invoices
-        WHERE operating_company_id = $1::uuid
-          AND status NOT IN ('void', 'draft')
-        ORDER BY issue_date DESC
+        SELECT i.id, i.display_id, i.total_cents, i.issue_date::text, c.customer_name
+        FROM accounting.invoices i
+        LEFT JOIN mdata.customers c ON c.id = i.customer_id
+        WHERE i.operating_company_id = $1::uuid
+          AND i.status NOT IN ('void', 'draft')
+        ORDER BY i.issue_date DESC
         LIMIT 200
       `,
         [companyId]
@@ -222,6 +231,7 @@ async function loadObligationCandidates(
       label: `Invoice ${r.display_id}`,
       amount_cents: Math.abs(Math.round(Number(r.total_cents ?? 0))),
       event_date: String(r.issue_date).slice(0, 10),
+      counterparty_name: r.customer_name?.trim() || null,
     });
   }
 
@@ -229,13 +239,14 @@ async function loadObligationCandidates(
     client,
     "obligation_reconcile_bills",
     () =>
-      client.query<{ id: string; bill_number: string | null; memo: string | null; amount_cents: number | null; bill_date: string }>(
+      client.query<{ id: string; bill_number: string | null; memo: string | null; amount_cents: number | null; bill_date: string; vendor_name: string | null }>(
         `
-        SELECT id, bill_number, memo, amount_cents, bill_date::text
-        FROM accounting.bills
-        WHERE operating_company_id = $1::uuid
-          AND revoked_at IS NULL
-        ORDER BY bill_date DESC NULLS LAST
+        SELECT b.id, b.bill_number, b.memo, b.amount_cents, b.bill_date::text, v.vendor_name
+        FROM accounting.bills b
+        LEFT JOIN mdata.vendors v ON v.id = b.mdata_vendor_id
+        WHERE b.operating_company_id = $1::uuid
+          AND b.revoked_at IS NULL
+        ORDER BY b.bill_date DESC NULLS LAST
         LIMIT 200
       `,
         [companyId]
@@ -249,6 +260,7 @@ async function loadObligationCandidates(
       label: r.bill_number?.slice(0, 80) || r.memo?.slice(0, 80) || `Bill ${r.id.slice(0, 8)}`,
       amount_cents: Math.abs(Math.round(Number(r.amount_cents ?? 0))),
       event_date: String(r.bill_date).slice(0, 10),
+      counterparty_name: r.vendor_name?.trim() || null,
     });
   }
 
@@ -262,13 +274,14 @@ async function loadObligationCandidates(
     client,
     "obligation_reconcile_expenses",
     () =>
-      client.query<{ id: string; expense_number: string | null; total_amount_cents: number | null; transaction_date: string }>(
+      client.query<{ id: string; expense_number: string | null; total_amount_cents: number | null; transaction_date: string; vendor_name: string | null }>(
         `
-        SELECT id, expense_number, total_amount_cents, transaction_date::text
-        FROM accounting.expenses
-        WHERE operating_company_id = $1::uuid
-          AND status NOT IN ('void', 'draft')
-        ORDER BY transaction_date DESC NULLS LAST
+        SELECT e.id, e.expense_number, e.total_amount_cents, e.transaction_date::text, v.vendor_name
+        FROM accounting.expenses e
+        LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid
+        WHERE e.operating_company_id = $1::uuid
+          AND e.status NOT IN ('void', 'draft')
+        ORDER BY e.transaction_date DESC NULLS LAST
         LIMIT 200
       `,
         [companyId]
@@ -282,6 +295,7 @@ async function loadObligationCandidates(
       label: r.expense_number ? `Expense ${r.expense_number}` : `Expense ${r.id.slice(0, 8)}`,
       amount_cents: Math.abs(Math.round(Number(r.total_amount_cents ?? 0))),
       event_date: String(r.transaction_date).slice(0, 10),
+      counterparty_name: r.vendor_name?.trim() || null,
     });
   }
 
