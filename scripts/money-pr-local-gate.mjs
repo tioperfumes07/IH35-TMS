@@ -70,6 +70,8 @@ const STEPS = [
   // LOAD-TO-CASH CHAIN, LINK 4 PR 3 (owner precedence, 2026-09-12) — "money-in excluded from
   // auto-categorization." Covers both pre-existing rule engines + the human refresh-suggestion route.
   ["verify-money-in-excluded-from-auto-categorization", "scripts/verify-money-in-excluded-from-auto-categorization.mjs"],
+  // B6 (owner, 2026-09-12) — customer record tab bar position fix + data-dot feature.
+  ["verify-customer-tab-bar-position-and-data-dot", "scripts/verify-customer-tab-bar-position-and-data-dot.mjs"],
   // Rule 30 — soft-reset onto newer main deleted other PRs' verify-steps (2026-08-02).
   ["verify-no-guard-file-deletion", "scripts/verify-no-guard-file-deletion.mjs"],
   // Rule 30 — tip commit LIVE PROOF must be Claude-green (not "UNVERIFIED browser" theater).
