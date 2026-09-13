@@ -31,6 +31,7 @@ import { JournalPostingsPanel } from "../../components/accounting/PostingGrid";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 import { formatUsdCents } from "../../lib/money";
+import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -173,6 +174,19 @@ export function BillDetailPage() {
           <EntityLink kind="load" id={line.load_id} label={entityLabel(line.load_number, line.load_id, "Load")} />
         ) : (
           "—"
+        ),
+    },
+    // ALL-SEATS LAW (owner, 2026-09-13): every window with a load number needs a settlement/tour
+    // column beside it. No load on this line → nothing to attach a settlement to.
+    {
+      key: "settlement_reference",
+      label: "Settlement / Presettlement",
+      testId: "settlement-reference-column",
+      render: (line) =>
+        line.load_id && selectedCompanyId ? (
+          <SettlementRefCell loadId={line.load_id} operatingCompanyId={selectedCompanyId} />
+        ) : (
+          <span className="text-gray-400">—</span>
         ),
     },
     {

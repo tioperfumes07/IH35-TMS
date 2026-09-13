@@ -21,6 +21,7 @@ import { useToast } from "../../components/Toast";
 import { Button } from "../../components/Button";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ReceiptAttach } from "../../components/documents/ReceiptAttach";
+import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 import { PostingPill } from "../../components/accounting/PostingPill";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
@@ -277,6 +278,19 @@ export function ExpensesListPage() {
       label: "Load",
       sortable: true,
       render: (r) => <EntityLink kind="load" id={r.load_id} label={entityLabel(r.load_number, r.load_id, "Load")} />,
+    },
+    // ALL-SEATS LAW (owner, 2026-09-13): every window with a load number needs a settlement/tour
+    // column beside it. No load on this line → nothing to attach a settlement to.
+    {
+      key: "settlement_reference",
+      label: "Settlement / Presettlement",
+      testId: "settlement-reference-column",
+      render: (r) =>
+        r.load_id ? (
+          <SettlementRefCell loadId={r.load_id} operatingCompanyId={companyId} />
+        ) : (
+          <span className="text-gray-400">—</span>
+        ),
     },
     {
       key: "trailer_display_id",

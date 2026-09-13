@@ -31,6 +31,10 @@
  * cumulative net. Also re-derives the notify cron's dedup predicate directly in SQL and confirms
  * it is reachable (real table/columns).
  *
+ * MATRIX-BUILT-OPTIONAL — not a Program-matrix wiring guard; the EntityLink check here is one of
+ * several rolling-ledger behavior invariants (carry-forward, live cash, filters), not a
+ * leaf-completion signal for the wire-sprint matrix.
+ *
  * Usage:
  *   node scripts/verify-cash-flow-rolling-ledger.mjs
  *   node scripts/verify-cash-flow-rolling-ledger.mjs --selftest
@@ -44,6 +48,10 @@ const LABEL = "verify-cash-flow-rolling-ledger";
 const BACKEND_FILE = "apps/backend/src/cash-flow/cash-flow.service.ts";
 const ROUTES_FILE = "apps/backend/src/cash-flow/cash-flow.routes.ts";
 const FRONTEND_FILE = "apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx";
+// ACCT-F26303 (2026-09-13) — REG-031 extracted the KPI strip out of RollingLedgerTab.tsx into its
+// own component (CashFlowKpiStrip.tsx) so the new Cash Flow Home tab could reuse it; the inline
+// height/background/border literals this guard pins now live there, not in RollingLedgerTab.tsx.
+const KPI_STRIP_FILE = "apps/frontend/src/pages/cash-flow/tabs/CashFlowKpiStrip.tsx";
 const CRON_FILE = "apps/backend/src/cron/cash-flow-rolling-ledger-notify.cron.ts";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
@@ -98,10 +106,14 @@ const REQUIRED_FRONTEND_MARKERS = [
   ["ExpenseRolloverMenu", "expense rows must get a plain Roll over ▾ reason menu, not the income popup"],
   ["StopTrackingButton", "expense rows must get a separate Stop action, not the income popup"],
   ["adjustingRow && adjustingRowIsIncome", "AdjustPopover must be gated to income rows only"],
-  // KPI tile spec (owner: "I WANT THE DESIGN AS YOU DESIGN THE LOAD COSTS" / STATE-AFTER-#21082
-  // correction) — the exact Load-Costs reference tile, inline-styled like SettlementKpiGrid.tsx's
-  // own Tile (never Tailwind bracket-notation, so the exact spec never trips the design-system
-  // ratchet's raw-size count).
+];
+
+// KPI tile spec (owner: "I WANT THE DESIGN AS YOU DESIGN THE LOAD COSTS" / STATE-AFTER-#21082
+// correction) — the exact Load-Costs reference tile, inline-styled like SettlementKpiGrid.tsx's
+// own Tile (never Tailwind bracket-notation, so the exact spec never trips the design-system
+// ratchet's raw-size count). Checked against KPI_STRIP_FILE, not FRONTEND_FILE, since REG-031
+// extracted this markup into its own component.
+const REQUIRED_KPI_STRIP_MARKERS = [
   ["height: 60,", "KPI tile must be 60px tall (the Load-Costs reference spec), not the rejected v2 44-48px tile"],
   ['background: "#F4F7FA"', "KPI tile must use the Load-Costs reference background #F4F7FA"],
   ['border: "1px solid #C7D2DC"', "KPI tile must use the Load-Costs reference border #C7D2DC"],
@@ -126,6 +138,7 @@ export function check({
   backend = load(BACKEND_FILE),
   routes = load(ROUTES_FILE),
   frontend = load(FRONTEND_FILE),
+  kpiStrip = load(KPI_STRIP_FILE),
   cron = load(CRON_FILE),
 } = {}) {
   const f = [];
@@ -164,6 +177,9 @@ export function check({
   for (const [marker, msg] of REQUIRED_FRONTEND_MARKERS) {
     if (!frontend.includes(marker)) f.push(`${FRONTEND_FILE}: ${msg}`);
   }
+  for (const [marker, msg] of REQUIRED_KPI_STRIP_MARKERS) {
+    if (!kpiStrip.includes(marker)) f.push(`${KPI_STRIP_FILE}: ${msg}`);
+  }
   for (const [re, msg] of FORBIDDEN_FRONTEND_MARKERS) {
     if (re.test(frontend)) f.push(`${FRONTEND_FILE}: ${msg}`);
   }
@@ -180,6 +196,7 @@ function selftest() {
     backend: load(BACKEND_FILE),
     routes: load(ROUTES_FILE),
     frontend: load(FRONTEND_FILE),
+    kpiStrip: load(KPI_STRIP_FILE),
     cron: load(CRON_FILE),
   };
   if (check(good).length) {
@@ -319,14 +336,14 @@ function selftest() {
       name: "KPI tile reverted to the rejected v2 44-48px height",
       mutate: () => ({
         ...good,
-        frontend: good.frontend.replace("height: 60,", "height: 48,"),
+        kpiStrip: good.kpiStrip.replace("height: 60,", "height: 48,"),
       }),
     },
     {
       name: "KPI tile background reverted off the Load-Costs reference spec",
       mutate: () => ({
         ...good,
-        frontend: good.frontend.replace('background: "#F4F7FA"', 'background: "#FFFFFF"'),
+        kpiStrip: good.kpiStrip.replace('background: "#F4F7FA"', 'background: "#FFFFFF"'),
       }),
     },
     {

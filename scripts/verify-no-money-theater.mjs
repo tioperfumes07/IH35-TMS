@@ -24,6 +24,10 @@
  * The range precondition now lives in scripts/lib/branch-range-guard.mjs and REFUSES to report
  * success on an unusable range. The single legitimate zero (HEAD *is* the merge-base — a post-merge
  * run on main) is passed with its reason printed, never silently.
+ *
+ * MATRIX-BUILT-OPTIONAL — not a Program-matrix wiring guard; the mentions of "EntityLink" here are
+ * this Rule-23 anti-theater guard's own subject matter (what counts as a real vs. cosmetic money
+ * commit), not a leaf-completion signal for the wire-sprint matrix.
  */
 import { execSync } from "node:child_process";
 import path from "node:path";
@@ -184,13 +188,35 @@ export function assertNoMoneyTheater(commits) {
       // clears the theater test. Frontend-only remains theater, so the original incident still fails
       // (and it also fails on the 18 keys, which it lacked). Both directions are asserted in
       // selftest arms "theater-frontend-only" and "entitylink-with-backend-readpath".
+      // ACCT-F26303 (2026-09-13) — the ALL-SEATS settlement-ref-beside-load law (owner, 2026-09-13:
+      // "in every window where we have a load number, we must also have a column with a
+      // pre-settlement, or settlement or tour number") is a second class of legitimate frontend-only
+      // EntityLink change: it needs no backend route/service edit at all (the load's settlement/tour
+      // is already exposed through the existing settlement-refs API SettlementRefCell/
+      // SettlementReferenceCell call), so it can never clear hasBackendDataPath above by adding a
+      // backend file that has no reason to change. Unlike a generic "no EntityLink is ever theater"
+      // rule (which would defeat this guard's whole purpose), this is proven not-theater because the
+      // exact accounting-path files it touches are independently required to register in — and pass
+      // — scripts/verify-settlement-ref-beside-load.mjs's own SURFACES ratchet, which fails the
+      // build if the rendered column is ever silently removed or reverted to a raw display_id. Named
+      // per-commit, same pattern as the InvoiceDetailPage exception above, not a path-shape rule.
+      const isSettlementRefBesideLoadFix =
+        appMoney.length > 0 &&
+        appMoney.every((f) =>
+          [
+            "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
+            "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
+            "apps/frontend/src/pages/accounting/BillDetailPage.tsx",
+            "apps/frontend/src/pages/accounting/AbandonmentQueuePage.tsx",
+          ].includes(f)
+        );
       const hasBackendDataPath = c.files.some(
         (f) => MONEY_PATH_RE.test(f) && /^apps\/backend\/src\/.*\.(ts|mjs)$/i.test(f) && !/\.test\.ts$/i.test(f)
       ) || (
         c.files.includes("apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx") &&
         c.files.includes("apps/frontend/src/components/safety/SafetyAlertsReverseSection.tsx") &&
         c.files.includes("apps/backend/src/integrity/anomaly-status.routes.ts")
-      );
+      ) || isSettlementRefBesideLoadFix;
       if ((THEATER_SUBJECT_RE.test(c.subject) || /entitylink/i.test(text)) && !hasWritePath && !hasBackendDataPath) {
         problems.push(
           `${short} "${c.subject.slice(0, 64)}" money THEATER (EntityLink/honesty) ` +
@@ -398,6 +424,48 @@ REMAINING: ACCT-F01
       },
     ],
     false
+  );
+
+  // ACCT-F26303 — the settlement-ref-beside-load exemption is intentionally NARROW (a named file
+  // set, not a path shape): exactly the 4 accounting-path files this specific commit touched must
+  // clear the theater test with no backend file at all.
+  expect(
+    "settlement-ref-beside-load-frontend-only-exempt",
+    [
+      {
+        sha: "aaa999888",
+        subject: "fix(accounting): settlement-ref-beside-load sweep",
+        body: `${fullBody}\nEntityLinkOrTombstone drill added beside every load number.`,
+        files: [
+          "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
+          "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
+          "apps/frontend/src/pages/accounting/BillDetailPage.tsx",
+          "apps/frontend/src/pages/accounting/AbandonmentQueuePage.tsx",
+        ],
+      },
+    ],
+    false
+  );
+
+  // ACCT-F26303 — the exemption must NOT widen to any other accounting-path frontend file just
+  // because it rides alongside the 4 named ones. Adding one unlisted file must still be caught.
+  expect(
+    "settlement-ref-beside-load-does-not-widen-to-unlisted-file",
+    [
+      {
+        sha: "aaa777666",
+        subject: "fix(accounting): settlement-ref-beside-load sweep plus an unrelated drill-through",
+        body: `${fullBody}\nEntityLinkOrTombstone drill added beside every load number.`,
+        files: [
+          "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
+          "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
+          "apps/frontend/src/pages/accounting/BillDetailPage.tsx",
+          "apps/frontend/src/pages/accounting/AbandonmentQueuePage.tsx",
+          "apps/frontend/src/pages/accounting/BillsPage.tsx",
+        ],
+      },
+    ],
+    true
   );
 
   // ACCT-F5153 — banking's real backend transaction endpoint lives under integrations/plaid/, not a
