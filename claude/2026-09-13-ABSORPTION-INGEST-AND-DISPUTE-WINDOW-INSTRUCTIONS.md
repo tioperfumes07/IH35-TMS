@@ -132,6 +132,29 @@ load, Master Register PART 7) rides through the bill path.
 pre-cutover leg), ingest **all** legs' economics into USMCA per B1–B6. Fix the **7 loads on the wrong side
 of the cutover flag**, and clear **13579** `is_sample_data=true`/`invoiced` to its correct real state.
 
+**B8 — EVERY FARO PURCHASE MAPS TO A LOAD (owner ruling 2026-09-13: *"any payments or purchases by Faro
+that you have not found a load — then it IS that load, same dates etc."*).** A Faro purchase is proof the
+load ran; never report a Faro purchase as "load never entered." Match by AllwaysTrack WO/PO → amount →
+debtor → date (Load existence/customer/WO = AllwaysTrack `Report 52`; invoice + factoring AMOUNT = Faro
+purchase — proven principle, `docs/reconcile/ALLWAYSTRACK-FARO-LOAD-RECONCILE-2026-09-12.md`). The three
+Faro purchases previously flagged "no advance" are all real loads:
+- **inv 062 · Tennessee Steel $1,000 · 09/10 → load 13584** — IN the app (corrected Armstrong $0 →
+  Tennessee Steel $1,000, proforma invoice). Action: create its Faro advance + send the invoice. NOT missing.
+- **inv 061 · Direct Connect Logistix $2,100 · 09/10 → load 13585** — the load ran (AllwaysTrack WO
+  6492969) but was never keyed into our DB. Action: **create load 13585 from AllwaysTrack** at $2,100,
+  then its invoice + Faro advance. On the 09-12 "MISSING loads to create" list.
+- **inv 013 · Sethmar Transportation $4,900 · 08/14** — an **08/14** load, **before the 08/28 start of the
+  AllwaysTrack Report 52 window** already reconciled, so it was never in that pass. Action: ingest the
+  **08/07–08/27 AllwaysTrack load window** and create this load at the Faro date/amount, then invoice +
+  advance. Not fabrication — Faro + AllwaysTrack are the source.
+
+**Root cause of the gap (verified, not guessed):** the loads physically ran and were factored with Faro
+(Faro holds the invoices), but the TMS was **behind on load entry in early USMCA (Aug) and a couple of Sept
+days**, and the pre-08/28 AllwaysTrack window was never ingested. AllwaysTrack (dispatch source of truth)
+has them. Owner: AllwaysTrack numbers are the source of truth for dispatch — ingest from it, don't invent.
+Owner (money) workflow entry: raising/creating a sent+factored invoice stays owner-gated; the load
+create + advance link is Cursor (load-linkage) + the CC-1 AllwaysTrack importer.
+
 ---
 
 ## PART C — DISPUTE WINDOW SPEC (owner: "for driver settlements, invoices, for any type of dispute")
@@ -233,6 +256,52 @@ type UnifiedDisputeRow = {
 **GUARD:** `scripts/verify-dispute-window-unified.mjs` — FAILS if the hub route/nav is missing, if either
 dispute type is not listed, if an invoice-dispute write path mutates `accounting.invoices`, or if a
 settlement reference renders an `S-` counter instead of `source_document_ref`. Wire into money gate.
+
+### C.10 — SETTLED DECISIONS (Cursor lead, 2026-09-13 — build to these; do not re-open)
+1. **Window length = NONE.** A dispute opens when discovered and stays **OPEN until resolved or
+   cancelled** — that is the entire point of the owner ruling (*"this way the balance is open and we can
+   figure and fix"*). No filing deadline, no auto-expiry, no auto-close. The queue shows `opened_at`
+   aging for operational visibility only; it never auto-resolves. (Owner may later add an SLA *alert*
+   overlay — never a hard close.)
+2. **Hold = the disputed amount only; the document is NEVER written down.** An open dispute is a
+   **tracking overlay**, not a balance freeze/block. **Invoice:** the invoice stays at its full billed
+   amount and its **entire A/R balance stays open** until resolved — we do NOT reduce it to what was
+   collected; the dispute records only `disputed_amount_cents` (the delta); customer payments still post
+   against the invoice normally; resolution (`invoice_corrected` / `credit_memo` / `collected_in_full` /
+   `written_off` / `no_change`) is what finally moves the balance. **Settlement:** the dispute tracks
+   only `claimed_adjustment_cents`; `decide` posts a corrective JE — it does **not** freeze the driver's
+   whole net. Nothing about a dispute holds or blocks the full document.
+3. **Who may resolve = Owner / Administrator / Accountant** (open, resolve, cancel for invoice; submit,
+   start-review, decide for settlement). **Manager / Dispatcher = read-only.** Already enforced in both
+   backends — do not widen or narrow it.
+
+### C.11 — OVER-PAYMENT **AND** UNDER-PAYMENT BOTH OPEN A DISPUTE (owner ruling 2026-09-13)
+Owner verbatim: *"when there is an over payment or underpayment, it must also go to dispute, so we can
+know there is or was an issue with a load."* A dispute is the **permanent record that a load had a money
+issue** — in either direction.
+- **Rule:** whenever what was **collected/purchased ≠ what we invoiced** (Faro purchase ≠ invoice face,
+  or a customer payment ≠ invoice face), **open an invoice dispute for the variance** — underpayment
+  (they paid less) *and* overpayment / under-billing (they paid or Faro purchased more than we billed).
+  The invoice is still never written down; the A/R stays open; the dispute records the delta and its
+  direction so the issue is visible and traceable to the load.
+- **Reason codes — extend the enum both ways.** Keep the underpayment set (`short_pay`,
+  `customer_discount`, `late_fine`, `driver_no_answer`, `chargeback`, `mis_entry`, `other`) and **ADD**
+  `over_payment` (collected/purchased > invoiced) and `under_billing` (we invoiced less than the load's
+  true/Faro amount). Direction is also derivable from `expected_amount_cents` vs `invoiced_amount_cents`.
+- **Validation change:** today the open endpoint caps `disputed_amount_cents ≤ invoice face` — that
+  blocks the overpayment/under-billing direction. Relax it so `expected_amount_cents` MAY exceed
+  `invoiced_amount_cents` and `disputed_amount_cents = abs(expected − invoiced)`; keep `> 0`.
+- **Apply now:** open disputes for the two confirmed under-billings **13578 (+$560)** and **13589 (+$30)**
+  (reason `under_billing`) so they stop living as "residual owner workflow" and become tracked issues.
+  Resolution (`invoice_corrected` — raise the invoice) stays the owner money workflow; the dispute is the
+  tracking record. Guard `verify-dispute-window-unified.mjs` asserts a dispute exists for every Faro-vs-face
+  variance.
+  **APPLIED 2026-09-13 (owner-ordered, live on the USMCA branch):** dispute **437bda1f** (13578 +$560,
+  expected $5,210) and **12b7313a** (13589 +$30, expected $4,150) opened via
+  `scripts/ops/cursor-2026-09-13-open-underbilling-invoice-disputes.ts`, reason `mis_entry` (the
+  `under_billing` code + `expected>face` validation relax remain the seat's enum task). Invoice faces
+  untouched ($4,650 / $4,120), A/R open. **All four USMCA invoice disputes are now OPEN:** 13581 (−$1,600),
+  13586 (−$300), 13578 (+$560), 13589 (+$30) — both directions, invoices never written down.
 
 ---
 
