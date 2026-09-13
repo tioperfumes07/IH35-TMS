@@ -8869,5 +8869,15 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-13",
     "purpose": "verify-faro-invoice-lines-load-linkage"
+  },
+  "11469": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-13",
+    "purpose": "verify-diesel-expense-fuel-dedupe"
+  },
+  "11473": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-13",
+    "purpose": "verify-fuel-transactions-per-load"
   }
 }
