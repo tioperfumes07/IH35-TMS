@@ -11,6 +11,7 @@ import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { DispatchAlertServerControls, type DispatchAlertRange } from "../../components/dispatch/DispatchAlertServerControls";
 import { serverDispatchAlertQueryFromSortState, sortDispatchAlertBoardRows } from "./dispatchAlertBoardSort";
+import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 
 function etaLabel(prediction: Record<string, unknown> | null | undefined): string {
   if (!prediction) return "No ETA";
@@ -69,6 +70,12 @@ export function LateArrivalsPage() {
           />
         );
       },
+    },
+    {
+      // ALL-SEATS LAW (owner, 2026-09-13): a settlement/tour number beside every load number.
+      key: "settlement_ref",
+      label: "Settlement / Tour",
+      render: (load) => <SettlementRefCell loadId={load.id} operatingCompanyId={companyId} />,
     },
     {
       key: "customer_name",

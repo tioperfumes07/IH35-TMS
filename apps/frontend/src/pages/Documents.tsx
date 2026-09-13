@@ -9,6 +9,7 @@ import { Combobox } from "../components/Combobox";
 import { DataTable } from "../components/DataTable";
 import { PreviewModal } from "../components/documents/PreviewModal";
 import { UploadModal } from "../components/documents/UploadModal";
+import { SettlementRefCell } from "../components/shared/SettlementRefCell";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useToast } from "../components/Toast";
 import { dataTableErrorState } from "../lib/tableError";
@@ -249,7 +250,25 @@ export function DocumentsPage() {
           { key: "category_label", label: "Category", sortable: true, render: (row) => row.category_label ?? "-" },
           // Not sortable: a composite entity label (name resolved through several possible FKs),
           // not a single orderable field.
-          { key: "entity", label: "Entity", sortable: false, render: (row) => docsFileEntityLabel(row) },
+          {
+            key: "entity",
+            label: "Entity",
+            sortable: false,
+            render: (row) => {
+              const loadLink = row.links?.find((link) => link.entity_type === "load");
+              // ALL-SEATS LAW (owner, 2026-09-13): a settlement/tour number beside every load
+              // number. Documents is a generic multi-entity surface — the cell only appears when
+              // THIS row's link happens to be a load; every other entity type (driver, customer,
+              // vendor, unit, equipment, settlement, invoice, standalone) renders exactly as before.
+              if (!loadLink || !selectedCompanyId) return docsFileEntityLabel(row);
+              return (
+                <span className="flex items-center gap-1.5">
+                  <span>{docsFileEntityLabel(row)}</span>
+                  <SettlementRefCell loadId={loadLink.entity_id} operatingCompanyId={selectedCompanyId} />
+                </span>
+              );
+            },
+          },
           { key: "uploader_email", label: "Uploader", sortable: true, render: (row) => formatEntityLabel(row.uploader_email, row.uploader_user_id, "User") },
           { key: "document_date", label: "Doc Date", sortable: true, render: (row) => formatDateUS(row.document_date) || "-" },
           { key: "expiration_date", label: "Expires", sortable: true, render: (row) => formatDateUS(row.expiration_date) || "-" },

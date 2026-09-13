@@ -10,6 +10,7 @@ import {
 } from "../../api/insurance";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 import { Button } from "../../components/Button";
 import { ClaimCreateModal } from "../../components/insurance/ClaimCreateModal";
 import { DataPanel } from "../../components/layout/DataPanel";
@@ -218,6 +219,17 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         ),
       },
       {
+        // ALL-SEATS LAW (owner, 2026-09-13): a settlement/tour number beside every load number.
+        key: "load_settlement_ref",
+        label: "Settlement / Tour",
+        render: (claim) =>
+          claim.load_id ? (
+            <SettlementRefCell loadId={claim.load_id} operatingCompanyId={companyId} />
+          ) : (
+            <span className="text-gray-400" title="No load linked to this claim">No load</span>
+          ),
+      },
+      {
         key: "accident_date",
         label: "Accident",
         sortable: true,
@@ -265,7 +277,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         render: (claim) => CLAIM_RECOVERY_RAIL_LABELS[claim.recovery_rail ?? "ask"] ?? claim.recovery_rail ?? "—",
       },
     ],
-    [],
+    [companyId],
   );
 
   // INS-F01 — React error #310, "rendered fewer hooks than expected". This guard used to sit ABOVE

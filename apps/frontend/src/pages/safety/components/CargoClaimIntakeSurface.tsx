@@ -26,6 +26,7 @@ import { formatUsdCents } from "../../../lib/money";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { SettlementRefCell } from "../../../components/shared/SettlementRefCell";
 import { entityLabel } from "../../../lib/entity-label";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -382,6 +383,17 @@ export function CargoClaimIntakeSurface({
           ),
       },
       {
+        // ALL-SEATS LAW (owner, 2026-09-13): a settlement/tour number beside every load number.
+        key: "load_settlement_ref",
+        label: "Settlement / Tour",
+        render: (row) =>
+          row.load_id ? (
+            <SettlementRefCell loadId={String(row.load_id)} operatingCompanyId={operatingCompanyId} />
+          ) : (
+            <span className="text-gray-400" title="No load linked to this claim">No load</span>
+          ),
+      },
+      {
         key: "driver_id",
         label: "Driver",
         render: (row) =>
@@ -423,7 +435,7 @@ export function CargoClaimIntakeSurface({
         ),
       },
     ],
-    [customerNameById, loadNumberById, detailLabel]
+    [customerNameById, loadNumberById, detailLabel, operatingCompanyId]
   );
 
   const detail = detailQuery.data?.incident ?? null;

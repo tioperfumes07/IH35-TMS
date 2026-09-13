@@ -365,6 +365,7 @@ export function LaneProfitabilityPage() {
         loads={detailQuery.data ?? []}
         loading={detailQuery.isLoading}
         onClose={() => setSelectedLane(null)}
+        operatingCompanyId={companyId}
       />
     </div>
   );

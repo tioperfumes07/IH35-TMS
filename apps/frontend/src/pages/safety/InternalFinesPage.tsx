@@ -3,6 +3,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { formatUsd } from "../../lib/money";
 import { internalFineDisplayId } from "../../lib/internal-fine-display";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -269,6 +270,19 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           />
         ) : (
           "—"
+        ),
+    },
+    {
+      // ALL-SEATS LAW (owner, 2026-09-13): the LOAD's own settlement/tour number, distinct from the
+      // "Settlement" column below (which is this FINE's own deduction-application settlement/id —
+      // a different linkage, kept separate rather than conflated into one column).
+      key: "load_settlement_ref",
+      label: "Load's Settlement / Tour",
+      render: (row) =>
+        row.related_load_id ? (
+          <SettlementRefCell loadId={String(row.related_load_id)} operatingCompanyId={operatingCompanyId} />
+        ) : (
+          <span className="text-gray-400" title="No load linked to this fine">No load</span>
         ),
     },
     {

@@ -11,6 +11,7 @@ import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useListState } from "../../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
+import { SettlementRefCell } from "../../../components/shared/SettlementRefCell";
 import { EntityPicker } from "../../../components/EntityPicker";
 import { entityLabel } from "../../../lib/entity-label";
 import { CappedListNotice } from "../../../components/CappedListNotice";
@@ -200,6 +201,17 @@ export function HOSViolationsTab() {
       { key: "related_load_id", label: "Load", sortable: true, sortValue: (row) => String(row.related_load_number ?? row.related_load_id ?? ""), render: (row) => (
         <EntityLinkOrTombstone kind="load" id={row.related_load_id as string | undefined} name={row.related_load_number} noun="Load" />
       ) },
+      {
+        // ALL-SEATS LAW (owner, 2026-09-13): a settlement/tour number beside every load number.
+        key: "load_settlement_ref",
+        label: "Settlement / Tour",
+        render: (row) =>
+          row.related_load_id ? (
+            <SettlementRefCell loadId={row.related_load_id as string} operatingCompanyId={companyId} />
+          ) : (
+            <span className="text-gray-400" title="No load linked to this violation">No load</span>
+          ),
+      },
       {
         key: "violation_type",
         label: "Violation Type",
