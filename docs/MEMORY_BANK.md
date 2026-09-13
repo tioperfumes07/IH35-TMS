@@ -795,3 +795,34 @@ facts — read before rendering or reporting any settlement/tour number:
   (`settlement.display_id`) still render the counter — must become `source_document_ref`.
 - **NO-REVERT (Rule 07 + 00-IH35-LAW):** "delete the S-2026 mechanism" = stop rendering it as identity,
   NOT drop the column/rows. No seat reverts/removes any feature/column/route/data without Jorge's say-so.
+
+## SETTLEMENT ABSORPTION LAW + INGEST + DISPUTE WINDOW (owner rulings 2026-09-13, Cursor lead)
+
+Full coder instructions: `claude/2026-09-13-ABSORPTION-INGEST-AND-DISPUTE-WINDOW-INSTRUCTIONS.md`
+(seats build; Cursor lead authored). Master register PART 8. Durable law:
+
+- **ABSORPTION (owner verbatim):** *"all those settlements that carried a transportation load and a
+  usmca — all expenses, driver pay, fuel, etc are absorbed by usmca."* The **tour/settlement is the
+  ATOMIC unit** for the Aug-7 cutover, not the load. A settlement carrying **≥1 USMCA-era leg** is a
+  USMCA settlement and **ALL its legs' economics** (invoice/line-haul, driver pay, fuel, DEF, tolls,
+  DTOPS, scales, lumper, tires, road service, deductions) are absorbed by USMCA — **including the
+  pre-cutover leg's costs**, nothing split back to Transportation. Operational predicate (Claude,
+  0 exceptions / 44 docs; PR #22012): **settlement END date ≥ 2026-08-07 ⇒ USMCA.** Pure pre-cutover
+  tours (END ≤ 08-06 → `5753, 5760–5768`) stay Transportation/QBO, correctly absent from USMCA. This
+  refines — does not contradict — the "END-date ⇒ USMCA" scope already in this file.
+- **Why the early settlements "were not created":** same QuickBooks realm `91e0bf0a` + same AlwaysTrack
+  account span both entities across the Aug-7 cutover; `5753, 5760–5768` and loads `13481/13489/13501`
+  are pre-cutover Transportation, frozen, correctly not on USMCA books.
+- **Ingest target (measured PR #22012, 69 USMCA loads):** line-haul −$23,587.59, driver pay −$5,852.30,
+  fuel −$34,428.17, 136 expense lines short, 9 shell loads, 7 loads on wrong side of cutover flag (incl.
+  13579 `is_sample_data=true`/`invoiced`). Fuel → `fuel.fuel_transactions` (1 row/receipt) + post expense
+  from it; net pay = signed PDF TOTAL DUE via canonical deduction engine (fix 5801/5802/5803 net $0);
+  1:1 re-cut of the 9 misgrouped mega-rows via canonical Bill+BillPayment (Pedro/5772 full $997.08);
+  link `settled_in_settlement_id` on every bill. Additive, void-not-delete, reuse gated posters, no
+  fabricated data, prod money re-post stays owner-gated.
+- **DISPUTE WINDOW (owner: "for driver settlements, invoices, for any type of dispute"):** ONE hub at
+  `/accounting/disputes` unifying the existing settlement-dispute GL path (`/api/v1/disputes`) + the
+  built-but-UI-less invoice-dispute tracking path (`/api/v1/accounting/invoice-disputes`, must surface
+  open disputes 13581/13586), extensible to any future type (bill/factoring-chargeback). Invoice disputes
+  stay tracking-only (never mutate `accounting.invoices`; A/R stays open for the delta). Additive — keep
+  existing pages. Spec in the instructions doc, guard `verify-dispute-window-unified.mjs`.
