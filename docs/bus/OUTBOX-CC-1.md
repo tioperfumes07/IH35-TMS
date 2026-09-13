@@ -254,3 +254,27 @@ invoice/line-haul creation supplement; then the pre-08/28 ingest + Faro-advances
 reverse+repost campaign stays parked pending an owner decision on whether it's worth the risk given
 the money is already correct.
 
+
+## 2026-09-13 — P0 (unassigned, blocked every deploy) — duplicate route boot-crash found + fixed
+
+**Not part of ROUND 23.2 — discovered as a side effect of shipping PR #22028.** That PR's own
+deploy (`dep-dajfbtnqj5pc73ddni6g`) built successfully and its pre-deploy migration succeeded, then
+the new instance crash-looped 36+ times over ~15 minutes before Render marked it `update_failed`.
+Root-caused to a DIFFERENT, unrelated commit that landed on `origin/main` between my last fetch and
+my deploy: `apps/backend/src/index.ts` explicitly called `registerInvoiceDisputeRoutes(app)` on top
+of that same route file's own pre-existing `default fp(...)` autoload mount (the exact "SET-30" /
+"DUPLICATE-ROUTE-BOOT-CRASH" class this codebase has hit before for other files) — Fastify throws at
+boot on the first duplicate route it registers, deterministically, every time.
+
+**Not caused by me** (confirmed via `git show origin/main:apps/backend/src/index.ts` the bug
+predates my branch). **Prod itself never went down** — Render correctly kept the previous build
+`live` the whole time (confirmed via healthz polling, zero downtime) — but every backend deploy from
+any seat was blocked from that point on, including my own B4 fix above.
+
+**FIXED, PR #22037**: removed the duplicate explicit call + import; the route's own autoload mount
+is the sole, correct registration, all 5 dispute endpoints stay reachable. `verify-no-duplicate-
+routes.mjs` (pre-existing) reproduces FAIL→PASS around the fix; also proved by actually booting the
+built server against a live Neon branch (was throwing `FastifyError` at boot every time without the
+fix, reaches `"Server listening"`/`"Server started"` with it). FINDING: ACCT-F26308. Merging on
+green (fast-merge law); will confirm the live deploy reaches this SHA next (which also finally
+unblocks PR #22028 / B4 from going live).
