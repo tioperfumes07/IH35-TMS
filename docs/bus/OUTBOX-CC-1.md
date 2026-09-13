@@ -2624,3 +2624,42 @@ flagged the unmatch/reversal path for the variance JE as needing a follow-up con
 (f) reconcile the 3 AlwaysTrack accessorial files against posted data; then ROUND 21.1 (accounting
 tabs — Item 1's open-bills-figure contradiction is real and separate from tonight's void incident,
 still needs its own investigation). Continuing now.
+
+---
+
+## CC-1 — ROUND 20.9 Item (d) — insurance treatment: NO capitalization needed, existing design is already correct (2026-09-13 01:0x UTC)
+
+**Reporting the treatment before posting anything, per your instruction — and the answer is: don't
+post anything new. The existing design is already correct GAAP practice.**
+
+**The question:** should a 9-installment financed insurance premium (Cimarron $206,372.39, 2x
+Lloyds $43,590.18/$21,317.84) be capitalized to Prepaid Insurance and amortized, rather than
+expensed as the "catastrophic fake loss ... biggest number in the ledger" your SECOND FINDING
+worried about?
+
+**Checked live in code:** `apps/backend/src/accounting/posting-engine.service.ts:1309` —
+`postingDate: bill.bill_date`. Each of the 9 installment bills `createPolicyBillSchedule` mints
+posts its own DR-insurance-expense/CR-A/P JE dated to **that installment's own future `bill_date`**
+(09-19-2026, 10-19-2026, ... 05-19-2027 — one per month), **not** the date the bill row was
+created. This is confirmed live-code, not assumed.
+
+**What that means:** the existing design already IS "recognize each month's premium in that
+month" — the exact matching-principle outcome capitalize-then-amortize exists to produce.
+Capitalizing to Prepaid Insurance and running a separate amortization schedule would be building a
+SECOND mechanism to do something the bill-schedule + `bill_date`-dated JE already does correctly.
+A P&L run for THIS month will only ever see the ONE installment whose `bill_date` falls in this
+month — never all 9 at once — as long as the report's own date filter is `je.entry_date` (which
+it is, per Item (a)). **No new GL math, no migration, no code change recommended for this item.**
+
+**What actually alarmed the screen, reassessed honestly:** the $259,437.21/27-bills figure you and
+the owner saw was **entirely my own accidental dry-run leak from earlier tonight** (see the URGENT
+SELF-CORRECTION post above) — all 27 bills committed within a ~4-minute window instead of the
+system's normal one-policy-at-a-time cadence, and by the time anyone looked, none of the 9
+per-policy installments had reached their own `bill_date` yet, so all 27 showed as "open" at once
+in a **Bills list view** — which is a genuinely separate, real bug: **ROUND 21.1 Item 2's
+aging-bucket predicate** miscategorized future-dated bills into "Past 90 days" / "MTD" buckets.
+That is a **Bills-list display/query bug**, not a GL-posting or accrual-treatment defect — I'll
+pick it up under ROUND 21.1, not here.
+
+**Net for Item (d): treatment recommendation is "keep as-is."** No account, no migration, no JE
+proposed. Moving to Item (f) (the 3 AlwaysTrack accessorial reconciliation files) next.
