@@ -89,6 +89,24 @@ export const SURFACES = [
   { file: "apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx", loadNumberNeedle: /key: "load_number"/ },
   { file: "apps/frontend/src/components/reports/LaneDetailModal.tsx", loadNumberNeedle: /key: "load_number"/ },
   { file: "apps/frontend/src/pages/Documents.tsx", loadNumberNeedle: /docsFileEntityLabel/ },
+  // CC-1 — 5 Accounting surfaces + 1 Cash Flow surface (A4, 2026-09-13).
+  { file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx", loadNumberNeedle: /key: "load_number"/ },
+  { file: "apps/frontend/src/pages/accounting/InvoicesListPage.tsx", loadNumberNeedle: /key: "source_load_id"/ },
+  { file: "apps/frontend/src/pages/accounting/BillDetailPage.tsx", loadNumberNeedle: /key: "load_id"/ },
+  // AbandonmentQueuePage.tsx already carried a "Settlement" column beside its "Load" column before
+  // this law (applied_to_settlement_id / settlement_display_id) -- the backend already aliases
+  // settlement_display_id FROM source_document_ref (abandonment.routes.ts), so the value was always
+  // law-compliant; only the render was rewired through the canonical settlementLabel() helper here
+  // so this guard can see it, without changing which settlement is shown (the chargeback's own
+  // applied-to settlement, not necessarily the load's current tour -- a deliberately different fact
+  // from what SettlementRefCell resolves).
+  { file: "apps/frontend/src/pages/accounting/AbandonmentQueuePage.tsx", loadNumberNeedle: /key: "load_id"/ },
+  // RevenueRecognitionPage.tsx already satisfied this law before it existed -- CC-2 found it uses
+  // SettlementReferenceCell (the disclosed second implementation) + useSettlementReferences,
+  // verified line-by-line correct (source_document_ref, never display_id). Registered here with
+  // zero code changes, per CC-2's own note in docs/bus/INBOX-CC-1.md.
+  { file: "apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx", loadNumberNeedle: /key: "load"/ },
+  { file: "apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx", loadNumberNeedle: /key: "load"/ },
 ];
 
 // SettlementReferenceCell — see the disclosed cross-seat finding above: a second, independently-

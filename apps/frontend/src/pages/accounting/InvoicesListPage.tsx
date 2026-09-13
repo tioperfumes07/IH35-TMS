@@ -60,6 +60,7 @@ const STATUS_OPTIONS: Array<{ value: InvoiceListFilter; label: string }> = [
 ];
 
 import { formatUsdCents } from "../../lib/money";
+import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -490,6 +491,19 @@ export function InvoicesListPage() {
             "—"
           ),
       },
+      // ALL-SEATS LAW (owner, 2026-09-13): every window with a load number needs a settlement/tour
+      // column beside it. No load on this row → nothing to attach a settlement to.
+      {
+        key: "settlement_reference",
+        label: "Settlement / Presettlement",
+        testId: "settlement-reference-column",
+        render: (row) =>
+          row.source_load_id && selectedCompanyId ? (
+            <SettlementRefCell loadId={row.source_load_id} operatingCompanyId={selectedCompanyId} />
+          ) : (
+            <span className="text-gray-400">—</span>
+          ),
+      },
       {
         key: "memo",
         label: "Memo",
@@ -505,7 +519,7 @@ export function InvoicesListPage() {
         },
       },
     ],
-    [],
+    [selectedCompanyId],
   );
 
   const invoicesActiveFilterCount =

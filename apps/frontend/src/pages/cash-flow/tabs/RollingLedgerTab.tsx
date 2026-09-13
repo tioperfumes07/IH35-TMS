@@ -18,6 +18,7 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { Combobox } from "../../../components/Combobox";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { CashFlowKpiStrip } from "./CashFlowKpiStrip";
+import { SettlementRefCell } from "../../../components/shared/SettlementRefCell";
 
 // CASH-FLOW-02 (owner order 2026-09-06 20:1x/20:2x/20:5xZ). A daily snapshot with roll-over:
 // every expected dollar carries its own due date and stays until paid/matched.
@@ -691,6 +692,19 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       render: (row) =>
         row.load_id ? (
           <EntityLink kind="load" id={row.load_id} label={row.load_number ?? row.load_id} onClick={(e) => e.stopPropagation()} />
+        ) : (
+          <span className="text-slate-400">—</span>
+        ),
+    },
+    // ALL-SEATS LAW (owner, 2026-09-13): every window with a load number needs a settlement/tour
+    // column beside it. No load on this row → nothing to attach a settlement to.
+    {
+      key: "settlement_reference",
+      label: "Settlement / Presettlement",
+      testId: "settlement-reference-column",
+      render: (row) =>
+        row.load_id ? (
+          <SettlementRefCell loadId={row.load_id} operatingCompanyId={operatingCompanyId} />
         ) : (
           <span className="text-slate-400">—</span>
         ),

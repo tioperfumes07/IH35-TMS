@@ -12,6 +12,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { formatDateUS } from "../../lib/formatDate";
+import { settlementLabel } from "../../lib/settlementNumber";
 
 export function AbandonmentQueuePage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -68,10 +69,22 @@ export function AbandonmentQueuePage() {
         },
       },
       {
+        // ALL-SEATS LAW (owner, 2026-09-13): the settlement column beside the load number must
+        // render only source_document_ref, never the retired internal display_id. This page's
+        // settlement_display_id field is already aliased from source_document_ref on the backend
+        // (abandonment.routes.ts) — routed through the canonical settlementLabel() helper here so
+        // the rule can't drift if that alias ever changes on either side.
         key: "applied_to_settlement_id",
         label: "Settlement",
         render: (row) => {
-          return <EntityLinkOrTombstone kind="settlement" id={row.applied_to_settlement_id} name={row.settlement_display_id} noun="Settlement" />;
+          return (
+            <EntityLinkOrTombstone
+              kind="settlement"
+              id={row.applied_to_settlement_id}
+              name={settlementLabel({ source_document_ref: row.settlement_display_id })}
+              noun="Settlement"
+            />
+          );
         },
       },
       { key: "total_chargeback_cents", label: "Total ¢", render: (row) => String(row.total_chargeback_cents ?? "") },
