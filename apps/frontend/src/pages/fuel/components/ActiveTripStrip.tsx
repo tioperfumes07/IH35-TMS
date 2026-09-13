@@ -1,13 +1,17 @@
 import type { ReactNode } from "react";
 import type { FuelActiveRoute } from "../../../api/fuelPlanner";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { SettlementRefCell } from "../../../components/shared/SettlementRefCell";
 import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
   route: FuelActiveRoute | null;
+  // ALL-SEATS LAW (owner, 2026-09-13) — every load-number column carries a settlement/tour column
+  // beside it.
+  operatingCompanyId: string;
 };
 
-export function ActiveTripStrip({ route }: Props) {
+export function ActiveTripStrip({ route, operatingCompanyId }: Props) {
   return (
     <div className="grid grid-cols-2 gap-2 rounded-sm border border-gray-200 bg-white p-2 text-xs md:grid-cols-3 xl:grid-cols-6">
       <Cell label="Load #">
@@ -17,6 +21,13 @@ export function ActiveTripStrip({ route }: Props) {
           label={entityLabel(route?.load_display_id, route?.load_id, "Load") ?? "—"}
           data-testid="fuel-planner-load-link"
         />
+      </Cell>
+      <Cell label="Settlement/Tour">
+        {route?.load_id && operatingCompanyId ? (
+          <SettlementRefCell loadId={route.load_id} operatingCompanyId={operatingCompanyId} />
+        ) : (
+          "—"
+        )}
       </Cell>
       <Cell label="Unit / Driver">
         {route ? (

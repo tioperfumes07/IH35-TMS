@@ -4,6 +4,7 @@ import { listDispatchLoads, type DispatchLoad } from "../../api/dispatch";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { SettlementRefCell } from "../shared/SettlementRefCell";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { StatusBadge } from "../../components/StatusBadge";
 
@@ -12,7 +13,8 @@ type Props = {
   operatingCompanyId: string;
 };
 
-const LOAD_COLUMNS: Array<ParityColumn<DispatchLoad>> = [
+function buildLoadColumns(operatingCompanyId: string): Array<ParityColumn<DispatchLoad>> {
+  return [
   {
     key: "load_number",
     label: "Load #",
@@ -20,6 +22,12 @@ const LOAD_COLUMNS: Array<ParityColumn<DispatchLoad>> = [
     render: (row) => (
       <EntityLink kind="load" id={row.id} label={entityLabel(row.load_number, row.id, "Load")} />
     ),
+  },
+  {
+    key: "settlement_ref",
+    label: "Settlement/Tour",
+    sortable: false,
+    render: (row) => <SettlementRefCell loadId={row.id} operatingCompanyId={operatingCompanyId} />,
   },
   {
     key: "status",
@@ -69,9 +77,11 @@ const LOAD_COLUMNS: Array<ParityColumn<DispatchLoad>> = [
       </span>
     ),
   },
-];
+  ];
+}
 
 export function LoadsSection({ driverId, operatingCompanyId }: Props) {
+  const LOAD_COLUMNS = buildLoadColumns(operatingCompanyId);
   const query = useQuery({
     queryKey: ["driver-profile-loads", driverId, operatingCompanyId],
     queryFn: () =>

@@ -5,6 +5,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { LoadDetailDriverPayTab } from "../../components/dispatch/LoadDetailDriverPayTab";
+import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 import { visibleDocumentLabel } from "../../lib/entity-label";
 import { formatUsdCents } from "../../lib/money";
 
@@ -85,6 +86,12 @@ export function DriverBillDetailPage() {
 
       {bill.load_id ? (
         <div className="mt-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="driver-bill-detail-body">
+          {/* ALL-SEATS LAW (owner, 2026-09-13) — every load-number reference (the breadcrumb above)
+              carries a settlement/tour reference beside it. */}
+          <p className="mb-2 text-xs text-gray-600">
+            <span className="font-semibold text-gray-500">Settlement/Tour: </span>
+            <SettlementRefCell loadId={bill.load_id} operatingCompanyId={selectedCompanyId!} />
+          </p>
           {/* Reuse the canonical Driver Pay detail (LDT-3) — USMCA books in USD. */}
           <LoadDetailDriverPayTab loadId={bill.load_id} operatingCompanyId={selectedCompanyId!} currencyCode="USD" />
         </div>

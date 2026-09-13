@@ -17,6 +17,31 @@
 // The registry starts EMPTY in this PR (which ships the shared component + guard alone, per the
 // Lead's own build order — "ship these BEFORE your own 13 surfaces"); each seat extends SURFACES
 // as their own conversions land.
+//
+// CC-2's own 13 surfaces (11 Driver/Finance + 2 Fuel) landed in the CC-2-settlement-ref-sweep-1 PR.
+// DriverInbox.tsx (one of the originally-assigned 13) is NOT registered: read in full, it never
+// renders a load number at all today (only "Cash advances" has a real backend; "Load updates" is an
+// honest empty state per its own header comment) — there is no load-number column to put a
+// settlement column beside, and registering it would fail auditRegisteredSurfaces' own
+// loadNumberNeedle check.
+//
+// DISCLOSED CROSS-SEAT FINDING (2026-09-12, CC-2): apps/frontend/src/components/settlements/
+// SettlementReferenceCell.tsx + hooks/useSettlementReferences.ts + api/driverFinance.ts's
+// getSettlementReferences() is a SECOND, independently-built implementation of this exact law —
+// verified by reading it line-by-line: "Not on a tour" (no id), "Open" (presettlement, no label),
+// a bare "—" (closed settlement, no source_document_ref yet), and a real deep link, all sourced from
+// settlements.routes.ts's source_document_ref (never the retired display_id, despite the confusingly
+//-named settlement_display_id/presettlement_display_id response fields — traced to
+// driver-finance/settlements.routes.ts:190, the value is source_document_ref). It already covers ~11
+// other surfaces spanning what look like CC-1's accounting (RevenueRecognitionPage) and CC-3's
+// dispatch/factoring/reports assignments (SubmissionQueue, FactoringQueuePage, DetentionBoardPage,
+// PodReviewPage, InTransitIssuesPage, AssignmentHistoryPage, BorderCrossingHistory, LoadsPlanner,
+// InvoiceSearchReportPage, DispatchMarginPage). Not consolidated here — those are other seats' files
+// (never edit another seat's file without coordination) — but SETTLEMENT_CELL_RE below accepts it as
+// an equally-valid marker so those surfaces can register once their owning seat confirms, rather
+// than forcing a risky rip-and-replace across 11 files this PR didn't touch. Posted to the Lead/
+// OUTBOX for a canonical-component decision; EscrowDeductionsPendingTab.tsx (CC-2's own file, already
+// using this second component) is registered below as-is, unmodified.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -27,9 +52,25 @@ const FRONTEND_SRC = path.join(ROOT, "apps", "frontend", "src");
 // { file, loadNumberNeedle: RegExp, note }. loadNumberNeedle proves the surface actually renders a
 // load-number column (so this guard is meaningful for it); a converted surface must ALSO match
 // SETTLEMENT_CELL_RE somewhere in the same file.
-export const SURFACES = [];
+export const SURFACES = [
+  { file: "apps/frontend/src/pages/driver-finance/DriverBillDetailPage.tsx", loadNumberNeedle: /bill\.load_number/ },
+  { file: "apps/frontend/src/pages/driver-finance/EscrowDeductionsPendingTab.tsx", loadNumberNeedle: /row\.load_number/ },
+  { file: "apps/frontend/src/pages/driver-finance/components/DeadheadPaySection.tsx", loadNumberNeedle: /line\.load_number/ },
+  { file: "apps/frontend/src/pages/driver-finance/components/DeductionsSection.tsx", loadNumberNeedle: /row\.load_number/ },
+  { file: "apps/frontend/src/pages/driver-finance/components/EarningsSection.tsx", loadNumberNeedle: /line\.load_number/ },
+  { file: "apps/frontend/src/pages/driver-finance/components/ExtraPaySection.tsx", loadNumberNeedle: /line\.load_number/ },
+  { file: "apps/frontend/src/pages/driver-finance/components/ReimbursementsSection.tsx", loadNumberNeedle: /line\.load_number/ },
+  { file: "apps/frontend/src/pages/driver-finance/components/SettlementLoadsSection.tsx", loadNumberNeedle: /l\.load_number/ },
+  { file: "apps/frontend/src/components/driver-profile/LoadsSection.tsx", loadNumberNeedle: /row\.load_number/ },
+  { file: "apps/frontend/src/components/drivers/LoadHistoryTab.tsx", loadNumberNeedle: /row\.load_number/ },
+  { file: "apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx", loadNumberNeedle: /row\.load_number/ },
+  { file: "apps/frontend/src/pages/fuel/components/ActiveTripStrip.tsx", loadNumberNeedle: /load_display_id/ },
+];
 
-const SETTLEMENT_CELL_RE = /<SettlementRefCell\b|settlementLabel\s*\(|settlementNumber\s*\(/;
+// SettlementReferenceCell — see the disclosed cross-seat finding above: a second, independently-
+// built, functionally-equivalent implementation of the identical 4-state rule. Accepted here rather
+// than forcing every one of its ~11 existing consumers to migrate before they can register.
+const SETTLEMENT_CELL_RE = /<SettlementRefCell\b|<SettlementReferenceCell\b|settlementLabel\s*\(|settlementNumber\s*\(/;
 
 function walk(dir, out = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {

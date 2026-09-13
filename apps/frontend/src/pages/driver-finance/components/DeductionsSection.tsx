@@ -12,6 +12,7 @@
 import { Button } from "../../../components/Button";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { SettlementRefCell } from "../../../components/shared/SettlementRefCell";
 import { mmmDd } from "../../../lib/formatDate";
 
 export type DeductionRow = {
@@ -54,6 +55,9 @@ type Props = {
   // SET-01 part 2 — per-line edit. Offered only for editable rows (see EDITABLE_TYPES); the backend
   // is the real gate (pending + manual-only + open settlement) and rejects anything else.
   onEdit?: (row: DeductionRow) => void;
+  // ALL-SEATS LAW (owner, 2026-09-13) — every load-number column carries a settlement/tour column
+  // beside it. Optional so a narrower caller keeps compiling.
+  operatingCompanyId?: string;
 };
 
 // SET-01 part 2 — the four typed, GL-bound kinds a saved line can be edited into (matches the
@@ -61,7 +65,8 @@ type Props = {
 // carry other types and are not offered an Edit control here.
 const EDITABLE_DEDUCTION_TYPES = new Set(["wire_fee", "ach_fee", "company_vehicle_fuel", "escrow_contribution"]);
 
-const COLUMNS: Array<ParityColumn<DeductionRow>> = [
+function buildColumns(operatingCompanyId?: string): Array<ParityColumn<DeductionRow>> {
+  return [
   {
     key: "seq_label",
     label: "Number",
@@ -73,6 +78,17 @@ const COLUMNS: Array<ParityColumn<DeductionRow>> = [
     sortable: true,
     sortValue: (row) => row.load_number ?? "",
     render: (row) => row.load_id ? <EntityLink kind="load" id={row.load_id} label={row.load_number ?? "—"} /> : (row.load_number ?? "—"),
+  },
+  {
+    key: "settlement_ref",
+    label: "Settlement/Tour",
+    sortable: false,
+    render: (row) =>
+      row.load_id && operatingCompanyId ? (
+        <SettlementRefCell loadId={row.load_id} operatingCompanyId={operatingCompanyId} />
+      ) : (
+        "—"
+      ),
   },
   {
     key: "line_date",
@@ -131,14 +147,15 @@ const COLUMNS: Array<ParityColumn<DeductionRow>> = [
         </span>
       ),
   },
-];
+  ];
+}
 
-export function DeductionsSection({ rows, onHold, onResume, isOpen, onAdd, onEdit }: Props) {
+export function DeductionsSection({ rows, onHold, onResume, isOpen, onAdd, onEdit, operatingCompanyId }: Props) {
   const subtotal = rows.reduce((sum, row) => sum + Number(row.pending_ack ? 0 : row.this_period_amount || 0), 0);
 
   // Build columns with working hold/resume/edit handlers — ParityColumn render is a pure function
   // of the row, so we close over the callbacks here rather than at module scope.
-  const columns: Array<ParityColumn<DeductionRow>> = COLUMNS.map((col) => {
+  const columns: Array<ParityColumn<DeductionRow>> = buildColumns(operatingCompanyId).map((col) => {
     if (col.key !== "_actions") return col;
     return {
       ...col,
