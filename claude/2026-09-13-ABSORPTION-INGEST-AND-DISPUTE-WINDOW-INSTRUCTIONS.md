@@ -181,6 +181,55 @@ logic, and (Rule 07) do NOT remove the existing pages; add the hub alongside and
    11px/700/UPPERCASE/`#4B5563`, 2px radius (`rounded-sm`), 1px `#E5E7EB` borders, navy rail `#14314F`,
    green `#16A34A`, centered sortable headers + centered values, 28px clickable boxes. Do not invent a scale.
 
+### C.9 — ENDPOINT CONTRACTS + FILE MAP (measured from live code — build against THESE)
+
+**Settlement disputes (office queue — the path used today; `decide` posts a corrective JE).**
+`apps/backend/src/accounting/disputes.routes.ts` → `settlement-disputes-p6.service.ts`. Read roles
+Owner/Administrator/Accountant/Manager/Dispatcher; write roles Owner/Administrator/Accountant.
+- `GET /api/v1/disputes?operating_company_id=&status?=&driver_id?=&limit=&offset=` → `{ disputes, total, limit, offset }`. Omit `status` (or `all`) = every status. Row (`SettlementDisputeQueueRow`, `apps/frontend/src/api/disputes.ts`): `id, settlement_id, settlement_line_id, driver_id, driver_name, settlement_display_id (⚠ ALREADY = source_document_ref — render via settlementLabel()), reason_code, reason_text, claimed_adjustment_cents, submitted_at, status (submitted|under_review|approved|denied|withdrawn), reviewer_user_id, reviewed_at, resolution_text, adjustment_cents, adjustment_journal_id`.
+- `POST /api/v1/disputes/:disputeId/start-review?operating_company_id=`
+- `POST /api/v1/disputes/:disputeId/decide` body `{ operating_company_id, decision:"approved"|"denied", resolution_text(≥10), adjustment_cents? }` — **posts corrective JE on approve** (`E_CORRECTIVE_JE_ACCOUNTS_MISSING` if unconfigured). **Keep on this path; never re-implement the money move.**
+- Create (open one): `POST /api/v1/driver-finance/settlement-disputes` body `{ operating_company_id, settlement_id, driver_id, dispute_category (missing_pay|wrong_deduction|miscalculated_mileage|wrong_rate|detention_not_paid|cash_advance_dispute|fine_dispute|escrow_dispute|other), dispute_description(≥20), disputed_amount_cents?, evidence_file_ids? }` → `{ data:{ id } }`. FE `openSettlementDispute` in `api/driverFinance.ts`; categories in `pages/driver-finance/settlementDisputeCategories.ts`.
+
+**Invoice disputes (tracking-only, NO GL, NO UI today — build the UI).**
+`apps/backend/src/accounting/invoice-disputes.{routes,service}.ts`, table `accounting.invoice_disputes`,
+flag `INVOICE_DISPUTE_ENABLED` (ON for USMCA). Read roles Owner/Administrator/Accountant/Manager/Dispatcher;
+write roles Owner/Administrator/Accountant.
+- `POST /api/v1/accounting/invoices/:id/disputes` body `{ operating_company_id, disputed_amount_cents(>0, ≤ invoice face), expected_amount_cents?, reason_code (mis_entry|customer_discount|late_fine|driver_no_answer|short_pay|chargeback|other), reason_text? }` → `201 { dispute }`. One open dispute per invoice (`open_dispute_exists`).
+- `GET /api/v1/accounting/invoices/:id/disputes?operating_company_id=` → `{ disputes }`
+- `GET /api/v1/accounting/invoice-disputes?operating_company_id=&status?=(open|resolved|cancelled|all)` → `{ disputes }`; row = `InvoiceDisputeRow` + `invoice_display_id` + `customer_name`: `id, invoice_id, customer_id, disputed_amount_cents, invoiced_amount_cents, expected_amount_cents, reason_code, reason_text, status (open|resolved|cancelled), resolution_type, resolution_text, resolution_amount_cents, resolution_ref_id, opened_at, resolved_at`.
+- `POST /api/v1/accounting/invoice-disputes/:id/resolve` body `{ operating_company_id, resolution_type (invoice_corrected|credit_memo|collected_in_full|written_off|no_change), resolution_text?, resolution_amount_cents?, resolution_ref_id? }`
+- `POST /api/v1/accounting/invoice-disputes/:id/cancel` body `{ operating_company_id, reason(5–500) }`
+- Enums exported: `INVOICE_DISPUTE_REASONS`, `INVOICE_DISPUTE_RESOLUTIONS`. **Never mutate `accounting.invoices`** — resolution routes to existing posters (credit memo / invoice edit).
+
+**Live data (Neon `br-fancy-credit-akjnd07a`, USMCA):** two OPEN invoice disputes exist — invoice **13581**
+(short_pay $1,600 of $4,900) and **13586** (short_pay $300 of $3,600). `driver_finance.driver_settlement_disputes`
+is **empty** for USMCA — a live settlement-dispute screenshot needs an OWNER-created dispute first; **do NOT
+seat-fixture one** (NO-SEAT-PROD-FINANCIAL-FIXTURES law).
+
+**Normalized unified row** (map both list endpoints, `status=all`, concat):
+```ts
+type DisputeType = "settlement" | "invoice";
+type UnifiedDisputeRow = {
+  id: string; type: DisputeType;
+  entity_kind: "settlement" | "invoice"; entity_id: string;
+  entity_label: string;                 // settlementLabel({source_document_ref}) | invoice_display_id
+  counterparty_kind: "driver" | "customer"; counterparty_id: string | null; counterparty_label: string;
+  reason_code: string; reason_text: string | null;
+  amount_cents: number | null;          // claimed_adjustment_cents | disputed_amount_cents
+  status: string;                       // raw per-type status (pill)
+  status_bucket: "open" | "resolved" | "cancelled"; // settlement submitted/under_review→open, approved/denied→resolved, withdrawn→cancelled; invoice 1:1
+  opened_at: string; resolved_at: string | null;    // submitted_at|opened_at ; reviewed_at|resolved_at
+};
+```
+
+**FE file map (exact insertion points):**
+- **CREATE** `apps/frontend/src/api/invoice-disputes.ts` (client for the 4 invoice-dispute endpoints — none exists today).
+- **CREATE** `apps/frontend/src/pages/accounting/DisputesHubPage.tsx` (unified list + Open-dispute modal: type picker → reuse `openInvoiceDispute`/`openSettlementDispute`; + invoice resolve/cancel modal; settlement act = deep-link to existing `/accounting/dispute-queue`).
+- **REUSE (don't modify):** `api/disputes.ts` `listDisputeQueue`, `components/parity/ParityTable`, `components/shared/EntityLink` (kinds `settlement`+`invoice` both exist), `lib/settlementNumber.ts` `settlementLabel`, `lib/entity-label.ts`, `components/Combobox`, `components/forms/MoneyInput`, `components/drivers/DriverPickerWithCreate`, `api/accounting.ts` `listInvoices({has_balance:true})` (invoice picker), `api/driverFinance.ts` `listSettlements`, `pages/accounting/AccountingSubNavWrapper`.
+- **ROUTE:** `apps/frontend/src/routes/manifest.tsx` — lazy import beside line ~303 (`DisputeQueuePage`); add `<Route path="/accounting/disputes">` right after the existing `/accounting/dispute-queue` block (~lines 4126–4133). **Keep the existing route (additive, Rule 07).**
+- **NAV:** `apps/frontend/src/pages/accounting/subnav-manifest.ts` — add `{ label:"Disputes", path:"/accounting/disputes", section:"more" }` to `SUBNAV_ITEMS` (next to "Dispute queue" ~line 129; `childrenOf("more")` auto-sorts). **Do NOT rename/remove "Dispute queue".**
+
 **GUARD:** `scripts/verify-dispute-window-unified.mjs` — FAILS if the hub route/nav is missing, if either
 dispute type is not listed, if an invoice-dispute write path mutates `accounting.invoices`, or if a
 settlement reference renders an `S-` counter instead of `source_document_ref`. Wire into money gate.
