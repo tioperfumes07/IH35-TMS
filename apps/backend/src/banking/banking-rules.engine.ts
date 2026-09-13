@@ -115,12 +115,16 @@ export async function applyFuzzyVendorMatchForTransaction(
 ): Promise<FuzzyVendorMatch | null> {
   await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
-  const txnRes = await client.query<{ description: string | null }>(
-    `SELECT description FROM banking.bank_transactions WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+  const txnRes = await client.query<{ description: string | null; is_credit: boolean }>(
+    `SELECT description, is_credit FROM banking.bank_transactions WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
     [txnId, operatingCompanyId]
   );
   const txn = txnRes.rows[0];
   if (!txn) return null;
+  // LINK4-PR3 — same "money-in excluded from auto-categorization" guard as
+  // applyBankingRulesForTransaction above, gated here too since this function is exported and
+  // callable on its own, not only via applyBankingRulesForCompany's fallback loop.
+  if (txn.is_credit) return null;
 
   const match = await matchVendorFuzzyByDescription(client, txn.description, operatingCompanyId);
   if (!match) return null;
@@ -152,9 +156,9 @@ export async function applyFuzzyVendorMatchForTransaction(
 export async function applyBankingRulesForTransaction(client: PoolClient, txnId: string, operatingCompanyId: string): Promise<boolean> {
   await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
-  const txnRes = await client.query<{ description: string | null; amount_cents: number; bank_account_id: string }>(
+  const txnRes = await client.query<{ description: string | null; amount_cents: number; bank_account_id: string; is_credit: boolean }>(
     `
-      SELECT description, amount_cents::int, bank_account_id::text
+      SELECT description, amount_cents::int, bank_account_id::text, is_credit
       FROM banking.bank_transactions
       WHERE id = $1::uuid AND operating_company_id = $2::uuid
       LIMIT 1
@@ -163,6 +167,15 @@ export async function applyBankingRulesForTransaction(client: PoolClient, txnId:
   );
   const txn = txnRes.rows[0];
   if (!txn) return false;
+
+  // LINK4-PR3 (owner precedence, 2026-09-12): "money-in excluded from auto-categorization." A
+  // deposit/refund/customer-payment is a business event a human should categorize deliberately, not
+  // one this engine should guess an expense account for. This is the ONE place both call sites
+  // (plaid.service.ts's sync loop, reconciliation.routes.ts's CSV import) resolve a transaction by
+  // id, so gating here covers both without a second, easy-to-forget guard at each call site — and
+  // applyBankingRulesForCompany below (the bulk driver) calls this same function per row, so its own
+  // callers are covered too.
+  if (txn.is_credit) return false;
 
   const rules = await client.query<BankingRuleRow>(
     `
@@ -233,12 +246,16 @@ export async function applyBankingRulesForCompany(
 ): Promise<{ scanned: number; matched: number; fuzzyMatched: number }> {
   await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
+  // LINK4-PR3 — is_credit = false at the SQL level (not just relying on the per-row guards below):
+  // a deposit/refund/customer-payment is categorically out of scope for this pass, so it should
+  // never even be "scanned", not merely skipped-and-counted.
   const txnsRes = await client.query<{ id: string }>(
     `
       SELECT id::text
       FROM banking.bank_transactions
       WHERE operating_company_id = $1::uuid
         AND categorized_at IS NULL
+        AND is_credit = false
       ORDER BY transaction_date DESC, id ASC
     `,
     [operatingCompanyId]

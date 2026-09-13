@@ -421,6 +421,11 @@ export const TRANSACTION_TYPE_FILTER_OPTIONS = [
   { id: "money_out", label: "Money out" },
   { id: "ready_to_post", label: "Ready to post" },
   { id: "suggested_matches", label: "Suggested matches" },
+  // LINK4-PR3 (owner ask, 2026-09-12) — distinct from "Suggested matches" above (which is the
+  // LINK-4 obligation-matching system, banking.reconciliation_matches): this is the
+  // categorization-rules engines' own suggested_vendor_id/suggested_account_id, computed and
+  // persisted but never surfaced on this list until now. See hasAutoSuggestion() below.
+  { id: "auto_suggested", label: "Auto-suggested" },
   { id: "transfers", label: "Transfers" },
   { id: "rules", label: "Rules" },
   { id: "missing_from_to", label: "Missing From/To" },
@@ -510,6 +515,20 @@ function transactionLabel(tx: PlaidBankTransaction) {
   return tx.description || tx.merchant_name || "—";
 }
 
+/**
+ * LINK4-PR3 (owner ask, 2026-09-12) — a transaction "carries an auto-suggestion" when the
+ * categorization-rules engines (banking-rules.engine.ts, either the exact rule match or the
+ * pg_trgm fuzzy fallback) computed one AND it is still pending a human decision. Owner precedence:
+ * money-in is excluded from auto-categorization entirely, so a credit row never has one; a row a
+ * human already categorized (categorized_at set) no longer needs review even if a stale suggestion
+ * value lingers on it.
+ */
+export function hasAutoSuggestion(tx: PlaidBankTransaction): boolean {
+  if (tx.is_credit) return false;
+  if (tx.categorized_at) return false;
+  return Boolean(tx.suggested_vendor_id || tx.suggested_account_id);
+}
+
 /** B.2 — one predicate per TRANSACTION_TYPE_FILTER_OPTIONS id, extracted from the old single-select
  * switch so the multi-select filter (a UNION over selectedTransactionTypes) and the server-side
  * subset (SERVER_FILTERABLE_TRANSACTION_TYPES in api/banking.ts) read the same one definition per
@@ -525,6 +544,8 @@ export function matchesTransactionTypeFilter(type: string, tx: PlaidBankTransact
       return !tx.pending;
     case "suggested_matches":
       return Boolean(tx.matched_kind);
+    case "auto_suggested":
+      return hasAutoSuggestion(tx);
     case "transfers":
       return tx.plaid_category.some((category) => category.toLowerCase().includes("transfer"));
     case "rules":
@@ -1566,6 +1587,18 @@ export function BankingTransactionsDesignView({
                   title={formatRelayFuelBreakdownSummary(tx.relay_fuel_lines, (c) => USD.format(c / 100))}
                 >
                   {formatRelayFuelBreakdownSummary(tx.relay_fuel_lines, (c) => USD.format(c / 100))}
+                </p>
+              ) : null}
+              {/* LINK4-PR3 (owner ask, 2026-09-12) — informational only, writes nothing: a computed
+                  suggestion (either engine) that is still pending review. Expanding the row already
+                  pre-fills Category/Payee from the freshest live rule match (ROUND 16.21) and the
+                  operator reviews + Saves there — this chip exists so a row worth expanding is
+                  visible without opening every row to find out. */}
+              {hasAutoSuggestion(tx) ? (
+                <p className="mt-0.5 truncate text-[11px] text-slate-600" title="Computed by the categorization rules engine — expand this row to review and accept">
+                  <span className="font-semibold uppercase tracking-wide text-slate-500">Suggested: </span>
+                  {tx.suggested_vendor_name || tx.suggested_account_name || "a category"}
+                  {tx.suggested_account_number ? ` (${tx.suggested_account_number})` : ""}
                 </p>
               ) : null}
               {!isRelayWalletAccount &&

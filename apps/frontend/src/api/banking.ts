@@ -134,6 +134,23 @@ export type PlaidBankTransaction = {
   tags?: string | null;
   categorization_recover_from_driver?: boolean | null;
   categorization_recover_deduction_type?: string | null;
+  /** Stamped when a human categorizes this transaction (any path); a suggestion below is still
+   *  pending review exactly while this is null. */
+  categorized_at?: string | null;
+  /**
+   * LINK4-PR3 (owner ask, 2026-09-12) — AUTO-SUGGESTED filter. These 4 columns have always been
+   * written by applyBankingRulesForTransaction / autoCategorize's dry-run / the pg_trgm fuzzy
+   * fallback (banking-rules.engine.ts); nothing on this list ever selected them until now, so a
+   * computed suggestion sat on the row invisibly (same one-level-up shape as ACCT-F375's
+   * per-transaction rule_match gap).
+   */
+  suggested_vendor_id?: string | null;
+  suggested_vendor_name?: string | null;
+  suggested_account_id?: string | null;
+  suggested_account_number?: string | null;
+  suggested_account_name?: string | null;
+  suggested_confidence?: "high" | "medium" | "low" | null;
+  suggested_source?: string | null;
   /**
    * Relay Fuel Wallet: product lines from integrations.relay_fuel_transaction_lines
    * (diesel truck / reefer / DEF / fee) when source_ref is relay_fuel:*.

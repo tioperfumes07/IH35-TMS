@@ -464,11 +464,19 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     const body = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.body ?? {});
     if (!params.success || !body.success) return reply.code(400).send({ error: "validation_error" });
 
+    let excludedMoneyIn = false;
     await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
       const txn = await client.query(`SELECT * FROM banking.bank_transactions WHERE id = $1`, [params.data.id]);
       const row = txn.rows[0];
       if (!row || String(row.operating_company_id) !== body.data.operating_company_id) {
         reply.code(404).send({ error: "not_found" });
+        return;
+      }
+      // LINK4-PR3 (owner precedence, 2026-09-12): "money-in excluded from auto-categorization." Even
+      // triggered by a human on one row, suggesting an expense account for a deposit/refund/
+      // customer-payment is never a useful answer — refuse to compute or write one.
+      if (row.is_credit === true) {
+        excludedMoneyIn = true;
         return;
       }
       const rulesRes = await client.query(
@@ -507,6 +515,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
       await appendCrudAudit(client, user.uuid, "banking.txn_suggestion_refreshed", { transaction_id: params.data.id }, "info", "P7-W2-BANK");
     });
     if (reply.sent) return;
+    if (excludedMoneyIn) return { ok: true, excluded_reason: "money_in_excluded_from_auto_categorization" };
     return { ok: true };
   });
 
