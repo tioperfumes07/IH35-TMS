@@ -161,3 +161,55 @@ LINK-2 and LINK-3. If it still will not reproduce, say so here rather than leavi
 Any seat that finishes a job in Part 2 moves its own row to Part 1 **in the same PR**, with the PR
 number and how it was verified. A job that is not in this file does not exist. A job in Part 2 with
 no movement for two cycles gets escalated to the owner by the Lead, by name.
+
+---
+
+## CORRECTION — 2026-09-13, LEAD ERROR. READ BEFORE JUDGING CURSOR'S QUEUE.
+
+The Lead reported to the owner that Cursor was "stuck in a void/recreate loop" and drafted a stop
+order. **That was wrong and the stop order was withdrawn before it was sent.** Recorded here because
+the register is the record.
+
+**What Cursor is actually doing:** the owner assigned him directly — *"i asked cursor to create
+daily purchases and match them exactly to faro factoring."* The activity the Lead read as churn is
+`Factoring funding FAC-2026-00052` through `FAC-2026-00072+`, entry dates spanning **2026-08-10 to
+2026-09-08**, created roughly one every 20 seconds. That is a month of real factoring history being
+posted, one dated funding at a time. It is the assigned work, done correctly.
+
+**The Lead's three errors, in order of seriousness:**
+1. **Assumed Cursor's only assignment was the Lead's.** The owner gives work directly. Any seat may
+   be carrying an owner-assigned task the Lead does not know about. Ask before escalating.
+2. **Read row volume as churn without reading what the rows were.** 101 JE inserts looked like a
+   loop; they were 20+ distinct, differently-dated funding events. Count is not evidence — content is.
+3. **Ran `audit.row_changes` with no entity filter**, so the first figures quoted were not even
+   USMCA-only.
+
+The only genuine create-then-void in that window was the 28 insurance "Bill posting" entries at
+00:05–00:09Z — CC-1's, already self-disclosed and voided (#21944).
+
+### CURSOR'S QUEUE IS RE-ORDERED ACCORDINGLY
+| # | Job | Status |
+|---|---|---|
+| **C0** | **Daily purchases matched exactly to Faro factoring** — assigned by the owner directly. **This outranks C1–C5.** | IN PROGRESS |
+| C1–C5 | The chain links, the hook, 13595, 13593 | QUEUED BEHIND C0 |
+
+No seat is escalated for not doing Lead work while carrying owner work.
+
+### USMCA IS NOT A GREENFIELD ENTITY — THE STANDARD IS STALE
+`anthropic-skills:ih35-tms-standards` §D still reads *"USMCA (future carrier, 0 balances)."* That is
+a month out of date and any seat reading it will reason wrongly. Measured live 2026-09-13 under
+`bypass_rls`:
+
+| | |
+|---|---|
+| First load | 2026-09-02 |
+| Loads | **113** |
+| Settlements | **74** |
+| Live invoices | **73** |
+| Journal entries | **1,064** |
+| Factoring advances | **114** |
+| Trial balance | debits $1,797,503.75 = credits $1,797,503.75, **out of balance $0.00** |
+
+**USMCA is a live operating carrier with a month of real history.** Treat every record as real
+unless it carries `is_sample_data = true`. The Lead is updating the standards skill; until that
+lands, this table is the current state and it overrides §D.
