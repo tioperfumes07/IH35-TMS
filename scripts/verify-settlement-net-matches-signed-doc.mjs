@@ -30,11 +30,15 @@ const LABEL = "verify-settlement-net-matches-signed-doc";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TRUTH_PATH = path.join(ROOT, "data/alwaystrack/settlements-truth-2026-09-13.json");
 const OPCO = "5c854333-6ea5-4faa-af31-67cb272fef80"; // USMCA
-// NOTE: both governing round-23.2 docs say "34 USMCA settlements, 5769 through 5803" — that range is
-// actually 35 numbers inclusive (5803-5769+1), a shared off-by-one. Verified against ground truth:
-// all 35 numbers exist as distinct documents in the truth file, and their total_due values sum to
-// exactly $49,297.42 -- the SAME target figure both docs cite -- so 35 is the count this guard
-// checks; "34" in the prose is the error, not this guard.
+// STANDING CORRECTION (owner, 2026-09-13, GO 2): both governing round-23.2 docs originally said "34
+// USMCA settlements, 5769 through 5803" -- that range is actually 35 numbers inclusive
+// (5803-5769+1). Root cause: the docs counted COMPANY-side settlement PDFs (34 of them), not driver-
+// side ones -- document 5782 has a driver settlement but no company settlement, so DRIVER documents
+// = 35, COMPANY documents = 34. This guard reads driver_finance.driver_settlements (driver-side), so
+// 35 is the correct count HERE. A guard counting company-side line-haul/fuel/expense documents
+// correctly asserts 34 instead -- state which set an assertion uses, do not assume they're the same
+// number. Verified: all 35 driver documents exist as distinct entries in the truth file and their
+// total_due values sum to exactly $49,297.42, the same target both docs cite.
 const USMCA_CUTOVER_DOCS = Array.from({ length: 35 }, (_, i) => String(5769 + i)); // 5769..5803
 
 // The known duplicate mega-row for tour 5782 (CC-2's B5 1:1 re-cut territory, not this guard's job)

@@ -278,3 +278,58 @@ built server against a live Neon branch (was throwing `FastifyError` at boot eve
 fix, reaches `"Server listening"`/`"Server started"` with it). FINDING: ACCT-F26308. Merging on
 green (fast-merge law); will confirm the live deploy reaches this SHA next (which also finally
 unblocks PR #22028 / B4 from going live).
+
+## 2026-09-13 — ROUND 23.2 GO 1 EXECUTED — prod settlement-header backfill run, PROOF ATTACHED
+
+**Owner GO 1, authorized 2026-09-13.** Ran `r232-backfill-settlement-header-from-posted-je.mts`
+against real prod (Neon `br-fancy-credit-akjnd07a`), not the rehearse branch. PREVIEW first (matched
+the rehearse-branch rehearsal exactly: 33 would-fix, 2 already-correct, 1 skip), then `--commit`.
+
+**Result: 33 FIXED, 2 already correct, 1 SKIPPED (S-2026-0011, the known duplicate mega-row for
+tour 5782 — excluded by name, per the standing condition, not guessed).** No new JE created, voided,
+or modified; no bill/bill_payment/deduction/settlement_line touched — this write copies what each
+settlement's own already-posted, already-balanced JE already says onto the header display columns.
+
+**Live guard run against PROD** (`verify-settlement-net-matches-signed-doc.mjs`, real
+`br-fancy-credit-akjnd07a`, not rehearse): all 35 USMCA settlement documents (5769-5803) now read
+`net_pay` = signed TOTAL DUE to the cent. Full 35-line prod output:
+
+5769 net=1095.52 signed=1095.52 OK · 5770 net=1997.50 signed=1997.50 OK · 5771 net=1949.10
+signed=1949.10 OK · 5772 net=997.08 signed=997.08 OK · 5773 net=1837.52 signed=1837.52 OK · 5774
+net=1107.42 signed=1107.42 OK · 5775 net=1186.40 signed=1186.40 OK · 5776 net=1280.39 signed=1280.39
+OK · 5777 net=1948.00 signed=1948.00 OK · 5778 net=1245.26 signed=1245.26 OK · 5779 net=1387.66
+signed=1387.66 OK · 5780 net=300.00 signed=300.00 OK · 5781 net=1220.31 signed=1220.31 OK · 5782
+net=1456.86 signed=1456.86 OK · 5783 net=2071.25 signed=2071.25 OK · 5784 net=1752.28 signed=1752.28
+OK · 5785 net=1246.68 signed=1246.68 OK · 5786 net=1039.05 signed=1039.05 OK · 5787 net=885.73
+signed=885.73 OK · 5788 net=1273.90 signed=1273.90 OK · 5789 net=2015.85 signed=2015.85 OK · 5790
+net=1452.75 signed=1452.75 OK · 5791 net=1630.03 signed=1630.03 OK · 5792 net=1386.05 signed=1386.05
+OK · 5793 net=1568.91 signed=1568.91 OK · 5794 net=1330.60 signed=1330.60 OK · 5795 net=789.04
+signed=789.04 OK · 5796 net=379.73 signed=379.73 OK · 5797 net=1544.48 signed=1544.48 OK · 5798
+net=927.85 signed=927.85 OK · 5799 net=2523.91 signed=2523.91 OK · 5800 net=1407.40 signed=1407.40
+OK · 5801 net=1334.02 signed=1334.02 OK · 5802 net=2104.84 signed=2104.84 OK · 5803 net=1624.05
+signed=1624.05 OK.
+
+**5801/5802/5803 read live, directly, post-fix** (the three originally-reported net=$0.00 rows):
+5801 gross=1558.27 ded=260.00 reimb=35.75 net=1334.02 · 5802 gross=2079.85 ded=10.00 reimb=34.99
+net=2104.84 · 5803 gross=1684.05 ded=60.00 reimb=0.00 net=1624.05. All three match the signed
+TOTAL DUE exactly, `updated_at` timestamp confirms the write landed at execution time.
+
+**Idempotency proven**: re-ran PREVIEW immediately after commit — 0 would-fix, 35 already-correct,
+1 skipped. A second run is a true no-op as designed.
+
+**The one honestly-isolated remaining guard failure** (unchanged, expected, separate from this
+backfill's scope): `closeSettlementPayRun` (`payrun_gl_runs`) still shows 36 posted rows against the
+law's requirement of 0 — that's B5's canonical-path-only migration, explicitly NOT authorized by
+GO 1 ("GO 1 is the header backfill only. Do not reverse a single correct JE."), still owner-gated,
+still not started.
+
+**GO 2 (34 vs 35 standing correction)**: this guard's own comment already asserted 35 correctly
+before GO 2 arrived; updated the comment (PR #22042) to record the owner-confirmed root cause
+(driver-side documents = 35, company-side = 34, because 5782 has a driver settlement but no company
+settlement) so the next reader doesn't have to re-derive it. No behavior change — same guard, same
+output, before and after the comment edit.
+
+**Queued next**: invoice/line-haul creation SUPPLEMENT ($238,810.00, 5 wrong-leg loads); pre-08/28
+ingest + Faro-advances DELTA (13584/13585; load 039 already resolved by CC-2). B5's reverse+repost
+campaign and extending the canonical poster for reimbursements stay owner-gated per GO order, not
+authorized today.
