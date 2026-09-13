@@ -5,6 +5,7 @@ import { scanDuplicateVendors } from "../../api/factoring";
 import { FACTORING_TAB_PATH } from "../../router/route-manifest";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
+import { colors } from "../../design/tokens";
 
 const DISMISS_STORAGE_PREFIX = "ih35.factoring.duplicate-vendors-banner.dismissed.";
 
@@ -96,22 +97,27 @@ export function DuplicateVendorsBanner({ companyId }: DuplicateVendorsBannerProp
     }
   };
 
+  // ROUND 21.0 item 5c (owner ruling: "a real and valuable finding rendered in flat gray with no
+  // severity color... give it the warn treatment and keep it") — the same colors.warn token
+  // StatusBadge already uses, not a new palette. This is a genuine data-integrity warning
+  // (25 pairs live), not decoration.
   return (
     <div
-      className="flex items-start justify-between gap-3 rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+      className="flex items-start justify-between gap-3 rounded-sm border px-3 py-2 text-xs"
+      style={{ borderColor: colors.warn.strong, backgroundColor: colors.warn.soft, color: colors.warn.strong }}
       role="status"
       data-testid="factoring-duplicate-vendors-banner"
     >
       <div className="min-w-0 space-y-1">
-        <div className="font-medium">
+        <div className="font-semibold">
           Duplicate factoring vendors detected ({visiblePairCount} pair{visiblePairCount === 1 ? "" : "s"})
         </div>
-        <p className="text-xs text-slate-600">
+        <p className="text-xs" style={{ color: colors.warn.strong }}>
           Similar vendor names may fragment reserve / merge history. Review and merge from Driver Vendor
           Merges.
         </p>
         {topPairs.length > 0 ? (
-          <ul className="list-inside list-disc text-xs text-slate-600">
+          <ul className="list-inside list-disc text-xs" style={{ color: colors.warn.strong }}>
             {topPairs.map((p) => {
               // BANNER-MERGE-DEEPLINK-DROPS-CONTEXT — the scan already resolved both real vendor
               // ids for this pair; carry them into the merge form via query params so "review and
@@ -143,13 +149,14 @@ export function DuplicateVendorsBanner({ companyId }: DuplicateVendorsBannerProp
                   {canDeepLinkMerge ? (
                     <NavLink
                       to={`${FACTORING_TAB_PATH.vendor_merges}?${mergeParams!.toString()}`}
-                      className="font-semibold underline underline-offset-2 hover:text-slate-900"
+                      className="font-semibold underline underline-offset-2"
+                      style={{ color: colors.warn.strong }}
                       data-testid="factoring-duplicate-vendors-banner-merge-pair-link"
                     >
                       Merge these
                     </NavLink>
                   ) : (
-                    <span className="text-slate-500" data-testid="factoring-duplicate-vendors-banner-merge-pair-unsynced">
+                    <span style={{ color: colors.warn.strong }} data-testid="factoring-duplicate-vendors-banner-merge-pair-unsynced">
                       not yet synced to QBO — merge from Driver Vendor Merges manually
                     </span>
                   )}
@@ -160,7 +167,8 @@ export function DuplicateVendorsBanner({ companyId }: DuplicateVendorsBannerProp
         ) : null}
         <NavLink
           to={FACTORING_TAB_PATH.vendor_merges}
-          className="inline-block text-xs font-semibold text-slate-700 underline underline-offset-2 hover:text-slate-900"
+          className="inline-block text-xs font-semibold underline underline-offset-2"
+          style={{ color: colors.warn.strong }}
           data-testid="factoring-duplicate-vendors-banner-merge-link"
         >
           Open Driver Vendor Merges
@@ -168,7 +176,8 @@ export function DuplicateVendorsBanner({ companyId }: DuplicateVendorsBannerProp
       </div>
       <button
         type="button"
-        className="shrink-0 rounded-sm px-2 py-0.5 text-xs font-medium text-slate-700 hover:bg-slate-200"
+        className="shrink-0 rounded-sm px-2 py-0.5 text-xs font-medium"
+        style={{ color: colors.warn.strong }}
         onClick={dismiss}
         aria-label="Dismiss duplicate vendors banner"
         data-testid="factoring-duplicate-vendors-banner-dismiss"
