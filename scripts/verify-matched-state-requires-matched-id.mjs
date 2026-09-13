@@ -24,12 +24,20 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-matched-state-requires-matched-id";
 const SRC = path.join(ROOT, "apps/backend/src");
 
+// ACCT-F26301-C (2026-09-13) — this list was checked against the REAL live schema
+// (information_schema.columns, banking.bank_transactions, bypass_rls=lucia) after
+// matched_invoice_id's own omission caused a false positive (see BANK-MATCHED-STATE-GAP in
+// docs/audit/GUARD-WORKORDERS.md). All 10 real matched_*_id columns are listed here now, not just
+// the 7 a prior pass happened to enumerate, so this can't quietly regress the same way twice.
 const MATCHED_ID_COLUMNS = [
   "matched_load_id",
   "matched_bill_id",
+  "matched_bill_payment_id",
   "matched_settlement_id",
   "matched_expense_id",
   "matched_invoice_id",
+  "matched_advance_id",
+  "matched_payment_id",
   "matched_transfer_id",
   "matched_journal_entry_id",
 ];
