@@ -8844,5 +8844,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-13",
     "purpose": "verify-one-saved-query-three-surfaces"
+  },
+  "11445": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-13",
+    "purpose": "verify-ap-aging-bucket-filter-tiles"
   }
 }
