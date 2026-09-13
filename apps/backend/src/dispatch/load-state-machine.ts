@@ -57,7 +57,8 @@ export function toMdataStatus(status: DispatchStatus): string {
   return "cancelled";
 }
 
-const allowedTransitions: Record<DispatchStatus, DispatchStatus[]> = {
+// Forward edges — the lifecycle's natural progression.
+const forwardTransitions: Record<DispatchStatus, DispatchStatus[]> = {
   unassigned: ["assigned_not_dispatched", "cancelled"],
   assigned_not_dispatched: ["dispatched", "driver_no_show", "cancelled"],
   dispatched: ["in_transit", "driver_no_show", "driver_walkoff", "cancelled"],
@@ -69,6 +70,49 @@ const allowedTransitions: Record<DispatchStatus, DispatchStatus[]> = {
   driver_walkoff: [],
   driver_no_show: [],
 };
+
+/**
+ * ZONE 1 reversible back-edges (owner ruling 2026-09-12: "a draggable column should be able to be
+ * sent back etc."). These operational statuses can move BACKWARD as freely as forward — a dispatcher
+ * who mis-drags a card must be able to undo it. A reverse move REQUIRES a reason (enforced at the
+ * route) and posts NOTHING: none of these targets stamp stop actuals, mint driver bills, emit escrow
+ * events, or fire the revenue latch (those all live at delivered_pending_docs and beyond).
+ *
+ * ZONE 2 (delivered_pending_docs, completed_docs_received) is DELIBERATELY excluded here. Those
+ * statuses fired the two-event revenue latch (DR Unbilled/CR Line-Haul at delivery, DR A/R/CR
+ * Unbilled at POD); moving backward out of either must run the existing reversing-entry poster
+ * (Owner+Administrator, maker≠checker) — that is money-lane work that reuses the GL poster, not new
+ * GL math invented here. Until that path is wired, Zone 2 stays forward-only rather than orphaning a
+ * posted JE. Terminal exits (cancelled/abandoned/driver_walkoff/driver_no_show) are never reversible.
+ */
+export const REVERSIBLE_BACK_EDGES: ReadonlyArray<readonly [DispatchStatus, DispatchStatus]> = [
+  ["assigned_not_dispatched", "unassigned"],
+  ["dispatched", "assigned_not_dispatched"],
+  ["in_transit", "dispatched"],
+];
+
+const allowedTransitions: Record<DispatchStatus, DispatchStatus[]> = (() => {
+  const merged = Object.fromEntries(
+    (Object.entries(forwardTransitions) as [DispatchStatus, DispatchStatus[]][]).map(([from, tos]) => [
+      from,
+      [...tos],
+    ])
+  ) as Record<DispatchStatus, DispatchStatus[]>;
+  for (const [from, to] of REVERSIBLE_BACK_EDGES) {
+    if (!merged[from].includes(to)) merged[from].push(to);
+  }
+  return merged;
+})();
+
+/**
+ * True when a target status is a ZONE 1 backward move from the current status (see REVERSIBLE_BACK_EDGES).
+ * The /transition route uses this to require a reason and to record `dispatch.load.status_reversed`,
+ * distinguishing an intentional undo from a forward progression.
+ */
+export function isReverseTransition(currentMdataStatus: string, targetStatus: DispatchStatus): boolean {
+  const from = fromMdataStatus(currentMdataStatus);
+  return REVERSIBLE_BACK_EDGES.some(([f, t]) => f === from && t === targetStatus);
+}
 
 export function validateLoadStatusTransition(
   currentMdataStatus: string,

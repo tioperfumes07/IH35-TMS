@@ -114,10 +114,13 @@ function canMutate(role: string) {
   return ["Owner", "Administrator", "Manager", "Accountant"].includes(role);
 }
 
-// INS-MONEY-F6810A — tags a bill-schedule failure inside the renewal transaction so the route's
-// outer catch can map ONLY this failure to 502, without mislabeling an unrelated in-transaction
-// error (membership, constraint, unexpected DB failure) the same way.
-class PolicyRenewBillScheduleError extends Error {}
+// INS-MONEY-F6810A — tags a bill-schedule failure inside the create/renew transaction so the
+// route's outer catch can map ONLY this failure to 502, without mislabeling an unrelated
+// in-transaction error (membership, constraint, unexpected DB failure) the same way. Shared by
+// both POST /api/v1/insurance/policies (create) and POST .../renew — ROUND 20.9 ITEM 1 found the
+// create route never called createPolicyBillSchedule at all (only renew did), so every
+// brand-new (non-renewal) policy silently never generated a bill schedule or GL posting.
+class PolicyBillScheduleError extends Error {}
 
 async function withCompanyScope<T>(
   userId: string,
@@ -279,7 +282,17 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const body = parsed.data;
 
-    const created = await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
+    // ROUND 20.9 ITEM 1 — createPolicyBillSchedule composes into the SAME transaction as the
+    // policy insert (same pattern as the renew route below): a schedule failure rolls the whole
+    // create back rather than leaving a policy with no bill schedule and no path to ever post a
+    // premium expense (the exact silent gap that left 3 real active USMCA policies — $271,280.41/yr
+    // combined premium — with zero GL postings, ever).
+    let created:
+      | { kind: "vendor_not_found" }
+      | { kind: "coverage_type_not_found" }
+      | { kind: "created"; policy: { id?: string } };
+    try {
+      created = await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
       const vendorRes = await client.query<{ vendor_name: string }>(
         `SELECT vendor_name
          FROM mdata.vendors
@@ -354,6 +367,17 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       );
       const policy = result.rows[0] as { id?: string } | undefined;
       if (!policy?.id) throw new Error("insurance_policy_insert_failed");
+
+      if (body.installment_count > 0) {
+        try {
+          await createPolicyBillSchedule(String(policy.id), user.uuid, client);
+        } catch (scheduleErr) {
+          // Same tagged-error pattern as renew below: only THIS failure maps to 502; any other
+          // in-transaction error keeps its normal 500 behavior.
+          throw new PolicyBillScheduleError(String((scheduleErr as Error)?.message ?? scheduleErr));
+        }
+      }
+
       await appendCrudAudit(client, user.uuid, "insurance.policy.created", {
         resource_type: "insurance.policy",
         resource_id: policy.id,
@@ -362,7 +386,15 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         coverage_type_id: coverageTypeRes.rows[0].id,
       });
       return { kind: "created" as const, policy };
-    });
+      });
+    } catch (err) {
+      // A bill-schedule failure rolls back the WHOLE create — no policy, no schedule — rather
+      // than leaving a policy committed with no way to ever generate a premium bill.
+      if (err instanceof PolicyBillScheduleError) {
+        return reply.code(502).send({ error: "bill_schedule_failed" });
+      }
+      throw err;
+    }
 
     if (created.kind === "vendor_not_found") return reply.code(400).send({ error: "insurance_vendor_not_found" });
     if (created.kind === "coverage_type_not_found") return reply.code(400).send({ error: "coverage_type_not_found" });
@@ -730,7 +762,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
             // Re-thrown as a tagged error so the outer catch can map ONLY this failure to 502 —
             // any other in-transaction error (membership, constraint, unexpected DB failure)
             // must keep propagating as a genuine 500, not be mislabeled as a schedule failure.
-            throw new PolicyRenewBillScheduleError(String((scheduleErr as Error)?.message ?? scheduleErr));
+            throw new PolicyBillScheduleError(String((scheduleErr as Error)?.message ?? scheduleErr));
           }
         }
 
@@ -745,7 +777,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     } catch (err) {
       // A bill-schedule failure rolls back the WHOLE renewal — no policy, no units, no schedule —
       // rather than the old half-committed state. Any other error keeps its normal 500 behavior.
-      if (err instanceof PolicyRenewBillScheduleError) {
+      if (err instanceof PolicyBillScheduleError) {
         return reply.code(502).send({ error: "bill_schedule_failed" });
       }
       throw err;

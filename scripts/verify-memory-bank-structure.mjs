@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @ratchet — docs/MEMORY_BANK.md existence/structure only; never product or Live proof. */
 /**
  * RULE 51 (2026-09-08) — docs/MEMORY_BANK.md must exist and keep its 3 required section headers.
  * Existence/structure only — whether an entry is WORTH being in the file is judgment, not guardable.

@@ -1,6 +1,6 @@
 {
   "healthzSha": "f447d5f",
-  "generated_at": "2026-09-13T00:05:17.228Z",
+  "generated_at": "2026-09-13T00:10:49.880Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
@@ -2123,6 +2123,33 @@
   },
   "recentActivity": [
     {
+      "number": 0,
+      "title": "FINDING: N/A (docs only -- B3 coordination request posted to CC-3's INBOX per ROUND-20.8)",
+      "state": "merged",
+      "mergedAtCt": "09/12/2026, 07:09 PM CT",
+      "url": "",
+      "sha": "8375ae682d",
+      "committedAtIso": "2026-09-12T19:09:48-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: N/A (docs only -- OUTBOX line, PR #21941 merged, Part A live; B3 coordination flagged for CC-3)",
+      "state": "merged",
+      "mergedAtCt": "09/12/2026, 07:09 PM CT",
+      "url": "",
+      "sha": "0e92b7f69f",
+      "committedAtIso": "2026-09-12T19:09:30-05:00"
+    },
+    {
+      "number": 21941,
+      "title": "FINDING: N/A (ROUND-20.8 PART A -- the Money Design System, define-once tokens/components)",
+      "state": "merged",
+      "mergedAtCt": "09/12/2026, 07:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21941",
+      "sha": "89624cb488",
+      "committedAtIso": "2026-09-12T19:09:04-05:00"
+    },
+    {
       "number": 21939,
       "title": "FINDING: N/A (ROUND-20.4 -- Truck Line: remove drivers, make the row rules visible)",
       "state": "merged",
@@ -2184,33 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21934",
       "sha": "78490eae7e",
       "committedAtIso": "2026-09-12T18:34:43-05:00"
-    },
-    {
-      "number": 21933,
-      "title": "FINDING: N/A (ROUND-20.7 -- APP-WIDE AUTOFIT LAW: Dispatch Planners no longer capped at 1400px)",
-      "state": "merged",
-      "mergedAtCt": "09/12/2026, 06:25 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21933",
-      "sha": "836f61a854",
-      "committedAtIso": "2026-09-12T18:25:07-05:00"
-    },
-    {
-      "number": 21932,
-      "title": "Claude-3-IN-claim-reserve-11377",
-      "state": "merged",
-      "mergedAtCt": "09/12/2026, 06:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21932",
-      "sha": "150b607e02",
-      "committedAtIso": "2026-09-12T18:23:42-05:00"
-    },
-    {
-      "number": 21931,
-      "title": "FINDING: N/A (docs -- bus post: ROUND 20.1 DONE + loads/tours reassignment discovered + 2 repo-wide CI P0s fixed + 2 more flagged + void still blocked)",
-      "state": "merged",
-      "mergedAtCt": "09/12/2026, 06:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21931",
-      "sha": "4a3b021dca",
-      "committedAtIso": "2026-09-12T18:18:26-05:00"
     }
   ]
 }

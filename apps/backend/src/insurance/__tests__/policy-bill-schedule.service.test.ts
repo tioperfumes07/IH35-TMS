@@ -87,12 +87,42 @@ describe("createPolicyBillSchedule (forward-fix)", () => {
 
     expect(result.skipped).toBe(false);
     expect(createBillMock).toHaveBeenCalledTimes(5); // 1 down payment + 4 installments
-    const calls = createBillMock.mock.calls.map((c) => c[0] as { billNumber: string; amountCents: number });
-    expect(calls[0].billNumber).toBe("INS-POL-1-DP");
+    const calls = createBillMock.mock.calls.map((c) => c[0] as { billNumber?: string; memo: string; amountCents: number });
+    // ROUND 20.9 ITEM 1 — billNumber must NEVER be passed to createBill(): it doubles as a manual
+    // display_id override there, validated against the strict BILL-YYYY-NNNNN shape, which
+    // "INS-<policy_number>-<suffix>" never matches (confirmed live: every createBill() call this
+    // function ever made, for any policy, threw InvalidDisplayIdShapeError before this fix — 0
+    // "INS-%" bills exist anywhere in the system's history). The human-readable reference is kept
+    // in the memo instead.
+    expect(calls[0].billNumber).toBeUndefined();
+    expect(calls[0].memo).toBe("INS-POL-1-DP — Insurance premium down payment — Acme policy POL-1");
     expect(calls[0].amountCents).toBe(20000);
     const total = calls.reduce((s, c) => s + c.amountCents, 0);
     expect(total).toBe(120000); // down + installments === total premium
     expect(result.billUuids).toEqual(["bill-1", "bill-2", "bill-3", "bill-4", "bill-5"]);
+  });
+
+  it("stamps operating_company_id (not just tenant_id) on every insurance.payment_schedule INSERT", async () => {
+    // ROUND 20.9 ITEM 1 — insurance.payment_schedule's RLS policy enforces on
+    // operating_company_id, which this INSERT left NULL (nullable, no default) before the fix,
+    // so a real (non-bypass) tenant-scoped transaction — i.e. every genuine production request —
+    // failed with "new row violates row-level security policy for table payment_schedule",
+    // confirmed live against Neon prod. tenant_id and operating_company_id must both be stamped
+    // to the same value, mirroring insurance.policy's own INSERT.
+    const client = makeClient();
+    const insertCalls: unknown[][] = [];
+    const wrappedQuery = vi.fn(async (sql: string, values?: unknown[]) => {
+      if (sql.includes("INSERT INTO insurance.payment_schedule")) {
+        insertCalls.push(values ?? []);
+        expect(sql).toContain("operating_company_id");
+      }
+      return client.query(sql, values);
+    });
+    await createPolicyBillSchedule(POLICY_ID, "user-1", { query: wrappedQuery });
+    expect(insertCalls.length).toBe(5);
+    for (const values of insertCalls) {
+      expect(values[0]).toBe(OC); // the single $1::uuid now bound to BOTH tenant_id and operating_company_id
+    }
   });
 
   it("replay-skips with no createBill calls when the policy already has billed rows", async () => {

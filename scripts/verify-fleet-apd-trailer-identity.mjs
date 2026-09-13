@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /** REG-025: only the two owner-pending APD trailer identities may remain active in USMCA. */
+/** @independent-input DATABASE_URL — live mdata.equipment read (gated ENABLE_LIVE_DB_UNIT_TEST_GUARD=true); the reconcile doc is only the static half of this check. */
 import fs from "node:fs";
 import process from "node:process";
 import { createRequire } from "node:module";
