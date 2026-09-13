@@ -64,6 +64,9 @@ const STEPS = [
   // accept it or change the transactions." All seats bound by these two.
   ["verify-no-automatch", "scripts/verify-no-automatch.mjs"],
   ["verify-load-to-cash-chain", "scripts/verify-load-to-cash-chain.mjs"],
+  // ALL-SEATS LAW (owner, 2026-09-13) — every load-number column carries a settlement/tour column
+  // beside it; only source_document_ref (never display_id) is ever the human-visible number.
+  ["verify-settlement-ref-beside-load", "scripts/verify-settlement-ref-beside-load.mjs"],
   // Rule 30 — soft-reset onto newer main deleted other PRs' verify-steps (2026-08-02).
   ["verify-no-guard-file-deletion", "scripts/verify-no-guard-file-deletion.mjs"],
   // Rule 30 — tip commit LIVE PROOF must be Claude-green (not "UNVERIFIED browser" theater).

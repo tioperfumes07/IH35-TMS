@@ -583,6 +583,21 @@ export function useCancelLoad(operatingCompanyId: string | null) {
   });
 }
 
+// ALL-SEATS LAW (owner, 2026-09-13) — "in every window where we have a load number, we must also
+// have a column with a pre-settlement, or settlement or tour number." One shared batch read; see
+// components/money/SettlementRefCell.tsx for the rendering half.
+export type SettlementRefRow = {
+  load_id: string;
+  presettlement_link_id: string | null;
+  source_document_ref: string | null;
+  status: string | null;
+};
+
+export function getSettlementRefs(operatingCompanyId: string, loadIds: string[]) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId, load_ids: loadIds.join(",") });
+  return apiRequest<{ refs: SettlementRefRow[] }>(`/api/v1/mdata/loads/settlement-refs?${q}`);
+}
+
 // ─── Block 9 (DISP-PROFITABILITY): additive types ────────────────────────────
 // Full API helpers live in src/lib/loadProfit.ts (Lane B).
 // These re-exports let other modules stay in the loads import namespace.
