@@ -77,6 +77,8 @@ const STEPS = [
   // ROUND 23.3 SUPPLEMENT (owner/Lead, 2026-09-13) — the master parity guard: proves the WHOLE
   // AlwaysTrack absorption/ingest chain against prod, not one seat's own slice.
   ["verify-alwaystrack-parity", "scripts/verify-alwaystrack-parity.mjs"],
+  // ROUND 23.3 DELTA (owner, 2026-09-13) — every live Faro invoice line must carry a real load_id.
+  ["verify-faro-invoice-lines-load-linkage", "scripts/verify-faro-invoice-lines-load-linkage.mjs"],
   // Rule 30 — soft-reset onto newer main deleted other PRs' verify-steps (2026-08-02).
   ["verify-no-guard-file-deletion", "scripts/verify-no-guard-file-deletion.mjs"],
   // Rule 30 — tip commit LIVE PROOF must be Claude-green (not "UNVERIFIED browser" theater).

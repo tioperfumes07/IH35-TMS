@@ -1,10 +1,10 @@
 {
-  "healthzSha": "f447d5f",
-  "generated_at": "2026-09-13T00:10:49.880Z",
+  "healthzSha": "1185086",
+  "generated_at": "2026-09-13T18:56:10.585Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "f447d5f",
+    "deployedSha": "1185086",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 0,
-      "title": "FINDING: N/A (docs only -- B3 coordination request posted to CC-3's INBOX per ROUND-20.8)",
+      "number": 22020,
+      "title": "FINDING: BANK-F30120 (ROUND 23.3 SUPPLEMENT -- master AlwaysTrack parity guard + orphaned invoice-dispute routes wired)",
       "state": "merged",
-      "mergedAtCt": "09/12/2026, 07:09 PM CT",
-      "url": "",
-      "sha": "8375ae682d",
-      "committedAtIso": "2026-09-12T19:09:48-05:00"
+      "mergedAtCt": "09/13/2026, 01:50 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22020",
+      "sha": "1f0a16406a",
+      "committedAtIso": "2026-09-13T13:50:26-05:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: N/A (docs only -- OUTBOX line, PR #21941 merged, Part A live; B3 coordination flagged for CC-3)",
+      "number": 22019,
+      "title": "FINDING: N/A (docs(bus) report — ROUND 23.1 Truck Line shipped #22018, awaiting deploy for live proof)",
       "state": "merged",
-      "mergedAtCt": "09/12/2026, 07:09 PM CT",
-      "url": "",
-      "sha": "0e92b7f69f",
-      "committedAtIso": "2026-09-12T19:09:30-05:00"
+      "mergedAtCt": "09/13/2026, 01:46 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22019",
+      "sha": "1185086675",
+      "committedAtIso": "2026-09-13T13:46:50-05:00"
     },
     {
-      "number": 21941,
-      "title": "FINDING: N/A (ROUND-20.8 PART A -- the Money Design System, define-once tokens/components)",
+      "number": 22018,
+      "title": "FINDING: N/A (ROUND 23.1 -- Truck Line: five owner-reported, live-verified defects)",
       "state": "merged",
-      "mergedAtCt": "09/12/2026, 07:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21941",
-      "sha": "89624cb488",
-      "committedAtIso": "2026-09-12T19:09:04-05:00"
+      "mergedAtCt": "09/13/2026, 01:42 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22018",
+      "sha": "bd1d28c6ad",
+      "committedAtIso": "2026-09-13T13:42:38-05:00"
     },
     {
-      "number": 21939,
-      "title": "FINDING: N/A (ROUND-20.4 -- Truck Line: remove drivers, make the row rules visible)",
+      "number": 22017,
+      "title": "FINDING: N/A (CLAIM-RESERVE 11453 -- reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "09/12/2026, 06:58 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21939",
-      "sha": "f447d5f901",
-      "committedAtIso": "2026-09-12T18:58:20-05:00"
+      "mergedAtCt": "09/13/2026, 01:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22017",
+      "sha": "7258a05505",
+      "committedAtIso": "2026-09-13T13:31:02-05:00"
     },
     {
-      "number": 21938,
-      "title": "FINDING: N/A (docs -- ROUND 20.3 UPDATED fan-out confirmed already-shipped, no code change)",
+      "number": 22013,
+      "title": "spec(usmca): absorption law + AlwaysTrack ingestion spec, and unified dispute window spec",
       "state": "merged",
-      "mergedAtCt": "09/12/2026, 06:55 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21938",
-      "sha": "eba08dd208",
-      "committedAtIso": "2026-09-12T18:55:39-05:00"
+      "mergedAtCt": "09/13/2026, 01:26 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22013",
+      "sha": "a01610940b",
+      "committedAtIso": "2026-09-13T13:26:09-05:00"
     },
     {
-      "number": 21937,
-      "title": "FINDING: N/A (CLAIM-RESERVE 11381 -- reservation-only commit, no code fix)",
+      "number": 22015,
+      "title": "docs: reconcile the three 2026-09-13 instruction docs to one source per topic",
       "state": "merged",
-      "mergedAtCt": "09/12/2026, 06:52 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21937",
-      "sha": "a72e109b55",
-      "committedAtIso": "2026-09-12T18:52:46-05:00"
+      "mergedAtCt": "09/13/2026, 01:16 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22015",
+      "sha": "c37f5f3d53",
+      "committedAtIso": "2026-09-13T13:16:40-05:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: N/A (docs only -- OUTBOX line, PR #21935 merged, ROUND-20.7 sweep complete)",
+      "number": 22016,
+      "title": "FINDING: GLB-20260913 — dispute-window spec (PART C) lacked the exact endpoint contracts, normalized row shape, and route/nav insertion points seats need to build it without re-reading the code; fold in the measured design brief.",
       "state": "merged",
-      "mergedAtCt": "09/12/2026, 06:49 PM CT",
-      "url": "",
-      "sha": "6d129bfd68",
-      "committedAtIso": "2026-09-12T18:49:35-05:00"
+      "mergedAtCt": "09/13/2026, 01:16 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22016",
+      "sha": "37d3ea76de",
+      "committedAtIso": "2026-09-13T13:16:37-05:00"
     },
     {
-      "number": 21935,
-      "title": "FINDING: N/A (ROUND-20.7 follow-up -- profile-page px->rem conversion + guard registry expansion)",
+      "number": 22014,
+      "title": "FINDING: GLB-20260913 — owner rulings 2026-09-13 (settlement absorption at the Aug-7 cutover, AlwaysTrack ingest gap, unified dispute window) were not written where every seat is forced to read them; encode as coder instructions.",
       "state": "merged",
-      "mergedAtCt": "09/12/2026, 06:48 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21935",
-      "sha": "a8b6fe8cee",
-      "committedAtIso": "2026-09-12T18:48:38-05:00"
+      "mergedAtCt": "09/13/2026, 01:10 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22014",
+      "sha": "3b22f9fdfa",
+      "committedAtIso": "2026-09-13T13:10:58-05:00"
     },
     {
-      "number": 21936,
-      "title": "Claude-3-IN-round-20.6-planners-labels-columns",
+      "number": 22012,
+      "title": "docs(alwaystrack): CORRECTION - withdraw D1 and D2, rescope the gap to real USMCA loads",
       "state": "merged",
-      "mergedAtCt": "09/12/2026, 06:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21936",
-      "sha": "ed6239a3e0",
-      "committedAtIso": "2026-09-12T18:47:48-05:00"
+      "mergedAtCt": "09/13/2026, 12:58 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22012",
+      "sha": "170e7cf6c5",
+      "committedAtIso": "2026-09-13T12:58:54-05:00"
     },
     {
-      "number": 21934,
-      "title": "FINDING: N/A (docs only -- ROUND-20.7 planners sub-piece DONE line, live-confirmed at 2368/1440/1024px)",
+      "number": 22011,
+      "title": "docs(alwaystrack): measured parity gap register + validated PDF extractor + truth JSON",
       "state": "merged",
-      "mergedAtCt": "09/12/2026, 06:34 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/21934",
-      "sha": "78490eae7e",
-      "committedAtIso": "2026-09-12T18:34:43-05:00"
+      "mergedAtCt": "09/13/2026, 12:12 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22011",
+      "sha": "82c225fd27",
+      "committedAtIso": "2026-09-13T12:12:14-05:00"
     }
   ]
 }
