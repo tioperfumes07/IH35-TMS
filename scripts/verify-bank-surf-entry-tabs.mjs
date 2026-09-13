@@ -19,8 +19,11 @@ const FILES = {
   home: "apps/frontend/src/pages/banking/BankingHome.tsx",
 };
 
+// ROUND-20.8 B3 (2026-09-13) — "/banking/factoring" / "factoring" removed from these lists; that
+// tab is deleted (Factoring owns its own module), see verify-banking-arch-design-tabs.mjs. The
+// route itself still exists as a redirect (routes/manifest.tsx), so it is deliberately NOT
+// required here anymore — a redirect-only route is not an "entry tab."
 const REQUIRED_PATHS = [
-  "/banking/factoring",
   "/banking/driver-escrow",
   "/banking/relay",
   "/banking/plaid-connections",
@@ -28,7 +31,6 @@ const REQUIRED_PATHS = [
 ];
 
 const REQUIRED_TAB_IDS = [
-  "factoring",
   "driver_escrow",
   "relay_card",
   "plaid_connections",
@@ -58,7 +60,7 @@ export function run(root = ROOT) {
   }
 
   // Home must still branch on these tabs (active path, not orphan routes).
-  for (const id of ["factoring", "driver_escrow", "relay_card", "plaid_connections", "statement_import"]) {
+  for (const id of REQUIRED_TAB_IDS) {
     if (!home.includes(`"${id}"`) && !home.includes(`'${id}'`)) {
       failures.push(`BankingHome must reference tab id ${id}`);
     }
@@ -83,7 +85,7 @@ if (process.argv.includes("--selftest")) {
   mk(FILES.sidebar, REQUIRED_PATHS.join("\n") + "\n");
   mk(FILES.home, homeIds + "\n");
   if (run(tmp).length) throw new Error("expected PASS: " + run(tmp).join("; "));
-  mk(FILES.manifest, `path="/banking/factoring"\n`);
+  mk(FILES.manifest, `path="/banking/driver-escrow"\n`);
   if (!run(tmp).length) throw new Error("expected FAIL when paths missing");
   fs.rmSync(tmp, { recursive: true, force: true });
   console.log("verify-bank-surf-entry-tabs --selftest OK");

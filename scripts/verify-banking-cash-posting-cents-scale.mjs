@@ -54,8 +54,11 @@ export function auditHome(src) {
   if (/formatUsdCents\s*\(\s*cashPosting\s*\)/.test(body)) {
     errors.push(`${HOME}: Cash posting must not pass API dollars through formatUsdCents (100× inflation).`);
   }
-  if (!/Cash posting[\s\S]{0,400}formatUsd\s*\(\s*cashPosting\s*\)/.test(body)) {
-    errors.push(`${HOME}: Cash posting tile must render formatUsd(cashPosting) so dollars stay dollars.`);
+  // ROUND-20.8 Part B (PR #21946) renamed the tile's label "Cash posting" -> "Cash on hand"
+  // (matching the owner-approved reference build); this anchor is a locator, not the check's real
+  // intent (dollars-not-cents), so it tracks the rename rather than the check disappearing.
+  if (!/Cash on hand[\s\S]{0,400}formatUsd\s*\(\s*cashPosting\s*\)/.test(body)) {
+    errors.push(`${HOME}: Cash on hand tile must render formatUsd(cashPosting) so dollars stay dollars.`);
   }
   return errors;
 }
@@ -109,12 +112,12 @@ function selftest() {
   const goodHome = `
     import { formatUsd } from "../../lib/money";
     const cashPosting = Number(kpiQuery.data?.total_cash ?? 0);
-    <div>Cash posting</div><div>{formatUsd(cashPosting)}</div>
+    <div>Cash on hand</div><div>{formatUsd(cashPosting)}</div>
   `;
   const doubleConvert = `
     import { formatUsd } from "../../lib/money";
     const cashPosting = Number(kpiQuery.data?.total_cash ?? 0) / 100;
-    <div>Cash posting</div><div>{formatUsd(cashPosting)}</div>
+    <div>Cash on hand</div><div>{formatUsd(cashPosting)}</div>
   `;
   const centsAsDollars = `
     import { formatUsdCents } from "../../lib/money";

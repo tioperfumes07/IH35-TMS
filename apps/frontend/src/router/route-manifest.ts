@@ -81,7 +81,6 @@ export const BANKING_TAB_PATH: Record<string, string> = {
   transactions: "/banking/transactions",
   link_suggestions: "/banking/link-suggestions",
   reconciliation: "/banking/reconciliation",
-  factoring: "/banking/factoring",
   driver_escrow: "/banking/driver-escrow",
   relay_card: "/banking/relay",
   reports: "/banking/reports",
@@ -94,7 +93,6 @@ export function bankingTabFromPath(pathname: string): string {
   if (pathname === "/banking/transactions") return "transactions";
   if (pathname === "/banking/link-suggestions") return "link_suggestions";
   if (pathname === "/banking/reconciliation") return "reconciliation";
-  if (pathname === "/banking/factoring") return "factoring";
   if (pathname === "/banking/driver-escrow") return "driver_escrow";
   if (pathname === "/banking/relay") return "relay_card";
   if (pathname === "/banking/reports") return "reports";

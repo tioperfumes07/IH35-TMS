@@ -5,7 +5,6 @@ import {
   getAllAccounts,
   getBankingKpis,
   getFactoringVirtual,
-  getFactoringVirtualTimeline,
   getBankingTiles,
   getBankingUncategorized,
   getPlaidBankAccounts,
@@ -15,9 +14,6 @@ import {
   createPettyCashAccount,
   reorderBankAccounts,
 } from "../../api/banking";
-import { EntityLink } from "../../components/shared/EntityLink";
-import { EntityPicker } from "../../components/EntityPicker";
-import { entityLabel } from "../../lib/entity-label";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { EntityEmptyState } from "../../components/shared/EntityEmptyState";
@@ -57,18 +53,6 @@ import { staleSyncLabel, MONEY_TONE_COLORS } from "../../design/money-design-sys
 
 type BankingTabId = BankingModuleTabId;
 
-// DISP-F9993 -- FactoringStatus is a machine enum ("reserve_held", "recourse_returned");
-// same label convention as FactoringListPage.tsx / SubmissionWorkqueue.tsx's local STATUS_LABEL.
-const FACTORING_STATUS_LABEL: Record<string, string> = {
-  submitted: "Submitted",
-  advanced: "Funded",
-  reserve_held: "Reserve Held",
-  collected: "Collected",
-  released: "Released",
-  recourse_returned: "Recourse",
-  voided: "Voided",
-};
-
 type Props = {
   initialTab?: BankingTabId;
 };
@@ -99,23 +83,8 @@ function virtualTileRoute(tile: { tile_kind?: string; account_type?: string } | 
 export function BankingHomePage({ initialTab }: Props = {}) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const deepLinkTxnId = searchParams.get("txn_id");
-  // LINK-F5171/LINK-F5184: factoring:banking.entry reverse — a load can filter this tab's "Recent
-  // Faro advances" timeline down to its own advance(s) via ?load_id=.
-  // LST-F5203 — visible Load EntityPicker must also write ?load_id= (seed-only was not enough).
-  const deepLinkLoadId = searchParams.get("load_id");
-  function patchLoadFilter(next: string) {
-    setSearchParams(
-      (prev) => {
-        const params = new URLSearchParams(prev);
-        if (next) params.set("load_id", next);
-        else params.delete("load_id");
-        return params;
-      },
-      { replace: true },
-    );
-  }
   const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const { user } = useAuth();
   const canSeeEmailQueue = user?.role === "Owner" || user?.role === "Administrator";
@@ -215,12 +184,6 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     queryFn: () => getFactoringVirtual(companyId),
     enabled: Boolean(companyId),
   });
-  const factoringTimelineQuery = useQuery({
-    queryKey: ["banking", "factoring-virtual-timeline", companyId, deepLinkLoadId],
-    queryFn: () => getFactoringVirtualTimeline(companyId, deepLinkLoadId ?? undefined),
-    enabled: Boolean(companyId) && activeTab === "factoring",
-  });
-
   const money = useMemo(
     () => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }),
     []
@@ -528,7 +491,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 tabs for canonical virtual-bank truth.
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
-                <ActionButton onClick={() => setActiveTab("factoring")}>Factoring entry</ActionButton>
+                <ActionButton onClick={() => navigate("/factoring")}>Factoring entry</ActionButton>
                 <ActionButton onClick={() => setActiveTab("driver_escrow")}>Driver Escrow</ActionButton>
                 <Link to="/banking/cash-gl-setup" className="text-xs font-medium text-slate-800 underline">
                   Cash GL setup
@@ -1008,147 +971,13 @@ export function BankingHomePage({ initialTab }: Props = {}) {
         </div>
       ) : null}
 
-      {activeTab === "factoring" ? (
-        <div className="space-y-3">
-          {factoringVirtualQuery.isSuccess &&
-          !factoringVirtualSummary.lastAdvanceAt &&
-          factoringReserve === 0 &&
-          factoringOutstandingLiability === 0 ? (
-            <div
-              className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
-              data-testid="banking-factoring-entry-unproven-banner"
-            >
-              <p className="font-semibold">Factoring Banking entry has no proven Faro advance / reserve / chargeback activity yet.</p>
-              <p className="mt-1">
-                This tab is a thin entry into `/factoring` — zeros here are not “factoring healthy.” Use Recourse Pipeline /
-                Reserve Tracker / Chargebacks for live Faro truth. Do not invent Advances funded MTD from cash posting
-                KPIs.
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <ActionButton onClick={() => navigate("/factoring/recourse-pipeline")}>Recourse Pipeline</ActionButton>
-                <ActionButton onClick={() => navigate("/factoring/reserve-tracker")}>Reserve Tracker</ActionButton>
-              </div>
-            </div>
-          ) : null}
-          <div className="rounded-sm border border-slate-300 bg-slate-100">
-            <div className="flex items-center justify-between border-b border-slate-300 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
-              <span>Factoring (Faro) · Banking entry</span>
-              <Link to="/factoring" className="text-xs font-semibold normal-case text-slate-800 hover:underline">
-                Open Factoring module →
-              </Link>
-            </div>
-            <div className="space-y-1 px-3 py-2 text-xs">
-              <Link to="/factoring/reserve-tracker" className="flex justify-between hover:underline">
-                <span>Reserves held</span>
-                <span>{money.format(factoringReserve)}</span>
-              </Link>
-              <div className="flex justify-between">
-                <span>Advances funded MTD</span>
-                <span title="No advances_funded_mtd on factoring-virtual API — open Factoring module; never invent from cash posting">
-                  — (see Factoring module)
-                </span>
-              </div>
-              <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
-                {/* FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY: honest label
-                    for what this figure actually is (Advance + Reserve owed to the factor). */}
-                <span>Outstanding liability</span>
-                <span className="text-red-700">{money.format(factoringOutstandingLiability)}</span>
-              </Link>
-              <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
-                <span>+30 aging fees</span>
-                <span className="text-slate-700" title="No aging_fees_30d field on factoring-virtual — open Chargebacks & Fees">
-                  — (see Chargebacks & Fees)
-                </span>
-              </Link>
-              <div className="pt-1 text-xs text-gray-500">
-                Last advance:{" "}
-                {factoringVirtualSummary.lastAdvanceAt
-                  ? String(factoringVirtualSummary.lastAdvanceAt).slice(0, 10)
-                  : <NotApplicable reason="not_applicable" />}
-              </div>
-              {factoringTile ? <div className="text-xs text-slate-700">{factoringTile.display_name}</div> : null}
-              <div className="flex flex-wrap gap-2 pt-2">
-                <ActionButton onClick={() => navigate("/factoring/recourse-pipeline")}>Recourse Pipeline</ActionButton>
-                <ActionButton onClick={() => navigate("/factoring/chargebacks-fees")}>Chargebacks & Fees</ActionButton>
-                <ActionButton onClick={() => navigate("/factoring/statements-settings")}>Statements & Settings</ActionButton>
-              </div>
-            </div>
-          </div>
-          <div
-            className="rounded-sm border border-slate-300 bg-white"
-            data-testid="banking-factoring-faro-advances-panel"
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
-              <span>{deepLinkLoadId ? "Faro advances for this load" : "Recent Faro advances"}</span>
-              <div className="flex flex-wrap items-center gap-2 normal-case">
-                <label className="text-[11px] font-medium text-slate-600">
-                  Load
-                  <EntityPicker
-                    kind="load"
-                    operatingCompanyId={companyId}
-                    value={deepLinkLoadId || null}
-                    onChange={(next) => patchLoadFilter(next ?? "")}
-                    allowCreate={false}
-                    placeholder="All loads"
-                    className="mt-1 min-w-[12rem]"
-                    dataTestId="banking-factoring-filter-load"
-                  />
-                </label>
-                <Link to="/accounting/factoring" className="text-xs font-semibold text-slate-800 hover:underline">
-                  All advances →
-                </Link>
-              </div>
-            </div>
-            {factoringTimelineQuery.isSuccess ? (
-              <div className="max-h-[220px] overflow-y-auto">
-                {(factoringTimelineQuery.data?.timeline ?? []).length === 0 ? (
-                  <p className="px-3 py-2 text-xs text-gray-500">
-                    No non-voided factoring advances recorded for this{" "}
-                    {deepLinkLoadId ? "load" : "company"} yet.
-                  </p>
-                ) : (
-                  (factoringTimelineQuery.data?.timeline ?? []).map((row) => {
-                    const cents = Number(row.advance_amount_cents ?? 0);
-                    return (
-                      <div
-                        key={row.id}
-                        className="grid grid-cols-[1fr_auto] items-center gap-2 border-b border-gray-100 px-3 py-1.5 text-xs"
-                      >
-                        <span className="min-w-0 truncate">
-                          <EntityLink
-                            kind="factoring_advance"
-                            id={row.id}
-                            label={entityLabel(row.display_id, row.id, "Factoring advance")}
-                            data-testid={`banking-factoring-advance-link-${row.id}`}
-                          />
-                          <span className="ml-2 text-[11px] uppercase text-gray-500">
-                            {FACTORING_STATUS_LABEL[row.status] ?? row.status}
-                          </span>
-                        </span>
-                        <span className="tabular-nums text-xs text-gray-800">
-                          {Number.isFinite(cents) ? money.format(cents / 100) : <NotApplicable reason="no_source" />}
-                        </span>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            ) : factoringTimelineQuery.isError ? (
-              <p className="px-3 py-2 text-xs text-red-700">Could not load Faro advances timeline.</p>
-            ) : (
-              <p className="px-3 py-2 text-xs text-gray-500">Loading advances…</p>
-            )}
-          </div>
-          <p className="text-xs text-gray-600">
-            Design law: Banking Factoring tab is a thin entry summary that deep-links into the standalone{" "}
-            <Link to="/factoring" className="underline">
-              /factoring
-            </Link>{" "}
-            module. Accounts home still shows the Factoring virtual-bank card (additive — never removed). Recent advances
-            use EntityLink → <code className="text-[11px]">/accounting/factoring/:id</code>.
-          </p>
-        </div>
-      ) : null}
+      {/* ROUND-20.8 B3 — the "Factoring (Faro)" tab is DELETED (was a whole duplicate module entry
+          point for Factoring, which owns its own 16-tab, now 6-tab, surface — CC-3 ROUND 21.0).
+          Coordinated per the Lead's own "neither side deletes unilaterally": CC-3 shipped their
+          side (#21952) and explicitly deferred this Banking-side deletion to this PR. The
+          Accounts tab's own "Factoring · virtual bank" summary card (a few hundred lines above)
+          already deep-links into /factoring and stays, unchanged — that IS the read-only summary
+          card the spec asks for; it predates this PR. */}
 
       {activeTab === "relay_card" ? (
         <div className="space-y-3" data-testid="banking-relay-tab">

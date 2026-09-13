@@ -39,7 +39,11 @@ const CHECKS = [
   { name: "faro import route", file: MANIFEST, pattern: mountedRoute("/factoring/faro-import", "FaroImportPage") },
   { name: "accounting factoring list route", file: MANIFEST, pattern: mountedRoute("/accounting/factoring", "FactoringListPage") },
   { name: "factor recon route", file: MANIFEST, pattern: mountedRoute("/accounting/factor-reconciliation", "FactorReconciliationPage") },
-  { name: "banking factoring entry route", file: MANIFEST, pattern: /path="\/banking\/factoring"[\s\S]{0,220}<BankingHomePage initialTab="factoring"/ },
+  // ROUND-20.8 B3 (2026-09-13) — /banking/factoring is now a redirect (Navigate to /banking), not
+  // a BankingHomePage initialTab mount; the Factoring tab it used to name is deleted (Factoring
+  // owns its own module). Updated in place rather than removed so a future regression back to a
+  // bare 404 (or a reintroduced duplicate tab) still gets caught.
+  { name: "banking factoring entry route (redirect)", file: MANIFEST, pattern: /path="\/banking\/factoring"[\s\S]{0,220}Navigate to="\/banking"/ },
   { name: "submission queue invoice+customer drills", file: "apps/frontend/src/pages/factoring/SubmissionQueue.tsx", pattern: /kind="invoice"[\s\S]{0,100}id=\{item\.invoice_id\}[\s\S]{0,500}kind="customer"[\s\S]{0,100}id=\{item\.customer_id\}/ },
   { name: "batch wizard invoice+customer drills", file: "apps/frontend/src/pages/factoring/BatchWizard.tsx", pattern: /kind="invoice" id=\{invoice\.id\}[\s\S]{0,500}kind="customer"[\s\S]{0,100}id=\{invoice\.customer_id\}/ },
   { name: "faro import invoice+customer drills", file: "apps/frontend/src/pages/factoring/FaroImportPage.tsx", pattern: /kind="invoice"[\s\S]{0,100}id=\{row\.invoice_id\}[\s\S]{0,500}kind="customer"[\s\S]{0,100}id=\{row\.customer_id\}/ },
@@ -52,7 +56,11 @@ const CHECKS = [
   { name: "plaid connections route", file: MANIFEST, pattern: /path="\/banking\/plaid-connections"[\s\S]{0,220}<BankingHomePage initialTab="plaid_connections"/ },
   { name: "banking settings route", file: MANIFEST, pattern: /path="\/banking\/settings"[\s\S]{0,220}<BankingHomePage initialTab="settings"/ },
   { name: "bank recon workspace exact reverse drills", file: "apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx", pattern: /kind="load"[\s\S]{0,100}id=\{tx\.matched_load_id\}[\s\S]{0,2500}kind="journal_entry" id=\{tx\.matched_journal_entry_id\}/ },
-  { name: "banking home factoring advance drill", file: "apps/frontend/src/pages/banking/BankingHome.tsx", pattern: /kind="factoring_advance"[\s\S]{0,100}id=\{row\.id\}/ },
+  // ROUND-20.8 B3 (2026-09-13) — "banking home factoring advance drill" removed: it asserted an
+  // EntityLink kind="factoring_advance" inside BankingHome.tsx's own Faro-advances-timeline panel,
+  // which was part of the now-deleted duplicate Factoring tab (Factoring's own module already shows
+  // every advance in full detail — verify-load-factoring-invoice-entitylink.mjs and others cover
+  // that surface). Removed, not silently left to bit-rot as an always-red entry.
   // drivers
   { name: "drivers home route", file: MANIFEST, pattern: mountedRoute("/drivers", "DriversPage") },
   { name: "drivers cash advances route", file: MANIFEST, pattern: /path="\/drivers\/cash-advances"[\s\S]{0,220}<DriversSubtabRoute subnav="cash_advances"/ },

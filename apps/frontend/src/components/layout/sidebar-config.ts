@@ -176,8 +176,8 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
       return [
         { label: "Accounts", to: "/banking" },
         { label: "Transactions", to: "/banking/transactions" },
+        { label: "Link Suggestions", to: "/banking/link-suggestions" },
         { label: "Reconciliation", to: "/banking/reconciliation" },
-        { label: "Factoring (Faro)", to: "/banking/factoring" },
         { label: "Driver Escrow", to: "/banking/driver-escrow" },
         { label: "Relay Card", to: "/banking/relay" },
         { label: "Reports", to: "/banking/reports" },

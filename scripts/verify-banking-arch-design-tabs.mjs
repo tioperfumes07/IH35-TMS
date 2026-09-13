@@ -10,11 +10,14 @@ const DESIGN = "docs/specs/IH35_ARCHITECTURAL_DESIGN.md";
 const NAV = "apps/frontend/src/pages/banking/BANKING_NAV_CONFIG.ts";
 const PATHS = "apps/frontend/src/router/route-manifest.ts";
 
+// ROUND-20.8 B3 (2026-09-13, coordinated with CC-3 ROUND 21.0 item 6) — "factoring" removed. It
+// was a duplicate entry point into the standalone /factoring module; the Accounts tab's own
+// "Factoring · virtual bank" summary card is the surviving read-only entry point, and
+// /banking/factoring now redirects rather than 404s (see routes/manifest.tsx).
 const REQUIRED_LIVE_TAB_IDS = [
   "accounts",
   "transactions",
   "reconciliation",
-  "factoring",
   "driver_escrow",
   "relay_card",
   "reports",
@@ -25,14 +28,12 @@ const REQUIRED_LIVE_TAB_IDS = [
 
 const REQUIRED_DESIGN_NEEDLES = [
   "MODULE 4 — BANKING",
-  "/banking/factoring",
   "/banking/relay",
   "/banking/statement-import",
   "/banking/plaid-connections",
   "/banking/settings",
   "**Reports**",
   "**Relay Card**",
-  "**Factoring (Faro)**",
   "**Plaid Connections**",
 ];
 
@@ -54,7 +55,6 @@ export function run(root = process.cwd()) {
   }
 
   for (const path of [
-    "/banking/factoring",
     "/banking/relay",
     "/banking/statement-import",
     "/banking/plaid-connections",
@@ -74,7 +74,7 @@ if (process.argv.includes("--selftest")) {
   };
   mk(
     DESIGN,
-    "## MODULE 4 — BANKING\n/banking/factoring\n/banking/relay\n/banking/statement-import\n/banking/plaid-connections\n/banking/settings\n**Reports**\n**Relay Card**\n**Factoring (Faro)**\n**Plaid Connections**\n## MODULE 5\n"
+    "## MODULE 4 — BANKING\n/banking/relay\n/banking/statement-import\n/banking/plaid-connections\n/banking/settings\n**Reports**\n**Relay Card**\n**Plaid Connections**\n## MODULE 5\n"
   );
   mk(
     NAV,
@@ -82,7 +82,7 @@ if (process.argv.includes("--selftest")) {
   );
   mk(
     PATHS,
-    `"/banking/factoring"\n"/banking/relay"\n"/banking/statement-import"\n"/banking/plaid-connections"\n"/banking/settings"\n`
+    `"/banking/relay"\n"/banking/statement-import"\n"/banking/plaid-connections"\n"/banking/settings"\n`
   );
   if (run(tmp).length) throw new Error("expected PASS: " + run(tmp).join("; "));
   mk(NAV, 'id: "accounts"\n');
