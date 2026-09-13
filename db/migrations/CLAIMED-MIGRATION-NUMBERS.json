@@ -8,6 +8,11 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00–11 / 12–23) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202614131900": {
+      "claimed_by": "cursor",
+      "claimed_at": "2026-09-13",
+      "purpose": "ROUND 23.3 DELTA (owner 2026-09-13, over/under-payment must both open a dispute): widen chk_invoice_disputes_reason to add over_payment + under_billing. Escalated CC-2 -> CC-1 (docs/bus/INBOX-CC-1.md) with this exact DDL; Cursor authored it in the 12-23 UTC Cursor band (HH=19). Additive DROP CONSTRAINT IF EXISTS + ADD CHECK widen, 0 rows changed on re-validate; then reclassified the two live under-billings 13578/13589 mis_entry -> under_billing (audited). Claim carried in the same PR because the migration is already applied + verified live on br-fancy-credit-akjnd07a and the owner delta is time-sensitive; the timestamp is Cursor-band and collision-checked against this registry before authoring."
+    },
     "202614120000": {
       "claimed_by": "claude",
       "claimed_at": "2026-09-12",
