@@ -354,6 +354,9 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
         );
         if (!ruleRes.rows[0]) throw new Error("categorization_rule_not_found");
 
+        // LINK4-PR3 — is_credit = false in the WHERE clause: "money-in excluded from
+        // auto-categorization" (owner precedence, 2026-09-12). A deposit/refund/customer-payment is
+        // categorically out of scope for this pass, never merely skipped-and-counted.
         const txRes = await client.query<{ id: string; operating_company_id: string; plaid_category: string[]; description: string | null }>(
           `
             SELECT id, operating_company_id, plaid_category, description
@@ -362,6 +365,7 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
               AND categorization_gl_account_id IS NULL
               AND matched_journal_entry_id IS NULL
               AND COALESCE(status, 'pending_categorization') IN ('pending_categorization', 'uncategorized')
+              AND is_credit = false
             ORDER BY created_at DESC
           `,
           [query.data.operating_company_id]
@@ -377,6 +381,7 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
               // BANK-F02 — the merchant condition needs the bank text; the dry-run preview must score
               // rules exactly as the live path does, or the preview would lie about what will happen.
               description: tx.description,
+              is_credit: false,
             },
             dryRun
               ? { dryRun: true }
