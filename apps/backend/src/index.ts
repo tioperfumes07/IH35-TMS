@@ -346,6 +346,7 @@ import { registerInsurancePaymentScheduleRoutes } from "./insurance/payment-sche
 import { registerInsurancePolicyRoutes } from "./insurance/policy.routes.js";
 import { registerScheduleConfirmationRoutes } from "./insurance/schedule-confirmations.routes.js";
 import { registerInsuranceSummaryRoutes } from "./insurance/summary.routes.js";
+import { registerExceptionQueueRoutes } from "./reports/exception-queue.routes.js";
 import { registerInsuranceTypeCatalogRoutes } from "./insurance/type-catalog.routes.js";
 import { registerCashFlowModuleRoutes } from "./cash-flow/cash-flow.routes.js";
 import { registerFinanceLoanWizardRoutes } from "./finance/loan-wizard/routes.js";
@@ -1189,6 +1190,7 @@ async function main() {
   await registerInsurancePolicyRoutes(app);
   await registerScheduleConfirmationRoutes(app);
   await registerInsuranceSummaryRoutes(app);
+  await registerExceptionQueueRoutes(app);
   await registerInsurancePolicyCreateAtomicRoutes(app);
   await registerInsuranceClaimRoutes(app);
   await registerInsuranceLawsuitRoutes(app);
