@@ -178,7 +178,7 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
           { key: "date", label: "Date", sortable: true, sortValue: c => c.date ?? "", render: c => fmtDate(c.date) ?? DASH },
           { key: "kind", label: "Kind", sortable: true, sortValue: c => isFuel(c) ? "Fuel" : "Expense", render: c => isFuel(c) ? "Fuel" : "Expense" },
           { key: "vendor", label: "Vendor", sortable: true, sortValue: c => c.vendor_name ?? "", render: c => c.vendor_name ?? DASH },
-          { key: "load", label: "Load Number", sortable: true, sortValue: c => c.load_number ?? "", render: c => c.load_number ?? DASH },
+          { key: "load", label: "Load Number", sortable: true, sortValue: c => c.load_number ?? "", render: c => <EntityLink kind="load" id={c.load_id} label={c.load_number ?? "Load"} /> },
           { key: "category", label: "Category", sortable: true, sortValue: c => c.category ?? "", render: c => c.category ?? DASH },
           { key: "amount", label: "Amount", sortable: true, sortValue: c => c.amount_cents, render: c => money(c.amount_cents, currencyCode) },
         ]} footerCells={{

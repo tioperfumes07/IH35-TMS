@@ -32,7 +32,13 @@ const composed = ["verify-wave-a-load-column.mjs", "verify-book-load-stamps-link
 export function auditLoadColumn(sources, leaves) {
   const failures = [];
   const p10 = leaves.filter((leaf) => P10.has(leaf.module));
-  if (p10.length < 96) failures.push(`priority-10 load inventory unexpectedly shrank to ${p10.length}`);
+  // Floor re-verified live 2026-09-13 (CC-3): the real, current count is 97 (a genuine leaf was
+  // legitimately added by another lane after this floor was last bumped to 96, so removing one
+  // planted leaf from the real 97 landed exactly ON the stale 96 floor and the selftest's own
+  // "did the P10 mutation get caught" check silently stopped catching it — a guard-staleness bug,
+  // not a real inventory shrink). Bumped 96 -> 97 to match live reality; still a floor (may only
+  // go UP for a genuinely new load leaf, never down without the same #9817-style disclosure).
+  if (p10.length < 97) failures.push(`priority-10 load inventory unexpectedly shrank to ${p10.length}`);
   // LINK-F5169 classified the final blanket Required tail leaf-by-leaf, leaving 134 genuine load
   // leaves at the time. Floor lowered to 131 (2026-08-20, CC-3) to match #9817
   // FLEET-UNIT-TRIP-COST-LOAD-REVERSE-INFLATION, a legitimate, documented honesty correction that
@@ -44,11 +50,15 @@ export function auditLoadColumn(sources, leaves) {
   // required.json files, not board prose: 130 total / 97 P10 / 18 modules. #14506 then removed
   // the false per-advance load Required from factoring accounting.list/submit/detail: one advance
   // batches many invoices and correctly reaches loads through each invoice.source_load_id; the
-  // advance header has no load_id. Current honest floor is 127 total / 94 P10 / 18 modules.
-  // This floor may
+  // advance header has no load_id. Comment-documented floor after that fix was 127 total / 94 P10
+  // / 18 modules, but the CODE threshold here was only ever bumped to 129 (never all the way down
+  // to 127) and genuinely new load leaves were legitimately added by other lanes since — live count
+  // re-verified 2026-09-13 (CC-3) is back to 130 total / 97 P10, matching this file's OWN earlier
+  // "130 total / 97 P10" comment two paragraphs up. Bumped 129 -> 130 to match live reality (the
+  // matching P10 floor fix is just above). This floor may
   // only ever go DOWN for a documented un-inflation like #9817 — never UP without a genuinely new
   // load leaf actually being built.
-  if (leaves.length < 129) failures.push(`all-module load inventory unexpectedly shrank to ${leaves.length}`);
+  if (leaves.length < 130) failures.push(`all-module load inventory unexpectedly shrank to ${leaves.length}`);
   for (const id of ["accounting.list", "accounting.submit", "accounting.detail"]) {
     if (leaves.some((leaf) => leaf.module === "factoring" && leaf.id === id)) failures.push(`factoring:${id} must not invent a per-advance load FK`);
   }

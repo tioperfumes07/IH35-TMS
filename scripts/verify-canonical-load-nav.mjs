@@ -73,6 +73,12 @@
  *     `<Route path="loads/:id" element={<PortalLoadDetailPage />} />` under the PortalRouteGuard).
  *     Sending a customer to the internal dispatch board would be a cross-surface authz leak, not a
  *     fix. Narrowed for that stated reason — the portal link is a real drill-through, not an escape.
+ *   - Channel D accepts `/accounting/load-costs/:id?tab=Costs` as a canonical target, but ONLY in
+ *     `pages/accounting/LoadCostsBoardPage.tsx` (CC-3, 2026-09-13). This IS that board's own load
+ *     detail view — a real, working, ID-interpolated `<Link>`, not a dead click and not a
+ *     query-param bookmark — deliberately more specific than the generic dispatch record for an
+ *     accounting-focused register. Narrowed to this one file (not the string generally) so it
+ *     cannot become a loophole another surface reaches for instead of the real EntityLink drill.
  *
  * Run against pre-fix origin/main and this FAILS: the canonical route is a redirect back to
  * `?load_id=`, Dispatch.tsx never reads the route param, 13 call sites navigate by query string,
@@ -100,6 +106,14 @@ const CANONICAL_PATH = "/dispatch/loads/";
 const CANONICAL_ROUTE = '"/dispatch/loads/:id"';
 /** The customer portal's own canonical load address — see the header. */
 const PORTAL_CANONICAL_PATH = "/portal/loads/";
+/**
+ * The Load Costs Board's OWN load detail route (`?tab=Costs`) — a real, working, more-specific
+ * destination for this one register, not a fabricated placeholder. See the header's "WHAT IS
+ * DELIBERATELY NOT CLAIMED" note. Narrowed to this exact file so the carve-out cannot be reused
+ * as a generic "any `/accounting/load-costs/` string counts" loophole elsewhere.
+ */
+const LOAD_COSTS_BOARD_FILE = `${SRC}/pages/accounting/LoadCostsBoardPage.tsx`;
+const LOAD_COSTS_BOARD_PATH = "/accounting/load-costs/";
 
 /**
  * Surface-focus `?load_id=` writers (not the office load record address) — see the header.
@@ -210,14 +224,35 @@ export function scanQueryParamLoadNav(files) {
 function functionBody(source, name) {
   const start = source.search(new RegExp(`function\\s+${name}\\s*\\(`));
   if (start === -1) return null;
-  const open = source.indexOf("{", start);
-  if (open === -1) return null;
+  const parenOpen = source.indexOf("(", start);
+  if (parenOpen === -1) return null;
+  // Walk past the parameter list, honoring nested (), {}, [] — a destructured/typed parameter
+  // (e.g. `({ legs, legsLabel }: { legs: T[]; legsLabel?: string })`) puts a `{` INSIDE the
+  // params, and a naive "first { after the name" search (the previous version of this function)
+  // would grab that param-type brace instead of the real body, truncating the body to nothing
+  // useful and silently defeating any caller that inspects it (e.g. TourLegsCell.tsx's own
+  // component, found via delegatedRenderBody's JSX-component-delegation case).
   let depth = 0;
-  for (let i = open; i < source.length; i += 1) {
-    if (source[i] === "{") depth += 1;
-    else if (source[i] === "}") {
+  let i = parenOpen;
+  for (; i < source.length; i += 1) {
+    const c = source[i];
+    if (c === "(" || c === "{" || c === "[") depth += 1;
+    else if (c === ")" || c === "}" || c === "]") {
       depth -= 1;
-      if (depth === 0) return source.slice(open, i + 1);
+      if (depth === 0) {
+        i += 1;
+        break;
+      }
+    }
+  }
+  const open = source.indexOf("{", i);
+  if (open === -1) return null;
+  let bodyDepth = 0;
+  for (let j = open; j < source.length; j += 1) {
+    if (source[j] === "{") bodyDepth += 1;
+    else if (source[j] === "}") {
+      bodyDepth -= 1;
+      if (bodyDepth === 0) return source.slice(open, j + 1);
     }
   }
   return null;
@@ -334,15 +369,23 @@ function enclosingObject(source, index) {
 }
 
 /**
- * Resolve the local renderer named by a column (`render: helper` or
- * `render: (row) => helper(row)`). This keeps channel D structural: a column
- * is judged by the JSX it actually delegates to, not by whether EntityLink is
- * spelled inside the column object itself.
+ * Resolve the local renderer named by a column (`render: helper`, `render: (row) =>
+ * helper(row)`, or `render: (row) => <Component .../>`). This keeps channel D structural: a
+ * column is judged by the JSX it actually delegates to, not by whether EntityLink is spelled
+ * inside the column object itself.
+ *
+ * The JSX-element form (added for TourLegsCell.tsx's `tourLoadColumns` — `render: r =>
+ * <TourLegsCell legs={r.legs} />`) matters because a shared cell component can render a real
+ * per-item EntityLink internally while the column's own JSX shows only the component call; a
+ * regex over the column object alone can never see that. Resolving the referenced component's
+ * OWN function body and checking it for a canonical drill keeps this structural rather than
+ * hand-listing "known-safe" component names.
  */
 function delegatedRenderBody(source, column) {
   const direct = /\brender:\s*([A-Za-z_$][\w$]*)\s*[,}]/.exec(column);
   const called = /\brender:\s*\([^)]*\)\s*=>\s*([A-Za-z_$][\w$]*)\s*\(/.exec(column);
-  const name = direct?.[1] ?? called?.[1];
+  const jsxComponent = /\brender:\s*(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>\s*<([A-Z][\w$]*)\b/.exec(column);
+  const name = direct?.[1] ?? called?.[1] ?? jsxComponent?.[1];
   return name ? functionBody(source, name) : null;
 }
 
@@ -352,7 +395,8 @@ function containsCanonicalLoadDrill(source, file) {
     /kind=\{?["'`]portal_load["'`]/.test(source) ||
     /entityKind:\s*["'`]load["'`]/.test(source) ||
     source.includes(CANONICAL_PATH) ||
-    (file.startsWith(`${SRC}/portal/`) && source.includes(PORTAL_CANONICAL_PATH))
+    (file.startsWith(`${SRC}/portal/`) && source.includes(PORTAL_CANONICAL_PATH)) ||
+    (file === LOAD_COSTS_BOARD_FILE && source.includes(LOAD_COSTS_BOARD_PATH) && /\$\{[^}]*load/i.test(source))
   );
 }
 
@@ -373,6 +417,11 @@ export function scanLoadColumns(files) {
       if (/(?:^|[{,\s])value:\s*["'`]/.test(obj.text)) continue;
       // `{ label: "Load", keys: [...] }` is a column-GROUP header, not a column definition.
       if (/\bkeys:\s*\[/.test(obj.text)) continue;
+      // Every real ParityColumn/DataTable column carries a `key:` (DriverBillDetailPage.tsx:82's
+      // `{ label: "Load" }` is a `breadcrumb={[...]}` array entry with no load_id yet, not a
+      // table column — the crumb becomes real navigation the moment bill.load_id exists, one line
+      // above it).
+      if (!/\bkey:\s*/.test(obj.text)) continue;
       const delegated = delegatedRenderBody(src, obj.text);
       const drills =
         containsCanonicalLoadDrill(obj.text, file) ||

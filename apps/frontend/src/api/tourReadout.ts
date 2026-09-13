@@ -10,7 +10,7 @@ export type TourLeg = {
   pod_count: number; cost_count: number; is_this_load: boolean;
 };
 export type TourCost = {
-  id: string; kind: "expense" | "bill"; number: string; load_number: string | null; date: string | null; vendor_name: string | null;
+  id: string; kind: "expense" | "bill"; number: string; load_id: string; load_number: string | null; date: string | null; vendor_name: string | null;
   category: string | null; amount_cents: number; posting_status: string; has_account: boolean; has_vendor: boolean; receipt_count: number;
 };
 export type ReadyItem = { key: string; label: string; ok: boolean; detail: string; hard: boolean };

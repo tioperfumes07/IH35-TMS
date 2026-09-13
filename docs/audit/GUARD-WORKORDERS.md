@@ -1,6 +1,25 @@
 # GUARD WORK-ORDERS — the live fix board (read after AUDIT-COVERAGE-LIVE.md, before any block)
 <!-- FINDINGS-TRIPLE-LOCK-LAW: every finding here follows board + register + Desktop routing + OUTBOX in one turn -->
 
+- **BANK-MATCHED-STATE-GAP — OPEN (CC-1/CC-2 banking lane, filed by CC-3, 2026-09-13):**
+  `scripts/verify-matched-state-requires-matched-id.mjs` FAILS on `origin/main` itself (confirmed via
+  an isolated `git worktree` checkout of `origin/main`, unrelated to any of this session's own
+  diffs, before any fix was attempted): `apps/backend/src/banking/link-suggestions-actions.routes.ts`
+  has an `UPDATE banking.bank_transactions SET review_state = 'matched', ...` that does NOT also set
+  a `matched_*_id` column in the same statement — the exact orphaned "matched-but-points-at-nothing"
+  shape ACC-20/BANK-F10008 fixed on the unmatch side, now reproduced on a write path this guard
+  didn't previously cover. Not fixed here: `banking.bank_transactions` is explicitly outside CC-3's
+  lane tonight (owner: "do not touch banking.bank_transactions"). This is ALSO blocking every other
+  lane's push right now: `scripts/verify-static-ratchet.mjs`'s baseline
+  (`docs/audit/VERIFY-STATIC-BASELINE.json`) is a hard, enforced shrink-only list and does not carry
+  this guard's name, so `verify-static.mjs` reports it as "new rot" on every branch even though it
+  is pre-existing content on `main` — the true fix must land in
+  `link-suggestions-actions.routes.ts` (set the correct `matched_*_id` alongside `review_state =
+  'matched'`) so the guard goes green on `main` itself; only then can the baseline stay honestly
+  shrink-only. Routed=CC-1/CC-2 banking. Live evidence: `node
+  scripts/verify-matched-state-requires-matched-id.mjs` FAIL on a clean `origin/main` worktree,
+  naming exactly this one file/line.
+
 - **REG-050-WO-TERMINAL-ACTIONS — OPEN (CODEX, 2026-09-10):** authenticated live Work Orders console detail for cancelled `WO-T150-AC-08-29-2026-0001-PEND0` rendered enabled Approve, Start work, Complete, and Cancel WO actions. `WorkOrdersConsoleDetailPage.tsx` rendered them without status predicates; `work-orders.routes.ts` approve SQL had no terminal/void predicate and could stamp a cancelled row approved. Routed=CODEX Fleet/Maintenance. Fix in current block: one canonical action matrix in the UI and approve restricted to open/non-voided rows, guarded by `verify-reg050-work-orders-module-home.mjs`.
 - **REG-050-WO-TERMINAL-LABOR — OPEN (CODEX, 2026-09-10):** the same authenticated cancelled Work Order rendered enabled timer/manual labor creators. Both labor INSERT routes only checked WO identity/company and could add economic labor after cancellation. Routed=CODEX Fleet/Maintenance. Fix in current block: terminal detail is read-only, both create routes require `voided_at IS NULL` and nonterminal status, while Stop remains available to close a timer that was already running.
 
