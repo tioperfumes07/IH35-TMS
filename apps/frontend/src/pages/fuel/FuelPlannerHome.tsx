@@ -486,7 +486,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                 </p>
               ) : (
                 <>
-                  <FuelTransactionsTable rows={fuelTransactionsQuery.data?.transactions ?? []} />
+                  <FuelTransactionsTable rows={fuelTransactionsQuery.data?.transactions ?? []} operatingCompanyId={companyId} />
                   <div className="mt-2 flex items-center justify-end gap-2 text-xs text-slate-600" data-testid="fuel-history-server-pager">
                     <ActionButton
                       disabled={fuelHistoryPage <= 1 || fuelTransactionsQuery.isFetching}
@@ -590,7 +590,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
               </div>
             </div>
           </section>
-          <ActiveTripStrip route={activeRoute} />
+          <ActiveTripStrip route={activeRoute} operatingCompanyId={companyId} />
           <HosRulesBox
             maxMilesPerShift={Number(settingsQuery.data?.max_miles_per_shift ?? 720)}
             maxOffHighwayMiles={Number(settingsQuery.data?.max_off_highway_miles ?? 5)}

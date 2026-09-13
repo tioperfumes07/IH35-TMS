@@ -2,6 +2,7 @@ import { useToast } from "../../components/Toast";
 import { useBulkPermission } from "../../hooks/useBulkPermission";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { companyToday } from "../../lib/businessDate";
@@ -27,6 +28,10 @@ export type FuelTransactionRow = {
 
 type Props = {
   rows: FuelTransactionRow[];
+  // ALL-SEATS LAW (owner, 2026-09-13) — every load-number column carries a settlement/tour column
+  // beside it. Optional so a narrower caller keeps compiling; the one real caller (FuelPlannerHome)
+  // always has it.
+  operatingCompanyId?: string;
 };
 
 function money(cents: number) {
@@ -68,7 +73,7 @@ function exportFuelTransactionsCsv(rows: FuelTransactionRow[]): void {
   URL.revokeObjectURL(url);
 }
 
-export function FuelTransactionsTable({ rows }: Props) {
+export function FuelTransactionsTable({ rows, operatingCompanyId }: Props) {
   const { pushToast } = useToast();
   // Same role gate the old BulkSelectableTable wrapper enforced (BULK_WRITE_ROLES via
   // useBulkPermission) — preserved here so bulk selection/actions stay hidden for roles that
@@ -144,6 +149,17 @@ export function FuelTransactionsTable({ rows }: Props) {
           render: (row) =>
             row.load_id ? (
               <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number ?? null, row.load_id, "Load")} />
+            ) : (
+              "—"
+            ),
+        },
+        {
+          key: "settlement_ref",
+          label: "Settlement/Tour",
+          sortable: false,
+          render: (row) =>
+            row.load_id && operatingCompanyId ? (
+              <SettlementRefCell loadId={row.load_id} operatingCompanyId={operatingCompanyId} />
             ) : (
               "—"
             ),

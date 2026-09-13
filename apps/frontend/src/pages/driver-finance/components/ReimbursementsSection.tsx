@@ -8,6 +8,7 @@
  */
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { SettlementRefCell } from "../../../components/shared/SettlementRefCell";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { Button } from "../../../components/Button";
 import { mmmDd } from "../../../lib/formatDate";
@@ -28,9 +29,16 @@ type Line = {
   amount: number;
 };
 
-type Props = { lines: Line[]; isOpen?: boolean };
+type Props = {
+  lines: Line[];
+  isOpen?: boolean;
+  // ALL-SEATS LAW (owner, 2026-09-13) — every load-number column carries a settlement/tour column
+  // beside it. Optional so a narrower caller keeps compiling.
+  operatingCompanyId?: string;
+};
 
-const COLUMNS: Array<ParityColumn<Line>> = [
+function buildColumns(operatingCompanyId?: string): Array<ParityColumn<Line>> {
+  return [
   {
     key: "seq_label",
     label: "Number",
@@ -42,6 +50,16 @@ const COLUMNS: Array<ParityColumn<Line>> = [
     render: (line) =>
       line.load_id ? (
         <EntityLink kind="load" id={line.load_id} label={entityLabel(line.load_number, line.load_id, "Load")} />
+      ) : (
+        "—"
+      ),
+  },
+  {
+    key: "settlement_ref",
+    label: "Settlement/Tour",
+    render: (line) =>
+      line.load_id && operatingCompanyId ? (
+        <SettlementRefCell loadId={line.load_id} operatingCompanyId={operatingCompanyId} />
       ) : (
         "—"
       ),
@@ -97,9 +115,11 @@ const COLUMNS: Array<ParityColumn<Line>> = [
     sortable: true,
     render: (line) => `$${Number(line.amount).toFixed(2)}`,
   },
-];
+  ];
+}
 
-export function ReimbursementsSection({ lines, isOpen }: Props) {
+export function ReimbursementsSection({ lines, isOpen, operatingCompanyId }: Props) {
+  const COLUMNS = buildColumns(operatingCompanyId);
   const subtotal = lines.reduce((sum, line) => sum + Number(line.amount || 0), 0);
   return (
     <section className="rounded-sm border border-gray-200 bg-white">

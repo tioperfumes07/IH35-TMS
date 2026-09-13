@@ -2,6 +2,7 @@
 
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { SettlementRefCell } from "../../../components/shared/SettlementRefCell";
 import { entityLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
 import { formatUsdCents } from "../../../lib/money";
@@ -17,7 +18,16 @@ const rateFor = (leg: TourLeg) => (leg.miles_practical && leg.miles_practical > 
  * from the same tour-readout every other section on this page reads, so this register can never
  * disagree with the KPI tiles above it. Every row drills to its source load (EntityLink).
  */
-export function SettlementLoadsSection({ legs }: { legs: TourLeg[]; currencyCode?: string }) {
+export function SettlementLoadsSection({
+  legs,
+  operatingCompanyId,
+}: {
+  legs: TourLeg[];
+  currencyCode?: string;
+  // ALL-SEATS LAW (owner, 2026-09-13) — every load-number column carries a settlement/tour column
+  // beside it. Optional so a narrower caller keeps compiling.
+  operatingCompanyId?: string;
+}) {
   const columns: ParityColumn<TourLeg>[] = [
     {
       key: "trip_type",
@@ -30,6 +40,12 @@ export function SettlementLoadsSection({ legs }: { legs: TourLeg[]; currencyCode
       label: "Load",
       sortable: true,
       render: (l) => <EntityLink kind="load" id={l.load_id} label={entityLabel(l.load_number, l.load_id, "Load")} />,
+    },
+    {
+      key: "settlement_ref",
+      label: "Settlement/Tour",
+      sortable: false,
+      render: (l) => (operatingCompanyId ? <SettlementRefCell loadId={l.load_id} operatingCompanyId={operatingCompanyId} /> : DASH),
     },
     { key: "lane", label: "Route", sortable: true, render: (l) => l.lane || DASH },
     { key: "pickup_date", label: "PU date", sortable: true, render: (l) => (l.pickup_date ? formatDateUS(l.pickup_date) : DASH) },

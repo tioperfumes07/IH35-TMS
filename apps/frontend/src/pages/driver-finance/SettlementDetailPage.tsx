@@ -688,7 +688,7 @@ export function SettlementDetailPage() {
         companyMarginCents={readout?.company_settlement?.margin_cents ?? 0}
         companyMarginSub={readout?.totals?.margin_pct == null ? "—" : `${readout.totals.margin_pct.toFixed(1)}%`}
       />
-      {readout ? <SettlementLoadsSection legs={readout.legs} /> : null}
+      {readout ? <SettlementLoadsSection legs={readout.legs} operatingCompanyId={companyId} /> : null}
       {readout ? <CompanyWaterfallSection readout={readout} report={companyReport} /> : null}
       <MoneyProofTrailPanel operatingCompanyId={companyId} documentType="settlement" documentId={settlementId} />
       {settlementIsCancelled ? (
@@ -810,10 +810,10 @@ export function SettlementDetailPage() {
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1.5fr_1fr]">
         <div className="space-y-2">
-          <EarningsSection lines={earnings} isOpen={!settlementIsLocked} />
-          <DeadheadPaySection lines={deadhead} isOpen={!settlementIsLocked} />
-          <ExtraPaySection lines={extraWithSeq} isOpen={!settlementIsLocked} />
-          <ReimbursementsSection lines={reimbursementsWithSeq} isOpen={!settlementIsLocked} />
+          <EarningsSection lines={earnings} isOpen={!settlementIsLocked} operatingCompanyId={companyId} />
+          <DeadheadPaySection lines={deadhead} isOpen={!settlementIsLocked} operatingCompanyId={companyId} />
+          <ExtraPaySection lines={extraWithSeq} isOpen={!settlementIsLocked} operatingCompanyId={companyId} />
+          <ReimbursementsSection lines={reimbursementsWithSeq} isOpen={!settlementIsLocked} operatingCompanyId={companyId} />
           <DeductionsSection
             rows={deductionsWithSeq}
             onHold={(row) => setHoldTarget(row)}
@@ -821,6 +821,7 @@ export function SettlementDetailPage() {
             isOpen={!settlementIsLocked}
             onAdd={driverId ? () => setAddDeductionOpen(true) : undefined}
             onEdit={(row) => setEditDeductionTarget(row)}
+            operatingCompanyId={companyId}
           />
           {driverId && companyId ? (
             <CreateSettlementDeductionDrawer

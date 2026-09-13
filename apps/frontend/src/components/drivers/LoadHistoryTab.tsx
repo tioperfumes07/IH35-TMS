@@ -11,6 +11,7 @@ import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { SettlementRefCell } from "../shared/SettlementRefCell";
 import { entityLabel } from "../../lib/entity-label";
 import { formatUsdCents } from "../../lib/money";
 import { mmmDd } from "../../lib/formatDate";
@@ -31,7 +32,8 @@ const STATUS_FILTER_OPTIONS: Array<{ label: string; value: string }> = [
   { label: "Invoiced", value: "invoiced,paid,closed" },
 ];
 
-const ASSIGNED_COLUMNS: Array<ParityColumn<DriverAssignedLoad>> = [
+function buildAssignedColumns(operatingCompanyId: string): Array<ParityColumn<DriverAssignedLoad>> {
+  return [
   {
     key: "load_number",
     label: "Load #",
@@ -39,6 +41,12 @@ const ASSIGNED_COLUMNS: Array<ParityColumn<DriverAssignedLoad>> = [
     render: (row) => (
       <EntityLink kind="load" id={row.id} label={entityLabel(row.load_number, row.id, "Load")} data-testid={`driver-assigned-load-${row.id}`} />
     ),
+  },
+  {
+    key: "settlement_ref",
+    label: "Settlement/Tour",
+    sortable: false,
+    render: (row) => <SettlementRefCell loadId={row.id} operatingCompanyId={operatingCompanyId} />,
   },
   { key: "status", label: "Status", sortable: true },
   {
@@ -93,9 +101,11 @@ const ASSIGNED_COLUMNS: Array<ParityColumn<DriverAssignedLoad>> = [
     render: (row) => (row.created_at ? mmmDd(row.created_at) : "—"),
     exportValue: (row) => (row.created_at ? mmmDd(row.created_at) : ""),
   },
-];
+  ];
+}
 
-const HISTORY_COLUMNS: Array<ParityColumn<DispatchAssignmentHistoryRow>> = [
+function buildHistoryColumns(operatingCompanyId: string): Array<ParityColumn<DispatchAssignmentHistoryRow>> {
+  return [
   {
     key: "load_number",
     label: "Load #",
@@ -108,6 +118,12 @@ const HISTORY_COLUMNS: Array<ParityColumn<DispatchAssignmentHistoryRow>> = [
         data-testid={`driver-load-history-load-${row.id}`}
       />
     ),
+  },
+  {
+    key: "settlement_ref",
+    label: "Settlement/Tour",
+    sortable: false,
+    render: (row) => <SettlementRefCell loadId={row.load_id} operatingCompanyId={operatingCompanyId} />,
   },
   {
     key: "assigned_at",
@@ -156,7 +172,8 @@ const HISTORY_COLUMNS: Array<ParityColumn<DispatchAssignmentHistoryRow>> = [
     sortable: true,
     render: (row) => row.reason_code ?? row.notes ?? "—",
   },
-];
+  ];
+}
 
 function csvEscape(value: string): string {
   return /[",\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
@@ -167,6 +184,8 @@ function csvEscape(value: string): string {
  * Assignment events alone are not load history.
  */
 export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
+  const ASSIGNED_COLUMNS = buildAssignedColumns(operatingCompanyId);
+  const HISTORY_COLUMNS = buildHistoryColumns(operatingCompanyId);
   const assignedPageSize = 50;
   const [assignedPage, setAssignedPage] = useState(1);
   const historyPageSize = 50;
