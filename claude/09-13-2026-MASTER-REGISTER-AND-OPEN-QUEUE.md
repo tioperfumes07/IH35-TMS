@@ -32,6 +32,12 @@ job, it updates its own row here in the same PR.
 | 21.0 | Factoring: 16 tabs → 6, 22 bare em-dashes, 2 developer schema notes removed | #21952 | CC-3 |
 | Chain | Posting contract for a human-confirmed bank match — 5 of 6 match types cited to existing functions | #21948 | CC-1 |
 | Chain L4 | **PR 1 of 3**: read-only bank suggestion engine, zero writes, + `verify-no-automatch.mjs` and `verify-load-to-cash-chain.mjs` both wired into the money gate | #21955 | CC-2 |
+| 20.9 f | 3 AlwaysTrack accessorial files reconciled against posted: (57) driver Enlonada/Desenlonada/Layover $950.00/35 rows · (59) admin fees + escrow claims $1,753.99/44 rows · (58) vendor fuel/DEF/reimbursement (LOVES) $3,218.70/57 rows — 2 of 3 clean or explained, 1 with an honest traceability gap, no fabricated conclusion | #21958 | CC-1 |
+| Chain L4 | **Auto-match violations neutralized** (Owner Law B): `findCandidates()` is now read-only (no GET-triggered writes); the nightly `bank-recon-auto-match.cron.ts` deleted outright (file, flag, monitoring rule); 4 live phantom-match rows found + voided (zero GL impact, confirmed) | #21988 | CC-1 |
+| 21.1 #1 | Accounting tab labels carry live counts + dollar totals (`Bills (N) $X.XX` / `Invoices (N) $X.XX`), computed via the same canonical open-balance helpers the list pages already use | #21968 | CC-1 |
+| ALL-SEATS | Settlement-ref-beside-load: CC-1's remaining 6 surfaces (ExpensesListPage, InvoicesListPage, BillDetailPage, AbandonmentQueuePage, RollingLedgerTab, RevenueRecognitionPage) — 29/29 registered surfaces pass `verify-settlement-ref-beside-load.mjs`; 3 stale/false-positive guards found and fixed along the way (2 pre-existing stale checks + 1 named money-theater exemption) | #21994 | CC-1 |
+| CI hygiene | Repo-wide P0 sweep, 10 items: 9 orphaned guards wired into verify-steps; 3 guards stale after legitimate prior redesigns (Record Transfer dropdown, QBO sync wording, Plaid panel retirement) fixed to match current architecture; 2 newly-orphaned components allowlisted with provenance; 1 out-of-lane (Samsara/fleet) guard fixed as the last shared blocker | #21977 | CC-1 |
+| CI hygiene | `BANK-MATCHED-STATE-GAP` closed — corrected CC-3's diagnosis: the flagged route was already correct; the guard's own `MATCHED_ID_COLUMNS` list was missing 4 of 10 real columns | #21990 | CC-1 |
 
 ### Two corrections the Lead owes the record
 1. **The "27 open bills / $271,280.41 vs $0.00" I reported as a cross-screen contradiction was not a
@@ -59,11 +65,11 @@ job, it updates its own row here in the same PR.
 ### CC-1 — money / GL / migrations / posting
 | # | Job | Status |
 |---|---|---|
-| A1 | ROUND 20.9 item (f) — reconcile the 3 AlwaysTrack accessorial files against posted: Report (57) driver Enlonada/Desenlonada/Layover **$950.00** / 35 rows · Report (59) admin fees + escrow claims **$1,753.99** / 44 rows · Report (58) vendor fuel/DEF/reimbursement (LOVES, real invoice numbers) **$3,218.70** / 57 rows | OPEN, next cycle |
-| A2 | ROUND 21.1 — Accounting tabs: counts + dollar totals in tab labels, validation errors as a counted column with hover reason, **split `Paid` from `Deposited`**, aging buckets as clickable filter tiles, live reconciling Difference that must reach zero | OPEN |
+| A1 | ROUND 20.9 item (f) — reconcile the 3 AlwaysTrack accessorial files | **DONE, see Part 1** (#21958) |
+| A2 | ROUND 21.1 Accounting tabs — item 1 (counts + dollar totals in tab labels) **DONE, see Part 1** (#21968). Items 2-5 (validation errors as a counted column with hover reason, split `Paid` from `Deposited`, aging buckets as clickable filter tiles, live reconciling Difference that must reach zero) remain OPEN — tracked as A5, not duplicated here. | PARTIAL — item 1 DONE, items 2-5 OPEN (=A5) |
 | A3 | ROUND 21.1 item 1 (the open-bills contradiction) — **CLOSED AS MOOT**, it was the 27-bill leak | CLOSED |
-| A4 | Settlement-number-beside-load sweep — the 5 Accounting surfaces + Cash Flow rolling ledger | OPEN |
-| A5 | Behaviour-only research items: Paid/Deposited split, aging-bucket filter tiles, reconciliation Difference | OPEN |
+| A4 | Settlement-number-beside-load sweep — the 5 Accounting surfaces + Cash Flow rolling ledger | **DONE, see Part 1** (#21994) |
+| A5 | Behaviour-only research items: validation-errors counted column, Paid/Deposited split, aging-bucket filter tiles, reconciliation Difference | OPEN, next cycle |
 
 ### CC-2 — banking / frontend / design system
 | # | Job | Status |
@@ -116,6 +122,15 @@ only to a suggestions table and never to `matched_*`.
 Both are tracked as ratchet debt in the new guard so no third site can appear silently. Good catch
 and the right call to escalate rather than edit.
 
+**DONE (CC-1, #21988).** Both violations neutralized exactly per this ruling: `findCandidates()` is
+now read-only (no `storeMatch()` call at all); the cron file, its `BANK_RECON_AUTO_MATCH_CRON_ENABLED`
+flag, its `health.routes.ts` monitoring rule, and its `index.ts` registration are all deleted
+outright. `verify-no-automatch.mjs`'s `KNOWN_AUTOMATCH_DEBT` is now empty (kept as a named export,
+not deleted, per the guard's own instruction). Live remediation: found 4 real
+`banking.reconciliation_matches` rows this bug had already written on production (real
+`matched_by_user_uuid`, not the system actor), confirmed zero GL impact, voided all 4
+(void-not-delete, full audit trail). 0 remain live.
+
 ## PART 4 — THE SETTLEMENT-DISBURSEMENT GAP. LEAD RULING.
 CC-1's posting contract covers 5 of 6 match types and flagged the sixth — a bank line matching a
 **settlement disbursement** — rather than inventing a JE. Correct.
@@ -127,6 +142,13 @@ already been relieved**, (c) posts nothing at all if it has. Idempotency key on 
 bank transaction id. **CC-1 confirms this against the existing close-path entries before CC-2
 builds against it** — if the close path already credits the bank directly, the answer is (c) always,
 and the match is link-only.
+
+**CONFIRMED (CC-1).** Re-verified live on S-2026-5802: the close JE credits `2170 Driver Net-Pay
+Clearing` (a liability), never the bank. Cash never moves at close — only the obligation is
+recorded. So **answer is (b)**, not (c): a bank line matching a settlement needs the relief JE,
+gated `paid_via_bank_txn_id IS NULL` (existing nullable column on
+`driver_finance.driver_settlements`, no migration needed). CC-2's Link-4 PR 2/3 (#21972/#21976)
+confirmed built on this correctly via code read of `link-suggestions-actions.routes.ts`.
 
 ---
 
