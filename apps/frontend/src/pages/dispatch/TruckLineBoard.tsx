@@ -471,7 +471,7 @@ function TruckLineTrack({
                     <div
                       onClick={onClearException}
                       data-testid="truck-line-reason-clear"
-                      className="mt-1 cursor-pointer rounded border-t border-[#E5E7EB] px-2 py-1.5 font-semibold"
+                      className="mt-1 cursor-pointer border-t border-[#E5E7EB] px-2 py-1.5 font-semibold"
                       style={{ color: ON_TIME_GREEN }}
                     >
                       ✓ No exception — on time
@@ -498,7 +498,7 @@ function TruckLineTrack({
                     </div>
                   ) : null}
                   {otherError ? (
-                    <div className="mx-1.5 mb-1.5 rounded border border-[#DC2626] bg-[#FEF2F2] px-2 py-1 text-[#DC2626]" data-testid="truck-line-other-error">
+                    <div className="mx-1.5 mb-1.5 border border-[#DC2626] bg-[#FEF2F2] px-2 py-1 text-[#DC2626]" data-testid="truck-line-other-error">
                       {otherError}
                     </div>
                   ) : null}
@@ -1111,7 +1111,7 @@ export function TruckLineBoard({
               <b>now</b>
             </div>
             {stampError ? (
-              <div className="mt-1 rounded border border-[#DC2626] bg-[#FEF2F2] px-2 py-1 text-[#DC2626]" data-testid="truck-line-stamp-error">
+              <div className="mt-1 border border-[#DC2626] bg-[#FEF2F2] px-2 py-1 text-[#DC2626]" data-testid="truck-line-stamp-error">
                 {stampError}
               </div>
             ) : null}
