@@ -193,3 +193,64 @@ no active QuickBooks connection" identically, no console errors.
 
 Nothing else new this cycle — A5 items 2/5 remain open pending scope clarification, unchanged.
 
+---
+
+## 2026-09-13 — ROUND 23.2 B4 (settlement net-pay), major finding + PR #22028 shipped
+
+**Assigned:** B4 (net-pay to signed TOTAL DUE, fix 5801/5802/5803 net=$0.00) + B5 (re-post via
+canonical Bill+BillPayment, not closeSettlementPayRun; Pedro/5772 full $997.08). Plus two
+mid-session supplements: invoice/line-haul creation to $238,810.00 (5 wrong-leg loads), and the
+pre-08/28 AllwaysTrack ingest window + missing Faro advances (13584/13585/load-039).
+
+**B4 — ROOT CAUSE FOUND, FIXED, SHIPPED (PR #22028, merged, deployed).** The "net_pay=0.00 with a
+gross present" symptom is NOT a broken deduction computation. Both settlement GL posters
+(`closeSettlementPayRun` AND `postSettlementBillPayment`) compute gross/deductions/reimbursements/
+net correctly and post a fully-balanced JE reflecting them — but NEITHER ever wrote those numbers
+back onto `driver_finance.driver_settlements`' own header columns. Live-measured: **34 of 36 posted
+USMCA settlements** (not just the 3 reported) carried a stale header net_pay disagreeing with their
+own already-correct JE. Cross-checked all 36 JEs' own net_cents against the ground-truth signed
+documents independently in Python: **35 of 36 match to the cent** — the money was never wrong, only
+the display field was stale. The one exception (S-2026-0011) is the already-known duplicate
+mega-row for tour 5782, CC-2's B5 1:1-re-cut territory, excluded by name.
+
+**Fixed:** both posters now write the header in the same transaction they post in (going forward).
+Built a one-time, JE-derived backfill script (writes NO new financial fact — reads what each
+settlement's own already-posted JE already says and copies it onto the header) for settlements
+posted before the fix. Rehearsed + proven end-to-end on a Neon branch
+(`br-summer-grass-akgqhc0i`): all 35 non-duplicate documents now read net_pay = signed TOTAL DUE
+exactly. New guard `scripts/verify-settlement-net-matches-signed-doc.mjs` (verify-step 11457).
+
+**Also fixed in passing:** 2 orphaned guards from CC-2's #22020/#22021 that were blocking
+`verify:guard-wired` on my branch (PRs #22026/#22027, wired as verify-steps 11461/11465 — not my
+code, just wiring so they actually run in CI).
+
+**NOT done, correctly scoped as separate:**
+- **The prod backfill itself is UNVERIFIED on prod** — proven only on the rehearse branch. Running
+  it changes what 33 real, already-correctly-paid settlements' net_pay reads for real people; asked
+  for explicit confirmation before executing even though it creates no new financial fact (see PR
+  REMAINING).
+- **B5 (canonical-path-only)** — all 36 posted USMCA settlements went through `closeSettlementPayRun`,
+  not the canonical Bill+BillPayment engine. Reversing 33+ ALREADY-CORRECT postings and reposting via
+  the other mechanism is a real, high-blast-radius architecture migration with zero economic benefit
+  (the money is already right) — explicitly owner-gated per MEMORY_BANK ("prod money re-post stays
+  owner-gated" / "no prod post without Claude's GO + owner's explicit yes," both reaffirmed
+  2026-09-13). Not started.
+- The canonical Bill+BillPayment poster (`postSettlementBillPayment`) has **no representation for a
+  settlement reimbursement at all** (grep-confirmed) — a real posting-path gap discovered while
+  rehearsing B5, flagged rather than worked around, per this round's own "say so and stop, do not
+  invent one" instruction.
+- `driver_finance.driver_bills` for the 10 loads across 5772/5801/5802/5803 carry stale/wrong
+  `driver_id` (4 of 10, pre-dating a tour driver-correction) and wrong/zero `gross_amount_cents`
+  (8 of 10) — B3/B6 ingestion territory (CC-2/CC-3's rows), diagnosed exactly (loads/amounts
+  available) but not touched.
+- The two mid-session supplements (invoice/line-haul creation; pre-08/28 ingest + Faro advances) are
+  **not started** — received partway through this cycle's investigation, not yet live-investigated.
+  One item already resolved by someone else: load "039" (Big G Logistics, $3,500.00) is linked in
+  `verify-faro-invoice-lines-load-linkage.mjs`'s own header comment to real load 13554 via
+  `accounting.invoices.display_id='039'.source_load_id` — no new load needs creating for that one.
+
+**Queued next**: get explicit confirmation to run the prod backfill (safe, no new GL fact); then the
+invoice/line-haul creation supplement; then the pre-08/28 ingest + Faro-advances delta; B5's
+reverse+repost campaign stays parked pending an owner decision on whether it's worth the risk given
+the money is already correct.
+
