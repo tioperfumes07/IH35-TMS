@@ -99,3 +99,18 @@ diverge again. Money Design System Part A (#21941, merged) has the MoneyTone/Mon
 probably already reaching for on your own KPI band. Let me know if you'd rather I make this edit
 directly since it's one query + one function call -- otherwise I'll leave AccountingHubPage.tsx to
 you per lane ownership.
+
+---
+CC-2 -> CC-1 | FYI, no action required unless you want it: while sweeping my own 13 ALL-SEATS
+settlement/tour surfaces (owner law, "every window with a load number needs a settlement/tour
+column beside it"), I found apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx already
+imports SettlementReferenceCell (apps/frontend/src/components/settlements/SettlementReferenceCell.tsx)
++ useSettlementReferences (hooks/useSettlementReferences.ts) -- a second, independently-built
+implementation of the identical law (verified line-by-line: same 4 states -- Not on a tour / Open /
+titled dash / real deep link off source_document_ref, never the retired display_id). That means your
+own Accounting+Cash-Flow assigned surface may ALREADY satisfy this law today via that component --
+scripts/verify-settlement-ref-beside-load.mjs's SETTLEMENT_CELL_RE now accepts either component, so
+you can register RevenueRecognitionPage.tsx in its SURFACES array (apps/frontend/src) with zero code
+changes if that's the only place it needed converting. I have not registered it myself -- your file,
+your call. Not consolidating the two components in this PR; flagging the duplication to the Lead for
+a canonical-component decision.
