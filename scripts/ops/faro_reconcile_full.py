@@ -37,6 +37,11 @@ def norm_debtor(s: str) -> set:
     return {t for t in s.split() if t and t not in stop}
 
 
+def deb_concat(s: str) -> str:
+    """Whole-name alnum key, spaces dropped, so 'J RAYL TRANSPORT' == 'JRAYL TRANSPORT'."""
+    return re.sub(r"[^0-9A-Z]", "", (s or "").upper())
+
+
 def cents(x) -> int:
     return round(float(x) * 100)
 
@@ -52,30 +57,37 @@ for r in faro:
     r["_po"] = norm_ref(r.get("po", ""))
     r["_inv"] = norm_ref(r.get("inv", ""))
     r["_deb"] = norm_debtor(r.get("debtor", ""))
+    r["_debc"] = deb_concat(r.get("debtor", ""))
     r["_purch_c"] = cents(r["purchase"]) if r.get("purchase") else 0
 print(f"faro rows: {len(faro_all)} total -> {len(faro)} USMCA-scoped (dropped {len(faro_all)-len(faro)} Transportation)")
 
 adv = list(csv.DictReader(ADV.open()))
 
-rows = []
-unmatched = []
-for a in adv:
+# 1:1 ASSIGNMENT (owner "identical day-by-day"). The earlier per-advance greedy let several
+# same-debtor/same-amount advances (e.g. 6 Semares $4,900 loads) all grab the SAME Faro row/date,
+# so a day double-counted while the other real Faro dates went empty. That is not identical.
+# Fix: build every candidate edge, sort by strength (exact PO/inv ref first, then debtor+amount),
+# and assign greedily so each Faro row is consumed AT MOST ONCE. Exact-ref matches lock their
+# specific row first; the remaining same-debtor/same-amount advances then fill the OTHER Faro rows
+# of that group, spreading them across their true distinct dates. Because every advance lands on a
+# distinct Faro row, the multiset of assigned (date, purchase) equals Faro's own -> daily totals
+# are identical by construction.
+edges = []  # (score, tiebreak_date, a_idx, r_idx, why)
+for ai, a in enumerate(adv):
     wo = norm_ref(a.get("wo", ""))
-    load = norm_ref(a.get("load_number", ""))
     face = int(a["face_cents"])
     deb = norm_debtor(a.get("customer_name", ""))
-
+    debc = deb_concat(a.get("customer_name", ""))
     our_inv = norm_ref(a.get("inv", ""))
-    cands = []
-    for r in faro:
+    for ri, r in enumerate(faro):
         score = 0
         why = []
         po_hit = bool(wo and r["_po"] and wo == r["_po"])
-        # our invoice display_id sometimes IS Faro's 3-digit seq (e.g. load 13554 -> "039").
-        # Never treat a 5-digit 13xxx load number as a Faro-inv match.
         inv_hit = bool(our_inv and r["_inv"] and our_inv == r["_inv"]
                        and not re.fullmatch(r"13\d{3}", our_inv))
-        deb_hit = bool(deb and r["_deb"] and (deb & r["_deb"]))
+        # token overlap OR whole-name containment (fixes 'J RAYL' vs 'JRAYL' tokenization miss)
+        deb_hit = bool((deb and r["_deb"] and (deb & r["_deb"]))
+                       or (len(debc) >= 4 and r["_debc"] and (debc in r["_debc"] or r["_debc"] in debc)))
         amt_hit = (r["_purch_c"] == face)
         if po_hit:
             score += 5; why.append("po=wo")
@@ -85,17 +97,29 @@ for a in adv:
             score += 2; why.append("debtor")
         if amt_hit:
             score += 1; why.append("amt")
-        # Accept a specific ref hit (WO/PO or Faro-inv), or debtor+amount together.
         if po_hit or inv_hit or (deb_hit and amt_hit):
-            cands.append((score, r, why))
+            edges.append((score, r.get("date", ""), ai, ri, why))
 
-    cands.sort(key=lambda x: (-x[0], x[1].get("date", "")))
-    if not cands:
+# Strongest edges first; deterministic date tiebreak keeps assignment stable.
+edges.sort(key=lambda e: (-e[0], e[1]))
+adv_match = {}   # a_idx -> (r_idx, score, why)
+faro_used = set()
+for score, _d, ai, ri, why in edges:
+    if ai in adv_match or ri in faro_used:
+        continue
+    adv_match[ai] = (ri, score, why)
+    faro_used.add(ri)
+
+rows = []
+unmatched = []
+for ai, a in enumerate(adv):
+    face = int(a["face_cents"])
+    if ai not in adv_match:
         unmatched.append(a)
         rows.append({**a, "matched": False})
         continue
-    best = cands[0]
-    r = best[1]
+    ri, score, why = adv_match[ai]
+    r = faro[ri]
     gap = face - r["_purch_c"]
     rows.append({
         "fa": a["fa"], "advance_id": a["advance_id"], "invoice_id": a["invoice_id"],
@@ -105,7 +129,7 @@ for a in adv:
         "faro_inv": r["inv"], "faro_date": r["date"], "faro_debtor": r["debtor"],
         "faro_purchase_cents": r["_purch_c"],
         "gap_cents": gap,
-        "match_why": "+".join(best[2]), "match_score": best[0],
+        "match_why": "+".join(why), "match_score": score,
         "matched": True,
     })
 

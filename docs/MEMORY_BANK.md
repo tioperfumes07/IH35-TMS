@@ -706,3 +706,30 @@ equipment_number / owner_company_id / currently_leased_to_company_id); no FK any
      final tours, so the auto REG-008/booking path CAN silently REG-040-reverse a posted settlement on
      a routine driver assignment. Tests (`presettlement-link.service.test.ts` lines 363/474) assert the
      closed-tour reopen is INTENTIONAL, so this is an owner design decision, not a unilateral code flip.
+
+## Active Architectural Decisions — Faro factoring day-by-day reconcile (Cursor, 2026-09-13)
+
+Owner "close it identical … cash flow same data day by day". Full writeup:
+`docs/reconcile/FARO-DAYBYDAY-RECONCILE-2026-09-13.md`. Key durable facts:
+- **Cash Flow buckets factoring by `fa.advanced_at::date`; Purchase Report by `fa.submitted_at`.** To
+  render identical to Faro BOTH must equal the Faro purchase date. The API create route stamps
+  `submitted_at = now()`, so after a void→recreate the rebuild also does a benign
+  `UPDATE accounting.factoring_advances SET submitted_at = <faro date>` (no JE — the funding JE is
+  dated by `advanced_at` through the poster).
+- **Entity separation is load-bearing.** `docs/reconcile/faro_canonical_purchases.csv` `src` column:
+  `FARO-IH-35-Transportation-export-17.csv` = frozen Transportation (OUT of scope, uses load# as inv);
+  `export (NN).csv` = USMCA (3-digit inv seqs). Matching USMCA advances to Transportation rows by
+  `inv==load` is a cross-entity trap (load-number collision). Some canonical rows have inv/po SWAPPED
+  by a parse quirk (e.g. `1013272-2` in inv, `059` in po).
+- **1:1 assignment is mandatory** (`scripts/ops/faro_reconcile_full.py`): each Faro row consumed once,
+  exact PO/inv edges first, then debtor+amount fills the rest — else same-debtor/same-amount loads
+  (6× Semares $4,900) collapse onto one date and the daily totals lie. Debtor match uses token overlap
+  OR whole-name concatenation (`J RAYL`==`JRAYL`, recovered load 13526).
+- **APPLIED (Neon branch): 59 advances re-dated (void→re-advance), 0 fail; 18 days 08/10→09/11 verified
+  identical to the projection.** Re-date advances got NEW FAC display_ids (void-not-delete leaves the
+  old ones voided in the register) — expected, not a regression.
+- **RESIDUALS = owner/data decisions (flagged, NOT auto-touched):** 13581/13586 disputes (Faro < face,
+  advances held submitted); 13578 (+$560) / 13589 (+$30) under-billings — invoice PATCH is DRAFT-ONLY
+  and has no `total_cents` input, so raising a sent+factored invoice is an owner money workflow, not a
+  field edit; and 3 Faro purchases with NO advance ($8,000: Sethmar 013 $4,900 08/14, Direct Connect
+  061 $2,100 09/10, Tennessee Steel 062 $1,000 09/10) — loads never entered, cannot fabricate.
