@@ -177,7 +177,9 @@ import { registerOwnerApprovalPortalRoutes } from "./driver-finance/owner-approv
 import { registerAbandonmentRoutes } from "./driver-finance/abandonment.routes.js";
 import { registerDetentionPayPostingRoutes } from "./driver-finance/detention-pay-posting.routes.js";
 import { registerSettlementsDisputesRoutes } from "./settlements/disputes/disputes.routes.js";
-import { registerInvoiceDisputeRoutes } from "./accounting/invoice-disputes.routes.js";
+// ACCT-F26308 — invoice-disputes.routes.ts is autoload-mounted (default fp) by
+// registerAccountingRoutes(); no explicit import/call needed (removing the duplicate below fixed a
+// live boot crash). Import removed, not just the call, so this can never silently drift back.
 import { registerSettlementApprovalRoutes } from "./settlements/approval.routes.js";
 import { registerAutoDeductionPolicyRoutes } from "./settlements/auto-deductions/policy.routes.js";
 import { registerSettlementDisputeRoutes } from "./driver-finance/settlement-dispute.routes.js";
@@ -1000,12 +1002,21 @@ async function main() {
   await registerCustomerContractRoutes(app);
   await registerWeeklyCloseRoutes(app);
   await registerSettlementsDisputesRoutes(app);
-  // ROUND 23.3 Part C — this route file has existed since the owner's 2026-09-12 A/R dispute
-  // ruling (db/migrations/202614131200_invoice_disputes.sql, already applied — accounting.
-  // invoice_disputes holds 2 real live open USMCA rows today) but was never wired into the app;
-  // registerInvoiceDisputeRoutes had no caller anywhere. $1,900.00 of open customer short-pay
-  // (invoices 13581/13586) has had no API surface at all until this line.
-  await registerInvoiceDisputeRoutes(app);
+  // ACCT-F26308 (P0, live-crash) — the ROUND 23.3 Part C comment this line used to carry claimed
+  // registerInvoiceDisputeRoutes "had no caller anywhere," which was wrong: invoice-disputes.routes.ts
+  // is `accounting/invoice-disputes.routes.ts` with a `default fp(...)` export, so
+  // registerAccountingRoutes()'s @fastify/autoload over this exact directory (see below, and the
+  // company-settlement-render.routes.ts / posted-while-tour-open-report.routes.ts comments a few
+  // lines down — this codebase has hit this SAME class of bug before, "SET-30" /
+  // DUPLICATE-ROUTE-BOOT-CRASH) already mounted every route in this file. Adding this explicit call
+  // registered all 5 of its routes a SECOND time, and Fastify's strict route-uniqueness check throws
+  // at boot on the very first duplicate — POST /api/v1/accounting/invoices/:id/disputes. Every
+  // deploy since this line merged has crash-looped (confirmed live: dep-dajfbtnqj5pc73ddni6g,
+  // 36+ instance restarts over 15 minutes, Render finally reporting update_failed) while the
+  // PREVIOUS build stayed live throughout — no prod outage, but no deploy has gone live since.
+  // scripts/verify-no-duplicate-routes.mjs already catches this exact case (confirmed: reproduces
+  // on origin/main before this fix, 5/5 duplicate routes reported) — REMOVED here, not added; the
+  // route file's own autoload mount is the correct, sole registration.
   // ACCT-R-13 (2026-07-25): built but never mounted (live 404 on all 9 endpoints). SettlementsMvp
   // (registerSettlementsMvpRoutes) stays UNMOUNTED — see scripts/verify-no-orphan-routes.mjs.
   await registerSettlementApprovalRoutes(app);
