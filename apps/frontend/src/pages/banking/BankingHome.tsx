@@ -405,7 +405,14 @@ export function BankingHomePage({ initialTab }: Props = {}) {
           {
             heading: "Record",
             items: [
-              { key: "record-transfer", label: "+ Record Transfer", onClick: () => setTransferModalOpen(true) },
+              {
+                key: "record-transfer",
+                label: "+ Record Transfer",
+                onClick: () => setTransferModalOpen(true),
+                // BANK-F02 — keep a stable, dedicated selector for the trigger even though ROUND-20.8
+                // B1/B2 folded it into this grouped "+ New" menu (verify-bank-record-transfer-trigger-wired.mjs).
+                testId: "banking-home-record-transfer",
+              },
               { key: "record-deposit", label: "+ Record Deposit", onClick: () => setRecordDepositOpen(true) },
               { key: "petty-cash", label: "+ Petty Cash", onClick: () => void handleCreatePettyCash() },
               { key: "view-transfers", label: "View Transfers", onClick: () => navigate("/banking/transfers") },

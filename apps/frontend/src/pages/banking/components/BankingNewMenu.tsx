@@ -11,7 +11,11 @@ import { useEffect, useId, useRef, useState } from "react";
 // never traps the operator.
 export type BankingNewMenuGroup = {
   heading: string;
-  items: { key: string; label: string; onClick: () => void }[];
+  // BANK-F02 regression fix — an item can carry an explicit `testId` so a specific menu entry
+  // stays reachable by a stable, dedicated selector (e.g. Record Transfer) even though it now
+  // lives inside this grouped dropdown rather than as its own standalone button. Falls back to
+  // the existing derived `banking-new-menu-item-${key}` pattern when omitted.
+  items: { key: string; label: string; onClick: () => void; testId?: string }[];
 };
 
 export function BankingNewMenu({ groups }: { groups: BankingNewMenuGroup[] }) {
@@ -62,7 +66,7 @@ export function BankingNewMenu({ groups }: { groups: BankingNewMenuGroup[] }) {
                   key={item.key}
                   type="button"
                   role="menuitem"
-                  data-testid={`banking-new-menu-item-${item.key}`}
+                  data-testid={item.testId ?? `banking-new-menu-item-${item.key}`}
                   className="block w-full px-3 py-1.5 text-left hover:bg-gray-50"
                   onClick={() => {
                     setOpen(false);
