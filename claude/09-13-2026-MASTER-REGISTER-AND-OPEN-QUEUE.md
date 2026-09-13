@@ -356,3 +356,41 @@ the identity; the S-YYYY-NNNN column is not shown.**
 | 13564 / 13570 / 13580 / 13589 / 13586 | **(closed, `source_document_ref` NULL)** | closed | CC-1/CC-2: stamp the close-time AlwaysTrack doc. |
 | 13579 | **(no AlwaysTrack doc)** | cancelled | — |
 | Current open tours | **5806** (driver 3e138476), **5807** (driver 4ff53886) | open | These render "Open" until closed, then take the next AlwaysTrack number. |
+
+---
+
+## PART 8 — USMCA SETTLEMENT ABSORPTION + AlwaysTrack INGEST + DISPUTE WINDOW (owner rulings 2026-09-13)
+
+**Full coder instructions (logic, rules, spec, seat assignments in VERDICT format):**
+`claude/2026-09-13-ABSORPTION-INGEST-AND-DISPUTE-WINDOW-INSTRUCTIONS.md`. MEMORY_BANK section
+"SETTLEMENT ABSORPTION LAW + INGEST + DISPUTE WINDOW". **Cursor lead authored the instructions; the
+SEATS build.** Deadline **2026-09-15 23:59 UTC**; surrender → lead reassigns, surrendering seat keeps
+only its money/GL lane.
+
+### 8.1 ABSORPTION LAW (owner verbatim: *"all those settlements that carried a transportation load and a usmca — all expenses, driver pay, fuel, etc are absorbed by usmca."*)
+The **tour/settlement is the atomic unit** of the Aug-7 cutover. A tour with **≥1 USMCA-era leg** is
+USMCA and **ALL its legs' economics are absorbed by USMCA** (incl. the pre-cutover leg's costs), nothing
+split to Transportation. Predicate (Claude, 0/44 exceptions, PR #22012): **END date ≥ 2026-08-07 ⇒
+USMCA**. Pure pre-cutover tours `5753, 5760–5768` (+ loads `13481/13489/13501`) stay Transportation/QBO,
+correctly absent. Guard: `verify-usmca-settlement-cutover.mjs`.
+
+### 8.2 INGEST (target measured PR #22012, 69 USMCA loads: line-haul −$23,587.59 · driver pay −$5,852.30 · fuel −$34,428.17 · 136 expense lines · 9 shell loads · 7 mis-flagged incl. 13579)
+Fuel → `fuel.fuel_transactions` 1 row/receipt + post expense from it (CC-2); per-load expense lines
+(CC-3); net pay = signed PDF TOTAL DUE via canonical deduction engine, fix 5801/5802/5803 net $0 (CC-1);
+1:1 re-cut of 9 misgrouped mega-rows via canonical **Bill+BillPayment**, Pedro/5772 full $997.08 (CC-1/CC-2);
+`settled_in_settlement_id` on every bill (CC-2). Additive, void-not-delete, reuse gated posters, source-
+backed only; **prod money re-post owner-gated** (owner presses go).
+
+### 8.3 DISPUTE WINDOW (owner: *"for driver settlements, invoices, for any type of dispute"*)
+ONE hub `/accounting/disputes` unifying settlement disputes (`/api/v1/disputes`, GL path) + invoice
+disputes (`/api/v1/accounting/invoice-disputes`, tracking-only, must surface open **13581/13586**),
+extensible to any future type. Invoice disputes never mutate `accounting.invoices` (A/R stays open for the
+delta). Additive — keep existing pages. Guard: `verify-dispute-window-unified.mjs`. Assigned to CC-2/FE seat.
+
+### 8.4 SEAT ROWS (VERDICT FORMAT)
+| Seat | Rows | Measured target | Guard | Deadline |
+|---|---|---|---|---|
+| CC-1 | 8.2 net-pay to signed TOTAL DUE · Bill+BillPayment re-post (Pedro/5772 full) | each net = signed doc; 0 via `closeSettlementPayRun` | `verify-settlement-net-matches-signed-doc.mjs` | 09-15 23:59 UTC |
+| CC-2 | 8.2 fuel→`fuel.fuel_transactions`+dedup · 1:1 re-cut · bill links · 8.3 dispute window | fuel rows = doc receipts; 0 multi-tour mega-rows; bills linked; hub lists both types incl. 13581/13586 | `verify-fuel-transactions-per-load.mjs` + `verify-settlement-recut-1to1.mjs` + `verify-dispute-window-unified.mjs` | 09-15 23:59 UTC |
+| CC-3 | 8.2 per-load expense lines (136) · miles · 8.1 cutover-flag fixes (7 + 13579) | 0 `line_category='(none)'`/null-load ingested lines; 0 mis-flagged across 08-07 | `verify-usmca-settlement-cutover.mjs` | 09-15 23:59 UTC |
+| Cursor (lead) | authored PART 8 + instructions; coordinates + re-measures each DONE | — | — | — |
