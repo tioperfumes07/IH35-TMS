@@ -19,12 +19,8 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityPicker } from "../../components/EntityPicker";
 import { entityLabel } from "../../lib/entity-label";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { KpiStatCard } from "../../components/layout/KpiStatCard";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { EntityEmptyState } from "../../components/shared/EntityEmptyState";
-import { PlaidLinkButton } from "../../components/banking/PlaidLinkButton";
-import { PlaidLink } from "../../components/banking/PlaidLink";
-import { PlaidSyncStatusPanel } from "../../components/banking/PlaidSyncStatusPanel";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
@@ -52,6 +48,10 @@ import { BANKING_TAB_PATH, bankingTabFromPath } from "../../router/route-manifes
 import { BANKING_MODULE_TABS, type BankingModuleTabId } from "./BANKING_NAV_CONFIG";
 import { formatUsd } from "../../lib/money";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { BankingNewMenu } from "./components/BankingNewMenu";
+import { MoneyKpiTile, MoneySparkline } from "../../components/money/MoneyKpiTile";
+import { NotApplicable } from "../../components/money/NotApplicable";
+import { staleSyncLabel, MONEY_TONE_COLORS } from "../../design/money-design-system";
 
 
 type BankingTabId = BankingModuleTabId;
@@ -232,7 +232,6 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   const cashPosting = Number(kpiQuery.data?.total_cash ?? 0);
   const dipBalance = Number(kpiQuery.data?.dip_operating ?? 0) + Number(kpiQuery.data?.dip_payroll ?? 0);
   const uncategorizedCount = Number(kpiQuery.data?.total_uncategorized ?? 0);
-  const reconAccounts = Number((reconciliationSessionsQuery.data?.open_sessions ?? []).length);
   const factoringVirtualSummary = useMemo(() => {
     const companies = factoringVirtualQuery.data?.companies ?? [];
     return companies.reduce(
@@ -267,6 +266,16 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     () => sortedBankTiles.filter((t) => String(t.tile_kind) === "real"),
     [sortedBankTiles],
   );
+  // ROUND-20.8 B7 — "Recon accts" used to read the count of currently-OPEN reconciliation sessions,
+  // not accounts that have ever actually been reconciled — a live 0 there read as neutral gray next
+  // to a healthy figure. The honest metric: of the real bank accounts this company has, how many
+  // have at least one COMPLETED session ever? (completed_sessions carries bank_account_id already —
+  // no new backend surface.)
+  const reconciledAccountIds = useMemo(
+    () => new Set((reconciliationSessionsQuery.data?.completed_sessions ?? []).map((s) => s.bank_account_id)),
+    [reconciliationSessionsQuery.data?.completed_sessions],
+  );
+  const reconciledAccountsCount = reconciledAccountIds.size;
   const virtualBankTiles = useMemo(
     () => sortedBankTiles.filter((t) => String(t.tile_kind) === "virtual"),
     [sortedBankTiles],
@@ -304,6 +313,21 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       balance: Number(account.current_balance_cents ?? 0) / 100,
     }));
   }, [plaidAccountsQuery.data?.accounts, sortedBankTiles]);
+  const totalBankAccountsForRecon = bankAccountsPanelRows.length;
+  // ROUND-20.8 A5 — the "Bank feed" KPI tile's staleness, from the same last_synced_at
+  // PlaidSyncStatusPanel used to read (that panel is gone now — B9 — so this is its one remaining
+  // consumer). The account with the newest last_synced_at wins.
+  const bankFeedLastSync = useMemo(() => {
+    const accounts = plaidAccountsQuery.data?.accounts ?? [];
+    return (
+      accounts
+        .map((a) => a.last_synced_at)
+        .filter((v): v is string => Boolean(v))
+        .sort()
+        .reverse()[0] ?? null
+    );
+  }, [plaidAccountsQuery.data?.accounts]);
+  const bankFeedInstitution = plaidAccountsQuery.data?.accounts?.[0]?.institution_name ?? null;
   useEffect(() => {
     if (!selectedAccountId) return;
     if (!bankAccountsPanelRows.some((row) => row.id === selectedAccountId)) setSelectedAccountId(null);
@@ -388,80 +412,56 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     }
     pushToast("Select a bank account first, then open Bank Register.", "error");
   };
-  // Doc-18 + owner P0 2026-07-29: + Record Transfer must be reachable from Banking Home
-  // (/banking = accounts tab). Hiding it only on Transactions left the modal/API orphaned —
-  // TransfersListPage pointed at a button that never rendered on the default surface.
+  // ROUND-20.8 B1/B2 — was THIRTEEN unstyled text links crammed into one header line (measured live
+  // on the Accounts tab: Bank Register, Chart of Accounts, +Record Transfer, +Record Deposit, View
+  // Transfers, +Import Statement, Cash GL setup, Email Queue, +Create Account/Manage Accounts,
+  // +Petty Cash, Connect Bank, +Connect Credit Card, +Connect Other). B2 deletes 5 of those outright
+  // — +Import Statement (duplicates the Statement Import tab), Connect Bank / +Connect Credit Card /
+  // +Connect Other (duplicate the Plaid Connections tab — now live inside
+  // BankingPlaidConnectionsPanel itself, see that file), +Create Account/Manage Accounts (duplicates
+  // the Accounts tab, which already has its own "+" manage-accounts affordance in the Bank accounts
+  // panel below). Bank Register stays a separate persistent button (Doc-18 #10/#11 — must render on
+  // every tab, pre-binding the selected bank's Cash GL). Everything else folds into ONE "+ New"
+  // grouped menu.
+  const handleCreatePettyCash = async () => {
+    try {
+      const result = await createPettyCashAccount(companyId);
+      pushToast(result.account.already_existed ? "Petty Cash account already exists." : "Petty Cash account created.", "success");
+      void queryClient.invalidateQueries({ queryKey: ["banking", "tiles", companyId] });
+      void queryClient.invalidateQueries({ queryKey: ["banking", "accounts", companyId] });
+    } catch (err) {
+      pushToast(`Failed to create Petty Cash account: ${(err as Error)?.message ?? "Unknown error"}`, "error");
+    }
+  };
   const navActions = (
     <>
       <ActionButton onClick={openBankRegister}>Bank Register</ActionButton>
-      <ActionButton onClick={() => navigate("/lists/accounting/chart-of-accounts")}>Chart of Accounts</ActionButton>
-      <ActionButton
-        data-testid="banking-home-record-transfer"
-        onClick={() => setTransferModalOpen(true)}
-      >
-        + Record Transfer
-      </ActionButton>
-      <ActionButton
-        data-testid="banking-home-record-deposit"
-        onClick={() => setRecordDepositOpen(true)}
-      >
-        + Record Deposit
-      </ActionButton>
-      <ActionButton onClick={() => navigate("/banking/transfers")}>View Transfers</ActionButton>
+      <BankingNewMenu
+        groups={[
+          {
+            heading: "Record",
+            items: [
+              { key: "record-transfer", label: "+ Record Transfer", onClick: () => setTransferModalOpen(true) },
+              { key: "record-deposit", label: "+ Record Deposit", onClick: () => setRecordDepositOpen(true) },
+              { key: "petty-cash", label: "+ Petty Cash", onClick: () => void handleCreatePettyCash() },
+              { key: "view-transfers", label: "View Transfers", onClick: () => navigate("/banking/transfers") },
+            ],
+          },
+          {
+            heading: "Setup",
+            items: [
+              { key: "coa", label: "Chart of Accounts", onClick: () => navigate("/lists/accounting/chart-of-accounts") },
+              { key: "cash-gl", label: "Cash GL setup", onClick: () => navigate("/banking/cash-gl-setup") },
+              ...(canSeeEmailQueue ? [{ key: "email-queue", label: "Email Queue", onClick: () => navigate("/banking/email-queue") }] : []),
+            ],
+          },
+        ]}
+      />
     </>
   );
 
   const tabActions =
-    activeTab === "accounts" ? (
-      <>
-        <span title="Import a statement CSV for a bank account.">
-          <ActionButton onClick={() => navigate(BANKING_TAB_PATH.statement_import)}>+ Import Statement</ActionButton>
-        </span>
-        <ActionButton onClick={() => navigate("/banking/cash-gl-setup")}>Cash GL setup</ActionButton>
-        {canSeeEmailQueue ? (
-          <ActionButton onClick={() => navigate("/banking/email-queue")}>Email Queue</ActionButton>
-        ) : null}
-        <ActionButton onClick={() => setManageOpen(true)}>+ Create Account / Manage Accounts</ActionButton>
-        <ActionButton
-          onClick={async () => {
-            try {
-              const result = await createPettyCashAccount(companyId);
-              pushToast(result.account.already_existed ? "Petty Cash account already exists." : "Petty Cash account created.", "success");
-              void queryClient.invalidateQueries({ queryKey: ["banking", "tiles", companyId] });
-              void queryClient.invalidateQueries({ queryKey: ["banking", "accounts", companyId] });
-            } catch (err) {
-              pushToast(`Failed to create Petty Cash account: ${(err as Error)?.message ?? "Unknown error"}`, "error");
-            }
-          }}
-        >
-          + Petty Cash
-        </ActionButton>
-        <PlaidLinkButton
-          operatingCompanyId={companyId}
-          accountType="bank"
-          label="Connect Bank"
-          onSuccess={() => {
-            void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] });
-          }}
-        />
-        <PlaidLinkButton
-          operatingCompanyId={companyId}
-          accountType="credit_card"
-          label="+ Connect Credit Card"
-          onSuccess={() => {
-            void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] });
-          }}
-        />
-        <PlaidLinkButton
-          operatingCompanyId={companyId}
-          accountType="all"
-          label="+ Connect Other"
-          onSuccess={() => {
-            void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] });
-          }}
-        />
-      </>
-    ) : activeTab === "transactions" ? (
+    activeTab === "transactions" ? (
       <>
         <ActionButton onClick={() => setManualJeOpen(true)}>+ Manual JE</ActionButton>
         <ActionButton onClick={() => setCcPaymentModalOpen(true)}>+ Pay Credit Card</ActionButton>
@@ -497,14 +497,11 @@ export function BankingHomePage({ initialTab }: Props = {}) {
           regardless of the active sub-tab, same as the highest-priority attention surface should be. */}
       <DriftAlertsPanel companyId={companyId} />
       {kpiQuery.isError || tilesQuery.isError || uncategorizedQuery.isError ? <ListErrorBanner onRetry={() => void uncategorizedQuery.refetch()} /> : null}
-      <PlaidSyncStatusPanel operatingCompanyId={companyId} />
-      <PlaidLink
-        operatingCompanyId={companyId}
-        onSuccess={() => {
-          void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] });
-        }}
-        label="Connect via PlaidLink"
-      />
+      {/* ROUND-20.8 B9 — this "Plaid sync status" + bare "Connect via PlaidLink" pair used to render
+          here UNCONDITIONALLY (every tab), on top of BankingPlaidConnectionsPanel appearing again
+          on Accounts/Plaid Connections/Settings — the same fact rendered up to 3x on one page.
+          BankingPlaidConnectionsPanel is now the ONE canonical panel (it grew its own
+          + Connect bank/credit card/other buttons, see that file) — this duplicate pair is deleted. */}
       {activeTab === "accounts" ? (
         <>
           {/* QBO-parity banking home: horizontal account-tiles row + QBO sync strip (May-1 spec).
@@ -514,6 +511,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             transactionCount={syncTransactionCount}
             uncategorizedCount={uncategorizedCount}
             pendingSyncCount={pendingSyncCount}
+            failedSyncCount={Number(qboStats?.failed ?? 0)}
             isConnected={qboConnectionQuery.data?.connected ?? false}
           />
           {showVirtualTilesEmptyHonesty ? (
@@ -556,20 +554,31 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             const accts = allAccountsQuery.data?.accounts ?? [];
             const unbound = accts.filter((a) => !a.ledger_account_id).length;
             if (accts.length === 0 || unbound === 0) return null;
+            // ROUND-20.8 B5 — this is a POSTING BLOCKER (an unbound bank cannot post at all), not
+            // routine information. Bad treatment (border-left spine + tinted background from
+            // MONEY_TONE_COLORS.bad) and a real primary button, not a text link.
             return (
               <div
-                className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+                className="rounded-[9px] border border-[#C7D2DC] px-3 py-2 text-xs"
+                style={{ borderLeft: "4px solid #B42318", background: "#fdecea" }}
                 data-testid="banking-accounts-cash-gl-unbound-banner"
               >
-                <p className="font-semibold">
-                  Cash GL unbound: {unbound} of {accts.length} bank account(s) have no Cash GL mapping
+                <p className="font-semibold" style={{ color: "#B42318" }}>
+                  Cash GL unbound on {unbound} of {accts.length} bank account(s)
                 </p>
-                <p className="mt-1">
-                  Bank Register and bank-feed posting need a Cash GL per account. Map unbound banks on Cash GL setup —
-                  do not treat Accounts home as posting-ready.
+                <p className="mt-1 text-slate-700">
+                  Bank Register and bank-feed posting need a Cash GL per account. Until it is mapped, that account
+                  cannot post — do not treat Accounts home as posting-ready.
                 </p>
                 <div className="mt-2">
-                  <ActionButton onClick={() => navigate("/banking/cash-gl-setup")}>Open Cash GL setup</ActionButton>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/banking/cash-gl-setup")}
+                    className="rounded-sm px-2.5 py-1 font-bold text-white"
+                    style={{ background: "#B42318", fontSize: "11px" }}
+                  >
+                    Map Cash GL
+                  </button>
                 </div>
               </div>
             );
@@ -609,13 +618,13 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="space-y-1 text-xs text-gray-800">
                       <p className="font-semibold text-gray-900">{tile?.display_name ?? "Account"}</p>
-                      <p className="text-xs text-gray-600">Type: {tile?.account_type ?? plaid?.account_type ?? "—"}</p>
-                      <p className="text-xs text-gray-600">Institution: {plaid?.institution_name ?? "—"}</p>
-                      <p className="text-xs text-gray-600">Mask: {plaid?.account_mask ? `••••${plaid.account_mask}` : "—"}</p>
+                      <p className="text-xs text-gray-600">Type: {tile?.account_type ?? plaid?.account_type ?? <NotApplicable reason="no_source" />}</p>
+                      <p className="text-xs text-gray-600">Institution: {plaid?.institution_name ?? <NotApplicable reason="not_applicable" data-testid="bank-account-inspect-no-institution" />}</p>
+                      <p className="text-xs text-gray-600">Mask: {plaid?.account_mask ? `••••${plaid.account_mask}` : <NotApplicable reason="not_applicable" />}</p>
                       <p className="text-xs text-gray-600">
                         Balance: ${Number(tile?.current_balance ?? (plaid?.current_balance_cents ?? 0) / 100).toFixed(2)}
                       </p>
-                      <p className="text-xs text-gray-600">Last txn: {tile?.last_txn_date ? String(tile.last_txn_date).slice(0, 10) : "—"}</p>
+                      <p className="text-xs text-gray-600">Last txn: {tile?.last_txn_date ? String(tile.last_txn_date).slice(0, 10) : <NotApplicable reason="not_loaded" />}</p>
                       <p className="text-xs text-gray-600">Uncategorized: {Number(tile?.uncategorized_count ?? 0)}</p>
                     </div>
                     <div className="flex gap-2">
@@ -646,47 +655,105 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               })()}
             </div>
           ) : null}
-          {/* B3 BANK-KPI-CARDS (owner CONSOLIDATED 2026-09-06, item 6): this band was 6 hand-built
-              h-16 buttons (11px/11px on #E5E7EB) — now the same KpiStatCard component Factoring's
-              Reserve Tracker uses (11px uppercase label / 22px bold value), extracted to
-              components/layout/KpiStatCard.tsx so both pages render the literal same component. */}
+          {/* ROUND-20.8 PART A/B4/B6/B7 — the Money Design System's KPI anatomy, replacing the flat
+              KpiStatCard band (every number was the same gray at the same weight — a 59%
+              uncategorized rate read identically to a routine cash balance). Each tile's tone
+              below is a THRESHOLD, named in its own comment, never a developer's mood (A1). */}
           <div className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-6">
-            <KpiStatCard
-              label="Cash posting"
+            {(() => {
+              // THRESHOLD: 0 uncategorized -> good; any uncategorized -> warn. Never bad — an
+              // uncategorized backlog is routine review work, not a blocked/failed state.
+              const uncatPct = syncTransactionCount > 0 ? (uncategorizedCount / syncTransactionCount) * 100 : 0;
+              const uncatTone = uncategorizedCount === 0 ? "good" : "warn";
+              return (
+                <MoneyKpiTile
+                  label="Uncategorized"
+                  value={`${Math.round(uncatPct)}%`}
+                  tone={uncatTone}
+                  sub={`${uncategorizedCount} of ${syncTransactionCount} transactions`}
+                  sparkline={<MoneySparkline kind="fill" pct={uncatPct} colorHex={MONEY_TONE_COLORS[uncatTone].text} />}
+                  action={uncategorizedCount > 0 ? { label: "Categorize now", onClick: () => { setTransactionsInitialFilter("uncategorized"); navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`); } } : undefined}
+                  onClick={() => { setTransactionsInitialFilter("uncategorized"); navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`); }}
+                  data-testid="banking-kpi-uncategorized"
+                />
+              );
+            })()}
+            {(() => {
+              // THRESHOLD: 0 real bank accounts -> neutral (nothing to reconcile yet); 0 of N
+              // reconciled -> bad (a real gap, never routine gray); some but not all -> warn;
+              // all reconciled -> good.
+              const reconTone =
+                totalBankAccountsForRecon === 0 ? "neutral" : reconciledAccountsCount === 0 ? "bad" : reconciledAccountsCount === totalBankAccountsForRecon ? "good" : "warn";
+              const reconPct = totalBankAccountsForRecon > 0 ? (reconciledAccountsCount / totalBankAccountsForRecon) * 100 : 0;
+              return (
+                <MoneyKpiTile
+                  label="Accounts reconciled"
+                  value={totalBankAccountsForRecon > 0 ? `${reconciledAccountsCount} of ${totalBankAccountsForRecon}` : "—"}
+                  tone={reconTone}
+                  sub={totalBankAccountsForRecon === 0 ? "no bank accounts yet" : reconciledAccountsCount === 0 ? "no account has ever been reconciled" : `${reconciledAccountsCount} of ${totalBankAccountsForRecon} ever reconciled`}
+                  sparkline={totalBankAccountsForRecon > 0 ? <MoneySparkline kind="fill" pct={reconPct} colorHex={MONEY_TONE_COLORS[reconTone].text} /> : undefined}
+                  action={reconciledAccountsCount === 0 && totalBankAccountsForRecon > 0 ? { label: "Start reconciliation", onClick: openStartReconciliation } : undefined}
+                  onClick={() => navigate(BANKING_TAB_PATH.reconciliation)}
+                  data-testid="banking-kpi-recon-accounts"
+                />
+              );
+            })()}
+            {/* THRESHOLD: always neutral — a cash balance is informational money, never a pass/fail
+                verdict on its own. */}
+            <MoneyKpiTile
+              label="Cash on hand"
               value={formatUsd(cashPosting)}
+              tone="neutral"
+              sub={`${realBankTiles.length} real bank account(s)`}
               onClick={() => navigate("/lists/accounting/chart-of-accounts")}
+              data-testid="banking-kpi-cash-on-hand"
             />
-            <KpiStatCard
-              label="DIP balance"
+            {/* THRESHOLD: always neutral — informational money. B6: "DIP BALANCE" jargon spelled out
+                rather than removed — this is a real Chapter 11 debtor-in-possession cash figure,
+                not decoration, and dropping it silently would hide a compliance-relevant balance. */}
+            <MoneyKpiTile
+              label="Debtor-in-possession cash"
               value={money.format(dipBalance)}
+              tone="neutral"
+              sub="operating + payroll DIP accounts (Ch. 11)"
               onClick={() => (dipAccountId ? navigate(`/banking/accounts/${dipAccountId}`) : setActiveTab("accounts"))}
+              data-testid="banking-kpi-dip-balance"
             />
-            <KpiStatCard
-              label="Uncategorized"
-              value={String(uncategorizedCount)}
-              tone="attention"
-              onClick={() => {
-                setTransactionsInitialFilter("uncategorized");
-                navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`);
-              }}
-            />
-            <KpiStatCard
-              label="Recon accts"
-              value={String(reconAccounts)}
-              onClick={() => navigate(BANKING_TAB_PATH.reconciliation)}
-            />
-            <KpiStatCard
-              label="Factoring res"
+            {/* THRESHOLD: always good — a reserve Faro is actually holding is funded, not at risk. */}
+            <MoneyKpiTile
+              label="Factoring reserve"
               value={money.format(factoringReserve)}
-              tone="attention"
+              tone="good"
+              sub="held by Faro · virtual ledger"
               onClick={() => navigate("/factoring/reserve-tracker")}
+              data-testid="banking-kpi-factoring-reserve"
             />
-            <KpiStatCard
-              label="Escrow feed"
+            {/* THRESHOLD: always good — escrow held in trust for drivers is a funded liability, not
+                a risk signal. */}
+            <MoneyKpiTile
+              label="Driver escrow"
               value={money.format(escrowFeed)}
-              tone="attention"
+              tone="good"
+              sub={`${Number(kpiQuery.data?.drivers_with_escrow_balance ?? 0)} driver(s) · liability, held in trust`}
               onClick={() => navigate(BANKING_TAB_PATH.driver_escrow)}
+              data-testid="banking-kpi-driver-escrow"
             />
+            {(() => {
+              // THRESHOLD: staleSyncLabel() — >4h since last sync -> warn (A5); never synced -> bad.
+              const stale = staleSyncLabel(bankFeedLastSync);
+              const stalePct = bankFeedLastSync ? Math.min(100, ((Date.now() - new Date(bankFeedLastSync).getTime()) / (24 * 60 * 60 * 1000)) * 100) : 100;
+              return (
+                <MoneyKpiTile
+                  label="Bank feed"
+                  value={stale.label}
+                  tone={stale.tone}
+                  sub={bankFeedInstitution ? `${bankFeedInstitution} · last sync` : "no bank feed connected yet"}
+                  sparkline={<MoneySparkline kind="fill" pct={stalePct} colorHex={MONEY_TONE_COLORS[stale.tone].text} />}
+                  action={stale.tone !== "good" && plaidAccountsQuery.data?.accounts?.[0]?.id ? { label: "Sync now", onClick: () => navigate(BANKING_TAB_PATH.plaid_connections) } : undefined}
+                  data-testid="banking-kpi-bank-feed"
+                />
+              );
+            })()}
           </div>
 
           <div className="grid grid-cols-1 gap-2 lg:grid-cols-[1.3fr_1fr_1fr]">
@@ -782,7 +849,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                   </span>
                 </Link>
                 <div className="pt-1 text-xs text-gray-500">
-                  Last advance: {factoringVirtualSummary.lastAdvanceAt ? String(factoringVirtualSummary.lastAdvanceAt).slice(0, 10) : "—"}
+                  Last advance: {factoringVirtualSummary.lastAdvanceAt ? String(factoringVirtualSummary.lastAdvanceAt).slice(0, 10) : <NotApplicable reason="not_applicable" />}
                 </div>
                 {factoringTile ? <div className="text-xs text-slate-700">{factoringTile.display_name}</div> : null}
               </div>
@@ -994,7 +1061,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 Last advance:{" "}
                 {factoringVirtualSummary.lastAdvanceAt
                   ? String(factoringVirtualSummary.lastAdvanceAt).slice(0, 10)
-                  : "—"}
+                  : <NotApplicable reason="not_applicable" />}
               </div>
               {factoringTile ? <div className="text-xs text-slate-700">{factoringTile.display_name}</div> : null}
               <div className="flex flex-wrap gap-2 pt-2">
@@ -1056,7 +1123,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                           </span>
                         </span>
                         <span className="tabular-nums text-xs text-gray-800">
-                          {Number.isFinite(cents) ? money.format(cents / 100) : "—"}
+                          {Number.isFinite(cents) ? money.format(cents / 100) : <NotApplicable reason="no_source" />}
                         </span>
                       </div>
                     );
@@ -1215,14 +1282,6 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             </div>
           </div>
           <BankingPlaidConnectionsPanel companyId={companyId} />
-          <PlaidSyncStatusPanel operatingCompanyId={companyId} />
-          <PlaidLink
-            operatingCompanyId={companyId}
-            onSuccess={() => {
-              void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] });
-            }}
-            label="Connect via PlaidLink"
-          />
         </div>
       ) : null}
 

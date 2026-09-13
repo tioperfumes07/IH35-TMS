@@ -230,7 +230,10 @@ describe("DISP-F6XXX — Record Deposit reaches Cash Deposit (undeposited funds 
     render(wrap(<BankingHomePage />));
 
     expect(screen.queryByTestId("record-transfer-modal-stub")).not.toBeInTheDocument();
-    await userEvent.click(await screen.findByTestId("banking-home-record-deposit"));
+    // ROUND-20.8 B1 — "+ Record Deposit" now lives inside the "+ New" grouped menu, not a flat
+    // header button.
+    await userEvent.click(await screen.findByTestId("banking-new-menu-trigger"));
+    await userEvent.click(await screen.findByTestId("banking-new-menu-item-record-deposit"));
     const stub = await screen.findByTestId("record-transfer-modal-stub");
     expect(stub).toHaveAttribute("data-default-type", "cash_deposit");
   });
