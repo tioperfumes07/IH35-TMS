@@ -2440,3 +2440,73 @@ migration-number allowlist gap, PR #21928, non-loads CI hygiene) | flagged a thi
 S-2026-5782 void STILL BLOCKED pending human/permission action | standing sweep clean, no new CC-1
 item | NEXT: staying OUT of loads/tours/trip-linkage/status/transitions per the reassignment; resuming
 idle-loop sweep for anything else genuinely open in CC-1's own lane.
+
+---
+
+## CC-1 — URGENT SELF-CORRECTION: the 27 insurance bills you (owner + Lead) just saw live were MY accidental test data — voided, GL restored, already fixed (2026-09-13 00:4x UTC)
+
+**Own it plainly: ROUND 20.9's "SECOND FINDING" (Truck Insurance $259,437.21/24 postings, all
+future-dated) and ROUND 21.1's Items 1-2 (27 open insurance bills, $271,280.41, "Past 90 days"/
+"MTD" bucket contradiction) were describing DATA I ACCIDENTALLY CREATED in live production
+tonight, between 2026-09-13 00:05Z and 00:09Z, NOT a pre-existing defect either of you discovered
+independently.** I am sorry — this went live in Chrome in front of the owner before I caught it.
+
+**WHAT HAPPENED:** while building the ROUND 20.9 Item-1 fix (insurance policy CREATE route never
+called `createPolicyBillSchedule` — real, still-valid finding, PR #21940), I wrote a `--dry-run`
+verification script to prove the fix worked against live Neon before merging. The dry-run's
+"rollback" trick (throw an error after the call, let the outer transaction roll back) worked for
+the `insurance.payment_schedule` linkage rows, but **`createBill()` opens its OWN internal
+transaction** (a `withCurrentUser` call with no `client` parameter) — it does NOT participate in a
+caller's outer transaction. So each of the 3 real USMCA policies' 9 installment bills committed
+for real, independently, immediately — including their real GL postings to 5600 Truck Insurance —
+while my outer "rollback" only undid the linkage bookkeeping, leaving 27 real, correctly-computed,
+but PREMATURELY POSTED bills sitting live in prod for ~35 minutes before I caught it via your two
+messages.
+
+**FIXED, VERIFIED CLEAN:** voided all 27 bills via the existing, already-proven `voidBill()` (the
+same compensating-void mechanism `createPolicyBillSchedule`'s own error handling already uses —
+confirmed it correctly voided 1 earlier orphan from a failed intermediate dry-run attempt tonight
+too). Live-verified after: account 5600 net balance = **$0.00** (56 posting lines, all netting to
+zero across the 27 originals + their 27 reversals + 1 earlier orphan pair); 0 active bills matching
+the insurance memo pattern. GL is back to its pre-incident state.
+
+**WHAT REMAINS TRUE AND VALID, UNCHANGED BY THIS INCIDENT:**
+- The ROUND 20.9 Item 1 code fix itself (create route now calls `createPolicyBillSchedule`) is
+  correct and still needed — the create route genuinely never called it before, confirmed via
+  grep, unrelated to tonight's dry-run mistake.
+- Two MORE real, previously-undiscovered bugs in `createPolicyBillSchedule` itself, found BECAUSE
+  I ran a live dry-run instead of trusting mocks: (1) `createBill()`'s `billNumber` param doubles
+  as a manual `display_id` override validated against a strict `BILL-YYYY-NNNNN` shape;
+  `"INS-<policy>-<suffix>"` never matches it, so every prior call (create OR renew, for any policy,
+  ever) threw before persisting — confirmed live, 0 "INS-%" bills existed anywhere before tonight.
+  (2) `insurance.payment_schedule`'s INSERT only stamped `tenant_id`, never `operating_company_id`
+  — the column the table's own RLS policy actually enforces on — so a real (non-bypass)
+  tenant-scoped write always failed RLS. Both fixed, in the same PR, with updated unit tests that
+  fail on the pre-fix code and pass post-fix.
+- **Per the Lead's own explicit instruction ("REPORT THE TREATMENT AND THE ACCOUNT BEFORE POSTING
+  ANYTHING") and the correct GAAP finding (a 9-month premium schedule belongs in Prepaid Insurance,
+  amortized — NOT booked to an expense account on day one) — I am NOT re-running the real backfill
+  for these 3 policies until that treatment is decided.** The code fix (PR #21940) makes future
+  policy creation correct going forward (schedule generation only, not immediate full-premium
+  expense recognition — that policy-vs-P&L-timing question is separate and larger than this PR).
+
+**ROUND 21.1's Items 1-2, reassessed honestly:**
+- Item 2 (aging-bucket dates, all-future-dated bills styled as red/overdue) — was entirely about
+  the 27 bills just described. Moot now that they're voided; not a real bucket-predicate bug on
+  its own (though the underlying "an unpaid future-dated bill should never render as overdue" point
+  is still worth a guard regardless of what caused this instance — flagging for later, not fixing
+  under this incident's urgency).
+- Item 1 (home `/accounting` reads $0.00 open bills vs `/accounting/bills` reads $271,280.41) is a
+  **separate, still-real, still-open finding independent of this incident** — two screens
+  disagreeing on the same fact is exactly the same contradiction-class as the QBO sync split
+  already flagged. I will verify and fix this on its own merits as part of ROUND 21.1, not treat it
+  as explained-away by the void.
+
+**Lesson, applied going forward:** a "dry run" against a pipeline where any step opens its own
+independent transaction is not actually a dry run — it needs either a real Neon branch (a
+throwaway copy) or an explicit compensating-void pass, never a bare "throw to roll back" on the
+outer scope alone. Will not repeat this shape of test again.
+
+Pivoting immediately to ROUND 20.9's revised Items (a)(b)(c) — the period-mismatch diagnosis — due
+2026-09-13 12:00Z, and will report ROUND 21.1's real Item 1 (open-bills contradiction) separately
+once investigated on its own merits.
