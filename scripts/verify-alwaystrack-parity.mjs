@@ -12,12 +12,17 @@
 // THE BYPASS TRAP (verbatim): a CTE calling set_config('app.bypass_rls','lucia',true) must be
 // declared AS MATERIALIZED and referenced in a WHERE clause, e.g. (SELECT v FROM b)='lucia'.
 // Referenced only in the SELECT list, or not at all, it silently returns 0 rows under FORCED RLS
-// and every comparison reads as a FALSE MATCH. A bare 0 is masked, not empty. This script instead
-// follows this repo's own established pg.Client convention (verify-load-to-cash-chain.mjs): a
-// plain session-level `SELECT set_config('app.bypass_rls','lucia',false)` on one held connection,
-// which persists correctly across every statement that connection runs (is_local=false — pg
-// autocommits per statement, so a transaction-local `true` GUC would silently vanish before the
-// next query and reproduce the exact same masked-zero failure mode by a different route).
+// and every comparison reads as a FALSE MATCH. A bare 0 is masked, not empty.
+//
+// BANK-F30150 (found + fixed this session): a bare session-level `set_config(...,false)` on one
+// held pg.Client connection is ALSO unreliable — through Neon's POOLED endpoint (the connection
+// string's `-pooler` host), the pooler can silently route different statements from the same
+// client-side connection to different physical backends, so a GUC "set for the whole session"
+// sometimes does not survive to the next statement. Reproduced live: the identical query returned
+// real rows on one run and 0 rows on the very next run of the same process. This guard now opens
+// one explicit transaction (BEGIN), sets bypass_rls with is_local=true (transaction-scoped) INSIDE
+// it, runs every read query on that same connection, then COMMITs — a pooler cannot split one
+// transaction across two backends, so every statement inside it reliably sees the same bypass.
 //
 // Skips gracefully (prints, exits 0) when DATABASE_URL is not set — same convention every other
 // live-Neon guard in this repo uses.
@@ -149,7 +154,23 @@ async function live() {
   const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
   await client.connect();
   try {
-    await client.query("SELECT set_config('app.bypass_rls','lucia',false)");
+    // BANK-F30150 (found + fixed this session): the session-level `set_config(...,false)` this
+    // file's own header used to recommend is UNRELIABLE through Neon's POOLED endpoint (the
+    // connection string's `-pooler` host) — a pooler can silently multiplex one client-side
+    // connection across different physical backends between individual statements, so a GUC set
+    // "for the whole session" sometimes does not survive to the NEXT statement. Reproduced live,
+    // twice, back to back, same process: a bare `mdata.loads` SELECT after `set_config(...,false)`
+    // returned 3/4 real rows on one run and 0 rows on the very next run with identical inputs — not
+    // a data problem, an instrument problem (this repo's own "an empty result is an instrument
+    // claim" law). This guard previously reported 34/34 documents FAILING on LINE_HAUL/DRIVER_
+    // PAYMENT/FUEL/EXPENSES all reading 0.00/0rows even after B1's fuel ingestion had already landed
+    // 171 real rows — a false read, not a true zero. Fixed by wrapping every read query in one
+    // explicit transaction with a TRANSACTION-scoped `set_config(...,true)`: a pooler cannot split
+    // one transaction across two backends, so every statement inside it reliably sees the same
+    // bypass. Verified: the identical query pair that returned 0 rows outside a transaction returned
+    // the correct non-zero rows every time once wrapped in BEGIN/COMMIT.
+    await client.query("BEGIN");
+    await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
 
     const allLoadNumbers = [...new Set(documents.flatMap((d) => d.loads))];
 
@@ -260,6 +281,7 @@ async function live() {
 
     // ── Six dimensions, one line per document ──────────────────────────────────────────────
     const lines = [];
+    const actuals = [];
     let cleanDocs = 0;
     for (const target of documents) {
       const actual = {
@@ -275,18 +297,26 @@ async function live() {
           return candidates[0].cents;
         })(),
       };
+      actuals.push(actual);
       const mismatches = compareDocument(target, actual);
       if (mismatches.length === 0) cleanDocs += 1;
       lines.push(`${target.doc}: ${mismatches.length === 0 ? "PASS" : "FAIL"}${mismatches.length ? " -- " + mismatches.join("; ") : ""}`);
     }
     for (const line of lines) console.log(line);
 
+    // ACTUAL live sums (never the ground-truth target restated) — a prior version of this line
+    // printed `totals.fuel_cents`/`totals.expenses_count` here, which is the GROUND-TRUTH TARGET,
+    // not a live query result; on a genuinely broken live read (BANK-F30150 above) that made the
+    // TOTAL line look correct while every per-document row above it read 0.00/0rows — misleading,
+    // not just imprecise. Every field below is summed from `actuals` (live query results only).
+    const sumActual = (field) => actuals.reduce((s, a) => s + (a[field] ?? 0), 0);
     console.log("");
     console.log(
-      `TOTAL: line_haul=${fmt(sumAll(documents, "line_haul_cents"))} (target ${fmt(totals.line_haul_cents)}) | ` +
-        `driver_payment=${fmt(sumAll(documents, "driver_payment_cents"))} (target ${fmt(totals.driver_payment_cents)}) | ` +
-        `fuel=${fmt(totals.fuel_cents)}/${totals.fuel_count}rows | expenses=${fmt(totals.expenses_cents)}/${totals.expenses_count}rows | ` +
-        `driver_net target=${fmt(totals.driver_net_cents)}`
+      `TOTAL (live): line_haul=${fmt(sumActual("line_haul_cents"))} (target ${fmt(totals.line_haul_cents)}) | ` +
+        `driver_payment=${fmt(sumActual("driver_payment_cents"))} (target ${fmt(totals.driver_payment_cents)}) | ` +
+        `fuel=${fmt(sumActual("fuel_cents"))}/${sumActual("fuel_count")}rows (target ${fmt(totals.fuel_cents)}/${totals.fuel_count}rows) | ` +
+        `expenses=${fmt(sumActual("expenses_cents"))}/${sumActual("expenses_count")}rows (target ${fmt(totals.expenses_cents)}/${totals.expenses_count}rows) | ` +
+        `driver_net=${fmt(sumActual("driver_net_cents"))} (target ${fmt(totals.driver_net_cents)})`
     );
     console.log(`DOCUMENTS: ${cleanDocs} of ${documentCount} exact on all six dimensions.`);
 
@@ -363,6 +393,10 @@ async function live() {
       console.log(`${a.id}: ${a.pass ? "PASS" : "FAIL"} -- ${a.label}${a.detail ? " -- " + a.detail : ""}`);
     }
 
+    // Read-only throughout — COMMIT (vs ROLLBACK) is a formality, but closes the transaction this
+    // guard opened (BANK-F30150 fix above) cleanly before the process may exit(1) below.
+    await client.query("COMMIT");
+
     const allStructuralPass = structuralFailures.every((a) => a.pass);
     const allDimensionsPass = cleanDocs === documentCount;
 
@@ -380,9 +414,6 @@ async function live() {
 
 function sumField(loadNumbers, byLoad, field) {
   return loadNumbers.reduce((s, n) => s + (byLoad.get(n)?.[field] ?? 0), 0);
-}
-function sumAll(documents, field) {
-  return documents.reduce((s, d) => s + (d[field] ?? 0), 0);
 }
 
 if (process.argv.includes("--selftest")) {
