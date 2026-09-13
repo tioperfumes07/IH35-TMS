@@ -61,4 +61,21 @@ describe("invoice-dispute invariants (owner ruling 2026-09-12)", () => {
     expect(serviceSrc).toMatch(/raiser_cannot_resolve_own_dispute/);
     expect(routesSrc).toMatch(/raiser_cannot_resolve_own_dispute/);
   });
+
+  // ROUND 23.3 DELTA (owner, 2026-09-13, verbatim): "over/under-payment both open disputes via
+  // new reason codes over_payment/under_billing... ship reason codes + relaxed validation FIRST."
+  it("carries the over_payment/under_billing reason codes and relaxes the invoice-face cap for them", () => {
+    expect(INVOICE_DISPUTE_REASONS).toContain("over_payment");
+    expect(INVOICE_DISPUTE_REASONS).toContain("under_billing");
+    expect(routesSrc).toMatch(/z\.enum\(INVOICE_DISPUTE_REASONS\)/);
+    // the traditional short-pay/discount/fine cap (disputed <= invoiced) must still exist for the
+    // pre-existing reasons -- this checks the relaxation is SCOPED (an isVariance branch), not a
+    // blanket removal of the cap that would let a plain short_pay dispute exceed the invoice face.
+    expect(serviceSrc).toMatch(/VARIANCE_REASONS/);
+    expect(serviceSrc).toMatch(/!isVariance\s*&&\s*disputed\s*>\s*invoiced/);
+    // the variance amount is derived, never caller-supplied verbatim -- disputed must equal
+    // abs(expected - invoiced) or the write is refused.
+    expect(serviceSrc).toMatch(/disputed_amount_must_equal_variance/);
+    expect(routesSrc).toMatch(/disputed_amount_must_equal_variance/);
+  });
 });

@@ -73,6 +73,10 @@ const ERROR_CODES: Record<string, number> = {
   dispute_not_open: 409,
   // ROUND 23.3 DELTA (owner, 2026-09-13) -- maker != checker, service-enforced.
   raiser_cannot_resolve_own_dispute: 403,
+  // ROUND 23.3 DELTA (owner, 2026-09-13) -- over_payment/under_billing variance validation.
+  expected_amount_required_for_variance: 400,
+  no_variance_to_dispute: 400,
+  disputed_amount_must_equal_variance: 400,
 };
 
 function sendServiceResult(reply: FastifyReply, result: Record<string, unknown>, okCode = 200) {

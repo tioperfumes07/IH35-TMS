@@ -85,6 +85,9 @@ const STEPS = [
   // ROUND 23.3 (owner/Lead, 2026-09-13) — B1 second half: every live Diesel-memo expense either
   // matches a fuel.fuel_transactions row or is voided ABSORPTION-D5.
   ["verify-diesel-expense-fuel-dedupe", "scripts/verify-diesel-expense-fuel-dedupe.mjs"],
+  // ROUND 23.3 DELTA (owner, 2026-09-13) — Part C unified dispute window: dispute exists for
+  // every Faro-vs-face variance (both directions) + zero null load_id in faro_invoice_lines.
+  ["verify-dispute-window-unified", "scripts/verify-dispute-window-unified.mjs"],
   // Rule 30 — soft-reset onto newer main deleted other PRs' verify-steps (2026-08-02).
   ["verify-no-guard-file-deletion", "scripts/verify-no-guard-file-deletion.mjs"],
   // Rule 30 — tip commit LIVE PROOF must be Claude-green (not "UNVERIFIED browser" theater).

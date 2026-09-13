@@ -126,6 +126,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   // More ▾ — settlements / driver finance
   { label: "Settlements", path: "/driver-finance/settlements", section: "more" },
   { label: "Pre-settlements", path: "/accounting/pre-settlements", section: "more" },
+  { label: "Disputes", path: "/accounting/disputes", section: "more" },
   { label: "Dispute queue", path: "/accounting/dispute-queue", section: "more" },
   { label: "Abandonment queue", path: "/accounting/abandonment-queue", section: "more" },
   { label: "Escrow", path: "/accounting/escrow", section: "more" },
