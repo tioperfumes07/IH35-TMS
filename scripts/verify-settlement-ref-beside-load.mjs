@@ -53,6 +53,8 @@ const FRONTEND_SRC = path.join(ROOT, "apps", "frontend", "src");
 // load-number column (so this guard is meaningful for it); a converted surface must ALSO match
 // SETTLEMENT_CELL_RE somewhere in the same file.
 export const SURFACES = [
+  // CC-2 — 11 Driver/Finance + 1 Fuel surface (DriverInbox.tsx, the other originally-assigned Fuel
+  // surface, is not registered — see the disclosure above).
   { file: "apps/frontend/src/pages/driver-finance/DriverBillDetailPage.tsx", loadNumberNeedle: /bill\.load_number/ },
   { file: "apps/frontend/src/pages/driver-finance/EscrowDeductionsPendingTab.tsx", loadNumberNeedle: /row\.load_number/ },
   { file: "apps/frontend/src/pages/driver-finance/components/DeadheadPaySection.tsx", loadNumberNeedle: /line\.load_number/ },
@@ -65,6 +67,28 @@ export const SURFACES = [
   { file: "apps/frontend/src/components/drivers/LoadHistoryTab.tsx", loadNumberNeedle: /row\.load_number/ },
   { file: "apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx", loadNumberNeedle: /row\.load_number/ },
   { file: "apps/frontend/src/pages/fuel/components/ActiveTripStrip.tsx", loadNumberNeedle: /load_display_id/ },
+  // CC-3 — 6 Dispatch surfaces. DetentionBoardPage/InTransitIssuesPage/PodReviewPage already carried
+  // a settlement column before this law (via the pre-existing SettlementReferenceCell +
+  // useSettlementReferences pattern, its own systemwide guard verify-settlement-presettlement-column-
+  // systemwide.mjs) and are registered there, not duplicated here, to avoid two guards asserting the
+  // same fact about the same file. TourLegsCell.tsx is the LOAD side of an already-compliant pairing
+  // on its own 2 real consumer pages (SettlementsToursRegister.tsx, LoadCostsBoardPage.tsx) and is not
+  // a target. documents/UploadModal.tsx is a pure upload form with no load-number display at all.
+  { file: "apps/frontend/src/pages/dispatch/LateArrivalsPage.tsx", loadNumberNeedle: /key: "load_number"/ },
+  { file: "apps/frontend/src/components/dispatch/DispatchKanban.tsx", loadNumberNeedle: /cardPrimaryLabel\(load\)|cardSecondaryLoadNumber\(load\)/ },
+  // CC-3 — 5 Safety/Insurance surfaces.
+  { file: "apps/frontend/src/pages/safety/AccidentsPage.tsx", loadNumberNeedle: /key: "load_id"/ },
+  { file: "apps/frontend/src/pages/safety/InternalFinesPage.tsx", loadNumberNeedle: /key: "related_load_id"/ },
+  { file: "apps/frontend/src/pages/safety/tabs/HOSViolationsTab.tsx", loadNumberNeedle: /key: "related_load_id"/ },
+  { file: "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx", loadNumberNeedle: /key: "load_id"/ },
+  { file: "apps/frontend/src/pages/insurance/ClaimsTab.tsx", loadNumberNeedle: /key: "load_id"/ },
+  // CC-3 — 5 Fleet/Reports/Docs surfaces (Documents.tsx converted conditionally — the cell only
+  // appears when a row's own link happens to be load-typed, per that page's generic multi-entity
+  // shape; still registered here since the file does render a load-number-carrying label).
+  { file: "apps/frontend/src/components/vehicle-profile/UnitMaintenanceHistorySection.tsx", loadNumberNeedle: /key: "load_number"/ },
+  { file: "apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx", loadNumberNeedle: /key: "load_number"/ },
+  { file: "apps/frontend/src/components/reports/LaneDetailModal.tsx", loadNumberNeedle: /key: "load_number"/ },
+  { file: "apps/frontend/src/pages/Documents.tsx", loadNumberNeedle: /docsFileEntityLabel/ },
 ];
 
 // SettlementReferenceCell — see the disclosed cross-seat finding above: a second, independently-

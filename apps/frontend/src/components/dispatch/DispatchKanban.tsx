@@ -23,6 +23,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { readDispatchAlertTier } from "../../lib/dispatch-local-settings";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { SettlementRefCell } from "../shared/SettlementRefCell";
 import { ListErrorState } from "../ListErrorState";
 import { useToast } from "../Toast";
 import { ChevronDown, ChevronRight, ChevronUp } from "lucide-react";
@@ -515,12 +516,14 @@ function KanbanDispatchCard({
   hasActiveGeofenceBreach,
   onClick,
   onStatusDrop,
+  operatingCompanyId,
 }: {
   load: KanbanLoad;
   columnKey: string;
   hasActiveGeofenceBreach?: boolean;
   onClick: (id: string) => void;
   onStatusDrop?: Props["onStatusDrop"];
+  operatingCompanyId?: string;
 }) {
   const draggableEnabled = canDragLoad(load.status) && !isSyntheticKanbanCardId(load.id);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -581,7 +584,16 @@ function KanbanDispatchCard({
             onClick={(event) => event.stopPropagation()}
           />
         ) : (
-          <EntityLink kind="load" id={load.id} label={cardPrimaryLabel(load)} className="font-semibold text-gray-900" data-testid="kanban-card-primary-entity-link" onClick={(event) => event.stopPropagation()} />
+          <span className="flex min-w-0 items-center gap-1.5">
+            <EntityLink kind="load" id={load.id} label={cardPrimaryLabel(load)} className="min-w-0 truncate font-semibold text-gray-900" data-testid="kanban-card-primary-entity-link" onClick={(event) => event.stopPropagation()} />
+            {/* ALL-SEATS LAW (owner, 2026-09-13): load is PRIMARY here (no unit assigned) — its
+                settlement/tour number sits beside it, mirroring the secondary line below. */}
+            {operatingCompanyId ? (
+              <span className="shrink-0 text-xs" onClick={(event) => event.stopPropagation()}>
+                <SettlementRefCell loadId={load.id} operatingCompanyId={operatingCompanyId} />
+              </span>
+            ) : null}
+          </span>
         )}
         {hasVisibleFlag(load.flag_code) ? (
           <span
@@ -594,14 +606,22 @@ function KanbanDispatchCard({
         ) : null}
       </div>
       {cardSecondaryLoadNumber(load) ? (
-        <EntityLink
-          kind="load"
-          id={load.id}
-          label={cardSecondaryLoadNumber(load) ?? undefined}
-          className="font-mono text-[11px] text-gray-500"
-          data-kanban-card-secondary="load-number"
-          onClick={(event) => event.stopPropagation()}
-        />
+        <div className="flex items-center gap-1.5">
+          <EntityLink
+            kind="load"
+            id={load.id}
+            label={cardSecondaryLoadNumber(load) ?? undefined}
+            className="font-mono text-[11px] text-gray-500"
+            data-kanban-card-secondary="load-number"
+            onClick={(event) => event.stopPropagation()}
+          />
+          {/* ALL-SEATS LAW (owner, 2026-09-13): a settlement/tour number beside every load number. */}
+          {operatingCompanyId ? (
+            <span className="text-xs" onClick={(event) => event.stopPropagation()}>
+              <SettlementRefCell loadId={load.id} operatingCompanyId={operatingCompanyId} />
+            </span>
+          ) : null}
+        </div>
       ) : null}
 
       <div className="mt-1 text-xs text-gray-600">{lane}</div>
@@ -674,10 +694,12 @@ function KanbanCompactCard({
   load,
   hasActiveGeofenceBreach,
   onClick,
+  operatingCompanyId,
 }: {
   load: KanbanLoad;
   hasActiveGeofenceBreach?: boolean;
   onClick: (id: string) => void;
+  operatingCompanyId?: string;
 }) {
   const draggableEnabled = canDragLoad(load.status) && !isSyntheticKanbanCardId(load.id);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -761,6 +783,12 @@ function KanbanCompactCard({
         data-testid="kanban-compact-load-link"
         onClick={(event) => event.stopPropagation()}
       />
+      {/* ALL-SEATS LAW (owner, 2026-09-13): settlement/tour number beside the load number. */}
+      {operatingCompanyId ? (
+        <span className="shrink-0 text-xs" onClick={(event) => event.stopPropagation()}>
+          <SettlementRefCell loadId={load.id} operatingCompanyId={operatingCompanyId} />
+        </span>
+      ) : null}
       {/* KANBAN-COMPACT-TRUNCATE (owner-live): the driver label was truncating because this SECONDARY lane
           text held up to 120px of the same row at every width above `sm`. The driver is the identifying
           field on a compact card, so the lane now yields first — it appears only on wide boards and takes
@@ -781,11 +809,13 @@ function KanbanStandardCard({
   hasActiveGeofenceBreach,
   onClick,
   onStatusDrop,
+  operatingCompanyId,
 }: {
   load: KanbanLoad;
   hasActiveGeofenceBreach?: boolean;
   onClick: (id: string) => void;
   onStatusDrop?: Props["onStatusDrop"];
+  operatingCompanyId?: string;
 }) {
   const draggableEnabled = canDragLoad(load.status) && !isSyntheticKanbanCardId(load.id);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -834,7 +864,16 @@ function KanbanStandardCard({
         {load.assigned_unit_id ? (
           <EntityLinkOrTombstone kind="unit" id={load.assigned_unit_id} name={load.assigned_unit_number} noun="Unit" className="min-w-0 flex-1 truncate font-semibold text-gray-900" data-testid="kanban-standard-primary-entity-link" data-kanban-card-primary="unit" onClick={(event) => event.stopPropagation()} />
         ) : (
-          <EntityLink kind="load" id={load.id} label={cardPrimaryLabel(load)} className="min-w-0 flex-1 truncate font-semibold text-gray-900" data-testid="kanban-standard-primary-entity-link" onClick={(event) => event.stopPropagation()} />
+          <span className="flex min-w-0 flex-1 items-center gap-1.5 truncate">
+            <EntityLink kind="load" id={load.id} label={cardPrimaryLabel(load)} className="min-w-0 truncate font-semibold text-gray-900" data-testid="kanban-standard-primary-entity-link" onClick={(event) => event.stopPropagation()} />
+            {/* ALL-SEATS LAW (owner, 2026-09-13): load is PRIMARY here (no unit assigned) —
+                settlement/tour number sits beside it, mirroring line 2's placement below. */}
+            {operatingCompanyId ? (
+              <span className="shrink-0 text-xs font-normal" onClick={(event) => event.stopPropagation()}>
+                <SettlementRefCell loadId={load.id} operatingCompanyId={operatingCompanyId} />
+              </span>
+            ) : null}
+          </span>
         )}
         {hasActiveGeofenceBreach ? <span className="shrink-0 text-red-600" title="Geofence breach">◆</span> : null}
         {isBreakdown(load) ? <span className="shrink-0 text-red-600" title="Breakdown">▲</span> : null}
@@ -860,6 +899,12 @@ function KanbanStandardCard({
             data-testid="kanban-card-secondary-load-link"
             data-kanban-card-secondary="load-number"
           />
+        ) : null}
+        {/* ALL-SEATS LAW (owner, 2026-09-13): settlement/tour number beside the load number. */}
+        {secondaryLoad && operatingCompanyId ? (
+          <span className="shrink-0" onClick={(event) => event.stopPropagation()}>
+            <SettlementRefCell loadId={load.id} operatingCompanyId={operatingCompanyId} />
+          </span>
         ) : null}
         {/* KANBAN-COMPACT-TRUNCATE — owner saw "Leon… Unkno…" at STANDARD density too, so this is not a
             compact-only bug. The driver was capped at an arbitrary max-w-[110px] and so truncated even when
@@ -1247,6 +1292,7 @@ function KanbanSwimLaneColumn({
   width,
   onResize,
   onStatusDrop,
+  operatingCompanyId,
 }: {
   column: KanbanColumnDef;
   allUnits: UnitRow[];
@@ -1259,6 +1305,9 @@ function KanbanSwimLaneColumn({
   width?: number;
   onResize?: (columnKey: string, width: number) => void;
   onStatusDrop?: Props["onStatusDrop"];
+  /** ALL-SEATS LAW (owner, 2026-09-13): needed so each card's SettlementRefCell can resolve its
+   *  load's settlement/tour number. */
+  operatingCompanyId?: string;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `column:${column.key}` });
   const sectionRef = useRef<HTMLElement | null>(null);
@@ -1419,20 +1468,20 @@ function KanbanSwimLaneColumn({
           if (density === "compact") {
             return (
               <div key={unit.unitKey} style={{ minHeight: `${rowMinH}px` }} data-kanban-swim-lane-row-key={unit.unitKey}>
-                <KanbanCompactCard load={readExtras(load)} hasActiveGeofenceBreach={breach} onClick={onLoadClick} />
+                <KanbanCompactCard load={readExtras(load)} hasActiveGeofenceBreach={breach} onClick={onLoadClick} operatingCompanyId={operatingCompanyId} />
               </div>
             );
           }
           if (density === "standard") {
             return (
               <div key={unit.unitKey} style={{ minHeight: `${rowMinH}px` }} data-kanban-swim-lane-row-key={unit.unitKey}>
-                <KanbanStandardCard load={readExtras(load)} hasActiveGeofenceBreach={breach} onClick={onLoadClick} onStatusDrop={onStatusDrop} />
+                <KanbanStandardCard load={readExtras(load)} hasActiveGeofenceBreach={breach} onClick={onLoadClick} onStatusDrop={onStatusDrop} operatingCompanyId={operatingCompanyId} />
               </div>
             );
           }
           return (
             <div key={unit.unitKey} style={{ minHeight: `${rowMinH}px` }} data-kanban-swim-lane-row-key={unit.unitKey}>
-              <KanbanDispatchCard load={readExtras(load)} columnKey={column.key} hasActiveGeofenceBreach={breach} onClick={onLoadClick} onStatusDrop={onStatusDrop} />
+              <KanbanDispatchCard load={readExtras(load)} columnKey={column.key} hasActiveGeofenceBreach={breach} onClick={onLoadClick} onStatusDrop={onStatusDrop} operatingCompanyId={operatingCompanyId} />
             </div>
           );
         })}
@@ -1819,6 +1868,7 @@ export function DispatchKanban({
                 width={columnWidths[group.key]}
                 onResize={setColumnWidth}
                 onStatusDrop={onStatusDrop}
+                operatingCompanyId={operatingCompanyId}
               />
             );
           })}

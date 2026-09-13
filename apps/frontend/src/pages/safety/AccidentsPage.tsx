@@ -8,6 +8,7 @@ import { AccidentReportDrawer } from "../../components/safety/AccidentReportDraw
 import { DatePicker } from "../../components/forms/DatePicker";
 import { companyNow } from "../../lib/businessDate";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityPicker } from "../../components/EntityPicker";
 import { entityLabel } from "../../lib/entity-label";
@@ -181,6 +182,17 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
       render: (row) => (
         <EntityLink kind="load" id={row.load_id as string | undefined} label={entityLabel((row.load_number as string | undefined)?.trim(), row.load_id as string | undefined, "Load")} />
       ),
+    },
+    {
+      // ALL-SEATS LAW (owner, 2026-09-13): a settlement/tour number beside every load number.
+      key: "settlement_ref",
+      label: "Settlement / Tour",
+      render: (row) =>
+        row.load_id ? (
+          <SettlementRefCell loadId={row.load_id as string} operatingCompanyId={operatingCompanyId} />
+        ) : (
+          <span className="text-gray-400" title="This accident has no load linked to it">No load</span>
+        ),
     },
     {
       key: "vendor_id",

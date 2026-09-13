@@ -4,6 +4,7 @@ import { listVehicleDriverHistory, listVehicleDriverOverlaps, resolveVehicleDriv
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 import { Button } from "../../components/Button";
 
 function formatDateTime(value: string | null) {
@@ -13,7 +14,8 @@ function formatDateTime(value: string | null) {
   return date.toLocaleString();
 }
 
-const COLUMNS: Array<ParityColumn<VehicleDriverHistoryRow>> = [
+function buildColumns(operatingCompanyId: string): Array<ParityColumn<VehicleDriverHistoryRow>> {
+  return [
   {
     key: "unit_number",
     label: "Unit",
@@ -44,6 +46,17 @@ const COLUMNS: Array<ParityColumn<VehicleDriverHistoryRow>> = [
       : "—",
   },
   {
+    // ALL-SEATS LAW (owner, 2026-09-13): a settlement/tour number beside every load number.
+    key: "load_settlement_ref",
+    label: "Settlement / Tour",
+    render: (row) =>
+      row.load_id ? (
+        <SettlementRefCell loadId={row.load_id} operatingCompanyId={operatingCompanyId} />
+      ) : (
+        <span className="text-gray-400" title="No load linked to this assignment window">No load</span>
+      ),
+  },
+  {
     key: "driven_miles",
     label: "Miles",
     sortable: true,
@@ -66,7 +79,8 @@ const COLUMNS: Array<ParityColumn<VehicleDriverHistoryRow>> = [
     label: "Source",
     sortable: true,
   },
-];
+  ];
+}
 
 type UnitDriverHistoryStripProps = {
   operatingCompanyId: string;
@@ -146,7 +160,7 @@ export function UnitDriverHistoryStrip({ operatingCompanyId, unitId, driverId, d
       ) : (
         <div className="mt-2">
           <ParityTable
-            columns={COLUMNS}
+            columns={buildColumns(operatingCompanyId)}
             rows={rows}
             rowKey={(row) => row.id}
             loading={historyQuery.isLoading}

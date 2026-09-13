@@ -5,6 +5,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { Modal } from "../Modal";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { EntityLink } from "../shared/EntityLink";
+import { SettlementRefCell } from "../shared/SettlementRefCell";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -21,9 +22,11 @@ type Props = {
   loads: LaneProfitabilityLoadDetail[];
   loading: boolean;
   onClose: () => void;
+  operatingCompanyId: string;
 };
 
-const LOAD_COLUMNS: Array<ParityColumn<LaneProfitabilityLoadDetail>> = [
+function buildLoadColumns(operatingCompanyId: string): Array<ParityColumn<LaneProfitabilityLoadDetail>> {
+  return [
   {
     key: "load_number",
     label: "Load",
@@ -31,6 +34,12 @@ const LOAD_COLUMNS: Array<ParityColumn<LaneProfitabilityLoadDetail>> = [
     render: (load) => (
       <EntityLink kind="load" id={load.load_id} label={entityLabel(load.load_number, load.load_id, "Load")} />
     ),
+  },
+  {
+    // ALL-SEATS LAW (owner, 2026-09-13): a settlement/tour number beside every load number.
+    key: "load_settlement_ref",
+    label: "Settlement / Tour",
+    render: (load) => <SettlementRefCell loadId={load.load_id} operatingCompanyId={operatingCompanyId} />,
   },
   {
     key: "created_at",
@@ -82,10 +91,11 @@ const LOAD_COLUMNS: Array<ParityColumn<LaneProfitabilityLoadDetail>> = [
     sortValue: (load) => load.margin_pct ?? Number.NEGATIVE_INFINITY,
     render: (load) => pct(load.margin_pct),
   },
-];
+  ];
+}
 
-export function LaneDetailModal({ open, lane, loads, loading, onClose }: Props) {
-  const columns = useMemo(() => LOAD_COLUMNS, []);
+export function LaneDetailModal({ open, lane, loads, loading, onClose, operatingCompanyId }: Props) {
+  const columns = useMemo(() => buildLoadColumns(operatingCompanyId), [operatingCompanyId]);
 
   if (!open || !lane) return null;
 
