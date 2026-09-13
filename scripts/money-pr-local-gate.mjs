@@ -82,6 +82,9 @@ const STEPS = [
   // ROUND 23.3 (owner/Lead, 2026-09-13) — B1 fuel absorption: 171 fuel_purchases rows ->
   // 171 fuel.fuel_transactions rows, $110,072.33, 0 DEF rows, disclosed corrections intact.
   ["verify-fuel-transactions-per-load", "scripts/verify-fuel-transactions-per-load.mjs"],
+  // ROUND 23.3 (owner/Lead, 2026-09-13) — B1 second half: every live Diesel-memo expense either
+  // matches a fuel.fuel_transactions row or is voided ABSORPTION-D5.
+  ["verify-diesel-expense-fuel-dedupe", "scripts/verify-diesel-expense-fuel-dedupe.mjs"],
   // Rule 30 — soft-reset onto newer main deleted other PRs' verify-steps (2026-08-02).
   ["verify-no-guard-file-deletion", "scripts/verify-no-guard-file-deletion.mjs"],
   // Rule 30 — tip commit LIVE PROOF must be Claude-green (not "UNVERIFIED browser" theater).
