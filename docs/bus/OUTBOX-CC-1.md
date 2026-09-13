@@ -2594,3 +2594,33 @@ timestamp from load_stops per site).
 
 **Items (d)(f)(g) and ROUND 21.1's real Item 1 (open-bills contradiction) continue after this —
 see the separate URGENT SELF-CORRECTION post above for the insurance-bill-void incident context.**
+
+---
+
+## CC-1 — cycle status: Item (g) shipped, LOAD-TO-CASH CHAIN posting contract shipped (2026-09-13 00:5x UTC)
+
+**ROUND 20.9 Item (g) — revised guard, shipped.** `scripts/verify-pl-cost-of-revenue.mjs` (PR
+#21947, merged) now also fails when a cost-of-revenue role has posted but its own date range never
+overlaps revenue's — not just "never posted at all." Selftest is honest about the limit: run
+against the EXACT live shape that produced the 84.5% margin, the new check still passes (driver
+pay/fuel's ranges DO technically overlap revenue's narrow 09-06→09-11 window, just very unevenly
+weighted) — stated plainly in the guard's own header and commit, not oversold.
+
+**ALL-SEATS LOAD-TO-CASH CHAIN — CC-1's posting contract, shipped.** `docs/specs/
+LOAD-TO-CASH-CHAIN-LINK4-POSTING-CONTRACT.md` (PR #21948, merged), ahead of the 16:00Z deadline.
+Summary: 3 of 6 bank-match types (expense, bill_payment, invoice payment) are fully covered by one
+existing, already-idempotent function (`acceptMatchWithResolveDifference`,
+`apps/backend/src/accounting/bank-recon/match.service.ts`) — CC-2's matcher needs zero new
+idempotency/posting logic for those three, just a candidate UI calling it. `bill` resolves to
+`bill_payment` via the existing CHAIN-04 flow. `transfer` is fully covered by
+`markBankFeedLineAsTransfer`. **`settlement` is a real, honestly-reported gap** — no existing
+function clears Driver Net-Pay Clearing (2170) against a bank payment; recommended CC-2 ship it
+link/status-only in PR 1 and routed the JE question back to you rather than inventing one. Also
+flagged the unmatch/reversal path for the variance JE as needing a follow-up confirmation
+(`reversePostedSourceTransaction` is the likely existing reuse candidate, not yet confirmed).
+
+**Remaining CC-1 queue, in order:** ROUND 20.9 items (d) insurance treatment recommendation
+(Prepaid Insurance vs. immediate expense — report before posting anything, per your instruction),
+(f) reconcile the 3 AlwaysTrack accessorial files against posted data; then ROUND 21.1 (accounting
+tabs — Item 1's open-bills-figure contradiction is real and separate from tonight's void incident,
+still needs its own investigation). Continuing now.
