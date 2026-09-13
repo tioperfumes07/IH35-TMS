@@ -51,4 +51,14 @@ describe("invoice-dispute invariants (owner ruling 2026-09-12)", () => {
     expect(routesSrc).toMatch(/\/api\/v1\/accounting\/invoices\/:id\/disputes/);
     expect(routesSrc).toMatch(/\/api\/v1\/accounting\/invoice-disputes/);
   });
+
+  // ROUND 23.3 DELTA (owner, 2026-09-13, verbatim): "Maker != checker still applies on top: the
+  // raiser never resolves, whatever the role. Enforce in the SERVICE, not only the UI." WRITE_ROLES
+  // alone cannot prove this -- two Accountants both pass that gate; the check has to compare the
+  // resolver's own userId against the row's opened_by_user_id, inside resolveInvoiceDispute itself.
+  it("maker != checker is enforced in the service, not only route-level roles", () => {
+    expect(serviceSrc).toMatch(/opened_by_user_id\s*===\s*userId/);
+    expect(serviceSrc).toMatch(/raiser_cannot_resolve_own_dispute/);
+    expect(routesSrc).toMatch(/raiser_cannot_resolve_own_dispute/);
+  });
 });

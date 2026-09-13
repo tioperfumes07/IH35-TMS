@@ -217,6 +217,13 @@ export async function resolveInvoiceDispute(
     const row = cur.rows[0] as InvoiceDisputeRow | undefined;
     if (!row) return { error: "dispute_not_found" };
     if (row.status !== "open") return { error: "dispute_not_open", status: row.status };
+    // ROUND 23.3 DELTA (owner, 2026-09-13, verbatim): "Maker != checker still applies on top: the
+    // raiser never resolves, whatever the role. Enforce in the SERVICE, not only the UI." Checked
+    // here, not just gated by WRITE_ROLES in the route -- a same-role user (e.g. two Accountants)
+    // is not a safeguard if one of them is the very person who raised this exact dispute.
+    if (row.opened_by_user_id && row.opened_by_user_id === userId) {
+      return { error: "raiser_cannot_resolve_own_dispute" };
+    }
 
     const upd = await client.query(
       `UPDATE accounting.invoice_disputes

@@ -71,6 +71,8 @@ const ERROR_CODES: Record<string, number> = {
   open_dispute_exists: 409,
   dispute_not_found: 404,
   dispute_not_open: 409,
+  // ROUND 23.3 DELTA (owner, 2026-09-13) -- maker != checker, service-enforced.
+  raiser_cannot_resolve_own_dispute: 403,
 };
 
 function sendServiceResult(reply: FastifyReply, result: Record<string, unknown>, okCode = 200) {
