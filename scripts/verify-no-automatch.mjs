@@ -10,21 +10,23 @@
 // writer of banking.bank_transactions.matched_expense_id / matched_bill_id / matched_load_id /
 // matched_settlement_id / matched_invoice_id — the five columns the Lead's chain audit measured at
 // 0/518 populated — found exactly two, both reviewed and exempted below by name, never by a
-// wildcard. A THIRD, SEPARATE, PRE-EXISTING violation was found in a different subsystem
-// (banking.reconciliation_matches, not these five columns) — recorded as ratchet debt, not
-// silently passed. See KNOWN_AUTOMATCH_DEBT.
+// wildcard. A THIRD, SEPARATE violation was found in a different subsystem
+// (banking.reconciliation_matches, not these five columns) at guard-authoring time (2026-09-12) —
+// recorded as ratchet debt, then FIXED the next day (2026-09-13, ACCT-F26301, Lead ruling):
+// findCandidates() no longer persists anything (READ-ONLY now — see match.service.ts), and the
+// nightly cron was deleted outright (not left flag-gated) per Owner Law B ("not in a nightly job").
+// KNOWN_AUTOMATCH_DEBT is now empty; kept as a named, exported const (rather than deleted outright)
+// so a future regression has an obvious place to land, and so this guard's own history stays legible.
 //
 // Fails when:
-//   1) A NEW file (outside KNOWN_AUTOMATCH_DEBT) writes `match_state: "auto_matched"` as an object
-//      literal — a second/third automatch-and-persist site.
-//   2) A NEW cron file (outside KNOWN_AUTOMATCH_DEBT) imports findCandidates or otherwise reaches a
-//      match-persisting call — a new nightly-job automatch.
+//   1) ANY file writes `match_state: "auto_matched"` as an object literal — an automatch-and-persist
+//      site (there is no debt exemption list any more; the one that existed is fixed).
+//   2) ANY cron file imports findCandidates or otherwise reaches a match-persisting call — a
+//      nightly-job automatch.
 //   3) Any UPDATE of banking.bank_transactions setting one of the five target columns to a bound
 //      parameter (a real value, not a NULL clear) lands in a file that is not on
 //      TARGET_COLUMN_WRITE_ALLOWLIST, or lands in an allowlisted file without
 //      categorized_by_user_id documented as N/A for that specific, reviewed reason.
-//   4) Either KNOWN_AUTOMATCH_DEBT needle goes missing without this guard being updated — the debt
-//      must stay visible, not silently disappear because a refactor moved the code.
 //
 // --selftest plants one mutation per check against a temp copy of a real file.
 import fs from "node:fs";
@@ -34,24 +36,10 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BACKEND_SRC = path.join(ROOT, "apps", "backend", "src");
 
-// RATCHET DEBT (owed, not forgiven — 2026-09-12 discovery while authoring this guard). Neither
-// touches the five matched_* columns above; both write banking.reconciliation_matches instead,
-// via a DIFFERENT engine (accounting/bank-recon/match.service.ts, "Engine B"). Flagged to the Lead
-// the same day this guard was written, not fixed here — removing findCandidates()'s auto-persist
-// touches a live, heavily-tested reconciliation surface shared with the accounting/money lane and
-// deserves its own reviewed change, not a rushed edit inside an unrelated PR.
-const KNOWN_AUTOMATCH_DEBT = [
-  {
-    file: "apps/backend/src/accounting/bank-recon/match.service.ts",
-    needle: 'match_state: "auto_matched"',
-    note: "findCandidates() auto-persists a reconciliation_matches row on a bare GET (opening the Match drawer) when score+amount+date criteria are met — no human action.",
-  },
-  {
-    file: "apps/backend/src/cron/bank-recon-auto-match.cron.ts",
-    needle: "findCandidates",
-    note: "a nightly cron (currently gated off by BANK_RECON_AUTO_MATCH_CRON_ENABLED, default false) that would call the same auto-persist path for every company, every night, if enabled.",
-  },
-];
+// FIXED 2026-09-13 (ACCT-F26301, Lead ruling) — see header comment. Empty on purpose: both
+// violations that once lived here are resolved, and the audit below fails loud if either file
+// somehow regresses the debt shape without this list (and this comment) being updated to match.
+const KNOWN_AUTOMATCH_DEBT = [];
 
 // The three (and only three) reviewed writers of the five target columns, found by a full-repo
 // search before this guard was written (see header). A write here is allowed ONLY because it was
@@ -199,7 +187,7 @@ function run() {
     process.exit(1);
   }
   console.log(
-    `verify-no-automatch OK — ${KNOWN_AUTOMATCH_DEBT.length} known pre-existing automatch debt site(s) tracked (not fixed here, not hidden either), 0 new automatch sites, ${TARGET_COLUMN_WRITE_ALLOWLIST.size} reviewed writer(s) of the five Link-4 target columns (all human-triggered or NULL-clearing only), 0 unreviewed writers.`
+    `verify-no-automatch OK — ${KNOWN_AUTOMATCH_DEBT.length} known automatch debt site(s) remaining (both original sites fixed 2026-09-13, ACCT-F26301), 0 new automatch sites, ${TARGET_COLUMN_WRITE_ALLOWLIST.size} reviewed writer(s) of the five Link-4 target columns (all human-triggered or NULL-clearing only), 0 unreviewed writers.`
   );
 }
 

@@ -82,7 +82,10 @@ describe("WAVE-H3 acceptMatch reverse bank FK stamps", () => {
     );
     expect(reverse).toBeDefined();
     expect(String(reverse?.[0])).toContain("COALESCE(source_bank_transaction_id");
-    expect(reverse?.[1]).toEqual([BANK_TX, PAYMENT, OPCO]);
+    // BANK-F26053 — THREE-DATES-COVERAGE-GAP stamp: cleared_date is also COALESCE-stamped from the
+    // bank transaction's own transaction_date, as a 4th bound param.
+    expect(String(reverse?.[0])).toContain("cleared_date = COALESCE(cleared_date");
+    expect(reverse?.[1]).toEqual([BANK_TX, PAYMENT, OPCO, "2026-07-31"]);
 
     const forward = mockQuery.mock.calls.find(([sql]) =>
       String(sql).includes("UPDATE banking.bank_transactions") && String(sql).includes("matched_payment_id"),
@@ -158,6 +161,9 @@ describe("WAVE-H3 acceptMatch reverse bank FK stamps", () => {
     );
     expect(reverse).toBeDefined();
     expect(String(reverse?.[0])).toContain("from_bank_account_id = COALESCE");
-    expect(reverse?.[1]).toEqual([BANK_TX, BILL_PAY, OPCO, BANK_ACCT]);
+    // BANK-F26053 — same THREE-DATES-COVERAGE-GAP stamp as the payment branch: cleared_date is a
+    // 5th bound param here (payment's own bank_account_id is the 4th).
+    expect(String(reverse?.[0])).toContain("cleared_date = COALESCE(cleared_date");
+    expect(reverse?.[1]).toEqual([BANK_TX, BILL_PAY, OPCO, BANK_ACCT, "2026-07-31"]);
   });
 });

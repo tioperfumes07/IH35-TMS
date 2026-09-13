@@ -688,9 +688,6 @@ export function backgroundJobRule(
     case "banking.plaid_daily_sync_cron":
       // Daily 02:00 CT (plaid-daily-sync.ts) — bank feed. 26h window.
       return { enabled: process.env.ENABLE_PLAID_DAILY_SYNC_CRON !== "false", maxStaleMinutes: 1560 };
-    case "accounting.bank_recon_auto_match_cron":
-      // Nightly 02:15 CT (bank-recon-auto-match.cron.ts). Default-OFF flag. 26h window.
-      return { enabled: envEnabled("BANK_RECON_AUTO_MATCH_CRON_ENABLED"), maxStaleMinutes: 1560 };
     case "accounting.collections_sync_cron":
       // Daily 04:00 CT (collections-sync.cron.ts) — A/R collections. Default-ON. 26h window.
       return { enabled: process.env.ACCOUNTING_COLLECTIONS_SYNC_ENABLED !== "false", maxStaleMinutes: 1560 };

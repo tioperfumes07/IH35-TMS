@@ -436,7 +436,6 @@ import { initializeSamsaraPositionsCron } from "./cron/samsara-positions-cron.js
 import { initializeReeferHoursPollCron } from "./cron/reefer-hours-poll.cron.js";
 import { initializeRealDrivenMilesSegmentsCron } from "./cron/real-driven-miles-segments.cron.js";
 import { initializeFuelGpsMatchCron } from "./cron/fuel-gps-match.cron.js";
-import { initializeBankReconAutoMatchCron } from "./cron/bank-recon-auto-match.cron.js";
 import { initializeDraftCrewStatusSelfHealCron } from "./cron/draft-crew-status-selfheal.cron.js";
 import { initializeGeofenceBreachDetectorCron } from "./cron/geofence-breach-detector.cron.js";
 import { initializeDriverLeaveAdvanceReminderCron } from "./cron/driver-leave-advance-reminder.cron.js";
@@ -1502,7 +1501,8 @@ async function main() {
 
     try {
       initializeFuelGpsMatchCron(app);
-      initializeBankReconAutoMatchCron(app);
+      // ACCT-F26301 — Owner Law B: "never in a nightly job." bank-recon-auto-match.cron.ts deleted
+      // outright (not left flag-gated) — see match.service.ts's findCandidates() comment.
       initializeDraftCrewStatusSelfHealCron(app);
       app.log.info("[STARTUP] fuel-gps-match-cron initialized");
     } catch (error) {
