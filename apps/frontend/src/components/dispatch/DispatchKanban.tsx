@@ -1115,7 +1115,7 @@ export function KanbanDispatchColumn({
   if (column.collapsedByDefault && !expanded) {
     return (
       <section className="min-w-[270px] rounded-sm border border-gray-300 bg-white p-2" data-testid={`kanban-column-${column.key}`}>
-        <header className="grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-sm border border-gray-300 bg-gray-50 px-2 pb-2 pt-1">
+        <header className="grid grid-cols-[auto_1fr_auto] items-center gap-2 border border-gray-300 bg-gray-50 px-2 pb-2 pt-1">
           <button
             type="button"
             onClick={() => setExpanded(true)}
@@ -1143,7 +1143,7 @@ export function KanbanDispatchColumn({
       style={width ? { width: `${width}px`, flex: "0 0 auto" } : undefined}
       data-testid={`kanban-column-${column.key}`}
     >
-      <header className="mb-2 rounded-sm border border-gray-300 bg-gray-50 px-2 pb-2 pt-1">
+      <header className="mb-2 border border-gray-300 bg-gray-50 px-2 pb-2 pt-1">
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
           {column.collapsedByDefault ? (
             <button
@@ -1302,7 +1302,7 @@ function KanbanSwimLaneColumn({
   if (column.collapsedByDefault && !expanded) {
     return (
       <section className="min-w-[270px] rounded-sm border border-gray-300 bg-white p-2" data-testid={`kanban-column-${column.key}`}>
-        <header className="grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-sm border border-gray-300 bg-gray-50 px-2 pb-2 pt-1">
+        <header className="grid grid-cols-[auto_1fr_auto] items-center gap-2 border border-gray-300 bg-gray-50 px-2 pb-2 pt-1">
           <button
             type="button"
             onClick={() => setExpanded(true)}
@@ -1349,7 +1349,7 @@ function KanbanSwimLaneColumn({
       style={width ? { width: `${width}px`, flex: "0 0 auto" } : undefined}
       data-testid={`kanban-column-${column.key}`}
     >
-      <header className="mb-2 rounded-sm border border-gray-300 bg-gray-50 px-2 pb-2 pt-1">
+      <header className="mb-2 border border-gray-300 bg-gray-50 px-2 pb-2 pt-1">
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
           {column.collapsedByDefault ? (
             <button
