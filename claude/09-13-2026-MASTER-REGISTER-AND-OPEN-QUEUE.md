@@ -60,10 +60,10 @@ job, it updates its own row here in the same PR.
 | # | Job | Status |
 |---|---|---|
 | C1 | **Chain Link 1** — driver bills | **DONE (Cursor, this PR).** 13554/13573/13579/13580 minted via the real hook `ensureDriverBillArtifactsForLoad` (they predate the 2026-09-11 mint convergence). Guard LINK 1 = **0 driver-having loads unbilled**. `13502/13505/13507` are DRIVERLESS `delivered_pending_docs` (no driver ever seated) — `driver_bills.driver_id` is NOT NULL, so no bill is possible; that is a DATA anomaly surfaced as a guard REPORT for the owner to seat the real driver, not a hook miss. |
-| C2 | **Chain Link 2** — tour links | **DONE-SAFE + OWNER FLAG (Cursor, this PR).** Root cause was NOT a hook miss: two UNATTRIBUTED script batches CANCELLED these loads' pre-settlements on 2026-09-12 (01:21Z/01:46Z, blank role) and cleared `presettlement_link_id`. **C2a restored** the 4 owner-CLOSED ones (S-2026-0018/0020/0028/0030) + re-pointed `13564/13570/13580/13589/13586`. **C2b owner decision** (`13526 13527 13561 13567 13571 13574`): the 2 settlements were `open`, drivers moved to newer tours S-2026-5806/5807 → re-open violates one-open-per-driver, `closed` is an owner close; 13526 never had one. Baselined in the guard. Full forensic: `docs/reconcile/CHAIN-C1-C2-BACKFILL-2026-09-13.md`. |
+| C2 | **Chain Link 2** — tour links | **DONE-SAFE + OWNER FLAG (Cursor, this PR).** *(Re-stated 2026-09-13 by AlwaysTrack `source_document_ref` per ACCT-F20260911 — the S-YYYY-NNNN counter is not shown.)* Root cause was NOT a hook miss: two UNATTRIBUTED script batches CANCELLED these loads' pre-settlements on 2026-09-12 (01:21Z/01:46Z, blank role) and cleared `presettlement_link_id`. **C2a restored** the 4 owner-CLOSED tours + re-pointed `13564/13570/13580/13589/13586` (these 4 closed tours carry **no AlwaysTrack doc yet — `source_document_ref` NULL**; they need the close-time AlwaysTrack stamp — flagged to CC-1/CC-2 money lane). **C2b owner decision** (`13526 13527 13561 13567 13571 13574`): loads `13527/13561/13567` sat on the now-cancelled tour **AlwaysTrack doc 5779** (driver 4ff53886, who has since moved to the newer open tour **AlwaysTrack 5807**); loads `13571/13574` sat on a cancelled tour that **never had an AlwaysTrack doc** (driver 3e138476, now on the newer open tour **AlwaysTrack 5806**); `13526` was **never on a tour** (no doc). Re-open violates one-open-per-driver; `closed` is an owner close. Baselined in the guard. Full forensic: `docs/reconcile/CHAIN-C1-C2-BACKFILL-2026-09-13.md`. |
 | C3 | **The auto-create HOOK** named + guard hardened | **DONE (Cursor, this PR).** Bill: `book-load.service.ts:1091` (`ensureDriverBillArtifactsForLoad`) → `:682`. Link: `presettlement-link.service.ts:624` (booking) / `:695` (REG-008 post-assignment). Guard corrected: USMCA-scoped (was counting frozen Transportation `L-2026…`), LINK 1 hard-fails only on driver-having loads, `set_config(bypass_rls,false)` (the `true`/tx-local form RLS-filtered every read to 0). Guard **LIVE PASS at 88 USMCA loads**. |
 | C4 | Load **13595** revert | **DONE (verified).** `audit.row_changes`: the Lead's test drag `dispatched→in_transit` (21:40:48Z) was already reverted `in_transit→dispatched` at 23:52:05Z. Reads `dispatched` live. |
-| C5 | Load **13593** check | **DONE (verified).** Reads `dispatched` live (matches the 16:30 CT read; the 18:15 planner `in_transit` was a render, not persisted). No anomaly — its NB/SB pair 13588/13593 is driver 4ff53886's current open tour S-2026-5807. |
+| C5 | Load **13593** check | **DONE (verified).** Reads `dispatched` live (matches the 16:30 CT read; the 18:15 planner `in_transit` was a render, not persisted). No anomaly — its NB/SB pair 13588/13593 is driver 4ff53886's current open tour **AlwaysTrack 5807**. |
 
 ### CC-1 — money / GL / migrations / posting
 | # | Job | Status |
@@ -246,3 +246,113 @@ a month out of date and any seat reading it will reason wrongly. Measured live 2
 **USMCA is a live operating carrier with a month of real history.** Treat every record as real
 unless it carries `is_sample_data = true`. The Lead is updating the standards skill; until that
 lands, this table is the current state and it overrides §D.
+
+---
+
+## PART 7 — ALL-SEATS LAW: ALWAYSTRACK IS THE SETTLEMENT/TOUR IDENTITY, BESIDE EVERY LOAD NUMBER
+Filed 2026-09-13 by Cursor on the owner's direct, angry escalation. **Every seat reads this before
+touching any surface that renders a load number or a settlement/tour number.** This is a RESTATEMENT
+of standing owner law (ACCT-F20260911, owner 2026-09-11), not a new invented rule.
+
+### 7.1 The quoted prior ruling (so nobody paraphrases it wrong)
+Source of truth on tip: `docs/bus/HANDOFF-SETTLEMENT-NUMBER-AND-PRESETTLEMENT-2026-09-11.md` (L15/L18/
+L29–L33) + codified in `apps/frontend/src/lib/settlementNumber.ts` (header, ACCT-F20260911).
+- Owner, verbatim (2026-09-11): *"for tours settlement remove and delete any fucking autogenerating
+  number etc, command-coordinate and code to have the settlement autogenerate based on the numbers we
+  have here from always."* and *"you are still showing your tour number. incorrectly … the always
+  version of pre-settlement for us. we must render the same data."*
+- Owner, verbatim (2026-09-13): *"allways track numbers are source of truth for dispatch"*; the
+  `S-YYYY-NNNN` counter *"is not real … i have explicitly told you to delete from the software, not to
+  ever mention that again."*
+
+**The rule:** A **SETTLEMENT / TOUR number = the 4-digit AlwaysTrack document** =
+`driver_finance.driver_settlements.source_document_ref`. It is the ONLY human/business identity of a
+settlement or tour, rendered everywhere through the one helper `settlementNumber.ts`
+(`settlementLabel` → the doc, `"Open"` for an unsettled tour, `"—"` closed-but-unstamped, **never a
+fabricated number**). `driver_settlements.display_id` (`S-YYYY-NNNN`) is a **RETIRED INTERNAL
+SURROGATE** — never rendered, never in an owner-facing report, never the identity. Rule 03 reconciled
+this PR.
+
+### 7.2 NO-REVERT LAW (restatement — Rule 07 + 00-IH35-LAW)
+Owner, 2026-09-13: *"there is a law that states you cannot revert shit without my explicit say so."*
+- **No seat may revert, delete, roll back, or remove any feature / column / module / route / screen /
+  data without Jorge's explicit say-so.** "Delete the S-2026 mechanism" = stop rendering/using it as
+  the business identity; it does **NOT** authorize dropping tables, deleting rows, or removing the
+  `display_id` column. **Void-not-delete** (00-IH35-LAW) / **NEVER DELETE — only ADD** (Rule 07).
+- The settlement-column guard is **purely additive**: it fails on a MISSING adjacent column or on a
+  `display_id` / `S-YYYY-NNNN` literal rendered as identity. It never requires deleting anything.
+
+### 7.3 THE COVERAGE LAW (owner 2026-09-13, verbatim)
+*"anywhere in the entire app, where a load number appears, a column must be next to it with the
+pre-settlement/settlement/tour number … that means in load costs, in pre settlements, settlements,
+bills, everywhere in the entire app."* and *"why did you not name, expenses, dispatch, load boards,
+everywhere."* → **Every surface that renders a load-number column MUST render an adjacent AlwaysTrack
+(`source_document_ref`) settlement/tour column** — Expenses/Load Costs, Dispatch board/load boards/
+load list, Pre-Settlements/Settlements/Tours, Driver bills/Vendor bills, Invoices/A/R, Factoring/
+Purchase Report/Cash Flow, Fuel, Work Orders/Maintenance-linked-to-a-load, IFTA/Mileage, Load detail/
+drawers, Payments, Escrow/Advances tied to a load, TONU/Cancellations, and **every export/CSV/report/
+accounting register that prints a load number**.
+
+### 7.4 GUARD (enforces both halves; wired into `money-pr-local-gate`)
+`scripts/verify-settlement-ref-beside-load.mjs` (this PR):
+1. **Backslide lock** — every surface in `SURFACES` must keep its load-number column AND a
+   `settlementLabel()`/`SettlementRefCell` beside it. Cursor registered its converted surfaces
+   (Load Costs board, Load Detail drawer). Each seat MOVES its file from the inventory (§7.5) into
+   `SURFACES` as it converts — a landed surface can never silently lose the column again.
+2. **No counter as identity** — repo-wide, FAILS if any file renders `settlement*/tour*.display_id`
+   or an `S-YYYY-NNNN` literal / `` `S-${…}` `` template as a settlement/tour number (comments
+   stripped; company-settlement + unrelated ids not falsely flagged). Self-test 6/6.
+   Red→green proven this PR on `LoadDetailDrawer.tsx` (`{headerTour.display_id}` → FAIL; `settlementLabel(headerTour)` → OK).
+
+### 7.5 ENUMERATED ROLLOUT — VERDICT FORMAT, BY OWNING SEAT
+The machine-readable list lives in the guard as `LOAD_NUMBER_SURFACE_INVENTORY`. Each seat converts
+its own surfaces (add the adjacent AlwaysTrack column via `settlementLabel`/`SettlementRefCell`, then
+register in `SURFACES`). **Target value:** every listed file renders `source_document_ref` (or
+`"Open"`/`"—"`) beside its load number; **guard:** `verify-settlement-ref-beside-load.mjs`;
+**deadline:** 2026-09-14 23:59 UTC; **surrender:** if a seat misses, Cursor (lead) reassigns and the
+surface moves, the surrendering seat keeps only its money/GL lane.
+
+- **CURSOR (loads/tours/dispatch/load-costs) — DONE this PR:** `LoadCostsBoardPage.tsx`,
+  `LoadDetailDrawer.tsx`. **Remaining Cursor:** `LoadDetailCostsTab.tsx`, `TourLoadRows.tsx` (already
+  AlwaysTrack), `TourSettlementTab.tsx`, `TourPreSettlementTab.tsx`, `DispatchList.tsx`,
+  `DispatchBoard.tsx`, `DispatchOverview.tsx`, `planners/LoadsPlanner.tsx`, `AssignmentHistoryPage.tsx`,
+  `DetentionBoardPage.tsx`, `PodReviewPage.tsx`, `InTransitIssuesPage.tsx`, `FactoringQueuePage.tsx`,
+  `AtRiskQueuePage.tsx`, `LateArrivalsPage.tsx`, `RoundTrips.tsx`, `PlannerCalendarPage.tsx`,
+  `DriverBillRemintScreen.tsx`, `PreSettlementsPanel.tsx`, `PresettlementSuggestionsTab.tsx`.
+- **CC-1 (accounting/money/cash-flow) — KNOWN BACKEND LEAKS TO FIX + surfaces:**
+  `transaction-register.routes.ts:190` renders `COALESCE(s.display_id,'Settlement')` — **must become
+  `source_document_ref`**; `settlement-pdf-renderer.service.ts:182` renders `settlement.display_id`
+  in the PDF — **must become `source_document_ref`**; `settlements-mvp.routes.ts:337/343/393` uses
+  `display_id` as label. Frontend surfaces: `ExpensesListPage.tsx`, `InvoicesListPage.tsx`,
+  `BillsPage.tsx`, `BillDetailPage.tsx`, `RevenueRecognitionPage.tsx`, `InvoiceCreateModal.tsx`,
+  `AbandonmentQueuePage.tsx`, `cash-flow/tabs/RollingLedgerTab.tsx`, `reports/CounterpartyStatementPage.tsx`,
+  `reports/PostedWhileTourOpenReportPage.tsx`, `reports/InvoiceSearchReportPage.tsx`,
+  `reports/DispatchMarginPage.tsx`, `banking/components/BankingTransactionsDesignView.tsx`. Also:
+  **the 4 owner-closed tours re-pointed in C2 carry `source_document_ref = NULL`** — stamp the
+  close-time AlwaysTrack doc via `setSettlementSourceDocumentRef`.
+- **CC-2 (driver-finance/settlements/fuel):** `SettlementsPage.tsx`, `SettlementsTable.tsx`,
+  `SettlementsCompanyDriverTab.tsx`, `PendingSettlementDeductionsPanel.tsx` (+ its already-landed 13).
+  Confirm `driver-bills-list.routes.ts settlement_display_id` resolves `source_document_ref`, not the
+  counter (LoadCostsBoardPage driver-pay register reads it).
+- **CC-3 (safety/maintenance/fleet/insurance):** `maintenance/components/WorkOrdersTable.tsx`,
+  `maintenance/components/InTransitIssuesTable.tsx`, `vehicle-profile/UnitMaintenanceHistorySection.tsx`,
+  `safety/AccidentsPage.tsx`, `safety/tabs/HOSViolationsTab.tsx`,
+  `safety/components/CargoClaimIntakeSurface.tsx`, `safety/InternalFinesPage.tsx`,
+  `insurance/ClaimsTab.tsx`, `maintenance/DriverReportsQueuePage.tsx`, `maintenance/ArrivingSoonPage.tsx`,
+  `units/UnitDriverHistoryStrip.tsx`, `drivers/operations/FuelHistoryView.tsx`,
+  `drivers/operations/AccidentHistoryView.tsx`, `Documents.tsx`.
+
+### 7.6 CORRECTED SETTLEMENT REFERENCES (what I wrongly showed the owner as S-2026-*)
+Verified live on Neon `br-fancy-credit-akjnd07a`, `bypass_rls='lucia'`, USMCA. **AlwaysTrack doc is
+the identity; the S-YYYY-NNNN column is not shown.**
+
+| Load(s) | Real AlwaysTrack ref (`source_document_ref`) | Tour status | Owner action, by AlwaysTrack |
+|---|---|---|---|
+| 13527 / 13561 / 13567 | **5779** | cancelled | Driver 4ff53886 now on open tour **5807**; owner decides whether to re-home these loads. |
+| 13571 / 13574 | **(no AlwaysTrack doc — never stamped)** | cancelled | Driver 3e138476 now on open tour **5806**; owner decides. |
+| 13526 | **(never on a tour)** | none | Owner seats/links if it belongs on a tour. |
+| 13554 | **5776** | cancelled | Driver bill minted (C1); tour cancelled. |
+| 13573 | **5811** | closed | Driver bill minted (C1); closed with real doc. |
+| 13564 / 13570 / 13580 / 13589 / 13586 | **(closed, `source_document_ref` NULL)** | closed | CC-1/CC-2: stamp the close-time AlwaysTrack doc. |
+| 13579 | **(no AlwaysTrack doc)** | cancelled | — |
+| Current open tours | **5806** (driver 3e138476), **5807** (driver 4ff53886) | open | These render "Open" until closed, then take the next AlwaysTrack number. |

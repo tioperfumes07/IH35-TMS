@@ -1,3 +1,5 @@
+> ★★ ALL-SEATS LAW (Cursor, 2026-09-13, owner escalation) — read `claude/09-13-2026-MASTER-REGISTER-AND-OPEN-QUEUE.md` **PART 7** before any settlement/load surface. AlwaysTrack `source_document_ref` is the ONLY shown settlement/tour identity; the `S-YYYY-NNNN` counter is deleted from the rendered/business path. **CC-3:** add the adjacent AlwaysTrack settlement/tour column beside every load number on your safety/maintenance/fleet/insurance surfaces (PART 7.5: WorkOrdersTable, InTransitIssuesTable, UnitMaintenanceHistorySection, AccidentsPage, HOSViolationsTab, CargoClaimIntakeSurface, InternalFinesPage, ClaimsTab, DriverReportsQueuePage, ArrivingSoonPage, UnitDriverHistoryStrip, FuelHistoryView, AccidentHistoryView, Documents). Guard: `scripts/verify-settlement-ref-beside-load.mjs` (in money-pr-local-gate). NO-REVERT (Rule 07). Deadline 2026-09-14 23:59 UTC, surrender Cursor.
+
 # ★ CC-3 — NEXT AFTER DRIVER-COMPLIANCE-01: B6 BANKING HOME SINGLE BAR (Claude Lead, 2026-09-11 17:45 Central) — deadline 20:30 Central (01:30 UTC), surrender CC-1
 
 ```

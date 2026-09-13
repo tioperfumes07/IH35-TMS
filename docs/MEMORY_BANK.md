@@ -767,3 +767,31 @@ pre-settlement/tour. Guard `scripts/verify-load-to-cash-chain.mjs`. Full forensi
   `dispatched`** live (planner `in_transit` render ≠ persisted state) — no anomaly.
 - **LOADS FENCE reminder:** only Cursor writes load status / tour_id / trip_type / presettlement_link_id.
   Restoring a never-posted pre-settlement's status is tour-linkage (Cursor), not GL/posting (CC-1).
+
+## Active Architectural Decisions — AlwaysTrack is the settlement/tour identity (Cursor, 2026-09-13)
+
+Owner law ACCT-F20260911 (2026-09-11, restated angrily 2026-09-13: *"allways track numbers are source
+of truth for dispatch"*, the S-YYYY-NNNN counter *"is not real … deleted from the software"*). Durable
+facts — read before rendering or reporting any settlement/tour number:
+- **The ONLY human/business settlement-or-tour number is the 4-digit AlwaysTrack document =
+  `driver_finance.driver_settlements.source_document_ref`.** Render it everywhere through the one helper
+  `apps/frontend/src/lib/settlementNumber.ts` (`settlementLabel` → the doc, `"Open"` unsettled, `"—"`
+  closed-unstamped, never fabricated). `driver_settlements.display_id` (`S-YYYY-NNNN`) is a RETIRED
+  INTERNAL SURROGATE — never rendered, never quoted to the owner. Rule 03 reconciled 2026-09-13.
+- **NEVER quote the S-YYYY-NNNN counter to the owner.** The prior C1/C2/C3 entry above names
+  `S-2026-0013/0021/5806/5807`; their real AlwaysTrack identities are: **0013 → doc 5779**; **0021 →
+  no doc (never stamped)**; **5806/5807 → docs 5806/5807** (open tours of drivers 3e138476 / 4ff53886).
+  Full corrected table: master register PART 7.6.
+- **Guard `scripts/verify-settlement-ref-beside-load.mjs`** (wired into `money-pr-local-gate`): fails on
+  (a) a registered surface losing its adjacent `settlementLabel`/`SettlementRefCell` beside a load
+  number (backslide lock), (b) any file rendering `settlement*/tour*.display_id` or an `S-YYYY-NNNN`
+  literal/`` `S-${…}` `` template as a settlement number (comments stripped; self-test 6/6). Purely
+  additive — never requires deleting a column (Rule 07 / void-not-delete).
+- **COVERAGE LAW:** every surface that renders a load-number column must render an adjacent AlwaysTrack
+  settlement/tour column. Enumerated by owning seat in the guard's `LOAD_NUMBER_SURFACE_INVENTORY` and
+  in master register PART 7.5. Cursor converted Load Costs board + Load Detail drawer this PR.
+- **Known cross-lane backend leaks (routed to CC-1):** `transaction-register.routes.ts:190`
+  (`COALESCE(s.display_id,'Settlement')`) and `settlement-pdf-renderer.service.ts:182`
+  (`settlement.display_id`) still render the counter — must become `source_document_ref`.
+- **NO-REVERT (Rule 07 + 00-IH35-LAW):** "delete the S-2026 mechanism" = stop rendering it as identity,
+  NOT drop the column/rows. No seat reverts/removes any feature/column/route/data without Jorge's say-so.

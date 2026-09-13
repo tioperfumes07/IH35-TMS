@@ -27,6 +27,7 @@ import { parseExpenseMemo } from "../../lib/expense-memo";
 import { STATUS_LABEL } from "../../components/dispatch/constants";
 import { InlineStatusPicker } from "../../components/dispatch/InlineStatusPicker";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { settlementLabel } from "../../lib/settlementNumber";
 
 type FilterPill = "in_motion" | "delivered_open" | "all_open" | "this_week";
 // LOAD-COSTS-COMPLETE item (3) (owner's exact board-column list, 2026-09-04): Load · Unit · Driver ·
@@ -764,7 +765,11 @@ export function LoadCostsBoardPage() {
     // (alwaysVisible -- stronger than just flipping the default, since it can never be re-hidden
     // via the gear picker either) while this same fix was in flight here; keeping Cursor's version
     // on merge rather than shipping a duplicate/weaker one.
-    { key: "settlement", label: "Settlement/Tour", testId: "col-settlement", sortable: true, className: "whitespace-nowrap", alwaysVisible: true, sortValue: r => r.settlement_display_id ?? "", render: r => r.settlement_id ? <Link className="font-semibold text-slate-700 underline" to={`/driver-finance/settlements?settlement_id=${r.settlement_id}`}>{r.settlement_display_id}</Link> : "—" },
+    // ACCT-F20260911 (owner 2026-09-11, restated 2026-09-13): the Settlement/Tour value is the AlwaysTrack
+    // document (source_document_ref, already what settlement_display_id carries from the backend CTE),
+    // rendered through the ONE settlementLabel() helper — "Open" while unsettled, a dash when closed-
+    // unnumbered, NEVER the retired S-YYYY-NNNN display_id counter. alwaysVisible, beside every load number.
+    { key: "settlement", label: "Settlement/Tour", testId: "col-settlement", sortable: true, className: "whitespace-nowrap", alwaysVisible: true, sortValue: r => r.settlement_display_id ?? "", render: r => { const lbl = settlementLabel({ source_document_ref: r.settlement_display_id, status: r.status }); return r.settlement_id ? <Link className="font-semibold text-slate-700 underline" to={`/driver-finance/settlements?settlement_id=${r.settlement_id}`}>{lbl}</Link> : (r.settlement_display_id ? lbl : "—"); } },
     // LOAD-COSTS-RETURN-COLS (owner 2026-09-08): same source as Dispatch Home's "Units Needing
     // Return" tile (listUnitsWithoutLoad's own hours_since_last_delivery) -- never a second copy of
     // that math. Only the LATEST delivered row for a currently-idle unit gets a value; an older

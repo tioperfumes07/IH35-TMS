@@ -107,7 +107,90 @@ export const SURFACES = [
   // zero code changes, per CC-2's own note in docs/bus/INBOX-CC-1.md.
   { file: "apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx", loadNumberNeedle: /key: "load"/ },
   { file: "apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx", loadNumberNeedle: /key: "load"/ },
+  // Cursor (loads/tours/dispatch/load-costs) converted surfaces — ACCT-F20260911 rollout, 2026-09-13.
+  // The Load Costs board's default "Costs" tab (owner's live-flagged surface) renders the AlwaysTrack
+  // Settlement/Tour column beside every load number via settlementLabel(); the Load Detail drawer header
+  // (REG-032) renders the same beside the load number. Both alwaysVisible, source_document_ref only.
+  { file: "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx", loadNumberNeedle: /r\.load_number/ },
+  { file: "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx", loadNumberNeedle: /load\?\.load_number/ },
 ];
+
+// ACCT-F20260911 ALL-SEATS ROLLOUT INVENTORY (owner 2026-09-13, verbatim: "anywhere in the entire app,
+// where a load number appears, a column must be next to it with the pre-settlement/settlement/tour
+// number ... expenses, dispatch, load boards, everywhere"). Every frontend surface that renders a
+// load-number column MUST carry an adjacent AlwaysTrack (source_document_ref) settlement/tour column.
+// This is the enumerated set, grouped by owning seat. As each seat converts a surface it MOVES the file
+// into SURFACES above (which hard-fails if the cell is later removed — a backslide lock). This constant
+// is the machine-readable rollout tracker referenced by the master-register all-seats instruction; it is
+// intentionally NOT auto-hard-failed for unconverted other-seat files, because that would red the shared
+// money-pr-local-gate for every seat at once and block the very PRs that fix it (and would violate the
+// no-cross-lane-edit rule). The hard enforcement is: (1) SURFACES backslide lock, (2) no display_id /
+// S-YYYY-NNNN literal rendered as a settlement number anywhere (auditNoDisplayIdAsSettlementNumber +
+// auditNoSYYYYLiteralAsSettlementNumber, repo-wide, additive). Purely additive: it never requires
+// deleting a column/feature (Rule 07 NEVER DELETE — only ADD; 00-IH35-LAW void-not-delete).
+export const LOAD_NUMBER_SURFACE_INVENTORY = {
+  cursor_dispatch_loads_tours_loadcosts: [
+    "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx", // CONVERTED (SURFACES)
+    "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx", // CONVERTED (SURFACES)
+    "apps/frontend/src/components/dispatch/LoadDetailCostsTab.tsx",
+    "apps/frontend/src/components/dispatch/TourLoadRows.tsx",
+    "apps/frontend/src/components/dispatch/TourSettlementTab.tsx",
+    "apps/frontend/src/components/dispatch/TourPreSettlementTab.tsx",
+    "apps/frontend/src/components/dispatch/DispatchList.tsx",
+    "apps/frontend/src/pages/dispatch/DispatchBoard.tsx",
+    "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
+    "apps/frontend/src/pages/dispatch/planners/LoadsPlanner.tsx",
+    "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx",
+    "apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx",
+    "apps/frontend/src/pages/dispatch/PodReviewPage.tsx",
+    "apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx",
+    "apps/frontend/src/pages/dispatch/FactoringQueuePage.tsx",
+    "apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx",
+    "apps/frontend/src/pages/dispatch/LateArrivalsPage.tsx",
+    "apps/frontend/src/pages/dispatch/RoundTrips.tsx",
+    "apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx",
+    "apps/frontend/src/pages/dispatch/DriverBillRemintScreen.tsx",
+    "apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx",
+    "apps/frontend/src/pages/driver-finance/components/PresettlementSuggestionsTab.tsx",
+  ],
+  cc1_accounting_money_cashflow: [
+    "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
+    "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
+    "apps/frontend/src/pages/accounting/BillsPage.tsx",
+    "apps/frontend/src/pages/accounting/BillDetailPage.tsx",
+    "apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx",
+    "apps/frontend/src/pages/accounting/InvoiceCreateModal.tsx",
+    "apps/frontend/src/pages/accounting/AbandonmentQueuePage.tsx",
+    "apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx",
+    "apps/frontend/src/pages/reports/CounterpartyStatementPage.tsx",
+    "apps/frontend/src/pages/reports/PostedWhileTourOpenReportPage.tsx",
+    "apps/frontend/src/pages/reports/InvoiceSearchReportPage.tsx",
+    "apps/frontend/src/pages/reports/DispatchMarginPage.tsx",
+    "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+  ],
+  cc2_driverfinance_settlements_fuel: [
+    "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
+    "apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx",
+    "apps/frontend/src/pages/driver-finance/SettlementsCompanyDriverTab.tsx",
+    "apps/frontend/src/pages/drivers/PendingSettlementDeductionsPanel.tsx",
+  ],
+  cc3_safety_maintenance_fleet_insurance: [
+    "apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx",
+    "apps/frontend/src/pages/maintenance/components/InTransitIssuesTable.tsx",
+    "apps/frontend/src/components/vehicle-profile/UnitMaintenanceHistorySection.tsx",
+    "apps/frontend/src/pages/safety/AccidentsPage.tsx",
+    "apps/frontend/src/pages/safety/tabs/HOSViolationsTab.tsx",
+    "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx",
+    "apps/frontend/src/pages/safety/InternalFinesPage.tsx",
+    "apps/frontend/src/pages/insurance/ClaimsTab.tsx",
+    "apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx",
+    "apps/frontend/src/pages/maintenance/ArrivingSoonPage.tsx",
+    "apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx",
+    "apps/frontend/src/pages/drivers/operations/FuelHistoryView.tsx",
+    "apps/frontend/src/pages/drivers/operations/AccidentHistoryView.tsx",
+    "apps/frontend/src/pages/Documents.tsx",
+  ],
+};
 
 // SettlementReferenceCell — see the disclosed cross-seat finding above: a second, independently-
 // built, functionally-equivalent implementation of the identical 4-state rule. Accepted here rather
@@ -126,6 +209,12 @@ function walk(dir, out = []) {
 
 function relFile(absPath) {
   return path.relative(ROOT, absPath).split(path.sep).join("/");
+}
+
+/** Strip block + line comments so a settlement counter mentioned in a comment (e.g. "BANK-F5751 — a
+ * real display_id like S-2026-0002") is never mistaken for a rendered value. Protects `://` in URLs. */
+function stripComments(src) {
+  return src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/([^:])\/\/[^\n]*/g, "$1");
 }
 
 export function auditRegisteredSurfaces() {
@@ -149,12 +238,16 @@ export function auditRegisteredSurfaces() {
 }
 
 /** driver_finance.driver_settlements.display_id (S-YYYY-NNNN) must never be the human-visible
- * settlement number — only source_document_ref may render. Scoped to JSX-rendered expressions
- * that name themselves "settlement" AND access `.display_id`, so an unrelated entity's own
- * legitimate display_id (an invoice, a bill) is not falsely flagged. */
+ * settlement/tour number — only source_document_ref (via settlementLabel) may render. Scoped to
+ * JSX-rendered expressions that name themselves "settlement" or "tour" AND access `.display_id`
+ * (dot access), so an unrelated entity's own legitimate display_id (invoice/bill) and the
+ * confusingly-named snake data field `settlement_display_id` (source_document_ref value) are not
+ * falsely flagged. The `tour` arm catches the REG-032 leak class (headerTour.display_id rendered as
+ * the load's settlement number in the Load Detail drawer). Company-settlement display_id (a distinct
+ * accounting document, not the tour/driver settlement) is intentionally out of scope here. */
 function findDisplayIdAsSettlementNumber(src) {
   const hits = [];
-  const re = /\{[^{}]*settlement[a-zA-Z_]*\.display_id[^{}]*\}/gi;
+  const re = /\{[^{}]*(?:settlement|tour)[a-zA-Z_]*\.display_id[^{}]*\}/gi;
   let m;
   while ((m = re.exec(src))) hits.push(m[0]);
   return hits;
@@ -163,7 +256,7 @@ function findDisplayIdAsSettlementNumber(src) {
 export function auditNoDisplayIdAsSettlementNumber(files) {
   const failures = [];
   for (const abs of files) {
-    const src = fs.readFileSync(abs, "utf8");
+    const src = stripComments(fs.readFileSync(abs, "utf8"));
     const hits = findDisplayIdAsSettlementNumber(src);
     if (hits.length > 0) {
       failures.push(`${relFile(abs)}: renders a settlement's display_id as a user-visible number (${hits[0]}) — only source_document_ref may render (settlementNumber.ts)`);
@@ -172,9 +265,37 @@ export function auditNoDisplayIdAsSettlementNumber(files) {
   return failures;
 }
 
+/** ACCT-F20260911 (owner 2026-09-11, restated 2026-09-13): the S-YYYY-NNNN settlement counter was
+ * ordered DELETED from the software — it must never be rendered as the settlement/tour number. Forbid a
+ * hardcoded `S-YYYY-NNNN` string literal or the `S-${...}` counter template rendered inside a
+ * settlement/tour-named JSX expression, so an unrelated id's own format is not falsely flagged. */
+function findSYYYYAsSettlementNumber(src) {
+  const hits = [];
+  const re = /\{[^{}]*(?:settlement|tour)[a-zA-Z_]*[^{}]*(?:`\s*S-\$\{|["'`]\s*S-\d{4}-\d{3,4})/gi;
+  let m;
+  while ((m = re.exec(src))) hits.push(m[0].slice(0, 90));
+  return hits;
+}
+
+export function auditNoSYYYYLiteralAsSettlementNumber(files) {
+  const failures = [];
+  for (const abs of files) {
+    const src = stripComments(fs.readFileSync(abs, "utf8"));
+    const hits = findSYYYYAsSettlementNumber(src);
+    if (hits.length > 0) {
+      failures.push(`${relFile(abs)}: renders an S-YYYY-NNNN settlement counter as a user-visible number (${hits[0]}) — the counter was deleted from the software; only the AlwaysTrack source_document_ref may render (settlementNumber.ts)`);
+    }
+  }
+  return failures;
+}
+
 function auditAll() {
   const files = walk(FRONTEND_SRC);
-  return [...auditRegisteredSurfaces(), ...auditNoDisplayIdAsSettlementNumber(files)];
+  return [
+    ...auditRegisteredSurfaces(),
+    ...auditNoDisplayIdAsSettlementNumber(files),
+    ...auditNoSYYYYLiteralAsSettlementNumber(files),
+  ];
 }
 
 function run() {
@@ -185,7 +306,7 @@ function run() {
     process.exit(1);
   }
   console.log(
-    `verify-settlement-ref-beside-load OK — ${SURFACES.length} registered surface(s) all render SettlementRefCell/settlementLabel beside their load number, 0 files render a settlement's display_id as a user-visible number.`
+    `verify-settlement-ref-beside-load OK — ${SURFACES.length} registered surface(s) all render SettlementRefCell/settlementLabel beside their load number, 0 files render a settlement's display_id or an S-YYYY-NNNN counter as a user-visible number.`
   );
 }
 
@@ -220,11 +341,26 @@ if (process.argv.includes("--selftest")) {
     const f3 = path.join(tmpDir, "InvoiceRow.tsx");
     fs.writeFileSync(f3, `export const x = <span>{invoice.display_id}</span>;\n`);
     assert.equal(auditNoDisplayIdAsSettlementNumber([f3]).length, 0, "MUTATION 3 false-positived on an unrelated entity's own display_id");
+
+    // MUTATION 4 — an S-YYYY-NNNN counter literal rendered as a settlement number.
+    const f4 = path.join(tmpDir, "RogueSettlementLiteral.tsx");
+    fs.writeFileSync(f4, "export const x = <span>{settlementNo ? `S-${year}-${seq}` : '—'}</span>;\n");
+    assert.ok(auditNoSYYYYLiteralAsSettlementNumber([f4]).length > 0, "MUTATION 4 (S-${...} counter template rendered) escaped detection");
+
+    // MUTATION 5 — a hardcoded S-YYYY-NNNN literal in a settlement-named expression.
+    const f5 = path.join(tmpDir, "RogueSettlementHardcode.tsx");
+    fs.writeFileSync(f5, `export const x = <span>{settlementLabelText ?? "S-2026-0013"}</span>;\n`);
+    assert.ok(auditNoSYYYYLiteralAsSettlementNumber([f5]).length > 0, "MUTATION 5 (hardcoded S-YYYY-NNNN literal) escaped detection");
+
+    // MUTATION 6 — an unrelated entity's own S-YYYY id (e.g. a load) must NOT be falsely flagged.
+    const f6 = path.join(tmpDir, "UnrelatedId.tsx");
+    fs.writeFileSync(f6, `export const x = <span>{invoice.number ?? "S-2026-0013"}</span>;\n`);
+    assert.equal(auditNoSYYYYLiteralAsSettlementNumber([f6]).length, 0, "MUTATION 6 false-positived on an unrelated entity's own literal");
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 
-  console.log("verify-settlement-ref-beside-load --selftest PASS (3/3 mutations caught)");
+  console.log("verify-settlement-ref-beside-load --selftest PASS (6/6 mutations caught)");
   process.exit(0);
 }
 
