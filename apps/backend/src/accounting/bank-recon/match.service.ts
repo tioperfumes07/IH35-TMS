@@ -1054,26 +1054,17 @@ export async function findCandidates(input: {
       .sort(compareCandidatesExactFirst)
       .slice(0, 50);
 
-    // Only persist an auto-match whose kind the banking.reconciliation_matches CHECK constraint
-    // accepts (see PERSISTABLE_MATCH_KINDS) — that keeps this Tier-3 and avoids a CHECK-violation 500.
-    //
-    // This comment used to say "'bill'/'expense' auto-matches are ... never written". That was WRONG
-    // about `expense`, which IS in PERSISTABLE_MATCH_KINDS and IS written. Of the six LedgerEntryKind
-    // members exactly ONE — 'bill' — is non-persistable. Corrected because the nightly cron's
-    // auto-matched metric was built on the belief the comment described, and overcounted as a result.
-    const best = ranked.find((row) => row.auto_match && PERSISTABLE_MATCH_KINDS.has(row.ledger_entry_kind));
-    if (best) {
-      await storeMatch(client, {
-        operating_company_id: input.operating_company_id,
-        bank_transaction_id: input.bank_transaction_id,
-        ledger_entry_kind: best.ledger_entry_kind,
-        ledger_entry_id: best.ledger_entry_id,
-        match_score: best.match_score,
-        match_state: "auto_matched",
-        actor_user_uuid: input.actor_user_uuid ?? "00000000-0000-0000-0000-000000000000",
-      });
-    }
-
+    // ACCT-F26301 — OWNER LAW B (verbatim, 2026-09-12): "it should never automatch, it suggests and
+    // we accept it or change the transactions." This function used to persist a
+    // banking.reconciliation_matches row with match_state='auto_matched' right here, as a side
+    // effect of a bare candidate search — meaning a GET request (opening the Match drawer, or the
+    // bulk /transactions/suggest endpoint) could silently write a match with no human action behind
+    // it. A GET must never write. findCandidates() is READ-ONLY: it returns ranked candidates, each
+    // carrying its own `auto_match` boolean (still computed below, unchanged) so a caller/UI can
+    // show "high confidence" — but persistence now happens ONLY in the explicit accept handler,
+    // acceptMatchWithResolveDifference(), which already requires a real actor_user_uuid and writes
+    // match_state='user_matched'. 'auto_matched' is no longer written anywhere in this codebase; the
+    // MatchState union member is kept only so any pre-existing historical rows still deserialize.
     return ranked;
   });
 }

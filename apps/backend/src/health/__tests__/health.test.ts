@@ -208,8 +208,8 @@ describe("backgroundJobRule money-cron freshness coverage (G4-HEALTH guard)", ()
     // settlement / driver pay
     "driver_finance.settlement_auto_pay_cron",
     // bank feed + bank reconciliation
+    // ACCT-F26301 — accounting.bank_recon_auto_match_cron deleted outright (Owner Law B), no rule.
     "banking.plaid_daily_sync_cron",
-    "accounting.bank_recon_auto_match_cron",
     // A/R collections + fuel-card expense import + insurance payments
     "accounting.collections_sync_cron",
     "fuel.loves_card_import_cron",
@@ -336,17 +336,10 @@ describe("backgroundJobRule money-cron freshness coverage (G4-HEALTH guard)", ()
     }
   });
 
-  it("default-OFF bank-recon cron only monitors when explicitly enabled", () => {
-    const prior = process.env.BANK_RECON_AUTO_MATCH_CRON_ENABLED;
-    try {
-      delete process.env.BANK_RECON_AUTO_MATCH_CRON_ENABLED;
-      expect(backgroundJobRule("accounting.bank_recon_auto_match_cron", false)?.enabled).toBe(false);
-      process.env.BANK_RECON_AUTO_MATCH_CRON_ENABLED = "true";
-      expect(backgroundJobRule("accounting.bank_recon_auto_match_cron", false)?.enabled).toBe(true);
-    } finally {
-      if (prior === undefined) delete process.env.BANK_RECON_AUTO_MATCH_CRON_ENABLED;
-      else process.env.BANK_RECON_AUTO_MATCH_CRON_ENABLED = prior;
-    }
+  // ACCT-F26301 — Owner Law B: the bank-recon-auto-match nightly cron was deleted outright (not left
+  // flag-gated); accounting.bank_recon_auto_match_cron has no rule and no longer exists.
+  it("deleted bank-recon-auto-match cron has no monitoring rule", () => {
+    expect(backgroundJobRule("accounting.bank_recon_auto_match_cron", false)).toBeNull();
   });
 
   // SYSTEM-BACKGROUND-JOB-LEDGER-STALE-AFTER-SUCCESSFUL-TICKS — this rule used to be unconditionally

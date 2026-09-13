@@ -64,11 +64,15 @@ describe("bank-recon auto vs manual matching", () => {
       actor_user_uuid: "22222222-2222-4222-8222-222222222222",
     });
 
+    // ACCT-F26301 — Owner Law B: findCandidates() is READ-ONLY. It still flags a candidate
+    // auto_match=true (so the UI can show "high confidence"), but must never persist a
+    // reconciliation_matches row itself — only the explicit accept handler
+    // (acceptMatchWithResolveDifference) may write one, on a real human action.
     expect(candidates[0]?.auto_match).toBe(true);
     expect(candidates[0]?.ledger_entry_kind).toBe("payment");
     expect(
       mockQuery.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO banking.reconciliation_matches"))
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("returns ranked manual candidates when similarity is too low", async () => {
@@ -170,9 +174,10 @@ describe("bank-recon auto vs manual matching", () => {
     expect(candidates[0]?.ledger_entry_kind).toBe("je");
     expect(candidates[0]?.memo_similarity).toBeGreaterThanOrEqual(0.5);
     expect(candidates[0]?.memo_similarity).toBeLessThan(0.8);
+    // ACCT-F26301 — auto_match still flags high confidence; findCandidates() itself never persists.
     expect(candidates[0]?.auto_match).toBe(true);
     expect(
       mockQuery.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO banking.reconciliation_matches"))
-    ).toBe(true);
+    ).toBe(false);
   });
 });

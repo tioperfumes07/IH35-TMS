@@ -1,10 +1,9 @@
 {
   "_README": "Historical verify-step number collisions frozen 2026-07-28 (LST-ORPH-04). NEW duplicates are blocked by verify-verify-step-numbers-unique.mjs. These are NOT waived defects: each is a traceability ambiguity for the git-gate's `GUARD: scripts/verify-steps/NNN-` reference. They are grandfathered because RENAMING them would invalidate the GUARD: references already recorded in merged commits \u2014 the very traceability this protects. Remove an entry when its group genuinely stops colliding; the guard FAILS on a stale entry.",
   "frozen_at": "2026-07-28",
-  "count": 87,
+  "count": 86,
   "groups": [
     "100",
-    "101",
     "1012",
     "1023",
     "1024",
