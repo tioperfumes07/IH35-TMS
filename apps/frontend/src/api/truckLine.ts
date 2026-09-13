@@ -19,6 +19,9 @@ export type TruckLinePosition = {
   engine_state: string | null;
   city: string | null;
   state: string | null;
+  // ROUND 23.1 D3 — the richest position string (street + city + state + zip when Samsara has it);
+  // prefer this over city/state when present.
+  formatted_location: string | null;
   captured_at: string;
   stale_minutes: number | null;
   stale: boolean;
@@ -30,6 +33,20 @@ export type TruckLineNextAppointment = {
   at_source: "appointment_start_at" | "scheduled_arrival_at" | null;
   late: boolean;
 };
+
+// ROUND 23.1 D4 (owner, 2026-09-13: "next appointment should show pick up and delivery") — BOTH
+// legs of the current load, independent of which is still outstanding. next_appointment above
+// stays for one release so nothing else breaks; this is the new field the board's cell now reads.
+export type TruckLineAppointmentLeg = {
+  at: string;
+  at_source: "appointment_start_at" | "scheduled_arrival_at" | null;
+  late: boolean;
+} | null;
+
+export type TruckLineAppointments = {
+  pickup: TruckLineAppointmentLeg;
+  delivery: TruckLineAppointmentLeg;
+} | null;
 
 export type TruckLineDriver = { id: string; name: string | null };
 
@@ -67,6 +84,7 @@ export type TruckLineRow = {
   station: TruckLineStation | null;
   position: TruckLinePosition | null;
   next_appointment: TruckLineNextAppointment | null;
+  appointments: TruckLineAppointments;
   available?: TruckLineAvailable;
 };
 

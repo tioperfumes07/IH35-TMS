@@ -182,8 +182,13 @@ export function verify(files) {
   if (!/Assign a load/.test(codeOnly) || !/onAssignDriver/.test(codeOnly)) {
     problems.push('(l) TruckLineBoard.tsx must render a real "Assign a load" action wired to an onAssignDriver callback — a dead button fails this box');
   }
-  if (!/kind === "available"/.test(boardTsx) && !/kind ===\s*"available"/.test(boardTsx)) {
-    problems.push('(l) TruckLineBoard.tsx must branch on row.kind === "available" to render THE AVAILABLE TRUCK — the row scope change is not optional styling');
+  // ROUND 23.1 (CC-3, 2026-09-13): narrowed to the exact `r.kind === "available"` the row-render
+  // map actually branches on — the loose substring check below matched ANY `kind === "available"`
+  // occurrence anywhere in the file, so D5's new signalSortRank() (which legitimately also reads
+  // `row.kind === "available"` to rank THE AVAILABLE TRUCK last for sorting) kept this check green
+  // even with the real render branch mutated away.
+  if (!/r\.kind === "available"/.test(boardTsx)) {
+    problems.push('(l) TruckLineBoard.tsx must branch on r.kind === "available" to render THE AVAILABLE TRUCK — the row scope change is not optional styling');
   }
 
   return problems;

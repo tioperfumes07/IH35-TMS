@@ -82,7 +82,12 @@ if (process.argv.includes("--selftest")) {
   assert.equal(auditAll(realSrc).length, 0, "all three audits should pass on real source");
 
   // MUTATION 1 — reintroduce a driver name into the available-truck row label.
-  const availNeedle = '<div className="truck-line-v4-sub text-[#6B7280]">{r.unit_number == null ? "no unit assigned" : "available truck"}</div>';
+  // ROUND 23.1 (owner, twice, 2026-09-13: "remove the drivers it is only the trucks"): the
+  // backend now filters every "available" row to one with a real unit_id/unit_number BEFORE this
+  // component ever sees it, so the old `r.unit_number == null ? "no unit assigned" : ...` ternary
+  // this fixture pinned is retired entirely, not just its driver-visible half — r.unit_number is
+  // never null here anymore.
+  const availNeedle = '<div className="truck-line-v4-sub text-[#6B7280]">available truck</div>';
   assert.ok(realSrc.includes(availNeedle), "selftest fixture out of sync with the real available-row label");
   const mutated1 = realSrc.replace(availNeedle, '<div className="truck-line-v4-sub text-[#6B7280]">{r.drivers[0]?.name ?? "Driver"}</div>');
   assert.notEqual(mutated1, realSrc, "mutation 1 did not change the source");
