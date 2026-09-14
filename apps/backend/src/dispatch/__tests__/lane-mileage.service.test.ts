@@ -87,7 +87,7 @@ describe("resolveLaneMileage — GO-16 Rev C (fill all bands)", () => {
     expect(result.fill_confidence).toBe("verify");
     expect(result.autofill_allowed).toBe(false); // DB flag untouched / audit
     expect(result.provenance).toMatch(/verify/i);
-    expect(mileageSourceFromFill(result.fill_confidence)).toBe("History — verify");
+    expect(mileageSourceFromFill(result.fill_confidence)).toBe("History");
   });
 
   it("Check ZIP: fills but flagged (Laredo → Chicago)", async () => {
@@ -112,7 +112,7 @@ describe("resolveLaneMileage — GO-16 Rev C (fill all bands)", () => {
     expect(result.autofill_allowed).toBe(false);
     expect(result.provenance).toMatch(/ZIP mismatch/i);
     expect(result.provenance).toMatch(/351/);
-    expect(mileageSourceFromFill(result.fill_confidence)).toBe("History — ZIP mismatch, verify");
+    expect(mileageSourceFromFill(result.fill_confidence)).toBe("History");
   });
 
   it("reverse lane: fills and labelled reverse (Rev C contract change from Rev B)", async () => {
@@ -136,7 +136,7 @@ describe("resolveLaneMileage — GO-16 Rev C (fill all bands)", () => {
     expect(result.fills).toBe(true);
     expect(result.fill_confidence).toBe("reverse");
     expect(result.provenance).toMatch(/reverse lane/i);
-    expect(mileageSourceFromFill(result.fill_confidence)).toBe("History — verify");
+    expect(mileageSourceFromFill(result.fill_confidence)).toBe("History");
     expect(result.short_miles_untrustworthy).toBe(false);
     expect(result.short_miles_untrustworthy_reason).toBeNull();
   });

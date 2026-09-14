@@ -123,19 +123,19 @@ export function provenanceFromRow(
   return "New lane. Enter the miles.";
 }
 
-/** mileage_source stamp when the wizard fills (never overwrites Operator entered). */
-export function mileageSourceFromFill(fillConfidence: FillConfidence): string {
-  switch (fillConfidence) {
-    case "check_zip":
-      return "History — ZIP mismatch, verify";
-    case "verify":
-    case "reverse":
-      return "History — verify";
-    case "high":
-      return "History";
-    default:
-      return "History";
-  }
+/**
+ * mileage_source stamp when the wizard fills (never overwrites Operator entered).
+ *
+ * P0 (owner 2026-09-14, "BOOK LOAD 500s") — this used to append a confidence qualifier with an
+ * em-dash ("History — ZIP mismatch, verify" / "History — verify") for check_zip/verify/reverse
+ * fills. mdata.loads.mileage_source is a controlled vocabulary of exactly 4 literals enforced by
+ * loads_mileage_source_english_check (NULL, "History", "Manual", "Routing engine",
+ * "Operator entered") -- any other string 500s on INSERT. The confidence qualifier is a DISPLAY
+ * concern, carried by provenanceFromRow's own return value (rendered in MilesStrip), never by this
+ * column -- so every fill confidence collapses to the one allowed "History" literal here.
+ */
+export function mileageSourceFromFill(_fillConfidence: FillConfidence): string {
+  return "History";
 }
 
 function toResult(row: LaneMileageRow | null, match: LaneMileageResult["match"]): LaneMileageResult {
