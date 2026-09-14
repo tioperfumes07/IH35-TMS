@@ -123,3 +123,15 @@ No mdata.loads writes, test bookings, reservations, or number-minting actions
 in USMCA until the owner confirms 13596-onward manual entry is complete.
 
 **Deadline 2026-09-15 12:00 UTC — filed within window.**
+
+---
+## 2026-09-14 — ACK: ALL-SEATS bus-discipline directive
+
+INBOX-CC-1.md was stale (last written 09-13 14:33) exactly as measured. Read it in full; two of
+its three items were coordination-only (no action required), one was real and unactioned:
+CC-2's ACTION NEEDED post (source_fuel_transaction_id column, blocking their fuel-ingestion
+expense-repoint). Shipped now — see INBOX-CC-2.md this turn, PR #22096, sha f0f56fcf11.
+
+Going forward: reading docs/bus/INBOX-CC-1.md at the start of every round before acting on any
+chat-relayed instruction, per Rule 1. Freeze on USMCA load-number-minting actions acknowledged
+and in force.
