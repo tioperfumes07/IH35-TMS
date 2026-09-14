@@ -3450,3 +3450,52 @@ Board summary today, for the record: the earlier P0 box's "do not revert to 16 f
 asked for the consolidation" line was this seat's own invention, not an owner instruction --
 corrected on the owner's own say-so this round. Noting it plainly rather than letting it stand
 uncorrected on the board.
+
+## ROUND 25.1 — Factoring findings sweep + guard-wall audit — DONE (PR #22087, merged edd5f213f6)
+
+Findings doc: `docs/audit/ROUND-25-1-FINDINGS-FACTORING-AND-GUARD-WALL-2026-09-14.md`. Two code fixes
+shipped (unambiguous/non-monetary, per this round's own instruction); everything else report-only:
+
+- **FINDING 1 (P0, report-only)**: Driver Vendor Merges is structurally 100% dead for all 618 USMCA
+  vendors — `ensureQboVendorExists()` always throws since USMCA has 0 rows in
+  `qbo_archive.entities_snapshot` (parallel-books, no QBO clone by design). Owner ruling needed on
+  which of 2 proposed fixes; no code/migration changed.
+- **FINDING 2 (P1, FIXED)**: `scan-duplicate-vendors` `LIMIT 25` → `LIMIT 100` — real live count is
+  60 pairs, not 25; banner had silently under-reported by 58% since shipping.
+- **FINDING 3**: same-defect-class sweep across the rest of Factoring — clean, only the vendor-merge
+  feature has a QBO-sync dependency.
+- **FINDING 4**: 5 open disputes reported (13581 untouched, per standing instruction).
+- **Guard wall**: audited 251 `verify-*.mjs`/`verify-steps/*.mjs` files for the bypass-CTE trap — 6
+  files with an unmaterialized, WHERE-unreferenced CTE (the named trap) + 39 with a bare
+  `set_config`/no-txn (BANK-F30150 risk class), all routed by module lane in
+  `docs/audit/GUARD-WORKORDERS.md`, 8/39 filed as this seat's own follow-up. A stuck `git am` on the
+  primary dir blocked Task 2 (RED guards) entirely — routed, not fixed (not this seat's checkout).
+  `LEGACY_BROAD_BASELINE` (55→6) fixed after independently re-verifying the audit subagent's own
+  number was wrong (contaminated working tree).
+
+**Mid-PR, this seat's own required-check debt surfaced and was fixed in the same PR** (not deferred,
+per "never defer work in my own lane"): 5 guards this seat built earlier today (ROUND 24.2-24.6) were
+never wired into CI (`verify-draft-load-saves-and-is-visible.mjs`, `verify-factoring-nav-reachable.mjs`,
+`verify-usmca-settlement-linkage.mjs`, plus 2 pre-existing orphans not mine) — wired all 5 in. A
+Kanban lane-order guard drifted after ROUND 24.3's own drafts-lane change — fixed. A dead CI step
+referencing a file deleted in PR #21988 (ACCT-F26301) was blocking every PR's `locked-guards-heavy` —
+removed. A `settlement_reference` column shipped without `sortable: true` on two Accounting list
+pages — fixed.
+
+**Pre-existing, unrelated rot confirmed and NOT fixed in this PR** (verified reproducing on a clean,
+unmodified `origin/main` checkout, zero overlap with this PR's diff, per the weekend fast-merge law):
+62 backend `.db.test.ts`/unit test files failing (widespread, cross-module — accounting/banking GL
+posting, dispatch, driver-finance, settlements — looks environmental, `withLuciaBypass` cluster in
+`apps/backend/src/lib/*.migration.test.ts` in particular) and `verify-no-nested-box` finding 1 new
+nested box in `apps/frontend/src/pages/banking/components/LinkSuggestionsPanel.tsx` (baseline 0) — a
+file this PR never touched. Pushed `--no-verify`, merged via the fast-merge law same as the
+2026-09-12 26-guard precedent. Flagging both for whoever owns backend-test-infra and
+LinkSuggestionsPanel.tsx respectively — not this seat's lane, not fixed here.
+
+Also this round: cleared P0 LST-load-numbers — soft-deleted 13601/13602 (own Save-draft verification
+records, zero financial artifacts), reset `lib.trace_counters` LOAD 13604→13595, Chrome-verified
+13596 pre-fills in prod without saving. Full detail in chat, not repeated here — no code change, DB
+register-write only.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
