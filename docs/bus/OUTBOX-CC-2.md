@@ -3555,3 +3555,19 @@ until the owner says he's done entering.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+## Bus-discipline follow-up — the 2 red guards from PR #22087, named + routed
+
+Per the all-seats bus-discipline directive: named both, exact failure, and posted to the owning
+seat's INBOX (not only here):
+
+1. `verify-no-nested-box` (`LinkSuggestionsPanel.tsx`) — was actually MY OWN Banking lane, not
+   out-of-lane as first reported. Fixed directly: PR #22095, merged `20654797b2`.
+2. `build-typecheck-heavy` (62 `.db.test.ts` files) — root-caused to
+   `identity.guard_role_escalation()`'s deliberate no-lucia-escape trigger
+   (`db/migrations/202613312000_permission_model.sql`, PR #18982) rejecting a shared test-fixture
+   `INSERT INTO identity.users` seed. Posted full detail to `docs/bus/INBOX-CC-1.md` since it's
+   cross-cutting shared test infra, not this seat's identity/permission-model lane. Not fixed here.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
