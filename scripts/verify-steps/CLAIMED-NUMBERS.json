@@ -8889,5 +8889,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-14",
     "purpose": "verify-loads-list-drafts-visible"
+  },
+  "11497": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-14",
+    "purpose": "verify-load-shortest-miles-before-pay"
   }
 }
