@@ -19,6 +19,7 @@ import {
   consumeLoadNumberReservation,
   FirstLoadNumberRequiredError,
   reserveNextLoadId,
+  seedLoadNumberCounterFromManualEntry,
 } from "./load-id-reservation.service.js";
 import { toMdataStatus, type DispatchStatus } from "./load-state-machine.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
@@ -2199,6 +2200,14 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
       ]
       );
       await client.query(`RELEASE SAVEPOINT book_load_insert`);
+      // P1 2026-09-14 (LOAD-NUMBER-COUNTER-POISONED) — the load just saved for real, inside this
+      // same transaction. If this was a manually-typed number (requestedLoadNumber === loadNumber,
+      // i.e. not an auto-allocated one) and the company has no counter yet, seed it with THIS exact
+      // number now — see seedLoadNumberCounterFromManualEntry's own header for why. A no-op once
+      // the counter already exists (every booking after the company's first).
+      if (requestedLoadNumber && requestedLoadNumber === loadNumber) {
+        await seedLoadNumberCounterFromManualEntry(client, input.operating_company_id, loadNumber);
+      }
     } catch (err) {
       await client.query(`ROLLBACK TO SAVEPOINT book_load_insert`).catch(() => undefined);
       if ((err as { code?: string }).code !== "23505") throw err;

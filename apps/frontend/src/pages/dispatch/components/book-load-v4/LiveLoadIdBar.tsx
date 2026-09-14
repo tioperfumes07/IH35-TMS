@@ -46,6 +46,15 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
   const activeGenerationRef = useRef<number | null>(null);
   const onUpdateRef = useRef(onReservationUpdate);
   onUpdateRef.current = onReservationUpdate;
+  // P1 2026-09-14 — owner ruling: "The next load should already be automatic ... Editable, but it
+  // should already be appearing." Before this fix the box stayed empty on open even though a real
+  // reservation (the actual next number, e.g. "13596") existed the whole time in `display` — only
+  // a caption hint showed it, and the empty box is what got submitted if the operator never typed.
+  // Tracks whether the OPERATOR has ever touched the box (typed into it, including clearing it to
+  // blank on purpose) — as opposed to it merely being empty because nothing has pre-filled it yet.
+  // Only pre-fill from a fresh/renewed reservation while this is still false, so a renewal tick (or
+  // a slow first response racing a fast typist) can never clobber something the operator typed.
+  const hasUserEditedRef = useRef(false);
 
   const publishTypedNumber = useCallback((next: string) => {
     const current = reservationRef.current;
@@ -76,7 +85,15 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
       reservationRef.current = { companyId: submittedCompanyId, reservationId: r.reservation_uuid };
       setAwaitingFirstNumber(false);
       setDisplay(r);
-      onUpdateRef.current({ ...r, load_number: manualNumberRef.current.trim() });
+      if (!hasUserEditedRef.current) {
+        // Pre-fill with the actual reserved number — still fully editable; the moment the
+        // operator types (even to clear it), hasUserEditedRef flips and this branch never fires
+        // again for this reservation's lifetime.
+        setManualNumber(r.load_number);
+        onUpdateRef.current(r);
+      } else {
+        onUpdateRef.current({ ...r, load_number: manualNumberRef.current.trim() });
+      }
       const until = new Date(r.reserved_until).getTime();
       setSecondsLeft(Math.max(0, Math.ceil((until - Date.now()) / 1000)));
     } catch (err) {
@@ -105,6 +122,8 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
     setSecondsLeft(0);
     setError(null);
     setAwaitingFirstNumber(false);
+    setManualNumber("");
+    hasUserEditedRef.current = false;
     onUpdateRef.current(null);
     void bumpReserve();
     return () => {
@@ -138,18 +157,28 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
           label="Load #"
           value={manualNumber}
           onChange={(next) => {
+            // Any operator keystroke — including clearing the box back to blank on purpose — is a
+            // deliberate edit from here on; the pre-fill in bumpReserve() never overwrites it again
+            // for this reservation's lifetime (see hasUserEditedRef's own comment above).
+            hasUserEditedRef.current = true;
             setManualNumber(next);
             publishTypedNumber(next);
           }}
           operatingCompanyId={operatingCompanyId}
-          nextNumberPath={awaitingFirstNumber ? undefined : "/api/v1/dispatch/loads/next-number"}
+          // P1 2026-09-14 — no longer used for a caption suggestion here (the box is pre-filled
+          // directly from the live reservation's own real number instead, see bumpReserve above);
+          // this generic "increment the last-saved row's number" endpoint isn't load-number aware
+          // and was live-caught suggesting a non-numeric placeholder load number as the "next"
+          // one. checkPath still runs so a typed override that collides with an existing load
+          // number is still caught.
+          nextNumberPath={undefined}
           checkPath={awaitingFirstNumber ? undefined : "/api/v1/dispatch/loads/next-number"}
           fieldName="load"
           autoFocus={awaitingFirstNumber}
           hint={
             awaitingFirstNumber
               ? "Click the white box and type the first number (example 13508)."
-              : undefined
+              : "Reserved automatically — type to use a different number."
           }
           data-testid="qbo-document-number-load"
         />

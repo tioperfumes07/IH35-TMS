@@ -94,12 +94,26 @@ export async function allocateNextLoadNumber(client: DbClient, operatingCompanyI
     [operatingCompanyId]
   );
   if (!already.rows[0]?.exists) {
+    // P1 2026-09-14 (LOAD-NUMBER-COUNTER-POISONED) — this MAX() scan is now a SAFETY-NET fallback
+    // only. The primary seed path is seedLoadNumberCounterFromManualEntry() below, called the
+    // moment the office's own first manually-typed numeric load number is actually saved — that
+    // seed can never be wrong because it IS the office's own typed value, not a guess reconstructed
+    // from whatever rows happen to exist later. This fallback exists only for a caller that reaches
+    // allocateNextLoadNumber before that hook ever ran (a direct import, a bypass of book-load, or
+    // a pre-existing company from before this fix). Live-caught 2026-09-13/14: with no status
+    // filter, this MAX() picked up a status='cancelled' test-proof booking 154 numbers above the
+    // real working max (13749 vs 13595), which then poisoned every load number minted after it.
+    // Excluding cancelled loads is a real, evidenced improvement (both ghost incidents found this
+    // session were status='cancelled'), not a complete guarantee — a genuinely real cancelled load
+    // could still legitimately be a company's true max in some future case. That residual risk is
+    // why this whole branch is now the FALLBACK, not the primary path.
     const seedRes = await client.query<{ seed: string | null }>(
       `
         SELECT MAX(load_number::bigint)::text AS seed
         FROM mdata.loads
         WHERE operating_company_id = $1::uuid
           AND load_number ~ '^[0-9]+$'
+          AND status <> 'cancelled'
       `,
       [operatingCompanyId]
     );
@@ -128,6 +142,33 @@ export async function allocateNextLoadNumber(client: DbClient, operatingCompanyI
     throw new Error("load_number_allocator_failed");
   }
   return seq;
+}
+
+/**
+ * P1 2026-09-14 (LOAD-NUMBER-COUNTER-POISONED) — call this right after a MANUALLY-TYPED, purely
+ * numeric load number is actually saved (book-load.service.ts, right after the INSERT's own
+ * SAVEPOINT releases — inside the same transaction, so a rolled-back booking never seeds a
+ * counter for a load that was never really created). If the company has no lib.trace_counters
+ * row yet, seed it with THIS exact office-typed number — never a MAX() scan reconstructed later
+ * from whatever rows happen to exist by then. That reconstruction is exactly what let a
+ * status='cancelled' test booking win the seed 154 numbers above the true working max in the
+ * incident this fix closes. Idempotent (ON CONFLICT DO NOTHING) — a no-op on every booking after
+ * the company's first, which is the normal, expected case.
+ */
+export async function seedLoadNumberCounterFromManualEntry(
+  client: DbClient,
+  operatingCompanyId: string,
+  loadNumber: string
+): Promise<void> {
+  if (!/^[0-9]+$/.test(loadNumber)) return; // only the flat numeric scheme has a counter to seed
+  await client.query(
+    `
+      INSERT INTO lib.trace_counters (operating_company_id, doc_type, last_trace_no, updated_at)
+      VALUES ($1::uuid, 'LOAD', $2::bigint, now())
+      ON CONFLICT (operating_company_id, doc_type) DO NOTHING
+    `,
+    [operatingCompanyId, loadNumber]
+  );
 }
 
 export type ReserveNextLoadIdResult = {
