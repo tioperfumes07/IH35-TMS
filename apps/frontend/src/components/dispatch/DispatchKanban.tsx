@@ -1770,7 +1770,7 @@ export function DispatchKanban({
     try {
       const dropResult = await onStatusDrop(loadId, nextStatus);
       pushToast(`Load ${load.load_number} moved to ${targetGroup.title}`, "success");
-      const mint = (dropResult as { driver_bill_mint?: { outcome?: string; missing?: string[]; unpriced?: boolean } } | null)?.driver_bill_mint;
+      const mint = (dropResult as { driver_bill_mint?: { outcome?: string; missing?: string[]; unpriced?: boolean; reason?: string } } | null)?.driver_bill_mint;
       if (mint?.outcome === "skipped_no_pay_rate" || (mint?.outcome === "minted" && mint.unpriced)) {
         const missing =
           Array.isArray(mint.missing) && mint.missing.length > 0 ? mint.missing.join(", ") : "pay inputs";
@@ -1778,6 +1778,10 @@ export function DispatchKanban({
           `Tracking driver bill for ${load.load_number} is $0 — missing ${missing}. Seed miles/rate and remint (never invent from customer rate).`,
           "info"
         );
+      } else if (mint?.outcome === "refused_no_shortest_miles") {
+        // P1 (owner 2026-09-14) — "Refuse LOUDLY with the reason on screen." No bill at all here,
+        // distinct from the info-level $0-tracking-bill toast above.
+        pushToast(mint.reason ?? `No driver bill was created for ${load.load_number} — shortest miles are required.`, "error");
       }
     } catch (error) {
       setOptimisticLoads(previousLoads);

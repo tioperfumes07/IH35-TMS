@@ -1990,11 +1990,17 @@ export function DispatchBoard({
           onClose={() => setQuickAssignLoad(null)}
           onSubmit={async (payload) => {
             try {
-              await quickAssignDispatchLoad(quickAssignLoad.id, {
+              const result = await quickAssignDispatchLoad(quickAssignLoad.id, {
                 operating_company_id: quickAssignLoad.operating_company_id,
                 ...payload,
               });
               pushToast("Load quick-assigned", "success");
+              // P1 (owner 2026-09-14) — "the hole" the ticket names: most loads are booked open and
+              // get a driver seated LATER, right here. Refuse LOUDLY, never a silent no-op.
+              const mint = (result as { driver_bill_mint?: { outcome?: string; reason?: string } } | null)?.driver_bill_mint;
+              if (mint?.outcome === "refused_no_shortest_miles") {
+                pushToast(mint.reason ?? "No driver bill was created — shortest miles are required.", "error");
+              }
               await queryClient.invalidateQueries({ queryKey: ["dispatch", "loads"] });
               onBulkComplete?.();
             } catch (error) {

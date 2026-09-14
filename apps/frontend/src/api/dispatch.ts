@@ -1653,6 +1653,30 @@ export type LaneMileageLookupResult = {
   short_miles_untrustworthy_reason: string | null;
 };
 
+// P1 (owner 2026-09-14) — GET /api/v1/dispatch/route-mileage, the ROUTE ENGINE autofill source for
+// miles_shortest (never the lane catalog above — that ban stays). source:"blank" is an honest,
+// expected answer today (the configured OSRM provider's default profile cannot produce a real
+// shortest-by-distance route; see osrm.provider.ts), never an error.
+export type RouteMileageResult =
+  | { practical_miles: number; shortest_miles: number | null; source: "cache" | "provider"; engine: string }
+  | { practical_miles: null; shortest_miles: null; source: "blank"; reason: string };
+
+export function getRouteMileage(params: {
+  operating_company_id: string;
+  origin_lat: number;
+  origin_lng: number;
+  dest_lat: number;
+  dest_lng: number;
+}) {
+  const u = new URLSearchParams();
+  u.set("operating_company_id", params.operating_company_id);
+  u.set("origin_lat", String(params.origin_lat));
+  u.set("origin_lng", String(params.origin_lng));
+  u.set("dest_lat", String(params.dest_lat));
+  u.set("dest_lng", String(params.dest_lng));
+  return apiRequest<RouteMileageResult>(`/api/v1/dispatch/route-mileage?${u.toString()}`);
+}
+
 export function getLaneMileage(params: {
   operating_company_id: string;
   origin_city: string;

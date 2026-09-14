@@ -307,7 +307,14 @@ export async function quickAssignLoad(
         actor_user_id: userId,
       });
 
-      await ensureDriverBillArtifactsForLoad(client, {
+      // P1 (owner 2026-09-14) — this is THE call site the ticket names as "the hole": most loads
+      // are booked open and get a driver seated LATER, right here, via quick-assign — the wizard's
+      // own miles_shortest hard-block only fires at initial booking. Previously this outcome was
+      // discarded entirely (a bare `await`), so a refused mint here was a genuinely silent no-op —
+      // the driver got seated, the tracking bill or refusal happened server-side, and nothing ever
+      // told the dispatcher. Captured now and returned below (driver_bill_mint) so the caller can
+      // surface it exactly like the Book Load wizard already does for skipped_no_pay_rate.
+      const driverBillMint = await ensureDriverBillArtifactsForLoad(client, {
         loadId: input.load_id,
         operatingCompanyId: input.operating_company_id,
         actorUserId: userId,
@@ -409,6 +416,10 @@ export async function quickAssignLoad(
         load_id: input.load_id,
         warnings,
         pending_fields: pendingFields,
+        // P1 (owner 2026-09-14) — surfaced so the caller can toast a refused_no_shortest_miles (or
+        // skipped_no_pay_rate) outcome exactly like the Book Load wizard already does; see the
+        // driverBillMint comment above.
+        driver_bill_mint: driverBillMint,
       };
     } catch (error) {
       throw error;

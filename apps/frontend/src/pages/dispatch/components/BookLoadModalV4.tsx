@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useForm, type FieldErrors } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createDispatchLoad, createTrailerInterchange, distributeLoadInstructions, getLaneMileage, getChainDeadhead } from "../../../api/dispatch";
+import { createDispatchLoad, createTrailerInterchange, distributeLoadInstructions, getLaneMileage, getChainDeadhead, getRouteMileage } from "../../../api/dispatch";
 import { resolveStopPlace } from "./book-load-city-state";
 import { geocodeRouteReference } from "../../../api/geocoding";
 import { historicalImportReasonsCatalogClient, listAllDispatchCatalogRows, loadCommoditiesCatalogClient, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
@@ -169,6 +169,10 @@ type FormValues = BookLoadFormValues & {
     | "Manual"
     | "Routing engine"
     | "Operator entered";
+  /** P1 (owner 2026-09-14) — miles_shortest's OWN source label, separate from mileage_source above
+   *  (which only ever describes practical/lane-history). Never sent to the server as a load column
+   *  — display-only, so the operator always sees WHY the shortest box is filled or blank. */
+  mileage_source_shortest?: string;
   pickup_number: string;
   border_routing: string;
   // Border-crossing capture: the selected reference.ports_of_entry id for a cross-border (NB/SB)
@@ -442,6 +446,7 @@ export function BookLoadModalV4({
       miles_shortest: null,
       miles_deadhead: null,
       mileage_source: "",
+      mileage_source_shortest: "",
       pickup_number: "",
       border_routing: "",
       border_port_of_entry_id: "",
@@ -688,6 +693,46 @@ export function BookLoadModalV4({
     const leg = routeReferenceQuery.data?.enabled ? routeReferenceQuery.data.legs?.[1] : null;
     return leg && Number.isFinite(leg.miles) && Number.isFinite(leg.minutes) ? { miles: leg.miles, minutes: leg.minutes } : null;
   }, [routeReferenceQuery.data]);
+
+  // P1 (owner 2026-09-14, SHORT-MILES-NEVER-CAPTURED) — "Autofill shortest from the ROUTE ENGINE,
+  // not the catalog." The ONLY autofill source for miles_shortest; the lane-history catalog
+  // (laneMileageQuery below) stays practical-only, per the standing ban on autofilling shortest
+  // from history. Fills ONLY when miles_shortest is not already set and the operator hasn't typed
+  // over it — same discipline as the practical/lane-history autofill further down. If the engine
+  // cannot return a shortest route (today: always — see route-mileage's own honest-NULL doc
+  // comment), this leaves miles_shortest untouched and shows the reason on screen; never invents
+  // it, never copies practical into it.
+  const routeMileageQuery = useQuery({
+    queryKey: ["book-load-route-mileage", operatingCompanyId, pickupLatLng?.lat, pickupLatLng?.lng, deliveryLatLng?.lat, deliveryLatLng?.lng],
+    queryFn: () =>
+      getRouteMileage({
+        operating_company_id: operatingCompanyId,
+        origin_lat: (pickupLatLng as { lat: number; lng: number }).lat,
+        origin_lng: (pickupLatLng as { lat: number; lng: number }).lng,
+        dest_lat: (deliveryLatLng as { lat: number; lng: number }).lat,
+        dest_lng: (deliveryLatLng as { lat: number; lng: number }).lng,
+      }),
+    enabled: Boolean(operatingCompanyId && pickupLatLng && deliveryLatLng),
+    staleTime: 5 * 60 * 1000,
+  });
+  useEffect(() => {
+    const route = routeMileageQuery.data;
+    if (!route || milesOperatorTouched.current) return;
+    if (route.shortest_miles == null) return;
+    if (Number(form.getValues("miles_shortest") ?? 0) > 0) return;
+    form.setValue("miles_shortest", route.shortest_miles, { shouldDirty: true, shouldValidate: true });
+    form.setValue("mileage_source_shortest", `Route engine (${route.engine})`, { shouldDirty: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeMileageQuery.data]);
+  const shortestProvenance = (() => {
+    const typed = form.watch("mileage_source_shortest");
+    if (typed) return typed;
+    const route = routeMileageQuery.data;
+    if (!route) return undefined;
+    if (route.source === "blank") return `Not available — ${route.reason}`;
+    if (route.shortest_miles == null) return "Not available — this route engine does not produce a shortest-by-distance route yet";
+    return `Route engine (${route.engine})`;
+  })();
 
   const laneMileageQuery = useQuery({
     queryKey: [
@@ -1213,10 +1258,12 @@ export function BookLoadModalV4({
         const loadNumber = String(editLoad?.load_number ?? "") || editLoadId;
         pushToast(`Load ${loadNumber} is saved.`, "success");
         const mint = (
-          patchResult as { driver_bill_mint?: { outcome?: string; missing?: string[]; unpriced?: boolean } | null }
+          patchResult as { driver_bill_mint?: { outcome?: string; missing?: string[]; unpriced?: boolean; reason?: string } | null }
         ).driver_bill_mint;
         if (mint?.outcome === "skipped_no_pay_rate" || (mint?.outcome === "minted" && mint.unpriced)) {
           pushToast(driverBillMintSkippedMessage("updated", mint.missing), "info");
+        } else if (mint?.outcome === "refused_no_shortest_miles") {
+          pushToast(mint.reason ?? "No driver bill was created — shortest miles are required.", "error");
         }
         if (applyPostSaveIntent(editLoadId, loadNumber)) return;
         setSaveAck({
@@ -1544,9 +1591,13 @@ export function BookLoadModalV4({
           : bookLoadToastMessage(saveMode, serverStatus),
         bookLoadToastTone(saveMode, serverStatus)
       );
-      const mint = (payload as { driver_bill_mint?: { outcome?: string; missing?: string[]; unpriced?: boolean } }).driver_bill_mint;
+      const mint = (payload as { driver_bill_mint?: { outcome?: string; missing?: string[]; unpriced?: boolean; reason?: string } }).driver_bill_mint;
       if (mint?.outcome === "skipped_no_pay_rate" || (mint?.outcome === "minted" && mint.unpriced)) {
         pushToast(driverBillMintSkippedMessage("booked", mint.missing), "info");
+      } else if (mint?.outcome === "refused_no_shortest_miles") {
+        // P1 (owner 2026-09-14) — "Refuse LOUDLY with the reason on screen." Distinct from the
+        // info-level $0-tracking-bill toast above: no bill was created at all here.
+        pushToast(mint.reason ?? "No driver bill was created — shortest miles are required.", "error");
       }
       // GO-23 A1 — trailer_interchanges.load_id is a real FK, so this can only be created AFTER the
       // load itself exists. The load is already committed at this point regardless of outcome here;
@@ -2470,6 +2521,7 @@ export function BookLoadModalV4({
                   ratePerMile={ratePerMile}
                   googleReferencePractical={googleReferencePractical}
                   googleReferenceEmpty={googleReferenceEmpty}
+                  shortestProvenance={shortestProvenance}
                   provenance={
                     mileageSource === "Operator entered"
                       ? "Operator entered"
@@ -2514,6 +2566,7 @@ export function BookLoadModalV4({
                   onShortestChange={(n) => {
                     milesOperatorTouched.current = true;
                     form.setValue("mileage_source", "Operator entered", { shouldDirty: true });
+                    form.setValue("mileage_source_shortest", "Operator entered", { shouldDirty: true });
                     form.setValue("miles_shortest", n, { shouldDirty: true, shouldValidate: true });
                   }}
                   onDeadheadChange={(n) => {

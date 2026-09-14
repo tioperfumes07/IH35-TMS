@@ -678,7 +678,16 @@ export type DriverBillMintOutcome =
   | { outcome: "not_applicable" }
   | { outcome: "already_exists" }
   | { outcome: "minted"; bill_number: string | null; unpriced?: boolean }
-  | { outcome: "skipped_no_pay_rate"; reason: string; missing: string[] };
+  | { outcome: "skipped_no_pay_rate"; reason: string; missing: string[] }
+  // P1 (owner 2026-09-14, 09-14-2026-Claude-Coder-3-SHORT-MILES-NEVER-CAPTURED.md): "a
+  // driver_finance.driver_bills row may not be minted from a load whose miles_shortest is NULL...
+  // Refuse LOUDLY with the reason on screen. A silent no-op is a defect." Distinct from
+  // skipped_no_pay_rate (which still inserts a $0 tracking row) — this refuses the insert/update
+  // entirely. Deliberately placed BEFORE resolveDriverBasePayCents runs, so its own owner-locked
+  // practical-miles fallback (2026-09-04, verify-driver-pay-practical-fallback-locked.mjs) is never
+  // touched or reached for this case — that fallback stays exactly as ruled and guarded; this is a
+  // stricter, additive gate placed in front of it, not a rewrite of it.
+  | { outcome: "refused_no_shortest_miles"; reason: string };
 
 export async function createDriverBillArtifacts(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
@@ -716,6 +725,47 @@ export async function createDriverBillArtifacts(
   // ACCT-F277 — a voided bill is an intentional reversal. Never remint over it.
   if (existing && (String(existing.status) === "void" || existing.voided_at != null)) {
     return { outcome: "already_exists" };
+  }
+
+  // P1 (owner 2026-09-14) — "a driver_finance.driver_bills row may not be minted from a load whose
+  // miles_shortest is NULL." Checked BEFORE resolveDriverBasePayCents runs, so its own owner-locked
+  // practical-miles fallback (2026-09-04) never gets a chance to price this load — a load with no
+  // captured shortest miles gets NO bill at all, not a $0 tracking row and not a practical-derived
+  // figure. Historical loads already carrying a driver_bills row from before this gate landed are
+  // untouched (existing && already-open/$0 falls through to the existing-bill branches below,
+  // unchanged) — this refuses only a NEW mint attempt going forward. Never applies when an existing
+  // bill is already priced (gross > 0) — that is settled history, not a fresh mint.
+  const isFreshMintAttempt = !existing || (Number(existing.gross_amount_cents ?? 0) === 0 && String(existing.status) === "open");
+  if (isFreshMintAttempt && !(Number(load.miles_shortest ?? 0) > 0)) {
+    const reason = "Shortest miles have not been captured for this load — driver pay is computed from shortest miles, never practical or an estimate. Enter shortest miles before a driver bill can be created.";
+    const priorRefusal = await client.query<{ exists: boolean }>(
+      `SELECT EXISTS (
+         SELECT 1
+           FROM audit.audit_events
+          WHERE event_class = 'driver_finance.driver_bill.refused_no_shortest_miles'
+            AND payload->>'load_id' = $1
+            AND payload->>'operating_company_id' = $2
+       ) AS exists`,
+      [String(load.id), input.operating_company_id]
+    );
+    if (!priorRefusal.rows[0]?.exists) {
+      await appendCrudAudit(
+        client,
+        input.requestingUserUuid,
+        "driver_finance.driver_bill.refused_no_shortest_miles",
+        {
+          load_id: String(load.id),
+          load_number: String(load.load_number ?? loadNumber),
+          operating_company_id: input.operating_company_id,
+          driver_id: primaryDriverForPay,
+          team_id: input.team_id ?? null,
+          reason,
+        },
+        "warning",
+        "P1-SHORT-MILES"
+      );
+    }
+    return { outcome: "refused_no_shortest_miles", reason };
   }
 
   const extraPickupCount = stops.filter((s) => s.stop_type === "pickup").length > 1 ? stops.filter((s) => s.stop_type === "pickup").length - 1 : 0;
