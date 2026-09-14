@@ -33,6 +33,11 @@ type Props = {
    *  yard → pickup — grey, read-only, NEVER editable and NEVER copied into Empty miles (LAW §2).
    *  null/undefined = not computed (no coordinates, provider off, or still loading). */
   googleReferenceEmpty?: { miles: number; minutes: number } | null;
+  /** P1 (owner 2026-09-14) — the shortest-miles field's OWN source label, independent of
+   *  `provenance` above (which only ever describes practical/lane-history). Never invented: either
+   *  a real engine label ("Route engine (osrm)") or an honest blank-reason ("Not available —
+   *  osrm_not_configured"). undefined = not looked up yet (no coordinates on file). */
+  shortestProvenance?: string;
 };
 
 function numFromInput(raw: string): number | null {
@@ -97,6 +102,7 @@ export function MilesStrip({
   newLane = false,
   googleReferencePractical = null,
   googleReferenceEmpty = null,
+  shortestProvenance,
 }: Props) {
   // fillConfidence drives chrome; provenance is the operator sentence.
   const cell = "flex flex-1 flex-col items-center justify-center border-r border-slate-200 px-2 py-2 text-center last:border-r-0";
@@ -231,6 +237,14 @@ export function MilesStrip({
           {fillConfidence === "check_zip"
             ? `Filled from a lane whose ZIP does not match. Check these miles before you book. ${provenance}`
             : provenance}
+        </p>
+      ) : null}
+      {shortestProvenance ? (
+        <p
+          className="border-t border-slate-200 px-2 py-1 text-xs text-slate-600"
+          data-testid="book-load-shortest-provenance"
+        >
+          Shortest: {shortestProvenance}
         </p>
       ) : null}
       {googleReferencePractical ? (

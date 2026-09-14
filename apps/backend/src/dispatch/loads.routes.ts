@@ -54,6 +54,8 @@ import {
 } from "./book-load.service.js";
 import { loadRefMatchSql, loadRefParamSchema } from "../lib/load-ref.js";
 import { resolveLaneMileage } from "./lane-mileage.service.js";
+import { resolvePointMileage } from "./mileage/mileage.service.js";
+import { OsrmProvider } from "./mileage/osrm.provider.js";
 import { computeChainDeadheadMiles } from "./deadhead/chain-deadhead.service.js";
 import { openWorkOrderPredicateSql } from "../maintenance/in-shop-condition.js";
 import { backfillStopCoordinatesForLoad } from "../telematics/stop-geocode-fallback.service.js";
@@ -575,6 +577,66 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       return reply.code(503).send({
         error: "lane_mileage_lookup_failed",
         message: "Could not load lane miles. Type them, or retry.",
+      });
+    }
+  });
+
+  // P1 (owner 2026-09-14, 09-14-2026-Claude-Coder-3-SHORT-MILES-NEVER-CAPTURED.md) — "Autofill
+  // shortest from the ROUTE ENGINE, not the catalog... Fill miles_shortest from a live route
+  // computation, label it with its source exactly as mileage_source labels practical, and leave it
+  // fully editable." mileage.service.ts/osrm.provider.ts are GO-19-2b Section 6's own coordinate-
+  // to-coordinate resolver — it already exists, already caches in catalogs.point_mileage, and
+  // already returns shortest_miles alongside practical_miles from the SAME provider call, but had
+  // ZERO callers anywhere in the backend before this route. This is the ONLY autofill source for
+  // miles_shortest; the lane-mileage CATALOG endpoint above stays practical-only, per the standing
+  // ban on autofilling shortest from history (locked by
+  // verify-miles-shortest-never-autofilled-from-catalog.mjs, untouched here).
+  //
+  // HONEST NULL, NOT AN ERROR: the currently-configured OsrmProvider's own header documents that
+  // its default "driving" profile IS the fastest-route weighting, and a true shortest-BY-DISTANCE
+  // route needs a distinct OSRM profile (a custom .lua weighting) this repo does not provision —
+  // so `shortest_miles: null` is the CORRECT, honest answer today, every time, until that
+  // infrastructure exists. Never inferred, never copied from practical_miles.
+  app.get("/api/v1/dispatch/route-mileage", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+    const query = z
+      .object({
+        operating_company_id: z.string().uuid(),
+        origin_lat: z.coerce.number().finite(),
+        origin_lng: z.coerce.number().finite(),
+        dest_lat: z.coerce.number().finite(),
+        dest_lng: z.coerce.number().finite(),
+      })
+      .safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    try {
+      const provider = new OsrmProvider();
+      const resolution = await withCompanyScope(authUser.uuid, query.data.operating_company_id, async (client) =>
+        resolvePointMileage(
+          client,
+          provider,
+          { lat: query.data.origin_lat, lng: query.data.origin_lng },
+          { lat: query.data.dest_lat, lng: query.data.dest_lng }
+        )
+      );
+      if (resolution.source === "blank") {
+        return { practical_miles: null, shortest_miles: null, source: "blank", reason: resolution.reason };
+      }
+      return {
+        practical_miles: resolution.practical_miles,
+        shortest_miles: resolution.shortest_miles,
+        source: resolution.source,
+        engine: resolution.engine,
+      };
+    } catch (err) {
+      req.log.warn({ err }, "route_mileage_lookup_failed");
+      return reply.code(503).send({
+        error: "route_mileage_lookup_failed",
+        message: "Could not compute route miles. Type them, or retry.",
       });
     }
   });
