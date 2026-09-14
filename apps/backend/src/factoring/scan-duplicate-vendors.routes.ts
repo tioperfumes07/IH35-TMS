@@ -69,7 +69,13 @@ export async function registerScanDuplicateVendorRoutes(app: FastifyInstance) {
             AND a.is_sample_data IS NOT TRUE
             AND b.is_sample_data IS NOT TRUE
           ORDER BY similarity DESC
-          LIMIT 25
+          -- ROUND 25.1 (owner findings sweep, 2026-09-14): was LIMIT 25 -- USMCA alone has 60 real
+          -- pairs above the 0.55 threshold today, so this cap silently hid 35 of them (58%) behind
+          -- a banner header that read "(25 pairs)" as if that were the complete count, with no
+          -- "and N more" indicator anywhere. Raised with headroom above the current live count;
+          -- DuplicateVendorsBanner.tsx's own visiblePairCount already derives from the returned
+          -- array length, so this alone corrects the displayed count -- no frontend change needed.
+          LIMIT 100
         `,
         [parsed.data.operating_company_id]
       );
