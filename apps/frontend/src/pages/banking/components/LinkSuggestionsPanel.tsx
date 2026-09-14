@@ -197,7 +197,7 @@ export function LinkSuggestionsPanel({ companyId }: { companyId: string }) {
               </div>
 
               {excludingId === row.bank_transaction_id && (
-                <div className="mt-2 flex items-center gap-2 rounded-sm border border-[#F5C2C0] bg-[#FDEEEE] p-2">
+                <div className="mt-2 flex items-center gap-2 border-t border-[#F5C2C0] bg-[#FDEEEE] p-2">
                   <input
                     type="text"
                     autoFocus
