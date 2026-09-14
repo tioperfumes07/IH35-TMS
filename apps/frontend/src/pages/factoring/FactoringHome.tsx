@@ -984,7 +984,14 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
           over their real sub-views, mapped below with the deleted tab -> new home for each. */}
       <NavyPageSubNav
         items={[
-          { label: "Submit", to: "/factoring/submit" },
+          // P0 (owner, 2026-09-14) verify-factoring-nav-reachable caught this: "Submit" was wired to
+          // "/factoring/submit" ("Submit to Factor" -- a separate deep-link action, see FAC-PAR1 above
+          // and the header's own "Submit to Factor" button), NOT to the `submit_invoice` SUBNAV tab
+          // this collapsed strip entry is documented (two comments up) to represent. Since PR #21952
+          // collapsed 16 tabs to 6, `submit_invoice` (/factoring/submit-invoice) had no nav entry at
+          // all -- the exact "surface shipped, route alive, link dead" defect class. "Submit to
+          // Factor" keeps its own dedicated header button, so nothing is lost by correcting this one.
+          { label: "Submit", to: FACTORING_TAB_PATH.submit_invoice },
           {
             // was: Funds Due · Payments to You · Debtor Receipts · Unapplied Cash (4 top-level tabs)
             label: "Cash",
