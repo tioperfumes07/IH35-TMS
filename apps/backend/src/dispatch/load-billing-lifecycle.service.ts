@@ -20,6 +20,7 @@
  */
 import { withCompanyScope } from "../accounting/shared.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { assertClosedLoadHasPricedDriverBill } from "./book-load.service.js";
 
 /** Invoice.status values that mean the carrier has been paid in full → close the load. */
 export const LOAD_CLOSE_INVOICE_STATUSES = ["paid"] as const;
@@ -91,6 +92,37 @@ async function walkForward(
     if (!next) return { changed: steps > 0, from, to: status, reason: "no_forward_step" };
     // Do not overshoot the target (e.g. target=invoiced must not step to closed).
     const stepTo = rank(next) > rank(target) ? target : next;
+
+    // ROUND 24.7 RULING (owner 2026-09-15) — this automatic walk (invoice paid / factoring funded)
+    // is the same code path that already produced 13582/13583/13588: closed, live, $0 driver bills
+    // nobody was watching. Same rule as the manual PATCH /status route, applied here non-fatally
+    // (matching this service's own swallow-and-log pattern): the walk simply stops one step short of
+    // `closed` and records why, rather than throwing into an invoice-paid webhook.
+    if (stepTo === "closed") {
+      const closedCheck = await assertClosedLoadHasPricedDriverBill(client as never, {
+        loadId,
+        operatingCompanyId,
+      });
+      if (!closedCheck.ok) {
+        await appendCrudAudit(
+          client as never,
+          actorUserId,
+          "dispatch.load_billing_lifecycle_close_refused_unpriced_driver_bill",
+          {
+            resource_type: "mdata.loads",
+            resource_id: loadId,
+            operating_company_id: operatingCompanyId,
+            from,
+            stuck_at: status,
+            reason: closedCheck.reason,
+          },
+          "warning",
+          "ROUND-24.7-CLOSED-LOAD-PRICING"
+        );
+        return { changed: steps > 0, from, to: status, reason: "closed_load_requires_priced_driver_bill" };
+      }
+    }
+
     const upd = await client.query(
       `
         UPDATE mdata.loads

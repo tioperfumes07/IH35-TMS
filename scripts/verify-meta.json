@@ -61,6 +61,7 @@
     "verify:usmca-app-path-list-apis",
     "verify:usmca-compliance-neon-pv",
     "verify:usmca-fleet-fuel-tasks-neon-pv",
+    "verify:closed-load-has-priced-driver-bill",
     "verify:load-shortest-miles-before-pay",
     "verify:usmca-load-cutover-floor",
     "verify:usmca-settlement-cutover",

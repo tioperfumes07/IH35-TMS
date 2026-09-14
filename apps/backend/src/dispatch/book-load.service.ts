@@ -1206,6 +1206,84 @@ export async function ensureDriverBillArtifactsForLoad(
   );
 }
 
+export type ClosedLoadPricingCheck =
+  | { ok: true }
+  | { ok: false; reason: string; driver_name: string | null };
+
+/**
+ * ROUND 24.7 RULING (owner 2026-09-15, "YOU WERE RIGHT TO STOP. MY BOX WAS WRONG."): the 2026-09-11
+ * open-$0-tracking-bill workflow (ACCT-F63/WIRE-02) stays completely untouched at booking time — a
+ * load with no priceable inputs yet still books, still mints its $0 placeholder, still upgrades on
+ * remint. What is NOT allowed is that placeholder sliding all the way to `closed` unnoticed: 13582,
+ * 13583 and 13588 are CLOSED, live, USMCA loads carrying a non-void, open, $0 driver bill right now
+ * (measured live 2026-09-15 — the owner's own box said "two are known", but the true count is
+ * three; do not assume it is two). This is the loud, on-screen gate the ruling asks for, checked at
+ * the load-status-transition choke point(s), never inside createDriverBillArtifacts — the mint path
+ * above is explicitly out of scope and its two pre-existing tests are untouched.
+ *
+ * Deliberately generic about WHY the bill is still $0 (no driver pay rate on file, no captured
+ * miles, or both) — the live baseline shows loads failing for the miles reason as often as the rate
+ * reason, so the reason string names whichever inputs are actually missing rather than assuming one
+ * cause. Single-driver loads only; a team-split load's per-driver pricing is out of this round's
+ * scope, same carve-out as the shortest-miles gate.
+ */
+export async function assertClosedLoadHasPricedDriverBill(
+  client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
+  input: { loadId: string; operatingCompanyId: string }
+): Promise<ClosedLoadPricingCheck> {
+  const res = await client.query<{
+    bill_status: string | null;
+    gross_amount_cents: string | number | null;
+    driver_id: string | null;
+    team_id: string | null;
+    driver_first_name: string | null;
+    driver_last_name: string | null;
+    has_active_rate: boolean;
+    miles_shortest: string | number | null;
+  }>(
+    `SELECT db.status AS bill_status, db.gross_amount_cents,
+            l.assigned_primary_driver_id AS driver_id, l.team_id, l.miles_shortest,
+            d.first_name AS driver_first_name, d.last_name AS driver_last_name,
+            rr.exists AS has_active_rate
+       FROM mdata.loads l
+       LEFT JOIN driver_finance.driver_bills db
+         ON db.load_id = l.id AND db.voided_at IS NULL AND db.status <> 'void'
+       LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+       CROSS JOIN LATERAL (
+         SELECT EXISTS (
+           SELECT 1 FROM driver_finance.driver_pay_rates r
+            WHERE r.operating_company_id = l.operating_company_id
+              AND r.driver_id = l.assigned_primary_driver_id
+              AND r.is_active
+              AND r.effective_to IS NULL
+         ) AS exists
+       ) rr
+      WHERE l.id = $1::uuid
+        AND l.operating_company_id = $2::uuid
+        AND l.soft_deleted_at IS NULL
+      LIMIT 1`,
+    [input.loadId, input.operatingCompanyId]
+  );
+  const row = res.rows[0];
+  if (!row || !row.bill_status) return { ok: true }; // no non-void bill at all — nothing to refuse
+  if (row.bill_status !== "open" || Number(row.gross_amount_cents ?? 0) !== 0) return { ok: true };
+  if (row.team_id) return { ok: true }; // team-split pricing is out of this round's scope
+
+  const missing: string[] = [];
+  if (!row.has_active_rate) missing.push("a pay rate on file");
+  if (!(Number(row.miles_shortest ?? 0) > 0)) missing.push("captured shortest miles");
+  if (missing.length === 0) return { ok: true }; // has both — the $0 is some other, unrelated reason
+
+  const driverName =
+    row.driver_first_name || row.driver_last_name ? `${row.driver_first_name ?? ""} ${row.driver_last_name ?? ""}`.trim() : null;
+  const who = driverName ? `driver ${driverName}` : "the assigned driver";
+  return {
+    ok: false,
+    driver_name: driverName,
+    reason: `This load cannot close with an open $0 driver bill — ${who} is missing ${missing.join(" and ")}. Seed the missing input(s) and remint before closing.`,
+  };
+}
+
 export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
   if (input.assigned_primary_driver_id && input.team_id) {
     return { kind: "error", status: 400, payload: { error: "solo_or_team_assignment_required_not_both" } };

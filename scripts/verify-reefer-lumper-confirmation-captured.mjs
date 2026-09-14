@@ -51,10 +51,20 @@ export function bookLoadPersistsLumperFields(src) {
 // `current.trailer_type === "refrigerated_van"` check dead for every future booking (confirmed live:
 // a freshly booked Reefer-trailer load queried right after INSERT had trailer_type=null). Additive
 // column write, no lockstep shape change otherwise.
+//
+// ROUND 24.7 (found pre-existing on origin/main, unrelated to this PR's own diff, proven via
+// worktree against origin/main before fixing): the original regex required `trailer_type` to be
+// the LAST column before `) VALUES` and `input.trailer_type ?? null,` to be the last value before
+// `] );` -- ROUND 24.2's `is_quicksave_draft` column landed AFTER trailer_type in both lists (a
+// legitimate, unrelated addition), so the strict "must be last" shape broke this guard even though
+// trailer_type is still genuinely persisted. Loosened to check trailer_type is A column in the
+// INSERT's column list (anywhere before its own VALUES) and input.trailer_type ?? null is A value
+// in that same statement -- still fails if either is removed, no longer fails on a later column
+// being appended after it.
 export function bookLoadPersistsTrailerType(src) {
   return (
-    /trailer_type\s*\n\s*\)\s*\n\s*VALUES/.test(src) &&
-    /input\.trailer_type \?\? null,\s*\n\s*\]\s*\n\s*\);/.test(src)
+    /trailer_type[\s\S]{0,200}?\)\s*\n\s*VALUES/.test(src) &&
+    /input\.trailer_type \?\? null,/.test(src)
   );
 }
 
