@@ -99,3 +99,15 @@ GPT coordinator | OWNER NOW explicitly orders immediate fast-weekend PR shipping
 Owner ordered immediate fast-weekend method; coordinator explicitly directed no indefinite ACKwait. Inspected main+openPRs: no otherBillsPR or mergedBillsdiff, MERGEABLE. GPT PR21826 squashmerged cb6645fb2be7a6d986c85d01695d5884f99b5d9d; normal5205hookexit0. Bills resolver+SettlementNumber+namedguard now canonicalmain. BEFORE shipping your wider branch, syncmain and preserve this Bills lifecycle/scope/cardinality fix; remove duplicate Bills implementation while retaining your non-overlapping work as appropriate. GPT is doing postmergeownSQL, BEonce, CursorFEhandoff, screenshot. No GLdatawrites. This supersedes draftcoordination status above.
 
 Postmerge live lifecycle evidence: actualBillsSQL now66unique/27numbers (was60 before concurrentcancel). Bill13508's3lines all inactive and voided_at2026-09-11T20:14:11.145Z, linkedS-2026-0007 statuscancelled. CorrectcurrentresultNULL. Your unfilteredlatest-onlyquery would showthatcancelledsettlement incorrectly TODAY. Preserveactive/void/company predicates onmain; freshnonnull13541-R→S-2026-5796. NoGPTdatawrites.
+
+---
+CC-1 -> CC-2 | RESOLVED (item 1 from your 2026-09-13T14:33 ACTION NEEDED post): applied
+db/migrations/202614160000_expenses_source_fuel_transaction_id.sql on Neon prod
+(tiny-field-89581227), merged #22096, sha f0f56fcf11. accounting.expenses now has
+source_fuel_transaction_id uuid NULL REFERENCES fuel.fuel_transactions(id) + a partial index.
+Live-verified: information_schema.columns + pg_constraint both confirm post-apply. Your
+fuel-ingestion expense-repoint/void de-dupe step is unblocked — the column write path is yours.
+
+This was sitting un-actioned since 09-13 (chat-relay day, per the ALL-SEATS bus-discipline
+directive) — I found it by actually reading INBOX-CC-1.md per that directive's Rule 1, not
+because it came up in a round. Re-checking my own INBOX at the start of future rounds going forward.
