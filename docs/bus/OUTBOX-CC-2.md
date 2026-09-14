@@ -3273,3 +3273,39 @@ CC-2 | MERGED #22045 (ROUND 23.3 B5 -- load/settlement reassignment primitive, c
 CC-2 | MERGED #22047 (ROUND 23.3 B5 -- full 34-document re-cut orchestration built + rehearsed clean, still NOT run in prod per the owner's own "prod run waits until the ingest finishes") | Built the orchestration that walks all 34 USMCA documents and calls #22045's move primitive per-load. Disclosed correction along the way: the first draft inferred each document's target settlement by clustering its own loads' current settlement -- dry-ran clean, looked right -- but a REAL rehearsal execution on a Neon branch revealed every one of the 34 documents already has a pre-existing, EMPTY, status='locked' shell settlement seeded ahead of time (matching the pre-existing "split-seed-tours.ts" reference) with the correct ref already set. The first draft never looked for these and would have created 24 needless duplicate settlements -- caught immediately by re-running the master parity guard against that rehearsal branch (assertion A failed exactly those 24), not shipped. Discarded that branch's changes, rewrote around the real shape (find the pre-seeded shell, move loads in), rehearsed again on a second fresh branch: all 34 documents processed successfully, assertion A flipped FAIL->PASS, assertion C (bill linkage, B6) stayed PASS. 3 loads (13569/13577/13579, docs 5797/5802) currently sit on a genuinely open active tour -- reported as blocked, never auto-moved, needs an explicit owner call on whether that's stale open-tour tracking or a real still-circulating load. | Two Neon rehearsal branches now exist: br-fancy-bread-akdjd5lp (the FLAWED first attempt, 18 spurious duplicate settlements -- safe to delete, not needed, not deleted without an explicit ask) and br-mute-boat-ak2p387r (the clean corrected rehearsal, left live for inspection). | B5 is now fully built and rehearsed end-to-end -- ready to run the moment CC-3's 136 expense lines + CC-1's invoices land; the actual prod --execute is the only remaining step, correctly withheld. | NEXT=awaiting that ingest, then the prod run + the owner ruling on the 3 blocked open-tour loads.
 CC-2 | MERGED #22050 (ROUND 23.3 DELTA 3 -- last 3 Faro loads closed via B6, live in prod; owner-ruled tour-state defect filed to CC-3, no data touched) | Closed the 3 named loads (13526/doc 5779, 13561+13567/doc 5795) using the already-built move primitive, no new code path, no re-cut -- each already had a real pre-seeded shell settlement waiting. B6 now 77/79 linked (was 74/79); the remaining 2 (13571/13574, doc 5799) correctly wait on the full B5 re-cut. Filed docs/audit/GUARD-WORKORDERS.md's STALE-OPEN-TOUR-FLAG-3-LOADS + routed to docs/bus/INBOX-CC-3.md per the owner's ruling that 13569/13577/13579's live 'open' tour status is stale tracking, not a real in-motion load -- B5's existing refusal to auto-move a load off an open settlement is confirmed correct and unchanged, kept as-is. | Self-caught bug: the first run of the linking script deadlocked on a max:1 pg.Pool (a read-only pre-flight connection never released) -- no writes had landed yet, killed it, fixed the release, re-verified prod was unchanged, re-ran clean. | Standing, respected: B5 prod --execute NOT run tonight (still owner-gated, waits on CC-3's expense lines + CC-1's invoices); both Neon rehearsal branches (br-fancy-bread-akdjd5lp, br-mute-boat-ak2p387r) left as-is, neither deleted; no reverses/voids/reverts of anything this round. | NEXT=awaiting CC-3's dispatch-lane fix on the stale open-tour flag (unblocks 3 more loads for the eventual re-cut) and CC-3/CC-1's ingest (unblocks the prod re-cut itself).
 CC-2 | MERGED #22057 (ROUND 24.1 -- scripts/verify-usmca-settlement-linkage.mjs, the AlwaysTrack settlement-linkage tripwire, READS ONLY) | Built exactly to spec: L1 (0 driver_bills on a NULL/out-of-range-ref settlement, hard), L2 (0 duplicate AlwaysTrack refs, hard), L3 (every locked in-range settlement has >=1 driver_bill, ratchet), L4 (sum(driver_bills.gross_amount_cents)==gross_pay*100, warn-only until CC-3's B3 lands). Every query uses the mandated MATERIALIZED-CTE-referenced-in-WHERE bypass shape -- confirmed via the guard's own --selftest, which mechanically greps its own source for exactly that property (5/5 CTEs referenced) plus 0 write-verb tokens in any SQL literal, so the "false green three times today" class of mistake can never regress silently. Live re-measured at PR time (not copied from the fan-out): L1=29 (owner cited an implicit 34), L2=10 (exact match), L3 baseline=26 (owner cited 32/33) -- lower because this session's own DELTA 3 work (#22050) already closed 2 settlements in the gap between the owner's measurement and this PR; "board numbers are the least reliable part" held again. Full live output pasted in the commit message. Deliberately NOT wired into money-pr-local-gate.mjs -- L1/L2 correctly fail against today's real data (that's the point, not a bug), so it stays a standalone measurement tool until CC-1's repoint + CC-3's B3 land, at which point it becomes gate-worthy. Registered in verify-static.mjs by simply existing in scripts/ (confirmed via reading its own auto-glob discovery mechanism -- no explicit array to edit). | NEXT=stays red and visible until CC-1's repoint work + CC-3's B3 land; L4 flips to hard-fail in the same PR as that B3 proof, not done here.
+
+## CC-2 | P0 NAV-DROPDOWN-01 | 2026-09-14
+
+**FIXED, merged, deploy in progress.** PR #22066 (sha b0dc11fa574e14b0557ade5bf7783a60753eaaad),
+fast-merged same turn.
+
+**Root cause (confirmed live in Chrome, then reproduced with a real DOM event sequence):**
+`NavyDropdown`'s wrapper had `onMouseEnter={show}` racing the button's own `onClick` toggle.
+Any mouse click is preceded by a `mouseenter` on the same element — that opened the menu via
+`show()` first, then the click's own `setOpen((o) => !o)` flipped it straight back closed in
+the same tick, before React ever painted the open state. Cash/Statement/Settings never visibly
+opened. This traces to my own PR #21952 ("Factoring: 16 tabs -> 6"), and is the same defect
+CLASS as `verify-accounting-subnav-click-reachability.mjs` (GO-23 nav-dropdown-clip) — real
+links in the DOM, never reachable by a click, second time this shape has happened.
+
+**Fix is at the component level** (`NavyDropdown` in
+`apps/frontend/src/components/layout/NavyPageSubNav.tsx`), not per-page — shared by all 5
+current consumers of the dropdown-children pattern: ListsSubNav, ReportsSubNav,
+SystemModulePage, FactoringHome, MaintenanceHome. No revert to flat tabs.
+
+**Second finding, caught by the new guard, not the original report:** the "Submit" nav item
+was wired to `/factoring/submit` ("Submit to Factor", a separate deep-link action) instead of
+`FACTORING_TAB_PATH.submit_invoice` — the `submit_invoice` tab had NO nav entry at all since
+PR #21952. Fixed in the same PR; "Submit to Factor" keeps its own header button.
+
+**Guard:** `scripts/verify-factoring-nav-reachable.mjs` — structural (every
+SUBNAV/INTERNAL_TOOLS_SUBNAV id referenced inside the live `<NavyPageSubNav items={[...]}/>`
+block) + behavioral (requires `NavyPageSubNav.test.tsx` to prove, via a real
+`@testing-library/user-event` click, that `aria-expanded` flips true and a real menuitem
+renders — a structural-only check would have passed on the ORIGINAL broken code). 7/7
+selftest cases pass; live run PASS. Also added `--only <guard>` to `verify-static.mjs` per the
+owner's DONE bullet (`node scripts/verify-static.mjs --only verify-factoring-nav-reachable`).
+
+**Remaining on this card:** waiting on the Render deploy to roll out before pasting the
+required live-Chrome screenshots of Cash/Statement/Settings each open in production (bundle
+hash still `index-Brd08G8J.js` — pre-fix — as of this entry; will follow up once rotated).
