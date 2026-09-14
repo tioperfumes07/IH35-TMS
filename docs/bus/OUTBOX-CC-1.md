@@ -473,3 +473,37 @@ without submitting: confirmed 0 real loads created, test reservation cleanly `ca
 
 Both LST-F30171 (counter + UI pre-fill) and LST-F30172 (reservation constraint) now closed and
 proven live. The owner's next load (13596) is mintable for real, end to end.
+
+## 2026-09-14 — ROUND 24.5 EXECUTE — Relay Fuel Wallet USMCA entity attribution, EXECUTED on prod
+
+**3 owner rulings, executed exactly.** USMCA's own Relay Fuel Wallet (existed since 2026-08-05,
+read 0 transactions) now correctly shows its real post-cutover fuel activity, moved out of
+TRANSPORTATION where it had been ingested by mistake.
+
+- **Moved 75 of 76** post-cutover transactions to USMCA — entity attribution correction, nothing
+  voided/un-voided/deleted/duplicated, no GL math invented, note appended to every moved row.
+- **Held 1** (`60677401-...`, $684.35, 09-10) — carries a live match to TRANSPORTATION's own load
+  `L-20260627-0036`; moving it would make that match cross-entity. Untouched, reported.
+- **Voided** USMCA's test-artifact Relay card ("CASCADE USMCA-WIRE test card", no funding
+  account) — standing-law violation, void-not-delete, never relabeled/reused. A real replacement
+  is **not** mapped: Relay's own data carries no card-number field anywhere to discover one from,
+  and inventing one would be exactly the guess this build exists to prevent.
+
+**Live proof, independent fresh read, exact query from the round's own directive:**
+```
+USMCA (5c854333):  75 txns, $32,042.10, 2026-08-13 → 2026-09-11
+TRANSP (91e0bf0a): 1,664 txns, $1,075,653.41, 2026-03-03 → 2026-09-10
+```
+Matches the round's own PASS criteria exactly.
+
+**3 items named and still open, not closed by this PR:**
+1. The 2026-08-07..08-12 missing week — confirmed at both the bank-ledger layer and the deeper
+   Relay daily_pull source-ingest layer; no sync-log entry exists to explain it. Needs a real
+   Relay statement (office's own support thread) — I have no access to contact Relay support.
+2. USMCA has no real card mapped — the wallet reads zero for any NEW purchase until a genuine
+   card with a real funding account is identified (office's Relay dashboard, or an owner ruling
+   this is TRANSPORTATION's same shared physical wallet).
+3. The intercompany funding question is still with the owner — no GL entry, no due-to/due-from
+   posting made.
+
+PR #22085, shipping via fast-merge now.
