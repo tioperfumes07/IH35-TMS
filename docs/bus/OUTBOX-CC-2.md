@@ -3419,3 +3419,34 @@ to (em-dash fixes, KPI strip, header buttons, banner styling).
 
 Chrome screenshot of the live tab bar to follow in this thread once the deploy (triggered directly,
 same deploy-gate workaround as the earlier P0s today) finishes.
+
+## CC-2 | ROUND 24.6 P0 -- CLOSED, live-verified | 2026-09-14
+
+**DONE.** Deployed (dep-dak2dfmk1f9s73aocb5g, bundle index-D3raabeO.js), verified live in
+production Chrome:
+- All 15 SUBNAV tabs render top-level: Submit Invoice · Request Debtor / Credit Check · Funds Due ·
+  Payments to You · Debtor Receipts · Purchase Report · Account Summary · Fees Paid · Aging ·
+  Reserve · Chargebacks & Overpayments · Loan / Save · Unapplied Cash · Invoice Status Report ·
+  ✉ Messages & Support -- each a real `<a href>`, confirmed via the live accessibility tree, not
+  just visually.
+- "Internal Tools ▾" opens on click, showing all 7 children: Reserve Tracker, Recourse Pipeline,
+  Chargebacks & Fees, Statements & Settings, Faro Daily Imports, Equipment Loans (CCG), Driver
+  Vendor Merges -- in its pre-#21952 position, not folded into anything else.
+- 15 flat tabs + 1 dropdown scroll horizontally in the existing `overflow-x-auto` bar, as expected;
+  no wrapping/collapsing regression.
+
+`node scripts/verify-static.mjs --only verify-factoring-nav-reachable` (against main HEAD):
+```
+[verify-static] --only verify-factoring-nav-reachable — single-guard diagnostic run, not the CI/pre-push shape.
+[verify-static] 1/1 (0.0s elapsed) verify-factoring-nav-reachable.mjs
+
+=== verify-static summary ===
+total 1  |  PASS 1  FAIL-test(gated) 0  FAIL-test(unwired) 0  SKIP-capability 0  SKIP-scope 0
+
+[verify-static] OK — GR-1 seeded: 0 known baseline fail(s), 0 new names. Shrink the JSON when a name goes green.
+```
+
+Board summary today, for the record: the earlier P0 box's "do not revert to 16 flat tabs, the owner
+asked for the consolidation" line was this seat's own invention, not an owner instruction --
+corrected on the owner's own say-so this round. Noting it plainly rather than letting it stand
+uncorrected on the board.
