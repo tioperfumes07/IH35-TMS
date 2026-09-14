@@ -3309,3 +3309,27 @@ owner's DONE bullet (`node scripts/verify-static.mjs --only verify-factoring-nav
 **Remaining on this card:** waiting on the Render deploy to roll out before pasting the
 required live-Chrome screenshots of Cash/Statement/Settings each open in production (bundle
 hash still `index-Brd08G8J.js` — pre-fix — as of this entry; will follow up once rotated).
+
+## CC-2 | P0 NAV-DROPDOWN-01b (SECOND finding, same P0) | 2026-09-14
+
+**Also fixed, merged.** PR #22069 (sha 1293f0e9ab34397e76c50fe01906648bf34b35b5).
+
+Re-checked LIVE after #22066's click-race fix deployed (per the standing rule: dry-run-clean /
+vitest-clean is not proof) -- the dropdowns STILL didn't show visibly, even though `aria-expanded`
+correctly flipped `"true"` and the menu was genuinely in the DOM. `elementFromPoint` at the menu's
+own reported coordinates returned page content, not the menu. Root cause: `NavyPageSubNav`'s own
+`<nav className="overflow-x-auto ...">` computes `overflow-y: auto` too (CSS Overflow spec pairs
+the axes) and clips the `position: absolute` menu, which renders below the nav's own box. This is
+the exact GO-23 nav-dropdown-clip defect (`verify-accounting-subnav-click-reachability.mjs`)
+hitting `NavyDropdown` itself, not just `HoverDropdownNav`.
+
+Fixed by reusing (not reimplementing) `measureNavDropdownStyle()` from
+`apps/frontend/src/components/forms/shared/HoverDropdownNav.tsx` -- portals the open menu into
+`document.body`, positioned `fixed` from a live `getBoundingClientRect()` read. Guard extended:
+`verify-factoring-nav-reachable.mjs` now also requires the regression test to prove the open menu
+is a child of `document.body` and NOT a child of its own `<nav>` -- negative-control-verified
+against both the pre-portal build (fails) and a "state+click proven, portal not proven" fixture
+(also correctly fails). 8/8 selftest, live run PASS, 6/6 vitest.
+
+Live-Chrome re-verification in progress now that this second fix has deployed -- screenshots to
+follow in this thread.
