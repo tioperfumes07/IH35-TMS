@@ -442,3 +442,34 @@ value wins verbatim — same rule already ruled for the Load Costs NUMBER column
 
 PR #22064, shipping via fast-merge now. Final "13596 pre-filled, deployed" screenshot follows once
 live.
+
+## 2026-09-14 — P1 LOAD-NUMBER-COUNTER-POISONED — CLOSED end-to-end, deployed, live-proven
+
+**Both deploys live**: backend `0197a56c` and frontend `0197a56c` (same commit, both services).
+Healthz confirmed live SHA match immediately after.
+
+**Then proving it live hit a SECOND, independent bug** (not the same fix — a different table's
+constraint): the real reservation for 13596 returned 409 `duplicate_load_number`, `existing_id`
+pointing at a reservation row created **2026-09-04** (10 days earlier), `reserved_load_number=
+'13596'`, `status='expired'` — reserved once, never consumed into a real load, abandoned. `dispatch.
+load_id_reservations` carried a plain unique constraint on `(operating_company_id,
+reserved_load_number)` with no status filter — ANY reservation ever created for a number, however
+long dead, blocks it forever. Fixing the counter alone was never going to be enough; the corrected
+next number was always going to walk into whichever number this table's history happened to have
+abandoned, and 13596 was exactly that number.
+
+**Fixed** (PR #22071, migration `202614140000`, applied directly on prod): replaced the constraint
+with a partial unique index scoped to `WHERE status='reserved'` — same pattern already used
+elsewhere in this codebase (`uq_invoices_source_load_active`, `uq_driver_settlements_source_
+document_ref_live`). Safe by construction (strict subset of the old enforcement, could never fail
+to build). Hit the known pooled-connection role-downgrade landmine applying it (`RESET ROLE`
+before DDL, documented in this session's own memory) — resolved on the second attempt.
+
+**Live end-to-end proof, real app, real deploy**: re-issued the exact reserve-id call — 200 OK,
+`load_number: "13596"`. Chrome screenshot of the live Book Load wizard: **"13596" pre-filled**,
+editable, caption "Reserved automatically — type to use a different number." Typed a manual
+override ("99999") — updated verbatim, survived a renewal tick, proving typed value wins. Closed
+without submitting: confirmed 0 real loads created, test reservation cleanly `cancelled`.
+
+Both LST-F30171 (counter + UI pre-fill) and LST-F30172 (reservation constraint) now closed and
+proven live. The owner's next load (13596) is mintable for real, end to end.
