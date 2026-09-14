@@ -8884,5 +8884,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-13",
     "purpose": "verify-usmca-settlement-cutover"
+  },
+  "11489": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-14",
+    "purpose": "verify-loads-list-drafts-visible"
   }
 }
