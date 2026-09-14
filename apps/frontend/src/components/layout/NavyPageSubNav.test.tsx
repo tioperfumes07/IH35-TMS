@@ -111,4 +111,24 @@ describe("NavyDropdown open/close (P0 2026-09-14 — mouseenter-then-click race)
     const link = screen.getByRole("menuitem", { name: "Funds Due" });
     expect(link).toHaveAttribute("href", "/factoring/funds-due");
   });
+
+  // P0 FOLLOW-UP #2 (owner 2026-09-14, live Chrome AFTER the click-race fix deployed): fixing the
+  // click race was not enough. `<nav className="overflow-x-auto ...">` computes `overflow-y: auto`
+  // too (CSS Overflow spec pairs the axes) and clips this `position: absolute` menu, since it renders
+  // below the nav's own box — confirmed live via `elementFromPoint` returning page content instead of
+  // the menu, despite zIndex:30/opacity:1/display:block all reading correctly. Same defect CLASS as
+  // verify-accounting-subnav-click-reachability.mjs's GO-23 nav-dropdown-clip fix, and the same
+  // portal-to-body remedy. jsdom has no real layout engine (every rect is 0x0), so it cannot see the
+  // clipping directly — but it CAN see the structural fix: the open menu must be a child of
+  // `document.body`, NOT of the `<nav>` (its clipping ancestor). This is the exact shape of assertion
+  // that would have caught the second bug immediately if it had existed before the first live check.
+  it("the open menu portals to document.body, escaping the <nav>'s own overflow-clipping ancestor", async () => {
+    const user = userEvent.setup();
+    renderDropdown();
+    await user.click(screen.getByRole("button", { name: /Cash/ }));
+    const menu = screen.getByRole("menu");
+    const nav = screen.getByRole("navigation", { name: "Section navigation" });
+    expect(nav.contains(menu)).toBe(false);
+    expect(document.body.contains(menu)).toBe(true);
+  });
 });

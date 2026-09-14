@@ -1,6 +1,17 @@
 import { ChevronDown } from "lucide-react";
-import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+} from "react";
+import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation } from "react-router-dom";
+import { measureNavDropdownStyle } from "../forms/shared/HoverDropdownNav";
 
 export interface NavySubNavChild {
   label: string;
@@ -43,10 +54,42 @@ function itemOrChildActive(pathname: string, item: NavyPageSubNavItem): boolean 
 function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: string }) {
   const menuId = useId().replace(/:/g, "");
   const [open, setOpen] = useState(false);
+  const [menuStyle, setMenuStyle] = useState<CSSProperties>({});
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuRef = useRef<HTMLUListElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  // P0 FOLLOW-UP #2 (owner 2026-09-14, live Chrome after the click-race fix deployed): the click-state
+  // fix alone was NOT enough -- once `open` correctly flips true, the menu is still invisible in
+  // production. Confirmed live: `<nav className="overflow-x-auto ...">` (this component's own root)
+  // computes `overflow-y: auto` too (CSS Overflow spec pairs the axes -- the exact GO-23
+  // nav-dropdown-clip root cause, see HoverDropdownNav.tsx's own header comment), clipping this
+  // `position: absolute` `<ul>` since it overflows the `<nav>`'s own box on the y-axis (menu rect
+  // extended to y=275 while `<nav>`'s own box ends at y=155). `elementFromPoint` at the menu's own
+  // reported coordinates returned a page-content div, not the menu, even with zIndex:30/opacity:1/
+  // display:block -- proof this is clipping, not a stacking-context or state bug. Same fix as that
+  // precedent: portal the open menu into `document.body`, positioned `fixed` from a live
+  // `getBoundingClientRect()` read via the shared `measureNavDropdownStyle()` (also reused by
+  // DispatchSubnav) -- no ancestor's overflow or stacking context can then clip or bury it.
+  useLayoutEffect(() => {
+    if (!open || !wrapperRef.current) return;
+    setMenuStyle(measureNavDropdownStyle(wrapperRef.current));
+  }, [open, item.children?.length]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    function reposition() {
+      if (!wrapperRef.current) return;
+      setMenuStyle(measureNavDropdownStyle(wrapperRef.current));
+    }
+    window.addEventListener("resize", reposition);
+    // Capture: this nav itself scrolls horizontally (overflow-x: auto) without bubbling.
+    document.addEventListener("scroll", reposition, true);
+    return () => {
+      window.removeEventListener("resize", reposition);
+      document.removeEventListener("scroll", reposition, true);
+    };
+  }, [open]);
   // PR #21952 FOLLOW-UP (P0, owner 2026-09-14): `onMouseEnter={show}` on the wrapper races the
   // button's own `onClick` toggle. A real (or automated) click is always preceded by a `mouseenter`
   // on the same element -- the cursor has to land on the button before the click fires. That
@@ -164,29 +207,33 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
         {hasDefaultHref ? null : item.label}
         <ChevronDown size={10} aria-hidden className="ml-0.5 inline" />
       </button>
-      {open ? (
-        <ul
-          ref={menuRef}
-          id={menuId}
-          role="menu"
-          className="absolute left-0 top-full z-30 min-w-[180px] rounded-sm border border-gray-200 bg-white py-1 text-[11px] text-gray-700 shadow-md"
-          onKeyDown={onMenuKeyDown}
-          tabIndex={-1}
-        >
-          {children.map((child) => (
-            <li key={child.to} role="none">
-              <Link
-                role="menuitem"
-                to={child.to}
-                className={`block whitespace-nowrap px-3 py-1.5 hover:bg-gray-50 ${isActive(pathname, child.to) ? "font-semibold text-gray-900" : ""}`}
-                onClick={close}
-              >
-                {child.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      {open && typeof document !== "undefined"
+        ? createPortal(
+            <ul
+              ref={menuRef}
+              id={menuId}
+              role="menu"
+              className="rounded-sm border border-gray-200 bg-white py-1 text-[11px] text-gray-700 shadow-md"
+              style={menuStyle}
+              onKeyDown={onMenuKeyDown}
+              tabIndex={-1}
+            >
+              {children.map((child) => (
+                <li key={child.to} role="none">
+                  <Link
+                    role="menuitem"
+                    to={child.to}
+                    className={`block whitespace-nowrap px-3 py-1.5 hover:bg-gray-50 ${isActive(pathname, child.to) ? "font-semibold text-gray-900" : ""}`}
+                    onClick={close}
+                  >
+                    {child.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
