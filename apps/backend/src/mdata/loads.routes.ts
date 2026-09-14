@@ -180,6 +180,12 @@ const listLoadsQuerySchema = z.object({
   // List, Trip Pairing) is unaffected unless it explicitly asks for this. Round Trips is the only
   // caller that passes it (apps/frontend/src/pages/Dispatch.tsx's roundTripsFullFetch gate).
   include_open_tour_legs: z.coerce.boolean().default(false),
+  // ROUND 24.2 (owner 2026-09-14): "a saved draft load must be findable from the Loads list" —
+  // supersedes the OWNER-REQUEST-REGISTER row 13 "drafts never appear" line. When set, REPLACES the
+  // normal status/board_scope filtering below with `status='draft' OR is_quicksave_draft=true` so a
+  // draft is findable regardless of the live OPEN-ONLY exclusion and regardless of any status
+  // already selected.
+  drafts_only: z.coerce.boolean().default(false),
 });
 
 const loadStatusTransitionBodySchema = z.object({
@@ -686,6 +692,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       include_live_eta,
       board_scope,
       include_open_tour_legs,
+      drafts_only,
     } = parsedQuery.data;
     // DISP-FILTER-01: FE URL uses `statuses=` (plural); API historically only documented `status=`.
     // Accept both and merge (dedupe) so pending-docs filters do not 400 or no-op.
@@ -734,7 +741,17 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       values.push(scopedCompanyIds);
       const filters: string[] = ["l.soft_deleted_at IS NULL"];
 
-      if (status && status.length > 0) {
+      if (drafts_only) {
+        // ROUND 24.2 (owner 2026-09-14): "a saved draft load must be findable from the Loads list."
+        // A draft is EITHER a load never booked past the wizard's own "Save draft" step
+        // (status='draft') OR a load already quick-assigned a driver but still missing unit/trailer
+        // (quicksave.routes.ts's is_quicksave_draft — independent of status, so a quicksave draft
+        // read 'assigned'/'booked' would otherwise be invisible to this filter). Deliberately
+        // replaces the normal status/board_scope branch below, never combined with it — a draft is
+        // findable regardless of the live OPEN-ONLY exclusion and regardless of any status already
+        // selected in the UI.
+        filters.push(`(l.status = 'draft' OR l.is_quicksave_draft = true)`);
+      } else if (status && status.length > 0) {
         values.push(status);
         filters.push(`l.status = ANY($${values.length}::mdata.load_status_enum[])`);
       } else if (board_scope === "live") {
@@ -878,6 +895,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             -- seat -- that route is not the one this page calls; confirmed via listLoads/listAllLoads
             -- in api/loads.ts, both hitting /api/v1/mdata/loads, i.e. this file.)
             l.trip_type, l.presettlement_link_id, l.tour_id,
+            -- ROUND 24.2 — the Loads list DRAFT badge/pill needs this independent of status (a
+            -- quicksave draft is not necessarily status='draft'; see quick-assign.service.ts).
+            l.is_quicksave_draft,
             c.customer_name AS customer_name,
             u.unit_number AS assigned_unit_number,
             tr.id AS trailer_id,

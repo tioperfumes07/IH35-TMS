@@ -152,6 +152,11 @@ export type DispatchLoadRow = {
    * while its tour's pre-settlement is still open. */
   presettlement_link_id?: string | null;
   tour_id?: string | null;
+  /** ROUND 24.2 — quicksave.routes.ts's own draft flag: a load already quick-assigned a driver
+   *  but still missing unit/trailer. Independent of status (a quicksave draft is not necessarily
+   *  status='draft' — it may already read 'assigned'/'booked'); the Loads list' DRAFT badge and
+   *  the Drafts filter must check BOTH `status === 'draft'` and this flag. */
+  is_quicksave_draft?: boolean;
 };
 
 export type LoadsListResponse = {
@@ -226,6 +231,12 @@ export type LoadsListFilters = {
   /** ROUND-20.2 (RT-FULL-TOUR) — Round Trips-only opt-in; every other board_scope=live caller must
    * leave this unset so OPEN-ONLY stays unchanged for them. See mdata/loads.routes.ts. */
   include_open_tour_legs?: boolean;
+  /** ROUND 24.2 — the Loads list "Drafts" pill. When set, the backend replaces the normal
+   * status/board_scope filtering with `status='draft' OR is_quicksave_draft=true` — a saved draft
+   * must be findable regardless of the live OPEN-ONLY exclusion, and regardless of any other status
+   * filter already selected (mutually exclusive with `status` — the backend ignores `status` when
+   * this is true). See mdata/loads.routes.ts. */
+  drafts_only?: boolean;
 };
 
 type CreateLoadWizardBody = {
@@ -274,6 +285,7 @@ export function listLoads(filters: LoadsListFilters) {
   if (filters.include_live_eta !== undefined) query.set("include_live_eta", String(filters.include_live_eta));
   if (filters.board_scope) query.set("board_scope", filters.board_scope);
   if (filters.include_open_tour_legs) query.set("include_open_tour_legs", "true");
+  if (filters.drafts_only) query.set("drafts_only", "true");
   const qs = query.toString();
   return apiRequest<LoadsListResponse>(`/api/v1/mdata/loads${qs ? `?${qs}` : ""}`);
 }

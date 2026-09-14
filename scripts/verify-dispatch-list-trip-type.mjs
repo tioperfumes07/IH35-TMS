@@ -119,7 +119,10 @@ function selftest() {
     "a source file missing the l.*, marker entirely must fail loud, not pass vacuously"
   );
 
-  const typeRegressed = typeSrc.replace('tour_id?: string | null;\n};', '};');
+  // ROUND 24.2: DispatchLoadRow grew a new field (is_quicksave_draft) after tour_id, so the type no
+  // longer ends `tour_id?: string | null;\n};` verbatim -- match just the tour_id line itself
+  // (still uniquely present once) so this fixture survives future fields landing after it too.
+  const typeRegressed = typeSrc.replace('  tour_id?: string | null;\n', '');
   assert.ok(typeRegressed !== typeSrc, "selftest type-fixture replace target not found -- stale");
   assert.ok(auditFrontendType(typeRegressed).length === 1, "removing tour_id from DispatchLoadRow must be caught");
 
