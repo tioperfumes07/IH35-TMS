@@ -266,13 +266,11 @@ export type DispatchBookLoadPayload = {
   miles_practical?: number | null;
   miles_shortest?: number | null;
   miles_deadhead?: number | null;
-  mileage_source?:
-    | "History"
-    | "History — verify"
-    | "History — ZIP mismatch, verify"
-    | "Manual"
-    | "Routing engine"
-    | "Operator entered";
+  // P0 (owner 2026-09-14, "BOOK LOAD 500s") — a controlled vocabulary of exactly the 4 literals
+  // loads_mileage_source_english_check allows (NULL, History, Manual, Routing engine,
+  // Operator entered). Do not add a confidence-qualified variant here again — display concerns
+  // (ZIP mismatch, verify, etc.) belong in the lane-mileage response's own provenance field.
+  mileage_source?: "History" | "Manual" | "Routing engine" | "Operator entered";
   stop_count?: string;
   pickup_number?: string;
   border_routing?: string;

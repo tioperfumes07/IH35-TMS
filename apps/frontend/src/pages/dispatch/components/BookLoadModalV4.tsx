@@ -161,14 +161,11 @@ type FormValues = BookLoadFormValues & {
   miles_practical: number | null;
   miles_shortest: number | null;
   miles_deadhead: number | null;
-  mileage_source:
-    | ""
-    | "History"
-    | "History — verify"
-    | "History — ZIP mismatch, verify"
-    | "Manual"
-    | "Routing engine"
-    | "Operator entered";
+  // P0 (owner 2026-09-14, "BOOK LOAD 500s") — "" is the unset form-default only (filtered to
+  // undefined before the API call by `values.mileage_source || undefined` below); every other
+  // value here must be one of the DB constraint's 4 allowed literals. Never add a confidence-
+  // qualified variant ("... — verify") again — that display concern lives in provenance, not here.
+  mileage_source: "" | "History" | "Manual" | "Routing engine" | "Operator entered";
   /** P1 (owner 2026-09-14) — miles_shortest's OWN source label, separate from mileage_source above
    *  (which only ever describes practical/lane-history). Never sent to the server as a load column
    *  — display-only, so the operator always sees WHY the shortest box is filled or blank. */
@@ -825,13 +822,18 @@ export function BookLoadModalV4({
     }
     // short_miles stays NULL (P0). Never fill from catalog.
     if (lane.practical_miles != null) {
-      const source =
-        lane.fill_confidence === "check_zip"
-          ? "History — ZIP mismatch, verify"
-          : lane.fill_confidence === "verify" || lane.fill_confidence === "reverse"
-            ? "History — verify"
-            : "History";
-      form.setValue("mileage_source", source, { shouldDirty: true });
+      // P0 (owner 2026-09-14, "BOOK LOAD 500s") — mileage_source is a controlled vocabulary of
+      // exactly 4 literals (loads_mileage_source_english_check: NULL, "History", "Manual",
+      // "Routing engine", "Operator entered"). This used to append a confidence qualifier with an
+      // em-dash ("History — ZIP mismatch, verify" / "History — verify"), which the constraint
+      // rejects outright — a 500 on save for any load whose miles filled from a check_zip/verify/
+      // reverse lane, blocking real bookings. The confidence qualifier is a DISPLAY concern and was
+      // never read from this field anyway: MilesStrip's warning line ("Filled from a lane whose ZIP
+      // does not match...") is driven entirely by the separate fillConfidence/provenance props
+      // (laneMileageQuery.data.fill_confidence / .provenance, backend-computed in
+      // lane-mileage.service.ts's provenanceFromRow) — never by this mileage_source string. So the
+      // warning is unaffected; only the illegal DB literal is fixed.
+      form.setValue("mileage_source", "History", { shouldDirty: true });
     }
     const laneKey = lane.matched_lane_id ?? `${originPlace.city}|${originPlace.state}|${destPlace.city}|${destPlace.state}`;
     const practical = Number(lane.practical_miles ?? 0);

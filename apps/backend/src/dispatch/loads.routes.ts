@@ -268,16 +268,14 @@ const createDispatchLoadBodySchema = z.object({
   miles_practical: z.number().min(0).multipleOf(0.1).optional(),
   miles_shortest: z.number().min(0).multipleOf(0.1).optional(),
   miles_deadhead: z.number().min(0).multipleOf(0.1).optional(),
-  mileage_source: z
-    .enum([
-      "History",
-      "History — verify",
-      "History — ZIP mismatch, verify",
-      "Manual",
-      "Routing engine",
-      "Operator entered",
-    ])
-    .optional(),
+  // P0 (owner 2026-09-14, "BOOK LOAD 500s") — this schema used to accept 2 literals
+  // ("History — verify", "History — ZIP mismatch, verify") that the DB's own
+  // loads_mileage_source_english_check CHECK constraint has never allowed (its em-dash confidence
+  // qualifier is not one of the 4 values in the ARRAY[...] literal) — Zod passed them straight
+  // through to a 500 on INSERT. Narrowed to exactly the constraint's 4 allowed literals; the
+  // confidence qualifier is carried by the lane-mileage response's own fill_confidence/provenance
+  // fields for display (MilesStrip), never by this column.
+  mileage_source: z.enum(["History", "Manual", "Routing engine", "Operator entered"]).optional(),
   stop_count: z.string().trim().max(40).optional(),
   pickup_number: z.string().trim().max(120).optional(),
   border_routing: z.string().trim().max(120).optional(),
