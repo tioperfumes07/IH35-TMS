@@ -8,7 +8,7 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import type { UnitsWithoutLoad } from "../../api/dispatch";
 import type { DispatchLoadRow } from "../../api/loads";
-import { DispatchKanban } from "./DispatchKanban";
+import { DispatchKanban, resolveKanbanColumnKey } from "./DispatchKanban";
 
 expect.extend(jestDomMatchers);
 
@@ -140,8 +140,9 @@ describe("DispatchKanban — DB-2 lane headers link to the filtered List view", 
     const headerLink = screen.getByTestId("kanban-column-header-link-assigned");
     expect(headerLink.tagName).toBe("BUTTON");
     await user.click(headerLink);
-    // carries the lane's status filter (so the List view can pre-filter via the `statuses` param)
-    expect(onColumnHeaderClick).toHaveBeenCalledWith(["draft", "planned", "unassigned", "booked", "assigned", "assigned_not_dispatched"]);
+    // carries the lane's status filter (so the List view can pre-filter via the `statuses` param).
+    // ROUND 24.3: "draft" moved out of this lane into its own "Drafts" lane (see that describe block).
+    expect(onColumnHeaderClick).toHaveBeenCalledWith(["planned", "unassigned", "booked", "assigned", "assigned_not_dispatched"]);
   });
 
   it("synthetic lanes with no statuses (awaiting_assignment) render a plain heading, not a link", () => {
@@ -481,4 +482,43 @@ describe("DispatchKanban — KANBAN-DUP-UNIT-2 loads/awaitingTrucks reconciliati
     // No ghost card either, since the unit already won a real card.
     expect(screen.queryByTestId("awaiting-truck-card-unit:u-171")).not.toBeInTheDocument();
   });
+});
+
+// ROUND 24.3 (owner, 2026-09-14): "Today a draft lands in the Kanban 'Assigned' lane ...
+// Wrong: an unfinished booking next to dispatchable loads is a trap." "draft" removed from the
+// "assigned" lane's own statuses array (asserted above, DB-2 describe block) and given its own
+// lane, verified directly here — not inferred from a full-board render.
+describe("DispatchKanban — Drafts get their own lane, never merged into Assigned (ROUND 24.3)", () => {
+  it("resolveKanbanColumnKey: a draft with no assignment resolves to \"drafts\", not \"assigned\"", () => {
+    expect(resolveKanbanColumnKey(mockLoad({ status: "draft", assigned_unit_id: null, assigned_primary_driver_id: null }))).toBe("drafts");
+  });
+
+  it("resolveKanbanColumnKey: a draft that ALREADY has a real assignment in progress still resolves to \"assigned\" (unchanged, pre-existing rule)", () => {
+    expect(resolveKanbanColumnKey(mockLoad({ status: "draft", assigned_unit_id: "u-1", assigned_primary_driver_id: null }))).toBe("assigned");
+  });
+
+  it("the Drafts lane header carries statuses=[\"draft\"] only, never merged with Assigned's", () => {
+    const onColumnHeaderClick = vi.fn();
+    renderWithClient(
+      <MemoryRouter>
+        <DispatchKanban loads={[]} loading={false} onLoadClick={vi.fn()} onStatusDrop={vi.fn()} onColumnHeaderClick={onColumnHeaderClick} />
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId("kanban-column-header-link-drafts")).toBeInTheDocument();
+  });
+
+  it("a bare-minimum draft load (no unit, no driver) renders under the Drafts lane, not Assigned", () => {
+    const loads = [mockLoad({ id: "load-draft-1", load_number: "13600", status: "draft", assigned_unit_id: null, assigned_unit_number: null, assigned_primary_driver_id: null, assigned_primary_driver_name: null })];
+    renderWithClient(
+      <MemoryRouter>
+        <DispatchKanban loads={loads} awaitingTrucks={[]} loading={false} onLoadClick={vi.fn()} onStatusDrop={vi.fn()} />
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId("kanban-standard-card-13600")).toBeInTheDocument();
+  });
+
+  // "Drafts is derivedOnly (drag refused with an explanation, matching the FAIL-K1 Loaded/At pickup/
+  // At delivery pattern) is asserted by scripts/verify-draft-load-saves-and-is-visible.mjs's own
+  // source-grep, not duplicated here — this file's tsconfig has no Node type declarations to read
+  // its own source at runtime, and the guard already runs in a real Node context.
 });

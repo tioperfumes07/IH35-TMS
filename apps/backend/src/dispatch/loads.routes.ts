@@ -355,9 +355,17 @@ const createDispatchLoadBodySchema = z.object({
         latitude: z.number().finite().gte(-90).lte(90).optional(),
         longitude: z.number().finite().gte(-180).lte(180).optional(),
       })
-    )
-    .min(2),
+    ),
+  // ROUND 24.3 (owner, 2026-09-14): ">=2 stops, each with a real city" is correct to BOOK a load,
+  // but a draft's minimum is operating_company_id + customer_id + load_number — nothing else. The
+  // array-level ">=2" moved out of this `.array()` builder (was `.min(2)`) into the `.superRefine`
+  // below, gated on save_mode !== "draft"; book_dispatch keeps the exact same requirement.
   save_mode: z.enum(["draft", "book_dispatch"]).default("book_dispatch"),
+  // ROUND 24.3 — required fields a draft deferred (mirrors the frontend's own draftPendingFields;
+  // both independently know the same rules, but the frontend's list is the one actually PERSISTED —
+  // this is not re-derived server-side to avoid a second, driftable copy of the same rule set).
+  // Ignored unless save_mode === "draft".
+  quicksave_pending_fields: z.array(z.string().trim().min(1).max(80)).max(40).optional(),
   override_token: z.string().uuid().optional(),
   override_reason: z.string().trim().min(10).max(1000).optional(),
   override_rules: z
@@ -372,6 +380,12 @@ const createDispatchLoadBodySchema = z.object({
     .optional(),
   // CUSTVEND-PAR-1: Manager+ override when customer is at/over credit limit.
   override_credit_limit: z.boolean().optional(),
+}).superRefine((data, ctx) => {
+  // ROUND 24.3 — a draft may submit 0 stops; book_dispatch keeps the pre-existing ">=2 stops" rule
+  // exactly as it was (the ".min(2)" moved here unchanged, not loosened, for that mode).
+  if (data.save_mode !== "draft" && data.stops.length < 2) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["stops"], message: "Array must contain at least 2 element(s)" });
+  }
 });
 
 // Block 06 (Inc 2) — full load edit. All fields optional (PATCH semantics); only present keys update.

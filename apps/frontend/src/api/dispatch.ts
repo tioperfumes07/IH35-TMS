@@ -243,6 +243,10 @@ export type DispatchBookLoadPayload = {
     geocode_precision?: "rooftop" | "range" | "locality" | null;
   }>;
   save_mode: "draft" | "book_dispatch";
+  // ROUND 24.3 — required fields save_mode="draft" deferred rather than blocked on; persisted as
+  // mdata.loads.quicksave_pending_fields, read back on resume. Ignored server-side unless save_mode
+  // is "draft".
+  quicksave_pending_fields?: string[];
   override_token?: string;
   override_reason?: string;
   override_rules?: Array<{ rule_code: string; reason: string; subject?: string }>;
