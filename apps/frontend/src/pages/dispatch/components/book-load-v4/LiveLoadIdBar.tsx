@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError } from "../../../../api/client";
-import { releaseDispatchLoadReservation, reserveDispatchLoadId } from "../../../../api/dispatch";
+import { peekNextLoadNumber } from "../../../../api/dispatch";
 import { QboDocumentNumberField } from "../../../../components/forms/QboDocumentNumberField";
 
 export type LiveReservation = {
@@ -33,122 +33,107 @@ function isFirstLoadNumberRequired(err: unknown): boolean {
   return code === FIRST_LOAD_REQUIRED || code.includes(FIRST_LOAD_REQUIRED);
 }
 
+/**
+ * P0 2026-09-14 (LOAD-NUMBER-COUNTER-BURN-ON-OPEN) — this component used to call
+ * reserveDispatchLoadId on every mount, which spent a real, permanent load number (via
+ * lib.next_trace_no()) the instant the wizard opened, whether or not a load was ever created.
+ * Live-proven the same day: last_trace_no 13611 -> open wizard -> close without saving -> 13612.
+ * Sixteen numbers burned in ninety minutes of ordinary use, zero loads created.
+ *
+ * FIX: this bar now only PEEKS (peekNextLoadNumber — a pure read, never writes, never increments)
+ * to show a live PREVIEW of what the next number would be right now. No reservation is created, so
+ * there is nothing to renew, nothing to release, nothing to abandon. The real, permanent
+ * allocation happens exactly once — atomically, via the existing lib.next_trace_no() sequence —
+ * only at the moment the load is actually saved (book-load.service.ts's own
+ * `if (!loadNumber) { reserveNextLoadId(...) }` fallback, which already existed and was simply
+ * unreachable in practice because this component always pre-empted it with a proactive
+ * open-time reservation).
+ *
+ * Two dispatchers opening the wizard at once may briefly see the same preview number — that is
+ * not a collision. Peeking issues nothing; only the real save-time allocator issues a number, and
+ * it remains atomic (whoever's save transaction reaches it first gets it). The second
+ * dispatcher's stale preview simply never matches what they end up actually submitting with; the
+ * number shown to them after a successful save is always the real one.
+ */
 export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props) {
-  const [display, setDisplay] = useState<LiveReservation | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
   const [manualNumber, setManualNumber] = useState("");
   const manualNumberRef = useRef("");
   manualNumberRef.current = manualNumber;
-  const [secondsLeft, setSecondsLeft] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [awaitingFirstNumber, setAwaitingFirstNumber] = useState(false);
-  const reservationRef = useRef<{ companyId: string; reservationId: string } | null>(null);
   const scopeGenerationRef = useRef(0);
-  const activeGenerationRef = useRef<number | null>(null);
   const onUpdateRef = useRef(onReservationUpdate);
   onUpdateRef.current = onReservationUpdate;
-  // P1 2026-09-14 — owner ruling: "The next load should already be automatic ... Editable, but it
-  // should already be appearing." Before this fix the box stayed empty on open even though a real
-  // reservation (the actual next number, e.g. "13596") existed the whole time in `display` — only
-  // a caption hint showed it, and the empty box is what got submitted if the operator never typed.
   // Tracks whether the OPERATOR has ever touched the box (typed into it, including clearing it to
   // blank on purpose) — as opposed to it merely being empty because nothing has pre-filled it yet.
-  // Only pre-fill from a fresh/renewed reservation while this is still false, so a renewal tick (or
-  // a slow first response racing a fast typist) can never clobber something the operator typed.
+  // Only pre-fill from a fresh peek while this is still false, so a slow peek response racing a
+  // fast typist can never clobber something the operator typed.
   const hasUserEditedRef = useRef(false);
 
   const publishTypedNumber = useCallback((next: string) => {
-    const current = reservationRef.current;
     onUpdateRef.current({
-      reservation_uuid: current?.reservationId ?? "",
+      reservation_uuid: "", // no reservation exists in the peek-only flow; submit allocates for real
       load_number: next,
       reserved_until: new Date(Date.now() + 60_000).toISOString(),
       ttl_seconds: 60,
     });
   }, []);
 
-  const bumpReserve = useCallback(async () => {
+  const doPeek = useCallback(async () => {
     const submittedGeneration = scopeGenerationRef.current;
     const submittedCompanyId = operatingCompanyId;
-    if (activeGenerationRef.current === submittedGeneration) return;
-    activeGenerationRef.current = submittedGeneration;
     setError(null);
     try {
-      const currentReservation = reservationRef.current;
-      const renewalId = currentReservation?.companyId === submittedCompanyId
-        ? currentReservation.reservationId
-        : undefined;
-      const r = await reserveDispatchLoadId(submittedCompanyId, renewalId);
-      if (scopeGenerationRef.current !== submittedGeneration) {
-        await releaseDispatchLoadReservation(submittedCompanyId, r.reservation_uuid).catch(() => undefined);
-        return;
-      }
-      reservationRef.current = { companyId: submittedCompanyId, reservationId: r.reservation_uuid };
+      const r = await peekNextLoadNumber(submittedCompanyId);
+      if (scopeGenerationRef.current !== submittedGeneration) return;
       setAwaitingFirstNumber(false);
-      setDisplay(r);
+      setPreview(r.next_number);
       if (!hasUserEditedRef.current) {
-        // Pre-fill with the actual reserved number — still fully editable; the moment the
-        // operator types (even to clear it), hasUserEditedRef flips and this branch never fires
-        // again for this reservation's lifetime.
-        setManualNumber(r.load_number);
-        onUpdateRef.current(r);
+        // Pre-fill the BOX visually with the previewed number — still fully editable; the moment
+        // the operator types (even to clear it), hasUserEditedRef flips and this branch never
+        // fires again. Critically, publish an EMPTY load_number to the parent form here, not the
+        // preview: if this got submitted as-is, book-load.service.ts would treat it exactly like
+        // a manually-typed number (assertLoadNumberAvailable + direct claim) instead of routing
+        // through the real atomic allocator at save time — reintroducing the same race class
+        // GO-10-REV-B eliminated, and defeating the whole point of peeking. Leaving it empty here
+        // means an unedited submit reaches book-load.service.ts's `if (!loadNumber)` fallback,
+        // which allocates for real, atomically, at that exact moment.
+        setManualNumber(r.next_number);
+        onUpdateRef.current({
+          reservation_uuid: "",
+          load_number: "",
+          reserved_until: new Date(Date.now() + 60_000).toISOString(),
+          ttl_seconds: 60,
+        });
       } else {
-        onUpdateRef.current({ ...r, load_number: manualNumberRef.current.trim() });
+        publishTypedNumber(manualNumberRef.current.trim());
       }
-      const until = new Date(r.reserved_until).getTime();
-      setSecondsLeft(Math.max(0, Math.ceil((until - Date.now()) / 1000)));
     } catch (err) {
       if (scopeGenerationRef.current !== submittedGeneration) return;
-      reservationRef.current = null;
-      setDisplay(null);
-      setSecondsLeft(0);
+      setPreview(null);
       if (isFirstLoadNumberRequired(err)) {
         setAwaitingFirstNumber(true);
         setError(null);
         publishTypedNumber(manualNumberRef.current.trim());
         return;
       }
-      setError(apiErrorCode(err) || "Could not reserve a load number");
+      setError(apiErrorCode(err) || "Could not preview the next load number");
       publishTypedNumber(manualNumberRef.current.trim());
-    } finally {
-      if (activeGenerationRef.current === submittedGeneration) activeGenerationRef.current = null;
     }
   }, [operatingCompanyId, publishTypedNumber]);
 
   useEffect(() => {
     scopeGenerationRef.current += 1;
-    activeGenerationRef.current = null;
-    reservationRef.current = null;
-    setDisplay(null);
-    setSecondsLeft(0);
+    setPreview(null);
     setError(null);
     setAwaitingFirstNumber(false);
     setManualNumber("");
     hasUserEditedRef.current = false;
     onUpdateRef.current(null);
-    void bumpReserve();
-    return () => {
-      scopeGenerationRef.current += 1;
-      activeGenerationRef.current = null;
-      const reservation = reservationRef.current;
-      reservationRef.current = null;
-      if (reservation) {
-        void releaseDispatchLoadReservation(reservation.companyId, reservation.reservationId);
-      }
-    };
-  }, [bumpReserve, operatingCompanyId]);
-
-  useEffect(() => {
-    if (!display || awaitingFirstNumber) return;
-    const timer = window.setInterval(() => {
-      const until = new Date(display.reserved_until).getTime();
-      const left = Math.max(0, Math.ceil((until - Date.now()) / 1000));
-      setSecondsLeft(left);
-      if (left <= 0) {
-        void bumpReserve();
-      }
-    }, 1000);
-    return () => window.clearInterval(timer);
-  }, [awaitingFirstNumber, bumpReserve, display]);
+    void doPeek();
+    // No cleanup needed: peeking creates nothing to release on unmount.
+  }, [doPeek, operatingCompanyId]);
 
   return (
     <div className="flex flex-wrap items-end gap-3" data-testid="book-load-live-load-id-bar">
@@ -158,19 +143,18 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
           value={manualNumber}
           onChange={(next) => {
             // Any operator keystroke — including clearing the box back to blank on purpose — is a
-            // deliberate edit from here on; the pre-fill in bumpReserve() never overwrites it again
-            // for this reservation's lifetime (see hasUserEditedRef's own comment above).
+            // deliberate edit from here on; the pre-fill in doPeek() never overwrites it again.
             hasUserEditedRef.current = true;
             setManualNumber(next);
             publishTypedNumber(next);
           }}
           operatingCompanyId={operatingCompanyId}
           // P1 2026-09-14 — no longer used for a caption suggestion here (the box is pre-filled
-          // directly from the live reservation's own real number instead, see bumpReserve above);
-          // this generic "increment the last-saved row's number" endpoint isn't load-number aware
-          // and was live-caught suggesting a non-numeric placeholder load number as the "next"
-          // one. checkPath still runs so a typed override that collides with an existing load
-          // number is still caught.
+          // directly from the live peek's own real next number instead); this generic
+          // "increment the last-saved row's number" endpoint isn't load-number aware and was
+          // live-caught suggesting a non-numeric placeholder load number as the "next" one.
+          // checkPath still runs so a typed override that collides with an existing load number
+          // is still caught.
           nextNumberPath={undefined}
           checkPath={awaitingFirstNumber ? undefined : "/api/v1/dispatch/loads/next-number"}
           fieldName="load"
@@ -178,7 +162,7 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
           hint={
             awaitingFirstNumber
               ? "Click the white box and type the first number (example 13508)."
-              : "Reserved automatically — type to use a different number."
+              : "Next number, not reserved yet — type to use a different one."
           }
           data-testid="qbo-document-number-load"
         />
@@ -190,15 +174,12 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
       ) : error ? (
         <>
           <span className="pb-5 text-xs text-red-700">Load number unavailable: {error}</span>
-          <button type="button" className="mb-5 rounded-sm border border-gray-300 px-2 py-1 text-xs" onClick={() => void bumpReserve()}>
+          <button type="button" className="mb-5 rounded-sm border border-gray-300 px-2 py-1 text-xs" onClick={() => void doPeek()}>
             Retry
           </button>
         </>
       ) : (
-        <>
-          <span className="pb-5 text-xs text-slate-600">{display ? "Reserved" : "Reserving…"}</span>
-          <span className="pb-5 text-xs text-slate-500">{secondsLeft}s</span>
-        </>
+        <span className="pb-5 text-xs text-slate-600">{preview ? "Previewed — assigned on save" : "Loading…"}</span>
       )}
     </div>
   );

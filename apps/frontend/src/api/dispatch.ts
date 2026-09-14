@@ -301,6 +301,15 @@ export function releaseDispatchLoadReservation(operatingCompanyId: string, reser
   );
 }
 
+// P0 2026-09-14 (LOAD-NUMBER-COUNTER-BURN-ON-OPEN) — pure read, no reservation created, no counter
+// touched. Replaces reserveDispatchLoadId for the wizard's own open-time PREVIEW display; see
+// peekNextLoadNumber's own header comment (backend, load-id-reservation.service.ts) for why.
+export function peekNextLoadNumber(operatingCompanyId: string) {
+  return apiRequest<{ next_number: string }>(
+    `/api/v1/dispatch/loads/next-number-peek?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
 export function patchAnticipatedChargeback(
   loadId: string,
   body: {

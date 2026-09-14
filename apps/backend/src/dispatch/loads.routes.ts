@@ -24,6 +24,7 @@ import { distributeLoadInstructions } from "./load-distribution.service.js";
 import {
   cancelLoadIdReservation,
   reserveNextLoadId,
+  peekNextLoadNumber,
   FirstLoadNumberRequiredError,
   LoadNumberConflictError,
 } from "./load-id-reservation.service.js";
@@ -794,6 +795,28 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       }
       if (err instanceof LoadNumberConflictError) {
         return reply.code(409).send({ error: err.code, load_number: err.loadNumber, existing_id: err.existingId });
+      }
+      throw err;
+    }
+  });
+
+  // P0 2026-09-14 (LOAD-NUMBER-COUNTER-BURN-ON-OPEN) — pure read, never writes, never increments.
+  // Replaces the wizard's old open-on-mount reserve-id call for the PREVIEW display only; the real
+  // allocation still happens exactly once, atomically, at actual save (see peekNextLoadNumber's own
+  // header comment in load-id-reservation.service.ts for the full root-cause + fix explanation).
+  app.get("/api/v1/dispatch/loads/next-number-peek", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    const query = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    try {
+      const next = await withCompanyScope(authUser.uuid, query.data.operating_company_id, async (client) =>
+        peekNextLoadNumber(client, query.data.operating_company_id)
+      );
+      return { next_number: next };
+    } catch (err) {
+      if (err instanceof FirstLoadNumberRequiredError) {
+        return reply.code(422).send({ error: err.code });
       }
       throw err;
     }
