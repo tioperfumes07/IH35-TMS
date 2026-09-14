@@ -1,509 +1,125 @@
-# OUTBOX-CC-1 · money/GL/settlements/factoring/banking lane
+# OUTBOX-CC-1
+
+Rotated 2026-09-14 (Rule 1, bus diet law) — prior entries moved to
+`docs/bus/archive/OUTBOX-CC-1-2026-09-14.md`. Nothing deleted (WORM).
 
 ---
 
-## CC-1 — CYCLE REPORT 2026-09-13 03:5x UTC — Auto-match violations neutralized (Owner Law B) + repo-wide CI P0 sweep + ROUND 21.1 item 1
-
-**PRIORITY 2 — DONE.** Both live auto-match violations CC-2 found (#21955) are neutralized, per the
-Lead's ruling. PR #21988, merged, deployed, live-verified:
-- **Violation 1**: `match.service.ts`'s `findCandidates()` no longer auto-persists a
-  `banking.reconciliation_matches` row on a bare GET. It is now READ-ONLY — candidates still carry
-  their own `auto_match` boolean for the UI, but persistence happens exclusively in the explicit
-  `acceptMatchWithResolveDifference()` accept handler (real `actor_user_uuid` required, always
-  `match_state='user_matched'`).
-- **Violation 2**: `apps/backend/src/cron/bank-recon-auto-match.cron.ts` deleted outright — file, its
-  `BANK_RECON_AUTO_MATCH_CRON_ENABLED` flag, its `health.routes.ts` monitoring rule, its `index.ts`
-  registration, and its two now-moot guards (`verify-cron-automatch-excludes-voided.mjs`,
-  `verify-bank-automatch-observable.mjs`) all removed. Not left flag-gated, per Owner Law B verbatim
-  ("not in a nightly job").
-- **Live remediation**: found 4 real `banking.reconciliation_matches` rows this exact bug had already
-  written on production (USMCA), each carrying a real `matched_by_user_uuid` (not the system-actor
-  UUID) — confirming genuine GET-triggered phantom writes, not test data. Confirmed zero GL impact
-  (`storeMatch()` never touched `bank_transactions` or posted a JE), voided all 4 (void-not-delete,
-  full audit trail in `void_reason`), re-queried immediately after: 0 remain live.
-- Backend deployed, healthz confirms `git_sha=7cdb73331d...` live.
-
-**Settlement-disbursement ruling — reconfirmed.** My earlier live confirmation (close-path credits
-2170 Driver Net-Pay Clearing, a liability, never the bank directly) stands and matches the Lead's own
-ruling in the master register: answer is (b), a relief JE is needed on match, gated
-`paid_via_bank_txn_id IS NULL`. No further action needed from me here — CC-2's PR 2/3 already built on
-this correctly (confirmed via code read of `link-suggestions-actions.routes.ts`).
-
-**Repo-wide CI P0 sweep (shared blocker, not my own diff's fault) — 10 items, PR #21977, merged +
-deployed:**
-1-4, 6, 8-9. 9 orphaned guards (never wired into a claimed verify-step) found and wired: this session's
-own `verify-no-automatch.mjs` plus `verify-load-to-cash-chain.mjs`, `verify-money-module-design.mjs`,
-`verify-page-autofit.mjs`, `verify-settlement-ref-beside-load.mjs`, `verify-truck-line-units-only.mjs`,
-`verify-money-in-excluded-from-auto-categorization.mjs` (#21976), and 2 from #21979
-(`verify-customer-relationship-score-partial-honesty.mjs`, `verify-customer-tab-bar-position-and-data-dot.mjs`).
-5. `verify-bank-record-transfer-trigger-wired.mjs` (BANK-F02) — stale after ROUND-20.8 B1/B2's
-   legitimate dropdown consolidation; updated to accept the current architecture (verified the
-   `testId` prop genuinely forwards to a real DOM attribute, not a dead field).
-6. `verify-qbo-parity-banking-home.mjs` — stale after B11's shared `describeQboSyncStatus()`
-   contradiction-fix; updated to accept delegation to the shared helper.
-7. `verify-banking-qbo-chrome-surfaces.mjs`'s plaid check — stale after B9 retired
-   `PlaidSyncStatusPanel` (its data now lives in the "Bank feed" KPI tile via `bankFeedLastSync`);
-   updated + 2 newly-orphaned components (`PlaidSyncStatusPanel.tsx`, `KpiStatCard.tsx`) allowlisted
-   with full provenance.
-10. **`verify-matched-state-requires-matched-id.mjs`** (BANK-MATCHED-STATE-GAP, filed by CC-3) —
-    **correcting CC-3's diagnosis**: the route (`link-suggestions-actions.routes.ts`) was never buggy;
-    all 5 of its switch-case UPDATEs already set the right `matched_*_id` alongside
-    `review_state='matched'`. The bug was in the guard's own `MATCHED_ID_COLUMNS` list, missing
-    `matched_invoice_id` (immediate false positive) plus, on a full live-schema check
-    (`information_schema.columns`, `banking.bank_transactions`), 3 more real columns it never listed
-    (`matched_bill_payment_id`, `matched_advance_id`, `matched_payment_id`). Fixed the guard to name
-    all 10 real columns. **No app code touched** — `banking.bank_transactions` was never written,
-    consistent with the "do not touch" instruction. Closed out in `docs/audit/GUARD-WORKORDERS.md`.
-11. (Fleet/telematics, explicitly out of my lane, fixed only because it was the last blocker on the
-    shared gate): `verify-samsara-stats-reversegeo-ingest.mjs` — stale after a legitimate
-    fallback-array refactor in `samsara-client.ts` (multi-account-compatible retry on 400); broadened
-    the guard's literal-string check to a multi-literal scan. Flagging for the fleet seat's awareness,
-    not claiming ownership of that module.
-
-All 10 items independently reproduced on a clean `origin/main` worktree before any fix (none caused
-by this session's own diffs) — each guard's own `--selftest` extended with the new correct shape
-(must pass) plus the original regression shape (must still fail), so none of them can go vacuous.
-CC-3 found and fixed a disjoint set of 5 pre-existing guard-staleness issues in parallel (#21985/
-#21986) — no overlap, no conflict.
-
-**ROUND 21.1 item 1 — DONE.** PR #21968, merged, deployed. Accounting top nav (`AccountingSubNavWrapper.tsx`,
-module header for all ~49 `/accounting/*` pages) now shows `Bills (N) $X.XX` / `Invoices (N) $X.XX`
-when N > 0, computed via a new hook that re-imports the SAME canonical open-balance helpers
-`BillsPage`/`InvoicesListPage` already use — the nav can never disagree with the page it links to.
-Text-only, no restyle, per the owner's scope fence. Live prod frontend deploy confirmed
-(`srv-d7s46dbrjlhs7383i150`, commit `142d7c6`, status `live`); visual confirm in Chrome not yet done
-this cycle — flagging as the one still-open verification step, not asserting it.
-
-**Queued next**: ROUND 21.1 CC-1 items 2 (validation-errors counted column), 3 (Paid vs Deposited
-split), 4 (aging-bucket clickable filter tiles), 5 (reconciliation pinned Difference figure); A4
-(settlement-ref-beside-load sweep for my 6 remaining Accounting/Cash-Flow surfaces — CC-2's
-`<SettlementRefCell>` is now shipped, no longer blocked).
-
----
-
-## 2026-09-13 cycle — PRIORITY 2 (auto-match violations) + A4 + A5 item 4, all shipped/deployed/live-verified
-
-**PRIORITY 2 — DONE.** Both live auto-match violations neutralized per the Lead's ruling: (1)
-`findCandidates()` in `match.service.ts` is now read-only — the auto-persist block that ran on a
-GET request was deleted outright, `acceptMatchWithResolveDifference()` remains the ONLY place
-`storeMatch()` is ever called, always `match_state: "user_matched"`; (2) `bank-recon-auto-match.cron.ts`
-deleted outright (file + `index.ts` registration + `health.routes.ts` monitoring rule + its own
-test), not flag-gated, per Owner Law B ("never in a nightly job"). Live remediation: 4 phantom
-auto-matched rows found on prod, confirmed zero GL impact, voided. One side-observation honestly
-flagged and left unresolved (a `430a34ce...` transaction's odd `review_state` timing) rather than
-inventing a second defect claim. PR #21988, merged, deployed.
-
-**Settlement-disbursement ruling — RECONFIRMED.** Re-verified against live close-path entries: the
-answer is (b), a relief JE against `2170 Driver Net-Pay Clearing`, gated
-`paid_via_bank_txn_id IS NULL` — matches my own earlier finding, not (c). No code change needed,
-confirmation posted to the register (Part 4).
-
-**A4 — DONE, all 6 assigned surfaces.** `<SettlementRefCell>` confirmed shipped by CC-2;
-ExpensesListPage, InvoicesListPage, BillDetailPage, AbandonmentQueuePage, RollingLedgerTab,
-RevenueRecognitionPage all now show a settlement/presettlement reference beside the load number.
-29/29 registered surfaces pass `verify-settlement-ref-beside-load.mjs`. 3 stale/misfiring guards
-found and fixed along the way (2 pre-existing false-positive checks unrelated to my diff, 1 new
-named `verify-no-money-theater.mjs` exemption for the exact 4-file set, treated with extra care
-given it's a fraud-prevention guard — 2 new selftest arms prove the exemption doesn't widen to an
-unlisted file). PR #21994, merged, deployed.
-
-**A5 item 4 (aging-bucket clickable filter tiles) — DONE, AP side.** Investigated item 3
-(Paid/Deposited split) first: live Neon query showed USMCA currently has 0 paid invoices, making
-live verification impossible today, so I pivoted to item 4 as the concrete, verifiable next build.
-`AccountsPayableAgingPage.tsx`'s TOTAL strip now doubles as 5 clickable filter tiles
-(Current/1-30/31-60/61-90/91+ — never Total, which is a sum not a bucket): clicking one narrows the
-By Vendor / By Vendor Type grid to vendors with a nonzero balance in that bucket, clicking it again
-(or "Clear bucket filter") restores every vendor, and a tile's own dollar figure is always the full
-type-filtered total so the number never appears to move when clicked. New guard
-`verify-ap-aging-bucket-filter-tiles.mjs` (4 selftest mutation arms) + a 3-case vitest regression
-suite. One self-caught regression along the way: an early draft used `text-[11px]` on the tile
-label and tripped the owner-locked `ui-design-system-ratchet` (raw_font_sizes 1259→1260, "must
-never go up"); fixed by switching to `text-xs` (12px, on the locked 11/12/22 scale), matching this
-file's own existing "As of"/"Vendor type" filter-label convention. PR #22001, merged, deployed
-(`srv-d7s46dbrjlhs7383i150`, live SHA `9c877da`), and live-verified in Chrome: 5 tiles render, click
-narrows/highlights (aria-pressed), Clear restores, no console errors. Register updated (PR #22002).
-
-**A5 items 2/3/5 — deliberately NOT built this cycle, flagged for scope clarification rather than
-guessed at:**
-- Item 2 (validation-errors counted column with hover reason) — no `validation_error`/`issues`/
-  `warnings` field exists today on any bill/invoice row or in any accounting API response I could
-  find. Building a UI column requires first defining what "validation error" means as a backend
-  concept; I have not invented one rather than risk building the wrong thing.
-- Item 3 (Paid vs Deposited split) — mechanism confirmed feasible
-  (`accounting.payments.deposited_to_account_id`/`cleared_date`/`source_bank_transaction_id`), but
-  USMCA has 0 paid invoices right now, so it can't be live-verified against real data today. Still a
-  buildable forward-looking feature per the owner's explicit ask — queued next, not dropped.
-- Item 5 (reconciliation pinned Difference-to-zero) — `AccountsPayableAgingPage.tsx` already shows a
-  per-page QBO-mirror signed Δ strip ("Reconcile: matched/divergent · signed Δ (TMS − mirror)").
-  Unclear whether that already satisfies "one pinned Difference figure that must reach zero,
-  updating live" or whether a new dedicated surface is wanted — needs Lead/owner confirmation before
-  I build either the wrong thing or a duplicate.
-
-**Queued next**: A5 item 3 (Paid/Deposited split, build as forward-looking infra, Live=BLOCKED
-honestly reported); A5 items 2/5 pending scope clarification; A/R equivalent of the aging-bucket
-tiles (no confirmed target file — `ArApAgingPage.tsx` has a different bucket-column shape than
-`AccountsPayableAgingPage.tsx`, `CollectionsPage.tsx` is a task list with a single `aging_bucket`
-tag, not a full matrix — not building against a guess).
-
----
-
-## 2026-09-13 cycle (cont'd) — A5 item 3 (Paid vs Deposited split), shipped, Live=BLOCKED honestly
-
-**A5 item 3 — DONE, built + unit-tested, Live=BLOCKED.** `accounting.payments.cleared_date` has
-existed since before this session (THREE-DATES-COVERAGE-GAP, migration `202613310400`, owner ruling
-2026-09-01) — "the date the bank cleared this payment... never used for GL period/cash-basis/tax
-year (that is `payment_date`)" — but Invoice Detail's Payment Applications panel only ever rendered
-`payment_date`/`applied_at`, never `cleared_date`. Fixed: the invoice detail query now also selects
-`cleared_date` + `deposited_to_account_id` (LEFT JOIN to `catalogs.accounts` for the account name,
-the exact same join shape `PaymentDetailPage.tsx` already uses for the identical column). The panel
-now shows the existing "Paid `<applied_at>`" text UNCHANGED, plus a new "Deposited `<cleared_date>`
-to `<account>`" when set, or an honest "Not yet deposited" (neutral gray, not a warning color) when
-null. Two source-assertion regression tests added, following this exact file's own established
-testing convention (`invoices-has-balance-filter.test.ts`'s pattern) rather than a live-DB test.
-
-**Honestly flagged, not hidden**: USMCA currently has 0 paid invoices, so every invoice's Payment
-Applications panel renders the pre-existing "No payments applied yet" empty state right now — there
-is nothing to click through in the browser today, on any real invoice. Marked `Live=BLOCKED` in the
-commit, the PR, and the register (not `Live=UNVERIFIED` glossed over, not silently deferred). Built
-now anyway per the owner's explicit ask for forward-looking infrastructure — ready the moment a real
-payment exists and clears. PR #22003, merged, both backend + frontend deploys triggered.
-
-**Remaining A5 items 2 (validation-errors counted column) and 5 (reconciliation pinned Difference)
-still pending scope clarification** — same open questions as posted in the previous cycle's report,
-unchanged: no confirmed `validation_error` data source for item 2; unclear whether AP Aging's
-existing per-page QBO-mirror Δ strip already satisfies item 5's "one pinned Difference" ask or a new
-dedicated surface is wanted. Not building either speculatively.
-
----
-
-## 2026-09-13 cycle (cont'd) — ROUND-20.8 B11 CLOSED (CC-1 side)
-
-**B11 — CLOSED.** CC-2's coordination note in this inbox flagged: `/banking` read "QBO Sync: Not
-connected | Last sync: n/a" while `/accounting`'s `AccountingHubPage.tsx` read "QBO SYNC 0 pending
-— queue healthy" at the same moment — both individually true (OAuth connection state vs. sync-queue
-backlog) but each screen showing only one, reading as a contradiction. Live-reproduced the exact
-contradiction on prod before touching anything (screenshot: QBO Sync = "0 pending / queue healthy"
-while Banking's own strip read "Not connected"). Fixed: added the `getQboConnectionStatus` query
-this page was missing (the exact same query `BankingHome.tsx` already fetches) and routed the tile
-through the shared `describeQboSyncStatus()` derivation CC-2 already built for this exact purpose —
-the two screens can now never disagree again, by construction (one function, two callers). New
-3-case vitest regression suite proves the contradiction can't recur. PR #22005, merged, deployed,
-live-verified in Chrome post-deploy: both `/accounting` and `/banking` now read "Not connected /
-no active QuickBooks connection" identically, no console errors.
-
-Nothing else new this cycle — A5 items 2/5 remain open pending scope clarification, unchanged.
-
----
-
-## 2026-09-13 — ROUND 23.2 B4 (settlement net-pay), major finding + PR #22028 shipped
-
-**Assigned:** B4 (net-pay to signed TOTAL DUE, fix 5801/5802/5803 net=$0.00) + B5 (re-post via
-canonical Bill+BillPayment, not closeSettlementPayRun; Pedro/5772 full $997.08). Plus two
-mid-session supplements: invoice/line-haul creation to $238,810.00 (5 wrong-leg loads), and the
-pre-08/28 AllwaysTrack ingest window + missing Faro advances (13584/13585/load-039).
-
-**B4 — ROOT CAUSE FOUND, FIXED, SHIPPED (PR #22028, merged, deployed).** The "net_pay=0.00 with a
-gross present" symptom is NOT a broken deduction computation. Both settlement GL posters
-(`closeSettlementPayRun` AND `postSettlementBillPayment`) compute gross/deductions/reimbursements/
-net correctly and post a fully-balanced JE reflecting them — but NEITHER ever wrote those numbers
-back onto `driver_finance.driver_settlements`' own header columns. Live-measured: **34 of 36 posted
-USMCA settlements** (not just the 3 reported) carried a stale header net_pay disagreeing with their
-own already-correct JE. Cross-checked all 36 JEs' own net_cents against the ground-truth signed
-documents independently in Python: **35 of 36 match to the cent** — the money was never wrong, only
-the display field was stale. The one exception (S-2026-0011) is the already-known duplicate
-mega-row for tour 5782, CC-2's B5 1:1-re-cut territory, excluded by name.
-
-**Fixed:** both posters now write the header in the same transaction they post in (going forward).
-Built a one-time, JE-derived backfill script (writes NO new financial fact — reads what each
-settlement's own already-posted JE already says and copies it onto the header) for settlements
-posted before the fix. Rehearsed + proven end-to-end on a Neon branch
-(`br-summer-grass-akgqhc0i`): all 35 non-duplicate documents now read net_pay = signed TOTAL DUE
-exactly. New guard `scripts/verify-settlement-net-matches-signed-doc.mjs` (verify-step 11457).
-
-**Also fixed in passing:** 2 orphaned guards from CC-2's #22020/#22021 that were blocking
-`verify:guard-wired` on my branch (PRs #22026/#22027, wired as verify-steps 11461/11465 — not my
-code, just wiring so they actually run in CI).
-
-**NOT done, correctly scoped as separate:**
-- **The prod backfill itself is UNVERIFIED on prod** — proven only on the rehearse branch. Running
-  it changes what 33 real, already-correctly-paid settlements' net_pay reads for real people; asked
-  for explicit confirmation before executing even though it creates no new financial fact (see PR
-  REMAINING).
-- **B5 (canonical-path-only)** — all 36 posted USMCA settlements went through `closeSettlementPayRun`,
-  not the canonical Bill+BillPayment engine. Reversing 33+ ALREADY-CORRECT postings and reposting via
-  the other mechanism is a real, high-blast-radius architecture migration with zero economic benefit
-  (the money is already right) — explicitly owner-gated per MEMORY_BANK ("prod money re-post stays
-  owner-gated" / "no prod post without Claude's GO + owner's explicit yes," both reaffirmed
-  2026-09-13). Not started.
-- The canonical Bill+BillPayment poster (`postSettlementBillPayment`) has **no representation for a
-  settlement reimbursement at all** (grep-confirmed) — a real posting-path gap discovered while
-  rehearsing B5, flagged rather than worked around, per this round's own "say so and stop, do not
-  invent one" instruction.
-- `driver_finance.driver_bills` for the 10 loads across 5772/5801/5802/5803 carry stale/wrong
-  `driver_id` (4 of 10, pre-dating a tour driver-correction) and wrong/zero `gross_amount_cents`
-  (8 of 10) — B3/B6 ingestion territory (CC-2/CC-3's rows), diagnosed exactly (loads/amounts
-  available) but not touched.
-- The two mid-session supplements (invoice/line-haul creation; pre-08/28 ingest + Faro advances) are
-  **not started** — received partway through this cycle's investigation, not yet live-investigated.
-  One item already resolved by someone else: load "039" (Big G Logistics, $3,500.00) is linked in
-  `verify-faro-invoice-lines-load-linkage.mjs`'s own header comment to real load 13554 via
-  `accounting.invoices.display_id='039'.source_load_id` — no new load needs creating for that one.
-
-**Queued next**: get explicit confirmation to run the prod backfill (safe, no new GL fact); then the
-invoice/line-haul creation supplement; then the pre-08/28 ingest + Faro-advances delta; B5's
-reverse+repost campaign stays parked pending an owner decision on whether it's worth the risk given
-the money is already correct.
-
-
-## 2026-09-13 — P0 (unassigned, blocked every deploy) — duplicate route boot-crash found + fixed
-
-**Not part of ROUND 23.2 — discovered as a side effect of shipping PR #22028.** That PR's own
-deploy (`dep-dajfbtnqj5pc73ddni6g`) built successfully and its pre-deploy migration succeeded, then
-the new instance crash-looped 36+ times over ~15 minutes before Render marked it `update_failed`.
-Root-caused to a DIFFERENT, unrelated commit that landed on `origin/main` between my last fetch and
-my deploy: `apps/backend/src/index.ts` explicitly called `registerInvoiceDisputeRoutes(app)` on top
-of that same route file's own pre-existing `default fp(...)` autoload mount (the exact "SET-30" /
-"DUPLICATE-ROUTE-BOOT-CRASH" class this codebase has hit before for other files) — Fastify throws at
-boot on the first duplicate route it registers, deterministically, every time.
-
-**Not caused by me** (confirmed via `git show origin/main:apps/backend/src/index.ts` the bug
-predates my branch). **Prod itself never went down** — Render correctly kept the previous build
-`live` the whole time (confirmed via healthz polling, zero downtime) — but every backend deploy from
-any seat was blocked from that point on, including my own B4 fix above.
-
-**FIXED, PR #22037**: removed the duplicate explicit call + import; the route's own autoload mount
-is the sole, correct registration, all 5 dispute endpoints stay reachable. `verify-no-duplicate-
-routes.mjs` (pre-existing) reproduces FAIL→PASS around the fix; also proved by actually booting the
-built server against a live Neon branch (was throwing `FastifyError` at boot every time without the
-fix, reaches `"Server listening"`/`"Server started"` with it). FINDING: ACCT-F26308. Merging on
-green (fast-merge law); will confirm the live deploy reaches this SHA next (which also finally
-unblocks PR #22028 / B4 from going live).
-
-## 2026-09-13 — ROUND 23.2 GO 1 EXECUTED — prod settlement-header backfill run, PROOF ATTACHED
-
-**Owner GO 1, authorized 2026-09-13.** Ran `r232-backfill-settlement-header-from-posted-je.mts`
-against real prod (Neon `br-fancy-credit-akjnd07a`), not the rehearse branch. PREVIEW first (matched
-the rehearse-branch rehearsal exactly: 33 would-fix, 2 already-correct, 1 skip), then `--commit`.
-
-**Result: 33 FIXED, 2 already correct, 1 SKIPPED (S-2026-0011, the known duplicate mega-row for
-tour 5782 — excluded by name, per the standing condition, not guessed).** No new JE created, voided,
-or modified; no bill/bill_payment/deduction/settlement_line touched — this write copies what each
-settlement's own already-posted, already-balanced JE already says onto the header display columns.
-
-**Live guard run against PROD** (`verify-settlement-net-matches-signed-doc.mjs`, real
-`br-fancy-credit-akjnd07a`, not rehearse): all 35 USMCA settlement documents (5769-5803) now read
-`net_pay` = signed TOTAL DUE to the cent. Full 35-line prod output:
-
-5769 net=1095.52 signed=1095.52 OK · 5770 net=1997.50 signed=1997.50 OK · 5771 net=1949.10
-signed=1949.10 OK · 5772 net=997.08 signed=997.08 OK · 5773 net=1837.52 signed=1837.52 OK · 5774
-net=1107.42 signed=1107.42 OK · 5775 net=1186.40 signed=1186.40 OK · 5776 net=1280.39 signed=1280.39
-OK · 5777 net=1948.00 signed=1948.00 OK · 5778 net=1245.26 signed=1245.26 OK · 5779 net=1387.66
-signed=1387.66 OK · 5780 net=300.00 signed=300.00 OK · 5781 net=1220.31 signed=1220.31 OK · 5782
-net=1456.86 signed=1456.86 OK · 5783 net=2071.25 signed=2071.25 OK · 5784 net=1752.28 signed=1752.28
-OK · 5785 net=1246.68 signed=1246.68 OK · 5786 net=1039.05 signed=1039.05 OK · 5787 net=885.73
-signed=885.73 OK · 5788 net=1273.90 signed=1273.90 OK · 5789 net=2015.85 signed=2015.85 OK · 5790
-net=1452.75 signed=1452.75 OK · 5791 net=1630.03 signed=1630.03 OK · 5792 net=1386.05 signed=1386.05
-OK · 5793 net=1568.91 signed=1568.91 OK · 5794 net=1330.60 signed=1330.60 OK · 5795 net=789.04
-signed=789.04 OK · 5796 net=379.73 signed=379.73 OK · 5797 net=1544.48 signed=1544.48 OK · 5798
-net=927.85 signed=927.85 OK · 5799 net=2523.91 signed=2523.91 OK · 5800 net=1407.40 signed=1407.40
-OK · 5801 net=1334.02 signed=1334.02 OK · 5802 net=2104.84 signed=2104.84 OK · 5803 net=1624.05
-signed=1624.05 OK.
-
-**5801/5802/5803 read live, directly, post-fix** (the three originally-reported net=$0.00 rows):
-5801 gross=1558.27 ded=260.00 reimb=35.75 net=1334.02 · 5802 gross=2079.85 ded=10.00 reimb=34.99
-net=2104.84 · 5803 gross=1684.05 ded=60.00 reimb=0.00 net=1624.05. All three match the signed
-TOTAL DUE exactly, `updated_at` timestamp confirms the write landed at execution time.
-
-**Idempotency proven**: re-ran PREVIEW immediately after commit — 0 would-fix, 35 already-correct,
-1 skipped. A second run is a true no-op as designed.
-
-**The one honestly-isolated remaining guard failure** (unchanged, expected, separate from this
-backfill's scope): `closeSettlementPayRun` (`payrun_gl_runs`) still shows 36 posted rows against the
-law's requirement of 0 — that's B5's canonical-path-only migration, explicitly NOT authorized by
-GO 1 ("GO 1 is the header backfill only. Do not reverse a single correct JE."), still owner-gated,
-still not started.
-
-**GO 2 (34 vs 35 standing correction)**: this guard's own comment already asserted 35 correctly
-before GO 2 arrived; updated the comment (PR #22042) to record the owner-confirmed root cause
-(driver-side documents = 35, company-side = 34, because 5782 has a driver settlement but no company
-settlement) so the next reader doesn't have to re-derive it. No behavior change — same guard, same
-output, before and after the comment edit.
-
-**Queued next**: invoice/line-haul creation SUPPLEMENT ($238,810.00, 5 wrong-leg loads); pre-08/28
-ingest + Faro-advances DELTA (13584/13585; load 039 already resolved by CC-2). B5's reverse+repost
-campaign and extending the canonical poster for reimbursements stay owner-gated per GO order, not
-authorized today.
-
-## 2026-09-13 — ROUND 23.5 CORRECTED — 2 orphan Faro invoices closed, EXECUTED on prod
-
-**Owner ruling, executed against real prod** (`br-fancy-credit-akjnd07a`). The two Faro-purchased
-invoices with no load link are closed:
-
-- **MPH $3,800 (INV-2026-00008) → EXISTING load 13524, LINK ONLY.** Cursor's own resolution
-  (Faro PO MPHC261334 = AllwaysTrack load 13524, gross $4,200) is correct; the ORIGINAL (uncorrected)
-  ROUND 23.5 box that told me to create a second MPH load was withdrawn by the Lead before I acted
-  on it — no second load was ever created. Linked the invoice, opened an under-billing dispute
-  ($3,800 invoiced / $4,200 expected / $400 disputed — invoice itself never written up or down),
-  created a new live $853.61 driver bill (old voided bill stays voided, only its `bill_number`
-  tombstoned to avoid a unique-index collision), linked the new bill to settlement S-2026-0011.
-- **ITS $350 (INV-2026-00007) → ONE genuinely new load.** Confirmed absent everywhere (WO 68747 =
-  0 rows anywhere in the app; no $300-$400 customer-charge line on any of the 44 AllwaysTrack
-  documents). Created load_number = "INV-2026-00007" (the invoice's own number, per explicit owner
-  instruction — deliberately invoice-shaped, never AlwaysTrack-shaped). Linked the invoice. Memo:
-  "Placeholder number — Faro-purchased load never entered in AllwaysTrack. Owner to reconcile."
-
-**Both Faro advances (FAC-2026-00113, FAC-2026-00114) were already attached to their invoices
-before this PR ran** — verified, not written.
-
-**NOT done, reported not guessed:** the ITS settlement + driver bill.
-`driver_finance.driver_settlements.driver_id` is NOT NULL (schema-verified live) and the driver is
-genuinely unknown — WO 68747 returns 0 rows on every number column anywhere in the app. The owner's
-"do not guess a driver" instruction for the bill binds the settlement's driver_id the same way.
-Flagged here, not invented.
-
-**Live proof**: 73 of 73 live USMCA invoices now carry a load (was 71 of 73). Both loads read live
-with their invoice and Faro advance attached; load 13524 carries its new bill linked to S-2026-0011;
-the dispute reads open at invoiced $3,800.00 / expected $4,200.00 / disputed $400.00. Guardrail
-confirmed: loads 13463/13475 stay soft-deleted, untouched, never reused; the old $853.61 bill stays
-voided, only renamed.
-
-PR #22052, shipping via fast-merge now.
-
-## 2026-09-13 — ROUND 23.5 follow-up: WO DE-GHOST + last 2 unlinked USMCA driver bills, EXECUTED
-
-**WO DE-GHOST.** The prior wrong-attempt loads (13463, 13475, both soft-deleted) still carried the
-real customer WO numbers (68747, MPHC261334) that belong on live rows — a lookup for either WO
-found only the dead row, while the real load (13524) carried no WO at all. Three UPDATEs, no
-reverses: `mdata.loads` 13524.customer_wo_number → 'MPHC261334' (the one that matters); 13463 and
-13475 (both stay soft-deleted, void-not-delete holds) → NULL, with a note appended pointing at
-where each WO actually belongs. Live proof, bypass properly referenced, no soft-delete filter:
-68747 → INV-2026-00007 (live, exactly 1 row); MPHC261334 → 13524 (live, exactly 1 row).
-
-**Last 2 unlinked USMCA driver bills.** Bills 13571 ($822.74) and 13574 ($780.61), both driver Hugo
-Gaytan's teammate (3e138476...), had `settled_in_settlement_id` NULL. Settlement S-2026-5799
-(status=locked, same driver) has first_load_number=13571 / last_load_number=13574 — an exact
-bookend match on the settlement's own recorded range, not a guess — and had ZERO bills linked to it
-at all (same ingestion-time gap already diagnosed for other USMCA settlements this session). Linked
-both bills to S-2026-5799; no GL/money recompute (its net_pay was already fixed by the B4 backfill
-earlier this session). Live proof: 0 USMCA open/unlinked bills remain (was 2). 2 TRANSP-scoped
-unlinked bills found in the same query are out of this round's USMCA scope, untouched.
-
-Both pushed as follow-up commits to PR #22052, shipping together via fast-merge.
-
-## 2026-09-13 — ROUND 24.1 — driver_bills → settlement FK repoint, EXECUTED on prod (blocks CC-3 B3)
-
-**7 open, non-voided driver_bills repointed off stale GEN-A settlements onto their correct GEN-B
-settlement.** Two generations of USMCA driver settlements exist: GEN-B (correct, locked,
-`source_document_ref` = an AllwaysTrack doc 5769-5803, net_pay matches signed TOTAL DUE — the same
-set the B4 backfill fixed earlier this session) and GEN-A (stale, cancelled/closed, ref NULL or out
-of range). Every live driver_bill was pointed at GEN-A; 33 of 45 GEN-B settlements had zero bills.
-
-Repointed loads 13524→S-2026-5778(doc 5778), 13554→S-2026-5790(doc 5790), 13573 and 13584→
-S-2026-5800(doc 5800), 13580→S-2026-5801(doc 5801), 13589→S-2026-5802(doc 5802), 13586→
-S-2026-5803(doc 5803). Every (load, doc) pair cross-checked against
-`data/alwaystrack/settlements-truth-2026-09-13.json`'s own `loads[]` array before writing — nothing
-inferred. Pure FK correction: nothing voided/un-voided/deleted, no GEN-A settlement touched, no
-GL written, `gross_amount_cents`/miles/rates untouched (CC-3's B3, out of scope here).
-
-Live proof, independent fresh read: all 7 rows now read their correct GEN-B settlement, `status=
-'locked'`, `source_document_ref` in (5778,5790,5800,5801,5802,5803) — exact match to the round's
-own DONE-proof query. PR #22055, shipping via fast-merge.
-
-## 2026-09-14 — P1 LOAD-NUMBER-COUNTER-POISONED — EXECUTED on prod, register recorded
-
-**Live query verdict on 13743/13749** (not assumed): both are CC-1's own live-proof TEST bookings
-— both `status='cancelled'`, both created AND cancelled 2026-09-09, both self-documented in their
-own `cancel_reason` text ("CC-1 test load ... Not a real freight movement"). No real freight, no
-customer WO, no genuine business. No gap in the real sequence exists between them and the true
-working max (13595, dispatched, 2026-09-11) — 13594/13593/13592/13591/13590 all confirmed real,
-dispatched, no cancel_reason, no gap.
-
-**COUNTER REGISTER** — this is the recorded correction, not a silent reset:
-- `lib.trace_counters` (USMCA, `doc_type='LOAD'`): **before = 13763** (drifted from the round's own
-  reported 13761 due to this session's own Chrome verification reservations), **after = 13595**.
-- **Reason**: seed picked up `status='cancelled'` test loads 13743/13749 instead of the true
-  working max — see live query above.
-- **Collision check** (immediately before the write, inside the same transaction): `load_number
-  = '13596'` exists in **0 rows**, live or soft-deleted.
-- Next mint is now **13596**, the owner's next number.
-
-**Recurrence fix**: the seed is now primarily sourced from the office's own first manually-typed
-numeric load number at the moment it saves (`seedLoadNumberCounterFromManualEntry`, wired into
-both booking paths), not reconstructed later from a `MAX()` scan that has no way to distinguish a
-ghost from a real number. The old `MAX()` scan is now a documented fallback only, hardened to
-exclude cancelled rows.
-
-**UI fix (owner's actual ask)**: confirmed live via Chrome screenshot — the Load # box stayed
-**empty** on wizard open despite a real reservation existing the whole time (caption hint only,
-also showing a second, independent ghost-pollution bug: the suggestion caption read
-"INV-2026-00008", a non-numeric placeholder load incremented by a generic, load-number-unaware
-algorithm). Fixed: box now pre-fills with the real reserved number on open, fully editable, typed
-value wins verbatim — same rule already ruled for the Load Costs NUMBER column.
-
-PR #22064, shipping via fast-merge now. Final "13596 pre-filled, deployed" screenshot follows once
-live.
-
-## 2026-09-14 — P1 LOAD-NUMBER-COUNTER-POISONED — CLOSED end-to-end, deployed, live-proven
-
-**Both deploys live**: backend `0197a56c` and frontend `0197a56c` (same commit, both services).
-Healthz confirmed live SHA match immediately after.
-
-**Then proving it live hit a SECOND, independent bug** (not the same fix — a different table's
-constraint): the real reservation for 13596 returned 409 `duplicate_load_number`, `existing_id`
-pointing at a reservation row created **2026-09-04** (10 days earlier), `reserved_load_number=
-'13596'`, `status='expired'` — reserved once, never consumed into a real load, abandoned. `dispatch.
-load_id_reservations` carried a plain unique constraint on `(operating_company_id,
-reserved_load_number)` with no status filter — ANY reservation ever created for a number, however
-long dead, blocks it forever. Fixing the counter alone was never going to be enough; the corrected
-next number was always going to walk into whichever number this table's history happened to have
-abandoned, and 13596 was exactly that number.
-
-**Fixed** (PR #22071, migration `202614140000`, applied directly on prod): replaced the constraint
-with a partial unique index scoped to `WHERE status='reserved'` — same pattern already used
-elsewhere in this codebase (`uq_invoices_source_load_active`, `uq_driver_settlements_source_
-document_ref_live`). Safe by construction (strict subset of the old enforcement, could never fail
-to build). Hit the known pooled-connection role-downgrade landmine applying it (`RESET ROLE`
-before DDL, documented in this session's own memory) — resolved on the second attempt.
-
-**Live end-to-end proof, real app, real deploy**: re-issued the exact reserve-id call — 200 OK,
-`load_number: "13596"`. Chrome screenshot of the live Book Load wizard: **"13596" pre-filled**,
-editable, caption "Reserved automatically — type to use a different number." Typed a manual
-override ("99999") — updated verbatim, survived a renewal tick, proving typed value wins. Closed
-without submitting: confirmed 0 real loads created, test reservation cleanly `cancelled`.
-
-Both LST-F30171 (counter + UI pre-fill) and LST-F30172 (reservation constraint) now closed and
-proven live. The owner's next load (13596) is mintable for real, end to end.
-
-## 2026-09-14 — ROUND 24.5 EXECUTE — Relay Fuel Wallet USMCA entity attribution, EXECUTED on prod
-
-**3 owner rulings, executed exactly.** USMCA's own Relay Fuel Wallet (existed since 2026-08-05,
-read 0 transactions) now correctly shows its real post-cutover fuel activity, moved out of
-TRANSPORTATION where it had been ingested by mistake.
-
-- **Moved 75 of 76** post-cutover transactions to USMCA — entity attribution correction, nothing
-  voided/un-voided/deleted/duplicated, no GL math invented, note appended to every moved row.
-- **Held 1** (`60677401-...`, $684.35, 09-10) — carries a live match to TRANSPORTATION's own load
-  `L-20260627-0036`; moving it would make that match cross-entity. Untouched, reported.
-- **Voided** USMCA's test-artifact Relay card ("CASCADE USMCA-WIRE test card", no funding
-  account) — standing-law violation, void-not-delete, never relabeled/reused. A real replacement
-  is **not** mapped: Relay's own data carries no card-number field anywhere to discover one from,
-  and inventing one would be exactly the guess this build exists to prevent.
-
-**Live proof, independent fresh read, exact query from the round's own directive:**
-```
-USMCA (5c854333):  75 txns, $32,042.10, 2026-08-13 → 2026-09-11
-TRANSP (91e0bf0a): 1,664 txns, $1,075,653.41, 2026-03-03 → 2026-09-10
-```
-Matches the round's own PASS criteria exactly.
-
-**3 items named and still open, not closed by this PR:**
-1. The 2026-08-07..08-12 missing week — confirmed at both the bank-ledger layer and the deeper
-   Relay daily_pull source-ingest layer; no sync-log entry exists to explain it. Needs a real
-   Relay statement (office's own support thread) — I have no access to contact Relay support.
-2. USMCA has no real card mapped — the wallet reads zero for any NEW purchase until a genuine
-   card with a real funding account is identified (office's Relay dashboard, or an owner ruling
-   this is TRANSPORTATION's same shared physical wallet).
-3. The intercompany funding question is still with the owner — no GL entry, no due-to/due-from
-   posting made.
-
-PR #22085, shipping via fast-merge now.
+## 2026-09-14 — ROUND 25.1 CONTINUES: S2 (14) + B2 (397) — REPORT ONLY, NOTHING WRITTEN
+
+### S2 — the 14 locked settlements where gross_pay ≠ sum(bills)
+
+35 locked settlements total split exactly: 21 have zero bills linked (separate,
+already-named stat, not re-touched here) + 14 have *some* bills linked but the
+sum still disagrees with gross_pay. Per row: source_document_ref, header
+gross_pay, sum(bills), delta, and net_pay vs the signed AlwaysTrack `total_due`.
+
+| doc  | gross_pay | net_pay | sum(bills) | gross−bills | net vs signed truth |
+|------|-----------|---------|------------|-------------|----------------------|
+| 5769 | 1155.52 | 1095.52 | 633.46 | 522.06 | MATCH |
+| 5778 | 1490.01 | 1245.26 | 853.61 | 636.40 | MATCH |
+| 5779 | 1447.66 | 1397.66 | 958.69 | 488.97 | **WRONG — see below** |
+| 5788 | 1725.89 | 1273.90 | 1172.90 | 552.99 | MATCH |
+| 5790 | 1512.75 | 1452.75 | 761.70 | 751.05 | MATCH |
+| 5793 | 1536.65 | 1568.91 | 1679.66 | −143.01 (bills EXCEED gross) | MATCH |
+| 5795 | 1051.03 | 1001.03 | 1079.39 | −28.36 (bills EXCEED gross) | **WRONG — see below** |
+| 5797 | 1516.85 | 1544.48 | 1223.73 | 293.12 | MATCH |
+| 5798 | 987.85 | 927.85 | 1007.07 | −19.22 (bills EXCEED gross) | MATCH |
+| 5799 | 2002.65 | 2523.91 | 1603.35 | 399.30 | MATCH |
+| 5800 | 1662.10 | 1407.40 | 1454.02 | 208.08 | MATCH |
+| 5801 | 1558.27 | 1334.02 | 1524.38 | 33.89 | MATCH |
+| 5802 | 2079.85 | 2104.84 | 1954.85 | 125.00 | MATCH |
+| 5803 | 1684.05 | 1624.05 | 1407.79 | 276.26 | MATCH |
+
+**Verdict, 12 of 14**: the HEADER (gross_pay/net_pay) is right — net_pay ties to
+the signed AlwaysTrack `total_due` exactly. The side that's wrong is the
+`driver_bills` DETAIL: every one of the 14 has only 1–3 bills linked against
+2–5 real pay_lines/loads in the signed document, so `sum(bills)` never equals
+`gross_pay` by construction (bills are incomplete, not the settlement itself).
+2 of 14 (5793, 5798) show bills *exceeding* gross — a distinct sub-pattern
+(over-captured detail rows, not under), still header-correct against truth.
+
+**★ 5779 and 5795 — HEADER ITSELF IS CURRENTLY WRONG, AND I KNOW EXACTLY WHY.**
+Both were CORRECTLY fixed by my own GO 1/GO 2 backfill (PR #22042,
+2026-09-13T20:04:58Z) — deductions_total corrected to the real evidenced value,
+net_pay landing exactly on the signed `total_due`:
+  - 5779: net 1397.66 → **1387.66** (deductions 50.00 → 60.00) — matched signed truth 1387.66.
+  - 5795: net 1001.03 → **789.04** (deductions 50.00 → 261.99) — matched signed truth 789.04.
+
+**88 minutes later, both were REVERTED back to their pre-fix wrong values**, at
+2026-09-13T21:32:17Z (5779) and 21:32:18Z (5795) — one second apart, `audit.row_changes`
+shows `changed_by_role`/`changed_by_user_id`/`session_id` all NULL for both writes
+(no app context — looks like a direct SQL write, not a UI action). No other
+settlement was touched in that window. Current live state: **both sit at the
+WRONG, pre-backfill value right now** — 5779 net_pay=1397.66 (should be
+1387.66), 5795 net_pay=1001.03 (should be 789.04, a **$211.99** swing — the
+single largest true-dollar error found in this sweep).
+
+I did not re-apply the fix — WRITE NOTHING, report and stop, per this round's
+instruction. The correct values are already known (they're what my own already-
+merged, already-proven backfill computed) and re-applying them is a one-line
+UPDATE per row whenever the Lead authorizes it; the open question is *what*
+made that 21:32 write and whether anything else it touched needs checking.
+
+The earlier "5779 duplicate settlement" note from mid-round is WITHDRAWN — the
+second 5779 row (S-2026-0013, net=1720.09) is `status='cancelled'`, not a live
+duplicate. Only one locked row exists for 5779; the real issue is the reversion above.
+
+### B2 — the 397 uncategorized USMCA bank transactions
+
+Confirmed scope: 398 = all non-voided USMCA bank_transactions (219 voided rows
+excluded); 397 have `coa_account_id IS NULL`. Break down by whether the
+existing rule engine (`banking-rules.engine.ts`, `suggested_account_id`) already
+covers them:
+
+| bucket | n | detail |
+|---|---|---|
+| **Existing rule already matches (high confidence)** | 303 | Spread across ~50 distinct active `rule_id`s already firing on these exact transactions — apply-ready, no new rule needed. |
+| **No suggestion — needs a NEW rule** | 79 | See below |
+| **No suggestion — genuinely ambiguous** | 15 | See below |
+
+**New-rule candidates (79)**, by merchant:
+  - **"Love's" (bare merchant_name, 72 txns, −$31,685.96)** — the single largest
+    opportunity. `Love's Travel Stops` (22) and `Love's Tire Care` (9) already
+    have active rules and match fine; the bare "Love's" merchant_name variant
+    has none. One new rule targeting the bare pattern, aliased to whichever GL
+    account the sibling "Love's Travel Stops" rule already uses (fuel), closes
+    72 of the 397 in one shot.
+  - Circle K Stores Inc (2, credits) — fuel/convenience refunds.
+  - Office Depot (2: 1 credit $37.89, 1 debit −$116.43) — office supplies.
+  - Pilot (1) — fuel/travel stop, same class as Love's.
+  - Uber (1) — travel.
+  - WEX INC (1) — fleet fuel-card settlement.
+
+**Genuinely ambiguous (15)** — named-person/entity Zelle payments and
+unlabeled instruments, each needs a human to say who/what, not a pattern rule:
+  - 7 distinct named-payee Zelle payments, 2 memo'd `"for Settlement"` (Justin
+    Galvez, David Trujillo) and 1 to **TIO PERFUMES 2 LLC** (×2, −$800 / −$2,600)
+    — an entity name unrelated to trucking; flagging for owner clarification,
+    not guessing.
+  - "Check 1025" (no payee), "PROCESSING CHECK ON 09/13" (no payee).
+  - "Relay" (−$2,581.25) — on the **USMCA FREIGHT checking account**, not the
+    Relay Fuel Wallet sub-account already closed out in ROUND 24.5. Likely a
+    funding transfer; flagging as related-but-separate from that closed item,
+    not reopening it.
+  - "TRANSFER USMCA FREIGHT SOLUTI:Juan Hernandez" (−$345), "Cash Deposit
+    Processing" (−$12), one stray "Wire Transfer Fee" variant not caught by
+    the existing Wire Transfer Fee rule (25 of 26 other instances already match).
+
+No bulk categorization performed. TRANSPORTATION not touched (frozen, not
+in scope of this query).
+
+### Three named items
+1. Missing Relay week 08-07..08-12 — stays open, office's thread, not reconstructed.
+2. No real USMCA card mapped — still open, unchanged since ROUND 24.5 (test card voided, no real card invented).
+3. Intercompany — CLOSED per owner ruling ("IT IS USMCA FUEL EXPENSE"), not re-raised.
+
+### Correction taken
+ROUND 24.4's "8 of 9 zero-rate drivers" was wrong; using CC-3's re-verified
+number going forward: 25 active USMCA drivers, 18 with a rate, 7 without.
+
+### Freeze acknowledged
+No mdata.loads writes, test bookings, reservations, or number-minting actions
+in USMCA until the owner confirms 13596-onward manual entry is complete.
+
+**Deadline 2026-09-15 12:00 UTC — filed within window.**
