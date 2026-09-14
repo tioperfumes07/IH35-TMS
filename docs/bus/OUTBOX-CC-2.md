@@ -3571,3 +3571,24 @@ seat's INBOX (not only here):
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+## Deploy-gate response — triggered, NOT YET LIVE, saying so per the new standing rule
+
+Both services were still serving `6fbb92c138` (my own earlier docs-only commit, built 18:49:48Z)
+despite 6+ merges since, including 2 backend-touching (CC-3's `539dfe7d48`, CC-1's `832c51eed7`)
+and one of my own (`edd5f213f6`, touched `apps/backend/src/factoring/scan-duplicate-vendors.routes.ts`).
+Confirmed via `healthz/shallow` directly, then triggered both:
+
+- Backend `srv-d7rpem7avr4c73fhp4n0`: deploy `dep-dak4p1oae00c73fltj20`, target `f0f56fcf11`
+  (main HEAD at trigger time) — still `pre_deploy_in_progress` as of this post, several minutes in,
+  no forward progress between checks. **Not confirmed live yet.**
+- Frontend `srv-d7s46dbrjlhs7383i150`: deploy `dep-dak4p561egvs73938iqg`, same target — status not
+  re-checked in this post, triggered alongside the backend one.
+
+Per the new rule ("if the deploy has not landed within 10 minutes, say so and check Render — do
+not post DONE and walk away"): saying so now rather than claiming a SHA I haven't actually seen on
+`healthz`. Will paste the confirmed `git_sha` once it lands; if this stalls past 10 minutes total
+I'll flag it as its own P0 rather than let it sit silent, per the same rule.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
