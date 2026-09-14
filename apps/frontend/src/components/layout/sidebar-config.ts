@@ -83,7 +83,7 @@ export type SidebarItemMeta = {
   to: string;
   visibleRoles?: UserRole[];
   dataTour?: string;
-  badgeKey?: "maintenance_severe";
+  badgeKey?: "maintenance_severe" | "dispatch_drafts";
 };
 
 /** Per-item presentation + routes. Order is controlled ONLY by `SIDEBAR_DEFAULT_ORDER` (uniform for all users; no per-user or per-role override). */
@@ -98,7 +98,16 @@ export const SIDEBAR_ITEM_META: Record<SidebarItemId, SidebarItemMeta> = {
     badgeKey: "maintenance_severe",
   },
   fuel: { id: "fuel", label: "FUEL", Icon: CarFront, to: "/fuel" },
-  dispatch: { id: "dispatch", label: "DISPATCH", Icon: Truck, to: "/dispatch", dataTour: "tour-nav-dispatch" },
+  dispatch: {
+    id: "dispatch",
+    label: "DISPATCH",
+    Icon: Truck,
+    to: "/dispatch",
+    dataTour: "tour-nav-dispatch",
+    // ROUND 24.2 (owner 2026-09-14): "a count badge on Dispatch in the nav, fed by
+    // listQuicksaveDrafts, so an abandoned draft is visible without opening the list."
+    badgeKey: "dispatch_drafts",
+  },
   drivers: { id: "drivers", label: "DRIVER PROFILE", Icon: Truck, to: "/drivers" },
   fleet: {
     id: "fleet",

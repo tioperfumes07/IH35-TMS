@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { NavLink, useLocation } from "react-router-dom";
 
 import { getArrivingSoon } from "../api/maintenance";
+import { listQuicksaveDrafts } from "../api/dispatch";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { colors, spacing } from "../design/tokens";
 import type { UserRole } from "../types/api";
@@ -40,6 +41,18 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
 
   const severeBadgeCount = Number(severeArrivingSoonQuery.data?.counts?.severe ?? 0);
 
+  // ROUND 24.2 (owner 2026-09-14) — "a count badge on Dispatch in the nav, fed by
+  // listQuicksaveDrafts, so an abandoned draft is visible without opening the list." Same wiring
+  // shape as the maintenance-severe badge above; listQuicksaveDrafts already existed
+  // (quicksave.routes.ts) with zero callers until this.
+  const quicksaveDraftsQuery = useQuery({
+    queryKey: ["sidebar", "dispatch-drafts-badge", selectedCompanyId ?? ""],
+    queryFn: () => listQuicksaveDrafts(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
+    refetchInterval: 60_000,
+  });
+  const draftsBadgeCount = quicksaveDraftsQuery.data?.drafts?.length ?? 0;
+
   const visibleMetas = useMemo(
     () =>
       order
@@ -75,6 +88,7 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
             const forceAccountingActive = meta.id === "accounting" && location.pathname.startsWith("/accounting");
             const forceActive = forceReportsActive || forceAccountingActive;
             const showMaintBadge = meta.badgeKey === "maintenance_severe" && severeBadgeCount > 0;
+            const showDraftsBadge = meta.badgeKey === "dispatch_drafts" && draftsBadgeCount > 0;
             return (
               <div key={meta.id} className="w-full">
                 <NavLink
@@ -96,6 +110,14 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
                         {showMaintBadge ? (
                           <span className="ml-1 rounded-full bg-red-600 px-1.5 py-0.5 text-xs font-semibold leading-none text-white">
                             {severeBadgeCount}
+                          </span>
+                        ) : null}
+                        {showDraftsBadge ? (
+                          <span
+                            className="ml-1 rounded-full bg-slate-600 px-1.5 py-0.5 text-xs font-semibold leading-none text-white"
+                            data-testid="dispatch-nav-drafts-badge"
+                          >
+                            {draftsBadgeCount}
                           </span>
                         ) : null}
                       </div>

@@ -1109,6 +1109,12 @@ export function DispatchBoard({
     // Synthetic truck-centric rows ("unit:"/"unit:inshop:") carry no real load to transition — keep
     // the static pill. Every real load gets the inline QuickBooks-style status dropdown.
     const isSyntheticRow = load.id.startsWith("unit:");
+    // ROUND 24.2 (owner 2026-09-14) — a draft is EITHER status='draft' (the status pill already
+    // reads "Draft" for that case) OR is_quicksave_draft=true (a load already quick-assigned a
+    // driver but still missing unit/trailer, whose status pill reads whatever real status it has —
+    // "assigned"/"booked" — so this badge is the ONLY visible signal for that case). Rendered for
+    // both so the badge is a consistent, unconditional draft marker, not just the quicksave case.
+    const isDraft = load.status === "draft" || load.is_quicksave_draft === true;
     return (
       <div className="flex items-center gap-1">
         {isSyntheticRow ? (
@@ -1123,6 +1129,14 @@ export function DispatchBoard({
             onSelect={(next) => void handleStatusChange(load as BoardLoad, next)}
           />
         )}
+        {isDraft ? (
+          <span
+            className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
+            data-testid={`dispatch-draft-badge-${load.id}`}
+          >
+            DRAFT
+          </span>
+        ) : null}
         {load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id) ? (
           <span className="rounded-sm bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">Geofence alert</span>
         ) : null}

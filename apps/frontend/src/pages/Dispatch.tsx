@@ -129,7 +129,12 @@ export function DispatchPage({
     setNewLoadOpen(false);
     setBookUnitId(null);
     setBookDriverId(null);
+    setEditLoadId(null);
   }, []);
+  // ROUND 24.2 (owner 2026-09-14) — a draft row's click resumes it in the wizard's EXISTING edit
+  // mode (BookLoadModalV4's editLoadId prop, already used by LoadDetailDrawer's own Edit action —
+  // no new route/contract, the same mechanism). Never the LoadDetailDrawer, per the ticket.
+  const [editLoadId, setEditLoadId] = useState<string | null>(null);
   // Dispatch "+ Book load" per Awaiting-assignment truck card — prefill that unit into the new booking.
   const [bookUnitId, setBookUnitId] = useState<string | null>(null);
   // RT-BOOK-RETURN (owner 2026-09-09): Round Trips "+ Book return" also prefills the needy truck's driver.
@@ -193,6 +198,10 @@ export function DispatchPage({
   }, [companies, selectedCompanyId]);
   const filters = useMemo(() => parseFilters(searchParams, defaultCompanyIds), [defaultCompanyIds, searchParams]);
   const boardScope: "live" | "history" = searchParams.get("board_scope") === "history" ? "history" : "live";
+  // ROUND 24.2 (owner 2026-09-14): the Loads list "Drafts" pill. Independent of the status
+  // multi-select (drafts_only replaces it server-side — see mdata/loads.routes.ts) and of
+  // board_scope's OPEN-ONLY exclusion, so a draft is findable no matter what else is selected.
+  const draftsOnly = searchParams.get("drafts") === "1";
   const effectiveDateMode =
     boardScope === "history" && !searchParams.has("date_mode") ? "delivery" : filters.dateMode;
 
@@ -239,6 +248,7 @@ export function DispatchPage({
     // open tour renders whole, delivered/invoiced legs included. Only this fetch passes it; every
     // other Dispatch surface (Kanban/List/Trip Pairing) stays exactly OPEN-ONLY.
     include_open_tour_legs: roundTripsFullFetch,
+    drafts_only: draftsOnly || undefined,
   };
   const loadsQuery = useQuery({
     queryKey: ["loads", "list", roundTripsFullFetch ? "all" : "page", loadListFilters, roundTripsFullFetch ? null : { limit, offset }],
@@ -556,6 +566,36 @@ export function DispatchPage({
         />
       ) : null}
 
+      {/* ROUND 24.2 (owner 2026-09-14): "a saved draft load must be findable from the Loads list ...
+          A 'Drafts' filter pill beside the existing status pills." List-view only — Kanban/Round
+          Trips/Truck Line stay unchanged. Mutually exclusive with the status multi-select (toggling
+          it on does not clear `statuses` from the URL, but the backend/loadListFilters above ignore
+          `status` whenever drafts_only is set, so re-toggling off restores whatever status filter
+          was already there). */}
+      {subTab === "load_board" && view === "list" ? (
+        <div className="flex items-center gap-2 px-2">
+          <button
+            type="button"
+            aria-pressed={draftsOnly}
+            data-testid="dispatch-drafts-pill"
+            onClick={() => {
+              const next = new URLSearchParams(searchParams);
+              if (draftsOnly) next.delete("drafts");
+              else next.set("drafts", "1");
+              next.delete("offset");
+              setSearchParams(next);
+            }}
+            className={`inline-flex h-7 items-center justify-center gap-1 rounded-sm border px-3 text-xs font-medium transition ${
+              draftsOnly
+                ? "border-[#14314F] bg-[#14314F] text-white"
+                : "border-gray-300 bg-white text-[#0F1219] hover:bg-gray-50"
+            }`}
+          >
+            Drafts
+          </button>
+        </div>
+      ) : null}
+
       {subTab === "load_board" && showLoadBoard ? (
         view === "truck-line" ? (
           <TruckLineBoard
@@ -611,6 +651,15 @@ export function DispatchPage({
               setSearchParams(next);
             }}
             onRowClick={(id) => {
+              // ROUND 24.2 (owner 2026-09-14): "a saved draft load must be findable ... Row click on
+              // a draft opens the Book Load wizard to resume." A draft never opens the detail drawer.
+              const clicked = loads.find((load) => load.id === id);
+              const isDraft = clicked ? clicked.status === "draft" || clicked.is_quicksave_draft === true : false;
+              if (isDraft) {
+                setEditLoadId(id);
+                openBookLoadModal();
+                return;
+              }
               const next = new URLSearchParams(searchParams);
               next.set("load_id", id);
               setSearchParams(next);
@@ -765,6 +814,7 @@ export function DispatchPage({
         operatingCompanyId={defaultCompanyIds[0] ?? ""}
         prefillUnitId={bookUnitId}
         prefillDriverId={bookDriverId}
+        editLoadId={editLoadId}
         onClose={() => {
           dismissBookLoadModal();
           retractBookLoadUrl();
