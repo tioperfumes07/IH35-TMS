@@ -154,14 +154,23 @@ type KanbanColumnDef = {
 // feed that HOS/OOS/cash-ETA are gated on; until that feed is confirmed they separate
 // best-effort by status (Loaded stays empty unless a "departed pickup" signal arrives).
 const KANBAN_STATUS_GROUPS: KanbanColumnDef[] = [
+  // ROUND 24.3 (owner, 2026-09-14): "a draft load lands in the Kanban 'Assigned' lane ...
+  // DispatchKanban.tsx:164 maps 'draft' into {key:'assigned'} ... Wrong: an unfinished booking next
+  // to dispatchable loads is a trap." "draft" removed from the "assigned" lane's own statuses
+  // (below) and given its own lane here, first — before even "Awaiting assignment" — since a draft
+  // with no assignment at all is earlier in the lifecycle than a load truly waiting to be assigned.
+  // A draft that already has a real assignment in progress (hasAssignment, resolved below) still
+  // routes to "Assigned" — this lane is only for a draft with NOTHING done on it yet, exactly what
+  // Save Draft persists at its minimum (operating_company_id + customer_id + load_number).
+  { key: "drafts", title: "Drafts", statuses: ["draft"], dropStatus: "draft", derivedOnly: true },
   // Awaiting assignment is TRUCK-derived (cards injected from awaitingTrucks), so it matches no
-  // load status. Loads with no truck (draft/planned/unassigned/booked) fall into Booked unassigned.
+  // load status. Loads with no truck (planned/unassigned/booked) fall into Booked unassigned.
   { key: "awaiting_assignment", title: "Awaiting assignment", statuses: [], dropStatus: "planned" },
   // OWNER-COLLAPSE-2026-09-07: "Booked unassigned" and "Assigned" merged into one lane on the owner's
   // explicit instruction ("collapse into one Assigned lane") -- a load with no truck yet and a load
   // that already has one both now render in this single "Assigned" column. Never split this back into
   // two lanes without a new owner instruction (Rule 4 -- do not invent a rule that isn't theirs).
-  { key: "assigned", title: "Assigned", statuses: ["draft", "planned", "unassigned", "booked", "assigned", "assigned_not_dispatched"], dropStatus: "assigned" },
+  { key: "assigned", title: "Assigned", statuses: ["planned", "unassigned", "booked", "assigned", "assigned_not_dispatched"], dropStatus: "assigned" },
   { key: "dispatched", title: "Dispatched", statuses: ["dispatched"], dropStatus: "dispatched" },
   // KANBAN-CROSS-COLUMN-DRAG: at_pickup and at_delivery are geofence-derived micro-states within
   // the dispatched/in_transit lifecycle stages (resolveKanbanColumnKey overrides status→column via
@@ -192,7 +201,9 @@ function readExtras(load: DispatchLoadRow): KanbanLoad {
   return load as KanbanLoad;
 }
 
-function resolveKanbanColumnKey(load: DispatchLoadRow): string {
+// ROUND 24.3 — exported so the "draft resolves to its own lane, not Assigned" claim is a real,
+// directly-tested fact rather than an inference from a full-board render.
+export function resolveKanbanColumnKey(load: DispatchLoadRow): string {
   const extras = readExtras(load);
   const status = String(load.status);
   const pickupGeo = extras.pickup_geofence_state ?? null;
@@ -1213,9 +1224,13 @@ export function KanbanDispatchColumn({
               <span
                 className="rounded-sm bg-slate-100 px-1 py-0.5 text-xs font-semibold uppercase text-slate-500"
                 data-testid={`kanban-column-auto-badge-${column.key}`}
-                title="Set automatically from pickup-departure telematics — not drag-droppable"
+                title={
+                  column.key === "drafts"
+                    ? "Only resumed and finished from its own card — not drag-droppable"
+                    : "Set automatically from pickup-departure telematics — not drag-droppable"
+                }
               >
-                Auto
+                {column.key === "drafts" ? "Draft" : "Auto"}
               </span>
             ) : null}
           </div>
@@ -1226,9 +1241,11 @@ export function KanbanDispatchColumn({
       <div ref={setNodeRef} className={`max-h-[68vh] ${detailed ? "space-y-2" : "space-y-1"} overflow-y-auto rounded-sm p-1 ${isOver ? "bg-slate-100" : "bg-transparent"}`}>
         {loads.length === 0 ? (
           <div className="rounded-sm border border-dashed border-gray-300 p-3 text-xs text-gray-500">
-            {column.derivedOnly
-              ? "Set automatically from pickup-departure telematics — you can't drag a card here."
-              : "(empty)"}
+            {column.key === "drafts"
+              ? "No open drafts."
+              : column.derivedOnly
+                ? "Set automatically from pickup-departure telematics — you can't drag a card here."
+                : "(empty)"}
           </div>
         ) : null}
         {loads.map((load) => {
@@ -1420,9 +1437,13 @@ function KanbanSwimLaneColumn({
               <span
                 className="rounded-sm bg-slate-100 px-1 py-0.5 text-xs font-semibold uppercase text-slate-500"
                 data-testid={`kanban-column-auto-badge-${column.key}`}
-                title="Set automatically from pickup-departure telematics — not drag-droppable"
+                title={
+                  column.key === "drafts"
+                    ? "Only resumed and finished from its own card — not drag-droppable"
+                    : "Set automatically from pickup-departure telematics — not drag-droppable"
+                }
               >
-                Auto
+                {column.key === "drafts" ? "Draft" : "Auto"}
               </span>
             ) : null}
           </div>
@@ -1438,9 +1459,11 @@ function KanbanSwimLaneColumn({
       >
         {visibleUnits.length === 0 ? (
           <div className="rounded-sm border border-dashed border-gray-300 p-3 text-xs text-gray-500">
-            {column.derivedOnly
-              ? "Set automatically from pickup-departure telematics — you can't drag a card here."
-              : "(empty)"}
+            {column.key === "drafts"
+              ? "No open drafts."
+              : column.derivedOnly
+                ? "Set automatically from pickup-departure telematics — you can't drag a card here."
+                : "(empty)"}
           </div>
         ) : null}
         {visibleUnits.map((unit) => {
@@ -1748,9 +1771,16 @@ export function DispatchKanban({
       // Loaded is set by pickup-departure telematics; At pickup / At delivery are set by geofence
       // dwell or driver PWA stop arrivals. All three map to the same dispatch state as their parent
       // (dispatched or in_transit), so a drop always produces a same-state transition the backend
-      // rejects as invalid_transition. Refuse with a clear explanation instead.
+      // rejects as invalid_transition. ROUND 24.3: Drafts is the same refuse-the-drop shape for a
+      // different reason — a draft is only ever created by "Save draft" and only ever finished by
+      // resuming it in the wizard; dragging a real load backward INTO Drafts would misrepresent an
+      // already-booked load as unfinished, and dragging a draft OUT would skip its own completion
+      // stamp (is_quicksave_draft/quicksave_completed_at, see update-load.service.ts). Refuse with a
+      // clear explanation instead.
       pushToast(
-        `${targetGroup.title} is set by telematics (geofence/driver PWA), not by dragging. Move the load to ${targetGroup.key === "at_pickup" ? "Dispatched or In transit" : targetGroup.key === "at_delivery" ? "In transit or Delivered" : "In transit"} instead.`,
+        targetGroup.key === "drafts"
+          ? "Drafts can't be moved by dragging — open the card to resume it in the Book Load wizard."
+          : `${targetGroup.title} is set by telematics (geofence/driver PWA), not by dragging. Move the load to ${targetGroup.key === "at_pickup" ? "Dispatched or In transit" : targetGroup.key === "at_delivery" ? "In transit or Delivered" : "In transit"} instead.`,
         "info"
       );
       return;

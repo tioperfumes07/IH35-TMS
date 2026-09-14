@@ -190,6 +190,10 @@ export type BookLoadInput = {
   charges: BookLoadCharge[];
   stops: BookLoadStop[];
   save_mode: "draft" | "book_dispatch";
+  // ROUND 24.3 — field names save_mode="draft" deferred rather than blocked on; persisted into
+  // quicksave_pending_fields (nested under a "pending_fields" key, see v3Metadata below). Ignored
+  // unless save_mode === "draft".
+  quicksave_pending_fields?: string[];
   override_token?: string;
   override_reason?: string;
   override_rules?: Array<{ rule_code: string; reason: string; subject?: string }>;
@@ -1217,16 +1221,29 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
   // appointment" accepts either scheduled_arrival_at (the wizard's single fixed-time field) OR
   // appointment_start_at (a start+end window) -- never invents a missing time, only refuses to
   // book without one.
-  const sortedStops = [...(input.stops ?? [])].sort((a, b) => a.sequence_number - b.sequence_number);
-  const firstPickup = sortedStops.find((s) => s.stop_type === "pickup");
-  const deliveries = sortedStops.filter((s) => s.stop_type === "delivery");
-  const lastDelivery = deliveries[deliveries.length - 1];
-  const hasAppointment = (s: BookLoadStop | undefined) => Boolean(s?.scheduled_arrival_at || s?.appointment_start_at);
-  if (!hasAppointment(firstPickup)) {
-    return { kind: "error", status: 400, payload: { error: "pickup_appointment_required" } };
-  }
-  if (!hasAppointment(lastDelivery)) {
-    return { kind: "error", status: 400, payload: { error: "delivery_appointment_required" } };
+  // ROUND 24.3 — DSP-49 ran unconditionally, including against a save_mode="draft" call with an
+  // EMPTY stops array (the exact shape this round's minimum-fields draft sends): firstPickup/
+  // lastDelivery are both undefined, hasAppointment(undefined) is false, and every empty-stops
+  // draft 400'd here before ever reaching the INSERT. A draft with no stops yet is not missing an
+  // appointment — it has no stop to have one on. book_dispatch mode is unchanged (still checks
+  // whatever stops WERE sent, exactly as DSP-49 requires); a draft that DOES include real stops
+  // still gets the same check applied to those.
+  if (input.save_mode !== "draft" || input.stops.length > 0) {
+    const sortedStops = [...(input.stops ?? [])].sort((a, b) => a.sequence_number - b.sequence_number);
+    const firstPickup = sortedStops.find((s) => s.stop_type === "pickup");
+    const deliveries = sortedStops.filter((s) => s.stop_type === "delivery");
+    const lastDelivery = deliveries[deliveries.length - 1];
+    const hasAppointment = (s: BookLoadStop | undefined) => Boolean(s?.scheduled_arrival_at || s?.appointment_start_at);
+    if (input.save_mode !== "draft" || firstPickup) {
+      if (!hasAppointment(firstPickup)) {
+        return { kind: "error", status: 400, payload: { error: "pickup_appointment_required" } };
+      }
+    }
+    if (input.save_mode !== "draft" || lastDelivery) {
+      if (!hasAppointment(lastDelivery)) {
+        return { kind: "error", status: 400, payload: { error: "delivery_appointment_required" } };
+      }
+    }
   }
 
   const result = await bookLoadInTransaction(input);
@@ -2111,9 +2128,23 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
           : !hasCrew && input.status === "assigned_not_dispatched"
             ? "unassigned"
             : toMdataStatus(input.status);
+    // ROUND 24.3 — a draft's still-empty required fields nest under `pending_fields` INSIDE this
+    // same object, never replacing it. `quicksave_pending_fields->>'hazmat'` is read as the load's
+    // hazmat flag in 9+ other backend files (driver-qualification.service.ts, planner.service.ts,
+    // quick-assign.service.ts, etc. — grep quicksave_pending_fields to confirm the full list before
+    // ever touching this shape again); overwriting the column with a bare array (the shape
+    // quick-assign.service.ts's OWN, unrelated quicksave-drafts feature writes for ITS pending-field
+    // concept, dispatch/quick-assign.service.ts:271/515) would silently zero hazmat via `->>'hazmat'`
+    // returning NULL on a JSON array. Filed as its own cross-cutting finding — the two features'
+    // shapes for the SAME column already collide even without this change (see
+    // docs/audit/GUARD-WORKORDERS.md, QUICKSAVE-PENDING-FIELDS-SHAPE-COLLISION) — this stays additive
+    // and does not make that collision any worse.
     const v3Metadata = {
       customer_po_number: input.customer_po_number ?? null,
       hazmat: Boolean(input.hazmat),
+      ...(input.save_mode === "draft" && input.quicksave_pending_fields?.length
+        ? { pending_fields: input.quicksave_pending_fields }
+        : {}),
     };
 
     // NEW-02 (owner urgent live report 2026-09-07, T152 double-dispatch): booking a brand-new load
@@ -2179,9 +2210,9 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
           ocr_source_pdf_r2_key, miles_practical, miles_shortest, miles_deadhead,
           customer_wo_number, pickup_number, border_routing, is_sample_data, loaded_miles,
           load_trailer_equipment_id, commodity, cargo_weight_lbs,
-          mileage_source, stop_count, trailer_type
+          mileage_source, stop_count, trailer_type, is_quicksave_draft
         )
-        VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47,$48)
+        VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47,$48,$49)
         RETURNING *
       `,
       [
@@ -2247,6 +2278,10 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
         // reefer-lumper gate in loads.routes.ts (and any other trailer_type-gated logic) dead code
         // for every future booking. Additive: nullable column, no other row shape change.
         input.trailer_type ?? null,
+        // ROUND 24.3 — the ONLY place this column is set on CREATE (the pre-existing
+        // quick-assign.service.ts writer sets it later, on an already-booked load, for its own
+        // different "still needs unit/trailer" concept).
+        input.save_mode === "draft",
       ]
       );
       await client.query(`RELEASE SAVEPOINT book_load_insert`);

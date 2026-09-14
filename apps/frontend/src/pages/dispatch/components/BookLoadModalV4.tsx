@@ -1297,15 +1297,37 @@ export function BookLoadModalV4({
       return;
     }
 
+    // ROUND 24.3 — Save draft skips `form.handleSubmit`, so the RHF-level `required` on customer_id's
+    // hidden input (below, in the customer section) never runs for this path. customer_id is a hard
+    // mdata.loads NOT NULL column with no default (verified live, prod schema) — not optional for any
+    // load, draft or not — so it's the one field this draft path enforces imperatively.
+    if (saveMode === "draft" && !customerId) {
+      form.setError("customer_id", { type: "required", message: "Select a customer from the list" });
+      setSubmitErrorMessage("Not saved — select a customer first. Nothing was written.");
+      pushToast("Not saved — select a customer first", "error");
+      return;
+    }
     if (values.assignment_mode === "team" && !values.team_id.trim()) {
       pushToast("Team mode requires a team ID", "error");
       return;
     }
+    // ROUND 24.3 (owner, 2026-09-14) — "Save draft ... fails validation ... NOTHING PERSISTS." These
+    // four gates below are correct requirements to BOOK a load, but a draft is, by definition, a
+    // load that has NOT finished being booked yet — gating the draft write behind them is the exact
+    // defect. `saveMode === "draft"` defers each one instead of blocking: the field name is
+    // collected into `draftPendingFields` (persisted server-side as `quicksave_pending_fields`, read
+    // back on resume to flag exactly what's still missing) and the save proceeds. `book_dispatch`
+    // mode is completely unchanged — every `return`/toast/inline error below fires exactly as before.
+    const draftPendingFields: string[] = [];
     // Trip Pairing (Block 04): Trip Type is REQUIRED — block save + surface an inline error.
     if (!values.trip_type) {
-      form.setError("trip_type", { type: "required", message: "Select a Trip Type (NB / TR / SB)" });
-      pushToast("Select a Trip Type before booking", "error");
-      return;
+      if (saveMode === "draft") {
+        draftPendingFields.push("trip_type");
+      } else {
+        form.setError("trip_type", { type: "required", message: "Select a Trip Type (NB / TR / SB)" });
+        pushToast("Select a Trip Type before booking", "error");
+        return;
+      }
     }
     // REEFER-LUMPER-CONFIRMATION (migration 202614010000, owner spec 2026-09-08): a reefer load
     // (trailer_type='refrigerated_van') must capture all 3 lumper-confirmation questions before it
@@ -1313,32 +1335,48 @@ export function BookLoadModalV4({
     // trip_type pattern above. The dispatch-transition endpoint is the real backstop if bypassed.
     if (values.trailer_type === "refrigerated_van") {
       if (!values.lumper_payer) {
-        form.setError("lumper_payer", { type: "required", message: "Confirm who pays the lumper (broker or customer)" });
-        pushToast("Confirm the lumper questions before booking a reefer load", "error");
-        return;
+        if (saveMode === "draft") {
+          draftPendingFields.push("lumper_payer");
+        } else {
+          form.setError("lumper_payer", { type: "required", message: "Confirm who pays the lumper (broker or customer)" });
+          pushToast("Confirm the lumper questions before booking a reefer load", "error");
+          return;
+        }
       }
       if (values.lumper_will_invoice_customer == null) {
-        form.setError("lumper_will_invoice_customer", { type: "required", message: "Confirm whether the customer will be invoiced for the lumper" });
-        pushToast("Confirm the lumper questions before booking a reefer load", "error");
-        return;
+        if (saveMode === "draft") {
+          draftPendingFields.push("lumper_will_invoice_customer");
+        } else {
+          form.setError("lumper_will_invoice_customer", { type: "required", message: "Confirm whether the customer will be invoiced for the lumper" });
+          pushToast("Confirm the lumper questions before booking a reefer load", "error");
+          return;
+        }
       }
       if (values.lumper_late_penalty_applies == null) {
-        form.setError("lumper_late_penalty_applies", { type: "required", message: "Confirm whether a late-arrival penalty applies" });
-        pushToast("Confirm the lumper questions before booking a reefer load", "error");
-        return;
+        if (saveMode === "draft") {
+          draftPendingFields.push("lumper_late_penalty_applies");
+        } else {
+          form.setError("lumper_late_penalty_applies", { type: "required", message: "Confirm whether a late-arrival penalty applies" });
+          pushToast("Confirm the lumper questions before booking a reefer load", "error");
+          return;
+        }
       }
     }
     // WIZ border-capture: a cross-border (NB/SB) load MUST record where it crosses. Without this the
     // load saved with no stop_type='border' stop and LoadDetailDrawer correctly hid the Customs tab
     // (owner block, load 13508). Fail loud naming the field rather than dropping the crossing silently.
     if (isCrossBorderTripType(values.trip_type) && !values.border_port_of_entry_id.trim()) {
-      form.setError("border_port_of_entry_id", {
-        type: "required",
-        message:
-          "Select the border crossing (port of entry) — a northbound/southbound load must record where the freight crosses.",
-      });
-      pushToast("Select the border crossing before booking a cross-border load", "error");
-      return;
+      if (saveMode === "draft") {
+        draftPendingFields.push("border_port_of_entry_id");
+      } else {
+        form.setError("border_port_of_entry_id", {
+          type: "required",
+          message:
+            "Select the border crossing (port of entry) — a northbound/southbound load must record where the freight crosses.",
+        });
+        pushToast("Select the border crossing before booking a cross-border load", "error");
+        return;
+      }
     }
     const linehaulNeg = linehaulFuelError("linehaul", Number(values.linehaul_cents || 0));
     if (linehaulNeg) {
@@ -1373,13 +1411,18 @@ export function BookLoadModalV4({
         pushToast("Enter shortest miles before booking with a driver", "error");
         return;
       }
+    } else if (saveMode === "draft") {
+      // Not blocking (see the ROUND 24.3 comment above) — just flagged for RESUME, matching the same
+      // two conditions book_dispatch mode would have enforced.
+      if (!(Number(values.miles_practical) > 0)) draftPendingFields.push("miles_practical");
+      if (assignedPrimaryDriverId && !(Number(values.miles_shortest) > 0)) draftPendingFields.push("miles_shortest");
     }
     const token = applyOverrides ? overrideToken ?? crypto.randomUUID() : undefined;
     if (applyOverrides && !overrideToken) setOverrideToken(token ?? null);
     // WIZ border-capture: for a cross-border (NB/SB) load, inject the port-of-entry crossing stop
     // (stop_type='border') before the first delivery so mdata.load_stops carries it and the Customs
     // tab shows on its own. sequence_number is renumbered by the map's index below.
-    const submitStops =
+    const stopsWithBorderCrossing =
       isCrossBorderTripType(values.trip_type) && selectedBorderPortRef.current
         ? withBorderCrossingStop(values.stops, {
             ...buildBorderCrossingStop(selectedBorderPortRef.current),
@@ -1388,6 +1431,17 @@ export function BookLoadModalV4({
             scheduled_arrival_at: "",
           })
         : values.stops;
+    // ROUND 24.3 — the form's own defaultValues always carry 2 stub stops (city: ""), so a bare
+    // "operating company + customer + load number" draft would still submit 2 stops with an empty,
+    // backend-rejected city. A draft sends only the stops the operator actually filled in (a real
+    // city typed) — zero is valid; the backend's own createDispatchLoadBodySchema requires >=2 stops
+    // (each with a real city) only when save_mode!=="draft" (see loads.routes.ts). book_dispatch mode
+    // is unchanged — it always sends every stop, city required or not (unchanged validation catches it).
+    if (saveMode === "draft" && !values.stops.some((s) => s.city.trim())) {
+      draftPendingFields.push("stops");
+    }
+    const submitStops =
+      saveMode === "draft" ? stopsWithBorderCrossing.filter((s) => s.city.trim()) : stopsWithBorderCrossing;
     try {
       const payload = await createDispatchLoad({
         operating_company_id: operatingCompanyId,
@@ -1557,6 +1611,9 @@ export function BookLoadModalV4({
         };
         }),
         save_mode: saveMode,
+        // ROUND 24.3 — the exact required fields this draft deferred (see draftPendingFields above),
+        // so a resumed draft can flag precisely what's still missing instead of re-deriving it.
+        quicksave_pending_fields: saveMode === "draft" ? draftPendingFields : undefined,
         override_token: token,
         override_reason: primaryOverrideReason,
         override_rules: applyOverrides ? overrideRuleRows : undefined,
@@ -2831,9 +2888,15 @@ export function BookLoadModalV4({
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={form.handleSubmit(async (values) => {
-                    await submitLoad(values, "draft");
-                  }, onInvalidSubmit)}
+                  // ROUND 24.3 (owner, 2026-09-14) — FAIL-D3-DRAFT: this used to be
+                  // `form.handleSubmit(...)`, the FULL book_dispatch validation gate. A half-finished
+                  // load is the entire reason this button exists; gating its write behind full
+                  // validation meant it silently failed `onInvalidSubmit` every time and never wrote a
+                  // row (prod measured: 0 status='draft' loads, 0 is_quicksave_draft=true loads across
+                  // 114 USMCA loads). `submitLoad` is called directly — no RHF resolver gate — and
+                  // `submitLoadInner` itself defers every create-only required field (trip_type,
+                  // reefer-lumper, border port, miles) instead of blocking when saveMode==="draft".
+                  onClick={() => void submitLoad(form.getValues(), "draft")}
                 >
                   Save draft
                 </Button>

@@ -785,6 +785,21 @@ export async function updateDispatchLoad(
     add("status", "assigned_not_dispatched", "::mdata.load_status_enum");
   }
 
+  // ROUND 24.3 (owner, 2026-09-14) — "click it, land back in the wizard, finish it, and paste the
+  // live row showing is_quicksave_draft=false with quicksave_completed_at NOT NULL." A resumed
+  // draft's Finish action is an ordinary PATCH through this same function (BookLoadModalV4 opens a
+  // draft row in its existing edit mode, per PR #22072). The FIRST real edit through this path is
+  // the completion signal — matching the existing quick-assign.service.ts draft mechanism's own
+  // completion semantic (completeQuicksaveDraft marks done the moment its own pending fields are
+  // filled, not once every OTHER field is also filled). Unconditional: no field-completeness check
+  // here, by design — Edit mode does not re-run the create-only book_dispatch gates either (see
+  // submitLoadInner's early `return` for isEditMode), so gating this on "all fields now present"
+  // would invent a stricter completion rule than editing already enforces everywhere else.
+  if (Boolean(old.is_quicksave_draft)) {
+    add("is_quicksave_draft", false);
+    setParts.push(`quicksave_completed_at = now()`);
+  }
+
   // NEW-02 (owner urgent live report 2026-09-07, T152 double-dispatch): this PATCH path can change
   // assigned_unit_id (SCALAR_COLUMNS) with no cross-load check, and can ALSO move the load's own
   // status into the active set via the draft-advance directly above — either alone is enough to
