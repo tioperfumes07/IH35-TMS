@@ -3333,3 +3333,41 @@ against both the pre-portal build (fails) and a "state+click proven, portal not 
 
 Live-Chrome re-verification in progress now that this second fix has deployed -- screenshots to
 follow in this thread.
+
+## CC-2 | P0 NAV-DROPDOWN-01 -- CLOSED | 2026-09-14
+
+**DONE.** Cash/Statement/Settings all confirmed OPEN live in production, children rendering,
+via direct element-ref clicks on https://app.ih35dispatch.com/factoring (post-deploy, bundle
+index-w6SjfUIG.js):
+- Cash: Funds Due / Payments to You / Debtor Receipts / Unapplied Cash — all 4 visible
+- Statement: Purchase Report / Account Summary / Fees Paid / Aging / Reserve / Invoice Status
+  Report — all 6 visible
+- Settings: Request Debtor/Credit Check / Loan-Save / Reserve Tracker / Recourse Pipeline /
+  Chargebacks & Fees / Statements & Settings / Faro Daily Imports / Equipment Loans (CCG) /
+  Driver Vendor Merges — all 9 visible
+
+`node scripts/verify-static.mjs --only verify-factoring-nav-reachable` (against main HEAD):
+```
+[verify-static] --only verify-factoring-nav-reachable — single-guard diagnostic run, not the CI/pre-push shape.
+[verify-static] 1/1 (0.0s elapsed) verify-factoring-nav-reachable.mjs
+
+=== verify-static summary ===
+total 1  |  PASS 1  FAIL-test(gated) 0  FAIL-test(unwired) 0  SKIP-capability 0  SKIP-scope 0
+
+[verify-static] OK — GR-1 seeded: 0 known baseline fail(s), 0 new names. Shrink the JSON when a name goes green.
+```
+
+**DEPLOY-GATE finding, separate from the code fix, disclosed per the owner's own ask:** both
+production Render services (`ih35-tms-web` frontend, `IH35-TMS` backend) have Render's native
+`autoDeploy` set to **off** — every deploy in the service history is `trigger:"api"`, meaning some
+EXTERNAL mechanism (not located yet, likely a GitHub Action) calls Render's deploy API after a
+merge. That mechanism stalled twice on this P0's own merges (didn't fire for #22066's b0dc11fa,
+then again for #22069's 1293f0e9) — confirmed via `list_deploys`/`list_services` on the Render
+account. Unblocked directly both times via the Render `trigger_deploy` API rather than waiting.
+This is a standing infra risk (silent, unbounded deploy lag with no visible alert) independent of
+this PR — flagging, not fixing; not this seat's lane to touch CI/deploy wiring blind.
+
+Two PRs total on this P0: #22066 (click-race state fix) + #22069 (clipping/portal-to-body fix,
+found only by re-checking LIVE after #22066 deployed — dry-run-clean/vitest-clean was not proof,
+same standing lesson as B5's rehearsal this session). Guard `verify-factoring-nav-reachable.mjs`
+now covers both defect classes (structural reachability + behavioral open-state + portal-escape).
