@@ -38,7 +38,11 @@ BEGIN
     RETURN;
   END IF;
 
-  EXECUTE 'DROP INDEX IF EXISTS dispatch.load_id_reservations_operating_company_id_reserved_load_num_key';
+  -- This is a CONSTRAINT-backed index (declared UNIQUE(...) at table creation, not a bare CREATE
+  -- INDEX), so DROP INDEX fails with "constraint ... requires it" -- live-caught applying this
+  -- exact migration against prod, and again by security-audit-heavy's own fresh-DB CI run before
+  -- this line was corrected. ALTER TABLE ... DROP CONSTRAINT is the only path that works for it.
+  EXECUTE 'ALTER TABLE dispatch.load_id_reservations DROP CONSTRAINT IF EXISTS load_id_reservations_operating_company_id_reserved_load_num_key';
 
   EXECUTE $idx$
     CREATE UNIQUE INDEX IF NOT EXISTS uq_load_id_reservations_active_number
