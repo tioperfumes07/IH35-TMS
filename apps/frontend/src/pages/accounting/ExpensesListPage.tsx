@@ -285,6 +285,8 @@ export function ExpensesListPage() {
       key: "settlement_reference",
       label: "Settlement / Presettlement",
       testId: "settlement-reference-column",
+      sortable: true,
+      sortValue: (r) => r.load_id ?? "",
       render: (r) =>
         r.load_id ? (
           <SettlementRefCell loadId={r.load_id} operatingCompanyId={companyId} />

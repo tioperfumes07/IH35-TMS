@@ -497,6 +497,8 @@ export function InvoicesListPage() {
         key: "settlement_reference",
         label: "Settlement / Presettlement",
         testId: "settlement-reference-column",
+        sortable: true,
+        sortValue: (row) => row.source_load_id ?? "",
         render: (row) =>
           row.source_load_id && selectedCompanyId ? (
             <SettlementRefCell loadId={row.source_load_id} operatingCompanyId={selectedCompanyId} />

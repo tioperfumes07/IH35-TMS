@@ -35,8 +35,12 @@ const FEED_FILE = "docs/specs/scoreboard/wire-sprint-built.json";
  * these 63 is real backlog for the vertical-column sweep (docs/audit/wave-queue.json) to burn down leaf
  * by leaf, NOT a debt this guard is allowed to quietly grow. Lower this number only by narrowing a real
  * claim to a leaf-specific leafRe or removing a disproven one — never by widening the match-all pattern
- * this guard rejects. */
-const LEGACY_BROAD_BASELINE = 55;
+ * this guard rejects.
+ * ROUND 25.1 (guard-wall audit, 2026-09-14): live-measured 6/55 remain on a clean origin/main
+ * checkout (49 of the original 63 have since been narrowed to leaf-specific claims by other work) —
+ * lowered 55->6 to ratchet in that progress. LIVE PROOF: `node scripts/verify-matrix-built-leaf-specific.mjs`
+ * -> "PASS — no new broad claims; 6/55 legacy broad claims remain". */
+const LEGACY_BROAD_BASELINE = 6;
 
 const MATRIX_BUILT_JSON_RE = /@matrix-built\s+(\{[\s\S]*?\})/g;
 const MATRIX_BUILT_SHORTHAND_RE =

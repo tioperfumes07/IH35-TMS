@@ -23,8 +23,12 @@ const fail = (msg) => {
 // 1. Lanes in exact order + Cancelled kept as collapsed lane.
 // OWNER-COLLAPSE-2026-09-07: "Booked unassigned" was merged into "Assigned" per owner instruction
 // ("collapse into one Assigned lane"). The guard was updated to reflect this owner-approved change.
+// ROUND 24.3 (owner, 2026-09-14): a new "drafts" lane was added FIRST — a draft load with no
+// assignment at all is earlier in the lifecycle than "Awaiting assignment" — additive per this
+// guard's own "never delete a lane" rule. Landed in PR #22081 (DispatchKanban.tsx); this guard's
+// expected order was missed at the time and only caught now via ROUND 25.1's own pre-merge check.
 const expectedLanes = [
-  "awaiting_assignment", "assigned", "dispatched", "at_pickup",
+  "drafts", "awaiting_assignment", "assigned", "dispatched", "at_pickup",
   "loaded", "in_transit", "at_delivery", "delivered", "completed", "cancelled",
 ];
 const start = src.indexOf("const KANBAN_STATUS_GROUPS");
@@ -60,6 +64,13 @@ if (!src.includes("truckToKanbanLoad")) fail("Awaiting lane must render trucks v
 if (!/key:\s*"awaiting_assignment",\s*title:\s*"Awaiting assignment",\s*statuses:\s*\[\]/.test(src)) {
   fail("awaiting_assignment lane must match NO load status (statuses: []) — it is truck-derived");
 }
-if (!/awaiting_assignment"\s*\?\s*awaitingTruckCards/.test(src)) fail("Awaiting column must render awaitingTruckCards");
+// PRE-EXISTING DRIFT (found ROUND 25.1, 2026-09-14, unrelated to the drafts-lane fix above): PR
+// #21825's KANBAN-SWIM-LANE refactor replaced the original `awaiting_assignment" ? awaitingTruckCards`
+// ternary with per-cell `if (column.key === "awaiting_assignment") { ... AwaitingTruckCard ... }`
+// blocks (two call sites, in the standard swim-lane grid and the per-unit row renderer) but never
+// updated this assertion to match — it has silently checked a shape the source no longer contains
+// since #21825 merged. Updated to assert the real, current rendering contract instead.
+if (!/column\.key\s*===\s*"awaiting_assignment"/.test(src)) fail("Awaiting column must branch on column.key === \"awaiting_assignment\"");
+if (!src.includes("AwaitingTruckCard")) fail("Awaiting column must render AwaitingTruckCard");
 
 console.log("PASS verify-dispatch-kanban-lanes-and-density");
