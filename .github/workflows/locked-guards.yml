@@ -683,11 +683,13 @@ jobs:
       - name: verify:bill-lines-load-id
         run: npm run verify:bill-lines-load-id
 
-      - name: verify:bank-automatch-observable --selftest
-        run: node scripts/verify-bank-automatch-observable.mjs --selftest
-
-      - name: verify:bank-automatch-observable
-        run: npm run verify:bank-automatch-observable
+      # ACCT-F26301 (owner ruling, 2026-09-12/13, PR #21988): the nightly bank-recon auto-match cron
+      # (apps/backend/src/cron/bank-recon-auto-match.cron.ts) was DELETED — Owner Law B ("it should
+      # never automatch... not in a nightly job") ruled the feature itself out, not just this guard's
+      # metric-observability assertion about it. verify-bank-automatch-observable.mjs was deleted in
+      # the same PR since it had nothing left to check; these two CI steps referencing it were missed
+      # at the time and left every PR's locked-guards-heavy permanently red on a missing module
+      # (found + fixed ROUND 25.1, 2026-09-14, ACCT-F26301 follow-through).
 
       - name: verify:bank-automatch-button-wired --selftest
         run: node scripts/verify-bank-automatch-button-wired.mjs --selftest
