@@ -8894,5 +8894,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-14",
     "purpose": "verify-load-shortest-miles-before-pay"
+  },
+  "11505": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-14",
+    "purpose": "verify-driver-pay-rate-required-before-bill"
   }
 }
