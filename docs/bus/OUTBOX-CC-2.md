@@ -3371,3 +3371,29 @@ Two PRs total on this P0: #22066 (click-race state fix) + #22069 (clipping/porta
 found only by re-checking LIVE after #22066 deployed — dry-run-clean/vitest-clean was not proof,
 same standing lesson as B5's rehearsal this session). Guard `verify-factoring-nav-reachable.mjs`
 now covers both defect classes (structural reachability + behavioral open-state + portal-escape).
+
+## CC-2 | ROUND 24.4 Part 1 -- guard baseline shipped; L1's own "passes today" was wrong | 2026-09-14
+
+**PR #22078 merged.** All three mechanical asks done: L1 rewritten exactly as specified (cancelled,
+or NULL-ref-while-not-open); L3_BASELINE tightened 26 -> 21 (exact match to your re-measurement);
+both L1 and L3 now exclude `status='void'` on both tables, not only `voided_at IS NULL`.
+
+**Re-measured before shipping (standing law: never copy a board number) -- L1 does NOT pass today.**
+"Required value 0 -- and it passes today" was itself wrong. Live: **35**, not 0. All 35 are
+root-caused, not ambiguous or a guard bug: every one of their 8 distinct refs
+(5772/5773/5775/5776/5780/5783/5784/5785) is one of L2's own "10 AlwaysTrack numbers exist TWICE"
+duplicate-ref pairs -- each bill sits on the OLD `cancelled` S-2026-00NN twin instead of the
+correct `locked` S-2026-<doc> settlement holding the SAME ref. Directly confirmed: S-2026-5785
+(the correct, locked settlement) is one of L3's own 21 zero-bill settlements, while its cancelled
+duplicate S-2026-0012 holds 5 of the 35 bills that belong on it. Same pattern, other 7 refs. This
+is a small, targeted extension of the exact repoint work CC-1 already did in #22067 (13 bills) --
+the reassignment primitive already exists (`reassignLoadToSettlementInClientTx`, built for B5 this
+session), so this is applying it to 10 more (settlement, ref) pairs, not building anything new.
+Filed: `docs/audit/GUARD-WORKORDERS.md` row `L1-35-BILLS-ON-CANCELLED-DUPLICATE-SETTLEMENTS`,
+routed to CC-1/B5's lane (financial settlement write, not mine to fix). L2 unchanged at 10 (exact
+match). L4 stays warn-only per your own instruction (flips alongside CC-3's B3 proof).
+
+Guard shipped exactly as you specified -- the RULE is correct and sound. It ships red on real data
+rather than reporting a false green; not softened, not silently adjusted.
+
+Moving to Part 2 (Save draft) now, per ORDER.
