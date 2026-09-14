@@ -40,6 +40,17 @@
  * reads 0x0), the guard's behavioral half below cannot see the clipping pixel-for-pixel — but it CAN
  * see the structural fix: the open menu must be a child of document.body, not of the clipping <nav>.
  *
+ * ROUND 24.6 (owner, 2026-09-14) — REVERTS the #21952 consolidation this guard was originally
+ * written to defend. The owner never asked for 16 tabs -> 6; that was this seat's own initiative,
+ * and the earlier P0 box's line telling the next round not to revert it ("the owner asked for the
+ * consolidation") was itself invented by this seat, not something the owner said. Tightened: every
+ * SUBNAV id must now render as a TOP-LEVEL tab (a child-of-dropdown placement FAILS, even if the
+ * dropdown itself opens correctly and the id is technically reachable two clicks deep) —
+ * INTERNAL_TOOLS_SUBNAV is the one exception, unchanged, returned to its own "Internal Tools"
+ * dropdown exactly as it stood before #21952. The behavioral half below (NavyDropdown proven to
+ * open by a real click, escaping its clipping <nav>) stays required — "Internal Tools" is still a
+ * real dropdown, and this guard also protects every OTHER NavyPageSubNav consumer in the repo.
+ *
  * Static (no DB). Self-test: node scripts/verify-factoring-nav-reachable.mjs --selftest
  */
 import { execSync } from "node:child_process";
@@ -98,6 +109,37 @@ export function extractNavyPageSubNavItemsBlock(src) {
 }
 
 /**
+ * Bracket-match every `children: [ ... ]` array inside a source block, returning their contents
+ * (not including the `children: [` / `]` delimiters themselves). Used to prove a SUBNAV id is NOT
+ * nested inside any dropdown — ROUND 24.6's "child-of-dropdown placement FAILS" rule.
+ */
+export function extractChildrenBlocks(block) {
+  const out = [];
+  const marker = "children: [";
+  let searchFrom = 0;
+  for (;;) {
+    const markerIdx = block.indexOf(marker, searchFrom);
+    if (markerIdx === -1) break;
+    const openBracketIdx = markerIdx + marker.length - 1;
+    let depth = 0;
+    let i = openBracketIdx;
+    for (; i < block.length; i++) {
+      if (block[i] === "[") depth++;
+      else if (block[i] === "]") {
+        depth--;
+        if (depth === 0) {
+          i++;
+          break;
+        }
+      }
+    }
+    out.push(block.slice(openBracketIdx, i));
+    searchFrom = i;
+  }
+  return out;
+}
+
+/**
  * Pure evaluation core (unit-testable / self-testable).
  * @param {{factoringHomeSrc: string, navTestSrc: string, navTestExists: boolean}} input
  * @returns {string[]} failures (empty => pass)
@@ -105,7 +147,7 @@ export function extractNavyPageSubNavItemsBlock(src) {
 export function assertGuard({ factoringHomeSrc, navTestSrc, navTestExists }) {
   const failures = [];
 
-  // --- (1) STRUCTURAL: every SUBNAV / INTERNAL_TOOLS_SUBNAV id is reachable from the live nav ---
+  // --- (1) STRUCTURAL ---
   const subnavIds = extractIdsFromConstBlock(factoringHomeSrc, "SUBNAV");
   const internalIds = extractIdsFromConstBlock(factoringHomeSrc, "INTERNAL_TOOLS_SUBNAV");
   if (!subnavIds) {
@@ -120,22 +162,48 @@ export function assertGuard({ factoringHomeSrc, navTestSrc, navTestExists }) {
   }
 
   if (subnavIds && internalIds && itemsBlock) {
-    // A dropdown item declared with a literal empty children array can never render a menu at all —
-    // structurally present, functionally dead (the exact "reachable... as a child of a dropdown
-    // that actually renders children" failure mode named in the P0).
+    // A dropdown item declared with a literal empty children array can never render a menu at all.
     if (/children:\s*\[\s*\]/.test(itemsBlock)) {
       failures.push(`${FACTORING_HOME_REL} — a dropdown item declares "children: []" (an empty menu can never render anything reachable)`);
     }
 
-    const internalToolsSpread = /\.\.\.INTERNAL_TOOLS_SUBNAV\.map\(/.test(itemsBlock);
+    const childrenBlocks = extractChildrenBlocks(itemsBlock);
 
+    // ROUND 24.6 — every SUBNAV id must be a TOP-LEVEL tab: referenced SOMEWHERE in the items
+    // block, and NOT inside any children: [...] array (a child-of-dropdown placement fails, even
+    // if that dropdown genuinely opens — a tab two clicks deep behind a dropdown is not what this
+    // round asked for). The intended shape is a single generic "...SUBNAV.map(...)" spread, which
+    // covers every SUBNAV id by construction (no per-id literal ever appears in source for that
+    // shape) — when present, only the "not nested in a dropdown" check applies per id. Absent that
+    // spread, fall back to requiring an explicit per-id reference, so a hand-rolled (non-spread)
+    // top-level listing is still accepted as long as it's genuinely top-level and complete.
+    const subnavSpreadPresent = /\.\.\.SUBNAV\.map\(/.test(itemsBlock);
+    if (!subnavSpreadPresent) {
+      failures.push(`${FACTORING_HOME_REL} — <NavyPageSubNav items={[...]}/> does not spread "...SUBNAV.map(...)" — every SUBNAV id must render as its own top-level tab, not be individually listed or nested`);
+    }
     for (const id of subnavIds) {
+      const nestedInChildren = childrenBlocks.some(
+        (block) => new RegExp(`["'\`]${id}["'\`]`).test(block) || new RegExp(`FACTORING_TAB_PATH\\.${id}\\b`).test(block)
+      );
+      if (nestedInChildren) {
+        failures.push(`SUBNAV id "${id}" is nested inside a dropdown's children — ROUND 24.6 requires every SUBNAV id to be its own top-level tab, not a child two clicks deep`);
+        continue;
+      }
+      if (subnavSpreadPresent) continue; // covered by construction — every SUBNAV id renders, none nested (checked above)
       const directPath = new RegExp(`FACTORING_TAB_PATH\\.${id}\\b`).test(itemsBlock);
       const asChildId = new RegExp(`["'\`]${id}["'\`]`).test(itemsBlock);
       if (!directPath && !asChildId) {
         failures.push(`SUBNAV id "${id}" is not referenced anywhere inside <NavyPageSubNav items={[...]}/> — unreachable (surface shipped, route alive, link dead)`);
       }
     }
+
+    // INTERNAL_TOOLS_SUBNAV is the one exception — it belongs INSIDE a dropdown (its own "Internal
+    // Tools" group, restored to its pre-#21952 position), not top-level. No nesting check for it.
+    // Matches either `children: INTERNAL_TOOLS_SUBNAV.map(...)` (the pre-#21952 shape, restored by
+    // ROUND 24.6 verbatim — .map() already returns an array, nothing else to combine it with) or
+    // `children: [...INTERNAL_TOOLS_SUBNAV.map(...), ...]` (a spread inside a literal array,
+    // needed only when combining with other entries) — both are valid, equivalent JS.
+    const internalToolsSpread = /INTERNAL_TOOLS_SUBNAV\.map\(/.test(itemsBlock);
     for (const id of internalIds) {
       const directPath = new RegExp(`FACTORING_TAB_PATH\\.${id}\\b`).test(itemsBlock);
       const asChildId = new RegExp(`["'\`]${id}["'\`]`).test(itemsBlock);
@@ -198,7 +266,7 @@ function runReal() {
   }
 
   console.log(
-    `[${LABEL}] PASS — every SUBNAV/INTERNAL_TOOLS_SUBNAV id is referenced inside FactoringHome.tsx's <NavyPageSubNav items={[...]}/>, and NavyDropdown is proven (by a real click) to actually open and render its children`
+    `[${LABEL}] PASS — every SUBNAV id renders as its own top-level tab (none nested inside a dropdown), INTERNAL_TOOLS_SUBNAV is reachable inside its own "Internal Tools" dropdown, and NavyDropdown is proven (by a real click) to actually open and render its children`
   );
 }
 
@@ -213,14 +281,12 @@ function runSelftest() {
     ] as const;
     <NavyPageSubNav
       items={[
+        ...SUBNAV.map((item) => ({
+          label: item.label,
+          to: item.id === "submit_invoice" ? "/factoring/submit" : FACTORING_TAB_PATH[item.id],
+        })),
         {
-          label: "Cash",
-          to: "",
-          children: (["funds_due"] as const).map((id) => ({ label: SUBNAV.find((i) => i.id === id)!.label, to: FACTORING_TAB_PATH[id] })),
-        },
-        { label: "Chargebacks", to: FACTORING_TAB_PATH.chargebacks_overpayments },
-        {
-          label: "Settings",
+          label: "Internal Tools",
           to: "",
           children: [
             ...INTERNAL_TOOLS_SUBNAV.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] })),
@@ -247,9 +313,21 @@ function runSelftest() {
       expectPass: true,
     },
     {
-      name: "regression: a SUBNAV id dropped from the items array entirely (surface shipped, link dead)",
+      name: "regression: the ...SUBNAV.map( spread is removed entirely (reverts to per-id enumeration, tabs go missing)",
       input: {
-        factoringHomeSrc: goodFactoringHome.replace('children: (["funds_due"] as const)', 'children: ([] as const)'),
+        factoringHomeSrc: goodFactoringHome.replace("...SUBNAV.map((item) => ({\n          label: item.label,\n          to: item.id === \"submit_invoice\" ? \"/factoring/submit\" : FACTORING_TAB_PATH[item.id],\n        })),", ""),
+        navTestSrc: goodNavTest,
+        navTestExists: true,
+      },
+      expectPass: false,
+    },
+    {
+      name: "regression: ROUND 24.6 — a SUBNAV id nested inside a dropdown's children (reachable, but two clicks deep — still fails)",
+      input: {
+        factoringHomeSrc: goodFactoringHome.replace(
+          "children: [\n            ...INTERNAL_TOOLS_SUBNAV.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] })),\n          ],",
+          'children: [\n            { label: "Funds Due", to: FACTORING_TAB_PATH.funds_due },\n            ...INTERNAL_TOOLS_SUBNAV.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] })),\n          ],'
+        ),
         navTestSrc: goodNavTest,
         navTestExists: true,
       },
