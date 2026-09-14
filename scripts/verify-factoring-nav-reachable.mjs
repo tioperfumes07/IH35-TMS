@@ -28,6 +28,18 @@
  * the owner's own framing: the behavioral half of this guard is what actually pins that fix in place,
  * for every current and future NavyPageSubNav dropdown consumer, not just Factoring.
  *
+ * SECOND ROOT CAUSE, found only by re-checking LIVE after the first fix deployed (dry-run-clean /
+ * vitest-clean is not proof): the click-race fix alone was not enough. `<nav className=
+ * "overflow-x-auto ...">` (NavyPageSubNav's own root) computes `overflow-y: auto` too — the exact
+ * GO-23 nav-dropdown-clip root cause named above, this time hitting NavyDropdown itself, not just
+ * HoverDropdownNav. Confirmed live: `elementFromPoint` at the open menu's own reported coordinates
+ * returned a page-content div, not the menu, despite zIndex:30/opacity:1/display:block all reading
+ * correctly — proof of clipping, not a stacking-context or state bug. Fixed the same way as GO-23:
+ * portal the open menu into document.body via the SAME shared `measureNavDropdownStyle()` helper
+ * HoverDropdownNav/DispatchSubnav already use. Because jsdom has no real layout engine (every rect
+ * reads 0x0), the guard's behavioral half below cannot see the clipping pixel-for-pixel — but it CAN
+ * see the structural fix: the open menu must be a child of document.body, not of the clipping <nav>.
+ *
  * Static (no DB). Self-test: node scripts/verify-factoring-nav-reachable.mjs --selftest
  */
 import { execSync } from "node:child_process";
@@ -145,6 +157,8 @@ export function assertGuard({ factoringHomeSrc, navTestSrc, navTestExists }) {
       ["user.click(", "must actually invoke the user-event click, not just set it up"],
       ['toHaveAttribute("aria-expanded", "true")', "must assert the dropdown's own open state actually flips true after the click, not just that markup exists"],
       ['getByRole("menuitem"', "must assert a real, rendered child menu item is present and visible after the click"],
+      ["document.body.contains(menu)", "must assert the open menu escaped into a document.body portal — a structural-only or aria-expanded-only check would have PASSED on the SECOND broken build too, where the state flipped correctly but the menu was still invisible, clipped by <nav>'s own overflow-y:auto"],
+      ["nav.contains(menu)", "must assert the menu is no longer inside its own <nav> (the overflow-clipping ancestor), not just that it exists somewhere in the document"],
     ];
     for (const [needle, why] of required) {
       if (!navTestSrc.includes(needle)) {
@@ -220,6 +234,10 @@ function runSelftest() {
     await user.click(trigger);
     expect(trigger).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByRole("menuitem", { name: "Funds Due" })).toBeVisible();
+    const menu = screen.getByRole("menu");
+    const nav = screen.getByRole("navigation", { name: "Section navigation" });
+    expect(nav.contains(menu)).toBe(false);
+    expect(document.body.contains(menu)).toBe(true);
   `;
 
   const cases = [
@@ -277,6 +295,20 @@ function runSelftest() {
       input: {
         factoringHomeSrc: goodFactoringHome,
         navTestSrc: `fireEvent.click(trigger); expect(trigger).toHaveAttribute("aria-expanded", "true"); screen.getByRole("menuitem", { name: "x" });`,
+        navTestExists: true,
+      },
+      expectPass: false,
+    },
+    {
+      name: "regression: test proves open state + real click but never proves the menu escaped its clipping <nav> (would pass on the SECOND broken build: state fixed, still clipped)",
+      input: {
+        factoringHomeSrc: goodFactoringHome,
+        navTestSrc: `
+          const user = userEvent.setup();
+          await user.click(trigger);
+          expect(trigger).toHaveAttribute("aria-expanded", "true");
+          expect(screen.getByRole("menuitem", { name: "Funds Due" })).toBeVisible();
+        `,
         navTestExists: true,
       },
       expectPass: false,
