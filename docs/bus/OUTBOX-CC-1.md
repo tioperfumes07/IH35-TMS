@@ -408,3 +408,37 @@ GL written, `gross_amount_cents`/miles/rates untouched (CC-3's B3, out of scope 
 Live proof, independent fresh read: all 7 rows now read their correct GEN-B settlement, `status=
 'locked'`, `source_document_ref` in (5778,5790,5800,5801,5802,5803) — exact match to the round's
 own DONE-proof query. PR #22055, shipping via fast-merge.
+
+## 2026-09-14 — P1 LOAD-NUMBER-COUNTER-POISONED — EXECUTED on prod, register recorded
+
+**Live query verdict on 13743/13749** (not assumed): both are CC-1's own live-proof TEST bookings
+— both `status='cancelled'`, both created AND cancelled 2026-09-09, both self-documented in their
+own `cancel_reason` text ("CC-1 test load ... Not a real freight movement"). No real freight, no
+customer WO, no genuine business. No gap in the real sequence exists between them and the true
+working max (13595, dispatched, 2026-09-11) — 13594/13593/13592/13591/13590 all confirmed real,
+dispatched, no cancel_reason, no gap.
+
+**COUNTER REGISTER** — this is the recorded correction, not a silent reset:
+- `lib.trace_counters` (USMCA, `doc_type='LOAD'`): **before = 13763** (drifted from the round's own
+  reported 13761 due to this session's own Chrome verification reservations), **after = 13595**.
+- **Reason**: seed picked up `status='cancelled'` test loads 13743/13749 instead of the true
+  working max — see live query above.
+- **Collision check** (immediately before the write, inside the same transaction): `load_number
+  = '13596'` exists in **0 rows**, live or soft-deleted.
+- Next mint is now **13596**, the owner's next number.
+
+**Recurrence fix**: the seed is now primarily sourced from the office's own first manually-typed
+numeric load number at the moment it saves (`seedLoadNumberCounterFromManualEntry`, wired into
+both booking paths), not reconstructed later from a `MAX()` scan that has no way to distinguish a
+ghost from a real number. The old `MAX()` scan is now a documented fallback only, hardened to
+exclude cancelled rows.
+
+**UI fix (owner's actual ask)**: confirmed live via Chrome screenshot — the Load # box stayed
+**empty** on wizard open despite a real reservation existing the whole time (caption hint only,
+also showing a second, independent ghost-pollution bug: the suggestion caption read
+"INV-2026-00008", a non-numeric placeholder load incremented by a generic, load-number-unaware
+algorithm). Fixed: box now pre-fills with the real reserved number on open, fully editable, typed
+value wins verbatim — same rule already ruled for the Load Costs NUMBER column.
+
+PR #22064, shipping via fast-merge now. Final "13596 pre-filled, deployed" screenshot follows once
+live.

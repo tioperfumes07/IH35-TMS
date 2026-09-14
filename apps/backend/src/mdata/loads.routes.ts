@@ -19,6 +19,7 @@ import {
   assertLoadNumberAvailable,
   FirstLoadNumberRequiredError,
   LoadNumberConflictError,
+  seedLoadNumberCounterFromManualEntry,
 } from "../dispatch/load-id-reservation.service.js";
 import { writeLoadCancellationRecord } from "../dispatch/cancellation.service.js";
 import {
@@ -483,6 +484,14 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           );
           await client.query(`RELEASE SAVEPOINT create_load`);
           inserted = res.rows[0] ?? null;
+          // P1 2026-09-14 (LOAD-NUMBER-COUNTER-POISONED) — same hook as book-load.service.ts's own
+          // create path: a manually-typed, purely numeric load number that just saved for real
+          // seeds the counter with itself if the company has none yet, instead of leaving that to
+          // allocateNextLoadNumber's own MAX()-scan fallback (see its header for why that scan can
+          // be wrong). No-op once the counter already exists.
+          if (b.load_number && b.load_number === loadNumber) {
+            await seedLoadNumberCounterFromManualEntry(client, b.operating_company_id, loadNumber);
+          }
         } catch (err) {
           await client.query(`ROLLBACK TO SAVEPOINT create_load`).catch(() => undefined);
           if ((err as { code?: string }).code !== "23505") throw err;
