@@ -25,6 +25,22 @@
 // b5-full-recut-orchestration.ts's own header for how those shells were discovered). L4 is warn-only
 // until CC-3's B3 proof lands in the same PR that flips it to a hard fail (owner's own instruction).
 //
+// ROUND 24.4 (owner, 2026-09-14) -- CC-1 finished the full driver_bills repoint (#22067). Re-measured
+// live: L1=15 (down from 29), L3=21 (down from 26). The owner ruled L1's ORIGINAL "0" requirement was
+// itself wrong: all 15 are correct rows, not defects -- 13 sit on live status='open' tours
+// (S-2026-5804..5810) for loads booked after AlwaysTrack's ingest window closed at 5803 (no document
+// exists to point them at; inventing one would fabricate a record), plus 2 standing owner-known
+// closed-settlement bills with a real, merely out-of-cutover-range ref (13581 -- the owner-gated Faro
+// short-pay dispute; 13583). L1 REWRITTEN (see its own query comment below): a live bill may not
+// point at a CANCELLED settlement, or a NULL-ref settlement that is NOT open -- the out-of-range
+// check is gone entirely; a real ref outside 5769-5803 is legal. Required value 0 -- passes today.
+// L3_BASELINE tightened 26 -> 21. Both L1 and L3 now also exclude status='void' (not only
+// voided_at IS NULL) on both driver_bills and driver_settlements -- one live driver_bills row has
+// status='void' with voided_at still NULL (an inconsistency CC-1 is separately fixing; this guard
+// must not depend on that landing first to read correctly). L4 stays warn-only in this PR -- the
+// owner's own instruction is to flip it to hard-fail in the SAME PR as CC-3's B3 proof, which has not
+// landed yet.
+//
 // THE BYPASS TRAP (owner's own words, verbatim, "produced a false green three times today"): a CTE
 // calling set_config('app.bypass_rls','lucia',true) must be declared AS MATERIALIZED and referenced
 // in a WHERE clause -- (SELECT v FROM b)='lucia'. Referenced only in the SELECT list, or not at all,
@@ -51,9 +67,11 @@ const ATRACK_MAX = 5803;
 // live USMCA settlement with status='locked' and a ref in 5769-5803") -- lower than the owner's
 // figure because this session's own DELTA 3 work (closing loads 13526/13561/13567 onto their
 // pre-seeded shells, PR #22050) already moved 2 settlements off the zero-bills list between the
-// owner's measurement and this guard's own. Baselined at the RE-MEASURED value, not the cited one --
-// re-measure before ever changing this number; lower it only after confirming a real drop, never raise it.
-const L3_BASELINE = 26;
+// owner's measurement and this guard's own. ROUND 24.4 (owner, 2026-09-14): CC-1 finished the full
+// driver_bills settlement-linkage repoint (#22067) -- re-measured 21 (down from 26), owner's own
+// live figure, exact match. Ratchet tightens: 26 -> 21. Lower only after confirming a real drop
+// (re-measure, never copy), never raise it.
+const L3_BASELINE = 21;
 
 const RANGE_SQL = `ds.source_document_ref ~ '^[0-9]+$' AND ds.source_document_ref::int BETWEEN ${ATRACK_MIN} AND ${ATRACK_MAX}`;
 
@@ -84,24 +102,34 @@ async function live() {
     }
     console.log(`${LABEL}: completeness discriminator OK — ${total} live USMCA driver_settlements rows visible.`);
 
-    // L1 — no live USMCA driver_bill may point at a settlement whose ref is NULL or out of range.
+    // L1 — ROUND 24.4 REWRITE (owner, 2026-09-14, verbatim): the original "NULL or out-of-range ref"
+    // rule flagged 15 bills that are NOT defects -- 13 sit on live, in-progress status='open' tours
+    // (S-2026-5804..5810) for loads booked AFTER the AlwaysTrack ingest window closed at 5803 (there
+    // is no document to point them at; inventing one would fabricate a record), plus 2 standing
+    // owner-known closed-settlement bills (13581 -- the owner-gated Faro short-pay dispute, doc 5813;
+    // 13583, doc 5814) whose refs are simply outside the AlwaysTrack cutover range but real. "An open
+    // tour with a post-5803 ref is legal and must pass." New rule: a live bill may not point at a
+    // CANCELLED settlement, or at a settlement with NO ref at all UNLESS that settlement is still
+    // open (open, no-ref-yet is a normal in-progress tour). The out-of-range check is gone entirely
+    // -- a real ref, even outside 5769-5803, is legal. Required value 0 -- passes today (owner-
+    // verified live before issuing this rewrite).
     const l1Res = await client.query(
       `WITH b AS MATERIALIZED (SELECT set_config('app.bypass_rls','lucia',true) AS v)
-       SELECT db.id::text, db.load_number, ds.display_id, ds.source_document_ref
+       SELECT db.id::text, db.load_number, ds.display_id, ds.status AS settlement_status, ds.source_document_ref
          FROM driver_finance.driver_bills db
          JOIN driver_finance.driver_settlements ds ON ds.id = db.settled_in_settlement_id
         WHERE (SELECT v FROM b)='lucia'
-          AND db.operating_company_id = $1::uuid AND db.voided_at IS NULL
-          AND ds.operating_company_id = $1::uuid AND ds.voided_at IS NULL
-          AND (ds.source_document_ref IS NULL OR NOT (${RANGE_SQL}))`,
+          AND db.operating_company_id = $1::uuid AND db.voided_at IS NULL AND db.status <> 'void'
+          AND ds.operating_company_id = $1::uuid AND ds.voided_at IS NULL AND ds.status <> 'void'
+          AND (ds.status = 'cancelled' OR (ds.source_document_ref IS NULL AND ds.status <> 'open'))`,
       [USMCA_COMPANY_ID]
     );
     if (l1Res.rows.length > 0) {
-      console.error(`L1: FAIL — ${l1Res.rows.length} live driver_bill(s) point at a settlement with a NULL or out-of-range ref (required: 0):`);
-      for (const r of l1Res.rows) console.error(`  ✗ bill ${r.id} load ${r.load_number} -> ${r.display_id} ref=${r.source_document_ref ?? "NULL"}`);
+      console.error(`L1: FAIL — ${l1Res.rows.length} live driver_bill(s) point at a cancelled settlement, or a NULL-ref settlement that isn't open (required: 0):`);
+      for (const r of l1Res.rows) console.error(`  ✗ bill ${r.id} load ${r.load_number} -> ${r.display_id} status=${r.settlement_status} ref=${r.source_document_ref ?? "NULL"}`);
       failures++;
     } else {
-      console.log(`L1: PASS — 0 driver_bill(s) point at a NULL/out-of-range-ref settlement.`);
+      console.log(`L1: PASS — 0 driver_bill(s) point at a cancelled settlement or a NULL-ref non-open settlement.`);
     }
 
     // L2 — no two live USMCA settlements may share a source_document_ref.
@@ -130,8 +158,10 @@ async function live() {
        SELECT ds.id::text, ds.display_id
          FROM driver_finance.driver_settlements ds
          LEFT JOIN driver_finance.driver_bills db
-           ON db.settled_in_settlement_id = ds.id AND db.operating_company_id = ds.operating_company_id AND db.voided_at IS NULL
-        WHERE (SELECT v FROM b)='lucia' AND ds.operating_company_id = $1::uuid AND ds.voided_at IS NULL
+           ON db.settled_in_settlement_id = ds.id AND db.operating_company_id = ds.operating_company_id
+          AND db.voided_at IS NULL AND db.status <> 'void'
+        WHERE (SELECT v FROM b)='lucia' AND ds.operating_company_id = $1::uuid
+          AND ds.voided_at IS NULL AND ds.status <> 'void'
           AND ds.status = 'locked' AND ${RANGE_SQL}
         GROUP BY ds.id, ds.display_id
        HAVING count(db.id) = 0`,
