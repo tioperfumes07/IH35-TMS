@@ -27,6 +27,7 @@ import {
   stampFinalActiveDeliveryDeparture,
 } from "../dispatch/stamp-final-delivery-departure.js";
 import {
+  assertClosedLoadHasPricedDriverBill,
   ensureDriverBillArtifactsForLoad,
   resolveLoadTrailerEquipmentIdForInsert,
 } from "../dispatch/book-load.service.js";
@@ -1269,6 +1270,21 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         return { error: "cancellation_reason_required" as const };
       }
 
+      // ROUND 24.7 RULING (owner 2026-09-15) — "A load may NOT transition to closed/settled while it
+      // carries an open $0 driver bill AND its driver has no active row in mdata.driver_pay_rates."
+      // Refuse LOUDLY, on screen, with the reason and the driver's name; never a silent no-op. The
+      // 2026-09-11 open-$0-tracking-bill workflow at booking time is untouched — this only stops the
+      // load from sliding into `closed` carrying that same $0 placeholder unnoticed.
+      if (newStatus === "closed") {
+        const closedCheck = await assertClosedLoadHasPricedDriverBill(client, {
+          loadId: current.id,
+          operatingCompanyId: current.operating_company_id,
+        });
+        if (!closedCheck.ok) {
+          return { error: "closed_load_requires_priced_driver_bill" as const, reason: closedCheck.reason };
+        }
+      }
+
       // OWNER DECISION 4 (2026-07-25): this route is the SECOND cancel path — the Dispatch Kanban's
       // "Cancelled" drop column calls it. It used to validate the reason, flip mdata.loads.status, and record
       // the reason only inside an audit-log JSON string: NO dispatch.load_cancellations row, no
@@ -1485,6 +1501,11 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       }
       if (result.error === "owner_approval_required") {
         return reply.code(403).send({ error: "owner_approval_required" });
+      }
+      if (result.error === "closed_load_requires_priced_driver_bill") {
+        // CU-09 / CLS-BARE-ERROR — `message` (not just `reason`) so userFacingApiError surfaces this
+        // verbatim instead of falling back to a bare error code (api-error-message.ts's generic key list).
+        return reply.code(409).send({ error: "closed_load_requires_priced_driver_bill", message: result.reason, reason: result.reason });
       }
     }
 

@@ -19,6 +19,7 @@ import { latchOnDeliveryEvidence } from "./delivery-evidence-latch.js";
 // ACCT-F166 — settlement half of a delivery; see the call site for why this route needs it.
 import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bookended.service.js";
 import { cancelLoadInClientTx } from "./cancellation.service.js";
+import { assertClosedLoadHasPricedDriverBill } from "./book-load.service.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 
 // Transitions that fire escrow-proposal + settlement side-effects on the per-load endpoint
@@ -150,6 +151,20 @@ async function handleLoadBulk(ctx: BulkPerEntityContext<LoadBulkPayload>): Promi
     }
 
     const mdataStatus = toMdataStatus(statusPayload.transition);
+
+    // ROUND 24.7 RULING (owner 2026-09-15) — same rule as the per-load PATCH /status route: a load
+    // may not reach `closed` carrying an open $0 driver bill whose driver is missing a pay rate
+    // and/or captured shortest miles. Refuse LOUDLY, on screen, with the reason.
+    if (mdataStatus === "closed") {
+      const closedCheck = await assertClosedLoadHasPricedDriverBill(client as never, {
+        loadId: id,
+        operatingCompanyId,
+      });
+      if (!closedCheck.ok) {
+        return { ok: false, code: "E_CLOSED_LOAD_REQUIRES_PRICED_DRIVER_BILL", message: closedCheck.reason };
+      }
+    }
+
     const updateRes = await client.query(
       `
         UPDATE mdata.loads

@@ -90,7 +90,13 @@ export function moneyPathStatuses(apiSrc) {
  * This list is deliberately EXPLICIT — the whole point is that skipping the money path must be a decision
  * somebody wrote down, never the silent default for anything a future author forgets to map.
  */
-const MONEY_FREE_PRE_DISPATCH = new Set(["planned", "booked"]);
+// ROUND 24.7 (found pre-existing on origin/main, unrelated to this PR's own diff, proven via
+// worktree against origin/main before fixing) -- "draft" added: the Kanban's "Drafts" lane
+// (ROUND 24.2, loads-list-drafts-visible) drops a row back to `status='draft'` or the parallel
+// `is_quicksave_draft` flag. A draft has no unit/driver dispatched, no revenue recognised anywhere,
+// and mints no driver_bills row (createDriverBillArtifacts requires assigned_primary_driver_id or
+// team_id, neither of which a draft carries) -- same "nothing has moved yet" shape as planned/booked.
+const MONEY_FREE_PRE_DISPATCH = new Set(["planned", "booked", "draft"]);
 
 /**
  * LV-KANBAN-DROP-SWALLOWED-REJECTION (2026-08-08, INVERTED — read the history, it matters).
