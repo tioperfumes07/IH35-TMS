@@ -287,6 +287,12 @@ export function runStatic({
   // guard not in scope becomes a cheap SKIP-scope result instead of a spawned child process.
   changedFiles = null,
   stepMap = null,
+  // ROUND-P0-FACTORING-NAV (2026-09-14): a single-guard diagnostic run, e.g.
+  // `node scripts/verify-static.mjs --only verify-factoring-nav-reachable`. Accepts the guard's
+  // basename with or without the `verify-`/`.mjs` decoration so a human can type the short form.
+  // Purely a filter on which files get spawned — does not change scoping/baseline semantics for
+  // the (subset of) guards that do run.
+  only = null,
 } = {}) {
   const set = ciSet || ciRunGuardSet();
   const scopeMap = changedFiles !== null ? (stepMap ?? ensureFreshGateStepMap({ dir }).map) : null;
@@ -298,9 +304,13 @@ export function runStatic({
       sharedClassifyOptions.root ?? ROOT
     );
   }
+  const onlyBase = only
+    ? (only.startsWith("verify-") ? only : `verify-${only}`).replace(/(\.mjs)?$/, ".mjs")
+    : null;
   const files = fs
     .readdirSync(dir)
     .filter((f) => /^verify-.*\.mjs$/.test(f) && f !== self && !NON_STATIC_ORCHESTRATORS.has(f))
+    .filter((f) => (onlyBase ? f === onlyBase : true))
     .sort()
     // docs/module-completion/<module>.md is GENERATED from the .json beside it and is no longer
     // committed (it conflicted on every merge). Four guards READ those files —
@@ -496,7 +506,12 @@ if (isDirectRun) {
       `GATE_FULL=1 forces every guard; CI never scopes.`
     );
   }
-  const results = runStatic({ changedFiles });
+  const onlyIdx = process.argv.indexOf("--only");
+  const only = onlyIdx !== -1 ? process.argv[onlyIdx + 1] ?? null : null;
+  if (only) {
+    console.log(`[${LABEL}] --only ${only} — single-guard diagnostic run, not the CI/pre-push shape.`);
+  }
+  const results = runStatic({ changedFiles, only });
   printSummary(results);
   const gatedFails = results.filter(
     (r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST && r.gated

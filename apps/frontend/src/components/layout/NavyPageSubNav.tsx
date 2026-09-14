@@ -47,31 +47,68 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
   const menuRef = useRef<HTMLUListElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  // PR #21952 FOLLOW-UP (P0, owner 2026-09-14): `onMouseEnter={show}` on the wrapper races the
+  // button's own `onClick` toggle. A real (or automated) click is always preceded by a `mouseenter`
+  // on the same element -- the cursor has to land on the button before the click fires. That
+  // mouseenter opened the menu via `show()` FIRST; the click's own `setOpen((o) => !o)` then flipped
+  // it straight back to closed in the same tick, before React ever painted the open state. Net
+  // effect: the dropdown never visibly opens on click, only via a mouseenter with no click (rare --
+  // e.g. focus via keyboard Tab then a non-click pointer move). Confirmed live via a realistic
+  // mousemove/mouseover/mouseenter/mousedown/mouseup/click sequence dispatched at the real DOM node.
+  // Fix: track whether the CURRENT open state was opened by hover. If so, the click that immediately
+  // follows is the user's actual "open" gesture (their pointer was already there) -- consume it as a
+  // no-op instead of toggling closed, and hand control to the normal click-to-close path on the NEXT
+  // click. `close()` always clears the flag so it can never leak into an unrelated later click.
+  const openedByHoverRef = useRef(false);
 
   const clearHide = useCallback(() => {
     if (hideTimer.current != null) { clearTimeout(hideTimer.current); hideTimer.current = null; }
   }, []);
 
+  const close = useCallback(() => {
+    openedByHoverRef.current = false;
+    setOpen(false);
+  }, []);
+
   const scheduleHide = useCallback(() => {
     clearHide();
-    hideTimer.current = setTimeout(() => setOpen(false), 150);
+    hideTimer.current = setTimeout(close, 150);
+  }, [clearHide, close]);
+
+  const show = useCallback(() => {
+    clearHide();
+    openedByHoverRef.current = true;
+    setOpen(true);
   }, [clearHide]);
 
-  const show = useCallback(() => { clearHide(); setOpen(true); }, [clearHide]);
+  const toggleFromClick = useCallback(() => {
+    if (openedByHoverRef.current) {
+      // The mouseenter that just fired already opened this -- this click is that same gesture's
+      // click, not a second, deliberate "close it" click. Consume it and arm normal toggle behavior.
+      openedByHoverRef.current = false;
+      setOpen(true);
+      return;
+    }
+    setOpen((o) => {
+      const next = !o;
+      if (!next) openedByHoverRef.current = false;
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     if (!open) return undefined;
     const onDown = (e: MouseEvent) => {
       if (wrapperRef.current?.contains(e.target as Node)) return;
-      setOpen(false);
+      close();
     };
     const onKey = (e: globalThis.KeyboardEvent) => {
-      if (e.key === "Escape") { setOpen(false); btnRef.current?.focus(); }
+      if (e.key === "Escape") { close(); btnRef.current?.focus(); }
     };
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
     return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
-  }, [open]);
+  }, [open, close]);
 
   useEffect(() => () => clearHide(), [clearHide]);
 
@@ -94,7 +131,7 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
   };
 
   const onButtonKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
-    if (e.key === "Escape" && open) { e.preventDefault(); setOpen(false); return; }
+    if (e.key === "Escape" && open) { e.preventDefault(); close(); return; }
     if (e.key === "ArrowDown") { e.preventDefault(); setOpen(true); queueMicrotask(() => menuRef.current?.querySelector<HTMLAnchorElement>("a")?.focus()); return; }
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(true); queueMicrotask(() => menuRef.current?.querySelector<HTMLAnchorElement>("a")?.focus()); }
   };
@@ -121,7 +158,7 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
         aria-expanded={open}
         aria-controls={menuId}
         className={hasDefaultHref ? "" : parentActive ? "border-b border-white pb-0.5 font-semibold" : ""}
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggleFromClick}
         onKeyDown={onButtonKeyDown}
       >
         {hasDefaultHref ? null : item.label}
@@ -142,7 +179,7 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
                 role="menuitem"
                 to={child.to}
                 className={`block whitespace-nowrap px-3 py-1.5 hover:bg-gray-50 ${isActive(pathname, child.to) ? "font-semibold text-gray-900" : ""}`}
-                onClick={() => setOpen(false)}
+                onClick={close}
               >
                 {child.label}
               </Link>
