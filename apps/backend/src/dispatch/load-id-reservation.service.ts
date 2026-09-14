@@ -134,14 +134,84 @@ export async function allocateNextLoadNumber(client: DbClient, operatingCompanyI
     );
   }
 
-  const seqRes = await client.query<{ seq: string }>(`SELECT lib.next_trace_no($1::uuid, 'LOAD')::text AS seq`, [
-    operatingCompanyId,
-  ]);
-  const seq = seqRes.rows[0]?.seq;
-  if (!seq || !/^[0-9]+$/.test(seq)) {
-    throw new Error("load_number_allocator_failed");
+  // P0 2026-09-14 (LOAD-NUMBER-COUNTER-BURN-ON-OPEN, item 3) — lib.next_trace_no() is a BLIND
+  // atomic increment with zero collision awareness against mdata.loads. Live-evidenced 2026-09-14:
+  // USMCA has two cancelled ghost test bookings (load_number 13743, 13749) that occupy real rows
+  // under the plain (non-partial) UNIQUE(operating_company_id, load_number) constraint — cancelling
+  // a load does NOT free its number. The P1 register correction that same day rolled the counter
+  // BACKWARD below those two numbers (13762 -> 13596, the real working max), which is correct for
+  // TODAY but means ordinary future counting will walk the sequence back UP through 13743 and 13749
+  // and mint them again -- and the INSERT will then fail on a real unique-violation in front of a
+  // real dispatcher. A pure "allocate atomically once, at save" design (the owner's own instinct,
+  // and what item 3's counter correction assumes) is not itself sufficient without this check; it
+  // is what makes it safe going forward without redesigning into a full MAX()+collision-check
+  // allocator (option c) for every call. Bounded retry: skip any number lib.next_trace_no() returns
+  // that a live row already holds, advancing the counter each time (never rewinding), capped so a
+  // real bug elsewhere (e.g. a stuck counter) fails loudly instead of looping forever.
+  const MAX_COLLISION_SKIPS = 1000;
+  for (let attempt = 0; attempt < MAX_COLLISION_SKIPS; attempt++) {
+    const seqRes = await client.query<{ seq: string }>(`SELECT lib.next_trace_no($1::uuid, 'LOAD')::text AS seq`, [
+      operatingCompanyId,
+    ]);
+    const seq = seqRes.rows[0]?.seq;
+    if (!seq || !/^[0-9]+$/.test(seq)) {
+      throw new Error("load_number_allocator_failed");
+    }
+    const taken = await client.query<{ exists: boolean }>(
+      `SELECT EXISTS (SELECT 1 FROM mdata.loads WHERE operating_company_id = $1::uuid AND load_number = $2) AS exists`,
+      [operatingCompanyId, seq]
+    );
+    if (!taken.rows[0]?.exists) {
+      return seq;
+    }
+    // A real, already-existing row (e.g. a cancelled ghost) holds this number -- next_trace_no()
+    // already advanced the counter past it permanently (irreversible by design, same as any other
+    // burned number); loop to the next one rather than returning a value doomed to 23505 at INSERT.
   }
-  return seq;
+  throw new Error("load_number_allocator_exhausted_collision_retries");
+}
+
+/**
+ * P0 2026-09-14 (LOAD-NUMBER-COUNTER-BURN-ON-OPEN) — a PURE READ, zero side effects, zero writes.
+ * Never calls lib.next_trace_no() (that's the irreversible increment) and never seeds
+ * lib.trace_counters if it doesn't exist yet -- this function only ever SELECTs.
+ *
+ * ROOT CAUSE this exists to fix: allocateNextLoadNumber() above is correct and remains the ONLY
+ * real allocator, but every prior caller of it from the wizard's own open-on-mount flow
+ * (LiveLoadIdBar -> reserveDispatchLoadId -> reserveNextLoadId -> allocateNextLoadNumber) spent a
+ * real, permanent number the instant the wizard was opened -- whether or not a load was ever
+ * created. Live-proven 2026-09-14: last_trace_no 13611 -> open the wizard -> close without saving
+ * -> 13612, one number burned, zero rows created. Ninety minutes of ordinary opening-and-abandoning
+ * burned 16 numbers this same day.
+ *
+ * FIX: the wizard now calls THIS function on open (via GET .../loads/next-number-peek) to display
+ * a live-computed PREVIEW only. No reservation row, no counter increment, nothing written. The
+ * REAL allocation still happens exactly once, atomically, via allocateNextLoadNumber -- but now
+ * only at the moment book-load.service.ts's own createLoad() actually inserts the row (the
+ * `if (!loadNumber) { reserveNextLoadId(...) }` fallback already there, previously unreachable in
+ * practice because the frontend always pre-empted it with a proactive mount-time reservation). A
+ * number is spent when a load is created, not when a screen opens.
+ *
+ * Two dispatchers can see the same preview momentarily if both open the wizard at once -- this is
+ * NOT a real collision: whichever one actually submits first gets that number for real (via the
+ * existing atomic sequence), and the second dispatcher's stale preview simply never matches what
+ * they end up submitting with (the number in the response after a successful save is always the
+ * real one, shown to them then). No number is ever double-issued because nothing is issued by
+ * peeking -- only allocateNextLoadNumber issues, and it remains atomic.
+ */
+export async function peekNextLoadNumber(client: DbClient, operatingCompanyId: string): Promise<string> {
+  const { rows } = await client.query<{ last_trace_no: string | null }>(
+    `SELECT last_trace_no::text FROM lib.trace_counters WHERE operating_company_id = $1::uuid AND doc_type = 'LOAD'`,
+    [operatingCompanyId]
+  );
+  if (!rows[0]?.last_trace_no) {
+    // No counter seeded yet -- same UX as allocateNextLoadNumber's own first-ever-mint case: the
+    // office must type the first number. Do NOT fall back to a MAX() scan here either; peeking
+    // must never invent a number the real allocator wouldn't also produce.
+    throw new FirstLoadNumberRequiredError();
+  }
+  const next = BigInt(rows[0].last_trace_no) + 1n;
+  return next.toString();
 }
 
 /**

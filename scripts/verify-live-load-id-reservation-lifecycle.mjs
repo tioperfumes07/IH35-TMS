@@ -1,61 +1,80 @@
 #!/usr/bin/env node
+// P0 2026-09-14 (LOAD-NUMBER-COUNTER-BURN-ON-OPEN) — REWRITTEN IN PLACE (fix, don't delete). This
+// guard used to assert the TTL-reservation-on-mount design (reserveDispatchLoadId /
+// releaseDispatchLoadReservation, "● Reserved" countdown). That design was root-caused as the
+// burn: opening the wizard called reserveDispatchLoadId on mount, which spent a real, permanent
+// load number via lib.next_trace_no() whether or not a load was ever saved (live-proven
+// 13611 -> open wizard -> close unsaved -> 13612; 16 numbers burned in 90 minutes, zero loads
+// created). It is now replaced by a PEEK-only design: LiveLoadIdBar shows a non-consuming preview
+// (peekNextLoadNumber, a pure read) and the real allocation happens exactly once, atomically, at
+// save (book-load.service.ts's existing `if (!loadNumber) { reserveNextLoadId(...) }` fallback).
+// This file's job stays the same — prove the load-id lifecycle design holds — just against the
+// new shape.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILE = "apps/frontend/src/pages/dispatch/components/book-load-v4/LiveLoadIdBar.tsx";
+const API_FILE = "apps/frontend/src/api/dispatch.ts";
 const SERVICE_FILE = "apps/backend/src/dispatch/load-id-reservation.service.ts";
 const BOOK_FILE = "apps/backend/src/dispatch/book-load.service.ts";
 const SELFTEST = process.argv.includes("--selftest");
 
 function assert(source) {
   const problems = [];
-  if (!/const submittedGeneration = scopeGenerationRef\.current/.test(source) || !/const submittedCompanyId = operatingCompanyId/.test(source))
-    problems.push("reserve must snapshot company and generation");
-  if (!/scopeGenerationRef\.current !== submittedGeneration/.test(source))
-    problems.push("late prior-scope reservation must be rejected");
-  if (!/releaseDispatchLoadReservation\(submittedCompanyId, r\.reservation_uuid\)/.test(source))
-    problems.push("late reservation must be released under its submitted company");
-  if (!/reservationRef\.current = \{ companyId: submittedCompanyId, reservationId: r\.reservation_uuid \}/.test(source))
-    problems.push("published reservation must retain its owning company");
-  if (!/releaseDispatchLoadReservation\(reservation\.companyId, reservation\.reservationId\)/.test(source))
-    problems.push("cleanup must release the exact company-owned reservation");
-  if (!/activeGenerationRef\.current === submittedGeneration\) return/.test(source))
-    problems.push("concurrent reservation calls must be refused");
-  if (!/Load number unavailable: \{error\}/.test(source) || !/>\s*Retry\s*</.test(source))
-    problems.push("reservation failure must be honest and recoverable");
-  if (!/display \? "● Reserved" : "Reserving…"/.test(source))
-    problems.push("pending reservation must not claim Reserved");
-  if (!/reserveDispatchLoadId\(submittedCompanyId, renewalId\)/.test(source))
-    problems.push("countdown renewal must submit the exact current reservation id");
+  if (/reserveDispatchLoadId\(/.test(source) || /releaseDispatchLoadReservation\(/.test(source))
+    problems.push("mount must never call a reserving/releasing endpoint again — that is the burn");
+  if (!/void doPeek\(\)/.test(source)) problems.push("mount must peek, not reserve");
+  if (!/if \(!hasUserEditedRef\.current\)/.test(source))
+    problems.push("an unedited preview must be distinguished from an operator-typed number");
+  const unedited = source.split("if (!hasUserEditedRef.current) {")[1]?.split("} else {")[0] ?? "";
+  if (!/load_number: "",/.test(unedited) || /load_number: r\.next_number/.test(unedited))
+    problems.push("an unedited preview must publish an EMPTY load_number, never the preview text — " +
+      "otherwise book-load.service.ts treats it as a manually-typed claim instead of routing through " +
+      "the atomic save-time allocator, reintroducing the exact race this fix eliminated");
+  if (!/scopeGenerationRef\.current !== submittedGeneration\) return/.test(source))
+    problems.push("a late peek response from a stale company/mount generation must be discarded");
+  if (!/hasUserEditedRef\.current = true/.test(source))
+    problems.push("a typed edit must be remembered so a slow peek can never clobber it");
+  return problems;
+}
+
+function assertApi(source) {
+  const problems = [];
+  if (!/export function peekNextLoadNumber/.test(source)) problems.push("api client must export peekNextLoadNumber");
   return problems;
 }
 
 function assertBackend(service, book) {
   const problems = [];
-  if (!/consumeLoadNumberReservation[\s\S]{0,700}operating_company_id = \$3::uuid[\s\S]{0,120}reserved_by_user_id = \$4::uuid[\s\S]{0,160}status = 'reserved'[\s\S]{0,100}RETURNING id::text/.test(service))
-    problems.push("consume must CAS reservation/company/user/status and return the claimed row");
-  if (!/if \(!consumed\.rows\[0\]\?\.id\) throw new Error\("load_id_reservation_consume_conflict"\)/.test(service))
-    problems.push("lost reservation consume must abort Book Load");
-  if (!/SET expires_at = now\(\) \+ \(\$4 \* interval '1 second'\)[\s\S]*id = \$1::uuid[\s\S]*operating_company_id = \$2::uuid[\s\S]*reserved_by_user_id = \$3::uuid[\s\S]*status = 'reserved'[\s\S]*expires_at > now\(\) - \(\$4 \* interval '1 second'\)[\s\S]*RETURNING id::text, reserved_load_number, expires_at::text/.test(service))
-    problems.push("renewal must extend only the exact recent company/user reservation and return its unchanged number");
-  if (!/consumeLoadNumberReservation\(client, \{[\s\S]{0,180}operatingCompanyId: input\.operating_company_id[\s\S]{0,180}reservedByUserId: input\.requestingUserUuid/.test(book))
-    problems.push("Book Load must forward submitted company and reserving user into consume");
+  if (!/export async function peekNextLoadNumber/.test(service))
+    problems.push("service must export a pure-read peekNextLoadNumber");
+  if (/lib\.next_trace_no/.test(service.split("export async function peekNextLoadNumber")[1]?.split(/^export /m)[0] ?? ""))
+    problems.push("peekNextLoadNumber must never call the irreversible increment");
+  if (!/const MAX_COLLISION_SKIPS/.test(service) || !/WHERE operating_company_id = \$1::uuid AND load_number = \$2/.test(service))
+    problems.push("allocateNextLoadNumber must skip past any load_number a live row already holds " +
+      "(evidenced 2026-09-14: cancelled ghost loads permanently occupy their number under the plain " +
+      "UNIQUE(operating_company_id, load_number) constraint — a blind increment will eventually re-mint one)");
+  if (!/if \(!loadNumber\) \{/.test(book) || !/reserveNextLoadId\(/.test(book))
+    problems.push("book-load submit must still fall back to the real atomic allocator when no reservation/typed number was supplied");
   return problems;
 }
 
 const live = fs.readFileSync(path.join(ROOT, FILE), "utf8");
+const api = fs.readFileSync(path.join(ROOT, API_FILE), "utf8");
 const service = fs.readFileSync(path.join(ROOT, SERVICE_FILE), "utf8");
 const book = fs.readFileSync(path.join(ROOT, BOOK_FILE), "utf8");
+
 if (SELFTEST) {
   const mutations = [
-    live.replace("const submittedCompanyId = operatingCompanyId", "const submittedCompanyId = currentCompanyId"),
-    live.replace("if (scopeGenerationRef.current !== submittedGeneration)", "if (false)"),
-    live.replace("releaseDispatchLoadReservation(submittedCompanyId, r.reservation_uuid)", "releaseDispatchLoadReservation(operatingCompanyId, r.reservation_uuid)"),
-    live.replace("if (activeGenerationRef.current === submittedGeneration) return;", ""),
-    live.replace("Load number unavailable: {error}", "Reserved"),
-    live.replace("reserveDispatchLoadId(submittedCompanyId, renewalId)", "reserveDispatchLoadId(submittedCompanyId)"),
+    live.replace("void doPeek();", "void reserveDispatchLoadId(operatingCompanyId);"),
+    live.replace(
+      '          load_number: "",',
+      "          load_number: r.next_number,"
+    ),
+    live.replaceAll("if (scopeGenerationRef.current !== submittedGeneration) return;", ""),
+    live.replace("hasUserEditedRef.current = true;", ""),
   ];
   for (const [index, mutation] of mutations.entries()) {
     if (!assert(mutation).length) {
@@ -63,14 +82,16 @@ if (SELFTEST) {
       process.exit(1);
     }
   }
+  const apiMutations = [api.replace("export function peekNextLoadNumber", "function peekNextLoadNumber")];
+  for (const [index, mutation] of apiMutations.entries()) {
+    if (!assertApi(mutation).length) {
+      console.error(`verify-live-load-id-reservation-lifecycle SELFTEST FAIL: api mutation ${index + 1} survived`);
+      process.exit(1);
+    }
+  }
   const backendMutations = [
-    { service: service.replace("AND operating_company_id = $3::uuid", ""), book },
-    { service: service.replace("AND reserved_by_user_id = $4::uuid", ""), book },
-    { service: service.replace("RETURNING id::text", ""), book },
-    { service: service.replace('if (!consumed.rows[0]?.id) throw new Error("load_id_reservation_consume_conflict");', ""), book },
-    { service, book: book.replaceAll("operatingCompanyId: input.operating_company_id,", "") },
-    { service, book: book.replaceAll("reservedByUserId: input.requestingUserUuid,", "") },
-    { service: service.replace("AND expires_at > now() - ($4 * interval '1 second')", ""), book },
+    { service: service.replace("const MAX_COLLISION_SKIPS = 1000;", ""), book },
+    { service, book: book.replace("if (!loadNumber) {", "if (false) {") },
   ];
   for (const [index, mutation] of backendMutations.entries()) {
     if (!assertBackend(mutation.service, mutation.book).length) {
@@ -78,11 +99,14 @@ if (SELFTEST) {
       process.exit(1);
     }
   }
-  console.log(`verify-live-load-id-reservation-lifecycle SELFTEST PASS — ${mutations.length + backendMutations.length}/${mutations.length + backendMutations.length}`);
+  console.log(
+    `verify-live-load-id-reservation-lifecycle SELFTEST PASS — ${mutations.length + apiMutations.length + backendMutations.length}/${mutations.length + apiMutations.length + backendMutations.length}`
+  );
   process.exit(0);
 }
 
 const problems = assert(live);
+problems.push(...assertApi(api));
 problems.push(...assertBackend(service, book));
 if (problems.length) {
   console.error("verify-live-load-id-reservation-lifecycle FAIL:");

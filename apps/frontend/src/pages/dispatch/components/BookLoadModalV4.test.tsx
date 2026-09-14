@@ -53,13 +53,10 @@ vi.mock("../../../api/dispatch", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../../api/dispatch")>();
   return {
     ...actual,
-    reserveDispatchLoadId: vi.fn().mockResolvedValue({
-      reservation_uuid: "018bcd5c-e1a2-4b70-9b1c-7d9a2b111111",
-      load_number: "L-20991231-0001",
-      reserved_until: new Date(Date.now() + 60_000).toISOString(),
-      ttl_seconds: 60,
-    }),
-    releaseDispatchLoadReservation: vi.fn().mockResolvedValue({ released: true }),
+    // P0 2026-09-14 (LOAD-NUMBER-COUNTER-BURN-ON-OPEN) — LiveLoadIdBar no longer reserves on
+    // mount (that permanently burned a real load number every time the wizard opened, whether or
+    // not a load was ever saved); it peeks a non-consuming preview instead.
+    peekNextLoadNumber: vi.fn().mockResolvedValue({ next_number: "20991231" }),
     getLaneMileage: vi.fn().mockResolvedValue({
       practical_miles: null,
       short_miles: null,
@@ -127,9 +124,10 @@ describe("BookLoadModalV4", () => {
     expect(screen.getByText(/Pre-dispatch validation/i)).toBeTruthy();
     expect(screen.getByText(/Enter destination and the customer rate/i)).toBeTruthy();
     await waitFor(() => {
-      expect(screen.getByText(/L-20991231-0001/)).toBeTruthy();
+      const loadNumberInput = screen.getByTestId("qbo-document-number-load") as HTMLInputElement;
+      expect(loadNumberInput.value).toBe("20991231");
     });
-    expect(screen.getByText(/● Reserved/i)).toBeTruthy();
+    expect(screen.getByText(/Previewed — assigned on save/i)).toBeTruthy();
   });
 
   it("clears the stale customer_id when the picked customer text is edited over (D3-3)", async () => {
