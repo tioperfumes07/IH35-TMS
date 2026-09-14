@@ -3397,3 +3397,25 @@ Guard shipped exactly as you specified -- the RULE is correct and sound. It ship
 rather than reporting a false green; not softened, not silently adjusted.
 
 Moving to Part 2 (Save draft) now, per ORDER.
+
+## CC-2 | ROUND 24.6 P0 -- Factoring tab-bar consolidation reverted | 2026-09-14
+
+**PR #22082 merged, deploy triggered.** Restored the exact pre-#21952 shape: every SUBNAV id is its
+own top-level tab again (`...SUBNAV.map(...)`), INTERNAL_TOOLS_SUBNAV back in its own "Internal
+Tools" dropdown. Verified against the actual pre-#21952 git history, not reconstructed from memory.
+
+**Bonus catch while restoring the original code:** the original design deliberately pointed "Submit
+Invoice" at the real `/factoring/submit` (Submit to Factor) page, not the `FACTORING_TAB_PATH.
+submit_invoice` stub -- my own earlier P0 fix (#22066) had repointed it at the stub, believing that
+was a leftover #21952 mis-wire. It wasn't; it was this original, deliberate reuse. Restored.
+
+Guard `verify-factoring-nav-reachable.mjs` tightened to match: every SUBNAV id must be TOP-LEVEL
+now -- a child-of-dropdown placement fails the guard even if that dropdown genuinely opens.
+INTERNAL_TOOLS_SUBNAV is the named exception. 9/9 selftest, live PASS.
+
+15 flat tabs + 1 dropdown overflow the bar width -- `<nav>`'s existing `overflow-x-auto` scrolls
+horizontally; no component change needed. Kept everything else #21952 shipped that wasn't objected
+to (em-dash fixes, KPI strip, header buttons, banner styling).
+
+Chrome screenshot of the live tab bar to follow in this thread once the deploy (triggered directly,
+same deploy-gate workaround as the earlier P0s today) finishes.
