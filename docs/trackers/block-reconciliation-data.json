@@ -1,6 +1,6 @@
 {
  "date": "2026-09-15",
- "generated_at_iso": "2026-09-15T17:07:12.300Z",
+ "generated_at_iso": "2026-09-15T21:28:53.281Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13727,6 +13727,12 @@
  ],
  "merged_prs": [
   {
+   "number": 22106,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-15T17:07:42Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 22105,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-09-15T11:53:45Z",
@@ -17319,12 +17325,6 @@
    "title": "Claude-1-FINDING: N/A (docs — NEW-09 correction post-deploy live-proof gate closed)",
    "mergedAt": "2026-09-09T05:10:32Z",
    "branch": "claude/cc-1-new09-live-proof-close"
-  },
-  {
-   "number": 21498,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-09-09T07:15:18Z",
-   "branch": "chore/tracker-artifacts-sync"
   }
  ],
  "merged_pr_total": 3000,
