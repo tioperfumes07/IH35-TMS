@@ -1,6 +1,6 @@
 {
- "date": "2026-09-15",
- "generated_at_iso": "2026-09-15T21:28:53.281Z",
+ "date": "2026-09-16",
+ "generated_at_iso": "2026-09-16T04:57:38.054Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13727,6 +13727,12 @@
  ],
  "merged_prs": [
   {
+   "number": 22107,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-15T21:29:19Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 22106,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-09-15T17:07:42Z",
@@ -17319,12 +17325,6 @@
    "title": "Claude-1-CLAIM-RESERVE 202614020000 notifications-type-check-insurance-widen",
    "mergedAt": "2026-09-09T05:13:50Z",
    "branch": "claude/cc-1-claim-202614020000"
-  },
-  {
-   "number": 21499,
-   "title": "Claude-1-FINDING: N/A (docs — NEW-09 correction post-deploy live-proof gate closed)",
-   "mergedAt": "2026-09-09T05:10:32Z",
-   "branch": "claude/cc-1-new09-live-proof-close"
   }
  ],
  "merged_pr_total": 3000,
