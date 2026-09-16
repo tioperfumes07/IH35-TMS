@@ -1,6 +1,6 @@
 {
  "date": "2026-09-16",
- "generated_at_iso": "2026-09-16T04:57:38.054Z",
+ "generated_at_iso": "2026-09-16T11:47:22.423Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13727,6 +13727,12 @@
  ],
  "merged_prs": [
   {
+   "number": 22108,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-16T04:58:02Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 22107,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-09-15T21:29:19Z",
@@ -17319,12 +17325,6 @@
    "title": "Cursor- claim-reserve verify-step 11092 (NEW-10 resettlement origin-load dates)",
    "mergedAt": "2026-09-09T05:13:47Z",
    "branch": "chore/claim-reserve-11092-new10"
-  },
-  {
-   "number": 21500,
-   "title": "Claude-1-CLAIM-RESERVE 202614020000 notifications-type-check-insurance-widen",
-   "mergedAt": "2026-09-09T05:13:50Z",
-   "branch": "claude/cc-1-claim-202614020000"
   }
  ],
  "merged_pr_total": 3000,
