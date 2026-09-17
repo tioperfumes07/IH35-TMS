@@ -1,6 +1,6 @@
 {
- "date": "2026-09-16",
- "generated_at_iso": "2026-09-16T21:25:11.007Z",
+ "date": "2026-09-17",
+ "generated_at_iso": "2026-09-17T05:00:22.070Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13727,6 +13727,12 @@
  ],
  "merged_prs": [
   {
+   "number": 22111,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-16T21:25:44Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 22110,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-09-16T17:08:05Z",
@@ -17319,12 +17325,6 @@
    "title": "Cursor- NEW-10 resettlement records: origin-load Date started + Delivery date columns",
    "mergedAt": "2026-09-09T05:20:16Z",
    "branch": "feat/new10-resettlement-origin-load-dates"
-  },
-  {
-   "number": 21503,
-   "title": "Claude-1-FINDING: N/A (insurance monthly report never_succeeded -- notifications type-check widen)",
-   "mergedAt": "2026-09-09T05:22:42Z",
-   "branch": "claude/cc-1-insurance-notification-check-widen"
   }
  ],
  "merged_pr_total": 3000,
