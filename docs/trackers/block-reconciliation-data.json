@@ -1,6 +1,6 @@
 {
  "date": "2026-09-18",
- "generated_at_iso": "2026-09-18T16:32:32.357Z",
+ "generated_at_iso": "2026-09-18T20:59:42.776Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13727,6 +13727,12 @@
  ],
  "merged_prs": [
   {
+   "number": 22118,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-18T16:33:45Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 22117,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-09-18T11:27:19Z",
@@ -17319,12 +17325,6 @@
    "title": "CC-2- FINDING: N/A (RECON-USMCA-BANK-01 round 2 DONE line + board closure)",
    "mergedAt": "2026-09-09T05:39:12Z",
    "branch": "cc-2/recon-usmca-bank-01-round2-done-line"
-  },
-  {
-   "number": 21510,
-   "title": "CC-2- FINDING: BANK-F30011 RECON-USMCA-BANK-01 round 2, coverage 72.8%→76.9%",
-   "mergedAt": "2026-09-09T05:36:34Z",
-   "branch": "cc-2/recon-usmca-bank-01-round2"
   }
  ],
  "merged_pr_total": 3000,
