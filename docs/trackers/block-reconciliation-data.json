@@ -1,6 +1,6 @@
 {
  "date": "2026-09-20",
- "generated_at_iso": "2026-09-20T05:01:08.744Z",
+ "generated_at_iso": "2026-09-20T11:34:59.843Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13727,6 +13727,12 @@
  ],
  "merged_prs": [
   {
+   "number": 22125,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-20T05:01:33Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 22124,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-09-19T20:49:43Z",
@@ -17319,12 +17325,6 @@
    "title": "FINDING: N/A (CLAIM-RESERVE 10839 -- reservation-only commit, no code fix)",
    "mergedAt": "2026-09-09T06:32:22Z",
    "branch": "cc-2/claim-reserve-10839"
-  },
-  {
-   "number": 21516,
-   "title": "FINDING: GLB-25154 — CoA click-through chain + report figures reconcile to source GL guard",
-   "mergedAt": "2026-09-09T06:21:18Z",
-   "branch": "cascade-coa-clickthrough-report-reconcile"
   }
  ],
  "merged_pr_total": 3000,
