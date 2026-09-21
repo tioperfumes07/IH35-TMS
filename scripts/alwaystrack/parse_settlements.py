@@ -251,13 +251,33 @@ def parse_company(path):
         comp_m = re.search(r"(?<!\S)([YN])(?!\S)", t)
         comp = comp_m.group(1) if comp_m else ""
         reimb = "Drv" if re.search(r"(?<!\S)Drv(?!\S)", t) else ""
-        body_text = re.sub(r"(\s+-?[\d,]+\.\d+)\s*$", "", t.strip())
-        body_text = re.sub(r"(?<!\S)[YN](?!\S)", " ", body_text)
-        body_text = re.sub(r"(?<!\S)Drv(?!\S)", " ", body_text)
-        body = re.split(r"\s{2,}", body_text.strip())
-        head = body[0].split(None, 1)
-        ex.append({"date": head[0], "vendor": head[1] if len(head) > 1 else (body[1] if len(body) > 1 else ""),
-                    "description": body[-1] if len(body) >= 2 else "", "invoice": "",
+        # A wrapped Location continuation (e.g. "STREET EUTAW," on one line, "AR,TX" on the next)
+        # gets appended by join_wrapped AFTER the amount, not before it -- so the amount is no
+        # longer the last thing on the line and a plain end-anchored strip leaves both the amount
+        # and the continuation stuck in the description. Cut the line at the AMOUNT's own match
+        # position instead of the string's end; everything after it (amount + any wrapped
+        # continuation) is discarded for field-splitting purposes -- the amount itself is already
+        # captured in `amt` via trailing_numbers, and a wrapped Location fragment was never useful
+        # for vendor/description/invoice anyway.
+        amt_re = re.search(r"-?[\d,]+\.\d+\s*$", t) or re.search(r"-?[\d,]+\.\d+(?!.*-?[\d,]+\.\d+)", t)
+        cut_at = amt_re.start() if amt_re else len(t)
+        head_text = t[:cut_at]
+        head_text = re.sub(r"(?<!\S)[YN](?!\S)", " ", head_text)
+        head_text = re.sub(r"(?<!\S)Drv(?!\S)", " ", head_text)
+        fields = re.split(r"\s{2,}", head_text.strip())
+        fields = [f for f in fields if f]
+        head = fields[0].split(None, 1) if fields else []
+        date_ = head[0] if head else ""
+        vendor = head[1] if len(head) > 1 else (fields[1] if len(fields) > 1 else "")
+        # Remaining fields, in order, are location / invoice / description -- the invoice is
+        # whichever field is a bare digit run; description is whatever's left after date/vendor/
+        # invoice, preferring the LAST non-invoice field (location sorts before description).
+        rest = fields[2:] if len(fields) > 2 else (fields[1:] if len(fields) > 1 and vendor == fields[1] else [])
+        invoice = next((f for f in rest if re.fullmatch(r"\d{4,}", f)), "")
+        desc_candidates = [f for f in rest if f != invoice]
+        description = desc_candidates[-1] if desc_candidates else ""
+        ex.append({"date": date_, "vendor": vendor,
+                    "description": description, "invoice": invoice,
                     "reimb": reimb, "comp": comp, "amount": amt, "raw": s})
     d["expenses"] = ex
     d["expenses_total"] = et
