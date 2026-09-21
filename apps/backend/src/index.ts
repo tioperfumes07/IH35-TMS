@@ -294,7 +294,6 @@ import { registerFactoringBatchRoutes } from "./factoring/batch.routes.js";
 import { registerFactorRoutes } from "./factoring/factor.routes.js";
 import { registerReserveRoutes } from "./factoring/reserve.routes.js";
 import { registerFaroCsvImportRoutes } from "./factoring/faro-csv-import.routes.js";
-import { registerFactorReconciliationRoutes } from "./accounting/factor-reconciliation/routes.js";
 import { registerSubmissionQueueRoutes } from "./factoring/submission-queue.routes.js";
 import { registerScanDuplicateVendorRoutes } from "./factoring/scan-duplicate-vendors.routes.js";
 import { registerCashAdvancesRoutes } from "./cash-advances/cash-advances.routes.js";
@@ -1166,11 +1165,16 @@ async function main() {
   await registerFactorRoutes(app);
   await registerReserveRoutes(app);
   await registerFaroCsvImportRoutes(app);
-  // ROUND27.1-STEP5.5: registerFactorReconciliationRoutes existed fully built (recon.service.ts +
-  // routes.ts, real tests) but was never imported/registered anywhere in this file — GET
-  // /api/v1/accounting/factor-reconciliation/* and POST .../import 404'd for every caller, so
-  // factor.reconciliation_runs stayed at 0 rows regardless of any import having landed.
-  await registerFactorReconciliationRoutes(app);
+  // CORRECTION (same-session, ROUND27.1-STEP5.5 revert): registerFactorReconciliationRoutes is
+  // ALREADY autoload-mounted (default fp) by registerAccountingRoutes()'s @fastify/autoload over
+  // this directory, via factor-reconciliation.routes.ts (name
+  // "accounting.registerFactorReconciliationRoutes", pre-existing commit 252252dd98). The explicit
+  // call this comment used to add here was a genuine duplicate registration — live-reproduced on a
+  // Render deploy: FastifyError "Method 'GET' already declared for route
+  // '.../factor-reconciliation/import-candidates'" crashed the new instance's boot, the deploy
+  // failed health checks, and Render rolled back to the prior release automatically (production was
+  // never actually down). Do NOT re-add this call — see DUPLICATE-ROUTE-BOOT-CRASH pattern
+  // documented elsewhere in this file (company-settlement-render.routes.ts, SET-30, etc.).
   await registerSubmissionQueueRoutes(app);
   await registerScanDuplicateVendorRoutes(app);
   await registerDataInfrastructureRoutes(app);
