@@ -26,11 +26,17 @@ describe("factor reconciliation match states", () => {
               advance_total_cents: 50000,
               fee_total_cents: 1000,
               reserve_total_cents: 5000,
+              raw_payload: { lines: [] },
             },
           ],
         };
       }
       if (sql.includes("INSERT INTO factor.reconciliation_runs")) return { rows: [{ id: "run-1" }] };
+      // Checked before the broader "FROM factor.faro_invoice_lines" match below — the date-window
+      // query also selects FROM that table.
+      if (sql.includes("min(due_on)")) {
+        return { rows: [{ min_due_on: "2026-02-25", max_due_on: "2026-03-01" }] };
+      }
       if (sql.includes("FROM factor.faro_invoice_lines")) {
         return {
           rows: [
@@ -54,12 +60,17 @@ describe("factor reconciliation match states", () => {
         };
       }
       if (sql.includes("FROM accounting.invoices i") && sql.includes("JOIN accounting.factoring_advances")) {
+        // missingOnStatementCandidatesRes: invoices advanced within the statement's date window
+        // whose display_id is NOT one of the statement's own invoice numbers.
         return {
-          rows: [
-            { invoice_id: "inv-a-id", display_id: "INV-A", total_cents: 12000 },
-            { invoice_id: "inv-only-ledger-id", display_id: "INV-ONLY-LEDGER", total_cents: 7000 },
-          ],
+          rows: [{ invoice_id: "inv-only-ledger-id", display_id: "INV-ONLY-LEDGER", total_cents: 7000 }],
         };
+      }
+      if (sql.includes("FROM accounting.invoices i")) {
+        // invoiceCandidatesRes: direct display_id lookup against the statement's own invoice
+        // numbers (ROUND29.7-RECON-DATE-SCOPE) — INV-NO-LEDGER genuinely has no accounting.invoices
+        // row, so it is correctly absent here.
+        return { rows: [{ invoice_id: "inv-a-id", display_id: "INV-A", total_cents: 12000 }] };
       }
       if (sql.includes("INSERT INTO factor.reconciliation_items")) return { rows: [] };
       if (sql.includes("FROM factor.reconciliation_runs") && sql.includes("WHERE id = $1::uuid")) {

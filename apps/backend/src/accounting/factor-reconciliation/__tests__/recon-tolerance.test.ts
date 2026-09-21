@@ -27,11 +27,17 @@ describe("factor reconciliation Q11 tolerance", () => {
               advance_total_cents: 0,
               fee_total_cents: 0,
               reserve_total_cents: 0,
+              raw_payload: { lines: [] },
             },
           ],
         };
       }
       if (sql.includes("INSERT INTO factor.reconciliation_runs")) return { rows: [{ id: "run-1" }] };
+      // Checked before the broader "FROM factor.faro_invoice_lines" match below — the date-window
+      // query also selects FROM that table.
+      if (sql.includes("min(due_on)")) {
+        return { rows: [{ min_due_on: "2026-03-01", max_due_on: "2026-03-01" }] };
+      }
       if (sql.includes("FROM factor.faro_invoice_lines")) {
         return {
           rows: [
@@ -47,6 +53,9 @@ describe("factor reconciliation Q11 tolerance", () => {
         };
       }
       if (sql.includes("FROM accounting.invoices i") && sql.includes("JOIN accounting.factoring_advances")) {
+        return { rows: [] };
+      }
+      if (sql.includes("FROM accounting.invoices i")) {
         return {
           rows: [{ invoice_id: "inv-tol-id", display_id: "INV-TOL", total_cents: 10099 }],
         };
