@@ -403,18 +403,34 @@ async function processLoad(pool: pg.Pool, app: InjectApp, authHeader: Record<str
 
     let result: Awaited<ReturnType<typeof bookLoad>>;
     let unitOmitted = false;
+    let tripLinkOmitted = false;
     try {
       result = await bookLoad(bookInput);
     } catch (err) {
-      // unit-active-load-guard.ts: this unit is legitimately occupied by a DIFFERENT, currently-open
-      // real trip (one of the 5 loads ROUND 28B keeps open) — the guard is a blunt one-slot check,
-      // not date-range-aware, so a historical/no-settlement load on the SAME truck can never win it
-      // while that trip is open. Book without the truck rather than block a real, dated, priced load
-      // over a same-unit ordering the guard cannot express — disclosed per row, attach the unit once
-      // Step 3 closes the conflicting trip and frees it.
-      if ((err as Error).message?.includes("unit is already active on load")) {
+      const msg = (err as Error).message ?? "";
+      if (msg.includes("unit is already active on load")) {
+        // unit-active-load-guard.ts: this unit is legitimately occupied by a DIFFERENT, currently-open
+        // real trip (one of the 5 loads ROUND 28B keeps open) — the guard is a blunt one-slot check,
+        // not date-range-aware, so a historical/no-settlement load on the SAME truck can never win it
+        // while that trip is open. Book without the truck rather than block a real, dated, priced load
+        // over a same-unit ordering the guard cannot express — disclosed per row, attach the unit once
+        // Step 3 closes the conflicting trip and frees it.
         unitOmitted = true;
         result = await bookLoad({ ...bookInput, assigned_unit_id: undefined });
+      } else if (msg.includes("uq_driver_settlements_one_open_per_driver")) {
+        // presettlement-link.service.ts's suggestPresettlementLink requires an EXISTING load on the
+        // SAME unit already linked to the driver's open settlement before it will suggest reusing
+        // it (its own unit-match EXISTS clause) — a freshly pre-seeded, still-empty shell settlement
+        // (the B5 pattern, ROUND 23.3) has no loads yet, so that clause can never match, the linker
+        // falls through to "create_new", and that collides with the ONE real open settlement the
+        // driver already has. Live-caught on 13600 (driver 4ff53886, unit T170): the auto-suggested
+        // target would in any case have been the driver's currently-open tour settlement (5807), not
+        // the document's real target (5812, per the owner's own reconciliation) — skipping the
+        // auto-link here and leaving trip_type/tour_id unset is CORRECT, not just a workaround: real
+        // settlement placement is Step 3's job (reassignLoadToSettlementInClientTx), never this
+        // heuristic's guess. Retry once, with no trip linkage attempted at all.
+        tripLinkOmitted = true;
+        result = await bookLoad({ ...bookInput, trip_type: undefined, tour_id: undefined });
       } else {
         throw err;
       }
@@ -428,6 +444,7 @@ async function processLoad(pool: pg.Pool, app: InjectApp, authHeader: Record<str
       return;
     }
     if (unitOmitted) rep.push(`- ${load.load_number} NOTE — unit ${load.unit} omitted (legitimately active on a different, currently-open trip); attach once that trip closes`);
+    if (tripLinkOmitted) rep.push(`- ${load.load_number} NOTE — trip_type/tour_id omitted (auto-link would have targeted the driver's currently-open tour, not the document's real settlement); real linkage is Step 3's job`);
     const loadId = String(result.row.id);
     const driverBillMint = result.row.driver_bill_mint;
     rep.push(`- ${load.load_number} BOOKED — id ${loadId}${stCapped ? ` · miles_shortest CAPPED at miles_practical (${load.l_miles}), export St.Miles was ${load.st_miles}` : ""} · driver_bill_mint=${JSON.stringify(driverBillMint)}`);
