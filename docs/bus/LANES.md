@@ -9,6 +9,7 @@ ruling's filename to the PR body under `LANE-CROSS:`.
 db/migrations/**
 scripts/verify-*.mjs
 scripts/money-pr-local-gate.mjs
+scripts/lib/**
 apps/backend/src/identity/**
 apps/backend/src/accounting/company-settlements**
 apps/backend/src/mdata/drivers**
