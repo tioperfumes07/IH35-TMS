@@ -1,6 +1,6 @@
 {
- "date": "2026-09-20",
- "generated_at_iso": "2026-09-20T20:55:29.813Z",
+ "date": "2026-09-21",
+ "generated_at_iso": "2026-09-21T05:06:50.072Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13727,6 +13727,12 @@
  ],
  "merged_prs": [
   {
+   "number": 22128,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-20T20:55:56Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 22127,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-09-20T16:15:42Z",
@@ -17319,12 +17325,6 @@
    "title": "CC-2- FINDING: BANK-F30012 reconciliation excludes voided bank_transactions",
    "mergedAt": "2026-09-09T06:35:11Z",
    "branch": "cc-2/bank-recon-voided-txns-excluded"
-  },
-  {
-   "number": 21519,
-   "title": "Claude-1-FINDING: N/A (settlement_lines reimbursement/deduction rows missing load_id backfilled)",
-   "mergedAt": "2026-09-09T06:36:39Z",
-   "branch": "claude/cc-1-settlement-lines-load-id-backfill"
   }
  ],
  "merged_pr_total": 3000,
