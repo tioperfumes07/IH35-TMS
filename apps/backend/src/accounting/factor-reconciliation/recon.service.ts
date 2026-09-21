@@ -1,4 +1,8 @@
 import { withLuciaBypass } from "../../auth/db.js";
+import {
+  assertFaroDailyImportProvenance,
+  FaroDailyImportUntrustedProvenanceError,
+} from "../../factoring/faro-daily-import-provenance.js";
 
 type MatchState = "matched" | "missing_in_ledger" | "missing_on_statement" | "amount_mismatch";
 
@@ -84,6 +88,7 @@ export async function importStatement(input: {
       advance_total_cents: number;
       fee_total_cents: number;
       reserve_total_cents: number;
+      raw_payload: unknown;
     }>(
       `
         SELECT
@@ -91,7 +96,8 @@ export async function importStatement(input: {
           statement_date::text,
           advance_total_cents::bigint AS advance_total_cents,
           fee_total_cents::bigint AS fee_total_cents,
-          reserve_total_cents::bigint AS reserve_total_cents
+          reserve_total_cents::bigint AS reserve_total_cents,
+          raw_payload
         FROM factor.faro_daily_imports
         WHERE id = $1::uuid
           AND operating_company_id = $2::uuid
@@ -101,6 +107,14 @@ export async function importStatement(input: {
     );
     const dailyImport = dailyImportRes.rows[0];
     if (!dailyImport) throw new Error("factor_daily_import_not_found");
+
+    // ROUND29.7 standing rule: never let an untrusted-provenance row (raw_payload written outside
+    // the app, not FaroCsvLine shape) source a reconciliation run. Refuse loud; the row itself is
+    // never touched here — flag and investigate, never delete.
+    const provenance = assertFaroDailyImportProvenance(dailyImport.raw_payload);
+    if (!provenance.trusted) {
+      throw new FaroDailyImportUntrustedProvenanceError(dailyImport.id, provenance.reason);
+    }
 
     const runRes = await client.query<{ id: string }>(
       `
@@ -149,6 +163,19 @@ export async function importStatement(input: {
       [input.daily_import_id, input.operating_company_id]
     );
 
+    // ROUND29.7-RECON-DATE-SCOPE: a factor.faro_daily_imports row was originally always a single
+    // day's statement, so "candidate invoices" was exact-date-filtered on the advance's own
+    // submitted_at/advanced_at/released_at. Once a statement legitimately spans a window (Round
+    // 29.6/29.7: 2026-08-10..2026-09-21, one row), that exact-date filter live-reproduced a false
+    // 85-of-89 missing_in_ledger result on a statement that actually ties to Faro's own control
+    // totals to the cent -- not because 85 invoices are missing, but because their advances simply
+    // weren't dated on the single statement_date this row happens to carry. Matching candidates
+    // now goes straight to what the statement itself claims (its own invoice_number list) —
+    // simpler and more correct than pre-filtering by date at all. The date window (derived from
+    // the statement's own lines' due_on, min..max) is used ONLY for the separate
+    // missing_on_statement direction below, where a real date scope is still needed to avoid
+    // treating every invoice this vendor has ever advanced as a candidate.
+    const statementInvoiceNumbers = statementLinesRes.rows.map((l) => l.invoice_number);
     const invoiceCandidatesRes = await client.query<{
       invoice_id: string;
       display_id: string | null;
@@ -160,21 +187,47 @@ export async function importStatement(input: {
           i.display_id::text AS display_id,
           i.total_cents::bigint AS total_cents
         FROM accounting.invoices i
-        -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): i is scoped by the WHERE below, but the
-        -- advance it filters against was not -- a cross-entity fa row could surface the wrong
-        -- invoice in a reconciliation query filtered by vendor/date.
-        JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
-                                              AND fa.operating_company_id = i.operating_company_id
         WHERE i.operating_company_id = $1::uuid
-          AND fa.factoring_company_vendor_id = $2::uuid
-          AND (
-            fa.submitted_at::date = $3::date
-            OR fa.advanced_at::date = $3::date
-            OR fa.released_at::date = $3::date
-          )
+          AND i.display_id = ANY($2::text[])
       `,
-      [input.operating_company_id, input.factor_id, dailyImport.statement_date]
+      [input.operating_company_id, statementInvoiceNumbers]
     );
+
+    const dateWindowRes = await client.query<{ min_due_on: string | null; max_due_on: string | null }>(
+      `
+        SELECT min(due_on)::text AS min_due_on, max(due_on)::text AS max_due_on
+        FROM factor.faro_invoice_lines
+        WHERE daily_import_id = $1::uuid AND operating_company_id = $2::uuid AND superseded_at IS NULL
+      `,
+      [input.daily_import_id, input.operating_company_id]
+    );
+    const dateWindow = dateWindowRes.rows[0];
+    const missingOnStatementCandidatesRes =
+      dateWindow?.min_due_on && dateWindow?.max_due_on
+        ? await client.query<{ invoice_id: string; display_id: string | null; total_cents: number }>(
+            `
+              SELECT
+                i.id::text AS invoice_id,
+                i.display_id::text AS display_id,
+                i.total_cents::bigint AS total_cents
+              FROM accounting.invoices i
+              -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): i is scoped by the WHERE below, but the
+              -- advance it filters against was not -- a cross-entity fa row could surface the wrong
+              -- invoice in a reconciliation query filtered by vendor/date.
+              JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
+                                                    AND fa.operating_company_id = i.operating_company_id
+              WHERE i.operating_company_id = $1::uuid
+                AND fa.factoring_company_vendor_id = $2::uuid
+                AND (
+                  fa.submitted_at::date BETWEEN $3::date AND $4::date
+                  OR fa.advanced_at::date BETWEEN $3::date AND $4::date
+                  OR fa.released_at::date BETWEEN $3::date AND $4::date
+                )
+                AND NOT (i.display_id = ANY($5::text[]))
+            `,
+            [input.operating_company_id, input.factor_id, dateWindow.min_due_on, dateWindow.max_due_on, statementInvoiceNumbers]
+          )
+        : { rows: [] as Array<{ invoice_id: string; display_id: string | null; total_cents: number }> };
 
     const byDisplayId = new Map<string, { invoice_id: string; total_cents: number }>();
     for (const row of invoiceCandidatesRes.rows) {
@@ -260,7 +313,7 @@ export async function importStatement(input: {
       );
     }
 
-    for (const row of invoiceCandidatesRes.rows) {
+    for (const row of missingOnStatementCandidatesRes.rows) {
       if (seenInvoiceIds.has(row.invoice_id)) continue;
       await client.query(
         `

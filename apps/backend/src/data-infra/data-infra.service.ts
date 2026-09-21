@@ -1,5 +1,6 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { assertFaroDailyImportProvenance } from "../factoring/faro-daily-import-provenance.js";
 
 type SqlClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -205,6 +206,18 @@ export async function upsertFaroDailyImportOnClient(
   input: FaroDailyImportUpsertInput
 ): Promise<{ id: string }> {
   await setCompanyScope(client, input.operatingCompanyId);
+
+  // ROUND29.7 standing rule: defensive write-time check — this function is the app's only writer
+  // of factor.faro_daily_imports.raw_payload and always constructs it in FaroCsvLine shape below,
+  // so this should never fire on any real call. It exists so a future refactor that changes what
+  // gets passed in cannot silently start writing the wrong shape without a loud failure. It does
+  // NOT stop a raw-SQL write that bypasses this function entirely — see
+  // assertFaroDailyImportProvenance's read-time use in recon.service.ts for the guard that
+  // actually matters against that.
+  const provenanceCheck = assertFaroDailyImportProvenance({ lines: input.lines });
+  if (!provenanceCheck.trusted) {
+    throw new Error(`refusing to write factor.faro_daily_imports: ${provenanceCheck.reason}`);
+  }
 
   const totals = input.lines.reduce(
     (acc, row) => {

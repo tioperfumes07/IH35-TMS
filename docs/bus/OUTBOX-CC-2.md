@@ -3612,5 +3612,60 @@ Also root-caused (not yet fixed): 13579 (voided test invoice — void path never
 
 PR incoming this same turn, fast-merge law.
 
+---
+
+## 2026-09-22 — ROUND 29.7 — header split, count fix, recon engine bug found+fixed
+
+Full detail + every number: `docs/reconciliation/2026-09-22-round29-7-header-split-and-recon-fix.md`.
+
+**Defect 1 (blended header) — fixed, live.** Split `factor.faro_daily_imports` into the scoped
+Faro statement (89 rows, gross $311,587.00 / advance $270,235.38 / reserve $4,530.19 / fee
+$4,673.82 — ties to every Faro control exactly) and a labelled prior-period row (15 rows, gross
+$45,200.00 / advance $43,794.00 / reserve $678.00 / fee $728.00). The cumulative $356,787.00 is
+never presented as a Faro figure.
+
+**Defect 2 (count arithmetic) — resolved: it was 15, not 16.** My own "already-present" tracking
+never included the manually-resolved Hummingbird ambiguity. Re-read live: 34+70=104, 70+19=89,
+34−19=15, and the 15's SUM ties to the $45,200.00 residual exactly.
+
+**A third defect found while reconciling the residual, fixed:** 4 lines from the original
+2026-09-07 import (13548, 13558, 13559, 13568) had folded a $10.00 wire fee into their
+`fee_amount_cents`, inconsistent with every other row and with their own raw Faro Discount column.
+Reset to discount-only — closed the last $40.00 gap. The scoped statement now ties to Faro on
+every control with zero residual.
+
+**Standing rule built, not just named:** `assertFaroDailyImportProvenance()`
+(`apps/backend/src/factoring/faro-daily-import-provenance.ts`), wired into `recon.service.ts`'s
+read path (refuses to source a reconciliation run from an untrusted-provenance row — the guard
+that actually matters, since it fires regardless of how the row was written) and defensively into
+the write path. 8 new tests.
+
+**Reconciliation engine bug found live, fixed, re-run.** The first run reported 85/89
+`missing_in_ledger` — not a data problem, a candidate-matching query that assumed a statement is
+always one day (exact-date filter on the advance's own date). Statements now legitimately span a
+window. Fixed to match candidates by the statement's own `display_id` list directly; the
+`missing_on_statement` direction now uses a date range derived from the statement's own lines
+instead of one exact date. Re-run: 38 matched, 3 amount_mismatch, 48 missing_in_ledger (a large
+share expected — 44 of the appended lines have no USMCA load at all, correctly Faro-native
+references, never invoiced by us by definition), 26 missing_on_statement. **Not yet individually
+classified — first real run, not claimed closed.**
+
+**Reserve register: confirmed target table, quantified the gap.**
+`accounting.factoring_reserve_movements` = 110 rows / $5,094.47 held (USMCA). Faro's escrow
+$4,530.19 + cash $135.41 = $4,665.60. **Difference $428.87 — named, not plugged, not netted, root
+cause not yet investigated.**
+
+**13579** — confirmed the exact code (`invoices.routes.ts:1122-1148`, the void UPDATE) never
+touches `mdata.loads.status`. **Not fixed**: no existing utility recomputes a load's status from
+its invoices, and guessing the correct revert-to value risks a wrong write across the fleet.
+Precise, not guessed.
+
+**Not started, named honestly per the owner's own explicit list:** escrow-as-asset / fee-on-close
+posting, the 8 direct legs, the 5 reserve deposits, the 5 self-carried invoices' AR line, the
+reconciling-item register as a real queryable artifact, daily close, 13615's write-time detector
+(needs a DB trigger — a migration, outside this session's lane).
+
+PR incoming this same turn, fast-merge law.
+
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
