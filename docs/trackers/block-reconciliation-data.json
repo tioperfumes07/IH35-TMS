@@ -1,6 +1,6 @@
 {
  "date": "2026-09-21",
- "generated_at_iso": "2026-09-21T05:06:50.072Z",
+ "generated_at_iso": "2026-09-21T12:59:45.535Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13727,6 +13727,12 @@
  ],
  "merged_prs": [
   {
+   "number": 22129,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-21T05:07:23Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 22128,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-09-20T20:55:56Z",
@@ -17319,12 +17325,6 @@
    "title": "Codex- verify maintenance WO create live 201",
    "mergedAt": "2026-09-09T06:35:16Z",
    "branch": "codex/maintenance-wo-create-live-201-close"
-  },
-  {
-   "number": 21520,
-   "title": "CC-2- FINDING: BANK-F30012 reconciliation excludes voided bank_transactions",
-   "mergedAt": "2026-09-09T06:35:11Z",
-   "branch": "cc-2/bank-recon-voided-txns-excluded"
   }
  ],
  "merged_pr_total": 3000,
