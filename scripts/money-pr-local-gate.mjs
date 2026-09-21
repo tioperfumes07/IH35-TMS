@@ -232,6 +232,13 @@ const STEPS = [
   ["verify-gl-invariants-inv3-real-only-basis", "scripts/verify-gl-invariants-inv3-real-only-basis.mjs"],
   ["verify-mdata-loads-patch-writes-assignment-history", "scripts/verify-mdata-loads-patch-writes-assignment-history.mjs"],
   ["verify-settlement-header-backlink-written", "scripts/verify-settlement-header-backlink-written.mjs"],
+  // ROUND 29.5 owner ruling (2026-09-22), queue item 3 — DUPLICATE-ROUTE-BOOT-CRASH has now hit
+  // production 3 separate times (ACCT-F26308, ACCT-F5726, factor-reconciliation/#22145), each one a
+  // real deploy failure discovered only AFTER merge because this guard existed but was never wired
+  // into the fail-fast local gate — only into the slower full verify:local-ci/verify:pre-commit
+  // suite. Wired here so any future explicit register*Routes(app) call in index.ts duplicating an
+  // @fastify/autoload-mounted route file is caught before push, not after a broken deploy.
+  ["verify-no-duplicate-routes", "scripts/verify-no-duplicate-routes.mjs"],
 ];
 
 function runNode(rel) {
