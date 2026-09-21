@@ -941,6 +941,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-09-11",
       "purpose": "Claude Lead ROUND 18.3 ITEM A (P1 SETTLEMENT NUMBERING, deadline 06:00Z 09-12): additive migration adding uq_driver_settlements_source_document_ref_live -- UNIQUE(operating_company_id, source_document_ref) WHERE source_document_ref IS NOT NULL AND voided_at IS NULL AND reversed_at IS NULL AND status <> 'cancelled', mirroring the existing uq_driver_settlements_one_open_per_driver partial-index pattern. NOT yet applied on prod pending the Lead's decision on the S-2026-0011 / S-2026-5782 source_document_ref='5782' collision (evidence posted to OUTBOX-CC-3.md, both rows are real+posted, not a guessable pick)."
+    },
+    "202614170000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-22",
+      "purpose": "ROUND 29.5 owner ruling item 2: driver_finance.settlement_lines uq_settlement_lines_no_duplicate_lines is missing load_id in its key (partial UNIQUE INDEX on settlement_id, line_type, description, amount only) -- two different loads on the same settlement genuinely sharing an identical description+amount collide. Drop+recreate scoped to (settlement_id, load_id, line_type, description, amount) NULLS NOT DISTINCT, same WHERE clause."
     }
   },
   "202613590001": {
