@@ -203,3 +203,36 @@ verified.
 - Step 4A/5 leftovers (cancelled shell 5779 duplicate $10, Vicente's $85 row, orphaned driver_bills
   on a duplicate driver record).
 - Contamination into 5797/5802/5816 (correction register required, per ROUND 29.5 item 6).
+
+---
+
+## COA hygiene instruction — retracted by owner, report-only item closed (2026-09-22)
+
+`DRIVERCASHAD896665` / `DRIVERTRIPLU056412` are correct by design (auto-provisioned per-driver
+liability/asset accounts, `driver-subaccount-provision.service.ts`, owner ruling §6 — an earlier
+order to deactivate them was already withdrawn). Not renumbered, not touched — no migration
+written before the retraction reached me.
+
+**Retained ask — confirm the sign on `DRIVERCASHAD896665`'s -990.00 balance (report only, no
+write):**
+
+The account IS correctly classified (Asset, `Employee Cash Advances` subtype, should carry a
+debit balance) and the postings are NOT reversed. Live-verified against
+`driver_finance.driver_advances` (10 rows, `operating_company_id` USMCA, none voided):
+- 6 "CA-2026-000N" advances ($1,205.96 total) each got a proper DEBIT posting on disbursement
+  and a matching CREDIT on recovery — net $0, correctly.
+- 4 historical-backfill advances — `CA-SEP-61727a46` ($200.00), `CA-BF-3445cf68` ($200.00),
+  `CA-BF-a785bea7` ($390.00), `CA-BF-40022039` ($200.00) — sum to **exactly $990.00**. Each has
+  `disbursed_at IS NULL` (pre-app historical entry) and `outstanding_balance = 0.00` /
+  `status = 'recovered'`. Their RECOVERY credit posted normally at settlement time (visible in
+  `accounting.journal_entry_postings`, "Settlement S-2026-5775/5787/5772/5800 — cash-advance
+  recovery" etc.), but their original DISBURSEMENT debit was **never posted** — because no real
+  disbursement event ever ran for a backfilled historical record.
+
+`$990.00` (the 4 missing debits) is not a coincidence: it is exactly the account's reported
+credit-heavy balance. The account's TRUE state (per `driver_finance.driver_advances` itself,
+every row `outstanding_balance = 0.00`) is that no driver currently owes anything on a cash
+advance — the GL should read $0.00, not -$990.00. The fix (posting the 4 missing historical
+debits, sourced from `driver_advances.amount`, never guessed) is a `driver_finance.*` /
+`accounting.journal_entries` posting action outside this box's explicit scope and outside this
+seat's lane per `docs/bus/LANES.md` — named here, not written.
