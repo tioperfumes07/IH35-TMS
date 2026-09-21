@@ -598,6 +598,48 @@ export function scanDuplicateVendors(companyId: string, driverId?: string) {
   );
 }
 
+// FIX-DVB135 (Round 27.1 step 5.7): the QBO-id merge path above requires a synced qbo_vendor_id on
+// BOTH sides. 0 of 618 USMCA vendors carry one (USMCA never pushes to/from QBO — law), so that path
+// can never fire for this entity. These two calls are the generic, already-built, already-tested
+// vendor-merge primitive (apps/backend/src/mdata/reclassify.routes.ts, entity="vendors") keyed on
+// the app's OWN vendor id (from_vendor_id/to_vendor_id above) — no QBO involved on either call.
+/** POST /api/v1/vendors/:id/flag-duplicate — mark `duplicateVendorId` as a confirmed duplicate of `survivorVendorId`. */
+export function flagVendorDuplicate(input: {
+  duplicateVendorId: string;
+  survivorVendorId: string;
+  reason: string;
+  companyId: string;
+}) {
+  return apiRequest<{ id: string; is_duplicate: boolean; merge_target_id: string | null }>(
+    `/api/v1/vendors/${encodeURIComponent(input.duplicateVendorId)}/flag-duplicate`,
+    {
+      method: "POST",
+      body: {
+        merge_target_id: input.survivorVendorId,
+        reason: input.reason,
+        operating_company_id: input.companyId,
+      },
+    }
+  );
+}
+
+/** POST /api/v1/vendors/:id/merge — repoints the duplicate's rows onto the survivor and deactivates it. Requires flag-duplicate first (409 `..._merge_unconfirmed_duplicate` otherwise). */
+export function mergeVendor(input: {
+  duplicateVendorId: string;
+  survivorVendorId: string;
+  reason: string;
+  companyId: string;
+}) {
+  return apiRequest<{ merge: unknown }>(`/api/v1/vendors/${encodeURIComponent(input.duplicateVendorId)}/merge`, {
+    method: "POST",
+    body: {
+      merge_target_id: input.survivorVendorId,
+      reason: input.reason,
+      operating_company_id: input.companyId,
+    },
+  });
+}
+
 // ── REG-015: Six real factoring tabs (owner 2026-09-10) ─────────────────────
 
 export type FactoringDebtorReceipt = {

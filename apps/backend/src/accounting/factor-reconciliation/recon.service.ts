@@ -276,7 +276,7 @@ export async function importStatement(input: {
             tolerance_cents,
             details
           )
-          VALUES ($1::uuid, $2::uuid, $3::uuid, NULL, 'missing_on_statement', 0, $4, -$4, $5, $6::jsonb)
+          VALUES ($1::uuid, $2::uuid, $3::uuid, NULL, 'missing_on_statement', 0, $4::bigint, -($4::bigint), $5, $6::jsonb)
         `,
         [
           runId,

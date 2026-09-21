@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { scanDuplicateVendors } from "../../api/factoring";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { flagVendorDuplicate, mergeVendor, scanDuplicateVendors } from "../../api/factoring";
 import { FACTORING_TAB_PATH } from "../../router/route-manifest";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
@@ -19,6 +19,26 @@ type DuplicateVendorsBannerProps = {
  */
 export function DuplicateVendorsBanner({ companyId }: DuplicateVendorsBannerProps) {
   const storageKey = `${DISMISS_STORAGE_PREFIX}${companyId}`;
+  const queryClient = useQueryClient();
+  // FIX-DVB135: which pair's "keep A / keep B" confirm row is expanded — one at a time, keyed by
+  // `${from_vendor_id}-${to_vendor_id}`.
+  const [confirmingPairKey, setConfirmingPairKey] = useState<string | null>(null);
+  const mergeMutation = useMutation({
+    mutationFn: async (input: { survivorVendorId: string; duplicateVendorId: string; survivorName: string }) => {
+      const reason = `Duplicate factoring vendor merge — "${input.survivorName}" kept, confirmed via Factoring duplicate-vendor scan`;
+      await flagVendorDuplicate({
+        duplicateVendorId: input.duplicateVendorId,
+        survivorVendorId: input.survivorVendorId,
+        reason,
+        companyId,
+      });
+      return mergeVendor({ duplicateVendorId: input.duplicateVendorId, survivorVendorId: input.survivorVendorId, reason, companyId });
+    },
+    onSuccess: () => {
+      setConfirmingPairKey(null);
+      void queryClient.invalidateQueries({ queryKey: ["factoring", "scan-duplicate-vendors", companyId] });
+    },
+  });
   const [dismissed, setDismissed] = useState(() => {
     if (!companyId || typeof sessionStorage === "undefined") return false;
     try {
@@ -119,46 +139,89 @@ export function DuplicateVendorsBanner({ companyId }: DuplicateVendorsBannerProp
         {topPairs.length > 0 ? (
           <ul className="list-inside list-disc text-xs" style={{ color: colors.warn.strong }}>
             {topPairs.map((p) => {
-              // BANNER-MERGE-DEEPLINK-DROPS-CONTEXT — the scan already resolved both real vendor
-              // ids for this pair; carry them into the merge form via query params so "review and
-              // merge" is one click, not "go find the raw QBO vendor uuid yourself" (the merge
-              // form's from/to fields are free text — see FactoringHome.tsx vendor_merges tab).
-              //
-              // VENDOR-MERGE-QBO-ID-MISMATCH (owner-live-tested 2026-09-08): the merge endpoint
-              // validates fromQboVendorId/toQboVendorId against QuickBooks' own external
-              // entity id — a different value from p.from_vendor_id/p.to_vendor_id (this
-              // TMS's internal UUID, still used below for the EntityLink navigation, unchanged).
-              // Deep-linking the internal UUID into the merge form 404'd every time, confirmed
-              // live. Use the real from_qbo_vendor_id/to_qbo_vendor_id instead — and when either
-              // is null (this vendor has never synced to QBO), don't offer a merge link that can
-              // only ever fail: show an honest note instead of a broken "Merge these".
-              const canDeepLinkMerge = Boolean(p.from_qbo_vendor_id && p.to_qbo_vendor_id);
-              const mergeParams = canDeepLinkMerge
-                ? new URLSearchParams({
-                    merge_from_vendor_id: p.from_qbo_vendor_id as string,
-                    merge_from_vendor_name: p.from_vendor_name,
-                    merge_to_vendor_id: p.to_qbo_vendor_id as string,
-                    merge_to_vendor_name: p.to_vendor_name,
-                  })
-                : null;
+              // FIX-DVB135 (Round 27.1 step 5.7, was VENDOR-MERGE-QBO-ID-MISMATCH): the old
+              // predicate gated "Merge these" on BOTH sides carrying a synced qbo_vendor_id — 0 of
+              // 618 USMCA vendors have one (USMCA never pushes to/from QBO), so the button could
+              // never render here. from_vendor_id/to_vendor_id are this TMS's own vendor ids,
+              // always present, and merge directly through the generic vendor-merge primitive
+              // (flag-duplicate + merge, POST /api/v1/vendors/:id/...) — no QBO involved. Which
+              // side survives is a real, hard-to-reverse decision (repoints bills/expenses/etc
+              // onto the survivor and deactivates the other), so it is a deliberate two-click
+              // confirm naming the exact survivor, never an automatic pick.
+              const pairKey = `${p.from_vendor_id}-${p.to_vendor_id}`;
+              const isConfirming = confirmingPairKey === pairKey;
+              const mutationTargetsThisPair = Boolean(
+                mergeMutation.variables &&
+                  [p.from_vendor_id, p.to_vendor_id].includes(mergeMutation.variables.duplicateVendorId)
+              );
+              const isMergingThisPair = mergeMutation.isPending && mutationTargetsThisPair;
+              const mergeErrorForThisPair = mergeMutation.isError && mutationTargetsThisPair;
               return (
-                <li key={`${p.from_vendor_id}-${p.to_vendor_id}`}>
+                <li key={pairKey}>
                   <EntityLink kind="vendor" id={p.from_vendor_id} label={p.from_vendor_name} /> ↔{" "}
                   <EntityLink kind="vendor" id={p.to_vendor_id} label={p.to_vendor_name} /> (
                   {Math.round(Number(p.similarity) * 100)}% similar) —{" "}
-                  {canDeepLinkMerge ? (
-                    <NavLink
-                      to={`${FACTORING_TAB_PATH.vendor_merges}?${mergeParams!.toString()}`}
+                  {isConfirming ? (
+                    <span className="inline-flex flex-wrap items-center gap-2">
+                      <span>Keep:</span>
+                      <button
+                        type="button"
+                        className="font-semibold underline underline-offset-2 disabled:opacity-60"
+                        style={{ color: colors.warn.strong }}
+                        disabled={isMergingThisPair}
+                        onClick={() =>
+                          mergeMutation.mutate({
+                            survivorVendorId: p.from_vendor_id,
+                            duplicateVendorId: p.to_vendor_id,
+                            survivorName: p.from_vendor_name,
+                          })
+                        }
+                        data-testid="factoring-duplicate-vendors-banner-merge-keep-from"
+                      >
+                        {p.from_vendor_name}
+                      </button>
+                      <button
+                        type="button"
+                        className="font-semibold underline underline-offset-2 disabled:opacity-60"
+                        style={{ color: colors.warn.strong }}
+                        disabled={isMergingThisPair}
+                        onClick={() =>
+                          mergeMutation.mutate({
+                            survivorVendorId: p.to_vendor_id,
+                            duplicateVendorId: p.from_vendor_id,
+                            survivorName: p.to_vendor_name,
+                          })
+                        }
+                        data-testid="factoring-duplicate-vendors-banner-merge-keep-to"
+                      >
+                        {p.to_vendor_name}
+                      </button>
+                      <button
+                        type="button"
+                        className="underline underline-offset-2"
+                        style={{ color: colors.warn.strong }}
+                        onClick={() => setConfirmingPairKey(null)}
+                        data-testid="factoring-duplicate-vendors-banner-merge-cancel"
+                      >
+                        cancel
+                      </button>
+                      {isMergingThisPair ? <span>merging…</span> : null}
+                      {mergeErrorForThisPair ? (
+                        <span data-testid="factoring-duplicate-vendors-banner-merge-error">
+                          {(mergeMutation.error as Error)?.message ?? "merge failed"}
+                        </span>
+                      ) : null}
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
                       className="font-semibold underline underline-offset-2"
                       style={{ color: colors.warn.strong }}
+                      onClick={() => setConfirmingPairKey(pairKey)}
                       data-testid="factoring-duplicate-vendors-banner-merge-pair-link"
                     >
                       Merge these
-                    </NavLink>
-                  ) : (
-                    <span style={{ color: colors.warn.strong }} data-testid="factoring-duplicate-vendors-banner-merge-pair-unsynced">
-                      not yet synced to QBO — merge from Driver Vendor Merges manually
-                    </span>
+                    </button>
                   )}
                 </li>
               );
