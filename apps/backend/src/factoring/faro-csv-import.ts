@@ -168,11 +168,24 @@ export function parseFaroCsv(csvText: string): FaroCsvParseResult {
   const netIdx = headerIndex(headers, ["net", "net amount"]);
   const dueIdx = headerIndex(headers, ["due date", "due on", "due"]);
 
+  // ROUND28-P0 (2026-09-22): the old `if (!invoice_number) continue;` here silently dropped any
+  // data row whose invoice-number cell was empty — no count, no warning, no trace. A 51-row
+  // statement could parse into a 34-line result with parseFaroCsv reporting total success. This
+  // codebase's own money-import law is "no raw SQL AND no silent swallow": every one of `rows.slice(1)`
+  // must end as either a stored line or a NAMED rejection — never neither. Money-value cells still
+  // fail loud on their own (parseMoneyToCents already throws FaroCsvImportError on anything
+  // unparseable, unchanged) — the only thing that used to disappear silently was a blank invoice
+  // number, so that is the one case turned into a named, aggregated rejection below.
+  const dataRows = rows.slice(1);
   const lines: FaroCsvLine[] = [];
-  for (const row of rows.slice(1)) {
+  const rejected: Array<{ row_number: number; raw: string; reason: string }> = [];
+  dataRows.forEach((row, idx) => {
     const cells = parseCsvRow(row);
     const invoice_number = String(cells[invoiceIdx] ?? "").trim();
-    if (!invoice_number) continue;
+    if (!invoice_number) {
+      rejected.push({ row_number: idx + 2, raw: row, reason: "blank invoice number cell" });
+      return;
+    }
     lines.push({
       invoice_number,
       customer_name: customerIdx >= 0 ? String(cells[customerIdx] ?? "").trim() || undefined : undefined,
@@ -184,9 +197,29 @@ export function parseFaroCsv(csvText: string): FaroCsvParseResult {
       net_amount_cents: parseMoneyToCents(String(cells[netIdx] ?? "0")),
       due_on: dueIdx >= 0 ? parseDueDate(String(cells[dueIdx] ?? "")) : undefined,
     });
+  });
+
+  if (rejected.length > 0) {
+    const detail = rejected
+      .map((r) => `row ${r.row_number} (${r.reason}): ${JSON.stringify(r.raw)}`)
+      .join("; ");
+    throw new FaroCsvImportError(
+      "invalid_csv",
+      `Faro CSV rejected ${rejected.length} of ${dataRows.length} data row(s) — a partial import is never committed. ` +
+        `Parsed ${lines.length}, rejected ${rejected.length}. Rejected rows: ${detail}`
+    );
   }
 
   if (lines.length === 0) throw new FaroCsvImportError("invalid_csv", "No invoice rows found in CSV");
+  // Invariant: every data row is now accounted for exactly once (stored line XOR named rejection
+  // above, which already returned/thrown). If this ever fails, some new code path is silently
+  // dropping rows again the same way this fix just closed — fail loud, do not let it slide.
+  if (lines.length !== dataRows.length) {
+    throw new FaroCsvImportError(
+      "invalid_csv",
+      `Faro CSV parse invariant violated: ${dataRows.length} data row(s) in, ${lines.length} line(s) out, 0 rejected — a row was dropped without being named. This is a bug in parseFaroCsv, not a data problem.`
+    );
+  }
 
   // Economic/statement date from parsed due_on when present — never invent UTC "today".
   const statementDate = lines.find((l) => l.due_on)?.due_on;

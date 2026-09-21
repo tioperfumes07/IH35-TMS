@@ -177,6 +177,40 @@ INV-BAD,Delta Co,ABC,950.00,50.00,25.00,0.00,925.00,2026-06-15`;
   it("rejects empty CSV", () => {
     expect(() => parseFaroCsv("Invoice Number\n")).toThrow(FaroCsvImportError);
   });
+
+  // ROUND28-P0: `if (!invoice_number) continue;` used to silently drop any row whose invoice
+  // number cell was blank — a 51-row statement could parse to 34 lines with zero error, zero
+  // count, zero trace. Reproduces exactly that shape (header-worthy row count, some rows missing
+  // their invoice number) and asserts the WHOLE import now fails loud instead of partially
+  // succeeding, naming the exact row(s) it rejected.
+  it("fails loud (never silently drops) a row with a blank invoice number, naming the row and its raw text", () => {
+    const csv =
+      `Invoice Number,Customer Name,Gross,Advance,Reserve,Fee,Chargeback,Net,Due Date\n` +
+      `INV-1,Acme Freight,1000.00,950.00,50.00,25.00,0.00,925.00,2026-06-15\n` +
+      `,Ghost Co,500.00,475.00,25.00,12.50,0.00,462.50,2026-06-16\n` +
+      `INV-3,Beta Logistics,700.00,650.00,30.00,20.00,0.00,650.00,2026-06-17`;
+    let caught: FaroCsvImportError | undefined;
+    try {
+      parseFaroCsv(csv);
+    } catch (e) {
+      caught = e as FaroCsvImportError;
+    }
+    expect(caught).toBeInstanceOf(FaroCsvImportError);
+    expect(caught?.message).toContain("rejected 1 of 3 data row");
+    expect(caught?.message).toContain("row 3");
+    expect(caught?.message).toContain("Ghost Co");
+  });
+
+  it("still parses every row correctly when no row is malformed (no false-positive rejection)", () => {
+    const csv =
+      `Invoice Number,Customer Name,Gross,Advance,Reserve,Fee,Chargeback,Net,Due Date\n` +
+      `INV-1,Acme Freight,1000.00,950.00,50.00,25.00,0.00,925.00,2026-06-15\n` +
+      `INV-2,Beta Logistics,500.00,475.00,25.00,12.50,0.00,462.50,2026-06-16\n` +
+      `INV-3,Gamma Co,700.00,650.00,30.00,20.00,0.00,650.00,2026-06-17`;
+    const parsed = parseFaroCsv(csv);
+    expect(parsed.lines).toHaveLength(3);
+    expect(parsed.lines.map((l) => l.invoice_number)).toEqual(["INV-1", "INV-2", "INV-3"]);
+  });
 });
 
 describe("resolveFaroCsvStatementDate", () => {
@@ -357,6 +391,25 @@ INV-2026-00002,Beta Logistics,500.00,475.00,25.00,12.50,0.00,462.50,2026-06-16`;
       statementDate: "2026-06-04",
     });
     expect(order).toEqual(["accrue", "exact", "chargeback"]);
+  });
+
+  // ROUND28-P0: a statement with a silently-droppable row must fail the ENTIRE commit before any
+  // durable write — never a partial 34-of-51 import with no error.
+  it("a row with a blank invoice number fails the whole commit before any durable write (never a partial import)", async () => {
+    const csvWithGhostRow =
+      `Invoice Number,Customer Name,Gross,Advance,Reserve,Fee,Chargeback,Net,Due Date\n` +
+      `INV-2026-00001,Acme Freight,1000.00,950.00,50.00,25.00,0.00,925.00,2026-06-15\n` +
+      `,Ghost Co,500.00,475.00,25.00,12.50,0.00,462.50,2026-06-16`;
+    await expect(
+      commitFaroCsvImport({
+        userId: "user-1",
+        operatingCompanyId: "11111111-1111-4111-8111-111111111111",
+        csvText: csvWithGhostRow,
+        statementDate: "2026-06-04",
+      })
+    ).rejects.toMatchObject({ code: "invalid_csv" });
+    expect(upsertOnClientMock).not.toHaveBeenCalled();
+    expect(postFundingMock).not.toHaveBeenCalled();
   });
 
   it("fail-closed when CSV chargeback ≠ exact linked liability (no partial / guessed recourse)", async () => {
