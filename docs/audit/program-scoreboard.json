@@ -1,10 +1,10 @@
 {
-  "healthzSha": "1185086",
-  "generated_at": "2026-09-13T19:02:36.151Z",
+  "healthzSha": "b211189",
+  "generated_at": "2026-09-21T18:59:51.701Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "1185086",
+    "deployedSha": "b211189",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 22022,
-      "title": "FINDING: N/A (docs only — OUTBOX status + migration-authority escalation to CC-1)",
+      "number": 22133,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "09/13/2026, 01:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22022",
-      "sha": "4443f35b78",
-      "committedAtIso": "2026-09-13T13:59:08-05:00"
+      "mergedAtCt": "09/21/2026, 08:00 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22133",
+      "sha": "b21118917a",
+      "committedAtIso": "2026-09-21T13:00:28Z"
     },
     {
-      "number": 22021,
-      "title": "CC-2-FINDING: BANK-F30130 (ROUND 23.3 DELTA — Faro linkage backfill + maker!=checker)",
+      "number": 22129,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "09/13/2026, 01:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22021",
-      "sha": "ebdaa709a4",
-      "committedAtIso": "2026-09-13T13:57:54-05:00"
+      "mergedAtCt": "09/21/2026, 12:07 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22129",
+      "sha": "4c959cae7c",
+      "committedAtIso": "2026-09-21T05:07:23Z"
     },
     {
-      "number": 22020,
-      "title": "FINDING: BANK-F30120 (ROUND 23.3 SUPPLEMENT -- master AlwaysTrack parity guard + orphaned invoice-dispute routes wired)",
+      "number": 22128,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "09/13/2026, 01:50 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22020",
-      "sha": "1f0a16406a",
-      "committedAtIso": "2026-09-13T13:50:26-05:00"
+      "mergedAtCt": "09/20/2026, 03:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22128",
+      "sha": "ec8680d3ea",
+      "committedAtIso": "2026-09-20T20:55:55Z"
     },
     {
-      "number": 22019,
-      "title": "FINDING: N/A (docs(bus) report — ROUND 23.1 Truck Line shipped #22018, awaiting deploy for live proof)",
+      "number": 22127,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "09/13/2026, 01:46 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22019",
-      "sha": "1185086675",
-      "committedAtIso": "2026-09-13T13:46:50-05:00"
+      "mergedAtCt": "09/20/2026, 11:15 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22127",
+      "sha": "ed8781e79c",
+      "committedAtIso": "2026-09-20T16:15:41Z"
     },
     {
-      "number": 22018,
-      "title": "FINDING: N/A (ROUND 23.1 -- Truck Line: five owner-reported, live-verified defects)",
+      "number": 22126,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "09/13/2026, 01:42 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22018",
-      "sha": "bd1d28c6ad",
-      "committedAtIso": "2026-09-13T13:42:38-05:00"
+      "mergedAtCt": "09/20/2026, 06:35 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22126",
+      "sha": "4bd8b8fcb9",
+      "committedAtIso": "2026-09-20T11:35:57Z"
     },
     {
-      "number": 22017,
-      "title": "FINDING: N/A (CLAIM-RESERVE 11453 -- reservation-only commit, no code fix)",
+      "number": 22125,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "09/13/2026, 01:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22017",
-      "sha": "7258a05505",
-      "committedAtIso": "2026-09-13T13:31:02-05:00"
+      "mergedAtCt": "09/20/2026, 12:01 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22125",
+      "sha": "4c9fa9dc72",
+      "committedAtIso": "2026-09-20T05:01:33Z"
     },
     {
-      "number": 22013,
-      "title": "spec(usmca): absorption law + AlwaysTrack ingestion spec, and unified dispute window spec",
+      "number": 22124,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "09/13/2026, 01:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22013",
-      "sha": "a01610940b",
-      "committedAtIso": "2026-09-13T13:26:09-05:00"
+      "mergedAtCt": "09/19/2026, 03:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22124",
+      "sha": "753ffecf58",
+      "committedAtIso": "2026-09-19T20:49:42Z"
     },
     {
-      "number": 22015,
-      "title": "docs: reconcile the three 2026-09-13 instruction docs to one source per topic",
+      "number": 22123,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "09/13/2026, 01:16 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22015",
-      "sha": "c37f5f3d53",
-      "committedAtIso": "2026-09-13T13:16:40-05:00"
+      "mergedAtCt": "09/19/2026, 10:58 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22123",
+      "sha": "5d66e287b5",
+      "committedAtIso": "2026-09-19T15:58:09Z"
     },
     {
-      "number": 22016,
-      "title": "FINDING: GLB-20260913 — dispute-window spec (PART C) lacked the exact endpoint contracts, normalized row shape, and route/nav insertion points seats need to build it without re-reading the code; fold in the measured design brief.",
+      "number": 22122,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "09/13/2026, 01:16 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22016",
-      "sha": "37d3ea76de",
-      "committedAtIso": "2026-09-13T13:16:37-05:00"
+      "mergedAtCt": "09/19/2026, 06:10 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22122",
+      "sha": "a62c7ab6cb",
+      "committedAtIso": "2026-09-19T11:10:49Z"
     },
     {
-      "number": 22014,
-      "title": "FINDING: GLB-20260913 — owner rulings 2026-09-13 (settlement absorption at the Aug-7 cutover, AlwaysTrack ingest gap, unified dispute window) were not written where every seat is forced to read them; encode as coder instructions.",
+      "number": 22120,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "09/13/2026, 01:10 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22014",
-      "sha": "3b22f9fdfa",
-      "committedAtIso": "2026-09-13T13:10:58-05:00"
+      "mergedAtCt": "09/18/2026, 11:45 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22120",
+      "sha": "97f6445acd",
+      "committedAtIso": "2026-09-19T04:45:58Z"
     }
   ]
 }
