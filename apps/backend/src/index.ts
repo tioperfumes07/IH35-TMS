@@ -294,6 +294,7 @@ import { registerFactoringBatchRoutes } from "./factoring/batch.routes.js";
 import { registerFactorRoutes } from "./factoring/factor.routes.js";
 import { registerReserveRoutes } from "./factoring/reserve.routes.js";
 import { registerFaroCsvImportRoutes } from "./factoring/faro-csv-import.routes.js";
+import { registerFactorReconciliationRoutes } from "./accounting/factor-reconciliation/routes.js";
 import { registerSubmissionQueueRoutes } from "./factoring/submission-queue.routes.js";
 import { registerScanDuplicateVendorRoutes } from "./factoring/scan-duplicate-vendors.routes.js";
 import { registerCashAdvancesRoutes } from "./cash-advances/cash-advances.routes.js";
@@ -1165,6 +1166,11 @@ async function main() {
   await registerFactorRoutes(app);
   await registerReserveRoutes(app);
   await registerFaroCsvImportRoutes(app);
+  // ROUND27.1-STEP5.5: registerFactorReconciliationRoutes existed fully built (recon.service.ts +
+  // routes.ts, real tests) but was never imported/registered anywhere in this file — GET
+  // /api/v1/accounting/factor-reconciliation/* and POST .../import 404'd for every caller, so
+  // factor.reconciliation_runs stayed at 0 rows regardless of any import having landed.
+  await registerFactorReconciliationRoutes(app);
   await registerSubmissionQueueRoutes(app);
   await registerScanDuplicateVendorRoutes(app);
   await registerDataInfrastructureRoutes(app);

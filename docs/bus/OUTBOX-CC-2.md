@@ -3592,3 +3592,25 @@ I'll flag it as its own P0 rather than let it sit silent, per the same rule.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+
+## 2026-09-21 — ROUND 27.1 / ROUND 28 — Invoices + Factoring (Faro is truth) — status
+
+Full evidence, live proof, and the honest open-scope list: `docs/reconciliation/2026-09-21-round27-28-faro-invoices-handoff.md` (this PR). Real extracted source data (CUSTOMER CHARGES 51 rows, FARO PURCHASES 90 rows, FARO RESERVE MOVEMENTS 17 rows, FARO MOVEMENTS REGISTER, FARO LOAD MAP, FARO CONTROL, FARO INVOICE STATUS, FARO FEES PAID, FARO FACTORING FEE & CLOSED) committed at `docs/reconciliation/2026-09-21-master-reconciliation-extract.json` — parsed straight from `~/Downloads/IH35-MASTER-RECONCILIATION-2026-09-21.xlsx`, not re-typed.
+
+SHIPPED, real and verified this PR:
+1. `factor.faro_daily_imports` header/ledger mismatch root-caused. First attempt shrank the header to match the incomplete 34-line ledger — WRONG DIRECTION, caught by the Round 28 correction ("Faro's data is the truth... header $151,740.00 CORRECT") and reverted live in the same session, with the full mistake+fix trail left on the row's own audit fields, not scrubbed.
+2. `factor-reconciliation` routes (recon.service.ts + routes.ts) existed fully built, zero callers — registered in index.ts.
+3. Live-reproduced + fixed a real bug in recon.service.ts (`operator is not unique: - unknown`, 42725) on the `missing_on_statement` path — every reconciliation run that ever hit an advanced-but-unstated invoice would have thrown this.
+4. `factoring.reserve_movement` (task's target table) is empty — but the REAL reserve ledger, `accounting.factoring_reserve_movements`, already has 110 rows / $5,094.47 held for USMCA. Flagging the naming collision before anyone builds a duplicate register against the dead table.
+5. `DuplicateVendorsBanner.tsx:135` fixed for real (not just the predicate) — wired to the generic, already-built, previously-uncalled vendor-merge primitive (`/api/v1/vendors/:id/flag-duplicate` + `/merge`), explicit Keep-A/Keep-B confirm since a merge survivor pick is real and hard to reverse. 5 tests passing.
+
+NOT attempted blind (source data extracted and committed, design needs a beat before code — each is its own next block): invoice-per-load minting + QP contra-revenue GL line, the loud-fail import guard, the full 89-purchase Faro historical load, reserve-register posting, the 8 cross-entity JE pairs, the two Faro-side-only discrepancies ($4,000.00 cash-reserve gap, $705.02 payments gap — raise with Faro, don't plug), daily-close-to-Faro check, bank-matching suggest-only verification.
+
+Also root-caused (not yet fixed): 13579 (voided test invoice — void path never reverts the source load's status off 'invoiced', a real status-sync bug) and 13615 (status 'invoiced' with zero audit trail explaining it — set outside the app, same pattern as the header).
+
+PR incoming this same turn, fast-merge law.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
