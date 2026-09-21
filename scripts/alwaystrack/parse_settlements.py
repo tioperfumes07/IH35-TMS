@@ -223,8 +223,15 @@ def parse_company(path):
         if not close(fsum, round(ft["actual"], 2)):
             d["_tie_errors"].append(("fuel_purchases", fsum, ft["actual"]))
 
-    # expenses -- anchor on the trailing amount only; the Y/N reimb/comp flags are read
-    # by searching for a standalone Y or N token, never by a fixed column offset.
+    # expenses -- anchor on the trailing amount only. The Reimb. column's real printed value is
+    # never Y/N -- it is the literal word "Drv" (reimbursed to the driver) or blank; only the
+    # Comp. Exp. column ever prints a standalone Y/N. Confirmed on prod text 2026-09-21
+    # (Company_Settlement_5809.txt:82: "...Fee Expense    Drv    Y    120.00" -- Reimb.=Drv AND
+    # Comp. Exp.=Y on the SAME line is real and means "the company paid it, recover it from the
+    # driver" -- both flags stand, never collapsed into one). An earlier version of this file
+    # took the first Y/N token as "reimb" whenever exactly one was present -- wrong, because a
+    # lone Y/N is virtually always under Comp. Exp., not Reimb.; that bug marked every plain
+    # Comp.-Exp.=Y line as a driver reimbursement instead.
     ex = []
     et = None
     for t in join_wrapped(sec.get("EXPENSES", [])):
@@ -241,17 +248,12 @@ def parse_company(path):
         if tail is None:
             continue
         amt = tail[0]
-        flags = [(mm.start(), mm.group(1)) for mm in re.finditer(r"(?<!\S)([YN])(?!\S)", t)]
-        reimb = comp = ""
-        if flags:
-            # Reimb. column prints before Comp. column in every document sampled;
-            # take them in left-to-right order rather than by absolute offset.
-            if len(flags) >= 1:
-                reimb = flags[0][1]
-            if len(flags) >= 2:
-                comp = flags[1][1]
+        comp_m = re.search(r"(?<!\S)([YN])(?!\S)", t)
+        comp = comp_m.group(1) if comp_m else ""
+        reimb = "Drv" if re.search(r"(?<!\S)Drv(?!\S)", t) else ""
         body_text = re.sub(r"(\s+-?[\d,]+\.\d+)\s*$", "", t.strip())
         body_text = re.sub(r"(?<!\S)[YN](?!\S)", " ", body_text)
+        body_text = re.sub(r"(?<!\S)Drv(?!\S)", " ", body_text)
         body = re.split(r"\s{2,}", body_text.strip())
         head = body[0].split(None, 1)
         ex.append({"date": head[0], "vendor": head[1] if len(head) > 1 else (body[1] if len(body) > 1 else ""),
