@@ -17,3 +17,7 @@ tmp-from-load-zero-*/
 # local pre-push run; committing it would be a constant merge-conflict generator across this
 # repo's many concurrent branches for zero benefit (never read by CI).
 scripts/.gate-step-map.json
+
+# Python bytecode cache from ad-hoc local runs of scripts/alwaystrack/parse_settlements.py.
+__pycache__/
+*.pyc
