@@ -40,7 +40,15 @@ const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 // owner-CLOSED (never re-opened: one-open-per-driver), or it never had a pre-settlement at all. Full
 // forensic + the safe restore of the 4 owner-CLOSED siblings: docs/reconcile/CHAIN-C1-C2-BACKFILL-
 // 2026-09-13.md. A driver-having unlinked load NOT in this set is a real regression and fails.
-const OWNER_PENDING_UNLINKED = new Set(["13526", "13527", "13561", "13567", "13571", "13574"]);
+// 13563: ROUND 28 STEP 3 PHASE 1 stray unlink (PR #22148) — presettlement_link_id nulled after
+// verifying zero settlement_lines existed for it; a pre-settlement-no-doc-yet load.
+// 13595: ROUND 29.5 owner ruling item 1 (docs/bus/CORRECTION-REGISTER-ROUND-28-STEP3-PHASE2B.md-era
+// work) — verified against DRIVER PAY LINES to belong to document 5816, not 5809; its live
+// escrow_contribution line was voided and presettlement_link_id nulled (contamination correction,
+// not re-linked here since 5816 is outside this session's assigned range).
+// 13615: genuinely pre-settlement, still 'dispatched' — its rate confirmation is not available to
+// the owner and "nobody waits on it" (ROUND 29.5 owner ruling, explicit).
+const OWNER_PENDING_UNLINKED = new Set(["13526", "13527", "13561", "13563", "13567", "13571", "13574", "13595", "13615"]);
 const DELIVERED_STATUSES = ["delivered_pending_docs", "completed_docs_received", "closed", "invoiced"];
 
 export function expenseNumberMismatch(loadNumber, expenseNumber) {

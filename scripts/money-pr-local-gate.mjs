@@ -232,26 +232,56 @@ const STEPS = [
   ["verify-gl-invariants-inv3-real-only-basis", "scripts/verify-gl-invariants-inv3-real-only-basis.mjs"],
   ["verify-mdata-loads-patch-writes-assignment-history", "scripts/verify-mdata-loads-patch-writes-assignment-history.mjs"],
   ["verify-settlement-header-backlink-written", "scripts/verify-settlement-header-backlink-written.mjs"],
-  // ROUND 29.5 owner ruling (2026-09-22), queue item 3 — DUPLICATE-ROUTE-BOOT-CRASH has now hit
-  // production 3 separate times (ACCT-F26308, ACCT-F5726, factor-reconciliation/#22145), each one a
-  // real deploy failure discovered only AFTER merge because this guard existed but was never wired
-  // into the fail-fast local gate — only into the slower full verify:local-ci/verify:pre-commit
-  // suite. Wired here so any future explicit register*Routes(app) call in index.ts duplicating an
-  // @fastify/autoload-mounted route file is caught before push, not after a broken deploy.
-  ["verify-no-duplicate-routes", "scripts/verify-no-duplicate-routes.mjs"],
 ];
 
-function runNode(rel) {
+// ROUND 29.9 owner ruling (2026-09-22) — three guards, wired in this exact order, AFTER the STEPS
+// array above and BEFORE this gate reports exit 0. Each uses the same runNode() non-zero-exit
+// propagation as every STEPS entry (verified live: see verify-money-pr-local-gate.mjs's deliberate-
+// failure case) — nothing here is a softer check than the array above.
+const GUARD_303 = [
+  // 03a — DUPLICATE-ROUTE-BOOT-CRASH has now hit production 3 separate times (ACCT-F26308,
+  // ACCT-F5726, factor-reconciliation/#22145), each one a real deploy failure discovered only AFTER
+  // merge because this guard (scripts/verify-no-duplicate-routes.mjs) existed but was never wired
+  // into the fail-fast local gate — only into the slower full verify:local-ci/verify:pre-commit
+  // suite (ROUND 29.5 owner ruling, queue item 3; this ROUND 29.9 message reconfirms it as 03a and
+  // asks it to run first, ahead of 03b/03c below — moved from its prior tail position in the STEPS
+  // array above to here, same script, same behavior).
+  ["verify-no-duplicate-routes (03a)", "scripts/verify-no-duplicate-routes.mjs", {}],
+  // 03b — LANE GUARD (ruled 2026-09-22 after CC-1 and CC-3 both wrote settlement rows 5805/5806 in
+  // the same hour). Fails a PR touching another seat's lane per docs/bus/LANES.md. Seat resolves
+  // from env SEAT or the branch name (cc-1/<topic>); no seat resolved -> FAIL, never assumed.
+  // LANE_BASE defaults to origin/main inside the script itself — no extra env needed here.
+  ["verify-lane-ownership (03b)", "scripts/verify-lane-ownership.mjs", {}],
+];
+
+function touchesMoneyPath() {
+  const res = spawnSync("git", ["diff", "--name-only", "origin/main...HEAD"], { cwd: ROOT, encoding: "utf8" });
+  if ((res.status ?? 1) !== 0) return false;
+  const files = (res.stdout || "").split("\n").filter(Boolean);
+  const MONEY_PATH_RE = /^(apps\/backend\/src\/(accounting|banking|factoring|driver-finance|mdata)\/|db\/migrations\/)/;
+  return files.some((f) => MONEY_PATH_RE.test(f));
+}
+
+function runNode(rel, extraEnv = {}) {
   const script = path.join(ROOT, rel);
   console.log(`[${LABEL}] RUN ${rel}`);
   const res = spawnSync(process.execPath, [script], {
     cwd: ROOT,
     encoding: "utf8",
-    env: process.env,
+    env: { ...process.env, ...extraEnv },
   });
   const out = `${res.stdout ?? ""}${res.stderr ?? ""}`.trim();
   if (out) console.log(out);
   return res.status ?? 1;
+}
+
+function failStep(name) {
+  console.error(
+    `\n${LABEL}: FAIL — ${name} rejected this branch BEFORE push.\n` +
+      `Fix the commit message / MODULE_PROGRESS / FINDING / lane band / CLAIMED / EntityLink baseline, then:\n` +
+      `  node scripts/money-pr-local-gate.mjs\n` +
+      `Then ONE push (hooks ON — never --no-verify). Do not rebase while CI is running (Rule 25 / Rule 29).\n`,
+  );
 }
 
 if (process.argv.includes("--selftest")) {
@@ -262,6 +292,16 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
+  for (const [, rel] of GUARD_303) {
+    if (!fs.existsSync(path.join(ROOT, rel))) {
+      console.error(`${LABEL} --selftest FAIL: missing ${rel}`);
+      process.exit(1);
+    }
+  }
+  if (!fs.existsSync(path.join(ROOT, "scripts/verify-control-totals.mjs"))) {
+    console.error(`${LABEL} --selftest FAIL: missing scripts/verify-control-totals.mjs`);
+    process.exit(1);
+  }
   console.log(`${LABEL} --selftest PASS`);
   process.exit(0);
 }
@@ -269,14 +309,33 @@ if (process.argv.includes("--selftest")) {
 for (const [name, rel] of STEPS) {
   const code = runNode(rel);
   if (code !== 0) {
-    console.error(
-      `\n${LABEL}: FAIL — ${name} rejected this branch BEFORE push.\n` +
-        `Fix the commit message / MODULE_PROGRESS / FINDING / lane band / CLAIMED / EntityLink baseline, then:\n` +
-        `  node scripts/money-pr-local-gate.mjs\n` +
-        `Then ONE push (hooks ON — never --no-verify). Do not rebase while CI is running (Rule 25 / Rule 29).\n`,
-    );
+    failStep(name);
     process.exit(code);
   }
+}
+
+// ROUND 29.9 — 03a/03b run unconditionally, in order, right after the STEPS array above.
+for (const [name, rel, extraEnv] of GUARD_303) {
+  const code = runNode(rel, extraEnv);
+  if (code !== 0) {
+    failStep(name);
+    process.exit(code);
+  }
+}
+
+// 03c — control totals against LIVE production. Skipped only when DATABASE_URL is absent AND this
+// PR touches no money path (apps/backend/src/{accounting,banking,factoring,driver-finance,mdata}/**
+// or db/migrations/**). Touching a money path with no DATABASE_URL is NOT a skip — the guard's own
+// script refuses outright ("Refusing to pass a money gate that never ran"), which is correct: an
+// operator working a money path must have prod access wired before this gate can pass.
+if (process.env.DATABASE_URL || touchesMoneyPath()) {
+  const code = runNode("scripts/verify-control-totals.mjs");
+  if (code !== 0) {
+    failStep("verify-control-totals (03c)");
+    process.exit(code);
+  }
+} else {
+  console.log(`[${LABEL}] SKIP verify-control-totals.mjs (03c) — no DATABASE_URL and no money path in this diff`);
 }
 
 function changedFileCountVsMain() {
