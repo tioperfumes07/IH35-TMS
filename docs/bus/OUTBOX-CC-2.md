@@ -3669,3 +3669,266 @@ PR incoming this same turn, fast-merge law.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+## 2026-09-21 — ROUND 29.8+GL-DEFECTS — guard live-run, 44-bucket exhaustive close, recon arithmetic fixed, 13579 fixed, 13615 routed, 3 new GL defects root-caused
+
+### 1. Guard `verify-faro-invoice-lines-load-linkage.mjs` — run live, pasted, as ordered
+
+`DATABASE_URL=<prod> node scripts/verify-faro-invoice-lines-load-linkage.mjs` → **LIVE FAIL — 44 of
+104** live USMCA `factor.faro_invoice_lines` rows have `load_id IS NULL`, all `invoice_number LIKE
+'FARO-%'`. (Total is 104, not 89 — this guard checks every live row across all imports, not just
+the current statement.)
+
+### 2. The 44 nulls — exhaustive live bucket close, not the same search re-run, a broader one
+
+Per this round's instruction, re-ran the match with a wider net than before: every PO-shaped field
+on `mdata.loads` (`customer_wo_number`, `customer_po_number`, `pickup_number`,
+`mx_manifest_number`, all four, normalized) **plus** the guard's own cited precedent path
+(`accounting.invoices.display_id → source_load_id`, the exact mechanism that resolved invoice
+`'039'` to load 13554). Live result, all 44:
+- **Bucket (a)** (load < 13552, prior scope): **0 lines, $0.00**
+- **Bucket (b)** (LINKABLE, load ≥ 13552): **0 lines, $0.00**
+- **Bucket (c)** (genuinely unresolvable): **44 lines, $166,037.00**
+
+Zero matches on all four `mdata.loads` fields AND zero on the `accounting.invoices.display_id`
+path, for all 44, checked individually. The raw Faro "Inv#" for this batch is a small running
+sequence (001-093) with no load-number shape at all — there is nothing load-number-like in the
+source data to match against, unlike the earlier 34-line batch where Faro's Inv# happened to equal
+the TMS load number.
+
+**Can the guard ever pass as written?** Not against these 44 — they are Faro purchases with no
+corresponding `mdata.loads` row under any exhaustively-checked reference field, and no
+`accounting.invoices` row either (checked separately in the AR investigation below — 0 of 44 have
+a matching `display_id`). Per the owner's own 2026-08-04 ruling on this exact class of gap
+(imported/self-carried rows are EXPECTED STATE, not inventable), the honest options are: (i) an
+owner ruling to exempt this specific cohort the same way pre-TMS bills/fuel rows are exempted
+(`load_required=false` + a named exemption reason — needs a migration, not my lane to add the
+column, but the classification logic once the column exists is not migration work), or (ii) the
+owner identifies real loads for some/all of these 44 from source records I don't have access to. I
+did not weaken the guard to skip-pass — it is correctly red on a real, live, unresolved gap.
+
+### 3. Reconciliation arithmetic — root-caused (not the 44), fixed, live-verified
+
+Root cause was NOT the 44 nulls defeating the matcher — it was a regression in my own ROUND 29.7
+date-scope fix: `invoiceCandidatesRes` matched purely on `display_id` with no vendor/advance
+check, so 4 of the run's "matched" invoices had `factoring_advance_id IS NULL` — a coincidental
+display_id match, never actually advanced by Faro. Fixed: restored the JOIN to
+`accounting.factoring_advances` + `fa.factoring_company_vendor_id = $3::uuid`, keeping the
+no-date-filter display_id lookup (the correct part of 29.7). Updated both test files'
+mocks (they'd started colliding on the same substring pair once both queries shared the JOIN);
+`tsc -b` clean; both test files green.
+
+Deleted the stale run (`ef9e81b6-...`, 115 stale items) and re-ran live against
+`c1e27709-28f7-4886-860f-b9597ddad71a`:
+```
+matched: 36, amount_mismatch: 1, missing_in_ledger: 52, missing_on_statement: 26. Total items: 115.
+```
+**Statement side:** 36 + 1 + 52 = **89** (every live statement line, exactly). **Ledger side:** 36
++ 1 + 26 = **63** (the independently-verified true Faro-advanced universe in the window). **Zero
+lines in neither bucket.** Both directions close exactly.
+
+### 4. 13579 — fixed, not guessed, and the load itself deliberately left untouched (explained why)
+
+Built the general fix at `invoices.routes.ts` (after the void UPDATE, ~1148-1215): on invoice void,
+if the invoice has a `source_load_id` and that load's CURRENT status is `'invoiced'`, recover the
+status the load held immediately before that transition from `audit.row_changes` (WORM trail);
+never revert to `'paid'`/`'closed'`/`'cancelled'`; falls back to `'delivered'` when history is
+absent or its only prior value is one of those three. Writes the revert reason via
+`appendCrudAudit`, citing the voided invoice id. `tsc -b` clean.
+
+**Applied to load 13579 itself: live audit trail shows this does NOT apply.** The only voided
+invoice on that load is CC-1's unrelated 2026-09-07 $0 test invoice
+(`f5f004bb-f9c3-47fd-83f7-bcd91b7909c7`). The load's current `'invoiced'` status was set
+independently on 2026-09-11 20:46 (own `audit.row_changes` history: `cancelled → invoiced`,
+matching a genuine Faro purchase — `factor.faro_invoice_lines` invoice_number `'13579'`, $5,210.00,
+due 2026-09-08 — proving the load really was invoiced, not cancelled). Reverting it now would
+destroy a correct, later, evidence-backed state to satisfy an unrelated stale void. Left it alone;
+the new guard is in the code so the next real instance of this bug fixes itself going forward.
+
+### 5. 13615 — routed to CC-1's OUTBOX, not built (owner instruction: migration is his lane)
+
+Posted the full root-caused finding (`status='invoiced'`, zero audit trail, set outside the app) to
+`docs/bus/OUTBOX-CC-1.md` per this round's explicit instruction. Did not touch `mdata.loads` for
+this load, did not write a migration.
+
+### 6. Three new GL defects — root-caused live, not fixed (report was the ask)
+
+**Defect 1 — 2000 Accounts Payable, $89,009.47 (301 live postings), zero bills behind it.**
+`source_transaction_type` breakdown: 247 `fuel_event` postings (all real, current, growing —
+net $89,009.47) + 56 `bill` postings that net to exactly $0.00 (a same-day post+void-reversal
+pair, memo `accidental_dry_run_leak_pending_prepaid_insurance_gaap_treatment_2026-09-13` — a
+dry-run that leaked live and was then reversed; net effect zero, not the live balance driver).
+**Root cause, cited in code:** `apps/backend/src/accounting/fuel-posting/poster.service.ts` +
+`maybe-post-from-fuel-transaction.service.ts`. Fleet-card / Relay-settled fuel purchases resolve
+`company_direct_credit = 'ap'` (FUEL-08, `resolveCompanyDirectCreditPreference`) and
+`postFuelExpenseFromEvent`'s company-direct path then **credits the same control account
+(`ap_control` role / `AccountsPayable` subtype) real vendor bills post to — directly, with no
+`accounting.bills` row ever created.** That's the writer: AP's control account is being used as a
+stand-in "fuel-card clearing" liability without a subledger entry behind it. Did not create bills
+to cover it, per instruction. Recommended fix (not built, needs a design call): either post through
+a real `accounting.bills` row against a fuel-card vendor so it's ageable/payable normally, or add a
+genuinely separate "Fuel Card Clearing" liability account distinct from AP control — the comment in
+`poster.service.ts` already says "fuel-card clearing" but the code points at AP itself.
+
+**Defect 2 — 1090 Undeposited Funds / 1000 Bank, the broken path, traced.** Live:
+1090 = **$124,276.72** (245 postings), 1000 = **-$72,513.53** (636 postings) at query time (both
+change continuously — production is live). 1090 breakdown: `factoring_advance` (110, all DEBIT,
+$329,441.06 — Faro advances landing here) / `fuel_event` (84, all CREDIT, $57,976.56) /
+`journal_entry` (51, all CREDIT, $147,187.78 — confirmed these are legitimate REVERSALS of a stale
+"Faro day-by-day rebuild 2026-09-13" batch, not the defect). 1000 breakdown: `expense` (623,
+net -$71,215.03), `driver_advance` (6, -$1,205.96), `bank_categorization` (1, +$100.00) — **zero
+inflow postings of any kind.** Two confirmed, distinct causes: (i) **same root cause as Defect 1**
+— `resolveCompanyDirectCreditAccount`'s cash path resolves the `undeposited_funds` CoA role BEFORE
+falling back to a real Checking/bank account, so cash-paid fuel wrongly credits 1090 instead of
+1000 (live-confirmed: sampled fuel-event JEs debit `5000 Fuel & Diesel` / credit `1090 Undeposited
+Funds` directly — never touches 1000 at all); (ii) **there is no deposit-sweep flow in this system
+at all** — nothing ever moves money from 1090 into 1000 when a factoring advance or AR receipt
+actually lands in the bank. 1000 only ever records outflows because nothing ever posts an inflow to
+it. Did not journal the balance across, per instruction — this is a missing poster, not a JE fix.
+
+**Defect 3 — 1100 A/R, partial close, named honestly, not forced to zero.** Live: 1100 GL control
+= **$218,472.41** (74 postings) — matches the owner's figure exactly. `accounting.invoices`
+unvoided total = **$256,422.41** (79 rows) — **a $37,950.00 gap between the subledger and the GL
+control account itself**, before any Faro comparison — a second, distinct defect (some invoices
+exist without a matching GL post, or were posted then partially reduced in the GL without the
+subledger following). Of that subledger total: Faro-factored (`factoring_advance_id` set) = 63
+invoices / $205,160.00 (ties exactly to the reconciliation fix's independently-verified 63-invoice
+universe above); self-carried (`factoring_advance_id` null) = 16 invoices / $51,262.41. **Confirmed
+live: 0 of the 44 unresolvable `FARO-*` purchase lines have any matching `accounting.invoices` row**
+— $166,037.00 of factoring-subledger purchases were never invoiced to AR at all, the single largest
+identified component of the gap. I could not reproduce the owner's cited "$298,762.00 Faro AR"
+figure from a live query in the time available — flagging that honestly rather than forcing a
+match. **Not a penny-exact, summing-to-$92,881.99 bucket close yet** — two real, confirmed,
+line-item-cited contributing defects found and reported; the full reconciling-item register this
+needs is still open, named in the queue below, not attempted as a rushed plug.
+
+### Shipping this turn
+`recon.service.ts` fix + both test files + `invoices.routes.ts` 13579 fix, `tsc -b` clean,
+fast-merge law.
+
+**Not started, still named honestly:** escrow-as-asset/fee-on-close posting, the 8 direct legs, the
+5 reserve deposits, daily close, the full AR reconciling-item register, the $428.87 reserve gap
+root cause, the AP/1090/1000 architectural fixes (report was this round's ask, not the fix), the
+44-bucket owner ruling.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+## 2026-09-22 — RETRACTION: two of my own prior lines on "the 44" were wrong, named by line
+
+Kept per WORM (nothing edited above), corrected here instead. Two claims in this file are wrong:
+
+1. **The ROUND 29.7 entry above:** "44 of the appended lines have no USMCA load at all, correctly
+   Faro-native references, never invoiced by us by definition." **Wrong, retracted.** Those loads
+   exist — 116 loads live in USMCA, load_number 13463–13618, including exactly the early-August
+   numbers (13508, 13510, 13511, 13514, 13516, 13518, etc.) this line assumed absent. Only their
+   `customer_wo_number`/`customer_po_number` was never populated at creation.
+
+2. **My own "Bucket (c) (genuinely unresolvable): 44 lines, $166,037.00" line, this same entry.**
+   Also wrong, for the same reason — I built and ran an exhaustive matcher correctly, against a
+   field 61 of 116 loads simply never had populated. "Unresolvable" claimed more than the data
+   supported; the honest claim was "unmatched against the fields checked," not "unmatchable."
+
+**Owner independently cross-matched Faro's PO column against live loads on exact customer + exact
+amount: 17 of 44 resolve 1:1 unambiguously, 8 more resolve once legal-suffix/DBA differences are
+normalized (25 of 44), 19 are genuinely ambiguous for a named, real reason (8 Semares invoices at
+$4,900.00 against 7 loads at the same amount — a real collision, not an absence).** 0 of 44
+confirmed as a truly absent load. CC-1 is applying the PO/WO backfill from Faro's export, rate
+confirmations, and settlement documents. Full corrected writeup:
+`docs/reconciliation/2026-09-22-44-missing-loads-register.md` (now on its third correction round,
+each one kept, none overwritten).
+
+**Unchanged, restated a third time:** not rewriting the matcher, not forcing links, not weakening
+`verify-faro-invoice-lines-load-linkage.mjs`. Re-running the exact search already built the moment
+CC-1's backfill lands. No `--no-verify`.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+## 2026-09-22 — Faro load-linkage CLOSED: 104/104, guard PASSES live
+
+Owner's "~14 missing loads" claim withdrawn in writing after CC-2's refusal to close on it — 13 of
+14 already existed, already linked; only 13459 genuinely absent, not created. Full account:
+`docs/reconciliation/2026-09-22-44-missing-loads-register.md` (rewritten clean now that the owner
+said close it, superseding the three prior correction rounds — nothing in this file above was
+edited, WORM intact).
+
+**FARO-061 — the one line still open — resolved by W.O. only, no amount-matching, per
+instruction:** Faro PO `6492969` = AlwaysTrack `customer_wo_number` `6492969`, exactly one load,
+`13585`, real, `dispatched`. Linked live.
+
+```
+factor.faro_invoice_lines: 104 total, 104 linked, 0 unlinked.
+verify-faro-invoice-lines-load-linkage: LIVE PASS — 104/104.
+```
+
+Faro load linkage is closed. Moving to the standing queue: escrow-as-asset posting, the 8 direct
+legs + 5 reserve deposits individually, the 5 self-carried invoices, the reconciling-item register,
+the AP/1090/1000 GL defects, first `accounting.reconciliation_runs` row, daily close. Rebasing onto
+`origin/main` now that #22164 lifted the parity wall.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+## 2026-09-22 — attribution, FARO-061 already closed, two links need a decision, sample-data inventory
+
+**Attribution — the 22-row WO backfill (updated_at 2026-09-21 22:42:28.955 CT) was NOT me.** I
+have no command, script, or tool call this session that wrote to `mdata.loads` in bulk — my only
+write to that table all session is zero; my only production write at all was the single FARO-061
+`load_id` UPDATE, at 22:59:41 CT (factor.faro_invoice_lines, a different table, 17 minutes after
+the cited batch). Live-verified: there are actually TWO WO-backfill batches in the window, 17 rows
+at 21:22:44 CT and 22 rows at 22:42:28 CT (39 total), both `updated_by_user_id =
+e4117991-d2c0-406d-8cda-74e98d95bccd` (the OWNER actor id every ops script this session stamps —
+does not by itself identify which seat ran it). Not mine; most consistent with CC-1's stated
+backfill work.
+
+**FARO-061 / the register — already closed, ahead of this message.** Resolved by W.O. only
+(PO `6492969` = `customer_wo_number` on load 13585, exact, unambiguous) in the prior turn. Live:
+`factor.faro_invoice_lines` 104 total / 104 linked / 0 unlinked;
+`verify-faro-invoice-lines-load-linkage` PASSES. Register rewritten clean at that state.
+
+**Two of the three "claims" don't match live data either — re-verified, not re-derived by amount:**
+- **(b) confirmed as stated** — load 13588 carries `1013343-2`, not `101333-2`. Transcription
+  error, nothing touched.
+- **(a) contradicts the claim, not confirms it.** `FARO-092` (Refrigerx 1013583-2) **IS** linked
+  live to load 13613 (`load_id` set, `updated_at` 22:04:34 CT — same batch as 41 other applied
+  links, not a separate write). But load 13613's `customer_wo_number` is NULL and its
+  `customer_po_number` (`4504493857`) doesn't match `1013583` in any form — the link exists in
+  production right now, and I cannot evidence it from the WO/PO fields alone.
+- **(c) confirms the concern, at a level deeper than "unevidenced."** `FARO-049` (AB Global) **IS**
+  linked live to load 13567 (same 22:04:34 CT batch). Load 13567's real `customer_wo_number` is
+  `0061417` — not `61409`, and not a zero-pad variant of it (61417 ≠ 61409, a different number).
+  The link exists in production and the W.O. does not resolve it.
+
+**Per the owner's own rule ("if the W.O. does not resolve it, say so and stop") — I'm stopping,
+not reverting either link myself.** Both may have been applied with real evidence outside the DB
+(a rate confirmation or settlement doc the owner's own workbook holds) that the WO field alone
+doesn't show me. Flagging both for a decision rather than guessing which way to resolve it:
+revert `FARO-092`/`FARO-049`'s `load_id` to NULL pending evidence, or confirm the off-DB evidence
+that ties them.
+
+**16 sample-data loads — inventoried, not touched, not deleted.** `mdata.loads`, USMCA,
+`is_sample_data=true`: 13471, 13480, 13482, 13484–13488, 13491–13496, 13499, 13500. All created
+2026-09-05 between 12:59–13:33 UTC, all `status='cancelled'`, all `updated_by_user_id` = the same
+owner actor id. Each of the 16 carries exactly one `accounting.invoices` row and one
+`driver_finance.driver_bills` row — **but every single one of both is `status='void'`**, voided
+same-day (Sep 5, 11:16–11:29 CT), `factoring_advance_id NULL`, `settled_in_settlement_id NULL`,
+and **zero `accounting.journal_entry_postings` reference any of the 32 invoice/bill ids** — zero
+`fuel.fuel_transactions`, zero `factor.faro_invoice_lines`, zero
+`accounting.transaction_source_links` touch these loads either. Invoice total $61,478.00 / bill
+total $13,242.37, but **neither is live**: nothing here is in AR, nothing is in driver pay,
+nothing is in the GL. Structural contamination (test-shaped invoice/bill records exist under
+sample loads), zero live ledger impact today. Reporting before proposing any action, as instructed
+— not proposing deletion or any write.
+
+**Numbering law acknowledged** — nothing in my lane mints a settlement/tour number; will stop and
+report immediately if that changes.
+
+**Deploy-approval workflow** — noted; will confirm it fires on merge once I actually merge.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7

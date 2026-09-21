@@ -1146,6 +1146,71 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         `,
         [params.data.id, body.data.reason ?? null, user.uuid]
       );
+
+      // ACCT-F13579 — a load whose invoice is voided must revert to the status it held BEFORE
+      // invoicing, not stay frozen at 'invoiced' with no live invoice behind it (owner ruling,
+      // 2026-09-22). Scoped to exactly the one load this one invoice points at — never a
+      // fleet-wide sweep, and never touched when the load's CURRENT status is something other
+      // than 'invoiced' (a later, independent load-status action superseded whatever this
+      // invoice set — reverting THAT would destroy real, later-verified state; live-checked
+      // against load 55e1b670-1201-40a8-8c48-b29d6bf73025/13579, whose void here is an unrelated
+      // 2026-09-07 $0 test invoice — its CURRENT 'invoiced' status was set independently on
+      // 2026-09-11, so this guard correctly leaves it untouched).
+      const sourceLoadId = (current as { source_load_id?: string | null }).source_load_id ?? null;
+      if (sourceLoadId) {
+        const loadRes = await client.query(
+          `SELECT status::text AS status FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+          [sourceLoadId, query.data.operating_company_id]
+        );
+        const loadStatus = (loadRes.rows[0] as { status?: string } | undefined)?.status ?? null;
+        if (loadStatus === "invoiced") {
+          // Recover the status the load held immediately before it flipped to 'invoiced', from
+          // the WORM audit trail (audit.row_changes) — never a guess. NEVER revert to 'paid',
+          // 'closed' or 'cancelled' (owner ruling): a 'cancelled' predecessor most often means the
+          // load was wrongly cancelled and later correctly re-invoiced, so replaying it would
+          // resurrect the earlier error, not fix one. Falls back to 'delivered' when the history
+          // is absent or its only prior value is one of the forbidden three.
+          const historyRes = await client.query(
+            `
+              SELECT old_data->>'status' AS old_status
+                FROM audit.row_changes
+               WHERE schema_name = 'mdata' AND table_name = 'loads' AND row_pk = $1
+                 AND new_data->>'status' = 'invoiced'
+               ORDER BY changed_at DESC
+               LIMIT 1
+            `,
+            [sourceLoadId]
+          );
+          const FORBIDDEN_REVERT_STATUSES = new Set(["paid", "closed", "cancelled"]);
+          const historicalPrior = (historyRes.rows[0] as { old_status?: string | null } | undefined)?.old_status ?? null;
+          const revertStatus =
+            historicalPrior && !FORBIDDEN_REVERT_STATUSES.has(historicalPrior) ? historicalPrior : "delivered";
+
+          await client.query(
+            `
+              UPDATE mdata.loads
+                 SET status = $3::mdata.load_status_enum,
+                     updated_at = now()
+               WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status = 'invoiced'
+            `,
+            [sourceLoadId, query.data.operating_company_id, revertStatus]
+          );
+          await appendCrudAudit(
+            client,
+            user.uuid,
+            "mdata.loads.status_reverted_on_invoice_void",
+            {
+              resource_type: "mdata.loads",
+              resource_id: sourceLoadId,
+              operating_company_id: query.data.operating_company_id,
+              reason: `Reverted to '${revertStatus}' (${historicalPrior && !FORBIDDEN_REVERT_STATUSES.has(historicalPrior) ? "recovered from status history" : "no usable status history — defaulted"}) after voided invoice ${params.data.id}`,
+            },
+            "warning",
+            "ACCT-F13579"
+          );
+        }
+      }
+
       if (flagOn) {
         await auditVoid(client, user.uuid, "invoice", {
           operatingCompanyId: query.data.operating_company_id,

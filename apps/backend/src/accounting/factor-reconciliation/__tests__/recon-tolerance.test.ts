@@ -52,10 +52,12 @@ describe("factor reconciliation Q11 tolerance", () => {
           ],
         };
       }
-      if (sql.includes("FROM accounting.invoices i") && sql.includes("JOIN accounting.factoring_advances")) {
+      if (sql.includes("FROM accounting.invoices i") && sql.includes("BETWEEN $3::date AND $4::date")) {
+        // missingOnStatementCandidatesRes: nothing else in the ledger's date window for this test.
         return { rows: [] };
       }
-      if (sql.includes("FROM accounting.invoices i")) {
+      if (sql.includes("FROM accounting.invoices i") && sql.includes("JOIN accounting.factoring_advances")) {
+        // invoiceCandidatesRes (ROUND29.8): display_id lookup restricted to genuinely-advanced invoices.
         return {
           rows: [{ invoice_id: "inv-tol-id", display_id: "INV-TOL", total_cents: 10099 }],
         };
