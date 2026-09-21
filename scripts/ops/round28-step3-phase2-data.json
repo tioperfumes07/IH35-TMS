@@ -1,0 +1,504 @@
+[
+  {
+    "doc": "5804",
+    "settlement_id": "48341005-1ac9-4a32-bd7b-f78479782a99",
+    "driver_id": "61727a46-af2e-4d33-8236-e2d99b737708",
+    "items": [
+      {
+        "kind": "reimbursement",
+        "load_number": "13576",
+        "load_id": "51e2d71b-c384-4b24-b5b9-f471a4da9dd1",
+        "description": "LOVES Driver Reimbursement-TPE-Scale Expense",
+        "reimbursement_type": "scale",
+        "amount_cents": 1525
+      },
+      {
+        "kind": "deduction",
+        "load_number": "13594",
+        "load_id": "6c08ae39-5079-4b23-ab16-8b044add7619",
+        "description": "Admin fee - GAS",
+        "deduction_type": "other",
+        "amount_cents": 1000
+      }
+    ]
+  },
+  {
+    "doc": "5805",
+    "settlement_id": "6a8ecf55-c321-4648-bb05-17fada8881a4",
+    "driver_id": "93be328f-ba1b-4175-adaf-bb619c1c51f2",
+    "items": [
+      {
+        "kind": "extra_pay",
+        "load_number": "13582",
+        "load_id": "c750b5ec-10c3-4a78-a70a-05afa560829e",
+        "description": "Driver Pay-Enlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "extra_pay",
+        "load_number": "13582",
+        "load_id": "c750b5ec-10c3-4a78-a70a-05afa560829e",
+        "description": "Driver Pay-Desenlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "extra_pay",
+        "load_number": "13592",
+        "load_id": "d706f493-de13-4d8c-8bf0-4a889e3f87fb",
+        "description": "Driver Pay-Enlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "extra_pay",
+        "load_number": "13592",
+        "load_id": "d706f493-de13-4d8c-8bf0-4a889e3f87fb",
+        "description": "Driver Pay-Desenlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "reimbursement",
+        "load_number": "13582",
+        "load_id": "c750b5ec-10c3-4a78-a70a-05afa560829e",
+        "description": "LOVES GASOLINA/HONDA",
+        "reimbursement_type": "fuel",
+        "amount_cents": 1000
+      },
+      {
+        "kind": "deduction",
+        "load_number": "13592",
+        "load_id": "d706f493-de13-4d8c-8bf0-4a889e3f87fb",
+        "description": "Admin fee - GAS",
+        "deduction_type": "other",
+        "amount_cents": 1000
+      }
+    ]
+  },
+  {
+    "doc": "5806",
+    "settlement_id": "f5305500-726f-4650-ab1c-ebef26db4c31",
+    "driver_id": "3e138476-06db-4b08-9ebe-527a5d8c591d",
+    "items": [
+      {
+        "kind": "extra_pay",
+        "load_number": "13581",
+        "load_id": "639b38d8-4c5e-42ba-9d7f-2d5aeb3f735f",
+        "description": "Driver Pay-Enlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "extra_pay",
+        "load_number": "13581",
+        "load_id": "639b38d8-4c5e-42ba-9d7f-2d5aeb3f735f",
+        "description": "Driver Pay-Desenlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "extra_pay",
+        "load_number": "13591",
+        "load_id": "10234bcb-933e-422c-9924-630a7f2a893f",
+        "description": "Driver Pay-Enlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "extra_pay",
+        "load_number": "13591",
+        "load_id": "10234bcb-933e-422c-9924-630a7f2a893f",
+        "description": "Driver Pay-Desenlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "deduction",
+        "load_number": "13591",
+        "load_id": "10234bcb-933e-422c-9924-630a7f2a893f",
+        "description": "Admin fee - GAS",
+        "deduction_type": "other",
+        "amount_cents": 1000
+      }
+    ]
+  },
+  {
+    "doc": "5807",
+    "settlement_id": "89c90396-28b3-46cd-8920-2c496e499b2f",
+    "driver_id": "4ff53886-41cc-434f-ae23-a36a0e3ec8e2",
+    "items": [
+      {
+        "kind": "extra_pay",
+        "load_number": "13585",
+        "load_id": "d603567d-3f8c-4f97-a116-729e4378db65",
+        "description": "Driver Pay-Layover-Estancia 6 y 7 DE SEPTIEMBRE",
+        "amount_cents": 5000
+      },
+      {
+        "kind": "deduction",
+        "load_number": "13578",
+        "load_id": "dc119bec-afc8-4b81-952c-6eb84ffa8329",
+        "description": "Driver-Escrow For Claims",
+        "deduction_type": "escrow_contribution",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "deduction",
+        "load_number": "13587",
+        "load_id": "0b3589e5-f09d-4b2b-9b2a-78134d2b2839",
+        "description": "Admin fee - GAS",
+        "deduction_type": "other",
+        "amount_cents": 1000
+      },
+      {
+        "kind": "deduction",
+        "load_number": "13587",
+        "load_id": "0b3589e5-f09d-4b2b-9b2a-78134d2b2839",
+        "description": "CASH ADVANCE WIRE TRANSFER",
+        "deduction_type": "advance",
+        "amount_cents": 28000
+      },
+      {
+        "kind": "deduction",
+        "load_number": "13585",
+        "load_id": "d603567d-3f8c-4f97-a116-729e4378db65",
+        "description": "Driver-Escrow For Claims",
+        "deduction_type": "escrow_contribution",
+        "amount_cents": 2500
+      }
+    ]
+  },
+  {
+    "doc": "5808",
+    "settlement_id": "63a8333b-8446-4426-bd34-4277997608ec",
+    "driver_id": "45fac397-860e-4fe8-ae18-67e12e1959c1",
+    "items": [
+      {
+        "kind": "extra_pay",
+        "load_number": "13597",
+        "load_id": "c4762193-3458-4a06-ae3c-f0dcd692c6b0",
+        "description": "Driver Pay-Enlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "extra_pay",
+        "load_number": "13597",
+        "load_id": "c4762193-3458-4a06-ae3c-f0dcd692c6b0",
+        "description": "Driver Pay-Desenlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "extra_pay",
+        "load_number": "13601",
+        "load_id": "8df416db-63b3-4497-bbd2-19f4cb355d72",
+        "description": "Driver Pay-Enlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "extra_pay",
+        "load_number": "13601",
+        "load_id": "8df416db-63b3-4497-bbd2-19f4cb355d72",
+        "description": "Driver Pay-Desenlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "reimbursement",
+        "load_number": "13597",
+        "load_id": "c4762193-3458-4a06-ae3c-f0dcd692c6b0",
+        "description": "ROAD RANGER GAS/HONDA",
+        "reimbursement_type": "fuel",
+        "amount_cents": 1000
+      },
+      {
+        "kind": "deduction",
+        "load_number": "13601",
+        "load_id": "8df416db-63b3-4497-bbd2-19f4cb355d72",
+        "description": "Admin fee - GAS",
+        "deduction_type": "other",
+        "amount_cents": 1000
+      }
+    ]
+  },
+  {
+    "doc": "5809",
+    "settlement_id": "4db66351-c523-43a4-b949-bd4d9c42e5a2",
+    "driver_id": "c864a4bb-a7ff-4373-a5e1-c1590eefe3b7",
+    "items": [
+      {
+        "kind": "extra_pay",
+        "load_number": "13583",
+        "load_id": "ffb3bb73-b039-4e32-8ed7-ac43566ebb83",
+        "description": "Driver Pay-Layover-Estancia 11 Y 13 DE SEPTIEMBRE",
+        "amount_cents": 5000
+      },
+      {
+        "kind": "extra_pay",
+        "load_number": "13583",
+        "load_id": "ffb3bb73-b039-4e32-8ed7-ac43566ebb83",
+        "description": "Driver Pay-Extra Delivery/Drop",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "reimbursement",
+        "load_number": "13606",
+        "load_id": "6f76f0eb-e674-455c-95e3-c483ff9cf487",
+        "description": "GDC GROUP LOGISTICS,INC Warehouse-Lumper Fee Expense",
+        "reimbursement_type": "lumper",
+        "amount_cents": 12000
+      },
+      {
+        "kind": "deduction",
+        "load_number": "13598",
+        "load_id": "c5da7a39-280d-4a36-88aa-77f978f9e191",
+        "description": "Driver-Escrow For Claims",
+        "deduction_type": "escrow_contribution",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "deduction",
+        "load_number": "13606",
+        "load_id": "6f76f0eb-e674-455c-95e3-c483ff9cf487",
+        "description": "Driver-Escrow For Claims",
+        "deduction_type": "escrow_contribution",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "deduction",
+        "load_number": "13606",
+        "load_id": "6f76f0eb-e674-455c-95e3-c483ff9cf487",
+        "description": "Admin fee - GAS",
+        "deduction_type": "other",
+        "amount_cents": 1000
+      }
+    ]
+  },
+  {
+    "doc": "5810",
+    "settlement_id": "f074c0c9-266c-4fc6-9c1e-446d702ced49",
+    "driver_id": "fba21d80-628b-4228-ae54-336f9cbb73b6",
+    "items": [
+      {
+        "kind": "extra_pay",
+        "load_number": "13599",
+        "load_id": "e80e9d9e-ea84-4188-8e0b-bd770572ec93",
+        "description": "Driver Pay-Extra Pick Up",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "extra_pay",
+        "load_number": "13599",
+        "load_id": "e80e9d9e-ea84-4188-8e0b-bd770572ec93",
+        "description": "Driver Pay-Extra Pick Up",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "deduction",
+        "load_number": "13599",
+        "load_id": "e80e9d9e-ea84-4188-8e0b-bd770572ec93",
+        "description": "Driver-Escrow For Claims",
+        "deduction_type": "escrow_contribution",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "deduction",
+        "load_number": "13599",
+        "load_id": "e80e9d9e-ea84-4188-8e0b-bd770572ec93",
+        "description": "Admin fee - gas",
+        "deduction_type": "other",
+        "amount_cents": 1000
+      }
+    ]
+  },
+  {
+    "doc": "5811",
+    "settlement_id": "222c0d6b-9c2c-4751-ba08-affd64a993a3",
+    "driver_id": "5dd518ff-db91-429f-b651-a71b5f0db672",
+    "items": [
+      {
+        "kind": "extra_pay",
+        "load_number": "13596",
+        "load_id": "deff9a3d-b8e1-4e43-aced-ff9bb7979841",
+        "description": "Driver Pay-Enlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "extra_pay",
+        "load_number": "13596",
+        "load_id": "deff9a3d-b8e1-4e43-aced-ff9bb7979841",
+        "description": "Driver Pay-Desenlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "extra_pay",
+        "load_number": "13603",
+        "load_id": "4a066861-e929-44d7-bf9e-1f16c62f1671",
+        "description": "Driver Pay-Enlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "extra_pay",
+        "load_number": "13603",
+        "load_id": "4a066861-e929-44d7-bf9e-1f16c62f1671",
+        "description": "Driver Pay-Desenlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "extra_pay",
+        "load_number": "13603",
+        "load_id": "4a066861-e929-44d7-bf9e-1f16c62f1671",
+        "description": "Driver Pay-Layover-Estancia",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "deduction",
+        "load_number": "13603",
+        "load_id": "4a066861-e929-44d7-bf9e-1f16c62f1671",
+        "description": "Driver-Escrow For Claims",
+        "deduction_type": "escrow_contribution",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "deduction",
+        "load_number": "13603",
+        "load_id": "4a066861-e929-44d7-bf9e-1f16c62f1671",
+        "description": "Admin fee - GAS",
+        "deduction_type": "other",
+        "amount_cents": 1000
+      }
+    ]
+  },
+  {
+    "doc": "5812",
+    "settlement_id": "63145f15-a749-4b86-adc6-254be14d31c7",
+    "driver_id": "4ff53886-41cc-434f-ae23-a36a0e3ec8e2",
+    "items": [
+      {
+        "kind": "deduction",
+        "load_number": "13588",
+        "load_id": "0a20a60d-c652-433b-9cfd-4d4e017c05cc",
+        "description": "Driver-Escrow For Claims",
+        "deduction_type": "escrow_contribution",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "deduction",
+        "load_number": "13600",
+        "load_id": "e4782161-7fc7-48a2-a164-96b6f30812c2",
+        "description": "Driver-Escrow For Claims",
+        "deduction_type": "escrow_contribution",
+        "amount_cents": 2500
+      }
+    ]
+  },
+  {
+    "doc": "5813",
+    "settlement_id": "e47e64e2-33cf-4c27-abf2-4e3ee5dbc95e",
+    "driver_id": "93be328f-ba1b-4175-adaf-bb619c1c51f2",
+    "items": [
+      {
+        "kind": "extra_pay",
+        "load_number": "13602",
+        "load_id": "4cf0ffd3-f032-46ee-a62c-2202c34ea1ce",
+        "description": "Driver Pay-Enlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "extra_pay",
+        "load_number": "13602",
+        "load_id": "4cf0ffd3-f032-46ee-a62c-2202c34ea1ce",
+        "description": "Driver Pay-Desenlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "extra_pay",
+        "load_number": "13607",
+        "load_id": "65b7edb1-fe70-4e9d-9451-969c2770e9bc",
+        "description": "Driver Pay-Enlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "extra_pay",
+        "load_number": "13607",
+        "load_id": "65b7edb1-fe70-4e9d-9451-969c2770e9bc",
+        "description": "Driver Pay-Desenlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "deduction",
+        "load_number": "13607",
+        "load_id": "65b7edb1-fe70-4e9d-9451-969c2770e9bc",
+        "description": "Admin fee - GAS",
+        "deduction_type": "other",
+        "amount_cents": 1000
+      }
+    ]
+  },
+  {
+    "doc": "5814",
+    "settlement_id": "d00faf77-0d38-451a-807f-54a594c318f5",
+    "driver_id": "3e138476-06db-4b08-9ebe-527a5d8c591d",
+    "items": [
+      {
+        "kind": "extra_pay",
+        "load_number": "13604",
+        "load_id": "9ecc3121-8056-4e99-b35e-2e27a66d37c3",
+        "description": "Driver Pay-Enlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "extra_pay",
+        "load_number": "13604",
+        "load_id": "9ecc3121-8056-4e99-b35e-2e27a66d37c3",
+        "description": "Driver Pay-Desenlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "extra_pay",
+        "load_number": "13608",
+        "load_id": "0e35b122-d643-411c-bac0-50f78690e507",
+        "description": "Driver Pay-Enlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "extra_pay",
+        "load_number": "13608",
+        "load_id": "0e35b122-d643-411c-bac0-50f78690e507",
+        "description": "Driver Pay-Desenlonada",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "deduction",
+        "load_number": "13608",
+        "load_id": "0e35b122-d643-411c-bac0-50f78690e507",
+        "description": "Admin fee - GAS",
+        "deduction_type": "other",
+        "amount_cents": 1000
+      }
+    ]
+  },
+  {
+    "doc": "5815",
+    "settlement_id": "00027149-1c90-4bc1-b213-0a6d6d614ac6",
+    "driver_id": "1ec7654c-1ae9-4f3d-9af6-af9fd4b6bcc9",
+    "items": [
+      {
+        "kind": "deduction",
+        "load_number": "13605",
+        "load_id": "454bb0c5-5ec8-45b0-ab33-806fa3197d2e",
+        "description": "Driver-Escrow For Claims",
+        "deduction_type": "escrow_contribution",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "deduction",
+        "load_number": "13611",
+        "load_id": "613657e2-7190-44a1-b773-83506ba37648",
+        "description": "Driver-Escrow For Claims",
+        "deduction_type": "escrow_contribution",
+        "amount_cents": 2500
+      },
+      {
+        "kind": "deduction",
+        "load_number": "13611",
+        "load_id": "613657e2-7190-44a1-b773-83506ba37648",
+        "description": "Admin fee - GAS",
+        "deduction_type": "other",
+        "amount_cents": 1000
+      }
+    ]
+  }
+]
