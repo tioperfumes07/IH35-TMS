@@ -71,7 +71,13 @@ export async function registerNotificationStreamRoutes(app: FastifyInstance) {
         for (const row of rows) {
           if (closed) break;
           reply.raw.write(`data: ${JSON.stringify(row)}\n\n`);
-          lastSeenAt = String(row.created_at);
+          // BUG (live, firing every 5s in prod): String(row.created_at) called Date.prototype.toString()
+          // on the pg driver's native Date object for a timestamptz column — "Mon Sep 21 2026
+          // 20:28:23 GMT+0000 (Coordinated Universal Time)" — which the NEXT poll then bound as
+          // $2::timestamptz and Postgres rejected (22007), degrading this stream to keepalive-only.
+          // new Date(...).toISOString() round-trips correctly whether pg handed back a Date object
+          // (the normal case) or, defensively, an already-ISO string.
+          lastSeenAt = new Date(row.created_at as string | number | Date).toISOString();
         }
         writeKeepalive();
       } catch (error) {
