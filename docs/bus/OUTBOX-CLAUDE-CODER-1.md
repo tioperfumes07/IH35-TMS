@@ -183,9 +183,22 @@ hit the same way), not a regression to fix here. `driver_finance.*` is CC-3's la
 `docs/bus/LANES.md` and this round's explicit instruction not to touch it — named for the record,
 not fixed.
 
+### CORRECTION — identity-lane test-infra blocker was already closed before this report
+The prior version of this section listed "the CC-2-routed identity-lane test-infra blocker
+(`guard_role_escalation()` rejecting a shared `.db.test.ts` fixture `INSERT INTO identity.users`)
+— queued next" under Not Started. That was stale: it was already root-caused and fixed on
+**2026-09-09**, PR #21628 (GLB-25158), commit `b6202a8d19` — an ancestor of `origin/main` well
+before this session started (confirmed live: `git merge-base --is-ancestor b6202a8d19 origin/main`).
+The guard (`identity.guard_role_escalation()`, `db/migrations/202613312000_permission_model.sql`,
+a deliberate no-lucia-escape trigger, owner ruling 2026-08-31) was correct; the shared test fixture
+(`apps/backend/test-helpers/db-fixture.ts`) needed to accommodate it, which PR #21628 did via the
+migration's own purpose-built `app.allow_owner_bootstrap` recovery GUC — live-proved 144→15 failing
+test files. Not re-work; correcting the record. One open thread that PR's own REMAINING named, not
+re-audited here: ~26 other `role === 'Owner'`-matching sites exist repo-wide, overwhelmingly
+production authorization checks rather than INSERT/seed sites on a quick scan, not individually
+verified.
+
 ### Not started this pass (disclosed)
-- The CC-2-routed identity-lane test-infra blocker (`guard_role_escalation()` rejecting a shared
-  `.db.test.ts` fixture `INSERT INTO identity.users`) — queued next.
 - Step 4 (`source_document_ref` migration + Company Settlements screen to $63,687.26).
 - Step 4A/5 leftovers (cancelled shell 5779 duplicate $10, Vicente's $85 row, orphaned driver_bills
   on a duplicate driver record).
