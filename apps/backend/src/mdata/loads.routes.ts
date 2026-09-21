@@ -1391,6 +1391,18 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       // Non-fatal by design, matching the dispatch route: a settlement-ping failure must never 500 an
       // office status change. Losing the status write is worse than deferring the settlement, which
       // the twice-daily reconcile surfaces.
+      //
+      // SETL-PING-SAVEPOINT (live-caught this session): the try/catch above caught the JS error but
+      // never protected the SQL transaction it runs in — once pingSettlementOnLoadEvent's own INSERT
+      // fails at the Postgres level (reproduced live: an RLS violation on lib.trace_counters), every
+      // later statement on the SAME connection/transaction — including the appendCrudAudit call right
+      // below and the status write's own COMMIT — fails too with "current transaction is aborted,
+      // commands ignored until end of transaction block". The comment's own stated intent ("a
+      // settlement-ping failure must never 500 an office status change") was being violated by the
+      // exact mechanism it was written to prevent. SAVEPOINT/ROLLBACK TO SAVEPOINT isolates the
+      // optional side-effect from the transaction the caller actually needs to succeed — same pattern
+      // settlements.routes.ts's recomputeDebtSync already uses for this identical class of bug.
+      await client.query("SAVEPOINT settlement_ping");
       try {
         await pingSettlementOnLoadEvent(client, {
           loadId: String(row.id),
@@ -1398,7 +1410,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           dispatchTargetStatus: String(row.status),
           actorUserId: req.user!.uuid,
         });
+        await client.query("RELEASE SAVEPOINT settlement_ping");
       } catch (err) {
+        await client.query("ROLLBACK TO SAVEPOINT settlement_ping");
         console.warn({ err, load_id: String(row.id) }, "mdata_load_settlement_ping_failed");
       }
 
