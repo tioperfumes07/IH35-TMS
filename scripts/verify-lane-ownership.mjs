@@ -1,0 +1,117 @@
+#!/usr/bin/env node
+// verify-lane-ownership.mjs — fails a PR that touches another seat's lane.
+// Ruled 2026-09-22 after CC-1 and CC-3 both wrote settlement rows 5805/5806 in the same hour.
+//
+// Seat identity, in order of precedence:
+//   1. env SEAT           (CC-1 | CC-2 | CC-3)
+//   2. branch name prefix (cc-1/..., cc1/..., claude-coder-1/...)
+// No seat resolved -> FAIL. Never assume a lane.
+//
+// Lane cross: put `LANE-CROSS: <ruling-filename>` in the PR body AND pass
+// LANE_CROSS=<ruling-filename> to this script. The ruling file must exist in docs/bus/.
+
+import { execSync } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
+
+const LANES_FILE = 'docs/bus/LANES.md';
+const BASE = process.env.LANE_BASE || 'origin/main';
+
+const fail = (m) => { console.error(`\n  LANE GUARD FAIL: ${m}\n`); process.exit(1); };
+const ok   = (m) => console.log(`  LANE GUARD PASS: ${m}`);
+
+if (!existsSync(LANES_FILE)) fail(`${LANES_FILE} is missing. The lane table IS the rule; without it nothing is enforced.`);
+
+// ---- resolve seat -----------------------------------------------------------
+let seat = (process.env.SEAT || '').trim().toUpperCase();
+if (!seat) {
+  let branch = '';
+  try { branch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim(); } catch {}
+  const m = branch.toLowerCase().match(/^(?:claude-)?(?:coder-)?cc-?([123])\b/);
+  if (m) seat = `CC-${m[1]}`;
+}
+if (!/^CC-[123]$/.test(seat)) {
+  fail(`could not resolve the seat. Set SEAT=CC-1|CC-2|CC-3 or name the branch cc-1/<topic>. ` +
+       `A PR with no owner is exactly how two seats wrote the same rows.`);
+}
+
+// ---- parse LANES.md ---------------------------------------------------------
+// Sections are "## CC-N ..." / "## SHARED ..." / "## FORBIDDEN ...".
+// Path globs are the lines that are not TABLES:/prose.
+const text = readFileSync(LANES_FILE, 'utf8');
+const sections = {};
+let cur = null;
+for (const raw of text.split('\n')) {
+  const h = raw.match(/^##\s+(CC-[123]|SHARED|FORBIDDEN)/);
+  if (h) { cur = h[1]; sections[cur] = []; continue; }
+  if (!cur) continue;
+  const line = raw.trim();
+  if (!line || line.startsWith('TABLES:') || line.startsWith('#')) continue;
+  if (/^[A-Za-z].*:/.test(line) && !line.includes('/')) continue;   // prose like "Any write to: ..."
+  if (line.includes('/') || line.includes('*')) sections[cur].push(line.split(/\s{2,}/)[0].trim());
+}
+for (const s of ['CC-1', 'CC-2', 'CC-3', 'SHARED']) {
+  if (!sections[s]?.length) fail(`${LANES_FILE} has no path patterns under "## ${s}". Refusing to run a guard that would pass everything.`);
+}
+
+// glob -> regex.  ** = any depth, * = within one segment.
+const rx = (g) => new RegExp('^' + g
+  .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+  .replace(/\*\*/g, '\u0000')
+  .replace(/\*/g, '[^/]*')
+  .replace(/\u0000/g, '.*') + '($|/)');
+
+const matches = (file, globs) => globs.some((g) => rx(g).test(file));
+
+// ---- changed files ----------------------------------------------------------
+let files = [];
+try {
+  const mergeBase = execSync(`git merge-base ${BASE} HEAD`, { encoding: 'utf8' }).trim();
+  files = execSync(`git diff --name-only ${mergeBase}..HEAD`, { encoding: 'utf8' })
+    .split('\n').map((s) => s.trim()).filter(Boolean);
+} catch (e) {
+  fail(`could not diff against ${BASE} (${e.message}). Fetch the base branch first. ` +
+       `A guard that cannot see the diff must never pass.`);
+}
+if (files.length === 0) { ok(`${seat}: no changed files.`); process.exit(0); }
+
+// ---- lane cross -------------------------------------------------------------
+const cross = (process.env.LANE_CROSS || '').trim();
+let crossOk = false;
+if (cross) {
+  const p = cross.includes('/') ? cross : `docs/bus/${cross}`;
+  if (!existsSync(p)) fail(`LANE_CROSS names "${cross}" but ${p} does not exist. A ruling you cannot open is not a ruling.`);
+  crossOk = true;
+  console.log(`  lane cross authorised by ${p}`);
+}
+
+// ---- verdict ----------------------------------------------------------------
+const mine = sections[seat];
+const others = ['CC-1', 'CC-2', 'CC-3'].filter((s) => s !== seat);
+const violations = [];
+const forbidden = [];
+
+for (const f of files) {
+  if (matches(f, sections.FORBIDDEN || [])) { forbidden.push(f); continue; }
+  if (matches(f, mine) || matches(f, sections.SHARED)) continue;
+  const owner = others.find((s) => matches(f, sections[s]));
+  violations.push({ file: f, owner: owner || 'UNASSIGNED' });
+}
+
+if (forbidden.length) {
+  fail(`${forbidden.length} file(s) in the FORBIDDEN list. No ruling overrides this:\n` +
+       forbidden.map((f) => `    ${f}`).join('\n'));
+}
+
+if (violations.length && !crossOk) {
+  fail(`${seat} touched ${violations.length} file(s) outside its lane:\n` +
+       violations.map((v) => `    ${v.file}   -> owned by ${v.owner}`).join('\n') +
+       `\n\n  To cross: post to that seat's OUTBOX, get the Lead's written ruling into docs/bus/,` +
+       `\n  then re-run with LANE_CROSS=<ruling-filename> and the same line in the PR body.`);
+}
+
+if (violations.length && crossOk) {
+  console.log(`  ${violations.length} out-of-lane file(s), authorised:`);
+  for (const v of violations) console.log(`    ${v.file}   -> ${v.owner}`);
+}
+
+ok(`${seat}: ${files.length} changed file(s), all in lane.`);
