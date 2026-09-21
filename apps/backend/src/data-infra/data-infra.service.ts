@@ -338,6 +338,176 @@ export async function upsertFaroDailyImport(userId: string, input: FaroDailyImpo
   return withCurrentUser(userId, async (client) => upsertFaroDailyImportOnClient(client, userId, input));
 }
 
+export type FaroInvoiceLinesAppendInput = {
+  operatingCompanyId: string;
+  dailyImportId: string;
+  lines: FaroDailyImportUpsertInput["lines"];
+};
+
+export type FaroInvoiceLinesAppendResult = {
+  inserted_invoice_numbers: string[];
+  skipped_already_present: string[];
+  header: {
+    gross_total_cents: number;
+    advance_total_cents: number;
+    reserve_total_cents: number;
+    fee_total_cents: number;
+    chargeback_total_cents: number;
+  };
+};
+
+/**
+ * ROUND29.6 (2026-09-22) — additive-only sibling to upsertFaroDailyImportOnClient. That function
+ * ALWAYS supersedes-then-reinserts an entire batch of lines under one daily_import_id, which is
+ * correct for a genuine CSV reimport but wrong for "the Faro export proves N more lines exist for
+ * a statement whose already-stored lines must not be touched" (owner ruling: "ADD ONLY. Keep all
+ * 34 existing lines untouched... Insert only lines the export proves are missing"). This function
+ * inserts ONLY lines whose invoice_number is not already present (non-superseded) for this
+ * daily_import_id — never supersedes, never re-touches an existing row — then recomputes the
+ * header's totals as sum(all lines, old + new), the same formula the sanctioned upsert already
+ * uses. Idempotent: re-running with the same lines inserts nothing the second time (returned in
+ * skipped_already_present instead), so it is safe to re-run after a partial failure.
+ */
+export async function appendFaroInvoiceLinesOnClient(
+  client: SqlClient,
+  userId: string,
+  input: FaroInvoiceLinesAppendInput
+): Promise<FaroInvoiceLinesAppendResult> {
+  await setCompanyScope(client, input.operatingCompanyId);
+
+  const importRes = await client.query<{ id: string }>(
+    `SELECT id::text FROM factor.faro_daily_imports WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+    [input.dailyImportId, input.operatingCompanyId]
+  );
+  if (!importRes.rows[0]) throw new Error("faro_daily_import_not_found");
+
+  const inserted: string[] = [];
+  const skipped: string[] = [];
+  for (const row of input.lines) {
+    const existsRes = await client.query<{ exists: boolean }>(
+      `SELECT 1 AS exists FROM factor.faro_invoice_lines WHERE daily_import_id = $1::uuid AND invoice_number = $2 AND superseded_at IS NULL LIMIT 1`,
+      [input.dailyImportId, row.invoice_number]
+    );
+    if (existsRes.rows[0]) {
+      skipped.push(row.invoice_number);
+      continue;
+    }
+    await client.query(
+      `
+        INSERT INTO factor.faro_invoice_lines (
+          operating_company_id,
+          daily_import_id,
+          invoice_number,
+          customer_name,
+          load_id,
+          gross_amount_cents,
+          advance_amount_cents,
+          reserve_amount_cents,
+          fee_amount_cents,
+          chargeback_amount_cents,
+          net_amount_cents,
+          due_on
+        )
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+      `,
+      [
+        input.operatingCompanyId,
+        input.dailyImportId,
+        row.invoice_number,
+        row.customer_name ?? null,
+        row.load_id ?? null,
+        Number(row.gross_amount_cents ?? 0),
+        Number(row.advance_amount_cents ?? 0),
+        Number(row.reserve_amount_cents ?? 0),
+        Number(row.fee_amount_cents ?? 0),
+        Number(row.chargeback_amount_cents ?? 0),
+        Number(row.net_amount_cents ?? 0),
+        row.due_on ?? null,
+      ]
+    );
+    inserted.push(row.invoice_number);
+  }
+
+  const totalsRes = await client.query<{
+    gross_total_cents: string | null;
+    advance_total_cents: string | null;
+    reserve_total_cents: string | null;
+    fee_total_cents: string | null;
+    chargeback_total_cents: string | null;
+  }>(
+    `
+      SELECT
+        COALESCE(sum(gross_amount_cents), 0)::text AS gross_total_cents,
+        COALESCE(sum(advance_amount_cents), 0)::text AS advance_total_cents,
+        COALESCE(sum(reserve_amount_cents), 0)::text AS reserve_total_cents,
+        COALESCE(sum(fee_amount_cents), 0)::text AS fee_total_cents,
+        COALESCE(sum(chargeback_amount_cents), 0)::text AS chargeback_total_cents
+      FROM factor.faro_invoice_lines
+      WHERE daily_import_id = $1::uuid AND superseded_at IS NULL
+    `,
+    [input.dailyImportId]
+  );
+  const t = totalsRes.rows[0] ?? {
+    gross_total_cents: "0",
+    advance_total_cents: "0",
+    reserve_total_cents: "0",
+    fee_total_cents: "0",
+    chargeback_total_cents: "0",
+  };
+  const header = {
+    gross_total_cents: Number(t.gross_total_cents),
+    advance_total_cents: Number(t.advance_total_cents),
+    reserve_total_cents: Number(t.reserve_total_cents),
+    fee_total_cents: Number(t.fee_total_cents),
+    chargeback_total_cents: Number(t.chargeback_total_cents),
+  };
+
+  if (inserted.length > 0) {
+    await client.query(
+      `
+        UPDATE factor.faro_daily_imports
+           SET gross_total_cents = $1,
+               advance_total_cents = $2,
+               reserve_total_cents = $3,
+               fee_total_cents = $4,
+               chargeback_total_cents = $5,
+               updated_at = now()
+         WHERE id = $6::uuid
+      `,
+      [
+        header.gross_total_cents,
+        header.advance_total_cents,
+        header.reserve_total_cents,
+        header.fee_total_cents,
+        header.chargeback_total_cents,
+        input.dailyImportId,
+      ]
+    );
+
+    await appendCrudAudit(
+      client,
+      userId,
+      "factoring.faro_import.lines_appended",
+      {
+        resource_type: "factor.faro_daily_imports",
+        resource_id: input.dailyImportId,
+        operating_company_id: input.operatingCompanyId,
+        inserted_count: inserted.length,
+        skipped_already_present_count: skipped.length,
+        inserted_invoice_numbers: inserted,
+      },
+      "info",
+      "ROUND29.6-FARO-APPEND-ONLY"
+    );
+  }
+
+  return { inserted_invoice_numbers: inserted, skipped_already_present: skipped, header };
+}
+
+export async function appendFaroInvoiceLines(userId: string, input: FaroInvoiceLinesAppendInput) {
+  return withCurrentUser(userId, async (client) => appendFaroInvoiceLinesOnClient(client, userId, input));
+}
+
 export async function listFaroDailyImports(userId: string, operatingCompanyId: string, limit = 90) {
   return withCurrentUser(userId, async (client) => {
     await setCompanyScope(client, operatingCompanyId);
