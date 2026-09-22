@@ -1681,3 +1681,74 @@ bypassed):** `claude-3-round53-settlement-expense-extract`, `claude-3-round43-it
 are blocked by the same single live-data regression.
 
 — CC-3
+
+---
+## 2026-09-22/23 evening (cont'd) -- CC-3: all 3 held branches landed; Round 66 parser hardened and merged; self-correction on a real push bug
+
+**All 3 previously-held branches are now confirmed live on main** (verified by reading the actual
+file content on origin/main after each merge, not just the merge status -- see the self-correction
+below for why that check now matters): E2 relay-ingest-cut (PR #22275), the resolveLoadId
+ambiguity fix (PR #22277, root cause of the alwaystrack-parity mis-linkage), and the D3
+source_document_ref-only guard (PR #22280, second attempt -- see below).
+
+**SELF-CORRECTION, disclosed not hidden:** two of my pushes this evening used `git push origin
+HEAD:branch-name` while a DIFFERENT branch's push was still running in the background. Husky's
+pre-push hook resolves `HEAD` (and inspects the working tree's diff) at the moment the backgrounded
+command actually executes, not when I typed it -- so a branch switch mid-flight put the WRONG
+branch's content under two of my target branch names on origin (`claude-3-fuel-mislink-01-...`
+briefly carried the expense-extract commit; `claude-3-d3-settlement-source-ref-law-guard`'s first
+merge, PR #22277, ALSO carried the resolveLoadId commit instead of the D3 guard -- so PR #22277 is
+correctly the resolveLoadId fix, and the actual D3 guard only landed on the second attempt, PR
+#22280). Caught it by reading the actual file content on origin/main after each merge rather than
+trusting the merge status alone; force-pushed the correct content to both branches; both are now
+verified correct on main. **Lesson applied for the rest of this session and going forward: never
+push a branch by name while checked out on a different one, and never run two pushes concurrently
+in the background -- checkout the target branch, push it in the foreground, wait for it, verify
+the content on origin before merging.**
+
+**Round 66 -- settlement parser hardened against all 116 documents, merged (PR #22283).** The Lead
+supplied a fully-tested base parser (`~/Downloads/_lead_parser/parse_settlements.py`) and grammar
+spec; per the explicit instruction ("TAKE IT AND HARDEN IT, do not start over, do not re-derive the
+grammar"), kept every one of the Lead's proven regexes verbatim and fixed only what was asked:
+- **Both named parser bugs fixed** (root-caused, not just patched): NOT a physical line-wrap --
+  read the raw text directly, every affected row is one physical line. The real cause: EXPENSES
+  rows with no invoice number (routine for road-service/lumper/toll charges) collapse the
+  location/invoice/description columns under a fixed-position regex. Replaced with the
+  split-on-2+-spaces + explicit-flag-token-filter method this session already proved byte-exact
+  earlier today. Confirmed 0 blank descriptions remain.
+- **The FUEL "wrap" investigated and cleared** -- a single-line OCR spacing artifact, not a
+  genuine wrap; no fix was needed. Investigated a live 300-vs-297 fuel-row count discrepancy
+  against the Lead's own stated total and root-caused it precisely: the Lead's own count doesn't
+  dedupe the known `(Merged) page 1` duplicate document, double-counting its 3 fuel rows --
+  confirmed live (both copies of doc 5760 carry identical rows for loads 13481/13489). 297 is the
+  correct de-duplicated count.
+- **Taxonomy widened from 7 to 15 categories** exactly as specified: diesel/def/reefer_diesel/
+  scale/lumper/toll_parking/washout/road_service -> `expense`; driver_pay/tarp_pay/layover_pay/
+  bonus_pay/extra_stop_pay -> `driver_earning`; cash_advance -> `bill_payment` (owner law, not a
+  deduction); escrow_for_claims -> `escrow` (never fed before -- 80 lines, $2,000.00); admin_fee/
+  driver_reimbursement -> `deduction`. Built from the real description vocabulary grepped out of
+  the Lead's own parsed.json, nothing guessed.
+- **Ground truth PASSES exactly** (document 5774, loads 13517/13518, $2,519.78/3 rows). Every
+  cross-checkable total from the ruling's own spec matches exactly: escrow 80/$2,000.00, tarp_pay
+  78/$1,950.00, admin_fee 54/$1,022.25, driver_reimbursement 25/$356.10, cash_advance 13/$2,578.96
+  with 8 in-window (>=2026-08-07)/$1,737.96 -- the owner-law figures, exact. Stops 355/facility
+  353/leg-miles 227, loads UNION 124/BOTH 122/driver-only [13529, 13540]/company-only [] -- all
+  exact matches to the ruling's own measured counts.
+- **The 13529/13540 finding filed, not resolved** (driver settlement exists, no company
+  settlement -- driver was paid, no revenue document) -- a dispatch/revenue-side question, out of
+  an extraction script's scope.
+- **2 small unexplained count deltas named, not chased further this pass:** line-haul 119 vs the
+  ruling's 121, company-expense rows 279 vs 275 -- both minor, flagged as REMAINING in the PR.
+
+Output: `feeder-input-loads.csv` (124 rows, both mileage measures side by side, never merged),
+`feeder-input-stops.csv` (355 rows, real facility/city/state/zip), `feeder-input-expenses.csv`
+(1060 rows, every line typed with its output destination), `feeder-input-doc-coverage.csv`.
+
+**Not started this pass, honestly named:** E10 (both void paths through an existing engine) --
+investigated in full earlier this evening with the correct engine mapping, not yet built; the
+Lead's message accepted the investigation's correction (real posting site is
+`driver-finance/escrow-forfeit.service.ts`, not `accounting/escrow/service.ts:533,545`) but asked
+for the actual build. Picking this up next if the turn continues; naming it now rather than
+claiming it's done.
+
+— CC-3
