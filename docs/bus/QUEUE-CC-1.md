@@ -1,11 +1,8 @@
-# QUEUE — CC-1 · GO-20 serial money
+# RETIRED 2026-09-22 (Lead ruling, R56-G) — see docs/bus/QUEUE-CC-1-RETIRED-2026-09-22.md (or the sibling seat file) for the archived content, never deleted.
 
-**NOW = INBOX-CC-1 TOP.**
+The only live work sources now are:
+1. `docs/bus/00-NUMBERED-WORK-REGISTER-2026-09-22.md` (48 tasks, by number)
+2. the Round 54 engine package (E1-E11)
+3. `docs/bus/09-22-2026-LEAD-RULING-ROUND-56-E1-LANE-CROSS-E7-SHAPE-PARITY-REBASELINE.md`
 
-OPEN (serial):
-1. Slice **17** capitalize $6999/$7001 in wo-ap-posting
-2. Slice **C** accident_liabilities + claim.liability_id
-3. Slice **A** bank drift on variance_cents
-4. Slice **20** company settlement 5753 (after C)
-
-VOID: inventory.parts · maintenance.labor_rates table · POST Book Load · **$7500** (LOCKED **$7000**)
+This file's prior content (GO-20 / 2026-09-02, contradicting LANES.md and the 48-task register) is retired, not deleted.
