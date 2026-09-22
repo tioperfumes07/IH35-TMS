@@ -951,3 +951,64 @@ Add entries as capabilities land — **your own canonical active-load-set module
 moment this guard is green.**
 
 — Lead
+
+---
+
+# LEAD → CC-1 · 2026-09-22 · THE ENGINE FIX. FEED PARITY. This is task 49 and it is now P0.
+
+Owner: *"NOT ALL WILL BE FACTORED, AND NOT ALL WILL BE CREATED HERE, ESPECIALLY NOW, WE ARE
+FEEDING, SO FIX THE ENGINE."*
+
+He is right and the defect is exact. **The automation chain is correct and fully wired — the feed
+paths just never call it.**
+
+## MEASURED — count of `latchOnDeliveryEvidence` calls per ingest path
+```
+apps/backend/src/mdata/loads.routes.ts                          2   <- in-app status change: CALLS IT
+apps/backend/src/dispatch/loads.routes.ts:2057                  1   <- dispatch transition: CALLS IT
+apps/backend/src/dispatch/stop-stamp.service.ts:125             1   <- stop stamp: CALLS IT
+apps/backend/src/driver/loads.routes.ts:711                     1   <- driver PWA depart: CALLS IT
+apps/backend/src/dispatch/loads-bulk.routes.ts:198              1   <- bulk: CALLS IT
+--------------------------------------------------------------------
+apps/backend/src/integrations/edi/transactions/inbound-204.handler.ts   0   <- EDI FEED: BYPASSES
+apps/backend/src/seed/csv-seed-import.ts                                0   <- CSV FEED: BYPASSES
+```
+A fed load enters at `delivered` or `closed` and **never passes the latch**, so the revenue latch
+never fires, `fireFactoringAutoSubmit` never fires, and the tour-close poster never fires. That
+is the whole reason 13610–13615 sit invoiced-in-Faro and uninvoiced-in-the-app.
+
+**The latch is already built for this.** Its own header: *"Own connection, idempotent,
+swallow-and-log"*, and it returns **`"skipped"` when the status is not delivery evidence**.
+Calling it from a feed path is safe by construction — it was simply never called.
+
+## THE FIX — task 49 of 49. FEED PARITY. Complete fix at the generative cause.
+1. **Every path that creates or advances a load calls `latchOnDeliveryEvidence`.** Add it to
+   `inbound-204.handler.ts` and `csv-seed-import.ts`, with the same swallow-and-log wrapper the
+   in-app callers use so a feed never 500s on a downstream hiccup.
+2. **A load fed at or past `delivered` runs the latch for the state it arrives in**, not for a
+   transition it never made. The latch already decides this itself — pass it the arriving status
+   and let it return `"skipped"` when it does not apply. **Do not reimplement its decision.**
+3. **One shared ingest entry point.** `bookLoad()`, the EDI handler and the CSV importer must all
+   funnel their post-create side effects through the same function, so the next feed source added
+   cannot bypass it by omission. **That is the part that makes this a fix and not a patch** —
+   today the bypass is possible because each path wires its own side effects by hand.
+4. **Guard: `scripts/verify-every-load-ingest-path-latches.mjs`** — FAIL any file that INSERTs
+   into `mdata.loads` or UPDATEs `mdata.loads.status` without reaching the shared entry point.
+   Seed it at today's 2 offenders. Selftest **RED before GREEN**.
+5. **Backfill:** run the latch over the fed backlog, idempotently. It will no-op on everything
+   already correct. Report how many fired and what they produced.
+
+## FACTORING IS A DECISION, NEVER AN ASSUMPTION — and the code is already right
+Owner: *"NOT ALL WILL BE FACTORED."* `autoSubmitDeliveredLoadToFactor` already **no-ops when the
+customer is not factor-assigned**, and `factoring_status` already carries six explicit values.
+**Nothing needs loosening.** What is missing is that a fed invoice arrives with **no decision
+recorded at all** — not `advanced`, not `not_factored`, just whatever the import left. So:
+- **Every invoice carries an explicit `factoring_status` at creation**, including fed ones.
+  Default `not_factored`, and it must be **visible**, never silently absent.
+- **Never infer "self-carried" from `factoring_advance_id IS NULL`.** That was my error and it
+  produced a $51,262.41 figure against a true $12,592.40. **`factoring_status` is the column.**
+
+**Deadline 2026-09-23 06:00 UTC** — ahead of the void dispatcher, because every load fed from now
+on goes through it. Surrender seat: CC-3.
+
+— Lead
