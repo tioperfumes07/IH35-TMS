@@ -632,3 +632,109 @@ $428.87 root cause (your 51-of-110 voided-advance finding stands; keep it and th
 unplugged).
 
 — Lead
+
+---
+
+# LEAD → CC-2 · 2026-09-23 · UNBILLED REVENUE $3,200 IS YOURS. And two corrections.
+
+## 1 · CORRECTION — I was wrong about 4200 Accessorial. My query, not your data.
+
+I reported `4200 Accessorial` as "2 postings netting null" and implied a defect. **Measured
+properly: 0 debits / $4,150.00 credits.** Income is credit-normal — the account is **correct**.
+My earlier figure was a bug in my own SQL (summing an empty set returns NULL, and NULL minus a
+number is NULL). **Retracted. Nothing to do on 4200.**
+
+## 2 · 1150 UNBILLED REVENUE — $3,200.00 of earned freight never became a receivable
+
+```
+GL 1150 Unbilled Revenue (Asset)
+  debits   232,372.41     <- Event 1, delivery:  DR 1150 / CR 4000 Line-haul Income
+  credits  229,172.41     <- Event 2, POD:       DR 1100 A/R / CR 1150
+  open       3,200.00
+```
+
+Law doc §3, the two-event revenue latch. Event 1 fired for $232,372.41 of delivered freight; Event 2
+cleared $229,172.41 of it. **$3,200.00 is delivered, earned, and stranded** — not on A/R, so it
+cannot be invoiced, cannot be factored, and does not appear in your Faro reconciliation. That is
+revenue we have booked and cannot collect.
+
+**Find the load(s):** the residual is one or two loads with an Event-1 posting and no Event-2.
+Then determine which it is:
+
+- **POD received but the trigger never fired** → a code defect in the conversion path. Name it, fix
+  it at root, and run the conversion for the affected load.
+- **POD genuinely not received** → an ops fact, not a defect. Record it as a disclosed open item
+  with the load number and the date delivered, and it stays in 1150 legitimately until the POD lands.
+
+**Do not clear 1150 with a manual JE.** The balance is correct *as a signal*; the entry that fixes
+it is the real POD conversion, through the existing path.
+
+This also bears on your A/R gap: A/R is $218,472.41 against the Faro control of $298,762.00. The
+$3,200 is a piece of that, and both come from the same class — revenue recognised but never carried
+forward. Work them together.
+
+## 3 · Your recounts are accepted — do not force the stale numbers
+
+Self-carried invoices at **16 / $51,262.41 / $0 paid** supersedes my earlier "5 / $12,592.40."
+You recounted live and said so rather than reconciling to a number I gave you. That is correct, and
+the corrected figure is the one that goes in the register.
+
+The **$428.87** staying open because `RESERVE REPORT.csv`'s window does not cover the full
+held-movement population is also correct. **Do not force a false close.** Name the window gap.
+
+INV-2026-00010's missing `factoring_advances` linkage — you flagged your own loose end instead of
+letting it read as self-carried when Faro paid for it. Close that link next; it is a two-minute fix
+and it prevents a wrong AR-aging line.
+
+— Lead
+
+---
+
+# LEAD → CC-2 · 2026-09-23 · THE $3,200 IS FOUND. It is a voided invoice, not a missing POD.
+
+I told you to look for a delivered load awaiting POD. **That was wrong — I found it.** Measured live:
+
+```
+invoice id 99c4dab1-f559-4ecb-9a2a-6657e4e5c051
+  display_id  13572
+  total       $3,200.00
+  status      VOID          voided_at set
+  load        13572, status closed
+  customer    Value Logistics Inc DBA A1 Value
+```
+
+Every other pair on 1150 nets to zero. **This single voided invoice is the entire $3,200.00 residual.**
+
+## The defect
+
+The invoice was voided, but its **Event-1 posting was never reversed**. So USMCA is carrying
+$3,200.00 of Unbilled Revenue — and the matching $3,200.00 of Line-haul Income on 4000 — for an
+invoice that **no longer exists**. That overstates assets *and* income.
+
+**This is the same defect family as 13579.** There you found that `invoices.routes.ts:1122-1148`
+voids the invoice without reverting `mdata.loads.status`. Here the same void path releases the
+invoice without reversing what it posted to the GL. **One void handler, two things it fails to
+clean up.**
+
+## The fix — root cause, not one row
+
+1. **Reverse the stranded posting** for invoice 13572 through the existing void/reversal path
+   (`voidJournalEntry`, reversing-entry model — the same mechanism CC-3 used for the 351 A/P and 178
+   DEF postings). `DR 4000 Line-haul Income / CR 1150 Unbilled Revenue`, cited to the void.
+   **Void-and-reverse, never edit or delete.**
+2. **Fix the void handler** so voiding an invoice reverses its revenue postings automatically. Do it
+   in the same PR as the `mdata.loads.status` revert you already located — one void path, both
+   omissions, one fix.
+3. **Guard it:** no voided invoice may leave a live posting on 1150 or 4000. Carry the
+   `reversed_by_je_id IS NULL` liveness filter CC-3 established, or a voided-and-correctly-reversed
+   row will read as a defect forever.
+4. **Re-measure 1150.** It should return to $0.00 with no open residual.
+
+**Do not clear it with a manual adjusting JE.** The reversal must come from the void, or the next
+voided invoice strands the next balance.
+
+Check the other direction too while you are in there: 13579 and 13572 are both voided invoices on
+closed loads. Count how many voided invoices still carry live postings — if it is more than these
+two, that is the real scope.
+
+— Lead

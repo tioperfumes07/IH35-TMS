@@ -466,3 +466,135 @@ Closed and not to be reopened: reefer_diesel excluded permanently (Relay categor
 — that is the receipt); next settlement number is **5817**.
 
 — Lead
+
+---
+
+# LEAD RULING → CC-3 · 2026-09-23 · RELAY 1295 — THE ANSWER IS 8000. You may now un-stop.
+
+You stayed stopped on this twice and both times you were right to. Here is the ruling, and it needs
+**no new GL math and no new account.**
+
+## The problem, measured
+
+```
+GL 1295 Relay Fuel Wallet (Asset)
+  debits   33,070.18
+  credits  65,796.63
+  net     -32,726.45
+```
+
+The $33,070.18 of debits is exactly offset by $33,070.18 of the credits — your voided pair netting
+to zero, as you reported. What remains is **$32,726.45 of pure draw-down credits and ZERO funding
+debits.** An asset that has only ever been drawn down.
+
+## The root cause — and it is not a missing posting path
+
+You already proved it: **TRANSP owns the Relay account. TRANSP has 175 `relay_deposits` rows;
+USMCA has 0.** USMCA has never put a dollar into that wallet and never will.
+
+So the defect is not "the funding posting is missing." **It is that 1295 is on the wrong entity's
+books.** USMCA is buying fuel on *someone else's* prepaid wallet. Law doc §2: *"TRANSP, TRK and
+USMCA are independent legal entities… **they are customers and vendors to each other.**"* That makes
+every Relay draw an **intercompany** event — the identical shape as the 8 Faro legs I ruled for CC-2.
+
+## The fix
+
+```
+Relay fuel purchase, USMCA:
+  DR  5000  Fuel & Diesel
+  CR  8000  Inter-company - IH35 Transportation      <- USMCA owes TRANSP for fuel drawn on its wallet
+```
+
+`8000 Inter-company - IH35 Transportation` **already exists** (Asset, verified live) and is the same
+account CC-2 is posting the 8 Faro legs against — one bidirectional intercompany position per entity
+pair, debited when USMCA funds IH 35 and credited when IH 35 funds USMCA. That is standard and it is
+already in your chart.
+
+**1295 then goes to $0.00 — correctly**, because USMCA never funded it. It is not a plug; it is the
+account reverting to the balance an unfunded, un-owned wallet should have.
+
+**Execute it the way you already built it:** `resolveCompanyDirectCreditPreference()` in
+`maybe-post-from-fuel-transaction.service.ts` already resolves the credit **per rail** from the row's
+own `fuel_card_id` against `catalogs.fuel_card_types.code`. RELAY currently resolves to
+`relay_fuel_wallet -> 1295`. **Point it at 8000.** Keep the fail-closed behaviour — a card-signalled
+row whose rail cannot be identified still throws. Then void and repost the 76 through the reused
+`reflushUnpostedFuelGlExpenses` / `flushFuelGlPostsAfterCommit` path, exactly as you did for the 351
+A/P postings and the 178 DEF postings. Same two idempotency landmines, same fix.
+
+**Guard it:** extend `verify-no-fuel-event-credits-ap-control.mjs` or add a sibling asserting no
+`fuel_event` credit lands on 1295, with the `reversed_by_je_id IS NULL` liveness filter you taught me.
+
+**Do not touch DREAMLINE.** That rail is correct: 2510 is USMCA's own card payable, USMCA pays it,
+and it ties to the statement net at −$140,226.34 exactly.
+
+## Your other open items are unaffected
+
+Fuel linkage (your 92→23 unit and 350→225 driver progress is accepted and is real work), the 313
+residual closed as expected state, IFTA-GALLONS-03, the 152 disclosed `fuel_card_id` NULLs.
+
+## The 13533/13539 quarantine finding — HOLD, you were right
+
+Two settlement_lines ($500.22 / $670.68) never reversed on TRANSPORTATION-quarantined loads, with
+S-2026-5786/5788 locked and `paid_at` NULL. **Do not touch a locked settlement's net pay.** That is
+a real half-done remediation and real money one step from paying out. Keep it held and keep it named
+— I am escalating it to the owner as cash risk, not closing it quietly.
+
+— Lead
+
+---
+
+# LEAD — RETRACTION → CC-3 · 2026-09-23 · MY 8000 RELAY RULING IS WRONG. DO NOT APPLY IT.
+
+**Owner correction, verbatim:** *"IT IS EITHER USMCA OR AMERICAN EXPRESS. SO YES IT IS FUNDED. THE
+FUNDED AMOUNT SHOULD APPEAR IN THE BANK ACCOUNT FOR RELAY. THE AMERICAN EXPRESS CARD FROM
+TRANSPORTATION IS BEING USED IN USMCA, ACTIVATE IT IN BANKING."*
+
+**I was wrong.** I ruled the Relay credit to `8000 Inter-company` on the reasoning that TRANSP funds
+the wallet and USMCA therefore owes TRANSP. That is not the arrangement. **The wallet is funded — by
+the American Express card** — so there is no intercompany position to book. **Do not point RELAY at
+8000.** If you have already started, stop and revert; nothing else in my prior entry changes.
+
+## What actually exists — measured live, all four already in the database
+
+```
+USMCA  "Relay Fuel Wallet"              depository   active, visible   ledger 1295   bal   -123.45
+USMCA  "Dreamline Diesel Card"          credit_card  active, visible   ledger 2510   bal      0.00
+USMCA  "TEST DATA Amex TESTMTDP79YF"    credit_card  INACTIVE, HIDDEN  ledger 2500   bal      0.00
+TRANSP "Relay Fuel Wallet"              depository   active, visible   ledger 1295   bal      0.00
+```
+
+`2500 Amex Credit Card Payable` **already exists.** The Relay wallet bank account **already exists
+in USMCA.** Nothing needs creating — the Amex is sitting deactivated and hidden under a TEST DATA
+name, and it is the real card in real use.
+
+## The model — it is the Dreamline pattern, not an intercompany one
+
+```
+FUNDING   DR 1295 Relay Fuel Wallet        CR 2500 Amex Credit Card Payable
+DRAW      DR 5000 Fuel & Diesel            CR 1295 Relay Fuel Wallet          <- already correct
+```
+
+1295 then carries the **real wallet balance** instead of a pure drawdown, and 2500 carries the Amex
+liability USMCA settles — exactly how 2510 carries Dreamline. **Your existing per-rail resolution
+stays pointed at 1295. It was right all along.** The missing piece was never the credit account; it
+was that the funding side had no source because the card was switched off.
+
+## Do this
+
+1. **Activate the Amex in Banking** through the real banking route, never raw SQL: `is_active=true`,
+   `visible=true`, and **rename it off "TEST DATA"** to the real card name. Keep `ledger_account_id`
+   on **2500**. It is `credit_card` / `credit`, the same shape as Dreamline — copy that account's
+   configuration exactly.
+2. **Ingest the Amex statement** so the funding transactions exist as real `banking.bank_transactions`,
+   the same way you landed the 397 Dreamline lines.
+3. **Post the funding** — `DR 1295 / CR 2500` per wallet load — through the existing reused poster.
+   No new GL math.
+4. **Re-verify 1295.** It should read the true wallet balance, not −32,726.45.
+
+**Do not delete the TEST DATA row and recreate it** — nothing is ever deleted; rename and activate
+the existing record so its history survives.
+
+Everything else in my earlier entry stands: DREAMLINE untouched at 2510, the fuel linkage work, the
+IFTA jurisdiction backfill, and the 13533/13539 quarantine finding staying held.
+
+— Lead
