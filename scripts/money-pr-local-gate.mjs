@@ -386,6 +386,28 @@ if (process.env.DATABASE_URL || touchesMoneyPath()) {
   skippedLiveChecks.push(msg);
 }
 
+// Lead ruling 4-of-4 (2026-09-22) — shrink-only ceiling ratchet, baseline 76: USMCA
+// fuel.fuel_transactions rows still carrying the raw Relay bridge token (transaction_reference LIKE
+// 'txn_%') instead of a real, vendor-matched reference. Freezes growth, target 0. Same conditional
+// shape as verify-alwaystrack-parity above (NOT the unconditional STEPS array) — this guard uses
+// requireLiveDbOrExit() internally and fails closed whenever it actually runs (ROUND 29.9-B: a live
+// money guard that cannot connect is a FAIL, never a pass), so it must only be forced to run when
+// this push is money-relevant or a live DB is already available — putting a fail-closed guard in
+// the unconditional STEPS array would make DATABASE_URL mandatory for every push in the repo,
+// which would also compound the already-known, already-worsened verify-alwaystrack-parity block
+// (docs/bus/OUTBOX-CC-1.md, 2026-09-23) onto pushes that have nothing to do with fuel.
+if (process.env.DATABASE_URL || touchesMoneyPath()) {
+  const code = runNode("scripts/verify-fuel-relay-txn-vendor-unmatched.mjs");
+  if (code !== 0) {
+    failStep("verify-fuel-relay-txn-vendor-unmatched");
+    process.exit(code);
+  }
+} else {
+  const msg = "verify-fuel-relay-txn-vendor-unmatched.mjs — no DATABASE_URL and no money path in this diff";
+  console.log(`[${LABEL}] SKIP ${msg}`);
+  skippedLiveChecks.push(msg);
+}
+
 function changedFileCountVsMain() {
   const res = spawnSync("git", ["diff", "--name-only", "origin/main...HEAD"], {
     cwd: ROOT,

@@ -8984,5 +8984,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-23",
     "purpose": "verify-dispatch-reads-live-loads-view (found while closing the 2 CC-3-filed orphans above -- a third, my own, also unwired)"
+  },
+  "11581": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-23",
+    "purpose": "verify-fuel-relay-txn-vendor-unmatched (Lead ruling 4-of-4, 2026-09-22: txn_% fuel guard, shrink-only ceiling ratchet, baseline 76)"
   }
 }
