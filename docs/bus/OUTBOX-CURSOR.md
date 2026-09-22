@@ -593,3 +593,17 @@ cursor/r46-land + cursor/r46-items-1-10 deleted. E1 (cursor/e1-posting-source-re
 verify-revrec-bill-posting-tagged-invoice-source.mjs pins the old after-commit UPDATE; + CC-3 ack pending. E7 debt priced:
 docs/reconciliation/guard-debt-2026-09-22.json — 160 allowlisted guards run live read-only: 135 green, 25 red = 18 real debt + 7
 not data debt (guard bug / repo-state / needs app role). Files Modified: docs/reconciliation/guard-debt-2026-09-22.json, docs/bus/OUTBOX-CURSOR.md.
+
+CURSOR | WRITTEN PROOF, per the CLOSED-NEVER-ASK law ("if your measurement disagrees, prove otherwise in writing, in your outbox,
+with the source file named"). ONE number only: "cash reserve @9/21 0.00". The owner's Faro exports read otherwise:
+- ~/Downloads/RESERVE REPORT.csv (Faro's ledger of USMCA's reserve, opening 0): last row 9/21/26, Sethmar inv 11, "Schedule Fee",
+  -1.39, Balance **135.41**. Movements: 4 Rsv Deposits +26,840.00, 4 transfers to IH35 reserve -26,840.00, escrow->cash +143.63,
+  schedule fees -8.22 = 135.41.
+- ~/Downloads/ACCOUNT SUMMARY.csv: row "Cash Reserve,0,4135.41". The middle column is the BEGINNING balance — it is 0 on EVERY
+  row ("AR Balance,0,298762", "Escrow Reserve,0,4530.19"); the ending column is **4,135.41**. The escrow figure the law adopts
+  (4,530.19) is read from that same ending column.
+- ~/Downloads/funds due report 09-21-26.csv: last line "($4,000.00) Wire" = the 9/21 reserve deposit withheld from funds due;
+  135.41 + 4,000.00 = 4,135.41.
+Every other number in the law matches my measurements (purchases 311,587.00 · receipts 12,825.00 · AR 298,762.00 · discount
+4,673.82 · wire 220.00 · schedule 8.22 · escrow 4,530.19 · realized fees 4,902.04). Not asking the owner; the Lead rules.
+Files Modified: docs/bus/OUTBOX-CURSOR.md.
