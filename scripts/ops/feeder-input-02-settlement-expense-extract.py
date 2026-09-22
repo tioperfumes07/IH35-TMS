@@ -132,7 +132,7 @@ def split_place(txt):
 OUTPUT_TYPE = {
     "cash_advance": "bill_payment",
     "escrow_for_claims": "escrow",
-    "admin_fee": "deduction",
+    "admin_fee": "income",  # Lead correction, 2026-09-23: "COMPANY INCOME, not a negative expense."
     "driver_reimbursement": "deduction",
     "driver_pay": "driver_earning",
     "tarp_pay": "driver_earning",
@@ -147,7 +147,50 @@ OUTPUT_TYPE = {
     "toll_parking": "expense",
     "washout": "expense",
     "road_service": "expense",
-    "other": "other",
+    "company_vehicle_fuel": "expense",
+}
+
+# ACCOUNT_KEY -- Lead ruling, 2026-09-23, verbatim: "EVERY LINE EMITS ITS TARGET ACCOUNT. NO
+# 'other' BUCKET. A line with no mapping is a build failure, not an 'other'." Three shapes:
+#   (a) a REAL numeric GL code, already established this session (diesel=5000, def=5010) or given
+#       explicitly in the ruling itself (admin_fee=7200).
+#   (b) a per-driver SUB-ACCOUNT KEY (escrow_for_claims, cash_advance) -- the ruling names these as
+#       "the driver's own Driver Escrow sub-account" / "Driver Advances Receivable sub-account",
+#       not a single shared code; resolving to a real per-driver account id is a live-DB join
+#       (mdata.drivers -> accounting.escrow_accounts / driver_finance receivables), out of scope
+#       for a text-extraction script -- the category-level key is emitted, the driver name is
+#       already on every row (feeder-input-loads.csv), so the feeder can resolve it at load time.
+#   (c) a NAMED PENDING key for the 5 new driver-earning COGS accounts and the 4 other company-
+#       expense accounts the ruling says CC-1 is creating: "use the names, he assigns the numbers
+#       with owner approval." Never a fabricated number.
+# Categories with NO entry here (vehicle_parts_accessories) are INTENTIONAL: main() asserts every
+# emitted row has a non-null account_key and FAILS THE BUILD, printing exactly which rows and
+# their total dollars, rather than silently bucketing them or guessing a code -- per the ruling's
+# own instruction.
+ACCOUNT_KEY = {
+    "diesel": "5000",  # Fuel & Diesel -- established this session
+    "def": "5010",  # DEF (Diesel Exhaust Fluid) -- DEF-GL-5010-segregation, this session
+    "admin_fee": "7200",  # Driver Admin Fee Income -- Lead ruling 2026-09-23, verbatim
+    "escrow_for_claims": "driver_escrow_subaccount",  # per-driver; resolved at feed time
+    "cash_advance": "driver_advances_receivable_subaccount",  # per-driver; resolved at feed time
+    "tarp_pay": "COGS_PENDING:tarp_pay",
+    "layover_pay": "COGS_PENDING:layover_pay",
+    "extra_stop_pay": "COGS_PENDING:extra_stop_pay",
+    "bonus_pay": "COGS_PENDING:hiring_bonus_or_performance_bonus",  # 2 source Spanish phrasings
+    # merged into one category by classify_driver_line; CC-1's own message names both
+    # "hiring_bonus" and "performance_bonus" as separate COGS accounts -- this parser cannot
+    # distinguish the two from description text alone (both use "Bono"/"Bonus" wording without a
+    # consistent hiring-vs-performance marker); named here as a real, unresolved sub-split, not
+    # silently merged and hidden.
+    "reefer_diesel": "EXPENSE_PENDING:reefer_diesel",
+    "washout": "EXPENSE_PENDING:washout",
+    "road_service": "EXPENSE_PENDING:road_service",
+    "driver_reimbursement": "EXPENSE_PENDING:driver_reimbursed",
+    "company_vehicle_fuel": "EXPENSE_PENDING:company_vehicle_fuel",  # Lead: "NOT 5000, NOT IFTA"
+    "scale": "EXPENSE_PENDING:scale",
+    "lumper": "EXPENSE_PENDING:lumper",
+    "toll_parking": "EXPENSE_PENDING:toll_parking",
+    "driver_pay": "COGS_PENDING:driver_pay_base",
 }
 
 
@@ -177,15 +220,24 @@ def classify_driver_line(desc):
         return "washout"
     if "lumper" in d:
         return "lumper"
-    if "toll" in d or "parking" in d or "bridge" in d:
+    # "Pago de Cruce" = Spanish for "bridge/toll crossing payment" -- a real toll charge, caught
+    # by grep-checking every "other"-bucket description before this fix (was silently landing in
+    # "other" because "toll"/"bridge"/"parking" never matched the Spanish-language wording).
+    if "toll" in d or "parking" in d or "bridge" in d or "pago de cruce" in d or "cruce" in d:
         return "toll_parking"
     if "road service" in d:
         return "road_service"
-    # Personal-vehicle gasoline (a support Honda pickup, not the load's own truck) and misc
-    # fuel-card parts/accessory charges -- neither maps to any of the 15 categories above; kept
-    # verbatim in "other" rather than silently forced into one, per the ruling's own "named, not
-    # hidden" standard for the 2 parser bugs it found in its own run.
-    return "other"
+    # Personal-vehicle gasoline (a support Honda pickup, NOT the load's own truck -- confirmed by
+    # the description text itself: "GASOLINA/HONDA", "Gasolina para Camioneta Honda"). Its own
+    # category per the Lead's explicit correction: "Company Vehicle Fuel. NOT 5000 Fuel & Diesel.
+    # NOT an IFTA gallon." -- lumping it with 5000 would overstate COGS and corrupt the IFTA filing.
+    if "honda" in d or "camioneta" in d:
+        return "company_vehicle_fuel"
+    # Fuel-card-purchased truck parts/accessories (windshield wiper, headlight, premium wash, a
+    # flat per-transaction "fee item") -- real money, does not fit ANY of the 16 named categories.
+    # Named as its own category rather than silently forced into "other"; ACCOUNT_KEY below has no
+    # entry for it on purpose, which fails the build loudly (see main()) instead of guessing a code.
+    return "vehicle_parts_accessories"
 
 
 # Company-side EXPENSES description vocabulary -- same categories, applied to the company
@@ -207,7 +259,9 @@ def classify_company_expense(desc):
         return "washout"
     if "road service" in d:
         return "road_service"
-    return "other"
+    if "honda" in d or "camioneta" in d:
+        return "company_vehicle_fuel"
+    return "vehicle_parts_accessories"
 
 
 def parse_driver(path):
@@ -511,46 +565,33 @@ def main():
         w.writeheader()
         w.writerows(stops_out)
 
-    # ---- expenses / earnings / bill_payments / escrow / deductions -- one unified table, typed
+    # ---- expenses / earnings / bill_payments / escrow / deductions -- one unified table, typed,
+    # every row carrying its target account_key. Lead ruling, 2026-09-23, verbatim: "EVERY LINE
+    # EMITS ITS TARGET ACCOUNT. NO 'other' BUCKET. A line with no mapping is a build failure, not
+    # an 'other'." -- see the FAIL block below, not a silent default.
+    def row(load_number, source_doc, source, date, category, vendor, description, amount, raw_line):
+        return {
+            "load_number": load_number, "source_doc": source_doc, "source": source, "date": date,
+            "category": category, "output_type": OUTPUT_TYPE.get(category, ""), "account_key": ACCOUNT_KEY.get(category),
+            "vendor": vendor, "description": description, "amount": amount, "raw_line": raw_line,
+        }
+
     money_out = []
     for d in D:
         for ld, v in d["loads"].items():
             for x in v["lines"]:
-                money_out.append(
-                    {
-                        "load_number": ld, "source_doc": d["doc_no"], "source": "driver", "date": x["date"] or "",
-                        "category": x["category"], "output_type": OUTPUT_TYPE[x["category"]],
-                        "vendor": "", "description": x["description"], "amount": x["amount"], "raw_line": "",
-                    }
-                )
+                money_out.append(row(ld, d["doc_no"], "driver", x["date"] or "", x["category"], "", x["description"], x["amount"], ""))
             for p in v["pay"]:
-                money_out.append(
-                    {
-                        "load_number": ld, "source_doc": d["doc_no"], "source": "driver", "date": "",
-                        "category": "driver_pay", "output_type": "driver_earning",
-                        "vendor": "", "description": p["kind"], "amount": p["amount"], "raw_line": "",
-                    }
-                )
+                money_out.append(row(ld, d["doc_no"], "driver", "", "driver_pay", "", p["kind"], p["amount"], ""))
     for c in C:
         for ld, v in c["loads"].items():
             for e in v["fuel"]:
-                money_out.append(
-                    {
-                        "load_number": ld, "source_doc": c["doc_no"], "source": "company", "date": e["date"],
-                        "category": "diesel", "output_type": "expense",
-                        "vendor": e["vendor"], "description": "Diesel", "amount": e["actual"], "raw_line": e["location"],
-                    }
-                )
+                money_out.append(row(ld, c["doc_no"], "company", e["date"], "diesel", e["vendor"], "Diesel", e["actual"], e["location"]))
             for e in v["expenses"]:
-                money_out.append(
-                    {
-                        "load_number": ld, "source_doc": c["doc_no"], "source": "company", "date": e["date"],
-                        "category": e["category"], "output_type": OUTPUT_TYPE[e["category"]],
-                        "vendor": e["vendor"], "description": e["description"], "amount": e["amount"], "raw_line": e.get("location", ""),
-                    }
-                )
+                money_out.append(row(ld, c["doc_no"], "company", e["date"], e["category"], e["vendor"], e["description"], e["amount"], e.get("location", "")))
+
     with open(os.path.join(OUT_DIR, "feeder-input-expenses.csv"), "w", newline="") as f_out:
-        w = csv.DictWriter(f_out, fieldnames=["load_number", "source_doc", "source", "date", "category", "output_type", "vendor", "description", "amount", "raw_line"])
+        w = csv.DictWriter(f_out, fieldnames=["load_number", "source_doc", "source", "date", "category", "output_type", "account_key", "vendor", "description", "amount", "raw_line"])
         w.writeheader()
         w.writerows(money_out)
 
@@ -577,7 +618,7 @@ def main():
     print(f"LINE HAUL rows {lh}   FUEL rows {fuel_n} (${fuel_amt:,.2f})   COMPANY EXPENSE rows {exp_n} (blank description: {exp_blank})")
     print("\nALL CATEGORIES:")
     for k, n in cat_counts.most_common():
-        print(f"   {k:<22} {n:>4} lines   {cat_amts[k]:>12,.2f}   -> {OUTPUT_TYPE[k]}")
+        print(f"   {k:<22} {n:>4} lines   {cat_amts[k]:>12,.2f}   -> {OUTPUT_TYPE.get(k, '?')} ({ACCOUNT_KEY.get(k, 'UNMAPPED')})")
 
     ca_rows = [r for r in money_out if r["category"] == "cash_advance"]
     ca_in_window = [r for r in ca_rows if r["date"] and r["date"] >= "2026-08-07"]
@@ -588,6 +629,25 @@ def main():
     print(f"feeder-input-stops.csv:        {len(stops_out)} rows")
     print(f"feeder-input-expenses.csv:     {len(money_out)} rows")
     print(f"feeder-input-doc-coverage.csv: {len(doc_nos)} rows ({len(seen_c)} company, {len(seen_d)} driver)")
+
+    # BUILD FAILURE, not a silent "other" -- Lead ruling, 2026-09-23, verbatim: "EVERY LINE EMITS
+    # ITS TARGET ACCOUNT. NO 'other' BUCKET. A line with no mapping is a build failure, not an
+    # 'other'." The CSV above is still written in full (including unmapped rows, account_key=="")
+    # so the output is inspectable while this gap gets closed -- but the process exits nonzero and
+    # names exactly what's missing, never silently passes.
+    unmapped = [r for r in money_out if r["account_key"] is None]
+    if unmapped:
+        by_cat = collections.defaultdict(lambda: [0, 0.0])
+        for r in unmapped:
+            by_cat[r["category"]][0] += 1
+            by_cat[r["category"]][1] += r["amount"] or 0.0
+        print("\nBUILD FAILURE -- lines with NO account_key mapping (Lead ruling 2026-09-23: "
+              "\"a line with no mapping is a build failure, not an 'other'\"):")
+        for cat, (n, amt) in sorted(by_cat.items()):
+            print(f"   {cat:<26} {n:>4} lines   ${amt:>12,.2f}")
+        print("Add these categories to ACCOUNT_KEY (or confirm a real GL code) before this script "
+              "may be considered done -- not guessed here.")
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

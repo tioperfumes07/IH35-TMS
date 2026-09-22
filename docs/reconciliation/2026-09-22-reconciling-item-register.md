@@ -421,3 +421,27 @@ question rather than inventing a status transition. GL 2150's standing liability
 these 10 postings: credits $235,220.00 / debits $164,565.00 / net $70,655.00 (pre-existing credits
 of $187,890.00 — matching Cursor's cited figure once the sign convention is reconciled — plus this
 round's $47,330.00).
+
+## Item 20 — 9 settlements (5817-5825) have NO source document, either side (REPORTED, not fixed)
+
+Source: the Lead's own live measurement (Round 66 settlement-parser work), confirmed independently
+by CC-3 against the same corpus. `~/Downloads/IH35-MASTER-RECONCILIATION/03-SETTLEMENTS/text/`
+carries documents 5753 and 5760-5816 (both Company and Driver, after the Lead converted the
+missing 5782 PDF and CC-3 re-ran the hardened parser -- 124 loads on both sides, 0 orphans, 13529
+and 13540 resolved). Live `driver_finance.driver_settlements.source_document_ref` goes up to
+**5825** (confirmed via `docs/bus/CC3-89-ROW-SETTLEMENT-NUMBERING-AUDIT-2026-09-23.md`'s own live
+audit). **Settlements 5817 through 5825 -- nine settlement numbers -- have NEITHER a Company nor a
+Driver settlement document anywhere in the folder.** The feeder cannot build these 9 without a
+source document; there is nothing to parse. This is a source-data gap, not a parser or code
+defect -- filed here for the owner to pull the missing 9 documents from AlwaysTrack, not attempted
+by either coder.
+
+Affected settlement numbers: **5817, 5818, 5819, 5820, 5821, 5822, 5823, 5824, 5825.**
+
+Cross-reference: this is the same numeric range implicated in D3's own settlement-numbering shift
+finding (`docs/bus/CC3-89-ROW-SETTLEMENT-NUMBERING-AUDIT-2026-09-23.md`) -- 6 of the 15 D3-flagged
+rows in this exact range (5817-5825) were already named there as "not decidable from the source
+document" for the same reason: no document exists to verify against. Pulling these 9 from
+AlwaysTrack would very likely also let D3's remaining un-verified rows close.
+
+— CC-3, 2026-09-23
