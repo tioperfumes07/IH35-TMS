@@ -19,6 +19,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
+// REQUIRES_LIVE_DB (ruled 2026-09-23, docs/bus/INBOX-CC-1.md): excluded from verify-static.mjs's no-DB sweep;
+// money-pr-local-gate.mjs runs it live and it fails closed there.
+export const REQUIRES_LIVE_DB =
+  "shrink-only ceiling on unsourced accounting.journal_entry_postings rows, fails closed via requireLiveDbOrExit, cannot be exercised without a live Neon connection";
+
 const LABEL = "verify-every-posting-has-a-source";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
