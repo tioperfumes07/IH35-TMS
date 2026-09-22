@@ -122,13 +122,18 @@ async function main() {
     }
 
     // TIER 2: match against the Dreamline statement on date + unit + quantity + amount.
+    // BUG FIXED (this pass): the CSV's own "Unit Number" column is a bare number ("163"), never
+    // "T"-prefixed -- mdata.units.unit_number is "T163". A literal string compare silently failed
+    // for every real unit, live-verified against the CSV directly (grep confirmed bare-number-only
+    // values). Normalize both sides by stripping a leading non-digit prefix before comparing.
     let tier2State: string | null = null;
     if (r.unit_number) {
+      const normalizedDbUnit = r.unit_number.replace(/^[^0-9]+/, "");
       const txnDate = r.transaction_at.slice(0, 10);
       const match = dreamlineRows.find(
         (d) =>
           d["Transaction Date"] === txnDate &&
-          d["Unit Number"] === r.unit_number &&
+          d["Unit Number"].replace(/^[^0-9]+/, "") === normalizedDbUnit &&
           Math.abs(Number(d.Quantity) - Number(r.gallons)) < 0.05 &&
           Math.abs(Number(d.Amount) - Number(r.total_cost)) < 0.5
       );
