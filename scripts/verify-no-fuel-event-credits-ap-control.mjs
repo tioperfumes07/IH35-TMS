@@ -19,10 +19,25 @@
 // exit-0 skip here is the exact anti-pattern that guard now hunts for, and this guard is
 // unambiguously money (GL account routing) so it may not declare ALLOW_OFFLINE_SKIP. No
 // DATABASE_URL -> FAIL, loud, not a silent pass.
+//
+// REQUIRES_LIVE_DB (ruled 2026-09-23, docs/bus/INBOX-CC-1.md, "your verify-static question is
+// ruled"): the ROUND 29.9-B design above means this guard is ALWAYS a gated fail under
+// verify-static.mjs's no-DB dead-port sentinel — that sweep is asking a question this guard
+// cannot be asked, not finding a defect in it. Declaring this constant EXCLUDES it from that
+// sweep entirely (mirrors ALLOW_OFFLINE_SKIP); it still runs for real, live, fail-closed under
+// money-pr-local-gate.mjs with a real DATABASE_URL. Not an escape hatch — a declaration, and it
+// touches no owner-protected baseline.
+export const REQUIRES_LIVE_DB =
+  "ROUND 29.9-B money guard — always fails without a live DB by design (fail-closed, never a " +
+  "silent skip), which is incompatible with verify-static's no-DB dead-port sentinel.";
+
 import pg from "pg";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 const LABEL = "verify-no-fuel-event-credits-ap-control";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+const SELF_PATH = fileURLToPath(import.meta.url);
 
 async function live() {
   const url = process.env.DATABASE_URL;
@@ -32,7 +47,18 @@ async function live() {
     return;
   }
   const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
-  await client.connect();
+  try {
+    await client.connect();
+  } catch (err) {
+    // Bug found + fixed 2026-09-23 (docs/bus/INBOX-CC-1.md): connect() used to sit outside any
+    // try/catch, so a PRESENT-but-UNREACHABLE DATABASE_URL (verify-static's dead-port sentinel, or
+    // a genuinely down prod) threw an uncaught ECONNREFUSED instead of the same clean, recognized
+    // failure shape as the "no DATABASE_URL" branch above. Both cases are "cannot connect" and
+    // must look identical to anything parsing this guard's output.
+    console.error(`${LABEL}: FAIL — cannot connect (${err.code || err.message}). A money guard that cannot connect is a fail, not a pass (ROUND 29.9-B).`);
+    process.exitCode = 1;
+    return;
+  }
   try {
     await client.query("BEGIN");
     await client.query(`SELECT set_config('app.bypass_rls','lucia',true)`);
@@ -108,4 +134,47 @@ async function live() {
   }
 }
 
-await live();
+// --selftest: proves the crash fix without needing a live DB — spawns this same file as a child
+// process under two controlled environments and asserts BOTH produce the same clean, recognized
+// "FAIL — cannot connect"-shaped output at exit 1, never a raw Node uncaught-exception stack trace.
+function selftest() {
+  const run = (env) =>
+    spawnSync(process.execPath, [SELF_PATH], { env, encoding: "utf8", timeout: 10000 });
+
+  const noUrlEnv = { ...process.env };
+  delete noUrlEnv.DATABASE_URL;
+  const r1 = run(noUrlEnv);
+
+  const deadPortEnv = { ...process.env, DATABASE_URL: "postgresql://u:p@127.0.0.1:1/deadport" };
+  const r2 = run(deadPortEnv);
+
+  const looksLikeUncaughtCrash = (s) =>
+    /triggerUncaughtException|internal\/modules\/run_main|Node\.js v\d/.test(s || "");
+
+  const checks = [
+    ["no DATABASE_URL -> exit 1", r1.status === 1],
+    ["no DATABASE_URL -> clean recognized FAIL message", /FAIL — no DATABASE_URL/.test(r1.stderr || "")],
+    ["no DATABASE_URL -> not an uncaught-crash stack trace", !looksLikeUncaughtCrash(r1.stderr)],
+    ["unreachable DATABASE_URL -> exit 1", r2.status === 1],
+    ["unreachable DATABASE_URL -> clean recognized FAIL message", /FAIL — cannot connect/.test(r2.stderr || "")],
+    ["unreachable DATABASE_URL -> not an uncaught-crash stack trace (the bug this selftest guards against)", !looksLikeUncaughtCrash(r2.stderr)],
+    ["both failure shapes share the same recognized FAIL prefix", /FAIL —/.test(r1.stderr || "") && /FAIL —/.test(r2.stderr || "")],
+  ];
+
+  let bad = 0;
+  for (const [name, ok] of checks) {
+    if (!ok) bad++;
+    console.log(`${ok ? "ok  " : "FAIL"}  ${name}`);
+  }
+  if (bad) {
+    console.error(`\n${LABEL} SELFTEST FAILED: ${bad}`);
+    process.exit(1);
+  }
+  console.log(`\n${LABEL} SELFTEST PASS`);
+}
+
+if (process.argv.includes("--selftest")) {
+  selftest();
+} else {
+  await live();
+}

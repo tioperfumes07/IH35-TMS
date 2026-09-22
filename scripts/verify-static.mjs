@@ -5,9 +5,17 @@
  *
  * What it does:
  *   - globs scripts/verify-*.mjs (EXCLUDING this runner),
- *   - runs each in a child process with NO reachable database, capturing stdout/stderr/exit,
+ *   - a guard declaring `export const REQUIRES_LIVE_DB = "<reason>";` is EXCLUDED entirely — never
+ *     spawned, not classified PASS/FAIL/SKIP — because a ROUND-29.9-B live-money guard is DESIGNED
+ *     to fail-closed with no live DB, and this sweep's dead-port sentinel would just be asking it a
+ *     question it cannot be asked (ruled 2026-09-23, docs/bus/INBOX-CC-1.md). It still runs for
+ *     real, live, fail-closed under `money-pr-local-gate.mjs`; see `REQUIRES_LIVE_DB_RE` below,
+ *     the mirror of `ALLOW_OFFLINE_SKIP` (verify-no-silent-db-skip.mjs),
+ *   - runs every OTHER guard in a child process with NO reachable database, capturing
+ *     stdout/stderr/exit,
  *   - classifies each through an explicit capability preflight, never by matching failure text:
- *     PASS | SKIP-capability (only with a named server-required CI equivalent) | FAIL-test,
+ *     PASS | SKIP-capability (only with a named server-required CI equivalent) | FAIL-test |
+ *     EXCLUDED-live-db,
  *   - additionally runs each guard's `--selftest` when the file contains that flag; a real selftest
  *     failure folds into FAIL,
  *   - does NOT fail-fast: runs ALL guards, prints a summary (counts + names of every FAIL and SKIP),
@@ -46,6 +54,7 @@ export const STATIC_RESULT_CATEGORIES = Object.freeze({
   SKIP_CAPABILITY: "SKIP-capability",
   SKIP_SCOPE: "SKIP-scope",
   FAIL_TEST: "FAIL-test",
+  EXCLUDED_LIVE_DB: "EXCLUDED-live-db",
 });
 
 /**
@@ -188,9 +197,30 @@ function firstSignalLine(out) {
   return (marked || lines[lines.length - 1] || "").slice(0, 200);
 }
 
+// REQUIRES_LIVE_DB — the mirror of ALLOW_OFFLINE_SKIP (scripts/verify-no-silent-db-skip.mjs),
+// ruled 2026-09-23 (docs/bus/INBOX-CC-1.md, "your verify-static question is ruled"). A
+// ROUND-29.9-B live-money guard is DESIGNED to fail-closed with no live DB — verify-static's
+// dead-port sentinel asks it a question it cannot be asked and then records the answer as a
+// finding, which is a false positive in the sweep, not a defect in the guard. A guard declaring
+// `export const REQUIRES_LIVE_DB = "<reason>";` is EXCLUDED from this sweep entirely — not
+// spawned, not classified PASS/FAIL/SKIP, out of context — while money-pr-local-gate.mjs still
+// runs it for real against a live DATABASE_URL (still fails closed where it actually runs), and
+// verify-no-silent-db-skip.mjs (03d) still catches any guard that silently exits 0 with no DB. A
+// declaration, not an escape hatch: it touches no owner-protected baseline and weakens nothing.
+const REQUIRES_LIVE_DB_RE = /export\s+const\s+REQUIRES_LIVE_DB\s*=\s*["'`]([^"'`]*)["'`]/;
+
 /** Classify a single guard file. Pure w.r.t. the filesystem read of the guard's own source. */
 export function classify(file, options = {}) {
   const src = (() => { try { return fs.readFileSync(file, "utf8"); } catch { return ""; } })();
+  const requiresLiveDb = src.match(REQUIRES_LIVE_DB_RE);
+  if (requiresLiveDb) {
+    return {
+      file,
+      name: path.basename(file),
+      kind: STATIC_RESULT_CATEGORIES.EXCLUDED_LIVE_DB,
+      detail: requiresLiveDb[1],
+    };
+  }
   const preflight = options.preflight ?? capabilityPreflight(file, options);
   if (!preflight.ok) {
     if (
@@ -354,14 +384,23 @@ function printSummary(results) {
   const pass = by(STATIC_RESULT_CATEGORIES.PASS);
   const skipped = by(STATIC_RESULT_CATEGORIES.SKIP_CAPABILITY);
   const skippedScope = by(STATIC_RESULT_CATEGORIES.SKIP_SCOPE);
+  const excludedLiveDb = by(STATIC_RESULT_CATEGORIES.EXCLUDED_LIVE_DB);
   const gatedFail = results.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST && r.gated);
   const unwiredFail = results.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST && !r.gated);
   console.log(`\n=== ${LABEL} summary ===`);
   console.log(
     `total ${results.length}  |  PASS ${pass.length}  ` +
     `FAIL-test(gated) ${gatedFail.length}  FAIL-test(unwired) ${unwiredFail.length}  ` +
-    `SKIP-capability ${skipped.length}  SKIP-scope ${skippedScope.length}`,
+    `SKIP-capability ${skipped.length}  SKIP-scope ${skippedScope.length}  ` +
+    `EXCLUDED-live-db ${excludedLiveDb.length}`,
   );
+  if (excludedLiveDb.length) {
+    console.log(
+      `\nEXCLUDED-live-db (${excludedLiveDb.length}) — declares REQUIRES_LIVE_DB, out of context for a ` +
+      `no-DB sweep; still runs for real under money-pr-local-gate.mjs with a live DATABASE_URL:`
+    );
+    for (const r of excludedLiveDb) console.log(`  · ${r.name} — ${r.detail}`);
+  }
   if (skippedScope.length) {
     console.log(
       `\nSKIP-scope (${skippedScope.length}) — path-scoped local pre-push only, NEVER how CI runs this ` +
@@ -406,6 +445,15 @@ function selftest() {
       `s.on("error", (e) => { console.error(\`connect \${e.code} \${process.env.PGHOST}:\${process.env.PGPORT}\`); process.exit(1); });\n`,
     );
 
+    // REQUIRES_LIVE_DB fixture — a planted failure (would exit 1 with an uncaught-looking crash if
+    // ever spawned) declaring the exclusion. If the mechanism regresses and this guard actually
+    // runs, it must show up as FAIL — the checks below assert it never does.
+    fs.writeFileSync(
+      path.join(tmp, "verify-requires-live-db-fixture.mjs"),
+      `export const REQUIRES_LIVE_DB = "planted: must never run in a no-DB sweep";\n` +
+      `console.error("planted: must never run — REQUIRES_LIVE_DB was not honored"); process.exit(1);\n`,
+    );
+
     // Mock CI-run set: only the fail fixture is "wired" → its FAIL must gate; the broken-selftest FAIL is
     // unwired → informational (proves the gate keys off CI membership, not raw FAIL count).
     const ciSet = new Set(["verify-fail-fixture.mjs"]);
@@ -434,6 +482,11 @@ function selftest() {
       ["gated FAIL count == 1 (only the CI-run guard gates)", results.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST && r.gated).length === 1],
       ["wired fail is gated", get("verify-fail-fixture.mjs")?.gated === true],
       ["unwired fail not gated", get("verify-selftest-broken-fixture.mjs")?.gated === false],
+      // REQUIRES_LIVE_DB: excluded, never spawned (the planted exit-1 must never surface as FAIL),
+      // reason string captured verbatim, never counted toward gated or unwired FAIL.
+      ["REQUIRES_LIVE_DB fixture → EXCLUDED-live-db, not FAIL-test", kindOf("verify-requires-live-db-fixture.mjs") === STATIC_RESULT_CATEGORIES.EXCLUDED_LIVE_DB],
+      ["REQUIRES_LIVE_DB reason captured verbatim", get("verify-requires-live-db-fixture.mjs")?.detail === "planted: must never run in a no-DB sweep"],
+      ["REQUIRES_LIVE_DB fixture never counted as FAIL-test (still exactly 4)", results.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST).length === 4],
     ];
 
     // GATE-LIVELOCK-01 scoping selftest — guardIsInScope() as a pure-function unit test, plus a
