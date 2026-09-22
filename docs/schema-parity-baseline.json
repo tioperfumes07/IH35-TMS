@@ -586,6 +586,7 @@
       "recover_deduction_type",
       "recover_from_driver",
       "reversed_by_je_id",
+      "source_fuel_transaction_id",
       "source_settlement_ref",
       "status",
       "total_amount_cents",

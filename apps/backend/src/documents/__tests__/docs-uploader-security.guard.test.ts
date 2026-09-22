@@ -76,7 +76,12 @@ describe("DOCS-2 guard: attachments DELETE is role-gated", () => {
     // Slice the delete handler body and assert it enforces a role gate before deleting.
     const start = attachmentsRoutesSrc.indexOf('app.delete("/api/v1/attachments/:id"');
     expect(start).toBeGreaterThan(-1);
-    const handler = attachmentsRoutesSrc.slice(start, start + 600);
+    // Behavior, not a stale offset — the handler body has grown since this window was chosen
+    // (softDeleteAttachment now sits at relative offset 613, past the old 600-char cutoff, which
+    // silently truncated it out of `handler` and made a real "gate before delete" check into a
+    // guaranteed false negative). Widened with headroom so small future additions to the route
+    // don't re-trip this the same way.
+    const handler = attachmentsRoutesSrc.slice(start, start + 1200);
     expect(handler).toMatch(/requireRole\(reply, user\.role/);
     // The gate must run before the destructive service call.
     const gateIdx = handler.indexOf("requireRole(");
