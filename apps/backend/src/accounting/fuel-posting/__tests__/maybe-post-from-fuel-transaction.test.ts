@@ -53,20 +53,35 @@ describe("mapFuelTypeToPostingKind", () => {
 });
 
 describe("resolveCompanyDirectCreditPreference", () => {
-  it("fleet/fuel card + Relay settle → ap (never cash)", () => {
-    expect(resolveCompanyDirectCreditPreference({ ...BASE, has_fuel_card: true })).toBe("ap");
-    expect(resolveCompanyDirectCreditPreference({ ...BASE, fuel_card_id: "55555555-5555-4555-8555-555555555555" })).toBe(
-      "ap"
-    );
+  // R-30.1-A (2026-09-22): the old blanket "any card signal -> ap" behavior is the exact defect
+  // that drove GL 2000 (A/P control) to -108,938.77 against a $0.00 open bills subledger --
+  // fuel-card purchases carry no bill, so crediting the generic AP control account for them was
+  // always wrong. The credit now resolves PER RAIL from a POSITIVELY IDENTIFIED card
+  // (fuel_card_code / relay_fuel_transaction_id), never a blanket "ap" fallback for any card-shaped
+  // signal. "ap" is no longer reachable from this function at all except via an explicit caller
+  // override (see "explicit override wins" below).
+  it("Relay settle (identified via relay_fuel_transaction_id) -> relay_fuel_wallet, never ap", () => {
     expect(
       resolveCompanyDirectCreditPreference({
         ...BASE,
         relay_fuel_transaction_id: "66666666-6666-4666-8666-666666666666",
       })
-    ).toBe("ap");
-    expect(
+    ).toBe("relay_fuel_wallet");
+  });
+  it("fuel_card_code DREAMLINE/RELAY resolves the rail directly", () => {
+    expect(resolveCompanyDirectCreditPreference(BASE, { fuel_card_code: "DREAMLINE" })).toBe("dreamline_card_payable");
+    expect(resolveCompanyDirectCreditPreference(BASE, { fuel_card_code: "RELAY" })).toBe("relay_fuel_wallet");
+  });
+  it("a card is signaled but the rail cannot be identified -> fails closed (throws), never ap_control", () => {
+    expect(() => resolveCompanyDirectCreditPreference({ ...BASE, has_fuel_card: true })).toThrow(
+      /card is signaled.*rail could not be identified/
+    );
+    expect(() =>
+      resolveCompanyDirectCreditPreference({ ...BASE, fuel_card_id: "55555555-5555-4555-8555-555555555555" })
+    ).toThrow(/card is signaled.*rail could not be identified/);
+    expect(() =>
       resolveCompanyDirectCreditPreference(BASE, { fuel_card_id: null, notes: "card=****1234", source: "import" })
-    ).toBe("ap");
+    ).toThrow(/card is signaled.*rail could not be identified/);
   });
 
   it("true cash / no card signal → cash", () => {
@@ -178,7 +193,7 @@ describe("maybePostFuelExpenseFromCanonicalTxn", () => {
     );
   });
 
-  it("FUEL-08: Relay / fleet-card company_direct does NOT credit cash", async () => {
+  it("FUEL-08 / R-30.1-A: Relay settle credits relay_fuel_wallet -- never cash, never ap_control", async () => {
     mockIsEnabled.mockResolvedValue(true);
     mockPostFuelExpenseFromEvent.mockResolvedValue({
       result: "posted",
@@ -196,7 +211,7 @@ describe("maybePostFuelExpenseFromCanonicalTxn", () => {
     expect(mockPostFuelExpenseFromEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         posting_path: "company_direct",
-        company_direct_credit: "ap",
+        company_direct_credit: "relay_fuel_wallet",
       })
     );
   });
