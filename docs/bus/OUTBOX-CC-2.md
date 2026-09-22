@@ -4454,3 +4454,122 @@ this report is the live evidence itself; the register write is bookkeeping, not 
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+## 2026-09-23 — Relay 43 (corrected to 17), GL 6400 reconciled, receipt-application scope, item 2/4 responses
+
+### 1 — Relay Fuel Wallet: the categorization path IS proven live (not a no-op) — and the real current gap is smaller than stated
+
+**Proof requested — pasted, live, before touching a row.** Queried `accounting.journal_entry_postings`
+directly for real, `status='posted'`, balanced (debit=credit) journal entries with
+`source_transaction_type='bank_categorization'` on USMCA. Ten most recent, all balanced:
+```
+bank_txn 38096512… -> JE a051a43d…  debit $207.10 / credit $207.10  status=posted
+bank_txn 465c87f3… -> JE bb5dada3…  debit $325.37 / credit $325.37  status=posted
+bank_txn 51844d4c… -> JE 4fb4021c…  debit $518.59 / credit $518.59  status=posted
+... (7 more, all balanced)
+```
+All hit GL 5000 "Fuel & Diesel" on the debit side. **The categorization -> GL posting mechanism
+(`maybePostBankCategorizationToGl`, `bank-feed-gl-posting.service.ts:321`) is real and does post** —
+confirmed, not assumed.
+
+**But the premise needs correcting.** All 76 Relay Fuel Wallet transactions (not 43) already carry
+`matched_journal_entry_id` — the categorize-then-post cycle already ran for every one of them. Using
+the correct standing predicate (`voided_at IS NULL AND reversed_by_je_id IS NULL`, not just
+`status='posted'` — a reversed JE keeps `status='posted'` historically), the live state right now is:
+
+```
+fuel_transactions(source='other', no source_doc_id -- "no statement twin", 76 rows, $32,726.45):
+  59 rows  $26,880.66  -- exactly ONE live GL 5000 debit (via fuel_event), bank_categorization JE
+                          correctly reversed alongside it -- CORRECT, single-counted, no action needed
+  17 rows  $ 5,845.79  -- ZERO live GL 5000 postings -- fuel_event JE reversed, bank_categorization
+                          JE also reversed, neither replaced -- a REAL, CURRENT gap
+   0 rows              -- currently double-posted (checked explicitly -- none)
+```
+
+Something (timestamps show a reversal/repost pass between 2026-09-21 22:xx and 2026-09-22 04:xx,
+not mine) already fixed 59 of the original 76 from a genuine historical double-post (every one of
+the 76 fuel_event JEs was posted TWICE at some point — confirmed via a clean per-row histogram, 76
+fuel_transactions each with exactly 2 distinct fuel_event JEs against GL 5000) down to a single
+live leg. It left 17 with **no live posting at all**, not "still double."
+
+**Concrete gap found in the recovery mechanism itself:** `post-categorized-backlog`
+(`categorization.routes.ts:1182`) — the ONLY existing recovery route for exactly this situation —
+filters `WHERE bt.matched_journal_entry_id IS NULL`. All 17 stuck rows already carry a (now-reversed)
+`matched_journal_entry_id`, so this route will never select them. They are currently invisible to
+the one mechanism built to catch them.
+
+**Not touched.** $5,845.79 across 17 rows needs one fresh decision-and-post (QuickBooks-"Add" style,
+per the packet's own framing — no document exists and none is coming), not a categorize+reverse pair
+(there is nothing live left to reverse). Scoping only this round; the exact 17 row ids are in the
+now-deleted scratch script's live query, reproducible from the query pasted above (fuel_txn WHERE
+`source='other' AND` zero live `fuel_event` debit JEs to GL 5000, joined to the Relay Fuel Wallet
+bank transaction by exact date+amount). Recommend: (a) fix `post-categorized-backlog`'s WHERE clause
+to catch "matched_journal_entry_id set but not live" as well as NULL, since this exact failure mode
+will recur for any future reversal-without-repost; (b) then re-run it for these 17 specifically.
+
+### 2 — GL 6400 / $1,847.24 reserve residual — re-derived, reconciles exactly
+
+Re-ran GL 6400 with the corrected predicate (standing debits only, `voided_at IS NULL AND
+reversed_by_je_id IS NULL`, NOT netted against unrelated `faro_reserve_close`-sourced credits on the
+same account — netting those in is what produced the earlier wrong $550.47):
+
+```
+GL 6400 standing debit total (factor_fee-type postings only): $2,826.58  -- matches your correction exactly
+Faro real discount fees (owner source):                        $4,673.82
+Gap:                                                            $1,847.24  -- matches your figure exactly
+```
+
+Confirmed this is the same item as the earlier $428.87 partial finding — that was a smaller, earlier
+slice of this same undercount, not a separate defect. Closing $428.87 as superseded by this $1,847.24
+measurement; not re-deriving its original math since the underlying gap is now fully characterized
+here.
+
+Root cause, partially traced: `accounting.factoring_advances.factor_fee_cents` sums to $5,804.42
+across all 120 rows (59 advanced $2,818.36 / 10 submitted $709.95 / 51 voided $2,276.11). Of the
+$1,847.24 gap: $709.95 is correctly not-yet-posted (fee posts at funding, not submission — expected
+timing, not a defect) and up to $2,276.11 sits in the 51 voided advances (the already-known "51
+orphan factoring advances" open item — same rows, not re-investigated fresh here). These two
+partially explain the gap but don't fully close it to the cent; the remainder is unaccounted for
+without the real Faro fee statement to reconcile against row-by-row. Not force-closing further this
+round.
+
+### 3 — Receipt application: SCOPED, not built, per instruction
+
+**An existing posting path already exists and is correctly shaped for debtor-pays-factor** —
+`postFactoringCustomerPaymentEvent()` (`apps/backend/src/accounting/factoring-posting/poster.service.ts:1282`,
+`source_transaction_type='factoring_customer_payment'`). Confirmed live role-account resolution on
+USMCA:
+
+```
+DR  GL 2150  Factoring Advance         (role: factoring_advance_liability)
+CR  GL 1100  Accounts Receivable (A/R) (role: ar_control)
+```
+
+This is NOT backbone §6's generic "Dr Cash/Undeposited, Cr A/R" — correctly so, since the cash never
+touched our bank; it went to Faro. The debit correctly relieves the factoring liability instead.
+Already has real guardrails: rejects overpayment against the advance's outstanding balance
+(`policy_overpayment`), idempotent via an event-key + lifecycle-repair pattern (safe to re-run),
+gated on the advance being Faro-bound. Partial payment (CORE LOGISTICS' short $250) needs no special
+handling — the poster only rejects `amount > outstanding`; a smaller amount posts cleanly and leaves
+the remainder outstanding automatically.
+
+**What's NOT built:** the input is keyed by `factoring_advance_id`, not by invoice or customer
+reference — so applying the 7 real receipts requires first resolving each CSV row's invoice
+reference to its bound `factoring_advance_id` (via the subledger, not by load number, per your
+instruction). That resolution step, plus the loop calling this poster per row, is the part that
+doesn't exist yet. **Confirmed live: zero `factoring_customer_payment` JE lines exist on USMCA
+today** — the path is real and tested but has never fired for USMCA, matching your "0 invoices carry
+a dollar of payment today" exactly.
+
+Stopping here per instruction — scope posted, not building until you rule.
+
+### 4 — Item 3 of 3 (three gaps to identical): acknowledged
+
+(a) 21 invoices missing — tracks to the 18-load batch + the 5 unproven, already reported above and
+in the reconciling-item register. (b) receipts applied — covered in §3 above (0 live, path exists,
+wiring doesn't). (c) Cursor's two GL sign defects — noted; not attempting a tie-out until those clear,
+per instruction — that's a dependency on another seat's lane, not something I can close from here.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
