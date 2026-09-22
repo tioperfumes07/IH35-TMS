@@ -523,3 +523,32 @@ architecture is not a settlement-text-extraction script's scope) -- named for wh
 feeder's pre-settlement rebuild path.
 
 — CC-3, 2026-09-23 (second correction, same day)
+
+## Item 22 — 13615 customer mismatch: CLOSED (evidence, not a fix — Lead ruling)
+
+Evidence, three sources, cross-checked and ruled by the Lead: app carries customer AB Global
+Logistics, W.O. SEM66538, $4,900.00; AlwaysTrack shows customer Semares Forwarding, W.O. SEM66529;
+Faro invoice 87 shows S E Mares Forwarding Service, PO SEM66538, $4,900.00, purchased 2026-09-21.
+The W.O. and the amount tie to Faro invoice 87 exactly. **Ruling: the customer link (AB Global) is
+wrong — SEM66538 belongs to S E Mares, not AB Global.** AlwaysTrack's own W.O. for this load
+(SEM66529) is a separate, distinct question, not resolved here. **Not patched** — every one of
+these loads is deleted and rebuilt from settlements in the pending purge; correcting a row about to
+be deleted is wasted work. Evidence recorded here so the rebuilt row lands correct the first time.
+Closed 2026-09-22, evidence = AlwaysTrack Unsettled Loads screen + Faro invoice 87.
+
+**Separately, not wasted by the purge:** the write that produced the wrong customer link on 13615
+bypassed the application entirely (a raw-SQL write against production, not a real app route) — a
+control failure independent of the row itself, and it survives the purge. Re-posted to CC-1's
+OUTBOX: a write-time DB trigger on `mdata.loads` is needed to make that class of write impossible
+going forward, citing this ruling.
+
+## Item 23 — 13612: measured, real anomaly found, neither hypothesis confirmed from our data
+
+W.O. SEM66514 is carried by exactly one load in our system (13612) — not reused across two loads
+here. 13612's own stop actuals: picked up 2026-09-18, delivered 2026-09-21. Faro's fee register
+(`FEES PAID.csv`) shows invoice 64 / PO SEM66514 purchased (fee charged) 2026-09-11 — a full week
+before this load's own pickup. Neither "W.O. reused across two loads" (ruled out on our side) nor
+"invoice 64 belongs elsewhere" is confirmed or refuted from our own data alone — no AlwaysTrack data
+source exists in this app's backend to cross-check (confirmed via search). Filed as a real timing
+anomaly (Faro's purchase date predates our load's pickup by a week) — same evidence-question shape
+as 13615/13613, needs AlwaysTrack, not ours to resolve without it.
