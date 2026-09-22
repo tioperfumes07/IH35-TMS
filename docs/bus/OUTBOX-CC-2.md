@@ -3932,3 +3932,45 @@ report immediately if that changes.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+## 2026-09-22 — Escrow/fee JE posted + verified live, reconciling-item register built, $428.87 gap partially root-caused
+
+**Escrow/fee — RESOLVED, one-time.** Independently re-derived $143.63 (the 6 closed invoices:
+13512, 13513, 13524, FARO-003, FARO-011, INV-2026-00007 — the only 6 scoped-statement rows with
+`reserve_amount_cents=0`), confirmed $8.22/$135.41 isn't derivable from our data (document-sourced
+per the Lead's ruling), and posted the one-time JE:
+```
+journal_entry ad7b68b5-0f77-41f8-bc53-ff1c63f941a5, 2026-09-22, balanced $143.63
+DEBIT  6400 Factoring Fees          $8.22
+DEBIT  1090 Undeposited Funds     $135.41
+CREDIT 1230 Factoring Reserves    $143.63
+```
+Independently re-read live post-commit: balanced, correct accounts (6400 active; 6820 confirmed
+deactivated, not used). **Standing poster explicitly NOT built** — named BLOCKED pending Faro's
+per-invoice fee/rebate split landing as a real field, per the Lead's own reasoning.
+
+**Reconciling-item register — built**, `docs/reconciliation/2026-09-22-reconciling-item-register.md`
+— every item RESOLVED or OPEN with the live status, not a static writeup.
+
+**$428.87 gap — partial root cause, not closed.** Live: 51 of the 110 active
+`factoring_reserve_movements` 'held' rows point to `accounting.factoring_advances` with
+`status='voided'` (the same stale "Faro day-by-day rebuild 2026-09-13" batch found earlier in the
+AP/1090 work) — their GL effect WAS correctly reversed (51 credits, exactly $2,276.11) but the
+subledger rows were never marked `is_active=false`. Real defect, named, not yet fixed. Excluding
+those 51 leaves $2,818.36 against a $4,665.60 target — undershoots by $1,847.24, the *opposite*
+direction from the original overshoot, so this alone doesn't close the gap; something else (likely
+purchases from the voided rebuild never re-posted with a fresh `held` row) is still missing.
+
+**BLOCKED — need source data, not derivable from anything in this repo or session history:** the 8
+direct disbursement legs ($35,730.00) and 5 reserve deposits ($28,489.00), each with Faro's own
+note. Searched every committed doc and this session's own OUTBOX history — only the totals are
+named anywhere, never the line-level detail (amount/date/note per leg or deposit). Did not invent
+line items to hit the totals. Please re-supply the original table (or point me to where it's
+committed) so this can be posted individually as instructed, never netted.
+
+**5 self-carried invoices, first `accounting.reconciliation_runs` row, daily close** — still open,
+next in the queue once the 8-legs/5-deposits data lands or I'm told to proceed without it.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
