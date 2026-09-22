@@ -1012,5 +1012,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-08",
     "purpose": "widen reconciliation_findings_finding_type_check to admit the 6 detector literals ledger-integrity-detectors.service.ts already writes (test_named_account_in_coa, journal_entry_fewer_than_two_postings, posting_orphan_or_cross_company_account, voided_document_reversal_broken, void_metadata_incomplete, is_sample_data_not_explicit) -- live-confirmed still missing from the CHECK, board row ACCT-RECONCILIATION-FINDINGS-CHECK-CONSTRAINT-MISSING-6-TYPES, routed to CC-1"
+  },
+  "202614250000": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-22",
+    "purpose": "Lead ruling (settlement-refeed schema, E14): mdata.load_stops gains facility_name + leg_miles; mdata.loads gains empty_miles + line_haul_miles + mpg; driver_finance.escrow_ledger gains load_id FK; driver_finance.driver_settlements gains is_presettlement boolean."
   }
 }
