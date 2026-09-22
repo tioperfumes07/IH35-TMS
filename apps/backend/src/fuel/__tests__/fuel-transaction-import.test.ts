@@ -4,6 +4,7 @@ import {
   normalizeFuelType,
   computeFuelRowHash,
   importFuelCardTransactionsForCompany,
+  resolveLoadId,
   type DbClient,
 } from "../fuel-transaction-import.js";
 
@@ -97,6 +98,9 @@ function makeClient(opts: {
   driverId?: string | null;
   vendorId?: string | null;
   loadId?: string | null;
+  /** When set, the mdata.loads query returns this exact row set (overrides loadId) --
+   * used to simulate an ambiguous stop-window match (>1 candidate load). */
+  loadIds?: string[];
   insertRowCount?: number;
   captured: Captured[];
 }): DbClient {
@@ -113,6 +117,7 @@ function makeClient(opts: {
         return opts.vendorId ? { rows: [{ id: opts.vendorId }] } : { rows: [] };
       }
       if (sql.includes("FROM mdata.loads")) {
+        if (opts.loadIds) return { rows: opts.loadIds.map((id) => ({ id })) };
         return opts.loadId ? { rows: [{ id: opts.loadId }] } : { rows: [] };
       }
       if (sql.includes("INSERT INTO fuel.fuel_transactions")) {
@@ -224,5 +229,57 @@ describe("importFuelCardTransactionsForCompany", () => {
     expect(counts.rows_inserted).toBe(0);
     expect(counts.rows_duplicate).toBe(1);
     expect(counts.rows_unlinked_to_load).toBe(0);
+  });
+
+  it("does NOT guess a load when the stop-date window matches more than one (ambiguous), flags the G18 gap instead", async () => {
+    // ALWAYSTRACK-PARITY-FUEL-MISLINK-01 regression guard. Two loads (e.g. back-to-back runs by
+    // the same driver a day apart) both satisfy resolveLoadId's ±1-day window -- confirmed live
+    // shape on load 13518/document 5774. The old `ORDER BY ... LIMIT 1` silently picked one;
+    // the fix must leave the fuel row unlinked (load_exemption_reason set), never guess.
+    const captured: Captured[] = [];
+    const client = makeClient({
+      unitId: UNIT_ID,
+      driverId: DRIVER_ID,
+      vendorId: null,
+      loadIds: [LOAD_ID, "55555555-5555-4555-8555-555555555555"], // 2 candidates -> ambiguous
+      captured,
+    });
+
+    const counts = await importFuelCardTransactionsForCompany(client, COMPANY, parsed);
+
+    expect(counts.rows_inserted).toBe(1);
+    expect(counts.rows_unlinked_to_load).toBe(1);
+
+    const ins = insertCall(captured);
+    const v = ins.values!;
+    expect(v[2]).toBeNull(); // no load -- ambiguity is NOT resolved by picking one
+    const reason = v[15] as string;
+    expect(reason).toBeTruthy();
+    expect(reason.length).toBeGreaterThanOrEqual(20);
+  });
+
+  it("resolveLoadId: returns the single unambiguous candidate directly", async () => {
+    const captured: Captured[] = [];
+    const client = makeClient({ loadIds: [LOAD_ID], captured });
+    const id = await resolveLoadId(client, COMPANY, UNIT_ID, DRIVER_ID, "2026-08-12T00:00:00Z");
+    expect(id).toBe(LOAD_ID);
+  });
+
+  it("resolveLoadId: returns null on zero candidates (unchanged behavior)", async () => {
+    const captured: Captured[] = [];
+    const client = makeClient({ loadIds: [], captured });
+    const id = await resolveLoadId(client, COMPANY, UNIT_ID, DRIVER_ID, "2026-08-12T00:00:00Z");
+    expect(id).toBeNull();
+  });
+
+  it("resolveLoadId: returns null on multiple candidates -- MUTATION check, the old ORDER BY LIMIT 1 behavior must not silently return rows[0] again", async () => {
+    const captured: Captured[] = [];
+    const client = makeClient({
+      loadIds: [LOAD_ID, "66666666-6666-4666-8666-666666666666", "77777777-7777-4777-8777-777777777777"],
+      captured,
+    });
+    const id = await resolveLoadId(client, COMPANY, UNIT_ID, DRIVER_ID, "2026-08-12T00:00:00Z");
+    expect(id).toBeNull();
+    expect(id).not.toBe(LOAD_ID); // guards against reverting to "pick rows[0]"
   });
 });
