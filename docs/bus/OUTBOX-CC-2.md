@@ -4573,3 +4573,86 @@ per instruction — that's a dependency on another seat's lane, not something I 
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+## 2026-09-23 — 681 pending report, receipt application BUILT and applied (7 of 7), a design-doc note
+
+### 1 — The 681 pending_categorization rows, by account and age (report only, none touched)
+
+```
+Overall (live, USMCA, voided_at IS NULL excluded from the categorized/pending split):
+  1,129 total  |  0 matched to an expense  |  388 matched to a load  |  77 categorized  |  681 pending_categorization
+
+By account:
+  Dreamline Diesel Card   397 rows   $140,226.34
+  USMCA FREIGHT (BofA)    284 rows   $     117.44   (small net -- mostly offsetting debit/credit pairs)
+
+By age (transaction_date):
+   0-7d   125 rows   $28,613.98   (newest 2026-09-21)
+   8-30d  303 rows   $54,386.95
+  31-90d  145 rows   $51,000.44   (oldest 2026-08-07)
+  90d+      1 row    -$377.45     (2026-06-01 -- a single old outlier)
+```
+
+Nothing categorized. This is the shape only, per instruction.
+
+### 2 — Categorization-path proof: standing from the prior report, reconfirmed
+
+Already proven and pasted in the 2026-09-23 "Relay 43" entry above (10 real balanced posted
+`bank_categorization` JEs). No new no-op risk found since — not re-running the live query a third
+time for the same already-established fact.
+
+### 3 — Receipt application: BUILT (thin resolver, no new GL math) and applied — 7 of 7
+
+**Design-doc correction first.** `docs/accounting/FACTORING-POSTER-DESIGN.md` R2 (SETTLEMENT) names
+`CR ar_assigned_to_factor` (GL 1210) — that file is the EARLY draft (2026-07-02, marked "DESIGN
+ONLY," explicitly TRANSP-only, predates USMCA's Faro onboarding). The actual shipped poster
+(`poster.service.ts:1-51` header) documents a deliberate, later deviation: A/R is relieved at
+`ar_control` (GL 1100) directly; `ar_assigned_to_factor` is reserved for the chargeback path and an
+optional presentation reclass not applied by default. Live-confirmed both roles are real, distinct,
+active bindings (GL 1210 "A/R - Assigned to Faro" vs GL 1100 "Accounts Receivable (A/R)"). Per your
+confirmation this round, the shipped code (GL 1100) is correct — flagging the stale doc file as
+worth a follow-up correction, not fixing it here (out of scope this round).
+
+**Resolution built:** each `debtor_receipts_report.csv` row resolved to its real invoice by customer
+name + exact face amount (`accounting.invoices.total_cents`), then to its bound
+`accounting.invoices.factoring_advance_id` (a direct FK — no separate link table needed). Two
+disambiguation cases, both resolved on hard criteria, never a guess:
+- **FLS Transport $525.00** — two invoices share that exact face value (13515, 13513). Only 13513
+  carries a `factoring_advance_id`; 13515's is NULL. The poster requires a bound advance, so 13513 is
+  the only structurally valid target — not a name/date guess.
+- **"NCC LOGISTICS USA"** — no customer by that exact name; `mdata.customers` carries "NCC Logistics
+  México" instead (a Faro-side naming variant, most likely — not independently confirmed against the
+  raw CSV's own customer field). The $2,500.00 face value is unique to that customer's one invoice
+  (13508), so the amount is the real disambiguator. Flagging the name mismatch honestly rather than
+  silently assuming it.
+
+**Applied live, all 7, through the existing poster exactly as designed** — `postFactoringCustomerPaymentEvent()`
+(`apps/backend/src/accounting/factoring-posting/poster.service.ts:1282`), no new GL math, no code
+changed:
+
+```
+invoice     customer                    face        paid        result
+13516       Sethmar Transportation      $700.00     $700.00     paid    (JE 3b56f62a)
+INV-...07   ITS Logistics LLC           $350.00     $350.00     paid    (JE 107647bc)
+INV-...08   MPH Carrier Services, Inc   $3,800.00   $3,800.00   paid    (JE 8eb187b7)
+13513       FLS Transportation Svcs     $525.00     $525.00     paid    (JE 8261fe08)
+13508       NCC Logistics México        $2,500.00   $2,500.00   paid    (JE ed049161)
+13512       Watco Supply Chain Svcs     $1,700.00   $1,700.00   paid    (JE de57f03a)
+13521       CORE LOGISTICS BROKERAGE    $3,500.00   $3,250.00   partial (JE 2246da63) -- $250.00 left open
+```
+
+Every JE balanced, DR GL 2150 (Factoring Advance) / CR GL 1100 (A/R), `status='posted'`. Invoice
+subledger relief fired automatically inside the same call (no separate write) — 6 flipped to `paid`
+with `$0.00` open, 13521 flipped to `partial` with exactly `$250.00` open, matching your instruction
+exactly ("CORE LOGISTICS takes $3,250 and LEAVES $250 OPEN"). Total posted: $12,825.00 — matches the
+Faro receipt total you cited in an earlier round exactly.
+
+LIVE PROOF: exit 0. All 7 `postFactoringCustomerPaymentEvent()` calls returned `posted:true` with a
+real `journal_entry_id`. Re-queried all 7 invoices post-write: 6/7 `status='paid'`/`open_cents=0`,
+1/7 (`13521`) `status='partial'`/`open_cents=25000` (=$250.00). Sum of all-time
+`factoring_customer_payment` credits to GL 1100 on USMCA = exactly $12,825.00 (7 rows), confirming
+no prior/duplicate postings existed before this batch.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
