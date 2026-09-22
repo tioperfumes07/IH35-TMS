@@ -214,3 +214,23 @@ with zero lines and zero net pay is itself a build failure and needs a real guar
 -- named in Item 20, not built here).
 
 — CC-3, 2026-09-23
+
+---
+
+## SECOND CORRECTION, 2026-09-23 (same day): the owner overrode the "purge, no document owed" correction above
+
+**Both corrections above this one about 5817-5825 are now superseded.** Owner, verbatim: "5817-25
+SHOULD BE PRE SETTLEMENTS IN OUR APP, SO IT IS NOT INVENTED. WE JUST HAVE TO ASSIGN THEM CORRECT
+ACCORDING TO LOAD NUMBER OR SEQUENCE." Full detail in
+`docs/reconciliation/2026-09-22-reconciling-item-register.md`'s own second Item 20 correction
+(same timestamp). Short version: these 9 rows are legitimate pre-settlement records (a real state
+this app has and AlwaysTrack does not), not over-minted garbage to be purged and forgotten. The two
+real defects are (a) 6 of 9 have no load assigned at all, and (b) all 9 wrongly carry a
+`source_document_ref` in the AlwaysTrack settled-number range before AlwaysTrack has ever settled
+them. New law: a pre-settlement carries its own identifier and picks up `source_document_ref` only
+once actually settled; the feeder must rebuild pre-settlements as a first-class state, not skip
+them. This reduces the genuinely undecidable D3 row count back up from 2 to include these 9 again
+-- but as a different, real fix (pre-settlement rebuild), not a "wait for a document" or "wait for
+the purge" placeholder.
+
+— CC-3, 2026-09-23 (second correction, same day)
