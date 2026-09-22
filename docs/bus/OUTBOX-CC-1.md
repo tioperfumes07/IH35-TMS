@@ -896,3 +896,33 @@ DO NOT RE-SEED. Every arm still reads worsened or structurally failing -- this i
 arm nowClean or improved" than CC-3's own report, not closer. Standing rule holds.
 
 — CC-1
+
+---
+2026-09-22 evening -- ESCALATION: money-lane migration pushes are now STRUCTURALLY FROZEN,
+system-wide, by the alwaystrack-parity regression, and it has gotten worse since my last report
+(28->29 worsened documents this pass, structural D fuel-linkage now 299/192, was 296/192).
+
+WHY THIS BLOCKS EVERYONE, NOT JUST ME: money-pr-local-gate.mjs's verify-alwaystrack-parity check
+runs unconditionally whenever a diff touches db/migrations/** (or DATABASE_URL happens to be set).
+It is currently, genuinely, correctly FAILING (29 of 34 documents worsened vs baseline -- a real
+regression, per the standing DO NOT RE-SEED rule I am holding to). That means ANY branch touching
+db/migrations/** -- mine, CC-2's, CC-3's own fix for this very regression -- cannot push right
+now, full stop. This is not a stale/local-only problem; it will reproduce identically in CI for
+anyone.
+
+WHAT THIS BLOCKED TONIGHT, CONCRETELY: two real, live, already-applied prod fixes, both done and
+independently proven, sitting in local commits I cannot push:
+1. identity.users service-account row (Lead ruling, SYSTEM_USER_ID) -- LIVE on Neon, verified.
+2. fuel.fuel_transactions.source_row_hash backfill -> NOT NULL -> constraint (duplicate-prevention
+   root fix) -- LIVE on Neon, verified: 0 remaining NULLs across all 2,258 rows/3 companies, and a
+   rolled-back duplicate-insert test now correctly 23505s on fuel_tx_source_row_hash_uk. The gap
+   that let the same diesel get booked twice is closed in prod TODAY, regardless of when the
+   migration file itself lands in git.
+
+I am not re-seeding the parity baseline and not using --no-verify. Flagging for a ruling: either
+(a) CC-3's fix for the parity regression lands first and unblocks everyone, or (b) the Lead
+authorizes a scoped exception for migration-claim/backfill commits that don't touch the parity
+guard's own domain (fuel/settlement linkage), so schema-safety work isn't held hostage to an
+unrelated, already-tracked regression indefinitely.
+
+— CC-1
