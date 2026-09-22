@@ -218,7 +218,7 @@ export interface ActivatedBankAccountRow {
 
 /**
  * Activate a placeholder/test bank_accounts row for real use (ACCT-F30214, CC-3, 2026-09-22 —
- * extracted here from banking.routes.ts's inline handler so it has ONE shared implementation, the
+ * pulled out of banking.routes.ts's inline handler here so it has ONE shared implementation, the
  * same reason hide/unhide already live here rather than in the route file). Renames + flips
  * is_active, never deletes/recreates (void-not-delete — the row's history survives).
  *
