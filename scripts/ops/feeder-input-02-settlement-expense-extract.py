@@ -197,7 +197,6 @@ ACCOUNT_KEY = {
     # distinguish the two from description text alone (both use "Bono"/"Bonus" wording without a
     # consistent hiring-vs-performance marker); named here as a real, unresolved sub-split, not
     # silently merged and hidden.
-    "reefer_diesel": "5160",  # Reefer Fuel (NEW, Round 67) -- fuel, not repair, no vehicle split
     "tires": "5500",  # Tires (EXISTS) -- Round 67: one account regardless of truck/trailer
     # vehicle_parts_accessories, washout, road_service intentionally have NO flat entry here as of
     # Round 68 -- the Lead's own correction: "A PART IS AN ITEM, NOT AN ACCOUNT... Map each line to
@@ -206,8 +205,17 @@ ACCOUNT_KEY = {
     # Maintenance; trailer -> MASTER_PENDING, that account doesn't exist yet; undeterminable from
     # the description text -> None, the intentional build failure, never guessed). Do NOT re-add a
     # flat entry for these 3 -- it would silently override the per-row resolution.
-    "driver_reimbursement": "5190",  # Driver Reimbursed Expenses (renumbered, Round 67)
-    "company_vehicle_fuel": "6220",  # Company Vehicle Fuel (NEW, Round 67 -- the Honda pickup)
+    #
+    # ROUND 83 WITHDRAWAL (Lead, 2026-09-23, verbatim): "PR #22297 merged 5160 Reefer Fuel (NEW)
+    # and 5170 Washout (NEW) citing my Round 67 list. I withdrew that ruling today... I read the
+    # live QuickBooks company file (USMCA Freight Solutions, Inc.): reefer fuel, DEF and washout
+    # are ITEMS under item categories, each mapped to an account. Do NOT create 5160. Do NOT
+    # create 5170... Same correction for company_vehicle_fuel and driver_reimbursement -- items,
+    # not new account numbers... The extractor maps a settlement line to an ITEM. The item carries
+    # the account. Not the other way around." reefer_diesel, washout, company_vehicle_fuel, and
+    # driver_reimbursement therefore have NO flat account_key entry here either, as of Round 84 --
+    # resolved via ITEM_KEY below instead (real item names read off the live QBO catalog,
+    # ~/Downloads/09-22-2026-QBO-LIVE-ITEM-CATALOG-126.csv, never invented).
     "scale": "5300",  # shared with toll_parking, Round 67: "scale/toll -> 5300"
     "toll_parking": "5300",
     "lumper": "EXPENSE_PENDING:lumper",  # no code given in either ruling yet
@@ -249,6 +257,124 @@ def resolve_vehicle_account(desc):
     if vehicle == "trailer":
         return "MASTER_PENDING:trailer_repairs_maintenance"
     return None
+
+
+# ITEM_KEY -- Round 83/84 (Lead, 2026-09-23), verbatim: "The extractor maps a settlement line to
+# an ITEM. The item carries the account. Not the other way around... Each of the 20 settlement
+# categories resolves to an ITEM." Every value here is a REAL item name read directly off the live
+# QuickBooks company file export, ~/Downloads/09-22-2026-QBO-LIVE-ITEM-CATALOG-126.csv -- none
+# invented. A category with NO entry has no confident single-item match in that 126-row catalog
+# and is named as a real gap in main()'s report, never forced onto a near-miss item.
+ITEM_KEY = {
+    "diesel": "Fuel-Truck Diesel",  # Fuel Expenses
+    "def": "Fuel-DEF-Diesel Exhaust Fluid",  # Fuel Expenses
+    "reefer_diesel": "Fuel-Reefer-Diesel",  # Fuel Expenses -- Round 83's own named correction
+    "escrow_for_claims": "Driver Deduction-Escrow for Claims-2026",  # Driver Deductions
+    "tarp_pay": "Driver Pay-Tarp-Enlonada/Desenlonada",  # Driver Salaries
+    "layover_pay": "Driver Pay-Layover-Estancia",  # Driver Salaries
+    "bonus_pay": "Driver Pay-Bonus",  # Driver Salaries
+    "extra_stop_pay": "Driver Pay-Extra Pick/Delivery-Drop",  # Driver Salaries
+    "scale": "OTR-Scale Expense",  # Scale Expense (company-paid; see driver_reimbursement split below)
+    "lumper": "Warehouse Lumper Expense",  # Freight Delivery Costs (company-paid)
+    "washout": "Reefer-Trailer Washout Expense",  # Freight Delivery Costs -- Round 83's own correction
+    "road_service": "Road Service-Truck Repair Expense",  # Repair & Maintenance-Roadservice
+    # tires is resolved per-row (truck vs trailer both have a distinct real item in the catalog --
+    # "Road Service-Truck Tire Expense" / "Road Service-Trailer Tire Expense") -- see
+    # resolve_tires_item() below, not a flat entry.
+    #
+    # NOT MAPPED -- real, reported gaps, not guessed:
+    #   driver_pay: the catalog carries BOTH "Driver Pay-Mexico-B1 Driver-Loaded/Empty Miles" and
+    #     "Driver Pay-CDL-Loaded/Empty Miles" -- two real, different items -- and this parser has
+    #     no reliable text signal in the settlement documents to choose between them per line.
+    #   admin_fee: no "Admin Fee"-shaped item exists anywhere in the 126-row catalog at all.
+    #   company_vehicle_fuel: no Honda/personal-vehicle-fuel item exists in the catalog.
+    #   vehicle_parts_accessories (PREMIUM/FEE ITEM/etc, and now also WINDSHIELD/HEADLIG since the
+    #     Round 69 5400-account ruling is itself superseded by "items, not accounts"): no
+    #     windshield/headlight/wash-tier item exists in the 126-row catalog.
+    #   cash_advance: BY DESIGN not an item -- it is a bill payment against the driver's bill, per
+    #     the owner's own law, and never posts through the item/expense system at all.
+}
+
+
+# driver_reimbursement -- the single settlement-side category actually covers FIVE distinct real
+# items in the catalog (one per what's being reimbursed), evidence-based off the same description
+# text classify_driver_line/classify_company_expense already read. A reimbursement type with no
+# match among these five stays unmapped -- never forced onto the nearest guess.
+def resolve_driver_reimbursement_item(desc):
+    d = desc.lower()
+    if "toll" in d or "bridge" in d or "parking" in d or "cruce" in d:
+        return "Driver Reimbursement-TPE-Toll Expense"
+    if "scale" in d:
+        return "Driver Reimbursement-Scale Expense"
+    if "def" in d or "diesel exhaust" in d:
+        return "Driver Reimbursement-Fuel Def"
+    if "lumper" in d:
+        return "Driver Reimbursement Warehouse-Lumper Fee"
+    if "maintenance" in d or "oil" in d or "additive" in d:
+        return "Driver Reimbursement-OTR-Maintenance, Oils, Additives"
+    return None
+
+
+# toll_parking -- the catalog splits this into 4 real items by kind (parking vs bridge/toll) and
+# geography (USA vs Mexico). Evidence read off the description text itself: "parking" is unique to
+# the parking item; "pago de cruce"/"cruce" (Spanish for border crossing) and "mexico" name the
+# Mexico-side toll; everything else (plain "toll"/"bridge", the common case in this corpus) is the
+# USA-side item. No vendor-based DTOPS sub-split attempted here -- DTOPS appears on both USA and
+# Mexico-side charges in the raw text, not a reliable single-item signal on its own.
+def resolve_toll_parking_item(desc):
+    d = desc.lower()
+    if "parking" in d:
+        return "OTR-Parking Expense"
+    if "cruce" in d or "mexico" in d:
+        return "Bridge Toll Expense-Mexico"
+    if "toll" in d or "bridge" in d:
+        return "Highway Toll Expense-USA"
+    return None
+
+
+# tires -- the catalog's own truck/trailer split ("Road Service-Truck Tire Expense" / "Road
+# Service-Trailer Tire Expense") matches classify_vehicle() exactly; an undeterminable vehicle
+# stays unmapped, same "don't guess" rule as every other item resolution here.
+def resolve_tires_item(desc):
+    vehicle = classify_vehicle(desc)
+    if vehicle == "truck":
+        return "Road Service-Truck Tire Expense"
+    if vehicle == "trailer":
+        return "Road Service-Trailer Tire Expense"
+    return None
+
+
+# driver_pay -- the catalog carries FOUR real items, split two ways: Mexico-B1 vs CDL driver, and
+# Loaded vs Empty miles. The settlement text itself never states which regime a driver is under,
+# but the driver's OWN home address (already captured, parse_driver's DRVADDR field) does: every
+# US-based (CDL) driver's address in this corpus ends in a 2-letter US state code ("..., TX"); every
+# Mexico-based (B1) driver's ends in a Mexican state abbreviation ("..., Tam.", "..., Pue.", "...,
+# Mex.", "..., Edo.Mex.", etc.) -- evidence read off the document, not a guess. An address with
+# neither shape (missing, or a format not seen anywhere in this corpus) stays unmapped.
+US_STATE_RE = __import__("re").compile(r",\s*[A-Z]{2}\s*$")
+
+
+def resolve_driver_pay_item(pay_kind, driver_address):
+    if not driver_address:
+        return None
+    regime = "CDL" if US_STATE_RE.search(driver_address.strip()) else "B1"
+    if pay_kind == "loaded_miles":
+        return f"Driver Pay-{'Mexico-B1 Driver' if regime == 'B1' else 'CDL'}-Loaded Miles"
+    if pay_kind == "empty_miles":
+        return f"Driver Pay-{'Mexico-B1 Driver' if regime == 'B1' else 'CDL'}-Empty Miles"
+    return None
+
+
+def resolve_item_key(category, description, driver_address=None, pay_kind=None):
+    if category == "driver_reimbursement":
+        return resolve_driver_reimbursement_item(description)
+    if category == "tires":
+        return resolve_tires_item(description)
+    if category == "toll_parking":
+        return resolve_toll_parking_item(description)
+    if category == "driver_pay":
+        return resolve_driver_pay_item(pay_kind, driver_address)
+    return ITEM_KEY.get(category)
 
 
 def classify_driver_line(desc):
@@ -643,17 +769,24 @@ def main():
     # reads the description itself.
     VEHICLE_RESOLVED_CATEGORIES = {"washout", "road_service", "vehicle_parts_accessories"}
 
-    def row(load_number, source_doc, source, date, category, vendor, description, amount, raw_line):
+    # Round 83/84: cash_advance is BY DESIGN item-less (a bill payment, never an expense/income
+    # line through the item system) -- its own disposition is what makes a row "resolved", not an
+    # item_key. Every other category must resolve to a real item_key.
+    ITEM_LESS_BY_DESIGN = {"cash_advance"}
+
+    def row(load_number, source_doc, source, date, category, vendor, description, amount, raw_line, driver_address=None, pay_kind=None):
         if category in VEHICLE_RESOLVED_CATEGORIES:
             account_key = resolve_vehicle_account(description)
             vehicle = classify_vehicle(description)
         else:
             account_key = ACCOUNT_KEY.get(category)
             vehicle = ""
+        item_key = resolve_item_key(category, description, driver_address=driver_address, pay_kind=pay_kind)
         return {
             "load_number": load_number, "source_doc": source_doc, "source": source, "date": date,
             "category": category, "output_type": OUTPUT_TYPE.get(category, ""), "account_key": account_key,
-            "vehicle": vehicle or "", "vendor": vendor, "description": description, "amount": amount, "raw_line": raw_line,
+            "item_key": item_key, "vehicle": vehicle or "", "vendor": vendor, "description": description,
+            "amount": amount, "raw_line": raw_line,
         }
 
     money_out = []
@@ -662,7 +795,7 @@ def main():
             for x in v["lines"]:
                 money_out.append(row(ld, d["doc_no"], "driver", x["date"] or "", x["category"], "", x["description"], x["amount"], ""))
             for p in v["pay"]:
-                money_out.append(row(ld, d["doc_no"], "driver", "", "driver_pay", "", p["kind"], p["amount"], ""))
+                money_out.append(row(ld, d["doc_no"], "driver", "", "driver_pay", "", p["kind"], p["amount"], "", driver_address=d.get("driver_address"), pay_kind=p["kind"]))
     for c in C:
         for ld, v in c["loads"].items():
             for e in v["fuel"]:
@@ -671,7 +804,7 @@ def main():
                 money_out.append(row(ld, c["doc_no"], "company", e["date"], e["category"], e["vendor"], e["description"], e["amount"], e.get("location", "")))
 
     with open(os.path.join(OUT_DIR, "feeder-input-expenses.csv"), "w", newline="") as f_out:
-        w = csv.DictWriter(f_out, fieldnames=["load_number", "source_doc", "source", "date", "category", "output_type", "account_key", "vehicle", "vendor", "description", "amount", "raw_line"])
+        w = csv.DictWriter(f_out, fieldnames=["load_number", "source_doc", "source", "date", "category", "output_type", "account_key", "item_key", "vehicle", "vendor", "description", "amount", "raw_line"])
         w.writeheader()
         w.writerows(money_out)
 
@@ -698,14 +831,9 @@ def main():
     print(f"LINE HAUL rows {lh}   FUEL rows {fuel_n} (${fuel_amt:,.2f})   COMPANY EXPENSE rows {exp_n} (blank description: {exp_blank})")
     print("\nALL CATEGORIES:")
     for k, n in cat_counts.most_common():
-        if k in ("washout", "road_service", "vehicle_parts_accessories"):
-            # Account is item-resolved per row (truck vs trailer), not flat -- print the real
-            # breakdown instead of a single stale key.
-            by_key = collections.Counter(r["account_key"] or "UNMAPPED" for r in money_out if r["category"] == k)
-            detail = ", ".join(f"{acct}:{cnt}" for acct, cnt in sorted(by_key.items()))
-            print(f"   {k:<22} {n:>4} lines   {cat_amts[k]:>12,.2f}   -> {OUTPUT_TYPE.get(k, '?')} (item-resolved: {detail})")
-        else:
-            print(f"   {k:<22} {n:>4} lines   {cat_amts[k]:>12,.2f}   -> {OUTPUT_TYPE.get(k, '?')} ({ACCOUNT_KEY.get(k, 'UNMAPPED')})")
+        by_item = collections.Counter(r["item_key"] or "UNMAPPED" for r in money_out if r["category"] == k)
+        item_detail = ", ".join(f"{item}:{cnt}" for item, cnt in sorted(by_item.items()))
+        print(f"   {k:<22} {n:>4} lines   {cat_amts[k]:>12,.2f}   -> {OUTPUT_TYPE.get(k, '?')}  items: {item_detail}")
 
     ca_rows = [r for r in money_out if r["category"] == "cash_advance"]
     ca_in_window = [r for r in ca_rows if r["date"] and r["date"] >= "2026-08-07"]
@@ -717,23 +845,26 @@ def main():
     print(f"feeder-input-expenses.csv:     {len(money_out)} rows")
     print(f"feeder-input-doc-coverage.csv: {len(doc_nos)} rows ({len(seen_c)} company, {len(seen_d)} driver)")
 
-    # BUILD FAILURE, not a silent "other" -- Lead ruling, 2026-09-23, verbatim: "EVERY LINE EMITS
-    # ITS TARGET ACCOUNT. NO 'other' BUCKET. A line with no mapping is a build failure, not an
-    # 'other'." The CSV above is still written in full (including unmapped rows, account_key=="")
-    # so the output is inspectable while this gap gets closed -- but the process exits nonzero and
-    # names exactly what's missing, never silently passes.
-    unmapped = [r for r in money_out if r["account_key"] is None]
+    # BUILD FAILURE, not a silent "other" -- Lead ruling, 2026-09-23 (Round 83/84), verbatim:
+    # "EVERY LINE EMITS ITS TARGET ACCOUNT. NO 'other' BUCKET. A line with no mapping is a build
+    # failure, not an 'other'... The extractor maps a settlement line to an ITEM. The item carries
+    # the account." A row is resolved when it has a real item_key, OR it's one of the categories
+    # that are item-less BY DESIGN (cash_advance -- a bill payment, never posts through the item
+    # system at all). The CSV above is still written in full (including unmapped rows) so the
+    # output is inspectable while a gap gets closed -- but the process exits nonzero and names
+    # exactly what's missing, never silently passes.
+    unmapped = [r for r in money_out if r["item_key"] is None and r["category"] not in ITEM_LESS_BY_DESIGN]
     if unmapped:
         by_cat = collections.defaultdict(lambda: [0, 0.0])
         for r in unmapped:
             by_cat[r["category"]][0] += 1
             by_cat[r["category"]][1] += r["amount"] or 0.0
-        print("\nBUILD FAILURE -- lines with NO account_key mapping (Lead ruling 2026-09-23: "
+        print("\nBUILD FAILURE -- lines with NO item_key mapping (Lead ruling 2026-09-23: "
               "\"a line with no mapping is a build failure, not an 'other'\"):")
         for cat, (n, amt) in sorted(by_cat.items()):
             print(f"   {cat:<26} {n:>4} lines   ${amt:>12,.2f}")
-        print("Add these categories to ACCOUNT_KEY (or confirm a real GL code) before this script "
-              "may be considered done -- not guessed here.")
+        print("Add these categories to ITEM_KEY (a REAL item name off the live QBO catalog) before "
+              "this script may be considered done -- not guessed here.")
         raise SystemExit(1)
 
 
