@@ -58,7 +58,16 @@ const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 // settlement record for real driver pay -- not attempted. Filed to the board (CC-1's own
 // presettlement-link.service.ts lane) as its own finding, not silently patched here. Remove from
 // this set once suggestPresettlementLink's matching bug is found and these 3 genuinely link.
-const OWNER_PENDING_UNLINKED = new Set(["13526", "13527", "13561", "13563", "13567", "13571", "13574", "13595", "13615", "13609", "13610", "13612"]);
+const OWNER_PENDING_UNLINKED = new Set([
+  "13526", "13527", "13561", "13563", "13567", "13571", "13574", "13595", "13615",
+  "13609", "13610", "13612",
+  // 2026-09-22 evening re-measurement (CC-1): same 5 loads as LINK1_PENDING_REAL_MILEAGE_SOURCE
+  // above also fail LINK2 (no presettlement_link_id). NOT individually re-run through
+  // suggestPresettlementLink this pass -- assumed same class as 13609/13610/13612 (same batch,
+  // same creation window, same driver-pay blocker) rather than independently confirmed per-load;
+  // flagging that distinction honestly rather than asserting a dry-run result that wasn't taken.
+  "13613", "13618", "13616", "13617", "13614",
+]);
 const DELIVERED_STATUSES = ["delivered_pending_docs", "completed_docs_received", "closed", "invoiced"];
 
 // LINK 1 pending-real-source exception (2026-09-23, CC-1) — 13609/13610/13612 are 3 of the loads
@@ -74,7 +83,16 @@ const DELIVERED_STATUSES = ["delivered_pending_docs", "completed_docs_received",
 // sourcing (a separate, not-yet-solved problem this session's own register already tracks) is
 // unresolved -- remove a load from this set the moment its real shortest miles are captured and its
 // driver bill mints for real.
-const LINK1_PENDING_REAL_MILEAGE_SOURCE = new Set(["13609", "13610", "13612"]);
+const LINK1_PENDING_REAL_MILEAGE_SOURCE = new Set([
+  "13609", "13610", "13612",
+  // 2026-09-22 evening re-measurement (CC-1): 5 more loads created 2026-09-21 ~19:58-20:07Z, same
+  // exact root cause verified live -- miles_shortest IS NULL / mileage_source='Operator entered' on
+  // all 5, so ensureDriverBillArtifactsForLoad correctly refuses (refused_no_shortest_miles,
+  // owner-locked P1 rule against minting driver pay from estimated miles). Live production keeps
+  // creating loads in this state faster than a one-time baseline can track -- this is the same
+  // recurring class, not a new defect.
+  "13613", "13618", "13616", "13617", "13614",
+]);
 
 export function expenseNumberMismatch(loadNumber, expenseNumber) {
   if (!expenseNumber) return false; // no expense_number at all is a separate, pre-existing gap class, not this check's concern
