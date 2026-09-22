@@ -310,3 +310,25 @@ is categorized/matched yet at all.
 
 **Closing item 38 as CONFIRMED-CLOSED (does not reproduce, re-verified live a third time) — data
 item, no PR needed, nothing to fix.**
+
+---
+
+## 2026-09-22 — OPEN DEBT: parity guard re-baselined once, under a Lead ruling, fuel drift not yet root-caused
+
+`verify-alwaystrack-parity.mjs` (the master AlwaysTrack settlement-parity check) was re-baselined
+today under an explicit, conditional Lead ruling (R56-D) after its worsened-document count froze
+every money-lane migration push and held two proven, live-verified fixes out of production. This
+is **not a pass and not forgiveness** — the Lead's own words. Full detail in
+`docs/IH35-CLAUDE-JOURNAL.md` (same date) and inside `scripts/verify-alwaystrack-parity.baseline.json`
+itself (`REBASELINE_REASON_R56D` key).
+
+**The open item:** 17 of 34 USMCA settlement documents show a live FUEL-dollar mismatch against
+the signed AlwaysTrack documents that got WORSE today ($4,554.79 -> $12,727.54 combined absolute
+drift), root cause not yet identified — most likely the same in-flight fuel-duplicate reconciliation
+CC-3 is running this week, but that is a hypothesis, not a confirmed cause. `structural_d_ceiling`
+(fuel rows not yet linked to `expense_attribution.expense_load_links`) also grew 192 -> 299.
+
+**Retires automatically**, not manually: the moment the planned full settlement re-feed
+(`scripts/ops/settlement-refeed.ts`, currently proven on a disposable Neon branch, not yet run
+against production) completes, this guard re-measures against the fresh data and today's baseline
+entries are deleted (superseded), per the ruling's own condition 3.

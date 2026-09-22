@@ -883,3 +883,33 @@ Scope closed: standalone open-list population, full pagination, loading/error ho
 - 2026-09-10 GPT urgent NB-OPEN-TOUR-SPLIT: forward shared-linker separation and stale/manual confirmation guard built;39 tests and REG040 suite PASS. Historical S0011 repair remains open: immutable posted clearing2881.45, stale header2606.45, replay fee difference35.25. Source round-trip groups5778/5782/5791 verified; no economic writes. Lead requires durable unchanged original-payrun attribution before identity repair.
 
 - 2026-09-10 22:45Z GPT: forward NB split PR21709 eb1b56a33e deployedexact/health200, deploydep-dahisa61egvs73876120 live22:27:47Z. Historical attribution support builtlocally with NULL amounts and originalposted-evidence protections;16BE+3FE tests/fullREG040/typesPASS; independent code+financialreviewPASS. Migration tooling coordination (Cursor/CC1 claim+CREATE-onlyDDL) remains prerequisite; concretecontractinactiveCursorINBOX22:29. HistoricalS0011split/treatment stillincomplete; no datawrites.
+
+## CC-1 — ROUND 56 PARITY RE-BASELINE (R56-D), OPEN DEBT — 2026-09-22
+
+verify-alwaystrack-parity.mjs's worsened-document count moved 28->29 (CC-1 escalation #22264),
+freezing every money-lane migration push system-wide and holding two proven live fixes
+(identity.users service actor E5, fuel.fuel_transactions.source_row_hash backfill E3) out of main.
+Lead ruling R56-D (docs/bus/09-22-2026-LEAD-RULING-ROUND-56-E1-LANE-CROSS-E7-SHAPE-PARITY-REBASELINE.md)
+authorized ONE re-baseline, today only, conditional on documenting the exact per-document delta.
+
+R56-C landed first, same round: excluded DEF/reefer_diesel from the FUEL dimension's live query
+(ft.fuel_type='diesel' filter) since the AlwaysTrack ground truth never included them either (DEF
+prints under each document's own EXPENSES section, not FUEL PURCHASES). That dropped the live
+worsened count from 29 to 17 BEFORE the baseline was written -- 29 is not what got baselined.
+
+RE-BASELINED (scripts/verify-alwaystrack-parity.baseline.json, full REBASELINE_REASON_R56D block
+inside the file itself, not just here): 17 documents worsened on FUEL specifically (LINE_HAUL/
+DRIVER_PAYMENT unchanged on all 17; EXPENSES improved sharply, 190->139 unlinked structural ceiling,
+unrelated in-flight diesel-dedupe work) -- 5771,5772,5773,5774,5775,5776,5778,5779,5781,5783,5786,
+5787,5788,5790,5794,5801,5803. Fuel-dimension dollar drift across these 17: $4,554.79 -> $12,727.54
+absolute (+$8,172.75), root cause not yet identified, likely the same in-flight FUEL-DEDUPE
+reconciliation CC-3 is running. structural_d_ceiling.fuel_count also worsened 192->299, same root
+cause, disclosed not hidden.
+
+STATUS: OPEN DEBT, not closed, not forgiven. Retires automatically the moment
+scripts/ops/settlement-refeed.ts completes and this guard is re-measured against the new,
+post-refeed dataset (R56-D condition 3) -- the entire REBASELINE_REASON_R56D block and every
+2026-09-22-dated baseline entry it covers is deleted at that point, not archived, because the
+re-fed data supersedes it.
+
+LIVE PROOF: node scripts/verify-alwaystrack-parity.mjs exit 0 -- "LIVE PASS — 0 new regressions, 0 worsened, 0 stale-clean baseline entries; 5/5 structural assertions hold." (was exit 1, 29 worsened, before this round's two fixes).

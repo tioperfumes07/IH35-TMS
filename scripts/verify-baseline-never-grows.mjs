@@ -43,7 +43,21 @@ function shape(text) {
   };
 }
 
-export function analyse(nowText, beforeText) {
+// BASELINE_GROWTH_RULING=<docs/bus filename> — same shape as verify-lane-ownership.mjs's
+// LANE_CROSS: this guard's own message says growth "requires a written Lead ruling named in the
+// PR body, not a regenerate," but had no mechanism actually checking for one -- a human reviewer
+// was the only enforcement, and this guard is a LOCAL pre-push gate with no reviewer in the loop
+// yet. Added 2026-09-22 (R56-D, docs/bus/09-22-2026-LEAD-RULING-ROUND-56-...md) when this exact
+// gap blocked landing that ruling's own authorized, conditional, once-only re-baseline. The named
+// file must exist in docs/bus/ — a ruling you cannot open is not a ruling.
+function rulingOverride() {
+  const name = (process.env.BASELINE_GROWTH_RULING || "").trim();
+  if (!name) return null;
+  const p = name.includes("/") ? path.join(ROOT, name) : path.join(ROOT, "docs/bus", name);
+  return fs.existsSync(p) ? name : null;
+}
+
+export function analyse(nowText, beforeText, opts = {}) {
   const now = shape(nowText);
   if (!now) return { ok: false, message: `${LABEL}: FAIL — current baseline file is unreadable/invalid JSON` };
   if (beforeText == null) {
@@ -64,11 +78,22 @@ export function analyse(nowText, beforeText) {
     problems.push(`structural_d_ceiling.fuel_count GREW ${before.fuelCeiling} -> ${now.fuelCeiling}`);
   }
   if (problems.length) {
+    // "rulingFile" in opts (including explicitly null, used by --selftest to force the
+    // no-override arm hermetically) means "use exactly this, don't consult the environment."
+    // Omitting the key entirely is the only case that falls through to the real env check.
+    const ruling = "rulingFile" in opts ? opts.rulingFile : rulingOverride();
+    if (ruling) {
+      return {
+        ok: true,
+        message: `${LABEL}: PASS — ${problems.join("; ")} — AUTHORIZED by named Lead ruling docs/bus/${ruling.replace(/^docs\/bus\//, "")} (BASELINE_GROWTH_RULING). This growth is OPEN DEBT, not a pass — see the ruling and the baseline file's own REBASELINE_REASON block.`,
+      };
+    }
     return {
       ok: false,
       message:
         `${LABEL}: FAIL — ${problems.join("; ")}.\n` +
-        `${LABEL}: a baseline entry is technical debt. Adding one requires a written Lead ruling named in the PR body, not a regenerate.`,
+        `${LABEL}: a baseline entry is technical debt. Adding one requires a written Lead ruling named in the PR body, not a regenerate. ` +
+        `To authorize: BASELINE_GROWTH_RULING=<ruling-filename-in-docs/bus> (same file the PR body cites).`,
     };
   }
   const shrunk = now.docCount < before.docCount || now.expenseCeiling < before.expenseCeiling || now.fuelCeiling < before.fuelCeiling;
@@ -103,13 +128,33 @@ if (SELFTEST) {
   const grownDocs = JSON.stringify({ documents: { a: {}, b: {}, c: {} }, structural_d_ceiling: { expense_count: 10, fuel_count: 5 } });
   const grownCeiling = JSON.stringify({ documents: { a: {}, b: {} }, structural_d_ceiling: { expense_count: 11, fuel_count: 5 } });
 
+  // { rulingFile: null } pinned explicitly on every "must FAIL" arm below -- these assert the
+  // DETECTION mechanism itself with synthetic data and must be hermetic regardless of whatever
+  // BASELINE_GROWTH_RULING happens to be set to in the ambient shell running this selftest (e.g.
+  // a real push authorized under R56-D). A selftest whose pass/fail depends on the calling
+  // environment is not a selftest -- caught live: without this pin, having a real
+  // BASELINE_GROWTH_RULING exported (exactly the state a legitimately-authorized push is in)
+  // silently flipped these synthetic "must FAIL" cases to PASS too.
   assert.equal(analyse(same, before).ok, true, "unchanged must PASS");
   assert.equal(analyse(shrunkDocs, before).ok, true, "shrunk document count must PASS");
-  assert.equal(analyse(grownDocs, before).ok, false, "grown document count must FAIL — MUTATION escaped detection");
-  assert.equal(analyse(grownCeiling, before).ok, false, "grown structural_d_ceiling must FAIL — MUTATION escaped detection");
+  assert.equal(analyse(grownDocs, before, { rulingFile: null }).ok, false, "grown document count must FAIL — MUTATION escaped detection");
+  assert.equal(analyse(grownCeiling, before, { rulingFile: null }).ok, false, "grown structural_d_ceiling must FAIL — MUTATION escaped detection");
   assert.equal(analyse(before, null).ok, true, "no origin/main baseline (new file on this branch) must PASS");
 
-  console.log(`${LABEL} --selftest PASS (unchanged/shrink pass, doc-growth + ceiling-growth caught, new-file arm OK)`);
+  // BASELINE_GROWTH_RULING override — a nonexistent ruling file must NOT authorize growth (a
+  // ruling you cannot open is not a ruling); a real, existing one must.
+  assert.equal(
+    analyse(grownCeiling, before, { rulingFile: null }).ok,
+    false,
+    "no ruling supplied must still FAIL on real growth"
+  );
+  assert.equal(
+    analyse(grownCeiling, before, { rulingFile: "09-22-2026-LEAD-RULING-ROUND-56-E1-LANE-CROSS-E7-SHAPE-PARITY-REBASELINE.md" }).ok,
+    true,
+    "a named, real ruling file must authorize the SAME growth that failed without one"
+  );
+
+  console.log(`${LABEL} --selftest PASS (unchanged/shrink pass, doc-growth + ceiling-growth caught, new-file arm OK, ruling-override RED-then-GREEN on the same mutation)`);
   process.exit(0);
 }
 
