@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { activateBankAccountForEntity } from "./bank-account-visibility.js";
+import { activateBankAccountForEntity, createFaroReserveAccount } from "./bank-account-visibility.js";
 
 // ACCT-F30223-DEACTIVATED / ACCT-F30223-VISIBLE — live-confirmed 2026-09-23 on the real USMCA Amex
 // row (banking.bank_accounts id 9564ca46…): the original inline activate handler (PR #22206) set
@@ -67,5 +67,61 @@ describe("activateBankAccountForEntity", () => {
       accountName: "Doesn't Matter",
     });
     expect(result).toBeNull();
+  });
+});
+
+// BANK-FARO-RESERVE-01 — owner order, verbatim: "we need to have the separate accounts in
+// banking, the escrow account and the reserves account." Real, manual (no Plaid), statement-fed
+// registers. Idempotent (keyed on tag, never a duplicate register) and never touches
+// ledger_account_id (that GL wiring is CC-1's lane, coordinated not crossed).
+describe("createFaroReserveAccount", () => {
+  it("creates a new depository, no-Plaid register keyed by reserve_type tag, and audits it", async () => {
+    const calls: Array<{ sql: string; values?: unknown[] }> = [];
+    const client = {
+      query: vi.fn(async (sql: string, values?: unknown[]) => {
+        calls.push({ sql, values });
+        if (sql.includes("SELECT id FROM banking.bank_accounts")) return { rows: [] };
+        if (sql.includes("INSERT INTO banking.bank_accounts")) {
+          return { rows: [{ id: "d5104d03-4646-4906-9fa7-0b595a1d74cc" }] };
+        }
+        return { rows: [] }; // appendCrudAudit's own insert
+      }),
+    };
+
+    const result = await createFaroReserveAccount(client as never, {
+      operatingCompanyId: "5c854333-6ea5-4faa-af31-67cb272fef80",
+      actorUserId: "e4117991-d2c0-406d-8cda-74e98d95bccd",
+      reserveType: "faro_escrow_reserve",
+    });
+
+    expect(result).toEqual({ id: "d5104d03-4646-4906-9fa7-0b595a1d74cc", alreadyExisted: false });
+    const insertCall = calls.find((c) => c.sql.includes("INSERT INTO banking.bank_accounts"));
+    expect(insertCall?.sql).toContain("'depository', 'depository', $3");
+    expect(insertCall?.sql).not.toContain("plaid");
+    expect(insertCall?.sql).not.toContain("ledger_account_id");
+    expect(insertCall?.values).toEqual([
+      "5c854333-6ea5-4faa-af31-67cb272fef80",
+      "Faro Escrow Reserve",
+      "faro_escrow_reserve",
+    ]);
+  });
+
+  it("is idempotent — a second call for the same reserve_type returns the existing row, no duplicate INSERT", async () => {
+    const client = {
+      query: vi.fn(async (sql: string) => {
+        if (sql.includes("SELECT id FROM banking.bank_accounts")) {
+          return { rows: [{ id: "58a1ca45-0d6a-42d2-b3bf-d8852e2fa823" }] };
+        }
+        throw new Error("must not reach INSERT when an existing register was found");
+      }),
+    };
+
+    const result = await createFaroReserveAccount(client as never, {
+      operatingCompanyId: "5c854333-6ea5-4faa-af31-67cb272fef80",
+      actorUserId: "e4117991-d2c0-406d-8cda-74e98d95bccd",
+      reserveType: "faro_cash_reserve",
+    });
+
+    expect(result).toEqual({ id: "58a1ca45-0d6a-42d2-b3bf-d8852e2fa823", alreadyExisted: true });
   });
 });

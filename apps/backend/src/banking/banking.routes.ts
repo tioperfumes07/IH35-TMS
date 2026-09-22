@@ -8,6 +8,7 @@ import { countPendingBills } from "../kpi/canonical-kpis.js";
 import {
   activateBankAccountForEntity,
   bankAccountHiddenFilterSql,
+  createFaroReserveAccount,
   hideBankAccountForEntity,
   isBankAccountHideAdminRole,
   isBankAccountHideEnabled,
@@ -356,6 +357,38 @@ export async function registerBankingRoutes(app: FastifyInstance) {
       return reply.code(201).send({ account });
     } catch (error) {
       return reply.code(500).send({ error: "petty_cash_create_failed", message: String((error as Error)?.message ?? "") });
+    }
+  });
+
+  // BANK-FARO-RESERVE-01 (owner order, verbatim: "we need to have the separate accounts in
+  // banking, the escrow account and the reserves account") — two real, manual (no Plaid),
+  // statement-fed registers the owner can open and click, same tier as Faro Factoring - USMCA.
+  // Implementation lives in bank-account-visibility.ts (createFaroReserveAccount) — one shared
+  // function, same reason activate/hide/unhide already live there instead of inline here.
+  app.post("/api/v1/banking/accounts/faro-reserve", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const body = z.object({
+      operating_company_id: z.string().uuid(),
+      reserve_type: z.enum(["faro_escrow_reserve", "faro_cash_reserve"]),
+      display_name: z.string().trim().min(1).max(120).optional(),
+    }).safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+    const companyId = body.data.operating_company_id;
+    await assertCompanyMembership(String(user.uuid), companyId);
+
+    try {
+      const result = await withCompanyScope(user.uuid, companyId, async (client) =>
+        createFaroReserveAccount(client, {
+          operatingCompanyId: companyId,
+          actorUserId: String(user.uuid),
+          reserveType: body.data.reserve_type,
+          displayName: body.data.display_name,
+        })
+      );
+      return reply.code(201).send({ account: { id: result.id, already_existed: result.alreadyExisted } });
+    } catch (error) {
+      return reply.code(500).send({ error: "faro_reserve_create_failed", message: String((error as Error)?.message ?? "") });
     }
   });
 
