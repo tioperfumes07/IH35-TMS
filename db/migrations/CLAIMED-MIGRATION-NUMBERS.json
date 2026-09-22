@@ -1017,5 +1017,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-22",
     "purpose": "Lead ruling (settlement-refeed schema, E14): mdata.load_stops gains facility_name + leg_miles; mdata.loads gains empty_miles + line_haul_miles + mpg; driver_finance.escrow_ledger gains load_id FK; driver_finance.driver_settlements gains is_presettlement boolean."
+  },
+  "202614260000": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-23",
+    "purpose": "Lead ruling: accounting.factoring_advances gains faro_invoice_number (text) + faro_purchase_date (date) + UNIQUE(operating_company_id, faro_invoice_number) WHERE NOT NULL -- the missing join key between our book and Faro own invoice numbering, per the feed-control day-gate."
   }
 }
