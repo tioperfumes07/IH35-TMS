@@ -670,3 +670,155 @@ TRANSPORTATION-quarantined loads, S-2026-5786/5788 locked with `paid_at` NULL. Y
 stop and it stays named, not closed quietly.
 
 — Lead
+
+---
+
+# LEAD → CC-3 · 2026-09-22 · I WAS WRONG ABOUT IFTA. TWICE. And here is the third source.
+
+## RETRACTION — read this before the assignment
+
+I wrote in `docs/manuals/00-LEAD-CORRECTION-...md` that you had not used the Dreamline `State`
+column or the Love's seed, and that the 118 rows were resolvable from them. **Both claims were
+wrong and I owe you the retraction.**
+
+Your PR #22180 already did exactly that work and reported it honestly:
+- 62 rows / 6,996.49 gal from an embedded state code in `location_city`, validated against the
+  real 50-state list to reject false positives like `...ROAD` → `AD`/`RD`/`DR`/`FT`/`ST`.
+- 11 rows / 1,296.42 gal matched against the Dreamline statement's own `State` column on
+  date+unit+quantity+amount.
+- **0 from the Love's seed — "no store number embedded in the address strings."**
+
+**I verified your Love's finding myself and you are right.** The Dreamline statement's `Location`
+column holds **store-number form** — `LOVES #787 TRAVEL STOP` → MOSHEIM, TN — while the 118
+residual rows carry **street addresses** in `location_city`: `10465LONESOME PINE`,
+`66595WADSWORTH PKWY`, `3158WEST IH-10 SEGUIN`. I normalised and tested 10 of them against all
+86 distinct statement `Location` values: **0 of 10 matched.** The Love's seed has `store_no,
+city, state, lat, lng` and **no street address**, so there is no join there either. Your
+"exhausted from the two named source documents" verdict is **correct and stands.**
+
+## THE THIRD SOURCE — in our own database, and I measured it
+
+`integrations.relay_fuel_transactions` carries the full Relay payload:
+```
+location_address | location_city | location_state | location_zip_code
+location_latitude | location_longitude | location_opis_id | location_timezone
+merchant_name | merchant_number | location_name | location_id
+```
+1,707 rows total; USMCA's own operating_company_id holds only 76 — **because USMCA buys on the
+TRANSPORTATION Relay account (owner ruling).** The rest of the payload is sitting there.
+
+**Measured live, normalised (strip non-alphanumeric, upper-case):**
+```
+blank-state fuel rows                                    118
+distinct staging addresses carrying a state              297
+EXACT normalised address matches                          32
+12-character prefix matches                                66
+```
+**32 rows resolve on an exact address match to Relay's own payload.** That is a document match,
+not a date-window guess — it is the merchant address Relay itself reported for that location.
+
+## ASSIGNMENT — IFTA-GALLONS-04 · DEADLINE 2026-09-23 12:00 UTC · surrender CC-1
+
+1. Join the 118 on `UPPER(REGEXP_REPLACE(location_city,'[^A-Za-z0-9]','','g'))` →
+   `integrations.relay_fuel_transactions.location_address` normalised the same way. **Apply the
+   EXACT matches only.** Report the count and gallons moved.
+2. The 66 prefix-12 matches: **do not apply them blind.** Report how many are one-to-one on
+   (address prefix → single distinct state) and apply only those; anything mapping to two or more
+   states stays NULL and is named.
+3. `location_zip_code`, `location_latitude`/`location_longitude` and `location_opis_id` are also
+   on that table. If a blank row matches on `transaction_reference` → `transaction_id`, take the
+   state directly — that is the strongest join of all and needs no address normalisation. **Try
+   it first**; 117 of the 118 carry a `transaction_reference`.
+4. Whatever remains after all of that is the **real** residual. Report it as a count and a gallon
+   figure with the reason, exactly as you have been doing. **Do not guess a state from unit+date.**
+
+**Reading the TRANSPORTATION-scoped rows of `integrations.relay_fuel_transactions` for
+jurisdiction is authorised** by the owner's standing ruling that USMCA runs on the Transportation
+Relay account and that reconciliation spans both entities. **You are reading an integration
+payload for a location string — you are not writing to, or reporting on, TRANSPORTATION's books.**
+Nothing else about the freeze changes.
+
+## ALSO — your other items
+
+- **`catalogs.relay_accounts` verdict ACCEPTED** and it is the finding of that thread: a live,
+  reachable CRUD catalog wired into the Lists picker with **zero readers in the real posting
+  pipeline**, superseded by `integrations.relay_company_cards` / `catalogs.fuel_card_types`.
+  I had told CC-2 to seed it. **That instruction is withdrawn** — nobody wires a new resolver
+  against the empty one. Your naming it "dead-but-reachable" is exactly right.
+- **`voidDocument()` — your filed nuance is RULED IN, verbatim.** It **calls**
+  `/settlements/:id/reverse`'s engine `reverseSettlementBillPaymentInClientTx`
+  (`accounting/settlement-posting/settlement-bill-payment-posting.service.ts:914`) and the
+  owner-ruled three-branch deduction dispatch. It does **not** reimplement either, and it does
+  **not** bypass the paid/locked preconditions. **An already-collected (applied) deduction is
+  NEVER reversed.** CC-1 posts you the signature the moment it compiles.
+- **13533/13539 — RULED: STAYS HELD.** No seat touches a locked settlement's net pay. You were
+  right to stop all three times. This is the owner's release, not a seat's.
+- **DEF is DONE and CC-1's report is stale on it** — you created GL 5010, deactivated the
+  def→5000 map row and created def→5010, voided and reposted the 178, and proved
+  5000 = $334,346.40 / 5010 = $5,635.24. I have told him.
+
+— Lead
+
+---
+
+# LEAD → CC-3 · 2026-09-22 · LOVE'S 604 GEOFENCES — THE COORDINATES EXIST. BUILD IT.
+**DEADLINE 2026-09-23 18:00 UTC · surrender seat CC-1**
+
+Owner: *"IN MY DOWNLOADS FOLDERS OR DESKTOP THERE IS A LOVES DOC WITH ALL ADDRESSES FOR LOVES
+LOCATIONS. CREATE IN OUR OWN DATABASE FOR GEOFENCING."*
+
+## MEASURED — this has never been built
+```
+geo.geofences        7 rows TOTAL across ALL companies
+                     0 labelled Love's
+USMCA breakdown      custom 4 (3 with lat/lng) · customer_site 2 (0 with lat/lng) · yard 1
+```
+The 2026-09-05 box `GEOFENCE-ENGINE-REBUILD-LOVES-604-AND-ARRIVAL-ALERT-CHAIN` is **17 days old
+and the 604 were never loaded.**
+
+## THE SEED IS EXTRACTED AND VERIFIED
+`~/Downloads/09-22-2026-LOVES-604-GEOFENCE-SEED.csv`
+Source: `~/Desktop/LOVES_PRICES_AND_LOCATIONS_WITH_COORDINATES.xlsx` (605 rows × 26 cols).
+**604 unique stores · 0 rejected · 42 states · every row a valid lat/lng.**
+```
+store_no | city | state | latitude | longitude | google_maps_link
+billing_card_station_code | opis_rack_id | def_retail_price | best_discounted_price
+state_taxes | effective_date
+```
+**There is no street-address column — coordinates are the join key.** Do not go looking for one.
+
+## BUILD — both halves, in one PR
+1. **`mdata.locations`** — one row per store. Columns exist:
+   `location_name` ("Love's #206 — Loxley, AL"), `location_code` (`LOVES-206`, unique),
+   `location_type` (`fuel_stop` or `truck_stop` — **both already in the enum, confirm which**),
+   `city`, `state`, `latitude`, `longitude`, `geocoded_at`, `geocoding_source`
+   ('loves_network_file_2026-06-25'), `operating_company_id`, `is_sample_data = FALSE`.
+   **Idempotent on `location_code`.** Re-running must not duplicate.
+2. **`geo.geofences`** — one per location, linked, not floating:
+   `location_kind` + **`location_ref_id` → the `mdata.locations.id`**, `label`,
+   `center_lat`/`center_lng`, `radius_m`, `enter_radius_m`/`exit_radius_m`,
+   `external_source='loves_network'`, `external_ref` = the store number, `is_active=true`.
+   **Propose the radius with your reasoning** — a truck stop is not a customer dock. State the
+   number, do not inherit a default silently.
+3. **Guard:** `scripts/verify-loves-geofences-seeded.mjs` — FAIL if any `mdata.locations` row with
+   `location_code LIKE 'LOVES-%'` has no linked active geofence, or if any geofence carries
+   `external_source='loves_network'` with a NULL `location_ref_id`. Selftest **RED before GREEN**
+   (today: 0 rows, so red is free — make the red case a real assertion, not a vacuous one).
+
+**No sample rows. `is_sample_data=FALSE` — these are real network locations.** Nothing deleted;
+a store that leaves the network is deactivated, never dropped.
+
+## WHAT THIS UNLOCKS — say so in your DONE
+Arrival detection at fuel stops · fuel-stop→location matching · **IFTA jurisdiction by
+coordinate** (a fourth resolution path for the 118, stronger than address matching) · DEF pricing
+per store · per-state fuel tax from `state_taxes`.
+
+## AND — the register that stops this recurring
+`docs/manuals/01-DATA-SOURCE-REGISTER-READ-BEFORE-SAYING-MISSING.md` is on main. **Every source
+the owner has given us is in it with its path, its real columns and what it resolves.** Before
+you declare anything missing, unattributable or unresolvable again — yours or mine — you read it
+and try every source listed for that domain. **A residual declared without that is not a
+residual, it is an unfinished search.** That rule binds me first: I declared the Love's file
+absent while it sat on his Desktop.
+
+— Lead
