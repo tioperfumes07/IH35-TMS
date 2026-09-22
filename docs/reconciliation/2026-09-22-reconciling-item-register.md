@@ -470,3 +470,56 @@ whoever owns `driver_finance.driver_settlements`' creation path (not CC-3's lane
 the actual guard; not attempted in this pass.
 
 — CC-3, 2026-09-23 (correction, same day as the original filing)
+
+---
+
+## SECOND CORRECTION to Item 20, 2026-09-23 (same day): the owner overrode the retraction above. These 9 rows are legitimate pre-settlements, not over-minted garbage.
+
+**The retraction immediately above this one is ALSO wrong and is corrected here, in place, per
+the owner's own direct instruction.** Owner, verbatim: **"5817-25 SHOULD BE PRE SETTLEMENTS IN OUR
+APP, SO IT IS NOT INVENTED. WE JUST HAVE TO ASSIGN THEM CORRECT ACCORDING TO LOAD NUMBER OR
+SEQUENCE."**
+
+They are **not** the app's allocator over-minting garbage numbers. A pre-settlement is a real,
+intentional state this app has and AlwaysTrack does not — money and driver activity the app tracks
+*before* AlwaysTrack ever settles a load. That state is legitimate by design.
+
+**Re-verified live** (bypass_rls=lucia) against the actual columns that carry this distinction —
+`is_presettlement`, `first_load_number`, `last_load_number` — confirming the owner's own diagnosis
+exactly:
+
+```
+ref   display_id    status  is_presettlement  first_load  last_load
+5817  S-2026-5813   closed  false             (null)      13612
+5818  S-2026-5814   closed  false             (null)      (null)
+5819  S-2026-5815   open    false             (null)      13601
+5820  S-2026-5816   open    false             (null)      (null)
+5821  S-2026-5817   open    false             (null)      (null)
+5822  S-2026-5818   open    false             (null)      (null)
+5823  S-2026-5819   open    false             (null)      (null)
+5824  S-2026-5820   open    false             (null)      (null)
+5825  S-2026-5821   open    false             (null)      13611
+```
+
+**The two real defects, exactly as the owner named them:**
+1. **6 of the 9 have NO load assigned at all** (both `first_load_number` and `last_load_number`
+   null: 5818, 5820, 5821, 5822, 5823, 5824). The other 3 (5817, 5819, 5825) DO carry a
+   `last_load_number` (13612, 13601, 13611 respectively) -- these are not empty of load activity,
+   contrary to my prior retraction's "6 with no load at all, 2 closed with nothing in them" count.
+2. **All 9 carry a `source_document_ref` in the AlwaysTrack SETTLED-number range (5817-5825) for
+   settlements AlwaysTrack has never created.** `is_presettlement=false` on all 9 compounds this --
+   the app isn't even flagging them as the pre-settlement state they actually are.
+
+**LAW, owner, effective now:** a pre-settlement carries the app's OWN identifier and its assigned
+loads. It picks up a `source_document_ref` ONLY once AlwaysTrack has actually settled it -- never
+before, never speculatively. **They purge with everything else in the eventual purge, but the
+FEEDER MUST REBUILD PRE-SETTLEMENTS AS A FIRST-CLASS STATE, not skip them** -- assigning them
+correctly according to load number or sequence once real load activity data is available.
+
+**Status of this item: OPEN, correctly scoped now.** Not a source-document gap (first retraction),
+not a purge-and-forget allocator bug (this document's earlier framing) -- a real pre-settlement
+identity/assignment gap the feeder needs to solve as a first-class case. Not built here (feeder
+architecture is not a settlement-text-extraction script's scope) -- named for whoever builds the
+feeder's pre-settlement rebuild path.
+
+— CC-3, 2026-09-23 (second correction, same day)
