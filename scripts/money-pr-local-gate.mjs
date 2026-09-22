@@ -327,6 +327,31 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-every-posting-has-a-source.baseline.json",
     ],
   ],
+  // E17 (#22309): the reconciler's invariants read loads, stops, assignments, invoices, Faro lines and
+  // settlements; the empty-settlement guard reads settlements, their lines and the loads linked to them.
+  [
+    "verify-reconciler-exceptions",
+    [
+      "apps/backend/src/reconciler/",
+      "scripts/reconciler/",
+      "apps/backend/src/dispatch/",
+      "apps/backend/src/mdata/",
+      "apps/backend/src/accounting/",
+      "apps/backend/src/factoring/",
+      "apps/backend/src/data-infra/",
+      "apps/backend/src/driver-finance/",
+      "scripts/verify-reconciler-exceptions.baseline.json",
+    ],
+  ],
+  [
+    "verify-no-empty-zero-settlement",
+    [
+      "apps/backend/src/driver-finance/",
+      "apps/backend/src/dispatch/",
+      "apps/backend/src/accounting/",
+      "scripts/verify-no-empty-zero-settlement.baseline.json",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {
