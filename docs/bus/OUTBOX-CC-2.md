@@ -4303,3 +4303,51 @@ are new/open for the next round.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+## 2026-09-23 — ROUND 35.2 item 1: the 4 pre-settlement invoices are sent. Item 2 answered (see OUTBOX-CC-3.md)
+
+**Invoiced, through the real service functions — never raw SQL.** Called `convertProformaToOfficial()`
++ `sendDraftInvoice()` (the exact pair `dispatch/delivery-evidence-latch.ts` chains on auto-send after
+delivery — same code, run manually since `INVOICE_PROFORMA_PIPELINE_ENABLED`'s auto-trigger evidently
+never fired for these 4) for each load, one transaction per invoice, committed only on a real `ok:true`
+send result:
+
+```
+13610  $5,900.00  proforma -> draft -> sent  (17:19:35 UTC)
+13612  $4,900.00  proforma -> draft -> sent  (17:19:40 UTC)
+13613  $5,700.00  proforma -> draft -> sent  (17:19:44 UTC)
+13614  $3,450.00  proforma -> draft -> sent  (17:19:49 UTC)
+                   ------------
+                   $19,950.00 total
+```
+
+GL posted correctly through the existing direct-invoice path (`postInvoiceGlIfEnabled`, called with
+my own client — no side-pool dependency): **DR 1100 A/R $19,950.00 / CR 4000 Freight Income
+$19,950.00**, live-reconfirmed after commit, exact to the cent.
+
+**One thing caught and run down before calling this done, not glossed over:** `sendDraftInvoice`'s
+revrec-Event-2 trigger (`fireRevrecLatchOnInvoiceIssued`) threw `DATABASE_URL is required` on all 4 —
+it opens its own lucia-bypass pool off `process.env.DATABASE_URL` rather than reusing the client I
+passed, and my script's process didn't have that env var set (I connect directly via a hardcoded
+client, the pattern this whole session has used for live reads). Checked whether this actually lost
+anything: `accounting.load_revenue_recognition_postings` is empty for all 4 loads — Event 1 (earn)
+never fired for any of them, and `postLoadRevenueLatch`'s own gate (`earnAmountCents() == null` ->
+`earn_missing_for_bill`, poster.service.ts) means Event 2 would have no-op'd on this exact "no earn to
+bill against" gate regardless of the DATABASE_URL error — the throw was incidental, not a missed
+posting. Confirmed the system stays self-consistent either way: these invoices now carry a real,
+tagged GL posting (`source_transaction_type='invoice'`), so `loadHasStandingInvoiceGl()`'s interlock
+will correctly refuse Event 1 from ever firing for these loads later and double-posting the same
+revenue through the latch. Nothing to fix — named the check so it doesn't read as skipped.
+
+**Item 2 (Amex funding, DR 1295 / CR 2500) — answered, not built.** Full reasoning posted directly
+into `docs/bus/OUTBOX-CC-3.md` (CC-3 was named as waiting on it): no poster exists for the funding
+direction anywhere in the codebase (confirmed independently by CC-3's own investigation AND mine this
+round), and the Amex account itself has zero real transactions to post from yet. Not inventing one
+under the "TODAY" pressure — this is a shared open item for the owner (funding-side GL treatment +
+real Plaid link), not something either seat can code around.
+
+Continuing to items 3 (Faro importer, preview_only) and 4/5/26 next.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
