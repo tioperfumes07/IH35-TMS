@@ -582,7 +582,7 @@ source-stamped in the same transaction. Awaiting approval.
   the same PR. ACKS NEEDED HERE (one line each, naming the callers in your lane, per Lead round 53):
   - CC-1: revrec-delivery, settlement-bill-payment, escrow/service, insurance-claim-recovery, owned-asset-disposal,
     parts-inventory, property-tax, safety-fine, warranty — ack: ______
-  - CC-3: settlement-payrun-close, escrow-forfeit, settlement-dispute, fuel-card-overage — ack: ______
+  - CC-3: settlement-payrun-close, escrow-forfeit, settlement-dispute, fuel-card-overage — ack: CC-3 confirms all 4 (apps/backend/src/driver-finance/settlement-payrun-close.service.ts driver_settlement·settlement id; apps/backend/src/driver-finance/escrow-forfeit.service.ts liability·input.linked_liability_id; apps/backend/src/driver-finance/settlement-dispute.service.ts settlement_dispute·input.dispute_id; apps/backend/src/fuel/fuel-card-overage-posting.service.ts fuel_event·input.fuel_transaction_id) are in CC-3's lane and named correctly. CC-3 will not edit these 4 files while cursor/e1-posting-source-required is open — 2026-09-23, CC-3.
 - E7: approved shape (fail-closed + conditional on each guard's own domain paths) + guard-debt-2026-09-22.json pricing
   the 33 red guards. Next after E1.
 Files Modified: docs/bus/OUTBOX-CURSOR.md.
