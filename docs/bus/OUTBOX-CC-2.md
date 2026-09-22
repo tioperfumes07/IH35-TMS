@@ -4014,3 +4014,37 @@ Copied both source files into the repo, citing them by name going forward:
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+## 2026-09-22 — PR #22189 deployed live; 8 legs posted; 13579 reinstated to Faro; CoA questions resolved by role
+
+**Deploy confirmed:** `deploy-approval` fired automatically on the #22189 merge; healthz live at
+`301b2c2` matching the merge SHA (recon arithmetic fix + 13579 void-revert logic both now live in
+the running API).
+
+**8 direct legs — RESOLVED, posted.** Per the owner's own correction (#22185/#22188): the 5
+"reserve deposits" are the funding side already inside 4 of the 8 legs, not a separate population
+— posted only the 8, `DR 8000 Inter-company - IH35 Transportation / CR 1230 Factoring Reserves`,
+individually, own date/memo each. Independently re-verified live: 8 debits + 8 credits, both sides
+$35,730.00, zero unbalanced. `scripts/ops/cursor-2026-09-22-faro-8-direct-legs.mts`.
+
+**13579 — RESOLVED, reinstated to match Faro.** Owner: "Faro is truth. You already reconciled."
+Built via the existing `buildInvoiceFromLoad` service (no new GL math) — new invoice
+`INV-2026-00010`, linehaul $4,900.00 (the load's own rate) + a transparent $310.00 adjustment line
+citing the Faro reconciliation, total $5,210.00 exact, `sent`. Dispute
+`80a9a5fa-e2f9-48c0-b921-096eeb956461` resolved. `verify-dispute-window-unified` re-run: still
+`LIVE PASS`. `scripts/ops/cursor-2026-09-22-faro-reinstate-13579.mts`.
+
+**6400 vs 6820 — resolved by role, not by number.** `accounting.chart_of_accounts_roles` live:
+role `factor_fee_expense` binds 6400 (active); 6820 has zero role bindings and is itself
+deactivated. No reclassification needed — item 1's earlier $8.22 posting was already correct.
+
+**1200 vs 1230 — reported, not fixed.** 1200 is a retired, deactivated, role-unbound legacy row,
+not a live ambiguity; 1230 is the sole active, role-bound account. Named per §D, neither touched.
+
+Full detail in `docs/reconciliation/2026-09-22-reconciling-item-register.md`. Remaining on the
+queue: 5 self-carried invoices ($12,592.40), first `accounting.reconciliation_runs` row, daily
+close, the $428.87 gap re-derivation against `RESERVE REPORT.csv`'s 18 rows.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
