@@ -142,6 +142,14 @@ function splitMethodFromRequest(splitType: string, primaryRatio: number, seconda
 
 function mapServiceError(reply: FastifyReply, error: unknown) {
   const msg = String((error as Error)?.message ?? "team_split_operation_failed");
+  // createTeam/deactivateTeam (mdata/driver-team.service.ts, DRV-F6002) call
+  // setScopedCompanyContext -> assertCompanyMembership before touching the RLS GUC; its own doc
+  // comment requires the caller to map this to a 403 (house pattern: accounting/recon/recon.routes.ts).
+  // This branch was missing, so a legitimate non-member rejection fell through to the generic 500
+  // below instead of the intended 403.
+  if (msg.includes("forbidden_company_membership")) {
+    return reply.code(403).send({ error: "forbidden_company_membership" });
+  }
   if (msg.includes("E_TEAM_NOT_FOUND")) {
     return reply.code(404).send({ error: "config_not_found", message: "Team-split configuration not found." });
   }

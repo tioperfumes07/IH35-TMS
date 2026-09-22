@@ -177,6 +177,10 @@ describe("governance void/cancel — atomic driver-settlement cancellation", () 
     const { client, seen } = mockClient([
       { match: (s) => s.includes("to_regclass('driver_finance.driver_settlements')"), rows: [{ ok: true }] },
       { match: (s) => s.includes("FROM driver_finance.driver_settlements"), rows: [{ status: "final" }] },
+      // SETL-LINES-VOID-GAP: executeDriverSettlement now cascades the reversal to
+      // settlement_lines (matching the direct /settlements/:id/reverse route's own cascade) before
+      // flipping the settlement itself -- teach the double this specific query.
+      { match: (s) => s.includes("UPDATE driver_finance.settlement_lines"), rows: [] },
       { match: (s) => s.includes("UPDATE driver_finance.driver_settlements"), rows: [{ id: SETTLEMENT }] },
       { match: (s) => s.includes("audit.append_event"), rows: [] },
     ]);

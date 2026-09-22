@@ -58,7 +58,10 @@ function makeClient(overrides: { openSettlement?: { id: string; display_id: stri
       }
       if (/COALESCE\(\s*\(SELECT ls\.scheduled_arrival_at/.test(sql)) return { rows: [{ trip_started_at: "2026-07-03T08:00:00.000Z", is_sample_data: false }] };
       if (/SELECT EXISTS \(SELECT 1 FROM lib\.trace_counters/.test(sql)) return { rows: [{ exists: true }] };
-      if (sql.includes("next_settlement_display_id")) return { rows: [{ next_id: "S-2026-0042" }] };
+      // P0-B numbering-law fix: allocateSettlementDisplayId now calls
+      // allocateNextSettlementSourceDocumentRef, never the retired next_settlement_display_id.
+      if (sql.includes("pg_advisory_xact_lock")) return { rows: [] };
+      if (sql.includes("GREATEST($2::int, COALESCE(MAX")) return { rows: [{ next: "5804" }] };
       if (/SELECT lib\.next_trace_no/.test(sql)) return { rows: [{ seq: "1" }] };
       if (/INSERT INTO driver_finance\.driver_settlements/.test(sql)) return { rows: [{ id: "new-settlement-id" }] };
       if (/SELECT id, status, trip_closed_at::text, tour_id::text FROM driver_finance\.driver_settlements\s+WHERE id = \$1::uuid/.test(sql)) return { rows: overrides.targetClosed ? [] : [{ id: OPEN_SETTLEMENT_ID, tour_id: TOUR_ID, status: overrides.closedContinuation ? "closed" : "open", trip_closed_at: overrides.closedContinuation ? "2026-09-10" : null }] };
@@ -138,7 +141,7 @@ describe("presettlement link — GO-22", () => {
     expect(result.status).toBe("confirmed");
     expect(result.settlement_id).toBe("new-settlement-id");
     const created = calls.find(c => /INSERT INTO driver_finance\.driver_settlements/.test(c.sql));
-    expect(created?.values[2]).toBe("S-2026-0042");
+    expect(created?.values[2]).toBe("5804");
     expect(calls.some(c => c.sql.includes("lib.next_trace_no"))).toBe(false);
     expect(calls.some((c) => /INSERT INTO driver_finance\.driver_settlements/.test(c.sql))).toBe(true);
     expect(calls.some((c) => /UPDATE mdata\.loads SET presettlement_link_id/.test(c.sql))).toBe(true);
@@ -384,15 +387,25 @@ describe("presettlement link — GO-22", () => {
 
 describe("REG-010/011 settlement identity", () => {
   it("uses the settlement sequence without consuming a load number", async () => {
+    // P0-B numbering-law fix: allocateSettlementDisplayId now calls
+    // allocateNextSettlementSourceDocumentRef (continues the real AlwaysTrack sequence, floor
+    // 5803), never the retired next_settlement_display_id synthetic S-YYYY-NNNN counter. periodDate
+    // is accepted for call-site compatibility but no longer used -- the sequence is opco-scoped,
+    // not date-scoped, so it is not part of either query's bound values.
     const { client, calls } = makeClient();
-    await expect(allocateNextSettlementDisplayId(client as never, OPCO, "2026-07-03")).resolves.toBe("S-2026-0042");
-    expect(calls).toHaveLength(1);
-    expect(calls[0].sql).toContain("driver_finance.next_settlement_display_id");
-    expect(calls[0].values).toEqual([OPCO, "2026-07-03"]);
+    await expect(allocateNextSettlementDisplayId(client as never, OPCO, "2026-07-03")).resolves.toBe("5804");
+    expect(calls).toHaveLength(2);
+    expect(calls[0].sql).toContain("pg_advisory_xact_lock");
+    expect(calls[1].sql).toContain("GREATEST($2::int, COALESCE(MAX");
+    expect(calls[1].values).toEqual([OPCO, 5803]);
   });
-  it.each([undefined, null, "S-13734", "13734", "S-2026-42"])("rejects invalid allocator output %s instead of inventing an ID", async (next_id) => {
-    const client = { query: vi.fn().mockResolvedValue({ rows: [{ next_id }] }) };
+  it.each([undefined, null, "", "S-13734", "S-2026-42", "13734.5", "-5"])("rejects invalid allocator output %s instead of inventing an ID", async (next) => {
+    const client = { query: vi.fn().mockResolvedValue({ rows: [{ next }] }) };
     await expect(allocateNextSettlementDisplayId(client, OPCO, "2026-07-03")).rejects.toThrow("Settlement number allocation failed");
+  });
+  it("accepts a bare AlwaysTrack-sequence number -- no S- prefix required or rejected", async () => {
+    const client = { query: vi.fn().mockResolvedValue({ rows: [{ next: "13734" }] }) };
+    await expect(allocateNextSettlementDisplayId(client, OPCO, "2026-07-03")).resolves.toBe("13734");
   });
 });
 

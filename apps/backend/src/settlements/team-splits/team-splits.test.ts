@@ -89,6 +89,10 @@ describe("team splits facade over mdata.driver_teams (P2b convergence)", () => {
     let insertedTeamSql: string | null = null;
     let insertedTeamValues: unknown[] | undefined;
     queryMock.mockImplementation(async (sql: string, values?: unknown[]) => {
+      // setScopedCompanyContext -> assertCompanyMembership (createTeam, DRV-F6002) -- membership
+      // check before the RLS GUC is set; must return a real row or createTeam throws
+      // forbidden_company_membership.
+      if (sql.includes("FROM org.companies")) return { rows: [{ ok: 1 }], rowCount: 1 };
       if (sql.includes("id = ANY($1::uuid[])")) {
         return {
           rows: [
@@ -153,6 +157,9 @@ describe("team splits facade over mdata.driver_teams (P2b convergence)", () => {
   it("ends a config by deactivating the canonical team row", async () => {
     let deactivateSql: string | null = null;
     queryMock.mockImplementation(async (sql: string) => {
+      // setScopedCompanyContext -> assertCompanyMembership (deactivateTeam, DRV-F6002) -- same
+      // membership check as createTeam above.
+      if (sql.includes("FROM org.companies")) return { rows: [{ ok: 1 }], rowCount: 1 };
       if (sql.includes("UPDATE mdata.driver_teams")) {
         deactivateSql = sql;
         return { rows: [{ ...TEAM_ROW, is_active: false, effective_to: "2026-07-21" }] };

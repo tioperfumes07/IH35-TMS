@@ -58,7 +58,10 @@ function makeMockClient(state: State) {
     async query<T = Record<string, unknown>>(sql: string, values?: unknown[]): Promise<{ rows: T[] }> {
       const rows = <R>(r: R[]) => ({ rows: r as unknown as T[] });
 
-      if (sql.includes("next_settlement_display_id")) return rows([{ next_id: "S-2026-0001" }]);
+      // P0-B numbering-law fix: allocateSettlementDisplayId now calls
+      // allocateNextSettlementSourceDocumentRef, never the retired next_settlement_display_id.
+      if (sql.includes("pg_advisory_xact_lock")) return rows([]);
+      if (sql.includes("GREATEST($2::int, COALESCE(MAX")) return rows([{ next: "5826" }]);
 
       if (sql.includes("to_regclass('driver_finance.settlement_lines')")) return rows([{ ok: true }]);
 
