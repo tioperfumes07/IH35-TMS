@@ -210,6 +210,8 @@ export async function postOwnedAssetDisposal(
         entry_date: input.disposalDate,
         memo: `${label} — gain/loss disposition`,
         source: "auto",
+        source_transaction_type: "fixed_asset",
+        source_transaction_id: input.assetId,
         postings,
       },
       actor

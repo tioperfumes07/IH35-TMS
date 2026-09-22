@@ -198,6 +198,8 @@ export async function cancelInsurancePolicy(input: CancelPolicyInput): Promise<C
           entry_date: input.cancelledOn,
           memo,
           source: "auto",
+          source_transaction_type: "insurance_policy",
+          source_transaction_id: input.policyId,
           postings: [
             // Debit AP control: reduce the payable owed to the insurer for the unearned portion.
             {

@@ -125,6 +125,8 @@ export async function recordFleetPremiumJournalEntry(params: {
         entry_date: today,
         memo: label.slice(0, 250),
         source: "auto",
+        source_transaction_type: "insurance_policy",
+        source_transaction_id: params.policyId,
         postings: [
           {
             account_id: debitAccountId,

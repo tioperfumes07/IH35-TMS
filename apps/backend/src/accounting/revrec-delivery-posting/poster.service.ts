@@ -41,6 +41,8 @@ type Posting = {
   debit_or_credit: "debit" | "credit";
   amount_cents: number;
   description?: string | null;
+  source_transaction_type?: string | null;
+  source_transaction_id?: string | null;
 };
 
 export type RevrecPostResult = {
@@ -568,19 +570,35 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
 
     const unbilledAccountId = await resolveRoleAccount(client, input.operating_company_id, "unbilled_revenue");
     let postings: Posting[];
+    let invoiceId: string | null = null;
     if (event === "earn") {
       const revenueAccountId = await resolveRoleAccount(client, input.operating_company_id, "revenue_default");
       postings = buildEarnEvent1Postings(unbilledAccountId, revenueAccountId, amount, memo);
     } else {
       const arAccountId = await resolveRoleAccount(client, input.operating_company_id, "ar_control");
       postings = buildBillEvent2Postings(arAccountId, unbilledAccountId, amount, memo);
+      // Event 2's A/R leg IS the invoice's A/R (the invoice poster refuses to post it while this latch owns
+      // the load — InvoiceRevrecLatchOwnsLoadError), so that line is tagged with the invoice when one exists.
+      const invoiceRes = await client.query<{ id: string }>(
+        `SELECT id::text FROM accounting.invoices
+          WHERE source_load_id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+          ORDER BY created_at ASC LIMIT 1`,
+        [input.load_id, input.operating_company_id]
+      );
+      invoiceId = invoiceRes.rows[0]?.id ?? null;
     }
+    // Every line names the load except the bill's A/R line (line_sequence 1), which afterInsertBeforeCommit
+    // tags with the invoice — or the load — inside the same transaction, before the writer's source check.
+    postings = postings.map((p, i) =>
+      event === "bill" && i === 0 ? p : { ...p, source_transaction_type: "load", source_transaction_id: input.load_id }
+    );
 
     return {
       gate: "post" as const,
       event,
       memo,
       amount,
+      invoiceId,
       entryDate: input.entry_date_iso.slice(0, 10),
       // ACCT-F210 — read from the LOAD, never from a memo or load-number string match.
       isSampleData: load.is_sample_data,
@@ -612,7 +630,32 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
       is_sample_data: prepared.isSampleData,
       postings: prepared.postings,
     },
-    { userId: input.actor_user_id, role: "system" }
+    { userId: input.actor_user_id, role: "system" },
+    {
+      afterInsertBeforeCommit: async (client, header) => {
+        if (prepared.event === "bill") {
+          if (prepared.invoiceId) {
+            await client.query(
+              `
+                UPDATE accounting.journal_entry_postings
+                SET source_transaction_type = 'invoice', source_transaction_id = $2
+                WHERE journal_entry_uuid = $1::uuid
+                  AND line_sequence = 1
+                  AND source_transaction_type IS NULL
+              `,
+              [header.id, prepared.invoiceId]
+            );
+          }
+          await client.query(
+            `UPDATE accounting.journal_entry_postings
+                SET source_transaction_type = 'load', source_transaction_id = $2
+              WHERE journal_entry_uuid = $1::uuid
+                AND source_transaction_type IS NULL`,
+            [header.id, input.load_id]
+          );
+        }
+      },
+    }
   );
 
   await withLuciaBypass(async (client: DbClient) => {
@@ -638,45 +681,6 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
         linked_object_id: input.load_id,
         relationship_role: prepared.event === "earn" ? "revrec_earn" : "revrec_bill",
       });
-
-      // INVOICE-SENT-WITHOUT-AR-RECOGNITION-JE (reconciliation-gap half) — Event 2's DR A/R leg IS
-      // economically the invoice's own A/R: the invoice poster (posting-engine.service.ts) REFUSES
-      // to post its own A/R+revenue JE whenever this latch owns the load (see
-      // InvoiceRevrecLatchOwnsLoadError — "The invoice's A/R belongs to latch Event 2 ... do not
-      // post around it"). Leaving this posting's source_transaction_type/source_transaction_id NULL
-      // meant the invoice detail page's own JE lookup, account-register.service.ts, and any
-      // GL<->sub-ledger tie-out could never find this JE via its invoice — confirmed live: the
-      // Balance Sheet 1100 A/R control account and /reports/ar-aging silently diverged by exactly
-      // the sum of untagged Event-2 legs. Tag it here, the same structured
-      // source_transaction_type/source_transaction_id column pair every other money path
-      // (bank_categorization, customer_payment, bill_payment, ...) already uses — only for the bill
-      // (A/R) leg, and only when an invoice link is resolvable for this load.
-      if (prepared.event === "bill") {
-        const invoiceRes = await client.query<{ id: string }>(
-          `
-            SELECT id::text
-            FROM accounting.invoices
-            WHERE source_load_id = $1::uuid
-              AND operating_company_id = $2::uuid
-              AND voided_at IS NULL
-            ORDER BY created_at ASC
-            LIMIT 1
-          `,
-          [input.load_id, input.operating_company_id]
-        );
-        const invoiceId = invoiceRes.rows[0]?.id;
-        if (invoiceId) {
-          await client.query(
-            `
-              UPDATE accounting.journal_entry_postings
-              SET source_transaction_type = 'invoice', source_transaction_id = $2
-              WHERE id = $1::uuid
-                AND source_transaction_type IS NULL
-            `,
-            [postingId, invoiceId]
-          );
-        }
-      }
     }
     await client.query(
       `

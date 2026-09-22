@@ -152,6 +152,8 @@ export async function postWarrantyReimbursement(
       entry_date: prepared.entryDate,
       memo: prepared.memo,
       source: "auto",
+      source_transaction_type: "warranty_claim",
+      source_transaction_id: input.claim_id,
       postings: prepared.postings,
     },
     { userId: input.actor_user_id, role: "system" }

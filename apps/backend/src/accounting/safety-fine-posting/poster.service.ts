@@ -266,6 +266,8 @@ export async function postCompanyPaidCivilFine(input: PostCompanyPaidFineInput):
       entry_date: prepared.entryDate,
       memo: prepared.memo,
       source: "auto",
+      source_transaction_type: "safety_fine",
+      source_transaction_id: input.fine_id,
       postings: prepared.postings,
     },
     { userId: input.actor_user_id, role: "system" }

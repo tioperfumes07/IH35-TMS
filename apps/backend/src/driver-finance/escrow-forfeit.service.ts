@@ -140,6 +140,8 @@ export async function forfeitDriverEscrowOnClient(
       entry_date: companyBusinessDate(),
       memo: `Driver escrow forfeiture — ${input.reason}`,
       source: "auto",
+      source_transaction_type: input.linked_liability_id ? "liability" : "driver_escrow",
+      source_transaction_id: input.linked_liability_id ?? input.driver_uuid,
       postings: [
         {
           account_id: escrowLiability.accountId,

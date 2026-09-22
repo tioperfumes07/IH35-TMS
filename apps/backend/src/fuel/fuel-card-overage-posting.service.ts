@@ -82,6 +82,8 @@ export async function postFuelOverageReceivable(
       entry_date: entryDate,
       memo,
       source: "auto",
+      source_transaction_type: "fuel_event",
+      source_transaction_id: input.fuel_transaction_id,
       postings: [
         {
           account_id: receivableAccountId,

@@ -57,6 +57,9 @@ type CreatePostingInput = {
   debit_or_credit: "debit" | "credit";
   amount_cents: number;
   description?: string | null;
+  /** The document this line posts for (e.g. "invoice" + the invoice id). Both or neither. */
+  source_transaction_type?: string | null;
+  source_transaction_id?: string | null;
 };
 
 export type CreateJournalEntryInput = {
@@ -80,6 +83,14 @@ export type CreateJournalEntryInput = {
    * "exclude sample rows from this report" still counted sample revenue as real.
    */
   is_sample_data?: boolean;
+  /**
+   * The document the whole entry posts for, applied to every line that does not name its own.
+   * Required for source="auto": an automated entry whose lines are still unsourced after
+   * afterInsertBeforeCommit is refused. A hand-keyed entry (source="manual") with none is its own
+   * source document ("manual_je", its id). ("journal_entry" already means "posts for another JE".)
+   */
+  source_transaction_type?: string | null;
+  source_transaction_id?: string | null;
   postings: CreatePostingInput[];
 };
 
@@ -161,6 +172,12 @@ export async function createJournalEntryOnClient(
   if (debits !== credits) {
     throw new Error("journal_entry_not_balanced");
   }
+  for (const line of input.postings) {
+    const type = line.source_transaction_type ?? input.source_transaction_type ?? null;
+    const id = line.source_transaction_id ?? input.source_transaction_id ?? null;
+    if (!type !== !id) throw new Error("journal_entry_posting_source_pair_incomplete");
+  }
+  const isHandKeyed = (input.source ?? "manual") === "manual";
 
   await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
   await ensureOpenPeriod(client, input.operating_company_id, input.entry_date);
@@ -248,10 +265,12 @@ export async function createJournalEntryOnClient(
           amount_cents,
           description,
           idempotency_key,
+          source_transaction_type,
+          source_transaction_id,
           created_at,
           updated_at
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now(),now())
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,now(),now())
         ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
           WHERE idempotency_key IS NOT NULL DO NOTHING
         RETURNING id::text
@@ -273,6 +292,8 @@ export async function createJournalEntryOnClient(
         // so the key is keyed to its freshly-generated header id (unique per entry) — this populates
         // the column + satisfies the unique-index backstop without changing manual-JE behavior.
         `manual_je:${header.id}`,
+        posting.source_transaction_type ?? input.source_transaction_type ?? (isHandKeyed ? "manual_je" : null),
+        posting.source_transaction_id ?? input.source_transaction_id ?? (isHandKeyed ? header.id : null),
       ]
     );
     // CODER-12 audit-spine: one source link per inserted posting line, same transaction. On a
@@ -320,6 +341,19 @@ export async function createJournalEntryOnClient(
 
   if (options?.afterInsertBeforeCommit) {
     await options.afterInsertBeforeCommit(client, header);
+  }
+
+  // Every posting names the document it posts for. A line still unsourced here — not set at insert,
+  // not stamped by afterInsertBeforeCommit — is refused, and the throw rolls the whole entry back.
+  const unsourced = await client.query<{ n: string }>(
+    `SELECT count(*)::text AS n
+       FROM accounting.journal_entry_postings
+      WHERE journal_entry_uuid = $1
+        AND (source_transaction_type IS NULL OR source_transaction_id IS NULL)`,
+    [header.id]
+  );
+  if (Number(unsourced.rows[0]?.n ?? 0) > 0) {
+    throw new Error("journal_entry_posting_source_required");
   }
 
   return header;

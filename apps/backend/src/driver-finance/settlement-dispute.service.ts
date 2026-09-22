@@ -103,6 +103,8 @@ export async function createCorrectiveJournalEntry(
       entry_date: today,
       memo: `Settlement dispute correction ${params.disputeId}: ${params.resolutionNotes.slice(0, 120)}`,
       source: "auto",
+      source_transaction_type: "settlement_dispute",
+      source_transaction_id: params.disputeId,
       postings: [
         {
           account_id: accounts.debitAccountId,
@@ -235,6 +237,8 @@ export async function disburseSettlementDisputeCorrection(
         entry_date: entryDate,
         memo: `Settlement dispute disbursement ${input.dispute_id}`,
         source: "auto",
+        source_transaction_type: "settlement_dispute",
+        source_transaction_id: input.dispute_id,
         postings: [
           {
             account_id: clearingAccountId,
