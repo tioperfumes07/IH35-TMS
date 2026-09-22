@@ -1,7 +1,15 @@
 /**
- * Canonical dispatch load KPI status sets (Block B7).
+ * Dispatch load KPI status sets (Block B7).
  * @see docs/specs/KPI_SOURCES_OF_TRUTH.md
+ *
+ * ROUND 31.2 (2026-09-23): these are NARROWER views of the real canonical active-load set
+ * (apps/backend/src/dispatch/canonical-active-load-set.ts), kept per that file's A4 — asking "a
+ * truck actually has a load out right now" (DSP-KPI-ON-LOAD, owner ruling 2026-09-09) is a
+ * genuinely different question than "is this load active." `assertCanonicalSubset` below throws
+ * at import time if either list ever drifts outside the canonical set, so this stays a real
+ * subset rather than becoming its own eleventh independent definition.
  */
+import { assertCanonicalSubset } from "./canonical-active-load-set.js";
 
 export const DISPATCH_ACTIVE_LOAD_STATUSES = [
   "assigned_not_dispatched",
@@ -11,6 +19,7 @@ export const DISPATCH_ACTIVE_LOAD_STATUSES = [
   "at_delivery",
   "delivered_pending_docs",
 ] as const;
+assertCanonicalSubset("DISPATCH_ACTIVE_LOAD_STATUSES", DISPATCH_ACTIVE_LOAD_STATUSES);
 
 // DSP-KPI-ON-LOAD (owner ruling 2026-09-09): the Dispatch Home "Active loads" tile must count only
 // trucks that actually HAVE a load out — assigned/dispatched/picking-up/in-transit/at-delivery.
@@ -25,6 +34,7 @@ export const DISPATCH_ON_LOAD_STATUSES = [
   "in_transit",
   "at_delivery",
 ] as const;
+assertCanonicalSubset("DISPATCH_ON_LOAD_STATUSES", DISPATCH_ON_LOAD_STATUSES);
 
 /** Movement-phase loads (kanban "In Transit" column). */
 export const DISPATCH_IN_TRANSIT_STATUSES = ["at_pickup", "in_transit", "at_delivery"] as const;

@@ -8959,5 +8959,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-22",
     "purpose": "verify-no-fuel-event-credits-ap-control"
+  },
+  "11557": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-22",
+    "purpose": "verify-one-canonical-active-load-set"
   }
 }
