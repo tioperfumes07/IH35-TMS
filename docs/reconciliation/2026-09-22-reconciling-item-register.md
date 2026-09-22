@@ -422,26 +422,51 @@ these 10 postings: credits $235,220.00 / debits $164,565.00 / net $70,655.00 (pr
 of $187,890.00 — matching Cursor's cited figure once the sign convention is reconciled — plus this
 round's $47,330.00).
 
-## Item 20 — 9 settlements (5817-5825) have NO source document, either side (REPORTED, not fixed)
+## Item 20 — 9 settlements (5817-5825): NOT a missing source document. RETRACTED and corrected.
 
-Source: the Lead's own live measurement (Round 66 settlement-parser work), confirmed independently
-by CC-3 against the same corpus. `~/Downloads/IH35-MASTER-RECONCILIATION/03-SETTLEMENTS/text/`
-carries documents 5753 and 5760-5816 (both Company and Driver, after the Lead converted the
-missing 5782 PDF and CC-3 re-ran the hardened parser -- 124 loads on both sides, 0 orphans, 13529
-and 13540 resolved). Live `driver_finance.driver_settlements.source_document_ref` goes up to
-**5825** (confirmed via `docs/bus/CC3-89-ROW-SETTLEMENT-NUMBERING-AUDIT-2026-09-23.md`'s own live
-audit). **Settlements 5817 through 5825 -- nine settlement numbers -- have NEITHER a Company nor a
-Driver settlement document anywhere in the folder.** The feeder cannot build these 9 without a
-source document; there is nothing to parse. This is a source-data gap, not a parser or code
-defect -- filed here for the owner to pull the missing 9 documents from AlwaysTrack, not attempted
-by either coder.
+**RETRACTED, 2026-09-23 (Lead + owner, same day this item was filed).** The original framing below
+("9 settlements have no source document, pull them from AlwaysTrack") was WRONG. Owner correction,
+verbatim: AlwaysTrack does not create pre-settlements at all -- it has Invoiced Loads, Unsettled
+Loads, and Delivered/Completed Loads. 5817 (and the other 8) "is not ready yet" on AlwaysTrack's
+own side because **no AlwaysTrack settlement exists yet to be ready** -- there was never a document
+to pull.
 
-Affected settlement numbers: **5817, 5818, 5819, 5820, 5821, 5822, 5823, 5824, 5825.**
+**ROOT CAUSE, measured live in the app, not on AlwaysTrack:** all 9
+`driver_finance.driver_settlements` rows carrying `source_document_ref` 5817-5825 are EMPTY
+SHELLS -- confirmed live (bypass_rls=lucia): **0 settlement_lines and $0.00 net_pay on every one
+of the 9**, 6 with no load linked at all, 2 marked `status='closed'` with nothing in them.
 
-Cross-reference: this is the same numeric range implicated in D3's own settlement-numbering shift
-finding (`docs/bus/CC3-89-ROW-SETTLEMENT-NUMBERING-AUDIT-2026-09-23.md`) -- 6 of the 15 D3-flagged
-rows in this exact range (5817-5825) were already named there as "not decidable from the source
-document" for the same reason: no document exists to verify against. Pulling these 9 from
-AlwaysTrack would very likely also let D3's remaining un-verified rows close.
+```
+source_document_ref  display_id    status
+5817                 S-2026-5813   closed
+5818                 S-2026-5814   closed
+5819                 S-2026-5815   open
+5820                 S-2026-5816   open
+5821                 S-2026-5817   open
+5822                 S-2026-5818   open
+5823                 S-2026-5819   open
+5824                 S-2026-5820   open
+5825                 S-2026-5821   open
+```
 
-— CC-3, 2026-09-23
+**This is the app's own allocator over-minting settlement numbers AHEAD of any real source -- the
+same defect class as the D3 numbering-shift audit, seen from the other end.** D3 found
+`source_document_ref` values that were WRONG (pointing at the wrong real document, shifted by the
+same-sequence-different-instant race in `allocateNextSettlementSourceDocumentRef`). This is the
+SAME allocator handing out 9 numbers to settlement rows with nothing behind them at all -- no
+lines, no pay, in some cases no load. Filed as an extension of D3 in
+`docs/bus/CC3-89-ROW-SETTLEMENT-NUMBERING-AUDIT-2026-09-23.md`.
+
+**Owner ruling: these 9 rows PURGE and never come back. No document is owed** -- do not chase
+AlwaysTrack for them, do not wait on the owner to produce anything for these 9 specifically.
+
+**NEW DESIGN LAW, owner, effective now:** the feeder must NEVER mint a settlement number. A
+settlement number exists only once AlwaysTrack has actually settled the load; the app's own
+pre-settlement state carries NO `source_document_ref`, ever. A delivered-but-unsettled load gets
+an invoice and a driver bill, and explicitly NO settlement row. Guard requirement, owner's own
+words: **"a settlement row with zero lines and zero net pay is a build failure."** Named here for
+whoever owns `driver_finance.driver_settlements`' creation path (not CC-3's lane --
+`settlement-source-document-ref.service.ts` mints the number but does not create the row) to build
+the actual guard; not attempted in this pass.
+
+— CC-3, 2026-09-23 (correction, same day as the original filing)
