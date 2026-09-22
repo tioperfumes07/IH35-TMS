@@ -326,3 +326,84 @@ Still correctly stopped: `8000 Inter-company`, the Relay wallet funding side, an
 txns. No new GL math, no invented tolerance.
 
 — Lead
+
+---
+
+# LEAD RULING → CC-3 · 2026-09-23 · REEFER CLOSED · NUMBERING CLOSED · GL 5010 ACCEPTED
+
+## 1 · GL 5010 — accepted, and you found a defect in MY guard
+
+Live verified: **5000 = $334,346.40** (diesel/oil/misc/reefer only), **5010 = $5,635.24** exact
+against the 178 DEF rows. Deactivating the immutable `def->5000` mapping and creating a new active
+`def->5010` row — instead of forcing a PATCH the route correctly refuses — was right, and it needed
+no code change because `resolveAccountForCategory` already failed closed.
+
+**Your catch on my guard is the important one.** My DEF segregation assertion had no
+`reversed_by_je_id` liveness filter. Under void-not-delete a voided-and-correctly-reposted DEF/5000
+line still physically exists, so the ratchet would have reported contamination **forever** and could
+never reach zero — permanently blocking the fix it existed to demand. You applied the landmine
+already documented in `verify-no-fuel-event-credits-ap-control.mjs`. That also resolves the 335-vs-178
+gap honestly: 335 was raw posting rows double-counting voids; **178 is the true distinct count tying
+to $5,635.24.** My defect, your catch, correct fix, LANE_CROSS declared, baseline entry removed per
+the guard's own fourth arm.
+
+## 2 · IFTA-GALLONS-02 — CLOSED. reefer_diesel stays EXCLUDED. Stop holding it.
+
+Owner: *"for 3 you have all the receipts from relay and from dreamline."* He is right — I checked
+instead of asking again.
+
+All 5 reefer rows, live:
+
+```
+2026-08-29  T156  35.177 gal  $177.51  Laredo        txn_AFdeLeLpDcZN1f  source 'other'
+2026-09-08  T156  58.732 gal  $327.80  Fort Pierce   txn_8RkPnDDGYnCKzR  source 'other'
+2026-09-10  T170 107.783 gal  $556.14  Mandeville    txn_7a7vejuNqnqxMT  source 'other'
+2026-09-10  T156  21.097 gal  $118.22  Demotte       txn_BHxTE5uwPBoyHa  source 'other'
+2026-09-11  T152  92.346 gal  $518.59  Lafayette     txn_6eaxGMsvbVveYV  source 'other'
+                 315.135 gal
+```
+
+Every one is **Relay** (`source='other'`, `txn_*` reference). **Relay categorised them as reefer at
+the pump — that IS the receipt.** A card distinguishes the product at the dispenser; had it gone into
+the tractor tank it would have come through as plain diesel. Reefer fuel burned in a separate
+refrigeration unit is **not taxable highway fuel**.
+
+**Ruling: the 315.14 gallons stay excluded from the IFTA taxable base permanently.** Record the five
+`txn_*` references as the evidence in the reconciling-item register. IFTA-GALLONS-02 is closed — do
+not hold it open waiting on the owner.
+
+## 3 · NUMBERING — CLOSED. The next number is 5817. Stop waiting.
+
+The owner's reply to the 2026-09-11 citation was *"we are not on 09-11, what is that."* He is right
+to push back, and I checked: that date's real artifact is
+`docs/bus/HANDOFF-SETTLEMENT-NUMBER-AND-PRESETTLEMENT-2026-09-11.md` and an owner quote about
+**when** a number is assigned — *"assigned instantly… i want it assigned instantly"* (at tour open).
+**It does not answer "what number when there is no AlwaysTrack document."** Do not cite it as if it
+does.
+
+That question answers itself, and the owner has told us to use common sense: **AlwaysTrack is a
+continuing sequence.** 5753, 5760–5803, 5804–5816. The next settlement is **5817**, then 5818. No
+parallel series, no synthetic counter, no `S-YYYY-` prefix, no zero-padding.
+
+Land the `allocateSettlementDisplayId` fix on that basis. **Backfilling the existing mismatched rows
+is still a separate ruling** — `display_id` on a settled row is a correction with an audit trail,
+never a silent UPDATE. Post the 89-row audit and stop there.
+
+## 4 · Your queue
+
+**IFTA-GALLONS-03 is now your biggest item and it needs nobody.** 28,635.54 gallons (61%) with no
+jurisdiction; 63 rows / 7,098.52 gal resolve from the state code already embedded in
+`location_city` (it holds the street address, not a city); 190 rows / 21,537.02 gal need the two
+CSVs named in your inbox. Match on date+unit+quantity+amount against the statement's own `State`
+column — never a regex guess alone. Leave NULL and report the residual where nothing resolves; a
+wrong state moves tax between jurisdictions.
+
+Then: 152 `fuel_card_id` NULLs — your "declare unattributable, not stamped" verdict is **accepted**,
+record it as a disclosed residual. Then the 26 unposted expenses and who closes the 7 open
+settlements.
+
+Still stopped, correctly: `8000 Inter-company` and the Relay wallet funding side. No new GL math.
+
+**FARO AND ALWAYSTRACK ARE THE SOURCE OF TRUTH, NOT THE APP.** Where they disagree, the app is wrong.
+
+— Lead
