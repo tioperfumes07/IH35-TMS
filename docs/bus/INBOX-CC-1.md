@@ -436,3 +436,95 @@ Also open in your lane: **9 of 126 loads have no driver, 21 have no assigned uni
 expenses have no load.** Invoices are 79/79 fully linked — that half is clean.
 
 — Lead
+
+---
+
+# LEAD → CC-1 · 2026-09-23 · P0 OWNER DEFECT — LOAD COSTS RENDERS 114 LOADS, 81 OF THEM SETTLED
+
+Owner, verbatim: *"LOAD COSTS IS STILL RENDERING OLDER LOADS THAT HAVE ALREADY BEEN SETTLED, THOSE
+SHOULD NOT APPEAR THERE, ONLY LOADS THAT ARE ACTIVE, NOT INVOICED, CLOSED, DELIVERED, ETC."*
+
+He is right, it is measured, and it is a one-line root cause in your lane
+(`apps/backend/src/accounting/**`, law doc §0b).
+
+## Root cause — `apps/backend/src/accounting/load-costs-board.routes.ts:357-358`
+
+```sql
+AND l.status <> 'draft'
+AND l.status <> 'cancelled'        -- only when show_voided is false
+```
+
+**That is the entire status gate on the board's main load query.** Everything that is not `draft` or
+`cancelled` renders — including every `closed`, `invoiced` and `paid` load in the company. The file
+has careful settlement/continuation logic further up (lines 174-246) but **none of it gates the outer
+result set.**
+
+## Measured live — USMCA, non-sample
+
+```
+status                    loads   with real invoice   on an active settlement
+closed                       75          65                      70
+dispatched                   19           0                      14
+delivered                    11           0                       7
+invoiced                      6           6                       5
+delivered_pending_docs        3           0                       3
+cancelled                    10           -                       -   (already excluded)
+draft                         2           -                       -   (already excluded)
+
+RENDERING TODAY: 114        SHOULD RENDER: 33        WRONG: 81  (71%)
+```
+
+The 75 closed loads — 65 already invoiced, 70 already carrying an active settlement line — are
+exactly what the owner is looking at.
+
+## The law this has to match
+
+Law doc §2: *"**The round trip is the unit of settlement.** Open = pre-settlement (live revenue and
+costs). Closed = settlement (frozen, posts to GL). **Load costs is the cost column of the
+pre-settlement, not a separate feature.**"*
+
+So the board is the **live cost column of an OPEN tour.** A load leaves it the moment it is settled,
+invoiced or closed — because at that point its costs are frozen and belong to the settlement, not to
+a live board.
+
+## The fix
+
+Gate the outer query to the active set:
+
+```sql
+AND l.status NOT IN ('draft', 'cancelled', 'closed', 'invoiced', 'paid')
+```
+
+and, because status alone has already proven unreliable on this data, **also exclude any load that
+is demonstrably done** even if its status lags:
+
+- it carries an invoice with `status NOT IN ('draft','proforma','void')` — the board already
+  computes this signal at line 246, *"so invoiced loads cannot re-enter an active bucket."* **Apply
+  it to the outer WHERE, which is where it was never applied.**
+- its tour is settled — the `source_document_ref` / settlement linkage the file already resolves.
+
+Leaves `dispatched`, `delivered`, `delivered_pending_docs` — **33 loads.** Do not hard-code 33; it
+moves with real dispatch.
+
+**Do not add a UI filter.** The owner asked for the board to be right, not for a control he has to
+set every time. Fix it at the query.
+
+## Guard it, and prove it before and after
+
+`scripts/verify-load-costs-board-excludes-settled.mjs` — assert the outer query excludes
+closed/invoiced/paid AND excludes loads with a real issued invoice. Selftest must go **red against
+the current code** and green after; that red-before is the proof the guard tests the real thing.
+
+**Live proof required in your DONE:** the board's own row count against production before and after,
+plus the status breakdown above re-measured. `114 -> 33`.
+
+## Then re-check the other boards
+
+The owner also said *"ALL LOAD BOARDS ARE STILL NOT RENDERING THE CORRECT DATA"* and that he gave us
+the active trucks and loads yesterday. Once Load Costs is right, **measure every other load board
+the same way** — row count rendered versus row count that should render — and post the table. If
+they share this outer-gate defect, they share the fix.
+
+**Deadline: 2026-09-23 18:00 UTC. Surrender seat: CC-3.**
+
+— Lead
