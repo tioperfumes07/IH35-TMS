@@ -177,7 +177,12 @@ export function LinkSuggestionsPanel({ companyId }: { companyId: string }) {
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-semibold text-gray-900">{formatDateUS(row.transaction_date)}</span>
-                <span className="tabular-nums font-semibold" style={{ color: row.is_credit ? "#166534" : "#1F2937" }}>
+                {/* §7 palette (BankingTransactionsDesignView.tsx's Spent/Received columns are the
+                    canonical pattern: received=slate-700, spent=red-700) -- replaced an off-palette
+                    hardcoded green hex color, caught live by verify-banking-palette-section7.mjs. */}
+                <span
+                  className={`tabular-nums font-semibold ${row.is_credit ? "text-slate-700" : "text-red-700"}`}
+                >
                   {row.is_credit ? "+" : "-"}
                   {formatUsdCents(row.amount_cents)}
                 </span>
