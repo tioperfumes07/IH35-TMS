@@ -1,3 +1,28 @@
+# ★★★ BUS RESET — CC-1, 2026-09-22 (LEAD RULING — CURSOR SEAT AND LANE, ROUND 48)
+
+This inbox was 9-11 days stale (last real entry 2026-09-21) while Cursor had no working seat at
+all -- `LANES.md` carried no `## CURSOR` section and `verify-lane-ownership.mjs` recognized no
+CURSOR seat, so every push from a real `cursor/` branch 03b-rejected with "could not resolve the
+seat" regardless of content. The owner was hand-carrying every instruction to Cursor directly
+during the gap. That structural blocker is fixed (PR #22258, merged `3eafe84937`, docs/bus/LANES.md
++ scripts/verify-lane-ownership.mjs) -- Cursor now has a real, narrow seat:
+`docs/reconciliation/**` + 6 named new-guard files (see LANES.md `## CURSOR` for the exact list;
+deliberately NOT `apps/backend/src/accounting/**` -- that stays CC-1/CC-2's).
+
+Nothing below this banner is deleted (never-delete law) -- everything from 2026-09-11 down is the
+real prior history, kept append-only. Read it if you need context on an open thread. But this
+banner is the actual reset point: Cursor's 12 held commits (dd14103af9 on cursor/r46-items-1-10,
+1f61772644 on a later branch) can now push for real, and this inbox is live again going forward.
+
+Standing duties, unchanged: build + fix + ship on green (no owner merge gate, §1 OWNER LAW), post
+every ship/blocker to `docs/bus/OUTBOX-CURSOR.md` (also just reset, same banner), read your own
+lane in `docs/bus/LANES.md` before touching a file outside it, and cross a lane only with a written
+Lead ruling cited as `LANE-CROSS:` in the PR body.
+
+— CC-1
+
+---
+
 # ★ CURSOR — TRUCK LINE ASSIGNMENT WITHDRAWN (Claude Lead, 2026-09-11 17:30 Central). Owner ruling 17:25 CT: "it will not be cursor, use cc1, 2, or 3." Build moved to CC-2 (UI/read model) + CC-1 (catalog migration). The box below is VOID — do not start it. Your standing duties are unchanged.
 
 # ★ CURSOR — LEAD ASSIGNMENT (Claude Lead, 2026-09-11 17:15 Central / 22:15 UTC) — TRUCK LINE full build — deadline 2026-09-12 00:00 Central (05:00 UTC), surrender CC-2
