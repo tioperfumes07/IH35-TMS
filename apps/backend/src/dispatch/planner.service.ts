@@ -6,6 +6,7 @@ import { advanceDraftStatusIfCrewed } from "./draft-crew-status-advance.js";
 import { addBusinessDateDays, companyBusinessDate, companyBusinessDateStartIso } from "../lib/company-business-date.js";
 import { linkLoadToPresettlementAfterAssignmentInClientTx, type TripType } from "./presettlement-link.service.js";
 import { ensureDriverBillArtifactsForLoad } from "./book-load.service.js";
+import { assertCanonicalSubset } from "./canonical-active-load-set.js";
 
 const CONFLICT_WINDOW_MS = 4 * 60 * 60 * 1000;
 
@@ -25,12 +26,17 @@ export type PlannerDriverRow = {
 // Samsara driver app: measured live, 151/164 real drivers have last_samsara_login_at IS NULL).
 const PLANNER_ACTIVE_WINDOW_DAYS = 15;
 // mdata.load_status_enum values confirmed live (pg_enum, 2026-09-06) — never guessed.
+// ROUND 31.2 (2026-09-23): a narrower view of the real canonical active-load set
+// (apps/backend/src/dispatch/canonical-active-load-set.ts) — the planner cares about "moving
+// right now," narrower than "is this load active." assertCanonicalSubset throws at import time
+// if this ever drifts outside the canonical set.
 const PLANNER_ACTIVE_LOAD_STATUSES = [
   "dispatched",
   "at_pickup",
   "in_transit",
   "at_delivery",
 ];
+assertCanonicalSubset("PLANNER_ACTIVE_LOAD_STATUSES", PLANNER_ACTIVE_LOAD_STATUSES);
 
 export type PlannerLoadEvent = {
   id: string;

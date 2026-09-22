@@ -812,6 +812,56 @@ route through the atomic `voidDocument()` CC-1 is building. Do not build your ow
 
 ---
 
+# LEAD → CC-2 · 2026-09-22 · YOUR LANE, RUN IT IN PARALLEL. NOTHING YOU NEED IS BLOCKED.
+
+Numbered register on main: `docs/bus/00-NUMBERED-WORK-REGISTER-2026-09-22.md`. **Report by
+number.** Your critical path has **no dependency on CC-1 or CC-3** — start at the top and run.
+
+**1 of 48 — invoice the 4 pre-settlement loads, `proforma` → `sent`.** 13610 $5,900 · 13612
+$4,900 · 13613 $5,700 · 13614 $3,450. This is what lets the auto-factor latch fire at all: its
+gate requires the invoice **durably `sent`**, and all four sit at `proforma`.
+
+**2 and 3 of 48 — the Faro importer ALREADY EXISTS. Do not build one.**
+`factoring/faro-csv-import.ts` → `commitFaroCsvImport`:530, `parseFaroCsv`:145, behind
+`POST /api/v1/factoring/import/faro` (role-gated), already setting `factoring_status='advanced'`
+at :333, posting reserve movements, gating on the full-recourse agreement.
+**Run it `preview_only` first** against `01-FARO/PURCHASE REPORT ALL.csv` (88 rows, through
+9/21/26). **Post the matched-vs-unmatched list with reasons before committing anything.**
+**Faro keys on the customer reference — `PO` → `mdata.loads.customer_wo_number`, then
+`customer_po_number`. NEVER the load number.** Confirmed matches already measured:
+13610↔#90 `1013737` · 13612↔#64 `SEM66514` (paid, wire $4,743.00) · 13613↔#92 `1013583-2` ·
+13614↔#93 `1013714` · 13615↔#87 `SEM66538`.
+**Covers USMCA-Faro AND Transportation-Faro** — USMCA has run on Transportation's accounts since
+2026-08-07.
+
+**4 of 48 — `factor_profile_id` is NULL on all 80 invoices** despite 1,216 live customer factoring
+assignments. **5 of 48 — 114 factoring advances, only 63 linked: 51 orphans.**
+
+**26 of 48 — three of the owner's five true self-carried invoices are MISSING from the app**:
+`010 SUPPLY CHAIN MANAGEMENT`, `026 IM SPECIALIZED`, `074/13593 ALIGATOR`. **Report before
+creating anything.** The true self-carried set is **5 / $12,592.40** — and my earlier
+"16 / $51,262.41" was wrong: I queried `factoring_advance_id IS NULL` instead of reading
+`factoring_status`. **`factoring_status` is the canonical column.**
+
+**48 of 48 — the Relay deposit sync does not exist for ANY entity.** `relay-client.ts` has **zero
+deposit endpoints**; there is **exactly one cron** in the whole Relay integration (fuel ingest,
+`0 7 * * *` America/Chicago) and **no deposit cron**. The 175 deposit rows are all non-USMCA from
+one hand-run CSV import on 2026-07-17. Confirm the endpoint from Relay's docs or Mykael/Ronan —
+**do not guess a path.** Reuse `applyRelayDateRangeParams` and `upsertRelayDeposit`.
+**GL posting stays HELD** (`verify-relay-stage1-no-new-gl-math.mjs`, Part B deferred) — ingest only.
+
+**19, 20, 21, 25 of 48** — GL 1000 −$74,263.96 · GL 1090 $83,842.22 · A/R gap $80,289.59 ·
+$428.87/$1,847.24. **Do not force a false close on 25** — the RESERVE REPORT window does not cover
+the full held-movement population, and you were right to say so.
+
+**16 of 48 — banking `/void` routes — DO THIS LAST.** It is the one item that waits on CC-1's
+dispatcher. Everything above is yours alone. **Do not idle on it.**
+
+**Before you build anything: `docs/manuals/capability-registry.json`. Before you call anything
+missing: `docs/manuals/01-DATA-SOURCE-REGISTER-READ-BEFORE-SAYING-MISSING.md`.**
+
+---
+
 # CC-2 — ROUND 31.1 — RELAY DAILY SYNC INTO USMCA + ACTIVATE THE AMEX
 Issued 2026-09-22 · Lead · DEADLINE 2026-09-23 02:00 UTC (2026-09-22 21:00 Laredo)
 Surrender seat if missed: CC-3
