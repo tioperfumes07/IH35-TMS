@@ -56,6 +56,17 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 
+// REQUIRES_LIVE_DB (ruled 2026-09-23, docs/bus/INBOX-CC-1.md): excludes this guard from
+// scripts/verify-static.mjs's dead-port sentinel sweep entirely. This guard's live() has always
+// FAIL-CLOSED without DATABASE_URL ("a live money guard that cannot connect is a FAIL, never a
+// pass") -- the dead-port sentinel asks it a question it cannot answer, and the static sweep was
+// classifying that correct fail-closed behavior as new rot the first time this file's content
+// changed under it. money-pr-local-gate.mjs still runs this for real against a live DATABASE_URL
+// (unaffected, still fails closed where it actually matters); the file's own --selftest arm
+// (synthetic data, no DB) is independently re-verified by verify-guard-selftests-are-real.mjs, so
+// nothing here loses static coverage of the part that can actually run statically.
+export const REQUIRES_LIVE_DB = "live() fails closed without DATABASE_URL by design (ROUND 29.9-B); the dead-port sentinel cannot ask this guard a question it can answer";
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-alwaystrack-parity";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -289,11 +300,24 @@ async function live() {
     // Fuel is keyed by load too (fuel.fuel_transactions.load_id), same shape as invoices/bills/
     // expenses above — today this returns 0 rows for every load, which is the entire reason B1
     // exists, not a query bug.
+    // R56-C (Lead ruling, docs/bus/09-22-2026-LEAD-RULING-ROUND-56-...md, 2026-09-22): the Round
+    // 46 "DO NOT TOUCH" on this file is lifted for exactly this one change. The AlwaysTrack
+    // ground-truth's own `fuel_purchases` section (data/alwaystrack/settlements-truth-*.json,
+    // parsed from each document's own "FUEL PURCHASES" table) never included DEF or reefer_diesel
+    // in the first place -- a DEF purchase prints under the document's separate "EXPENSES" section
+    // (confirmed live: e.g. Company_Settlement_5769's "Fuel-DEF-Diesel Exhaust Fluid" line sits
+    // under EXPENSES, not FUEL PURCHASES). fuel.fuel_transactions, by contrast, stores DEF and
+    // reefer_diesel as first-class fuel_type values in this SAME table (by design, per this
+    // session's own DEF-GL-segregation work) -- so the live side was silently over-counting
+    // against a target that was diesel-only from the start. Restricting to fuel_type='diesel'
+    // makes this query measure the SAME population the ground truth already does, not a new
+    // exclusion invented here.
     const fuelRes = await client.query(
       `SELECT l.load_number, sum(round(ft.total_cost * 100)) AS cents, count(ft.id) AS n
          FROM mdata.loads l
          JOIN fuel.fuel_transactions ft ON ft.load_id = l.id AND ft.operating_company_id = l.operating_company_id
         WHERE l.operating_company_id = $1::uuid AND l.load_number = ANY($2::text[]) AND ft.archived_at IS NULL
+          AND ft.fuel_type = 'diesel'
         GROUP BY l.load_number`,
       [USMCA_COMPANY_ID, allLoadNumbers]
     );
