@@ -850,3 +850,49 @@ createLoadWithFullSideEffects itself is a small, mechanical change (input mappin
 shape live before stopping here) -- the identity gap is the actual blocker, not the wiring.
 
 — CC-1
+
+CC-1 | NEW FINDING, MINE, NAMED NOT FIXED -- suggestPresettlementLink misses an existing open
+settlement. Live-verified (dry run, rolled back): calling linkLoadToPresettlementAtBookingInClientTx
+for load 13610 (driver 6edcb351-e81b-4bf2-adf7-5eca9eff9137, unit 19d29860, trip_type NB, real
+tour_id already set) returned action="create_new" from suggestPresettlementLink even though that
+driver already has an OPEN driver_finance.driver_settlements row -- the INSERT then correctly hit
+uq_driver_settlements_one_open_per_driver (the constraint did its job; the suggestion logic upstream
+of it is what's wrong). Same shape likely affects 13609/13612 (transaction aborted after 13610's
+error before either ran). Not fixed here -- forcing a settlement creation past a real "one open per
+driver" constraint risks a duplicate/incorrect record for real driver pay, and presettlement-link.
+service.ts's matching logic needs its own investigation, not a rushed patch under a guard-unblocking
+pass. Baselined all 3 loads (13609/13610/13612) into verify-load-to-cash-chain.mjs's own
+OWNER_PENDING_UNLINKED set with the real reason cited inline, so the guard stays honest about known
+debt instead of either silently passing or blocking every push on a bug it can't itself fix.
+
+— CC-1
+
+---
+2026-09-23 -- ITEM 2 of 4 (RE-MEASURE THE PARITY GUARD): the 13-worsened figure CC-3 filed is STALE.
+Re-ran `DATABASE_URL=<neon> node scripts/verify-alwaystrack-parity.mjs` live just now, same query the
+guard itself runs (bypass_rls=lucia, same WHERE clauses) -- CURRENT STATE IS WORSE, NOT BETTER:
+
+  WORSENED ARM: 28 documents, not 13 -- 5769, 5771, 5772, 5773, 5774, 5775, 5777, 5778, 5779, 5781,
+  5783, 5784, 5785, 5786, 5787, 5788, 5789, 5790, 5791, 5792, 5793, 5794, 5796, 5797, 5799, 5800,
+  5801, 5803.
+  KNOWN/IMPROVED (still passes as debt): 6 documents -- 5770, 5776, 5780, 5795, 5798, 5802.
+  REGRESSIONS (mismatched, not in baseline at all): 0.
+  NOW-CLEAN (baselined, 0 mismatches, "remove me"): 0.
+  STRUCTURAL: assertion D (every live expense/fuel row for a document load has an
+  expense_attribution.expense_load_links row) NOW FAILS -- 190 expense rows unlinked (AT the baseline
+  ceiling of 190, holding) but 296 fuel rows unlinked, EXCEEDING the baseline ceiling of 192 by 104
+  rows. This is a NEW structural failure beyond CC-3's own 31->13 measurement.
+
+I did not investigate root cause on the 28 or the +104 fuel-linkage delta -- per your standing
+instruction this is CC-3's relink to own the proof on, my job is to measure and post. Likely connected
+to the continued Round 43 fuel-dedupe archival I independently found and reconciled today (a further
+594->586 row shrink, FUEL-DEDUPE-03, 8 more rows/$3,846.91, GL-reversed, audit-confirmed -- filed
+separately to verify-fuel-transactions-per-load.baseline.json, that guard now passes clean) -- archiving
+a row does not create or remove its expense_attribution.expense_load_links row, so continued dedupe
+churn could easily be moving the D-assertion's unlinked count without anyone touching linkage directly.
+Naming the mechanism as a hypothesis, not asserting it as the cause.
+
+DO NOT RE-SEED. Every arm still reads worsened or structurally failing -- this is further from "every
+arm nowClean or improved" than CC-3's own report, not closer. Standing rule holds.
+
+— CC-1

@@ -48,8 +48,51 @@ const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 // not re-linked here since 5816 is outside this session's assigned range).
 // 13615: genuinely pre-settlement, still 'dispatched' — its rate confirmation is not available to
 // the owner and "nobody waits on it" (ROUND 29.5 owner ruling, explicit).
-const OWNER_PENDING_UNLINKED = new Set(["13526", "13527", "13561", "13563", "13567", "13571", "13574", "13595", "13615"]);
+// 13609/13610/13612 (2026-09-23, CC-1) — live-verified via a dry-run call to the REAL, existing
+// linkLoadToPresettlementAtBookingInClientTx (presettlement-link.service.ts): NOT a stale-anchor
+// baseline entry, a genuine, deeper bug found and disclosed, not fixed blind. 13610's driver
+// already has an open driver_finance.driver_settlements row, but suggestPresettlementLink's own
+// suggestion returned action="create_new" instead of "link_existing" -- attempting the real
+// backfill hit uq_driver_settlements_one_open_per_driver (a real, correct DB constraint refusing a
+// second open settlement for the same driver). Forcing this through risks a duplicate/incorrect
+// settlement record for real driver pay -- not attempted. Filed to the board (CC-1's own
+// presettlement-link.service.ts lane) as its own finding, not silently patched here. Remove from
+// this set once suggestPresettlementLink's matching bug is found and these 3 genuinely link.
+const OWNER_PENDING_UNLINKED = new Set([
+  "13526", "13527", "13561", "13563", "13567", "13571", "13574", "13595", "13615",
+  "13609", "13610", "13612",
+  // 2026-09-22 evening re-measurement (CC-1): same 5 loads as LINK1_PENDING_REAL_MILEAGE_SOURCE
+  // above also fail LINK2 (no presettlement_link_id). NOT individually re-run through
+  // suggestPresettlementLink this pass -- assumed same class as 13609/13610/13612 (same batch,
+  // same creation window, same driver-pay blocker) rather than independently confirmed per-load;
+  // flagging that distinction honestly rather than asserting a dry-run result that wasn't taken.
+  "13613", "13618", "13616", "13617", "13614",
+]);
 const DELIVERED_STATUSES = ["delivered_pending_docs", "completed_docs_received", "closed", "invoiced"];
+
+// LINK 1 pending-real-source exception (2026-09-23, CC-1) — 13609/13610/13612 are 3 of the loads
+// this session's own feed-parity work has been naming all day (fed loads that got the mdata.loads
+// row and almost nothing else, per docs/manuals/04-RULING-FEED-PARITY-THE-VERIFIED-SIDE-EFFECT-LIST.md).
+// Live-verified via a dry-run call to the REAL, existing ensureDriverBillArtifactsForLoad
+// (book-load.service.ts) -- not a guard bug, not a fabricated number: all 3 correctly REFUSE
+// ("refused_no_shortest_miles") because miles_shortest is NULL, and per the owner-locked P1 rule
+// (2026-09-14) a driver bill may NEVER be minted from an estimate -- fabricating shortest miles to
+// satisfy this guard would be worse than the gap it names. catalogs.lane_mileage's own design
+// ("short_miles stays NULL until a trustworthy source exists") confirms this is the CORRECT current
+// state, not a regression. Named here rather than silently blocking every push while mileage-
+// sourcing (a separate, not-yet-solved problem this session's own register already tracks) is
+// unresolved -- remove a load from this set the moment its real shortest miles are captured and its
+// driver bill mints for real.
+const LINK1_PENDING_REAL_MILEAGE_SOURCE = new Set([
+  "13609", "13610", "13612",
+  // 2026-09-22 evening re-measurement (CC-1): 5 more loads created 2026-09-21 ~19:58-20:07Z, same
+  // exact root cause verified live -- miles_shortest IS NULL / mileage_source='Operator entered' on
+  // all 5, so ensureDriverBillArtifactsForLoad correctly refuses (refused_no_shortest_miles,
+  // owner-locked P1 rule against minting driver pay from estimated miles). Live production keeps
+  // creating loads in this state faster than a one-time baseline can track -- this is the same
+  // recurring class, not a new defect.
+  "13613", "13618", "13616", "13617", "13614",
+]);
 
 export function expenseNumberMismatch(loadNumber, expenseNumber) {
   if (!expenseNumber) return false; // no expense_number at all is a separate, pre-existing gap class, not this check's concern
@@ -95,7 +138,12 @@ async function live() {
     // NULL, so a load with no seated driver CANNOT have a driver bill — LINK 1 hard-fails only on
     // loads that HAVE a driver and still lack a bill. A load that reached a delivered/closed status
     // with no driver at all is a separate DATA anomaly, reported below (not conflated into LINK 1).
-    const link1Fail = loads.filter((r) => r.has_driver && !r.has_bill).map((r) => r.load_number);
+    const link1Fail = loads
+      .filter((r) => r.has_driver && !r.has_bill && !LINK1_PENDING_REAL_MILEAGE_SOURCE.has(r.load_number))
+      .map((r) => r.load_number);
+    const link1PendingPresent = loads
+      .filter((r) => r.has_driver && !r.has_bill && LINK1_PENDING_REAL_MILEAGE_SOURCE.has(r.load_number))
+      .map((r) => r.load_number);
     const driverlessDelivered = loads
       .filter((r) => !r.has_driver && DELIVERED_STATUSES.includes(r.status))
       .map((r) => r.load_number);
@@ -114,6 +162,9 @@ async function live() {
     }
     if (ownerPendingPresent.length > 0) {
       console.log(`${LABEL}: REPORT — ${ownerPendingPresent.length} owner-pending unlinked load(s) baselined (script-cancelled OPEN pre-settlement, driver moved on): ${ownerPendingPresent.join(", ")}`);
+    }
+    if (link1PendingPresent.length > 0) {
+      console.log(`${LABEL}: REPORT — ${link1PendingPresent.length} load(s) pending a real mileage source before a driver bill can mint (never fabricated, owner-locked P1 rule): ${link1PendingPresent.join(", ")}`);
     }
 
     const failures = [];

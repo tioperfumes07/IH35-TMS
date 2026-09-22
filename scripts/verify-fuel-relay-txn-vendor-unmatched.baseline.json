@@ -1,0 +1,7 @@
+{
+  "_comment": "verify-fuel-relay-txn-vendor-unmatched.mjs shrink-only ceiling ratchet. Lead's 4-of-4 instruction (2026-09-22): 'THE txn_% FUEL GUARD AS A SHRINK-ONLY RATCHET, BASELINE 76. 76 rows exist today. Ship it as a hard zero and you freeze every push exactly like parity is doing now.'",
+  "_what_this_measures": "USMCA fuel.fuel_transactions rows whose transaction_reference still carries the raw Relay bridge token (LIKE 'txn_%', e.g. 'txn_D65tDbfFqky6b9') instead of a real, vendor-matched reference. CC-1 live-verified 2026-09-23 (bypass_rls=lucia, same WHERE the guard itself uses): all 76 carry notes containing 'relay_bridge=1'; 75 of 76 have vendor_id IS NULL / 'vendor_unmatched=1' in notes (the merchant, e.g. Love's, was never linked to a canonical mdata.vendors row); 1 of 76 has since been vendor-matched (vendor_id populated) but its transaction_reference was never rekeyed off the raw Relay token, so it still counts here. Includes archived rows on purpose -- FUEL-DEDUPE-01/-03 archiving a duplicate does not rekey transaction_reference, so an archived row is still un-canonicalized debt, not resolved debt.",
+  "_target": "0 -- every row either gets vendor-matched (real mdata.vendors row + a real, non-Relay-token transaction_reference) or is explained and reclassified out of this cohort. This ratchet only freezes the ceiling; it does not fix the underlying vendor-matching gap (see verify-bnk01-fuzzy-vendor-match.mjs for the existing fuzzy-match engine this should likely reuse).",
+  "established": "2026-09-23",
+  "count": 76
+}
