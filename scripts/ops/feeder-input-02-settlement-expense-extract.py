@@ -188,13 +188,15 @@ ACCOUNT_KEY = {
     # distinguish the two from description text alone (both use "Bono"/"Bonus" wording without a
     # consistent hiring-vs-performance marker); named here as a real, unresolved sub-split, not
     # silently merged and hidden.
-    "reefer_diesel": "5160",  # Reefer Fuel (NEW, Round 67)
-    "washout": "5170",  # Trailer & Truck Washout (NEW, Round 67)
-    "road_service": "5400",  # Truck Repairs & Maintenance (EXISTS) -- non-tire repair only
-    "tires": "5500",  # Tires (EXISTS) -- split out of road_service, Round 67
-    "vehicle_parts_accessories": "5400",  # Truck Repairs & Maintenance -- Round 67: "consumed on
-    # the road running a load... COGS, not a period expense," explicitly NOT 6160 Parts & Supplies
-    # (that account is shop inventory, not roadside purchases).
+    "reefer_diesel": "5160",  # Reefer Fuel (NEW, Round 67) -- fuel, not repair, no vehicle split
+    "tires": "5500",  # Tires (EXISTS) -- Round 67: one account regardless of truck/trailer
+    # vehicle_parts_accessories, washout, road_service intentionally have NO flat entry here as of
+    # Round 68 -- the Lead's own correction: "A PART IS AN ITEM, NOT AN ACCOUNT... Map each line to
+    # an item under the right master by whether it's a truck or trailer part." Their account_key is
+    # resolved per-row by resolve_vehicle_account() below (truck -> 5400 Truck Repairs &
+    # Maintenance; trailer -> MASTER_PENDING, that account doesn't exist yet; undeterminable from
+    # the description text -> None, the intentional build failure, never guessed). Do NOT re-add a
+    # flat entry for these 3 -- it would silently override the per-row resolution.
     "driver_reimbursement": "5190",  # Driver Reimbursed Expenses (renumbered, Round 67)
     "company_vehicle_fuel": "6220",  # Company Vehicle Fuel (NEW, Round 67 -- the Honda pickup)
     "scale": "5300",  # shared with toll_parking, Round 67: "scale/toll -> 5300"
@@ -202,6 +204,36 @@ ACCOUNT_KEY = {
     "lumper": "EXPENSE_PENDING:lumper",  # no code given in either ruling yet
     "driver_pay": "COGS_PENDING:driver_pay_base",
 }
+
+
+# ROUND 68 (Lead, 2026-09-23): "A PART IS AN ITEM, NOT AN ACCOUNT... THE ONE REAL GAP -- THERE ARE
+# TWO MASTERS AND ONLY ONE EXISTS: 5400 Truck Repairs & Maintenance EXISTS; Trailer Repairs &
+# Maintenance MISSING, must be created." Determines truck vs trailer from the description's OWN
+# vocabulary, evidence-based (grepped the real corpus, not guessed): "Reefer Trailer-Washout" /
+# "Trailer Tire" name the trailer explicitly; "TRACTOR-Washout" / "Truck Tire" / "Truck Repair" /
+# a bare "WASHOUT TRUCK-<unit>" name the truck explicitly. Returns None when the description gives
+# no vehicle signal at all (e.g. a flat "FEE ITEM" or a wash-tier name like "PREMIUM") -- that None
+# is what drives the intentional build failure in resolve_vehicle_account() below, never a guess.
+def classify_vehicle(desc):
+    d = desc.lower()
+    if "trailer" in d or "trlr" in d:
+        return "trailer"
+    if "truck" in d or "tractor" in d:
+        return "truck"
+    return None
+
+
+# Resolves the truck-vs-trailer ITEM split into the two masters the Round 68 ruling names. Trailer
+# Repairs & Maintenance does not exist as a real account yet (named, not fabricated) -- returns a
+# PENDING key rather than inventing a number. An undeterminable vehicle returns None, same as any
+# other unmapped category, and is caught by the same build-failure check in main().
+def resolve_vehicle_account(desc):
+    vehicle = classify_vehicle(desc)
+    if vehicle == "truck":
+        return "5400"
+    if vehicle == "trailer":
+        return "MASTER_PENDING:trailer_repairs_maintenance"
+    return None
 
 
 def classify_driver_line(desc):
@@ -270,7 +302,10 @@ def classify_company_expense(desc):
         return "scale"
     if "lumper" in d:
         return "lumper"
-    if "toll" in d or "parking" in d or "bridge" in d:
+    # Round 68 bug fix: "PAGO DE CRUCE" (Spanish for toll/bridge crossing) was landing in
+    # vehicle_parts_accessories on the company side -- classify_driver_line already had this
+    # pattern (Round 66), classify_company_expense never did. Same evidence, same fix.
+    if "toll" in d or "parking" in d or "bridge" in d or "pago de cruce" in d or "cruce" in d:
         return "toll_parking"
     if "washout" in d:
         return "washout"
@@ -588,11 +623,22 @@ def main():
     # every row carrying its target account_key. Lead ruling, 2026-09-23, verbatim: "EVERY LINE
     # EMITS ITS TARGET ACCOUNT. NO 'other' BUCKET. A line with no mapping is a build failure, not
     # an 'other'." -- see the FAIL block below, not a silent default.
+    # Categories where the target account depends on the ITEM (truck vs trailer part), not just
+    # the category -- Round 68. ACCOUNT_KEY has no flat entry for these; resolve_vehicle_account()
+    # reads the description itself.
+    VEHICLE_RESOLVED_CATEGORIES = {"washout", "road_service", "vehicle_parts_accessories"}
+
     def row(load_number, source_doc, source, date, category, vendor, description, amount, raw_line):
+        if category in VEHICLE_RESOLVED_CATEGORIES:
+            account_key = resolve_vehicle_account(description)
+            vehicle = classify_vehicle(description)
+        else:
+            account_key = ACCOUNT_KEY.get(category)
+            vehicle = ""
         return {
             "load_number": load_number, "source_doc": source_doc, "source": source, "date": date,
-            "category": category, "output_type": OUTPUT_TYPE.get(category, ""), "account_key": ACCOUNT_KEY.get(category),
-            "vendor": vendor, "description": description, "amount": amount, "raw_line": raw_line,
+            "category": category, "output_type": OUTPUT_TYPE.get(category, ""), "account_key": account_key,
+            "vehicle": vehicle or "", "vendor": vendor, "description": description, "amount": amount, "raw_line": raw_line,
         }
 
     money_out = []
@@ -610,7 +656,7 @@ def main():
                 money_out.append(row(ld, c["doc_no"], "company", e["date"], e["category"], e["vendor"], e["description"], e["amount"], e.get("location", "")))
 
     with open(os.path.join(OUT_DIR, "feeder-input-expenses.csv"), "w", newline="") as f_out:
-        w = csv.DictWriter(f_out, fieldnames=["load_number", "source_doc", "source", "date", "category", "output_type", "account_key", "vendor", "description", "amount", "raw_line"])
+        w = csv.DictWriter(f_out, fieldnames=["load_number", "source_doc", "source", "date", "category", "output_type", "account_key", "vehicle", "vendor", "description", "amount", "raw_line"])
         w.writeheader()
         w.writerows(money_out)
 
@@ -637,7 +683,14 @@ def main():
     print(f"LINE HAUL rows {lh}   FUEL rows {fuel_n} (${fuel_amt:,.2f})   COMPANY EXPENSE rows {exp_n} (blank description: {exp_blank})")
     print("\nALL CATEGORIES:")
     for k, n in cat_counts.most_common():
-        print(f"   {k:<22} {n:>4} lines   {cat_amts[k]:>12,.2f}   -> {OUTPUT_TYPE.get(k, '?')} ({ACCOUNT_KEY.get(k, 'UNMAPPED')})")
+        if k in ("washout", "road_service", "vehicle_parts_accessories"):
+            # Account is item-resolved per row (truck vs trailer), not flat -- print the real
+            # breakdown instead of a single stale key.
+            by_key = collections.Counter(r["account_key"] or "UNMAPPED" for r in money_out if r["category"] == k)
+            detail = ", ".join(f"{acct}:{cnt}" for acct, cnt in sorted(by_key.items()))
+            print(f"   {k:<22} {n:>4} lines   {cat_amts[k]:>12,.2f}   -> {OUTPUT_TYPE.get(k, '?')} (item-resolved: {detail})")
+        else:
+            print(f"   {k:<22} {n:>4} lines   {cat_amts[k]:>12,.2f}   -> {OUTPUT_TYPE.get(k, '?')} ({ACCOUNT_KEY.get(k, 'UNMAPPED')})")
 
     ca_rows = [r for r in money_out if r["category"] == "cash_advance"]
     ca_in_window = [r for r in ca_rows if r["date"] and r["date"] >= "2026-08-07"]
