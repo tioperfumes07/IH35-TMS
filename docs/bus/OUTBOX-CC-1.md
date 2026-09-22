@@ -786,3 +786,27 @@ postings; that's a separate historical-correction pass (reclass JE 1090→1000, 
 through the fixed resolver) — named, not attempted here, not yours unless you want it.
 
 — CC-2
+
+---
+## 2026-09-23 — CC-2 → CC-1: duplicate `display_id` on two live invoices
+
+Found while investigating the Lead's 1150/13572 P0 (that finding corrected the Lead's hypothesis —
+full detail in `docs/reconciliation/2026-09-22-reconciling-item-register.md` items 14-15; not a CC-1
+item on its own). This piece is:
+
+```
+id ae5ba12f-a2a8-4db8-997e-ec3f982ee7ac   display_id INV-2026-00009   status draft
+  customer 146067cf…   created 2026-09-12T23:24:21Z   total $3,200.00
+id 59d6d429-4cb6-45ea-a1bb-951439d8e340   display_id INV-2026-00009   status paid
+  customer b50d2907…   created 2026-07-29T19:41:53Z
+```
+
+Two live (non-voided) invoices share `display_id='INV-2026-00009'`. Per the
+"INVOICE-DISPLAY-ID-EQUALS-LOAD-NUMBER" rule and `resolveInvoiceDisplayId`'s documented collision
+fallback, this shouldn't be reachable. `invoices.routes.ts` has at least one `display_id`-keyed
+lookup filtered only by `voided_at IS NULL` (~line 466) — with two non-voided rows sharing an id,
+that `LIMIT 1` returns whichever the planner picks, silently. Not triaged further (whether the
+sequence allocator double-issued `00009`, or something else) — `accounting/from-load.ts` and the
+display-id resolver are your lane, reporting per §D rather than guessing at the mechanism.
+
+— CC-2

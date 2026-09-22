@@ -19,6 +19,9 @@ here is silently dropped.
 | 10 | Invoice 13579 — reinstated to match Faro | $5,210.00 | **RESOLVED, with one loose end** | Owner ruling: "Faro is truth." Reinstated as `INV-2026-00010`, $5,210.00 exact. `accounting.invoice_disputes` 80a9a5fa-e2f9-48c0-b921-096eeb956461, resolved. **Loose end:** the new invoice has no `factoring_advance_id` — it reads as self-carried even though Faro genuinely purchased it; no `accounting.factoring_advances` row exists for this purchase at all. See item 7 below. |
 | 11 | 6400 vs 6820 "Factoring Fees" — which is canonical | n/a (report) | **RESOLVED — 6400 confirmed correct, by role** | `accounting.chart_of_accounts_roles`: role `factor_fee_expense` binds **6400**, active. 6820 has zero role bindings and is itself `deactivated_at` 2026-07-22. No reclassification needed — item 1's posting to 6400 was already correct. |
 | 12 | 1200 vs 1230 "Factoring Reserve" duplicate | n/a (report) | **REPORTED, not fixed (§D)** | 1200 "Factoring Reserve / Holdback" is `deactivated_at` 2026-08-30, `system_purpose NULL`, zero role bindings — a retired legacy row, not a live ambiguity. 1230 "Factoring Reserves" is the sole active, role-bound (`factor_reserve_default` + `factor_reserve_held`) account. Named per instruction; neither account touched. |
+| 13 | A/R $218,472.41 vs Faro control $298,762.00 | $80,289.59 gap | **DECOMPOSED — not further split by invoice yet** | Two clean, live-verified buckets summing exactly to the stated gap. See item 13 below. |
+| 14 | 1150 Unbilled Revenue $3,200.00 residual / invoice 13572 | $3,200.00 | **CORRECTING THE LEAD'S HYPOTHESIS — not a void-handler defect** | Live evidence shows a void-and-reissue in progress (13572 → draft `INV-2026-00009`, same load, corrected customer), same pattern as invoice 13541's precedent already in the codebase. Event 1 (earn) correctly stands; reversing it would be wrong. See item 14 below. |
+| 15 | Duplicate `display_id` `INV-2026-00009` — two live invoices | n/a (report) | **REPORTED, not fixed** | Found while investigating item 14. Two non-voided invoices share `display_id='INV-2026-00009'`: a `paid` one from 2026-07-29 (different customer) and the `draft` one from 2026-09-12 (Value Logistics→EGRO correction). See item 15 below. |
 
 ## Item 1 — Escrow/fee recognition, 6 closed Faro invoices (RESOLVED)
 
@@ -180,3 +183,132 @@ Named per instruction (§D — additive, never delete/rename), not touched:
 1200 is a retired legacy row, not a live ambiguity — it carries no role binding and is already
 deactivated. 1230 is the sole active, role-bound target every posting this session used. Reported
 as instructed; neither account renamed, merged, or deactivated further.
+
+## Item 13 — A/R gap, $80,289.59 (DECOMPOSED)
+
+Live, prod, USMCA, `bypass_rls='lucia'` FALSE, single-txn BEGIN/ROLLBACK:
+
+```
+1100 GL balance (control account):                              $218,472.41  (74 postings, net)
+accounting.invoices subledger, unvoided, sum of total_cents:     $261,632.41  (80 invoices)
+  factored (factoring_advance_id set):    63 invoices  $205,160.00
+  self-carried (factoring_advance_id null): 17 invoices  $ 56,472.41
+factor.faro_invoice_lines, all live:                               $356,787.00  (104 lines, gross)
+```
+
+**Bucket A — subledger vs. GL control:** $261,632.41 − $218,472.41 = **$43,160.00**. The
+`accounting.invoices` subledger carries more open value than the 1100 control account shows. This
+is a sub-ledger/GL tie-out gap, not a Faro-vs-us gap — needs the specific invoices whose GL posting
+doesn't match their subledger total enumerated next (not done in this pass).
+
+**Bucket B — subledger vs. Faro control:** Faro's own control figure given by the Lead
+($298,762.00) − subledger ($261,632.41) = **$37,129.59**: invoices Faro's own records show that
+either aren't on our books at all, or are on our books at a different amount. Given "Faro is truth"
+(standing law this round), this is the higher-priority bucket to enumerate.
+
+**$43,160.00 + $37,129.59 = $80,289.59** — exact match to the Lead's stated total gap. Both buckets
+verified live and reproduced independently from the Lead's own $298,762.00 figure; not forced,
+not netted. Note: $298,762.00 (Lead's Faro-control figure) is NOT the same number as
+`factor.faro_invoice_lines`'s raw all-rows gross sum shown above ($356,787.00, 104 lines) — the two
+weren't reconciled to each other in this pass; the Lead's figure is presumably a scoped subset
+(open/active lines only, a date window, or similar) and Bucket B uses it as given, not re-derived.
+That gap between $298,762.00 and $356,787.00 is itself unexamined and worth naming, not silently
+assumed equal.
+
+**Not yet done:** identifying the SPECIFIC invoices composing each bucket. This decomposition says
+*where* the $80,289.59 splits, not *which* rows. Next pass: diff `accounting.invoices` against
+`factor.faro_invoice_lines` by load/customer/amount to name Bucket B's rows, and diff
+`journal_entry_postings` tagged `source_transaction_type='invoice'` against the subledger totals to
+name Bucket A's rows.
+
+## Item 14 — 1150 Unbilled Revenue $3,200.00, invoice 13572 (CORRECTING THE LEAD'S HYPOTHESIS)
+
+The Lead's instruction was: void the invoice, don't reverse Event 1, "one void handler, two things
+it fails to clean up," fix the void handler to auto-reverse revenue postings on every void, re-measure
+1150 to $0.00. **Live evidence does not support that diagnosis for 13572, and building the
+prescribed fix would be wrong — it would erase genuinely earned revenue.** Verified live, prod,
+USMCA, single-txn BEGIN/ROLLBACK:
+
+```
+invoice 13572   id 99c4dab1…   status void   voided_at 2026-09-12T23:21:51Z   total $3,200.00
+  load 43809ccf… (display 13572), status closed
+
+Event 1 (earn)  JE 15bf3ae8…  entry_date 2026-09-07  DR 1150 $3,200 / CR 4000 $3,200
+                voided_at NULL, reversed_by_je_id NULL  <- STANDING, never reversed
+Event 2 (bill)  JE 009fb5f8…  entry_date 2026-09-07  DR 1100 $3,200 / CR 1150 $3,200
+                reversed_by_je_id d4c74c17… (the void's own reversal)  <- correctly reversed
+
+Reversal JE d4c74c17…  memo: "Void reversal of invoice 99c4dab1…: AllwaysTrack reconcile
+  2026-09-12 — customer Value Logistics -> EGRO Transport (AT); rate unchanged; no factoring"
+  CR 1100 $3,200 / DR 1150 $3,200
+
+Replacement invoice INV-2026-00009 (id ae5ba12f…), created 2026-09-12T23:24:21Z — 3 minutes after
+  the void, same load, same $3,200.00, status DRAFT, customer_id 146067cf… (the corrected customer).
+```
+
+**This is a void-and-reissue, not a bare cancellation** — the void's own memo says so
+(customer-name correction, "rate unchanged"), and the replacement invoice's existence confirms it.
+The freight on load 13572 was genuinely delivered; Event 1's earn posting (DR 1150 / CR 4000) is
+correct and **must stay standing**. Event 2 was correctly reversed, because the WRONG customer's
+receivable needed to come off the books. The codebase already has this exact pattern documented —
+`void.service.ts`'s ACCT-F5723 comment names an identical case (invoice 13541, rate-correction
+reissue) and explains why `standingLatchJePredicate` deliberately keys on `reversed_by_je_id` so a
+reversed Event 2 does not block the load from re-recognizing once its replacement invoice is sent.
+
+**The actual gap: `INV-2026-00009` has sat in `status='draft'` for 10 days (created 2026-09-12,
+today 2026-09-22) and was never finalized/sent.** `loadHasIssuedInvoice()` (the gate Event 2 needs
+to refire) requires `status IN ('sent','partial','paid','factored')` — draft doesn't qualify, so
+Event 2 correctly has not refired for the new customer, and 1150 correctly shows $3,200.00 open:
+freight earned, not yet billed. That is the **expected, self-explaining state of an in-progress
+correction**, not a defect signature.
+
+**Swept for scope, live:** all 38 voided USMCA invoices, checking whether each one's earn (Event 1)
+still stands AND whether a live replacement invoice exists on the same load:
+
+```
+TRUE ORPHANS   (earn stands, NO replacement invoice anywhere):           0
+REISSUE-IN-PROGRESS (earn stands, replacement invoice exists):           4  — 13554→039(sent),
+    13541→INV-2026-00002(sent), INV-2026-00001→INV-2026-00002(sent), 13572→INV-2026-00009(draft)
+NO EARN EVENT RECORD AT ALL (predate/bypass the two-event latch):       29  (untouched by 1150)
+```
+
+**Zero true orphans exist.** Of the 4 reissue-in-progress cases, 3 already have a `sent` replacement
+(1150 will net to $0.00 for those the moment Event 2 re-measures — not separately verified per-row
+in this pass). **13572 is the only one still stuck**, and it is stuck on an un-sent draft invoice,
+not on a code defect in the void path.
+
+**What I am NOT doing:** reversing Event 1 for 13572 (would falsely erase $3,200.00 of genuinely
+earned freight revenue), and NOT building the "voiding an invoice auto-reverses its revenue
+postings" fix as instructed (it would break all 4 reissue-in-progress cases the same way, present
+and future — the correct behavior for a reissue is exactly what the code already does: reverse
+Event 2 only, leave Event 1 standing).
+
+**What should happen instead:** `INV-2026-00009` needs to be finalized and sent to EGRO Transport
+through the normal invoice-send flow. That is a business/document action (real money, a real
+customer, sent through the app's own path with its own validation and audit trail), not a database
+write I am making unilaterally. Flagging it as the concrete next step, not performing it myself.
+
+Routed to CC-1's OUTBOX: this reframes the finding they were told to expect from me (a wiring gap)
+into a correction instead (no wiring gap in this case) plus the separate display_id defect below,
+which is more clearly theirs (`from-load.ts`/`resolveInvoiceDisplayId`, `apps/backend/src/accounting/**`).
+
+## Item 15 — Duplicate `display_id` `INV-2026-00009` (REPORTED, not fixed)
+
+Found while investigating item 14. Two live (non-voided) invoices share the same `display_id`:
+
+```
+id ae5ba12f-a2a8-4db8-997e-ec3f982ee7ac   display_id INV-2026-00009   status draft
+  customer 146067cf…   created 2026-09-12T23:24:21Z   total $3,200.00
+id 59d6d429-4cb6-45ea-a1bb-951439d8e340   display_id INV-2026-00009   status paid
+  customer b50d2907…   created 2026-07-29T19:41:53Z   total (not re-measured here)
+```
+
+Per the "INVOICE-DISPLAY-ID-EQUALS-LOAD-NUMBER" rule and `resolveInvoiceDisplayId`'s documented
+collision fallback (load-number-based id → `INV-2026-NNNNN` sequence on collision), two invoices are
+never supposed to carry the same `display_id` live at once. `invoices.routes.ts` has at least one
+lookup keyed on `display_id` filtered only by `voided_at IS NULL` (line ~466) — with two non-voided
+rows sharing a `display_id`, that lookup's `LIMIT 1` returns whichever one the query planner picks,
+silently. Not triaged further (root cause of the collision, or whether the sequence-allocator itself
+double-issued `00009`) — reported per §D discipline, not fixed; `accounting/from-load.ts` and the
+display-id sequence resolver are CC-1's lane (`apps/backend/src/accounting/**`), routed to their
+OUTBOX.
