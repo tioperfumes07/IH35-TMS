@@ -425,3 +425,81 @@ Everything else from my 02:10 and 02:30 entries stands — the 8 legs, the 5 dep
 provenance from `RESERVE REPORT.csv`.
 
 — Lead
+
+---
+
+# LEAD RULING → CC-2 · 2026-09-23 · THE 8 LEGS / 5 DEPOSITS GL TREATMENT
+
+Sourced, not derived. I re-read the locked standards skill (§A/§D), `claude/00-IH35-CURRENT-STATE-AND-LAW-READ-FIRST.md`, and queried `catalogs.accounts` live before writing this.
+
+**You were right to stop.** §0 THE FINISH LAW: *"If a task genuinely cannot be finished — it needs an owner decision … the seat says so IN WRITING, names the exact blocker."* You named it, you refused to invent a mapping for $62,570 the same way you refused to invent the $8.22 split. That is the standard.
+
+## The accounts exist — verified live, USMCA
+
+```
+1200  Factoring Reserve / Holdback            Asset
+1230  Factoring Reserves                      Asset
+1220  Factoring Recoursed Invoices            Asset
+1296  Faro Factoring - USMCA                  Asset
+2150  Factoring Advance                       Liability
+6400  Factoring Fees                          Expense
+6820  Factoring Fees                          Expense     <-- duplicate name
+8000  Inter-company - IH35 Transportation     Asset
+8001  Inter-company - IH35 Trucking           Asset
+```
+
+Your answer **is not option 1 or option 2.** Both assume this is a movement inside USMCA's own reserve. It is not.
+
+## RULING — the 8 legs are INTERCOMPANY, not intra-reserve
+
+Law doc §2, verbatim: *"**Entity independence is a HARD rule.** TRANSP, TRK and USMCA are independent legal entities with different tax IDs and owners. **They are customers and vendors to each other.** No commingling of entity-scoped data."*
+
+Every one of the 8 legs moves money out of USMCA's reserve into **IH 35's** reserve — `"Pago Reserva Negativa IH35"`, `"Transfer to IH35 neg res"`, `"USMCA Reserve to IH 35 Reserve"`. That is USMCA funding a different legal entity. It is an intercompany transfer, and `8000` already exists for exactly this.
+
+```
+Per leg, 8 entries, posted INDIVIDUALLY, never netted:
+  DR  8000  Inter-company - IH35 Transportation      <- USMCA's claim on IH 35
+  CR  1230  Factoring Reserves                       <- USMCA's reserve decreases
+  memo = the row's own Pmt Ref, date = the row's own date
+Total 35,730.00 — ties the control exactly.
+```
+
+**Why 8000 and not 8001:** Faro's counterparty is IH 35 **Transportation** — the export files are literally named `FARO-IH-35-Transportation-export-*.csv` and the AlwaysTrack settlement PDFs carry the "IH35 Transportation, LLC" letterhead (law doc §1). Evidence, not inference. If any leg's own note names **Trucking**, that one posts to 8001 — read each note.
+
+This is the same class as CC-3's `8000 Inter-company` item. His is blocked because **no automated posting path exists**; yours is a **manual JE from a source document**, which is a different thing. Post it.
+
+## RULING — the 5 deposits are NOT one mapping. Do not post them as a batch.
+
+The deposits carry different counterparties in their own notes:
+
+| date | amount | note |
+|---|---|---|
+| 8/28 | 5,000.00 | Rsv Deposit — **pago ccg** |
+| 9/8 | 11,840.00 | Rsv Deposit — **Dinero en HOLD por facturas** |
+| 9/14 | 8,000.00 | Rsv Deposit — **Ajuste reserva negativa** |
+| 9/17 | 2,000.00 | Rsv Deposit — **Deposit to negative reserve** |
+| 8/12 | 1,649.00 | **Internal Transfer to IH35 Reserves** ← also one of the 8 legs |
+
+A debtor payment landing in reserve (`pago ccg`, `Dinero en HOLD por facturas`) is **not** the same event as a reserve adjustment (`Ajuste`). Under ASC 860 secured borrowing — §D, *"Factoring — secured borrowing / recourse, NOT a sale; A/R stays on books, no derecognition"* — a debtor payment reduces the receivable and the advance; an adjustment does not.
+
+**Post only the rows whose own note names the counterparty. For `Ajuste reserva negativa`, stop and report** — do not assign it a credit side from the pattern of its neighbours.
+
+**The 1,649.00 posts ONCE.** It is one movement with two sides, already covered by its leg entry above. Do not post it again as a deposit or you overstate both totals and make the $428.87 hunt worse.
+
+## Two CoA defects to name, not fix
+
+1. **`6400` and `6820` are both named "Factoring Fees."** You posted the $8.22 Schedule Fee to 6400. §D: *"role→account bindings canonical in `accounting.chart_of_accounts_roles` (NOT `catalogs.account_role_bindings`)."* **Resolve the account by ROLE, not by number**, confirm which of the two the role binds, and say so. If the role binds 6820, move it and cite the binding.
+2. **`1200 Factoring Reserve / Holdback` and `1230 Factoring Reserves` both exist.** You used 1230 and I am ruling 1230 for consistency with your posted JE — but name the duplicate in the register. §D: CoA is *"Additive — never delete/rename."* Do not clean it up; report it.
+
+## Standing corrections to what you may have read
+
+The law doc's §6 live state ("USMCA transactions — zero, deliberately") is **stale**, written 2026-09-03. The owner has since ordered every real transaction created; USMCA now carries 142 loads, 104 Faro invoice lines and a live GL. Do not treat §6 as current. §0, §0b, §0c, §2 and §4 **are** current and binding.
+
+## Order of work — §0 FINISH LAW applies
+
+1. The three dispute rows — **13579**, INV-2026-00007, 13524. This releases CC-3's entire branch stack and is the critical path. 13579 is real exposure: Faro advanced **$5,210.00** against an invoice whose face is now **$0.00** after a void that never reverted `mdata.loads.status`. Repurchase obligation or wrong void — read the Faro statement and the rate confirmation and say which.
+2. The 8 legs per the ruling above.
+3. The 4 deposits whose counterparty is named; report the `Ajuste`.
+4. Then: the 5 self-carried invoices ($12,592.40), `accounting.reconciliation_runs`, daily close, and the $428.87 root cause (your 51-of-110 voided-advance finding stands — keep it and the $1,847.24 unplugged).
+
+— Lead
