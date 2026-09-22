@@ -22,7 +22,9 @@ const LOADS_36 = [
   "13550", "13551", "13552", "13554", "13556", "13557",
 ];
 // EXP-CLOSED-TOUR-VOCAB (owner 2026-09-07): 'closed'/'final' are terminal, GL-posted statuses too.
-const OPEN_TOUR_STATUSES_EXCLUDED = ["approved", "paid", "cancelled", "closed", "final"];
+// EXP-CLOSED-TOUR-VOCAB-2 (CC-3, 2026-09-22): 'locked' is the same terminal tier — mirrors
+// tour-open-gate.service.ts CLOSED_TOUR_STATUSES.
+const OPEN_TOUR_STATUSES_EXCLUDED = ["approved", "paid", "cancelled", "closed", "final", "locked"];
 
 if (!process.env.DATABASE_URL) {
   console.error("report-posted-expenses-while-tour-open: DATABASE_URL required (read-only report, no --apply flag exists)");

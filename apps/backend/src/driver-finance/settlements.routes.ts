@@ -20,6 +20,8 @@ import { reverseSettlementBillPaymentInClientTx } from "../accounting/settlement
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { canVoid, unmatchBankTransactionById } from "../accounting/void.service.js";
 import { postNegativeSettlementLiabilityIfNeeded } from "./negative-settlement-liability.service.js";
+import { loadIdsForSettlement } from "../accounting/tour-open-gate.service.js";
+import { postHeldDocumentsForClosedTour } from "../accounting/tour-close-posting.service.js";
 import {
   settlementEarningsSumSql,
   settlementDeductionsSumSql,
@@ -1123,6 +1125,44 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     if ("unavailable" in result) return reply.code(501).send({ error: "driver_finance_schema_not_available" });
     if ("notFound" in result) return reply.code(404).send({ error: "settlement_not_found" });
     if ("blocked" in result) return reply.code(409).send({ error: "finalize_blocked", reason: result.reason });
+
+    // ACC-50 (LAW §2, ROUND 5) — this settlement just left the open statuses (its tour closed, via
+    // finalize -> 'locked', the same terminal tier as the MVP approve route's 'closed'/'final').
+    // Every expense/bill held for one of its loads now posts, through the SAME engine the
+    // create/manual-post paths use (postSourceTransaction / postBillGlIfEnabled) — no new posting
+    // code, mirrors settlements-mvp.routes.ts's approve handler exactly. Runs AFTER the finalize
+    // transaction above has committed (postSourceTransaction opens its own transaction and must
+    // never nest inside another). A failure here never un-finalizes the settlement — the batch is
+    // retriable (the held rows are still findable by their own posting_hold_reason) and is only
+    // ever best-effort at this step.
+    // CC-3, 2026-09-22 (ACCT-F30214 fuel-linkage-audit follow-on): this call was MISSING here —
+    // only the MVP approve route ever invoked it, so any settlement finalized via THIS route
+    // (BT-3-DRIVER-FINANCE-REBUILD, the one USMCA's real settlements actually use) left its
+    // tour-held expenses permanently unposted. Confirmed live: S-2026-5786/5788 (locked via this
+    // route) each stranded 2 expenses this way. Fixed together with tour-open-gate.service.ts's
+    // CLOSED_TOUR_STATUSES gaining 'locked' — both halves were required.
+    try {
+      const loadIds = await withCompany(user.uuid, companyId, (client) => loadIdsForSettlement(client, companyId, params.data.id));
+      const tourClosePosting = await postHeldDocumentsForClosedTour(companyId, loadIds, { userId: user.uuid });
+      if (tourClosePosting.expenses_posted.length || tourClosePosting.bills_posted.length) {
+        await withCompany(user.uuid, companyId, (client) =>
+          appendCrudAudit(
+            client,
+            user.uuid,
+            "driver_finance.settlement_tour_close_posted_held",
+            {
+              resource_type: "driver_finance.driver_settlements",
+              resource_id: params.data.id,
+              ...tourClosePosting,
+            },
+            "info",
+            "ACC-50"
+          )
+        );
+      }
+    } catch (tourCloseErr) {
+      console.error("[ACC-50] postHeldDocumentsForClosedTour failed for settlement finalize", tourCloseErr);
+    }
 
     void withLuciaBypass(async (client) => {
       const rowRes = await client.query(
