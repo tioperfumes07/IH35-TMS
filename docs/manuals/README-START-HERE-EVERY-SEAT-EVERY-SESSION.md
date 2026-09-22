@@ -7,7 +7,7 @@ already existed. A PR that rebuilds something in the capability registry fails r
 
 ---
 
-## READ IN THIS ORDER — 6 files, ~15 minutes, every session
+## READ IN THIS ORDER — 7 files, ~17 minutes, every session
 
 | # | file | read it before |
 |---|---|---|
@@ -17,6 +17,7 @@ already existed. A PR that rebuilds something in the capability registry fails r
 | 4 | `04-RULING-FEED-PARITY-THE-VERIFIED-SIDE-EFFECT-LIST.md` | **touching load creation or any ingest path.** The 8 INSERTs and 14 gates Book Load performs, by line number, that a feed skips. |
 | 5 | `02-RULING-LIVE-LOADS-VIEW-THE-PERMANENT-FIX.md` | **any board, tile, drill-through or load query.** Why `assertCanonicalSubset` was not enough and what replaces it. |
 | 6 | `09-22-2026-IH35-FULL-LINKAGE-PROCESS-AND-MAPPING.md` | **creating any record.** Load → invoice → factoring → cash → driver bill → settlement → GL → bank, every column verified live. Includes the mandatory `LINKAGE:` block every PR body must carry. |
+| 7 | `00-USMCA-RECONCILIATION-CLOSED-NEVER-ASK-AGAIN.md` | **citing, disputing or re-deriving any USMCA/Faro reconciliation figure.** Owner order: this is CLOSED. Nine figures are LAW, enforced by `scripts/verify-reconciliation-constants.mjs` on every push — do not re-measure, do not ask again. |
 
 **Domain manuals, read when you are in that domain:**
 `09-22-2026-IH35-PROCESS-01-FUEL-TRANSACTIONS.md` · `09-22-2026-IH35-PROCESS-02-IFTA.md` ·

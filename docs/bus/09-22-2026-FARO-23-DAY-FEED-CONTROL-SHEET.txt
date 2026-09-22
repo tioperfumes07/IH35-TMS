@@ -1,0 +1,46 @@
+FARO 23-DAY FEED CONTROL SHEET — built by Claude Lead from PURCHASE REPORT ALL.csv
++ FUNDS DUE 09-21-26.csv (the 9/21 net advances, absent from the purchase export).
+A DAY DOES NOT CLOSE UNLESS ALL FIVE COLUMNS TIE.
+
+DAY      | INV | INVOICE NUMBERS                          |    PURCHASE |   ESCROW |  DISCOUNT | WIRE |   NET ADVANCE
+----------------------------------------------------------------------------------------------------------------------
+8/10/26  |   2 | 2,3                                      |    5,500.00 |    45.00 |     82.50 |   10 |      5,325.00
+8/11/26  |   1 | 1                                        |    3,600.00 |    54.00 |     54.00 |   10 |      3,482.00
+8/12/26  |   1 | 4                                        |    1,700.00 |     0.00 |     25.50 |   10 |      1,639.00
+8/13/26  |   3 | 5,6,7                                    |    5,650.00 |    79.50 |     84.75 |   10 |      5,470.50
+8/14/26  |   4 | 8,11,12,13                               |   10,125.00 |   133.50 |    151.88 |   10 |      9,811.24
+8/17/26  |   2 | 14,15                                    |    7,100.00 |   106.50 |    106.50 |   10 |      6,877.00
+8/18/26  |   1 | 16                                       |    3,800.00 |     0.00 |     57.00 |   10 |      3,676.00
+8/19/26  |   2 | 17,19                                    |    6,600.00 |    99.00 |     99.00 |   10 |      6,392.00
+8/21/26  |   5 | 18,20,22,23,24                           |   16,900.00 |   253.50 |    253.50 |   10 |     16,383.00
+8/24/26  |   2 | 21,25                                    |    4,100.00 |    61.50 |     61.50 |   10 |      3,967.00
+8/26/26  |   2 | 27,28                                    |    3,100.00 |    46.50 |     46.50 |   10 |      2,997.00
+8/28/26  |   8 | 29,30,31,32,33,34,35,36                  |   26,900.00 |   403.50 |    403.50 |   10 |     26,083.00
+8/31/26  |   4 | 38,39,40,41                              |   13,900.00 |   208.50 |    208.50 |   10 |     13,473.00
+9/1/26   |   4 | 37,42,43,44                              |   14,650.00 |   219.75 |    219.75 |   10 |     14,200.50
+9/3/26   |   6 | 45,46,47,48,49,51                        |   10,800.00 |   162.00 |    162.00 |   10 |     10,466.00
+9/4/26   |   4 | 50,52,53,54                              |   17,315.00 |   259.73 |    259.73 |   10 |     16,785.54
+9/8/26   |   6 | 56,57,58,59 + UNNUMBERED 1013272-2       |   23,910.00 |   358.65 |    358.65 |   10 |     23,182.70
+9/10/26  |   2 | 61,62                                    |    3,100.00 |    46.50 |     46.50 |   10 |      2,997.00
+9/11/26  |   7 | 63,64,65,66,67,68,69                     |   33,400.00 |   501.00 |    501.00 |   10 |     32,388.00
+9/14/26  |   7 | 70,71,72,73,75,76,77                     |   30,770.00 |   461.55 |    461.55 |   10 |     29,836.90
+9/17/26  |   2 | 78,79                                    |    7,600.00 |   114.00 |    114.00 |   10 |      7,362.00
+9/18/26  |   7 | 80,81,82,83,84,85,86                     |   28,300.00 |   424.50 |    424.50 |   10 |     27,441.00
+9/21/26  |   7 | 87,88,89,90,91,92,93                     |   32,767.00 |   491.51 |    491.51 |    0 |     31,783.98
+----------------------------------------------------------------------------------------------------------------------
+TOTAL    |  89 |                                          |  311,587.00 | 4,530.19 |  4,673.82 |  220 |    302,019.36
+
+TIE-OUTS, ALL EXACT:
+  PURCHASE  311,587.00 - RECEIPTS 12,825.00 = AR 298,762.00  (AGING = OPEN INVOICES = ACCOUNT SUMMARY)
+  ESCROW      4,530.19 = ESCROW REPORT 9/21 close = ACCOUNT SUMMARY Escrow Reserve
+  DISCOUNT    4,673.82 = FEES PAID "Discount fee" = ACCOUNT SUMMARY Discount Fee
+  WIRE          220.00 = FEES PAID "Wire Fee"     = ACCOUNT SUMMARY Wire Fee
+  NET ADV   302,019.36 - 4,000.00 reserve line on FUNDS DUE = 298,019.36 = AS "Payments to You"
+
+CORRECTION TO MY OWN EARLIER CALL — INVOICE 59 IS **ARMSTRONG**, NOT REFRIGERX.
+  row 54: ARMSTRONG TRANSPORT GROUP INC · 9/8/26 · Inv 59 · PO 4619442-1 · $3,500.00
+  row 58: Refrigerx Transportation LLC  · 9/8/26 · Inv "1013272-2" · PO "59" · $5,210.00
+  Faro ID 405560. That row's fields ARE swapped — "59" is not a Refrigerx PO format and
+  1013272-2 is. Its TRUE invoice number is UNNUMBERED in Faro; its PO is 1013272-2.
+  THE ARITHMETIC IS UNCHANGED: 88 numbered invoices (1-93 less 9,10,26,55,74) + this one
+  unnumbered row = 89 purchase rows. The five self-carried gaps still stand, proven.

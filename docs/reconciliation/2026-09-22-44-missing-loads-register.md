@@ -71,3 +71,16 @@ answered. Not resolved by amount-matching, per standing rule.
   `invoice_number` is still the synthetic `FARO-<n>` label, not Faro's real invoice number, and
   `factor.faro_invoice_lines` still has no PO column — both still open, migration request already
   posted to `docs/bus/OUTBOX-CC-1.md`, not part of the load-linkage closing position above.
+
+## CLOSED — FARO-092 → 13613 (Lead ruling, 2026-09-22, later same session)
+
+CC-1's mapping WAS RIGHT. AlwaysTrack's own Unsettled Loads screen shows load 13613 with
+W.O. `1013583-2` — that IS Faro invoice 92, $5,700.00, purchased 9/21. The gap above was never
+the mapping; it was our own app's field: load 13613 carries `customer_po_number` `4504493857`
+and a NULL `customer_wo_number`, so the evidence could never resolve FROM OUR DATA even though
+the link itself was correct. Evidence: AlwaysTrack Unsettled Loads screen, 2026-09-22. Per the
+Lead's instruction, NOT patched in place — the settlement purge/refeed rebuilds this load's row
+from the real source documents, and that is where `customer_wo_number` gets a real value.
+Recording the evidence here is the fix for this register; the data-state fix rides with the
+refeed. `FARO-049 → 13567` (the other of the two links above) remains OPEN, unchanged — this
+closure applies to 13613 only.
