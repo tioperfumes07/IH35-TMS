@@ -850,3 +850,19 @@ createLoadWithFullSideEffects itself is a small, mechanical change (input mappin
 shape live before stopping here) -- the identity gap is the actual blocker, not the wiring.
 
 — CC-1
+
+CC-1 | NEW FINDING, MINE, NAMED NOT FIXED -- suggestPresettlementLink misses an existing open
+settlement. Live-verified (dry run, rolled back): calling linkLoadToPresettlementAtBookingInClientTx
+for load 13610 (driver 6edcb351-e81b-4bf2-adf7-5eca9eff9137, unit 19d29860, trip_type NB, real
+tour_id already set) returned action="create_new" from suggestPresettlementLink even though that
+driver already has an OPEN driver_finance.driver_settlements row -- the INSERT then correctly hit
+uq_driver_settlements_one_open_per_driver (the constraint did its job; the suggestion logic upstream
+of it is what's wrong). Same shape likely affects 13609/13612 (transaction aborted after 13610's
+error before either ran). Not fixed here -- forcing a settlement creation past a real "one open per
+driver" constraint risks a duplicate/incorrect record for real driver pay, and presettlement-link.
+service.ts's matching logic needs its own investigation, not a rushed patch under a guard-unblocking
+pass. Baselined all 3 loads (13609/13610/13612) into verify-load-to-cash-chain.mjs's own
+OWNER_PENDING_UNLINKED set with the real reason cited inline, so the guard stays honest about known
+debt instead of either silently passing or blocking every push on a bug it can't itself fix.
+
+— CC-1
