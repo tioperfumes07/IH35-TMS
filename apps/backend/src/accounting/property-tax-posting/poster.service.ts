@@ -167,6 +167,8 @@ export async function postPropertyTaxAccrual(input: PostPropertyTaxAccrualInput)
       entry_date: prepared.entryDate,
       memo: prepared.memo,
       source: "auto",
+      source_transaction_type: "property_tax_rendition",
+      source_transaction_id: input.rendition_id,
       postings: prepared.postings,
     },
     { userId: input.actor_user_id, role: "system" }
@@ -270,6 +272,8 @@ export async function postPropertyTaxPayment(input: PostPropertyTaxPaymentInput)
       entry_date: prepared.entryDate,
       memo: prepared.memo,
       source: "auto",
+      source_transaction_type: "property_tax_rendition",
+      source_transaction_id: input.rendition_id,
       postings: prepared.postings,
     },
     { userId: input.actor_user_id, role: "system" }

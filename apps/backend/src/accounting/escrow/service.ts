@@ -346,6 +346,8 @@ export async function postEscrowTransactionOnClient(
         entry_date: postingDate,
         memo: `${memoPrefix} ${input.escrow_account_id}`,
         source: "auto",
+        source_transaction_type: "escrow_account",
+        source_transaction_id: input.escrow_account_id,
         postings:
           input.posting_type === "release"
             ? [

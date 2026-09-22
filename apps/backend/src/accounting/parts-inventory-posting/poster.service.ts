@@ -260,6 +260,8 @@ export async function postPartsInventoryPurchase(
           entry_date: prepared.entryDate,
           memo: prepared.memo,
           source: "auto",
+          source_transaction_type: input.parts_purchase_id ? "parts_purchase" : "parts_inventory",
+          source_transaction_id: input.parts_purchase_id ?? input.parts_inventory_id,
           postings: buildCashPartsPurchasePostings(
             prepared.expenseAccountId,
             cashAccountId,

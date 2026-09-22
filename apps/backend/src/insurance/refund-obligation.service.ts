@@ -166,6 +166,8 @@ export async function postPendingRefundObligations(
           entry_date: obligation.entry_date,
           memo: obligation.deterministic_memo,
           source: "auto",
+          source_transaction_type: "refund_obligation",
+          source_transaction_id: obligation.id,
           postings: [
             { account_id: debitAccountId, debit_or_credit: "debit", amount_cents: amountCents, description: obligation.deterministic_memo },
             { account_id: creditAccountId, debit_or_credit: "credit", amount_cents: amountCents, description: obligation.deterministic_memo },

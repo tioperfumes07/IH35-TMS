@@ -790,7 +790,7 @@ export async function postSettlementBillPayment(
     ];
     assertBalanced(postings);
     const je = await createJournalEntry(
-      { operating_company_id: opco, entry_date: billDate, memo: `${label} — settlement deductions (Dr A/P / Cr driver accounts)`, source: "auto", postings },
+      { operating_company_id: opco, entry_date: billDate, memo: `${label} — settlement deductions (Dr A/P / Cr driver accounts)`, source: "auto", source_transaction_type: "driver_settlement", source_transaction_id: settlementId, postings },
       { userId: actor.userId, role: "system" }
     );
     deductionJournalEntryId = je.id;

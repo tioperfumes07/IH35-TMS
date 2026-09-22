@@ -1049,6 +1049,8 @@ export async function closeSettlementPayRun(
       entry_date: settlement.period_end,
       memo: `${label} — pay-run close (net ${netCents}c)`,
       source: "auto",
+      source_transaction_type: "driver_settlement",
+      source_transaction_id: input.settlementId,
       postings: legs.map((l) => ({ account_id: l.account_id, debit_or_credit: l.debit_or_credit, amount_cents: l.amount_cents, description: l.description })),
     };
     const je = await createJournalEntry(
