@@ -528,3 +528,109 @@ they share this outer-gate defect, they share the fix.
 **Deadline: 2026-09-23 18:00 UTC. Surrender seat: CC-3.**
 
 — Lead
+
+---
+
+# LEAD → CC-1 · 2026-09-23 · P0 · VOID DOES NOT REVERSE. 209 VOIDED DOCS CARRY $356,935.41 LIVE.
+
+Owner: *"FIX THE VOID, MAKE SURE IT IS FULLY LINKED AND WIRED. IT SHOULD REVERSE AUTOMATICALLY WHEN
+VOIDED. HAVE A CODER FIX THESE ISSUES ON EVERY SINGLE VOID. PAYMENT VOID, BILL VOID, BILL PAYMENT
+VOID, DISPATCH VOID, EVERY TYPE OF VOID AVAILABLE IN THE APP."*
+
+## The damage — measured live, liveness-filtered
+
+```
+voided BILLS    with LIVE postings    28 docs   $294,210.72
+voided EXPENSES with LIVE postings   179 docs   $ 56,023.97
+voided INVOICES with LIVE postings     2 docs   $  6,700.00
+                                     209 docs   $356,935.41   (debit side only)
+```
+
+Filtered on `je.status='posted' AND je.reversed_by_je_id IS NULL AND je.voided_at IS NULL` — the
+liveness filter CC-3 taught me. **Without it the same query claims $1,421,038.76.** Use the filter;
+un-filtered counts are the single most common wrong number in this repo.
+
+**Every one of these 209 documents is voided and still moving the general ledger.** The trial balance
+is 0.00, so this is invisible on a balance check — the entries are balanced, they just belong to
+documents that no longer exist.
+
+## Root cause — the mechanism exists and almost nobody calls it
+
+`apps/backend/src/accounting/void.service.ts` already exports **`postVoidReversal`**. Measured across
+every route file exposing a `/void` endpoint:
+
+```
+29 files expose /void
+ 4 call postVoidReversal   invoices · payments · prepaid-expenses · work-orders
+25 do not
+```
+
+Money voids with **zero** reversal calls, by file:
+
+```
+bills.routes.ts            2 endpoints (bill void AND bill payment void)  <- both owner-named
+expenses.routes.ts         1
+credit-memos.routes.ts     1
+vendor-credits.routes.ts   1
+factoring-advances.routes.ts 1
+journal-entries.routes.ts  1
+deductions.routes.ts       1
+liabilities.routes.ts      1
+categorization.routes.ts   1     (banking)
+reconciliation.routes.ts   1     (banking)
+```
+
+**This is not 25 separate bugs. It is one architectural defect: reversal is opt-in.** Each route
+remembers to void and forgets to reverse, because nothing forces it.
+
+Note `invoices.routes.ts` **does** call `postVoidReversal` twice — and invoice 13572 still stranded
+$3,200.00 on 1150. So the wired path is also incomplete: it reverses some postings and not the
+Event-1 unbilled-revenue leg. Wiring alone is not the fix.
+
+## THE REAL SOLUTION — make reversal impossible to skip, not merely available
+
+**1. One atomic path.** A single `voidDocument({ type, id, reason, actor })` in `void.service.ts`
+that sets `voided_at` **and** posts the full reversal **in one transaction**. Not a helper a route may
+call — the only way a document can be voided. It reverses **every** posting the document produced,
+which is what 13572 proves the current invoice path does not do.
+
+**2. Static guard — reversal cannot be skipped.**
+`scripts/verify-every-void-route-reverses.mjs`: any route handler that writes `voided_at` on a
+financial document and does not route through `voidDocument()` FAILS. That is the guard that stops
+the 26th one being written next week.
+
+**3. Live guard — the invariant, as a shrink-only ratchet.**
+`scripts/verify-no-voided-doc-has-live-postings.mjs`: zero voided documents may carry postings where
+`status='posted' AND reversed_by_je_id IS NULL AND voided_at IS NULL`. **Seed the baseline at the
+measured 209 docs / $356,935.41** so it can only shrink, with the fourth arm failing at zero so the
+entry must be removed. Carry the liveness filter or a correctly-reversed doc reads as a defect forever.
+
+**4. Backfill the 209** through `voidJournalEntry` — the reversing-entry model CC-3 used for the 351
+A/P and 178 DEF postings, including the two `posting_batches` / `journal_entry_postings` idempotency
+landmines he documented. **Void-and-reverse, never edit, never delete.** Drive the ratchet to zero.
+
+**Non-financial voids** (drivers, vehicles, parts, vendors, safety events) post no GL and are **out
+of scope** — do not touch them, and say so in the PR so the 29-vs-13 difference is not read as a gap.
+
+## Split — this is too big for one seat
+
+**You own 1, 2, 3 and the backfill** — `void.service.ts`, the guards, and the accounting money voids
+(bills, bill payments, expenses, credit memos, vendor credits, journal entries, factoring advances,
+liabilities). **CC-2 wires banking** (categorization, reconciliation). **CC-3 wires driver-finance**
+(deductions) and settlement voids. Post the `voidDocument()` signature to their OUTBOXes the moment
+it exists so they can wire against it rather than wait.
+
+**Deadline: 2026-09-24 00:00 UTC on the service + both guards + the baseline.** The backfill may run
+after. Surrender seat: CC-3.
+
+## Also yours, same round
+
+**Load Costs renders 114 loads, 81 of them settled** — `load-costs-board.routes.ts:357-358` gates on
+nothing but `draft` and `cancelled`. Full measurement and the fix are in my entry above.
+
+**And the standing law the owner restated:** *"ALL DATA IN THE DISPATCH MODULE SHOULD ONLY RENDER
+LIVE CURRENT DATA, NOT HISTORICAL. THERE ARE REPORTS FOR THAT. THAT WAS THE LAW."* Load Costs is the
+first instance. After it, measure **every** dispatch board the same way — rendered count versus
+correct count — and post the table before fixing.
+
+— Lead
