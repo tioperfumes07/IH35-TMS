@@ -4656,3 +4656,54 @@ no prior/duplicate postings existed before this batch.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+## 2026-09-23 — Diesel void batch 1 (89) + batch 2 (1) executed; 10 factoring-advance fundings posted
+
+### 1 of 2 — Diesel expense void, both batches, per Cursor's approved preview
+
+Read `~/Downloads/09-22-2026-Cursor-DIESEL-EXPENSE-VOID-PREVIEW.md` directly (not a pasted copy —
+Cursor's branch was still blocked). Ran BOTH reproduce queries verbatim, before touching anything:
+
+```
+Batch 1: 89 | 59726.73 | 8c6a2eea31541c22c69481032dbfeb6c   -- EXACT MATCH
+Batch 2:  1 |   624.60 | 328d3394910696b1164e82ac829fce80   -- EXACT MATCH
+```
+
+Executed both, all 90 rows, through the identical transaction the real `/api/v1/expenses/:id/void`
+route already uses (`reversePostedSourceTransactionInClientTx` + the same `UPDATE accounting.expenses`
+status-flip, in one transaction, per row) — no new GL math, no seventh engine, nothing deleted. 89/89
++ 1/1 succeeded, 0 failures. Re-ran both reproduce queries after: both **0 rows, $0.00** — confirming
+the population is fully cleared. GL 5000 credit total from all 90 reversal JEs, live-confirmed =
+exactly $60,351.33 ($59,726.73 + $624.60, no rounding drift). Full row-level register (every expense
+id, load, invoice, dollars, twin fuel row, reversal JE id):
+`docs/reconciliation/2026-09-22-diesel-void-batch1-row-register.md`; summary + Batch 2 detail:
+`docs/reconciliation/2026-09-22-reconciling-item-register.md` Item 18.
+
+**Held, exactly as instructed, not touched:** expense 13537 (twin restored live without a GL posting
+— waiting on CC-3's POSTING-04 re-post); Class C (13547, 13557-1 — waiting on CC-3's load
+attribution fix).
+
+### 2 of 2 — 10 unbooked 'submitted' factoring advances: FUNDING posted
+
+Called the existing, unmodified `postFactoringAdvanceEvent()` for all 10, no `funding_figures`
+override (each advance row's own 97%/1.5%/1.5% split used as-is — no invented leg, no new math):
+
+```
+face $47,330.00 total across the 10 -- matches your figure exactly
+DR GL 1090 Undeposited Funds   $45,910.10 (97%)   -- matches your net figure exactly
+DR GL 1230 Factoring Reserves  $   709.95 (1.5%)
+DR GL 6400 Factoring Fees      $   709.95 (1.5%)
+CR GL 2150 Factoring Advance   $47,330.00 (face)
+```
+
+All 10 `posted:true` with a real `journal_entry_id`, balanced, no ACH/wire leg (none named). GL 2150
+standing balance after: credits $235,220.00 / debits $164,565.00 / net $70,655.00 — the pre-existing
+$187,890.00 credit balance (matches your cited figure once the sign convention is reconciled — a
+liability read as negative in your framing is a credit balance in mine) plus this round's
+$47,330.00. **Not flipped:** advance `status` stays `'submitted'` — the instruction asked for the
+GL posting only, and flipping status wasn't named, so I didn't invent that transition. Flagging it
+as an open question rather than guessing which state is correct.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7

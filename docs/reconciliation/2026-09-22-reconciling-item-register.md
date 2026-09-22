@@ -373,3 +373,51 @@ customer's single invoice (13508), so amount was the real disambiguator; the nam
 flagged, not silently assumed. Total applied: $12,825.00 — matches the Faro receipt total cited in
 an earlier round exactly. No code changed; reused the existing, tested, never-before-invoked-on-
 USMCA poster exactly as built. Full detail: `docs/bus/OUTBOX-CC-2.md`, 2026-09-23 entry.
+
+## Item 18 — Diesel expense void, Batch 1 (89) + Batch 2 (1): RESOLVED, live, per Cursor's approved preview
+
+Source: `~/Downloads/09-22-2026-Cursor-DIESEL-EXPENSE-VOID-PREVIEW.md`. Reproduce query run verbatim
+BEFORE execution for both batches — exact match on both: Batch 1 **89 | $59,726.73 |
+md5 8c6a2eea31541c22c69481032dbfeb6c**; Batch 2 **1 | $624.60 | md5
+328d3394910696b1164e82ac829fce80**. Executed via the same reversal + status-flip transaction
+`/api/v1/expenses/:expenseId/void` already uses (`reversePostedSourceTransactionInClientTx` +
+`UPDATE accounting.expenses SET status='void', posting_status='reversed', ...` in one transaction,
+per row) — no new GL math, no seventh engine, nothing deleted. All 90 rows voided successfully (0
+failures). Re-ran both reproduce queries after: both **0 | $0.00**. GL 5000 credit total from the 90
+reversal JEs confirmed live = exactly $60,351.33 ($59,726.73 + $624.60). Full row-level register
+(expense id · load · invoice · dollars · twin fuel row id · reversal JE id), for every one of the 90
+rows: `docs/reconciliation/2026-09-22-diesel-void-batch1-row-register.md`.
+
+**Held, not touched, per explicit instruction:** expense 13537 (invoice 99456225, $1,164.04) — its
+twin fuel row was restored live by CC-3 (FUEL-DEDUPE-05) but without a GL posting; waiting on
+CC-3's re-post through POSTING-04 first. Class C (13547, 13557-1) — waiting on CC-3's load
+attribution fix.
+
+## Item 19 — 10 unbooked 'submitted' factoring advances: FUNDING posted, live (RESOLVED)
+
+Source: Lead instruction, round ~52 — Cursor's finding that GL 2150 (Factoring Advance liability)
+was understated because 10 advances sat at `status='submitted'` with zero funding (R1b) postings
+despite Faro having actually advanced the money. Posted via the existing, unmodified
+`postFactoringAdvanceEvent()` (`apps/backend/src/accounting/factoring-posting/poster.service.ts:877`)
+for all 10, no funding_figures override (read reserve/fee/cash straight from each advance row's own
+already-correct 97%/1.5%/1.5% split — no new math, no invented leg):
+
+```
+FAC-2026-00054  face $4,650.00   FAC-2026-00115  face $5,900.00
+FAC-2026-00058  face $4,900.00   FAC-2026-00116  face $4,900.00
+FAC-2026-00062  face $3,600.00   FAC-2026-00117  face $5,700.00
+FAC-2026-00063  face $4,120.00   FAC-2026-00118  face $3,450.00
+                                  FAC-2026-00119  face $4,900.00
+                                  FAC-2026-00120  face $5,210.00
+```
+
+Total face posted: **$47,330.00** — matches Cursor's figure exactly. Aggregate legs across all 10,
+live-confirmed: DR GL 1090 (Undeposited Funds) $45,910.10 (97%) / DR GL 1230 (Factoring Reserves)
+$709.95 (1.5%) / DR GL 6400 (Factoring Fees) $709.95 (1.5%) / CR GL 2150 (Factoring Advance)
+$47,330.00 (face) — balanced, no ACH/wire leg (none was named). Net advance $45,910.10 matches
+Cursor's figure exactly. Advance `status` was NOT flipped to `'advanced'` — the poster only posts
+GL, and the instruction asked only for the posting, not a status change; flagging this as an open
+question rather than inventing a status transition. GL 2150's standing liability balance after
+these 10 postings: credits $235,220.00 / debits $164,565.00 / net $70,655.00 (pre-existing credits
+of $187,890.00 — matching Cursor's cited figure once the sign convention is reconciled — plus this
+round's $47,330.00).
