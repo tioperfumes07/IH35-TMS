@@ -1086,3 +1086,52 @@ Build order and deadlines are in the ruling. **Deadline for skeleton + exception
 invariant proven end to end: 2026-09-23 18:00 UTC.**
 
 — Lead
+
+---
+
+# LEAD → CC-1 · 2026-09-22 · **FEED PARITY — THE VERIFIED LIST. NOT A DESCRIPTION.**
+`docs/manuals/04-RULING-FEED-PARITY-THE-VERIFIED-SIDE-EFFECT-LIST.md`
+
+Owner: *"SO CREATE THE SAME WHEN FEEDING. I TOLD YOU TO CREATE THE PROCESSES BASED ON LIVE
+VERIFIED DATA. REPO."*
+
+I read `book-load.service.ts` and extracted what it actually does. **A fed load gets the
+`mdata.loads` row and almost nothing else.**
+
+**8 INSERTs:** `driver_bills` :984/:1070 · `mdata.loads` :2275 · `docs.file_links` :2413 ·
+`load_charge_lines` :2426 · `load_assignment_history` :2481/:2512 · `mdata.load_stops` :2644
+**14 resolvers/gates:** `resolveLoadTrailerEquipmentIdForInsert` :364/:2260 ·
+`resolveDriverBasePayCents` :800 · `resolveFactoringVendorId` :2444 ·
+`findOpenPresettlementTourForUnit` :2590 · `claimReservation`/`reserveNextLoadId` :2076/:2117 ·
+**`assertUnitNotActiveOnAnotherLoad` :2231** · `detectAssetCoverageGap` :1674 ·
+`assertDriverQualifiedForLoad` :1929 · drug gate :1851 · HOS :1753 · OOS :1602 · unit check :1485 ·
+`appendCrudAudit` ×12 · `enqueueOverrideNotice`
+
+**Four of the owner's reports fall straight out of that list:**
+- *"bills auto created from the driver"* → `driver_bills` INSERTed **only** at :984/:1070
+- *"trucks duplicated in waiting for load"* → **`assertUnitNotActiveOnAnotherLoad` :2231 is
+  Book-Load-only.** A feed bypasses it, so one unit is active on two loads.
+- *"we are missing the trailer"* → `resolveLoadTrailerEquipmentIdForInsert` never runs on a feed
+- *"missing the pre-settlement tour number"* → `findOpenPresettlementTourForUnit` never runs
+
+And the fuel gap: **`mdata.load_stops` is INSERTed at :2644.** Fuel matching keys on stop windows.
+No stops → no window → no match → the `load_exemption_reason` that was never retried.
+
+**RULING: extract everything after input validation into
+`createLoadWithFullSideEffects(client, input, { source })`. `bookLoad()`, the EDI 204 handler, the
+CSV importer and every future feed call it.** `source` controls **policy, never presence** — a
+gate may be recorded-and-continued for a historical load, but it is always evaluated and always
+recorded, and a skipped gate is an **exception row**, never a silent pass.
+
+Guard `verify-one-load-create-path.mjs` — FAIL any other file INSERTing `mdata.loads`. Today's
+offenders, verified: `inbound-204.handler.ts:236` · `mdata/loads.routes.ts:462` ·
+`csv-seed-import.ts:942` · `onboarding/seed-sample-data.ts:278`.
+
+**DONE: feed one historical load in a dry run and show it produces a driver bill, charge lines,
+stops, assignment history, a trailer, a factoring vendor, a pre-settlement tour link and an audit
+row — then show `assertUnitNotActiveOnAnotherLoad` firing on a unit already active.** That last
+one is the Truck Line duplicate, caught at the source.
+
+**2026-09-23 06:00 UTC.**
+
+— Lead
