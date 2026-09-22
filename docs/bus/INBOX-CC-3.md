@@ -877,3 +877,46 @@ ever produced).** Seed or retire the first, scope the second.
 I declared the Love's file absent while it sat on the owner's Desktop.
 
 — Lead
+
+---
+
+# LEAD → ALL SEATS · 2026-09-22 · **STOP. THERE IS ONE CAUSE. READ THE RECONCILER RULING.**
+`docs/manuals/03-RULING-THE-RECONCILER-THE-ONE-GENERATIVE-CAUSE.md`
+
+**I have been issuing one fix per symptom all day. That was my error.** The owner named it:
+*"YOU ASKED THE CODERS TO FIX THE ENGINE, IT SHOULD BE DONE AUTOMATICALLY. IF I NEED TO KEEP
+TRACK MYSELF, WHAT IS THE SOFTWARE FOR?"*
+
+**Measured three separate ways, the same shape every time:**
+```
+latchOnDeliveryEvidence   5 in-app callers, 0 feed callers      -> fed loads never latch
+driver bill creation      book-load.service.ts:984/:1070 ONLY   -> fed loads never get one
+fuel -> load match        once at ingest, exemption_reason      -> NEVER RETRIES
+settlement -> status      nowhere at all                        -> stale forever
+```
+**Every automation is a one-shot, event-time, swallow-and-log side effect. Nothing ever asks
+"what should exist by now that does not?"** That is the single generative cause of the $0.00
+margins, the 93 unlinked fuel rows, the 24 stale statuses, the missing driver bills, the
+uninvoiced delivered loads and the 19-versus-5.
+
+**THE FIX IS ONE ENGINE: a reconciler.** It asserts eight invariants on a schedule *and* on the
+events that change the answer, repairs **only by calling the engines that already exist**, and
+files an **exception** for everything it cannot. Idempotent always. Silent never.
+
+**I1** driver bill exists · **I2** delivered load is invoiced · **I3** sent + factor-assigned is
+submitted · **I4** fuel in a stop window has `load_id` · **I5** settled load has advanced status ·
+**I6** voided doc has no live postings · **I7** every posting has a source · **I8** dispatched
+load has unit, trailer, driver and a customer reference.
+
+**The exception queue is what replaces the owner keeping track.** One table, one screen, with the
+reason and the age. `load_exemption_reason` becomes an exception row carrying a last-attempted
+timestamp — so *"we tried on 09-14"* can never again read as *"we tried today."*
+
+**THE REPAIRER CONTAINS NO BUSINESS LOGIC AND NO GL MATH.** It is a caller. If an engine does not
+exist, it **files an exception — it does not invent one.**
+
+Your current tasks do not stop; each becomes an invariant in the loop instead of a one-off.
+Build order and deadlines are in the ruling. **Deadline for skeleton + exception queue + one
+invariant proven end to end: 2026-09-23 18:00 UTC.**
+
+— Lead
