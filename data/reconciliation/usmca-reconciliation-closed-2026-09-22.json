@@ -1,0 +1,28 @@
+{
+  "_comment": "USMCA/Faro reconciliation, CLOSED — owner-ordered permanent record, docs/manuals/00-USMCA-RECONCILIATION-CLOSED-NEVER-ASK-AGAIN.md. These nine figures are LAW: any code, seed, fixture or doc that contradicts one is a build failure (scripts/verify-reconciliation-constants.mjs).",
+  "closed_at": "2026-09-22",
+  "purchases_cents": 31158700,
+  "ar_cents": 29876200,
+  "receipts_cents": 1282500,
+  "discount_fee_cents": 467382,
+  "wire_fee_cents": 22000,
+  "schedule_fee_cents": 822,
+  "escrow_at_0921_cents": 453019,
+  "cash_reserve_at_0921_cents": 413541,
+  "realized_fees_cents": 490204,
+  "self_carried_open_cents": 1259240,
+  "identity_check": "purchases_cents - receipts_cents == ar_cents (31158700 - 1282500 == 29876200)",
+  "cash_reserve_at_0921_correction_2026-09-22": {
+    "_comment": "Cursor caught the Lead's single-number framing of cash_reserve_at_0921 as wrong. It is FOUR numbers depending on which moment/movement is meant. cash_reserve_at_0921_cents above is the CONTROL figure -- Faro's own statement ending balance -- and is the only one of the four that is LAW; the other three are informational, sourced, and never asserted by the guard.",
+    "before_ajuste_ccg_deposit_cents": 13541,
+    "faro_statement_ending_balance_cents_THE_CONTROL": 413541,
+    "after_same_day_sweep_to_ih35_cents": 0,
+    "on_0922_after_jerue_release_cents": 1650,
+    "sources": [
+      "01-FARO RESERVE REPORT (before_ajuste_ccg_deposit)",
+      "ACCOUNT SUMMARY.csv row \"Cash Reserve,0,4135.41\" ending column (faro_statement_ending_balance -- THE CONTROL)",
+      "09-21-26-reserves report (after_same_day_sweep_to_ih35)",
+      "JERUE release, 9/22 (on_0922_after_jerue_release)"
+    ]
+  }
+}

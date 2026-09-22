@@ -276,6 +276,10 @@ const GUARD_303 = [
   // parity guard's own in-process regenerate-refuse logic (a hand-edit, a different script, a bad
   // merge). No DATABASE_URL needed — pure git+JSON diff.
   ["verify-baseline-never-grows (03e)", "scripts/verify-baseline-never-grows.mjs", {}],
+  // 03f — the USMCA/Faro reconciliation, CLOSED (owner order 2026-09-22, "SAVED SO NOBODY ASKS
+  // AGAIN"). Nine figures are LAW; this asserts the JSON + the human-readable doc both still
+  // match them exactly, and the purchases-receipts=AR identity holds. Static — no DATABASE_URL.
+  ["verify-reconciliation-constants", "scripts/verify-reconciliation-constants.mjs", {}],
 ];
 
 function touchesMoneyPath() {
