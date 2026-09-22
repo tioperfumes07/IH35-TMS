@@ -62,7 +62,21 @@ function check(raw) {
         `alone, with no captured delivery evidence. This is the WIRE-05 regression.`
     );
   }
-  if (!/if\s*\(\s*!departedAt\s*\)\s*return/.test(code)) {
+  // Two valid shapes: the original bare short-circuit (`if (!departedAt) return`), and the
+  // MANUAL-DELIVERY-AUTH-01 shape (2026-09-07, commit 4022f7840a) which nests a fallback check
+  // for an explicit, on-the-record manual delivery authorization before refusing — `if
+  // (!departedAt) { ... if (!authorizedAt) return { gate: "missing_delivery_evidence" ... }`.
+  // Both REFUSE when there is no real evidence; neither falls through silently. The bare-old-shape
+  // alternative stays in the pattern so a future revert back to it still passes.
+  //
+  // Tested against `withStrings`, not `code`: the "missing_delivery_evidence" gate name is a
+  // string literal, and `code` has every string literal replaced with "" — matching it against
+  // `code` would be unfalsifiable (the literal text this regex looks for cannot exist there).
+  if (
+    !/if\s*\(\s*!departedAt\s*\)\s*(return|\{[\s\S]{0,600}?if\s*\(\s*!authorizedAt\s*\)\s*return\s*\{\s*gate:\s*"missing_delivery_evidence")/.test(
+      withStrings
+    )
+  ) {
     errors.push(
       `${POSTER}: missing departure evidence no longer short-circuits — the gate must REFUSE to post, ` +
         `not fall through and recognise revenue`
@@ -112,7 +126,12 @@ function selftest() {
 
   const mutations = [
     ["evidence gate removed", (s) => s.replace(/const departedAt = await finalActiveDeliveryDepartureAt\(/, "const departedAt = await someOtherThing(")],
-    ["gate no longer refuses", (s) => s.replace("if (!departedAt) return { gate: \"missing_delivery_evidence\" as const };", "// gate removed")],
+    // Real shape since MANUAL-DELIVERY-AUTH-01 (2026-09-07, commit 4022f7840a): the refusal is
+    // the INNER authorizedAt check nested inside `if (!departedAt) { ... }`, not a bare
+    // departedAt short-circuit — the pre-09-07 bare-return shape no longer exists in the real
+    // source at all, so a mutation targeting it would be a dead/unfalsifiable no-op (exactly the
+    // staleness this guard itself exists to catch — verified live 2026-09-22).
+    ["gate no longer refuses", (s) => s.replace('if (!authorizedAt) return { gate: "missing_delivery_evidence" as const };', "// gate removed")],
     ["events collapsed", (s) => s.replace(/buildBillEvent2Postings\(/g, "buildEarnEvent1Postings(")],
     ["flag gate removed", (s) => s.split("REVENUE_RECOGNITION_POST_ENABLED").join("ALWAYS_ON")],
     ["bill re-reads load rate", (s) => s.replace(/const earnAmt = await earnAmountCents\(/, "const earnAmt = await somethingElse(")],
