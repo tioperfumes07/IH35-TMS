@@ -281,3 +281,75 @@ export async function activateBankAccountForEntity(
   }
   return row;
 }
+
+export type FaroReserveType = "faro_escrow_reserve" | "faro_cash_reserve";
+
+export const FARO_RESERVE_ACCOUNT_DEFAULT_NAMES: Record<FaroReserveType, string> = {
+  faro_escrow_reserve: "Faro Escrow Reserve",
+  faro_cash_reserve: "Faro Cash Reserve",
+};
+
+export interface CreateFaroReserveAccountInput {
+  operatingCompanyId: string;
+  actorUserId: string;
+  reserveType: FaroReserveType;
+  displayName?: string | null;
+}
+
+export interface FaroReserveAccountRow {
+  id: string;
+  alreadyExisted: boolean;
+}
+
+/**
+ * BANK-FARO-RESERVE-01 (owner order, verbatim: "we need to have the separate accounts in
+ * banking, the escrow account and the reserves account") — two real, manual (no Plaid),
+ * statement-fed registers, same tier as the already-live "Faro Factoring - USMCA" depository
+ * account (a real banking.bank_accounts row, never a synthetic/derived figure on a dashboard).
+ * Idempotent (keyed on `tag`, never a duplicate register) + audited, same shape as
+ * activateBankAccountForEntity/the petty-cash route above — pulled into this shared file so the
+ * route and any future ops/backfill caller share ONE implementation.
+ *
+ * GL linkage (ledger_account_id, the 1230/1235 split) is deliberately left NULL here — that
+ * wiring is CC-1's lane (coordinate in his OUTBOX, never cross). This function only creates the
+ * register the statement feed will post into.
+ */
+export async function createFaroReserveAccount(
+  client: Queryable,
+  input: CreateFaroReserveAccountInput
+): Promise<FaroReserveAccountRow> {
+  const existing = await client.query<{ id: string }>(
+    `SELECT id FROM banking.bank_accounts WHERE operating_company_id = $1::uuid AND tag = $2 AND deactivated_at IS NULL LIMIT 1`,
+    [input.operatingCompanyId, input.reserveType]
+  );
+  if (existing.rows[0]) return { id: existing.rows[0].id, alreadyExisted: true };
+
+  const displayName = input.displayName?.trim() || FARO_RESERVE_ACCOUNT_DEFAULT_NAMES[input.reserveType];
+  const inserted = await client.query<{ id: string }>(
+    `
+      INSERT INTO banking.bank_accounts (
+        operating_company_id, account_name, display_name, account_type, account_class, tag,
+        current_balance_cents, available_balance_cents, currency_code,
+        is_active, sync_status
+      )
+      VALUES ($1, $2, $2, 'depository', 'depository', $3, 0, 0, 'USD', true, 'active')
+      RETURNING id
+    `,
+    [input.operatingCompanyId, displayName, input.reserveType]
+  );
+  const id = inserted.rows[0]!.id;
+  await appendCrudAudit(
+    client,
+    input.actorUserId,
+    "banking.bank_accounts.faro_reserve_created",
+    {
+      resource_type: "banking.bank_accounts",
+      resource_id: id,
+      operating_company_id: input.operatingCompanyId,
+      reserve_type: input.reserveType,
+    },
+    "info",
+    "BANK-FARO-RESERVE-01"
+  );
+  return { id, alreadyExisted: false };
+}
