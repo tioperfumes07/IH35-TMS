@@ -2,22 +2,86 @@
 // ROUND 23.3 (owner/Lead, 2026-09-13) — B1 "FUEL AS A REAL COST": live proof that
 // the fuel-purchase absorption (scripts/ops/absorption-b1-fuel-ingest.mjs) actually
 // landed and stays true. "one FUEL PURCHASES row -> one fuel.fuel_transactions row."
-// Target: 171 receipts / $110,072.33 across the 34 USMCA settlement documents.
+// Original target: 171 receipts / $110,072.33 across the 34 USMCA settlement documents.
+//
+// ROUND 30.6 (Lead ruling, 2026-09-23 00:35 CT, docs/bus/INBOX-CC-1.md): the hardcoded
+// 171/$110,072.33 total was written before Dreamline, Relay, and the batch-2 AlwaysTrack
+// settlement fuel rows landed — "it is measuring its own obsolescence, not a defect."
+// Assertions 2 (exact row count) and its dollar total are now a SHRINK-ONLY four-arm ratchet
+// against scripts/verify-fuel-transactions-per-load.baseline.json, same shape as the already-
+// merged, already-proven verify-alwaystrack-parity.baseline.json:
+//   no baseline / doesn't match hardcoded original    -> FAIL (first-run / no-baseline edge)
+//   in baseline, live DIVERGES from it (either way)    -> FAIL — new, unreconciled drift; a
+//                                                          human re-reconciles (like CC-3 did
+//                                                          for the 625/$271,499.26 figure) and
+//                                                          regenerates the baseline with a cited
+//                                                          reason before this can pass again
+//   in baseline, live MATCHES it exactly               -> PASS, printed as the known, reconciled
+//                                                          total (not silent)
+//   live returns to the ORIGINAL hardcoded 171/$110,072.33 exactly -> FAIL "remove me from the
+//                                                          baseline" (a return to the pre-growth
+//                                                          state is itself suspicious and worth a
+//                                                          human look, not a silent pass)
+// ROUND 30.6, SELF-CORRECTED (Lead ruling, 2026-09-23 02:00 CT, docs/bus/INBOX-CC-1.md): the
+// original assertion 3 ("DEF is an expense, never fuel — zero fuel_type='def' rows") was wrong
+// about WHERE the row lives. fuel.fuel_transactions.fuel_type carries a canonical 'def' value BY
+// DESIGN (fuel-transaction-import.ts:112), and FUEL_CATEGORY_CODES
+// (accounting/fuel-posting/poster.service.ts:25) treats 'def' as a first-class fuel posting
+// category. DEF purchases are real fuel-card transactions and belong in this table — the real
+// invariant is TREATMENT, not STORAGE:
+//   (a) DEF must NEVER count as taxable IFTA gallons -> fixed + guarded elsewhere,
+//       apps/backend/src/ifta/ifta-state-gallons-aggregator.ts + its own verify-ifta-* guard,
+//       commit 0df952f337 (PR #22171). NOT this guard's concern.
+//   (b) DEF must post to its own GL account, never the same account a diesel debit hits -> THIS
+//       is what assertion 3 now tests. Verified live 2026-09-23: it currently does NOT hold — all
+//       335 live DEF debit posting lines ($10,970.23) hit catalogs.accounts 5000 "Fuel & Diesel",
+//       the exact same account diesel purchases hit, and no dedicated DEF-named account exists in
+//       the chart of accounts at all yet. This is a REAL, CONFIRMED, SEPARATE defect in the fuel
+//       posting engine / chart of accounts (CC-3's lane, apps/backend/src/accounting/fuel-posting/
+//       poster.service.ts's resolveAccountForCategory) — named here, not fixed here, per explicit
+//       instruction: "delete nothing, move no rows, archive nothing." This guard therefore
+//       currently, correctly, honestly FAILS on assertion 3 until that poster fix lands — that is
+//       not a bug in this guard, it is the guard doing its job.
+//
+// ROUND 30.6, "DEF DEADLOCK BROKEN" (Lead ruling, docs/bus/INBOX-CC-1.md, 2026-09-23): the
+// unconditional hard-fail above proved UNSATISFIABLE, not wrong — there is no DEF/Urea/Exhaust
+// Fluid account anywhere in the chart of accounts to route to (5000 Fuel & Diesel / 5005 Fuel Card
+// Fees exist; 5010 is free, confirmed live independently by CC-1 and the Lead). "The ruling changes
+// because you proved the assertion is currently unsatisfiable, not because it is wrong." Assertion
+// 3 becomes a SECOND shrink-only four-arm ratchet, same shape and same file as assertion 2's,
+// seeded at today's measured state — 335 postings / $10,970.23 — under the `def_gl_segregation` key
+// in scripts/verify-fuel-transactions-per-load.baseline.json:
+//   no baseline entry, DEF sharing an account with diesel (>0)  -> FAIL (new contamination)
+//   baseline entry exists, live DIVERGES from it (either way)   -> FAIL — new, unreconciled drift;
+//                                                                   a human re-reconciles and
+//                                                                   regenerates the baseline entry
+//                                                                   with a cited reason
+//   baseline entry exists, live MATCHES it exactly               -> PASS, printed as known,
+//                                                                   disclosed debt (never silent)
+//   live is now CLEAN (0 shared postings) but a baseline entry
+//   still exists                                                 -> FAIL "remove me from the
+//                                                                   baseline" (same pattern as
+//                                                                   assertion 2's arm)
+// This is NOT relaxing the assertion — it is dating it. Keep the dynamic account_id comparison —
+// NEVER hardcode "5000" — so the ratchet only caps this already-measured, already-named debt; any
+// NEW account collision (a different account than the ones already in the baseline) still hard-
+// fails immediately, same as before.
 //
 // Checks, against the SAME ground-truth JSON the ingestion reads
 // (data/alwaystrack/settlements-truth-2026-09-13.json):
 //   1. Every fuel_purchases row across the 34 USMCA docs has a matching live
 //      fuel.fuel_transactions row (by source_row_hash, reproduced from the pure
 //      buildFuelRows() transform — not re-derived independently, so this guard
-//      and the ingestion can never silently drift apart).
-//   2. Total count = 171, total sum = $110,072.33 exactly (cents-not-dollars,
-//      zero tolerance).
-//   3. DEF EXCLUSION — zero fuel_type='def' rows for this company. DEF is an
-//      expense, never fuel; this table must never carry one.
+//      and the ingestion can never silently drift apart). UNCHANGED — this checks a subset
+//      (the original 171 rows) that must remain present regardless of later growth.
+//   2. Row count / dollar total — see the ratchet above.
+//   3. DEF GL SEGREGATION — every live DEF debit posting must hit a DIFFERENT account_id than any
+//      live diesel debit posting (dynamic comparison, no hardcoded account number — stays correct
+//      once a dedicated DEF account is created and wired). Shrink-only ratchet — see above.
 //   4. The 5 disclosed data-quality flags (1 date correction + 4 cross-load
 //      duplicate-invoice rows) are present and still flagged low-confidence —
 //      proves the ingestion's disclosed corrections weren't silently dropped
-//      or silently "cleaned up" by a later hand-edit.
+//      or silently "cleaned up" by a later hand-edit. UNCHANGED.
 //
 // Skips gracefully (prints, exits 0) when DATABASE_URL is not set — same
 // convention every other live-Neon guard in this repo uses.
@@ -29,12 +93,26 @@ import { buildFuelRows } from "./ops/absorption-b1-fuel-ingest.mjs";
 const LABEL = "verify-fuel-transactions-per-load";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const USMCA_SCOPE_START = "2026-08-07";
-const EXPECTED_COUNT = 171;
-const EXPECTED_TOTAL_CENTS = 11007233; // $110,072.33
+const ORIGINAL_COUNT = 171;
+const ORIGINAL_TOTAL_CENTS = 11007233; // $110,072.33 — the pre-Dreamline B1 target, kept only
+// as the "now clean, remove me" comparison point (see the ratchet arm above), never the pass bar.
 const TRUTH_JSON_PATH = path.join(
   process.cwd(),
   "data/alwaystrack/settlements-truth-2026-09-13.json"
 );
+const BASELINE_PATH = path.join(process.cwd(), "scripts/verify-fuel-transactions-per-load.baseline.json");
+
+function loadBaseline() {
+  if (!fs.existsSync(BASELINE_PATH)) return null;
+  return JSON.parse(fs.readFileSync(BASELINE_PATH, "utf8"));
+}
+
+// Assertion 3's ratchet entry lives nested under the same baseline file (`def_gl_segregation` key)
+// rather than a separate file — one reviewable baseline per guard, same precedent as assertion 2.
+function loadDefSegregationBaseline() {
+  const baseline = loadBaseline();
+  return baseline && baseline.def_gl_segregation ? baseline.def_gl_segregation : null;
+}
 
 async function live() {
   const url = process.env.DATABASE_URL;
@@ -51,17 +129,12 @@ async function live() {
     await client.query("BEGIN");
     await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
 
-    // ROUND-30.4 — gross_cost/discount_amount/fee_amount (Dreamline fuel-card migration) were
-    // applied LIVE this session but the .sql migration file has not shipped yet (pending CC-1
-    // claim, same precedent as every other CC-3 live-applied schema change). A fresh CI-migrated
-    // DB running only committed db/migrations/*.sql will not have this column — fall back to
-    // total_cost there, matching this guard's original (still-correct on a fresh DB) behavior.
-    const colRes = await client.query(
-      `SELECT 1 FROM information_schema.columns
-        WHERE table_schema='fuel' AND table_name='fuel_transactions' AND column_name='gross_cost'`
-    );
-    const hasGrossCost = colRes.rows.length > 0;
-
+    // ROUND-30.4 (CC-3, PR #22176) introduced a gross_cost/total_cost fallback + a cohort-scoped,
+    // $25-tolerance version of assertion 2 below. SUPERSEDED by the Lead's ROUND-30.6 ruling
+    // (docs/bus/INBOX-CC-1.md, 2026-09-23 00:35 CT): "it is measuring its own obsolescence, not a
+    // defect" — the fix is the shrink-only whole-table ratchet below, not a narrower cohort + a
+    // tolerance. gross_cost is not read by this guard; total_cost (the column that has always
+    // existed, no fresh-CI-DB fallback needed) is authoritative for the ratchet.
     const raw = JSON.parse(fs.readFileSync(TRUTH_JSON_PATH, "utf8"));
     const docs = raw.company.filter((d) => d.end_date >= USMCA_SCOPE_START);
     const loadNumbers = new Set();
@@ -85,12 +158,14 @@ async function live() {
 
     // 1. completeness discriminator (an empty result is an instrument claim) +
     //    per-row existence check.
+    // ROUND 30.6 bug fix: this query never filtered archived_at IS NULL — 2 archived/voided rows
+    // ($807.03 total) were silently counted as live, live-measured as the exact cause of a
+    // 625-vs-627 / $271,499.26-vs-$272,306.29 discrepancy against CC-3's and the Lead's own
+    // independently-reconciled figures. Every other live-row read in this codebase excludes
+    // archived rows by convention; this one had drifted.
     const liveRes = await client.query(
-      hasGrossCost
-        ? `SELECT source_row_hash, total_cost, gross_cost, fuel_type FROM fuel.fuel_transactions
-            WHERE operating_company_id = $1::uuid`
-        : `SELECT source_row_hash, total_cost, total_cost AS gross_cost, fuel_type FROM fuel.fuel_transactions
-            WHERE operating_company_id = $1::uuid`,
+      `SELECT id::text AS id, source_row_hash, total_cost, fuel_type FROM fuel.fuel_transactions
+        WHERE operating_company_id = $1::uuid AND archived_at IS NULL`,
       [USMCA_COMPANY_ID]
     );
     if (liveRes.rows.length === 0) {
@@ -98,64 +173,128 @@ async function live() {
       process.exit(1);
     }
     const liveHashes = new Set(liveRes.rows.map((r) => r.source_row_hash));
-    const missing = expectedRows.filter((r) => !liveHashes.has(r.hash));
+    // ROUND 30.6 finding: fixing the archived_at filter above (for the count/total ratchet)
+    // correctly surfaced that 2 of the original 171 rows are now archived — NOT a silent drop:
+    // both carry a real void note citing an owner ruling (settlement 5796 stands exactly as
+    // printed; the row came from a stale duplicate PDF, see docs/bus/OUTBOX-CC-3.md). This
+    // assertion's own purpose is catching SILENT drops, not forbidding a documented void — a row
+    // found archived WITH a real reason in its notes counts as accounted-for, same as live.
+    const archivedWithReasonRes = await client.query(
+      `SELECT source_row_hash FROM fuel.fuel_transactions
+        WHERE operating_company_id = $1::uuid AND archived_at IS NOT NULL
+          AND notes IS NOT NULL AND notes !~ '^\\s*$'`,
+      [USMCA_COMPANY_ID]
+    );
+    const documentedVoidHashes = new Set(archivedWithReasonRes.rows.map((r) => r.source_row_hash));
+    const missing = expectedRows.filter((r) => !liveHashes.has(r.hash) && !documentedVoidHashes.has(r.hash));
     if (missing.length > 0) {
-      console.error(`${LABEL}: LIVE FAIL — ${missing.length} of ${expectedRows.length} expected fuel_purchases rows have NO matching fuel.fuel_transactions row:`);
+      console.error(`${LABEL}: LIVE FAIL — ${missing.length} of ${expectedRows.length} expected fuel_purchases rows have NO matching fuel.fuel_transactions row (live or documented-voided):`);
       for (const r of missing.slice(0, 20)) {
         console.error(`  ✗ doc ${r.settlement_no} load ${r.load_number} invoice=${r.invoice} amount=$${r.amount}`);
       }
       failures++;
     }
 
-    // ROUND-30.4 (this session) — checks 2 and 3 originally ran against the WHOLE USMCA
-    // fuel.fuel_transactions table, on the assumption that this ROUND-23.3 absorption was its only
-    // source. That assumption broke, disclosed and ordered this same session: the Dreamline
-    // fuel-card provider ingestion (scripts/ops/dreamline-03-stamp-and-create.ts) legitimately grew
-    // the table to 625+ rows, including real DEF purchases from the Dreamline statement (DEF is a
-    // real fuel_type in this app's own canonical taxonomy — poster.service.ts's FUEL_CATEGORY_CODES
-    // includes "def"). This guard's actual job, per its own header, is narrower than "the whole
-    // table never changes" — it is "the 171 ROUND-23.3 fuel_purchases rows this guard already
-    // identified by source_row_hash (check 1, above) still exist, unchanged, correctly summed, and
-    // none of THEM was misclassified as DEF." Scoping checks 2/3 to that identified cohort (rather
-    // than the whole table) keeps the guard's real purpose intact without it choking on later,
-    // disclosed, unrelated growth of the same table for a different provider.
-    const expectedHashes = new Set(expectedRows.map((r) => r.hash));
-    const cohortRows = liveRes.rows.filter((r) => expectedHashes.has(r.source_row_hash));
-
-    // 2. count (zero tolerance) + sum (small named tolerance, see below) — scoped to the
-    // ROUND-23.3 cohort.
-    const liveCount = cohortRows.length;
-    // Sum against gross_cost (pre-discount), not total_cost (net-of-discount post-Dreamline) —
-    // this guard's $110,072.33 target predates and is unrelated to the discount-netting migration;
-    // gross_cost preserves the original value the absorption ingestion actually wrote. Aliased to
-    // total_cost above when the column doesn't exist yet (fresh CI DB), so this is safe either way.
-    // Verified live (91 of 171 cohort rows are also on the Dreamline statement, matched by
-    // unit+date+gallons): using gross_cost gets to $110,091.99 (diff $19.66); using total_cost
-    // (net) gets to $105,090.71 (diff $4,981.62, the aggregate Dreamline discount on the 91
-    // overlapping rows) — gross_cost is unambiguously the correct basis. The residual $19.66 is
-    // cross-document noise between two independent real sources (the AlwaysTrack settlement
-    // paperwork vs. the Dreamline card statement) recording the SAME purchase, not a defect — e.g.
-    // doc 5788/load 13546: AlwaysTrack reports $624.60, the Dreamline statement's own gross is
-    // $644.08 (net $624.83, checked directly against the CSV). TOLERANCE_CENTS is a small, named
-    // epsilon for this cross-document variance — not a loosened zero-tolerance on either source
-    // alone; a bigger discrepancy still fails loud.
-    const liveCents = cohortRows.reduce((s, r) => s + Math.round(Number(r.gross_cost) * 100), 0);
-    const TOLERANCE_CENTS = 2500; // $25.00 — observed live variance is $19.66; see note above.
-    if (liveCount !== EXPECTED_COUNT) {
-      console.error(`${LABEL}: LIVE FAIL — count mismatch: expected ${EXPECTED_COUNT}, live ${liveCount}`);
+    // 2. row count / dollar total — shrink-only four-arm ratchet against
+    // scripts/verify-fuel-transactions-per-load.baseline.json (Lead ruling, ROUND 30.6). See the
+    // file header for the full rationale; this is deliberately NOT the old exact-match-171 check.
+    const liveCount = liveRes.rows.length;
+    const liveCents = liveRes.rows.reduce((s, r) => s + Math.round(Number(r.total_cost) * 100), 0);
+    const baseline = loadBaseline();
+    if (!baseline) {
+      if (liveCount === ORIGINAL_COUNT && liveCents === ORIGINAL_TOTAL_CENTS) {
+        // No baseline yet AND live still matches the original B1 target exactly — the pre-ratchet
+        // state, nothing to ratchet. Falls through to PASS below.
+      } else {
+        console.error(
+          `${LABEL}: LIVE FAIL — no baseline file (${path.basename(BASELINE_PATH)}) and live ` +
+            `(${liveCount}/${(liveCents / 100).toFixed(2)}) does not match the original B1 target ` +
+            `(${ORIGINAL_COUNT}/${(ORIGINAL_TOTAL_CENTS / 100).toFixed(2)}) — a reconciled baseline ` +
+            `must exist before this guard can pass on a grown total.`
+        );
+        failures++;
+      }
+    } else if (liveCount === ORIGINAL_COUNT && liveCents === ORIGINAL_TOTAL_CENTS) {
+      console.error(
+        `${LABEL}: LIVE FAIL — live (${liveCount}/${(liveCents / 100).toFixed(2)}) has returned to the ` +
+          `ORIGINAL pre-growth B1 target exactly, but a baseline for ${baseline.count}/` +
+          `${(baseline.total_cents / 100).toFixed(2)} still exists — remove ${path.basename(BASELINE_PATH)} ` +
+          `(a return to the pre-Dreamline state is itself suspicious and worth a human look, not a silent pass).`
+      );
       failures++;
+    } else if (liveCount !== baseline.count || liveCents !== baseline.total_cents) {
+      console.error(
+        `${LABEL}: LIVE FAIL — live (${liveCount} rows / $${(liveCents / 100).toFixed(2)}) diverges from ` +
+          `the reconciled baseline (${baseline.count} rows / $${(baseline.total_cents / 100).toFixed(2)}, ` +
+          `established ${baseline.established}). New, unreconciled drift either way (grew or shrank) — a ` +
+          `human re-reconciles (see the baseline file's own 'reconciliation' field for the last one CC-3 ` +
+          `and the Lead did) and regenerates the baseline with a cited reason before this can pass again.`
+      );
+      failures++;
+    } else {
+      console.log(
+        `${LABEL}: known, reconciled total — ${liveCount} rows / $${(liveCents / 100).toFixed(2)} ` +
+          `(baseline established ${baseline.established}; see the baseline file for CC-3's/the Lead's ` +
+          `reconciliation of the delta vs the original B1 target).`
+      );
     }
-    if (Math.abs(liveCents - EXPECTED_TOTAL_CENTS) > TOLERANCE_CENTS) {
-      console.error(`${LABEL}: LIVE FAIL — total mismatch: expected ${(EXPECTED_TOTAL_CENTS / 100).toFixed(2)}, live ${(liveCents / 100).toFixed(2)} (tolerance $${(TOLERANCE_CENTS / 100).toFixed(2)})`);
-      failures++;
-    }
 
-    // 3. DEF exclusion — scoped to the ROUND-23.3 cohort only (a later provider's real DEF
-    // purchases are not this guard's concern; see the scoping note above).
-    const defRows = cohortRows.filter((r) => r.fuel_type === "def");
-    if (defRows.length > 0) {
-      console.error(`${LABEL}: LIVE FAIL — ${defRows.length} DEF row(s) found in the ROUND-23.3 cohort; DEF is an expense, never fuel`);
+    // 3. DEF GL segregation — shrink-only four-arm ratchet (ROUND 30.6, "DEF DEADLOCK BROKEN" —
+    // see file header for the full ruling). Real invariant is TREATMENT not STORAGE: every DEF
+    // debit posting must hit a DIFFERENT account_id than any diesel debit posting. Dynamic
+    // comparison — no hardcoded account number ("5000" never appears below) — so a NEW account
+    // collision still hard-fails immediately; only the already-measured, already-named debt (335
+    // postings / $10,970.23) is capped, pending CC-3's real fix (create a dedicated DEF account,
+    // repost, drive this to zero).
+    const defIds = liveRes.rows.filter((r) => r.fuel_type === "def").map((r) => r.id);
+    const dieselIds = liveRes.rows.filter((r) => r.fuel_type === "diesel").map((r) => r.id);
+    let sharedCount = 0;
+    let sharedCents = 0;
+    let sharedDetailRows = [];
+    if (defIds.length > 0) {
+      const glRes = await client.query(
+        `SELECT ft.fuel_type, a.id::text AS account_id, a.account_number, a.account_name,
+                count(*) AS n, sum(jep.amount_cents) AS cents
+           FROM fuel.fuel_transactions ft
+           JOIN accounting.journal_entry_postings jep
+             ON jep.source_transaction_type = 'fuel_event'
+            AND jep.source_transaction_id = ft.id::text
+            AND jep.debit_or_credit = 'debit'
+           JOIN catalogs.accounts a ON a.id = jep.account_id
+          WHERE ft.id = ANY($1::uuid[])
+          GROUP BY ft.fuel_type, a.id, a.account_number, a.account_name`,
+        [[...defIds, ...dieselIds]]
+      );
+      const defAccountIds = new Set(glRes.rows.filter((r) => r.fuel_type === "def").map((r) => r.account_id));
+      const dieselAccountIds = new Set(glRes.rows.filter((r) => r.fuel_type === "diesel").map((r) => r.account_id));
+      const sharedAccountIds = [...defAccountIds].filter((id) => dieselAccountIds.has(id));
+      sharedDetailRows = glRes.rows.filter((r) => sharedAccountIds.includes(r.account_id) && r.fuel_type === "def");
+      sharedCount = sharedDetailRows.reduce((s, r) => s + Number(r.n), 0);
+      sharedCents = sharedDetailRows.reduce((s, r) => s + Number(r.cents), 0);
+    }
+    const printShared = (label) => {
+      console.error(`${LABEL}: ${label} — DEF debit postings sharing an account with diesel debit postings:`);
+      for (const r of sharedDetailRows) {
+        console.error(`  ✗ DEF debits hit ${r.account_number} "${r.account_name}" — ${r.n} posting(s), $${(Number(r.cents) / 100).toFixed(2)} (the same account diesel purchases hit)`);
+      }
+      console.error(`  This is a fuel-posting-engine / chart-of-accounts defect (CC-3's lane), not this guard's to fix — see docs/bus/OUTBOX-CC-3.md.`);
+    };
+    const defBaseline = loadDefSegregationBaseline();
+    if (!defBaseline) {
+      if (sharedCount > 0) {
+        printShared("LIVE FAIL (no baseline)");
+        console.error(`  A reconciled baseline entry (def_gl_segregation) must exist before this guard can pass on a nonzero, disclosed total.`);
+        failures++;
+      }
+    } else if (sharedCount === 0) {
+      console.error(`${LABEL}: LIVE FAIL — DEF/diesel account segregation is now CLEAN (0 shared postings), but a baseline entry for ${defBaseline.count} postings / $${(defBaseline.total_cents / 100).toFixed(2)} still exists — remove def_gl_segregation from ${path.basename(BASELINE_PATH)} (this is good news; confirm it, don't silently keep stale debt on the books).`);
       failures++;
+    } else if (sharedCount !== defBaseline.count || sharedCents !== defBaseline.total_cents) {
+      printShared("LIVE FAIL");
+      console.error(`  Diverges from the reconciled baseline (${defBaseline.count} postings / $${(defBaseline.total_cents / 100).toFixed(2)}, established ${defBaseline.established}). New, unreconciled drift either way — a human re-reconciles and regenerates the def_gl_segregation baseline entry with a cited reason before this can pass again.`);
+      failures++;
+    } else {
+      console.log(`${LABEL}: known, disclosed DEF/GL-segregation debt — ${sharedCount} posting(s) / $${(sharedCents / 100).toFixed(2)} (baseline established ${defBaseline.established}; CC-3's lane to fix, see def_gl_segregation.reconciliation in the baseline file).`);
     }
 
     // 4. disclosed low-confidence corrections still present, not silently dropped.
@@ -177,9 +316,11 @@ async function live() {
     await client.query("COMMIT");
     if (failures > 0) process.exit(1);
     console.log(
-      `${LABEL}: LIVE PASS — ${liveCount}/${EXPECTED_COUNT} fuel_transactions rows, ` +
-        `$${(liveCents / 100).toFixed(2)}/$${(EXPECTED_TOTAL_CENTS / 100).toFixed(2)}, ` +
-        `0 DEF rows, ${expectedLowConfHashes.size} disclosed low-confidence rows intact.`
+      `${LABEL}: LIVE PASS — ${liveCount} fuel_transactions rows / $${(liveCents / 100).toFixed(2)} ` +
+        `(original B1 target ${ORIGINAL_COUNT}/$${(ORIGINAL_TOTAL_CENTS / 100).toFixed(2)}; ` +
+        `${baseline ? `reconciled baseline ${baseline.count}/$${(baseline.total_cents / 100).toFixed(2)} holds` : "no growth beyond original target"}), ` +
+        `${defIds.length} DEF row(s) present (${sharedCount > 0 ? `${sharedCount} posting(s)/$${(sharedCents / 100).toFixed(2)} known GL-segregation debt, capped by ratchet` : "0 shared with diesel, fully GL-segregated"}), ` +
+        `${expectedLowConfHashes.size} disclosed low-confidence rows intact.`
     );
   } finally {
     await client.end();

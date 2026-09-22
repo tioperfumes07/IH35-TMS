@@ -261,6 +261,12 @@ const GUARD_303 = [
   // ALLOW_OFFLINE_SKIP, fails the gate immediately. Runs unconditionally (no DATABASE_URL needed
   // itself — it deletes DATABASE_URL from the env of every guard it dynamically spawns).
   ["verify-no-silent-db-skip (03d)", "scripts/verify-no-silent-db-skip.mjs", {}],
+  // 03e — independent second-layer enforcement that verify-alwaystrack-parity.baseline.json can
+  // only SHRINK between commits. Diffs the file AS COMMITTED on this branch against AS COMMITTED
+  // on origin/main via git, so it also catches a baseline grown by any path other than the
+  // parity guard's own in-process regenerate-refuse logic (a hand-edit, a different script, a bad
+  // merge). No DATABASE_URL needed — pure git+JSON diff.
+  ["verify-baseline-never-grows (03e)", "scripts/verify-baseline-never-grows.mjs", {}],
 ];
 
 function touchesMoneyPath() {

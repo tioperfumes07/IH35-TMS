@@ -58,6 +58,12 @@ describe("loads-bulk.routes", () => {
   it("refuses escrow/settlement-triggering terminal transitions in bulk", () => {
     expect(routes).toContain("PER_LOAD_ONLY_TRANSITIONS");
     expect(routes).toContain("E_REQUIRES_PER_LOAD");
-    expect(routes).toContain('"abandoned", "driver_walkoff", "driver_no_show"');
+    // Behavior, not formatting — PER_LOAD_ONLY_TRANSITIONS is a multi-line Set literal (one value
+    // per line), not the single joined line this used to assert. Check each value present instead
+    // of one exact-formatted string that a reformat (or a --fix pass) breaks without changing
+    // behavior at all.
+    expect(routes).toContain('"abandoned"');
+    expect(routes).toContain('"driver_walkoff"');
+    expect(routes).toContain('"driver_no_show"');
   });
 });

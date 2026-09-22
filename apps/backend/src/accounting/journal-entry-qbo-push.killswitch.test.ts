@@ -74,9 +74,14 @@ describe("IMPORT-P0 — JE→QBO push kill-switch (zero-call proof)", () => {
     expect(getTokenMock).not.toHaveBeenCalled();
     const alerts = syncAlertInserts();
     expect(alerts).toHaveLength(1);
-    // values: [...,10]=severity, [...,11]=replay_hint — must be error + NULL (never replayable)
+    // values: [...,10]=severity, [...,11]=replay_hint — must be critical + NULL (never replayable).
+    // Severity was deliberately changed 'error' -> 'critical' in ACCT-F5950 (2026-08-31, commit
+    // a15e844d5f) alongside a real qbo.sync_alerts column-name fix (entity_type/error_message ->
+    // kind/message) that had been blocking expense creation for no-load drivers; the Neon CHECK
+    // constraint was widened to also allow 'error', but the code intentionally writes 'critical'.
+    // This assertion was never updated for that change — stale, not the source.
     const params = alerts[0][1] as unknown[];
-    expect(params[10]).toBe("error");
+    expect(params[10]).toBe("critical");
     expect(params[11]).toBeNull();
   });
 
