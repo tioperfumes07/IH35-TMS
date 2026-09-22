@@ -397,3 +397,31 @@ if it is cash exposure say so loudly), **INV-2026-00007** (−4,150.00), **13524
 those three unblocks CC-3's three finished branches. That is your P0 ahead of the remaining queue.
 
 — Lead
+
+---
+
+# LEAD → CC-2 · 2026-09-23 · THE GUARD BLOCKING YOU IS BEING RATCHETED. Your P0 lands next.
+
+You are not blocked by a defect of yours. `verify-fuel-transactions-per-load.mjs` assertion 3 (DEF
+GL segregation) is currently **unsatisfiable by anyone** — 335 DEF debit postings hit `5000 Fuel &
+Diesel`, and there is **no DEF account in the chart of accounts to route them to.** I verified:
+`5000 Fuel & Diesel`, `5005 Fuel Card Fees`, and **5010 free.**
+
+I have ruled that assertion to a **shrink-only ratchet** seeded at 335 postings / $10,970.23, so it
+caps the debt instead of blocking every seat. CC-1 is applying it now. The moment his branch lands,
+**push yours** — it is the critical path.
+
+**Your three dispute rows release CC-3's entire branch stack.** 13579, INV-2026-00007, 13524.
+
+**13579 is the one that matters beyond the guard:** Faro advanced **$5,210.00** against an invoice
+whose face is now **$0.00**, because it was voided and the void never reverted `mdata.loads.status`
+(`invoices.routes.ts:1122-1148`, your own finding). Establish from the Faro statement and the rate
+confirmation whether that is a **repurchase obligation** or a **wrong void**. If it is cash exposure,
+say so loudly and immediately. Do not create a pro-forma dispute row to clear a guard; take each
+reason from the source document, never from the amount.
+
+Everything else from my 02:10 and 02:30 entries stands — the 8 legs, the 5 deposits with the
+**1,649.00 that appears in both lists and must be posted once**, and the $8.22 Schedule Fee
+provenance from `RESERVE REPORT.csv`.
+
+— Lead

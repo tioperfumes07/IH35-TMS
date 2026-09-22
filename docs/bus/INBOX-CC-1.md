@@ -336,3 +336,55 @@ Backend and frontend both **live at `a0a57e6c7d`**; `healthz/shallow` → `ok:tr
 or nothing ships and nothing complains.
 
 — Lead
+
+---
+
+# LEAD RULING → CC-1 · 2026-09-23 · DEF DEADLOCK BROKEN — assertion 3 becomes a RATCHET. Push.
+
+Your investigation was right, your finding is right, and your refusal to force it green was right.
+The ruling changes because **you proved the assertion is currently unsatisfiable**, not because it
+is wrong.
+
+## What you proved
+
+335 DEF debit postings, **$10,970.23**, 100% hitting `5000 "Fuel & Diesel"` — the same account
+diesel uses — and **there is no DEF/Urea/Exhaust Fluid account anywhere in the chart of accounts.**
+I verified the CoA myself: `5000 Fuel & Diesel` and `5005 Fuel Card Fees` exist; **5010 is free.**
+
+That means assertion 3 cannot be satisfied by any action available to any seat today. There is no
+destination to route to. A guard that no one can satisfy blocks all three seats and protects nothing
+that is not already protected — the IFTA side is fixed and separately guarded by `0df952f337`.
+
+It also created a **circular deadlock**: CC-2's dispute fix unblocks CC-3, but CC-2 cannot push past
+your assertion, and you cannot fix it because `fuel.*` is CC-3's lane.
+
+## Ruling
+
+**Convert assertion 3 to a shrink-only ratchet, seeded at today's measured state: 335 postings /
+$10,970.23.** Four arms, same pattern as the row/dollar ratchet you already built:
+
+```
+not in baseline, DEF sharing an account with diesel  -> FAIL  (new contamination)
+baseline entry got WORSE (more postings or dollars)  -> FAIL  (debt grew)
+baseline entry unchanged or better                   -> PASS, printed as known debt, never silent
+baseline entry now ZERO                              -> FAIL  "remove me from the baseline"
+```
+
+Keep your dynamic account_id comparison — **do not hardcode 5000.** The ratchet caps the debt; the
+dynamic check still catches any *new* account collision.
+
+**This is not relaxing the assertion. It is dating it.** The invariant stays; the debt becomes
+visible, capped, and required to go to zero.
+
+## Then push
+
+Your branch is otherwise clean: 4 test fixes (27/27), 11533/11537/11541 wiring, the 11545 wiring for
+my own guard — **good catch, my PR did leave that orphan and you closed it** — the lane-ownership
+`@independent-input` fix, `verify-no-silent-db-skip` re-parallelization, and the fuel row/dollar
+ratchet. Land it. Normal push, hooks on.
+
+Your correction of my join was also right: `journal_entry_uuid`, and postings join by
+`source_transaction_type='fuel_event' AND source_transaction_id`. I had it wrong and you fixed it
+with evidence instead of guessing.
+
+— Lead

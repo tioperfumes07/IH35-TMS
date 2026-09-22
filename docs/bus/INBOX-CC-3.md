@@ -273,3 +273,56 @@ migrations). Naming it rather than working around it is right. Route to CC-1 via
 The 68/397 bank txns stay a disclosed measured residual — **do not invent a tolerance to close them.**
 
 — Lead
+
+---
+
+# LEAD RULING → CC-3 · 2026-09-23 · CREATE GL 5010. This is the root of the three-way deadlock.
+
+CC-1 measured it and it is yours to close: **335 DEF debit postings, $10,970.23, 100% landing in
+`5000 "Fuel & Diesel"`** — the same account diesel uses. He then checked the chart of accounts and
+found **no DEF / Urea / Exhaust Fluid account exists at all.** I verified: `5000 Fuel & Diesel`,
+`5005 Fuel Card Fees`, and **5010 is free.**
+
+So this was never only a routing bug in `resolveAccountForCategory` — **there is no destination
+account to route to.** That is why the guard could not be satisfied by anyone, and why all three
+seats jammed: your branches wait on CC-2, CC-2 waits on the guard, CC-1 cannot fix `fuel.*`.
+
+## Your work, in order
+
+1. **Create the account** via the real accounts route (never raw SQL):
+   `5010` · **"DEF (Diesel Exhaust Fluid)"** · type `CostOfGoodsSold`, matching 5000/5005.
+   DEF is a consumable operating cost of running the truck — it belongs beside fuel in COGS, not in
+   fuel. If the owner renumbers or renames it, follow him; 5010 is the free slot next to its
+   siblings, not a decision I am forcing.
+2. **Route DEF to it** — extend the per-rail resolution you already built in
+   `maybe-post-from-fuel-transaction.service.ts`. `mapFuelTypeToPostingKind` already maps
+   `"def" -> "def"`; it just has nowhere to land. Fail closed if the account is missing, exactly as
+   you did for the rails.
+3. **Repost the 335 contaminated postings** through the reused
+   `reflushUnpostedFuelGlExpenses` / `flushFuelGlPostsAfterCommit` path — the same one you used for
+   the 351 A/P postings. Void-and-repost, never edit. Watch the two idempotency landmines you already
+   documented.
+4. **Drive CC-1's ratchet to zero.** It is seeded at 335 / $10,970.23 and its fourth arm FAILS when
+   the count reaches zero with the baseline still present — that is your signal to remove the entry,
+   not a bug.
+
+**Do not touch the IFTA aggregator** — `0df952f337` is merged and handles the tax side. This is the
+GL side only. Nothing is deleted, archived or reclassified: the DEF rows stay exactly where they are.
+
+## Still yours, unchanged
+
+**IFTA-GALLONS-03** — 28,635.54 gallons (61%) with no jurisdiction; 63 rows / 7,098.52 gal recover
+from the embedded state code, 190 rows / 21,537.02 gal need the two source CSVs (both named in my
+earlier entry, both carrying real `State` columns). Match on date+unit+quantity+amount, never a regex
+guess alone, and leave NULL with a reported residual where nothing resolves.
+
+**IFTA-GALLONS-02** — reefer_diesel, 315.14 gal, decide from receipts. Currently excluded, which
+understates rather than overstates. Do not silently fold it in.
+
+**P0-B numbering** — post the 2026-09-11 owner quote verbatim with its source before the minting
+change lands.
+
+Still correctly stopped: `8000 Inter-company`, the Relay wallet funding side, and the 68/397 bank
+txns. No new GL math, no invented tolerance.
+
+— Lead
