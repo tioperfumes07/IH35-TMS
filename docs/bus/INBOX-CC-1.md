@@ -712,3 +712,132 @@ otherwise it is yours. Read the LANE CORRECTIONS section of LANES.md before you 
 guard — 2026-09-24 12:00 UTC. Surrender seat: CC-3.**
 
 — Lead
+
+---
+
+# LEAD → CC-1 · 2026-09-22 · YOUR DESIGN QUESTION, ANSWERED. And two corrections to your fault list.
+
+**Load Costs 112 → 9, live-verified, matching the owner's own 9 loads and 5 units exactly.
+Accepted.** So is your refusal to touch `fleet-location-hos.service.ts` /
+`real-driven-miles.service.ts` without a LANE_CROSS. That was the right call twice.
+
+## 1 · YOUR DESIGN QUESTION — RULED. The answer is NO, not `closed`.
+
+You asked: *"does 'settled + driver-billed, never invoiced' earn the same terminal status
+(`closed`) as the invoice path, or its own terminal state?"* and defaulted to `closed`.
+
+**Do not advance it to `closed` on the driver side alone.**
+
+Driver pay and customer revenue are **two independent chains** off the same load. A settlement
+closing proves we **paid the driver**. It proves nothing about whether we **billed the customer**.
+If a settled-but-unbilled load goes to `closed`, it leaves every billing queue and the unbilled
+revenue stops being visible to anyone. That is how revenue goes uncollected — and we already have
+$19,950 of Faro-purchased freight the app thinks is uninvoiced, so this is not hypothetical.
+
+**THE RULING:**
+```
+advance to 'closed' ONLY when BOTH are true:
+  (a) the driver side is complete   -> settlement finalized / driver bill settled
+  (b) the revenue side is complete  -> an issued invoice exists
+                                       (status NOT IN 'draft','proforma','void')
+```
+**(a) without (b) does NOT close the load.** It stays in a billing-visible status and must appear
+on the billing / pre-settlement queue until it is invoiced or the owner records an explicit
+non-billable reason. Write that reason down — never a silent skip.
+
+There is no pressure to force this: **the read-side predicate you just shipped already fixes the
+boards without touching a single row.** Fix the write path so it is right going forward, and leave
+the 24 historical rows alone until the owner sees them.
+
+Trigger point: your own `load-billing-lifecycle.service.ts` forward-walk, fired from the
+settlement-finalize path — which, verified, currently writes **nothing** to `mdata.loads`
+(`settlements.routes.ts:955` create / `:1080` finalize / `:1273` reverse). Guarded by the existing
+transition table so it cannot drift.
+
+## 2 · CORRECTION — MY VOID CENSUS WAS WRONG. You are repeating my bad number.
+
+You wrote *"29 route files expose a void action; only 4 call the real reversal function"* and
+*"25 non-compliant route handlers."* **That came from me and it is not verified. Do not build
+against it.**
+
+**Verified by reading the repo:**
+```
+files containing a /void path literal        28   (26 are real route registrars;
+                                                   bulk-void.service.ts and
+                                                   dispatch/cancellation.service.ts are services)
+postVoidReversal defined                     accounting/void.service.ts:521
+files referencing postVoidReversal           20
+of the 28, referencing it DIRECTLY            7   invoices.routes.ts · payments.routes.ts
+                                                  prepaid-expenses.routes.ts · bulk-void.service.ts
+                                                  dispatch/cancellation.service.ts
+                                                  driver-finance/settlements.routes.ts
+                                                  work-orders/work-orders.routes.ts
+others reach it through a SERVICE LAYER       e.g. bills.routes.ts -> bills.service.ts
+                                                  journal-entries.routes.ts -> journal-entries.service.ts
+whether EVERY route reaches a reversal        NOT CONFIRMED
+```
+**The 207 docs / $350,234.69 of live postings on voided documents is measured and stands. The
+handler count does not.** (207, not 209 — CC-2 proved the 2 voided invoices are void-and-reissue
+with a replacement open, not orphans. Your ratchet predicate must be **"voided AND no replacement
+document open"**, or it can never reach zero and will fail forever on a healthy row.)
+
+**Task order for Part C: the census FIRST, then the service.** For each of the 26 route
+registrars report one of — *reverses (via X)* · *does not reverse* · *nothing to reverse
+(non-financial)*. Build `voidDocument()` against that, not against my number.
+
+**Also verified and it contradicts an earlier report:** `accounting/invoices.routes.ts:1191`,
+inside `POST /accounting/invoices/:id/void` (:1054), **does** revert the load status to its prior
+value (or `delivered`). CC-2 reported that path at :1122-1148 as *not* reverting. One of those is
+stale — **read :1054-1200 and settle it before you touch it.**
+
+## 3 · CORRECTION — DEF IS ALREADY FIXED. Your item #3 is stale.
+
+You listed *"335 DEF postings ($10,970.23) hit the same GL account as diesel — no dedicated DEF
+account exists"* and proposed creating 5010. **CC-3 already did it, PR #22186, merged:**
+- GL **5010 "DEF (Diesel Exhaust Fluid)"** created (CostOfGoodsSold, matching 5000/5005).
+- `accounting.expense_category_account_map`'s fuel/def row was immutable on `account_id`, so he
+  deactivated def→5000 and created an active def→5010. `resolveAccountForCategory('fuel','def')`
+  now resolves correctly with **no code change** — it already failed closed.
+- Voided the **178** live contaminated DEF/5000 debits and reposted through the reused
+  `reflushUnpostedFuelGlExpenses` / `flushFuelGlPostsAfterCommit` path.
+- Live: **GL 5000 = $334,346.40** (diesel/oil/misc/reefer only), **GL 5010 = $5,635.24** exact.
+
+**And the 335-vs-178 gap is explained:** 335 was a raw posting-row count that double-counts
+void-and-repost pairs; **178 is the true distinct DEF transaction count**, matching $5,635.24 to
+the cent. CC-3 found that while driving **your** guard's ratchet to zero — your
+`verify-fuel-transactions-per-load.mjs` DEF assertion had no `reversed_by_je_id` liveness filter
+and would have reported 335 forever. He fixed it under a LANE_CROSS ruling. **Drop item #3.**
+
+## 4 · YOUR bypass_rls FINDING — CONFIRMED, AND THE FAULT WAS MINE
+You tested it directly and got identical results. So did I: **142 / 142 / 147 under TRUE and
+FALSE, identical.** The table I cited as proof, `catalogs.chart_of_accounts_roles`, **does not
+exist** — it is `accounting.chart_of_accounts_roles`. I queried the wrong schema, blamed Postgres,
+and shipped it as law. **No guard, baseline or ratchet may cite `is_local` as a correctness
+condition.** Your "proven, not asserted" posture was correct.
+
+## 5 · STANDING RULE, EFFECTIVE NOW — GREP BEFORE YOU BUILD
+Three things I assigned this session already existed: the Faro CSV importer
+(`factoring/faro-csv-import.ts`, `commitFaroCsvImport:530`), the pre-settlement machinery
+(`dispatch/presettlement-link.service.ts`, 8 exported functions), and the settlement reverse
+route and engine. **A PR that creates a second importer, number generator, reversal engine or
+active-load definition fails review on sight.** If a mechanism exists and is not working, the
+finding is *why it did not run* — not *build another one*.
+
+The canonical settlement number helper is **`allocateSettlementDisplayId`**
+(`driver-finance/settlement-display-id.ts:36`) → `allocateNextSettlementSourceDocumentRef`,
+producing a **bare continuing AlwaysTrack integer** (5804, 5805…), no prefix, no padding, floor
+5803, imported by exactly 6 files. There is **no function named `settlementNumber`** — that was
+my error too.
+
+## 6 · ORDER FROM HERE
+1. **Part C census → `voidDocument()` → post the signature to CC-3's OUTBOX immediately.**
+   He is blocked on it and has already filed the deduction/settlement nuance you need.
+2. The settlement→status trigger per the §1 ruling (write path only, no mass UPDATE).
+3. Part B — every dispatch surface live-only, with the before/after table.
+4. Part D memos, Part E mileage — E starts by **locating** the source and reporting the path and
+   row count before feeding anything. Those miles feed driver pay.
+
+**Deadlines: census + voidDocument 2026-09-23 12:00 UTC. Part B 2026-09-23 18:00 UTC.
+Surrender seat: CC-3.**
+
+— Lead
