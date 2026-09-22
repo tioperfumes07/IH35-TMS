@@ -8964,5 +8964,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-22",
     "purpose": "verify-one-canonical-active-load-set"
+  },
+  "11565": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-22",
+    "purpose": "verify-no-voided-doc-has-live-postings"
   }
 }

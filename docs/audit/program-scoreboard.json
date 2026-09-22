@@ -1,6 +1,6 @@
 {
   "healthzSha": "19d3ff8",
-  "generated_at": "2026-09-22T17:46:01.285Z",
+  "generated_at": "2026-09-22T18:00:19.461Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
@@ -2123,6 +2123,51 @@
   },
   "recentActivity": [
     {
+      "number": 22227,
+      "title": "FINDING: ACCT-F2026092209 — settlement-finalize now syncs load status (write-path fix, ROUND 33.2 §1)",
+      "state": "merged",
+      "mergedAtCt": "09/22/2026, 12:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22227",
+      "sha": "4ff78e34a2",
+      "committedAtIso": "2026-09-22T12:59:59-05:00"
+    },
+    {
+      "number": 22238,
+      "title": "CORRECTION: views.live_loads predicate was wrong — a round trip ends at SETTLEMENT, not at invoice",
+      "state": "merged",
+      "mergedAtCt": "09/22/2026, 12:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22238",
+      "sha": "3c36c1190b",
+      "committedAtIso": "2026-09-22T17:56:38Z"
+    },
+    {
+      "number": 22239,
+      "title": "FINDING: N/A LANE: DOCS (docs(bus) report -- T156 answered, I4 diesel re-match live result reported, push held on alwaystrack-parity baseline)",
+      "state": "merged",
+      "mergedAtCt": "09/22/2026, 12:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22239",
+      "sha": "8c1a380f20",
+      "committedAtIso": "2026-09-22T12:56:24-05:00"
+    },
+    {
+      "number": 22237,
+      "title": "FINDING: N/A LANE: DOCS (docs(audit) GUARD-WORKORDERS -- verify-alwaystrack-parity baseline stale after my own correct live fuel-relink, blocking every seat's push, needs CC-1's re-measurement)",
+      "state": "merged",
+      "mergedAtCt": "09/22/2026, 12:51 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22237",
+      "sha": "fe3799e623",
+      "committedAtIso": "2026-09-22T12:51:43-05:00"
+    },
+    {
+      "number": 22236,
+      "title": "MANUALS INDEX for every seat + feed-parity gates sharpened: conditions must still be met when fed",
+      "state": "merged",
+      "mergedAtCt": "09/22/2026, 12:48 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22236",
+      "sha": "6c17642cb0",
+      "committedAtIso": "2026-09-22T17:48:13Z"
+    },
+    {
       "number": 22231,
       "title": "FINDING: N/A — CLAIM-RESERVE 202614180000: views.live_loads permanent fix (ROUND 36.1)",
       "state": "merged",
@@ -2166,51 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22232",
       "sha": "61e1f8150b",
       "committedAtIso": "2026-09-22T12:33:17-05:00"
-    },
-    {
-      "number": 22230,
-      "title": "FINDING: N/A",
-      "state": "merged",
-      "mergedAtCt": "09/22/2026, 12:30 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22230",
-      "sha": "3899bfb965",
-      "committedAtIso": "2026-09-22T12:30:39-05:00"
-    },
-    {
-      "number": 22228,
-      "title": "FINDING: N/A",
-      "state": "merged",
-      "mergedAtCt": "09/22/2026, 12:20 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22228",
-      "sha": "f4a6a091e0",
-      "committedAtIso": "2026-09-22T12:20:55-05:00"
-    },
-    {
-      "number": 22229,
-      "title": "RULING: views.live_loads — the permanent fix for At Risk showing 19, validated live before any code",
-      "state": "merged",
-      "mergedAtCt": "09/22/2026, 12:20 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22229",
-      "sha": "401598663c",
-      "committedAtIso": "2026-09-22T12:20:06-05:00"
-    },
-    {
-      "number": 22226,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-      "state": "merged",
-      "mergedAtCt": "09/22/2026, 12:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22226",
-      "sha": "abf0416082",
-      "committedAtIso": "2026-09-22T17:04:08Z"
-    },
-    {
-      "number": 22225,
-      "title": "FINDING: N/A LANE: DOCS (docs(bus) report -- item 9 of 48 closed; items 36/37 of 48 scoped (ifta_states retire recommendation, ifta_filings expected-state))",
-      "state": "merged",
-      "mergedAtCt": "09/22/2026, 11:58 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22225",
-      "sha": "f757878262",
-      "committedAtIso": "2026-09-22T11:58:58-05:00"
     }
   ]
 }

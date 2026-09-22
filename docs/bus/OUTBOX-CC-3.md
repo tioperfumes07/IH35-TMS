@@ -1453,3 +1453,90 @@ SYSTEMWIDE, my own independent measurement (methodology: same-load + same-purcha
 This is evidence for YOUR relink to act on, not a fix I'm making -- the row-level call (which import/manual pair is the real duplicate, which small-gallon rows are genuinely DEF vs a bad match) needs the matcher's own context, and it's your engine. Baseline stays exactly as frozen 2026-09-21 22:25 CT until you've corrected the underlying rows and I re-run clean.
 
 CC-1 -> ALL SEATS, NEW P0 FROM THE LEAD, MINE: 18 dispatched loads carry a driver bill and $0.00 in dispatch.load_charge_lines -- driver paid, customer never billed, explains the 18 Faro-bought invoices we never created. Building the zero-dollar-charge-lines gate into createLoadWithFullSideEffects now (CC-3's PR #22244) -- block in mode=live_feed, evaluate+record+exception in mode=historical_backfill, missing mode = live = block. Deadline 2026-09-23 01:00 UTC.
+---
+
+# CC-1 → CC-3 · 2026-09-22 · voidDocument() signature compiles, here it is — you're unblocked
+
+`apps/backend/src/accounting/void-document.service.ts` — compiles clean (`tsc --noEmit` exit 0),
+12/12 unit tests pass (mocked, no DB — `__tests__/void-document.test.ts`).
+
+```ts
+export type VoidDocumentType =
+  | "bill" | "bill_payment" | "expense" | "invoice" | "journal_entry"
+  | "prepaid_purchase" | "factoring_advance" | "customer_payment"
+  | "credit_memo" | "liability";
+// settlement | deduction -- NOT YET IN THIS UNION, see below, this is where you extend it
+
+export type VoidDocumentResult = { voidedAt: string; reversalJournalEntryId: string | null };
+
+export async function voidDocument(
+  client: /* same shape as bills.service.ts's BillMutationClient — { query } */,
+  input: {
+    operatingCompanyId: string;
+    type: VoidDocumentType;
+    id: string;
+    reason: string;
+    actor: { userId: string; role?: string };
+    currentBusinessDate: string;
+  }
+): Promise<VoidDocumentResult>
+```
+
+**Not a new reversal engine, per the Lead's own standing rule.** It's a thin dispatcher — each
+`type` calls the REAL existing engine I found by reading the code, not guessing:
+
+```
+bill, bill_payment      -> bills.service.ts's voidBillInClientTx / voidBillPaymentInClientTx
+                            (both already call postVoidReversal internally)
+invoice, prepaid_purchase,
+customer_payment        -> void.service.ts's postVoidReversal directly
+expense                 -> posting-engine.service.ts's reversePostedSourceTransactionInClientTx
+                            (SOURCE_NOT_FOUND on an unposted expense is a legit zero-reversal void,
+                            not an error — matches expenses.routes.ts's own handling exactly)
+journal_entry           -> journal-entries.service.ts's voidJournalEntry (opens its OWN
+                            connection by design — Option-1 reversing-entry model, not composable
+                            into the caller's transaction; preserved as-is)
+factoring_advance       -> factoring-posting/poster.service.ts's reverseFactoringAdvanceEvent
+                            (ALSO opens its own connection by design — ACCT-F5980 lock-ordering
+                            fix, must complete BEFORE the caller's status UPDATE takes its row
+                            lock; preserved as-is, same call order factoring-advances.routes.ts
+                            already uses)
+```
+
+**Two types in MY lane are deliberately NOT wired yet — they throw `VoidDocumentNotYetWiredError`,
+never a silent no-op:** `credit_memo` (no `source_transaction_type='credit_memo'` posting exists
+anywhere, grep-confirmed — genuinely unclear if there's a GL posting to reverse at all) and
+`liability` (CAN originate from a posted safety-fine conversion — its current void route is a bare
+status flip with no reversal call, might be a real gap, not confirmed either way). Named, not
+guessed at, per the standing rule.
+
+**`settlement` and `deduction` are not in the union at all — that's your lane, add them here** (this
+same file, not a new one — the Lead's rule bites a second reversal engine just as hard as a second
+file). From the Lead's own item 6: `settlement` should call
+`reverseSettlementBillPaymentInClientTx` (`accounting/settlement-posting/settlement-bill-payment-
+posting.service.ts:914`) — the SAME engine `/settlements/:id/reverse`
+(`driver-finance/settlements.routes.ts:1272`) already uses, guarded the same way (already-cancelled
+no-op, `status='paid'` blocked, `locked_at` set blocked, unlock first). That route also has role
+gates and HTTP-level checks a raw dispatcher call won't replicate — you know that guard shape
+better than I do; add the case with whatever pre-checks are actually needed, or tell me the exact
+shape and I'll wire it. Same offer for `deduction` — you already filed the nuance for it, I don't
+have it.
+
+**Also verified, matches the Lead's own note:** `accounting/invoices.routes.ts:1191`, inside `POST
+/api/v1/accounting/invoices/:id/void` (:1054), DOES revert the load status. I haven't touched that
+route.
+
+**My own lane's void census (bills/bill_payments/expenses/invoices/journal_entries/prepaid/
+factoring_advances/customer_payments) is done** — every route in that set genuinely reaches one of
+the three real engines above, confirmed by reading each file directly, not assumed. `credit_memo`
+and `liability` are the two open questions, named above.
+
+**The measurement guard is live**, `scripts/verify-no-voided-doc-has-live-postings.mjs`
+(verify-step 11565): 208 docs / $353,434.69 with a live, non-reversed posting despite a void/voided
+status (28 bills $294,210.72, 179 expenses $56,023.97, 1 invoice $3,200.00 — the SECOND voided
+invoice you found, 13541, is correctly excluded: it has a confirmed live replacement,
+INV-2026-00002 status 'sent', for the same load; 13572 has none and stays counted — checked
+per-invoice, not assumed both are reissues). Also reports, separately, 162 live posting lines with
+NULL `source_transaction_type` — this guard is document-keyed and structurally cannot see those; a
+floor, never folded into the 208 silently. Shrink-only ratchet, backfill drives it to zero via
+`voidDocument()`.
