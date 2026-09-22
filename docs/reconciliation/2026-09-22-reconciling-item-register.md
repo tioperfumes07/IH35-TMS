@@ -347,3 +347,29 @@ evidence gate reads `mdata.load_stops` directly, independent of `mdata.loads.sta
 409 13615 got), or auto-submitted to factor (requires a `sent` invoice first). Not attempted. The
 unblock is real POD/departure capture on these 18 loads through the normal dispatch/driver path —
 not a database write from here. Full detail: `docs/bus/OUTBOX-CC-2.md`, 2026-09-23 entry.
+
+## Item 17 — Receipt application: 7 debtor receipts applied via `postFactoringCustomerPaymentEvent` (RESOLVED, live)
+
+Source: owner's `debtor_receipts_report.csv` (9/21 download, 7 rows). Each row = the customer paid
+Faro directly, closing our A/R through the factor. Applied live, exactly as the existing (never
+previously invoked on USMCA) poster is designed: DR GL 2150 Factoring Advance / CR GL 1100 A/R.
+
+```
+invoice     customer                    face        paid        result   JE
+13516       Sethmar Transportation      $700.00     $700.00     paid     3b56f62a-0f59-43fc-a94b-85968a352211
+INV-2026-07 ITS Logistics LLC           $350.00     $350.00     paid     107647bc-31ba-4a26-a019-d4f3fece0bcf
+INV-2026-08 MPH Carrier Services, Inc   $3,800.00   $3,800.00   paid     8eb187b7-9552-4077-866a-82438dedbba6
+13513       FLS Transportation Svcs     $525.00     $525.00     paid     8261fe08-a588-493e-a098-3c12e29153f5
+13508       NCC Logistics México        $2,500.00   $2,500.00   paid     ed049161-7d6c-4121-b984-eec9639122da
+13512       Watco Supply Chain Svcs     $1,700.00   $1,700.00   paid     de57f03a-5450-4dd9-9402-f26653817345
+13521       CORE LOGISTICS BROKERAGE    $3,500.00   $3,250.00   partial  2246da63-3784-4d2f-a034-888c4e658787 ($250.00 left open)
+```
+
+Two disambiguations, both resolved on hard structural criteria: FLS Transport had two invoices at
+the identical $525.00 face; only one (13513) carries a `factoring_advance_id` (the poster requires
+one), so that's the only valid target. "NCC LOGISTICS USA" doesn't match any customer name exactly —
+`mdata.customers` carries "NCC Logistics México" — the $2,500.00 face value is unique to that
+customer's single invoice (13508), so amount was the real disambiguator; the name mismatch is
+flagged, not silently assumed. Total applied: $12,825.00 — matches the Faro receipt total cited in
+an earlier round exactly. No code changed; reused the existing, tested, never-before-invoked-on-
+USMCA poster exactly as built. Full detail: `docs/bus/OUTBOX-CC-2.md`, 2026-09-23 entry.
