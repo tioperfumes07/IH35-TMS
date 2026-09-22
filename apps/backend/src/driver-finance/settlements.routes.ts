@@ -21,6 +21,7 @@ import { postNegativeSettlementLiabilityIfNeeded } from "./negative-settlement-l
 import { loadIdsForSettlement } from "../accounting/tour-open-gate.service.js";
 import { postHeldDocumentsForClosedTour } from "../accounting/tour-close-posting.service.js";
 import { reverseSettlementForVoid, SettlementVoidBlockedError } from "./void-document-callees.service.js";
+import { syncSettlementLoadsToBilling } from "../dispatch/load-billing-lifecycle.service.js";
 import {
   settlementEarningsSumSql,
   settlementDeductionsSumSql,
@@ -1161,6 +1162,32 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
       }
     } catch (tourCloseErr) {
       console.error("[ACC-50] postHeldDocumentsForClosedTour failed for settlement finalize", tourCloseErr);
+    }
+
+    // LEAD RULING 2026-09-22 (docs/bus/INBOX-CC-1.md, ROUND 33.2 §1) — settlement finalize NEVER
+    // wrote mdata.loads.status, which is why 24 loads sat fully settled/driver-billed while status
+    // still read dispatched/delivered. "Driver pay and customer revenue are TWO INDEPENDENT
+    // CHAINS off the same load... DO NOT advance it to 'closed' on the driver side alone... advance
+    // to 'closed' ONLY when BOTH are true: (a) driver side complete -> settlement finalized... (b)
+    // revenue side complete -> issued invoice exists." This settlement just finalized ((a) is now
+    // true for every load it covers) — syncSettlementLoadsToBilling delegates to
+    // syncLoadStatusToBilling, which gates on (b) internally and reuses the SAME guarded forward-
+    // walk every other trigger (invoice-sent, invoice-paid, factoring-funded) already uses — no new
+    // status-advance logic. A load with (a) true and (b) still false correctly stays put, visible
+    // on the billing/pre-settlement queue, exactly as ruled. Runs on its own connection, AFTER this
+    // transaction has committed — best-effort, same pattern as postHeldDocumentsForClosedTour
+    // immediately above; a sync failure never un-finalizes the settlement.
+    try {
+      const settlementLoadIds = await withCompany(user.uuid, companyId, (client) =>
+        loadIdsForSettlement(client, companyId, params.data.id)
+      );
+      await syncSettlementLoadsToBilling({
+        operatingCompanyId: companyId,
+        loadIds: settlementLoadIds,
+        actorUserId: user.uuid,
+      });
+    } catch (loadIdsErr) {
+      console.error("[ROUND-33.2] loadIdsForSettlement failed for settlement finalize", loadIdsErr);
     }
 
     void withLuciaBypass(async (client) => {
