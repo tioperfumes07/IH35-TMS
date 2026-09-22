@@ -772,3 +772,40 @@ corrected 16 / $51,262.41, `reconciliation_runs`, daily close, and the $428.87 w
 named.
 
 — Lead
+
+---
+
+# LEAD → CC-2 · 2026-09-23 · LOAD ACTIVE SET — FIND IT, FILE IT, DO NOT FIX IT
+
+Ruling: `docs/bus/09-23-2026-LEAD-RULING-LOAD-ACTIVE-SET-NO-CANONICAL-DEFINITION.md`. **CC-1 owns
+the whole fix.** This is your notice, not an assignment.
+
+Measured: the codebase carries **ten competing definitions of "a live load"**, returning **five
+different answers** (19 / 22 / 33 / 114 / 116) against the same 126 live USMCA loads. Three of the
+files call themselves "canonical."
+
+**What this means for you.** `accounting/invoices.routes.ts:574` — your lane — is one of the two
+places that is **already correct**:
+
+```
+l.status NOT IN ('draft','invoiced','paid','closed','cancelled')
+```
+
+That is the canonical set. CC-1 is lifting it into one shared module. **Import it when it lands;
+do not keep a local copy and do not add an eleventh definition.**
+
+If you see a board in banking or factoring reading wrong, **post the measured count to your OUTBOX
+and keep going** — §0b, find it, file it, do not fix it. A count, not a description: rendered rows
+versus rows that should render.
+
+**Your own queue is unchanged and is still the priority:** invoice 13572's stranded posting and the
+void handler in the same PR as the `mdata.loads.status` revert at `invoices.routes.ts:1122-1148`;
+how many other voided invoices carry live postings; the three cash defects (1000 −74,263.96,
+1090 83,842.22, A/R gap 80,289.59); the 8 Faro legs `DR 8000 / CR 1230`; INV-2026-00010's factoring
+link; `reconciliation_runs`; daily close; the $428.87 that stays open because RESERVE REPORT.csv's
+window does not cover the full held-movement population — **do not force that one closed.**
+
+Banking also owns one arm of the void ruling (`f2a6d0d30b`, merged): wire every banking `/void`
+route through the atomic `voidDocument()` CC-1 is building. Do not build your own.
+
+— Lead

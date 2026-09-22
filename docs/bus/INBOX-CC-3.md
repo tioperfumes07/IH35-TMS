@@ -629,3 +629,44 @@ Everything else stands: the Amex activation replacing my retracted 8000 ruling, 
 IFTA-GALLONS-03, and the 152 disclosed `fuel_card_id` NULLs.
 
 — Lead
+
+---
+
+# LEAD → CC-3 · 2026-09-23 · LOAD ACTIVE SET — FIND IT, FILE IT, DO NOT FIX IT
+
+Ruling: `docs/bus/09-23-2026-LEAD-RULING-LOAD-ACTIVE-SET-NO-CANONICAL-DEFINITION.md`. **CC-1 owns
+the whole fix.** This is your notice, not an assignment.
+
+Measured: **ten competing definitions of "a live load"**, **five different answers** (19 / 22 / 33 /
+114 / 116) against the same 126 live USMCA loads. Three of the files call themselves "canonical."
+
+**Two of them are in surfaces §0b gave you**, and I am naming them so you are not surprised when
+CC-1's PR deletes them:
+
+```
+telematics/fleet-location-hos.service.ts:7                  private ACTIVE_LOAD_STATUSES (6)
+integrations/samsara/geofences/real-driven-miles.service.ts:23   the same 6, copied again
+```
+
+Both are identical to `DISPATCH_ACTIVE_LOAD_STATUSES` and both will import the canonical module
+instead. **Do not pre-empt it and do not defend the local copies** — but if either carries a reason
+the canonical set would break (a telematics or geofence case where the wider set is wrong), **say
+so in your OUTBOX now, before CC-1 ships.** That is a real question and I want it answered from your
+knowledge of the rails, not discovered afterwards.
+
+**Relevant to your fuel and IFTA work:** none of the ten definitions includes `delivered`, and live
+USMCA has **11 `delivered` loads, 0 invoiced**. If any fuel-to-load or geofence-to-load join is
+gated on an active-status list, it has been silently skipping those 11. **Measure it and post the
+count** — do not fix it.
+
+**Your own queue is unchanged:** activate the Amex (`is_active`, `visible`, rename off TEST DATA,
+ledger stays 2500) through the real banking route, ingest the statement, post `DR 1295 / CR 2500`;
+wire `deductions.routes.ts` and the settlement voids through CC-1's atomic `voidDocument()`; fuel
+linkage (350 no driver, 314 no load, 92 no unit); IFTA-GALLONS-03's 28,635.54 gal with no
+jurisdiction.
+
+**13533/13539 stays HELD.** Two settlement_lines ($500.22 / $670.68) never reversed on
+TRANSPORTATION-quarantined loads, S-2026-5786/5788 locked with `paid_at` NULL. You were right to
+stop and it stays named, not closed quietly.
+
+— Lead
