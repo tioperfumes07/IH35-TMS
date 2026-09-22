@@ -938,6 +938,19 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     operating_company_id: z.string().uuid(),
   });
 
+  // BANK-ACCOUNT-ACTIVATE (ACCT-F30214, CC-3, 2026-09-22) — real credit/depository card already in the
+  // database, `is_active=false` under a placeholder "TEST DATA" name, needs to be switched on and
+  // renamed to the real card in use — never delete/recreate (void-not-delete: rename+activate the
+  // existing row so its history survives). Owner/Administrator only, same gate as hide/unhide — this
+  // changes what appears in Banking and can bring an account into active GL posting, the same
+  // financial-surface class as those two actions. Never touches ledger_account_id (that stays pinned
+  // to whatever GL account the row already carries — activation ≠ re-mapping).
+  const activateBodySchema = z.object({
+    operating_company_id: z.string().uuid(),
+    account_name: z.string().trim().min(1).max(120),
+    institution_name: z.string().trim().min(1).max(120).optional(),
+  });
+
   app.post("/api/v1/banking/accounts/:id/hide", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
@@ -986,4 +999,56 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     if (!result) return reply.code(404).send({ error: "bank_account_not_found_or_not_hidden" });
     return { account: result };
   });
+
+  app.patch(
+    "/api/v1/banking/accounts/:id/activate",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      if (!isBankAccountHideAdminRole(String((user as { role?: string }).role ?? ""))) {
+        return reply.code(403).send({ error: "forbidden", detail: "bank-account activate is Owner/Administrator only" });
+      }
+      const params = accountIdParamsSchema.safeParse(req.params ?? {});
+      if (!params.success) return sendValidationError(reply, params.error);
+      const body = activateBodySchema.safeParse(req.body ?? {});
+      if (!body.success) return sendValidationError(reply, body.error);
+      const companyId = body.data.operating_company_id;
+
+      const result = await withCompanyScope(user.uuid, companyId, async (client) => {
+        const res = await client.query(
+          `
+            UPDATE banking.bank_accounts
+            SET is_active = true,
+                account_name = $1,
+                display_name = $1,
+                institution_name = COALESCE($2, institution_name),
+                updated_at = now()
+            WHERE id = $3
+              AND operating_company_id = $4::uuid
+            RETURNING *
+          `,
+          [body.data.account_name, body.data.institution_name ?? null, params.data.id, companyId]
+        );
+        const row = res.rows[0];
+        if (!row) return null;
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "banking.bank_accounts.activated",
+          {
+            resource_type: "banking.bank_accounts",
+            resource_id: params.data.id,
+            operating_company_id: companyId,
+            account_name: body.data.account_name,
+          },
+          "info",
+          "ACCT-F30214-BANK-ACCOUNT-ACTIVATE"
+        );
+        return row;
+      });
+      if (!result) return reply.code(404).send({ error: "bank_account_not_found" });
+      return { account: result };
+    }
+  );
 }

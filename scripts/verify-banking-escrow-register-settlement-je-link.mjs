@@ -1,5 +1,11 @@
 #!/usr/bin/env node
 /**
+ * MATRIX-BUILT-OPTIONAL — this guard checks one backend SQL query's column selection plus one
+ * frontend prop-threading assertion; it is not a Program-matrix EntityLink/FK wiring leaf, so it
+ * carries no @matrix-built tag (verify-matrix-built-tag-present.mjs's own WIRING_HINT regex only
+ * flags it because its comments mention "EntityLink" while describing the frontend's own render
+ * call, not because this guard tracks a matrix leaf itself).
+ *
  * BANKING-DRIVER-ESCROW-REGISTER-MISSING-SETTLEMENT-JE-LINK — the register endpoint's "escrow" branch
  * (`GET /api/v1/banking/accounts/:id/register`, banking.routes.ts) never selected settlement_id/
  * journal_entry_id at all, even though accounting.escrow_postings.source_id/linked_journal_entry_id are
@@ -55,7 +61,13 @@ export function checkEscrowRegisterLinkage(src, frontendSrc) {
   if (!/je\.memo\s+AS\s+journal_entry_memo/.test(branch)) {
     problems.push(`${TARGET}: escrow branch no longer selects journal_entry_memo (the label DriverEscrowTabContent.tsx renders for the EntityLink)`);
   }
-  if (!/ds\.display_id\s+AS\s+settlement_display_id/.test(branch)) {
+  // P0-B settlement numbering law (Lead, 2026-09-22/23): the AlwaysTrack settlement document
+  // number (driver_settlements.source_document_ref) IS the settlement number the user sees --
+  // display_id (the old synthetic S-YYYY-NNNN counter) is retired as the user-facing label. The
+  // escrow branch was correctly updated to alias FROM source_document_ref; this check widened
+  // (2026-09-23, CC-3) to accept either column feeding the same settlement_display_id alias, so a
+  // stale literal-string check doesn't false-positive against the numbering-law-correct code.
+  if (!/ds\.(display_id|source_document_ref)\s+AS\s+settlement_display_id/.test(branch)) {
     problems.push(`${TARGET}: escrow branch no longer selects settlement_display_id from driver_finance.driver_settlements`);
   }
   if (!/LEFT JOIN driver_finance\.driver_settlements ds\s*\n\s*ON ds\.id\s*=\s*ep\.source_id/.test(branch)) {
