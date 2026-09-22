@@ -169,15 +169,13 @@ export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
         const raw = csvRowToApiShape(g);
         const tx = raw ? parseRelayFuelTransactionRow(raw) : null;
         if (!tx) { skipped++; continue; }
-        const res = await upsertRelayFuelTransaction(client, opco, tx, "csv_import");
+        // ROUND 43 FOLLOW-UP item 2: upsertRelayFuelTransaction no longer bridges into
+        // fuel.fuel_transactions or produces a GL post candidate — gl_post_candidate is always
+        // null now (see that file's own header for why). pendingGlPosts stays declared/flushed
+        // below so a future real candidate source is a one-line change, not a signature change.
+        await upsertRelayFuelTransaction(client, opco, tx, "csv_import");
         imported++;
         lines += Array.isArray(tx.fuel_items) ? tx.fuel_items.length : 0;
-        if (res.gl_post_candidate) {
-          pendingGlPosts.push({
-            ...res.gl_post_candidate,
-            actor_user_id: actorUserId || res.gl_post_candidate.actor_user_id,
-          });
-        }
       }
     });
 

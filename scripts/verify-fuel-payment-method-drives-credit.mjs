@@ -3,6 +3,13 @@
  * FUEL-08 — company_direct fuel credit must follow the real payment method.
  * FAIL if maybe-post hardcodes company_direct_credit: "cash" (the live defect that
  * credited undeposited/cash for fleet-card / Relay settles).
+ *
+ * REVISED 2026-09-22 (ROUND 43 FOLLOW-UP item 2, LANE_CROSS —
+ * docs/bus/LEAD-RULING-2026-09-22-CC3-ROUND-43-CUT-RELAY-INGEST-CROSS-LANE.md): relay-fuel-ingest
+ * no longer computes a gl_post_candidate at all (no fuel row, no GL — banking.bank_transactions
+ * visibility only). The has_fuel_card-on-Relay-candidate check below is retired along with the
+ * candidate it checked; the fuel-transaction-import.ts check (Dreamline/manual imports, the ONLY
+ * remaining live GL-posting pathway for fuel) is unchanged and still enforced.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -36,8 +43,13 @@ export function check(sources) {
     }
   }
   if (!ingest) problems.push("missing relay-fuel-ingest.service.ts");
-  else if (!/has_fuel_card/.test(ingest)) {
-    problems.push("relay-fuel-ingest must stamp has_fuel_card on gl_post candidates");
+  else if (/gl_post_candidate:\s*\{/.test(ingest)) {
+    // ROUND 43 FOLLOW-UP item 2: a real gl_post_candidate object literal (not the always-null
+    // return) reappearing here means the fuel.fuel_transactions bridge / GL posting came back --
+    // if it ever does, has_fuel_card must be stamped on it again, same as before.
+    if (!/has_fuel_card/.test(ingest)) {
+      problems.push("relay-fuel-ingest computes a real gl_post_candidate again but does not stamp has_fuel_card on it");
+    }
   }
   if (!importSrc) problems.push("missing fuel-transaction-import.ts");
   else if (!/has_fuel_card/.test(importSrc)) {
@@ -65,8 +77,19 @@ function selftest() {
     ingest: `cash_advance: false,`,
     importSrc: `cash_advance: false,`,
   };
+  // ROUND 43 FOLLOW-UP item 2: the ingest side no longer builds a real gl_post_candidate at all
+  // (no fuel row, no GL — see this guard's own header). A real candidate object literal reappearing
+  // without has_fuel_card must still be caught; a stub that returns null (today's real shape) must
+  // NOT be flagged as missing has_fuel_card.
+  const ingestNoCandidate = { ...good, ingest: `return { relay_fuel_transaction_id, gl_post_candidate: null };` };
+  const ingestRealCandidateMissingFlag = {
+    ...good,
+    ingest: `return { relay_fuel_transaction_id, gl_post_candidate: { fuel_transaction_id: bridge.fuel_transaction_id, fuel_type: "diesel" } };`,
+  };
   if (check(good).length) throw new Error(`${LABEL} selftest: compliant sources flagged`);
   if (!check(bad).length) throw new Error(`${LABEL} selftest: hardcoded cash / missing has_fuel_card not caught`);
+  if (check(ingestNoCandidate).length) throw new Error(`${LABEL} selftest: always-null gl_post_candidate wrongly flagged`);
+  if (!check(ingestRealCandidateMissingFlag).length) throw new Error(`${LABEL} selftest: real gl_post_candidate missing has_fuel_card not caught`);
   console.log(`[${LABEL}] SELFTEST PASS`);
 }
 

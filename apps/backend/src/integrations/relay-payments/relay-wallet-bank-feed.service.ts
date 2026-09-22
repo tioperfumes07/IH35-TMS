@@ -100,25 +100,9 @@ export async function resolveRelayWalletBankAccountId(
   return res.rows[0]?.id ?? null;
 }
 
-async function resolveTrailerId(
-  client: DbClient,
-  operatingCompanyId: string,
-  trailerNumber: string | null,
-): Promise<string | null> {
-  if (!trailerNumber) return null;
-  const res = await client.query<{ id: string }>(
-    `
-      SELECT id::text AS id
-      FROM mdata.equipment
-      WHERE (owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)
-        AND upper(replace(equipment_number, ' ', '')) = upper(replace($2, ' ', ''))
-        AND deactivated_at IS NULL
-      LIMIT 1
-    `,
-    [operatingCompanyId, trailerNumber],
-  );
-  return res.rows[0]?.id ?? null;
-}
+// resolveTrailerId (mdata.equipment lookup by the "Trailer #" prompt) removed as part of ROUND 43
+// FOLLOW-UP item 2 -- its only caller wrote categorization_trailer_id, which this file no longer
+// sets at ingest time (see upsertRelayWalletBankFeedRow's own header comment).
 
 async function resolveDriverFallbackFromUnit(
   client: DbClient,
@@ -289,7 +273,6 @@ export async function upsertRelayWalletBankFeedRow(
     "Reefer",
     "Trailer Number",
   ]);
-  const trailerId = await resolveTrailerId(client, input.operating_company_id, trailerNumber);
 
   let driverId = input.matched_driver_id;
   if (!driverId) {
@@ -358,6 +341,14 @@ export async function upsertRelayWalletBankFeedRow(
     [input.operating_company_id, sourceRef],
   );
 
+  // ROUND 43 FOLLOW-UP item 2 (Lead, 2026-09-22): "it may not set its own line's status, category
+  // or match." driverId/loadId/settlementId are still RESOLVED above (read-only) purely
+  // so the audit event below stays informative ("here is what this line would have matched to, at
+  // ingest time") -- but none of them are written onto the bank_transactions row itself anymore.
+  // categorization_* and matched_load_id/matched_settlement_id are exclusively a human "Match"
+  // action now (banking's own reconciliation tooling), never an ingest-time auto-write. status and
+  // review_state stay at their neutral, honest "not yet reviewed" defaults on insert -- that is the
+  // starting state every real bank line gets, not an assignment.
   if (existing.rows[0]?.id) {
     const id = existing.rows[0].id;
     await client.query(
@@ -373,12 +364,6 @@ export async function upsertRelayWalletBankFeedRow(
           normalized_description = $7,
           dedup_hash = $8,
           notes = $9,
-          categorization_unit_id = COALESCE($10::uuid, categorization_unit_id),
-          categorization_driver_id = COALESCE($11::uuid, categorization_driver_id),
-          categorization_trailer_id = COALESCE($12::uuid, categorization_trailer_id),
-          categorization_load_id = COALESCE($13::uuid, categorization_load_id),
-          matched_load_id = COALESCE($13::uuid, matched_load_id),
-          matched_settlement_id = COALESCE($14::uuid, matched_settlement_id),
           updated_at = now()
         WHERE id = $1::uuid
       `,
@@ -392,11 +377,6 @@ export async function upsertRelayWalletBankFeedRow(
         normalized,
         dedupHash,
         notes,
-        input.matched_unit_id,
-        driverId,
-        trailerId,
-        loadId,
-        settlementId,
       ],
     );
     await emitRelayWalletFeedAudit(client, "updated", {
@@ -435,19 +415,12 @@ export async function upsertRelayWalletBankFeedRow(
         dedup_hash,
         review_state,
         status,
-        categorization_unit_id,
-        categorization_driver_id,
-        categorization_trailer_id,
-        categorization_load_id,
-        matched_load_id,
-        matched_settlement_id,
         created_at,
         updated_at
       )
       VALUES (
         $1::uuid, $2::uuid, NULL, $3::date, $3::date, $4, $5, $6, '{}'::text[], false, false,
         $7, $8, 'csv_import', $9, $10, 'for_review', 'pending_categorization',
-        $11::uuid, $12::uuid, $13::uuid, $14::uuid, $14::uuid, $15::uuid,
         now(), now()
       )
       -- Partial unique uq_bank_transactions_account_dedup requires the same WHERE on ON CONFLICT
@@ -459,12 +432,6 @@ export async function upsertRelayWalletBankFeedRow(
         description = EXCLUDED.description,
         merchant_name = EXCLUDED.merchant_name,
         notes = EXCLUDED.notes,
-        categorization_unit_id = COALESCE(EXCLUDED.categorization_unit_id, banking.bank_transactions.categorization_unit_id),
-        categorization_driver_id = COALESCE(EXCLUDED.categorization_driver_id, banking.bank_transactions.categorization_driver_id),
-        categorization_trailer_id = COALESCE(EXCLUDED.categorization_trailer_id, banking.bank_transactions.categorization_trailer_id),
-        categorization_load_id = COALESCE(EXCLUDED.categorization_load_id, banking.bank_transactions.categorization_load_id),
-        matched_load_id = COALESCE(EXCLUDED.matched_load_id, banking.bank_transactions.matched_load_id),
-        matched_settlement_id = COALESCE(EXCLUDED.matched_settlement_id, banking.bank_transactions.matched_settlement_id),
         updated_at = now()
       RETURNING id::text AS id
     `,
@@ -479,11 +446,6 @@ export async function upsertRelayWalletBankFeedRow(
       normalized,
       sourceRef,
       dedupHash,
-      input.matched_unit_id,
-      driverId,
-      trailerId,
-      loadId,
-      settlementId,
     ],
   );
 

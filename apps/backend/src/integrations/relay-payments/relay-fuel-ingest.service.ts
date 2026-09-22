@@ -1,20 +1,29 @@
 /**
- * Relay Payments fuel-transaction INGEST — staging + canonical fuel history bridge.
+ * Relay Payments fuel-transaction INGEST — staging + bank-feed visibility ONLY.
  *
- * Upserts each pulled/webhook/CSV transaction into integrations.relay_fuel_transactions (+ _lines) by
- * (operating_company_id, transaction_id) — idempotent. Then bridges into fuel.fuel_transactions for
- * IFTA/Fuel History. Returns a gl_post_candidate so the CALLER can invoke maybePostFuelExpenseFromCanonicalTxn
- * AFTER this transaction commits (EXPENSE_GL_POSTING_ENABLED, default OFF). Do not post inside this txn.
+ * ROUND 43 FOLLOW-UP item 2 (Lead, 2026-09-22, LANE_CROSS —
+ * docs/bus/LEAD-RULING-2026-09-22-CC3-ROUND-43-CUT-RELAY-INGEST-CROSS-LANE.md): "CUT THE RELAY
+ * INGEST. banking.bank_transactions and nothing else — no fuel row, no expense, no GL, AND it may
+ * not set its own line's status, category or match." Root cause this closes: Relay and Dreamline
+ * are two SEPARATE real ingestion pipelines that can both capture the SAME physical fuel purchase
+ * (Round 43's own duplicate-fuel-row finding, FUEL-DEDUPE-01/02/03/04 — 39 confirmed duplicates
+ * archived + GL-reversed this same round). Bridging every Relay transaction into
+ * fuel.fuel_transactions (+ GL) unconditionally is what manufactured that duplicate population in
+ * the first place — a NEW Relay transaction landing today would create another one tomorrow. This
+ * ingest no longer bridges into fuel.fuel_transactions and no longer computes a GL post
+ * candidate — it upserts the raw Relay staging (integrations.relay_fuel_transactions, the system
+ * of record for what Relay itself reported) and the visibility-only banking.bank_transactions
+ * mirror, nothing else. Reconciling a Relay bank line to its real Dreamline-statement counterpart
+ * is now exclusively a human "Match" action (banking's own reconciliation tooling), never an
+ * ingest-time auto-write.
  *
  * Resolves (read-only) the driver via integration_id → unique phone → unique name
  * (see relay-fuel-driver-match.ts) and the unit via the "Truck #" prompt.
  */
 import type { RelayFuelTransaction } from "./relay-client.js";
 import type { DbClient } from "./db-client.type.js";
-import { bridgeRelayFuelToCanonical } from "./relay-fuel-canonical-bridge.js";
 import { resolveMatchedDriverId } from "./relay-fuel-driver-match.js";
 import { upsertRelayWalletBankFeedRow } from "./relay-wallet-bank-feed.service.js";
-import type { FuelTxnGlPostCandidate } from "../../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
 
 export type { DbClient } from "./db-client.type.js";
 
@@ -26,13 +35,15 @@ export type RelayIngestResult = {
   matched_driver_id: string | null;
   matched_unit_id: string | null;
   line_count: number;
-  /** Canonical fuel.fuel_transactions id when bridge succeeded. */
-  fuel_transaction_id: string | null;
   /**
-   * Present when bridge succeeded. Caller MUST flush via flushFuelGlPostsAfterCommit AFTER the
-   * ingest transaction commits (never inside this function — avoids orphan JEs on outer ROLLBACK).
+   * ROUND 43 FOLLOW-UP item 2: this ingest no longer bridges into fuel.fuel_transactions — always
+   * null now. Kept on the type (rather than removed) so the two existing callers'
+   * `if (result.gl_post_candidate)` / `if (res.gl_post_candidate)` checks keep compiling as inert
+   * no-ops instead of needing a simultaneous cross-file edit under this same change.
    */
-  gl_post_candidate: FuelTxnGlPostCandidate | null;
+  fuel_transaction_id: null;
+  /** Always null now — see fuel_transaction_id's comment. */
+  gl_post_candidate: null;
 };
 
 /** Relay sends dollar amounts as strings (e.g. "182.44"). Converts to integer cents; never silently
@@ -286,12 +297,12 @@ export async function upsertRelayFuelTransaction(
     );
   }
 
-  const bridge = await bridgeRelayFuelToCanonical(client, operatingCompanyId, tx, {
-    driver_id: matchedDriverId,
-    unit_id: matchedUnitId,
-  });
-
-  // Wallet bank feed (Banking → Relay Fuel Wallet). Visibility + linkage only — no GL.
+  // ROUND 43 FOLLOW-UP item 2: no fuel.fuel_transactions bridge, no GL candidate. The raw Relay
+  // staging upsert above (integrations.relay_fuel_transactions) IS the system of record for what
+  // Relay itself reported; bridging it into fuel.fuel_transactions unconditionally is what
+  // manufactured this round's 39 confirmed duplicate fuel rows (FUEL-DEDUPE-01/02/03/04) against
+  // Dreamline's own real statement rows. Wallet bank feed stays — visibility only, no GL, no
+  // fuel_transaction_id to link against anymore.
   await upsertRelayWalletBankFeedRow(client, {
     operating_company_id: operatingCompanyId,
     transaction_id: tx.transaction_id,
@@ -303,41 +314,9 @@ export async function upsertRelayFuelTransaction(
     matched_unit_id: matchedUnitId,
     matched_unit_number: truckNumber,
     matched_driver_id: matchedDriverId,
-    fuel_transaction_id: bridge.fuel_transaction_id,
+    fuel_transaction_id: null,
     prompts: tx.prompts ?? [],
   });
-
-  let glPostCandidate: FuelTxnGlPostCandidate | null = null;
-  if (bridge.fuel_transaction_id && totalAmountPaidCents > 0) {
-    let gallons = 0;
-    let fuelType = "diesel";
-    for (const item of fuelItems) {
-      const vol = item.volume != null && item.volume !== "" ? Number(item.volume) : NaN;
-      if (Number.isFinite(vol) && vol > 0) gallons += vol;
-      if (item.fuel_type || item.fuel_type_description) {
-        const raw = String(item.fuel_type_description ?? item.fuel_type ?? "").toLowerCase();
-        if (raw.includes("def") || raw.includes("urea")) fuelType = "def";
-        else if (raw.includes("reefer") || raw.includes("refriger")) fuelType = "reefer_diesel";
-        else if (raw.includes("gas") || raw.includes("unleaded")) fuelType = "gas";
-        else if (raw.includes("diesel") || raw.includes("ulsd")) fuelType = "diesel";
-        else fuelType = "other";
-      }
-    }
-    glPostCandidate = {
-      operating_company_id: operatingCompanyId,
-      fuel_transaction_id: bridge.fuel_transaction_id,
-      fuel_type: fuelType,
-      transaction_at: tx.created_at,
-      amount_cents: totalAmountPaidCents,
-      driver_id: matchedDriverId,
-      location_state: tx.location?.state ?? null,
-      gallons: gallons > 0 ? gallons : null,
-      cash_advance: Boolean(tx.cash_advance),
-      relay_fuel_transaction_id: relayFuelTransactionId,
-      // FUEL-08: Relay settle is fleet-card / AP unless cash_advance took the driver_advance path.
-      has_fuel_card: !Boolean(tx.cash_advance),
-    };
-  }
 
   return {
     relay_fuel_transaction_id: relayFuelTransactionId,
@@ -345,7 +324,7 @@ export async function upsertRelayFuelTransaction(
     matched_driver_id: matchedDriverId,
     matched_unit_id: matchedUnitId,
     line_count: fuelItems.length,
-    fuel_transaction_id: bridge.fuel_transaction_id,
-    gl_post_candidate: glPostCandidate,
+    fuel_transaction_id: null,
+    gl_post_candidate: null,
   };
 }
