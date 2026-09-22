@@ -3,6 +3,7 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { countUncategorizedTransactions } from "../banking/pending-categorization.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { canonicalActiveLoadNotFinishedByMoneyCte } from "../dispatch/canonical-active-load-set.js";
 
 /** TAB-COMPLETION-STANDARD A — twelve hubs, both-way or explicit N/A. Silence is a defect. */
 export const LOAD_COSTS_HUB_LINKAGE = {
@@ -356,6 +357,18 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
             -- loads are hidden by default, toggle-able via show_voided.
             AND l.status <> 'draft'
             ${parsed.data.show_voided ? "" : "AND l.status <> 'cancelled'"}
+            -- ROUND 31.2 P0 (owner, 2026-09-22): "LOAD COSTS IS STILL RENDERING OLDER LOADS THAT
+            -- HAVE ALREADY BEEN SETTLED... ONLY LOADS THAT ARE ACTIVE, NOT INVOICED, CLOSED,
+            -- DELIVERED, ETC." Root cause: this board's OWN invoice_info CTE (above) already
+            -- computed "does this load carry a real, issued invoice" and never applied it here.
+            -- ROUND 32.2-CORRECTED (owner, 2026-09-22): invoice-exclusion alone still overcounted
+            -- 33 -> the real 9 -- on this fed data, 24 loads are fully settled/driver-billed
+            -- WITHOUT status ever advancing past dispatched/delivered, and none was ever invoiced.
+            -- Money is the source of truth, not status: exclude the three settled statuses status
+            -- alone can miss, plus ANY load already finished by settlement, driver bill, or
+            -- invoice. Measured live: 114 -> 33 (invoice-only) -> 9 (the corrected predicate).
+            AND l.status NOT IN ('closed', 'invoiced', 'paid')
+            AND ${canonicalActiveLoadNotFinishedByMoneyCte("l.id")}
           ORDER BY ${sortSql}`,
         [parsed.data.operating_company_id]
       );

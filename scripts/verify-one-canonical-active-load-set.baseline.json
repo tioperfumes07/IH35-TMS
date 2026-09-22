@@ -1,0 +1,138 @@
+{
+  "_comment": "verify-one-canonical-active-load-set.mjs shrink-only ratchet. ROUND 31.2 (Lead ruling 2026-09-23): the ruling named 10 conflicting active-load definitions as the headline defect; a full static scan for inline mdata.loads status gates + undeclared load-status arrays found a materially larger surface (42 files). Seeded honestly at the measured state rather than only the 10 named files -- migrating each to import apps/backend/src/dispatch/canonical-active-load-set.ts (or calling assertCanonicalSubset on a genuinely narrower view) shrinks this baseline one file at a time. Some entries may include a false-positive line where the heuristic caught a same-file status check on a different table (e.g. accounting.invoices/driver_finance.settlements) near an unrelated mdata.loads reference -- re-verify each file live before migrating, do not batch-fix blind.",
+  "established": "2026-09-22",
+  "files": {
+    "accounting/break-even.service.ts": {
+      "count": 1
+    },
+    "accounting/cash-forecast.routes.ts": {
+      "count": 1
+    },
+    "accounting/invoices.routes.ts": {
+      "count": 4
+    },
+    "accounting/load-costs-board.routes.ts": {
+      "count": 5
+    },
+    "accounting/revenue-leakage.service.ts": {
+      "count": 1
+    },
+    "accounting/revrec-delivery-posting/poster.service.ts": {
+      "count": 1
+    },
+    "banking/categorization.routes.ts": {
+      "count": 1
+    },
+    "banking/obligation-reconcile.routes.ts": {
+      "count": 2
+    },
+    "cash-flow/cash-flow.service.ts": {
+      "count": 1
+    },
+    "customers/relationship-score/scorer.service.ts": {
+      "count": 1
+    },
+    "dispatch/cancellation.service.ts": {
+      "count": 1
+    },
+    "dispatch/load-billing-lifecycle.service.ts": {
+      "count": 1
+    },
+    "dispatch/load-id-reservation.service.ts": {
+      "count": 1
+    },
+    "dispatch/loads.routes.ts": {
+      "count": 2
+    },
+    "dispatch/manual-delivery-authorization.routes.ts": {
+      "count": 1
+    },
+    "dispatch/planner.service.ts": {
+      "count": 1
+    },
+    "dispatch/presettlement-link.service.ts": {
+      "count": 6
+    },
+    "dispatch/stamp-final-delivery-departure.ts": {
+      "count": 1
+    },
+    "dispatch/truck-line/station.ts": {
+      "count": 1
+    },
+    "dispatch/unit-active-load-guard.ts": {
+      "count": 1
+    },
+    "dispatch/update-load.service.ts": {
+      "count": 1
+    },
+    "dispatcher-board/role-views/dispatcher.service.ts": {
+      "count": 2
+    },
+    "driver/loads.routes.ts": {
+      "count": 2
+    },
+    "driver/pwa-live.routes.ts": {
+      "count": 1
+    },
+    "driver-finance/settlements-load-bookended.service.ts": {
+      "count": 2
+    },
+    "driver-finance/settlements.routes.ts": {
+      "count": 2
+    },
+    "driver-finance/tour-readout.routes.ts": {
+      "count": 2
+    },
+    "home/scenario-registry.ts": {
+      "count": 2
+    },
+    "integrations/samsara/cap-14-cargo-sensors/ingester.service.ts": {
+      "count": 1
+    },
+    "integrations/samsara/geofences/real-driven-miles.service.ts": {
+      "count": 1
+    },
+    "mdata/driver-aggregate.service.ts": {
+      "count": 1
+    },
+    "mdata/driver-team.service.ts": {
+      "count": 1
+    },
+    "mdata/equipment-aggregate.service.ts": {
+      "count": 1
+    },
+    "mdata/loads.routes.ts": {
+      "count": 3
+    },
+    "mdata/unit-aggregate.service.ts": {
+      "count": 1
+    },
+    "reports/exception-queue.routes.ts": {
+      "count": 4
+    },
+    "settlements/trip-link.engine.ts": {
+      "count": 1
+    },
+    "shipper-portal/portal-api.routes.ts": {
+      "count": 1
+    },
+    "tasks/task.routes.ts": {
+      "count": 1
+    },
+    "telematics/arrival-detection.service.ts": {
+      "count": 1
+    },
+    "telematics/fleet-location-hos.service.ts": {
+      "count": 1
+    },
+    "telematics/geofence-detector.service.ts": {
+      "count": 1
+    },
+    "telematics/load-progress.service.ts": {
+      "count": 1
+    },
+    "telematics/stops-geocode-backfill.service.ts": {
+      "count": 1
+    }
+  }
+}
