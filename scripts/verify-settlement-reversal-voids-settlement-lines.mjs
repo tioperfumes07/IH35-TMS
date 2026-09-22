@@ -18,7 +18,12 @@
  * WHAT IT ASSERTS: both `settlements.routes.ts`'s `/reverse` handler and
  * `void-cancel-executors.ts`'s `executeDriverSettlement` contain an `UPDATE
  * driver_finance.settlement_lines` statement that sets `is_active = false` AND all three of
- * `voided_at`, `void_reason`, `voided_by_user_id`.
+ * `voided_at`, `void_reason`, `voided_by_user_id` -- OR, since Round 35.3's voidDocument()
+ * dependency inversion (VOID-DOCUMENT-CALLEES, CC-3, 2026-09-23), delegate to
+ * `reverseSettlementForVoid` (driver-finance/void-document-callees.service.ts), the SAME cascade
+ * extracted into one shared function both the route and CC-1's future voidDocument() dispatcher
+ * call, so it is checked there instead of demanding the SQL sit inline at every call site --
+ * still exactly one real implementation, never a silently-removed one.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -26,6 +31,14 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-settlement-reversal-voids-settlement-lines";
+
+const CALLEE_FILE = path.join(ROOT, "apps", "backend", "src", "driver-finance", "void-document-callees.service.ts");
+
+function extractCalleeBody(fnName, src) {
+  const re = new RegExp(`export async function ${fnName}\\([\\s\\S]*?\\n\\}`);
+  const m = src.match(re);
+  return m ? m[0] : null;
+}
 
 const TARGETS = [
   {
@@ -36,6 +49,15 @@ const TARGETS = [
       if (start === -1) return null;
       const nextRoute = src.indexOf("\n  app.", start + 10);
       return src.slice(start, nextRoute === -1 ? src.length : nextRoute);
+    },
+    // Delegation escape hatch: a handler that calls reverseSettlementForVoid is deferring the
+    // cascade to that function's own file -- check the real cascade there instead of demanding
+    // the SQL sit inline in the route.
+    resolveDelegate: (body) => {
+      if (!body || !/reverseSettlementForVoid\s*\(/.test(body)) return null;
+      if (!fs.existsSync(CALLEE_FILE)) return `${path.relative(ROOT, CALLEE_FILE)}: file missing (delegation target)`;
+      const calleeSrc = fs.readFileSync(CALLEE_FILE, "utf8");
+      return extractCalleeBody("reverseSettlementForVoid", calleeSrc);
     },
   },
   {
@@ -55,20 +77,32 @@ export function check() {
       continue;
     }
     const src = fs.readFileSync(t.file, "utf8");
-    const body = t.extract(src);
+    let body = t.extract(src);
     const rel = path.relative(ROOT, t.file);
     if (!body) {
       offenders.push(`${rel}: target function/route body not found`);
       continue;
     }
+    let checkedLabel = rel;
+    if (t.resolveDelegate && !/UPDATE\s+driver_finance\.settlement_lines/.test(body)) {
+      const delegate = t.resolveDelegate(body);
+      if (typeof delegate === "string" && delegate.includes(": file missing")) {
+        offenders.push(delegate);
+        continue;
+      }
+      if (delegate) {
+        body = delegate;
+        checkedLabel = `${rel} (delegates to reverseSettlementForVoid in ${path.relative(ROOT, CALLEE_FILE)})`;
+      }
+    }
     if (!/UPDATE\s+driver_finance\.settlement_lines/.test(body)) {
-      offenders.push(`${rel}: no cascade UPDATE to settlement_lines found`);
+      offenders.push(`${checkedLabel}: no cascade UPDATE to settlement_lines found`);
       continue;
     }
-    if (!/is_active\s*=\s*false/.test(body)) offenders.push(`${rel}: cascade does not set is_active = false`);
-    if (!/voided_at\s*=/.test(body)) offenders.push(`${rel}: cascade does not set voided_at`);
-    if (!/void_reason\s*=/.test(body)) offenders.push(`${rel}: cascade does not set void_reason`);
-    if (!/voided_by_user_id\s*=/.test(body)) offenders.push(`${rel}: cascade does not set voided_by_user_id`);
+    if (!/is_active\s*=\s*false/.test(body)) offenders.push(`${checkedLabel}: cascade does not set is_active = false`);
+    if (!/voided_at\s*=/.test(body)) offenders.push(`${checkedLabel}: cascade does not set voided_at`);
+    if (!/void_reason\s*=/.test(body)) offenders.push(`${checkedLabel}: cascade does not set void_reason`);
+    if (!/voided_by_user_id\s*=/.test(body)) offenders.push(`${checkedLabel}: cascade does not set voided_by_user_id`);
   }
   return offenders;
 }
@@ -108,6 +142,24 @@ async function selftest() {
   const badExecBody = TARGETS[1].extract(fs.readFileSync(execFile, "utf8"));
   if (badExecBody && /UPDATE\s+driver_finance\.settlement_lines/.test(badExecBody)) {
     failures.push("case3 FAIL — a fixture with no cascade must not appear to have one.");
+  }
+
+  // case4 (RED then GREEN): a route body with NO inline cascade but that calls
+  // reverseSettlementForVoid must delegate to the REAL callee file (not vacuously pass because
+  // the inline check alone failed) -- proven against the real repo, since resolveDelegate reads
+  // the real CALLEE_FILE by design (the whole point is checking the real shared implementation).
+  const delegatingRoute = `app.post(\n"/api/v1/driver-finance/settlements/:id/reverse",\nasync (req, reply) => {\nawait reverseSettlementForVoid(client, { operatingCompanyId, settlementId, reason, actor });\n}\n);`;
+  const delegatingBody = TARGETS[0].extract(delegatingRoute);
+  if (!delegatingBody || /UPDATE\s+driver_finance\.settlement_lines/.test(delegatingBody)) {
+    failures.push("case4 setup FAIL — delegating fixture must NOT itself contain the inline cascade (that's the point).");
+  }
+  const resolved = TARGETS[0].resolveDelegate(delegatingBody);
+  if (!resolved || !/is_active\s*=\s*false/.test(resolved) || !/voided_at\s*=/.test(resolved)) {
+    failures.push("case4 FAIL — a route that delegates to reverseSettlementForVoid must resolve to that function's real cascade, not report missing.");
+  }
+  const nonDelegatingBody = TARGETS[0].extract(goodRoute);
+  if (TARGETS[0].resolveDelegate(nonDelegatingBody) !== null) {
+    failures.push("case5 FAIL — a route that already has its own inline cascade must not be redirected to the delegate.");
   }
 
   fs.rmSync(tmp, { recursive: true, force: true });
