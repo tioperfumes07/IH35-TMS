@@ -4351,3 +4351,49 @@ Continuing to items 3 (Faro importer, preview_only) and 4/5/26 next.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+## 2026-09-23 — STATUS CHECKPOINT (ROUND 37.3 repeats items 1/2 as open — both are done/answered)
+
+Items 1 and 2 keep re-arriving as open across ROUND 34.2/35.2/36.2/37.3. Confirming plainly, once,
+with the receipts, so this stops re-surfacing as pending:
+
+- **Item 1 — DONE.** 13610/13612/13613/13614 all `status='sent'`, $19,950.00 total, GL posted DR
+  1100/CR 4000 exact. PR #22230, merged `3899bfb965`. Live-reconfirmed after commit.
+- **Item 2 — ANSWERED, not buildable.** Posted in full to `docs/bus/OUTBOX-CC-3.md` (CC-3 named as
+  waiting): no poster exists for the DR-asset/CR-card-payable funding direction anywhere in the
+  codebase — confirmed independently by CC-3's own investigation (their own "1295 Relay Fuel Wallet"
+  entry, same board) and by mine this round. The Amex account also has zero real transactions to post
+  from. This is not a task I'm behind on; it's a shared open item for the owner (funding-side GL
+  treatment + a real Plaid link), named plainly, twice, in writing.
+
+**Item 3 — Faro importer, preview_only run attempted, real header mismatch found, not forced.**
+Ran `parseFaroCsv()` (the real, existing parser named in every round's packet) directly against the
+actual named file, `01-FARO/PURCHASE REPORT ALL.csv`:
+
+```
+FaroCsvImportError [missing_headers]: Missing required column: invoice number
+```
+
+The file's real header row is `Debtor,Date,Inv #,PO,Other Ref,Purchase,Escrow Rsv,Cash Rsv,Discount,
+Fees,Dispatch,Net Adv,Receipts,Sch Fee,ChgBack (Refund),,Non-purchased` — none of
+`FARO_CSV_REQUIRED_HEADERS` (`invoice number, customer name, gross, advance, reserve, fee,
+chargeback, net`) appear verbatim. The importer's field-level alias resolver already recognizes
+"debtor" for customer, but the hard required-header gate (`faro-csv-import.ts:155-158`) checks the
+literal required names, not the alias list, so it refuses before alias resolution ever runs. This
+is a genuine, narrow gap in the *existing* importer (not a reason to build a second one) — but fixing
+it isn't a one-line rename: the real file splits reserve into `Escrow Rsv` + `Cash Rsv` (two figures)
+against the importer's single `reserve`, and carries `Net Adv` + `Receipts` + `Sch Fee` +
+`ChgBack (Refund)` against the importer's single `advance`/`net`/`fee`/`chargeback`. Mapping those
+correctly needs a real decision (which of Escrow Rsv/Cash Rsv is "the" reserve figure the importer's
+downstream posting expects, whether Net Adv or Receipts is "advance"), not a guess dressed up as a
+column rename. Not attempting `preview_only` further until that mapping is confirmed — reporting the
+concrete blocker with the exact error and exact header list, per "do not guess a path."
+
+**Items 4/5/26/48/19-21/25/45/16 and the 5 new home-page findings (duplicate expenses,
+unmatched fuel, loads-without-driver-bill, loads-without-tour, factoring balance tile blank):**
+received, not yet started this pass — flagging the queue rather than silently sitting on it. The
+factoring-balance-tile-blank item is noted as the one worth prioritizing next given its P1 framing.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
