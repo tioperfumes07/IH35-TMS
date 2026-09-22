@@ -63,6 +63,15 @@ const EXEMPT = new Set([
   // itself), so it is exempt for the same reason load-state-machine.ts is: a status MAPPER that reads
   // the evidence statuses as ranks, never assigns one.
   "apps/backend/src/dispatch/load-billing-lifecycle.service.ts",
+  // active-loads-count.ts is a KPI/count module only -- verified by reading the whole 161-line
+  // file (grep for UPDATE/INSERT/SET status/.query( scoped to writes: zero hits). Its only match
+  // is a read-only `SELECT count(*) ... WHERE status = 'delivered_pending_docs'` in
+  // countDeliveredPendingDocsLoads() -- a SQL equality filter, not a JS assignment; the guard's
+  // literal-assignment regex (`=` immediately before the quoted status) can't distinguish a SQL
+  // WHERE clause from a write, same false-positive shape as load-state-machine.ts above. This file
+  // never calls client.query with UPDATE/INSERT anywhere -- it only counts loads already in a
+  // status some other (latched) path set.
+  "apps/backend/src/dispatch/active-loads-count.ts",
 ]);
 
 /**
