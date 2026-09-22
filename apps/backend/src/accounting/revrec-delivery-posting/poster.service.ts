@@ -570,6 +570,7 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
 
     const unbilledAccountId = await resolveRoleAccount(client, input.operating_company_id, "unbilled_revenue");
     let postings: Posting[];
+    let invoiceId: string | null = null;
     if (event === "earn") {
       const revenueAccountId = await resolveRoleAccount(client, input.operating_company_id, "revenue_default");
       postings = buildEarnEvent1Postings(unbilledAccountId, revenueAccountId, amount, memo);
@@ -577,24 +578,27 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
       const arAccountId = await resolveRoleAccount(client, input.operating_company_id, "ar_control");
       postings = buildBillEvent2Postings(arAccountId, unbilledAccountId, amount, memo);
       // Event 2's A/R leg IS the invoice's A/R (the invoice poster refuses to post it while this latch owns
-      // the load — InvoiceRevrecLatchOwnsLoadError), so that line names the invoice when one exists.
+      // the load — InvoiceRevrecLatchOwnsLoadError), so that line is tagged with the invoice when one exists.
       const invoiceRes = await client.query<{ id: string }>(
         `SELECT id::text FROM accounting.invoices
           WHERE source_load_id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
           ORDER BY created_at ASC LIMIT 1`,
         [input.load_id, input.operating_company_id]
       );
-      const invoiceId = invoiceRes.rows[0]?.id;
-      if (invoiceId) {
-        postings[0] = { ...postings[0]!, source_transaction_type: "invoice", source_transaction_id: invoiceId };
-      }
+      invoiceId = invoiceRes.rows[0]?.id ?? null;
     }
+    // Every line names the load except the bill's A/R line (line_sequence 1), which afterInsertBeforeCommit
+    // tags with the invoice — or the load — inside the same transaction, before the writer's source check.
+    postings = postings.map((p, i) =>
+      event === "bill" && i === 0 ? p : { ...p, source_transaction_type: "load", source_transaction_id: input.load_id }
+    );
 
     return {
       gate: "post" as const,
       event,
       memo,
       amount,
+      invoiceId,
       entryDate: input.entry_date_iso.slice(0, 10),
       // ACCT-F210 — read from the LOAD, never from a memo or load-number string match.
       isSampleData: load.is_sample_data,
@@ -621,14 +625,37 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
       entry_date: prepared.entryDate,
       memo: prepared.memo,
       source: "auto",
-      source_transaction_type: "load",
-      source_transaction_id: input.load_id,
       // ACCT-F210 — the GL inherits the load's sample flag, exactly as the invoice and settlement
       // paths already do. One source of truth: the load. Never derived from a memo string.
       is_sample_data: prepared.isSampleData,
       postings: prepared.postings,
     },
-    { userId: input.actor_user_id, role: "system" }
+    { userId: input.actor_user_id, role: "system" },
+    {
+      afterInsertBeforeCommit: async (client, header) => {
+        if (prepared.event === "bill") {
+          if (prepared.invoiceId) {
+            await client.query(
+              `
+                UPDATE accounting.journal_entry_postings
+                SET source_transaction_type = 'invoice', source_transaction_id = $2
+                WHERE journal_entry_uuid = $1::uuid
+                  AND line_sequence = 1
+                  AND source_transaction_type IS NULL
+              `,
+              [header.id, prepared.invoiceId]
+            );
+          }
+          await client.query(
+            `UPDATE accounting.journal_entry_postings
+                SET source_transaction_type = 'load', source_transaction_id = $2
+              WHERE journal_entry_uuid = $1::uuid
+                AND source_transaction_type IS NULL`,
+            [header.id, input.load_id]
+          );
+        }
+      },
+    }
   );
 
   await withLuciaBypass(async (client: DbClient) => {

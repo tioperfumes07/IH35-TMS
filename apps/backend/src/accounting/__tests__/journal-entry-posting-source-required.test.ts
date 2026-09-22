@@ -99,6 +99,23 @@ describe("createJournalEntryOnClient — every posting names its source", () => 
     expect(lines.every((l) => l.source_transaction_type === "factoring_advance" && l.source_transaction_id === "fa-1")).toBe(true);
   });
 
+  it("accepts a settlement cash advance posted as a bill payment sourced to the driver_settlement", async () => {
+    const { client, lines } = fakeClient();
+    await createJournalEntryOnClient(
+      client,
+      {
+        operating_company_id: COMPANY,
+        entry_date: "2026-09-22",
+        source: "auto",
+        source_transaction_type: "driver_settlement",
+        source_transaction_id: "settlement-5809",
+        postings: twoLines,
+      },
+      ACTOR
+    );
+    expect(lines.every((l) => l.source_transaction_type === "driver_settlement" && l.source_transaction_id === "settlement-5809")).toBe(true);
+  });
+
   it("makes a hand-keyed entry its own source", async () => {
     const { client, lines } = fakeClient();
     await createJournalEntryOnClient(client, { operating_company_id: COMPANY, entry_date: "2026-09-22", source: "manual", postings: twoLines }, ACTOR);
