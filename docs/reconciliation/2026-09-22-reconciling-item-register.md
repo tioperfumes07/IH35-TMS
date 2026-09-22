@@ -11,12 +11,14 @@ here is silently dropped.
 | 2 | `FARO-092` → load 13613 | n/a (link) | **OPEN — EVIDENCE NOT ON FILE** | Posted to `docs/bus/OUTBOX-CC-1.md`; `docs/reconciliation/2026-09-22-44-missing-loads-register.md`. |
 | 3 | `FARO-049` → load 13567 | n/a (link) | **OPEN — EVIDENCE NOT ON FILE** | Same as above. |
 | 4 | `factoring_reserve_movements` gap | $428.87 | **OPEN — not plugged** | 110 rows / $5,094.47 held vs. escrow $4,530.19 + cash $135.41 = $4,665.60. Partial root cause found (item 4 below); re-derivation against `RESERVE REPORT.csv`'s 18 rows in progress. |
-| 5 | 8 direct disbursement legs | $35,730.00 | **OPEN — source data received, not yet posted** | See item 5 below — 8 line items identified in `docs/reconciliation/2026-09-22-PAYMENTS-TO-USMCA-FROM-FARO.csv`, ties exactly. |
-| 6 | 5 reserve deposits | $28,489.00 | **OPEN — source data received, not yet posted** | See item 6 below — includes the $1,649.00 overlap with item 5, one movement not two. |
+| 5 | 8 direct disbursement legs (intercompany, DR 8000 / CR 1230) | $35,730.00 | **RESOLVED** | 8 individual JEs posted, balanced, source_transaction_type `faro_intercompany_leg`. See item 5 below. |
+| 6 | 5 "reserve deposits" | $28,489.00 | **CLOSED — moot, not a separate population** | Owner correction (#22188): 4 of the 5 are the funding side already inside 4 of the 8 legs; RESERVE REPORT.csv's own Balance column proves it. Posting both would double-count $26,840.00. Not posted separately — see item 6 below. |
 | 7 | 5 self-carried invoices | $12,592.40 open | **OPEN — under investigation** | |
 | 8 | Invoice 13524 Faro-vs-face variance | $400.00 | **RESOLVED** | Voided predecessor invoice; live replacement `INV-2026-00008` ties Faro's gross exactly. `accounting.invoice_disputes` dea42eed-6f25-4cf5-b0ff-ce2ea0ceec9a. |
 | 9 | Invoice 13587 (Key Global) under-billing | $120.00 | **OPEN** | Proforma not yet finalized at Faro's $4,120.00. `accounting.invoice_disputes` 08a6227a-3eaf-47d8-9e80-0905fe0b4a85. |
-| 10 | Invoice 13579 — **REAL CASH EXPOSURE** | $5,210.00 | **OPEN — flagged loudly** | See item 7 below. `accounting.invoice_disputes` 80a9a5fa-e2f9-48c0-b921-096eeb956461. Faro advanced $5,053.70 real cash; no live invoice exists on our side. Repurchase-vs-reissue determination needs the rate confirmation/Faro statement — not guessed. |
+| 10 | Invoice 13579 — reinstated to match Faro | $5,210.00 | **RESOLVED** | Owner ruling: "Faro is truth." Reinstated as `INV-2026-00010`, $5,210.00 exact. `accounting.invoice_disputes` 80a9a5fa-e2f9-48c0-b921-096eeb956461, resolved. See item 7 below. |
+| 11 | 6400 vs 6820 "Factoring Fees" — which is canonical | n/a (report) | **RESOLVED — 6400 confirmed correct, by role** | `accounting.chart_of_accounts_roles`: role `factor_fee_expense` binds **6400**, active. 6820 has zero role bindings and is itself `deactivated_at` 2026-07-22. No reclassification needed — item 1's posting to 6400 was already correct. |
+| 12 | 1200 vs 1230 "Factoring Reserve" duplicate | n/a (report) | **REPORTED, not fixed (§D)** | 1200 "Factoring Reserve / Holdback" is `deactivated_at` 2026-08-30, `system_purpose NULL`, zero role bindings — a retired legacy row, not a live ambiguity. 1230 "Factoring Reserves" is the sole active, role-bound (`factor_reserve_default` + `factor_reserve_held`) account. Named per instruction; neither account touched. |
 
 ## Item 1 — Escrow/fee recognition, 6 closed Faro invoices (RESOLVED)
 
@@ -76,55 +78,89 @@ the reversing JE), but it is **not, by itself, the whole $428.87 story** — som
 likely purchases that were part of the voided rebuild and never got a fresh `held` row posted after
 the correction) is still missing on top of it. Not plugged, not netted, root cause not fully closed.
 
-## Item 5 — 8 direct disbursement legs, $35,730.00 (source confirmed, ties exactly, not yet posted)
+## Item 5 — 8 direct disbursement legs, $35,730.00 (RESOLVED, posted)
 
 Source: `docs/reconciliation/2026-09-22-PAYMENTS-TO-USMCA-FROM-FARO.csv` (95 rows), filtered to
-`Pmt Type = 'Faro Internal Transfer'` (9 rows, 8 carrying an amount):
+`Pmt Type = 'Faro Internal Transfer'` (9 rows, 8 carrying an amount). Intercompany, per owner
+ruling #22185: Faro's counterparty is IH 35 Transportation (export filenames and settlement
+letterhead both name it, not inferred) — 8000, not 8001.
 
-| Date | Amount | Pmt Ref (memo) |
-|---|---|---|
-| 9/21/26 | $2,000.00 | Pago Reserva Negativa IH35 |
-| 9/15/26 | $8,000.00 | Pago a Reserva Negativa IH35 09/15/26 |
-| 9/9/26 | $11,840.00 | Pago a IH35 Reserva Negativa - Facturas Larralde Transport pagadas a ellos directamente |
-| 9/2/26 | $5,000.00 | USMCA Reserve to IH 35 Reserve |
-| 8/14/26 | $688.00 | Transfer to IH35 neg res 08/14/26 |
-| 8/14/26 | $4,753.00 | Transfer to IH35 neg res 08/14/26 |
-| 8/13/26 | $1,800.00 | USMCA Internal Transfer IH35 08/13/26 |
-| 8/12/26 | $1,649.00 | Internal Transfer to IH35 Reserves 08/12/26 |
+Posted individually, `scripts/ops/cursor-2026-09-22-faro-8-direct-legs.mts`, each `DR 8000
+Inter-company - IH35 Transportation / CR 1230 Factoring Reserves`, own date, Pmt Ref as memo:
 
-Sum ties exactly: $35,730.00. **Not yet posted to the GL** — the exact account treatment (these are
-internal reallocations within the Faro relationship, not a wire into IH35's own bank account; per
-`RESERVE REPORT.csv`'s own paired structure, each "Rsv Deposit" is shortly followed by a matching
-"Client Payable" transfer of the identical amount, meaning these largely net to zero *inside
-Faro's own reserve tracking* while the real effect is on a separate "IH35 Reserve" bucket this
-repo's schema doesn't yet name) needs confirmation before posting, not a guess.
+| Date | Amount | Pmt Ref (memo) | Journal entry |
+|---|---|---|---|
+| 9/21/26 | $2,000.00 | Pago Reserva Negativa IH35 | `55aee712-32dd-49dc-93ee-3fbfc1182f0e` |
+| 9/15/26 | $8,000.00 | Pago a Reserva Negativa IH35 09/15/26 | `ea80a374-1f15-4aa2-ab59-fd166177fa25` |
+| 9/9/26 | $11,840.00 | Pago a IH35 Reserva Negativa - Facturas Larralde Transport pagadas a ellos directamente | `319a1897-5a04-4e25-8b16-bea5ea3538d3` |
+| 9/2/26 | $5,000.00 | USMCA Reserve to IH 35 Reserve | `0f867254-bff0-4cb1-99b9-cb1b396083ee` |
+| 8/14/26 | $688.00 | Transfer to IH35 neg res 08/14/26 (1 of 2) | `0e529e4f-f284-48c1-9eae-d8b62fc88579` |
+| 8/14/26 | $4,753.00 | Transfer to IH35 neg res 08/14/26 (2 of 2) | `7a93859f-b4c1-4ddc-9b42-f3cb4ac4f76e` |
+| 8/13/26 | $1,800.00 | USMCA Internal Transfer IH35 08/13/26 | `f47e4e9f-1455-498d-9c64-73c2aed8572e` |
+| 8/12/26 | $1,649.00 | Internal Transfer to IH35 Reserves 08/12/26 | `12c6d447-7d9f-46e9-b973-bf14e4d3d6a6` |
 
-## Item 6 — 5 reserve deposits, $28,489.00 (source confirmed, ties exactly, not yet posted)
+Independently re-verified live post-posting: 8 debits + 8 credits to `source_transaction_type =
+'faro_intercompany_leg'`, both sides sum to $35,730.00 exactly, zero unbalanced JEs.
 
-Source: same file, `Pmt Type = 'Wire'`/`Deposit` rows tagged "Rsv Deposit":
+## Item 6 — 5 "reserve deposits", $28,489.00 (CLOSED — moot, not a separate population)
 
-| Date | Amount | Pmt Ref (memo) |
-|---|---|---|
-| 8/28/26 | $5,000.00 | USMCA Tank 08/28/2026 (Rsv Deposit — pago ccg) |
-| 9/8/26 | $11,840.00 | USMCA Tank 09/08/2026 (Rsv Deposit — Dinero en HOLD por facuras de Larralde) |
-| 9/14/26 | $8,000.00 | USMCA Tank 09/14/2026 (Rsv Deposit — Ajuste reserva negativa ih35) |
-| 9/17/26 | $2,000.00 | USMCA Tank 09/17/2026 (Rsv Deposit — Deposit to negative reserve IH35) |
-| 8/12/26 | $1,649.00 | Internal Transfer to IH35 Reserves 08/12/26 — **same movement as item 5's last row** |
+Owner's own correction, verbatim (#22188): "the 5 deposits are the FUNDING SIDE of the 8 legs."
+`RESERVE REPORT.csv`'s own running Balance column proves it — each `Rsv Deposit` is matched by an
+equal, opposite `Client Payable` transfer days later that pays IH35, and the balance returns to
+(near) zero every time: 8/28 +5,000 → 9/2 −5,000 (bal 0) → the 9/2 leg; 9/8 +11,840 → 9/9 −11,840
+(bal 0) → the 9/9 leg; 9/14 +8,000 → 9/15 −8,000 (bal 0) → the 9/15 leg; 9/17 +2,000 → 9/21 −2,000
+(bal 69.30) → the 9/21 leg. **Posting these separately would have double-counted $26,840.00.**
+The 8/12/26 $1,649.00 "appears in both lists" question from the prior round is moot under this
+correction — it was never two events; it is item 5's own last leg. Not posted here, superseded by
+item 5.
 
-Sum ties exactly: $28,489.00. **The 8/12/26 $1,649.00 row is the identical movement listed in item
-5** — one internal transfer, recorded on both sides (out of USMCA's available reserve, into the
-IH35 reserve) in the source file. **Post it once, with both sides, not twice** — posting it twice
-would overstate both totals by $1,649.00 and worsen the $428.87 hunt, exactly as flagged. Total
-unique movement across items 5+6: $35,730.00 + $28,489.00 − $1,649.00 = **$62,570.00**.
+## Item 7 — Invoice 13579, RESOLVED — reinstated to match Faro exactly
 
-## Item 7 — Invoice 13579, real cash exposure (OPEN, flagged loudly)
+Owner ruling, verbatim: **"Faro is truth. You already reconciled."** Faro's $5,210.00 was correct;
+our $0.00 face (from the 2026-09-07 void that never got replaced) was the defect. The app moves to
+Faro, never Faro to the app.
 
-See `docs/bus/OUTBOX-CC-2.md`, 2026-09-22 P0 entry, for the full account. Summary: Faro advanced
-$5,053.70 real cash (invoice #59, Refrigerx, gross $5,210.00, due 09/08/2026) against load 13579,
-whose only matching invoice record (`accounting.invoices` display_id `13579`) is voided at $0.00
-with no replacement ever created. The load↔Faro-purchase link is verified correct (load's own
-`customer_wo_number` `1013272-2` matches Faro's PO exactly) — this is not a mismatch, it is a real
-receivable Faro purchased that does not exist as a live document on our side.
-`accounting.invoice_disputes` `80a9a5fa-e2f9-48c0-b921-096eeb956461`, status `open`. **Not
-resolved as repurchase-obligation or wrong-void** — that determination needs the rate confirmation
-and/or Faro's own per-invoice statement, not guessed here.
+**Reinstated live**, `scripts/ops/cursor-2026-09-22-faro-reinstate-13579.mts`, reusing the existing
+`buildInvoiceFromLoad` service (no new GL math):
+- New invoice `INV-2026-00010` (the load-number display_id `13579` was taken by the voided
+  predecessor; `resolveInvoiceDisplayId` fell back to the `INV-2026-NNNNN` sequence, the same path
+  13524's own replacement `INV-2026-00008` went through).
+- Linehaul line: $4,900.00 (the load's own `rate_total_cents`, from the standard service).
+- Adjustment line: $310.00, `line_type='adjustment'` → revenue_code `accessorial` (the existing,
+  real category — never an invented account), memo citing the Faro reconciliation and Faro invoice
+  #59 by name.
+- Total: **$5,210.00 exact**, matching Faro's gross to the cent. Status set to `sent` (matching the
+  13524/`INV-2026-00008` precedent).
+- `accounting.invoice_disputes` `80a9a5fa-e2f9-48c0-b921-096eeb956461` resolved,
+  `resolution_type='invoice_corrected'`, citing `INV-2026-00010`.
+
+Independently re-verified live: invoice status/total/lines all confirmed post-write;
+`verify-dispute-window-unified.mjs` re-run, still `LIVE PASS`.
+
+## Item 11 — 6400 vs 6820 "Factoring Fees" (RESOLVED — 6400 confirmed correct, by role)
+
+Resolved by role, not by number, per instruction: `accounting.chart_of_accounts_roles` (the
+canonical table — not `catalogs.account_role_bindings`) live, USMCA:
+
+```
+role='factor_fee_expense', is_active=true  -> account 6400 'Factoring Fees'
+(no role of any kind binds account 6820)
+```
+
+6820 is itself `deactivated_at = 2026-07-22T18:31:45.187Z`, `system_purpose = NULL`. 6400 is
+active, `system_purpose = 'factoring_fees'`, and is the one live-bound role target. Item 1's
+posting of the $8.22 Schedule Fee to 6400 was already correct — no move, no reclassification.
+
+## Item 12 — 1200 vs 1230 "Factoring Reserve" duplicate (REPORTED, not fixed)
+
+Named per instruction (§D — additive, never delete/rename), not touched:
+
+```
+1200 'Factoring Reserve / Holdback'  deactivated_at=2026-08-30T23:08:48Z  system_purpose=NULL  0 role bindings
+1230 'Factoring Reserves'            active                              system_purpose='factoring_reserves'
+                                      roles: factor_reserve_default (active), factor_reserve_held (active)
+```
+
+1200 is a retired legacy row, not a live ambiguity — it carries no role binding and is already
+deactivated. 1230 is the sole active, role-bound target every posting this session used. Reported
+as instructed; neither account renamed, merged, or deactivated further.
