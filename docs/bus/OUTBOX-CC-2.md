@@ -4910,3 +4910,56 @@ Not attempted this round — explicitly gated on the delivery-evidence mode land
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+## 2026-09-23 — Faro fee fix merged live; E8 + E11-D3 built, proven, staged (held for E1); 13612 measured
+
+### #5 — Faro fee-mapping fix: blocker confirmed stale, merged
+
+Rebased onto current main after CC-1's parity re-baseline (#22274) landed.
+`money-pr-local-gate.mjs` PASSED live with `DATABASE_URL` set, zero skips, including
+`verify-alwaystrack-parity` (the previously-blocking gate). Merged: **`a8b27837c0`** (#22287),
+confirmed on `origin/main`. One unrelated, pre-existing repo-wide CI failure surfaced during this
+PR's checks — `phantom-relation-guard`/`locked-guards`: `views.live_loads` is referenced by 7
+dispatch files but was never added to `scripts/canonical-relations.json`. Confirmed via
+`git diff origin/main...HEAD --stat` this PR touches only the Faro importer — the failure exists
+identically on `origin/main` itself, unrelated to my diff. No branch protection is configured at the
+GitHub level (`mergeable: MERGEABLE`, 404 on branch protection) and `required-checks-gate` already
+passed, so merged per the fast-merge law rather than blocking a clean PR on someone else's
+pre-existing red. Not fixed here — `scripts/canonical-relations.json` sits alongside the
+`scripts/verify-*.mjs` family, CC-1's lane; flagging for CC-1, not touching it.
+
+### #2 — E8 + E11-D3: built, real red-before-green proven, staged and held for Cursor's E1
+
+Both guards built under the Round 56-A lane-cross (grantee's cited step numbers 11531/11539
+collided with claims made since the ruling was written — re-claimed live at 11543/11547, same
+seat/band, cited in the commit). Real DoD proof performed on both (not just described):
+
+```
+E8  (verify-bank-line-status-has-live-target.mjs): no-baseline -> FAIL(76) -> seed baseline -> PASS
+    -> perturb baseline to 75 (data untouched) -> FAIL("Debt GREW") -> restore to 76 -> PASS
+E11-D3 (verify-load-costs-board-excludes-settled.mjs): PASS (0 leaked, live) -> temporarily dropped
+    the money-based exclusion from the guard's own board-predicate reproduction (simulating the
+    regression) -> FAIL, named all 20 leaked USMCA loads -> restored -> PASS
+```
+
+Committed together on `cc2-round52-e8-e11d3-guards` (local, `717d3b72a5`) — **not pushed**, per your
+instruction: both collide with Cursor's E1 on the same postings, push both the same turn E1 merges.
+
+### 13612 — measured, not assumed: neither hypothesis confirmed on our side, a real timing anomaly found instead
+
+W.O. SEM66514 is carried by exactly ONE load in our system (13612) — not reused across two loads
+here. Load 13612's own real stop actuals: pickup departed 2026-09-18 09:00, delivery arrived/departed
+2026-09-21. Faro's fee register (`FEES PAID.csv`) shows invoice 64 / PO SEM66514 purchased (fee
+charged) on **2026-09-11** — a full week before this load's own pickup even happened. Neither of
+your two hypotheses resolves cleanly from our data alone: the W.O. isn't reused on our side, and I
+have no way to check whether Faro's own portfolio has a second, different physical load carrying the
+same W.O. (that's an AlwaysTrack/Faro-side question, not something queryable from here — no
+AlwaysTrack data source exists in this app's backend for me to cross-check, confirmed via a repo
+search). Filing the anomaly precisely rather than picking a side: **Faro's purchase date
+(2026-09-11) predates our load's own pickup date (2026-09-18) by a week.** That itself may be the
+real signal — same shape as 13615/13613, an evidence question for AlwaysTrack, not ours to resolve
+without it.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
