@@ -28,9 +28,15 @@ if (!seat) {
   try { branch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim(); } catch {}
   const m = branch.toLowerCase().match(/^(?:claude-)?(?:coder-)?cc-?([123])\b/);
   if (m) seat = `CC-${m[1]}`;
+  // LEAD: scripts/claim-verify-step.mjs's own SEATS table already defines a `lead` seat in the
+  // odd1 band with branch prefix `claude/`. This guard recognised only CC-1/2/3, so a legally
+  // claimed Lead branch could never be pushed — the two files disagreed about who exists.
+  // Ruling: docs/bus/09-22-2026-LEAD-RULING-LEAD-SEAT-AND-CI-WORKFLOW-LANE.md
+  else if (/^claude\//.test(branch.toLowerCase())) seat = 'LEAD';
 }
-if (!/^CC-[123]$/.test(seat)) {
-  fail(`could not resolve the seat. Set SEAT=CC-1|CC-2|CC-3 or name the branch cc-1/<topic>. ` +
+if (!/^(CC-[123]|LEAD)$/.test(seat)) {
+  fail(`could not resolve the seat. Set SEAT=CC-1|CC-2|CC-3|LEAD, or name the branch ` +
+       `cc-1/<topic> (seat) or claude/<topic> (Lead). ` +
        `A PR with no owner is exactly how two seats wrote the same rows.`);
 }
 
@@ -41,7 +47,7 @@ const text = readFileSync(LANES_FILE, 'utf8');
 const sections = {};
 let cur = null;
 for (const raw of text.split('\n')) {
-  const h = raw.match(/^##\s+(CC-[123]|SHARED|FORBIDDEN)/);
+  const h = raw.match(/^##\s+(CC-[123]|LEAD|SHARED|FORBIDDEN)/);
   if (h) { cur = h[1]; sections[cur] = []; continue; }
   if (!cur) continue;
   const line = raw.trim();
@@ -85,8 +91,8 @@ if (cross) {
 }
 
 // ---- verdict ----------------------------------------------------------------
-const mine = sections[seat];
-const others = ['CC-1', 'CC-2', 'CC-3'].filter((s) => s !== seat);
+const mine = sections[seat] ?? [];
+const others = ['CC-1', 'CC-2', 'CC-3', 'LEAD'].filter((s) => s !== seat && sections[s]?.length);
 const violations = [];
 const forbidden = [];
 
