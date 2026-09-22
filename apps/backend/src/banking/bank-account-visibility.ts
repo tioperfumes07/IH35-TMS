@@ -197,3 +197,87 @@ export async function unhideBankAccountForEntity(
   }
   return row;
 }
+
+export interface ActivateBankAccountInput {
+  bankAccountId: string;
+  operatingCompanyId: string;
+  actorUserId: string;
+  accountName: string;
+  institutionName?: string | null;
+}
+
+export interface ActivatedBankAccountRow {
+  id: string;
+  operating_company_id: string;
+  account_name: string;
+  display_name: string | null;
+  institution_name: string | null;
+  is_active: boolean;
+  visible: boolean;
+}
+
+/**
+ * Activate a placeholder/test bank_accounts row for real use (ACCT-F30214, CC-3, 2026-09-22 —
+ * pulled out of banking.routes.ts's inline handler here so it has ONE shared implementation, the
+ * same reason hide/unhide already live here rather than in the route file). Renames + flips
+ * is_active, never deletes/recreates (void-not-delete — the row's history survives).
+ *
+ * ACCT-F30223-VISIBLE — the original inline route set is_active but never `visible`. Live-confirmed
+ * 2026-09-23 on the USMCA Amex row: `is_active=false, visible=false` are TWO SEPARATE columns, and
+ * `visible=false` here did NOT come from a hide action (hidden_at was already NULL) — so
+ * unhideBankAccountForEntity's `WHERE hidden_at IS NOT NULL` guard cannot touch it either. An
+ * activated account with `visible=false` still would not render in Banking, defeating the entire
+ * point of activating it. "Activate" is naturally understood to mean "bring into active, visible
+ * use" — this sets both, in the one place every caller (the route, and any future ops path) shares.
+ *
+ * Never touches ledger_account_id (activation is never a re-map — same invariant as the original).
+ *
+ * ACCT-F30223-DEACTIVATED — live-confirmed 2026-09-23: the USMCA Amex row also carries
+ * `deactivated_at` set (2026-09-01), and `ck_bank_accounts_deactivated_implies_inactive`
+ * (migration 202610280000, BANK-F14) rejects `is_active=true` while `deactivated_at` is non-NULL —
+ * "a deactivated account may not also be is_active", enforced so the two flags for one idea can
+ * never disagree again. The original inline route (and my first pass here) set only `is_active`,
+ * so activating this exact row would have thrown 23514 the first time anyone actually invoked it.
+ * Activation is the owner-directed reversal of that deactivation, so clearing `deactivated_at`
+ * here is the correct, intended un-deactivation the constraint's own invariant requires — not a
+ * workaround around it.
+ */
+export async function activateBankAccountForEntity(
+  client: Queryable,
+  input: ActivateBankAccountInput
+): Promise<ActivatedBankAccountRow | null> {
+  const res = await client.query<ActivatedBankAccountRow>(
+    `
+      UPDATE banking.bank_accounts
+      SET is_active = true,
+          visible = true,
+          deactivated_at = NULL,
+          account_name = $1,
+          display_name = $1,
+          institution_name = COALESCE($2, institution_name),
+          updated_at = now()
+      WHERE id = $3::uuid
+        AND operating_company_id = $4::uuid
+      RETURNING id::text, operating_company_id::text, account_name, display_name, institution_name,
+                is_active, visible
+    `,
+    [input.accountName, input.institutionName ?? null, input.bankAccountId, input.operatingCompanyId]
+  );
+  const row = res.rows[0] ?? null;
+  if (row) {
+    await appendCrudAudit(
+      client,
+      input.actorUserId,
+      "banking.bank_accounts.activated",
+      {
+        resource_type: "banking.bank_accounts",
+        resource_id: input.bankAccountId,
+        operating_company_id: input.operatingCompanyId,
+        account_name: input.accountName,
+      },
+      "info",
+      "ACCT-F30214-BANK-ACCOUNT-ACTIVATE"
+    );
+  }
+  return row;
+}

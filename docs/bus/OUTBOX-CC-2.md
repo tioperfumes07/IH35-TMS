@@ -4132,3 +4132,137 @@ that lookup's behavior is undefined/silent. Register item 15; routed to CC-1's O
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+## 2026-09-23 — ROUND 31.1: Relay deposits (HOLD, correctly, per owner's own 2026-07-12 directive) + Amex activated, real bug caught before it shipped live
+
+**Confirmed CC-1 has the fuel-poster handoff.** `docs/bus/OUTBOX-CC-1.md` carries the full patch
+from ROUND 31; live-checked `origin/main`'s `poster.service.ts` — the fix is not applied there yet
+(not urgent, no deadline given, sitting in their queue).
+
+### TASK A — Relay deposits into USMCA, daily
+
+**A1/A2, precisely, before touching anything:** the 175 rows for the non-USMCA company were NOT
+produced by a daily/live sync. They came from `scripts/run-relay-csv-import-once.mts` — a one-shot,
+manually-triggered script, hardcoded to that one company id, that parses a human-exported "All
+Transactions" CSV and calls `upsertRelayDeposit()`
+(`relay-payments/relay-deposit-classifier.service.ts`). **There is no live Relay API for deposits at
+all, for any company.** Confirmed two ways: (1) `relay-client.ts` exports exactly one fetch
+function, `fetchAllRelayFuelTransactions` — FUEL transactions only, no deposits/wallet-funding
+endpoint exists in this codebase; (2) `docs/specs/ASK-MIKE-RELAY-DEPOSITS-API-2026-07-16.md` — an
+open, apparently still-unanswered question to Relay's own contact asking whether a deposits API
+exists at all, concluding "If no: we keep CSV export... as the lasting source of truth." The real
+daily cron that DOES exist (`relay-fuel-ingest.cron.ts`, 07:00 America/Chicago, per-entity
+`RELAY_FUEL_INGEST_ENABLED` flag) is fuel-transactions only — and it's why USMCA's 76 Relay Fuel
+Wallet draws are already live; it was never built to carry deposits. So "why is USMCA excluded" has
+no allow-list/credential-scoping/hardcoded-id answer to report, because there's no live ingester of
+this data for ANY company to be excluded from — the mechanism is "manual CSV, run once, for one
+company." Not building a second ingester, and not building the first REAL one either (an API pull)
+without a confirmed endpoint from Relay.
+
+**A3 blocker, same shape as a missing credential:** running the existing script for USMCA needs a
+human-exported "All Transactions" CSV from Relay's own portal for USMCA's account. I don't have one
+and can't produce one (it requires logging into Relay's dashboard, the same class of action as
+entering credentials). Searched the local reconciliation folder tree for one — none exists. **STOP
+and report, per A2's own instruction** — this is the owner's/office's to export, not mine to invent.
+
+**A4 — no poster exists, and inventing one would be wrong, not just undone work.**
+`relay-deposit-classifier.service.ts`'s own header: *"storage + classification ONLY (Part B). NO
+GL/booking... Nothing here posts. posted_to_gl stays false. Booking company deposits as company
+cash and external deposits as Loan-from-Owner (liability) / Capital-Contribution (equity) is
+deferred until the owner names each unclassified card and approves the accounting treatment."*
+`docs/trackers/RELAY-DEPOSIT-FUNDING-RECON-2026-07-12.md` names this an explicit owner HOLD
+(2026-07-12): the credit side isn't uniformly "2500" or any single account — it depends on WHICH
+card funded each deposit (6 cards / $54,361.14 still unclassified as owner/spouse/other vs.
+company). Crediting a blanket 2500 would also be substantively wrong here regardless of the HOLD —
+**2500 is the Amex Credit Card Payable liability** (confirmed live, Task B below); a Relay wallet
+funding transfer is not an Amex card charge, and posting it there would misclassify two unrelated
+liabilities into one account. **Stopping and reporting, per A4's own instruction** — not posting,
+not inventing a different single account either.
+
+### TASK B — Activate the Amex
+
+**A real bug caught before it could have broken this in production**, not just a missing column.
+Called CC-3's merged route's logic directly (extracted to a shared function, below — never raw SQL):
+the live USMCA Amex row also carries `deactivated_at` set (2026-09-01), which
+`ck_bank_accounts_deactivated_implies_inactive` (migration 202610280000, BANK-F14, added exactly to
+stop `is_active` and `deactivated_at` from ever disagreing) rejects a bare `is_active=true` against.
+**The original inline route handler (PR #22206) would have thrown 23514 the first time anyone
+actually invoked it against this real row** — it was merged but, per its own commit message, never
+executed against the live Amex ("capability-building"). Caught this live, before shipping.
+
+**Fix, in my own lane (`banking/**`):** extracted the route's inline SQL into
+`activateBankAccountForEntity()` in `bank-account-visibility.ts` (matching hide/unhide's existing
+shared-function pattern exactly, since the original PR's own commit message says it mirrors them
+"verbatim" — the inline duplication was the gap). The extracted version now also sets
+`visible = true` (the original set only `is_active` — a second, separate column; the Amex row had
+`visible=false` independent of `hidden_at`, which was already NULL, so `unhide` couldn't have fixed
+it either) and `deactivated_at = NULL` (the constraint fix above). `banking.routes.ts`'s route now
+calls this one shared function. New test `bank-account-visibility.test.ts` proves both fields are in
+the UPDATE and that a not-found row returns null, not a fake success — verified per DoD: stashed the
+fix, confirmed the test fails (function doesn't exist pre-fix), restored, confirmed it passes.
+Full backend typecheck clean.
+
+**Then actually activated it — via the real function, not raw SQL:**
+
+```
+BEFORE:  account_name "TEST DATA Amex TESTMTDP79YF" | institution "TEST DATA issuer keep"
+         is_active=false | visible=false | deactivated_at=2026-09-01...
+
+AFTER:   account_name "Amex-Scentsx" (owner's exact wording) | institution "American Express"
+         is_active=true | visible=true | deactivated_at=NULL | ledger_account_id UNCHANGED (2500)
+```
+
+`ledger_account_id` untouched, matching Dreamline Diesel Card's shape (`credit_card`/`credit`,
+2510 is its GL analogue to Amex's 2500) — confirmed live, both rows now match on `account_type`.
+
+**B4 — what only the owner can do, and where.** USMCA FREIGHT (BofA) is genuinely Plaid-linked
+(confirmed: real `plaid_item_id`, `last_synced_at` 2026-09-22) — Plaid works in this app for a
+depository account. The Amex is a **credit card**, a different Plaid product category
+(`credit`/`liabilities`), and linking it needs Plaid's own connect flow run against the owner's real
+Amex login — something only the owner (or whoever holds those Amex credentials) can do, in Plaid
+Link's UI, the same place USMCA FREIGHT was connected. **Concretely: open Banking → the newly-active
+"Amex-Scentsx" account → whatever "Connect"/"Link account" affordance exists next to it (the same
+flow that connected USMCA FREIGHT) → sign in with the real Amex login when Plaid's own modal asks
+for it.** Not asking for the credentials here, not fabricating a statement — the account now exists,
+named right, ready for that one click.
+
+### Done line — re-measurable
+
+```
+integrations.relay_deposits USMCA:              0 -> 0            (unchanged — CSV export not on file)
+banking.bank_transactions, Relay Fuel Wallet,
+  non-draw rows:                                 0 -> 0            (unchanged — deposits never ingested)
+GL 1295 — debits:      79 postings, $33,070.18   (unchanged this round)
+GL 1295 — credits:    155 postings, $65,796.63   (unchanged this round, net credit ~$32,726.45 —
+                                                   a real, separate, already-partially-known gap,
+                                                   not touched or newly investigated here)
+Scheduler: N/A — no deposit scheduler exists to name (see A1/A2/A4 above); the real fuel-ingest
+  cron is `relay-fuel-ingest.cron.ts`, "0 7 * * *" UTC-equivalent America/Chicago (07:00 daily),
+  next fire time not re-derived here (unrelated to deposits, already running for fuel).
+
+banking.bank_accounts, id 9564ca46-a68f-4abc-84e5-178ac38e8d19:
+  account_name "Amex-Scentsx" | institution_name "American Express"
+  is_active TRUE | visible TRUE | deactivated_at NULL | ledger_account_id 20b43ecc… (2500, unchanged)
+```
+
+### One judgment call, flagged rather than silently made
+
+Built `scripts/verify-relay-deposits-land-in-usmca.mjs` exactly as named — live-DB, `requireLiveDbOrExit`
+(money-relevant, cannot declare `ALLOW_OFFLINE_SKIP`), `--selftest` confirmed RED against today's
+real state (`usmca=0, TRANSP=175`), normal mode confirmed FAIL/exit 1 against live prod, no-DB mode
+confirmed FAIL/exit 1 (never a silent skip). **Deliberately did NOT wire it into
+`scripts/verify-steps/`.** `verify:pre-commit` (the exact command CI's `build-typecheck` runs) runs
+every verify-step and aborts on the first `process.exit(1)` — wiring in a guard that is *correctly,
+currently* red on a real external-data gap (not a code defect) would fail every unrelated PR
+company-wide until the owner exports a USMCA CSV, which could be hours or weeks away and isn't
+something any coder can fix by writing code. Confirmed this wouldn't be silently unenforced either:
+`guard-integrity.yml`'s `guard-wired-audit` step is informational only (`process.exit(0)` always,
+just prints a NOT-WIRED count) — leaving it unwired doesn't fail CI, it just means the guard runs on
+demand (`node scripts/verify-relay-deposits-land-in-usmca.mjs`) rather than automatically. Flagging
+for a ruling rather than guessing: wire it into the blocking chain once it's expected to read GREEN
+(after the CSV import), or wire it now in some non-blocking/informational path if one exists that I
+didn't find.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7

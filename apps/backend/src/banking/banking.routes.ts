@@ -6,6 +6,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { countPendingBills } from "../kpi/canonical-kpis.js";
 import {
+  activateBankAccountForEntity,
   bankAccountHiddenFilterSql,
   hideBankAccountForEntity,
   isBankAccountHideAdminRole,
@@ -1016,36 +1017,13 @@ export async function registerBankingRoutes(app: FastifyInstance) {
       const companyId = body.data.operating_company_id;
 
       const result = await withCompanyScope(user.uuid, companyId, async (client) => {
-        const res = await client.query(
-          `
-            UPDATE banking.bank_accounts
-            SET is_active = true,
-                account_name = $1,
-                display_name = $1,
-                institution_name = COALESCE($2, institution_name),
-                updated_at = now()
-            WHERE id = $3
-              AND operating_company_id = $4::uuid
-            RETURNING *
-          `,
-          [body.data.account_name, body.data.institution_name ?? null, params.data.id, companyId]
-        );
-        const row = res.rows[0];
-        if (!row) return null;
-        await appendCrudAudit(
-          client,
-          user.uuid,
-          "banking.bank_accounts.activated",
-          {
-            resource_type: "banking.bank_accounts",
-            resource_id: params.data.id,
-            operating_company_id: companyId,
-            account_name: body.data.account_name,
-          },
-          "info",
-          "ACCT-F30214-BANK-ACCOUNT-ACTIVATE"
-        );
-        return row;
+        return activateBankAccountForEntity(client, {
+          bankAccountId: params.data.id,
+          operatingCompanyId: companyId,
+          actorUserId: user.uuid,
+          accountName: body.data.account_name,
+          institutionName: body.data.institution_name ?? null,
+        });
       });
       if (!result) return reply.code(404).send({ error: "bank_account_not_found" });
       return { account: result };
