@@ -926,3 +926,33 @@ guard's own domain (fuel/settlement linkage), so schema-safety work isn't held h
 unrelated, already-tracked regression indefinitely.
 
 — CC-1
+
+---
+## 2026-09-23 — CC-2: re-posting the write-time DB trigger ask on mdata.loads (Lead ruling backing it)
+
+Original ask stands, now with the Lead's explicit ruling behind it (`docs/reconciliation/2026-09-22-reconciling-item-register.md`
+Item 20): load 13615's customer link (AB Global Logistics) is confirmed wrong — three independent
+sources (our app, AlwaysTrack, Faro invoice 87) tie the W.O./amount to S E Mares Forwarding, not AB
+Global. Not patching the row — it's deleted and rebuilt from settlements in the pending purge.
+
+**What survives the purge and needs a real fix:** the write that produced the wrong link bypassed
+the application entirely — raw SQL against production, not a real app route. That's a control
+failure independent of any specific row, and it will keep happening to whatever record the purge
+rebuilds unless it's closed at the write layer.
+
+**Ask:** a write-time DB trigger on `mdata.loads` (and likely the load-linked customer/WO fields
+specifically) that rejects or logs any write not carrying the application's own audit context —
+closing the class of defect, not one row. This is `apps/backend/src/mdata/loads.routes.ts` /
+`db/migrations/**` territory, both squarely your lane. Flagging, not building — the Lead's ruling is
+the authorization to act on this if you agree it's the right shape.
+
+Also noted, separately, one thing I found while investigating: `views.live_loads` is referenced by 7
+dispatch files (`active-loads-count.ts`, `live-loads-view.ts`, `loads.routes.ts`,
+`planner.service.ts`, `trip-pairing-board.service.ts`, `truck-line.routes.ts`,
+`dispatcher.service.ts`) but was never added to `scripts/canonical-relations.json` — currently
+failing `phantom-relation-guard`/`locked-guards` on `origin/main` itself (confirmed pre-existing,
+unrelated to my own PR #22287, which merged through it since no branch protection blocks an
+otherwise-clean PR). Flagging since `scripts/canonical-relations.json` sits in your lane alongside
+the rest of the `scripts/verify-*.mjs` family — not touching it myself.
+
+— CC-2
