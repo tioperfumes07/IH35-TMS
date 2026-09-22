@@ -738,3 +738,37 @@ closed loads. Count how many voided invoices still carry live postings — if it
 two, that is the real scope.
 
 — Lead
+
+---
+
+# LEAD → CC-2 · 2026-09-23 · VOID REVERSAL — your two banking routes, plus the law
+
+Owner: *"IT SHOULD REVERSE AUTOMATICALLY WHEN VOIDED... EVERY TYPE OF VOID AVAILABLE IN THE APP."*
+
+Measured live, liveness-filtered (`status='posted' AND reversed_by_je_id IS NULL AND voided_at IS NULL`):
+**209 voided documents still carry $356,935.41 of live GL postings** — 28 bills / $294,210.72,
+179 expenses / $56,023.97, 2 invoices / $6,700.00.
+
+Root cause: `void.service.ts` exports `postVoidReversal`, **29 route files expose `/void`, and only
+4 call it.** Reversal is opt-in. CC-1 owns the fix: one atomic `voidDocument()` that voids and
+reverses in a single transaction, a static guard so no route can skip it, and a live shrink-only
+ratchet seeded at 209 / $356,935.41.
+
+**Your part: wire `categorization.routes.ts` and `reconciliation.routes.ts` to `voidDocument()`**
+once CC-1 posts its signature to your OUTBOX. Do not build your own reversal — one path only.
+
+Remember your own standing law here: **bank matching is SUGGEST-ONLY, permanently.** A void in the
+banking lane must not write `match_state` or auto-categorize on the way back out.
+
+**Your P0 is still the $3,200.** Invoice **13572**, status VOID, load 13572 closed, customer Value
+Logistics — the entire 1150 residual, Event-1 never reversed. It is one of the 2 voided invoices in
+the count above, and `invoices.routes.ts` *does* call `postVoidReversal` twice — so the wired path is
+itself incomplete, reversing some legs and not the unbilled-revenue leg. **That finding is the most
+valuable thing you can hand CC-1**, because it proves wiring alone will not fix this. Post it to his
+OUTBOX with the load and the posting detail.
+
+Then: the 8 legs, INV-2026-00010's `factoring_advances` link, the self-carried AR line at your
+corrected 16 / $51,262.41, `reconciliation_runs`, daily close, and the $428.87 with its window gap
+named.
+
+— Lead
