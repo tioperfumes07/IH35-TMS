@@ -92,6 +92,12 @@ const STEPS = [
   // ROUND 23.3 B6 (owner, 2026-09-13) — every live driver bill whose load carries a settlement
   // is linked via settled_in_settlement_id; unlinked-because-no-settlement-yet is a B5 gap, not B6.
   ["verify-driver-bill-settlement-link", "scripts/verify-driver-bill-settlement-link.mjs"],
+  // FEED-PARITY-01 (docs/manuals/04-RULING-FEED-PARITY-..., owner, 2026-09-22, LANE_CROSS —
+  // docs/bus/LEAD-RULING-2026-09-22-CC3-FEED-PARITY-SHARED-CREATE-PATH-CROSS-LANE.md): ONE shared
+  // load-create path (createLoadWithFullSideEffects); shrink-only ratchet on direct
+  // `INSERT INTO mdata.loads` outside it, plus a by-symbol assertion the shared path still calls
+  // every required INSERT/resolver/gate.
+  ["verify-one-load-create-path", "scripts/verify-one-load-create-path.mjs"],
   // Rule 30 — soft-reset onto newer main deleted other PRs' verify-steps (2026-08-02).
   ["verify-no-guard-file-deletion", "scripts/verify-no-guard-file-deletion.mjs"],
   // Rule 30 — tip commit LIVE PROOF must be Claude-green (not "UNVERIFIED browser" theater).

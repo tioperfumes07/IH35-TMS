@@ -35,6 +35,48 @@ import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.
 import { computeAndPersistGoogleReferenceMilesForLoad } from "./google-reference-miles.service.js";
 import { ACTIVE_UNIT_STATUSES, assertUnitNotActiveOnAnotherLoad } from "./unit-active-load-guard.js";
 
+// FEED PARITY (docs/manuals/04-RULING-FEED-PARITY-THE-VERIFIED-SIDE-EFFECT-LIST.md, 2026-09-22).
+// Minimal client shape (same pattern as presettlement-link.service.ts's DbClient) so
+// createLoadWithFullSideEffects can be called with a plain pg.PoolClient from any caller without
+// importing `pg` here.
+type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
+
+// "There are exactly two cases and neither one is a silent pass" (ruling, verbatim):
+//  - live_feed: a load running now or in the future. EVERY gate blocks, exactly as Book Load does
+//    today. This is the fail-closed DEFAULT -- an undeclared source is treated as live_feed.
+//  - historical_backfill: a load that already ran and is being recorded after the fact. A gate
+//    cannot retroactively fail a drug test that has already passed. The gate is still EVALUATED,
+//    its outcome is RECORDED, and creation proceeds. Never skipped, never silently passed.
+export type LoadCreateSource = "live_feed" | "historical_backfill";
+
+/**
+ * Called at each hard gate in createLoadWithFullSideEffects in place of a bare
+ * `return { kind: "error", ... }`. For source==="live_feed" (or any undeclared/other value --
+ * fail-closed default) it returns the SAME error result the gate always returned, unchanged. For
+ * source==="historical_backfill" it records the gate's outcome via the EXISTING appendCrudAudit
+ * trail (no new exceptions table invented here -- reconciliation.exceptions is CC-1's
+ * reconciler-skeleton lane, docs/manuals/03-RULING-THE-RECONCILER-THE-ONE-GENERATIVE-CAUSE.md) and
+ * returns null, meaning "recorded, not blocking -- fall through."
+ */
+async function gateOutcome(
+  client: DbClient,
+  source: LoadCreateSource,
+  requestingUserUuid: string,
+  errorResult: { kind: "error"; status: number; payload: Record<string, unknown> },
+  exception: { eventType: string; findingRef: string; details: Record<string, unknown> }
+): Promise<{ kind: "error"; status: number; payload: Record<string, unknown> } | null> {
+  if (source !== "historical_backfill") return errorResult;
+  await appendCrudAudit(
+    client,
+    requestingUserUuid,
+    exception.eventType,
+    { ...exception.details, historical_backfill_gate_exception: true, would_have_blocked_with: errorResult.payload },
+    "warning",
+    exception.findingRef
+  );
+  return null;
+}
+
 type BookLoadStop = {
   // 'border' = a port-of-entry crossing stop captured in Book Load for a cross-border (NB/SB) load.
   stop_type: "pickup" | "delivery" | "border";
@@ -1372,8 +1414,45 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
 async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResult> {
   return withCurrentUser(input.requestingUserUuid, async (client) => {
     await setScopedCompanyContext(client, input.requestingUserUuid, input.operating_company_id);
+    // Book Load is always the "running now" case -- every gate below blocks, unchanged from
+    // before this function existed. See createLoadWithFullSideEffects's own header.
+    return createLoadWithFullSideEffects(client, input, { source: "live_feed" });
+  });
+}
 
-    // B6 — resolve the uploaded rate confirmation inside the SAME transaction that creates the load.
+/**
+ * FEED PARITY (docs/manuals/04-RULING-FEED-PARITY-THE-VERIFIED-SIDE-EFFECT-LIST.md, 2026-09-22).
+ * Owner: "SO CREATE THE SAME WHEN FEEDING. I TOLD YOU TO CREATE THE PROCESSES BASED ON LIVE
+ * VERIFIED DATA."
+ *
+ * THE ONE SHARED CREATE PATH. Every INSERT and every resolver/gate that used to live only inside
+ * Book Load's transaction now lives here, in this exact order, unchanged: mdata.loads,
+ * docs.file_links, dispatch.load_charge_lines, dispatch.load_assignment_history (x2),
+ * mdata.load_stops, plus resolveLoadTrailerEquipmentIdForInsert, resolveDriverBasePayCents (via
+ * createDriverBillArtifacts), resolveFactoringVendorId, findOpenPresettlementTourForUnit,
+ * claimReservation/reserveNextLoadId, assertUnitNotActiveOnAnotherLoad, detectAssetCoverageGap,
+ * assertDriverQualifiedForLoad, the drug-test gate, the HOS check, the out-of-service check, the
+ * unit validity check, and appendCrudAudit throughout. NOTHING is reimplemented -- every resolver
+ * and gate is called by its existing name, in its existing order. bookLoad() calls this with
+ * source="live_feed". Any future feed (EDI 204, a CSV importer) must call this too, declaring
+ * which of the two cases (see LoadCreateSource above) applies -- an undeclared source is refused
+ * fail-closed as live_feed, never defaulted to historical_backfill.
+ *
+ * NOT YET WIRED (disclosed, not silently dropped): the actual feed call sites
+ * (integrations/edi/transactions/inbound-204.handler.ts, mdata/loads.routes.ts direct-insert path,
+ * seed/csv-seed-import.ts, onboarding/seed-sample-data.ts -- the guard's own named offenders) still
+ * insert into mdata.loads independently and have not yet been rewired to call this function. That
+ * is real, separate, per-caller work -- each has its own input shape to map onto BookLoadInput --
+ * named here rather than claimed done. scripts/verify-one-load-create-path.mjs fails on exactly
+ * these files today, by design, until that wiring lands.
+ */
+export async function createLoadWithFullSideEffects(
+  client: DbClient,
+  input: BookLoadInput,
+  opts: { source: LoadCreateSource }
+): Promise<BookLoadResult> {
+  const source = opts.source;
+  // B6 — resolve the uploaded rate confirmation inside the SAME transaction that creates the load.
     // Never trust a browser-supplied R2 key as document identity, and never return 201 unless the
     // completed, entity-scoped docs.files row can also be linked to the created load.
     let rateConfirmationFile: { id: string; r2_key: string; category_id: string } | null = null;
@@ -1524,40 +1603,84 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
       // DISP-F01 — OOS is a hard block of the same severity class as WF-050 (0441-mod2), and this
       // path had no OOS check whatsoever. Refused before the dispatch-block branch so an out-of-
       // service unit can never be booked, override token or not: an OOS truck is a DOT/safety state,
-      // not a workflow warning an operator may wave through.
+      // not a workflow warning an operator may wave through. FEED PARITY: this is the unit's
+      // CURRENT is_oos state -- for a historical_backfill (a load that already ran), "currently OOS"
+      // does not prove the unit was OOS when that load actually ran, so this gate is recorded, not
+      // blocking, in that one case only (throw doesn't fit gateOutcome's return-shaped contract, so
+      // handled inline rather than forcing it through that helper).
       if (unit?.is_oos) {
-        throw new Error(
-          `E_UNIT_OOS:Unit ${String(unit.display_id ?? input.assigned_unit_id)} is out of service (OOS) and cannot be booked.`
+        const oosMessage = `E_UNIT_OOS:Unit ${String(unit.display_id ?? input.assigned_unit_id)} is out of service (OOS) and cannot be booked.`;
+        if (source !== "historical_backfill") {
+          throw new Error(oosMessage);
+        }
+        await appendCrudAudit(
+          client,
+          input.requestingUserUuid,
+          "dispatch.historical_backfill_gate_exception",
+          {
+            operating_company_id: input.operating_company_id,
+            gate: "unit_oos",
+            unit_id: unit.id,
+            unit_display_id: unit.display_id,
+            historical_backfill_gate_exception: true,
+            would_have_blocked_with: oosMessage,
+          },
+          "warning",
+          "DISP-F01"
         );
       }
 
       if (unit?.is_dispatch_blocked) {
+        // FEED PARITY: a historical_backfill has no live operator to supply an override token --
+        // record the gate outcome instead of demanding one. An explicit override_token supplied
+        // during a backfill still goes through the normal owner-override path below, unchanged.
+        let bypassedAsHistoricalBackfillException = false;
         if (!input.override_token) {
-          await appendCrudAudit(
-            client,
-            input.requestingUserUuid,
-            "dispatch.book_load_blocked_by_unit",
-            {
-              operating_company_id: input.operating_company_id,
-              unit_id: unit.id,
-              block_reason: unit.dispatch_block_reason ?? null,
-              block_code: "E_UNIT_DISPATCH_BLOCKED",
-            },
-            "info",
-            "BT-3-DISPATCH-AUTH-GATES"
-          );
-          return {
-            kind: "error",
-            status: 422,
-            payload: {
-              error: "E_UNIT_DISPATCH_BLOCKED",
-              message: `Unit ${String(unit.display_id ?? "")} is dispatch-blocked: ${String(unit.dispatch_block_reason ?? "major defect reported")}`,
-              details: { unit_id: unit.id, unit_display_id: unit.display_id, block_reason: unit.dispatch_block_reason },
-              wf_044_maintenance_warnings: wf044Warnings,
-              insurance_coverage_gap_warnings: insuranceCoverageWarnings,
-            },
-          };
+          if (source === "historical_backfill") {
+            await appendCrudAudit(
+              client,
+              input.requestingUserUuid,
+              "dispatch.historical_backfill_gate_exception",
+              {
+                operating_company_id: input.operating_company_id,
+                gate: "unit_dispatch_blocked",
+                unit_id: unit.id,
+                unit_display_id: unit.display_id,
+                block_reason: unit.dispatch_block_reason ?? null,
+                historical_backfill_gate_exception: true,
+              },
+              "warning",
+              "BT-3-DISPATCH-AUTH-GATES"
+            );
+            bypassedAsHistoricalBackfillException = true;
+          } else {
+            await appendCrudAudit(
+              client,
+              input.requestingUserUuid,
+              "dispatch.book_load_blocked_by_unit",
+              {
+                operating_company_id: input.operating_company_id,
+                unit_id: unit.id,
+                block_reason: unit.dispatch_block_reason ?? null,
+                block_code: "E_UNIT_DISPATCH_BLOCKED",
+              },
+              "info",
+              "BT-3-DISPATCH-AUTH-GATES"
+            );
+            return {
+              kind: "error",
+              status: 422,
+              payload: {
+                error: "E_UNIT_DISPATCH_BLOCKED",
+                message: `Unit ${String(unit.display_id ?? "")} is dispatch-blocked: ${String(unit.dispatch_block_reason ?? "major defect reported")}`,
+                details: { unit_id: unit.id, unit_display_id: unit.display_id, block_reason: unit.dispatch_block_reason },
+                wf_044_maintenance_warnings: wf044Warnings,
+                insurance_coverage_gap_warnings: insuranceCoverageWarnings,
+              },
+            };
+          }
         }
+        if (!bypassedAsHistoricalBackfillException) {
         if (!canOverrideUnitBlock(input.requestingUserRole)) {
           return {
             kind: "error",
@@ -1596,6 +1719,7 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
           override_reason: input.override_reason,
           override_by_user_id: input.requestingUserUuid,
         });
+        }
       }
 
       // 0441-mod2: hard-block OOS units (same severity class as WF-050 / is_dispatch_blocked).
@@ -1614,31 +1738,51 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
       );
       const oosUnit = oosRows[0] ?? null;
       if (oosUnit?.is_oos) {
+        let bypassedAsHistoricalBackfillException = false;
         if (!input.override_token) {
-          await appendCrudAudit(
-            client,
-            input.requestingUserUuid,
-            "dispatch.book_load_blocked_by_unit_oos",
-            {
-              operating_company_id: input.operating_company_id,
-              unit_id: oosUnit.id,
-              block_code: "E_UNIT_OOS",
-            },
-            "info",
-            "0441-MOD2-DISPATCH-OOS"
-          );
-          return {
-            kind: "error",
-            status: 422,
-            payload: {
-              error: "E_UNIT_OOS",
-              message: `Unit ${String(oosUnit.display_id ?? "")} is out of service (OOS) and cannot be assigned.`,
-              details: { unit_id: oosUnit.id, unit_display_id: oosUnit.display_id },
-              wf_044_maintenance_warnings: wf044Warnings,
-              insurance_coverage_gap_warnings: insuranceCoverageWarnings,
-            },
-          };
+          if (source === "historical_backfill") {
+            await appendCrudAudit(
+              client,
+              input.requestingUserUuid,
+              "dispatch.historical_backfill_gate_exception",
+              {
+                operating_company_id: input.operating_company_id,
+                gate: "unit_oos_0441mod2",
+                unit_id: oosUnit.id,
+                unit_display_id: oosUnit.display_id,
+                historical_backfill_gate_exception: true,
+              },
+              "warning",
+              "0441-MOD2-DISPATCH-OOS"
+            );
+            bypassedAsHistoricalBackfillException = true;
+          } else {
+            await appendCrudAudit(
+              client,
+              input.requestingUserUuid,
+              "dispatch.book_load_blocked_by_unit_oos",
+              {
+                operating_company_id: input.operating_company_id,
+                unit_id: oosUnit.id,
+                block_code: "E_UNIT_OOS",
+              },
+              "info",
+              "0441-MOD2-DISPATCH-OOS"
+            );
+            return {
+              kind: "error",
+              status: 422,
+              payload: {
+                error: "E_UNIT_OOS",
+                message: `Unit ${String(oosUnit.display_id ?? "")} is out of service (OOS) and cannot be assigned.`,
+                details: { unit_id: oosUnit.id, unit_display_id: oosUnit.display_id },
+                wf_044_maintenance_warnings: wf044Warnings,
+                insurance_coverage_gap_warnings: insuranceCoverageWarnings,
+              },
+            };
+          }
         }
+        if (!bypassedAsHistoricalBackfillException) {
         if (!canOverrideUnitBlock(input.requestingUserRole)) {
           return {
             kind: "error",
@@ -1669,6 +1813,7 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
           "warning",
           "0441-MOD2-DISPATCH-OOS"
         );
+        }
       }
 
       const coverage = await detectAssetCoverageGap(client, {
@@ -1778,36 +1923,58 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
         };
       }
       if (hos?.is_in_violation) {
+        // FEED PARITY: a driver's CURRENT HOS clock says nothing about whether they were in
+        // violation at the time a historical_backfill's load actually ran -- record, don't block.
+        let bypassedAsHistoricalBackfillException = false;
         if (!input.override_token) {
-          await appendCrudAudit(
-            client,
-            input.requestingUserUuid,
-            "dispatch.book_load_blocked_by_hos",
-            {
-              operating_company_id: input.operating_company_id,
-              driver_id: hos.id,
-              block_code: "E_DRIVER_HOS_VIOLATION",
-              minutes_until_violation: Number(hos.minutes_until_violation ?? 0),
-            },
-            "info",
-            "BT-3-DISPATCH-AUTH-GATES"
-          );
-          return {
-            kind: "error",
-            status: 422,
-            payload: {
-              error: "E_DRIVER_HOS_VIOLATION",
-              message: `Driver ${String(hos.full_name ?? hos.display_id ?? "")} is in HOS violation.`,
-              details: {
+          if (source === "historical_backfill") {
+            await appendCrudAudit(
+              client,
+              input.requestingUserUuid,
+              "dispatch.historical_backfill_gate_exception",
+              {
+                operating_company_id: input.operating_company_id,
+                gate: "hos_violation",
                 driver_id: hos.id,
                 minutes_until_violation: Number(hos.minutes_until_violation ?? 0),
-                hos_badge_color: hos.hos_badge_color,
+                historical_backfill_gate_exception: true,
               },
-              wf_044_maintenance_warnings: wf044Warnings,
-              insurance_coverage_gap_warnings: insuranceCoverageWarnings,
-            },
-          };
+              "warning",
+              "BT-3-DISPATCH-AUTH-GATES"
+            );
+            bypassedAsHistoricalBackfillException = true;
+          } else {
+            await appendCrudAudit(
+              client,
+              input.requestingUserUuid,
+              "dispatch.book_load_blocked_by_hos",
+              {
+                operating_company_id: input.operating_company_id,
+                driver_id: hos.id,
+                block_code: "E_DRIVER_HOS_VIOLATION",
+                minutes_until_violation: Number(hos.minutes_until_violation ?? 0),
+              },
+              "info",
+              "BT-3-DISPATCH-AUTH-GATES"
+            );
+            return {
+              kind: "error",
+              status: 422,
+              payload: {
+                error: "E_DRIVER_HOS_VIOLATION",
+                message: `Driver ${String(hos.full_name ?? hos.display_id ?? "")} is in HOS violation.`,
+                details: {
+                  driver_id: hos.id,
+                  minutes_until_violation: Number(hos.minutes_until_violation ?? 0),
+                  hos_badge_color: hos.hos_badge_color,
+                },
+                wf_044_maintenance_warnings: wf044Warnings,
+                insurance_coverage_gap_warnings: insuranceCoverageWarnings,
+              },
+            };
+          }
         }
+        if (!bypassedAsHistoricalBackfillException) {
         if (!canOverrideHos(input.requestingUserRole)) {
           return {
             kind: "error",
@@ -1845,6 +2012,7 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
           override_reason: input.override_reason,
           override_by_user_id: input.requestingUserUuid,
         });
+        }
       }
     }
 
@@ -1875,35 +2043,58 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
         );
         const blocked = latestDrugRows.find((row) => isDrugDispatchBlocked(row.result));
         if (blocked) {
-          await appendCrudAudit(
+          // FEED PARITY worked example (ruling, verbatim): "a load delivered last week cannot
+          // retroactively fail a drug-test gate." No existing override path for this gate at all
+          // -- live_feed still hard-blocks unconditionally, historical_backfill records and
+          // proceeds.
+          const outcome = await gateOutcome(
             client,
+            source,
             input.requestingUserUuid,
-            "dispatch.book_load_blocked_by_drug_program",
             {
-              operating_company_id: input.operating_company_id,
-              driver_id: blocked.driver_id,
-              latest_result: blocked.result,
-              latest_test_date: blocked.test_date,
-              block_code: "E_DRIVER_DRUG_DISPATCH_BLOCKED",
+              kind: "error",
+              status: 422,
+              payload: {
+                error: "E_DRIVER_DRUG_DISPATCH_BLOCKED",
+                message: `Driver is dispatch-blocked due to latest drug program result: ${blocked.result}.`,
+                details: {
+                  driver_id: blocked.driver_id,
+                  latest_result: blocked.result,
+                  latest_test_date: blocked.test_date,
+                },
+                wf_044_maintenance_warnings: wf044Warnings,
+                insurance_coverage_gap_warnings: insuranceCoverageWarnings,
+              },
             },
-            "warning",
-            "P7-SAF-DRUG-PROGRAM"
-          );
-          return {
-            kind: "error",
-            status: 422,
-            payload: {
-              error: "E_DRIVER_DRUG_DISPATCH_BLOCKED",
-              message: `Driver is dispatch-blocked due to latest drug program result: ${blocked.result}.`,
+            {
+              eventType: "dispatch.historical_backfill_gate_exception",
+              findingRef: "P7-SAF-DRUG-PROGRAM",
               details: {
+                operating_company_id: input.operating_company_id,
+                gate: "drug_program_block",
                 driver_id: blocked.driver_id,
                 latest_result: blocked.result,
                 latest_test_date: blocked.test_date,
               },
-              wf_044_maintenance_warnings: wf044Warnings,
-              insurance_coverage_gap_warnings: insuranceCoverageWarnings,
-            },
-          };
+            }
+          );
+          if (outcome) {
+            await appendCrudAudit(
+              client,
+              input.requestingUserUuid,
+              "dispatch.book_load_blocked_by_drug_program",
+              {
+                operating_company_id: input.operating_company_id,
+                driver_id: blocked.driver_id,
+                latest_result: blocked.result,
+                latest_test_date: blocked.test_date,
+                block_code: "E_DRIVER_DRUG_DISPATCH_BLOCKED",
+              },
+              "warning",
+              "P7-SAF-DRUG-PROGRAM"
+            );
+            return outcome;
+          }
         }
       }
     }
@@ -1932,6 +2123,33 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
           isHazmat: isHazmatLoad,
         });
         if (block) {
+          // FEED PARITY: a historical_backfill's driver-qualification snapshot is CURRENT-state
+          // (assertDriverQualifiedForLoad reads live CDL/medical/hazmat expiry), which says
+          // nothing about whether the driver was qualified when this already-ran load actually
+          // happened. Record and move on to the next gated driver -- same shape as the other
+          // gates above, no Owner role/reason required for this case (unlike the live-feed
+          // override path below, which stays unchanged).
+          if (source === "historical_backfill") {
+            await appendCrudAudit(
+              client,
+              input.requestingUserUuid,
+              "dispatch.historical_backfill_gate_exception",
+              {
+                operating_company_id: input.operating_company_id,
+                gate: "driver_qualification",
+                driver_id: block.driverId,
+                driver_name: block.driverName,
+                reasons: block.reasons,
+                cdl_expires_at: block.cdlExpiresAt,
+                medical_expiry_date: block.medicalExpiryDate,
+                hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,
+                historical_backfill_gate_exception: true,
+              },
+              "warning",
+              "BT-3-DISPATCH-AUTH-GATES"
+            );
+            continue; // recorded, not blocking -- every other gated driver is still checked.
+          }
           // OWNER-ALWAYS-OVERRIDE (owner ruling 2026-08-02). Before this branch the driver-qualification
           // gate was an ABSOLUTE 422 with no override path at all — unlike the sibling unit-block and OOS
           // gates, which have carried an Owner override since BT-3. That left the Owner with a dead end:
@@ -2930,5 +3148,4 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
         save_proof,
       },
     };
-  });
 }
