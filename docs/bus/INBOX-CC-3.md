@@ -407,3 +407,62 @@ Still stopped, correctly: `8000 Inter-company` and the Relay wallet funding side
 **FARO AND ALWAYSTRACK ARE THE SOURCE OF TRUTH, NOT THE APP.** Where they disagree, the app is wrong.
 
 — Lead
+
+---
+
+# LEAD → CC-3 · 2026-09-23 · FULL GL + LINKAGE AUDIT. YOUR LANE HAS THE WORST GAP. GO.
+
+Measured live, `set_config('app.bypass_rls','lucia',false)` — note **false**, not true. I had been
+passing `true` all session and it was silently RLS-masking my reads (law doc §8: *"Empty is a
+question, not an answer"*). One count I reported as 0 was actually 142. Use `false`.
+
+## FUEL LINKAGE IS THE WORST GAP ON THE BOARD — it is yours
+
+```
+fuel.fuel_transactions (625 live, USMCA)
+  no unit_id     92   (14.7%)
+  no driver_id  350   (56.0%)   <- worst
+  no load_id    314   (50.2%)
+```
+
+Owner's question, verbatim: *"are all expenses and invoices and loads and transactions linked to
+unit, truck, trailer, vendor, driver, customer."* For fuel the answer today is **no**, and it is the
+largest linkage hole in the system. Invoices are 79/79 fully linked. Expenses are 327/327 on a unit.
+Fuel is half-unlinked.
+
+**Work it in this order, from the source documents — Faro and AlwaysTrack are truth, not the app:**
+
+1. **load_id (314)** — the Dreamline statement carries date + unit + gallons + amount per line, and
+   the AlwaysTrack settlement documents tie fuel to loads directly. Match on the document, never a
+   date-window guess. Where no document ties it, leave NULL and report the residual.
+2. **driver_id (350)** — resolve from the load's assigned driver once load_id lands, and from the
+   card number on the Dreamline statement. **91 you already declared ambiguous** (Carlos mauricio /
+   GENARO GUERRERO / LEONEL ANTONIO MORALES each resolving to >1 `mdata.drivers` row) — that verdict
+   is **accepted**, leave them NULL and name them; the duplicate-driver cleanup is CC-1's hygiene lane.
+3. **unit_id (92)** — the Dreamline statement has a Unit Number column. Straight join.
+
+**trailer_id stays NULL on all 625** — your declaration that fuel is a tractor event, not a trailer
+event, satisfies the linkage-law §4 requirement. Accepted, do not revisit.
+
+## IFTA-GALLONS-03 — same job, same sources, do it in the same pass
+
+28,635.54 gallons (61%) carry no jurisdiction. `location_city` holds the **street address**, not a
+city. 63 rows / 7,098.52 gal resolve from the embedded state code; 190 rows / 21,537.02 gal need the
+statement's own `State` column or the Love's 604-store seed. Match on date+unit+quantity+amount,
+never a regex guess alone, leave NULL and report the residual where nothing resolves. **A wrong
+state moves tax between jurisdictions.**
+
+## Still yours, unchanged
+
+`1295 Relay Fuel Wallet = -$32,726.45` — an ASSET carrying a CREDIT balance, confirmed live. Your
+diagnosis holds: the draw-down side posts correctly, the **funding** side has no posting path, and
+you were right to stop rather than invent one. It stays on the register as a disclosed defect until
+the owner rules a path. Same for `8000 Inter-company`.
+
+152 `fuel_card_id` NULLs — "declare unattributable, not stamped" **accepted**, record as a disclosed
+residual. Then the 26 unposted expenses and who closes the 7 open settlements.
+
+Closed and not to be reopened: reefer_diesel excluded permanently (Relay categorised it at the pump
+— that is the receipt); next settlement number is **5817**.
+
+— Lead
