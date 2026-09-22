@@ -4397,3 +4397,60 @@ factoring-balance-tile-blank item is noted as the one worth prioritizing next gi
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+## 2026-09-23 — The 18 loads: 1 resolved live, 1 rate discrepancy flagged, and a finding that changes the premise of the batch
+
+**13579 / INV-2026-00010 — resolved, exactly as instructed.** Called `autoSubmitDeliveredLoadToFactor`
+directly for load `55e1b670-1201-40a8-8c48-b29d6bf73025` (confirmed live as this invoice's
+`source_load_id` before calling, not from memory). Result: `submitted:true`, advance
+`FAC-2026-00120` ($5,210.00 pledge), `factoring_status` flipped `not_factored` -> `submitted` on
+its own — never set by hand. Live-reconfirmed after commit.
+
+**13611 — a real $500.00 discrepancy, not touched.** Faro's own purchase (inv #91 / PO 1013707,
+confirmed by my own PO-matching preview work this round to resolve to this exact customer,
+Refrigerx) is $3,200.00. The load's own real, owner-entered linehaul charge line
+(`dispatch.load_charge_lines`, created 2026-09-21 by the owner directly) is $3,700.00. This is not
+a data-entry gap to paper over — one of these two real numbers is wrong, and I don't know which
+without the actual rate confirmation. Excluded from everything below; not touched.
+
+**The finding that changes the batch's premise: zero of the 18 named loads carry real delivery
+evidence in `mdata.load_stops` — not the 13 assumed "dispatched, needs advancing," and not the 4
+already marked `status='delivered'` either.** Checked all 18 directly, live:
+
+```
+Every one of the 18 loads' stop rows (pickup AND delivery, both) read:
+  status = 'pending', actual_arrival_at = NULL, actual_departure_at = NULL
+```
+
+That includes 13590, 13591, 13592, 13594 — all four sit at `mdata.loads.status='delivered'` while
+their OWN stop records show nothing ever marked complete. The load-status field and the stop-level
+evidence directly contradict each other for these four; that contradiction is itself worth a
+separate, named data-integrity item (not something I'm fixing here — it's a dispatch-data-entry
+gap, not a code defect).
+
+**What this means for the batch, applying the exact same law 13615 already proved correct:**
+`sendDraftInvoice`'s delivery-evidence gate reads `mdata.load_stops` directly, not the load's
+`status` column — so every one of these 17 (18 minus 13611) would hit the identical
+`delivery_evidence_missing` refusal 13615 got, REGARDLESS of load status. **Not attempting to
+advance any load's status** — there is no real evidence to advance "using," which the instruction's
+own condition requires ("advance through the real status path using the delivery evidence that
+exists"). **Not creating or sending any of the 17 invoices** — doing so would either hit the same
+correct refusal (if I use the real send path) or require bypassing a control built specifically for
+factoring recourse risk (if I didn't) — same reasoning as 13615, applied consistently rather than
+selectively. **Charge lines need no action** — 17 of 18 already carry the owner's own real linehaul
+charge line at exactly Faro's stated rate (verified line-by-line against the packet's own table;
+only 13611 diverges).
+
+**What would actually unblock this batch:** real POD/departure capture for these 18 loads through
+whatever path normally does it (driver PWA, dispatcher completing a stop) — not something I can
+invent from here. Once even one load's stop record shows a real `actual_departure_at`, the same
+convert→send→auto-submit sequence that worked cleanly on 13610/12/13/14/13596 this round will work
+identically for it, unassisted, exactly like the packet's own observation that the auto-factor
+latch "fired unaided."
+
+Register entry for all 19 (18 + 13579) deferred to the reconciling-item register in a follow-up —
+this report is the live evidence itself; the register write is bookkeeping, not blocking.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7

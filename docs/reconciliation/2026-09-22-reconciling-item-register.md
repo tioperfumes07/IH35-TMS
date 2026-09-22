@@ -312,3 +312,38 @@ silently. Not triaged further (root cause of the collision, or whether the seque
 double-issued `00009`) — reported per §D discipline, not fixed; `accounting/from-load.ts` and the
 display-id sequence resolver are CC-1's lane (`apps/backend/src/accounting/**`), routed to their
 OUTBOX.
+
+## Item 16 — The 18 Faro-bought loads: 1 resolved, 1 rate flag, 0/18 evidence (RESOLVED partial / REPORTED)
+
+Owner packet: 18 named loads Faro already purchased ($72,567.00 total), plus one mis-keyed case,
+INV-2026-00010 / load 13579 ($5,210.00), to be resolved by setting factoring status from the Faro
+document rather than invoicing.
+
+**INV-2026-00010 / load 13579 — RESOLVED, live, per instruction.** Called
+`autoSubmitDeliveredLoadToFactor` for `source_load_id 55e1b670-1201-40a8-8c48-b29d6bf73025` (the
+real, confirmed `source_load_id` on this invoice). Result: `submitted:true`, advance
+`FAC-2026-00120`, pledge $5,210.00. `accounting.invoices.factoring_status` flipped
+`not_factored -> submitted` on its own, through the real auto-submit path — never set by hand.
+
+**13611 — FLAGGED, not touched.** Faro's stated purchase (inv #91 / PO 1013707, Refrigerx) is
+$3,200.00. This load's own real, owner-entered linehaul charge line (`dispatch.load_charge_lines`,
+2026-09-21) is $3,700.00 — a genuine $500.00 discrepancy between two real, independently-entered
+numbers. Excluded from the batch below pending clarification of which figure is correct.
+
+**The other 17: charge lines are already correct (no action needed); delivery evidence is
+uniformly absent (0 of 18, no action possible).** Checked all 18 loads' `dispatch.load_charge_lines`
+against the packet's own rate table — 17/18 match Faro's stated rate exactly (owner-booked directly,
+2026-09-11 through 2026-09-21); only 13611 diverges (above). Checked all 18 loads'
+`mdata.load_stops` (same query shape `finalActiveDeliveryDepartureAt` uses in the real send-invoice
+gate): every stop, pickup and delivery, on every one of the 18 loads reads `status='pending'`,
+`actual_arrival_at IS NULL`, `actual_departure_at IS NULL`. This includes loads 13590, 13591, 13592,
+13594, whose `mdata.loads.status` column already reads `'delivered'` — a direct, load-level-vs-
+stop-level contradiction on those 4, itself worth a separate data-integrity item, not fixed here.
+
+**Applying the same rule that correctly refused invoice 13615** (`sendDraftInvoice`'s delivery-
+evidence gate reads `mdata.load_stops` directly, independent of `mdata.loads.status`): none of these
+17 loads can be advanced through the real status path (there is no delivery evidence to advance
+"using"), invoiced through the real send path (would hit the identical `delivery_evidence_missing`
+409 13615 got), or auto-submitted to factor (requires a `sent` invoice first). Not attempted. The
+unblock is real POD/departure capture on these 18 loads through the normal dispatch/driver path —
+not a database write from here. Full detail: `docs/bus/OUTBOX-CC-2.md`, 2026-09-23 entry.
