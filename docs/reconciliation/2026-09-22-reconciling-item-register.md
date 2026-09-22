@@ -10,13 +10,13 @@ here is silently dropped.
 | 1 | Escrow/fee recognition, 6 closed Faro invoices | $143.63 ($8.22 fee / $135.41 rebate) | **RESOLVED** | See below. Source now confirmed: `docs/reconciliation/2026-09-22-RESERVE-REPORT.csv`. |
 | 2 | `FARO-092` → load 13613 | n/a (link) | **OPEN — EVIDENCE NOT ON FILE** | Posted to `docs/bus/OUTBOX-CC-1.md`; `docs/reconciliation/2026-09-22-44-missing-loads-register.md`. |
 | 3 | `FARO-049` → load 13567 | n/a (link) | **OPEN — EVIDENCE NOT ON FILE** | Same as above. |
-| 4 | `factoring_reserve_movements` gap | $428.87 | **OPEN — not plugged** | 110 rows / $5,094.47 held vs. escrow $4,530.19 + cash $135.41 = $4,665.60. Partial root cause found (item 4 below); re-derivation against `RESERVE REPORT.csv`'s 18 rows in progress. |
+| 4 | `factoring_reserve_movements` gap | $428.87 | **OPEN — not plugged, re-derivation attempted, doesn't close it** | 110 rows / $5,094.47 held vs. escrow $4,530.19 + cash $135.41 = $4,665.60. Partial root cause (51 stale rows) found; `RESERVE REPORT.csv`'s 18 rows re-derived per instruction — its window (8/28–9/21) doesn't cover the full held-movement window (8/10–9/11), so it cannot close the residual $1,847.24. |
 | 5 | 8 direct disbursement legs (intercompany, DR 8000 / CR 1230) | $35,730.00 | **RESOLVED** | 8 individual JEs posted, balanced, source_transaction_type `faro_intercompany_leg`. See item 5 below. |
 | 6 | 5 "reserve deposits" | $28,489.00 | **CLOSED — moot, not a separate population** | Owner correction (#22188): 4 of the 5 are the funding side already inside 4 of the 8 legs; RESERVE REPORT.csv's own Balance column proves it. Posting both would double-count $26,840.00. Not posted separately — see item 6 below. |
-| 7 | 5 self-carried invoices | $12,592.40 open | **OPEN — under investigation** | |
+| 7 | Self-carried invoices | $51,262.41 open, 16 invoices | **OPEN — count corrected, not yet built as an AR-aging line** | The "5 invoices / $12,592.40" figure from earlier this session does not reproduce live — re-derived fresh: 16 real unfactored (`factoring_advance_id IS NULL`), unvoided invoices, $51,262.41 total, $0.00 paid on every one. Not forcing the stale figure. |
 | 8 | Invoice 13524 Faro-vs-face variance | $400.00 | **RESOLVED** | Voided predecessor invoice; live replacement `INV-2026-00008` ties Faro's gross exactly. `accounting.invoice_disputes` dea42eed-6f25-4cf5-b0ff-ce2ea0ceec9a. |
 | 9 | Invoice 13587 (Key Global) under-billing | $120.00 | **OPEN** | Proforma not yet finalized at Faro's $4,120.00. `accounting.invoice_disputes` 08a6227a-3eaf-47d8-9e80-0905fe0b4a85. |
-| 10 | Invoice 13579 — reinstated to match Faro | $5,210.00 | **RESOLVED** | Owner ruling: "Faro is truth." Reinstated as `INV-2026-00010`, $5,210.00 exact. `accounting.invoice_disputes` 80a9a5fa-e2f9-48c0-b921-096eeb956461, resolved. See item 7 below. |
+| 10 | Invoice 13579 — reinstated to match Faro | $5,210.00 | **RESOLVED, with one loose end** | Owner ruling: "Faro is truth." Reinstated as `INV-2026-00010`, $5,210.00 exact. `accounting.invoice_disputes` 80a9a5fa-e2f9-48c0-b921-096eeb956461, resolved. **Loose end:** the new invoice has no `factoring_advance_id` — it reads as self-carried even though Faro genuinely purchased it; no `accounting.factoring_advances` row exists for this purchase at all. See item 7 below. |
 | 11 | 6400 vs 6820 "Factoring Fees" — which is canonical | n/a (report) | **RESOLVED — 6400 confirmed correct, by role** | `accounting.chart_of_accounts_roles`: role `factor_fee_expense` binds **6400**, active. 6820 has zero role bindings and is itself `deactivated_at` 2026-07-22. No reclassification needed — item 1's posting to 6400 was already correct. |
 | 12 | 1200 vs 1230 "Factoring Reserve" duplicate | n/a (report) | **REPORTED, not fixed (§D)** | 1200 "Factoring Reserve / Holdback" is `deactivated_at` 2026-08-30, `system_purpose NULL`, zero role bindings — a retired legacy row, not a live ambiguity. 1230 "Factoring Reserves" is the sole active, role-bound (`factor_reserve_default` + `factor_reserve_held`) account. Named per instruction; neither account touched. |
 
@@ -78,6 +78,13 @@ the reversing JE), but it is **not, by itself, the whole $428.87 story** — som
 likely purchases that were part of the voided rebuild and never got a fresh `held` row posted after
 the correction) is still missing on top of it. Not plugged, not netted, root cause not fully closed.
 
+**Re-derivation against `RESERVE REPORT.csv`'s 18 rows, as instructed — does not close it.** Live:
+the 110 active `held` movements span **2026-08-10 to 2026-09-11**; the CSV covers **2026-08-28 to
+2026-09-21** — overlapping, not identical. 24 of the 110 held rows ($949.13) predate the CSV's
+window entirely. The CSV is authoritative for its own window (already correctly used for item 1's
+escrow JE) but is not a comprehensive movement list for the full 110-row population, so it cannot
+by itself account for the residual $1,847.24. Not forcing a false close.
+
 ## Item 5 — 8 direct disbursement legs, $35,730.00 (RESOLVED, posted)
 
 Source: `docs/reconciliation/2026-09-22-PAYMENTS-TO-USMCA-FROM-FARO.csv` (95 rows), filtered to
@@ -136,6 +143,15 @@ Faro, never Faro to the app.
 
 Independently re-verified live: invoice status/total/lines all confirmed post-write;
 `verify-dispute-window-unified.mjs` re-run, still `LIVE PASS`.
+
+**Loose end, flagged by the same seat that created it:** `INV-2026-00010` has
+`factoring_advance_id IS NULL` — it reads as a self-carried invoice in the system even though Faro
+genuinely purchased it ($5,053.70 real cash advanced). Checked live: no `accounting.factoring_advances`
+row exists for this purchase at all, on either the old voided invoice or the new one — the same gap
+already found affecting most of the Faro-native purchases this session. Not fixed here: creating a
+new `factoring_advances` row needs the correct `factoring_company_vendor_id` and the established
+advance-creation path, not a guess bolted onto this fix under time pressure. Belongs with the
+broader, already-named advance-linkage gap.
 
 ## Item 11 — 6400 vs 6820 "Factoring Fees" (RESOLVED — 6400 confirmed correct, by role)
 
