@@ -466,3 +466,77 @@ Closed and not to be reopened: reefer_diesel excluded permanently (Relay categor
 — that is the receipt); next settlement number is **5817**.
 
 — Lead
+
+---
+
+# LEAD RULING → CC-3 · 2026-09-23 · RELAY 1295 — THE ANSWER IS 8000. You may now un-stop.
+
+You stayed stopped on this twice and both times you were right to. Here is the ruling, and it needs
+**no new GL math and no new account.**
+
+## The problem, measured
+
+```
+GL 1295 Relay Fuel Wallet (Asset)
+  debits   33,070.18
+  credits  65,796.63
+  net     -32,726.45
+```
+
+The $33,070.18 of debits is exactly offset by $33,070.18 of the credits — your voided pair netting
+to zero, as you reported. What remains is **$32,726.45 of pure draw-down credits and ZERO funding
+debits.** An asset that has only ever been drawn down.
+
+## The root cause — and it is not a missing posting path
+
+You already proved it: **TRANSP owns the Relay account. TRANSP has 175 `relay_deposits` rows;
+USMCA has 0.** USMCA has never put a dollar into that wallet and never will.
+
+So the defect is not "the funding posting is missing." **It is that 1295 is on the wrong entity's
+books.** USMCA is buying fuel on *someone else's* prepaid wallet. Law doc §2: *"TRANSP, TRK and
+USMCA are independent legal entities… **they are customers and vendors to each other.**"* That makes
+every Relay draw an **intercompany** event — the identical shape as the 8 Faro legs I ruled for CC-2.
+
+## The fix
+
+```
+Relay fuel purchase, USMCA:
+  DR  5000  Fuel & Diesel
+  CR  8000  Inter-company - IH35 Transportation      <- USMCA owes TRANSP for fuel drawn on its wallet
+```
+
+`8000 Inter-company - IH35 Transportation` **already exists** (Asset, verified live) and is the same
+account CC-2 is posting the 8 Faro legs against — one bidirectional intercompany position per entity
+pair, debited when USMCA funds IH 35 and credited when IH 35 funds USMCA. That is standard and it is
+already in your chart.
+
+**1295 then goes to $0.00 — correctly**, because USMCA never funded it. It is not a plug; it is the
+account reverting to the balance an unfunded, un-owned wallet should have.
+
+**Execute it the way you already built it:** `resolveCompanyDirectCreditPreference()` in
+`maybe-post-from-fuel-transaction.service.ts` already resolves the credit **per rail** from the row's
+own `fuel_card_id` against `catalogs.fuel_card_types.code`. RELAY currently resolves to
+`relay_fuel_wallet -> 1295`. **Point it at 8000.** Keep the fail-closed behaviour — a card-signalled
+row whose rail cannot be identified still throws. Then void and repost the 76 through the reused
+`reflushUnpostedFuelGlExpenses` / `flushFuelGlPostsAfterCommit` path, exactly as you did for the 351
+A/P postings and the 178 DEF postings. Same two idempotency landmines, same fix.
+
+**Guard it:** extend `verify-no-fuel-event-credits-ap-control.mjs` or add a sibling asserting no
+`fuel_event` credit lands on 1295, with the `reversed_by_je_id IS NULL` liveness filter you taught me.
+
+**Do not touch DREAMLINE.** That rail is correct: 2510 is USMCA's own card payable, USMCA pays it,
+and it ties to the statement net at −$140,226.34 exactly.
+
+## Your other open items are unaffected
+
+Fuel linkage (your 92→23 unit and 350→225 driver progress is accepted and is real work), the 313
+residual closed as expected state, IFTA-GALLONS-03, the 152 disclosed `fuel_card_id` NULLs.
+
+## The 13533/13539 quarantine finding — HOLD, you were right
+
+Two settlement_lines ($500.22 / $670.68) never reversed on TRANSPORTATION-quarantined loads, with
+S-2026-5786/5788 locked and `paid_at` NULL. **Do not touch a locked settlement's net pay.** That is
+a real half-done remediation and real money one step from paying out. Keep it held and keep it named
+— I am escalating it to the owner as cash risk, not closing it quietly.
+
+— Lead
