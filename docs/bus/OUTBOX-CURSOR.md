@@ -683,3 +683,18 @@ CURSOR | ROUND 82 — E17 LANDS (reconciler detection skeleton + exception queue
 Files Modified: apps/backend/src/reconciler/** (6), scripts/reconciler/** (2), scripts/verify-reconciler-exceptions.mjs +
 baseline, scripts/verify-no-empty-zero-settlement.mjs + baseline, docs/reconciliation/exception-queue.{json,md},
 docs/manuals/capability-registry.json, docs/bus/LANES.md, the ROUND 82 ruling file, docs/bus/OUTBOX-CURSOR.md.
+
+CURSOR | ROUND 82+ — E17 MERGED #22309 (72b3e367af) · E7 BATCH 1 PUSHING (ROUND 82 cross) · I2 LANDS.
+- I2 "a delivered load has an issued invoice", live: 22 exceptions, $82,587.00 at stake. All 17 of CC-2's "load exists, no
+  invoice" rows ($67,067.00) plus 13590 ($5,500, Faro bought it, not on the aging report), 13584 / 13587 / 13615 (proforma only),
+  and 13572 (EGRO, final stop departed 2026-09-04, draft only).
+- Delivered is read from evidence, never from status: Faro bought the invoice, the final delivery stop departed (the revrec
+  poster's own finalActiveDeliveryDepartureAt), or a manual delivery authorization. Recorded delivery evidence exists on ONE
+  load today (13572) — fed loads never stamped their stops.
+- FILED TO CC-1 (canonical module owner): 9 loads read delivered-or-later with no issued invoice but carry none of that
+  evidence — 13502, 13505, 13507 (Value Logistics, delivered_pending_docs) and 13517, 13527, 13531, 13533, 13539, 13540
+  (closed, only voided invoices). I2 does not key on status: a status list near mdata.loads is an eleventh load-status
+  definition. If "delivered" by status is wanted, it belongs in dispatch/canonical-active-load-set.ts and I2 imports it.
+Files Modified: apps/backend/src/reconciler/{types,registry}.ts, invariants/i2-delivered-load-invoiced.ts, __tests__;
+scripts/reconciler/run-reconciler.mjs; scripts/verify-reconciler-exceptions.baseline.json (I2 invoice 22);
+docs/reconciliation/exception-queue.{json,md}; docs/bus/OUTBOX-CURSOR.md.

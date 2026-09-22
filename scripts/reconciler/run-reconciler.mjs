@@ -17,7 +17,14 @@ const FIELD_LABELS = {
   trailer: "Trailer",
   driver: "Driver",
   customer_reference: "Customer W.O. / PO",
+  invoice: "Invoice",
 };
+
+function money(cents) {
+  return cents === null || cents === undefined
+    ? ""
+    : `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 function ageDays(since, asOf) {
   return Math.floor((Date.parse(asOf) - Date.parse(since)) / 86_400_000);
@@ -70,11 +77,20 @@ function queueMarkdown(doc) {
       lines.push("No exceptions.", "");
       continue;
     }
-    lines.push("| Load | Missing | Why it matters | Open since | Age (days) | Lane |", "|---|---|---|---|---|---|");
+    const withMoney = rows.some((e) => e.amount_cents !== null && e.amount_cents !== undefined);
+    lines.push(
+      `| Load | Missing | Why it matters |${withMoney ? " Amount |" : ""} Open since | Age (days) | Lane |`,
+      `|---|---|---|${withMoney ? "---|" : ""}---|---|---|`
+    );
     for (const e of rows) {
       lines.push(
-        `| ${e.entity_label} | ${FIELD_LABELS[e.field] ?? e.field} | ${e.reason} | ${e.since.slice(0, 10)} | ${e.age_days} | ${e.owner_seat} |`
+        `| ${e.entity_label} | ${FIELD_LABELS[e.field] ?? e.field} | ${e.reason} |${withMoney ? ` ${money(e.amount_cents)} |` : ""} ` +
+          `${e.since.slice(0, 10)} | ${e.age_days} | ${e.owner_seat} |`
       );
+    }
+    if (withMoney) {
+      const total = rows.reduce((n, e) => n + (e.amount_cents ?? 0), 0);
+      lines.push("", `Total at stake: ${money(total)}.`);
     }
     lines.push("");
   }
@@ -91,7 +107,11 @@ for (const inv of doc.invariants) {
   }
   console.log(`${LABEL}: ${inv.id} — ${inv.exception_count} exception(s) — ${inv.title}`);
   for (const e of doc.exceptions.filter((x) => x.invariant === inv.id)) {
-    console.log(`  load ${e.entity_label}: ${FIELD_LABELS[e.field] ?? e.field} missing — ${e.reason} (open ${e.age_days} day(s), ${e.owner_seat})`);
+    const amount = money(e.amount_cents);
+    console.log(
+      `  load ${e.entity_label}: ${FIELD_LABELS[e.field] ?? e.field} missing${amount ? ` (${amount})` : ""} — ${e.reason} ` +
+        `(open ${e.age_days} day(s), ${e.owner_seat})`
+    );
   }
 }
 

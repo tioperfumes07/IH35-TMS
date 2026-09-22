@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { canonicalActiveLoadWhereClause } from "../../dispatch/canonical-active-load-set.js";
+import { canonicalActiveLoadInvoiceExclusionCte, canonicalActiveLoadWhereClause } from "../../dispatch/canonical-active-load-set.js";
+import { I2_SQL, i2DeliveredLoadInvoiced, i2ExceptionForRow } from "../invariants/i2-delivered-load-invoiced.js";
 import { I8_SQL, i8DispatchedLoadComplete, i8ExceptionsForRow } from "../invariants/i8-dispatched-load-complete.js";
 import { RECONCILER_INVARIANTS } from "../registry.js";
 import { runReconciler } from "../run.js";
@@ -68,9 +69,74 @@ describe("I8 — a dispatched load has a truck, a trailer, a driver and a custom
   });
 });
 
+describe("I2 — a delivered load has an issued invoice", () => {
+  const base = {
+    load_id: "00000000-0000-0000-0000-000000000002",
+    load_number: "13600",
+    load_status: "dispatched",
+    faro_gross_cents: null as string | null,
+    faro_invoice_numbers: null as string | null,
+    faro_first_seen: null as string | null,
+    authorized_at: null as string | null,
+    unissued_invoice_statuses: null as string | null,
+  };
+
+  it("files a Faro-purchased load with no issued invoice, with the amount and Faro's date", () => {
+    const e = i2ExceptionForRow(
+      { ...base, faro_gross_cents: "490000", faro_invoice_numbers: "13600", faro_first_seen: "2026-09-21T20:00:00+00:00" },
+      null
+    );
+    expect(e).toMatchObject({
+      key: "I2/load/00000000-0000-0000-0000-000000000002/invoice",
+      field: "invoice",
+      entity_label: "13600",
+      amount_cents: 490000,
+      since_source: "factor.faro_invoice_lines.created_at",
+      owner_seat: "CC-2",
+    });
+    expect(e?.reason).toBe("Faro bought invoice 13600 for $4,900.00 on this load, but our books have no issued invoice for it.");
+  });
+
+  it("uses recorded delivery evidence when Faro has not bought it, and names an unissued draft", () => {
+    const e = i2ExceptionForRow({ ...base, unissued_invoice_statuses: "draft" }, "2026-09-20T14:00:00+00:00");
+    expect(e?.since_source).toBe("mdata.load_stops.actual_departure_at");
+    expect(e?.reason).toBe(
+      "The final delivery stop departed on 2026-09-20, but no invoice has been issued. A draft invoice exists but was never issued."
+    );
+  });
+
+  it("flags a Faro purchase on a cancelled load as the contradiction it is", () => {
+    const e = i2ExceptionForRow(
+      { ...base, load_status: "cancelled", faro_gross_cents: "480000", faro_invoice_numbers: "13593", faro_first_seen: "2026-09-12T00:00:00+00:00" },
+      null
+    );
+    expect(e?.reason.endsWith("The load reads cancelled.")).toBe(true);
+  });
+
+  it("files nothing without delivery evidence", () => {
+    expect(i2ExceptionForRow(base, null)).toBeNull();
+  });
+
+  it("reads the canonical issued-invoice test and never the load status", () => {
+    expect(I2_SQL).toContain(canonicalActiveLoadInvoiceExclusionCte("l.id"));
+    expect(I2_SQL).toContain("factor.faro_invoice_lines");
+    expect(I2_SQL).toContain("dispatch.manual_delivery_authorizations");
+    expect(I2_SQL).not.toMatch(/l\.status(::text)?\s*(=|<>|IN|NOT IN)/);
+  });
+
+  it("asks the revrec poster's own departure rule for every candidate", async () => {
+    const { client, statements } = recordingClient((sql) =>
+      sql.includes("mdata.load_stops") ? [{ actual_departure_at: "2026-09-20T14:00:00+00:00" }] : [base]
+    );
+    const exceptions = await i2DeliveredLoadInvoiced.detect(client, COMPANY);
+    expect(exceptions).toHaveLength(1);
+    expect(statements.some((s) => s.includes("mdata.load_stops"))).toBe(true);
+  });
+});
+
 describe("runReconciler", () => {
-  it("registers I8", () => {
-    expect(RECONCILER_INVARIANTS.map((i) => i.id)).toContain("I8");
+  it("registers I2 and I8", () => {
+    expect(RECONCILER_INVARIANTS.map((i) => i.id)).toEqual(["I2", "I8"]);
   });
 
   it("records a failing invariant as an error, rolls back its savepoint, and still runs the next one", async () => {

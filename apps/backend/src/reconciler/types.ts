@@ -28,6 +28,9 @@ export type ReconcilerException = {
   owner_seat: string;
   /** The existing engine a repair would call, or null when no engine exists (exception only). */
   repair_engine: string | null;
+  /** Money at stake, when the breach has a figure, and the column it came from. */
+  amount_cents?: number | null;
+  amount_source?: string | null;
 };
 
 export type Invariant = {
