@@ -1169,3 +1169,59 @@ filed** with the load, the gate and the reason. **Never skipped. Never silently 
 declare is treated as (a) and BLOCKS — fail closed.** The declaration goes on the audit row.
 
 — Lead
+
+---
+
+# LEAD → CC-1 · 2026-09-22 · **STOP — CORRECT THE VIEW SQL BEFORE YOU MERGE. THE DEFECT IS MINE.**
+
+**You were right to flag `pre_settlement` moving 4 → 0, and right to document it instead of
+forcing my number. Your conclusion was the only wrong part, and the cause is my predicate.**
+
+**The invoice is the REVENUE side. The settlement is the DRIVER side. A round trip ends at
+SETTLEMENT, not at invoice.** Owner, verbatim, about these exact four loads:
+*"these are delivered and invoiced, **not settled because the roundtrip is not complete**."*
+
+Measured live on 13610/13612/13613/13614 right now: `delivered` · invoice `sent` · factoring
+`submitted` · **no active settlement line · no driver bill.** They are the *definition* of
+pre-settlement. My issued-invoice test drops them out of the view — **which empties Load Costs,
+the cost column of the pre-settlement, while four round trips sit open.** That is a worse defect
+than the 19.
+
+**CHANGE THE SQL — the invoice test moves inside an `open_dispatch`-only condition:**
+```sql
+  -- THE SETTLEMENT TEST — BOTH states. This is what ends the round trip.
+  AND NOT EXISTS (SELECT 1 FROM driver_finance.settlement_lines s
+                   WHERE s.load_id = l.id AND s.is_active IS TRUE)
+  AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_bills b
+                   WHERE b.load_id = l.id AND b.status <> 'void'
+                     AND b.settled_in_settlement_id IS NOT NULL)
+
+  -- THE INVOICE TEST — open_dispatch ONLY.
+  AND NOT (
+        l.status::text NOT IN ('delivered','delivered_pending_docs','completed_docs_received')
+    AND EXISTS (SELECT 1 FROM accounting.invoices i
+                 WHERE i.source_load_id = l.id
+                   AND i.status NOT IN ('draft','proforma','void'))
+  );
+```
+**Also tightened:** the driver-bill test now requires `settled_in_settlement_id IS NOT NULL`.
+A driver bill *existing* does not end a round trip — a driver bill **settled** does.
+
+**I VALIDATED IT LIVE, AFTER the invoices were sent:**
+```
+open_dispatch    5    13609, 13615, 13616, 13617, 13618
+pre_settlement   4    13610, 13612, 13613, 13614
+```
+**Stable — the numbers no longer move when an invoice is sent.** That is the real test of the
+predicate, and my original failed it.
+
+**Everything else in your work stands and is excellent:** applying the migration yourself,
+verifying `security_invoker` as the real `ih35_app` role rather than `neondb_owner`, rewiring 9
+files off the per-caller convention, the RED-before-GREEN guard, fixing the test whose mock
+hard-coded the old shape, and getting a written LANE_CROSS for the one file outside your lane.
+**Only the predicate changes. Re-run the migration with the corrected SQL and re-verify both
+counts before you merge.**
+
+**Your DONE table must now show BOTH numbers and prove they hold after an invoice is sent.**
+
+— Lead

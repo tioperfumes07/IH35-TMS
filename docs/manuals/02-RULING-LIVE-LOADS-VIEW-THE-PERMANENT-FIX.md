@@ -64,6 +64,65 @@ PR body. **A view that bypasses RLS is a worse defect than the one it fixes.**
 
 ---
 
+## **CORRECTION — 2026-09-22 — MY PREDICATE WAS WRONG. CC-1 FOUND IT. THIS SUPERSEDES THE SQL ABOVE.**
+
+CC-1 re-measured after CC-2 sent the four invoices and reported `pre_settlement` had moved from
+**4 to 0**. He read it as the view correctly tracking forward data movement and documented it
+rather than forcing my number. **His honesty was right; his conclusion was not — and the defect
+is mine.**
+
+**The invoice is the REVENUE side. The settlement is the DRIVER side. A round trip ends at
+SETTLEMENT, not at invoice.** Owner, verbatim, looking at these exact four loads: *"these are
+delivered and invoiced, **not settled because the roundtrip is not complete**."*
+
+Measured live on those four (13610, 13612, 13613, 13614): `delivered` · invoice `sent` ·
+factoring `submitted` · **no active settlement line · no driver bill**. They are the definition
+of pre-settlement. My issued-invoice test dropped them out of the view entirely — which would
+have emptied Load Costs, the cost column of the pre-settlement, while four round trips sat open.
+
+**THE CORRECTED PREDICATE — the invoice test applies to `open_dispatch` ONLY:**
+```sql
+CREATE OR REPLACE VIEW views.live_loads AS
+SELECT l.*,
+  CASE WHEN l.status::text IN ('delivered','delivered_pending_docs','completed_docs_received')
+       THEN 'pre_settlement' ELSE 'open_dispatch' END AS live_state
+FROM mdata.loads l
+WHERE l.is_sample_data IS NOT TRUE
+  AND l.soft_deleted_at IS NULL
+  AND l.status::text NOT IN (
+        'draft','invoiced','paid','closed','cancelled',
+        'abandoned','driver_walkoff','driver_no_show')
+
+  -- THE SETTLEMENT TEST — applies to BOTH states. This is what ends the round trip.
+  AND NOT EXISTS (SELECT 1 FROM driver_finance.settlement_lines s
+                   WHERE s.load_id = l.id AND s.is_active IS TRUE)
+  AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_bills b
+                   WHERE b.load_id = l.id AND b.status <> 'void'
+                     AND b.settled_in_settlement_id IS NOT NULL)
+
+  -- THE INVOICE TEST — open_dispatch ONLY.
+  -- An invoiced load is no longer DISPATCHING.
+  -- An invoiced-and-unsettled load IS PRE-SETTLEMENT, by definition.
+  AND NOT (
+        l.status::text NOT IN ('delivered','delivered_pending_docs','completed_docs_received')
+    AND EXISTS (SELECT 1 FROM accounting.invoices i
+                 WHERE i.source_load_id = l.id
+                   AND i.status NOT IN ('draft','proforma','void'))
+  );
+```
+**Also tightened:** the driver-bill test now requires `settled_in_settlement_id IS NOT NULL`. A
+driver bill EXISTING does not end a round trip — a driver bill **settled** does.
+
+**VALIDATED LIVE AFTER THE INVOICES WERE SENT:**
+```
+open_dispatch    5    13609, 13615, 13616, 13617, 13618
+pre_settlement   4    13610, 13612, 13613, 13614
+```
+**Stable. The numbers no longer move when an invoice is sent — because sending an invoice is not
+what closes a round trip.**
+
+---
+
 ## VALIDATED LIVE — USMCA, `set_config('app.bypass_rls','lucia',FALSE)`, 2026-09-22
 ```
 live_state       loads  units  load numbers
