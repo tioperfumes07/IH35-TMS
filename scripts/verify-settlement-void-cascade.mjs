@@ -21,6 +21,12 @@
  *      routes, the load-cancel cascade, the governance executors, this settlement route) gets it for
  *      free with no per-caller wiring.
  *
+ * VOID-DOCUMENT-CALLEES (Round 35.3, CC-3, 2026-09-23): the /reverse route's cascade moved into
+ * reverseSettlementForVoid (driver-finance/void-document-callees.service.ts) so CC-1's future
+ * voidDocument() dispatcher can call the same function -- one implementation, not two. The
+ * cascade-mechanics assertions below check routes.ts + that callee file together; the
+ * route-existence/gating assertions still check routes.ts alone.
+ *
  *   node scripts/verify-settlement-void-cascade.mjs
  *   node scripts/verify-settlement-void-cascade.mjs --selftest
  */
@@ -32,23 +38,34 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-settlement-void-cascade";
 const ROUTES_FILE = "apps/backend/src/driver-finance/settlements.routes.ts";
 const VOID_SERVICE_FILE = "apps/backend/src/accounting/void.service.ts";
+// VOID-DOCUMENT-CALLEES (Round 35.3, CC-3, 2026-09-23): the /reverse route now delegates its
+// cascade to reverseSettlementForVoid so CC-1's voidDocument() dispatcher can call the SAME
+// function -- one implementation, not two. The cascade-detail assertions below check the UNION of
+// this file and the route file, since the cascade now lives in the callee, not inline.
+const CALLEE_FILE = "apps/backend/src/driver-finance/void-document-callees.service.ts";
 
 function read(rel) {
   const p = path.join(ROOT, rel);
   return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : null;
 }
 
-export function assertRoutesGuard(src) {
+/**
+ * `routesSrc` is checked for route existence/registration/gating (must live in the route file
+ * itself). `cascadeSrc` (routesSrc + the callee file's content, concatenated) is checked for the
+ * cascade's actual mechanics — present EITHER inline in the route OR in the delegated callee.
+ */
+export function assertRoutesGuard(routesSrc, cascadeSrc = routesSrc) {
   const errs = [];
-  if (!src) return [`${ROUTES_FILE}: missing`];
+  if (!routesSrc) return [`${ROUTES_FILE}: missing`];
+  const src = cascadeSrc;
 
-  if (!/\/api\/v1\/driver-finance\/settlements\/:id\/reverse/.test(src)) {
+  if (!/\/api\/v1\/driver-finance\/settlements\/:id\/reverse/.test(routesSrc)) {
     errs.push(`${ROUTES_FILE}: POST …/:id/reverse route is missing`);
   }
-  if (!/\/api\/v1\/driver-finance\/settlements\/:id\/unlock/.test(src)) {
+  if (!/\/api\/v1\/driver-finance\/settlements\/:id\/unlock/.test(routesSrc)) {
     errs.push(`${ROUTES_FILE}: POST …/:id/unlock route is missing`);
   }
-  if (!/canVoid\(role\)/.test(src)) {
+  if (!/canVoid\(role\)/.test(routesSrc)) {
     errs.push(`${ROUTES_FILE}: reversal must be gated by the shared void.service.ts canVoid (Owner+Accountant), not a locally re-declared role set`);
   }
   if (!/reverseSettlementBillPaymentInClientTx\(/.test(src)) {
@@ -117,8 +134,10 @@ export function assertBankOrphanGuard(src) {
 
 function selftest() {
   const goodRoutes = read(ROUTES_FILE) ?? "";
+  const goodCallee = read(CALLEE_FILE) ?? "";
+  const goodCascade = goodRoutes + "\n" + goodCallee;
   const goodVoidService = read(VOID_SERVICE_FILE) ?? "";
-  const goodRoutesErrs = assertRoutesGuard(goodRoutes);
+  const goodRoutesErrs = assertRoutesGuard(goodRoutes, goodCascade);
   const goodVoidErrs = assertBankOrphanGuard(goodVoidService);
   if (goodRoutesErrs.length) {
     console.error(`${LABEL} --selftest FAIL good-routes (${goodRoutesErrs.length}): ${goodRoutesErrs.join("; ")}`);
@@ -129,13 +148,18 @@ function selftest() {
     process.exit(1);
   }
 
+  // bad1 mutates the ROUTE file (canVoid lives there); bad2-bad6 mutate whichever of
+  // routes+callee actually contains the pattern today -- the cascade moved into the callee
+  // (VOID-DOCUMENT-CALLEES), so mutating goodRoutes alone for those would no-op and defeat the
+  // mutation test (the pattern was never there to remove). Mutating the concatenated cascade
+  // source directly is correct regardless of which file currently holds each pattern.
   const routeMutations = [
-    ["bad1-no-role-gate", assertRoutesGuard(goodRoutes.replace(/canVoid\(role\)/g, "true"))],
-    ["bad2-no-shared-engine", assertRoutesGuard(goodRoutes.replace(/reverseSettlementBillPaymentInClientTx\(/g, "reverseSettlementBillPaymentInClientTxXXX("))],
-    ["bad3-paid-not-protected", assertRoutesGuard(goodRoutes.replace(/current\.status === "paid"/g, "false"))],
-    ["bad4-lock-bypassed", assertRoutesGuard(goodRoutes.replace(/settlement_reverse_blocked_locked/g, "REMOVED_CODE"))],
-    ["bad5-no-bank-unmatch", assertRoutesGuard(goodRoutes.replace(/unmatchBankTransactionById\(/g, "unmatchBankTransactionByIdXXX("))],
-    ["bad6-no-audit", assertRoutesGuard(goodRoutes.replace(/"driver_finance\.driver_settlement\.reversed"/g, '"driver_finance.driver_settlement.reversedXXX"'))],
+    ["bad1-no-role-gate", assertRoutesGuard(goodRoutes.replace(/canVoid\(role\)/g, "true"), goodCascade.replace(/canVoid\(role\)/g, "true"))],
+    ["bad2-no-shared-engine", assertRoutesGuard(goodRoutes, goodCascade.replace(/reverseSettlementBillPaymentInClientTx\(/g, "reverseSettlementBillPaymentInClientTxXXX("))],
+    ["bad3-paid-not-protected", assertRoutesGuard(goodRoutes, goodCascade.replace(/current\.status === "paid"/g, "false"))],
+    ["bad4-lock-bypassed", assertRoutesGuard(goodRoutes, goodCascade.replace(/settlement_reverse_blocked_locked/g, "REMOVED_CODE"))],
+    ["bad5-no-bank-unmatch", assertRoutesGuard(goodRoutes, goodCascade.replace(/unmatchBankTransactionById\(/g, "unmatchBankTransactionByIdXXX("))],
+    ["bad6-no-audit", assertRoutesGuard(goodRoutes, goodCascade.replace(/"driver_finance\.driver_settlement\.reversed"/g, '"driver_finance.driver_settlement.reversedXXX"'))],
   ];
   const voidServiceMutations = [
     ["bad7-forward-only", assertBankOrphanGuard(goodVoidService.replace("linked_entity_id = $2::uuid OR id = ${reverseIdSql}", "linked_entity_id = $2::uuid"))],
@@ -157,7 +181,9 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-const routesErrs = assertRoutesGuard(read(ROUTES_FILE));
+const liveRoutesSrc = read(ROUTES_FILE);
+const liveCalleeSrc = read(CALLEE_FILE) ?? "";
+const routesErrs = assertRoutesGuard(liveRoutesSrc, (liveRoutesSrc ?? "") + "\n" + liveCalleeSrc);
 const voidServiceErrs = assertBankOrphanGuard(read(VOID_SERVICE_FILE));
 const errs = [...routesErrs, ...voidServiceErrs];
 if (errs.length) {
