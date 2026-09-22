@@ -1,0 +1,120 @@
+{
+  "established": "2026-09-22",
+  "note": "ROUND 36.1 — shrink-only ratchet, seeded at the offender count remaining after fixing the reported-broken surfaces (Home tiles, Dispatch board ACTIVE LOADS/DELIVERED-PENDING-DOCS, At Risk, Late Arrivals, Truck Line, Planner roster, Trip Pairing). Each remaining file either mutates mdata.loads (not a list/board read) or is a genuinely out-of-scope internal computation (deadhead optimizer, OCR, BOL generation) not named by the owner complaint — never silently excused, tracked here to shrink.",
+  "files": {
+    "accounting/load-costs-board.routes.ts": {
+      "count": 2
+    },
+    "dispatch/analytics/booking-gap.service.ts": {
+      "count": 1
+    },
+    "dispatch/arch-tabs.service.ts": {
+      "count": 2
+    },
+    "dispatch/assignments/quicksave.service.ts": {
+      "count": 1
+    },
+    "dispatch/bol-generator.service.ts": {
+      "count": 1
+    },
+    "dispatch/cancellation-tonu-invoice.ts": {
+      "count": 1
+    },
+    "dispatch/canonical-active-load-set.ts": {
+      "count": 2
+    },
+    "dispatch/completion-prompts.routes.ts": {
+      "count": 3
+    },
+    "dispatch/deadhead/chain-deadhead.service.ts": {
+      "count": 1
+    },
+    "dispatch/deadhead/optimizer.service.ts": {
+      "count": 2
+    },
+    "dispatch/dispatch-refinements.service.ts": {
+      "count": 4
+    },
+    "dispatch/dispatch-sheet.routes.ts": {
+      "count": 2
+    },
+    "dispatch/driver-optimizer.service.ts": {
+      "count": 2
+    },
+    "dispatch/driver-pwa/dispatch-view.routes.ts": {
+      "count": 1
+    },
+    "dispatch/driver-pwa/tour-close.service.ts": {
+      "count": 2
+    },
+    "dispatch/factoring-queue.routes.ts": {
+      "count": 1
+    },
+    "dispatch/intransit-issues.routes.ts": {
+      "count": 2
+    },
+    "dispatch/late-arrivals.service.ts": {
+      "count": 1
+    },
+    "dispatch/layovers/detection.service.ts": {
+      "count": 2
+    },
+    "dispatch/load-billing-lifecycle.service.ts": {
+      "count": 1
+    },
+    "dispatch/load-distribution.service.ts": {
+      "count": 1
+    },
+    "dispatch/load-geofence-timeline.routes.ts": {
+      "count": 1
+    },
+    "dispatch/load-profitability.service.ts": {
+      "count": 2
+    },
+    "dispatch/load-settlement-summary.routes.ts": {
+      "count": 1
+    },
+    "dispatch/load-status-signal/tri-signal.service.ts": {
+      "count": 2
+    },
+    "dispatch/load-stops-record.routes.ts": {
+      "count": 1
+    },
+    "dispatch/loads/multi-stop/extra-rate.service.ts": {
+      "count": 1
+    },
+    "dispatch/loads-bulk.routes.ts": {
+      "count": 1
+    },
+    "dispatch/manual-delivery-authorization.routes.ts": {
+      "count": 1
+    },
+    "dispatch/ocr-processor.service.ts": {
+      "count": 1
+    },
+    "dispatch/planner.service.ts": {
+      "count": 5
+    },
+    "dispatch/predicted-delivery.routes.ts": {
+      "count": 1
+    },
+    "dispatch/presettlement-link.service.ts": {
+      "count": 9
+    },
+    "dispatch/trailer-interchange.service.ts": {
+      "count": 1
+    },
+    "dispatch/truck-line/station.ts": {
+      "count": 1
+    },
+    "dispatch/truck-line/truck-line.routes.ts": {
+      "count": 2
+    },
+    "dispatch/unit-active-load-guard.ts": {
+      "count": 1
+    },
+    "dispatcher-board/role-views/dispatcher.service.ts": {
+      "count": 1
+    }
+  }
+}

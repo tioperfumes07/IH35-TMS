@@ -145,7 +145,7 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
               nullif(trim(coalesce(ld.first_name,'') || ' ' || coalesce(ld.last_name,'')), ''),
               mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id)
             ) AS load_driver_name
-       FROM mdata.loads l
+       FROM views.live_loads l
        LEFT JOIN mdata.drivers ld ON ld.id = l.assigned_primary_driver_id
         AND (
           ld.operating_company_id = l.operating_company_id
@@ -167,7 +167,8 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
          WHERE load_id = l.id AND stop_type = 'delivery' AND soft_deleted_at IS NULL
          ORDER BY sequence_number DESC LIMIT 1) de ON true
       WHERE l.operating_company_id = $1::uuid
-        AND l.assigned_unit_id IS NOT NULL AND l.trip_type IS NOT NULL AND l.soft_deleted_at IS NULL
+        AND l.live_state = 'open_dispatch'
+        AND l.assigned_unit_id IS NOT NULL AND l.trip_type IS NOT NULL
         AND l.status::text = ANY($2::text[])`,
     [operatingCompanyId, ACTIVE_LOAD_STATUSES]
   );

@@ -1,6 +1,7 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 import { DISPATCH_ALERT_ACTIVE_STATUSES_SQL } from "./dispatch-alert-statuses.js";
+import { LIVE_LOADS_OPEN_DISPATCH_EXISTS_SQL } from "./live-loads-view.js";
 import { dispatchAlertOrderBy, type DispatchAlertQuery } from "./dispatch-alert-query.js";
 import { KPI_LOAD_DRILL_JOINS, KPI_LOAD_DRILL_SELECT } from "./kpi-load-drill-sql.js";
 
@@ -113,6 +114,9 @@ ${KPI_LOAD_DRILL_JOINS}
               AND sample_load.is_sample_data IS NOT TRUE
           )
           AND l.status IN (${DISPATCH_ALERT_ACTIVE_STATUSES_SQL})
+          -- ROUND 36.1: structural guarantee via views.live_loads (see arch-tabs.service.ts's
+          -- listAtRiskLoads for the same pattern) instead of the per-caller money predicate.
+          AND ${LIVE_LOADS_OPEN_DISPATCH_EXISTS_SQL}
           AND sp.scheduled_arrival_at IS NOT NULL
           AND (
             COALESCE(l.latest_eta_prediction->>'confidence_class', '') = 'late'
