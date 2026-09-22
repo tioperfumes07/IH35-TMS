@@ -689,8 +689,8 @@ CURSOR | ROUND 82+ — E17 MERGED #22309 (72b3e367af) · E7 BATCH 1 PUSHING (ROU
   invoice" rows ($67,067.00) plus 13590 ($5,500, Faro bought it, not on the aging report), 13584 / 13587 / 13615 (proforma only),
   and 13572 (EGRO, final stop departed 2026-09-04, draft only).
 - Delivered is read from evidence, never from status: Faro bought the invoice, the final delivery stop departed (the revrec
-  poster's own finalActiveDeliveryDepartureAt), or a manual delivery authorization. Recorded delivery evidence exists on ONE
-  load today (13572) — fed loads never stamped their stops.
+  poster's own finalActiveDeliveryDepartureAt), or a manual delivery authorization. Of the loads with no issued invoice, only
+  13572 carries recorded delivery evidence — fed loads never stamped their stops.
 - FILED TO CC-1 (canonical module owner): 9 loads read delivered-or-later with no issued invoice but carry none of that
   evidence — 13502, 13505, 13507 (Value Logistics, delivered_pending_docs) and 13517, 13527, 13531, 13533, 13539, 13540
   (closed, only voided invoices). I2 does not key on status: a status list near mdata.loads is an eleventh load-status
