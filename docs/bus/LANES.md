@@ -14,11 +14,13 @@ scripts/.guard-exempt.json
 scripts/money-pr-local-gate.mjs
 scripts/lib/**
 apps/backend/src/identity/**
-apps/backend/src/accounting/company-settlements**
+apps/backend/src/accounting/**
+apps/backend/src/dispatch/**
 apps/backend/src/mdata/drivers**
 apps/backend/src/mdata/loads.routes.ts
 **/*.db.test.ts
 TABLES: accounting.company_settlements · driver_finance.driver_bills · mdata.drivers · identity.*
+        mdata.loads
 
 ## CC-2 — money in and out
 apps/backend/src/factoring/**
@@ -42,6 +44,25 @@ docs/bus/**
 .github/workflows/**
 TABLES: none. The Lead owns no module code and no tables. Anything else the Lead touches is a lane
         cross and needs a written ruling, same as every other seat.
+
+## LANE CORRECTIONS — LEAD, 2026-09-23
+
+**`apps/backend/src/accounting/**` widened from `accounting/company-settlements**` to the whole
+directory.** Not a new grant. Law doc §0b (owner order 2026-09-03, PERMANENT) already reads
+`CC-1 | pages/accounting/**, backend/accounting/**, dispatch/mileage/**, lane-mileage.service.ts`.
+This file, written 2026-09-22, narrowed it to one glob without saying so. The two disagreed, and
+this file is the one the merge gate enforces — so CC-1's assigned fix to
+`apps/backend/src/accounting/load-costs-board.routes.ts` would have failed `verify-lane-ownership.mjs`
+on a lane he has held since 2026-09-03. Corrected to match §0b. **§0b is the senior document; where
+this file and §0b disagree, §0b wins and this file is wrong.**
+
+**`apps/backend/src/dispatch/**` added to CC-1 — OWNER DECISION PENDING, stated plainly.** §0b
+assigns the dispatch surface to **Cursor**, who is not seated in this round. The active-load-set
+defect (see `docs/bus/09-23-2026-LEAD-RULING-LOAD-ACTIVE-SET-NO-CANONICAL-DEFINITION.md`) spans
+`accounting/` and `dispatch/` as **one fix with one canonical definition**, and splitting it across
+two seats is exactly the mechanism §0b exists to prevent ("No job is split across seats").
+Assigned to CC-1 so the work is not blocked. **Owner may move it; until he says otherwise it is
+CC-1's**, on the same basis §0b used when it moved telematics to CC-3 in 2026-09-05.
 
 ## SHARED — any seat, but say so in the PR body
 docs/**

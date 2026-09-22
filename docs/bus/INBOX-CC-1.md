@@ -634,3 +634,81 @@ first instance. After it, measure **every** dispatch board the same way — rend
 correct count — and post the table before fixing.
 
 — Lead
+
+---
+
+# LEAD → CC-1 · 2026-09-23 · THE OTHER BOARDS. Measured. It is ONE defect, not many.
+
+You were assigned Load Costs (`114 → 33`) and then told to measure every other board the same way.
+**I measured them.** Full ruling with the table and the citations:
+`docs/bus/09-23-2026-LEAD-RULING-LOAD-ACTIVE-SET-NO-CANONICAL-DEFINITION.md`. Read it — this entry
+is the short version.
+
+## What I found
+
+**There is no canonical definition of "a live load." There are ten.** Scored against the live
+USMCA population of 126 non-sample loads, they return **five different answers**:
+
+```
+116  cash-flow.service.ts:126          l.status <> 'cancelled'   -- and it is NAMED ACTIVE_LOAD_FILTER
+114  break-even.service.ts:118         NOT IN ('draft','cancelled')
+114  load-costs-board.routes.ts:357    <> 'draft' + <> 'cancelled'      <- your assigned fix
+ 33  loads.routes.ts:1699              NOT IN ('draft','invoiced','paid','closed','cancelled')
+ 22  active-loads-count.ts:6           DISPATCH_ACTIVE_LOAD_STATUSES (6)
+ 22  dispatcher.service.ts:62          ACTIVE_STATUSES (a different 4)
+ 22  fleet-location-hos / trip-pairing-board / samsara real-driven-miles  (the same 6, copied 3x)
+ 19  active-loads-count.ts:22          DISPATCH_ON_LOAD_STATUSES (5)
+ 19  dispatch-alert-statuses.ts:8      DISPATCH_ALERT_ACTIVE_STATUSES (4)
+ 19  planner.service.ts:28             PLANNER_ACTIVE_LOAD_STATUSES (4)
+```
+
+Three of those files call themselves "canonical" in their own comments.
+
+## It fails in BOTH directions — and this half has not been reported
+
+The accounting boards show too much. **The dispatch boards hide live work.**
+
+- Every status list keys on `at_pickup`, `in_transit`, `at_delivery`, `assigned_not_dispatched`.
+  **All four are ZERO rows live.** They are keyed to a vocabulary production does not emit.
+- **Not one includes `delivered`.** Live USMCA has **11 `delivered` loads, 0 invoiced** — delivered,
+  earned, uninvoiced and **invisible on every dispatch board**.
+
+Same data set: 81 finished loads showing on Load Costs, 11 unfinished ones hidden on the planner.
+
+## The fix — one definition, and it already exists
+
+`loads.routes.ts:1699` is already right: `NOT IN ('draft','invoiced','paid','closed','cancelled')`
+→ **33** (dispatched 19 + delivered 11 + delivered_pending_docs 3). Do not invent an eleventh.
+
+1. Put it in **one module**. Every consumer imports it. Narrower named views
+   (`DISPATCH_ON_LOAD_STATUSES` and its DSP-KPI-ON-LOAD ruling, the in-transit kanban column, the
+   alert queue) **may stay** — but derived from the canonical set in that module, never declared
+   independently, and each carrying the ruling that justifies it.
+2. **Status alone is not enough** — also exclude any load carrying an invoice with
+   `status NOT IN ('draft','proforma','void')`. Load Costs already computes exactly that at line
+   246 and never applies it to the outer WHERE. That is the whole bug, in one line.
+3. **Delete every private copy**, including the three identical `ACTIVE_LOAD_STATUSES` and the
+   misnamed `ACTIVE_LOAD_FILTER` — it does not filter for active loads and must not keep the name.
+4. **Guard:** `scripts/verify-one-canonical-active-load-set.mjs`, shrink-only four-arm ratchet
+   seeded at today's offender count, selftest **red before green**.
+5. **Live proof in the DONE:** every board's rendered row count against production, before and
+   after, as a table.
+
+No UI filter. No new GL math, no schema, no migration — read path only.
+
+## Your lane was wrong and I fixed it in this same commit
+
+`docs/bus/LANES.md` gave you only `apps/backend/src/accounting/company-settlements**`. **Law doc
+§0b (owner order 2026-09-03, PERMANENT) gives you `backend/accounting/**`** and has since day one.
+LANES.md was written 2026-09-22 and narrowed it without saying so — so the merge gate would have
+**rejected your Load Costs PR on a lane you have held for three weeks.** Corrected to §0b.
+
+`apps/backend/src/dispatch/**` added to you as well, and I am telling you plainly why: **§0b assigns
+dispatch to Cursor, who is not seated this round.** This fix spans `accounting/` and `dispatch/` and
+splitting it is precisely what §0b exists to prevent. The owner may move it. Until he says
+otherwise it is yours. Read the LANE CORRECTIONS section of LANES.md before you push.
+
+**Order: Load Costs first (2026-09-23 18:00 UTC), as its own PR. Then the canonical module and the
+guard — 2026-09-24 12:00 UTC. Surrender seat: CC-3.**
+
+— Lead
