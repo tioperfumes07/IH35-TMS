@@ -26,6 +26,31 @@
 //
 // Skips gracefully (prints, exits 0) when DATABASE_URL is not set — same convention every other
 // live-Neon guard in this repo uses.
+//
+// P0 owner ruling (2026-09-22, ~02:00 Laredo deadline): this guard silently skip-passed on every
+// push all session (see the comment two lines up — that "not a pass, not a fail" line is correct
+// in what it SAYS, wrong in what the code then DID: exit 0 anyway). The moment 03c
+// (verify-control-totals.mjs, the OWNER's own ROUND 29.9 guard) started requiring DATABASE_URL for
+// any money-path push, this guard's real 34-of-34-document mismatch — pre-existing, dated
+// 2026-09-13 drift in CC-3's historical reconciliation scope, unrelated to either blocked branch —
+// surfaced and blocked CC-2's and CC-3's finished, control-totals-clean branches. Owner: "the 34
+// documents are pre-existing drift... fixing 34 documents of real money is its own multi-hour
+// block with its own proof. Holding two finished branches hostage to it is how days get lost."
+//
+// BASELINE RATCHET (repo's own precedent: scripts/verify-sweep-c6-money-insert-requires-je-poster.
+// baseline.json) — scripts/verify-alwaystrack-parity.baseline.json, one entry per already-known
+// mismatched document, carrying its exact 2026-09-22 delta (actual - target, in cents, per
+// dimension) and a one-line reason. Four-arm verdict per document:
+//   not in baseline, mismatched              -> FAIL (a real, new regression)
+//   in baseline, mismatched, delta WORSE      -> FAIL (debt got bigger, not just old)
+//   in baseline, mismatched, unchanged/better -> PASS, printed as known debt (not silent)
+//   in baseline, now EXACT (0 mismatches)     -> FAIL "remove me from the baseline" (forces the
+//                                                 baseline to stay honest — a real fix cannot hide)
+// The baseline's own entry COUNT may never grow (enforced below) — adding a document requires a
+// written Lead ruling named in the PR body, exactly like C6's own regenerate-and-review convention.
+// Regenerate: UPDATE_ALWAYSTRACK_PARITY_BASELINE=1 (writes the CURRENT live deltas for every
+// currently-mismatched document — used ONCE to establish the 2026-09-22 baseline; any later
+// regenerate that would INCREASE the entry count is refused, matching the shrink-only law).
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -35,6 +60,41 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-alwaystrack-parity";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const GROUND_TRUTH_PATH = path.join(ROOT, "data/alwaystrack/settlements-truth-2026-09-13.json");
+const BASELINE_PATH = path.join(ROOT, "scripts/verify-alwaystrack-parity.baseline.json");
+
+/** cents/count delta per dimension, actual - target. The comparable "how far off" signature. */
+function deltaSignature(target, actual) {
+  return {
+    line_haul_cents: actual.line_haul_cents - target.line_haul_cents,
+    driver_payment_cents: actual.driver_payment_cents - target.driver_payment_cents,
+    fuel_cents: actual.fuel_cents - target.fuel_cents,
+    fuel_count: actual.fuel_count - target.fuel_count,
+    expenses_cents: actual.expenses_cents - target.expenses_cents,
+    expenses_count: actual.expenses_count - target.expenses_count,
+    driver_net_cents: actual.driver_net_cents == null || target.driver_net_cents == null ? null : actual.driver_net_cents - target.driver_net_cents,
+  };
+}
+
+function totalAbsDrift(sig) {
+  return Math.abs(sig.line_haul_cents) + Math.abs(sig.driver_payment_cents) + Math.abs(sig.fuel_cents) + Math.abs(sig.expenses_cents) + Math.abs(sig.driver_net_cents ?? 0);
+}
+
+/** True if `current` is strictly worse than `baseline` on ANY dimension (further from zero). */
+function deltaWorsened(baselineSig, currentSig) {
+  const fields = ["line_haul_cents", "driver_payment_cents", "fuel_cents", "fuel_count", "expenses_cents", "expenses_count"];
+  for (const f of fields) {
+    if (Math.abs(currentSig[f]) > Math.abs(baselineSig[f])) return true;
+  }
+  if (baselineSig.driver_net_cents != null && currentSig.driver_net_cents != null) {
+    if (Math.abs(currentSig.driver_net_cents) > Math.abs(baselineSig.driver_net_cents)) return true;
+  }
+  return false;
+}
+
+function loadBaseline() {
+  if (!fs.existsSync(BASELINE_PATH)) return null;
+  return JSON.parse(fs.readFileSync(BASELINE_PATH, "utf8"));
+}
 
 // L1/Part A (absorption law): a settlement whose END date is on or after this cutover date is
 // USMCA in full. 0 exceptions across 44 documents (#22012) — the tested predicate, not the
@@ -141,8 +201,15 @@ const TRANSPORTATION_DOCS = ["5753", "5760", "5761", "5762", "5763", "5764", "57
 async function live() {
   const url = process.env.DATABASE_URL;
   if (!url) {
-    console.log(`${LABEL}: LIVE skipped (no DATABASE_URL) — not a pass, not a fail; this check needs a real Neon connection`);
-    return;
+    // P0 owner ruling (2026-09-22): "the comment is right and the code is wrong" — this line
+    // correctly SAID "not a pass, not a fail" but the function then returned normally, and the
+    // caller (--live-only invocation below) exits 0 regardless. Money-pr-local-gate.mjs now only
+    // invokes this guard when a money path is actually touched or DATABASE_URL is already present
+    // (mirroring 03c/verify-control-totals.mjs's own established conditional) — so reaching this
+    // branch at all means a money-relevant push has no live DB connection, which must fail, not
+    // silently pass.
+    console.error(`${LABEL}: FAIL — DATABASE_URL not set. A live money guard that cannot connect is a FAIL, never a pass.`);
+    process.exit(1);
   }
   if (!fs.existsSync(GROUND_TRUTH_PATH)) {
     console.error(`${LABEL}: LIVE FAIL — ground truth file missing: ${GROUND_TRUTH_PATH}`);
@@ -283,6 +350,7 @@ async function live() {
     const lines = [];
     const actuals = [];
     let cleanDocs = 0;
+    const docResults = []; // { doc, mismatches, deltaSig, target, actual }
     for (const target of documents) {
       const actual = {
         line_haul_cents: sumField(target.loads, invoiceByLoad, "cents"),
@@ -301,8 +369,60 @@ async function live() {
       const mismatches = compareDocument(target, actual);
       if (mismatches.length === 0) cleanDocs += 1;
       lines.push(`${target.doc}: ${mismatches.length === 0 ? "PASS" : "FAIL"}${mismatches.length ? " -- " + mismatches.join("; ") : ""}`);
+      docResults.push({ doc: target.doc, mismatches, deltaSig: deltaSignature(target, actual) });
     }
     for (const line of lines) console.log(line);
+
+    // ── UPDATE_ALWAYSTRACK_PARITY_BASELINE=1 — write the CURRENT live deltas for every
+    // currently-mismatched document. Shrink-only: refuses if this would INCREASE the entry count
+    // over an already-existing baseline (matches C6's own regenerate-and-review law).
+    if (process.env.UPDATE_ALWAYSTRACK_PARITY_BASELINE === "1") {
+      const existing = loadBaseline();
+      const existingDocCount = existing ? Object.keys(existing.documents).length : 0;
+      const mismatchedDocs = docResults.filter((r) => r.mismatches.length > 0);
+      const curUnlinkedExpenses = unlinkedExpenseRes.rows.map((r) => r.load_number).length;
+      const curUnlinkedFuel = unlinkedFuelRes.rows.map((r) => r.load_number).length;
+      const existingCeiling = existing?.structural_d_ceiling ?? { expense_count: 0, fuel_count: 0 };
+      if (
+        existing &&
+        (mismatchedDocs.length > existingDocCount ||
+          curUnlinkedExpenses > existingCeiling.expense_count ||
+          curUnlinkedFuel > existingCeiling.fuel_count)
+      ) {
+        console.error(
+          `${LABEL}: REFUSED to regenerate — current state (${mismatchedDocs.length} mismatched docs, ${curUnlinkedExpenses} unlinked expenses, ${curUnlinkedFuel} unlinked fuel) exceeds the existing baseline (${existingDocCount} docs, ${existingCeiling.expense_count} expenses, ${existingCeiling.fuel_count} fuel). ` +
+            `Adding to this baseline requires a written Lead ruling named in the PR body, not a regenerate.`
+        );
+        await client.query("COMMIT");
+        process.exit(1);
+      }
+      const entries = {};
+      for (const r of mismatchedDocs) {
+        entries[r.doc] = {
+          delta_cents: r.deltaSig,
+          reason: "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+          mismatch_summary: r.mismatches,
+        };
+      }
+      const out = {
+        _comment:
+          "ALWAYSTRACK-PARITY shrink-only baseline — P0 owner ruling 2026-09-22 (03c un-masked this guard's pre-existing 34/34 mismatch, blocking CC-2/CC-3's finished branches). " +
+          "Regenerate: UPDATE_ALWAYSTRACK_PARITY_BASELINE=1 (refuses to grow either the document count or the structural_d_ceiling). A document's delta getting WORSE fails the gate even while baselined; " +
+          "a baselined document reaching zero mismatches ALSO fails (\"remove me from the baseline\") so a real fix cannot hide. Adding to this baseline requires a written Lead ruling named in the PR body.",
+        baseline_established: "2026-09-22",
+        document_count: mismatchedDocs.length,
+        structural_d_ceiling: { expense_count: curUnlinkedExpenses, fuel_count: curUnlinkedFuel },
+        documents: entries,
+      };
+      fs.writeFileSync(BASELINE_PATH, JSON.stringify(out, null, 2) + "\n");
+      console.log(`${LABEL}: baseline written — ${mismatchedDocs.length} document(s), ${BASELINE_PATH}`);
+      await client.query("COMMIT");
+      process.exit(0);
+    }
+
+    // Loaded once, used by both structural assertion D's ceiling check (below) and the four-arm
+    // per-document verdict (further below) — declared here so both can see it.
+    const baseline = loadBaseline();
 
     // ACTUAL live sums (never the ground-truth target restated) — a prior version of this line
     // printed `totals.fuel_cents`/`totals.expenses_count` here, which is the GROUND-TRUTH TARGET,
@@ -364,13 +484,24 @@ async function live() {
     // enough rows for entirely unrelated expenses.
     const unlinkedExpenses = unlinkedExpenseRes.rows.map((r) => r.load_number);
     const unlinkedFuel = unlinkedFuelRes.rows.map((r) => r.load_number);
+    // Same shrink-only ratchet as the per-document deltas above (P0 owner ruling 2026-09-22): D's
+    // 190 expense / 192 fuel unlinked rows are the SAME pre-existing, dated drift, not a new
+    // regression — baselined as a ceiling. Growing past the baseline still fails; shrinking (or
+    // reaching zero) is fine and does not need the baseline edited (unlike the per-document ratchet,
+    // there is no "remove me" arm here — zero unlinked rows is simply the structural check's own
+    // normal PASS, already handled by `pass` below once counts drop to/under the ceiling AND the
+    // ceiling itself is later shrunk by a deliberate regenerate).
+    const structDBaseline = baseline?.structural_d_ceiling ?? { expense_count: 0, fuel_count: 0 };
+    const dWithinBaseline = unlinkedExpenses.length <= structDBaseline.expense_count && unlinkedFuel.length <= structDBaseline.fuel_count;
     structuralFailures.push({
       id: "D",
       label: "every live expense/fuel row for a document load has an expense_attribution.expense_load_links row",
-      pass: unlinkedExpenses.length === 0 && unlinkedFuel.length === 0,
+      pass: (unlinkedExpenses.length === 0 && unlinkedFuel.length === 0) || dWithinBaseline,
+      knownDebt: (unlinkedExpenses.length > 0 || unlinkedFuel.length > 0) && dWithinBaseline,
       detail:
         unlinkedExpenses.length || unlinkedFuel.length
-          ? `${unlinkedExpenses.length} expense row(s) unlinked (loads: ${[...new Set(unlinkedExpenses)].join(",")}), ${unlinkedFuel.length} fuel row(s) unlinked (loads: ${[...new Set(unlinkedFuel)].join(",")})`
+          ? `${unlinkedExpenses.length} expense row(s) unlinked (loads: ${[...new Set(unlinkedExpenses)].join(",")}), ${unlinkedFuel.length} fuel row(s) unlinked (loads: ${[...new Set(unlinkedFuel)].join(",")})` +
+            (dWithinBaseline ? ` — within baseline ceiling (${structDBaseline.expense_count} expense/${structDBaseline.fuel_count} fuel), known debt, not a new regression` : ` — EXCEEDS baseline ceiling (${structDBaseline.expense_count} expense/${structDBaseline.fuel_count} fuel)`)
           : "",
     });
 
@@ -398,15 +529,60 @@ async function live() {
     await client.query("COMMIT");
 
     const allStructuralPass = structuralFailures.every((a) => a.pass);
-    const allDimensionsPass = cleanDocs === documentCount;
 
-    if (!allDimensionsPass || !allStructuralPass) {
-      console.error(
-        `\n${LABEL}: LIVE FAIL — ${documentCount - cleanDocs} of ${documentCount} document(s) mismatched, ${structuralFailures.filter((a) => !a.pass).length} of 5 structural assertion(s) failed.`
-      );
+    // ── Four-arm baseline verdict, per mismatched document ──────────────────────────────────
+    const baselineDocs = baseline?.documents ?? {};
+    const regressions = []; // not in baseline, mismatched
+    const worsened = []; // in baseline, mismatched, delta got worse
+    const nowClean = []; // in baseline, now 0 mismatches — must be removed
+    const knownDebt = []; // in baseline, mismatched, unchanged or better — PASS, printed as debt
+    let debtDollarTotal = 0;
+
+    for (const r of docResults) {
+      const inBaseline = Object.prototype.hasOwnProperty.call(baselineDocs, r.doc);
+      if (r.mismatches.length === 0) {
+        if (inBaseline) nowClean.push(r.doc);
+        continue; // truly clean, not baselined — nothing to do
+      }
+      if (!inBaseline) {
+        regressions.push(r.doc);
+        continue;
+      }
+      const baselineSig = baselineDocs[r.doc].delta_cents;
+      if (deltaWorsened(baselineSig, r.deltaSig)) {
+        worsened.push(r.doc);
+        continue;
+      }
+      knownDebt.push(r.doc);
+      debtDollarTotal += totalAbsDrift(r.deltaSig);
+    }
+
+    console.log("");
+    if (knownDebt.length > 0) {
+      console.log(`${LABEL}: ${knownDebt.length} document(s) are known, baselined debt (unchanged or improved vs 2026-09-22): ${knownDebt.join(", ")}`);
+    }
+    console.log(
+      `${LABEL}: ${Object.keys(baselineDocs).length} document(s) in baseline, $${(debtDollarTotal / 100).toFixed(2)} total known drift — THIS IS DEBT, NOT A PASS.`
+    );
+
+    const ratchetFail = regressions.length > 0 || worsened.length > 0 || nowClean.length > 0;
+
+    if (!allStructuralPass || ratchetFail) {
+      if (regressions.length > 0) {
+        console.error(`${LABEL}: LIVE FAIL — ${regressions.length} document(s) mismatched and NOT in the baseline (real regression): ${regressions.join(", ")}`);
+      }
+      if (worsened.length > 0) {
+        console.error(`${LABEL}: LIVE FAIL — ${worsened.length} baselined document(s) got WORSE, not just old debt: ${worsened.join(", ")}`);
+      }
+      if (nowClean.length > 0) {
+        console.error(`${LABEL}: LIVE FAIL — ${nowClean.length} baselined document(s) now have ZERO mismatches — remove from the baseline: ${nowClean.join(", ")}`);
+      }
+      if (!allStructuralPass) {
+        console.error(`${LABEL}: LIVE FAIL — ${structuralFailures.filter((a) => !a.pass).length} of 5 structural assertion(s) failed.`);
+      }
       process.exit(1);
     }
-    console.log(`\n${LABEL}: LIVE PASS — ${documentCount}/${documentCount} documents exact on all six dimensions, 5/5 structural assertions hold.`);
+    console.log(`\n${LABEL}: LIVE PASS — 0 new regressions, 0 worsened, 0 stale-clean baseline entries; 5/5 structural assertions hold.`);
   } finally {
     await client.end();
   }

@@ -1,0 +1,598 @@
+{
+  "_comment": "ALWAYSTRACK-PARITY shrink-only baseline — P0 owner ruling 2026-09-22 (03c un-masked this guard's pre-existing 34/34 mismatch, blocking CC-2/CC-3's finished branches). Regenerate: UPDATE_ALWAYSTRACK_PARITY_BASELINE=1 (refuses to grow either the document count or the structural_d_ceiling). A document's delta getting WORSE fails the gate even while baselined; a baselined document reaching zero mismatches ALSO fails (\"remove me from the baseline\") so a real fix cannot hide. Adding to this baseline requires a written Lead ruling named in the PR body.",
+  "baseline_established": "2026-09-22",
+  "document_count": 34,
+  "structural_d_ceiling": {
+    "expense_count": 190,
+    "fuel_count": 192
+  },
+  "documents": {
+    "5769": {
+      "delta_cents": {
+        "line_haul_cents": -380000,
+        "driver_payment_cents": -52206,
+        "fuel_cents": -8443,
+        "fuel_count": 0,
+        "expenses_cents": 127822,
+        "expenses_count": 2,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "LINE_HAUL 2500.00!=6300.00",
+        "DRIVER_PAYMENT 633.46!=1155.52",
+        "FUEL 1193.79/2rows!=1278.22/2rows",
+        "EXPENSES 1346.06/3rows!=67.84/1rows"
+      ]
+    },
+    "5770": {
+      "delta_cents": {
+        "line_haul_cents": -930000,
+        "driver_payment_cents": -190750,
+        "fuel_cents": -17606,
+        "fuel_count": 0,
+        "expenses_cents": -10505,
+        "expenses_count": -3,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "LINE_HAUL 0.00!=9300.00",
+        "DRIVER_PAYMENT 0.00!=1907.50",
+        "FUEL 3045.64/5rows!=3221.70/5rows",
+        "EXPENSES 0.00/0rows!=105.05/3rows"
+      ]
+    },
+    "5771": {
+      "delta_cents": {
+        "line_haul_cents": -490000,
+        "driver_payment_cents": -77556,
+        "fuel_cents": -18893,
+        "fuel_count": 0,
+        "expenses_cents": 137646,
+        "expenses_count": 0,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "LINE_HAUL 3000.00!=7900.00",
+        "DRIVER_PAYMENT 1133.54!=1909.10",
+        "FUEL 2982.73/4rows!=3171.66/4rows",
+        "EXPENSES 1528.80/4rows!=152.34/4rows"
+      ]
+    },
+    "5772": {
+      "delta_cents": {
+        "line_haul_cents": -500000,
+        "driver_payment_cents": -71443,
+        "fuel_cents": -16321,
+        "fuel_count": 1,
+        "expenses_cents": 161097,
+        "expenses_count": -2,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "LINE_HAUL 2225.00!=7225.00",
+        "DRIVER_PAYMENT 667.40!=1381.83",
+        "FUEL 3816.19/7rows!=3979.40/6rows",
+        "EXPENSES 1800.63/2rows!=189.66/4rows"
+      ]
+    },
+    "5773": {
+      "delta_cents": {
+        "line_haul_cents": -720000,
+        "driver_payment_cents": -65782,
+        "fuel_cents": -30526,
+        "fuel_count": 0,
+        "expenses_cents": 150072,
+        "expenses_count": -1,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "LINE_HAUL 3600.00!=10800.00",
+        "DRIVER_PAYMENT 1239.70!=1897.52",
+        "FUEL 3500.59/5rows!=3805.85/5rows",
+        "EXPENSES 1697.66/4rows!=196.94/5rows"
+      ]
+    },
+    "5774": {
+      "delta_cents": {
+        "line_haul_cents": -380000,
+        "driver_payment_cents": -40765,
+        "fuel_cents": 0,
+        "fuel_count": 0,
+        "expenses_cents": 88001,
+        "expenses_count": -2,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "LINE_HAUL 4000.00!=7800.00",
+        "DRIVER_PAYMENT 644.30!=1051.95",
+        "EXPENSES 2136.37/4rows!=1256.36/6rows"
+      ]
+    },
+    "5775": {
+      "delta_cents": {
+        "line_haul_cents": -390000,
+        "driver_payment_cents": -51683,
+        "fuel_cents": -11606,
+        "fuel_count": 0,
+        "expenses_cents": 204222,
+        "expenses_count": 1,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "LINE_HAUL 3400.00!=7300.00",
+        "DRIVER_PAYMENT 787.32!=1304.15",
+        "FUEL 3091.34/6rows!=3207.40/6rows",
+        "EXPENSES 2224.91/9rows!=182.69/8rows"
+      ]
+    },
+    "5776": {
+      "delta_cents": {
+        "line_haul_cents": -390000,
+        "driver_payment_cents": -54156,
+        "fuel_cents": 0,
+        "fuel_count": 0,
+        "expenses_cents": 291244,
+        "expenses_count": 1,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "LINE_HAUL 3125.00!=7025.00",
+        "DRIVER_PAYMENT 662.33!=1203.89",
+        "EXPENSES 3161.20/11rows!=248.76/10rows"
+      ]
+    },
+    "5777": {
+      "delta_cents": {
+        "line_haul_cents": 0,
+        "driver_payment_cents": 17669,
+        "fuel_cents": -32133,
+        "fuel_count": 0,
+        "expenses_cents": 336965,
+        "expenses_count": 4,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "DRIVER_PAYMENT 2084.69!=1908.00",
+        "FUEL 3048.32/4rows!=3369.65/4rows",
+        "EXPENSES 3450.00/6rows!=80.35/2rows"
+      ]
+    },
+    "5778": {
+      "delta_cents": {
+        "line_haul_cents": 20741,
+        "driver_payment_cents": 2101,
+        "fuel_cents": -28175,
+        "fuel_count": 0,
+        "expenses_cents": -7118,
+        "expenses_count": -3,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "LINE_HAUL 4407.41!=4200.00",
+        "DRIVER_PAYMENT 1461.02!=1440.01",
+        "FUEL 3275.59/5rows!=3557.34/5rows",
+        "EXPENSES 62.63/3rows!=133.81/6rows"
+      ]
+    },
+    "5779": {
+      "delta_cents": {
+        "line_haul_cents": -300000,
+        "driver_payment_cents": -46197,
+        "fuel_cents": -7139,
+        "fuel_count": 0,
+        "expenses_cents": 133955,
+        "expenses_count": 0,
+        "driver_net_cents": 1000
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "LINE_HAUL 3500.00!=6500.00",
+        "DRIVER_PAYMENT 958.69!=1420.66",
+        "FUEL 3228.18/6rows!=3299.57/6rows",
+        "EXPENSES 1482.31/5rows!=142.76/5rows",
+        "DRIVER_NET 1397.66!=1387.66"
+      ]
+    },
+    "5780": {
+      "delta_cents": {
+        "line_haul_cents": 0,
+        "driver_payment_cents": 20382,
+        "fuel_cents": 0,
+        "fuel_count": 0,
+        "expenses_cents": 84376,
+        "expenses_count": 1,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "DRIVER_PAYMENT 503.82!=300.00",
+        "EXPENSES 1064.47/4rows!=220.71/3rows"
+      ]
+    },
+    "5781": {
+      "delta_cents": {
+        "line_haul_cents": 0,
+        "driver_payment_cents": 2788,
+        "fuel_cents": -17093,
+        "fuel_count": 0,
+        "expenses_cents": 238597,
+        "expenses_count": 5,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "DRIVER_PAYMENT 1308.19!=1280.31",
+        "FUEL 2215.04/5rows!=2385.97/5rows",
+        "EXPENSES 3182.33/16rows!=796.36/11rows"
+      ]
+    },
+    "5783": {
+      "delta_cents": {
+        "line_haul_cents": 0,
+        "driver_payment_cents": 23679,
+        "fuel_cents": -14660,
+        "fuel_count": 0,
+        "expenses_cents": 353969,
+        "expenses_count": 4,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "DRIVER_PAYMENT 2143.04!=1906.25",
+        "FUEL 3393.09/4rows!=3539.69/4rows",
+        "EXPENSES 3661.39/7rows!=121.70/3rows"
+      ]
+    },
+    "5784": {
+      "delta_cents": {
+        "line_haul_cents": 0,
+        "driver_payment_cents": 26364,
+        "fuel_cents": -34793,
+        "fuel_count": 0,
+        "expenses_cents": 554773,
+        "expenses_count": 8,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "DRIVER_PAYMENT 1926.58!=1662.94",
+        "FUEL 5199.80/8rows!=5547.73/8rows",
+        "EXPENSES 5920.79/20rows!=373.06/12rows"
+      ]
+    },
+    "5785": {
+      "delta_cents": {
+        "line_haul_cents": -430000,
+        "driver_payment_cents": -39482,
+        "fuel_cents": -8636,
+        "fuel_count": 0,
+        "expenses_cents": 249504,
+        "expenses_count": 2,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "LINE_HAUL 3300.00!=7600.00",
+        "DRIVER_PAYMENT 1128.85!=1523.67",
+        "FUEL 4483.78/6rows!=4570.14/6rows",
+        "EXPENSES 2640.64/8rows!=145.60/6rows"
+      ]
+    },
+    "5786": {
+      "delta_cents": {
+        "line_haul_cents": -345000,
+        "driver_payment_cents": -42630,
+        "fuel_cents": -8890,
+        "fuel_count": 0,
+        "expenses_cents": 115466,
+        "expenses_count": 2,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "LINE_HAUL 2300.00!=5750.00",
+        "DRIVER_PAYMENT 612.75!=1039.05",
+        "FUEL 2329.34/4rows!=2418.24/4rows",
+        "EXPENSES 1246.05/6rows!=91.39/4rows"
+      ]
+    },
+    "5787": {
+      "delta_cents": {
+        "line_haul_cents": 0,
+        "driver_payment_cents": 27256,
+        "fuel_cents": -11932,
+        "fuel_count": 0,
+        "expenses_cents": 205554,
+        "expenses_count": 6,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "DRIVER_PAYMENT 1273.28!=1000.72",
+        "FUEL 1871.23/3rows!=1990.55/3rows",
+        "EXPENSES 2195.74/13rows!=140.20/7rows"
+      ]
+    },
+    "5788": {
+      "delta_cents": {
+        "line_haul_cents": -486000,
+        "driver_payment_cents": -55299,
+        "fuel_cents": 7951,
+        "fuel_count": 1,
+        "expenses_cents": 246498,
+        "expenses_count": 4,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "LINE_HAUL 4100.00!=8960.00",
+        "DRIVER_PAYMENT 1172.90!=1725.89",
+        "FUEL 4750.77/9rows!=4671.26/8rows",
+        "EXPENSES 2736.69/11rows!=271.71/7rows"
+      ]
+    },
+    "5789": {
+      "delta_cents": {
+        "line_haul_cents": 0,
+        "driver_payment_cents": 26189,
+        "fuel_cents": 46285,
+        "fuel_count": 1,
+        "expenses_cents": 384167,
+        "expenses_count": 6,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "DRIVER_PAYMENT 2187.74!=1925.85",
+        "FUEL 4262.14/6rows!=3799.29/5rows",
+        "EXPENSES 3998.09/9rows!=156.42/3rows"
+      ]
+    },
+    "5790": {
+      "delta_cents": {
+        "line_haul_cents": 350000,
+        "driver_payment_cents": -5967,
+        "fuel_cents": 86870,
+        "fuel_count": 2,
+        "expenses_cents": 397530,
+        "expenses_count": 11,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "LINE_HAUL 7500.00!=4000.00",
+        "DRIVER_PAYMENT 1453.08!=1512.75",
+        "FUEL 4675.38/8rows!=3806.68/6rows",
+        "EXPENSES 4164.72/17rows!=189.42/6rows"
+      ]
+    },
+    "5791": {
+      "delta_cents": {
+        "line_haul_cents": 0,
+        "driver_payment_cents": 0,
+        "fuel_cents": 41942,
+        "fuel_count": 1,
+        "expenses_cents": 384027,
+        "expenses_count": 5,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "FUEL 4259.69/6rows!=3840.27/5rows",
+        "EXPENSES 3951.75/8rows!=111.48/3rows"
+      ]
+    },
+    "5792": {
+      "delta_cents": {
+        "line_haul_cents": 0,
+        "driver_payment_cents": 5457,
+        "fuel_cents": 73874,
+        "fuel_count": 2,
+        "expenses_cents": 379270,
+        "expenses_count": 5,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "DRIVER_PAYMENT 1792.62!=1738.05",
+        "FUEL 4531.44/7rows!=3792.70/5rows",
+        "EXPENSES 3931.69/9rows!=138.99/4rows"
+      ]
+    },
+    "5793": {
+      "delta_cents": {
+        "line_haul_cents": 0,
+        "driver_payment_cents": 19301,
+        "fuel_cents": -25936,
+        "fuel_count": 0,
+        "expenses_cents": 394223,
+        "expenses_count": 6,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "DRIVER_PAYMENT 1679.66!=1486.65",
+        "FUEL 3682.87/6rows!=3942.23/6rows",
+        "EXPENSES 4135.42/13rows!=193.19/7rows"
+      ]
+    },
+    "5794": {
+      "delta_cents": {
+        "line_haul_cents": 0,
+        "driver_payment_cents": 10560,
+        "fuel_cents": 102275,
+        "fuel_count": 2,
+        "expenses_cents": 370791,
+        "expenses_count": 6,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "DRIVER_PAYMENT 1394.44!=1288.84",
+        "FUEL 4730.66/8rows!=3707.91/6rows",
+        "EXPENSES 4044.79/18rows!=336.88/12rows"
+      ]
+    },
+    "5795": {
+      "delta_cents": {
+        "line_haul_cents": 0,
+        "driver_payment_cents": 2836,
+        "fuel_cents": 77892,
+        "fuel_count": 2,
+        "expenses_cents": 268435,
+        "expenses_count": 4,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "DRIVER_PAYMENT 1079.39!=1051.03",
+        "FUEL 3463.27/6rows!=2684.35/4rows",
+        "EXPENSES 3383.92/7rows!=699.57/3rows"
+      ]
+    },
+    "5796": {
+      "delta_cents": {
+        "line_haul_cents": 0,
+        "driver_payment_cents": 0,
+        "fuel_cents": -80703,
+        "fuel_count": -2,
+        "expenses_cents": -4505,
+        "expenses_count": -3,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "FUEL 0.00/0rows!=807.03/2rows",
+        "EXPENSES 0.00/0rows!=45.05/3rows"
+      ]
+    },
+    "5797": {
+      "delta_cents": {
+        "line_haul_cents": 0,
+        "driver_payment_cents": -19312,
+        "fuel_cents": -15402,
+        "fuel_count": 1,
+        "expenses_cents": 1,
+        "expenses_count": 1,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "DRIVER_PAYMENT 1223.73!=1416.85",
+        "FUEL 3157.56/6rows!=3311.58/5rows",
+        "EXPENSES 137.49/6rows!=137.48/5rows"
+      ]
+    },
+    "5798": {
+      "delta_cents": {
+        "line_haul_cents": 0,
+        "driver_payment_cents": 1922,
+        "fuel_cents": 91325,
+        "fuel_count": 3,
+        "expenses_cents": 0,
+        "expenses_count": 0,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "DRIVER_PAYMENT 1007.07!=987.85",
+        "FUEL 2904.23/7rows!=1990.98/4rows"
+      ]
+    },
+    "5799": {
+      "delta_cents": {
+        "line_haul_cents": 0,
+        "driver_payment_cents": -29930,
+        "fuel_cents": 107601,
+        "fuel_count": 2,
+        "expenses_cents": 0,
+        "expenses_count": 0,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "DRIVER_PAYMENT 1603.35!=1902.65",
+        "FUEL 5260.36/8rows!=4184.35/6rows"
+      ]
+    },
+    "5800": {
+      "delta_cents": {
+        "line_haul_cents": 0,
+        "driver_payment_cents": -808,
+        "fuel_cents": -8969,
+        "fuel_count": 0,
+        "expenses_cents": 0,
+        "expenses_count": 0,
+        "driver_net_cents": -10000
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "DRIVER_PAYMENT 1454.02!=1462.10",
+        "FUEL 3294.17/6rows!=3383.86/6rows",
+        "DRIVER_NET 1307.40!=1407.40"
+      ]
+    },
+    "5801": {
+      "delta_cents": {
+        "line_haul_cents": 181500,
+        "driver_payment_cents": 1611,
+        "fuel_cents": 68612,
+        "fuel_count": 1,
+        "expenses_cents": -2050,
+        "expenses_count": -2,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "LINE_HAUL 11015.00!=9200.00",
+        "DRIVER_PAYMENT 1524.38!=1508.27",
+        "FUEL 4022.93/7rows!=3336.81/6rows",
+        "EXPENSES 99.47/5rows!=119.97/7rows"
+      ]
+    },
+    "5802": {
+      "delta_cents": {
+        "line_haul_cents": -490000,
+        "driver_payment_cents": 0,
+        "fuel_cents": 193024,
+        "fuel_count": 3,
+        "expenses_cents": -1000,
+        "expenses_count": -1,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "LINE_HAUL 4120.00!=9020.00",
+        "FUEL 5432.65/9rows!=3502.41/6rows",
+        "EXPENSES 112.58/4rows!=122.58/5rows"
+      ]
+    },
+    "5803": {
+      "delta_cents": {
+        "line_haul_cents": 300000,
+        "driver_payment_cents": -5126,
+        "fuel_cents": 24536,
+        "fuel_count": 1,
+        "expenses_cents": 0,
+        "expenses_count": 0,
+        "driver_net_cents": 0
+      },
+      "reason": "pre-existing ROUND 28/CC-3 AlwaysTrack reconciliation drift, dated 2026-09-22 — see docs/bus for the owning round",
+      "mismatch_summary": [
+        "LINE_HAUL 6600.00!=3600.00",
+        "DRIVER_PAYMENT 1407.79!=1459.05",
+        "FUEL 2624.84/8rows!=2379.48/7rows"
+      ]
+    }
+  }
+}

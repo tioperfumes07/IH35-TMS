@@ -74,9 +74,6 @@ const STEPS = [
   ["verify-customer-tab-bar-position-and-data-dot", "scripts/verify-customer-tab-bar-position-and-data-dot.mjs"],
   // B4/ROUND 21.2 (owner, 2026-09-12) — relationship-health-score honesty for the 1-4-of-5-signals case.
   ["verify-customer-relationship-score-partial-honesty", "scripts/verify-customer-relationship-score-partial-honesty.mjs"],
-  // ROUND 23.3 SUPPLEMENT (owner/Lead, 2026-09-13) — the master parity guard: proves the WHOLE
-  // AlwaysTrack absorption/ingest chain against prod, not one seat's own slice.
-  ["verify-alwaystrack-parity", "scripts/verify-alwaystrack-parity.mjs"],
   // ROUND 23.3 DELTA (owner, 2026-09-13) — every live Faro invoice line must carry a real load_id.
   ["verify-faro-invoice-lines-load-linkage", "scripts/verify-faro-invoice-lines-load-linkage.mjs"],
   // ROUND 23.3 (owner/Lead, 2026-09-13) — B1 fuel absorption: 171 fuel_purchases rows ->
@@ -306,7 +303,7 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  for (const rel of ["scripts/verify-control-totals.mjs", "scripts/lib/require-live-db.mjs", "scripts/lib/db-skip-baseline.json"]) {
+  for (const rel of ["scripts/verify-control-totals.mjs", "scripts/verify-alwaystrack-parity.mjs", "scripts/lib/require-live-db.mjs", "scripts/lib/db-skip-baseline.json"]) {
     if (!fs.existsSync(path.join(ROOT, rel))) {
       console.error(`${LABEL} --selftest FAIL: missing ${rel}`);
       process.exit(1);
@@ -352,6 +349,23 @@ if (process.env.DATABASE_URL || touchesMoneyPath()) {
   }
 } else {
   const msg = "verify-control-totals.mjs (03c) — no DATABASE_URL and no money path in this diff";
+  console.log(`[${LABEL}] SKIP ${msg}`);
+  skippedLiveChecks.push(msg);
+}
+
+// ROUND 23.3 SUPPLEMENT (owner/Lead, 2026-09-13) — the master AlwaysTrack parity guard, proves the
+// WHOLE ingest chain against prod. P0 (2026-09-22): moved OUT of the unconditional STEPS array
+// above (where it used to silently skip-pass with no DATABASE_URL, masking a real, pre-existing
+// 34-of-34-document mismatch) and into this SAME conditional 03c already uses — a non-money push
+// is never blocked by it; a money-relevant push with no DATABASE_URL correctly fails, never skips.
+if (process.env.DATABASE_URL || touchesMoneyPath()) {
+  const code = runNode("scripts/verify-alwaystrack-parity.mjs");
+  if (code !== 0) {
+    failStep("verify-alwaystrack-parity");
+    process.exit(code);
+  }
+} else {
+  const msg = "verify-alwaystrack-parity.mjs — no DATABASE_URL and no money path in this diff";
   console.log(`[${LABEL}] SKIP ${msg}`);
   skippedLiveChecks.push(msg);
 }
