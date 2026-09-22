@@ -4778,3 +4778,65 @@ second one if scoped narrowly.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+## 2026-09-23 — D1 measured and filed (not touched); D2 invoice created through the real engine
+
+Noted: E8's follow-up PR (the actual guard wiring, still stashed) stays held until Cursor's E1 lands
+— keeping it proven, not pushing it yet.
+
+### D1 — 13615: measured exactly, one correction, and the invoice/customer are NOT actually in conflict
+
+```
+status='dispatched'  live_invoices=1 (status='proforma', $4,900.00)  driver_bills=1  fuel_rows=0
+```
+
+**Correction: driver bills = 1, not 0.** Everything else matches.
+
+**The invoice is a PROFORMA, not a committed invoice** — `convertProformaToOfficial` has no
+delivery-status gate at all (only `sendDraftInvoice`, later in the lifecycle, does). A proforma
+sitting on an undelivered/dispatched load is the SYSTEM WORKING AS DESIGNED, not the defect — a
+proforma is a pre-invoice quote stage, and nothing here has been "invoiced before delivery" in the
+sense that matters (no A/R has moved, no revenue posted).
+
+**The real finding, precisely: the invoice's customer and the LOAD's own customer_id AGREE with
+each other** — both point at the same row, `AB Global Logistics , Inc` (`2395176f-...`). There is no
+invoice-vs-load divergence to choose a side on. What doesn't fit is the `customer_wo_number`
+("SEM66538") against that customer — three different Semares-family customers exist in
+`mdata.customers` (`S E Mares Forwarding Service LLC`, `SEMARES, INC.`, `Semares Forwarding
+Services`), and "SEM" reads far more naturally as a Semares reference than an AB Global one. If
+anything is mis-linked, the candidate is the LOAD's `customer_id` itself (booked to the wrong
+customer from the start, with the invoice correctly inheriting that same, wrong customer) — not a
+divergence between two documents that actually agree. I don't have the original booking
+document/rate confirmation to confirm which Semares entity (if any) is the real customer, so I'm not
+guessing further. Not voided, not re-linked — filed for your ruling.
+
+### D2 — 13595: invoice created through the real engine; sending it hits the identical evidence gate 13615 already proved correct
+
+Confirmed live first: settlement `S-2026-5809` closed, PAYPA TRANSPORT, load `rate_total_cents` =
+$1,500.00 (one active `linehaul` charge line, already correct, no action needed there), zero live
+invoices on the load before this. Created the invoice through `buildInvoiceFromLoad()`
+(`apps/backend/src/accounting/from-load.ts:81`, the same path `POST
+/api/v1/accounting/invoices/from-load` uses) — no direct insert:
+
+```
+invoice display_id=13595, customer=PAYPA TRANSPORT, total=$1,500.00, status='draft'
+re-run confirms idempotent:true -- no duplicate created
+```
+
+**Then found the same contradiction the 18-load batch already surfaced**, on this load too: status
+reads `'delivered'`, but its own `mdata.load_stops` show BOTH pickup and delivery at
+`status='pending'`, no `actual_arrival_at`/`actual_departure_at` on either. Attempted
+`sendDraftInvoice()` anyway to confirm rather than assume — it correctly refused:
+
+```
+409 delivery_evidence_missing — "Load ... has no actual_departure_at on its final active delivery
+stop. This invoice bills a delivery the system cannot evidence..."
+```
+
+Identical to 13615's own refusal. **The invoice now exists (draft, correct, ready to send the moment
+real delivery evidence lands) — the debt itself is owed and captured; the remaining step is real
+POD/departure capture through dispatch, not a code or data override.** Not forcing it through.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
