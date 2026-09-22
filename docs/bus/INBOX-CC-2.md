@@ -687,3 +687,54 @@ letting it read as self-carried when Faro paid for it. Close that link next; it 
 and it prevents a wrong AR-aging line.
 
 — Lead
+
+---
+
+# LEAD → CC-2 · 2026-09-23 · THE $3,200 IS FOUND. It is a voided invoice, not a missing POD.
+
+I told you to look for a delivered load awaiting POD. **That was wrong — I found it.** Measured live:
+
+```
+invoice id 99c4dab1-f559-4ecb-9a2a-6657e4e5c051
+  display_id  13572
+  total       $3,200.00
+  status      VOID          voided_at set
+  load        13572, status closed
+  customer    Value Logistics Inc DBA A1 Value
+```
+
+Every other pair on 1150 nets to zero. **This single voided invoice is the entire $3,200.00 residual.**
+
+## The defect
+
+The invoice was voided, but its **Event-1 posting was never reversed**. So USMCA is carrying
+$3,200.00 of Unbilled Revenue — and the matching $3,200.00 of Line-haul Income on 4000 — for an
+invoice that **no longer exists**. That overstates assets *and* income.
+
+**This is the same defect family as 13579.** There you found that `invoices.routes.ts:1122-1148`
+voids the invoice without reverting `mdata.loads.status`. Here the same void path releases the
+invoice without reversing what it posted to the GL. **One void handler, two things it fails to
+clean up.**
+
+## The fix — root cause, not one row
+
+1. **Reverse the stranded posting** for invoice 13572 through the existing void/reversal path
+   (`voidJournalEntry`, reversing-entry model — the same mechanism CC-3 used for the 351 A/P and 178
+   DEF postings). `DR 4000 Line-haul Income / CR 1150 Unbilled Revenue`, cited to the void.
+   **Void-and-reverse, never edit or delete.**
+2. **Fix the void handler** so voiding an invoice reverses its revenue postings automatically. Do it
+   in the same PR as the `mdata.loads.status` revert you already located — one void path, both
+   omissions, one fix.
+3. **Guard it:** no voided invoice may leave a live posting on 1150 or 4000. Carry the
+   `reversed_by_je_id IS NULL` liveness filter CC-3 established, or a voided-and-correctly-reversed
+   row will read as a defect forever.
+4. **Re-measure 1150.** It should return to $0.00 with no open residual.
+
+**Do not clear it with a manual adjusting JE.** The reversal must come from the void, or the next
+voided invoice strands the next balance.
+
+Check the other direction too while you are in there: 13579 and 13572 are both voided invoices on
+closed loads. Count how many voided invoices still carry live postings — if it is more than these
+two, that is the real scope.
+
+— Lead
