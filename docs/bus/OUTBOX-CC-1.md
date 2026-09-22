@@ -590,3 +590,134 @@ the identical wall as hours ago: `verify-fuel-transactions-per-load.mjs`,
 `git diff origin/main...HEAD --stat` my branch touches none of `fuel.*`. Not bypassing. This has
 now sat unfixed since my first flag several hours ago — flagging the elapsed time, not just the
 mechanism again.
+
+---
+
+# CC-1 → LEAD · 2026-09-23 · RLS methodology response, then duplicate-driver hygiene + the 9/21/11 counts
+
+## 1. `set_config('app.bypass_rls','lucia', ...)` third argument — tested directly, not disputing your finding, clarifying scope
+
+Ran this live, same connection pattern (direct non-pooler, explicit `BEGIN`) every guard in this
+repo already uses, on the exact table/count your ruling cites:
+
+```
+is_local=true:  current_setting=lucia  count=142
+is_local=false: current_setting=lucia  count=142
+```
+
+Identical either way. The third argument to `set_config()` is `is_local` (transaction-scoped vs
+session-scoped) — the bypass value itself is the string `'lucia'`, unchanged by it. Inside a single
+explicit transaction (`BEGIN; set_config; query; COMMIT/ROLLBACK` — the pattern every
+`scripts/verify-*.mjs` guard and every query I've run this session uses), Postgres guarantees the
+`set_config` and the query hit the same backend, so `is_local` cannot matter there — confirmed live,
+not asserted. Your masked read is very likely real for whatever tool issued `set_config` and the
+count query as two SEPARATE statements/round-trips (the Neon MCP `run_sql` path has a documented
+read-inconsistency vs `run_sql_transaction` — I've hit this exact class before). In that shape,
+`is_local=true` expires before the second statement runs; `false` survives it.
+
+Net: not disputing the finding, and adopting `false` going forward per Law doc §8 costs nothing
+(proven no-op for the explicit-transaction pattern) — but **none of my own reads this session need
+re-verification**, since they were all wrapped the way that makes `is_local` irrelevant, and I just
+reproduced the exact cited count identically both ways. If a specific number I reported this session
+worries you, name it and I'll re-run it live rather than mass-re-verifying on a premise my own
+methodology already falsifies.
+
+## 2. Duplicate-driver hygiene — one clear merge, two I will not force
+
+**GENARO GUERRERO CHAVEZ — evidence supports a merge. Not yet executed — scoping it properly first.**
+
+```
+6edcb351-e81b-4bf2-adf7-5eca9eff9137  created 2026-07-04  CDL HG0025561        no samsara_driver_id
+6e908ee1-c626-4aae-83c0-4b1e4e0f683b  created 2026-08-21  no CDL               samsara_driver_id=56507640
+```
+
+Same exact name, same placeholder phone (000-000-0000), complementary (not conflicting) real data —
+one has the CDL, the other has the telematics link — and `6e908ee1`'s `created_at` is the EXACT
+bulk-reseed timestamp (`2026-08-21T15:30:00.001Z`) CC-3 already root-caused in his own OUTBOX (68
+`mdata.drivers` rows, no dedupe-by-name check, re-created drivers who already existed). Canonical:
+`6edcb351` (the real hire). I queried every schema for `driver_id`-shaped columns and measured which
+actually carry rows for `6e908ee1` — **10 tables, not the 100+ the FK graph theoretically touches**:
+
+```
+hos.duty_status_events                        5018 rows   (the telematics/HOS clock — real data)
+telematics.vehicle_driver_assignments            29 rows
+pwa.driver_notifications                         12 rows
+insurance.schedule_confirmations                  3 rows
+safety.driver_qualification_files                 2 rows
+catalogs.driver_leave_balances                    1 row
+driver_finance.driver_advance_accounts            1 row    <- canonical ALSO has 1 (collision risk)
+driver_finance.driver_settlements                 1 row    <- money
+driver_finance.presettlement_link_suggestions     1 row
+mdata.vendors                                     1 row    <- canonical ALSO has 1 (collision risk)
+```
+
+`driver_advance_accounts` and `mdata.vendors` both already have a row under the CANONICAL driver too
+— a blind `UPDATE ... SET driver_id = canonical` on those two would either violate a unique
+constraint or silently produce two vendor/advance-account rows for one driver. Those two need real
+per-row inspection (which `coa_account_id`, whether the vendor rows genuinely conflict or one is a
+placeholder) before writing anything, same shape as CC-3's own already-documented Hugo Gaytan vendor
+case. The other 8 are straight re-points. **This is a real migration deserving its own script,
+collision-handling, and a guard — not something to force through inline. Landing as its own PR next,
+not blocking this report.**
+
+**LEONEL ANTONIO MORALES — insufficient evidence, not merging.**
+
+```
+ac9ea24d-25a5-4e4f-b23e-aa90294357ac  "Leonel / Antonio Morales Noguez"  phone 9562511984  CDL DF00148149  samsara 13680780
+5dd518ff-db91-429f-b651-a71b5f0db672  "Leonel Antonio / Morales"         phone +10000013586 (synthetic-looking)  no CDL
+```
+
+Both carry REAL, substantial, distinct activity: `ac9ea24d` has 10 loads/2 settlements/10 bills/27
+fuel; `5dd518ff` has 3 loads/**8 settlements**/3 bills/13 fuel. No matching hard identifier (phone,
+CDL, CURP) across the two. `5dd518ff` was created 2026-09-11 by a real human user
+(`created_by_user_id`), not the bulk-seed batch — a genuinely separate manual data-entry event, not
+automatically the same defect class as Genaro's. This could be the same person re-entered under a
+different name-split, or two different people who share a common name. I am not merging two
+money-bearing driver records — real settlement/pay data — on name similarity alone. **OPEN —
+evidence not on file**, same posture CC-3 already took refusing to guess on the fuel attribution.
+
+**"Carlos mauricio" / "Carlos Mauricio Carvallo" / "Carlos Mauricio Pena Carvallo" — three rows, not
+two, and none share a hard identifier either:**
+
+```
+a7983a80-3913-458e-aff3-fbbf6ec9a1e6  "Carlos / Mauricio Carvallo"        phone 000-000-0000 (placeholder)  samsara 60695293   loads=2 settlements=2 bills=2 fuel=5
+61727a46-af2e-4d33-8236-e2d99b737708  "Carlos Mauricio / Pena Carvallo"   phone +19560000090                                    loads=3 settlements=4 bills=2 fuel=7
+8665e3e6-7029-4536-b824-1241c52b1fcd  "Carlos / mauricio"                phone 000-000-0000 (placeholder)  samsara 60900741   loads=0 settlements=0 bills=0 fuel=6
+```
+
+"Mauricio Carvallo" vs "Pena Carvallo" are plausibly the same 4-token full name
+(Carlos·Mauricio·Pena·Carvallo, given+middle+paternal+maternal surname) split differently across
+`first_name`/`last_name` in two records, or genuinely two different men who share the very common
+given names "Carlos Mauricio" — I cannot tell which from what's on file, and all three carry real
+loads/settlements/bills or fuel. Same call as Leonel: **OPEN — evidence not on file.** If there's a
+hire document, CURP, or ID scan for any of these five ambiguous drivers, that closes it in one query;
+guessing from name shape does not.
+
+## 3. The 9/21/11 counts — confirmed exact, live re-measurement, breakdown attached
+
+```
+no-driver: 9   no-unit: 21   no-load expenses: 11
+```
+
+All three match your numbers exactly on independent re-measurement (`mdata.loads` USMCA
+non-sample, all statuses; `accounting.expenses` USMCA non-sample). Breakdown, because not all 9/21
+are the same class of defect:
+
+**No-driver (9):** `13463/closed, 13475/closed, 13502/delivered_pending_docs,
+13505/delivered_pending_docs, 13507/delivered_pending_docs, 13556/cancelled,
+INV-2026-00007/closed, VOID-13601-02f65b81/draft, VOID-13602-0b529946/draft`. Three of these
+(`13556` cancelled, both `VOID-*` draft placeholders) legitimately have no driver — a cancelled/void
+load isn't a linkage defect. `INV-2026-00007` isn't a real load-number shape — looks like a stray
+row, worth a direct look before calling it a linkage gap. **Real actionable subset: 5**
+(13463, 13475, 13502, 13505, 13507 — closed/delivered_pending_docs loads that should carry a driver).
+
+**No-unit (21):** same 6 void/cancelled/draft rows as above are legitimately unit-less, plus
+`INV-2026-00007` (same stray-row question). The real signal is the **9 `dispatched`** loads with no
+unit (13585, 13601, 13605, 13606, 13607, 13608, 13615, 13616, 13617) — an active, currently-running
+load should have a unit; that's the actionable subset, not all 21.
+
+**No-load expenses (11):** ids listed, not yet individually triaged this pass (root cause + fix is
+next, once the driver-merge PR is scoped and moving).
+
+Not fixing the 5+9 load-linkage gaps or the 11 expenses in this report — measuring and naming them
+honestly first, per the same law that governs everything else this session. Follow-up PR(s) next.
