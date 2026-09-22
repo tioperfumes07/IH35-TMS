@@ -147,30 +147,36 @@ OUTPUT_TYPE = {
     "toll_parking": "expense",
     "washout": "expense",
     "road_service": "expense",
+    "tires": "expense",
+    "vehicle_parts_accessories": "expense",
     "company_vehicle_fuel": "expense",
 }
 
 # ACCOUNT_KEY -- Lead ruling, 2026-09-23, verbatim: "EVERY LINE EMITS ITS TARGET ACCOUNT. NO
-# 'other' BUCKET. A line with no mapping is a build failure, not an 'other'." Three shapes:
-#   (a) a REAL numeric GL code, already established this session (diesel=5000, def=5010) or given
-#       explicitly in the ruling itself (admin_fee=7200).
+# 'other' BUCKET. A line with no mapping is a build failure, not an 'other'." ROUND 67 (same day)
+# finalized most of the pending codes with real numbers; superseded values are noted inline.
+# Three remaining shapes:
+#   (a) a REAL numeric GL code -- established this session (diesel=5000, def=5010) or given
+#       explicitly in the Round 66/67 rulings (admin_fee=7200, reefer_diesel=5160, washout=5170,
+#       road_service/vehicle_parts_accessories=5400 Truck Repairs & Maintenance, tires=5500,
+#       company_vehicle_fuel=6220, driver_reimbursement=5190, scale/toll_parking=5300 -- shared
+#       code, two categories, per the ruling's own "scale/toll -> 5300").
 #   (b) a per-driver SUB-ACCOUNT KEY (escrow_for_claims, cash_advance) -- the ruling names these as
 #       "the driver's own Driver Escrow sub-account" / "Driver Advances Receivable sub-account",
 #       not a single shared code; resolving to a real per-driver account id is a live-DB join
 #       (mdata.drivers -> accounting.escrow_accounts / driver_finance receivables), out of scope
 #       for a text-extraction script -- the category-level key is emitted, the driver name is
 #       already on every row (feeder-input-loads.csv), so the feeder can resolve it at load time.
-#   (c) a NAMED PENDING key for the 5 new driver-earning COGS accounts and the 4 other company-
-#       expense accounts the ruling says CC-1 is creating: "use the names, he assigns the numbers
-#       with owner approval." Never a fabricated number.
-# Categories with NO entry here (vehicle_parts_accessories) are INTENTIONAL: main() asserts every
-# emitted row has a non-null account_key and FAILS THE BUILD, printing exactly which rows and
-# their total dollars, rather than silently bucketing them or guessing a code -- per the ruling's
-# own instruction.
+#   (c) a NAMED PENDING key for the still-unassigned driver-earning COGS accounts (CC-1 creates
+#       these, owner approves the numbers) and lumper (no code given in either ruling yet).
+# Categories with NO entry here are INTENTIONAL: main() asserts every emitted row has a non-null
+# account_key and FAILS THE BUILD, printing exactly which rows and their total dollars, rather
+# than silently bucketing them or guessing a code -- per the ruling's own instruction, and it
+# already caught one real miscategorization this way (vehicle_parts_accessories, Round 66).
 ACCOUNT_KEY = {
-    "diesel": "5000",  # Fuel & Diesel -- established this session
-    "def": "5010",  # DEF (Diesel Exhaust Fluid) -- DEF-GL-5010-segregation, this session
-    "admin_fee": "7200",  # Driver Admin Fee Income -- Lead ruling 2026-09-23, verbatim
+    "diesel": "5000",  # Fuel & Diesel
+    "def": "5010",  # DEF (Diesel Exhaust Fluid)
+    "admin_fee": "7200",  # Driver Admin Fee Income (company INCOME, not a negative expense)
     "escrow_for_claims": "driver_escrow_subaccount",  # per-driver; resolved at feed time
     "cash_advance": "driver_advances_receivable_subaccount",  # per-driver; resolved at feed time
     "tarp_pay": "COGS_PENDING:tarp_pay",
@@ -182,14 +188,18 @@ ACCOUNT_KEY = {
     # distinguish the two from description text alone (both use "Bono"/"Bonus" wording without a
     # consistent hiring-vs-performance marker); named here as a real, unresolved sub-split, not
     # silently merged and hidden.
-    "reefer_diesel": "EXPENSE_PENDING:reefer_diesel",
-    "washout": "EXPENSE_PENDING:washout",
-    "road_service": "EXPENSE_PENDING:road_service",
-    "driver_reimbursement": "EXPENSE_PENDING:driver_reimbursed",
-    "company_vehicle_fuel": "EXPENSE_PENDING:company_vehicle_fuel",  # Lead: "NOT 5000, NOT IFTA"
-    "scale": "EXPENSE_PENDING:scale",
-    "lumper": "EXPENSE_PENDING:lumper",
-    "toll_parking": "EXPENSE_PENDING:toll_parking",
+    "reefer_diesel": "5160",  # Reefer Fuel (NEW, Round 67)
+    "washout": "5170",  # Trailer & Truck Washout (NEW, Round 67)
+    "road_service": "5400",  # Truck Repairs & Maintenance (EXISTS) -- non-tire repair only
+    "tires": "5500",  # Tires (EXISTS) -- split out of road_service, Round 67
+    "vehicle_parts_accessories": "5400",  # Truck Repairs & Maintenance -- Round 67: "consumed on
+    # the road running a load... COGS, not a period expense," explicitly NOT 6160 Parts & Supplies
+    # (that account is shop inventory, not roadside purchases).
+    "driver_reimbursement": "5190",  # Driver Reimbursed Expenses (renumbered, Round 67)
+    "company_vehicle_fuel": "6220",  # Company Vehicle Fuel (NEW, Round 67 -- the Honda pickup)
+    "scale": "5300",  # shared with toll_parking, Round 67: "scale/toll -> 5300"
+    "toll_parking": "5300",
+    "lumper": "EXPENSE_PENDING:lumper",  # no code given in either ruling yet
     "driver_pay": "COGS_PENDING:driver_pay_base",
 }
 
@@ -225,6 +235,12 @@ def classify_driver_line(desc):
     # "other" because "toll"/"bridge"/"parking" never matched the Spanish-language wording).
     if "toll" in d or "parking" in d or "bridge" in d or "pago de cruce" in d or "cruce" in d:
         return "toll_parking"
+    # Round 67 correction (Lead, 2026-09-23): "Road-service TIRES -> 5500 Tires" is its own
+    # account, split out of general road-service repair ("Road Service-Truck Repair" -> 5400,
+    # Truck Repairs & Maintenance). Checked "tire" first since both share the "Road Service-"
+    # prefix in the real description vocabulary.
+    if "tire" in d:
+        return "tires"
     if "road service" in d:
         return "road_service"
     # Personal-vehicle gasoline (a support Honda pickup, NOT the load's own truck -- confirmed by
@@ -234,9 +250,10 @@ def classify_driver_line(desc):
     if "honda" in d or "camioneta" in d:
         return "company_vehicle_fuel"
     # Fuel-card-purchased truck parts/accessories (windshield wiper, headlight, premium wash, a
-    # flat per-transaction "fee item") -- real money, does not fit ANY of the 16 named categories.
-    # Named as its own category rather than silently forced into "other"; ACCOUNT_KEY below has no
-    # entry for it on purpose, which fails the build loudly (see main()) instead of guessing a code.
+    # flat per-transaction "fee item") -- real money. Round 67 ruling: "-> 5400 Truck Repairs &
+    # Maintenance (COGS). These are consumed on the road running a load... COGS, not a period
+    # expense." Kept as its own category for reporting granularity even though it now shares an
+    # account with road_service's non-tire repair lines.
     return "vehicle_parts_accessories"
 
 
@@ -257,6 +274,8 @@ def classify_company_expense(desc):
         return "toll_parking"
     if "washout" in d:
         return "washout"
+    if "tire" in d:
+        return "tires"
     if "road service" in d:
         return "road_service"
     if "honda" in d or "camioneta" in d:
