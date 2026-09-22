@@ -67,6 +67,10 @@ const STEPS = [
   // ALL-SEATS LAW (owner, 2026-09-13) — every load-number column carries a settlement/tour column
   // beside it; only source_document_ref (never display_id) is ever the human-visible number.
   ["verify-settlement-ref-beside-load", "scripts/verify-settlement-ref-beside-load.mjs"],
+  // D3-SOURCE-REF-ONLY-KEY (Lead LAW, 2026-09-23) — "source_document_ref is the ONLY key that
+  // means AlwaysTrack... until this closes." Backend twin of the guard above: no query/derivation
+  // matches a settlement by display_id. docs/bus/CC3-89-ROW-SETTLEMENT-NUMBERING-AUDIT-2026-09-23.md
+  ["verify-settlement-source-ref-only-key", "scripts/verify-settlement-source-ref-only-key.mjs"],
   // LOAD-TO-CASH CHAIN, LINK 4 PR 3 (owner precedence, 2026-09-12) — "money-in excluded from
   // auto-categorization." Covers both pre-existing rule engines + the human refresh-suggestion route.
   ["verify-money-in-excluded-from-auto-categorization", "scripts/verify-money-in-excluded-from-auto-categorization.mjs"],
