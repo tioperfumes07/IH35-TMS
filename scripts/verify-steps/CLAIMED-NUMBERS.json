@@ -8949,5 +8949,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-22",
     "purpose": "verify-baseline-never-grows"
+  },
+  "11545": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-22",
+    "purpose": "verify-ifta-excludes-non-highway-fuel-types"
   }
 }
