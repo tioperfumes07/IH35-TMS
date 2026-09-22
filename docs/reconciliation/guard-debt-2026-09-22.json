@@ -1,0 +1,203 @@
+{
+  "_comment": "E7 (Lead rounds 53/56). Every guard on scripts/lib/db-skip-baseline.json (160 files) run live against USMCA production as role ih35_ci_readonly. 135 green, 25 red. Of the 25: 18 are real debt, priced below; 7 are not data debt (a guard bug, a repo-state check, or not measurable with a read-only role) and are listed separately so they are never mistaken for money. Each debt row becomes that guard's shrink-only baseline when the guard is converted to fail-closed. red_rows / dollars are exactly what the guard printed; null means the guard does not report it.",
+  "measured_at": "2026-09-22T22:12:59Z",
+  "measured_on": "clean checkout of origin/main",
+  "role": "ih35_ci_readonly",
+  "totals": {
+    "allowlisted": 160,
+    "green": 135,
+    "red": 25,
+    "real_debt": 18,
+    "not_debt": 7
+  },
+  "debt": [
+    {
+      "guard": "verify-acc13-no-test-accounts-in-usmca-coa.mjs",
+      "owner_seat": "CC-1",
+      "red_rows": 2,
+      "dollars": null,
+      "what": "test/sample-named accounts active in the USMCA chart of accounts",
+      "guard_output": "verify-acc13-no-test-accounts-in-usmca-coa: FAIL — 2 active test/sample-named account(s) still in USMCA's live chart of accounts (je_control=4957)"
+    },
+    {
+      "guard": "verify-cash-flow-row-adjustments-seq-grant.mjs",
+      "owner_seat": "CC-1",
+      "red_rows": 1,
+      "dollars": null,
+      "what": "ih35_app lacks USAGE on accounting.cash_flow_row_adjustments_seq_seq",
+      "guard_output": "verify-cash-flow-row-adjustments-seq-grant LIVE FAILED: ih35_app has no USAGE grant on accounting.cash_flow_row_adjustments_seq_seq — the migration has not been applied to this database."
+    },
+    {
+      "guard": "verify-driver-licence-documents-linked.mjs",
+      "owner_seat": "CC-1",
+      "red_rows": 2,
+      "dollars": null,
+      "what": "active drivers on live loads missing CDL number / expiry / licence doc",
+      "guard_output": "verify-driver-licence-documents-linked: static OK — service-boundary gate present+wired, quarantine heuristic + profile honesty fixed"
+    },
+    {
+      "guard": "verify-driver-repair-guard.mjs",
+      "owner_seat": "CC-1",
+      "red_rows": null,
+      "dollars": null,
+      "what": "guard prints FAILED with no detail; rows not reported",
+      "guard_output": "verify:driver-repair-guard FAILED"
+    },
+    {
+      "guard": "verify-gl-posting-coverage.mjs",
+      "owner_seat": "CC-1",
+      "red_rows": 64,
+      "dollars": null,
+      "what": "TMS-native money events that reached no ledger (dollars not printed by the guard)",
+      "guard_output": "verify-gl-posting-coverage FAIL — 64 TMS-native money event(s) reached no ledger:"
+    },
+    {
+      "guard": "verify-load-exception-reasons-catalog.mjs",
+      "owner_seat": "CC-1",
+      "red_rows": 1,
+      "dollars": null,
+      "what": "ih35_app lacks SELECT on catalogs.load_exception_reasons",
+      "guard_output": "verify-load-exception-reasons-catalog: FAIL — ih35_app is missing SELECT grant on catalogs.load_exception_reasons"
+    },
+    {
+      "guard": "verify-load-settlement-linkage.mjs",
+      "owner_seat": "CC-1",
+      "red_rows": 22,
+      "dollars": null,
+      "what": "dispatched/active loads with no settlement link (guard baseline 3)",
+      "guard_output": "verify-load-settlement-linkage FAIL — 22 orphaned load(s) (dispatched/active with no settlement link) live, up from baseline 3. NEW occurrence(s):"
+    },
+    {
+      "guard": "verify-no-duplicate-settlement-lines.mjs",
+      "owner_seat": "CC-3",
+      "red_rows": 16,
+      "dollars": null,
+      "what": "active non-reimbursement duplicate settlement-line groups",
+      "guard_output": "verify-no-duplicate-settlement-lines FAIL — 16 active non-reimbursement duplicate group(s) still exist (index would be inapplicable/cleanup incomplete)"
+    },
+    {
+      "guard": "verify-no-test-seed-in-prod-listings.mjs",
+      "owner_seat": "CC-1",
+      "red_rows": 1,
+      "dollars": null,
+      "what": "test/seed customer visible in mdata.customers (TIO PERFUMES)",
+      "guard_output": "verify:no-test-seed-in-prod-listings FAIL: mdata.customers still has visible test/seed rows: TIO PERFUMES"
+    },
+    {
+      "guard": "verify-payrun-close-requires-load-activity.mjs",
+      "owner_seat": "CC-3",
+      "red_rows": 12,
+      "dollars": null,
+      "what": "closed/posted settlements with zero load-linked lines",
+      "guard_output": "verify-payrun-close-requires-load-activity FAIL — 12 already-closed/posted settlement(s) have zero load-linked lines and would newly be blocked by this fix: S-2026-5813, S-2026-0030, S-2026-0029, S-2026-0028, S-2026-0020, S-2026-5823, S-2026-0023, S-2026-5814, S-2026-0018, S-2026-0025, S-2026-0031, "
+    },
+    {
+      "guard": "verify-presettlement-autolink-all-paths.mjs",
+      "owner_seat": "CC-1",
+      "red_rows": 16,
+      "dollars": null,
+      "what": "driver-assigned loads with no pre-settlement link, not on the legacy list",
+      "guard_output": "verify-presettlement-autolink-all-paths FAILED (live): 16 NEW driver-assigned load(s) with no pre-settlement link, not on the known-legacy list:"
+    },
+    {
+      "guard": "verify-real-owned-fleet-is-trk.mjs",
+      "owner_seat": "CC-1",
+      "red_rows": 9,
+      "dollars": null,
+      "what": "real units not owned by TRK (FLT-02); check against Rule 49 lease scoping before fixing",
+      "guard_output": "[verify-real-owned-fleet-is-trk] FAILED — 1 issue(s):"
+    },
+    {
+      "guard": "verify-reimbursement-historical-reclass.mjs",
+      "owner_seat": "CC-3",
+      "red_rows": null,
+      "dollars": 1878.94,
+      "what": "reclass credits $2,039.94 vs reimbursement total $161.00",
+      "guard_output": "verify-reimbursement-historical-reclass FAILED: reclass credits (203994c) != reimbursement total (16100c)"
+    },
+    {
+      "guard": "verify-settlement-line-rate-consistency.mjs",
+      "owner_seat": "CC-3",
+      "red_rows": null,
+      "dollars": null,
+      "what": "guard reports settlement_line_control=319; offending rows not itemised",
+      "guard_output": "verify-settlement-line-rate-consistency: FAIL (settlement_line_control=319)"
+    },
+    {
+      "guard": "verify-settlement-lines-have-accounts.mjs",
+      "owner_seat": "CC-3",
+      "red_rows": null,
+      "dollars": null,
+      "what": "guard reports settlement_line_control=324; offending rows not itemised",
+      "guard_output": "verify-settlement-lines-have-accounts: FAIL (settlement_line_control=324)"
+    },
+    {
+      "guard": "verify-settlement-net-matches-signed-doc.mjs",
+      "owner_seat": "CC-3",
+      "red_rows": 1,
+      "dollars": 10,
+      "what": "settlement 5779 net $1,397.66 vs signed document $1,387.66",
+      "guard_output": "5779  S-2026-5779      net=   1397.66 signed=   1387.66 FAIL"
+    },
+    {
+      "guard": "verify-settlement-tieout-01.mjs",
+      "owner_seat": "CC-3",
+      "red_rows": 1,
+      "dollars": null,
+      "what": "settlement tie-out mismatch",
+      "guard_output": "verify-settlement-tieout-01: FAIL — 1 mismatch(es):"
+    },
+    {
+      "guard": "verify-usmca-settlement-linkage.mjs",
+      "owner_seat": "CC-1",
+      "red_rows": 35,
+      "dollars": null,
+      "what": "live driver bills pointing at a cancelled or non-open NULL-ref settlement",
+      "guard_output": "L1: FAIL — 35 live driver_bill(s) point at a cancelled settlement, or a NULL-ref settlement that isn't open (required: 0):"
+    }
+  ],
+  "not_debt": [
+    {
+      "guard": "verify-applied-migrations-immutable.mjs",
+      "owner_seat": "CC-1",
+      "why": "repo state: 22 applied migrations absent from db/migrations/.ledger.json; not production data",
+      "guard_output": "verify:applied-migrations-immutable FAILED - snapshot is stale - 22 applied migration(s) absent from db/migrations/.ledger.json"
+    },
+    {
+      "guard": "verify-baseline-columns-exist-in-db.mjs",
+      "owner_seat": "CC-1",
+      "why": "compares against a freshly-migrated database; not meaningful against production",
+      "guard_output": "verify-baseline-columns-exist-in-db FAILED — the drift baseline claims 10 column(s) that exist on NO table in a freshly-migrated database. A baseline that invents columns cannot detect a real removal and reports work that was never done. Regenerate it with a correct parser; do NOT allowlist."
+    },
+    {
+      "guard": "verify-no-seat-instruction-overrides-owner-void.mjs",
+      "owner_seat": "CC-1",
+      "why": "GUARD BUG: crashes with column \"display_id\" does not exist",
+      "guard_output": "Node.js v22.22.3"
+    },
+    {
+      "guard": "verify-recon-usmca-bank-suggestion-coverage.mjs",
+      "owner_seat": "CC-2",
+      "why": "needs the built backend (apps/backend dist); not measured",
+      "guard_output": "verify-recon-usmca-bank-suggestion-coverage — ERROR: Cannot find module '/private/tmp/ih35-main-clean/apps/backend/src/banking/banking-rules.engine.js' imported from /private/tmp/ih35-main-clean/scripts/verify-recon-usmca-bank-suggestion-coverage.mjs"
+    },
+    {
+      "guard": "verify-rls-operating-company-scope.mjs",
+      "owner_seat": "CC-1",
+      "why": "needs SET ROLE ih35_app; not measurable with the read-only role",
+      "guard_output": "verify:rls-operating-company-scope FAIL: permission denied to set role \"ih35_app\""
+    },
+    {
+      "guard": "verify-usmca-seed-completeness.mjs",
+      "owner_seat": "CC-1",
+      "why": "needs SET ROLE ih35_app; not measurable with the read-only role",
+      "guard_output": "verify:usmca-seed-completeness FAIL: permission denied to set role \"ih35_app\""
+    },
+    {
+      "guard": "verify-usmca-app-path-list-apis.mjs",
+      "owner_seat": "CC-1",
+      "why": "needs SET ROLE ih35_app; not measurable with the read-only role",
+      "guard_output": "}"
+    }
+  ]
+}
