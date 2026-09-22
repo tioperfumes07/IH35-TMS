@@ -997,6 +997,12 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     return result.data;
   });
 
+  // Lead ruling item 2 P0 (2026-09-22): mode is OPTIONAL and undeclared fails closed as
+  // live_feed, same fail-closed-by-default shape as createLoadWithFullSideEffects's mode. Only
+  // the planned settlement-refeed caller (scripts/ops/settlement-refeed.ts and any future
+  // backfill tool) is expected to ever pass historical_backfill here.
+  const sendInvoiceBodySchema = z.object({ mode: z.enum(["live_feed", "historical_backfill"]).optional() }).optional();
+
   app.post("/api/v1/accounting/invoices/:id/send", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
@@ -1004,11 +1010,14 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    const body = sendInvoiceBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const sent = await sendDraftInvoice(client, {
         invoiceId: params.data.id,
         operatingCompanyId: query.data.operating_company_id,
         userId: user.uuid,
+        mode: body.data?.mode,
       });
       if (!sent.ok) {
         return {
