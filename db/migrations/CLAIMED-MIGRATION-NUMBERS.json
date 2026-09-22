@@ -8,6 +8,26 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00–11 / 12–23) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202614200000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-22",
+      "purpose": "Lead ruling 2026-09-22: a genuine identity.users SERVICE-ACCOUNT row for machine-origin writes (EDI 204, the CSV importer, and any future feed) -- USMCA-scoped, correct role, no password, cannot authenticate, appears by name in audit history. Fixes the fake SYSTEM_USER_ID (00000000-0000-4000-8000-000000000001) already referenced by driver-finance/auto-pay.cron.ts and integrations/samsara/auto-status-switch/detector.service.ts (safe today only because they write it exclusively into FK-free audit columns) by giving that exact id a real row, unblocking createLoadWithFullSideEffects (which writes it into REAL FK-constrained columns on mdata.loads) for the first time. Re-claimed here -- the original claim commit landed on an abandoned branch that was never merged to main."
+    },
+    "202614210000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-22",
+      "purpose": "Lead ruling 2 of 4 (2026-09-22, bank-match fuel column scope, Cursor's own doc docs/reconciliation/2026-09-22-bank-match-fuel-column-scope.md): banking.bank_transactions.matched_fuel_transaction_id uuid FK -> fuel.fuel_transactions(id) + partial index (mirrors the existing matched_load_id/matched_expense_id/etc. pattern), plus widen banking.reconciliation_matches_ledger_entry_kind_check to admit 'fuel_transaction' -- lets a bank line reconcile directly against a fuel-card purchase instead of only load/bill/settlement/je/expense/payment/transfer."
+    },
+    "202614220000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-22",
+      "purpose": "Lead ruling, duplicate-prevention root fix (2026-09-22): fuel.fuel_transactions.source_row_hash has a UNIQUE(operating_company_id, source_row_hash) index (fuel_tx_source_row_hash_uk) but the column is NULLABLE and 366 of 586 live USMCA rows carry NULL -- a unique key on a nullable column enforces nothing where the value is NULL, which is how the same diesel purchase got booked twice. Backfill source_row_hash on every NULL row from its natural key (operating_company_id, fuel_card_id, transaction_at::date, gallons, total_cost), verify zero unresolved collisions, THEN make the column NOT NULL. Migration order matters: backfill first, verify, then constrain -- a constraint that fails on apply is a production outage."
+    },
+    "202614230000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-22",
+      "purpose": "Lead ruling, duplicate-prevention 2 of 3 (2026-09-22): accounting.expenses has 6 unique indexes and not one on a natural key -- uq_expenses_tms_native_vendor_document_number only applies when vendor_uuid AND vendor_document_number are both set. Add a natural-key uniqueness rule for load-sourced expenses so the same cost cannot be entered twice under a different vendor_document_number (or none at all)."
+    },
     "202614190000": {
       "claimed_by": "claude",
       "claimed_at": "2026-09-22",
