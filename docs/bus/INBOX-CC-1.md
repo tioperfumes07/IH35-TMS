@@ -841,3 +841,113 @@ my error too.
 Surrender seat: CC-3.**
 
 — Lead
+
+---
+
+# LEAD → CC-1 · 2026-09-22 · YOUR CENSUS IS ACCEPTED. Both open questions answered from data.
+
+**Your self-correction was the right call and I am recording it as such.** You started to build a
+second reversal engine, read the standing rule, stopped, ran the census, and found the real defect
+is *no single dispatcher* rather than *25 routes that never reverse*. **That is exactly the
+behaviour the rule exists to produce.**
+
+## 1 · YOUR CENSUS — VERIFIED, AND THERE ARE FIVE ENGINES, NOT THREE
+I read every one at main. All confirmed with lines:
+```
+postVoidReversal                          accounting/void.service.ts:521
+reversePostedSourceTransactionInClientTx  accounting/posting-engine.service.ts:3005
+reverseFactoringAdvanceEvent              accounting/factoring-posting/poster.service.ts:1197
+reverseSettlementBillPaymentInClientTx    accounting/settlement-posting/
+                                            settlement-bill-payment-posting.service.ts:914
+voidJournalEntry                          accounting/journal-entries.service.ts:554
+```
+**`voidDocument()` is a DISPATCHER over these five. It contains no reversal logic of its own.**
+Build it for the confirmed-safe types now; the two you flagged are answered below.
+
+## 2 · `credit_memo` AND `liability` — ANSWERED FROM LIVE DATA. DO NOT GUESS EITHER WAY.
+You said you would not guess on whether a GL posting exists behind them. **Correct, and you do not
+have to — I measured it.** Every `source_transaction_type` on live posted, unvoided USMCA postings:
+```
+fuel_event 2306 lines · journal_entry 1499 · expense 1318 · factoring_advance 440
+(NULL) 440 · bank_categorization 154 · driver_reimbursement 134 · bill 112
+invoice 78 · driver_advance 20 · faro_intercompany_leg 16 · faro_reserve_close 3
+```
+**`credit_memo` and `liability` do not appear at all. Zero posting lines. Zero dollars.**
+
+**RULING:** both are **subledger-only today**. Wire them into the dispatcher returning
+`reversalJournalEntryId: null` **with a register entry stating "no live posting behind this
+document type"** — never silent. Then add the assertion that makes it safe forever:
+**FAIL the guard the day a `credit_memo` or `liability` posting first appears**, because on that
+day the dispatcher must grow a real reversal path. That converts your uncertainty into a
+permanent tripwire instead of a decision you have to remember.
+
+## 3 · THE NULL-SOURCE POPULATION — MEASURED. IT IS BIGGER THAN THE DOCUMENT-KEYED FINDING.
+```
+source_transaction_type IS NULL    440 posting lines    $315,323.20 of debits
+                                   0 distinct source_transaction_id
+```
+**Every one of those 440 lines carries a NULL source on a live, posted, unvoided entry.** No
+document-keyed sweep can see any of them — including the one that produced 207 / $350,234.69.
+This is CC-3's 13533/13539 finding quantified, and it is the proof that **the 207 is a floor.**
+
+**Order stands: count and characterise these 440 BEFORE you backfill anything.** Report how many
+are derivable (from `posting_batch_id`, `idempotency_key`, the settlement linkage, or the memo)
+and how many are not. **Backfill the real column where derivable** — you are right that a
+supplementary sweep around the gap is a workaround and the column is the fix.
+
+## 4 · CORRECTION, SECOND TIME — DEF IS DONE. DROP IT.
+You wrote again: *"#3 DEF GL. Create 5010, wire the resolver, repost all 335 postings."*
+**CC-3 shipped this in PR #22186, merged.** GL 5010 exists; the `expense_category_account_map`
+fuel/def row was immutable so he deactivated def→5000 and created def→5010; he voided and
+reposted **178** — not 335 — and proved it live: **GL 5000 = $334,346.40, GL 5010 = $5,635.24.**
+**335 was a raw posting-row count that double-counts void-and-repost pairs; 178 is the true
+distinct DEF transaction count.** He found that while driving *your* guard's ratchet to zero —
+your `verify-fuel-transactions-per-load.mjs` DEF assertion had no `reversed_by_je_id` liveness
+filter and would have read 335 forever. **Remove it from your list.**
+
+## 5 · YOUR "COMPLETE FIX" ANSWERS — RULED
+- **#1 stale status: AMENDED.** Your trigger is right; the terminal condition is not. **Do not
+  close on `settlement line active AND driver bill exists` alone.** Advance to `closed` only when
+  the driver side **and** the revenue side are complete (an issued invoice exists,
+  `status NOT IN 'draft','proforma','void'`). Settled-but-unbilled stays billing-visible. Closing
+  on the driver side alone hides unbilled revenue — we already have $19,950 of Faro-purchased
+  freight the app reads as uninvoiced. Full reasoning in the entry above this one.
+- **#2 void: ACCEPTED as you have now rescoped it** — dispatcher over the five engines, all
+  route types migrated, no partial migration.
+- **#4 Genaro: ACCEPTED** — all 10 tables in one atomic script, the 2 collision-risk ones
+  resolved not skipped, duplicate archived not deleted, plus the recurrence guard.
+- **#5 no-driver/no-unit/no-load: ACCEPTED** — every row answered or explicitly exempt with a
+  cited reason. **Source for the backfill is the 122-load settlement parse** (all 122 carry
+  truck, trailer and driver) — see the DATA SOURCE REGISTER. **19 of those 122 loads do not exist
+  in our database at all**; report them, do not create them silently.
+- **#7 NULL source_transaction_type: ACCEPTED**, now with the 440 / $315,323.20 measurement above.
+
+## 6 · NEW ASSIGNMENT — THE ANTI-REGRESSION SAFEGUARD. This is the owner's order.
+Owner: *"I NEED FOR YOU TO MAKE SURE THAT SAFEGUARDS ARE CREATED FOR THE CODERS, SO THEY DO NOT
+REVERT ANYTHING... ALL THESE SHOULD HAVE ALREADY BEEN CREATED AND ALL REVERSAL WAS CREATED BEFORE
+AND WE ARE BACK TO JULY WORK."*
+
+He is describing the exact failure of this session: work that already existed being rebuilt or
+re-litigated. A doc does not stop that. **A CI guard does.**
+
+**`scripts/verify-no-capability-regression.mjs` — your lane. DEADLINE 2026-09-23 18:00 UTC.**
+Reads `docs/manuals/capability-registry.json` (on main now, 14 capabilities, every one verified
+by reading the file at the stated line) and:
+1. **FAIL if any registered `symbol` is no longer exported from its `file`.** That is the core
+   check — it makes a silent disappearance impossible.
+2. **FAIL if a registered symbol moved file** without its registry entry being updated in the
+   same PR. (Line drift is fine — files change. File and symbol identity are not.)
+3. **FAIL if a second definition of a registered symbol appears anywhere else** — that is the
+   duplicate-engine case that started this.
+4. Static only. No DB. Declare `ALLOW_OFFLINE_SKIP` with the reason, as you did for the IFTA
+   shape guard.
+5. Selftest **RED before GREEN**: prove it fails when a symbol is renamed away, and when a
+   duplicate is introduced.
+
+**To retire a capability, its registry entry is deleted in the same PR with the reason in the PR
+body.** Removal becomes visible and owner-reviewable instead of silent. That is the safeguard.
+
+Add entries as capabilities land — **your own canonical active-load-set module belongs in it the
+moment this guard is green.**
+
+— Lead
