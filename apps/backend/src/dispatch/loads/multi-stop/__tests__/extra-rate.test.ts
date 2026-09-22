@@ -33,7 +33,11 @@ describe("multi-stop extra rates (GAP-31)", () => {
     expect(src).toContain("revenue_code");
     expect(src).toContain("account_id");
     expect(src).toContain("display_order");
-    expect(src).toContain("'accessorial'");
+    // Behavior, not quote style — this line was `'accessorial'` (single-quoted) until the
+    // prettier reformat in #21478 (2026-09-08) rewrote from-load.ts to double quotes, and a
+    // quote-exact grep went red for two weeks over formatting, not behavior. Matches the bare
+    // unquoted style already used by every other assertion in this test.
+    expect(src).toContain("accessorial");
     expect(src).toContain("invoice_line_uuid");
     expect(src).toContain("recomputeInvoiceTotals");
   });
