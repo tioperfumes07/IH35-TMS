@@ -1786,3 +1786,41 @@ or an owner ruling folding it into an existing account before the extract script
 (currently, and intentionally, exits 1).
 
 — CC-3
+
+---
+## 2026-09-23 -- CC-3: test-data sweep, CC-3's lane (fuel.fuel_transactions, driver_settlements, settlement_lines)
+
+Owner order: test data was supposed to be deleted, was not. Swept the 3 named tables live
+(bypass_rls=lucia). **Report only, nothing deleted, per instruction.**
+
+**fuel.fuel_transactions: CLEAN.** No `is_sample_data` column exists on this table at all. Joined
+against `mdata.units`/`mdata.drivers` for TEST-%/DEMO/test-name patterns and grepped `notes` for
+test/sample/demo -- 0 matching rows, $0.00.
+
+**driver_finance.driver_settlements: CLEAN.** `is_sample_data=true`: 0 rows. Cross-checked by
+joining to driver name for test/demo/sample patterns independent of the flag -- also 0 rows.
+
+**driver_finance.settlement_lines: CLEAN.** `is_sample_data=true`: 0 rows.
+
+**What IS test data, found while sweeping -- dangling fixtures, zero financial activity, a
+different gap than the one asked about:** 14 `mdata.units` rows and 8 `mdata.drivers` rows with
+TEST-/DEMO-shaped identifiers exist in prod, none currently leased, and -- confirmed by the same
+join above -- **none of them have a single fuel_transactions row, driver_settlements row, or
+settlement_lines row attached.** They are inert: present, unposted, no dollars, no postings.
+
+```
+units:  TEST-CC3-FLEET-001, TEST-CODEX-956214, TEST-TRUCK-1..4, TEST-U01,
+        TEST-UNIT-20260806-01, U-DEMO-101..106  (14 total)
+drivers: CODEX / "ACTIVE FLEET TEST 20260821"
+         ZZTEST / "AUTOACCT PROBE"
+         TEST / "Autoprovisionwalk-void"
+         TEST / "DriverTESTMTDP79YF"
+         TEST-DRIVER-1..4 / "SEED"  (8 total)
+```
+
+This matches this repo's own standing rule (`verify-no-test-units-in-prod.mjs`,
+`docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md` -- hold TEST rows until one post-launch
+pass, don't void mid-session) -- these look like exactly that class of held fixture, not a
+financial-posting contamination. Named, not deleted, per this pass's explicit instruction.
+
+— CC-3
