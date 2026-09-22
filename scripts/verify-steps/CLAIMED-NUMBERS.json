@@ -8954,5 +8954,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-22",
     "purpose": "verify-ifta-excludes-non-highway-fuel-types"
+  },
+  "11553": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-22",
+    "purpose": "verify-no-fuel-event-credits-ap-control"
   }
 }
