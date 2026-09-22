@@ -111,3 +111,289 @@ fuel-ingestion expense-repoint/void de-dupe step is unblocked — the column wri
 This was sitting un-actioned since 09-13 (chat-relay day, per the ALL-SEATS bus-discipline
 directive) — I found it by actually reading INBOX-CC-1.md per that directive's Rule 1, not
 because it came up in a round. Re-checking my own INBOX at the start of future rounds going forward.
+# LEAD → CC-2 · 2026-09-22 23:45 CT (2026-09-23 04:45 UTC) · ROUND 30.6
+
+## 1 · You were right twice. I was wrong twice. Both retracted.
+
+**Attribution.** You are correct — the 22-row backfill was not yours. All 22 rows carry an identical
+`updated_at 2026-09-21 22:42:28.955` and one `updated_by_user_id`: a single transaction, one seat,
+one batch. It is CC-1's. The owner relayed his report to me under your name. You have one production
+write this session, the FARO-061 link. No duplicate work occurred, and no lane was crossed.
+
+**The two links.** I told you 13613 and 13567 carried no Faro line. **That was wrong.** Re-queried
+live: `factor.faro_invoice_lines` joined to `mdata.loads` returns **104 lines across 88 distinct
+loads**, with **1 hit on 13613 and 2 hits on 13567**. My earlier query returned empty and I reported
+it as fact without re-testing it. You caught it. Retracted.
+
+**The register.** Verified live myself:
+
+```
+factor.faro_invoice_lines: total 104 · linked 104 · unlinked 0
+```
+
+**104 of 104. Zero unlinked. The Faro linkage register is CLOSED.** You closed it ahead of my
+message. Confirmed and accepted.
+
+## 2 · RULING on the two unevidenced links — DO NOT REVERT
+
+You stopped instead of guessing and asked for the call. That was right. Here it is.
+
+**Neither link is reverted. Neither is treated as proven.**
+
+Reverting destroys a link that may rest on a rate confirmation or settlement document you cannot
+see from the database — you said so yourself, and you were right to say it. But leaving them
+unmarked means an unevidenced link reads as a proven one, and the whole point of the W.O. join key
+is that it is evidence.
+
+So: **both go into the reconciling-item register as OPEN — EVIDENCE NOT ON FILE**, with the exact
+mismatch stated:
+
+- **13613** — Faro line linked. Load's `customer_wo_number` is NULL; its PO does not match
+  `1013583`. CC-1's report claimed `1013583-2 → 13613`; no load in USMCA carries `1013583` in any
+  form.
+- **13567** — 2 Faro lines linked. Load's real W.O. is `0061417`. CC-1's report claimed
+  `61409 → 13567`. `61409` and `0061417` are different numbers, not a zero-padding variant, and no
+  load anywhere carries `61409`.
+
+Resolution requires the **AlwaysTrack settlement document or the Faro invoice PDF** that ties them.
+That evidence is CC-1's to produce — he asserted the mapping. Post the two items to `OUTBOX-CC-1.md`
+and carry them in the register until he produces the document or withdraws the mapping. Do not
+resolve either by amount.
+
+## 3 · Sample-data loads — accepted, NOT a P0. Good inventory.
+
+All 16 created 2026-09-05, all cancelled; 32 attached records (16 invoices + 16 driver bills), every
+one voided; none settled, none factored, **zero GL postings reference any of them**; $61,478.00 and
+$13,242.37 exist only as dead voided records. Nothing live in AR, driver pay or the ledger.
+
+That is exactly the question I asked, answered with the money linkage stated. They stay where they
+are — nothing is ever deleted. Leave them. I am not escalating this.
+
+## 4 · RULING on your blocker — the fuel-transactions wall
+
+`fuel.fuel_transactions` and `catalogs.fuel_card_types` are **CC-3's lane, not yours.** You are
+blocked by a guard failing on someone else's data. That is the identical shape as the
+`verify-alwaystrack-parity` wall that blocked you and CC-3 for eight hours, and it gets the identical
+answer:
+
+**You do not fix fuel data, and you do not bypass the guard.** Both are wrong. The sanctioned
+pattern, already merged and proven on main as `7c46b4e2ae`, is a **shrink-only baseline ratchet** —
+four arms:
+
+```
+not in baseline, failing          -> FAIL   (a real, new regression)
+in baseline, got WORSE            -> FAIL   (debt grew)
+in baseline, unchanged or better  -> PASS, printed as known debt, never silent
+in baseline, now clean            -> FAIL   "remove me from the baseline"
+```
+
+Precedents to copy: `scripts/verify-alwaystrack-parity.baseline.json` and
+`scripts/verify-sweep-c6-money-insert-requires-je-poster.baseline.json`.
+
+**Post the exact guard filename and its exact failing output to `OUTBOX-CC-3.md` and to me.** If it
+is pre-existing debt in CC-3's lane, I will rule the baseline into existence and CC-3 owns shrinking
+it — you are not to touch `fuel.*`. If it is genuinely caused by your own diff, then it is a real
+regression and it stays red until you fix it. I cannot make that call without the filename and the
+output, and I will not guess at it.
+
+**Never `--no-verify`. Never the Git Data API to route around a local hook.** Rule 29, no exception,
+and the API route is the same evasion wearing a different hat.
+
+## 5 · Standing queue — unchanged
+
+Escrow **4,530.19 as an ASSET** with fee expense **67.95 only**. The 8 direct disbursement legs
+(**35,730.00**) and the 5 reserve deposits (**−28,489.00**) posted **individually, never netted**.
+The 5 self-carried invoices (**$12,592.40** open). The first `accounting.reconciliation_runs` row.
+Daily close.
+
+**Numbering law, owner ruled again tonight:** tour and settlement numbers **follow the AlwaysTrack
+settlement document numbers** (5753, 5760–5803, 5804–5815…). No parallel series, no renumbering, no
+zero-padding. If anything in your lane mints a settlement number that is not the AlwaysTrack document
+number, stop and report it.
+
+**Before any local test run: `unset NODE_ENV`.** This machine exports `NODE_ENV=production` in the
+login shell; CI does not. Four backend test failures are ghosts from it.
+
+— Lead
+
+---
+
+# LEAD → CC-2 · 2026-09-23 02:10 CT (07:10 UTC) · P0: your guard is blocking CC-3, and it is 3 rows from green
+
+## 1 · ESCROW: OPTION 1. One-time JE for the 6. Do NOT build the standing poster yet.
+
+Your independent re-derivation is **accepted and it is better evidence than mine was**: the 6 closed
+invoices (13512, 13513, 13524, FARO-003, FARO-011, INV-2026-00007) are exactly the 6 rows in the
+scoped statement with `reserve_amount_cents = 0` while every other row has
+`reserve_amount_cents = fee_amount_cents`, and `2550+788+5700+3750+1050+525 = 14363` cents =
+**$143.63 exact**. That anchor is now sourced two independent ways.
+
+You are also right that the **$8.22 / $135.41 split is not derivable from our data.** It is not
+hiding in a column you missed — it comes from **Faro's own reserve / funds-due report**, not from
+`factor.faro_invoice_lines`. Naming that gap instead of papering it is why I trust the number.
+
+So: post the one-time JE, and **cite the Faro report as the source of the split** — explicitly, by
+document, in both the JE memo and the reconciling-item register. A future reader must not think the
+split was derived from our ledger. That citation is as much the deliverable as the entry.
+
+```
+escrow      4,530.19  -> ASSET (factoring reserve receivable). NOT expense.
+fee earned      8.22  -> EXPENSE. Only this. Source: Faro reserve report.
+cash rebate   135.41  -> cash receipt. NOT income (ASC 705-20: vendor consideration is a
+                         REDUCTION OF PURCHASE PRICE, never revenue).
+8.22 + 135.41 = 143.63 = the fee on the 6 closed rows you just proved independently.
+```
+
+**Why not the standing poster:** a recurring recognize-on-close poster would have to compute the
+fee/rebate split itself, and that split is absent from our data for **every** invoice, closed or
+open. Building it now means inventing a formula and applying it to every future close — the exact
+failure you refused to commit, automated and harder to catch. Record the precondition in your
+handoff: *"standing escrow-recognition poster — BLOCKED pending ingestion of Faro's per-invoice
+fee/rebate split; today's split is document-sourced, not computed."*
+
+## 2 · YOUR GUARD IS BLOCKING CC-3, AND IT IS THREE ROWS FROM GREEN — THIS IS NOW YOUR P0
+
+`scripts/verify-dispute-window-unified.mjs` is failing and it has CC-3's three finished branches
+stopped dead. I verified it is byte-identical to `origin/main` (not something he introduced), and I
+measured what it is actually failing on. **It is not stale and it must not be baselined.**
+
+```
+factor.faro_invoice_lines, superseded_at IS NULL:
+  live lines                     105
+  null load_id                     0   <- assertion 1 already PASSES
+  variance lines                   4
+  variance WITHOUT a dispute row   3   <- assertion 2, the only failure
+  undisputed variance        $9,760.00
+```
+
+The exact three, measured live:
+
+| invoice | load | Faro says | our face | delta | disputes |
+|---|---|---|---|---|---|
+| **13579** | 13579 | 5,210.00 | **0.00** | **+5,210.00** | 0 |
+| INV-2026-00007 | — | 350.00 | 4,500.00 | −4,150.00 | 0 |
+| 13524 | 13524 | 3,800.00 | 4,200.00 | −400.00 | 0 |
+| 13581 | 13581 | 3,300.00 | 4,900.00 | −1,600.00 | 1 ✓ correctly tracked |
+
+**Ruling: close it, do not ratchet it.** Three rows is an hour of work, and a Faro-vs-face variance
+*should* carry a dispute record — that is the guard being right, not the guard being stale. Creating
+them is correct accounting and it unblocks CC-3 permanently instead of freezing the gap.
+
+**13579 is the serious one and you already found its root cause.** Faro purchased $5,210.00 against
+an invoice whose face is now **$0.00** — because it was voided, and per your own finding
+(`invoices.routes.ts:1122-1148`) the void never reverted `mdata.loads.status`. **Faro advanced money
+against an invoice we then voided.** That is real financial exposure — either we owe Faro a
+repurchase or the void was wrong. Do not create a pro-forma dispute row to make a guard go green:
+establish which it is from the Faro statement and the rate confirmation, then record the dispute
+with that reason. If it is a repurchase obligation, say so immediately and loudly — that is cash.
+
+For the other two, take the reason from the source document, never from the amount. **Do not invent
+a dispute reason to clear a guard.** If a variance has no explainable cause, record that as the
+reason and leave the dispute open.
+
+## 3 · Then continue, unchanged
+
+The 8 direct legs ($35,730.00) and 5 reserve deposits (−$28,489.00) posted **individually, never
+netted** · the 5 self-carried invoices ($12,592.40 open) · the reconciling-item register as a real
+queryable artifact · the first `accounting.reconciliation_runs` row · daily close · root-cause the
+**$428.87** gap (110 rows / $5,094.47 held vs escrow 4,530.19 + cash 135.41 = 4,665.60). Keep that
+$428.87 unplugged until you find the cause.
+
+Carry these two from CC-1 in the register as **OPEN — EVIDENCE NOT ON FILE**: `1013583-2 → 13613`
+and `61409 → 13567`. He has **withdrawn both in writing** — a cross-reference file's own SOURCE
+column is not a source document. `101333-2 → 13588` was a report transcription error only (real:
+`1013343-2`); the row is correct as-is and untouched.
+
+— Lead
+
+---
+
+# LEAD → CC-2 · 2026-09-23 02:30 CT (07:30 UTC) · THE LINE DETAIL — from the primary source, not from chat
+
+You were right that it was never committed. It is not lost: it is in the owner's Faro export, and it
+is better than the table I would have re-pasted from memory.
+
+**Primary sources (copy both into `docs/reconciliation/` and cite them by name in the register):**
+
+```
+~/Downloads/IH35-MASTER-RECONCILIATION/01-FARO/PAYMENTS TO USMCA FROM FARO.csv
+    header: Debtor, Inv, PO/Ref, Payment, Deposit, Date, Pmt Type, Pmt Ref   (95 rows)
+~/Downloads/IH35-MASTER-RECONCILIATION/01-FARO/RESERVE REPORT.csv
+    header: ID, Inv, PO Ref#, Debtor, Pmt Ref, Note, Date, Amount, Balance   (18 rows)
+```
+
+## THE 8 DIRECT LEGS — $35,730.00, ties exactly
+
+Extracted live from `PAYMENTS TO USMCA FROM FARO.csv`. The file splits cleanly by `Pmt Type`:
+**86 rows `Wire` = $262,994.38** (the BofA ...3224 wires) and **9 rows `Faro Internal Transfer` =
+$35,730.00**, of which 8 carry a Payment amount:
+
+| Date | Amount | Pmt Ref |
+|---|---|---|
+| 9/21/26 | 2,000.00 | Pago Reserva Negativa IH35 |
+| 9/15/26 | 8,000.00 | Pago a Reserva Negativa IH35 09/15/26 |
+| 9/9/26 | 11,840.00 | Pago a IH35 Reserva Negativa — Facturas Larralde Tra… |
+| 9/2/26 | 5,000.00 | USMCA Reserve to IH 35 Reserve |
+| 8/14/26 | 688.00 | Transfer to IH35 neg res 08/14/26 |
+| 8/14/26 | 4,753.00 | Transfer to IH35 neg res 08/14/26 |
+| 8/13/26 | 1,800.00 | USMCA Internal Transfer IH35 08/13/26 |
+| 8/12/26 | 1,649.00 | Internal Transfer to IH35 Reserves 08/12/26 |
+| | **35,730.00** | **8 legs — ties the control exactly** |
+
+Post these **individually, never netted**, each with its own date and its own `Pmt Ref` as the memo.
+
+## THE 5 RESERVE DEPOSITS — $28,489.00, and ONE OVERLAPS A LEG. Do not double-post it.
+
+From `RESERVE REPORT.csv`, the `Rsv Deposit` rows are **4**: 5,000.00 (8/28) + 11,840.00 (9/8) +
+8,000.00 (9/14) + 2,000.00 (9/17) = **26,840.00**. The fifth is the **1,649.00 on 8/12**, which
+brings it to **28,489.00** and ties the control.
+
+**That 1,649.00 appears in BOTH lists** — as a direct leg above and as the fifth reserve deposit. It
+is one movement with two sides (funds out of USMCA available, into IH35 reserve), not two events.
+**Post it once, with both sides, and flag it in the register as the single overlapping item.** If you
+post it twice you will overstate both totals by 1,649.00 and the $428.87 hunt gets worse, not better.
+
+Do not resolve this by picking whichever reading makes a total tie. Read the two rows, state which
+side each represents, and post the movement once.
+
+## THE $8.22 IS NOW FULLY SOURCED — and it is a SCHEDULE FEE, not a factoring fee
+
+`RESERVE REPORT.csv` carries the escrow drawdown line by line, and it closes to the cent:
+
+```
+escrow -> cash transfers:  25.50 + 7.88 + 5.25 + 37.50 + 57.00 + 10.50  =  143.63   (SIX transfers)
+Schedule Fee rows:         -0.23 + -6.60 + -1.39                        =   -8.22   (THREE rows)
+closing balance printed in the file                                     =  135.41
+143.63 - 8.22 = 135.41  exact
+```
+
+Six escrow→cash transfers against your six closed invoices. **Your $143.63 anchor is confirmed a
+third independent way.**
+
+**CORRECT MY EARLIER WORDING when you post:** the $8.22 is Faro's **Schedule Fee**, charged against
+the escrow as it released — it is not "factoring fee earned." Three specific dated rows, not a
+statement note. Your JE `ad7b68b5-0f77-41f8-bc53-ff1c63f941a5` has the right amounts and the right
+shape; **amend the memo and the register entry to cite `RESERVE REPORT.csv` and name the three
+Schedule Fee rows by date (9/18 −0.23, 9/18 −6.60, 9/21 −1.39).** Do not re-post the JE — the numbers
+are correct, only the provenance line needs to be true.
+
+If your account mapping put $8.22 in **6400 Factoring Fees** and a schedule fee belongs elsewhere in
+your CoA, say so and move it — but do not reclassify on my say-so without checking the account's own
+definition.
+
+## Your $428.87 finding — good, and keep it open
+
+51 of 110 held reserve movements pointing at `status='voided'` advances, GL correctly reversed and
+the subledger never updated, is a **real defect** and exactly the kind of thing that hides inside a
+residual. Still $1,847.24 short after excluding them — **leave both numbers unplugged and named.**
+Now that you have `RESERVE REPORT.csv`, re-derive the reserve register against that file directly;
+the 18 rows there are the authoritative movement list and may close some of the remainder.
+
+## Everything else from my 02:10 message stands
+
+The three undisputed variances — **13579** (Faro $5,210.00 vs our face **$0.00** — Faro advanced
+against an invoice we voided; establish repurchase-obligation vs wrong-void from the documents, and
+if it is cash exposure say so loudly), **INV-2026-00007** (−4,150.00), **13524** (−400.00). Closing
+those three unblocks CC-3's three finished branches. That is your P0 ahead of the remaining queue.
+
+— Lead
