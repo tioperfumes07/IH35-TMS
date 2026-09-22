@@ -758,3 +758,67 @@ Nothing else about the freeze changes.
   5000 = $334,346.40 / 5010 = $5,635.24. I have told him.
 
 — Lead
+
+---
+
+# LEAD → CC-3 · 2026-09-22 · LOVE'S 604 GEOFENCES — THE COORDINATES EXIST. BUILD IT.
+**DEADLINE 2026-09-23 18:00 UTC · surrender seat CC-1**
+
+Owner: *"IN MY DOWNLOADS FOLDERS OR DESKTOP THERE IS A LOVES DOC WITH ALL ADDRESSES FOR LOVES
+LOCATIONS. CREATE IN OUR OWN DATABASE FOR GEOFENCING."*
+
+## MEASURED — this has never been built
+```
+geo.geofences        7 rows TOTAL across ALL companies
+                     0 labelled Love's
+USMCA breakdown      custom 4 (3 with lat/lng) · customer_site 2 (0 with lat/lng) · yard 1
+```
+The 2026-09-05 box `GEOFENCE-ENGINE-REBUILD-LOVES-604-AND-ARRIVAL-ALERT-CHAIN` is **17 days old
+and the 604 were never loaded.**
+
+## THE SEED IS EXTRACTED AND VERIFIED
+`~/Downloads/09-22-2026-LOVES-604-GEOFENCE-SEED.csv`
+Source: `~/Desktop/LOVES_PRICES_AND_LOCATIONS_WITH_COORDINATES.xlsx` (605 rows × 26 cols).
+**604 unique stores · 0 rejected · 42 states · every row a valid lat/lng.**
+```
+store_no | city | state | latitude | longitude | google_maps_link
+billing_card_station_code | opis_rack_id | def_retail_price | best_discounted_price
+state_taxes | effective_date
+```
+**There is no street-address column — coordinates are the join key.** Do not go looking for one.
+
+## BUILD — both halves, in one PR
+1. **`mdata.locations`** — one row per store. Columns exist:
+   `location_name` ("Love's #206 — Loxley, AL"), `location_code` (`LOVES-206`, unique),
+   `location_type` (`fuel_stop` or `truck_stop` — **both already in the enum, confirm which**),
+   `city`, `state`, `latitude`, `longitude`, `geocoded_at`, `geocoding_source`
+   ('loves_network_file_2026-06-25'), `operating_company_id`, `is_sample_data = FALSE`.
+   **Idempotent on `location_code`.** Re-running must not duplicate.
+2. **`geo.geofences`** — one per location, linked, not floating:
+   `location_kind` + **`location_ref_id` → the `mdata.locations.id`**, `label`,
+   `center_lat`/`center_lng`, `radius_m`, `enter_radius_m`/`exit_radius_m`,
+   `external_source='loves_network'`, `external_ref` = the store number, `is_active=true`.
+   **Propose the radius with your reasoning** — a truck stop is not a customer dock. State the
+   number, do not inherit a default silently.
+3. **Guard:** `scripts/verify-loves-geofences-seeded.mjs` — FAIL if any `mdata.locations` row with
+   `location_code LIKE 'LOVES-%'` has no linked active geofence, or if any geofence carries
+   `external_source='loves_network'` with a NULL `location_ref_id`. Selftest **RED before GREEN**
+   (today: 0 rows, so red is free — make the red case a real assertion, not a vacuous one).
+
+**No sample rows. `is_sample_data=FALSE` — these are real network locations.** Nothing deleted;
+a store that leaves the network is deactivated, never dropped.
+
+## WHAT THIS UNLOCKS — say so in your DONE
+Arrival detection at fuel stops · fuel-stop→location matching · **IFTA jurisdiction by
+coordinate** (a fourth resolution path for the 118, stronger than address matching) · DEF pricing
+per store · per-state fuel tax from `state_taxes`.
+
+## AND — the register that stops this recurring
+`docs/manuals/01-DATA-SOURCE-REGISTER-READ-BEFORE-SAYING-MISSING.md` is on main. **Every source
+the owner has given us is in it with its path, its real columns and what it resolves.** Before
+you declare anything missing, unattributable or unresolvable again — yours or mine — you read it
+and try every source listed for that domain. **A residual declared without that is not a
+residual, it is an unfinished search.** That rule binds me first: I declared the Love's file
+absent while it sat on his Desktop.
+
+— Lead
