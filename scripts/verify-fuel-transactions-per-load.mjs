@@ -252,6 +252,15 @@ async function live() {
     let sharedCents = 0;
     let sharedDetailRows = [];
     if (defIds.length > 0) {
+      // LIVENESS FIX (CC-3, 2026-09-23, GL 5010 fix): this query originally had no status/
+      // reversed_by_je_id filter at all. voidJournalEntry's Option-1 reversing-entry model
+      // (journal-entries.service.ts) NEVER flips a voided JE's status or deletes its lines -- it
+      // posts a separate, equal-and-opposite reversing JE instead (void-not-delete). So an
+      // already-voided-and-correctly-reposted DEF debit line still physically exists at its
+      // original (wrong) account and was being counted here as live contamination forever, even
+      // after the real fix landed -- the exact same landmine already documented and fixed in
+      // verify-no-fuel-event-credits-ap-control.mjs. je.reversed_by_je_id IS NULL is the correct
+      // liveness predicate (status alone cannot distinguish a live posting from a voided one).
       const glRes = await client.query(
         `SELECT ft.fuel_type, a.id::text AS account_id, a.account_number, a.account_name,
                 count(*) AS n, sum(jep.amount_cents) AS cents
@@ -260,8 +269,11 @@ async function live() {
              ON jep.source_transaction_type = 'fuel_event'
             AND jep.source_transaction_id = ft.id::text
             AND jep.debit_or_credit = 'debit'
+           JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
            JOIN catalogs.accounts a ON a.id = jep.account_id
           WHERE ft.id = ANY($1::uuid[])
+            AND je.status = 'posted'
+            AND je.reversed_by_je_id IS NULL
           GROUP BY ft.fuel_type, a.id, a.account_number, a.account_name`,
         [[...defIds, ...dieselIds]]
       );
