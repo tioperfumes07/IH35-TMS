@@ -251,6 +251,44 @@ export async function syncLoadsForFactoringAdvance(input: {
 }
 
 /**
+ * Sync every load covered by a settlement, called AFTER a settlement finalizes (Lead ruling
+ * 2026-09-22, docs/bus/INBOX-CC-1.md, ROUND 33.2 §1): "Driver pay and customer revenue are TWO
+ * INDEPENDENT CHAINS off the same load... advance to 'closed' ONLY when BOTH are true: (a) driver
+ * side complete -> settlement finalized... (b) revenue side complete -> issued invoice exists."
+ *
+ * This function IS condition (a) — the caller (settlements.routes.ts's finalize handler) only
+ * calls it once a settlement has just locked, so (a) already holds for every load it covers.
+ * syncLoadStatusToBilling supplies (b) internally (it returns `changed:false, reason:'no_invoice'`
+ * or `'invoice_not_billable_yet'` when there is none, or not yet sent/paid) — no new gating logic
+ * here, this function only resolves WHICH loads to check and delegates the actual decision.
+ * Best-effort per load (matches syncLoadsForFactoringAdvance's own pattern): one load's sync
+ * failure never blocks another's, and never propagates back to the caller — the settlement stays
+ * finalized regardless.
+ */
+export async function syncSettlementLoadsToBilling(input: {
+  operatingCompanyId: string;
+  loadIds: readonly string[];
+  actorUserId: string;
+}): Promise<SyncResult[]> {
+  const results: SyncResult[] = [];
+  for (const loadId of input.loadIds) {
+    try {
+      results.push(
+        await syncLoadStatusToBilling({
+          operatingCompanyId: input.operatingCompanyId,
+          loadId,
+          actorUserId: input.actorUserId,
+        })
+      );
+    } catch (err) {
+      console.warn({ err, load_id: loadId }, "load_billing_lifecycle_sync_for_settlement_failed");
+      results.push({ changed: false, reason: "error" });
+    }
+  }
+  return results;
+}
+
+/**
  * Resolve a load id from an invoice id and sync it. Used by the customer-payment and factoring hooks,
  * which know the invoice but not the load.
  */
