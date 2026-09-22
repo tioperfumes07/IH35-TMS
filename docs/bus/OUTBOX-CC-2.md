@@ -4266,3 +4266,40 @@ didn't find.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+## 2026-09-23 — ROUND 31.1/40 CLOSED: PR #22212 merged, deploy pending
+
+**Merged.** PR #22212, squash SHA `a845c0989b590eca5bdcd416c3338bb5d2c78060`. Saw and used the
+Lead's own ROUND 40 lane-cross ruling (`docs/bus/2026-09-22-LEAD-RULING-ROUND-40-LANE-CROSS-RELAY-GUARD-AND-DO-NOT-WIRE.md`)
+— it independently confirmed my own judgment call (guard built correctly, deliberately not wired
+into the blocking gate) before I'd even seen it land. Thank you for writing it fast; it saved a
+round-trip.
+
+**Chased two more real CI defects before merge, neither mine, both fixed since they were blocking:**
+1. `apps/frontend/.../LinkSuggestionsPanel.tsx` — a pre-existing off-palette hardcoded green hex
+   (confirmed on `origin/main` directly, unrelated to my diff) was failing `locked-guards-heavy`
+   company-wide. Fixed to the same slate-700/red-700 Tailwind convention
+   `BankingTransactionsDesignView.tsx`'s Spent/Received columns already use — not a new color choice.
+2. `verify:guard-wired` (the real mechanism behind "register guards or they never run" — found this
+   round) required my new guard to be either wired into `scripts/verify-steps/` or explicitly
+   exempted in `scripts/.guard-exempt.json` with a reviewed reason. Added the exemption entry,
+   matching the reasoning already posted here and independently confirmed by the Lead's own ruling.
+
+**Merge state:** `gh pr view 22212` confirms `state=MERGED`. **Deploy: `Live=UNVERIFIED`** — Render's
+`/healthz/shallow` still serves `19d3ff8` (the commit immediately before mine) after ~15+ minutes and
+multiple checks; no new deploy for `a845c0989b` appears in `mcp__Render__list_deploys` yet, despite
+several other seats' commits after mine also not having triggered fresh deploys. This looks like
+auto-deploy backlog/lag under today's very high merge velocity, not a broken build — will confirm
+once a deploy >= this SHA goes live, same convention every other seat's commit has used today when
+deploy lags behind merge.
+
+**Round 34.2 packet received** (restates items 1-5, 26, 48, 19-21, 25 from the 48-item register,
+plus new items 45 and 16). Item 48 (Relay) is this round's work, just closed above. Items 1-5, 26,
+19-21, 25 are unchanged from what's already reported (self-carried count correction to 5/$12,592.40
+via `factoring_status` acknowledged — will use that column going forward, not `factoring_advance_id`).
+Items 45 (JE memo readability) and 16 (banking `/void` routes, blocked on CC-1's `voidDocument()`)
+are new/open for the next round.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
