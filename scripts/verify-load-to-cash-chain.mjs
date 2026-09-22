@@ -20,14 +20,15 @@
 //     regression." This check is what keeps it there.
 // All three scoped identically: non-cancelled, non-soft-deleted, older than 24h.
 //
-// Skips gracefully (prints, exits 0) when DATABASE_URL is not set — same convention every other
-// live-Neon guard in this repo uses, so a coder without a live connection configured is never
-// blocked locally; CI / a session with the real connection string sees the real check.
-import pg from "pg";
+// Fails closed with no DATABASE_URL (requireLiveDbOrExit, ROUND 29.9-B). money-pr-local-gate.mjs runs
+// it only when this guard's own domain paths change or a live DB is present (Lead ruling R56-B).
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 /** @matrix-built {"modules":["dispatch"],"cols":["connectivity"],"leafRe":"^(loads|driver_bills|presettlement|expenses)$","task":"LOAD-TO-CASH-CHAIN-C1-C3","vertical":"class-sweep"} */
 
 const LABEL = "verify-load-to-cash-chain";
+export const REQUIRES_LIVE_DB =
+  "live-data money guard; fails closed via requireLiveDbOrExit with no DATABASE_URL (ROUND 29.9-B) and runs in money-pr-local-gate.mjs only when its own domain paths change or a live DB is present (Lead ruling R56-B, 2026-09-22)";
 
 // USMCA only (00-IH35-LAW.mdc). The first draft of this guard counted EVERY company under
 // bypass_rls, so frozen Transportation loads (L-2026… under 91e0bf0a) landed in LINK 1/2 as
@@ -101,13 +102,7 @@ export function expenseNumberMismatch(loadNumber, expenseNumber) {
 }
 
 async function live() {
-  const url = process.env.DATABASE_URL;
-  if (!url) {
-    console.log(`${LABEL}: LIVE skipped (no DATABASE_URL) — not a pass, not a fail; this check needs a real Neon connection`);
-    return;
-  }
-  const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
-  await client.connect();
+  const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
     // is_local MUST be false — pg autocommits each statement, so a transaction-local (true) GUC is
     // gone by the next query and every read then RLS-filters to 0 ("0 eligible loads" false FAIL).
@@ -202,7 +197,8 @@ async function live() {
       `${LABEL}: LIVE PASS — ${loads.length} eligible USMCA load(s); every driver-having load has a driver_bill and a presettlement_link_id; 0 expense_number mismatches.`
     );
   } finally {
-    await client.end();
+    client.release();
+    await pool.end();
   }
 }
 

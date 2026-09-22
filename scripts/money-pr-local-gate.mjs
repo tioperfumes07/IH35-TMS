@@ -61,9 +61,8 @@ const STEPS = [
   // the 3-color dataviz palette, no registered money-module page's header link duplicates a tab.
   ["verify-money-module-design", "scripts/verify-money-module-design.mjs"],
   // LOAD-TO-CASH CHAIN (owner law, 2026-09-12) — "it should never automatch, it suggests and we
-  // accept it or change the transactions." All seats bound by these two.
+  // accept it or change the transactions." verify-load-to-cash-chain runs in LIVE_DOMAIN_GUARDS below.
   ["verify-no-automatch", "scripts/verify-no-automatch.mjs"],
-  ["verify-load-to-cash-chain", "scripts/verify-load-to-cash-chain.mjs"],
   // ALL-SEATS LAW (owner, 2026-09-13) — every load-number column carries a settlement/tour column
   // beside it; only source_document_ref (never display_id) is ever the human-visible number.
   ["verify-settlement-ref-beside-load", "scripts/verify-settlement-ref-beside-load.mjs"],
@@ -78,23 +77,12 @@ const STEPS = [
   ["verify-customer-tab-bar-position-and-data-dot", "scripts/verify-customer-tab-bar-position-and-data-dot.mjs"],
   // B4/ROUND 21.2 (owner, 2026-09-12) — relationship-health-score honesty for the 1-4-of-5-signals case.
   ["verify-customer-relationship-score-partial-honesty", "scripts/verify-customer-relationship-score-partial-honesty.mjs"],
-  // ROUND 23.3 DELTA (owner, 2026-09-13) — every live Faro invoice line must carry a real load_id.
-  ["verify-faro-invoice-lines-load-linkage", "scripts/verify-faro-invoice-lines-load-linkage.mjs"],
-  // ROUND 23.3 (owner/Lead, 2026-09-13) — B1 fuel absorption: 171 fuel_purchases rows ->
-  // 171 fuel.fuel_transactions rows, $110,072.33, 0 DEF rows, disclosed corrections intact.
-  ["verify-fuel-transactions-per-load", "scripts/verify-fuel-transactions-per-load.mjs"],
   // ROUND 23.3 (owner/Lead, 2026-09-13) — B1 second half: every live Diesel-memo expense either
   // matches a fuel.fuel_transactions row or is voided ABSORPTION-D5.
   // P0-A (Lead ruling, 2026-09-22) — IFTA taxable-gallon base must never include DEF (not a motor
   // fuel) or reefer_diesel (undetermined tank source, no receipt evidence). Static + live
   // deliberate-failure proof.
   ["verify-ifta-excludes-non-highway-fuel-types", "scripts/verify-ifta-excludes-non-highway-fuel-types.mjs"],
-  // ROUND 23.3 DELTA (owner, 2026-09-13) — Part C unified dispute window: dispute exists for
-  // every Faro-vs-face variance (both directions) + zero null load_id in faro_invoice_lines.
-  ["verify-dispute-window-unified", "scripts/verify-dispute-window-unified.mjs"],
-  // ROUND 23.3 B6 (owner, 2026-09-13) — every live driver bill whose load carries a settlement
-  // is linked via settled_in_settlement_id; unlinked-because-no-settlement-yet is a B5 gap, not B6.
-  ["verify-driver-bill-settlement-link", "scripts/verify-driver-bill-settlement-link.mjs"],
   // FEED-PARITY-01 (docs/manuals/04-RULING-FEED-PARITY-..., owner, 2026-09-22, LANE_CROSS —
   // docs/bus/LEAD-RULING-2026-09-22-CC3-FEED-PARITY-SHARED-CREATE-PATH-CROSS-LANE.md): ONE shared
   // load-create path (createLoadWithFullSideEffects); shrink-only ratchet on direct
@@ -189,7 +177,6 @@ const STEPS = [
   ["verify-acct-direct-creators-company-keyed-remount", "scripts/verify-acct-direct-creators-company-keyed-remount.mjs"],
   ["verify-settlement-pending-deductions-error-suppresses-cache", "scripts/verify-settlement-pending-deductions-error-suppresses-cache.mjs"],
   ["verify-cash-advance-owner-notification-durable", "scripts/verify-cash-advance-owner-notification-durable.mjs"],
-  ["verify-fuel-loves-prices-daily-table-and-report-guard", "scripts/verify-fuel-loves-prices-daily-table-and-report-guard.mjs"],
   ["verify-cancellation-approver-actor-and-billable-charge", "scripts/verify-cancellation-approver-actor-and-billable-charge.mjs"],
   ["verify-expenses-created-by-actor-and-total-amount-cents-column", "scripts/verify-expenses-created-by-actor-and-total-amount-cents-column.mjs"],
   ["verify-settlements-load-ids-reverse-link", "scripts/verify-settlements-load-ids-reverse-link.mjs"],
@@ -282,6 +269,91 @@ const GUARD_303 = [
   ["verify-reconciliation-constants", "scripts/verify-reconciliation-constants.mjs", {}],
 ];
 
+// E7 (Lead ruling R56-B, 2026-09-22) — live-data guards that used to sit in STEPS above, where each
+// skip-passed (exit 0) with no DATABASE_URL. Each now fails closed (requireLiveDbOrExit) and runs
+// whenever a live DB is present or this diff touches its own file, a data-writing path, or a code
+// path that writes the tables it reads. A diff that cannot be read counts as touching everything.
+const DATA_WRITE_PATHS = ["db/migrations/", "scripts/ops/"];
+const ONE_SHOT_WRITER_RE = /^scripts\/run-[^/]+-once\.m?[jt]s$/;
+const LIVE_DOMAIN_GUARDS = [
+  ["verify-faro-invoice-lines-load-linkage", ["apps/backend/src/data-infra/", "apps/backend/src/factoring/"]],
+  [
+    "verify-dispute-window-unified",
+    ["apps/backend/src/data-infra/", "apps/backend/src/factoring/", "apps/backend/src/accounting/"],
+  ],
+  [
+    "verify-driver-bill-settlement-link",
+    ["apps/backend/src/driver-finance/", "apps/backend/src/dispatch/", "apps/backend/src/accounting/"],
+  ],
+  [
+    "verify-load-to-cash-chain",
+    [
+      "apps/backend/src/dispatch/",
+      "apps/backend/src/mdata/",
+      "apps/backend/src/driver-finance/",
+      "apps/backend/src/accounting/",
+      "apps/backend/src/work-orders/",
+      "apps/backend/src/maintenance/",
+      "apps/backend/src/cash-advances/",
+      "apps/backend/src/governance/",
+      "apps/backend/src/qbo-sync/",
+    ],
+  ],
+  [
+    "verify-fuel-transactions-per-load",
+    [
+      "apps/backend/src/fuel/",
+      "apps/backend/src/integrations/",
+      "apps/backend/src/accounting/",
+      "data/alwaystrack/",
+      "scripts/verify-fuel-transactions-per-load.baseline.json",
+    ],
+  ],
+  [
+    "verify-fuel-loves-prices-daily-table-and-report-guard",
+    ["apps/backend/src/fuel/", "apps/backend/src/sync/", "apps/backend/src/reports/fuel-price-variance.routes.ts"],
+  ],
+  // E1 (#22293): every directory that calls createJournalEntry(OnClient), plus the guard's baseline.
+  [
+    "verify-every-posting-has-a-source",
+    [
+      "apps/backend/src/accounting/",
+      "apps/backend/src/banking/",
+      "apps/backend/src/driver-finance/",
+      "apps/backend/src/fuel/",
+      "apps/backend/src/insurance/",
+      "apps/backend/src/payroll/",
+      "apps/backend/src/safety/",
+      "scripts/verify-every-posting-has-a-source.baseline.json",
+    ],
+  ],
+  // E17 (#22309): the reconciler's invariants read loads, stops, assignments, invoices, Faro lines and
+  // settlements; the empty-settlement guard reads settlements, their lines and the loads linked to them.
+  [
+    "verify-reconciler-exceptions",
+    [
+      "apps/backend/src/reconciler/",
+      "scripts/reconciler/",
+      "apps/backend/src/dispatch/",
+      "apps/backend/src/mdata/",
+      "apps/backend/src/accounting/",
+      "apps/backend/src/factoring/",
+      "apps/backend/src/data-infra/",
+      "apps/backend/src/driver-finance/",
+      "scripts/verify-reconciler-exceptions.baseline.json",
+    ],
+  ],
+  [
+    "verify-no-empty-zero-settlement",
+    [
+      "apps/backend/src/driver-finance/",
+      "apps/backend/src/dispatch/",
+      "apps/backend/src/accounting/",
+      "scripts/verify-no-empty-zero-settlement.baseline.json",
+    ],
+  ],
+];
+
 function touchesMoneyPath() {
   const res = spawnSync("git", ["diff", "--name-only", "origin/main...HEAD"], { cwd: ROOT, encoding: "utf8" });
   if ((res.status ?? 1) !== 0) return false;
@@ -323,6 +395,12 @@ if (process.argv.includes("--selftest")) {
   for (const [, rel] of GUARD_303) {
     if (!fs.existsSync(path.join(ROOT, rel))) {
       console.error(`${LABEL} --selftest FAIL: missing ${rel}`);
+      process.exit(1);
+    }
+  }
+  for (const [name] of LIVE_DOMAIN_GUARDS) {
+    if (!fs.existsSync(path.join(ROOT, "scripts", `${name}.mjs`))) {
+      console.error(`${LABEL} --selftest FAIL: missing scripts/${name}.mjs`);
       process.exit(1);
     }
   }
@@ -435,6 +513,30 @@ if (process.env.DATABASE_URL || touchesMoneyPath()) {
   const msg = "verify-fuel-relay-txn-vendor-unmatched.mjs — no DATABASE_URL and no money path in this diff";
   console.log(`[${LABEL}] SKIP ${msg}`);
   skippedLiveChecks.push(msg);
+}
+
+const changedForLiveDomains = (() => {
+  const res = spawnSync("git", ["diff", "--name-only", "origin/main...HEAD"], { cwd: ROOT, encoding: "utf8" });
+  if ((res.status ?? 1) !== 0) return null;
+  return (res.stdout || "").split("\n").filter(Boolean);
+})();
+for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
+  const rel = `scripts/${name}.mjs`;
+  const prefixes = [...DATA_WRITE_PATHS, ...domainPaths];
+  const touched =
+    changedForLiveDomains === null ||
+    changedForLiveDomains.some((f) => f === rel || ONE_SHOT_WRITER_RE.test(f) || prefixes.some((p) => f.startsWith(p)));
+  if (process.env.DATABASE_URL || touched) {
+    const code = runNode(rel);
+    if (code !== 0) {
+      failStep(name);
+      process.exit(code);
+    }
+  } else {
+    const msg = `${rel} — no DATABASE_URL and none of its domain paths in this diff`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+  }
 }
 
 function changedFileCountVsMain() {

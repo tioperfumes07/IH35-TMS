@@ -18,21 +18,17 @@
 // must re-run this same "is this row already in factor.faro_invoice_lines" check before trusting
 // either source, or the exact "same money counted twice" risk the owner named will materialize.
 //
-// Skips gracefully (prints, exits 0) when DATABASE_URL is not set — same convention every other
-// live-Neon guard in this repo uses.
-import pg from "pg";
+// Fails closed with no DATABASE_URL (requireLiveDbOrExit, ROUND 29.9-B). money-pr-local-gate.mjs runs
+// it only when this guard's own domain paths change or a live DB is present (Lead ruling R56-B).
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const LABEL = "verify-faro-invoice-lines-load-linkage";
+export const REQUIRES_LIVE_DB =
+  "live-data money guard; fails closed via requireLiveDbOrExit with no DATABASE_URL (ROUND 29.9-B) and runs in money-pr-local-gate.mjs only when its own domain paths change or a live DB is present (Lead ruling R56-B, 2026-09-22)";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 async function live() {
-  const url = process.env.DATABASE_URL;
-  if (!url) {
-    console.log(`${LABEL}: LIVE skipped (no DATABASE_URL) — not a pass, not a fail; this check needs a real Neon connection`);
-    return;
-  }
-  const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
-  await client.connect();
+  const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
     // BANK-F30150 (found this session, verify-alwaystrack-parity.mjs): a bare session-level
     // set_config is unreliable through Neon's POOLED endpoint — wrap every read in one explicit
@@ -66,7 +62,8 @@ async function live() {
     await client.query("COMMIT");
     console.log(`${LABEL}: LIVE PASS — ${total}/${total} live USMCA faro_invoice_lines rows carry a real load_id.`);
   } finally {
-    await client.end();
+    client.release();
+    await pool.end();
   }
 }
 

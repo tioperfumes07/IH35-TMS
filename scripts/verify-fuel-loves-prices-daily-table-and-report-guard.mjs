@@ -27,8 +27,11 @@
  *     loves_prices_daily_unavailable contract the writers already use, instead of an opaque 500,
  *     for the window before this migration is deployed.
  */
-import { createRequire } from "node:module";
 import { readFileSync, readdirSync } from "node:fs";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
+
+export const REQUIRES_LIVE_DB =
+  "static migration/report-route checks plus a live ACL check that fails closed via requireLiveDbOrExit with no DATABASE_URL (ROUND 29.9-B); runs in money-pr-local-gate.mjs only when its own domain paths change or a live DB is present (Lead ruling R56-B, 2026-09-22)";
 
 const failures = [];
 
@@ -115,34 +118,12 @@ if (failures.length > 0) {
 }
 
 // LIVE ACL check — text assertions above cannot see a schema-default-granted privilege the migration
-// text never mentions. Mirrors scripts/verify-safety-evidence-no-delete-grant.mjs exactly: skip
-// cleanly with no DB (verify:static's dead-port sentinel), assert for real whenever one is reachable
-// (verify:local-ci, and against prod when pointed at it).
+// text never mentions. Fails closed with no DATABASE_URL or an unreachable database (requireLiveDbOrExit,
+// ROUND 29.9-B); money-pr-local-gate.mjs runs this guard only when its own paths change or a live DB is
+// present (Lead ruling R56-B).
 async function checkLiveAcl() {
   const LABEL = "verify-fuel-loves-prices-daily-table-and-report-guard";
-  const require = createRequire(import.meta.url);
-  const { buildPgClientConfig } = require("./lib/pg-connection-options.cjs");
-  const pg = (await import("pg")).default;
-  try {
-    (await import("dotenv")).default.config();
-  } catch {
-    // dotenv optional — env may already be present.
-  }
-
-  const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
-  if (!connectionString) {
-    console.log(`${LABEL} (live-ACL) CAPABILITY SKIP — no DATABASE_URL/DATABASE_DIRECT_URL. CI equivalent: verify:local-ci.`);
-    return;
-  }
-
-  const { Client } = pg;
-  const client = new Client(buildPgClientConfig(connectionString, { connectionTimeoutMillis: 15000 }));
-  try {
-    await client.connect();
-  } catch (error) {
-    console.log(`${LABEL} (live-ACL) CAPABILITY SKIP — database unreachable (${error.code ?? error.message}). CI equivalent: verify:local-ci.`);
-    return;
-  }
+  const { client, pool } = await requireLiveDbOrExit({ label: `${LABEL} (live-ACL)` });
 
   try {
     const { rows } = await client.query(
@@ -162,7 +143,8 @@ async function checkLiveAcl() {
     }
     console.log(`${LABEL} (live-ACL) OK — fuel.loves_prices_daily verified against the LIVE ACL: no DELETE for ih35_app (grants: ${grants}).`);
   } finally {
-    await client.end().catch(() => {});
+    client.release();
+    await pool.end();
   }
 }
 
