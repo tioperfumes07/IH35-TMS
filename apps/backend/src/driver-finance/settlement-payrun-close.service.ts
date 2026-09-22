@@ -37,6 +37,7 @@ import { claimSettlementPayRunInClientTx } from "./settlement-payrun-claim.servi
 import { withCurrentUser } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { signedEscrowLedgerAmountCents } from "./escrow-ledger-sign.js";
 import { createJournalEntry, enqueueJournalEntrySideEffects, type CreateJournalEntryInput } from "../accounting/journal-entries.service.js";
 import { recordEscrowPostingOnly } from "../accounting/escrow/service.js";
 import {
@@ -1249,14 +1250,16 @@ async function recordEscrowContribution(
   );
   const balanceId = bal.rows[0]?.id;
   if (!balanceId) return;
-  // Append the ledger 'hold' entry (detailed history). running_balance_cents = the post-contribution balance.
+  // Append the ledger 'hold' entry (detailed history). running_balance_cents = the post-contribution
+  // balance (escrow_balances' own magnitude tracking, unchanged by ESCROW-LEDGER-SIGN-01). amount_cents
+  // IS signed per that fix: a hold is negative to the driver, sign follows transaction_type.
   await client.query(
     `
       INSERT INTO driver_finance.escrow_ledger
         (operating_company_id, driver_id, escrow_balance_id, transaction_type, amount_cents, running_balance_cents, description)
       VALUES ($1::uuid, $2::uuid, $3::uuid, 'hold', $4, $5, $6)
     `,
-    [args.operatingCompanyId, args.driverId, balanceId, args.amountCents, newBalance, `${args.label} — escrow contribution (capped @ ${ESCROW_CAP_LABEL})`]
+    [args.operatingCompanyId, args.driverId, balanceId, signedEscrowLedgerAmountCents("hold", args.amountCents), newBalance, `${args.label} — escrow contribution (capped @ ${ESCROW_CAP_LABEL})`]
   );
 }
 

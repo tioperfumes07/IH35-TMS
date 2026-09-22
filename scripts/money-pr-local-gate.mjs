@@ -352,6 +352,20 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-no-empty-zero-settlement.baseline.json",
     ],
   ],
+  // ESCROW-LEDGER-SIGN-01 (owner ruling, 2026-09-23): "A hold is a CREDIT to the driver's escrow
+  // liability... sign follows transaction_type, never the caller." Shrink-only baseline on the
+  // 39 pre-fix rows (they purge, not corrected here). Domain-conditional per the E7 pattern above
+  // rather than an unconditional STEPS entry, so this doesn't repeat the alwaystrack-parity class
+  // of "blocks every seat regardless of their own diff" mistake.
+  [
+    "verify-escrow-ledger-sign-follows-type",
+    [
+      "apps/backend/src/driver-finance/",
+      "apps/backend/src/settlements/",
+      "apps/backend/src/reports/driver-settlement-summary.routes.ts",
+      "scripts/verify-escrow-ledger-sign-follows-type.baseline.json",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {
