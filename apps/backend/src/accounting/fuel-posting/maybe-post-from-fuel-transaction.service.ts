@@ -79,28 +79,53 @@ function resolvePostingPath(candidate: FuelTxnGlPostCandidate): FuelPostingPath 
 }
 
 /**
- * FUEL-08 — company_direct credit preference from the REAL payment method.
- * Fleet/fuel card (and Relay card-settled fuel) → AP / fuel-card clearing (`ap`).
- * True cash / undeposited → `cash`. Never hardcode cash for card rows.
+ * R-30.1-A (A/P control contamination fix, 2026-09-22) — SUPERSEDES the old FUEL-08 behavior of
+ * this function, which collapsed EVERY card-settled fuel purchase into a blanket `ap` preference.
+ * `resolveCompanyDirectCreditAccount("ap")` resolves the generic A/P control role/subtype (GL
+ * 2000) — a control account backed by the accounting.bills subledger. Fuel-card purchases carry
+ * no bill; crediting 2000 for them left 2000 at -108,938.77 against a $0.00 live bills subledger
+ * (351 live fuel_event credits: 76 Relay + 275 Dreamline) while GL 2510 Dreamline Diesel Card
+ * Payable sat at 0 postings. ap_control must NEVER credit a fuel_event. Ever.
+ *
+ * The card-settled credit now resolves PER RAIL, identified from the fuel transaction's own
+ * fuel_card_id (stamped against catalogs.fuel_card_types by the Dreamline/Relay ingestion) —
+ * never guessed:
+ *   DREAMLINE (billed in arrears) -> "dreamline_card_payable" (GL 2510)
+ *   RELAY (prefunded)             -> "relay_fuel_wallet"      (GL 1295)
+ * True cash / undeposited stays `cash`. A card is signaled (fuel_card_id / has_fuel_card / a
+ * card-shaped note) but the rail cannot be identified from a known fuel_card_types row -> FAIL
+ * CLOSED (throw), never fall back to `ap` or guess a rail.
  */
 export function resolveCompanyDirectCreditPreference(
   candidate: FuelTxnGlPostCandidate,
-  txnSignals?: { fuel_card_id?: string | null; notes?: string | null; source?: string | null } | null
+  txnSignals?: { fuel_card_id?: string | null; fuel_card_code?: string | null; notes?: string | null; source?: string | null } | null
 ): CompanyDirectCredit {
-  if (candidate.company_direct_credit === "ap" || candidate.company_direct_credit === "cash") {
-    return candidate.company_direct_credit;
-  }
-  if (candidate.fuel_card_id || candidate.has_fuel_card) return "ap";
-  if (txnSignals?.fuel_card_id) return "ap";
-  // Relay fleet-card settle (not cash_advance) — always card/AP, never undeposited cash.
-  if (candidate.relay_fuel_transaction_id) return "ap";
+  if (candidate.company_direct_credit) return candidate.company_direct_credit;
+
+  const code = (txnSignals?.fuel_card_code ?? "").toUpperCase();
+  if (code === "DREAMLINE") return "dreamline_card_payable";
+  if (code === "RELAY") return "relay_fuel_wallet";
+  // Legacy Relay-bridge rows created before fuel_card_id was stamped to the RELAY catalog row —
+  // still Relay-settled by construction of the bridge itself.
+  if (candidate.relay_fuel_transaction_id) return "relay_fuel_wallet";
+
   const notes = (txnSignals?.notes ?? "").toLowerCase();
-  if (notes.includes("card=") || notes.includes("relay_bridge=1") || notes.includes("relay_txn=")) {
-    return "ap";
+  const cardSignaled =
+    Boolean(candidate.fuel_card_id || candidate.has_fuel_card || txnSignals?.fuel_card_id) ||
+    notes.includes("card=") ||
+    notes.includes("relay_bridge=1") ||
+    notes.includes("relay_txn=");
+  if (cardSignaled) {
+    throw new Error(
+      `fuel_event ${candidate.fuel_transaction_id}: a card is signaled (fuel_card_id=${
+        txnSignals?.fuel_card_id ?? candidate.fuel_card_id ?? "null"
+      }) but its rail could not be identified from a known catalogs.fuel_card_types row. ` +
+        `Refusing to credit ap_control per R-30.1-A. Stamp fuel_card_id to DREAMLINE or RELAY, or pass an explicit company_direct_credit.`
+    );
   }
-  const source = (txnSignals?.source ?? "").toLowerCase();
-  // CSV/fleet imports without an explicit cash stamp are card-settled in this operation.
-  if (source === "import") return "ap";
+  // No card signal at all (e.g. an older import row with neither a stamped fuel_card_id nor a
+  // card-shaped note) — no evidence of a card/payable rail, so this is true cash, never a guess
+  // at "ap" the way the pre-fix `source === 'import'` branch used to.
   return "cash";
 }
 
@@ -110,6 +135,7 @@ async function loadFuelTxnCreditSignals(
   fuelTransactionId: string
 ): Promise<{
   fuel_card_id: string | null;
+  fuel_card_code: string | null;
   notes: string | null;
   source: string | null;
   unit_id: string | null;
@@ -117,20 +143,23 @@ async function loadFuelTxnCreditSignals(
 }> {
   const res = await client.query<{
     fuel_card_id: string | null;
+    fuel_card_code: string | null;
     notes: string | null;
     source: string | null;
     unit_id: string | null;
     trailer_id: string | null;
   }>(
     `
-      SELECT fuel_card_id::text AS fuel_card_id,
-             notes,
-             source::text AS source,
-             unit_id::text AS unit_id,
-             trailer_id::text AS trailer_id
-        FROM fuel.fuel_transactions
-       WHERE id = $1::uuid
-         AND operating_company_id = $2::uuid
+      SELECT ft.fuel_card_id::text AS fuel_card_id,
+             ct.code::text AS fuel_card_code,
+             ft.notes,
+             ft.source::text AS source,
+             ft.unit_id::text AS unit_id,
+             ft.trailer_id::text AS trailer_id
+        FROM fuel.fuel_transactions ft
+        LEFT JOIN catalogs.fuel_card_types ct ON ct.id = ft.fuel_card_id
+       WHERE ft.id = $1::uuid
+         AND ft.operating_company_id = $2::uuid
        LIMIT 1
     `,
     [fuelTransactionId, operatingCompanyId]
@@ -138,6 +167,7 @@ async function loadFuelTxnCreditSignals(
   const row = res.rows[0];
   return {
     fuel_card_id: row?.fuel_card_id ?? null,
+    fuel_card_code: row?.fuel_card_code ?? null,
     notes: row?.notes ?? null,
     source: row?.source ?? null,
     unit_id: row?.unit_id ?? null,

@@ -25,7 +25,11 @@ type DbClient = {
 export const FUEL_CATEGORY_CODES = ["diesel", "def", "reefer", "oil", "misc"] as const;
 export type FuelCategoryCode = (typeof FUEL_CATEGORY_CODES)[number];
 export type FuelPostingPath = "driver_advance" | "company_direct";
-export type CompanyDirectCredit = "cash" | "ap";
+// R-30.1-A (A/P control contamination fix): card-settled fuel is the GL of record for its own
+// rail, never the generic A/P control account. "ap" is kept only for a genuine non-fuel-card
+// company-direct payable (never auto-selected for a fuel_event -- see
+// maybe-post-from-fuel-transaction.service.ts's resolveCompanyDirectCreditPreference).
+export type CompanyDirectCredit = "cash" | "ap" | "dreamline_card_payable" | "relay_fuel_wallet";
 
 export type FuelPostingInput = {
   operating_company_id: string;
@@ -116,11 +120,41 @@ async function resolveFuelAdvanceLiabilityAccount(client: DbClient, operatingCom
   throw new Error("Fuel advance liability account mapping is missing");
 }
 
+// R-30.1-A: resolve the fuel-card rail's OWN GL account by account_number -- the same
+// by-lookup pattern resolveFuelAdvanceLiabilityAccount already uses above, not a hardcoded uuid.
+// Dreamline (2510) is billed-in-arrears (a payable); Relay (1295) is prefunded (an asset wallet).
+// Fails closed (throws) rather than falling back to ap_control -- a missing rail account is a
+// setup gap to report, never silently substituted.
+async function resolveFuelCardRailAccount(
+  client: DbClient,
+  operatingCompanyId: string,
+  rail: "dreamline_card_payable" | "relay_fuel_wallet"
+): Promise<{ account_id: string; source: string }> {
+  const accountNumber = rail === "dreamline_card_payable" ? "2510" : "1295";
+  const byNumber = await client.query<{ id: string }>(
+    `
+      SELECT id::text
+      FROM catalogs.accounts
+      WHERE account_number = $1
+        AND deactivated_at IS NULL
+        AND operating_company_id = $2::uuid
+      ORDER BY updated_at DESC
+      LIMIT 1
+    `,
+    [accountNumber, operatingCompanyId]
+  );
+  if (byNumber.rows[0]?.id) return { account_id: byNumber.rows[0].id, source: `account_number:${accountNumber}` };
+  throw new Error(`Fuel card rail account ${accountNumber} (${rail}) is missing for operating_company_id=${operatingCompanyId}`);
+}
+
 async function resolveCompanyDirectCreditAccount(
   client: DbClient,
   operatingCompanyId: string,
   preference: CompanyDirectCredit
 ): Promise<{ account_id: string; source: string }> {
+  if (preference === "dreamline_card_payable" || preference === "relay_fuel_wallet") {
+    return resolveFuelCardRailAccount(client, operatingCompanyId, preference);
+  }
   if (preference === "ap") {
     // Resolve A/P via the canonical CoA-roles resolver (CoaRole 'ap_control'; legacy 'ap_clearing' binding
     // is kept as a fallback tier inside the resolver). ap_control is a CONTROL role: the resolver FAILS

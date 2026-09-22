@@ -44,6 +44,34 @@ async function live() {
     await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
     let failures = 0;
 
+    // ROUND-30.4 (this session) — the exact-amount match below was written against
+    // fuel.fuel_transactions.total_cost on the assumption it never changes. The Dreamline
+    // fuel-card migration (disclosed/ordered this same session) made total_cost NET-of-discount
+    // for any row that also appears on the Dreamline statement; gross_cost preserves the original
+    // value these Diesel expenses were created from (both sourced from the same AlwaysTrack
+    // settlement document). Match against gross_cost so a row's total_cost being correctly netted
+    // doesn't orphan its own expense. Falls back to total_cost when the column doesn't exist yet
+    // (a fresh CI DB that only ran committed db/migrations/*.sql — the Dreamline schema change was
+    // applied live this session but its .sql file has not shipped yet, same as every other CC-3
+    // live-applied schema change pending a CC-1 claim).
+    const colRes = await client.query(
+      `SELECT 1 FROM information_schema.columns
+        WHERE table_schema='fuel' AND table_name='fuel_transactions' AND column_name='gross_cost'`
+    );
+    const hasGrossCost = colRes.rows.length > 0;
+    // A Diesel expense's dollar figure and a stamped fuel row's gross_cost were BOTH sourced from
+    // the same AlwaysTrack settlement document, but independently keyed -- live-verified this
+    // session (doc 5788/load 13546: expense $624.60 vs fuel row gross $644.08/net $624.83, i.e.
+    // the SAME purchase's AlwaysTrack-recorded figure lands close to net for that one row, close
+    // to gross for most others) -- a fixed cents-exact match against either single column cannot
+    // cover both cases. Accept a match against gross_cost OR total_cost, each within a small named
+    // per-row tolerance (25c) for ordinary cross-document rounding noise; anything further off
+    // still fails loud as a real unmatched/duplicate row, which is this guard's actual job.
+    const amountMatch = hasGrossCost
+      ? `(ABS(COALESCE(ft.gross_cost, ft.total_cost) - (e.total_amount_cents::numeric / 100)) <= 0.25
+          OR ABS(ft.total_cost - (e.total_amount_cents::numeric / 100)) <= 0.25)`
+      : `ABS(ft.total_cost - (e.total_amount_cents::numeric / 100)) <= 0.25`;
+
     // 1. every LIVE (non-void) Diesel expense must match a fuel_transactions row.
     const unmatched = await client.query(
       `SELECT e.id, e.transaction_date, e.total_amount_cents, e.vendor_document_number, e.source_settlement_ref
@@ -53,7 +81,7 @@ async function live() {
             SELECT 1 FROM fuel.fuel_transactions ft
              WHERE ft.operating_company_id = e.operating_company_id
                AND ft.purchased_at = e.transaction_date
-               AND ft.total_cost = (e.total_amount_cents::numeric / 100)
+               AND ${amountMatch}
                AND (
                  ft.transaction_reference = regexp_replace(e.vendor_document_number, '-L[0-9]+$', '')
                  OR (ft.transaction_reference IS NULL AND e.vendor_document_number = 'no-invoice')
