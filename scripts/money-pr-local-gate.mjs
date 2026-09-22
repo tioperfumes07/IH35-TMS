@@ -74,9 +74,6 @@ const STEPS = [
   ["verify-customer-tab-bar-position-and-data-dot", "scripts/verify-customer-tab-bar-position-and-data-dot.mjs"],
   // B4/ROUND 21.2 (owner, 2026-09-12) — relationship-health-score honesty for the 1-4-of-5-signals case.
   ["verify-customer-relationship-score-partial-honesty", "scripts/verify-customer-relationship-score-partial-honesty.mjs"],
-  // ROUND 23.3 SUPPLEMENT (owner/Lead, 2026-09-13) — the master parity guard: proves the WHOLE
-  // AlwaysTrack absorption/ingest chain against prod, not one seat's own slice.
-  ["verify-alwaystrack-parity", "scripts/verify-alwaystrack-parity.mjs"],
   // ROUND 23.3 DELTA (owner, 2026-09-13) — every live Faro invoice line must carry a real load_id.
   ["verify-faro-invoice-lines-load-linkage", "scripts/verify-faro-invoice-lines-load-linkage.mjs"],
   // ROUND 23.3 (owner/Lead, 2026-09-13) — B1 fuel absorption: 171 fuel_purchases rows ->
@@ -252,6 +249,14 @@ const GUARD_303 = [
   // from env SEAT or the branch name (cc-1/<topic>); no seat resolved -> FAIL, never assumed.
   // LANE_BASE defaults to origin/main inside the script itself — no extra env needed here.
   ["verify-lane-ownership (03b)", "scripts/verify-lane-ownership.mjs", {}],
+  // 03d — ROUND 29.9-B owner ruling: 162 of 192 live-DB-referencing guards were found (dynamic
+  // scan, not a guess) to silently exit 0 — fake green — when DATABASE_URL is unset, instead of
+  // failing. 91 converted to fail-closed same pass; verify-no-silent-db-skip.mjs enforces the
+  // remaining 71 as a ratchet baseline (scripts/lib/db-skip-baseline.json) that can only shrink —
+  // any NEW file exhibiting the pattern, not in the baseline and not declaring
+  // ALLOW_OFFLINE_SKIP, fails the gate immediately. Runs unconditionally (no DATABASE_URL needed
+  // itself — it deletes DATABASE_URL from the env of every guard it dynamically spawns).
+  ["verify-no-silent-db-skip (03d)", "scripts/verify-no-silent-db-skip.mjs", {}],
 ];
 
 function touchesMoneyPath() {
@@ -298,9 +303,11 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  if (!fs.existsSync(path.join(ROOT, "scripts/verify-control-totals.mjs"))) {
-    console.error(`${LABEL} --selftest FAIL: missing scripts/verify-control-totals.mjs`);
-    process.exit(1);
+  for (const rel of ["scripts/verify-control-totals.mjs", "scripts/verify-alwaystrack-parity.mjs", "scripts/lib/require-live-db.mjs", "scripts/lib/db-skip-baseline.json"]) {
+    if (!fs.existsSync(path.join(ROOT, rel))) {
+      console.error(`${LABEL} --selftest FAIL: missing ${rel}`);
+      process.exit(1);
+    }
   }
   console.log(`${LABEL} --selftest PASS`);
   process.exit(0);
@@ -323,6 +330,12 @@ for (const [name, rel, extraEnv] of GUARD_303) {
   }
 }
 
+// ROUND 29.9-B (Rule 30 corollary): a gate that prints PASS while a live check was skipped is fake
+// green, exactly what Rule 30 already forbids in words. Every skip anywhere in this file — 03c
+// below, and any future conditional live check — pushes here so the final line can never silently
+// omit it.
+const skippedLiveChecks = [];
+
 // 03c — control totals against LIVE production. Skipped only when DATABASE_URL is absent AND this
 // PR touches no money path (apps/backend/src/{accounting,banking,factoring,driver-finance,mdata}/**
 // or db/migrations/**). Touching a money path with no DATABASE_URL is NOT a skip — the guard's own
@@ -335,7 +348,26 @@ if (process.env.DATABASE_URL || touchesMoneyPath()) {
     process.exit(code);
   }
 } else {
-  console.log(`[${LABEL}] SKIP verify-control-totals.mjs (03c) — no DATABASE_URL and no money path in this diff`);
+  const msg = "verify-control-totals.mjs (03c) — no DATABASE_URL and no money path in this diff";
+  console.log(`[${LABEL}] SKIP ${msg}`);
+  skippedLiveChecks.push(msg);
+}
+
+// ROUND 23.3 SUPPLEMENT (owner/Lead, 2026-09-13) — the master AlwaysTrack parity guard, proves the
+// WHOLE ingest chain against prod. P0 (2026-09-22): moved OUT of the unconditional STEPS array
+// above (where it used to silently skip-pass with no DATABASE_URL, masking a real, pre-existing
+// 34-of-34-document mismatch) and into this SAME conditional 03c already uses — a non-money push
+// is never blocked by it; a money-relevant push with no DATABASE_URL correctly fails, never skips.
+if (process.env.DATABASE_URL || touchesMoneyPath()) {
+  const code = runNode("scripts/verify-alwaystrack-parity.mjs");
+  if (code !== 0) {
+    failStep("verify-alwaystrack-parity");
+    process.exit(code);
+  }
+} else {
+  const msg = "verify-alwaystrack-parity.mjs — no DATABASE_URL and no money path in this diff";
+  console.log(`[${LABEL}] SKIP ${msg}`);
+  skippedLiveChecks.push(msg);
 }
 
 function changedFileCountVsMain() {
@@ -366,7 +398,12 @@ if (nFiles > 50) {
   }
 }
 
+if (skippedLiveChecks.length > 0) {
+  console.log(`\n${LABEL}: ${skippedLiveChecks.length} LIVE CHECK(S) SKIPPED — NOT A PASS on those checks specifically:`);
+  for (const s of skippedLiveChecks) console.log(`  - ${s}`);
+}
+
 console.log(
-  `${LABEL}: PASS — DoD + money-theater + scoreboard serialize + §7 palette (fin+nonfin) + auth rateLimit + migration band + verify-step band + no-CLAIMED-edits + EntityLink + Rule 30 (no guard deletion + Claude-green LIVE PROOF) OK (fail-fast before CI)`,
+  `${LABEL}: PASS — DoD + money-theater + scoreboard serialize + §7 palette (fin+nonfin) + auth rateLimit + migration band + verify-step band + no-CLAIMED-edits + EntityLink + Rule 30 (no guard deletion + Claude-green LIVE PROOF) OK (fail-fast before CI)${skippedLiveChecks.length > 0 ? ` — WITH ${skippedLiveChecks.length} LIVE CHECK(S) SKIPPED (see above)` : ""}`,
 );
 process.exit(0);

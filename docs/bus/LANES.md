@@ -8,7 +8,9 @@ ruling's filename to the PR body under `LANE-CROSS:`.
 ## CC-1 — schema, gates, hygiene
 db/migrations/**
 scripts/verify-*.mjs
+scripts/verify-*.baseline.json
 scripts/money-pr-local-gate.mjs
+scripts/lib/**
 apps/backend/src/identity/**
 apps/backend/src/accounting/company-settlements**
 apps/backend/src/mdata/drivers**
