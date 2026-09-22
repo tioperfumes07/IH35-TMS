@@ -174,6 +174,55 @@ INV-BAD,Delta Co,ABC,950.00,50.00,25.00,0.00,925.00,2026-06-15`;
     expect(() => parseFaroCsv("Invoice Number,Gross\nINV-1,100")).toThrow(FaroCsvImportError);
   });
 
+  // ROUND 40.1/48 — OWNER RULING (Round 48 corrects Round 40.1's fee mapping, verbatim): the owner's
+  // real Faro export ("PURCHASE REPORT ALL.csv") never carried the old literal header names at all —
+  // confirmed live, the pre-fix code rejected it outright with `missing_headers`. This is the
+  // owner's real header row, verbatim, with the Round 48-ruled mapping applied (Debtor->customer
+  // name, Inv #->invoice number, Purchase->gross, Net Adv->advance, Escrow Rsv->reserve,
+  // Discount->fee (NOT Fees — Round 48 corrected this: "fee = Discount", the file carries both
+  // columns and they are different), ChgBack (Refund)->chargeback, Date->due_on, PO->match_key).
+  // Cash Rsv is its own separate pool (owner ruling: -> GL 1235, not reserve) — deliberately not
+  // aliased to reserve or anything else here. Dispatch/Receipts/Sch Fee/Non-purchased are real
+  // columns this owner mapping does not use — parseFaroCsv must ignore them, not choke on them.
+  it("parses the owner's real Faro export header row and column order", () => {
+    const csv =
+      `Debtor,Date,Inv #,PO,Other Ref,Purchase,Escrow Rsv,Cash Rsv,Discount,Fees,Dispatch,Net Adv,Receipts,Sch Fee,ChgBack (Refund),,Non-purchased\n` +
+      `IMPACT BULK LOGISTICS LLC,8/10/26,2,4483,,"3,000.00",45,0,45,99,0,"2,910.00",0,0,0,,`;
+    const parsed = parseFaroCsv(csv);
+    expect(parsed.lines).toHaveLength(1);
+    const line = parsed.lines[0]!;
+    expect(line.invoice_number).toBe("2");
+    expect(line.customer_name).toBe("IMPACT BULK LOGISTICS LLC");
+    expect(line.match_key).toBe("4483");
+    expect(line.gross_amount_cents).toBe(300000);
+    expect(line.reserve_amount_cents).toBe(4500);
+    expect(line.discount_amount_cents).toBe(4500);
+    // Round 48: fee resolves from "Discount" ($45.00), NOT the separate "Fees" column ($99.00) —
+    // proves the alias order picks the ruled-correct column even when both are present and differ.
+    expect(line.fee_amount_cents).toBe(4500);
+    expect(line.advance_amount_cents).toBe(291000);
+    expect(line.due_on).toBe("2026-08-10");
+    // net has no column in this real export and is intentionally never guessed — stays 0.
+    expect(line.net_amount_cents).toBe(0);
+  });
+
+  it("missing_headers error names every alias tried AND the full observed header row (owner ruling: never a bare 'missing column')", () => {
+    let caught: FaroCsvImportError | undefined;
+    try {
+      parseFaroCsv("Some Weird Column,Another One\nx,y");
+    } catch (e) {
+      caught = e as FaroCsvImportError;
+    }
+    expect(caught).toBeInstanceOf(FaroCsvImportError);
+    expect(caught?.code).toBe("missing_headers");
+    // Names the alias list it tried for at least one field...
+    expect(caught?.message).toContain("tried:");
+    expect(caught?.message).toContain("purchase");
+    // ...and the actual header row it saw, so a genuinely new export format is diagnosable, not a
+    // bare "missing column: x" that gives no way to fix it.
+    expect(caught?.message).toContain("Observed header row: Some Weird Column, Another One");
+  });
+
   it("rejects empty CSV", () => {
     expect(() => parseFaroCsv("Invoice Number\n")).toThrow(FaroCsvImportError);
   });
