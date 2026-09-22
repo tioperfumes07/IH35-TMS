@@ -139,8 +139,17 @@ OUTPUT_TYPE = {
     "layover_pay": "driver_earning",
     "bonus_pay": "driver_earning",
     "extra_stop_pay": "driver_earning",
-    "diesel": "expense",
-    "def": "expense",
+    # ROUND 69 correction (Lead, 2026-09-23): "fuel.fuel_transactions is canonical for fuel AND
+    # DEF and carries the GL. NO path creates a DEF or Diesel expense row. Ever." Live-measured:
+    # 158 of 237 USMCA accounting.expenses rows were a duplicate of a real fuel.fuel_transactions
+    # row -- the exact $76,506.01-class defect, still generating, from settlement-expense imports
+    # reading the company document's EXPENSES block (which lists DEF) alongside the FUEL PURCHASES
+    # block that already has it. diesel/def are NOT "expense" output_type -- they are
+    # "fuel_transaction": the feeder must create them through fuel.fuel_transactions (fuel_type
+    # 'diesel'/'def'), never accounting.expenses, regardless of which section of the settlement
+    # document they were printed in.
+    "diesel": "fuel_transaction",
+    "def": "fuel_transaction",
     "reefer_diesel": "expense",
     "scale": "expense",
     "lumper": "expense",
@@ -219,6 +228,12 @@ def classify_vehicle(desc):
     if "trailer" in d or "trlr" in d:
         return "trailer"
     if "truck" in d or "tractor" in d:
+        return "truck"
+    # Round 69 owner ruling, verbatim: "WINDSHIELD and HEADLIGHT are truck parts. A trailer has
+    # neither. Map both to 5400 Truck Repairs & Maintenance as items." A cab component, not a
+    # text-evidence inference this script makes on its own -- the owner named these two
+    # specifically; PREMIUM and FEE ITEM are explicitly NOT included and stay unmapped.
+    if "windshield" in d or "headlig" in d:
         return "truck"
     return None
 
