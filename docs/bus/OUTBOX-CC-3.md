@@ -1559,3 +1559,63 @@ ITEM 1 -- "how many others": exhaustive, CORRECTED re-audit run system-wide (all
 ITEM 2 -- the 9 documents ($13,399.69 excess): 5774 5781 5783 5786 5787 5788 5790 5792 5794. Ran the same system-wide loose-match scan scoped to these documents' 20 loads. Found exactly 3 remaining candidate pairs after excluding ABSORPTION-B1-attributed rows and filtering out ground-truth-confirmed-on-both-sides pairs: (1) 12ff13e0 vs 6d52396c, both load 13548, T163, driver Concepcion Cordoba, 2026-08-26 -- CONFIRMED both real via the raw Dreamline CSV directly: 99.04gal/$505.50 net at LOVES #471 NATALIA TX, and 99.0gal/$530.84 net at LOVES #762 LAREDO TX, same day, two real separate fills, coincidental near-identical gallons. NOT a duplicate. (2) b75e35cd(load 13554) vs c5997fcd(load 13568) -- CONFIRMED both real via integrations.relay_fuel_transactions raw_payload directly: two distinct real Relay transaction ids, different units (T175 Katy TX vs T171 Columbia TN), different dates. NOT a duplicate. (3) 2ec53a9b(load 13554) vs 0953ea69(unlinked) -- CONFIRMED both real via Relay raw_payload: same unit T174, same date, 11.5 hours apart, different Alabama towns (Hope Hull vs Evergreen) -- two real separate fills, coincidental identical gross retail price ($690.00 both, net amounts differ). NOT a duplicate. RESULT: all 3 remaining candidates for these 9 documents are real, distinct, confirmed transactions -- zero further duplicates to archive. The $13,399.69 excess is NOT a duplicate-fuel-row problem. It matches the SAME "third defect class" already named for load 13518 (Round 43 item 3 report, PR #22254): real, correctly-captured Dreamline/Relay transactions that the unit+date-window matcher (I4's own rematchRelayFuelLoads) linked to a load whose own AlwaysTrack settlement document does not itemize them -- e.g. 2ec53a9b is real ($594.47, T174, confirmed via Relay) but does not match ANY of load 13554's own 3 ground-truth fuel_purchases lines. This is a reconciling/re-linkage item for the owner, not archival -- named, not forced, per the same standing instruction on 13518.
 
 ITEM 3 -- CUT THE RELAY INGEST: built, verified, committed (branch claude-3-round43-item2-cut-relay-ingest). relay-fuel-ingest.service.ts no longer bridges into fuel.fuel_transactions or computes a GL post candidate; relay-wallet-bank-feed.service.ts no longer writes categorization_unit_id/driver_id/trailer_id/load_id or matched_load_id/matched_settlement_id at ingest time -- pure visibility only (date/amount/description/merchant/location/source_ref), reconciling to the real statement is now exclusively a human Match action. 2 stale pre-existing guards updated to assert the new law (verify-relay-wallet-bank-feed.mjs, verify-fuel-payment-method-drives-credit.mjs), both with selftest proof. tsc clean, 35/35 relay-payments tests pass, verify-no-automatch clean. HELD, NOT PUSHED: blocked by 2 different, confirmed pre-existing/unrelated gate failures depending on which path the push takes -- with DATABASE_URL set, verify-load-to-cash-chain.mjs (loads 13610/13609/13612/13613/13614/13616/13617/13618 missing driver_finance.driver_bills, a growing list, confirmed identical on clean main); without it, verify-static-fallback's broader sweep hits 4 more (verify-delivery-evidence-latch-wired.mjs, verify-phantom-relations.mjs, verify-regclass-fallback-intent.mjs, verify-requireauth-returns-reply.mjs), all confirmed identical on clean main via direct comparison. Neither is caused by this branch. Filed to GUARD-WORKORDERS. Not bypassed.
+
+---
+## 2026-09-22 evening -- CC-3: Round 53 expense extract delivered; E2 branch re-diagnosed; alwaystrack-parity root cause named
+
+**1. ROUND 53's owed item -- the settlement-PDF expense extract -- DELIVERED.** New
+`scripts/ops/feeder-input-02-settlement-expense-extract.py`, PR-ready on branch
+`claude-3-round53-settlement-expense-extract` (held only on the same alwaystrack-parity block
+described below -- everything else is green). Parses all 57 unique `Company_Settlement_*.txt`
+documents in `~/Downloads/_st_txt` (58 files, 1 known "(Merged)" duplicate excluded; date range
+2026-07-03 to 2026-09-21, covers and exceeds the 45-day window). Output: 122 loads,
+1023 per-load-per-day expense lines -- def 202/$6,733.10, diesel 300/$196,314.66, driver_pay
+424/$82,683.15, lumpers 11/$2,104.90, other 46/$5,034.89, scales 40/$530.00 -- plus a
+feeder-consumption JSON grouped by load_number/date/category. Cross-checked against the
+already-established ground truth for document 5774 (loads 13517/13518, $2,519.78/3 rows) --
+exact match. While porting the proven `~/Downloads/_ih35_parse_settlements.py`, found and fixed
+a real bug in ITS OWN EXPENSES-row parsing (present in that file and therefore in
+`settlements-truth-2026-09-13.json`, named not fixed there, out of repo scope): the "Comp. Exp."
+column's only-ever value, "Drv" (grep-verified, 47 occurrences, corpus-wide), wasn't excluded
+before guessing the description off the row's second-to-last token, so any EXPENSES row carrying
+that flag read its description as "Drv" instead of the real text. Fixed here with a literal
+exclusion, not a guess. This is NOT fixed in the outside-repo Python file or in the JSON it
+already produced -- flagging in case anything downstream still reads that JSON's EXPENSES
+descriptions.
+
+**2. E2 (cut the Relay ingest) -- rebuilt branch; LINK 1/2 is flaky (not resolved), and confirmed
+also blocked by alwaystrack-parity.** `claude-3-round43-item2-cut-relay-ingest` rebased onto
+latest `main`. `verify-load-to-cash-chain.mjs` on the same 8 loads
+(13610/13613/13609/13618/13616/13617/13612/13614) read LIVE PASS once, then LIVE FAIL on three
+immediate consecutive re-runs, identical failure text each time -- flagging this guard as
+non-deterministic on this exact check right now, not as resolved; do not trust one green run of
+it. Lane-ownership clears with `SEAT=CC-3
+LANE_CROSS=LEAD-RULING-2026-09-22-CC3-ROUND-43-CUT-RELAY-INGEST-CROSS-LANE.md`. On the one run
+where LINK 1/2 happened to pass, the gate reached `verify-alwaystrack-parity.mjs` next and failed
+there -- confirmed live, 29 of 34 documents worse than baseline, same failure CC-1 already
+escalated in `docs/bus/OUTBOX-CC-1.md` (PR #22264). Branch is held on (at least) that second
+blocker regardless of LINK 1/2's flakiness.
+
+**3. Alwaystrack-parity root cause -- named with direct evidence, not "investigate later" anymore.**
+Full detail + proposed fix in `docs/audit/GUARD-WORKORDERS.md` (this same commit). Short version:
+this session's own earlier I4 relink (`rematchRelayFuelLoads`, ±1-day unit/driver window) attached
+Dreamline-card fuel purchases to the WRONG nearby load when a driver ran multiple loads close
+together -- verified on load 13518 (document 5774): 3 real, non-duplicate Dreamline rows dated
+8/10 (Blytheville AR), 8/12 (Strafford MO), 8/13 (Italy TX) are attached to a load whose own
+stop window is 8/11-8/12 only. Not a duplicate-ingestion problem (FUEL-DEDUPE-01/03's date+gallons
+rule correctly found nothing to dedupe here); a mis-linkage problem, matching the "live count
+consistently higher than target" pattern across nearly all 29 worsened documents. Proposed fix:
+tighten the relink rule to require the purchase date fall WITHIN the matched load's own stop
+window (not padded ±1 day), then re-verify and NULL back any of the I4 relink's own rows that
+land outside their assigned load's window -- a mechanical FK correction, not a GL event. Not
+attempted here -- re-scoping ~299 rows safely is a real multi-hour pass and `fuel.fuel_transactions`
+is money lane; reporting per standing law rather than rushing it after tonight's 3 wrong-archival
+corrections already taught that lesson once.
+
+**Not started this pass, honestly named:** E4 (ONE OBJECT OWNS FUEL -- fuel.fuel_transactions vs
+accounting.expenses 'Diesel —' double-post) and E10 (escrow-forfeiture + parts-inventory void
+paths with no reversal) from the Lead's latest message -- both real, both scoped clearly in that
+message, neither investigated yet this pass. Picking up E4 next (it's the more load-bearing of
+the two, and likely shares root cause with item 3 above -- both are "fuel double-counted" shapes).
+
+— CC-3
