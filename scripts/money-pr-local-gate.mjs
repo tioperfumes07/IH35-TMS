@@ -81,7 +81,6 @@ const STEPS = [
   ["verify-fuel-transactions-per-load", "scripts/verify-fuel-transactions-per-load.mjs"],
   // ROUND 23.3 (owner/Lead, 2026-09-13) — B1 second half: every live Diesel-memo expense either
   // matches a fuel.fuel_transactions row or is voided ABSORPTION-D5.
-  ["verify-diesel-expense-fuel-dedupe", "scripts/verify-diesel-expense-fuel-dedupe.mjs"],
   // P0-A (Lead ruling, 2026-09-22) — IFTA taxable-gallon base must never include DEF (not a motor
   // fuel) or reefer_diesel (undetermined tank source, no receipt evidence). Static + live
   // deliberate-failure proof.
@@ -382,6 +381,28 @@ if (process.env.DATABASE_URL || touchesMoneyPath()) {
   }
 } else {
   const msg = "verify-alwaystrack-parity.mjs — no DATABASE_URL and no money path in this diff";
+  console.log(`[${LABEL}] SKIP ${msg}`);
+  skippedLiveChecks.push(msg);
+}
+
+// Lead ROUND 48 (2026-09-22): one fuel purchase, one posting. Moved out of the unconditional STEPS
+// array, where it skip-passed without DATABASE_URL. fuel/ is not in touchesMoneyPath() but a fuel
+// change is exactly what can post a second copy of a purchase, so this check keys on its own paths.
+function touchesFuelOrExpensePath() {
+  const res = spawnSync("git", ["diff", "--name-only", "origin/main...HEAD"], { cwd: ROOT, encoding: "utf8" });
+  if ((res.status ?? 1) !== 0) return false;
+  const files = (res.stdout || "").split("\n").filter(Boolean);
+  const FUEL_EXPENSE_RE = /^(apps\/backend\/src\/(accounting|fuel)\/|db\/migrations\/)/;
+  return files.some((f) => FUEL_EXPENSE_RE.test(f));
+}
+if (process.env.DATABASE_URL || touchesFuelOrExpensePath()) {
+  const code = runNode("scripts/verify-diesel-expense-fuel-dedupe.mjs");
+  if (code !== 0) {
+    failStep("verify-diesel-expense-fuel-dedupe");
+    process.exit(code);
+  }
+} else {
+  const msg = "verify-diesel-expense-fuel-dedupe.mjs — no DATABASE_URL and no accounting/fuel/migration path in this diff";
   console.log(`[${LABEL}] SKIP ${msg}`);
   skippedLiveChecks.push(msg);
 }

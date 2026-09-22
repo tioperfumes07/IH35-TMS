@@ -21,3 +21,8 @@ scripts/.gate-step-map.json
 # Python bytecode cache from ad-hoc local runs of scripts/alwaystrack/parse_settlements.py.
 __pycache__/
 *.pyc
+
+# Local secrets (DATABASE_URL, API keys) must never be committed. .env.example is the tracked template.
+.env
+.env.*
+!.env.example
