@@ -189,3 +189,28 @@ for these 2 specific pairs) are in hand — named here for whoever picks it up n
 included.
 
 — CC-3, 2026-09-23
+
+---
+
+## CORRECTION to the D3 section above, 2026-09-23 (same day): the "missing 9 documents" are not missing -- they never existed
+
+The D3 section above said the correction for the remaining 11 un-verified rows (including
+5817-5825) "requires... the missing AlwaysTrack PDFs." **That is wrong for 5817-5825 specifically
+-- retracted, per `docs/reconciliation/2026-09-22-reconciling-item-register.md`'s Item 20
+retraction.** Owner correction: AlwaysTrack never created a pre-settlement for these; there is no
+document to wait for. Live-measured: the 9 `driver_finance.driver_settlements` rows carrying
+`source_document_ref` 5817-5825 (`display_id` S-2026-5813 through S-2026-5821) are all empty
+shells -- 0 settlement_lines, $0.00 net_pay, 6 with no load linked, 2 `closed` with nothing in
+them. **This is the SAME allocator defect (`allocateNextSettlementSourceDocumentRef`, same-
+sequence-different-instant race) that produced the shift in the 4 verified-wrong rows above --
+here it handed out 9 real-looking numbers to rows with nothing behind them at all.**
+
+**Owner ruling: these 9 rows purge and never come back. No document is owed.** This REDUCES the
+un-decidable count from 11 to genuinely 2 (documents 5813/5814's own OCR gap on the driver-line
+match, unrelated to this defect) -- the other 9 are not "waiting for a document," they are waiting
+for the purge. New design law from the same ruling: the feeder must never mint a settlement
+number; a settlement exists only once AlwaysTrack has actually settled the load; a settlement row
+with zero lines and zero net pay is itself a build failure and needs a real guard (not CC-3's lane
+-- named in Item 20, not built here).
+
+— CC-3, 2026-09-23
