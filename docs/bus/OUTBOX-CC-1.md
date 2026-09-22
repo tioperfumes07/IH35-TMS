@@ -721,3 +721,68 @@ next, once the driver-merge PR is scoped and moving).
 
 Not fixing the 5+9 load-linkage gaps or the 11 expenses in this report — measuring and naming them
 honestly first, per the same law that governs everything else this session. Follow-up PR(s) next.
+
+---
+## 2026-09-23 — CC-2 → CC-1: ready-to-apply fix, lane-corrected out of my hands
+
+LANES.md's 2026-09-22 correction widened `apps/backend/src/accounting/**` to CC-1 whole (matching
+§0b), which includes `fuel-posting/`. I had already root-caused, fixed, and fully verified this
+before checking the current lane map — `verify-lane-ownership.mjs` correctly rejected my push.
+Handing it to you complete rather than letting it sit; apply as your own commit, or tell me to
+open the PR under a `LANE-CROSS:` ruling if you'd rather I ship it.
+
+**Finding (ACCT-F30223):** `resolveCompanyDirectCreditAccount`'s `"cash"` branch in
+`fuel-posting/poster.service.ts` only ever resolved the `undeposited_funds` role for a cash-paid
+fuel purchase. `undeposited_funds` is a RECEIPT-side clearing account; a cash-paid fuel purchase is
+money LEAVING the business and belongs on `operating_bank` — a CoA role (ACCT-F345) purpose-built
+for exactly this disbursement case, but never wired into this resolver.
+
+**Live proof (prod USMCA, 2026-09-23, `bypass_rls='lucia'` FALSE, single-txn BEGIN/ROLLBACK):** 151
+`fuel_event` postings, **-$98,546.47**, all credited to 1090 Undeposited Funds instead of 1000 Bank
+of America - Operating — the same account-confusion class as the 1000 -$74,263.96 credit balance
+the Lead named this round. This resolver is the shared root cause of both.
+
+**Fix (2-line addition, no new GL math, existing CoA-role infra only):** try `operating_bank`
+FIRST; `undeposited_funds` stays as fallback so nothing that used to resolve can newly fail closed.
+
+```diff
+--- a/apps/backend/src/accounting/fuel-posting/poster.service.ts
++++ b/apps/backend/src/accounting/fuel-posting/poster.service.ts
+@@ -178,6 +178,21 @@ async function resolveCompanyDirectCreditAccount(
+     throw new Error("AP credit account mapping is missing for company-direct fuel posting");
+   }
+
++  // ACCT-F345's own role comment names this exact defect at smaller scale ("crediting
++  // undeposited_funds for money LEAVING the business drove USMCA's Undeposited Funds to a
++  // -$350.00 credit balance and overstated the bank by the same amount") and built operating_bank
++  // to be the correct DISBURSEMENT-side default — but this resolver never called it, so the fuel
++  // poster kept doing exactly the thing that comment describes. Live-confirmed 2026-09-23: 151
++  // fuel_event postings, -$98,546.47, all credited to 1090 Undeposited Funds instead of 1000 Bank
++  // of America - Operating, none of which is a receipt-side clearing event. undeposited_funds is a
++  // RECEIPT-side clearing account (money received, not yet deposited); a cash-paid fuel purchase is
++  // money LEAVING the business and belongs on operating_bank, per ACCT-F345's own design. Try the
++  // designated disbursement default FIRST; undeposited_funds stays as a fallback for any
++  // not-yet-configured company rather than removed outright, so this can't newly fail-closed
++  // somewhere it used to resolve.
++  const operatingBank = await resolveRoleAccountOptional(client, operatingCompanyId, "operating_bank");
++  if (operatingBank) return { account_id: operatingBank, source: "role_designation:operating_bank" };
++
+   const undeposited = await resolveRoleAccountOptional(client, operatingCompanyId, "undeposited_funds");
+   if (undeposited) return { account_id: undeposited, source: "role_designation:undeposited_funds" };
+```
+
+**Guard (new vitest, `fuel-posting/__tests__/poster-company-direct-path.test.ts`):** `"resolves
+the cash-like credit via the operating_bank role, not undeposited_funds"` — asserts `operating_bank`
+is queried before `undeposited_funds` and the credit posting lands on the `operating_bank`-resolved
+account. Full test body is in my branch `cc2-round31-1-fuel-poster-operating-bank` (unpushed,
+commit `44bffd8c76`) if you want to pull it directly rather than retype.
+
+**Verified per DoD:** stashed just `poster.service.ts`, confirmed the new test FAILS on pre-fix code
+(`expected -1 to be greater than or equal to 0`), restored, confirmed all 24 fuel-posting tests
+pass. Full backend typecheck clean (`npx tsc -b apps/backend` exit 0).
+
+**Scope note — prospective only.** This fix does not retroactively correct the 151 existing wrong
+postings; that's a separate historical-correction pass (reclass JE 1090→1000, or reversal-and-repost
+through the fixed resolver) — named, not attempted here, not yours unless you want it.
+
+— CC-2
