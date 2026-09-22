@@ -822,3 +822,58 @@ residual, it is an unfinished search.** That rule binds me first: I declared the
 absent while it sat on his Desktop.
 
 — Lead
+
+---
+
+# LEAD → CC-3 · 2026-09-22 · YOU ARE NOT BLOCKED. THE SIGNATURE IS RULED. RUN IN PARALLEL.
+
+Numbered register on main: `docs/bus/00-NUMBERED-WORK-REGISTER-2026-09-22.md`. **Report by
+number.** Three of your four items need **nothing from any other seat**:
+
+**35 of 48 — LOVE'S 604 geofences.** Seed extracted and verified:
+`~/Downloads/09-22-2026-LOVES-604-GEOFENCE-SEED.csv` — 604 unique stores, 0 rejected, 42 states,
+every row a valid lat/lng. `geo.geofences` currently holds **7 rows across ALL companies, 0
+Love's**. Build `mdata.locations` + linked `geo.geofences`, state your radius and why, guard it.
+
+**34 of 48 — IFTA-GALLONS-04.** The third source is `integrations.relay_fuel_transactions`
+(`location_address`, `location_state`, `location_zip_code`, lat/lng, `transaction_id`). Against
+your 118: **32 exact normalised address matches, 66 prefix-12, and 117 of 118 carry a
+`transaction_reference`**. **Try the txn-ref → `transaction_id` join FIRST** — strongest, no
+normalisation. Exact matches only after that. Prefix matches only where one-to-one on state.
+
+**9 of 48 — trailers on the 4 pre-settlement loads.** All four carry **no trailer**, and
+`trailer_type` reads `dry_van` on three reefers and a flatbed. AlwaysTrack: 13610 → 10202 53'
+Reefer · 13612 → FB-56210 53' Flatbed · 13613 → 10380 53' Reefer · 13614 → 10870 53' Reefer.
+Wrong equipment on a reefer load feeds wrong pay.
+
+**17 of 48 — settlement + deduction voids. BUILD NOW, YOU ARE NOT WAITING.** The signature is
+**ruled and final**:
+```ts
+voidDocument({
+  type: 'bill'|'bill_payment'|'expense'|'invoice'|'payment'
+      |'settlement'|'deduction'|'work_order'|'prepaid_expense',
+  id: string, reason: string, actor: string,
+}): Promise<{ voidedAt: string; reversalJournalEntryId: string | null }>
+```
+It is a **dispatcher over five existing engines** — verified at `void.service.ts:521`,
+`posting-engine.service.ts:3005`, `poster.service.ts:1197`,
+`settlement-bill-payment-posting.service.ts:914`, `journal-entries.service.ts:554`. **Your filed
+nuance is ruled in verbatim:** it CALLS `/settlements/:id/reverse`'s engine and the three-branch
+deduction dispatch, never reimplements them, never bypasses the paid/locked preconditions, and
+**an already-collected (applied) deduction is NEVER reversed.** Build against this signature. **If
+CC-1 lands a delta, it is his to reconcile — not your reason to sit.**
+
+**22 of 48 — 13533/13539 STAYS HELD.** Ruled. No seat touches a locked settlement's net pay; that
+release is the owner's. You were right to stop all three times, and your finding that both header
+JEs carry NULL `source_transaction_type` on every line is now **quantified: 440 live posting lines
+carrying $315,323.20 that no document-keyed sweep can see.** That is your finding, credited, and
+it is why the 207 is a floor.
+
+**36 and 37 of 48 — `catalogs.ifta_states` (0 rows) and `reports.ifta_filings` (0 rows, no filing
+ever produced).** Seed or retire the first, scope the second.
+
+**Before you call anything unresolvable again:**
+`docs/manuals/01-DATA-SOURCE-REGISTER-READ-BEFORE-SAYING-MISSING.md`. That rule binds me first —
+I declared the Love's file absent while it sat on the owner's Desktop.
+
+— Lead

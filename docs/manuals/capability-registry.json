@@ -1,0 +1,24 @@
+{
+  "_comment": "CAPABILITY REGISTRY. Every entry was verified by reading the file at the stated line. A capability listed here EXISTS and is PROVEN. It is never rebuilt, never duplicated, and never removed. scripts/verify-no-capability-regression.mjs reads this file and fails the build if any symbol is gone from its file. To retire a capability you delete its entry here in the SAME PR, with the reason in the PR body, so the removal is visible and owner-reviewable. Silent disappearance is the regression this file exists to stop.",
+  "_verified_at": "2026-09-22",
+  "_law": "Additive-only. Never delete or remove modules, pages, sidebar entries, sections, cards, fields, columns, tabs, routes or features. Only add. The only exception is the owner saying 'remove X' in words.",
+  "capabilities": [
+    { "id": "REVERSAL-ENGINE-01", "symbol": "postVoidReversal", "file": "apps/backend/src/accounting/void.service.ts", "line": 521, "domain": "reversal", "serves": "invoices, bills, journal entries, payments, prepaid purchases and amortization" },
+    { "id": "REVERSAL-ENGINE-02", "symbol": "reversePostedSourceTransactionInClientTx", "file": "apps/backend/src/accounting/posting-engine.service.ts", "line": 3005, "domain": "reversal", "serves": "expenses, work orders, governance void executors" },
+    { "id": "REVERSAL-ENGINE-03", "symbol": "reverseFactoringAdvanceEvent", "file": "apps/backend/src/accounting/factoring-posting/poster.service.ts", "line": 1197, "domain": "reversal", "serves": "factoring advances" },
+    { "id": "REVERSAL-ENGINE-04", "symbol": "reverseSettlementBillPaymentInClientTx", "file": "apps/backend/src/accounting/settlement-posting/settlement-bill-payment-posting.service.ts", "line": 914, "domain": "reversal", "serves": "driver settlements, behind POST /settlements/:id/reverse with paid/locked preconditions" },
+    { "id": "REVERSAL-ENGINE-05", "symbol": "voidJournalEntry", "file": "apps/backend/src/accounting/journal-entries.service.ts", "line": 554, "domain": "reversal", "serves": "the reversing-entry primitive itself" },
+    { "id": "POSTING-ENGINE-01", "symbol": "postSourceTransaction", "file": "apps/backend/src/accounting/posting-engine.service.ts", "line": 2652, "domain": "posting", "serves": "the single GL posting entry point" },
+    { "id": "POSTING-ENGINE-02", "symbol": "postSourceTransactionInClientTx", "file": "apps/backend/src/accounting/posting-engine.service.ts", "line": 2644, "domain": "posting", "serves": "in-transaction posting" },
+    { "id": "POSTING-03", "symbol": "postHeldDocumentsForClosedTour", "file": "apps/backend/src/accounting/tour-close-posting.service.ts", "line": 47, "domain": "posting", "serves": "releases tour-open-held documents when a settlement closes" },
+    { "id": "POSTING-04", "symbol": "reflushUnpostedFuelGlExpenses", "file": "apps/backend/src/accounting/fuel-posting/reflush-unposted-fuel-gl.service.ts", "line": 118, "domain": "posting", "serves": "fuel GL void-and-repost path" },
+    { "id": "FARO-IMPORT-01", "symbol": "commitFaroCsvImport", "file": "apps/backend/src/factoring/faro-csv-import.ts", "line": 530, "domain": "factoring", "serves": "THE Faro purchase importer. Sets factoring_status='advanced', posts reserve movements, gates on the full-recourse agreement, accrues default interest. Behind POST /api/v1/factoring/import/faro." },
+    { "id": "FARO-IMPORT-02", "symbol": "parseFaroCsv", "file": "apps/backend/src/factoring/faro-csv-import.ts", "line": 145, "domain": "factoring", "serves": "Faro CSV parse + preview" },
+    { "id": "FACTORING-01", "symbol": "autoSubmitDeliveredLoadToFactor", "file": "apps/backend/src/factoring/auto-submit-on-delivery.service.ts", "line": 73, "domain": "factoring", "serves": "automatic submission to the factor on delivery" },
+    { "id": "SETTLEMENT-NUMBER-01", "symbol": "allocateSettlementDisplayId", "file": "apps/backend/src/driver-finance/settlement-display-id.ts", "line": 36, "domain": "settlements", "serves": "THE settlement number. Bare continuing AlwaysTrack integer, no prefix, no padding, floor 5803. Delegates to allocateNextSettlementSourceDocumentRef. Imported by exactly 6 files. Any call site minting its own number is a defect." },
+    { "id": "PRESETTLEMENT-01", "symbol": "confirmPresettlementLink", "file": "apps/backend/src/dispatch/presettlement-link.service.ts", "line": 329, "domain": "presettlement", "serves": "writes mdata.loads.presettlement_link_id and tour_id together. The pre-settlement number is ours; AlwaysTrack has no equivalent." }
+  ],
+  "known_dead_do_not_wire": [
+    { "table": "catalogs.relay_accounts", "rows": 0, "verdict": "Live CRUD catalog wired to the Lists picker with ZERO readers in the real posting pipeline. Superseded by integrations.relay_company_cards and catalogs.fuel_card_types. Do not seed it, do not resolve against it. (CC-3, PR #22210)" }
+  ]
+}
