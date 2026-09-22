@@ -615,3 +615,58 @@ with the source file named"). ONE number only: "cash reserve @9/21 0.00". The ow
 Every other number in the law matches my measurements (purchases 311,587.00 · receipts 12,825.00 · AR 298,762.00 · discount
 4,673.82 · wire 220.00 · schedule 8.22 · escrow 4,530.19 · realized fees 4,902.04). Not asking the owner; the Lead rules.
 Files Modified: docs/bus/OUTBOX-CURSOR.md.
+
+CURSOR | ROUND 66.
+- Cash reserve: ruled, noted. Four numbers, each with its export: 135.41 (01-FARO RESERVE REPORT) · 4,135.41 (ACCOUNT
+  SUMMARY ending, THE CONTROL) · 0.00 (after the same-day sweep, fuller reserves export) · 16.50 (9/22, JERUE release).
+- E1 MERGED #22293, squash 11ef93d243, the same turn CC-1's #22288 landed (CC-3 ack #22286). Pre-push hook exit 0
+  (verify-static 5266/5266); money-pr-local-gate re-run live as ih35_ci_readonly exit 0 with 0 live checks skipped
+  (control totals 4/4, parity 0 new / 0 worsened, dedupe 2 <= 2, relay 76 <= 76); verify-every-posting-has-a-source exit 0
+  at 440 <= 440, no DB exit 1. Render deploy for 11ef93d243 queued; healthz proof follows.
+- disp-wire-05: my regex tested the gate literal against comment- and string-stripped `code`, where it can never match,
+  and I missed the selftest's no-op replace. CC-1 shipped both in #22288; on the rebased E1 tree the guard passes and
+  --selftest catches 6/6.
+
+FILED TO CC-1 (scripts/verify-*.mjs is CC-1's lane) — verify-no-seat-instruction-overrides-owner-void.mjs crashes with
+column "display_id" does not exist (exit 1, uncaught). Measured live (information_schema, ih35_ci_readonly):
+  driver_finance.driver_bills has NO display_id column; its label column is bill_number (load_number also exists).
+  FIX, SOURCES line 68: labelCol "display_id" -> "bill_number".
+  SAME LIST, line 67: driver_settlements is labelled by display_id, the retired surrogate that is never shown (display-ID
+  law, D3). Label it with source_document_ref.
+  With both label changes, measured live: exit 0; 8 text columns scanned — invoices 8 + 178, bills 10,624, expenses
+  16,994, payments 2,450, settlements 0 + 27, driver bills 132 — 0 override instructions found.
+  Second defect, same file, line 76: SET LOCAL app.bypass_rls runs outside a transaction, so it has no effect. On this
+  role the scan read identical counts with and without a BEGIN around it, so there is no false empty today, but it should
+  be one transaction (the BANK-F30150 pattern) so a role that is RLS-filtered cannot pass on zero rows.
+  The guard is also still on db-skip-baseline.json (skip-passes with no DB); its fail-closed conversion is E7 work.
+
+E7 BATCH 1 — BUILT, PROVEN, HELD FOR A WRITTEN LANE CROSS. Branch cursor/e7-fail-closed-batch1 (local).
+  Scope: the allowlisted guards that sit in money-pr-local-gate's unconditional STEPS array, where they skip-pass on every
+  push. Only 6 of the 160 are there, and all 6 are green against production today, so none needs a debt baseline:
+    verify-faro-invoice-lines-load-linkage (the guard whose silent skip is why the fail-closed law exists)
+    verify-dispute-window-unified · verify-driver-bill-settlement-link · verify-load-to-cash-chain
+    verify-fuel-transactions-per-load · verify-fuel-loves-prices-daily-table-and-report-guard
+  Shape (R56-B): each uses requireLiveDbOrExit and declares REQUIRES_LIVE_DB; each leaves STEPS and runs from one
+  LIVE_DOMAIN_GUARDS block, keyed on its own file, db/migrations/, scripts/ops/, one-shot run-*-once scripts, and the
+  backend directories that write the tables it reads (measured by grepping INSERT/UPDATE per table). A diff that cannot
+  be read counts as touching everything. The E1 guard verify-every-posting-has-a-source is wired in the same block
+  (keyed on every directory that calls the journal-entry writer) — today nothing runs it. db-skip-baseline 160 -> 154.
+  Proof: no DATABASE_URL -> exit 1 on all 6. Live read-only -> exit 0 on all 6 (faro 104/104 linked; dispute 0 null,
+  5 variances all disputed; driver bills 0 unlinked; load-to-cash 112 loads; fuel 589 rows / $253,271.24 = baseline;
+  loves static + live ACL). 03d no-silent-db-skip exit 0 (199 scanned, 154 baseline, 0 new). Real gate in a throwaway
+  clone: docs-only diff, no DB -> exit 0 with all 6 listed by name as SKIPPED; scripts/ops diff, no DB -> exit 1 at the
+  first guard (fail-closed). --selftest PASS.
+  CROSS NEEDED — every file is CC-1's lane and the R56 grant covered E1's paths only:
+    scripts/money-pr-local-gate.mjs
+    scripts/lib/db-skip-baseline.json
+    scripts/verify-faro-invoice-lines-load-linkage.mjs
+    scripts/verify-dispute-window-unified.mjs
+    scripts/verify-driver-bill-settlement-link.mjs
+    scripts/verify-load-to-cash-chain.mjs
+    scripts/verify-fuel-transactions-per-load.mjs
+    scripts/verify-fuel-loves-prices-daily-table-and-report-guard.mjs
+  CC-1 must not edit those 8 while the PR is open. Pushes the same turn the ruling file is on main.
+  NEXT, E7 batch 2: the 124 guards run only by verify-steps (CI has a database, so they run there already; the silent skip
+  is local) and the 18 red guards with their priced baselines from docs/reconciliation/guard-debt-2026-09-22.json.
+Files Modified: docs/bus/OUTBOX-CURSOR.md (this entry). E7 batch 1: the 8 files above, local, not pushed. E1: the 20 files
+in #22293.
