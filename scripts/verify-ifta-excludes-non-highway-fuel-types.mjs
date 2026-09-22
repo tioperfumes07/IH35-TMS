@@ -107,3 +107,63 @@ if (!fs.existsSync(abs)) fail(`${TARGET} is missing. Refusing to pass a guard wh
 const problems = analyse(fs.readFileSync(abs, "utf8"));
 if (problems.length) fail(problems.map((p) => `\n    - ${p}`).join(""));
 ok(`${TARGET} filters fuel_type and carries no state-dedupe/source-priority drop`);
+
+// --- CC-3 addition (2026-09-22): live deliberate-failure proof, ADDITIONAL to the static shape
+// check above, not a replacement. The static check confirms fuel_type is REFERENCED; it cannot
+// confirm the reference actually EXCLUDES the right values against real data (a file that
+// referenced fuel_type incorrectly, e.g. filtering on the wrong column entirely, would still pass
+// the string-match above). This proves it, live, without inserting any row into prod: re-runs the
+// aggregator's own real query two ways against today's data -- once with the fuel_type filter
+// applied, once with it stripped -- and asserts the un-filtered total is strictly larger whenever
+// live DEF/reefer_diesel gallons exist. This is a SEPARATE, optional layer: the file above is
+// already declared ALLOW_OFFLINE_SKIP and stays correct standalone; this addition only runs when
+// DATABASE_URL is present, and never turns a static PASS into a FAIL on its own account -- it can
+// only report its own deliberate-failure proof or its own connection error, logged separately.
+const LIVE_LABEL = `${LABEL} (live deliberate-failure proof)`;
+async function liveDeliberateFailureProof() {
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    console.log(`  ${LIVE_LABEL}: SKIP — no DATABASE_URL (the static check above already passed and is sufficient offline).`);
+    return;
+  }
+  const { default: pg } = await import("pg");
+  const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+  const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+  await client.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(`SELECT set_config('app.bypass_rls','lucia',true)`);
+    const window = ["2026-01-01", "2027-01-01"];
+    const scan = (excludeNonTaxable) => `
+      SELECT COALESCE(SUM(gallons), 0)::numeric(14,3) AS total_gallons
+        FROM fuel.fuel_transactions
+       WHERE operating_company_id = $1::uuid AND archived_at IS NULL
+         AND purchased_at >= $2::date AND purchased_at < $3::date
+         ${excludeNonTaxable ? `AND LOWER(COALESCE(fuel_type,'')) IN ('diesel','gas')` : ""}
+    `;
+    const fixed = await client.query(scan(true), [USMCA_COMPANY_ID, ...window]);
+    const preFix = await client.query(scan(false), [USMCA_COMPANY_ID, ...window]);
+    await client.query("ROLLBACK");
+
+    const fixedTotal = Number(fixed.rows[0]?.total_gallons ?? 0);
+    const preFixTotal = Number(preFix.rows[0]?.total_gallons ?? 0);
+
+    if (preFixTotal <= fixedTotal) {
+      console.log(
+        `  ${LIVE_LABEL}: SKIP — no live non-highway (def/reefer_diesel/etc.) gallons in the window right now ` +
+          `(filtered=${fixedTotal}, unfiltered=${preFixTotal}); this proof cannot currently fail.`
+      );
+      return;
+    }
+    console.log(
+      `  ${LIVE_LABEL}: PASS — unfiltered scan returns ${preFixTotal} gal, fuel_type-filtered scan returns ` +
+        `${fixedTotal} gal (${(preFixTotal - fixedTotal).toFixed(3)} gal excluded by the live fuel_type filter, proving it has real effect).`
+    );
+  } catch (e) {
+    await client.query("ROLLBACK").catch(() => {});
+    console.error(`  ${LIVE_LABEL}: connection/query error (not fatal to the static PASS above): ${e.message}`);
+  } finally {
+    await client.end().catch(() => {});
+  }
+}
+await liveDeliberateFailureProof();

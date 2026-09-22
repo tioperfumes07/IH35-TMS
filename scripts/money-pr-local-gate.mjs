@@ -82,6 +82,10 @@ const STEPS = [
   // ROUND 23.3 (owner/Lead, 2026-09-13) — B1 second half: every live Diesel-memo expense either
   // matches a fuel.fuel_transactions row or is voided ABSORPTION-D5.
   ["verify-diesel-expense-fuel-dedupe", "scripts/verify-diesel-expense-fuel-dedupe.mjs"],
+  // P0-A (Lead ruling, 2026-09-22) — IFTA taxable-gallon base must never include DEF (not a motor
+  // fuel) or reefer_diesel (undetermined tank source, no receipt evidence). Static + live
+  // deliberate-failure proof.
+  ["verify-ifta-excludes-non-highway-fuel-types", "scripts/verify-ifta-excludes-non-highway-fuel-types.mjs"],
   // ROUND 23.3 DELTA (owner, 2026-09-13) — Part C unified dispute window: dispute exists for
   // every Faro-vs-face variance (both directions) + zero null load_id in faro_invoice_lines.
   ["verify-dispute-window-unified", "scripts/verify-dispute-window-unified.mjs"],
