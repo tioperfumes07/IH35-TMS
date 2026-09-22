@@ -1445,6 +1445,17 @@ async function bookLoadInTransaction(input: BookLoadInput): Promise<BookLoadResu
  * is real, separate, per-caller work -- each has its own input shape to map onto BookLoadInput --
  * named here rather than claimed done. scripts/verify-one-load-create-path.mjs fails on exactly
  * these files today, by design, until that wiring lands.
+ *
+ * FEED PARITY P0 (Lead, 2026-09-22, live-verified: 18 dispatched loads carry a driver bill and
+ * $0.00 in dispatch.load_charge_lines -- driver paid, customer never billed): after the charge
+ * lines are written, a load reaching status='dispatched' with a $0.00 charge-line total is gated
+ * the SAME two-case way as every gate above -- live_feed BLOCKS (throws, the only way to roll back
+ * this late in the transaction), historical_backfill records an exception via appendCrudAudit and
+ * proceeds, an undeclared source fails closed as live_feed. Live-proved (real USMCA customer/
+ * driver, rolled-back transaction, never committed): source omitted -> throws
+ * E_LOAD_DISPATCHED_NO_CHARGE_LINES; source="live_feed" -> throws identically; source=
+ * "historical_backfill" -> load 13619 created, exact exception row filed
+ * (event_class=dispatch.historical_backfill_gate_exception, gate=zero_dollar_charge_lines_at_dispatch).
  */
 export async function createLoadWithFullSideEffects(
   client: DbClient,
@@ -2651,6 +2662,43 @@ export async function createLoadWithFullSideEffects(
           charge.amount_cents, (index + 1) * 10, input.requestingUserUuid,
         ]
       );
+    }
+
+    // FEED PARITY P0 (Lead, 2026-09-22, live-verified): 18 dispatched loads carry a driver bill
+    // and $0.00 in dispatch.load_charge_lines -- the driver got paid, the customer was never
+    // billed. That is why Faro bought 18 invoices we never created. A load may not reach
+    // 'dispatched' with no billable charge lines.
+    //   live_feed          -> BLOCK. This fires after the load row (and its charge lines) are
+    //                         already inserted, so a bare `return {kind:"error"}` would NOT roll
+    //                         back (withCurrentUser only rolls back on a THROW, confirmed against
+    //                         its own implementation) -- throw, same as the unit_oos gate above,
+    //                         the only correct way to undo everything this transaction has done.
+    //   historical_backfill -> EVALUATE + RECORD via the same appendCrudAudit exception trail
+    //                         every other gate in this function uses; creation proceeds.
+    //   undeclared source   -> fail-closed live_feed (LoadCreateSource's own default) -> BLOCK.
+    if (load.status === "dispatched") {
+      const totalChargeCents = input.charges.reduce((sum, c) => sum + c.amount_cents, 0);
+      if (totalChargeCents === 0) {
+        const zeroChargeMessage = `E_LOAD_DISPATCHED_NO_CHARGE_LINES:Load ${String(load.load_number ?? load.id)} is dispatching with $0.00 in charge lines -- the customer would never be billed.`;
+        if (source !== "historical_backfill") {
+          throw new Error(zeroChargeMessage);
+        }
+        await appendCrudAudit(
+          client,
+          input.requestingUserUuid,
+          "dispatch.historical_backfill_gate_exception",
+          {
+            operating_company_id: input.operating_company_id,
+            gate: "zero_dollar_charge_lines_at_dispatch",
+            load_id: load.id,
+            load_number: load.load_number,
+            historical_backfill_gate_exception: true,
+            would_have_blocked_with: zeroChargeMessage,
+          },
+          "warning",
+          "FEED-PARITY-ZERO-CHARGE-GATE"
+        );
+      }
     }
 
     // GO-19 slice 04 — proforma is minted at first pickup (mintProformaInvoiceOnFirstPickup), never
