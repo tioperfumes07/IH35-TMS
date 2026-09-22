@@ -50,6 +50,16 @@ function fakeClient(pickupAt: Date | string | null) {
     if (/INSERT INTO outbox\.events/.test(sql)) {
       return { rows: [] };
     }
+    // allocateSettlementDisplayId (settlement-display-id.ts) now calls
+    // allocateNextSettlementSourceDocumentRef (P0-B numbering-law fix) instead of the retired
+    // next_settlement_display_id counter -- teach the double the two queries it issues. This test
+    // is about periodDate survival, not settlement numbering, so any valid bare-number id works.
+    if (/SELECT pg_advisory_xact_lock/.test(sql)) {
+      return { rows: [] };
+    }
+    if (/GREATEST\(\$2::int, COALESCE\(MAX/.test(sql)) {
+      return { rows: [{ next: "5826" }] };
+    }
     throw new Error(`fakeClient: unhandled query: ${sql}`);
   });
   return { query, inserted };

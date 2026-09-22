@@ -62,6 +62,17 @@ function makeClient(scn: { activeLoad?: boolean; loadBill?: boolean; openBill?: 
       if (sql.includes("UPDATE driver_finance.cash_advance_requests")) {
         return { rows: [{ id: REQ, display_id: "CAR-1", status: "approved" }] };
       }
+      // insertDriverPwaNotification (notifyDriverPwaIfAvailable, cash-advance-requests.service.ts)
+      // -- the service now sends a PWA notification on approve; teach the double the two specific
+      // queries it issues (table-exists probe, then the real insert) rather than falling through
+      // to the catch-all `{ rows: [] }` below, which made both the probe and the insert look like
+      // they returned nothing and threw pwa_driver_notification_undelivered_enqueue_failed.
+      if (sql.includes("to_regclass('pwa.driver_notifications')")) {
+        return { rows: [{ ok: true }] };
+      }
+      if (sql.includes("INSERT INTO pwa.driver_notifications")) {
+        return { rows: [{ id: "88888888-8888-4888-8888-888888888888" }] };
+      }
       return { rows: [] };
     }),
   };

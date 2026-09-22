@@ -151,16 +151,24 @@ describe("load-bookended settlements", () => {
         if (sql.includes("FROM mdata.load_stops")) {
           return { rows: [{ pickup_at: "2026-08-07T00:00:00.000Z" }] };
         }
+        // P0-B numbering-law fix: allocateSettlementDisplayId now calls
+        // allocateNextSettlementSourceDocumentRef (continues the real AlwaysTrack sequence),
+        // never the retired next_settlement_display_id synthetic S-YYYY-NNNN counter. Checked
+        // BEFORE the generic "FROM driver_finance.driver_settlements" branch below -- the
+        // allocator's own query also contains that substring.
+        if (sql.includes("pg_advisory_xact_lock")) {
+          return { rows: [] };
+        }
+        if (sql.includes("GREATEST($2::int, COALESCE(MAX")) {
+          return { rows: [{ next: "9901" }] };
+        }
         if (sql.includes("FROM driver_finance.driver_settlements")) {
           // Simulates S-13651/S-13653: first_load_id's own load is cancelled AND there are zero
           // settlement_lines to attach — genuinely nothing reusable, per the ruling's own carve-out.
           return { rows: [] };
         }
-        if (sql.includes("next_settlement_display_id")) {
-          return { rows: [{ next_id: "S-2026-9901" }] };
-        }
         if (sql.includes("INSERT INTO driver_finance.driver_settlements")) {
-          return { rows: [{ id: "s-new", display_id: "S-2026-9901" }] };
+          return { rows: [{ id: "s-new", display_id: "9901" }] };
         }
         if (sql.includes("audit.append_event") || sql.includes("INSERT INTO outbox.events")) {
           return { rows: [] };
@@ -176,14 +184,15 @@ describe("load-bookended settlements", () => {
       actorUserId: "00000000-0000-4000-8000-0000000000a1",
     });
 
-    expect(result).toEqual({ settlementId: "s-new", settlementNumber: "S-2026-9901" });
+    expect(result).toEqual({ settlementId: "s-new", settlementNumber: "9901" });
   });
 
   it("OWNER-NUMBERING-RULE — new settlement display_id is generated, never S-<load_number>", async () => {
-    // The load number is L-99001. The old bug produced S-99001 (settlement = load number).
-    // The fix calls next_settlement_display_id which returns an independent S-YYYY-NNNN sequence.
-    // This test asserts the generated display_id is NOT S-99001 (the load-number-derived form)
-    // and IS the value from next_settlement_display_id (S-2026-0042 in this mock).
+    // The load number is L-99001. The old bug produced S-99001 (settlement = load number, wrong
+    // because one settlement can cover many loads). P0-B (Lead ruling, 2026-09-22) replaced the
+    // synthetic S-YYYY-NNNN counter with allocateNextSettlementSourceDocumentRef, which continues
+    // the REAL AlwaysTrack document-number sequence (a bare number, e.g. "9942") -- still never
+    // derived from the load number, which is exactly what this test protects.
     const client = {
       query: vi.fn().mockImplementation(async (sql: string) => {
         if (sql.includes("FROM mdata.loads") && sql.includes("WHERE id = $1")) {
@@ -192,14 +201,17 @@ describe("load-bookended settlements", () => {
         if (sql.includes("FROM mdata.load_stops")) {
           return { rows: [{ pickup_at: "2026-08-07T00:00:00.000Z" }] };
         }
+        if (sql.includes("pg_advisory_xact_lock")) {
+          return { rows: [] };
+        }
+        if (sql.includes("GREATEST($2::int, COALESCE(MAX")) {
+          return { rows: [{ next: "9942" }] };
+        }
         if (sql.includes("FROM driver_finance.driver_settlements")) {
           return { rows: [] };
         }
-        if (sql.includes("next_settlement_display_id")) {
-          return { rows: [{ next_id: "S-2026-0042" }] };
-        }
         if (sql.includes("INSERT INTO driver_finance.driver_settlements")) {
-          return { rows: [{ id: "s-new-42", display_id: "S-2026-0042" }] };
+          return { rows: [{ id: "s-new-42", display_id: "9942" }] };
         }
         if (sql.includes("audit.append_event") || sql.includes("INSERT INTO outbox.events")) {
           return { rows: [] };
@@ -219,7 +231,9 @@ describe("load-bookended settlements", () => {
     expect(result.settlementNumber).not.toBe("S-99001");
     // The settlement number must NOT be S- prefixed load number in any form.
     expect(result.settlementNumber).not.toBe(`S-${makeLoadRow().load_number.replace(/^L-/, "")}`);
-    // The settlement number MUST be the generated sequence value.
-    expect(result.settlementNumber).toBe("S-2026-0042");
+    // The settlement number MUST be the generated AlwaysTrack-sequence value, never a synthetic
+    // S-YYYY-NNNN counter.
+    expect(result.settlementNumber).toBe("9942");
+    expect(result.settlementNumber).not.toMatch(/^S-\d{4}-\d{4}$/);
   });
 });
