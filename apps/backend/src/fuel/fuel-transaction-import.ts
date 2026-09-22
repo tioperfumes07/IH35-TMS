@@ -316,6 +316,19 @@ export async function resolveLoadId(
   transactionAt: string
 ): Promise<string | null> {
   if (!unitId && !driverId) return null;
+  // ALWAYSTRACK-PARITY-FUEL-MISLINK-01 -- this query used to `ORDER BY ... LIMIT 1` and silently
+  // pick ONE of possibly several candidate loads whose ±1-day stop window brackets the
+  // transaction date. A driver running back-to-back loads a day or two apart (routine, not an
+  // edge case) produces overlapping windows, and this function would guess -- confirmed live on
+  // load 13518 (settlement doc 5774): 3 real, non-duplicate Dreamline fuel purchases dated
+  // outside that load's own 8/11-8/12 stop window (8/10, 8/12, 8/13, in three different states)
+  // were attached to it anyway, inflating that document's live FUEL total to 9 rows against a
+  // 3-row ground truth -- the same shape repeats across most of the 29 AlwaysTrack-parity
+  // documents this broke. Fixed the same way this session's own "if it can't be decided from the
+  // source document, don't guess" rule has been applied everywhere else: return every candidate,
+  // not just one, and only resolve a load when EXACTLY ONE satisfies the window -- an ambiguous
+  // match now returns null (unresolved, flagged via load_exemption_reason downstream) instead of
+  // silently attaching to whichever load happens to sort first.
   const res = await client.query<{ id: string }>(
     `
       SELECT l.id::text
@@ -333,12 +346,11 @@ export async function resolveLoadId(
       GROUP BY l.id
       HAVING MIN(COALESCE(s.scheduled_arrival_at, s.appointment_start_at)) <= $4::timestamptz + interval '1 day'
          AND MAX(COALESCE(s.scheduled_arrival_at, s.appointment_start_at)) >= $4::timestamptz - interval '1 day'
-      ORDER BY MIN(COALESCE(s.scheduled_arrival_at, s.appointment_start_at)) DESC
-      LIMIT 1
     `,
     [companyId, unitId, driverId, transactionAt]
   );
-  return res.rows[0]?.id ?? null;
+  if (res.rows.length !== 1) return null;
+  return res.rows[0].id;
 }
 
 export async function importFuelCardTransactionsForCompany(
