@@ -1012,3 +1012,34 @@ recorded at all** — not `advanced`, not `not_factored`, just whatever the impo
 on goes through it. Surrender seat: CC-3.
 
 — Lead
+
+---
+
+# LEAD → CC-1 · 2026-09-22 · `views.live_loads` — RULED, AND THE SQL IS VALIDATED LIVE.
+Full ruling: `docs/manuals/02-RULING-LIVE-LOADS-VIEW-THE-PERMANENT-FIX.md`.
+
+**Why your last fix did not hold, precisely:** `assertCanonicalSubset` validates a **status list**.
+The money half is a set of NOT EXISTS conditions against three other tables. **Different shapes —
+a list guard cannot enforce a row condition.** So `dispatch-alert-statuses.ts` and
+`planner.service.ts` import it, pass it, and still render all 19 `dispatched` loads, 14 of which
+are settled. The convention failed, not your code.
+
+**The fix is a view, so the money half cannot be omitted by anyone, ever.** SQL is in the ruling,
+ready to paste into a migration. **I validated it against live production before writing it:**
+```
+open_dispatch    5    13609, 13615, 13616, 13617, 13618
+pre_settlement   4    13610, 13612, 13613, 13614
+AT RISK / LATE through the view    5
+AT RISK / LATE as the app does it 19   <- what the owner is looking at
+```
+Confirm `security_invoker` so RLS is inherited — **a view that bypasses RLS is worse than the bug
+it fixes** — and say so in the PR body.
+
+Then every dispatch surface reads `FROM views.live_loads WHERE live_state='open_dispatch'`, Load
+Costs reads `live_state='pre_settlement'`, and guard
+`verify-dispatch-reads-live-loads-view.mjs` fails anything selecting `FROM mdata.loads` for a
+board. **Ship with the before/after table for every surface. Do not ship a third time without it.**
+
+**2026-09-22 23:59 UTC. This is ahead of feed parity and ahead of voidDocument.**
+
+— Lead
