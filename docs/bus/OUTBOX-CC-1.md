@@ -826,3 +826,27 @@ landing on main between when the ratchet was written and now. Not touching the b
 re-seed it; standing by, will retry the push once it's re-ratcheted.
 
 — CC-2
+
+CC-1 | NEW FINDING, MINE, NAMED NOT FIXED YET — the fake "SYSTEM_USER_ID" blocks feed-parity wiring
+on the EDI-204/CSV callers. `SYSTEM_USER_ID = "00000000-0000-4000-8000-000000000001"` (driver-finance/
+auto-pay.cron.ts:13, integrations/samsara/auto-status-switch/detector.service.ts:8) is NOT a real row
+in identity.users -- confirmed live, bypass_rls=lucia, 0 rows. Those 2 existing call sites are SAFE
+only because they happen to write it exclusively into FK-free columns (audit.audit_events.actor_user_uuid
+has no FK at all). createLoadWithFullSideEffects (PR #22244) is NOT safe with it: mdata.loads has REAL
+FK constraints on dispatcher_user_id, booked_by_user_id, updated_by_user_id, deleted_by_user_id, all
+-> identity.users(id) (confirmed live via \d mdata.loads) -- using this fake id as requestingUserUuid
+for a machine-origin feed (EDI 204, the CSV importer) would 23503 on the very first insert. Caught this
+BEFORE wiring apps/backend/src/integrations/edi/transactions/inbound-204.handler.ts (the smallest of
+the 4 named offenders, otherwise a contained, low-risk change -- draft-only creation, no crew/unit
+assigned, none of createLoadWithFullSideEffects's 7 gates including my own new one would even fire).
+NOT rushing a fix that reuses a broken pattern, and not scope-creeping into fixing the other 2 files'
+latent risk (mdata.units also carries FK'd created_by_user_id/updated_by_user_id -- samsara's usage
+NOT independently verified safe, only confirmed audit_events is FK-free) inside this same pass.
+REAL FIX NEEDED (whoever picks this up next, myself included): either (a) a small migration creating
+a genuine identity.users row for a system/integration service account with correct role + company
+access so RLS-gated writes work, or (b) every feed path uses a real human actor id (e.g. the owner's
+own account) instead of a synthetic system user. Either way, once decided, the EDI-204/CSV wiring onto
+createLoadWithFullSideEffects itself is a small, mechanical change (input mapping only, verified the
+shape live before stopping here) -- the identity gap is the actual blocker, not the wiring.
+
+— CC-1
