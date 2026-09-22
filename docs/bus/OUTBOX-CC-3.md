@@ -1619,3 +1619,65 @@ message, neither investigated yet this pass. Picking up E4 next (it's the more l
 the two, and likely shares root cause with item 3 above -- both are "fuel double-counted" shapes).
 
 — CC-3
+
+---
+## 2026-09-22 evening (cont'd) -- CC-3: root cause fixed (code, not data yet); E4/E10 filed with exact engine mapping
+
+**4. Alwaystrack-parity mis-linkage -- CODE FIX landed, live data NOT yet corrected (be precise
+about the difference).** `apps/backend/src/fuel/fuel-transaction-import.ts:311` `resolveLoadId()`
+used to `ORDER BY ... LIMIT 1` and silently pick ONE candidate load when more than one satisfied
+the ±1-day stop-window match -- the exact mechanism behind the 13517/13518 mis-link proven earlier
+this evening, and (by the "live FUEL rows consistently higher than target" pattern) most of the 29
+worsened documents. Fixed: it now returns every candidate and resolves a link ONLY when exactly
+one exists -- ambiguous (0 or 2+) returns null, same as this session's standing "don't guess" rule,
+never a GL/money change, pure FK-resolution correctness. 5 new test cases (11/11 passing),
+`tsc -b` clean. Branch `claude-3-fuel-mislink-01-resolveloadid-ambiguity`, committed, held.
+**This does NOT unblock the parity guard by itself** -- confirmed by trying to push it: it still
+hits the same live `verify-alwaystrack-parity` failure, because the guard checks LIVE DATA and
+this fix only changes what future imports/relinks will do, not the ~299 rows already mis-linked by
+the old logic. That historical correction (re-verify each row's load_id against its own load's
+stop window using the now-fixed logic, NULL back any mismatch -- a pure FK correction, no GL/money
+table touched) is the real remaining unblock, named as REMAINING, not attempted here given the
+scope and this session's own recent lesson about rushing fuel.fuel_transactions corrections.
+CC-1's own escalation (OUTBOX-CC-1.md, PR #22264) asked for "(a) CC-3's fix lands first or
+(b) a Lead-authorized scoped exception" -- (a) is now landed in code but is not sufficient alone;
+recommend (b) or the historical-backfill pass next, whichever the Lead prefers.
+
+**5. E4/E10 (Lead's mid-turn items) -- investigated with full evidence, filed to
+`docs/audit/GUARD-WORKORDERS.md`, not built (both span other seats' lanes).**
+- **E4 (diesel double-post):** root cause is FOUR separate ops/seed scripts
+  (`scripts/seed-settlements-cc-3.ts`, `seed-settlements-codex.ts`, `seed-missing-usmca-loads.ts`,
+  `scripts/ops/round27-1-step3-create-expenses-batch2.ts`) independently writing `"Diesel — ..."`
+  `accounting.expenses` rows from the same settlement PDFs a later script
+  (`scripts/ops/absorption-b1-fuel-ingest.mjs`) also absorbed into `fuel.fuel_transactions` --
+  two genuinely parallel ingestions of the same real purchase, not one buggy call site.
+  `scripts/verify-diesel-expense-fuel-dedupe.mjs`'s pass condition is inverted (asserts a MATCH
+  exists = pass, when a match IS the duplicate) -- Cursor already has a granted lane-cross to
+  rewrite it (`docs/bus/09-22-2026-LEAD-RULING-CURSOR-GATE-WIRING-LANE-CROSS.md`), confirmed NOT
+  YET LANDED. Named an explicit forward-risk: our own new Round-53 feeder's `diesel` category must
+  never be wired into `accounting.expenses` the same way, or it reproduces this at Round-53 scale.
+- **E10 (void-no-reversal):** the ticket's own D1 line citation was corrected (the real posting
+  site is `driver-finance/escrow-forfeit.service.ts`, not `accounting/escrow/service.ts:533,545`
+  which never creates a JE) -- confirmed genuinely missing, zero hits repo-wide for any
+  unforfeit/reverse-forfeit path. D2 (`parts-inventory.routes.ts:294`) confirmed exactly as
+  described. Read all six named engines' real signatures; both D1's forfeiture JE and D2's
+  cash-path JE go through `createJournalEntryOnClient`, which stamps NO
+  `source_transaction_type`/`source_transaction_id` at all -- so `reverseJournalEntryNoFlip`
+  (`journal-entries.service.ts:447`) is the correct fit for both, driven off each domain's own
+  already-stored JE id (`escrow_postings.linked_journal_entry_id` /
+  `parts_purchase_postings.expense_je_id`); D2's vendor/bill sub-path is separately stamped and
+  fits `reversePostedSourceTransactionInClientTx` instead. D1 also needs a symmetric un-forfeit
+  write to the escrow subledger (`driver_finance.escrow_balances`/`escrow_ledger`) beyond the GL
+  call -- new wiring, not new GL math. `scripts/verify-every-void-route-reverses.mjs` does not
+  exist yet -- confirmed tracked-but-unwritten, CC-1's lane, in the work register docs.
+
+Full evidence + exact file:line citations for both in `docs/audit/GUARD-WORKORDERS.md` (this
+evening's two new rows). Recommend CC-1 picks up E4's ingestion-side fix + E10's two void paths
+next; Cursor already owns E4's guard rewrite.
+
+**Branches held pending a Lead ruling on the alwaystrack-parity guard (all fully built, none
+bypassed):** `claude-3-round53-settlement-expense-extract`, `claude-3-round43-item2-cut-relay-ingest`,
+`claude-3-fuel-mislink-01-resolveloadid-ambiguity`. All three clear every other check; all three
+are blocked by the same single live-data regression.
+
+— CC-3
