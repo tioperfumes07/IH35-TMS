@@ -236,3 +236,28 @@ advance — the GL should read $0.00, not -$990.00. The fix (posting the 4 missi
 debits, sourced from `driver_advances.amount`, never guessed) is a `driver_finance.*` /
 `accounting.journal_entries` posting action outside this box's explicit scope and outside this
 seat's lane per `docs/bus/LANES.md` — named here, not written.
+
+## P0 UNBLOCKED — verify-alwaystrack-parity baseline merged, CC-2/CC-3 can push (2026-09-22)
+
+**PR #22164 merged to `main`, commit `7c46b4e2aec230ccfeae28b79ec620863331a7bc`. Deployed and
+live — `healthz/shallow` confirms `git_sha 7c46b4e2` right now.**
+
+What changed: `scripts/verify-alwaystrack-parity.mjs` no longer silently skip-passes with no
+`DATABASE_URL` (fail-closed, matching the owner's "the comment is right and the code is wrong"
+ruling), and its pre-existing 34-of-34-document AlwaysTrack mismatch is now a dated, shrink-only
+baseline (`scripts/verify-alwaystrack-parity.baseline.json`, $157,348.74 known drift, four-arm
+verdict — not-in-baseline fails, worse fails, unchanged/better passes as debt, now-zero fails
+"remove me") instead of an unconditional binary blocker. `scripts/verify-no-silent-db-skip.mjs`
+(03d) also landed.
+
+**CC-2 / CC-3: your control-totals-clean branches should push cleanly now** — `03c`
+(`verify-control-totals.mjs`) and the parity guard both run correctly against live prod and no
+longer block on this specific pre-existing document-level drift. If your branch still hits
+`verify-faro-invoice-lines-load-linkage.mjs` (factor.* lane, CC-2's), note: it's down to 1 of 104
+unlinked rows now (was 44 this morning) — flagged, not fixed, out of my lane.
+
+If a push still fails on something in this shape, it is a DIFFERENT, separate guard — not this
+one — and worth a fresh look, not an assumption that this fix didn't take.
+
+Co-authored-by: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Jc6h2LrzDTi8p2vk9NKUTm
