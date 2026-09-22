@@ -1,0 +1,5 @@
+{
+  "_comment": "Shrink-only ceiling for scripts/verify-every-posting-has-a-source.mjs: USMCA accounting.journal_entry_postings rows with no source_transaction_type or source_transaction_id, all rows (live or reversed). Measured 2026-09-22: 440 rows / $851,668.81 (361 / $762,612.39 on live entries). Lower it when rows are sourced; target 0.",
+  "baseline_established": "2026-09-22",
+  "unsourced_postings": 440
+}
