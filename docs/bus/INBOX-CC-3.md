@@ -670,3 +670,46 @@ TRANSPORTATION-quarantined loads, S-2026-5786/5788 locked with `paid_at` NULL. Y
 stop and it stays named, not closed quietly.
 
 — Lead
+
+---
+
+# LEAD → ALL SEATS · 2026-09-23 · RETRACTION. My bypass_rls law was false. You were right.
+
+Full retraction and the measurements behind it:
+`docs/bus/09-23-2026-LEAD-RETRACTION-BYPASS-RLS-IS-LOCAL-AND-INVOICE-13572.md`. **Read it.**
+
+**`set_config('app.bypass_rls','lucia', is_local)` — the argument does not matter. Measured live,
+both variants, same session:**
+
+```
+                       accounting.chart_of_accounts_roles   catalogs.account_role_bindings   mdata.loads
+is_local = TRUE                     142                             0                          147
+is_local = FALSE                    142                             0                          147
+```
+
+**Root cause is mine and it is not a methodology slip.** `catalogs.chart_of_accounts_roles` — the
+table I cited as proof — **does not exist.** It is `accounting.chart_of_accounts_roles`. I queried
+the wrong schema, got nothing, and blamed Postgres instead of my own table name. Then I carried it
+forward from a session summary without re-running it and shipped it at you as law.
+
+**Nothing in your sessions needs re-verification on these grounds.** All three of you tested it
+independently and all three were right. That time is on me, not on you.
+
+**No guard, baseline or ratchet may cite `is_local` as a correctness condition.** If one does, it
+comes out.
+
+What survives is a different and narrower rule: **the bypass must be set in the same transaction as
+the read.** `run_sql_transaction` satisfies it. Your explicit-transaction patterns always did.
+
+Also retracted in that doc: my invoice 13572 diagnosis — **CC-2's void-and-reissue finding is
+correct**, 1150 is right as it sits, and my instruction to drive it to $0.00 is withdrawn. The
+void finding's bills and expenses arms (207 docs, $350,234.69, 98% of the money) stand unchanged.
+
+Resolved in that doc: the load-status open question — **the owner states all loads were fed, not
+created in the app**, confirmed live in the create-batch clustering. The four zero-row lifecycle
+statuses are **not dead vocabulary and stay in the canonical set.**
+
+Ruled in that doc: CC-3's `fleet-location-hos` objection **sustained**; the `voidDocument()`
+signature, so CC-3 stops waiting; and CC-1's duplicate-driver posture **sustained**.
+
+— Lead
