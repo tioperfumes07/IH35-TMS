@@ -1,10 +1,10 @@
 {
-  "healthzSha": "277c83a",
-  "generated_at": "2026-09-21T19:51:13.564Z",
+  "healthzSha": "19d3ff8",
+  "generated_at": "2026-09-22T16:54:19.288Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "277c83a",
+    "deployedSha": "19d3ff8",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 22134,
-      "title": "FINDING: N/A — ROUND 26.3 STEP 4A: fix deduction shortfall on locked settlements 5795, 5800",
+      "number": 22224,
+      "title": "FINDING: ACCT-F30214 LANE: FINANCIAL (mdata.loads -- item 9 of 48, corrected trailer_type on 4 pre-settlement loads from AlwaysTrack's real equipment record)",
       "state": "merged",
-      "mergedAtCt": "09/21/2026, 02:07 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22134",
-      "sha": "277c83ab6f",
-      "committedAtIso": "2026-09-21T14:07:27-05:00"
+      "mergedAtCt": "09/22/2026, 11:52 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22224",
+      "sha": "b3aa3d3de2",
+      "committedAtIso": "2026-09-22T11:52:27-05:00"
     },
     {
-      "number": 22133,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "number": 22223,
+      "title": "FINDING: N/A LANE: DOCS (docs(bus) report -- Love's 604 geofences closed, both deadlines met)",
       "state": "merged",
-      "mergedAtCt": "09/21/2026, 08:00 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22133",
-      "sha": "b21118917a",
-      "committedAtIso": "2026-09-21T13:00:28Z"
+      "mergedAtCt": "09/22/2026, 11:45 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22223",
+      "sha": "19d3ff8933",
+      "committedAtIso": "2026-09-22T11:45:28-05:00"
     },
     {
-      "number": 22129,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "number": 22221,
+      "title": "FINDING: ACCT-F30214 LANE: FINANCIAL (mdata/geo -- Love's 604 geofences built, both halves, 604 locations + 604 linked active geofences, guard included)",
       "state": "merged",
-      "mergedAtCt": "09/21/2026, 12:07 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22129",
-      "sha": "4c959cae7c",
-      "committedAtIso": "2026-09-21T05:07:23Z"
+      "mergedAtCt": "09/22/2026, 11:42 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22221",
+      "sha": "2000af2040",
+      "committedAtIso": "2026-09-22T11:42:14-05:00"
     },
     {
-      "number": 22128,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "number": 22219,
+      "title": "ENGINE FIX: FEED PARITY + CAPABILITY REGISTRY + 48-task numbered register",
       "state": "merged",
-      "mergedAtCt": "09/20/2026, 03:55 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22128",
-      "sha": "ec8680d3ea",
-      "committedAtIso": "2026-09-20T20:55:55Z"
+      "mergedAtCt": "09/22/2026, 11:29 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22219",
+      "sha": "70bf00bc75",
+      "committedAtIso": "2026-09-22T11:29:37-05:00"
     },
     {
-      "number": 22127,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "number": 22220,
+      "title": "FINDING: N/A LANE: DOCS (docs(bus) report -- IFTA-GALLONS-04 closed, deadline met, 49-row residual now exhausted across all 3 sources)",
       "state": "merged",
-      "mergedAtCt": "09/20/2026, 11:15 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22127",
-      "sha": "ed8781e79c",
-      "committedAtIso": "2026-09-20T16:15:41Z"
+      "mergedAtCt": "09/22/2026, 11:29 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22220",
+      "sha": "f56e1389b7",
+      "committedAtIso": "2026-09-22T11:29:31-05:00"
     },
     {
-      "number": 22126,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "number": 22218,
+      "title": "FINDING: ACCT-F30214 LANE: FINANCIAL (docs(ops) IFTA-GALLONS-04 -- third source (integrations.relay_fuel_transactions) resolves 69 more of the 118 residual rows, 118->49 / 12,537.778->5,627.525 gal)",
       "state": "merged",
-      "mergedAtCt": "09/20/2026, 06:35 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22126",
-      "sha": "4bd8b8fcb9",
-      "committedAtIso": "2026-09-20T11:35:57Z"
+      "mergedAtCt": "09/22/2026, 11:26 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22218",
+      "sha": "61d50a36d9",
+      "committedAtIso": "2026-09-22T11:26:23-05:00"
     },
     {
-      "number": 22125,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "number": 22217,
+      "title": "ROUND 33 — terminal-status ruling · void-census correction · IFTA third source · LOVE'S 604 geofence seed · DATA SOURCE REGISTER",
       "state": "merged",
-      "mergedAtCt": "09/20/2026, 12:01 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22125",
-      "sha": "4c9fa9dc72",
-      "committedAtIso": "2026-09-20T05:01:33Z"
+      "mergedAtCt": "09/22/2026, 11:18 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22217",
+      "sha": "432e8df3d1",
+      "committedAtIso": "2026-09-22T16:18:21Z"
     },
     {
-      "number": 22124,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "number": 22216,
+      "title": "FINDING: ACCT-F30223 — LEAD ruling ROUND 40: lane cross GRANTED for CC-2 on verify-relay-deposits-land-in-usmca.mjs; Relay guard stays OUT of the gate",
       "state": "merged",
-      "mergedAtCt": "09/19/2026, 03:49 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22124",
-      "sha": "753ffecf58",
-      "committedAtIso": "2026-09-19T20:49:42Z"
+      "mergedAtCt": "09/22/2026, 11:13 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22216",
+      "sha": "933f29136c",
+      "committedAtIso": "2026-09-22T11:13:40-05:00"
     },
     {
-      "number": 22123,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "number": 22215,
+      "title": "LEAD CORRECTION + manuals — three of my instructions were wrong, verified against the repo",
       "state": "merged",
-      "mergedAtCt": "09/19/2026, 10:58 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22123",
-      "sha": "5d66e287b5",
-      "committedAtIso": "2026-09-19T15:58:09Z"
+      "mergedAtCt": "09/22/2026, 11:06 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22215",
+      "sha": "90ad43f0b1",
+      "committedAtIso": "2026-09-22T16:06:43Z"
     },
     {
-      "number": 22122,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "number": 22213,
+      "title": "FINDING: ACCT-F2026092207 — CLAIMED-REGEN 11557: ROUND 32.2-CORRECTED canonical active-load set, Load Costs 114->9",
       "state": "merged",
-      "mergedAtCt": "09/19/2026, 06:10 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22122",
-      "sha": "a62c7ab6cb",
-      "committedAtIso": "2026-09-19T11:10:49Z"
+      "mergedAtCt": "09/22/2026, 10:57 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22213",
+      "sha": "790feca0e2",
+      "committedAtIso": "2026-09-22T10:57:43-05:00"
     }
   ]
 }
