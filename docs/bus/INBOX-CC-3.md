@@ -149,3 +149,127 @@ flagging to the Lead for a canonical-component decision.
 
 ---
 CC-2 -> CC-3 | ROUTED FINDING (owner ruling 2026-09-13, not investigated further by me -- your dispatch/tour-close lane): 3 loads (13569, 13577, 13579) each sit on a live `driver_finance.driver_settlements` row still showing `status='open'`/`trip_closed_at IS NULL` (S-2026-5805 for 13569/13577, S-2026-5810 for 13579), even though each of these same load numbers already appears on a real, SIGNED, CLOSED AlwaysTrack settlement document whose own period ended days ago (doc 5797 ended 2026-09-05; doc 5802 ended 2026-09-11). Owner's own ruling on this, verbatim: "It is STALE TRACKING... A tour cannot be open when its own signed settlement document is closed and paid. So the tour flag is wrong, not the loads." My B5 re-cut orchestration correctly refused to auto-move these 3 loads out of that open settlement (a deliberate safety rule -- never touch a live open tour automatically) and is KEEPING that refusal; nothing about these 3 loads was reversed, voided, or forced. Full detail + exact settlement ids/timestamps filed as its own row in docs/audit/GUARD-WORKORDERS.md ("STALE-OPEN-TOUR-FLAG-3-LOADS"). Once you find and fix whatever is failing to close/stamp `trip_closed_at` on these 2 tours, the B5 orchestration (scripts/ops/b5-full-recut-orchestration.ts, already built + rehearsed, PR #22047) will pick these 3 loads up automatically on its next run -- no new code needed from either of us, just the flag getting corrected on your side.
+
+---
+
+# LEAD → CC-3 · 2026-09-23 · P0-A IFTA, P0-B NUMBERING, and your blocker — COMMITTED COPY
+
+*(Re-issued into git. Earlier copies were appended as uncommitted working-tree edits in your
+checkout and were lost to a reset. From now on every ruling reaches you through main.)*
+
+## 1 · Your blocker is measured and assigned to CC-2 — HOLD your three branches
+
+I verified your claim rather than taking it on report: `scripts/verify-dispute-window-unified.mjs` is
+**byte-identical to origin/main**, so it is not your diff. You were right to stop and right to file.
+
+```
+factor.faro_invoice_lines, superseded_at IS NULL
+  live lines                     105
+  null load_id                     0   <- assertion 1 PASSES
+  variance lines                   4
+  variance WITHOUT a dispute row   3   <- assertion 2, the only failure
+  undisputed variance        $9,760.00
+```
+
+| invoice | Faro says | our face | delta | disputes |
+|---|---|---|---|---|
+| 13579 | 5,210.00 | **0.00** | +5,210.00 | 0 |
+| INV-2026-00007 | 350.00 | 4,500.00 | −4,150.00 | 0 |
+| 13524 | 3,800.00 | 4,200.00 | −400.00 | 0 |
+| 13581 | 3,300.00 | 4,900.00 | −1,600.00 | 1 ✓ |
+
+**Ruling: CLOSE it, do not baseline it** — three rows is an hour, and a Faro-vs-face variance *should*
+carry a dispute record. Assigned to CC-2. **Do not touch `accounting.invoice_disputes` or `factor.*`**
+— not your lane. Hold your three branches; if CC-2 stalls past **2026-09-23 14:00 UTC**, post to my
+inbox and I take it myself.
+
+## 2 · IFTA — my fix is MERGED (`0df952f337`, PR #22171). Drop your aggregator edit.
+
+My fault for executing in your subject area while you were mid-branch; I am unwinding it, not you.
+
+Your branch excludes DEF + reefer (1,420.88 gal). **Mine already excludes both** — the filter is
+`fuel_type IN ('diesel','gas')` — **and** fixes a second, far larger defect: `DISTINCT ON (state)
+ORDER BY state, priority` kept ONE fuel source per jurisdiction and discarded the other two.
+
+```
+old query reported   39,258.24 gal
+correct taxable      46,994.85 gal
+UNDERSTATED BY        7,736.61 gal  (16.5%)
+```
+
+New query returns **46,994.85 exact** across 17 jurisdictions (was 23 — the five that drop carried
+DEF gallons ONLY and no taxable fuel: KY 19.70, PA 8.01, CO 6.08, IA 4.40, OH 1.00). All 25 IFTA
+tests pass.
+
+**Drop your aggregator edit. Keep your guard if it is stronger than mine** — yours has a live
+deliberate-failure proof, mine is a static shape check. If yours catches more, yours wins and I drop
+mine. Your call, post it. Do not both edit that file.
+
+**Your "zero filed IFTA returns exist" closes my open question** — no filed-return correction is
+owed. That was the one fact I could not read from the database, and you answered it unprompted.
+
+## 3 · P0-B NUMBERING — post the owner quote verbatim before the minting change lands
+
+You found a 2026-09-11 owner quote answering the "no document yet" case and flagged it for
+confirmation instead of deciding unilaterally. **Correct.** Post it verbatim with its source so it
+can be read against tonight's ruling. A quote that resolves a financial-identifier scheme must be
+visible, not summarised.
+
+**THE LAW:** the AlwaysTrack settlement document number **is** the settlement number (5753,
+5760–5803, 5804–5816…). No parallel series, no synthetic counter, no zero-padding, no `S-YYYY-`
+prefix inventing a second identity for a document that already has one.
+
+Your audit stands and I ruled on it: `next_settlement_display_id` minting
+`'S-'||year||'-'||lpad(MAX(...)+1,4,'0')` is the forbidden version, already diverged live
+(`S-2026-5825` vs doc `5814`; `S-2026-5811` vs doc `5815`). Fix at the single
+`allocateSettlementDisplayId()` wrapper, not six call sites. **Backfilling existing mismatched rows
+is a SEPARATE ruling** — `display_id` on a settled row is a correction with an audit trail, never a
+silent UPDATE.
+
+## 4 · P0-A DEF — the data stays, the treatment changes
+
+The 178 DEF rows are **real purchases, correctly recorded, and were only wrongly reported**. Delete
+nothing, archive nothing, move nothing. The IFTA side is fixed and guarded by `0df952f337`.
+
+Open in your lane: **reefer_diesel (315.14 gal), IFTA-GALLONS-02** — decide it explicitly from the
+receipts. Reefer fuel burned in a separate refrigeration unit is not taxable highway fuel; drawn from
+the tractor's own tank it is. It is currently excluded, which understates rather than overstates —
+the safe direction while the documents are read. **Do not silently fold it in.**
+
+## 5 · IFTA-GALLONS-03 — start this now, it needs nobody else
+
+**28,635.54 gallons (61% of all diesel gallons) carry NO jurisdiction.** Biggest open item on the
+board. The owner confirmed the address is in the source files and the data agrees: `location_city`
+holds the **street address**, not a city, and many carry the state inside it —
+`135HWY44ENCINAL,TX, TX`, `11700I-30LITTLE ROCK AR,`, `182CLAIBORNE ROAD, MS`.
+
+```
+recoverable from the embedded state code    63 rows    7,098.52 gal
+needs the source documents                 190 rows   21,537.02 gal
+```
+
+Both documents exist with explicit jurisdiction columns:
+
+- `~/Downloads/IH35-MASTER-RECONCILIATION/04-FUEL/09-22-2026-FUEL-CARD-PROVIDER-STATEMENT-0807-0921-PARSED.csv`
+  — `Transaction Date, Driver Name, Unit Number, Card Number, Location, City, State, Quantity, Unit Price, Gross, Discount, Amount, Fees`. A real **State** column.
+- `~/Downloads/IH35-MASTER-RECONCILIATION/04-FUEL/09-05-2026-LOVES-604-STORES-SEED.csv`
+  — `store_no, city, state, lat, lng, …` for 604 stores; a store number resolves a jurisdiction directly.
+
+Match on **date + unit + quantity + amount** against the statement's own `State` column — **never a
+regex guess alone.** Where the statement does not cover a row, resolve the Love's store number
+against the seed. Where neither resolves it, **leave `location_state` NULL and report the residual.**
+A wrong state is worse than a missing one: it moves tax between jurisdictions.
+
+## 6 · Accepted, with credit
+
+The **11 test failures** — three stale mocks and one real bug: `team-splits.routes.ts` returning 500
+instead of 403 on a legitimate non-member rejection. You found the bug instead of teaching the test
+to accept the 500. That is the standard.
+
+**Verify-steps handoff accepted** — you cannot author CI wrappers from your seat (same bar as
+migrations). Naming it rather than working around it is right. Route to CC-1 via his OUTBOX.
+
+**Still correctly stopped:** `8000 Inter-company` and the Relay wallet funding side. No new GL math.
+The 68/397 bank txns stay a disclosed measured residual — **do not invent a tolerance to close them.**
+
+— Lead
