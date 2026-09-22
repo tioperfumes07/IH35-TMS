@@ -43,6 +43,30 @@
 //       currently, correctly, honestly FAILS on assertion 3 until that poster fix lands — that is
 //       not a bug in this guard, it is the guard doing its job.
 //
+// ROUND 30.6, "DEF DEADLOCK BROKEN" (Lead ruling, docs/bus/INBOX-CC-1.md, 2026-09-23): the
+// unconditional hard-fail above proved UNSATISFIABLE, not wrong — there is no DEF/Urea/Exhaust
+// Fluid account anywhere in the chart of accounts to route to (5000 Fuel & Diesel / 5005 Fuel Card
+// Fees exist; 5010 is free, confirmed live independently by CC-1 and the Lead). "The ruling changes
+// because you proved the assertion is currently unsatisfiable, not because it is wrong." Assertion
+// 3 becomes a SECOND shrink-only four-arm ratchet, same shape and same file as assertion 2's,
+// seeded at today's measured state — 335 postings / $10,970.23 — under the `def_gl_segregation` key
+// in scripts/verify-fuel-transactions-per-load.baseline.json:
+//   no baseline entry, DEF sharing an account with diesel (>0)  -> FAIL (new contamination)
+//   baseline entry exists, live DIVERGES from it (either way)   -> FAIL — new, unreconciled drift;
+//                                                                   a human re-reconciles and
+//                                                                   regenerates the baseline entry
+//                                                                   with a cited reason
+//   baseline entry exists, live MATCHES it exactly               -> PASS, printed as known,
+//                                                                   disclosed debt (never silent)
+//   live is now CLEAN (0 shared postings) but a baseline entry
+//   still exists                                                 -> FAIL "remove me from the
+//                                                                   baseline" (same pattern as
+//                                                                   assertion 2's arm)
+// This is NOT relaxing the assertion — it is dating it. Keep the dynamic account_id comparison —
+// NEVER hardcode "5000" — so the ratchet only caps this already-measured, already-named debt; any
+// NEW account collision (a different account than the ones already in the baseline) still hard-
+// fails immediately, same as before.
+//
 // Checks, against the SAME ground-truth JSON the ingestion reads
 // (data/alwaystrack/settlements-truth-2026-09-13.json):
 //   1. Every fuel_purchases row across the 34 USMCA docs has a matching live
@@ -53,9 +77,7 @@
 //   2. Row count / dollar total — see the ratchet above.
 //   3. DEF GL SEGREGATION — every live DEF debit posting must hit a DIFFERENT account_id than any
 //      live diesel debit posting (dynamic comparison, no hardcoded account number — stays correct
-//      once a dedicated DEF account is created and wired). Currently FAILS live (see above);
-//      remains unconditional, never baselined, never widened — this is treatment correctness, not
-//      growth-driven drift.
+//      once a dedicated DEF account is created and wired). Shrink-only ratchet — see above.
 //   4. The 5 disclosed data-quality flags (1 date correction + 4 cross-load
 //      duplicate-invoice rows) are present and still flagged low-confidence —
 //      proves the ingestion's disclosed corrections weren't silently dropped
@@ -83,6 +105,13 @@ const BASELINE_PATH = path.join(process.cwd(), "scripts/verify-fuel-transactions
 function loadBaseline() {
   if (!fs.existsSync(BASELINE_PATH)) return null;
   return JSON.parse(fs.readFileSync(BASELINE_PATH, "utf8"));
+}
+
+// Assertion 3's ratchet entry lives nested under the same baseline file (`def_gl_segregation` key)
+// rather than a separate file — one reviewable baseline per guard, same precedent as assertion 2.
+function loadDefSegregationBaseline() {
+  const baseline = loadBaseline();
+  return baseline && baseline.def_gl_segregation ? baseline.def_gl_segregation : null;
 }
 
 async function live() {
@@ -210,12 +239,18 @@ async function live() {
       );
     }
 
-    // 3. DEF GL segregation (ROUND 30.6 self-correction — see file header). Real invariant is
-    // TREATMENT not STORAGE: every DEF debit posting must hit a DIFFERENT account_id than any
-    // diesel debit posting. Dynamic comparison — no hardcoded account number, so this stays
-    // correct once a dedicated DEF account is created and wired.
+    // 3. DEF GL segregation — shrink-only four-arm ratchet (ROUND 30.6, "DEF DEADLOCK BROKEN" —
+    // see file header for the full ruling). Real invariant is TREATMENT not STORAGE: every DEF
+    // debit posting must hit a DIFFERENT account_id than any diesel debit posting. Dynamic
+    // comparison — no hardcoded account number ("5000" never appears below) — so a NEW account
+    // collision still hard-fails immediately; only the already-measured, already-named debt (335
+    // postings / $10,970.23) is capped, pending CC-3's real fix (create a dedicated DEF account,
+    // repost, drive this to zero).
     const defIds = liveRes.rows.filter((r) => r.fuel_type === "def").map((r) => r.id);
     const dieselIds = liveRes.rows.filter((r) => r.fuel_type === "diesel").map((r) => r.id);
+    let sharedCount = 0;
+    let sharedCents = 0;
+    let sharedDetailRows = [];
     if (defIds.length > 0) {
       const glRes = await client.query(
         `SELECT ft.fuel_type, a.id::text AS account_id, a.account_number, a.account_name,
@@ -233,15 +268,33 @@ async function live() {
       const defAccountIds = new Set(glRes.rows.filter((r) => r.fuel_type === "def").map((r) => r.account_id));
       const dieselAccountIds = new Set(glRes.rows.filter((r) => r.fuel_type === "diesel").map((r) => r.account_id));
       const sharedAccountIds = [...defAccountIds].filter((id) => dieselAccountIds.has(id));
-      if (sharedAccountIds.length > 0) {
-        const shared = glRes.rows.filter((r) => sharedAccountIds.includes(r.account_id) && r.fuel_type === "def");
-        console.error(`${LABEL}: LIVE FAIL — DEF debit postings share an account with diesel debit postings (must be segregated):`);
-        for (const r of shared) {
-          console.error(`  ✗ DEF debits hit ${r.account_number} "${r.account_name}" — ${r.n} posting(s), $${(Number(r.cents) / 100).toFixed(2)} (the same account diesel purchases hit)`);
-        }
-        console.error(`  This is a fuel-posting-engine / chart-of-accounts defect (CC-3's lane), not this guard's to fix — see docs/bus/OUTBOX-CC-3.md.`);
+      sharedDetailRows = glRes.rows.filter((r) => sharedAccountIds.includes(r.account_id) && r.fuel_type === "def");
+      sharedCount = sharedDetailRows.reduce((s, r) => s + Number(r.n), 0);
+      sharedCents = sharedDetailRows.reduce((s, r) => s + Number(r.cents), 0);
+    }
+    const printShared = (label) => {
+      console.error(`${LABEL}: ${label} — DEF debit postings sharing an account with diesel debit postings:`);
+      for (const r of sharedDetailRows) {
+        console.error(`  ✗ DEF debits hit ${r.account_number} "${r.account_name}" — ${r.n} posting(s), $${(Number(r.cents) / 100).toFixed(2)} (the same account diesel purchases hit)`);
+      }
+      console.error(`  This is a fuel-posting-engine / chart-of-accounts defect (CC-3's lane), not this guard's to fix — see docs/bus/OUTBOX-CC-3.md.`);
+    };
+    const defBaseline = loadDefSegregationBaseline();
+    if (!defBaseline) {
+      if (sharedCount > 0) {
+        printShared("LIVE FAIL (no baseline)");
+        console.error(`  A reconciled baseline entry (def_gl_segregation) must exist before this guard can pass on a nonzero, disclosed total.`);
         failures++;
       }
+    } else if (sharedCount === 0) {
+      console.error(`${LABEL}: LIVE FAIL — DEF/diesel account segregation is now CLEAN (0 shared postings), but a baseline entry for ${defBaseline.count} postings / $${(defBaseline.total_cents / 100).toFixed(2)} still exists — remove def_gl_segregation from ${path.basename(BASELINE_PATH)} (this is good news; confirm it, don't silently keep stale debt on the books).`);
+      failures++;
+    } else if (sharedCount !== defBaseline.count || sharedCents !== defBaseline.total_cents) {
+      printShared("LIVE FAIL");
+      console.error(`  Diverges from the reconciled baseline (${defBaseline.count} postings / $${(defBaseline.total_cents / 100).toFixed(2)}, established ${defBaseline.established}). New, unreconciled drift either way — a human re-reconciles and regenerates the def_gl_segregation baseline entry with a cited reason before this can pass again.`);
+      failures++;
+    } else {
+      console.log(`${LABEL}: known, disclosed DEF/GL-segregation debt — ${sharedCount} posting(s) / $${(sharedCents / 100).toFixed(2)} (baseline established ${defBaseline.established}; CC-3's lane to fix, see def_gl_segregation.reconciliation in the baseline file).`);
     }
 
     // 4. disclosed low-confidence corrections still present, not silently dropped.
@@ -266,7 +319,8 @@ async function live() {
       `${LABEL}: LIVE PASS — ${liveCount} fuel_transactions rows / $${(liveCents / 100).toFixed(2)} ` +
         `(original B1 target ${ORIGINAL_COUNT}/$${(ORIGINAL_TOTAL_CENTS / 100).toFixed(2)}; ` +
         `${baseline ? `reconciled baseline ${baseline.count}/$${(baseline.total_cents / 100).toFixed(2)} holds` : "no growth beyond original target"}), ` +
-        `${defIds.length} DEF row(s) present and GL-segregated from diesel, ${expectedLowConfHashes.size} disclosed low-confidence rows intact.`
+        `${defIds.length} DEF row(s) present (${sharedCount > 0 ? `${sharedCount} posting(s)/$${(sharedCents / 100).toFixed(2)} known GL-segregation debt, capped by ratchet` : "0 shared with diesel, fully GL-segregated"}), ` +
+        `${expectedLowConfHashes.size} disclosed low-confidence rows intact.`
     );
   } finally {
     await client.end();
