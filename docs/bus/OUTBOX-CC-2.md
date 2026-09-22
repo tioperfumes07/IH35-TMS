@@ -4707,3 +4707,74 @@ as an open question rather than guessing which state is correct.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+## 2026-09-23 — E8 built and live-proven, BLOCKED on a lane-cross ruling; E11-D2 measured; E11-D3 not started
+
+Round 53 HOLD honored — no voids, no categorizations touched this round.
+
+### E8 (P1) — guard built, red-before-green proven live, but cannot push
+
+**Live-confirmed the defect exactly:** 76 of 77 `banking.bank_transactions` rows at
+`status='categorized'` with a `matched_journal_entry_id` fail the five-column liveness check —
+matches your number exactly. All 76 are Relay Fuel Wallet rows whose `bank_categorization` JE was
+reversed during the earlier FUEL-DEDUPE reversal/repost pass (confirmed: `reversed_by_je_id` set on
+every one, `reverses_je_id` NULL — a genuine reversal, not a self-reversing entry).
+
+Built `scripts/verify-bank-line-status-has-live-target.mjs` — a shrink-only baseline ratchet (same
+shape as `verify-no-voided-doc-has-live-postings.mjs`), using all five columns, every time
+(`je.status='posted' AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL AND
+je.reverses_je_id IS NULL AND p.reversed_by_line_id IS NULL`). Red-before-green, live, no direct
+INSERT into any accounting table:
+
+```
+RED  (no baseline):        76 line(s) -- LIVE FAIL, exit 1
+GREEN (baseline=76 seeded): known reconciled debt -- LIVE PASS, exit 0
+RED  (baseline perturbed to 75, simulating regression, data untouched): "Debt GREW" -- FAIL
+GREEN (baseline restored to 76):                                        LIVE PASS, exit 0
+```
+
+**Cannot push.** `scripts/verify-*.mjs`, `scripts/verify-*.baseline.json`, `scripts/verify-steps/**`,
+and `scripts/.guard-exempt.json` are ALL CC-1's lane per `docs/bus/LANES.md` — confirmed live via
+`node scripts/money-pr-local-gate.mjs`: `LANE GUARD FAIL: CC-2 touched ... scripts/verify-steps/
+CLAIMED-NUMBERS.json -> owned by CC-1`, even for the reservation-only commit (claimed verify-step
+number **11531**, CC-2's ≡3 mod 4 band, via `claim-verify-step.mjs`).
+
+Per your own standing rule (`docs/bus/2026-09-22-LEAD-RULING-ROUND-40-LANE-CROSS-RELAY-GUARD-AND-DO-NOT-WIRE.md`
+line 24-26: "when a Lead box names a `scripts/verify-*.mjs` file for CC-2 or CC-3, the lane-cross
+ruling ships in that same box or the box is defective") — E8's box named this guard for me without
+one. **Requesting the ruling now**, same shape as the Relay-guard precedent: grant CC-2 the cross for
+exactly `scripts/verify-bank-line-status-has-live-target.mjs` +
+`scripts/verify-bank-line-status-has-live-target.baseline.json` +
+`scripts/verify-steps/11531-verify-bank-line-status-has-live-target.mjs` +
+`scripts/verify-steps/CLAIMED-NUMBERS.json` (the 11531 append) + `scripts/.guard-exempt.json` (see
+below). Unlike the Relay guard, this one is a shrink-only ratchet that reads GREEN once baselined —
+wiring it into `verify-steps/` will NOT freeze other seats' pushes; it only starts tracking future
+growth. Everything is built, tested live, and staged — a `git stash` on branch
+`cc-2/claim-reserve-11531`, ready to apply the moment the cross is granted.
+
+**Fix scope, not attempted this round (Round 53 HOLD):** the actual fix per row is a STATUS RESET
+(categorized → pending_categorization or similar), never a re-post — the underlying JE reversal is
+already correct; only the bank line's own status is lying about it.
+
+### E11-D2 (P2) — confirmed live: `views.live_loads` already gives the right numbers
+
+```
+views.live_loads.live_state counts, USMCA: open_dispatch=5, pre_settlement=4
+```
+
+Matches your DONE-WHEN exactly. Did not attempt the frontend fix itself — the dispatch tile files
+live in `apps/frontend/`, which isn't listed under any backend seat's lane in `docs/bus/LANES.md`
+(CC-1/CC-2/CC-3 are all `apps/backend/src/**`-scoped there); flagging rather than guessing whether
+that's Cursor's lane (screens/janitor) or genuinely open, to avoid the same lane-cross problem E8
+just hit.
+
+### E11-D3 (P2) — not started
+
+Same lane blocker as E8 — `scripts/verify-load-costs-board-excludes-settled.mjs` would need the
+same cross. Confirmed it does not exist yet (checked, not built). Holding until the E8 ruling
+resolves the pattern, then building both under the same cross if granted broadly, or requesting a
+second one if scoped narrowly.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
