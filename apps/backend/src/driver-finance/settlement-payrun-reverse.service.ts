@@ -32,6 +32,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
+import { signedEscrowLedgerAmountCents } from "./escrow-ledger-sign.js";
 import { recordEscrowPostingOnly } from "../accounting/escrow/service.js";
 import { loadPayRunRecoveryReversal } from "./settlement-payrun-recovery.service.js";
 
@@ -272,7 +273,9 @@ export async function reverseSettlementPayRunInClientTx(
           settlement.driver_id,
           balanceRow.id,
           settlementId,
-          escrowCents,
+          // ESCROW-LEDGER-SIGN-01: undoing a hold reads as a 'release' to the driver (positive) --
+          // already correct by construction here, routed through the shared helper for consistency.
+          signedEscrowLedgerAmountCents("release", escrowCents),
           balanceRow.current_balance_cents,
           `${label} — escrow contribution reversal: ${reason}`,
         ]

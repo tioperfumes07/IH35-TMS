@@ -49,8 +49,12 @@ export async function registerDriverSettlementSummaryRoutes(app: FastifyInstance
             -- keeping the old scaling would have inflated escrow 100x the moment real rows existed.
             -- transaction_type is CHECK-constrained to ('hold','release','forfeit'); "withheld" is the
             -- HOLD sum — netting releases/forfeits in would under-report what was withheld this period.
+            -- ESCROW-LEDGER-SIGN-01 (2026-09-23): hold rows are now NEGATIVE (money moving away from
+            -- the driver, per the owner's own sign law) -- ABS() keeps this "amount withheld" figure
+            -- reading as the positive magnitude this report has always displayed, not a sign flip in
+            -- what the user sees.
             COALESCE((
-              SELECT SUM(el.amount_cents)
+              SELECT SUM(ABS(el.amount_cents))
               FROM driver_finance.escrow_ledger el
               WHERE el.settlement_id = s.id
                 AND el.operating_company_id = s.operating_company_id

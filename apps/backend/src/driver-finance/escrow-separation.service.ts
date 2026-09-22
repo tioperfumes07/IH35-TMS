@@ -26,6 +26,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { releaseEscrowOnClient } from "../accounting/escrow/service.js";
+import { signedEscrowLedgerAmountCents } from "./escrow-ledger-sign.js";
 import {
   DRIVER_ESCROW_SEPARATION_RETURN_FLAG_KEY,
   computeNetEscrowReturn,
@@ -379,7 +380,9 @@ export async function releaseDriverEscrowSeparation(
           input.operating_company_id,
           separation.driver_id,
           dfRow.id,
-          net.net_release_cents,
+          // ESCROW-LEDGER-SIGN-01: already positive here (a release is positive to the driver) --
+          // routed through the shared helper anyway so every writer derives the sign the same way.
+          signedEscrowLedgerAmountCents("release", net.net_release_cents),
           Number(dfRow.current_balance_cents),
           `Driver escrow separation payout (>=90 days post-termination)`,
         ]

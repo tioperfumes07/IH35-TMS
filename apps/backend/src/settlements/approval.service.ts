@@ -32,6 +32,7 @@
 
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { recordEscrowPostingOnly } from "../accounting/escrow/service.js";
+import { signedEscrowLedgerAmountCents } from "../driver-finance/escrow-ledger-sign.js";
 
 type Queryable = {
   query: <R = unknown>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -436,7 +437,10 @@ async function updateEscrowBalance(
       settlementId,
       lineItemId,
       transactionType,
-      Math.abs(amountCents),
+      // ESCROW-LEDGER-SIGN-01 (owner ruling, 2026-09-23): was Math.abs(amountCents) unconditionally
+      // -- discarded the hold-vs-release distinction on every row. Sign now follows
+      // transaction_type, never the caller.
+      signedEscrowLedgerAmountCents(transactionType, amountCents),
       balance.current_balance_cents,
       `Escrow ${transactionType} from settlement line item`
     ]);

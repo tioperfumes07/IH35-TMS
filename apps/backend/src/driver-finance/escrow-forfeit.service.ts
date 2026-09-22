@@ -34,6 +34,7 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
 import { recordEscrowPostingOnly } from "../accounting/escrow/service.js";
+import { signedEscrowLedgerAmountCents } from "./escrow-ledger-sign.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import {
@@ -212,7 +213,9 @@ export async function forfeitDriverEscrowOnClient(
       input.operating_company_id,
       input.driver_uuid,
       dfRow.id,
-      amountCents,
+      // ESCROW-LEDGER-SIGN-01: a forfeit is money permanently leaving the driver's escrow
+      // position -- negative to him, same as a hold. Sign follows transaction_type.
+      signedEscrowLedgerAmountCents("forfeit", amountCents),
       Number(dfRow.current_balance_cents),
       `Forfeit: ${input.reason}`,
     ]
