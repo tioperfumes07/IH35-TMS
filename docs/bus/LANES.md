@@ -25,6 +25,7 @@ apps/backend/src/factoring/**
 apps/backend/src/banking/**
 apps/backend/src/accounting/invoices**
 apps/backend/src/accounting/daily-close**
+apps/backend/src/accounting/factor-reconciliation/**
 TABLES: factor.* · banking.* · accounting.factoring_reserve_movements · accounting.invoices
         accounting.reconciliation_runs
 

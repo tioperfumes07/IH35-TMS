@@ -1,0 +1,19 @@
+ID,Inv,PO Ref#,Debtor,Pmt Ref,Note,Date,Amount,Balance
+,,,,,Beginning Balance,,,0
+--,--,,-- RSV Transaction --,USMCA Tank 08/28/2026 ,Rsv Deposit -- Note: pago ccg,8/28/26,"5,000.00","5,000.00"
+--,--,,-- RSV Transaction --,USMCA Reserve to IH 35 Reserve ,Client Payable -- Note: To transfer to IH 35 Reserve ,9/2/26,"-5,000.00",0
+--,--,,-- RSV Transaction --,USMCA Tank 09/08/2026 ,Rsv Deposit -- Note: Dinero en HOLD por facuras de Larralde,9/8/26,"11,840.00","11,840.00"
+--,--,,-- RSV Transaction --,Pago a IH35 Reserva Negativa - Facturas Larralde Transport pagadas a ellos directamente,Client Payable -- Note: Pago a IH35 - Reserva Facturas Pagadas directo a ellos Larralde Transport,9/9/26,"-11,840.00",0
+--,--,,-- RSV Transaction --,USMCA Tank 09/14/2026 ,Rsv Deposit -- Note: Ajuste reserva negativa ih35,9/14/26,"8,000.00","8,000.00"
+--,--,,-- RSV Transaction --,Pago a Reserva Negativa IH35 09/15/26,Client Payable -- Note: Pago a Reserva Negativa IH35,9/15/26,"-8,000.00",0
+394572,4,2239480,"Watco Supply Chain Services, LLC ",,Transfer Escrow to Cash,9/15/26,25.5,25.5
+395429,8,5772267,FLS Transport Inc.,,Transfer Escrow to Cash,9/16/26,7.88,33.38
+--,--,,-- RSV Transaction --,USMCA Tank 09/17/2026 ,Rsv Deposit -- Note: Deposit to negative reserve IH35,9/17/26,"2,000.00","2,033.38"
+395044,7,68747,"ITS LOGISTICS, LLC",,Transfer Escrow to Cash,9/18/26,5.25,"2,038.63"
+395044,7,68747,"ITS LOGISTICS, LLC",,Schedule Fee,9/18/26,-0.23,"2,038.40"
+393703,3,138458,NCC LOGISTICS USA INC,,Transfer Escrow to Cash,9/18/26,37.5,"2,075.90"
+393703,3,138458,NCC LOGISTICS USA INC,,Schedule Fee,9/18/26,-6.6,"2,069.30"
+--,--,,-- RSV Transaction --,Pago Reserva Negativa IH35,Client Payable -- Note: Pago Reserva Negativa IH35,9/21/26,"-2,000.00",69.3
+397034,16,MPHC261334,MPH CARRIER SERVICES INC,,Transfer Escrow to Cash,9/21/26,57,126.3
+395428,11,477079,Sethmar Transportation Inc,,Transfer Escrow to Cash,9/21/26,10.5,136.8
+395428,11,477079,Sethmar Transportation Inc,,Schedule Fee,9/21/26,-1.39,135.41

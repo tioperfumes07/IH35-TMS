@@ -59,17 +59,18 @@ describe("factor reconciliation match states", () => {
           ],
         };
       }
-      if (sql.includes("FROM accounting.invoices i") && sql.includes("JOIN accounting.factoring_advances")) {
+      if (sql.includes("FROM accounting.invoices i") && sql.includes("BETWEEN $3::date AND $4::date")) {
         // missingOnStatementCandidatesRes: invoices advanced within the statement's date window
         // whose display_id is NOT one of the statement's own invoice numbers.
         return {
           rows: [{ invoice_id: "inv-only-ledger-id", display_id: "INV-ONLY-LEDGER", total_cents: 7000 }],
         };
       }
-      if (sql.includes("FROM accounting.invoices i")) {
-        // invoiceCandidatesRes: direct display_id lookup against the statement's own invoice
-        // numbers (ROUND29.7-RECON-DATE-SCOPE) — INV-NO-LEDGER genuinely has no accounting.invoices
-        // row, so it is correctly absent here.
+      if (sql.includes("FROM accounting.invoices i") && sql.includes("JOIN accounting.factoring_advances")) {
+        // invoiceCandidatesRes (ROUND29.8): display_id lookup against the statement's own invoice
+        // numbers, restricted to invoices genuinely advanced by THIS factor (any date) — INV-A
+        // qualifies, INV-NO-LEDGER genuinely has no accounting.invoices row so it is correctly
+        // absent here regardless.
         return { rows: [{ invoice_id: "inv-a-id", display_id: "INV-A", total_cents: 12000 }] };
       }
       if (sql.includes("INSERT INTO factor.reconciliation_items")) return { rows: [] };

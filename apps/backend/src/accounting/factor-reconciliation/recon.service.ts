@@ -176,6 +176,14 @@ export async function importStatement(input: {
     // missing_on_statement direction below, where a real date scope is still needed to avoid
     // treating every invoice this vendor has ever advanced as a candidate.
     const statementInvoiceNumbers = statementLinesRes.rows.map((l) => l.invoice_number);
+    // ROUND29.8: the date-scope fix above (matching by display_id, not by an exact-date advance)
+    // was correct, but it ALSO silently dropped the vendor/advance-existence check the original
+    // query had — live-reproduced: 4 of a run's 41 "matched" invoices had NO
+    // accounting.factoring_advances row at all (factoring_advance_id IS NULL), matched purely on
+    // a coincidental display_id string, never actually purchased by Faro. A statement line only
+    // "matches the ledger" if the invoice both exists AND was genuinely advanced by THIS factor —
+    // restored that check, still with NO date filter (a real advance can be dated any time; the
+    // window only matters for the SEPARATE missing_on_statement direction below).
     const invoiceCandidatesRes = await client.query<{
       invoice_id: string;
       display_id: string | null;
@@ -187,10 +195,16 @@ export async function importStatement(input: {
           i.display_id::text AS display_id,
           i.total_cents::bigint AS total_cents
         FROM accounting.invoices i
+        -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): i is scoped by the WHERE below, but the
+        -- advance it filters against was not -- a cross-entity fa row could surface the wrong
+        -- invoice in a reconciliation query filtered by vendor.
+        JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
+                                              AND fa.operating_company_id = i.operating_company_id
         WHERE i.operating_company_id = $1::uuid
           AND i.display_id = ANY($2::text[])
+          AND fa.factoring_company_vendor_id = $3::uuid
       `,
-      [input.operating_company_id, statementInvoiceNumbers]
+      [input.operating_company_id, statementInvoiceNumbers, input.factor_id]
     );
 
     const dateWindowRes = await client.query<{ min_due_on: string | null; max_due_on: string | null }>(
