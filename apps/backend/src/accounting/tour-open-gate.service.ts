@@ -25,7 +25,20 @@ export const TOUR_OPEN_HOLD_REASON = "tour_open" as const;
 // USMCA's real settlements close to status='closed' (never 'approved'/'paid'), so omitting 'closed'
 // here left every held tour-open load cost on a genuinely-closed, GL-posted tour stuck unposted.
 // Widening this can only release held expenses on already-terminal tours; open/draft/etc. stay open.
-const CLOSED_TOUR_STATUSES = new Set(["approved", "paid", "cancelled", "closed", "final"]);
+//
+// EXP-CLOSED-TOUR-VOCAB-2 (CC-3, 2026-09-22, ACCT-F30214 fuel-linkage-audit follow-on): 'locked'
+// was missing too. The status CHECK enum (db/migrations/0143_...sql:34-40) orders the lifecycle
+// 'draft'->'presettle'->'acked'->'locked'->'paid' — 'locked' sits in the SAME finalized/values-
+// fixed tier as 'closed'/'final'/'approved'/'paid', reached via PATCH .../settlements/:id/finalize
+// (settlements.routes.ts), which sets status='locked' and is a genuinely terminal close (its own
+// comment there: "the finalize path's terminal close"). Confirmed live: S-2026-5786/5788 reached
+// 'locked' via that route and left 4 expenses permanently stuck posting_status='unposted' because
+// (a) 'locked' wasn't in this set, so isLoadTourOpen still reported their tour open, and (b) the
+// finalize route never called postHeldDocumentsForClosedTour at all (only the MVP approve route
+// does) — see settlements.routes.ts's finalize handler for that half of the fix. Widening this set
+// can only release held expenses on an already-terminal tour; every non-terminal status keeps
+// gating exactly as before.
+const CLOSED_TOUR_STATUSES = new Set(["approved", "paid", "cancelled", "closed", "final", "locked"]);
 
 /**
  * Is the given load's tour still open? A load with no driver_bill/settlement link yet is

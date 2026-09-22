@@ -188,7 +188,8 @@ async function main() {
           -- EXP-CLOSED-TOUR-VOCAB (owner 2026-09-07): 'closed'/'final' are terminal, GL-posted
           -- statuses — a tour in either is closed, so posting its expense is correct, not a
           -- violation. Mirrors tour-open-gate.service.ts CLOSED_TOUR_STATUSES.
-          AND (ds.status IS NULL OR ds.status NOT IN ('approved', 'paid', 'cancelled', 'closed', 'final'))
+          -- EXP-CLOSED-TOUR-VOCAB-2 (CC-3, 2026-09-22): 'locked' is the same terminal tier.
+          AND (ds.status IS NULL OR ds.status NOT IN ('approved', 'paid', 'cancelled', 'closed', 'final', 'locked'))
       `,
       [GATE_MERGE_CUTOFF]
     );
