@@ -64,11 +64,28 @@ which is exactly the `load_exemption_reason` the ingest wrote and never retried.
 2. **`bookLoad()` calls it. The EDI 204 handler calls it. The CSV importer calls it. Any future
    feed calls it.** One path. A feed source cannot bypass a side effect by omission, because
    there is nothing left to omit.
-3. **`source` controls POLICY, never PRESENCE.** A gate may be recorded-and-continued for a fed
-   historical load rather than blocking it — a load that already ran cannot fail a drug-test gate
-   retroactively. **But it is always EVALUATED and its outcome always RECORDED.** A skipped gate
-   becomes an **exception row**, never a silent pass. `appendCrudAudit` runs on every path with
-   the source named.
+3. **THE CONDITIONS MUST STILL BE MET WHEN FED.** Owner, 2026-09-22: *"CONDITIONS MUST STILL BE
+   MET IF FEEDED ANYHOW, SO GET THAT DONE."* There are exactly two cases and **neither one is a
+   silent pass**:
+
+   **(a) A LIVE FEED — a load that is running now or in the future.** This is what the owner is
+   doing from today. **EVERY GATE BLOCKS, exactly as it does in Book Load.** An uninsured unit,
+   an unqualified driver, a driver past HOS, an out-of-service truck, a unit already active on
+   another load — **these REFUSE the feed.** A load that would be rejected at Book Load is
+   rejected when fed. The source of the row does not change whether the truck is legal to
+   dispatch. **`assertUnitNotActiveOnAnotherLoad` blocking on a feed is the fix for the Truck
+   Line duplicates.**
+
+   **(b) A HISTORICAL BACKFILL — a load that already ran and is being recorded after the fact.**
+   A load delivered last week cannot retroactively fail a drug-test gate. Here the gate is
+   **evaluated, its outcome recorded, and an EXCEPTION ROW filed** — with the load, the gate and
+   the reason. **It is never skipped and never silently passed.** The owner sees it on the
+   exception queue and decides.
+
+   **The caller declares which case it is. It is never inferred, and it is never defaulted to
+   (b).** A feed that does not declare is treated as **(a) and blocks** — fail closed. The
+   declaration is recorded on the audit row, so "this was backfilled" is always answerable.
+   `appendCrudAudit` runs on every path with the source and the case named.
 4. **NOTHING IS REIMPLEMENTED.** Every resolver and gate above already exists and is called by
    its existing name. The feed path gains no logic of its own.
 5. **The reconciler (ruling 03) is the safety net, not the mechanism.** This ruling makes fed

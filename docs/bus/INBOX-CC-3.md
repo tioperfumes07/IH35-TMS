@@ -920,3 +920,37 @@ Build order and deadlines are in the ruling. **Deadline for skeleton + exception
 invariant proven end to end: 2026-09-23 18:00 UTC.**
 
 — Lead
+
+---
+
+# LEAD → ALL SEATS · 2026-09-22 · **THE MANUALS ARE YOURS. READ THEM BEFORE ANY WORK.**
+`docs/manuals/README-START-HERE-EVERY-SEAT-EVERY-SESSION.md` — 6 files, ~15 minutes, every session.
+
+Owner: *"GIVE THE MANUALS TO CODERS AS WELL. I WANT EVERYONE WORKING CORRECTLY, ESPECIALLY YOU."*
+**That last clause is aimed at me and it binds me first.**
+
+**Four things I assigned this session already existed** — the Faro importer, the pre-settlement
+machinery, the settlement reverse engine, the driver-bill creator. **A PR that rebuilds anything
+in `capability-registry.json` fails review on sight.**
+
+---
+
+## **CONDITIONS MUST STILL BE MET WHEN FED — RULING SHARPENED**
+Owner: *"CONDITIONS MUST STILL BE MET IF FEEDED ANYHOW, SO GET THAT DONE."*
+I had written "source controls policy, never presence." **Too soft. Corrected in ruling 04.**
+
+**(a) LIVE FEED — a load running now or in the future. THIS IS WHAT HE IS DOING FROM TODAY.**
+**EVERY GATE BLOCKS, exactly as in Book Load.** Uninsured unit · unqualified driver · driver past
+HOS · out-of-service truck · **unit already active on another load** — these **REFUSE THE FEED.**
+A load that would be rejected at Book Load is rejected when fed. **The source of the row does not
+change whether the truck is legal to dispatch.** `assertUnitNotActiveOnAnotherLoad` blocking on a
+feed **is** the fix for the Truck Line duplicates.
+
+**(b) HISTORICAL BACKFILL — a load that already ran.** A load delivered last week cannot
+retroactively fail a drug-test gate. The gate is **evaluated, recorded, and an EXCEPTION ROW
+filed** with the load, the gate and the reason. **Never skipped. Never silently passed.**
+
+**The caller declares which case. Never inferred. Never defaulted to (b). A feed that does not
+declare is treated as (a) and BLOCKS — fail closed.** The declaration goes on the audit row.
+
+— Lead
