@@ -108,3 +108,84 @@ authored, wired into the local gate) asserts live that 0 frontend files render `
 Highest live `source_document_ref` right now: **5825**. `allocateNextSettlementSourceDocumentRef`
 (floor 5803, `GREATEST(5803, MAX(source_document_ref::int))+1`) would mint **5826** next — always
 computed live at call time, never hardcoded, so it stays correct as the sequence keeps growing.
+
+---
+
+## D3 — CLOSED HERE (Lead ruling, 2026-09-23): rows 75-89 are shifted, root-caused, LAW shipped as a guard
+
+**LAW, effective now (Lead, verbatim): "source_document_ref is the ONLY key that means AlwaysTrack.
+Nothing is matched to a settlement by display_id, in any query, any guard, any screen, until this
+closes."** Enforced by new `scripts/verify-settlement-source-ref-only-key.mjs` (registered in
+`scripts/money-pr-local-gate.mjs`), which fails on any backend query that filters
+`driver_finance.driver_settlements` by `display_id=`, or any code that derives a document-ref
+value by stripping an `S-YYYY-` prefix off a `display_id`. **Live-confirmed clean: 0 violations,
+2108 backend files scanned.** The frontend twin (`verify-settlement-ref-beside-load.mjs`) already
+covers screens — this closes the backend gap. The law is now enforced, not just stated.
+
+**Root cause of the 15-row shift (rows 75-89, `S-2026-5811` through `S-2026-5825`):**
+`display_id` was instant-minted at tour OPEN (sequential, in creation order — confirmed live:
+`S-2026-5811` created `2026-09-21T19:32:51Z`, `S-2026-5812` at `19:33:01Z`, strictly increasing).
+`source_document_ref` for the SAME rows was set LATER, via a separate deferred call to
+`allocateNextSettlementSourceDocumentRef` at settlement CLOSE — the SAME sequential "MAX+1"
+allocator, but invoked at a different wall-clock moment. Tours do not necessarily CLOSE in the
+same order they OPEN; whichever settlement's close-time code ran first grabbed whatever was
+next-available at THAT moment, not the number matching its own identity. This is NOT a
+content-matching bug (there was never a real AlwaysTrack-document lookup for these rows — both
+fields come from the same synthetic sequence, just sampled at different times) — it is a
+same-sequence, different-instant race. `settlement-display-id.ts`'s already-landed fix (P0-B,
+2026-09-22/23) closes this going forward by minting both fields from ONE call at tour-open time;
+the CLOSE-time code path already no-ops when `source_document_ref` is already set
+(`settlements-load-bookended.service.ts` ~line 575). **These 15 rows predate that fix and are
+historical data debt, not a live code defect.**
+
+**Content-verified correction, evidence-based (matched real settlement-document driver name +
+date range against 6 of the 15 documents currently on disk in `~/Downloads/_st_txt/`,
+`Company_Settlement_5811..5816.txt` — 9 of the 15, `5817`-`5825`, are not yet on disk and CANNOT be
+verified without guessing):**
+
+| DB row (display_id) | driver (DB) | driver (real doc) | doc's own dates match? | current `source_document_ref` | **correct ref** |
+|---|---|---|---|---|---|
+| S-2026-5814 | Leonel Antonio Morales | doc 5811: Leonel Antonio Morales, 09-11→09-21 | exact | 5818 | **5811 — WRONG, needs correction** |
+| S-2026-5812 | Rafael Rogelio Rivero Reynoso | doc 5816: Rafael Rogelio Rivero Reynoso | driver matches (unique) | 5816 | **5816 — already correct** |
+| S-2026-5823 | LUIS ARMANDO SOSA PEREZ | doc 5812: LUIS ARMANDO SOSA PEREZ | driver matches (unique) | 5812 | **5812 — already correct** |
+| S-2026-5821 | JOSE ANTONIO VICENTE MARTINEZ | doc 5815: JOSE ANTONIO VICENTE MARTINEZ | driver matches (unique) | 5825 | **5815 — WRONG, needs correction** |
+
+**Not decidable from the source document — NOT guessed:** the other 11 of the 15 rows (documents
+5813, 5814, and the full 5817-5825 range are either missing a parseable driver line — 5813/5814's
+`Trk:/Trlr:/Driver` grep came back empty, an OCR gap, not investigated further here — or the PDF
+itself is not yet in `~/Downloads/_st_txt/` at all). Per this session's own standing rule ("if it
+can't be decided from the source document, don't guess"), these 11 are named, not corrected. The
+uniform "shift by 4 then wrap" pattern visible in the raw numbers is NOT a reliable correction key
+by itself — 2 of the 4 verified rows were already correct despite "failing" the numeric-match
+check, and 2 were wrong in a way the shift pattern alone would not have predicted without content
+verification. **Do not bulk-correct the remaining 11 by assumed rotation** — get the missing
+AlwaysTrack PDFs first.
+
+**Fix mechanism when the remaining documents arrive:** `setSettlementSourceDocumentRef`
+(`settlement-source-document-ref.service.ts`) is the one real writer — company-scoped, audited,
+idempotent. Never a raw `UPDATE`.
+
+**NOT EXECUTED — a real collision, found live before writing, not guessed away:** `source_document_ref`
+has NO unique constraint (`pg_constraint` checked live — none). Writing the 2 "correct" values
+above as isolated single-row updates would silently create a DUPLICATE AlwaysTrack identity, the
+exact failure mode the LAW exists to prevent:
+- `S-2026-5814` → `5811` collides with **`S-2026-5822`, which ALREADY holds `source_document_ref
+  = '5811'` right now.**
+- `S-2026-5821` → `5815` collides with **`S-2026-5811`, which ALREADY holds `source_document_ref
+  = '5815'` right now.**
+
+Neither `S-2026-5822` nor `S-2026-5811`'s CURRENT ref has been content-verified (their real
+documents, 5811 and 5815 respectively, are the ones THIS finding just proved belong elsewhere —
+so both are very likely also wrong, not merely coincidentally occupied). A one-row write here
+would not fix anything; it would trade one wrong duplicate for a different wrong duplicate. Fixing
+either pair correctly requires either (a) a same-transaction SWAP for a verified pair, or (b) the
+missing real documents for the colliding row so its own correct ref can be independently
+determined — never a single-row overwrite while the ref has no uniqueness guard. **Wrote and then
+deleted an ops script that would have done the single-row overwrite** after finding this
+collision live, rather than leaving a script in the repo that looks safe to run and isn't.
+
+The correction itself is the natural next step once the missing 9 documents (or a verified swap
+for these 2 specific pairs) are in hand — named here for whoever picks it up next, this seat
+included.
+
+— CC-3, 2026-09-23
