@@ -1,6 +1,6 @@
 {
  "date": "2026-09-22",
- "generated_at_iso": "2026-09-22T05:08:33.839Z",
+ "generated_at_iso": "2026-09-22T11:49:35.244Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13727,6 +13727,78 @@
  ],
  "merged_prs": [
   {
+   "number": 22183,
+   "title": "Claude-1-FINDING: N/A — OUTBOX: pre-existing CI red, vanished-ruling recovery, 11549 verify-static incompatibility",
+   "mergedAt": "2026-09-22T06:42:06Z",
+   "branch": "cc-1/report-build-typecheck-heavy-pre-existing"
+  },
+  {
+   "number": 22182,
+   "title": "Claude-1-FINDING: N/A — ROUND 30.6 close-out: test fixes, guard wiring, fuel-guard shrink-only ratchets",
+   "mergedAt": "2026-09-22T06:39:12Z",
+   "branch": "cc-1/round30-6-test-fixes-and-guard-wiring"
+  },
+  {
+   "number": 22181,
+   "title": "Claude-3: OUTBOX report -- ROUND 30.4 closed out, 5 PRs merged",
+   "mergedAt": "2026-09-22T05:57:27Z",
+   "branch": "claude-3-outbox-round304-final-report"
+  },
+  {
+   "number": 22180,
+   "title": "Claude-3: IFTA-GALLONS-03 -- 73 of 253 NULL-jurisdiction fuel rows resolved",
+   "mergedAt": "2026-09-22T05:53:00Z",
+   "branch": "claude-3-ifta-gallons-03-jurisdiction-resolution"
+  },
+  {
+   "number": 22179,
+   "title": "Claude-3: IFTA-GALLONS-01 guard merged with the Lead's stronger fix",
+   "mergedAt": "2026-09-22T05:48:28Z",
+   "branch": "claude-3-ifta-def-reefer-exclusion"
+  },
+  {
+   "number": 22178,
+   "title": "Claude-3: R-30.1-A hotfix -- stale ap-fallback test assertions",
+   "mergedAt": "2026-09-22T05:43:47Z",
+   "branch": "claude-3-r30-1-a-test-hotfix-stale-ap-assertions"
+  },
+  {
+   "number": 22177,
+   "title": "Claude-3: 11 backend test failures + P0-B settlement numbering law fix",
+   "mergedAt": "2026-09-22T05:38:52Z",
+   "branch": "claude-3-11-test-failures-and-settlement-numbering-law"
+  },
+  {
+   "number": 22176,
+   "title": "Claude-3: R-30.1-A -- fuel_event A/P control contamination fixed",
+   "mergedAt": "2026-09-22T05:24:01Z",
+   "branch": "claude-3-ap-control-fuel-event-rail-fix"
+  },
+  {
+   "number": 22175,
+   "title": "Claude-Lead-FINDING: DEF-GL-DEADLOCK — all three seats jammed on an unsatisfiable guard assertion; no DEF account exists to route to",
+   "mergedAt": "2026-09-22T05:24:25Z",
+   "branch": "claude/bus-def-deadlock-ruling"
+  },
+  {
+   "number": 22174,
+   "title": "Claude-1-FINDING: N/A — report DEF GL-segregation defect to CC-3 (verified live)",
+   "mergedAt": "2026-09-22T05:17:26Z",
+   "branch": "cc-1/report-def-gl-segregation-defect"
+  },
+  {
+   "number": 22173,
+   "title": "Claude-Lead-FINDING: N/A (docs(bus) — all three seat INBOXes committed to main; rulings were being lost as uncommitted worktree edits)",
+   "mergedAt": "2026-09-22T05:15:23Z",
+   "branch": "claude/bus-inboxes-2026-09-23"
+  },
+  {
+   "number": 22172,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-22T05:08:57Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 22171,
    "title": "Claude-Lead-FINDING: IFTA-GALLONS-01 — IFTA return understated taxable gallons by 7,736.61 (16.5%) and taxed DEF as motor fuel",
    "mergedAt": "2026-09-22T05:04:37Z",
@@ -17253,78 +17325,6 @@
    "title": "Claude-1-FINDING: N/A (Company Waterfall now splits Fuel Purchases / Company Expenses from real data)",
    "mergedAt": "2026-09-09T11:28:44Z",
    "branch": "claude/cc-1-company-waterfall-fuel-expense-split"
-  },
-  {
-   "number": 21570,
-   "title": "Claude-1-CLAIM-RESERVE 11125 verify-company-waterfall-fuel-expense-split",
-   "mergedAt": "2026-09-09T11:25:40Z",
-   "branch": "claude/cc-1-claim-vs-11125"
-  },
-  {
-   "number": 21569,
-   "title": "CC-2- docs: board/bus writeup for BANK-F30021",
-   "mergedAt": "2026-09-09T11:23:07Z",
-   "branch": "cc-2/board-bank-f30021"
-  },
-  {
-   "number": 21568,
-   "title": "CC-2- FINDING: BANK-F30021 cash-flow categorization coverage excludes voided bank_transactions",
-   "mergedAt": "2026-09-09T11:21:17Z",
-   "branch": "cc-2/cash-flow-coverage-excludes-voided"
-  },
-  {
-   "number": 21567,
-   "title": "CC-2- CLAIM-RESERVE 10875",
-   "mergedAt": "2026-09-09T11:10:40Z",
-   "branch": "cc-2/claim-reserve-10875"
-  },
-  {
-   "number": 21566,
-   "title": "Cursor-SETL-POST: Verify & Post button on open pre-settlement register (open→settlement)",
-   "mergedAt": "2026-09-09T10:25:03Z",
-   "branch": "cursor-settlement-verify-post"
-  },
-  {
-   "number": 21565,
-   "title": "CC-2- docs: board/bus writeup for BANK-F30020",
-   "mergedAt": "2026-09-09T10:19:50Z",
-   "branch": "cc-2/board-bank-f30020"
-  },
-  {
-   "number": 21564,
-   "title": "CC-2- FINDING: BANK-F30020 QBO sync job excludes voided bank_transactions",
-   "mergedAt": "2026-09-09T10:17:39Z",
-   "branch": "cc-2/qbo-sync-excludes-voided"
-  },
-  {
-   "number": 21563,
-   "title": "CC-2- CLAIM-RESERVE 10871",
-   "mergedAt": "2026-09-09T10:15:11Z",
-   "branch": "cc-2/claim-reserve-10871"
-  },
-  {
-   "number": 21562,
-   "title": "Cursor-Dispatch Round Trips completeness: + Book return prefills truck/driver; timeline shows delivered units (7→13)",
-   "mergedAt": "2026-09-09T09:47:43Z",
-   "branch": "cursor-dispatch-round-trips-completeness"
-  },
-  {
-   "number": 21561,
-   "title": "FINDING: N/A (OUTBOX-CASCADE DONE — 50347 + LST-F50098 batch merged)",
-   "mergedAt": "2026-09-09T08:21:01Z",
-   "branch": "cascade-outbox-sort-noop-done"
-  },
-  {
-   "number": 21560,
-   "title": "FINDING: LST-F50098 — SORT-NO-OP + SILENT-NO-OP + DEAD-UX batch fix (7 audit rows)",
-   "mergedAt": "2026-09-09T08:17:17Z",
-   "branch": "cascade-sort-noop-batch-fresh"
-  },
-  {
-   "number": 21559,
-   "title": "Claude-3: docs -- OUTBOX FAC09a-BUILD-NOW-OWNER-OVERRIDE DONE",
-   "mergedAt": "2026-09-09T08:17:10Z",
-   "branch": "claude-3/outbox-fac09a-override-done"
   }
  ],
  "merged_pr_total": 3000,
