@@ -1,11 +1,13 @@
 #!/usr/bin/env node
-// A driver settlement with no live lines and $0.00 net pay is an empty shell, not a settlement
-// (Lead round 67, 2026-09-22: "a driver_settlements row with ZERO lines and $0.00 net_pay is a build
-// failure"). Live USMCA, read-only. Cancelled or voided settlements are out of scope: that is the
-// void register the law keeps, printed here as information only.
-//   an empty shell not in the baseline        -> FAIL (a new one was created)
-//   a baselined shell that is no longer empty -> PASS, printed: remove it from the baseline
-// Settlements are named by source_document_ref (the AlwaysTrack number), never display_id.
+// A driver settlement with no live lines and $0.00 net pay has no loads assigned (Lead round 67,
+// 2026-09-22: "a driver_settlements row with ZERO lines and $0.00 net_pay is a build failure").
+// A pre-settlement is legitimate — AlwaysTrack has no such state and we do — but it must carry its
+// loads (owner, round 80). Live USMCA, read-only. Cancelled or voided settlements are out of scope:
+// that is the void register the law keeps, printed here as information only.
+//   not in the baseline                      -> FAIL (a settlement was created with no loads)
+//   a baselined id that now has its loads    -> PASS with a note; the PR that fixed it removes the
+//                                               id, so a later regression on that row is a new id
+// Named by source_document_ref (the AlwaysTrack number) when settled, never by display_id.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -23,11 +25,20 @@ const BASELINE_PATH =
 const EMPTY_SQL = `
   SELECT s.id::text AS id,
          s.status::text AS status,
-         CASE WHEN s.source_document_ref IS NOT NULL THEN s.source_document_ref
-              WHEN s.status::text = 'open' THEN 'Open'
-              ELSE '—' END AS label,
+         CASE WHEN s.status::text = 'open'
+                THEN 'open pre-settlement, ' || coalesce(btrim(d.first_name || ' ' || d.last_name), 'no driver')
+                     || ', from ' || s.period_start::text
+                     || coalesce(' (records ref ' || s.source_document_ref || ')', '')
+              ELSE coalesce(s.source_document_ref, '—') || ' (' || s.status::text || ', '
+                     || coalesce(btrim(d.first_name || ' ' || d.last_name), 'no driver') || ')'
+         END
+         || coalesce(': load ' || (SELECT string_agg(l.load_number, ', ' ORDER BY l.load_number)
+                                     FROM mdata.loads l WHERE l.presettlement_link_id = s.id)
+                     || ' is linked but has no settlement line — build its lines',
+                     ': no load linked — assign its loads') AS label,
          (s.status::text = 'cancelled' OR s.voided_at IS NOT NULL) AS void_register
     FROM driver_finance.driver_settlements s
+    LEFT JOIN mdata.drivers d ON d.id = s.driver_id
    WHERE s.operating_company_id = $1::uuid
      AND s.is_sample_data IS NOT TRUE
      AND coalesce(s.net_pay, 0) = 0
@@ -97,14 +108,17 @@ if (voidRegister.length > 0) {
 }
 for (const id of resolved) {
   const label = baseline.settlements.find((s) => s.id === id)?.label ?? id;
-  console.log(`${LABEL}: settlement ${label} is no longer an empty shell — remove it from ${path.basename(BASELINE_PATH)}`);
+  console.log(
+    `${LABEL}: NOTE — settlement ${label} (${id}) now has its loads. Remove this id from ` +
+      `${path.basename(BASELINE_PATH)} in the PR that fixed it.`
+  );
 }
 if (newShells.length > 0) {
-  console.error(`${LABEL}: FAIL — ${newShells.length} new settlement(s) with no live lines and $0.00 net pay:`);
-  for (const r of newShells) console.error(`  ✗ settlement ${r.label} (${r.status}) ${r.id}`);
+  console.error(`${LABEL}: FAIL — ${newShells.length} settlement(s) with no live lines and $0.00 net pay:`);
+  for (const r of newShells) console.error(`  ✗ ${r.label} — ${r.id}`);
   process.exit(1);
 }
 console.log(
-  `${LABEL}: PASS — 0 new empty settlements; ${knownShells.length} known empty shell(s) still open as debt (baseline ${baseline.established}): ` +
-    `${knownShells.map((r) => r.label).join(", ") || "none"}.`
+  `${LABEL}: PASS — no new settlement without loads. ${knownShells.length} known, baselined ${baseline.established}, still open:`
 );
+for (const r of knownShells) console.log(`  - ${r.label}`);

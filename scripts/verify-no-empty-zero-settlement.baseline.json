@@ -1,5 +1,5 @@
 {
-  "_comment": "Settlements that were already empty shells (no live settlement_lines, net_pay 0.00) when the guard landed, measured live on USMCA, read-only. Shrink-only: remove an entry when its lines are fed or it is cancelled; never add one without a Lead ruling named in the PR. 5817-5825 are the AlwaysTrack-numbered shells created 2026-09-21 (the 5817-5825 source gap, #22289).",
+  "_comment": "Settlements with no loads assigned (no live settlement_lines, net_pay 0.00) when the guard landed, measured live on USMCA, read-only. Shrink-only: the PR that assigns a settlement's loads removes its id here; never add one without a Lead ruling named in the PR. The nine labelled 5817-5825 are legitimate pre-settlements (owner, round 80: assign them by load number or sequence); separately, each records a source_document_ref in AlwaysTrack's settled range although AlwaysTrack has not settled it.",
   "established": "2026-09-22",
   "settlements": [
     { "id": "2ed4116a-ad7a-4cf8-86dc-66c0f7b13426", "label": "—", "status": "closed", "period_start": "2026-09-02" },
