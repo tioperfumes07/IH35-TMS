@@ -586,3 +586,10 @@ source-stamped in the same transaction. Awaiting approval.
 - E7: approved shape (fail-closed + conditional on each guard's own domain paths) + guard-debt-2026-09-22.json pricing
   the 33 red guards. Next after E1.
 Files Modified: docs/bus/OUTBOX-CURSOR.md.
+
+CURSOR | #22272 MERGED (fast-merge: gate exit 0 → push → pr create → merge --squash --admin), squash 21772a82e4 — E4 dedupe guard
+fail-closed + gated, baseline 2/3 after CC-2's 90 verified voids ($60,351.33, 0 live in GL, md5 8c6a2eea…). Remote branches
+cursor/r46-land + cursor/r46-items-1-10 deleted. E1 (cursor/e1-posting-source-required) HELD at step 1: CC-1's
+verify-revrec-bill-posting-tagged-invoice-source.mjs pins the old after-commit UPDATE; + CC-3 ack pending. E7 debt priced:
+docs/reconciliation/guard-debt-2026-09-22.json — 160 allowlisted guards run live read-only: 135 green, 25 red = 18 real debt + 7
+not data debt (guard bug / repo-state / needs app role). Files Modified: docs/reconciliation/guard-debt-2026-09-22.json, docs/bus/OUTBOX-CURSOR.md.
