@@ -40,10 +40,16 @@ if (!seat) {
   // claimed Lead branch could never be pushed — the two files disagreed about who exists.
   // Ruling: docs/bus/09-22-2026-LEAD-RULING-LEAD-SEAT-AND-CI-WORKFLOW-LANE.md
   else if (/^claude\//.test(branch.toLowerCase())) seat = 'LEAD';
+  // CURSOR: LEAD RULING — CURSOR SEAT AND LANE, ROUND 48, 2026-09-22. Cursor's real branch
+  // prefix is `cursor/` (confirmed live: 7 finished commits stuck at dd14103af9 on
+  // cursor/r46-items-1-10, and a later 5-commit branch at 1f61772644, both unable to push
+  // because this guard recognised no CURSOR seat at all -- every push 03b-rejected regardless
+  // of lane content). This guard was the bottleneck, not Cursor's work.
+  else if (/^cursor\//.test(branch.toLowerCase())) seat = 'CURSOR';
 }
-if (!/^(CC-[123]|LEAD)$/.test(seat)) {
-  fail(`could not resolve the seat. Set SEAT=CC-1|CC-2|CC-3|LEAD, or name the branch ` +
-       `cc-1/<topic> (seat) or claude/<topic> (Lead). ` +
+if (!/^(CC-[123]|LEAD|CURSOR)$/.test(seat)) {
+  fail(`could not resolve the seat. Set SEAT=CC-1|CC-2|CC-3|LEAD|CURSOR, or name the branch ` +
+       `cc-1/<topic> (seat), claude/<topic> (Lead), or cursor/<topic> (Cursor). ` +
        `A PR with no owner is exactly how two seats wrote the same rows.`);
 }
 
@@ -54,7 +60,7 @@ const text = readFileSync(LANES_FILE, 'utf8');
 const sections = {};
 let cur = null;
 for (const raw of text.split('\n')) {
-  const h = raw.match(/^##\s+(CC-[123]|LEAD|SHARED|FORBIDDEN)/);
+  const h = raw.match(/^##\s+(CC-[123]|LEAD|CURSOR|SHARED|FORBIDDEN)/);
   if (h) { cur = h[1]; sections[cur] = []; continue; }
   if (!cur) continue;
   const line = raw.trim();
@@ -62,6 +68,28 @@ for (const raw of text.split('\n')) {
   if (/^[A-Za-z].*:/.test(line) && !line.includes('/')) continue;   // prose like "Any write to: ..."
   if (line.includes('/') || line.includes('*')) sections[cur].push(line.split(/\s{2,}/)[0].trim());
 }
+
+// ---- guard on the guard -----------------------------------------------------
+// A CURSOR-seat bug (2026-09-22, same round as the seat landing itself) proved this file's own
+// parser is not just naive but actively dangerous: prose inside a lane section that happens to
+// contain "/" or "*" (e.g. an em-dash-joined sentence naming a path) silently compiles into a real
+// glob and grants a lane nobody wrote. Every parsed entry must look like an actual path pattern --
+// no whitespace, no em/en-dash, no sentence-ending punctuation -- or this guard is worse than none,
+// because it reads as coverage while quietly widening a seat's real access.
+const PATH_LIKE = /^[A-Za-z0-9_.*/-]+$/;
+for (const [section, globs] of Object.entries(sections)) {
+  for (const g of globs) {
+    if (!PATH_LIKE.test(g)) {
+      fail(
+        `${LANES_FILE} section "## ${section}" parsed a non-path line as a lane glob: "${g}". ` +
+        `This is prose being silently compiled into a permission grant -- move it below the TABLES: ` +
+        `line or prefix it with "# " (the parser skips both). Refusing to trust any lane in this file ` +
+        `until every entry looks like a real path.`
+      );
+    }
+  }
+}
+
 for (const s of ['CC-1', 'CC-2', 'CC-3', 'SHARED']) {
   if (!sections[s]?.length) fail(`${LANES_FILE} has no path patterns under "## ${s}". Refusing to run a guard that would pass everything.`);
 }
@@ -99,7 +127,7 @@ if (cross) {
 
 // ---- verdict ----------------------------------------------------------------
 const mine = sections[seat] ?? [];
-const others = ['CC-1', 'CC-2', 'CC-3', 'LEAD'].filter((s) => s !== seat && sections[s]?.length);
+const others = ['CC-1', 'CC-2', 'CC-3', 'LEAD', 'CURSOR'].filter((s) => s !== seat && sections[s]?.length);
 const violations = [];
 const forbidden = [];
 
