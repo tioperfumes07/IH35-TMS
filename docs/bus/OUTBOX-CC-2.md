@@ -3974,3 +3974,43 @@ next in the queue once the 8-legs/5-deposits data lands or I'm told to proceed w
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+## 2026-09-22 — P0 CLEARED: verify-dispute-window-unified PASSES live, CC-3 unblocked
+
+`DATABASE_URL=<prod> node scripts/verify-dispute-window-unified.mjs` →
+**`LIVE PASS — 0/104 null load_id; 5 Faro-vs-face variance(s) found, all covered by a real
+dispute.`**
+
+The owner's live-measured 3 rows had already moved by the time I re-queried (production is live —
+one, `INV-2026-00007`, had already been resolved elsewhere and dropped off the list; two new ones,
+`13589`/Kirsch $30 and `13587`/Key Global $120, appeared). Re-derived fresh against current state,
+not the stale snapshot. Three real disputes opened, `scripts/ops/cursor-2026-09-22-faro-dispute-window-p0.mts`:
+
+- **`13524` — RESOLVED, not a real variance.** The voided predecessor invoice ($4,200.00,
+  quarantined as TRANSPORTATION-entity seed contamination by CC-3) is superseded by
+  `INV-2026-00008` ($3,800.00, live, `status=sent`), which ties Faro's gross exactly. Dispute
+  opened already-resolved, citing the replacement invoice — the guard's join surfaced a stale
+  predecessor, not real money.
+- **`13587` (Key Global) — OPEN, real, small.** Proforma invoice $4,000.00 vs. Faro's $4,120.00;
+  load already delivered. `under_billing`, same shape as the existing `13589` dispute. Needs the
+  proforma finalized at $4,120.00.
+- **`13579` — OPEN, THE SERIOUS ONE. REAL CASH EXPOSURE, saying so loudly, not quietly.** Invoice
+  13579 is voided at $0.00 (CC-1's 2026-09-07 test-cleanup) and **no replacement invoice was ever
+  created** — unlike 13524, there is nothing standing behind this receivable in our own books.
+  Load 13579's own `customer_wo_number` (`1013272-2`) matches Faro invoice #59 (Refrigerx, gross
+  **$5,210.00**, advance **$5,053.70**, due 09/08/2026) exactly — the load↔Faro-purchase link is
+  verified correct, not a mismatch. **Faro genuinely advanced $5,053.70 in real cash against an
+  invoice that does not currently exist as a live document on our side.** I could not determine
+  from anything database-accessible whether the correct resolution is re-issuing the real invoice
+  (load status is `'invoiced'`, consistent with real, delivered freight) or a repurchase obligation
+  back to Faro — that needs the rate confirmation and/or Faro's own per-invoice statement, which I
+  do not have machine access to. Left the dispute open rather than guess; did not create a
+  pro-forma invoice or dispute row to force the guard green.
+
+Copied both source files into the repo, citing them by name going forward:
+`docs/reconciliation/2026-09-22-PAYMENTS-TO-USMCA-FROM-FARO.csv` (95 rows) and
+`docs/reconciliation/2026-09-22-RESERVE-REPORT.csv` (18 rows).
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7

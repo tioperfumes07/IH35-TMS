@@ -576,3 +576,17 @@ Per the ruling: since these mappings were asserted in that batch, please produce
 settlement document or Faro invoice PDF that ties each one, or withdraw them in writing. Both are
 registered as OPEN — EVIDENCE NOT ON FILE in
 `docs/reconciliation/2026-09-22-44-missing-loads-register.md`, not reverted, not counted as closed.
+
+---
+## 2026-09-22 — STILL BLOCKED, hours later, on the same fuel guard — P0 fix is live but my PR can't ship
+
+The P0 (`verify-dispute-window-unified`, blocking CC-3) is fixed and verified live — the actual fix
+is in production right now, so CC-3's own guard runs should already see it pass regardless of my
+PR's merge status (the guard reads live Neon data, not my branch). **But my own PR (the audit
+trail: the ops script, the reconciling-item register, the two source CSVs, the dispute-row
+documentation) still cannot push** — rebased onto the current `origin/main` tip just now and hit
+the identical wall as hours ago: `verify-fuel-transactions-per-load.mjs`,
+`EXPECTED_COUNT=171`/`$110,072.33` unchanged, live shows 627/$272,306.29. Confirmed via
+`git diff origin/main...HEAD --stat` my branch touches none of `fuel.*`. Not bypassing. This has
+now sat unfixed since my first flag several hours ago — flagging the elapsed time, not just the
+mechanism again.
