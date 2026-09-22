@@ -809,3 +809,98 @@ Banking also owns one arm of the void ruling (`f2a6d0d30b`, merged): wire every 
 route through the atomic `voidDocument()` CC-1 is building. Do not build your own.
 
 — Lead
+
+---
+
+# CC-2 — ROUND 31.1 — RELAY DAILY SYNC INTO USMCA + ACTIVATE THE AMEX
+Issued 2026-09-22 · Lead · DEADLINE 2026-09-23 02:00 UTC (2026-09-22 21:00 Laredo)
+Surrender seat if missed: CC-3
+
+OWNER, VERBATIM:
+"relay syncs in transportation, it should sync here now. it should be done daily."
+"Name it Amex-Scentsx."
+"everything should be pulled live that is the point of relay."
+
+LANE: banking/** is yours. integrations/relay/** is in NO seat's lane — I am
+assigning it to you because it feeds banking. Cite this box under LANE-CROSS:.
+
+=== MEASURED LIVE (Neon tiny-field-89581227 / br-fancy-credit-akjnd07a,
+    set_config('app.bypass_rls','lucia',FALSE)) ===
+
+integrations.relay_deposits      175 rows, ALL on a non-USMCA company,
+                                 every row created 2026-07-17. USMCA = 0.
+integrations.relay_company_cards USMCA 1 card, other companies 3.
+catalogs.relay_accounts          0 rows. EMPTY FOR EVERY COMPANY.
+banking.bank_accounts 'Relay Fuel Wallet' (USMCA)
+                                 76 txns, EVERY ONE a fuel draw
+                                 ("Relay fuel · T176 · Love's · Mandeville, LA"),
+                                 last 2026-09-11, plaid_item_id NULL,
+                                 last_synced_at NULL, ledger 1295, bal -123.45
+USMCA bank txns matching relay/amex/american express, excluding draws: 0
+
+=== TASK A — RELAY DEPOSITS INTO USMCA, DAILY ===
+
+A1. Find the ingestion path that produced those 175 rows for the other company.
+    Report the file, the function, and how it is triggered BEFORE you change it.
+    Do not build a second ingester — the owner says it already works there.
+A2. Determine why USMCA is excluded. Report the mechanism (company allow-list,
+    credential scoping, a hard-coded id, or no USMCA credential). NAME IT.
+    If the blocker is a missing Relay credential for USMCA, STOP and report —
+    that is the owner's to supply, not yours to invent.
+A3. Point it at USMCA and run it. Deposits land as real
+    banking.bank_transactions on the Relay Fuel Wallet.
+A4. Post the funding through the EXISTING reused poster: DR 1295 / CR 2500.
+    No new GL math. No new posting path. If none exists, stop and report.
+A5. Schedule it DAILY. Report the scheduler, the cron expression in UTC, and the
+    next fire time. A sync that runs once is not what was asked for.
+
+=== TASK B — ACTIVATE THE AMEX ===
+
+banking.bank_accounts row, USMCA:
+  account_name  'TEST DATA Amex TESTMTDP79YF'
+  institution   'TEST DATA issuer keep'
+  is_active     false     visible false     sync_status 'pending'
+  ledger        2500 Amex Credit Card Payable     txns 0
+
+B1. Through CC-3's PATCH /accounts/:id/activate (merged, PR #22206) — never raw
+    SQL, never delete-and-recreate. The history stays.
+B2. account_name := 'Amex-Scentsx'   (OWNER DECISION, verbatim. Do not vary it.)
+    institution_name off 'TEST DATA issuer keep'.
+    is_active := true. visible := true. ledger_account_id STAYS 2500.
+B3. Copy 'Dreamline Diesel Card' exactly for shape: credit_card / credit,
+    ledger 2510 is its analogue. It is the working pattern in this company.
+B4. TRANSACTIONS — read this before you act. The owner's instruction is
+    "everything should be pulled live." USMCA FREIGHT (BOA) is Plaid-linked and
+    synced 2026-09-22, so Plaid works in this app. The Amex should be LINKED,
+    not statement-loaded. You cannot perform the link — it needs the owner's
+    Amex credentials in Plaid's own UI. Do B1-B3, then report exactly what the
+    owner must click and where. Do NOT ask him for credentials and do NOT
+    fabricate a statement.
+
+=== CARRY-OVER, UNCHANGED ===
+- 1000 -74,263.96 and 1090 83,842.22 fuel-poster fix: you root-caused it and
+  correctly handed it to CC-1's OUTBOX on the lane correction. Confirm he has it.
+- Your A/R decomposition 43,160.00 + 37,129.59 = 80,289.59 is ACCEPTED.
+- Invoice 13572: YOU WERE RIGHT, I WAS WRONG, TWICE. Void-and-reissue, zero true
+  orphans in all 38. 1150 is correct as it sits. My instruction to drive it to
+  0.00 IS WITHDRAWN. The open item is INV-2026-00009 sitting in draft 10 days —
+  that is the owner's action, not yours.
+- Duplicate display_id on two live invoices: routed to CC-1, correct.
+
+=== GUARD (one, named) ===
+scripts/verify-relay-deposits-land-in-usmca.mjs
+  FAIL if integrations.relay_deposits has 0 rows for USMCA while any other
+  company has rows. Selftest must go RED against today's state (175/0) before
+  it goes green.
+
+=== DONE LINE — must be re-measurable ===
+- integrations.relay_deposits USMCA count, before and after.
+- banking.bank_transactions on Relay Fuel Wallet: count of NON-draw rows, before
+  and after.
+- GL 1295 debits and credits SEPARATELY (never netted — netting is what hid this
+  for three days).
+- The scheduler name, the UTC cron, and the next fire time.
+- banking.bank_accounts row for Amex-Scentsx: account_name, is_active, visible,
+  ledger. Pasted.
+
+— Lead
