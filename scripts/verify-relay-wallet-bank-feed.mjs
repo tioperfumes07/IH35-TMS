@@ -3,7 +3,19 @@
  * verify-relay-wallet-bank-feed.mjs
  *
  * GUARD 2026-07-16: Relay fuel purchases must land on the Relay Fuel Wallet bank feed
- * (banking.bank_transactions), with auto-linkage columns set — not only fuel.* tables.
+ * (banking.bank_transactions) — not only fuel.* tables.
+ *
+ * REVERSED 2026-09-22 (ROUND 43 FOLLOW-UP item 2, Lead ruling — LANE_CROSS
+ * docs/bus/LEAD-RULING-2026-09-22-CC3-ROUND-43-CUT-RELAY-INGEST-CROSS-LANE.md): "CUT THE RELAY
+ * INGEST. banking.bank_transactions and nothing else — no fuel row, no expense, no GL, AND it may
+ * not set its own line's status, category or match." The auto-linkage assertion this guard
+ * originally required (categorization_unit_id/driver_id + matched_load_id/settlement_id set at
+ * ingest time) is EXACTLY the shape that manufactured Round 43's own confirmed duplicate-fuel-row
+ * population (FUEL-DEDUPE-01/02/03/04, 39 rows / $20,743.65 archived + GL-reversed this same
+ * round) — an unreviewed ingest-time auto-match with no human behind it. This guard now asserts
+ * the OPPOSITE: the wallet feed stays pure visibility (date/amount/description/merchant/
+ * location/source_ref), and reconciling a Relay bank line to its real counterpart is exclusively
+ * a human "Match" action from here on.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -35,11 +47,21 @@ if (service) {
   if (!/upsertRelayWalletBankFeedRow/.test(service)) {
     failures.push("wallet feed service must export upsertRelayWalletBankFeedRow");
   }
-  if (!/categorization_unit_id/.test(service) || !/categorization_driver_id/.test(service)) {
-    failures.push("wallet feed must set categorization_unit_id + categorization_driver_id");
+  // ROUND 43 FOLLOW-UP item 2 (2026-09-22): the wallet feed must NOT write categorization_* or
+  // matched_load_id/matched_settlement_id onto banking.bank_transactions at ingest time — those
+  // are exclusively a human "Match" action now. Checked as SQL-write shapes specifically
+  // (`= $N` / a bare column-list identifier), not a bare string search, so the audit-log JS object
+  // literal (`matched_load_id: loadId,` — informational only, never written to the row) does not
+  // false-positive this check.
+  if (/categorization_unit_id\s*[,=]/.test(service) || /categorization_driver_id\s*[,=]/.test(service)) {
+    failures.push(
+      "REGRESSION: wallet feed writes categorization_unit_id/categorization_driver_id again — Round 43 follow-up item 2 requires ingest-time visibility only, no auto-category",
+    );
   }
-  if (!/matched_load_id/.test(service) || !/matched_settlement_id/.test(service)) {
-    failures.push("wallet feed must set matched_load_id + matched_settlement_id when resolvable");
+  if (/matched_load_id\s*=/.test(service) || /matched_settlement_id\s*=/.test(service)) {
+    failures.push(
+      "REGRESSION: wallet feed writes matched_load_id/matched_settlement_id again — Round 43 follow-up item 2 requires ingest-time visibility only, no auto-match",
+    );
   }
   if (!/RELAY_WALLET_SOURCE_REF_PREFIX|relay_fuel:/.test(service)) {
     failures.push("wallet feed must use relay_fuel: source_ref for idempotency");
