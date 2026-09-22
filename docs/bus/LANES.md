@@ -34,10 +34,17 @@ scripts/alwaystrack/**
 TABLES: driver_finance.settlement_lines · driver_finance.driver_settlements
         fuel.fuel_transactions · catalogs.fuel_card_types · catalogs.relay_accounts
 
+## LEAD — rulings and CI pipeline only
+docs/bus/**
+.github/workflows/**
+TABLES: none. The Lead owns no module code and no tables. Anything else the Lead touches is a lane
+        cross and needs a written ruling, same as every other seat.
+
 ## SHARED — any seat, but say so in the PR body
 docs/**
 scripts/ops/**            (one-shot ops scripts, named for the round)
 apps/frontend/**          (declare the screen in the PR body)
+.github/workflows/**      (CI is infrastructure every seat depends on — declare the job in the PR body)
 
 ## FORBIDDEN TO EVERY SEAT
 Any write to: payroll.* · settlement.* · accounting.qbo_* · bank.* · maint.*
