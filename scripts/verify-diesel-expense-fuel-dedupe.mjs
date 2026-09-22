@@ -1,103 +1,134 @@
 #!/usr/bin/env node
-// ROUND 23.3 (owner/Lead, 2026-09-13) — B1 "FUEL AS A REAL COST", second half.
-// "non-matching expense VOIDED (void_reason='ABSORPTION-D5 duplicate or unmatched fuel row')."
+// verify-diesel-expense-fuel-dedupe.mjs — one fuel purchase, one posting.
 //
-// Matches every live (voided_at IS NULL) accounting.expenses row with memo
-// ILIKE 'Diesel%' against fuel.fuel_transactions by (transaction_date,
-// invoice-number-with-any-trailing-"-L<load>"-suffix-stripped, amount),
-// degrading to (transaction_date, amount) when vendor_document_number is the
-// literal placeholder "no-invoice" and the fuel row's transaction_reference
-// is NULL (same rule scripts/ops/2026-09-13-cc2-absorption-b1-diesel-expense-
-// dedupe.ts used). Asserts:
-//   1. every live Diesel expense has a match (the 2 known unmatched rows —
-//      settlement 5782, which has no company-side settlement document at all —
-//      were already voided this session; this guard fails loud if a NEW
-//      unmatched one ever appears, so a future absorption run can't silently
-//      leave orphaned Diesel-memo expenses unaddressed).
-//   2. the 2 specific settlement-5782 rows stay voided with the exact
-//      disclosed reason (proves the fix wasn't silently reverted).
+// Lead ruling, ROUND 48 (2026-09-22): fuel.fuel_transactions is canonical for fuel. A Diesel row in
+// accounting.expenses is a derived copy of the same purchase and must not post beside it. Measured
+// that day: 93 live Diesel expenses ($63,106.32), 91 of them ($61,317.68) carrying the same vendor
+// invoice as a live fuel row — the same diesel debited to GL 5000 twice.
+// (docs/reconciliation/2026-09-22-diesel-expense-void-preview.md)
 //
-// Skips gracefully (prints, exits 0) when DATABASE_URL is not set.
-import pg from "pg";
+// The previous version of this guard failed only when a Diesel expense had NO matching fuel row,
+// so every matched pair passed — it protected the duplicate it was named after.
+//
+// SHRINK-ONLY RATCHET against scripts/verify-diesel-expense-fuel-dedupe.baseline.json:
+//   doubled_with_live_fuel_twin  live Diesel expense whose invoice (a trailing "-L<load>" stripped on
+//                                both sides) matches a live fuel row anywhere in USMCA, where BOTH
+//                                copies post — the purchase is in the GL twice. A twin that exists
+//                                but does not post is a WARN (void the expense only after re-posting it).
+//   live_diesel_expenses         every live Diesel expense (no new ones may appear)
+//   current > baseline -> FAIL (new double, or a new Diesel expense was written)
+//   current <= baseline -> PASS; when lower, prints the tighter number to commit to the baseline
+// Plus the prior regression lock: the two settlement-5782 rows stay voided with their disclosed reason.
+//
+// Fail-closed (ROUND 29.9-B): no DATABASE_URL, or no connection, is a FAIL. money-pr-local-gate.mjs
+// runs it only when DATABASE_URL is set or the diff touches accounting/, fuel/ or db/migrations/.
+// DIESEL_DEDUPE_BASELINE_PATH overrides the baseline location (red-run proof only).
+import fs from "node:fs";
+import path from "node:path";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
+
+// REQUIRES_LIVE_DB (ruled 2026-09-23, docs/bus/INBOX-CC-1.md): excluded from verify-static.mjs's no-DB sweep;
+// money-pr-local-gate.mjs runs it live and it fails closed there.
+export const REQUIRES_LIVE_DB =
+  "shrink-only ceilings on live Diesel expenses vs fuel.fuel_transactions, fails closed via requireLiveDbOrExit, cannot be exercised without a live Neon connection";
 
 const LABEL = "verify-diesel-expense-fuel-dedupe";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
-const VOID_REASON = "ABSORPTION-D5 duplicate or unmatched fuel row";
+const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+const BASELINE_PATH =
+  process.env.DIESEL_DEDUPE_BASELINE_PATH || path.join(ROOT, "scripts/verify-diesel-expense-fuel-dedupe.baseline.json");
+const VOID_REASON_5782 = "ABSORPTION-D5 duplicate or unmatched fuel row";
 const KNOWN_VOIDED_5782_IDS = [
   "fc1e34b9-98a2-49cc-bfcb-febf2b67f678",
   "0154cb7e-6b14-4d97-9ebc-8b19268ad124",
 ];
+const METRICS = ["doubled_with_live_fuel_twin", "live_diesel_expenses"];
+
+// A posting is live only when all five hold: je.status='posted', je.voided_at, je.reversed_by_je_id,
+// je.reverses_je_id and p.reversed_by_line_id all NULL (a JE-level reversal leaves the line fields NULL).
+const LIVE_POSTING = (typeCol, idExpr) => `EXISTS (
+    SELECT 1 FROM accounting.journal_entry_postings p
+      JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+     WHERE p.source_transaction_type = '${typeCol}' AND p.source_transaction_id::text = ${idExpr}
+       AND je.status = 'posted' AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL
+       AND je.reverses_je_id IS NULL AND p.reversed_by_line_id IS NULL)`;
+
+// doubled       both copies post: the purchase is in the GL twice.
+// twin_unposted a live fuel twin exists but only the expense posts — voiding the expense now would
+//               drop the cost; the fuel row must be re-posted first (e.g. a row restored from archive).
+const DIESEL_SQL = `
+  WITH de AS (
+    SELECT e.id, e.total_amount_cents, e.vendor_document_number, e.source_settlement_ref,
+           NULLIF(regexp_replace(coalesce(e.vendor_document_number, ''), '-L[0-9]+$', ''), '') AS inv
+      FROM accounting.expenses e
+     WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.memo ILIKE 'Diesel%'
+  ), tw AS (
+    SELECT de.*,
+           bool_or(ft.id IS NOT NULL) AS has_twin,
+           bool_or(ft.id IS NOT NULL AND ${LIVE_POSTING("fuel_event", "ft.id::text")}) AS twin_posts
+      FROM de
+      LEFT JOIN fuel.fuel_transactions ft
+        ON ft.operating_company_id = $1::uuid AND ft.archived_at IS NULL
+       AND de.inv IS NOT NULL AND de.inv <> 'no-invoice'
+       AND regexp_replace(ft.transaction_reference, '-L[0-9]+$', '') = de.inv
+     GROUP BY de.id, de.total_amount_cents, de.vendor_document_number, de.source_settlement_ref, de.inv
+  )
+  SELECT tw.id, tw.total_amount_cents, tw.vendor_document_number, tw.source_settlement_ref,
+         (coalesce(tw.twin_posts, false) AND ${LIVE_POSTING("expense", "tw.id::text")}) AS doubled,
+         (coalesce(tw.has_twin, false) AND NOT coalesce(tw.twin_posts, false)) AS twin_unposted
+    FROM tw`;
+
+function readBaseline() {
+  if (!fs.existsSync(BASELINE_PATH)) {
+    console.error(`${LABEL}: FAIL — baseline not found at ${path.relative(ROOT, BASELINE_PATH)}`);
+    process.exit(1);
+  }
+  const b = JSON.parse(fs.readFileSync(BASELINE_PATH, "utf8"));
+  for (const m of METRICS) {
+    if (!Number.isInteger(b[m]) || b[m] < 0) {
+      console.error(`${LABEL}: FAIL — baseline field ${m} missing or not a non-negative integer`);
+      process.exit(1);
+    }
+  }
+  return b;
+}
 
 async function live() {
-  const url = process.env.DATABASE_URL;
-  if (!url) {
-    console.log(`${LABEL}: LIVE skipped (no DATABASE_URL) — not a pass, not a fail; this check needs a real Neon connection`);
-    return;
-  }
-  const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
-  await client.connect();
+  const baseline = readBaseline();
+  const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
-    // BANK-F30150 (found this session, verify-alwaystrack-parity.mjs): a bare session-level
-    // set_config is unreliable through Neon's POOLED endpoint — wrap every read in one explicit
-    // transaction with a transaction-scoped bypass so a pooler can't split it across backends.
+    // One explicit transaction with a transaction-scoped bypass: Neon's pooled endpoint can split a
+    // bare session-level set_config across backends (BANK-F30150).
     await client.query("BEGIN");
     await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
     let failures = 0;
 
-    // ROUND-30.4 (this session) — the exact-amount match below was written against
-    // fuel.fuel_transactions.total_cost on the assumption it never changes. The Dreamline
-    // fuel-card migration (disclosed/ordered this same session) made total_cost NET-of-discount
-    // for any row that also appears on the Dreamline statement; gross_cost preserves the original
-    // value these Diesel expenses were created from (both sourced from the same AlwaysTrack
-    // settlement document). Match against gross_cost so a row's total_cost being correctly netted
-    // doesn't orphan its own expense. Falls back to total_cost when the column doesn't exist yet
-    // (a fresh CI DB that only ran committed db/migrations/*.sql — the Dreamline schema change was
-    // applied live this session but its .sql file has not shipped yet, same as every other CC-3
-    // live-applied schema change pending a CC-1 claim).
-    const colRes = await client.query(
-      `SELECT 1 FROM information_schema.columns
-        WHERE table_schema='fuel' AND table_name='fuel_transactions' AND column_name='gross_cost'`
-    );
-    const hasGrossCost = colRes.rows.length > 0;
-    // A Diesel expense's dollar figure and a stamped fuel row's gross_cost were BOTH sourced from
-    // the same AlwaysTrack settlement document, but independently keyed -- live-verified this
-    // session (doc 5788/load 13546: expense $624.60 vs fuel row gross $644.08/net $624.83, i.e.
-    // the SAME purchase's AlwaysTrack-recorded figure lands close to net for that one row, close
-    // to gross for most others) -- a fixed cents-exact match against either single column cannot
-    // cover both cases. Accept a match against gross_cost OR total_cost, each within a small named
-    // per-row tolerance (25c) for ordinary cross-document rounding noise; anything further off
-    // still fails loud as a real unmatched/duplicate row, which is this guard's actual job.
-    const amountMatch = hasGrossCost
-      ? `(ABS(COALESCE(ft.gross_cost, ft.total_cost) - (e.total_amount_cents::numeric / 100)) <= 0.25
-          OR ABS(ft.total_cost - (e.total_amount_cents::numeric / 100)) <= 0.25)`
-      : `ABS(ft.total_cost - (e.total_amount_cents::numeric / 100)) <= 0.25`;
+    const rows = (await client.query(DIESEL_SQL, [USMCA_COMPANY_ID])).rows;
+    const doubled = rows.filter((r) => r.doubled);
+    const current = { doubled_with_live_fuel_twin: doubled.length, live_diesel_expenses: rows.length };
+    const usd = (list) => (list.reduce((a, r) => a + Number(r.total_amount_cents), 0) / 100).toFixed(2);
 
-    // 1. every LIVE (non-void) Diesel expense must match a fuel_transactions row.
-    const unmatched = await client.query(
-      `SELECT e.id, e.transaction_date, e.total_amount_cents, e.vendor_document_number, e.source_settlement_ref
-         FROM accounting.expenses e
-        WHERE e.operating_company_id = $1::uuid AND e.memo ILIKE 'Diesel%' AND e.voided_at IS NULL
-          AND NOT EXISTS (
-            SELECT 1 FROM fuel.fuel_transactions ft
-             WHERE ft.operating_company_id = e.operating_company_id
-               AND ft.purchased_at = e.transaction_date
-               AND ${amountMatch}
-               AND (
-                 ft.transaction_reference = regexp_replace(e.vendor_document_number, '-L[0-9]+$', '')
-                 OR (ft.transaction_reference IS NULL AND e.vendor_document_number = 'no-invoice')
-               )
-          )`,
-      [USMCA_COMPANY_ID]
-    );
-    if (unmatched.rows.length > 0) {
-      console.error(`${LABEL}: LIVE FAIL — ${unmatched.rows.length} live Diesel expense(s) have no matching fuel.fuel_transactions row (must be VOIDED, void_reason='${VOID_REASON}'):`);
-      for (const r of unmatched.rows) {
-        console.error(`  ✗ ${r.id} ${r.transaction_date} $${(Number(r.total_amount_cents) / 100).toFixed(2)} settlement=${r.source_settlement_ref}`);
+    for (const m of METRICS) {
+      if (current[m] > baseline[m]) {
+        console.error(`${LABEL}: LIVE FAIL — ${m} grew: ${current[m]} > baseline ${baseline[m]}`);
+        failures++;
+      } else if (current[m] < baseline[m]) {
+        console.log(`${LABEL}: ${m} shrank ${baseline[m]} -> ${current[m]}; commit ${current[m]} to ${path.relative(ROOT, BASELINE_PATH)}`);
       }
-      failures++;
+    }
+    for (const r of rows.filter((x) => x.twin_unposted)) {
+      console.warn(
+        `${LABEL}: WARN — ${r.id} inv=${r.vendor_document_number} $${(Number(r.total_amount_cents) / 100).toFixed(2)} ` +
+          `has a live fuel twin that does NOT post; re-post the fuel row before voiding this expense or the cost is lost`,
+      );
+    }
+    if (current.doubled_with_live_fuel_twin > baseline.doubled_with_live_fuel_twin) {
+      console.error(`  a Diesel expense beside its fuel row posts the same purchase twice — void it through voidDocument({ type: 'expense' }):`);
+      for (const r of doubled.slice(0, 20)) {
+        console.error(`  ✗ ${r.id} inv=${r.vendor_document_number} $${(Number(r.total_amount_cents) / 100).toFixed(2)} settlement=${r.source_settlement_ref}`);
+      }
     }
 
-    // 2. the 2 known settlement-5782 rows stay voided with the exact disclosed reason.
     const knownRes = await client.query(
       `SELECT id, status, void_reason FROM accounting.expenses WHERE id = ANY($1::uuid[]) AND operating_company_id = $2::uuid`,
       [KNOWN_VOIDED_5782_IDS, USMCA_COMPANY_ID]
@@ -107,7 +138,7 @@ async function live() {
       failures++;
     }
     for (const r of knownRes.rows) {
-      if (r.status !== "void" || r.void_reason !== VOID_REASON) {
+      if (r.status !== "void" || r.void_reason !== VOID_REASON_5782) {
         console.error(`${LABEL}: LIVE FAIL — ${r.id} is not correctly voided (status=${r.status}, void_reason=${r.void_reason})`);
         failures++;
       }
@@ -115,9 +146,14 @@ async function live() {
 
     await client.query("COMMIT");
     if (failures > 0) process.exit(1);
-    console.log(`${LABEL}: LIVE PASS — 0 unmatched live Diesel expenses, 2/2 known settlement-5782 rows correctly voided.`);
+    console.log(
+      `${LABEL}: LIVE PASS — ${current.doubled_with_live_fuel_twin} doubled ($${usd(doubled)}) <= baseline ` +
+        `${baseline.doubled_with_live_fuel_twin}; ${current.live_diesel_expenses} live Diesel expenses ($${usd(rows)}) <= baseline ` +
+        `${baseline.live_diesel_expenses}; 2/2 settlement-5782 rows voided.`
+    );
   } finally {
-    await client.end();
+    client.release();
+    await pool.end();
   }
 }
 

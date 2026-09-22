@@ -379,3 +379,210 @@ CURSOR (lead) | 2026-09-10 EVE | truck-lock + orphan-load settlement pairing shi
 - REBUILD (Thursday catch-up) STATE: preview PASSES 28 Faro tours / $37,830.87 penny-exact. BUT Thursday-correct scope is 32 tours / $44,234.51 (add signed 5797-5800) with reverse expanded to ~19 settlements (redistribution of 7 loads). The 5797-5800 LINE data is OFF-DISK (lost in branch churn; signed PDFs ARE in ~/Downloads) and NO reverse+repost executor script exists yet. NOT POSTED — a 28-tour post would skip 4 newest tours + double-settle 7 loads. Owner said "post if confident"; I am correctly not-yet-confident. → Claude/money-lead: re-extract 5797-5800, get 32-tour preview PASS, build executor reusing existing reverse+repost posters, rehearse equal-and-opposite on a throwaway branch, then post.
 - OWNER DECISIONS captured today: reimbursement GL mapping (above); rebuild post-if-confident; seed missing open loads from AllwaysTrack.
 NEXT (Cursor): seed 13582/13583/13584/13586-13589 at $0 (pull details from AllwaysTrack, book via bookLoad); verify-step regression guard for uq_loads_one_active_unit.
+
+---
+## CURSOR — ROUND 46 QUEUE (Lead: Claude Opus 5) — 2026-09-22 — reported by number
+
+**10 of 11 DONE (local, committed on `cursor/r46-items-1-10`).** `.gitignore` had no `.env` rule at all.
+Added `.env` / `.env.*` / `!.env.example`. Proof (`git check-ignore`): `.env`, `.env.local`,
+`.env.production`, `apps/backend/.env` -> IGNORED; `.env.example` -> still tracked. No `.env` existed on
+disk and none was ever tracked, so nothing leaked; this is preventive.
+Files Modified: `.gitignore`.
+
+**1 of 11 DONE (measured, nothing written).** `accounting.journal_entry_postings` USMCA with
+`source_transaction_id IS NULL`: **440 lines / 194 JEs / $851,668.81** (sum of amount_cents, both sides) —
+matches the Lead's re-measure. All 440: `je.source='auto'`, `source_transaction_type` NULL, JE not voided,
+`idempotency_key = 'manual_je:<je_id>'` — i.e. every one was written through the manual-JE path, which is
+why it carries no source. Characterised by FK, not memo text:
+
+| kind | lines | JEs | $ | provable by | exactly-one match |
+|---|---|---|---|---|---|
+| Revrec earn/bill (load) | 212 | 141 | 672,367.23 | `accounting.load_revenue_recognition_postings.journal_entry_id` | 212/212 |
+| Pay-run close, memo `S-2026-NNNN` | 149 | 35 | 106,871.26 | `driver_finance.payrun_gl_runs.journal_entry_id` | 149/149 |
+| Pay-run close, memo `S-<n>` (e.g. `S-13508`) | 77 | 17 | 71,651.00 | `driver_finance.payrun_gl_runs.journal_entry_id` | 77/77 |
+| Manual driver-pay correction (JE "Corrects posted JE 13ffbcff…") | 2 | 1 | 779.32 | none — no FK; the JE it cites is itself unsourced | 0 |
+
+**DERIVABLE: 438 lines, $850,889.49. NOT DERIVABLE: 2 lines, $779.32.** (850,889.49 + 779.32 = 851,668.81.)
+Note: the `S-<n>` memos match no settlement or company-settlement display id (company settlements are
+`CS-2026-NNNN`) — memo text would have called those 77 lines unresolvable; the FK resolves every one.
+Files Modified: none — measure-only pass, as ordered.
+
+**2 of 11 — PREREQUISITE FOUND, not started.** No DB CHECK constrains `source_transaction_type`; none of the
+11 types in use today (`fuel_event, journal_entry, expense, factoring_advance, bank_categorization,
+driver_reimbursement, bill, invoice, driver_advance, faro_intercompany_leg, faro_reserve_close`) is a revrec or
+pay-run type. The backfill must use whatever type the revrec and pay-run posters would write if they posted
+through `postSourceTransaction` — I read that from the engine before writing a row, I do not invent one.
+
+**6 of 11 — CORRECTION TO THE QUEUE.** `scripts/verify-one-canonical-active-load-set.mjs` already exists on
+main (CC-1, ROUND 31.2, shrink-only ratchet + baseline). Not rebuilding it. **Item 6 is 4 new guards**, all
+confirmed absent on main: `verify-load-costs-board-excludes-settled`, `verify-every-void-route-reverses`,
+`verify-no-voided-doc-has-live-postings`, `verify-no-capability-regression` (the registry's own `_comment`
+already names that last file as if it existed — it does not).
+
+**BLOCKER — every Cursor PR, independent of the parity gate.** `scripts/verify-lane-ownership.mjs` resolves
+seats only as `^(CC-[123]|LEAD)$` (from `SEAT=` or a `cc-N/` / `claude/` branch). A `cursor/` branch resolves
+to no seat and the guard FAILS by design ("No seat resolved -> FAIL"). `docs/bus/LANES.md` also has no
+CURSOR section, and lists both my assigned paths (`apps/backend/src/accounting/**`, `scripts/verify-*.mjs`)
+under CC-1. **Unblocks:** Lead adds a `## CURSOR` section to LANES.md (my two paths, noted as shared with
+CC-1) and CC-1 adds `CURSOR` + `cursor/` branch resolution to the guard — or the Lead issues a `LANE-CROSS`
+ruling file I cite in each PR body. I am not editing either file myself; both are other seats' lanes.
+
+**Side finding for item 5:** 52 of these JEs print the RETIRED `S-2026-NNNN` / `S-<n>` settlement surrogate in
+the memo (Rule 03: never rendered). The memo fix at the writer must print the AlwaysTrack
+`source_document_ref` instead.
+
+NEXT: item 6 (the 4 guards, red-before-green, both runs pasted), then 2 once the engine's type is read.
+
+**6 of 11 — 1 of 4 new guards DONE (red-before-green), the rest adjudicated so nothing is built twice.**
+- `scripts/verify-no-capability-regression.mjs` — WRITTEN. Static scan of `capability-registry.json` against
+  `apps/backend/src`. FAILs on MISSING (file gone / symbol not declared), MOVED (declared in another file),
+  DUPLICATE (defined in >1 non-test file; imports/re-exports don't count); same-file line drift is a WARN
+  with the new line. **RED** (temp registry, real one untouched, `git diff` empty): exit 1, all three arms
+  fire — `thisEngineWasDeleted: MISSING`, `postVoidReversal: MOVED … now in accounting/void.service.ts:521`,
+  `sendValidationError: DUPLICATE — defined in 147 files`. **GREEN** (real registry): exit 0,
+  "14 capabilities present, each defined exactly once (0 line-drift warning(s))". Not yet wired into
+  `scripts/verify-steps/` — needs a claimed step number (Rule 37), which needs a mergeable Cursor PR.
+- `verify-no-voided-doc-has-live-postings.mjs` — **CC-1 already has it** in open PR #22222 (voidDocument()
+  dispatcher, baseline + verify-step 11565, re-measured 208 docs / $353,434.69, MERGEABLE, 0 failed checks).
+  Not building it. **Item 3 is the same work** (reverse the voided docs through the engines) — it rides on
+  #22222's dispatcher; it is not a second Cursor build.
+- `verify-every-void-route-reverses.mjs` — nobody has it (not in #22222, not on main). Mine next; it must
+  ratchet over #22222's dispatcher, so it is sequenced after #22222 lands.
+- `verify-load-costs-board-excludes-settled.mjs` — pairs with CC-1's assigned fix to
+  `accounting/load-costs-board.routes.ts` (LANES.md correction). Lead: confirm it is mine, not CC-1's, before
+  I write it.
+
+**PROCESS FINDING — every seat that uses a git worktree pushes with NO hooks.** `core.hooksPath` is the
+relative `.husky/_`; that directory is generated by husky and untracked, so a fresh worktree has no
+`.husky/_` and no `node_modules`, and git silently runs no commit-msg or pre-push hook. My first push of
+`f3c3a330d5` went out in 3.3 s with zero gates. Run retroactively: commit-msg gate exit 0; pre-push
+`money-pr-local-gate` exit 1 on `verify-claude-green-evidence-shape` (LIVE PROOF line named no artifact).
+Fixed by the follow-up commit on this branch (no amend, no force). No PR was opened, nothing reached main.
+Fix for any seat: in the worktree, symlink `node_modules` from the main checkout and copy `.husky/_` —
+or `npx husky` there — before the first commit. Guard owner (CI/Lead): a pre-push check that fails when
+`.husky/_` is absent would close this for good.
+
+**LEAD ROUND 48 — 3 of 4 (verify the $62,833.83 expenses gap) — ANSWERED: it IS a money defect.**
+Measured live (Neon prod, bypass_rls=lucia, USMCA), 34 USMCA documents / 76 loads (end_date >= 2026-08-07,
+the parity guard's own selection), read-only, nothing written.
+- The parity guard's app-side "expenses" = every live `accounting.expenses` row on the doc's loads, no category
+  filter. 93 of those rows are `memo ILIKE 'Diesel%'`, $63,106.32 — 66 carry `source_settlement_ref` (copied
+  from the settlement PDFs' fuel lines). On **11 documents, not 7** (5769 5777 5780 5781 5783 5784 5791 5792
+  5793 5794 5795) the expense overage equals the AlwaysTrack fuel total to the cent — the whole fuel block of
+  the document was booked as expense rows.
+- Both copies are LIVE in GL. Diesel expense rows debit 5000 Fuel & Diesel (and 5300); fuel.fuel_transactions
+  rows debit 5000 / 5010 via fuel_event. Liveness = je.voided_at, je.reversed_by_je_id, je.reverses_je_id,
+  p.reversed_by_line_id all NULL.
+- Per document: AlwaysTrack fuel $110,072.33 · fuel rows $123,472.02 · diesel expense rows $63,106.32 ·
+  **GL fuel overstated $76,506.01**. On 11 of the 24 docs that carry diesel expense rows, fuel rows alone
+  already meet or exceed the document ($26,605.83 of diesel expense on those is pure excess). Across all 34,
+  diesel expense rows fill a real gap of only $1,673.89. 27 of the 93 are exact twins of a fuel row (same load,
+  +-1 day, amount to the cent, $17,463.39); the rest differ in amount basis (settlement "actual" net of discount).
+- `source_fuel_transaction_id IS NULL` on these rows proves they were never linked — which is why the double
+  went unseen — not that there is no double.
+- `scripts/verify-diesel-expense-fuel-dedupe.mjs` never runs in the gate (skips with no DATABASE_URL), and its
+  own rule voids only UNMATCHED Diesel expenses — a matched Diesel expense is kept alongside its fuel row.
+  That rule preserves the double. Lead ruling needed on which object is canonical; owner design (load creates
+  the fuel expense from the fuel-card statement, bank line matched to it) points at fuel.fuel_transactions.
+Files Modified: docs/bus/OUTBOX-CURSOR.md only.
+
+**LEAD ROUND 48 — Cursor box DONE (preview only, no money writes).**
+- Void list: `docs/reconciliation/2026-09-22-diesel-expense-void-preview.md` (copy in ~/Downloads). 93 live
+  Diesel expense rows / $63,106.32 = A 89 / $59,726.73 VOID (same invoice, live fuel row, same load) + C 2 /
+  $1,590.95 HOLD (twin on another load: 13547, 13557-1 -> CC-3 fixes attribution first) + D 2 / $1,788.64
+  KEEP (no live twin: 13537, 13546-2). Reproduce query in the file returns 89 / 59726.73 / md5
+  8c6a2eea31541c22c69481032dbfeb6c — CC-2 must match all three before voiding via voidDocument({type:'expense'}).
+- Premise correction: the fuel rows these duplicate are mostly source='import', note "ABSORPTION-B1 doc <n>" —
+  transcribed from the same settlement PDFs, not from the fuel-card statement. Only the small 'manual' rows are
+  Dreamline statement lines. Join key is the vendor invoice number, "-L<load>" suffix stripped on BOTH sides.
+- Guard rewritten: `scripts/verify-diesel-expense-fuel-dedupe.mjs` + new `.baseline.json` (doubled 91, live 93,
+  shrink-only). Old version on main, run live today: "LIVE PASS — 0 unmatched" with 91 duplicates present.
+  New version, run live as role ih35_ci_readonly: GREEN exit 0 (91 doubled $61,317.68 <= 91; 93 live
+  $63,106.32 <= 93; 2/2 5782 voided); RED exit 1 with a temp baseline 90/92 (both arms fail, offenders listed);
+  no DATABASE_URL -> skip exit 0 (file stays on scripts/lib/db-skip-baseline.json). verify-step 11469 and
+  money-pr-local-gate.mjs:84 call it by path — no wiring change.
+Files Modified: scripts/verify-diesel-expense-fuel-dedupe.mjs, scripts/verify-diesel-expense-fuel-dedupe.baseline.json,
+  docs/reconciliation/2026-09-22-diesel-expense-void-preview.md, docs/bus/OUTBOX-CURSOR.md.
+
+**LEAD ROUND 48 (restated box) — 1, 2, 3 of 3 DONE.**
+- 1 of 3: per-document dollar effect added to the void preview (24 docs). After class A: 13 docs land $7-205
+  under AlwaysTrack, 2 tie (5776, 5780), 9 stay over $455-1,911 on their own fuel rows. Remaining overstatement
+  $16,779.28 = fuel-row excess $13,399.69 + C $1,590.95 + D $1,788.64. Class D corrected: 13546-2 is a 23c twin
+  (void on approval); 13537's twin is a fuel row CC-3 ARCHIVED — keep until CC-3 names the canonical row.
+- 2 of 3: guard now fail-closed via scripts/lib/require-live-db.mjs (no DB -> exit 1), moved out of the
+  unconditional STEPS array into its own conditional block in money-pr-local-gate.mjs (runs when DATABASE_URL
+  is set or the diff touches accounting/, fuel/, db/migrations/ or the guard), removed from
+  scripts/lib/db-skip-baseline.json (161 -> 160). Proof: no DB exit 1; GREEN exit 0 (91/$61,317.68, 93/$63,106.32);
+  RED exit 1; `node --check` gate OK; 03d verify-no-silent-db-skip PASS (196 scanned, 160 debt, 0 new).
+  Consequence: this branch touches the guard, so its own push needs DATABASE_URL.
+- 3 of 3: scope in docs/reconciliation/2026-09-22-bank-match-fuel-column-scope.md (+ ~/Downloads). Migration for
+  CC-1: matched_fuel_transaction_id uuid FK -> fuel.fuel_transactions + partial index, and widen
+  reconciliation_matches_ledger_entry_kind_check with 'fuel_transaction'. 13 code sites that enumerate the
+  matched_* family, by seat. New finding: all 76 Relay bank lines are review_state 'matched' pointing at a
+  REVERSED/VOIDED journal entry (76/76), none at the fuel posting — the register shows them reconciled with a
+  dead match behind each. Guard proposed: matched => at least one live target (baseline 76).
+Files Modified: scripts/verify-diesel-expense-fuel-dedupe.mjs, scripts/money-pr-local-gate.mjs,
+  scripts/lib/db-skip-baseline.json, docs/reconciliation/2026-09-22-diesel-expense-void-preview.md,
+  docs/reconciliation/2026-09-22-bank-match-fuel-column-scope.md, docs/bus/OUTBOX-CURSOR.md.
+
+**LEAD ROUND 50 — the two GL sign defects, ROOT-CAUSED (no writes).** Design read first:
+docs/accounting/FACTORING-POSTER-DESIGN.md R1b (funding): DR cash (face - reserve - fee), DR factor_reserve_held
+(asset), DR factor_fee_expense, CR factoring_advance_liability = FACE. R2 (customer pays factor): DR liability
+face / CR A/R. R3 (reserve release): DR cash / CR reserve. Liveness: 5-column.
+
+2150 Factoring Advance (-$187,890.00) — NO sign defect, NO missing legs.
+- A liability carries a credit balance; crediting FACE is the design (R1b), not a symptom.
+- All 59 funding JEs are complete: CR 2150 $187,890.00 = DR 1090 $182,253.28 + DR 1230 $2,818.36 + DR 6400
+  $2,818.36 (1.5% / 1.5%, advance rate 97%). The "fee and reserve legs never posted" reading is wrong.
+- The gap to Faro is population + collections: factoring_advances = 59 advanced (all posted) + 10 'submitted'
+  (face $47,330, net $45,910.10, 0 posted) + 51 voided. Our net advanced (1090) $182,253.28 vs Faro net advanced
+  $270,235.38 = $87,982.10 Faro sent that we never booked as an advance. And 2150 has ZERO debit lines: the R2
+  collection leg has never posted once, so every collected invoice still sits in 2150 and in A/R.
+- Only deviation from design: the cash leg lands in 1090 Undeposited Funds, not a bank account (known 1000/1090).
+
+1230 Factoring Reserves (-$33,055.27) — REAL defect, written by a CURSOR ops script (my seat's error).
+- DR $2,818.36 (59 funding holdbacks, correct) - CR $35,730.00 (8 lines, source 'faro_intercompany_leg') -
+  CR $143.63 (1 line, 'faro_reserve_close') = -$33,055.27.
+- Writer: scripts/ops/cursor-2026-09-22-faro-8-direct-legs.mts (INSERT at :111), #22193 / ad2f7eca21. It posted
+  the 8 "transfer to IH 35 Reserve" legs as DR 8000 Inter-company - IH35 Transportation / CR 1230, and by design
+  skipped the Rsv Deposits INTO USMCA's reserve ("USMCA Tank": 8/28 $5,000, 9/8 $11,840, 9/14 $8,000,
+  9/17 $2,000 = $26,840) as double-counting. They are one event — USMCA funding Transportation's negative
+  reserve — but the credit belongs on the account the money came from (USMCA's funds at Faro), not on a reserve
+  the money only passed through. Crediting 1230 for outflows whose inflows were never debited drives the asset
+  negative by construction. The owner's ruling (#22185/#22188) decided "intercompany"; the credit account was a
+  seat's choice.
+- Magnitude vs Faro reserves ($8,665.60 = escrow $4,530.19 + cash $4,135.41): our holdback debits cover only the
+  59 posted advances; holdbacks on the 10 submitted ($709.95) and on Faro purchases with no advance record never
+  reached 1230.
+Fix is owner/CC-2 (Tier A): re-point the 8 legs' credit from 1230 to the funds-due/cash account the Tank draws on,
+through the existing reversal engine; source for the counter-account = Faro FUNDS_DUE / PAYMENTS_TO_USMCA reports.
+Files Modified: docs/bus/OUTBOX-CURSOR.md only.
+
+**LEAD ROUND 51 — items 1 + 2 PREVIEW (nothing posted):** docs/reconciliation/2026-09-22-faro-reserve-1230-correction-preview.md
+(+ ~/Downloads/09-22-2026-Cursor-1230-RESERVE-CORRECTION-PREVIEW.md). Items 1 and 2 together would double-credit USMCA's
+Faro funds (1230 -> ~+$29,500). Rule used: 1230 mirrors Faro's USMCA reserve ledger. A: book 4 deposits DR 1230 / CR 1090
+$26,840.00 (their 4 transfers stay). B: re-point 3 legs Faro never ran through the reserve (Magna 5, CTS 12, SE Mares 13,
+$7,241.00) to DR 8000 / CR 1090. C: Watco $1,649.00 HELD (payment + deposit same day, not on reserve report). D: reserve
+close re-posted as fees only ($8.22); $135.41 is still at Faro. Expected: 1230 -33,055.27 -> +1,161.14; 1090 89,791.33 ->
+55,574.92; 8000 and 6400 unchanged. Residual vs Faro $4,665.60 (not $8,665.60 — the $4,000 has no source) = $3,504.46 =
+Watco $1,649.00 + unposted holdbacks $1,855.46. Engines: reverseJournalEntryNoFlip + createJournalEntryOnClient, lines
+source-stamped in the same transaction. Awaiting approval.
+- REVISION 2 (owner's original Faro exports): the $4,000 HAS a source — funds due report 09-21-26, last line
+  "($4,000.00) Wire" (label shows #NAME? — Excel mis-parses the "-- RSV Transaction --" prefix): a 5th reserve deposit
+  withheld from the 9/21 funds due, still held (reserve report $135.41 + $4,000 = ACCOUNT SUMMARY cash $4,135.41).
+  Faro's reserve is $8,665.60 after all. Watco inv 4 ($1,649 = $1,700 x 97%) moved to B (never on USMCA's reserve report).
+  A = 5 deposits $30,840.00; B = 4 re-points $8,890.00; D = $8.22 fees. 1230 -33,055.27 -> +6,810.14; 1090 89,791.33 ->
+  49,925.92. Residual $1,855.46 = exactly the escrow holdbacks on Faro purchases not yet posted as advances.
+
+**LEAD ROUND 53 — status (Cursor).**
+- E4: landing in this PR — scripts/verify-diesel-expense-fuel-dedupe.mjs (+ .baseline.json) fail-closed, run from its
+  own conditional block in money-pr-local-gate.mjs, off the db-skip allowlist (161 -> 160). DEF/reefer exclusion from the
+  AlwaysTrack FUEL compare is CC-1's one edit to verify-alwaystrack-parity.mjs (Lead lifted DO-NOT-TOUCH for that change only).
+- E1: branch cursor/e1-posting-source-required @ 131fadbc58 — writer + guard proven; the 16 callers are being migrated in
+  the same PR. ACKS NEEDED HERE (one line each, naming the callers in your lane, per Lead round 53):
+  - CC-1: revrec-delivery, settlement-bill-payment, escrow/service, insurance-claim-recovery, owned-asset-disposal,
+    parts-inventory, property-tax, safety-fine, warranty — ack: ______
+  - CC-3: settlement-payrun-close, escrow-forfeit, settlement-dispute, fuel-card-overage — ack: ______
+- E7: approved shape (fail-closed + conditional on each guard's own domain paths) + guard-debt-2026-09-22.json pricing
+  the 33 red guards. Next after E1.
+Files Modified: docs/bus/OUTBOX-CURSOR.md.
