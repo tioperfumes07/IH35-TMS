@@ -22,15 +22,26 @@
 //                                                          baseline" (a return to the pre-growth
 //                                                          state is itself suspicious and worth a
 //                                                          human look, not a silent pass)
-// CARVE-OUT, explicit, permanent: assertion 3 (DEF exclusion) is NEVER baselined and NEVER
-// widened — DEF rows counted as fuel is a live IFTA gallon-taxation defect (CC-3's lane,
-// apps/backend/src/ifta/ifta-state-gallons-aggregator.ts summing DEF gallons as taxable highway
-// fuel with no fuel_type filter), not drift. It stays a hard, unconditional FAIL exactly as
-// written. Deliberately NO automated regenerate mode: unlike verify-alwaystrack-parity.mjs's
-// mechanical per-document delta, updating this baseline means a human did a fresh reconciliation
-// (as CC-3 and the Lead both did for 625/$271,499.26) — hand-edit
-// scripts/verify-fuel-transactions-per-load.baseline.json's count/total_cents AND its
-// `reconciliation` field together, every time, or the guard is lying about why the number moved.
+// ROUND 30.6, SELF-CORRECTED (Lead ruling, 2026-09-23 02:00 CT, docs/bus/INBOX-CC-1.md): the
+// original assertion 3 ("DEF is an expense, never fuel — zero fuel_type='def' rows") was wrong
+// about WHERE the row lives. fuel.fuel_transactions.fuel_type carries a canonical 'def' value BY
+// DESIGN (fuel-transaction-import.ts:112), and FUEL_CATEGORY_CODES
+// (accounting/fuel-posting/poster.service.ts:25) treats 'def' as a first-class fuel posting
+// category. DEF purchases are real fuel-card transactions and belong in this table — the real
+// invariant is TREATMENT, not STORAGE:
+//   (a) DEF must NEVER count as taxable IFTA gallons -> fixed + guarded elsewhere,
+//       apps/backend/src/ifta/ifta-state-gallons-aggregator.ts + its own verify-ifta-* guard,
+//       commit 0df952f337 (PR #22171). NOT this guard's concern.
+//   (b) DEF must post to its own GL account, never the same account a diesel debit hits -> THIS
+//       is what assertion 3 now tests. Verified live 2026-09-23: it currently does NOT hold — all
+//       335 live DEF debit posting lines ($10,970.23) hit catalogs.accounts 5000 "Fuel & Diesel",
+//       the exact same account diesel purchases hit, and no dedicated DEF-named account exists in
+//       the chart of accounts at all yet. This is a REAL, CONFIRMED, SEPARATE defect in the fuel
+//       posting engine / chart of accounts (CC-3's lane, apps/backend/src/accounting/fuel-posting/
+//       poster.service.ts's resolveAccountForCategory) — named here, not fixed here, per explicit
+//       instruction: "delete nothing, move no rows, archive nothing." This guard therefore
+//       currently, correctly, honestly FAILS on assertion 3 until that poster fix lands — that is
+//       not a bug in this guard, it is the guard doing its job.
 //
 // Checks, against the SAME ground-truth JSON the ingestion reads
 // (data/alwaystrack/settlements-truth-2026-09-13.json):
@@ -40,8 +51,11 @@
 //      and the ingestion can never silently drift apart). UNCHANGED — this checks a subset
 //      (the original 171 rows) that must remain present regardless of later growth.
 //   2. Row count / dollar total — see the ratchet above.
-//   3. DEF EXCLUSION — zero fuel_type='def' rows for this company. DEF is an
-//      expense, never fuel; this table must never carry one. NEVER BASELINED.
+//   3. DEF GL SEGREGATION — every live DEF debit posting must hit a DIFFERENT account_id than any
+//      live diesel debit posting (dynamic comparison, no hardcoded account number — stays correct
+//      once a dedicated DEF account is created and wired). Currently FAILS live (see above);
+//      remains unconditional, never baselined, never widened — this is treatment correctness, not
+//      growth-driven drift.
 //   4. The 5 disclosed data-quality flags (1 date correction + 4 cross-load
 //      duplicate-invoice rows) are present and still flagged low-confidence —
 //      proves the ingestion's disclosed corrections weren't silently dropped
@@ -121,7 +135,7 @@ async function live() {
     // independently-reconciled figures. Every other live-row read in this codebase excludes
     // archived rows by convention; this one had drifted.
     const liveRes = await client.query(
-      `SELECT source_row_hash, total_cost, fuel_type FROM fuel.fuel_transactions
+      `SELECT id::text AS id, source_row_hash, total_cost, fuel_type FROM fuel.fuel_transactions
         WHERE operating_company_id = $1::uuid AND archived_at IS NULL`,
       [USMCA_COMPANY_ID]
     );
@@ -196,11 +210,38 @@ async function live() {
       );
     }
 
-    // 3. DEF exclusion.
-    const defRows = liveRes.rows.filter((r) => r.fuel_type === "def");
-    if (defRows.length > 0) {
-      console.error(`${LABEL}: LIVE FAIL — ${defRows.length} DEF row(s) found in fuel.fuel_transactions; DEF is an expense, never fuel`);
-      failures++;
+    // 3. DEF GL segregation (ROUND 30.6 self-correction — see file header). Real invariant is
+    // TREATMENT not STORAGE: every DEF debit posting must hit a DIFFERENT account_id than any
+    // diesel debit posting. Dynamic comparison — no hardcoded account number, so this stays
+    // correct once a dedicated DEF account is created and wired.
+    const defIds = liveRes.rows.filter((r) => r.fuel_type === "def").map((r) => r.id);
+    const dieselIds = liveRes.rows.filter((r) => r.fuel_type === "diesel").map((r) => r.id);
+    if (defIds.length > 0) {
+      const glRes = await client.query(
+        `SELECT ft.fuel_type, a.id::text AS account_id, a.account_number, a.account_name,
+                count(*) AS n, sum(jep.amount_cents) AS cents
+           FROM fuel.fuel_transactions ft
+           JOIN accounting.journal_entry_postings jep
+             ON jep.source_transaction_type = 'fuel_event'
+            AND jep.source_transaction_id = ft.id::text
+            AND jep.debit_or_credit = 'debit'
+           JOIN catalogs.accounts a ON a.id = jep.account_id
+          WHERE ft.id = ANY($1::uuid[])
+          GROUP BY ft.fuel_type, a.id, a.account_number, a.account_name`,
+        [[...defIds, ...dieselIds]]
+      );
+      const defAccountIds = new Set(glRes.rows.filter((r) => r.fuel_type === "def").map((r) => r.account_id));
+      const dieselAccountIds = new Set(glRes.rows.filter((r) => r.fuel_type === "diesel").map((r) => r.account_id));
+      const sharedAccountIds = [...defAccountIds].filter((id) => dieselAccountIds.has(id));
+      if (sharedAccountIds.length > 0) {
+        const shared = glRes.rows.filter((r) => sharedAccountIds.includes(r.account_id) && r.fuel_type === "def");
+        console.error(`${LABEL}: LIVE FAIL — DEF debit postings share an account with diesel debit postings (must be segregated):`);
+        for (const r of shared) {
+          console.error(`  ✗ DEF debits hit ${r.account_number} "${r.account_name}" — ${r.n} posting(s), $${(Number(r.cents) / 100).toFixed(2)} (the same account diesel purchases hit)`);
+        }
+        console.error(`  This is a fuel-posting-engine / chart-of-accounts defect (CC-3's lane), not this guard's to fix — see docs/bus/OUTBOX-CC-3.md.`);
+        failures++;
+      }
     }
 
     // 4. disclosed low-confidence corrections still present, not silently dropped.
@@ -225,7 +266,7 @@ async function live() {
       `${LABEL}: LIVE PASS — ${liveCount} fuel_transactions rows / $${(liveCents / 100).toFixed(2)} ` +
         `(original B1 target ${ORIGINAL_COUNT}/$${(ORIGINAL_TOTAL_CENTS / 100).toFixed(2)}; ` +
         `${baseline ? `reconciled baseline ${baseline.count}/$${(baseline.total_cents / 100).toFixed(2)} holds` : "no growth beyond original target"}), ` +
-        `0 DEF rows, ${expectedLowConfHashes.size} disclosed low-confidence rows intact.`
+        `${defIds.length} DEF row(s) present and GL-segregated from diesel, ${expectedLowConfHashes.size} disclosed low-confidence rows intact.`
     );
   } finally {
     await client.end();
