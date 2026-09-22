@@ -4840,3 +4840,73 @@ POD/departure capture through dispatch, not a code or data override.** Not forci
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+## 2026-09-23 — Faro fee mapping corrected (blocked on the known alwaystrack-parity gate); $1,847.24 re-measured live and corrected; $80,289.59 decomposed exactly against the 83 open invoices
+
+### #5 — Importer fee mapping fixed: `fee = Discount`, not `Fees`
+
+Confirmed the real file (`PURCHASE REPORT ALL.csv`) carries BOTH a "Discount" column AND a separate
+"Fees" column — my Round 40.1 fix aliased canonical `fee` to `["fee","factor fee","fees"]`, which
+exact-matched the real "Fees" column, the wrong one, on every row. Fixed: `fee` now tries
+"discount"/"discount fee" first (`apps/backend/src/factoring/faro-csv-import.ts`). Real DoD
+red-before-green, for real this time (backed up the fixed file, surgically reverted only the
+alias-order line, kept the corrected test, confirmed it fails exactly as the bug would
+`fee_amount_cents=9900/from Fees, expected 4500/from Discount`; restored, all 28 tests pass). Live
+proof against the real file: 89 lines, 0 parse errors, `fee_amount_cents === discount_amount_cents`
+on every one of the 89 rows (0 mismatches). Cash Rsv confirmed never aliased to reserve (unchanged,
+already correct).
+
+**Committed, cannot push** — branch `cc2-round48-faro-header-fix-and-fee-mapping`,
+`money-pr-local-gate.mjs` correctly refuses on the same known, already-escalated
+`verify-alwaystrack-parity` regression blocking every money-lane push session-wide (not my diff —
+confirmed my change touches only the Faro CSV importer). Ready the moment that clears.
+
+### #4 — $1,847.24 was already stale by the time I re-measured it; corrected to $1,137.29, and there is no bookable gap
+
+Re-measured GL 6400's standing debit LIVE before booking anything: **$3,536.53**, not the $2,826.58
+it read when the $1,847.24 figure was derived — my own 10-advance funding batch earlier this round
+(Item 19) already added $709.95 in real fee legs. Gap vs the ruled $4,673.82 total is now
+**$1,137.29**, not $1,847.24.
+
+Built a robust join (FEES PAID.csv's 90 "Discount fee" lines, matched by PO to
+`mdata.loads.customer_wo_number`/`customer_po_number` → the load's live factoring advance → whether
+that advance already carries a live GL 6400 posting): **zero rows matched an advance that lacks a
+live fee posting.** Every advance my system can find already has its fee booked. The $1,137.29 (CSV
+total $4,673.82 minus GL 6400's $3,536.53) is not sitting on any bookable row — it traces to Faro
+purchases that don't have a corresponding `factoring_advances` row in our system AT ALL yet (34 of
+90 CSV lines, $1,926.34, found NO matching load by PO — a strict superset of the dollar gap, since
+some of those 34 likely resolve through a linkage this join doesn't capture). **Not booking
+anything** — there is no existing advance to attach a correcting fee leg to, and inventing one would
+be exactly the new-GL-math this codebase forbids. The real unblock is importing those purchases as
+real advances first (the just-fixed importer), not a fee posting.
+
+### #6 — $80,289.59 decomposed exactly against the 83 open invoices, by PO, no correcting JE
+
+`AGING REPORT.csv`'s 83 rows sum to **exactly $298,762.00** — matches the locked "AR 298,762.00"
+figure precisely. Matched every row to our own live invoices by PO → `mdata.loads.customer_wo_number`/
+`customer_po_number` → the load's live invoice:
+
+```
+13 rows  $50,810.00  no load found for this PO at all (same population as the un-imported Faro purchases above)
+ 1 row   $ 4,000.00  ambiguous PO (matches >1 load) — Hummingbird Logistix, PO 488, not force-picked
+17 rows  $67,067.00  load exists, but NO live invoice on it yet (includes several S E Mares/ES
+                       Logistics/Refrigerx loads — same evidence-gate population as 13595/13615)
+ 3 rows              balance MISMATCH between Faro and ours:
+                       13581 TRIPLE T: Faro $3,300.00 vs ours $4,900.00 (sent)
+                       13589 Kirsch:   Faro $4,150.00 vs ours $4,120.00 (sent)
+                       13587 Key Global: Faro $4,120.00 vs ours $4,000.00 (proforma, not sent)
+49 rows  $165,315.00  matched, balances agree exactly — clean
+```
+
+13+1+17+3+49 = 83, and the dollar total reconciles exactly to $298,762.00. Posted as the list, per
+instruction — no correcting JE. The 17-row "load exists, no invoice" bucket is the most directly
+actionable: same shape as 13595/13615, blocked on the same delivery-evidence gate CC-1 is building
+(mode='historical_backfill').
+
+### Item 3/#3 — the three self-carried invoices: still holding for the gate, per instruction
+
+Not attempted this round — explicitly gated on the delivery-evidence mode landing.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
