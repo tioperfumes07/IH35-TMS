@@ -13,6 +13,16 @@ import {
   resolveCanonicalEntryDate,
 } from "../accounting/factoring-posting/poster.service.js";
 
+// ROUND 40.1 — OWNER RULING 2026-09-23 (verbatim mapping): the owner's real Faro export
+// ("PURCHASE REPORT ALL.csv") never carried these literal column names — it carries Faro's own
+// vocabulary (Debtor/Inv #/Purchase/Net Adv/Escrow Rsv/Fees/ChgBack (Refund)/PO/Date). "ACCEPT THE
+// OWNER'S REAL EXPORT FORMAT. Do not ask him to reshape a CSV that Faro generates." Confirmed live
+// this round: the old literal-required-header check rejected the real file outright with
+// `missing_headers`, so this importer had never actually run against a real Faro export — every
+// prior "confirmed match" in this session's rulings was reasoned from reading the CSV by eye, not
+// from a successful parse. These are the SAME canonical field names as before (ORIGINAL required
+// names kept so any existing caller/test still works) — only the header-RESOLUTION widened to
+// accept the real export's own column names as additional aliases, additive, nothing removed.
 export const FARO_CSV_REQUIRED_HEADERS = [
   "invoice number",
   "customer name",
@@ -21,9 +31,13 @@ export const FARO_CSV_REQUIRED_HEADERS = [
   "reserve",
   "fee",
   "chargeback",
-  "net",
 ] as const;
 
+// "net" is intentionally NOT in FARO_CSV_REQUIRED_HEADERS as of this ruling — the owner's real
+// export has no column that maps to it (Receipts/Sch Fee are distinct Faro concepts the owner's
+// mapping does not equate to "net"), and inventing a formula for it would be exactly the guess this
+// codebase's own law forbids. net_amount_cents stays on FaroCsvLine, defaults to 0 when absent, same
+// optionality due_on already had before this change — never silently required, never fabricated.
 export type FaroCsvLine = {
   invoice_number: string;
   customer_name?: string;
@@ -33,7 +47,14 @@ export type FaroCsvLine = {
   fee_amount_cents: number;
   chargeback_amount_cents: number;
   net_amount_cents: number;
+  discount_amount_cents: number;
   due_on?: string;
+  /** ROUND 40.1 — Faro's own match key, from the "PO" column (falls back to "Other Ref"). Owner
+   *  ruling: "MATCH KEY -> PO, then Other Ref. NEVER the load number." Resolved against
+   *  mdata.loads.customer_wo_number, then customer_po_number — never mdata.loads.load_number.
+   *  Captured here (parse-time) so preview/commit matching has it; parseFaroCsv itself does not
+   *  resolve it against loads — that is a DB-aware step, done by enrichFaroPreviewLines. */
+  match_key?: string;
 };
 
 export type FaroCsvPreviewLine = FaroCsvLine & {
@@ -142,6 +163,28 @@ function headerIndex(headers: string[], aliases: string[]) {
   return -1;
 }
 
+// ROUND 40.1 \u2014 one alias table, shared by both the required-header CHECK and the field-index
+// RESOLUTION, so the two can never drift out of sync again (that drift \u2014 required-header checking a
+// literal list while headerIndex() already had working aliases the check never consulted \u2014 is
+// exactly what rejected the real Faro file before this fix). Each canonical field lists every header
+// spelling known to resolve it, owner's real export names included.
+const FARO_CSV_FIELD_ALIASES = {
+  "invoice number": ["invoice number", "invoice #", "invoice", "inv #"],
+  "customer name": ["customer name", "customer", "debtor"],
+  gross: ["gross", "invoice amount", "face amount", "purchase"],
+  advance: ["advance", "advance amount", "net adv"],
+  reserve: ["reserve", "reserve amount", "withholding", "escrow rsv"],
+  // ROUND 48 — OWNER RULING 2026-09-23 (verbatim): "fee = Discount". The real export carries BOTH a
+  // "Discount" column and a separate "Fees" column — they are NOT the same thing, and "fees" (the
+  // original, pre-ruling alias) would silently resolve to the wrong one. "discount"/"discount fee"
+  // are listed FIRST so headerIndex()'s first-match order picks the correct column whenever both are
+  // present; "fee"/"factor fee"/"fees" stay as trailing fallbacks for a export that genuinely has no
+  // "Discount" column and means the factor fee by "Fees" instead — never reached against the real
+  // Faro file, since "discount" always matches first there.
+  fee: ["discount", "discount fee", "fee", "factor fee", "fees"],
+  chargeback: ["chargeback", "chargeback amount", "chgback (refund)"],
+} as const satisfies Record<(typeof FARO_CSV_REQUIRED_HEADERS)[number], readonly string[]>;
+
 export function parseFaroCsv(csvText: string): FaroCsvParseResult {
   const rows = csvText
     .replace(/^\uFEFF/, "")
@@ -152,21 +195,47 @@ export function parseFaroCsv(csvText: string): FaroCsvParseResult {
 
   const headers = parseCsvRow(rows[0] ?? "");
   const normalizedHeaders = headers.map(normalizeHeader);
-  for (const required of FARO_CSV_REQUIRED_HEADERS) {
-    if (!normalizedHeaders.includes(required)) {
-      throw new FaroCsvImportError("missing_headers", `Missing required column: ${required}`);
-    }
+
+  // ROUND 40.1 \u2014 required-ness is now checked via the SAME alias resolution headerIndex() uses for
+  // parsing, not a literal-name-only list. "Unknown header -> a NAMED error listing what it saw and
+  // what it expected. NEVER a silent skip" (owner ruling) \u2014 the error below names every alias tried
+  // for the missing field AND the full observed header row, so a genuinely new Faro export format
+  // is loud and specific, not a bare "missing column: x" that gives no way to fix it.
+  const missingFields = (Object.keys(FARO_CSV_FIELD_ALIASES) as (keyof typeof FARO_CSV_FIELD_ALIASES)[]).filter(
+    (field) => headerIndex(headers, [...FARO_CSV_FIELD_ALIASES[field]]) < 0
+  );
+  if (missingFields.length > 0) {
+    const detail = missingFields
+      .map((field) => `"${field}" (tried: ${FARO_CSV_FIELD_ALIASES[field].join(", ")})`)
+      .join("; ");
+    throw new FaroCsvImportError(
+      "missing_headers",
+      `Missing required column(s): ${detail}. Observed header row: ${headers.join(", ")}`
+    );
   }
 
-  const invoiceIdx = headerIndex(headers, ["invoice number", "invoice #", "invoice"]);
-  const customerIdx = headerIndex(headers, ["customer name", "customer", "debtor"]);
-  const grossIdx = headerIndex(headers, ["gross", "invoice amount", "face amount"]);
-  const advanceIdx = headerIndex(headers, ["advance", "advance amount"]);
-  const reserveIdx = headerIndex(headers, ["reserve", "reserve amount", "withholding"]);
-  const feeIdx = headerIndex(headers, ["fee", "factor fee"]);
-  const chargebackIdx = headerIndex(headers, ["chargeback", "chargeback amount"]);
+  const invoiceIdx = headerIndex(headers, [...FARO_CSV_FIELD_ALIASES["invoice number"]]);
+  const customerIdx = headerIndex(headers, [...FARO_CSV_FIELD_ALIASES["customer name"]]);
+  const grossIdx = headerIndex(headers, [...FARO_CSV_FIELD_ALIASES.gross]);
+  const advanceIdx = headerIndex(headers, [...FARO_CSV_FIELD_ALIASES.advance]);
+  const reserveIdx = headerIndex(headers, [...FARO_CSV_FIELD_ALIASES.reserve]);
+  const feeIdx = headerIndex(headers, [...FARO_CSV_FIELD_ALIASES.fee]);
+  const chargebackIdx = headerIndex(headers, [...FARO_CSV_FIELD_ALIASES.chargeback]);
+  // "net" deliberately stays OUTSIDE FARO_CSV_FIELD_ALIASES (see the FaroCsvLine comment above) \u2014
+  // optional, defaults to 0, never required, never guessed at from an unrelated column.
   const netIdx = headerIndex(headers, ["net", "net amount"]);
-  const dueIdx = headerIndex(headers, ["due date", "due on", "due"]);
+  // ROUND 48 — proven, not just aliased: the owner's ruling confirmed "Discount" IS the factor fee
+  // (fee = Discount), so discountIdx and feeIdx now resolve to the SAME column on the real export.
+  // discount_amount_cents stays as its own field (additive, kept for any existing caller) rather than
+  // removed now that it's a confirmed duplicate of fee_cents.
+  const discountIdx = headerIndex(headers, ["discount"]);
+  // "due date"/"due on"/"due" are this importer's original due-date vocabulary; "date" is the owner's
+  // real export's per-row transaction date column \u2014 same role (the economic/statement date this line
+  // carries), added as an alias, not a new concept.
+  const dueIdx = headerIndex(headers, ["due date", "due on", "due", "date"]);
+  // MATCH KEY (owner ruling): "PO", then "Other Ref" as fallback. Never load number \u2014 parseFaroCsv
+  // has no load data to resolve against anyway; this only captures the raw cell.
+  const matchKeyIdx = headerIndex(headers, ["po", "other ref"]);
 
   // ROUND28-P0 (2026-09-22): the old `if (!invoice_number) continue;` here silently dropped any
   // data row whose invoice-number cell was empty — no count, no warning, no trace. A 51-row
@@ -194,8 +263,10 @@ export function parseFaroCsv(csvText: string): FaroCsvParseResult {
       reserve_amount_cents: parseMoneyToCents(String(cells[reserveIdx] ?? "0")),
       fee_amount_cents: parseMoneyToCents(String(cells[feeIdx] ?? "0")),
       chargeback_amount_cents: parseMoneyToCents(String(cells[chargebackIdx] ?? "0")),
-      net_amount_cents: parseMoneyToCents(String(cells[netIdx] ?? "0")),
+      net_amount_cents: netIdx >= 0 ? parseMoneyToCents(String(cells[netIdx] ?? "0")) : 0,
+      discount_amount_cents: discountIdx >= 0 ? parseMoneyToCents(String(cells[discountIdx] ?? "0")) : 0,
       due_on: dueIdx >= 0 ? parseDueDate(String(cells[dueIdx] ?? "")) : undefined,
+      match_key: matchKeyIdx >= 0 ? String(cells[matchKeyIdx] ?? "").trim() || undefined : undefined,
     });
   });
 
@@ -230,7 +301,19 @@ type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
 };
 
-/** Preview-only: resolve TMS invoice + customer ids for Faro CSV invoice numbers (Law §9 reverse drill). */
+/**
+ * Preview-only: resolve TMS invoice + customer ids for Faro CSV lines (Law §9 reverse drill).
+ *
+ * ROUND 40.1 — OWNER RULING: "MATCH KEY -> PO, then Other Ref. NEVER the load number." Faro's own
+ * `invoice_number` column (e.g. "#90", "#64") is Faro's INTERNAL sequence, unrelated to our
+ * `accounting.invoices.display_id` — the direct-match query below finds real rows only by
+ * coincidence, never by design. The PO-based lookup is the real match path this codebase's own
+ * earlier session work already confirmed live (customer_wo_number, then customer_po_number —
+ * NEVER load_number): PO -> mdata.loads -> that load's own invoice(s). Both paths run; a line that
+ * resolves via the direct display_id match keeps that (still a real, if coincidental, match); a line
+ * that resolves ONLY via PO is filled in from that lookup instead. A line matching NEITHER stays
+ * unmatched — never guessed, never defaulted to the first invoice found.
+ */
 export async function enrichFaroPreviewLines(
   client: Queryable,
   companyId: string,
@@ -238,32 +321,99 @@ export async function enrichFaroPreviewLines(
 ): Promise<FaroCsvPreviewLine[]> {
   if (lines.length === 0) return [];
   const numbers = Array.from(new Set(lines.map((l) => l.invoice_number).filter(Boolean)));
-  if (numbers.length === 0) return lines.map((line) => ({ ...line, invoice_id: null, customer_id: null }));
+  const poKeys = Array.from(new Set(lines.map((l) => l.match_key).filter((v): v is string => Boolean(v))));
 
-  const res = await client.query<{
-    id: string;
-    display_id: string;
-    customer_id: string | null;
-    customer_name: string | null;
-  }>(
-    `
-      SELECT
-        i.id::text,
-        i.display_id::text,
-        i.customer_id::text,
-        c.customer_name::text AS customer_name
-      FROM accounting.invoices i
-      LEFT JOIN mdata.customers c
-             ON c.id = i.customer_id
-            AND c.operating_company_id = i.operating_company_id
-      WHERE i.operating_company_id = $1::uuid
-        AND i.display_id = ANY($2::text[])
-    `,
-    [companyId, numbers]
-  );
-  const byDisplay = new Map(res.rows.map((row) => [row.display_id, row]));
+  const byDisplay = new Map<
+    string,
+    { id: string; display_id: string; customer_id: string | null; customer_name: string | null }
+  >();
+  if (numbers.length > 0) {
+    const res = await client.query<{
+      id: string;
+      display_id: string;
+      customer_id: string | null;
+      customer_name: string | null;
+    }>(
+      `
+        SELECT
+          i.id::text,
+          i.display_id::text,
+          i.customer_id::text,
+          c.customer_name::text AS customer_name
+        FROM accounting.invoices i
+        LEFT JOIN mdata.customers c
+               ON c.id = i.customer_id
+              AND c.operating_company_id = i.operating_company_id
+        WHERE i.operating_company_id = $1::uuid
+          AND i.display_id = ANY($2::text[])
+      `,
+      [companyId, numbers]
+    );
+    for (const row of res.rows) byDisplay.set(row.display_id, row);
+  }
+
+  // PO -> mdata.loads.customer_wo_number, then customer_po_number (never load_number) -> that load's
+  // own live (non-voided) invoice. A PO value could in principle match more than one load's WO/PO
+  // field — that ambiguity must be visible, not silently resolved to "the first row" — so this only
+  // fills in a match when exactly one candidate load resolves for a given PO key.
+  const byPoKey = new Map<
+    string,
+    { id: string; display_id: string; customer_id: string | null; customer_name: string | null }
+  >();
+  if (poKeys.length > 0) {
+    const res = await client.query<{
+      match_key: string;
+      candidate_count: number;
+      id: string | null;
+      display_id: string | null;
+      customer_id: string | null;
+      customer_name: string | null;
+    }>(
+      `
+        WITH po_keys AS (SELECT unnest($2::text[]) AS match_key),
+        matched_loads AS (
+          SELECT pk.match_key, l.id AS load_id
+          FROM po_keys pk
+          JOIN mdata.loads l
+            ON l.operating_company_id = $1::uuid
+           AND (l.customer_wo_number = pk.match_key OR l.customer_po_number = pk.match_key)
+        )
+        SELECT
+          ml.match_key,
+          count(DISTINCT ml.load_id)::int AS candidate_count,
+          (array_agg(i.id::text ORDER BY i.created_at DESC))[1] AS id,
+          (array_agg(i.display_id::text ORDER BY i.created_at DESC))[1] AS display_id,
+          (array_agg(i.customer_id::text ORDER BY i.created_at DESC))[1] AS customer_id,
+          (array_agg(c.customer_name ORDER BY i.created_at DESC))[1] AS customer_name
+        FROM matched_loads ml
+        LEFT JOIN accounting.invoices i
+               ON i.source_load_id = ml.load_id
+              AND i.operating_company_id = $1::uuid
+              AND i.voided_at IS NULL
+        LEFT JOIN mdata.customers c
+               ON c.id = i.customer_id
+              AND c.operating_company_id = i.operating_company_id
+        GROUP BY ml.match_key
+      `,
+      [companyId, poKeys]
+    );
+    for (const row of res.rows) {
+      // Only a single matched load AND a real invoice on it counts as a resolved PO match —
+      // multiple candidate loads for one PO, or a load with no live invoice, stays unmatched rather
+      // than guessing which one Faro meant.
+      if (row.candidate_count === 1 && row.id && row.display_id) {
+        byPoKey.set(row.match_key, {
+          id: row.id,
+          display_id: row.display_id,
+          customer_id: row.customer_id,
+          customer_name: row.customer_name,
+        });
+      }
+    }
+  }
+
   return lines.map((line) => {
-    const match = byDisplay.get(line.invoice_number);
+    const match = byDisplay.get(line.invoice_number) ?? (line.match_key ? byPoKey.get(line.match_key) : undefined);
     return {
       ...line,
       invoice_id: match?.id ?? null,
