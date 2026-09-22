@@ -190,9 +190,13 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
           AND d.status = 'Active'::mdata.driver_status
           AND (
             activity.last_dispatch_activity_at >= (now() - make_interval(days => ${PLANNER_ACTIVE_WINDOW_DAYS}))
+            -- ROUND 36.1: reads views.live_loads's open_dispatch bucket, structurally excluding a
+            -- load stuck at 'dispatched' but already settled/driver-billed (was a per-caller money
+            -- predicate in ROUND 35.1).
             OR EXISTS (
-              SELECT 1 FROM mdata.loads cl
+              SELECT 1 FROM views.live_loads cl
               WHERE cl.operating_company_id = $1::uuid
+                AND cl.live_state = 'open_dispatch'
                 AND (cl.assigned_primary_driver_id = d.id OR cl.assigned_secondary_driver_id = d.id)
                 AND cl.status = ANY($2::mdata.load_status_enum[])
             )

@@ -1,6 +1,7 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 import { DISPATCH_ALERT_ACTIVE_STATUSES_SQL } from "./dispatch-alert-statuses.js";
+import { LIVE_LOADS_OPEN_DISPATCH_EXISTS_SQL } from "./live-loads-view.js";
 import { dispatchAlertOrderBy, type DispatchAlertQuery } from "./dispatch-alert-query.js";
 import { KPI_LOAD_DRILL_JOINS, KPI_LOAD_DRILL_SELECT } from "./kpi-load-drill-sql.js";
 
@@ -72,6 +73,10 @@ ${KPI_LOAD_DRILL_JOINS}
           AND ($3::date IS NULL OR sp.scheduled_arrival_at < $3::date + interval '1 day')
           AND l.soft_deleted_at IS NULL
           AND l.status IN (${DISPATCH_ALERT_ACTIVE_STATUSES_SQL})
+          -- ROUND 36.1: the per-caller money predicate (ROUND 35.1) was replaced by the
+          -- structural guarantee — reads views.live_loads's open_dispatch bucket via EXISTS
+          -- rather than re-deriving the three-table condition inline.
+          AND ${LIVE_LOADS_OPEN_DISPATCH_EXISTS_SQL}
           AND (
             COALESCE(l.latest_eta_prediction->>'confidence_class', '') IN ('late_risk', 'late')
             OR (

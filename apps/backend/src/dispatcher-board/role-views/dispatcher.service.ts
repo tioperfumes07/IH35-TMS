@@ -59,7 +59,12 @@ export type DispatcherHomeData = {
   booking_gap_analytics: DispatcherHomeBookingGapAnalytics;
 };
 
-const ACTIVE_STATUSES = ["assigned_not_dispatched", "dispatched", "in_transit", "delivered_pending_docs"];
+// ROUND 36.1: matches the "OPEN LOADS" KPI filter above exactly (open_dispatch bucket) — the
+// owner's own acceptance criterion is that a load renders equally across every tab; a drill-down
+// list disagreeing with its own tile's count is the same defect one click later. Dropped
+// 'delivered_pending_docs' (that status lives in views.live_loads's pre_settlement bucket, its own
+// separate tile) and added 'at_pickup'/'at_delivery' (were missing from the original list).
+const ACTIVE_STATUSES = ["assigned_not_dispatched", "dispatched", "at_pickup", "in_transit", "at_delivery"];
 
 const GAP_OPEN_STATUSES = ["unassigned", "assigned_not_dispatched"];
 
@@ -102,11 +107,16 @@ async function loadKpis(
   }>(
     `
       SELECT
+        -- ROUND 36.1: "OPEN LOADS" must render the SAME number as the Dispatch board's "ACTIVE
+        -- LOADS" tile (the owner's own acceptance criterion) — both now read views.live_loads's
+        -- open_dispatch bucket, narrowed to the same DISPATCH_ON_LOAD_STATUSES-shaped set.
         COUNT(*) FILTER (
-          WHERE l.status IN ('assigned_not_dispatched', 'dispatched', 'in_transit', 'delivered_pending_docs')
+          WHERE l.live_state = 'open_dispatch'
+            AND l.status IN ('assigned_not_dispatched', 'dispatched', 'in_transit', 'at_pickup', 'at_delivery')
         )::int AS active_loads,
         COUNT(*) FILTER (
-          WHERE l.status IN ('assigned_not_dispatched', 'dispatched', 'in_transit')
+          WHERE l.live_state = 'open_dispatch'
+            AND l.status IN ('assigned_not_dispatched', 'dispatched', 'in_transit')
             AND (
               COALESCE(next_pickup.scheduled_arrival_at, next_delivery.scheduled_arrival_at) < now()
             )
@@ -117,7 +127,7 @@ async function loadKpis(
         COUNT(*) FILTER (
           WHERE delivery_today.c > 0
         )::int AS today_deliveries
-      FROM mdata.loads l
+      FROM views.live_loads l
       LEFT JOIN LATERAL (
         SELECT ls.scheduled_arrival_at
         FROM mdata.load_stops ls
@@ -195,7 +205,9 @@ async function loadActiveLoads(
         u.unit_number::text AS unit_number,
         inv.invoice_display_id,
         inv.invoice_status
-      FROM mdata.loads l
+      -- ROUND 36.1: reads views.live_loads (structural guarantee, open_dispatch bucket via
+      -- ACTIVE_STATUSES below) instead of mdata.loads with the per-caller money predicate.
+      FROM views.live_loads l
       JOIN mdata.customers c ON c.id = l.customer_id
                             AND c.operating_company_id = l.operating_company_id
       LEFT JOIN mdata.drivers dr ON dr.id = l.assigned_primary_driver_id

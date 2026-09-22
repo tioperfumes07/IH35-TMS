@@ -147,13 +147,11 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
           p.captured_at::text AS pos_captured_at
         FROM mdata.units u
         LEFT JOIN LATERAL (
-          SELECT * FROM mdata.loads x
-          WHERE x.assigned_unit_id = u.id AND x.operating_company_id = $1::uuid AND x.soft_deleted_at IS NULL
-            AND x.status NOT IN (
-              'cancelled'::mdata.load_status_enum, 'abandoned'::mdata.load_status_enum,
-              'driver_walkoff'::mdata.load_status_enum, 'driver_no_show'::mdata.load_status_enum,
-              'invoiced'::mdata.load_status_enum, 'paid'::mdata.load_status_enum, 'closed'::mdata.load_status_enum
-            )
+          -- ROUND 36.1: reads views.live_loads (structural guarantee) instead of mdata.loads with
+          -- an inline status exclusion list — a load stuck at 'dispatched' but already settled/
+          -- driver-billed can no longer render as "the unit's current load," structurally.
+          SELECT * FROM views.live_loads x
+          WHERE x.assigned_unit_id = u.id AND x.operating_company_id = $1::uuid
           ORDER BY x.created_at DESC LIMIT 1
         ) l ON true
         LEFT JOIN mdata.customers cust ON cust.id = l.customer_id AND cust.operating_company_id = l.operating_company_id
@@ -218,13 +216,18 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
       const availableRes = await client.query(
         `
         WITH busy_drivers AS (
-          SELECT DISTINCT assigned_primary_driver_id AS driver_id FROM mdata.loads
+          -- ROUND 36.1: reads views.live_loads's open_dispatch bucket — a driver whose only
+          -- "in-progress" load is stuck at 'dispatched' but already settled/driver-billed is not
+          -- busy, structurally (was a per-caller money predicate in ROUND 35.1).
+          SELECT DISTINCT assigned_primary_driver_id AS driver_id FROM views.live_loads
           WHERE operating_company_id = $1::uuid
+            AND live_state = 'open_dispatch'
             AND status IN ('dispatched', 'at_pickup', 'in_transit', 'at_delivery')
             AND assigned_primary_driver_id IS NOT NULL
           UNION
-          SELECT DISTINCT assigned_secondary_driver_id FROM mdata.loads
+          SELECT DISTINCT assigned_secondary_driver_id FROM views.live_loads
           WHERE operating_company_id = $1::uuid
+            AND live_state = 'open_dispatch'
             AND status IN ('dispatched', 'at_pickup', 'in_transit', 'at_delivery')
             AND assigned_secondary_driver_id IS NOT NULL
         ),

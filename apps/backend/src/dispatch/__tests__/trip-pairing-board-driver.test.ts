@@ -30,7 +30,10 @@ function makeClient(opts: { eldDriver?: Rows; loads?: Rows; units?: Rows }) {
         return { rows: (opts.units ?? [{ unit_id: "unit-1", unit_number: "T176" }]) as R[] };
       }
       if (/telematics\.vehicle_driver_assignments/.test(sql)) return { rows: (opts.eldDriver ?? []) as R[] };
-      if (/FROM mdata\.loads/.test(sql)) return { rows: (opts.loads ?? []) as R[] };
+      // ROUND 36.1: the loads query now reads FROM views.live_loads (the permanent fix for
+      // "At Risk shows 19" — see docs/manuals/02-RULING-LIVE-LOADS-VIEW-THE-PERMANENT-FIX.md),
+      // not mdata.loads directly.
+      if (/FROM views\.live_loads/.test(sql)) return { rows: (opts.loads ?? []) as R[] };
       // positions / anything else
       return { rows: [] as R[] };
     },
@@ -94,7 +97,7 @@ describe("FAIL-TP1 trip pairing driver resolution", () => {
   it("selects assigned_primary_driver_id in the loads query at all", async () => {
     const { client, seen } = makeClient({ loads: [] });
     await getTripPairingBoard(client, "co-1", AS_OF);
-    const loadsSql = seen.find((s) => /FROM mdata\.loads/.test(s)) ?? "";
+    const loadsSql = seen.find((s) => /FROM views\.live_loads/.test(s)) ?? "";
     // Assert the PROJECTION under the exact alias the row assembly reads, not merely that the identifier
     // appears somewhere: `LEFT JOIN mdata.drivers ld ON ld.id = l.assigned_primary_driver_id` also contains
     // the column name, so a bare `toContain("assigned_primary_driver_id")` still passes when the SELECT

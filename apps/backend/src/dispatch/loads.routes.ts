@@ -2162,19 +2162,22 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         client.query<{ count: number }>(
           `
             SELECT count(*)::int AS count
-            FROM mdata.loads
+            FROM views.live_loads
             WHERE operating_company_id = $1::uuid
-              AND soft_deleted_at IS NULL
+              AND live_state = 'open_dispatch'
               AND status IN ('dispatched'::mdata.load_status_enum, 'in_transit'::mdata.load_status_enum)
           `,
           [operatingCompanyId]
         ),
+        // ROUND 36.1: DELIVERED — PENDING DOCS tile — views.live_loads's pre_settlement bucket
+        // narrowed to this specific status (pre_settlement also carries plain 'delivered' and
+        // 'completed_docs_received', a different stage of the same pipeline).
         client.query<{ count: number }>(
           `
             SELECT count(*)::int AS count
-            FROM mdata.loads
+            FROM views.live_loads
             WHERE operating_company_id = $1::uuid
-              AND soft_deleted_at IS NULL
+              AND live_state = 'pre_settlement'
               AND status = 'delivered_pending_docs'::mdata.load_status_enum
           `,
           [operatingCompanyId]
