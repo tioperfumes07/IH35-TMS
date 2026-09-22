@@ -4081,3 +4081,54 @@ with that broader, already-named gap rather than bolted onto the 13579 fix under
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+## 2026-09-23 — ROUND 31: bypass_rls methodology, 1000/1090 root-caused+fixed (handed off), A/R gap decomposed, 13572 correction
+
+**bypass_rls TRUE vs FALSE:** empirically A/B tested my own read pattern directly (5 tables, both
+values, same connection). Zero difference either way — my reads use `neondb_owner` (which appears
+to bypass RLS as a Postgres role attribute independent of the app GUC) plus explicit single-txn
+`BEGIN`/`ROLLBACK` on every query, never spanning statements. Nothing I've reported as empty/zero
+this session needs re-verification on that basis specifically — the masking mechanism the Lead
+found doesn't apply to how I connect.
+
+**1000 Bank of America (-$74,263.96) and 1090 Undeposited Funds ($83,842.22) — same root cause,
+found and fixed, but it's CC-1's lane now (LANES.md 2026-09-22 correction widened
+`accounting/**`), so the actual commit is handed off, not shipped by me.** Root cause:
+`resolveCompanyDirectCreditAccount`'s cash branch (fuel-posting/poster.service.ts) only ever
+resolved `undeposited_funds` — a RECEIPT-side clearing account — for a cash-paid fuel purchase,
+which is money LEAVING the business and belongs on `operating_bank` (a CoA role, ACCT-F345,
+purpose-built for exactly this but never wired in). Live: 151 `fuel_event` postings, -$98,546.47,
+all on the wrong side. Fixed, tested (new vitest proves fail-before/pass-after via a real stash
+revert), typechecked clean — full patch + evidence posted to `docs/bus/OUTBOX-CC-1.md`. **Not
+retroactive** — the 151 existing wrong postings still need a historical correction pass, named as a
+separate open item.
+
+**A/R gap ($218,472.41 vs Faro's $298,762.00 = $80,289.59) — decomposed into two live-verified
+buckets summing exactly to the total:** Bucket A (subledger $261,632.41 vs GL control $218,472.41)
+= $43,160.00; Bucket B (Faro $298,762.00 vs subledger $261,632.41) = $37,129.59. Full detail in
+`docs/reconciliation/2026-09-22-reconciling-item-register.md` item 13. **Not yet done:** the
+specific invoices composing each bucket — this says where the gap splits, not which rows.
+
+**Invoice 13572 / 1150 Unbilled Revenue $3,200.00 — correcting the instruction, not executing it.**
+Live evidence: this is a void-and-reissue in progress (13572 void → draft `INV-2026-00009`, same
+load, corrected customer, 3 minutes apart, same amount), the exact pattern `void.service.ts`'s own
+ACCT-F5723 comment already documents (invoice 13541 precedent). Event 1 (earn) correctly stands —
+the freight was genuinely delivered — and reversing it, or building "void auto-reverses all revenue
+postings," would erase real earned revenue and break this same pattern for the 3 OTHER
+reissue-in-progress invoices found in a full sweep of all 38 voided USMCA invoices (13554, 13541,
+INV-2026-00001 — all already resolved via a `sent` replacement). **Zero true orphans exist**
+(voided invoice + standing earn + no replacement) anywhere in USMCA. The actual gap: replacement
+invoice `INV-2026-00009` has sat in `draft` for 10 days, never sent — that's the fix (finalize and
+send it through the normal invoice flow), not a database write I'm making unilaterally. Full detail
+in the register, item 14.
+
+**New finding, reported not fixed: duplicate `display_id`.** Two live (non-voided) invoices both
+carry `display_id='INV-2026-00009'` — a `paid` one from 2026-07-29 (different customer) and the
+`draft` reissue above from 2026-09-12. At least one `display_id`-keyed lookup in
+`invoices.routes.ts` filters only on `voided_at IS NULL`, so with two non-voided rows sharing an id
+that lookup's behavior is undefined/silent. Register item 15; routed to CC-1's OUTBOX
+(`accounting/from-load.ts` / the display-id sequence resolver are their lane).
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
