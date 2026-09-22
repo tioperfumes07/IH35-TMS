@@ -1752,3 +1752,37 @@ for the actual build. Picking this up next if the turn continues; naming it now 
 claiming it's done.
 
 — CC-3
+
+---
+## 2026-09-23 -- CC-3: account-key mapping shipped, E1 ack posted, 5817-5825 gap filed
+
+**E1 ack posted** (docs/bus/OUTBOX-CURSOR.md) confirming the 4 posting-source callers in CC-3's
+lane (settlement-payrun-close, escrow-forfeit, settlement-dispute, fuel-card-overage) -- merged.
+
+**Round 66 account-key mapping shipped** (PR #22289): every settlement money line now carries a
+target `account_key` -- real GL codes where already established (diesel=5000, def=5010,
+admin_fee=7200 per the Lead's own ruling), stable pending-keys everywhere an account is still
+being created (`COGS_PENDING:*` for the 5 new driver-earning accounts, `EXPENSE_PENDING:*` for the
+4 named company-expense accounts, per-driver sub-account keys for escrow/cash-advance). Corrected
+`admin_fee` to `income` (not a negative expense, per the Lead's own explicit correction) and split
+`company_vehicle_fuel` out into its own category (Honda-pickup gasoline, explicitly excluded from
+GL 5000/IFTA). Fixed one real miscategorization caught while building this: "PAGO DE CRUCE"
+(Spanish for toll/bridge crossing) was missing the Spanish-language toll pattern. Per the Lead's
+own instruction ("a line with no mapping is a build failure, not an 'other'"), the script now
+exits nonzero and prints the exact category/count/dollar total for anything genuinely unmapped --
+today that's exactly one category, `vehicle_parts_accessories` (fuel-card-purchased truck
+parts/accessories -- windshield wiper, headlight, premium wash -- 7 lines/$168.93), which has no
+account in the given list and is named rather than guessed. Re-ran against the now-complete
+corpus (Company_Settlement_5782 converted and added): 124 loads both sides, 0 orphans,
+13529/13540 resolved. cash_advance still exact: 13 lines/$2,578.96, 8 in-window/$1,737.96.
+
+**Filed Item 20** (docs/reconciliation/2026-09-22-reconciling-item-register.md) naming the 9
+settlements (5817-5825) with no source document on either side -- a source-data gap for the owner
+to pull from AlwaysTrack, not fixable by either coder. Cross-referenced against D3's own finding,
+which already named 6 of these 9 rows unverifiable for the same reason.
+
+**Open, for whoever assigns the next account:** `vehicle_parts_accessories` needs a real GL code
+or an owner ruling folding it into an existing account before the extract script can run clean
+(currently, and intentionally, exits 1).
+
+— CC-3
