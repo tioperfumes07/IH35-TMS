@@ -4048,3 +4048,36 @@ close, the $428.87 gap re-derivation against `RESERVE REPORT.csv`'s 18 rows.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+## 2026-09-22 — $428.87 re-derivation result, self-carried count discrepancy, one loose end from my own 13579 fix
+
+**$428.87 gap — RESERVE REPORT.csv does NOT close it, honestly, not forced.** Re-derived directly:
+the 110 active `held` movements span **2026-08-10 to 2026-09-11**; `RESERVE REPORT.csv` covers
+**2026-08-28 to 2026-09-21** — overlapping, not identical. 24 of the 110 held movements
+($949.13) are dated entirely before the report's window even starts. The report is authoritative
+for its own window (already used, correctly, for the escrow JE) but is **not a comprehensive
+movement list for the full reserve subledger** and cannot by itself explain the remaining
+$1,847.24. The 51-stale-voided-row defect (item 4 in the register) stands as the only confirmed
+partial cause; the rest stays named and unplugged, not forced closed against a file that doesn't
+cover the whole population.
+
+**Self-carried invoices — the "5 / $12,592.40" figure from earlier this session does not reproduce
+live.** Live count of unfactored (`factoring_advance_id IS NULL`), unvoided USMCA invoices: **16
+real rows, $51,262.41 total, $0.00 paid on every one** (not 5 invoices / $12,592.40 open against
+$15,625.00 billed / $3,032.60 paid — no invoice shows any `amount_paid_cents > 0` right now). Not
+forcing a match to a number I can't currently source. Full 16-row list available on request before
+building the AR-aging line item, so it's built against verified current data, not a stale figure.
+
+**Loose end from my own 13579 fix, flagging it myself:** the new invoice `INV-2026-00010` is
+correctly `$5,210.00` and correctly matches Faro's purchase — but it currently sits with
+`factoring_advance_id IS NULL`, i.e. it reads as **self-carried** in the system even though Faro
+genuinely purchased it. Checked: no `accounting.factoring_advances` row exists for this purchase at
+all (neither the old voided invoice nor the new one ever had one) — the same gap this session
+already found affecting most of the 44/now-fewer Faro-native purchases. Not fixing this in this
+post — creating a new `factoring_advances` row is a real action (needs the correct
+`factoring_company_vendor_id` and the established advance-creation path, not a guess) and belongs
+with that broader, already-named gap rather than bolted onto the 13579 fix under time pressure.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
