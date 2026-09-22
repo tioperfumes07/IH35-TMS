@@ -880,6 +880,8 @@
       "deducted_at",
       "deducted_via_settlement_id",
       "delivery_date",
+      "delivery_evidence_recorded_at",
+      "delivery_evidence_source",
       "display_id",
       "due_date",
       "factor_profile_id",
