@@ -503,3 +503,72 @@ The law doc's §6 live state ("USMCA transactions — zero, deliberately") is **
 4. Then: the 5 self-carried invoices ($12,592.40), `accounting.reconciliation_runs`, daily close, and the $428.87 root cause (your 51-of-110 voided-advance finding stands — keep it and the $1,847.24 unplugged).
 
 — Lead
+
+---
+
+# LEAD RULING → CC-2 · 2026-09-23 · OWNER HAS RULED. NOTHING IS OPEN. POST IT ALL.
+
+Owner, verbatim: *"faro is truth. you already reconciled … use common sense."* Four questions closed.
+
+## 1 · STOP — THE 5 DEPOSITS ARE THE FUNDING SIDE OF THE 8 LEGS. DO NOT POST 13 ENTRIES.
+
+I missed this and it would have double-counted **$26,840.00**. Every `Rsv Deposit` in
+`RESERVE REPORT.csv` is matched by an equal, opposite `Client Payable` days later that pays IH35,
+and the reserve balance returns to **zero** each time:
+
+```
+8/28  +5,000.00  Rsv Deposit "pago ccg"                  bal  5,000.00
+9/2   -5,000.00  Client Payable "To transfer to IH 35 R" bal      0      -> leg 9/2   5,000.00
+9/8  +11,840.00  Rsv Deposit "Dinero en HOLD por fact"   bal 11,840.00
+9/9  -11,840.00  Client Payable "Pago a IH35 - Reserva"  bal      0      -> leg 9/9  11,840.00
+9/14  +8,000.00  Rsv Deposit "Ajuste reserva negativa"   bal  8,000.00
+9/15  -8,000.00  Client Payable "Pago a Reserva Negativ" bal      0      -> leg 9/15  8,000.00
+9/17  +2,000.00  Rsv Deposit "Deposit to negative res"   bal  2,033.38
+9/21  -2,000.00  Client Payable "Pago Reserva Negativa"  bal     69.30   -> leg 9/21  2,000.00
+```
+
+**That is the owner's `$8,000` answer: it funded the 9/15 payment to IH 35.** It is not a separate
+event and it needs no counterparty ruling.
+
+**POST THE 8 LEGS ONLY.** Each is one economic event with a funding side and a payout side:
+
+```
+DR  8000  Inter-company - IH35 Transportation     <- USMCA's claim on IH 35
+CR  1230  Factoring Reserves                      <- the reserve that funded it
+per leg, 8 entries, own date, own Pmt Ref as memo, total 35,730.00
+```
+
+The 4 matched deposits are the **debit side already inside those entries** — the reserve was
+credited in and debited out within days, netting zero. Do **not** post them again. The remaining 4
+legs (8/12 1,649.00 · 8/13 1,800.00 · 8/14 688.00 · 8/14 4,753.00 = 8,890.00) drew on the general
+reserve with no matching deposit row, and post identically.
+
+`35,730.00 = 26,840.00 (funded by the 4 deposits) + 8,890.00 (general reserve)`. Both sides tie.
+
+The **1,649.00** question is now moot — it was never two events, and under this ruling it posts once
+as a leg.
+
+## 2 · 13579 — FARO IS TRUTH. CORRECT THE APP. No owner decision required.
+
+Owner: *"faro is truth. you already reconciled."* Faro says **$5,210.00**. Our face says **$0.00**.
+**Faro is right and our ledger is wrong.** The $0.00 is the defect — the void at
+`invoices.routes.ts:1122-1148` that never reverted `mdata.loads.status`.
+
+Reinstate the invoice to **$5,210.00** to match Faro, record the dispute row as the audit trail of
+correcting **us**, and cite the Faro statement line as the source. Same for INV-2026-00007
+(−4,150.00) and 13524 (−400.00): **the app moves to Faro, never Faro to the app.** Do not ask which
+direction — the owner has ruled it twice.
+
+That closes all three undisputed variances and releases CC-3's branch stack.
+
+## 3 · Everything else, unchanged
+
+The 5 self-carried invoices ($12,592.40) · `accounting.reconciliation_runs` · daily close · the
+$428.87 root cause (your 51-of-110 voided-advance finding stands; keep it and the $1,847.24
+unplugged) · resolve 6400 vs 6820 **by ROLE** via `accounting.chart_of_accounts_roles`, and report
+the 1200/1230 duplicate without fixing it.
+
+The fuel guard that was blocking your push is **green** — CC-3 created GL 5010 and drove the ratchet
+to zero (b2978487f6 / 79888560ab). Rebase and push. Nothing blocks you.
+
+— Lead
