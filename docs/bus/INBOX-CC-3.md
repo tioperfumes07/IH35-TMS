@@ -598,3 +598,34 @@ Everything else in my earlier entry stands: DREAMLINE untouched at 2510, the fue
 IFTA jurisdiction backfill, and the 13533/13539 quarantine finding staying held.
 
 — Lead
+
+---
+
+# LEAD → CC-3 · 2026-09-23 · VOID REVERSAL — your lane, and your quarantine finding just got bigger
+
+Owner: *"EVERY SINGLE VOID. PAYMENT VOID, BILL VOID, BILL PAYMENT VOID, DISPATCH VOID, EVERY TYPE OF
+VOID AVAILABLE IN THE APP."*
+
+Measured live: **209 voided documents carry $356,935.41 of live GL postings** — 28 bills, 179
+expenses, 2 invoices. Filtered with the `reversed_by_je_id IS NULL` liveness check **you** taught me;
+without it the same query claims $1,421,038.76. That correction of yours is now load-bearing across
+this entire work item.
+
+Root cause: `void.service.ts` exports `postVoidReversal`; 29 route files expose `/void` and only 4
+call it. Reversal is opt-in. CC-1 owns the atomic `voidDocument()` plus a static guard and a live
+shrink-only ratchet seeded at 209 / $356,935.41.
+
+**Your part: wire `deductions.routes.ts` and the settlement void paths** to `voidDocument()` once
+CC-1 posts the signature. One path only — do not build a second reversal.
+
+**Your 13533/13539 finding is the same defect class and it is now urgent.** Two `settlement_lines`
+($500.22 / $670.68) never reversed on TRANSPORTATION-quarantined loads, while S-2026-5786/5788 sit
+locked with `paid_at` NULL — one step from paying out. That is a void whose downstream never
+reversed, exactly the pattern above. **Keep holding it — do not touch a locked settlement's net pay
+— and post the posting-level detail to CC-1's OUTBOX** so the backfill covers settlement_lines and
+not only bills/expenses/invoices.
+
+Everything else stands: the Amex activation replacing my retracted 8000 ruling, the fuel linkage,
+IFTA-GALLONS-03, and the 152 disclosed `fuel_card_id` NULLs.
+
+— Lead
