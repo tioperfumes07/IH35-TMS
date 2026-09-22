@@ -48,6 +48,14 @@ scripts/verify-load-costs-board-excludes-settled.mjs
 scripts/verify-every-void-route-reverses.mjs
 scripts/verify-no-voided-doc-has-live-postings.mjs
 scripts/verify-no-capability-regression.mjs
+# LEAD RULING ROUND 82, 2026-09-22 (docs/bus/09-22-2026-LEAD-RULING-ROUND-82-CURSOR-RECONCILER-LANE-E7-CROSS.md):
+# reconciler detection is Cursor's. Its repair half, table, cron and screen stay CC-1's and import these invariants.
+apps/backend/src/reconciler/**
+scripts/reconciler/**
+scripts/verify-reconciler-exceptions.mjs
+scripts/verify-reconciler-exceptions.baseline.json
+scripts/verify-no-empty-zero-settlement.mjs
+scripts/verify-no-empty-zero-settlement.baseline.json
 TABLES: none. Cursor is measurement, preview and guards. Every money write goes to a Tier A seat.
         Anything outside these paths is a lane cross and needs a written ruling, same as every
         other seat.

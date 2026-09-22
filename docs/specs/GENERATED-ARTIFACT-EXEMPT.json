@@ -20,6 +20,10 @@
     {
       "path": "docs/schema-parity-baseline.json",
       "why": "Column inventory from verify-schema-parity --update. Schema fingerprint, not a deploy-stale board."
+    },
+    {
+      "path": "docs/reconciliation/exception-queue.json",
+      "why": "Dated snapshot of the reconciler's exceptions from live USMCA (scripts/reconciler/run-reconciler.mjs --write, read-only). It cannot be rebuilt offline, so it has no freshness check; carries its own ran_at. The ratchet is scripts/verify-reconciler-exceptions.mjs, which reads live data, never this file."
     }
   ]
 }

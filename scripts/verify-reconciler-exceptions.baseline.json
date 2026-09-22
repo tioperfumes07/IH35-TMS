@@ -1,0 +1,12 @@
+{
+  "_comment": "Exception ceilings per reconciler invariant and field. Shrink-only: lower a ceiling when the count drops; raising one needs a Lead ruling named in the PR. Measured live on USMCA, read-only, 2026-09-22.",
+  "established": "2026-09-22",
+  "ceilings": {
+    "I8": {
+      "unit": 3,
+      "trailer": 1,
+      "driver": 0,
+      "customer_reference": 4
+    }
+  }
+}

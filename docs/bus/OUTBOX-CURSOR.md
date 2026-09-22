@@ -670,3 +670,16 @@ E7 BATCH 1 — BUILT, PROVEN, HELD FOR A WRITTEN LANE CROSS. Branch cursor/e7-fa
   is local) and the 18 red guards with their priced baselines from docs/reconciliation/guard-debt-2026-09-22.json.
 Files Modified: docs/bus/OUTBOX-CURSOR.md (this entry). E7 batch 1: the 8 files above, local, not pushed. E1: the 20 files
 in #22293.
+
+CURSOR | ROUND 82 — E17 LANDS (reconciler detection skeleton + exception queue + I8 + empty-settlement guard).
+- E1 live: healthz HTTP 200, git_sha 11ef93d2433cb8f7a8cfb7d0a79dda88de79e5e8, built 2026-09-22T23:10:46Z.
+- Lane: LEAD RULING ROUND 82 committed verbatim (docs/bus/09-22-2026-LEAD-RULING-ROUND-82-CURSOR-RECONCILER-LANE-E7-CROSS.md);
+  its six paths added to the CURSOR section of LANES.md. The repair half, table, cron and owner's screen stay CC-1's.
+- I8 live: 5 open loads (canonicalActiveLoadWhereClause), 8 exceptions — no truck 3 (13615, 13616, 13617), no trailer 1
+  (13615), no driver 0, no customer W.O./PO 4 (13609, 13616, 13617, 13618). Queue: docs/reconciliation/exception-queue.{json,md}.
+- Empty-settlement guard: 12 known (5817-5825 and 5817/5818 closed: no load linked, assign its loads; 13573 and 13584 linked with
+  no settlement line, build its lines; one unnumbered closed with no load). 5 cancelled/voided reported as the void register.
+- NEXT: E7 batch 1 (ROUND 82 cross) with both new guards in LIVE_DOMAIN_GUARDS, then I2.
+Files Modified: apps/backend/src/reconciler/** (6), scripts/reconciler/** (2), scripts/verify-reconciler-exceptions.mjs +
+baseline, scripts/verify-no-empty-zero-settlement.mjs + baseline, docs/reconciliation/exception-queue.{json,md},
+docs/manuals/capability-registry.json, docs/bus/LANES.md, the ROUND 82 ruling file, docs/bus/OUTBOX-CURSOR.md.
