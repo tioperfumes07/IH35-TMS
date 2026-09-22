@@ -176,6 +176,21 @@ jobs:
       - name: Frontend vite build (Render build-command parity, L.0)
         run: cd apps/frontend && npx vite build
 
+      # CI-FRESH-DB-MIGRATE (2026-08-12) — the consistency guard further below reads the 54329
+      # service DB and by its own header requires a FRESH-MIGRATED DB. That step was added to this
+      # job in the right spirit but ~110 lines BELOW `verify:pre-commit`, which is the step that
+      # actually runs the backend vitest suite. So vitest ran against an EMPTY, UNMIGRATED Postgres
+      # and every DB-touching migration test failed on content grounds that had nothing to do with
+      # any PR's diff. MEASURED 2026-09-22 on origin/main @7c46b4e2ae, same commit, same suite:
+      #   empty/unmigrated DB -> 55 failed tests across 24 files
+      #   fresh-migrated DB   -> 34 failed tests across 17 files
+      # 21 failures, i.e. every test in all 7 *.migration.test.ts files, were caused by this step
+      # ordering alone. Migrations must be applied BEFORE the suite that reads them, not after.
+      # db:migrate targets the job-level DATABASE_URL (localhost:54329); its prod-refusal guard
+      # stays active (localhost is not a prod endpoint). Idempotent — safe where it also ran before.
+      - name: Apply migrations to the fresh CI DB (vitest + consistency guard both read it)
+        run: npm run db:migrate
+
       - name: Verification source of truth (local + CI parity)
         run: npm run verify:pre-commit
 
