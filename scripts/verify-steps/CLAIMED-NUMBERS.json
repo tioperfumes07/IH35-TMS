@@ -8929,5 +8929,20 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-14",
     "purpose": "verify-mileage-source-vocabulary"
+  },
+  "11529": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-22",
+    "purpose": "verify-control-totals"
+  },
+  "11533": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-22",
+    "purpose": "verify-lane-ownership"
+  },
+  "11537": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-22",
+    "purpose": "verify-no-silent-db-skip"
   }
 }

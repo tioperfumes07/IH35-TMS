@@ -9,6 +9,13 @@
 //
 // Lane cross: put `LANE-CROSS: <ruling-filename>` in the PR body AND pass
 // LANE_CROSS=<ruling-filename> to this script. The ruling file must exist in docs/bus/.
+//
+// @independent-input git-diff:BASE...HEAD -- this guard's real evidence is the LIVE, dynamic
+// changed-file list for the current branch (execSync git diff below), cross-referenced against
+// the static docs/bus/LANES.md map. The literal-path regex in verify-no-closed-loop-guards.mjs
+// only sees the LANES_FILE constant, misreading this as a single-source declaration ratchet; it
+// is not one — the git diff is an independent, live process-state input, not the same artifact
+// the guard is trying to prove.
 
 import { execSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';

@@ -257,6 +257,14 @@ const GUARD_303 = [
   // ALLOW_OFFLINE_SKIP, fails the gate immediately. Runs unconditionally (no DATABASE_URL needed
   // itself — it deletes DATABASE_URL from the env of every guard it dynamically spawns).
   ["verify-no-silent-db-skip (03d)", "scripts/verify-no-silent-db-skip.mjs", {}],
+  // 03e — ROUND 30.3 owner ruling: the verify-alwaystrack-parity.baseline.json shrink-only law
+  // (34 documents, dated 2026-09-22) is enforced IN-PROCESS by the guard's own
+  // UPDATE_ALWAYSTRACK_PARITY_BASELINE=1 regenerate mode, which refuses to grow the file at
+  // write-time. This is a deliberately INDEPENDENT second layer: it diffs the baseline file AS
+  // COMMITTED on this branch against AS COMMITTED on origin/main via git, so it also catches a
+  // baseline grown by any OTHER path (a hand-edit, a different script, a bad merge) that the
+  // regenerate-mode's own refuse-check never sees. No DATABASE_URL needed — pure git+JSON diff.
+  ["verify-baseline-never-grows (03e)", "scripts/verify-baseline-never-grows.mjs", {}],
 ];
 
 function touchesMoneyPath() {
