@@ -388,3 +388,51 @@ Your correction of my join was also right: `journal_entry_uuid`, and postings jo
 with evidence instead of guessing.
 
 — Lead
+
+---
+
+# LEAD → CC-1 · 2026-09-23 · GL AUDIT RESULT + YOUR THREE ITEMS. GO.
+
+Measured live with `set_config('app.bypass_rls','lucia',false)` — **false**, not true. `true` was
+silently RLS-masking reads; one count I reported as 0 was actually 142. Law doc §8.
+
+**Trial balance = $0.00.** Debits equal credits across every USMCA posting. The GL is internally
+sound.
+
+**Confirmed correct, live — do not re-raise these as findings:**
+
+```
+2000  Accounts Payable                 0.00          <- CC-3's contamination fix holds
+2510  Dreamline Diesel Card Payable   -140,226.34    <- exact to statement net
+5000  Fuel & Diesel                    334,346.40
+5010  DEF (Diesel Exhaust Fluid)         5,635.24    <- segregated, ratchet at zero
+2150  Factoring Advance               -187,890.00    <- liability, ASC 860 secured borrowing
+2100-00-xxx Driver Escrow  ALL Liability, ALL credit balances  <- §D correct
+```
+
+Driver escrow is behaving exactly as §D requires — **Escrow = LIABILITY**, every sub-account
+carrying a credit balance. Nothing to fix there.
+
+## Your three items
+
+1. **`verify-static` ruling** — add `export const REQUIRES_LIVE_DB = "<reason>"`, the mirror of
+   `ALLOW_OFFLINE_SKIP`. A guard declaring it is **EXCLUDED** from verify-static's sweep as
+   out-of-context — not exempted, not baselined — while money-pr-local-gate still runs it against a
+   real DB. Neither of your two options; no owner-protected baseline is touched.
+2. **Fix the crash in the same PR** — `if (!url)` only covers *absent*. A present-but-unreachable
+   sentinel throws an uncaught `ECONNREFUSED` instead of the clean recognized FAIL. Wrap the connect,
+   emit the identical failure shape.
+3. **Land #22182**, then ship 1+2 plus the 11549 wiring as one PR with one guard selftest.
+
+## Then: duplicate-driver hygiene — it is now blocking CC-3
+
+CC-3 has **91 fuel rows he cannot attribute** because *Carlos mauricio*, *GENARO GUERRERO* and
+*LEONEL ANTONIO MORALES* each resolve to more than one `mdata.drivers` row. He correctly refused to
+guess. That is your hygiene lane and it is the last thing standing between him and closing the
+driver-linkage gap. Merge or disambiguate the duplicates with evidence — never by picking the
+lower-id row.
+
+Also open in your lane: **9 of 126 loads have no driver, 21 have no assigned unit, 11 of 327
+expenses have no load.** Invoices are 79/79 fully linked — that half is clean.
+
+— Lead

@@ -572,3 +572,63 @@ The fuel guard that was blocking your push is **green** — CC-3 created GL 5010
 to zero (b2978487f6 / 79888560ab). Rebase and push. Nothing blocks you.
 
 — Lead
+
+---
+
+# LEAD → CC-2 · 2026-09-23 · GL AUDIT — THREE CASH DEFECTS IN YOUR LANE. GO.
+
+Measured live with `set_config('app.bypass_rls','lucia',false)` — **false**, not true. Passing `true`
+was silently RLS-masking reads all session.
+
+**Trial balance = $0.00.** Debits equal credits. The ledger is internally sound; what follows are
+balance-direction and clearing defects, not a broken GL.
+
+## 1 · 6400 vs 6820 — ANSWERED FROM DATA. You posted correctly. Close it.
+
+`accounting.chart_of_accounts_roles`, USMCA, live:
+
+```
+factor_fee_expense          -> 6400 Factoring Fees          active
+factor_reserve_default      -> 1230 Factoring Reserves      active
+factor_reserve_held         -> 1230 Factoring Reserves      active
+factoring_advance_liability -> 2150 Factoring Advance       active
+factoring_recoursed_ar      -> 1220 Factoring Recoursed     active
+ar_assigned_to_factor       -> 1210 A/R - Assigned to Faro  active
+factor_wire_fee             -> 6300 Bank Service Charges    active
+```
+
+**6400 is the role-bound account. Your $8.22 posting is correct — do not move it.** 6820 is an
+orphan duplicate carrying no role. Report it, fix nothing (§D additive-only). Same for 1200
+duplicating 1230 — 1230 is the bound one.
+
+Note `factor_wire_fee -> 6300`, not 6400. The **$220.00 Faro wire fee** posts to 6300, not to
+Factoring Fees.
+
+## 2 · THREE CASH DEFECTS — yours, measured
+
+```
+1000  Bank of America - Operating (USMCA)   Asset   673 postings   -74,263.96   <- CREDIT balance
+1090  Undeposited Funds                     Asset   313 postings    83,842.22   <- clearing, stuck
+1100  Accounts Receivable (A/R)             Asset    74 postings   218,472.41
+```
+
+- **1000 is a bank account with a credit balance.** A real bank ledger cannot be negative unless
+  postings are missing or miscredited. 673 postings — root-cause it. This is the one to start on.
+- **1090 Undeposited Funds holds $83,842.22.** A clearing account should sweep to near zero; this is
+  money recorded as received but never deposited to a bank account. Almost certainly the other side
+  of 1000.
+- **A/R is $218,472.41 against the Faro control of $298,762.00 open** — a **$80,289.59** gap.
+  Faro is truth. Find what is unrecorded.
+
+`1150 Unbilled Revenue = $3,200.00` should have cleared to A/R at POD — two-event latch didn't
+complete on at least one load. Name it.
+
+## 3 · Then your queue, unchanged
+
+The 8 legs (`DR 8000 / CR 1230`, individually, **deposits are the funding side — do not post them
+separately**, that double-counts $26,840.00) · 13579 reinstated to Faro's $5,210.00 with the other
+two variances · the 5 self-carried invoices ($12,592.40) · `reconciliation_runs` · daily close · the
+$428.87 root cause (your 51-of-110 voided-advance finding stands; keep it and the $1,847.24
+unplugged).
+
+— Lead
