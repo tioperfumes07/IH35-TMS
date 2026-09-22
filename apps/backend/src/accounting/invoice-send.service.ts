@@ -70,10 +70,55 @@ export type SendDraftInvoiceErr = {
 };
 export type SendDraftInvoiceResult = SendDraftInvoiceOk | SendDraftInvoiceErr;
 
+// Lead ruling, item 2 P0 (2026-09-22, "A CLOSED SETTLEMENT IS DELIVERY EVIDENCE"): same
+// two-value LoadCreateSource shape as createLoadWithFullSideEffects -- an undeclared mode fails
+// closed as live_feed, exactly the current, unchanged behavior. historical_backfill is the ONLY
+// mode where evidence beyond a real stop departure is ever accepted, and it is always RECORDED
+// (delivery_evidence_source / delivery_evidence_recorded_at, migration 202614240000), never a
+// silent pass -- "a backfill that cannot name its evidence source still fails closed."
+export type InvoiceSendMode = "live_feed" | "historical_backfill";
+
+type DeliveryEvidenceSource = "stop_actual_departure" | "closed_settlement" | "faro_invoice_line";
+
+/**
+ * mode='historical_backfill' ONLY: does a closed/locked driver settlement carry this load, or
+ * does a Faro invoice line reference it directly? Reuses existing tables -- no new engine, no new
+ * GL math. Checked in this order because a settlement is closer to "this specific load was
+ * delivered and paid" than a factoring purchase is.
+ */
+async function backfillDeliveryEvidence(
+  client: SendClient,
+  operatingCompanyId: string,
+  loadId: string
+): Promise<DeliveryEvidenceSource | null> {
+  const settlementRes = await client.query<{ id: string }>(
+    `
+      SELECT ds.id::text
+        FROM driver_finance.settlement_lines sl
+        JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
+       WHERE sl.operating_company_id = $1::uuid
+         AND sl.load_id = $2::uuid
+         AND ds.status IN ('closed', 'locked')
+       LIMIT 1
+    `,
+    [operatingCompanyId, loadId]
+  );
+  if (settlementRes.rows.length > 0) return "closed_settlement";
+
+  const faroRes = await client.query<{ id: string }>(
+    `SELECT id::text FROM factor.faro_invoice_lines WHERE operating_company_id = $1::uuid AND load_id = $2::uuid AND superseded_at IS NULL LIMIT 1`,
+    [operatingCompanyId, loadId]
+  );
+  if (faroRes.rows.length > 0) return "faro_invoice_line";
+
+  return null;
+}
+
 export async function sendDraftInvoice(
   client: SendClient,
-  input: { invoiceId: string; operatingCompanyId: string; userId: string }
+  input: { invoiceId: string; operatingCompanyId: string; userId: string; mode?: InvoiceSendMode }
 ): Promise<SendDraftInvoiceResult> {
+  const mode: InvoiceSendMode = input.mode === "historical_backfill" ? "historical_backfill" : "live_feed";
   const currentRes = await client.query(
     `SELECT * FROM accounting.invoices WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
     [input.invoiceId, input.operatingCompanyId]
@@ -150,7 +195,7 @@ export async function sendDraftInvoice(
   //
   // Evidence is now evaluated for EVERY invoice, and the two failure shapes are recorded distinctly
   // so the population can be split when the owner decides whether to enforce.
-  const evidenceReason = current.source_load_id
+  let evidenceReason: "no_source_load" | "no_departure_on_final_delivery_stop" | null = current.source_load_id
     ? (await finalActiveDeliveryDepartureAt(
         client as never,
         input.operatingCompanyId,
@@ -159,6 +204,55 @@ export async function sendDraftInvoice(
       ? null
       : ("no_departure_on_final_delivery_stop" as const)
     : ("no_source_load" as const);
+
+  // Lead ruling item 2 P0: mode='historical_backfill' ONLY, and only when the load itself is
+  // known (a no-load invoice has nothing to check a settlement/Faro line against — that shape
+  // still falls straight through to the fail-closed block below, same as live_feed). A real stop
+  // departure (evidenceReason === null already) is never overridden or re-checked here -- this
+  // only fires when the live_feed-shaped check above found nothing.
+  if (evidenceReason === "no_departure_on_final_delivery_stop" && mode === "historical_backfill" && current.source_load_id) {
+    const backfillSource = await backfillDeliveryEvidence(
+      client,
+      input.operatingCompanyId,
+      String(current.source_load_id)
+    );
+    if (backfillSource) {
+      await client.query(
+        `UPDATE accounting.invoices SET delivery_evidence_source = $2, delivery_evidence_recorded_at = now() WHERE id = $1 AND operating_company_id = $3::uuid`,
+        [input.invoiceId, backfillSource, input.operatingCompanyId]
+      );
+      await appendCrudAudit(
+        client as never,
+        input.userId,
+        "accounting.invoice.delivery_evidence_backfilled",
+        {
+          invoice_id: input.invoiceId,
+          load_id: String(current.source_load_id),
+          delivery_evidence_source: backfillSource,
+          operating_company_id: input.operatingCompanyId,
+          mode,
+        },
+        "info",
+        "ACCT-F61-BACKFILL-EVIDENCE"
+      );
+      evidenceReason = null;
+    }
+    // backfillSource === null falls through: evidenceReason stays set, and the block below
+    // fails closed regardless of the DELIVERY_EVIDENCE_FLAG's enforce/warn-only setting for
+    // live_feed -- "a backfill that cannot name its evidence source still fails closed" is not
+    // conditional on that flag, it is unconditional for this mode.
+    if (!backfillSource) {
+      return {
+        ok: false,
+        code: 409,
+        error: "delivery_evidence_missing",
+        message:
+          `Load ${String(current.source_load_id)} has no stop-actual departure, no closed/locked ` +
+          `settlement, and no Faro invoice line — historical_backfill mode cannot name a delivery ` +
+          `evidence source for it, so it fails closed the same as a live send would.`,
+      };
+    }
+  }
 
   if (evidenceReason) {
     const enforce = await isEnabled(client as never, DELIVERY_EVIDENCE_FLAG, {
