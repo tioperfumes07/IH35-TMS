@@ -82,7 +82,7 @@ async function handleExpenseBulk(ctx: BulkPerEntityContext<Record<string, unknow
   );
 
   // ROUND 138 -- bulk expense void is another independent writer of accounting.expenses.voided_at.
-  await cascadeVoidChildren(client, "expense", id, operatingCompanyId);
+  await cascadeVoidChildren(client as never, "expense", id, operatingCompanyId);
 
   await appendCrudAudit(
     client,
