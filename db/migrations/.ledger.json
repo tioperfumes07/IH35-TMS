@@ -1,6 +1,6 @@
 {
   "_comment": "GENERATED FILE - cache of the canonical ledger _system._schema_migrations, read by verify:applied-migrations-immutable where the database is unreachable. Do not hand-edit. Regenerate with: npm run db:ledger:snapshot",
-  "generated_by": "db:migrate",
+  "generated_by": "db:ledger:snapshot",
   "migration_count": 1171,
   "migrations": [
     {

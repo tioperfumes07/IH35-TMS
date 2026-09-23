@@ -1,3 +1,5 @@
+import { createLoadWithFullSideEffects } from "../dispatch/book-load.service.js";
+
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
 };
@@ -260,25 +262,56 @@ async function ensureLoad(
     return { id: existing.rows[0].id, created: false };
   }
 
-  const insertValues: Record<string, unknown> = {
-    operating_company_id: companyId,
-    load_number: "LD-SAMPLE-001",
-    customer_id: customerId,
-    status: "draft",
-    rate_total_cents: 150000,
-    currency_code: "USD",
-    assigned_unit_id: unitId,
-    assigned_primary_driver_id: driverId,
-    dispatcher_user_id: actorUserId,
-    notes: "Onboarding sample load",
-    is_sample_data: true,
-  };
-  const parts = toInsertParts(insertValues, columns);
-  const inserted = await client.query<{ id: string }>(
-    `INSERT INTO mdata.loads (${parts.columns.join(", ")}) VALUES (${parts.placeholders.join(", ")}) RETURNING id::text AS id`,
-    parts.params
+  // E6 (Lead ruling, 2026-09-22 / Round 84): this used to write mdata.loads rows via a direct INSERT
+  // (via the dynamic toInsertParts/columns dance, needed only because this file also seeds
+  // customers/vendors/drivers/units against a possibly-partial schema). The load path doesn't
+  // need that defense any more -- createLoadWithFullSideEffects is the one shared create path
+  // and already targets only real, confirmed-live columns; `columns` stays a parameter (unused
+  // here now) only because callers/tests still pass it and the customer/vendor/driver/unit
+  // helpers above still need the dynamic-column pattern.
+  void columns;
+  const result = await createLoadWithFullSideEffects(
+    client as never,
+    {
+      requestingUserUuid: actorUserId,
+      requestingUserRole: "system",
+      operating_company_id: companyId,
+      customer_id: customerId,
+      status: "unassigned",
+      save_mode: "draft",
+      requested_load_number: "LD-SAMPLE-001",
+      assigned_unit_id: unitId,
+      assigned_primary_driver_id: driverId,
+      notes: "Onboarding sample load",
+      is_sample_data: true,
+      charges: [{ code: "LINEHAUL", amount_cents: 150000 }],
+      stops: [
+        {
+          stop_type: "pickup",
+          sequence_number: 1,
+          address_line1: "123 Sample Pickup Rd",
+          city: "Laredo",
+          state: "TX",
+          country: "US",
+          scheduled_arrival_at: new Date(Date.now() + 86_400_000).toISOString(),
+        },
+        {
+          stop_type: "delivery",
+          sequence_number: 2,
+          address_line1: "456 Sample Delivery Ave",
+          city: "San Antonio",
+          state: "TX",
+          country: "US",
+          scheduled_arrival_at: new Date(Date.now() + 2 * 86_400_000).toISOString(),
+        },
+      ],
+    },
+    { source: "historical_backfill" }
   );
-  return { id: inserted.rows[0].id, created: true };
+  if (result.kind !== "ok") {
+    throw new Error(`seed_sample_data_load_create_failed: ${JSON.stringify(result.payload)}`);
+  }
+  return { id: String(result.row.id), created: true };
 }
 
 async function ensureSampleStops(client: Queryable, loadId: string) {

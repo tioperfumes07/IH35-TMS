@@ -18,6 +18,7 @@ import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { useStagedListFilters } from "../../components/table";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 import { getShowAccountNumbers } from "../../lib/show-account-numbers";
+import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 import { useExportAction } from "../../hooks/useExportAction";
 
 import { formatUsdCents } from "../../lib/money";
@@ -48,6 +49,10 @@ export function BalanceSheetPage() {
   const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
   const [reportSearch, setReportSearch] = useState("");
   const exportAction = useExportAction();
+  // ROUND 83 RULING 1 — the on-screen table rendered account_code unconditionally; only the
+  // print/export path (getShowAccountNumbers() inside printList, below) respected the toggle.
+  // ProfitLossPage/TrialBalancePage already do this correctly under the `showCodes` name; matching.
+  const [showCodes] = useShowAccountNumbers();
 
   const query = useQuery({
     queryKey: ["reports", "balance-sheet", companyId, applied.asOfDate, applied.basis],
@@ -267,7 +272,7 @@ export function BalanceSheetPage() {
             <table className="min-w-full text-left text-xs">
               <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                 <tr>
-                  <th className="px-3 py-2">Account #</th>
+                  {showCodes ? <th className="px-3 py-2">Account #</th> : null}
                   <th className="px-3 py-2">Account</th>
                   <th className="px-3 py-2 text-right">Amount</th>
                 </tr>
@@ -275,14 +280,14 @@ export function BalanceSheetPage() {
               <tbody>
                 {assets.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="px-3 py-4 text-gray-500">
+                    <td colSpan={showCodes ? 3 : 2} className="px-3 py-4 text-gray-500">
                       No rows
                     </td>
                   </tr>
                 ) : (
                   assets.map((line) => (
                     <tr key={`asset-${line.account_code}-${line.account_name}`} className="border-b border-gray-100">
-                      <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td>
+                      {showCodes ? <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td> : null}
                       <td className="px-3 py-2">
                         {line.account_id ? (
                           <Link to={registerHref(line.account_id, applied.asOfDate, applied.basis)} className="text-slate-700 underline-offset-2 hover:underline">
@@ -297,7 +302,7 @@ export function BalanceSheetPage() {
                   ))
                 )}
                 <tr className="bg-slate-50 font-semibold">
-                  <td colSpan={2} className="px-3 py-2 text-right">
+                  <td colSpan={showCodes ? 2 : 1} className="px-3 py-2 text-right">
                     Total assets
                   </td>
                   <td className="px-3 py-2 text-right">{money(query.data.assets.total)}</td>
@@ -312,7 +317,7 @@ export function BalanceSheetPage() {
               <table className="min-w-full text-left text-xs">
                 <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                   <tr>
-                    <th className="px-3 py-2">Account #</th>
+                    {showCodes ? <th className="px-3 py-2">Account #</th> : null}
                     <th className="px-3 py-2">Account</th>
                     <th className="px-3 py-2 text-right">Amount</th>
                   </tr>
@@ -320,14 +325,14 @@ export function BalanceSheetPage() {
                 <tbody>
                   {liabilities.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="px-3 py-4 text-gray-500">
+                      <td colSpan={showCodes ? 3 : 2} className="px-3 py-4 text-gray-500">
                         No rows
                       </td>
                     </tr>
                   ) : (
                     liabilities.map((line) => (
                       <tr key={`liability-${line.account_code}-${line.account_name}`} className="border-b border-gray-100">
-                        <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td>
+                        {showCodes ? <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td> : null}
                         <td className="px-3 py-2">
                           {line.account_id ? (
                             <Link to={registerHref(line.account_id, applied.asOfDate, applied.basis)} className="text-slate-700 underline-offset-2 hover:underline">
@@ -342,7 +347,7 @@ export function BalanceSheetPage() {
                     ))
                   )}
                   <tr className="bg-slate-50 font-semibold">
-                    <td colSpan={2} className="px-3 py-2 text-right">
+                    <td colSpan={showCodes ? 2 : 1} className="px-3 py-2 text-right">
                       Total liabilities
                     </td>
                     <td className="px-3 py-2 text-right">{money(query.data.liabilities.total)}</td>
@@ -356,7 +361,7 @@ export function BalanceSheetPage() {
               <table className="min-w-full text-left text-xs">
                 <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                   <tr>
-                    <th className="px-3 py-2">Account #</th>
+                    {showCodes ? <th className="px-3 py-2">Account #</th> : null}
                     <th className="px-3 py-2">Account</th>
                     <th className="px-3 py-2 text-right">Amount</th>
                   </tr>
@@ -364,14 +369,14 @@ export function BalanceSheetPage() {
                 <tbody>
                   {equityLinesWithoutAdjustment.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="px-3 py-4 text-gray-500">
+                      <td colSpan={showCodes ? 3 : 2} className="px-3 py-4 text-gray-500">
                         No rows
                       </td>
                     </tr>
                   ) : (
                     equityLinesWithoutAdjustment.map((line) => (
                       <tr key={`equity-${line.account_code}-${line.account_name}`} className="border-b border-gray-100">
-                        <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td>
+                        {showCodes ? <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td> : null}
                         <td className="px-3 py-2">
                           {line.account_id ? (
                             <Link to={registerHref(line.account_id, applied.asOfDate, applied.basis)} className="text-slate-700 underline-offset-2 hover:underline">
@@ -387,19 +392,19 @@ export function BalanceSheetPage() {
                   )}
                   {applied.basis === "cash" ? (
                     <tr className="border-b border-gray-100">
-                      <td className="px-3 py-2 font-medium text-gray-900">{cashBasisAdjustment?.account_code ?? "CASH_BASIS_ADJ"}</td>
+                      {showCodes ? <td className="px-3 py-2 font-medium text-gray-900">{cashBasisAdjustment?.account_code ?? "CASH_BASIS_ADJ"}</td> : null}
                       <td className="px-3 py-2">{cashBasisAdjustment?.account_name ?? "Cash Basis Adjustment"}</td>
                       <td className="px-3 py-2 text-right">{money(cashBasisAdjustment?.amount ?? 0)}</td>
                     </tr>
                   ) : null}
                   <tr className="bg-slate-50 font-semibold">
-                    <td colSpan={2} className="px-3 py-2 text-right">
+                    <td colSpan={showCodes ? 2 : 1} className="px-3 py-2 text-right">
                       Current year earnings
                     </td>
                     <td className="px-3 py-2 text-right">{money(query.data.equity.current_year_earnings)}</td>
                   </tr>
                   <tr className="bg-slate-50 font-semibold">
-                    <td colSpan={2} className="px-3 py-2 text-right">
+                    <td colSpan={showCodes ? 2 : 1} className="px-3 py-2 text-right">
                       Total equity
                     </td>
                     <td className="px-3 py-2 text-right">{money(query.data.equity.total)}</td>

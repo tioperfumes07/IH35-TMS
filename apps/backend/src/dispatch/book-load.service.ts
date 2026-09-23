@@ -77,7 +77,7 @@ async function gateOutcome(
   return null;
 }
 
-type BookLoadStop = {
+export type BookLoadStop = {
   // 'border' = a port-of-entry crossing stop captured in Book Load for a cross-border (NB/SB) load.
   stop_type: "pickup" | "delivery" | "border";
   sequence_number: number;

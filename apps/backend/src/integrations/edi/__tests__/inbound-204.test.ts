@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
 import {
-  createDraftLoadFrom204,
   extractControlNumber,
   handleInbound204,
   parseX12204Payload,
@@ -30,8 +29,10 @@ describe("parseX12204Payload", () => {
     expect(parsed.broker_ref).toBe("BROKERREF123");
     expect(parsed.pickup_city).toBe("LAREDO");
     expect(parsed.pickup_state).toBe("TX");
+    expect(parsed.pickup_name).toBe("SHIPPER");
     expect(parsed.delivery_city).toBe("DALLAS");
     expect(parsed.delivery_state).toBe("TX");
+    expect(parsed.delivery_name).toBe("CONSIGNEE");
     expect(parsed.commodity).toBe("STEEL COILS");
     expect(parsed.rate_cents).toBe(150000);
     expect(parsed.pickup_date).toBe("20260608");
@@ -106,20 +107,7 @@ describe("handleInbound204", () => {
   });
 });
 
-describe("createDraftLoadFrom204", () => {
-  it("inserts draft load and stops when customer_id provided", async () => {
-    const client = {
-      query: vi
-        .fn()
-        .mockResolvedValueOnce({ rows: [{ id: "load-1" }] })
-        .mockResolvedValue({ rows: [] }),
-    };
-    const loadId = await createDraftLoadFrom204(client as never, {
-      operating_company_id: "co-1",
-      customer_id: "cust-1",
-      parsed: parseX12204Payload(SAMPLE_204),
-    });
-    expect(loadId).toBe("load-1");
-    expect(client.query.mock.calls.length).toBeGreaterThanOrEqual(1);
-  });
-});
+// createDraftLoadFrom204's real behavior is exercised in inbound-204-create-draft-load.db.test.ts
+// (E6, 2026-09-22): it now calls createLoadWithFullSideEffects, the one shared create path with
+// its own resolver/gate chain -- a hand-mocked single-INSERT client here would only prove a fake
+// call shape, not real behavior. That file is the honest replacement for this describe block.

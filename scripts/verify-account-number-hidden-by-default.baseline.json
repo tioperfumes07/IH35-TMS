@@ -1,0 +1,75 @@
+{
+  "_comment": "ROUND 83 RULING 1 -- shrink-only baseline of account_number/account_code renders found outside the show-account-numbers helper at the time this guard was built. Real, known debt -- not yet fixed. Fix a file and remove its entry (never leave stale debt on the books); a new violation outside this list fails the build.",
+  "established": "2026-09-22",
+  "files": {
+    "components/accounting/MoneyProofTrailPanel.tsx": {
+      "count": 1
+    },
+    "components/dispatch/LoadDetailCostsTab.tsx": {
+      "count": 6
+    },
+    "components/dispatch/LoadDetailDriverPayTab.tsx": {
+      "count": 1
+    },
+    "components/driver-finance/PaymentMethodPicker.tsx": {
+      "count": 1
+    },
+    "components/driver-inbox/DriverInbox.tsx": {
+      "count": 1
+    },
+    "components/forms/TwoSectionLineEditor.tsx": {
+      "count": 1
+    },
+    "pages/accounting/AccountingAuditTrailPage.tsx": {
+      "count": 1
+    },
+    "pages/accounting/BillDetailPage.tsx": {
+      "count": 1
+    },
+    "pages/accounting/CoaAsymmetryReportPanel.tsx": {
+      "count": 1
+    },
+    "pages/accounting/LoadCostsBoardPage.tsx": {
+      "count": 2
+    },
+    "pages/accounting/OpeningBalanceRegisterPage.tsx": {
+      "count": 1
+    },
+    "pages/accounting/PrepaidExpensesPage.tsx": {
+      "count": 1
+    },
+    "pages/accounting/loans/LoanApplicationWizard.tsx": {
+      "count": 1
+    },
+    "pages/banking/CategorizationRulesPage.tsx": {
+      "count": 2
+    },
+    "pages/banking/RecordTransferModal.tsx": {
+      "count": 2
+    },
+    "pages/banking/TransferModal.tsx": {
+      "count": 1
+    },
+    "pages/finance/BreakEvenPage.tsx": {
+      "count": 1
+    },
+    "pages/finance/FinancialStatementsPage.tsx": {
+      "count": 4
+    },
+    "pages/lists/accounting/PostingTemplateModal.tsx": {
+      "count": 1
+    },
+    "pages/lists/accounting/PostingTemplatesListPage.tsx": {
+      "count": 1
+    },
+    "pages/reports/ManagementReportPackagePage.tsx": {
+      "count": 2
+    },
+    "pages/reports/PostedWhileTourOpenReportPage.tsx": {
+      "count": 1
+    },
+    "pages/system/SystemModulePage.tsx": {
+      "count": 1
+    }
+  }
+}
