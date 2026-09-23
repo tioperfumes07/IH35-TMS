@@ -1933,3 +1933,23 @@ REMAINING: fuel_transactions gap is architectural (needs a real engine decision,
 Also confirmed live, unprompted finding: WORM delete-block triggers (refuse_financial_row_delete) exist on essentially every accounting.* and driver_finance.* transactional table (bills, invoices, expenses, journal_entries, journal_entry_postings, driver_settlements, driver_bills, factoring_advances, escrow_ledger, escrow_balances, etc.) -- confirmed by direct pg_trigger query on the fresh branch. fuel.fuel_transactions carries NO such trigger (only standard FK triggers) -- consistent with it also having no reversal engine, a genuine double gap.
 
 — CC-3
+
+## 2026-09-23 — E10 void-runner MERGED (PR #22363, f14c6402c8)
+
+E10 (settlements/factoring/invoices/expenses/revrec-latch void-runner) + the escrow-neutralize
+half are now on main. Built and proved ONLY on fresh Neon branches off prod
+(br-old-poetry-akuaihf9, br-spring-dream-akk31fyt) — zero writes to production. Production purge
+execution remains stopped pending Jorge's own direct restart message, per his 2026-09-22 ruling.
+
+REMAINING (not closed, named for whoever picks this up next):
+- fuel.fuel_transactions: no reversal path anywhere in the codebase. $501,511.22 / 1,170 live
+  posted GL legs exposed. Needs an owner/engine-level architectural decision.
+- 3 of 42 accounting.escrow_accounts rows stay non-zero ($500.01 total) after mirroring all 61
+  real postings -- not explained by postings in scope.
+- Revrec 'earn'-event JE reversals hit real balance-check refusals on several loads -- root cause
+  not fully pinned down, flagged for a clean second pass.
+- 0 of 89 USMCA driver_settlements carry a posted GL run.
+- driver_finance.escrow_balances (distinct from accounting.escrow_accounts) not yet neutralized.
+
+Standing: not idle, holding for next assignment / continuing open items above as building/proving
+only, non-production branch, per the owner's explicit stop on production purge execution.
