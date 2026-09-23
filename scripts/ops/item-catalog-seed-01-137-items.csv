@@ -1,0 +1,138 @@
+item_category,item_name,item_type,item_code,description,account_number,account_name,posts_to,mirrors_shortpay_account,source
+Sales of Service Income,Line Haul,Service,SALES-OF-SER-LINE-HAUL,Line Haul,4000,Freight / Line-haul Income,revenue,,LIVE QBO COMPANY FILE
+,Hours,Service,HOURS,,5100,Driver Pay / Settlements,expense,,LIVE QBO COMPANY FILE
+Sales of Service Income,Warehouse-Lumper Fee,Service,SALES-OF-SER-WAREHOUSE-LUMPER-FEE,Warehouse-Lumper Fee,4230,Lumper Income,revenue,,LIVE QBO COMPANY FILE
+,Fuel Surcharge,Service,FUEL-SURCHARGE,,4100,Fuel Surcharge Income,expense,,LIVE QBO COMPANY FILE
+Sales of Service Income,Layover Charge,Service,SALES-OF-SER-LAYOVER-CHARGE,Layover Charge,4220,Layover Income,revenue,,LIVE QBO COMPANY FILE
+Sales of Service Income,Customer Expense-Product Disposal-Fee,Service,SALES-OF-SER-CUSTOMER-EXPENSE-PRODUCT-DISPOSAL-FEE,Customer Expense-Product Disposal-Fee,4200,Accessorial / Detention Income,revenue,,LIVE QBO COMPANY FILE
+Sales of Service Income,Sales-Transload,Service,SALES-OF-SER-SALES-TRANSLOAD,Sales-Transload,4200,Accessorial / Detention Income,revenue,,LIVE QBO COMPANY FILE
+Sales of Service Income,Extra Delivery-Pick/Drop,Service,SALES-OF-SER-EXTRA-DELIVERY-PICK-DROP,Extra Delivery-Pick/Drop,4200,Accessorial / Detention Income,revenue,,LIVE QBO COMPANY FILE
+Sales of Service Income,Sales-Detention Charge,Service,SALES-OF-SER-SALES-DETENTION-CHARGE,Sales-Detention Charge,4210,Detention Income,revenue,,LIVE QBO COMPANY FILE
+Sales of Service Income,Deduction-For Damaged Product,Service,SALES-OF-SER-DEDUCTION-FOR-DAMAGED-PRODUCT,Deduction-For Damaged Product,4930,Short-Pay — OS&D deducted from freight invoice,revenue,,LIVE QBO COMPANY FILE
+Sales of Service Income,Customer Pmt-Fuel Advance,NonInventory,SALES-OF-SER-CUSTOMER-PMT-FUEL-ADVANCE,Customer Pmt-Fuel Advance,4200,Accessorial / Detention Income,revenue,,LIVE QBO COMPANY FILE
+Driver Salaries,Driver Pay-Extra Pick/Delivery-Drop,Service,DRIVER-SALAR-DRIVER-PAY-EXTRA-PICK-DELIVERY-DROP,,5100,Driver Pay / Settlements,expense,,LIVE QBO COMPANY FILE
+Sales of Service Income,Deduction-Charge for Damages,Service,SALES-OF-SER-DEDUCTION-CHARGE-FOR-DAMAGES,11478     Damages,4930,Short-Pay — OS&D deducted from freight invoice,revenue,,LIVE QBO COMPANY FILE
+Sales of Service Income,Sales-Permit Fee Expense,Service,SALES-OF-SER-SALES-PERMIT-FEE-EXPENSE,Sales-Permit Fee Expense,4200,Accessorial / Detention Income,revenue,,LIVE QBO COMPANY FILE
+"Operational Licenses, Permits & Taxes",Oversize Permit,Service,OPERATIONAL-OVERSIZE-PERMIT,,5700,Permits & Licenses (IFTA/IRP/DOT),expense,,LIVE QBO COMPANY FILE
+Driver Salaries,Driver Pay-Mexico-B1 Driver-Empty Miles,Service,DRIVER-SALAR-DRIVER-PAY-MEXICO-B1-DRIVER-EMPTY-MILES,,5100,Driver Pay / Settlements,expense,,LIVE QBO COMPANY FILE
+Driver Salaries,Driver Pay-Mexico-B1 Driver-Loaded Miles,Service,DRIVER-SALAR-DRIVER-PAY-MEXICO-B1-DRIVER-LOADED-MILES,,5100,Driver Pay / Settlements,expense,,LIVE QBO COMPANY FILE
+Scale Expense,OTR-Scale Expense,Service,SCALE-EXPENS-OTR-SCALE-EXPENSE,,5300,Tolls & Scales,expense,,LIVE QBO COMPANY FILE
+Fuel Expenses,Fuel-Truck Diesel,NonInventory,FUEL-EXPENSE-FUEL-TRUCK-DIESEL,,5000,Fuel & Diesel,expense,,LIVE QBO COMPANY FILE
+Fuel Expenses,Fuel-Reefer-Diesel,NonInventory,FUEL-EXPENSE-FUEL-REEFER-DIESEL,,5000,Fuel & Diesel,expense,,LIVE QBO COMPANY FILE
+Sales of Service Income,Customer Expense-Reefer-Trailer-Washout,Service,SALES-OF-SER-CUSTOMER-EXPENSE-REEFER-TRAILER-WASHOUT,Customer Expense-Reefer-Trailer-Washout,4200,Accessorial / Detention Income,revenue,,LIVE QBO COMPANY FILE
+Fuel Expenses,Fuel-DEF-Diesel Exhaust Fluid,NonInventory,FUEL-EXPENSE-FUEL-DEF-DIESEL-EXHAUST-FLUID,,5000,Fuel & Diesel,expense,,LIVE QBO COMPANY FILE
+Driver Deductions,Driver Deduction-Escrow for Claims-2026,NonInventory,DRIVER-DEDUC-DRIVER-DEDUCTION-ESCROW-FOR-CLAIMS-2026,Driver Deduction-Escrow for Claims-2026,7200,Driver Admin Fee & Chargeback Income,income,,LIVE QBO COMPANY FILE
+Driver Salaries,Driver Pay-Layover-Estancia,Service,DRIVER-SALAR-DRIVER-PAY-LAYOVER-ESTANCIA,,5100,Driver Pay / Settlements,expense,,LIVE QBO COMPANY FILE
+Driver Salaries,Driver Pay-Bonus,Service,DRIVER-SALAR-DRIVER-PAY-BONUS,,5100,Driver Pay / Settlements,expense,,LIVE QBO COMPANY FILE
+Driver Salaries,Driver Pay-Tarp-Enlonada/Desenlonada,Service,DRIVER-SALAR-DRIVER-PAY-TARP-ENLONADA-DESENLONADA,,5100,Driver Pay / Settlements,expense,,LIVE QBO COMPANY FILE
+Driver Salaries,Driver Pay-Local Movement,Service,DRIVER-SALAR-DRIVER-PAY-LOCAL-MOVEMENT,,5100,Driver Pay / Settlements,expense,,LIVE QBO COMPANY FILE
+Driver Salaries,Driver Pay-Oversize Load,Service,DRIVER-SALAR-DRIVER-PAY-OVERSIZE-LOAD,,5100,Driver Pay / Settlements,expense,,LIVE QBO COMPANY FILE
+Sales of Service Income,Shag Fee,Service,SALES-OF-SER-SHAG-FEE,Shag Fee,4200,Accessorial / Detention Income,revenue,,LIVE QBO COMPANY FILE
+Driver Reimbursements,Driver Reimbursement-Fuel Def,NonInventory,DRIVER-REIMB-DRIVER-REIMBURSEMENT-FUEL-DEF,,5000,Fuel & Diesel,expense,,LIVE QBO COMPANY FILE
+Driver Reimbursements,"Driver Reimbursement-OTR-Maintenance, Oils, Additives",NonInventory,DRIVER-REIMB-DRIVER-REIMBURSEMENT-OTR-MAINTENANCE-OILS-ADDIT,,5400,Truck Repairs & Maintenance,expense,,LIVE QBO COMPANY FILE
+Driver Reimbursements,Driver Reimbursement-TPE-Toll Expense,NonInventory,DRIVER-REIMB-DRIVER-REIMBURSEMENT-TPE-TOLL-EXPENSE,,5300,Tolls & Scales,expense,,LIVE QBO COMPANY FILE
+Driver Reimbursements,Driver Reimbursement-Scale Expense,NonInventory,DRIVER-REIMB-DRIVER-REIMBURSEMENT-SCALE-EXPENSE,,5300,Tolls & Scales,expense,,LIVE QBO COMPANY FILE
+Driver Deductions,Driver Deduction-Express Code Fee,Service,DRIVER-DEDUC-DRIVER-DEDUCTION-EXPRESS-CODE-FEE,,7200,Driver Admin Fee & Chargeback Income,income,,LIVE QBO COMPANY FILE
+Driver Deductions,Driver Deduction-Fines & Violations,Service,DRIVER-DEDUC-DRIVER-DEDUCTION-FINES-VIOLATIONS,,7200,Driver Admin Fee & Chargeback Income,income,,LIVE QBO COMPANY FILE
+Driver Deductions,Driver Deduction-I-94 Permit,Service,DRIVER-DEDUC-DRIVER-DEDUCTION-I-94-PERMIT,,7200,Driver Admin Fee & Chargeback Income,income,,LIVE QBO COMPANY FILE
+Driver Deductions,Driver Deduction-Wire & ACH Fee,Service,DRIVER-DEDUC-DRIVER-DEDUCTION-WIRE-ACH-FEE,,7200,Driver Admin Fee & Chargeback Income,income,,LIVE QBO COMPANY FILE
+Driver Deductions,Driver Deduction-Fine-Late Delivery Fee,Service,DRIVER-DEDUC-DRIVER-DEDUCTION-FINE-LATE-DELIVERY-FEE,,7200,Driver Admin Fee & Chargeback Income,income,,LIVE QBO COMPANY FILE
+Sales of Service Income,Deduction-Company Fine-For Late Delivery,Service,SALES-OF-SER-DEDUCTION-COMPANY-FINE-FOR-LATE-DELIVERY,Deduction-Company Fine-For Late Delivery,4910,Short-Pay — Service Failure / Late Delivery,revenue,,LIVE QBO COMPANY FILE
+Repair & Maintenance-Over the Road,"OTR-Additives, Oil, Antifreeze",NonInventory,REPAIR-MAI-OTR-ADDITIVES-OIL-ANTIFREEZE,,6160,Parts & Supplies Expense,expense,,LIVE QBO COMPANY FILE
+Software Expenses,Google,Service,SOFTWARE-EXP-GOOGLE,,6500,Software & Subscriptions,expense,,LIVE QBO COMPANY FILE
+Software Expenses,All-ways Track,Service,SOFTWARE-EXP-ALL-WAYS-TRACK,,6500,Software & Subscriptions,expense,,LIVE QBO COMPANY FILE
+Software Expenses,Anydesk,Service,SOFTWARE-EXP-ANYDESK,,6500,Software & Subscriptions,expense,,LIVE QBO COMPANY FILE
+Software Expenses,Apple,Service,SOFTWARE-EXP-APPLE,,6500,Software & Subscriptions,expense,,LIVE QBO COMPANY FILE
+Software Expenses,Credit Score,Service,SOFTWARE-EXP-CREDIT-SCORE,,6500,Software & Subscriptions,expense,,LIVE QBO COMPANY FILE
+Software Expenses,Dat Solutions-360,Service,SOFTWARE-EXP-DAT-SOLUTIONS-360,,6500,Software & Subscriptions,expense,,LIVE QBO COMPANY FILE
+Software Expenses,Intuit Quick Books,Service,SOFTWARE-EXP-INTUIT-QUICK-BOOKS,,6500,Software & Subscriptions,expense,,LIVE QBO COMPANY FILE
+Software Expenses,Saasant Software,Service,SOFTWARE-EXP-SAASANT-SOFTWARE,,6500,Software & Subscriptions,expense,,LIVE QBO COMPANY FILE
+Software Expenses,Samsara-GPS,Service,SOFTWARE-EXP-SAMSARA-GPS,,6500,Software & Subscriptions,expense,,LIVE QBO COMPANY FILE
+Driver Salaries,Driver Pay-CDL-Empty Miles,Service,DRIVER-SALAR-DRIVER-PAY-CDL-EMPTY-MILES,,5100,Driver Pay / Settlements,expense,,LIVE QBO COMPANY FILE
+Driver Salaries,Driver Pay-CDL-Loaded Miles,Service,DRIVER-SALAR-DRIVER-PAY-CDL-LOADED-MILES,,5100,Driver Pay / Settlements,expense,,LIVE QBO COMPANY FILE
+Repair & Maintenance-Over the Road,OTR-Maintenance-Tools,NonInventory,REPAIR-MAI-OTR-MAINTENANCE-TOOLS,,6160,Parts & Supplies Expense,expense,,LIVE QBO COMPANY FILE
+Driver Reimbursements,Driver Reimbursement Warehouse-Lumper Fee,NonInventory,DRIVER-REIMB-DRIVER-REIMBURSEMENT-WAREHOUSE-LUMPER-FEE,,DRIVERTRIPLU056412,Driver Trip-Lumper Reimbursement,expense,,LIVE QBO COMPANY FILE
+Driver Deductions,Driver-Deductions-Miscellaneous,Service,DRIVER-DEDUC-DRIVER-DEDUCTIONS-MISCELLANEOUS,,7200,Driver Admin Fee & Chargeback Income,income,,LIVE QBO COMPANY FILE
+Bank Charges,BC-Bank Ach & Wire Fees,Service,BANK-CHARGES-BC-BANK-ACH-WIRE-FEES,,6300,Bank Service Charges & Wire Fees,expense,,LIVE QBO COMPANY FILE
+Freight Delivery Costs,Reefer-Trailer Washout Expense,Service,FREIGHT-DELI-REEFER-TRAILER-WASHOUT-EXPENSE,,5300,Tolls & Scales,expense,,LIVE QBO COMPANY FILE
+Bridge & Toll Expenses,Bridge Toll Exp-Dtops-Bridge Tolls-USA,Service,BRIDGE-TOL-BRIDGE-TOLL-EXP-DTOPS-BRIDGE-TOLLS-USA,,5300,Tolls & Scales,expense,,LIVE QBO COMPANY FILE
+"Operational Licenses, Permits & Taxes",Kentucky-State Permits,NonInventory,OPERATIONAL-KENTUCKY-STATE-PERMITS,,5700,Permits & Licenses (IFTA/IRP/DOT),expense,,LIVE QBO COMPANY FILE
+Freight Delivery Costs,Driver Antidoping Expense,NonInventory,FREIGHT-DELI-DRIVER-ANTIDOPING-EXPENSE,,5300,Tolls & Scales,expense,,LIVE QBO COMPANY FILE
+"Operational Licenses, Permits & Taxes",State Permits-New Mexico,NonInventory,OPERATIONAL-STATE-PERMITS-NEW-MEXICO,,5700,Permits & Licenses (IFTA/IRP/DOT),expense,,LIVE QBO COMPANY FILE
+"Operational Licenses, Permits & Taxes",State Permits-Arkansas,Service,OPERATIONAL-STATE-PERMITS-ARKANSAS,,5700,Permits & Licenses (IFTA/IRP/DOT),expense,,LIVE QBO COMPANY FILE
+Bank Charges,BC-ComData Express Check Fee,Service,BANK-CHARGES-BC-COMDATA-EXPRESS-CHECK-FEE,,6300,Bank Service Charges & Wire Fees,expense,,LIVE QBO COMPANY FILE
+Bank Charges,BC-Monthly Bank Charge,Service,BANK-CHARGES-BC-MONTHLY-BANK-CHARGE,,6300,Bank Service Charges & Wire Fees,expense,,LIVE QBO COMPANY FILE
+Bank Charges,BC-NSF Fee,Service,BANK-CHARGES-BC-NSF-FEE,,6300,Bank Service Charges & Wire Fees,expense,,LIVE QBO COMPANY FILE
+Employees-Payroll & Contractors,Mecanics-Nuevo Laredo,Service,EMPLOYEES-PA-MECANICS-NUEVO-LAREDO,,6890,Cost of Labor–Mexico Drivers,expense,,LIVE QBO COMPANY FILE
+Employees-Payroll & Contractors,Mecanics-Laredo Texas,Service,EMPLOYEES-PA-MECANICS-LAREDO-TEXAS,,6890,Cost of Labor–Mexico Drivers,expense,,LIVE QBO COMPANY FILE
+Employees-Payroll & Contractors,Dispatcher Services-USA,Service,EMPLOYEES-PA-DISPATCHER-SERVICES-USA,,6890,Cost of Labor–Mexico Drivers,expense,,LIVE QBO COMPANY FILE
+Employees-Payroll & Contractors,Dispatcher Services-Mexico,Service,EMPLOYEES-PA-DISPATCHER-SERVICES-MEXICO,,6890,Cost of Labor–Mexico Drivers,expense,,LIVE QBO COMPANY FILE
+Employees-Payroll & Contractors,Safety Officer Services,Service,EMPLOYEES-PA-SAFETY-OFFICER-SERVICES,,6890,Cost of Labor–Mexico Drivers,expense,,LIVE QBO COMPANY FILE
+Employees-Payroll & Contractors,Mecanics-Extra Pay,Service,EMPLOYEES-PA-MECANICS-EXTRA-PAY,,6890,Cost of Labor–Mexico Drivers,expense,,LIVE QBO COMPANY FILE
+Employees-Payroll & Contractors,Nomina-Operador Local,Service,EMPLOYEES-PA-NOMINA-OPERADOR-LOCAL,,6890,Cost of Labor–Mexico Drivers,expense,,LIVE QBO COMPANY FILE
+Employees-Payroll & Contractors,Employees-Data Entry Nuevo Laredo,Service,EMPLOYEES-PA-EMPLOYEES-DATA-ENTRY-NUEVO-LAREDO,,6890,Cost of Labor–Mexico Drivers,expense,,LIVE QBO COMPANY FILE
+Building Rent & Lease Expense,"Rent-Office-Laredo, Texas",Service,BUILDING-REN-RENT-OFFICE-LAREDO-TEXAS,,6255,Rent — Office,expense,,LIVE QBO COMPANY FILE
+Building Rent & Lease Expense,Rent-Office-Nuevo Laredo,Service,BUILDING-REN-RENT-OFFICE-NUEVO-LAREDO,,6255,Rent — Office,expense,,LIVE QBO COMPANY FILE
+Building Rent & Lease Expense,"Rent-Truck Yard-Colombia, Nuevo León",Service,BUILDING-REN-RENT-TRUCK-YARD-COLOMBIA-NUEVO-LE-N,,6260,Rent — Truck Yard,expense,,LIVE QBO COMPANY FILE
+Utilities Expense,UE-Electricity,Service,UTILITIES-EX-UE-ELECTRICITY,,6100,Telephone & Communications,expense,,LIVE QBO COMPANY FILE
+Utilities Expense,UE-Sanitation & Waste Mgmt,Service,UTILITIES-EX-UE-SANITATION-WASTE-MGMT,,6100,Telephone & Communications,expense,,LIVE QBO COMPANY FILE
+Utilities Expense,UE-Sewer & Water,Service,UTILITIES-EX-UE-SEWER-WATER,,6100,Telephone & Communications,expense,,LIVE QBO COMPANY FILE
+Utilities Expense,UE-Telephone & Internet,Service,UTILITIES-EX-UE-TELEPHONE-INTERNET,,6100,Telephone & Communications,expense,,LIVE QBO COMPANY FILE
+"Operational Licenses, Permits & Taxes",Permit-IRP-License Plates-Texas,Service,OPERATIONAL-PERMIT-IRP-LICENSE-PLATES-TEXAS,,5700,Permits & Licenses (IFTA/IRP/DOT),expense,,LIVE QBO COMPANY FILE
+"Operational Licenses, Permits & Taxes",Permit-License Plates-Mexico,Service,OPERATIONAL-PERMIT-LICENSE-PLATES-MEXICO,,5700,Permits & Licenses (IFTA/IRP/DOT),expense,,LIVE QBO COMPANY FILE
+"Operational Licenses, Permits & Taxes",Tax-2290-Heavy Highway Vehicle Tax,Service,OPERATIONAL-TAX-2290-HEAVY-HIGHWAY-VEHICLE-TAX,,5700,Permits & Licenses (IFTA/IRP/DOT),expense,,LIVE QBO COMPANY FILE
+"Operational Licenses, Permits & Taxes",Tax-IFTA-Motor Fuel Tax,Service,OPERATIONAL-TAX-IFTA-MOTOR-FUEL-TAX,,5700,Permits & Licenses (IFTA/IRP/DOT),expense,,LIVE QBO COMPANY FILE
+"Operational Licenses, Permits & Taxes",Tax-Unified Carrier-UCR,Service,OPERATIONAL-TAX-UNIFIED-CARRIER-UCR,,5700,Permits & Licenses (IFTA/IRP/DOT),expense,,LIVE QBO COMPANY FILE
+"Operational Licenses, Permits & Taxes",Tax-Vehicle Inspection,Service,OPERATIONAL-TAX-VEHICLE-INSPECTION,,5700,Permits & Licenses (IFTA/IRP/DOT),expense,,LIVE QBO COMPANY FILE
+"Operational Licenses, Permits & Taxes",Permits-Mexico,Service,OPERATIONAL-PERMITS-MEXICO,,5700,Permits & Licenses (IFTA/IRP/DOT),expense,,LIVE QBO COMPANY FILE
+Bridge & Toll Expenses,Highway Toll Expense-USA,Service,BRIDGE-TOL-HIGHWAY-TOLL-EXPENSE-USA,,5300,Tolls & Scales,expense,,LIVE QBO COMPANY FILE
+Bridge & Toll Expenses,Highway Toll Expense-Mexico,Service,BRIDGE-TOL-HIGHWAY-TOLL-EXPENSE-MEXICO,,5300,Tolls & Scales,expense,,LIVE QBO COMPANY FILE
+Bridge & Toll Expenses,Bridge Toll Expense-Mexico,Service,BRIDGE-TOL-BRIDGE-TOLL-EXPENSE-MEXICO,,5300,Tolls & Scales,expense,,LIVE QBO COMPANY FILE
+Employees-Payroll & Contractors,Accounting & Bookkeeping Employees,Service,EMPLOYEES-PA-ACCOUNTING-BOOKKEEPING-EMPLOYEES,,6890,Cost of Labor–Mexico Drivers,expense,,LIVE QBO COMPANY FILE
+Repair & Maintenance-Roadservice,Road Service-Reefer Repair Expense,Service,REPAIR-MAI-ROAD-SERVICE-REEFER-REPAIR-EXPENSE,,5450,Trailer Repairs & Maintenance,expense,,LIVE QBO COMPANY FILE
+Repair & Maintenance-Roadservice,Road Service-Flatbed Repair Expense,Service,REPAIR-MAI-ROAD-SERVICE-FLATBED-REPAIR-EXPENSE,,5450,Trailer Repairs & Maintenance,expense,,LIVE QBO COMPANY FILE
+Repair & Maintenance-Roadservice,Road Service-Trailer Tire Expense,Service,REPAIR-MAI-ROAD-SERVICE-TRAILER-TIRE-EXPENSE,,5500,Tires,expense,,LIVE QBO COMPANY FILE
+Repair & Maintenance-Roadservice,Road Service-Truck Repair Expense,Service,REPAIR-MAI-ROAD-SERVICE-TRUCK-REPAIR-EXPENSE,,5400,Truck Repairs & Maintenance,expense,,LIVE QBO COMPANY FILE
+Repair & Maintenance-Roadservice,Road Service-Truck Tire Expense,Service,REPAIR-MAI-ROAD-SERVICE-TRUCK-TIRE-EXPENSE,,5500,Tires,expense,,LIVE QBO COMPANY FILE
+Repair & Maintenance-IH 35-Internal Mechanic Shop,IH 35-Internal-Oil & Additive Expense (617),Service,REPAIR-MAI-IH-35-INTERNAL-OIL-ADDITIVE-EXPENSE-617,,6160,Parts & Supplies Expense,expense,,LIVE QBO COMPANY FILE
+Repair & Maintenance-IH 35-Internal Mechanic Shop,IH 35-Internal-Trailer Repair & Maintenance,Service,REPAIR-MAI-IH-35-INTERNAL-TRAILER-REPAIR-MAINTENANCE,,5450,Trailer Repairs & Maintenance,expense,,LIVE QBO COMPANY FILE
+Repair & Maintenance-IH 35-Internal Mechanic Shop,IH 35-Internal-Reefer Tire Expense,Service,REPAIR-MAI-IH-35-INTERNAL-REEFER-TIRE-EXPENSE,,5500,Tires,expense,,LIVE QBO COMPANY FILE
+Repair & Maintenance-IH 35-Internal Mechanic Shop,IH 35-Internal-Truck Repair & Maintenance,Service,REPAIR-MAI-IH-35-INTERNAL-TRUCK-REPAIR-MAINTENANCE,,5400,Truck Repairs & Maintenance,expense,,LIVE QBO COMPANY FILE
+Repair & Maintenance-IH 35-Internal Mechanic Shop,IH 35-Internal-Truck-Tire Expenses,Service,REPAIR-MAI-IH-35-INTERNAL-TRUCK-TIRE-EXPENSES,,5500,Tires,expense,,LIVE QBO COMPANY FILE
+Repair & Maintenance-Local External Mechanic Shop,External Mechanic Shop-Trailer Repair,Service,REPAIR-MAI-EXTERNAL-MECHANIC-SHOP-TRAILER-REPAIR,,5450,Trailer Repairs & Maintenance,expense,,LIVE QBO COMPANY FILE
+Repair & Maintenance-Local External Mechanic Shop,External Mechanic Shop-Tractor-Truck,Service,REPAIR-MAI-EXTERNAL-MECHANIC-SHOP-TRACTOR-TRUCK,,5400,Truck Repairs & Maintenance,expense,,LIVE QBO COMPANY FILE
+Driver Deductions,Driver Deduction-For Accident & Damages to Equipment,Service,DRIVER-DEDUC-DRIVER-DEDUCTION-FOR-ACCIDENT-DAMAGES-TO-EQUIPM,,7200,Driver Admin Fee & Chargeback Income,income,,LIVE QBO COMPANY FILE
+Driver Deductions,Driver Deduction-Meals,Service,DRIVER-DEDUC-DRIVER-DEDUCTION-MEALS,,7200,Driver Admin Fee & Chargeback Income,income,,LIVE QBO COMPANY FILE
+Sales of Service Income,Sales-International Border Crossing,Service,SALES-OF-SER-SALES-INTERNATIONAL-BORDER-CROSSING,Sales-International Border Crossing,4200,Accessorial / Detention Income,revenue,,LIVE QBO COMPANY FILE
+Travel Expenses-Drivers,Driver Meals Expense,Service,TRAVEL-EXPEN-DRIVER-MEALS-EXPENSE,,5100,Driver Pay / Settlements,expense,,LIVE QBO COMPANY FILE
+Travel Expenses-Drivers,Driver-Hotel/Lodging Expense,Service,TRAVEL-EXPEN-DRIVER-HOTEL-LODGING-EXPENSE,,5100,Driver Pay / Settlements,expense,,LIVE QBO COMPANY FILE
+Sales of Service Income,Sales-Escort Expense,Service,SALES-OF-SER-SALES-ESCORT-EXPENSE,Sales-Escort Expense,4200,Accessorial / Detention Income,revenue,,LIVE QBO COMPANY FILE
+Freight Delivery Costs,Escort Expense,Service,FREIGHT-DELI-ESCORT-EXPENSE,,5300,Tolls & Scales,expense,,LIVE QBO COMPANY FILE
+Bridge & Toll Expenses,OTR-Parking Expense,Service,BRIDGE-TOL-OTR-PARKING-EXPENSE,,5300,Tolls & Scales,expense,,LIVE QBO COMPANY FILE
+Employees-Payroll & Contractors,Human Resources-Employee Finder,Service,EMPLOYEES-PA-HUMAN-RESOURCES-EMPLOYEE-FINDER,,6890,Cost of Labor–Mexico Drivers,expense,,LIVE QBO COMPANY FILE
+Repair & Maintenance-IH 35-Internal Mechanic Shop,IH 35-Internal-Flatbed Trailer Tire Expense,Service,REPAIR-MAI-IH-35-INTERNAL-FLATBED-TRAILER-TIRE-EXPENSE,,5500,Tires,expense,,LIVE QBO COMPANY FILE
+"Operational Licenses, Permits & Taxes",State Permit-Oklahoma,Service,OPERATIONAL-STATE-PERMIT-OKLAHOMA,,5700,Permits & Licenses (IFTA/IRP/DOT),expense,,LIVE QBO COMPANY FILE
+Driver Salaries,Petty Cash Advance-Caja Chica,Service,DRIVER-SALAR-PETTY-CASH-ADVANCE-CAJA-CHICA,,5100,Driver Pay / Settlements,expense,,LIVE QBO COMPANY FILE
+Freight Delivery Costs,"Documentos Cruces-Manifiestos, Etc",Service,FREIGHT-DELI-DOCUMENTOS-CRUCES-MANIFIESTOS-ETC,,5300,Tolls & Scales,expense,,LIVE QBO COMPANY FILE
+Driver Salaries,Driver Pay-Extra for Repairs-Maintenance,Service,DRIVER-SALAR-DRIVER-PAY-EXTRA-FOR-REPAIRS-MAINTENANCE,,5100,Driver Pay / Settlements,expense,,LIVE QBO COMPANY FILE
+Driver Deductions,"Driver Deduction-Personal Expenses-Telephone, etc",Service,DRIVER-DEDUC-DRIVER-DEDUCTION-PERSONAL-EXPENSES-TELEPHONE-ET,,7200,Driver Admin Fee & Chargeback Income,income,,LIVE QBO COMPANY FILE
+,DOWN PAYMENT INSURANCE,Service,DOWN-PAYMENT-INSURANCE,,6600,Insurance Expense,expense,,LIVE QBO COMPANY FILE
+Bank Charges,BC-Relay Wire Fees,Service,BANK-CHARGES-BC-RELAY-WIRE-FEES,,6300,Bank Service Charges & Wire Fees,expense,,LIVE QBO COMPANY FILE
+Bank Charges,BC-Relay Diesel Code Fee,Service,BANK-CHARGES-BC-RELAY-DIESEL-CODE-FEE,,6300,Bank Service Charges & Wire Fees,expense,,LIVE QBO COMPANY FILE
+Software Expenses,Chat Gpt Software,Service,SOFTWARE-EXP-CHAT-GPT-SOFTWARE,,6500,Software & Subscriptions,expense,,LIVE QBO COMPANY FILE
+Software Expenses,Employee Hiring Software,Service,SOFTWARE-EXP-EMPLOYEE-HIRING-SOFTWARE,,6500,Software & Subscriptions,expense,,LIVE QBO COMPANY FILE
+Freight Delivery Costs,Warehouse Lumper Expense,Service,FREIGHT-DELI-WAREHOUSE-LUMPER-EXPENSE,,DRIVERTRIPLU056412,Driver Trip-Lumper Reimbursement,expense,,LIVE QBO COMPANY FILE
+Software Expenses,Alvys-Software,Service,SOFTWARE-EXP-ALVYS-SOFTWARE,,6500,Software & Subscriptions,expense,,LIVE QBO COMPANY FILE
+,TONU,NonInventory,TONU,Truck order Not Used,4240,TONU Income,expense,,LIVE QBO COMPANY FILE
+Sales of Service Income,Sales-Local Movement,Service,SALES-OF-SER-SALES-LOCAL-MOVEMENT,Sales-Local Movement,4200,Accessorial / Detention Income,revenue,,LIVE QBO COMPANY FILE
+Sales of Service Income,Sales-Tracking/MacroPoint Compliance,Service,SALES-OF-SER-SALES-TRACKING-MACROPOINT-COMPLIANCE,,4200,Accessorial / Detention Income,revenue,,NEW — OWNER RULING ROUND 87/88
+Sales of Service Income,Sales-On-Time Pickup Appointment,Service,SALES-OF-SER-SALES-ON-TIME-PICKUP-APPOINTMENT,,4200,Accessorial / Detention Income,revenue,,NEW — OWNER RULING ROUND 87/88
+Sales of Service Income,Sales-On-Time Delivery Appointment,Service,SALES-OF-SER-SALES-ON-TIME-DELIVERY-APPOINTMENT,,4200,Accessorial / Detention Income,revenue,,NEW — OWNER RULING ROUND 87/88
+Sales of Service Income,Sales-Tarp Charge,Service,SALES-OF-SER-SALES-TARP-CHARGE,,4200,Accessorial / Detention Income,revenue,,NEW — OWNER RULING ROUND 87/88
+Driver Deductions,Driver Deduction-Company Vehicle Use Fee,Service,DRIVER-DEDUC-DRIVER-DEDUCTION-COMPANY-VEHICLE-USE-FEE,,7200,Driver Admin Fee & Chargeback Income,income,,NEW — OWNER RULING ROUND 87/88
+Driver Deductions,Driver Deduction-Missing or Late Paperwork/POD,Service,DRIVER-DEDUC-DRIVER-DEDUCTION-MISSING-OR-LATE-PAPERWORK-POD,,7200,Driver Admin Fee & Chargeback Income,income,4920,NEW — OWNER RULING ROUND 87/88
+Driver Deductions,Driver Deduction-Lumper Not Paid or Receipt Missing,Service,DRIVER-DEDUC-DRIVER-DEDUCTION-LUMPER-NOT-PAID-OR-RECEIPT-MIS,,7200,Driver Admin Fee & Chargeback Income,income,4920,NEW — OWNER RULING ROUND 87/88
+Driver Deductions,Driver Deduction-Cargo Damage OS&D,Service,DRIVER-DEDUC-DRIVER-DEDUCTION-CARGO-DAMAGE-OS-D,,7200,Driver Admin Fee & Chargeback Income,income,4930,NEW — OWNER RULING ROUND 87/88
+Driver Deductions,Driver Deduction-Detention Denied - Driver Delay,Service,DRIVER-DEDUC-DRIVER-DEDUCTION-DETENTION-DENIED-DRIVER-DELAY,,7200,Driver Admin Fee & Chargeback Income,income,4950,NEW — OWNER RULING ROUND 87/88
+Driver Deductions,Driver Deduction-Missed Appointment,Service,DRIVER-DEDUC-DRIVER-DEDUCTION-MISSED-APPOINTMENT,,7200,Driver Admin Fee & Chargeback Income,income,4910,NEW — OWNER RULING ROUND 87/88
+Driver Deductions,Driver Deduction-Load Not Tarped or Secured,Service,DRIVER-DEDUC-DRIVER-DEDUCTION-LOAD-NOT-TARPED-OR-SECURED,,7200,Driver Admin Fee & Chargeback Income,income,4980,NEW — OWNER RULING ROUND 87/88

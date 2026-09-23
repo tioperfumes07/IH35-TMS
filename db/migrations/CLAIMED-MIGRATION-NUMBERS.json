@@ -991,6 +991,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-09-23",
       "purpose": "Lead ruling: accounting.factoring_advances gains faro_invoice_number (text) + faro_purchase_date (date) + UNIQUE(operating_company_id, faro_invoice_number) WHERE NOT NULL -- the missing join key between our book and Faro own invoice numbering, per the feed-control day-gate."
+    },
+    "202614270000": {
+      "claimed_by": "claude-3",
+      "claimed_at": "2026-09-23",
+      "purpose": "owner-ordered (09-23-2026-CC-3-CREATE-FOUR-ACCOUNTS-RUN-THIS.md): catalogs.accounts 6250 Rent & Lease Expense (parent, non-postable) + 6255 Rent -- Office / 6260 Rent -- Truck Yard (children) -- the chart has no rent account, QBO-228-USMCA is a truck lease and using it for office rent would bury premises cost inside equipment cost; 5450 Trailer Repairs & Maintenance (parent, non-postable, mirrors 5400) -- E13-B D1's own trailer master, now needed to close the last item-catalog gaps. Closes all 4 remaining item_catalog_gaps.csv rows -> the 137-item seed maps 100%."
     }
   },
   "202613590001": {
