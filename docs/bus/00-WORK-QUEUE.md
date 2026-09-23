@@ -91,6 +91,8 @@ Never work in the shared main checkout.
       selftest RED against current code first.
 [CODEX 2026-09-24T00:30:00Z] Q13 GUARD  verify-load-costs-board-excludes-settled.mjs
 [CODEX 2026-09-24T01:15:00Z] Q14 GUARD  verify-loves-geofences-seeded.mjs — assert >=604 Love's
+[DONE DEVIN-B #22472] Q13 GUARD  verify-load-costs-board-excludes-settled.mjs
+[DEVIN-B 2026-09-24T00:57:00Z] Q14 GUARD  verify-loves-geofences-seeded.mjs — assert >=604 Love's
       geofences + their mdata.locations halves + a stated radius each.
       611 live today; this protects finished work from a future purge.
 [DONE CODEX PR#22481] Q15 GUARD  verify-no-capability-regression.mjs — 14 capabilities; fail on
