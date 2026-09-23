@@ -40,7 +40,7 @@ vi.mock("../../driver-finance/void-document-callees.service.js", () => ({
   })),
 }));
 
-import { voidDocument, VoidDocumentNotYetWiredError } from "../void-document.service.js";
+import { voidDocument } from "../void-document.service.js";
 import { voidBillInClientTx, voidBillPaymentInClientTx } from "../bills.service.js";
 import { postVoidReversal } from "../void.service.js";
 import { reversePostedSourceTransactionInClientTx } from "../posting-engine.service.js";
@@ -143,21 +143,30 @@ describe("voidDocument — ROUND 31.2/32.2 dispatcher (not a new reversal engine
     expect(result.reversalJournalEntryId).toBe("je-void-1");
   });
 
-  it("credit_memo -> throws VoidDocumentNotYetWiredError, never a silent no-op or a guessed reversal", async () => {
-    await expect(voidDocument(fakeClient, { ...baseInput, type: "credit_memo", id: "cm-1" })).rejects.toBeInstanceOf(
-      VoidDocumentNotYetWiredError
-    );
-    // No underlying engine touched — the guard fires before any dispatch.
+  it("credit_memo -> TASK 18: verified zero posting lines, registers the void, returns reversalJournalEntryId: null (never a guessed reversal, never a silent no-op)", async () => {
+    const result = await voidDocument(fakeClient, { ...baseInput, type: "credit_memo", id: "cm-1" });
+    expect(result.reversalJournalEntryId).toBeNull();
+    expect(result.voidedAt).toBeTruthy();
+    // No underlying GL reversal engine touched — there is nothing to reverse.
     expect(postVoidReversal).not.toHaveBeenCalledWith(
       fakeClient,
       expect.objectContaining({ entityId: "cm-1" }),
       expect.anything()
     );
+    // The dispatcher registers the void itself (fakeClient.query stands in for appendCrudAudit's write).
+    expect(fakeClient.query).toHaveBeenCalledWith(
+      expect.stringContaining("audit.append_event"),
+      expect.arrayContaining(["accounting.credit_memo.voided_no_gl_impact"])
+    );
   });
 
-  it("liability -> throws VoidDocumentNotYetWiredError, never a silent no-op or a guessed reversal", async () => {
-    await expect(voidDocument(fakeClient, { ...baseInput, type: "liability", id: "liab-1" })).rejects.toBeInstanceOf(
-      VoidDocumentNotYetWiredError
+  it("liability -> TASK 18: verified zero posting lines, registers the void, returns reversalJournalEntryId: null (never a guessed reversal, never a silent no-op)", async () => {
+    const result = await voidDocument(fakeClient, { ...baseInput, type: "liability", id: "liab-1" });
+    expect(result.reversalJournalEntryId).toBeNull();
+    expect(result.voidedAt).toBeTruthy();
+    expect(fakeClient.query).toHaveBeenCalledWith(
+      expect.stringContaining("audit.append_event"),
+      expect.arrayContaining(["accounting.liability.voided_no_gl_impact"])
     );
   });
 
