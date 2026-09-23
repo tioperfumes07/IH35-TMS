@@ -80,7 +80,7 @@ Never work in the shared main checkout.
       hardcoded-count defects surfaced today: 333-vs-92, fuel 589/$253,271.24,
       purge-window 9 then 11, and "47 documents". Allowlist only by
       `// STALE-LITERAL-OK: <reason>`.
-[ ] Q11 GUARD  verify-purge-era-closures-still-hold.mjs — re-assert tasks
+[CODEX 2026-09-23T23:48:51Z] Q11 GUARD  verify-purge-era-closures-still-hold.mjs — re-assert tasks
       19/21/24/25/26/29/30/31/39 and SCALE with the live load count. Print
       "closure re-measured at N live loads". "Zero now" on a 6% fed book is
       not "fixed".
