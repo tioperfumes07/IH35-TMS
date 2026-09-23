@@ -6,6 +6,7 @@
 // Fails closed with no DATABASE_URL (requireLiveDbOrExit, ROUND 29.9-B). money-pr-local-gate.mjs runs
 // it only when this guard's own domain paths change or a live DB is present (Lead ruling R56-B).
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
+import { exitIfEmptyByPurge } from "./lib/purge-window.mjs";
 
 const LABEL = "verify-driver-bill-settlement-link";
 export const REQUIRES_LIVE_DB =
@@ -24,6 +25,7 @@ async function live() {
     );
     const total = Number(totalRes.rows[0].n);
     if (total === 0) {
+      exitIfEmptyByPurge(LABEL, "driver_finance.driver_bills (USMCA, live)");
       console.error(`${LABEL}: LIVE FAIL — 0 live driver_bills rows; completeness discriminator says this is an instrument problem, not a real zero`);
       process.exit(1);
     }

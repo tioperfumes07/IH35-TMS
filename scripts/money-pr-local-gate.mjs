@@ -21,6 +21,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ensureFreshGateStepMap } from "./generate-gate-step-map.mjs";
 import { guardIsInScope } from "./verify-static.mjs";
+import { EMPTY_BY_PURGE_EXIT, PURGE_WINDOW_GUARDS, purgeWindow } from "./lib/purge-window.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "money-pr-local-gate";
@@ -234,6 +235,8 @@ const STEPS = [
   // Round 83 R3 / migration 202614271200: every money line's amount = qty x rate, and no invoice-line
   // writer rounds that product in floating point. Static.
   ["verify-item-line-quantity-rate-amount", "scripts/verify-item-line-quantity-rate-amount.mjs"],
+  // Purge window (Lead rulings 2026-09-23): exactly the eight named guards may skip EMPTY BY PURGE. Static.
+  ["verify-purge-window-exemption", "scripts/verify-purge-window-exemption.mjs"],
 ];
 
 // ROUND 29.9 owner ruling (2026-09-22) — three guards, wired in this exact order, AFTER the STEPS
@@ -474,6 +477,18 @@ for (const [name, rel, extraEnv] of GUARD_303) {
 // omit it.
 const skippedLiveChecks = [];
 
+// Purge window (Lead ruling 2026-09-23, docs/bus/09-23-2026-LEAD-RULING-CURSOR-PURGE-WINDOW-GUARD-STATE.md):
+// a live guard may exit EMPTY_BY_PURGE_EXIT only if it is one of PURGE_WINDOW_GUARDS and the window in
+// purge_state.json is open. Any other guard returning that code fails the gate like any failure.
+const purgeSkips = [];
+function acceptedAsEmptyByPurge(rel, code) {
+  if (code !== EMPTY_BY_PURGE_EXIT) return false;
+  const guard = path.basename(rel, ".mjs");
+  if (!PURGE_WINDOW_GUARDS.includes(guard) || !purgeWindow().open || purgeSkips.includes(guard)) return false;
+  purgeSkips.push(guard);
+  return true;
+}
+
 // 03c — control totals against LIVE production. Skipped only when DATABASE_URL is absent AND this
 // PR touches no money path (apps/backend/src/{accounting,banking,factoring,driver-finance,mdata}/**
 // or db/migrations/**). Touching a money path with no DATABASE_URL is NOT a skip — the guard's own
@@ -498,7 +513,7 @@ if (process.env.DATABASE_URL || touchesMoneyPath()) {
 // is never blocked by it; a money-relevant push with no DATABASE_URL correctly fails, never skips.
 if (process.env.DATABASE_URL || touchesMoneyPath()) {
   const code = runNode("scripts/verify-alwaystrack-parity.mjs");
-  if (code !== 0) {
+  if (code !== 0 && !acceptedAsEmptyByPurge("scripts/verify-alwaystrack-parity.mjs", code)) {
     failStep("verify-alwaystrack-parity");
     process.exit(code);
   }
@@ -565,7 +580,7 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
     changedForLiveDomains.some((f) => f === rel || ONE_SHOT_WRITER_RE.test(f) || prefixes.some((p) => f.startsWith(p)));
   if (process.env.DATABASE_URL || touched) {
     const code = runNode(rel);
-    if (code !== 0) {
+    if (code !== 0 && !acceptedAsEmptyByPurge(rel, code)) {
       failStep(name);
       process.exit(code);
     }
@@ -594,7 +609,7 @@ for (const file of e7Batch2) {
     continue;
   }
   const code = runNode(`scripts/${file}`);
-  if (code !== 0) {
+  if (code !== 0 && !acceptedAsEmptyByPurge(`scripts/${file}`, code)) {
     failStep(file);
     process.exit(code);
   }
@@ -604,6 +619,15 @@ if (e7Batch2Skipped.length > 0) {
     `${e7Batch2Skipped.length} E7 batch-2 live guard(s) — none of their owned paths in this diff ` +
     `(alwaysRun ones need a DATABASE_URL): ${e7Batch2Skipped.join(", ")}`;
   console.log(`[${LABEL}] SKIP ${msg}`);
+  skippedLiveChecks.push(msg);
+}
+
+if (purgeSkips.length > 0) {
+  const w = purgeWindow();
+  const msg =
+    `${purgeSkips.length} GUARDS SKIPPED — EMPTY BY PURGE, verified ${w.verifiedAt}, expires ${w.expiresAt}: ` +
+    purgeSkips.join(", ");
+  console.log(`[${LABEL}] ${msg}`);
   skippedLiveChecks.push(msg);
 }
 

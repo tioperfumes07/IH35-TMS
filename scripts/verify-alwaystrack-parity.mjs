@@ -55,6 +55,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import { exitIfEmptyByPurge } from "./lib/purge-window.mjs";
 
 // REQUIRES_LIVE_DB (ruled 2026-09-23, docs/bus/INBOX-CC-1.md): excludes this guard from
 // scripts/verify-static.mjs's dead-port sentinel sweep entirely. This guard's live() has always
@@ -249,6 +250,14 @@ async function live() {
     // the correct non-zero rows every time once wrapped in BEGIN/COMMIT.
     await client.query("BEGIN");
     await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
+
+    // Purge window: with no USMCA loads at all, every document would read as a mismatch. Inside a
+    // verified purge window that is EMPTY BY PURGE; outside it, the guard fails exactly as before.
+    const usmcaLoads = await client.query(
+      "SELECT count(*)::int AS n FROM mdata.loads WHERE operating_company_id = $1::uuid",
+      [USMCA_COMPANY_ID]
+    );
+    if (usmcaLoads.rows[0].n === 0) exitIfEmptyByPurge(LABEL, "mdata.loads (USMCA)");
 
     const allLoadNumbers = [...new Set(documents.flatMap((d) => d.loads))];
 
