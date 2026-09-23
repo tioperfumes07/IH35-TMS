@@ -316,6 +316,11 @@ export type VendorBill = {
   coa_account_number?: string | null;
   coa_account_name?: string | null;
   attachment_count?: number | null;
+  item_id?: string | null;
+  item_name?: string | null;
+  quantity?: number | string | null;
+  rate_cents?: number | string | null;
+  unit_of_measure?: string | null;
   /** GO-18 — accounting.bills.driver_id. Not driver_uuid. */
   driver_id?: string | null;
   unit_display_id?: string | null;
@@ -844,6 +849,11 @@ export type ExpenseListRow = {
   category_account_number?: string | null;
   category_account_name?: string | null;
   attachment_count?: number | null;
+  item_id?: string | null;
+  item_name?: string | null;
+  quantity?: number | string | null;
+  rate_cents?: number | string | null;
+  unit_of_measure?: string | null;
 };
 
 export function listExpenses(
@@ -1390,6 +1400,11 @@ export function createExpense(
     attachment_draft_id?: string;
     expense_number?: string;
     vendor_document_number?: string;
+    /** Round 115 load-cost line identity. All four fields travel together; amount is qty × rate. */
+    item_id?: string;
+    quantity?: number;
+    rate_cents?: number;
+    unit_of_measure?: string;
   }
 ) {
   return apiRequest<{ expense_id: string; posting_status: "posted" | "unposted"; journal_entry_id: string | null }>(

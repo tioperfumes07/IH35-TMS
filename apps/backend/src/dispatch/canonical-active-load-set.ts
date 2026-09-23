@@ -1,11 +1,20 @@
 /**
- * THE canonical "active load" definition — ROUND 32.2-CORRECTED (Lead ruling, 2026-09-22/23,
+ * Adapter to THE canonical active-load definition in views.live_loads.
+ *
+ * ROUND 115.3/115.4 (Lead ruling, 2026-09-23) supersedes the status-first and
+ * "any money row closes the load" prose that originally lived here. Membership is structural
+ * in the view and a load leaves only when BOTH customer money and driver money are closed.
+ * Status only excludes never-had-money terminal states and labels open_dispatch/pre_settlement.
+ * No TypeScript helper may restate the row-level SQL.
+ *
+ * Historical context — ROUND 32.2-CORRECTED (Lead ruling, 2026-09-22/23,
  * superseding ROUND 31.2's own §A; docs/bus/09-23-2026-LEAD-RULING-LOAD-ACTIVE-SET-NO-CANONICAL-
  * DEFINITION.md + the CORRECTED follow-up). Owner, verbatim, on the corrected number: "why are
  * there all these units dispatched, when there are only 5, that was supposed to have been
  * resolved already, as all loads that have been reconciled, and all settlements created, and all
  * expenses, all bills, bill payments, and every single transaction related to a load and
- * settlement." He was right and exact — the true count is 9 loads / 5 units, not 33.
+ * settlement." That incident is retained as history only; membership now comes exclusively
+ * from views.live_loads and its both-money-sides-closed contract.
  *
  * Before this file, TEN different places declared their own "active load" status list, returning
  * FIVE different counts against the same 126 live USMCA loads (116 / 114 / 33 / 22 / 19). This is
@@ -23,12 +32,10 @@
  * mdata.loads.status ever advancing: settlements were created, driver bills raised, expenses
  * posted — and status still reads 'dispatched'/'delivered'. NONE of those 24 was ever invoiced,
  * so the invoice-exclusion test missed every one of them. **The money is the source of truth, not
- * status.** `canonicalActiveLoadNotFinishedByMoneyCte` below is the real second half of the
- * invariant — NOT EXISTS an active settlement line, a non-void driver bill, OR an issued invoice
- * for this load. Both halves — status IN canonical AND NOT finished-by-money — must gate
- * together; a board applying status alone, or status + invoice-only, is WRONG and will overcount.
- * `canonicalActiveLoadInvoiceExclusionCte` (invoice-only) is kept below as the narrower signal it
- * always was — a component of the real predicate, not the real predicate itself anymore.
+ * status. The first correction then swung too far: it closed membership when EITHER customer or
+ * driver money existed. That hid invoiced-but-unsettled costs. `views.live_loads` now owns the
+ * both-sides-closed predicate. `canonicalActiveLoadInvoiceExclusionCte` remains only for callers
+ * asking the narrower invoice-only question, never active membership.
  *
  * This is confirmed live, not asserted: 9 truly-open loads (13609, 13610, 13612, 13613, 13614,
  * 13615, 13616, 13617, 13618) across 5 distinct units — the owner's own 5. Do NOT hard-code 9, 5,
@@ -82,22 +89,17 @@ export const CANONICAL_ACTIVE_LOAD_STATUSES = [
 
 export type CanonicalActiveLoadStatus = (typeof CANONICAL_ACTIVE_LOAD_STATUSES)[number];
 
-/** The five statuses a load is NOT active in. Named for readability at call sites; the guard and
- *  every query below derive from CANONICAL_ACTIVE_LOAD_STATUSES, not from this list — this is
- *  documentation, not a second source of truth. */
-export const CANONICAL_TERMINAL_LOAD_STATUSES = ["draft", "invoiced", "paid", "closed", "cancelled"] as const;
-
 /**
  * "Delivered by status" — Cursor's I2 finding (docs/bus/OUTBOX-CURSOR.md, "I2 does not key on
  * status: a status list near mdata.loads is an eleventh load-status definition. If 'delivered'
  * by status is wanted, it belongs in dispatch/canonical-active-load-set.ts and I2 imports it.").
  * He was right to refuse to invent his own — this is that ONE place, per the file's own law.
  *
- * This answers a DIFFERENT question than CANONICAL_ACTIVE_LOAD_STATUSES/
- * CANONICAL_TERMINAL_LOAD_STATUSES above ("is this load still open on the dispatch board"). This
+ * This answers a DIFFERENT question than CANONICAL_ACTIVE_LOAD_STATUSES and the row-level view
+ * above ("is this load still open on the dispatch board"). This
  * is "has this load's status progressed at least as far as delivery" — a delivery-lifecycle
  * stage, not an activity state. The two sets deliberately overlap and diverge: 'closed' is
- * TERMINAL (not board-active) but is also DELIVERED-OR-LATER (a load cannot close without having
+ * terminal (not board-active) but is also DELIVERED-OR-LATER (a load cannot close without having
  * delivered first); 'dispatched'/'at_pickup'/'in_transit' are board-active but NOT
  * delivered-or-later. Do not merge these into one list — that would be the exact "status alone is
  * not sufficient" trap this file's own header warns about, just inverted.
@@ -141,60 +143,44 @@ export function assertCanonicalSubset(name: string, subset: readonly string[]): 
   }
 }
 
-function statusInClause(statuses: readonly string[]): string {
-  return statuses.map((status) => `'${status}'::mdata.load_status_enum`).join(", ");
-}
-
-/** `l.status IN (...)` fragment for the canonical set, aliasable to match the caller's query. */
-export function canonicalActiveLoadStatusClause(alias = "l"): string {
-  return `${alias}.status IN (${statusInClause(CANONICAL_ACTIVE_LOAD_STATUSES)})`;
-}
-
 /**
  * Invoice-only exclusion — the narrower, ROUND-31.2 signal. Kept as a component (some callers
- * genuinely only care about the invoice half), but on its own it UNDERCOUNTS the real "finished"
- * set (missed 24 of 33 on live data, ROUND 32.2-CORRECTED) — use
- * `canonicalActiveLoadNotFinishedByMoneyCte` for the real predicate. `loadIdColumn` names the
+ * genuinely only care about the invoice half), but on its own it cannot decide active membership.
+ * Use `canonicalActiveLoadWhereClause` for the structural view membership. `loadIdColumn` names the
  * column carrying the load's id in the caller's own FROM clause (aliased to match).
  */
-export function canonicalActiveLoadInvoiceExclusionCte(loadIdColumn = "l.id"): string {
+export function issuedCustomerInvoiceExistsSql(
+  loadIdColumn = "l.id",
+  operatingCompanyIdColumn = "l.operating_company_id"
+): string {
   return `
-    NOT EXISTS (
+    EXISTS (
       SELECT 1 FROM accounting.invoices i
        WHERE i.source_load_id = ${loadIdColumn}
+         AND i.operating_company_id = ${operatingCompanyIdColumn}
+         AND i.voided_at IS NULL
          AND i.status NOT IN ('draft', 'proforma', 'void')
     )
   `;
 }
 
-/**
- * THE real "not finished" half of the invariant (ROUND 32.2-CORRECTED) — money is the source of
- * truth, not status. A load is finished (and therefore NOT active, regardless of status) the
- * moment ANY of these exist: an active settlement line, a non-void driver bill, or an issued
- * (non-draft/proforma/void) invoice. Confirmed live: 24 of 33 status-active USMCA loads are
- * already settled/driver-billed while status never advanced past dispatched/delivered — status
- * alone (or status + invoice-only) overcounts by exactly that 24. `loadIdColumn` names the
- * column carrying the load's id in the caller's own FROM clause (aliased to match).
- */
-export function canonicalActiveLoadNotFinishedByMoneyCte(loadIdColumn = "l.id"): string {
-  return `
-    NOT EXISTS (
-      SELECT 1 FROM driver_finance.settlement_lines sl
-       WHERE sl.load_id = ${loadIdColumn} AND sl.is_active IS TRUE
-    )
-    AND NOT EXISTS (
-      SELECT 1 FROM driver_finance.driver_bills db
-       WHERE db.load_id = ${loadIdColumn} AND db.status <> 'void'
-    )
-    AND ${canonicalActiveLoadInvoiceExclusionCte(loadIdColumn)}
-  `;
+export function canonicalActiveLoadInvoiceExclusionCte(
+  loadIdColumn = "l.id",
+  operatingCompanyIdColumn = "l.operating_company_id"
+): string {
+  return `NOT (${issuedCustomerInvoiceExistsSql(loadIdColumn, operatingCompanyIdColumn)})`;
 }
 
-/** The complete canonical predicate — status IN canonical AND not-finished-by-money, aliasable.
- *  Every consumer's outer WHERE must include BOTH; applying status alone, or status + the
- *  invoice-only signal, overcounts (confirmed live, ROUND 32.2-CORRECTED). */
+/**
+ * The complete canonical predicate is membership in views.live_loads.
+ *
+ * ROUND 115 closes the last split-brain definition: the SQL view is the structural source of
+ * truth and this helper is only its aliasable adapter for queries that must retain a richer FROM
+ * source. Never restate the status/money clauses here; doing so previously disagreed with the
+ * corrected pre-settlement rule (an issued invoice does not close an unsettled round trip).
+ */
 export function canonicalActiveLoadWhereClause(alias = "l"): string {
-  return `${canonicalActiveLoadStatusClause(alias)} AND ${canonicalActiveLoadNotFinishedByMoneyCte(`${alias}.id`)}`;
+  return `EXISTS (SELECT 1 FROM views.live_loads canonical_live_load WHERE canonical_live_load.id = ${alias}.id)`;
 }
 
 type Queryable = {
@@ -207,10 +193,8 @@ export async function countCanonicalActiveLoads(client: Queryable, operatingComp
   const res = await client.query<{ count: number }>(
     `
       SELECT count(*)::int AS count
-      FROM mdata.loads l
+      FROM views.live_loads l
       WHERE l.operating_company_id = $1::uuid
-        AND l.soft_deleted_at IS NULL
-        AND ${canonicalActiveLoadWhereClause("l")}
     `,
     [operatingCompanyId]
   );
@@ -223,10 +207,8 @@ export async function listCanonicalActiveLoadIds(client: Queryable, operatingCom
   const res = await client.query<{ id: string }>(
     `
       SELECT l.id::text AS id
-      FROM mdata.loads l
+      FROM views.live_loads l
       WHERE l.operating_company_id = $1::uuid
-        AND l.soft_deleted_at IS NULL
-        AND ${canonicalActiveLoadWhereClause("l")}
     `,
     [operatingCompanyId]
   );

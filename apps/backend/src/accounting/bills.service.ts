@@ -296,6 +296,11 @@ type BillRow = {
   coa_account_number?: string | null;
   coa_account_name?: string | null;
   attachment_count?: number | null;
+  item_id?: string | null;
+  item_name?: string | null;
+  quantity?: number | string | null;
+  rate_cents?: number | string | null;
+  unit_of_measure?: string | null;
   /** CV-TRANSACTION-COLUMNS (inv #46) — load/settlement/unit linkage for vendor bill transactions tab. */
   linked_load_id?: string | null;
   linked_load_number?: string | null;
@@ -1023,6 +1028,11 @@ export async function listBillsByVendor(
                -- count from the same list row. Additive, nullable.
                coa.account_number AS coa_account_number,
                coa.account_name AS coa_account_name,
+               item_line.item_id::text AS item_id,
+               item_line.item_name AS item_name,
+               item_line.quantity AS quantity,
+               item_line.rate_cents AS rate_cents,
+               item_line.unit_of_measure AS unit_of_measure,
                (
                  SELECT COUNT(*)::int
                  FROM documents.attachments att
@@ -1043,6 +1053,15 @@ export async function listBillsByVendor(
         FROM accounting.bills b
         ${BILL_VENDOR_RESOLVE_JOIN_SQL}
         LEFT JOIN catalogs.accounts coa ON coa.id = b.coa_account_id AND coa.operating_company_id = b.operating_company_id
+        LEFT JOIN LATERAL (
+          SELECT bl.item_id, item.item_name, bl.quantity, bl.rate_cents, bl.unit_of_measure
+          FROM accounting.bill_lines bl
+          LEFT JOIN catalogs.items item
+            ON item.id = bl.item_id AND item.operating_company_id = b.operating_company_id
+          WHERE bl.bill_id = b.id
+          ORDER BY bl.line_sequence ASC
+          LIMIT 1
+        ) item_line ON true
         LEFT JOIN maintenance.work_orders wo
           ON wo.id = b.linked_work_order_uuid
          AND wo.operating_company_id = b.operating_company_id

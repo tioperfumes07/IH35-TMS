@@ -1,5 +1,6 @@
 import { withCurrentUser } from "../../auth/db.js";
 import { resolveOperatingCompanyId } from "../../auth/operating-company-scope.js";
+import { assertCanonicalSubset } from "../../dispatch/canonical-active-load-set.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -69,6 +70,9 @@ const ACTIVE_STATUSES = ["assigned_not_dispatched", "dispatched", "at_pickup", "
 const GAP_OPEN_STATUSES = ["unassigned", "assigned_not_dispatched"];
 
 const EXCEPTION_STATUSES = ["cancelled", "driver_no_show", "driver_walkoff", "abandoned"];
+
+assertCanonicalSubset("dispatcher home active statuses", ACTIVE_STATUSES);
+assertCanonicalSubset("dispatcher home booking-gap statuses", GAP_OPEN_STATUSES);
 
 function num(raw: unknown): number {
   const value = Number(raw ?? 0);

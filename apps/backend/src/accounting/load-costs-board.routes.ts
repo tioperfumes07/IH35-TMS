@@ -3,7 +3,8 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { countUncategorizedTransactions } from "../banking/pending-categorization.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
-import { canonicalActiveLoadNotFinishedByMoneyCte } from "../dispatch/canonical-active-load-set.js";
+import { liveLoadsExistsSql } from "../dispatch/live-loads-view.js";
+import { issuedCustomerInvoiceExistsSql } from "../dispatch/canonical-active-load-set.js";
 
 /** TAB-COMPLETION-STANDARD A — twelve hubs, both-way or explicit N/A. Silence is a defect. */
 export const LOAD_COSTS_HUB_LINKAGE = {
@@ -208,12 +209,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                      WHERE original.id = ds.first_load_id
                        AND original.operating_company_id = ds.operating_company_id
                        AND original.soft_deleted_at IS NULL
-                       AND (original.status::text IN ('closed', 'invoiced', 'paid') OR EXISTS (
-                         SELECT 1 FROM accounting.invoices oi
-                         WHERE oi.operating_company_id = ds.operating_company_id
-                           AND oi.source_load_id = original.id AND oi.voided_at IS NULL
-                           AND oi.status NOT IN ('draft', 'proforma', 'void')
-                       ))
+                       AND (${issuedCustomerInvoiceExistsSql("original.id", "original.operating_company_id")})
                    ) OR EXISTS (
                      SELECT 1 FROM driver_finance.presettlement_link_suggestions continuation
                      WHERE continuation.operating_company_id = ds.operating_company_id
@@ -240,11 +236,10 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
          -- Issued invoices are independent of dispatch status. Keep this signal alongside
          -- the tour-continuation flag so invoiced loads cannot re-enter an active bucket.
          ), invoice_info AS (
-           SELECT i.source_load_id AS load_id, true AS is_invoiced
-             FROM accounting.invoices i
-            WHERE i.operating_company_id = $1::uuid
-              AND i.source_load_id IS NOT NULL
-              AND i.status NOT IN ('draft', 'proforma', 'void')
+           SELECT l.id AS load_id, true AS is_invoiced
+             FROM mdata.loads l
+            WHERE l.operating_company_id = $1::uuid
+              AND (${issuedCustomerInvoiceExistsSql("l.id", "l.operating_company_id")})
          ), driver_pay_amounts AS (
            SELECT db.load_id,
                   COALESCE(SUM(db.loaded_pay_cents), 0)::bigint AS loaded_pay_cents,
@@ -263,7 +258,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
               AND wo.operating_company_id = e.operating_company_id
               AND wo.load_id = e.load_id
               AND wo.load_id IS NOT NULL
-              AND wo.status <> 'cancelled'
+              AND NOT (wo.status = 'cancelled')
             WHERE e.operating_company_id = $1::uuid
               AND e.load_id IS NOT NULL
               AND e.status <> 'void'
@@ -278,7 +273,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
               AND wo.operating_company_id = b.operating_company_id
               AND wo.load_id = bl.load_id
               AND wo.load_id IS NOT NULL
-              AND wo.status <> 'cancelled'
+              AND NOT (wo.status = 'cancelled')
             WHERE bl.load_id IS NOT NULL
               AND b.status NOT IN ('void','voided')
               AND b.revoked_at IS NULL
@@ -352,11 +347,6 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
            LEFT JOIN LATERAL (SELECT city,scheduled_arrival_at FROM mdata.load_stops WHERE load_id=l.id AND stop_type='pickup' AND soft_deleted_at IS NULL ORDER BY sequence_number ASC LIMIT 1) pickup ON true
            LEFT JOIN LATERAL (SELECT city,scheduled_arrival_at,actual_arrival_at FROM mdata.load_stops WHERE load_id=l.id AND stop_type='delivery' AND soft_deleted_at IS NULL ORDER BY sequence_number DESC LIMIT 1) delivery ON true
           WHERE l.operating_company_id=$1::uuid AND l.soft_deleted_at IS NULL
-            -- LOAD-COSTS-COMPLETE item (3): drafts never appear on this board (owner order
-            -- 2026-09-04) -- a draft is not a real, money-bearing load yet. Voided (cancelled)
-            -- loads are hidden by default, toggle-able via show_voided.
-            AND l.status <> 'draft'
-            ${parsed.data.show_voided ? "" : "AND l.status <> 'cancelled'"}
             -- ROUND 31.2 P0 (owner, 2026-09-22): "LOAD COSTS IS STILL RENDERING OLDER LOADS THAT
             -- HAVE ALREADY BEEN SETTLED... ONLY LOADS THAT ARE ACTIVE, NOT INVOICED, CLOSED,
             -- DELIVERED, ETC." Root cause: this board's OWN invoice_info CTE (above) already
@@ -367,8 +357,13 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
             -- Money is the source of truth, not status: exclude the three settled statuses status
             -- alone can miss, plus ANY load already finished by settlement, driver bill, or
             -- invoice. Measured live: 114 -> 33 (invoice-only) -> 9 (the corrected predicate).
-            AND l.status NOT IN ('closed', 'invoiced', 'paid')
-            AND ${canonicalActiveLoadNotFinishedByMoneyCte("l.id")}
+            -- ROUND 115 / tasks 41-42: views.live_loads is the one canonical active-load set.
+            -- This richer projection retains its derived driver/ETA columns, but membership is
+            -- structural through the canonical view. Both open_dispatch and pre_settlement stay
+            -- eligible, including assigned/unassigned loads; settled loads cannot enter. Do not
+            -- add status clauses here: sample/soft-delete/terminal/money closure all belong to
+            -- the view, and show_voided cannot widen the canonical open-cost set.
+            AND ${liveLoadsExistsSql("l.id")}
           ORDER BY ${sortSql}`,
         [parsed.data.operating_company_id]
       );

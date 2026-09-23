@@ -11,7 +11,7 @@ import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction
 import { computeProgressStatus } from "../telematics/load-progress.service.js";
 import { enrichLoadsLiveEta } from "../telematics/dispatch-live-eta.service.js";
 import { effectiveDeliverySelectSql } from "../dispatch/effective-delivery.js";
-import { liveLoadsOpenDispatchExistsSql } from "../dispatch/live-loads-view.js";
+import { liveLoadsExistsSql, liveLoadsOpenDispatchExistsSql } from "../dispatch/live-loads-view.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { loadRefMatchSql, loadRefParamSchema } from "../lib/load-ref.js";
@@ -107,14 +107,6 @@ const statusFilterSchema = z
  * (truck-roster) side in dispatch/loads.routes.ts, where a truck is "occupied" only by an IN-FLIGHT
  * load (assigned_not_dispatched/dispatched/in_transit) — unaffected by this change.
  */
-const CLOSED_LOAD_STATUSES = [
-  "closed",
-  "cancelled",
-  "abandoned",
-  "driver_walkoff",
-  "driver_no_show",
-] as const satisfies readonly z.infer<typeof loadStatusSchema>[];
-
 // OPEN-ONLY LAW (owner 2026-09-11): the Dispatch live board excludes every post-delivery/billing-tail
 // status on top of the always-closed cohort above — a load stops being "current" the moment delivery
 // happens, not only when it is formally closed. History becomes the exact complement (every load is in
@@ -131,15 +123,6 @@ const CLOSED_LOAD_STATUSES = [
 // billed). views.live_loads bakes BOTH halves into one predicate no caller can accidentally skip;
 // open-only Dispatch is exactly live_state = 'open_dispatch' — pre_settlement loads belong on
 // their own board state (E11-D4), never here. See the board_scope==="live" branch below.
-const DISPATCH_LIVE_EXCLUDED_STATUSES = [
-  ...CLOSED_LOAD_STATUSES,
-  "delivered",
-  "delivered_pending_docs",
-  "completed_docs_received",
-  "invoiced",
-  "paid",
-] as const satisfies readonly z.infer<typeof loadStatusSchema>[];
-
 const listLoadsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
@@ -610,7 +593,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       // Keep the company scope as parameter 1 so both SQL literals carry a visible, fail-closed
       // entity predicate while preserving the requested-company-set and resolved-company behavior.
       values.push(scopedCompanyIds);
-      const filters: string[] = ["l.soft_deleted_at IS NULL"];
+      const filters: string[] = ["l.soft_deleted_at IS NULL", "l.is_sample_data IS NOT TRUE"];
 
       if (drafts_only) {
         // ROUND 24.2 (owner 2026-09-14): "a saved draft load must be findable from the Loads list."
@@ -652,8 +635,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           filters.push(existsSql);
         }
       } else if (board_scope === "history") {
-        values.push(DISPATCH_LIVE_EXCLUDED_STATUSES);
-        filters.push(`l.status = ANY($${values.length}::mdata.load_status_enum[])`);
+        // Exact structural complement of the canonical live set. Never restate money closure or
+        // a status blacklist here: both previously drifted from Dispatch/Planner/Load Costs.
+        filters.push(`NOT (${liveLoadsExistsSql("l.id")})`);
       }
       if (customer_id) {
         values.push(customer_id);
@@ -1538,7 +1522,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
               LEFT JOIN driver_finance.driver_bills db ON db.load_id = l.id
              WHERE l.operating_company_id = $1::uuid
                AND l.soft_deleted_at IS NULL
-               AND l.status NOT IN ('cancelled', 'abandoned', 'driver_walkoff', 'driver_no_show')
+               AND ${liveLoadsExistsSql("l.id")}
                AND (l.assigned_primary_driver_id IS NOT NULL OR l.team_id IS NOT NULL)
                AND db.id IS NULL
              ORDER BY l.is_sample_data ASC, l.load_number ASC
@@ -1577,7 +1561,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
               LEFT JOIN driver_finance.driver_bills db ON db.load_id = l.id
              WHERE l.operating_company_id = $1::uuid
                AND l.soft_deleted_at IS NULL
-               AND l.status NOT IN ('cancelled', 'abandoned', 'driver_walkoff', 'driver_no_show')
+               AND ${liveLoadsExistsSql("l.id")}
                AND (l.assigned_primary_driver_id IS NOT NULL OR l.team_id IS NOT NULL)
                AND db.id IS NULL
              ORDER BY l.load_number ASC

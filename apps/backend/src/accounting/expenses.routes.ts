@@ -126,6 +126,12 @@ const createExpenseBodySchema = z.object({
   expense_category_code: z.string().trim().min(1).optional().nullable(),
   expense_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   amount_cents: z.coerce.number().int().positive(),
+  // ROUND 115 — itemized load-cost line. All four travel together; the service and DB both
+  // enforce quantity * rate_cents = amount_cents so callers cannot post contradictory money.
+  item_id: z.string().uuid().optional().nullable(),
+  quantity: z.coerce.number().positive().optional().nullable(),
+  rate_cents: z.coerce.number().positive().optional().nullable(),
+  unit_of_measure: z.string().trim().regex(/^[a-z][a-z_]*$/).optional().nullable(),
   vendor_uuid: z.string().uuid().optional(),
   memo: z.string().trim().max(2000).optional(),
   // FAIL-F2 / ACCT-F262 — without this the flag could not be SUPPLIED at all, so the writer below had
@@ -419,6 +425,11 @@ export async function queryExpensesList(
         pa.account_name                              AS payment_account_name,
         ca.account_number                            AS category_account_number,
         ca.account_name                              AS category_account_name,
+        line_item.item_id::text                      AS item_id,
+        line_item.item_name                          AS item_name,
+        line_item.quantity::text                     AS quantity,
+        line_item.rate_cents::text                   AS rate_cents,
+        line_item.unit_of_measure                    AS unit_of_measure,
         (
           SELECT COUNT(*)::int
           FROM documents.attachments att
@@ -438,6 +449,15 @@ export async function queryExpensesList(
         ORDER BY el.line_sequence ASC
         LIMIT 1
       ) ca ON true
+      LEFT JOIN LATERAL (
+        SELECT el.item_id, item.item_name, el.quantity, el.rate_cents, el.unit_of_measure
+        FROM accounting.expense_lines el
+        LEFT JOIN catalogs.items item
+          ON item.id = el.item_id AND item.operating_company_id = e.operating_company_id
+        WHERE el.expense_id = e.id
+        ORDER BY el.line_sequence ASC
+        LIMIT 1
+      ) line_item ON true
       LEFT JOIN mdata.drivers dr ON dr.id = e.driver_uuid AND dr.operating_company_id = e.operating_company_id
       LEFT JOIN mdata.loads l ON l.id = e.load_id AND l.operating_company_id = e.operating_company_id
       LEFT JOIN mdata.equipment tr ON tr.id = e.trailer_id
@@ -697,6 +717,15 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
     const body = parsed.data;
 
+    const itemFields = [body.item_id, body.quantity, body.rate_cents, body.unit_of_measure];
+    const itemFieldCount = itemFields.filter((value) => value != null).length;
+    if (itemFieldCount !== 0 && itemFieldCount !== itemFields.length) {
+      return reply.code(400).send({ error: "expense_line_item_qty_rate_incomplete" });
+    }
+    if (itemFieldCount === itemFields.length && Math.round(Number(body.quantity) * Number(body.rate_cents)) !== body.amount_cents) {
+      return reply.code(400).send({ error: "expense_line_item_qty_rate_amount_mismatch" });
+    }
+
     // Driverless general expense (e.g. "Record expense") guardrails: a categorized cash-out must carry
     // BOTH a GL category and the cash/bank account it was paid from — no uncategorized cash-out, no
     // orphan payable. Driver-centric callers (driver_id present) keep the existing optional behavior.
@@ -766,6 +795,18 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             [body.vendor_uuid, body.operating_company_id]
           );
           if (!vendorRes.rows[0]) return { vendorNotInCompany: true as const };
+        }
+
+        if (body.item_id) {
+          const itemRes = await client.query(
+            `SELECT id FROM catalogs.items
+             WHERE id = $1::uuid
+               AND operating_company_id = $2::uuid
+               AND deactivated_at IS NULL
+             LIMIT 1`,
+            [body.item_id, body.operating_company_id]
+          );
+          if (!itemRes.rows[0]) return { itemNotInCompany: true as const };
         }
 
         // Resolve the form's QBO category account → a catalogs.accounts (GL) id, ENTITY-SCOPED
@@ -1025,6 +1066,11 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           const cents = body.amount_cents;
           const lineColumns = ["expense_id", "line_sequence", "amount_cents", "amount", "description", "expense_account_uuid"];
           const lineValues: unknown[] = [expenseId, 1, cents, cents / 100, body.memo ?? "Expense", categoryAccountId];
+
+          if (body.item_id) {
+            lineColumns.push("item_id", "quantity", "rate_cents", "unit_of_measure");
+            lineValues.push(body.item_id, body.quantity, body.rate_cents, body.unit_of_measure);
+          }
 
           // Column-gated so a DB that predates migration 0050 still writes the line.
           if (expenseCategoryId && (await columnExists(client, "accounting", "expense_lines", "expense_category_uuid"))) {
@@ -1305,6 +1351,8 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         });
       if ("vendorNotInCompany" in payload)
         return reply.code(400).send({ error: "expense_vendor_not_in_company" });
+      if ("itemNotInCompany" in payload)
+        return reply.code(400).send({ error: "expense_line_item_not_in_company" });
       if ("duplicateSubmission" in payload)
         return reply.code(409).send({
           error: "duplicate_expense_submission",

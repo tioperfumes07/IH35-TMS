@@ -44,7 +44,10 @@ describe("REG-040 canonical continuation board reader", () => {
       expect(sql).toContain("continuation.status = 'confirmed'");
       expect(sql).toContain("COALESCE(si.is_resettlement, false) AS is_resettlement");
       expect(sql).toContain("db.voided_at IS NULL");
-      expect(sql).toContain("oi.voided_at IS NULL");
+      expect(sql).toContain("i.source_load_id = original.id");
+      expect(sql).toContain("i.operating_company_id = original.operating_company_id");
+      expect(sql).toContain("i.voided_at IS NULL");
+      expect(sql).toContain("i.status NOT IN ('draft', 'proforma', 'void')");
     } finally { await app.close(); }
   });
 });

@@ -2,8 +2,8 @@
 // ROUND 31.2 (Lead ruling, 2026-09-23, docs/bus/09-23-2026-LEAD-RULING-LOAD-ACTIVE-SET-NO-
 // CANONICAL-DEFINITION.md): TEN places independently declared their own "active load" status
 // list, returning FIVE different counts against the same 126 live USMCA loads. The canonical
-// definition now lives in ONE module:
-// apps/backend/src/dispatch/canonical-active-load-set.ts. This guard is the backstop: it fails
+// definition now lives in ONE row-level source: views.live_loads. The TypeScript helper module is
+// an adapter only. This guard is the backstop: it fails
 // any OTHER file that (a) inlines a `status NOT IN (...)` / `status <> '...'` gate shaped like a
 // load-status filter in the same statement as `mdata.loads`, or (b) declares its own array of
 // load-status-enum string literals without calling `assertCanonicalSubset` on it in the same
@@ -34,6 +34,12 @@ const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..")
 const SRC_DIR = path.join(ROOT, "apps/backend/src");
 const CANONICAL_FILE = "dispatch/canonical-active-load-set.ts";
 const BASELINE_PATH = path.join(ROOT, "scripts/verify-one-canonical-active-load-set.baseline.json");
+const REQUIRED_SURFACE_CONTRACTS = new Map([
+  ["accounting/load-costs-board.routes.ts", 'liveLoadsExistsSql("l.id")'],
+  ["dispatch/planner.service.ts", 'liveLoadsOpenDispatchExistsSql("l.id")'],
+  ["mdata/loads.routes.ts", 'liveLoadsOpenDispatchExistsSql("l.id")'],
+  ["dispatcher-board/role-views/dispatcher.service.ts", "FROM views.live_loads l"],
+]);
 
 // The 15-status canonical vocabulary (mirrors CANONICAL_ACTIVE_LOAD_STATUSES) — used to recognize
 // "this array is a load-status list", not to re-derive the canonical decision itself.
@@ -109,18 +115,14 @@ export function findViolations(relPath, src) {
     }
   }
 
-  // (c) ROUND 32.2-CORRECTED: a file using the canonical STATUS half (condition 1) without also
-  // using the MONEY half (condition 2, canonicalActiveLoadNotFinishedByMoneyCte /
-  // canonicalActiveLoadWhereClause, which already includes it) overcounts — confirmed live,
-  // status-only or status+invoice-only both overcounted (33, then still wrong vs the real 9).
+  // (c) A status vocabulary without structural views.live_loads membership is not canonical.
   const usesStatusHalf = /\bcanonicalActiveLoadStatusClause\s*\(|\bCANONICAL_ACTIVE_LOAD_STATUSES\b/.test(src);
-  const usesMoneyHalf = /\bcanonicalActiveLoadNotFinishedByMoneyCte\s*\(|\bcanonicalActiveLoadWhereClause\s*\(/.test(src);
-  if (usesStatusHalf && !usesMoneyHalf) {
+  const usesStructuralMembership = /\bcanonicalActiveLoadWhereClause\s*\(|\bliveLoads(?:OpenDispatch)?ExistsSql\s*\(|\bFROM\s+views\.live_loads\b/i.test(src);
+  if (usesStatusHalf && !usesStructuralMembership && !src.includes("assertCanonicalSubset")) {
     violations.push(
-      `uses the canonical STATUS half (condition 1) without the MONEY half (condition 2, ` +
-        `canonicalActiveLoadNotFinishedByMoneyCte) — status alone, or status + invoice-only, ` +
-        `overcounts on this data (confirmed live: 33 -> the real 9). Use ` +
-        `canonicalActiveLoadWhereClause(...) for the complete predicate.`
+      `uses a load-status vocabulary without structural views.live_loads membership. Use ` +
+        `canonicalActiveLoadWhereClause/liveLoadsExistsSql, or assertCanonicalSubset for a ` +
+        `genuinely narrower operational label set.`
     );
   }
 
@@ -139,7 +141,23 @@ function scan() {
   return byFile;
 }
 
+export function findMissingSurfaceContracts(readSource) {
+  const missing = [];
+  for (const [rel, token] of REQUIRED_SURFACE_CONTRACTS) {
+    const src = readSource(rel);
+    if (!src.includes(token)) missing.push({ rel, token });
+  }
+  return missing;
+}
+
 function run() {
+  const missingContracts = findMissingSurfaceContracts((rel) =>
+    fs.readFileSync(path.join(SRC_DIR, rel), "utf8")
+  );
+  for (const { rel, token } of missingContracts) {
+    console.error(`${LABEL}: FAIL — required ROUND 115 surface ${rel} bypasses canonical membership (${token})`);
+  }
+  if (missingContracts.length > 0) process.exit(1);
   const found = scan();
   const baseline = loadBaseline();
   let failures = 0;
@@ -214,11 +232,27 @@ function selftest() {
   `;
   checks.push(["ROUND 32.2-CORRECTED: status-half-only file -> RED, at least 1 violation", findViolations("dispatch/status-only.ts", statusOnlySrc).length >= 1]);
 
-  const bothHalvesSrc = `
-    import { canonicalActiveLoadWhereClause } from "./canonical-active-load-set.js";
-    const q = \`SELECT * FROM mdata.loads l WHERE \${canonicalActiveLoadWhereClause("l")}\`;
+  const structuralSrc = `
+    import { liveLoadsExistsSql } from "./live-loads-view.js";
+    const q = \`SELECT * FROM mdata.loads l WHERE \${liveLoadsExistsSql("l.id")}\`;
   `;
-  checks.push(["file using the complete predicate (both halves) -> 0 violations", findViolations("dispatch/both-halves.ts", bothHalvesSrc).length === 0]);
+  checks.push(["file using structural view membership -> 0 violations", findViolations("dispatch/structural.ts", structuralSrc).length === 0]);
+
+  const allSurfaceSources = new Map(
+    [...REQUIRED_SURFACE_CONTRACTS].map(([rel, token]) => [rel, `/* canonical contract */ ${token}`])
+  );
+  checks.push([
+    "all four ROUND 115 board contracts present -> 0 missing",
+    findMissingSurfaceContracts((rel) => allSurfaceSources.get(rel) ?? "").length === 0,
+  ]);
+  for (const [mutatedRel] of REQUIRED_SURFACE_CONTRACTS) {
+    checks.push([
+      `${mutatedRel}: planted local definition/removal -> RED`,
+      findMissingSurfaceContracts((rel) =>
+        rel === mutatedRel ? "const ACTIVE = ['dispatched'];" : (allSurfaceSources.get(rel) ?? "")
+      ).some(({ rel }) => rel === mutatedRel),
+    ]);
+  }
 
   let bad = 0;
   for (const [name, ok] of checks) { if (!ok) bad++; console.log(`${ok ? "ok  " : "FAIL"}  ${name}`); }

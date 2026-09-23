@@ -25,6 +25,7 @@ import { companyToday } from "../../lib/businessDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { DatePicker } from "../forms/DatePicker";
 import { MoneyInput } from "../forms/MoneyInput";
+import { QboCombobox } from "../forms/QboCombobox";
 import { useToast } from "../Toast";
 import { EntityLink } from "../shared/EntityLink";
 import { ReceiptAttach } from "../documents/ReceiptAttach";
@@ -67,6 +68,11 @@ type Draft = {
   invoiceNo: string;
   vendorDocNo: string;
   amount: string;
+  itemId: string;
+  itemName: string;
+  quantity: string;
+  rateCents: number | null;
+  unitOfMeasure: string;
   error: string | null;
   advanceCategory: BrokerAdvanceCategory | "";
   instrumentType: string;
@@ -119,7 +125,8 @@ function bucketOf(kind: CostChoice, categoryName: string): Bucket {
 function blankDraft(kind: CostChoice = "expense"): Draft {
   return {
     id: crypto.randomUUID(), number: "", kind, date: companyToday(), vendorId: "", vendorName: "", categoryId: "", categoryName: "", categoryCode: "",
-    paymentAccountId: "", invoiceNo: "", vendorDocNo: "", amount: "", error: null, advanceCategory: "", instrumentType: "", instrumentReference: "",
+    paymentAccountId: "", invoiceNo: "", vendorDocNo: "", amount: "", itemId: "", itemName: "", quantity: "", rateCents: null,
+    unitOfMeasure: "", error: null, advanceCategory: "", instrumentType: "", instrumentReference: "",
     attachmentDraftId: crypto.randomUUID(), receiptCount: 0, isReimbursable: false,
   };
 }
@@ -129,6 +136,19 @@ const fmtMiles = (v: number | string | null | undefined) => (v == null || v === 
 const fmtRate = (cents: number | string | null | undefined) => (cents == null || cents === "" ? DASH : `$${(Number(cents) / 100).toFixed(4)}`);
 const mmdd = (iso: string | null | undefined) => (iso ? `${iso.slice(5, 7)} / ${iso.slice(8, 10)}` : DASH);
 const acctLabel = (number: string | null | undefined, name: string | null | undefined) => (name ? `${number ? `${number} ` : ""}${name}` : DASH);
+const itemUnit = (name: string, code?: string | null) => {
+  const identity = `${name} ${code ?? ""}`.toLowerCase();
+  if (/diesel|\bdef\b|fuel/.test(identity)) return "gallon";
+  if (/loaded.?miles|empty.?miles|\bmile/.test(identity)) return "mile";
+  return "each";
+};
+const lineAmountCents = (row: Draft) => {
+  if (row.kind === "expense" || row.kind === "bill") {
+    const quantity = Number(row.quantity);
+    return quantity > 0 && row.rateCents != null && row.rateCents > 0 ? Math.round(quantity * row.rateCents) : 0;
+  }
+  return Math.max(0, Math.round(Number(row.amount || 0) * 100));
+};
 
 export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: LoadDetail; canEdit: boolean; canEditReason?: string }) {
   const [drafts, setDrafts] = useState<Draft[]>([blankDraft()]);
@@ -177,7 +197,7 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
   const fuelAccount = fuelRoleRow ? chart.find((row) => row.id === fuelRoleRow.account_id) : undefined;
   const operatingBankRoleRow = (coaRoles.data?.rows ?? []).find((row) => row.role === "operating_bank" && row.is_active && row.account_id);
   const operatingBankAccount = operatingBankRoleRow ? chart.find((row) => row.id === operatingBankRoleRow.account_id) : undefined;
-  const draftTotal = drafts.reduce((s, row) => s + Math.max(0, Math.round(Number(row.amount || 0) * 100)), 0);
+  const draftTotal = drafts.reduce((s, row) => s + lineAmountCents(row), 0);
   const margin = revenue - savedCosts - driverPay - draftTotal;
   const entryCount = liveExpenses.length + liveBills.length;
 
@@ -186,7 +206,7 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
     const acc: Record<Bucket, number> = { late_fee: 0, lumper: 0, fuel: 0, repairs_maintenance: 0, other: 0 };
     for (const r of liveExpenses) acc[bucketOf("expense", r.category_account_name ?? r.line_description ?? "")] += num(r.total_amount_cents);
     for (const r of liveBills) acc[bucketOf("bill", r.coa_account_name ?? "")] += num(r.amount_cents);
-    for (const r of drafts) acc[bucketOf(r.kind, r.categoryName)] += Math.max(0, Math.round(Number(r.amount || 0) * 100));
+    for (const r of drafts) acc[bucketOf(r.kind, r.categoryName)] += lineAmountCents(r);
     return acc;
   }, [liveExpenses, liveBills, drafts]);
 
@@ -201,11 +221,11 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
   const addDraft = (kind: CostChoice = "expense") => setDrafts((rows) => [...rows, blankDraft(kind)]);
 
   /** A card nobody has touched yet — skipped by Save, never a blocker. */
-  const isPristine = (row: Draft) => !row.amount && !row.vendorId && !row.categoryId && !row.number.trim() && !row.invoiceNo.trim() && !row.vendorDocNo.trim() && !row.instrumentReference.trim() && !row.instrumentType.trim() && !row.advanceCategory && !row.paymentAccountId && row.receiptCount === 0 && (row.kind === "expense" || row.kind === "bill");
+  const isPristine = (row: Draft) => !row.amount && !row.itemId && !row.quantity && row.rateCents == null && !row.vendorId && !row.categoryId && !row.number.trim() && !row.invoiceNo.trim() && !row.vendorDocNo.trim() && !row.instrumentReference.trim() && !row.instrumentType.trim() && !row.advanceCategory && !row.paymentAccountId && row.receiptCount === 0 && (row.kind === "expense" || row.kind === "bill");
 
   /** Why a card cannot post — in English, on the card. Save is disabled while any touched card is blocked. */
   const blocker = (row: Draft): string | null => {
-    const amountCents = Math.round(Number(row.amount) * 100);
+    const amountCents = lineAmountCents(row);
     if (row.kind === "advance") {
       if (!row.advanceCategory) return "Pick the advance category (diesel, driver pay, repair, other).";
       if (!row.instrumentType.trim()) return "Instrument type is required (Comchek, EFT, wire).";
@@ -223,6 +243,10 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
     }
     if (!row.vendorId) return "Vendor is required.";
     if (!row.categoryId) return "Category (expense account) is required.";
+    if (!row.itemId) return "Item is required — pick the real catalog item for this cost.";
+    if (!(Number(row.quantity) > 0)) return "Quantity must be greater than zero.";
+    if (!(row.rateCents != null && row.rateCents > 0)) return "Rate must be greater than zero.";
+    if (!row.unitOfMeasure) return "Unit of measure is required.";
     if (!(amountCents > 0)) return "Amount must be greater than zero.";
     if (row.kind === "expense" && !row.paymentAccountId) return "Paid with is required — the bank, card or fuel card the money left.";
     if (row.kind === "expense" && categoryCodesForAccount(row.categoryId).length > 1 && !row.categoryCode) return "This account covers more than one category — pick which one below.";
@@ -249,15 +273,15 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
       let saved = 0;
       for (const [index, row] of drafts.entries()) {
         if (isPristine(row)) continue;
-        const amountCents = Math.round(Number(row.amount) * 100);
+        const amountCents = lineAmountCents(row);
         const number = resolvedNumber(row, index);
         const missing = blocker(row);
         if (missing) { errors.set(row.id, missing); continue; }
         try {
           if (row.kind === "expense") {
-            await createExpense(opco, { category_account_id: row.categoryId, expense_category_code: row.categoryCode || undefined, expense_date: row.date, amount_cents: amountCents, payment_account_uuid: row.paymentAccountId, vendor_uuid: row.vendorId, load_id: load.id, expense_number: number, vendor_document_number: row.vendorDocNo.trim() || undefined, memo: `Load cost · ${load.load_number}`, is_sample_data: false, attachment_draft_id: row.attachmentDraftId, is_reimbursable: row.isReimbursable });
+            await createExpense(opco, { category_account_id: row.categoryId, expense_category_code: row.categoryCode || undefined, expense_date: row.date, amount_cents: amountCents, payment_account_uuid: row.paymentAccountId, vendor_uuid: row.vendorId, load_id: load.id, expense_number: number, vendor_document_number: row.vendorDocNo.trim() || undefined, memo: `Load cost · ${load.load_number}`, is_sample_data: false, attachment_draft_id: row.attachmentDraftId, is_reimbursable: row.isReimbursable, item_id: row.itemId, quantity: Number(row.quantity), rate_cents: row.rateCents!, unit_of_measure: row.unitOfMeasure });
           } else if (row.kind === "bill") {
-            await createVendorBill(opco, { vendor_id: row.vendorId, bill_number: row.invoiceNo.trim(), display_id: number, bill_date: row.date, amount_cents: amountCents, coa_account_id: row.categoryId, driver_id: load.assigned_primary_driver_id ?? undefined, memo: `Load cost · ${load.load_number}`, is_sample_data: false, attachment_draft_id: row.attachmentDraftId, lines: [{ account_id: row.categoryId, amount_cents: amountCents, description: `Load cost · ${load.load_number}`, section: "A", load_id: load.id }] }, { idempotencyKey: generateIdempotencyKey() });
+            await createVendorBill(opco, { vendor_id: row.vendorId, bill_number: row.invoiceNo.trim(), display_id: number, bill_date: row.date, amount_cents: amountCents, coa_account_id: row.categoryId, driver_id: load.assigned_primary_driver_id ?? undefined, memo: `Load cost · ${load.load_number}`, is_sample_data: false, attachment_draft_id: row.attachmentDraftId, lines: [{ account_id: row.categoryId, amount_cents: amountCents, description: `Load cost · ${load.load_number}`, section: "A", load_id: load.id, item_id: row.itemId, quantity: Number(row.quantity), rate_cents: row.rateCents!, unit_of_measure: row.unitOfMeasure }] }, { idempotencyKey: generateIdempotencyKey() });
           } else if (row.kind === "fuel_advance") {
             await createExpense(opco, { category_account_id: fuelAccount!.id, expense_date: row.date, amount_cents: amountCents, payment_account_uuid: operatingBankAccount!.id, driver_id: load.assigned_primary_driver_id!, load_id: load.id, expense_number: number, vendor_document_number: row.vendorDocNo.trim() || undefined, memo: `Fuel advance · Load ${load.load_number}`, is_sample_data: false, attachment_draft_id: row.attachmentDraftId });
           } else {
@@ -332,7 +356,7 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
         </div>
 
         {canEdit ? drafts.map((row, index) => {
-          const cents = row.amount ? Math.round(Number(row.amount) * 100) : 0;
+          const cents = lineAmountCents(row);
           const why = isPristine(row) ? null : blocker(row);
           const isVendorKind = row.kind === "expense" || row.kind === "bill";
           return <div key={row.id} className="ldt-entry" data-testid="load-costs-entry" data-cost-kind={row.kind}>
@@ -369,6 +393,12 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
                       update(row.id, { categoryId: o.id, categoryName: o.label, categoryCode: bindings.length === 1 ? bindings[0].category_code : "" });
                     }} createHref="/accounting/chart-of-accounts" />}
               </div>
+              {isVendorKind ? <>
+                <div className="ldt-fld"><label>Item</label><QboCombobox entityType="item" operatingCompanyId={opco} value={row.itemId || null} displayValue={row.itemName} allowFreeText={false} placeholder="Type an item…" onChange={(_, displayName) => update(row.id, { itemId: "", itemName: displayName })} onPick={(item) => update(row.id, { itemId: item.id, itemName: item.display_name, unitOfMeasure: itemUnit(item.display_name, item.sku), rateCents: item.unit_price_cents ?? row.rateCents })} /></div>
+                <div className="ldt-fld"><label>Quantity</label><input data-testid="load-cost-field-quantity" className="ldt-mono" type="number" min="0.0001" step="0.0001" value={row.quantity} onChange={(e) => update(row.id, { quantity: e.target.value })} /></div>
+                <div className="ldt-fld"><label>Unit</label><select data-testid="load-cost-field-uom" value={row.unitOfMeasure} onChange={(e) => update(row.id, { unitOfMeasure: e.target.value })}><option value="">Select…</option><option value="gallon">gallon</option><option value="mile">mile</option><option value="each">each</option><option value="hour">hour</option></select></div>
+                <div className="ldt-fld"><label>Rate</label><div data-testid="load-cost-field-rate" className="relative"><span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-500">$</span><input aria-label="Rate per unit" className="ldt-inp ldt-mono right pl-5" type="number" min="0.0001" step="0.0001" value={row.rateCents == null ? "" : row.rateCents / 100} onChange={(e) => update(row.id, { rateCents: e.target.value === "" ? null : Number(e.target.value) * 100 })} /></div></div>
+              </> : null}
               {row.kind === "expense" && categoryCodesForAccount(row.categoryId).length > 1 ? <div className="ldt-fld"><label>Category detail</label>
                 <select data-testid="load-cost-field-category-code" value={row.categoryCode} onChange={(e) => update(row.id, { categoryCode: e.target.value })}>
                   <option value="">Select…</option>
@@ -414,7 +444,7 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
                 <div className="ldt-fld"><label>Instrument reference</label><input data-testid="load-cost-field-instrument-reference" placeholder="check / transaction no." value={row.instrumentReference} onChange={(e) => update(row.id, { instrumentReference: e.target.value })} /></div>
                 <div className="ldt-fld"><label>{row.advanceCategory === "driver_pay" ? "Deposited into (bank) — optional" : "Deposited into (bank)"}</label><select data-testid="load-cost-field-advance-bank" value={row.paymentAccountId} onChange={(e) => update(row.id, { paymentAccountId: e.target.value })}><option value="">{row.advanceCategory === "driver_pay" ? "No bank — broker paid the driver directly" : "Select bank account"}</option>{advanceBankAccountRows.map((a) => <option key={a.id} value={a.id}>{formatBankAccountPickerLabel(a)}</option>)}</select></div>
               </> : null}
-              <div className="ldt-fld"><label>Amount</label><div data-testid="load-cost-field-amount"><MoneyInput className="ldt-inp mono right" valueCents={cents || null} onChangeCents={(c) => update(row.id, { amount: c == null ? "" : String(c / 100) })} /></div></div>
+              <div className="ldt-fld"><label>Amount</label>{isVendorKind ? <div data-testid="load-cost-field-amount" className="ldt-inp ro ldt-mono">{cents ? formatMoneyCents(cents, currency) : DASH}</div> : <div data-testid="load-cost-field-amount"><MoneyInput className="ldt-inp mono right" valueCents={cents || null} onChangeCents={(c) => update(row.id, { amount: c == null ? "" : String(c / 100) })} /></div>}</div>
               {isVendorKind || row.kind === "fuel_advance" ? <div className="ldt-fld"><label>Receipt</label>
                 <CardReceipt opco={opco} entityType={row.kind === "bill" ? "bill" : "expense"} entityId={row.attachmentDraftId} onCountChange={(n) => setDrafts((rows) => rows.map((r) => (r.id === row.id ? { ...r, receiptCount: n } : r)))} />
               </div> : null}
@@ -485,6 +515,9 @@ function SavedExpenseCard({ row, opco, currency, canEdit, onPop }: { row: Expens
       <Ro label="Date" value={mmdd(row.transaction_date)} />
       <Ro label="Vendor" value={row.vendor_name ?? DASH} />
       <Ro label="Category" value={acctLabel(row.category_account_number, row.category_account_name)} />
+      <Ro label="Item" value={row.item_name ?? DASH} />
+      <Ro label="Quantity" value={row.quantity == null ? DASH : `${Number(row.quantity).toLocaleString()} ${row.unit_of_measure ?? ""}`.trim()} mono />
+      <Ro label="Rate" value={fmtRate(row.rate_cents)} mono />
       <Ro label="Paid with" value={acctLabel(row.payment_account_number, row.payment_account_name)} />
       <Ro label="Vendor doc no." value={row.vendor_document_number ?? DASH} mono />
       <Ro label="Amount" value={formatMoneyCents(num(row.total_amount_cents), currency)} mono />
@@ -519,6 +552,9 @@ function SavedBillCard({ row, opco, currency, canEdit, onPop }: { row: VendorBil
       <Ro label="Date" value={mmdd(row.bill_date)} />
       <Ro label="Vendor" value={row.vendor_name ?? DASH} />
       <Ro label="Category" value={acctLabel(row.coa_account_number, row.coa_account_name)} />
+      <Ro label="Item" value={row.item_name ?? DASH} />
+      <Ro label="Quantity" value={row.quantity == null ? DASH : `${Number(row.quantity).toLocaleString()} ${row.unit_of_measure ?? ""}`.trim()} mono />
+      <Ro label="Rate" value={fmtRate(row.rate_cents)} mono />
       <Ro label="Vendor invoice no." value={row.bill_number ?? DASH} mono />
       <Ro label="Due" value={mmdd(row.due_date)} />
       <Ro label="Amount" value={formatMoneyCents(num(row.amount_cents), currency)} mono />

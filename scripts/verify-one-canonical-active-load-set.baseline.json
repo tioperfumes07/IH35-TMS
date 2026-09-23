@@ -1,5 +1,5 @@
 {
-  "_comment": "verify-one-canonical-active-load-set.mjs shrink-only ratchet. ROUND 31.2 (Lead ruling 2026-09-23): the ruling named 10 conflicting active-load definitions as the headline defect; a full static scan for inline mdata.loads status gates + undeclared load-status arrays found a materially larger surface (42 files). Seeded honestly at the measured state rather than only the 10 named files -- migrating each to import apps/backend/src/dispatch/canonical-active-load-set.ts (or calling assertCanonicalSubset on a genuinely narrower view) shrinks this baseline one file at a time. Some entries may include a false-positive line where the heuristic caught a same-file status check on a different table (e.g. accounting.invoices/driver_finance.settlements) near an unrelated mdata.loads reference -- re-verify each file live before migrating, do not batch-fix blind.",
+  "_comment": "verify-one-canonical-active-load-set.mjs shrink-only ratchet. PROVISIONAL UNTIL THE 2026-09-23 PRODUCTION REFEED COMPLETES (ROUND 115.2): never widen this baseline to pass. ROUND 115 removed the named Dispatch board, Planner, Loads list and Load Costs membership definitions in favor of structural views.live_loads membership; all named surfaces are now absent from this debt file. The residual entries below are individually named debt, including heuristic false positives where an invoice/driver-finance status check is merely near a load join. Re-verify each owning surface before shrinking; never batch-fix blind.",
   "established": "2026-09-22",
   "files": {
     "accounting/break-even.service.ts": {
@@ -10,9 +10,6 @@
     },
     "accounting/invoices.routes.ts": {
       "count": 4
-    },
-    "accounting/load-costs-board.routes.ts": {
-      "count": 5
     },
     "accounting/revenue-leakage.service.ts": {
       "count": 1
@@ -62,9 +59,6 @@
     "dispatch/update-load.service.ts": {
       "count": 1
     },
-    "dispatcher-board/role-views/dispatcher.service.ts": {
-      "count": 2
-    },
     "driver/loads.routes.ts": {
       "count": 2
     },
@@ -97,9 +91,6 @@
     },
     "mdata/equipment-aggregate.service.ts": {
       "count": 1
-    },
-    "mdata/loads.routes.ts": {
-      "count": 3
     },
     "mdata/unit-aggregate.service.ts": {
       "count": 1

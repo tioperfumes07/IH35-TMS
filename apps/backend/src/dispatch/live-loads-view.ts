@@ -19,5 +19,20 @@ export function liveLoadsOpenDispatchExistsSql(loadIdColumn = "l.id"): string {
   `;
 }
 
+/**
+ * Membership in the complete canonical live-load set (open_dispatch + pre_settlement).
+ * Use this for Load Costs and any surface that must retain both states while reading a richer
+ * projection than views.live_loads itself. The predicate remains structural and cannot drift.
+ */
+export function liveLoadsExistsSql(loadIdColumn = "l.id"): string {
+  return `
+    EXISTS (
+      SELECT 1 FROM views.live_loads vll
+       WHERE vll.id = ${loadIdColumn}
+    )
+  `;
+}
+
 /** Pre-built default (loadIdColumn = "l.id") for the common case. */
 export const LIVE_LOADS_OPEN_DISPATCH_EXISTS_SQL = liveLoadsOpenDispatchExistsSql();
+export const LIVE_LOADS_EXISTS_SQL = liveLoadsExistsSql();

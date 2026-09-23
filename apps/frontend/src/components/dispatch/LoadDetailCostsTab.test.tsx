@@ -52,11 +52,35 @@ vi.mock("../../api/attachments", async () => {
 vi.mock("../../api/mdata", () => ({
   listVendors: vi.fn().mockResolvedValue({ vendors: [] }),
 }));
+vi.mock("../forms/QboCombobox", () => ({
+  QboCombobox: ({
+    placeholder,
+    onChange,
+    onPick,
+  }: {
+    placeholder?: string;
+    onChange: (qboId: string | null, displayName: string) => void;
+    onPick?: (row: { id: string; qbo_id: string; display_name: string; active: boolean; sku: string; unit_price_cents: number }) => void;
+  }) => (
+    <input
+      aria-label={placeholder ?? "Catalog item"}
+      onChange={(event) => {
+        const displayName = event.target.value;
+        onChange(null, displayName);
+        onPick?.({ id: "item-1", qbo_id: "qbo-item-1", display_name: displayName, active: true, sku: "TEST-ITEM", unit_price_cents: 100 });
+      }}
+    />
+  ),
+}));
 vi.mock("../../api/client", async () => {
   const actual = await vi.importActual<typeof import("../../api/client")>("../../api/client");
   return {
     ...actual,
-    apiRequest: vi.fn().mockResolvedValue({ driver_bills: [] }),
+    apiRequest: vi.fn().mockImplementation((path: string) =>
+      Promise.resolve(path.includes("/api/v1/accounting/loads/") && path.includes("/unit-cost-split")
+        ? { units: [], is_multi_unit: false, pool_cents: 0, total_miles: 0, reconciled: true, miles_basis: "equal" }
+        : { driver_bills: [] })
+    ),
   };
 });
 
@@ -94,6 +118,11 @@ async function addViaMenu(itemTestId: string) {
   fireEvent.click(await screen.findByTestId(itemTestId));
 }
 const last = <T extends HTMLElement>(els: T[]) => els[els.length - 1];
+
+function fillVendorItemLine(amountDollars: string, itemName = "Tolls") {
+  fireEvent.change(screen.getByLabelText("Type an item…"), { target: { value: itemName } });
+  fireEvent.change(screen.getByTestId("load-cost-field-quantity"), { target: { value: amountDollars } });
+}
 
 // "+ New → Cash advance · from broker" adds an Advance card; Save calls createBrokerAdvance with the
 // load's real FKs (SET-15 / SET-24 write path). Never a driver liability, never reduces the invoice.
@@ -229,13 +258,13 @@ describe("LoadDetailCostsTab — entry cards + SET-15 advance received", () => {
     fireEvent.click(await screen.findByText("6500 Tolls"));
     fireEvent.change(screen.getByTestId("load-cost-field-paid-with"), { target: { value: "Operating Bank" } });
     fireEvent.click(await screen.findByText("1000 Operating Bank · bank"));
-    fireEvent.change(screen.getByTestId("load-cost-field-amount").querySelector("input")!, { target: { value: "40.00" } });
+    fillVendorItemLine("40.00");
     fireEvent.click(screen.getByTestId("load-costs-save-all"));
     await waitFor(() => expect(createExpense).toHaveBeenCalledTimes(1));
     expect(createExpense).toHaveBeenCalledWith(
       "5c854333-6ea5-4faa-af31-67cb272fef80",
       // The receipt follows the record: attachment_draft_id is the card's documents.attachments draft id.
-      expect.objectContaining({ expense_number: "13508", amount_cents: 4000, attachment_draft_id: expect.any(String) })
+      expect.objectContaining({ expense_number: "13508", amount_cents: 4000, item_id: "item-1", quantity: 40, rate_cents: 100, unit_of_measure: "each", attachment_draft_id: expect.any(String) })
     );
   });
 
@@ -265,7 +294,7 @@ describe("LoadDetailCostsTab — entry cards + SET-15 advance received", () => {
     expect(screen.getByTestId("load-cost-field-category-code")).toBeInTheDocument();
     fireEvent.change(screen.getByTestId("load-cost-field-paid-with"), { target: { value: "Operating Bank" } });
     fireEvent.click(await screen.findByText("1000 Operating Bank · bank"));
-    fireEvent.change(screen.getByTestId("load-cost-field-amount").querySelector("input")!, { target: { value: ".01" } });
+    fillVendorItemLine(".01", "Diesel");
     await waitFor(() => expect(last(screen.getAllByTestId("load-cost-hint"))).toHaveTextContent("more than one category"));
     fireEvent.change(screen.getByTestId("load-cost-field-category-code"), { target: { value: "diesel" } });
     fireEvent.click(screen.getByTestId("load-costs-save-all"));
@@ -296,7 +325,7 @@ describe("LoadDetailCostsTab — entry cards + SET-15 advance received", () => {
     expect(screen.queryByTestId("load-cost-field-category-code")).not.toBeInTheDocument();
     fireEvent.change(screen.getByTestId("load-cost-field-paid-with"), { target: { value: "Operating Bank" } });
     fireEvent.click(await screen.findByText("1000 Operating Bank · bank"));
-    fireEvent.change(screen.getByTestId("load-cost-field-amount").querySelector("input")!, { target: { value: "5.00" } });
+    fillVendorItemLine("5.00");
     fireEvent.click(screen.getByTestId("load-costs-save-all"));
     await waitFor(() => expect(createExpense).toHaveBeenCalledTimes(1));
     expect(createExpense).toHaveBeenCalledWith(
@@ -321,7 +350,7 @@ describe("LoadDetailCostsTab — entry cards + SET-15 advance received", () => {
     fireEvent.click(await screen.findByText("6500 Tolls"));
     fireEvent.change(screen.getByTestId("load-cost-field-paid-with"), { target: { value: "Operating Bank" } });
     fireEvent.click(await screen.findByText("1000 Operating Bank · bank"));
-    fireEvent.change(screen.getByTestId("load-cost-field-amount").querySelector("input")!, { target: { value: "40.00" } });
+    fillVendorItemLine("40.00");
     const reimbursable = screen.getByTestId("load-cost-field-reimbursable");
     expect(reimbursable).not.toBeChecked();
     fireEvent.click(reimbursable);
