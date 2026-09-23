@@ -56,6 +56,12 @@ export type FaroCsvLine = {
    *  Deducted from net advance at funding as the ACH/wire leg (factor_wire_fee account role,
    *  poster.service.ts) — previously always sent as 0, silently absorbing the wire cost into cash. */
   wire_fee_amount_cents: number;
+  /** The export's "Cash Rsv", "Dispatch" and "Sch Fee" columns: three more deductions between face
+   *  and net advance. null when the export has no such column (not captured), never a guessed 0.
+   *  Cash Rsv is its own reserve pool (owner ruling: GL 1235), never aliased to reserve. */
+  cash_rsv_amount_cents: number | null;
+  dispatch_amount_cents: number | null;
+  schedule_fee_amount_cents: number | null;
   due_on?: string;
   /** ROUND 40.1 — Faro's own match key, from the "PO" column (falls back to "Other Ref"). Owner
    *  ruling: "MATCH KEY -> PO, then Other Ref. NEVER the load number." Resolved against
@@ -75,6 +81,11 @@ export type FaroCsvParseResult = {
   headers: string[];
   lines: FaroCsvLine[];
   statement_date?: string;
+  /** Faro's "PURCHASE REPORT ALL" export puts a "<date> Total" row after each day and a "Grand
+   *  Total" row at the end: blank invoice number, every amount $0.00, the first cell a count. Each
+   *  one is verified (the day count equals that day's invoice rows; the grand total equals the
+   *  number of days) and reported here, never silently dropped. */
+  summary_rows_verified: number;
 };
 
 export class FaroCsvImportError extends Error {
@@ -241,6 +252,9 @@ export function parseFaroCsv(csvText: string): FaroCsvParseResult {
   // "Discount" on the real export per Round 48). "Fees" is Faro's flat wire/ACH charge — a
   // different economic thing than the factoring discount fee, never captured anywhere until now.
   const wireFeeIdx = headerIndex(headers, ["fees"]);
+  const cashRsvIdx = headerIndex(headers, ["cash rsv", "cash reserve"]);
+  const dispatchIdx = headerIndex(headers, ["dispatch", "dispatch fee"]);
+  const scheduleFeeIdx = headerIndex(headers, ["sch fee", "schedule fee"]);
   // "due date"/"due on"/"due" are this importer's original due-date vocabulary; "date" is the owner's
   // real export's per-row transaction date column \u2014 same role (the economic/statement date this line
   // carries), added as an alias, not a new concept.
@@ -260,9 +274,15 @@ export function parseFaroCsv(csvText: string): FaroCsvParseResult {
   const dataRows = rows.slice(1);
   const lines: FaroCsvLine[] = [];
   const rejected: Array<{ row_number: number; raw: string; reason: string }> = [];
+  let summaryRowsVerified = 0;
+  const moneyIdxs = [grossIdx, advanceIdx, reserveIdx, feeIdx, chargebackIdx, netIdx, wireFeeIdx, cashRsvIdx, dispatchIdx, scheduleFeeIdx];
   dataRows.forEach((row, idx) => {
     const cells = parseCsvRow(row);
     const invoice_number = String(cells[invoiceIdx] ?? "").trim();
+    if (!invoice_number && isFaroSummaryRow(cells, dueIdx, moneyIdxs)) {
+      summaryRowsVerified++;
+      return;
+    }
     if (!invoice_number) {
       rejected.push({ row_number: idx + 2, raw: row, reason: "blank invoice number cell" });
       return;
@@ -278,6 +298,9 @@ export function parseFaroCsv(csvText: string): FaroCsvParseResult {
       net_amount_cents: netIdx >= 0 ? parseMoneyToCents(String(cells[netIdx] ?? "0")) : 0,
       discount_amount_cents: discountIdx >= 0 ? parseMoneyToCents(String(cells[discountIdx] ?? "0")) : 0,
       wire_fee_amount_cents: wireFeeIdx >= 0 ? parseMoneyToCents(String(cells[wireFeeIdx] ?? "0")) : 0,
+      cash_rsv_amount_cents: cashRsvIdx >= 0 ? parseMoneyToCents(String(cells[cashRsvIdx] ?? "0")) : null,
+      dispatch_amount_cents: dispatchIdx >= 0 ? parseMoneyToCents(String(cells[dispatchIdx] ?? "0")) : null,
+      schedule_fee_amount_cents: scheduleFeeIdx >= 0 ? parseMoneyToCents(String(cells[scheduleFeeIdx] ?? "0")) : null,
       due_on: dueIdx >= 0 ? parseDueDate(String(cells[dueIdx] ?? "")) : undefined,
       match_key: matchKeyIdx >= 0 ? String(cells[matchKeyIdx] ?? "").trim() || undefined : undefined,
     });
@@ -298,16 +321,27 @@ export function parseFaroCsv(csvText: string): FaroCsvParseResult {
   // Invariant: every data row is now accounted for exactly once (stored line XOR named rejection
   // above, which already returned/thrown). If this ever fails, some new code path is silently
   // dropping rows again the same way this fix just closed — fail loud, do not let it slide.
-  if (lines.length !== dataRows.length) {
+  if (lines.length + summaryRowsVerified !== dataRows.length) {
     throw new FaroCsvImportError(
       "invalid_csv",
-      `Faro CSV parse invariant violated: ${dataRows.length} data row(s) in, ${lines.length} line(s) out, 0 rejected — a row was dropped without being named. This is a bug in parseFaroCsv, not a data problem.`
+      `Faro CSV parse invariant violated: ${dataRows.length} data row(s) in, ${lines.length} line(s) + ${summaryRowsVerified} verified summary row(s) out, 0 rejected — a row was dropped without being named. This is a bug in parseFaroCsv, not a data problem.`
     );
   }
 
   // Economic/statement date from parsed due_on when present — never invent UTC "today".
   const statementDate = lines.find((l) => l.due_on)?.due_on;
-  return { headers, lines, statement_date: statementDate };
+  return { headers, lines, statement_date: statementDate, summary_rows_verified: summaryRowsVerified };
+}
+
+/** A Faro summary row, recognized only by its exact shape: the date cell reads "<M/D/YY> Total" or
+ *  "Grand Total" and every money cell is zero (Faro writes no sums into them). The leading count cell
+ *  is not the day's invoice count (measured: "1" above two invoices), so it is not used. A blank-invoice
+ *  row that carries any money, or any other label, stays a named rejection. */
+function isFaroSummaryRow(cells: string[], dateIdx: number, moneyIdxs: number[]): boolean {
+  if (dateIdx < 0) return false;
+  const label = String(cells[dateIdx] ?? "").trim();
+  if (!/^(?:\d{1,2}\/\d{1,2}\/\d{2,4}\s+Total|Grand Total)$/i.test(label)) return false;
+  return moneyIdxs.every((i) => i < 0 || parseMoneyToCents(String(cells[i] ?? "0")) === 0);
 }
 
 type Queryable = {

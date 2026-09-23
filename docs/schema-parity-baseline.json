@@ -5036,12 +5036,15 @@
     ],
     "factor.faro_invoice_lines": [
       "advance_amount_cents",
+      "cash_rsv_amount_cents",
       "chargeback_amount_cents",
       "created_at",
       "customer_name",
       "daily_import_id",
+      "dispatch_amount_cents",
       "due_on",
       "fee_amount_cents",
+      "fees_amount_cents",
       "gross_amount_cents",
       "id",
       "invoice_number",
@@ -5049,6 +5052,7 @@
       "net_amount_cents",
       "operating_company_id",
       "reserve_amount_cents",
+      "schedule_fee_amount_cents",
       "superseded_at",
       "superseded_reason",
       "updated_at"

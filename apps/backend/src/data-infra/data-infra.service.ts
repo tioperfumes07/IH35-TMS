@@ -192,6 +192,10 @@ export type FaroDailyImportUpsertInput = {
     chargeback_amount_cents?: number;
     net_amount_cents?: number;
     due_on?: string | null;
+    cash_rsv_amount_cents?: number | null;
+    wire_fee_amount_cents?: number | null;
+    dispatch_amount_cents?: number | null;
+    schedule_fee_amount_cents?: number | null;
   }>;
 };
 
@@ -307,9 +311,13 @@ export async function upsertFaroDailyImportOnClient(
           fee_amount_cents,
           chargeback_amount_cents,
           net_amount_cents,
-          due_on
+          due_on,
+          cash_rsv_amount_cents,
+          fees_amount_cents,
+          dispatch_amount_cents,
+          schedule_fee_amount_cents
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
       `,
       [
         input.operatingCompanyId,
@@ -324,6 +332,10 @@ export async function upsertFaroDailyImportOnClient(
         Number(row.chargeback_amount_cents ?? 0),
         Number(row.net_amount_cents ?? 0),
         row.due_on ?? null,
+        row.cash_rsv_amount_cents ?? null,
+        row.wire_fee_amount_cents ?? null,
+        row.dispatch_amount_cents ?? null,
+        row.schedule_fee_amount_cents ?? null,
       ]
     );
   }
@@ -419,9 +431,13 @@ export async function appendFaroInvoiceLinesOnClient(
           fee_amount_cents,
           chargeback_amount_cents,
           net_amount_cents,
-          due_on
+          due_on,
+          cash_rsv_amount_cents,
+          fees_amount_cents,
+          dispatch_amount_cents,
+          schedule_fee_amount_cents
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
       `,
       [
         input.operatingCompanyId,
@@ -436,6 +452,10 @@ export async function appendFaroInvoiceLinesOnClient(
         Number(row.chargeback_amount_cents ?? 0),
         Number(row.net_amount_cents ?? 0),
         row.due_on ?? null,
+        row.cash_rsv_amount_cents ?? null,
+        row.wire_fee_amount_cents ?? null,
+        row.dispatch_amount_cents ?? null,
+        row.schedule_fee_amount_cents ?? null,
       ]
     );
     inserted.push(row.invoice_number);
