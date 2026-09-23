@@ -18,6 +18,7 @@ import { useUrlSort } from "../../hooks/useUrlSort";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { visibleDocumentLabel } from "../../lib/entity-label";
+import { VoidedRowBadge, voidedRowClassName } from "../../components/accounting/VoidedRowIndicator";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
@@ -214,7 +215,21 @@ export function ManualJEListPage() {
         render: (entry) => humanMemo(entry.memo, entry.source_transaction_id, entry.source_transaction_display_id),
       },
       { key: "source", label: "Source", sortable: true },
-      { key: "status", label: "Status", sortable: true },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        // R-102-B item 2 ("EVERY LIST ROW") — the register's own status text/filter already
+        // carries 'voided', it just never LOOKED voided in the row. voided_at stays null for
+        // most JEs by design (Option-1 reversing-entry model never flips a posted JE), so the
+        // badge only ever shows on the rare row where it IS set (migration/legacy paths).
+        render: (entry) => (
+          <span>
+            {entry.status}
+            <VoidedRowBadge voidedAt={entry.voided_at} />
+          </span>
+        ),
+      },
       { key: "debit_total_cents", label: "Debits", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (entry) => `$${((entry.debit_total_cents ?? 0) / 100).toFixed(2)}` },
       { key: "credit_total_cents", label: "Credits", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (entry) => `$${((entry.credit_total_cents ?? 0) / 100).toFixed(2)}` },
       {
@@ -312,6 +327,7 @@ export function ManualJEListPage() {
         columns={columns}
         rows={pageRows}
         rowKey={(entry) => entry.id}
+        rowClassName={(entry) => voidedRowClassName(entry.voided_at)}
         loading={entriesQuery.isPending || (entriesQuery.isFetching && pageRows.length === 0)}
         onRowClick={(entry) => navigate(`/accounting/journal-entries/${entry.id}`)}
         filterBar={filterBar}

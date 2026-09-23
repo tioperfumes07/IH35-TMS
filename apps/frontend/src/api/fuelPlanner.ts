@@ -204,6 +204,9 @@ export type FuelTransactionListItem = {
   load_number: string | null;
   vendor_id: string | null;
   vendor_name: string | null;
+  /** R-102-B item 2 — fuel.fuel_transactions.voided_at/void_reason (R-102.1-A, migration 202614310100). */
+  voided_at?: string | null;
+  void_reason?: string | null;
 };
 
 export type FuelTransactionListResponse = {

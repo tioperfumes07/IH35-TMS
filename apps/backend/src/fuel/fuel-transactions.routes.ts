@@ -216,7 +216,9 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
             ft.source,
             ft.load_required,
             ft.load_exemption_reason,
-            ft.created_at
+            ft.created_at,
+            ft.voided_at,
+            ft.void_reason
           FROM fuel.fuel_transactions ft
           -- Entity-scope the joins to the SAME company as the transaction (defense in depth: a
           -- load_id/driver_id/unit_id should never point cross-company, but never trust that silently).
@@ -268,6 +270,11 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
           load_exemption_reason: row.load_exemption_reason,
           purchased_at: row.purchased_at,
           created_at: row.created_at,
+          // R-102-B item 2 ("EVERY LIST ROW") — fuel.fuel_transactions gained voided_at/void_reason/
+          // voided_by_user_id via R-102.1-A (migration 202614310100); nothing writes them yet
+          // (0 rows live), but the list must be ready to render one the day a writer does.
+          voided_at: row.voided_at,
+          void_reason: row.void_reason,
         })),
         total: Number((countRes.rows[0] as { total?: number } | undefined)?.total ?? 0),
       };
