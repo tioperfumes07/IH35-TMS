@@ -1665,3 +1665,81 @@ arrival/departure — still mine, still P0, unstarted this round; ROUND 118/119'
 driver-bill split and dispatcher confirmation stay correctly parked on it).
 
 — CC-1
+
+## ROUND 125-129 — the missing reversal callers: fuel, driver_reimbursement, faro_intercompany_leg,
+## NULL-source JEs, draft/proforma invoices, the 122 loads. PR #22437, CI in progress.
+
+Built, tsc-clean, live-rehearsed against a fresh Neon branch cloned off production
+(`br-lingering-surf-ak6vl591`) before touching production itself. Not a 7th engine anywhere —
+every new caller is engine #1 (`postVoidReversal`) or engine #6 (`reverseJournalEntryNoFlip`) used
+directly, exactly as both already accept any typed entity / any posted JE id.
+
+**Fuel ($501,511.22, 585 JEs) — the real finding, not assumed.** Both the E10 runner's bare-JE-id
+fallback AND the Lead's own "postVoidReversal already releases the bank match" description turn out
+to need one more precision: `reverseJournalEntryNoFlip` alone calls `postVoidReversal` with
+`entityType:'journal_entry', entityId:<the JE's own id>` — that entityId is what
+`unmatchBankTransactionsForVoid`'s FORWARD check (`linked_entity_id = entityId`) matches against, so
+a bare-JE-id reversal can NEVER release a fuel bank match (it's matching the wrong id). Fixed by
+adding `'fuel_event'`/`'driver_reimbursement'` to `VoidableEntityType` (void.service.ts) and calling
+`postVoidReversal` DIRECTLY with the fuel_transaction's/reimbursement's own id — one call does the GL
+reversal AND the bank-match release correctly. Verified this distinction by reading
+`unmatchBankTransactionsForVoid`+`postVoidReversal`+`readOriginalGlPostings` directly, not assumed.
+Wired into `e10-void-runner-01-usmca.ts` (Phase 5/5b) and into a new governance executor
+(`executeFuelTransaction`, `void-cancel-executors.ts`) registered as `entity_type='fuel_transaction'`
+and wired into `dispatch/cancellation.service.ts`'s load-cancel cascade (VOID-CASCADE-FUEL, which
+supersedes ROUND 118 Defect 4's earlier "fuel is N/A" stance — the physical purchase and its bank
+transaction stay untouched; the accounting document is a separate record and now voids like any
+other load-sourced expense). The header write goes through `stampDocumentVoided` only, never a hand
+UPDATE — `fuel_transactions.voided_at` has a zero-tolerance named-writer allowlist
+(`verify-void-stamp-columns.mjs`) and `executeFuelTransaction` respects it.
+
+**ROUND 129 cross-check:** the Lead's message named `accounting.transaction_source_links` as the
+linkage to use. Checked live on production: `transaction_source_links` and
+`journal_entry_postings.source_transaction_type='fuel_event'` resolve the EXACT SAME live-fuel-JE
+set (541 vs 541, exact parity) — no coverage gap, so the existing code was extended in place inside
+`e10-void-runner-01-usmca.ts` (which already had every shared helper this needed) rather than
+rebuilt as a separate `e10-void-runner-02-fuel-usmca.ts`.
+
+**driver_reimbursement (67)** — same shape exactly, `entityType='driver_reimbursement'`.
+
+**faro_intercompany_leg / driver_advance / faro_reserve_close / bank_categorization (8+6+1+1)** —
+none is a `VoidDocumentFamily` member (no document table with void columns exists for them);
+inventing one would be the exact guess this codebase's law forbids. Reversed via engine #6 directly
+on their JE id, GL only, no stamp, named explicitly (same reasoning already established for
+settlements/driver_bills in Phase 1).
+
+**The 8 NULL-source JEs ($53,030)** — ROUND 125/126 said characterize-only; ROUND 128 (owner, final:
+"EVERYTHING IS VOIDED") explicitly superseded that for this group: "reverse them by JE id directly,
+and report what they were." Characterized first (all 8 are `Revrec Event 1 earn — load NNNNN [uuid]`
+memos whose latch row is gone or already inactive), then reversed via engine #6 on the JE id the
+characterization query itself already resolved. No stamp — no verified load linkage for these
+specific 8 confirmed here; Phase 7 re-checks each load's own linkage fresh.
+
+**5 draft/proforma invoices** — live-verified 0 posted JE rows exist for any of them (never
+guessed); direct `stampDocumentVoided`, nothing to reverse.
+
+**122 loads** — new Phase 7: `soft_deleted_at` + `stampDocumentVoided(family='load')` in one
+transaction, but ONLY after `loadHasLiveLinkedJes` (ROUND 117's own five-column test, reused not
+re-derived) confirms the load's ledger is fully dead. A load still linked to a live JE is skipped
+and counted, never forced — the loop naturally catches it on a later pass.
+
+**Live rehearsal proof (real, not projected):** dry-run candidate counts matched the Lead's own live
+measurement exactly (585/67/8/6/1/1/8). `--execute` run against the rehearsal branch: 201/585 fuel +
+9/61 driver_reimbursement reversed+stamped so far (still running as of this report — 585+ sequential
+transactions takes real wall-clock time). Spot-checked a reversed fuel_transaction directly: original
+JE stays `status='posted'` (correctly never flipped), `reversed_by_je_id` populated, the
+fuel_transaction carries `voided_at`/`void_reason`/`voided_by_user_id` with the correct actor.
+**`banking.bank_transactions` (USMCA-scoped) held at exactly 1,133 throughout** — confirmed by direct
+count after 200+ reversals. The required invariant is holding, live.
+
+**Division of labor per ROUND 128/129:** this PR is the CALLER build. CC-3 runs it against
+production (`br-fancy-credit-akjnd07a`) with standing authorization the moment it merges. I have not
+run `--execute` against production myself in this PR — only against the disposable rehearsal branch,
+per this script's own "NEVER against production [without rehearsal]" header law.
+
+**STOP WRITER** (mdata.load_stops actual arrival/departure + facility_name/leg_miles backfill from
+the owner's feed_input.json) is drafted but paused mid-build in its own worktree
+(`cc1-round124-stopwriter-*`, branch `cc-1/round124-stop-writer-facility-legmiles`) — I dropped it
+to answer ROUND 125 the moment it arrived, per priority. Resuming once the void-to-zero work lands.
+
+— CC-1
