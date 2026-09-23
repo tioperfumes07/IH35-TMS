@@ -82,12 +82,35 @@ type BookLoadStop = {
   stop_type: "pickup" | "delivery" | "border";
   sequence_number: number;
   location_id?: string;
+  // E14/E6 (Lead ruling, 2026-09-22): the free-text consignee/facility name as printed on the
+  // source document -- independent of location_id, which is an optional FK into the
+  // mdata.locations catalog and is frequently unset. `company_name` above predates this column
+  // (migration 202614250000) and was declared but never wired to any INSERT -- dead since it was
+  // added; facility_name is the real, wired field going forward. Callers should prefer
+  // facility_name; company_name is kept only so an existing caller that already sets it doesn't
+  // silently lose data -- see the INSERT below, which falls back to company_name when
+  // facility_name is absent.
+  facility_name?: string;
   company_name?: string;
   city?: string;
   state?: string;
   country?: string;
   address_line1?: string;
+  // Per-leg miles (prior stop -> this stop), as printed on the source document. Not the load
+  // total -- mdata.loads.miles_practical/loaded_miles/miles_deadhead remain the per-load
+  // aggregates.
+  leg_miles?: number;
   scheduled_arrival_at?: string;
+  // Round 84 P0 (Lead, 2026-09-22): "a stop fed with a city and no consignee is not done" --
+  // and, more urgently, Cursor's I2 (#22313) measured 21 of 22 delivered-no-invoice loads
+  // ($82,587.00) have NO delivery evidence because their fed stops never stamped actuals at
+  // all. finalActiveDeliveryDepartureAt (revrec-delivery-posting/poster.service.ts) reads
+  // mdata.load_stops.actual_departure_at directly -- a stop written without it is invisible to
+  // the revenue-recognition gate no matter how complete every other field is. Only meaningful
+  // in mode='historical_backfill' (the settlement-refeed feeder knows real actuals from the
+  // source document at creation time); a live_feed stop has no actual yet by definition.
+  actual_arrival_at?: string;
+  actual_departure_at?: string;
   time_window_type?: "appointment" | "open_window" | "select_hours" | "refused" | "first_come_first_serve" | "drop_window";
   pickup_time_type_id?: string | null;
   appointment_start_at?: string;
@@ -2905,20 +2928,30 @@ export async function createLoadWithFullSideEffects(
 
     for (const stop of input.stops) {
       const tw = normalizeStopTimeWindow(stop.time_window_type);
+      // Round 84 P0: actual_arrival_at/actual_departure_at are ONLY ever written here in
+      // historical_backfill mode -- a live_feed stop has no real actual yet by definition, and
+      // writing one would fabricate delivery evidence that never happened. Same reasoning as
+      // every other two-case gate in this function: undeclared/live_feed never gets the
+      // historical-only behavior.
+      const isBackfill = source === "historical_backfill";
+      const actualArrivalAt = isBackfill ? stop.actual_arrival_at ?? null : null;
+      const actualDepartureAt = isBackfill ? stop.actual_departure_at ?? null : null;
       await client.query(
         `
           INSERT INTO mdata.load_stops (
-            load_id, sequence_number, stop_type, location_id, address_line1, city, state, country, scheduled_arrival_at, status,
+            load_id, sequence_number, stop_type, location_id, facility_name, address_line1, city, state, country, scheduled_arrival_at, status,
             time_window_type, pickup_time_type_id, appointment_start_at, appointment_end_at, lumper_required, lumper_provider_id, lumper_paid_by, lumper_amount_cents, is_tarp_stop, tarp_count, stop_notes,
-            site_contact_name, site_contact_phone, gate_dock_text, postal_code, latitude, longitude
+            site_contact_name, site_contact_phone, gate_dock_text, postal_code, latitude, longitude, leg_miles,
+            actual_arrival_at, actual_departure_at, actual_arrival_source, actual_departure_source
           )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending',$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending',$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32)
         `,
         [
           load.id,
           stop.sequence_number,
           stop.stop_type,
           stop.location_id ?? null,
+          stop.facility_name ?? stop.company_name ?? null,
           stop.address_line1 ?? null,
           stop.city ?? null,
           stop.state ?? null,
@@ -2941,6 +2974,11 @@ export async function createLoadWithFullSideEffects(
           stop.postal_code ?? null,
           stop.latitude ?? null,
           stop.longitude ?? null,
+          stop.leg_miles ?? null,
+          actualArrivalAt,
+          actualDepartureAt,
+          actualArrivalAt ? "manual" : null,
+          actualDepartureAt ? "manual" : null,
         ]
       );
     }
