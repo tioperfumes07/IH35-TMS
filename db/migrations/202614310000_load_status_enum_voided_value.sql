@@ -1,0 +1,34 @@
+-- R-102.1-A — restore mdata.load_status_enum's missing 'voided' member.
+--
+-- WHY THIS FILE CONTAINS NOTHING ELSE. This is the whole point, not tidiness.
+-- 202612140000 already documented the exact landmine this file exists to avoid: ALTER TYPE ...
+-- ADD VALUE run inside a transaction that ALSO does other DDL rolls the enum addition back with
+-- any later failure in that SAME transaction -- and the migration ledger still reads "applied,"
+-- because the ledger row is written by a later statement in a transaction that, from Postgres's
+-- point of view, never committed the ADD VALUE either. A ledger row saying "applied" is not
+-- proof. So: this migration does ONE thing. No table, no column, no index, no seed. There is
+-- nothing here that can fail and roll the ADD VALUE back with it. Do not add anything to this
+-- file -- put it in 202614310100 (the void-stamp columns migration, claimed alongside this one).
+--
+-- NO EXPLICIT BEGIN/COMMIT, deliberately -- same reasoning as 202612140000. scripts/db-migrate.mjs
+-- wraps a file without an explicit transaction in its own; PostgreSQL permits ALTER TYPE ... ADD
+-- VALUE inside a transaction block provided the new value is not USED in that same transaction --
+-- and nothing here uses it.
+--
+-- WHAT THIS UNBLOCKS. Owner's standing ruling: "FOR FUTURE REFERENCE YES AL SHOULD STATE VOIDED."
+-- stampDocumentVoided() (apps/backend/src/accounting/void-document-stamp.service.ts, this same
+-- round) writes status='voided' on every document family that carries a status column --
+-- including mdata.loads. Without this label, that UPDATE throws 22P02 (invalid input value for
+-- enum load_status_enum) and the whole stamp call fails on loads specifically, even though the
+-- three void-stamp columns themselves (202614310100) exist and are otherwise correct.
+--
+-- IDEMPOTENT: ADD VALUE IF NOT EXISTS is a no-op when the label is already present, so a re-run
+-- and a from-scratch CI database both land in the same state.
+--
+-- Measured live before this migration, 2026-09-23, br-fancy-credit-akjnd07a: mdata.load_status_enum
+-- has 20 labels (draft, booked, planned, assigned, dispatched, at_pickup, in_transit, at_delivery,
+-- delivered, invoiced, paid, closed, cancelled, unassigned, assigned_not_dispatched,
+-- delivered_pending_docs, completed_docs_received, abandoned, driver_walkoff, driver_no_show) --
+-- 'voided' is not among them.
+
+ALTER TYPE mdata.load_status_enum ADD VALUE IF NOT EXISTS 'voided';
