@@ -1743,3 +1743,62 @@ the owner's feed_input.json) is drafted but paused mid-build in its own worktree
 to answer ROUND 125 the moment it arrived, per priority. Resuming once the void-to-zero work lands.
 
 — CC-1
+
+## P0 — REAL PRODUCTION MONEY MISSTATEMENT FOUND. Fixed. 130 rows need a remediation ruling.
+
+**This is the most severe finding of the session. Confirmed on live production, not rehearsal, not
+projected.** PR #22440 has the fix and a guard; requesting a ruling below.
+
+**What happened:** `postVoidReversal`'s `readOriginalGlPostings` (void.service.ts, pre-existing code,
+not written by me or in #22437) pulls every journal entry carrying a posting tagged a given
+`(source_transaction_type, source_transaction_id)` — with no filter excluding JEs that were
+themselves already reversed. Live-measured: 464 of 624 USMCA `fuel.fuel_transactions` have 2, 3, or 4
+distinct original JEs sharing the same `(source_transaction_type, source_transaction_id)` pair — the
+**common** case for fuel, not an edge case. Any document in that shape which had already had *some*
+but not all of its original JEs reversed by an earlier call got those already-reversed JEs' postings
+pulled straight back in and reversed **a second time** on the next call — a real, non-zero GL
+misstatement, not a rounding artifact.
+
+**Confirmed on production:** of the 222 USMCA `fuel_transactions` already stamped `voided_at` on
+`br-fancy-credit-akjnd07a` before this fix, **130 carry a non-zero net GL balance across their
+combined original+reversal postings — $72,676.56 total absolute misstatement.** Direct proof on one
+real example: the buggy query returned 2 already-fully-reversed JEs as still-eligible reversal
+candidates; the fixed query correctly returns 0.
+
+**Scope check, done live before reporting:** `driver_reimbursement` is NOT affected by the actual
+corruption — all 67 USMCA driver_reimbursements have exactly 1 original JE each, so the ambiguity
+never triggers. `faro_intercompany_leg`/`driver_advance`/`faro_reserve_close`/`bank_categorization`
+and the NULL-source JEs route through `reverseJournalEntryNoFlip`'s OTHER, JE-id-keyed branch of
+`readOriginalGlPostings`, which was never exposed to this bug. Draft/proforma invoices and loads
+never call `postVoidReversal` at all. **Only fuel is confirmed hit.**
+
+**Fix (PR #22440):** the candidate-JE subquery now joins to `accounting.journal_entries` and excludes
+any JE that is itself already reversed (`status='posted' AND voided_at IS NULL AND reversed_by_je_id
+IS NULL AND reverses_je_id IS NULL` — the same 4-column liveness predicate already used everywhere
+else in this codebase). Live before/after proof in the PR. New guard
+(`verify-no-double-reversed-fuel-postings.mjs`) zero-tolerance above a named 130-row pre-fix baseline
+— it can only shrink, never grow, and fails immediately on any NEW occurrence.
+
+**What I did NOT do:** remediate the 130 already-corrupted rows. Fixing live, already-posted GL data
+needs a correcting-entry approach (a third, net-balancing entry per corrupted row, or some other
+method) and that is a decision for the owner, not something a coder decides unilaterally — matching
+this session's own standing law on money remediation. **Requesting a ruling on remediation approach
+for the 130.**
+
+**Also named, not fixed (lower severity, real):** the same function's `reversed_by_je_id`
+header-linkage write (a separate `LIMIT 2` + `rows.length===1` guard) silently no-ops whenever a
+document has more than one original JE, even when they're all genuinely live and correctly reversed
+together — this is bookkeeping/reporting staleness (it can make a correctly-reversed document still
+*look* live to a header-only query), not a money-correctness issue, and is NOT fixed in this PR. Named
+so it isn't mistaken for resolved.
+
+**Timeline, for the record:** discovered via the ROUND 125-129 rehearsal (never touched production)
+exactly as rehearsal is for. Cross-checked against production the moment the rehearsal surfaced it —
+found 222 already-voided, 130 already-corrupted, meaning something (Cursor, per ROUND 128's own
+instruction to keep running the loop) had already executed fuel reversals against production before I
+finished the rehearsal. Alerted CC-3 directly (SendMessage, faster than the PR/merge pipeline) the
+moment I confirmed real production impact, before writing this report. CC-3 confirmed not running fuel
+themselves, confirmed the count had stopped climbing, and is surfacing this to Jorge directly in their
+own conversation as well — redundant escalation, deliberately, given the severity.
+
+— CC-1
