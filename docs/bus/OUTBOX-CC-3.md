@@ -1953,3 +1953,81 @@ REMAINING (not closed, named for whoever picks this up next):
 
 Standing: not idle, holding for next assignment / continuing open items above as building/proving
 only, non-production branch, per the owner's explicit stop on production purge execution.
+
+## 2026-09-23 (Round 94) — your four: 1 done+proved, 1 explained (not a bug), 1 real bug found+fixed, 1 own mistake owned
+
+Fuel (createExpenseFromFuelTransaction, #22373) landed while I was independently mid-build on the
+same finding — discarded my duplicate (historical-fuel-expense-backfill.service.ts, never
+committed, never pushed) rather than create the split-brain-writer defect this codebase's own
+docstrings warn against. One real gap worth relaying: their document is written `status='draft'`
+with no `journal_entry_id` set, so it does not yet point at the live 'fuel_event' JE it is meant to
+retroactively document — whoever wires E10's fuel phase to it will still need to resolve that JE by
+source_transaction_id directly, same as I was doing. Not fighting for my version; naming the gap.
+
+**1. driver_finance.escrow_balances neutralization — DONE, proof matches the bar exactly.**
+Reused the EXACT existing writer shape from settlement-payrun-reverse.service.ts's own escrow-
+reversal step (UPDATE total_held_cents/current_balance_cents, INSERT escrow_ledger 'release' via
+signedEscrowLedgerAmountCents) — no new GL math, this table has no JE of its own. Ran on
+br-spring-dream-akk31fyt: 17 rows, $1,325.00 -> 17 rows, $0.00, nonzero=0. New file:
+scripts/ops/e10-void-runner-04-driver-finance-escrow-balances-neutralize.ts.
+
+**2. The $500.01 escrow_accounts residual — EXPLAINED, and it is NOT a posting gap.** Traced all
+3 nonzero accounts (ac9ea24d $0.01, c864a4bb $250.00, 88c04cf5 $250.00) down to their own
+escrow_postings rows directly: every one of the three nets to EXACTLY $0.00 on its own postings
+(verified per-escrow_account_id, not just per-holder -- no duplicate-account confusion). The
+column itself, `accounting.escrow_accounts.balance_cents`, disagrees with its own fully-reconciled
+posting history. audit.row_changes on these 3 rows shows the drift traces to a batch of UPDATEs at
+the IDENTICAL millisecond timestamp `2026-09-02 04:24:58` across multiple accounts, attributed to
+no role/user (blank changed_by_role/changed_by_user_id -- not an "Owner" settlement action). No
+migration or live route directly UPDATEs balance_cents outside the posting trigger (grepped). This
+predates all of this month's E10/purge work. Per the standing "QBO 2023-2025 figures still moving"
+guidance (Martin's reconciliation), this fits the known pattern of in-flight reconciliation
+activity and is NOT a new defect. Inserting more mirror postings against these 3 accounts would be
+WRONG -- their ledger already nets to zero; adding more would create fictitious postings to force
+a column that's already the one that's actually wrong. Recommend: flag to whoever owns the
+2026-09-02 batch event (not named here since I could not identify the actor) rather than "fix" via
+E10.
+
+**3. Revrec 'earn' balance-check refusals — the updated_at bug is confirmed fixed. The "137
+debits=0" errors I generated THIS pass are MY OWN mistake, not a real finding, and I'm not
+reporting them as one.** I ran the full runner --execute TWICE, overlapping, against the SAME
+branch (b75riqtr6 started, then b2pduog8y started before it finished) -- two mutating instances
+racing the same latch rows. Direct evidence: the JE named in one "not balanced" error
+(cf64e515-...) turned out to be a REVERSAL-JE HEADER MY OWN SCRIPT HAD JUST CREATED moments
+earlier for a DIFFERENT latch, with ZERO posting lines and a broken reverses_je_id -- an orphan
+from the race, not an original 'earn' posting. count: 274 orphaned "Reversal of journal entry..."
+JE headers with zero posting lines now exist on br-spring-dream-akk31fyt (proving-ground only,
+never production -- inconsequential in real terms, but real, and I own it: never run two instances
+of a mutating ops script against the same branch concurrently again). A clean, single-instance
+third run converged to 0 active revrec latches (both 'earn' and 'bill') -- the target state is
+reached, but I cannot vouch for the path, so I am not claiming the balance-check-refusal question
+is answered. Recommend: a genuinely clean re-run on a FRESH branch (this one's now got 274 junk
+rows) before trusting any revrec balance-check finding as real. Also surfaced, not chased further
+given the above: PHASE 3's invoice reversal on this same run hit a new "No posted batch found to
+reverse" error on 70 of 77 invoices -- may be a further symptom of the same race, not verified.
+
+**4. 0 of 89 USMCA driver_settlements carry a posted GL run — WRONG, self-corrected. Real bug
+found in the merged E10 runner (PR #22363) and fixed.** `driver_finance.driver_settlement_gl_runs`
+(the table Phase 1 of the runner queries) has 0 rows for USMCA -- confirmed -- but that table
+belongs to the BILL-PAYMENT poster (reverseSettlementBillPayment's own mechanism), which USMCA has
+never used. USMCA's real 89 settlements post through closeSettlementPayRun
+(settlement-payrun-close.service.ts), tracked in `driver_finance.payrun_gl_runs`: **36 posted, 16
+void, 37 never posted** (measured live). settlement-payrun-reverse.service.ts's own header
+independently confirms this exact gap in its own words -- it was BUILT to be that missing reverse
+counterpart and was simply never wired into E10. Not a 7th engine: it delegates the GL reversal
+whole to reverseJournalEntryNoFlip (#6) and the escrow reversal to recordEscrowPostingOnly, the
+same way reverseSettlementBillPayment (#4) is itself an orchestrator, not a primitive. Added Phase
+1b to e10-void-runner-01-usmca.ts calling reverseSettlementPayRun for the payrun_gl_runs-posted
+settlements; Phase 1 (bill-payment) stays as defense-in-depth. LIVE PROOF: dry-run before the fix
+showed 0 candidates (the bug); after the fix, 36; executed, settlements+driver_bills:
+reversed=36 already_reversed=0 errors=0.
+
+REMAINING, unchanged or newly named: fuel_transactions reversal path now belongs to #22373's
+follow-up wiring (not mine). $500.01 escrow_accounts residual explained, not a defect, named to
+whoever owns the 2026-09-02 batch event. Revrec balance-check question genuinely still open --
+needs a clean re-run on a fresh branch, not this one. The new "No posted batch found to reverse"
+invoice error is unverified, possibly race-contaminated, named not asserted. br-spring-dream-akk31fyt
+now carries 274 orphaned reversal-JE-header rows from my own concurrency mistake -- proving ground
+only, never production, but real and owned.
+
+— CC-3
