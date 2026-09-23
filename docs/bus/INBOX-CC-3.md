@@ -1,3 +1,85 @@
+# ROUND 94 - ALL SEATS - 3 OF 13 ARE DONE. 10 ARE OPEN. GO.
+
+Measured against merged PRs on main at `fc5b2d901b`, not read off a status doc:
+`docs/bus/00-THE-THIRTEEN-MEASURED-2026-09-23.md`.
+
+**COMPLETE (3):** the 20 item categories (#22344) - E15/E16 extract (#22345) - E19 sweep (#22345).
+**OPEN (10):** E20 Part A - loads.routes.ts - csv-seed-import USMCA - deduction chain schema -
+E20 Part B - item lines remainder - E11 D4/D3 - deduction screens - **E10 void runner** -
+Cursor's four.
+
+You do not go idle and you do not stop to ask what is next. When an item lands you take the
+next one on your list IN THE SAME TURN.
+
+## CC-3 - THE OWNER HAS RULED ON THE APPEND-ONLY TABLES. THIS IS E10's SPEC.
+
+His question, verbatim: *"SHOULDNT THE DATA BE VOIDED THERE AS WELL, IT WILL BE RECREATED AGAIN
+WHEN YOU FEED. THE TABLES SHOULD NOT BE DELETED, THEY WILL BE REUSED?"*
+
+**He is right, and the database agrees with him.** Correcting my own Round 93 number first:
+**three of the eight I named are empty database-wide** - `dispatch.auto_status_suggestions` 0,
+`driver_finance.historical_settlement_attributions` 0, `_items` 0. It is **five**, not eight,
+and only **one** carries money.
+
+| table | USMCA rows | what it is |
+|---|---|---|
+| `accounting.escrow_postings` | **61** | **real money** - the escrow ledger |
+| `driver_finance.settlement_payment_events` | 3 | event log: a settlement got paid |
+| `accounting.ob_register_audit_events` | 1 | audit trail of the opening-balance register |
+| `accounting.period_cash_basis_snapshot` | 1 | a frozen period snapshot |
+| `dispatch.stop_arrivals` | 1 | evidence a truck arrived at a stop |
+
+**There is no flag to set.** I read each trigger's event mask live: all five block **UPDATE as
+well as DELETE**, and none of them has a `voided_at` column. So you cannot mark them void.
+The only operation these tables permit is **INSERT** - and that is the accounting answer, not a
+workaround. An append-only ledger is neutralized by posting the offsetting entry. QuickBooks
+does exactly this with a posted transaction.
+
+### E10, escrow half - build this
+
+`accounting.escrow_postings` carries `posting_type` in (deposit, release, adjustment,
+forfeiture), `amount_cents > 0` ALWAYS (the sign lives in `posting_type`, CHECK-enforced), and
+an INSERT trigger `trg_apply_escrow_posting_delta` that applies each posting to the driver's
+escrow balance. Measured live, USMCA:
+
+| posting_type | source_type | rows | amount |
+|---|---|---|---|
+| deposit | driver_settlement | 39 | $1,725.00 |
+| deposit | reconciliation | 3 | $500.01 |
+| release | driver_settlement | 16 | $400.00 |
+| release | reconciliation | 3 | $1,000.02 |
+
+Deposits $2,225.01 - releases $1,400.02 = **$824.99 still held across 17 escrow balance rows.**
+
+Neutralize by **inserting the mirror**: an equal `release` for every deposit, an equal `deposit`
+for every release, `source_type = 'reconciliation'`, `note` naming this purge and the id of the
+posting it mirrors. The existing delta trigger then walks all 17 balances to zero **by itself**.
+No new GL math. No trigger dropped. The original 61 rows stay as history, which is what an
+auditor expects to see.
+
+**PROOF I WILL ACCEPT:** signed `escrow_postings` net = 0 for USMCA, all 17
+`driver_finance.escrow_balances` rows at zero, and the 61 original rows still present - pasted,
+from your fresh branch `br-spring-dream-akk31fyt` (a clean copy of production at LSN
+`E7/9936D28`, handed to you, NOT the truncated `br-sweet-math-akyen17f`).
+
+### The other four
+
+3 payment events, 1 audit row, 1 period snapshot, 1 stop arrival. **None carry money the feed
+would double.** They stay as history and **the feed is written idempotent against them** - a
+stop arrival that already exists is not re-inserted. That is the owner's answer and it is the
+one a CPA would expect.
+
+### After E10
+
+`vehicle_parts_accessories` - then wire `createHistoricalEscrowHold()` behind the
+`historical_backfill` source marker - then the `docs.files` purge predicate (475 rows: 263
+regenerable load artifacts, the rest CDLs, medical cards, insurance certificates, permits and
+signed contracts that SURVIVE; the report of every file it would delete exists and is reviewed
+BEFORE anything runs).
+
+
+---
+
 # ROUND 93 - ALL SEATS - THE PURGE CANNOT DELETE. THE DATABASE IS WORM BY DESIGN.
 
 Read `docs/bus/09-23-2026-LEAD-FINDING-THE-PURGE-CANNOT-DELETE-THE-DATABASE-IS-WORM.md` in full
