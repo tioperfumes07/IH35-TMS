@@ -246,6 +246,9 @@ const STEPS = [
   // that had zero pre-existing writer; a named, frozen baseline covers the three that already had
   // established GL-aware void machinery. Live DB required, fails closed.
   ["verify-void-stamp-columns", "scripts/verify-void-stamp-columns.mjs"],
+  // ROUND 124 T4 (Lead): every submitted/advanced invoice must carry factor_profile_id -- the write
+  // paths resolved it and dropped it on the floor before this round; red-before-green proven live.
+  ["verify-invoice-factor-profile-linkage", "scripts/verify-invoice-factor-profile-linkage.mjs"],
   // ROUND 118/119 (Lead ruling): a cancelled load must leave no live money artifact behind it --
   // invoice/expense/vendor-bill/driver-bill/advance/settlement, checked against
   // dispatch/cancellation.service.ts's own cascade logic exactly. Baselined (shrink-only) against

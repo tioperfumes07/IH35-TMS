@@ -18,6 +18,8 @@ import {
 import { nextFactoringDisplayId } from "./display-id.js";
 import { syncLoadsForFactoringAdvance } from "../dispatch/load-billing-lifecycle.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope, INVOICE_PLEDGE_CENTS_SQL } from "./shared.js";
+import { getFactorForCustomer } from "../factoring/factor.service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 import { requireVoidCancelExecutorWired } from "../lib/authz/void-cancel-authz.js";
 
 const idParamsSchema = z.object({
@@ -522,18 +524,39 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
       const advanceId = String(insertRes.rows[0]?.id ?? "");
       if (!advanceId) return { code: 500 as const, error: "factoring_advance_create_failed" };
 
-      await client.query(
-        `
-          UPDATE accounting.invoices
-          SET factoring_advance_id = $2,
-              factoring_status = 'submitted',
-              updated_at = now(),
-              updated_by_user_id = $3
-          WHERE operating_company_id = $1::uuid
-            AND id = ANY($4::uuid[])
-        `,
-        [query.data.operating_company_id, advanceId, user.uuid, body.data.invoice_ids]
-      );
+      // T4 (ROUND 124): factor_profile_id was never written on this (manual batch-submit) path —
+      // the caller supplies a vendor_id (who gets paid), not a factoring.factor.id (the pricing
+      // profile invoices.factor_profile_id FKs to; that table has no vendor-linkage column, so a
+      // vendor_id cannot be mapped to it directly). Resolve the SAME way the auto-submit path
+      // already does (getFactorForCustomer — no new resolution logic), per invoice's own customer
+      // and as-of the business date, cached per customer since a batch can span customers. A
+      // customer genuinely unassigned as of today resolves to null — left NULL on the invoice,
+      // which is the correct value, not a defect (never invented).
+      const asOfSubmit = companyBusinessDate();
+      const factorIdByCustomer = new Map<string, string | null>();
+      for (const row of invoiceRes.rows as Array<Record<string, unknown>>) {
+        const customerId = String(row.customer_id);
+        if (factorIdByCustomer.has(customerId)) continue;
+        const factor = await getFactorForCustomer(query.data.operating_company_id, customerId, asOfSubmit, { client });
+        factorIdByCustomer.set(customerId, factor?.id ?? null);
+      }
+
+      for (const row of invoiceRes.rows as Array<Record<string, unknown>>) {
+        const factorProfileId = factorIdByCustomer.get(String(row.customer_id)) ?? null;
+        await client.query(
+          `
+            UPDATE accounting.invoices
+            SET factoring_advance_id = $2,
+                factoring_status = 'submitted',
+                factor_profile_id = $5,
+                updated_at = now(),
+                updated_by_user_id = $3
+            WHERE operating_company_id = $1::uuid
+              AND id = $4
+          `,
+          [query.data.operating_company_id, advanceId, user.uuid, row.id, factorProfileId]
+        );
+      }
 
       await appendCrudAudit(
         client,
