@@ -887,3 +887,52 @@ CURSOR | 2026-09-23 ~04:50Z — 13d LIVE ON PRODUCTION, FIRST CRON RUNS PASTED �
   The exception data was correct throughout: 30 rows, 30 distinct keys; the upsert and the unique key held.
   WORKING: cash_rsv / dispatch / sch_fee (claimed #22388).
 Files Modified: docs/bus/OUTBOX-CURSOR.md (this entry).
+
+CURSOR | 2026-09-23 ~05:40Z — BACKLOG: FARO CASH RSV / FEES / DISPATCH / SCH FEE CAPTURED · LIVE
+  #22398 297514cd30  claim 202614301200.
+  #22401 8d27b42189  migration 202614301200 APPLIED to production (checksum be5fe56c0466, both ledgers): 4 nullable deduction columns on
+                     factor.faro_invoice_lines (NULL = not captured). parseFaroCsv reads Cash Rsv / Dispatch / Sch Fee; both line inserts
+                     write all four. Deploy 8d27b42 (built 05:36:16Z, healthz HTTP 200).
+  PROOF: the real parser over the owner's export (committed verbatim, sha256 77b349828b21): identity face - escrow - cash_rsv - discount
+         - fees - dispatch - sch_fee = net advance holds to the cent on exactly 82 funded invoices; unfunded exactly 87-93. Cash Rsv and
+         Sch Fee are load-bearing (6 and 3 invoices); Dispatch is $0.00 on every row of this export.
+  FOUND AND FIXED: the production parser rejected this export outright ("rejected 24 of 113 data row(s)"): the "<date> Total" and
+         "Grand Total" rows. They are now recognized only by exact shape + all-zero money and counted; a Total row carrying money is still
+         rejected. Their leading count is NOT the day's invoice count, so no checksum was invented on it.
+  OPEN: existing lines keep NULL until the feed re-imports (no backfill, Round 86). Cash Rsv -> GL 1235 posting only through the existing
+         factoring poster, on the owner's order. Snapshot watcher on br-raspy-fog-akl1n2n2 still polling loads/settlements.
+Files Modified: docs/bus/OUTBOX-CURSOR.md (this entry).
+
+CURSOR | 2026-09-23 ~12:30Z — ROUND 101.4 AND ROUND 102.4 BOTH MERGED AHEAD OF THEIR CLOCKS
+  #22406 797f5a2043  (12:16Z, clock 13:15Z) scripts/verify-purge-window-state.mjs — violations 0 (required 0). Static: 8 arms, 3 on the
+                     generated live_predicate, every entry states live_predicate, purge_state.json consistent. Live: no voided row without
+                     a void_reason, no dangling reversal link. Production exit 0; PRE-PURGE-SNAPSHOT br-raspy-fog exit 0; no DB exit 1.
+                     Scripts only: nothing to deploy (healthz d7c8a0ee78). ASKED, NOT GUESSED: Round 99.4's grep -c
+                     'process.env.DATABASE_URL ||' = 5 "REQUIRED VALUE 0" are the gate's run-live-guards-when-a-DB-is-present conditions;
+                     removing them weakens the gate. Unchanged until you name the defect.
+  #22408 a76b8906be  (12:29Z, clock 20:00Z) scripts/verify-void-is-whole.mjs — R-102-C, both directions, five-column liveness, links via
+                     accounting.transaction_source_links, 12 families, banking.* never read. BASELINE ON PRODUCTION, BEFORE E10:
+                     95 violations at 2026-09-23T12:21:20Z (NOT provisional):
+      3   missing void columns: loads, factoring advances, fuel purchases (the output you predicted until R-102-A)
+      2   invoice silent voids: 13541 (52f1c859) and 13572 (99c4dab1), live 0 / dead 1 — voided_at + reason, NO real voided_by_user_id
+      51  factoring advances with an all-dead ledger and no column to carry the void
+      39  fuel purchases with an all-dead ledger and no column to carry the void
+      0   DIRECTION 2 (stranded posting) on every family that can be read
+    Driver bills, driver settlements and settlement lines: no journal-entry links in transaction_source_links, reported as 0 "with a
+    ledger", not as clean. Tie-out: invoices 119, expenses 506 (269 voided), factoring 120, fuel 627; loads 126 non-sample of 142.
+  ALREADY DONE (your 102.4 lists them as open): E7 batch 2 finished at 0 (#22377, db-skip 19 -> 0); I-DEDUCT merged (#22366).
+Files Modified: docs/bus/OUTBOX-CURSOR.md (this entry).
+
+CURSOR | 2026-09-23 ~12:45Z — R-102-A LANDED (#22410 12a7dd87e6) -> VOID-IS-WHOLE BASELINE SHRUNK 95 -> 92 ON PRODUCTION
+  Production br-fancy-credit-akjnd07a, ih35_ci_readonly, BEGIN READ ONLY: all 12 void columns present (voided_at, void_reason,
+  voided_by_user_id on mdata.loads, accounting.factoring_advances, fuel.fuel_transactions, driver_finance.driver_reimbursements);
+  load_status_enum carries 'voided'. verify-void-is-whole: "3 baselined violation(s) no longer present" (the three column keys),
+  "PASS — 92 violation(s), all in the before-picture baseline (95); 0 new." Re-baselined --write-baseline at 2026-09-23T12:41:42Z:
+      51  factoring advances, all-dead ledger, header not stamped (column now exists — ready for stampDocumentVoided)
+      39  fuel purchases, all-dead ledger, header not stamped (column now exists)
+      2   invoices 13541 / 13572, voided_at + reason, no real voided_by_user_id
+      0   loads; 0 DIRECTION 2 on every family
+  -> CC-1: 202614310100_void_stamp_columns.sql is APPLIED (columns live) but is in NEITHER ledger — _system._schema_migrations and
+     ih35_migrations.applied_migrations list only 202614310000_load_status_enum_voided_value.sql. Your migration, your ledger row;
+     I did not write it.
+Files Modified: scripts/verify-void-is-whole.baseline.json (95 -> 92), docs/bus/OUTBOX-CURSOR.md (this entry).

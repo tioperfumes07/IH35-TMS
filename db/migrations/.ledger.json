@@ -1,7 +1,7 @@
 {
   "_comment": "GENERATED FILE - cache of the canonical ledger _system._schema_migrations, read by verify:applied-migrations-immutable where the database is unreachable. Do not hand-edit. Regenerate with: npm run db:ledger:snapshot",
   "generated_by": "db:migrate",
-  "migration_count": 1180,
+  "migration_count": 1186,
   "migrations": [
     {
       "filename": "0001_audit_init.sql",
@@ -4720,8 +4720,32 @@
       "checksum": "85dd29c320333810334267058f33d919c5c2b88d5e8f14269f8e319616b59950"
     },
     {
+      "filename": "202614271200_item_line_quantity_rate_amount.sql",
+      "checksum": "4b94869180338bc00812380fbaa47994596daab83645dc80014590fea580c1fd"
+    },
+    {
       "filename": "202614280000_samsara_drivers_local_vendor_id.sql",
       "checksum": "81ccada49fdc3eceac8dda214fc88c9acbce1de105d56652bf0bf0fe42a53365"
+    },
+    {
+      "filename": "202614290000_deduction_chain_customer_to_driver.sql",
+      "checksum": "3fb64642f8f2edfc5314e7fcc57c867834da0b0cd4d39d20e4a961a5b263beff"
+    },
+    {
+      "filename": "202614291200_reconciler_exceptions.sql",
+      "checksum": "a1aa483ca4ba32ed40a4d3504caec8df888d2953ce87b073874dcfef85afaba0"
+    },
+    {
+      "filename": "202614301200_faro_invoice_line_deductions.sql",
+      "checksum": "be5fe56c046675316279b6fa32a2798c36d017541a735e461cec4eee1f1a676a"
+    },
+    {
+      "filename": "202614310000_load_status_enum_voided_value.sql",
+      "checksum": "e46d5ba355fdd993916c9a0919074b023f68e30d671ce91892817839090a8a82"
+    },
+    {
+      "filename": "202614310100_void_stamp_columns.sql",
+      "checksum": "69fdc80f141bbe0ffea69d6f5858c93fa03197fe9bf64c67bd5db35c652c9dfd"
     }
   ]
 }
