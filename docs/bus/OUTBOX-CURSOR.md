@@ -902,3 +902,23 @@ CURSOR | 2026-09-23 ~05:40Z — BACKLOG: FARO CASH RSV / FEES / DISPATCH / SCH F
   OPEN: existing lines keep NULL until the feed re-imports (no backfill, Round 86). Cash Rsv -> GL 1235 posting only through the existing
          factoring poster, on the owner's order. Snapshot watcher on br-raspy-fog-akl1n2n2 still polling loads/settlements.
 Files Modified: docs/bus/OUTBOX-CURSOR.md (this entry).
+
+CURSOR | 2026-09-23 ~12:30Z — ROUND 101.4 AND ROUND 102.4 BOTH MERGED AHEAD OF THEIR CLOCKS
+  #22406 797f5a2043  (12:16Z, clock 13:15Z) scripts/verify-purge-window-state.mjs — violations 0 (required 0). Static: 8 arms, 3 on the
+                     generated live_predicate, every entry states live_predicate, purge_state.json consistent. Live: no voided row without
+                     a void_reason, no dangling reversal link. Production exit 0; PRE-PURGE-SNAPSHOT br-raspy-fog exit 0; no DB exit 1.
+                     Scripts only: nothing to deploy (healthz d7c8a0ee78). ASKED, NOT GUESSED: Round 99.4's grep -c
+                     'process.env.DATABASE_URL ||' = 5 "REQUIRED VALUE 0" are the gate's run-live-guards-when-a-DB-is-present conditions;
+                     removing them weakens the gate. Unchanged until you name the defect.
+  #22408 a76b8906be  (12:29Z, clock 20:00Z) scripts/verify-void-is-whole.mjs — R-102-C, both directions, five-column liveness, links via
+                     accounting.transaction_source_links, 12 families, banking.* never read. BASELINE ON PRODUCTION, BEFORE E10:
+                     95 violations at 2026-09-23T12:21:20Z (NOT provisional):
+      3   missing void columns: loads, factoring advances, fuel purchases (the output you predicted until R-102-A)
+      2   invoice silent voids: 13541 (52f1c859) and 13572 (99c4dab1), live 0 / dead 1 — voided_at + reason, NO real voided_by_user_id
+      51  factoring advances with an all-dead ledger and no column to carry the void
+      39  fuel purchases with an all-dead ledger and no column to carry the void
+      0   DIRECTION 2 (stranded posting) on every family that can be read
+    Driver bills, driver settlements and settlement lines: no journal-entry links in transaction_source_links, reported as 0 "with a
+    ledger", not as clean. Tie-out: invoices 119, expenses 506 (269 voided), factoring 120, fuel 627; loads 126 non-sample of 142.
+  ALREADY DONE (your 102.4 lists them as open): E7 batch 2 finished at 0 (#22377, db-skip 19 -> 0); I-DEDUCT merged (#22366).
+Files Modified: docs/bus/OUTBOX-CURSOR.md (this entry).
