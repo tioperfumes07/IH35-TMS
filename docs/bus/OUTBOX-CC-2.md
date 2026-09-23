@@ -5061,5 +5061,61 @@ nobody duplicates work, not because either needs to change.
 
 Moving to E11-D2 now (still measured only per your "FINISH ALL 13" doc -- D4/D3 not started).
 
+### ROUND 92/94 — E11-D2 live (#22350, sha f9f9ac6a7b), E11-D4 pushed (PR #22374), D3 re-verified live, E20 Part B next
+
+**E11-D2 — live, confirmed.** Dispatch board/Load list/Round Trips/Truck Planner
+(`mdata/loads.routes.ts`), Timeline/Loads Planner (`dispatch/planner.service.ts`), Today's
+Attention "In-flight loads running late" (`reports/library.routes.ts`) all now read the canonical
+`views.live_loads` exists-clause instead of a hardcoded status list. Live before/after, all three,
+same USMCA entity: 19->5, 21->5, 19->5 (matches the ruling's own proven 5/9 numbers). Merged.
+
+**E11-D4 — built, pushed, PR open: https://github.com/tioperfumes07/IH35-TMS/pull/22374 (branch
+`cc2-e11-d4-pre-settlement-board`, sha `e4e22166cd`).** Root cause: 10 open (still-accumulating)
+pre-settlements exist right now on USMCA; 7 of 10 have no load bookended yet. Dispatch's
+Pre-Settlements tab filtered to status IN ('presettle','acked','locked'), which excludes 'open'
+entirely -- the whole cohort rendered nowhere. New `OpenPreSettlementsPanel.tsx`, same read model
+DispatchBoard.tsx already fetches (`GET /pre-settlements/open-by-driver`), title naming exactly
+how many tours have no load; `PreSettlementsPanel.tsx` gets the same named-gap treatment for its
+own cohort. 6 new tests + real red-before-green proof, 13/13 green, 0 regressions.
+
+This one hit 8 pre-existing/rotted guards along the way -- none caused by this diff, every one
+confirmed unrelated by testing its pattern against `origin/main`'s own content or `git log`
+before touching anything, every one fixed at root cause (loosened a stale text-shape assumption
+to match real, better, already-merged code; bumped a documented staleness floor by exactly the
+amount this PR's own new leaf legitimately added; re-baselined two shrink-only debt registers
+that had fallen behind live reality from concurrent seats' merges) -- never silenced, never
+downgraded working code to fit a stale pattern. Full account, file-by-file, is in the commit body
+and `docs/bus/2026-09-23-LEAD-RULING-ROUND-94-CC2-LANE-CROSS-WAVE-B-CONNECTIVITY-GUARD.md`
+(4 CC-1-lane `scripts/verify-*.mjs` files under that grant). Main advanced 123 files mid-push;
+rebased once, one real (non-overlapping) conflict in the dead-schema baseline, resolved by
+keeping both sides' additions.
+
+Live-measured cohort this panel renders, same as the commit's own LIVE PROOF: 10 open
+pre-settlements, 3 with loads (S-2026-5807/5810/5811), 7 without
+(S-2026-5815/5816/5817/5818/5819/5820/5821).
+
+**D3 -- re-verified live, no new work needed.** `verify-load-costs-board-excludes-settled.mjs`
+(built #22311, earlier this session) is live and PASSING right now: TRANSP 0 leaked, TRK 0
+leaked, USMCA 0 leaked (5 active loads on the board; 94 settled-class loads with real cost
+correctly excluded, $77,787.25 total). The Load Costs board's own driver-pay register already
+shows loaded/empty miles x their real per-mile rates (SET-RATE law, pre-existing, confirmed by
+direct code read). I don't have a second named defect to point at on this board beyond what
+#22311 already fixed -- reporting it re-verified live rather than inventing UI work with no
+defect behind it.
+
+**Next, in order, no pause (per this round's explicit order): E20 Part B -> item-lines remainder
+(bill and invoice lines off `item_id/quantity/rate_cents/unit_of_measure`, migration
+202614271200, #22337) -> deduction screens (migration 202614290000, #22355, now unblocked).**
+E20 Part B is scoped against the real 4-endpoint contract from #22357 (`GET /samsara/profiles`,
+`GET /samsara/mapping-targets`, `POST /samsara/map`, `POST /samsara/unmap` -- confirmed distinct
+from the older `/vendor-mapping/*` system, no duplicate-work risk). Item-lines-remainder backend
+plumbing (bills.routes.ts/bills.service.ts item_id/quantity/rate_cents/unit_of_measure write
+path, reusing the qty x unit_cost the bill-create UI's Section B already captures and silently
+drops) is half-built and parked in a tagged `git stash` from earlier this session -- picked back
+up once E20 Part B ships. Invoice lines confirmed ALREADY fully wired (pre-existing
+quantity/unit_amount_cents/item_id, NOT NULL, InvoiceDetailPage.tsx already renders Qty/Unit) --
+no work needed there beyond the new nullable `unit_of_measure` sibling column, tracked in the
+dead-schema baseline for now.
+
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
