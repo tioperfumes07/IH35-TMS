@@ -1006,6 +1006,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-09-23",
       "purpose": "E20 Samsara mapping engine (Lead spec, 2026-09-23): integrations.samsara_drivers gains local_vendor_id (polymorphic target alongside the existing local_driver_id, CHECK at most one set -- an owner-operator paid as a vendor is not on driver payroll) + a partial index. Additive only, no backfill in this migration (measured live: 28 of 94 scalar mdata.drivers.samsara_driver_id values conflict with an existing local_driver_id mapping to a DIFFERENT driver row -- a real duplicate-driver-identity problem, not a schema gap; not silently resolved here)."
+    },
+    "202614291200": {
+      "claimed_by": "cursor",
+      "claimed_at": "2026-09-23",
+      "purpose": "13d reconciler backend half (ALL-13 cross, docs/bus/09-23-2026-LEAD-RULING-CURSOR-ALL-13-E9-RECONCILER-CROSS.md): reconciler.exceptions, one row per open invariant breach keyed by the stable exception key (invariant/entity_type/entity_id/field), first_seen_at / last_seen_at / resolved_at, written only by the reconciler cron. CREATE-only, FORCE RLS, operating_company_id scoped. Authored in Cursor hours (12-23 UTC)."
     }
   },
   "202613590001": {
