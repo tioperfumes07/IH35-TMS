@@ -518,6 +518,9 @@ jobs:
       - name: verify:feed-day-preflight-is-enforced
         run: node scripts/verify-feed-day-preflight-is-enforced.mjs
 
+      - name: verify:bank-undo-releases-every-match-column
+        run: node scripts/verify-bank-undo-releases-every-match-column.mjs
+
       - name: verify:migration-lane-band
         run: node scripts/verify-migration-lane-band.mjs
 

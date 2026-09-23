@@ -15,6 +15,7 @@ import {
   isManualBankTransaction,
   skipBankTransactionInvestigation,
   supersedePlaidPendingTransaction,
+  undoBankTransactionCategorization,
   updateBankTransactionDate,
   uploadBankStatementCsv,
   SERVER_FILTERABLE_TRANSACTION_TYPES,
@@ -378,6 +379,24 @@ function hasPersistedMatch(tx: PlaidBankTransaction) {
       tx.matched_transfer_id ||
       tx.matched_journal_entry_id,
   );
+}
+
+function looksExcludedTx(tx: PlaidBankTransaction) {
+  return (
+    String(tx.matched_kind ?? "").toLowerCase() === "excluded" ||
+    String(tx.notes ?? "").toLowerCase().includes("excluded from banking transactions view")
+  );
+}
+
+function looksCategorizedTx(tx: PlaidBankTransaction) {
+  return hasPersistedMatch(tx) || (tx.matched_kind != null && String(tx.matched_kind).toLowerCase() !== "excluded");
+}
+
+/** BANK-UNDO-01 — a row is Undo-eligible exactly when it's on the Categorized or Excluded bucket
+ *  (never For review — nothing to undo there). Single source of truth for both the tab-bucketing
+ *  above and the row-level Action column below, so they can never silently disagree. */
+function isUndoEligible(tx: PlaidBankTransaction) {
+  return looksExcludedTx(tx) || looksCategorizedTx(tx);
 }
 
 type ViewSettings = {
@@ -957,16 +976,10 @@ export function BankingTransactionsDesignView({
       excluded: [],
     };
     for (const tx of scopedRows) {
-      const looksExcluded =
-        String(tx.matched_kind ?? "").toLowerCase() === "excluded" ||
-        String(tx.notes ?? "").toLowerCase().includes("excluded from banking transactions view");
-      const looksCategorized =
-        hasPersistedMatch(tx) ||
-        (tx.matched_kind != null && String(tx.matched_kind).toLowerCase() !== "excluded");
       out.all.push(tx);
-      if (looksExcluded) {
+      if (looksExcludedTx(tx)) {
         out.excluded.push(tx);
-      } else if (looksCategorized) {
+      } else if (looksCategorizedTx(tx)) {
         out.categorized.push(tx);
       } else {
         out.for_review.push(tx);
@@ -1469,6 +1482,40 @@ export function BankingTransactionsDesignView({
     pushToast(ok === rows.length ? `Excluded ${ok} transaction(s).` : `Excluded ${ok} of ${rows.length}; some failed.`, ok > 0 ? "success" : "error");
     bulkSelection.clearSelection();
     onDataChanged();
+  }
+
+  // BANK-UNDO-01 — QBO parity: Undo returns a Categorized or Excluded row to For review, releasing
+  // every match/categorization column (and reversing the GL if any). Row-level and bulk share this
+  // one call — a row-level Undo is just a one-element selection.
+  async function undoCategorization(ids: string[]) {
+    if (ids.length === 0) {
+      pushToast("Select transactions to undo.", "error");
+      return;
+    }
+    try {
+      const result = await undoBankTransactionCategorization(companyId, ids);
+      const okCount = result.succeeded.length;
+      const failCount = result.failed.length;
+      if (failCount === 0) {
+        pushToast(`Undo complete — ${okCount} transaction(s) returned to For review.`, "success");
+      } else {
+        // Partial failure: name the actual reasons, never a blanket toast.
+        const reasons = [...new Set(result.failed.map((f) => f.reason))].slice(0, 3).join(", ");
+        pushToast(
+          `Undo: ${okCount} of ${ids.length} succeeded. ${failCount} failed (${reasons}${result.failed.length > 3 ? ", …" : ""}).`,
+          okCount > 0 ? "error" : "error"
+        );
+      }
+      bulkSelection.clearSelection();
+      onDataChanged();
+    } catch (error) {
+      pushToast(userFacingApiError(error, "Undo failed"), "error");
+    }
+  }
+
+  async function bulkUndo() {
+    const rows = selectedTableRows();
+    await undoCategorization(rows.map((tx) => tx.id));
   }
 
   // Bulk categorize (H3): real multi-select categorize-to-account via POST /banking/transactions/
@@ -2077,6 +2124,17 @@ export function BankingTransactionsDesignView({
                 >
                   Suggested
                 </button>
+              ) : null}
+              {/* BANK-UNDO-01 — QBO parity: row-level Undo on Categorized AND Excluded, releasing
+                  every match/categorization column (and reversing the GL if any) in one call. */}
+              {isUndoEligible(tx) ? (
+                <ActionButton
+                  className="h-7 px-2 text-xs"
+                  onClick={() => void undoCategorization([tx.id])}
+                  data-testid={`banking-undo-${tx.id}`}
+                >
+                  Undo
+                </ActionButton>
               ) : null}
               <ActionButton
                 className="h-7 px-2 text-[11px]"
@@ -3664,6 +3722,19 @@ export function BankingTransactionsDesignView({
             onClick: () => openBulkCategorize(),
           },
           { id: "exclude", label: "Exclude", onClick: () => void bulkExclude() },
+          // BANK-UNDO-01 — QBO parity bulk Undo, labelled with the count like the owner's own
+          // packet asked ("Undo 329"); applies to Categorized/Excluded rows only, same
+          // honestly-disabled-with-reason pattern the bulk Categorize action above already uses.
+          {
+            id: "undo",
+            label: `Undo ${bulkSelection.selectedIds.size}`,
+            disabled: activeReviewTab !== "categorized" && activeReviewTab !== "excluded",
+            title:
+              activeReviewTab !== "categorized" && activeReviewTab !== "excluded"
+                ? "Undo applies to Categorized or Excluded transactions only."
+                : "Return the selected transactions to For review, releasing every match/categorization and reversing any GL.",
+            onClick: () => void bulkUndo(),
+          },
           { id: "export", label: "Export Selected", onClick: () => bulkExport() },
         ])}
       />

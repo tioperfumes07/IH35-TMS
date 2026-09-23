@@ -870,6 +870,16 @@ export function categorizeTransactionsBulk(
   );
 }
 
+// BANK-UNDO-01 (owner, via the Lead) — QBO parity: Undo on Categorized/Excluded, row-level and
+// bulk. Releases every matched_*/categorization_* column, reverses the GL if any, never touches
+// the bank_transaction row's own amount/date/description/bank_account_id.
+export function undoBankTransactionCategorization(companyId: string, transactionIds: string[]) {
+  return apiRequest<{ succeeded: string[]; failed: Array<{ id: string; reason: string }> }>(
+    `/api/v1/banking/transactions/undo-categorization`,
+    { method: "POST", body: { operating_company_id: companyId, transaction_ids: transactionIds } }
+  );
+}
+
 /** Marks a bank transaction as an inter-account transfer (excludes it from cash-flow / bank-feed GL
  *  posting — see bank-feed-gl-posting.service.ts's own-transfer skip). Repointed to the REAL backend
  *  route `POST /api/v1/banking/transactions/:id/transfer` (categorization.routes.ts) whose body

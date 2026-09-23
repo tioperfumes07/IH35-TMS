@@ -30,6 +30,8 @@ import {
   assertBankTxnsNotInReconciledSession,
   ReconciledSessionLockedError,
 } from "./closed-session-immutability.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
+import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
 
 const transactionIdParamsSchema = z.object({
   id: z.string().uuid(),
@@ -117,6 +119,12 @@ const bulkCategorizeBodySchema = z.object({
   transaction_ids: z.array(z.string().uuid()).min(1).max(500),
   category_kind: z.string().trim().min(1).max(120),
   gl_account_id: z.string().uuid().optional(),
+});
+
+// BANK-UNDO-01 — same shape as bulk-categorize, single-row Undo is just a one-element array.
+const undoCategorizationBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  transaction_ids: z.array(z.string().uuid()).min(1).max(500),
 });
 
 const transferBodySchema = z.object({
@@ -1400,4 +1408,167 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       throw error;
     }
   });
+
+  // BANK-UNDO-01 (owner, via the Lead) — QBO parity: Banking > Categorized has an Undo on every row
+  // and a bulk Undo on the selection. This codebase had neither — grep for undo/uncategorize/unmatch/
+  // unlink/revert returned zero matches, live: 329 Dreamline Diesel Card + Relay Fuel Wallet rows
+  // matched to now-voided loads with no product path to release them. Per-row atomic: one row's
+  // failure never rolls back the rest. Never deletes/amends the bank_transaction row's own fields
+  // (amount/date/description/bank_account_id) — banking.bank_transactions is must_be_unchanged in
+  // the purge spec. audit.row_changes is written automatically by trg_audit_bank_transactions on
+  // every UPDATE (captures app.current_user_id, set by withCompanyScope/withCurrentUser) — no
+  // separate write needed for that half; appendCrudAudit below matches this file's own convention
+  // for the higher-level event feed every other mutation route in this file already writes.
+  app.post(
+    "/api/v1/banking/transactions/undo-categorization",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      const body = undoCategorizationBodySchema.safeParse(req.body ?? {});
+      if (!body.success) return validationError(reply, body.error);
+
+      const result = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
+        const succeeded: string[] = [];
+        const failed: Array<{ id: string; reason: string }> = [];
+
+        // AF-7 parity — the same money-control gate voidJournalEntry() checks before reversing a
+        // posted JE. Resolved once per batch (company-wide, not per-row) so an OFF entity refuses
+        // every JE-carrying row up front rather than partially reversing before hitting the gate.
+        const voidReversalEnabled = await isEnabled(client, "MONEY_CONTROL_VOID_REVERSAL_ENABLED", {
+          operating_company_id: body.data.operating_company_id,
+          user_uuid: user.uuid,
+        });
+
+        for (const id of body.data.transaction_ids) {
+          try {
+            try {
+              await assertBankTxnNotInReconciledSession(client, id, body.data.operating_company_id);
+            } catch (err) {
+              if (err instanceof ReconciledSessionLockedError) {
+                failed.push({ id, reason: err.code });
+                continue;
+              }
+              throw err;
+            }
+
+            const rowRes = await client.query(
+              `SELECT matched_journal_entry_id::text AS matched_journal_entry_id
+                 FROM banking.bank_transactions
+                WHERE id = $1 AND operating_company_id = $2::uuid
+                LIMIT 1 FOR UPDATE`,
+              [id, body.data.operating_company_id]
+            );
+            const row = rowRes.rows[0] as { matched_journal_entry_id: string | null } | undefined;
+            if (!row) {
+              failed.push({ id, reason: "not_found" });
+              continue;
+            }
+
+            let jeOutcome: "none" | "reversed" | "already_reversed" | "absent" = "none";
+            if (row.matched_journal_entry_id) {
+              if (!voidReversalEnabled) {
+                failed.push({ id, reason: "void_reversal_disabled" });
+                continue;
+              }
+              try {
+                await reverseJournalEntryNoFlip(client, {
+                  operatingCompanyId: body.data.operating_company_id,
+                  journalEntryId: row.matched_journal_entry_id,
+                  reason: `Undo bank categorization — release bank_transaction ${id}`,
+                  actorUserId: user.uuid,
+                });
+                jeOutcome = "reversed";
+              } catch (jeErr) {
+                const code = String((jeErr as Error)?.message ?? "");
+                if (code === "journal_entry_not_found") {
+                  // Absent — never invent a reversal for a JE that no longer exists; clear the
+                  // pointer and report it, per the packet's own "already reversed or absent" clause.
+                  jeOutcome = "absent";
+                } else {
+                  // Fail loud — never clear matched_journal_entry_id on an incomplete reversal.
+                  failed.push({ id, reason: `je_reversal_failed:${code || "unknown"}` });
+                  continue;
+                }
+              }
+            }
+
+            const upd = await client.query(
+              `
+                UPDATE banking.bank_transactions
+                SET
+                  status = 'pending_categorization',
+                  matched_load_id = NULL,
+                  matched_invoice_id = NULL,
+                  matched_bill_id = NULL,
+                  matched_expense_id = NULL,
+                  matched_payment_id = NULL,
+                  matched_bill_payment_id = NULL,
+                  matched_transfer_id = NULL,
+                  matched_settlement_id = NULL,
+                  matched_advance_id = NULL,
+                  matched_journal_entry_id = NULL,
+                  category = NULL,
+                  category_kind = NULL,
+                  coa_account_id = NULL,
+                  linked_entity_id = NULL,
+                  categorization_customer_id = NULL,
+                  categorization_vendor_id = NULL,
+                  categorization_gl_account_id = NULL,
+                  categorization_project_id = NULL,
+                  categorization_memo = NULL,
+                  categorization_driver_id = NULL,
+                  categorization_unit_id = NULL,
+                  categorization_load_id = NULL,
+                  -- NOT NULL DEFAULT false (confirmed live) — unlike its uuid/text siblings, "cleared"
+                  -- for this boolean is false, never NULL.
+                  categorization_recover_from_driver = false,
+                  categorization_recover_deduction_type = NULL,
+                  categorization_deduction_id = NULL,
+                  categorization_item_id = NULL,
+                  categorization_trailer_id = NULL,
+                  categorization_class_id = NULL,
+                  categorization_location = NULL,
+                  skip_reason = NULL,
+                  excluded_reason = NULL,
+                  investigate_note = NULL,
+                  categorized_at = NULL,
+                  categorized_by_user_id = NULL,
+                  updated_at = now()
+                WHERE id = $1
+                  AND operating_company_id = $2::uuid
+                RETURNING id
+              `,
+              [id, body.data.operating_company_id]
+            );
+            if (!upd.rows[0]) {
+              failed.push({ id, reason: "update_failed" });
+              continue;
+            }
+
+            await appendCrudAudit(
+              client,
+              user.uuid,
+              "banking.transaction.categorization_undone.bank_undo_01",
+              {
+                resource_type: "banking.bank_transactions",
+                resource_id: id,
+                operating_company_id: body.data.operating_company_id,
+                je_outcome: jeOutcome,
+              },
+              "warning",
+              "BANK-UNDO-01"
+            );
+            succeeded.push(id);
+          } catch (e) {
+            failed.push({ id, reason: String((e as Error)?.message ?? "undo_failed") });
+          }
+        }
+
+        return { succeeded, failed };
+      });
+
+      return result;
+    }
+  );
 }
