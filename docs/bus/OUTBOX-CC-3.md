@@ -1856,3 +1856,17 @@ Live-corrected rather than left wrong: reverted the 133 category_id values my sc
 Will run item-catalog-seed-02-137-items-canonical.sql for real (categories + final proof block) the moment catalogs.item_categories lands -- watching for it, not blocking on it.
 
 — CC-3
+
+CC-3 | E13-B D3 -- duplicate drivers, full report (not just the 2 named examples), live-verified | The Lead named "Leonel Antonio Morales x2, Carlos Mauricio Carvallo x2" as feed-readiness blockers. Token-overlap self-join on mdata.drivers (USMCA, active only) found the real shape is messier than 2 clean pairs:
+
+  GENARO GUERRERO CHAVEZ -- exact duplicate, both rows carry REAL linked activity: 6edcb351 (6 settlements, 11 loads) and 6e908ee1 (1 settlement, 1 load). NOT resolved -- true consolidation means repointing driver_finance.driver_settlements.driver_id / mdata.loads.assigned_primary_driver_id from one row to the other, which is a TRANSACTION-ROW edit, forbidden under Round 85/86 law until after the purge. Reported, not touched.
+
+  CARLOS MAURICIO [PENA] CARVALLO -- a 3-ROW cluster, not 2: 61727a46 "Carlos Mauricio / Pena Carvallo" (4 settlements, 3 loads), a7983a80 "Carlos / Mauricio Carvallo" (2 settlements, 2 loads) -- BOTH real, NOT resolved for the same transaction-row reason above. Third row 8665e3e6 "Carlos / mauricio" had ZERO linked activity (0 settlements, 0 loads) -- a pure duplicate-registration stub, no transaction-row FK involved -- DEACTIVATED live (void-not-delete, status->Inactive, status_locked_reason=manual_deactivate, mirrors the real POST /:id/deactivate route's own UPDATE).
+
+  LEONEL ANTONIO MORALES [NOGUEZ] -- also a cluster: 5dd518ff "Leonel Antonio / Morales" (8 settlements, 3 loads) and ac9ea24d "Leonel / Antonio Morales Noguez" (2 settlements, 10 loads) -- BOTH real, NOT resolved, same reason. A third fragment row a296b552 "ANTONIO / NOGUEZ" (0 settlements, 0 loads) -- DEACTIVATED live, same pattern as above.
+
+  Lower-confidence, NOT acted on: e6933af3 "LUIS / CORONA" (0,0) shares 2 name tokens with 3e138476 "Jorge / Luis Infante Corona" (10 settlements, 16 loads) -- could be the same person's stub or a coincidental partial-name collision with someone else entirely named Luis Corona. Not deactivated -- flagging for a human call rather than guessing on a driver identity.
+
+Bottom line: 2 zero-activity duplicate stubs retired live (safe, no transaction row touched). The 2 real clusters (Genaro, Carlos Mauricio) with substantive linked settlement/load history on BOTH sides of each pair CANNOT be safely consolidated without repointing transaction-row FKs -- exactly the work Round 85/86 forbids pre-purge. verify-feed-readiness.mjs will still report these 2 as AMBIGUOUS until the purge runs and the feed rebuilds through one canonical row per driver -- that is expected, not a gap in this report.
+
+— CC-3
