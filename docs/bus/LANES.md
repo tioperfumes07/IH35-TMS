@@ -119,6 +119,7 @@ TABLES: none. The Lead owns no module code and no tables. Anything else the Lead
 docs/**
 scripts/ops/**            (one-shot ops scripts, named for the round)
 apps/frontend/**          (declare the screen in the PR body)
+apps/backend/src/index.ts  (route registration only — declare which register*Routes call in the PR body)
 .github/workflows/**      (CI is infrastructure every seat depends on — declare the job in the PR body)
 
 ## FORBIDDEN TO EVERY SEAT
