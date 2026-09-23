@@ -1,4 +1,5 @@
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
+import { VoidedRowBadge, voidedRowClassName } from "../../components/accounting/VoidedRowIndicator";
 import { formatDateUS } from "../../lib/formatDate";
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -524,7 +525,19 @@ export function BillsPage() {
       { key: "miles_deadhead", label: "Empty mi", sortable: true, render: (b) => (b.miles_deadhead != null ? Number(b.miles_deadhead).toLocaleString(undefined, { maximumFractionDigits: 1 }) : "—") },
       { key: "rate_empty_per_mile_cents", label: "Rate", sortable: true, render: (b) => (b.rate_empty_per_mile_cents != null ? `$${(b.rate_empty_per_mile_cents / 100).toFixed(4)}` : "—") },
       { key: "gross_amount_cents", label: "Gross", sortable: true, render: (b) => (b.gross_amount_cents != null ? money(b.gross_amount_cents) : "—") },
-      { key: "status", label: "Status", sortable: true, render: (b) => <span className="capitalize">{b.status}</span> },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        // R-102-B item 2 — plain text before; the vendor-bill status column already badges
+        // "voided" (statusBadgeClass below), driver bills never did.
+        render: (b) => (
+          <span className="capitalize">
+            {b.status}
+            <VoidedRowBadge voidedAt={b.voided_at} />
+          </span>
+        ),
+      },
       {
         key: "settlement_number",
         label: "Settlement Number",
@@ -1046,6 +1059,7 @@ export function BillsPage() {
             columns={driverBillColumns}
             rows={driverBillRows}
             rowKey={(b) => b.id}
+            rowClassName={(b) => voidedRowClassName(b.voided_at)}
             loading={billsQuery.isPending}
             exportFilename="driver-bills"
             storageKey="bills-driver-list"

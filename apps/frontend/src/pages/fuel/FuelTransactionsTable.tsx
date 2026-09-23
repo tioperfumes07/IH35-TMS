@@ -5,6 +5,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
+import { VoidedRowBadge, voidedRowClassName } from "../../components/accounting/VoidedRowIndicator";
 import { companyToday } from "../../lib/businessDate";
 
 export type FuelTransactionRow = {
@@ -24,6 +25,9 @@ export type FuelTransactionRow = {
   load_number?: string | null;
   trailer_id?: string | null;
   trailer_number?: string | null;
+  /** R-102-B item 2 — fuel.fuel_transactions.voided_at/void_reason (R-102.1-A). Optional, same reason. */
+  voided_at?: string | null;
+  void_reason?: string | null;
 };
 
 type Props = {
@@ -84,6 +88,7 @@ export function FuelTransactionsTable({ rows, operatingCompanyId }: Props) {
     <ParityTable
       rows={rows}
       rowKey={(row) => row.id}
+      rowClassName={(row) => voidedRowClassName(row.voided_at)}
       storageKey="fuel-transactions"
       emptyText="No fuel transactions."
       selectable={bulkPermission.canUseBulkOps}
@@ -118,6 +123,8 @@ export function FuelTransactionsTable({ rows, operatingCompanyId }: Props) {
           key: "transaction_date",
           label: "Date",
           sortable: true,
+          // verify-fuel-history-transaction-date-display.mjs requires this exact render shape
+          // (LV-FUEL-HISTORY-RAW-ISO-DATETIME) — the void badge goes on Station instead, below.
           render: (row) => formatDateUS(row.transaction_date) || "—",
         },
         {
@@ -179,7 +186,20 @@ export function FuelTransactionsTable({ rows, operatingCompanyId }: Props) {
               "—"
             ),
         },
-        { key: "station", label: "Station", sortable: true },
+        {
+          key: "station",
+          label: "Station",
+          sortable: true,
+          // R-102-B item 2 — fuel_purchases was the one named family with NO void signal anywhere
+          // in this stack (route didn't select it, type didn't carry it, table didn't render it);
+          // wired now that R-102.1-A's migration landed, even though 0 rows are voided yet.
+          render: (row) => (
+            <span>
+              {row.station}
+              <VoidedRowBadge voidedAt={row.voided_at} />
+            </span>
+          ),
+        },
         { key: "gallons", label: "Gallons", sortable: true, render: (row) => row.gallons == null ? "—" : row.gallons.toFixed(2) },
         { key: "amount_cents", label: "Amount", sortable: true, render: (row) => money(row.amount_cents) },
       ]}
