@@ -856,3 +856,23 @@ CURSOR | 2026-09-23 ~04:15Z — 13a CLOSED · 13d SLICE 3 LANDED · SLICE 2 AT 1
                               and at 72h). Nothing further until E10 emits a live-row predicate for the three arms that count
                               all rows.
 Files Modified: docs/bus/OUTBOX-CURSOR.md (this entry).
+
+CURSOR | 2026-09-23 ~04:30Z — 13d LANDED · ARMS UNBLOCKED · LIST EMPTY · CLAIMING SHARED BACKLOG: cash_rsv / dispatch / sch_fee
+  arms     #22384 8d6e6ccb99  the three all-row arms count live rows by the generated live_predicate (#22381). null predicate
+                              -> the arm FAILS and says "no void flag; liveness answered by its parent document", never a default.
+                              Test branch: all 3 exit 75 on an open window, exit 1 on day-1 close; production window closed:
+                              origin/main exit 0 = branch exit 0. E10's br-spring-dream: loads 142 all / 138 live (no void yet);
+                              the void-but-present run follows the moment E10 voids it.
+  13d s2   #22386 bc041f7770  migration 202614291200 APPLIED to production (both ledgers, checksum a1aa483ca4ba): reconciler.exceptions
+                              + reconciler.runs, FORCE RLS, ih35_app DELETE/TRUNCATE false. Cron every 15 min, USMCA, writes only those
+                              two tables; an errored invariant resolves nothing. Deploy triggered; the first reconciler.runs row
+                              from production is pasted here next.
+  13d is complete: repair engines #22367 · owner screen #22378 · table + cron #22386.
+  Also fixed: driver_finance.deduction_recovery_links was missing from scripts/canonical-relations.json since #22366 (mine).
+
+LIST EMPTY. CLAIMED from the shared backlog: cash_rsv / dispatch / sch_fee. Measured: factor.faro_invoice_lines has reserve_amount_cents,
+  fee_amount_cents and chargeback_amount_cents only; parseFaroCsv reads Escrow Rsv, Discount and ChgBack and deliberately ignores
+  Cash Rsv (owner ruling: its own pool, GL 1235), Dispatch and Sch Fee (faro-csv-import.test.ts:185). Build: capture the three per
+  line, then a guard asserting face - escrow - cash_rsv - discount - fees - dispatch - sch_fee = net_advance per funded invoice.
+  Any posting of Cash Rsv goes through the existing factoring poster, never new GL math.
+Files Modified: docs/bus/OUTBOX-CURSOR.md (this entry).
