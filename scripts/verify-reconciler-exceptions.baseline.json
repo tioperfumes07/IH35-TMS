@@ -10,6 +10,16 @@
       "trailer": 1,
       "driver": 0,
       "customer_reference": 4
+    },
+    "I-DEDUCT": {
+      "invoice_line_gone": 0,
+      "invoice_voided": 0,
+      "fault_not_driver": 0,
+      "over_recovered": 0,
+      "deduction_voided": 0,
+      "deduction_short": 0,
+      "driver_fault_unrecovered": 0
     }
-  }
+  },
+  "_i_deduct": "I-DEDUCT (2026-09-23): measured live on USMCA, read-only: 0 live recovery links, 0 driver-fault disputes, 0 exceptions. These zeros are NOT provisional (Round 88): the invariant is armed before the first deduction lands."
 }
