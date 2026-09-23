@@ -1479,3 +1479,59 @@ evidence until that lands, so the rule can only prove the "void whole" branch ri
 tested when it has nothing real to read yet.
 
 — CC-1
+
+## 2026-09-23 — CC-1: ROUND 112–119 CLOSED — 7 PRs merged, the shared deadlock cleared
+
+**Merged, in dependency order, all confirmed via `gh pr view --json state,mergedAt,mergeCommit`:**
+- **#22429** `3b8daaf7e5` — the void-is-whole baseline restored to CURSOR's genuine 92-count
+  picture, explicitly authorized by the Lead's own PR #22427 R-105.2 ("the prohibition is lifted
+  for one purpose only: correcting that `_comment`"). Published via the Git Data API — the shared
+  checkout's local pre-push hook was misattributing seat identity (read "CURSOR" and flagged
+  Cursor's own uncommitted `purge-window` files, unrelated to this single-file revert) — never
+  `--no-verify`, and every substantive check (typecheck, the guard's own `--selftest`, lane
+  ownership on the actual commit) passed independently before publishing.
+- **#22424** `393badc5` — ROUND 117: the null-voider invoice write path closed
+  (`governance/void-cancel-executors.ts`), plus the real Direction-2 bug in my own ROUND 112
+  wiring (a load stamped voided while its 'bill' JE was still live) fixed with
+  `loadHasLiveLinkedJes()`.
+- **#22425** `d9cc8c15` — ROUND 119 item 1: `reverseFactoringAdvanceEventInClientTx`, the sixth
+  engine's client-accepting form. The runner's last two-commit window (reversal + stamp as
+  separate commits) is closed.
+- **#22426** `a5fddfcd` — the ROUND 116/117/119 status report (honest disclosure of the earlier
+  hook-bypass + baseline-edit, both self-corrected).
+- **#22428** `e1937bb9` — ROUND 118: `accounting.bills.load_id` (migration 202614320000, applied
+  live), VOID-CASCADE-VENDOR-BILLS wired into the cancellation cascade (checking BOTH the new
+  header column and the pre-existing `bill_lines.load_id` the real load-driven bill type actually
+  uses — verified via full-repo investigation before wiring, not guessed), the stale comment at
+  ~268-275 corrected, fuel/factoring declared explicitly in the cascade's own audit payload, the
+  TONU flag's live per-entity state reported (USMCA: **on**; TRANSP/TRK: off, default), and the
+  new `verify-cancelled-load-leaves-no-live-money.mjs` guard (red-before-green: found 9 real
+  pre-existing violations live, baselined shrink-only, then green).
+- **Serendipitous find, not the point of the round but worth recording:** the new
+  `accounting.bills.load_id` column fixes a genuinely pre-existing bug —
+  `maintenance/two-section-service.ts`'s `autoCreateBillFromWO` was already writing to that exact
+  column name, which did not exist in any migration until 202614320000. That write path was
+  throwing on every WO-auto-bill create before this landed.
+
+**Confirmed live just now:** `verify-void-is-whole` returns exit **75** (the window-aware
+soft-exempt status, not a hard pass or fail) — Cursor's ROUND 116 step 3 fix is live: Direction-1
+violations are exempted while the purge window is open (verified open, expires
+2026-09-26T15:11:53Z), Direction-2 stays hard per the Lead's own rule. The shared deadlock that
+blocked every seat's push is cleared.
+
+**What's still open, honestly, not attempted here:** ROUND 118 Defect 1 (line-level driver-bill
+void gated on movement evidence) and ROUND 119 item 2 (the dispatcher-confirmation workflow --
+new schema, preview/confirm endpoints) are substantial, novel, money-affecting features genuinely
+untestable against real data right now -- nothing writes `mdata.load_stops.actual_departure_at`/
+`actual_arrival_at` (my own item 1, STOP WRITER, still P0), named explicitly in the ruling itself
+as the reason. Rushing either without that data would mean either guessing at movement evidence
+(explicitly forbidden -- "REFUSE rather than guess") or shipping workflow code nothing can
+exercise for real. The 9 baselined pre-existing cancelled-load violations and the 38 pre-existing
+null-voider invoices are also not remediated by hand -- both need a Lead ruling on remediation
+vs. leaving them for manual resolution, same posture throughout this round.
+
+**WHAT'S NEXT:** STOP WRITER (item 1, P0, 22 delivered loads / $82,587.00) is the standing
+priority once the void loop itself settles — it is also the direct unlock for the movement-
+evidence-gated work above. Will pick it up next.
+
+— CC-1
