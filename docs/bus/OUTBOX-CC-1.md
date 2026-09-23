@@ -1017,4 +1017,71 @@ link, all real side effects — "IT SHOULD NOT SKIP THE DRIVER BILLS") and `csv-
 extended to USMCA both land AFTER the purge, in that order. The item + line schema stays
 Cursor's, not touched.
 
+## 2026-09-23 — CC-1: Round 92 correction + E20 Part A landing (schema, guard, 2 self-found CI-blocking bugs)
+
+**CORRECTION, per the Lead's Round 92 note**: the line directly above this one is wrong.
+`loads.routes.ts` and `csv-seed-import.ts` do NOT land after the purge — owner, verbatim:
+"I THINK WE NEED TO COMPLETELY FINISH ALL 13 THEN WE BEGIN FEEDING, I DO NOT WANT ANY PENDING."
+All 13 are a gate ON the purge, not follow-on work. Both are mine, before the purge runs, right
+after E20 Part A. My queue in order: E20 Part A (below) → `loads.routes.ts` → `csv-seed-import.ts`
+→ the deduction-chain schema → Cursor's I2 finding (9 loads reading delivered-or-later with no
+issued invoice and no delivery evidence: 13502/13505/13507/13517/13527/13531/13533/13539/13540).
+
+**WHAT I DID — E20 Part A, first landing (PR #22338):**
+1. `db/migrations/202614280000_samsara_drivers_local_vendor_id.sql` — `local_vendor_id` column
+   on `integrations.samsara_drivers` (FK `mdata.vendors`, no unique constraint), CHECK
+   `ck_samsara_drivers_one_target`, FK, partial index. Applied live to production.
+2. `scripts/verify-samsara-mapping-integrity.mjs` (new guard) — 2 hard zero-tolerance checks
+   (duplicate `samsara_driver_id`; both `local_driver_id` and `local_vendor_id` set) + 1
+   shrink-only ratchet (mapped profile whose driver is deactivated, baseline 78 of 95 mapped).
+   Never fails on unmapped count — 663 of 758 USMCA profiles are unmapped and that's correct
+   per the spec's own "NEVER AUTO-MAP" / "UNMAPPED IS NOT A DEFECT" law, exactly matching the
+   Lead's own fresh Round 92 measurement (758 profiles, 95 mapped, 663 unmapped).
+3. Measured, NOT resolved (per NEVER AUTO-MAP): the legacy `mdata.drivers.samsara_driver_id`
+   scalar (94 rows) disagrees with the existing `local_driver_id` mapping on 28 of those 94 —
+   same shape the Lead's Round 92 note independently flagged ("the two sources already
+   disagree by one" — my measurement found the fuller picture: 28 conflicts, not 1, one of
+   them a currently-Active driver, GENARO GUERRERO CHAVEZ, two live rows). Documented in the
+   migration's own SQL comment. No pairing was guessed or written.
+4. **Two self-found, real CI-blocking bugs, fixed in the same PR** (found by literally watching
+   this PR's own CI, per the Lead's own standing lesson this round — check every guard against
+   the real thing): (a) the `identity.users` EDI system-account row
+   (`00000000-0000-4000-8000-000000000001`) was created live on production earlier this
+   session but never shipped as a migration, so CI's ephemeral DB never had it and
+   `inbound-204-create-draft-load.db.test.ts` was failing deterministically on
+   `loads_dispatcher_user_id_fkey` — closed by `202614200000_identity_users_edi_system_account.sql`
+   (idempotent, `default_company_id` resolved via an existence-safe subquery so a from-scratch
+   DB doesn't FK-violate before `org.companies` exists — caught by this repo's own
+   local-CI-parity gate, not guessed). Also found: this same PR's 202614280000 migration had
+   been applied live via a raw DO-block earlier and never ledger-recorded in
+   `_system._schema_migrations`/`ih35_migrations.applied_migrations` — a live backend restart
+   today would have refused to boot. Both now correctly ledgered against production. (b)
+   `scripts/canonical-relations.json` (generated prod-relation snapshot) was stale — migration
+   202614180000 (a different, earlier PR this session) created `views.live_loads` but the
+   snapshot was never regenerated, so `phantom-relation-guard` has been red on main itself,
+   independent of this PR, flagging 7 real unrelated call sites as phantom. Regenerated from
+   live prod (827 → 828 relations). LANE-CROSS ruling filed:
+   `09-23-2026-CC-1-LANE-CROSS-CANONICAL-RELATIONS-JSON-REGEN.md` (the file has no LANES.md
+   owner; treated the same as `docs/schema-parity-baseline.json`).
+
+**THE PROOF IT'S REAL:**
+- `node scripts/verify-samsara-mapping-integrity.mjs --selftest` → exit 0, SELFTEST caught 10/10
+- Live run against production → exit 0, "LIVE PASS — 758 USMCA Samsara profiles (95 mapped, 663
+  unmapped), 0 hard structural problems, 78 mapping(s) known debt (baseline ceiling 78)"
+- `_system._schema_migrations` re-queried directly: both 202614200000 and 202614280000 present
+- `identity.users` system row re-queried after the ledger fix: same id, same original
+  `created_at` (unchanged — confirms `ON CONFLICT DO NOTHING`, not a duplicate write)
+- `node scripts/verify-phantom-relations.mjs` → exit 0, "phantom-relation guard passed — no new
+  phantoms (828 canonical relations)"
+- Verify-step 11589 claimed and merged on main (`a653f7c5981c`, PR #22349, claim-only per Rule 37)
+
+**WHAT'S NEXT:** merge #22338 on green; immediate follow-up PR wires
+`verify-steps/11589-verify-samsara-mapping-integrity.mjs` into the full CI workflow (claim
+already on main); then the 4 REST API endpoints (`GET /samsara/profiles`,
+`GET /samsara/mapping-targets`, `POST /samsara/map`, `POST /samsara/unmap`) and the 66-clean-row
+`local_driver_id` backfill close out E20 Part A; then, per the correction above,
+`loads.routes.ts` fully built, BEFORE the purge, not after.
+
+— CC-1
+
 — CC-1
