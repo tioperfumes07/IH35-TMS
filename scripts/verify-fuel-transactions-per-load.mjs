@@ -88,6 +88,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
+import { exitIfEmptyByPurge } from "./lib/purge-window.mjs";
 import { buildFuelRows } from "./ops/absorption-b1-fuel-ingest.mjs";
 
 const LABEL = "verify-fuel-transactions-per-load";
@@ -165,6 +166,7 @@ async function live() {
       [USMCA_COMPANY_ID]
     );
     if (liveRes.rows.length === 0) {
+      exitIfEmptyByPurge(LABEL, "fuel.fuel_transactions (USMCA, live)");
       console.error(`${LABEL}: LIVE FAIL — 0 live fuel.fuel_transactions rows for USMCA; completeness discriminator says this is an instrument problem, not a real zero — re-run before trusting this`);
       process.exit(1);
     }

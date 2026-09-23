@@ -23,6 +23,7 @@
 // Fails closed with no DATABASE_URL (requireLiveDbOrExit, ROUND 29.9-B). money-pr-local-gate.mjs runs
 // it only when this guard's own domain paths change or a live DB is present (Lead ruling R56-B).
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
+import { exitIfEmptyByPurge } from "./lib/purge-window.mjs";
 
 /** @matrix-built {"modules":["dispatch"],"cols":["connectivity"],"leafRe":"^(loads|driver_bills|presettlement|expenses)$","task":"LOAD-TO-CASH-CHAIN-C1-C3","vertical":"class-sweep"} */
 
@@ -125,6 +126,7 @@ async function live() {
     );
     const loads = loadsRes.rows;
     if (loads.length === 0) {
+      exitIfEmptyByPurge(LABEL, "mdata.loads (USMCA, eligible)");
       console.error(`${LABEL}: LIVE FAIL — 0 eligible USMCA loads found; completeness discriminator says this is an instrument problem, not a real zero (see verify-zero-count-completeness-discriminator convention) — re-run before trusting this`);
       process.exit(1);
     }

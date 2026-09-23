@@ -12,6 +12,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
+import { exitIfEmptyByPurge } from "./lib/purge-window.mjs";
 
 const LABEL = "verify-no-empty-zero-settlement";
 export const REQUIRES_LIVE_DB =
@@ -92,6 +93,7 @@ try {
     [USMCA_COMPANY_ID]
   );
   if (totals.rows[0].n === 0) {
+    exitIfEmptyByPurge(LABEL, "driver_finance.driver_settlements (USMCA)");
     console.error(`${LABEL}: FAIL — 0 USMCA settlements visible; that is an instrument problem, not a clean result`);
     process.exit(1);
   }
