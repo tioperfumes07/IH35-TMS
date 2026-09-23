@@ -9044,5 +9044,10 @@
     "claimed_by": "devin-b",
     "claimed_at": "2026-09-24",
     "purpose": "verify-no-capability-regression (Q15, CI-wiring follow-up)"
+  },
+  "11592": {
+    "claimed_by": "devin-b",
+    "claimed_at": "2026-09-24",
+    "purpose": "verify-no-driver-merge-without-hard-identifier (Q16, new guard)"
   }
 }

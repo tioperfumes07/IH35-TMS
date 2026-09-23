@@ -69,6 +69,7 @@ Never work in the shared main checkout.
       0 or >1 -> STOP that invoice. Guard
       verify-faro-po-match-is-normalized.mjs.
 [CC-2 2026-09-24T01:06:00Z] Q06 GATE  Gate live reads connect as ih35_ci_readonly, never
+[DEVIN-B 2026-09-24T01:15:00Z] Q06 GATE  Gate live reads connect as ih35_ci_readonly, never
       neondb_owner — six seats read prod while the feed writes and
       owner-role reads contend with its locks.
       BUILT + LIVE-VERIFIED, pushing now: scripts/money-pr-local-gate.mjs
@@ -103,6 +104,7 @@ Never work in the shared main checkout.
 [DONE CC-3 2026-09-24T01:26:26Z, PR #22484] Q16 GUARD  verify-no-driver-merge-without-hard-identifier.mjs
 [DONE CC-1 2026-09-23T23:49:16Z, PR #22467 -- built and merged earlier this round (TASK 27), already live and self-arming] Q17 GUARD  verify-settled-load-carries-settled-status.mjs
 [DEVIN-B 2026-09-24T01:05:00Z] Q16 GUARD  verify-no-driver-merge-without-hard-identifier.mjs
+[DONE DEVIN-B #22472] Q16 GUARD  verify-no-driver-merge-without-hard-identifier.mjs
 [DONE CC-1 2026-09-23T23:49:16Z, PR #22467 -- built and merged earlier this round (TASK 27), already live and self-arming] Q17 GUARD  verify-settled-load-carries-settled-status.mjs)
 
 # P1 — DISPATCH / READ PATH

@@ -560,6 +560,17 @@ const LIVE_DOMAIN_GUARDS = [
       "apps/backend/src/dispatch/",
     ],
   ],
+  // ROUND E23 (DEVIN-B, Q16): a driver merge must have at least one hard identifier
+  // match (CDL, passport, INE, CURP, Samsara ID, QBO vendor ID, employee ID). Name
+  // similarity alone is NOT sufficient. Baseline 0 (shrink-only).
+  [
+    "verify-no-driver-merge-without-hard-identifier",
+    [
+      "apps/backend/src/drivers/",
+      "apps/backend/src/data-infra/",
+      "apps/backend/src/dispatch/",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {
