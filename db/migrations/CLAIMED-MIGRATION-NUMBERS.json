@@ -1016,6 +1016,16 @@
       "claimed_by": "cursor",
       "claimed_at": "2026-09-23",
       "purpose": "Shared backlog (Lead, claimed #22388): factor.faro_invoice_lines gains cash_rsv_amount_cents, dispatch_amount_cents, schedule_fee_amount_cents and fees_amount_cents, the four Faro export deductions no column captures today, so the funding identity face - escrow - cash_rsv - discount - fees - dispatch - sch_fee = net_advance can be asserted per funded invoice. ADD COLUMN IF NOT EXISTS, nullable (NULL = not captured, never 0), no backfill."
+    },
+    "202614310000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-23",
+      "purpose": "ROUND 102.1-A (deadline 2026-09-23 18:00 UTC): restore mdata.load_status_enum's missing 'voided' member. OWN FILE, NOTHING ELSE -- same landmine 202612140000 already documented: ALTER TYPE ... ADD VALUE inside a transaction that also runs other DDL rolls the enum addition back with any later failure in that same transaction, even though the ledger still reads applied. No BEGIN/COMMIT, no table/column DDL, no seed -- exactly the shape 202612140000 proved safe."
+    },
+    "202614310100": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-23",
+      "purpose": "ROUND 102.1-A (deadline 2026-09-23 18:00 UTC): the void-stamp columns (voided_at, void_reason, voided_by_user_id) on mdata.loads, accounting.factoring_advances, fuel.fuel_transactions -- copied exactly from accounting.invoices's own shape, owner ruling 'FOR FUTURE REFERENCE YES AL SHOULD STATE VOIDED' -- plus the one column driver_finance.driver_reimbursements is missing (voided_by_user_id; it already carries voided_at/void_reason). Partial index on each WHERE voided_at IS NOT NULL. Depends on 202614310000 landing first for mdata.loads' status='voided' to be a legal value, but adds no DDL that touches the enum itself."
     }
   },
   "202613590001": {
