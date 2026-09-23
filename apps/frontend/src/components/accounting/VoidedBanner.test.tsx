@@ -41,12 +41,14 @@ describe("VoidedBanner", () => {
     expect(getUser).toHaveBeenCalledWith("u-1");
   });
 
-  // Never fabricates an actor: a family whose write path doesn't populate voided_by_user_id (or one
-  // still mid-migration) must render the stamp with no "by <name>" clause, not a guess or a blank name.
-  it("omits the 'by' clause honestly when voidedByUserId is absent — never fabricates an actor", () => {
+  // ROUND 112 CORRECTION (owner, verbatim): "a voider CAN be missing — invoices 13541 and 13572 are
+  // voided with a reason and no actor. Render 'voided by — unknown'. Never crash, never hide the
+  // stamp, never invent an actor." An earlier cut of this component OMITTED the "by" clause
+  // entirely when voidedByUserId was absent, silently dropping the fact the actor is unknown.
+  it("renders 'by — unknown' honestly when voidedByUserId is absent — never fabricates a real name", () => {
     renderBanner({ voidedAt: "2026-09-23T15:00:00.000Z", voidReason: "test", voidedByUserId: null });
     expect(screen.getByText("Invoice is VOID")).toBeTruthy();
-    expect(screen.queryByText((text) => text.includes(" by "))).toBeNull();
+    expect(screen.getByText((text) => text.includes("by — unknown"))).toBeTruthy();
     expect(getUser).not.toHaveBeenCalled();
   });
 });

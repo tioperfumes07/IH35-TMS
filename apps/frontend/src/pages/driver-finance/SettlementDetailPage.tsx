@@ -192,11 +192,16 @@ export function SettlementDetailPage() {
   const approvalStatus = String(settlement.approval_status ?? "needs_review");
   const settlementDisplayId =
     settlementNumber(settlement) ?? (isOpenSettlement(settlement) ? "Open" : null);
+  // R-102-B item 3 (owner, ROUND 112) — moved up from its original spot below so the gates that
+  // follow can reference it; isFinalSettlement/showFinalizeBlock/canApproveSettlement/canOpenDispute
+  // all previously checked ONLY isFinalSettlement (locked/final), never cancelled — a cancelled
+  // settlement is neither "final" nor "locked" by that check, so all four read as still-open.
+  const settlementIsCancelled = String(settlement.status ?? "") === "cancelled";
   const isFinalSettlement = String(settlement.status ?? "") === "locked" || String(settlement.status ?? "") === "final";
-  const showFinalizeBlock = !isFinalSettlement;
+  const showFinalizeBlock = !isFinalSettlement && !settlementIsCancelled;
   const showManualPaidDraftBanner = paymentState === "manual_paid" && !isFinalSettlement;
-  const canApproveSettlement = (auth.user?.role === "Owner" || auth.user?.role === "Administrator" || auth.user?.role === "Accountant") && approvalStatus === "needs_review" && !isFinalSettlement;
-  const canOpenDispute = auth.user?.role === "Owner" || auth.user?.role === "Administrator" || auth.user?.role === "Driver";
+  const canApproveSettlement = (auth.user?.role === "Owner" || auth.user?.role === "Administrator" || auth.user?.role === "Accountant") && approvalStatus === "needs_review" && !isFinalSettlement && !settlementIsCancelled;
+  const canOpenDispute = (auth.user?.role === "Owner" || auth.user?.role === "Administrator" || auth.user?.role === "Driver") && !settlementIsCancelled;
   // SETL-NO-VOID-PATH-01 — matches void.service.ts's canVoid() exactly (Owner + Accountant only).
   // Hardcoded fallback per VOID LAW item 6: PERMISSION_MODEL_ENFORCED is OFF today, so this stays the
   // gate rather than leaving the control ungated in the gap; swap for a permission-key check when that
@@ -216,9 +221,15 @@ export function SettlementDetailPage() {
         ? "Requires Owner or Administrator role"
         : null;
   const canReopen = reopenBlockedReason === null;
-  const settlementIsCancelled = String(settlement.status ?? "") === "cancelled";
   const settlementIsLocked = Boolean(settlement.locked_at) && !settlementIsCancelled;
   const settlementIsPaid = String(settlement.status ?? "") === "paid";
+  // R-102-B item 3 (owner, ROUND 112 — "NOTHING EDITABLE ON A VOIDED DOCUMENT"): settlementIsLocked
+  // deliberately EXCLUDES cancelled (it drives the Locked/Reverse button row at the bottom of this
+  // page, which already branches on settlementIsCancelled separately) — but every OTHER "is this
+  // still open for editing" gate on this page was built off settlementIsLocked alone, so a cancelled
+  // settlement read as "open": Add/Edit deduction, extra pay, reimbursements all stayed live-write.
+  // This is the single combined "no further writes" gate for everything BUT that one button row.
+  const settlementIsReadOnly = settlementIsLocked || settlementIsCancelled;
 
   async function refreshSettlementViews() {
     await Promise.all([
@@ -820,21 +831,21 @@ export function SettlementDetailPage() {
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1.5fr_1fr]">
         <div className="space-y-2">
-          <EarningsSection lines={earnings} isOpen={!settlementIsLocked} operatingCompanyId={companyId} />
-          <DeadheadPaySection lines={deadhead} isOpen={!settlementIsLocked} operatingCompanyId={companyId} />
+          <EarningsSection lines={earnings} isOpen={!settlementIsReadOnly} operatingCompanyId={companyId} />
+          <DeadheadPaySection lines={deadhead} isOpen={!settlementIsReadOnly} operatingCompanyId={companyId} />
           {/* ROUND 83 RULING 3 / owner "item lines on screen" law (2026-09-23) -- item lines carry
               QTY x RATE = AMOUNT, never a flat amount alone. Company-paid fuel purchases the same
               company-settlement-report read model already sourced (CompanyWaterfallSection's own
               "Less · Fuel purchases" rollup, above) -- this is its itemized detail: one row per
               real fuel.fuel_transactions purchase, diesel and DEF as separate items. */}
           <FuelPurchasesSection rows={companyReport?.sections.fuel_purchases.rows ?? []} />
-          <ExtraPaySection lines={extraWithSeq} isOpen={!settlementIsLocked} operatingCompanyId={companyId} />
-          <ReimbursementsSection lines={reimbursementsWithSeq} isOpen={!settlementIsLocked} operatingCompanyId={companyId} />
+          <ExtraPaySection lines={extraWithSeq} isOpen={!settlementIsReadOnly} operatingCompanyId={companyId} />
+          <ReimbursementsSection lines={reimbursementsWithSeq} isOpen={!settlementIsReadOnly} operatingCompanyId={companyId} />
           <DeductionsSection
             rows={deductionsWithSeq}
             onHold={(row) => setHoldTarget(row)}
             onResume={(row) => void handleResumeDeduction(row)}
-            isOpen={!settlementIsLocked}
+            isOpen={!settlementIsReadOnly}
             onAdd={driverId ? () => setAddDeductionOpen(true) : undefined}
             onEdit={(row) => setEditDeductionTarget(row)}
             operatingCompanyId={companyId}
@@ -974,6 +985,7 @@ export function SettlementDetailPage() {
                 typeof settlement.trip_closed_at === "string" ? settlement.trip_closed_at : null
               }
               onClosed={() => void refreshSettlementViews()}
+              settlementIsCancelled={settlementIsCancelled}
             />
           ) : null}
           {companyId ? (

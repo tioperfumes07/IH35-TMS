@@ -866,3 +866,186 @@ export async function approveCancellation(
     }
   });
 }
+
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+// R-102-B / ROUND 125-126 (owner, via the Lead) — VOID-A-LOAD CASCADE PREVIEW.
+// "the dispatcher sees, before confirming, every artifact that will be touched — each named with
+// its number and amount, never a count." Read-only: lists what EXISTS today and would be a
+// candidate for the void cascade. Builds no GL math and performs no write — CC-1 owns the actual
+// cascade execution (the reversal/void engine this preview describes, not replaces). Every query
+// below reuses an existing, already-proven load-linkage predicate from elsewhere in this codebase
+// (bill_lines.load_id, invoices.source_load_id, driver_settlements dual-path bookend/settlement_lines
+// resolve, fuel_transactions.load_id, driver_advances.load_id) rather than inventing a new one.
+export type CancellationPreviewItem = {
+  id: string;
+  number: string | null;
+  amount_cents: number;
+  detail: string | null;
+};
+
+export type CancellationPreviewDriverBillItem = CancellationPreviewItem & {
+  keep_cents: number;
+  void_cents: number;
+};
+
+export type CancellationPreview = {
+  load_id: string;
+  load_number: string | null;
+  computed_at: string;
+  invoices: CancellationPreviewItem[];
+  expenses: CancellationPreviewItem[];
+  vendor_bills: CancellationPreviewItem[];
+  driver_advances: CancellationPreviewItem[];
+  settlements: CancellationPreviewItem[];
+  fuel_expenses: CancellationPreviewItem[];
+  driver_bills: CancellationPreviewDriverBillItem[];
+};
+
+export async function getCancellationPreview(
+  userId: string,
+  operatingCompanyId: string,
+  loadId: string
+): Promise<CancellationPreview> {
+  return withCurrentUser(userId, async (client) => {
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
+
+    const loadRes = await client.query<{ id: string; load_number: string | null }>(
+      `SELECT id, load_number FROM mdata.loads
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL`,
+      [loadId, operatingCompanyId]
+    );
+    if (!loadRes.rows[0]?.id) throw new Error("E_LOAD_NOT_FOUND");
+    const loadNumber = loadRes.rows[0].load_number ?? null;
+
+    const invoicesRes = await client.query<{ id: string; display_id: string | null; total_cents: string | number | null; status: string | null }>(
+      `SELECT id, display_id, total_cents, status
+         FROM accounting.invoices
+        WHERE operating_company_id = $1::uuid AND source_load_id = $2::uuid
+          AND status NOT IN ('void', 'voided')
+        ORDER BY created_at`,
+      [operatingCompanyId, loadId]
+    );
+
+    const expensesRes = await client.query<{ id: string; expense_number: string | null; memo: string | null; total_amount_cents: string | number | null }>(
+      `SELECT id, expense_number, memo, total_amount_cents
+         FROM accounting.expenses
+        WHERE operating_company_id = $1::uuid AND load_id = $2::uuid
+          AND voided_at IS NULL AND status NOT IN ('void', 'voided')
+        ORDER BY created_at`,
+      [operatingCompanyId, loadId]
+    );
+
+    const vendorBillsRes = await client.query<{ id: string; display_id: string | null; amount_cents: string | number | null; vendor_name: string | null }>(
+      `SELECT DISTINCT b.id, b.display_id, b.amount_cents, v.vendor_name
+         FROM accounting.bill_lines bl
+         JOIN accounting.bills b ON b.id = bl.bill_id AND b.operating_company_id = $1::uuid
+         LEFT JOIN mdata.vendors v ON v.id = b.mdata_vendor_id AND v.operating_company_id = b.operating_company_id
+        WHERE bl.load_id = $2::uuid AND b.status NOT IN ('void', 'voided')`,
+      [operatingCompanyId, loadId]
+    );
+
+    const driverAdvancesRes = await client.query<{ id: string; display_id: string | null; amount: string | number | null; driver_name: string | null }>(
+      `SELECT da.id, da.display_id, da.amount, concat_ws(' ', d.first_name, d.last_name) AS driver_name
+         FROM driver_finance.driver_advances da
+         LEFT JOIN mdata.drivers d ON d.id = da.driver_id AND d.operating_company_id = da.operating_company_id
+        WHERE da.operating_company_id = $1::uuid AND da.load_id = $2::uuid AND da.voided_at IS NULL`,
+      [operatingCompanyId, loadId]
+    );
+
+    // Dual-path resolve — same predicate as bills.service.ts's settlement_link LATERAL
+    // (ACCT-F26140): first_load_id/last_load_id are bookend conveniences only, not the settlement
+    // grain; a load can also be a MIDDLE leg via settlement_lines/driver_bills.load_id.
+    const settlementsRes = await client.query<{ id: string; source_document_ref: string | null; net_pay: string | number | null; status: string | null; driver_name: string | null }>(
+      `SELECT DISTINCT s.id, s.source_document_ref, s.net_pay, s.status, concat_ws(' ', d.first_name, d.last_name) AS driver_name
+         FROM driver_finance.driver_settlements s
+         LEFT JOIN mdata.drivers d ON d.id = s.driver_id AND d.operating_company_id = s.operating_company_id
+        WHERE s.operating_company_id = $1::uuid
+          AND s.voided_at IS NULL AND s.status <> 'cancelled'
+          AND (
+            s.first_load_id = $2::uuid OR s.last_load_id = $2::uuid
+            OR EXISTS (
+              SELECT 1 FROM driver_finance.settlement_lines sl
+              LEFT JOIN driver_finance.driver_bills db2 ON db2.id = sl.source_driver_bill_id
+              WHERE sl.settlement_id = s.id AND COALESCE(db2.load_id, sl.load_id) = $2::uuid
+            )
+          )`,
+      [operatingCompanyId, loadId]
+    );
+
+    const fuelRes = await client.query<{ id: string; transaction_at: string | null; total_cost: string | number | null; location_city: string | null; location_state: string | null; vendor_name: string | null }>(
+      `SELECT ft.id, ft.transaction_at, ft.total_cost, ft.location_city, ft.location_state, v.vendor_name
+         FROM fuel.fuel_transactions ft
+         LEFT JOIN mdata.vendors v ON v.id = ft.vendor_id AND v.operating_company_id = ft.operating_company_id
+        WHERE ft.operating_company_id = $1::uuid AND ft.load_id = $2::uuid AND ft.voided_at IS NULL`,
+      [operatingCompanyId, loadId]
+    );
+
+    // KEEP = deadhead_pay_cents (empty miles the driver actually drove — real work, stays).
+    // VOID = everything else (loaded miles, tarp, extra stops, detention — all tied to freight
+    // that never moved). driver_bills carries no separate line-item breakdown for tarp/extra-stop/
+    // detention; they are already folded into gross at bill-creation time, so VOID is derived as
+    // gross - keep rather than invented from a table that does not exist.
+    const driverBillsRes = await client.query<{ id: string; bill_number: string | null; gross_amount_cents: string | number | null; deadhead_pay_cents: string | number | null; driver_name: string | null }>(
+      `SELECT db.id, db.bill_number, db.gross_amount_cents, db.deadhead_pay_cents, concat_ws(' ', d.first_name, d.last_name) AS driver_name
+         FROM driver_finance.driver_bills db
+         LEFT JOIN mdata.drivers d ON d.id = db.driver_id AND d.operating_company_id = db.operating_company_id
+        WHERE db.operating_company_id = $1::uuid AND db.load_id = $2::uuid
+          AND db.voided_at IS NULL AND db.status <> 'void'`,
+      [operatingCompanyId, loadId]
+    );
+
+    return {
+      load_id: loadId,
+      load_number: loadNumber,
+      computed_at: new Date().toISOString(),
+      invoices: invoicesRes.rows.map((r) => ({
+        id: r.id,
+        number: r.display_id,
+        amount_cents: Math.round(Number(r.total_cents ?? 0)),
+        detail: r.status,
+      })),
+      expenses: expensesRes.rows.map((r) => ({
+        id: r.id,
+        number: r.expense_number,
+        amount_cents: Math.round(Number(r.total_amount_cents ?? 0)),
+        detail: r.memo,
+      })),
+      vendor_bills: vendorBillsRes.rows.map((r) => ({
+        id: r.id,
+        number: r.display_id,
+        amount_cents: Math.round(Number(r.amount_cents ?? 0)),
+        detail: r.vendor_name,
+      })),
+      driver_advances: driverAdvancesRes.rows.map((r) => ({
+        id: r.id,
+        number: r.display_id,
+        amount_cents: Math.round(Number(r.amount ?? 0) * 100),
+        detail: r.driver_name,
+      })),
+      settlements: settlementsRes.rows.map((r) => ({
+        id: r.id,
+        number: r.source_document_ref,
+        amount_cents: Math.round(Number(r.net_pay ?? 0) * 100),
+        detail: r.driver_name ? `${r.driver_name} — ${r.status ?? ""}`.trim() : r.status,
+      })),
+      fuel_expenses: fuelRes.rows.map((r) => ({
+        id: r.id,
+        number: r.transaction_at ? new Date(r.transaction_at).toISOString().slice(0, 10) : null,
+        amount_cents: Math.round(Number(r.total_cost ?? 0) * 100),
+        detail: r.vendor_name ?? ([r.location_city, r.location_state].filter(Boolean).join(", ") || null),
+      })),
+      driver_bills: driverBillsRes.rows.map((r) => {
+        const gross = Math.round(Number(r.gross_amount_cents ?? 0));
+        const keep = Math.round(Number(r.deadhead_pay_cents ?? 0));
+        return {
+          id: r.id,
+          number: r.bill_number,
+          amount_cents: gross,
+          detail: r.driver_name,
+          keep_cents: keep,
+          void_cents: Math.max(0, gross - keep),
+        };
+      }),
+    };
+  });
+}

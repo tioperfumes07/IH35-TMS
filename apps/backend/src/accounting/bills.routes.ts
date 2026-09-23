@@ -237,8 +237,11 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       if (!query.data.check) return base;
       const check = parseOperatorDocumentNumber(query.data.check);
       if (!check) return { ...base, taken: false };
+      // R-102-B item 4 — same fix as resolveBillDisplayId (display-id.ts): a voided bill's number
+      // must always read as taken, never reissuable. Was `AND revoked_at IS NULL AND voided_at
+      // IS NULL`, which excluded voided bills from this UI-facing duplicate-number check.
       const taken = await client.query(
-        `SELECT 1 FROM accounting.bills WHERE operating_company_id = $1::uuid AND (bill_number = $2 OR display_id = $2) AND revoked_at IS NULL AND voided_at IS NULL LIMIT 1`,
+        `SELECT 1 FROM accounting.bills WHERE operating_company_id = $1::uuid AND (bill_number = $2 OR display_id = $2) LIMIT 1`,
         [query.data.operating_company_id, check]
       );
       return { ...base, taken: Boolean(taken.rows[0]) };
@@ -339,6 +342,23 @@ export async function registerBillsRoutes(app: FastifyInstance) {
 
     const vendorTotalCents = vendorRows.reduce((sum: number, row: { amount_cents?: number | string | null }) => sum + Number(row.amount_cents ?? 0), 0);
     const driverTotalCents = driverRows.reduce((sum: number, row: { gross_amount_cents?: number | string | null }) => sum + Number(row.gross_amount_cents ?? 0), 0);
+    // R-102-B item 5 — disclosed count: company-wide, both bill tables, independent of every
+    // non-status filter (vendor/date/search/etc.) so it always states the true hidden count.
+    const voidedCount = await withCompanyScope(String(user.uuid), query.data.operating_company_id, async (client) => {
+      const res = await client.query(
+        `SELECT
+           (SELECT count(*) FROM accounting.bills
+             WHERE operating_company_id = $1::uuid
+               AND (status IN ('void', 'voided') OR revoked_at IS NOT NULL))
+           +
+           (SELECT count(*) FROM driver_finance.driver_bills
+             WHERE operating_company_id = $1::uuid
+               AND (status = 'void' OR voided_at IS NOT NULL))
+           AS n`,
+        [query.data.operating_company_id]
+      );
+      return Number((res.rows[0] as { n?: string } | undefined)?.n ?? 0);
+    });
     return {
       rows: [
         ...vendorRows.map((bill: unknown) => ({ bill_type: "vendor_bill" as const, bill })),
@@ -348,6 +368,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
         vendor_bill: { count: vendorRows.length, amount_cents: vendorTotalCents },
         driver_bill: { count: driverRows.length, amount_cents: driverTotalCents },
       },
+      voided_count: voidedCount,
     };
   });
 

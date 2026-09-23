@@ -13,6 +13,11 @@ type Props = {
   settlementModel: string | null | undefined;
   tripClosedAt: string | null | undefined;
   onClosed?: () => void;
+  /** R-102-B item 3 (owner, ROUND 112) — neither button here checked the settlement's own void/
+   * cancel state at all; both stayed clickable (closeSettlementTrip is a real write) on a cancelled
+   * settlement. Disabled with a reason, not hidden — matches this file's own SET-13 precedent one
+   * page up: a control with no authorized path is a defect, not a safety feature. */
+  settlementIsCancelled?: boolean;
 };
 
 /**
@@ -36,6 +41,7 @@ export function CloseTripPanel({
   settlementModel,
   tripClosedAt,
   onClosed,
+  settlementIsCancelled = false,
 }: Props) {
   const { pushToast } = useToast();
   const [busy, setBusy] = useState(false);
@@ -79,7 +85,8 @@ export function CloseTripPanel({
           <Button
             size="sm"
             variant="secondary"
-            disabled={busy || !companyId}
+            disabled={busy || !companyId || settlementIsCancelled}
+            title={settlementIsCancelled ? "Settlement is cancelled" : undefined}
             onClick={() => void runCloseTrip()}
             data-testid="close-trip-recheck-button"
           >
@@ -104,7 +111,8 @@ export function CloseTripPanel({
       <div className="mt-2">
         <Button
           size="sm"
-          disabled={busy || !companyId}
+          disabled={busy || !companyId || settlementIsCancelled}
+          title={settlementIsCancelled ? "Settlement is cancelled" : undefined}
           onClick={() => void runCloseTrip()}
           data-testid="close-trip-button"
         >

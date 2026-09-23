@@ -30,6 +30,11 @@ const listFuelTransactionsQuerySchema = z.object({
   unlinked: z.coerce.boolean().optional(),
   from: z.string().date().optional(),
   to: z.string().date().optional(),
+  // R-102-B item 5 ("DEFAULT FILTERS") — this list showed voided fuel purchases mixed in with live
+  // ones by default, with no way to hide them (fuel_transactions gained voided_at/void_reason via
+  // R-102.1-A, but nothing above the column knew about it). Default false, matching every sibling
+  // family's own "active hides voided" convention.
+  include_voided: z.coerce.boolean().optional().default(false),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -173,12 +178,29 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
         values.push(q.to);
         filters.push(`ft.transaction_at::date <= $${values.length}::date`);
       }
+      // R-102-B item 5 — the base filters (company/driver/unit/etc) apply either way; voided_count
+      // below re-runs them WITHOUT this clause added, so it discloses exactly what THIS filter set
+      // hides, not a global total.
+      const baseFilters = [...filters];
+      if (!q.include_voided) {
+        filters.push("ft.voided_at IS NULL");
+      }
       const whereClause = `WHERE ${filters.join(" AND ")}`;
 
       const countRes = await client.query(
         `SELECT count(*)::int AS total FROM fuel.fuel_transactions ft ${whereClause}`,
         values
       );
+
+      // R-102-B item 5 ("DEFAULT FILTERS" — owner, ROUND 121: "a list that silently hides is the
+      // same class of defect as a badge that never renders"). Disclosed count of voided rows this
+      // filter set is currently hiding — 0 whenever include_voided=true (nothing hidden).
+      const voidedCountRes = q.include_voided
+        ? { rows: [{ n: 0 }] }
+        : await client.query(
+            `SELECT count(*)::int AS n FROM fuel.fuel_transactions ft WHERE ${baseFilters.join(" AND ")} AND ft.voided_at IS NOT NULL`,
+            values
+          );
 
       values.push(q.limit);
       values.push(q.offset);
@@ -277,6 +299,7 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
           void_reason: row.void_reason,
         })),
         total: Number((countRes.rows[0] as { total?: number } | undefined)?.total ?? 0),
+        voidedCount: Number((voidedCountRes.rows[0] as { n?: number } | undefined)?.n ?? 0),
       };
     });
 
@@ -287,6 +310,9 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
       transactions: result.rows,
       total_count: result.total,
       has_more: q.offset + q.limit < result.total,
+      // R-102-B item 5 — how many voided rows this filter set is currently hiding (0 when
+      // include_voided=true was passed, since nothing is hidden in that case).
+      voided_count: result.voidedCount,
     };
   });
   /**

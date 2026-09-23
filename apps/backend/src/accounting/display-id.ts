@@ -325,14 +325,19 @@ export async function resolveBillDisplayId(
   if (manual) {
     assertDisplayIdShape(manual, BILL_DISPLAY_ID_PATTERN, "bill");
     await withDisplayLock(client, `accounting.bill.display_id:${operatingCompanyId}`);
+    // R-102-B item 4 (owner, "WE WILL USE THE SAME NUMBERS" — never reused): this was
+    // `AND revoked_at IS NULL AND voided_at IS NULL`, so a voided bill's own display_id read as
+    // "not taken" and a NEW bill could be typed with the same number — the exact reissue the law
+    // forbids. Every sibling family's resolver (payments/invoices/credit_memos/vendor_credits,
+    // display-id.ts) deliberately has NO such exclusion for this reason; bills was the one
+    // family that still had it. accounting.bills carries no unconditional UNIQUE(display_id)
+    // either, so this check was the ONLY thing standing between a voided number and reuse.
     const taken = await client.query(
       `
         SELECT 1
           FROM accounting.bills
          WHERE operating_company_id = $1::uuid
            AND display_id = $2
-           AND revoked_at IS NULL
-           AND voided_at IS NULL
          LIMIT 1
       `,
       [operatingCompanyId, manual]

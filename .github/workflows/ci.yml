@@ -515,6 +515,9 @@ jobs:
       - name: verify:sortable-columns-and-void-visibility
         run: node scripts/verify-sortable-columns-and-void-visibility.mjs
 
+      - name: verify:feed-day-preflight-is-enforced
+        run: node scripts/verify-feed-day-preflight-is-enforced.mjs
+
       - name: verify:migration-lane-band
         run: node scripts/verify-migration-lane-band.mjs
 

@@ -138,6 +138,15 @@ export function SettlementsPage() {
     if (hideCancelled && s.status === "cancelled") return false;
     return true;
   });
+  // R-102-B item 5 — owner: "a list that silently hides is the same class of defect as a badge
+  // that never renders." hideCancelled is client-side over the already-fetched full list (no
+  // server round-trip needed), so the hidden count is derived from the same source, minus the
+  // one predicate that hides rows.
+  const cancelledHiddenCount = hideCancelled
+    ? (listQuery.data?.settlements ?? []).filter(
+        (s) => (!effectiveDriverId || s.driver_id === effectiveDriverId) && s.status === "cancelled",
+      ).length
+    : 0;
   const kpiSettlements = (kpiBaseQuery.data?.settlements ?? []).filter((s) =>
     effectiveDriverId ? s.driver_id === effectiveDriverId : true,
   );
@@ -524,6 +533,12 @@ export function SettlementsPage() {
         totalGrossCents={openBillsSummary.total_gross_cents}
         items={openBillsSummary.items}
       />
+
+      {cancelledHiddenCount > 0 ? (
+        <p className="text-xs text-gray-500" data-testid="settlements-cancelled-count">
+          {settlements.length} live, {cancelledHiddenCount} cancelled (hidden)
+        </p>
+      ) : null}
 
       <SettlementsTable
         rows={focusedSettlements}

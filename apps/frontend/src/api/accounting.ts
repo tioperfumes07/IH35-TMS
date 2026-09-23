@@ -498,6 +498,9 @@ export function listInvoices(
   return apiRequest<{
     invoices: Invoice[];
     total?: number;
+    /** R-102-B item 5 — company-wide count of voided invoices, so the list can disclose what
+     * "Active (hide voided)" is hiding: "{total} live, {voided_count} voided". */
+    voided_count?: number;
     limit?: number;
     offset?: number;
     has_more?: boolean;
@@ -879,7 +882,9 @@ export function listExpenses(
   if (params.limit !== undefined) query.set("limit", String(params.limit));
   if (params.offset !== undefined) query.set("offset", String(params.offset));
   const qs = query.toString();
-  return apiRequest<{ rows: ExpenseListRow[] }>(withCompany(`/api/v1/expenses${qs ? `?${qs}` : ""}`, operatingCompanyId));
+  // R-102-B item 5 — voided_count: company-wide count of voided expenses, so the list can
+  // disclose what "Active (hide voided)" is hiding.
+  return apiRequest<{ rows: ExpenseListRow[]; voided_count?: number }>(withCompany(`/api/v1/expenses${qs ? `?${qs}` : ""}`, operatingCompanyId));
 }
 
 /** WAVE-H2 reverse drill — load → expenses. */
@@ -1115,6 +1120,7 @@ export type BillRegisterRow =
 export type BillRegisterResponse = {
   rows: BillRegisterRow[];
   totals: Record<"vendor_bill" | "driver_bill", { count: number; amount_cents: number }>;
+  voided_count?: number;
 };
 
 export function listBillRegister(
@@ -1545,7 +1551,7 @@ export function listFactoringAdvances(
   if (filters.load_id) query.set("load_id", filters.load_id);
   if (filters.limit !== undefined) query.set("limit", String(filters.limit));
   const qs = query.toString();
-  return apiRequest<{ rows: FactoringAdvance[] }>(withCompany(`/api/v1/accounting/factoring-advances${qs ? `?${qs}` : ""}`, operatingCompanyId));
+  return apiRequest<{ rows: FactoringAdvance[]; voided_count?: number }>(withCompany(`/api/v1/accounting/factoring-advances${qs ? `?${qs}` : ""}`, operatingCompanyId));
 }
 
 export function getFactoringAdvance(id: string, operatingCompanyId: string) {
@@ -1794,7 +1800,7 @@ export function listJournalEntries(
   if (params.limit) query.set("limit", String(params.limit));
   if (params.offset) query.set("offset", String(params.offset));
   const qs = query.toString();
-  return apiRequest<{ journal_entries: JournalEntry[] }>(
+  return apiRequest<{ journal_entries: JournalEntry[]; voided_count?: number }>(
     withCompany(`/api/v1/accounting/journal-entries${qs ? `?${qs}` : ""}`, operatingCompanyId)
   );
 }

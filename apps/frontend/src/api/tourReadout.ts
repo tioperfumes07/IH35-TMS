@@ -93,5 +93,7 @@ export type TourListRow = {
   driver_net_cents: number | null; company_settlement_display_id: string | null;
 };
 export function listTours(operatingCompanyId: string, state: "open" | "closed") {
-  return apiRequest<{ state: string; count: number; rows: TourListRow[] }>(`/api/v1/driver-finance/tours?operating_company_id=${encodeURIComponent(operatingCompanyId)}&state=${state}`);
+  // R-102-B item 5 — voided_count discloses how many cancelled/reversed/voided settlements in this
+  // SAME state bucket are permanently excluded from `rows` (SETL-REVERSED-HIDE); never a silent hide.
+  return apiRequest<{ state: string; count: number; voided_count: number; rows: TourListRow[] }>(`/api/v1/driver-finance/tours?operating_company_id=${encodeURIComponent(operatingCompanyId)}&state=${state}`);
 }

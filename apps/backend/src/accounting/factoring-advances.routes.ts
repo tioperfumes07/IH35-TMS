@@ -295,11 +295,17 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
         `,
         values
       );
-      return res.rows;
+      // R-102-B item 5 — disclosed count: company-wide, independent of every non-status filter.
+      const voidedRes = await client.query(
+        `SELECT count(*) AS n FROM accounting.factoring_advances
+          WHERE operating_company_id = $1::uuid AND status = 'voided'`,
+        [q.operating_company_id]
+      );
+      return { rows: res.rows, voidedCount: Number(voidedRes.rows[0]?.n ?? 0) };
     });
 
     return {
-      rows: rows.map((row: Record<string, unknown>) => ({
+      rows: rows.rows.map((row: Record<string, unknown>) => ({
         ...row,
         invoice_total_cents: Number(row.invoice_total_cents ?? 0),
         advance_rate_pct: Number(row.advance_rate_pct ?? 0),
@@ -311,6 +317,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
         release_amount_cents: Number(row.release_amount_cents ?? 0),
         invoice_count: Number(row.invoice_count ?? 0),
       })),
+      voided_count: rows.voidedCount,
     };
   });
 
