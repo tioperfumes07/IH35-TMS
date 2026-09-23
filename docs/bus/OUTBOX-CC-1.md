@@ -1134,4 +1134,73 @@ necessarily blessed yet for what a create call should REJECT vs accept). This is
 money-path rewrite; building it carefully now, reporting again when a real, tested slice lands —
 not stopping to ask, not claiming done before it is.
 
+## 2026-09-23 — CC-1: ALL FOUR ITEMS COMPLETE. Load-create ratchet closed at 0/0.
+
+**WHAT I DID:**
+
+1. **`loads.routes.ts` Book Load, fully built** — `loads-create-status.ts` (new): the
+   CREATE-specific validate-never-coerce status validator (Lead ruling "DO NOT MAP. DO NOT
+   SQUASH"). A 7-status allow-list (draft/booked/planned/unassigned/assigned/
+   assigned_not_dispatched/dispatched) for what a brand-new load can honestly be born in, mapped
+   to `(save_mode, DispatchStatus)` via `dispatch/load-state-machine.ts`'s EXISTING
+   `fromMdataStatus` (found while scoping, not written by me — a considered translation, and a
+   materially better-reasoned answer than my own earlier REJECTED `at_pickup→in_transit`
+   proposal). Every other status is REJECTED and NAMED (422 `status_not_creatable`), never
+   coerced. `POST /api/v1/mdata/loads` now calls `createLoadWithFullSideEffects(source=
+   "live_feed")` instead of a raw INSERT. Dropped as redundant (verified by reading the shared
+   path's own body, not assumed): local driver-qualification pre-check, trailer pre-resolution,
+   manual load-number allocation, separate driver-bill call — the shared path does all of it
+   internally, richer in every case (its driver-qualification gate supports an
+   Owner-override-with-audit path this route never had). New, honest rejection:
+   `currency_code="MXN"` (the shared path hardcodes USD with no field for currency at all).
+
+2. **`csv-seed-import.ts` extended to USMCA** — the Lead independently built the SAME CompanyCode
+   admission fix concurrently (#22368, merged mid-session) and found a real second defect while
+   doing it (`companySlug` ternary that would have stamped every USMCA row with TRANSP's slug —
+   he was right to catch it, my own build had already fixed the same bug independently, same
+   root cause). Real rebase conflict resulted; resolved by hand, keeping his already-merged
+   CompanyCode/parseCompany/companySlug code verbatim and layering this PR's actual new substance
+   on top: `upsertLoads()`'s raw INSERT replaced with `createLoadWithFullSideEffects(source=
+   "historical_backfill")` — historical_backfill because these are real historical rows (their
+   ACTUAL already-progressed status), so `fromMdataStatus` (the wide, total translation) is used
+   here, deliberately NOT the narrow create-time allow-list from item 1 above (that allow-list
+   exists to keep a LIVE create honest; here the point is recording real history, which may
+   legitimately already be delivered/invoiced/paid/closed). The real per-row `dispatcher_email`
+   this CSV format carries is preserved via a targeted post-insert UPDATE (the shared path has no
+   field for a dispatcher distinct from its own acting user — verified, not assumed). Actor: the
+   real `identity.users` service-account row from migration 202614200000 (this session) — the
+   exact row that migration's own comment named "the CSV importer" as an intended consumer of.
+
+3. **`scripts/verify-one-load-create-path.mjs`: OFFENDER_CEILING 4 → 0.** All four original
+   offenders (`inbound-204.handler.ts`, `seed-sample-data.ts`, `loads.routes.ts`,
+   `csv-seed-import.ts`) are now on the one shared create path. The ratchet holds at zero from
+   here — any new direct `INSERT INTO mdata.loads` is a regression, full stop.
+
+4. Two OTHER static guards (`verify-load-create-paths-tag-sample-data.mjs`,
+   `verify-mdata-load-create-trailer-equipment-default.mjs`) were anchored on the old
+   literal-INSERT shape of `loads.routes.ts` and went new-red the moment the rewire landed —
+   caught by this repo's own pre-push gate, not guessed at. Both updated to accept the new
+   delegated shape as an equally valid way to satisfy their real invariant; neither loosened —
+   both selftests re-verified after the fix.
+
+5. **E20 Part A** (reported complete earlier this round, restated for a single close-out
+   record): `local_vendor_id` migration + `ck_samsara_drivers_one_target` CHECK (#22338); the
+   resolver + all 4 REST endpoints, `GET /samsara/profiles`, `GET /samsara/mapping-targets`,
+   `POST /samsara/map`, `POST /samsara/unmap` (#22357). CC-2's Mapping page unblocked.
+
+**Deduction chain schema and the historical driver-bill writer were taken off my list and built
+by the Lead directly** (#22355, #22362) — noted, not mine, not touched.
+
+**THE PROOF IT'S REAL:** `npx vitest run .../loads-create-status.test.ts` → exit 0, 20/20 passed;
+`npx tsc -p tsconfig.json --noEmit` → exit 0 across every touched file; `node
+scripts/verify-one-load-create-path.mjs` → exit 0, "OK — 0/0 offender(s)" (down from 4 the day
+the ratchet was seeded); the pre-existing `loads.routes.test.ts` (8 tests, none touching the
+create path) still 8/8 — no regression to GET/PATCH; all 3 load-create guards pass live after the
+rewire. Merged: `a0e4f18439` (#22338), `dce0b63ba4` (#22357), `f3dd0719d0` (#22372, both
+loads.routes.ts + csv-seed-import.ts, squashed after the rebase conflict with #22368).
+
+**WHAT'S NEXT:** my four items from Round 88/92/93 are complete. Standing by for the next
+assignment — not idle, will pick up the next unclaimed shared-backlog item
+(`docs/bus/INBOX-CC-1.md`'s SHARED BACKLOG section) if nothing new lands first.
+
 — CC-1
