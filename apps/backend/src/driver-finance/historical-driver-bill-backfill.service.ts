@@ -40,6 +40,7 @@
  */
 
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { linkCostDocumentToLoad } from "../expense-attribution/cost-load-link.service.js";
 import { driverBillNumberFromLoadNumber } from "./driver-bill-number.js";
 
 /**
@@ -216,6 +217,15 @@ export async function createHistoricalDriverBill(
   );
 
   const driverBillId = inserted.rows[0]!.id;
+
+  await linkCostDocumentToLoad(client as never, {
+    operatingCompanyId: input.operating_company_id,
+    source: "driver_finance",
+    documentId: driverBillId,
+    loadId: input.load_id,
+    actorUserId: input.requesting_user_uuid ?? HISTORICAL_BACKFILL_SYSTEM_ACTOR,
+    reason: `Historical driver bill ${billNumber} inherits source load ${input.load_number}`,
+  });
 
   // ---- 4. SAY SO, IN THE AUDIT TRAIL, NAMING THE SOURCE DOCUMENT -------------------------
   // appendCrudAudit requires a real actor id. A historical backfill has no interactive user, so

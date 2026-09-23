@@ -41,6 +41,8 @@
 
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { nextExpenseDisplayId } from "../accounting/display-id.js";
+import { linkCostDocumentToLoad } from "../expense-attribution/cost-load-link.service.js";
+import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 
 export type QueryableClient = {
   query: <T = Record<string, unknown>>(
@@ -238,11 +240,14 @@ export async function createExpenseFromFuelTransaction(
   const adoptedJeId = jeRes.rows[0]?.je ?? null;
 
   // ---- 4. THE SAME NUMBER SERIES EVERY OTHER EXPENSE USES --------------------------------
-  const expenseNumber = await nextExpenseDisplayId(
-    client as never,
-    input.operating_company_id,
-    new Date(`${txnDate}T00:00:00.000Z`),
-  );
+  const loadNumbered = fuel.load_id
+    ? await generateExpenseNumber(client as never, fuel.load_id, input.operating_company_id)
+    : null;
+  const expenseNumber = loadNumbered?.number ?? await nextExpenseDisplayId(
+      client as never,
+      input.operating_company_id,
+      new Date(`${txnDate}T00:00:00.000Z`),
+    );
 
   // ---- 5. WRITE THE DOCUMENT. STATUS 'draft' ON PURPOSE. ---------------------------------
   // A backfilled document is not posted by the act of existing. The existing expense posting
@@ -278,6 +283,19 @@ export async function createExpenseFromFuelTransaction(
     ],
   );
   const expenseId = inserted.rows[0]!.id;
+
+  if (fuel.load_id) {
+    const link = await linkCostDocumentToLoad(client as never, {
+      operatingCompanyId: input.operating_company_id,
+      source: "accounting",
+      documentId: expenseId,
+      loadId: fuel.load_id,
+      actorUserId: input.requesting_user_uuid ?? FUEL_EXPENSE_SYSTEM_ACTOR,
+      reason: "Fuel expense document inherits the fuel transaction load",
+      numbered: loadNumbered ?? undefined,
+    });
+    if (link.expenseNumber !== expenseNumber) throw new Error(`fuel_expense_number_link_mismatch:${expenseId}`);
+  }
 
   await appendCrudAudit(
     client,

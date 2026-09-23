@@ -350,30 +350,33 @@ async function live() {
     // one of these document loads' own rows had zero real links — exactly the "guard proves
     // nothing" failure mode this whole master guard exists to close). expense_number = the load's
     // own load_number is the identity this table's own contract requires (3.3: "written both
-    // ways"); an expense with a link row whose expense_number does NOT match its load counts as
-    // unlinked, same as no row at all.
+    // ways"). expense_number is a SEQUENCE (load, load-1, load-2), so comparing that field to the
+    // bare load number makes every legitimate second/subsequent cost look orphaned. The durable
+    // edge's load_number is the denormalized identity that must equal mdata.loads.load_number.
     const unlinkedExpenseRes = await client.query(
       `SELECT l.load_number, e.id::text AS expense_id
          FROM mdata.loads l
          JOIN accounting.expenses e ON e.load_id = l.id AND e.operating_company_id = l.operating_company_id
          LEFT JOIN expense_attribution.expense_load_links ell
-           ON ell.expense_source = 'accounting' AND ell.expense_id = e.id AND ell.expense_number = l.load_number
+           ON ell.expense_source = 'accounting' AND ell.expense_id = e.id AND ell.load_number = l.load_number
         WHERE l.operating_company_id = $1::uuid AND l.load_number = ANY($2::text[])
           AND e.voided_at IS NULL AND ell.id IS NULL`,
       [USMCA_COMPANY_ID, allLoadNumbers]
     );
-    // NOTE — expense_attribution.expense_load_links.expense_source's own CHECK constraint accepts
-    // only 'accounting' | 'driver_finance' today; there is no 'fuel' value, so a fuel_transactions
-    // row cannot be linked into this table at all without a migration widening that constraint
-    // (out of this guard's authority — see this repo's CC-2-cannot-author-migrations lane rule).
-    // Matched on expense_id alone (not a specific source value) so this assertion stays correct
-    // once that migration lands and starts writing real rows, rather than hard-coding a guess now.
+    // Fuel is represented by its canonical accounting.expenses document (source_fuel_transaction_id),
+    // then linked as expense_source='accounting'. Never invent a third source value for the same cost.
     const unlinkedFuelRes = await client.query(
       `SELECT l.load_number, ft.id::text AS fuel_id
          FROM mdata.loads l
          JOIN fuel.fuel_transactions ft ON ft.load_id = l.id AND ft.operating_company_id = l.operating_company_id
+         LEFT JOIN accounting.expenses fuel_expense
+           ON fuel_expense.source_fuel_transaction_id = ft.id
+          AND fuel_expense.operating_company_id = ft.operating_company_id
+          AND fuel_expense.voided_at IS NULL
          LEFT JOIN expense_attribution.expense_load_links ell
-           ON ell.expense_id = ft.id AND ell.expense_number = l.load_number
+           ON ell.expense_source = 'accounting'
+          AND ell.expense_id = fuel_expense.id
+          AND ell.load_number = l.load_number
         WHERE l.operating_company_id = $1::uuid AND l.load_number = ANY($2::text[])
           AND ft.archived_at IS NULL AND ell.id IS NULL`,
       [USMCA_COMPANY_ID, allLoadNumbers]

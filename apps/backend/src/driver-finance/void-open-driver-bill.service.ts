@@ -177,6 +177,15 @@ export async function correctOpenDriverBillMileage(
   );
   const newBillId = newBillRes.rows[0]!.id;
 
+  await linkCostDocumentToLoad(client as never, {
+    operatingCompanyId: input.operatingCompanyId,
+    source: "driver_finance",
+    documentId: newBillId,
+    loadId: input.loadId,
+    actorUserId: input.actorUserId,
+    reason: `Replacement driver bill ${newBillNumber} retains the original load`,
+  });
+
   // 3. Mint the replacement settlement lines — same (settlement_id, line_type, description, amount,
   // source_driver_bill_id, load_id, is_sample_data) shape as settlement-engine.ts's own INSERT for
   // this line pair, on the SAME settlement the voided lines belonged to.
@@ -208,3 +217,4 @@ export async function correctOpenDriverBillMileage(
     new_gross_amount_cents: grossAmountCents,
   };
 }
+import { linkCostDocumentToLoad } from "../expense-attribution/cost-load-link.service.js";

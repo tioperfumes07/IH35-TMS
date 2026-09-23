@@ -1,6 +1,7 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { randomUUID } from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { linkCostDocumentToLoad } from "../expense-attribution/cost-load-link.service.js";
 import { withCurrentUser } from "../auth/db.js";
 import { driverBillNumberFromLoadNumber } from "../driver-finance/driver-bill-number.js";
 import {
@@ -1090,6 +1091,16 @@ export async function createDriverBillArtifacts(
         ]
       );
       const billId = billRes.rows[0]?.id ? String(billRes.rows[0].id) : "";
+      if (billId) {
+        await linkCostDocumentToLoad(client as never, {
+          operatingCompanyId: input.operating_company_id,
+          source: "driver_finance",
+          documentId: billId,
+          loadId: String(load.id),
+          actorUserId: input.requestingUserUuid,
+          reason: `Driver bill ${resolvedLoadNumber}${row.suffix} inherits its booked load`,
+        });
+      }
       if (billId && !firstBillId) firstBillId = billId;
     }
 
@@ -1175,6 +1186,15 @@ export async function createDriverBillArtifacts(
   );
   const billId = billRes.rows[0]?.id;
   if (!billId) return mintOutcome(billNumber);
+
+  await linkCostDocumentToLoad(client as never, {
+    operatingCompanyId: input.operating_company_id,
+    source: "driver_finance",
+    documentId: String(billId),
+    loadId: String(load.id),
+    actorUserId: input.requestingUserUuid,
+    reason: `Driver bill ${billNumber} inherits its booked load`,
+  });
 
   await appendCrudAudit(
     client,

@@ -3,6 +3,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { isBillPaymentGlPostingEnabled } from "../accounting/bill-payment-gl.service.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
+import { linkCostDocumentToLoad } from "../expense-attribution/cost-load-link.service.js";
 import { logger } from "../observability/structured-logger.js";
 
 /**
@@ -213,6 +214,16 @@ export async function disburseCashAdvanceSplit(
           );
           const expenseId = String((exp.rows[0] as { id: string }).id);
           expenseIds.push(expenseId);
+
+          await linkCostDocumentToLoad(client as never, {
+            operatingCompanyId: companyId,
+            source: "accounting",
+            documentId: expenseId,
+            loadId: leg.load_id,
+            actorUserId: actorUserUuid,
+            reason: "Lumper expense leg inherits the cash-advance split load",
+            numbered,
+          });
 
           await client.query(
             `INSERT INTO accounting.expense_lines
