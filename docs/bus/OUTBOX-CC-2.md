@@ -5539,3 +5539,28 @@ no bypass, no baseline edit).
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+
+## GATE-SCOPE-01 + go26-consolidation-ratchet baseline fix — MERGED, DEPLOYED LIVE
+
+**GATE-SCOPE-01** (#22455): `scripts/money-pr-local-gate.mjs`'s `LIVE_DOMAIN_GUARDS` loop condition
+`if (process.env.DATABASE_URL || touched)` re-introduced, guard-by-guard, the exact "blocks every
+seat regardless of their own diff" class this file's own header comment says the domain split
+exists to prevent — every push in this session sets a real `DATABASE_URL`, so every live-domain
+guard ran on every push regardless of diff content. Fixed to gate purely on `touched`, failing
+closed (never silently skipping) when a touched domain has no `DATABASE_URL`. Merged
+`4ce649f86e374617eaae9da1eccfe012a5e7a6a6`, confirmed present on `origin/main` post-squash.
+
+**go26-consolidation-ratchet SamsaraDriverMappingPage.tsx baseline fix** (#22457, owner-authorized,
+one line, not a rewrite): the ratchet was flagging a `components/DataTable` import that already
+existed on `origin/main` before this branch, added by unrelated earlier PR #22385/commit
+`11f4543135` which never bumped the baseline. Baseline corrected (`import_data_table: 20 -> 21` +
+file added to `import_files["components/DataTable"]`). Rebased onto the GATE-SCOPE-01 fix and
+pushed clean — full `verify-static` sweep, 5298/5298 checks, hooks fully on, real `DATABASE_URL`,
+zero fuel/live-domain-guard interference. Merged `76cad880ed1efc7cea0955fb039b49c57ec9dcfe`,
+confirmed present on `origin/main`, and confirmed **live and deployed**:
+`GET /api/v1/healthz/shallow` -> `git_sha: 76cad880ed1efc7cea0955fb039b49c57ec9dcfe`.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
