@@ -1,7 +1,13 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
-import { approveCancellation, cancelLoad, listCancellationReasons, listCancellations } from "./cancellation.service.js";
+import {
+  approveCancellation,
+  cancelLoad,
+  getCancellationPreview,
+  listCancellationReasons,
+  listCancellations,
+} from "./cancellation.service.js";
 
 const loadIdParamsSchema = z.object({ id: z.string().uuid() });
 const cancellationIdParamsSchema = z.object({ id: z.string().uuid() });
@@ -41,6 +47,8 @@ function mapServiceError(error: unknown) {
   return null;
 }
 
+const previewQuerySchema = z.object({ operating_company_id: z.string().uuid() });
+
 export async function registerDispatchCancellationRoutes(app: FastifyInstance) {
   app.get("/api/v1/dispatch/cancellation-reasons", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
@@ -49,6 +57,31 @@ export async function registerDispatchCancellationRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     return listCancellationReasons(user.uuid, query.data.operating_company_id);
   });
+
+  // ROUND 125-126 (owner, via the Lead) — VOID-A-LOAD CASCADE PREVIEW. Read-only: every artifact
+  // the cancel cascade is a candidate to touch, named with its own number and amount (never a
+  // count), plus the driver bill KEEP/VOID split. No GL math, no write path — CC-1 owns cascade
+  // execution; this describes what exists today, so CancelLoadModal.tsx can show the dispatcher
+  // the real picture before they confirm.
+  app.get(
+    "/api/v1/dispatch/loads/:id/cancellation-preview",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = authed(req, reply);
+      if (!user) return;
+      const params = loadIdParamsSchema.safeParse(req.params ?? {});
+      if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
+      const query = previewQuerySchema.safeParse(req.query ?? {});
+      if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+      try {
+        return await getCancellationPreview(user.uuid, query.data.operating_company_id, params.data.id);
+      } catch (error) {
+        const mapped = mapServiceError(error);
+        if (mapped) return reply.code(mapped.status).send(mapped.payload);
+        throw error;
+      }
+    }
+  );
 
   app.post("/api/v1/dispatch/loads/:id/cancel", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
