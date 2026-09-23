@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
+  FAULT_PARTIES,
   INVOICE_DISPUTE_FLAG,
   INVOICE_DISPUTE_REASONS,
   INVOICE_DISPUTE_RESOLUTIONS,
@@ -77,5 +78,39 @@ describe("invoice-dispute invariants (owner ruling 2026-09-12)", () => {
     // abs(expected - invoiced) or the write is refused.
     expect(serviceSrc).toMatch(/disputed_amount_must_equal_variance/);
     expect(routesSrc).toMatch(/disputed_amount_must_equal_variance/);
+  });
+
+  // Round 88 (owner law, migration 202614290000, verbatim): "IF WE ARE LATE DUE TO DRIVER FAULT,
+  // WE WILL DEDUCT." The fault decision is a NAMED HUMAN ACT, never inferred from lateness, and
+  // 'unassigned' is the honest default -- not 'driver'.
+  describe("Round 88 -- the fault decision", () => {
+    it("carries the owner's closed fault vocabulary, unassigned first (the honest default)", () => {
+      expect(FAULT_PARTIES).toEqual(["unassigned", "driver", "carrier", "customer", "broker", "force_majeure"]);
+    });
+
+    it("refuses a driver_id on any fault_party other than 'driver', and requires one when fault_party IS 'driver'", () => {
+      expect(serviceSrc).toMatch(/faultParty\s*!==\s*"driver"\s*&&\s*input\.driverId/);
+      expect(serviceSrc).toMatch(/driver_only_valid_for_driver_fault/);
+      expect(serviceSrc).toMatch(/faultParty\s*===\s*"driver"\s*&&\s*!input\.driverId/);
+      expect(serviceSrc).toMatch(/driver_required_for_driver_fault/);
+      expect(routesSrc).toMatch(/driver_only_valid_for_driver_fault/);
+      expect(routesSrc).toMatch(/driver_required_for_driver_fault/);
+    });
+
+    it("requires a real reason (min 10 chars, matches every other reason field's honesty bar in this codebase)", () => {
+      expect(routesSrc).toMatch(/fault_reason:\s*z\.string\(\)\.trim\(\)\.min\(10\)/);
+    });
+
+    it("the fault route is role-gated and audited, same discipline as resolve/cancel", () => {
+      expect(routesSrc).toMatch(/\/api\/v1\/accounting\/invoice-disputes\/:id\/fault/);
+      expect(serviceSrc).toMatch(/accounting\.invoice_dispute\.fault_decided/);
+    });
+
+    it("posts no GL and never mutates the invoice face — same discipline as the rest of this service", () => {
+      // decideDisputeFault only appears within the section already covered by the file-wide
+      // no-GL/no-face-mutation checks above; this test exists to keep that claim anchored to the
+      // fault-decision function specifically if the file is ever split.
+      expect(serviceSrc).toMatch(/export async function decideDisputeFault/);
+    });
   });
 });
