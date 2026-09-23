@@ -38,13 +38,13 @@ const SHARED_PATH_FILE = path.join(SRC_ROOT, "dispatch", "book-load.service.ts")
 // file below is actually rewired to call createLoadWithFullSideEffects; never raise it.
 //
 // E6 (2026-09-22, same day): inbound-204.handler.ts rewired to call createLoadWithFullSideEffects
-// (source="live_feed") -- the first of the 4 to land. 4 -> 3.
-const OFFENDER_CEILING = 3;
+// (source="live_feed") -- the first of the 4 to land. 4 -> 3. seed-sample-data.ts rewired next
+// (source="historical_backfill", synthetic demo data, softer gates) -- 3 -> 2.
+const OFFENDER_CEILING = 2;
 
 const KNOWN_OFFENDERS_AT_SEED = [
   "apps/backend/src/mdata/loads.routes.ts",
   "apps/backend/src/seed/csv-seed-import.ts",
-  "apps/backend/src/onboarding/seed-sample-data.ts",
 ];
 
 // The 8 INSERTs, by table (ruling's own numbering).
