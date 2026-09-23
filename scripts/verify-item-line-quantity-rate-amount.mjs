@@ -10,6 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const LABEL = "verify-item-line-quantity-rate-amount";
+export const ALLOW_OFFLINE_SKIP = "static source check of the migration and the invoice-line writers; never connects to a database";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MIGRATION = process.env.ITEM_LINE_MIGRATION_PATH || path.join(ROOT, "db/migrations/202614271200_item_line_quantity_rate_amount.sql");
 const WRITERS = ["apps/backend/src/accounting/invoice-lines.routes.ts", "apps/backend/src/accounting/recurring.worker.ts"];
