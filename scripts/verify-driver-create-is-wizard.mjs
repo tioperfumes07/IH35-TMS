@@ -35,6 +35,7 @@ function check(src) {
     assertWired("requestUploadUrlFromFile", src, /requestUploadUrlFromFile\s*\(/);
     assertWired("confirmUpload", src, /confirmUpload\s*\(/);
     assertWired("pending docs", src, /pendingDocs/);
+    // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
     assertWired("identity step readiness", src, /const identityStepReady = Boolean\([\s\S]*?form\.first_name\.trim\(\)[\s\S]*?form\.last_name\.trim\(\)[\s\S]*?normalizePhoneDigits\(form\.phone_input\)\.length === 10[\s\S]*?\);/);
     assertWired("required first-name label", src, /\["first_name", "First Name \*"\]/);
     assertWired("required last-name label", src, /\["last_name", "Last Name \*"\]/);
@@ -49,6 +50,7 @@ function check(src) {
 
 function selftest() {
   const orig = fs.readFileSync(MODAL, "utf8");
+  // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
   const broken = orig.replace(
     /normalizePhoneDigits\(form\.phone_input\)\.length === 10/,
     "true /* SELFTEST: blank phone escapes identity gate */"

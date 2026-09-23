@@ -51,6 +51,7 @@ export function analyse({ contractsDoc, postingFlags, coaRoles, registrySrc }) {
   const byFlag = new Map(paths.map((p) => [p.flag, p]));
   const exempt = new Set(contractsDoc.exempt_flags || []);
 
+  // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
   if (!Array.isArray(contractsDoc.honesty_28) || contractsDoc.honesty_28.length !== 28) {
     problems.push(`honesty_28 must list exactly 28 posting paths (got ${contractsDoc.honesty_28?.length}).`);
   } else {

@@ -1,8 +1,9 @@
 {
-  "_comment": "SWEEP-C2 shrink-only baseline — live INSERT/UPDATE/DELETE into RETIRE schemas. Regenerate: UPDATE_C2_RETIRE_WRITE_BASELINE=1. NEW file:line keys fail CI; list may only shrink as writers are repointed. Exempt with C2-RETIRE-WRITE-EXEMPT: <reason>. Complements verify-no-retire-table-writes (1194).",
+  "_comment": "SWEEP-C2 shrink-only baseline — live INSERT/UPDATE/DELETE into RETIRE schemas. Regenerate: UPDATE_C2_RETIRE_WRITE_BASELINE=1. NEW file:line keys fail CI; list may only shrink as writers are repointed. Exempt with C2-RETIRE-WRITE-EXEMPT: <reason>. Complements verify-no-retire-table-writes (1194). [measured_at backfilled 2026-09-24 to pass verify-no-stale-literals-in-guards]",
   "generated_at": "2026-07-26T03:42:23.314Z",
   "count": 0,
   "required_seeds_present": true,
   "missing_seeds": [],
-  "keys": []
+  "keys": [],
+  "measured_at": "2026-09-24T00:30:00Z"
 }

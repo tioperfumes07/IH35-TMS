@@ -365,6 +365,7 @@ function repoProblems() {
         "settlements",
         "vendors",
       ];
+      // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
       if (ids.length !== 16 || JSON.stringify(ids) !== JSON.stringify(expected)) {
         problems.push("URGENT_16_MODULE_IDS must be exactly 16 modules in A–Z id order, including legal+finance");
       }

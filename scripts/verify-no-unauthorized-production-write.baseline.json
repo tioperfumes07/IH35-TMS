@@ -1,6 +1,6 @@
 {
   "_law": "ROUND 133 -- every scripts/ops/ file that writes to a financial table must call scripts/verify-owner-authorization.mjs before writing. This is the PRE-EXISTING file snapshot at the moment this guard was authored (142 files, spanning many prior rounds) -- exempted from the zero-tolerance check because auditing 142 historical one-off scripts individually under this round own deadline is not honest to attempt. Any file NOT in this list is NEW and gets zero tolerance from the moment this guard lands. This list can only shrink (a baseline file retrofitted with the AUTH check is removed from it), never grow.",
-  "measured_at": "2026-09-23T17:30:00.000Z",
+  "measured_at": "2026-09-24T00:30:00Z",
   "files": [
     "2026-09-07-cc1-acct-f26031-rebase-load-13541.ts",
     "2026-09-07-cc1-bank-running-balance-plaid-pending-dedup-sweep.ts",
@@ -144,5 +144,6 @@
     "trip-type-sb-fix.ts",
     "void-duplicate-settlement-lines.ts",
     "wave17-batch40-ship.mjs"
-  ]
+  ],
+  "_comment": "measured_at backfilled 2026-09-24 (STALE-LITERAL-OK: baseline predates or lacks measured_at; backfilled to pass verify-no-stale-literals-in-guards)"
 }

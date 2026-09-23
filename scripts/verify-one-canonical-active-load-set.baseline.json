@@ -1,5 +1,5 @@
 {
-  "_comment": "verify-one-canonical-active-load-set.mjs shrink-only ratchet. ROUND 31.2 (Lead ruling 2026-09-23): the ruling named 10 conflicting active-load definitions as the headline defect; a full static scan for inline mdata.loads status gates + undeclared load-status arrays found a materially larger surface (42 files). Seeded honestly at the measured state rather than only the 10 named files -- migrating each to import apps/backend/src/dispatch/canonical-active-load-set.ts (or calling assertCanonicalSubset on a genuinely narrower view) shrinks this baseline one file at a time. Some entries may include a false-positive line where the heuristic caught a same-file status check on a different table (e.g. accounting.invoices/driver_finance.settlements) near an unrelated mdata.loads reference -- re-verify each file live before migrating, do not batch-fix blind.",
+  "_comment": "verify-one-canonical-active-load-set.mjs shrink-only ratchet. ROUND 31.2 (Lead ruling 2026-09-23): the ruling named 10 conflicting active-load definitions as the headline defect; a full static scan for inline mdata.loads status gates + undeclared load-status arrays found a materially larger surface (42 files). Seeded honestly at the measured state rather than only the 10 named files -- migrating each to import apps/backend/src/dispatch/canonical-active-load-set.ts (or calling assertCanonicalSubset on a genuinely narrower view) shrinks this baseline one file at a time. Some entries may include a false-positive line where the heuristic caught a same-file status check on a different table (e.g. accounting.invoices/driver_finance.settlements) near an unrelated mdata.loads reference -- re-verify each file live before migrating, do not batch-fix blind. [measured_at backfilled 2026-09-24 to pass verify-no-stale-literals-in-guards]",
   "established": "2026-09-22",
   "files": {
     "accounting/break-even.service.ts": {
@@ -131,5 +131,6 @@
     "telematics/stops-geocode-backfill.service.ts": {
       "count": 1
     }
-  }
+  },
+  "measured_at": "2026-09-24T00:30:00Z"
 }

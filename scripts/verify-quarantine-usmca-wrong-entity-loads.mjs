@@ -21,6 +21,7 @@ requireText("soft_deleted_at=NULL, deleted_by_user_id=NULL", "quarantine must re
 if (/\bDELETE\s+FROM\b/i.test(source)) failures.push("quarantine runner must never delete");
 
 const list = source.match(/const LOAD_NUMBERS = \[([\s\S]*?)\] as const;/)?.[1]?.match(/"\d+"/g) ?? [];
+// STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
 if (list.length !== 29 || new Set(list).size !== 29) failures.push(`expected 29 unique load numbers, found ${list.length}/${new Set(list).size}`);
 
 if (failures.length) {

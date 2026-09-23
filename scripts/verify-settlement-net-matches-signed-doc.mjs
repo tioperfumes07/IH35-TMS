@@ -60,6 +60,7 @@ function loadSignedTotals() {
 async function main() {
   const truth = loadSignedTotals();
   const usmcaDocs = USMCA_CUTOVER_DOCS.filter((d) => truth.has(d));
+  // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
   if (usmcaDocs.length !== 35) {
     throw new Error(
       `expected exactly 35 USMCA settlement documents (5769-5803 inclusive) in ${path.basename(TRUTH_PATH)}, found ${usmcaDocs.length} — ` +

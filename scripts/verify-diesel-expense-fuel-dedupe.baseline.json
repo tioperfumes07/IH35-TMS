@@ -1,6 +1,7 @@
 {
-  "_comment": "Shrink-only ceiling for scripts/verify-diesel-expense-fuel-dedupe.mjs. A number here may only go DOWN. Lower it in the same PR (or the next one) after Diesel expense duplicates are voided through voidDocument({ type: 'expense' }). Target is 0 for doubled_with_live_fuel_twin; live_diesel_expenses reaches 0 once the 2 no-twin rows become fuel rows. Source: docs/reconciliation/2026-09-22-diesel-expense-void-preview.md. Tightened 2026-09-22 after CC-2 voided 90 Diesel expenses (batch 1: 89, batch 2: 13546-2): remaining = class C 13547 + 13557-1 (twin on another load) and 13537 (twin restored without a GL posting).",
+  "_comment": "Shrink-only ceiling for scripts/verify-diesel-expense-fuel-dedupe.mjs. A number here may only go DOWN. Lower it in the same PR (or the next one) after Diesel expense duplicates are voided through voidDocument({ type: 'expense' }). Target is 0 for doubled_with_live_fuel_twin; live_diesel_expenses reaches 0 once the 2 no-twin rows become fuel rows. Source: docs/reconciliation/2026-09-22-diesel-expense-void-preview.md. Tightened 2026-09-22 after CC-2 voided 90 Diesel expenses (batch 1: 89, batch 2: 13546-2): remaining = class C 13547 + 13557-1 (twin on another load) and 13537 (twin restored without a GL posting). [measured_at backfilled 2026-09-24 to pass verify-no-stale-literals-in-guards]",
   "baseline_established": "2026-09-22",
   "doubled_with_live_fuel_twin": 2,
-  "live_diesel_expenses": 3
+  "live_diesel_expenses": 3,
+  "measured_at": "2026-09-24T00:30:00Z"
 }

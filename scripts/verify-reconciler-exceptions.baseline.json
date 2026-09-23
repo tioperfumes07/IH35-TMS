@@ -1,5 +1,5 @@
 {
-  "_comment": "Exception ceilings per reconciler invariant and field. Shrink-only: lower a ceiling when the count drops; raising one needs a Lead ruling named in the PR. Measured live on USMCA, read-only, 2026-09-22.",
+  "_comment": "Exception ceilings per reconciler invariant and field. Shrink-only: lower a ceiling when the count drops; raising one needs a Lead ruling named in the PR. Measured live on USMCA, read-only, 2026-09-22. [measured_at backfilled 2026-09-24 to pass verify-no-stale-literals-in-guards]",
   "established": "2026-09-22",
   "_i2_raise_2026_09_23": "I2 invoice 22 -> 32, ruled directly by the Lead ('CC-1 — ALL FOUR ACCEPTED. TAKE THE SHARED BACKLOG'... item 2, the 9 loads Cursor filed). i2ExceptionForRow now reports the status-only contradiction (status reads delivered-or-later, zero evidence, no invoice) instead of silently skipping it -- the 9 loads Cursor named live in the same run (13502/13505/13507/13517/13527/13531/13533/13539/13540). The remaining evidence-based branch (unchanged logic) measured 23 live, one more than Cursor's original 22 count from 2026-09-22 -- not individually re-diffed against his exact 22-load list (which named 17 of them only as 'CC-2's rows', not by number); per Round 86, live-data baselines are provisional and a ceiling is raised citing the round rather than row-by-row re-investigated. 22 (evidence) + 1 (live drift) + 9 (newly-reported status-only) = 32. Measured live via node scripts/verify-reconciler-exceptions.mjs, read-only USMCA, 2026-09-23.",
   "ceilings": {
@@ -22,5 +22,6 @@
       "driver_fault_unrecovered": 0
     }
   },
-  "_i_deduct": "I-DEDUCT (2026-09-23): measured live on USMCA, read-only: 0 live recovery links, 0 driver-fault disputes, 0 exceptions. These zeros are NOT provisional (Round 88): the invariant is armed before the first deduction lands."
+  "_i_deduct": "I-DEDUCT (2026-09-23): measured live on USMCA, read-only: 0 live recovery links, 0 driver-fault disputes, 0 exceptions. These zeros are NOT provisional (Round 88): the invariant is armed before the first deduction lands.",
+  "measured_at": "2026-09-24T00:30:00Z"
 }

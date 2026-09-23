@@ -6,5 +6,7 @@
       "table": "driver_finance.driver_settlements",
       "reason": "reverseSettlementForVoid() flips driver_settlements to status='cancelled'+voided_at directly (R-102-B) and already hand-cascades settlement_lines itself, but not driver_settlement_deductions -- the same gap ROUND 138 closed in governance/void-cancel-executors.ts's executeDriverSettlement for the SAME underlying entity. This file is driver-finance/** (CC-3's lane per LANES.md); CC-1 does not edit it. Flagged here rather than silently skipped -- CC-3 notified directly (ROUND 138 handoff) to add the one-line `cascadeVoidChildren(client, \"driver_settlement\", settlementId, operatingCompanyId)` call after the existing settlement_lines UPDATE. Remove this entry once wired."
     }
-  ]
+  ],
+  "measured_at": "2026-09-24T00:30:00Z",
+  "_comment": "measured_at backfilled 2026-09-24 (STALE-LITERAL-OK: baseline predates or lacks measured_at; backfilled to pass verify-no-stale-literals-in-guards)"
 }

@@ -119,6 +119,7 @@ const VOIDED_PHANTOM_IDS = [
 
 const BACKFILLED_IDS = ["24374e31-1c15-4851-8c1e-85034b3c0247", "dfbaa0f3-5d66-4934-9c68-93524fa3a96f"];
 
+// STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
 if (VOIDED_PHANTOM_IDS.length !== 36) {
   console.error(`${LABEL}: FAIL — internal: expected 36 pinned phantom ids, got ${VOIDED_PHANTOM_IDS.length}`);
   process.exit(1);

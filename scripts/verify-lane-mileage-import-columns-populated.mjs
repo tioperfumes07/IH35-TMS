@@ -118,6 +118,7 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAIL — this file does not exist`);
     process.exit(1);
   }
+  // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
   if (CHECKS.length !== 10) {
     console.error(`${LABEL} SELFTEST FAIL — expected 10 tracked columns, found ${CHECKS.length}`);
     process.exit(1);

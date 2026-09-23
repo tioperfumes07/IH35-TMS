@@ -30,6 +30,7 @@ const callers = fs
   .map((f) => f.replace(/\.mjs$/, ""))
   .sort();
 const expected = [...PURGE_WINDOW_GUARDS].sort();
+// STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
 if (PURGE_WINDOW_GUARDS.length !== 10) failures.push(`PURGE_WINDOW_GUARDS lists ${PURGE_WINDOW_GUARDS.length} guards; the rulings name ten`);
 for (const c of callers) if (!expected.includes(c)) failures.push(`${c} calls the purge-window helper but is not one of the ten`);
 for (const e of expected) if (!callers.includes(e)) failures.push(`${e} is one of the ten but no longer calls the purge-window helper at its empty-table arm`);

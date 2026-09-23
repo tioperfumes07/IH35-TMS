@@ -106,6 +106,10 @@ const STEPS = [
   // POPULATION CHECK: cron absent → SKIPPED exit 0 (arms itself when CC-2 lands task 48);
   // cron present → assert daily + wired at boot, RED if broken. No .guard-exempt.json entry.
   ["verify-relay-deposits-sync-is-scheduled", "scripts/verify-relay-deposits-sync-is-scheduled.mjs"],
+  // ROUND E23 §9.0.17 SWEEP (DEVIN-B, Q10) — no stale hardcoded counts in guards or baselines.
+  // FAIL on: numeric literal vs live count/sum, baseline missing/stale measured_at, _comment
+  // contradicting measured_at, duplicated count. Allowlist: `// STALE-LITERAL-OK: <reason>`.
+  ["verify-no-stale-literals-in-guards", "scripts/verify-no-stale-literals-in-guards.mjs"],
   // Rule 30 — soft-reset onto newer main deleted other PRs' verify-steps (2026-08-02).
   ["verify-no-guard-file-deletion", "scripts/verify-no-guard-file-deletion.mjs"],
   // Rule 30 — tip commit LIVE PROOF must be Claude-green (not "UNVERIFIED browser" theater).
@@ -527,6 +531,33 @@ const LIVE_DOMAIN_GUARDS = [
       "apps/backend/src/insurance/",
       "apps/backend/src/payroll/",
       "apps/backend/src/safety/",
+    ],
+  ],
+  // ROUND E23 (DEVIN-B, Q01): a cost-of-revenue/expense JE (debiting 5xxx/6xxx) must have a
+  // matching accounting.expenses row; a fuel/expense JE must NOT credit 1090/1100/1150.
+  // RED fixture: 10 live fuel JEs crediting 1090 with bare-UUID memos, $7,250.20.
+  // Cursor fixes the writer; this guard catches the output. Baseline 0 (shrink-only).
+  [
+    "verify-costs-are-expenses-not-handwritten-jes",
+    [
+      "apps/backend/src/accounting/",
+      "apps/backend/src/fuel/",
+      "apps/backend/src/banking/",
+      "apps/backend/src/driver-finance/",
+      "apps/backend/src/expenses/",
+    ],
+  ],
+  // ROUND E23 (DEVIN-B, Q11): re-assert purge-era closures (tasks 19/21/24/25/26/29/30/31/39)
+  // against live state every run. "Zero now" on a 6% fed book is NOT "fixed." Derives live load
+  // count dynamically, prints "closure re-measured at N live loads", self-arms as feed grows.
+  [
+    "verify-purge-era-closures-still-hold",
+    [
+      "apps/backend/src/accounting/",
+      "apps/backend/src/factoring/",
+      "apps/backend/src/driver-finance/",
+      "apps/backend/src/fuel/",
+      "apps/backend/src/dispatch/",
     ],
   ],
 ];

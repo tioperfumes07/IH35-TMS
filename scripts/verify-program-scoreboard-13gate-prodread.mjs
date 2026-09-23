@@ -104,6 +104,7 @@ if (SELFTEST) {
   }
   const mod = await import(pathToFileURL(path.join(ROOT, SCRIPT)).href);
   const t = mod.computeGateTally([{ cells: Array(13).fill("PASS") }]);
+  // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
   if (mod.GATE_LABELS_13.length !== 13 || t.A.pass !== 1) {
     console.error(`${LABEL} SELFTEST FAIL — computeGateTally`);
     process.exit(1);

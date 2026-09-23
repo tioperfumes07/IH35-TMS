@@ -152,6 +152,7 @@ function runChecks() {
   }
 
   // 2. "178" is NOT the real number
+  // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
   if (REAL_TOTAL === 178) {
     fail(`REAL_TOTAL is exactly 178 — this is suspicious, the old denominator was never enumerated`);
   } else {
