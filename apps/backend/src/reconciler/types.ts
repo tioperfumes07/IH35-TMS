@@ -9,7 +9,7 @@ export type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
 };
 
-export type ReconcilerEntityType = "load";
+export type ReconcilerEntityType = "load" | "recovery_link" | "invoice_dispute";
 
 export type ReconcilerException = {
   /** Stable across runs: `${invariant}/${entity_type}/${entity_id}/${field}`. */
