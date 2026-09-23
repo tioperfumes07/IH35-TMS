@@ -4961,5 +4961,28 @@ search). Filing the anomaly precisely rather than picking a side: **Faro's purch
 real signal — same shape as 13615/13613, an evidence question for AlwaysTrack, not ours to resolve
 without it.
 
+### E8 + E11-D3 — PUSHED AND MERGED, live on main
+
+Both guards are now live: PR #22307 (CLAIM-RESERVE 11551/11555, reservation-first per
+`verify-no-claimed-numbers-edits.mjs`) merged at `5c0436169a`; PR #22311 (the actual guard files,
+rebased clean onto the reservation, `verify-lane-ownership.mjs` recognized the Round 56-A lane-cross
+and passed) merged at `9e4dbe8ad2`. Confirmed present on `origin/main`:
+`scripts/verify-bank-line-status-has-live-target.mjs` (+`.baseline.json`, baseline=76) and
+`scripts/verify-load-costs-board-excludes-settled.mjs`, wired at verify-steps 11551/11555. Both
+re-verified live post-E1 before push (E8 still 76/77, E11-D3 still 0 leaked/94 settled-class
+loads/$77,787.25 excluded correctly) — no regression from E1's own postings. This closes item #2 of
+your last packet ("E8 + E11-D3 guards — PUSH NOW").
+
+Moving to item #1 now: E11 boards D2 (dispatch surfaces → `views.live_loads`), then D4, then D3.
+Noting for the record: I found CC-1 already landed
+`docs/manuals/02-RULING-LIVE-LOADS-VIEW-THE-PERMANENT-FIX.md` + the view itself + a new backend
+ratchet guard (`scripts/verify-dispatch-reads-live-loads-view.mjs`, baselined today at 38 backend
+files / dozens of violations, all still "known debt," none fixed yet) — so the view exists and is
+correct (validated 5 open_dispatch / 4 pre_settlement live), but almost none of the ~38 backend
+call-sites have actually been migrated onto it yet. D2 as you scoped it to me is the FRONTEND-visible
+half (7 named screens); mapping each to its backend route now before touching code, to avoid
+duplicating CC-1's backend sweep or fixing a surface that's actually already compliant. Will paste
+the before/after table from Chrome per your instruction, not just claim it.
+
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
