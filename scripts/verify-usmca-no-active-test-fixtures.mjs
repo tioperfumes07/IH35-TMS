@@ -25,6 +25,9 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 import pg from "pg";
+export const ALLOW_OFFLINE_SKIP =
+  "static checks always run; the database half is a unit test for a throwaway CI database, opt-in via ENABLE_LIVE_DB_UNIT_TEST_GUARD=true, and must never run against production (E7 batch 2c)";
+// MATRIX-BUILT-OPTIONAL: data-hygiene guard (no active test fixtures in customers, drivers, vendors), not a wiring ratchet.
 
 dotenv.config();
 

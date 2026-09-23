@@ -35,6 +35,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+export const ALLOW_OFFLINE_SKIP =
+  "static checks always run; the database half is a unit test for a throwaway CI database, opt-in via ENABLE_LIVE_DB_UNIT_TEST_GUARD=true, and must never run against production (E7 batch 2c)";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-driver-status-lock-blocks-reactivation";

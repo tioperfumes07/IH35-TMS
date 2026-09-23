@@ -3,6 +3,8 @@
 import process from "node:process";
 import { createRequire } from "node:module";
 import fs from "node:fs";
+export const ALLOW_OFFLINE_SKIP =
+  "static checks always run; the database half is a unit test for a throwaway CI database, opt-in via ENABLE_LIVE_DB_UNIT_TEST_GUARD=true, and must never run against production (E7 batch 2c)";
 
 const require = createRequire(import.meta.url);
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
