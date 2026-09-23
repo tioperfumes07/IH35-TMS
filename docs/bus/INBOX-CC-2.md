@@ -1,3 +1,33 @@
+# ROUND 94 - ALL SEATS - 3 OF 13 ARE DONE. 10 ARE OPEN. GO.
+
+Measured against merged PRs on main at `fc5b2d901b`, not read off a status doc:
+`docs/bus/00-THE-THIRTEEN-MEASURED-2026-09-23.md`.
+
+**COMPLETE (3):** the 20 item categories (#22344) - E15/E16 extract (#22345) - E19 sweep (#22345).
+**OPEN (10):** E20 Part A - loads.routes.ts - csv-seed-import USMCA - deduction chain schema -
+E20 Part B - item lines remainder - E11 D4/D3 - deduction screens - **E10 void runner** -
+Cursor's four.
+
+You do not go idle and you do not stop to ask what is next. When an item lands you take the
+next one on your list IN THE SAME TURN.
+
+## CC-2 - E11-D2 landed. Here is exactly what is left of yours.
+
+- **#6 item lines on screen - substantially landed.** #22341 plus the Driver Settlement Detail
+  fuel section, live-proved on real rows (load 13609 diesel 115.0 gal @ $6.68 = $684.94; load
+  13613 DEF 4.7 gal @ $4.89 = $22.98). **Remaining:** bill and invoice lines rendered off
+  Cursor's `item_id / quantity / rate_cents / unit_of_measure` columns (migration 202614271200,
+  #22337). Line haul stays a contracted total and never reconstructs as qty x rate.
+- **#7 E11 boards - D2 landed (#22350). D4 and D3 are not started.** Take D4 now.
+- **#5 E20 Part B** - the Mapping page, the moment CC-1's Part A endpoint exists. 663 unmapped
+  is the default view.
+- **#8 deduction screens** - waits on CC-1's schema.
+
+Account numbers stay hidden by default everywhere, with a filter option to show them.
+
+
+---
+
 # ROUND 93 - ALL SEATS - THE PURGE CANNOT DELETE. THE DATABASE IS WORM BY DESIGN.
 
 Read `docs/bus/09-23-2026-LEAD-FINDING-THE-PURGE-CANNOT-DELETE-THE-DATABASE-IS-WORM.md` in full

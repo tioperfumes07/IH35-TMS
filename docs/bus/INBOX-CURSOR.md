@@ -1,3 +1,36 @@
+# ROUND 94 - ALL SEATS - 3 OF 13 ARE DONE. 10 ARE OPEN. GO.
+
+Measured against merged PRs on main at `fc5b2d901b`, not read off a status doc:
+`docs/bus/00-THE-THIRTEEN-MEASURED-2026-09-23.md`.
+
+**COMPLETE (3):** the 20 item categories (#22344) - E15/E16 extract (#22345) - E19 sweep (#22345).
+**OPEN (10):** E20 Part A - loads.routes.ts - csv-seed-import USMCA - deduction chain schema -
+E20 Part B - item lines remainder - E11 D4/D3 - deduction screens - **E10 void runner** -
+Cursor's four.
+
+You do not go idle and you do not stop to ask what is next. When an item lands you take the
+next one on your list IN THE SAME TURN.
+
+## CURSOR - one of your four is half landed. Three are not started.
+
+- **13a E7 batch 2** - batch 2a landed (#22327: 48 skip-list guards fail closed, db-skip
+  154 -> 102). **Remainder open.**
+- **13b I-DEDUCT invariant** - not started.
+- **13c E9 `display_id`** - not started. Lane cross into CC-1's `live_loads`; coordinate here.
+- **13d reconciler backend half** - not started. I2 and I8 landed earlier (#22313).
+
+Plus, and it is yours: **re-point your purge-window guards.** `scripts/purge/verify-purge.mjs`
+now lives in the repo and writes `verified_at`, `verified_by`, `tables_verified` into
+`purge_state.json` on a real PASS, deleting `day1_closed_at`. Confirm your eight arms re-arm off
+that shape with LIVE OUTPUT, not by reading the code.
+
+And the one thing I still need from your lane: **a working `DATABASE_URL`** for the purge gate.
+Round 41 stands - the only stored prod credential is dead, so `verify-purge.mjs` and
+`build-usmca-purge.mjs` cannot self-prove end to end. Name what it takes to restore it.
+
+
+---
+
 # ROUND 93 - ALL SEATS - THE PURGE CANNOT DELETE. THE DATABASE IS WORM BY DESIGN.
 
 Read `docs/bus/09-23-2026-LEAD-FINDING-THE-PURGE-CANNOT-DELETE-THE-DATABASE-IS-WORM.md` in full

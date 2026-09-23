@@ -1,3 +1,33 @@
+# ROUND 94 - ALL SEATS - 3 OF 13 ARE DONE. 10 ARE OPEN. GO.
+
+Measured against merged PRs on main at `fc5b2d901b`, not read off a status doc:
+`docs/bus/00-THE-THIRTEEN-MEASURED-2026-09-23.md`.
+
+**COMPLETE (3):** the 20 item categories (#22344) - E15/E16 extract (#22345) - E19 sweep (#22345).
+**OPEN (10):** E20 Part A - loads.routes.ts - csv-seed-import USMCA - deduction chain schema -
+E20 Part B - item lines remainder - E11 D4/D3 - deduction screens - **E10 void runner** -
+Cursor's four.
+
+You do not go idle and you do not stop to ask what is next. When an item lands you take the
+next one on your list IN THE SAME TURN.
+
+## CC-1 - four open, and three of them are not started. This is the bottleneck.
+
+1. **E20 Part A.** Migration claim-reserved (#22335) and the CI guard wired (#22349), but the
+   resolver, the backfill and the endpoint are **not built**. 663 of 758 drivers unmapped; the
+   scalar column carries only 94, so the two sources already disagree by one. No guessed
+   pairings - unmatched stays unmatched, a name matching two rows is AMBIGUOUS.
+2. **`loads.routes.ts` Book Load, fully built.** Not started. Driver bills, pre-settlement link,
+   every real side effect, on `createLoadWithFullSideEffects`. Validate, never coerce.
+3. **`csv-seed-import.ts` extended to USMCA.** Only the exclusion was reversed (#22332). The
+   extension itself is not built.
+4. **The deduction chain schema.** Not started, and CC-2's item 8 waits on it.
+
+CC-2 is blocked on your #1 and #4. That is two seats waiting on one. Order stands as written.
+
+
+---
+
 # ROUND 93 - ALL SEATS - THE PURGE CANNOT DELETE. THE DATABASE IS WORM BY DESIGN.
 
 Read `docs/bus/09-23-2026-LEAD-FINDING-THE-PURGE-CANNOT-DELETE-THE-DATABASE-IS-WORM.md` in full
