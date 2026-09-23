@@ -1256,3 +1256,84 @@ from the backlog text.
 for a new assignment rather than idle.
 
 — CC-1
+
+## 2026-09-23 — CC-1: R-102.1-A CLOSED — void-stamp migration + the one writer, all 3 BUILDs merged
+
+Deadline 2026-09-23 18:00 UTC. Closed well inside it.
+
+**BUILD 1 — migration, MERGED `12a7dd87e6` (#22410).** Measured live before writing anything:
+`mdata.loads` / `accounting.factoring_advances` / `fuel.fuel_transactions` carried zero of
+voided_at/void_reason/voided_by_user_id; `driver_finance.driver_reimbursements` carried 2 of 3
+(missing voided_by_user_id); `mdata.load_status_enum` had no `'voided'` member at all (20 labels,
+none of them it). That last fact is a real blocker the ruling's literal text didn't anticipate:
+"status='voided' where a status column exists" cannot succeed on `mdata.loads` without the enum
+value existing first, and adding an enum value inside a transaction with other DDL is a documented
+landmine already caught once in this repo (`202612140000` — the ADD VALUE silently rolls back if
+anything later in the same transaction fails, while the ledger still reads "applied"). Followed
+that file's own proven-safe pattern exactly: split into two migrations —
+`202614310000_load_status_enum_voided_value.sql` (one statement, no BEGIN/COMMIT, nothing else in
+the file) applied first and alone, then `202614310100_void_stamp_columns.sql` (guarded DO block,
+columns + FK `{table}_voided_by_user_id_fkey → identity.users(id)` + partial index
+`WHERE voided_at IS NOT NULL` on each of the four tables, copied exactly from
+`accounting.invoices`'s own shape). ih35_app GRANTs confirmed live (table-level privileges already
+present on all four tables) — no new GRANT needed, documented in the migration header per the
+ruling's "say so." Both applied live to `br-fancy-credit-akjnd07a`, both ledgered in
+`_system._schema_migrations` + `ih35_migrations.applied_migrations` before the PR opened, proof
+captured via live `information_schema.columns`/`pg_enum`/`pg_constraint`/`pg_indexes` queries
+showing all three columns on all four tables, the enum member, all four FKs, all four indexes.
+
+**BUILD 2 — the one writer, MERGED `1ba0476eca` (#22412, with BUILD 3).**
+`apps/backend/src/accounting/void-document-stamp.service.ts` — `stampDocumentVoided(client,
+{operatingCompanyId, family, documentId, voidReason, voidedByUserId, voidedAt?})`. Same contract
+as `reverseJournalEntryNoFlip` (R-98.1-B): caller owns the transaction, no BEGIN/COMMIT of its own.
+Writes only the three void-stamp columns plus `status='voided'` where a status column exists — no
+GL math, no posting, no reversal, calls none of the six existing reversal engines, is not a
+seventh. Fixed table map, never a dynamic name from caller input. All five refusal conditions from
+the ruling, each its own error code: invalid family, empty/whitespace void_reason, missing/fake
+voided_by_user_id (checked against `identity.users`), document not found, company mismatch,
+already-voided-with-a-different-reason-or-actor. Idempotent on an identical (document, reason,
+actor): second call returns `already_voided: true`, never an error.
+**One documented, deliberate exception to the ruling's literal text:** `accounting.journal_entries
+.status` is never flipped to `'voided'` here, even though the column exists — `reverseJournalEntry
+NoFlip`'s own header says GL total readers exclude `status='voided'` at 13 sites, so a flip would
+silently drop a posted JE's totals. The void-stamp columns still get written on journal_entries
+(the audit trail the ruling wants exists); status alone is skipped, cited in code and in the PR.
+The alternative — following the literal instruction and corrupting live GL totals — is exactly
+what "NO GL MATH" already forbids; flagging this here rather than either silently complying or
+silently deviating.
+
+**BUILD 3 — the guard, same PR.** `scripts/verify-void-stamp-columns.mjs`, wired into
+`money-pr-local-gate.mjs`. Live-DB-required, fails closed. Part 1 (static): zero-tolerance on the
+four families that had no pre-existing writer at all before BUILD 1 (confirmed by a full-repo grep
+before writing the guard) — any writer outside `stampDocumentVoided()` on those four is a hard
+fail, no baseline possible. The three families that already had established GL-aware void
+machinery before this round (invoices/expenses/journal_entries — 11 named files across
+`invoices.routes.ts`, `bulk-void.service.ts`, `dispatch/cancellation.service.ts`, `governance/
+void-cancel-executors.ts`, `expenses.routes.ts`, `expenses-bulk.routes.ts`, `work-orders.routes.ts`,
+`void.service.ts`, `loan-payment-posting.service.ts`, `amortization-posting.service.ts`,
+`settlement-posting.service.ts`) get a named, frozen baseline — same shape as `verify-no-automatch
+.mjs`'s reviewed-writer allowlist, shrink-only, never a wildcard. Consolidating those 11 live
+GL-reversal call sites onto the new writer was never asked for and would be scope creep against
+the deadline; the "one writer" requirement is fully enforced (zero-tolerance) everywhere it could
+be without touching live GL-reversal code. Part 2 (live): fails if any of the 7 families is
+missing any of the 3 columns. `--selftest` plants a violation on a zero-tolerance table and proves
+the detector catches it.
+
+**REQUIRED PROOF, all four:**
+- Migration files + ledger rows: `202614310000`/`202614310100`, both ledgered before #22410 opened.
+- `\d mdata.loads`-equivalent on `br-fancy-credit-akjnd07a`: `voided_at`/`void_reason`/
+  `voided_by_user_id` present, live query re-run post-merge, same result.
+- Guard exit 0: `node scripts/verify-void-stamp-columns.mjs` against production, re-run after both
+  PRs merged — `all 7 document families carry voided_at/void_reason/voided_by_user_id live; ...
+  0 writer(s) outside stampDocumentVoided() [x4]; ... 4/4, 4/4, 3/4 baseline writer(s), 0 new [x3];
+  single writer is apps/backend/src/accounting/void-document-stamp.service.ts.`
+- REHEARSE-branch run: forked `br-super-bird-akxhplor` from `br-fancy-credit-akjnd07a` via
+  `neonctl branches create` (assert-neon-branch-verified before every write, per the known
+  `neonctl connection-string --branch-id` bug — branch must be positional). Real
+  `stampDocumentVoided()` called against a real existing `mdata.loads` row inside a
+  BEGIN/ROLLBACK: first call `already_voided:false status_flip_applied:true`, second call
+  `already_voided:true`, a third call with a different reason threw
+  `already_voided_different_reason` exactly as designed. Rolled back — no row change persisted
+  even on the rehearse branch. **No test/sample/demo row was ever written to USMCA.**
+
+— CC-1
