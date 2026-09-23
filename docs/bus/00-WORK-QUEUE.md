@@ -46,7 +46,7 @@ Never work in the shared main checkout.
       debiting 5xxx/6xxx with no accounting.expenses row; FAIL a cost JE
       crediting 1090/1100/1150; PASS on 1295/2510/2500/1000. RED fixture:
       the 10 live fuel JEs crediting 1090, $7,250.20, bare-UUID memos.
-[CODEX 2026-09-23T23:40:23Z] Q02 GUARD  Tighten guard 45 — a bare UUID is NOT a document reference.
+[DONE DEVIN-B #22472] Q02 GUARD  Tighten guard 45 — a bare UUID is NOT a document reference.
       Require a load number (134xx), settlement (57xx/58xx), Faro invoice,
       driver name, vendor name, or unit (Txxx). RED fixture: the live memo
       "Fuel event 56627fdf-6bf6-476b-a6ee-d8b5452ac1cf (diesel...".
@@ -79,10 +79,11 @@ Never work in the shared main checkout.
 [DONE DEVIN-A 2026-09-24T00:15:00Z, PR #22474] Q08 GUARD  verify-no-voided-doc-has-live-postings.mjs (baseline 0)
 [DONE DEVIN-A 2026-09-24T00:15:00Z, PR #22474] Q09 GUARD  verify-baselines-are-post-wipe.mjs
 [DONE DEVIN-A 2026-09-24T01:30:00Z, PR #22480] Q10 GUARD  verify-no-stale-literals-in-guards.mjs — §9.0.17 sweep. Four
+[DONE DEVIN-B #22472] Q10 GUARD  verify-no-stale-literals-in-guards.mjs — §9.0.17 sweep. Four
       hardcoded-count defects surfaced today: 333-vs-92, fuel 589/$253,271.24,
       purge-window 9 then 11, and "47 documents". Allowlist only by
       `// STALE-LITERAL-OK: <reason>`.
-[CODEX 2026-09-23T23:48:51Z] Q11 GUARD  verify-purge-era-closures-still-hold.mjs — re-assert tasks
+[DONE DEVIN-B #22472] Q11 GUARD  verify-purge-era-closures-still-hold.mjs — re-assert tasks
       19/21/24/25/26/29/30/31/39 and SCALE with the live load count. Print
       "closure re-measured at N live loads". "Zero now" on a 6% fed book is
       not "fixed".
