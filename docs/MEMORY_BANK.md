@@ -135,6 +135,18 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   A posted settlement/bill gets a full reversing entry (equal, opposite, dated, memo'd to the
   original), then the corrected version posts fresh. QuickBooks and McLeod both work this way.
 
+## Active Architectural Decisions — Faro W.O. matching (Cursor, 2026-09-23 E11.0-R8)
+
+- **Normalize before compare (owner law):** strip surrounding whitespace, strip a leading `#`,
+  strip leading zeros, case-insensitive. Faro PO `1523174` == AlwaysTrack `001523174`. **CORRECT.**
+- **Store** the AlwaysTrack form in `mdata.loads.customer_wo_number` (e.g. `001523174`, not `1523174`).
+- **STOP** on that invoice if normalize yields 0 or >1 load matches; feed the rest of the day; report
+  the collision. Never invent a load FK.
+- **STILL FORBIDDEN:** matching on amount / purchase / net adv / face under any circumstance.
+- Posted to `docs/bus/OUTBOX-CURSOR.md` for CC-1 feed-engine encode. Ops proof: `scripts/ops/feed-day-812-faro.mts`
+  (8/12 Watco inv 4 — wire $1,639 only; Faro Internal Transfer $1,649 OUT+IN as separate
+  `factoring.reserve_movement` legs, never netted, never extra advance; banking stays 1133).
+
 ## Known Quirks & Blockers
 
 - **Fake-green linkage:** all 17 settlements show `posted_at` but `accounting_bill_id` /
