@@ -17,6 +17,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { targetIsProd } from "./lib/prod-target-guard.mjs";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B) and runs in money-pr-local-gate.mjs when its owned paths change (Lead ROUND 84, E7 batch 2)";
 
 const { Pool } = pg;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -175,8 +177,8 @@ function collectStaticFailures(files) {
 async function probeProdColumn() {
   const cs = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
   if (!cs) {
-    console.warn(`${LABEL}: no DATABASE_URL — prod SQL layer skipped (static only).`);
-    return [];
+    console.error("verify-je-type-fk: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
   if (!targetIsProd(cs)) {
     console.warn(`${LABEL}: DATABASE_URL is not prod — SQL column probe skipped (202607960000 is HELD on CI).`);

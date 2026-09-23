@@ -15,6 +15,8 @@
 //   node scripts/verify-close-post-a-item2-historical-advances.mjs --selftest
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B) and runs in money-pr-local-gate.mjs when its owned paths change (Lead ROUND 84, E7 batch 2)";
 
 const require = createRequire(import.meta.url);
 const CREATE_SERVICE = "apps/backend/src/cash-advances/cash-advance-create.ts";
@@ -51,8 +53,8 @@ export function verifyStatic(createSrc, opsSrc) {
 async function liveCheck() {
   const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
   if (!connectionString) {
-    console.log(`${LABEL} SKIP (live half) — no DATABASE_URL/DATABASE_DIRECT_URL; live check not possible here.`);
-    return 0;
+    console.error("verify-close-post-a-item2-historical-advances: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
   const liveRequested = process.env.CLOSE_POST_A_ITEM2_LIVE === "1";
   if (!liveRequested && (process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true")) {

@@ -19,6 +19,8 @@ import fs from "node:fs";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { ensureFreshGateStepMap } from "./generate-gate-step-map.mjs";
+import { guardIsInScope } from "./verify-static.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "money-pr-local-gate";
@@ -429,6 +431,13 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
+  for (const file of JSON.parse(fs.readFileSync(path.join(ROOT, "scripts/lib/e7-batch2-live-guards.json"), "utf8")).guards) {
+    const abs = path.join(ROOT, "scripts", file);
+    if (!fs.existsSync(abs) || !/export\s+const\s+REQUIRES_LIVE_DB\s*=/.test(fs.readFileSync(abs, "utf8"))) {
+      console.error(`${LABEL} --selftest FAIL: E7 batch-2 guard ${file} is missing or does not declare REQUIRES_LIVE_DB`);
+      process.exit(1);
+    }
+  }
   for (const rel of ["scripts/verify-control-totals.mjs", "scripts/verify-alwaystrack-parity.mjs", "scripts/lib/require-live-db.mjs", "scripts/lib/db-skip-baseline.json"]) {
     if (!fs.existsSync(path.join(ROOT, rel))) {
       console.error(`${LABEL} --selftest FAIL: missing ${rel}`);
@@ -562,6 +571,37 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
     console.log(`[${LABEL}] SKIP ${msg}`);
     skippedLiveChecks.push(msg);
   }
+}
+
+// E7 batch 2 (Lead ROUND 84): the guards in scripts/lib/e7-batch2-live-guards.json fail closed. Each
+// runs when its owned paths in scripts/.gate-step-map.json intersect the diff or its own file changed
+// (verify-static's guardIsInScope), and then needs a live DB. A guard the map marks alwaysRun has no
+// owned path to key on, so it runs only when a live DB is present.
+const E7_BATCH2_LIST = "scripts/lib/e7-batch2-live-guards.json";
+const e7Batch2 = JSON.parse(fs.readFileSync(path.join(ROOT, E7_BATCH2_LIST), "utf8")).guards;
+const { map: gateStepMap } = ensureFreshGateStepMap();
+const e7Batch2Skipped = [];
+for (const file of e7Batch2) {
+  const entry = gateStepMap.entries?.[file];
+  const inScope = entry?.alwaysRun
+    ? Boolean(process.env.DATABASE_URL)
+    : changedForLiveDomains === null || guardIsInScope(file, entry, changedForLiveDomains);
+  if (!inScope) {
+    e7Batch2Skipped.push(file);
+    continue;
+  }
+  const code = runNode(`scripts/${file}`);
+  if (code !== 0) {
+    failStep(file);
+    process.exit(code);
+  }
+}
+if (e7Batch2Skipped.length > 0) {
+  const msg =
+    `${e7Batch2Skipped.length} E7 batch-2 live guard(s) — none of their owned paths in this diff ` +
+    `(alwaysRun ones need a DATABASE_URL): ${e7Batch2Skipped.join(", ")}`;
+  console.log(`[${LABEL}] SKIP ${msg}`);
+  skippedLiveChecks.push(msg);
 }
 
 function changedFileCountVsMain() {

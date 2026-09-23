@@ -19,6 +19,8 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+export const ALLOW_OFFLINE_SKIP =
+  "static source scan; never connects to a database, so there is nothing to skip (E7 batch 2)";
 
 const RESOLVER_PATH = "apps/backend/src/accounting/coa-roles/resolver.service.ts";
 const MIGRATIONS_DIR = "db/migrations";

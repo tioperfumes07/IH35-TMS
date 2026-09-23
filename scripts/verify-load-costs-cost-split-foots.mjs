@@ -9,6 +9,8 @@
  */
 import fs from "node:fs";
 import pg from "pg";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B) and runs in money-pr-local-gate.mjs when its owned paths change (Lead ROUND 84, E7 batch 2)";
 
 const LABEL = "verify-load-costs-cost-split-foots";
 const BACKEND_PATH = "apps/backend/src/accounting/load-costs-board.routes.ts";
@@ -49,8 +51,8 @@ checkStatic(backendSrc);
 
 const url = process.env.DATABASE_URL;
 if (!url) {
-  console.log(`[${LABEL}] static checks PASS; SKIP live footing check -- no DATABASE_URL (static context); this half is DB-backed by design`);
-  process.exit(0);
+  console.error("verify-load-costs-cost-split-foots: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+  process.exit(1);
 }
 
 const pool = new pg.Pool({ connectionString: url, ssl: url.includes("localhost") ? false : { rejectUnauthorized: false } });

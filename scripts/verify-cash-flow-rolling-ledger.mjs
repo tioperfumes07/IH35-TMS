@@ -42,6 +42,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B) and runs in money-pr-local-gate.mjs when its owned paths change (Lead ROUND 84, E7 batch 2)";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-cash-flow-rolling-ledger";
@@ -380,8 +382,8 @@ if (process.argv.includes("--selftest")) {
   console.log(`${LABEL}: static OK — sources, carry-forward predicate, live-balance running cash, EntityLink wiring all present`);
 
   if (!process.env.DATABASE_URL && !process.env.DATABASE_DIRECT_URL) {
-    console.log(`${LABEL}: DATABASE_URL not set — skipping the live re-check (static check above still ran).`);
-    process.exit(0);
+    console.error("verify-cash-flow-rolling-ledger: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
 
   // LIVE check re-implements each source as a direct, independent SQL count (not an import of the
