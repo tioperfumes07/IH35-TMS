@@ -5,6 +5,7 @@ import {
   countPastDueMaintenanceWorkOrders,
 } from "../kpi/canonical-kpis.js";
 import { REPORT_LIBRARY, companyQuerySchema, currentAuthUser, getCurrentQuarterInfo, validationError, withCompanyScope } from "./shared.js";
+import { liveLoadsOpenDispatchExistsSql } from "../dispatch/live-loads-view.js";
 
 const frequentlyRunQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -338,6 +339,13 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
           const whereParts: string[] = [
             // in-flight only (NOT booked/planned/assigned) — a load must be moving to be "running late".
             `COALESCE(l.status::text, '') IN ('dispatched','at_pickup','in_transit','at_delivery')`,
+            // ROUND 36.1 / E11-D2 (Lead ruling, 2026-09-22/23): the status list alone can't see the
+            // MONEY half — a load already settled/driver-billed/invoiced but still carrying an
+            // in-flight status (a lagged transition) is not "running late," it's done. views.live_loads
+            // narrows to open_dispatch = STATUS half (this file's own narrower in-flight subset) AND
+            // MONEY half in one predicate, matching the ruling doc's own "FROM views.live_loads WHERE
+            // live_state = 'open_dispatch' [AND status IN (<narrower list>)]" pattern exactly.
+            liveLoadsOpenDispatchExistsSql("l.id"),
           ];
           if (hasSoftDelete) whereParts.push(`l.soft_deleted_at IS NULL`);
           if (hasSample) whereParts.push(`l.is_sample_data IS NOT TRUE`);
