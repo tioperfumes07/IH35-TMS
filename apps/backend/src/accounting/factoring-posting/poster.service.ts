@@ -1276,64 +1276,89 @@ async function reverseFactoringAdvanceEventImpl(
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
       input.operating_company_id,
     ]);
-    // Same gate the original funding post used — if GL posting is OFF for this entity there is no
-    // liability JE to reverse (the advance was never posted, so a status-only void is already correct).
-    if (!(await factoringPostingEnabled(client, input.operating_company_id))) {
-      return { reversed: false, reason: "flag_off" as const };
-    }
-    // FAC-VOID-ENUM-2150: reverse EVERY still-live linked posting, not just the hardcoded "funding"
-    // leg. The original assumption here ("void only ever happens before any downstream JE exists,
-    // because the route only allows void from submitted/advanced status") is false in practice — proven
-    // live: a factoring_customer_payment JE posted while the advance was still 'advanced', then the
-    // advance was voided anyway, leaving that payment's Dr 2150 leg permanently un-reversed while the
-    // source record read 'voided'. Order matters for auditability (oldest first, funding is always
-    // earliest) but every leg is reversed regardless of order — reverseJournalEntryNoFlip is per-JE and
-    // idempotent, so processing more than the historical single funding leg is safe.
-    const liveLegs = await findAllLifecyclePostingKeyJes(client, {
-      operating_company_id: input.operating_company_id,
-      factoring_advance_id: input.factoring_advance_id,
-    });
-    if (liveLegs.length === 0) {
-      return { reversed: false, reason: "no_posting_found" as const };
-    }
-    const allReversed: Array<{
-      source_transaction_type: string;
-      event_key: string;
-      original_journal_entry_id: string;
-      reversal_journal_entry_id: string;
-    }> = [];
-    for (const leg of liveLegs) {
-      const { reversal } = await reverseJournalEntryNoFlip(client, {
-        operatingCompanyId: input.operating_company_id,
-        journalEntryId: leg.journal_entry_id,
-        reason: input.reason,
-        actorUserId: input.actor_user_id,
-      });
-      if (!reversal.reversal_journal_entry_id) {
-        // Unreachable in practice — reverseJournalEntryNoFlip itself throws "journal_entry_nothing_to_reverse"
-        // before returning a null id — but stay type-honest rather than asserting past the compiler.
-        throw new Error("factoring_advance_reversal_journal_entry_id_missing");
-      }
-      allReversed.push({
-        source_transaction_type: leg.source_transaction_type,
-        event_key: leg.event_key,
-        original_journal_entry_id: leg.journal_entry_id,
-        reversal_journal_entry_id: reversal.reversal_journal_entry_id,
-      });
-    }
-    // Funding is the canonical "primary" reversal for the two backward-compatible top-level fields —
-    // it is always present (findAllLifecyclePostingKeyJes only returns keys that exist, and funding is
-    // written by the same posting call that creates the advance's liability in the first place) unless
-    // GL posting was off at funding time, in which case liveLegs would be empty and we'd have already
-    // returned no_posting_found above.
-    const funding = allReversed.find((r) => r.source_transaction_type === "factoring_advance" && r.event_key === "funding") ?? allReversed[0]!;
-    return {
-      reversed: true as const,
-      reversal_journal_entry_id: funding.reversal_journal_entry_id,
-      original_journal_entry_id: funding.original_journal_entry_id,
-      all_reversed: allReversed,
-    };
+    return reverseFactoringAdvanceEventInClientTx(client, input);
   });
+}
+
+/**
+ * ROUND 119 (Lead) — the client-accepting sibling reverseFactoringAdvanceEvent never had.
+ * "Factoring is the ONLY phase whose reversal and stamp are two separate commits, because
+ * reverseFactoringAdvanceEvent opens its own connection and has no client-accepting variant. That
+ * window is real: it is blocking CC-3 and CC-2 on clean docs-only pushes right now." This is the
+ * SAME core logic reverseFactoringAdvanceEventImpl already runs, extracted so a caller already
+ * holding its own transaction (e.g. the E10 void runner's inTx()) can wrap reversal +
+ * stampDocumentVoided in ONE commit instead of two. This is the sixth engine gaining a
+ * client-accepting form -- NOT a seventh engine; the standalone reverseFactoringAdvanceEvent above
+ * is UNCHANGED for its existing callers (it now delegates here, same behavior, same return shape).
+ *
+ * Unlike the standalone export, this does NOT set app.operating_company_id itself and does NOT
+ * wrap itself in retryOnFactoringDeadlock — both are the CALLER's responsibility here, exactly the
+ * same contract reversePostedSourceTransactionInClientTx and
+ * reverseSettlementBillPaymentInClientTx already use: the caller's own transaction already has the
+ * GUC set, and a deadlock inside the caller's larger transaction must be retried by the caller
+ * retrying its WHOLE transaction, not just this one call.
+ */
+export async function reverseFactoringAdvanceEventInClientTx(
+  client: DbClient,
+  input: ReverseFactoringAdvanceInput
+): Promise<ReverseFactoringAdvanceResult> {
+  // Same gate the original funding post used — if GL posting is OFF for this entity there is no
+  // liability JE to reverse (the advance was never posted, so a status-only void is already correct).
+  if (!(await factoringPostingEnabled(client, input.operating_company_id))) {
+    return { reversed: false, reason: "flag_off" as const };
+  }
+  // FAC-VOID-ENUM-2150: reverse EVERY still-live linked posting, not just the hardcoded "funding"
+  // leg. The original assumption here ("void only ever happens before any downstream JE exists,
+  // because the route only allows void from submitted/advanced status") is false in practice — proven
+  // live: a factoring_customer_payment JE posted while the advance was still 'advanced', then the
+  // advance was voided anyway, leaving that payment's Dr 2150 leg permanently un-reversed while the
+  // source record read 'voided'. Order matters for auditability (oldest first, funding is always
+  // earliest) but every leg is reversed regardless of order — reverseJournalEntryNoFlip is per-JE and
+  // idempotent, so processing more than the historical single funding leg is safe.
+  const liveLegs = await findAllLifecyclePostingKeyJes(client, {
+    operating_company_id: input.operating_company_id,
+    factoring_advance_id: input.factoring_advance_id,
+  });
+  if (liveLegs.length === 0) {
+    return { reversed: false, reason: "no_posting_found" as const };
+  }
+  const allReversed: Array<{
+    source_transaction_type: string;
+    event_key: string;
+    original_journal_entry_id: string;
+    reversal_journal_entry_id: string;
+  }> = [];
+  for (const leg of liveLegs) {
+    const { reversal } = await reverseJournalEntryNoFlip(client, {
+      operatingCompanyId: input.operating_company_id,
+      journalEntryId: leg.journal_entry_id,
+      reason: input.reason,
+      actorUserId: input.actor_user_id,
+    });
+    if (!reversal.reversal_journal_entry_id) {
+      // Unreachable in practice — reverseJournalEntryNoFlip itself throws "journal_entry_nothing_to_reverse"
+      // before returning a null id — but stay type-honest rather than asserting past the compiler.
+      throw new Error("factoring_advance_reversal_journal_entry_id_missing");
+    }
+    allReversed.push({
+      source_transaction_type: leg.source_transaction_type,
+      event_key: leg.event_key,
+      original_journal_entry_id: leg.journal_entry_id,
+      reversal_journal_entry_id: reversal.reversal_journal_entry_id,
+    });
+  }
+  // Funding is the canonical "primary" reversal for the two backward-compatible top-level fields —
+  // it is always present (findAllLifecyclePostingKeyJes only returns keys that exist, and funding is
+  // written by the same posting call that creates the advance's liability in the first place) unless
+  // GL posting was off at funding time, in which case liveLegs would be empty and we'd have already
+  // returned no_posting_found above.
+  const funding = allReversed.find((r) => r.source_transaction_type === "factoring_advance" && r.event_key === "funding") ?? allReversed[0]!;
+  return {
+    reversed: true as const,
+    reversal_journal_entry_id: funding.reversal_journal_entry_id,
+    original_journal_entry_id: funding.original_journal_entry_id,
+    all_reversed: allReversed,
+  };
 }
 
 // ---------------------------------------------------------------------------------------------------

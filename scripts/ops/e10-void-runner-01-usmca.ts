@@ -13,7 +13,9 @@
 // SIX REVERSAL ENGINES, NO SEVENTH:
 //   1. postVoidReversal                          (void.service.ts)              -- (a)+(b)
 //   2. reversePostedSourceTransactionInClientTx   (posting-engine.service.ts)    -- (a)+(b)
-//   3. reverseFactoringAdvanceEvent               (factoring-posting/poster.service.ts) -- delegates to 6
+//   3. reverseFactoringAdvanceEventInClientTx     (factoring-posting/poster.service.ts) -- delegates to 6
+//      (ROUND 119: the client-accepting sibling of the standalone reverseFactoringAdvanceEvent --
+//      same engine, same logic, now callable inside this script's own inTx())
 //   4. reverseSettlementBillPaymentInClientTx     (settlement-bill-payment-posting.service.ts) -- orchestrator, all 3 mechanisms
 //   5. voidJournalEntry                           (journal-entries.service.ts)   -- delegates to 6
 //   6. reverseJournalEntryNoFlip                  (journal-entries.service.ts)   -- (a), wraps 1
@@ -85,7 +87,7 @@ import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { voidJournalEntry, reverseJournalEntryNoFlip } from "../../apps/backend/src/accounting/journal-entries.service.js";
 import { reversePostedSourceTransactionInClientTx, PostingEngineError } from "../../apps/backend/src/accounting/posting-engine.service.js";
-import { reverseFactoringAdvanceEvent } from "../../apps/backend/src/accounting/factoring-posting/poster.service.js";
+import { reverseFactoringAdvanceEventInClientTx } from "../../apps/backend/src/accounting/factoring-posting/poster.service.js";
 import { reverseSettlementBillPaymentInClientTx } from "../../apps/backend/src/accounting/settlement-posting/settlement-bill-payment-posting.service.js";
 import { reverseSettlementPayRunInClientTx } from "../../apps/backend/src/driver-finance/settlement-payrun-reverse.service.js";
 import { companyBusinessDate } from "../../apps/backend/src/lib/company-business-date.js";
@@ -108,14 +110,12 @@ const VOID_REASON =
 // together or neither, by construction (stampDocumentVoided throwing inside inTx() rolls the
 // reversal back too, never leaves a committed reversal with no stamp).
 //
-// ONE EXCEPTION, named, not hidden: Phase 2 (factoring) calls reverseFactoringAdvanceEvent, which
-// manages its OWN connection/transaction internally (see that phase's own pre-existing comment --
-// no ...InClientTx sibling exists). Its GL reversal is therefore ALREADY COMMITTED, on a different
-// connection, before this script can attempt the stamp at all -- true single-transaction atomicity
-// with the GL write is not achievable here without a client-accepting variant of that engine, which
-// does not exist and is out of scope for this round. The stamp is still called immediately after a
-// CONFIRMED-successful reversal, in its own inTx() on `client`, minimizing the window rather than
-// eliminating it -- and a stamp failure there is reported as a named gap, never silently dropped.
+// RESOLVED (ROUND 119): Phase 2 (factoring) used to be the one exception -- reverseFactoringAdvanceEvent
+// opened its own connection/transaction internally, so its GL reversal committed separately from
+// the stamp, a real window that was blocking other seats' clean docs-only pushes. Closed by adding
+// reverseFactoringAdvanceEventInClientTx (poster.service.ts) -- the sixth engine gaining a
+// client-accepting form, not a seventh engine -- and Phase 2 now runs reversal + stamp inside the
+// SAME inTx() as every other phase. No exception remains.
 //
 // stampDocumentVoided()'s VoidDocumentFamily union has NO 'settlement' or 'driver_bill' member --
 // those two tables were never part of the seven document families R-102.1-A added void-stamp
@@ -386,37 +386,36 @@ async function main() {
     [USMCA_COMPANY_ID]
   );
   console.log(`\nFactoring advances with a live posted leg: ${advances.rowCount}`);
-  // ROUND 102 NOTE -- the one of the five NOT wrapped in inTx(). reverseFactoringAdvanceEvent has
-  // no ...InClientTx sibling (verified: grepped every export in poster.service.ts) -- it opens
-  // and manages its own connection/transaction internally, on a DIFFERENT connection than this
-  // script's `client`. Wrapping THIS call in `client`'s own BEGIN/COMMIT would open an empty
-  // transaction with no real writes in it (all the actual GL work happens on the other
-  // connection) -- noise, not a fix. Left as a standalone call, same as before; the atomicity
-  // this engine provides is internal to itself, not something this runner can add from outside
-  // without a client-accepting variant that does not exist yet.
+  // ROUND 119 FIX -- CLOSES THE LAST TWO-COMMIT WINDOW. reverseFactoringAdvanceEventInClientTx
+  // (poster.service.ts) is the new client-accepting sibling of reverseFactoringAdvanceEvent; this
+  // phase now runs reversal + stamp inside the SAME inTx() as every other phase, exactly like
+  // invoices/expenses/revrec already do. The ROUND 102 gap this comment used to document ("no
+  // client-accepting variant exists yet") is closed -- do not reopen it by reverting to the
+  // standalone export.
   for (const a of advances.rows) {
     if (!executeFlag) continue;
     try {
-      const res = await reverseFactoringAdvanceEvent({ operating_company_id: USMCA_COMPANY_ID, factoring_advance_id: a.id, actor_user_id: OWNER_USER_ID, reason: VOID_REASON });
-      // ROUND 112: reversed=true (fresh this run) or reason='no_posting_found' (every leg already
-      // dead from a prior run -- the "97 reversals in, not one stamped" case this round exists to
-      // fix) both mean the ledger is CONFIRMED dead -- stamp owed either way. reason='flag_off' is
-      // a genuine skip, not a confirmed-dead ledger, and is NOT stamped -- stamping there would
-      // risk "a committed stamp over a live posting." Narrowed via the discriminated union's own
-      // `reversed` field first (TS2339: `.reason` does not exist on the `reversed: true` variant).
-      const confirmedDead = res.reversed || res.reason === "no_posting_found";
+      // ROUND 119: reversal + stamp in the SAME inTx() -- header and GL commit together or
+      // neither, the exact invariant ROUND 112 asked for and factoring alone was missing until
+      // reverseFactoringAdvanceEventInClientTx existed. A stamp failure here rolls the reversal
+      // back too, same as every other phase.
+      let confirmedDead = false;
+      const res = await inTx(async () => {
+        const r = await reverseFactoringAdvanceEventInClientTx(client, { operating_company_id: USMCA_COMPANY_ID, factoring_advance_id: a.id, actor_user_id: OWNER_USER_ID, reason: VOID_REASON });
+        // ROUND 112: reversed=true (fresh this run) or reason='no_posting_found' (every leg
+        // already dead from a prior run -- the "97 reversals in, not one stamped" case this round
+        // exists to fix) both mean the ledger is CONFIRMED dead -- stamp owed either way.
+        // reason='flag_off' is a genuine skip, not a confirmed-dead ledger, and is NOT stamped --
+        // stamping there would risk "a committed stamp over a live posting." Narrowed via the
+        // discriminated union's own `reversed` field first (TS2339: `.reason` does not exist on
+        // the `reversed: true` variant).
+        confirmedDead = r.reversed || r.reason === "no_posting_found";
+        if (confirmedDead) await stamp(factoringTally, "factoring_advance", a.id);
+        return r;
+      });
       if (confirmedDead) {
         if (res.reversed) factoringTally.reversed++;
         else factoringTally.already_reversed++;
-        try {
-          // Own inTx(): the GL reversal already committed on reverseFactoringAdvanceEvent's OWN
-          // connection (see the ROUND 102 note above) before this line runs -- not atomic with the
-          // GL write by construction of that pre-existing engine, named honestly in the file header.
-          await inTx(() => stamp(factoringTally, "factoring_advance", a.id));
-        } catch {
-          // stamp() already recorded the failure in factoringTally.stamp_errors; nothing else to
-          // do here except let the loop continue to the next advance rather than abort the run.
-        }
       } else {
         factoringTally.skipped.push(`factoring_advance ${a.id} (${res.reversed ? "reversed" : res.reason})`);
       }
