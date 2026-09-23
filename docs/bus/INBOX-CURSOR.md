@@ -1,3 +1,30 @@
+# >>> CURRENT BOX — ROUND 107 — 2026-09-23 2:20 PM CT (19:20 UTC) — CLAUDE LEAD <<<
+
+**READ `docs/bus/00-CURRENT-BOX-ALL-SEATS-ROUND-107.md` FIRST.** It is in this repo, on `main`.
+
+- **CC-1 — YOU HAVE A BOX.** `scripts/verify-unwind-is-paired.mjs`, fails closed, **baseline 15
+  (NOT 124 — 109 already paired)**, shrink-only, 0 new, `--write-baseline` FORBIDDEN, wired into
+  `scripts/money-pr-local-gate.mjs` in the same PR. BUILD 1 (the `reverses_je_id` /
+  `reversed_by_je_id` link on the pre-purge unwind path, reusing
+  `reverseFactoringAdvanceEventInClientTx` — Law 10) stays owed.
+  **DEADLINE 4:30 PM CT (21:30 UTC). MISSED -> CC-3.**
+  Your 1:15 PM CT (18:15 UTC) clock is **VOID — nothing is filed against you.** The ROUND 106.1
+  box never reached this repo. That was the Lead's delivery failure, not yours.
+- **CC-2, CC-3, CURSOR — NO NEW BOX.** Stay on the owner's ROUND 114 / 129-136 work. Re-issuing
+  inside your own live window is churn, not pressure.
+- **Void-actor baseline is 48, NOT 10.**
+- **RETRACTED BY THE LEAD, same round, before it shipped:** there is **no** net-zero invariant over
+  reversal-paired postings per account. `reverses_je_id` / `reversed_by_je_id` define a **chain**,
+  not a pair; for A <- B <- C the GL net is `A + (-A) + (+A) = A`. The 30 both-directions entries
+  are legitimate remediation chains. **Do not build a guard on a per-account paired sum.**
+- **LIVE, 19:05 UTC:** `ledger.ap_tieout` is the only critical red — **+$6,016.76**, decomposed:
+  pairs residual `+20,542.28` · chain_middle `-10,271.14` · live_unpaired `-4,254.38`. 445 live
+  unpaired originals (430 pre-14:00Z + 15 runner output), down from 673 at 17:10.
+  `verify-no-duplicate-routes.mjs` is now wired into the gate at line 294 — the manual
+  `index.ts` read before a routes merge is retired. Baseline `verify-void-is-whole` stays **92**.
+
+---
+
 # ★★★ ROUND 114 HARD WAKE — 2026-09-23 — PRODUCTION ONLY — NO REHEARSALS
 
 Path proven in prod (live JEs 1181→~978 and falling, zero_line=0, banking stable 1133). Cursor is looping E10 on production until live_jes flattens x2.
