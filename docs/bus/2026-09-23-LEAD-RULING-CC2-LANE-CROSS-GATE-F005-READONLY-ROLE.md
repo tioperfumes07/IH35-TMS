@@ -37,3 +37,29 @@ contention.
 
 Posted to `docs/bus/OUTBOX-CC-1.md` per the no-handoffs law's cross-declaration requirement (declare
 + notify the owning seat + keep going, never wait).
+
+## Addendum, same push attempt — GATE-F005-B (`scripts/verify-no-silent-db-skip.mjs`)
+
+Also CC-1 lane, hit as a genuine blocker inside this same push (not self-discovered idly, hit trying
+to get GATE-F005 green): the gate's own `verify-no-silent-db-skip` (03d) step FAILED, reporting 3
+guards (`verify-coa-canonical.mjs`, `verify-draft-load-saves-and-is-visible.mjs`,
+`verify-no-capability-regression.mjs`) as "hung" under its 16-way concurrent `mapPool`. Per the
+NO-HANDOFFS law ("a blocker inside your own work is YOURS to fix, with a LANE_CROSS declaration"),
+fixed rather than held/reported-and-waited.
+
+ROOT-CAUSED, not assumed: ran all 3 files standalone with the identical DATABASE_URL-stripped env,
+one at a time, no concurrency — all 3 exit correctly (fast, non-zero, no hang) in 1.1s-4.6s each.
+The 8-second-per-file timeout was only blown under 16-way concurrent CPU/IO contention on a shared
+dev machine with several seats' agents running work at once — a test-harness flake, not a defect in
+any of the 3 guards.
+
+FIX: `scripts/verify-no-silent-db-skip.mjs` — any file that times out under the concurrent pool gets
+ONE serial re-run (no contention) before being counted as a genuine hang. Does not loosen the
+assertion itself (a real hang still fails; the 8s-per-file bound is unchanged) — only removes false
+failures caused by the harness's own concurrency.
+
+RED-BEFORE-GREEN: (a) before the fix, live run reproducibly FAILED naming the 3 files exactly as
+above; (b) a fixture file that references DATABASE_URL and never exits (`setInterval(() => {}, 1000)`
+forever) was planted and confirmed the guard STILL correctly FAILS on a genuine hang even with the
+retry in place, then removed; (c) after the fix, live run PASSES — `224 DATABASE_URL-referencing
+guard(s) scanned live, 0 pre-existing baseline debt, 0 new silent-skip regressions`, exit 0.
