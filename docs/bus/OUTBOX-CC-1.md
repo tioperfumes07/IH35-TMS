@@ -1802,3 +1802,51 @@ themselves, confirmed the count had stopped climbing, and is surfacing this to J
 own conversation as well — redundant escalation, deliberately, given the severity.
 
 — CC-1
+
+## Item 3 (asked three times now) — go26-consolidation-ratchet and build-typecheck-heavy, named in
+## writing, per the instruction. Both confirmed pre-existing on main itself, neither caused by any
+## diff of mine this session, and both blocked from a unilateral fix by two of this codebase's own
+## standing laws — reporting rather than forcing either.
+
+**`go26-consolidation-ratchet`** — exact log line, unchanged across every PR I've opened since it
+first appeared this session:
+```
+REGRESSION  import_data_table: 20 -> 21  (+1)
+NEW FILE    components/DataTable: apps/frontend/src/pages/samsara-driver-mapping/SamsaraDriverMappingPage.tsx
+```
+`SamsaraDriverMappingPage.tsx` imports `components/DataTable` directly instead of the consolidated
+shared table component. This is a frontend file in the Samsara driver-mapping UI — a domain I have
+never touched this session (every PR I've opened this round has been `apps/backend/src/accounting`,
+`apps/backend/src/dispatch`, `apps/backend/src/governance`, `scripts/`, and `docs/bus/`). Confirmed
+failing on `origin/main`'s own tip commit directly via `gh api repos/.../commits/main/status`,
+independent of any PR — it was already red before I opened my first PR of this session-segment and
+has stayed red through six more merges since, none of which touched this file. The fix (converting
+this one page to the shared component) belongs to whoever owns the frontend/Samsara domain; making
+that change myself, unreviewed, under this round's deadline, would be exactly the "move fast in
+someone else's domain" pattern that produced today's fuel-corruption bug in the first place.
+
+**`build-typecheck-heavy` / `verify-no-duplicate-financial-ledger`** — exact log line:
+```
+driver_finance.deduction_recovery_links: NEW financial table has no '-- CANONICAL-CHECK:' block.
+```
+Traced to migration `202614290000_deduction_chain_customer_to_driver.sql` ("Round 88 owner law," a
+real, carefully-reasoned migration by a different seat, not mine) — `deduction_recovery_links` is a
+genuine link table (invoice_disputes ↔ driver_settlement_deductions), not a duplicate ledger: checked
+directly against `scripts/canonical-ledger-registry.json`, no concept collision, `settlement_deduction`
+already correctly maps to `driver_finance.driver_settlement_deductions`, the table this one REFERENCES
+via FK rather than duplicates. The table is legitimate; it is simply missing the required
+`-- CANONICAL-CHECK:` comment declaring that.
+
+**Why I did not fix this myself:** the correct fix is blocked by two of this codebase's own standing
+laws pointing in opposite directions. `never-edit-applied-migration-checksum-freeze` forbids editing
+`202614290000_deduction_chain_customer_to_driver.sql` — it is already applied on production, the
+table already exists live. The guard's own documented alternate path ("Regenerate the baseline after
+a legitimately-reconciled new table lands: `--write-baseline`") is exactly the kind of baseline edit
+ROUND 116's standing order forbids without asking ("NOBODY EDITS A BASELINE TO GET A PUSH THROUGH...
+clearing it is my job"). I did the actual reconciliation check myself (confirmed: not a duplicate,
+legitimate table) so the finding is real and complete — I'm not stopping short of the analysis, only
+of picking between two rules that forbid the two available fixes. Whichever path is correct (a
+documentation-only migration addendum in a NEW migration, or an explicit one-time baseline
+regeneration) is a ruling, not a coder decision.
+
+— CC-1
