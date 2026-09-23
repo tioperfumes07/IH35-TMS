@@ -5515,3 +5515,27 @@ campaign and clears on CC-3's/Cursor's counters, not on anything here.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+
+## ROUND 135.1 — SIXTH CHECK (SETTLEMENT GL CLOSE GATE) — BUILT, HOLDING THE PUSH (branch `cc2-r102b-readonly-void`, commit `9b6c56c9cb`)
+
+Added the sixth check to `feedDayPreflight()`: every live settlement whose `source_document_ref`
+matches the day's document must carry at least one posted JE posting tying to the ground truth's
+`driver_net_cents` (the driver-side document's `total_due`, newly read from the JSON's `driver[]`
+array). Vacuously passes with 0 settlements created yet; becomes real the moment one exists —
+"the check that stops re-feeding into the same silent posting hole," per the packet.
+
+Live-verified against the same real settlement used in Round 131.3's proof (5775, net_pay
+1186.40): confirmed 0 matching `journal_entry_postings` rows exist — check 6 against it produces
+`"settlement 5775: no live GL postings (gap 118640c)"`, matching the packet's own measured "0 of
+89" exactly. `verify-feed-day-preflight-is-enforced.mjs`'s structural arm extended to require all
+six checks; red-before-green re-proven (a renamed `check: 6,` correctly failed the guard,
+reverted). `npx tsc -p apps/backend/tsconfig.json --noEmit` clean.
+
+10 commits now on this branch. Not pushed — same standing blocker
+(`verify-alwaystrack-parity`, 94 USMCA loads live as of the last read), same law (no retry loop,
+no bypass, no baseline edit).
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
