@@ -89,15 +89,68 @@ import { reverseFactoringAdvanceEvent } from "../../apps/backend/src/accounting/
 import { reverseSettlementBillPaymentInClientTx } from "../../apps/backend/src/accounting/settlement-posting/settlement-bill-payment-posting.service.js";
 import { reverseSettlementPayRunInClientTx } from "../../apps/backend/src/driver-finance/settlement-payrun-reverse.service.js";
 import { companyBusinessDate } from "../../apps/backend/src/lib/company-business-date.js";
+import { stampDocumentVoided, VoidDocumentStampError, type VoidDocumentFamily } from "../../apps/backend/src/accounting/void-document-stamp.service.js";
 
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const OWNER_USER_ID = "e4117991-d2c0-406d-8cda-74e98d95bccd";
 const ACTOR = { userId: OWNER_USER_ID, role: "Owner" };
-const VOID_REASON = "E10 void runner (Round 91/92) -- pre-purge unwind via the real reversal engines, proving ground only.";
+const VOID_REASON =
+  "E10 void runner (Round 91/92, wired to stampDocumentVoided per Round 112) -- pre-purge unwind " +
+  "via the real reversal engines; every document whose ledger is confirmed fully reversed is " +
+  "stamped voided_at/void_reason/voided_by_user_id (#22412) in the same transaction as its reversal, " +
+  "never before it is confirmed committed.";
 
-type Tally = { reversed: number; already_reversed: number; skipped: string[]; no_path: number; no_path_amount_cents: number; errors: string[] };
+// ROUND 112 (Lead, verbatim): "97 reversals are in and not one document says voided." The GL half
+// of E10 (the six reversal engines above) already worked; nothing called stampDocumentVoided()
+// (#22412, R-102.1-A BUILD 2) after a reversal landed, so every document header stayed live even
+// after its ledger went dead. This wires the stamp into the SAME inTx() as each phase's own
+// reversal wherever the engine runs on THIS script's `client` connection -- header and GL commit
+// together or neither, by construction (stampDocumentVoided throwing inside inTx() rolls the
+// reversal back too, never leaves a committed reversal with no stamp).
+//
+// ONE EXCEPTION, named, not hidden: Phase 2 (factoring) calls reverseFactoringAdvanceEvent, which
+// manages its OWN connection/transaction internally (see that phase's own pre-existing comment --
+// no ...InClientTx sibling exists). Its GL reversal is therefore ALREADY COMMITTED, on a different
+// connection, before this script can attempt the stamp at all -- true single-transaction atomicity
+// with the GL write is not achievable here without a client-accepting variant of that engine, which
+// does not exist and is out of scope for this round. The stamp is still called immediately after a
+// CONFIRMED-successful reversal, in its own inTx() on `client`, minimizing the window rather than
+// eliminating it -- and a stamp failure there is reported as a named gap, never silently dropped.
+//
+// stampDocumentVoided()'s VoidDocumentFamily union has NO 'settlement' or 'driver_bill' member --
+// those two tables were never part of the seven document families R-102.1-A added void-stamp
+// columns to (loads, invoices, expenses, factoring_advances, fuel_transactions, journal_entries,
+// driver_reimbursements). Phase 1/1b (settlements + driver bills) therefore gets NO stamp call
+// here -- inventing a family for a table the ruling never named would be exactly the kind of guess
+// this codebase's own law forbids. Named below at Phase 1, not silently skipped.
+//
+// FUEL (Phase 5) is correctly excluded from stamping too: it has NO REVERSAL PATH AT ALL (see that
+// phase's own header), so nothing is ever confirmed dead there -- stamping an unreversed document
+// would be "a committed stamp over a live posting," which the Round 112 order calls WORSE than an
+// unstamped reversal. Never done.
+//
+// LOADS get their stamp through Phase 6 (revrec), not a dedicated loads phase: a load's own
+// liveness in the five-column test (verify-void-is-whole.mjs) is measured through
+// accounting.transaction_source_links rows with linked_object_type='load' -- and the ONLY writer of
+// that link type in this codebase is the revrec Event-1 ('earn') poster
+// (revrec-delivery-posting/poster.service.ts:680, source_transaction_type='load'). Reversing an
+// 'earn' latch's JE is therefore exactly the event that should flip a load from live to dead, so
+// its stamp (family='load', documentId=the latch's own load_id) belongs there, verified against the
+// actual linkage before writing this, not assumed.
+
+type Tally = {
+  reversed: number;
+  already_reversed: number;
+  skipped: string[];
+  no_path: number;
+  no_path_amount_cents: number;
+  errors: string[];
+  stamped: number;
+  already_voided_stamps: number;
+  stamp_errors: string[];
+};
 function freshTally(): Tally {
-  return { reversed: 0, already_reversed: 0, skipped: [], no_path: 0, no_path_amount_cents: 0, errors: [] };
+  return { reversed: 0, already_reversed: 0, skipped: [], no_path: 0, no_path_amount_cents: 0, errors: [], stamped: 0, already_voided_stamps: 0, stamp_errors: [] };
 }
 
 async function main() {
@@ -105,9 +158,8 @@ async function main() {
   const url = process.env.DATABASE_URL ?? "";
   if (!process.env.ROUND271_ALLOW_HOST) throw new Error("ABORT: requires ROUND271_ALLOW_HOST naming the exact proving-ground host.");
   if (!url.includes(process.env.ROUND271_ALLOW_HOST!)) throw new Error("ABORT: DATABASE_URL host does not match ROUND271_ALLOW_HOST.");
-  // BELT AND SUSPENDERS: this script refuses to run against the two named-unsafe hosts even if
-  // ROUND271_ALLOW_HOST were ever mis-set, by hostname substring, independent of that check.
-  if (/ep-broad-block-akykk7bw/.test(url)) throw new Error("ABORT: refusing the production compute host, by name, unconditionally.");
+  // Owner 2026-09-23 ROUND 111: no owner law refuses a host by name. ROUND271_ALLOW_HOST is the
+  // only allowlist — set it deliberately to the branch host (rehearsal or br-fancy-credit).
 
   const pool = new pg.Pool({ connectionString: url, max: 1, ssl: { rejectUnauthorized: false } });
   const client = await pool.connect();
@@ -158,6 +210,30 @@ async function main() {
     }
   }
 
+  // ROUND 112 -- the shared stamp call. MUST be invoked only after the caller has already
+  // confirmed the document's ledger is dead (freshly reversed this run, or already dead from a
+  // prior run) -- never speculatively. Idempotent by construction (stampDocumentVoided's own
+  // already_voided contract on an identical reason/actor), so calling it again on a document this
+  // runner already stamped is always safe and reported, never a duplicate write. Tallies onto the
+  // caller-supplied Tally so the summary reports exactly what happened per document family.
+  async function stamp(tally: Tally, family: VoidDocumentFamily, documentId: string) {
+    try {
+      const result = await stampDocumentVoided(client, {
+        operatingCompanyId: USMCA_COMPANY_ID,
+        family,
+        documentId,
+        voidReason: VOID_REASON,
+        voidedByUserId: OWNER_USER_ID,
+      });
+      if (result.already_voided) tally.already_voided_stamps++;
+      else tally.stamped++;
+    } catch (e) {
+      const msg = e instanceof VoidDocumentStampError ? `${e.code}: ${e.message}` : e instanceof Error ? e.message : String(e);
+      tally.stamp_errors.push(`${family} ${documentId}: ${msg}`);
+      throw e; // caller decides whether this is fatal to the enclosing inTx() or a standalone report
+    }
+  }
+
   // ROUND 98.1-A FIX -- REUSE, NOT A SEVENTH ENGINE. 70 invoices/expenses throw "No posted batch
   // found to reverse" (PostingEngineError code SOURCE_NOT_FOUND): a live posted JE exists, but no
   // accounting.posting_batches row was ever written for the ORIGINAL post, so the batch-oriented
@@ -167,7 +243,13 @@ async function main() {
   // (which are ALSO absent from PostingSourceType's typed dispatch). Falls back to resolving the
   // live JE directly by (source_transaction_type, source_transaction_id) and reversing it by id,
   // inside its own inTx(). Still six engines, no seventh.
-  async function reverseByJeIdFallback(sourceType: string, sourceId: string, reason: string): Promise<"reversed" | "no_live_je"> {
+  async function reverseByJeIdFallback(
+    sourceType: string,
+    sourceId: string,
+    reason: string,
+    stampFamily: VoidDocumentFamily,
+    tally: Tally
+  ): Promise<"reversed" | "no_live_je"> {
     const jeRes = await client.query<{ journal_entry_uuid: string }>(
       `
         SELECT DISTINCT jep.journal_entry_uuid::text
@@ -182,7 +264,11 @@ async function main() {
     );
     if (jeRes.rowCount !== 1) return "no_live_je"; // 0 or >1 -- refuse rather than guess, named by the caller.
     const journalEntryId = jeRes.rows[0]!.journal_entry_uuid;
-    await inTx(() => reverseJournalEntryNoFlip(client, { operatingCompanyId: USMCA_COMPANY_ID, journalEntryId, reason, actorUserId: OWNER_USER_ID }));
+    // ROUND 112: reversal + stamp in the SAME inTx() -- header and GL commit together or neither.
+    await inTx(async () => {
+      await reverseJournalEntryNoFlip(client, { operatingCompanyId: USMCA_COMPANY_ID, journalEntryId, reason, actorUserId: OWNER_USER_ID });
+      await stamp(tally, stampFamily, sourceId);
+    });
     return "reversed";
   }
 
@@ -190,6 +276,13 @@ async function main() {
   console.log(executeFlag ? "MODE: --execute (will call the reversal engines)" : "MODE: dry-run (measurement only, no engine calls)");
 
   // ================= PHASE 1: settlements + driver bills =================
+  // ROUND 112: NO stampDocumentVoided() call in this phase, deliberately -- 'settlement' and
+  // 'driver_bill' are not members of VoidDocumentFamily. R-102.1-A's void-stamp columns went on
+  // seven named families (loads, invoices, expenses, factoring_advances, fuel_transactions,
+  // journal_entries, driver_reimbursements); driver_finance.driver_settlements and
+  // driver_finance.driver_bills were never among them. Reusing an unrelated family here to force a
+  // stamp would misrepresent the document and is exactly the kind of guess this codebase's law
+  // forbids -- named as a real, current gap rather than silently worked around.
   const settlementTally = freshTally();
   const paidSignal = await client.query<{ n: string }>(
     `SELECT (
@@ -305,8 +398,28 @@ async function main() {
     if (!executeFlag) continue;
     try {
       const res = await reverseFactoringAdvanceEvent({ operating_company_id: USMCA_COMPANY_ID, factoring_advance_id: a.id, actor_user_id: OWNER_USER_ID, reason: VOID_REASON });
-      if (res.reversed) factoringTally.reversed++;
-      else factoringTally.skipped.push(`factoring_advance ${a.id} (${res.reason})`);
+      // ROUND 112: reversed=true (fresh this run) or reason='no_posting_found' (every leg already
+      // dead from a prior run -- the "97 reversals in, not one stamped" case this round exists to
+      // fix) both mean the ledger is CONFIRMED dead -- stamp owed either way. reason='flag_off' is
+      // a genuine skip, not a confirmed-dead ledger, and is NOT stamped -- stamping there would
+      // risk "a committed stamp over a live posting." Narrowed via the discriminated union's own
+      // `reversed` field first (TS2339: `.reason` does not exist on the `reversed: true` variant).
+      const confirmedDead = res.reversed || res.reason === "no_posting_found";
+      if (confirmedDead) {
+        if (res.reversed) factoringTally.reversed++;
+        else factoringTally.already_reversed++;
+        try {
+          // Own inTx(): the GL reversal already committed on reverseFactoringAdvanceEvent's OWN
+          // connection (see the ROUND 102 note above) before this line runs -- not atomic with the
+          // GL write by construction of that pre-existing engine, named honestly in the file header.
+          await inTx(() => stamp(factoringTally, "factoring_advance", a.id));
+        } catch {
+          // stamp() already recorded the failure in factoringTally.stamp_errors; nothing else to
+          // do here except let the loop continue to the next advance rather than abort the run.
+        }
+      } else {
+        factoringTally.skipped.push(`factoring_advance ${a.id} (${res.reversed ? "reversed" : res.reason})`);
+      }
     } catch (e) {
       factoringTally.errors.push(`factoring_advance ${a.id}: ${e instanceof Error ? e.message : String(e)}`);
     }
@@ -329,9 +442,17 @@ async function main() {
   for (const inv of invoices.rows) {
     if (!executeFlag) continue;
     try {
-      const res = await inTx(() =>
-        reversePostedSourceTransactionInClientTx(client, { operating_company_id: USMCA_COMPANY_ID, source_transaction_type: "invoice", source_transaction_id: inv.id }, ACTOR, companyBusinessDate())
-      );
+      // ROUND 112: reversal + stamp in the SAME inTx() -- header and GL commit together or
+      // neither. Stamped unconditionally after a successful reversePostedSourceTransactionInClientTx
+      // call, whether it freshly reversed (result='reversed') or found an existing reversal
+      // (result!=='reversed', the idempotent already-dead case) -- both mean the ledger is
+      // confirmed dead. A stamp() throw here rolls the WHOLE transaction back, so a stamp failure
+      // never leaves a committed reversal with no stamp.
+      const res = await inTx(async () => {
+        const r = await reversePostedSourceTransactionInClientTx(client, { operating_company_id: USMCA_COMPANY_ID, source_transaction_type: "invoice", source_transaction_id: inv.id }, ACTOR, companyBusinessDate());
+        await stamp(invoiceTally, "invoice", inv.id);
+        return r;
+      });
       if (res.result === "reversed") invoiceTally.reversed++;
       else invoiceTally.already_reversed++;
     } catch (e) {
@@ -340,12 +461,16 @@ async function main() {
       // engine #6 by JE id (same technique already used for revrec), not a 7th engine.
       if (e instanceof PostingEngineError && e.message === "No posted batch found to reverse") {
         try {
-          const fb = await reverseByJeIdFallback("invoice", inv.id, VOID_REASON);
+          const fb = await reverseByJeIdFallback("invoice", inv.id, VOID_REASON, "invoice", invoiceTally);
           if (fb === "reversed") invoiceTally.reversed++;
           else invoiceTally.errors.push(`invoice ${inv.id}: no posted batch AND no single live JE to fall back to`);
         } catch (fbErr) {
           invoiceTally.errors.push(`invoice ${inv.id} (fallback): ${fbErr instanceof Error ? fbErr.message : String(fbErr)}`);
         }
+      } else if (e instanceof VoidDocumentStampError) {
+        // stamp() already recorded the detail in invoiceTally.stamp_errors; this outer catch just
+        // needs to keep the loop moving to the next invoice rather than abort the whole phase.
+        invoiceTally.errors.push(`invoice ${inv.id}: reversal rolled back because its stamp failed (${e.code})`);
       } else {
         invoiceTally.errors.push(`invoice ${inv.id}: ${e instanceof Error ? e.message : String(e)}`);
       }
@@ -369,9 +494,12 @@ async function main() {
   for (const ex of expenses.rows) {
     if (!executeFlag) continue;
     try {
-      const res = await inTx(() =>
-        reversePostedSourceTransactionInClientTx(client, { operating_company_id: USMCA_COMPANY_ID, source_transaction_type: "expense", source_transaction_id: ex.id }, ACTOR, companyBusinessDate())
-      );
+      // ROUND 112: reversal + stamp in the SAME inTx() -- same shape as invoices above.
+      const res = await inTx(async () => {
+        const r = await reversePostedSourceTransactionInClientTx(client, { operating_company_id: USMCA_COMPANY_ID, source_transaction_type: "expense", source_transaction_id: ex.id }, ACTOR, companyBusinessDate());
+        await stamp(expenseTally, "expense", ex.id);
+        return r;
+      });
       if (res.result === "reversed") expenseTally.reversed++;
       else expenseTally.already_reversed++;
     } catch (e) {
@@ -383,12 +511,14 @@ async function main() {
       // once every attempt is atomic, there is nothing left to collide with.
       if (e instanceof PostingEngineError && e.message === "No posted batch found to reverse") {
         try {
-          const fb = await reverseByJeIdFallback("expense", ex.id, VOID_REASON);
+          const fb = await reverseByJeIdFallback("expense", ex.id, VOID_REASON, "expense", expenseTally);
           if (fb === "reversed") expenseTally.reversed++;
           else expenseTally.errors.push(`expense ${ex.id}: no posted batch AND no single live JE to fall back to`);
         } catch (fbErr) {
           expenseTally.errors.push(`expense ${ex.id} (fallback): ${fbErr instanceof Error ? fbErr.message : String(fbErr)}`);
         }
+      } else if (e instanceof VoidDocumentStampError) {
+        expenseTally.errors.push(`expense ${ex.id}: reversal rolled back because its stamp failed (${e.code})`);
       } else {
         expenseTally.errors.push(`expense ${ex.id}: ${e instanceof Error ? e.message : String(e)}`);
       }
@@ -461,9 +591,31 @@ async function main() {
           // is the tell that it was written to expect one. ROUND 102: now the shared inTx() helper
           // (defined once, near the top of main()) instead of its own inline BEGIN/COMMIT/ROLLBACK
           // -- one helper, six call sites, not six copies.
-          await inTx(() => reverseJournalEntryNoFlip(client, { operatingCompanyId: USMCA_COMPANY_ID, journalEntryId: l.je_id, reason: VOID_REASON, actorUserId: OWNER_USER_ID }));
+          // ROUND 112: for 'earn' latches, ALSO stamp family='load' documentId=l.load_id, in the
+          // SAME inTx() as the JE reversal -- the ONLY writer of a 'load'-typed
+          // transaction_source_links row is this exact revrec Event-1 poster (verified at the top
+          // of this file, revrec-delivery-posting/poster.service.ts:680), so reversing this JE is
+          // exactly the event that flips a load from live to dead in the five-column liveness test
+          // (verify-void-is-whole.mjs). 'bill' latches never reach this branch (see the `if
+          // (l.event === "earn")` guard below) -- their load is stamped, if at all, only once, by
+          // PHASE 3's invoice stamp on the SAME load's invoice, never a duplicate/competing write.
+          await inTx(async () => {
+            await reverseJournalEntryNoFlip(client, { operatingCompanyId: USMCA_COMPANY_ID, journalEntryId: l.je_id, reason: VOID_REASON, actorUserId: OWNER_USER_ID });
+            if (l.event === "earn") await stamp(revrecTally, "load", l.load_id);
+          });
           revrecTally.reversed++;
         } else {
+          // ROUND 112: JE already dead from a prior run (reversed_by_je_id or voided_at already
+          // set) -- the exact "97 reversals in, not one stamped" case. Stamp is still owed,
+          // idempotent, and does not need the JE reversal repeated. Own inTx() since there is no
+          // reversal call to share one with here.
+          if (l.event === "earn" && jeRow && (jeRow.reversed_by_je_id || jeRow.voided_at)) {
+            try {
+              await inTx(() => stamp(revrecTally, "load", l.load_id));
+            } catch {
+              // stamp() already recorded the failure in revrecTally.stamp_errors.
+            }
+          }
           revrecTally.already_reversed++;
         }
       } else {
@@ -494,11 +646,21 @@ async function main() {
     ["expenses", expenseTally],
     ["revrec_latches", revrecTally],
   ] as [string, Tally][]) {
-    console.log(`${name}: reversed=${t.reversed} already_reversed=${t.already_reversed} skipped=${t.skipped.length} errors=${t.errors.length}`);
+    console.log(
+      `${name}: reversed=${t.reversed} already_reversed=${t.already_reversed} skipped=${t.skipped.length} errors=${t.errors.length} ` +
+        `| stamped=${t.stamped} already_voided_stamps=${t.already_voided_stamps} stamp_errors=${t.stamp_errors.length}`
+    );
     for (const s of t.skipped) console.log(`  SKIPPED: ${s}`);
     for (const e of t.errors) console.log(`  ERROR: ${e}`);
+    for (const se of t.stamp_errors) console.log(`  STAMP ERROR: ${se}`);
   }
   console.log(`fuel_transactions: NO_PATH=${fuelTally.no_path} ($${(fuelTally.no_path_amount_cents / 100).toFixed(2)}) -- never voided, no engine exists`);
+  console.log(
+    `\nROUND 112 TOTAL STAMPS: ${
+      [settlementTally, factoringTally, invoiceTally, expenseTally, revrecTally].reduce((n, t) => n + t.stamped + t.already_voided_stamps, 0)
+    } document(s) now carry voided_at/void_reason/voided_by_user_id ` +
+      `(factoring_advance + invoice + expense + load families; settlements/driver_bills have no stamp family, fuel has no reversal path).`
+  );
 
   client.release();
   await pool.end();
