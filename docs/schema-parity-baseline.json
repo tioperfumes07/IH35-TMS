@@ -6347,6 +6347,7 @@
       "id",
       "last_seen_at",
       "local_driver_id",
+      "local_vendor_id",
       "operating_company_id",
       "raw_payload",
       "samsara_driver_id",
