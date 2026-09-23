@@ -12,7 +12,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
-import { exitIfEmptyByPurge } from "./lib/purge-window.mjs";
+import { exitIfEmptyByPurge, purgeLiveRowCondition } from "./lib/purge-window.mjs";
 
 const LABEL = "verify-no-empty-zero-settlement";
 export const REQUIRES_LIVE_DB =
@@ -89,11 +89,13 @@ try {
   await client.query("BEGIN READ ONLY");
   await client.query("SET LOCAL app.bypass_rls = 'lucia'");
   const totals = await client.query(
-    "SELECT count(*)::int AS n FROM driver_finance.driver_settlements WHERE operating_company_id = $1::uuid AND is_sample_data IS NOT TRUE",
+    `SELECT count(*)::int AS n FROM driver_finance.driver_settlements
+      WHERE operating_company_id = $1::uuid AND is_sample_data IS NOT TRUE
+        AND ${purgeLiveRowCondition(LABEL, "driver_finance.driver_settlements")}`,
     [USMCA_COMPANY_ID]
   );
   if (totals.rows[0].n === 0) {
-    exitIfEmptyByPurge(LABEL, "driver_finance.driver_settlements (USMCA)");
+    exitIfEmptyByPurge(LABEL, "driver_finance.driver_settlements (USMCA, no live row)");
     console.error(`${LABEL}: FAIL — 0 USMCA settlements visible; that is an instrument problem, not a clean result`);
     process.exit(1);
   }

@@ -7,7 +7,7 @@
 // written Lead ruling in docs/bus/ and the ruling's filename in the PR body.
 
 import pg from 'pg';
-import { EMPTY_BY_PURGE_EXIT, purgeWindowFor } from './lib/purge-window.mjs';
+import { EMPTY_BY_PURGE_EXIT, purgeLiveRowCondition, purgeWindowFor } from './lib/purge-window.mjs';
 
 const LABEL = 'verify-control-totals';
 const USMCA = '5c854333-6ea5-4faa-af31-67cb272fef80';
@@ -101,7 +101,8 @@ async function usmcaSettlementCount() {
   try {
     const { rows } = await client.query(
       `${BYPASS} SELECT COUNT(*)::int AS n FROM driver_finance.driver_settlements s
-        WHERE (SELECT v FROM b)='lucia' AND s.operating_company_id = $1`, [USMCA]);
+        WHERE (SELECT v FROM b)='lucia' AND s.operating_company_id = $1
+          AND ${purgeLiveRowCondition(LABEL, 'driver_finance.driver_settlements')}`, [USMCA]);
     return rows[0].n;
   } finally {
     await client.query('ROLLBACK').catch(() => {});
