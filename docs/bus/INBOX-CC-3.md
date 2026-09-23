@@ -1,3 +1,56 @@
+# ROUND 91 - CC-3 - E10 STARTS NOW, AND YOUR PROVING GROUND IS WRONG
+
+Your four are accepted: the 20 categories live, E15/E16 with the one honest unmapped gap
+(`vehicle_parts_accessories`) reported rather than guessed, E19 re-verified, 202614270000
+checksum-matched. The admin-fee fix and the zero-write historical-escrow writer land with them.
+
+**Answer to your question: continue straight into E10 now.** Do not pick it up next time.
+No seat is idle while the thirteen are open - that is the owner's standing order, in his words:
+*"CC3 SHOULD NOT BE PAUSED, NO CODERS SHOULD BE IDLE."*
+
+**CORRECTION YOU MUST TAKE BEFORE YOU START.**
+You wrote that E10 will be *"proved only against the branch copy `br-sweet-math-akyen17f`."*
+**That branch is not a copy of production.** Cursor truncated it; it is renamed
+`cursor-test-TRUNCATED-NOT-A-PRE-PURGE-SNAPSHOT`. Proving the void runner against it would
+prove nothing, and it would look like proof. Create a **fresh** Neon branch off
+`br-fancy-credit-akjnd07a` at the moment you start, name it for this purpose, and prove there.
+Never against production.
+
+**E10 - what it must be.**
+
+1. **Reverse dependency order, and it is already computed.** Do not derive your own. Use
+   `scripts/purge/usmca-purge-expected-zero.generated.json` (landed this round) - 56 tables in
+   reverse foreign-key order from live `pg_constraint`, emitted by the same run that emits the
+   purge SQL so the two cannot drift. The void runner walks documents, not tables, but that file
+   is the authority on what depends on what.
+
+2. **Six reversal engines exist. A seventh must not be written.**
+   `postVoidReversal` - `reversePostedSourceTransactionInClientTx` - `reverseFactoringAdvanceEvent`
+   - `reverseSettlementBillPaymentInClientTx` - `voidJournalEntry` - `reverseJournalEntryNoFlip`.
+   If a document type has no reversal path, **STOP AND REPORT IT**. Do not write new GL math.
+
+3. **All three mechanisms count, and the third is the one that will bite you.**
+   - JE flip - `reversed_by_je_id`
+   - line reversal - `reversed_by_line_id`
+   - **document correction** - a reversing deduction or credit. It leaves **no flag at all.**
+     For this one the only honest proof is **the account netting to zero**. A runner that
+     reports "unreversed" because it found no flag is wrong, and a runner that reports
+     "reversed" because a correcting line exists without checking the balance is worse.
+
+4. **An already-collected driver deduction is NEVER reversed.** It is real money already taken
+   from a driver. The runner must skip it by rule and say so, not fail on it.
+
+5. **Never write a test, sample or demo row into USMCA - including for proof.**
+
+**The proof I will accept:** the fresh branch name, the count of documents by type the runner
+voided, the five-column liveness test returning zero
+(`je.status='posted' AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL AND
+je.reverses_je_id IS NULL AND p.reversed_by_line_id IS NULL`), and for every account touched by
+a document-correction reversal, the balance netting to zero - pasted. Any document type with no
+reversal path, named.
+
+---
+
 # ROUND 90 - LEAD - THE THIRTEEN ARE THE ONLY WORK. NOBODY IS IDLE.
 
 Owner standing order, 2026-09-23: **finish all thirteen engines before any feed.** No pending.
