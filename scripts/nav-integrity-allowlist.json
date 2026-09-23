@@ -347,6 +347,10 @@
       "reason": "HOS-MAP driver\u2192Samsara ID preview (OwnerOnlyRoute) \u2014 read-only, write step is Jorge-gated; deep link only, no subnav"
     },
     {
+      "path": "/samsara/driver-mapping",
+      "reason": "E20 Part B Samsara\u2192driver mapping page (#22385) \u2014 reachable via a Link from /integrations/samsara (SamsaraIntegrationPage.tsx), same pattern as /samsara/vendor-mapping-integrity and /samsara/hos-driver-map; deep link only, no subnav. Confirmed pre-existing on origin/main (verify-nav-integrity.mjs fails identically on a clean origin/main checkout, independent of this PR's diff) \u2014 fixed here rather than deferred."
+    },
+    {
       "path": "/catalogs/equipment-types",
       "reason": "Legacy catalog route \u2014 Block 43 lists migration"
     },

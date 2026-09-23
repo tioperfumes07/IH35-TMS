@@ -317,6 +317,12 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
           SELECT db.id::text, db.bill_number, db.status, db.gross_amount_cents::text AS gross_amount_cents,
             db.load_id::text AS load_id, l.load_number,
             concat_ws(' ', d.first_name, d.last_name) AS driver_name,
+            -- R-102-B — first detail-page wiring for this family; driver_finance.driver_bills already
+            -- carries all three columns (void-open-driver-bill.service.ts / dispatch/cancellation.service.ts
+            -- both write voided_by_user_id on void), the detail SELECT simply never read them back.
+            db.voided_at::text AS voided_at,
+            db.void_reason,
+            db.voided_by_user_id::text AS voided_by_user_id,
             -- ENTITY PREDICATES (CLS-JOIN-ENTITY-UNSCOPED): identity_user_id feeds the WHO-may-see-this
             -- authorization check below, so these driver joins are load-bearing, not decorative labels.
             d1.identity_user_id AS primary_identity_user_id,

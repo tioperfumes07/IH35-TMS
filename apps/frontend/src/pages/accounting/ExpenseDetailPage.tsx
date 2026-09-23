@@ -135,7 +135,7 @@ export function ExpenseDetailPage() {
 
   return (
     <AccountingSubNavWrapper>
-      <VoidedBanner voidedAt={expense.voided_at} voidReason={expense.void_reason} documentLabel="Expense" />
+      <VoidedBanner voidedAt={expense.voided_at} voidReason={expense.void_reason} voidedByUserId={expense.voided_by_user_id} documentLabel="Expense" />
       <PageHeader
         title={displayId}
         backHref="/accounting/expenses/list"

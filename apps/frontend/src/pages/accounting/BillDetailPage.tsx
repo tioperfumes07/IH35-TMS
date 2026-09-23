@@ -251,7 +251,7 @@ export function BillDetailPage() {
 
   return (
     <AccountingSubNavWrapper>
-      <VoidedBanner voidedAt={bill.revoked_at} voidReason={bill.revoked_reason} documentLabel="Bill" />
+      <VoidedBanner voidedAt={bill.revoked_at} voidReason={bill.revoked_reason} voidedByUserId={bill.voided_by_user_id} documentLabel="Bill" />
       <PageHeader
         title={displayId}
         backHref="/accounting/bills"

@@ -5185,3 +5185,71 @@ disclosure.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+
+## R-102-B item 1 ("THE STAMP") — live, ACCT-F2026092313, lane-cross granted (Round 102.2)
+
+Built and shipped the shared void-stamp upgrade (`VoidedBanner.tsx` + new `useUserName.ts`
+hook) across all 8 already-schema-ready families named in the Lead's own Round 102.2 packet
+that carry a standalone document detail screen: invoices, expenses, bills, bill payments,
+credit memos, vendor credits, payments, driver bills, driver settlements. §9.0.17 — one
+component, wired everywhere, not eleven page edits. Full root cause / fix detail in the PR
+body (FINDING ACCT-F2026092313) and in the lane-cross ruling doc
+`docs/bus/2026-09-23-LEAD-RULING-ROUND-102-2-CC2-LANE-CROSS-VOIDED-STAMP.md`, which this task
+required crossing into CC-1's and CC-3's lanes for (six backend files — read-path and/or
+write-path void-column gaps in `expenses.routes.ts`, `vendor-credits.routes.ts`,
+`credit-memos.routes.ts` [CC-1], `driver-bills.routes.ts`, `settlements.routes.ts`,
+`void-document-callees.service.ts` [CC-3], and `governance/void-cancel-executors.ts`
+[UNASSIGNED]).
+
+Also fixed, same block, not deferred: `verify-nav-integrity.mjs` (run only inside the full
+`verify:local-ci` chain, not the pre-push `money-pr-local-gate`) caught a real pre-existing
+orphan route on origin/main tip itself, `/samsara/driver-mapping` (my own earlier E20 Part B
+PR #22385) — it has a real inbound Link from `/integrations/samsara` but was never added to
+`scripts/nav-integrity-allowlist.json`. Confirmed pre-existing via a throwaway worktree at
+`origin/main`'s own tip before touching anything; fixed by allowlisting it alongside the two
+existing same-pattern Samsara deep links.
+
+**Named for CC-1, per the packet's own instruction to name the exact file and column rather
+than sit on it or build a placeholder schema:** two live, historical data gaps this PR's
+code fix stops from growing but cannot itself repair (backfilling existing rows is a
+migration, outside `cc2-`'s lane per `verify-migration-lane-band.mjs`):
+
+1. **`accounting.invoices.voided_by_user_id`** — all 39 currently-voided invoices on
+   production (br-fancy-credit-akjnd07a) have this column NULL. The same row's
+   `updated_by_user_id` was stamped by the identical void UPDATE statement in the same
+   transaction (verified live: every sampled row's `updated_by_user_id` matches the actor who
+   actually voided it), so it is a safe, non-invented backfill source —
+   `UPDATE accounting.invoices SET voided_by_user_id = updated_by_user_id WHERE voided_at IS
+   NOT NULL AND voided_by_user_id IS NULL AND updated_by_user_id IS NOT NULL`. 2 of these 39
+   rows (invoice docs 13541 / 99c4dab1... and 13572 / 52f1c859...) are also named in
+   R-102-C's own `verify-void-is-whole.baseline.json` as silent-void violations.
+2. **`driver_finance.driver_settlements.voided_at` / `void_reason` / `voided_by_user_id`** —
+   21 live `status='cancelled'` settlements carry `reversed_at`/`reversed_by_user_id`/
+   `reversal_reason` but NULL on the mirrored voided_* columns (the write paths only mirrored
+   both sets going forward as of this PR — see `governance/void-cancel-executors.ts` and
+   `driver-finance/void-document-callees.service.ts`). Same safe backfill shape as #1, COALESCE
+   from the existing `reversed_*` columns, same owner-authorized pattern migration
+   202612480900 already used for `accounting.bills` (`voided_at = COALESCE(voided_at,
+   revoked_at)`, etc.) — mirrored, not COALESCE-invented, since the source values already exist.
+
+Both gaps are honestly surfaced by the fix, not hidden: `VoidedBanner` never fabricates an
+actor — a row with `voided_by_user_id IS NULL` simply omits the "by <name>" clause until
+backfilled.
+
+**R-102.1-A landed while this was in flight (#22410/#22411, CC-1's own migration + baseline
+shrink 95→92)** — `mdata.loads` / `accounting.factoring_advances` / `fuel.fuel_transactions`
+now carry the void-stamp columns too. Not wired into `VoidedBanner` in THIS PR (out of time
+before the R-102-B item-1 deadline); next in queue.
+
+**REMAINING (R-102-B items 2-6, not yet built, same deadline):** every list row struck/badged;
+every money field + write action read-only/disabled on a voided document; verify no family
+renumbers/reuses a voided document's number; default "Show voided" toggle off with an honest
+live/voided count; the dedicated no-money-input-on-a-voided-row guard (R-102-C's
+`verify-void-is-whole.mjs`, already live, covers the adjacent "is a void whole" invariant but
+not this specific rendering rule). Plus wiring the 3 CC-1 families (loads, factoring advances,
+fuel purchases) into VoidedBanner now that #22410/#22411 landed.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7

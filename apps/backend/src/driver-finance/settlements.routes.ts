@@ -630,7 +630,19 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             s.last_load_id,
             s.last_load_number,
             s.trip_closed_at,
-            s.settlement_model
+            s.settlement_model,
+            -- R-102-B (2026-09-23) — views.driver_settlement_with_debt exposes neither marker set
+            -- (confirmed live, information_schema, br-fancy-credit-akjnd07a: the view carries no
+            -- reversed_at/reversal_reason/voided_at/void_reason/voided_by_user_id column at all), so
+            -- the page's pre-existing "Reversed on {reversed_at}" banner has been rendering a blank
+            -- date/reason on every one of the 21 live cancelled settlements since it was written —
+            -- reversed_at was always undefined on the response. Selected directly off the joined table.
+            s.reversed_at,
+            s.reversed_by_user_id,
+            s.reversal_reason,
+            s.voided_at,
+            s.void_reason,
+            s.voided_by_user_id
           FROM views.driver_settlement_with_debt v
           JOIN driver_finance.driver_settlements s ON s.id = v.id
           WHERE v.id = $1 AND s.operating_company_id = $2::uuid

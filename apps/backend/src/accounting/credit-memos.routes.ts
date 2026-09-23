@@ -107,7 +107,10 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
            (cm.amount_cents - cm.amount_applied_cents) AS amount_unapplied_cents,
            cm.notes,
            cm.created_at,
-           cm.created_by_user_id
+           cm.created_by_user_id,
+           cm.voided_at,
+           cm.void_reason,
+           cm.voided_by_user_id
          FROM accounting.credit_memos cm
          LEFT JOIN mdata.customers c
            ON c.id = cm.customer_id
@@ -173,7 +176,10 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
            (cm.amount_cents - cm.amount_applied_cents) AS amount_unapplied_cents,
            cm.notes,
            cm.created_at,
-           cm.created_by_user_id
+           cm.created_by_user_id,
+           cm.voided_at,
+           cm.void_reason,
+           cm.voided_by_user_id
          FROM accounting.credit_memos cm
          LEFT JOIN mdata.customers c
            ON c.id = cm.customer_id

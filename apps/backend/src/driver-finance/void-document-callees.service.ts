@@ -104,10 +104,14 @@ export async function reverseSettlementForVoid(
     [settlementId, operatingCompanyId, reason, actor.userId]
   );
 
+  // R-102-B (2026-09-23) — mirror both void-marker sets (same fix as governance/void-cancel-
+  // executors.ts's identical path); see that file's comment for the live-measured root cause.
   const flipped = await client.query<{ id: string; updated_at: string }>(
     `UPDATE driver_finance.driver_settlements
         SET status = 'cancelled', reversed_at = now(), reversed_by_user_id = $3::uuid,
-            reversal_reason = $4, updated_at = now()
+            reversal_reason = $4,
+            voided_at = now(), void_reason = $4, voided_by_user_id = $3::uuid,
+            updated_at = now()
       WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'cancelled'
       RETURNING id::text, updated_at::text`,
     [settlementId, operatingCompanyId, actor.userId, reason]

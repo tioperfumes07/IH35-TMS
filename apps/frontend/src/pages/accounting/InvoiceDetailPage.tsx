@@ -306,7 +306,7 @@ export function InvoiceDetailPage() {
 
   return (
     <AccountingSubNavWrapper>
-      <VoidedBanner voidedAt={invoice.voided_at} voidReason={invoice.void_reason} documentLabel="Invoice" />
+      <VoidedBanner voidedAt={invoice.voided_at} voidReason={invoice.void_reason} voidedByUserId={invoice.voided_by_user_id} documentLabel="Invoice" />
       <PageHeader
         title={entityLabel(invoice.display_id, invoice.id, "Invoice")}
         backHref="/accounting/invoices"

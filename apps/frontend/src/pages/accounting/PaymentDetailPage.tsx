@@ -169,7 +169,7 @@ export function PaymentDetailPage() {
 
   return (
     <AccountingSubNavWrapper>
-      <VoidedBanner voidedAt={payment.voided_at} voidReason={payment.void_reason} documentLabel="Payment" />
+      <VoidedBanner voidedAt={payment.voided_at} voidReason={payment.void_reason} voidedByUserId={payment.voided_by_user_id} documentLabel="Payment" />
       <PageHeader
         title={entityLabel(payment.display_id, payment.id, "Payment")}
         backHref="/accounting/payments"

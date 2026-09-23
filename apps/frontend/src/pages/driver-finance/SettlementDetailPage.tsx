@@ -31,6 +31,7 @@ import { openCanonicalDocument, openPrintableDocument } from "../../lib/openPrin
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { VoidedBanner } from "../../components/accounting/VoidedBanner";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { Button } from "../../components/Button";
 import { BackButton } from "../../components/shared/BackButton";
@@ -622,6 +623,21 @@ export function SettlementDetailPage() {
           </div>
         }
       />
+      {/* R-102-B (owner, ROUND 102.2) — "above the fold, unmissable." This replaces the bespoke
+          "Reversed" block that used to sit below the KPI grid/loads/waterfall/proof-trail sections
+          (settlementIsCancelled block, now removed) with the shared VoidedBanner — §9.0.17, ONE
+          component. That old block was also silently broken: it read settlement.reversed_at /
+          settlement.reversal_reason, but views.driver_settlement_with_debt never exposed either
+          column (confirmed live), so the date/reason half of "Reversed on {date} — {reason}" rendered
+          blank on every one of the 21 live cancelled settlements. Fixed at the source in
+          settlements.routes.ts (the detail SELECT now pulls reversed_at/reversal_reason AND the
+          mirrored voided_at/void_reason/voided_by_user_id straight off driver_finance.driver_settlements). */}
+      <VoidedBanner
+        voidedAt={settlement.voided_at as string | null | undefined}
+        voidReason={settlement.void_reason as string | null | undefined}
+        voidedByUserId={settlement.voided_by_user_id as string | null | undefined}
+        documentLabel="Settlement"
+      />
       {/* SETL-MOD-02 (owner ROUND 10, render § Settlement + DRIVER-SETTLEMENT-DETAIL-REFERENCE): the
           Settlements-module detail leads with the APPROVED Settlement design — driver settlement card
           (loaded × rate · empty × rate · gross · escrow · recoveries · net, 5% floor) and company
@@ -692,13 +708,6 @@ export function SettlementDetailPage() {
       {readout ? <SettlementLoadsSection legs={readout.legs} operatingCompanyId={companyId} /> : null}
       {readout ? <CompanyWaterfallSection readout={readout} report={companyReport} /> : null}
       <MoneyProofTrailPanel operatingCompanyId={companyId} documentType="settlement" documentId={settlementId} />
-      {settlementIsCancelled ? (
-        <div className="rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800">
-          <span className="font-semibold uppercase tracking-wide">Reversed</span>{" "}
-          {settlement.reversed_at ? `on ${String(settlement.reversed_at).slice(0, 10)}` : ""}
-          {settlement.reversal_reason ? ` — ${String(settlement.reversal_reason)}` : ""}
-        </div>
-      ) : null}
       {showManualPaidDraftBanner ? (
         <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-800">
           Payment is recorded as <span className="font-semibold">manual_paid</span> but this settlement is not
