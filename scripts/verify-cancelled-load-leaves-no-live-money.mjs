@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // ROUND 118/119 (Lead) — a cancelled load must leave NO live money artifact behind it. This
 // guard checks the direction that is fully built today: dispatch/cancellation.service.ts's
-// cascade (invoices, expenses, vendor bills [ROUND 118 DEFECT 2], driver bills, settlements,
-// advances). Two more directions the Lead's own spec names are NOT checked here, deliberately,
+// cascade (invoices, expenses, fuel transactions [ROUND 125/126, supersedes ROUND 118 Defect 4's
+// "fuel is N/A" stance], vendor bills [ROUND 118 DEFECT 2], driver bills, settlements, advances).
+// Two more directions the Lead's own spec names are NOT checked here, deliberately,
 // not silently -- the schema/logic they depend on does not exist yet:
 //   - "a cancelled load with movement evidence has NO surviving deadhead line" -- needs the
 //     line-level driver-bill split (ROUND 118 Defect 1) and real movement evidence
@@ -22,6 +23,8 @@
 // genuinely still-open one):
 //   invoices          -- status='void' OR status IN ('paid','factored')  (the cascade's own gate)
 //   expenses          -- status='void'                                  (no legitimate skip)
+//   fuel transactions -- voided_at IS NOT NULL                          (no legitimate skip; the
+//                        bank transaction/match is a separate concept, not checked here)
 //   vendor bills       -- status='void' OR has a recorded bill_payment    (bill_has_payments skip)
 //   driver bills       -- status='void'                                  (no legitimate skip)
 //   driver advances    -- disbursement_status='reversed' OR paid_to_date > 0 (already-recovered skip)
@@ -87,6 +90,22 @@ async function measure(client) {
     violations.push({ family: "vendor_bill", id: r.id, doc_number: r.display_id, load_number: r.load_number, detail: `status='${r.status}' on a cancelled load, no payment recorded` });
   }
 
+  // ROUND 125/126 (owner ruling supersedes ROUND 118 Defect 4's "fuel is N/A" stance) --
+  // fuel.fuel_transactions is now voided by the cascade (VOID-CASCADE-FUEL,
+  // dispatch/cancellation.service.ts); no legitimate skip exists (the bank transaction/match is a
+  // separate concept this guard does not check -- releasing a match is not a reason to leave the
+  // fuel document itself live).
+  const fuel = await client.query(
+    `SELECT ft.id::text, l.load_number, ft.voided_at
+       FROM fuel.fuel_transactions ft
+       JOIN mdata.loads l ON l.id = ft.load_id AND l.operating_company_id = ft.operating_company_id
+      WHERE ft.operating_company_id = $1::uuid AND l.status = 'cancelled' AND ft.voided_at IS NULL`,
+    [USMCA]
+  );
+  for (const r of fuel.rows) {
+    violations.push({ family: "fuel_transaction", id: r.id, doc_number: null, load_number: r.load_number, detail: `voided_at IS NULL on a cancelled load, no legitimate skip exists` });
+  }
+
   const driverBills = await client.query(
     `SELECT db.id::text, db.bill_number, l.load_number, db.status::text
        FROM driver_finance.driver_bills db
@@ -150,6 +169,7 @@ if (process.argv.includes("--selftest")) {
     "accounting.invoices",
     "status IN ('void', 'paid', 'factored')",
     "accounting.expenses",
+    "fuel.fuel_transactions",
     "accounting.bills",
     "accounting.bill_lines",
     "has_payment",
@@ -164,7 +184,7 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} --selftest FAIL: missing expected SQL fragment(s): ${missing.join(", ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest OK -- all 6 families + their skip conditions present in the guard's own SQL.`);
+  console.log(`${LABEL} --selftest OK -- all 7 families + their skip conditions present in the guard's own SQL.`);
   process.exit(0);
 }
 

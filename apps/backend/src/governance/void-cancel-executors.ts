@@ -20,6 +20,10 @@ import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { reverseSettlementBillPaymentInClientTx } from "../accounting/settlement-posting/settlement-bill-payment-posting.service.js";
 import { voidBillPaymentInClientTx } from "../accounting/bills.service.js";
+// ROUND 125/126 (Lead) -- fuel.fuel_transactions.voided_at may ONLY be written by
+// stampDocumentVoided (verify-void-stamp-columns.mjs's writer allowlist enforces this, zero-
+// tolerance, R-102.1-A). executeFuelTransaction below must never hand-write that column itself.
+import { stampDocumentVoided } from "../accounting/void-document-stamp.service.js";
 
 export type VoidCancelAction = "void" | "cancel";
 
@@ -459,6 +463,80 @@ const executeExpense: EntityExecutor = async (ctx) => {
   return { kind: "ok", reversing_entry_ref: reversingEntryRef };
 };
 
+// ROUND 125/126 (Lead) -- fuel.fuel_transactions executor. "A fuel EXPENSE is created by a LOAD. A
+// fuel BANK TRANSACTION is a separate real thing we MATCH to it... voiding one must never delete or
+// alter the other." postVoidReversal(entityType:'fuel_event', entityId:<fuel_transaction id>)
+// reverses the GL (source_transaction_type='fuel_event' on the live postings, verified live) AND
+// releases any BANK-ORPHAN-01 match via its unconditional FORWARD check (linked_entity_id=entityId)
+// in the SAME call -- the banking.bank_transactions ROW is never touched, only its own match/
+// categorization pointers, exactly the same as postVoidReversal does today for 'expense'. The
+// header write itself goes through stampDocumentVoided ONLY (see the import above) -- never a
+// hand-written UPDATE here -- because fuel_transactions.voided_at has a zero-tolerance named-writer
+// allowlist (verify-void-stamp-columns.mjs).
+const executeFuelTransaction: EntityExecutor = async (ctx) => {
+  const { client, operatingCompanyId, entityId, userId, reason } = ctx;
+
+  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('fuel.fuel_transactions') IS NOT NULL AS ok`);
+  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+
+  const pre = await client.query<{ voided_at: string | null; purchased_at: string | null; transaction_at: string | null; created_at: string }>(
+    `SELECT voided_at::text, purchased_at::text, transaction_at::text, created_at::text
+       FROM fuel.fuel_transactions WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
+    [entityId, operatingCompanyId]
+  );
+  if (!pre.rows[0]) return { kind: "not_found" };
+  if (pre.rows[0].voided_at) return { kind: "already_done" };
+
+  const flagOn = await isVoidEnforcementEnabled(client, operatingCompanyId, userId);
+  if (!flagOn) return { kind: "void_not_enabled" };
+
+  const liveJe = await client.query<{ n: string }>(
+    `SELECT count(*)::text AS n
+       FROM accounting.journal_entry_postings jep
+       JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+      WHERE je.operating_company_id = $1::uuid
+        AND jep.source_transaction_type = 'fuel_event' AND jep.source_transaction_id = $2
+        AND je.status = 'posted' AND je.voided_at IS NULL
+        AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL`,
+    [operatingCompanyId, entityId]
+  );
+  let reversingEntryRef: string | null = null;
+  if (Number(liveJe.rows[0]?.n ?? 0) > 0) {
+    const originalDate = (pre.rows[0].purchased_at ?? pre.rows[0].transaction_at ?? pre.rows[0].created_at).slice(0, 10);
+    const reversal = await postVoidReversal(
+      client,
+      { operatingCompanyId, entityType: "fuel_event", entityId, originalDate, memo: `Void reversal of fuel transaction ${entityId}: ${reason}` },
+      { userId }
+    );
+    reversingEntryRef = reversal.reversal_journal_entry_id;
+    await auditVoid(client, userId, "fuel_event", { operatingCompanyId, entityId, reason, reversal });
+  }
+
+  await stampDocumentVoided(client, {
+    operatingCompanyId,
+    family: "fuel_transaction",
+    documentId: entityId,
+    voidReason: reason,
+    voidedByUserId: userId,
+  });
+
+  await appendCrudAudit(
+    client,
+    userId,
+    "fuel_transaction.voided",
+    {
+      fuel_transaction_id: entityId,
+      operating_company_id: operatingCompanyId,
+      reason,
+      reversing_journal_entry_id: reversingEntryRef,
+      via: "governance.void_cancel_requests",
+    },
+    "warning",
+    "VOID-CANCEL-GOV"
+  );
+  return { kind: "ok", reversing_entry_ref: reversingEntryRef };
+};
+
 // VOID-EVERYWHERE PR-3 — bill_payment executor. Mirrors bills.service.ts voidBillPayment's guards
 // (not-found / already-voided), reverses any posted GL for this bill_payment via postVoidReversal
 // (entityType 'bill_payment' — additive VoidableEntityType, same generic source-linked path), THEN
@@ -719,6 +797,9 @@ const EXECUTORS: Record<string, EntityExecutor | { supported: false }> = {
   invoice: executeInvoice,
   // VOID-EVERYWHERE PR-3 (this block): all wired through the SAME shared engine.
   expense: executeExpense,
+  // ROUND 125/126/127/128 (Lead + owner) -- fuel_transaction wired through the SAME shared engine
+  // (postVoidReversal), header write via stampDocumentVoided only (writer allowlist).
+  fuel_transaction: executeFuelTransaction,
   journal_entry: executeJournalEntry,
   payment: executeCustomerPayment,
   bill_payment: executeBillPayment,

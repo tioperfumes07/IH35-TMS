@@ -410,6 +410,41 @@ export async function cancelLoadInClientTx(
           }
         }
 
+        // ROUND 125/126 (Lead + owner) — VOID-CASCADE-FUEL. "A fuel EXPENSE is created by a LOAD. A
+        // fuel BANK TRANSACTION is a separate real thing we MATCH to it... voiding one must never
+        // delete or alter the other." Every open (non-void) fuel.fuel_transactions row sourced from
+        // this load gets voided via the SAME shared executeVoidCancel("fuel_transaction", ...)
+        // executor (void-cancel-executors.ts's executeFuelTransaction, ROUND 125/126) that internally
+        // calls postVoidReversal(entityType:"fuel_event", entityId:<fuel_transaction id>) — this
+        // releases any BANK-ORPHAN-01 match (banking.bank_transactions row itself untouched, only its
+        // match/categorization pointers) in the same call that reverses the GL. Header write goes
+        // through stampDocumentVoided only (the executor's own import comment), never a hand UPDATE.
+        const openFuelRes = await client.query<{ id: string }>(
+          `SELECT id::text FROM fuel.fuel_transactions
+            WHERE load_id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+            FOR UPDATE`,
+          [input.load_id, input.operating_company_id]
+        );
+        const voidedFuelIds: string[] = [];
+        for (const ft of openFuelRes.rows) {
+          const ftResult = await executeVoidCancel("fuel_transaction", {
+            client,
+            operatingCompanyId: input.operating_company_id,
+            entityId: ft.id,
+            action: "cancel",
+            userId,
+            reason: `Load cancelled (${input.reason_code}) — fuel transaction voided by load cancellation cascade: ${input.cancellation_notes.trim()}`,
+          });
+          if (ftResult.kind === "ok" || ftResult.kind === "already_done") {
+            voidedFuelIds.push(ft.id);
+          } else {
+            throw Object.assign(
+              new Error(`load_cancel_fuel_void_failed:${ft.id}:${ftResult.kind}`),
+              { code: "load_cancel_fuel_void_failed", fuel_transaction_id: ft.id, result: ftResult.kind }
+            );
+          }
+        }
+
         // ROUND 118 DEFECT 2 — VOID-CASCADE-VENDOR-BILLS. Newly possible: accounting.bills.load_id
         // (migration 202614320000) is the load linkage the HEADER never had. Real-repo investigation
         // before wiring this (not guessed): the canonical createBill() path never writes a bill-
@@ -591,24 +626,20 @@ export async function cancelLoadInClientTx(
         // INV-2026-00024 (still proforma, voided_at NULL) and again on L-20260830-0020/0024 (still
         // 'sent', $2,500.00 + $1,100.00 orphaned, no reversing JE — the VOID-CANCEL-NOT-VOID
         // finding this whole block now closes).
-        // ROUND 118 DEFECT 4 — declare fuel and factoring explicitly, not silence (§10: both-way
-        // or explicit N/A). Neither is touched by this cascade, and both reasons are real, not an
-        // oversight:
-        //   fuel.fuel_transactions: the diesel was REALLY bought, regardless of whether this load
-        //   got cancelled — voiding a fuel purchase because the load it was attributed to died
-        //   would misstate a real expense as never having happened. Counted (not voided) so the
-        //   audit trail shows this cascade looked, not that it forgot to.
-        //   accounting.factoring_advances: carries no direct load_id or invoice_id column at all
-        //   (a factoring advance is often a multi-invoice batch submission) — there is nothing to
-        //   join on independently. The real safety net is the existing unvoidable-invoice gate
-        //   above: an invoice already sold to the factor reads status='factored' on
-        //   accounting.invoices itself and already blocks this whole cancellation before any void
-        //   runs. Safe today because of that gate, not because factoring was checked directly here.
-        const fuelForLoad = await client.query<{ n: string }>(
-          `SELECT count(*)::text AS n FROM fuel.fuel_transactions WHERE load_id = $1::uuid AND operating_company_id = $2::uuid`,
-          [input.load_id, input.operating_company_id]
-        );
-        const fuelTransactionCount = Number(fuelForLoad.rows[0]?.n ?? 0);
+        // ROUND 118 DEFECT 4 (SUPERSEDED, ROUND 125/126, owner explicit ruling) — this cascade
+        // originally left fuel.fuel_transactions untouched on the reasoning that "the diesel was
+        // REALLY bought, voiding it would misstate a real expense as never having happened." The
+        // owner's later, explicit ruling draws a finer line this reasoning had collapsed: the
+        // physical fuel purchase and its BANK TRANSACTION record are real and untouched by this
+        // cascade (VOID-CASCADE-FUEL above never alters banking.bank_transactions, only releases its
+        // match); what DOES void is the ACCOUNTING document (fuel.fuel_transactions) and its GL --
+        // "A fuel EXPENSE is created by a LOAD... they are NOT the same record." A cancelled load's
+        // fuel expense is now voided by the block above, same as every other load-sourced expense.
+        // accounting.factoring_advances is still NOT joined here (unchanged reasoning): it carries no
+        // direct load_id or invoice_id column (an advance is often a multi-invoice batch submission)
+        // — the existing unvoidable-invoice gate (an invoice already sold reads status='factored' and
+        // blocks this whole cancellation before any void runs) is the real safety net, not a join
+        // here.
 
         // Always write the money-artifacts audit when any financial artifact was touched — this
         // includes driver bills, settlements, and invoices. Even an empty set on one axis is
@@ -620,7 +651,7 @@ export async function cancelLoadInClientTx(
           voidedExpenseIds.length > 0 ||
           voidedVendorBillIds.length > 0 ||
           reversedAdvanceIds.length > 0 ||
-          fuelTransactionCount > 0
+          voidedFuelIds.length > 0
         ) {
           await appendCrudAudit(
             client,
@@ -640,13 +671,14 @@ export async function cancelLoadInClientTx(
               vendor_bills_voided: voidedVendorBillIds,
               advances_reversed: reversedAdvanceIds,
               invoices_voided: voidedInvoiceIds,
-              // ROUND 118 DEFECT 4 — declared explicitly, never silent (see comment above).
-              fuel_transactions_not_voided_count: fuelTransactionCount,
-              fuel_transactions_reason: "N/A -- diesel was really purchased; a cancelled load does not un-buy fuel",
+              // ROUND 125/126 (owner ruling supersedes ROUND 118 Defect 4 -- see comment above): the
+              // fuel EXPENSE document is now voided by this cascade; the underlying bank transaction
+              // and the real fuel purchase are untouched, only the match pointer is released.
+              fuel_transactions_voided: voidedFuelIds,
               factoring_advances_reason:
                 "N/A -- accounting.factoring_advances has no load_id/invoice_id column to join on; " +
                 "safety is provided by the unvoidable-invoice gate above (a 'factored' invoice already blocks this cancellation)",
-              note: "load cancellation cascade: settlements cancelled, driver bills voided, expenses voided (bank matches released), vendor bills voided, advances/liabilities reversed, invoices voided with reversing JEs, fuel/factoring explicitly declared N/A — all in the same transaction",
+              note: "load cancellation cascade: settlements cancelled, driver bills voided, expenses voided (bank matches released), vendor bills voided, fuel transactions voided (bank matches released, bank transaction itself untouched), advances/liabilities reversed, invoices voided with reversing JEs, factoring explicitly declared N/A — all in the same transaction",
             },
             "warning",
             "VOID-CANCEL-NOT-VOID"
