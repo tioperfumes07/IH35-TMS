@@ -342,6 +342,13 @@ const GUARD_303 = [
 const DATA_WRITE_PATHS = ["db/migrations/", "scripts/ops/"];
 const ONE_SHOT_WRITER_RE = /^scripts\/run-[^/]+-once\.m?[jt]s$/;
 const LIVE_DOMAIN_GUARDS = [
+  // PROTECT-LIST GUARD (owner, P0, ROUND E11.2) — "nothing in this repo prevents a purge or a feed
+  // from deleting master data. The wipe spared geofences and locations because the table list
+  // happened to omit them, not because anything forbade it." Static half (no new DELETE/TRUNCATE
+  // against protected schemas in db/migrations/**/scripts/ops/**) is diff-scoped already; live half
+  // (every protected table's USMCA row count at or above its floor) needs DATABASE_URL whenever
+  // this domain is touched, same as every other LIVE_DOMAIN_GUARDS entry.
+  ["verify-master-data-protected", ["db/migrations/", "scripts/ops/"]],
   [
     "verify-void-is-whole",
     ["apps/backend/src/accounting/", "apps/backend/src/driver-finance/", "apps/backend/src/factoring/", "apps/backend/src/fuel/", "db/migrations/", "scripts/purge/"],
