@@ -801,6 +801,21 @@ export async function postVoidReversal(
   // posting_batch_id filter here — the same fix already applied to readOriginalGlPostings — closes it at
   // the source instead of teaching every reader of reversed_by_je_id a second, inconsistent test.
   if (reversalJeId) {
+    // ROUND 134.1 FIX (Lead, P0 -- called "bookkeeping-only" in ACCT-F2026092326's own report; it
+    // is not): this used to run ONLY when exactly one other original JE shared this
+    // (source_transaction_type, source_transaction_id) pair (`LIMIT 2` + `rows.length === 1`), so
+    // it silently no-op'd on every multi-JE document -- the common case for fuel (464/624 USMCA
+    // fuel_transactions have 2-4 distinct original JEs). Live proof this was already load-bearing,
+    // not cosmetic: 1665 reversing JEs / 1665 distinct originals / 0 doubles found BY LINKAGE, while
+    // the account-level net-balance scan (verify-no-double-reversed-fuel-postings.mjs) found 122
+    // real corrupted rows the SAME linkage could not see -- remediation needed a net-balance scan
+    // instead of a join specifically because this write never ran for them. `reversed_by_je_id` is
+    // now written on EVERY original JE in the set, not only when the set size is 1, in the SAME
+    // transaction as the reversal. `reverses_je_id` (a single-value column on the reversal JE
+    // itself) can only ever name ONE original when several are reversed together -- it is set to
+    // the first (lowest id) original for continuity with the existing single-original behavior;
+    // the exhaustive, load-bearing signal for "is this original reversed" is `reversed_by_je_id` on
+    // the ORIGINAL side, which this fix makes complete for every original, not just the lone one.
     const src = await client.query<{ je_id: string }>(
       `
         SELECT DISTINCT p.journal_entry_uuid::text AS je_id
@@ -809,22 +824,24 @@ export async function postVoidReversal(
           AND p.source_transaction_type = $3
           AND p.source_transaction_id = $2
           AND p.journal_entry_uuid <> $4::uuid
-        LIMIT 2
+        ORDER BY p.journal_entry_uuid ASC
       `,
       [params.operatingCompanyId, params.entityId, params.entityType, reversalJeId]
     );
-    if (src.rows.length === 1 && src.rows[0]?.je_id) {
-      const originalJeId = String(src.rows[0].je_id);
+    if (src.rows.length > 0) {
+      const firstOriginalJeId = String(src.rows[0]!.je_id);
       await client.query(
         `UPDATE accounting.journal_entries SET reverses_je_id = $2::uuid, updated_at = now()
           WHERE id = $1::uuid AND operating_company_id = $3::uuid AND reverses_je_id IS NULL`,
-        [reversalJeId, originalJeId, params.operatingCompanyId]
+        [reversalJeId, firstOriginalJeId, params.operatingCompanyId]
       );
-      await client.query(
-        `UPDATE accounting.journal_entries SET reversed_by_je_id = $2::uuid, updated_at = now()
-          WHERE id = $1::uuid AND operating_company_id = $3::uuid AND reversed_by_je_id IS NULL`,
-        [originalJeId, reversalJeId, params.operatingCompanyId]
-      );
+      for (const row of src.rows) {
+        await client.query(
+          `UPDATE accounting.journal_entries SET reversed_by_je_id = $2::uuid, updated_at = now()
+            WHERE id = $1::uuid AND operating_company_id = $3::uuid AND reversed_by_je_id IS NULL`,
+          [String(row.je_id), reversalJeId, params.operatingCompanyId]
+        );
+      }
     }
   }
 

@@ -262,6 +262,10 @@ const STEPS = [
   // live_predicate reads (usmca-purge-expected-zero.generated.json), never just voided_at/status --
   // static arm (FAMILY_TABLE vs the JSON) + live arm (no row missing its liveness column).
   ["verify-void-stamps-the-spec-liveness-column", "scripts/verify-void-stamps-the-spec-liveness-column.mjs"],
+  // ROUND 134.1 (Lead, P0): reversed_by_je_id must be written on EVERY original JE in a combined
+  // reversal set, not only when exactly one exists -- shrink-only baseline for the 116 pre-existing
+  // fully-line-reversed-but-header-unlinked rows this fix found live.
+  ["verify-reversed-jes-carry-header-linkage", "scripts/verify-reversed-jes-carry-header-linkage.mjs"],
   // ROUND 118/119 (Lead ruling): a cancelled load must leave no live money artifact behind it --
   // invoice/expense/vendor-bill/driver-bill/advance/settlement, checked against
   // dispatch/cancellation.service.ts's own cascade logic exactly. Baselined (shrink-only) against
