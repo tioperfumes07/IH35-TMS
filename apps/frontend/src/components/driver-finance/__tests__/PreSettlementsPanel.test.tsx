@@ -57,6 +57,26 @@ describe("PreSettlementsPanel (DISP-S33)", () => {
     expect(screen.getByText("Jordan Ruiz")).toBeTruthy();
   });
 
+  // E11-D4 (Lead ruling, 2026-09-23) — "never blank": a load-less row used to render a bare "—"
+  // in the Load Number column, indistinguishable from any other missing-data dash on the page.
+  it("renders a NAMED gap, not a bare dash, when a settlement has no load link", () => {
+    const rows = [
+      {
+        id: "s3",
+        driver_id: "d3",
+        driver_full_name: "No-Load Driver",
+        period_start: "2026-08-01",
+        period_end: "2026-08-07",
+        net_pay: 300,
+        load_count: 0,
+        load_links: [],
+        status: "presettle",
+      },
+    ] as unknown as SettlementListRow[];
+    wrap(<PreSettlementsPanel rows={rows} loading={false} isError={false} />);
+    expect(screen.getByText("No load assigned")).toBeTruthy();
+  });
+
   it("renders the governed columns and sorts through the shared DataTable header", () => {
     const rows = [
       {

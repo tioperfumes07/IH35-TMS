@@ -39,9 +39,16 @@ const CHECKS = [
     pattern: /<EntityLink[\s\n]+kind="vendor"[\s\n]+id=\{billVendorDrillId\(bill\)\}/,
   },
   {
+    // Round 92/94 (CC-2) — was locked to `label={entityLabel(bill.bill_number, bill.id, "Bill")}`
+    // verbatim; confirmed failing on origin/main already (pre-existing, unrelated to this PR's
+    // diff — this file is untouched here). The live code moved the label onto
+    // `visibleDocumentLabel(bill.bill_number ?? bill.memo ?? bill.vendor_name, bill.id, "Bill")`,
+    // a strictly more honest fallback chain for the same bill EntityLink -- loosened to the
+    // connectivity fact this check actually guards (kind="bill" id={bill.id} exists), not one
+    // specific label-building helper's call signature.
     name: "Pay bill modal bill EntityLink",
     file: "apps/frontend/src/pages/accounting/PayBillModal.tsx",
-    pattern: /<EntityLink kind="bill" id=\{bill\.id\} label=\{entityLabel\(bill\.bill_number, bill\.id, "Bill"\)\}/,
+    pattern: /<EntityLink[\s\S]{0,80}kind="bill"[\s\S]{0,80}id=\{bill\.id\}/,
   },
   {
     name: "Bill payments list vendor EntityLink",
@@ -64,9 +71,23 @@ const CHECKS = [
     pattern: /<EntityLink kind=\{kind\} id=\{row\.source_id\}/,
   },
   {
-    name: "Pre-settlements driver+settlement EntityLink",
+    // Round 92/94 (CC-2) — the original single pattern required kind="driver" (with the literal
+    // id={settlement.driver_id}) to appear BEFORE kind="settlement" in the raw file text.
+    // Confirmed failing on origin/main already (pre-existing, unrelated to E11-D4): the settlement
+    // link was refactored into its own renderSettlementLinks() helper, defined ABOVE the columns
+    // array, so its literal kind="settlement" text now sits before the driver column in the file
+    // -- same connectivity, different order. Driver rendering also correctly upgraded from bare
+    // EntityLink to EntityLinkOrTombstone (LV-SAFETY-ENTITYLINK-UNRESOLVED-TOMBSTONE — never
+    // drill into an unresolved driver). Split into two order-free checks on the real facts: a
+    // driver link keyed off *.driver_id, and a settlement link, each present somewhere in the file.
+    name: "Pre-settlements driver EntityLink",
     file: "apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx",
-    pattern: /<EntityLink[\s\S]*kind="driver"[\s\S]*id=\{settlement\.driver_id\}[\s\S]*<EntityLink[\s\S]*kind="settlement"/,
+    pattern: /<EntityLink(?:OrTombstone)?[\s\S]{0,120}kind="driver"[\s\S]{0,120}id=\{[\w.]*\.driver_id\}/,
+  },
+  {
+    name: "Pre-settlements settlement EntityLink",
+    file: "apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx",
+    pattern: /<EntityLink[\s\S]{0,120}kind="settlement"/,
   },
   {
     name: "Factoring list EntityLink",

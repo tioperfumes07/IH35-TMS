@@ -32,13 +32,13 @@ const composed = ["verify-wave-a-load-column.mjs", "verify-book-load-stamps-link
 export function auditLoadColumn(sources, leaves) {
   const failures = [];
   const p10 = leaves.filter((leaf) => P10.has(leaf.module));
-  // Floor re-verified live 2026-09-13 (CC-3): the real, current count is 97 (a genuine leaf was
-  // legitimately added by another lane after this floor was last bumped to 96, so removing one
-  // planted leaf from the real 97 landed exactly ON the stale 96 floor and the selftest's own
-  // "did the P10 mutation get caught" check silently stopped catching it — a guard-staleness bug,
-  // not a real inventory shrink). Bumped 96 -> 97 to match live reality; still a floor (may only
-  // go UP for a genuinely new load leaf, never down without the same #9817-style disclosure).
-  if (p10.length < 97) failures.push(`priority-10 load inventory unexpectedly shrank to ${p10.length}`);
+  // Floor re-verified live 2026-09-23 (CC-2, Round 92/94, same staleness class as the 2026-09-13
+  // bump right above): the real, current count is 98 -- settlements.panel.open_pre_settlements
+  // (E11-D4) is a genuine new P10 leaf carrying `load` in its required set, so removing one
+  // planted leaf from the real 98 landed exactly ON the stale 97 floor. Bumped 97 -> 98 to match
+  // live reality; still a floor (may only go UP for a genuinely new load leaf, never down without
+  // the same #9817-style disclosure).
+  if (p10.length < 98) failures.push(`priority-10 load inventory unexpectedly shrank to ${p10.length}`);
   // LINK-F5169 classified the final blanket Required tail leaf-by-leaf, leaving 134 genuine load
   // leaves at the time. Floor lowered to 131 (2026-08-20, CC-3) to match #9817
   // FLEET-UNIT-TRIP-COST-LOAD-REVERSE-INFLATION, a legitimate, documented honesty correction that
@@ -57,8 +57,10 @@ export function auditLoadColumn(sources, leaves) {
   // "130 total / 97 P10" comment two paragraphs up. Bumped 129 -> 130 to match live reality (the
   // matching P10 floor fix is just above). This floor may
   // only ever go DOWN for a documented un-inflation like #9817 — never UP without a genuinely new
-  // load leaf actually being built.
-  if (leaves.length < 130) failures.push(`all-module load inventory unexpectedly shrank to ${leaves.length}`);
+  // load leaf actually being built. Round 92/94 (CC-2, 2026-09-23) is exactly that: a genuinely
+  // new load leaf, settlements.panel.open_pre_settlements (E11-D4), carrying `load` in its
+  // required set -- re-verified live count is 131 total / 98 P10. Bumped 130 -> 131.
+  if (leaves.length < 131) failures.push(`all-module load inventory unexpectedly shrank to ${leaves.length}`);
   for (const id of ["accounting.list", "accounting.submit", "accounting.detail"]) {
     if (leaves.some((leaf) => leaf.module === "factoring" && leaf.id === id)) failures.push(`factoring:${id} must not invent a per-advance load FK`);
   }

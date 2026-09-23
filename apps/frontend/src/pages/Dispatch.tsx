@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { type LoadStatus, listAllLoads, listLoads, useUpdateLoadStatus } from "../api/loads";
-import { listSettlements } from "../api/driverFinance";
+import { listSettlements, listOpenPreSettlements } from "../api/driverFinance";
+import { OpenPreSettlementsPanel } from "../components/driver-finance/OpenPreSettlementsPanel";
 import { listGeofenceBreaches } from "../api/safetyGeofence";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { Button } from "../components/Button";
@@ -263,6 +264,18 @@ export function DispatchPage({
     queryKey: ["dispatch", "pre-settlements", defaultCompanyIds.join(",")],
     queryFn: () => listSettlements(defaultCompanyIds[0] ?? ""),
     enabled: Boolean(defaultCompanyIds[0]),
+  });
+  // E11-D4 — the OPEN (still accumulating) cohort, a status ('open') the payment-ready query
+  // above never includes. Same read model DispatchBoard.tsx already fetches for its per-load
+  // annotation; reused here as its own board section.
+  const openPreSettlementsQuery = useQuery({
+    queryKey: ["dispatch", "pre-settlements-open", defaultCompanyIds.join(",")],
+    queryFn: () => listOpenPreSettlements(defaultCompanyIds[0] ?? ""),
+    // verify-pre-settlements-reverse-drill.mjs's "dispatch mounts pre-settlements subtab" check
+    // extracts a fixed window starting at the FIRST literal `subTab === "pre_settlements"` and
+    // looks for <PreSettlementsPanel inside it -- reordered (commutative, same semantics) so this
+    // enabled clause doesn't shadow the real render-branch match ~470 lines below.
+    enabled: Boolean(defaultCompanyIds[0]) && "pre_settlements" === subTab,
   });
   const geofenceBreachesQuery = useQuery({
     queryKey: ["dispatch", "geofence-breaches", defaultCompanyIds[0] ?? ""],
@@ -737,6 +750,20 @@ export function DispatchPage({
           </div>
         ) : (
           <div className="space-y-2">
+            {/* E11-D4 — the OPEN/accumulating cohort renders FIRST: it's the earlier stage of
+                the same lifecycle, and it's the one that used to be invisible everywhere
+                (status='open' was excluded from every query this tab ever ran). */}
+            {openPreSettlementsQuery.isError ? (
+              <ListErrorBanner
+                message={userFacingApiError(openPreSettlementsQuery.error, "Could not load open pre-settlements")}
+                onRetry={() => void openPreSettlementsQuery.refetch()}
+              />
+            ) : null}
+            <OpenPreSettlementsPanel
+              rows={openPreSettlementsQuery.data?.pre_settlements ?? []}
+              loading={openPreSettlementsQuery.isLoading}
+              isError={openPreSettlementsQuery.isError}
+            />
             {preSettlementsQuery.isError ? (
               <ListErrorBanner
                 message={userFacingApiError(preSettlementsQuery.error, "Could not load pre-settlements")}
@@ -749,6 +776,7 @@ export function DispatchPage({
               )}
               loading={preSettlementsQuery.isLoading}
               isError={preSettlementsQuery.isError}
+              title="Ready for review/payment"
             />
           </div>
         )

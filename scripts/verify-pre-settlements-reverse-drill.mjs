@@ -48,11 +48,19 @@ const CHECKS = [
   { name: "exact dispatch pre-settlement reverse Built annotation", file: F.self, pattern: /^ \* @matrix-built \{"modules":\["dispatch"\],"cols":\["reverse_link"\],"leaves":\["load\.drawer\.pre_settlement","dispatch\.panel\.pre_settlement"\],"task":"DISP-F5868-PRE-SETTLEMENT-REVERSE-EXACT-LEAVES","vertical":"column-wave"\}$/m },
   { name: "settlement detail selected-company read", file: F.detail, pattern: /queryKey: \["driver-finance", "settlement-detail", settlementId, companyId\][\s\S]{0,160}getSettlement\(settlementId!, companyId\)[\s\S]{0,100}enabled: Boolean\(settlementId && companyId\)/ },
   { name: "settlement detail route-param mount", file: F.settlementsPage, pattern: /selectedSettlementId = searchParams\.get\("settlement_id"\)[\s\S]{0,10000}selectedSettlementId && activeTab === "settlements"[\s\S]{0,1500}<SettlementDetailPage \/>/ },
-  { name: "driver profile exact settlement return", file: F.driverSettlements, pattern: /kind="settlement"\s+id=\{row\.settlement_id\}[\s\S]{0,160}entityLabel\(row\.week_ending \|\| null, row\.settlement_id, "Settlement"\)/ },
+  // Round 92/94 (CC-2) — confirmed already false on origin/main, unrelated to this PR (this file
+  // is untouched here): ACCT-F20260911 (owner ruling 2026-09-11) replaced the raw week_ending
+  // label with row.settlement_display_id -- the AlwaysTrack document number is the only number a
+  // person ever sees, never the period-end date. Same real settlement drill, corrected label.
+  { name: "driver profile exact settlement return", file: F.driverSettlements, pattern: /kind="settlement"\s+id=\{row\.settlement_id\}[\s\S]{0,220}entityLabel\(row\.settlement_display_id, row\.settlement_id, "Settlement"\)/ },
   { name: "settlement close route mounted", file: F.manifest, pattern: /path="\/driver-finance\/settlement-close"[\s\S]{0,180}<SettlementCloseArrivalPage \/>/ },
   { name: "settlement close company-scoped list", file: F.close, pattern: /listOpenPreSettlements\(companyId\)[\s\S]{0,100}enabled: Boolean\(companyId\)/ },
   { name: "settlement close company-driver detail", file: F.close, pattern: /getPreSettlementForDriver\(String\(selectedDriverId\), companyId\)[\s\S]{0,100}enabled: Boolean\(companyId\) && Boolean\(selectedDriverId\)/ },
-  { name: "settlement close exact settlement return", file: F.close, pattern: /kind="settlement"\s+id=\{settlement\.id\}\s+label=\{entityLabel\(settlement\.display_id, settlement\.id, "Settlement"\)\}/ },
+  // Round 92/94 (CC-2) — confirmed already false on origin/main, unrelated to this PR: the raw
+  // entityLabel(display_id,...) call was replaced by the shared settlementLabel() helper
+  // (lib/settlementNumber.ts, ACCT-F20260911) so this surface can't drift from the AlwaysTrack
+  // document-number rule independently. Same real settlement drill, canonical label helper.
+  { name: "settlement close exact settlement return", file: F.close, pattern: /kind="settlement"\s+id=\{settlement\.id\}\s+label=\{settlementLabel\(settlement\)\}/ },
   { name: "escrow driver drill", file: F.escrow, pattern: /kind="driver" id=\{row\.driver_id\} label=\{entityLabel\(row\.driver_name, row\.driver_id, "Driver"\)\}/ },
   { name: "escrow load drill", file: F.escrow, pattern: /kind="load" id=\{row\.load_id\} label=\{entityLabel\(row\.load_number, row\.load_id, "Load"\)\}/ },
   { name: "escrow bans manual load navigation", file: F.escrow, banned: /navigate\(`\/dispatch\/loads\// },
@@ -60,15 +68,33 @@ const CHECKS = [
   { name: "close settlement drill", file: F.close, pattern: /kind="settlement"/ },
   { name: "close load-range FK", file: F.close, pattern: /kind="load"\s+id=\{settlement\.first_load_id \?\? ""\}\s+label=\{entityLabel\(settlement\.first_load_number, settlement\.first_load_id, "Load"\)\}/ },
   { name: "approval settlement drill", file: F.approval, pattern: /kind="settlement"/ },
-  { name: "approval settlement history source", file: F.approval, pattern: /data\.driver_history\.settlements\.map\(\(s\)[\s\S]{0,500}id=\{settlementId\}[\s\S]{0,220}s\.display_id/ },
+  // Round 92/94 (CC-2) — confirmed already false on origin/main, unrelated to this PR: same
+  // ACCT-F20260911 settlementLabel() migration as the two checks above -- s.display_id was
+  // dropped in favor of settlementLabel({source_document_ref, status}).
+  { name: "approval settlement history source", file: F.approval, pattern: /data\.driver_history\.settlements\.map\(\(s\)[\s\S]{0,500}id=\{settlementId\}[\s\S]{0,300}settlementLabel\(\{[\s\S]{0,150}s\.source_document_ref/ },
   { name: "pre-settlement EntityLink import", file: F.panel, pattern: /from ["']\.\.\/shared\/EntityLink["']/ },
-  { name: "pre-settlement exact driver drill", file: F.panel, pattern: /kind="driver"[\s\S]{0,180}settlement\.driver_id/ },
-  { name: "pre-settlement exact settlement drill", file: F.panel, pattern: /kind="settlement"[\s\S]{0,180}settlement\.id/ },
-  { name: "pre-settlement row marker", file: F.panel, pattern: /data-testid="pre-settlement-row-reverse"/ },
+  // Round 92/94 (CC-2) — confirmed already false on origin/main, unrelated to this PR (this
+  // check's own file IS touched here, but only for the unrelated E11-D4 "No load assigned" text):
+  // the driver cell was correctly upgraded from bare EntityLink to EntityLinkOrTombstone
+  // (LV-SAFETY-ENTITYLINK-UNRESOLVED-TOMBSTONE — never drill into an unresolved driver), and the
+  // render callback's parameter is named `row`, not `settlement`. Same real drill, same fix
+  // pattern already applied to verify-wave-b-acct-connectivity-remainder.mjs's identical check.
+  { name: "pre-settlement exact driver drill", file: F.panel, pattern: /<EntityLink(?:OrTombstone)?[\s\S]{0,150}kind="driver"[\s\S]{0,150}id=\{[\w.]*\.driver_id\}/ },
+  { name: "pre-settlement exact settlement drill", file: F.panel, pattern: /kind="settlement"[\s\S]{0,180}id=\{settlement\.id\}/ },
+  // "pre-settlement row marker" — rowTestId is a DataTable PROP (rowTestId={() => "..."}), not an
+  // inline JSX attribute; the literal `data-testid="..."` never appears in this file's own source
+  // (DataTable applies it internally). Match the actual prop-passing shape instead.
+  { name: "pre-settlement row marker", file: F.panel, pattern: /rowTestId=\{\(\) => "pre-settlement-row-reverse"\}/ },
   { name: "accounting mounts pre-settlements", file: F.accounting, pattern: /<PreSettlementsPanel/ },
   { name: "accounting pre-settlements route", file: F.manifest, pattern: /path="\/accounting\/pre-settlements"/ },
   { name: "settlement table exact row drill", file: F.table, pattern: /kind="settlement"[\s\S]{0,180}row\.id/ },
-  { name: "dispute exact settlement drill", file: F.disputes, pattern: /kind="settlement"[\s\S]{0,180}settlement_id/ },
+  // Round 92/94 (CC-2) — pre-existing selftest bug, unrelated to this PR's diff: the file carries
+  // TWO real kind="settlement" drills (the list column and the dispute-detail header), so the
+  // generic pattern always had a second live match after the selftest's single-occurrence poison
+  // plant, making the plant inert (pattern.test() still true via the untouched second instance) --
+  // this only surfaced once the five stale patterns above were fixed and the baseline could reach
+  // the plant phase at all. Anchored to id={row.settlement_id}, unique to the list-column drill.
+  { name: "dispute exact settlement drill", file: F.disputes, pattern: /kind="settlement"[\s\S]{0,180}id=\{row\.settlement_id\}/ },
   { name: "settlement header exact drill", file: F.header, pattern: /kind="settlement"[\s\S]{0,180}settlementId/ },
   { name: "detail threads settlement id", file: F.detail, pattern: /<SettlementHeader\s+settlementId=\{settlementId\}/ },
   { name: "pay-run exact settlement drill", file: F.payRun, pattern: /kind="settlement"[\s\S]{0,180}settlementId/ },

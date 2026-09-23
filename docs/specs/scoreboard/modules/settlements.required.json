@@ -479,6 +479,19 @@
         "qbo_chrome"
       ]
     },
+    {
+      "id": "settlements.panel.open_pre_settlements",
+      "tab": "Settlements",
+      "sub": "E11-D4 (Lead ruling, Round 86/94) — open/accumulating pre-settlements, the earlier-stage cohort before a load is bookended; 7 of 10 live carry no load link yet, rendered as a NAMED gap, never blank",
+      "route_hint": "/dispatch?tab=pre_settlements",
+      "surface_kind": "panel",
+      "surface_path": "components/driver-finance/OpenPreSettlementsPanel.tsx",
+      "required": [
+        "driver",
+        "load",
+        "connectivity"
+      ]
+    },
     "settlements.panel.close_trip"
   ],
   "honesty_audit": {
