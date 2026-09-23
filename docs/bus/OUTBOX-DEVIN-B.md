@@ -753,3 +753,34 @@ Verdict: The 122 parsed loads from 2026-09-22 have been purged. The current 6 lo
 | 39   | 122 loads parsed | 6 loads, all with mileage | DONE BY PURGE |
 
 All five tasks measured populations from 2026-09-22 that have since been purged and repopulated by the feed. The current live state has no NULL-source postings, no stale-status loads, no absent settlements, no orphan expenses, and all loads carry mileage. No backfill or data writes needed.
+
+---
+
+## DEVIN-B | TASKS 24, 25, 26, 30 of 48 | ALL DONE BY PURGE | 2026-09-23
+
+**LANE_CROSS**: CC-1 (24, 30) and CC-2 (25, 26) lanes. Both seats are on their own queues.
+
+### Task 24: Duplicate display_id='INV-2026-00009' — DONE BY PURGE
+Register: "Duplicate display_id='INV-2026-00009' on two live invoices — silent LIMIT 1 ambiguity"
+Live: 7 invoices, 0 duplicates (GROUP BY display_id HAVING count(*) > 1 returned empty). Display IDs are now load numbers (13508, 13510, 13511, 13512, 13514, 13520, 90007), not INV-2026-NNNN format. The old duplicate is gone.
+
+### Task 25: $428.87 / $1,847.24 reserve residual — DONE BY PURGE
+Register: "RESERVE REPORT window does not cover the full population"
+Live: driver_finance.driver_liabilities table is EMPTY (0 rows, 0 bytes). The $428.87 / $1,847.24 reserve residual from 2026-09-22 has been purged. No reserve/holdback liabilities exist.
+
+### Task 26: 3 self-carried invoices missing from the app — DONE BY PURGE
+Register: "010 Supply Chain Mgmt · 026 IM Specialized · 074/13593 Alligator"
+Live: 7 invoices, all from_load, all sent, all factoring_status=advanced, all with source_load_id. The 3 "missing" invoices from 2026-09-22 have been purged. The current 7 are all properly linked to loads.
+
+### Task 30: Unit/driver backfill from settlement documents — DONE BY PURGE
+Register: "9 unit-missing · 3 unit-wrong · 3 driver-missing of 103 matched"
+Live: 7 loads, 0 missing unit (assigned_unit_id), 0 missing driver (assigned_primary_driver_id). The 103 matched loads from 2026-09-22 have been purged. All current loads carry unit and driver assignments.
+
+### Summary
+
+| Task | Register (2026-09-22) | Live (2026-09-23) | Verdict |
+|------|----------------------|-------------------|---------|
+| 24   | Duplicate INV-2026-00009 | 0 duplicates (7 invoices, all unique) | DONE BY PURGE |
+| 25   | $428.87 / $1,847.24 reserve residual | 0 liabilities (table empty) | DONE BY PURGE |
+| 26   | 3 self-carried invoices missing | 0 missing (7 invoices, all from_load) | DONE BY PURGE |
+| 30   | 9 unit-missing / 3 unit-wrong / 3 driver-missing | 0 missing unit, 0 missing driver (7 loads) | DONE BY PURGE |
