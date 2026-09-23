@@ -36,10 +36,12 @@ const SHARED_PATH_FILE = path.join(SRC_ROOT, "dispatch", "book-load.service.ts")
 // Shrink-only. Was 4 the day this guard was added (2026-09-22) -- the 4 files the ruling itself
 // named as offenders, confirmed live against this exact repo state. Lower this number only when a
 // file below is actually rewired to call createLoadWithFullSideEffects; never raise it.
-const OFFENDER_CEILING = 4;
+//
+// E6 (2026-09-22, same day): inbound-204.handler.ts rewired to call createLoadWithFullSideEffects
+// (source="live_feed") -- the first of the 4 to land. 4 -> 3.
+const OFFENDER_CEILING = 3;
 
 const KNOWN_OFFENDERS_AT_SEED = [
-  "apps/backend/src/integrations/edi/transactions/inbound-204.handler.ts",
   "apps/backend/src/mdata/loads.routes.ts",
   "apps/backend/src/seed/csv-seed-import.ts",
   "apps/backend/src/onboarding/seed-sample-data.ts",
