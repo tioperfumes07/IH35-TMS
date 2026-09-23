@@ -291,7 +291,10 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
               AND db.status <> 'void'
             GROUP BY db.load_id
          )
-         SELECT l.id::text AS load_id, l.load_number, l.status::text, COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id,l.operating_company_id)) AS customer_name,
+         SELECT l.id::text AS load_id, l.operating_company_id::text AS operating_company_id,
+                l.customer_id::text AS customer_id, l.assigned_primary_driver_id::text AS driver_id,
+                l.assigned_unit_id::text AS unit_id, tr.equipment_id,
+                l.load_number, l.status::text, COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id,l.operating_company_id)) AS customer_name,
                 mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id,l.operating_company_id) AS driver_name,
                 u.unit_number, tr.equipment_number AS trailer_number, pickup.city AS pickup_city, delivery.city AS delivery_city,
                 pickup.scheduled_arrival_at::text AS pickup_date, delivery.scheduled_arrival_at::text AS scheduled_delivery_at,
@@ -336,7 +339,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
            -- already used by GET /api/v1/dispatch/loads (loads.routes.ts).
            LEFT JOIN mdata.units u ON u.id=l.assigned_unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id)=l.operating_company_id
            LEFT JOIN LATERAL (
-             SELECT eq.equipment_number
+             SELECT eq.id::text AS equipment_id, eq.equipment_number
                FROM dispatch.load_assignment_history lah
                JOIN mdata.equipment eq ON eq.id = lah.new_trailer_id
                                       AND (eq.owner_company_id = l.operating_company_id OR eq.currently_leased_to_company_id = l.operating_company_id)

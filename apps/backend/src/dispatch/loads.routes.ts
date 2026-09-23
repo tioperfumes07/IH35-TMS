@@ -1053,6 +1053,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             -- resolver already used by invoices.routes.ts and cancellations-report.routes.ts.
             COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)) AS customer_name,
             u.unit_number,
+            tr.equipment_id AS trailer_id,
             tr.equipment_number AS trailer_number,
             tr.equipment_type AS trailer_equipment_type,
             COALESCE(
@@ -1111,7 +1112,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           -- the team driver) — the only real trailer↔load link is dispatch.load_assignment_history.new_trailer_id
           -- (mdata.equipment). Resolve the most recent assignment-history row that actually set a trailer.
           LEFT JOIN LATERAL (
-            SELECT eq.equipment_number, eq.equipment_type
+            SELECT eq.id::text AS equipment_id, eq.equipment_number, eq.equipment_type
             FROM dispatch.load_assignment_history lah
             JOIN mdata.equipment eq ON eq.id = lah.new_trailer_id
                                    AND COALESCE(eq.currently_leased_to_company_id, eq.owner_company_id) = l.operating_company_id

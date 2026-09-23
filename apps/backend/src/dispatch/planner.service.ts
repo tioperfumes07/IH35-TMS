@@ -41,10 +41,12 @@ assertCanonicalSubset("PLANNER_ACTIVE_LOAD_STATUSES", PLANNER_ACTIVE_LOAD_STATUS
 
 export type PlannerLoadEvent = {
   id: string;
+  operating_company_id: string;
   load_number: string;
   driver_id: string;
   customer_id: string;
   unit_id: string | null;
+  equipment_id: string | null;
   customer_name: string | null;
   status: string;
   start_at: string;
@@ -211,11 +213,13 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
       `
         SELECT
           l.id::text AS id,
+          l.operating_company_id::text AS operating_company_id,
           l.load_number,
           l.status::text AS status,
           l.assigned_primary_driver_id::text AS driver_id,
           l.customer_id::text AS customer_id,
           l.assigned_unit_id::text AS unit_id,
+          tr.equipment_id,
           COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)) AS customer_name,
           COALESCE(pu.scheduled_arrival_at, pu.appointment_start_at)::text AS start_at,
           COALESCE(del.scheduled_arrival_at, del.appointment_end_at, pu.scheduled_arrival_at + interval '24 hours')::text AS end_at,
@@ -224,6 +228,18 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
         FROM mdata.loads l
         LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                    AND c.operating_company_id = l.operating_company_id
+        LEFT JOIN LATERAL (
+          SELECT eq.id::text AS equipment_id
+          FROM dispatch.load_assignment_history lah
+          JOIN mdata.equipment eq
+            ON eq.id = lah.new_trailer_id
+           AND (eq.owner_company_id = l.operating_company_id
+             OR eq.currently_leased_to_company_id = l.operating_company_id)
+          WHERE lah.load_id = l.id
+            AND lah.new_trailer_id IS NOT NULL
+          ORDER BY lah.assigned_at DESC
+          LIMIT 1
+        ) tr ON true
         LEFT JOIN LATERAL (
           SELECT scheduled_arrival_at, appointment_start_at, city, state
           FROM mdata.load_stops
@@ -287,10 +303,12 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
 
     const loads: PlannerLoadEvent[] = loadsRes.rows.map((row) => ({
       id: String(row.id),
+      operating_company_id: String(row.operating_company_id),
       load_number: String(row.load_number),
       driver_id: String(row.driver_id),
       customer_id: String(row.customer_id),
       unit_id: row.unit_id ? String(row.unit_id) : null,
+      equipment_id: row.equipment_id ? String(row.equipment_id) : null,
       customer_name: row.customer_name ? String(row.customer_name) : null,
       status: String(row.status),
       start_at: String(row.start_at),
@@ -496,11 +514,13 @@ export async function reschedulePlannerLoad(
       `
         SELECT
           l.id::text AS id,
+          l.operating_company_id::text AS operating_company_id,
           l.load_number,
           l.status::text AS status,
           l.assigned_primary_driver_id::text AS driver_id,
           l.customer_id::text AS customer_id,
           l.assigned_unit_id::text AS unit_id,
+          tr.equipment_id,
           COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)) AS customer_name,
           COALESCE(pu.scheduled_arrival_at, pu.appointment_start_at)::text AS start_at,
           COALESCE(del.scheduled_arrival_at, del.appointment_end_at, pu.scheduled_arrival_at + interval '24 hours')::text AS end_at,
@@ -509,6 +529,17 @@ export async function reschedulePlannerLoad(
         FROM mdata.loads l
         LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                    AND c.operating_company_id = l.operating_company_id
+        LEFT JOIN LATERAL (
+          SELECT eq.id::text AS equipment_id
+          FROM dispatch.load_assignment_history lah
+          JOIN mdata.equipment eq
+            ON eq.id = lah.new_trailer_id
+           AND (eq.owner_company_id = l.operating_company_id
+             OR eq.currently_leased_to_company_id = l.operating_company_id)
+          WHERE lah.load_id = l.id AND lah.new_trailer_id IS NOT NULL
+          ORDER BY lah.assigned_at DESC
+          LIMIT 1
+        ) tr ON true
         LEFT JOIN LATERAL (
           SELECT scheduled_arrival_at, appointment_start_at, city, state
           FROM mdata.load_stops
@@ -536,10 +567,12 @@ export async function reschedulePlannerLoad(
       ok: true,
       load: {
         id: String(updated.id),
+        operating_company_id: String(updated.operating_company_id),
         load_number: String(updated.load_number),
         driver_id: String(updated.driver_id),
         customer_id: String(updated.customer_id),
         unit_id: updated.unit_id ? String(updated.unit_id) : null,
+        equipment_id: updated.equipment_id ? String(updated.equipment_id) : null,
         customer_name: updated.customer_name ? String(updated.customer_name) : null,
         status: String(updated.status),
         start_at: String(updated.start_at),
