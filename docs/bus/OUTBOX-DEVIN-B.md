@@ -811,3 +811,33 @@ Live: 7 invoices, total $16,450.00 A/R. The old $80,289.59 gap has been purged. 
 | 19   | GL 1000: −$74,263.96, 673 postings | 0 postings on 1000 | DONE BY PURGE |
 | 20   | GL 1090: $83,842.22 | $8,666.30 (17 postings, new from feed) | OLD DONE BY PURGE; new state is normal in-flight |
 | 21   | A/R vs Faro: $80,289.59 gap | 7 invoices, $16,450.00, no gap | DONE BY PURGE |
+
+---
+
+## DEVIN-B | TASK 33 of 48 | VERIFIED OPEN (correct state) | 2026-09-23
+
+**LANE_CROSS**: CC-1 lane. CC-1 is on task 27 + WO normalize + feed idempotency.
+
+### Task 33: Leonel Morales + Carlos Mauricio trio — stay OPEN
+Register: "no hard identifier — never merged on name similarity"
+Live (2026-09-23 23:12 UTC, bypass_rls='lucia', USMCA): 167 total drivers, 128 active.
+
+Duplicate-name drivers still present (CORRECT — task says "stay OPEN, never merged on name similarity"):
+```
+Carlos GALAVIZ: 4 active (fc24d491, 31e0c899, 2330ef4e, 74ff1e2c)
+Carlos Adrian Martinez Coleotte: 2 active (1ac254be, 1fc4d27f)
+Carlos Mauricio Carvallo: 1 active (a7983a80)
+Carlos mauricio: 1 active (8665e3e6)
+Carlos Mauricio Pena Carvallo: 1 active (61727a46)
+GENARO GUERRERO CHAVEZ: 2 active (6e908ee1, 6edcb351) — also task 32
+JESUS ARMANDO MORALES: 1 active + 1 archived (7f0341f2, 4090e889)
+JESUS ARMANDO MORALES LEAL: 1 active + 1 archived (d75b74ea, bd81b204)
+Leonel Antonio Morales Noguez: 1 active (ac9ea24d)
+Leonel Antonio Morales: 1 active (5dd518ff)
+```
+
+### Verdict
+
+**VERIFIED OPEN — correct state.** The duplicate-name drivers still exist as separate records, which is exactly what the task requires. No hard identifier has been found to merge them. The task stays OPEN until hard identifiers (CDL, DOB, SSN) are available to distinguish whether these are truly the same person or different people who happen to share a name.
+
+Task 32 (Genaro Guerrero Chavez merge) is a DATA WRITE task — CC-1 owns it. I do NOT touch USMCA data.
