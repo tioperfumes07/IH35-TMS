@@ -1,0 +1,10 @@
+{
+  "_law": "shrink-only; every entry needs a reason; see verify-no-caller-voids-without-cascade.mjs header",
+  "entries": [
+    {
+      "file": "apps/backend/src/driver-finance/void-document-callees.service.ts",
+      "table": "driver_finance.driver_settlements",
+      "reason": "reverseSettlementForVoid() flips driver_settlements to status='cancelled'+voided_at directly (R-102-B) and already hand-cascades settlement_lines itself, but not driver_settlement_deductions -- the same gap ROUND 138 closed in governance/void-cancel-executors.ts's executeDriverSettlement for the SAME underlying entity. This file is driver-finance/** (CC-3's lane per LANES.md); CC-1 does not edit it. Flagged here rather than silently skipped -- CC-3 notified directly (ROUND 138 handoff) to add the one-line `cascadeVoidChildren(client, \"driver_settlement\", settlementId, operatingCompanyId)` call after the existing settlement_lines UPDATE. Remove this entry once wired."
+    }
+  ]
+}

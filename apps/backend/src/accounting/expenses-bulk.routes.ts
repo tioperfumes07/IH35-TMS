@@ -12,6 +12,7 @@ import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { PostingEngineError, reversePostedSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { BATCH_VOID_ACTION } from "./bulk-void.service.js";
 import { todayIso } from "./void.service.js";
+import { cascadeVoidChildren } from "./cascade-void-engine.service.js";
 
 const emptyPayloadSchema = z.object({}).default({});
 
@@ -79,6 +80,9 @@ async function handleExpenseBulk(ctx: BulkPerEntityContext<Record<string, unknow
     `,
     [id, reversingJeId, actorUserId, reason.trim(), operatingCompanyId]
   );
+
+  // ROUND 138 -- bulk expense void is another independent writer of accounting.expenses.voided_at.
+  await cascadeVoidChildren(client, "expense", id, operatingCompanyId);
 
   await appendCrudAudit(
     client,

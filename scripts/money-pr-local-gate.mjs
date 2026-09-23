@@ -277,6 +277,16 @@ const STEPS = [
   // call verify-owner-authorization.mjs first -- static check, shrink-only baseline for the 142
   // pre-existing files, zero tolerance for anything new.
   ["verify-no-unauthorized-production-write", "scripts/verify-no-unauthorized-production-write.mjs"],
+  // ROUND 138 (owner order, via Lead relay, P0): voiding a parent document must cascade to its own
+  // line/detail children in the SAME transaction -- static arm (CASCADE_CHILDREN vs the spec JSON)
+  // + live arm (0 live children under a voided parent). Live-measured pre-fix: 119 invoice_lines,
+  // 28 bill_lines under voided parents -- backfilled live in the same round this guard shipped.
+  ["verify-void-cascades-to-every-child", "scripts/verify-void-cascades-to-every-child.mjs"],
+  // ROUND 138 companion: no write site may void a registered parent table without also calling
+  // cascadeVoidChildren( in the same file -- same-file-signal static scan, shrink-only baseline
+  // (1 pre-existing entry: driver-finance/void-document-callees.service.ts, CC-3's lane, handed
+  // off rather than edited directly).
+  ["verify-no-caller-voids-without-cascade", "scripts/verify-no-caller-voids-without-cascade.mjs"],
 ];
 
 // ROUND 29.9 owner ruling (2026-09-22) — three guards, wired in this exact order, AFTER the STEPS

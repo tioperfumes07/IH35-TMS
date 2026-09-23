@@ -34,6 +34,15 @@ export type QueryableClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
 
+// ROUND 138 (owner order, P0) — the ONE cascade void engine. Voiding a parent document must also
+// cascade to that document's OWN line/detail children (invoice -> invoice_lines, bill ->
+// bill_lines, etc.) -- not a seventh GL engine, pure metadata, same contract as this file's own.
+// Wiring it HERE means every existing caller of stampDocumentVoided (dispatch/cancellation
+// .service.ts, the governance executors, the E10 runner) gets the cascade automatically, with no
+// per-caller change needed, for every family that has a CASCADE_CHILDREN entry.
+import { cascadeVoidChildren, type CascadeParentFamily } from "./cascade-void-engine.service.js";
+const CASCADE_ELIGIBLE_FAMILIES: ReadonlySet<string> = new Set<CascadeParentFamily>(["invoice", "expense", "factoring_advance"]);
+
 export const VOID_DOCUMENT_FAMILIES = [
   "load",
   "invoice",
@@ -222,6 +231,14 @@ export async function stampDocumentVoided(
     const sameReason = (existing.void_reason ?? "").trim() === voidReason;
     const sameActor = existing.voided_by_user_id === voidedByUserId;
     if (sameReason && sameActor) {
+      // ROUND 138: an already-voided document may still have children that were never cascaded
+      // (the EXACT historical defect this engine fixes -- 706 live settlement_lines under
+      // already-voided settlements, measured before this existed). cascadeVoidChildren is itself
+      // idempotent, so re-running it on every already_voided hit is safe and is how the backlog
+      // gets closed without a separate one-time script.
+      if (CASCADE_ELIGIBLE_FAMILIES.has(family)) {
+        await cascadeVoidChildren(client, family as CascadeParentFamily, documentId, operatingCompanyId);
+      }
       return {
         already_voided: true,
         family,
@@ -280,6 +297,12 @@ export async function stampDocumentVoided(
       "document_write_race_lost",
       `stampDocumentVoided: UPDATE on ${qualifiedTable} for document ${documentId} matched no row (race with a concurrent write).`
     );
+  }
+
+  // ROUND 138: fresh stamp -- cascade to this document's own registered children in the SAME
+  // transaction, never a separate write, never a caller that has to remember to do it itself.
+  if (CASCADE_ELIGIBLE_FAMILIES.has(family)) {
+    await cascadeVoidChildren(client, family as CascadeParentFamily, documentId, operatingCompanyId);
   }
 
   return {
