@@ -1,5 +1,7 @@
 {
   "purged_at": null,
-  "verified_at": null,
+  "verified_at": "2026-09-23T15:11:53.498Z",
+  "verified_by": "scripts/purge/verify-purge.mjs",
+  "tables_verified": 56,
   "day1_closed_at": null
 }

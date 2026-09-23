@@ -16,11 +16,17 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 export const PURGE_STATE_PATH = process.env.PURGE_STATE_PATH || path.join(ROOT, "purge_state.json");
 export const PURGE_WINDOW_HOURS = 72;
-/** Exit code a guard uses for "EMPTY BY PURGE". money-pr-local-gate accepts it only from these seven. */
+/** Exit code a guard uses for "EMPTY BY PURGE". money-pr-local-gate accepts it only from these nine. */
 export const EMPTY_BY_PURGE_EXIT = 75;
 // verify-control-totals is the eighth (Lead ruling, same day): its settlement control asserts a
 // fixed figure (5804-5815 net 20,191.07) that is transaction data the purge deletes, so after the
 // purge the true answer is 0. Only that control skips; its banking controls keep running for real.
+// verify-void-is-whole is the ninth (Lead ROUND 117): Direction 1 only may EMPTY BY PURGE while the
+// window is open; Direction 2 stays hard always.
+// Nine arms (Lead ROUND 117): the original eight empty-table arms, plus verify-void-is-whole for
+// Direction 1 only (ledger dead / header still live) while the window is open. Direction 2
+// (header stamped VOIDED over live postings) is NEVER window-exempt — that is the dangerous
+// direction. Do not widen the void-is-whole baseline to absorb Direction 1; re-price once after feed.
 export const PURGE_WINDOW_GUARDS = Object.freeze([
   "verify-alwaystrack-parity",
   "verify-faro-invoice-lines-load-linkage",
@@ -30,6 +36,7 @@ export const PURGE_WINDOW_GUARDS = Object.freeze([
   "verify-fuel-transactions-per-load",
   "verify-no-empty-zero-settlement",
   "verify-control-totals",
+  "verify-void-is-whole",
 ]);
 
 export const EXPECTED_ZERO_PATH = path.join(ROOT, "scripts/purge/usmca-purge-expected-zero.generated.json");
