@@ -1,9 +1,21 @@
 /**
  * GAP-70 — Inbound X12 204 Load Tender handler.
  * Parses tender envelope and creates dispatch.loads in PENDING state.
+ *
+ * E6 (Lead ruling, 2026-09-22 / Round 84): this handler used to write rows into mdata.loads (an INSERT) and
+ * mdata.load_stops directly, one of the 4 offenders verify-one-load-create-path.mjs's own
+ * shrink-only ratchet named at seed. Rewired below to call createLoadWithFullSideEffects, the
+ * ONE shared create path every feed must go through -- every INSERT/resolver/gate that path
+ * calls now applies here too, not just to the interactive Book Load wizard.
  */
 
 import type { DbClient } from "../setup.service.js";
+import { createLoadWithFullSideEffects, type BookLoadStop } from "../../../dispatch/book-load.service.js";
+
+// A real, live identity.users row (migration 202614200000, this session) -- a genuine
+// service-account actor for machine-origin writes, EDI 204 named explicitly in its own
+// purpose text. "Machine caller gets a NEW system actor, don't borrow a human user" (Round 84).
+const EDI_SYSTEM_USER_ID = "00000000-0000-4000-8000-000000000001";
 
 export type Parsed204Load = {
   broker_ref: string | null;
@@ -11,6 +23,11 @@ export type Parsed204Load = {
   pickup_state: string | null;
   delivery_city: string | null;
   delivery_state: string | null;
+  // The N1 loop's own Name field (position 2, between the entity code and city in this parser's
+  // simplified indexing) -- the actual facility/consignee name, not just city/state. "A stop fed
+  // with a city and no consignee is not done" (Round 84 P0).
+  pickup_name: string | null;
+  delivery_name: string | null;
   commodity: string | null;
   rate_cents: number | null;
   pickup_date: string | null;
@@ -36,6 +53,8 @@ export function parseX12204Payload(raw: string): Parsed204Load {
   let pickupState: string | null = null;
   let deliveryCity: string | null = null;
   let deliveryState: string | null = null;
+  let pickupName: string | null = null;
+  let deliveryName: string | null = null;
   let commodity: string | null = null;
   let rateCents: number | null = null;
   let pickupDate: string | null = null;
@@ -50,13 +69,18 @@ export function parseX12204Payload(raw: string): Parsed204Load {
     }
     if (tag === "N1") {
       const entity = segmentValue(seg, 1);
+      // This parser's own established indexing (city at 3, state at 4) leaves position 2 as the
+      // N1 loop's Name field -- the actual facility/consignee name.
+      const name = segmentValue(seg, 2);
       const city = segmentValue(seg, 3);
       const state = segmentValue(seg, 4);
       if (entity === "SH" || entity === "SF") {
+        pickupName = name;
         pickupCity = city;
         pickupState = state;
       }
       if (entity === "CN" || entity === "ST") {
+        deliveryName = name;
         deliveryCity = city;
         deliveryState = state;
       }
@@ -76,6 +100,8 @@ export function parseX12204Payload(raw: string): Parsed204Load {
     pickup_state: pickupState,
     delivery_city: deliveryCity,
     delivery_state: deliveryState,
+    pickup_name: pickupName,
+    delivery_name: deliveryName,
     commodity,
     rate_cents: rateCents,
     pickup_date: pickupDate,
@@ -119,6 +145,8 @@ export async function handleInbound204(
         pickup_state: null,
         delivery_city: null,
         delivery_state: null,
+        pickup_name: null,
+        delivery_name: null,
         commodity: null,
         rate_cents: null,
         pickup_date: null,
@@ -215,7 +243,16 @@ async function insertMessage(
   return res.rows[0]!.uuid;
 }
 
-/** Creates a draft mdata.loads row for dispatcher review (EDI 204 tender). */
+/**
+ * Creates a draft mdata.loads row for dispatcher review (EDI 204 tender).
+ *
+ * E6 (Lead ruling, 2026-09-22 / Round 84): rewired from a direct INSERT of mdata.loads rows /
+ * mdata.load_stops to the ONE shared create path, createLoadWithFullSideEffects. This is
+ * genuinely live, real-time data (a real tender just arrived over EDI) -- source is
+ * "live_feed", never "historical_backfill". The actor is EDI_SYSTEM_USER_ID, a real
+ * identity.users service-account row (not a borrowed human session), per Round 84's explicit
+ * answer: "machine caller gets a NEW system actor, don't borrow a human user."
+ */
 export async function createDraftLoadFrom204(
   client: DbClient,
   params: {
@@ -231,51 +268,57 @@ export async function createDraftLoadFrom204(
   const loadNumber =
     params.load_number ??
     `EDI-${params.parsed.broker_ref ?? Date.now().toString(36).toUpperCase()}`;
-  const res = await client.query<{ id: string }>(
-    `
-      INSERT INTO mdata.loads (
-        operating_company_id,
-        load_number,
-        customer_id,
-        status,
-        rate_total_cents,
-        currency_code,
-        notes,
-        customer_wo_number
-      )
-      VALUES ($1, $2, $3, 'draft', $4, 'USD', $5, $6)
-      RETURNING id
-    `,
-    [
-      params.operating_company_id,
-      loadNumber,
-      params.customer_id,
-      params.parsed.rate_cents ?? 0,
-      params.parsed.commodity ? `EDI 204 tender: ${params.parsed.commodity}` : "EDI 204 tender",
-      params.parsed.broker_ref,
-    ]
+
+  const stops: BookLoadStop[] = [];
+  if (params.parsed.pickup_city || params.parsed.pickup_state || params.parsed.pickup_name) {
+    stops.push({
+      stop_type: "pickup",
+      sequence_number: 1,
+      facility_name: params.parsed.pickup_name ?? undefined,
+      city: params.parsed.pickup_city ?? undefined,
+      state: params.parsed.pickup_state ?? undefined,
+    });
+  }
+  if (params.parsed.delivery_city || params.parsed.delivery_state || params.parsed.delivery_name) {
+    stops.push({
+      stop_type: "delivery",
+      sequence_number: stops.length + 1,
+      facility_name: params.parsed.delivery_name ?? undefined,
+      city: params.parsed.delivery_city ?? undefined,
+      state: params.parsed.delivery_state ?? undefined,
+    });
+  }
+
+  const result = await createLoadWithFullSideEffects(
+    client,
+    {
+      requestingUserUuid: EDI_SYSTEM_USER_ID,
+      requestingUserRole: "system",
+      operating_company_id: params.operating_company_id,
+      customer_id: params.customer_id,
+      // 'draft' save_mode maps to mdata.loads.status='draft' regardless of this value (see
+      // statusForInsert inside createLoadWithFullSideEffects); 'unassigned' is a real
+      // mdata.load_status_enum member, used here only to satisfy the required field honestly.
+      status: "unassigned",
+      save_mode: "draft",
+      requested_load_number: loadNumber,
+      commodity: params.parsed.commodity ?? undefined,
+      notes: params.parsed.commodity ? `EDI 204 tender: ${params.parsed.commodity}` : "EDI 204 tender",
+      // The original direct-INSERT wrote broker_ref into customer_wo_number -- preserved
+      // exactly, byte-for-byte behavior, not a new mapping decision.
+      customer_wo_number: params.parsed.broker_ref ?? undefined,
+      // mdata.loads.rate_total_cents is computed from charges (summed), not a direct input
+      // field -- the L3 segment's rate becomes a real LINEHAUL charge line rather than being
+      // silently dropped, matching what the original direct-INSERT wrote into that column.
+      charges:
+        params.parsed.rate_cents != null
+          ? [{ code: "LINEHAUL", amount_cents: params.parsed.rate_cents }]
+          : [],
+      stops,
+    },
+    { source: "live_feed" }
   );
-  const loadId = res.rows[0]?.id ?? null;
-  if (!loadId) return null;
 
-  if (params.parsed.pickup_city || params.parsed.pickup_state) {
-    await client.query(
-      `
-        INSERT INTO mdata.load_stops (load_id, sequence_number, stop_type, city, state, status)
-        VALUES ($1, 1, 'pickup', $2, $3, 'pending')
-      `,
-      [loadId, params.parsed.pickup_city, params.parsed.pickup_state]
-    );
-  }
-  if (params.parsed.delivery_city || params.parsed.delivery_state) {
-    await client.query(
-      `
-        INSERT INTO mdata.load_stops (load_id, sequence_number, stop_type, city, state, status)
-        VALUES ($1, 2, 'delivery', $2, $3, 'pending')
-      `,
-      [loadId, params.parsed.delivery_city, params.parsed.delivery_state]
-    );
-  }
-
-  return loadId;
+  if (result.kind !== "ok") return null;
+  return String(result.row.id ?? "") || null;
 }
