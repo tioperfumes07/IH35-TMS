@@ -49,20 +49,44 @@ export type VoidDocumentFamily = (typeof VOID_DOCUMENT_FAMILIES)[number];
 type FamilyTableSpec = {
   schema: string;
   table: string;
-  hasStatusColumn: boolean;
-  /** true only for journal_entry -- see the journal_entry EXCEPTION in the file header. */
-  neverFlipStatus?: boolean;
+  /**
+   * ROUND 122 FIX (P0, real bug, not theoretical -- production measured, 2026-09-23 15:25Z):
+   * the exact value THIS family's own status column accepts for "voided", read from its live
+   * CHECK constraint / enum -- never assumed, never a single hardcoded literal shared across
+   * families. `null` means status is never flipped for this family, either because there is no
+   * status column at all (fuel_transaction) or because flipping it would break something else
+   * (journal_entry -- see the journal_entry EXCEPTION in the file header, unchanged by this fix).
+   *
+   * The original code wrote the literal string 'voided' for every family with a status column,
+   * on the unverified assumption the value was the same everywhere. It is not. Confirmed live,
+   * pg_get_constraintdef on every family's own CHECK / the enum's own members, same session:
+   *   invoice              accounting.invoices_status_check   -> 'void'   (NOT 'voided')
+   *   expense              accounting.expenses_status_check   -> 'void'   (NOT 'voided')
+   *   driver_reimbursement driver_reimbursements_status_check -> 'void'   (NOT 'voided' --
+   *                        found during THIS fix, not named in the original bug report, but the
+   *                        identical class of defect: same wrong hardcoded literal, same throw)
+   *   factoring_advance    factoring_advances_status_check    -> 'voided' (matches the original code)
+   *   load                 mdata.load_status_enum             -> 'voided' (matches the original code)
+   *   journal_entry        journal_entries_status_check ALLOWS 'voided', but status is never
+   *                        flipped for this family regardless -- the journal_entry EXCEPTION
+   *                        above is about GL-total-reader correctness, not about the constraint.
+   *   fuel_transaction     no status column exists at all -- unaffected either way.
+   * Every stamp on invoices/expenses/driver_reimbursements was a CHECK-constraint violation and
+   * threw before this fix -- the write never happened, so there is no bad data to clean up, only
+   * a code fix.
+   */
+  voidStatusValue: string | null;
 };
 
 /** FIXED literal table map -- never build a table name from caller input (ruling requirement). */
 const FAMILY_TABLE: Record<VoidDocumentFamily, FamilyTableSpec> = {
-  load: { schema: "mdata", table: "loads", hasStatusColumn: true },
-  invoice: { schema: "accounting", table: "invoices", hasStatusColumn: true },
-  expense: { schema: "accounting", table: "expenses", hasStatusColumn: true },
-  factoring_advance: { schema: "accounting", table: "factoring_advances", hasStatusColumn: true },
-  fuel_transaction: { schema: "fuel", table: "fuel_transactions", hasStatusColumn: false },
-  journal_entry: { schema: "accounting", table: "journal_entries", hasStatusColumn: true, neverFlipStatus: true },
-  driver_reimbursement: { schema: "driver_finance", table: "driver_reimbursements", hasStatusColumn: true },
+  load: { schema: "mdata", table: "loads", voidStatusValue: "voided" },
+  invoice: { schema: "accounting", table: "invoices", voidStatusValue: "void" },
+  expense: { schema: "accounting", table: "expenses", voidStatusValue: "void" },
+  factoring_advance: { schema: "accounting", table: "factoring_advances", voidStatusValue: "voided" },
+  fuel_transaction: { schema: "fuel", table: "fuel_transactions", voidStatusValue: null },
+  journal_entry: { schema: "accounting", table: "journal_entries", voidStatusValue: null },
+  driver_reimbursement: { schema: "driver_finance", table: "driver_reimbursements", voidStatusValue: "void" },
 };
 
 export class VoidDocumentStampError extends Error {
@@ -186,17 +210,23 @@ export async function stampDocumentVoided(
     );
   }
 
-  const applyStatusFlip = spec.hasStatusColumn && !spec.neverFlipStatus;
+  // ROUND 122 FIX: the status value is per-family (see FamilyTableSpec.voidStatusValue's own
+  // comment) -- never the single literal 'voided' the original code wrote for every family.
+  const applyStatusFlip = spec.voidStatusValue !== null;
   const voidedAtParam = params.voidedAt ?? new Date();
   const setClauses = ["voided_at = $2", "void_reason = $3", "voided_by_user_id = $4::uuid"];
-  if (applyStatusFlip) setClauses.push("status = 'voided'");
+  const queryParams: unknown[] = [documentId, voidedAtParam, voidReason, voidedByUserId, operatingCompanyId];
+  if (applyStatusFlip) {
+    queryParams.push(spec.voidStatusValue);
+    setClauses.push(`status = $${queryParams.length}`);
+  }
 
   const updateRes = await client.query<{ voided_at: string }>(
     `UPDATE ${qualifiedTable}
         SET ${setClauses.join(", ")}
       WHERE id = $1::uuid AND operating_company_id = $5::uuid
       RETURNING voided_at::text`,
-    [documentId, voidedAtParam, voidReason, voidedByUserId, operatingCompanyId]
+    queryParams
   );
   const written = updateRes.rows[0];
   if (!written) {
