@@ -19,9 +19,10 @@ import { listVendors } from "../../api/mdata";
 import { BillAllocationPanel } from "../../components/allocation";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { SelectCombobox } from "../../components/Combobox";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
-import { ReferenceSelect, type ReferenceOption } from "../../components/parity/ReferenceSelect";
+import { DateRangePresets } from "../../components/forms/DateRangePresets";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { type ReferenceOption } from "../../components/parity/ReferenceSelect";
 import { vendorFilterReferenceOptions } from "../../components/parity/referenceOptionLabels";
 import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";
 import { BulkPreValidationDialog } from "../../components/bulk/BulkPreValidationDialog";
@@ -35,7 +36,6 @@ import { Button } from "../../components/Button";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { ReceiptAttach } from "../../components/documents/ReceiptAttach";
@@ -259,10 +259,11 @@ export function BillsPage() {
   // (has_balance=true — includes partial) and legacy Pay-now unpaid land pre-filtered.
   const STATUS_FILTER_VALUES = new Set(["unpaid", "partial", "paid", "voided", "active", "all", "posted"]);
   const initialStatus = searchParams.get("status");
-  const [status, setStatus] = useState<"" | BillStatus | "unpaid" | "active" | "all" | "posted">(
-    initialStatus && STATUS_FILTER_VALUES.has(initialStatus)
-      ? (initialStatus as BillStatus | "unpaid" | "active" | "all" | "posted")
-      : "active"
+  // FILTER-MULTI-01: Status is now a real multi-select (checkbox dropdown, e.g. "Open + Partial"
+  // at once) — array state, seeded from the single-value deep-link contract above (still exactly
+  // one value on first load, unchanged for every existing inbound link).
+  const [statusFilter, setStatusFilter] = useState<string[]>(() =>
+    initialStatus && STATUS_FILTER_VALUES.has(initialStatus) ? [initialStatus] : ["active"]
   );
   const hasBalance = searchParams.get("has_balance") === "true";
   // BILLS-DATERANGE-01: From/To bill_date filter (server-side via listBills date_from/date_to).
@@ -274,9 +275,16 @@ export function BillsPage() {
   // 200, same rows already in memory) — bill number, vendor name, memo.
   const [search, setSearch] = useState("");
   const [billType, setBillType] = useState<"all" | "vendor_bill" | "driver_bill">("all");
-  // BILLS-VENDORFILTER-01: server-side vendor filter (listBills already accepts vendor_id).
-  // Keep vendor_id URL-synced for aging drill same-route / back-forward.
-  const vendorId = searchParams.get("vendor_id") ?? "";
+  // FILTER-MULTI-01: Vendor is now a real multi-select — array state, seeded from the single-value
+  // deep-link contract (?vendor_id=, aging-drill / Pay-now links) below.
+  const [vendorFilter, setVendorFilter] = useState<string[]>(() => {
+    const v = searchParams.get("vendor_id");
+    return v ? [v] : [];
+  });
+  // FILTER-MULTI-01: Category is now a real multi-select — array state, seeded from the single-
+  // value deep-link contract (?category=, used by the maintenance/repair/fuel/driver quick-create
+  // routes in routes/manifest.tsx).
+  const [categoryFilter, setCategoryFilter] = useState<string[]>(() => (category ? [category] : []));
   // ACCT-F5049 — reverse Open Bills carries claim/unit/load; listBills already accepts these.
   // LINK-F5171 — legal matter Open Bills carries legal_matter_id.
   const deepLinkInsuranceClaimId = searchParams.get("insurance_claim_id");
@@ -285,18 +293,30 @@ export function BillsPage() {
   const deepLinkLoadId = searchParams.get("load_id");
   const [allocationBillId, setAllocationBillId] = useState<string | null>(() => deepLinkBillId);
 
-  function setVendorId(next: string) {
+  // FILTER-MULTI-01: unit_id/load_id stay URL-synced, immediate-apply (no staged draft) — matching
+  // every other filter on this page now.
+  function setUnitFilter(next: string) {
     setSearchParams(
       (prev) => {
         const params = new URLSearchParams(prev);
-        if (next) params.set("vendor_id", next);
-        else params.delete("vendor_id");
+        if (next) params.set("unit_id", next);
+        else params.delete("unit_id");
         return params;
       },
       { replace: true }
     );
   }
-  // LST-F5198 — unit/load reverse filters commit via staged Apply (no silent URL helper).
+  function setLoadFilter(next: string) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next) params.set("load_id", next);
+        else params.delete("load_id");
+        return params;
+      },
+      { replace: true }
+    );
+  }
 
   useEffect(() => {
     if (!deepLinkBillId) return;
@@ -318,17 +338,26 @@ export function BillsPage() {
     [vendorOptions]
   );
 
+  // FILTER-MULTI-01: the server list route (listBillRegister) only ever accepted ONE status/vendor
+  // value. A real multi-select ("Open + Partial" at once) is server-correct when exactly one value
+  // is picked (identical to today) and falls back to fetching unnarrowed-on-that-field + a client
+  // membership filter below when 2+ are picked — never silently drops rows the server would have
+  // returned for a single value, and a 2+ selection is strictly a broader fetch, never narrower.
+  // statusFilter's options are exactly STATUS_FILTER_VALUES's literal set (seeded from it above),
+  // so a single selected value is always one of the server's accepted literals.
+  const statusParam = statusFilter.length === 1 ? (statusFilter[0] as BillStatus | "unpaid" | "active" | "all" | "posted") : undefined;
+  const vendorParam = vendorFilter.length === 1 ? vendorFilter[0] : undefined;
   const billsQuery = useQuery({
     queryKey: [
       "accounting",
       "bills",
       companyId,
-      status,
+      statusFilter,
       hasBalance,
       category,
       dateFrom,
       dateTo,
-      vendorId,
+      vendorFilter,
       search,
       deepLinkInsuranceClaimId,
       deepLinkLegalMatterId,
@@ -342,9 +371,9 @@ export function BillsPage() {
     queryFn: () =>
       listBillRegister(companyId, {
         include_balance: true,
-        status: status || undefined,
+        status: statusParam,
         has_balance: hasBalance || undefined,
-        vendor_id: vendorId || undefined,
+        vendor_id: vendorParam,
         date_from: dateFrom || undefined,
         date_to: dateTo || undefined,
         search: search.trim() || undefined,
@@ -367,19 +396,29 @@ export function BillsPage() {
   // bills" view or the "driver" category chip is active — the union + Source distinction this
   // page's spec asks for, done honestly rather than faking one shared row shape for two
   // structurally different tables.
-  const showDriverBills = billType !== "vendor_bill" && (category === "" || category === "driver");
+  const showDriverBills = billType !== "vendor_bill" && (categoryFilter.length === 0 || categoryFilter.includes("driver"));
+  // FILTER-MULTI-01: statusFilter/vendorFilter apply server-side when exactly one value is picked
+  // (statusParam/vendorParam above); a 2+ selection fetches unnarrowed-on-that-field and this
+  // client membership check does the real OR-of-several-values filtering. Driver bills have their
+  // own `status` vocabulary and no vendor at all, so only statusFilter (when non-empty) applies to
+  // them — a selected vendor-bill-only status (e.g. "Paid") correctly shows 0 driver bills rather
+  // than silently ignoring the filter.
   const driverBillRows = (billsQuery.data?.rows ?? [])
     .filter((row) => row.bill_type === "driver_bill")
-    .map((row) => row.bill as DriverBillListRow);
+    .map((row) => row.bill as DriverBillListRow)
+    .filter((bill) => statusFilter.length === 0 || statusFilter.includes(bill.status));
 
   const rows = useMemo(() => {
     const all = (billsQuery.data?.rows ?? [])
       .filter((row) => row.bill_type === "vendor_bill")
       .map((row) => row.bill as VendorBill);
-    // Keep deep-linked bill visible even when a category chip would filter it out.
-    let next = category
-      ? all.filter((bill) => bill.id === deepLinkBillId || billMatchesCategory(bill, category))
-      : [...all];
+    let next = all.filter((bill) => {
+      if (bill.id === deepLinkBillId) return true; // keep deep-linked bill visible regardless of filters
+      if (categoryFilter.length > 0 && !categoryFilter.some((c) => billMatchesCategory(bill, c as BillListCategory))) return false;
+      if (statusFilter.length > 0 && !statusFilter.includes(bill.status)) return false;
+      if (vendorFilter.length > 0 && !vendorFilter.includes(bill.vendor_id ?? "")) return false;
+      return true;
+    });
     // BILL-SEARCH-01 — server search via buildListSearchClause.
     if (deepLinkBillId) {
       const idx = next.findIndex((bill) => bill.id === deepLinkBillId);
@@ -389,7 +428,7 @@ export function BillsPage() {
       }
     }
     return next;
-  }, [billsQuery.data?.rows, category, deepLinkBillId]);
+  }, [billsQuery.data?.rows, categoryFilter, statusFilter, vendorFilter, deepLinkBillId]);
 
   const billKpis = useMemo(() => {
     const all = (billsQuery.data?.rows ?? [])
@@ -446,59 +485,6 @@ export function BillsPage() {
   };
 
   const allocationBill = useMemo(() => rows.find((b) => b.id === allocationBillId) ?? null, [rows, allocationBillId]);
-
-  function setCategory(next: BillListCategory | "") {
-    setSearchParams(
-      (prev) => {
-        const params = new URLSearchParams(prev);
-        if (!next) params.delete("category");
-        else params.set("category", next);
-        return params;
-      },
-      { replace: false }
-    );
-  }
-  const staged = useStagedListFilters({
-    applied: {
-      category,
-      status,
-      vendorId,
-      dateFrom,
-      dateTo,
-      unitId: deepLinkUnitId || "",
-      loadId: deepLinkLoadId || "",
-      billType,
-    },
-    empty: {
-      category: "" as const,
-      status: "active" as const,
-      vendorId: "",
-      dateFrom: "",
-      dateTo: "",
-      unitId: "",
-      loadId: "",
-      billType: "all" as "all" | "vendor_bill" | "driver_bill",
-    },
-    onApply: (next) => {
-      setCategory(next.category);
-      setStatus(next.status);
-      setVendorId(next.vendorId);
-      setDateFrom(next.dateFrom);
-      setDateTo(next.dateTo);
-      setBillType(next.billType);
-      setSearchParams(
-        (prev) => {
-          const params = new URLSearchParams(prev);
-          if (next.unitId) params.set("unit_id", next.unitId);
-          else params.delete("unit_id");
-          if (next.loadId) params.set("load_id", next.loadId);
-          else params.delete("load_id");
-          return params;
-        },
-        { replace: true },
-      );
-    },
-  });
 
   function setCreateOpen(next: boolean) {
     setSearchParams(
@@ -760,13 +746,25 @@ export function BillsPage() {
     [allocationBillId],
   );
 
+  // FILTER-MULTI-01 (owner, live-measured 2026-09-23 — TOOLBAR-ONE app-wide): every filter below is
+  // an always-visible dropdown in ONE toolbar row — never a "Filters (N)" popover (the dead-on-click
+  // defect this replaces), never a button/chip row. Vendor/Category/Status/Type are real multi-
+  // select (checkbox dropdown, closed label "Status (3)"); Unit/Load stay single-value EntityPicker
+  // (search-as-you-type against the full fleet/load set — a checkbox list of the whole roster is
+  // its own defect) but move out of the popover into the same visible row, immediate-apply.
+  const bulkClearAll = () => {
+    setSearch("");
+    setStatusFilter([]);
+    setCategoryFilter([]);
+    setVendorFilter([]);
+    setBillType("all");
+    setDateFrom("");
+    setDateTo("");
+    setUnitFilter("");
+    setLoadFilter("");
+  };
   const billsActiveFilterCount =
-    (category ? 1 : 0) +
-    (status ? 1 : 0) +
-    (vendorId ? 1 : 0) +
-    (dateFrom || dateTo ? 1 : 0) +
-    (deepLinkUnitId ? 1 : 0) +
-    (deepLinkLoadId ? 1 : 0);
+    categoryFilter.length + statusFilter.length + vendorFilter.length + (dateFrom || dateTo ? 1 : 0) + (deepLinkUnitId ? 1 : 0) + (deepLinkLoadId ? 1 : 0) + (billType !== "all" ? 1 : 0);
 
   const filterBar = (
     <div className="flex flex-col gap-2 w-full">
@@ -776,140 +774,98 @@ export function BillsPage() {
           onRetry={() => void vendorsQuery.refetch()}
         />
       ) : null}
-      <CollapsedListFilters
+      <MoneyListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Bill #, vendor invoice #, amount, vendor…"
+        searchTestId="bills-search-input"
+        onClearAll={bulkClearAll}
         activeFilterCount={billsActiveFilterCount}
-        onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
         testIdPrefix="bills"
-        dataAttributes={{ "data-bills-filter-toolbar": "collapsed" }}
-        searchSlot={
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Bill #, vendor invoice #, amount, vendor…"
-            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-xs"
-            aria-label="Search bills"
-            data-testid="bills-search-input"
-          />
-        }
       >
-        <div className="flex flex-wrap items-end gap-3" data-testid="bills-entity-filters">
-          <label className="text-[11px] text-slate-600">
-            Unit
-            <EntityPicker
-              kind="unit"
-              operatingCompanyId={companyId}
-              value={staged.draft.unitId || null}
-              onChange={(next) => staged.setDraft({ ...staged.draft, unitId: next ?? "" })}
-              allowCreate={false}
-              placeholder="All units"
-              className="mt-1"
-              dataTestId="bills-filter-unit"
-            />
-          </label>
-          <label className="text-[11px] text-slate-600">
-            Load
-            <EntityPicker
-              kind="load"
-              operatingCompanyId={companyId}
-              value={staged.draft.loadId || null}
-              onChange={(next) => staged.setDraft({ ...staged.draft, loadId: next ?? "" })}
-              allowCreate={false}
-              placeholder="All loads"
-              className="mt-1"
-              dataTestId="bills-filter-load"
-            />
-          </label>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="text-gray-600">Type:</span>
+        <MultiSelectDropdown
+          label="Status"
+          options={[
+            { value: "active", label: "Active (hide voided)" },
+            { value: "posted", label: "Posted (GL)" },
+            { value: "unpaid", label: "Unpaid" },
+            { value: "partial", label: "Partial" },
+            { value: "paid", label: "Paid" },
+            { value: "voided", label: "Voided" },
+          ]}
+          selected={statusFilter}
+          onChange={setStatusFilter}
+          allLabel="All (include voided)"
+          data-testid="bills-status-filter"
+        />
+        <MultiSelectDropdown
+          label="Category"
+          options={BILL_LIST_CATEGORIES.map((cat) => ({ value: cat, label: cat.charAt(0).toUpperCase() + cat.slice(1) }))}
+          selected={categoryFilter}
+          onChange={setCategoryFilter}
+          allLabel="All categories"
+          data-testid="bills-category-filter"
+        />
+        <MultiSelectDropdown
+          label="Type"
+          options={[
+            { value: "vendor_bill", label: "Vendor bill" },
+            { value: "driver_bill", label: "Driver bill" },
+          ]}
+          selected={billTypesToSelected(billType)}
+          onChange={(next) => setBillType(selectedToBillType(next))}
+          allLabel="All bill types"
+          data-testid="bills-type-filter"
+        />
+        <div>
+          {/* A3/FIX-06: vendor options still come from the canonical mdata.vendors read
+              vendorFilterOptions was already built from — same table, now rendered as checkboxes. */}
           <MultiSelectDropdown
-            label="Type"
-            options={[
-              { value: "vendor_bill", label: "Vendor bill" },
-              { value: "driver_bill", label: "Driver bill" },
-            ]}
-            selected={billTypesToSelected(staged.draft.billType)}
-            onChange={(next) => staged.setDraft({ ...staged.draft, billType: selectedToBillType(next) })}
-            allLabel="All bill types"
-            data-testid="bills-type-filter"
+            label="Vendor"
+            options={vendorFilterOptions.map((o) => ({ value: o.value, label: o.label }))}
+            selected={vendorFilter}
+            onChange={setVendorFilter}
+            allLabel="All vendors"
+            searchable
+            searchPlaceholder="Narrow by vendor name…"
+            data-testid="bills-vendor-filter"
+          />
+          <CappedListNotice
+            shown={vendorOptions.length}
+            limit={1000}
+            total={vendorsQuery.data?.total ?? null}
+            hint="Narrow by typing in the vendor field."
+            className="mt-1 text-[11px] text-slate-600"
           />
         </div>
-
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="text-gray-600">Category:</span>
-          <button
-            type="button"
-            className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${!staged.draft.category ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"}`}
-            onClick={() => staged.setDraft({ ...staged.draft, category: "" })}
-          >
-            All
-          </button>
-          {BILL_LIST_CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              className={`rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${
-                staged.draft.category === cat ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-              }`}
-              onClick={() => staged.setDraft({ ...staged.draft, category: cat })}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="text-gray-600">Status:</span>
-          <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1" value={staged.draft.status} onChange={(e) => staged.setDraft({ ...staged.draft, status: e.target.value as typeof status })}>
-            <option value="active">Active (hide voided)</option>
-            <option value="all">All (include voided)</option>
-            <option value="posted">Posted (GL)</option>
-            <option value="unpaid">Unpaid</option>
-            <option value="partial">Partial</option>
-            <option value="paid">Paid</option>
-            <option value="voided">Voided</option>
-          </SelectCombobox>
-          <span className="text-gray-600">Vendor:</span>
-          {/* A3/FIX-06: shared ReferenceSelect gives the vendor FILTER the inline "+ Add new vendor" row
-              too (writes to canonical mdata.vendors — same table vendorOptions reads from). */}
-          <div className="w-56">
-            <ReferenceSelect
-              value={staged.draft.vendorId || null}
-              onChange={(next) => staged.setDraft({ ...staged.draft, vendorId: next ?? "" })}
-              options={vendorFilterOptions}
-              createKind="vendor"
-              operatingCompanyId={companyId}
-              placeholder="All vendors"
-              disabled={!companyId}
-            />
-            <CappedListNotice
-              shown={vendorOptions.length}
-              limit={1000}
-              total={vendorsQuery.data?.total ?? null}
-              hint="Narrow by typing in the vendor field."
-              className="mt-1 text-[11px] text-slate-600"
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="text-gray-600">From:</span>
-          <DatePicker value={staged.draft.dateFrom} onChange={(next) => staged.setDraft({ ...staged.draft, dateFrom: next })} max={staged.draft.dateTo || undefined} className="w-36" />
-          <span className="text-gray-600">To:</span>
-          <DatePicker value={staged.draft.dateTo} onChange={(next) => staged.setDraft({ ...staged.draft, dateTo: next })} min={staged.draft.dateFrom || undefined} className="w-36" />
-          {staged.draft.dateFrom || staged.draft.dateTo ? (
-            <button
-              type="button"
-              className="rounded-full border border-gray-300 bg-white px-2.5 py-0.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-              onClick={() => {
-                staged.setDraft({ ...staged.draft, dateFrom: "", dateTo: "" });
-              }}
-            >
-              Clear dates
-            </button>
-          ) : null}
-        </div>
-      </CollapsedListFilters>
+        <label className="text-[11px] text-slate-600">
+          Unit
+          <EntityPicker
+            kind="unit"
+            operatingCompanyId={companyId}
+            value={deepLinkUnitId || null}
+            onChange={(next) => setUnitFilter(next ?? "")}
+            allowCreate={false}
+            placeholder="All units"
+            className="mt-1"
+            dataTestId="bills-filter-unit"
+          />
+        </label>
+        <label className="text-[11px] text-slate-600">
+          Load
+          <EntityPicker
+            kind="load"
+            operatingCompanyId={companyId}
+            value={deepLinkLoadId || null}
+            onChange={(next) => setLoadFilter(next ?? "")}
+            allowCreate={false}
+            placeholder="All loads"
+            className="mt-1"
+            dataTestId="bills-filter-load"
+          />
+        </label>
+        <DateRangePresets from={dateFrom} to={dateTo} onChange={({ from, to }) => { setDateFrom(from); setDateTo(to); }} data-testid="bills-date-range" />
+      </MoneyListToolbar>
     </div>
   );
 
@@ -975,7 +931,7 @@ export function BillsPage() {
       {/* R-102-B item 5 — owner: "a list that silently hides is the same class of defect as a
           badge that never renders." Company-wide, both bill tables (vendor + driver), independent
           of every non-status filter. */}
-      {status === "active" && typeof billsQuery.data?.voided_count === "number" && billsQuery.data.voided_count > 0 ? (
+      {statusFilter.length === 1 && statusFilter[0] === "active" && typeof billsQuery.data?.voided_count === "number" && billsQuery.data.voided_count > 0 ? (
         <p className="text-xs text-gray-500" data-testid="bills-voided-count">
           {rows.length} live, {billsQuery.data.voided_count} voided (hidden)
         </p>
@@ -990,6 +946,11 @@ export function BillsPage() {
         filterBar={filterBar}
         exportFilename="bills"
         storageKey="bills-list"
+        // FILTER-MULTI-01 — the page's own MoneyListToolbar above already supplies search and a
+        // date range; ParityTable's own native search/Range would render a second, competing
+        // control for the exact same rows (the "3 search boxes" defect measured live).
+        suppressToolbarSearch
+        suppressToolbarRange
         initialPageSize={50}
         sortKey={sortKey}
         sortDirection={sortDirection}
@@ -1074,6 +1035,14 @@ export function BillsPage() {
             storageKey="bills-driver-list"
             initialPageSize={50}
             emptyText="No driver bills found."
+            // FILTER-MULTI-01 — owner, live-measured: "Driver Bills register has NO filter control
+            // at all" / a third competing "Search rows..." box. This register shares the ONE
+            // toolbar above (Status/Category/Type/Vendor/Unit/Load/dates/search) — driverBillRows
+            // is already derived through statusFilter — rather than growing a second, separate
+            // toolbar (rule: "shares ONE toolbar that filters both, or each register gets its own
+            // complete toolbar — not one with filters and one without").
+            suppressToolbarSearch
+            suppressToolbarRange
           />
         </div>
       ) : null}

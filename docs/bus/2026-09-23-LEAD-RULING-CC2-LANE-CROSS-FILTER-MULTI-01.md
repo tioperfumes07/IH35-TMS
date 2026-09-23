@@ -55,3 +55,13 @@ accept an array, additive and backward-compatible (a single value still behaves 
 no existing param removed, no response shape changed, no new GL/business logic). Twelve pages named
 across the two packets: Bills, Driver Bills, Expenses, Invoices, Journal Entries, Load Costs,
 Settlements, Factoring, Fuel, Banking, Customers, Vendors.
+
+**Mechanical baseline regeneration:** `scripts/entity-link-adoption-baseline.json` (does not match
+CC-1's `scripts/verify-*.baseline.json` glob — it is a "verify-" *suffix*, not prefix, so it reads
+UNASSIGNED in `docs/bus/LANES.md`) is the exact structural fingerprint baseline for
+`verify-entity-link-adoption.mjs`. Any diff that changes the AST position of an existing
+`entityLabel(...)`/`EntityLink` call (without removing or weakening it) shifts its fingerprint and
+requires a mechanical `--update-baseline` regen (`UPDATE_ENTITY_LINK_ADOPTION_BASELINE=1 node
+scripts/verify-entity-link-adoption.mjs --update-baseline`) — this ruling authorizes CC-2 to touch
+that file wherever this sweep's own diff requires it, verified each time via the guard's own
+before/after PASS (never a blind regen).
