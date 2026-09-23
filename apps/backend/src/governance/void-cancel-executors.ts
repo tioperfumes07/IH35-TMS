@@ -24,6 +24,7 @@ import { voidBillPaymentInClientTx } from "../accounting/bills.service.js";
 // stampDocumentVoided (verify-void-stamp-columns.mjs's writer allowlist enforces this, zero-
 // tolerance, R-102.1-A). executeFuelTransaction below must never hand-write that column itself.
 import { stampDocumentVoided } from "../accounting/void-document-stamp.service.js";
+import { cascadeVoidChildren } from "../accounting/cascade-void-engine.service.js";
 
 export type VoidCancelAction = "void" | "cancel";
 
@@ -240,6 +241,10 @@ const executeBill: EntityExecutor = async (ctx) => {
     [entityId, operatingCompanyId, userId, reason]
   );
   if (!flipped.rows[0]) return { kind: "already_done" };
+  // ROUND 138 -- cascade to bill_lines/bill_payments in the SAME transaction. `bill` is not one of
+  // stampDocumentVoided's seven families (it voids via this executor directly), so it needs its
+  // own explicit call rather than getting it for free through that file's wiring.
+  await cascadeVoidChildren(client, "bill", entityId, operatingCompanyId);
   await appendCrudAudit(
     client,
     userId,
@@ -310,6 +315,12 @@ const executeInvoice: EntityExecutor = async (ctx) => {
     [entityId, operatingCompanyId, reason, userId]
   );
   if (!flipped.rows[0]) return { kind: "already_done" };
+
+  // ROUND 138 -- this executor writes accounting.invoices.voided_at with its OWN raw UPDATE above
+  // (it does not call stampDocumentVoided, so that file's cascadeVoidChildren wiring never fires
+  // for a governance-approved void). Cascading here closes that exact gap for this caller.
+  await cascadeVoidChildren(client, "invoice", entityId, operatingCompanyId);
+
   await appendCrudAudit(
     client,
     userId,
@@ -446,6 +457,11 @@ const executeExpense: EntityExecutor = async (ctx) => {
     [entityId, operatingCompanyId, reversingEntryRef, userId, reason]
   );
   if (!flipped.rows[0]) return { kind: "already_done" };
+
+  // ROUND 138 -- same gap as executeInvoice above: this executor's own raw UPDATE never goes
+  // through stampDocumentVoided, so cascade here directly.
+  await cascadeVoidChildren(client, "expense", entityId, operatingCompanyId);
+
   await appendCrudAudit(
     client,
     userId,
@@ -736,6 +752,12 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
         AND (is_active IS DISTINCT FROM false OR voided_at IS NULL)`,
     [entityId, operatingCompanyId, reason, userId]
   );
+
+  // ROUND 138 -- the settlement_lines UPDATE above (pre-existing, SETL-LINES-VOID-GAP) only ever
+  // covered ONE child. cascadeVoidChildren adds the rest of driver_settlement's registered
+  // children (driver_settlement_deductions.voided_at, chiefly) without duplicating the lines
+  // write above -- idempotent, `WHERE ... IS NULL` only touches rows still live.
+  await cascadeVoidChildren(client, "driver_settlement", entityId, operatingCompanyId);
 
   // R-102-B (2026-09-23) — driver_settlements carries the SAME disjoint dual-marker-set defect
   // migration 202612480900 already fixed for accounting.bills (reversed_at/reversed_by_user_id/

@@ -15,6 +15,7 @@ import {
   postVoidReversal,
   type VoidReversalResult,
 } from "./void.service.js";
+import { cascadeVoidChildren } from "./cascade-void-engine.service.js";
 
 export const BATCH_VOID_ACTION = "void" as const;
 
@@ -104,6 +105,9 @@ export async function voidInvoiceInBulk(
   if (updateRes.rows.length === 0) {
     return { ok: false, code: "E_UPDATE_FAILED", message: "Invoice void update failed" };
   }
+
+  // ROUND 138 -- bulk void is yet another independent writer of accounting.invoices.voided_at.
+  await cascadeVoidChildren(voidClient, "invoice", id, operatingCompanyId);
 
   await auditVoid(voidClient, actorUserId, "invoice", {
     operatingCompanyId,

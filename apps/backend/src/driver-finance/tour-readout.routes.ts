@@ -423,8 +423,28 @@ export async function registerTourReadoutRoutes(app: FastifyInstance) {
   app.get("/api/v1/driver-finance/tours", RL, async (req, reply) => {
     const user = authed(req, reply); if (!user) return;
     const q = toursQuery.safeParse(req.query ?? {}); if (!q.success) return validationError(reply, q.error);
-    const rows = await withCompany(user.uuid, q.data.operating_company_id, (client) => listTours(client, q.data.operating_company_id, q.data.state, q.data.limit));
-    return { state: q.data.state, count: rows.length, rows };
+    const { rows, voidedCount } = await withCompany(user.uuid, q.data.operating_company_id, async (client) => {
+      const rows = await listTours(client, q.data.operating_company_id, q.data.state, q.data.limit);
+      // R-102-B item 5 ("DEFAULT FILTERS" — owner, ROUND 121: "a list that silently hides is the
+      // same class of defect as a badge that never renders"). listTours' own SETL-REVERSED-HIDE
+      // WHERE clause permanently excludes cancelled/reversed/voided settlements from this register
+      // (an explicit owner ruling — "economically void ... never shown as a live settlement" — not
+      // something this PR changes); this count is the disclosure that ruling still owes: how many
+      // are hidden, in the SAME state bucket (open/closed) and company, so the register can say
+      // "N live, M voided" instead of silently dropping them with no trace.
+      const voidedRes = await client.query<{ n: string }>(
+        `SELECT count(*)::text AS n
+           FROM driver_finance.driver_settlements s
+          WHERE s.operating_company_id = $1::uuid
+            AND s.is_sample_data IS NOT TRUE
+            AND (s.settlement_model = 'load_bookended' OR s.first_load_id IS NOT NULL)
+            AND (s.voided_at IS NOT NULL OR s.reversed_at IS NOT NULL OR s.status = 'cancelled')
+            AND ${q.data.state === "open" ? "s.trip_closed_at IS NULL" : "s.trip_closed_at IS NOT NULL"}`,
+        [q.data.operating_company_id]
+      );
+      return { rows, voidedCount: Number(voidedRes.rows[0]?.n ?? 0) };
+    });
+    return { state: q.data.state, count: rows.length, voided_count: voidedCount, rows };
   });
 
   app.get("/api/v1/driver-finance/pre-settlements/:id/readout", RL, async (req, reply) => {

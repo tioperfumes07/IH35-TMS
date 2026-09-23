@@ -4,6 +4,7 @@ import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import {
+  countVoidedJournalEntries,
   createJournalEntry,
   getJournalEntryDetail,
   getJournalEntryPostingsBySource,
@@ -163,7 +164,8 @@ export async function registerJournalEntryRoutes(app: FastifyInstance) {
       limit: query.data.limit,
       offset: query.data.offset,
     });
-    return { journal_entries: items };
+    const voidedCount = await countVoidedJournalEntries(user.uuid, query.data.operating_company_id);
+    return { journal_entries: items, voided_count: voidedCount };
   });
 
   // LV-JE-DETAIL-COLD-NAV-FALSE-NOT-FOUND (ACCT-F5426): operating_company_id is required here

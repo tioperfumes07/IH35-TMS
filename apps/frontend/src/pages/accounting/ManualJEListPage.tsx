@@ -125,12 +125,17 @@ export function ManualJEListPage() {
   const queryClient = useQueryClient();
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
 
-  const [status, setStatus] = useState<JournalEntryStatus | "all">("all");
+  // R-102-B item 5 ("DEFAULT FILTERS" — owner, ROUND 117: "lists default to live with 'Show
+  // voided' off on fresh load"). This page was the one list in the whole accounting/driver-
+  // finance surface with NO default-hide at all — invoices/expenses/bills/factoring/settlements-
+  // payments all default to "active"; this defaulted to "all", mixing voided JEs into a fresh
+  // load. "posted" is this family's own live-document status (voided is mutually exclusive).
+  const [status, setStatus] = useState<JournalEntryStatus | "all">("posted");
   const [source, setSource] = useState<JournalEntrySource | "all">("all");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [accountId, setAccountId] = useState("");
-  const staged = useStagedListFilters({ applied: { source, status, fromDate, toDate, accountId }, empty: { source: "all" as const, status: "all" as const, fromDate: "", toDate: "", accountId: "" }, onApply: (next) => { setSource(next.source); setStatus(next.status); setFromDate(next.fromDate); setToDate(next.toDate); setAccountId(next.accountId); setPage(0); } });
+  const staged = useStagedListFilters({ applied: { source, status, fromDate, toDate, accountId }, empty: { source: "all" as const, status: "posted" as const, fromDate: "", toDate: "", accountId: "" }, onApply: (next) => { setSource(next.source); setStatus(next.status); setFromDate(next.fromDate); setToDate(next.toDate); setAccountId(next.accountId); setPage(0); } });
   const accountsQuery = useQuery({
     queryKey: ["manual-je-list", "accounts", companyId],
     queryFn: () => listCoaAccountsForJe(companyId, { postableOnly: true }),
@@ -294,8 +299,8 @@ export function ManualJEListPage() {
           <option value="auto">Auto</option>
         </SelectCombobox>
         <SelectCombobox className="h-8 rounded-sm border border-gray-300 px-2" value={staged.draft.status} onChange={(e) => staged.setDraft({ ...staged.draft, status: e.target.value as JournalEntryStatus | "all" })}>
-          <option value="all">All statuses</option>
-          <option value="posted">Posted</option>
+          <option value="posted">Posted (hide voided)</option>
+          <option value="all">All statuses (include voided)</option>
           <option value="voided">Voided</option>
         </SelectCombobox>
         <DatePicker className="h-8" value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} />
@@ -323,6 +328,13 @@ export function ManualJEListPage() {
     >
       {/* 0243-g8-5: a query error must surface a retryable banner, not a blank grid / forever spinner. */}
       {entriesQuery.isError ? <ListErrorBanner onRetry={() => void entriesQuery.refetch()} /> : null}
+      {/* R-102-B item 5 — owner: "a list that silently hides is the same class of defect as a
+          badge that never renders." Company-wide, independent of every non-status filter. */}
+      {status === "posted" && typeof entriesQuery.data?.voided_count === "number" && entriesQuery.data.voided_count > 0 ? (
+        <p className="text-xs text-gray-500" data-testid="manual-je-voided-count">
+          {pageRows.length} live, {entriesQuery.data.voided_count} voided (hidden)
+        </p>
+      ) : null}
       <ParityTable
         columns={columns}
         rows={pageRows}

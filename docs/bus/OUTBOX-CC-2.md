@@ -5345,3 +5345,197 @@ rows today — forward-looking wiring only, not yet visually provable.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+
+## R-102-B items 3-6 + item 5 (disclosed count) — BUILT, TSC CLEAN, PUSH BLOCKED BY LIVE PRODUCTION CHURN (branch `cc2-r102b-readonly-void`, commit `eb248fc5eb`)
+
+Round 121 accepted items 3-6 "as described" and assigned item 5's remaining half (the disclosed
+count). All of it is built, on `cc2-r102b-readonly-void`, four commits, rebased clean onto
+`origin/main` tip (`2c49a4c6d4`) with zero conflicts:
+
+- **Item 3 (NOTHING EDITABLE)** — `a3a346bb20`: `SettlementDetailPage.tsx`'s `settlementIsLocked`
+  excluded `cancelled`; new `settlementIsReadOnly` gate wired into every writable section +
+  `CloseTripPanel`; `DeductionsSection.tsx` Hold/Resume gained a real disabled check (had none).
+  `VoidedBanner.tsx` Round 112 correction: renders "by — unknown" instead of omitting the actor.
+- **Item 4 (THE NUMBER STAYS)** — `06d704cee9`: `accounting.bills` display_id taken-check dropped
+  the `voided_at`/`revoked_at` exclusion that let a voided bill's number be reissued.
+- **Item 5 first half (DEFAULT FILTERS)** — `2a95fd61cd`: ManualJEListPage/CreditMemosPage/
+  VendorCreditsPage now default-hide voided documents (`"active"` pseudo-status), matching the
+  other 6 families that already did.
+- **Item 5 second half (DISCLOSED COUNT)** — `9ff17bfcbb`→`eb248fc5eb`: every family that
+  default-hides voided/cancelled rows now discloses what it hid — "{live} live, {N} voided
+  (hidden)" — across bills (vendor+driver, summed), credit memos, vendor credits, expenses,
+  invoices, factoring advances, the JE register, the Settlements tours-register, fuel_purchases
+  (which also gained a new `include_voided` toggle — it had none before), and the Settlements
+  payments-view (client-side derived, since its `hideCancelled` filter is client-side over an
+  already-fully-fetched list, not a server round-trip). Two incidental bugs fixed along the way:
+  `ExpensesListPage.tsx` and `FactoringListPage.tsx` both had their `queryFn` unwrap the list
+  response down to a bare rows array (`.then((res) => res.rows)`) before React Query ever stored
+  it, which would have made `voided_count` structurally unreachable regardless of what the backend
+  returned — fixed by keeping the full response and deriving `rows` separately.
+
+Live-verified (Neon `br-fancy-credit-akjnd07a`, bypass_rls='lucia', USMCA
+`5c854333-6ea5-4faa-af31-67cb272fef80`) before wiring each family's frontend: bills 28
+voided/revoked + 35 voided driver bills (63 total); factoring_advances 51 voided; credit_memos 0;
+vendor_credits 0; journal_entries 0 (E10 hasn't reversed a manual JE as of this read);
+driver_settlements 21 cancelled (matches the payments-view's own client-side count); tours-register
+18 voided/cancelled closed tours; fuel_transactions 0 voided of 589 live (both from the earlier,
+already-merged half of this branch).
+
+New lane-cross ruling: `docs/bus/2026-09-23-LEAD-RULING-ROUND-121-CC2-LANE-CROSS-ITEM5-DISCLOSED-COUNT.md`,
+quoting Round 121 verbatim — covers 8 CC-1 files (`bills.routes.ts`, `display-id.ts`,
+`credit-memos.routes.ts`, `vendor-credits.routes.ts`, `expenses.routes.ts`,
+`factoring-advances.routes.ts`, `journal-entries.routes.ts`, `journal-entries.service.ts`) and 2
+CC-3 files (`tour-readout.routes.ts`, `fuel-transactions.routes.ts`) — all read-only-additive.
+`invoices.routes.ts` needed no cross (already CC-2's own lane). `npx tsc -p
+apps/backend/tsconfig.json --noEmit` and `cd apps/frontend && npx tsc -b` both exit 0, checked
+after every family.
+
+**PUSH ATTEMPTED, BLOCKED — genuine live production churn, not my diff, not bypassed, not
+retried in a loop (per Round 121's own law):**
+
+1st attempt (before the lane-cross ruling existed) correctly rejected by `verify-lane-ownership.mjs`
+(03b) — my own violation, fixed by writing the ruling above and re-committing with the
+`LANE-CROSS:`/`SEAT=CC-2 LANE_CROSS=...` wiring (not a retry against an external blocker — a fix
+to my own gate failure, done once).
+
+2nd attempt (with the lane-cross fix in place) passed lane-ownership and hit
+`verify-alwaystrack-parity`: **0 of 34 tracked documents exact on all six dimensions**, with
+severe live drift — e.g. `TOTAL (live): line_haul=9410.00 (target 238810.00) | driver_payment=
+42173.74 (target 48783.51) | fuel=120295.75/206rows (target 110072.33/171rows)` — and 33
+previously-baselined documents newly WORSE (5769-5803 range), not just old debt. Confirmed
+zero diff-overlap: `git diff origin/main...HEAD --stat` shows my branch touches no
+settlement-posting/GL/reconciliation backend code at all — the only Settlements files in the diff
+(`SettlementDetailPage.tsx`, `SettlementsPage.tsx`, `SettlementsToursRegister.tsx`) are all
+frontend display-only. The script itself only runs meaningfully against a real `DATABASE_URL`
+(live prod) and reads no baseline file that's in my diff. This is the same class of shared,
+external, in-progress production event as the earlier `verify-void-is-whole.mjs` blocker (Round
+116/117/121) — almost certainly the same Round 114 "PRODUCTION ONLY, LOOP UNTIL IT FLATTENS" E10
+void-runner, now visibly churning settlement-linked line_haul/fuel/expense totals, not something
+my diff caused or can fix.
+
+**Per Round 121, verbatim ("DO NOT retry in a loop and DO NOT bypass"): not retrying against this
+guard, not touching any baseline. `eb248fc5eb` is ready to push as-is the moment production
+settlement totals stop actively churning** — same resolution path as before (whoever is driving
+the E10 loop stabilizes it, or it finishes). No further push attempts against this specific guard
+until then.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+
+## ROUND 125/126 — VOID-A-LOAD CASCADE PREVIEW — BUILT, TSC/TEST CLEAN, HOLDING THE PUSH (branch `cc2-r102b-readonly-void`, commit `37f291e5fe`)
+
+Built the screen against the SHAPE per Round 125/126, verbatim: "the dispatcher sees, before
+confirming, every artifact that will be touched — each named with its number and amount, never a
+count," including FUEL EXPENSES and the driver bill KEEP (empty miles driven) / VOID (loaded
+miles, tarp, extra stops, detention) split.
+
+- New read-only `GET /api/v1/dispatch/loads/:id/cancellation-preview`
+  (`cancellation.service.ts`'s `getCancellationPreview()` + the route in `cancellation.routes.ts`),
+  computing all seven families off load-linkage predicates already proven elsewhere this session —
+  no new tables, no GL math, no write path. CC-1 owns the actual cascade execution this describes.
+- `CancelLoadModal.tsx` (the existing dispatcher-facing cancel UI) replaces its old static
+  three-bullet "this will automatically:" notice with the real itemized preview for a single-load
+  cancel: each artifact by its own number + dollar amount, a per-item exclude checkbox (the
+  packet's "confirms or corrects"), and the driver-bill KEEP/VOID split shown as two distinct
+  dollar figures. Confirm Cancel is blocked until the preview has actually loaded and — when it
+  names real artifacts — until "I have reviewed the artifacts above" is checked: no confirm
+  without seeing. Submit payload additively carries `cascade_preview_computed_at` /
+  `cascade_confirmed_at` / `cascade_excluded_ids` for CC-1's cascade to read once it lands. Batch
+  cancel (2+ loads) keeps the prior generic notice — no single load to preview against.
+- Live-verified (Neon, bypass_rls='lucia', USMCA): all 7 preview queries run clean against a real
+  cancelled load (13506 — settlement 5775 $1,186.40, two fuel transactions $352.95/$747.87); three
+  sampled `driver_bills` rows confirm `gross_amount_cents = deadhead_pay_cents + loaded_pay_cents`
+  exactly (e.g. 97305 = 22555 + 74750), so the KEEP/VOID derivation is exact.
+- 2 new `CancelLoadModal.test.tsx` cases (itemized-by-number-and-amount + honest-empty-state) pass.
+  The file's 4 pre-existing reason-dropdown tests are CONFIRMED pre-existing/unrelated — identical
+  failure reproduced on the unmodified file before this diff (a jsdom combobox-open flake).
+- `verify-ui-design-system-ratchet.mjs`: my first draft used `text-[11px]` 5 times (raw arbitrary
+  value, even though 11px is itself on the locked scale) — fixed by swapping to the semantic
+  `text-xs` class, same lesson as the item-2 badge work earlier this session.
+- New lane-cross ruling:
+  `docs/bus/2026-09-23-LEAD-RULING-ROUND-125-CC2-LANE-CROSS-VOID-A-LOAD-CASCADE-PREVIEW.md`,
+  covering the two `apps/backend/src/dispatch/**` files (CC-1 lane) touched.
+
+**Not pushed yet — per Round 121/125/126/128 (verbatim, "DO NOT retry in a loop"):** the shared
+`verify-alwaystrack-parity` blocker is still live (Round 128's own owner-authorized USMCA-wide
+void-to-zero campaign, actively in progress: loads 122→0, driver bills 94→0, settlements 89→0 not
+yet reached). Round 128 itself names the clear condition ("the alwaystrack-parity gate clears the
+moment live loads hit 0"), which is CC-3/Cursor/Codex's work, not mine. `37f291e5fe` (6 commits
+total on this branch) is ready to push the moment that lands — same resolution path as the prior
+five commits, no action needed from me to force it.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+
+## ROUND 131.3 — DAY-1 FEED GATE — BUILT, TSC/GUARD CLEAN, HOLDING THE PUSH (branch `cc2-r102b-readonly-void`, commit `ad1b076307`)
+
+Deadline 2026-09-23 20:00Z. Built exactly as specified, no push required yet per the packet.
+
+- `apps/backend/src/feed/feed-day-preflight.service.ts` (new) — `feedDayPreflight()`, USMCA-only,
+  read-only, all five checks: (1) every load_number the day's document names is absent or
+  VOID-prefixed in `mdata.loads`; (2) no live invoice/driver bill/settlement/expense/fuel
+  row/factoring advance references those load numbers; (3) the document exists in the same
+  ground-truth JSON `verify-alwaystrack-parity.mjs` reads, six dimensions parsing to real numbers;
+  (4) `banking.bank_transactions` count for USMCA unchanged from the run's opening reading; (5)
+  the purge window (`purge_state.json`) is still open. Never writes, never auto-corrects, never
+  soft-passes — every refusal names which check failed and the measured number.
+- `scripts/verify-feed-day-preflight-is-enforced.mjs` (new, the named guard) — fails if the
+  preflight's own structure is theater (any check hard-coded to always pass), and fails if any
+  backend file under `apps/backend/src/feed/**` (or naming "feed day") inserts into `mdata.loads`
+  without calling `feedDayPreflight()` in the same file. Wired into `.github/workflows/ci.yml` as
+  a real step (confirmed via `verify-guard-wired.mjs`: not on the orphan list) — deliberately NOT
+  registered in `package.json`, since DOD §4 forbids a new guard wired through package.json
+  without a matching `scripts/verify-steps/NNNN-*.mjs` claim, and that claim is its own separate
+  CC-1-lane, claim-reserve-branch process (mod-4 banded: CC-1≡1, CC-2≡3, Cursor EVEN, chrome-only
+  seats author none) that a `cc2-*` (unslashed) branch doesn't cleanly map into today — the
+  CI-workflow step alone is sufficient wiring, confirmed live.
+- Red-before-green proven twice on the guard itself: a mutated copy with one check's `passed`
+  hard-coded to `true` correctly FAILED with the exact structural reason; a synthetic bad-loader
+  fixture placed live under `apps/backend/src/feed/` (an INSERT with no `feedDayPreflight` call)
+  correctly FAILED naming that exact file. Both proofs reverted before committing.
+- Live-verified against real production data (Neon, bypass_rls='lucia', USMCA): ran the preflight's
+  exact SQL against AlwaysTrack document 5775 (loads 13506/13514/13516) and found load 13516 as a
+  genuine live, un-renamed collision (condition 1 would correctly refuse) plus a still-live
+  driver_bill=1/settlement=1 reference on the two VOID-renamed loads (condition 2 would correctly
+  refuse) — the gate catches real, current production state, not a synthetic case.
+- New lane-cross ruling:
+  `docs/bus/2026-09-23-LEAD-RULING-ROUND-131-3-CC2-LANE-CROSS-FEED-DAY-PREFLIGHT.md`, covering the
+  new `apps/backend/src/feed/**` module and the `scripts/verify-*.mjs` (CC-1 lane) guard filename,
+  both named directly in the packet.
+
+**Not pushed yet** — the packet's own words: "no push required until the gate clears." 8 commits
+now on this branch; `verify-alwaystrack-parity` is still red from the live USMCA void-to-zero
+campaign and clears on CC-3's/Cursor's counters, not on anything here.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+
+## ROUND 135.1 — SIXTH CHECK (SETTLEMENT GL CLOSE GATE) — BUILT, HOLDING THE PUSH (branch `cc2-r102b-readonly-void`, commit `9b6c56c9cb`)
+
+Added the sixth check to `feedDayPreflight()`: every live settlement whose `source_document_ref`
+matches the day's document must carry at least one posted JE posting tying to the ground truth's
+`driver_net_cents` (the driver-side document's `total_due`, newly read from the JSON's `driver[]`
+array). Vacuously passes with 0 settlements created yet; becomes real the moment one exists —
+"the check that stops re-feeding into the same silent posting hole," per the packet.
+
+Live-verified against the same real settlement used in Round 131.3's proof (5775, net_pay
+1186.40): confirmed 0 matching `journal_entry_postings` rows exist — check 6 against it produces
+`"settlement 5775: no live GL postings (gap 118640c)"`, matching the packet's own measured "0 of
+89" exactly. `verify-feed-day-preflight-is-enforced.mjs`'s structural arm extended to require all
+six checks; red-before-green re-proven (a renamed `check: 6,` correctly failed the guard,
+reverted). `npx tsc -p apps/backend/tsconfig.json --noEmit` clean.
+
+10 commits now on this branch. Not pushed — same standing blocker
+(`verify-alwaystrack-parity`, 94 USMCA loads live as of the last read), same law (no retry loop,
+no bypass, no baseline edit).
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7

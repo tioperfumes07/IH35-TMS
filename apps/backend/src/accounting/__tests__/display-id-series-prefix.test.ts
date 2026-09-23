@@ -9,6 +9,7 @@ import {
   nextInvoiceDisplayId,
   nextPaymentDisplayId,
   nextVendorCreditDisplayId,
+  resolveBillDisplayId,
   resolveInvoiceDisplayId,
   resolvePaymentDisplayId,
 } from "../display-id.js";
@@ -107,5 +108,20 @@ describe("E9 — a voided document's number stays taken (the unique constraints 
       resolvePaymentDisplayId(client as never, OPCO, new Date("2026-09-23T00:00:00Z"), "PMT-2026-00009")
     ).rejects.toBeInstanceOf(DuplicateDocumentNumberError);
     expect(calls.find((c) => /SELECT 1/.test(c.sql))!.sql).not.toMatch(/voided_at/);
+  });
+
+  // R-102-B item 4 (owner, "WE WILL USE THE SAME NUMBERS" — never reused): bill was the one
+  // family whose taken-check still excluded voided/revoked rows (`AND revoked_at IS NULL AND
+  // voided_at IS NULL`), so a voided bill's own number read as available and could be typed
+  // into a brand-new bill. Fixed to match every sibling family's pattern above.
+  it("bill: the manual taken-check does not exclude voided or revoked rows", async () => {
+    const { client, calls } = recordingClient({ takenRow: true });
+    await expect(
+      resolveBillDisplayId(client as never, OPCO, new Date("2026-09-23T00:00:00Z"), "BILL-2026-00009")
+    ).rejects.toBeInstanceOf(DuplicateDocumentNumberError);
+    const check = calls.find((c) => /SELECT 1/.test(c.sql))!;
+    expect(check.sql).not.toMatch(/voided_at/);
+    expect(check.sql).not.toMatch(/revoked_at/);
+    expect(check.values).toEqual([OPCO, "BILL-2026-00009"]);
   });
 });

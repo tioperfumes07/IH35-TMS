@@ -328,8 +328,9 @@ export function InvoicesListPage() {
     () => ({
       total: query.data?.total,
       hasMore: query.data?.has_more,
+      voidedCount: query.data?.voided_count,
     }),
-    [query.data?.total, query.data?.has_more]
+    [query.data?.total, query.data?.has_more, query.data?.voided_count]
   );
 
   const runInvoiceBulk = async (
@@ -613,6 +614,13 @@ export function InvoicesListPage() {
           {typeof listMeta.total === "number" ? ` of ${listMeta.total}` : ""}
           {listMeta.hasMore ? " (more available)" : ""}
         </span>
+        {/* R-102-B item 5 — owner, ROUND 121: "a list that silently hides is the same class of
+            defect as a badge that never renders." */}
+        {status === "active" && typeof listMeta.voidedCount === "number" && listMeta.voidedCount > 0 ? (
+          <span className="text-gray-500" data-testid="invoices-voided-count">
+            {listMeta.total ?? invoices.length} live, {listMeta.voidedCount} voided (hidden)
+          </span>
+        ) : null}
       </div>
     </div>
   );

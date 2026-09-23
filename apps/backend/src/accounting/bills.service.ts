@@ -17,6 +17,7 @@ import { isBillPaymentGlPostingEnabled } from "./bill-payment-gl.service.js";
 import { insertTransferInClient, type TransferInput } from "../banking/transfers.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { vendorIdentitySetSql } from "./vendor-identity.js";
+import { cascadeVoidChildren } from "./cascade-void-engine.service.js";
 import {
   auditVoid,
   canVoid,
@@ -3207,6 +3208,15 @@ export async function voidBill(
 
     // ACCT-F5673 — never strand the source bank transaction (same client, atomic with the flip).
     await cascadeBillVoidToSourceBankTransactions(client, { operatingCompanyId, billId, userId, reason });
+
+    // ROUND 138 -- this is THE direct voidBill() engine (the real writer behind the primary
+    // bill-void route/UI action, distinct from governance's executeBill). Cascades bill_lines/
+    // bill_payments here directly -- this function stamps status/revoked_at, not voided_at, on
+    // the bill header itself (a separate, pre-existing mismatch against this table's own
+    // voided_at-based live_predicate in usmca-purge-expected-zero.generated.json, named here and
+    // in the PR body, NOT fixed by this change -- out of this cascade engine's scope, which only
+    // ever writes to CHILDREN, never guesses a parent's own stamp column).
+    await cascadeVoidChildren(client, "bill", billId, operatingCompanyId);
 
     if (flagOn) {
       await auditVoid(client, userId, "bill", {

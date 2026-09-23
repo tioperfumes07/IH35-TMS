@@ -46,7 +46,10 @@ const voidBodySchema = z.object({
 
 const listQuerySchema = companyQuerySchema.extend({
   vendor_id: z.string().trim().optional(),
-  status: z.enum(["open", "applied", "voided"]).optional(),
+  // R-102-B item 5 — "active" is a frontend-facing pseudo-status (not a real vendor_credits.status
+  // value): open/applied are both live states, voided is the only dead one; see credit-
+  // memos.routes.ts's identical listQuerySchema for the sibling family's same pattern.
+  status: z.enum(["open", "applied", "voided", "active"]).optional(),
 });
 
 function canWriteVendorCredits(role: string) {
@@ -69,7 +72,9 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
         params.push(query.data.vendor_id);
         conditions.push(`vc.vendor_id = $${params.length}`);
       }
-      if (query.data.status) {
+      if (query.data.status === "active") {
+        conditions.push(`vc.status <> 'voided'`);
+      } else if (query.data.status) {
         params.push(query.data.status);
         conditions.push(`vc.status = $${params.length}`);
       }
@@ -110,10 +115,16 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
          LIMIT 500`,
         params
       );
-      return res.rows;
+      // R-102-B item 5 — disclosed count: company-wide, independent of every non-status filter.
+      const voidedRes = await client.query(
+        `SELECT count(*) AS n FROM accounting.vendor_credits
+          WHERE operating_company_id = $1::uuid AND status = 'voided'`,
+        [query.data.operating_company_id]
+      );
+      return { rows: res.rows, voidedCount: Number(voidedRes.rows[0]?.n ?? 0) };
     });
 
-    return { credits: rows };
+    return { credits: rows.rows, voided_count: rows.voidedCount };
   });
 
   // Preview only — same MAX+1 generator POST uses. Must register before /:id so "next-number" is not a UUID.

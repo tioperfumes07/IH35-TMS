@@ -69,6 +69,9 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
   const [selectedActiveRouteId, setSelectedActiveRouteId] = useState<string | null>(null);
   const fuelHistoryPageSize = 50;
   const [fuelHistoryPage, setFuelHistoryPage] = useState(1);
+  // R-102-B item 5 ("DEFAULT FILTERS") — off on every fresh load, matching every sibling family's
+  // own "active hides voided" convention (fuel_transactions previously had no hide/toggle at all).
+  const [includeVoidedFuel, setIncludeVoidedFuel] = useState(false);
   useEffect(() => {
     actionGenerationRef.current += 1;
     setActiveRoutePage(1);
@@ -193,6 +196,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       effectiveTrailerId,
       deepLinkTransactionId,
       fuelHistoryPage,
+      includeVoidedFuel,
     ],
     queryFn: () =>
       getFuelTransactions(companyId, {
@@ -203,10 +207,12 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
         load_id: effectiveLoadId,
         trailer_id: effectiveTrailerId,
         transaction_id: deepLinkTransactionId,
+        include_voided: includeVoidedFuel,
       }),
     enabled: Boolean(companyId) && tab === "history",
   });
   const fuelHistoryTotal = fuelTransactionsQuery.data?.total_count ?? 0;
+  const fuelHistoryVoidedCount = fuelTransactionsQuery.data?.voided_count ?? 0;
   const fuelHistoryPageCount = Math.max(1, Math.ceil(fuelHistoryTotal / fuelHistoryPageSize));
   useEffect(() => {
     setFuelHistoryPage(1);
@@ -472,6 +478,24 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                   </label>
                 </div>
               </CollapsedListFilters>
+            </div>
+            {/* R-102-B item 5 ("DEFAULT FILTERS" — owner, ROUND 121: "a list that silently hides
+                is the same class of defect as a badge that never renders"). Voided fuel purchases
+                used to show mixed in with live ones by default, with no way to hide them at all. */}
+            <div className="mt-2 flex items-center gap-2">
+              <label className="flex items-center gap-1 text-xs text-gray-600" data-testid="fuel-history-show-voided">
+                <input
+                  type="checkbox"
+                  checked={includeVoidedFuel}
+                  onChange={(e) => { setIncludeVoidedFuel(e.target.checked); setFuelHistoryPage(1); }}
+                />
+                Show voided
+              </label>
+              {!includeVoidedFuel && fuelHistoryVoidedCount > 0 ? (
+                <span className="text-xs text-gray-500" data-testid="fuel-history-voided-count">
+                  {fuelHistoryTotal} live, {fuelHistoryVoidedCount} voided (hidden)
+                </span>
+              ) : null}
             </div>
             <div className="mt-3">
               {fuelTransactionsQuery.isLoading ? (

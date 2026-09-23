@@ -65,7 +65,10 @@ const voidBodySchema = z.object({
 
 const listQuerySchema = companyQuerySchema.extend({
   customer_id: z.string().trim().optional(),
-  status: z.enum(["draft", "issued", "applied", "voided"]).optional(),
+  // R-102-B item 5 ("DEFAULT FILTERS") — "active" is a frontend-facing pseudo-status (not a real
+  // credit_memos.status value): draft/issued/applied are all live states, voided is the only dead
+  // one, so "active" means "exclude voided" rather than matching one literal status column value.
+  status: z.enum(["draft", "issued", "applied", "voided", "active"]).optional(),
 });
 
 function canWriteCreditMemos(role: string) {
@@ -88,7 +91,9 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
         params.push(query.data.customer_id);
         conditions.push(`cm.customer_id = $${params.length}::uuid`);
       }
-      if (query.data.status) {
+      if (query.data.status === "active") {
+        conditions.push(`cm.status <> 'voided'`);
+      } else if (query.data.status) {
         params.push(query.data.status);
         conditions.push(`cm.status = $${params.length}`);
       }
@@ -120,10 +125,16 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
          LIMIT 500`,
         params
       );
-      return res.rows;
+      // R-102-B item 5 — disclosed count: company-wide, independent of every non-status filter.
+      const voidedRes = await client.query(
+        `SELECT count(*) AS n FROM accounting.credit_memos
+          WHERE operating_company_id = $1::uuid AND status = 'voided'`,
+        [query.data.operating_company_id]
+      );
+      return { rows: res.rows, voidedCount: Number(voidedRes.rows[0]?.n ?? 0) };
     });
 
-    return { credit_memos: rows };
+    return { credit_memos: rows.rows, voided_count: rows.voidedCount };
   });
 
   app.get("/api/v1/accounting/credit-memos/next-number", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {

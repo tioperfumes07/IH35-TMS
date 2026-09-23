@@ -222,7 +222,7 @@ export function ExpensesListPage() {
         work_order_id: deepLinkWorkOrderId || undefined,
         insurance_claim_id: deepLinkInsuranceClaimId || undefined,
         limit: 200,
-      }).then((res) => res.rows),
+      }),
     enabled: Boolean(companyId),
   });
 
@@ -232,7 +232,7 @@ export function ExpensesListPage() {
     enabled: Boolean(companyId),
   });
 
-  const rows = query.data ?? [];
+  const rows = query.data?.rows ?? [];
 
   const totals = useMemo(() => {
     return rows.reduce(
@@ -519,6 +519,13 @@ export function ExpensesListPage() {
         <span>Total: {query.isError ? "—" : money(totals.total)}</span>
         <span>Matched: {query.isError ? "—" : totals.matched}</span>
         <span>Rows: {rows.length}</span>
+        {/* R-102-B item 5 — owner, ROUND 121: "a list that silently hides is the same class of
+            defect as a badge that never renders." */}
+        {status === "active" && typeof query.data?.voided_count === "number" && query.data.voided_count > 0 ? (
+          <span className="text-gray-500" data-testid="expenses-voided-count">
+            {rows.length} live, {query.data.voided_count} voided (hidden)
+          </span>
+        ) : null}
       </div>
     </div>
   );

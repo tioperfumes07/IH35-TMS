@@ -972,6 +972,15 @@ export function BillsPage() {
         </p>
       ) : null}
 
+      {/* R-102-B item 5 — owner: "a list that silently hides is the same class of defect as a
+          badge that never renders." Company-wide, both bill tables (vendor + driver), independent
+          of every non-status filter. */}
+      {status === "active" && typeof billsQuery.data?.voided_count === "number" && billsQuery.data.voided_count > 0 ? (
+        <p className="text-xs text-gray-500" data-testid="bills-voided-count">
+          {rows.length} live, {billsQuery.data.voided_count} voided (hidden)
+        </p>
+      ) : null}
+
       <ParityTable
         key={tableResetKey}
         columns={columns}

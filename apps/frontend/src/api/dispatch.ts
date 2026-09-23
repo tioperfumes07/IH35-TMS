@@ -737,6 +737,11 @@ export function cancelDispatchLoad(
     cancellation_notes?: string;
     billable_to_customer?: boolean;
     cancellation_charge_cents?: number;
+    // ROUND 125-126 (owner, via the Lead) — "both the proposal and his confirmation are recorded
+    // with his user id and timestamp." Additive; CC-1's cascade execution reads/records these.
+    cascade_preview_computed_at?: string;
+    cascade_confirmed_at?: string;
+    cascade_excluded_ids?: string[];
   }
 ) {
   const normalizedReason = String(body.cancel_reason ?? body.cancellation_notes ?? "").trim();
@@ -766,6 +771,39 @@ export function listDispatchCancellationReasons(operatingCompanyId: string) {
   u.set("operating_company_id", operatingCompanyId);
   return apiRequest<{ reasons: Array<Record<string, unknown>> }>(
     `/api/v1/dispatch/cancellation-reasons?${u.toString()}`
+  );
+}
+
+// ROUND 125-126 (owner, via the Lead) — VOID-A-LOAD CASCADE PREVIEW. Every artifact the cascade
+// is a candidate to touch, named with its own number and amount — never a count.
+export type CancellationPreviewItem = {
+  id: string;
+  number: string | null;
+  amount_cents: number;
+  detail: string | null;
+};
+export type CancellationPreviewDriverBillItem = CancellationPreviewItem & {
+  keep_cents: number;
+  void_cents: number;
+};
+export type CancellationPreview = {
+  load_id: string;
+  load_number: string | null;
+  computed_at: string;
+  invoices: CancellationPreviewItem[];
+  expenses: CancellationPreviewItem[];
+  vendor_bills: CancellationPreviewItem[];
+  driver_advances: CancellationPreviewItem[];
+  settlements: CancellationPreviewItem[];
+  fuel_expenses: CancellationPreviewItem[];
+  driver_bills: CancellationPreviewDriverBillItem[];
+};
+
+export function getLoadCancellationPreview(loadId: string, operatingCompanyId: string) {
+  const u = new URLSearchParams();
+  u.set("operating_company_id", operatingCompanyId);
+  return apiRequest<CancellationPreview>(
+    `/api/v1/dispatch/loads/${loadId}/cancellation-preview?${u.toString()}`
   );
 }
 

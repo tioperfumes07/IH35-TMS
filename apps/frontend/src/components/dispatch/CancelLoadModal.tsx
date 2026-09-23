@@ -1,6 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { listDispatchCancellationReasons } from "../../api/dispatch";
+import {
+  getLoadCancellationPreview,
+  listDispatchCancellationReasons,
+  type CancellationPreview,
+  type CancellationPreviewItem,
+} from "../../api/dispatch";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
@@ -9,6 +14,7 @@ import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../ListErrorState";
+import { formatUsdCents } from "../../lib/money";
 
 /** Pull a human message out of a cancel API failure (validation_error details, field message, or text). */
 function extractCancelError(err: unknown): string {
@@ -31,8 +37,63 @@ type Props = {
     cancellation_notes: string;
     billable_to_customer: boolean;
     cancellation_charge_cents?: number;
+    // ROUND 125-126 (owner, via the Lead) — "both the proposal and his confirmation are recorded
+    // with his user id and timestamp." Omitted for batch cancel (no single load to preview).
+    cascade_preview_computed_at?: string;
+    cascade_confirmed_at?: string;
+    cascade_excluded_ids?: string[];
   }) => Promise<void>;
 };
+
+/** One cascade-preview row — always the item's own number/description AND amount, never a count. */
+function CascadeItemRow({
+  item,
+  excluded,
+  onToggle,
+}: {
+  item: CancellationPreviewItem;
+  excluded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <label className="flex items-center justify-between gap-2 py-0.5 text-xs text-slate-700">
+      <span className="flex items-center gap-1.5">
+        <input type="checkbox" checked={!excluded} onChange={onToggle} />
+        <span className={excluded ? "line-through text-slate-400" : ""}>
+          {item.number ?? "—"}
+          {item.detail ? ` — ${item.detail}` : ""}
+        </span>
+      </span>
+      <span className={excluded ? "line-through text-slate-400" : "font-mono"}>{formatUsdCents(item.amount_cents)}</span>
+    </label>
+  );
+}
+
+function CascadeSection({
+  title,
+  items,
+  excludedIds,
+  onToggle,
+}: {
+  title: string;
+  items: CancellationPreviewItem[];
+  excludedIds: Set<string>;
+  onToggle: (id: string) => void;
+}) {
+  if (items.length === 0) return null;
+  const totalCents = items.reduce((sum, item) => (excludedIds.has(item.id) ? sum : sum + item.amount_cents), 0);
+  return (
+    <div className="border-t border-slate-200 pt-1">
+      <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+        <span>{title}</span>
+        <span className="font-mono">{formatUsdCents(totalCents)}</span>
+      </div>
+      {items.map((item) => (
+        <CascadeItemRow key={item.id} item={item} excluded={excludedIds.has(item.id)} onToggle={() => onToggle(item.id)} />
+      ))}
+    </div>
+  );
+}
 
 export function CancelLoadModal({
   open,
@@ -76,6 +137,8 @@ export function CancelLoadModal({
     setCharge("");
     setSubmitError(null);
     setCreatedReasons([]);
+    setReviewedCascade(false);
+    setExcludedIds(new Set());
   }, [resetKey, open]);
 
   const reasonsQuery = useQuery({
@@ -83,6 +146,35 @@ export function CancelLoadModal({
     queryFn: () => listDispatchCancellationReasons(operatingCompanyId).then((value) => value.reasons),
     enabled: open && Boolean(operatingCompanyId),
   });
+
+  // ROUND 125-126 (owner, via the Lead) — "the dispatcher sees, before confirming, every artifact
+  // that will be touched — each named with its number and amount, never a count." Single-load only
+  // (batch cancel has no one load to preview); CC-1 owns the actual cascade this describes.
+  const isBatch = Boolean(affectedCount && affectedCount > 1);
+  const previewQuery = useQuery({
+    queryKey: ["dispatch", "load-cancellation-preview", operatingCompanyId, loadId],
+    queryFn: () => getLoadCancellationPreview(loadId!, operatingCompanyId),
+    enabled: open && Boolean(operatingCompanyId) && Boolean(loadId) && !isBatch,
+  });
+  const [reviewedCascade, setReviewedCascade] = useState(false);
+  const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
+  const toggleExcluded = (id: string) =>
+    setExcludedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const preview: CancellationPreview | undefined = previewQuery.data;
+  const cascadeIsEmpty =
+    preview != null &&
+    preview.invoices.length === 0 &&
+    preview.expenses.length === 0 &&
+    preview.vendor_bills.length === 0 &&
+    preview.driver_advances.length === 0 &&
+    preview.settlements.length === 0 &&
+    preview.fuel_expenses.length === 0 &&
+    preview.driver_bills.length === 0;
 
   const { user } = useAuth();
   // Mirrors the backend gate (cancellation.service.ts: isOwner(role) = role === "Owner"). An Owner's
@@ -140,6 +232,13 @@ export function CancelLoadModal({
           setSubmitError(null);
           if (!selectedReason || notes.trim().length < 20) return;
           if (billable && !charge.trim()) return;
+          // ROUND 125-126 — no confirm without seeing: a single-load cancel cannot submit until
+          // the cascade preview has actually loaded, and (when it names real artifacts) until the
+          // dispatcher has explicitly reviewed it.
+          if (!isBatch && loadId) {
+            if (previewQuery.isPending || previewQuery.isError) return;
+            if (!cascadeIsEmpty && !reviewedCascade) return;
+          }
           setSubmitting(true);
           // DSP-MONEY-F7112 — snapshot exactly which load/company this request is FOR. If the
           // modal gets reassigned to a different load while this await is in flight (the parent
@@ -155,6 +254,16 @@ export function CancelLoadModal({
               cancellation_notes: notes.trim(),
               billable_to_customer: billable,
               cancellation_charge_cents: charge.trim() ? Math.round(Number(charge) * 100) : undefined,
+              // ROUND 125-126 — "both the proposal and his confirmation are recorded with his
+              // user id and timestamp." The backend cancel already stamps the actor/timestamp on
+              // the write; these carry the PROPOSAL's own computed_at and what was excluded.
+              ...(!isBatch && preview
+                ? {
+                    cascade_preview_computed_at: preview.computed_at,
+                    cascade_confirmed_at: new Date().toISOString(),
+                    cascade_excluded_ids: [...excludedIds],
+                  }
+                : {}),
             });
             const stale =
               liveScopeRef.current.loadId !== submittedFor.loadId ||
@@ -244,20 +353,90 @@ export function CancelLoadModal({
           placeholder="Cancellation charge (USD, optional)"
           className="w-full"
         />
-        {/* Cascade void notice — always shown so the operator knows what will happen automatically. */}
+        {/* ROUND 125-126 (owner, via the Lead) — VOID-A-LOAD CASCADE PREVIEW. "the dispatcher sees,
+            before confirming, every artifact that will be touched — each named with its number and
+            amount, never a count." Batch cancel keeps the old summary notice (no single load to
+            preview); a single load gets the real itemized breakdown. */}
         {!needsApproval || ownerInlineApprove ? (
-          <div
-            className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1.5 text-xs text-slate-800"
-            data-testid="cancel-load-modal-cascade-notice"
-          >
-            <span className="font-semibold">This will automatically:</span>
-            <ul className="mt-0.5 list-inside list-disc space-y-0.5">
-              <li>Void all open driver bills on this load</li>
-              <li>Cancel any linked driver settlements (if not yet paid out)</li>
-              <li>Void all open invoices on this load with a reversing journal entry</li>
-            </ul>
-            <p className="mt-1 text-slate-600">Paid or factored invoices and paid-out settlements must be resolved manually.</p>
-          </div>
+          isBatch ? (
+            <div
+              className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1.5 text-xs text-slate-800"
+              data-testid="cancel-load-modal-cascade-notice"
+            >
+              <span className="font-semibold">This will automatically:</span>
+              <ul className="mt-0.5 list-inside list-disc space-y-0.5">
+                <li>Void all open driver bills on each load</li>
+                <li>Cancel any linked driver settlements (if not yet paid out)</li>
+                <li>Void all open invoices on each load with a reversing journal entry</li>
+              </ul>
+              <p className="mt-1 text-slate-600">Paid or factored invoices and paid-out settlements must be resolved manually.</p>
+            </div>
+          ) : (
+            <div
+              className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1.5 text-xs text-slate-800"
+              data-testid="cancel-load-modal-cascade-preview"
+            >
+              <span className="font-semibold">Every artifact this cancel will touch:</span>
+              {previewQuery.isPending ? (
+                <p className="mt-1 text-slate-600">Loading impact…</p>
+              ) : previewQuery.isError ? (
+                <ListErrorState
+                  status={0}
+                  message="Cascade impact unavailable — cannot confirm until this loads."
+                  onRetry={() => void previewQuery.refetch()}
+                />
+              ) : preview ? (
+                cascadeIsEmpty ? (
+                  <p className="mt-1 text-slate-600" data-testid="cancel-load-modal-cascade-empty">
+                    No linked invoices, expenses, vendor bills, driver advances, settlements, fuel
+                    expenses, or driver bills found for this load.
+                  </p>
+                ) : (
+                  <div className="mt-1 space-y-1">
+                    <CascadeSection title="Invoices" items={preview.invoices} excludedIds={excludedIds} onToggle={toggleExcluded} />
+                    <CascadeSection title="Expenses" items={preview.expenses} excludedIds={excludedIds} onToggle={toggleExcluded} />
+                    <CascadeSection title="Vendor bills" items={preview.vendor_bills} excludedIds={excludedIds} onToggle={toggleExcluded} />
+                    <CascadeSection title="Driver advances" items={preview.driver_advances} excludedIds={excludedIds} onToggle={toggleExcluded} />
+                    <CascadeSection title="Settlements" items={preview.settlements} excludedIds={excludedIds} onToggle={toggleExcluded} />
+                    <CascadeSection title="Fuel expenses" items={preview.fuel_expenses} excludedIds={excludedIds} onToggle={toggleExcluded} />
+                    {preview.driver_bills.length > 0 ? (
+                      <div className="border-t border-slate-200 pt-1">
+                        <div className="text-xs font-semibold text-slate-700">Driver bill — KEEP / VOID split</div>
+                        {preview.driver_bills.map((db) => (
+                          <div key={db.id} className="py-0.5 text-xs text-slate-700">
+                            <div className="flex items-center justify-between">
+                              <span>
+                                {db.number ?? "—"}
+                                {db.detail ? ` — ${db.detail}` : ""}
+                              </span>
+                              <span className="font-mono">{formatUsdCents(db.amount_cents)}</span>
+                            </div>
+                            <div className="ml-3 flex items-center justify-between text-slate-600">
+                              <span>KEEP — empty miles actually driven</span>
+                              <span className="font-mono">{formatUsdCents(db.keep_cents)}</span>
+                            </div>
+                            <div className="ml-3 flex items-center justify-between text-slate-600">
+                              <span>VOID — loaded miles, tarp, extra stops, detention (freight never moved)</span>
+                              <span className="font-mono">{formatUsdCents(db.void_cents)}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                    <label className="mt-1 flex items-center gap-1.5 border-t border-slate-200 pt-1 text-xs font-medium text-slate-800">
+                      <input
+                        type="checkbox"
+                        checked={reviewedCascade}
+                        onChange={(event) => setReviewedCascade(event.target.checked)}
+                        data-testid="cancel-load-modal-cascade-reviewed"
+                      />
+                      I have reviewed the artifacts above.
+                    </label>
+                  </div>
+                )
+              ) : null}
+            </div>
+          )
         ) : null}
         {needsApproval ? (
           ownerInlineApprove ? (
@@ -270,33 +449,48 @@ export function CancelLoadModal({
             </div>
           )
         ) : null}
-        {!selectedReason || notes.trim().length < 20 || (billable && !charge.trim()) ? (
-          <p className="text-[11px] text-gray-500">
-            {!selectedReason
-              ? "Select a cancellation reason to continue."
-              : notes.trim().length < 20
-                ? `Add ${20 - notes.trim().length} more character(s) of notes to enable Confirm Cancel.`
-                : "Enter a cancellation charge amount — billable to customer requires one."}
-          </p>
-        ) : null}
-        {submitError ? (
-          <div className="rounded-sm border border-red-300 bg-red-50 px-2 py-1.5 text-xs text-red-900" role="alert">
-            {submitError}
-          </div>
-        ) : null}
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={guardedClose} disabled={submitting}>
-            Close
-          </Button>
-          <Button
-            type="submit"
-            variant="danger"
-            loading={submitting}
-            disabled={!selectedReason || notes.trim().length < 20 || (billable && !charge.trim())}
-          >
-            {submitLabel}
-          </Button>
-        </div>
+        {/* ROUND 125-126 — no confirm without seeing: blocks Confirm Cancel until the cascade
+            preview has loaded, and (when it names real artifacts) is explicitly reviewed. */}
+        {(() => {
+          const previewNotReady = !isBatch && Boolean(loadId) && (previewQuery.isPending || previewQuery.isError);
+          const cascadeUnreviewed = !isBatch && Boolean(loadId) && !cascadeIsEmpty && !reviewedCascade && previewQuery.isSuccess;
+          const cascadeBlocking = previewNotReady || cascadeUnreviewed;
+          return (
+            <>
+              {!selectedReason || notes.trim().length < 20 || (billable && !charge.trim()) || cascadeBlocking ? (
+                <p className="text-[11px] text-gray-500">
+                  {!selectedReason
+                    ? "Select a cancellation reason to continue."
+                    : notes.trim().length < 20
+                      ? `Add ${20 - notes.trim().length} more character(s) of notes to enable Confirm Cancel.`
+                      : billable && !charge.trim()
+                        ? "Enter a cancellation charge amount — billable to customer requires one."
+                        : previewNotReady
+                          ? "Waiting on the cascade impact preview before Confirm Cancel enables."
+                          : "Check \"I have reviewed the artifacts above\" to enable Confirm Cancel."}
+                </p>
+              ) : null}
+              {submitError ? (
+                <div className="rounded-sm border border-red-300 bg-red-50 px-2 py-1.5 text-xs text-red-900" role="alert">
+                  {submitError}
+                </div>
+              ) : null}
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="secondary" onClick={guardedClose} disabled={submitting}>
+                  Close
+                </Button>
+                <Button
+                  type="submit"
+                  variant="danger"
+                  loading={submitting}
+                  disabled={!selectedReason || notes.trim().length < 20 || (billable && !charge.trim()) || cascadeBlocking}
+                >
+                  {submitLabel}
+                </Button>
+              </div>
+            </>
+          );
+        })()}
       </form>
     </Modal>
   );

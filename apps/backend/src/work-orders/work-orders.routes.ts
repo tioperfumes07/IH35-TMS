@@ -10,6 +10,7 @@ import { autoCreateBillFromWO } from "../maintenance/two-section-service.js";
 import { operatorWorkOrderListSql } from "../maintenance/work-order-visibility.js";
 import { auditVoid, postVoidReversal, type VoidReversalResult } from "../accounting/void.service.js";
 import { requireVoidCancelExecutorWired } from "../lib/authz/void-cancel-authz.js";
+import { cascadeVoidChildren } from "../accounting/cascade-void-engine.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { generatePresignedUploadUrl, isR2Configured } from "../storage/r2-client.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
@@ -302,6 +303,8 @@ export async function settleWorkOrderFinancialLinkage(
           AND revoked_at IS NULL`,
       [bill.id, operatingCompanyId, userId, reason]
     );
+    // ROUND 138 -- WO-close bill void is another independent writer of accounting.bills.
+    await cascadeVoidChildren(client, "bill", bill.id, operatingCompanyId);
     await auditVoid(client, userId, "bill", { operatingCompanyId, entityId: bill.id, reason, reversal });
     if (reversal.reversal_journal_entry_id) reversingEntryRef = reversal.reversal_journal_entry_id;
     if (reversal.closed_period_reversal) closedPeriod = true;
@@ -346,6 +349,8 @@ export async function settleWorkOrderFinancialLinkage(
             AND status <> 'void'`,
         [exp.id, operatingCompanyId, reversal.reversal_journal_entry_id, userId, reason]
       );
+      // ROUND 138 -- WO-close expense void is another independent writer of accounting.expenses.
+      await cascadeVoidChildren(client, "expense", exp.id, operatingCompanyId);
       await auditVoid(client, userId, "expense", { operatingCompanyId, entityId: exp.id, reason, reversal });
       if (reversal.reversal_journal_entry_id) reversingEntryRef = reversal.reversal_journal_entry_id;
       if (reversal.closed_period_reversal) closedPeriod = true;

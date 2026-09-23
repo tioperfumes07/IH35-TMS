@@ -861,6 +861,22 @@ export async function listJournalEntries(input: {
 }
 
 /**
+ * R-102-B item 5 — disclosed count: company-wide, independent of every non-status filter (a list
+ * that hides voided rows must state what it hid).
+ */
+export async function countVoidedJournalEntries(userId: string, operatingCompanyId: string) {
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    const res = await client.query(
+      `SELECT count(*) AS n FROM accounting.journal_entries
+        WHERE operating_company_id = $1::uuid AND status = 'voided'`,
+      [operatingCompanyId]
+    );
+    return Number(res.rows[0]?.n ?? 0);
+  });
+}
+
+/**
  * Reverse drill-through: "what posted this journal entry" — the source object(s) tied to each
  * posting line. Reads BOTH source-tracking mechanisms that exist on the real schema (verified against
  * db/migrations/0195_accounting_posting_backbone_schema.sql — accounting.journal_entries itself has

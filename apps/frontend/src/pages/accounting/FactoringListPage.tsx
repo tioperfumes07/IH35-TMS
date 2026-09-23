@@ -96,11 +96,11 @@ export function FactoringListPage() {
         date_from: fromDate || undefined,
         date_to: toDate || undefined,
         load_id: deepLinkLoadId ?? undefined,
-      }).then((res) => res.rows),
+      }),
     enabled: Boolean(selectedCompanyId),
   });
 
-  const rows = query.data ?? [];
+  const rows = query.data?.rows ?? [];
 
   const columns = useMemo<ParityColumn<FactoringAdvance>[]>(
     () => [
@@ -203,6 +203,14 @@ export function FactoringListPage() {
     <AccountingSubNavWrapper title="Factoring" subtitle="Track factoring submissions, reserves, and releases" actions={<Button onClick={() => setSubmitOpen(true)}>+ Submit New Batch</Button>}>
 
       {filterBar}
+
+      {/* R-102-B item 5 — owner: "a list that silently hides is the same class of defect as a
+          badge that never renders." Company-wide, independent of every non-status filter. */}
+      {status === "active" && typeof query.data?.voided_count === "number" && query.data.voided_count > 0 ? (
+        <p className="text-xs text-gray-500" data-testid="factoring-voided-count">
+          {rows.length} live, {query.data.voided_count} voided (hidden)
+        </p>
+      ) : null}
 
       <ParityTable
         columns={columns}

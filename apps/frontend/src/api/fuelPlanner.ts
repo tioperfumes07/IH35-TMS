@@ -213,6 +213,9 @@ export type FuelTransactionListResponse = {
   transactions: FuelTransactionListItem[];
   total_count: number;
   has_more: boolean;
+  /** R-102-B item 5 — how many voided rows this filter set is currently hiding (0 when
+   * include_voided was passed true, since nothing is hidden in that case). */
+  voided_count: number;
 };
 
 export function getFuelTransactions(
@@ -227,6 +230,8 @@ export function getFuelTransactions(
     trailer_id?: string;
     from?: string;
     to?: string;
+    /** R-102-B item 5 — default false (hide voided), matching every sibling family. */
+    include_voided?: boolean;
   } = {}
 ) {
   const search = new URLSearchParams({ operating_company_id: companyId });
@@ -239,6 +244,7 @@ export function getFuelTransactions(
   if (params.trailer_id) search.set("trailer_id", params.trailer_id);
   if (params.from) search.set("from", params.from);
   if (params.to) search.set("to", params.to);
+  if (params.include_voided) search.set("include_voided", "true");
   return apiRequest<FuelTransactionListResponse>(`/api/v1/fuel/transactions?${search.toString()}`);
 }
 
