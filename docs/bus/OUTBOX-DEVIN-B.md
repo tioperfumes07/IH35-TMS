@@ -591,3 +591,58 @@ money-pr-local-gate --selftest PASS
 - If the writer produces a memo that violates any of these, guard 45 goes RED. That is the guard working as intended.
 
 **Neither agent does both. I guard, you fix/build.**
+
+---
+
+## DEVIN-B | E15.7-R + E12.3-R3 | MERGED | 4cc106c696 | 2026-09-23
+
+**PR #22471 — squash-merged. SHA: 4cc106c696fec53ce73f57cdeff74c125f8f51c8**
+
+### What shipped
+
+1. **Guard 45** (`verify-je-memo-is-human-readable.mjs`): LIVE guard, REQUIRES_LIVE_DB, fail-closed. Baseline 0, shrink-only. FAILs on serialized JSON, memo >200 chars, no document reference, empty memo. Wired into LIVE_DOMAIN_GUARDS. CC-2 owns the writer fix (task 38).
+
+2. **Guard 47** (`verify-relay-deposits-sync-is-scheduled.mjs`): SELF-ARMING POPULATION CHECK (E15.7-R shape fix). Cron absent → "SKIPPED — RELAY DEPOSIT CRON NOT BUILT (task 48, CC-2)" exit 0. Cron present → assert daily + wired at boot, RED if broken. No .guard-exempt.json entry — the guard arms itself the moment CC-2 lands the cron. Wired into STEPS. CC-2 owns the cron build (task 48).
+
+3. **Parity rewrite** (`verify-alwaystrack-parity.mjs`, E12.3-R3, LANE-CROSS): Feed-scoped. A document is IN SCOPE only when EVERY load it references is live in mdata.loads for USMCA. Otherwise SKIPPED — NOT FED YET, printed as scope, never as a variance. Structural assertions A-E apply to in-scope documents only. Removed baseline mechanism entirely (no baseline file, no UPDATE_ALWAYSTRACK_PARITY_BASELINE). Scope is a POPULATION check — never a flag, never an env var, never a date. Dynamic document count from ground-truth file (never hardcoded). Prints "parity scope: N of X documents in scope, M skipped NOT FED YET" every run.
+
+### RED-BEFORE-GREEN (both runs pasted)
+
+**Guard 45 — RED (fail-closed, no DATABASE_URL):**
+```
+verify-je-memo-is-human-readable: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP.
+```
+
+**Guard 45 — GREEN (live Neon, USMCA, bypass_rls='lucia'):**
+```
+LIVE PROOF — scanned 15 posted JE(s) for USMCA, 0 violation(s): none
+Longest memo length: 71 chars (limit 200)
+```
+
+**Guard 47 — SKIPPED (cron not built yet, self-arming):**
+```
+verify-relay-deposits-sync-is-scheduled: SKIPPED — RELAY DEPOSIT CRON NOT BUILT (task 48, CC-2). The guard arms itself the moment the cron file lands.
+```
+
+**Parity — RED (planted in-scope doc 9999 with wrong line_haul):**
+```
+9999: FAIL -- LINE_HAUL 5500.00!=9999.99; DRIVER_NET no driver-side document for 9999 in ground truth — cannot compare
+```
+
+**Parity — GREEN (planted doc removed, live production):**
+```
+parity scope: 0 of 34 documents in scope, 34 skipped NOT FED YET
+verify-alwaystrack-parity: LIVE PASS — 0 in scope, 34 skipped NOT FED YET, 0 mismatches, 5/5 structural assertions hold.
+```
+
+### Coordination
+
+| Work | Owner | Status |
+|------|-------|--------|
+| Guard 45 (je-memo-is-human-readable) | DEVIN-B | MERGED |
+| JE memo writer fix (task 38) | CC-2 | PENDING |
+| Guard 47 (relay-deposits-sync-is-scheduled) | DEVIN-B | MERGED (self-arming, SKIPPED until cron lands) |
+| Daily Relay deposit sync cron (task 48) | CC-2 | PENDING — guard arms itself when this lands |
+| Parity rewrite (E12.3-R3) | DEVIN-B | MERGED (LANE-CROSS from CC-3) |
+
+**Neither agent does both. I guard, CC-2 fixes/builds.**
