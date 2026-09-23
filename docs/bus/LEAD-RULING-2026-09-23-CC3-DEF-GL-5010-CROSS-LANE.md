@@ -1,5 +1,18 @@
 # Lead ruling — CC-3 lane cross, DEF DEADLOCK BROKEN / GL 5010
 
+> **★ SUPERSEDED — ROUND 86, 2026-09-23.** The Lead's own later ruling
+> (`~/Downloads/09-23-2026-LEAD-RULING-ROUND-86-GL-5010-KILLED-AND-CC1-UNFROZEN.md`), verbatim:
+> "GL 5010 DEF IS RETIRED. MY EARLIER RULING IS DEAD... I read the live QuickBooks company file
+> for USMCA Freight Solutions, Inc. on 09-22-2026. 154 product/service items, 126 active, 20
+> categories. The fuel block is three ITEMS under one category... there is NO DEF account and NO
+> reefer account in the company file. We are a QuickBooks clone. We mirror it." GL 5010 (created
+> below) is now deactivated (void-not-delete, history kept) and
+> `accounting.expense_category_account_map`'s def row is repointed back to 5000, live-verified —
+> `scripts/ops/gl-fix-06-retire-5010-repoint-def-to-5000.ts`. The 335/$10,970.23 postings reposted
+> under this ruling to 5010 were NOT reversed a second time (Round 85/86: transaction rows purge,
+> do not repost them again for proof). Everything below this line is HISTORY, kept per
+> never-delete, and describes a since-withdrawn account creation, not current law.
+
 **Date:** 2026-09-23
 **Seat:** CC-3
 **Files crossed:** `scripts/verify-fuel-transactions-per-load.mjs`,
