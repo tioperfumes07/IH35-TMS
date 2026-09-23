@@ -521,6 +521,9 @@ jobs:
       - name: verify:bank-undo-releases-every-match-column
         run: node scripts/verify-bank-undo-releases-every-match-column.mjs
 
+      - name: verify:live-domain-guards-are-diff-scoped
+        run: node scripts/verify-live-domain-guards-are-diff-scoped.mjs
+
       - name: verify:migration-lane-band
         run: node scripts/verify-migration-lane-band.mjs
 

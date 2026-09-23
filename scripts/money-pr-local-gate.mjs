@@ -29,6 +29,9 @@ const LABEL = "money-pr-local-gate";
 /** Ordered fail-fast suite — same classes that red'd Cursor #4009–#4011 / #4198 vs Claude. */
 const STEPS = [
   ["verify-definition-of-done-evidence", "scripts/verify-definition-of-done-evidence.mjs"],
+  // GATE-SCOPE-01 — proves this very file's LIVE_DOMAIN_GUARDS loop runs a guard only when its
+  // own declared domain is touched, never merely because DATABASE_URL happens to be set.
+  ["verify-live-domain-guards-are-diff-scoped", "scripts/verify-live-domain-guards-are-diff-scoped.mjs"],
   ["verify-no-money-theater", "scripts/verify-no-money-theater.mjs"],
   // Rule 26 — block parallel scoreboard-hotfile PRs before push (SKIP-PASS without gh token).
   ["verify-no-parallel-scoreboard-prs", "scripts/verify-no-parallel-scoreboard-prs.mjs"],
@@ -635,20 +638,45 @@ const changedForLiveDomains = (() => {
   if ((res.status ?? 1) !== 0) return null;
   return (res.stdout || "").split("\n").filter(Boolean);
 })();
+// GATE-SCOPE-01 (owner, via the Lead) — this loop's WHETHER-a-touched-guard-passes was always
+// correct; its WHEN-does-it-run was not. `touched` already computes correctly whether the diff
+// hits this guard's own declared domain. The prior condition ORed a live DB's mere presence in
+// with the diff-derived touched flag, so every live-domain guard ran on every push for any seat
+// that happened to have a live DB set — which is every seat, every push — re-introducing exactly the
+// "blocks every seat regardless of their own diff" class this file's own comments say
+// LIVE_DOMAIN_GUARDS exists to avoid (see the verify-fuel-relay-txn-vendor-unmatched comment
+// above). Confirmed live: verify-fuel-transactions-per-load (domain: fuel/, integrations/,
+// accounting/, data/alwaystrack/) blocked a banking-only PR (BANK-UNDO-01, #22452 — touches only
+// apps/backend/src/banking/ + frontend, none of that guard's domain) purely because a real
+// DATABASE_URL was set to let its OWN guards run for real.
+//
+// A live DB being available is what lets a touched guard run for real — never a reason to run an
+// untouched one. A guard whose domain the diff DOES touch still needs a live DB to prove anything
+// (ROUND 29.9-B: a live money guard that cannot connect is a FAIL, never a skip) — so a touched
+// guard with no DATABASE_URL now fails closed instead of silently running-because-DB-was-set. A
+// fuel change still runs the fuel guard and still fails closed; an untouched domain no longer
+// runs at all, on any diff, regardless of whether DATABASE_URL happens to be set.
 for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
   const rel = `scripts/${name}.mjs`;
   const prefixes = [...DATA_WRITE_PATHS, ...domainPaths];
   const touched =
     changedForLiveDomains === null ||
     changedForLiveDomains.some((f) => f === rel || ONE_SHOT_WRITER_RE.test(f) || prefixes.some((p) => f.startsWith(p)));
-  if (process.env.DATABASE_URL || touched) {
+  if (touched) {
+    if (!process.env.DATABASE_URL) {
+      console.error(
+        `\n${LABEL}: FAIL — ${rel} — this diff touches its domain but DATABASE_URL is not set. ` +
+          `A touched live-domain guard with no DB is a FAIL, never a skip (ROUND 29.9-B).\n`,
+      );
+      process.exit(1);
+    }
     const code = runNode(rel);
     if (code !== 0 && !acceptedAsEmptyByPurge(rel, code)) {
       failStep(name);
       process.exit(code);
     }
   } else {
-    const msg = `${rel} — no DATABASE_URL and none of its domain paths in this diff`;
+    const msg = `${rel} — none of its domain paths in this diff`;
     console.log(`[${LABEL}] SKIP ${msg}`);
     skippedLiveChecks.push(msg);
   }
