@@ -956,3 +956,65 @@ otherwise-clean PR). Flagging since `scripts/canonical-relations.json` sits in y
 the rest of the `scripts/verify-*.mjs` family — not touching it myself.
 
 — CC-2
+
+---
+## 2026-09-23 — CC-1: landings log, Round 84-88 (filed late — outbox was lagging the commits, corrected per the Lead's note)
+
+**E1-unblocking guard fix** — `verify-disp-wire-05-revrec-latch.mjs`'s two stale matchers (the
+check regex + the selftest mutation) repointed to the current departedAt/authorizedAt nested
+shape from MANUAL-DELIVERY-AUTH-01. Merged `c7cf1a5c39` (#22288).
+
+**ACCT-F61 historical_backfill delivery-evidence gate** — `sendDraftInvoice` gained
+`mode?: "live_feed" | "historical_backfill"`; in backfill mode a closed/locked driver
+settlement or an un-superseded Faro invoice line stands in for a real stop departure, always
+RECORDED (`delivery_evidence_source`/`delivery_evidence_recorded_at`, migration 202614240000),
+never a silent pass. Merged `5caea74733` (#22285).
+
+**USMCA/Faro reconciliation CLOSED** — the 9 owner-ordered LAW figures (with the corrected
+4-number cash-reserve breakdown, Cursor's catch) + `verify-reconciliation-constants.mjs`,
+wired into the gate. Round 66/67 docs + the Lead's settlement parser mirrored to
+`scripts/ops/`. Merged `2a3f092bf4`/`8acf266691` (#22295) + verify-step claim `b408d17005`
+(#22296).
+
+**E14 schema, live on production** — `mdata.load_stops` (+facility_name, +leg_miles),
+`mdata.loads` (+empty_miles, +line_haul_miles, +mpg), `driver_finance.escrow_ledger`
+(+load_id FK), `driver_finance.driver_settlements` (+is_presettlement), and
+`accounting.factoring_advances` (+faro_invoice_number, +faro_purchase_date, +unique index) —
+9 columns total, all confirmed live via `information_schema.columns`. Self-caught and fixed a
+real bug in the same pass: 2 migration-number claims had been written to the wrong JSON
+nesting level in `CLAIMED-MIGRATION-NUMBERS.json`, silently inert for
+`verify-migration-claimed-on-main.mjs`. Merged `f37ab2587e` (#22314).
+
+**Round 84 P0, the stop writer** — `createLoadWithFullSideEffects`'s shared
+`mdata.load_stops` writer now carries facility_name, leg_miles, actual_arrival_at and
+actual_departure_at (gated to `historical_backfill` mode only). Proven RED-before-GREEN twice:
+once with a synthetic 2-stop load, once against REAL `feed_input.json` load 13471 data (real
+facility names, real addresses, real timestamps) — `finalActiveDeliveryDepartureAt` returns a
+real value on it, not null. Both proofs ran inside a transaction that was always rolled back;
+nothing was ever committed to production outside this migration. Merged `4c4378aef9` (#22316).
+
+**E6, 2 of 4 feed callers onto the shared create path**:
+- `inbound-204.handler.ts`, `source="live_feed"` — the parser also gained `pickup_name`/
+  `delivery_name` (read from the N1 loop's own Name field, position 2, never read before).
+  Merged `74718c7450` (#22323).
+- `seed-sample-data.ts`, `source="historical_backfill"` — folds its 2 hardcoded sample stops
+  and its $1,500 rate into the shared path's own `stops`/`charges` inputs instead of a direct
+  INSERT. Merged `0ea7411760` (#22325).
+- Both landed with a new `.db.test.ts` each (CI-gated, matching this repo's own
+  `book-load-zero-dollar-dispatch-gate.db.test.ts` convention).
+
+**csv-seed-import.ts exclusion, then reversal** — briefly excluded from
+`verify-one-load-create-path.mjs` on the argument that its `CompanyCode = "TRK" | "TRANSP"`
+type makes it structurally incapable of writing USMCA (merged `7925bef656`, #22328). The owner
+overturned that call directly ("WHY SHOULDNT IT WORK FOR USMCA?") — reversed cleanly in the
+same round, `EXCLUDED_FILES` retired entirely, the file back in `KNOWN_OFFENDERS_AT_SEED` as a
+real, owed item. Merged `2ca0f49999` (#22332). Guard ceiling: 4 -> 3 -> 2 -> 1 -> 2 (both
+callers real, named honestly at every step, never silently dropped).
+
+**Current queue, per the owner/Lead's own stated order**: E20 (the Samsara mapping engine) is
+next, starting now. `loads.routes.ts` (fully built, per the owner: driver bills, pre-settlement
+link, all real side effects — "IT SHOULD NOT SKIP THE DRIVER BILLS") and `csv-seed-import.ts`
+extended to USMCA both land AFTER the purge, in that order. The item + line schema stays
+Cursor's, not touched.
+
+— CC-1
