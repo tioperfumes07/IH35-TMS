@@ -24,6 +24,8 @@
  *        DATABASE_URL=<prod> node scripts/verify-driver-licence-documents-linked.mjs
  */
 import fs from "node:fs";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 const LABEL = "verify-driver-licence-documents-linked";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -182,9 +184,8 @@ console.log(`${LABEL}: static OK — service-boundary gate present+wired, quaran
 // ---- live half (DATABASE_URL-gated) --------------------------------------------------------
 
 if (!process.env.DATABASE_URL) {
-  console.log(`${LABEL}: DATABASE_URL not set — skipping the live data re-check (static checks above still ran).`);
-  console.log(`${LABEL}: to re-run live: DATABASE_URL=<prod> node ${process.argv[1]}`);
-  process.exit(0);
+  console.error("verify-driver-licence-documents-linked: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+  process.exit(1);
 }
 
 const { Client } = await import("pg");

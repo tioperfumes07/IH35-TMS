@@ -21,6 +21,8 @@
  */
 import process from "node:process";
 import { createRequire } from "node:module";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 const require = createRequire(import.meta.url);
 const LABEL = "verify-settlement-detail-readmodel-s1b";
@@ -72,8 +74,8 @@ async function main() {
 
   const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
   if (!connectionString) {
-    console.log(`${LABEL} SKIP — no DATABASE_URL/DATABASE_DIRECT_URL; live join cannot be asserted here.`);
-    return 0;
+    console.error("verify-settlement-detail-readmodel-s1b: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
 
   const liveRequested = process.env.SETTLEMENT_DETAIL_READMODEL_S1B_LIVE === "1";

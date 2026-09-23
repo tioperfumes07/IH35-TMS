@@ -18,6 +18,8 @@
 //   node scripts/verify-close-creates-company-settlement.mjs --selftest
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 const require = createRequire(import.meta.url);
 const FILE = "apps/backend/src/driver-finance/settlement-payrun-close.service.ts";
@@ -82,8 +84,8 @@ function selftest() {
 async function liveCheck() {
   const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
   if (!connectionString) {
-    console.log(`${LABEL} SKIP (live half) — no DATABASE_URL/DATABASE_DIRECT_URL; live check not possible here.`);
-    return 0;
+    console.error("verify-close-creates-company-settlement: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
   const liveRequested = process.env.COMPANY_SETTLEMENT_CLOSE_LIVE === "1";
   if (!liveRequested && (process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true")) {

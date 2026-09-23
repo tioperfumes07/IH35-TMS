@@ -772,3 +772,17 @@ WHAT'S NEXT, in the Round 92 order
   FILED: scripts/verify-recon-usmca-bank-suggestion-coverage.mjs:148 COMMITs applyBankingRulesForCompany on USMCA bank rows
   (CC-2); only a broken import stops the write. It must ROLLBACK before anyone fixes the import.
 Files Modified: docs/bus/OUTBOX-CURSOR.md (this entry). Code lands on the three branches named above.
+
+CURSOR | 2026-09-23 — E7 BATCH 2b (ROUND 84 cross): 52 MORE GUARDS FAIL CLOSED · db-skip 102 -> 50 · ONE FILING FOR CC-2
+- 52 converted. Proof per file: live exit as ih35_ci_readonly recorded before the edit; after it node --check 0, no-DB exit != 0,
+  live exit UNCHANGED. 22 green are wired into money-pr-local-gate (20 in guards, 2 in the new live_flag_guards, run with --live).
+  30 red are listed as converted_red_not_wired: REQUIRES_LIVE_DB keeps them out of verify-static and the gate until green; CI runs
+  them against its own Postgres as before. Round 86: nobody works transaction rows to turn them green.
+- FILED TO CC-2 (banking lane), not fixed here: scripts/verify-recon-usmca-bank-suggestion-coverage.mjs:148 calls
+  applyBankingRulesForCompany(client, USMCA) inside BEGIN ... COMMIT, writing suggestion columns on USMCA banking.bank_transactions
+  whenever it runs with a write role. Its import of ../apps/backend/src/banking/banking-rules.engine.js fails today (the source is
+  .ts), and that failure is the only thing preventing the write. Fix order: ROLLBACK instead of COMMIT first, then the import.
+  Fixing the import alone turns a guard into a bank-row writer ("A GET must never write"; Round 86).
+- REMAINING: batch 2c, 50 guards with one-off shapes, hand edits.
+Files Modified: 52 scripts/verify-*.mjs, scripts/lib/db-skip-baseline.json, scripts/lib/e7-batch2-live-guards.json,
+scripts/money-pr-local-gate.mjs, docs/bus/OUTBOX-CURSOR.md.

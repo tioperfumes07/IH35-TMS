@@ -165,6 +165,8 @@ const authorizeBodySchema = z.object({
 
   const goodIndex = `
 import { registerManualDeliveryAuthorizationRoutes } from "./dispatch/manual-delivery-authorization.routes.js";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
   await registerManualDeliveryAuthorizationRoutes(app);
 `;
   if (!routeIsRegistered(goodIndex)) failures.push("routeIsRegistered false-negative on good source");
@@ -207,9 +209,8 @@ if (failures.length) {
 console.log(`${LABEL}: static OK — all 4 contract points (a-d) hold across poster/packet/route/index`);
 
 if (!process.env.DATABASE_URL) {
-  console.log(`${LABEL}: DATABASE_URL not set — skipping the live schema check (static half still ran).`);
-  console.log(`${LABEL}: to re-run live: DATABASE_URL=<prod> node ${process.argv[1]}`);
-  process.exit(0);
+  console.error("verify-manual-delivery-authorization: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+  process.exit(1);
 }
 
 const { Client } = await import("pg");

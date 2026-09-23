@@ -28,6 +28,8 @@
  *   DATABASE_URL=<prod> node scripts/verify-driver-vendor-linkage.mjs
  */
 import fs from "node:fs";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 const LABEL = "verify-driver-vendor-linkage";
 const CREATE_PATH = "apps/backend/src/mdata/ensure-driver-vendor.shared.ts";
@@ -70,9 +72,8 @@ console.log(`${LABEL}: static OK — driver-vendor create path mints vendor_type
 // Live half: only runs with a real DATABASE_URL (prod or a branch) — same convention as
 // verify-acc13-no-test-accounts-in-usmca-coa.mjs; never part of the CI ephemeral-DB suite.
 if (!process.env.DATABASE_URL) {
-  console.log(`${LABEL}: DATABASE_URL not set — skipping the live re-count (static check above still ran).`);
-  console.log(`${LABEL}: to re-run the live count: DATABASE_URL=<prod> node ${process.argv[1]}`);
-  process.exit(0);
+  console.error("verify-driver-vendor-linkage: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+  process.exit(1);
 }
 
 const { Client } = await import("pg");

@@ -33,6 +33,8 @@
 // (excluded today by the task's own has_suggestion definition: suggested_vendor_id OR
 // suggested_match_bill_id).
 import fs from "node:fs";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 const ENGINE_REL = "apps/backend/src/banking/banking-rules.engine.ts";
 const SUGGESTION_REL = "apps/backend/src/banking/suggestion-engine.ts";
@@ -123,8 +125,8 @@ console.log("verify-recon-usmca-bank-suggestion-coverage: static OK (suggestion-
 
 const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
 if (!connectionString) {
-  console.log("verify-recon-usmca-bank-suggestion-coverage — SKIPPED live check (no DATABASE_DIRECT_URL/DATABASE_URL)");
-  process.exit(0);
+  console.error("verify-recon-usmca-bank-suggestion-coverage: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+  process.exit(1);
 }
 
 const { default: pg } = await import("pg");

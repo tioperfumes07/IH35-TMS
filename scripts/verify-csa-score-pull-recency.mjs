@@ -2,6 +2,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const ROUTES_FILE = path.join(ROOT, "apps/backend/src/compliance/csa.routes.ts");
@@ -36,8 +38,8 @@ if (!migrationSource.includes("compliance.csa_basic_scores")) fail("migration mu
 
 const databaseUrl = process.env.DATABASE_URL?.trim();
 if (!databaseUrl) {
-  pass("static guard validated; DATABASE_URL not set, db recency check skipped");
-  process.exit(0);
+  console.error("verify-csa-score-pull-recency: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+  process.exit(1);
 }
 
 try {

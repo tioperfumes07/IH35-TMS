@@ -94,8 +94,8 @@ function selftest() {
 async function live() {
   const url = process.env.DATABASE_URL;
   if (!url) {
-    console.log(`${LABEL}: LIVE skipped (no DATABASE_URL)`);
-    return;
+    console.error("verify-acct-link-03-bill-unit-density: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
   const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
   await client.connect();

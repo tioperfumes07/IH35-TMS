@@ -23,6 +23,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 const LABEL = "verify-load-exception-reasons-catalog";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -209,9 +211,8 @@ async function run() {
   console.log(`${LABEL}: static OK — migration, route file, single registration, and no colliding route file`);
 
   if (!process.env.DATABASE_URL) {
-    console.log(`${LABEL}: DATABASE_URL not set — skipping the live check (static check above still ran).`);
-    console.log(`${LABEL}: to re-run the live check: DATABASE_URL=<prod> node ${process.argv[1]}`);
-    return;
+    console.error("verify-load-exception-reasons-catalog: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
 
   const { Client } = await import("pg");

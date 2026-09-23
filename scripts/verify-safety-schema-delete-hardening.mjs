@@ -14,6 +14,8 @@
  * verify:local-ci and against prod.
  */
 import { createRequire } from "node:module";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 const LABEL = "verify-safety-schema-delete-hardening";
 
@@ -40,7 +42,7 @@ async function main() {
   const pg = (await import("pg")).default;
   try { (await import("dotenv")).default.config(); } catch { /* optional */ }
   const cs = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
-  if (!cs) { console.log(`${LABEL} CAPABILITY SKIP — ACL/grants read only from a live DB. CI: verify:local-ci.`); return; }
+  if (!cs) { console.error("verify-safety-schema-delete-hardening: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B)."); process.exit(1); }
   const { Client } = pg;
   const client = new Client(buildPgClientConfig(cs, { connectionTimeoutMillis: 15000 }));
   try { await client.connect(); } catch (e) { console.log(`${LABEL} CAPABILITY SKIP — DB unreachable (${e.code ?? e.message}).`); return; }

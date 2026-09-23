@@ -25,6 +25,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 const LABEL = "verify-settlement-net-matches-signed-doc";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -74,8 +76,8 @@ async function main() {
 
   const url = process.env.DATABASE_URL;
   if (!url) {
-    console.log(`${LABEL}: SKIPPED-DB-CHECK (DATABASE_URL is unset) -- static sweep only, no live check ran`);
-    return;
+    console.error("verify-settlement-net-matches-signed-doc: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
   const pool = new pg.Pool({ connectionString: url, ssl: { rejectUnauthorized: false } });
   const client = await pool.connect();

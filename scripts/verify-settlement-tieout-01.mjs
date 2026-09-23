@@ -37,6 +37,8 @@
  *   DATABASE_URL=<Neon prod> node scripts/verify-settlement-tieout-01.mjs
  */
 import fs from "node:fs";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 const LABEL = "verify-settlement-tieout-01";
 const SEED_SCRIPT_PATH = "scripts/seed-missing-usmca-loads.ts";
@@ -111,9 +113,8 @@ console.log(`${LABEL}: static OK — override-rate fix present in both the seed 
 
 // Live half.
 if (!process.env.DATABASE_URL) {
-  console.log(`${LABEL}: DATABASE_URL not set — skipping the live re-check (static check above still ran).`);
-  console.log(`${LABEL}: to re-run live: DATABASE_URL=<prod> node ${process.argv[1]}`);
-  process.exit(0);
+  console.error("verify-settlement-tieout-01: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+  process.exit(1);
 }
 
 const { Client } = await import("pg");

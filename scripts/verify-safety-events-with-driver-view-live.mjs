@@ -14,6 +14,8 @@
 // Run: node scripts/verify-safety-events-with-driver-view-live.mjs [--selftest]
 //      DATABASE_URL=<prod> node scripts/verify-safety-events-with-driver-view-live.mjs
 import fs from "node:fs";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 const LABEL = "verify-safety-events-with-driver-view-live";
 const MIGRATION_FILE = "db/migrations/202613970000_safety_events_with_driver_column_rename_fix.sql";
@@ -72,9 +74,8 @@ if (!migrationHasCorrectAliases(sql)) {
 console.log(`${LABEL}: static OK — migration aliases driver_id/unit_id/event_at correctly, LEFT JOINs mdata.drivers`);
 
 if (!process.env.DATABASE_URL) {
-  console.log(`${LABEL}: DATABASE_URL not set — skipping the live re-count (static half still ran).`);
-  console.log(`${LABEL}: to re-run live: DATABASE_URL=<prod> node ${process.argv[1]}`);
-  process.exit(0);
+  console.error("verify-safety-events-with-driver-view-live: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+  process.exit(1);
 }
 
 const { Client } = await import("pg");

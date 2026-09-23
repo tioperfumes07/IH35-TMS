@@ -23,6 +23,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BASELINE = path.join(ROOT, "docs/schema-parity-baseline.json");
@@ -87,11 +89,8 @@ async function main() {
   // skips, and it says so out loud.
   const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
   if (!connectionString) {
-    console.log(
-      `${LABEL} SKIP-capability: database → ci / build-typecheck (no DATABASE_DIRECT_URL or ` +
-        `DATABASE_URL). The baseline-vs-database comparison runs for real in CI after db:reset.`
-    );
-    return;
+    console.error("verify-baseline-columns-exist-in-db: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
 
   const baseline = readBaseline(fs.readFileSync(BASELINE, "utf8"));

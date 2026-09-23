@@ -29,6 +29,8 @@ import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-draft-load-saves-and-is-visible";
@@ -90,8 +92,8 @@ export function assertGuard({ kanbanSrc, dbTestSrc, dbTestExists }) {
 async function liveCheck() {
   const url = process.env.DATABASE_URL;
   if (!url) {
-    console.log(`${LABEL}: LIVE skipped (no DATABASE_URL) — not a pass, not a fail; this check needs a real Neon connection`);
-    return true;
+    console.error("verify-draft-load-saves-and-is-visible: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
   const { default: pg } = await import("pg");
   const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
