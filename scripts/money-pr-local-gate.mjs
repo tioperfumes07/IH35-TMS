@@ -28,6 +28,7 @@ const LABEL = "money-pr-local-gate";
 
 /** Ordered fail-fast suite — same classes that red'd Cursor #4009–#4011 / #4198 vs Claude. */
 const STEPS = [
+  ["verify-driver-bill-linked-at-settlement-time", "scripts/verify-driver-bill-linked-at-settlement-time.mjs"],
   ["verify-load-cost-document-link-writers", "scripts/verify-load-cost-document-link-writers.mjs"],
   ["verify-definition-of-done-evidence", "scripts/verify-definition-of-done-evidence.mjs"],
   ["verify-no-money-theater", "scripts/verify-no-money-theater.mjs"],

@@ -178,6 +178,26 @@ export async function appendSettlementLineFromDriverBillIfMissing(
     return;
   }
 
+  // Structural assertion C — the bill belongs to the settlement as soon as its settlement line
+  // is materialized, not later when the cash/payment poster happens to run.  This is identity,
+  // not a payment-status transition: status remains open until the existing payment engine pays it.
+  // Never repoint a bill already linked to a different settlement; fail loud in the same transaction.
+  const settlementLink = await client.query<{ id: string }>(
+    `UPDATE driver_finance.driver_bills
+        SET settled_in_settlement_id = $1::uuid,
+            updated_at = now()
+      WHERE id = $2::uuid
+        AND operating_company_id = $3::uuid
+        AND voided_at IS NULL
+        AND status <> 'void'
+        AND (settled_in_settlement_id IS NULL OR settled_in_settlement_id = $1::uuid)
+      RETURNING id::text`,
+    [input.settlementId, bill.id, input.operatingCompanyId],
+  );
+  if (!settlementLink.rows[0]) {
+    throw new Error(`driver_bill_settlement_link_conflict:${bill.id}:${input.settlementId}`);
+  }
+
   const loadLabel = String(bill.load_number ?? input.loadId);
 
   // MILES SPEC (owner 2026-09-02) — "Two lines on the settlement, always": loaded miles and empty
