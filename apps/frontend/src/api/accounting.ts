@@ -349,6 +349,15 @@ export type BillDetailLine = {
   account_name: string | null;
   load_id: string | null;
   load_number: string | null;
+  /**
+   * Round 92/94 (item lines remainder, migration 202614271200) — catalogs.items FK + qty x rate =
+   * amount. Only ever all-set or all-null together (bills.service.ts enforces this on write).
+   */
+  item_id: string | null;
+  item_name: string | null;
+  quantity: number | null;
+  rate_cents: number | null;
+  unit_of_measure: string | null;
 };
 
 export type VendorCreditApplicationForBill = {
@@ -1229,6 +1238,14 @@ export function createVendorBill(
       category_kind?: string;
       category_code?: string;
       load_id?: string;
+      /**
+       * Round 92/94 (item lines remainder, migration 202614271200) — catalogs.items FK + qty x
+       * rate = amount. All four travel together or not at all (backend enforces this).
+       */
+      item_id?: string;
+      quantity?: number;
+      rate_cents?: number;
+      unit_of_measure?: string;
     }>;
   },
   opts?: { idempotencyKey?: string }

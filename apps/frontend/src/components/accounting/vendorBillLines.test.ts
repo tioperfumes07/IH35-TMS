@@ -142,3 +142,88 @@ describe("buildVendorBillLinePayloads", () => {
     expect(buildVendorBillLinePayloads(lines)[0]).not.toHaveProperty("load_id");
   });
 });
+
+// Round 92/94 — item lines remainder: a Section B line with a real catalog item picked and a
+// real quantity carries item_id/quantity/rate_cents/unit_of_measure, computed the same way the
+// DB's own CHECK verifies it (round(quantity * rate_cents) = round(amount * 100)).
+describe("buildVendorBillLinePayloads — item lines remainder (Round 92/94)", () => {
+  it("carries item_id/quantity/rate_cents/unit_of_measure when a catalog item + real quantity are set", () => {
+    const lines: TwoSectionLine[] = [
+      {
+        id: "1",
+        section: "B",
+        description: "Diesel",
+        quantity: 115,
+        unit_cost: 6.68,
+        amount: 768.2,
+        service_item_uuid: "33333333-3333-4333-8333-333333333333",
+      },
+    ];
+    const payload = buildVendorBillLinePayloads(lines);
+    expect(payload).toHaveLength(1);
+    expect(payload[0]).toMatchObject({
+      section: "B",
+      item_id: "33333333-3333-4333-8333-333333333333",
+      quantity: 115,
+      rate_cents: 668,
+      unit_of_measure: "each",
+    });
+    // amount_cents is DERIVED from quantity * rate_cents, not the UI's own separately-rounded
+    // `amount` field — guarantees the DB's round(quantity*rate_cents)=round(amount*100) check
+    // holds by construction.
+    expect(payload[0]!.amount_cents).toBe(Math.round(115 * 668));
+  });
+
+  it("does NOT send item_id/quantity/rate_cents when no catalog item is picked, even with a real quantity/unit_cost", () => {
+    const lines: TwoSectionLine[] = [
+      {
+        id: "1",
+        section: "B",
+        description: "Misc service",
+        quantity: 3,
+        unit_cost: 50,
+        amount: 150,
+      },
+    ];
+    const payload = buildVendorBillLinePayloads(lines);
+    expect(payload[0]).not.toHaveProperty("item_id");
+    expect(payload[0]).not.toHaveProperty("quantity");
+    expect(payload[0]).not.toHaveProperty("rate_cents");
+    expect(payload[0]!.amount_cents).toBe(15000);
+  });
+
+  it("does NOT send item_id/quantity/rate_cents on a sub_rows (parts/labor) breakdown — different FK target (catalogs.parts/labor_rates, not catalogs.items)", () => {
+    const lines: TwoSectionLine[] = [
+      {
+        id: "1",
+        section: "B",
+        description: "Service",
+        quantity: 1,
+        unit_cost: 0,
+        amount: 0,
+        service_item_uuid: "33333333-3333-4333-8333-333333333333",
+        sub_rows: [{ id: "s1", line_type: "parts", description: "Filter", quantity: 2, unit_cost: 12.5, amount: 25 }],
+      },
+    ];
+    const payload = buildVendorBillLinePayloads(lines);
+    expect(payload).toHaveLength(1);
+    expect(payload[0]).not.toHaveProperty("item_id");
+    expect(payload[0]).not.toHaveProperty("quantity");
+    expect(payload[0]!.amount_cents).toBe(2500);
+  });
+
+  it("does not invent an item line when quantity is zero, even with an item picked", () => {
+    const lines: TwoSectionLine[] = [
+      {
+        id: "1",
+        section: "B",
+        description: "Diesel",
+        quantity: 0,
+        unit_cost: 6.68,
+        amount: 0,
+        service_item_uuid: "33333333-3333-4333-8333-333333333333",
+      },
+    ];
+    expect(buildVendorBillLinePayloads(lines)).toEqual([]);
+  });
+});
