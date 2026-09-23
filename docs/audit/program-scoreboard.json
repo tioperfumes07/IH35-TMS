@@ -1,10 +1,10 @@
 {
-  "healthzSha": "19d3ff8",
-  "generated_at": "2026-09-22T18:00:19.461Z",
+  "healthzSha": "72b3e36",
+  "generated_at": "2026-09-23T00:00:01.195Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "19d3ff8",
+    "deployedSha": "72b3e36",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 22227,
-      "title": "FINDING: ACCT-F2026092209 — settlement-finalize now syncs load status (write-path fix, ROUND 33.2 §1)",
+      "number": 22312,
+      "title": "FINDING: ESCROW-LEDGER-SIGN-01 LANE: CC-3 (LANE_CROSS on scripts/money-pr-local-gate.mjs + settlements/approval.service.ts -- docs/bus/LEAD-RULING-2026-09-23-CC3-ESCROW-LEDGER-SIGN-CROSS-LANE.md)",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 12:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22227",
-      "sha": "4ff78e34a2",
-      "committedAtIso": "2026-09-22T12:59:59-05:00"
+      "mergedAtCt": "09/22/2026, 06:54 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22312",
+      "sha": "0967eeb4b9",
+      "committedAtIso": "2026-09-22T18:54:35-05:00"
     },
     {
-      "number": 22238,
-      "title": "CORRECTION: views.live_loads predicate was wrong — a round trip ends at SETTLEMENT, not at invoice",
+      "number": 22314,
+      "title": "FINDING: N/A LANE: FINANCIAL (E14 + factoring_advances Faro join key: 2 additive migrations for the settlement-refeed feeder and the day-by-day Faro feed-control gate)",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 12:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22238",
-      "sha": "3c36c1190b",
-      "committedAtIso": "2026-09-22T17:56:38Z"
+      "mergedAtCt": "09/22/2026, 06:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22314",
+      "sha": "f37ab2587e",
+      "committedAtIso": "2026-09-22T18:52:09-05:00"
     },
     {
-      "number": 22239,
-      "title": "FINDING: N/A LANE: DOCS (docs(bus) report -- T156 answered, I4 diesel re-match live result reported, push held on alwaystrack-parity baseline)",
+      "number": 22313,
+      "title": "Cursor-E17 I2 FINDING: RECONCILER-I2 — delivered load has an issued invoice: 22 exceptions, $82,587.00 (CC-2's 17 + 5)",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 12:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22239",
-      "sha": "8c1a380f20",
-      "committedAtIso": "2026-09-22T12:56:24-05:00"
+      "mergedAtCt": "09/22/2026, 06:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22313",
+      "sha": "7fef24a229",
+      "committedAtIso": "2026-09-22T18:49:59-05:00"
     },
     {
-      "number": 22237,
-      "title": "FINDING: N/A LANE: DOCS (docs(audit) GUARD-WORKORDERS -- verify-alwaystrack-parity baseline stale after my own correct live fuel-relink, blocking every seat's push, needs CC-1's re-measurement)",
+      "number": 22311,
+      "title": "FINDING: E8-BANK-LINE-DEAD-TARGET / E11-D3-LOAD-COSTS-SETTLED-LEAK (LANE-CROSS GRANTED, LEAD RULING ROUND 56-A)",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 12:51 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22237",
-      "sha": "fe3799e623",
-      "committedAtIso": "2026-09-22T12:51:43-05:00"
+      "mergedAtCt": "09/22/2026, 06:48 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22311",
+      "sha": "9e4dbe8ad2",
+      "committedAtIso": "2026-09-22T18:48:53-05:00"
     },
     {
-      "number": 22236,
-      "title": "MANUALS INDEX for every seat + feed-parity gates sharpened: conditions must still be met when fed",
+      "number": 22310,
+      "title": "Cursor-E7 batch 1: skip-list guards in the gate fail closed on their own domain paths; posting-source, reconciler and empty-settlement guards wired",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 12:48 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22236",
-      "sha": "6c17642cb0",
-      "committedAtIso": "2026-09-22T17:48:13Z"
+      "mergedAtCt": "09/22/2026, 06:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22310",
+      "sha": "02598800ff",
+      "committedAtIso": "2026-09-22T18:47:32-05:00"
     },
     {
-      "number": 22231,
-      "title": "FINDING: N/A — CLAIM-RESERVE 202614180000: views.live_loads permanent fix (ROUND 36.1)",
+      "number": 22309,
+      "title": "Cursor-E17 FINDING: RECONCILER-E17 — reconciler detection skeleton + exception queue + I8; settlement with no loads is a build failure",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 12:43 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22231",
-      "sha": "8c48285e5f",
-      "committedAtIso": "2026-09-22T12:43:33-05:00"
+      "mergedAtCt": "09/22/2026, 06:41 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22309",
+      "sha": "72b3e367af",
+      "committedAtIso": "2026-09-22T18:41:32-05:00"
     },
     {
-      "number": 22234,
-      "title": "FINDING: N/A",
+      "number": 22307,
+      "title": "FINDING: N/A (CLAIM-RESERVE 11551, 11555 -- reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 12:40 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22234",
-      "sha": "09ca56df78",
-      "committedAtIso": "2026-09-22T12:40:30-05:00"
+      "mergedAtCt": "09/22/2026, 06:39 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22307",
+      "sha": "5c0436169a",
+      "committedAtIso": "2026-09-22T18:39:51-05:00"
     },
     {
-      "number": 22235,
-      "title": "RULING: THE RECONCILER + FEED PARITY — one generative cause, and the verified side-effect list",
+      "number": 22308,
+      "title": "FINDING: ROUND69-DEF-DIESEL-FUEL-ROUTING-AND-WINDSHIELD-HEADLIGHT LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 12:38 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22235",
-      "sha": "02969860fe",
-      "committedAtIso": "2026-09-22T17:38:49Z"
+      "mergedAtCt": "09/22/2026, 06:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22308",
+      "sha": "757beaa603",
+      "committedAtIso": "2026-09-22T18:35:51-05:00"
     },
     {
-      "number": 22233,
-      "title": "FINDING: N/A LANE: DOCS (docs(bus) report -- item 17 of 48 closed, deadline met, moving to Round 38.1 diesel re-match)",
+      "number": 22306,
+      "title": "FINDING: N/A (docs only -- Faro fee fix merge report, E8/E11-D3 status, 13615 closed by evidence per Lead ruling, 13612 measured, audit-trigger ask re-posted to CC-1)",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 12:36 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22233",
-      "sha": "1fc788665d",
-      "committedAtIso": "2026-09-22T12:36:26-05:00"
+      "mergedAtCt": "09/22/2026, 06:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22306",
+      "sha": "daab3912bd",
+      "committedAtIso": "2026-09-22T18:35:33-05:00"
     },
     {
-      "number": 22232,
-      "title": "FINDING: ACCT-F30214 LANE: FINANCIAL (driver-finance -- item 17 of 48, invert the voidDocument() dependency: exported the two callee functions CC-1's dispatcher will call, deduplicated the existing /reverse route onto the same implementation)",
+      "number": 22305,
+      "title": "FINDING: N/A LANE: FINANCIAL (CLAIM-RESERVE 202614260000: accounting.factoring_advances faro_invoice_number + faro_purchase_date)",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 12:33 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22232",
-      "sha": "61e1f8150b",
-      "committedAtIso": "2026-09-22T12:33:17-05:00"
+      "mergedAtCt": "09/22/2026, 06:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22305",
+      "sha": "063944b3f6",
+      "committedAtIso": "2026-09-22T18:31:34-05:00"
     }
   ]
 }
