@@ -5117,5 +5117,71 @@ quantity/unit_amount_cents/item_id, NOT NULL, InvoiceDetailPage.tsx already rend
 no work needed there beyond the new nullable `unit_of_measure` sibling column, tracked in the
 dead-schema baseline for now.
 
+### ROUND 92/94 FINAL — all four of CC-2's assigned items live on origin/main
+
+D3 re-verified (no new defect, already reported above). The remaining three:
+
+**E20 Part B — merged #22385, sha 11f454313527163914b5c68ddd11bb5e99cb1886.** New
+`/samsara/driver-mapping` route consuming E20 Part A's 4 real endpoints (#22357). Status filter
+(Unmapped default / Mapped / All) -- 663-unmapped IS the default view, not a footnote. Each
+unmapped row's own resolver_suggestion renders its own named state -- matched (one-click "Use
+suggestion", still goes through the same map() write, never silent), ambiguous (candidate count,
+never a pick), unmatched. Multi-select + bulk Map to Driver/Vendor/Unmap wired to the 4 real
+endpoints; unmap disabled unless a selected row is actually mapped. Nothing writes a pairing the
+backend didn't resolve. 11 new component tests, tsc clean, full local gate PASS.
+
+**Item lines remainder — merged #22389, sha 4e2b82d385b11f7ee6b499888c255ca73b241935.**
+`accounting.bill_lines.item_id/quantity/rate_cents/unit_of_measure` (migration 202614271200,
+#22337) now wired end to end: the bill-create UI's Section B already captured a real catalog item
++ quantity (CostBreakdownBox's own live amount=quantity*unit_cost), the payload builder was just
+silently dropping it before it reached the API. `vendorBillLines.ts` now derives all four fields
+FROM that same quantity*rate math -- guarantees the DB's own
+`round(quantity*rate_cents)=round(amount*100)` CHECK holds by construction. bills.service.ts
+validates all-four-or-none + entity-scope before INSERT; BillDetailPage.tsx renders the new
+Item/Qty/Rate columns. Confirmed `accounting.invoice_lines` was ALREADY fully wired
+(pre-existing quantity/unit_amount_cents/item_id, InvoiceDetailPage.tsx already renders
+Qty/Unit) -- no work needed there beyond a new nullable unit_of_measure sibling column, left as
+tracked debt (no operator-facing unit selector exists for invoice lines). Line haul untouched
+anywhere in this diff -- only fires for a genuinely picked item with a genuinely captured
+quantity, never reconstructs a contracted total. 4 new tests + real red-before-green proof,
+7 pre-existing unchanged.
+
+**Deduction screens — merged #22396, sha 7b65b75beef3e975562fa31101110430afb2f9de.** Migration
+202614290000's `fault_party` (unassigned/driver/carrier/customer/broker/force_majeure, default
+unassigned) sat unwritten on all 11 live USMCA `accounting.invoice_disputes` rows -- no UI ever
+touched it. New `decideDisputeFault` + `POST /invoice-disputes/:id/fault`, modeled on the
+existing `resolveInvoiceDispute`. `DisputesHubPage.tsx` gets a Fault column (driver-fault rows
+drill to the real driver) and a "Decide fault"/"Change" action opening a modal: the closed
+six-value vocabulary, a driver picker that only appears for fault_party='driver', and a required
+real reason (min 10 chars, matches the DB's own non-empty CHECK). Confirm stays disabled until
+the reason is real and, for driver fault, a driver is actually picked. The recovery cap and the
+driver-fault-only rule are the database's own trigger
+(`driver_finance.enforce_recovery_not_over_disputed()`) -- this screen's only job is collecting
+the human decision honestly. 6 new backend invariant tests + real red-before-green proof,
+13/13 green. **Not built in this PR, flagged honestly:** the `deduction_recovery_links` CREATE
+flow (linking one specific fault-decided dispute to one specific driver deduction with a
+recovered amount + reason) -- the Lead's own packet named the fault-decision screen
+specifically; the recovery-link creation is separate, related UI this PR does not claim to close.
+
+**Two durable process bugs found and fixed along the way, saved to memory so they don't recur:**
+(1) `apps/frontend/tsconfig.json` is a solution-style config (files:[] + references) --
+`tsc -p apps/frontend/tsconfig.json --noEmit` silently checks ZERO files and always "passes,"
+even against a real, reproducible type error (caught live: a `SelectCombobox` prop-shape bug that
+passed this broken check repeatedly, then correctly failed the pre-push hook's real
+`tsc -b` invocation). Frontend typechecks from here on use `cd apps/frontend && npx tsc -b`. (2)
+`scripts/check-commit-evidence.mjs` takes the message-file path POSITIONALLY, not as `--file` --
+`node scripts/check-commit-evidence.mjs --file <path>` silently validates nothing (argv[2]
+becomes the literal string "--file"). Separately, its own documented "amend hole" fix (fall back
+to HEAD's file list when staged is empty) has a real gap: staging only a SMALL incremental fix on
+top of an already-committed commit during `--amend` leaves `git diff --cached` showing just that
+one file, not the full amended commit's true file set -- false-positived a real backend-work
+commit as a "frontend-only EntityLink commit" (Rule 23 money theater) purely because the
+incremental diff looked that way in isolation. Fix: `git reset --soft HEAD~1` before amending
+with an incremental change, so the index reflects the complete true diff.
+
+LIST EMPTY. All four assigned items (E11-D3, E20 Part B, item lines, deduction screens) are live
+on origin/main with real tests and live Neon proof, none deferred, none half-built without
+disclosure.
+
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
