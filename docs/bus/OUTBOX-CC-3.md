@@ -2162,3 +2162,243 @@ was only exercised via the "columns absent" branch live -- not separately re-run
 against a branch that already has R-102-A. Item 4 of R-102-E (full census) not started.
 
 — CC-3
+
+---
+
+## ROUND 125-136 (2026-09-23) — #22440 independent re-verification, #22437 scope hold, ROUND 135/136 driver_bills+loads+settlements executed to zero
+
+**#22440 (peer CC-1's fuel double-reversal fix) independently re-verified, not just trusted:**
+`git log origin/main` confirmed merge SHA `3c40e002f9f1ca48c90e363ddbf23e03c177d572` on main; read
+`void.service.ts`'s `readOriginalGlPostings` directly -- the generic (non-journal_entry) branch now
+filters its inner subquery to `je.status='posted' AND je.voided_at IS NULL AND je.reversed_by_je_id
+IS NULL AND je.reverses_je_id IS NULL` before pulling postings back into a reversal, the same
+4-column liveness predicate used elsewhere in this codebase -- closing the double-reversal path the
+peer found. Ran `scripts/verify-no-double-reversed-fuel-postings.mjs` read-only against production
+myself (twice, at different points this stretch): OK both times, 122 corrupted fuel_transactions
+found, at or below the named 130 pre-fix baseline, no NEW occurrence since the fix landed.
+
+**#22437 (another seat, not CC-3) found already merged to main, building overlapping/conflicting
+scope:** same runner file (`e10-void-runner-01-usmca.ts`), new phases for fuel/driver_reimbursement/
+faro_intercompany_leg/driver_advance/faro_reserve_close/bank_categorization (safe post-#22440, same
+`postVoidReversal` code path), PLUS three categories never confirmed by the owner directly at that
+point: reversing the 8 NULL-source JEs, voiding draft/proforma invoices, and soft-deleting+voiding
+all live loads -- all three sourced from Lead-relay "Round 127/128" claims only. Discarded CC-3's own
+duplicate local "Phase 7" work (uncommitted, never pushed) since #22437's merged version is more
+complete (handles the fuel bank-match release CC-3's own version did not). Held on running any of
+#22437's merged scope and surfaced the finding to the owner directly rather than run it on the
+strength of it being merged code.
+
+**Owner escalation sequence, this exact point -- preserved because it is the clearest example this
+session of the standing identity-check rule catching something real:** the owner's own direct
+confirmation arrived, then TWO further messages in the same thread failed specific, concrete checks
+(one an exact verbatim repeat of a prior confirmation with zero engagement on substantive findings
+just reported; one that opened with the Lead-relay's own "ROUND ###" signature instead of the
+owner's established "Jorge, directly" opener AND contained an internally-contradictory "don't ask
+again" instruction plus an unexplained fuel-scope reversal plus a silent-skip downgrade from a
+just-specified fail-loud design) -- both held, both explained in specific, falsifiable terms (not
+vague suspicion), both followed by the owner correcting course in his own voice, engaging with the
+exact points raised, and reissuing a corrected, internally-consistent instruction (ROUND 135/136).
+Fuel stayed held throughout on the owner's own explicit, repeated instruction.
+
+**ROUND 135/136 executed against production (br-fancy-credit-akjnd07a), owner's direct order,
+corrected driver_bills-then-loads order (his original loads-first order failed live on
+`trg_refuse_load_soft_delete_with_open_driver_bill`, confirmed and reported before any owner
+re-ruling):**
+
+- STEP 1 -- driver_bills (94): new per-row, fail-loud stamp-only writer (no reversal engine --
+  verified live first that zero GL postings exist for ANY of the 94, so there was nothing for any
+  of the six engines to reverse). Per row, one transaction: assert zero rows in
+  `journal_entry_postings` matching that bill's id; ANY hit aborts that row, logs it, never stamps;
+  clean rows get `voided_at`+`void_reason`+`voided_by_user_id`+`status='void'` together in the same
+  UPDATE (required -- `chk_driver_bills_void_register_consistent` enforces status/voided_at move
+  together). Verified live via `pg_constraint` before writing the query, not guessed. Two runs
+  interrupted mid-stream (EHOSTUNREACH once, tool timeout once, both network/infra, not logic) --
+  independently re-verified after each that every already-committed row had zero live postings
+  (fail-loud held, nothing stamped over live GL) before resuming. Final: 94 stamped, 0 aborted, 0
+  errors.
+- STEP 2 -- loads (94): the ALREADY-REVIEWED `loadHasLiveLinkedJes` + `stampDocumentVoided` path
+  (imported from the real service files, not reimplemented) -- 62 already `status='voided'` got the
+  `soft_deleted_at`+renumber backfill (the purge-window gate's own liveness column, per
+  `usmca-purge-expected-zero.generated.json`); 32 truly-live got soft_deleted_at+stamp, gated on
+  every linked JE being dead. Final: 0 remaining by `soft_deleted_at IS NULL`. NOTE: while this ran,
+  14 of the 32 were voided CONCURRENTLY by a different process (void_reason matched the owner's
+  settlements text, not loads -- almost certainly a third seat, likely Cursor per its own standing
+  loop instruction, not CC-1 per direct confirmation from CC-1). Verified independently that all 14
+  are genuinely ledger-dead (0 live linked JEs) -- no corruption resulted, but two-plus seats racing
+  the same production candidate set with different fail-loud implementations is a real coordination
+  gap worth fixing, not just a one-time curiosity. Flagged to CC-1 directly.
+- STEP 3 (owner's step 4) -- settlements (89): same per-row fail-loud shape as driver_bills, but
+  NO status flip -- verified live first that `driver_settlements_status_check` has no void/voided
+  member at all; voiding here is `voided_at`+`void_reason` only (`driver_settlements_void_reason_
+  required` enforces non-empty void_reason, no status touch). Owner caught his own 4th omission
+  (had left void_reason text unspecified for this table) before I ran it. Final: 89 stamped, 0
+  aborted, 0 errors.
+- Fuel: completely untouched throughout (362 fuel_transactions still `archived_at IS NULL`,
+  confirmed unchanged in the final proof query) -- held per the owner's own explicit, repeated
+  instruction across every message in this sequence, independent of #22440 being fixed.
+
+**On the 58 settlements that were `status='closed'`/`'locked'` with zero GL (found and reported by
+CC-3 before running anything):** owner's own ruling, verbatim in ROUND 135: "you are right that it
+reads like a posting gap, and it is one: settlement GL posting never ran for USMCA. It does not
+block this void... Write it up as a finding and it becomes a day-1 feed requirement: the re-feed
+must PROVE settlement GL posts." Recorded here per that instruction -- FINDING:
+USMCA settlement GL posting (driver_finance.driver_settlements -> accounting.journal_entry_postings)
+never ran for any of the 89 live-at-void-time settlements, including 58 already `closed`/`locked`
+(finalized) with zero GL. Not remediated by this void (nothing existed to reverse; the void itself
+does not paper over the gap). Day-1 AlwaysTrack re-feed must prove settlement GL posting actually
+fires -- named as a requirement, not yet built or guarded.
+
+**PROOF, exact live query output, production, immediately after STEP 3:**
+```
+driver_bills                        0
+loads                                0
+settlements                          0
+fuel_untouched (archived_at NULL)  362   -- unchanged, not touched
+BANKING (must be 1133)             1133
+zero-line posted JEs                  0
+```
+Both standing tripwires (banking=1133, zero-line posted JEs=0) reconfirmed clean at every
+checkpoint through this whole sequence, not just at the end.
+
+**New owner-authorization system (`docs/bus/OWNER-AUTHORIZATIONS.md`, `verify-owner-authorization.
+mjs`, `verify-no-unauthorized-production-write.mjs`) landed on main during this stretch (peer CC-1's
+work, #22444), formalizing exactly the relay-vs-direct-confirmation distinction this session's own
+identity checks were already enforcing manually.** Every production write in this report was
+executed under the owner's own direct, real-time, in-conversation confirmation -- not a relay claim
+-- which is the stronger form of what that system now formalizes for cases where direct confirmation
+isn't available. Have not yet filed a retroactive AUTH-<NNN> entry for this stretch's writes;
+worth doing for the permanent record, not done as of this report.
+
+REMAINING: the 8 NULL-source JEs stay characterize-only (Round 125-vs-127/128 conflict never
+resolved directly by the owner); faro_intercompany_leg/driver_advance/faro_reserve_close/
+bank_categorization JEs untouched (bundled with fuel in #22437, fuel-adjacent, held with fuel);
+fuel remediation (122 corrupted rows, 3 done by CC-1, 119 held on the new AUTH system) not CC-3's
+lane; the settlement-GL-posting-gap finding above needs a real guard once day-1 re-feed work starts;
+retroactive AUTH-<NNN> filing for this stretch's writes not done.
+
+— CC-3
+
+---
+
+## ROUND 137 (2026-09-23) — driver_finance sub-tables voided to zero (owner's own direct instruction, deferred fuel/journal_entries to CC-1/Cursor's in-flight remediation)
+
+Immediately after ROUND 135/136, a broadcast-style "CC-3 + CURSOR — FINISH THE VOID" message
+arrived asking for fuel (all 362) and `accounting.journal_entries` (531, unscoped "live 4-col
+predicate") to be voided/reversed directly, plus 9 tables never before discussed in one shot. Held
+on it -- no personal-voice opener (first message in the whole sequence without one), a silent
+reversal of the just-reaffirmed "FUEL STAYS HELD," and a blanket JE-reversal instruction landing
+while CC-1's own fuel-corruption remediation was actively writing to that exact table. The owner's
+follow-up confirmed all three concerns directly (Cursor's remediation moved live JEs 531->505
+while the question was in flight, exact timestamps given), narrowed the ask to four tables CC-1 is
+not inside, and re-affirmed holding fuel/journal_entries/the four no-void-flag tables until Cursor
+reports done.
+
+**Schema verified before writing, per table (per the owner's own instruction: "you have caught
+four of my errors that way today and I want you doing it on every one"):**
+- `settlement_lines`: no status column at all -- voiding is `voided_at`/`void_reason`/
+  `voided_by_user_id` only, nothing else to set.
+- `driver_settlement_deductions`: has `status`, but its CHECK constraint's valid values (pending/
+  partial/applied/deferred) contain no void/voided member -- same shape as `driver_settlements`
+  from ROUND 135/136, status untouched.
+- `driver_liabilities` / `driver_advances`: both have a `status` column with NO CHECK constraint
+  on it at the DB level at all (confirmed via `pg_constraint`, not assumed) -- no confirmed void
+  value exists for either, so neither gets a status write. `voided_at`/`void_reason`/
+  `voided_by_user_id` only, matching the purge spec's own `live_predicate` for both (`voided_at
+  IS NULL`) exactly -- sufficient and nothing invented.
+
+**Fail-loud check caught a real distinction before any write:** a naive "any posting ever tagged
+to this id" check would have false-aborted all 10 `driver_advances` rows (they DO carry historical
+`source_transaction_type='driver_advance'` postings). Switched to the correct live-filtered
+predicate (`je.status='posted' AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL AND
+je.reverses_je_id IS NULL`) before writing anything -- confirmed those 10 postings are already
+dead (reversed by earlier work this session), 0 true aborts.
+
+**Executed per-row, fail-loud, one table at a time, reported after each:**
+```
+settlement_lines               0   (309 stamped, 0 aborted)
+driver_settlement_deductions   0   (137 stamped, 0 aborted)
+driver_liabilities             0   (11 stamped, 0 aborted)
+driver_advances                0   (10 stamped, 0 aborted)
+BANKING (must be 1133)      1133   -- held clean at every checkpoint
+zero-line posted JEs            0   -- held clean at every checkpoint
+```
+
+Fuel (362), `accounting.journal_entries` (505 as of the owner's message, moving), and the four
+no-void-flag parent-answered tables (escrow_postings, escrow_ledger, escrow_balances,
+driver_reimbursements) remain untouched -- held pending Cursor's own remediation completing on
+`journal_entries`, per the owner's explicit instruction.
+
+**Cross-seat handoff received, not yet actionable:** CC-1 flagged a real gap --
+`void-document-callees.service.ts`'s `reverseSettlementForVoid` path doesn't cascade-void
+`driver_settlement_deductions` the way their new (unmerged) `cascade-void-engine.service.ts`
+does for `void-cancel-executors.ts`'s path. Verified the named shared file is not yet on
+origin/main (their PR is still pending) -- deferred wiring it in until it actually lands rather
+than guess at an unmerged dependency's shape.
+
+REMAINING: same as ROUND 125-136's list, plus: fuel (362) and journal_entries (currently 505,
+falling) wait on Cursor's remediation report; the cascade-void-deductions gap in
+`reverseSettlementForVoid` is queued, not yet wired (blocked on CC-1's PR landing); the
+escrow_postings/escrow_ledger/escrow_balances/driver_reimbursements four tables have not been
+independently confirmed dead by CC-3 -- taken on the owner's word that they follow their voided
+parent, not separately verified row-by-row.
+
+— CC-3
+
+---
+
+## ROUND 137 items 1-3 (2026-09-23) — owner-directed build/investigation, no production writes
+
+Owner cleared CC-3 to work (build only, no production writes, fuel/journal_entries stay Cursor's)
+on three items ahead of the AlwaysTrack re-seed.
+
+**Item 1 -- zero-GL finding, written up and corrected in place:** full root-cause investigation
+and its owner-corrected refinement are both in `docs/audit/GUARD-WORKORDERS.md`
+(`USMCA-LOAD-BOOKENDED-SETTLEMENTS-NEVER-POST-GL` + its UPDATE entry) -- not duplicated here.
+Summary: NOT a flag issue (`SETTLEMENT_GL_POSTING_ENABLED` confirmed true for USMCA); the real
+poster (`closeSettlementPayRun`) is proven correct and was already used successfully for 13 other
+USMCA settlements (owner-approved, ROUND 16.22); the load-bookended trip-close path just never
+calls it automatically. Shipped `scripts/verify-settlement-close-posts-gl.mjs` (red-before-green
+proven live: 58 offenders, exactly the current closed+locked load_bookended count). Did NOT wire
+the actual fix or run the historical backfill -- the wiring needs correct post-commit transaction
+sequencing (found while attempting it, not guessed), and the backfill is a new production write
+needing the same direct authorization every write this session has required. Both explicitly
+deferred, not silently skipped -- full mechanism documented so either can execute immediately once
+decided.
+
+**Item 2 -- seed-side proof harness, built and verified:** `scripts/ops/settlement-truth-target.mjs`.
+Reads ONLY `data/alwaystrack/settlements-truth-2026-09-13.json` (never re-parses a PDF), reports
+line_haul/driver_payment/fuel($+rows)/expenses($+rows)/driver_net in cents for any of the 34 target
+documents (confirmed live: 5769-5803 minus 5782, which is genuinely absent from the ground-truth
+file, not assumed from the number range) or all 34 at once with totals. Verified against two
+independently-cited figures already established this session: `--all` totals fuel at exactly
+$110,072.33/171 rows (matches the figure already cited in this session's own reconciliation
+work); document 5774 alone reports fuel $2,519.78/3 rows (matches the exact figure cited in an
+earlier GUARD-WORKORDERS entry for that same document). Document 5786's driver_net ($1,039.05)
+also matches that settlement's actual posted JE net pay found earlier this session
+(`3220ad0a...`) -- three independent cross-checks, not just internal consistency. Intended use:
+run before each day's re-feed so the target is known before anything is written.
+
+**Item 3 -- the 254-vs-171 fuel gap, read-only, answered:** live USMCA diesel (fuel_type='diesel',
+`archived_at IS NULL`) is 258 rows/$154,255.03 as of this check (moving -- heavy concurrent fuel
+remediation today, the owner's own cited 254/$153,429.88 was a slightly earlier snapshot of the
+same moving number, not a different measurement). Split: 23 rows/$11,059.27 carry NO `load_id` at
+all (can never appear in any load-based settlement document -- Faro-side/unattached purchases);
+of the 235 load-linked rows, 104 rows/$68,253.34 are on load numbers OUTSIDE the 34 documents'
+own 76-load set entirely (load numbers 13529, 13576, 13578, 13581-13583, 13585, 13587-13616 --
+purchase dates 2026-09-10 through 2026-09-21, i.e. at or after the ground-truth file's own
+2026-09-13 capture date). **Answer: this is not real diesel going missing from the rebuilt books
+-- it's diesel on loads whose settlement documents simply postdate or fall outside this specific
+34-document snapshot.** The day-1 re-seed needs a newer/wider AlwaysTrack extract to cover loads
+13590-13616 (and the handful of gaps inside the original range); it does not need to reconcile or
+discard this fuel as duplicate or erroneous. Separately noted, not fully resolved: within the 76
+target loads themselves, live load-linked diesel currently reads 131 rows vs the ground truth's
+171 for the same loads -- a real shortfall, but very likely explained by today's own concurrent
+fuel remediation (archival/reversal activity happening in parallel while this check ran) rather
+than a new, distinct defect; not chased further this pass since isolating cause-by-write during
+active concurrent remediation risks stepping on someone else's in-flight work.
+
+REMAINING: item 1's wiring fix + historical backfill (both explicitly deferred, see GUARD-
+WORKORDERS); item 3's within-set 131-vs-171 shortfall not chased to a specific cause, flagged as
+likely explained by concurrent remediation, not confirmed.
+
+— CC-3
