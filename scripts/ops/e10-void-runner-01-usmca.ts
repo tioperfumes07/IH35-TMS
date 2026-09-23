@@ -84,10 +84,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { voidJournalEntry, reverseJournalEntryNoFlip } from "../../apps/backend/src/accounting/journal-entries.service.js";
-import { reversePostedSourceTransaction } from "../../apps/backend/src/accounting/posting-engine.service.js";
+import { reversePostedSourceTransactionInClientTx, PostingEngineError } from "../../apps/backend/src/accounting/posting-engine.service.js";
 import { reverseFactoringAdvanceEvent } from "../../apps/backend/src/accounting/factoring-posting/poster.service.js";
-import { reverseSettlementBillPayment } from "../../apps/backend/src/accounting/settlement-posting/settlement-bill-payment-posting.service.js";
-import { reverseSettlementPayRun } from "../../apps/backend/src/driver-finance/settlement-payrun-reverse.service.js";
+import { reverseSettlementBillPaymentInClientTx } from "../../apps/backend/src/accounting/settlement-posting/settlement-bill-payment-posting.service.js";
+import { reverseSettlementPayRunInClientTx } from "../../apps/backend/src/driver-finance/settlement-payrun-reverse.service.js";
+import { companyBusinessDate } from "../../apps/backend/src/lib/company-business-date.js";
 
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const OWNER_USER_ID = "e4117991-d2c0-406d-8cda-74e98d95bccd";
@@ -129,6 +130,61 @@ async function main() {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, false)`, [USMCA_COMPANY_ID]);
   }
   await reassertSession();
+
+  // ROUND 102 FIX -- FIVE MORE UNCOVERED CALL SITES. Runner 01 shipped #22404 with exactly ONE
+  // BEGIN (the revrec latch): reverseJournalEntryNoFlip and its siblings do `SELECT ... FOR
+  // UPDATE` and write a header + N rows expecting the CALLER to own the transaction -- that is
+  // the SAME finding that exonerated the 274 orphan headers, and it cuts both ways. Settlements
+  // (both mechanisms), factoring, invoices and expenses all called their engines with no
+  // transaction of their own -- any failure partway through leaves an orphaned posting_batches/
+  // journal_entries row that then collides on idempotency_key on retry (209 of the Round 98/99
+  // rehearsal's 416 errors -- mostly expenses). inTx() is the one shared helper: BEGIN, then
+  // re-establish the TRANSACTION-LOCAL GUCs fresh (a `SET LOCAL`/is_local=true config does not
+  // survive a ROLLBACK -- the session-level reassertSession() above is a baseline, this is the
+  // per-transaction belt-and-suspenders the engines' own FOR UPDATE locks expect), then COMMIT on
+  // success or ROLLBACK on any error (re-thrown, never swallowed) so a failed attempt leaves
+  // NOTHING behind to block the next one. One helper, six call sites, not six copies.
+  async function inTx<T>(fn: () => Promise<T>): Promise<T> {
+    await client.query("BEGIN");
+    await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [USMCA_COMPANY_ID]);
+    try {
+      const result = await fn();
+      await client.query("COMMIT");
+      return result;
+    } catch (e) {
+      await client.query("ROLLBACK");
+      throw e;
+    }
+  }
+
+  // ROUND 98.1-A FIX -- REUSE, NOT A SEVENTH ENGINE. 70 invoices/expenses throw "No posted batch
+  // found to reverse" (PostingEngineError code SOURCE_NOT_FOUND): a live posted JE exists, but no
+  // accounting.posting_batches row was ever written for the ORIGINAL post, so the batch-oriented
+  // reversal path (reversePostedSourceTransaction) has no handle to find. Engines #5/#6
+  // (voidJournalEntry / reverseJournalEntryNoFlip) already accept ANY posted JE id regardless of
+  // how it got there -- the same fallback this runner already uses for revrec 'earn' latches
+  // (which are ALSO absent from PostingSourceType's typed dispatch). Falls back to resolving the
+  // live JE directly by (source_transaction_type, source_transaction_id) and reversing it by id,
+  // inside its own inTx(). Still six engines, no seventh.
+  async function reverseByJeIdFallback(sourceType: string, sourceId: string, reason: string): Promise<"reversed" | "no_live_je"> {
+    const jeRes = await client.query<{ journal_entry_uuid: string }>(
+      `
+        SELECT DISTINCT jep.journal_entry_uuid::text
+          FROM accounting.journal_entry_postings jep
+          JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+         WHERE je.operating_company_id = $1::uuid
+           AND jep.source_transaction_type = $2 AND jep.source_transaction_id = $3
+           AND je.status = 'posted' AND je.voided_at IS NULL
+           AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL
+      `,
+      [USMCA_COMPANY_ID, sourceType, sourceId]
+    );
+    if (jeRes.rowCount !== 1) return "no_live_je"; // 0 or >1 -- refuse rather than guess, named by the caller.
+    const journalEntryId = jeRes.rows[0]!.journal_entry_uuid;
+    await inTx(() => reverseJournalEntryNoFlip(client, { operatingCompanyId: USMCA_COMPANY_ID, journalEntryId, reason, actorUserId: OWNER_USER_ID }));
+    return "reversed";
+  }
 
   console.log(`DATABASE_URL host: ${new URL(url).host}`);
   console.log(executeFlag ? "MODE: --execute (will call the reversal engines)" : "MODE: dry-run (measurement only, no engine calls)");
@@ -174,7 +230,9 @@ async function main() {
     }
     if (!executeFlag) continue;
     try {
-      const res = await reverseSettlementBillPayment({ operatingCompanyId: USMCA_COMPANY_ID, settlementId: s.id, reason: VOID_REASON }, ACTOR);
+      const res = await inTx(() =>
+        reverseSettlementBillPaymentInClientTx(client, { operatingCompanyId: USMCA_COMPANY_ID, settlementId: s.id, reason: VOID_REASON }, ACTOR, companyBusinessDate())
+      );
       if (res.result === "reversed") settlementTally.reversed++;
       else settlementTally.already_reversed++;
     } catch (e) {
@@ -210,7 +268,9 @@ async function main() {
     }
     if (!executeFlag) continue;
     try {
-      const res = await reverseSettlementPayRun({ operatingCompanyId: USMCA_COMPANY_ID, settlementId: s.id, reason: VOID_REASON }, ACTOR);
+      const res = await inTx(() =>
+        reverseSettlementPayRunInClientTx(client, { operatingCompanyId: USMCA_COMPANY_ID, settlementId: s.id, reason: VOID_REASON }, ACTOR, companyBusinessDate())
+      );
       if (res.result === "reversed") settlementTally.reversed++;
       else settlementTally.already_reversed++;
     } catch (e) {
@@ -228,11 +288,19 @@ async function main() {
         JOIN accounting.journal_entry_postings jep
           ON jep.source_transaction_type LIKE 'factoring%' AND jep.source_transaction_id = fa.id::text
         JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
-       WHERE fa.operating_company_id = $1::uuid AND je.status = 'posted' AND je.reversed_by_je_id IS NULL AND je.voided_at IS NULL
+       WHERE fa.operating_company_id = $1::uuid AND je.status = 'posted' AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL AND je.voided_at IS NULL
     `,
     [USMCA_COMPANY_ID]
   );
   console.log(`\nFactoring advances with a live posted leg: ${advances.rowCount}`);
+  // ROUND 102 NOTE -- the one of the five NOT wrapped in inTx(). reverseFactoringAdvanceEvent has
+  // no ...InClientTx sibling (verified: grepped every export in poster.service.ts) -- it opens
+  // and manages its own connection/transaction internally, on a DIFFERENT connection than this
+  // script's `client`. Wrapping THIS call in `client`'s own BEGIN/COMMIT would open an empty
+  // transaction with no real writes in it (all the actual GL work happens on the other
+  // connection) -- noise, not a fix. Left as a standalone call, same as before; the atomicity
+  // this engine provides is internal to itself, not something this runner can add from outside
+  // without a client-accepting variant that does not exist yet.
   for (const a of advances.rows) {
     if (!executeFlag) continue;
     try {
@@ -253,7 +321,7 @@ async function main() {
         FROM accounting.invoices i
         JOIN accounting.journal_entry_postings jep ON jep.source_transaction_type = 'invoice' AND jep.source_transaction_id = i.id::text
         JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
-       WHERE i.operating_company_id = $1::uuid AND je.status = 'posted' AND je.reversed_by_je_id IS NULL AND je.voided_at IS NULL
+       WHERE i.operating_company_id = $1::uuid AND je.status = 'posted' AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL AND je.voided_at IS NULL
     `,
     [USMCA_COMPANY_ID]
   );
@@ -261,11 +329,26 @@ async function main() {
   for (const inv of invoices.rows) {
     if (!executeFlag) continue;
     try {
-      const res = await reversePostedSourceTransaction({ operating_company_id: USMCA_COMPANY_ID, source_transaction_type: "invoice", source_transaction_id: inv.id }, ACTOR);
+      const res = await inTx(() =>
+        reversePostedSourceTransactionInClientTx(client, { operating_company_id: USMCA_COMPANY_ID, source_transaction_type: "invoice", source_transaction_id: inv.id }, ACTOR, companyBusinessDate())
+      );
       if (res.result === "reversed") invoiceTally.reversed++;
       else invoiceTally.already_reversed++;
     } catch (e) {
-      invoiceTally.errors.push(`invoice ${inv.id}: ${e instanceof Error ? e.message : String(e)}`);
+      // ROUND 98.1-A FALLBACK: a live posted JE with no accounting.posting_batches row for the
+      // original post throws SOURCE_NOT_FOUND / "No posted batch found to reverse" -- REUSE
+      // engine #6 by JE id (same technique already used for revrec), not a 7th engine.
+      if (e instanceof PostingEngineError && e.message === "No posted batch found to reverse") {
+        try {
+          const fb = await reverseByJeIdFallback("invoice", inv.id, VOID_REASON);
+          if (fb === "reversed") invoiceTally.reversed++;
+          else invoiceTally.errors.push(`invoice ${inv.id}: no posted batch AND no single live JE to fall back to`);
+        } catch (fbErr) {
+          invoiceTally.errors.push(`invoice ${inv.id} (fallback): ${fbErr instanceof Error ? fbErr.message : String(fbErr)}`);
+        }
+      } else {
+        invoiceTally.errors.push(`invoice ${inv.id}: ${e instanceof Error ? e.message : String(e)}`);
+      }
     }
   }
 
@@ -278,7 +361,7 @@ async function main() {
         FROM accounting.expenses ex
         JOIN accounting.journal_entry_postings jep ON jep.source_transaction_type = 'expense' AND jep.source_transaction_id = ex.id::text
         JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
-       WHERE ex.operating_company_id = $1::uuid AND je.status = 'posted' AND je.reversed_by_je_id IS NULL AND je.voided_at IS NULL
+       WHERE ex.operating_company_id = $1::uuid AND je.status = 'posted' AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL AND je.voided_at IS NULL
     `,
     [USMCA_COMPANY_ID]
   );
@@ -286,11 +369,29 @@ async function main() {
   for (const ex of expenses.rows) {
     if (!executeFlag) continue;
     try {
-      const res = await reversePostedSourceTransaction({ operating_company_id: USMCA_COMPANY_ID, source_transaction_type: "expense", source_transaction_id: ex.id }, ACTOR);
+      const res = await inTx(() =>
+        reversePostedSourceTransactionInClientTx(client, { operating_company_id: USMCA_COMPANY_ID, source_transaction_type: "expense", source_transaction_id: ex.id }, ACTOR, companyBusinessDate())
+      );
       if (res.result === "reversed") expenseTally.reversed++;
       else expenseTally.already_reversed++;
     } catch (e) {
-      expenseTally.errors.push(`expense ${ex.id}: ${e instanceof Error ? e.message : String(e)}`);
+      // ROUND 98.1-A FALLBACK: same as invoices above -- REUSE engine #6 by JE id, not a 7th
+      // engine, when there is a live posted JE but no accounting.posting_batches row to find it
+      // through. This is also the fix for the 202 uq_posting_batches_company_idempotency_key
+      // collisions the Round 99/101 rehearsal hit on expenses: those were orphaned partial
+      // batches from a PRIOR unwrapped attempt (fixed above by inTx()) colliding on retry --
+      // once every attempt is atomic, there is nothing left to collide with.
+      if (e instanceof PostingEngineError && e.message === "No posted batch found to reverse") {
+        try {
+          const fb = await reverseByJeIdFallback("expense", ex.id, VOID_REASON);
+          if (fb === "reversed") expenseTally.reversed++;
+          else expenseTally.errors.push(`expense ${ex.id}: no posted batch AND no single live JE to fall back to`);
+        } catch (fbErr) {
+          expenseTally.errors.push(`expense ${ex.id} (fallback): ${fbErr instanceof Error ? fbErr.message : String(fbErr)}`);
+        }
+      } else {
+        expenseTally.errors.push(`expense ${ex.id}: ${e instanceof Error ? e.message : String(e)}`);
+      }
     }
   }
 
@@ -302,7 +403,7 @@ async function main() {
         FROM fuel.fuel_transactions ft
         JOIN accounting.journal_entry_postings jep ON jep.source_transaction_type = 'fuel_event' AND jep.source_transaction_id = ft.id::text
         JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
-       WHERE ft.operating_company_id = $1::uuid AND je.status = 'posted' AND je.reversed_by_je_id IS NULL AND je.voided_at IS NULL
+       WHERE ft.operating_company_id = $1::uuid AND je.status = 'posted' AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL AND je.voided_at IS NULL
     `,
     [USMCA_COMPANY_ID]
   );
@@ -357,16 +458,11 @@ async function main() {
           // no-ops the retry's same-numbered line via ON CONFLICT DO NOTHING, leaving the new
           // header with only one side posted and the trigger firing immediately. Wrapping the call
           // in an explicit transaction here is the real fix -- the function's own FOR UPDATE lock
-          // is the tell that it was written to expect one.
-          try {
-            await client.query("BEGIN");
-            await reverseJournalEntryNoFlip(client, { operatingCompanyId: USMCA_COMPANY_ID, journalEntryId: l.je_id, reason: VOID_REASON, actorUserId: OWNER_USER_ID });
-            await client.query("COMMIT");
-            revrecTally.reversed++;
-          } catch (e) {
-            await client.query("ROLLBACK");
-            throw e;
-          }
+          // is the tell that it was written to expect one. ROUND 102: now the shared inTx() helper
+          // (defined once, near the top of main()) instead of its own inline BEGIN/COMMIT/ROLLBACK
+          // -- one helper, six call sites, not six copies.
+          await inTx(() => reverseJournalEntryNoFlip(client, { operatingCompanyId: USMCA_COMPANY_ID, journalEntryId: l.je_id, reason: VOID_REASON, actorUserId: OWNER_USER_ID }));
+          revrecTally.reversed++;
         } else {
           revrecTally.already_reversed++;
         }
