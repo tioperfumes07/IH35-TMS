@@ -1850,3 +1850,43 @@ documentation-only migration addendum in a NEW migration, or an explicit one-tim
 regeneration) is a ruling, not a coder decision.
 
 — CC-1
+
+## ROUND 133/134.1 — merged and live. Fuel remediation paused at 3/122 pending an AUTH entry.
+
+All merged to main, current tip `fe0170c8a47f87ac1d291bf61e28912fa96f0a2a`:
+  - #22444 — the owner authorization system: `docs/bus/OWNER-AUTHORIZATIONS.md`,
+    `scripts/verify-owner-authorization.mjs` (fetches from `origin/main` only — live-proven: fails
+    correctly when an AUTH exists only on a local branch, not main), the law at the top of
+    `docs/bus/00-CODER-START-HERE.md`, `scripts/verify-no-unauthorized-production-write.mjs` (static
+    scan, 142-file shrink-only baseline for pre-existing scripts/ops/, zero tolerance for new ones,
+    red-before-green proven). **Disclosed, not hidden:** the "merged by the repo owner" check is not
+    currently a real identity boundary in this repo — every coder seat merges under the same shared
+    `tioperfumes07` GitHub credential (checked live via `gh api user` and three PRs I personally
+    merged this session). The check still runs for when that changes; the real protection today is
+    the AUTH text existing as a permanent, byte-for-byte, reviewable commit on main before any seat
+    acts, not identity verification.
+  - #22445 — the `reversed_by_je_id` linkage fix I under-called as "bookkeeping-only" in the P0
+    report. It is not: `postVoidReversal` only wrote the header link when exactly one other original
+    JE existed, silently no-op'ing on every multi-JE document (464/624 USMCA fuel_transactions have
+    2-4). Live proof this was load-bearing: 1665 reversing JEs / 1665 distinct originals / 0 doubles
+    BY LINKAGE, while the net-balance scan found 122 real corrupted rows the same linkage could not
+    see — this is why remediation needed a full scan instead of a join. Fixed: writes
+    `reversed_by_je_id` on every original in a combined set now. New guard, 116-row shrink-only
+    baseline for the pre-existing gap (not backfilled — metadata only, zero dollar impact, separate
+    follow-up).
+  - #22446 — item 3, named in writing: `go26-consolidation-ratchet`
+    (`apps/frontend/src/pages/samsara-driver-mapping/SamsaraDriverMappingPage.tsx`, outside this
+    session's domain) and `build-typecheck-heavy`/`verify-no-duplicate-financial-ledger`
+    (`driver_finance.deduction_recovery_links` missing a `CANONICAL-CHECK` comment on an
+    already-applied migration — confirmed a genuine non-duplicating table, blocked from a unilateral
+    fix because the two available paths each violate a different standing law: editing an applied
+    migration, or regenerating a baseline without asking). Both need a ruling, not a coder decision.
+
+**Fuel corruption remediation status:** 3 of 122 corrected and verified sound (posted before the
+AUTH law existed). The remaining 119 are paused, correctly, per the new law — there is no AUTH entry
+yet authorizing them. I will not issue one myself; that defeats the system's whole point. Whenever
+the owner merges an AUTH-<NNN> for this action, I'll verify it with
+`scripts/verify-owner-authorization.mjs` and resume immediately, no further confirmation needed, per
+the law's own text.
+
+— CC-1
