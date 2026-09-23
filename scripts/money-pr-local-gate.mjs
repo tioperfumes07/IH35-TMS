@@ -287,6 +287,10 @@ const GUARD_303 = [
 const DATA_WRITE_PATHS = ["db/migrations/", "scripts/ops/"];
 const ONE_SHOT_WRITER_RE = /^scripts\/run-[^/]+-once\.m?[jt]s$/;
 const LIVE_DOMAIN_GUARDS = [
+  [
+    "verify-void-is-whole",
+    ["apps/backend/src/accounting/", "apps/backend/src/driver-finance/", "apps/backend/src/factoring/", "apps/backend/src/fuel/", "db/migrations/", "scripts/purge/"],
+  ],
   ["verify-purge-window-state", ["scripts/purge/", "scripts/lib/purge-window.mjs", "purge_state.json"]],
   ["verify-faro-invoice-lines-load-linkage", ["apps/backend/src/data-infra/", "apps/backend/src/factoring/"]],
   [
