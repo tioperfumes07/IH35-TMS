@@ -2,6 +2,8 @@
 import fs from "node:fs";
 import process from "node:process";
 import pg from "pg";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2c)";
 
 const ROOT = new URL("../", import.meta.url);
 const read = (path) => fs.readFileSync(new URL(path, ROOT), "utf8");
@@ -60,6 +62,10 @@ if (process.argv.includes("--selftest")) {
 }
 
 const databaseUrl = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
+if (!databaseUrl && !process.argv.includes("--selftest")) {
+  console.error("verify-yard-location-and-fence: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+  process.exit(1);
+}
 if (databaseUrl && !process.argv.includes("--selftest")) {
   const client = new pg.Client({ connectionString: databaseUrl });
   await client.connect();

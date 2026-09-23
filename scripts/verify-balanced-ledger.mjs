@@ -34,6 +34,9 @@
 import process from "node:process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2c)";
+/** @matrix-built modules=accounting cols=connectivity */
 
 const ENFORCE = process.env.BALANCED_LEDGER_ENFORCE === "true";
 
@@ -67,9 +70,8 @@ export const ASSERTIONS = {
 async function main() {
   const cs = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
   if (!cs) {
-    // DEGRADE-SAFE: no DB locally → skip, do not crash (unlike the block-ready C5 hook).
-    console.warn("[balanced-ledger] no DATABASE_URL — skipping (advisory). CI/cron with a DB is the real gate.");
-    process.exit(0);
+    console.error("verify-balanced-ledger: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
 
   // pg is a runtime dep; import lazily so the no-DB path above never needs it.

@@ -20,6 +20,8 @@
  * second read model in the Settlement tab, the old "No active pre-settlement found" text.
  */
 import fs from "node:fs";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2c)";
 
 const ROUTE = "apps/backend/src/driver-finance/tour-readout.routes.ts";
 const LINK = "apps/backend/src/dispatch/presettlement-link.service.ts";
@@ -78,7 +80,7 @@ function audit(f) {
 
 async function live() {
   const url = process.env.DATABASE_URL;
-  if (!url) { console.log("[verify-ldt-5] SKIP live half — no DATABASE_URL"); return []; }
+  if (!url) { console.error("verify-ldt-5-presettlement-readout: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B)."); process.exit(1); }
   const { default: pg } = await import("pg");
   const c = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
   await c.connect();

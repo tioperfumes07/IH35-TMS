@@ -17,6 +17,8 @@
  * scripts/verify-steps/, so it is not registered through package.json).
  */
 import { fileURLToPath } from "node:url";
+export const ALLOW_OFFLINE_SKIP =
+  "selftest and static checks always run; the database half is opt-in via ENABLE_QBO_MIRROR_LEAK_LIVE_CHECK=true and prints that it did not run otherwise; QuickBooks sync is OFF for USMCA (E7 batch 2c)";
 
 const LABEL = "verify-qbo-mirror-requires-connection";
 
