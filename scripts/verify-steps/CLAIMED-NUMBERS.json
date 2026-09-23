@@ -9039,5 +9039,10 @@
     "claimed_by": "devin-b",
     "claimed_at": "2026-09-24",
     "purpose": "verify-je-memo-is-human-readable (guard 45 from PR #22471, CI-wiring follow-up)"
+  },
+  "11591": {
+    "claimed_by": "devin-b",
+    "claimed_at": "2026-09-24",
+    "purpose": "verify-no-capability-regression (Q15, CI-wiring follow-up)"
   }
 }

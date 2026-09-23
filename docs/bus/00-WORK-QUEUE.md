@@ -98,9 +98,12 @@ Never work in the shared main checkout.
 [DONE CODEX PR#22481] Q15 GUARD  verify-no-capability-regression.mjs — 14 capabilities; fail on
 [CODEX 2026-09-24T01:25:00Z] Q15 GUARD  verify-no-capability-regression.mjs — 14 capabilities; fail on
 [DEVIN-B 2026-09-24T01:00:00Z] Q15 GUARD  verify-no-capability-regression.mjs — 14 capabilities; fail on
+[DONE DEVIN-B #22472] Q15 GUARD  verify-no-capability-regression.mjs — 14 capabilities; fail on
       missing symbol, moved file, OR duplicate definition.
 [DONE CC-3 2026-09-24T01:26:26Z, PR #22484] Q16 GUARD  verify-no-driver-merge-without-hard-identifier.mjs
 [DONE CC-1 2026-09-23T23:49:16Z, PR #22467 -- built and merged earlier this round (TASK 27), already live and self-arming] Q17 GUARD  verify-settled-load-carries-settled-status.mjs
+[DEVIN-B 2026-09-24T01:05:00Z] Q16 GUARD  verify-no-driver-merge-without-hard-identifier.mjs
+[DONE CC-1 2026-09-23T23:49:16Z, PR #22467 -- built and merged earlier this round (TASK 27), already live and self-arming] Q17 GUARD  verify-settled-load-carries-settled-status.mjs)
 
 # P1 — DISPATCH / READ PATH
 [CODEX 2026-09-24T01:40:00Z] Q18 DISPATCH  Canonical active-load set — ONE module. Predicate:
