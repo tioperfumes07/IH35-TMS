@@ -249,6 +249,23 @@ async function readOriginalGlPostings(
   // failed assertBalanced with void_reversal_requires_debit_and_credit, and the UI Void button
   // could not complete. ACCT-F10181: expand to EVERY posting on those JE headers (same opco).
   // ACCT-F331: do NOT require posting_batch_id (sub-ledger posters use idempotency_key).
+  //
+  // P0 FIX (Lead-directed, live production corruption found and confirmed 2026-09-23): the inner
+  // subquery used to select EVERY journal_entry_uuid carrying a posting tagged this
+  // source_transaction_type/id, with no filter for "already reversed." A document whose
+  // (source_transaction_type, source_transaction_id) pair is shared by MORE THAN ONE original JE
+  // (measured live: 464/624 USMCA fuel.fuel_transactions have 2-4 distinct original JEs each,
+  // NOT a rare edge case) and had already had SOME of those JEs reversed by an earlier call would
+  // have every one of THOSE already-reversed JEs' postings pulled back in and reversed A SECOND
+  // TIME by the next call — a real, confirmed, non-zero net GL misstatement, not a projection:
+  // live-verified on production, 130 of 222 already-voided fuel_transactions carry a non-zero net
+  // balance across their combined original+reversal postings, $72,676.56 total absolute
+  // misstatement. Fixed by filtering the inner subquery to only the JE headers that are THEMSELVES
+  // still live (the same 4-column liveness predicate this codebase already uses everywhere else --
+  // e.g. e10-void-runner-01-usmca.ts's own candidate queries, loadHasLiveLinkedJes) -- an
+  // already-reversed JE's postings are never pulled back into a later reversal again. The
+  // ACCT-F10181 "expand to every posting on the JE header" behavior is preserved exactly for any
+  // JE that IS still live; only already-dead JEs are now excluded.
   const res = await client.query<GlPostingRow>(
     `
       SELECT id::text, account_id::text, class_id::text, entity_uuid::text,
@@ -256,11 +273,17 @@ async function readOriginalGlPostings(
       FROM accounting.journal_entry_postings
       WHERE operating_company_id = $1::uuid
         AND journal_entry_uuid IN (
-          SELECT DISTINCT journal_entry_uuid
-          FROM accounting.journal_entry_postings
-          WHERE operating_company_id = $1::uuid
-            AND source_transaction_type = $3
-            AND source_transaction_id = $2
+          SELECT DISTINCT jep.journal_entry_uuid
+          FROM accounting.journal_entry_postings jep
+          JOIN accounting.journal_entries je
+            ON je.id = jep.journal_entry_uuid AND je.operating_company_id = jep.operating_company_id
+          WHERE jep.operating_company_id = $1::uuid
+            AND jep.source_transaction_type = $3
+            AND jep.source_transaction_id = $2
+            AND je.status = 'posted'
+            AND je.voided_at IS NULL
+            AND je.reversed_by_je_id IS NULL
+            AND je.reverses_je_id IS NULL
         )
       ORDER BY line_sequence ASC
     `,

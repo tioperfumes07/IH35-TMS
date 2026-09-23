@@ -249,6 +249,11 @@ const STEPS = [
   // ROUND 124 T4 (Lead): every submitted/advanced invoice must carry factor_profile_id -- the write
   // paths resolved it and dropped it on the floor before this round; red-before-green proven live.
   ["verify-invoice-factor-profile-linkage", "scripts/verify-invoice-factor-profile-linkage.mjs"],
+  // P0 (Lead-directed): a voided fuel_transaction's combined original+reversal postings must net
+  // to zero per account -- the exact class of live-confirmed corruption (130 rows, $72,676.56) a
+  // multi-JE-per-document double-reversal bug produced before this round's fix. Baseline is the
+  // known pre-fix count only, never allowed to grow.
+  ["verify-no-double-reversed-fuel-postings", "scripts/verify-no-double-reversed-fuel-postings.mjs"],
   // ROUND 118/119 (Lead ruling): a cancelled load must leave no live money artifact behind it --
   // invoice/expense/vendor-bill/driver-bill/advance/settlement, checked against
   // dispatch/cancellation.service.ts's own cascade logic exactly. Baselined (shrink-only) against
