@@ -63,28 +63,32 @@ function toYear(referenceDate: Date) {
   return referenceDate.getUTCFullYear();
 }
 
+/**
+ * Every yearly series below (INV-, PMT-, CM-, BILL-, VC-, FAC-, EXP-) follows two rules:
+ *
+ * 1. A series is identified by its PREFIX, never by a document date. The MAX scans every row of
+ *    the company carrying the prefix. A number whose document date sits in another year (a
+ *    backdated issue date, a manual override, a date edited after the number was minted) still
+ *    belongs to its series; scanning by date misses it and re-issues the same number, which the
+ *    per-company unique constraint then refuses mid-create.
+ * 2. The advisory lock key is per company, the SAME key the matching resolve*DisplayId manual path
+ *    takes, so an auto allocation and an operator-typed number serialize against each other.
+ */
 export async function nextInvoiceDisplayId(client: Queryable, operatingCompanyId: string, referenceDate: Date = new Date()) {
   const year = toYear(referenceDate);
   const prefix = `INV-${year}-`;
-  await withDisplayLock(client, `accounting.invoice.display_id:${operatingCompanyId}:${year}`);
+  await withDisplayLock(client, `accounting.invoice.display_id:${operatingCompanyId}`);
   const res = await client.query<{ next_number: number }>(
     `
       SELECT COALESCE(
-        MAX(
-          CASE
-            WHEN display_id ~ '^INV-[0-9]{4}-[0-9]{5}$' AND display_id LIKE $2 || '%'
-              THEN right(display_id, 5)::int
-            ELSE 0
-          END
-        ),
+        MAX(CASE WHEN display_id ~ '^INV-[0-9]{4}-[0-9]{5}$' THEN substr(display_id, length($2) + 1)::bigint END),
         0
       ) + 1 AS next_number
       FROM accounting.invoices
       WHERE operating_company_id = $1::uuid
-        AND issue_date >= make_date($3, 1, 1)
-        AND issue_date < make_date($3 + 1, 1, 1)
+        AND display_id LIKE $2 || '%'
     `,
-    [operatingCompanyId, prefix, year]
+    [operatingCompanyId, prefix]
   );
   const nextNumber = Number(res.rows[0]?.next_number ?? 1);
   return `${prefix}${String(nextNumber).padStart(5, "0")}`;
@@ -93,24 +97,18 @@ export async function nextInvoiceDisplayId(client: Queryable, operatingCompanyId
 export async function nextPaymentDisplayId(client: Queryable, operatingCompanyId: string, referenceDate: Date = new Date()) {
   const year = toYear(referenceDate);
   const prefix = `PMT-${year}-`;
-  await withDisplayLock(client, `accounting.payment.display_id:${operatingCompanyId}:${year}`);
+  await withDisplayLock(client, `accounting.payment.display_id:${operatingCompanyId}`);
   const res = await client.query<{ next_number: number }>(
     `
       SELECT COALESCE(
-        MAX(
-          CASE
-            WHEN display_id LIKE $2 || '%' THEN right(display_id, 5)::int
-            ELSE 0
-          END
-        ),
+        MAX(CASE WHEN display_id ~ ('^' || $2 || '[0-9]+$') THEN substr(display_id, length($2) + 1)::bigint END),
         0
       ) + 1 AS next_number
       FROM accounting.payments
       WHERE operating_company_id = $1::uuid
-        AND payment_date >= make_date($3, 1, 1)
-        AND payment_date < make_date($3 + 1, 1, 1)
+        AND display_id LIKE $2 || '%'
     `,
-    [operatingCompanyId, prefix, year]
+    [operatingCompanyId, prefix]
   );
   const nextNumber = Number(res.rows[0]?.next_number ?? 1);
   return `${prefix}${String(nextNumber).padStart(5, "0")}`;
@@ -119,24 +117,18 @@ export async function nextPaymentDisplayId(client: Queryable, operatingCompanyId
 export async function nextCreditMemoDisplayId(client: Queryable, operatingCompanyId: string, referenceDate: Date = new Date()) {
   const year = toYear(referenceDate);
   const prefix = `CM-${year}-`;
-  await withDisplayLock(client, `accounting.credit_memo.display_id:${operatingCompanyId}:${year}`);
+  await withDisplayLock(client, `accounting.credit_memo.display_id:${operatingCompanyId}`);
   const res = await client.query<{ next_number: number }>(
     `
       SELECT COALESCE(
-        MAX(
-          CASE
-            WHEN display_id LIKE $2 || '%' THEN right(display_id, 4)::int
-            ELSE 0
-          END
-        ),
+        MAX(CASE WHEN display_id ~ ('^' || $2 || '[0-9]+$') THEN substr(display_id, length($2) + 1)::bigint END),
         0
       ) + 1 AS next_number
       FROM accounting.credit_memos
       WHERE operating_company_id = $1::uuid
-        AND issue_date >= make_date($3, 1, 1)
-        AND issue_date < make_date($3 + 1, 1, 1)
+        AND display_id LIKE $2 || '%'
     `,
-    [operatingCompanyId, prefix, year]
+    [operatingCompanyId, prefix]
   );
   const nextNumber = Number(res.rows[0]?.next_number ?? 1);
   return `${prefix}${String(nextNumber).padStart(4, "0")}`;
@@ -158,24 +150,18 @@ export async function nextCreditMemoDisplayId(client: Queryable, operatingCompan
 export async function nextBillDisplayId(client: Queryable, operatingCompanyId: string, referenceDate: Date = new Date()) {
   const year = toYear(referenceDate);
   const prefix = `BILL-${year}-`;
-  await withDisplayLock(client, `accounting.bill.display_id:${operatingCompanyId}:${year}`);
+  await withDisplayLock(client, `accounting.bill.display_id:${operatingCompanyId}`);
   const res = await client.query<{ next_number: number }>(
     `
       SELECT COALESCE(
-        MAX(
-          CASE
-            WHEN display_id LIKE $2 || '%' THEN right(display_id, 5)::int
-            ELSE 0
-          END
-        ),
+        MAX(CASE WHEN display_id ~ ('^' || $2 || '[0-9]+$') THEN substr(display_id, length($2) + 1)::bigint END),
         0
       ) + 1 AS next_number
       FROM accounting.bills
       WHERE operating_company_id = $1::uuid
-        AND bill_date >= make_date($3, 1, 1)
-        AND bill_date < make_date($3 + 1, 1, 1)
+        AND display_id LIKE $2 || '%'
     `,
-    [operatingCompanyId, prefix, year]
+    [operatingCompanyId, prefix]
   );
   const nextNumber = Number(res.rows[0]?.next_number ?? 1);
   return `${prefix}${String(nextNumber).padStart(5, "0")}`;
@@ -184,24 +170,18 @@ export async function nextBillDisplayId(client: Queryable, operatingCompanyId: s
 export async function nextVendorCreditDisplayId(client: Queryable, operatingCompanyId: string, referenceDate: Date = new Date()) {
   const year = toYear(referenceDate);
   const prefix = `VC-${year}-`;
-  await withDisplayLock(client, `accounting.vendor_credit.display_id:${operatingCompanyId}:${year}`);
+  await withDisplayLock(client, `accounting.vendor_credit.display_id:${operatingCompanyId}`);
   const res = await client.query<{ next_number: number }>(
     `
       SELECT COALESCE(
-        MAX(
-          CASE
-            WHEN display_id LIKE $2 || '%' THEN right(display_id, 4)::int
-            ELSE 0
-          END
-        ),
+        MAX(CASE WHEN display_id ~ ('^' || $2 || '[0-9]+$') THEN substr(display_id, length($2) + 1)::bigint END),
         0
       ) + 1 AS next_number
       FROM accounting.vendor_credits
       WHERE operating_company_id = $1::uuid
-        AND issue_date >= make_date($3, 1, 1)
-        AND issue_date < make_date($3 + 1, 1, 1)
+        AND display_id LIKE $2 || '%'
     `,
-    [operatingCompanyId, prefix, year]
+    [operatingCompanyId, prefix]
   );
   const nextNumber = Number(res.rows[0]?.next_number ?? 1);
   return `${prefix}${String(nextNumber).padStart(4, "0")}`;
@@ -210,24 +190,18 @@ export async function nextVendorCreditDisplayId(client: Queryable, operatingComp
 export async function nextFactoringDisplayId(client: Queryable, operatingCompanyId: string, referenceDate: Date = new Date()) {
   const year = toYear(referenceDate);
   const prefix = `FAC-${year}-`;
-  await withDisplayLock(client, `accounting.factoring.display_id:${operatingCompanyId}:${year}`);
+  await withDisplayLock(client, `accounting.factoring.display_id:${operatingCompanyId}`);
   const res = await client.query<{ next_number: number }>(
     `
       SELECT COALESCE(
-        MAX(
-          CASE
-            WHEN display_id LIKE $2 || '%' THEN right(display_id, 5)::int
-            ELSE 0
-          END
-        ),
+        MAX(CASE WHEN display_id ~ ('^' || $2 || '[0-9]+$') THEN substr(display_id, length($2) + 1)::bigint END),
         0
       ) + 1 AS next_number
       FROM accounting.factoring_advances
       WHERE operating_company_id = $1::uuid
-        AND submitted_at >= make_date($3, 1, 1)
-        AND submitted_at < make_date($3 + 1, 1, 1)
+        AND display_id LIKE $2 || '%'
     `,
-    [operatingCompanyId, prefix, year]
+    [operatingCompanyId, prefix]
   );
   const nextNumber = Number(res.rows[0]?.next_number ?? 1);
   return `${prefix}${String(nextNumber).padStart(5, "0")}`;
@@ -241,24 +215,18 @@ export async function nextFactoringDisplayId(client: Queryable, operatingCompany
 export async function nextExpenseDisplayId(client: Queryable, operatingCompanyId: string, referenceDate: Date = new Date()) {
   const year = toYear(referenceDate);
   const prefix = `EXP-${year}-`;
-  await withDisplayLock(client, `accounting.expense.expense_number:${operatingCompanyId}:${year}`);
+  await withDisplayLock(client, `accounting.expense.expense_number:${operatingCompanyId}`);
   const res = await client.query<{ next_number: number }>(
     `
       SELECT COALESCE(
-        MAX(
-          CASE
-            WHEN expense_number ~ ('^' || $2 || '[0-9]+$') THEN right(expense_number, 5)::int
-            ELSE 0
-          END
-        ),
+        MAX(CASE WHEN expense_number ~ ('^' || $2 || '[0-9]+$') THEN substr(expense_number, length($2) + 1)::bigint END),
         0
       ) + 1 AS next_number
       FROM accounting.expenses
       WHERE operating_company_id = $1::uuid
-        AND transaction_date >= make_date($3, 1, 1)
-        AND transaction_date < make_date($3 + 1, 1, 1)
+        AND expense_number LIKE $2 || '%'
     `,
-    [operatingCompanyId, prefix, year]
+    [operatingCompanyId, prefix]
   );
   const nextNumber = Number(res.rows[0]?.next_number ?? 1);
   return `${prefix}${String(nextNumber).padStart(5, "0")}`;
@@ -275,13 +243,14 @@ export async function resolveInvoiceDisplayId(
   if (manual) {
     assertDisplayIdShape(manual, INVOICE_DISPLAY_ID_PATTERN, "invoice");
     await withDisplayLock(client, `accounting.invoice.display_id:${operatingCompanyId}`);
+    // No voided_at filter: invoices_operating_company_id_display_id_key covers voided rows too, so a
+    // voided invoice's number stays taken and must answer DuplicateDocumentNumberError, not a raw 23505.
     const taken = await client.query(
       `
         SELECT 1
           FROM accounting.invoices
          WHERE operating_company_id = $1::uuid
            AND display_id = $2
-           AND voided_at IS NULL
          LIMIT 1
       `,
       [operatingCompanyId, manual]
@@ -329,13 +298,13 @@ export async function resolvePaymentDisplayId(
   if (manual) {
     assertDisplayIdShape(manual, PAYMENT_DISPLAY_ID_PATTERN, "payment");
     await withDisplayLock(client, `accounting.payment.display_id:${operatingCompanyId}`);
+    // No voided_at filter: payments_operating_company_id_display_id_key covers voided rows too.
     const taken = await client.query(
       `
         SELECT 1
           FROM accounting.payments
          WHERE operating_company_id = $1::uuid
            AND display_id = $2
-           AND voided_at IS NULL
          LIMIT 1
       `,
       [operatingCompanyId, manual]

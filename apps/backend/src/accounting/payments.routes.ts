@@ -368,7 +368,7 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
       const check = parseOperatorDocumentNumber(query.data.check);
       if (!check) return { ...base, taken: false };
       const taken = await client.query(
-        `SELECT 1 FROM accounting.payments WHERE operating_company_id = $1::uuid AND display_id = $2 AND voided_at IS NULL LIMIT 1`,
+        `SELECT 1 FROM accounting.payments WHERE operating_company_id = $1::uuid AND display_id = $2 LIMIT 1`,
         [query.data.operating_company_id, check]
       );
       return { ...base, taken: Boolean(taken.rows[0]) };
