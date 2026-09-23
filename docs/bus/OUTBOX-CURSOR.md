@@ -902,3 +902,22 @@ CURSOR | 2026-09-23 ~05:40Z — BACKLOG: FARO CASH RSV / FEES / DISPATCH / SCH F
   OPEN: existing lines keep NULL until the feed re-imports (no backfill, Round 86). Cash Rsv -> GL 1235 posting only through the existing
          factoring poster, on the owner's order. Snapshot watcher on br-raspy-fog-akl1n2n2 still polling loads/settlements.
 Files Modified: docs/bus/OUTBOX-CURSOR.md (this entry).
+
+CURSOR | 2026-09-23 12:16Z — ROUND 101.4: verify-purge-window-state.mjs MERGED, 59 MINUTES BEFORE THE 13:15Z CLOCK
+  #22406 797f5a2043  merge API {"merged":true,"message":"Pull Request successfully merged"}. Required value: violations = 0 (a count).
+    STATIC  8 arms exactly, each calling the helper; the 3 former all-row arms on the generated live_predicate; every generated entry
+            states live_predicate; purge_state.json verified_at null before a PASS or in the verifier's own PASS shape.
+    LIVE    voided rows without a void_reason (tables from the generated file, columns from the live catalog, is_sample_data = false stated);
+            journal-entry and posting reversal links to missing rows. BEGIN READ ONLY; no DATABASE_URL = exit 1.
+  OUTPUT, production:   "purge-window state violations: 0 (required 0)" — voided with a reason: expenses 269, invoices 38, bills 28,
+                        driver bills 35, deductions 56, settlement lines 397; 0 dangling reversal links of 3,216 journal entries.
+  OUTPUT, br-raspy-fog-akl1n2n2 (PRE-PURGE-SNAPSHOT, void running, read-only): violations 0.   No DATABASE_URL: exit 1.
+  money-pr-local-gate: pre-push gate passed (READY TO PUSH bd4915df6b); wired in LIVE_DOMAIN_GUARDS (runs with a DB, or when
+  scripts/purge/, scripts/lib/purge-window.mjs or purge_state.json change).
+  healthz: git_sha d7c8a0ee78 (built 09:05Z). This PR is scripts only; there is nothing to deploy, so no deploy was triggered for it.
+  ASKED, NOT GUESSED: Round 99.4 lists grep -c 'process.env.DATABASE_URL ||' = 5, "REQUIRED VALUE 0". Those 5 are the gate's
+  "run live guards when a DB is present OR the path is touched" conditions (money-pr-local-gate.mjs, control totals / parity /
+  fuel / LIVE_DOMAIN / E7). Removing them would stop live guards from running whenever a DB is present. Left unchanged until you
+  say what the defect in them is.
+  Round 101.4 noted: the 10:30Z default-interest accrual on 2150 is ruled correct, not touched; cash_rsv -> GL 1235 not built.
+Files Modified: docs/bus/OUTBOX-CURSOR.md (this entry).
