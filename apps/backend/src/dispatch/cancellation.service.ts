@@ -7,6 +7,7 @@ import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import { auditVoid, isVoidEnforcementEnabled, pgDateColumnToIsoDay, postVoidReversal } from "../accounting/void.service.js";
 import { executeVoidCancel } from "../governance/void-cancel-executors.js";
 import { reverseDriverAdvanceInClientTx } from "../cash-advances/cash-advance-create.js";
+import { cascadeVoidChildren } from "../accounting/cascade-void-engine.service.js";
 
 function isOwner(role: string) {
   return role === "Owner";
@@ -607,6 +608,10 @@ export async function cancelLoadInClientTx(
               code: "load_cancel_invoice_void_race_lost",
             });
           }
+          // ROUND 138 -- this UPDATE (like executeInvoice's own raw UPDATE) never goes through
+          // stampDocumentVoided, so its cascade wiring never fires for this caller. Cascade here
+          // directly; idempotent, safe even if some other path already touched a child row.
+          await cascadeVoidChildren(client, "invoice", inv.id, input.operating_company_id);
           voidedInvoiceIds.push(inv.id);
           if (voidFlagOn) {
             await auditVoid(client, userId, "invoice", {

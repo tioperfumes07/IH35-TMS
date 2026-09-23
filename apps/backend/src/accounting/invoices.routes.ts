@@ -15,6 +15,7 @@ import { auditVoid, isVoidEnforcementEnabled, pgDateColumnToIsoDay, postVoidReve
 import { requireVoidCancelExecutorWired } from "../lib/authz/void-cancel-authz.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { buildListSearchClause, invoiceListSearchFields } from "../lib/list-search/build-list-search.js";
+import { cascadeVoidChildren } from "./cascade-void-engine.service.js";
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
 
@@ -1166,6 +1167,10 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         `,
         [params.data.id, body.data.reason ?? null, user.uuid]
       );
+
+      // ROUND 138 -- this is THE direct admin void route (POST /api/v1/invoices/:id/void); its
+      // own raw UPDATE above never went through stampDocumentVoided, so cascade here directly.
+      await cascadeVoidChildren(client, "invoice", params.data.id, query.data.operating_company_id);
 
       // ACCT-F13579 — a load whose invoice is voided must revert to the status it held BEFORE
       // invoicing, not stay frozen at 'invoiced' with no live invoice behind it (owner ruling,

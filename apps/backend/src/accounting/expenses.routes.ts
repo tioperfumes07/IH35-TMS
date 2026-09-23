@@ -18,6 +18,7 @@ import { listExpenseDuplicateGroups } from "./expense-duplicate.service.js";
 import { nextExpenseDisplayId } from "./display-id.js";
 import { parseOperatorDocumentNumber, suggestFromLastSaved } from "../lib/qbo-custom-document-number.js";
 import { buildListSearchClause, expenseListSearchFields } from "../lib/list-search/build-list-search.js";
+import { cascadeVoidChildren } from "./cascade-void-engine.service.js";
 
 export const EXPENSE_GL_POSTING_FLAG_KEY = "EXPENSE_GL_POSTING_ENABLED";
 
@@ -1720,6 +1721,9 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
            WHERE id=$1::uuid AND operating_company_id=$5::uuid`,
           [expenseId, reversingJeId, user.uuid, body.data.reason, oci]
         );
+        // ROUND 138 -- this route is "the third writer" (per the ACCT-F5635 comment above) of
+        // accounting.expenses.voided_at; cascade here directly, same as the other two.
+        await cascadeVoidChildren(client, "expense", expenseId, oci);
         await appendCrudAudit(client, user.uuid, "expense.voided",
           { expense_id: expenseId, reversing_journal_entry_id: reversingJeId, reason: body.data.reason }, "warning");
         return { reversingJeId };
