@@ -10,12 +10,13 @@ import {
   type ExpenseListStatus,
 } from "../../api/accounting";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
-import { DatePicker } from "../../components/forms/DatePicker";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { RecordExpenseModal } from "../../components/expenses/RecordExpenseModal";
-import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { DateRangePresets } from "../../components/forms/DateRangePresets";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { Button } from "../../components/Button";
@@ -26,7 +27,6 @@ import { PostingPill } from "../../components/accounting/PostingPill";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { humanMemo } from "./ManualJEListPage";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { BulkProgressDialog } from "../../components/bulk";
 import { BulkPreValidationDialog } from "../../components/bulk/BulkPreValidationDialog";
@@ -112,51 +112,26 @@ export function ExpensesListPage() {
   const deepLinkUnitId = searchParams.get("unit_id");
   const deepLinkWorkOrderId = searchParams.get("work_order_id");
   const deepLinkInsuranceClaimId = searchParams.get("insurance_claim_id");
-  // FLT-03 — hide voided by default (toggle via Status → All / Void).
-  const [status, setStatus] = useState<"" | ExpenseListStatus>("active");
+  // FILTER-MULTI-01: Status is now a real multi-select (checkbox dropdown) — array state.
+  // FLT-03 — hide voided by default (Active is the initial checked state).
+  const [statusFilter, setStatusFilter] = useState<string[]>(["active"]);
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const staged = useStagedListFilters({
-    applied: {
-      status,
-      fromDate,
-      toDate,
-      loadId: deepLinkLoadId || "",
-      driverId: deepLinkDriverId || "",
-      unitId: deepLinkUnitId || "",
-      trailerId: deepLinkTrailerId || "",
-    },
-    empty: {
-      status: "active" as const,
-      fromDate: "",
-      toDate: "",
-      loadId: "",
-      driverId: "",
-      unitId: "",
-      trailerId: "",
-    },
-    onApply: (next) => {
-      setStatus(next.status);
-      setFromDate(next.fromDate);
-      setToDate(next.toDate);
-      setSearchParams(
-        (prev) => {
-          const params = new URLSearchParams(prev);
-          if (next.loadId) params.set("load_id", next.loadId);
-          else params.delete("load_id");
-          if (next.driverId) params.set("driver_id", next.driverId);
-          else params.delete("driver_id");
-          if (next.unitId) params.set("unit_id", next.unitId);
-          else params.delete("unit_id");
-          if (next.trailerId) params.set("trailer_id", next.trailerId);
-          else params.delete("trailer_id");
-          return params;
-        },
-        { replace: true },
-      );
-    },
-  });
+  // FILTER-MULTI-01: Load/Driver/Unit/Trailer stay single-value EntityPicker (search-as-you-type
+  // against the full fleet/roster) but are now immediate-apply, URL-synced directly — no staged
+  // draft/Apply/Cancel, matching every other filter on this page now.
+  function setEntityFilterParam(key: "load_id" | "driver_id" | "unit_id" | "trailer_id", next: string) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next) params.set(key, next);
+        else params.delete(key);
+        return params;
+      },
+      { replace: true },
+    );
+  }
   // ACCT-F5054 — Topbar Create→Expense uses ?create=1 (Bills/Invoices parity).
   const createOpen = searchParams.get("create") === "1";
   function setCreateOpen(next: boolean) {
@@ -194,12 +169,17 @@ export function ExpensesListPage() {
     if (deepLinkExpenseId) setHighlightedExpenseId(deepLinkExpenseId);
   }, [deepLinkExpenseId]);
 
+  // FILTER-MULTI-01: listExpenses only ever accepted ONE status value. Server-correct when exactly
+  // one is picked (identical to today); a 2+ selection fetches unnarrowed-on-status + the client
+  // membership filter below does the real OR-of-several-values filtering — never narrower than a
+  // single-value fetch would have been.
+  const statusParam = statusFilter.length === 1 ? (statusFilter[0] as ExpenseListStatus) : undefined;
   const query = useQuery({
     queryKey: [
       "accounting",
       "expenses",
       companyId,
-      status,
+      statusFilter,
       search,
       fromDate,
       toDate,
@@ -212,7 +192,7 @@ export function ExpensesListPage() {
     ],
     queryFn: () =>
       listExpenses(companyId, { search: search || undefined,
-        status: status || undefined,
+        status: statusParam,
         date_from: fromDate || undefined,
         date_to: toDate || undefined,
         load_id: deepLinkLoadId || undefined,
@@ -232,7 +212,10 @@ export function ExpensesListPage() {
     enabled: Boolean(companyId),
   });
 
-  const rows = query.data?.rows ?? [];
+  const rows = useMemo(
+    () => (query.data?.rows ?? []).filter((r) => statusFilter.length === 0 || statusFilter.includes(r.status)),
+    [query.data?.rows, statusFilter],
+  );
 
   const totals = useMemo(() => {
     return rows.reduce(
@@ -419,7 +402,7 @@ export function ExpensesListPage() {
   ];
 
   const expensesActiveFilterCount =
-    (status ? 1 : 0) +
+    statusFilter.length +
     (fromDate || toDate ? 1 : 0) +
     (deepLinkLoadId ? 1 : 0) +
     (deepLinkDriverId ? 1 : 0) +
@@ -428,89 +411,86 @@ export function ExpensesListPage() {
 
   const filterBar = (
     <div className="flex flex-wrap items-end gap-3">
-      <CollapsedListFilters
+      <MoneyListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search # · vendor · amount · date · status · load · memo · category"
+        searchTestId="expenses-search-input"
+        onClearAll={() => {
+          setSearch("");
+          setStatusFilter([]);
+          setFromDate("");
+          setToDate("");
+          setEntityFilterParam("load_id", "");
+          setEntityFilterParam("driver_id", "");
+          setEntityFilterParam("unit_id", "");
+          setEntityFilterParam("trailer_id", "");
+        }}
         activeFilterCount={expensesActiveFilterCount}
-        onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
         testIdPrefix="expenses"
-        dataAttributes={{ "data-expenses-filter-toolbar": "collapsed" }}
       >
-        <div className="flex flex-wrap items-end gap-3" data-testid="expenses-entity-filters">
-          <label className="text-[11px] text-slate-600">
-            Load
-            <EntityPicker
-              kind="load"
-              operatingCompanyId={companyId}
-              value={staged.draft.loadId || null}
-              onChange={(next) => staged.setDraft({ ...staged.draft, loadId: next ?? "" })}
-              allowCreate={false}
-              placeholder="All loads"
-              className="mt-1"
-              dataTestId="expenses-filter-load"
-            />
-          </label>
-          <label className="text-[11px] text-slate-600">
-            Driver
-            <EntityPicker
-              kind="driver"
-              operatingCompanyId={companyId}
-              value={staged.draft.driverId || null}
-              onChange={(next) => staged.setDraft({ ...staged.draft, driverId: next ?? "" })}
-              allowCreate={false}
-              placeholder="All drivers"
-              className="mt-1"
-              dataTestId="expenses-filter-driver"
-            />
-          </label>
-          <label className="text-[11px] text-slate-600">
-            Unit
-            <EntityPicker
-              kind="unit"
-              operatingCompanyId={companyId}
-              value={staged.draft.unitId || null}
-              onChange={(next) => staged.setDraft({ ...staged.draft, unitId: next ?? "" })}
-              allowCreate={false}
-              placeholder="All units"
-              className="mt-1"
-              dataTestId="expenses-filter-unit"
-            />
-          </label>
-          <label className="text-[11px] text-slate-600">
-            Trailer
-            <EntityPicker
-              kind="trailer"
-              operatingCompanyId={companyId}
-              value={staged.draft.trailerId || null}
-              onChange={(next) => staged.setDraft({ ...staged.draft, trailerId: next ?? "" })}
-              allowCreate={false}
-              placeholder="All trailers"
-              className="mt-1"
-              dataTestId="expenses-filter-trailer"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-[11px] font-semibold text-gray-600">
-            Status
-            <SelectCombobox
-              value={staged.draft.status}
-              onChange={(e) => staged.setDraft({ ...staged.draft, status: e.target.value as "" | ExpenseListStatus })}
-              className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
-            >
-              {STATUS_OPTIONS.map((o) => (
-                <option key={o.label} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </SelectCombobox>
-          </label>
-          <label className="flex flex-col gap-1 text-[11px] font-semibold text-gray-600">
-            From date
-            <DatePicker value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} className="h-8" />
-          </label>
-          <label className="flex flex-col gap-1 text-[11px] font-semibold text-gray-600">
-            To date
-            <DatePicker value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} className="h-8" />
-          </label>
-        </div>
-      </CollapsedListFilters>
+        <MultiSelectDropdown
+          label="Status"
+          options={STATUS_OPTIONS.filter((o) => o.value !== "").map((o) => ({ value: o.value, label: o.label }))}
+          selected={statusFilter}
+          onChange={setStatusFilter}
+          allLabel="All statuses"
+          data-testid="expenses-status-filter"
+        />
+        <label className="text-[11px] text-slate-600">
+          Load
+          <EntityPicker
+            kind="load"
+            operatingCompanyId={companyId}
+            value={deepLinkLoadId || null}
+            onChange={(next) => setEntityFilterParam("load_id", next ?? "")}
+            allowCreate={false}
+            placeholder="All loads"
+            className="mt-1"
+            dataTestId="expenses-filter-load"
+          />
+        </label>
+        <label className="text-[11px] text-slate-600">
+          Driver
+          <EntityPicker
+            kind="driver"
+            operatingCompanyId={companyId}
+            value={deepLinkDriverId || null}
+            onChange={(next) => setEntityFilterParam("driver_id", next ?? "")}
+            allowCreate={false}
+            placeholder="All drivers"
+            className="mt-1"
+            dataTestId="expenses-filter-driver"
+          />
+        </label>
+        <label className="text-[11px] text-slate-600">
+          Unit
+          <EntityPicker
+            kind="unit"
+            operatingCompanyId={companyId}
+            value={deepLinkUnitId || null}
+            onChange={(next) => setEntityFilterParam("unit_id", next ?? "")}
+            allowCreate={false}
+            placeholder="All units"
+            className="mt-1"
+            dataTestId="expenses-filter-unit"
+          />
+        </label>
+        <label className="text-[11px] text-slate-600">
+          Trailer
+          <EntityPicker
+            kind="trailer"
+            operatingCompanyId={companyId}
+            value={deepLinkTrailerId || null}
+            onChange={(next) => setEntityFilterParam("trailer_id", next ?? "")}
+            allowCreate={false}
+            placeholder="All trailers"
+            className="mt-1"
+            dataTestId="expenses-filter-trailer"
+          />
+        </label>
+        <DateRangePresets from={fromDate} to={toDate} onChange={({ from, to }) => { setFromDate(from); setToDate(to); }} data-testid="expenses-date-range" />
+      </MoneyListToolbar>
       <div className="ml-auto flex items-center gap-3 text-[11px] text-gray-600">
         {/* CLS-MONEY-KPI-FAKE-ZERO-REMAINDER — totals used to compute straight from query.data with
             no isError awareness, so a failed fetch fabricated a real-looking "$0.00" here even while
@@ -521,7 +501,7 @@ export function ExpensesListPage() {
         <span>Rows: {rows.length}</span>
         {/* R-102-B item 5 — owner, ROUND 121: "a list that silently hides is the same class of
             defect as a badge that never renders." */}
-        {status === "active" && typeof query.data?.voided_count === "number" && query.data.voided_count > 0 ? (
+        {statusFilter.length === 1 && statusFilter[0] === "active" && typeof query.data?.voided_count === "number" && query.data.voided_count > 0 ? (
           <span className="text-gray-500" data-testid="expenses-voided-count">
             {rows.length} live, {query.data.voided_count} voided (hidden)
           </span>
@@ -656,15 +636,6 @@ export function ExpensesListPage() {
           </p>
         ) : null}
 
-        <div className="mb-2">
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search # · vendor · amount · date · status · load · memo · category"
-          className="w-full max-w-xl rounded-sm border border-gray-300 px-2 py-1 text-xs"
-        />
-      </div>
       <ParityTable
           columns={columns}
           rows={rows}
@@ -677,6 +648,10 @@ export function ExpensesListPage() {
           filterBar={filterBar}
           exportFilename="expenses"
           storageKey="expenses-list"
+          // FILTER-MULTI-01 — the toolbar above already supplies search and a date range;
+          // ParityTable's own native search/Range would render a second, competing control.
+          suppressToolbarSearch
+          suppressToolbarRange
           initialPageSize={50}
           sortKey={sortKey}
           sortDirection={sortDirection}
