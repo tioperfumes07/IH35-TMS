@@ -125,6 +125,95 @@ function findWriters(files, schema, table) {
   return [...new Set(hits)].sort();
 }
 
+// ROUND 122 ADDITION -- independently declared here, NOT imported from void-document-stamp
+// .service.ts. The whole point of this check is to catch a mismatch between what the service
+// file CLAIMS a family's status value is and what the live database actually accepts -- trusting
+// the service file's own self-report would make this check unable to ever fail on the exact bug
+// it exists to prevent. `null` means this family's status is never flipped (no column, or the
+// documented journal_entry GL-total-reader exception) -- nothing to check against a constraint.
+const VOID_STATUS_VALUES = {
+  load: "voided",
+  invoice: "void",
+  expense: "void",
+  factoring_advance: "voided",
+  fuel_transaction: null,
+  journal_entry: null,
+  driver_reimbursement: "void",
+};
+
+/**
+ * Pure decision logic, DB-independent and unit-testable via --selftest: given the declared value
+ * for a family and the live-fetched set of values that family's own status column actually
+ * accepts (from its CHECK constraint's value list or its enum's members), decide whether the
+ * declared value is safe to write.
+ * @param {string|null} declaredValue
+ * @param {string[]|null} liveAcceptedValues -- null means "no status column exists at all"
+ * @returns {{ ok: boolean, detail: string }}
+ */
+export function evaluateStatusValueAcceptance(declaredValue, liveAcceptedValues) {
+  if (declaredValue === null) {
+    return { ok: true, detail: "no status flip declared for this family -- nothing to check" };
+  }
+  if (liveAcceptedValues === null) {
+    return { ok: false, detail: `declared voidStatusValue='${declaredValue}' but the table has no status column at all` };
+  }
+  if (!liveAcceptedValues.includes(declaredValue)) {
+    return {
+      ok: false,
+      detail: `declared voidStatusValue='${declaredValue}' is NOT accepted by the live status constraint/enum (accepts: ${liveAcceptedValues.join(", ")})`,
+    };
+  }
+  return { ok: true, detail: `declared voidStatusValue='${declaredValue}' confirmed accepted live` };
+}
+
+/** Parses the literal string values out of a `CHECK ((status = ANY (ARRAY['a'::text, 'b'::text])))`
+ *  style constraint definition. Deliberately simple (no SQL parser) -- this guard's job is a
+ *  sanity check, not a general-purpose constraint interpreter, and the ARRAY[...] shape is the
+ *  one every status CHECK in this codebase actually uses (confirmed live, 2026-09-23). */
+function parseCheckConstraintValues(def) {
+  const matches = [...def.matchAll(/'([^']+)'::text/g)];
+  return matches.map((m) => m[1]);
+}
+
+async function checkStatusValuesLive(client) {
+  const problems = [];
+  const report = [];
+  for (const { family, schema, table } of FAMILIES) {
+    const declared = VOID_STATUS_VALUES[family];
+    if (declared === null) {
+      report.push(`${family}: no status flip declared`);
+      continue;
+    }
+    const colRes = await client.query(
+      `SELECT data_type, udt_name FROM information_schema.columns
+        WHERE table_schema = $1 AND table_name = $2 AND column_name = 'status'`,
+      [schema, table]
+    );
+    const col = colRes.rows[0];
+    let liveAcceptedValues = null;
+    if (col && col.data_type === "USER-DEFINED") {
+      const enumRes = await client.query(
+        `SELECT e.enumlabel FROM pg_enum e JOIN pg_type t ON e.enumtypid = t.oid WHERE t.typname = $1`,
+        [col.udt_name]
+      );
+      liveAcceptedValues = enumRes.rows.map((r) => r.enumlabel);
+    } else if (col) {
+      const defRes = await client.query(
+        `SELECT pg_get_constraintdef(oid) AS def
+           FROM pg_constraint
+          WHERE conrelid = ($1 || '.' || $2)::regclass AND contype = 'c' AND pg_get_constraintdef(oid) ILIKE 'CHECK ((status =%'`,
+        [schema, table]
+      );
+      liveAcceptedValues = defRes.rows.flatMap((r) => parseCheckConstraintValues(r.def));
+      if (liveAcceptedValues.length === 0) liveAcceptedValues = null; // no status CHECK found -- treat as "no column" for safety
+    }
+    const verdict = evaluateStatusValueAcceptance(declared, liveAcceptedValues);
+    report.push(`${family}: ${verdict.detail}`);
+    if (!verdict.ok) problems.push(`${schema}.${table} (${family}): ${verdict.detail}`);
+  }
+  return { problems, report };
+}
+
 async function main() {
   const files = walk(BACKEND_SRC);
 
@@ -177,9 +266,23 @@ async function main() {
       for (const m of missing) console.error(`  - ${m}`);
       process.exit(1);
     }
+
+    // ---- Part 3 (ROUND 122): the status value the writer would write must be accepted by that
+    // family's own live CHECK constraint / enum. This is the check that would have caught the
+    // exact P0 bug (every family writing 'voided', three families' constraints only accept
+    // 'void') before it shipped -- it does not trust void-document-stamp.service.ts's own
+    // FAMILY_TABLE, it re-declares the expected values here and verifies each independently.
+    const { problems: statusProblems, report: statusReport } = await checkStatusValuesLive(client);
+    if (statusProblems.length > 0) {
+      console.error(`${LABEL}: FAIL — ${statusProblems.length} status-value mismatch(es):`);
+      for (const p of statusProblems) console.error(`  - ${p}`);
+      process.exit(1);
+    }
+
     console.log(
       `${LABEL} OK — all 7 document families carry voided_at/void_reason/voided_by_user_id live; ` +
-        `${zeroToleranceReport.join("; ")}; ${baselineReport.join("; ")}; single writer is ${THE_ONE_WRITER}.`
+        `${zeroToleranceReport.join("; ")}; ${baselineReport.join("; ")}; single writer is ${THE_ONE_WRITER}; ` +
+        `status values: ${statusReport.join("; ")}.`
     );
     process.exit(0);
   } finally {
@@ -212,6 +315,35 @@ async function selftest() {
   } finally {
     fs.writeFileSync(target, original);
   }
+
+  // ROUND 122 ADDITION: the status-value acceptance check is DB-independent and pure
+  // (evaluateStatusValueAcceptance), so it is unit-tested directly here -- no live connection
+  // needed to prove the LOGIC is correct; checkStatusValuesLive's own live queries feed it real
+  // data when the guard actually runs. Red-before-green per the Lead's own instruction: plant the
+  // exact P0 bug's shape (invoice declared 'voided', live constraint only accepts 'void') first
+  // and confirm the check catches it, THEN confirm the real, fixed value passes.
+  const plantedInvoiceViolation = evaluateStatusValueAcceptance("voided", ["draft", "proforma", "sent", "partial", "paid", "void", "factored"]);
+  if (plantedInvoiceViolation.ok) {
+    console.error(`${LABEL} --selftest FAILED: planting 'voided' on invoice's real accepted-value set did not fail (red-before-green did not go red).`);
+    process.exit(1);
+  }
+  const fixedInvoiceValue = evaluateStatusValueAcceptance("void", ["draft", "proforma", "sent", "partial", "paid", "void", "factored"]);
+  if (!fixedInvoiceValue.ok) {
+    console.error(`${LABEL} --selftest FAILED: the real, fixed invoice value 'void' was rejected (${fixedInvoiceValue.detail}).`);
+    process.exit(1);
+  }
+  const noStatusColumnCase = evaluateStatusValueAcceptance("voided", null);
+  if (noStatusColumnCase.ok) {
+    console.error(`${LABEL} --selftest FAILED: declaring a value against a family with no status column at all should never pass.`);
+    process.exit(1);
+  }
+  const noFlipDeclaredCase = evaluateStatusValueAcceptance(null, null);
+  if (!noFlipDeclaredCase.ok) {
+    console.error(`${LABEL} --selftest FAILED: a family that declares no status flip at all (journal_entry/fuel_transaction) must always be ok.`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} --selftest OK — status-value acceptance check: red-before-green confirmed (planted 'voided' on invoice's real constraint FAILS), the real fixed value 'void' PASSES, no-column and no-flip edge cases both correct.`);
+
   process.exit(0);
 }
 
