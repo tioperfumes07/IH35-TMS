@@ -1,10 +1,10 @@
 {
-  "healthzSha": "72b3e36",
-  "generated_at": "2026-09-23T00:17:20.365Z",
+  "healthzSha": "303dcf5",
+  "generated_at": "2026-09-23T04:48:27.668Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "72b3e36",
+    "deployedSha": "303dcf5",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 22316,
-      "title": "FINDING: ACCT-F61 (Round 84 P0 -- the shared stop writer now carries facility_name, leg_miles, actual_arrival_at, actual_departure_at; revrec's delivery-evidence gate is unblocked for any load fed through it)",
+      "number": 22393,
+      "title": "FINDING: FUEL-EXPENSE-DOC-02 -- the document now ADOPTS the posting that already exists, and only LIVE entries count",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 07:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22316",
-      "sha": "4c4378aef9",
-      "committedAtIso": "2026-09-22T19:15:20-05:00"
+      "mergedAtCt": "09/22/2026, 11:44 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22393",
+      "sha": "1f7ae46a9c",
+      "committedAtIso": "2026-09-22T23:44:22-05:00"
     },
     {
-      "number": 22315,
-      "title": "Cursor-M1: duplicate active account names fail the build (Round 84); program scoreboard regenerated to unblock pushes",
+      "number": 22392,
+      "title": "FINDING: ACCT-F2026092310 (13d follow-up — the reconciler cron ran twice per tick on production: every backend instance schedules it, and the ticks land seconds apart)",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 07:07 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22315",
-      "sha": "504ecf143a",
-      "committedAtIso": "2026-09-22T19:07:28-05:00"
+      "mergedAtCt": "09/22/2026, 11:39 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22392",
+      "sha": "303dcf547a",
+      "committedAtIso": "2026-09-22T23:39:17-05:00"
     },
     {
-      "number": 22312,
-      "title": "FINDING: ESCROW-LEDGER-SIGN-01 LANE: CC-3 (LANE_CROSS on scripts/money-pr-local-gate.mjs + settlements/approval.service.ts -- docs/bus/LEAD-RULING-2026-09-23-CC3-ESCROW-LEDGER-SIGN-CROSS-LANE.md)",
+      "number": 22391,
+      "title": "FINDING: THE-500.01-ESCROW-RESIDUAL-EXPLAINED -- three 2026-09-02 repair pairs where the release is double the deposit; no money is missing and E10 is unblocked",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 06:54 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22312",
-      "sha": "0967eeb4b9",
-      "committedAtIso": "2026-09-22T18:54:35-05:00"
+      "mergedAtCt": "09/22/2026, 11:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22391",
+      "sha": "5be225fecd",
+      "committedAtIso": "2026-09-22T23:37:24-05:00"
     },
     {
-      "number": 22314,
-      "title": "FINDING: N/A LANE: FINANCIAL (E14 + factoring_advances Faro join key: 2 additive migrations for the settlement-refeed feeder and the day-by-day Faro feed-control gate)",
+      "number": 22390,
+      "title": "FINDING: E10-SETTLEMENTS-PHASE-WRONG-TABLE-USMCA-USES-PAYRUN-GL-RUNS-NOT-SETTLEMENT-GL-RUNS LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 06:52 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22314",
-      "sha": "f37ab2587e",
-      "committedAtIso": "2026-09-22T18:52:09-05:00"
+      "mergedAtCt": "09/22/2026, 11:36 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22390",
+      "sha": "28cf281397",
+      "committedAtIso": "2026-09-22T23:36:51-05:00"
     },
     {
-      "number": 22313,
-      "title": "Cursor-E17 I2 FINDING: RECONCILER-I2 — delivered load has an issued invoice: 22 exceptions, $82,587.00 (CC-2's 17 + 5)",
+      "number": 22389,
+      "title": "FINDING: ACCT-F69 (item lines remainder -- bill lines carry real item/qty/rate, invoice lines confirmed already wired)",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 06:49 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22313",
-      "sha": "7fef24a229",
-      "committedAtIso": "2026-09-22T18:49:59-05:00"
+      "mergedAtCt": "09/22/2026, 11:36 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22389",
+      "sha": "4e2b82d385",
+      "committedAtIso": "2026-09-22T23:36:07-05:00"
     },
     {
-      "number": 22311,
-      "title": "FINDING: E8-BANK-LINE-DEAD-TARGET / E11-D3-LOAD-COSTS-SETTLED-LEAK (LANE-CROSS GRANTED, LEAD RULING ROUND 56-A)",
+      "number": 22388,
+      "title": "FINDING: N/A LANE: DOCS (Cursor OUTBOX: 13d complete, arms unblocked, LIST EMPTY, claiming cash_rsv/dispatch/sch_fee)",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 06:48 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22311",
-      "sha": "9e4dbe8ad2",
-      "committedAtIso": "2026-09-22T18:48:53-05:00"
+      "mergedAtCt": "09/22/2026, 11:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22388",
+      "sha": "fbcf9e4ee0",
+      "committedAtIso": "2026-09-22T23:28:23-05:00"
     },
     {
-      "number": 22310,
-      "title": "Cursor-E7 batch 1: skip-list guards in the gate fail closed on their own domain paths; posting-source, reconciler and empty-settlement guards wired",
+      "number": 22387,
+      "title": "FINDING: N/A LANE: DOCS (Cursor OUTBOX: 13d complete, arms unblocked, LIST EMPTY, claiming cash_rsv/dispatch/sch_fee)",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 06:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22310",
-      "sha": "02598800ff",
-      "committedAtIso": "2026-09-22T18:47:32-05:00"
+      "mergedAtCt": "09/22/2026, 11:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22387",
+      "sha": "e4c665b8e0",
+      "committedAtIso": "2026-09-22T23:27:40-05:00"
     },
     {
-      "number": 22309,
-      "title": "Cursor-E17 FINDING: RECONCILER-E17 — reconciler detection skeleton + exception queue + I8; settlement with no loads is a build failure",
+      "number": 22386,
+      "title": "FINDING: ACCT-F2026092309 (13d reconciler backend half, slice 2 — exceptions existed only for the length of one GET: no record of when a breach was first seen, whether it is still open, or when it resolved; nothing ran the reconciler unless someone opened the page)",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 06:41 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22309",
-      "sha": "72b3e367af",
-      "committedAtIso": "2026-09-22T18:41:32-05:00"
+      "mergedAtCt": "09/22/2026, 11:23 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22386",
+      "sha": "bc041f7770",
+      "committedAtIso": "2026-09-22T23:23:59-05:00"
     },
     {
-      "number": 22307,
-      "title": "FINDING: N/A (CLAIM-RESERVE 11551, 11555 -- reservation-only commit, no code fix)",
+      "number": 22385,
+      "title": "FINDING: ACCT-F68 (E20 Part B -- the Samsara Driver Mapping page, 663 unmapped is the default view, never auto-map)",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 06:39 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22307",
-      "sha": "5c0436169a",
-      "committedAtIso": "2026-09-22T18:39:51-05:00"
+      "mergedAtCt": "09/22/2026, 11:18 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22385",
+      "sha": "11f4543135",
+      "committedAtIso": "2026-09-22T23:18:20-05:00"
     },
     {
-      "number": 22308,
-      "title": "FINDING: ROUND69-DEF-DIESEL-FUEL-ROUTING-AND-WINDSHIELD-HEADLIGHT LANE: NON-FINANCIAL",
+      "number": 22383,
+      "title": "FINDING: N/A LANE: DOCS (OUTBOX-CC-1 -- all four items complete, load-create ratchet closed at 0/0)",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 06:35 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22308",
-      "sha": "757beaa603",
-      "committedAtIso": "2026-09-22T18:35:51-05:00"
+      "mergedAtCt": "09/22/2026, 11:16 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22383",
+      "sha": "ec1b057639",
+      "committedAtIso": "2026-09-22T23:16:33-05:00"
     }
   ]
 }
