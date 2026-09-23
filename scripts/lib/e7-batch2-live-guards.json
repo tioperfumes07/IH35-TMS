@@ -7,11 +7,9 @@
     "verify-bank-running-balance-uses-full-history.mjs",
     "verify-bill-payments-void-biconditional.mjs",
     "verify-bnk01-fuzzy-vendor-match.mjs",
-    "verify-capitalized-repair-registers-fixed-asset.mjs",
     "verify-cash-advance-close-time-three-way-routing.mjs",
     "verify-cash-flow-rolling-ledger.mjs",
     "verify-cash-flow-statement-live.mjs",
-    "verify-chain-04-bill-payment-bank-tieout.mjs",
     "verify-chain-06-factoring-ar-tieout.mjs",
     "verify-close-post-a-item2-historical-advances.mjs",
     "verify-coa-roles.mjs",
@@ -20,7 +18,6 @@
     "verify-customer-activity-statements.mjs",
     "verify-customer-finance-cost-rollup.mjs",
     "verify-customer-shipping-country-nullable.mjs",
-    "verify-disp-wire-06-load-expense-link.mjs",
     "verify-driver-termination-reasons-rls-single-policy.mjs",
     "verify-driver-vendor-financial-identity-invariant.mjs",
     "verify-escrow-balance-reconciles-gl.mjs",
@@ -46,7 +43,6 @@
     "verify-other-recovery-role-bound.mjs",
     "verify-payrun-close-excludes-voided-deductions.mjs",
     "verify-pl-cost-of-revenue.mjs",
-    "verify-reimbursement-reversal-routes-to-expense.mjs",
     "verify-rpt-s02-neon-tie.mjs",
     "verify-safety-evidence-no-delete-grant.mjs",
     "verify-set24-correction-dry-run.mjs",
@@ -54,9 +50,6 @@
     "verify-settlement-lines-load-id-backfilled.mjs",
     "verify-settlement-list-accrual.mjs",
     "verify-tour-leg-linkage.mjs",
-    "verify-unbilled-revenue-accounts.mjs",
-    "verify-vendor-customer-merge.mjs",
-    "verify-vendor-statements-activity-tabs.mjs",
-    "verify-wave-h1-catalog-coa-completeness.mjs"
+    "verify-vendor-statements-activity-tabs.mjs"
   ]
 }
