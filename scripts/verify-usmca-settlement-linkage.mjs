@@ -54,6 +54,8 @@
 // Skips gracefully (prints, exits 0) when DATABASE_URL is not set -- same convention every other
 // live-Neon guard in this repo uses.
 import pg from "pg";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 const LABEL = "verify-usmca-settlement-linkage";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -78,8 +80,8 @@ const RANGE_SQL = `ds.source_document_ref ~ '^[0-9]+$' AND ds.source_document_re
 async function live() {
   const url = process.env.DATABASE_URL;
   if (!url) {
-    console.log(`${LABEL}: LIVE skipped (no DATABASE_URL) — not a pass, not a fail; this check needs a real Neon connection`);
-    return;
+    console.error("verify-usmca-settlement-linkage: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
   const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
   await client.connect();

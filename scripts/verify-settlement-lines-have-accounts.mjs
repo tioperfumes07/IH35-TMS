@@ -42,6 +42,8 @@
  *   DATABASE_URL=<Neon prod> node scripts/verify-settlement-lines-have-accounts.mjs
  */
 import fs from "node:fs";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 const LABEL = "verify-settlement-lines-have-accounts";
 const MATERIALIZE_PATH = "apps/backend/src/driver-finance/settlement-lines-materialize.service.ts";
@@ -121,9 +123,8 @@ console.log(`${LABEL}: static OK — materializer never approves a line with an 
 
 // Live half.
 if (!process.env.DATABASE_URL) {
-  console.log(`${LABEL}: DATABASE_URL not set — skipping the live re-check (static check above still ran).`);
-  console.log(`${LABEL}: to re-run live: DATABASE_URL=<prod> node ${process.argv[1]}`);
-  process.exit(0);
+  console.error("verify-settlement-lines-have-accounts: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+  process.exit(1);
 }
 
 const { Client } = await import("pg");

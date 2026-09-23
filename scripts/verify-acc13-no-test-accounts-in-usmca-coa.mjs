@@ -18,6 +18,8 @@
  *        node scripts/verify-acc13-no-test-accounts-in-usmca-coa.mjs --selftest
  */
 import fs from "node:fs";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 const LABEL = "verify-acc13-no-test-accounts-in-usmca-coa";
 const ROUTE_PATH = "apps/backend/src/catalogs/accounts.routes.ts";
@@ -65,9 +67,8 @@ console.log(`${LABEL}: static OK — create route rejects test/sample/demo-named
 // Live half: only runs with a real DATABASE_URL (prod or a branch) — never part of the CI ephemeral-DB
 // suite (same convention as verify-gl-invariants.sql, which is psql-invoked, not auto-run in CI).
 if (!process.env.DATABASE_URL) {
-  console.log(`${LABEL}: DATABASE_URL not set — skipping the live re-count (static check above still ran).`);
-  console.log(`${LABEL}: to re-run the live count: DATABASE_URL=<prod> node ${process.argv[1]}`);
-  process.exit(0);
+  console.error("verify-acc13-no-test-accounts-in-usmca-coa: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+  process.exit(1);
 }
 
 const { Client } = await import("pg");

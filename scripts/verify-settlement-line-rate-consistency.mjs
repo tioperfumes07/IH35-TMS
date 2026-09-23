@@ -31,6 +31,8 @@
  *   DATABASE_URL=<Neon prod> node scripts/verify-settlement-line-rate-consistency.mjs
  */
 import fs from "node:fs";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 const LABEL = "verify-settlement-line-rate-consistency";
 const ROUTES_PATH = "apps/backend/src/driver-finance/settlements.routes.ts";
@@ -124,9 +126,8 @@ console.log(`${LABEL}: static OK — rate reads the same source as amount; no FE
 // Live half: only runs with a real DATABASE_URL — same convention as
 // verify-acc13-no-test-accounts-in-usmca-coa.mjs / verify-driver-vendor-linkage.mjs.
 if (!process.env.DATABASE_URL) {
-  console.log(`${LABEL}: DATABASE_URL not set — skipping the live re-check (static check above still ran).`);
-  console.log(`${LABEL}: to re-run live: DATABASE_URL=<prod> node ${process.argv[1]}`);
-  process.exit(0);
+  console.error("verify-settlement-line-rate-consistency: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+  process.exit(1);
 }
 
 const { Client } = await import("pg");

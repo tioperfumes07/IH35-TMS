@@ -18,6 +18,8 @@
 // every other db-verify-*.mjs script, intended for CI's ephemeral Postgres or local dev.
 import dotenv from "dotenv";
 import pg from "pg";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 dotenv.config();
 
@@ -83,10 +85,7 @@ if (process.argv.includes("--selftest")) {
 }
 
 const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
-if (!connectionString) {
-  console.error("verify:bank-feed-live-tieout — SKIPPED (no DATABASE_DIRECT_URL/DATABASE_URL in environment)");
-  process.exit(0);
-}
+if (!connectionString) { console.error("verify-bank-feed-live-tieout: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B)."); process.exit(1); }
 
 const { Pool } = pg;
 const client = new Pool({ connectionString });

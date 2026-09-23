@@ -395,10 +395,10 @@ function touchesMoneyPath() {
   return files.some((f) => MONEY_PATH_RE.test(f));
 }
 
-function runNode(rel, extraEnv = {}) {
+function runNode(rel, extraEnv = {}, args = []) {
   const script = path.join(ROOT, rel);
-  console.log(`[${LABEL}] RUN ${rel}`);
-  const res = spawnSync(process.execPath, [script], {
+  console.log(`[${LABEL}] RUN ${rel}${args.length ? ` ${args.join(" ")}` : ""}`);
+  const res = spawnSync(process.execPath, [script, ...args], {
     cwd: ROOT,
     encoding: "utf8",
     env: { ...process.env, ...extraEnv },
@@ -437,10 +437,18 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  for (const file of JSON.parse(fs.readFileSync(path.join(ROOT, "scripts/lib/e7-batch2-live-guards.json"), "utf8")).guards) {
+  const e7List = JSON.parse(fs.readFileSync(path.join(ROOT, "scripts/lib/e7-batch2-live-guards.json"), "utf8"));
+  for (const file of e7List.guards) {
     const abs = path.join(ROOT, "scripts", file);
     if (!fs.existsSync(abs) || !/export\s+const\s+REQUIRES_LIVE_DB\s*=/.test(fs.readFileSync(abs, "utf8"))) {
       console.error(`${LABEL} --selftest FAIL: E7 batch-2 guard ${file} is missing or does not declare REQUIRES_LIVE_DB`);
+      process.exit(1);
+    }
+  }
+  for (const file of e7List.live_flag_guards ?? []) {
+    const abs = path.join(ROOT, "scripts", file);
+    if (!fs.existsSync(abs) || !/process\.argv\.includes\(\s*["']--live["']\s*\)/.test(fs.readFileSync(abs, "utf8"))) {
+      console.error(`${LABEL} --selftest FAIL: E7 batch-2 --live guard ${file} is missing or has no --live path`);
       process.exit(1);
     }
   }
@@ -596,10 +604,15 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
 // (verify-static's guardIsInScope), and then needs a live DB. A guard the map marks alwaysRun has no
 // owned path to key on, so it runs only when a live DB is present.
 const E7_BATCH2_LIST = "scripts/lib/e7-batch2-live-guards.json";
-const e7Batch2 = JSON.parse(fs.readFileSync(path.join(ROOT, E7_BATCH2_LIST), "utf8")).guards;
+const e7Batch2List = JSON.parse(fs.readFileSync(path.join(ROOT, E7_BATCH2_LIST), "utf8"));
+// live_flag_guards are static by default; their database half runs only with --live.
+const e7Batch2 = [
+  ...e7Batch2List.guards.map((file) => [file, []]),
+  ...(e7Batch2List.live_flag_guards ?? []).map((file) => [file, ["--live"]]),
+];
 const { map: gateStepMap } = ensureFreshGateStepMap();
 const e7Batch2Skipped = [];
-for (const file of e7Batch2) {
+for (const [file, args] of e7Batch2) {
   const entry = gateStepMap.entries?.[file];
   const inScope = entry?.alwaysRun
     ? Boolean(process.env.DATABASE_URL)
@@ -608,7 +621,7 @@ for (const file of e7Batch2) {
     e7Batch2Skipped.push(file);
     continue;
   }
-  const code = runNode(`scripts/${file}`);
+  const code = runNode(`scripts/${file}`, {}, args);
   if (code !== 0 && !acceptedAsEmptyByPurge(`scripts/${file}`, code)) {
     failStep(file);
     process.exit(code);

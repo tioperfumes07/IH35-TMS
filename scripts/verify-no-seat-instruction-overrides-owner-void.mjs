@@ -29,6 +29,8 @@
 // docs/bus/RULING-VOID-10-SUBSTITUTE-PICKLIST-2026-09-01.md). This guard is the narrowest,
 // highest-confidence slice of the ask that is buildable and verifiable today.
 import { Client } from "pg";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 const LABEL = "verify-no-seat-instruction-overrides-owner-void";
 
@@ -105,8 +107,8 @@ async function auditLive(databaseUrl) {
 async function run() {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
-    console.log(`${LABEL} SKIP — no DATABASE_URL (this is a live-prod-only audit, read-only role required)`);
-    return;
+    console.error("verify-no-seat-instruction-overrides-owner-void: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
   const findings = await auditLive(databaseUrl);
   if (findings.length > 0) {

@@ -49,6 +49,8 @@
 import process from "node:process";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 const require = createRequire(import.meta.url);
 const LABEL = "verify-gl-posting-coverage";
@@ -172,8 +174,8 @@ if (process.argv.includes("--selftest")) {
 
 const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
 if (!connectionString) {
-  console.log(`${LABEL} SKIP — no DATABASE_URL/DATABASE_DIRECT_URL; live coverage cannot be asserted here.`);
-  process.exit(0);
+  console.error("verify-gl-posting-coverage: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+  process.exit(1);
 }
 
 // THE LIVE ASSERTION ONLY MEANS SOMETHING AGAINST THE REAL BOOKS.

@@ -29,6 +29,8 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
@@ -59,8 +61,8 @@ async function main() {
 
   const cs = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
   if (!cs) {
-    console.warn("[posting-gate] no DATABASE_URL — skipping (advisory). CI/cron with a DB is the real gate.");
-    process.exit(0);
+    console.error("verify-no-posting-gate-on-empty-table: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
 
   const pg = (await import("pg")).default;

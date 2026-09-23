@@ -36,6 +36,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Client } from "pg";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-load-settlement-linkage";
@@ -141,8 +143,8 @@ function ratchetOne(label, count, baselinePath, describe) {
 async function run() {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
-    console.log(`${LABEL} SKIP — no DATABASE_URL (this is a live-prod-only audit, read-only role required)`);
-    return;
+    console.error("verify-load-settlement-linkage: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
   const { orphans, misattached } = await auditLive(databaseUrl);
 
