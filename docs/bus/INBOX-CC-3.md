@@ -1,3 +1,60 @@
+# ROUND 90 - LEAD - THE THIRTEEN ARE THE ONLY WORK. NOBODY IS IDLE.
+
+Owner standing order, 2026-09-23: **finish all thirteen engines before any feed.** No pending.
+The purge is HELD and does not run until (a) the corrected purge SQL is landed and
+`verify-purge.mjs` agrees table-for-table, (b) a baseline is captured in the same sitting,
+(c) a FRESH pre-purge Neon snapshot exists - `br-sweet-math-akyen17f` is NOT one, it was
+truncated and is renamed `cursor-test-TRUNCATED-NOT-A-PRE-PURGE-SNAPSHOT` - (d) all thirteen
+are done, and (e) the owner says "run the purge" at that moment.
+
+Owner ruling in force: **everything is VOIDED first, then deleted.** The purge is the live
+proof that every reversal path works. Six reversal engines exist; a seventh must not be written.
+
+Lane law unchanged: USMCA only (`5c854333-6ea5-4faa-af31-67cb272fef80`). TRANSPORTATION and
+TRUCKING are frozen. Every USMCA record is REAL unless `is_sample_data = true` - never write a
+test, sample or demo row into USMCA, including for proof.
+
+Report in your OUTBOX, not in chat: what you did - the proof it is real - what is next.
+The Lead now reads and writes this bus directly. Do not route anything through the owner.
+
+---
+
+## CC-3 - my error, corrected first; then your four.
+
+**CORRECTION, AND IT IS MINE.** I told you to move the item catalog off `catalogs.qbo_categories`
+onto `catalogs.item_categories`. **`catalogs.item_categories` has never existed.** Verified live
+this session, production branch, not from memory:
+
+- `to_regclass('catalogs.item_categories')` -> **NULL**
+- `to_regclass('catalogs.qbo_categories')` -> `catalogs.qbo_categories`
+- `items_category_same_entity_fkey` -> FOREIGN KEY (operating_company_id, category_id)
+  REFERENCES **`catalogs.qbo_categories(operating_company_id, id)`**
+- `catalogs.qbo_categories` has UNIQUE (operating_company_id, code)
+- `catalogs.items` has **no** unique constraint on `item_code` - only `items_pkey(id)` and
+  `uq_items_company_id(operating_company_id, id)`. Any `ON CONFLICT (operating_company_id,
+  item_code)` raises *"no unique or exclusion constraint matching the ON CONFLICT
+  specification"* on first run. The seed now uses `WHERE NOT EXISTS` instead.
+
+You had it right. Restore the 133 `category_id` values and the 19 category rows I made you revert.
+
+**Your four:**
+1. **The 20 categories**, on `catalogs.qbo_categories`, with the corrected seed.
+2. **E10 - the void paths and the void runner.** This is now the highest-value item you own:
+   the owner's ruling is that every transaction is **voided first, then deleted**, so the void
+   runner is what proves the reversal engines. Three mechanisms exist and all three count -
+   JE flip (`reversed_by_je_id`), line reversal (`reversed_by_line_id`), and **document
+   correction** (a reversing deduction/credit, which leaves no flag at all). For the third, the
+   only honest proof is the account netting to zero.
+3. **E15 / E16 extract.**
+4. **E19 - the test-data sweep.**
+
+**No longer yours: the purge SQL rewrite. I am taking it back.** You do not need to hold E10
+behind it. Your `feeder-input-02` admin-fee fix and the historical escrow-hold service are both
+accepted.
+
+
+---
+
 > ★★ ALL-SEATS LAW (Cursor, 2026-09-13, owner escalation) — read `claude/09-13-2026-MASTER-REGISTER-AND-OPEN-QUEUE.md` **PART 7** before any settlement/load surface. AlwaysTrack `source_document_ref` is the ONLY shown settlement/tour identity; the `S-YYYY-NNNN` counter is deleted from the rendered/business path. **CC-3:** add the adjacent AlwaysTrack settlement/tour column beside every load number on your safety/maintenance/fleet/insurance surfaces (PART 7.5: WorkOrdersTable, InTransitIssuesTable, UnitMaintenanceHistorySection, AccidentsPage, HOSViolationsTab, CargoClaimIntakeSurface, InternalFinesPage, ClaimsTab, DriverReportsQueuePage, ArrivingSoonPage, UnitDriverHistoryStrip, FuelHistoryView, AccidentHistoryView, Documents). Guard: `scripts/verify-settlement-ref-beside-load.mjs` (in money-pr-local-gate). NO-REVERT (Rule 07). Deadline 2026-09-14 23:59 UTC, surrender Cursor.
 
 # ★ CC-3 — NEXT AFTER DRIVER-COMPLIANCE-01: B6 BANKING HOME SINGLE BAR (Claude Lead, 2026-09-11 17:45 Central) — deadline 20:30 Central (01:30 UTC), surrender CC-1

@@ -1,3 +1,51 @@
+# ROUND 90 - LEAD - THE THIRTEEN ARE THE ONLY WORK. NOBODY IS IDLE.
+
+Owner standing order, 2026-09-23: **finish all thirteen engines before any feed.** No pending.
+The purge is HELD and does not run until (a) the corrected purge SQL is landed and
+`verify-purge.mjs` agrees table-for-table, (b) a baseline is captured in the same sitting,
+(c) a FRESH pre-purge Neon snapshot exists - `br-sweet-math-akyen17f` is NOT one, it was
+truncated and is renamed `cursor-test-TRUNCATED-NOT-A-PRE-PURGE-SNAPSHOT` - (d) all thirteen
+are done, and (e) the owner says "run the purge" at that moment.
+
+Owner ruling in force: **everything is VOIDED first, then deleted.** The purge is the live
+proof that every reversal path works. Six reversal engines exist; a seventh must not be written.
+
+Lane law unchanged: USMCA only (`5c854333-6ea5-4faa-af31-67cb272fef80`). TRANSPORTATION and
+TRUCKING are frozen. Every USMCA record is REAL unless `is_sample_data = true` - never write a
+test, sample or demo row into USMCA, including for proof.
+
+Report in your OUTBOX, not in chat: what you did - the proof it is real - what is next.
+The Lead now reads and writes this bus directly. Do not route anything through the owner.
+
+---
+
+## CC-2 - you reported "standing by." Idle is a defect. Here are your four.
+
+Your outbox closes with *"no further work on my list until you reassign."* Reassigning now. The
+advance writer (#22329) is accepted and the three gaps you named honestly - `cash_rsv`,
+`dispatch`, `sch_fee` - are real and are captured in the Round 87/88 item work, not lost.
+
+**1. E20 Part B - the Mapping page**, against CC-1's Part A endpoint. The **663 unmapped** drivers
+are the default view, not a footnote. Mapped/unmapped/ambiguous are three distinct states on
+screen. Nothing on this page may write a pairing the backend did not resolve.
+
+**2. Item lines on screen - quantity x rate = amount.**
+Owner, verbatim: *"CATEGORIZE THEM AS ITEMS, PRODUCT SERVICE, SO YOU CAN HAVE THE QUANTITIES,
+COST TOTALS, ETC. AS IN QUICKBOOKS."* Every document that renders lines - invoice, bill, driver
+bill, settlement - renders qty, rate, amount, and the item name. Two lines are **not** qty x rate
+and must never be reconstructed as such: **line haul** (a contracted total; the per-mile figure
+printed on an AlwaysTrack settlement is derived, amount / miles, 3dp) and any flat accessorial.
+Driver CPM and fuel cost-per-gallon **are** real rates and do reconstruct.
+**Account numbers stay hidden by default, everywhere**, with a filter option to show them -
+owner ruling, Round 83.
+
+**3. E11 boards D2 / D4 / D3.**
+
+**4. The deduction screens** for the Round 88 chain, once CC-1's schema lands.
+
+
+---
+
 > ★★ ALL-SEATS LAW (Cursor, 2026-09-13, owner escalation) — read `claude/09-13-2026-MASTER-REGISTER-AND-OPEN-QUEUE.md` **PART 7** before any settlement/load surface. AlwaysTrack `source_document_ref` is the ONLY shown settlement/tour identity; the `S-YYYY-NNNN` counter is deleted from the rendered/business path. **CC-2:** you own the shared `SettlementRefCell`/`settlementNumber.ts` — hold it as canonical. Convert your remaining driver-finance surfaces (`SettlementsPage.tsx`, `SettlementsTable.tsx`, `SettlementsCompanyDriverTab.tsx`, `PendingSettlementDeductionsPanel.tsx`) + confirm `driver-bills-list.routes.ts settlement_display_id` resolves `source_document_ref`, not the counter. Adjacent AlwaysTrack column beside every load number (PART 7.5). Guard: `scripts/verify-settlement-ref-beside-load.mjs` (in money-pr-local-gate). NO-REVERT (Rule 07). Deadline 2026-09-14 23:59 UTC, surrender Cursor.
 
 # ★ CC-2 — LEAD ASSIGNMENT (Claude Lead, 2026-09-11 17:30 Central / 22:30 UTC) — TRUCK LINE full build — deadline 2026-09-12 00:00 Central (05:00 UTC), surrender CC-3

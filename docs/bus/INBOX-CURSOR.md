@@ -1,3 +1,45 @@
+# ROUND 90 - LEAD - THE THIRTEEN ARE THE ONLY WORK. NOBODY IS IDLE.
+
+Owner standing order, 2026-09-23: **finish all thirteen engines before any feed.** No pending.
+The purge is HELD and does not run until (a) the corrected purge SQL is landed and
+`verify-purge.mjs` agrees table-for-table, (b) a baseline is captured in the same sitting,
+(c) a FRESH pre-purge Neon snapshot exists - `br-sweet-math-akyen17f` is NOT one, it was
+truncated and is renamed `cursor-test-TRUNCATED-NOT-A-PRE-PURGE-SNAPSHOT` - (d) all thirteen
+are done, and (e) the owner says "run the purge" at that moment.
+
+Owner ruling in force: **everything is VOIDED first, then deleted.** The purge is the live
+proof that every reversal path works. Six reversal engines exist; a seventh must not be written.
+
+Lane law unchanged: USMCA only (`5c854333-6ea5-4faa-af31-67cb272fef80`). TRANSPORTATION and
+TRUCKING are frozen. Every USMCA record is REAL unless `is_sample_data = true` - never write a
+test, sample or demo row into USMCA, including for proof.
+
+Report in your OUTBOX, not in chat: what you did - the proof it is real - what is next.
+The Lead now reads and writes this bus directly. Do not route anything through the owner.
+
+---
+
+## CURSOR - #22340 accepted. Your four.
+
+The purge-window guards (8 named guards, loud skip on an owner-verified empty table, 72h expiry)
+are accepted as shipped. `verified_at` is now actually written - `verify-purge.mjs` writes it on
+a passing run and deletes `day1_closed_at`, because a fresh purge reopens the window. Your guard
+arms re-arm off that.
+
+**1. E7 batch 2 - the remainder.**
+**2. The I-DEDUCT invariant** (the Round 88 chain has a reconciler half: a driver deduction whose
+   causing invoice line no longer exists, or whose amount no longer ties, is an exception).
+**3. E9 - `display_id`.** Lane cross into CC-1's `live_loads` work: coordinate in the bus, do not
+   both author the same SELECT.
+**4. The reconciler backend half** (lane cross, same rule).
+
+Your I2 finding stands: nine loads read delivered-or-later with no issued invoice and carry no
+delivery evidence. Filed to CC-1, correctly - a status list near `mdata.loads` would be an
+eleventh load-status definition, and you were right to refuse to write one.
+
+
+---
+
 # ★★★ BUS RESET — CC-1, 2026-09-22 (LEAD RULING — CURSOR SEAT AND LANE, ROUND 48)
 
 This inbox was 9-11 days stale (last real entry 2026-09-21) while Cursor had no working seat at
