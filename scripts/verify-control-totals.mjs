@@ -7,7 +7,9 @@
 // written Lead ruling in docs/bus/ and the ruling's filename in the PR body.
 
 import pg from 'pg';
+import { EMPTY_BY_PURGE_EXIT, purgeWindowFor } from './lib/purge-window.mjs';
 
+const LABEL = 'verify-control-totals';
 const USMCA = '5c854333-6ea5-4faa-af31-67cb272fef80';
 const BYPASS = `WITH b AS MATERIALIZED (SELECT set_config('app.bypass_rls','lucia',true) AS v)`;
 // NOTE: the bypass CTE must be MATERIALIZED *and* referenced in a WHERE clause.
@@ -17,6 +19,9 @@ const CHECKS = [
   {
     name: 'Driver settlements 5804-5815 net pay',
     expect: 20191.07,
+    // Transaction data the purge deletes. Inside a verified purge window, with no USMCA settlements
+    // at all, this control is EMPTY BY PURGE (provisional per Round 86, re-priced once after day 1).
+    emptyByPurgeWhenNoRows: 'driver_finance.driver_settlements',
     sql: `${BYPASS}
           SELECT COALESCE(SUM(s.net_pay),0)::numeric AS v
           FROM driver_finance.driver_settlements s
@@ -89,6 +94,19 @@ if (!url) {
 
 const client = new pg.Client({ connectionString: url });
 let failures = 0, skips = 0;
+const emptyByPurge = [];
+
+async function usmcaSettlementCount() {
+  await client.query('BEGIN');
+  try {
+    const { rows } = await client.query(
+      `${BYPASS} SELECT COUNT(*)::int AS n FROM driver_finance.driver_settlements s
+        WHERE (SELECT v FROM b)='lucia' AND s.operating_company_id = $1`, [USMCA]);
+    return rows[0].n;
+  } finally {
+    await client.query('ROLLBACK').catch(() => {});
+  }
+}
 
 try {
   await client.connect();
@@ -118,6 +136,11 @@ try {
       continue;
     }
     const delta = Math.round((got - c.expect) * 100) / 100;
+    if (c.emptyByPurgeWhenNoRows && Math.abs(delta) >= 0.005 && got === 0 && purgeWindowFor(LABEL).open && (await usmcaSettlementCount()) === 0) {
+      emptyByPurge.push(c.name);
+      console.log(`  EMPTY BY PURGE  ${c.name} — ${c.emptyByPurgeWhenNoRows} has no USMCA rows; named skip, not a pass.`);
+      continue;
+    }
     if (Math.abs(delta) < 0.005) {
       console.log(`  PASS  ${c.name} = ${money(got)}`);
     } else {
@@ -137,5 +160,10 @@ if (failures) {
   console.error(`  CONTROL TOTALS FAIL: ${failures} check(s) do not tie. Do not merge. Do not plug the difference.`);
   console.error(`  A forced tie is worse than an honest variance — name it in the reconciling-item register.\n`);
   process.exit(1);
+}
+if (emptyByPurge.length) {
+  const w = purgeWindowFor(LABEL);
+  console.log(`${LABEL}: EMPTY BY PURGE (verified ${w.verifiedAt}, expires ${w.expiresAt}) — ${emptyByPurge.length} control(s) skipped; every other control ran and tied.`);
+  process.exit(EMPTY_BY_PURGE_EXIT);
 }
 console.log('  CONTROL TOTALS PASS — every control ties to the cent.\n');

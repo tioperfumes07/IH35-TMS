@@ -496,7 +496,7 @@ function acceptedAsEmptyByPurge(rel, code) {
 // operator working a money path must have prod access wired before this gate can pass.
 if (process.env.DATABASE_URL || touchesMoneyPath()) {
   const code = runNode("scripts/verify-control-totals.mjs");
-  if (code !== 0) {
+  if (code !== 0 && !acceptedAsEmptyByPurge("scripts/verify-control-totals.mjs", code)) {
     failStep("verify-control-totals (03c)");
     process.exit(code);
   }

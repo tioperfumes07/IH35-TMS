@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // The purge-window exemption stays exactly as ruled (Lead, docs/bus/09-23-2026-LEAD-RULING-CURSOR-
 // PURGE-WINDOW-GUARD-STATE.md). Static, no DATABASE_URL:
-//   1. the seven named guards, and only they, call exitIfEmptyByPurge — a new guard cannot inherit it;
-//   2. money-pr-local-gate accepts the EMPTY BY PURGE exit at all three live-guard sites and prints
+//   1. the eight named guards, and only they, call the purge-window helper — a new guard cannot inherit it;
+//   2. money-pr-local-gate accepts the EMPTY BY PURGE exit at all four live-guard sites and prints
 //      the counted summary line;
 //   3. the window opens only on a verified purge, closes when day 1 closes, and expires 72 hours
 //      after verified_at whatever the feed has done;
@@ -23,17 +23,17 @@ const failures = [];
 const callers = fs
   .readdirSync(path.join(ROOT, "scripts"))
   .filter((f) => f.endsWith(".mjs") && f !== path.basename(fileURLToPath(import.meta.url)))
-  .filter((f) => /exitIfEmptyByPurge\s*\(/.test(fs.readFileSync(path.join(ROOT, "scripts", f), "utf8")))
+  .filter((f) => /exitIfEmptyByPurge\s*\(|purgeWindowFor\s*\(/.test(fs.readFileSync(path.join(ROOT, "scripts", f), "utf8")))
   .map((f) => f.replace(/\.mjs$/, ""))
   .sort();
 const expected = [...PURGE_WINDOW_GUARDS].sort();
-if (PURGE_WINDOW_GUARDS.length !== 7) failures.push(`PURGE_WINDOW_GUARDS lists ${PURGE_WINDOW_GUARDS.length} guards; the ruling names seven`);
-for (const c of callers) if (!expected.includes(c)) failures.push(`${c} calls exitIfEmptyByPurge but is not one of the seven`);
-for (const e of expected) if (!callers.includes(e)) failures.push(`${e} is one of the seven but no longer calls exitIfEmptyByPurge at its empty-table arm`);
+if (PURGE_WINDOW_GUARDS.length !== 8) failures.push(`PURGE_WINDOW_GUARDS lists ${PURGE_WINDOW_GUARDS.length} guards; the rulings name eight`);
+for (const c of callers) if (!expected.includes(c)) failures.push(`${c} calls the purge-window helper but is not one of the eight`);
+for (const e of expected) if (!callers.includes(e)) failures.push(`${e} is one of the eight but no longer calls the purge-window helper at its empty-table arm`);
 
 const gate = fs.readFileSync(GATE, "utf8");
 const sites = (gate.match(/code !== 0 && !acceptedAsEmptyByPurge\(/g) ?? []).length;
-if (sites !== 3) failures.push(`money-pr-local-gate accepts EMPTY BY PURGE at ${sites} site(s); expected 3 (parity, LIVE_DOMAIN_GUARDS, E7 batch 2)`);
+if (sites !== 4) failures.push(`money-pr-local-gate accepts EMPTY BY PURGE at ${sites} site(s); expected 4 (control totals, parity, LIVE_DOMAIN_GUARDS, E7 batch 2)`);
 if (!/PURGE_WINDOW_GUARDS\.includes\(guard\)/.test(gate) || !/purgeWindow\(\)\.open/.test(gate)) {
   failures.push("money-pr-local-gate no longer checks the guard list and the open window before accepting the skip");
 }
@@ -71,6 +71,6 @@ if (failures.length > 0) {
 }
 const w = purgeWindow();
 console.log(
-  `${LABEL}: PASS — exactly the 7 named guards may skip EMPTY BY PURGE; the gate accepts it at 3 sites; ` +
+  `${LABEL}: PASS — exactly the 8 named guards may skip EMPTY BY PURGE; the gate accepts it at 4 sites; ` +
     `window ${w.open ? `OPEN (verified ${w.verifiedAt}, expires ${w.expiresAt})` : `closed (${w.reason})`}; ${cases.length} window cases hold.`
 );
