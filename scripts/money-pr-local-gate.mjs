@@ -16,6 +16,7 @@
  * Never `git commit --no-verify` / `git push --no-verify` (Rule 29).
  */
 import fs from "node:fs";
+import os from "node:os";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -537,13 +538,46 @@ function touchesMoneyPath() {
   return files.some((f) => MONEY_PATH_RE.test(f));
 }
 
+// E16.2 (owner, 2026-09-23 22:45 UTC) — gate slowness during a six-seat merge window was lock
+// contention, not a slow guard: every guard's live read was connecting as `neondb_owner`, which
+// contends for writer locks with the production feed. Every one of these guards is a read-only
+// check (SELECT / BEGIN READ ONLY / set_config bypass_rls) — none of them ever needs write
+// authority — so the gate defaults their DATABASE_URL to the `ih35_ci_readonly` role instead.
+// Read once, memoized, never logged (it's a live credential).
+const READONLY_DB_URL_FILE = path.join(os.homedir(), ".config/ih35/neon-prod-readonly.url");
+let cachedReadonlyDbUrl;
+function resolveGuardDatabaseUrl() {
+  if (cachedReadonlyDbUrl !== undefined) return cachedReadonlyDbUrl;
+  // An explicit env var always wins — lets a seat without the file (or CI, which injects its own
+  // scoped secret) opt in without touching this file.
+  if (process.env.DATABASE_URL_READONLY) {
+    cachedReadonlyDbUrl = process.env.DATABASE_URL_READONLY;
+    return cachedReadonlyDbUrl;
+  }
+  try {
+    const val = fs.readFileSync(READONLY_DB_URL_FILE, "utf8").trim();
+    cachedReadonlyDbUrl = val || undefined;
+  } catch {
+    cachedReadonlyDbUrl = undefined;
+  }
+  // No readonly credential available locally — fall back to whatever DATABASE_URL the caller
+  // already set (unchanged behavior; never block a seat that hasn't fetched the readonly role yet).
+  return cachedReadonlyDbUrl ?? process.env.DATABASE_URL;
+}
+
 function runNode(rel, extraEnv = {}, args = []) {
   const script = path.join(ROOT, rel);
   console.log(`[${LABEL}] RUN ${rel}${args.length ? ` ${args.join(" ")}` : ""}`);
+  const env = { ...process.env, ...extraEnv };
+  // Only override when a live DB is actually in play (DATABASE_URL set) and the caller didn't
+  // already pin a specific connection string via extraEnv (e.g. a test harness).
+  if (env.DATABASE_URL && !extraEnv.DATABASE_URL) {
+    env.DATABASE_URL = resolveGuardDatabaseUrl();
+  }
   const res = spawnSync(process.execPath, [script, ...args], {
     cwd: ROOT,
     encoding: "utf8",
-    env: { ...process.env, ...extraEnv },
+    env,
   });
   const out = `${res.stdout ?? ""}${res.stderr ?? ""}`.trim();
   if (out) console.log(out);
