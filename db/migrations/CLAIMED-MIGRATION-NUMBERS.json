@@ -1031,6 +1031,16 @@
       "claimed_by": "claude",
       "claimed_at": "2026-09-23",
       "purpose": "ROUND 118 (Lead ruling, Defect 2): accounting.bills carries NO load linkage of any kind (measured live: linked_work_order_uuid, vendor_id, vendor_uuid, mdata_vendor_id, source, source_system, source_bank_transaction_id -- no load column). A lumper/scale/tarp bill raised for a load has nothing pointing back at that load, so a load cancellation leaves a live payable orphaned with no trace. Adds a nullable, indexed load_id FK to mdata.loads(id), idempotent (IF NOT EXISTS guards)."
+    },
+    "202614310200": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-23",
+      "purpose": "ROUND 115 tasks 41-42: follow-up CREATE OR REPLACE VIEW for views.live_loads. Preserve column order and security_invoker while replacing status-declared money closure with the owner-ruled both-sides-closed predicate: issued non-draft/non-proforma/non-void customer invoice AND an active settlement line or settled driver bill. Keep samples, soft-deleted rows, and never-had-money terminal states out; never mutate load status."
+    },
+    "202614310201": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-23",
+      "purpose": "ROUND 115 load-cost line vertical: validate the existing accounting.bill_lines and accounting.expense_lines item/quantity/rate/unit/amount CHECK constraints after wiring both load-cost writers to persist the complete tuple."
     }
   },
   "202613590001": {

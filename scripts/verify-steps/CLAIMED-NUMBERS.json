@@ -9014,5 +9014,10 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-23",
     "purpose": "verify-account-number-hidden-by-default"
+  },
+  "11605": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-23",
+    "purpose": "verify-load-cost-lines-item-quantity-rate"
   }
 }
