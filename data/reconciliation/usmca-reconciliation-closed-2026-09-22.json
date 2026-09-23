@@ -11,6 +11,13 @@
   "cash_reserve_at_0921_cents": 413541,
   "realized_fees_cents": 490204,
   "self_carried_open_cents": 1259240,
+  "self_carried_open_count": 5,
+  "self_carried_open_count_correction_2026-09-23": {
+    "_comment": "ROUND E11.2 -- corrected from 16 to 5. 16 came from re-deriving off factoring_advance_id IS NULL -- the exact error docs/bus/INBOX-CC-1.md already names as producing $51,262.41 against the true $12,592.40. factoring_status is the real column.",
+    "documents": ["009 FLS", "010 Supply Chain Mgmt", "026 IM Specialized", "055/13555 2EMS", "074/13593 Alligator"],
+    "invoiceable_count": 4,
+    "not_invoiceable": "074/13593 Alligator -- deadhead, per LEAD-RULING-ROUND-56, not invoiceable"
+  },
   "identity_check": "purchases_cents - receipts_cents == ar_cents (31158700 - 1282500 == 29876200)",
   "cash_reserve_at_0921_correction_2026-09-22": {
     "_comment": "Cursor caught the Lead's single-number framing of cash_reserve_at_0921 as wrong. It is FOUR numbers depending on which moment/movement is meant. cash_reserve_at_0921_cents above is the CONTROL figure -- Faro's own statement ending balance -- and is the only one of the four that is LAW; the other three are informational, sourced, and never asserted by the guard.",

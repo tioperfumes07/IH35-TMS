@@ -19,10 +19,25 @@ is a build failure — that is the point of the guard.
 | 7 | escrow @9/21 | $4,530.19 | Faro Escrow Reserve, Account Summary ending column |
 | 8 | cash reserve @9/21 THE CONTROL | $4,135.41 | Faro Account Summary, "Cash Reserve" ending column |
 | 9 | realized fees | $4,902.04 | discount + wire + schedule, realized to date |
-| — | self-carried open | $12,592.40 | 16 real unfactored, unvoided invoices, $0.00 paid on any |
+| — | self-carried open | $12,592.40 | 5 real unfactored, unvoided invoices, $0.00 paid on any |
 
 **IDENTITY (asserted by the guard, must hold exactly):**
 purchases $311,587.00 − receipts $12,825.00 = AR $298,762.00.
+
+**SELF-CARRIED OPEN — CORRECTED, 5 NOT 16 (2026-09-23, Round E11.2).** 16 came from re-deriving off
+`factoring_advance_id IS NULL` — the exact error `docs/bus/INBOX-CC-1.md` already names as producing
+$51,262.41 against the true $12,592.40. `factoring_status` is the real column. The 5 real documents:
+
+| document | customer |
+|---|---|
+| 009 | FLS |
+| 010 | Supply Chain Mgmt |
+| 026 | IM Specialized |
+| 055 / 13555 | 2EMS |
+| 074 / 13593 | Alligator |
+
+13593 (074/Alligator) is **not invoiceable** — deadhead, per LEAD-RULING-ROUND-56. **5 documents,
+4 invoiceable.**
 
 ## CASH RESERVE @9/21 — CORRECTED, FOUR NUMBERS NOT ONE (2026-09-22, same day)
 

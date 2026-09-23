@@ -37,6 +37,10 @@ const LAW = {
   cash_reserve_at_0921_cents: 413541, // Faro statement ending balance, THE CONTROL — not one of the other 3 real movement figures
   realized_fees_cents: 490204,
   self_carried_open_cents: 1259240,
+  // ROUND E11.2 (2026-09-23) — corrected from 16 to 5. 16 came from re-deriving off
+  // factoring_advance_id IS NULL, the exact error docs/bus/INBOX-CC-1.md already names as
+  // producing $51,262.41 against the true $12,592.40; factoring_status is the real column.
+  self_carried_open_count: 5,
 };
 
 const dollars = (c) => (c / 100).toFixed(2);
@@ -47,7 +51,10 @@ export function checkAgainstLaw(candidate) {
   for (const [key, expected] of Object.entries(LAW)) {
     const actual = candidate[key];
     if (actual !== expected) {
-      problems.push(`${key}: expected ${expected} ($${dollars(expected)}), got ${actual === undefined ? "MISSING" : `${actual} ($${dollars(actual)})`}`);
+      // _cents keys get the dollar-formatted echo; a plain count (e.g. self_carried_open_count)
+      // is not a cents value and must not be divided by 100 in its own error message.
+      const fmt = (v) => (key.endsWith("_cents") ? `${v} ($${dollars(v)})` : `${v}`);
+      problems.push(`${key}: expected ${fmt(expected)}, got ${actual === undefined ? "MISSING" : fmt(actual)}`);
     }
   }
   return problems;
@@ -81,6 +88,10 @@ function extractFromDoc(text) {
     const m = text.match(re);
     if (m) out[key] = Math.round(Number(m[1].replace(/,/g, "")) * 100);
   }
+  // self_carried_open_count is a plain integer printed right after the dollar figure on the same
+  // table row ("$12,592.40 | 5 real unfactored, unvoided invoices...") — not cents, no /100.
+  const countMatch = text.match(/self-carried open\D+[\d,]+\.\d{2}\D+(\d+) real unfactored/i);
+  if (countMatch) out.self_carried_open_count = Number(countMatch[1]);
   return out;
 }
 
@@ -90,21 +101,30 @@ function main() {
     const bad = { ...LAW, purchases_cents: LAW.purchases_cents + 100 };
     const missing = { ...LAW };
     delete missing.ar_cents;
+    const badCount = { ...LAW, self_carried_open_count: LAW.self_carried_open_count + 1 };
 
     const goodProblems = checkAgainstLaw(good);
     const badProblems = checkAgainstLaw(bad);
     const missingProblems = checkAgainstLaw(missing);
+    const badCountProblems = checkAgainstLaw(badCount);
     const goodIdentity = checkIdentity(good);
     const badIdentity = checkIdentity({ purchases_cents: 100, receipts_cents: 1, ar_cents: 50 });
+    const docExtract = extractFromDoc(
+      "| — | self-carried open | $12,592.40 | 5 real unfactored, unvoided invoices, $0.00 paid on any |",
+    );
 
     let caught = 0;
-    const total = 5;
+    const total = 7;
     if (goodProblems.length === 0) caught++;
     else console.error(`${LABEL}: SELFTEST FAIL — unmutated LAW should have 0 problems, got ${goodProblems.length}`);
     if (badProblems.length === 1 && /purchases_cents/.test(badProblems[0])) caught++;
     else console.error(`${LABEL}: SELFTEST FAIL — planted +100 cent mutation on purchases_cents was not caught`);
     if (missingProblems.length === 1 && /ar_cents/.test(missingProblems[0]) && /MISSING/.test(missingProblems[0])) caught++;
     else console.error(`${LABEL}: SELFTEST FAIL — planted missing-field mutation was not caught`);
+    if (badCountProblems.length === 1 && /self_carried_open_count/.test(badCountProblems[0]) && !/\$/.test(badCountProblems[0])) caught++;
+    else console.error(`${LABEL}: SELFTEST FAIL — planted +1 mutation on self_carried_open_count was not caught (or wrongly dollar-formatted)`);
+    if (docExtract.self_carried_open_count === 5) caught++;
+    else console.error(`${LABEL}: SELFTEST FAIL — extractFromDoc did not read self_carried_open_count=5 from a real doc-row sample, got ${docExtract.self_carried_open_count}`);
     if (goodIdentity === null) caught++;
     else console.error(`${LABEL}: SELFTEST FAIL — real identity should hold`);
     if (badIdentity !== null) caught++;
