@@ -825,6 +825,12 @@ export type PostFactoringAdvanceInput = {
     fee_cents?: number;
     ach_cents?: number;
   } | null;
+  // ROUND 86 (Lead, 2026-09-23) — Faro's own invoice number/purchase date for THIS advance, known
+  // only once the funding report (CSV import) names it. Columns already exist on
+  // accounting.factoring_advances (migration landed); written here, COALESCE-guarded so a value is
+  // never overwritten once set, matching the column's own "populated once" contract.
+  faro_invoice_number?: string | null;
+  faro_purchase_date?: string | null;
 };
 
 function fundingExpectedLegs(opts: {
@@ -977,7 +983,23 @@ async function postFactoringAdvanceEventImpl(input: PostFactoringAdvanceInput): 
     }
     postings.push({ account_id: liabilityAccountId, debit_or_credit: "credit", amount_cents: liability, description: `${memo} — factoring advance (liability)` });
 
-    return { gate: "post" as const, memo, entryDate, postings, reserve, expected_legs: expectedLegs, eventKey };
+    return {
+      gate: "post" as const,
+      memo,
+      entryDate,
+      postings,
+      reserve,
+      // ROUND 86 — carried through so the caller-owned txn below can correct
+      // accounting.factoring_advances' own stored reserve/fee/advance figures to these REAL,
+      // independently-computed funding numbers (see the UPDATE after JE creation).
+      fee,
+      cash,
+      liability,
+      ach,
+      hasFundingFigures: input.funding_figures != null,
+      expected_legs: expectedLegs,
+      eventKey,
+    };
   });
 
   if (prepared.gate === "flag_off") return FLAG_OFF;
@@ -1092,6 +1114,53 @@ async function postFactoringAdvanceEventImpl(input: PostFactoringAdvanceInput): 
                 prepared.reserve,
                 prepared.entryDate,
                 hdr.id
+              );
+            }
+            // ROUND 86 (Lead, 2026-09-23) — correct accounting.factoring_advances' OWN stored
+            // reserve/fee/advance figures to the real, independently-sourced funding numbers this
+            // call was actually given (the submission-time estimate came from computeFactoringSubmitAmounts()
+            // applying the SAME contracted rate to both reserve_pct and fee_pct — reserve_rate and
+            // fee_rate are both 0.0150 in factoring.factor today — which is why
+            // reserve_amount_cents = factor_fee_cents on every live row: not a coincidence of the
+            // math, the two numbers ARE the same input run through the same formula. Faro's real
+            // funding report carries them as genuinely different figures (Escrow Rsv vs Discount);
+            // this is where that real split finally reaches the persisted row instead of staying
+            // frozen at the submission estimate forever. Only runs when this call was actually given
+            // funding_figures (a real funding event, not a bare re-post with no override) — never
+            // fabricates a correction from figures nobody supplied. Percent columns recomputed from
+            // the SAME liability so the row stays internally consistent (cents and pct agree).
+            // faro_invoice_number/faro_purchase_date are COALESCE-guarded — set once, never
+            // overwritten, matching the column's own "populated once" contract (see its DB comment).
+            if (prepared.hasFundingFigures && prepared.liability > 0) {
+              const reservePct = Number(((prepared.reserve / prepared.liability) * 100).toFixed(4));
+              const feePct = Number(((prepared.fee / prepared.liability) * 100).toFixed(4));
+              const advanceRatePct = Number(((prepared.cash / prepared.liability) * 100).toFixed(2));
+              await c.query(
+                `
+                  UPDATE accounting.factoring_advances
+                     SET reserve_amount_cents = $2::bigint,
+                         reserve_pct = $3::numeric,
+                         factor_fee_cents = $4::bigint,
+                         factor_fee_pct = $5::numeric,
+                         advance_amount_cents = $6::bigint,
+                         advance_rate_pct = $7::numeric,
+                         faro_invoice_number = COALESCE(faro_invoice_number, $8::text),
+                         faro_purchase_date = COALESCE(faro_purchase_date, $9::date)
+                   WHERE id = $1::uuid
+                     AND operating_company_id = $10::uuid
+                `,
+                [
+                  input.factoring_advance_id,
+                  prepared.reserve,
+                  reservePct,
+                  prepared.fee,
+                  feePct,
+                  prepared.cash,
+                  advanceRatePct,
+                  input.faro_invoice_number ?? null,
+                  input.faro_purchase_date ?? null,
+                  input.operating_company_id,
+                ]
               );
             }
           },

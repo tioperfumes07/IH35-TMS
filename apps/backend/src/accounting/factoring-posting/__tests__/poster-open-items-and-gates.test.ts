@@ -217,6 +217,65 @@ describe("factoring poster — idempotency (deterministic posting key)", () => {
   });
 });
 
+// ROUND 86 (Lead, 2026-09-23) — reserve_amount_cents = factor_fee_cents on 120 of 120 live rows
+// because the submission-time estimate (auto-submit-on-delivery.service.ts) runs the SAME formula
+// against factoring.factor's reserve_rate and fee_rate, which are both configured 0.0150 today —
+// so the two numbers are mathematically forced equal at submission, before Faro's real funding
+// report is ever seen. This is the fix: once real funding_figures ARE known (a genuine funding
+// event, not a bare re-post), the advance row's own stored reserve/fee/advance columns are
+// corrected to the real, independently-sourced numbers — never left frozen at the duplicate-rate
+// estimate — and the wire fee (previously always ach_cents:0) is deducted as its own leg.
+describe("factoring poster — Round 86: real funding figures correct the advance row (escrow ≠ fee, wire fee deducted, faro_invoice_number/date set once)", () => {
+  it("funding: writes the REAL reserve/fee/advance/pct + faro_invoice_number/purchase_date back onto accounting.factoring_advances, distinct from the submission-time estimate", async () => {
+    installDefaults(true, false);
+    // The fixture advance row (mocked "FROM accounting.factoring_advances" branch) carries the
+    // submission-time estimate reserve_amount_cents=7500 / factor_fee_cents=0 — genuinely funded
+    // figures from Faro's own CSV are DIFFERENT (escrow 6000, discount 4500, wire fee 1000), the
+    // real-world shape this fix targets (escrow and fee are NOT the same number).
+    const res = await postFactoringAdvanceEvent({
+      operating_company_id: OPCO,
+      factoring_advance_id: ADVANCE,
+      actor_user_id: ACTOR,
+      funding_figures: { invoice_total_cents: 500000, reserve_cents: 6000, fee_cents: 4500, ach_cents: 1000 },
+      faro_invoice_number: "92",
+      faro_purchase_date: "2026-09-11",
+    });
+    expect(res.posted).toBe(true);
+    const correctionCall = mockQuery.mock.calls.find(
+      (call) => typeof call[0] === "string" && call[0].includes("UPDATE accounting.factoring_advances")
+    );
+    expect(correctionCall).toBeDefined();
+    const [, params] = correctionCall as [string, unknown[]];
+    // [advance_id, reserve, reserve_pct, fee, fee_pct, cash/advance_amount, advance_rate_pct,
+    //  faro_invoice_number, faro_purchase_date, operating_company_id]
+    expect(params[1]).toBe(6000); // real reserve, NOT the 7500 submission estimate
+    expect(params[3]).toBe(4500); // real fee, NOT the 0 submission estimate — and NOT equal to reserve
+    expect(params[1]).not.toBe(params[3]); // the exact bug this fix closes: escrow ≠ fee
+    expect(params[5]).toBe(500000 - 6000 - 4500 - 1000); // cash = liability - reserve - fee - ach (wire fee deducted)
+    expect(params[7]).toBe("92");
+    expect(params[8]).toBe("2026-09-11");
+  });
+
+  it("funding: does NOT touch accounting.factoring_advances' reserve/fee/advance columns when no funding_figures are supplied (never fabricates a correction from numbers nobody gave it)", async () => {
+    installDefaults(true, false);
+    mockQuery.mockClear();
+    await postFactoringAdvanceEvent({
+      operating_company_id: OPCO,
+      factoring_advance_id: ADVANCE,
+      actor_user_id: ACTOR,
+      // no funding_figures — falls back to the advance row's own stored values for posting, and
+      // must NOT issue the Round 86 correction UPDATE (nothing new was actually learned).
+    });
+    const correctionCall = mockQuery.mock.calls.find(
+      (call) =>
+        typeof call[0] === "string" &&
+        call[0].includes("UPDATE accounting.factoring_advances") &&
+        call[0].includes("faro_invoice_number")
+    );
+    expect(correctionCall).toBeUndefined();
+  });
+});
+
 describe("factoring poster — partial/ambiguous recourse fail-closed (no defaults)", () => {
   it("partial chargeback amount ≠ exact linked liability ⇒ policy_partial_or_ambiguous_recourse", async () => {
     installDefaults(true);

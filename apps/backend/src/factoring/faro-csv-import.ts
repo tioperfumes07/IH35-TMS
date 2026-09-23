@@ -48,6 +48,14 @@ export type FaroCsvLine = {
   chargeback_amount_cents: number;
   net_amount_cents: number;
   discount_amount_cents: number;
+  /** ROUND 86 (Lead, 2026-09-23, ~/Downloads/measure_faro_shortpay.py): the real export's "Fees"
+   *  column is Faro's flat WIRE fee (measured: $10.00 flat on 19 of the 120 live invoices) — a
+   *  DIFFERENT charge than `fee_amount_cents` (which resolves to "Discount" per Round 48's owner
+   *  ruling "fee = Discount"). Captured under its own literal-header lookup ("fees") so it never
+   *  shares an index with fee_amount_cents/discountIdx regardless of which alias those resolved to.
+   *  Deducted from net advance at funding as the ACH/wire leg (factor_wire_fee account role,
+   *  poster.service.ts) — previously always sent as 0, silently absorbing the wire cost into cash. */
+  wire_fee_amount_cents: number;
   due_on?: string;
   /** ROUND 40.1 — Faro's own match key, from the "PO" column (falls back to "Other Ref"). Owner
    *  ruling: "MATCH KEY -> PO, then Other Ref. NEVER the load number." Resolved against
@@ -229,6 +237,10 @@ export function parseFaroCsv(csvText: string): FaroCsvParseResult {
   // discount_amount_cents stays as its own field (additive, kept for any existing caller) rather than
   // removed now that it's a confirmed duplicate of fee_cents.
   const discountIdx = headerIndex(headers, ["discount"]);
+  // ROUND 86 — the literal "Fees" column, looked up independently of feeIdx (which resolves to
+  // "Discount" on the real export per Round 48). "Fees" is Faro's flat wire/ACH charge — a
+  // different economic thing than the factoring discount fee, never captured anywhere until now.
+  const wireFeeIdx = headerIndex(headers, ["fees"]);
   // "due date"/"due on"/"due" are this importer's original due-date vocabulary; "date" is the owner's
   // real export's per-row transaction date column \u2014 same role (the economic/statement date this line
   // carries), added as an alias, not a new concept.
@@ -265,6 +277,7 @@ export function parseFaroCsv(csvText: string): FaroCsvParseResult {
       chargeback_amount_cents: parseMoneyToCents(String(cells[chargebackIdx] ?? "0")),
       net_amount_cents: netIdx >= 0 ? parseMoneyToCents(String(cells[netIdx] ?? "0")) : 0,
       discount_amount_cents: discountIdx >= 0 ? parseMoneyToCents(String(cells[discountIdx] ?? "0")) : 0,
+      wire_fee_amount_cents: wireFeeIdx >= 0 ? parseMoneyToCents(String(cells[wireFeeIdx] ?? "0")) : 0,
       due_on: dueIdx >= 0 ? parseDueDate(String(cells[dueIdx] ?? "")) : undefined,
       match_key: matchKeyIdx >= 0 ? String(cells[matchKeyIdx] ?? "").trim() || undefined : undefined,
     });
@@ -572,6 +585,17 @@ type AdvanceActuals = {
   actual_reserve_cents: number;
   actual_fee_cents: number;
   actual_chargeback_cents: number;
+  /** ROUND 86 — Faro's flat wire fee, summed per advance (typically one CSV line = one advance;
+   *  see the "batch" note above), deducted at funding as its own ACH leg (never folded into
+   *  actual_fee_cents/the discount-fee leg). */
+  actual_wire_fee_cents: number;
+  /** ROUND 86 — Faro's own invoice number / purchase date for this advance (columns already exist
+   *  on accounting.factoring_advances, migration landed, never populated by any writer until now).
+   *  Captured from the FIRST CSV line that resolves to this advance; never overwritten by a later
+   *  line for the same advance (matches this file's own "never backfilled" convention for the
+   *  column — see the column's own DB comment). */
+  faro_invoice_number: string | null;
+  faro_purchase_date: string | null;
   total_invoice_count: number;
   // Distinct invoice numbers from the CSV that resolved to this advance (drives completeness).
   matched_invoice_numbers: Set<string>;
@@ -630,6 +654,9 @@ async function aggregateFaroActualsByAdvance(
       actual_reserve_cents: 0,
       actual_fee_cents: 0,
       actual_chargeback_cents: 0,
+      actual_wire_fee_cents: 0,
+      faro_invoice_number: null,
+      faro_purchase_date: null,
       total_invoice_count: Number(row.total_invoice_count ?? 0),
       matched_invoice_numbers: new Set<string>(),
     };
@@ -637,6 +664,11 @@ async function aggregateFaroActualsByAdvance(
     entry.actual_reserve_cents += Number(line.reserve_amount_cents ?? 0);
     entry.actual_fee_cents += Number(line.fee_amount_cents ?? 0);
     entry.actual_chargeback_cents += Number(line.chargeback_amount_cents ?? 0);
+    entry.actual_wire_fee_cents += Number(line.wire_fee_amount_cents ?? 0);
+    if (entry.faro_invoice_number === null) {
+      entry.faro_invoice_number = line.invoice_number;
+      entry.faro_purchase_date = line.due_on ?? null;
+    }
     entry.matched_invoice_numbers.add(line.invoice_number);
     byAdvance.set(key, entry);
   }
@@ -769,8 +801,15 @@ export async function commitFaroCsvImport(input: {
             invoice_total_cents: a.actual_gross_cents,
             reserve_cents: a.actual_reserve_cents,
             fee_cents: a.actual_fee_cents,
-            ach_cents: 0,
+            // ROUND 86 — previously hardcoded 0, silently absorbing Faro's flat wire fee (the
+            // "Fees" column, $10.00 on 19 of 120 live invoices) into cash instead of deducting it.
+            ach_cents: a.actual_wire_fee_cents,
           },
+          // ROUND 86 — Faro's own invoice number/purchase date, captured here for the first time;
+          // poster.service.ts writes them (COALESCE-guarded, never overwritten once set) alongside
+          // the reserve/fee correction below.
+          faro_invoice_number: a.faro_invoice_number,
+          faro_purchase_date: a.faro_purchase_date,
         });
         funding_posts.push({
           factoring_advance_id: a.factoring_advance_id,
