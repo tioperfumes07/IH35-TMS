@@ -246,6 +246,13 @@ const STEPS = [
   // that had zero pre-existing writer; a named, frozen baseline covers the three that already had
   // established GL-aware void machinery. Live DB required, fails closed.
   ["verify-void-stamp-columns", "scripts/verify-void-stamp-columns.mjs"],
+  // ROUND 118/119 (Lead ruling): a cancelled load must leave no live money artifact behind it --
+  // invoice/expense/vendor-bill/driver-bill/advance/settlement, checked against
+  // dispatch/cancellation.service.ts's own cascade logic exactly. Baselined (shrink-only) against
+  // 9 pre-existing loads cancelled before this cascade covered every family. Live DB required,
+  // fails closed. Two more directions (movement-evidence line survival, dispatcher confirmation)
+  // are named in this guard's own header as NOT YET BUILT -- not silently skipped.
+  ["verify-cancelled-load-leaves-no-live-money", "scripts/verify-cancelled-load-leaves-no-live-money.mjs"],
 ];
 
 // ROUND 29.9 owner ruling (2026-09-22) — three guards, wired in this exact order, AFTER the STEPS

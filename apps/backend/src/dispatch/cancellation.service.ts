@@ -265,14 +265,19 @@ export async function cancelLoadInClientTx(
       //   2. a 'paid' invoice is NOT silently voided — real cash was collected against it. FAILS
       //      LOUD instead (throws, cancels nothing) so a human resolves it explicitly; same for
       //      'factored' (sold to the factor — a different liability, not this function's call).
-      //   3. any OPEN (non-void) driver_finance.driver_bills or driver_finance.settlement_lines
-      //      still attached to this load are NOT auto-voided by this pass — the "did this driver
-      //      still earn something (deadhead, layover) before the load died" question is a real
-      //      business decision this function still may not invent, matching the original driver-
-      //      bill reasoning. But leaving them silently orphaned is exactly the defect being fixed
-      //      here for invoices, so this now FAILS LOUD instead of proceeding around them: the
-      //      cancellation is refused, unchanged, until a human voids/settles those first. No
-      //      partial cascade, no silent orphan.
+      //   3. ROUND 118 FIX (stale comment, real defect — whoever read this next would have built
+      //      against a lie): this comment used to say open driver bills are NOT auto-voided and the
+      //      cancellation "FAILS LOUD" instead. The code twenty lines below has always voided every
+      //      open driver bill WHOLE (VOID-CASCADE-DRIVER-BILLS) — there is no fail-loud branch for
+      //      driver bills here; settlements are the ones that fail loud when unreversable (paid_to_date
+      //      > 0, see VOID-CASCADE-ADVANCES below) and skip when already paid. The owner's own ROUND
+      //      118 ruling on the driver-bill VOID-WHOLE behavior: "IF A LOAD WAS INPUTED... AND ASSIGNED
+      //      TO A DRIVER AND TRUCK AND THEN CANCELLED, THEN THERE SHOULD BE NOTHING RELATED TO IT, THE
+      //      DRIVER BILL SHOULD BE VOIDED" — confirming VOID-WHOLE is correct behavior when there is no
+      //      movement evidence. Line-level (keep empty/deadhead miles actually driven, void the rest)
+      //      is the owner-ruled behavior when movement evidence exists (ROUND 118/119) — not built here
+      //      yet; see docs/bus/ for the tracked follow-up, blocked on the STOP WRITER item (nothing
+      //      writes mdata.load_stops.actual_departure_at/actual_arrival_at today).
       if (!pendingOwnerApproval) {
         // VOID-CASCADE-DRIVER-BILLS — void every open (non-void) driver bill for this load in the
         // same transaction. A cancelled load should not leave phantom payables orphaned. This does
@@ -405,6 +410,62 @@ export async function cancelLoadInClientTx(
           }
         }
 
+        // ROUND 118 DEFECT 2 — VOID-CASCADE-VENDOR-BILLS. Newly possible: accounting.bills.load_id
+        // (migration 202614320000) is the load linkage the HEADER never had. Real-repo investigation
+        // before wiring this (not guessed): the canonical createBill() path never writes a bill-
+        // header load_id at all -- load linkage for the one real load-driven bill type in this
+        // codebase today (driver-pay bills numbered by load#, settlement-bill-payment-posting
+        // .service.ts) lives on accounting.bill_lines.load_id, a column that already existed
+        // (migration 202607200000). So this query checks BOTH: the new header column (for any
+        // future/direct header-level write) AND a join through bill_lines (for the real load-driven
+        // bill type that exists today). Reuses the SAME shared executeVoidCancel("bill", ...)
+        // executor the governance dispatch map already wires (void-cancel-executors.ts's
+        // executeBill) — no new GL math, same postVoidReversal engine every other cascade step here
+        // uses. A bill already PAID (bill_has_payments) fails loud — same policy as a paid invoice,
+        // real money already moved, resolved manually.
+        //
+        // ALSO FOUND, not guessed: maintenance/two-section-service.ts's autoCreateBillFromWO
+        // (WO-close auto-bill) already wrote work_orders.load_id into accounting.bills.load_id --
+        // a column that did not exist in any migration until 202614320000 landed. That write path
+        // was throwing "column load_id of relation bills does not exist" on every WO-auto-bill
+        // create before this migration; it is fixed as a side effect, not the point of this round,
+        // but worth stating plainly rather than discovering it silently.
+        const openVendorBillsRes = await client.query<{ id: string }>(
+          `SELECT DISTINCT b.id::text
+             FROM accounting.bills b
+             LEFT JOIN accounting.bill_lines bl ON bl.bill_id = b.id AND bl.operating_company_id = b.operating_company_id
+            WHERE b.operating_company_id = $2::uuid AND b.status <> 'void'
+              AND (b.load_id = $1::uuid OR bl.load_id = $1::uuid)
+            FOR UPDATE OF b`,
+          [input.load_id, input.operating_company_id]
+        );
+        const voidedVendorBillIds: string[] = [];
+        for (const vb of openVendorBillsRes.rows) {
+          const vbResult = await executeVoidCancel("bill", {
+            client,
+            operatingCompanyId: input.operating_company_id,
+            entityId: vb.id,
+            action: "cancel",
+            userId,
+            reason: `Load cancelled (${input.reason_code}) — vendor bill voided by load cancellation cascade: ${input.cancellation_notes.trim()}`,
+          });
+          if (vbResult.kind === "ok" || vbResult.kind === "already_done") {
+            voidedVendorBillIds.push(vb.id);
+          } else if (vbResult.kind === "bill_has_payments") {
+            throw Object.assign(
+              new Error(
+                `load_cancel_blocked_paid_vendor_bill: vendor bill ${vb.id} already has recorded payments — real money already moved, cannot be silently voided by a cancellation. Resolve manually.`
+              ),
+              { code: "load_cancel_blocked_paid_vendor_bill", bill_id: vb.id }
+            );
+          } else {
+            throw Object.assign(
+              new Error(`load_cancel_vendor_bill_void_failed:${vb.id}:${vbResult.kind}`),
+              { code: "load_cancel_vendor_bill_void_failed", bill_id: vb.id, result: vbResult.kind }
+            );
+          }
+        }
+
         // VOID-CASCADE-ADVANCES (SET-09, owner 2026-09-03: cancelling a load did not reverse
         // ADVANCES/LIABILITIES) — every driver_advances row load-linked to this load (#1440
         // traceability: driver_advances.load_id mirrors cash_advance_requests.load_id when a
@@ -530,6 +591,25 @@ export async function cancelLoadInClientTx(
         // INV-2026-00024 (still proforma, voided_at NULL) and again on L-20260830-0020/0024 (still
         // 'sent', $2,500.00 + $1,100.00 orphaned, no reversing JE — the VOID-CANCEL-NOT-VOID
         // finding this whole block now closes).
+        // ROUND 118 DEFECT 4 — declare fuel and factoring explicitly, not silence (§10: both-way
+        // or explicit N/A). Neither is touched by this cascade, and both reasons are real, not an
+        // oversight:
+        //   fuel.fuel_transactions: the diesel was REALLY bought, regardless of whether this load
+        //   got cancelled — voiding a fuel purchase because the load it was attributed to died
+        //   would misstate a real expense as never having happened. Counted (not voided) so the
+        //   audit trail shows this cascade looked, not that it forgot to.
+        //   accounting.factoring_advances: carries no direct load_id or invoice_id column at all
+        //   (a factoring advance is often a multi-invoice batch submission) — there is nothing to
+        //   join on independently. The real safety net is the existing unvoidable-invoice gate
+        //   above: an invoice already sold to the factor reads status='factored' on
+        //   accounting.invoices itself and already blocks this whole cancellation before any void
+        //   runs. Safe today because of that gate, not because factoring was checked directly here.
+        const fuelForLoad = await client.query<{ n: string }>(
+          `SELECT count(*)::text AS n FROM fuel.fuel_transactions WHERE load_id = $1::uuid AND operating_company_id = $2::uuid`,
+          [input.load_id, input.operating_company_id]
+        );
+        const fuelTransactionCount = Number(fuelForLoad.rows[0]?.n ?? 0);
+
         // Always write the money-artifacts audit when any financial artifact was touched — this
         // includes driver bills, settlements, and invoices. Even an empty set on one axis is
         // worth recording (zero orphans = confirmed clean cascade).
@@ -538,7 +618,9 @@ export async function cancelLoadInClientTx(
           cancelledSettlementIds.length > 0 ||
           voidedInvoiceIds.length > 0 ||
           voidedExpenseIds.length > 0 ||
-          reversedAdvanceIds.length > 0
+          voidedVendorBillIds.length > 0 ||
+          reversedAdvanceIds.length > 0 ||
+          fuelTransactionCount > 0
         ) {
           await appendCrudAudit(
             client,
@@ -549,15 +631,22 @@ export async function cancelLoadInClientTx(
               resource_id: input.load_id,
               operating_company_id: input.operating_company_id,
               // Ordered steps: settlements first (GL reversal), then driver bills (subledger), then
-              // expenses (bank-match release rides along, BANK-ORPHAN-01), then advances/liabilities,
-              // then invoices (A/R reversal).
+              // expenses (bank-match release rides along, BANK-ORPHAN-01), then vendor bills, then
+              // advances/liabilities, then invoices (A/R reversal).
               settlements_cancelled: cancelledSettlementIds,
               settlements_skipped_paid: skippedSettlementIds,
               driver_bills_voided: voidedDriverBillIds,
               expenses_voided: voidedExpenseIds,
+              vendor_bills_voided: voidedVendorBillIds,
               advances_reversed: reversedAdvanceIds,
               invoices_voided: voidedInvoiceIds,
-              note: "load cancellation cascade: settlements cancelled, driver bills voided, expenses voided (bank matches released), advances/liabilities reversed, invoices voided with reversing JEs — all in the same transaction",
+              // ROUND 118 DEFECT 4 — declared explicitly, never silent (see comment above).
+              fuel_transactions_not_voided_count: fuelTransactionCount,
+              fuel_transactions_reason: "N/A -- diesel was really purchased; a cancelled load does not un-buy fuel",
+              factoring_advances_reason:
+                "N/A -- accounting.factoring_advances has no load_id/invoice_id column to join on; " +
+                "safety is provided by the unvoidable-invoice gate above (a 'factored' invoice already blocks this cancellation)",
+              note: "load cancellation cascade: settlements cancelled, driver bills voided, expenses voided (bank matches released), vendor bills voided, advances/liabilities reversed, invoices voided with reversing JEs, fuel/factoring explicitly declared N/A — all in the same transaction",
             },
             "warning",
             "VOID-CANCEL-NOT-VOID"

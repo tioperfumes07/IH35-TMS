@@ -1026,6 +1026,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-09-23",
       "purpose": "ROUND 102.1-A (deadline 2026-09-23 18:00 UTC): the void-stamp columns (voided_at, void_reason, voided_by_user_id) on mdata.loads, accounting.factoring_advances, fuel.fuel_transactions -- copied exactly from accounting.invoices's own shape, owner ruling 'FOR FUTURE REFERENCE YES AL SHOULD STATE VOIDED' -- plus the one column driver_finance.driver_reimbursements is missing (voided_by_user_id; it already carries voided_at/void_reason). Partial index on each WHERE voided_at IS NOT NULL. Depends on 202614310000 landing first for mdata.loads' status='voided' to be a legal value, but adds no DDL that touches the enum itself."
+    },
+    "202614320000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-23",
+      "purpose": "ROUND 118 (Lead ruling, Defect 2): accounting.bills carries NO load linkage of any kind (measured live: linked_work_order_uuid, vendor_id, vendor_uuid, mdata_vendor_id, source, source_system, source_bank_transaction_id -- no load column). A lumper/scale/tarp bill raised for a load has nothing pointing back at that load, so a load cancellation leaves a live payable orphaned with no trace. Adds a nullable, indexed load_id FK to mdata.loads(id), idempotent (IF NOT EXISTS guards)."
     }
   },
   "202613590001": {

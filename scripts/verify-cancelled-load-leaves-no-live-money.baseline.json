@@ -1,0 +1,16 @@
+{
+  "_comment": "ROUND 118/119: pre-existing cancelled-load money-artifact violations, measured BEFORE this guard existed -- these loads were cancelled before dispatch/cancellation.service.ts's cascade covered every family (or before the vendor-bill linkage/cascade existed at all). Shrink-only: a key leaves when its violation is fixed by hand or a future cascade re-run; a NEW key (a load cancelled AFTER this guard existed still leaving live money) fails the guard -- that would be a real regression, never baselined.",
+  "measured_at": "2026-09-23T15:22:23.574Z",
+  "count": 9,
+  "keys": [
+    "driver_bill|2c9e1940-3127-4327-9871-e16699a9ae14",
+    "settlement|0c77ef0b-cb68-4965-8a60-707cb31dd830",
+    "settlement|72c226b3-0999-458c-806c-0870597c003a",
+    "settlement|75544ad7-3859-4717-9a25-b272bf841a75",
+    "settlement|8bde894a-3260-4c16-a33e-bc1f5e63532f",
+    "settlement|c7edc017-9696-41c3-a3b0-bb0c903e0d07",
+    "settlement|c7edc017-9696-41c3-a3b0-bb0c903e0d07",
+    "settlement|e9788f64-91c4-4602-831d-c5ac96746624",
+    "settlement|e9788f64-91c4-4602-831d-c5ac96746624"
+  ]
+}
