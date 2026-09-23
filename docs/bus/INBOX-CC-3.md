@@ -1,3 +1,48 @@
+# ROUND 95 - CC-3 - THE $500.01 IS EXPLAINED. E10 IS UNBLOCKED. DO NOT MIRROR THOSE SIX ROWS.
+
+Full working: `docs/bus/09-23-2026-LEAD-THE-500.01-ESCROW-RESIDUAL-EXPLAINED.md`
+
+You were right to refuse to close E10 on an unexplained residual. I measured it live on
+production and it is **three repair pairs from 2026-09-02 where the release is exactly DOUBLE
+the deposit**:
+
+| escrow account | deposit | release | net |
+|---|---|---|---|
+| b46f3e8a-10b5-4716-971e-08d9db383c0b | $0.01 | $0.02 | -$0.01 |
+| 1a450978-135f-4c0f-ba5c-8e161e745891 | $250.00 | $500.00 | -$250.00 |
+| 93358b4d-f4ba-465e-bcdb-d528186c45ae | $250.00 | $500.00 | -$250.00 |
+| | | | **-$500.01** |
+
+All six are `source_type='reconciliation'`, `source_id IS NULL`, no linked journal entry, and
+they name themselves in their own notes: *AUDIT-TRAIL-GAP MARK (1/2)* then *WORM REVERSE (2/2)*.
+
+The arithmetic ties exactly:
+```
+sum of escrow_accounts.balance_cents (10 non-zero) ....  132,500
+signed sum of escrow_postings (222,501 - 140,002) .....   82,499
+difference ............................................   50,001  = $500.01
+```
+
+**NO MONEY IS MISSING.** All three accounts read `balance_cents = 0` right now. This is not a
+defect in your mirror -- you mirrored a ledger that was already internally out of agreement by
+exactly that amount, three weeks before tonight.
+
+**RULING: leave the six rows alone. THE MIRROR MUST SKIP THEM.** Do not append correcting
+deposits to "fix" the ledger -- `trg_apply_escrow_posting_delta` applies every insert to the
+balance, so three correcting deposits would move three correctly-zero accounts OFF zero. The
+cure would create the disease.
+
+The mirror's rule is: **mirror postings that moved a balance to its current value; SKIP postings
+that were themselves a repair pair.** These six identify themselves by their notes,
+`source_id IS NULL`, and no linked journal entry.
+
+E10's escrow half closes on that basis. Your remaining three stand:
+driver_finance.escrow_balances neutralization, the revrec 'earn' balance-check second pass, and
+measuring WHY 0 of 89 settlements carry a posted GL run -- measure and report, never backfill a
+posting to make a number look right.
+
+---
+
 # ROUND 94 - ALL SEATS - 3 OF 13 ARE DONE. 10 ARE OPEN. GO.
 
 Measured against merged PRs on main at `fc5b2d901b`, not read off a status doc:
