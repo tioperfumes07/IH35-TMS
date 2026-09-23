@@ -173,12 +173,17 @@ export async function autoSubmitDeliveredLoadToFactor(input: AutoSubmitInput): P
           UPDATE accounting.invoices
           SET factoring_advance_id = $2,
               factoring_status = 'submitted',
+              -- T4 (ROUND 124): factor.id was already resolved above (getFactorForCustomer, the
+              -- SAME lookup that gates this whole submit) and used to compute reserve/fee/advance,
+              -- but was never persisted onto the invoice header — factor_profile_id stayed NULL on
+              -- every auto-submitted invoice. No new resolution logic; just stop dropping the value.
+              factor_profile_id = $5,
               updated_at = now(),
               updated_by_user_id = $3
           WHERE operating_company_id = $1::uuid
             AND id = $4
         `,
-        [oci, advanceId, input.actorUserId, inv.id]
+        [oci, advanceId, input.actorUserId, inv.id, factor.id]
       );
 
       await appendCrudAudit(
