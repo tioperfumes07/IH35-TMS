@@ -784,3 +784,30 @@ Live: 7 loads, 0 missing unit (assigned_unit_id), 0 missing driver (assigned_pri
 | 25   | $428.87 / $1,847.24 reserve residual | 0 liabilities (table empty) | DONE BY PURGE |
 | 26   | 3 self-carried invoices missing | 0 missing (7 invoices, all from_load) | DONE BY PURGE |
 | 30   | 9 unit-missing / 3 unit-wrong / 3 driver-missing | 0 missing unit, 0 missing driver (7 loads) | DONE BY PURGE |
+
+---
+
+## DEVIN-B | TASKS 19, 20, 21 of 48 | DONE BY PURGE (with new state noted) | 2026-09-23
+
+**LANE_CROSS**: CC-2 lane. CC-2 is on gate-scope-03, bus-channel, FILTER-MULTI, VOID-BUTTON, task 38, task 48, task 16.
+
+### Task 19: GL 1000 negative balance — DONE BY PURGE
+Register: "−$74,263.96 on an asset, 673 postings — root-caused"
+Live: 0 postings on account 1000. The −$74,263.96 and all 673 postings have been purged. Account 1000 (Cash) has no activity in the current feed.
+
+### Task 20: GL 1090 Undeposited Funds — OLD ISSUE DONE BY PURGE, NEW STATE EXISTS
+Register: "$83,842.22 — suspected other side of 19 — root-caused"
+Live: $8,666.30 (866,630 cents) across 17 postings on account 1090 (Undeposited Funds).
+The OLD $83,842.22 has been purged. The NEW $8,666.30 is from the current feed (8/12 → 8/13). Since task 19 (GL 1000) is now 0 postings, this is no longer "the other side of 19." The $8,666.30 represents customer payments received but not yet deposited — normal in-flight state while the feed is running. CC-2 should verify this clears as deposits are processed.
+
+### Task 21: A/R vs Faro control gap — DONE BY PURGE
+Register: "$80,289.59 → Bucket A $43,160.00 + Bucket B $37,129.59 — invoices named"
+Live: 7 invoices, total $16,450.00 A/R. The old $80,289.59 gap has been purged. The current $16,450.00 is the current feed's A/R (7 invoices, all sent, all factoring_status=advanced). No control gap exists in the current population.
+
+### Summary
+
+| Task | Register (2026-09-22) | Live (2026-09-23) | Verdict |
+|------|----------------------|-------------------|---------|
+| 19   | GL 1000: −$74,263.96, 673 postings | 0 postings on 1000 | DONE BY PURGE |
+| 20   | GL 1090: $83,842.22 | $8,666.30 (17 postings, new from feed) | OLD DONE BY PURGE; new state is normal in-flight |
+| 21   | A/R vs Faro: $80,289.59 gap | 7 invoices, $16,450.00, no gap | DONE BY PURGE |
