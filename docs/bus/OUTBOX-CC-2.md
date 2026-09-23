@@ -5423,3 +5423,50 @@ until then.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+
+## ROUND 125/126 — VOID-A-LOAD CASCADE PREVIEW — BUILT, TSC/TEST CLEAN, HOLDING THE PUSH (branch `cc2-r102b-readonly-void`, commit `37f291e5fe`)
+
+Built the screen against the SHAPE per Round 125/126, verbatim: "the dispatcher sees, before
+confirming, every artifact that will be touched — each named with its number and amount, never a
+count," including FUEL EXPENSES and the driver bill KEEP (empty miles driven) / VOID (loaded
+miles, tarp, extra stops, detention) split.
+
+- New read-only `GET /api/v1/dispatch/loads/:id/cancellation-preview`
+  (`cancellation.service.ts`'s `getCancellationPreview()` + the route in `cancellation.routes.ts`),
+  computing all seven families off load-linkage predicates already proven elsewhere this session —
+  no new tables, no GL math, no write path. CC-1 owns the actual cascade execution this describes.
+- `CancelLoadModal.tsx` (the existing dispatcher-facing cancel UI) replaces its old static
+  three-bullet "this will automatically:" notice with the real itemized preview for a single-load
+  cancel: each artifact by its own number + dollar amount, a per-item exclude checkbox (the
+  packet's "confirms or corrects"), and the driver-bill KEEP/VOID split shown as two distinct
+  dollar figures. Confirm Cancel is blocked until the preview has actually loaded and — when it
+  names real artifacts — until "I have reviewed the artifacts above" is checked: no confirm
+  without seeing. Submit payload additively carries `cascade_preview_computed_at` /
+  `cascade_confirmed_at` / `cascade_excluded_ids` for CC-1's cascade to read once it lands. Batch
+  cancel (2+ loads) keeps the prior generic notice — no single load to preview against.
+- Live-verified (Neon, bypass_rls='lucia', USMCA): all 7 preview queries run clean against a real
+  cancelled load (13506 — settlement 5775 $1,186.40, two fuel transactions $352.95/$747.87); three
+  sampled `driver_bills` rows confirm `gross_amount_cents = deadhead_pay_cents + loaded_pay_cents`
+  exactly (e.g. 97305 = 22555 + 74750), so the KEEP/VOID derivation is exact.
+- 2 new `CancelLoadModal.test.tsx` cases (itemized-by-number-and-amount + honest-empty-state) pass.
+  The file's 4 pre-existing reason-dropdown tests are CONFIRMED pre-existing/unrelated — identical
+  failure reproduced on the unmodified file before this diff (a jsdom combobox-open flake).
+- `verify-ui-design-system-ratchet.mjs`: my first draft used `text-[11px]` 5 times (raw arbitrary
+  value, even though 11px is itself on the locked scale) — fixed by swapping to the semantic
+  `text-xs` class, same lesson as the item-2 badge work earlier this session.
+- New lane-cross ruling:
+  `docs/bus/2026-09-23-LEAD-RULING-ROUND-125-CC2-LANE-CROSS-VOID-A-LOAD-CASCADE-PREVIEW.md`,
+  covering the two `apps/backend/src/dispatch/**` files (CC-1 lane) touched.
+
+**Not pushed yet — per Round 121/125/126/128 (verbatim, "DO NOT retry in a loop"):** the shared
+`verify-alwaystrack-parity` blocker is still live (Round 128's own owner-authorized USMCA-wide
+void-to-zero campaign, actively in progress: loads 122→0, driver bills 94→0, settlements 89→0 not
+yet reached). Round 128 itself names the clear condition ("the alwaystrack-parity gate clears the
+moment live loads hit 0"), which is CC-3/Cursor/Codex's work, not mine. `37f291e5fe` (6 commits
+total on this branch) is ready to push the moment that lands — same resolution path as the prior
+five commits, no action needed from me to force it.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
