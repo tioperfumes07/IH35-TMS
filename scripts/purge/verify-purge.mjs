@@ -27,6 +27,7 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { PURGE_STATE_PATH } from "../lib/purge-window.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const EXPECTED = path.join(HERE, "usmca-purge-expected-zero.generated.json");
@@ -37,7 +38,7 @@ const BASELINE = process.env.PURGE_BASELINE_PATH || "purge_baseline.json";
  * whether an empty table is "EMPTY BY PURGE" or a broken instrument. WITHOUT THIS WRITE THE
  * WINDOW NEVER OPENS and every seat's money push blocks the moment we purge.
  */
-const PURGE_STATE = process.env.PURGE_STATE_PATH || "purge_state.json";
+const PURGE_STATE = PURGE_STATE_PATH;
 
 function fail(msg) { console.error(msg); process.exit(1); }
 
@@ -64,10 +65,11 @@ const MUST_SURVIVE = [
   ["catalogs.items", "the item catalog"],
   ["catalogs.qbo_categories", "the item categories"],
   ["mdata.drivers", "drivers"],
-  ["mdata.units", "units"],
+  // units and equipment carry no operating_company_id: USMCA holds them by lease (Rule 49 §2).
+  ["mdata.units", "units", "(currently_leased_to_company_id = '{CO}' OR owner_company_id = '{CO}')"],
   ["mdata.customers", "customers"],
   ["mdata.vendors", "vendors"],
-  ["mdata.equipment", "equipment"],
+  ["mdata.equipment", "equipment", "(currently_leased_to_company_id = '{CO}' OR owner_company_id = '{CO}')"],
   ["mdata.locations", "locations"],
   ["driver_finance.driver_pay_rates", "driver pay rates"],
   ["accounting.periods", "accounting periods"],
@@ -79,10 +81,10 @@ async function counts(sql) {
     try { out[table] = Number((await sql(`SELECT count(*) AS n FROM ${table} WHERE ${where}`))[0].n); }
     catch (e) { out[table] = `ERROR: ${String(e.message).split("\n")[0]}`; }
   }
-  for (const [table] of MUST_SURVIVE) {
+  for (const [table, , scope = "operating_company_id = '{CO}'"] of MUST_SURVIVE) {
     try {
       out[table] = Number(
-        (await sql(`SELECT count(*) AS n FROM ${table} WHERE operating_company_id = '${CO}'`))[0].n,
+        (await sql(`SELECT count(*) AS n FROM ${table} WHERE ${scope.replaceAll("{CO}", CO)}`))[0].n,
       );
     } catch (e) { out[table] = `ERROR: ${String(e.message).split("\n")[0]}`; }
   }
@@ -94,18 +96,22 @@ async function main() {
   if (!url)
     fail("REFUSED: no DATABASE_URL. This guard fails closed - it never reports a pass it did not measure.");
 
-  const { neon } = await import("@neondatabase/serverless").catch(() =>
-    fail("REFUSED: @neondatabase/serverless not installed"));
-  const raw = neon(url);
-  const sql = async (q) =>
-    raw.transaction
-      ? raw
-          .transaction((t) => [t`SET LOCAL app.bypass_rls = 'lucia'`, t.unsafe ? t.unsafe(q) : t(q)])
-          .then((r) => r[1])
-      : raw(q);
+  const { default: pg } = await import("pg").catch(() => fail("REFUSED: pg not installed"));
+  const client = new pg.Client({ connectionString: url });
+  await client.connect().catch((e) => fail(`REFUSED: cannot connect: ${String(e.message).split("\n")[0]}`));
+  const sql = async (q) => {
+    await client.query("BEGIN READ ONLY");
+    try {
+      await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+      return (await client.query(q)).rows;
+    } finally {
+      await client.query("ROLLBACK");
+    }
+  };
 
   const before = process.argv.includes("--before");
   const now = await counts(sql);
+  await client.end();
 
   if (before) {
     writeFileSync(BASELINE, JSON.stringify({ captured: new Date().toISOString(), counts: now }, null, 1));

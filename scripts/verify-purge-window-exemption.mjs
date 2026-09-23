@@ -16,7 +16,7 @@ const LABEL = "verify-purge-window-exemption";
 export const ALLOW_OFFLINE_SKIP = "static source and state-file checks; never connects to a database";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const GATE = path.join(ROOT, "scripts/money-pr-local-gate.mjs");
-const KNOWN_KEYS = new Set(["purged_at", "verified_at", "day1_closed_at", "day1_day"]);
+const KNOWN_KEYS = new Set(["purged_at", "verified_at", "verified_by", "tables_verified", "day1_closed_at", "day1_day"]);
 
 const failures = [];
 
