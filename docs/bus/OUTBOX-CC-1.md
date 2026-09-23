@@ -1203,4 +1203,56 @@ loads.routes.ts + csv-seed-import.ts, squashed after the rebase conflict with #2
 assignment — not idle, will pick up the next unclaimed shared-backlog item
 (`docs/bus/INBOX-CC-1.md`'s SHARED BACKLOG section) if nothing new lands first.
 
+## 2026-09-23 — CC-1: shared backlog, all three items closed
+
+Lead order ("CC-1 — ALL FOUR ACCEPTED. TAKE THE SHARED BACKLOG, DO NOT GO IDLE"), three items
+in order:
+
+**1. Feed-day executor route — MERGED, `dfec242ae8` (#22403).** `executeHistoricalFeedDay`
+(#22375) was a service with no HTTP entry point. Built `POST /api/v1/driver-finance/feed-day/run`.
+Real design finding along the way: `executeHistoricalFeedDay`'s own header says the caller opens
+the transaction and commits only when clean — `withCurrentUser()` already IS that caller
+(verified by reading its body: it opens BEGIN before its callback and COMMITs on a normal
+return / ROLLBACKs on a thrown error). My first draft called BEGIN/COMMIT/ROLLBACK by hand
+inside the callback, which would have fought withCurrentUser's own transaction — caught before
+shipping, fixed to use a sentinel thrown error (`FeedDayNotCleanError`) to force ROLLBACK while
+still carrying the report back to the route handler. "Refuse day N+1 while day N is not closed":
+no DB table anywhere tracks feed-day closure (verified); this route tracks it via the append-only
+audit trail (`audit.audit_events`, event_class `driver-finance.feed_day.closed`) rather than
+inventing new schema — the caller names which day it considers "previous" (never a guessed
+calendar predecessor, since Faro's real day sequence is not every calendar date). Does NOT invoke
+`verify-feed-day.mjs` itself — that stays the separate, manual reconciliation-side gate per
+`scripts/feed/README.md`'s own recipe. 7 real-Postgres tests (CI-only): clean commit + audit
+event, already-closed-day refusal, N+1-blocked-until-N-closed, N+1-succeeds-once-N-closed,
+full rollback on refusal (no partial driver bill), dry_run never commits, non-authority 403.
+
+**2. Cursor's I2 finding, the 9 loads — MERGED, `13380ba9f5` (#22400).** `dispatch/
+canonical-active-load-set.ts` gained `DELIVERED_OR_LATER_STATUSES`/`isDeliveredOrLaterStatus` —
+the one place Cursor's own finding said this vocabulary belongs. I2's `i2ExceptionForRow` now
+reports the status-only contradiction (status reads delivered-or-later, zero evidence, no
+invoice) instead of silently excluding it. `verify-reconciler-exceptions.baseline.json` I2.invoice
+ceiling 22 → 32 (the 9 named loads plus 1 more from live data drift since Cursor's 2026-09-22
+measurement — disclosed honestly, not chased row-by-row per Round 86's standing law). 4 new test
+cases; live guard re-run confirmed exactly 32.
+
+**3. `cash_rsv` / `dispatch` / `sch_fee` — ALREADY DONE, not mine to build.** Scoped before
+touching anything: Cursor had already shipped this (migration `202614301200`, PRs #22398/#22401/
+#22402, applied live to production, closed out in his own OUTBOX before I got to it). The 4
+columns landed on `factor.faro_invoice_lines` (not `accounting.factoring_advances` — I would have
+guessed wrong there), the 82-of-82 funding-identity test is real and passing
+(`apps/backend/src/factoring/__tests__/faro-funding-identity.test.ts`), and
+`scripts/verify-faro-deduction-capture.mjs` guards it. One genuinely open thread remains, named in
+Cursor's own closeout, NOT built by him or me: posting `cash_rsv_amount_cents` to GL 1235 through
+the existing factoring poster is explicitly deferred pending owner authorization (new GL-posting
+math is never solo-authorized) — flagging it here rather than either building it unprompted or
+silently letting it disappear.
+
+**THE PROOF IT'S REAL:** both merged PRs' local proof already quoted in their own commit
+messages (exit 0 typecheck, exit 0 test suites, live guard re-runs); item 3's "already done"
+claim verified by reading the actual merged migration/test/guard files on `main`, not assumed
+from the backlog text.
+
+**WHAT'S NEXT:** shared backlog is empty. Standing by — will re-check `docs/bus/INBOX-CC-1.md`
+for a new assignment rather than idle.
+
 — CC-1
