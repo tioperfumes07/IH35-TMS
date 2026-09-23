@@ -2088,4 +2088,27 @@ Your three: (1) revrec 'earn' -- DONE, see above, clean single-instance proof wi
 (2) the 4 fuel purchases with no live posting, and (3) docs.files purge predicate -- NOT STARTED
 this pass given the time this correction + the two runner bugs took; picking up next turn.
 
+**Corroboration on merge**: the Lead's own independent rehearsal
+(09-23-2026-LEAD-E10-REHEARSAL-FAILED-274-ORPHAN-HEADERS-ARE-NOT-CC3S-RACE.md) reproduced the exact
+same 274-orphan-header defect from ONE sequential instance on a different branch
+(br-raspy-fog-akl1n2n2), independently landing on the identical root cause named here: "the
+reversing header must be written in the same transaction as its lines, or not at all." That is
+exactly Bug 2's fix above -- independently corroborated, not just self-reported. Also flags a
+SEPARATE idempotency defect I have not fixed: `reversePostedSourceTransaction`'s posting-batch
+writer collides on `uq_posting_batches_company_idempotency_key` on a re-run instead of recognizing
+its own prior batch (209 of their 416 errors) -- distinct from, and not addressed by, either of
+my two fixes. Named here, not claimed as fixed.
+
+Also merged in: 09-23-2026-LEAD-THE-500.01-ESCROW-RESIDUAL-EXPLAINED.md -- a better, production-
+verified explanation than my own from Round 94 (mine was measured on br-spring-dream-akk31fyt
+AFTER my own mirror script had already run there, which changed the picture; the Lead measured
+untouched production directly). Real mechanism: a 2026-09-02 repair pair (MARK/WORM REVERSE)
+already walked 3 escrow_accounts to exactly $0.00, but the release leg was written for double the
+deposit, so the POSTING LEDGER on those 3 accounts reads $500.01 short of the (correct) balances.
+Ruling: E10's escrow mirror must SKIP these six repair-pair rows (source_type='reconciliation',
+source_id IS NULL, no linked_journal_entry_id) -- mirroring them would mirror a correction of a
+correction, moving three already-zero accounts OFF zero. Fixed in
+e10-void-runner-02-escrow-neutralize.ts: these rows are now identified, named in the output, and
+excluded from the mirror set. Not yet re-run end-to-end with this fix (queued next).
+
 — CC-3
