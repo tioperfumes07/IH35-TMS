@@ -93,7 +93,7 @@ Never work in the shared main checkout.
 [ ] Q15 GUARD  verify-no-capability-regression.mjs — 14 capabilities; fail on
       missing symbol, moved file, OR duplicate definition.
 [ ] Q16 GUARD  verify-no-driver-merge-without-hard-identifier.mjs
-[ ] Q17 GUARD  verify-settled-load-carries-settled-status.mjs
+[DONE CC-1 2026-09-23T23:49:16Z, PR #22467 -- built and merged earlier this round (TASK 27), already live and self-arming] Q17 GUARD  verify-settled-load-carries-settled-status.mjs
 
 # P1 — DISPATCH / READ PATH
 [ ] Q18 DISPATCH  Canonical active-load set — ONE module. Predicate:
@@ -122,7 +122,7 @@ Never work in the shared main checkout.
 [ ] Q24 ACCOUNTING  Task 17 — deductions.routes.ts + settlement voids through
       the EXISTING dispatcher (all five engines). Never a sixth.
 [ ] Q25 BANKING  Task 16 — banking /void routes through that same dispatcher.
-[ ] Q26 ACCOUNTING  Task 38 — JE memo WRITER only. No backfill. One file.
+[CC-1 2026-09-23T23:49:16Z] Q26 ACCOUNTING  Task 38 — JE memo WRITER only. No backfill. One file.
       Do it before the feed writes many more.
 [ ] Q27 BANKING  Task 48 — Relay deposit fetch + DAILY cron. State its UTC
       cron expression and next fire time. In-app scheduling, never an
@@ -164,13 +164,22 @@ Never work in the shared main checkout.
       path. CC-1 found it in his own REMAINING: the helper exists and NO
       CALLER INVOKES IT, so resumability is built but not real. Self-
       identified, approved, CC-1 claiming.
-[ ] Q37 GUARD  The 10 original fuel JEs carry reversal entries and net to
+[DONE CC-1 2026-09-23T23:49:16Z, NOT A BUG -- confirmed live] Q37 GUARD  The 10 original fuel JEs carry reversal entries and net to
       0.00, but voided_at on the originals read 0 at 2026-09-23 23:30:30Z —
       reversed but not stamped. Confirm live. If still 0, it is a gap in the
       reversal engine: a reversed document that does not carry its void
       stamp is invisible to every void-aware guard. Fix the engine, then
       guard it.
-[CC-1 2026-09-23T23:29:52Z] Q38 GATE  Commit the bus files to main. They exist in every working tree
+      CLOSED, not fixed: re-confirmed live (bypass_rls) -- all 10 still
+      voided_at=NULL/status='posted' with reversed_by_je_id set. This is the
+      DOCUMENTED Option-1 reversing-entry model in journal-entries.service.ts
+      ("voiding a posted JE NEVER mutates/flips the original... a status
+      flip would SILENTLY DROP the entry from every GL report filtering
+      status <> 'voided'"). verify-void-stamp-columns.mjs already declares
+      `journal_entry: null` (no status-flip expected) for exactly this
+      reason -- already correctly modeled, not an unguarded gap. Not fixing
+      something that isn't broken.
+[DONE CC-1 2026-09-23T23:49:16Z, PR #22477] Q38 GATE  Commit the bus files to main. They exist in every working tree
       as UNTRACKED files and are absent from origin/main — a fetch does not
       see them and `git clean -fd` deletes them. CC-1 verified this. Docs
       only: 00-LEAD-ROUND.md, 00-SEQUENCE.md, 00-WORK-QUEUE.md, and all
