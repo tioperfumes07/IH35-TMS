@@ -1,0 +1,430 @@
+{
+ "source": [
+  "01-FARO/PURCHASE REPORT ALL.csv",
+  "funds due report 09-21-26.csv"
+ ],
+ "days": [
+  {
+   "date": "8/10/26",
+   "invoices": 2,
+   "purchase": 5500.0,
+   "escrow": 45.0,
+   "cash_rsv": 30.9,
+   "discount": 82.5,
+   "wire": 10.0,
+   "sch_fee": 6.6,
+   "receipts": 2500.0,
+   "net_adv": 5325.0,
+   "inv": [
+    "2",
+    "3"
+   ]
+  },
+  {
+   "date": "8/11/26",
+   "invoices": 1,
+   "purchase": 3600.0,
+   "escrow": 54.0,
+   "cash_rsv": 0.0,
+   "discount": 54.0,
+   "wire": 10.0,
+   "sch_fee": 0.0,
+   "receipts": 0.0,
+   "net_adv": 3482.0,
+   "inv": [
+    "1"
+   ]
+  },
+  {
+   "date": "8/12/26",
+   "invoices": 1,
+   "purchase": 1700.0,
+   "escrow": 0.0,
+   "cash_rsv": 25.5,
+   "discount": 25.5,
+   "wire": 10.0,
+   "sch_fee": 0.0,
+   "receipts": 1700.0,
+   "net_adv": 1639.0,
+   "inv": [
+    "4"
+   ]
+  },
+  {
+   "date": "8/13/26",
+   "invoices": 3,
+   "purchase": 5650.0,
+   "escrow": 79.5,
+   "cash_rsv": 5.02,
+   "discount": 84.75,
+   "wire": 10.0,
+   "sch_fee": 0.23,
+   "receipts": 350.0,
+   "net_adv": 5470.5,
+   "inv": [
+    "5",
+    "6",
+    "7"
+   ]
+  },
+  {
+   "date": "8/14/26",
+   "invoices": 4,
+   "purchase": 10125.0,
+   "escrow": 133.5,
+   "cash_rsv": 16.99,
+   "discount": 151.88,
+   "wire": 10.0,
+   "sch_fee": 1.39,
+   "receipts": 1225.0,
+   "net_adv": 9811.24,
+   "inv": [
+    "8",
+    "11",
+    "12",
+    "13"
+   ]
+  },
+  {
+   "date": "8/17/26",
+   "invoices": 2,
+   "purchase": 7100.0,
+   "escrow": 106.5,
+   "cash_rsv": 0.0,
+   "discount": 106.5,
+   "wire": 10.0,
+   "sch_fee": 0.0,
+   "receipts": 3250.0,
+   "net_adv": 6877.0,
+   "inv": [
+    "14",
+    "15"
+   ]
+  },
+  {
+   "date": "8/18/26",
+   "invoices": 1,
+   "purchase": 3800.0,
+   "escrow": 0.0,
+   "cash_rsv": 57.0,
+   "discount": 57.0,
+   "wire": 10.0,
+   "sch_fee": 0.0,
+   "receipts": 3800.0,
+   "net_adv": 3676.0,
+   "inv": [
+    "16"
+   ]
+  },
+  {
+   "date": "8/19/26",
+   "invoices": 2,
+   "purchase": 6600.0,
+   "escrow": 99.0,
+   "cash_rsv": 0.0,
+   "discount": 99.0,
+   "wire": 10.0,
+   "sch_fee": 0.0,
+   "receipts": 0.0,
+   "net_adv": 6392.0,
+   "inv": [
+    "17",
+    "19"
+   ]
+  },
+  {
+   "date": "8/21/26",
+   "invoices": 5,
+   "purchase": 16900.0,
+   "escrow": 253.5,
+   "cash_rsv": 0.0,
+   "discount": 253.5,
+   "wire": 10.0,
+   "sch_fee": 0.0,
+   "receipts": 0.0,
+   "net_adv": 16383.0,
+   "inv": [
+    "18",
+    "20",
+    "22",
+    "23",
+    "24"
+   ]
+  },
+  {
+   "date": "8/24/26",
+   "invoices": 2,
+   "purchase": 4100.0,
+   "escrow": 61.5,
+   "cash_rsv": 0.0,
+   "discount": 61.5,
+   "wire": 10.0,
+   "sch_fee": 0.0,
+   "receipts": 0.0,
+   "net_adv": 3967.0,
+   "inv": [
+    "21",
+    "25"
+   ]
+  },
+  {
+   "date": "8/26/26",
+   "invoices": 2,
+   "purchase": 3100.0,
+   "escrow": 46.5,
+   "cash_rsv": 0.0,
+   "discount": 46.5,
+   "wire": 10.0,
+   "sch_fee": 0.0,
+   "receipts": 0.0,
+   "net_adv": 2997.0,
+   "inv": [
+    "27",
+    "28"
+   ]
+  },
+  {
+   "date": "8/28/26",
+   "invoices": 8,
+   "purchase": 26900.0,
+   "escrow": 403.5,
+   "cash_rsv": 0.0,
+   "discount": 403.5,
+   "wire": 10.0,
+   "sch_fee": 0.0,
+   "receipts": 0.0,
+   "net_adv": 26083.0,
+   "inv": [
+    "29",
+    "30",
+    "31",
+    "32",
+    "33",
+    "34",
+    "35",
+    "36"
+   ]
+  },
+  {
+   "date": "8/31/26",
+   "invoices": 4,
+   "purchase": 13900.0,
+   "escrow": 208.5,
+   "cash_rsv": 0.0,
+   "discount": 208.5,
+   "wire": 10.0,
+   "sch_fee": 0.0,
+   "receipts": 0.0,
+   "net_adv": 13473.0,
+   "inv": [
+    "38",
+    "39",
+    "40",
+    "41"
+   ]
+  },
+  {
+   "date": "9/1/26",
+   "invoices": 4,
+   "purchase": 14650.0,
+   "escrow": 219.75,
+   "cash_rsv": 0.0,
+   "discount": 219.75,
+   "wire": 10.0,
+   "sch_fee": 0.0,
+   "receipts": 0.0,
+   "net_adv": 14200.5,
+   "inv": [
+    "37",
+    "42",
+    "43",
+    "44"
+   ]
+  },
+  {
+   "date": "9/3/26",
+   "invoices": 6,
+   "purchase": 10800.0,
+   "escrow": 162.0,
+   "cash_rsv": 0.0,
+   "discount": 162.0,
+   "wire": 10.0,
+   "sch_fee": 0.0,
+   "receipts": 0.0,
+   "net_adv": 10466.0,
+   "inv": [
+    "45",
+    "46",
+    "47",
+    "48",
+    "49",
+    "51"
+   ]
+  },
+  {
+   "date": "9/4/26",
+   "invoices": 4,
+   "purchase": 17315.0,
+   "escrow": 259.73,
+   "cash_rsv": 0.0,
+   "discount": 259.73,
+   "wire": 10.0,
+   "sch_fee": 0.0,
+   "receipts": 0.0,
+   "net_adv": 16785.54,
+   "inv": [
+    "50",
+    "52",
+    "53",
+    "54"
+   ]
+  },
+  {
+   "date": "9/8/26",
+   "invoices": 6,
+   "purchase": 23910.0,
+   "escrow": 358.65,
+   "cash_rsv": 0.0,
+   "discount": 358.65,
+   "wire": 10.0,
+   "sch_fee": 0.0,
+   "receipts": 0.0,
+   "net_adv": 23182.7,
+   "inv": [
+    "56",
+    "57",
+    "58",
+    "59",
+    "60",
+    "1013272-2"
+   ]
+  },
+  {
+   "date": "9/10/26",
+   "invoices": 2,
+   "purchase": 3100.0,
+   "escrow": 46.5,
+   "cash_rsv": 0.0,
+   "discount": 46.5,
+   "wire": 10.0,
+   "sch_fee": 0.0,
+   "receipts": 0.0,
+   "net_adv": 2997.0,
+   "inv": [
+    "61",
+    "62"
+   ]
+  },
+  {
+   "date": "9/11/26",
+   "invoices": 7,
+   "purchase": 33400.0,
+   "escrow": 501.0,
+   "cash_rsv": 0.0,
+   "discount": 501.0,
+   "wire": 10.0,
+   "sch_fee": 0.0,
+   "receipts": 0.0,
+   "net_adv": 32388.0,
+   "inv": [
+    "63",
+    "64",
+    "65",
+    "66",
+    "67",
+    "68",
+    "69"
+   ]
+  },
+  {
+   "date": "9/14/26",
+   "invoices": 7,
+   "purchase": 30770.0,
+   "escrow": 461.55,
+   "cash_rsv": 0.0,
+   "discount": 461.55,
+   "wire": 10.0,
+   "sch_fee": 0.0,
+   "receipts": 0.0,
+   "net_adv": 29836.9,
+   "inv": [
+    "70",
+    "71",
+    "72",
+    "73",
+    "75",
+    "76",
+    "77"
+   ]
+  },
+  {
+   "date": "9/17/26",
+   "invoices": 2,
+   "purchase": 7600.0,
+   "escrow": 114.0,
+   "cash_rsv": 0.0,
+   "discount": 114.0,
+   "wire": 10.0,
+   "sch_fee": 0.0,
+   "receipts": 0.0,
+   "net_adv": 7362.0,
+   "inv": [
+    "78",
+    "79"
+   ]
+  },
+  {
+   "date": "9/18/26",
+   "invoices": 7,
+   "purchase": 28300.0,
+   "escrow": 424.5,
+   "cash_rsv": 0.0,
+   "discount": 424.5,
+   "wire": 10.0,
+   "sch_fee": 0.0,
+   "receipts": 0.0,
+   "net_adv": 27441.0,
+   "inv": [
+    "80",
+    "81",
+    "82",
+    "83",
+    "84",
+    "85",
+    "86"
+   ]
+  },
+  {
+   "date": "9/21/26",
+   "invoices": 7,
+   "purchase": 32767.0,
+   "escrow": 491.51,
+   "cash_rsv": 0.0,
+   "discount": 491.51,
+   "wire": 0.0,
+   "sch_fee": 0.0,
+   "receipts": 0.0,
+   "net_adv": 31783.98,
+   "inv": [
+    "87",
+    "88",
+    "89",
+    "90",
+    "91",
+    "92",
+    "93"
+   ]
+  }
+ ],
+ "totals": {
+  "invoices": 89,
+  "purchase": 311587.0,
+  "escrow": 4530.19,
+  "cash_rsv": 135.41,
+  "discount": 4673.82,
+  "wire": 220.0,
+  "sch_fee": 8.22,
+  "receipts": 12825.0,
+  "net_adv": 302019.36
+ }
+}
