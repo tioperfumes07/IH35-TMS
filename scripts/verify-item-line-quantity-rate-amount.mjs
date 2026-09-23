@@ -5,6 +5,7 @@
 //      validated) and the three same-company item FKs, with rate in fractional cents;
 //   2. no invoice-line writer computes line_total_cents with a floating Math.round(quantity * unit),
 //      which disagrees with the CHECK on exact halves (0.29 x 50 = 14.4999... -> 14; the row says 15).
+/** @matrix-built {"modules":["accounting"],"cols":["connectivity"],"leafRe":"^(bill_lines|invoice_lines|expense_lines|settlement_lines)$","task":"ACCT-F2026092301-ITEM-LINE-SCHEMA"} */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
