@@ -87,6 +87,44 @@ export type CanonicalActiveLoadStatus = (typeof CANONICAL_ACTIVE_LOAD_STATUSES)[
  *  documentation, not a second source of truth. */
 export const CANONICAL_TERMINAL_LOAD_STATUSES = ["draft", "invoiced", "paid", "closed", "cancelled"] as const;
 
+/**
+ * "Delivered by status" — Cursor's I2 finding (docs/bus/OUTBOX-CURSOR.md, "I2 does not key on
+ * status: a status list near mdata.loads is an eleventh load-status definition. If 'delivered'
+ * by status is wanted, it belongs in dispatch/canonical-active-load-set.ts and I2 imports it.").
+ * He was right to refuse to invent his own — this is that ONE place, per the file's own law.
+ *
+ * This answers a DIFFERENT question than CANONICAL_ACTIVE_LOAD_STATUSES/
+ * CANONICAL_TERMINAL_LOAD_STATUSES above ("is this load still open on the dispatch board"). This
+ * is "has this load's status progressed at least as far as delivery" — a delivery-lifecycle
+ * stage, not an activity state. The two sets deliberately overlap and diverge: 'closed' is
+ * TERMINAL (not board-active) but is also DELIVERED-OR-LATER (a load cannot close without having
+ * delivered first); 'dispatched'/'at_pickup'/'in_transit' are board-active but NOT
+ * delivered-or-later. Do not merge these into one list — that would be the exact "status alone is
+ * not sufficient" trap this file's own header warns about, just inverted.
+ *
+ * NEVER used to decide whether a load IS delivered on its own (the same "status is stale in both
+ * directions on fed data" warning above applies here too) — only to flag the CONTRADICTION when
+ * status claims delivery-or-later but neither an issued invoice nor real delivery evidence
+ * (Faro purchase / stop departure / manual authorization) exists. See I2
+ * (reconciler/invariants/i2-delivered-load-invoiced.ts) for the live consumer.
+ */
+export const DELIVERED_OR_LATER_STATUSES = [
+  "delivered",
+  "delivered_pending_docs",
+  "completed_docs_received",
+  "invoiced",
+  "paid",
+  "closed",
+] as const;
+
+export type DeliveredOrLaterStatus = (typeof DELIVERED_OR_LATER_STATUSES)[number];
+
+/** True when `status` reads as at-or-past delivery — see DELIVERED_OR_LATER_STATUSES above for
+ *  what this does and does not mean. */
+export function isDeliveredOrLaterStatus(status: string): boolean {
+  return (DELIVERED_OR_LATER_STATUSES as readonly string[]).includes(status);
+}
+
 /** Throws if `subset` contains any status outside the canonical active set — call this once at
  *  module load for every narrower named view so drift fails loudly at import time, not silently
  *  in a live count. */

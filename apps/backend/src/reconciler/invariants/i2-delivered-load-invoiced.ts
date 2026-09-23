@@ -1,5 +1,5 @@
 import { finalActiveDeliveryDepartureAt } from "../../accounting/revrec-delivery-posting/poster.service.js";
-import { canonicalActiveLoadInvoiceExclusionCte } from "../../dispatch/canonical-active-load-set.js";
+import { canonicalActiveLoadInvoiceExclusionCte, isDeliveredOrLaterStatus } from "../../dispatch/canonical-active-load-set.js";
 import type { Invariant, Queryable, ReconcilerException } from "../types.js";
 
 const INVARIANT_ID = "I2";
@@ -14,6 +14,9 @@ type Row = {
   faro_first_seen: string | null;
   authorized_at: string | null;
   unissued_invoice_statuses: string | null;
+  /** mdata.loads.updated_at — only ever used as `since` for the no-evidence-but-status-claims-
+   *  delivered branch below, where no real delivery evidence exists to date the breach from. */
+  status_since: string;
 };
 
 /**
@@ -22,11 +25,22 @@ type Row = {
  * stop departed (the revrec poster's own finalActiveDeliveryDepartureAt), or an active manual
  * delivery authorization exists. "Invoiced" is the canonical issued-invoice test, imported. No
  * status filter at all, so a Faro purchase on a cancelled load surfaces as the contradiction it is.
+ *
+ * A FOURTH case (2026-09-23, Cursor's I2 finding, 9 loads live): status alone reads
+ * delivered-or-later (dispatch/canonical-active-load-set.ts's `isDeliveredOrLaterStatus` — the
+ * ONE place that vocabulary lives, imported, never re-declared here) but NONE of the three real
+ * evidence signals above exist. Previously silently excluded by the same early-return that
+ * correctly skips a load still in dispatch; now reported as the contradiction it is —
+ * status-claims-delivered with zero evidence is worse than any of the three evidenced cases, not
+ * something to hide. No status filter drives detection (the query is unchanged); the status
+ * check only decides which of two paths a no-evidence row takes: silently skip (never claimed
+ * delivery) or report (claims delivery, proves nothing).
  */
 export const I2_SQL = `
   SELECT l.id::text AS load_id,
          l.load_number,
          l.status::text AS load_status,
+         l.updated_at::text AS status_since,
          f.gross_cents::text AS faro_gross_cents,
          f.invoice_numbers AS faro_invoice_numbers,
          f.first_seen::text AS faro_first_seen,
@@ -72,7 +86,10 @@ function dollars(cents: number): string {
 
 export function i2ExceptionForRow(row: Row, departedAt: string | null): ReconcilerException | null {
   const faroCents = row.faro_gross_cents === null ? null : Number(row.faro_gross_cents);
-  if (faroCents === null && !departedAt && !row.authorized_at) return null;
+  const noEvidence = faroCents === null && !departedAt && !row.authorized_at;
+  // The original gate: no evidence at all, and status does not even claim delivery — genuinely
+  // nothing to flag (a load still in dispatch has no business being in this report).
+  if (noEvidence && !isDeliveredOrLaterStatus(row.load_status)) return null;
 
   let reason: string;
   let since: string;
@@ -85,10 +102,26 @@ export function i2ExceptionForRow(row: Row, departedAt: string | null): Reconcil
     reason = `The final delivery stop departed on ${departedAt.slice(0, 10)}, but no invoice has been issued.`;
     since = departedAt;
     sinceSource = "mdata.load_stops.actual_departure_at";
-  } else {
+  } else if (row.authorized_at) {
     reason = `A manual delivery authorization was recorded on ${String(row.authorized_at).slice(0, 10)}, but no invoice has been issued.`;
     since = String(row.authorized_at);
     sinceSource = "dispatch.manual_delivery_authorizations.authorized_at";
+  } else {
+    // Cursor's I2 finding (docs/bus/OUTBOX-CURSOR.md, "9 loads read delivered-or-later with no
+    // issued invoice but carry none of that evidence"): status alone claims delivery-or-later,
+    // but there is no Faro purchase, no stop departure, and no manual authorization at all — the
+    // worst case, previously silently excluded by the `noEvidence` early-return above rather
+    // than reported. "Delivered by status" is never trusted alone (this file's own header law),
+    // so this is reported as the CONTRADICTION it is — status vs. evidence disagree — not as
+    // proof the load is actually delivered. `since` is the load's own record, not delivery
+    // evidence, because none exists; that absence is exactly what the reason names.
+    reason =
+      `This load's status reads "${row.load_status}" (delivered-or-later) but carries no issued ` +
+      `invoice AND no delivery evidence at all — no Faro purchase, no recorded stop departure, ` +
+      `no manual delivery authorization. Status and evidence disagree; this is not proof the ` +
+      `load was actually delivered.`;
+    since = row.status_since;
+    sinceSource = "mdata.loads.updated_at";
   }
   if (row.unissued_invoice_statuses) reason += ` A ${row.unissued_invoice_statuses} invoice exists but was never issued.`;
   if (row.load_status === "cancelled") reason += " The load reads cancelled.";

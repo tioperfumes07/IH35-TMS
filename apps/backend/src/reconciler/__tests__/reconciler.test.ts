@@ -79,6 +79,7 @@ describe("I2 — a delivered load has an issued invoice", () => {
     faro_first_seen: null as string | null,
     authorized_at: null as string | null,
     unissued_invoice_statuses: null as string | null,
+    status_since: "2026-09-15T09:00:00+00:00",
   };
 
   it("files a Faro-purchased load with no issued invoice, with the amount and Faro's date", () => {
@@ -113,8 +114,45 @@ describe("I2 — a delivered load has an issued invoice", () => {
     expect(e?.reason.endsWith("The load reads cancelled.")).toBe(true);
   });
 
-  it("files nothing without delivery evidence", () => {
+  it("files nothing without delivery evidence, when status has not even progressed to delivered", () => {
     expect(i2ExceptionForRow(base, null)).toBeNull();
+  });
+
+  // Cursor's I2 finding (2026-09-23, docs/bus/OUTBOX-CURSOR.md): 9 live loads read
+  // delivered-or-later with no issued invoice and carry none of the three evidence signals —
+  // previously silently excluded by the exact same early-return the test above still covers.
+  // "Delivered by status" is read from dispatch/canonical-active-load-set.ts's
+  // isDeliveredOrLaterStatus, imported, never re-declared here.
+  it("FILES a status-only contradiction: delivered_pending_docs with zero evidence and no invoice", () => {
+    const e = i2ExceptionForRow({ ...base, load_status: "delivered_pending_docs" }, null);
+    expect(e).not.toBeNull();
+    expect(e).toMatchObject({
+      key: "I2/load/00000000-0000-0000-0000-000000000002/invoice",
+      field: "invoice",
+      since_source: "mdata.loads.updated_at",
+      since: "2026-09-15T09:00:00+00:00",
+      amount_cents: null,
+      amount_source: null,
+      repair_engine: "POST /api/v1/accounting/invoices/from-load",
+    });
+    expect(e?.reason).toContain('status reads "delivered_pending_docs"');
+    expect(e?.reason).toContain("no delivery evidence at all");
+  });
+
+  it("FILES the same contradiction for status=closed with only a voided invoice (6 of the 9 live loads)", () => {
+    const e = i2ExceptionForRow({ ...base, load_status: "closed", unissued_invoice_statuses: null }, null);
+    expect(e).not.toBeNull();
+    expect(e?.reason).toContain('status reads "closed"');
+  });
+
+  it("prefers real evidence over the status-only branch when both are present", () => {
+    // A load that is delivered-or-later by status AND has real evidence takes the normal
+    // evidence-first path (Faro/stop-departure/manual-auth), never the status-only fallback.
+    const e = i2ExceptionForRow(
+      { ...base, load_status: "closed", faro_gross_cents: "100000", faro_invoice_numbers: "13999", faro_first_seen: "2026-09-18T00:00:00+00:00" },
+      null
+    );
+    expect(e?.since_source).toBe("factor.faro_invoice_lines.created_at");
   });
 
   it("reads the canonical issued-invoice test and never the load status", () => {
