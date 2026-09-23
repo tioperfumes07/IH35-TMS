@@ -21,6 +21,8 @@ import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 import { ReferenceSelect, type ReferenceOption } from "../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
+import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
+import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 
 const fmtCents = (cents: number) => formatUsdCents(cents);
 
@@ -164,6 +166,10 @@ export function AccountRegisterPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [typeLabel, setTypeLabel] = useState("");
+  // ROUND 83 RULING 1 (owner, verbatim: "I DO NOT LIKE TO SEE THE ACCOUNT NUMBERS SHOWING
+  // ANYWHERE... IN FILTERS ADD OPTION TO SHOW") — default OFF, global toggle shared with Chart of
+  // Accounts via the same localStorage key (lib/show-account-numbers.ts).
+  const [showAccountNumbers, setShowAccountNumbers] = useShowAccountNumbers();
 
   const bankAccountsQuery = useQuery({
     queryKey: ["banking", "accounts-all", companyId, "register-picker"],
@@ -275,7 +281,13 @@ export function AccountRegisterPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `account-register-${report.account.account_code}-${fromDate}_${toDate}.csv`;
+    // ROUND 83 RULING 1 — exports are a named surface; the filename must not leak the account
+    // code by default. Name-slug is stable and unambiguous (duplicate account NAMES are now a
+    // defect per the same ruling), and respects the toggle same as the on-screen/printed label.
+    const fileAcctLabel = showAccountNumbers
+      ? report.account.account_code
+      : report.account.account_name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    a.download = `account-register-${fileAcctLabel}-${fromDate}_${toDate}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -413,7 +425,14 @@ export function AccountRegisterPage() {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
     const acct = report.account;
-    const acctLabel = `${acct.account_code ?? ""} ${acct.account_name ?? ""}`.trim() || accountId;
+    // ROUND 83 RULING 1 — the printed register is a named surface ("printed documents"); the
+    // account CODE must not appear unless the user has the toggle on, same as the on-screen page.
+    // account_register.ts's field is `account_code`, not `account_number` -- the helper's shape.
+    const acctLabel =
+      formatAccountDisplayLabel(
+        { account_name: acct.account_name, account_number: acct.account_code },
+        { showNumber: showAccountNumbers }
+      ) || accountId;
     const nb = acct.normal_balance;
     const rowsHtml = report.rows
       .map((r) => {
@@ -527,6 +546,21 @@ export function AccountRegisterPage() {
               <label className="mb-2 flex flex-col gap-1 text-xs font-semibold text-gray-600">
                 Search memo / reference
                 <input value={search} onChange={(e) => setSearch(e.target.value)} className={inputCls} placeholder="memo, description, or ref" />
+              </label>
+              {/* ROUND 83 RULING 1 (owner, verbatim: "IN FILTERS ADD OPTION TO SHOW") — same
+                  global toggle as Chart of Accounts, exposed locally too. */}
+              <label
+                className="mb-2 flex cursor-pointer items-center gap-1.5 rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-700"
+                data-testid="account-register-show-account-numbers-toggle"
+                title="Show account numbers in this register (off by default — owner ruling, Round 83)"
+              >
+                <input
+                  type="checkbox"
+                  className="rounded-sm border-gray-300"
+                  checked={showAccountNumbers}
+                  onChange={(event) => setShowAccountNumbers(event.target.checked)}
+                />
+                Show account numbers
               </label>
               <div className="flex justify-between">
                 <button type="button" onClick={resetFilters} className="text-xs font-medium text-gray-500 underline">
