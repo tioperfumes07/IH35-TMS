@@ -1,7 +1,7 @@
 {
   "_comment": "R-102-C before-picture: every void-is-whole violation on production, measured BEFORE E10 ran anywhere. NOT provisional. Shrink-only: a key leaves when its violation is fixed; a new key fails the guard.",
-  "measured_at": "2026-09-23T12:21:20.362Z",
-  "count": 95,
+  "measured_at": "2026-09-23T12:41:42.016Z",
+  "count": 92,
   "keys": [
     "factoring advances|1-silent-void|06622d20-0560-4987-8bad-4fd098e4498f",
     "factoring advances|1-silent-void|0e1eee93-35af-447b-971b-f8579e0de1e6",
@@ -54,7 +54,6 @@
     "factoring advances|1-silent-void|f93b8505-6086-473b-a34e-07a7de2fcac5",
     "factoring advances|1-silent-void|fb9aba32-9f14-457c-b945-21c20c2bcc3f",
     "factoring advances|1-silent-void|ff9994a5-e38a-44e5-ad4c-4e3f262be900",
-    "factoring advances|column|voided_at,void_reason,voided_by_user_id",
     "fuel purchases|1-silent-void|0406ef43-5ca8-440c-b0e3-fbdf58f69145",
     "fuel purchases|1-silent-void|06a7550e-d7e7-4b05-ac32-c85ae8b98c50",
     "fuel purchases|1-silent-void|18bb02d2-9f04-40ec-914f-d49c55b809fe",
@@ -94,9 +93,7 @@
     "fuel purchases|1-silent-void|f4ccc6d0-b90d-438c-8e9e-ef616db72217",
     "fuel purchases|1-silent-void|fd7df9d4-418a-4fd9-9fee-e2c41b66f42d",
     "fuel purchases|1-silent-void|fd9fec02-7e42-4da8-8244-3b6200b9b3b9",
-    "fuel purchases|column|voided_at,void_reason,voided_by_user_id",
     "invoices|1-silent-void|52f1c859-1918-4476-9c5e-479d8cbe2749",
-    "invoices|1-silent-void|99c4dab1-f559-4ecb-9a2a-6657e4e5c051",
-    "loads|column|voided_at,void_reason,voided_by_user_id"
+    "invoices|1-silent-void|99c4dab1-f559-4ecb-9a2a-6657e4e5c051"
   ]
 }
