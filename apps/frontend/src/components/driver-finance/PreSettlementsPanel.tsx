@@ -31,7 +31,13 @@ type Props = {
 
 function renderLoadLinks(settlement: SettlementListRow) {
   const link = settlement.load_links?.[0];
-  return link ? <EntityLink kind="load" id={link.id} label={entityLabel(link.label, link.id, "Load")} title="First linked load; open the settlement to see every load" /> : "—";
+  if (link) {
+    return <EntityLink kind="load" id={link.id} label={entityLabel(link.label, link.id, "Load")} title="First linked load; open the settlement to see every load" />;
+  }
+  // E11-D4 (Lead ruling, 2026-09-23) — "never blank": a settlement ready for review/payment with
+  // no load link is a real, named state (e.g. a non-load-bookended settlement model), not an
+  // absence to render silently.
+  return <span className="text-xs italic text-slate-600">No load assigned</span>;
 }
 
 function renderSettlementLinks(settlement: SettlementListRow) {

@@ -8,7 +8,7 @@
     "weak": "identifier appears in the codebase but in NO file that touches this table — the substring illusion (e.g. mdata.drivers.employment_status, superseded by driver_employment_status_id in 0343)"
   },
   "_recapture": "2026-07-21 — coverage went from 1,074 ADD COLUMN-only objects to 5,740 live columns (inline CREATE TABLE columns were 81% of the schema and were invisible), and whole-corpus substring matching was replaced by whole-token, table-context matching. The count grew because the guard now sees what it always claimed to check. DO-block DDL (real CREATE TABLE inside $$ bodies) and comma-separated inline columns are now parsed too — the prior revision discarded dollar-quoted bodies entirely.",
-  "count": 571,
+  "count": 586,
   "entries": [
     {
       "object": "_system.background_jobs.last_error_message",
@@ -3517,6 +3517,111 @@
       "verdict": "none",
       "migration": "202614280000_samsara_drivers_local_vendor_id.sql",
       "reason": "E20 Part A schema landing (2026-09-23) -- the mapping API routes (GET /samsara/profiles, GET /samsara/mapping-targets, POST /samsara/map, POST /samsara/unmap) that read/write this column are separate, not-yet-landed work in the same E20 build, not a different feature."
+    },
+    {
+      "object": "accounting.bill_lines.rate_cents",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614271200_item_line_quantity_rate_amount.sql",
+      "reason": "Round 92/94 (CC-2, 2026-09-23) -- confirmed pre-existing on origin/main, unrelated to the branch that first hit this guard (E11-D4, apps/frontend/driver-finance only). Schema-only landing (Cursor, item lines catalog columns: item_id/quantity/rate_cents/unit_of_measure). Item lines remainder (bill/invoice lines rendered off these columns, Round 92/94 assignment) wires the bill_lines write path next -- in progress, parked mid-build (git stash) while this PR shipped first."
+    },
+    {
+      "object": "accounting.bill_lines.unit_of_measure",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202614271200_item_line_quantity_rate_amount.sql",
+      "reason": "Same schema-only landing as accounting.bill_lines.rate_cents above -- same in-progress writer."
+    },
+    {
+      "object": "accounting.expense_lines.item_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614271200_item_line_quantity_rate_amount.sql",
+      "reason": "Round 92/94 (CC-2, 2026-09-23) -- confirmed pre-existing on origin/main, unrelated to the branch that first hit this guard. Schema-only landing (Cursor, item lines catalog columns). expense_lines is not named in the CC-2 item-lines-remainder assignment (bill and invoice lines only) -- tracked debt, not silently dropped."
+    },
+    {
+      "object": "accounting.expense_lines.rate_cents",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614271200_item_line_quantity_rate_amount.sql",
+      "reason": "Same schema-only landing as accounting.expense_lines.item_id above -- same tracked debt."
+    },
+    {
+      "object": "accounting.expense_lines.unit_of_measure",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202614271200_item_line_quantity_rate_amount.sql",
+      "reason": "Same schema-only landing as accounting.expense_lines.item_id above -- same tracked debt."
+    },
+    {
+      "object": "accounting.invoice_lines.unit_of_measure",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202614271200_item_line_quantity_rate_amount.sql",
+      "reason": "Round 92/94 (CC-2, 2026-09-23) -- confirmed pre-existing on origin/main, unrelated to the branch that first hit this guard. accounting.invoice_lines already carries its own pre-existing quantity/unit_amount_cents/item_id (NOT NULL, fully wired create+display path, InvoiceDetailPage.tsx Qty/Unit columns) -- this migration only added the new, nullable unit_of_measure sibling column, not yet written by the existing create-line route. Tracked, not silently dropped."
+    },
+    {
+      "object": "driver_finance.settlement_lines.quantity",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614271200_item_line_quantity_rate_amount.sql",
+      "reason": "Round 92/94 (CC-2, 2026-09-23) -- confirmed pre-existing on origin/main, unrelated to the branch that first hit this guard. Schema-only landing (Cursor, item lines catalog columns). settlement_lines is not named in the CC-2 item-lines-remainder assignment (bill and invoice lines only) -- tracked debt, not silently dropped. Line haul on settlements stays a contracted total per the Round 92 rule and never reconstructs as qty x rate; only a genuinely reconstructable line (e.g. a future non-linehaul settlement item) would ever populate this column."
+    },
+    {
+      "object": "driver_finance.settlement_lines.unit_of_measure",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202614271200_item_line_quantity_rate_amount.sql",
+      "reason": "Same schema-only landing as driver_finance.settlement_lines.quantity above -- same tracked debt."
+    },
+    {
+      "object": "accounting.invoice_disputes.driver_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614290000_deduction_chain_customer_to_driver.sql",
+      "reason": "Round 92/94 (CC-2, 2026-09-23) -- confirmed pre-existing on origin/main, unrelated to the branch that first hit this guard (E11-D4, apps/frontend/driver-finance only, rebased onto this migration after it landed mid-session). Schema-only landing (Lead's own migration, DEDUCTION-CHAIN-CUSTOMER-TO-DRIVER, #22355) for the deduction screens CC-2 is assigned next: fault_party on invoice_disputes is a named human decision, driver_finance.deduction_recovery_links links a customer short-pay to the driver deduction that recovers it. Writer/reader is CC-2's very next build."
+    },
+    {
+      "object": "accounting.invoice_disputes.fault_decided_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202614290000_deduction_chain_customer_to_driver.sql",
+      "reason": "Same schema-only landing as accounting.invoice_disputes.driver_id above -- same next-build writer."
+    },
+    {
+      "object": "accounting.invoice_disputes.fault_reason",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202614290000_deduction_chain_customer_to_driver.sql",
+      "reason": "Same schema-only landing as accounting.invoice_disputes.driver_id above -- same next-build writer."
+    },
+    {
+      "object": "accounting.invoice_disputes.load_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614290000_deduction_chain_customer_to_driver.sql",
+      "reason": "Same schema-only landing as accounting.invoice_disputes.driver_id above -- same next-build writer."
+    },
+    {
+      "object": "driver_finance.deduction_recovery_links.driver_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614290000_deduction_chain_customer_to_driver.sql",
+      "reason": "Same schema-only landing as accounting.invoice_disputes.driver_id above -- same next-build writer."
+    },
+    {
+      "object": "driver_finance.deduction_recovery_links.load_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614290000_deduction_chain_customer_to_driver.sql",
+      "reason": "Same schema-only landing as accounting.invoice_disputes.driver_id above -- same next-build writer."
+    },
+    {
+      "object": "driver_finance.deduction_recovery_links.recovery_reason",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202614290000_deduction_chain_customer_to_driver.sql",
+      "reason": "Same schema-only landing as accounting.invoice_disputes.driver_id above -- same next-build writer."
     }
   ]
 }
