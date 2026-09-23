@@ -1,6 +1,6 @@
 {
   "healthzSha": "72b3e36",
-  "generated_at": "2026-09-22T23:58:31.967Z",
+  "generated_at": "2026-09-23T00:17:20.365Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 22316,
+      "title": "FINDING: ACCT-F61 (Round 84 P0 -- the shared stop writer now carries facility_name, leg_miles, actual_arrival_at, actual_departure_at; revrec's delivery-evidence gate is unblocked for any load fed through it)",
+      "state": "merged",
+      "mergedAtCt": "09/22/2026, 07:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22316",
+      "sha": "4c4378aef9",
+      "committedAtIso": "2026-09-22T19:15:20-05:00"
+    },
+    {
+      "number": 22315,
+      "title": "Cursor-M1: duplicate active account names fail the build (Round 84); program scoreboard regenerated to unblock pushes",
+      "state": "merged",
+      "mergedAtCt": "09/22/2026, 07:07 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22315",
+      "sha": "504ecf143a",
+      "committedAtIso": "2026-09-22T19:07:28-05:00"
+    },
+    {
       "number": 22312,
       "title": "FINDING: ESCROW-LEDGER-SIGN-01 LANE: CC-3 (LANE_CROSS on scripts/money-pr-local-gate.mjs + settlements/approval.service.ts -- docs/bus/LEAD-RULING-2026-09-23-CC3-ESCROW-LEDGER-SIGN-CROSS-LANE.md)",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22308",
       "sha": "757beaa603",
       "committedAtIso": "2026-09-22T18:35:51-05:00"
-    },
-    {
-      "number": 22306,
-      "title": "FINDING: N/A (docs only -- Faro fee fix merge report, E8/E11-D3 status, 13615 closed by evidence per Lead ruling, 13612 measured, audit-trigger ask re-posted to CC-1)",
-      "state": "merged",
-      "mergedAtCt": "09/22/2026, 06:35 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22306",
-      "sha": "daab3912bd",
-      "committedAtIso": "2026-09-22T18:35:33-05:00"
-    },
-    {
-      "number": 22305,
-      "title": "FINDING: N/A LANE: FINANCIAL (CLAIM-RESERVE 202614260000: accounting.factoring_advances faro_invoice_number + faro_purchase_date)",
-      "state": "merged",
-      "mergedAtCt": "09/22/2026, 06:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22305",
-      "sha": "063944b3f6",
-      "committedAtIso": "2026-09-22T18:31:34-05:00"
     }
   ]
 }
