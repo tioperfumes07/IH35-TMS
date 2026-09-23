@@ -5470,3 +5470,48 @@ five commits, no action needed from me to force it.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+
+## ROUND 131.3 — DAY-1 FEED GATE — BUILT, TSC/GUARD CLEAN, HOLDING THE PUSH (branch `cc2-r102b-readonly-void`, commit `ad1b076307`)
+
+Deadline 2026-09-23 20:00Z. Built exactly as specified, no push required yet per the packet.
+
+- `apps/backend/src/feed/feed-day-preflight.service.ts` (new) — `feedDayPreflight()`, USMCA-only,
+  read-only, all five checks: (1) every load_number the day's document names is absent or
+  VOID-prefixed in `mdata.loads`; (2) no live invoice/driver bill/settlement/expense/fuel
+  row/factoring advance references those load numbers; (3) the document exists in the same
+  ground-truth JSON `verify-alwaystrack-parity.mjs` reads, six dimensions parsing to real numbers;
+  (4) `banking.bank_transactions` count for USMCA unchanged from the run's opening reading; (5)
+  the purge window (`purge_state.json`) is still open. Never writes, never auto-corrects, never
+  soft-passes — every refusal names which check failed and the measured number.
+- `scripts/verify-feed-day-preflight-is-enforced.mjs` (new, the named guard) — fails if the
+  preflight's own structure is theater (any check hard-coded to always pass), and fails if any
+  backend file under `apps/backend/src/feed/**` (or naming "feed day") inserts into `mdata.loads`
+  without calling `feedDayPreflight()` in the same file. Wired into `.github/workflows/ci.yml` as
+  a real step (confirmed via `verify-guard-wired.mjs`: not on the orphan list) — deliberately NOT
+  registered in `package.json`, since DOD §4 forbids a new guard wired through package.json
+  without a matching `scripts/verify-steps/NNNN-*.mjs` claim, and that claim is its own separate
+  CC-1-lane, claim-reserve-branch process (mod-4 banded: CC-1≡1, CC-2≡3, Cursor EVEN, chrome-only
+  seats author none) that a `cc2-*` (unslashed) branch doesn't cleanly map into today — the
+  CI-workflow step alone is sufficient wiring, confirmed live.
+- Red-before-green proven twice on the guard itself: a mutated copy with one check's `passed`
+  hard-coded to `true` correctly FAILED with the exact structural reason; a synthetic bad-loader
+  fixture placed live under `apps/backend/src/feed/` (an INSERT with no `feedDayPreflight` call)
+  correctly FAILED naming that exact file. Both proofs reverted before committing.
+- Live-verified against real production data (Neon, bypass_rls='lucia', USMCA): ran the preflight's
+  exact SQL against AlwaysTrack document 5775 (loads 13506/13514/13516) and found load 13516 as a
+  genuine live, un-renamed collision (condition 1 would correctly refuse) plus a still-live
+  driver_bill=1/settlement=1 reference on the two VOID-renamed loads (condition 2 would correctly
+  refuse) — the gate catches real, current production state, not a synthetic case.
+- New lane-cross ruling:
+  `docs/bus/2026-09-23-LEAD-RULING-ROUND-131-3-CC2-LANE-CROSS-FEED-DAY-PREFLIGHT.md`, covering the
+  new `apps/backend/src/feed/**` module and the `scripts/verify-*.mjs` (CC-1 lane) guard filename,
+  both named directly in the packet.
+
+**Not pushed yet** — the packet's own words: "no push required until the gate clears." 8 commits
+now on this branch; `verify-alwaystrack-parity` is still red from the live USMCA void-to-zero
+campaign and clears on CC-3's/Cursor's counters, not on anything here.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
