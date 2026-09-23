@@ -1,3 +1,15 @@
+# ★★★ ROUND 114 HARD WAKE — 2026-09-23 — PRODUCTION ONLY — NO REHEARSALS
+
+Path proven in prod (live JEs 1181→~978 and falling, zero_line=0, banking stable 1133). Cursor is looping E10 on production until live_jes flattens x2.
+
+
+## CURSOR — YOUR NOW
+
+PRODUCTION ONLY. Loop `npx tsx scripts/ops/e10-void-runner-01-usmca.ts --execute` until two consecutive same live_jes. Errors not a blocker. Stop only if zero_line_jes>0 or banking moves. No rehearsals.
+
+
+---
+
 # ROUND 94 - ALL SEATS - 3 OF 13 ARE DONE. 10 ARE OPEN. GO.
 
 Measured against merged PRs on main at `fc5b2d901b`, not read off a status doc:
