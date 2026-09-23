@@ -42,7 +42,7 @@ Never work in the shared main checkout.
 ---
 
 # P0 — THE FEED CANNOT BE TRUSTED WITHOUT THESE
-[ ] Q01 GUARD  verify-costs-are-expenses-not-handwritten-jes.mjs — FAIL a JE
+[CODEX 2026-09-23T23:28:37Z] Q01 GUARD  verify-costs-are-expenses-not-handwritten-jes.mjs — FAIL a JE
       debiting 5xxx/6xxx with no accounting.expenses row; FAIL a cost JE
       crediting 1090/1100/1150; PASS on 1295/2510/2500/1000. RED fixture:
       the 10 live fuel JEs crediting 1090, $7,250.20, bare-UUID memos.
