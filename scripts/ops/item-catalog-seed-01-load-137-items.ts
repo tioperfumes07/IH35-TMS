@@ -6,6 +6,18 @@
 // 87/88, plus 5 more resolved after the 4-account migration 202614270000 closed the last gaps).
 // ~/Downloads/item_catalog_gaps.csv is empty -- zero unmapped, nothing to report.
 //
+// SUPERSEDED for categories, same session: this script's own category_id linkage pointed at
+// catalogs.qbo_categories (the only table catalogs.items.category_id's FK referenced at the
+// time) -- invented, not sourced. The owner's own follow-up, item-catalog-seed-02-137-items-
+// canonical.sql, links category_id to catalogs.item_categories instead ("Cursor's
+// catalogs.item_categories <- this SQL raises without it") -- a table that did not exist live
+// when this ran and is not this seat's to create. Live-reverted: the 133 category_id values this
+// script set were set back to NULL and the 19 invented qbo_categories rows deleted, so a stale,
+// non-canonical linkage does not sit on prod pretending to be the real one. The item_name/
+// item_code/item_type/account rows this script created are UNCHANGED and match seed-02 row for
+// row -- only the category linkage was wrong. Run this script's account/item logic again freely
+// (idempotent); its category-creation block should not be revived -- seed-02 owns categories.
+//
 // This script does NOT decide any mapping. Every account_number in the CSV is resolved by exact
 // match against the LIVE catalogs.accounts row created earlier this session (gl-fix-06,
 // migration 202614270000) -- if any CSV account_number does not resolve live, the script aborts

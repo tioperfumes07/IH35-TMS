@@ -33,6 +33,15 @@ BEGIN
     RETURN;
   END IF;
 
+  -- Same guard as 202614090000_load_exception_reasons.sql for the same fixed USMCA id: a fresh
+  -- local/replay DB seeds org.companies with a freshly-generated uuid (0013_org_companies.sql's
+  -- INSERT has no fixed id), so this exact prod uuid legitimately does not exist there. Without
+  -- this guard the FK violates on replay even though the migration is otherwise a correct no-op
+  -- for an environment that has no USMCA row at all.
+  IF NOT EXISTS (SELECT 1 FROM org.companies WHERE id = usmca_id) THEN
+    RETURN;
+  END IF;
+
   -- 6250 Rent & Lease Expense -- parent, non-postable
   IF NOT EXISTS (
     SELECT 1 FROM catalogs.accounts
