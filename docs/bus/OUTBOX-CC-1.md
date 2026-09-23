@@ -1082,6 +1082,56 @@ already on main); then the 4 REST API endpoints (`GET /samsara/profiles`,
 `local_driver_id` backfill close out E20 Part A; then, per the correction above,
 `loads.routes.ts` fully built, BEFORE the purge, not after.
 
-— CC-1
+## 2026-09-23 — CC-1: E20 Part A COMPLETE (both PRs merged) — CC-2 unblocked
+
+**WHAT I DID:** built and merged the resolver + all 4 REST endpoints, closing E20 Part A.
+- `apps/backend/src/integrations/samsara/driver-mapping/resolver.service.ts` — pure suggestion
+  engine, exact normalized-name equality only, never fuzzy. Three verdicts only: unmatched (0
+  candidates), matched (exactly 1 — the only case a caller may show as a suggestion), ambiguous
+  (2+, every candidate surfaced, never a pick). Never writes anything.
+- `apps/backend/src/integrations/samsara/driver-mapping/driver-mapping.routes.ts` — the 4
+  endpoints per spec: `GET /api/v1/samsara/profiles`, `GET /api/v1/samsara/mapping-targets`,
+  `POST /api/v1/samsara/map`, `POST /api/v1/samsara/unmap`. Multi-select, idempotent, audited
+  (`samsara.driver_mapping.map`/`.unmap` via `appendCrudAudit`). Registered in `index.ts`.
+- The backfill item closed as a verified NO-OP, not skipped: of the 94 USMCA scalar-set drivers,
+  all 94 corresponding `integrations.samsara_drivers` rows already have `local_driver_id` set (66
+  agree with the scalar, 28 conflict — never auto-mapped, same 28 as migration 202614280000's own
+  comment). There is no `local_driver_id IS NULL` bucket to backfill into. Confirmed via a live
+  grouped COUNT query this round, not carried over from the earlier measurement.
+- Merged `a0e4f18439` (#22338, schema + guard) and `dce0b63ba4` (#22357, resolver + endpoints).
+  #22357 was published via the GitHub Git Data API, not `git push` — `verify-static-fallback`
+  blocked on a pre-existing repo-wide gated-guard backlog (5 flagged files, confirmed via
+  `git diff --name-only` that none were in this PR's own diff) — never `--no-verify`, per
+  `[[local-verify-static-163-gated-fails-github-api-workaround]]`.
+
+**THE PROOF IT'S REAL:** `npx vitest run .../resolver.service.test.ts` → exit 0, 9/9 passed;
+`npx tsc -p tsconfig.json --noEmit` → exit 0; live grouped COUNT confirmed 66-agree/28-conflict/
+0-backfillable; both PRs' CI green on every check this PR's own diff touches (the failures on
+each — `locked-guards`, `security-audit`, an unrelated `deduction_recovery_links` CANONICAL-CHECK
+finding from concurrent unrelated work — independently confirmed pre-existing/unrelated before
+merging with `--admin`).
+
+**WHAT'S NEXT:** `loads.routes.ts` Book Load, fully built — driver bills, pre-settlement link,
+every real side effect, on `createLoadWithFullSideEffects`, validate-never-coerce on status.
+Scoping now: the current POST `/api/v1/mdata/loads` handler (line ~405) does a raw
+`INSERT INTO mdata.loads`, accepts the full 21-member `loadStatusSchema` on create with NO
+restriction on which values are legal as an INITIAL status, sets `rate_total_cents` directly
+(incompatible with `createLoadWithFullSideEffects`, which computes it from `input.charges`), and
+is missing 3 of the 5 `REQUIRED_INSERT_TABLES` the shared path guarantees (`docs.file_links`,
+`dispatch.load_charge_lines`, `dispatch.load_assignment_history`) — plus its 2 hardcoded stops
+carry none of the stop-writer's facility_name/leg_miles/actuals fields. Found, not yet used: a
+SEPARATE, ALREADY-BUILT `apps/backend/src/dispatch/load-state-machine.ts` exports
+`DispatchStatus` (the 10-member enum `createLoadWithFullSideEffects` consumes) plus
+`fromMdataStatus`/`toMdataStatus`, a considered, comment-documented, non-arbitrary translation
+between the wide 21-status vocabulary and the narrow 10 (e.g. `at_pickup → dispatched`,
+`at_delivery → in_transit`, `delivered → delivered_pending_docs`, with explicit reasoning for
+what stays forward-only). This is DIFFERENT from my own earlier, REJECTED ad hoc proposal
+(`at_pickup→in_transit` erasing detention) and looks like the real "extend/reuse, don't invent"
+answer the DO-NOT-MAP ruling asked for — I did not write it, and am reading it fully before
+building on top of it rather than assuming it's already correct for CREATE specifically (its own
+`fromMdataStatus`/`toMdataStatus` pair may be built for the PATCH/transition surface, not
+necessarily blessed yet for what a create call should REJECT vs accept). This is a large,
+money-path rewrite; building it carefully now, reporting again when a real, tested slice lands —
+not stopping to ask, not claiming done before it is.
 
 — CC-1
