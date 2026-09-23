@@ -41,6 +41,7 @@ import { registerRelayDepositReviewRoutes } from "./integrations/relay-payments/
 import { registerRelayHealthRoutes } from "./integrations/relay-payments/relay-health.routes.js";
 import { registerSamsaraVendorMappingActionsRoutes } from "./integrations/samsara/vendor-mapping-actions.routes.js";
 import { registerSamsaraVendorMappingIntegrityRoutes } from "./integrations/samsara/vendor-mapping.routes.js";
+import { registerSamsaraDriverMappingRoutes } from "./integrations/samsara/driver-mapping/driver-mapping.routes.js";
 import { registerDriverVendorMappingIntegrityRoutes } from "./integrations/integrity-monitors/driver-vendor-mapping.routes.js";
 import { initializeDriverVendorMappingWorker } from "./jobs/driver-vendor-mapping-worker.js";
 import { registerGeofenceReconciliationRoutes } from "./integrations/samsara/geofences/reconciliation.routes.js";
@@ -791,6 +792,7 @@ async function main() {
   await registerIntegrationHealthRoutes(app);
   await registerSamsaraVendorMappingIntegrityRoutes(app);
   await registerSamsaraVendorMappingActionsRoutes(app);
+  await registerSamsaraDriverMappingRoutes(app);
   await registerDriverVendorMappingIntegrityRoutes(app);
   await registerGeofenceReconciliationRoutes(app);
   await registerGeofenceStateMachineRoutes(app);
