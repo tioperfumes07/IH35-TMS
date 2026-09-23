@@ -254,6 +254,10 @@ const STEPS = [
   // multi-JE-per-document double-reversal bug produced before this round's fix. Baseline is the
   // known pre-fix count only, never allowed to grow.
   ["verify-no-double-reversed-fuel-postings", "scripts/verify-no-double-reversed-fuel-postings.mjs"],
+  // ROUND 130.2 (Lead, P0, permanent fix): no voided USMCA load may hold a real load_number --
+  // the UNIQUE(operating_company_id, load_number) constraint has no partial predicate, so a real
+  // number held by a voided row permanently blocks the AlwaysTrack feed from re-creating it.
+  ["verify-voided-loads-hold-no-real-number", "scripts/verify-voided-loads-hold-no-real-number.mjs"],
   // ROUND 118/119 (Lead ruling): a cancelled load must leave no live money artifact behind it --
   // invoice/expense/vendor-bill/driver-bill/advance/settlement, checked against
   // dispatch/cancellation.service.ts's own cascade logic exactly. Baselined (shrink-only) against
