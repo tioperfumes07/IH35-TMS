@@ -523,6 +523,7 @@ import { registerIdempotencyMiddleware } from "./middleware/idempotency.js";
 import { registerCsrfOriginGuard } from "./middleware/csrf-origin-guard.js";
 import { initializeIdempotencyCleanupCron } from "./middleware/idempotency-cleanup.cron.js";
 import { registerScenarioCertifyCron } from "./home/scenario-certify.cron.js";
+import { registerReconcilerCron } from "./reconciler/reconciler.cron.js";
 import { registerMigrationStatusRoutes } from "./admin/migration-status.routes.js";
 import { registerAdminObservabilityRoutes } from "./admin/observability.routes.js";
 import { registerHomeWidgetRoutes } from "./home/home-widgets.routes.js";
@@ -1861,6 +1862,13 @@ async function main() {
       app.log.info("[STARTUP] in-process overdue job catch-up armed");
     } catch (error) {
       app.log.error({ err: error }, "[STARTUP] in-process job catch-up failed to arm");
+    }
+
+    try {
+      registerReconcilerCron(app);
+      app.log.info("[STARTUP] reconciler cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] reconciler cron failed");
     }
 
     try {
