@@ -22,6 +22,7 @@ import { fileURLToPath } from "node:url";
 import { ensureFreshGateStepMap } from "./generate-gate-step-map.mjs";
 import { guardIsInScope } from "./verify-static.mjs";
 import { EMPTY_BY_PURGE_EXIT, PURGE_WINDOW_GUARDS, purgeWindow } from "./lib/purge-window.mjs";
+import { dataWritePathFileActuallyWrites } from "./lib/data-write-path-detection.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "money-pr-local-gate";
@@ -32,6 +33,10 @@ const STEPS = [
   // GATE-SCOPE-01 — proves this very file's LIVE_DOMAIN_GUARDS loop runs a guard only when its
   // own declared domain is touched, never merely because DATABASE_URL happens to be set.
   ["verify-live-domain-guards-are-diff-scoped", "scripts/verify-live-domain-guards-are-diff-scoped.mjs"],
+  // GATE-SCOPE-02 — the other half: proves a DATA_WRITE_PATHS path match also requires the file to
+  // actually write to a database (content-checked), not just sit under db/migrations/ or
+  // scripts/ops/.
+  ["verify-data-write-path-detection-is-content-based", "scripts/verify-data-write-path-detection-is-content-based.mjs"],
   ["verify-no-money-theater", "scripts/verify-no-money-theater.mjs"],
   // Rule 26 — block parallel scoreboard-hotfile PRs before push (SKIP-PASS without gh token).
   ["verify-no-parallel-scoreboard-prs", "scripts/verify-no-parallel-scoreboard-prs.mjs"],
@@ -656,12 +661,25 @@ const changedForLiveDomains = (() => {
 // guard with no DATABASE_URL now fails closed instead of silently running-because-DB-was-set. A
 // fuel change still runs the fuel guard and still fails closed; an untouched domain no longer
 // runs at all, on any diff, regardless of whether DATABASE_URL happens to be set.
+// GATE-SCOPE-02 (owner, via the Lead) — DATA_WRITE_PATHS was spread unconditionally into every
+// guard's `prefixes`, so ANY file under db/migrations/ or scripts/ops/ counted as "touched" for
+// every live-domain guard regardless of whether that file writes anything — confirmed live
+// blocking three seats on three non-writing files (a claim-registry JSON, a read-only ops script).
+// A domain path (e.g. fuel/, accounting/) still triggers unconditionally — that's real application
+// code in a real money domain, not a path historically reused for unrelated bookkeeping files. A
+// DATA_WRITE_PATHS match now also requires dataWritePathFileActuallyWrites() to say yes: real .sql
+// migrations always do (unconditionally, by file type); everything else under either prefix is
+// content-checked for an actual DB client import, with a manifest escape hatch for edge cases.
 for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
   const rel = `scripts/${name}.mjs`;
-  const prefixes = [...DATA_WRITE_PATHS, ...domainPaths];
   const touched =
     changedForLiveDomains === null ||
-    changedForLiveDomains.some((f) => f === rel || ONE_SHOT_WRITER_RE.test(f) || prefixes.some((p) => f.startsWith(p)));
+    changedForLiveDomains.some((f) => {
+      if (f === rel || ONE_SHOT_WRITER_RE.test(f)) return true;
+      if (domainPaths.some((p) => f.startsWith(p))) return true;
+      if (DATA_WRITE_PATHS.some((p) => f.startsWith(p))) return dataWritePathFileActuallyWrites(f, ROOT);
+      return false;
+    });
   if (touched) {
     if (!process.env.DATABASE_URL) {
       console.error(
