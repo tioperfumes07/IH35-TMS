@@ -59,6 +59,7 @@ import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
 import { DatePicker } from "../../../components/forms/DatePicker";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import {
   buildPagedBankTxnGroups,
   type BankTxnGroupMode,
@@ -2972,27 +2973,18 @@ export function BankingTransactionsDesignView({
               (all six kinds on by default), never a single-select dropdown. */}
           <div className="mt-2 flex flex-wrap items-end gap-2" data-testid="banking-match-filters">
             <div className="ldt-fld" data-testid="banking-match-filter-kind">
-              <span className="ldt-muted block">Show</span>
-              <div className="flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-gray-300 px-2 py-1">
-                {ALL_MATCH_KINDS.map((kind) => (
-                  <label key={kind} className="inline-flex items-center gap-1 whitespace-nowrap text-[11px]">
-                    <input
-                      type="checkbox"
-                      data-testid={`banking-match-filter-kind-${kind}`}
-                      checked={matchKinds.has(kind)}
-                      onChange={(e) =>
-                        setMatchKinds((prev) => {
-                          const next = new Set(prev);
-                          if (e.target.checked) next.add(kind);
-                          else next.delete(kind);
-                          return next;
-                        })
-                      }
-                    />
-                    {MATCH_KIND_FILTER_LABELS[kind]}
-                  </label>
-                ))}
-              </div>
+              {/* FILTER-MULTI-01 — was an always-visible checkbox list (never a collapsed dropdown,
+                  no "(N)" count label). Same MultiSelectDropdown every other money list now uses;
+                  Set<->array conversion only, matchKinds/setMatchKinds unchanged, all downstream
+                  consumers of the Set are untouched. */}
+              <MultiSelectDropdown
+                label="Show"
+                options={ALL_MATCH_KINDS.map((kind) => ({ value: kind, label: MATCH_KIND_FILTER_LABELS[kind] }))}
+                selected={ALL_MATCH_KINDS.filter((k) => matchKinds.has(k))}
+                onChange={(next) => setMatchKinds(new Set(next as BankMatchCandidateKind[]))}
+                allLabel="All kinds"
+                data-testid="banking-match-filter-kind-dropdown"
+              />
             </div>
             <label className="ldt-fld">
               <span className="ldt-muted block">Payee (vendor / customer)</span>
