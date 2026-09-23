@@ -38,7 +38,7 @@ const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..")
 const BASELINE_PATH =
   process.env.DIESEL_DEDUPE_BASELINE_PATH || path.join(ROOT, "scripts/verify-diesel-expense-fuel-dedupe.baseline.json");
 const VOID_REASON_5782 = "ABSORPTION-D5 duplicate or unmatched fuel row";
-const KNOWN_VOIDED_5782_IDS = [
+const KNOWN_VOIDED_5782_IDS = [ // STALE-LITERAL-OK: known voided IDs for settlement 5782, purge-aware (absence accepted after AUTH-001 wipe)
   "fc1e34b9-98a2-49cc-bfcb-febf2b67f678",
   "0154cb7e-6b14-4d97-9ebc-8b19268ad124",
 ];

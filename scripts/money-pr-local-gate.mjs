@@ -346,6 +346,7 @@ const GUARD_303 = [
   // that still carries a pre-wipe measured_at, so a wipe artifact can never be baselined as
   // historical debt again.
   ["verify-baselines-are-post-wipe", "scripts/verify-baselines-are-post-wipe.mjs", {}],
+  ["verify-no-stale-literals-in-guards", "scripts/verify-no-stale-literals-in-guards.mjs", {}],
   // ROUND E11.3-R item 5 — the guard that stops the AUTH-001 class of bug permanently: the wipe's
   // own DELETE FROM mdata.load_stops carried no operating_company_id predicate at all, deleting
   // the frozen TRANSP entity's rows alongside USMCA's. Static, no DB needed — scans
