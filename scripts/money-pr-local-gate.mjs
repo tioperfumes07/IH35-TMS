@@ -269,6 +269,10 @@ const STEPS = [
   // fails closed. Two more directions (movement-evidence line survival, dispatcher confirmation)
   // are named in this guard's own header as NOT YET BUILT -- not silently skipped.
   ["verify-cancelled-load-leaves-no-live-money", "scripts/verify-cancelled-load-leaves-no-live-money.mjs"],
+  // ROUND 133 (owner law, P0): every NEW scripts/ops/ file that writes to a financial table must
+  // call verify-owner-authorization.mjs first -- static check, shrink-only baseline for the 142
+  // pre-existing files, zero tolerance for anything new.
+  ["verify-no-unauthorized-production-write", "scripts/verify-no-unauthorized-production-write.mjs"],
 ];
 
 // ROUND 29.9 owner ruling (2026-09-22) — three guards, wired in this exact order, AFTER the STEPS
