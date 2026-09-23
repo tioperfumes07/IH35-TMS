@@ -524,6 +524,9 @@ jobs:
       - name: verify:live-domain-guards-are-diff-scoped
         run: node scripts/verify-live-domain-guards-are-diff-scoped.mjs
 
+      - name: verify:data-write-path-detection-is-content-based
+        run: node scripts/verify-data-write-path-detection-is-content-based.mjs
+
       - name: verify:migration-lane-band
         run: node scripts/verify-migration-lane-band.mjs
 
