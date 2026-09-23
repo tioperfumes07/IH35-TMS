@@ -45,6 +45,12 @@ export const INVOICE_DISPUTE_RESOLUTIONS = [
 ] as const;
 export type InvoiceDisputeResolution = (typeof INVOICE_DISPUTE_RESOLUTIONS)[number];
 
+// Round 88 (owner law, migration 202614290000) — the fault decision is a NAMED HUMAN ACT, never
+// inferred from lateness. 'unassigned' is the honest default; only 'driver' may ever produce a
+// driver deduction (enforced by driver_finance.enforce_recovery_not_over_disputed()).
+export const FAULT_PARTIES = ["unassigned", "driver", "carrier", "customer", "broker", "force_majeure"] as const;
+export type FaultParty = (typeof FAULT_PARTIES)[number];
+
 export type InvoiceDisputeRow = {
   id: string;
   operating_company_id: string;
@@ -66,6 +72,12 @@ export type InvoiceDisputeRow = {
   resolved_by_user_id: string | null;
   created_at: string;
   updated_at: string;
+  fault_party: FaultParty;
+  fault_reason: string | null;
+  fault_decided_at: string | null;
+  fault_decided_by_user_id: string | null;
+  driver_id: string | null;
+  load_id: string | null;
 };
 
 export type ServiceError = { error: string; [k: string]: unknown };
@@ -286,6 +298,83 @@ export async function resolveInvoiceDispute(
       },
       "warning",
       "INVOICE-DISPUTE"
+    );
+    return { dispute };
+  });
+}
+
+// Round 88 (owner law, migration 202614290000) — the fault decision, separate from resolution.
+// A dispute can be resolved (invoice corrected, credit memo, etc.) independently of who was at
+// fault for the delay/short-pay that caused it; the fault decision is what unlocks a driver
+// deduction recovery, never something the resolution flow does implicitly.
+export type DecideDisputeFaultInput = {
+  userId: string;
+  operatingCompanyId: string;
+  disputeId: string;
+  faultParty: FaultParty;
+  faultReason: string;
+  driverId?: string | null;
+  loadId?: string | null;
+};
+
+export async function decideDisputeFault(
+  input: DecideDisputeFaultInput
+): Promise<{ dispute: InvoiceDisputeRow } | ServiceError> {
+  const { userId, operatingCompanyId, disputeId } = input;
+  // §1's own invoice_disputes_driver_only_when_driver_fault CHECK refuses driver_id on any
+  // fault_party other than 'driver' — fail closed here with a named error instead of letting the
+  // operator's mistake surface as a raw constraint violation.
+  if (input.faultParty !== "driver" && input.driverId) {
+    return { error: "driver_only_valid_for_driver_fault" };
+  }
+  if (input.faultParty === "driver" && !input.driverId) {
+    return { error: "driver_required_for_driver_fault" };
+  }
+  return withCompanyScope(userId, operatingCompanyId, async (client) => {
+    const cur = await client.query(
+      `SELECT * FROM accounting.invoice_disputes
+        WHERE id = $1 AND operating_company_id = $2`,
+      [disputeId, operatingCompanyId]
+    );
+    const row = cur.rows[0] as InvoiceDisputeRow | undefined;
+    if (!row) return { error: "dispute_not_found" };
+
+    const upd = await client.query(
+      `UPDATE accounting.invoice_disputes
+          SET fault_party = $3,
+              fault_reason = $4,
+              fault_decided_at = now(),
+              fault_decided_by_user_id = $5,
+              driver_id = $6,
+              load_id = $7,
+              updated_at = now()
+        WHERE id = $1 AND operating_company_id = $2
+        RETURNING *`,
+      [
+        disputeId,
+        operatingCompanyId,
+        input.faultParty,
+        input.faultReason,
+        userId,
+        input.faultParty === "driver" ? input.driverId : null,
+        input.loadId ?? null,
+      ]
+    );
+    const dispute = upd.rows[0] as InvoiceDisputeRow;
+    await appendCrudAudit(
+      client,
+      userId,
+      "accounting.invoice_dispute.fault_decided",
+      {
+        invoice_dispute_id: disputeId,
+        operating_company_id: operatingCompanyId,
+        fault_party: input.faultParty,
+        fault_reason: input.faultReason,
+        driver_id: dispute.driver_id,
+        load_id: dispute.load_id,
+      },
+      "warning",
+      "DEDUCTION-CHAIN-ROUND-88"
     );
     return { dispute };
   });

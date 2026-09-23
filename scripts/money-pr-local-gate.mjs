@@ -239,6 +239,7 @@ const STEPS = [
   ["verify-purge-window-exemption", "scripts/verify-purge-window-exemption.mjs"],
   ["verify-display-id-series-by-prefix", "scripts/verify-display-id-series-by-prefix.mjs"],
   ["verify-reconciler-route-read-only", "scripts/verify-reconciler-route-read-only.mjs"],
+  ["verify-faro-deduction-capture", "scripts/verify-faro-deduction-capture.mjs"],
 ];
 
 // ROUND 29.9 owner ruling (2026-09-22) — three guards, wired in this exact order, AFTER the STEPS
