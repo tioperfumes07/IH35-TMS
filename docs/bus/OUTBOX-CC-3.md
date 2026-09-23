@@ -1824,3 +1824,15 @@ pass, don't void mid-session) -- these look like exactly that class of held fixt
 financial-posting contamination. Named, not deleted, per this pass's explicit instruction.
 
 — CC-3
+
+CC-3 | ROUND 87 SIGN CHECK -- the Honda $10 line is a REIMBURSEMENT TO the driver, not a fee charged to him | Round 87 asked me to confirm the sign of the four "GASOLINA/HONDA" / "Gasolina para Camioneta Honda" lines against ONE real settlement PDF before assuming direction. Checked all 3 checkable instances (docs 5802/5805/5808 -- the 4th, "LOVES 1ASC H1155LL HEADLIG" on doc 5802/load 13589, is a different line, not a 4th Honda hit):
+
+  Driver_Settlement_5802.txt: "Load 13579  ROAD RANGER Gasolina para Camioneta Honda  10.00" sits under the driver doc's REIMBURSED EXPENSES section (Reimbursed Expenses: 34.99, which ADDS to TOTAL DUE: 2,104.84), not under Deductions.
+  Driver_Settlement_5805.txt / _5808.txt: same shape -- "LOVES GASOLINA/HONDA 10.00" / "ROAD RANGER GAS/HONDA 10.00" both under Reimbursed Expenses, both adding to the driver's total due.
+  Company_Settlement_5802.txt line 53: the same $10 line appears in the company doc's EXPENSES section marked Drv=Y (driver-reimbursable), and the company's own Company Expenses total (-122.58) already carries it as a real cost.
+
+So the real shape is: the driver pays cash for gasoline for a company-owned Honda (a support/yard vehicle -- "Camioneta Honda" is not the tractor; those all run diesel and are billed separately), the company reimburses him via the ADD side of his settlement, and the company books it as its own fuel expense for that vehicle. That is the OPPOSITE of Round 87/88's working assumption ("charge to the driver... reduce his pay and credit income... posts to INCOME"). It is a real, unmapped company EXPENSE item (already flagged as the 6-line/$60.00 company_vehicle_fuel gap in the Round 83/84 extract build-failure, PR #22317, now on main) reimbursed to the driver -- not driver-side income, and 6220 was never the right shape for it either way.
+
+Confirmed against 3 of 4 source lines (100% consistent, no split direction found) per the explicit "do not assume either direction" instruction. NOT changing the catalog-seed plan to "posts to INCOME" for this item -- proceeding with Round 87/88's other 10 items (4 revenue + 6 driver-deduction mirrors) as specified, and will seed this one as an EXPENSE item under Fuel Expenses (reimbursed-to-driver, not driver-charged), reported here rather than silently building the owner's original assumption. Awaiting confirmation/override before I create any account or mapping for it; not blocking the other 10 items on this one line.
+
+— CC-3
