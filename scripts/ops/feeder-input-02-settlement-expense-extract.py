@@ -298,8 +298,9 @@ ITEM_KEY = {
     #   driver_pay: the catalog carries BOTH "Driver Pay-Mexico-B1 Driver-Loaded/Empty Miles" and
     #     "Driver Pay-CDL-Loaded/Empty Miles" -- two real, different items -- and this parser has
     #     no reliable text signal in the settlement documents to choose between them per line.
-    #   admin_fee: no "Admin Fee"-shaped item exists anywhere in the 126-row catalog at all.
-    #   company_vehicle_fuel: no Honda/personal-vehicle-fuel item exists in the catalog.
+    #   admin_fee and company_vehicle_fuel: resolved per-row now (resolve_admin_fee_item(),
+    #     the company_vehicle_fuel branch of resolve_item_key()) -- see the Lead correction,
+    #     2026-09-23, above resolve_admin_fee_item(). No flat entry here on purpose.
     #   vehicle_parts_accessories (PREMIUM/FEE ITEM/etc, and now also WINDSHIELD/HEADLIG since the
     #     Round 69 5400-account ruling is itself superseded by "items, not accounts"): no
     #     windshield/headlight/wash-tier item exists in the 126-row catalog.
@@ -325,6 +326,29 @@ def resolve_driver_reimbursement_item(desc):
     if "maintenance" in d or "oil" in d or "additive" in d:
         return "Driver Reimbursement-OTR-Maintenance, Oils, Additives"
     return None
+
+
+# admin_fee -- Lead correction, 2026-09-23 (a real defect in the Lead's own build_feed_input.py,
+# now fixed there too): "'Admin fee - X' IS NEVER A BANK FEE... The part after the dash IS the
+# meaning." Matching just the "admin fee" prefix and stopping was the bug -- it lumped 54 real,
+# distinct lines into one undifferentiated bucket. Route by X, the text after the dash, evidence
+# read off the real corpus (grepped every "Admin fee -" line in all 117 driver documents): GAS
+# (49 lines) is the company-vehicle-use CHARGE half of the Honda pair (see company_vehicle_fuel
+# below for the REIMBURSEMENT half) -- the item the owner described and that now carries real
+# traffic. VUELO ("flight", 1 line), BASCULA ("scale ... on a past trip", 1 line), and a blank
+# suffix (1 line) have no dedicated item and fall to the catalog's own general
+# Driver-Deductions-Miscellaneous. PAGO DE TELEFONO PERSONAL (2 lines) names itself exactly
+# against the catalog's own Personal Expenses-Telephone item.
+def resolve_admin_fee_item(desc):
+    d = desc.lower()
+    if "gas" in d:
+        return "Driver Deduction-Company Vehicle Use Fee"
+    if "telefono" in d:
+        return "Driver Deduction-Personal Expenses-Telephone, etc"
+    # VUELO, BASCULA, and a blank suffix all fall through to the catalog's general bucket --
+    # never invented, never left on the specific-but-wrong GAS item just because it's the most
+    # common shape.
+    return "Driver-Deductions-Miscellaneous"
 
 
 # toll_parking -- the catalog splits this into 4 real items by kind (parking vs bridge/toll) and
@@ -386,6 +410,15 @@ def resolve_item_key(category, description, driver_address=None, pay_kind=None):
         return resolve_toll_parking_item(description)
     if category == "driver_pay":
         return resolve_driver_pay_item(pay_kind, driver_address)
+    if category == "admin_fee":
+        return resolve_admin_fee_item(description)
+    if category == "company_vehicle_fuel":
+        # Lead correction, 2026-09-23: the Honda lines are a REIMBURSEMENT TO the driver (he
+        # fronts cash for the company pickup's fuel), confirmed against the raw settlement text
+        # -- not a fuel expense (5000/tractor diesel) and not an IFTA gallon. Item added to the
+        # catalog for this: "Driver Reimbursement-Company Vehicle Fuel" (Driver Reimbursements,
+        # posts_to expense).
+        return "Driver Reimbursement-Company Vehicle Fuel"
     return ITEM_KEY.get(category)
 
 
