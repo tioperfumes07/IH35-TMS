@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // ROUND 131.3 (owner, via the Lead) — DAY-1 FEED GATE, the guard half.
 //
-// FAILS if any feed-day entry path can create a load without passing all five checks in
+// FAILS if any feed-day entry path can create a load without passing all six checks in
 // apps/backend/src/feed/feed-day-preflight.service.ts's feedDayPreflight(). Two arms:
-//   1. STRUCTURAL — the preflight service itself must genuinely carry all five checks, each with
+//   1. STRUCTURAL — the preflight service itself must genuinely carry all six checks, each with
 //      a computed (not hard-coded) `passed` value. A guard that only checks "the file exists"
 //      would pass on a stub that always opens.
 //   2. ENFORCEMENT — every backend file that inserts a row into mdata.loads AND is plausibly part
@@ -47,7 +47,7 @@ function walk(dir, out = []) {
 /** Structural check on the preflight service's own source text — pure, takes a string. */
 export function checkPreflightServiceStructure(source) {
   const problems = [];
-  const checkNumbers = [1, 2, 3, 4, 5];
+  const checkNumbers = [1, 2, 3, 4, 5, 6];
   for (const n of checkNumbers) {
     if (!new RegExp(`check:\\s*${n}\\b`).test(source)) {
       problems.push(`missing check: ${n}`);
@@ -156,7 +156,7 @@ function main() {
     );
   }
 
-  console.log(`${LABEL}: PASS — feed-day-preflight.service.ts carries all five checks (none hard-coded), 0 unenforced feed-day load-creation paths (${files.length} backend files scanned).`);
+  console.log(`${LABEL}: PASS — feed-day-preflight.service.ts carries all six checks (none hard-coded), 0 unenforced feed-day load-creation paths (${files.length} backend files scanned).`);
 }
 
 main();

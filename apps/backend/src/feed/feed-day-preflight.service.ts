@@ -11,7 +11,16 @@
 //   5. the purge window is still open (purge_state.json verified_at set, day1_closed_at unset,
 //      under 72h)
 //
-// Refusal prints which of the five failed and the measured number. This module NEVER
+// ROUND 135.1 (owner, via the Lead) — SIXTH CHECK, THE CLOSE GATE. Zero GL exists for USMCA
+// settlements (0 of 89) and driver bills (0 of 94) today — settlement GL posting never ran for
+// this entity. A day cannot CLOSE (i.e. a later preflight for the SAME document — a re-feed —
+// must not silently pass) until every settlement that document created carries live GL postings
+// that tie to the document's driver_net figure, in cents. Vacuously true before any settlement
+// exists (nothing to tie out yet, matching checks 1-5's own "day hasn't run" behavior); becomes a
+// real gate the moment a settlement is created — this is the check that stops re-feeding into the
+// same silent posting hole. Refusal names the settlement and the measured gap in cents.
+//
+// Refusal prints which of the six failed and the measured number. This module NEVER
 // auto-corrects, NEVER soft-passes, NEVER writes — it is a read-only measurement, exactly like
 // verify-alwaystrack-parity.mjs (the ground-truth JSON this reuses) and scripts/lib/purge-window.mjs
 // (the purge-window semantics this mirrors, reimplemented locally rather than imported — this is
@@ -32,7 +41,7 @@ const PURGE_WINDOW_HOURS = 72;
 export const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 export type FeedDayPreflightCheckResult = {
-  check: 1 | 2 | 3 | 4 | 5;
+  check: 1 | 2 | 3 | 4 | 5 | 6;
   label: string;
   passed: boolean;
   /** The measured number/detail — always present, pass or fail (never a bare pass/fail). */
@@ -68,6 +77,10 @@ type GroundTruthDocument = {
   fuel_count: number;
   expenses_cents: number;
   expenses_count: number;
+  // ROUND 135.1 — the driver-side document's own total_due, in cents. null (not 0) when no
+  // driver-side document exists for this number at all, matching verify-alwaystrack-parity.mjs's
+  // own convention — a missing driver doc must never read as a false $0.00 target.
+  driver_net_cents: number | null;
 };
 
 function round2Cents(dollars: unknown): number {
@@ -81,9 +94,13 @@ function sumBy(rows: Array<Record<string, unknown>> | undefined, key: string): n
 /** Reads the ground-truth JSON and finds ONE document by its settlement number. Pure, no I/O beyond the read. */
 export function findGroundTruthDocument(documentNumber: string, groundTruthPath = GROUND_TRUTH_PATH): GroundTruthDocument | null {
   if (!fs.existsSync(groundTruthPath)) return null;
-  const raw = JSON.parse(fs.readFileSync(groundTruthPath, "utf8")) as { company?: Array<Record<string, unknown>> };
+  const raw = JSON.parse(fs.readFileSync(groundTruthPath, "utf8")) as {
+    company?: Array<Record<string, unknown>>;
+    driver?: Array<Record<string, unknown>>;
+  };
   const row = (raw.company ?? []).find((r) => String(r.settlement_no) === documentNumber);
   if (!row) return null;
+  const driverRow = (raw.driver ?? []).find((r) => String(r.settlement_no) === documentNumber);
   return {
     doc: documentNumber,
     loads: (row.loads as string[] | undefined) ?? [],
@@ -93,6 +110,7 @@ export function findGroundTruthDocument(documentNumber: string, groundTruthPath 
     fuel_count: ((row.fuel_purchases as unknown[] | undefined) ?? []).length,
     expenses_cents: round2Cents(sumBy(row.expenses as Array<Record<string, unknown>>, "amount")),
     expenses_count: ((row.expenses as unknown[] | undefined) ?? []).length,
+    driver_net_cents: driverRow ? round2Cents(driverRow.total_due) : null,
   };
 }
 
@@ -264,6 +282,54 @@ export async function feedDayPreflight(userId: string, input: FeedDayPreflightIn
       label: "banking.bank_transactions count unchanged from the run's opening reading",
       passed: currentBankCount === input.openingBankTransactionCount,
       measured: `current=${currentBankCount} opening=${input.openingBankTransactionCount}`,
+    });
+
+    // ROUND 135.1 — Condition 6 (the CLOSE gate). Every settlement THIS document created must
+    // carry live, posted GL that ties to the document's own driver_net figure, in cents. Vacuously
+    // true when no settlement exists yet for this document (nothing to tie out — matches checks
+    // 1-5's own "day hasn't run" behavior); becomes a real gate the moment one is created.
+    const settlementsRes = await client.query<{ id: string; source_document_ref: string | null; net_pay: string | number | null }>(
+      `SELECT id, source_document_ref, net_pay FROM driver_finance.driver_settlements
+        WHERE operating_company_id = $1::uuid AND source_document_ref = $2
+          AND voided_at IS NULL AND status <> 'cancelled'`,
+      [input.operatingCompanyId, input.documentNumber]
+    );
+    const targetCents = doc?.driver_net_cents ?? null;
+    const glGaps: string[] = [];
+    for (const settlement of settlementsRes.rows) {
+      const postingsRes = await client.query<{ debit_or_credit: string; amount_cents: string | number }>(
+        `SELECT p.debit_or_credit, p.amount_cents
+           FROM accounting.journal_entry_postings p
+           JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+          WHERE je.operating_company_id = $1::uuid AND je.status = 'posted'
+            AND p.source_transaction_type IN ('driver_settlement', 'settlement')
+            AND p.source_transaction_id = $2::text`,
+        [input.operatingCompanyId, settlement.id]
+      );
+      if (postingsRes.rows.length === 0) {
+        glGaps.push(`settlement ${settlement.source_document_ref ?? settlement.id}: no live GL postings (gap ${targetCents ?? "?"}c)`);
+        continue;
+      }
+      if (targetCents == null) {
+        glGaps.push(`settlement ${settlement.source_document_ref ?? settlement.id}: has GL postings but ground truth carries no driver_net to tie to — cannot verify`);
+        continue;
+      }
+      const tiesOut = postingsRes.rows.some((r) => r.debit_or_credit === "credit" && Number(r.amount_cents) === targetCents);
+      if (!tiesOut) {
+        const creditTotal = postingsRes.rows.filter((r) => r.debit_or_credit === "credit").reduce((sum, r) => sum + Number(r.amount_cents), 0);
+        glGaps.push(`settlement ${settlement.source_document_ref ?? settlement.id}: credit-leg total ${creditTotal}c != driver_net ${targetCents}c (gap ${targetCents - creditTotal}c)`);
+      }
+    }
+    checks.push({
+      check: 6,
+      label: "every settlement this document created carries live GL postings tying to driver_net, in cents",
+      passed: glGaps.length === 0,
+      measured:
+        settlementsRes.rows.length === 0
+          ? "0 settlements created for this document yet — nothing to tie out"
+          : glGaps.length === 0
+            ? `${settlementsRes.rows.length} settlement(s) checked, all tie out to driver_net exactly`
+            : glGaps.join("; "),
     });
 
     return { candidateIds };
