@@ -11,7 +11,16 @@ import { repairUtf8Mojibake } from "../lib/repair-utf8-mojibake.js";
 // per-row human attribution (applied_by_user_id + applied_at) or per-entity opt-in.
 
 export type SeedType = "drivers" | "customers" | "vendors" | "assets" | "loads" | "bank_accounts" | "bank_transactions";
-export type CompanyCode = "TRK" | "TRANSP";
+/**
+ * USMCA was excluded from this importer and the owner overturned that directly:
+ * "WHY SHOULDN'T IT WORK FOR USMCA? WE MIGHT NEED IT TO IMPORT DATA AS WELL."
+ * The code is a real row in org.companies (USMCA Freight Solutions Inc,
+ * 5c854333-6ea5-4faa-af31-67cb272fef80), so nothing here is invented -- the importer simply
+ * refused a company that exists. TRK and TRANSP remain valid codes for this tool; the freeze on
+ * TRANSPORTATION and TRUCKING is an operating rule about what work is done, not a reason for the
+ * importer to pretend a third company does not exist.
+ */
+export type CompanyCode = "TRK" | "TRANSP" | "USMCA";
 
 const DRIVER_HEADERS = ["first_name", "last_name", "email", "phone", "cdl_number", "cdl_state", "cdl_class", "cdl_expires_at", "hire_date", "status"];
 const CUSTOMER_HEADERS = ["customer_code", "customer_name", "billing_email", "billing_phone", "mc_number", "dot_number", "billing_address_line1", "billing_city", "billing_state", "billing_postal_code"];
@@ -115,7 +124,9 @@ function deriveCodeSlug(prefix: string, source: string) {
 
 function parseCompany(value: string): CompanyCode {
   const upper = value.trim().toUpperCase();
-  if (upper !== "TRK" && upper !== "TRANSP") throw new Error(`Unsupported --company "${value}". Use TRK or TRANSP.`);
+  if (upper !== "TRK" && upper !== "TRANSP" && upper !== "USMCA") {
+    throw new Error(`Unsupported --company "${value}". Use TRK, TRANSP or USMCA.`);
+  }
   return upper as CompanyCode;
 }
 
@@ -1411,7 +1422,11 @@ export async function runAdminCsvImport(
     const abortOnAnyError = txnMode === "participant";
     for (const [companyCode, rows] of targets.entries()) {
       const operatingCompanyId = await resolveCompanyId(client, companyCode);
-      const companySlug = companyCode === "TRK" ? "TRK" : "TRANSP";
+      // The slug is the company's own code. The previous two-way ternary silently relabelled
+      // anything that was not TRK as TRANSP -- which, the moment a third company was admitted,
+      // would have stamped USMCA rows with another carrier's slug. That is a cross-entity
+      // mislabel, not a cosmetic one.
+      const companySlug: CompanyCode = companyCode;
       let report: RowReport;
       switch (seedKind) {
         case "drivers":
