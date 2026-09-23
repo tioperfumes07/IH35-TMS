@@ -3,6 +3,7 @@ import { requireDriverSession } from "../../driver/auth.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { setScopedCompanyContext } from "../../_helpers/scoped-company-context.js";
 import { closeTourForDriver, resolveTourCloseEligibility, TourCloseError } from "./tour-close.service.js";
+import { postLoadBookendedSettlementGlAfterClose } from "../../driver-finance/settlement-payrun-close.service.js";
 
 const RL = { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } };
 
@@ -46,6 +47,20 @@ export async function registerTourCloseRoutes(app: FastifyInstance) {
           actorUserId: req.user!.uuid,
         });
       });
+      // ROUND 137 fix (USMCA-LOAD-BOOKENDED-SETTLEMENTS-NEVER-POST-GL): the trip-close write above
+      // has already committed (withCurrentUser resolved) -- posting the settlement's GL now, in a
+      // separate call/connection, is the correct post-commit sequencing (closeSettlementPayRun
+      // reads the settlement's own current status; calling it INSIDE the still-open transaction
+      // above would see pre-commit state). Fail-soft by design: the driver's tour is closed either
+      // way, a posting hiccup here must never block that response -- see
+      // postLoadBookendedSettlementGlAfterClose's own doc comment.
+      if (result.closed && result.settlement_id) {
+        await postLoadBookendedSettlementGlAfterClose({
+          operatingCompanyId: driver.operating_company_id,
+          settlementId: result.settlement_id,
+          actorUserId: req.user!.uuid,
+        });
+      }
       return result;
     } catch (e) {
       if (e instanceof TourCloseError) {

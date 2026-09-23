@@ -6,6 +6,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { stampTripClosedForBookendedSettlement } from "./settlements-load-bookended.service.js";
 import { closeCompanySettlementAlongsideDriverSettlement } from "../accounting/company-settlement-close.service.js";
+import { postLoadBookendedSettlementGlAfterClose } from "./settlement-payrun-close.service.js";
 
 /**
  * LDT-5 / LDT-6 · ONE tour readout (owner order 2026-09-05 23:00Z, register § LDT-5: "One read model shared with
@@ -509,6 +510,16 @@ export async function registerTourReadoutRoutes(app: FastifyInstance) {
         await appendCrudAudit(client as never, user.uuid, "driver_finance.tour.closed_by_office", { operating_company_id: b.data.operating_company_id, settlement_id: p.data.id, soft_warnings_confirmed: before.soft_warnings, company_settlement_id: company.company_settlement_id, legs: before.legs.map((l) => l.load_number) });
         await client.query("COMMIT");
       } catch (e) { await client.query("ROLLBACK"); throw e; }
+      // ROUND 137 fix (USMCA-LOAD-BOOKENDED-SETTLEMENTS-NEVER-POST-GL): same post-commit
+      // sequencing as tour-close.routes.ts's driver-facing close -- the trip-close transaction
+      // above has already committed, so it's safe for closeSettlementPayRun to read the
+      // settlement's now-current status. Fail-soft: this office close already succeeded either
+      // way; a posting hiccup here must not turn into a 500 for the user.
+      await postLoadBookendedSettlementGlAfterClose({
+        operatingCompanyId: b.data.operating_company_id,
+        settlementId: p.data.id,
+        actorUserId: user.uuid,
+      });
       const after = await buildTourReadout(client, b.data.operating_company_id, p.data.id, null);
       return { closed: true, readout: after };
     });
