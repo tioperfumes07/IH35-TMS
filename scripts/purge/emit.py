@@ -1,4 +1,25 @@
 import json
+import os
+import tempfile
+
+# WHERE THE GENERATED SQL GOES -- AND WHY IT IS NEVER THE REPO.
+#
+# verify-no-hard-delete-document-number-tables scans scripts/** ON DISK for DELETE FROM against
+# any document-number table (bills, credit_memos, expenses, factoring_advances, invoices,
+# payments, vendor_credits), because deleting one of those rows lets MAX+1 numbering re-issue a
+# number that was already used. That guard is CORRECT and it stays.
+#
+# I already fixed this for build-usmca-purge.mjs (#22359) and left THIS script still writing
+# into scripts/purge/. Running it put the file back on disk and the guard failed again -- which
+# is how it was caught: by running the guard after my own change instead of assuming it passed.
+# gitignore does not help, because the guard reads the working tree, not the index.
+OUT_DIR = os.environ.get("USMCA_PURGE_OUT") or tempfile.mkdtemp(prefix="usmca-purge-")
+if os.path.abspath(OUT_DIR).startswith(os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))):
+    raise SystemExit(
+        "REFUSED: USMCA_PURGE_OUT is inside the repository. The generated SQL contains DELETE "
+        "FROM on document-number tables and would fail "
+        "verify-no-hard-delete-document-number-tables for every seat. Point it outside the tree."
+    )
 CO = "5c854333-6ea5-4faa-af31-67cb272fef80"
 ORDER = ["accounting.transaction_source_links","accounting.journal_entry_postings","accounting.escrow_postings","accounting.expense_lines","banking.bank_transaction_splits","driver_finance.settlement_contract_lines","fuel.fuel_transactions","driver_finance.driver_settlement_deductions","accounting.expenses","accounting.factoring_default_interest_accruals","accounting.factoring_lifecycle_posting_keys","accounting.factoring_reserve_movements","accounting.load_revenue_recognition_postings","banking.reconciliation_drift_alerts","driver_finance.driver_advances","driver_finance.driver_settlement_gl_bills","driver_finance.driver_reimbursements","driver_finance.escrow_ledger","driver_finance.settlement_lines","driver_finance.driver_bills","driver_finance.deduction_schedule","driver_finance.driver_liabilities","driver_finance.driver_settlement_gl_runs","driver_finance.payrun_gl_runs","accounting.journal_entries","accounting.posting_batches","accounting.invoice_disputes","dispatch.load_cancellations","accounting.invoice_lines","accounting.payment_applications","accounting.invoices","accounting.bill_lines","accounting.bills","accounting.factoring_advances","accounting.company_settlements","accounting.outbox_events","accounting.ob_register_audit_events","accounting.period_cash_basis_snapshot","driver_finance.escrow_balances","driver_finance.presettlement_link_suggestions","driver_finance.driver_settlements","driver_finance.settlement_payment_events","dispatch.load_assignment_history","dispatch.load_charge_lines","dispatch.load_id_reservations","dispatch.driver_layovers","dispatch.manual_delivery_authorizations","dispatch.intransit_issues","dispatch.stop_arrivals","dispatch.pod_documents","expense_attribution.expense_load_links","expense_attribution.expense_seq_per_load","mdata.load_stop_legs","mdata.load_stops","mdata.loads","banking.reconciliation_matches"]
 LOADS = "load_id IN (SELECT id FROM mdata.loads WHERE operating_company_id = '%s')" % CO
@@ -112,7 +133,8 @@ a("-- --------------------------------------------------------------------------
 a("")
 a("-- COMMIT;   -- owner only, at the moment of the purge")
 a("ROLLBACK;")
-open("scripts/purge/usmca-transaction-purge.generated.sql", "w").write("\n".join(L) + "\n")
+_sql_path = os.path.join(OUT_DIR, "usmca-transaction-purge.generated.sql")
+open(_sql_path, "w").write("\n".join(L) + "\n")
 json.dump({
   "_generated": "2026-09-23",
   "_source": "scripts/purge/emit.py - the same run that emitted the SQL, so the two cannot drift",
@@ -136,3 +158,4 @@ json.dump({
   "must_be_unchanged": KEEP["KEEP"] + KEEP["KEEP_BANKING"],
 }, open("scripts/purge/usmca-purge-expected-zero.generated.json", "w"), indent=2)
 print("%d deletes, %d kept tables" % (len(ORDER), len(KEEP["KEEP"]) + len(KEEP["KEEP_BANKING"])))
+print("SQL written to %s  (outside the repo on purpose)" % _sql_path)
