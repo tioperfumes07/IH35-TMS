@@ -177,11 +177,25 @@ export function DeductionsSection({ rows, onHold, onResume, isOpen, onAdd, onEdi
               </Button>
             ) : null}
             {row.is_held ? (
-              <Button size="sm" variant="secondary" onClick={() => onResume?.(row)} disabled={!onResume}>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => onResume?.(row)}
+                disabled={!onResume || !isOpen}
+                title={!isOpen ? "Settlement locked" : undefined}
+              >
                 Resume
               </Button>
             ) : row.source_deduction_id ? (
-              <Button size="sm" variant="secondary" onClick={() => onHold(row)}>
+              // R-102-B item 3 (owner, ROUND 112) — Hold had NO isOpen check at all; it stayed
+              // clickable, writing to a cancelled settlement's deductions, regardless of lock state.
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => onHold(row)}
+                disabled={!isOpen}
+                title={!isOpen ? "Settlement locked" : undefined}
+              >
                 Hold
               </Button>
             ) : !canEdit ? (

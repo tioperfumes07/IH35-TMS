@@ -14,11 +14,17 @@ import { useUserName } from "../../hooks/useUserName";
  * Laredo Central Time)." §9.0.17 — ONE component, not eleven page edits — is why this file, not each
  * of the 11 call sites, grew the two new capabilities below:
  *   - `voidedByUserId`: resolved via useUserName (wraps GET /identity/users/:id, no role gate) so
- *     every viewer role sees a name, never a uuid. Optional and additive — a caller that hasn't wired
- *     the column yet (or a family where the write path doesn't populate it) still renders exactly as
- *     before, just without the "by <name>" clause; this NEVER fabricates an actor.
+ *     every viewer role sees a name, never a uuid.
  *   - The timestamp now renders in Laredo Central Time via ctDateTime (was formatDateUS, which is UTC/
  *     browser-local and unlabeled) — matches the packet's explicit "Laredo Central Time" requirement.
+ *
+ * ROUND 112 CORRECTION (owner, verbatim): "a voider CAN be missing — invoices 13541 and 13572 are
+ * voided with a reason and no actor. Render 'voided by — unknown'. Never crash, never hide the
+ * stamp, never invent an actor." The first cut of this component OMITTED the "by" clause entirely
+ * when voidedByUserId was absent — silently dropping the fact that the actor is unknown instead of
+ * saying so. Fixed: the actor slot now always renders once we know there's nothing to show (no id
+ * at all, or the id failed to resolve) — "by — unknown" — and stays blank only while a REAL id is
+ * still in flight, so it never flashes "unknown" for a name that's a beat away from loading.
  */
 export function VoidedBanner({
   voidedAt,
@@ -31,8 +37,11 @@ export function VoidedBanner({
   voidedByUserId?: string | null;
   documentLabel?: string;
 }) {
-  const { name: voidedByName } = useUserName(voidedAt ? voidedByUserId : null);
+  const { name: voidedByName, isLoading } = useUserName(voidedAt ? voidedByUserId : null);
   if (!voidedAt) return null;
+  // ROUND 112 — always resolve to a definite actor label once we know one either way; only stays
+  // null while a real id is still being fetched (avoids an "unknown" flash before the name loads).
+  const actorLabel = !voidedByUserId ? "— unknown" : isLoading ? null : voidedByName ?? "— unknown";
   return (
     <div role="alert" className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3">
       <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-red-900">
@@ -40,7 +49,7 @@ export function VoidedBanner({
       </div>
       <div className="text-xs text-red-900">
         Voided {ctDateTime(voidedAt)}
-        {voidedByName ? ` by ${voidedByName}` : ""}
+        {actorLabel != null ? ` by ${actorLabel}` : ""}
         {voidReason ? ` — ${voidReason}` : ""}
       </div>
     </div>
