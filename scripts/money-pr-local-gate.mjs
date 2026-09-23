@@ -580,6 +580,14 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/lib/pg-connection-options.cjs",
     ],
   ],
+  // ROUND E23 (DEVIN-B, Q34): bus channel — NOW-<SEAT>.md 4KB cap + 48h staleness arm.
+  // Static filesystem scan — no DB needed.
+  [
+    "verify-bus-files-are-readable",
+    [
+      "docs/bus/",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {

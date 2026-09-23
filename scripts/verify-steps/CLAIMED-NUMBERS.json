@@ -9054,5 +9054,10 @@
     "claimed_by": "devin-b",
     "claimed_at": "2026-09-24",
     "purpose": "verify-gate-live-reads-use-ci-readonly (Q06, new guard)"
+  },
+  "11594": {
+    "claimed_by": "devin-b",
+    "claimed_at": "2026-09-24",
+    "purpose": "verify-bus-files-are-readable (Q34, new guard)"
   }
 }
