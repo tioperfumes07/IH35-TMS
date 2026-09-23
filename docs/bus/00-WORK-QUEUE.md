@@ -84,7 +84,7 @@ Never work in the shared main checkout.
       19/21/24/25/26/29/30/31/39 and SCALE with the live load count. Print
       "closure re-measured at N live loads". "Zero now" on a 6% fed book is
       not "fixed".
-[ ] Q12 GUARD  verify-one-canonical-active-load-set.mjs — four-arm ratchet,
+[CODEX 2026-09-23T23:54:58Z] Q12 GUARD  verify-one-canonical-active-load-set.mjs — four-arm ratchet,
       selftest RED against current code first.
 [ ] Q13 GUARD  verify-load-costs-board-excludes-settled.mjs
 [ ] Q14 GUARD  verify-loves-geofences-seeded.mjs — assert >=604 Love's
