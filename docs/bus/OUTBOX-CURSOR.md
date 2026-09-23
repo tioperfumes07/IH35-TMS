@@ -698,3 +698,77 @@ CURSOR | ROUND 82+ — E17 MERGED #22309 (72b3e367af) · E7 BATCH 1 PUSHING (ROU
 Files Modified: apps/backend/src/reconciler/{types,registry}.ts, invariants/i2-delivered-load-invoiced.ts, __tests__;
 scripts/reconciler/run-reconciler.mjs; scripts/verify-reconciler-exceptions.baseline.json (I2 invoice 22);
 docs/reconciliation/exception-queue.{json,md}; docs/bus/OUTBOX-CURSOR.md.
+
+CURSOR | ROUND 92/93 — 2026-09-23 ~02:35Z — what I did · the proof it is real · what's next
+
+WHAT I DID
+- #22340 MERGED (ef471d7cb1): purge window, 8 named arms, 72h expiry, loud counted skip.
+- ROUND 92 ITEM 5, branch cursor/r92-purge-verifier-live (pushing). The verifier you landed (#22348) could never PASS:
+  (1) it imports @neondatabase/serverless, which is not a dependency anywhere in the repo, so every run stops at "REFUSED: not
+  installed"; (2) MUST_SURVIVE filters mdata.units and mdata.equipment on operating_company_id, a column neither has (USMCA holds
+  them by lease, Rule 49 §2), so both count as ERROR = FAIL; (3) my exemption guard rejected the verified_by / tables_verified
+  keys your PASS writes, which would have failed every seat's gate on the first committed verified state. Fixed: pg in BEGIN READ
+  ONLY + SET LOCAL bypass per count, always ROLLBACK; units/equipment scoped (leased to OR owned by USMCA); state path shared with
+  the arms (scripts/lib/purge-window.mjs); KNOWN_KEYS += verified_by, tables_verified. Generated table list, PASS-only write and the
+  day1_closed_at delete are untouched.
+- E9 (cursor/e9-invoice-display-id, pushing). The register's "two live invoices share INV-2026-00009" is two COMPANIES:
+  59d6d429 is not USMCA (is_usmca=f); numbering is per company, full UNIQUE (operating_company_id, display_id) since 0060; all 8
+  invoice display_id lookups in apps/backend are company-scoped. The real defect is the allocator: all 7 yearly series (INV, PMT,
+  CM, BILL, VC, FAC, EXP) found MAX by DOCUMENT DATE, not by prefix, so a backdated/overridden number is re-issued and the create
+  dies on the unique constraint; the auto path locked apart from the manual path; invoice/payment taken-checks and ?check= previews
+  called a voided number free. Fixed + guard verify-display-id-series-by-prefix. The ruled "UNIQUE WHERE voided_at IS NULL" is NOT
+  added: it is weaker than the full constraint already live. CC-1 live_loads: this touches only accounting/display-id.ts and the two
+  ?check= SELECTs; no load SELECT was authored.
+- E7 batch 2b committed (52 guards fail closed, db-skip 102 -> 50), push blocked only by verify-migration-no-number-collision:
+  CC-1 stamped 202614280000 and 202614200000 in the prod ledger while their files sit on the unmerged #22338. Re-pushing when it lands.
+
+THE PROOF IT IS REAL — live output, test branch br-sweet-math-akyen17f (ep-wispy-mountain-aknctt5m), read-only role, state in /tmp
+  verify-purge --before                    exit 0 · baseline written · state sha b15a51094ae8 before = after · 0 ERROR lines
+                                           (mdata.units 43, mdata.equipment 145; before the fix: "column operating_company_id does not exist")
+  forced FAIL (baseline accounts +1)       exit 1 · "catalogs.accounts fell from 194 to 193" · verified_at=null · day1_closed_at kept
+  real verify, unpurged branch             exit 1 · 16 transaction tables non-zero · verified_at=null · 0 MUST_SURVIVE failures
+  PASS-shape state (verified_at, verified_by, tables_verified 56, day1_closed_at deleted):
+                                           ALL 8 ARMS exit 75 "EMPTY BY PURGE (verified 2026-09-23T02:27:12.022Z, expires 2026-09-26T02:27:12.022Z)"
+  day1_closed_at set                       ALL 8 exit 1 — re-armed
+  verified_at 73h ago                      ALL 8 exit 1 — re-armed
+  ninth guard asks for the exemption       exit 1 "not one of the 8 purge-window guards"
+  exemption guard on that PASS-shape state origin/main exit 1 ("unknown key verified_by", "unknown key tables_verified") · branch exit 0 "window OPEN"
+  E9 on the test branch, one ROLLBACK txn: voided INV-2026-00001 dated 2025-12-30, then a planted second INV-2026-00001 ->
+  ERROR duplicate key "invoices_operating_company_id_display_id_key"; old allocator next=1 (re-issue), new next=2; 0 rows left.
+  A PASS of the verifier itself is only reachable on the purged database; I wrote no rows to fake one.
+
+ROUND 93 — WHAT THE MASS VOID DOES TO MY EIGHT ARMS (measured from each arm's own empty-check query)
+  After a void the rows stay. Three arms count ALL rows and will never see "empty":
+    verify-alwaystrack-parity        mdata.loads WHERE operating_company_id only
+    verify-no-empty-zero-settlement  driver_finance.driver_settlements, is_sample_data only
+    verify-control-totals            driver_finance.driver_settlements, count only
+  Five already count live rows: driver-bill-settlement-link (voided_at IS NULL), faro-invoice-lines-load-linkage and
+  dispute-window-unified (superseded_at IS NULL), fuel-transactions-per-load (archived_at IS NULL), load-to-cash-chain
+  (soft_deleted_at IS NULL + status).
+  The generated file cannot fix this yet: every predicate in usmca-purge-expected-zero.generated.json is company-scope only
+  (delete-shaped), and factor.faro_invoice_lines is not in it at all. NEED FROM E10 (CC-3): a per-table live-row predicate in the
+  generated file (e.g. "live_where": "voided_at IS NULL"), one per table the void runner voids. The same field makes verify-purge
+  count live rows after a void instead of all rows. The moment it lands, the eight arms read it and no arm keeps a hand-typed filter.
+
+THE DATABASE_URL YOU ASKED FOR — what it takes
+  The dead file is ~/.config/ih35/neon-prod-owner.url (142 bytes, 2026-07-26): the neondb_owner password rotated after that.
+  Nothing needs rotating to restore a working gate credential. Both purge scripts are read-only: verify-purge reads counts, and
+  build-usmca-purge prints "Nothing was written to the database". The read-only role is enough:
+    neonctl connection-string br-fancy-credit-akjnd07a --project-id tiny-field-89581227 --database-name neondb --role-name ih35_ci_readonly
+  That works today with the owner's neonctl login (every Cursor push this session ran the live gate with it). To make it durable,
+  the owner runs, once:
+    neonctl connection-string br-fancy-credit-akjnd07a --project-id tiny-field-89581227 --database-name neondb \
+      --role-name ih35_ci_readonly > ~/.config/ih35/neon-prod-readonly.url && chmod 600 ~/.config/ih35/neon-prod-readonly.url
+  and the same with --role-name neondb_owner into neon-prod-owner.url for migration applies only. neonctl READS the current
+  password; do NOT run neonctl roles reset-password: Render uses neondb_owner, and a rotation is exactly the 2026-09-06 28P01 outage.
+  I did not write a credential file; it is the owner's secret store.
+
+WHAT'S NEXT, in the Round 92 order
+  1. E7 2b re-push the moment #22338 merges; then 2c, the last 50 one-off shapes.
+  2. I-DEDUCT (Round 92 definition: a driver deduction whose causing invoice line no longer exists, or no longer ties).
+  3. E9 merge + healthz sha.
+  4. The reconciler backend half. Its exception table is a migration, Cursor hours 12-23 UTC; the engine side goes first.
+  5. Item 5 remainder: the arms read the live-row predicate the moment E10 emits it.
+  FILED: scripts/verify-recon-usmca-bank-suggestion-coverage.mjs:148 COMMITs applyBankingRulesForCompany on USMCA bank rows
+  (CC-2); only a broken import stops the write. It must ROLLBACK before anyone fixes the import.
+Files Modified: docs/bus/OUTBOX-CURSOR.md (this entry). Code lands on the three branches named above.
