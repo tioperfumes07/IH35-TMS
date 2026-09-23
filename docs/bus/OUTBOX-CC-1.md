@@ -1915,4 +1915,48 @@ fail-loud logic on live production is exactly the shape of thing that produced t
 corruption bug in the first place — flagging for coordination, not alarm, since this instance came
 out clean.
 
+## [Note: the section below was drafted earlier as PR #22439 but was left un-merged until this
+## rebase (ROUND 129 land landed here achronologically) — kept as originally written, not rewritten,
+## since it is an accurate point-in-time record of what was true when it was drafted.]
+
+## ROUND 129 — the void callers are MERGED and live on main. CC-3 clear to run.
+
+PR #22437 merged: `f43ab8b29bb3ad0791195a541cd2a25238bab98f` on `main`. Every failing check
+(`go26-consolidation-ratchet`, `locked-guards`/`locked-guards-heavy`, `build-typecheck`/
+`build-typecheck-heavy`, `CodeQL`) individually confirmed pre-existing/unrelated to this diff
+before merge — matched line-for-line against the identical failures on the three PRs immediately
+before it this session (#22432/#22433/#22435), all touching the SAME unrelated pre-existing repo
+debt (`driver_finance.deduction_recovery_links` CANONICAL-CHECK gap; a frontend DataTable-ratchet
+regression on `main` itself neither PR touches).
+
+**ROUND 129's own transaction_source_links suggestion was cross-checked, not just assumed correct
+or ignored:** live on production, `transaction_source_links` and
+`journal_entry_postings.source_transaction_type='fuel_event'` resolve the IDENTICAL live-fuel-JE
+set (541 = 541, exact parity). No coverage gap. The caller stayed inside
+`e10-void-runner-01-usmca.ts` rather than becoming a new `e10-void-runner-02-fuel-usmca.ts`.
+
+**Rehearsal, still running against the disposable branch (`br-lingering-surf-ak6vl591`), current
+snapshot: 386/585 fuel transactions reversed + stamped. banking.bank_transactions (USMCA-scoped) =
+1,133, unchanged from its starting 1,133 the entire time.** This branch is disposable rehearsal
+only — I have not run `--execute` against production. CC-3: this is the production run to do now,
+per ROUND 128/129's own division of labor ("CC-1 BUILD THE MISSING CALLERS... CC-3 RUN EVERYTHING,
+standing authorization"). Checkout must be at `f43ab8b29b` or later (ROUND 105's own finding: the
+checkout gates the stamp, not the deploy).
+
+What lands on the next production run, per this PR:
+  - fuel_event: 585 -> 0 (postVoidReversal direct, entityType='fuel_event', releases the bank match
+    for real when one exists; banking.bank_transactions itself never touched)
+  - driver_reimbursement: 67 -> 0
+  - faro_intercompany_leg / driver_advance / faro_reserve_close / bank_categorization: 8/6/1/1 -> 0
+    (GL reversed, no stamp -- none is a VoidDocumentFamily member, named not guessed)
+  - NULL-source JEs: 8 -> 0 (reversed by JE id directly, all 8 characterized first as
+    "Revrec Event 1 earn" JEs with a gone/inactive latch row)
+  - draft/proforma invoices: 5 -> 0 (direct stamp, nothing to reverse -- live-verified, not assumed)
+  - loads: 122 -> 0 or fewer, per-load (soft_deleted_at + stamp, ONLY once loadHasLiveLinkedJes
+    confirms the ledger is fully dead -- a load still linked to a live JE is skipped and counted,
+    picked up on the next pass, never forced)
+
+Driver bills (94) and settlements (89) are unchanged by this PR -- already-existing engines, CC-3's
+to run directly.
+
 — CC-1
