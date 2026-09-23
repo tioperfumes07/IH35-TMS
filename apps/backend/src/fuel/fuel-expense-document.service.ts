@@ -62,7 +62,14 @@ export type FuelExpenseDocumentInput = {
 };
 
 export type FuelExpenseDocumentOutcome =
-  | { outcome: "created"; expense_id: string; expense_number: string; amount_cents: number }
+  | {
+      outcome: "created";
+      expense_id: string;
+      expense_number: string;
+      amount_cents: number;
+      /** The journal entry this document ADOPTED, when the fuel purchase was already posted. */
+      adopted_journal_entry_id: string | null;
+    }
   | { outcome: "already_exists"; expense_id: string; expense_number: string | null }
   | { outcome: "would_create"; expense_number: null; amount_cents: number }
   | { outcome: "refused"; reason: string };
@@ -177,6 +184,59 @@ export async function createExpenseFromFuelTransaction(
     return { outcome: "would_create", expense_number: null, amount_cents: amountCents };
   }
 
+  // ---- 3b. ADOPT THE POSTING THAT ALREADY EXISTS. --------------------------------------
+  // CC-3 flagged this gap in the first cut and he was right: a document that does not point at
+  // the journal entry its own purchase already produced is not the origin of that posting, it
+  // is a second thing standing next to it. Posting the new document would DOUBLE-POST the fuel.
+  //
+  // The link already exists and nobody was using it: accounting.transaction_source_links rows
+  // with linked_object_type='fuel_event' and linked_object_id = the fuel transaction id, one
+  // 'fuel_expense' leg and one 'fuel_offset' leg per posting (2,306 links live for USMCA).
+  // Walk it back to the journal entry and ADOPT that entry.
+  //
+  // Adopted => the expense is 'posted', carrying the JE that is already on the books. Nothing
+  // new is posted, no GL math runs, and postVoidReversal can now reverse the REAL entry,
+  // because the document it needs finally exists.
+  // Not adopted => 'draft', and the normal posting path posts it later like any other expense.
+  // ONLY LIVE ENTRIES COUNT, AND THIS IS NOT A DETAIL -- IT IS THE WHOLE ANSWER.
+  // My first cut of this query counted every linked journal entry and would have REFUSED 372 of
+  // 627 fuel transactions as "linked to 2 or 3 journal entries". Measured live, that was wrong:
+  // 555 of those entries are already reversed (reversed_by_je_id set) and are dead history. In a
+  // void-not-delete system the reversed row is STILL THERE, so a query that counts rows counts
+  // ghosts. With the five-column liveness test applied: 585 fuel transactions have exactly ONE
+  // live entry, 42 have none, and ZERO have more than one. The multi-entry alarm was my own
+  // measurement error, caught by measuring instead of shipping.
+  const jeRes = await client.query<{ je: string }>(
+    `SELECT DISTINCT p.journal_entry_uuid::text AS je
+       FROM accounting.transaction_source_links l
+       JOIN accounting.journal_entry_postings p ON p.id = l.journal_entry_posting_id
+       JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+      WHERE l.operating_company_id = $1
+        AND l.linked_object_type = 'fuel_event'
+        AND l.linked_object_id = $2::text
+        AND p.journal_entry_uuid IS NOT NULL
+        AND p.reversed_by_line_id IS NULL
+        AND je.status = 'posted'
+        AND je.voided_at IS NULL
+        AND je.reversed_by_je_id IS NULL
+        AND je.reverses_je_id IS NULL`,
+    [input.operating_company_id, fuel.id],
+  );
+  if (jeRes.rows.length > 1) {
+    // Two journal entries for one fuel purchase is a real defect upstream. Picking one would
+    // attach the document to half its own history and hide the other half forever.
+    return {
+      outcome: "refused",
+      reason:
+        `fuel transaction ${fuel.id} is linked to ${jeRes.rows.length} LIVE journal entries ` +
+        `(${jeRes.rows.map((r) => r.je).join(", ")}). One purchase, one live posting -- more than ` +
+        `one means the fuel was posted twice and is really on the books twice. Measured live on ` +
+        `2026-09-23 this happened ZERO times, so if it fires it is new and it is real. The ` +
+        `document is not written until it is resolved.`,
+    };
+  }
+  const adoptedJeId = jeRes.rows[0]?.je ?? null;
+
   // ---- 4. THE SAME NUMBER SERIES EVERY OTHER EXPENSE USES --------------------------------
   const expenseNumber = await nextExpenseDisplayId(
     client as never,
@@ -192,9 +252,11 @@ export async function createExpenseFromFuelTransaction(
     `
       INSERT INTO accounting.expenses (
         operating_company_id, vendor_uuid, status, transaction_date, total_amount_cents,
-        memo, expense_number, source_fuel_transaction_id, load_id, is_sample_data
+        memo, expense_number, source_fuel_transaction_id, load_id, is_sample_data,
+        journal_entry_id, posted_at
       )
-      VALUES ($1::uuid, $2::uuid, 'draft', $3::date, $4::bigint, $5, $6, $7::uuid, $8::uuid, false)
+      VALUES ($1::uuid, $2::uuid, $9, $3::date, $4::bigint, $5, $6, $7::uuid, $8::uuid, false,
+              $10::uuid, $11)
       RETURNING id::text
     `,
     [
@@ -209,6 +271,10 @@ export async function createExpenseFromFuelTransaction(
       expenseNumber,
       fuel.id,
       fuel.load_id,
+      // A document that adopts a posting is posted. One that does not is a draft.
+      adoptedJeId ? "posted" : "draft",
+      adoptedJeId,
+      adoptedJeId ? (fuel.purchased_at ?? fuel.transaction_at) : null,
     ],
   );
   const expenseId = inserted.rows[0]!.id;
@@ -228,6 +294,8 @@ export async function createExpenseFromFuelTransaction(
       unit_id: fuel.unit_id,
       amount_cents: amountCents,
       transaction_date: txnDate,
+      adopted_journal_entry_id: adoptedJeId,
+      status: adoptedJeId ? "posted" : "draft",
       reason:
         "fuel posted to the GL with no document behind it; the expense is the document the " +
         "existing reversal path (postVoidReversal) needs in order to reverse it",
@@ -236,5 +304,11 @@ export async function createExpenseFromFuelTransaction(
     "FUEL-EXPENSE-DOC-01",
   );
 
-  return { outcome: "created", expense_id: expenseId, expense_number: expenseNumber, amount_cents: amountCents };
+  return {
+    outcome: "created",
+    expense_id: expenseId,
+    expense_number: expenseNumber,
+    amount_cents: amountCents,
+    adopted_journal_entry_id: adoptedJeId,
+  };
 }
