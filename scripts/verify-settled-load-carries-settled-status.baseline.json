@@ -1,0 +1,5 @@
+{
+  "_comment": "TASK 27 tripwire (ROUND E12.1-R2). Baseline MUST be 0 -- this guard is a tripwire for a wiring gap, not a ratchet meant to carry debt. A new key here means a NEW caller manufactured a stale-status settled load; fix the caller, do not baseline it.",
+  "measured_at": "2026-09-23T22:20:00.000Z",
+  "keys": []
+}

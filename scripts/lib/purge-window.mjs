@@ -27,6 +27,10 @@ export const EMPTY_BY_PURGE_EXIT = 75;
 // Direction 1 only (ledger dead / header still live) while the window is open. Direction 2
 // (header stamped VOIDED over live postings) is NEVER window-exempt — that is the dangerous
 // direction. Do not widen the void-is-whole baseline to absorb Direction 1; re-price once after feed.
+// Tenth arm (ROUND E12.1-R2, TASK 27): verify-settled-load-carries-settled-status. Its whole
+// population (settled driver_bill x finalized driver_settlement x advanced invoice) is legitimately
+// empty right now — no driver_settlements have been finalized since the AUTH-001 purge — so an
+// empty result is the purge window, not a broken join.
 export const PURGE_WINDOW_GUARDS = Object.freeze([
   "verify-alwaystrack-parity",
   "verify-faro-invoice-lines-load-linkage",
@@ -37,6 +41,7 @@ export const PURGE_WINDOW_GUARDS = Object.freeze([
   "verify-no-empty-zero-settlement",
   "verify-control-totals",
   "verify-void-is-whole",
+  "verify-settled-load-carries-settled-status",
 ]);
 
 export const EXPECTED_ZERO_PATH = path.join(ROOT, "scripts/purge/usmca-purge-expected-zero.generated.json");

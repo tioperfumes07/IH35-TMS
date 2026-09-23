@@ -466,6 +466,20 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-no-duplicate-active-account-names.baseline.json",
     ],
   ],
+  // ROUND E12.1-R2, TASK 27 — every directory that writes driver_finance.driver_settlements /
+  // driver_finance.driver_bills.settled_in_settlement_id, mdata.loads.status, or
+  // accounting.invoices.status: a settlement finalize or invoice-sent event that doesn't sync the
+  // load's status forward is exactly the defect class this guard tripwires.
+  [
+    "verify-settled-load-carries-settled-status",
+    [
+      "apps/backend/src/driver-finance/",
+      "apps/backend/src/dispatch/",
+      "apps/backend/src/feed/",
+      "apps/backend/src/accounting/",
+      "scripts/verify-settled-load-carries-settled-status.baseline.json",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {

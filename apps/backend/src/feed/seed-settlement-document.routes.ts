@@ -22,6 +22,7 @@ import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { withCurrentUser } from "../auth/db.js";
+import { syncSettlementLoadsToBilling } from "../dispatch/load-billing-lifecycle.service.js";
 import {
   seedSettlementDocument,
   postGlForSeededDocument,
@@ -130,6 +131,23 @@ export function registerSeedSettlementDocumentRoutes(app: FastifyInstance) {
       { operatingCompanyId: b.operating_company_id, actorUserId: user.uuid }
     );
 
-    return reply.code(200).send({ seed: seedResult, gl: glReport });
+    // ROUND E12.1-R / TASK 27 (docs/bus/00-NUMBERED-WORK-REGISTER-2026-09-22.md #27) — the exact
+    // defect that ruling exists to prevent: a settlement posting without this call manufactures a
+    // stale-status load (status stuck at completed_docs_received/delivered while fully settled and
+    // invoiced). settlements.routes.ts's own /finalize route already wires this (#22227); this
+    // seed route creates a settlement through a SEPARATE path (never calling /finalize) and would
+    // silently reproduce the same defect class without its own call to the identical, existing,
+    // guarded forward-walk — no new status logic, the same syncSettlementLoadsToBilling every
+    // other settlement-finalize trigger already uses.
+    const billingSync = await syncSettlementLoadsToBilling({
+      operatingCompanyId: b.operating_company_id,
+      loadIds: Object.values(seedResult.loadIds),
+      actorUserId: user.uuid,
+    }).catch((err) => {
+      console.warn("seed-settlement-document route: syncSettlementLoadsToBilling did not complete", (err as Error)?.message);
+      return null;
+    });
+
+    return reply.code(200).send({ seed: seedResult, gl: glReport, billing_sync: billingSync });
   });
 }
