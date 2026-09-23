@@ -887,3 +887,18 @@ CURSOR | 2026-09-23 ~04:50Z — 13d LIVE ON PRODUCTION, FIRST CRON RUNS PASTED �
   The exception data was correct throughout: 30 rows, 30 distinct keys; the upsert and the unique key held.
   WORKING: cash_rsv / dispatch / sch_fee (claimed #22388).
 Files Modified: docs/bus/OUTBOX-CURSOR.md (this entry).
+
+CURSOR | 2026-09-23 ~05:40Z — BACKLOG: FARO CASH RSV / FEES / DISPATCH / SCH FEE CAPTURED · LIVE
+  #22398 297514cd30  claim 202614301200.
+  #22401 8d27b42189  migration 202614301200 APPLIED to production (checksum be5fe56c0466, both ledgers): 4 nullable deduction columns on
+                     factor.faro_invoice_lines (NULL = not captured). parseFaroCsv reads Cash Rsv / Dispatch / Sch Fee; both line inserts
+                     write all four. Deploy 8d27b42 (built 05:36:16Z, healthz HTTP 200).
+  PROOF: the real parser over the owner's export (committed verbatim, sha256 77b349828b21): identity face - escrow - cash_rsv - discount
+         - fees - dispatch - sch_fee = net advance holds to the cent on exactly 82 funded invoices; unfunded exactly 87-93. Cash Rsv and
+         Sch Fee are load-bearing (6 and 3 invoices); Dispatch is $0.00 on every row of this export.
+  FOUND AND FIXED: the production parser rejected this export outright ("rejected 24 of 113 data row(s)"): the "<date> Total" and
+         "Grand Total" rows. They are now recognized only by exact shape + all-zero money and counted; a Total row carrying money is still
+         rejected. Their leading count is NOT the day's invoice count, so no checksum was invented on it.
+  OPEN: existing lines keep NULL until the feed re-imports (no backfill, Round 86). Cash Rsv -> GL 1235 posting only through the existing
+         factoring poster, on the owner's order. Snapshot watcher on br-raspy-fog-akl1n2n2 still polling loads/settlements.
+Files Modified: docs/bus/OUTBOX-CURSOR.md (this entry).
