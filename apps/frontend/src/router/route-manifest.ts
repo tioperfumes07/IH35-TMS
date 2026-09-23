@@ -62,6 +62,7 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
   { path: "/tasks/mine", label: "My Tasks", module: "tasks" },
   { path: "/tasks/chat", label: "Team Chat", module: "tasks" },
   { path: "/tasks/report", label: "Admin Report", module: "tasks" },
+  { path: "/tasks/exceptions", label: "Exceptions", module: "tasks" },
   { path: "/finance", label: "Finance Overview", module: "finance" },
   { path: "/finance/hub", label: "Finance Hub", module: "finance" },
   { path: "/finance/projections", label: "Projections", module: "finance" },
