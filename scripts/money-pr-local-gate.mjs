@@ -361,6 +361,15 @@ const GUARD_303 = [
 const DATA_WRITE_PATHS = ["db/migrations/", "scripts/ops/"];
 const ONE_SHOT_WRITER_RE = /^scripts\/run-[^/]+-once\.m?[jt]s$/;
 const LIVE_DOMAIN_GUARDS = [
+  [
+    "verify-costs-are-expenses-not-handwritten-jes",
+    [
+      "scripts/verify-costs-are-expenses-not-handwritten-jes.mjs",
+      "apps/backend/src/accounting/",
+      "apps/backend/src/fuel/",
+      "apps/backend/src/factoring/",
+    ],
+  ],
   // PROTECT-LIST GUARD (owner, P0, ROUND E11.2) — "nothing in this repo prevents a purge or a feed
   // from deleting master data. The wipe spared geofences and locations because the table list
   // happened to omit them, not because anything forbade it." Static half (no new DELETE/TRUNCATE
