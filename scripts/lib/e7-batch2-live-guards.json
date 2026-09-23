@@ -46,7 +46,6 @@
     "verify-load-costs-cost-split-foots.mjs",
     "verify-load-counter-not-ahead-of-reality.mjs",
     "verify-manual-delivery-authorization.mjs",
-    "verify-migration-no-number-collision.mjs",
     "verify-no-duplicate-seed-deductions.mjs",
     "verify-no-duplicate-settlement-deductions.mjs",
     "verify-no-future-dated-seed-expenses.mjs",
@@ -90,6 +89,7 @@
       "verify-load-exception-reasons-catalog.mjs",
       "verify-load-settlement-linkage.mjs",
       "verify-load-stop-legs-and-vendor-driver-id.mjs",
+      "verify-migration-no-number-collision.mjs",
       "verify-no-duplicate-settlement-lines.mjs",
       "verify-no-posting-gate-on-empty-table.mjs",
       "verify-no-seat-instruction-overrides-owner-void.mjs",
@@ -108,7 +108,8 @@
       "verify-settlement-tieout-01.mjs",
       "verify-source-document-ref-backfill.mjs",
       "verify-usmca-settlement-linkage.mjs"
-    ]
+    ],
+    "collision_note": "verify-migration-no-number-collision was green when proven (2026-09-23 ~02:00Z), then went red live: 202614280000 and 202614200000 are stamped in the prod ledger while their files sit on CC-1 PR #22338. Move it back to guards when #22338 merges."
   },
   "batch2b_established": "2026-09-23"
 }
