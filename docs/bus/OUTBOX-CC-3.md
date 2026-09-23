@@ -2112,3 +2112,53 @@ e10-void-runner-02-escrow-neutralize.ts: these rows are now identified, named in
 excluded from the mirror set. Not yet re-run end-to-end with this fix (queued next).
 
 — CC-3
+
+## 2026-09-23 (Round 102) — R-98.1-A idempotency MERGED (#22414), R-102-E sample-load numbers MERGED (same PR)
+
+**R-98.1-A -- DONE, live-proven.** Wrapped all six e10-void-runner-01-usmca.ts reversal-engine
+call sites in one shared inTx() helper (five previously uncovered: settlements bill-payment,
+settlement pay-run, factoring left unwrapped with a named reason -- no ...InClientTx sibling
+exists, wrapping it would be an empty no-op transaction). Added reverseByJeIdFallback() for "No
+posted batch found to reverse" (REUSE engine #6 by JE id, not a 7th engine). Fixed every
+candidate-liveness query to add `reverses_je_id IS NULL` -- without it a reversal JE gets
+re-selected as a fresh candidate on the next run (this exact bug produced "480 live expenses
+again" on an already-fully-reversed branch earlier this session; root-caused and fixed here).
+LIVE PROOF on a fresh branch off production (br-snowy-cake-ak9meo9f, never production): run 1 --
+0 errors across all five phases (36/69/75/211/139 processed clean, vs the Lead's own rehearsal's
+416 errors on the unfixed code). Run 2, same branch, immediately after -- every phase's own
+measurement query returns 0 candidates, 0 errors, 0 "No posted batch found to reverse" -- exceeds
+the required bar (nothing left to even attempt). verify-e10-reversal-is-idempotent.mjs (new,
+static, --selftest PASS) checks the runner's own code shape for the three properties that keep
+it idempotent.
+
+**R-102-E -- DONE for items 1-3, item 4 explicitly not done.** 16 is_sample_data USMCA loads
+(created 2026-09-05, already fully voided, re-verified 0 live money myself and in doing so caught
+a measurement bug in my OWN first check -- forgot reverses_je_id, same bug as above) held real
+AlwaysTrack load numbers that would hard-fail Feed Day 1 (13%, guaranteed, on
+mdata.loads' non-partial UNIQUE(operating_company_id, load_number)). Renumbered all 16 to
+"<number>-SAMPLE-VOID-20260923" (void-not-delete), moved the three denormalized load_number
+copies (driver_bills, driver_settlement_gl_bills, expense_load_links) by load_id in the same
+transaction. The voided_at/void_reason/voided_by_user_id stamp is gated on an
+information_schema.columns existence check, not assumed -- hit live: my proving-ground branch was
+forked minutes before R-102-A landed on production, so it correctly skipped the stamp and said so
+plainly rather than inventing a column (production itself already has the columns per #22411,
+confirmed directly). Executed clean: renumbered=16 skipped=0 errors=0, all 16 rows still present,
+0 rows deleted. verify-no-sample-data-holds-a-real-number.mjs (new): PASS, 0 collisions, 0 stale
+copies. Item 4 (the wider ~22-table is_sample_data census) is NOT done -- named, not skipped
+silently.
+
+Both new guards (scripts/verify-e10-reversal-is-idempotent.mjs,
+scripts/verify-no-sample-data-holds-a-real-number.mjs) crossed into CC-1's guard-file lane;
+authorized via docs/bus/LEAD-RULING-2026-09-23-CC3-E10-AND-SAMPLE-LOAD-GUARDS-CROSS-LANE.md
+(both files were named by exact filename in the Lead's own assignment messages) and pushed with
+LANE_CROSS set, per standing procedure.
+
+REMAINING: the R-98.1-A REUSE fallback (reverseByJeIdFallback) was code-reviewed and typechecked
+but NOT exercised live this pass -- run 1 processed every invoice/expense cleanly through the
+InClientTx path with 0 SOURCE_NOT_FOUND errors, so the original 209+70-error scenario did not
+reproduce once the transaction-wrapping fix alone was in place. R-102-E's voided_at stamp path
+(columns present) is a straightforward conditional matching production's real current schema but
+was only exercised via the "columns absent" branch live -- not separately re-run end-to-end
+against a branch that already has R-102-A. Item 4 of R-102-E (full census) not started.
+
+— CC-3
