@@ -51,6 +51,17 @@ const LIVE_FLAG_FILES = new Map([
   ["verify-acct-link-03-bill-unit-density.mjs", "--live"],
   ["verify-heavy-repair-expense-account.mjs", "--live"],
   ["verify-je-type-inbound-density.mjs", "--live"],
+  // E7 batch 2c-2: static by default; their database half runs only with --live, and fails closed there.
+  ["verify-factoring-recourse-window.mjs", "--live"],
+  ["verify-fuel-overage-receivable-account.mjs", "--live"],
+  ["verify-geofence-events-from-positions.mjs", "--live"],
+  ["verify-intercompany-coa-8000-block.mjs", "--live"],
+  ["verify-netpay-clearing-is-liability.mjs", "--live"],
+  ["verify-samsara-driver-mirror-both-statuses.mjs", "--live"],
+  ["verify-samsara-driver-mirror-complete.mjs", "--live"],
+  ["verify-seed-script-usmca-cutover-floor.mjs", "--live"],
+  ["verify-stops-geocoded.mjs", "--live"],
+  ["verify-double-entry-balance-trigger.mjs", "--live"],
 ]);
 
 // Not a lightweight money/data guard despite the verify- prefix and a DATABASE_URL mention — it

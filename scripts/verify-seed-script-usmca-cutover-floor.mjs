@@ -61,6 +61,10 @@ export function collectSourceFailures(sources = SEED_SCRIPTS.map((p) => [p, load
 
 async function liveCheck() {
   const { default: pg } = await import("pg");
+  if (!process.env.DATABASE_URL) {
+    console.error("verify-seed-script-usmca-cutover-floor: FAIL — --live needs DATABASE_URL; it never falls back to a local database.");
+    process.exit(1);
+  }
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
   const client = await pool.connect();
   try {

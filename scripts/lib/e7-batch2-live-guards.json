@@ -73,7 +73,17 @@
   ],
   "live_flag_guards": [
     "verify-acct-link-03-bill-unit-density.mjs",
-    "verify-heavy-repair-expense-account.mjs"
+    "verify-double-entry-balance-trigger.mjs",
+    "verify-factoring-recourse-window.mjs",
+    "verify-fuel-overage-receivable-account.mjs",
+    "verify-geofence-events-from-positions.mjs",
+    "verify-heavy-repair-expense-account.mjs",
+    "verify-intercompany-coa-8000-block.mjs",
+    "verify-netpay-clearing-is-liability.mjs",
+    "verify-samsara-driver-mirror-both-statuses.mjs",
+    "verify-samsara-driver-mirror-complete.mjs",
+    "verify-seed-script-usmca-cutover-floor.mjs",
+    "verify-stops-geocoded.mjs"
   ],
   "converted_red_not_wired": {
     "_comment": "E7 batch 2b (2026-09-23): converted to fail closed, red live today for their own pre-existing reason (same exit code before and after the edit). Not run by the gate until green; move to guards once green. Round 86: no seat works transaction rows to turn these green.",

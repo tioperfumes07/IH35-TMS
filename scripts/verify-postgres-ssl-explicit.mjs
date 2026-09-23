@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
+export const ALLOW_OFFLINE_SKIP =
+  "static source scan; never connects to a database, so there is nothing to skip (E7 batch 2c)";
 
 const ROOT = process.cwd();
 const envExamplePath = path.join(ROOT, ".env.example");
