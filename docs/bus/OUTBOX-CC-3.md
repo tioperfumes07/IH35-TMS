@@ -1912,3 +1912,7 @@ Live proof: categories 19 (all 20 QBO categories minus the one E13-B D1 already 
 The catalog is now fully categorized for every row this session's own source data actually categorizes. The only remaining gaps (5 Relay items, no account and no category) are a pre-existing condition from before this session's work, never guessed at.
 
 — CC-3
+
+CC-3 | vehicle_parts_accessories -- partially mapped with real evidence, not forced | Read all 4 real line-shapes in their own document context (not just the classifier bucket name): all sit inside "Reimbursed Expenses" blocks on the driver documents, the SAME section as already-correctly-mapped driver_reimbursement lines on the SAME Loves/Road Ranger receipts -- these are truck-stop consumable purchases reimbursed to the driver, not "vehicle parts" repairs. WINDSHIELD (windshield washer fluid) and HEADLIG (a headlight bulb) map cleanly to the catalog's existing "Driver Reimbursement-OTR-Maintenance, Oils, Additives" -- real evidence, not guessed. PREMIUM and FEE ITEM stay unmapped: PREMIUM sits on the same Loves receipt as a Driver Reimbursement-Fuel-Def line and could mean a premium diesel grade (fuel) or a premium wash/product (maintenance) -- the two possibilities hit different GL accounts and the receipt text doesn't disambiguate. FEE ITEM is a flat per-transaction fee with no stated product attached -- could be Bank Charges or a surcharge on whatever it's billed against. Build failure down from 6 lines/$148.13 to 3 lines/$47.88 (2x PREMIUM + 1x FEE ITEM) -- real, reported, not invented.
+
+— CC-3

@@ -380,6 +380,36 @@ def resolve_tires_item(desc):
     return None
 
 
+# vehicle_parts_accessories -- Round 91/92 evidence check (read every raw line in its own
+# document context, not just the classifier's bucket name): all 4 real lines sit inside a
+# "Reimbursed Expenses" block on the driver document, the SAME section as already-correctly-
+# mapped driver_reimbursement lines (Driver Reimbursement-Fuel-Def, -TPE-Scale Expense, Reefer
+# Trailer-Washout Expense appear immediately adjacent to these on the same documents). These are
+# Loves/Road Ranger truck-stop consumable purchases reimbursed to the driver, not "vehicle parts
+# and accessories" repairs -- the category name itself, inherited from an earlier ruling, no
+# longer matches what the evidence shows.
+#   "LOVES 2AS20WINDSHIELD" ($37.63, doc 5797) -- windshield washer fluid, a real OTR consumable.
+#   "LOVES 1ASC H1155LL HEADLIG" ($24.99, doc 5802) -- a headlight bulb, same shape.
+# Both map cleanly to the catalog's existing "Driver Reimbursement-OTR-Maintenance, Oils,
+# Additives" -- real truck-stop supplies, exactly what that item already covers.
+#   "LOVES 1ASC ''19 PREMIUM" ($22.14, doc 5794) -- sits between a Driver Reimbursement-Fuel-Def
+#   line and a Reefer Trailer-Washout line on the same Loves receipt. "PREMIUM" could mean a
+#   premium diesel grade (a FUEL item) or a premium-tier wash/product (a maintenance item) --
+#   the receipt text alone does not disambiguate, and guessing between the two changes which GL
+#   account it hits. Left unmapped.
+#   "loves FEE ITEM" ($3.60, doc 5761) -- a flat per-transaction fee on the same kind of Loves
+#   receipt (appears beside two Driver Reimbursement-TPE-Scale Expense lines and a Reefer
+#   Trailer-Washout line). Could be a card/transaction fee (Bank Charges) or a receipt-level
+#   surcharge on whatever product it is attached to -- no catalog item exists for an
+#   undifferentiated "fee," and which specific purchase it belongs to is not stated. Left
+#   unmapped.
+def resolve_vehicle_parts_accessories_item(desc):
+    d = desc.lower()
+    if "windshield" in d or "headlig" in d:
+        return "Driver Reimbursement-OTR-Maintenance, Oils, Additives"
+    return None
+
+
 # driver_pay -- the catalog carries FOUR real items, split two ways: Mexico-B1 vs CDL driver, and
 # Loaded vs Empty miles. The settlement text itself never states which regime a driver is under,
 # but the driver's OWN home address (already captured, parse_driver's DRVADDR field) does: every
@@ -406,6 +436,8 @@ def resolve_item_key(category, description, driver_address=None, pay_kind=None):
         return resolve_driver_reimbursement_item(description)
     if category == "tires":
         return resolve_tires_item(description)
+    if category == "vehicle_parts_accessories":
+        return resolve_vehicle_parts_accessories_item(description)
     if category == "toll_parking":
         return resolve_toll_parking_item(description)
     if category == "driver_pay":
