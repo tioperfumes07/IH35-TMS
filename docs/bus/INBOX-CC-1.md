@@ -1,3 +1,15 @@
+# ★★★ ROUND 114 HARD WAKE — 2026-09-23 — PRODUCTION ONLY — NO REHEARSALS
+
+Path proven in prod (live JEs 1181→~978 and falling, zero_line=0, banking stable 1133). Cursor is looping E10 on production until live_jes flattens x2.
+
+
+## CC-1 — YOUR NOW (PARALLEL with Cursor loop — do not wait)
+
+Wire `stampDocumentVoided()` into `scripts/ops/e10-void-runner-01-usmca.ts` phases so **header + GL reverse in the same inTx()**. Owner standing ruling. 97+ reversals already posted with document headers NOT reading VOIDED — that is the only missing piece of the void. Do not wait for the loop to finish. One PR + guard. USMCA only. Never POST Book Load.
+
+
+---
+
 # ROUND 94 - ALL SEATS - 3 OF 13 ARE DONE. 10 ARE OPEN. GO.
 
 Measured against merged PRs on main at `fc5b2d901b`, not read off a status doc:

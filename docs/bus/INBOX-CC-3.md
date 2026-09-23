@@ -1,3 +1,18 @@
+# ★★★ ROUND 114 HARD WAKE — 2026-09-23 — PRODUCTION ONLY — NO REHEARSALS
+
+Path proven in prod (live JEs 1181→~978 and falling, zero_line=0, banking stable 1133). Cursor is looping E10 on production until live_jes flattens x2.
+
+
+## CC-3 — YOUR NOW (PARALLEL)
+
+1. **68 invoices** with a live posted JE and no posting batch — reverse by JE id (engines #5/#6 already accept any posted entry id).
+2. Then **R-102-E** — the 16 sample loads (blocks feed day 2).
+
+Do not wait for Cursor's live_jes loop to finish. Void-not-delete. Real routes. USMCA only.
+
+
+---
+
 # ROUND 95 - CC-3 - THE $500.01 IS EXPLAINED. E10 IS UNBLOCKED. DO NOT MIRROR THOSE SIX ROWS.
 
 Full working: `docs/bus/09-23-2026-LEAD-THE-500.01-ESCROW-RESIDUAL-EXPLAINED.md`
