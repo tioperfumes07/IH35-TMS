@@ -480,6 +480,18 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-settled-load-carries-settled-status.baseline.json",
     ],
   ],
+  // TASK 18 (ROUND E12.1-R2) — the credit_memo/liability zero-posting-lines tripwire. Fires on the
+  // one known live-capable writer (escrow-forfeit.service.ts's source_transaction_type='liability'
+  // path) plus the routes/dispatcher whose contract depends on the count staying zero.
+  [
+    "verify-credit-memo-liability-zero-posting-lines",
+    [
+      "apps/backend/src/accounting/void-document.service.ts",
+      "apps/backend/src/accounting/credit-memos.routes.ts",
+      "apps/backend/src/liabilities/",
+      "apps/backend/src/driver-finance/escrow-forfeit.service.ts",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {

@@ -31,15 +31,23 @@
  * reversed, "why would I forgive the debt", 2026-09-05). This dispatcher calls them verbatim, no
  * new GL math, no new preconditions — exactly the shape every other case in this switch follows.
  *
- * TWO entity types in this lane are deliberately NOT wired yet: 'credit_memo' and 'liability'.
- * credit_memos.routes.ts's void route has no `source_transaction_type='credit_memo'` reference
- * anywhere in the codebase (grep-confirmed) — no GL posting exists at that source type today, so
- * there may be nothing to reverse; but driver_finance.driver_liabilities can originate from a
- * POSTED safety-fine conversion (safety-fine-posting/poster.service.ts), so liabilities.routes.ts's
- * bare status-flip void may be a REAL gap, not a "nothing to reverse" case. Wiring either one on a
- * guess would misrepresent a void as reversed (or as safely unreversed) without evidence — both
- * throw NOT_YET_WIRED below until that trace is done. Calling voidDocument() with either type is a
- * loud, immediate failure, never a silent no-op.
+ * TASK 18 (ROUND E12.1-R2, owner order 2026-09-23) — THE TRACE IS NOW DONE for 'credit_memo' and
+ * 'liability'. Verified live 2026-09-23 (bypass_rls, tiny-field-89581227):
+ *   SELECT source_transaction_type, count(*) FROM accounting.journal_entry_postings
+ *     WHERE source_transaction_type IN ('credit_memo','liability') GROUP BY source_transaction_type;
+ * returns ZERO ROWS for both — genuinely subledger-only today, nothing to reverse. This is NOT the
+ * same claim the earlier comment here made (that comment cited safety-fine-posting/poster.service.ts,
+ * which actually posts under source_transaction_type='safety_fine', a different type it never
+ * checked) — the real live-capable path is driver-finance/escrow-forfeit.service.ts, which posts
+ * `source_transaction_type: "liability"` whenever a forfeiture names a `linked_liability_id`. That
+ * path is real code, already shippable, just never yet exercised (0 live rows) — so "zero posting
+ * lines" is a currently-true fact, not a permanent guarantee. scripts/verify-credit-memo-liability-
+ * zero-posting-lines.mjs is the standing tripwire: it fails the build the moment either type's count
+ * goes above zero, at which point THIS dispatcher's two cases below need a real reversal engine, not
+ * a guess. Until then, both cases register the void (this dispatcher's own audit entry — neither
+ * underlying route calls an engine that would otherwise write one) and return a clean, honest
+ * `reversalJournalEntryId: null` — never a thrown refusal for a case that is genuinely empty today,
+ * and never a silent no-op either.
  */
 import {
   postVoidReversal,
@@ -49,6 +57,7 @@ import { voidBillInClientTx, voidBillPaymentInClientTx, type BillMutationClient 
 import { reversePostedSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { reverseFactoringAdvanceEvent } from "./factoring-posting/poster.service.js";
 import { reverseSettlementForVoid, reverseDeductionForVoid } from "../driver-finance/void-document-callees.service.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 
 export type VoidDocumentType =
   | "bill"
@@ -218,21 +227,28 @@ export async function voidDocument(
     }
 
     case "credit_memo":
-      throw new VoidDocumentNotYetWiredError(
-        input.type,
-        "no source_transaction_type='credit_memo' posting exists anywhere in the codebase (grep-" +
-          "confirmed) — needs a real trace of whether credit-memo application nets against a live " +
-          "GL posting before this can be wired safely, not assumed either way."
+    case "liability": {
+      // TASK 18 — see this file's header. Verified live, zero posting lines at either source type
+      // today; nothing to reverse. Register the void event ourselves (the real routes for both
+      // types — credit-memos.routes.ts, liabilities.routes.ts — flip status directly and never call
+      // an underlying reversal engine that would otherwise write this audit entry) and return a
+      // clean null, never a thrown refusal for a case verified genuinely empty.
+      await appendCrudAudit(
+        client,
+        input.actor.userId,
+        `accounting.${input.type}.voided_no_gl_impact`,
+        {
+          resource_type: input.type,
+          resource_id: input.id,
+          reason: input.reason,
+          zero_posting_lines_verified_at: "2026-09-23",
+          tripwire: "scripts/verify-credit-memo-liability-zero-posting-lines.mjs",
+        },
+        "info",
+        "ACCT-TASK18-CREDIT-MEMO-LIABILITY"
       );
-
-    case "liability":
-      throw new VoidDocumentNotYetWiredError(
-        input.type,
-        "driver_finance.driver_liabilities can originate from a POSTED safety-fine conversion " +
-          "(safety-fine-posting/poster.service.ts) — liabilities.routes.ts's void route today only " +
-          "flips status, with no reversal call. Needs the real source_transaction_type trace before " +
-          "this can be wired, not assumed safe."
-      );
+      return { voidedAt: nowIso(), reversalJournalEntryId: null };
+    }
 
     default: {
       const _exhaustive: never = input.type;
