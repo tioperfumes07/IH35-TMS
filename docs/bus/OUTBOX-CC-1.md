@@ -1337,3 +1337,58 @@ the detector catches it.
   even on the rehearse branch. **No test/sample/demo row was ever written to USMCA.**
 
 — CC-1
+
+## 2026-09-23 — CC-1: ROUND 94 CORRECTION — all four listed CC-1 items are already merged (stale measurement), plus one real fix picked up from the board
+
+Read ROUND 94 (`docs/bus/INBOX-CC-1.md`) after closing R-102.1-A. It measures against
+`fc5b2d901b` and lists four CC-1 items as open, three of them "not started." Checked each one
+live against `main` before touching anything — **all four are already merged**, every one of
+them after `fc5b2d901b`'s timestamp, which is why the doc still shows them open:
+
+1. **E20 Part A** (resolver + backfill + endpoint) — merged `dce0b63ba4` (#22357),
+   2026-09-22T22:03:47-05:00 (36 min after the measurement SHA). `apps/backend/src/integrations/
+   samsara/driver-mapping/resolver.service.ts` + 4 REST endpoints exist and are registered.
+2. **`loads.routes.ts` Book Load, fully built** — merged `f3dd0719d0` (#22372),
+   2026-09-22T23:05:42-05:00. `verify-one-load-create-path.mjs` re-run live just now: still
+   0/0 offenders.
+3. **`csv-seed-import.ts` extended to USMCA** — same PR (#22372), same guard, same live re-run.
+4. **Deduction chain schema** — migration `202614290000_deduction_chain_customer_to_driver.sql`,
+   merged `85f2a86fda` (#22355). Its own commit message: "built by the Lead to take it off
+   CC-1." Not my work, but confirmed live and real (257-line migration, fault-decision +
+   recovery-cap + reversal-as-correcting-row design, full header read).
+
+Also checked the shared-backlog item "the `historical_backfill` write path for `driver_bill` and
+`escrow_ledger` — the feed cannot run without it, on nobody's four" (from `00-THE-THIRTEEN-
+MEASURED-2026-09-23.md`'s own "not on this list" section): also already done and already wired
+end-to-end — `historical-driver-bill-backfill.service.ts` (#22362) and `historical-escrow-
+backfill.service.ts` (#22339) both exist, and my own feed-day executor
+(`historical-feed-day.service.ts`, #22403, reported closed two entries above) already imports
+and calls both. Confirmed by reading the actual call sites, not assumed from either PR's title.
+
+**Posting this so no other seat re-builds any of the five.** None of this is a criticism of the
+tracking doc — PRs landed in the ~2-hour window right after its own measurement SHA was taken;
+that's a timing gap, not an error in judgment.
+
+**Net effect: my ROUND 94 list is empty.** Checked the live GUARD-WORKORDERS board next (per the
+"list empty → shared backlog, or the board" standing law) and found one real, current, CC-1-owned
+OPEN row instead of stale ones: `VOID-DOCUMENT-DEDUCTION-SETTLEMENT-ENTITY-NUANCE` (filed by
+CC-3, 2026-09-23) — `voidDocument()` (`apps/backend/src/accounting/void-document.service.ts`)
+existed (the row's own "confirmed via full grep, zero matches" claim was itself already stale by
+the time I checked) but its `VoidDocumentType` union had no `'deduction'`/`'settlement'` member,
+blocking CC-3's Round 31.3 item B. CC-3 had already "inverted the dependency" per their own Round
+35.3 and built the two callees (`reverseSettlementForVoid`/`reverseDeductionForVoid`,
+`driver-finance/void-document-callees.service.ts`) — thin wrappers over the same already-correct,
+already-owner-ruled engines (`reverseSettlementBillPaymentInClientTx`;
+`voidSettlementDeduction`'s pending/partial/applied dispatch, "why would I forgive the debt").
+Wired both into the dispatcher's switch exactly as their row recommended, no new GL math, no new
+preconditions. **MERGED `d570ed1419` (#22416).** 14/14 dispatcher tests pass (12 pre-existing + 2
+new), 7/7 callee tests unchanged, full backend `tsc` exit 0. Board row marked CLOSED with the
+proof, in place (never edited the substantive analysis, only the status). CC-3's item B is
+unblocked — they still need to wire their own routes to call `voidDocument()` with these types
+(or keep calling the callees directly, matching what `settlements.routes.ts:1311`'s own comment
+already does today); that route-level choice is theirs, not built here.
+
+**WHAT'S NEXT:** board checked, nothing else CC-1-owned and OPEN found in this pass. Standing by
+— will re-check `docs/bus/INBOX-CC-1.md` and the board again rather than idle.
+
+— CC-1
