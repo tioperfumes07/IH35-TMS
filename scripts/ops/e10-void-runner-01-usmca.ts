@@ -21,6 +21,22 @@
 // wrapper siblings: reverseSettlementBillPayment, reversePostedSourceTransaction). Nothing here
 // writes new GL math.
 //
+// ROUND 94 FIX -- SETTLEMENTS PHASE WAS CHECKING THE WRONG TABLE FOR USMCA, FOUND LIVE:
+// driver_finance.driver_settlement_gl_runs has 0 rows for USMCA -- that table belongs to the
+// BILL-PAYMENT poster (reverseSettlementBillPayment's own mechanism), which USMCA has never used.
+// USMCA's real 89 settlements post through a SEPARATE mechanism, closeSettlementPayRun
+// (settlement-payrun-close.service.ts), tracked in driver_finance.payrun_gl_runs (36 posted / 16
+// void / 37 never posted, measured live). reverseSettlementPayRun
+// (settlement-payrun-reverse.service.ts) is that mechanism's own already-built reverse
+// counterpart -- its own header says so verbatim: "the only packaged settlement reversal
+// (reverseSettlementBillPayment) targets the DIFFERENT bill-payment poster ... which has ZERO
+// rows in prod and was never used for USMCA. This is that missing engine." It is NOT a seventh
+// primitive: it delegates the actual GL reversal whole to reverseJournalEntryNoFlip (#6) and the
+// escrow sub-ledger reversal to recordEscrowPostingOnly, exactly the way reverseSettlementBillPayment
+// (#4) itself is an orchestrator over the six, not a primitive of its own. Phase 1b below adds
+// this second, USMCA-actual mechanism; Phase 1 (bill-payment) stays in place, unchanged, for
+// defense-in-depth on any future settlement that DOES post that way.
+//
 // DOCUMENT-LEVEL ORDER (per the owner's own phase-redesign, reverse of how money flows forward):
 //   1. settlements + driver bills (escrow & deductions unwind here, BY THE ENGINE) --
 //      reverseSettlementBillPaymentInClientTx. Bill/payment legs are its own first sub-step.
@@ -71,6 +87,7 @@ import { voidJournalEntry, reverseJournalEntryNoFlip } from "../../apps/backend/
 import { reversePostedSourceTransaction } from "../../apps/backend/src/accounting/posting-engine.service.js";
 import { reverseFactoringAdvanceEvent } from "../../apps/backend/src/accounting/factoring-posting/poster.service.js";
 import { reverseSettlementBillPayment } from "../../apps/backend/src/accounting/settlement-posting/settlement-bill-payment-posting.service.js";
+import { reverseSettlementPayRun } from "../../apps/backend/src/driver-finance/settlement-payrun-reverse.service.js";
 
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const OWNER_USER_ID = "e4117991-d2c0-406d-8cda-74e98d95bccd";
@@ -146,6 +163,41 @@ async function main() {
       else settlementTally.already_reversed++;
     } catch (e) {
       settlementTally.errors.push(`settlement ${s.id}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+
+  // ================= PHASE 1b: settlements posted via pay-run close (payrun_gl_runs) =================
+  // See the ROUND 94 FIX header note -- this is the mechanism USMCA actually used, 0 of the
+  // Phase 1 (driver_settlement_gl_runs) candidates ever existed for USMCA.
+  const payrunSettlements = await client.query<{ id: string }>(
+    `
+      SELECT ds.id::text
+        FROM driver_finance.driver_settlements ds
+        JOIN driver_finance.payrun_gl_runs r ON r.settlement_id = ds.id
+       WHERE ds.operating_company_id = $1::uuid AND r.status = 'posted'
+       ORDER BY ds.id
+    `,
+    [USMCA_COMPANY_ID]
+  );
+  console.log(`Settlements with a posted payrun_gl_runs (pay-run close) run: ${payrunSettlements.rowCount}`);
+
+  for (const s of payrunSettlements.rows) {
+    // Same already-collected rule as Phase 1: settlement_payment_events is the real signal.
+    const collected = await client.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM driver_finance.settlement_payment_events WHERE settlement_id = $1::uuid`,
+      [s.id]
+    );
+    if (collected.rows[0]?.n !== "0") {
+      settlementTally.skipped.push(`settlement ${s.id} (payrun_gl_runs; settlement_payment_events=${collected.rows[0]?.n} -- already-collected, never reversed)`);
+      continue;
+    }
+    if (!executeFlag) continue;
+    try {
+      const res = await reverseSettlementPayRun({ operatingCompanyId: USMCA_COMPANY_ID, settlementId: s.id, reason: VOID_REASON }, ACTOR);
+      if (res.result === "reversed") settlementTally.reversed++;
+      else settlementTally.already_reversed++;
+    } catch (e) {
+      settlementTally.errors.push(`settlement ${s.id} (payrun_gl_runs): ${e instanceof Error ? e.message : String(e)}`);
     }
   }
 
