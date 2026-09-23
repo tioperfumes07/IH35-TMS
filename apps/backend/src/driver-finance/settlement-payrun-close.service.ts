@@ -1300,3 +1300,81 @@ async function recordSettlementDisbursement(
   );
   return (upd.rowCount ?? 0) > 0;
 }
+
+/**
+ * ROUND 137 (owner, direct, 2026-09-23) — USMCA-LOAD-BOOKENDED-SETTLEMENTS-NEVER-POST-GL fix.
+ *
+ * The load-bookended trip-close path (settlements-load-bookended.service.ts's
+ * stampTripClosedForBookendedSettlement, called from tour-close.routes.ts and
+ * tour-readout.routes.ts's office close-tour route) stamps status='closed'/trip_closed_at and
+ * returns — it never posts the settlement's GL. Every OTHER path that reaches this point
+ * (settlement-payrun-close.routes.ts, and this file's own internal calls at claimSettlementPayRun
+ * time) goes through closeSettlementPayRun, which both stamps (idempotently, if not already
+ * stamped) AND posts. The gap is specifically the two trip-close ROUTES that call the stamp
+ * function directly and stop.
+ *
+ * closeSettlementPayRun manages its OWN connection/transaction internally (no `client` param) and
+ * reads the settlement's CURRENT status to decide postability — calling it from inside the
+ * trip-close write's own still-open transaction would read pre-commit state. This function is
+ * therefore called by its callers ONLY AFTER their own trip-close transaction has committed
+ * (see tour-close.routes.ts / tour-readout.routes.ts) — never nested inside it.
+ *
+ * The settlement has never been disbursed (payment_state='unpaid', payment_method=NULL, confirmed
+ * live for every USMCA load_bookended settlement) — real cash never moved for it at trip-close, so
+ * the payment leg goes to the "Driver Net-Pay Clearing" method (a LIABILITY/clearing GL account,
+ * not cash), the SAME mechanism the owner already approved and used successfully for 13 other
+ * USMCA settlements (ROUND 16.22, scripts/ops/setl-close-post-a-apply.ts) — reused here, not
+ * reinvented. Resolved BY NAME (not hardcoded, unlike the one-off ops script) so this stays
+ * correct if the clearing method's id ever differs across environments.
+ *
+ * FAIL-SOFT BY DESIGN: a driver's (or office user's) "close tour" action must not hard-fail
+ * because a backend GL posting hit a snag — the trip IS closed either way (that write already
+ * committed). A posting failure here is caught, audited loudly (never swallowed silently), and
+ * left for scripts/verify-settlement-close-posts-gl.mjs to catch and someone to retry — the guard
+ * exists specifically so this failure mode is never invisible.
+ */
+export async function postLoadBookendedSettlementGlAfterClose(
+  args: { operatingCompanyId: string; settlementId: string; actorUserId: string }
+): Promise<{ posted: boolean; journal_entry_id: string | null; error: string | null }> {
+  try {
+    const methodRes = await withCurrentUser(args.actorUserId, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [args.operatingCompanyId]);
+      return client.query<{ id: string }>(
+        `SELECT id::text FROM catalogs.payment_methods
+          WHERE operating_company_id = $1::uuid AND display_name = 'Driver Net-Pay Clearing' LIMIT 1`,
+        [args.operatingCompanyId]
+      );
+    });
+    const clearingMethodId = methodRes.rows[0]?.id;
+    if (!clearingMethodId) {
+      const msg = `postLoadBookendedSettlementGlAfterClose: no "Driver Net-Pay Clearing" payment method found for company ${args.operatingCompanyId} -- refusing to guess an account, not posting.`;
+      console.error(msg);
+      return { posted: false, journal_entry_id: null, error: msg };
+    }
+
+    const result = await closeSettlementPayRun(
+      {
+        operatingCompanyId: args.operatingCompanyId,
+        settlementId: args.settlementId,
+        paymentMethodId: clearingMethodId,
+        previewOnly: false,
+      },
+      { userId: args.actorUserId }
+    );
+
+    if (result.result === "posted") {
+      // Covers both a fresh post and the idempotent re-entry branch (already claimed by an
+      // earlier close) -- both return result:"posted" (see the claim-guard branch above).
+      return { posted: true, journal_entry_id: result.journal_entry_id, error: null };
+    }
+    // "previewed" only happens if the flag flipped OFF between the trip-close and this call --
+    // real, but not this function's job to fix (the guard will catch it as still-unposted).
+    const msg = `postLoadBookendedSettlementGlAfterClose: settlement ${args.settlementId} closed but did not post (result=${result.result}, posting_enabled=${result.posting_enabled}).`;
+    console.error(msg);
+    return { posted: false, journal_entry_id: null, error: msg };
+  } catch (e) {
+    const msg = `postLoadBookendedSettlementGlAfterClose: settlement ${args.settlementId} threw while posting: ${e instanceof Error ? e.message : String(e)}`;
+    console.error(msg);
+    return { posted: false, journal_entry_id: null, error: msg };
+  }
+}

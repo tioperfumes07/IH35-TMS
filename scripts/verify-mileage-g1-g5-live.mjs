@@ -125,16 +125,24 @@ async function runLiveChecks() {
           AND short_miles IS NOT NULL AND short_miles > practical_miles`,
       [USMCA]
     );
+    // ROOT CAUSE (found 2026-09-23, live): the named 13508 exception matched on an exact
+    // load_number string, but a void/renumber pass elsewhere (void-not-delete renames a load to
+    // "VOID-<original>-<suffix>") changed 13508's own load_number, making the exact match miss it
+    // and re-surface as a false "unexplained" G4 hit. FIX at the root, not another named string: a
+    // voided row is defunct history, not live data this consistency check is about — exclude
+    // voided_at IS NOT NULL generally (covers 13508's own void-renumber AND any future one),
+    // keeping the named exact-match too so the comment/history above stays literally true for the
+    // common, not-yet-voided case.
     const g3 = await client.query(
       `SELECT count(*)::int AS n FROM mdata.loads
         WHERE operating_company_id = $1::uuid AND miles_shortest IS NOT NULL AND miles_practical IS NOT NULL
-          AND miles_shortest > miles_practical AND load_number <> $2`,
+          AND miles_shortest > miles_practical AND load_number <> $2 AND voided_at IS NULL`,
       [USMCA, KNOWN_MISMATCH_LOAD_NUMBER]
     );
     const g4 = await client.query(
       `SELECT count(*)::int AS n FROM mdata.loads
         WHERE operating_company_id = $1::uuid AND miles_practical IS NOT NULL AND mileage_source IS NULL
-          AND load_number <> $2`,
+          AND load_number <> $2 AND voided_at IS NULL`,
       [USMCA, KNOWN_MISMATCH_LOAD_NUMBER]
     );
     return {
