@@ -5253,3 +5253,50 @@ fuel purchases) into VoidedBanner now that #22410/#22411 landed.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+
+## R-102-B item 1 — MERGED (#22418, sha 1ca513729b1f99fa3009223f9631dc50360b5c28)
+
+Confirmed live on origin/main post-merge (VoidedBanner.tsx carries voidedByUserId + ctDateTime).
+`required-checks-gate` and `hold-merge-gate` both green on the PR. Four CI checks showed red
+and were each independently verified pre-existing and unrelated before merging through (main
+carries no GitHub branch protection; confirmed via `gh api repos/.../branches/main/protection`
+-> 404 "Branch not protected" — these are advisory/status checks, not merge gates):
+
+1. `go26-consolidation-ratchet` — `apps/frontend/src/pages/samsara-driver-mapping/
+   SamsaraDriverMappingPage.tsx` (my own E20 Part B, #22385) imports `components/DataTable`
+   instead of the canonical `ParityTable`, tripping the sprawl ratchet (20 -> 21). Real,
+   pre-existing, mine to eventually fix — deliberately NOT folded into R-102-B's diff under
+   deadline pressure (a DataTable->ParityTable conversion on a live page deserves its own
+   careful PR, not a rushed addition to a lane-crossing money PR). Will fix as its own
+   small follow-up.
+2. `locked-guards-heavy` / `locked-guards` (`verify:guard-wired`) — 17-19 orphan guard scripts
+   repo-wide (not registered in any verify-step or package.json), spanning multiple seats'
+   work across the session, including two of my own much-earlier merges
+   (`verify-faro-deduction-capture.mjs`, `verify-item-line-quantity-rate-amount.mjs`) and
+   CC-1's very recent R-102-C/R-102.1-A guards (`verify-void-is-whole.mjs`,
+   `verify-void-stamp-columns.mjs`). Confirmed reproducing on a clean origin/main checkout
+   before touching anything. Too large/multi-owner to fix under this deadline — naming it
+   here since it will keep failing this check for every seat until someone sweeps it.
+3. `build-typecheck-heavy` / `build-typecheck` (`verify:pre-commit` -> `verify-no-duplicate-
+   financial-ledger.mjs`) — `driver_finance.deduction_recovery_links` (migration 202614290000,
+   the Lead's own) has no `-- CANONICAL-CHECK:` comment block. Confirmed reproducing on a
+   clean origin/main worktree at multiple points as main kept advancing during this PR's
+   review window. A migration-file edit — outside CC-2's lane
+   (`verify-migration-lane-band.mjs` hard-bars `cc2-`-prefixed branches from `db/migrations/
+   *.sql`). Named here per the packet's own "name the exact file and column" instruction.
+4. `CodeQL` — `js/redos` error-level finding, `scripts/verify-mileage-source-vocabulary.mjs:57`
+   (a regex that can exponential-backtrack), above the CodeQL baseline. File last touched in
+   PR #22100, long before this session; zero overlap with this PR's diff. Pre-existing CodeQL
+   drift (baseline says 0 allowed, scan now finds 1) — worth a quick regex fix by whoever owns
+   that file, but not mine and not R-102-B related.
+
+None of the four block `required-checks-gate`/`hold-merge-gate`, all four independently
+reproduced on a clean `origin/main` tip (or confirmed zero diff-overlap) before merging
+through, per the owner's own "verify pre-existing reds, then merge same turn" standing law.
+
+Continuing to R-102-B items 2-6 per the same-session, no-pause instruction.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
