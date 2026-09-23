@@ -54,7 +54,16 @@ export type CompanySettlementFuelRow = {
   vendor: string | null;
   location: string | null;
   invoice_number: string | null;
+  /** ROUND 83 RULING 3 -- the real fuel.fuel_transactions.fuel_type ('diesel'/'def'/'gas'/
+   *  'reefer_diesel'/'other'), so the UI renders a distinct QuickBooks item per fuel type instead
+   *  of one undifferentiated "Fuel" line -- diesel and DEF are separate items per the owner. */
+  fuel_type: string;
   gallons: number | null;
+  /** ROUND 83 RULING 3 -- the real stored fuel.fuel_transactions.price_per_gallon (dollars, as
+   *  stored -- never derived from amount/gallons, which would silently absorb card fees/discounts
+   *  already netted into total_cost and misstate the actual pump price). Null when the source row
+   *  itself has no price captured (never a fabricated $0.00). */
+  price_per_gallon: number | null;
   amount_cents: number;
 };
 
@@ -269,14 +278,17 @@ export async function buildCompanySettlementReport(
     vendor: string | null;
     location: string | null;
     invoice_number: string | null;
+    fuel_type: string;
     gallons: string | null;
+    price_per_gallon: string | null;
     amount_cents_num: string;
   }>(
     `
       SELECT ft.load_id::text AS load_id, l.load_number, ft.transaction_at::text AS transaction_date,
              v.vendor_name AS vendor,
              NULLIF(TRIM(BOTH ', ' FROM COALESCE(ft.location_city, '') || ', ' || COALESCE(ft.location_state, '')), '') AS location,
-             ft.transaction_reference AS invoice_number, ft.gallons::text AS gallons,
+             ft.transaction_reference AS invoice_number, ft.fuel_type,
+             ft.gallons::text AS gallons, ft.price_per_gallon::text AS price_per_gallon,
              ROUND(ft.total_cost * 100)::bigint::text AS amount_cents_num
       FROM fuel.fuel_transactions ft
       LEFT JOIN mdata.loads l ON l.id = ft.load_id
@@ -294,7 +306,9 @@ export async function buildCompanySettlementReport(
     vendor: r.vendor,
     location: r.location,
     invoice_number: r.invoice_number,
+    fuel_type: r.fuel_type,
     gallons: r.gallons === null ? null : Number(r.gallons),
+    price_per_gallon: r.price_per_gallon === null ? null : Number(r.price_per_gallon),
     amount_cents: Number(r.amount_cents_num),
   }));
   const fuelTotal = fuelRows.reduce((sum, r) => sum + r.amount_cents, 0);

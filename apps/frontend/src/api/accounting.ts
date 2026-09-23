@@ -2966,7 +2966,12 @@ export type CompanySettlementFuelRow = {
   vendor: string | null;
   location: string | null;
   invoice_number: string | null;
+  /** ROUND 83 RULING 3 -- 'diesel'/'def'/'gas'/'reefer_diesel'/'other', a distinct QuickBooks item
+   *  per fuel type. */
+  fuel_type: string;
   gallons: number | null;
+  /** ROUND 83 RULING 3 -- real stored $/gallon, never derived from amount/gallons. */
+  price_per_gallon: number | null;
   amount_cents: number;
 };
 
