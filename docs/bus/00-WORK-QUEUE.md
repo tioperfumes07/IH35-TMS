@@ -42,11 +42,11 @@ Never work in the shared main checkout.
 ---
 
 # P0 — THE FEED CANNOT BE TRUSTED WITHOUT THESE
-[CODEX 2026-09-23T23:28:37Z] Q01 GUARD  verify-costs-are-expenses-not-handwritten-jes.mjs — FAIL a JE
+[DONE CODEX PR#22476] Q01 GUARD  verify-costs-are-expenses-not-handwritten-jes.mjs — FAIL a JE
       debiting 5xxx/6xxx with no accounting.expenses row; FAIL a cost JE
       crediting 1090/1100/1150; PASS on 1295/2510/2500/1000. RED fixture:
       the 10 live fuel JEs crediting 1090, $7,250.20, bare-UUID memos.
-[ ] Q02 GUARD  Tighten guard 45 — a bare UUID is NOT a document reference.
+[CODEX 2026-09-23T23:40:23Z] Q02 GUARD  Tighten guard 45 — a bare UUID is NOT a document reference.
       Require a load number (134xx), settlement (57xx/58xx), Faro invoice,
       driver name, vendor name, or unit (Txxx). RED fixture: the live memo
       "Fuel event 56627fdf-6bf6-476b-a6ee-d8b5452ac1cf (diesel...".
