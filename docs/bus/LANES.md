@@ -39,6 +39,20 @@ scripts/alwaystrack/**
 TABLES: driver_finance.settlement_lines · driver_finance.driver_settlements
         fuel.fuel_transactions · catalogs.fuel_card_types · catalogs.relay_accounts
 
+## CODEX — dispatch loadboard + load costs vertical, settlement linkage
+apps/backend/src/dispatch/loads.routes.ts
+apps/backend/src/dispatch/planner.service.ts
+apps/backend/src/accounting/load-costs-board.routes.ts
+apps/backend/src/expense-attribution/**
+apps/backend/src/fuel/fuel-expense-document.service.ts
+apps/backend/src/cash-advances/lumper-cash-advance-split.ts
+apps/backend/src/driver-finance/historical-driver-bill-backfill.service.ts
+apps/backend/src/driver-finance/void-open-driver-bill.service.ts
+apps/backend/src/driver-finance/settlement-engine.ts
+scripts/verify-load-cost-document-link-writers.mjs
+scripts/verify-driver-bill-linked-at-settlement-time.mjs
+scripts/verify-loadboard-hub-linkage-systemwide.mjs
+
 ## CURSOR — posting provenance, reconciliation analysis, new guards
 docs/reconciliation/**
 scripts/verify-diesel-expense-fuel-dedupe.mjs
