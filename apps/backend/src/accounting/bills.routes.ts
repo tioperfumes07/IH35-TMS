@@ -237,8 +237,11 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       if (!query.data.check) return base;
       const check = parseOperatorDocumentNumber(query.data.check);
       if (!check) return { ...base, taken: false };
+      // R-102-B item 4 — same fix as resolveBillDisplayId (display-id.ts): a voided bill's number
+      // must always read as taken, never reissuable. Was `AND revoked_at IS NULL AND voided_at
+      // IS NULL`, which excluded voided bills from this UI-facing duplicate-number check.
       const taken = await client.query(
-        `SELECT 1 FROM accounting.bills WHERE operating_company_id = $1::uuid AND (bill_number = $2 OR display_id = $2) AND revoked_at IS NULL AND voided_at IS NULL LIMIT 1`,
+        `SELECT 1 FROM accounting.bills WHERE operating_company_id = $1::uuid AND (bill_number = $2 OR display_id = $2) LIMIT 1`,
         [query.data.operating_company_id, check]
       );
       return { ...base, taken: Boolean(taken.rows[0]) };
