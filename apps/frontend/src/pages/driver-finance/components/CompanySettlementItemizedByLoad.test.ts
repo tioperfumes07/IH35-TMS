@@ -32,7 +32,7 @@ function buildReport(overrides?: Partial<CompanySettlementReport["sections"]>): 
         total_cents: 97500,
       },
       fuel_purchases: {
-        rows: [{ load_id: "load-1", load_number: "13524", transaction_date: "2026-08-14", vendor: "Loves", location: "Laredo, TX", invoice_number: "INV1", gallons: 100, amount_cents: 35000 }],
+        rows: [{ load_id: "load-1", load_number: "13524", transaction_date: "2026-08-14", vendor: "Loves", location: "Laredo, TX", invoice_number: "INV1", fuel_type: "diesel", gallons: 100, price_per_gallon: 3.5, amount_cents: 35000 }],
         total_cents: 35000,
         total_gallons: 100,
       },

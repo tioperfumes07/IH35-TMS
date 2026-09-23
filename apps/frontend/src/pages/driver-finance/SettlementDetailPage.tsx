@@ -41,6 +41,7 @@ import { useAuth } from "../../auth/useAuth";
 import { previewTeamSettlementSplit } from "../../api/mdata";
 import { DebtBanner } from "./components/DebtBanner";
 import { DeadheadPaySection } from "./components/DeadheadPaySection";
+import { FuelPurchasesSection } from "./components/FuelPurchasesSection";
 import { DeductionsSection, type DeductionRow } from "./components/DeductionsSection";
 import { CreateSettlementDeductionDrawer } from "../drivers/components/CreateSettlementDeductionDrawer";
 import { EditSettlementDeductionDrawer } from "../drivers/components/EditSettlementDeductionDrawer";
@@ -812,6 +813,12 @@ export function SettlementDetailPage() {
         <div className="space-y-2">
           <EarningsSection lines={earnings} isOpen={!settlementIsLocked} operatingCompanyId={companyId} />
           <DeadheadPaySection lines={deadhead} isOpen={!settlementIsLocked} operatingCompanyId={companyId} />
+          {/* ROUND 83 RULING 3 / owner "item lines on screen" law (2026-09-23) -- item lines carry
+              QTY x RATE = AMOUNT, never a flat amount alone. Company-paid fuel purchases the same
+              company-settlement-report read model already sourced (CompanyWaterfallSection's own
+              "Less · Fuel purchases" rollup, above) -- this is its itemized detail: one row per
+              real fuel.fuel_transactions purchase, diesel and DEF as separate items. */}
+          <FuelPurchasesSection rows={companyReport?.sections.fuel_purchases.rows ?? []} />
           <ExtraPaySection lines={extraWithSeq} isOpen={!settlementIsLocked} operatingCompanyId={companyId} />
           <ReimbursementsSection lines={reimbursementsWithSeq} isOpen={!settlementIsLocked} operatingCompanyId={companyId} />
           <DeductionsSection
