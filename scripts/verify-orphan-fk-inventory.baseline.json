@@ -1,6 +1,6 @@
 {
   "_comment": "0519-ri1(a) orphan-FK inventory ratchet. Regenerate: UPDATE_ORPHAN_FK_BASELINE=1. Adding real FK constraints is owner-gated (db-integrity-hardening-0519).",
-  "count": 832,
+  "count": 833,
   "keys": [
     "0001_audit_init.sql::actor_user_uuid",
     "0003_outbox_init.sql::aggregate_id",
@@ -833,6 +833,7 @@
     "202614160000_expenses_source_fuel_transaction_id.sql::source_fuel_transaction_id",
     "202614271200_item_line_quantity_rate_amount.sql::item_id",
     "202614271200_item_line_quantity_rate_amount.sql::item_id#2",
-    "202614271200_item_line_quantity_rate_amount.sql::item_id#3"
+    "202614271200_item_line_quantity_rate_amount.sql::item_id#3",
+    "202614291200_reconciler_exceptions.sql::entity_id"
   ]
 }

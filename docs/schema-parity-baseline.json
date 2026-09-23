@@ -9472,6 +9472,36 @@
       "resolution_action",
       "resolved_at"
     ],
+    "reconciler.exceptions": [
+      "amount_cents",
+      "amount_source",
+      "entity_id",
+      "entity_label",
+      "entity_type",
+      "exception_key",
+      "field",
+      "first_seen_at",
+      "id",
+      "invariant",
+      "last_seen_at",
+      "operating_company_id",
+      "owner_seat",
+      "reason",
+      "repair_engine",
+      "resolved_at",
+      "since",
+      "since_source",
+      "times_reopened"
+    ],
+    "reconciler.runs": [
+      "errored_invariants",
+      "id",
+      "open_count",
+      "opened_count",
+      "operating_company_id",
+      "ran_at",
+      "resolved_count"
+    ],
     "reference.cbp_wait_times_cache": [
       "cbp_port_code",
       "fetched_at",
