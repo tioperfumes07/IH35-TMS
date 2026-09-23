@@ -1,11 +1,1 @@
-{
-  "_comment": "verify-no-voided-doc-has-live-postings.mjs shrink-only ratchet. ROUND 31.2/32.2 Part C: a document (bill/expense/invoice) whose own status is void/voided but still carries a LIVE (posted, non-reversed) GL posting, EXCLUDING a voided invoice with a live replacement already open for the same load (void-and-reissue -- the correct, intentional shape, not a gap). Seeded 2026-09-22 at a live measurement by this guard's own query: 28 bills / $294,210.72, 179 expenses / $56,023.97, 1 invoice / $3,200.00 (of the 2 voided invoices with live postings, only display_id 13541 has a confirmed live replacement -- INV-2026-00002, status 'sent', for the same load; 13572 has none and stays counted -- verified per-invoice, not assumed both are reissues). Total 208 docs / $353,434.69. Backfill target: void every one of these through the existing engines (accounting/void-document.service.ts's voidDocument(), which calls voidBillInClientTx / reversePostedSourceTransactionInClientTx / postVoidReversal -- never a new reversal). NULL-source-type live posting lines: measured live at 162 (far more than the 2 settlement header JEs, 13533/13539, CC-3 had already named -- reported honestly, not smoothed to match the smaller prior disclosure) -- reported separately every run, this guard's total_docs/total_cents is a floor, not a ceiling, and must never silently absorb that count.",
-  "established": "2026-09-22",
-  "total_docs": 208,
-  "total_cents": 35343469,
-  "per_type": {
-    "bills": { "docs": 28, "cents": 29421072 },
-    "expenses": { "docs": 179, "cents": 5602397 },
-    "invoices": { "docs": 1, "cents": 320000 }
-  }
-}
+{"count": 0, "total_cents": 0, "_doc": "Frozen at 0 after the void-reversal sweep. Shrink-only: count and total_cents must never increase. --write-baseline is FORBIDDEN."}

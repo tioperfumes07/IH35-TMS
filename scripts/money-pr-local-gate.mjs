@@ -299,6 +299,10 @@ const STEPS = [
   // (1 pre-existing entry: driver-finance/void-document-callees.service.ts, CC-3's lane, handed
   // off rather than edited directly).
   ["verify-no-caller-voids-without-cascade", "scripts/verify-no-caller-voids-without-cascade.mjs"],
+  // E15.6 DEVIN-A — void/reversal guards (round 105 defect class). verify-every-void-route-reverses
+  // is new; verify-no-voided-doc-has-live-postings exists on main but was not wired into the gate.
+  ["verify-every-void-route-reverses", "scripts/verify-every-void-route-reverses.mjs"],
+  ["verify-no-voided-doc-has-live-postings", "scripts/verify-no-voided-doc-has-live-postings.mjs"],
 ];
 
 // ROUND 29.9 owner ruling (2026-09-22) — three guards, wired in this exact order, AFTER the STEPS

@@ -61,6 +61,13 @@ function loadBaseline() {
  */
 function evaluateRatchet(liveCount, baseline) {
   if (!baseline) {
+    if (liveCount === 0) {
+      // Target reached and baseline retired — no debt, no ceiling needed.
+      return {
+        ok: true,
+        message: `0 live rows match 'txn_%%' and no baseline file — target reached, ratchet retired.`,
+      };
+    }
     return {
       ok: false,
       message: `no baseline file (${path.basename(BASELINE_PATH)}). ${liveCount} row(s) live. ` +

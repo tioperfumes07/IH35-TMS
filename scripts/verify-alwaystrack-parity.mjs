@@ -210,12 +210,8 @@ async function live() {
     );
     const billByLoad = new Map(billRes.rows.map((r) => [r.load_number, { cents: Number(r.cents), n: Number(r.n) }]));
 
-    const unlinkedBillRes = await client.query(
-      `SELECT count(*) AS n FROM driver_finance.driver_bills
-        WHERE operating_company_id = $1::uuid AND voided_at IS NULL AND settled_in_settlement_id IS NULL`,
-      [USMCA_COMPANY_ID]
-    );
-    const unlinkedBillCount = Number(unlinkedBillRes.rows[0].n);
+    // C and D queries moved after in-scope scoping (see below) — they must use
+    // inScopeLoadNumbers, not allLoadNumbers, to avoid checking NOT FED YET loads.
 
     const expenseRes = await client.query(
       `SELECT l.load_number, sum(e.total_amount_cents) AS cents, count(e.id) AS n
@@ -251,27 +247,7 @@ async function live() {
       settlementsByDoc.set(row.source_document_ref, list);
     }
 
-    // D input — real anti-join for expense/fuel load links (same as before).
-    const unlinkedExpenseRes = await client.query(
-      `SELECT l.load_number, e.id::text AS expense_id
-         FROM mdata.loads l
-         JOIN accounting.expenses e ON e.load_id = l.id AND e.operating_company_id = l.operating_company_id
-         LEFT JOIN expense_attribution.expense_load_links ell
-           ON ell.expense_source = 'accounting' AND ell.expense_id = e.id AND ell.expense_number = l.load_number
-        WHERE l.operating_company_id = $1::uuid AND l.load_number = ANY($2::text[])
-          AND e.voided_at IS NULL AND ell.id IS NULL`,
-      [USMCA_COMPANY_ID, allLoadNumbers]
-    );
-    const unlinkedFuelRes = await client.query(
-      `SELECT l.load_number, ft.id::text AS fuel_id
-         FROM mdata.loads l
-         JOIN fuel.fuel_transactions ft ON ft.load_id = l.id AND ft.operating_company_id = l.operating_company_id
-         LEFT JOIN expense_attribution.expense_load_links ell
-           ON ell.expense_id = ft.id AND ell.expense_number = l.load_number
-        WHERE l.operating_company_id = $1::uuid AND l.load_number = ANY($2::text[])
-          AND ft.archived_at IS NULL AND ell.id IS NULL`,
-      [USMCA_COMPANY_ID, allLoadNumbers]
-    );
+    // D input — moved after in-scope scoping (see below) — must use inScopeLoadNumbers.
 
     // ── Partition documents: IN SCOPE vs SKIPPED (NOT FED YET) ───────────────────────────
     const inScopeDocs = [];
@@ -354,6 +330,39 @@ async function live() {
 
     // B — every named load on an IN-SCOPE document exists, is_sample_data=false, not soft-deleted.
     const inScopeLoadNumbers = [...new Set(inScopeDocs.flatMap((d) => d.loads))];
+
+    // C input — scoped to IN-SCOPE loads only (was company-wide, the bug that blocked every seat).
+    const unlinkedBillRes = await client.query(
+      `SELECT count(*) AS n FROM driver_finance.driver_bills db
+        JOIN mdata.loads l ON db.load_id = l.id AND db.operating_company_id = l.operating_company_id
+        WHERE db.operating_company_id = $1::uuid AND db.voided_at IS NULL
+          AND db.settled_in_settlement_id IS NULL AND l.load_number = ANY($2::text[])`,
+      [USMCA_COMPANY_ID, inScopeLoadNumbers]
+    );
+    const unlinkedBillCount = Number(unlinkedBillRes.rows[0].n);
+
+    // D input — scoped to IN-SCOPE loads only (was allLoadNumbers, the bug that blocked every seat).
+    const unlinkedExpenseRes = await client.query(
+      `SELECT l.load_number, e.id::text AS expense_id
+         FROM mdata.loads l
+         JOIN accounting.expenses e ON e.load_id = l.id AND e.operating_company_id = l.operating_company_id
+         LEFT JOIN expense_attribution.expense_load_links ell
+           ON ell.expense_source = 'accounting' AND ell.expense_id = e.id AND ell.expense_number = l.load_number
+        WHERE l.operating_company_id = $1::uuid AND l.load_number = ANY($2::text[])
+          AND e.voided_at IS NULL AND ell.id IS NULL`,
+      [USMCA_COMPANY_ID, inScopeLoadNumbers]
+    );
+    const unlinkedFuelRes = await client.query(
+      `SELECT l.load_number, ft.id::text AS fuel_id
+         FROM mdata.loads l
+         JOIN fuel.fuel_transactions ft ON ft.load_id = l.id AND ft.operating_company_id = l.operating_company_id
+         LEFT JOIN expense_attribution.expense_load_links ell
+           ON ell.expense_id = ft.id AND ell.expense_number = l.load_number
+        WHERE l.operating_company_id = $1::uuid AND l.load_number = ANY($2::text[])
+          AND ft.archived_at IS NULL AND ell.id IS NULL`,
+      [USMCA_COMPANY_ID, inScopeLoadNumbers]
+    );
+
     const missingLoads = inScopeLoadNumbers.filter((n) => !loadByNumber.has(n));
     const staleSampleLoads = inScopeLoadNumbers.filter((n) => loadByNumber.get(n)?.is_sample_data === true);
     const softDeletedLoads = inScopeLoadNumbers.filter((n) => loadByNumber.get(n)?.is_soft_deleted === true);
