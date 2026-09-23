@@ -1,0 +1,14 @@
+{
+  "_comment": "Pre-existing, ALREADY-APPLIED migrations, measured 2026-09-23 when this guard was built (ROUND E11.3-R item 5). Never edited per this repo's own never-edit-applied-migration law -- these already ran, cannot be re-run, and cannot be fixed retroactively. Shrink-only: a key is removed only if the guard's own scan (comment-stripping, WITH-clause lookback, etc.) improves enough to prove the statement was never actually a defect; a NEW unscoped DELETE in a new migration or scripts/ops/ file is never added here.",
+  "measured_at": "2026-09-23T22:10:00.000Z",
+  "keys": [
+    "db/migrations/0170_bank_transactions_source_dedup.sql|banking.bank_transactions",
+    "db/migrations/0242_drift_reconciliation.sql|banking.bank_transactions",
+    "db/migrations/202607360000_feature_flag_key_not_uuid.sql|lib.feature_flag_overrides"
+  ],
+  "_reasons": {
+    "db/migrations/0170_bank_transactions_source_dedup.sql|banking.bank_transactions": "DELETE ... USING ranked r WHERE bt.id=r.id AND r.rn>1 -- the scoping (if any) lives in the preceding WITH ranked AS (...) CTE, which this guard's regex does not look back into. Applied migration, not re-verified further under this round's deadline; frozen either way.",
+    "db/migrations/0242_drift_reconciliation.sql|banking.bank_transactions": "Same CTE-lookback limitation as 0170 above.",
+    "db/migrations/202607360000_feature_flag_key_not_uuid.sql|lib.feature_flag_overrides": "DELETE FROM lib.feature_flag_overrides WHERE flag_key ~* <uuid-pattern> -- genuinely no operating_company_id predicate; a real historical gap (removes malformed UUID-shaped flag_key rows globally), applied and frozen before this guard existed."
+  }
+}

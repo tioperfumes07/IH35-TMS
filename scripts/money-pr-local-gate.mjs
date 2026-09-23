@@ -333,6 +333,17 @@ const GUARD_303 = [
   // AGAIN"). Nine figures are LAW; this asserts the JSON + the human-readable doc both still
   // match them exactly, and the purchases-receipts=AR identity holds. Static — no DATABASE_URL.
   ["verify-reconciliation-constants", "scripts/verify-reconciliation-constants.mjs", {}],
+  // ROUND E11.3 — the AUTH-001 USMCA wipe left three live-money baselines (fuel, void-is-whole,
+  // cancelled-load) measured against a ledger the wipe then deleted; this guard fails any of them
+  // that still carries a pre-wipe measured_at, so a wipe artifact can never be baselined as
+  // historical debt again.
+  ["verify-baselines-are-post-wipe", "scripts/verify-baselines-are-post-wipe.mjs", {}],
+  // ROUND E11.3-R item 5 — the guard that stops the AUTH-001 class of bug permanently: the wipe's
+  // own DELETE FROM mdata.load_stops carried no operating_company_id predicate at all, deleting
+  // the frozen TRANSP entity's rows alongside USMCA's. Static, no DB needed — scans
+  // db/migrations/**/*.sql and scripts/ops/**/*.{mjs,ts} for a DELETE against a company-scoped
+  // table with zero mention of operating_company_id anywhere in the statement.
+  ["verify-no-unscoped-company-delete", "scripts/verify-no-unscoped-company-delete.mjs", {}],
 ];
 
 // E7 (Lead ruling R56-B, 2026-09-22) — live-data guards that used to sit in STEPS above, where each
@@ -567,64 +578,43 @@ function acceptedAsEmptyByPurge(rel, code) {
   return true;
 }
 
-// GATE-SCOPE-03 (self-discovered, same class as GATE-SCOPE-01/02, fixed the same way) — these four
-// 03c-style checks all used `if (process.env.DATABASE_URL || touchesXPath())`, so a live DB's mere
-// presence ran them on every push regardless of diff content, exactly the "blocks every seat
-// regardless of their own diff" class GATE-SCOPE-01 already fixed once in LIVE_DOMAIN_GUARDS.
-// Reproduced live: a pure apps/frontend diff (FILTER-MULTI-01, zero accounting/fuel/migration
-// paths touched) with a real DATABASE_URL set failed verify-diesel-expense-fuel-dedupe on an
-// unrelated live-data mismatch. Fixed identically to GATE-SCOPE-01: gate purely on `touched`; a
-// touched domain with no DATABASE_URL still fails closed (ROUND 29.9-B — never a silent skip).
-// Kept as four separate inline blocks (not a shared helper) — verify-purge-window-exemption.mjs
-// counts a literal source-text pattern (the exact non-zero-exit-code guard clause wrapping the
-// purge-exemption check) as its proof the exemption is still wired at all four named sites; a
-// shared helper would collapse that text to 2 occurrences and read as 2 of the 4 sites silently
-// losing their exemption path, even though the behavior is unchanged.
-
-// 03c — control totals against LIVE production.
-if (touchesMoneyPath()) {
-  if (!process.env.DATABASE_URL) {
-    console.error(
-      `\n${LABEL}: FAIL — scripts/verify-control-totals.mjs (03c) — this diff touches a money path ` +
-        `but DATABASE_URL is not set. A touched live-domain guard with no DB is a FAIL, never a skip (ROUND 29.9-B).\n`,
-    );
-    process.exit(1);
-  }
+// 03c — control totals against LIVE production. Skipped only when DATABASE_URL is absent AND this
+// PR touches no money path (apps/backend/src/{accounting,banking,factoring,driver-finance,mdata}/**
+// or db/migrations/**). Touching a money path with no DATABASE_URL is NOT a skip — the guard's own
+// script refuses outright ("Refusing to pass a money gate that never ran"), which is correct: an
+// operator working a money path must have prod access wired before this gate can pass.
+if (process.env.DATABASE_URL || touchesMoneyPath()) {
   const code = runNode("scripts/verify-control-totals.mjs");
   if (code !== 0 && !acceptedAsEmptyByPurge("scripts/verify-control-totals.mjs", code)) {
     failStep("verify-control-totals (03c)");
     process.exit(code);
   }
 } else {
-  const msg = "verify-control-totals.mjs (03c) — no money path in this diff";
+  const msg = "verify-control-totals.mjs (03c) — no DATABASE_URL and no money path in this diff";
   console.log(`[${LABEL}] SKIP ${msg}`);
   skippedLiveChecks.push(msg);
 }
 
 // ROUND 23.3 SUPPLEMENT (owner/Lead, 2026-09-13) — the master AlwaysTrack parity guard, proves the
-// WHOLE ingest chain against prod.
-if (touchesMoneyPath()) {
-  if (!process.env.DATABASE_URL) {
-    console.error(
-      `\n${LABEL}: FAIL — scripts/verify-alwaystrack-parity.mjs — this diff touches a money path but ` +
-        `DATABASE_URL is not set. A touched live-domain guard with no DB is a FAIL, never a skip (ROUND 29.9-B).\n`,
-    );
-    process.exit(1);
-  }
+// WHOLE ingest chain against prod. P0 (2026-09-22): moved OUT of the unconditional STEPS array
+// above (where it used to silently skip-pass with no DATABASE_URL, masking a real, pre-existing
+// 34-of-34-document mismatch) and into this SAME conditional 03c already uses — a non-money push
+// is never blocked by it; a money-relevant push with no DATABASE_URL correctly fails, never skips.
+if (process.env.DATABASE_URL || touchesMoneyPath()) {
   const code = runNode("scripts/verify-alwaystrack-parity.mjs");
   if (code !== 0 && !acceptedAsEmptyByPurge("scripts/verify-alwaystrack-parity.mjs", code)) {
     failStep("verify-alwaystrack-parity");
     process.exit(code);
   }
 } else {
-  const msg = "verify-alwaystrack-parity.mjs — no money path in this diff";
+  const msg = "verify-alwaystrack-parity.mjs — no DATABASE_URL and no money path in this diff";
   console.log(`[${LABEL}] SKIP ${msg}`);
   skippedLiveChecks.push(msg);
 }
 
-// Lead ROUND 48 (2026-09-22): one fuel purchase, one posting. fuel/ is not in touchesMoneyPath()
-// but a fuel change is exactly what can post a second copy of a purchase, so this check keys on
-// its own paths.
+// Lead ROUND 48 (2026-09-22): one fuel purchase, one posting. Moved out of the unconditional STEPS
+// array, where it skip-passed without DATABASE_URL. fuel/ is not in touchesMoneyPath() but a fuel
+// change is exactly what can post a second copy of a purchase, so this check keys on its own paths.
 function touchesFuelOrExpensePath() {
   const res = spawnSync("git", ["diff", "--name-only", "origin/main...HEAD"], { cwd: ROOT, encoding: "utf8" });
   if ((res.status ?? 1) !== 0) return false;
@@ -632,45 +622,36 @@ function touchesFuelOrExpensePath() {
   const FUEL_EXPENSE_RE = /^(apps\/backend\/src\/(accounting|fuel)\/|db\/migrations\/)/;
   return files.some((f) => FUEL_EXPENSE_RE.test(f));
 }
-if (touchesFuelOrExpensePath()) {
-  if (!process.env.DATABASE_URL) {
-    console.error(
-      `\n${LABEL}: FAIL — scripts/verify-diesel-expense-fuel-dedupe.mjs — this diff touches its ` +
-        `fuel/accounting/migration domain but DATABASE_URL is not set. A touched live-domain guard ` +
-        `with no DB is a FAIL, never a skip (ROUND 29.9-B).\n`,
-    );
-    process.exit(1);
-  }
+if (process.env.DATABASE_URL || touchesFuelOrExpensePath()) {
   const code = runNode("scripts/verify-diesel-expense-fuel-dedupe.mjs");
   if (code !== 0) {
     failStep("verify-diesel-expense-fuel-dedupe");
     process.exit(code);
   }
 } else {
-  const msg = "verify-diesel-expense-fuel-dedupe.mjs — no accounting/fuel/migration path in this diff";
+  const msg = "verify-diesel-expense-fuel-dedupe.mjs — no DATABASE_URL and no accounting/fuel/migration path in this diff";
   console.log(`[${LABEL}] SKIP ${msg}`);
   skippedLiveChecks.push(msg);
 }
 
 // Lead ruling 4-of-4 (2026-09-22) — shrink-only ceiling ratchet, baseline 76: USMCA
 // fuel.fuel_transactions rows still carrying the raw Relay bridge token (transaction_reference LIKE
-// 'txn_%') instead of a real, vendor-matched reference.
-if (touchesMoneyPath()) {
-  if (!process.env.DATABASE_URL) {
-    console.error(
-      `\n${LABEL}: FAIL — scripts/verify-fuel-relay-txn-vendor-unmatched.mjs — this diff touches a ` +
-        `money path but DATABASE_URL is not set. A touched live-domain guard with no DB is a FAIL, ` +
-        `never a skip (ROUND 29.9-B).\n`,
-    );
-    process.exit(1);
-  }
+// 'txn_%') instead of a real, vendor-matched reference. Freezes growth, target 0. Same conditional
+// shape as verify-alwaystrack-parity above (NOT the unconditional STEPS array) — this guard uses
+// requireLiveDbOrExit() internally and fails closed whenever it actually runs (ROUND 29.9-B: a live
+// money guard that cannot connect is a FAIL, never a pass), so it must only be forced to run when
+// this push is money-relevant or a live DB is already available — putting a fail-closed guard in
+// the unconditional STEPS array would make DATABASE_URL mandatory for every push in the repo,
+// which would also compound the already-known, already-worsened verify-alwaystrack-parity block
+// (docs/bus/OUTBOX-CC-1.md, 2026-09-23) onto pushes that have nothing to do with fuel.
+if (process.env.DATABASE_URL || touchesMoneyPath()) {
   const code = runNode("scripts/verify-fuel-relay-txn-vendor-unmatched.mjs");
   if (code !== 0) {
     failStep("verify-fuel-relay-txn-vendor-unmatched");
     process.exit(code);
   }
 } else {
-  const msg = "verify-fuel-relay-txn-vendor-unmatched.mjs — no money path in this diff";
+  const msg = "verify-fuel-relay-txn-vendor-unmatched.mjs — no DATABASE_URL and no money path in this diff";
   console.log(`[${LABEL}] SKIP ${msg}`);
   skippedLiveChecks.push(msg);
 }
