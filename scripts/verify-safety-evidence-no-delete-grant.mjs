@@ -28,6 +28,8 @@
  * and against prod when pointed at it.
  */
 import { createRequire } from "node:module";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B) and runs in money-pr-local-gate.mjs when its owned paths change (Lead ROUND 84, E7 batch 2)";
 
 const LABEL = "verify-safety-evidence-no-delete-grant";
 
@@ -53,8 +55,8 @@ async function main() {
 
   const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
   if (!connectionString) {
-    console.log(`${LABEL} CAPABILITY SKIP — no DATABASE_URL/DATABASE_DIRECT_URL; grants can only be read from a live database. CI equivalent: verify:local-ci (ephemeral Postgres).`);
-    process.exit(0);
+    console.error("verify-safety-evidence-no-delete-grant: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
 
   const { Client } = pg;
@@ -62,8 +64,8 @@ async function main() {
   try {
     await client.connect();
   } catch (error) {
-    console.log(`${LABEL} CAPABILITY SKIP — database unreachable (${error.code ?? error.message}). CI equivalent: verify:local-ci.`);
-    process.exit(0);
+    console.error("verify-safety-evidence-no-delete-grant: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
 
   try {

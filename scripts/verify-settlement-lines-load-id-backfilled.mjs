@@ -20,6 +20,8 @@
 //
 // Usage: DATABASE_URL=<prod> node scripts/verify-settlement-lines-load-id-backfilled.mjs
 import pg from "pg";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B) and runs in money-pr-local-gate.mjs when its owned paths change (Lead ROUND 84, E7 batch 2)";
 
 const LABEL = "verify-settlement-lines-load-id-backfilled";
 
@@ -33,8 +35,8 @@ async function main() {
   // and exit 0 when there is no DB to check against; run for real (and fail loudly) whenever a
   // caller deliberately sets DATABASE_URL, exactly as this file's own "Usage" comment intends.
   if (!url) {
-    console.log(`${LABEL}: SKIPPED-DB-CHECK (DATABASE_URL is unset) -- static sweep only, no live check ran`);
-    return;
+    console.error("verify-settlement-lines-load-id-backfilled: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
   const pool = new pg.Pool({ connectionString: url, ssl: { rejectUnauthorized: false } });
   const client = await pool.connect();

@@ -27,6 +27,8 @@
  *   node scripts/verify-trip-pairing-leg-columns.mjs
  */
 import fs from "node:fs";
+export const ALLOW_OFFLINE_SKIP =
+  "static source scan; never connects to a database, so there is nothing to skip (E7 batch 2)";
 
 const LABEL = "verify-trip-pairing-leg-columns";
 const PAGE_PATH = "apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx";

@@ -22,6 +22,8 @@ import fs from "node:fs";
 import path from "node:path";
 import pg from "pg";
 import { fileURLToPath } from "node:url";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B) and runs in money-pr-local-gate.mjs when its owned paths change (Lead ROUND 84, E7 batch 2)";
 
 dotenv.config();
 
@@ -64,8 +66,8 @@ function staticChecks() {
 
 async function dbChecks() {
   if (!connectionString) {
-    console.log("verify:coa-roles PASS (static checks only; no DATABASE_URL)");
-    return;
+    console.error("verify-coa-roles: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
 
   const pool = new Pool({ connectionString });

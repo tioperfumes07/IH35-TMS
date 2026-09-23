@@ -16,6 +16,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+export const ALLOW_OFFLINE_SKIP =
+  "static source scan; never connects to a database, so there is nothing to skip (E7 batch 2)";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-acct-r03-merge-records-density";

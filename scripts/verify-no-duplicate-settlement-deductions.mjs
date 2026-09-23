@@ -28,6 +28,8 @@
 import fs from "node:fs";
 import { createRequire } from "node:module";
 import { setsTenantGuc } from "./lib/tenant-guc-match.mjs";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B) and runs in money-pr-local-gate.mjs when its owned paths change (Lead ROUND 84, E7 batch 2)";
 
 const require = createRequire(import.meta.url);
 const LABEL = "verify-no-duplicate-settlement-deductions";
@@ -77,8 +79,8 @@ console.log(`${LABEL}: static half OK — correction script is scoped, audited, 
 // Live half.
 const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
 if (!connectionString) {
-  console.log(`${LABEL} SKIP (live half) — no DATABASE_URL/DATABASE_DIRECT_URL; live check not possible here.`);
-  process.exit(0);
+  console.error("verify-no-duplicate-settlement-deductions: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+  process.exit(1);
 }
 const liveRequested = process.env.SETTLEMENT_DEDUP_LIVE === "1";
 if (!liveRequested && (process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true")) {

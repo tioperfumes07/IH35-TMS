@@ -16,6 +16,8 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B) and runs in money-pr-local-gate.mjs when its owned paths change (Lead ROUND 84, E7 batch 2)";
 
 const require = createRequire(import.meta.url);
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -72,8 +74,8 @@ function verifySourceFiles() {
 async function verifyLive() {
   const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
   if (!connectionString) {
-    console.log(`${LABEL} SKIP (live half) — no DATABASE_URL/DATABASE_DIRECT_URL; source-only check passed.`);
-    return;
+    console.error("verify-customer-activity-statements: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
   if (process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true") {
     console.log(`${LABEL} SKIP (live half) — CI database is a fixture; source-only check passed.`);
@@ -85,8 +87,8 @@ async function verifyLive() {
   const client = new pg.Client(buildPgClientConfig(connectionString));
   try { await client.connect(); }
   catch (error) {
-    console.log(`${LABEL} SKIP (live half) — database unreachable (${error.code ?? error.message}); source-only check passed.`);
-    return;
+    console.error("verify-customer-activity-statements: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
 
   try {

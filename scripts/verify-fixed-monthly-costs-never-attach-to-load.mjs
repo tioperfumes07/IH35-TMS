@@ -17,6 +17,8 @@
 //
 // Usage: DATABASE_URL=<prod> node scripts/verify-fixed-monthly-costs-never-attach-to-load.mjs
 import pg from "pg";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B) and runs in money-pr-local-gate.mjs when its owned paths change (Lead ROUND 84, E7 batch 2)";
 
 const LABEL = "verify-fixed-monthly-costs-never-attach-to-load";
 
@@ -32,8 +34,8 @@ async function main() {
   // for real only when a caller deliberately sets it — same convention as every other live-data
   // verify-step this session (e.g. verify-settlement-lines-load-id-backfilled.mjs).
   if (!url) {
-    console.log(`${LABEL}: SKIPPED-DB-CHECK (DATABASE_URL is unset) -- static sweep only, no live check ran`);
-    return;
+    console.error("verify-fixed-monthly-costs-never-attach-to-load: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
   const pool = new pg.Pool({ connectionString: url, ssl: { rejectUnauthorized: false } });
   const client = await pool.connect();

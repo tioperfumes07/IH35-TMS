@@ -19,6 +19,8 @@
  */
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync, existsSync, unlinkSync } from "node:fs";
+export const ALLOW_OFFLINE_SKIP =
+  "static source scan; never connects to a database, so there is nothing to skip (E7 batch 2)";
 
 const LABEL = "verify-root-claude-md-untracked";
 

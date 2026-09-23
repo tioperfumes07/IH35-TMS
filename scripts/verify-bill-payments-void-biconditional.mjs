@@ -20,6 +20,8 @@
  */
 import process from "node:process";
 import { createRequire } from "node:module";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B) and runs in money-pr-local-gate.mjs when its owned paths change (Lead ROUND 84, E7 batch 2)";
 
 const require = createRequire(import.meta.url);
 const LABEL = "verify-bill-payments-void-biconditional";
@@ -56,8 +58,8 @@ async function main() {
 
   const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
   if (!connectionString) {
-    console.log(`${LABEL} SKIP — no DATABASE_URL/DATABASE_DIRECT_URL; live reconciliation cannot be asserted here.`);
-    return 0;
+    console.error("verify-bill-payments-void-biconditional: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
   }
 
   const liveRequested = process.env.BILL_PAYMENTS_VOID_RECONCILE_LIVE === "1";
