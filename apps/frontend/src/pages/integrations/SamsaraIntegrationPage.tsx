@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { disableSamsaraIntegration, getSamsaraDriverRoster, getSamsaraOwnerConfig, saveSamsaraOwnerConfig, type SamsaraDriverRosterRow } from "../../api/samsara";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -108,7 +109,19 @@ export function SamsaraIntegrationPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-4">
-      <PageHeader title="Samsara" subtitle="Telematics integration (MVP foundation — API wired post-MVP)" />
+      <PageHeader
+        title="Samsara"
+        subtitle="Telematics integration (MVP foundation — API wired post-MVP)"
+        actions={
+          <Link
+            to="/samsara/driver-mapping"
+            className="rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-gray-50"
+            data-testid="samsara-driver-mapping-link"
+          >
+            Driver mapping
+          </Link>
+        }
+      />
 
       <div className="rounded-sm border border-slate-200 bg-white p-4 text-xs text-slate-700">
         <div className="mb-3 flex items-center gap-2">
