@@ -1,3 +1,64 @@
+# ROUND 92 - LEAD - NEXT ENGINE IS ALREADY ASSIGNED. NEVER STOP TO ASK.
+
+**Standing order, effective now: you do not go idle and you do not ask what is next.**
+When the item you are on lands, you take the next one on YOUR list below, in order, in the
+same turn. Only when your whole list is empty do you post `LIST EMPTY` in your outbox and take
+the shared backlog at the bottom of this block. The owner is not a dispatcher and neither is a
+pause.
+
+The thirteen are the only work. The purge is HELD until all thirteen are done, a fresh
+pre-purge Neon snapshot exists (`br-sweet-math-akyen17f` is TRUNCATED and is NOT one), the
+baseline is captured in the same sitting, `scripts/purge/verify-purge.mjs` passes, and the
+owner says "run the purge" at that moment.
+
+New this round, and it changes how you prove things:
+`scripts/purge/verify-purge.mjs` now reads `scripts/purge/usmca-purge-expected-zero.generated.json`,
+which is emitted by the same run that emits the purge SQL. **The purge SQL and its verifier can
+no longer disagree silently.** The old verifier checked 19 tables while the SQL deleted 38, named
+a table that never existed, and counted child tables with no WHERE clause at all - so
+TRANSPORTATION and TRUCKING rows would have failed a perfectly good USMCA purge. Do not
+hand-type a table list into any new guard. Read the generated file.
+
+USMCA only (`5c854333-6ea5-4faa-af31-67cb272fef80`). TRANSPORTATION and TRUCKING are frozen.
+Every USMCA record is REAL unless `is_sample_data = true` - never write a test, sample or demo
+row into USMCA, including for proof.
+
+## CC-2 - your list, in order. E11-D2 is in flight; here is everything after it.
+
+Item lines on screen (#22341) accepted - diesel and DEF now render as real QuickBooks item
+lines. Two rules that hold for every remaining screen: **line haul is a contracted total and
+never reconstructs as qty x rate** (the per-mile figure on an AlwaysTrack settlement is derived,
+amount / miles, 3dp), and **account numbers stay hidden by default everywhere**, with a filter
+option to show them.
+
+1. **E11 boards D2 / D4 / D3.** In flight.
+2. **E20 Part B - the Mapping page**, against CC-1's Part A endpoint. 663 unmapped drivers are
+   the default view, not a footnote. Mapped / unmapped / ambiguous are three distinct states.
+   Nothing on that page writes a pairing the backend did not resolve.
+3. **The deduction screens** for the Round 88 chain, the moment CC-1's schema lands.
+4. **Item lines on the remaining documents** - driver bill and settlement, same treatment the
+   invoice and bill already got.
+
+---
+
+## SHARED BACKLOG - take the top unclaimed item and claim it in your outbox first
+
+1. **The docs.files purge predicate.** 475 USMCA rows. 263 are app-generated driver
+   instructions tied to a load and regenerable; the rest are CDLs, medical cards, insurance
+   certificates, permits and signed contracts hanging off drivers, units and vendors. Build the
+   predicate that separates them by evidence, not by guess, and a report that lists every file
+   it would delete BEFORE anything runs.
+2. **The historical-backfill write path for driver_bill.** CC-3 found the gap honestly: no
+   `historical_backfill` path exists anywhere in `apps/backend` for driver_bill or escrow_ledger,
+   while loads and invoices already have one. The feed cannot run without it.
+3. **`cash_rsv`, `dispatch` and `sch_fee`.** Three real Faro deductions the export carries and
+   nothing in this codebase captures. The funding identity
+   `face - escrow - cash_rsv - discount - fees - dispatch - sch_fee = net_advance` holds 82 of
+   82 funded invoices, so all three are proven real, not theoretical.
+4. **The 663 unmapped Samsara drivers**, if E20 Part A lands and Part B is still open.
+
+---
+
 # ROUND 90 - LEAD - THE THIRTEEN ARE THE ONLY WORK. NOBODY IS IDLE.
 
 Owner standing order, 2026-09-23: **finish all thirteen engines before any feed.** No pending.
