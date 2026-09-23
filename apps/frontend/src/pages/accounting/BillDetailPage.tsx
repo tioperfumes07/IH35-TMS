@@ -165,6 +165,30 @@ export function BillDetailPage() {
       render: (line) => line.description || "—",
     },
     {
+      key: "item_name",
+      label: "Item",
+      sortable: true,
+      render: (line) => line.item_name || "—",
+    },
+    {
+      key: "quantity",
+      label: "Qty",
+      sortable: true,
+      className: "text-right",
+      cellClass: "text-right tabular-nums",
+      render: (line) => (line.quantity == null ? "—" : `${line.quantity} ${line.unit_of_measure ?? ""}`.trim()),
+    },
+    {
+      key: "rate_cents",
+      label: "Rate",
+      sortable: true,
+      className: "text-right",
+      cellClass: "text-right tabular-nums",
+      // rate_cents is CENTS-per-unit (may carry a fractional cent, e.g. 522.9 = $5.229) — divide
+      // by 100 for dollars and keep 4 decimal places, same convention as driver-pay's per-mile rate.
+      render: (line) => (line.rate_cents == null ? "—" : `$${(line.rate_cents / 100).toFixed(4)}`),
+    },
+    {
       key: "load_id",
       label: "Load",
       sortable: true,

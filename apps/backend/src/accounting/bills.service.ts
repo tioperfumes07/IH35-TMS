@@ -49,6 +49,19 @@ export type CreateBillLineInput = {
    * (accounting.enforce_load_fk_invariant, now covers bill_lines too).
    */
   loadExemptionReason?: string | null;
+  /**
+   * Round 92/94 (item lines remainder) — catalogs.items FK + qty x rate = amount, migration
+   * 202614271200 (accounting.bill_lines.item_id/quantity/rate_cents/unit_of_measure). The
+   * TwoSectionLineEditor's Section B (parts-and-labor) rows already capture quantity and
+   * unit_cost live in the UI — this was silently dropped before it ever reached the API. All
+   * four fields travel together or not at all (bill_lines_item_qty_rate_amount_check requires
+   * item_id/quantity/rate_cents/unit_of_measure to be all-null or all-set, and
+   * round(quantity * rate_cents) = round(amount * 100)).
+   */
+  itemId?: string | null;
+  quantity?: number | null;
+  rateCents?: number | null;
+  unitOfMeasure?: string | null;
 };
 
 type CreateBillInput = {
@@ -1842,6 +1855,11 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
       load_number: string | null;
       voided_at: Date | string | null;
       voided_reason: string | null;
+      item_id: string | null;
+      item_name: string | null;
+      quantity: string | null;
+      rate_cents: string | null;
+      unit_of_measure: string | null;
     }>(
       `
         SELECT
@@ -1855,7 +1873,12 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
           bl.load_id::text AS load_id,
           l.load_number,
           bl.voided_at,
-          bl.voided_reason
+          bl.voided_reason,
+          bl.item_id::text AS item_id,
+          item.item_name AS item_name,
+          bl.quantity::text AS quantity,
+          bl.rate_cents::text AS rate_cents,
+          bl.unit_of_measure
         FROM accounting.bill_lines bl
         LEFT JOIN catalogs.accounts acct
           ON acct.id = bl.account_id
@@ -1863,6 +1886,9 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
         LEFT JOIN mdata.loads l
           ON l.id = bl.load_id
          AND l.operating_company_id = $2::uuid
+        LEFT JOIN catalogs.items item
+          ON item.id = bl.item_id
+         AND item.operating_company_id = $2::uuid
         WHERE bl.bill_id = $1::uuid
         ORDER BY bl.line_sequence ASC
       `,
@@ -1908,6 +1934,11 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
         load_number: row.load_number,
         voided_at: row.voided_at ?? null,
         voided_reason: row.voided_reason ?? null,
+        item_id: row.item_id,
+        item_name: row.item_name,
+        quantity: row.quantity == null ? null : Number(row.quantity),
+        rate_cents: row.rate_cents == null ? null : Number(row.rate_cents),
+        unit_of_measure: row.unit_of_measure,
       })),
       payments: paymentsRes.rows.map((row) => ({
         ...row,
@@ -2513,6 +2544,42 @@ export async function createBill(input: CreateBillInput, userId: string) {
         // silently-succeeding no-load bill line into a raw trigger exception with no escape hatch.
         const lineCategory = await resolveLineCategoryForLoadRequirement(client, line.expenseCategoryUuid);
 
+        // Round 92/94 item lines remainder — accounting.bill_lines.item_id/quantity/rate_cents/
+        // unit_of_measure (migration 202614271200). bill_lines_item_qty_rate_amount_check demands
+        // all four set or all four null, and round(quantity * rate_cents) = round(amount * 100) —
+        // fail closed here with a named error instead of letting a mismatch surface as a raw
+        // Postgres constraint violation.
+        const itemFields = [line.itemId, line.quantity, line.rateCents, line.unitOfMeasure];
+        const itemFieldsSetCount = itemFields.filter((v) => v !== undefined && v !== null).length;
+        let itemId: string | null = null;
+        let quantity: number | null = null;
+        let rateCents: number | null = null;
+        let unitOfMeasure: string | null = null;
+        if (itemFieldsSetCount > 0) {
+          if (itemFieldsSetCount < 4) throw new Error("bill_line_item_qty_rate_incomplete");
+          itemId = String(line.itemId);
+          quantity = Number(line.quantity);
+          rateCents = Number(line.rateCents);
+          unitOfMeasure = String(line.unitOfMeasure);
+          if (!(quantity > 0)) throw new Error("bill_line_quantity_invalid");
+          if (Math.round(quantity * rateCents) !== Math.round(amountDollars * 100)) {
+            throw new Error("bill_line_item_qty_rate_amount_mismatch");
+          }
+          // Entity-scope the item — same discipline as accountId above (never accept a
+          // cross-company catalogs.items id).
+          const item = await client.query<{ id: string }>(
+            `
+              SELECT id::text
+              FROM catalogs.items
+              WHERE id = $1::uuid
+                AND operating_company_id = $2::uuid
+              LIMIT 1
+            `,
+            [itemId, input.operatingCompanyId]
+          );
+          if (!item.rows[0]) throw new Error("bill_line_item_not_in_company");
+        }
+
         await client.query(
           `
             INSERT INTO accounting.bill_lines (
@@ -2528,11 +2595,16 @@ export async function createBill(input: CreateBillInput, userId: string) {
               account_id,
               load_id,
               line_category,
-              load_exemption_reason
+              load_exemption_reason,
+              item_id,
+              quantity,
+              rate_cents,
+              unit_of_measure
             )
             VALUES (
               $1::uuid, $2, $3, $4, $5,
-              $6::uuid, $7::uuid, $8, $9, $10::uuid, $11::uuid, $12, $13
+              $6::uuid, $7::uuid, $8, $9, $10::uuid, $11::uuid, $12, $13,
+              $14::uuid, $15, $16, $17
             )
           `,
           [
@@ -2560,6 +2632,10 @@ export async function createBill(input: CreateBillInput, userId: string) {
             line.loadId ?? null,
             lineCategory,
             line.loadExemptionReason ?? null,
+            itemId,
+            quantity,
+            rateCents,
+            unitOfMeasure,
           ]
         );
       }

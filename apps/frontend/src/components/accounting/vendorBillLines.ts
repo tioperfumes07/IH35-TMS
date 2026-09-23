@@ -14,7 +14,21 @@ export type VendorBillFormLinePayload = {
   // Backend (bills.routes.ts createBillLineSchema, bills.service.ts createVendorBill INSERT) has
   // accepted this since #19459; the frontend simply never sent it. Not memo-only (LAW-E2E #3167).
   load_id?: string;
+  /**
+   * Round 92/94 (item lines remainder, migration 202614271200) — catalogs.items FK + qty x rate =
+   * amount. All four travel together or not at all (bills.service.ts enforces this server-side).
+   */
+  item_id?: string;
+  quantity?: number;
+  rate_cents?: number;
+  unit_of_measure?: string;
 };
+
+/** Bill lines carry no per-unit signal today (no catalogs.items.unit_of_measure column) — "each"
+ *  is the QuickBooks-standard default for a picked item with no more specific unit, same as an
+ *  unmeasured Product/Service line there. Only ever written alongside a real item_id + quantity;
+ *  never invented for a line with no item selected. */
+const DEFAULT_UNIT_OF_MEASURE = "each";
 
 export type ExpenseCategoryMapMeta = {
   category_kind?: string;
@@ -59,11 +73,36 @@ export function mapExpenseCatalogCodeToBillCategory(
 }
 
 /**
+ * Round 92/94 (item lines remainder) — the Section B item-line row already carries real
+ * quantity/unit_cost the moment an operator picks a catalogs.items entry and types a quantity
+ * (CostBreakdownBox's own live amount = quantity * unit_cost computation). Deriving amount_cents
+ * FROM quantity * rate_cents here (rather than trusting the UI's separately-rounded `amount`
+ * field) guarantees the DB's own CHECK — round(quantity * rate_cents) = round(amount * 100) —
+ * holds exactly, by construction, not by coincidence. Returns null when there is no item picked
+ * or no positive quantity: the line stays amount-only, exactly today's behavior.
+ */
+function deriveItemQtyRate(
+  serviceItemUuid: string | undefined,
+  quantity: number | undefined,
+  unitCost: number | undefined
+): { item_id: string; quantity: number; rate_cents: number; unit_of_measure: string; amount_cents: number } | null {
+  const itemId = String(serviceItemUuid ?? "").trim();
+  const qty = Number(quantity ?? 0);
+  if (!itemId || !(qty > 0)) return null;
+  const rateCents = Number(unitCost ?? 0) * 100;
+  const amountCents = Math.round(qty * rateCents);
+  if (amountCents <= 0) return null;
+  return { item_id: itemId, quantity: qty, rate_cents: rateCents, unit_of_measure: DEFAULT_UNIT_OF_MEASURE, amount_cents: amountCents };
+}
+
+/**
  * Flatten TwoSectionLine editor rows into API line payloads.
  * Section A (WAVE-H1): catalogs.expense_categories id → expense_category_uuid;
  * known codes also set category_kind/code for the B1 map. Never stamp a CoA account
  * id into expense_category_uuid (same-entity FK).
- * Section B: item + optional part/labor sub-rows; account left unset.
+ * Section B: item + optional part/labor sub-rows; account left unset. A sub-row breakdown
+ * (parts/labor) FKs to catalogs.parts/labor_rates, not catalogs.items — never sent as
+ * item_id/quantity/rate_cents (a different FK target the DB would reject).
  */
 export function buildVendorBillLinePayloads(
   lines: TwoSectionLine[],
@@ -108,7 +147,8 @@ export function buildVendorBillLinePayloads(
         });
       }
     } else {
-      const cents = Math.round(Number(line.amount || 0) * 100);
+      const derived = deriveItemQtyRate(line.service_item_uuid, line.quantity, line.unit_cost);
+      const cents = derived?.amount_cents ?? Math.round(Number(line.amount || 0) * 100);
       if (cents <= 0) continue;
       out.push({
         section: "B",
@@ -116,6 +156,9 @@ export function buildVendorBillLinePayloads(
         description: line.description?.trim() || undefined,
         ...(line.service_item_uuid ? { service_item_uuid: line.service_item_uuid } : {}),
         ...(defaultLoadId ? { load_id: defaultLoadId } : {}),
+        ...(derived
+          ? { item_id: derived.item_id, quantity: derived.quantity, rate_cents: derived.rate_cents, unit_of_measure: derived.unit_of_measure }
+          : {}),
       });
     }
   }

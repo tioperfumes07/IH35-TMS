@@ -123,6 +123,12 @@ const createBillLineSchema = z.object({
   // GO-18 — mirrors expenses' identical field; the DB trigger (accounting.enforce_load_fk_invariant)
   // enforces >=20 chars when this line's category requires a load and none was given.
   load_exemption_reason: z.string().trim().min(20).max(2000).optional().nullable(),
+  // Round 92/94 item lines remainder (migration 202614271200) — catalogs.items FK + qty x rate =
+  // amount. bills.service.ts enforces all-four-or-none and the qty*rate=amount identity.
+  item_id: z.string().uuid().optional().nullable(),
+  quantity: z.coerce.number().positive().optional().nullable(),
+  rate_cents: z.coerce.number().positive().optional().nullable(),
+  unit_of_measure: z.string().trim().regex(/^[a-z][a-z_]*$/).optional().nullable(),
 });
 
 const createBillBodySchema = z.object({
@@ -523,6 +529,10 @@ export async function registerBillsRoutes(app: FastifyInstance) {
             categoryCode: line.category_code,
             loadId: line.load_id,
             loadExemptionReason: line.load_exemption_reason,
+            itemId: line.item_id,
+            quantity: line.quantity,
+            rateCents: line.rate_cents,
+            unitOfMeasure: line.unit_of_measure,
           })),
         },
         String(user.uuid)
@@ -540,6 +550,11 @@ export async function registerBillsRoutes(app: FastifyInstance) {
         message === "bill_recovery_requires_driver" ||
         message === "bill_recovery_requires_deduction_type" ||
         message === "bill_line_account_not_in_company" ||
+        // Round 92/94 item lines remainder — all-four-or-none, qty*rate=amount, entity scope.
+        message === "bill_line_item_qty_rate_incomplete" ||
+        message === "bill_line_quantity_invalid" ||
+        message === "bill_line_item_qty_rate_amount_mismatch" ||
+        message === "bill_line_item_not_in_company" ||
         // ACCT-F158 — a vendor outside the caller's entity is a client error, not a 500.
         message === "bill_vendor_not_in_company"
       ) {
