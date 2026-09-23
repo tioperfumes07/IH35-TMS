@@ -200,6 +200,10 @@ INV-BAD,Delta Co,ABC,950.00,50.00,25.00,0.00,925.00,2026-06-15`;
     // Round 48: fee resolves from "Discount" ($45.00), NOT the separate "Fees" column ($99.00) —
     // proves the alias order picks the ruled-correct column even when both are present and differ.
     expect(line.fee_amount_cents).toBe(4500);
+    // ROUND 86: the "Fees" column ($99.00) is Faro's flat wire/ACH charge, captured under its own
+    // literal-header lookup — proves it resolves independently of fee_amount_cents (which took the
+    // SAME $99.00-carrying column's sibling "Discount" instead), not silently dropped or duplicated.
+    expect(line.wire_fee_amount_cents).toBe(9900);
     expect(line.advance_amount_cents).toBe(291000);
     expect(line.due_on).toBe("2026-08-10");
     // net has no column in this real export and is intentionally never guessed — stays 0.
