@@ -494,6 +494,7 @@ const TasksMinePage = React.lazy(() => import("../pages/tasks/TasksMinePage").th
 const TasksChatPage = React.lazy(() => import("../pages/tasks/TasksChatPage").then((m) => ({ default: m.TasksChatPage })));
 const DispatchChatPage = React.lazy(() => import("../pages/chat/DispatchChatPage").then((m) => ({ default: m.DispatchChatPage })));
 const TasksReportPage = React.lazy(() => import("../pages/tasks/TasksReportPage").then((m) => ({ default: m.TasksReportPage })));
+const ReconcilerExceptionsPage = React.lazy(() => import("../pages/tasks/ReconcilerExceptionsPage").then((m) => ({ default: m.ReconcilerExceptionsPage })));
 
 // Finance module (SIDEBAR-V2-REORG-25)
 const FinanceOverviewPage = React.lazy(() => import("../pages/finance/FinanceOverviewPage").then((m) => ({ default: m.FinanceOverviewPage })));
@@ -4860,6 +4861,7 @@ export const ROUTES = React.Children.toArray(
         <Route path="/tasks/chat" element={<ProtectedRoute><TasksChatPage /></ProtectedRoute>} />
         <Route path="/dispatch/chat" element={<ProtectedRoute><DispatchChatPage /></ProtectedRoute>} />
         <Route path="/tasks/report" element={<ProtectedRoute><TasksReportPage /></ProtectedRoute>} />
+        <Route path="/tasks/exceptions" element={<ProtectedRoute><ReconcilerExceptionsPage /></ProtectedRoute>} />
         {/* Finance module (SIDEBAR-V2-REORG-25) */}
         {/* FIN-2 — canonical Finance entry mounts the real read-only Hub. The placeholder Overview remains
             reachable at /finance/overview, and /finance/hub remains mounted as an additive legacy alias. */}

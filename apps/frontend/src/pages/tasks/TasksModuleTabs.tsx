@@ -11,6 +11,7 @@ const tabs = [
   { id: "mine", label: "My Tasks", to: "/tasks/mine" },
   { id: "chat", label: "Team Chat", to: "/tasks/chat" },
   { id: "report", label: "Admin Report", to: "/tasks/report" },
+  { id: "exceptions", label: "Exceptions", to: "/tasks/exceptions" },
 ];
 
 export function TasksModuleTabs() {

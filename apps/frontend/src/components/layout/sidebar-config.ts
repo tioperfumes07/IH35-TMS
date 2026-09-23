@@ -304,6 +304,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "My Tasks", to: "/tasks/mine" },
         { label: "Team Chat", to: "/tasks/chat" },
         { label: "Admin Report", to: "/tasks/report" },
+        { label: "Exceptions", to: "/tasks/exceptions" },
       ];
     case "finance":
       return [
