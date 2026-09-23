@@ -26,12 +26,26 @@ vi.mock("../factoring-posting/poster.service.js", () => ({
 vi.mock("../journal-entries.service.js", () => ({
   voidJournalEntry: vi.fn(async () => ({ reversal_journal_entry_id: "je-void-1" })),
 }));
+vi.mock("../../driver-finance/void-document-callees.service.js", () => ({
+  reverseSettlementForVoid: vi.fn(async () => ({
+    voidedAt: "2026-09-23T00:00:00.000Z",
+    reversalJournalEntryId: "je-settlement-1",
+    glReversalResult: "reversed",
+    bankTransactionUnmatched: false,
+  })),
+  reverseDeductionForVoid: vi.fn(async () => ({
+    voidedAt: "2026-09-23T00:00:00.000Z",
+    reversalJournalEntryId: null,
+    outcome: "voided_applied_retained",
+  })),
+}));
 
 import { voidDocument, VoidDocumentNotYetWiredError } from "../void-document.service.js";
 import { voidBillInClientTx, voidBillPaymentInClientTx } from "../bills.service.js";
 import { postVoidReversal } from "../void.service.js";
 import { reversePostedSourceTransactionInClientTx } from "../posting-engine.service.js";
 import { reverseFactoringAdvanceEvent } from "../factoring-posting/poster.service.js";
+import { reverseSettlementForVoid, reverseDeductionForVoid } from "../../driver-finance/void-document-callees.service.js";
 
 const fakeClient = { query: vi.fn() } as unknown as Parameters<typeof voidDocument>[0];
 const baseInput = {
@@ -145,5 +159,25 @@ describe("voidDocument — ROUND 31.2/32.2 dispatcher (not a new reversal engine
     await expect(voidDocument(fakeClient, { ...baseInput, type: "liability", id: "liab-1" })).rejects.toBeInstanceOf(
       VoidDocumentNotYetWiredError
     );
+  });
+
+  it("settlement -> calls the EXISTING reverseSettlementForVoid (driver-finance's own callee, VOID-DOCUMENT-CALLEES)", async () => {
+    const result = await voidDocument(fakeClient, { ...baseInput, type: "settlement", id: "settle-1" });
+    expect(reverseSettlementForVoid).toHaveBeenCalledWith(
+      fakeClient,
+      expect.objectContaining({ operatingCompanyId: "opco-1", settlementId: "settle-1", reason: "test void" })
+    );
+    expect(result.reversalJournalEntryId).toBe("je-settlement-1");
+  });
+
+  it("deduction -> calls the EXISTING reverseDeductionForVoid, an APPLIED (fully-collected) deduction never reverses", async () => {
+    const result = await voidDocument(fakeClient, { ...baseInput, type: "deduction", id: "ded-1" });
+    expect(reverseDeductionForVoid).toHaveBeenCalledWith(
+      fakeClient,
+      expect.objectContaining({ operatingCompanyId: "opco-1", deductionId: "ded-1" })
+    );
+    // outcome: voided_applied_retained -- the owner-ruled "why would I forgive the debt" branch,
+    // never a reversal.
+    expect(result.reversalJournalEntryId).toBeNull();
   });
 });

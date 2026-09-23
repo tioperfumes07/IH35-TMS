@@ -21,6 +21,16 @@
  * engine per entity type, in that engine's own already-proven-correct transaction/connection shape
  * — never reimplementing GL math.
  *
+ * 'deduction' and 'settlement' (VOID-DOCUMENT-DEDUCTION-SETTLEMENT-ENTITY-NUANCE, GUARD-WORKORDERS
+ * row filed by CC-3 2026-09-23, "inverted the dependency" per Round 35.3): driver-finance/**
+ * (CC-3's lane) exports the two callees this dispatcher needs —
+ * `driver-finance/void-document-callees.service.ts`'s `reverseSettlementForVoid` /
+ * `reverseDeductionForVoid` — each a thin wrapper over an ALREADY-CORRECT, ALREADY-OWNER-RULED
+ * engine (reverseSettlementBillPaymentInClientTx for settlement; voidSettlementDeduction's
+ * pending/partial/applied three-branch dispatch for deduction — an 'applied' deduction is NEVER
+ * reversed, "why would I forgive the debt", 2026-09-05). This dispatcher calls them verbatim, no
+ * new GL math, no new preconditions — exactly the shape every other case in this switch follows.
+ *
  * TWO entity types in this lane are deliberately NOT wired yet: 'credit_memo' and 'liability'.
  * credit_memos.routes.ts's void route has no `source_transaction_type='credit_memo'` reference
  * anywhere in the codebase (grep-confirmed) — no GL posting exists at that source type today, so
@@ -38,6 +48,7 @@ import {
 import { voidBillInClientTx, voidBillPaymentInClientTx, type BillMutationClient } from "./bills.service.js";
 import { reversePostedSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { reverseFactoringAdvanceEvent } from "./factoring-posting/poster.service.js";
+import { reverseSettlementForVoid, reverseDeductionForVoid } from "../driver-finance/void-document-callees.service.js";
 
 export type VoidDocumentType =
   | "bill"
@@ -49,7 +60,9 @@ export type VoidDocumentType =
   | "factoring_advance"
   | "customer_payment"
   | "credit_memo"
-  | "liability";
+  | "liability"
+  | "deduction"
+  | "settlement";
 
 export type VoidDocumentResult = {
   voidedAt: string;
@@ -182,6 +195,26 @@ export async function voidDocument(
         voidedAt: nowIso(),
         reversalJournalEntryId: result.reversed ? result.reversal_journal_entry_id : null,
       };
+    }
+
+    case "settlement": {
+      const result = await reverseSettlementForVoid(client, {
+        operatingCompanyId: input.operatingCompanyId,
+        settlementId: input.id,
+        reason: input.reason,
+        actor: { userId: input.actor.userId },
+      });
+      return { voidedAt: result.voidedAt, reversalJournalEntryId: result.reversalJournalEntryId };
+    }
+
+    case "deduction": {
+      const result = await reverseDeductionForVoid(client, {
+        operatingCompanyId: input.operatingCompanyId,
+        deductionId: input.id,
+        reason: input.reason,
+        actor: { userId: input.actor.userId },
+      });
+      return { voidedAt: result.voidedAt, reversalJournalEntryId: result.reversalJournalEntryId };
     }
 
     case "credit_memo":
