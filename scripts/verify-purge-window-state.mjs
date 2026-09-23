@@ -4,7 +4,7 @@
 //
 // The mass void leaves rows in place (#22384; Law 7: nothing is deleted), so the window is read by the
 // STATE of its rows, never by their absence:
-//   STATIC  1. exactly the eight named arms may skip EMPTY BY PURGE, and each still calls the helper;
+//   STATIC  1. exactly the nine named arms may skip EMPTY BY PURGE, and each still calls the helper;
 //           2. the three arms that once counted every row count by the generated live_predicate;
 //           3. every generated entry states live_predicate (null stated, never missing);
 //           4. purge_state.json: verified_at is null before a PASS, or carries the verifier's own PASS shape.
@@ -31,7 +31,7 @@ const LIVE_ARMS = [
 
 export function staticViolations({ readScript, spec, state }) {
   const v = [];
-  if (PURGE_WINDOW_GUARDS.length !== 8) v.push(`the exemption lists ${PURGE_WINDOW_GUARDS.length} arms; exactly 8 are ruled`);
+  if (PURGE_WINDOW_GUARDS.length !== 9) v.push(`the exemption lists ${PURGE_WINDOW_GUARDS.length} arms; exactly 9 are ruled`);
   for (const arm of PURGE_WINDOW_GUARDS) {
     const src = readScript(arm);
     if (src == null) v.push(`${arm}: file missing`);
@@ -172,4 +172,4 @@ if (violations.length > 0) {
   for (const x of violations) console.error(`  ✗ ${x}`);
   process.exit(1);
 }
-console.log(`${LABEL}: PASS — purge-window state violations: 0 (required 0). Static: 8 arms, 3 on the generated live_predicate, every entry states live_predicate, purge_state.json consistent. Live: ${live.counted.join(", ")}; every voided row carries a reason; no dangling reversal link.`);
+console.log(`${LABEL}: PASS — purge-window state violations: 0 (required 0). Static: 9 arms, 3 on the generated live_predicate, every entry states live_predicate, purge_state.json consistent. Live: ${live.counted.join(", ")}; every voided row carries a reason; no dangling reversal link.`);
