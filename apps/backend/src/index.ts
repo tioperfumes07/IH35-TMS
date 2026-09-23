@@ -188,6 +188,7 @@ import { registerSettlementPaymentRoutes } from "./driver-finance/settlement-pay
 import { registerHomeRoutes } from "./home/home.routes.js";
 import { registerReportsRoutes } from "./reports/index.js";
 import { registerReportsScheduledCrudRoutes } from "./reports/scheduled-reports.routes.js";
+import { registerReconcilerRoutes } from "./reconciler/reconciler.routes.js";
 import { registerScheduledSubscriptionRoutes } from "./reports/scheduled/routes.js";
 import { registerCustomReportBuilderRoutes } from "./reports/custom-report-builder.routes.js";
 import { initializeReportsRoleScheduler, stopReportsRoleScheduler } from "./reports/scheduler.js";
@@ -1057,6 +1058,7 @@ async function main() {
   await registerDriverManagerRoleHomeRoutes(app);
   await registerReportsRoutes(app);
   await registerReportsScheduledCrudRoutes(app);
+  registerReconcilerRoutes(app);
   await registerScheduledReportsRoutes(app);
   await registerScheduledSubscriptionRoutes(app);
   await registerCustomReportBuilderRoutes(app);

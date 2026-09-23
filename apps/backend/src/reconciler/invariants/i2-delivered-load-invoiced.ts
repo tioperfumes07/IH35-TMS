@@ -63,6 +63,9 @@ export const I2_SQL = `
    ORDER BY l.load_number
 `;
 
+export const I2_REPAIR_FROM_LOAD = "POST /api/v1/accounting/invoices/from-load";
+export const I2_REPAIR_ISSUE_DRAFT = "POST /api/v1/accounting/invoices/:id/send";
+
 function dollars(cents: number): string {
   return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
@@ -101,7 +104,8 @@ export function i2ExceptionForRow(row: Row, departedAt: string | null): Reconcil
     since,
     since_source: sinceSource,
     owner_seat: OWNER_SEAT,
-    repair_engine: null,
+    // An unissued draft is issued, never duplicated: from-load refuses a load that already has one.
+    repair_engine: row.unissued_invoice_statuses ? I2_REPAIR_ISSUE_DRAFT : I2_REPAIR_FROM_LOAD,
     amount_cents: faroCents,
     amount_source: faroCents === null ? null : "factor.faro_invoice_lines.gross_amount_cents",
   };
@@ -111,7 +115,7 @@ export const i2DeliveredLoadInvoiced: Invariant = {
   id: INVARIANT_ID,
   title: "A delivered load has an issued invoice",
   ownerSeat: OWNER_SEAT,
-  repairEngine: null,
+  repairEngine: `${I2_REPAIR_FROM_LOAD} | ${I2_REPAIR_ISSUE_DRAFT}`,
   async detect(client: Queryable, operatingCompanyId: string) {
     const res = await client.query<Row>(I2_SQL, [operatingCompanyId]);
     const out: ReconcilerException[] = [];
