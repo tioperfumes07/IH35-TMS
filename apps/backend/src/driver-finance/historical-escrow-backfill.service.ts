@@ -39,14 +39,20 @@
  * not a duplicate. Matches the feeder's own natural key shape, `escrow:{load_number}:{n}`, which
  * is unique per line within a load and maps 1:1 onto this row's (load_id, description) pair.
  *
- * NOT WIRED to run_feed_day.py or any route yet -- CC-1's "stop writer" and the driver_bill
+ * WIRED BEHIND THE `historical_backfill` SOURCE MARKER (Round 91/92): `input.source` must equal
+ * `"historical_backfill"` or the function throws before touching the database -- the same fail-
+ * closed discriminator shape as `LoadCreateSource` (book-load.service.ts) and `InvoiceSendMode`
+ * (invoice-send.service.ts), so an accidental or undeclared caller can never reach this path by
+ * default the way an undeclared `LoadCreateSource` fails closed to `live_feed` and gets blocked.
+ * NOT YET WIRED to run_feed_day.py or any route -- CC-1's "stop writer" and the driver_bill
  * historical-backfill path it depends on (STEPS["escrow"]["needs"] = ["driver_bill"] in the
  * orchestrator) do not exist yet either, and are not this seat's lane
  * (apps/backend/src/dispatch/book-load.service.ts::createDriverBillArtifacts is CC-1's booking-
  * time pay computation, not an item-line historical-backfill writer). This function is the real,
- * tested, sign-correct escrow half, ready to be called once that caller exists. Per Round 85/86
- * law it performs NO write in this commit -- it is code, not a transaction row, and is exercised
- * only by its own selftest.
+ * tested, sign-correct, source-gated escrow half, ready to be called with
+ * `source: "historical_backfill"` once that caller exists. Per Round 85/86 law it performs NO
+ * write in this commit -- it is code, not a transaction row, and is exercised only by its own
+ * selftest.
  */
 import { signedEscrowLedgerAmountCents } from "./escrow-ledger-sign.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -56,7 +62,17 @@ export type QueryableClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
 };
 
+// Same discriminator shape as LoadCreateSource (book-load.service.ts) and InvoiceSendMode
+// (invoice-send.service.ts) -- "live_feed" is reserved for a future real-time settlement-
+// approval caller (none exists today; every current escrow_ledger writer goes through the
+// live approval/pay-run flow directly, not through this file). This writer exists ONLY for the
+// settlement-refeed historical backfill, so it fails closed on anything else -- an undeclared or
+// "live_feed" source is refused, matching this codebase's own established pattern rather than
+// silently defaulting to the historical (looser-gated) path.
+export type HistoricalEscrowHoldSource = "live_feed" | "historical_backfill";
+
 export type HistoricalEscrowHoldInput = {
+  source: HistoricalEscrowHoldSource;
   operating_company_id: string;
   driver_id: string;
   load_id: string;
@@ -78,6 +94,11 @@ export async function createHistoricalEscrowHold(
   client: QueryableClient,
   input: HistoricalEscrowHoldInput
 ): Promise<HistoricalEscrowHoldOutcome> {
+  if (input.source !== "historical_backfill") {
+    throw new Error(
+      `createHistoricalEscrowHold: source must be "historical_backfill" (got "${input.source}") -- this writer is the settlement-refeed backfill path only. A live-flow caller belongs on the existing approval/pay-run writers (ESCROW-LEDGER-SIGN-01), not here.`
+    );
+  }
   if (input.amount_cents <= 0) {
     throw new Error(
       `createHistoricalEscrowHold: amount_cents must be a positive magnitude (got ${input.amount_cents}) -- the sign is derived here, never passed in.`
