@@ -5345,3 +5345,81 @@ rows today — forward-looking wiring only, not yet visually provable.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+
+## R-102-B items 3-6 + item 5 (disclosed count) — BUILT, TSC CLEAN, PUSH BLOCKED BY LIVE PRODUCTION CHURN (branch `cc2-r102b-readonly-void`, commit `eb248fc5eb`)
+
+Round 121 accepted items 3-6 "as described" and assigned item 5's remaining half (the disclosed
+count). All of it is built, on `cc2-r102b-readonly-void`, four commits, rebased clean onto
+`origin/main` tip (`2c49a4c6d4`) with zero conflicts:
+
+- **Item 3 (NOTHING EDITABLE)** — `a3a346bb20`: `SettlementDetailPage.tsx`'s `settlementIsLocked`
+  excluded `cancelled`; new `settlementIsReadOnly` gate wired into every writable section +
+  `CloseTripPanel`; `DeductionsSection.tsx` Hold/Resume gained a real disabled check (had none).
+  `VoidedBanner.tsx` Round 112 correction: renders "by — unknown" instead of omitting the actor.
+- **Item 4 (THE NUMBER STAYS)** — `06d704cee9`: `accounting.bills` display_id taken-check dropped
+  the `voided_at`/`revoked_at` exclusion that let a voided bill's number be reissued.
+- **Item 5 first half (DEFAULT FILTERS)** — `2a95fd61cd`: ManualJEListPage/CreditMemosPage/
+  VendorCreditsPage now default-hide voided documents (`"active"` pseudo-status), matching the
+  other 6 families that already did.
+- **Item 5 second half (DISCLOSED COUNT)** — `9ff17bfcbb`→`eb248fc5eb`: every family that
+  default-hides voided/cancelled rows now discloses what it hid — "{live} live, {N} voided
+  (hidden)" — across bills (vendor+driver, summed), credit memos, vendor credits, expenses,
+  invoices, factoring advances, the JE register, the Settlements tours-register, fuel_purchases
+  (which also gained a new `include_voided` toggle — it had none before), and the Settlements
+  payments-view (client-side derived, since its `hideCancelled` filter is client-side over an
+  already-fully-fetched list, not a server round-trip). Two incidental bugs fixed along the way:
+  `ExpensesListPage.tsx` and `FactoringListPage.tsx` both had their `queryFn` unwrap the list
+  response down to a bare rows array (`.then((res) => res.rows)`) before React Query ever stored
+  it, which would have made `voided_count` structurally unreachable regardless of what the backend
+  returned — fixed by keeping the full response and deriving `rows` separately.
+
+Live-verified (Neon `br-fancy-credit-akjnd07a`, bypass_rls='lucia', USMCA
+`5c854333-6ea5-4faa-af31-67cb272fef80`) before wiring each family's frontend: bills 28
+voided/revoked + 35 voided driver bills (63 total); factoring_advances 51 voided; credit_memos 0;
+vendor_credits 0; journal_entries 0 (E10 hasn't reversed a manual JE as of this read);
+driver_settlements 21 cancelled (matches the payments-view's own client-side count); tours-register
+18 voided/cancelled closed tours; fuel_transactions 0 voided of 589 live (both from the earlier,
+already-merged half of this branch).
+
+New lane-cross ruling: `docs/bus/2026-09-23-LEAD-RULING-ROUND-121-CC2-LANE-CROSS-ITEM5-DISCLOSED-COUNT.md`,
+quoting Round 121 verbatim — covers 8 CC-1 files (`bills.routes.ts`, `display-id.ts`,
+`credit-memos.routes.ts`, `vendor-credits.routes.ts`, `expenses.routes.ts`,
+`factoring-advances.routes.ts`, `journal-entries.routes.ts`, `journal-entries.service.ts`) and 2
+CC-3 files (`tour-readout.routes.ts`, `fuel-transactions.routes.ts`) — all read-only-additive.
+`invoices.routes.ts` needed no cross (already CC-2's own lane). `npx tsc -p
+apps/backend/tsconfig.json --noEmit` and `cd apps/frontend && npx tsc -b` both exit 0, checked
+after every family.
+
+**PUSH ATTEMPTED, BLOCKED — genuine live production churn, not my diff, not bypassed, not
+retried in a loop (per Round 121's own law):**
+
+1st attempt (before the lane-cross ruling existed) correctly rejected by `verify-lane-ownership.mjs`
+(03b) — my own violation, fixed by writing the ruling above and re-committing with the
+`LANE-CROSS:`/`SEAT=CC-2 LANE_CROSS=...` wiring (not a retry against an external blocker — a fix
+to my own gate failure, done once).
+
+2nd attempt (with the lane-cross fix in place) passed lane-ownership and hit
+`verify-alwaystrack-parity`: **0 of 34 tracked documents exact on all six dimensions**, with
+severe live drift — e.g. `TOTAL (live): line_haul=9410.00 (target 238810.00) | driver_payment=
+42173.74 (target 48783.51) | fuel=120295.75/206rows (target 110072.33/171rows)` — and 33
+previously-baselined documents newly WORSE (5769-5803 range), not just old debt. Confirmed
+zero diff-overlap: `git diff origin/main...HEAD --stat` shows my branch touches no
+settlement-posting/GL/reconciliation backend code at all — the only Settlements files in the diff
+(`SettlementDetailPage.tsx`, `SettlementsPage.tsx`, `SettlementsToursRegister.tsx`) are all
+frontend display-only. The script itself only runs meaningfully against a real `DATABASE_URL`
+(live prod) and reads no baseline file that's in my diff. This is the same class of shared,
+external, in-progress production event as the earlier `verify-void-is-whole.mjs` blocker (Round
+116/117/121) — almost certainly the same Round 114 "PRODUCTION ONLY, LOOP UNTIL IT FLATTENS" E10
+void-runner, now visibly churning settlement-linked line_haul/fuel/expense totals, not something
+my diff caused or can fix.
+
+**Per Round 121, verbatim ("DO NOT retry in a loop and DO NOT bypass"): not retrying against this
+guard, not touching any baseline. `eb248fc5eb` is ready to push as-is the moment production
+settlement totals stop actively churning** — same resolution path as before (whoever is driving
+the E10 loop stabilizes it, or it finishes). No further push attempts against this specific guard
+until then.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
