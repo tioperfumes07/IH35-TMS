@@ -1001,6 +1001,11 @@
       "claimed_by": "cursor",
       "claimed_at": "2026-09-23",
       "purpose": "Lead cross to Cursor (item + line schema, one of the seven engines that gate the purge; docs/bus/09-23-2026-LEAD-RULING-CURSOR-ITEM-LINE-SCHEMA-CROSS.md): item_id, quantity, rate, unit_of_measure and a CHECK that the stored amount equals quantity x rate on accounting.bill_lines, accounting.invoice_lines, driver_finance.settlement_lines and accounting.expense_lines (the load-cost line). Additive and CREATE-only; rows land later through the writers (CC-3). Numbered above 202614270000, which is already stamped in the prod ledger."
+    },
+    "202614280000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-23",
+      "purpose": "E20 Samsara mapping engine (Lead spec, 2026-09-23): integrations.samsara_drivers gains local_vendor_id (polymorphic target alongside the existing local_driver_id, CHECK at most one set -- an owner-operator paid as a vendor is not on driver payroll) + a partial index. Additive only, no backfill in this migration (measured live: 28 of 94 scalar mdata.drivers.samsara_driver_id values conflict with an existing local_driver_id mapping to a DIFFERENT driver row -- a real duplicate-driver-identity problem, not a schema gap; not silently resolved here)."
     }
   },
   "202613590001": {
