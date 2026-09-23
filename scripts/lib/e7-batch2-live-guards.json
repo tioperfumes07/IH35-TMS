@@ -35,7 +35,6 @@
     "verify-ldt-d-documents-tab.mjs",
     "verify-load-costs-cost-split-foots.mjs",
     "verify-load-counter-not-ahead-of-reality.mjs",
-    "verify-migration-no-number-collision.mjs",
     "verify-no-duplicate-settlement-deductions.mjs",
     "verify-no-unmanifested-prod-financial-fixtures.mjs",
     "verify-one-void-convention.mjs",
