@@ -22,6 +22,10 @@ export type InvoiceDisputeResolution =
   | "written_off"
   | "no_change";
 
+// Round 88 (owner law, migration 202614290000) — the fault decision is a NAMED HUMAN ACT, never
+// inferred. 'unassigned' is the honest default; only 'driver' may ever produce a driver deduction.
+export type FaultParty = "unassigned" | "driver" | "carrier" | "customer" | "broker" | "force_majeure";
+
 export type InvoiceDisputeRow = {
   id: string;
   operating_company_id: string;
@@ -45,6 +49,12 @@ export type InvoiceDisputeRow = {
   resolved_by_user_id: string | null;
   created_at: string;
   updated_at: string;
+  fault_party: FaultParty;
+  fault_reason: string | null;
+  fault_decided_at: string | null;
+  fault_decided_by_user_id: string | null;
+  driver_id: string | null;
+  load_id: string | null;
 };
 
 export type InvoiceDisputeQueueResponse = { disputes: InvoiceDisputeRow[] };
@@ -98,5 +108,20 @@ export function cancelInvoiceDispute(disputeId: string, operatingCompanyId: stri
   return apiRequest<{ dispute: InvoiceDisputeRow }>(
     `/api/v1/accounting/invoice-disputes/${disputeId}/cancel`,
     { method: "POST", body: { operating_company_id: operatingCompanyId, reason } }
+  );
+}
+
+export type DecideDisputeFaultBody = {
+  operating_company_id: string;
+  fault_party: FaultParty;
+  fault_reason: string;
+  driver_id?: string | null;
+  load_id?: string | null;
+};
+
+export function decideDisputeFault(disputeId: string, body: DecideDisputeFaultBody) {
+  return apiRequest<{ dispute: InvoiceDisputeRow }>(
+    `/api/v1/accounting/invoice-disputes/${disputeId}/fault`,
+    { method: "POST", body }
   );
 }

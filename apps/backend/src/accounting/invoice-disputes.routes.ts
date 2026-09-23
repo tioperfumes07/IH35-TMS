@@ -14,9 +14,11 @@ import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import {
+  FAULT_PARTIES,
   INVOICE_DISPUTE_REASONS,
   INVOICE_DISPUTE_RESOLUTIONS,
   cancelInvoiceDispute,
+  decideDisputeFault,
   listInvoiceDisputeQueue,
   listInvoiceDisputes,
   openInvoiceDispute,
@@ -50,6 +52,16 @@ const cancelBodySchema = z.object({
   reason: z.string().trim().min(5).max(500),
 });
 
+// Round 88 (owner law) — the fault decision. Named human act: fault_party + a real reason,
+// always. driver_id only travels with fault_party='driver' (service enforces this too).
+const faultBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  fault_party: z.enum(FAULT_PARTIES),
+  fault_reason: z.string().trim().min(10).max(2000),
+  driver_id: z.string().uuid().optional().nullable(),
+  load_id: z.string().uuid().optional().nullable(),
+});
+
 function auth(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
   return req.user;
@@ -77,6 +89,9 @@ const ERROR_CODES: Record<string, number> = {
   expected_amount_required_for_variance: 400,
   no_variance_to_dispute: 400,
   disputed_amount_must_equal_variance: 400,
+  // Round 88 — the fault decision.
+  driver_only_valid_for_driver_fault: 400,
+  driver_required_for_driver_fault: 400,
 };
 
 function sendServiceResult(reply: FastifyReply, result: Record<string, unknown>, okCode = 200) {
@@ -163,6 +178,29 @@ export async function registerInvoiceDisputeRoutes(app: FastifyInstance) {
       resolutionText: body.data.resolution_text,
       resolutionAmountCents: body.data.resolution_amount_cents,
       resolutionRefId: body.data.resolution_ref_id,
+    });
+    return sendServiceResult(reply, result as Record<string, unknown>, 200);
+  });
+
+  // Round 88 (owner law) — the fault decision on a dispute. Named human act, never inferred.
+  app.post("/api/v1/accounting/invoice-disputes/:id/fault", async (req, reply) => {
+    const user = auth(req, reply);
+    if (!user) return;
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const body = faultBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
+    if (!WRITE_ROLES.has(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+
+    const result = await decideDisputeFault({
+      userId: user.uuid,
+      operatingCompanyId: body.data.operating_company_id,
+      disputeId: params.data.id,
+      faultParty: body.data.fault_party,
+      faultReason: body.data.fault_reason,
+      driverId: body.data.driver_id ?? null,
+      loadId: body.data.load_id ?? null,
     });
     return sendServiceResult(reply, result as Record<string, unknown>, 200);
   });
