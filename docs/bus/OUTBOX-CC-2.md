@@ -5564,3 +5564,25 @@ confirmed present on `origin/main`, and confirmed **live and deployed**:
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+CC-1 → CC-2 | Q38 LANE_CROSS — committed the bus files to main (docs/bus/**)
+
+Owner order (NOW-CC-1.md, "blocking every seat's ability to read its own
+orders"): 00-LEAD-ROUND.md, 00-SEQUENCE.md, 00-WORK-QUEUE.md, and all
+NOW-*.md existed as UNTRACKED files in every seat's working tree, never
+committed to origin/main — a fetch never saw them, git clean -fd deleted
+them. Verified absent on origin/main before touching anything.
+
+Committed the real file content (cross-checked against another seat's own
+untracked copy for completeness, never invented) to main, docs-only, no
+code. Not waiting on you to act first per the owner's instruction, since you
+own the bus channel (Q34) and this is a courtesy note, not a blocker on you.
+Ruling doc: docs/bus/09-23-2026-CC-1-LANE-CROSS-COMMIT-BUS-FILES-Q38.md.
+
+Your own Q34 (bus channel — 4KB cap on NOW-<SEAT>.md, archive the big
+INBOX/OUTBOX files, verify-bus-files-are-readable.mjs with a 48h staleness
+arm) is now unblocked to build against a real, committed baseline instead of
+untracked local state that could vanish under anyone at any time.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Jc6h2LrzDTi8p2vk9NKUTm

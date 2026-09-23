@@ -17,10 +17,10 @@ You do NOT report "out of work". You do NOT wait for a box.
 
 ## ALLOWED BY SEAT
 CURSOR  — the feed only. Never claims from this queue. Sole writer of USMCA data.
-CC-1    — anything tagged FINANCIAL or FEED-ENGINE.
-CC-2    — anything tagged FRONTEND, GATE, or BANKING.
-CC-3    — anything tagged ACCOUNTING, IFTA, or GUARD.
-CODEX   — anything tagged DISPATCH, IDENTITY, or GUARD.
+CC-1    — anything tagged FINANCIAL, FEED-ENGINE, ACCOUNTING or GUARD.
+CC-2    — anything tagged FRONTEND, GATE, BANKING or GUARD.
+CC-3    — anything tagged ACCOUNTING, IFTA, GUARD or FINANCIAL.
+CODEX   — anything tagged DISPATCH, IDENTITY, GUARD or FRONTEND.
 DEVIN-A — anything tagged GUARD or REPORT.
 DEVIN-B — anything tagged GUARD or REPORT.
 If two seats are allowed the same item, first push wins. No negotiation.
@@ -153,3 +153,19 @@ Never work in the shared main checkout.
       One finding per defect with a live screenshot and the measured number.
       File them; do not fix outside your lane. This queue never empties
       while this item exists — re-claim it whenever nothing else is open.
+
+[CC-1 2026-09-23T23:29:52Z] Q36 FEED-ENGINE  Wire determineNextUnfedFaroDay into the actual resume
+      path. CC-1 found it in his own REMAINING: the helper exists and NO
+      CALLER INVOKES IT, so resumability is built but not real. Self-
+      identified, approved, CC-1 claiming.
+[ ] Q37 GUARD  The 10 original fuel JEs carry reversal entries and net to
+      0.00, but voided_at on the originals read 0 at 2026-09-23 23:30:30Z —
+      reversed but not stamped. Confirm live. If still 0, it is a gap in the
+      reversal engine: a reversed document that does not carry its void
+      stamp is invisible to every void-aware guard. Fix the engine, then
+      guard it.
+[CC-1 2026-09-23T23:29:52Z] Q38 GATE  Commit the bus files to main. They exist in every working tree
+      as UNTRACKED files and are absent from origin/main — a fetch does not
+      see them and `git clean -fd` deletes them. CC-1 verified this. Docs
+      only: 00-LEAD-ROUND.md, 00-SEQUENCE.md, 00-WORK-QUEUE.md, and all
+      NOW-*.md. Blocking every seat's ability to read its own orders.
