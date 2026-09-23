@@ -23,13 +23,13 @@ const REGISTERED_PAGES = [
   "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
   "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
   "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+  "apps/frontend/src/pages/accounting/ManualJEListPage.tsx",
 ];
 
 // Pages named in the packet but NOT yet retrofitted — tracked here so a reviewer can see the real
 // remaining scope in one place, not scattered across commit messages. Never auto-checked; adding a
 // page to REGISTERED_PAGES above (after retrofitting it) is what turns enforcement on.
 const KNOWN_NOT_YET_DONE = [
-  "Journal Entries (ManualJEListPage.tsx)",
   "Load Costs (LoadCostsBoardPage.tsx)",
   "Settlements (SettlementsPage.tsx)",
   "Factoring (FactoringListPage.tsx)",

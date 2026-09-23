@@ -1,19 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
-import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listCoaAccountsForJe, listJournalEntries, voidJournalEntry, type JournalEntry, type JournalEntrySource, type JournalEntryStatus } from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
-import { SelectCombobox } from "../../components/Combobox";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ManualJEModal } from "./ManualJEModal";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -22,6 +19,9 @@ import { VoidedRowBadge, voidedRowClassName } from "../../components/accounting/
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { DateRangePresets } from "../../components/forms/DateRangePresets";
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 
@@ -130,12 +130,17 @@ export function ManualJEListPage() {
   // finance surface with NO default-hide at all — invoices/expenses/bills/factoring/settlements-
   // payments all default to "active"; this defaulted to "all", mixing voided JEs into a fresh
   // load. "posted" is this family's own live-document status (voided is mutually exclusive).
-  const [status, setStatus] = useState<JournalEntryStatus | "all">("posted");
-  const [source, setSource] = useState<JournalEntrySource | "all">("all");
+  // FILTER-MULTI-01 — real checkbox multi-select on Status/Source, an always-visible toolbar
+  // instead of the old click-to-reveal "Filters (N)" popover. Status defaults to ["posted"] (R-102-B item 5's
+  // hide-voided-by-default law); Source defaults to none-selected = "All sources".
+  const [statusFilter, setStatusFilter] = useState<string[]>(["posted"]);
+  const [sourceFilter, setSourceFilter] = useState<string[]>([]);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [accountId, setAccountId] = useState("");
-  const staged = useStagedListFilters({ applied: { source, status, fromDate, toDate, accountId }, empty: { source: "all" as const, status: "posted" as const, fromDate: "", toDate: "", accountId: "" }, onApply: (next) => { setSource(next.source); setStatus(next.status); setFromDate(next.fromDate); setToDate(next.toDate); setAccountId(next.accountId); setPage(0); } });
+  const [search, setSearch] = useState("");
+  const statusParam = statusFilter.length === 1 ? (statusFilter[0] as JournalEntryStatus) : undefined;
+  const sourceParam = sourceFilter.length === 1 ? (sourceFilter[0] as JournalEntrySource) : undefined;
   const accountsQuery = useQuery({
     queryKey: ["manual-je-list", "accounts", companyId],
     queryFn: () => listCoaAccountsForJe(companyId, { postableOnly: true }),
@@ -166,14 +171,14 @@ export function ManualJEListPage() {
   // Reset to the first page whenever a filter changes so offset paging stays coherent.
   useEffect(() => {
     setPage(0);
-  }, [status, source, fromDate, toDate, accountId]);
+  }, [statusParam, sourceParam, fromDate, toDate, accountId]);
 
   const entriesQuery = useQuery({
-    queryKey: ["journal-entries", companyId, status, source, fromDate, toDate, accountId, page],
+    queryKey: ["journal-entries", companyId, statusParam, sourceParam, fromDate, toDate, accountId, page],
     queryFn: () =>
       listJournalEntries(companyId, {
-        status: status === "all" ? undefined : status,
-        source: source === "all" ? undefined : source,
+        status: statusParam,
+        source: sourceParam,
         from_date: fromDate || undefined,
         to_date: toDate || undefined,
         account_id: accountId || undefined,
@@ -183,8 +188,20 @@ export function ManualJEListPage() {
     enabled: Boolean(companyId),
   });
 
-  const pageRows = entriesQuery.data?.journal_entries ?? [];
-  const hasNextPage = pageRows.length === PAGE_SIZE;
+  const allPageRows = entriesQuery.data?.journal_entries ?? [];
+  // No server-side search param on this list endpoint — filter the already-paginated page
+  // client-side over the same text the JE/Memo columns render, rather than adding a new backend
+  // param (out of this sweep's frontend-only lane).
+  const pageRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return allPageRows;
+    return allPageRows.filter((entry) => {
+      const label = journalEntryListLabel(entry).toLowerCase();
+      const memo = (entry.memo ?? "").toLowerCase();
+      return label.includes(q) || memo.includes(q);
+    });
+  }, [allPageRows, search]);
+  const hasNextPage = allPageRows.length === PAGE_SIZE;
 
   const voidMutation = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) => voidJournalEntry(id, companyId, reason),
@@ -283,41 +300,62 @@ export function ManualJEListPage() {
   );
 
   const jeActiveFilterCount =
-    (source !== "all" ? 1 : 0) + (status !== "all" ? 1 : 0) + (fromDate || toDate ? 1 : 0) + (accountId ? 1 : 0);
+    (sourceFilter.length > 0 ? 1 : 0) +
+    (statusFilter.length === 1 && statusFilter[0] !== "posted" ? 1 : 0) +
+    (statusFilter.length === 0 || statusFilter.length === 2 ? 1 : 0) +
+    (fromDate || toDate ? 1 : 0) +
+    (accountId ? 1 : 0);
 
   const filterBar = (
-    <CollapsedListFilters
-      activeFilterCount={jeActiveFilterCount}
-      onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
+    <MoneyListToolbar
+      search={search}
+      onSearchChange={setSearch}
+      searchPlaceholder="Search memo or type…"
+      searchTestId="manual-je-search"
       testIdPrefix="manual-je"
-      dataAttributes={{ "data-manual-je-filter-toolbar": "collapsed" }}
+      activeFilterCount={jeActiveFilterCount}
+      onClearAll={() => {
+        setSourceFilter([]);
+        setStatusFilter(["posted"]);
+        setFromDate("");
+        setToDate("");
+        setAccountId("");
+        setSearch("");
+      }}
     >
-      <div className="grid grid-cols-2 gap-2 w-full text-xs md:grid-cols-5">
-        <SelectCombobox className="h-8 rounded-sm border border-gray-300 px-2" value={staged.draft.source} onChange={(e) => staged.setDraft({ ...staged.draft, source: e.target.value as JournalEntrySource | "all" })}>
-          <option value="all">All sources</option>
-          <option value="manual">Manual</option>
-          <option value="auto">Auto</option>
-        </SelectCombobox>
-        <SelectCombobox className="h-8 rounded-sm border border-gray-300 px-2" value={staged.draft.status} onChange={(e) => staged.setDraft({ ...staged.draft, status: e.target.value as JournalEntryStatus | "all" })}>
-          <option value="posted">Posted (hide voided)</option>
-          <option value="all">All statuses (include voided)</option>
-          <option value="voided">Voided</option>
-        </SelectCombobox>
-        <DatePicker className="h-8" value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} />
-        <DatePicker className="h-8" value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} />
-        <ReferenceSelect
-          value={staged.draft.accountId || null}
-          onChange={(next) => staged.setDraft({ ...staged.draft, accountId: next ?? "" })}
-          options={accountOptions}
-          createKind="account"
-          operatingCompanyId={companyId}
-          placeholder="All accounts"
-          disabled={!companyId}
-          loading={accountsQuery.isLoading}
-          onOptionCreated={() => void accountsQuery.refetch()}
-        />
-      </div>
-    </CollapsedListFilters>
+      <MultiSelectDropdown
+        label="Status"
+        options={[
+          { value: "posted", label: "Posted" },
+          { value: "voided", label: "Voided" },
+        ]}
+        selected={statusFilter}
+        onChange={setStatusFilter}
+        allLabel="All statuses"
+      />
+      <MultiSelectDropdown
+        label="Source"
+        options={[
+          { value: "manual", label: "Manual" },
+          { value: "auto", label: "Auto" },
+        ]}
+        selected={sourceFilter}
+        onChange={setSourceFilter}
+        allLabel="All sources"
+      />
+      <ReferenceSelect
+        value={accountId || null}
+        onChange={(next) => setAccountId(next ?? "")}
+        options={accountOptions}
+        createKind="account"
+        operatingCompanyId={companyId}
+        placeholder="All accounts"
+        disabled={!companyId}
+        loading={accountsQuery.isLoading}
+        onOptionCreated={() => void accountsQuery.refetch()}
+      />
+      <DateRangePresets from={fromDate} to={toDate} onChange={(next) => { setFromDate(next.from); setToDate(next.to); }} data-testid="manual-je-date-range" />
+    </MoneyListToolbar>
   );
 
   return (
@@ -330,9 +368,9 @@ export function ManualJEListPage() {
       {entriesQuery.isError ? <ListErrorBanner onRetry={() => void entriesQuery.refetch()} /> : null}
       {/* R-102-B item 5 — owner: "a list that silently hides is the same class of defect as a
           badge that never renders." Company-wide, independent of every non-status filter. */}
-      {status === "posted" && typeof entriesQuery.data?.voided_count === "number" && entriesQuery.data.voided_count > 0 ? (
+      {statusFilter.length === 1 && statusFilter[0] === "posted" && typeof entriesQuery.data?.voided_count === "number" && entriesQuery.data.voided_count > 0 ? (
         <p className="text-xs text-gray-500" data-testid="manual-je-voided-count">
-          {pageRows.length} live, {entriesQuery.data.voided_count} voided (hidden)
+          {allPageRows.length} live, {entriesQuery.data.voided_count} voided (hidden)
         </p>
       ) : null}
       <ParityTable
@@ -340,9 +378,11 @@ export function ManualJEListPage() {
         rows={pageRows}
         rowKey={(entry) => entry.id}
         rowClassName={(entry) => voidedRowClassName(entry.voided_at)}
-        loading={entriesQuery.isPending || (entriesQuery.isFetching && pageRows.length === 0)}
+        loading={entriesQuery.isPending || (entriesQuery.isFetching && allPageRows.length === 0)}
         onRowClick={(entry) => navigate(`/accounting/journal-entries/${entry.id}`)}
         filterBar={filterBar}
+        suppressToolbarSearch
+        suppressToolbarRange
         storageKey="manual-je-list"
         initialPageSize={PAGE_SIZE}
         pageSizeOptions={[PAGE_SIZE]}
@@ -354,8 +394,9 @@ export function ManualJEListPage() {
 
       <div className="flex items-center justify-between gap-2 text-xs text-gray-600">
         <span>
-          Showing {pageRows.length === 0 ? 0 : page * PAGE_SIZE + 1}
-          {pageRows.length > 0 ? `–${page * PAGE_SIZE + pageRows.length}` : ""}
+          {search.trim()
+            ? `${pageRows.length} matching "${search.trim()}" on this page`
+            : `Showing ${allPageRows.length === 0 ? 0 : page * PAGE_SIZE + 1}${allPageRows.length > 0 ? `–${page * PAGE_SIZE + allPageRows.length}` : ""}`}
         </span>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="secondary" disabled={page === 0 || entriesQuery.isFetching} onClick={() => setPage((p) => Math.max(0, p - 1))}>
