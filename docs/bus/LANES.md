@@ -16,6 +16,7 @@ scripts/lib/**
 apps/backend/src/identity/**
 apps/backend/src/accounting/**
 apps/backend/src/dispatch/**
+apps/backend/src/feed/**
 apps/backend/src/mdata/drivers**
 apps/backend/src/mdata/loads.routes.ts
 **/*.db.test.ts
