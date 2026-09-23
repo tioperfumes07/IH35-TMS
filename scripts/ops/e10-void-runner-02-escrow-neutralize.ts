@@ -18,6 +18,16 @@
 //
 // PROVING GROUND ONLY: br-spring-dream-akk31fyt (a clean copy of production at LSN E7/9936D28),
 // never br-sweet-math-akyen17f (Cursor-truncated), never production.
+//
+// ROUND 95 FIX -- SKIP REPAIR-PAIR ROWS (Lead ruling, docs/bus/09-23-2026-LEAD-THE-500.01-ESCROW-
+// RESIDUAL-EXPLAINED.md, measured live on production). A 2026-09-02 two-step correction
+// (MARK/WORM REVERSE) already walked 3 accounts to exactly 0 -- but the release leg was written
+// for double the deposit, so the POSTING LEDGER on those 3 accounts is $500.01 short of the
+// balances even though the balances themselves are correct. Mirroring these six rows would
+// mirror a correction of a correction, moving three accounts that are already at 0 OFF zero --
+// "the cure would create the disease." These rows self-identify: source_type='reconciliation',
+// source_id IS NULL, no linked_journal_entry_id. Skipped below, named in the output, never
+// silently dropped.
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
@@ -45,17 +55,30 @@ async function main() {
   );
   console.log(`BEFORE: accounting.escrow_accounts -- ${before.rows[0]!.n} rows, net balance $${(Number(before.rows[0]!.total_cents) / 100).toFixed(2)}`);
 
+  const skipped = await client.query<{ id: string; note: string | null }>(
+    `
+      SELECT ep.id::text, ep.note
+        FROM accounting.escrow_postings ep
+        JOIN accounting.escrow_accounts ea ON ea.id = ep.escrow_account_id
+       WHERE ea.operating_company_id = $1::uuid
+         AND ep.source_type = 'reconciliation' AND ep.source_id IS NULL AND ep.linked_journal_entry_id IS NULL
+    `,
+    [USMCA_COMPANY_ID]
+  );
+  for (const s of skipped.rows) console.log(`  SKIP (repair-pair row, Lead ruling): posting ${s.id} -- ${s.note ?? "(no note)"}`);
+
   const postings = await client.query<{ id: string; escrow_account_id: string; posting_type: string; amount_cents: string; driver_id: string }>(
     `
       SELECT ep.id::text, ep.escrow_account_id::text, ep.posting_type, ep.amount_cents::text, ea.holder_id::text AS driver_id
         FROM accounting.escrow_postings ep
         JOIN accounting.escrow_accounts ea ON ea.id = ep.escrow_account_id
        WHERE ea.operating_company_id = $1::uuid
+         AND NOT (ep.source_type = 'reconciliation' AND ep.source_id IS NULL AND ep.linked_journal_entry_id IS NULL)
        ORDER BY ep.posted_at ASC, ep.id ASC
     `,
     [USMCA_COMPANY_ID]
   );
-  console.log(`Real postings to mirror: ${postings.rowCount}`);
+  console.log(`Real postings to mirror (excluding ${skipped.rowCount} repair-pair rows): ${postings.rowCount}`);
   let sumSigned = 0;
   for (const p of postings.rows) sumSigned += (p.posting_type === "deposit" ? 1 : p.posting_type === "release" ? -1 : 0) * Number(p.amount_cents);
   console.log(`Signed net of real postings (deposit +, release -): $${(sumSigned / 100).toFixed(2)}`);

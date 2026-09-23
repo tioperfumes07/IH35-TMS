@@ -110,9 +110,25 @@ async function main() {
 
   const pool = new pg.Pool({ connectionString: url, max: 1, ssl: { rejectUnauthorized: false } });
   const client = await pool.connect();
-  await client.query("RESET ROLE");
-  await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
-  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [USMCA_COMPANY_ID]);
+
+  // ROUND 95 FIX -- session state was silently lost mid-run, found live: `set_config(key, val,
+  // true)` is TRANSACTION-LOCAL (is_local=true), and this script issues it as a bare autocommit
+  // statement with no enclosing BEGIN, so its effect can revert the moment ANY later query opens
+  // its own transaction on this connection. Empirically, after Phase 1b's 36 calls into
+  // reverseSettlementPayRun (which manages its own connection/role via withCurrentUser), this
+  // client's own bypass_rls/operating_company_id measurement queries started returning 0 rows for
+  // factoring/invoices/expenses/fuel/revrec -- verified directly: the SAME query, run standalone
+  // in an explicit BEGIN...COMMIT via psql, returned the correct 69 live factoring advances the
+  // script itself had just reported as 0. reassertSession is now called at the top of every phase
+  // that follows a real engine call, using is_local=false (SESSION-scoped, survives statement/
+  // transaction boundaries on this connection) instead of true, plus RESET ROLE as defense against
+  // any role switch an engine call may have left behind.
+  async function reassertSession() {
+    await client.query("RESET ROLE");
+    await client.query(`SELECT set_config('app.bypass_rls', 'lucia', false)`);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, false)`, [USMCA_COMPANY_ID]);
+  }
+  await reassertSession();
 
   console.log(`DATABASE_URL host: ${new URL(url).host}`);
   console.log(executeFlag ? "MODE: --execute (will call the reversal engines)" : "MODE: dry-run (measurement only, no engine calls)");
@@ -167,6 +183,7 @@ async function main() {
   }
 
   // ================= PHASE 1b: settlements posted via pay-run close (payrun_gl_runs) =================
+  await reassertSession();
   // See the ROUND 94 FIX header note -- this is the mechanism USMCA actually used, 0 of the
   // Phase 1 (driver_settlement_gl_runs) candidates ever existed for USMCA.
   const payrunSettlements = await client.query<{ id: string }>(
@@ -202,6 +219,7 @@ async function main() {
   }
 
   // ================= PHASE 2: factoring advances =================
+  await reassertSession();
   const factoringTally = freshTally();
   const advances = await client.query<{ id: string }>(
     `
@@ -227,6 +245,7 @@ async function main() {
   }
 
   // ================= PHASE 3: invoices =================
+  await reassertSession();
   const invoiceTally = freshTally();
   const invoices = await client.query<{ id: string }>(
     `
@@ -251,6 +270,7 @@ async function main() {
   }
 
   // ================= PHASE 4: expenses =================
+  await reassertSession();
   const expenseTally = freshTally();
   const expenses = await client.query<{ id: string }>(
     `
@@ -275,6 +295,7 @@ async function main() {
   }
 
   // ================= PHASE 5: fuel transactions -- NO REVERSAL PATH =================
+  await reassertSession();
   const fuelGap = await client.query<{ n: string; cents: string }>(
     `
       SELECT count(*)::text AS n, COALESCE(sum(jep.amount_cents), 0)::text AS cents
@@ -291,6 +312,7 @@ async function main() {
   console.log(`\nFUEL TRANSACTIONS -- NO REVERSAL PATH EXISTS ANYWHERE IN THIS CODEBASE. Live posted GL legs: ${fuelTally.no_path} / $${(fuelTally.no_path_amount_cents / 100).toFixed(2)}. STOP AND REPORT -- not voided, no 7th engine written.`);
 
   // ================= PHASE 6: revrec (load_revenue_recognition_postings) =================
+  await reassertSession();
   const revrecTally = freshTally();
   // The latch's own journal_entry_id column is the direct, real linkage -- 'event' distinguishes
   // 'earn' (Event 1, delivery accrual, JE tagged source_transaction_type='load' -- NOT reachable
@@ -321,8 +343,30 @@ async function main() {
         );
         const jeRow = je.rows[0];
         if (jeRow && jeRow.status === "posted" && !jeRow.reversed_by_je_id && !jeRow.voided_at) {
-          await reverseJournalEntryNoFlip(client, { operatingCompanyId: USMCA_COMPANY_ID, journalEntryId: l.je_id, reason: VOID_REASON, actorUserId: OWNER_USER_ID });
-          revrecTally.reversed++;
+          // ROUND 95 FIX -- reverseJournalEntryNoFlip does `SELECT ... FOR UPDATE` and writes a
+          // header + N posting lines expecting the CALLER to own the transaction (found live: the
+          // "journal entry X is not balanced (debits=0 credits=Y)" errors on every one of 137
+          // 'earn' latches were NOT a defect in the original postings -- verified the referenced
+          // original JE directly, debit=credit=300000, perfectly balanced. The id in the error is
+          // a BRAND NEW reversal-JE header this call itself creates. Without an enclosing
+          // transaction, accounting.trg_check_journal_entry_balanced (a DEFERRED constraint
+          // trigger) fires at the end of EACH individual autocommit INSERT instead of once at the
+          // true end, and each reversal line shares one idempotency_key across both lines
+          // (`void:journal_entry:<id>`) with a UNIQUE(operating_company_id, idempotency_key,
+          // line_sequence) constraint -- so a line orphaned by any earlier failed attempt silently
+          // no-ops the retry's same-numbered line via ON CONFLICT DO NOTHING, leaving the new
+          // header with only one side posted and the trigger firing immediately. Wrapping the call
+          // in an explicit transaction here is the real fix -- the function's own FOR UPDATE lock
+          // is the tell that it was written to expect one.
+          try {
+            await client.query("BEGIN");
+            await reverseJournalEntryNoFlip(client, { operatingCompanyId: USMCA_COMPANY_ID, journalEntryId: l.je_id, reason: VOID_REASON, actorUserId: OWNER_USER_ID });
+            await client.query("COMMIT");
+            revrecTally.reversed++;
+          } catch (e) {
+            await client.query("ROLLBACK");
+            throw e;
+          }
         } else {
           revrecTally.already_reversed++;
         }

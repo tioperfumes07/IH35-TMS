@@ -1,10 +1,10 @@
 {
-  "healthzSha": "303dcf5",
-  "generated_at": "2026-09-23T04:44:25.349Z",
+  "healthzSha": "1f7ae46",
+  "generated_at": "2026-09-23T05:35:31.806Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "303dcf5",
+    "deployedSha": "1f7ae46",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,60 @@
   },
   "recentActivity": [
     {
+      "number": 22401,
+      "title": "FINDING: ACCT-F2026092312 (shared backlog — Faro's export carries Cash Rsv, Fees, Dispatch and Sch Fee between face and net advance; nothing stored them, and the parser rejected the owner's real \"PURCHASE REPORT ALL\" export outright)",
+      "state": "merged",
+      "mergedAtCt": "09/23/2026, 12:33 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22401",
+      "sha": "8d27b42189",
+      "committedAtIso": "2026-09-23T00:33:01-05:00"
+    },
+    {
+      "number": 22399,
+      "title": "FINDING: E10-REHEARSAL-FAILED-416-ERRORS -- and the 274 orphan headers are NOT CC-3's concurrency race",
+      "state": "merged",
+      "mergedAtCt": "09/23/2026, 12:24 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22399",
+      "sha": "80b137a198",
+      "committedAtIso": "2026-09-23T00:24:07-05:00"
+    },
+    {
+      "number": 22398,
+      "title": "FINDING: ACCT-F2026092311 (claim migration 202614301200 for the Faro deduction columns: cash_rsv, dispatch, sch_fee, fees; claim-before-author, Rule 37)",
+      "state": "merged",
+      "mergedAtCt": "09/23/2026, 12:21 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22398",
+      "sha": "297514cd30",
+      "committedAtIso": "2026-09-23T00:21:20-05:00"
+    },
+    {
+      "number": 22397,
+      "title": "FINDING: N/A LANE: DOCS (OUTBOX-CC-2 final: E20 Part B, item lines, deduction screens all merged -- LIST EMPTY, all four assigned items live)",
+      "state": "merged",
+      "mergedAtCt": "09/23/2026, 12:20 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22397",
+      "sha": "bd59b5e79e",
+      "committedAtIso": "2026-09-23T00:20:46-05:00"
+    },
+    {
+      "number": 22396,
+      "title": "FINDING: ACCT-F70 (deduction screens -- the fault decision is a named human act, with a reason, unlocked only for fault_party=driver)",
+      "state": "merged",
+      "mergedAtCt": "09/23/2026, 12:12 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22396",
+      "sha": "7b65b75bee",
+      "committedAtIso": "2026-09-23T00:12:30-05:00"
+    },
+    {
+      "number": 22395,
+      "title": "Cursor-OUTBOX: 13d live with first cron runs + program scoreboard regen (82 > 80 behind blocked every push)",
+      "state": "merged",
+      "mergedAtCt": "09/22/2026, 11:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22395",
+      "sha": "ac985f8151",
+      "committedAtIso": "2026-09-22T23:55:41-05:00"
+    },
+    {
       "number": 22393,
       "title": "FINDING: FUEL-EXPENSE-DOC-02 -- the document now ADOPTS the posting that already exists, and only LIVE entries count",
       "state": "merged",
@@ -2157,60 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22390",
       "sha": "28cf281397",
       "committedAtIso": "2026-09-22T23:36:51-05:00"
-    },
-    {
-      "number": 22389,
-      "title": "FINDING: ACCT-F69 (item lines remainder -- bill lines carry real item/qty/rate, invoice lines confirmed already wired)",
-      "state": "merged",
-      "mergedAtCt": "09/22/2026, 11:36 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22389",
-      "sha": "4e2b82d385",
-      "committedAtIso": "2026-09-22T23:36:07-05:00"
-    },
-    {
-      "number": 22388,
-      "title": "FINDING: N/A LANE: DOCS (Cursor OUTBOX: 13d complete, arms unblocked, LIST EMPTY, claiming cash_rsv/dispatch/sch_fee)",
-      "state": "merged",
-      "mergedAtCt": "09/22/2026, 11:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22388",
-      "sha": "fbcf9e4ee0",
-      "committedAtIso": "2026-09-22T23:28:23-05:00"
-    },
-    {
-      "number": 22387,
-      "title": "FINDING: N/A LANE: DOCS (Cursor OUTBOX: 13d complete, arms unblocked, LIST EMPTY, claiming cash_rsv/dispatch/sch_fee)",
-      "state": "merged",
-      "mergedAtCt": "09/22/2026, 11:27 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22387",
-      "sha": "e4c665b8e0",
-      "committedAtIso": "2026-09-22T23:27:40-05:00"
-    },
-    {
-      "number": 22386,
-      "title": "FINDING: ACCT-F2026092309 (13d reconciler backend half, slice 2 — exceptions existed only for the length of one GET: no record of when a breach was first seen, whether it is still open, or when it resolved; nothing ran the reconciler unless someone opened the page)",
-      "state": "merged",
-      "mergedAtCt": "09/22/2026, 11:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22386",
-      "sha": "bc041f7770",
-      "committedAtIso": "2026-09-22T23:23:59-05:00"
-    },
-    {
-      "number": 22385,
-      "title": "FINDING: ACCT-F68 (E20 Part B -- the Samsara Driver Mapping page, 663 unmapped is the default view, never auto-map)",
-      "state": "merged",
-      "mergedAtCt": "09/22/2026, 11:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22385",
-      "sha": "11f4543135",
-      "committedAtIso": "2026-09-22T23:18:20-05:00"
-    },
-    {
-      "number": 22383,
-      "title": "FINDING: N/A LANE: DOCS (OUTBOX-CC-1 -- all four items complete, load-create ratchet closed at 0/0)",
-      "state": "merged",
-      "mergedAtCt": "09/22/2026, 11:16 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22383",
-      "sha": "ec1b057639",
-      "committedAtIso": "2026-09-22T23:16:33-05:00"
     }
   ]
 }

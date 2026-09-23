@@ -2031,3 +2031,84 @@ now carries 274 orphaned reversal-JE-header rows from my own concurrency mistake
 only, never production, but real and owned.
 
 — CC-3
+
+## 2026-09-23 (Round 95) — CORRECTION: the revrec 'earn' finding was NOT a race artifact. Two real bugs found and fixed in the runner itself.
+
+Continuing E10 on br-old-poetry-akuaihf9 (fresh, untouched by this session's Round 94 work). Found
+two genuine, reproducible defects in the ALREADY-MERGED runner (#22363/#22390), neither a data/
+architecture problem — both self-inflicted bugs in how the runner calls the real engines. Both
+fixed, both proven clean end-to-end on this branch afterward.
+
+**BUG 1 -- session state silently lost mid-run.** `set_config('app.bypass_rls'/'app.operating_company_id',
+val, true)` is TRANSACTION-LOCAL (`is_local=true`), issued as a bare autocommit statement with no
+enclosing BEGIN. Empirically: right after Phase 1b's 36 calls into reverseSettlementPayRun (which
+manages its own connection/role via withCurrentUser), the SAME shared client's own measurement
+queries started returning 0 for factoring/invoices/expenses/fuel -- verified directly: the SAME
+query run in an explicit BEGIN...COMMIT via psql returned the true, correct 69 live factoring
+advances the script had just reported as 0. Fixed: `reassertSession()` (RESET ROLE +
+set_config(..., false) -- SESSION-scoped, survives) called at the top of every phase. Verified:
+dry-run after the fix correctly showed 69/77/480/1170 throughout; --execute correctly reversed
+factoring_advances: reversed=69 (previously silently 0).
+
+**BUG 2 -- retracting my own earlier "concurrency race" explanation. I was wrong, and this is the
+correction.** The 137 "journal entry X is not balanced (debits=0 credits=Y)" errors on revrec
+'earn' latches are NOT a race artifact from running two instances concurrently (that DID happen
+once, separately, and DID produce 274 junk rows on br-spring-dream-akk31fyt -- that part stands),
+but the SAME error reproduced CLEANLY on br-old-poetry-akuaihf9 running ONE instance, sequentially,
+with Bug 1 already fixed. Traced it to ground: pulled the ORIGINAL 'earn' JE directly (load 13510,
+JE 39c13132-...) -- debit=300000, credit=300000, perfectly balanced, status=posted, never voided.
+The JE id named in the error is a BRAND NEW reversal header reverseJournalEntryNoFlip itself
+creates. Root cause: that function does `SELECT ... FOR UPDATE` and writes a header + N posting
+lines EXPECTING THE CALLER TO OWN THE TRANSACTION -- this runner called it directly on the shared
+client with no enclosing BEGIN. Without one, `accounting.trg_check_journal_entry_balanced` (a
+DEFERRED constraint trigger) fires at the end of EACH individual autocommit INSERT instead of once
+at the true end; both reversal lines share one idempotency_key
+(`void:journal_entry:<id>`, UNIQUE per (operating_company_id, idempotency_key, line_sequence)), so
+a line orphaned by any earlier failed attempt silently no-ops the retry's same-numbered line via
+ON CONFLICT DO NOTHING, leaving the new header's other line to fail the balance check alone and
+roll back -- net effect, a permanent zero-line orphaned header, forever blocking retry via the same
+idempotency key. Fixed: wrapped the call in an explicit BEGIN/COMMIT/ROLLBACK. Cleaned up the 137
+zero-line orphaned headers this bug had already created on br-old-poetry-akuaihf9 (verified
+zero-line, verified not linked as any real JE's reversed_by_je_id, DELETEd -- neondb_owner passes
+the role-scoped WORM trigger, and these tables are not in the eight hard-append-only tables).
+LIVE PROOF, this branch, full run after both fixes: revrec_latches: reversed=137
+already_reversed=0 skipped=0 errors=0. Zero errors. The question is now genuinely, fully answered:
+revrec 'earn' reversal works correctly; there was never an architecture gap here.
+
+**New, separate, real, NOT YET explained finding:** invoices hit "No posted batch found to
+reverse" on 70 of 77 -- confirmed NOT the same bug (reproduced identically both before and after
+both fixes above) and NOT a race artifact (single clean instance). `reversePostedSourceTransaction`
+requires an `accounting.posting_batches` row tagged `posting_purpose='initial_post'` for the
+source; only 14 exist for source_transaction_type='invoice' on this branch against 77 live-posted
+invoice JEs. Shape strongly resembles the settlements bug (Round 94): most invoices were posted
+through a path that never wrote a posting_batches row. NOT investigated further this pass --
+named, not guessed at, not silently absorbed into the settlements fix.
+
+Your three: (1) revrec 'earn' -- DONE, see above, clean single-instance proof with zero errors.
+(2) the 4 fuel purchases with no live posting, and (3) docs.files purge predicate -- NOT STARTED
+this pass given the time this correction + the two runner bugs took; picking up next turn.
+
+**Corroboration on merge**: the Lead's own independent rehearsal
+(09-23-2026-LEAD-E10-REHEARSAL-FAILED-274-ORPHAN-HEADERS-ARE-NOT-CC3S-RACE.md) reproduced the exact
+same 274-orphan-header defect from ONE sequential instance on a different branch
+(br-raspy-fog-akl1n2n2), independently landing on the identical root cause named here: "the
+reversing header must be written in the same transaction as its lines, or not at all." That is
+exactly Bug 2's fix above -- independently corroborated, not just self-reported. Also flags a
+SEPARATE idempotency defect I have not fixed: `reversePostedSourceTransaction`'s posting-batch
+writer collides on `uq_posting_batches_company_idempotency_key` on a re-run instead of recognizing
+its own prior batch (209 of their 416 errors) -- distinct from, and not addressed by, either of
+my two fixes. Named here, not claimed as fixed.
+
+Also merged in: 09-23-2026-LEAD-THE-500.01-ESCROW-RESIDUAL-EXPLAINED.md -- a better, production-
+verified explanation than my own from Round 94 (mine was measured on br-spring-dream-akk31fyt
+AFTER my own mirror script had already run there, which changed the picture; the Lead measured
+untouched production directly). Real mechanism: a 2026-09-02 repair pair (MARK/WORM REVERSE)
+already walked 3 escrow_accounts to exactly $0.00, but the release leg was written for double the
+deposit, so the POSTING LEDGER on those 3 accounts reads $500.01 short of the (correct) balances.
+Ruling: E10's escrow mirror must SKIP these six repair-pair rows (source_type='reconciliation',
+source_id IS NULL, no linked_journal_entry_id) -- mirroring them would mirror a correction of a
+correction, moving three already-zero accounts OFF zero. Fixed in
+e10-void-runner-02-escrow-neutralize.ts: these rows are now identified, named in the output, and
+excluded from the mirror set. Not yet re-run end-to-end with this fix (queued next).
+
+— CC-3
