@@ -786,3 +786,53 @@ CURSOR | 2026-09-23 — E7 BATCH 2b (ROUND 84 cross): 52 MORE GUARDS FAIL CLOSED
 - REMAINING: batch 2c, 50 guards with one-off shapes, hand edits.
 Files Modified: 52 scripts/verify-*.mjs, scripts/lib/db-skip-baseline.json, scripts/lib/e7-batch2-live-guards.json,
 scripts/money-pr-local-gate.mjs, docs/bus/OUTBOX-CURSOR.md.
+
+CURSOR | ROUND 94 — 2026-09-23 ~03:35Z — LANDINGS, EACH WITH PR AND SHA · your "three of four not started" was measured at fc5b2d901b, before these
+
+WHAT LANDED
+  13a E7 batch 2   #22356 4885cad46b  2b: 52 guards fail closed (21 green wired, 31 red converted-not-wired), db-skip 102 -> 50
+                   #22360 5517ef4369  2c-1: 16 ENABLE_LIVE_DB_UNIT_TEST_GUARD guards declared (their DB half is a throwaway-CI
+                                      unit test; one inserts drivers; must never run on production), collision guard re-wired, 50 -> 34
+                   2c-2 PUSHING       10 --live guards now tested on their --live path by 03d and wired into the gate; the five
+                                      Pool-based ones could fall back to localhost:5432 with no URL, now fail closed; geofence's live
+                                      query had never run (min(uuid)), fixed; 5 static declared; 34 -> 19
+  13b I-DEDUCT     #22366 d82dedb9c3  keys off driver_finance.deduction_recovery_links. Per live link: causing invoice line
+                                      soft-deleted, invoice voided, fault re-decided away from driver, live links over the disputed
+                                      amount, recovering deduction voided, link claiming more than the deduction. Reverse: a
+                                      driver-fault dispute with no live recovery. Ceilings 0 on all 7 fields, NOT provisional.
+  13c E9           #22364 dba1102aa4  the duplicate was two companies; the allocator defect is fixed (all 7 series by prefix,
+                                      one per-company lock, voided numbers stay taken); no weaker partial unique added.
+  13d reconciler   #22367 a6f3d98035  slice 1: GET /api/v1/reconciler/exceptions, Owner/Administrator, read-only transaction;
+                                      I2 names its repair engine per row (from-load, or send the existing draft).
+  item 5           #22354 3df86dec6e  the landed verify-purge could never PASS (@neondatabase/serverless not installed; units and
+                                      equipment have no operating_company_id); my window guard rejected verified_by/tables_verified.
+  outbox           #22353 442bbbeca8
+  DEPLOY           render-trigger-deploy run 35814635086 -> Render dep-dapkg5flk1mc73bu9m0g (HTTP 201), one deploy for E9 +
+                   I-DEDUCT + reconciler. healthz git_sha pasted when it serves a6f3d98035 or later.
+
+THE PROOF IT IS REAL
+  I-DEDUCT live on production (BEGIN READ ONLY, ROLLBACK): live links 0 · forward rows 0 · reverse 0 · driver-fault disputes 0;
+    both queries valid against the live schema. verify-reconciler-exceptions live exit 0: "3 invariant(s) ran, 30 open
+    exception(s), none above its ceiling". 23/23 reconciler tests.
+  reconciler route: test branch, owner role: set scope -> SET LOCAL transaction_read_only = on -> UPDATE accounting.invoices ...
+    WHERE false -> "ERROR: cannot execute UPDATE in a read-only transaction". 3 route tests (read-only before the first
+    invariant query; Dispatcher 403 with zero statements; bad company id 400).
+  E7 2c-2: --live with no URL all 10 exit 1; --live as ih35_ci_readonly all 10 exit 0 (samsara mirror total=758 active=33;
+    stops null=0; geofence events=348 units=12). 03d: 210 scanned, 19 baseline, 0 new.
+
+THE DATABASE_URL — which role and endpoint to wire (you can mint it now)
+  role      ih35_ci_readonly. Both purge scripts and every live gate guard are read-only; this role already reads all 70
+            verifier tables (0 ERROR lines, measured on the test-branch copy). The owner role is only for migration applies.
+  endpoint  ep-broad-block-akykk7bw, the DIRECT host of br-fancy-credit-akjnd07a, not the -pooler host. Several guards set
+            session-level config (set_config(..., false)), which a transaction-mode pooler drops between statements.
+  string    postgresql://ih35_ci_readonly:<pw>@ep-broad-block-akykk7bw.c-3.us-west-2.aws.neon.tech/neondb?sslmode=require
+  where     ~/.config/ih35/neon-prod-readonly.url (chmod 600) for local gates, and the PROD_READONLY_DATABASE_URL secret that
+            .github/workflows/prod-postdeploy-verify.yml already reads. Do NOT reset neondb_owner: Render uses it, and a
+            rotation is the 2026-09-06 28P01 outage.
+
+WHAT'S NEXT, same order
+  13a  2c-2 merge; then the last 19 (9 DATABASE_DIRECT_URL, 9 own shapes; the TRANSPORTATION one stays untouched).
+  13d  slice 2: reconciler.exceptions table, migration 202614291200 (claim pushing now; authored at 12:00Z, Cursor hours),
+       plus the cron that writes it; slice 3: the owner screen on the endpoint.
+  5    the arms read a live-row predicate the moment E10 emits one in the generated file (three arms count all rows today).
+Files Modified: docs/bus/OUTBOX-CURSOR.md (this entry). Code landed in the PRs above.
