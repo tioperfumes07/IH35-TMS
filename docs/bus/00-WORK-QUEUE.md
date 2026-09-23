@@ -70,6 +70,7 @@ Never work in the shared main checkout.
       verify-faro-po-match-is-normalized.mjs.
 [CC-2 2026-09-24T01:06:00Z] Q06 GATE  Gate live reads connect as ih35_ci_readonly, never
 [DEVIN-B 2026-09-24T01:15:00Z] Q06 GATE  Gate live reads connect as ih35_ci_readonly, never
+[DONE DEVIN-B #22472] Q06 GATE  Gate live reads connect as ih35_ci_readonly, never
       neondb_owner — six seats read prod while the feed writes and
       owner-role reads contend with its locks.
       BUILT + LIVE-VERIFIED, pushing now: scripts/money-pr-local-gate.mjs
@@ -187,6 +188,7 @@ Never work in the shared main checkout.
 
 # P3 — INFRASTRUCTURE
 [CC-2 2026-09-24T01:06:00Z] Q34 GATE  Bus channel — NOW-<SEAT>.md 4KB cap, archive the 83-548KB
+[DEVIN-B 2026-09-24T01:25:00Z] Q34 GATE  Bus channel — NOW-<SEAT>.md 4KB cap, archive the 83-548KB
       INBOX/OUTBOX files, verify-bus-files-are-readable.mjs with the 48-hour
       staleness arm. That arm is what would have caught Codex idling 12 days
       and CC-2 idling on a dead signal.

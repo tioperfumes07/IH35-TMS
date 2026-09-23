@@ -571,6 +571,15 @@ const LIVE_DOMAIN_GUARDS = [
       "apps/backend/src/dispatch/",
     ],
   ],
+  // ROUND E23 (DEVIN-B, Q06): gate live reads must connect as ih35_ci_readonly, never
+  // neondb_owner. Static source scan — no DB needed.
+  [
+    "verify-gate-live-reads-use-ci-readonly",
+    [
+      "scripts/lib/require-live-db.mjs",
+      "scripts/lib/pg-connection-options.cjs",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {

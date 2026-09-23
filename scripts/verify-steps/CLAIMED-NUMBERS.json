@@ -9049,5 +9049,10 @@
     "claimed_by": "devin-b",
     "claimed_at": "2026-09-24",
     "purpose": "verify-no-driver-merge-without-hard-identifier (Q16, new guard)"
+  },
+  "11593": {
+    "claimed_by": "devin-b",
+    "claimed_at": "2026-09-24",
+    "purpose": "verify-gate-live-reads-use-ci-readonly (Q06, new guard)"
   }
 }
