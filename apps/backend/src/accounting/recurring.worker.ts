@@ -6,6 +6,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
 import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
+import { invoiceLineTotalCents } from "./invoice-line-total.js";
 // ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): this recurring-JE template insert
 // never populated journal_entry_type_id -- one of several direct posters contributing to the live
 // 46/2214 (2%) density gap. Leaf module, no accounting-service imports.
@@ -141,7 +142,7 @@ async function materializeInvoice(client: PoolClient, tmpl: Record<string, unkno
       revenue_code: typeof ln.revenue_code === "string" ? ln.revenue_code : null,
     });
     const description = String(ln.description ?? "Recurring line");
-    const lineTotal = Math.round(qty * unit);
+    const lineTotal = invoiceLineTotalCents(qty, unit);
     await client.query(
       `
         INSERT INTO accounting.invoice_lines (

@@ -231,6 +231,9 @@ const STEPS = [
   ["verify-gl-invariants-inv3-real-only-basis", "scripts/verify-gl-invariants-inv3-real-only-basis.mjs"],
   ["verify-mdata-loads-patch-writes-assignment-history", "scripts/verify-mdata-loads-patch-writes-assignment-history.mjs"],
   ["verify-settlement-header-backlink-written", "scripts/verify-settlement-header-backlink-written.mjs"],
+  // Round 83 R3 / migration 202614271200: every money line's amount = qty x rate, and no invoice-line
+  // writer rounds that product in floating point. Static.
+  ["verify-item-line-quantity-rate-amount", "scripts/verify-item-line-quantity-rate-amount.mjs"],
 ];
 
 // ROUND 29.9 owner ruling (2026-09-22) — three guards, wired in this exact order, AFTER the STEPS

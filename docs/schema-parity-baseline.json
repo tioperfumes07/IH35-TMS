@@ -157,6 +157,7 @@
       "description",
       "expense_category_uuid",
       "id",
+      "item_id",
       "labor_rate_uuid",
       "line_category",
       "line_sequence",
@@ -170,8 +171,11 @@
       "part_uuid",
       "ps_category_qbo_id",
       "ps_item_qbo_id",
+      "quantity",
+      "rate_cents",
       "section",
       "service_item_uuid",
+      "unit_of_measure",
       "voided_at",
       "voided_reason"
     ],
@@ -540,6 +544,7 @@
       "expense_category_uuid",
       "expense_id",
       "id",
+      "item_id",
       "labor_rate_uuid",
       "line_category",
       "line_sequence",
@@ -553,8 +558,11 @@
       "part_uuid",
       "ps_category_qbo_id",
       "ps_item_qbo_id",
+      "quantity",
+      "rate_cents",
       "section",
-      "service_item_uuid"
+      "service_item_uuid",
+      "unit_of_measure"
     ],
     "accounting.expenses": [
       "class_id",
@@ -863,7 +871,8 @@
       "soft_deleted_at",
       "soft_deleted_by",
       "source_load_id",
-      "unit_amount_cents"
+      "unit_amount_cents",
+      "unit_of_measure"
     ],
     "accounting.invoices": [
       "amount_open_cents",
@@ -4742,10 +4751,13 @@
       "id",
       "is_active",
       "is_sample_data",
+      "item_id",
       "line_type",
       "load_id",
       "operating_company_id",
       "posting_account_id",
+      "quantity",
+      "rate_cents",
       "rejected_at",
       "rejected_by",
       "rejection_reason",
@@ -4757,6 +4769,7 @@
       "source_type",
       "split_partner_driver_id",
       "team_id",
+      "unit_of_measure",
       "updated_at",
       "void_reason",
       "void_reversal_entry_id",
