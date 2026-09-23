@@ -59,7 +59,23 @@ export type VoidableEntityType =
   // prepaid-expenses.routes.ts's void route call postVoidReversal a second time to reverse the
   // cumulative amortization-to-date, with NO new GL math — readOriginalGlPostings' generic
   // source_transaction_type/id predicate already handles it.
-  | "prepaid_amortization";
+  | "prepaid_amortization"
+  // ROUND 125/126 (Lead) — 'fuel_event' and 'driver_reimbursement' added. Both already post with a
+  // real source_transaction_type/source_transaction_id on their journal_entry_postings rows (live-
+  // verified: 'fuel_event' -> fuel.fuel_transactions.id, 'driver_reimbursement' ->
+  // driver_finance.driver_reimbursements.id) and both have a real document row with void columns
+  // (fuel_transactions/driver_reimbursements are 2 of the 7 VoidDocumentFamily members,
+  // void-document-stamp.service.ts) — engine #1 (postVoidReversal) used exactly as designed for any
+  // typed entity, NOT a 7th engine. This also gets fuel its BANK-ORPHAN-01 match release for free:
+  // unmatchBankTransactionsForVoid's FORWARD check (linked_entity_id = entityId) is unconditional on
+  // entityType (same as 'expense', which also has no BANK_MATCH_REVERSE_TABLE entry) — calling
+  // postVoidReversal with entityId = the fuel_transaction's OWN id (not the JE's id) is what makes
+  // the release fire; the bare-JE-id path (reverseJournalEntryNoFlip on the JE alone) does NOT, since
+  // it calls postVoidReversal with entityType:'journal_entry', entityId:<je id>, which never matches
+  // banking.bank_transactions.linked_entity_id = <fuel_transaction id>. Verified by reading
+  // unmatchBankTransactionsForVoid + postVoidReversal + readOriginalGlPostings directly, not assumed.
+  | "fuel_event"
+  | "driver_reimbursement";
 
 type QueryableClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -820,6 +836,9 @@ export async function auditVoid(
     prepaid_purchase: "accounting.prepaid_assets",
     // ACCT-F5640 — same table; the amortization-to-date reversal still targets the prepaid asset record.
     prepaid_amortization: "accounting.prepaid_assets",
+    // ROUND 125/126 — the audit row names the real document table, same convention as every other member.
+    fuel_event: "fuel.fuel_transactions",
+    driver_reimbursement: "driver_finance.driver_reimbursements",
   };
   const resourceType = resourceTypeByEntity[entityType];
   await appendCrudAudit(

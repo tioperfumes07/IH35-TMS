@@ -92,6 +92,15 @@ import { reverseSettlementBillPaymentInClientTx } from "../../apps/backend/src/a
 import { reverseSettlementPayRunInClientTx } from "../../apps/backend/src/driver-finance/settlement-payrun-reverse.service.js";
 import { companyBusinessDate } from "../../apps/backend/src/lib/company-business-date.js";
 import { stampDocumentVoided, VoidDocumentStampError, type VoidDocumentFamily } from "../../apps/backend/src/accounting/void-document-stamp.service.js";
+// ROUND 125/126 (Lead) -- postVoidReversal is engine #1, used directly (generic entity-typed call,
+// not a 7th engine) for fuel_event and driver_reimbursement: both now have a VoidableEntityType
+// member (void.service.ts) that matches their live source_transaction_type exactly, so calling
+// postVoidReversal with entityId = the DOCUMENT's own id (not the JE's id) both reverses the GL
+// (readOriginalGlPostings' generic source_transaction_type/id predicate) AND releases any
+// BANK-ORPHAN-01 bank match (unmatchBankTransactionsForVoid's FORWARD check, unconditional on
+// entityType) in the same call -- the bare-JE-id path (reverseJournalEntryNoFlip alone) cannot do
+// the second half, see void.service.ts's VoidableEntityType comment for the full reasoning.
+import { postVoidReversal } from "../../apps/backend/src/accounting/void.service.js";
 
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const OWNER_USER_ID = "e4117991-d2c0-406d-8cda-74e98d95bccd";
@@ -307,6 +316,71 @@ async function main() {
     return "reversed";
   }
 
+  // ROUND 125/126 -- same JE-id fallback shape (engine #6), but for a source_transaction_type with
+  // NO VoidDocumentFamily member (faro_intercompany_leg, driver_advance, faro_reserve_close,
+  // bank_categorization -- none of R-102.1-A's seven named families). Inventing a stamp family for a
+  // table the ruling never named would be exactly the kind of guess this codebase's law forbids
+  // (same reasoning as Phase 1's settlements/driver_bills, stated in this file's own header) -- so
+  // this variant reverses the GL and stops, never calls stamp(). Named explicitly by the caller.
+  async function reverseByJeIdFallbackNoStamp(sourceType: string, sourceId: string, reason: string): Promise<"reversed" | "no_live_je"> {
+    const jeRes = await client.query<{ journal_entry_uuid: string }>(
+      `
+        SELECT DISTINCT jep.journal_entry_uuid::text
+          FROM accounting.journal_entry_postings jep
+          JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+         WHERE je.operating_company_id = $1::uuid
+           AND jep.source_transaction_type = $2 AND jep.source_transaction_id = $3
+           AND je.status = 'posted' AND je.voided_at IS NULL
+           AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL
+      `,
+      [USMCA_COMPANY_ID, sourceType, sourceId]
+    );
+    if (jeRes.rowCount !== 1) return "no_live_je";
+    const journalEntryId = jeRes.rows[0]!.journal_entry_uuid;
+    await inTx(async () => {
+      await reverseJournalEntryNoFlip(client, { operatingCompanyId: USMCA_COMPANY_ID, journalEntryId, reason, actorUserId: OWNER_USER_ID });
+    });
+    return "reversed";
+  }
+
+  // ROUND 125/126 -- engine #1 (postVoidReversal) called DIRECTLY with the DOCUMENT's own id as
+  // entityId (not the JE's id) -- this is what makes unmatchBankTransactionsForVoid's FORWARD check
+  // (linked_entity_id = entityId) actually fire for fuel; the bare-JE-id fallback above cannot do
+  // this (see the VoidableEntityType comment in void.service.ts). Reverses the GL AND releases any
+  // bank match in one call, then stamps. Used for fuel_event and driver_reimbursement -- both are
+  // real VoidableEntityType members now AND real VoidDocumentFamily members.
+  async function reverseTypedEntityWithBankRelease(
+    entityType: "fuel_event" | "driver_reimbursement",
+    entityId: string,
+    originalDate: string,
+    reason: string,
+    stampFamily: VoidDocumentFamily,
+    tally: Tally
+  ): Promise<"reversed" | "no_live_gl"> {
+    const liveRes = await client.query<{ n: string }>(
+      `
+        SELECT count(*)::text AS n
+          FROM accounting.journal_entry_postings jep
+          JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+         WHERE je.operating_company_id = $1::uuid
+           AND jep.source_transaction_type = $2 AND jep.source_transaction_id = $3
+           AND je.status = 'posted' AND je.voided_at IS NULL
+           AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL
+      `,
+      [USMCA_COMPANY_ID, entityType, entityId]
+    );
+    if (Number(liveRes.rows[0]!.n) === 0) return "no_live_gl";
+    await inTx(async () => {
+      await postVoidReversal(
+        client,
+        { operatingCompanyId: USMCA_COMPANY_ID, entityType, entityId, originalDate, memo: reason },
+        { userId: OWNER_USER_ID }
+      );
+      await stamp(tally, stampFamily, entityId);
+    });
+    return "reversed";
+  }
+
   console.log(`DATABASE_URL host: ${new URL(url).host}`);
   console.log(executeFlag ? "MODE: --execute (will call the reversal engines)" : "MODE: dry-run (measurement only, no engine calls)");
 
@@ -511,6 +585,44 @@ async function main() {
     }
   }
 
+  // ================= PHASE 3b: draft/proforma invoices with NO GL at all (ROUND 128) =============
+  // "invoices live 5 <- the 2 draft + 3 proforma. VOID THEM." Owner ruling: status does not matter,
+  // draft/proforma are IN SCOPE. These never posted (no source_transaction_type='invoice' posting
+  // exists for them at all), so there is nothing for any of the six engines to reverse -- this is a
+  // direct stampDocumentVoided call only, exactly like Phase 3's own stamp() step, just with no
+  // reversal step in front of it because there is no GL to reverse. Live-verified before writing
+  // this phase: 0 posted JE rows exist for any invoice this query returns (the NOT EXISTS below is
+  // the same check, not assumed).
+  await reassertSession();
+  const noGlInvoices = await client.query<{ id: string }>(
+    `
+      SELECT i.id::text
+        FROM accounting.invoices i
+       WHERE i.operating_company_id = $1::uuid AND i.voided_at IS NULL AND i.status <> 'void'
+         AND NOT EXISTS (
+           SELECT 1 FROM accounting.journal_entry_postings jep
+            WHERE jep.source_transaction_type = 'invoice' AND jep.source_transaction_id = i.id::text
+         )
+    `,
+    [USMCA_COMPANY_ID]
+  );
+  console.log(`\nInvoices with NO GL at all (draft/proforma -- direct stamp, nothing to reverse): ${noGlInvoices.rowCount}`);
+  for (const inv of noGlInvoices.rows) {
+    if (!executeFlag) continue;
+    try {
+      await inTx(async () => {
+        await stamp(invoiceTally, "invoice", inv.id);
+      });
+      invoiceTally.reversed++; // no GL existed to reverse; "reversed" here tracks "processed" for the shared Tally summary line, matching Phase 5d/7's same convention.
+    } catch (e) {
+      if (e instanceof VoidDocumentStampError) {
+        invoiceTally.errors.push(`invoice ${inv.id} (no-GL): reversal rolled back because its stamp failed (${e.code})`);
+      } else {
+        invoiceTally.errors.push(`invoice ${inv.id} (no-GL): ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+  }
+
   // ================= PHASE 4: expenses =================
   await reassertSession();
   const expenseTally = freshTally();
@@ -559,22 +671,163 @@ async function main() {
     }
   }
 
-  // ================= PHASE 5: fuel transactions -- NO REVERSAL PATH =================
+  // ================= PHASE 5: fuel transactions (ROUND 125/126 -- caller built, no 7th engine) ====
+  // "A fuel EXPENSE is created by a LOAD. A fuel BANK TRANSACTION is a separate real thing we MATCH
+  // to it. They are NOT the same record and voiding one must never delete or alter the other" --
+  // owner, verbatim. reverseTypedEntityWithBankRelease (defined above) calls engine #1
+  // (postVoidReversal) directly with entityType='fuel_event', entityId=<fuel_transaction id> -- this
+  // reverses the GL AND releases the BANK-ORPHAN-01 match (banking.bank_transactions row itself is
+  // NEVER touched by this -- only its match/categorization pointers are cleared) in one call, then
+  // stamps fuel.fuel_transactions via stampDocumentVoided. NO seventh engine: this is engine #1 used
+  // exactly as designed for a typed entity, the same way every other document-family phase uses it.
   await reassertSession();
-  const fuelGap = await client.query<{ n: string; cents: string }>(
+  const fuelTally = freshTally();
+  const fuelCandidates = await client.query<{ id: string; purchased_at: string | null; transaction_at: string | null; created_at: string }>(
     `
-      SELECT count(*)::text AS n, COALESCE(sum(jep.amount_cents), 0)::text AS cents
+      SELECT DISTINCT ft.id::text, ft.purchased_at::text, ft.transaction_at::text, ft.created_at::text
         FROM fuel.fuel_transactions ft
         JOIN accounting.journal_entry_postings jep ON jep.source_transaction_type = 'fuel_event' AND jep.source_transaction_id = ft.id::text
         JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
-       WHERE ft.operating_company_id = $1::uuid AND je.status = 'posted' AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL AND je.voided_at IS NULL
+       WHERE ft.operating_company_id = $1::uuid AND ft.voided_at IS NULL
+         AND je.status = 'posted' AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL AND je.voided_at IS NULL
     `,
     [USMCA_COMPANY_ID]
   );
-  const fuelTally = freshTally();
-  fuelTally.no_path = Number(fuelGap.rows[0]!.n);
-  fuelTally.no_path_amount_cents = Number(fuelGap.rows[0]!.cents);
-  console.log(`\nFUEL TRANSACTIONS -- NO REVERSAL PATH EXISTS ANYWHERE IN THIS CODEBASE. Live posted GL legs: ${fuelTally.no_path} / $${(fuelTally.no_path_amount_cents / 100).toFixed(2)}. STOP AND REPORT -- not voided, no 7th engine written.`);
+  console.log(`\nFUEL TRANSACTIONS with a live posted GL leg: ${fuelCandidates.rowCount}`);
+  for (const ft of fuelCandidates.rows) {
+    if (!executeFlag) continue;
+    const originalDate = (ft.purchased_at ?? ft.transaction_at ?? ft.created_at).slice(0, 10);
+    try {
+      const outcome = await reverseTypedEntityWithBankRelease("fuel_event", ft.id, originalDate, VOID_REASON, "fuel_transaction", fuelTally);
+      if (outcome === "reversed") fuelTally.reversed++;
+      else fuelTally.already_reversed++;
+    } catch (e) {
+      if (e instanceof VoidDocumentStampError) {
+        fuelTally.errors.push(`fuel ${ft.id}: reversal rolled back because its stamp failed (${e.code})`);
+      } else {
+        fuelTally.errors.push(`fuel ${ft.id}: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+  }
+
+  // ================= PHASE 5b: driver_reimbursement (ROUND 125/126) =================
+  // Same shape as fuel exactly one section up: engine #1 direct with entityId = the reimbursement's
+  // own id, then stampDocumentVoided (family 'driver_reimbursement', voidStatusValue='void' per
+  // ROUND 122/123's own fix -- confirmed already correct, not re-derived here).
+  await reassertSession();
+  const reimbTally = freshTally();
+  const reimbCandidates = await client.query<{ id: string; posting_date: string | null; created_at: string }>(
+    `
+      SELECT DISTINCT dr.id::text, dr.posting_date::text, dr.created_at::text
+        FROM driver_finance.driver_reimbursements dr
+        JOIN accounting.journal_entry_postings jep ON jep.source_transaction_type = 'driver_reimbursement' AND jep.source_transaction_id = dr.id::text
+        JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+       WHERE dr.operating_company_id = $1::uuid AND dr.voided_at IS NULL
+         AND je.status = 'posted' AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL AND je.voided_at IS NULL
+    `,
+    [USMCA_COMPANY_ID]
+  );
+  console.log(`\nDRIVER_REIMBURSEMENT with a live posted GL leg: ${reimbCandidates.rowCount}`);
+  for (const dr of reimbCandidates.rows) {
+    if (!executeFlag) continue;
+    const originalDate = (dr.posting_date ?? dr.created_at).slice(0, 10);
+    try {
+      const outcome = await reverseTypedEntityWithBankRelease("driver_reimbursement", dr.id, originalDate, VOID_REASON, "driver_reimbursement", reimbTally);
+      if (outcome === "reversed") reimbTally.reversed++;
+      else reimbTally.already_reversed++;
+    } catch (e) {
+      if (e instanceof VoidDocumentStampError) {
+        reimbTally.errors.push(`driver_reimbursement ${dr.id}: reversal rolled back because its stamp failed (${e.code})`);
+      } else {
+        reimbTally.errors.push(`driver_reimbursement ${dr.id}: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+  }
+
+  // ================= PHASE 5c: no-document-family sources (ROUND 125/126) =================
+  // faro_intercompany_leg, driver_advance, faro_reserve_close, bank_categorization -- each resolves
+  // to exactly one live posted JE via source_transaction_type/id (verified live before writing this
+  // phase), but none is a VoidDocumentFamily member, so no stamp() call is possible or attempted --
+  // reverseByJeIdFallbackNoStamp reverses the GL only, named explicitly per source type below.
+  await reassertSession();
+  const NO_STAMP_SOURCE_TYPES = ["faro_intercompany_leg", "driver_advance", "faro_reserve_close", "bank_categorization"] as const;
+  const noStampTally = freshTally();
+  for (const sourceType of NO_STAMP_SOURCE_TYPES) {
+    const ids = await client.query<{ source_transaction_id: string }>(
+      `
+        SELECT DISTINCT jep.source_transaction_id
+          FROM accounting.journal_entry_postings jep
+          JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+         WHERE je.operating_company_id = $1::uuid AND jep.source_transaction_type = $2
+           AND je.status = 'posted' AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL AND je.voided_at IS NULL
+      `,
+      [USMCA_COMPANY_ID, sourceType]
+    );
+    console.log(`\n${sourceType.toUpperCase()} with a live posted GL leg: ${ids.rowCount}`);
+    for (const row of ids.rows) {
+      if (!executeFlag) continue;
+      try {
+        const outcome = await reverseByJeIdFallbackNoStamp(sourceType, row.source_transaction_id, VOID_REASON);
+        if (outcome === "reversed") noStampTally.reversed++;
+        else noStampTally.errors.push(`${sourceType} ${row.source_transaction_id}: no single live JE (0 or >1) -- refused, not guessed`);
+      } catch (e) {
+        noStampTally.errors.push(`${sourceType} ${row.source_transaction_id}: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+  }
+
+  // ================= PHASE 5d: NULL source_transaction_type JEs =============
+  // ROUND 128 (owner, final): "EVERYTHING IS VOIDED... WE ARE BEGINNING WITH 0 AGAIN" supersedes
+  // ROUND 125/126's characterize-only instruction for this group specifically -- "Reverse them by
+  // JE id directly, and REPORT what they were." Characterization (this file's own live run, ROUND
+  // 125/126) already showed all 8 are "Revrec Event 1 earn -- load NNNNN [uuid]" memos whose latch
+  // row (accounting.load_revenue_recognition_postings) is either gone or already is_active=false --
+  // reachable directly by THIS query's own je.id (no source_transaction_type/id lookup needed, so
+  // the 0-or->1-live-JE refusal doesn't even apply here: the id is already known and unique).
+  // Reversed via engine #6 (reverseJournalEntryNoFlip) on that id directly. NO stamp call -- this
+  // phase does not have a verified load_id -> loadHasLiveLinkedJes linkage for these 8 specifically
+  // (the memo's bracketed uuid is a load id, not confirmed here as the SAME linkage Phase 6 checks),
+  // so inventing a family='load' stamp from unverified memo text would be exactly the guess this
+  // codebase's law forbids -- Phase 7 (loads) below re-checks every load's OWN linkage fresh and
+  // will stamp the load once this reversal makes its ledger fully dead, never guessed at here.
+  await reassertSession();
+  const nullSourceJes = await client.query<{ id: string; memo: string | null; entry_date: string; source: string; total_cents: string }>(
+    `
+      SELECT je.id::text, je.memo, je.entry_date::text, je.source::text,
+             (SELECT COALESCE(SUM(jep.amount_cents), 0) FROM accounting.journal_entry_postings jep
+               WHERE jep.journal_entry_uuid = je.id AND jep.operating_company_id = je.operating_company_id
+                 AND jep.debit_or_credit = 'debit')::text AS total_cents
+        FROM accounting.journal_entries je
+       WHERE je.operating_company_id = $1::uuid AND je.status = 'posted' AND je.voided_at IS NULL
+         AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL
+         AND je.id IN (
+           SELECT jep.journal_entry_uuid FROM accounting.journal_entry_postings jep
+            WHERE jep.operating_company_id = $1::uuid GROUP BY jep.journal_entry_uuid
+           HAVING bool_and(jep.source_transaction_type IS NULL)
+         )
+      ORDER BY je.entry_date ASC
+    `,
+    [USMCA_COMPANY_ID]
+  );
+  console.log(`\nNULL-SOURCE JEs (no source_transaction_type on ANY posting), characterized below, reversed by JE id (ROUND 128): ${nullSourceJes.rowCount}`);
+  const nullSourceTally = freshTally();
+  for (const je of nullSourceJes.rows) {
+    console.log(`  ${je.id} entry_date=${je.entry_date} source=${je.source} amount=$${(Number(je.total_cents) / 100).toFixed(2)} memo="${(je.memo ?? "").slice(0, 90)}"`);
+    if (!executeFlag) continue;
+    try {
+      await inTx(async () => {
+        await reverseJournalEntryNoFlip(client, {
+          operatingCompanyId: USMCA_COMPANY_ID,
+          journalEntryId: je.id,
+          reason: VOID_REASON,
+          actorUserId: OWNER_USER_ID,
+        });
+      });
+      nullSourceTally.reversed++;
+    } catch (e) {
+      nullSourceTally.errors.push(`null-source JE ${je.id}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
 
   // ================= PHASE 6: revrec (load_revenue_recognition_postings) =================
   await reassertSession();
@@ -674,6 +927,48 @@ async function main() {
     }
   }
 
+  // ================= PHASE 7: void the load shells (ROUND 127, Lead + owner order) =================
+  // "WE NEED THE LIVE LOADS VOIDED, EVERYTHING SHOULD BE VOIDED." No GL of its own once every money
+  // document above is unwound (this file's own header, item 7) -- this phase does not call any of
+  // the six reversal engines; it stamps the load itself (family='load', value='voided', #22410) and
+  // marks it soft-deleted, but ONLY once loadHasLiveLinkedJes confirms every JE this load is linked
+  // to (via accounting.transaction_source_links, linked_object_type='load') is already dead --
+  // ROUND 117's own five-column test, unchanged, reused here rather than re-derived. A load whose
+  // ledger is NOT fully dead is SKIPPED and counted, never forced -- the loop (ROUND 114) picks it
+  // up on a later pass once the earlier phases above have caught up. soft_deleted_at + the stamp
+  // happen in the SAME inTx() as each other (not the same tx as any GL reversal -- there is none
+  // here), matching the Lead's "in ONE transaction" instruction for this phase specifically.
+  await reassertSession();
+  const loadTally = freshTally();
+  const liveLoads = await client.query<{ id: string }>(
+    `SELECT id::text FROM mdata.loads WHERE operating_company_id = $1::uuid AND voided_at IS NULL AND soft_deleted_at IS NULL`,
+    [USMCA_COMPANY_ID]
+  );
+  console.log(`\nLIVE (non-voided, non-deleted) mdata.loads: ${liveLoads.rowCount}`);
+  for (const l of liveLoads.rows) {
+    if (!executeFlag) continue;
+    try {
+      if (await loadHasLiveLinkedJes(l.id)) {
+        loadTally.skipped.push(`load ${l.id}: still has a live linked JE -- ledger not fully dead, not voided this pass`);
+        continue;
+      }
+      await inTx(async () => {
+        await client.query(`UPDATE mdata.loads SET soft_deleted_at = now(), deleted_by_user_id = $2::uuid WHERE id = $1::uuid AND soft_deleted_at IS NULL`, [
+          l.id,
+          OWNER_USER_ID,
+        ]);
+        await stamp(loadTally, "load", l.id);
+      });
+      loadTally.reversed++; // "reversed" here means "processed" (this phase has no GL of its own) -- kept for the shared Tally shape/summary line.
+    } catch (e) {
+      if (e instanceof VoidDocumentStampError) {
+        loadTally.errors.push(`load ${l.id}: void rolled back because its stamp failed (${e.code})`);
+      } else {
+        loadTally.errors.push(`load ${l.id}: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+  }
+
   // ================= SUMMARY =================
   console.log("\n=== SUMMARY BY DOCUMENT TYPE ===");
   for (const [name, t] of [
@@ -681,7 +976,12 @@ async function main() {
     ["factoring_advances", factoringTally],
     ["invoices", invoiceTally],
     ["expenses", expenseTally],
+    ["fuel_transactions", fuelTally],
+    ["driver_reimbursements", reimbTally],
+    ["no_stamp_family (faro_intercompany_leg/driver_advance/faro_reserve_close/bank_categorization)", noStampTally],
+    ["null_source_jes (reversed by id, ROUND 128)", nullSourceTally],
     ["revrec_latches", revrecTally],
+    ["loads (soft-deleted + voided, ROUND 127/128)", loadTally],
   ] as [string, Tally][]) {
     console.log(
       `${name}: reversed=${t.reversed} already_reversed=${t.already_reversed} skipped=${t.skipped.length} errors=${t.errors.length} ` +
@@ -691,12 +991,16 @@ async function main() {
     for (const e of t.errors) console.log(`  ERROR: ${e}`);
     for (const se of t.stamp_errors) console.log(`  STAMP ERROR: ${se}`);
   }
-  console.log(`fuel_transactions: NO_PATH=${fuelTally.no_path} ($${(fuelTally.no_path_amount_cents / 100).toFixed(2)}) -- never voided, no engine exists`);
+  console.log(`NULL-source JEs (characterized, never touched): ${nullSourceJes.rowCount}`);
   console.log(
-    `\nROUND 112 TOTAL STAMPS: ${
-      [settlementTally, factoringTally, invoiceTally, expenseTally, revrecTally].reduce((n, t) => n + t.stamped + t.already_voided_stamps, 0)
+    `\nROUND 112/125/126 TOTAL STAMPS: ${
+      [settlementTally, factoringTally, invoiceTally, expenseTally, fuelTally, reimbTally, revrecTally].reduce(
+        (n, t) => n + t.stamped + t.already_voided_stamps,
+        0
+      )
     } document(s) now carry voided_at/void_reason/voided_by_user_id ` +
-      `(factoring_advance + invoice + expense + load families; settlements/driver_bills have no stamp family, fuel has no reversal path).`
+      `(factoring_advance + invoice + expense + load + fuel_transaction + driver_reimbursement families; ` +
+      `settlements/driver_bills/faro_intercompany_leg/driver_advance/faro_reserve_close/bank_categorization have no stamp family).`
   );
 
   client.release();
