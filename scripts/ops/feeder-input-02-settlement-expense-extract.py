@@ -165,7 +165,7 @@ OUTPUT_TYPE = {
 # 'other' BUCKET. A line with no mapping is a build failure, not an 'other'." ROUND 67 (same day)
 # finalized most of the pending codes with real numbers; superseded values are noted inline.
 # Three remaining shapes:
-#   (a) a REAL numeric GL code -- established this session (diesel=5000, def=5010) or given
+#   (a) a REAL numeric GL code -- established this session (diesel=5000) or given
 #       explicitly in the Round 66/67 rulings (admin_fee=7200, reefer_diesel=5160, washout=5170,
 #       road_service/vehicle_parts_accessories=5400 Truck Repairs & Maintenance, tires=5500,
 #       company_vehicle_fuel=6220, driver_reimbursement=5190, scale/toll_parking=5300 -- shared
@@ -184,7 +184,8 @@ OUTPUT_TYPE = {
 # already caught one real miscategorization this way (vehicle_parts_accessories, Round 66).
 ACCOUNT_KEY = {
     "diesel": "5000",  # Fuel & Diesel
-    "def": "5010",  # DEF (Diesel Exhaust Fluid)
+    # "def" intentionally has NO flat entry here as of Round 86 (see the ROUND 86 note below) --
+    # resolved via ITEM_KEY like reefer_diesel/washout/company_vehicle_fuel/driver_reimbursement.
     "admin_fee": "7200",  # Driver Admin Fee Income (company INCOME, not a negative expense)
     "escrow_for_claims": "driver_escrow_subaccount",  # per-driver; resolved at feed time
     "cash_advance": "driver_advances_receivable_subaccount",  # per-driver; resolved at feed time
@@ -216,6 +217,17 @@ ACCOUNT_KEY = {
     # driver_reimbursement therefore have NO flat account_key entry here either, as of Round 84 --
     # resolved via ITEM_KEY below instead (real item names read off the live QBO catalog,
     # ~/Downloads/09-22-2026-QBO-LIVE-ITEM-CATALOG-126.csv, never invented).
+    #
+    # ROUND 86 (Lead, 2026-09-23, verbatim): "GL 5010 IS RETIRED. MY EARLIER RULING IS DEAD...
+    # DEF, reefer fuel and washout are ITEMS. 5010, 5160 and 5170 are not created, not mapped, not
+    # cited. Fuel items roll up to 5000 Fuel & Diesel." The def=5010 account created live in this
+    # session (scripts/ops/gl-fix-05-create-def-account-and-repost.ts) is retired --
+    # scripts/ops/gl-fix-06-retire-5010-repoint-def-to-5000.ts deactivated GL 5010 (void-not-
+    # delete) and repointed accounting.expense_category_account_map's def row back to 5000, live-
+    # verified. "def" is removed from ACCOUNT_KEY above for the same reason as the other three --
+    # ITEM_KEY["def"] below already carries it correctly since the Round 83/84 redesign, and
+    # OUTPUT_TYPE["def"]="fuel_transaction" already routes it away from accounting.expenses/5010
+    # entirely, so no other change to this script's emitted rows was needed.
     "scale": "5300",  # shared with toll_parking, Round 67: "scale/toll -> 5300"
     "toll_parking": "5300",
     "lumper": "EXPENSE_PENDING:lumper",  # no code given in either ruling yet
