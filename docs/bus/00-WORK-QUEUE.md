@@ -50,7 +50,13 @@ Never work in the shared main checkout.
       Require a load number (134xx), settlement (57xx/58xx), Faro invoice,
       driver name, vendor name, or unit (Txxx). RED fixture: the live memo
       "Fuel event 56627fdf-6bf6-476b-a6ee-d8b5452ac1cf (diesel...".
-[CC-3 2026-09-23T23:22:02Z] Q03 GUARD  Feed-scope verify-pl-cost-of-revenue.mjs — same shape as
+[DONE DEVIN-A 2026-09-24T00:15:00Z, PR #22474 -- CC-3 claimed first (23:22:02Z) and built an
+      independent working version, but #22474 landed and merged first with a stricter, document-
+      level scope matching parity exactly (0 of 95 loads in scope right now, PASS); CC-3 verified
+      #22474 live rather than duplicate it, and filed a real latent gap found in it instead:
+      docs/audit/GUARD-WORKORDERS.md PL-COST-OF-REVENUE-INSURANCE-PERMANENTLY-UNSATISFIABLE-
+      UNDER-LOAD-SCOPE (insurance_expense can never post-check-green once documents start
+      closing, per its own per-load INNER join)] Q03 GUARD  Feed-scope verify-pl-cost-of-revenue.mjs — same shape as
       E12.3-R3. Read the CLOSED FEED SET the parity guard already computes.
       Print "P&L scope: N of X loads in scope, M skipped NOT FED YET".
 [DONE CC-1 2026-09-23T23:29:52Z, PR pending merge (blocked on Devin-B's Q03 collision, not mine)] Q04 FEED-ENGINE  Feed-day executor IDEMPOTENT + RESUMABLE. Key on Faro
