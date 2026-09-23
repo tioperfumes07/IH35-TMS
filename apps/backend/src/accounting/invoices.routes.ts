@@ -373,6 +373,15 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         values
       );
       const total = Number(countRes.rows[0]?.total ?? 0);
+      // R-102-B item 5 ("DEFAULT FILTERS" — owner, ROUND 121: "a list that silently hides is the
+      // same class of defect as a badge that never renders"). Company-wide voided count (not
+      // re-filtered by every other applied filter, same simple scope as the packet's own example,
+      // "81 live, 38 voided") — so the list can disclose what "Active (hide voided)" is hiding.
+      const voidedCountRes = await client.query(
+        `SELECT COUNT(*)::int AS n FROM accounting.invoices WHERE operating_company_id = $1::uuid AND (voided_at IS NOT NULL OR status IN ('void', 'voided'))`,
+        [q.operating_company_id]
+      );
+      const voidedCount = Number(voidedCountRes.rows[0]?.n ?? 0);
       values.push(q.limit);
       const limitIdx = values.length;
       values.push(q.offset);
@@ -422,13 +431,14 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         `,
         values
       );
-      return { rows: res.rows, total };
+      return { rows: res.rows, total, voidedCount };
     });
     const invoices = listed.rows;
     const total = listed.total;
     return {
       invoices,
       total,
+      voided_count: listed.voidedCount,
       limit: q.limit,
       offset: q.offset,
       has_more: q.offset + invoices.length < total,

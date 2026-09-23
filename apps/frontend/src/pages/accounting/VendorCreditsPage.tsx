@@ -302,6 +302,14 @@ export function VendorCreditsPage() {
           onRetry={() => void creditsQuery.refetch()}
         />
       ) : (
+        <>
+          {/* R-102-B item 5 — owner: "a list that silently hides is the same class of defect as
+              a badge that never renders." Company-wide, independent of every non-status filter. */}
+          {statusFilter === "active" && typeof creditsQuery.data?.voided_count === "number" && creditsQuery.data.voided_count > 0 ? (
+            <p className="text-xs text-gray-500" data-testid="vendor-credits-voided-count">
+              {(creditsQuery.data?.credits ?? []).length} live, {creditsQuery.data.voided_count} voided (hidden)
+            </p>
+          ) : null}
         <ParityTable
           rows={creditsQuery.data?.credits ?? []}
           columns={columns}
@@ -313,6 +321,7 @@ export function VendorCreditsPage() {
           emptyText="No vendor credits found."
           onRowClick={(row) => setSelectedCreditId(row.id)}
         />
+        </>
       )}
 
       {/* CHROME-12: money creator -> ParityDrawer side panel (never a centered Modal). A centered

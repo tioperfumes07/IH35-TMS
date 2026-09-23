@@ -328,6 +328,13 @@ export function ManualJEListPage() {
     >
       {/* 0243-g8-5: a query error must surface a retryable banner, not a blank grid / forever spinner. */}
       {entriesQuery.isError ? <ListErrorBanner onRetry={() => void entriesQuery.refetch()} /> : null}
+      {/* R-102-B item 5 — owner: "a list that silently hides is the same class of defect as a
+          badge that never renders." Company-wide, independent of every non-status filter. */}
+      {status === "posted" && typeof entriesQuery.data?.voided_count === "number" && entriesQuery.data.voided_count > 0 ? (
+        <p className="text-xs text-gray-500" data-testid="manual-je-voided-count">
+          {pageRows.length} live, {entriesQuery.data.voided_count} voided (hidden)
+        </p>
+      ) : null}
       <ParityTable
         columns={columns}
         rows={pageRows}

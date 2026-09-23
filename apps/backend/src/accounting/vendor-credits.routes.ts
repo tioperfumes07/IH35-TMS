@@ -115,10 +115,16 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
          LIMIT 500`,
         params
       );
-      return res.rows;
+      // R-102-B item 5 — disclosed count: company-wide, independent of every non-status filter.
+      const voidedRes = await client.query(
+        `SELECT count(*) AS n FROM accounting.vendor_credits
+          WHERE operating_company_id = $1::uuid AND status = 'voided'`,
+        [query.data.operating_company_id]
+      );
+      return { rows: res.rows, voidedCount: Number(voidedRes.rows[0]?.n ?? 0) };
     });
 
-    return { credits: rows };
+    return { credits: rows.rows, voided_count: rows.voidedCount };
   });
 
   // Preview only — same MAX+1 generator POST uses. Must register before /:id so "next-number" is not a UUID.

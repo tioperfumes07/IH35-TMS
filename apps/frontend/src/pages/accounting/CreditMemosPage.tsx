@@ -308,6 +308,14 @@ export function CreditMemosPage() {
           onRetry={() => void creditMemosQuery.refetch()}
         />
       ) : (
+        <>
+          {/* R-102-B item 5 — owner: "a list that silently hides is the same class of defect as
+              a badge that never renders." Company-wide, independent of every non-status filter. */}
+          {statusFilter === "active" && typeof creditMemosQuery.data?.voided_count === "number" && creditMemosQuery.data.voided_count > 0 ? (
+            <p className="text-xs text-gray-500" data-testid="credit-memos-voided-count">
+              {(creditMemosQuery.data?.credit_memos ?? []).length} live, {creditMemosQuery.data.voided_count} voided (hidden)
+            </p>
+          ) : null}
         <ParityTable
           rows={creditMemosQuery.data?.credit_memos ?? []}
           columns={columns}
@@ -319,6 +327,7 @@ export function CreditMemosPage() {
           emptyText="No credit memos found."
           onRowClick={(row) => setSelectedCreditMemoId(row.id)}
         />
+        </>
       )}
 
       {/* CHROME-12: money creator -> ParityDrawer side panel (never a centered Modal), matching

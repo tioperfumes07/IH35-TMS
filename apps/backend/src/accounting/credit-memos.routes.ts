@@ -125,10 +125,16 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
          LIMIT 500`,
         params
       );
-      return res.rows;
+      // R-102-B item 5 — disclosed count: company-wide, independent of every non-status filter.
+      const voidedRes = await client.query(
+        `SELECT count(*) AS n FROM accounting.credit_memos
+          WHERE operating_company_id = $1::uuid AND status = 'voided'`,
+        [query.data.operating_company_id]
+      );
+      return { rows: res.rows, voidedCount: Number(voidedRes.rows[0]?.n ?? 0) };
     });
 
-    return { credit_memos: rows };
+    return { credit_memos: rows.rows, voided_count: rows.voidedCount };
   });
 
   app.get("/api/v1/accounting/credit-memos/next-number", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {

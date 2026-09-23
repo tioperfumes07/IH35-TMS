@@ -494,11 +494,20 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         limit: q.limit,
         offset: q.offset,
       });
-      return { rows };
+      // R-102-B item 5 ("DEFAULT FILTERS" — owner, ROUND 121: "a list that silently hides is the
+      // same class of defect as a badge that never renders"). Company-wide voided count, same
+      // simple scope as the packet's own example ("81 live, 38 voided") — discloses what
+      // "Active (hide voided)" is hiding.
+      const voidedCountRes = await client.query(
+        `SELECT COUNT(*)::int AS n FROM accounting.expenses WHERE operating_company_id = $1::uuid AND (voided_at IS NOT NULL OR status = 'void')`,
+        [q.operating_company_id]
+      );
+      const voidedCount = Number((voidedCountRes.rows[0] as { n?: number } | undefined)?.n ?? 0);
+      return { rows, voidedCount };
     });
 
-    if ("unavailable" in result) return reply.code(200).send({ rows: [] });
-    return reply.code(200).send(result);
+    if ("unavailable" in result) return reply.code(200).send({ rows: [], voided_count: 0 });
+    return reply.code(200).send({ rows: result.rows, voided_count: result.voidedCount });
   });
 
   // ACCT-R-17 — duplicate expense fingerprint groups (READ-ONLY). Must register before /:id.

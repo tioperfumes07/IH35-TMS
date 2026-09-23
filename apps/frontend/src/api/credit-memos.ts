@@ -77,11 +77,11 @@ export function listCreditMemos(
   // R-102-B item 5 — "active" is a backend-recognized pseudo-status meaning "exclude voided"
   // (draft/issued/applied are all live states); see credit-memos.routes.ts's listQuerySchema.
   params: { customer_id?: string; status?: CreditMemoStatus | "active" }
-): Promise<{ credit_memos: CreditMemo[] }> {
+): Promise<{ credit_memos: CreditMemo[]; voided_count?: number }> {
   const qs = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (params.customer_id) qs.set("customer_id", params.customer_id);
   if (params.status) qs.set("status", params.status);
-  return apiRequest<{ credit_memos: CreditMemo[] }>(`/api/v1/accounting/credit-memos?${qs.toString()}`);
+  return apiRequest<{ credit_memos: CreditMemo[]; voided_count?: number }>(`/api/v1/accounting/credit-memos?${qs.toString()}`);
 }
 
 export function createCreditMemo(

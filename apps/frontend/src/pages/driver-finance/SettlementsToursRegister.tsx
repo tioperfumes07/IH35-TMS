@@ -161,6 +161,15 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
           </button>
         ))}
       </div>
+      {/* R-102-B item 5 ("DEFAULT FILTERS" — owner, ROUND 121: "a list that silently hides is the
+          same class of defect as a badge that never renders"). This register permanently excludes
+          cancelled/reversed/voided settlements (SETL-REVERSED-HIDE, an owner ruling this PR does
+          not change) with no toggle to see them — the honest disclosure this ruling still owes. */}
+      {typeof activeQ.data?.voided_count === "number" ? (
+        <p className="text-xs text-gray-500" data-testid="settlements-tours-voided-count">
+          {rows.length} live, {activeQ.data.voided_count} voided/cancelled (not shown)
+        </p>
+      ) : null}
       {activeQ.isError ? (
         <ListErrorState status={0} message={activeQ.error instanceof Error ? activeQ.error.message : String(activeQ.error)} onRetry={() => void activeQ.refetch()} />
       ) : (
