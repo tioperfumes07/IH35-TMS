@@ -240,6 +240,12 @@ const STEPS = [
   ["verify-display-id-series-by-prefix", "scripts/verify-display-id-series-by-prefix.mjs"],
   ["verify-reconciler-route-read-only", "scripts/verify-reconciler-route-read-only.mjs"],
   ["verify-faro-deduction-capture", "scripts/verify-faro-deduction-capture.mjs"],
+  // R-102.1-A BUILD 3 (Lead ruling, deadline 2026-09-23 18:00 UTC): the void-stamp system's own
+  // guard -- 7 document families carry voided_at/void_reason/voided_by_user_id live, and
+  // stampDocumentVoided() (void-document-stamp.service.ts) is the ONE writer of the four families
+  // that had zero pre-existing writer; a named, frozen baseline covers the three that already had
+  // established GL-aware void machinery. Live DB required, fails closed.
+  ["verify-void-stamp-columns", "scripts/verify-void-stamp-columns.mjs"],
 ];
 
 // ROUND 29.9 owner ruling (2026-09-22) — three guards, wired in this exact order, AFTER the STEPS
