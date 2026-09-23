@@ -449,7 +449,7 @@ if (process.argv.includes("--selftest")) {
   }
   for (const file of e7List.live_flag_guards ?? []) {
     const abs = path.join(ROOT, "scripts", file);
-    if (!fs.existsSync(abs) || !/process\.argv\.includes\(\s*["']--live["']\s*\)/.test(fs.readFileSync(abs, "utf8"))) {
+    if (!fs.existsSync(abs) || !/\b(?:process\.argv|argv|args)(?:\.slice\(\d+\))?\.includes\(\s*["']--live["']\s*\)/.test(fs.readFileSync(abs, "utf8"))) {
       console.error(`${LABEL} --selftest FAIL: E7 batch-2 --live guard ${file} is missing or has no --live path`);
       process.exit(1);
     }

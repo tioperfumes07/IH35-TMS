@@ -48,13 +48,17 @@ if (out.length) {
 }
 if (process.argv.includes("--live")) {
   const pg = await import("pg");
+  if (!process.env.DATABASE_URL) {
+    console.error("verify-geofence-events-from-positions: FAIL — --live needs DATABASE_URL; it never falls back to a local database.");
+    process.exit(1);
+  }
   const pool = new pg.default.Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
   try {
     const { rows: [row] } = await pool.query(`WITH b AS (SELECT set_config('app.bypass_rls','lucia',false))
       SELECT count(*)::int AS events,
              count(DISTINCT ge.unit_id)::int AS distinct_units,
              count(DISTINCT seg.load_id)::int AS loads_with_real_miles,
-             min(seg.load_id)::text AS first_load
+             min(seg.load_id::text) AS first_load
       FROM b, geo.geofence_events ge
       LEFT JOIN telematics.load_odometer_segments seg
         ON seg.operating_company_id=ge.operating_company_id
