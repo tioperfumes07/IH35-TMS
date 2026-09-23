@@ -86,11 +86,36 @@ function assert(files) {
   const route = files[ROUTE] ?? "";
   const wizard = files[WIZARD] ?? "";
 
-  // Path B — the one that regressed.
+  // Path B — the one that regressed, then got rewired (2026-09-23, E20/loads.routes.ts) onto
+  // createLoadWithFullSideEffects (the ONE shared create path, verify-one-load-create-path.mjs)
+  // instead of its own local INSERT. There are now two ways this route can honestly satisfy
+  // FAIL-T1: (a) a local INSERT INTO mdata.loads with is_sample_data in its own column list (the
+  // pre-rewire shape, still checked so a REVERT can't silently drop the tag), or (b) delegation
+  // to createLoadWithFullSideEffects with is_sample_data passed straight through in the
+  // BookLoadInput object literal — the actual INSERT then lives inside book-load.service.ts,
+  // which is checked separately below via the same is_sample_data-in-source scan already applied
+  // to Path A. Accepting ONLY (a) after the rewire would make this guard permanently, falsely red
+  // on correct code; accepting NEITHER by skipping the check would let is_sample_data silently
+  // drop out of the delegated call and reintroduce the exact FAIL-T1 defect this guard exists to
+  // catch, just one level removed.
   const ins = readInsert(route);
-  if (!ins) {
-    problems.push(`${ROUTE}: could not locate the INSERT INTO mdata.loads (...) VALUES (...) — anchor drifted`);
-  } else {
+  const delegatesToSharedPath = /createLoadWithFullSideEffects\(/.test(route);
+  const passesSampleDataThrough = /is_sample_data:\s*b\.is_sample_data/.test(route);
+  if (!ins && !delegatesToSharedPath) {
+    problems.push(
+      `${ROUTE}: could not locate a local INSERT INTO mdata.loads (...) VALUES (...) NOR a call to ` +
+        `createLoadWithFullSideEffects — anchor drifted on both known shapes.`,
+    );
+  } else if (!ins && delegatesToSharedPath) {
+    if (!passesSampleDataThrough) {
+      problems.push(
+        `${ROUTE}: delegates to createLoadWithFullSideEffects but never passes ` +
+          `"is_sample_data: b.is_sample_data" into the BookLoadInput object — the shared INSERT ` +
+          `then always takes the false default for loads created through this route (FAIL-T1, ` +
+          `one level removed: a Delivered step on an untagged load still fires revrec into REAL income).`,
+      );
+    }
+  } else if (ins) {
     if (!ins.columns.includes("is_sample_data")) {
       problems.push(
         `${ROUTE}: INSERT INTO mdata.loads must include is_sample_data (FAIL-T1). Without it every load ` +
@@ -138,22 +163,22 @@ files.__writers = findLoadWriters(ROOT);
 if (SELFTEST) {
   const checks = [];
 
-  // 1. Plant the original FAIL-T1: drop the column (and its placeholder, so arity stays consistent).
+  // 1. Plant the original FAIL-T1, on the CURRENT (post-2026-09-23 rewire) shape of this route:
+  // it delegates to createLoadWithFullSideEffects and must pass is_sample_data through in that
+  // call's input object -- drop that one line and the flag can never be set true again.
   const untagged = {
     ...files,
-    [ROUTE]: files[ROUTE].replace("dispatcher_user_id, notes, is_sample_data", "dispatcher_user_id, notes").replace(
-      "$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13",
-      "$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12",
-    ),
+    [ROUTE]: files[ROUTE].replace(/\s*is_sample_data:\s*b\.is_sample_data,\n/, "\n"),
   };
-  checks.push(["untagged INSERT", assert(untagged).some((p) => /must include is_sample_data/.test(p))]);
+  checks.push(["untagged delegated create", assert(untagged).some((p) => /never passes/.test(p))]);
 
-  // 2. Plant a lockstep break: column added, placeholder not.
-  const arity = {
+  // 2. Plant total anchor loss on Path B: no local INSERT, no delegation call either (e.g. a
+  // botched refactor that deleted the createLoadWithFullSideEffects call entirely).
+  const noAnchor = {
     ...files,
-    [ROUTE]: files[ROUTE].replace("$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13", "$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12"),
+    [ROUTE]: files[ROUTE].replace(/createLoadWithFullSideEffects\(/g, "someOtherFunctionEntirely("),
   };
-  checks.push(["lockstep arity", assert(arity).some((p) => /lockstep broken/.test(p))]);
+  checks.push(["anchor lost on both known shapes", assert(noAnchor).some((p) => /anchor drifted on both known shapes/.test(p))]);
 
   // 3. Plant a regression on path A.
   const wizardBroken = { ...files, [WIZARD]: files[WIZARD].replace(/is_sample_data/g, "unrelated_field") };
@@ -187,5 +212,5 @@ if (problems.length) {
   for (const p of problems) console.error("  - " + p);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — both load-create paths write is_sample_data; route INSERT is lockstep`);
+console.log(`${LABEL}: OK — both load-create paths write is_sample_data (route delegates to the shared create path, which stays lockstep)`);
 process.exit(0);

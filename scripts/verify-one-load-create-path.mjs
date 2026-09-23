@@ -48,12 +48,23 @@ const SHARED_PATH_FILE = path.join(SRC_ROOT, "dispatch", "book-load.service.ts")
 // EXCLUDED_FILES / the permanent-exception pattern is retired; this file goes back to being a
 // real, owed KNOWN_OFFENDERS_AT_SEED entry, to be extended to USMCA and rewired like the others,
 // not permanently carved out. Ceiling back to 2.
-const OFFENDER_CEILING = 2;
+//
+// mdata/loads.routes.ts REWIRED (2026-09-23, same round, "loads.routes.ts Book Load, fully
+// built" -- Lead ruling, validate-never-coerce on status): its POST /api/v1/mdata/loads now
+// calls createLoadWithFullSideEffects (source="live_feed") instead of a direct INSERT. Ceiling
+// shrinks 2 -> 1.
+//
+// csv-seed-import.ts REWIRED (2026-09-23, same round, "csv-seed-import.ts extended to USMCA"):
+// its upsertLoads() now calls createLoadWithFullSideEffects (source="historical_backfill")
+// instead of a direct INSERT; CompanyCode widened to admit "USMCA" via the existing
+// org.companies code lookup (never a hardcoded UUID). Ceiling shrinks 1 -> 0. ALL FOUR original
+// offenders (book-load.service.ts itself is the shared path, not a caller; inbound-204.handler.ts;
+// seed-sample-data.ts; loads.routes.ts; csv-seed-import.ts) are now on the one shared create
+// path. The ratchet holds at zero from here -- ANY new direct INSERT INTO mdata.loads is a
+// regression, full stop.
+const OFFENDER_CEILING = 0;
 
-const KNOWN_OFFENDERS_AT_SEED = [
-  "apps/backend/src/mdata/loads.routes.ts",
-  "apps/backend/src/seed/csv-seed-import.ts",
-];
+const KNOWN_OFFENDERS_AT_SEED = [];
 
 // The 8 INSERTs, by table (ruling's own numbering).
 const REQUIRED_INSERT_TABLES = [
