@@ -411,7 +411,12 @@ async function materializeExpense(client: PoolClient, tmpl: Record<string, unkno
         vendor_uuid,
         status,
         transaction_date,
-        total_amount,
+        -- accounting.expenses has NO total_amount column. The real column is
+        -- total_amount_cents (bigint NOT NULL) -- verified live against production. This INSERT
+        -- named a column that does not exist, so EVERY recurring-template expense
+        -- materialization failed at runtime. Found while giving fuel purchases their own expense
+        -- document; fixed here rather than left for someone else to hit.
+        total_amount_cents,
         memo,
         payment_account_uuid,
         is_sample_data,
@@ -422,7 +427,7 @@ async function materializeExpense(client: PoolClient, tmpl: Record<string, unkno
         $2::uuid,
         'posted',
         $3::date,
-        $4,
+        $4::bigint,
         $5,
         $6::uuid,
         $7,
@@ -430,7 +435,8 @@ async function materializeExpense(client: PoolClient, tmpl: Record<string, unkno
       )
       RETURNING id::text
     `,
-    [oc, body.vendor_uuid ?? null, expenseDate, totalAmount, body.memo ?? null, body.payment_account_uuid ?? null, vendorIsSampleData, expenseNumber]
+    // amountCents, not totalAmount: cents is the authoritative spine and the column is bigint.
+    [oc, body.vendor_uuid ?? null, expenseDate, amountCents, body.memo ?? null, body.payment_account_uuid ?? null, vendorIsSampleData, expenseNumber]
   );
   const expenseId = ins.rows[0]?.id;
   if (!expenseId) throw new Error("recurring_expense_insert_failed");
