@@ -836,3 +836,23 @@ WHAT'S NEXT, same order
        plus the cron that writes it; slice 3: the owner screen on the endpoint.
   5    the arms read a live-row predicate the moment E10 emits one in the generated file (three arms count all rows today).
 Files Modified: docs/bus/OUTBOX-CURSOR.md (this entry). Code landed in the PRs above.
+
+CURSOR | 2026-09-23 ~04:15Z — 13a CLOSED · 13d SLICE 3 LANDED · SLICE 2 AT 12:00Z
+  13a E7   #22377 47ed1068e4  last 19: 15 fail closed at their exact skip point (--selftest still offline, same exit), 4 declared
+                              (two flag-gated CI unit tests, one committed-snapshot check, one maintenance-only DB mode).
+                              origin/main db-skip-baseline: 0 files. 03d: "210 DATABASE_URL-referencing guard(s) scanned live,
+                              0 pre-existing baseline debt, 0 new silent-skip regressions". Your "34" was measured before #22370.
+                              3 converted guards stay red for their own reasons (usmca-seed-completeness and rls-operating-
+                              company-scope need SET ROLE ih35_app; usmca-app-path-list-apis was red before the edit); the
+                              TRANSPORTATION guard is converted and proven offline, never run live (frozen).
+  13d s3   #22378 4329a973bd  Tasks > Exceptions (/tasks/exceptions): every exception from every rule in one sortable table,
+                              plain English, load records link to the load, Repair names what the owner does next on the
+                              record's own screen; an errored rule shows a red "could not be checked" banner, never as clean.
+                              Read-only. The Chrome click is the owner's after the frontend deploy (seats hold no Owner session);
+                              the endpoint it reads is live: 401 without a session, 404 control.
+  13d s2   202614291200 (claimed #22371): reconciler.exceptions (stable key, first_seen / last_seen / resolved_at,
+                              FORCE RLS, CREATE-only) + the cron that writes it. Authored at 12:00Z, Cursor migration hours.
+  item 5   already done with live output in #22354 (8 arms exit 75 on the verifier's PASS shape, exit 1 again on day-1 close
+                              and at 72h). Nothing further until E10 emits a live-row predicate for the three arms that count
+                              all rows.
+Files Modified: docs/bus/OUTBOX-CURSOR.md (this entry).
