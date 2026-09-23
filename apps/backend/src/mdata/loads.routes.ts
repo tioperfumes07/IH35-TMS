@@ -11,6 +11,7 @@ import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction
 import { computeProgressStatus } from "../telematics/load-progress.service.js";
 import { enrichLoadsLiveEta } from "../telematics/dispatch-live-eta.service.js";
 import { effectiveDeliverySelectSql } from "../dispatch/effective-delivery.js";
+import { liveLoadsOpenDispatchExistsSql } from "../dispatch/live-loads-view.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { loadRefMatchSql, loadRefParamSchema } from "../lib/load-ref.js";
@@ -121,6 +122,18 @@ const CLOSED_LOAD_STATUSES = [
 // status on top of the always-closed cohort above — a load stops being "current" the moment delivery
 // happens, not only when it is formally closed. History becomes the exact complement (every load is in
 // live XOR history, never neither) so a delivered load is never invisible everywhere.
+//
+// ROUND 36.1 / E11-D2 (Lead ruling, 2026-09-22/23, docs/manuals/02-RULING-LIVE-LOADS-VIEW-THE-
+// PERMANENT-FIX.md): this list is STILL used for board_scope="history" (the exact complement, by
+// design — history is a pure status partition, never money-filtered). But board_scope="live" no
+// longer uses it alone: a hardcoded status list can only ever enforce the STATUS half of "is this
+// load live" — it cannot see the MONEY half (a load can still carry status 'dispatched' after it
+// already has an active settlement line / driver bill / posted invoice, e.g. a status transition
+// that lagged the money event). That gap is exactly how a settled load kept rendering on the live
+// Dispatch board (measured live: 19 raw-status "dispatched" loads, 14 already settled/driver-
+// billed). views.live_loads bakes BOTH halves into one predicate no caller can accidentally skip;
+// open-only Dispatch is exactly live_state = 'open_dispatch' — pre_settlement loads belong on
+// their own board state (E11-D4), never here. See the board_scope==="live" branch below.
 const DISPATCH_LIVE_EXCLUDED_STATUSES = [
   ...CLOSED_LOAD_STATUSES,
   "delivered",
@@ -756,11 +769,8 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         values.push(status);
         filters.push(`l.status = ANY($${values.length}::mdata.load_status_enum[])`);
       } else if (board_scope === "live") {
-        // OPEN-ONLY LAW (owner 2026-09-11, supersedes 2026-09-09): a load stops being "current" for
-        // Dispatch the moment delivery happens, not only when formally closed — see the comment above
-        // DISPATCH_LIVE_EXCLUDED_STATUSES.
-        values.push(DISPATCH_LIVE_EXCLUDED_STATUSES);
-        const excludedIdx = values.length;
+        // ROUND 36.1 / E11-D2 — see the comment above DISPATCH_LIVE_EXCLUDED_STATUSES.
+        const existsSql = liveLoadsOpenDispatchExistsSql("l.id");
         if (include_open_tour_legs) {
           // ROUND-20.2 (RT-FULL-TOUR) — owner ruling 2026-09-12: "Round Trips is the ONE exception
           // [to OPEN-ONLY], because the tour IS the unit of this view: an OPEN tour renders whole,
@@ -772,7 +782,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           // leak back in once the tour settles. Opt-in via include_open_tour_legs; every other
           // board_scope=live caller (Kanban/List/Trip Pairing) does not pass it and is unaffected.
           filters.push(`(
-            NOT (l.status = ANY($${excludedIdx}::mdata.load_status_enum[]))
+            ${existsSql}
             OR l.presettlement_link_id IN (
               SELECT s.id FROM driver_finance.driver_settlements s
               WHERE s.operating_company_id = l.operating_company_id
@@ -782,7 +792,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             )
           )`);
         } else {
-          filters.push(`NOT (l.status = ANY($${excludedIdx}::mdata.load_status_enum[]))`);
+          filters.push(existsSql);
         }
       } else if (board_scope === "history") {
         values.push(DISPATCH_LIVE_EXCLUDED_STATUSES);

@@ -7,6 +7,7 @@ import { addBusinessDateDays, companyBusinessDate, companyBusinessDateStartIso }
 import { linkLoadToPresettlementAfterAssignmentInClientTx, type TripType } from "./presettlement-link.service.js";
 import { ensureDriverBillArtifactsForLoad } from "./book-load.service.js";
 import { assertCanonicalSubset } from "./canonical-active-load-set.js";
+import { liveLoadsOpenDispatchExistsSql } from "./live-loads-view.js";
 
 const CONFLICT_WINDOW_MS = 4 * 60 * 60 * 1000;
 
@@ -240,7 +241,15 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
         WHERE l.operating_company_id = $1::uuid
           AND l.soft_deleted_at IS NULL
           AND l.assigned_primary_driver_id IS NOT NULL
-          AND l.status::text NOT IN ('cancelled', 'abandoned', 'driver_walkoff', 'driver_no_show', 'completed_docs_received')
+          -- ROUND 36.1 / E11-D2 (Lead ruling, 2026-09-22/23): the hardcoded exclusion list here
+          -- enforced only the status half of "is this load live" (and a narrower one than
+          -- DISPATCH_LIVE_EXCLUDED_STATUSES besides -- it let 'delivered'/'invoiced'/'paid' through
+          -- entirely). Named explicitly in the ruling doc as one of the "13 callers [that] correctly
+          -- import assertCanonicalSubset, correctly pass it, and still render every dispatched load."
+          -- views.live_loads bakes the money half in too -- a load already settled/driver-billed/
+          -- invoiced never renders on the Timeline or Loads Planner just because its pickup falls in
+          -- this week's window.
+          AND ${liveLoadsOpenDispatchExistsSql("l.id")}
           AND COALESCE(pu.scheduled_arrival_at, pu.appointment_start_at) >= $2::timestamptz
           AND COALESCE(pu.scheduled_arrival_at, pu.appointment_start_at) < $3::timestamptz
         ORDER BY start_at ASC, l.load_number ASC
