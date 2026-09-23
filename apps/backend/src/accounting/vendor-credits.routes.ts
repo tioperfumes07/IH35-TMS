@@ -97,7 +97,10 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
            vc.amount_unapplied_cents,
            vc.notes,
            vc.created_at,
-           vc.created_by_user_id
+           vc.created_by_user_id,
+           vc.voided_at,
+           vc.void_reason,
+           vc.voided_by_user_id
          FROM accounting.vendor_credits vc
          LEFT JOIN mdata.vendors v
            ON v.id::text = vc.vendor_id
@@ -173,7 +176,10 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
            vc.amount_unapplied_cents,
            vc.notes,
            vc.created_at,
-           vc.created_by_user_id
+           vc.created_by_user_id,
+           vc.voided_at,
+           vc.void_reason,
+           vc.voided_by_user_id
          FROM accounting.vendor_credits vc
          LEFT JOIN mdata.vendors v
            ON v.id::text = vc.vendor_id
@@ -511,14 +517,24 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
          WHERE credit_id = $1 AND voided_at IS NULL`,
         [params.data.id, user.uuid, body.data.reason]
       );
-      // Zero out applied amount and mark voided. Belt-and-suspenders alongside the row lock: WHERE
-      // status <> 'voided', matching payments.routes.ts's own pattern.
+      // Zero out applied amount and mark voided. R-102-B (2026-09-23): the comment this replaced
+      // claimed "vendor_credits does not have" the dedicated void columns credit_memos.routes.ts
+      // sets — FALSE, live-verified on prod (information_schema, br-fancy-credit-akjnd07a):
+      // accounting.vendor_credits carries voided_at/voided_by_user_id/void_reason same as every
+      // other void-tracked family. The generic `status='voided'` flip alone left those three columns
+      // permanently NULL, so a voided vendor credit could never say who voided it or when/why on the
+      // shared VoidedBanner. Belt-and-suspenders alongside the row lock: WHERE status <> 'voided',
+      // matching payments.routes.ts's own pattern.
       const flipped = await client.query(
         `UPDATE accounting.vendor_credits
-         SET status = 'voided', amount_applied_cents = 0
+         SET status = 'voided',
+             amount_applied_cents = 0,
+             voided_at = now(),
+             voided_by_user_id = $2,
+             void_reason = $3
          WHERE id = $1
            AND status <> 'voided'`,
-        [params.data.id]
+        [params.data.id, user.uuid, body.data.reason]
       );
       if (flipped.rowCount === 0) return { code: 409 as const, error: "already_voided" };
 

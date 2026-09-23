@@ -1133,6 +1133,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
           UPDATE accounting.invoices
           SET status = 'void',
               voided_at = now(),
+              voided_by_user_id = $3,
               void_reason = $2,
               -- ACCT-F200 — DO NOT ADD 'amount_open_cents = 0' HERE. It was added once (ACCT-F197)
               -- and took production down: that column is STORED GENERATED on prod

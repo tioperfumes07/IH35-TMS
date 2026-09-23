@@ -603,6 +603,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             -- the top-of-page VoidedBanner -- same fields invoices.routes.ts already returns).
             e.voided_at::text                            AS voided_at,
             e.void_reason                                AS void_reason,
+            e.voided_by_user_id::text                    AS voided_by_user_id,
             e.load_id::text                              AS load_id,
             e.vendor_uuid::text                          AS vendor_uuid,
             e.driver_uuid::text                          AS driver_uuid,

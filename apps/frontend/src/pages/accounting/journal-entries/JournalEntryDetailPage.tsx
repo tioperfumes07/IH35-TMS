@@ -240,7 +240,7 @@ export function JournalEntryDetailPage() {
 
   return (
     <AccountingSubNavWrapper>
-      <VoidedBanner voidedAt={entry.voided_at} voidReason={entry.void_reason} documentLabel="Journal entry" />
+      <VoidedBanner voidedAt={entry.voided_at} voidReason={entry.void_reason} voidedByUserId={entry.voided_by_user_id} documentLabel="Journal entry" />
       <PageHeader
         title={chromeLabel}
         backHref="/accounting/journal-entries"

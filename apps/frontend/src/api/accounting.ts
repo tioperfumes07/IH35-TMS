@@ -58,6 +58,8 @@ export type Invoice = {
   sent_at: string | null;
   voided_at: string | null;
   void_reason: string | null;
+  /** R-102-B — resolved to a name (never a raw uuid) by VoidedBanner via useUserName. */
+  voided_by_user_id?: string | null;
   subtotal_cents: number;
   tax_cents: number;
   total_cents: number;
@@ -212,6 +214,7 @@ export type Payment = {
   notes: string | null;
   voided_at: string | null;
   void_reason: string | null;
+  voided_by_user_id?: string | null;
   created_at: string;
   /** Law §9: bank feed / recon reverse hop (source_bank_transaction_id or matched_payment_id). */
   matched_bank_transaction_id?: string | null;
@@ -293,6 +296,12 @@ export type VendorBill = {
   revoked_at: string | null;
   /** VIS-01 — bill void reason (accounting.bills.revoked_reason), shown by VoidedBanner. */
   revoked_reason?: string | null;
+  /**
+   * R-102-B — accounting.bills.voided_by_user_id. Kept in sync with revoked_by_user_id by the
+   * trg_bills_sync_void_markers trigger (migration 202612480900), so this is populated for every
+   * app/governance/bulk void path even though the app writers only set revoked_by_user_id directly.
+   */
+  voided_by_user_id?: string | null;
   // BANKREC-LISTSTATUS-01: true iff any of this bill's payments has an active (not-rejected)
   // bank.reconciliation_matches row. Read-only, derived server-side.
   is_reconciled?: boolean;
@@ -397,6 +406,8 @@ export type BillPayment = {
   revoked_at: string | null;
   /** VIS-01 — bill payment void reason (accounting.bill_payments.revoked_reason), shown by VoidedBanner. */
   revoked_reason?: string | null;
+  /** R-102-B — accounting.bill_payments.voided_by_user_id, mirrored in the same UPDATE as revoked_by_user_id (ACCT-SETL-BILLPAY-VOID-MIRROR). */
+  voided_by_user_id?: string | null;
   // BANKREC-LISTSTATUS-01: true iff this bill_payment has an active (not-rejected)
   // bank.reconciliation_matches row. Read-only, derived server-side.
   is_reconciled?: boolean;
@@ -974,6 +985,7 @@ export type ExpenseDetail = {
   /** VIS-01 — expense void date/reason, shown by VoidedBanner. */
   voided_at?: string | null;
   void_reason?: string | null;
+  voided_by_user_id?: string | null;
   load_id: string | null;
   load_number: string | null;
   vendor_uuid: string | null;
@@ -1734,6 +1746,10 @@ export type JournalEntry = {
   created_by_user_id: string | null;
   voided_at: string | null;
   void_reason: string | null;
+  /** R-102-B. Note (out of scope to change here): voidJournalEntry never flips this — Option 1's
+   * reversing-entry model leaves the original 'posted' and posts a linked reversal instead, so this
+   * stays null for every JE voided through the normal flow. Wired for correctness/future writers. */
+  voided_by_user_id?: string | null;
   reversed_by_je_id: string | null;
   reverses_je_id: string | null;
   qbo_journal_entry_id: string | null;

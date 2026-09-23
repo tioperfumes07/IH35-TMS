@@ -8,6 +8,7 @@ import { LoadDetailDriverPayTab } from "../../components/dispatch/LoadDetailDriv
 import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 import { visibleDocumentLabel } from "../../lib/entity-label";
 import { formatUsdCents } from "../../lib/money";
+import { VoidedBanner } from "../../components/accounting/VoidedBanner";
 
 /**
  * REG-023(b) (owner 2026-09-10: "the Open Driver Bill button is unwired — no driver_bills/:id route
@@ -26,6 +27,9 @@ type DriverBillRef = {
   load_id: string;
   load_number: string | null;
   driver_name: string | null;
+  voided_at: string | null;
+  void_reason: string | null;
+  voided_by_user_id: string | null;
 };
 
 function statusLabel(status: string): string {
@@ -82,6 +86,13 @@ export function DriverBillDetailPage() {
             : { label: "Load" },
           { label: `Driver bill ${label}` },
         ]}
+      />
+
+      <VoidedBanner
+        voidedAt={bill.voided_at}
+        voidReason={bill.void_reason}
+        voidedByUserId={bill.voided_by_user_id}
+        documentLabel="Driver bill"
       />
 
       {bill.load_id ? (

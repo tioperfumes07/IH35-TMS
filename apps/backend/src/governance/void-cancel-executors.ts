@@ -654,12 +654,22 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
     [entityId, operatingCompanyId, reason, userId]
   );
 
+  // R-102-B (2026-09-23) — driver_settlements carries the SAME disjoint dual-marker-set defect
+  // migration 202612480900 already fixed for accounting.bills (reversed_at/reversed_by_user_id/
+  // reversal_reason vs. voided_at/void_reason/voided_by_user_id), but with no equivalent sync
+  // trigger here: 21 live 'cancelled' settlements (measured, br-fancy-credit-akjnd07a) carry
+  // reversed_at but a NULL voided_at, so the shared VoidedBanner (reads voided_at/voided_by_user_id
+  // uniformly across every void-tracked family) could never render them as voided. Mirror both sets
+  // in the same UPDATE — additive only, same pattern as bill_payments' ACCT-SETL-BILLPAY-VOID-MIRROR.
   const flipped = await client.query<{ id: string }>(
     `UPDATE driver_finance.driver_settlements
         SET status = 'cancelled',
             reversed_at = now(),
             reversed_by_user_id = $3::uuid,
             reversal_reason = $4,
+            voided_at = now(),
+            void_reason = $4,
+            voided_by_user_id = $3::uuid,
             updated_at = now()
       WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'cancelled'
       RETURNING id::text`,

@@ -80,7 +80,7 @@ export function BillPaymentDetailPage() {
 
   return (
     <AccountingSubNavWrapper>
-      <VoidedBanner voidedAt={payment.revoked_at} voidReason={payment.revoked_reason} documentLabel="Bill payment" />
+      <VoidedBanner voidedAt={payment.revoked_at} voidReason={payment.revoked_reason} voidedByUserId={payment.voided_by_user_id} documentLabel="Bill payment" />
       <PageHeader
         title={displayId}
         backHref="/accounting/bill-payments"
