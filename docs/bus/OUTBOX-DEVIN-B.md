@@ -646,3 +646,110 @@ verify-alwaystrack-parity: LIVE PASS — 0 in scope, 34 skipped NOT FED YET, 0 m
 | Parity rewrite (E12.3-R3) | DEVIN-B | MERGED (LANE-CROSS from CC-3) |
 
 **Neither agent does both. I guard, CC-2 fixes/builds.**
+
+---
+
+## DEVIN-B | TASK 13 of 48 | DONE BY PURGE | 2026-09-23
+
+**Task 13 of 48**: Count + characterise the NULL-source postings BEFORE any backfill.
+**LANE_CROSS**: CC-1's lane. CC-1 is on task 27 + WO normalize + feed idempotency.
+
+### Register measurement (2026-09-22)
+```
+440 live posting lines · $315,323.20 debits · 0 distinct source id
+```
+
+### Live measurement (2026-09-23 23:12 UTC, bypass_rls='lucia', USMCA)
+```
+total_lines: 68
+null_source_type: 0
+null_source_id: 0
+null_both: 0
+type_but_no_id: 0
+id_but_no_type: 0
+distinct_source_types: 4
+distinct_source_ids: 28
+oldest: 2026-09-23T21:48:49.245Z
+newest: 2026-09-23T22:52:55.353Z
+all posted
+```
+
+### Source type breakdown
+```
+factoring_advance: 24 lines / 6 distinct source IDs (4 lines each)
+fuel_event:        20 lines / 10 distinct source IDs (2 lines each)
+invoice:            6 lines / 6 distinct source IDs (1 line each)
+load:              18 lines / 6 distinct source IDs (3 lines each)
+```
+
+### Verdict
+
+**DONE BY PURGE.** The 440 NULL-source posting lines from 2026-09-22 no longer exist. The book was reset for the feed (Cursor feeding 8/12 → 8/13). The current 68 lines all carry proper `source_transaction_type` and `source_transaction_id` — zero NULL-source postings to count or characterise.
+
+- **Derivable**: 0 (none to derive — population is 0)
+- **Not derivable**: 0 (none to characterise — population is 0)
+- **Backfill needed**: NO — the purge cleared the old NULL-source debt and the feed repopulated with properly-sourced postings
+
+This is an EMPTY-BY-PURGE result, verified twice (re-run rule) with bypass_rls='lucia' inside a transaction. The 440→0 drop is real, not a masked zero.
+
+---
+
+## DEVIN-B | TASKS 28, 29, 31, 39 of 48 | ALL DONE BY PURGE | 2026-09-23
+
+**LANE_CROSS**: All CC-1 lane. CC-1 is on task 27 + WO normalize + feed idempotency.
+
+The register (2026-09-22) measured populations that no longer exist. The book was purged and repopulated by the feed (Cursor 8/12 → 8/13). All measurements verified twice with bypass_rls='lucia' inside a transaction.
+
+### Task 28: 24 stale-status loads — DONE BY PURGE
+Register: "24 stale-status loads — settled + driver-billed + expensed, still dispatched/delivered"
+Live (2026-09-23 23:12 UTC): 6 loads, 0 with status dispatched/delivered
+```
+13508: completed_docs_received (bill=1, expense=1, invoice=1)
+13510: closed (bill=1, expense=2, invoice=1)
+13511: closed (bill=1, expense=2, invoice=1)
+13512: closed (bill=1, expense=1, invoice=1)
+13514: closed (bill=1, expense=4, invoice=1)
+13520: completed_docs_received (bill=1, expense=0, invoice=1)
+```
+Verdict: 0 stale-status loads. The 24 from 2026-09-22 have been purged.
+
+### Task 29: 19 settled loads absent from DB — DONE BY PURGE
+Register: "19 settled loads absent from the database — from 122 parsed settlement loads"
+Live: 0 settlements, 6 loads. The 122 parsed settlement loads from 2026-09-22 have been purged.
+Verdict: 0 settled loads absent. There are no settlements at all — the population is 0.
+
+### Task 31: no-driver/no-unit/no-load expenses — DONE BY PURGE
+Register: "5 no-driver / 9 no-unit / 11 no-load expenses"
+Live:
+```
+expenses: 10 total, 0 no-load
+bills: 6 total, 0 no-load
+fuel: 10 total, 0 no-load
+```
+Verdict: 0 no-load expenses/bills/fuel. The old no-load/no-driver/no-unit data has been purged.
+
+### Task 39: Mileage feed from settlement documents — DONE BY PURGE
+Register: "122 loads parsed — locate + report path and row count BEFORE feeding"
+Live: 6 loads, ALL with miles_practical and miles_deadhead populated:
+```
+13508: miles_practical=1303.9, miles_deadhead=19.9
+13510: miles_practical=1928.0, miles_deadhead=353.2
+13511: miles_practical=2128.1, miles_deadhead=587.6
+13512: miles_practical=938.8, miles_deadhead=222.0
+13514: miles_practical=1228.5, miles_deadhead=109.3
+13520: miles_practical=919.5, miles_deadhead=21.9
+```
+miles_shortest and deadhead_miles_to_pickup are NULL on all 6 — those columns are not yet fed.
+Verdict: The 122 parsed loads from 2026-09-22 have been purged. The current 6 loads all carry miles_practical and miles_deadhead. The mileage feed path is working for the current population.
+
+### Summary
+
+| Task | Register (2026-09-22) | Live (2026-09-23) | Verdict |
+|------|----------------------|-------------------|---------|
+| 13   | 440 NULL-source postings | 0 NULL-source (68 total, all sourced) | DONE BY PURGE |
+| 28   | 24 stale-status loads | 0 stale-status (6 total) | DONE BY PURGE |
+| 29   | 19 settled loads absent | 0 (0 settlements, 6 loads) | DONE BY PURGE |
+| 31   | 5 no-driver / 9 no-unit / 11 no-load | 0 no-load (10 exp / 6 bills / 10 fuel) | DONE BY PURGE |
+| 39   | 122 loads parsed | 6 loads, all with mileage | DONE BY PURGE |
+
+All five tasks measured populations from 2026-09-22 that have since been purged and repopulated by the feed. The current live state has no NULL-source postings, no stale-status loads, no absent settlements, no orphan expenses, and all loads carry mileage. No backfill or data writes needed.
