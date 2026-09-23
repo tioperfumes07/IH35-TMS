@@ -1,3 +1,63 @@
+# ROUND 92 - LEAD - NEXT ENGINE IS ALREADY ASSIGNED. NEVER STOP TO ASK.
+
+**Standing order, effective now: you do not go idle and you do not ask what is next.**
+When the item you are on lands, you take the next one on YOUR list below, in order, in the
+same turn. Only when your whole list is empty do you post `LIST EMPTY` in your outbox and take
+the shared backlog at the bottom of this block. The owner is not a dispatcher and neither is a
+pause.
+
+The thirteen are the only work. The purge is HELD until all thirteen are done, a fresh
+pre-purge Neon snapshot exists (`br-sweet-math-akyen17f` is TRUNCATED and is NOT one), the
+baseline is captured in the same sitting, `scripts/purge/verify-purge.mjs` passes, and the
+owner says "run the purge" at that moment.
+
+New this round, and it changes how you prove things:
+`scripts/purge/verify-purge.mjs` now reads `scripts/purge/usmca-purge-expected-zero.generated.json`,
+which is emitted by the same run that emits the purge SQL. **The purge SQL and its verifier can
+no longer disagree silently.** The old verifier checked 19 tables while the SQL deleted 38, named
+a table that never existed, and counted child tables with no WHERE clause at all - so
+TRANSPORTATION and TRUCKING rows would have failed a perfectly good USMCA purge. Do not
+hand-type a table list into any new guard. Read the generated file.
+
+USMCA only (`5c854333-6ea5-4faa-af31-67cb272fef80`). TRANSPORTATION and TRUCKING are frozen.
+Every USMCA record is REAL unless `is_sample_data = true` - never write a test, sample or demo
+row into USMCA, including for proof.
+
+## CC-3 - E10 is in flight. Here is what follows it, so you never stop to ask.
+
+1. **E10 - the void runner.** In flight. Fresh Neon branch off `br-fancy-credit-akjnd07a`,
+   never `br-sweet-math-akyen17f` (truncated), never production. Six reversal engines, no
+   seventh. All three mechanisms, and document correction leaves no flag - the only honest
+   proof there is the account netting to zero.
+2. **The docs.files purge predicate** (shared backlog item 1, pre-assigned to you since you
+   already built the docs.files scope script). The report of every file it would delete must
+   exist and be reviewed BEFORE anything runs.
+3. **`vehicle_parts_accessories`** - the one genuinely unmapped extractor gap you reported
+   rather than guessed. Map it properly or prove it has no item, and say which.
+4. **The historical-backfill write path for escrow_ledger** - your `createHistoricalEscrowHold()`
+   is built and unwired. Wire it behind the same `historical_backfill` source marker loads and
+   invoices already use, and leave driver_bill's half to CC-1.
+
+---
+
+## SHARED BACKLOG - take the top unclaimed item and claim it in your outbox first
+
+1. **The docs.files purge predicate.** 475 USMCA rows. 263 are app-generated driver
+   instructions tied to a load and regenerable; the rest are CDLs, medical cards, insurance
+   certificates, permits and signed contracts hanging off drivers, units and vendors. Build the
+   predicate that separates them by evidence, not by guess, and a report that lists every file
+   it would delete BEFORE anything runs.
+2. **The historical-backfill write path for driver_bill.** CC-3 found the gap honestly: no
+   `historical_backfill` path exists anywhere in `apps/backend` for driver_bill or escrow_ledger,
+   while loads and invoices already have one. The feed cannot run without it.
+3. **`cash_rsv`, `dispatch` and `sch_fee`.** Three real Faro deductions the export carries and
+   nothing in this codebase captures. The funding identity
+   `face - escrow - cash_rsv - discount - fees - dispatch - sch_fee = net_advance` holds 82 of
+   82 funded invoices, so all three are proven real, not theoretical.
+4. **The 663 unmapped Samsara drivers**, if E20 Part A lands and Part B is still open.
+
+---
+
 # ROUND 91 - CC-3 - E10 STARTS NOW, AND YOUR PROVING GROUND IS WRONG
 
 Your four are accepted: the 20 categories live, E15/E16 with the one honest unmapped gap

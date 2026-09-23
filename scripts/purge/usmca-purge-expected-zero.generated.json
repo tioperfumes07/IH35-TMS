@@ -6,227 +6,227 @@
   "must_be_zero_after_purge": [
     {
       "table": "accounting.transaction_source_links",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "accounting.journal_entry_postings",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "accounting.escrow_postings",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "accounting.expense_lines",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "banking.bank_transaction_splits",
-      "predicate": "child-of-parent"
+      "where": "result_journal_entry_id IN (SELECT id FROM accounting.journal_entries WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80')\n    OR load_id IN (SELECT id FROM mdata.loads WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80')"
     },
     {
       "table": "driver_finance.settlement_contract_lines",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "fuel.fuel_transactions",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "driver_finance.driver_settlement_deductions",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "accounting.expenses",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "accounting.factoring_default_interest_accruals",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "accounting.factoring_lifecycle_posting_keys",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "accounting.factoring_reserve_movements",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "accounting.load_revenue_recognition_postings",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "banking.reconciliation_drift_alerts",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "driver_finance.driver_advances",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "driver_finance.driver_settlement_gl_bills",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "driver_finance.driver_reimbursements",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "driver_finance.escrow_ledger",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "driver_finance.settlement_lines",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "driver_finance.driver_bills",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "driver_finance.deduction_schedule",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "driver_finance.driver_liabilities",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "driver_finance.driver_settlement_gl_runs",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "driver_finance.payrun_gl_runs",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "accounting.journal_entries",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "accounting.posting_batches",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "accounting.invoice_disputes",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "dispatch.load_cancellations",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "accounting.invoice_lines",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "accounting.payment_applications",
-      "predicate": "child-of-parent"
+      "where": "invoice_id IN (SELECT id FROM accounting.invoices WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80')"
     },
     {
       "table": "accounting.invoices",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "accounting.bill_lines",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "accounting.bills",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "accounting.factoring_advances",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "accounting.company_settlements",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "accounting.outbox_events",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "accounting.ob_register_audit_events",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "accounting.period_cash_basis_snapshot",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "driver_finance.escrow_balances",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "driver_finance.presettlement_link_suggestions",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "driver_finance.driver_settlements",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "driver_finance.settlement_payment_events",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "dispatch.load_assignment_history",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "dispatch.load_charge_lines",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "dispatch.load_id_reservations",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "dispatch.driver_layovers",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "dispatch.manual_delivery_authorizations",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "dispatch.intransit_issues",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "dispatch.stop_arrivals",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "dispatch.pod_documents",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "expense_attribution.expense_load_links",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "expense_attribution.expense_seq_per_load",
-      "predicate": "child-of-parent"
+      "where": "load_id IN (SELECT id FROM mdata.loads WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80')"
     },
     {
       "table": "mdata.load_stop_legs",
-      "predicate": "child-of-parent"
+      "where": "load_id IN (SELECT id FROM mdata.loads WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80')"
     },
     {
       "table": "mdata.load_stops",
-      "predicate": "child-of-parent"
+      "where": "load_id IN (SELECT id FROM mdata.loads WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80')"
     },
     {
       "table": "mdata.loads",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     },
     {
       "table": "banking.reconciliation_matches",
-      "predicate": "operating_company_id"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
     }
   ],
   "must_be_unchanged": [

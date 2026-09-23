@@ -72,7 +72,7 @@ json.dump({
   "_source": "scripts/purge/emit.py - the same run that emitted the SQL, so the two cannot drift",
   "_law": "verify-purge must read THIS list. A verifier with its own hand-typed table list is how a bad purge reported green.",
   "company_id": CO,
-  "must_be_zero_after_purge": [{"table": t, "predicate": ("child-of-parent" if t in CHILD else "operating_company_id")} for t in ORDER],
+  "must_be_zero_after_purge": [{"table": t, "where": CHILD.get(t, "operating_company_id = '%s'" % CO)} for t in ORDER],
   "must_be_unchanged": KEEP["KEEP"] + KEEP["KEEP_BANKING"],
 }, open("scripts/purge/usmca-purge-expected-zero.generated.json", "w"), indent=2)
 print("%d deletes, %d kept tables" % (len(ORDER), len(KEEP["KEEP"]) + len(KEEP["KEEP_BANKING"])))
