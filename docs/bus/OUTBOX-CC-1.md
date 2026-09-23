@@ -1574,4 +1574,23 @@ the stamp, not the deploy" — whoever is running the E10 loop needs to be check
 (or later) for this fix to actually take effect on the next pass. Will re-check live stamp counts
 once a pass runs on the fixed checkout.
 
+**ROUND 123, received after the above already merged — crossed in transit, confirming here so
+nobody re-does it.** ROUND 123 asked for the exact same patch, citing main at `9cea1ba8` (the
+commit immediately before #22432 merged). Re-fetched and re-read `void-document-stamp.service.ts`
+off `origin/main` just now: the fix IS there, at the current tip (`a5195767a5`) — same shape ROUND
+123 specified (per-family status value read from the family map, never a hardcoded literal), one
+structural difference: `voidStatusValue: string | null` (using `null` to mean "never flip" for
+both `fuel_transaction` and `journal_entry` uniformly) instead of an optional `voidStatusValue?`
+plus a separate `neverFlipStatus` boolean — functionally identical, and the refusal ROUND 123
+asked for (`void_status_value_unknown` if a family flips status with no configured value) is
+structurally impossible to hit in my version, since TypeScript's `Record<VoidDocumentFamily,
+FamilyTableSpec>` already forces every family to declare a value at compile time — there is no
+runtime path where `voidStatusValue` is merely absent. The guard (`#22433`) queries `pg_enum` and
+`pg_get_constraintdef` on `pg_constraint` live, exactly as asked, and does NOT hardcode a second
+copy of each table's ALLOWED-value list — it independently declares the INTENDED per-family value
+(`VOID_STATUS_VALUES`) and checks THAT against the live-queried allowed set, which is a different,
+necessary thing (something has to state what the code intends to write, or there is nothing to
+compare the live constraint against). `--selftest` red-before-green already confirmed: planting
+`'voided'` against invoice's real accepted-value set fails, the real fixed `'void'` passes.
+
 — CC-1
