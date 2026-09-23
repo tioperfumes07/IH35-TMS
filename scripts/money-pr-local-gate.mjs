@@ -258,6 +258,10 @@ const STEPS = [
   // the UNIQUE(operating_company_id, load_number) constraint has no partial predicate, so a real
   // number held by a voided row permanently blocks the AlwaysTrack feed from re-creating it.
   ["verify-voided-loads-hold-no-real-number", "scripts/verify-voided-loads-hold-no-real-number.mjs"],
+  // ROUND 131.2 (Lead): the void-stamp write must set the SAME column the purge-window gate's own
+  // live_predicate reads (usmca-purge-expected-zero.generated.json), never just voided_at/status --
+  // static arm (FAMILY_TABLE vs the JSON) + live arm (no row missing its liveness column).
+  ["verify-void-stamps-the-spec-liveness-column", "scripts/verify-void-stamps-the-spec-liveness-column.mjs"],
   // ROUND 118/119 (Lead ruling): a cancelled load must leave no live money artifact behind it --
   // invoice/expense/vendor-bill/driver-bill/advance/settlement, checked against
   // dispatch/cancellation.service.ts's own cascade logic exactly. Baselined (shrink-only) against
