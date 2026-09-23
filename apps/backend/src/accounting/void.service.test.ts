@@ -52,8 +52,8 @@ describe("VOID-EVERYWHERE — reversal-date rule (QuickBooks-grounded, the logic
 
 describe("VOID-EVERYWHERE — reversing postings (equal & opposite, net zero)", () => {
   const original = [
-    { account_id: "a1", class_id: null, entity_uuid: null, debit_or_credit: "debit" as const, amount_cents: 10000, description: "AR", line_sequence: 1 },
-    { account_id: "a2", class_id: "c1", entity_uuid: "e1", debit_or_credit: "credit" as const, amount_cents: 10000, description: "Revenue", line_sequence: 2 },
+    { id: "line-a1", account_id: "a1", class_id: null, entity_uuid: null, debit_or_credit: "debit" as const, amount_cents: 10000, description: "AR", line_sequence: 1 },
+    { id: "line-a2", account_id: "a2", class_id: "c1", entity_uuid: "e1", debit_or_credit: "credit" as const, amount_cents: 10000, description: "Revenue", line_sequence: 2 },
   ];
 
   it("flips every line to the opposite side, preserving account/class/entity/amount", () => {
@@ -61,6 +61,19 @@ describe("VOID-EVERYWHERE — reversing postings (equal & opposite, net zero)", 
     expect(reversed[0]).toMatchObject({ account_id: "a1", debit_or_credit: "credit", amount_cents: 10000 });
     expect(reversed[1]).toMatchObject({ account_id: "a2", class_id: "c1", entity_uuid: "e1", debit_or_credit: "debit", amount_cents: 10000 });
     expect(reversed[0].description).toContain("Void reversal");
+  });
+
+  // ROUND 86 (Lead, 2026-09-23) — "invoice 13572's stranded posting": postVoidReversal's own
+  // GlPostingRow type had no `id` field at all, so the reversal could never be linked back to the
+  // original at the LINE level (reversal_of_line_id / reversed_by_line_id) — only the JE-level FK
+  // was ever written. flipPostingsForReversal is the one place that shape decision gets made;
+  // this is the regression lock for it.
+  it("carries the ORIGINAL line's own id through as original_line_id, one per flipped row (the fix for the 'stranded posting' — a reversal that can't be traced back at the LINE level)", () => {
+    const reversed = flipPostingsForReversal(original);
+    expect(reversed[0]?.original_line_id).toBe("line-a1");
+    expect(reversed[1]?.original_line_id).toBe("line-a2");
+    // Never the reversal's own (not-yet-existing) id, and never dropped/undefined.
+    expect(reversed.every((r) => typeof r.original_line_id === "string" && r.original_line_id.length > 0)).toBe(true);
   });
 
   it("a balanced original yields a balanced reversal (net GL effect zero)", () => {
@@ -90,8 +103,8 @@ describe("VOID-EVERYWHERE — reversing postings (equal & opposite, net zero)", 
 describe("VOID-EVERYWHERE PR-2 — bill void reverses AP correctly (same engine as invoices/JEs)", () => {
   // A typical posted bill: DR Expense, CR Accounts Payable.
   const billPosting = [
-    { account_id: "expense", class_id: "drv1", entity_uuid: "vendor1", debit_or_credit: "debit" as const, amount_cents: 45000, description: "Fuel bill", line_sequence: 1 },
-    { account_id: "accounts_payable", class_id: null, entity_uuid: "vendor1", debit_or_credit: "credit" as const, amount_cents: 45000, description: "AP", line_sequence: 2 },
+    { id: "line-expense", account_id: "expense", class_id: "drv1", entity_uuid: "vendor1", debit_or_credit: "debit" as const, amount_cents: 45000, description: "Fuel bill", line_sequence: 1 },
+    { id: "line-ap", account_id: "accounts_payable", class_id: null, entity_uuid: "vendor1", debit_or_credit: "credit" as const, amount_cents: 45000, description: "AP", line_sequence: 2 },
   ];
 
   it("voiding a bill credits the expense and debits AP back out (net zero)", () => {

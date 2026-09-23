@@ -66,6 +66,16 @@ type QueryableClient = {
 };
 
 type GlPostingRow = {
+  /** ROUND 86 (Lead, 2026-09-23) -- the original posting line's own id, needed to link the
+   *  reversal at the LINE level (reversal_of_line_id / reversed_by_line_id), the same way
+   *  posting-engine.service.ts's own reversal path already does. Previously absent from this
+   *  type entirely, so postVoidReversal (used by invoice/bill/payment/journal-entry/loan-payment
+   *  voids -- six callers) could never write those columns, no matter how balanced/atomic its
+   *  JE-level reversal was: a "stranded posting" — the original line's own reversed_by_line_id
+   *  stays NULL forever, even though its JE is correctly marked reversed_by_je_id. Any consumer
+   *  checking line-level liveness (the same five-column predicate this session's own E8 guard
+   *  uses) reads it as still live. */
+  id: string;
   account_id: string;
   class_id: string | null;
   entity_uuid: string | null;
@@ -109,9 +119,15 @@ export function isClosedPeriodReversal(originalDate: string, reversalDate: strin
   return reversalDate !== originalDate;
 }
 
-/** Flip every posting to the opposite side, preserving account/class/entity/amount. Balanced original -> balanced reversal. */
-export function flipPostingsForReversal(rows: GlPostingRow[]): Array<Omit<GlPostingRow, "line_sequence">> {
+/** Flip every posting to the opposite side, preserving account/class/entity/amount. Balanced original -> balanced reversal.
+ *  ROUND 86 -- carries `original_line_id` through (the row it flipped) so the caller can link the
+ *  new reversal line back to it (reversal_of_line_id / reversed_by_line_id), never dropping it
+ *  silently the way this function did before. */
+export function flipPostingsForReversal(
+  rows: GlPostingRow[]
+): Array<Omit<GlPostingRow, "line_sequence" | "id"> & { original_line_id: string }> {
   return rows.map((row) => ({
+    original_line_id: row.id,
     account_id: row.account_id,
     class_id: row.class_id,
     entity_uuid: row.entity_uuid,
@@ -201,7 +217,7 @@ async function readOriginalGlPostings(
   if (entityType === "journal_entry") {
     const res = await client.query<GlPostingRow>(
       `
-        SELECT account_id::text, class_id::text, entity_uuid::text,
+        SELECT id::text, account_id::text, class_id::text, entity_uuid::text,
                debit_or_credit, amount_cents::bigint AS amount_cents, description, line_sequence
         FROM accounting.journal_entry_postings
         WHERE operating_company_id = $1::uuid AND journal_entry_uuid = $2::uuid
@@ -219,7 +235,7 @@ async function readOriginalGlPostings(
   // ACCT-F331: do NOT require posting_batch_id (sub-ledger posters use idempotency_key).
   const res = await client.query<GlPostingRow>(
     `
-      SELECT account_id::text, class_id::text, entity_uuid::text,
+      SELECT id::text, account_id::text, class_id::text, entity_uuid::text,
              debit_or_credit, amount_cents::bigint AS amount_cents, description, line_sequence
       FROM accounting.journal_entry_postings
       WHERE operating_company_id = $1::uuid
@@ -621,8 +637,8 @@ export async function postVoidReversal(
     const lineRes = await client.query<{ id: string }>(
       `
         INSERT INTO accounting.journal_entry_postings
-          (operating_company_id, journal_entry_uuid, line_sequence, account_id, class_id, entity_uuid, debit_or_credit, amount_cents, description, idempotency_key, source_transaction_type, source_transaction_id)
-        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5::uuid, $6, $7, $8::bigint, $9, $10, $11, $12)
+          (operating_company_id, journal_entry_uuid, line_sequence, account_id, class_id, entity_uuid, debit_or_credit, amount_cents, description, idempotency_key, source_transaction_type, source_transaction_id, reversal_of_line_id)
+        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5::uuid, $6, $7, $8::bigint, $9, $10, $11, $12, $13::uuid)
         ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
           WHERE idempotency_key IS NOT NULL DO NOTHING
         RETURNING id::text
@@ -650,11 +666,18 @@ export async function postVoidReversal(
         // nets to zero, matching how the account-level total already behaves.
         params.entityType,
         params.entityId,
+        // ROUND 86 (Lead, 2026-09-23) — LINE-LEVEL reversal FK, the fix for the "stranded posting"
+        // this function's own comment below used to claim already existed. Mirrors
+        // posting-engine.service.ts's reversal path exactly: the new line points back at the
+        // original via reversal_of_line_id (set here, at insert); the original line is pointed
+        // forward at the new one via reversed_by_line_id (set by the UPDATE right after).
+        line.original_line_id,
       ]
     );
     // CODER-12 audit-spine: link each reversal posting line back to the ORIGINAL entity
-    // (role 'reversal_of'); the GL reversal chain itself is carried by reversal_of_line_id /
-    // reversed_by_line_id on posting-engine reversals. Skip on a BLOCK-2 conflict no-op (no row).
+    // (role 'reversal_of') — a separate, additional cross-reference (transaction_source_links),
+    // NOT the same thing as reversal_of_line_id/reversed_by_line_id above (this function's own
+    // prior comment conflated the two; see ROUND 86 above). Skip on a BLOCK-2 conflict no-op (no row).
     const reversalPostingId = lineRes.rows[0]?.id;
     if (reversalPostingId) {
       await writeTransactionSourceLink(client, {
@@ -664,6 +687,19 @@ export async function postVoidReversal(
         linked_object_id: params.entityId,
         relationship_role: "reversal_of",
       });
+      // ROUND 86 — the other half of the line-level link: point the ORIGINAL line forward at
+      // this new reversal line. Without this, the original stays a "stranded posting" — its own
+      // JE correctly shows reversed_by_je_id, but any reader keyed on the LINE-level column
+      // (e.g. this session's own E8 guard's five-column liveness predicate) still sees it live.
+      await client.query(
+        `
+          UPDATE accounting.journal_entry_postings
+             SET reversed_by_line_id = $2::uuid,
+                 updated_at = now()
+           WHERE id = $1::uuid
+        `,
+        [line.original_line_id, reversalPostingId]
+      );
     }
   }
 
