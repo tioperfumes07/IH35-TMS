@@ -67,10 +67,10 @@ Never work in the shared main checkout.
       owner-role reads contend with its locks.
 
 # P1 — GUARDS THAT STOP TODAY'S DEFECTS COMING BACK
-[ ] Q07 GUARD  verify-every-void-route-reverses.mjs
-[ ] Q08 GUARD  verify-no-voided-doc-has-live-postings.mjs (baseline 0)
-[ ] Q09 GUARD  verify-baselines-are-post-wipe.mjs
-[ ] Q10 GUARD  verify-no-stale-literals-in-guards.mjs — §9.0.17 sweep. Four
+[DONE DEVIN-A 2026-09-24T00:15:00Z, PR #22474] Q07 GUARD  verify-every-void-route-reverses.mjs
+[DONE DEVIN-A 2026-09-24T00:15:00Z, PR #22474] Q08 GUARD  verify-no-voided-doc-has-live-postings.mjs (baseline 0)
+[DONE DEVIN-A 2026-09-24T00:15:00Z, PR #22474] Q09 GUARD  verify-baselines-are-post-wipe.mjs
+[DEVIN-A 2026-09-24T00:16:00Z] Q10 GUARD  verify-no-stale-literals-in-guards.mjs — §9.0.17 sweep. Four
       hardcoded-count defects surfaced today: 333-vs-92, fuel 589/$253,271.24,
       purge-window 9 then 11, and "47 documents". Allowlist only by
       `// STALE-LITERAL-OK: <reason>`.
