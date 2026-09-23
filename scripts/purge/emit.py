@@ -2,6 +2,52 @@ import json
 CO = "5c854333-6ea5-4faa-af31-67cb272fef80"
 ORDER = ["accounting.transaction_source_links","accounting.journal_entry_postings","accounting.escrow_postings","accounting.expense_lines","banking.bank_transaction_splits","driver_finance.settlement_contract_lines","fuel.fuel_transactions","driver_finance.driver_settlement_deductions","accounting.expenses","accounting.factoring_default_interest_accruals","accounting.factoring_lifecycle_posting_keys","accounting.factoring_reserve_movements","accounting.load_revenue_recognition_postings","banking.reconciliation_drift_alerts","driver_finance.driver_advances","driver_finance.driver_settlement_gl_bills","driver_finance.driver_reimbursements","driver_finance.escrow_ledger","driver_finance.settlement_lines","driver_finance.driver_bills","driver_finance.deduction_schedule","driver_finance.driver_liabilities","driver_finance.driver_settlement_gl_runs","driver_finance.payrun_gl_runs","accounting.journal_entries","accounting.posting_batches","accounting.invoice_disputes","dispatch.load_cancellations","accounting.invoice_lines","accounting.payment_applications","accounting.invoices","accounting.bill_lines","accounting.bills","accounting.factoring_advances","accounting.company_settlements","accounting.outbox_events","accounting.ob_register_audit_events","accounting.period_cash_basis_snapshot","driver_finance.escrow_balances","driver_finance.presettlement_link_suggestions","driver_finance.driver_settlements","driver_finance.settlement_payment_events","dispatch.load_assignment_history","dispatch.load_charge_lines","dispatch.load_id_reservations","dispatch.driver_layovers","dispatch.manual_delivery_authorizations","dispatch.intransit_issues","dispatch.stop_arrivals","dispatch.pod_documents","expense_attribution.expense_load_links","expense_attribution.expense_seq_per_load","mdata.load_stop_legs","mdata.load_stops","mdata.loads","banking.reconciliation_matches"]
 LOADS = "load_id IN (SELECT id FROM mdata.loads WHERE operating_company_id = '%s')" % CO
+
+# ---------------------------------------------------------------------------------------------
+# LIVE-ROW PREDICATES — measured live, never assumed.
+#
+# After the mass void, a guard that counts rows counts VOIDED rows too and reports a table as
+# non-empty when every row in it is dead. Cursor hit exactly this: three of his eight
+# purge-window arms count every row, voided included. So the generated file now carries, per
+# table, the predicate that means "this row is still alive" -- read off the columns each table
+# ACTUALLY has (information_schema, production, 2026-09-23), not a pattern assumed to be uniform.
+#
+# A table with NO void column gets live_predicate = null, ON PURPOSE. That is the honest answer,
+# not an oversight: those rows carry no flag, so "is it live" cannot be answered from the row
+# itself -- it is answered by the parent document or, for a document-correction reversal, only
+# by the account netting to zero. A guard that defaulted such a table to "all rows live" would
+# report a clean void as dirty forever; one that defaulted to "all dead" would hide real rows.
+# Null forces the guard to say which, out loud.
+# ---------------------------------------------------------------------------------------------
+LIVE = {
+    # The five-column liveness test, in its home table.
+    "accounting.journal_entries":
+        "voided_at IS NULL AND reversed_by_je_id IS NULL AND reverses_je_id IS NULL",
+    # The line-level half of the same test.
+    "accounting.journal_entry_postings": "reversed_by_line_id IS NULL",
+    # Documents that carry their own void stamp.
+    "accounting.expenses": "voided_at IS NULL",
+    "accounting.bills": "voided_at IS NULL",
+    "accounting.bill_lines": "voided_at IS NULL",
+    "accounting.invoices": "voided_at IS NULL",
+    "accounting.company_settlements": "voided_at IS NULL",
+    "accounting.load_revenue_recognition_postings": "voided_at IS NULL",
+    "driver_finance.driver_settlements": "voided_at IS NULL",
+    "driver_finance.driver_settlement_deductions": "voided_at IS NULL",
+    "driver_finance.driver_bills": "voided_at IS NULL",
+    "driver_finance.driver_advances": "voided_at IS NULL",
+    "driver_finance.driver_liabilities": "voided_at IS NULL",
+    "driver_finance.settlement_lines": "voided_at IS NULL",
+    # Not voided -- soft deleted. Different column, same question.
+    "accounting.invoice_lines": "soft_deleted_at IS NULL",
+    "mdata.loads": "soft_deleted_at IS NULL",
+    # Not voided -- archived.
+    "fuel.fuel_transactions": "archived_at IS NULL",
+    # Status-only, no timestamp. Named separately so nobody mistakes it for a void stamp.
+    "accounting.factoring_advances": "status <> 'voided'",
+    "accounting.invoice_disputes": "status <> 'voided'",
+    "driver_finance.escrow_balances": "status <> 'voided'",
+}
 CHILD = {
   "mdata.load_stops": LOADS,
   "mdata.load_stop_legs": LOADS,
@@ -72,7 +118,21 @@ json.dump({
   "_source": "scripts/purge/emit.py - the same run that emitted the SQL, so the two cannot drift",
   "_law": "verify-purge must read THIS list. A verifier with its own hand-typed table list is how a bad purge reported green.",
   "company_id": CO,
-  "must_be_zero_after_purge": [{"table": t, "where": CHILD.get(t, "operating_company_id = '%s'" % CO)} for t in ORDER],
+  "_live_predicate_law": (
+    "A guard that counts rows after a mass void counts VOIDED rows too. Use live_predicate to "
+    "count only live rows. live_predicate = null means the table carries NO void flag at all -- "
+    "that is measured, not missing. Such a table's liveness is answered by its parent document, "
+    "or for a document-correction reversal only by the account netting to zero. A guard MUST say "
+    "so out loud rather than defaulting either way."
+  ),
+  "must_be_zero_after_purge": [
+    {
+      "table": t,
+      "where": CHILD.get(t, "operating_company_id = '%s'" % CO),
+      "live_predicate": LIVE.get(t),
+    }
+    for t in ORDER
+  ],
   "must_be_unchanged": KEEP["KEEP"] + KEEP["KEEP_BANKING"],
 }, open("scripts/purge/usmca-purge-expected-zero.generated.json", "w"), indent=2)
 print("%d deletes, %d kept tables" % (len(ORDER), len(KEEP["KEEP"]) + len(KEEP["KEEP_BANKING"])))
