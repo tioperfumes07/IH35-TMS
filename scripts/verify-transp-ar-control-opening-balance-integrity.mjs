@@ -122,11 +122,12 @@ if (process.argv.includes("--selftest")) selftest();
 console.log(`${LABEL}: static OK — this is a live-data integrity guard, no source-file contract to check statically.`);
 
 if (!process.env.DATABASE_URL) {
-  console.log(`${LABEL}: DATABASE_URL not set — skipping the live check (static half still ran).`);
-  console.log(`${LABEL}: to re-run live: DATABASE_URL=<prod> node ${process.argv[1]}`);
-  process.exit(0);
+  console.error("verify-transp-ar-control-opening-balance-integrity: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+  process.exit(1);
 }
 
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2c)";
 const { Client } = await import("pg");
 const client = new Client({ connectionString: process.env.DATABASE_URL });
 await client.connect();

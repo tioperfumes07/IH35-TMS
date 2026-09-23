@@ -27,6 +27,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2c)";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const HELD_MANIFEST = "db/migrations/.held-migrations.json";
@@ -144,10 +146,10 @@ async function main() {
   const pg = (await import("pg")).default;
   try { (await import("dotenv")).default.config(); } catch { /* optional */ }
   const cs = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
-  if (!cs) { console.log(`${LABEL} CAPABILITY SKIP — ${referenced.size} held-only reference(s); presence needs a live DB (prod diverges from files). CI: verify:local-ci.`); return; }
+  if (!cs) { console.error("verify-held-column-consumers: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B)."); process.exit(1); }
   const { Client } = pg;
   const client = new Client(buildPgClientConfig(cs, { connectionTimeoutMillis: 15000 }));
-  try { await client.connect(); } catch (e) { console.log(`${LABEL} CAPABILITY SKIP — DB unreachable (${e.code ?? e.message}).`); return; }
+  try { await client.connect(); } catch (e) { console.error(`${LABEL}: FAIL — database unreachable (${e.code ?? e.message}). A live guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).`); process.exit(1); }
   const problems = [];
   try {
     for (const [id, { kind, hits }] of referenced) {

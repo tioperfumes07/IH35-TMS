@@ -10,6 +10,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2c)";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-usmca-reports-neon-pv";
@@ -135,6 +137,10 @@ async function main() {
   }
 
   const problems = auditManifest();
+  if (!process.env.DATABASE_URL) {
+    console.error("verify-usmca-reports-neon-pv: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+    process.exit(1);
+  }
   if (process.env.DATABASE_URL) {
     assertNotPooler(process.env.DATABASE_URL);
     const { default: pg } = await import("pg");

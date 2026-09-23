@@ -15,6 +15,8 @@ import path from "node:path";
 import { createRequire } from "node:module";
 import dotenv from "dotenv";
 import pg from "pg";
+export const ALLOW_OFFLINE_SKIP =
+  "static checks always run; the database half is opt-in via ENABLE_LIVE_DB_SAMPLE_BANK_TX_GUARD=true for a throwaway CI database and prints that it did not run otherwise (E7 batch 2c)";
 
 dotenv.config();
 

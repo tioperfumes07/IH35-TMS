@@ -2,29 +2,10 @@
   "_comment": "ROUND 29.9-B ratchet baseline — scripts/verify-*.mjs that silently exit 0 when DATABASE_URL is unset instead of failing. Enforced by scripts/verify-no-silent-db-skip.mjs (gate step 03d, dynamic re-test every run — independent of whether any individual file has been converted). This list may only SHRINK. A brand-new file exhibiting this pattern that is NOT in this list, and does not declare ALLOW_OFFLINE_SKIP in its own source, is a real regression and fails the gate.",
   "_why_not_yet_converted_2026_09_22": "A first pass converted 91 of these to unconditional fail-closed (process.exit(1) on missing DB) and re-verified each individually against live prod. That surfaced two compounding, team-wide-blocking discoveries BEFORE merge, not after: (1) 33 of the 91 are genuinely, currently RED against live prod for real, independently-tracked reasons (ongoing ROUND 28 settlement/fuel/AlwaysTrack reconciliation, overwhelmingly CC-3 lane) — converting an already-broken check to unconditional fail-closed does not catch a NEW regression, it just makes an EXISTING, already-disclosed, already-being-worked gap block every future push team-wide. (2) even the 58 that DO currently pass against live prod are, like nearly every guard in this file, invoked UNCONDITIONALLY in money-pr-local-gate.mjs STEPS array (not gated the way 03c/verify-control-totals.mjs is on touchesMoneyPath()) -- converting them to hard-fail-without-DB means the WHOLE gate can no longer pass at all for a coder without DATABASE_URL configured, on ANY push, including a pure docs/frontend change untouched by money data. Both discoveries were confirmed live (a full money-pr-local-gate.mjs run with DATABASE_URL set, and one without, both captured) before deciding not to ship the individual conversions. All 91 edits were reverted for this reason -- this baseline is therefore the full, honest, unreduced count (162), not a partially-progressed one. FOLLOW-UP, not done here: give each STEPS-array entry the SAME touchesMoneyPath()-style conditional 03c already has, so a guard only need pass when its own domain is actually touched -- that is the safe shape for the full conversion, not a blanket unconditional flip.",
   "baseline_established": "2026-09-22",
-  "baseline_count": 19,
-  "files": [
-    "verify-applied-migrations-immutable.mjs",
-    "verify-balanced-ledger.mjs",
-    "verify-bank-sign-convention-per-account-audit.mjs",
-    "verify-held-column-consumers.mjs",
-    "verify-launch-toggle-audit-trail.mjs",
-    "verify-ldt-5-presettlement-readout.mjs",
-    "verify-m1-positioned-parts.mjs",
-    "verify-mileage-g1-g5-live.mjs",
-    "verify-no-sample-bank-transaction-writes.mjs",
-    "verify-qbo-mirror-requires-connection.mjs",
-    "verify-reg030-bofa-usmca-freight-reconciliation.mjs",
-    "verify-rls-operating-company-scope.mjs",
-    "verify-schema-parity-from-prod.mjs",
-    "verify-settlement-lines-driver-bill-miles-rate-join.mjs",
-    "verify-transp-ar-control-opening-balance-integrity.mjs",
-    "verify-usmca-app-path-list-apis.mjs",
-    "verify-usmca-reports-neon-pv.mjs",
-    "verify-usmca-seed-completeness.mjs",
-    "verify-yard-location-and-fence.mjs"
-  ],
+  "baseline_count": 0,
+  "files": [],
   "_e7_batch2b_2026_09_23": "E7 batch 2b removed 52 (102 -> 50). Each was converted to fail closed and proven: node --check; exit non-zero with no DATABASE_URL; live exit code as ih35_ci_readonly UNCHANGED from before the edit. Green ones run in money-pr-local-gate.mjs via scripts/lib/e7-batch2-live-guards.json. Red ones are listed there under converted_red_not_wired: they declare REQUIRES_LIVE_DB, so verify-static never runs them and the gate does not either until they are green; CI still runs them against its own database exactly as before.",
   "_e7_batch2c_2026_09_23": "E7 batch 2c-1 removed 16 (50 -> 34): guards whose database half is a unit test for a throwaway CI database, opt-in via ENABLE_LIVE_DB_UNIT_TEST_GUARD=true (one of them inserts drivers). They print a loud \"the live scan did NOT run\" line and must never run against production, so they declare ALLOW_OFFLINE_SKIP with that reason instead of failing closed.",
-  "_e7_batch2c2_2026_09_23": "E7 batch 2c-2 removed 15 (34 -> 19): 10 guards static by default whose database half runs only with --live now sit in verify-no-silent-db-skip LIVE_FLAG_FILES, so 03d tests the --live path (each exits 1 with no DATABASE_URL; the five Pool-based ones gained an explicit check so they never fall back to a local database; all 10 exit 0 live as ih35_ci_readonly). 5 never connect and declare ALLOW_OFFLINE_SKIP."
+  "_e7_batch2c2_2026_09_23": "E7 batch 2c-2 removed 15 (34 -> 19): 10 guards static by default whose database half runs only with --live now sit in verify-no-silent-db-skip LIVE_FLAG_FILES, so 03d tests the --live path (each exits 1 with no DATABASE_URL; the five Pool-based ones gained an explicit check so they never fall back to a local database; all 10 exit 0 live as ih35_ci_readonly). 5 never connect and declare ALLOW_OFFLINE_SKIP.",
+  "_e7_batch2c3_2026_09_23": "E7 batch 2c-3 removed 19 (19 -> 0). 15 converted to fail closed at their exact skip point (each --selftest still runs offline with the same exit); 4 declared ALLOW_OFFLINE_SKIP (two flag-gated CI unit tests, one committed-snapshot check, one maintenance-only DB mode). The ratchet reached zero: every DATABASE_URL guard now either fails closed, runs --live under 03d, or declares why it never needs a database."
 }

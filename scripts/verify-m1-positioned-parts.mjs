@@ -2,6 +2,8 @@
 import { createRequire } from "node:module";
 import dotenv from "dotenv";
 import pg from "pg";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2c)";
 
 dotenv.config();
 
@@ -16,8 +18,8 @@ if (!url) {
     console.error("DATABASE_URL required in CI");
     process.exit(1);
   }
-  console.log("SKIP: DATABASE_URL not set (local dev)");
-  process.exit(0);
+  console.error("verify-m1-positioned-parts: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+  process.exit(1);
 }
 
 const client = new Client(buildPgClientConfig(url));

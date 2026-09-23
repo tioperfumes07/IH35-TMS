@@ -32,6 +32,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
+export const ALLOW_OFFLINE_SKIP =
+  "offline mode checks every applied migration against the committed ledger snapshot db/migrations/.ledger.json; with DATABASE_URL it compares the live ledger instead (E7 batch 2c)";
 
 const ROOT = process.cwd();
 const MIGRATIONS_DIR = path.resolve(ROOT, "db/migrations");

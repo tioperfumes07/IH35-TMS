@@ -4,9 +4,11 @@
   "guards": [
     "verify-acc-51-lists-receipt-and-hold.mjs",
     "verify-acc13-no-test-accounts-in-usmca-coa.mjs",
+    "verify-balanced-ledger.mjs",
     "verify-bank-fee-recovery-role-bound.mjs",
     "verify-bank-feed-live-tieout.mjs",
     "verify-bank-running-balance-uses-full-history.mjs",
+    "verify-bank-sign-convention-per-account-audit.mjs",
     "verify-bill-payments-void-biconditional.mjs",
     "verify-bnk01-fuzzy-vendor-match.mjs",
     "verify-capitalized-repair-registers-fixed-asset.mjs",
@@ -35,18 +37,23 @@
     "verify-fixed-monthly-costs-never-attach-to-load.mjs",
     "verify-fleet-sample-data-quarantine.mjs",
     "verify-fmcsa-safer-customer-coverage.mjs",
+    "verify-held-column-consumers.mjs",
     "verify-invoice-copies-export-safe.mjs",
     "verify-invoice-due-date-from-terms.mjs",
     "verify-invoices-factored-column.mjs",
     "verify-je-debit-credit-columns.mjs",
     "verify-je-type-fk.mjs",
+    "verify-launch-toggle-audit-trail.mjs",
     "verify-ldt-3-driver-pay.mjs",
     "verify-ldt-4-factoring-money.mjs",
+    "verify-ldt-5-presettlement-readout.mjs",
     "verify-ldt-d-documents-tab.mjs",
     "verify-load-costs-cost-split-foots.mjs",
     "verify-load-counter-not-ahead-of-reality.mjs",
+    "verify-m1-positioned-parts.mjs",
     "verify-manual-delivery-authorization.mjs",
     "verify-migration-no-number-collision.mjs",
+    "verify-mileage-g1-g5-live.mjs",
     "verify-no-duplicate-seed-deductions.mjs",
     "verify-no-duplicate-settlement-deductions.mjs",
     "verify-no-future-dated-seed-expenses.mjs",
@@ -56,6 +63,7 @@
     "verify-other-recovery-role-bound.mjs",
     "verify-payrun-close-excludes-voided-deductions.mjs",
     "verify-pl-cost-of-revenue.mjs",
+    "verify-reg030-bofa-usmca-freight-reconciliation.mjs",
     "verify-reimbursement-reversal-routes-to-expense.mjs",
     "verify-rpt-s02-neon-tie.mjs",
     "verify-safety-events-with-driver-view-live.mjs",
@@ -63,13 +71,16 @@
     "verify-safety-schema-delete-hardening.mjs",
     "verify-set24-correction-dry-run.mjs",
     "verify-settlement-lines-backfill-resolves-accounts.mjs",
+    "verify-settlement-lines-driver-bill-miles-rate-join.mjs",
     "verify-settlement-lines-load-id-backfilled.mjs",
     "verify-settlement-list-accrual.mjs",
     "verify-tour-leg-linkage.mjs",
     "verify-unbilled-revenue-accounts.mjs",
+    "verify-usmca-reports-neon-pv.mjs",
     "verify-vendor-customer-merge.mjs",
     "verify-vendor-statements-activity-tabs.mjs",
-    "verify-wave-h1-catalog-coa-completeness.mjs"
+    "verify-wave-h1-catalog-coa-completeness.mjs",
+    "verify-yard-location-and-fence.mjs"
   ],
   "live_flag_guards": [
     "verify-acct-link-03-bill-unit-density.mjs",
@@ -110,6 +121,7 @@
       "verify-recon-usmca-bank-suggestion-coverage.mjs",
       "verify-reg-parse-data-backfill.mjs",
       "verify-reimbursement-historical-reclass.mjs",
+      "verify-rls-operating-company-scope.mjs",
       "verify-settlement-detail-readmodel-s1b.mjs",
       "verify-settlement-line-rate-consistency.mjs",
       "verify-settlement-lines-have-accounts.mjs",
@@ -117,8 +129,16 @@
       "verify-settlement-net-matches-signed-doc.mjs",
       "verify-settlement-tieout-01.mjs",
       "verify-source-document-ref-backfill.mjs",
+      "verify-usmca-app-path-list-apis.mjs",
+      "verify-usmca-seed-completeness.mjs",
       "verify-usmca-settlement-linkage.mjs"
     ]
   },
-  "batch2b_established": "2026-09-23"
+  "batch2b_established": "2026-09-23",
+  "converted_not_run_frozen": {
+    "_comment": "Converted to fail closed and proven offline (node --check, no-DB exit 1) but never run live: it reads TRANSPORTATION, which is frozen (00-IH35-LAW Scope). CI runs it against its own database as before.",
+    "guards": [
+      "verify-transp-ar-control-opening-balance-integrity.mjs"
+    ]
+  }
 }

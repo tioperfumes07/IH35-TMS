@@ -23,6 +23,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath, pathToFileURL } from "node:url";
+export const ALLOW_OFFLINE_SKIP =
+  "default mode checks the committed prod-evidence baseline; the database is used only by the explicit --update-from-db maintenance mode, which fails closed without a URL (E7 batch 2c)";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-schema-parity-from-prod";

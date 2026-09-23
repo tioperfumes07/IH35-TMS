@@ -33,6 +33,8 @@
  * is untouched -- S.1's original spec for those two was never wrong).
  */
 import { readFileSync } from "node:fs";
+export const REQUIRES_LIVE_DB =
+  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2c)";
 
 const ROUTES_PATH = "apps/backend/src/driver-finance/settlements.routes.ts";
 const PAGE_PATH = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
@@ -189,6 +191,10 @@ if (failures.length > 0) {
 // gap). The honest criterion is therefore "every line that actually PAID something has real
 // miles>0 and rate>0", not "every line unconditionally" — a $0.00 deadhead line on a load with no
 // empty miles correctly shows "—", not a fabricated 0.0/$0.0000.
+if (!process.env.DATABASE_URL && !process.argv.includes("--selftest")) {
+  console.error("verify-settlement-lines-driver-bill-miles-rate-join: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
+  process.exit(1);
+}
 if (process.env.DATABASE_URL) {
   const { default: pg } = await import("pg");
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
