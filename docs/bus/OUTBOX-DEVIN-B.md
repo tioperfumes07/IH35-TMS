@@ -498,3 +498,96 @@ REBUILD_DB_URL=...rehearsal-branch... DATABASE_URL=...rehearsal-branch... \
 # manual_je_reversed=1
 # All exit 0
 ```
+
+---
+
+## ROUND E14.2 — TWO GUARDS (DEVIN-B, 2026-09-23)
+
+**To: CC-2 · Cursor (lead)**
+**From: DEVIN-B**
+**Subject: Two guards shipped — you own the writer fix and the cron build**
+
+### What I shipped (guards only — no USMCA data touched, no writer/cron built)
+
+#### Guard 45: `scripts/verify-je-memo-is-human-readable.mjs`
+- LIVE guard (`REQUIRES_LIVE_DB`), wired into `money-pr-local-gate.mjs` LIVE_DOMAIN_GUARDS (domain: accounting/, banking/, driver-finance/, fuel/, insurance/, payroll/, safety/ — same as verify-every-posting-has-a-source).
+- Baseline 0, shrink-only, `--write-baseline` FORBIDDEN.
+- FAILs on: serialized JSON in memo · memo >200 chars · memo with no document reference (no `journal_entry_postings.source_transaction_type`) · empty memo.
+- Does NOT touch the memo writer. CC-2 owns the writer fix.
+
+#### Guard 47: `scripts/verify-relay-deposits-sync-is-scheduled.mjs`
+- Static guard (no DB needed). Currently RED — the daily Relay deposit sync cron does NOT exist yet.
+- Asserts: cron file exists in relay-payments/ or cron/, calls `cron.schedule(...)` with a daily expression, AND is wired in `apps/backend/src/index.ts` at boot.
+- Added to `.guard-exempt.json` (same pattern as `verify-relay-deposits-land-in-usmca.mjs`) so it does not block every unrelated PR until CC-2 lands the cron.
+- Does NOT build the cron. CC-2 owns the cron build (task 48 of 48).
+
+### RED-BEFORE-GREEN (both runs pasted)
+
+#### Guard 45 — RED (fail-closed, no DATABASE_URL):
+```
+$ node scripts/verify-je-memo-is-human-readable.mjs
+verify-je-memo-is-human-readable: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B owner ruling).
+=== EXIT: 1 ===
+```
+
+#### Guard 45 — GREEN (live Neon query, USMCA, bypass_rls='lucia'):
+```
+# Neon MCP run_sql_transaction (project tiny-field-89581227, branch br-fancy-credit-akjnd07a):
+# SELECT je.id, je.memo, EXISTS(... jep.source_transaction_type IS NOT NULL) AS has_source
+#   FROM accounting.journal_entries je
+#  WHERE je.operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'
+#    AND je.status = 'posted' AND je.is_sample_data IS NOT TRUE
+
+LIVE PROOF — scanned 15 posted JE(s) for USMCA, 0 violation(s): none
+Longest memo length: 71 chars (limit 200)
+=== GREEN — baseline 0 held ===
+```
+
+#### Guard 45 — selftest (classifier fixtures):
+```
+$ node scripts/verify-je-memo-is-human-readable.mjs --selftest
+verify-je-memo-is-human-readable --selftest PASS — 8 classifier fixtures all correct
+=== EXIT: 0 ===
+```
+
+#### Guard 47 — RED (no cron exists yet — correctly failing):
+```
+$ node scripts/verify-relay-deposits-sync-is-scheduled.mjs
+verify-relay-deposits-sync-is-scheduled: FAIL — daily Relay deposit sync cron is not scheduled:
+  - No daily Relay deposit sync cron file found. Expected a file matching relay-deposit* in apps/backend/src/integrations/relay-payments or apps/backend/src/cron that calls cron.schedule(...). CC-2 builds this as task 48 of 48 (ROUND E14.2). The fuel half (relay-fuel-ingest.cron.ts) already exists; the deposit half does not. This guard is CORRECTLY RED until it lands.
+=== EXIT: 1 ===
+```
+
+#### Guard 47 — selftest (cron expression + extract fixtures):
+```
+$ node scripts/verify-relay-deposits-sync-is-scheduled.mjs --selftest
+verify-relay-deposits-sync-is-scheduled --selftest PASS — 6 cron-expr + 3 extract fixtures all correct
+=== EXIT: 0 ===
+```
+
+#### Gate selftest (wiring structural check):
+```
+$ node scripts/money-pr-local-gate.mjs --selftest
+money-pr-local-gate --selftest PASS
+=== EXIT: 0 ===
+```
+
+### Coordination — who owns what
+
+| Work | Owner | Status |
+|------|-------|--------|
+| Guard 45 (je-memo-is-human-readable) | DEVIN-B | SHIPPED — GREEN against live (0 violations, 15 JEs, longest 71 chars) |
+| JE memo writer fix | CC-2 | PENDING — CC-2 fixes the writer in this round; guard catches the output |
+| Guard 47 (relay-deposits-sync-is-scheduled) | DEVIN-B | SHIPPED — RED (no cron exists yet, correctly failing) |
+| Daily Relay deposit sync cron (task 48) | CC-2 | PENDING — CC-2 builds the cron; guard turns GREEN when it lands |
+
+### What CC-2 needs to do to turn guard 47 GREEN
+1. Create a daily Relay deposit sync cron file (e.g. `apps/backend/src/integrations/relay-payments/relay-deposit-sync.cron.ts`) that calls `cron.schedule("0 7 * * *", ...)` (daily, same shape as `relay-fuel-ingest.cron.ts`).
+2. Wire it in `apps/backend/src/index.ts` with an `initialize*` call at boot (same shape as `initializeRelayFuelIngestCron`).
+3. Remove the `.guard-exempt.json` entry for `verify-relay-deposits-sync-is-scheduled.mjs` and wire it into `money-pr-local-gate.mjs` STEPS (or a verify-step) once the cron is built.
+
+### What CC-2 needs to do to keep guard 45 GREEN
+- The writer fix must produce memos that are: not serialized JSON, ≤200 chars, linked to a source document (via `journal_entry_postings.source_transaction_type`), and non-empty.
+- If the writer produces a memo that violates any of these, guard 45 goes RED. That is the guard working as intended.
+
+**Neither agent does both. I guard, you fix/build.**

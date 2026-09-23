@@ -100,6 +100,10 @@ const STEPS = [
   // `INSERT INTO mdata.loads` outside it, plus a by-symbol assertion the shared path still calls
   // every required INSERT/resolver/gate.
   ["verify-one-load-create-path", "scripts/verify-one-load-create-path.mjs"],
+  // ROUND E15.7-R (DEVIN-B, task 47) — daily Relay deposit sync cron must exist and be wired.
+  // POPULATION CHECK: cron absent → SKIPPED exit 0 (arms itself when CC-2 lands task 48);
+  // cron present → assert daily + wired at boot, RED if broken. No .guard-exempt.json entry.
+  ["verify-relay-deposits-sync-is-scheduled", "scripts/verify-relay-deposits-sync-is-scheduled.mjs"],
   // Rule 30 — soft-reset onto newer main deleted other PRs' verify-steps (2026-08-02).
   ["verify-no-guard-file-deletion", "scripts/verify-no-guard-file-deletion.mjs"],
   // Rule 30 — tip commit LIVE PROOF must be Claude-green (not "UNVERIFIED browser" theater).
@@ -490,6 +494,23 @@ const LIVE_DOMAIN_GUARDS = [
       "apps/backend/src/accounting/credit-memos.routes.ts",
       "apps/backend/src/liabilities/",
       "apps/backend/src/driver-finance/escrow-forfeit.service.ts",
+    ],
+  ],
+  // ROUND E14.2 (DEVIN-B, task 45): the JE memo is the ONE human-readable line on a register row.
+  // CC-2 is fixing the WRITER (posting-engine.service.ts memo builders) in the same round; this
+  // guard catches the output (serialized JSON, >200 chars, no document reference, empty). Baseline 0
+  // (shrink-only). Domain: every directory that calls createJournalEntry(OnClient), same as
+  // verify-every-posting-has-a-source above. Live guard — fail-closed without DATABASE_URL.
+  [
+    "verify-je-memo-is-human-readable",
+    [
+      "apps/backend/src/accounting/",
+      "apps/backend/src/banking/",
+      "apps/backend/src/driver-finance/",
+      "apps/backend/src/fuel/",
+      "apps/backend/src/insurance/",
+      "apps/backend/src/payroll/",
+      "apps/backend/src/safety/",
     ],
   ],
 ];
