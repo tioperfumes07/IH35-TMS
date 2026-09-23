@@ -294,8 +294,13 @@ const executeInvoice: EntityExecutor = async (ctx) => {
   }
 
   const flipped = await client.query<{ id: string }>(
+    // ROUND 117 FIX -- this SET clause wrote voided_at + void_reason but never voided_by_user_id
+    // (only updated_by_user_id, a different column) even though userId (the real actor) was
+    // already a bound parameter here -- the write path that produced 38 live USMCA invoices
+    // (incl. 13541, 13572) with a real voided_at + void_reason but a NULL voided_by_user_id.
+    // Reuses the SAME $4 (userId) already passed for updated_by_user_id; no new parameter.
     `UPDATE accounting.invoices
-        SET status = 'void', voided_at = now(), void_reason = $3, updated_by_user_id = $4::uuid, updated_at = now()
+        SET status = 'void', voided_at = now(), void_reason = $3, voided_by_user_id = $4::uuid, updated_by_user_id = $4::uuid, updated_at = now()
       WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'void'
       RETURNING id::text`,
     [entityId, operatingCompanyId, reason, userId]

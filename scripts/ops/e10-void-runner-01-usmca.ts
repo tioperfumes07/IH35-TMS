@@ -131,12 +131,17 @@ const VOID_REASON =
 //
 // LOADS get their stamp through Phase 6 (revrec), not a dedicated loads phase: a load's own
 // liveness in the five-column test (verify-void-is-whole.mjs) is measured through
-// accounting.transaction_source_links rows with linked_object_type='load' -- and the ONLY writer of
-// that link type in this codebase is the revrec Event-1 ('earn') poster
-// (revrec-delivery-posting/poster.service.ts:680, source_transaction_type='load'). Reversing an
-// 'earn' latch's JE is therefore exactly the event that should flip a load from live to dead, so
-// its stamp (family='load', documentId=the latch's own load_id) belongs there, verified against the
-// actual linkage before writing this, not assumed.
+// accounting.transaction_source_links rows with linked_object_type='load'. CORRECTED (ROUND 117,
+// a real bug caught live, not assumed): this round's first draft claimed the 'earn' latch's JE was
+// the ONLY such link for a load -- FALSE, confirmed live on load 13569
+// (b3532955-9b0a-4c07-989d-5352f574a01d): its 'bill' latch's JE (Event 2) is ALSO linked with
+// linked_object_type='load', not only linked_object_type='invoice'. Stamping the load the moment
+// only its 'earn' JE was reversed produced the exact DANGEROUS direction ROUND 116 named --
+// "header stamped VOIDED over LIVE postings" -- while that load's 'bill' JE was still live.
+// Phase 6 now calls loadHasLiveLinkedJes(load_id) (defined near inTx(), same five-column test as
+// verify-void-is-whole.mjs) immediately before every load stamp and only stamps when it returns
+// false -- a load with any other still-live 'load'-linked JE is simply not stamped on this pass;
+// the loop (ROUND 114) is repeated, so it stamps on a later pass once every linked JE is dead.
 
 type Tally = {
   reversed: number;
@@ -232,6 +237,36 @@ async function main() {
       tally.stamp_errors.push(`${family} ${documentId}: ${msg}`);
       throw e; // caller decides whether this is fatal to the enclosing inTx() or a standalone report
     }
+  }
+
+  // ROUND 117 FIX (real bug, found live): a load can carry MORE than one
+  // accounting.transaction_source_links row with linked_object_type='load' -- confirmed live on
+  // load 13569 (b3532955-9b0a-4c07-989d-5352f574a01d), which had BOTH its 'earn' JE (Event 1) AND
+  // its 'bill' JE (Event 2) linked with linked_object_type='load', not just the 'earn' one this
+  // file's own header comment assumed was the sole writer. Stamping the load the moment its
+  // 'earn' JE alone was reversed produced exactly the DANGEROUS direction ROUND 116 named --
+  // "header stamped VOIDED over LIVE postings" -- when that same load's 'bill' JE was still live
+  // (Phase 3 had not reversed its invoice yet on that pass). This helper uses the EXACT same
+  // five-column liveness test verify-void-is-whole.mjs uses (status='posted' AND voided_at IS
+  // NULL AND reversed_by_je_id IS NULL AND reverses_je_id IS NULL AND the posting's own
+  // reversed_by_line_id IS NULL), scoped to linked_object_type='load', so this runner can never
+  // disagree with that guard about whether a load is really fully dead. A load whose OTHER linked
+  // JE is still live simply does not get stamped on this pass -- the loop is repeated (ROUND 114),
+  // so it stamps on a LATER pass once every linked JE is dead, never guessed at.
+  async function loadHasLiveLinkedJes(loadId: string): Promise<boolean> {
+    const res = await client.query<{ n: string }>(
+      `
+        SELECT count(*)::text AS n
+          FROM accounting.transaction_source_links l
+          JOIN accounting.journal_entry_postings p ON p.id = l.journal_entry_posting_id
+          JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = l.operating_company_id
+         WHERE l.operating_company_id = $1::uuid AND l.linked_object_type = 'load' AND l.linked_object_id = $2
+           AND je.status = 'posted' AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL
+           AND je.reverses_je_id IS NULL AND p.reversed_by_line_id IS NULL
+      `,
+      [USMCA_COMPANY_ID, loadId]
+    );
+    return Number(res.rows[0]?.n ?? 0) > 0;
   }
 
   // ROUND 98.1-A FIX -- REUSE, NOT A SEVENTH ENGINE. 70 invoices/expenses throw "No posted batch
@@ -592,26 +627,29 @@ async function main() {
           // (defined once, near the top of main()) instead of its own inline BEGIN/COMMIT/ROLLBACK
           // -- one helper, six call sites, not six copies.
           // ROUND 112: for 'earn' latches, ALSO stamp family='load' documentId=l.load_id, in the
-          // SAME inTx() as the JE reversal -- the ONLY writer of a 'load'-typed
-          // transaction_source_links row is this exact revrec Event-1 poster (verified at the top
-          // of this file, revrec-delivery-posting/poster.service.ts:680), so reversing this JE is
-          // exactly the event that flips a load from live to dead in the five-column liveness test
-          // (verify-void-is-whole.mjs). 'bill' latches never reach this branch (see the `if
-          // (l.event === "earn")` guard below) -- their load is stamped, if at all, only once, by
-          // PHASE 3's invoice stamp on the SAME load's invoice, never a duplicate/competing write.
+          // SAME inTx() as the JE reversal -- reversing this JE is one of possibly several events
+          // that must ALL be dead before the load itself is fully unwound (ROUND 117 fix: a load
+          // can carry more than one 'load'-linked JE, e.g. its 'bill' event too -- see
+          // loadHasLiveLinkedJes's own header comment). Checked BEFORE stamping, inside the same
+          // transaction as the reversal that might be what finally clears it, so the check sees
+          // this reversal's own effect.
           await inTx(async () => {
             await reverseJournalEntryNoFlip(client, { operatingCompanyId: USMCA_COMPANY_ID, journalEntryId: l.je_id, reason: VOID_REASON, actorUserId: OWNER_USER_ID });
-            if (l.event === "earn") await stamp(revrecTally, "load", l.load_id);
+            if (l.event === "earn" && !(await loadHasLiveLinkedJes(l.load_id))) await stamp(revrecTally, "load", l.load_id);
           });
           revrecTally.reversed++;
         } else {
           // ROUND 112: JE already dead from a prior run (reversed_by_je_id or voided_at already
           // set) -- the exact "97 reversals in, not one stamped" case. Stamp is still owed,
           // idempotent, and does not need the JE reversal repeated. Own inTx() since there is no
-          // reversal call to share one with here.
+          // reversal call to share one with here. ROUND 117: still gated on loadHasLiveLinkedJes
+          // -- this latch's own JE being dead does not mean every OTHER JE linked to the same
+          // load is dead too.
           if (l.event === "earn" && jeRow && (jeRow.reversed_by_je_id || jeRow.voided_at)) {
             try {
-              await inTx(() => stamp(revrecTally, "load", l.load_id));
+              await inTx(async () => {
+                if (!(await loadHasLiveLinkedJes(l.load_id))) await stamp(revrecTally, "load", l.load_id);
+              });
             } catch {
               // stamp() already recorded the failure in revrecTally.stamp_errors.
             }

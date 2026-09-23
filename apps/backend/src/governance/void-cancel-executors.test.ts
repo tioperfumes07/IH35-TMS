@@ -121,4 +121,36 @@ describe("Task #24 — void/cancel executor wiring", () => {
       expect(flipIdx).toBeGreaterThan(cascadeIdx);
     });
   });
+
+  // ROUND 117 (Lead) — executeInvoice's own UPDATE wrote voided_at + void_reason but never
+  // voided_by_user_id (only updated_by_user_id, a different column), even though the real actor
+  // (userId) was already a bound parameter in the same statement. Live production found 38 USMCA
+  // invoices with this exact shape (voided_at + void_reason set, voided_by_user_id NULL), incl.
+  // 13541 and 13572 -- this is the write path that produced them, now closed.
+  describe("executeInvoice — ROUND 117 null-voider fix", () => {
+    const fnMatch = source.match(/const executeInvoice: EntityExecutor = async \(ctx\) => \{[\s\S]*?\n\};/);
+    it("function body found", () => {
+      expect(fnMatch, "executeInvoice function body not found").toBeTruthy();
+    });
+    const body = fnMatch ? fnMatch[0] : "";
+
+    it("the status-flip UPDATE also stamps voided_by_user_id, not just updated_by_user_id", () => {
+      const updateMatch = body.match(/UPDATE accounting\.invoices[\s\S]*?RETURNING id::text/);
+      expect(updateMatch, "the status-flip UPDATE was not found in executeInvoice's body").toBeTruthy();
+      const updateSql = updateMatch![0];
+      expect(updateSql).toMatch(/voided_by_user_id\s*=\s*\$4::uuid/);
+      expect(updateSql).toContain("voided_at = now()");
+      expect(updateSql).toContain("void_reason = $3");
+    });
+
+    it("reuses the SAME $4 (userId) parameter already bound for updated_by_user_id -- no new parameter, no guessed actor", () => {
+      const updateMatch = body.match(/UPDATE accounting\.invoices[\s\S]*?RETURNING id::text/);
+      const updateSql = updateMatch![0];
+      const paramsMatch = body.match(/\[entityId, operatingCompanyId, reason, userId\]/);
+      expect(paramsMatch, "the UPDATE's own parameter array should stay [entityId, operatingCompanyId, reason, userId] -- 4 params, not 5").toBeTruthy();
+      // Both voided_by_user_id and updated_by_user_id reference $4 -- one real actor, two columns.
+      const dollar4Count = (updateSql.match(/\$4::uuid/g) ?? []).length;
+      expect(dollar4Count).toBe(2);
+    });
+  });
 });
