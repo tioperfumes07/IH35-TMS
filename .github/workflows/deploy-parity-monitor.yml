@@ -3,6 +3,13 @@
 # the SERVED frontend sha (/version.json), the SERVED backend sha (/api/v1/healthz/shallow), and compares both
 # to main HEAD. It goes RED (notifies via the failed run) when a component is stale. Runs on a schedule and can
 # be dispatched right after a deploy. Non-financial, read-only (HTTP GETs only).
+#
+# 2026-09-23 P0: the first step above demands EXACT frontend==backend==main equality, so it is expected to be
+# red for the few normal minutes between a merge and its deploy-trigger — and WAS red on-and-off for most of
+# 2026-09-23 while that was mistaken for noise. PR #22450 (a real financial fix, the cascade void engine) sat
+# merged ~50+ min undeployed before anyone noticed. The second step below is the actionable signal: it
+# tolerates bounded normal lag (MAX_COMMITS_BEHIND) and only fails on genuine drift, or on ANY undeployed
+# LANE: FINANCIAL commit regardless of count — so a red run here means "go trigger a deploy now," never "wait."
 name: deploy-parity-monitor
 
 on:
@@ -32,3 +39,10 @@ jobs:
           FRONTEND_URL: https://app.ih35dispatch.com
           BACKEND_URL: https://api.ih35dispatch.com
         run: node scripts/verify-deploy-parity.mjs
+      - name: Deploy-staleness gate (backend must not sit undeployed)
+        if: always()
+        env:
+          DEPLOYED_SHA_CHECK_LIVE: "1"
+          BACKEND_URL: https://api.ih35dispatch.com
+          MAX_COMMITS_BEHIND: "5"
+        run: node scripts/verify-deployed-sha-matches-main.mjs
