@@ -70,10 +70,13 @@ export function CreditMemosPage() {
     );
   }
   const deepLinkCreditMemoId = searchParams.get("credit_memo_id");
-  const [statusFilter, setStatusFilter] = useState<CreditMemoStatus | "">("");
+  // R-102-B item 5 ("DEFAULT FILTERS" — owner, ROUND 117: "lists default to live with 'Show
+  // voided' off on fresh load"). This page had NO default-hide at all — the empty-string state
+  // meant "all statuses," mixing voided credit memos into a fresh load with no way to hide them.
+  const [statusFilter, setStatusFilter] = useState<CreditMemoStatus | "active" | "">("active");
   const staged = useStagedListFilters({
     applied: { statusFilter, customerId: customerFilter },
-    empty: { statusFilter: "" as const, customerId: "" },
+    empty: { statusFilter: "active" as const, customerId: "" },
     onApply: (next) => {
       setStatusFilter(next.statusFilter);
       setCustomerFilter(next.customerId);
@@ -242,7 +245,7 @@ export function CreditMemosPage() {
 
   const filterBar = (
     <div className="flex flex-wrap items-end gap-3" data-credit-memos-filter-toolbar="collapsed">
-      <CollapsedListFilters activeFilterCount={(statusFilter ? 1 : 0) + (customerFilter ? 1 : 0)} testIdPrefix="credit-memos" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
+      <CollapsedListFilters activeFilterCount={(statusFilter && statusFilter !== "active" ? 1 : 0) + (customerFilter ? 1 : 0)} testIdPrefix="credit-memos" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
         <div className="flex flex-wrap gap-2">
           <label className="text-[11px] text-slate-600">
             Customer
@@ -259,10 +262,11 @@ export function CreditMemosPage() {
           </label>
           <SelectCombobox
             value={staged.draft.statusFilter}
-            onChange={(e) => staged.setDraft({ ...staged.draft, statusFilter: e.target.value as CreditMemoStatus | "" })}
+            onChange={(e) => staged.setDraft({ ...staged.draft, statusFilter: e.target.value as CreditMemoStatus | "active" | "" })}
             aria-label="Credit memo status filter"
           >
-            <option value="">All statuses</option>
+            <option value="active">Active (hide voided)</option>
+            <option value="">All statuses (include voided)</option>
             <option value="draft">Draft</option>
             <option value="issued">Issued</option>
             <option value="applied">Applied</option>

@@ -65,7 +65,10 @@ const voidBodySchema = z.object({
 
 const listQuerySchema = companyQuerySchema.extend({
   customer_id: z.string().trim().optional(),
-  status: z.enum(["draft", "issued", "applied", "voided"]).optional(),
+  // R-102-B item 5 ("DEFAULT FILTERS") — "active" is a frontend-facing pseudo-status (not a real
+  // credit_memos.status value): draft/issued/applied are all live states, voided is the only dead
+  // one, so "active" means "exclude voided" rather than matching one literal status column value.
+  status: z.enum(["draft", "issued", "applied", "voided", "active"]).optional(),
 });
 
 function canWriteCreditMemos(role: string) {
@@ -88,7 +91,9 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
         params.push(query.data.customer_id);
         conditions.push(`cm.customer_id = $${params.length}::uuid`);
       }
-      if (query.data.status) {
+      if (query.data.status === "active") {
+        conditions.push(`cm.status <> 'voided'`);
+      } else if (query.data.status) {
         params.push(query.data.status);
         conditions.push(`cm.status = $${params.length}`);
       }

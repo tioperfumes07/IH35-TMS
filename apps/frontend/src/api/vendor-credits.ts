@@ -44,7 +44,9 @@ export function getNextVendorCreditDocumentNumber(operatingCompanyId: string) {
 
 export function listVendorCredits(
   operatingCompanyId: string,
-  params: { vendor_id?: string; status?: VendorCreditStatus }
+  // R-102-B item 5 — "active" is a backend-recognized pseudo-status meaning "exclude voided"
+  // (open/applied are both live states); see vendor-credits.routes.ts's listQuerySchema.
+  params: { vendor_id?: string; status?: VendorCreditStatus | "active" }
 ): Promise<{ credits: VendorCredit[] }> {
   const qs = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (params.vendor_id) qs.set("vendor_id", params.vendor_id);

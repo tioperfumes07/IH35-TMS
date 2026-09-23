@@ -74,7 +74,9 @@ export type CreditMemoApplication = {
 
 export function listCreditMemos(
   operatingCompanyId: string,
-  params: { customer_id?: string; status?: CreditMemoStatus }
+  // R-102-B item 5 — "active" is a backend-recognized pseudo-status meaning "exclude voided"
+  // (draft/issued/applied are all live states); see credit-memos.routes.ts's listQuerySchema.
+  params: { customer_id?: string; status?: CreditMemoStatus | "active" }
 ): Promise<{ credit_memos: CreditMemo[] }> {
   const qs = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (params.customer_id) qs.set("customer_id", params.customer_id);

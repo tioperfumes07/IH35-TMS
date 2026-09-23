@@ -67,10 +67,13 @@ export function VendorCreditsPage() {
     );
   }
   const deepLinkCreditId = searchParams.get("credit_id");
-  const [statusFilter, setStatusFilter] = useState<VendorCreditStatus | "">("");
+  // R-102-B item 5 ("DEFAULT FILTERS" — owner, ROUND 117: "lists default to live with 'Show
+  // voided' off on fresh load"). Same fix as the sibling CreditMemosPage — this page had NO
+  // default-hide at all before this.
+  const [statusFilter, setStatusFilter] = useState<VendorCreditStatus | "active" | "">("active");
   const staged = useStagedListFilters({
     applied: { statusFilter, vendorId: vendorFilter },
-    empty: { statusFilter: "" as const, vendorId: "" },
+    empty: { statusFilter: "active" as const, vendorId: "" },
     onApply: (next) => {
       setStatusFilter(next.statusFilter);
       setVendorFilter(next.vendorId);
@@ -237,7 +240,7 @@ export function VendorCreditsPage() {
 
   const filterBar = (
     <div className="flex flex-wrap items-end gap-3" data-vendor-credits-filter-toolbar="collapsed">
-      <CollapsedListFilters activeFilterCount={(statusFilter ? 1 : 0) + (vendorFilter ? 1 : 0)} testIdPrefix="vendor-credits" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
+      <CollapsedListFilters activeFilterCount={(statusFilter && statusFilter !== "active" ? 1 : 0) + (vendorFilter ? 1 : 0)} testIdPrefix="vendor-credits" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
         <div className="flex flex-wrap gap-2">
           <label className="text-[11px] text-slate-600">
             Vendor
@@ -254,10 +257,11 @@ export function VendorCreditsPage() {
           </label>
           <SelectCombobox
             value={staged.draft.statusFilter}
-            onChange={(e) => staged.setDraft({ ...staged.draft, statusFilter: e.target.value as VendorCreditStatus | "" })}
+            onChange={(e) => staged.setDraft({ ...staged.draft, statusFilter: e.target.value as VendorCreditStatus | "active" | "" })}
             aria-label="Vendor credit status filter"
           >
-            <option value="">All statuses</option>
+            <option value="active">Active (hide voided)</option>
+            <option value="">All statuses (include voided)</option>
             <option value="open">Open</option>
             <option value="applied">Applied</option>
             <option value="voided">Voided</option>
