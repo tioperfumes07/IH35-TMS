@@ -876,3 +876,14 @@ LIST EMPTY. CLAIMED from the shared backlog: cash_rsv / dispatch / sch_fee. Meas
   line, then a guard asserting face - escrow - cash_rsv - discount - fees - dispatch - sch_fee = net_advance per funded invoice.
   Any posting of Cash Rsv goes through the existing factoring poster, never new GL math.
 Files Modified: docs/bus/OUTBOX-CURSOR.md (this entry).
+
+CURSOR | 2026-09-23 ~04:50Z — 13d LIVE ON PRODUCTION, FIRST CRON RUNS PASTED · one defect found and fixed
+  first tick after #22386 (deploy bc041f7, built 04:27:03Z), reconciler.runs on production:
+    04:30:10.846Z  open 30  opened 30  resolved 0  errored {}     reconciler.exceptions: I2 22 open, I8 8 open (= the ceiling guard's 30)
+    04:30:18.310Z  open 30  opened 0   resolved 0  errored {}     <- a SECOND run: every backend instance schedules the cron
+  #22392 303dcf547a  reconcilerTick takes pg_advisory_xact_lock first, then skips when a run was recorded in the last 10 minutes.
+                     Deploy 303dcf5 (built 04:42:42Z); the next tick:
+    04:45:00.861Z  open 30  opened 0   resolved 0  errored {}     exactly ONE run for the 04:45 slot
+  The exception data was correct throughout: 30 rows, 30 distinct keys; the upsert and the unique key held.
+  WORKING: cash_rsv / dispatch / sch_fee (claimed #22388).
+Files Modified: docs/bus/OUTBOX-CURSOR.md (this entry).
