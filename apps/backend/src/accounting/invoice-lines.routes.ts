@@ -8,6 +8,7 @@ import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { ExpenseCategoryMapResolutionError, resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
 import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
+import { invoiceLineTotalCents } from "./invoice-line-total.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope, recomputeInvoiceTotals } from "./shared.js";
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
@@ -105,7 +106,7 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
       const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
         const guard = await ensureDraftInvoice(client, params.data.id, query.data.operating_company_id);
         if (!guard.ok) return guard;
-        const lineTotal = Math.round(body.data.quantity * body.data.unit_amount_cents);
+        const lineTotal = invoiceLineTotalCents(body.data.quantity, body.data.unit_amount_cents);
         let revenueCode: string;
         let accountId: string;
         if (body.data.account_id) {
