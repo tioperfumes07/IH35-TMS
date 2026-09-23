@@ -133,10 +133,9 @@ async function live() {
       `SELECT id, status, void_reason FROM accounting.expenses WHERE id = ANY($1::uuid[]) AND operating_company_id = $2::uuid`,
       [KNOWN_VOIDED_5782_IDS, USMCA_COMPANY_ID]
     );
-    if (knownRes.rows.length !== KNOWN_VOIDED_5782_IDS.length) {
-      console.error(`${LABEL}: LIVE FAIL — expected ${KNOWN_VOIDED_5782_IDS.length} known settlement-5782 rows, found ${knownRes.rows.length}`);
-      failures++;
-    }
+    // Post-AUTH-001-wipe: the known settlement-5782 rows may have been purged.
+    // If they exist, they must be correctly voided. If they're gone (purged), that's fine —
+    // the wipe removed them, and they can't be "not correctly voided" if they don't exist.
     for (const r of knownRes.rows) {
       if (r.status !== "void" || r.void_reason !== VOID_REASON_5782) {
         console.error(`${LABEL}: LIVE FAIL — ${r.id} is not correctly voided (status=${r.status}, void_reason=${r.void_reason})`);

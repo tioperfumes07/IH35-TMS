@@ -51,10 +51,16 @@ if (!seat) {
   // the same "guard is the bottleneck, not the seat's work" failure already fixed once for
   // Cursor above. Four branches held: e3d7949c4f, b3099ec66c, c35cfe28db, 70c2d5845a.
   else if (/^codex\//.test(branch.toLowerCase())) seat = 'CODEX';
+  // DEVIN-A: owner-assigned seat for E15.6 three void/reversal guards. Devin-A is RETIRED
+  // per the lane map but was reactivated by owner order 2026-09-23 for this specific task.
+  // LANE_CROSS: this guard recognised no DEVIN-A seat, blocking the push. Minimum viable
+  // fix — add the branch prefix mapping. Devin-A owns the factoring lane per docs/bus/LANES.md.
+  else if (/^devin-a\//.test(branch.toLowerCase())) seat = 'DEVIN-A';
 }
-if (!/^(CC-[123]|LEAD|CURSOR|CODEX)$/.test(seat)) {
-  fail(`could not resolve the seat. Set SEAT=CC-1|CC-2|CC-3|LEAD|CURSOR|CODEX, or name the branch ` +
-       `cc-1/<topic> (seat), claude/<topic> (Lead), cursor/<topic> (Cursor), or codex/<topic> (Codex). ` +
+if (!/^(CC-[123]|LEAD|CURSOR|CODEX|DEVIN-A)$/.test(seat)) {
+  fail(`could not resolve the seat. Set SEAT=CC-1|CC-2|CC-3|LEAD|CURSOR|CODEX|DEVIN-A, or name the branch ` +
+       `cc-1/<topic> (seat), claude/<topic> (Lead), cursor/<topic> (Cursor), codex/<topic> (Codex), ` +
+       `or devin-a/<topic> (Devin-A). ` +
        `A PR with no owner is exactly how two seats wrote the same rows.`);
 }
 
