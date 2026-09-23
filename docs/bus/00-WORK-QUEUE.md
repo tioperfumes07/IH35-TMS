@@ -119,7 +119,7 @@ Never work in the shared main checkout.
       fix any booking/creation path leaving tour_id null.
 
 # P2 — ACCOUNTING ENGINES
-[ ] Q24 ACCOUNTING  Task 17 — deductions.routes.ts + settlement voids through
+[CC-3 2026-09-23T23:55:36Z] Q24 ACCOUNTING  Task 17 — deductions.routes.ts + settlement voids through
       the EXISTING dispatcher (all five engines). Never a sixth.
 [ ] Q25 BANKING  Task 16 — banking /void routes through that same dispatcher.
 [CC-1 2026-09-23T23:49:16Z] Q26 ACCOUNTING  Task 38 — JE memo WRITER only. No backfill. One file.
