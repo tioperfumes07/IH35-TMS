@@ -46,10 +46,15 @@ if (!seat) {
   // because this guard recognised no CURSOR seat at all -- every push 03b-rejected regardless
   // of lane content). This guard was the bottleneck, not Cursor's work.
   else if (/^cursor\//.test(branch.toLowerCase())) seat = 'CURSOR';
+  // CODEX: LEAD RULING — LANE-CODEX-01. This guard recognised no CODEX seat and no codex/
+  // branch mapping, so every Codex push failed 03b regardless of what the diff contained --
+  // the same "guard is the bottleneck, not the seat's work" failure already fixed once for
+  // Cursor above. Four branches held: e3d7949c4f, b3099ec66c, c35cfe28db, 70c2d5845a.
+  else if (/^codex\//.test(branch.toLowerCase())) seat = 'CODEX';
 }
-if (!/^(CC-[123]|LEAD|CURSOR)$/.test(seat)) {
-  fail(`could not resolve the seat. Set SEAT=CC-1|CC-2|CC-3|LEAD|CURSOR, or name the branch ` +
-       `cc-1/<topic> (seat), claude/<topic> (Lead), or cursor/<topic> (Cursor). ` +
+if (!/^(CC-[123]|LEAD|CURSOR|CODEX)$/.test(seat)) {
+  fail(`could not resolve the seat. Set SEAT=CC-1|CC-2|CC-3|LEAD|CURSOR|CODEX, or name the branch ` +
+       `cc-1/<topic> (seat), claude/<topic> (Lead), cursor/<topic> (Cursor), or codex/<topic> (Codex). ` +
        `A PR with no owner is exactly how two seats wrote the same rows.`);
 }
 
@@ -60,7 +65,7 @@ const text = readFileSync(LANES_FILE, 'utf8');
 const sections = {};
 let cur = null;
 for (const raw of text.split('\n')) {
-  const h = raw.match(/^##\s+(CC-[123]|LEAD|CURSOR|SHARED|FORBIDDEN)/);
+  const h = raw.match(/^##\s+(CC-[123]|LEAD|CURSOR|CODEX|SHARED|FORBIDDEN)/);
   if (h) { cur = h[1]; sections[cur] = []; continue; }
   if (!cur) continue;
   const line = raw.trim();
@@ -127,7 +132,7 @@ if (cross) {
 
 // ---- verdict ----------------------------------------------------------------
 const mine = sections[seat] ?? [];
-const others = ['CC-1', 'CC-2', 'CC-3', 'LEAD', 'CURSOR'].filter((s) => s !== seat && sections[s]?.length);
+const others = ['CC-1', 'CC-2', 'CC-3', 'LEAD', 'CURSOR', 'CODEX'].filter((s) => s !== seat && sections[s]?.length);
 const violations = [];
 const forbidden = [];
 
