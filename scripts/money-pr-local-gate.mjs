@@ -366,6 +366,17 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-escrow-ledger-sign-follows-type.baseline.json",
     ],
   ],
+  // Round 84 M1: every directory that writes catalogs.accounts.
+  [
+    "verify-no-duplicate-active-account-names",
+    [
+      "apps/backend/src/accounting/",
+      "apps/backend/src/catalogs/",
+      "apps/backend/src/outbox/",
+      "apps/backend/src/qbo-sync/",
+      "scripts/verify-no-duplicate-active-account-names.baseline.json",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {
