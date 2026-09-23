@@ -3,230 +3,287 @@
   "_source": "scripts/purge/emit.py - the same run that emitted the SQL, so the two cannot drift",
   "_law": "verify-purge must read THIS list. A verifier with its own hand-typed table list is how a bad purge reported green.",
   "company_id": "5c854333-6ea5-4faa-af31-67cb272fef80",
+  "_live_predicate_law": "A guard that counts rows after a mass void counts VOIDED rows too. Use live_predicate to count only live rows. live_predicate = null means the table carries NO void flag at all -- that is measured, not missing. Such a table's liveness is answered by its parent document, or for a document-correction reversal only by the account netting to zero. A guard MUST say so out loud rather than defaulting either way.",
   "must_be_zero_after_purge": [
     {
       "table": "accounting.transaction_source_links",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "accounting.journal_entry_postings",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": "reversed_by_line_id IS NULL"
     },
     {
       "table": "accounting.escrow_postings",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "accounting.expense_lines",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "banking.bank_transaction_splits",
-      "where": "result_journal_entry_id IN (SELECT id FROM accounting.journal_entries WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80')\n    OR load_id IN (SELECT id FROM mdata.loads WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80')"
+      "where": "result_journal_entry_id IN (SELECT id FROM accounting.journal_entries WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80')\n    OR load_id IN (SELECT id FROM mdata.loads WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80')",
+      "live_predicate": null
     },
     {
       "table": "driver_finance.settlement_contract_lines",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "fuel.fuel_transactions",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": "archived_at IS NULL"
     },
     {
       "table": "driver_finance.driver_settlement_deductions",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": "voided_at IS NULL"
     },
     {
       "table": "accounting.expenses",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": "voided_at IS NULL"
     },
     {
       "table": "accounting.factoring_default_interest_accruals",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "accounting.factoring_lifecycle_posting_keys",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "accounting.factoring_reserve_movements",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "accounting.load_revenue_recognition_postings",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": "voided_at IS NULL"
     },
     {
       "table": "banking.reconciliation_drift_alerts",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "driver_finance.driver_advances",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": "voided_at IS NULL"
     },
     {
       "table": "driver_finance.driver_settlement_gl_bills",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "driver_finance.driver_reimbursements",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "driver_finance.escrow_ledger",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "driver_finance.settlement_lines",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": "voided_at IS NULL"
     },
     {
       "table": "driver_finance.driver_bills",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": "voided_at IS NULL"
     },
     {
       "table": "driver_finance.deduction_schedule",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "driver_finance.driver_liabilities",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": "voided_at IS NULL"
     },
     {
       "table": "driver_finance.driver_settlement_gl_runs",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "driver_finance.payrun_gl_runs",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "accounting.journal_entries",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": "voided_at IS NULL AND reversed_by_je_id IS NULL AND reverses_je_id IS NULL"
     },
     {
       "table": "accounting.posting_batches",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "accounting.invoice_disputes",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": "status <> 'voided'"
     },
     {
       "table": "dispatch.load_cancellations",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "accounting.invoice_lines",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": "soft_deleted_at IS NULL"
     },
     {
       "table": "accounting.payment_applications",
-      "where": "invoice_id IN (SELECT id FROM accounting.invoices WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80')"
+      "where": "invoice_id IN (SELECT id FROM accounting.invoices WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80')",
+      "live_predicate": null
     },
     {
       "table": "accounting.invoices",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": "voided_at IS NULL"
     },
     {
       "table": "accounting.bill_lines",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": "voided_at IS NULL"
     },
     {
       "table": "accounting.bills",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": "voided_at IS NULL"
     },
     {
       "table": "accounting.factoring_advances",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": "status <> 'voided'"
     },
     {
       "table": "accounting.company_settlements",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": "voided_at IS NULL"
     },
     {
       "table": "accounting.outbox_events",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "accounting.ob_register_audit_events",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "accounting.period_cash_basis_snapshot",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "driver_finance.escrow_balances",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": "status <> 'voided'"
     },
     {
       "table": "driver_finance.presettlement_link_suggestions",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "driver_finance.driver_settlements",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": "voided_at IS NULL"
     },
     {
       "table": "driver_finance.settlement_payment_events",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "dispatch.load_assignment_history",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "dispatch.load_charge_lines",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "dispatch.load_id_reservations",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "dispatch.driver_layovers",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "dispatch.manual_delivery_authorizations",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "dispatch.intransit_issues",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "dispatch.stop_arrivals",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "dispatch.pod_documents",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "expense_attribution.expense_load_links",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     },
     {
       "table": "expense_attribution.expense_seq_per_load",
-      "where": "load_id IN (SELECT id FROM mdata.loads WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80')"
+      "where": "load_id IN (SELECT id FROM mdata.loads WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80')",
+      "live_predicate": null
     },
     {
       "table": "mdata.load_stop_legs",
-      "where": "load_id IN (SELECT id FROM mdata.loads WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80')"
+      "where": "load_id IN (SELECT id FROM mdata.loads WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80')",
+      "live_predicate": null
     },
     {
       "table": "mdata.load_stops",
-      "where": "load_id IN (SELECT id FROM mdata.loads WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80')"
+      "where": "load_id IN (SELECT id FROM mdata.loads WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80')",
+      "live_predicate": null
     },
     {
       "table": "mdata.loads",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": "soft_deleted_at IS NULL"
     },
     {
       "table": "banking.reconciliation_matches",
-      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'"
+      "where": "operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'",
+      "live_predicate": null
     }
   ],
   "must_be_unchanged": [
