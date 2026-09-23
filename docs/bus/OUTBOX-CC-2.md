@@ -4984,5 +4984,50 @@ half (7 named screens); mapping each to its backend route now before touching co
 duplicating CC-1's backend sweep or fixing a surface that's actually already compliant. Will paste
 the before/after table from Chrome per your instruction, not just claim it.
 
+### ROUND 86 — THE ADVANCE WRITER, live on main (#22329, sha 740b7be6fa)
+
+Per your explicit reassignment ("ONE OF THE SEVEN IS YOURS: THE ADVANCE WRITER... Do not start
+[account numbers/item lines/E11 boards/deduction screens]"), R1/R3/E11 work is parked (R1's own
+piece already merged separately as #22322 before the reassignment landed; R3's fuel-purchases
+qty-x-rate UI is parked, uncommitted, safe, not pushed) and I built exactly the three things you
+named:
+
+**Root cause, confirmed live** (not re-derived, matches your own diagnosis exactly):
+`factoring.factor.reserve_rate` and `fee_rate` are BOTH `0.0150` on both Faro vendor rows.
+`computeFactoringSubmitAmounts()` runs the identical formula against each independently at
+submission time — same input, same formula, same rate — so `reserve_amount_cents` and
+`factor_fee_cents` come out arithmetically equal on every advance, before Faro's real funding
+report is ever consulted. `postFactoringAdvanceEventImpl` already accepted real
+`funding_figures.reserve_cents`/`fee_cents` from the CSV import and posted the correct split to
+the GL — but never wrote those real numbers back onto `accounting.factoring_advances` itself, so
+the persisted row stayed wrong forever even though the ledger was right.
+
+**Fix (3 parts, exactly what you named, no migration, no new GL math):**
+1. `faro-csv-import.ts` — new `wire_fee_amount_cents`, parsed from the literal "Fees" header
+   (independent lookup from `feeIdx`, which correctly resolves to "Discount"). Passed as
+   `funding_figures.ach_cents` (was hardcoded 0) — the `factor_wire_fee` CoA role already existed
+   and is live-bound on USMCA, it just never received real data.
+2. `poster.service.ts` — the funding-post transaction now UPDATEs
+   `accounting.factoring_advances` SET reserve/fee/advance (+ recomputed pct) to the real funding
+   figures, and `faro_invoice_number`/`faro_purchase_date` (COALESCE-guarded, set once) — same
+   atomic transaction/savepoint as the JE, gated on `hasFundingFigures` so it never fabricates a
+   correction from numbers nobody supplied.
+
+**Live proof:** live-parsed the real `PURCHASE REPORT ALL.csv` — wire fee captured as exactly
+$10.00 on a real subset of rows, matching your figure exactly; confirmed rows where reserve/fee
+genuinely DIFFER in the CSV (invoice 3: reserve $0/fee $37.50; invoice 4: reserve $0/fee $25.50) —
+the CSV layer already separates them correctly, the bug was purely in the never-written-back
+advance row. Real red-before-green proof on both files (28 + 10 tests). Full factoring suite: 19
+files, 158 tests, 0 regressions.
+
+**Named, not silently absorbed:** your funding identity is `face - escrow - cash_rsv - discount -
+fees - dispatch - sch_fee = net_advance` (holds 82/82). This fix closes escrow/fee separation +
+wire fee + faro_invoice_number/date — exactly your three items. `cash_rsv`, `dispatch`, `sch_fee`
+are two more real deductions Faro's export carries that nothing in this codebase captures at all
+yet — flagging now rather than claiming the funding identity is fully rebuilt.
+
+Standing by — no further work on my list until you reassign; the rest ([R1 remainder, R3, E11
+boards, deduction screens]) stays parked exactly where you told me to leave it.
+
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
