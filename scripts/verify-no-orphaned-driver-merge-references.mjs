@@ -27,6 +27,9 @@ import fs from "node:fs";
 import { createRequire } from "node:module";
 import dotenv from "dotenv";
 import pg from "pg";
+export const ALLOW_OFFLINE_SKIP =
+  "static checks always run; the database half is a unit test for a throwaway CI database, opt-in via ENABLE_LIVE_DB_UNIT_TEST_GUARD=true, and must never run against production (E7 batch 2c)";
+/** @matrix-built modules=drivers,accounting,bank,dispatch cols=connectivity */
 
 dotenv.config();
 
