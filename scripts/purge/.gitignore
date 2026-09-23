@@ -1,0 +1,14 @@
+# The generated purge SQL is NOT committed.
+#
+# ROUND 93 ruled that it can never run: this database is WORM and refuses DELETE on financial
+# rows by design (db/migrations/202612220000_worm_financial_tables_no_delete.sql). The
+# operation is a MASS VOID, not a purge.
+#
+# Committing it also broke every seat: verify-no-hard-delete-document-number-tables scans
+# scripts/**/*.sql for DELETE FROM on any document-number table, and correctly refused it,
+# failing every backend, frontend and migration push repo-wide. That guard is right and stays.
+#
+# The classification and the generator remain. If the post-void scaffolding cleanup is ever
+# needed, regenerate it OUTSIDE the repo:
+#   node scripts/purge/build-usmca-purge.mjs   # writes to this directory, gitignored
+usmca-transaction-purge.generated.sql

@@ -23,6 +23,7 @@
  */
 
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
@@ -33,6 +34,31 @@ const CLASSIFICATION = JSON.parse(
 );
 const CO = CLASSIFICATION._company_id;
 const CENSUS_ONLY = process.argv.includes("--census");
+
+/**
+ * WHERE THE GENERATED SQL GOES — AND WHY IT IS NEVER THE REPO.
+ *
+ * `verify-no-hard-delete-document-number-tables` scans scripts/** for `DELETE FROM` against any
+ * document-number table (bills, credit_memos, expenses, factoring_advances, invoices, payments,
+ * vendor_credits) because deleting those rows lets MAX+1 numbering re-issue a number that was
+ * already used. That guard is CORRECT and it stays. I committed the generated SQL anyway in
+ * #22346 and it failed every seat's backend, frontend and migration push repo-wide.
+ *
+ * So the artifact is written OUTSIDE the working tree by default. Pass --out <dir> to override;
+ * writing it back under scripts/ is refused outright rather than left to discipline.
+ */
+const outArgIdx = process.argv.indexOf("--out");
+const OUT_DIR = outArgIdx > -1 && process.argv[outArgIdx + 1]
+  ? path.resolve(process.argv[outArgIdx + 1])
+  : fs.mkdtempSync(path.join(os.tmpdir(), "usmca-purge-"));
+if (path.resolve(OUT_DIR).startsWith(path.resolve(HERE, ".."))) {
+  console.error(
+    "REFUSED: --out is inside the repository. The generated SQL contains DELETE FROM on " +
+    "document-number tables and would fail verify-no-hard-delete-document-number-tables for " +
+    "every seat. Write it somewhere outside the working tree.",
+  );
+  process.exit(2);
+}
 
 /**
  * Tables purged through a parent because they carry no operating_company_id of their own.
@@ -216,7 +242,7 @@ async function main() {
     lines.push(``);
     lines.push(`-- COMMIT;   -- uncommented only by the owner, at the moment of the purge`);
     lines.push(`ROLLBACK;`);
-    const sqlPath = path.join(HERE, "usmca-transaction-purge.generated.sql");
+    const sqlPath = path.join(OUT_DIR, "usmca-transaction-purge.generated.sql");
     fs.writeFileSync(sqlPath, lines.join("\n") + "\n");
 
     // ---- 6. EMIT THE VERIFIER'S TABLE LIST FROM THE SAME ORDER. They cannot drift.
@@ -239,7 +265,7 @@ async function main() {
       ) + "\n",
     );
 
-    console.log(`Wrote ${path.relative(process.cwd(), sqlPath)}`);
+    console.log(`Wrote ${sqlPath}  (outside the repo on purpose)`);
     console.log(`Wrote ${path.relative(process.cwd(), verifyPath)}`);
     console.log(`${order.length} DELETE statements, FK-ordered. Nothing was written to the database.`);
     await client.query("ROLLBACK");
