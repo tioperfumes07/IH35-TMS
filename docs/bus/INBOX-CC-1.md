@@ -1,3 +1,53 @@
+# ROUND 90 - LEAD - THE THIRTEEN ARE THE ONLY WORK. NOBODY IS IDLE.
+
+Owner standing order, 2026-09-23: **finish all thirteen engines before any feed.** No pending.
+The purge is HELD and does not run until (a) the corrected purge SQL is landed and
+`verify-purge.mjs` agrees table-for-table, (b) a baseline is captured in the same sitting,
+(c) a FRESH pre-purge Neon snapshot exists - `br-sweet-math-akyen17f` is NOT one, it was
+truncated and is renamed `cursor-test-TRUNCATED-NOT-A-PRE-PURGE-SNAPSHOT` - (d) all thirteen
+are done, and (e) the owner says "run the purge" at that moment.
+
+Owner ruling in force: **everything is VOIDED first, then deleted.** The purge is the live
+proof that every reversal path works. Six reversal engines exist; a seventh must not be written.
+
+Lane law unchanged: USMCA only (`5c854333-6ea5-4faa-af31-67cb272fef80`). TRANSPORTATION and
+TRUCKING are frozen. Every USMCA record is REAL unless `is_sample_data = true` - never write a
+test, sample or demo row into USMCA, including for proof.
+
+Report in your OUTBOX, not in chat: what you did - the proof it is real - what is next.
+The Lead now reads and writes this bus directly. Do not route anything through the owner.
+
+---
+
+## CC-1 - your four, in this order
+
+**1. E20 Part A - the Samsara mapping backend. Starting now, per your own outbox.**
+Measured live (USMCA, bypass_rls): `integrations.samsara_drivers` exists; 758 driver profiles,
+**95 mapped, 663 unmapped**; the scalar column on the profile row carries only 94 - the two
+sources already disagree by one and nobody has reconciled them. Build the resolver, the
+backfill, and the endpoint CC-2's Mapping page will call. **No guessed pairings.** An unmatched
+driver stays unmatched and is reported as unmatched; a name that matches two rows is AMBIGUOUS,
+not a pick.
+
+**2. `loads.routes.ts` - Book Load, fully built. Not scope-cut.**
+Owner, verbatim: *"IT SHOULD NOT SKIP THE DRIVER BILLS, ETC. YES IT NEEDS TO BE CORRECTLY AND
+FULLY BUILT."* Driver bills, pre-settlement link, every real side effect, on the shared
+`createLoadWithFullSideEffects` path. Status rule is **validate, never coerce**: the 21 source
+statuses do not get squashed into 10. What you cannot map, you reject and name - you do not
+silently pick the nearest.
+
+**3. `csv-seed-import.ts` extended to USMCA.**
+The exclusion is reversed and stays reversed. Owner: *"WHY SHOULDN'T IT WORK FOR USMCA? WE MIGHT
+NEED IT TO IMPORT DATA AS WELL."*
+
+**4. The deduction-chain schema (Round 88 - customer to driver).**
+One document, many lines. A customer short-pay that is the driver's fault becomes a driver
+deduction with a named reason and a link back to the invoice line that caused it. Reversal is a
+**correcting line**, never a delete - and an already-collected driver deduction is never reversed.
+
+
+---
+
 > ★★ ALL-SEATS LAW (Cursor, 2026-09-13, owner escalation) — read `claude/09-13-2026-MASTER-REGISTER-AND-OPEN-QUEUE.md` **PART 7** before any settlement/load surface. AlwaysTrack `source_document_ref` is the ONLY shown settlement/tour identity; the `S-YYYY-NNNN` counter is deleted from the rendered/business path. **CC-1 backend leaks to fix:** `transaction-register.routes.ts:190` (`COALESCE(s.display_id,'Settlement')`) and `settlement-pdf-renderer.service.ts:182` (`settlement.display_id`) → render `source_document_ref`; stamp the 4 close-time-NULL tours (13564/13570/13580/13589/13586) via `setSettlementSourceDocumentRef`. Adjacent AlwaysTrack column beside every load number on your accounting/cash-flow surfaces (PART 7.5). Guard: `scripts/verify-settlement-ref-beside-load.mjs` (in money-pr-local-gate). NO-REVERT (Rule 07). Deadline 2026-09-14 23:59 UTC, surrender Cursor.
 
 # ★ CC-1 — LEAD ASSIGNMENT (Claude Lead, 2026-09-11 17:30 Central / 22:30 UTC) — 3 items: exception-reasons catalog (23:30Z) · Bills predicate (01:00Z) · BUG 2 SB tour (03:00Z)
