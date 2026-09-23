@@ -15,13 +15,6 @@ import { liveLoadsOpenDispatchExistsSql } from "../dispatch/live-loads-view.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { loadRefMatchSql, loadRefParamSchema } from "../lib/load-ref.js";
-import {
-  allocateNextLoadNumber,
-  assertLoadNumberAvailable,
-  FirstLoadNumberRequiredError,
-  LoadNumberConflictError,
-  seedLoadNumberCounterFromManualEntry,
-} from "../dispatch/load-id-reservation.service.js";
 import { writeLoadCancellationRecord } from "../dispatch/cancellation.service.js";
 import {
   loadStatusRequiresDeliveryDepartureStamp,
@@ -29,13 +22,17 @@ import {
 } from "../dispatch/stamp-final-delivery-departure.js";
 import {
   assertClosedLoadHasPricedDriverBill,
+  createLoadWithFullSideEffects,
   ensureDriverBillArtifactsForLoad,
-  resolveLoadTrailerEquipmentIdForInsert,
 } from "../dispatch/book-load.service.js";
 import {
   assertDriverQualifiedForLoad,
   DriverNotQualifiedError,
 } from "../dispatch/driver-qualification.service.js";
+// E20/loads.routes.ts rewire (Lead ruling 2026-09-23, docs/bus/09-23-2026-LEAD-RULING-CC-1-
+// STATUS-VOCABULARY-DO-NOT-SQUASH.md): the CREATE-specific status validator. See the module's
+// own header for why it is narrower than dispatch/load-state-machine.ts's fromMdataStatus.
+import { planCreateStatus, type WideLoadStatus } from "./loads-create-status.js";
 import { resyncProformaInvoiceFromLoadRate } from "../accounting/resync-proforma-from-load-rate.js";
 import { mintProformaInvoiceOnFirstPickup } from "../accounting/proforma-mint-on-first-pickup.js";
 import {
@@ -402,6 +399,19 @@ const allowedStatusTransitions: Record<z.infer<typeof loadStatusSchema>, z.infer
 };
 
 export async function registerLoadRoutes(app: FastifyInstance) {
+  // E20/loads.routes.ts rewire (Lead ruling 2026-09-23 — "IT SHOULD NOT SKIP THE DRIVER BILLS,
+  // ETC. YES IT NEEDS TO BE CORRECTLY AND FULLY BUILT"): this create path now goes through
+  // createLoadWithFullSideEffects, the ONE shared load-create path (verify-one-load-create-path.mjs),
+  // instead of writing mdata.loads rows via a direct INSERT. That function already: allocates/validates the load
+  // number, resolves load_trailer_equipment_id, gates driver qualification (a richer gate than the
+  // one this route used to call directly — it supports the Owner-override-with-audit path this
+  // route never had), mints driver bill artifacts (createDriverBillArtifacts — "the driver bills"),
+  // links an open pre-settlement tour when requested, writes docs.file_links/
+  // dispatch.load_charge_lines/dispatch.load_assignment_history/mdata.load_stops (the other 4
+  // REQUIRED_INSERT_TABLES this route's old raw INSERT never touched), and emits the dispatch spine
+  // event. STATUS: validate, never coerce (planCreateStatus, loads-create-status.ts) — a status
+  // this route cannot honestly represent as an initial value is REJECTED and named (422
+  // status_not_creatable), never silently squashed into the nearest bucket.
   app.post("/api/v1/mdata/loads", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return reply;
@@ -418,265 +428,112 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "solo_or_team_assignment_required_not_both" });
     }
 
+    const statusPlan = planCreateStatus(b.status as WideLoadStatus);
+    if (!statusPlan.ok) {
+      return reply.code(422).send({
+        error: "status_not_creatable",
+        status: statusPlan.rejectedStatus,
+        message:
+          `A load cannot be created directly in status "${statusPlan.rejectedStatus}" — that status ` +
+          `represents operational progress a brand-new load has not made yet. Create the load in an ` +
+          `early status (draft/booked/planned/unassigned/assigned/assigned_not_dispatched/dispatched) ` +
+          `and transition it forward via PATCH /api/v1/mdata/loads/:id/status.`,
+      });
+    }
+
+    // createLoadWithFullSideEffects hardcodes currency_code = 'USD' in its own INSERT (verified
+    // by reading its body, not assumed) -- it has no BookLoadInput field for it at all, unlike
+    // this route's own wire schema (which has accepted MXN since before this rewire). Silently
+    // defaulting a caller's real MXN request to USD would corrupt real financial data; validate,
+    // never coerce applies here too. Reject and name it rather than pretend it's supported.
+    if (b.currency_code !== "USD") {
+      return reply.code(422).send({
+        error: "currency_not_supported_on_create",
+        currency_code: b.currency_code,
+        message:
+          "The shared load-create path only supports USD today. MXN is not yet wired through " +
+          "createLoadWithFullSideEffects.",
+      });
+    }
+
     await assertCompanyMembership(authUser.uuid, b.operating_company_id);
 
-    try {
-      const created = await withCurrentUser(authUser.uuid, async (client) => {
-        const customerRes = await client.query<{ id: string }>(
-          `
-            SELECT id
-            FROM mdata.customers
-            WHERE id = $1
-              AND operating_company_id = $2::uuid
-              AND deactivated_at IS NULL
-            LIMIT 1
-          `,
-          [b.customer_id, b.operating_company_id]
-        );
-        if (customerRes.rows.length === 0) {
-          return { error: "invalid_customer_for_company" as const };
-        }
+    const created = await withCurrentUser(authUser.uuid, async (client) => {
+      const customerRes = await client.query<{ id: string }>(
+        `
+          SELECT id
+          FROM mdata.customers
+          WHERE id = $1
+            AND operating_company_id = $2::uuid
+            AND deactivated_at IS NULL
+          LIMIT 1
+        `,
+        [b.customer_id, b.operating_company_id]
+      );
+      if (customerRes.rows.length === 0) {
+        return { kind: "error" as const, status: 400, payload: { error: "invalid_customer_for_company" } };
+      }
 
-        if (b.assigned_primary_driver_id || b.assigned_secondary_driver_id) {
-          await gateMdataLoadDriverAssignment(
-            client,
-            b.operating_company_id,
-            [b.assigned_primary_driver_id, b.assigned_secondary_driver_id],
-            false
-          );
-        }
+      // rate_total_cents is NOT directly settable on the shared path — BookLoadInput computes it
+      // from input.charges. A caller-supplied flat rate becomes a single LINEHAUL charge line
+      // (dispatch.load_charge_lines), matching what Book Load itself does for a simple load.
+      const charges =
+        b.rate_total_cents > 0 ? [{ code: "LINEHAUL", amount_cents: b.rate_total_cents }] : [];
 
-        const loadTrailerEquipmentId = await resolveLoadTrailerEquipmentIdForInsert(
-          client,
-          b.operating_company_id,
-          b.load_trailer_equipment_id
-        );
-
-        // GO-10 REV-B — the atomic shared allocator (see load-id-reservation.service.ts) replaces
-        // the old per-file MAX()+1-then-retry-3x pattern. One allocate, one insert, one SAVEPOINT
-        // so a genuine collision rolls back in isolation rather than aborting the whole
-        // transaction (that abort was the original G9-M 500 this file's own comment used to
-        // describe) — but no retry loop: with a real counter, a 23505 here means the number was
-        // used outside the allocator, which is a 409 to surface, not a race to spin past.
-        let loadNumber: string;
-        if (b.load_number) {
-          // Typed = verbatim. Fast pre-check only (F4) -- the real guarantee is the INSERT-level
-          // 23505 catch below, which a pre-check-then-insert race can never fully close on its own.
-          await assertLoadNumberAvailable(client, b.operating_company_id, b.load_number);
-          loadNumber = b.load_number;
-        } else {
-          loadNumber = await allocateNextLoadNumber(client, b.operating_company_id);
-        }
-        let inserted: Record<string, unknown> | null = null;
-        await client.query(`SAVEPOINT create_load`);
-        try {
-          const res = await client.query(
-            `
-              INSERT INTO mdata.loads (
-                operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
-                assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
-                dispatcher_user_id, notes, is_sample_data, load_trailer_equipment_id
-              ) VALUES (
-                $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
-              )
-              RETURNING
-                id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
-                assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
-                dispatcher_user_id, notes, is_sample_data, load_trailer_equipment_id,
-                created_at, updated_at, soft_deleted_at, deleted_by_user_id
-            `,
-            [
-              b.operating_company_id,
-              loadNumber,
-              b.customer_id,
-              b.status,
-              b.rate_total_cents,
-              b.currency_code,
-              b.assigned_unit_id ?? null,
-              b.assigned_primary_driver_id ?? null,
-              b.assigned_secondary_driver_id ?? null,
-              b.team_id ?? null,
-              authUser.uuid,
-              b.notes ?? null,
-              b.is_sample_data ?? false,
-              loadTrailerEquipmentId,
-            ]
-          );
-          await client.query(`RELEASE SAVEPOINT create_load`);
-          inserted = res.rows[0] ?? null;
-          // P1 2026-09-14 (LOAD-NUMBER-COUNTER-POISONED) — same hook as book-load.service.ts's own
-          // create path: a manually-typed, purely numeric load number that just saved for real
-          // seeds the counter with itself if the company has none yet, instead of leaving that to
-          // allocateNextLoadNumber's own MAX()-scan fallback (see its header for why that scan can
-          // be wrong). No-op once the counter already exists.
-          if (b.load_number && b.load_number === loadNumber) {
-            await seedLoadNumberCounterFromManualEntry(client, b.operating_company_id, loadNumber);
-          }
-        } catch (err) {
-          await client.query(`ROLLBACK TO SAVEPOINT create_load`).catch(() => undefined);
-          if ((err as { code?: string }).code !== "23505") throw err;
-          // GAP-TRACE-NO-MISLABELED-AS-DUPLICATE-LOAD-NUMBER (found live 2026-09-05, see the
-          // matching fix in book-load.service.ts) — this INSERT also carries the
-          // loads_opco_trace_no_key unique index (operating_company_id, trace_no), populated by a
-          // BEFORE INSERT trigger this route never sets a value for. Any 23505 here used to be
-          // assumed a load_number collision; only report that when the constraint that actually
-          // fired is the load_number one, or a trace_no counter desync masquerades as a false
-          // "duplicate load number" with existing_id always null.
-          if ((err as { constraint?: string }).constraint !== "loads_operating_company_id_load_number_key") {
-            throw Object.assign(new Error("load_insert_unique_violation_non_load_number"), {
-              code: "load_insert_unique_violation_non_load_number",
-              constraint: (err as { constraint?: string }).constraint,
-              cause: err,
-            });
-          }
-          const existingRow = await client.query<{ id: string }>(
-            `SELECT id::text FROM mdata.loads WHERE operating_company_id = $1::uuid AND load_number = $2 LIMIT 1`,
-            [b.operating_company_id, loadNumber]
-          );
-          throw new LoadNumberConflictError(loadNumber, existingRow.rows[0]?.id ?? null);
-        }
-        if (!inserted) throw new Error("load_insert_failed");
-
-        const createdStops: Array<Record<string, unknown>> = [];
-        if (b.pickup && b.delivery) {
-          const stopDefs = [
-            { sequence_number: 1, stop_type: "pickup" as const, stop: b.pickup },
-            { sequence_number: 2, stop_type: "delivery" as const, stop: b.delivery },
-          ];
-          for (const stopDef of stopDefs) {
-            const stopRes = await client.query(
-              `
-                INSERT INTO mdata.load_stops (
-                  load_id, sequence_number, stop_type, location_id, address_line1, city, state, country, scheduled_arrival_at, status
-                ) VALUES (
-                  $1,$2,$3,$4,$5,$6,$7,$8,$9,'pending'
-                )
-                RETURNING
-                  id, load_id, sequence_number, stop_type, location_id, address_line1, city, state, country,
-                  scheduled_arrival_at, scheduled_departure_at, actual_arrival_at, actual_departure_at,
-                  status, notes, created_at, updated_at
-              `,
-              [
-                inserted.id,
-                stopDef.sequence_number,
-                stopDef.stop_type,
-                stopDef.stop.location_id ?? null,
-                stopDef.stop.address_line1 ?? null,
-                stopDef.stop.city,
-                stopDef.stop.state,
-                stopDef.stop.country,
-                stopDef.stop.scheduled_arrival_at,
-              ]
-            );
-            const stopRow = stopRes.rows[0] ?? null;
-            if (stopRow) createdStops.push(stopRow);
-          }
-        }
-
-        // ACCT-F277 — this secondary creator can seat a driver but historically bypassed the
-        // canonical driver-pay path. Converge immediately: mint from the configured rate when
-        // inputs are complete, otherwise leave the same durable skipped_no_pay_rate audit used by
-        // Book Load. Never derive driver wages from rate_total_cents (customer freight revenue).
-        await ensureDriverBillArtifactsForLoad(client, {
-          loadId: String(inserted.id),
-          operatingCompanyId: b.operating_company_id,
-          actorUserId: authUser.uuid,
-        });
-
-        await appendCrudAudit(
-          client,
-          authUser.uuid,
-          "mdata.loads.created",
-          {
-            resource_id: inserted.id,
-            resource_type: "mdata.loads",
-            entity_type: "load",
-            entity_id: inserted.id,
-            load_number: inserted.load_number,
-            operating_company_id: inserted.operating_company_id,
-            customer_id: inserted.customer_id,
-            status: inserted.status,
-          },
-          "info",
-          "BT-3-DISPATCH-BOARD"
-        );
-
-        for (const stopRow of createdStops) {
-          await appendCrudAudit(
-            client,
-            authUser.uuid,
-            "mdata.load_stops.created",
+      const stops = b.pickup && b.delivery
+        ? [
             {
-              resource_id: stopRow.id,
-              resource_type: "mdata.load_stops",
-              entity_type: "load",
-              entity_id: inserted.id,
-              load_id: inserted.id,
-              sequence_number: stopRow.sequence_number,
-              stop_type: stopRow.stop_type,
-              status: stopRow.status,
+              stop_type: "pickup" as const,
+              sequence_number: 1,
+              city: b.pickup.city,
+              state: b.pickup.state,
+              country: b.pickup.country,
+              address_line1: b.pickup.address_line1,
+              location_id: b.pickup.location_id,
+              scheduled_arrival_at: b.pickup.scheduled_arrival_at,
             },
-            "info",
-            "BT-3-DISPATCH-BOARD"
-          );
-        }
-
-        if (inserted.assigned_unit_id || inserted.assigned_primary_driver_id || inserted.assigned_secondary_driver_id || inserted.team_id) {
-          await appendCrudAudit(
-            client,
-            authUser.uuid,
-            "mdata.loads.assigned",
             {
-              resource_id: inserted.id,
-              resource_type: "mdata.loads",
-              entity_type: "load",
-              entity_id: inserted.id,
-              assigned_unit_id: inserted.assigned_unit_id,
-              assigned_primary_driver_id: inserted.assigned_primary_driver_id,
-              assigned_secondary_driver_id: inserted.assigned_secondary_driver_id,
-              team_id: inserted.team_id,
+              stop_type: "delivery" as const,
+              sequence_number: 2,
+              city: b.delivery.city,
+              state: b.delivery.state,
+              country: b.delivery.country,
+              address_line1: b.delivery.address_line1,
+              location_id: b.delivery.location_id,
+              scheduled_arrival_at: b.delivery.scheduled_arrival_at,
             },
-            "info",
-            "BT-3-DISPATCH-BOARD"
-          );
-        }
+          ]
+        : [];
 
-        if (createdStops.length === 0) {
-          return inserted;
-        }
-        return { ...inserted, stops: createdStops };
-      });
+      const result = await createLoadWithFullSideEffects(
+        client,
+        {
+          requestingUserUuid: authUser.uuid,
+          requestingUserRole: authUser.role,
+          operating_company_id: b.operating_company_id,
+          customer_id: b.customer_id,
+          status: statusPlan.dispatchStatus,
+          save_mode: statusPlan.saveMode,
+          assigned_unit_id: b.assigned_unit_id,
+          assigned_primary_driver_id: b.assigned_primary_driver_id,
+          assigned_secondary_driver_id: b.assigned_secondary_driver_id,
+          team_id: b.team_id,
+          load_trailer_equipment_id: b.load_trailer_equipment_id,
+          notes: b.notes,
+          is_sample_data: b.is_sample_data,
+          load_number: b.load_number,
+          charges,
+          stops,
+        },
+        { source: "live_feed" }
+      );
+      return result;
+    });
 
-      if (created && typeof created === "object" && "error" in created) {
-        if (created.error === "invalid_customer_for_company") return reply.code(400).send({ error: created.error });
-      }
-
-      return reply.code(201).send(created);
-    } catch (err) {
-      if (err instanceof DriverNotQualifiedError) {
-        return reply.code(422).send({
-          error: err.code,
-          message: err.message,
-          details: {
-            driver_id: err.block.driverId,
-            reasons: err.block.reasons,
-            cdl_expires_at: err.block.cdlExpiresAt,
-            medical_expiry_date: err.block.medicalExpiryDate,
-            hazmat_endorsement_expires_at: err.block.hazmatEndorsementExpiresAt,
-          },
-        });
-      }
-      if (err instanceof FirstLoadNumberRequiredError) {
-        return reply.code(422).send({ error: err.code });
-      }
-      if (err instanceof LoadNumberConflictError) {
-        return reply.code(409).send({ error: err.code, load_number: err.loadNumber, existing_id: err.existingId });
-      }
-      const code = (err as { code?: string }).code;
-      if (code === "23503") return reply.code(400).send({ error: "invalid_foreign_key" });
-      if (code === "23505") return reply.code(409).send({ error: "mdata_load_conflict" });
-      throw err;
+    if (created.kind === "error") {
+      return reply.code(created.status).send(created.payload);
     }
+    return reply.code(201).send(created.row);
   });
 
   // Rate-limited (CodeQL js/missing-rate-limiting). Pre-existing gap surfaced because this PR touched

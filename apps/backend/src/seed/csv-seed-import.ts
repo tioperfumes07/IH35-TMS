@@ -1,10 +1,20 @@
 // C6-MONEY-JE-EXEMPT: an offline/admin CSV bulk-import utility (SeedType includes bank_transactions)
 // for onboarding HISTORICAL records — same "imported history is not a defect" shape as the QBO
 // pullers (qbo-sync/*.ts, also C6-exempt): these rows predate/bypass the live TMS money path and
-// are not a new TMS-native money event requiring its own JE. Not a production write endpoint.
+// are not a new TMS-native money event requiring its own JE.
+//
+// CORRECTED 2026-09-23 (E20/csv-seed-import.ts extension, owner ruling): this line used to read
+// "Not a production write endpoint" as the justification for excluding USMCA from CompanyCode.
+// The owner overturned that directly — "WHY SHOULDNT IT WORK FOR USMCA? WE MIGHT NEED IT TO
+// IMPORT DATA AS WELL WOULDNT WE?" — he was right: this file writes real rows to real production
+// tables (mdata.drivers/customers/vendors/loads, banking.*) for whichever company code is passed,
+// USMCA included, same as TRK/TRANSP always have. It is an ADMIN/CLI tool (no HTTP route, no
+// authenticated request context), not a toy — every write here is production data.
 import pg from "pg";
 import { normalizeBankTransactionDescription } from "../banking/transaction-ingestion.js";
 import { repairUtf8Mojibake } from "../lib/repair-utf8-mojibake.js";
+import { createLoadWithFullSideEffects } from "../dispatch/book-load.service.js";
+import { fromMdataStatus } from "../dispatch/load-state-machine.js";
 
 // NEVER bulk-apply default classification tags (Late-pay, FMCSA: Not verified, Medium)
 // to real customer/vendor rows during seed import. Classifications require explicit
@@ -21,6 +31,14 @@ export type SeedType = "drivers" | "customers" | "vendors" | "assets" | "loads" 
  * importer to pretend a third company does not exist.
  */
 export type CompanyCode = "TRK" | "TRANSP" | "USMCA";
+
+// The real identity.users SERVICE-ACCOUNT row for machine-origin writes (migration
+// 202614200000_identity_users_edi_system_account.sql — "EDI 204, the CSV importer, and any
+// future feed"), the exact one this file's own header comment was written to unblock. Used as
+// the actor for createLoadWithFullSideEffects's driver-bill/audit/spine-event writes; the CSV's
+// own per-row dispatcher_email stays the load's dispatcher_user_id via a targeted post-insert
+// UPDATE below — the shared path has no field for a dispatcher distinct from its own actor.
+const CSV_IMPORT_SYSTEM_USER_ID = "00000000-0000-4000-8000-000000000001";
 
 const DRIVER_HEADERS = ["first_name", "last_name", "email", "phone", "cdl_number", "cdl_state", "cdl_class", "cdl_expires_at", "hire_date", "status"];
 const CUSTOMER_HEADERS = ["customer_code", "customer_name", "billing_email", "billing_phone", "mc_number", "dot_number", "billing_address_line1", "billing_city", "billing_state", "billing_postal_code"];
@@ -947,81 +965,97 @@ async function upsertLoads(
         const hasPickupStop = Boolean(pickupTs || pickupCity || pickupState);
         const hasDeliveryStop = Boolean(deliveryTs || deliveryCity || deliveryState);
 
-        if (!dryRun) {
-          const inserted = await client.query<{ id: string }>(
-            `
-              INSERT INTO mdata.loads (
-                operating_company_id,
-                load_number,
-                customer_id,
-                status,
-                rate_total_cents,
-                currency_code,
-                assigned_unit_id,
-                assigned_primary_driver_id,
-                assigned_secondary_driver_id,
-                dispatcher_user_id,
-                notes
-              )
-              VALUES (
-                $1,$2,$3,$4::mdata.load_status_enum,$5::bigint,$6,$7,$8,$9,$10,$11
-              )
-              RETURNING id
-            `,
-            [
-              operatingCompanyId,
-              loadNumber,
-              customerId,
-              statusRaw,
-              rateParsed,
-              currencyCode,
-              unitId,
-              primaryDriverId,
-              secondaryDriverId,
-              dispatcherId,
-              nullable(row.notes),
-            ]
+        // E20/csv-seed-import.ts extension (2026-09-23) — this used to be a raw INSERT INTO
+        // mdata.loads, one of 2 remaining offenders on verify-one-load-create-path.mjs's
+        // shrink-only ratchet. Rewired onto createLoadWithFullSideEffects(source=
+        // "historical_backfill"): these are REAL historical rows (TRK/TRANSP always were;
+        // USMCA now too, per the owner's own reversal of the earlier exclusion), not a live
+        // dispatch event, so historical_backfill mode is correct — it EVALUATES gates (driver
+        // qualification, etc.) and RECORDS an exception rather than hard-blocking, matching the
+        // seed-sample-data.ts and inbound-204.handler.ts precedents from the same E6 round.
+        //
+        // status is intentionally NOT run through loads-create-status.ts's narrow 7-status
+        // create-time allow-list: that allow-list exists for a LIVE create where an
+        // already-progressed status would be dishonest. Here the whole point is recording a
+        // load's REAL historical state, which may legitimately already be
+        // delivered/invoiced/paid/closed — fromMdataStatus (the wider, total translation) is the
+        // correct tool, not planCreateStatus.
+        //
+        // currency_code: createLoadWithFullSideEffects hardcodes 'USD' with no field for it at
+        // all (verified by reading its body) — same honest rejection as loads.routes.ts, not a
+        // silent MXN->USD coercion.
+        if (currencyCode === "MXN") {
+          throw new Error(
+            'currency_code "MXN" is not supported by the shared load-create path (hardcodes USD) — ' +
+              "import this row through a path that can record MXN, or confirm USD is correct."
           );
-          const loadId = inserted.rows[0]?.id;
+        }
+
+        if (!dryRun) {
+          const stops = [
+            ...(hasPickupStop
+              ? [
+                  {
+                    stop_type: "pickup" as const,
+                    sequence_number: 1,
+                    city: pickupCity ?? undefined,
+                    state: pickupState ?? undefined,
+                    country: pickupCountry,
+                    scheduled_arrival_at: pickupTs ?? undefined,
+                  },
+                ]
+              : []),
+            ...(hasDeliveryStop
+              ? [
+                  {
+                    stop_type: "delivery" as const,
+                    sequence_number: hasPickupStop ? 2 : 1,
+                    city: deliveryCity ?? undefined,
+                    state: deliveryState ?? undefined,
+                    country: deliveryCountry,
+                    scheduled_arrival_at: deliveryTs ?? undefined,
+                  },
+                ]
+              : []),
+          ];
+
+          const result = await createLoadWithFullSideEffects(
+            client,
+            {
+              requestingUserUuid: CSV_IMPORT_SYSTEM_USER_ID,
+              requestingUserRole: "system",
+              operating_company_id: operatingCompanyId,
+              customer_id: customerId,
+              status: fromMdataStatus(statusRaw),
+              save_mode: "book_dispatch",
+              assigned_unit_id: unitId ?? undefined,
+              assigned_primary_driver_id: primaryDriverId ?? undefined,
+              assigned_secondary_driver_id: secondaryDriverId ?? undefined,
+              notes: nullable(row.notes) ?? undefined,
+              is_sample_data: false,
+              load_number: loadNumber,
+              charges: rateParsed > 0 ? [{ code: "LINEHAUL", amount_cents: rateParsed }] : [],
+              stops,
+            },
+            { source: "historical_backfill" }
+          );
+          if (result.kind === "error") {
+            throw new Error(`createLoadWithFullSideEffects: ${JSON.stringify(result.payload)}`);
+          }
+          const loadId = result.row.id;
           if (!loadId) throw new Error("Load insert failed");
 
-          let seq = 1;
-          if (hasPickupStop) {
-            await client.query(
-              `
-                INSERT INTO mdata.load_stops (
-                  load_id,
-                  sequence_number,
-                  stop_type,
-                  city,
-                  state,
-                  country,
-                  scheduled_arrival_at,
-                  status
-                )
-                VALUES ($1, $2, 'pickup'::mdata.stop_type_enum, $3, $4, $5, $6::timestamptz, 'pending'::mdata.stop_status_enum)
-              `,
-              [loadId, seq, pickupCity, pickupState, pickupCountry, pickupTs]
-            );
-            seq += 1;
-          }
-          if (hasDeliveryStop) {
-            await client.query(
-              `
-                INSERT INTO mdata.load_stops (
-                  load_id,
-                  sequence_number,
-                  stop_type,
-                  city,
-                  state,
-                  country,
-                  scheduled_arrival_at,
-                  status
-                )
-                VALUES ($1, $2, 'delivery'::mdata.stop_type_enum, $3, $4, $5, $6::timestamptz, 'pending'::mdata.stop_status_enum)
-              `,
-              [loadId, seq, deliveryCity, deliveryState, deliveryCountry, deliveryTs]
-            );
+          // The shared path stamps dispatcher_user_id = the ACTING user (CSV_IMPORT_SYSTEM_USER_ID
+          // here) — it has no field for a dispatcher distinct from its own actor. This CSV format
+          // carries a genuine per-row dispatcher_email column predating this rewire; preserve that
+          // real historical attribution with a targeted post-insert UPDATE rather than silently
+          // losing it. Only writes when the CSV actually named a dispatcher different from the
+          // system actor that just created the row.
+          if (dispatcherId && dispatcherId !== CSV_IMPORT_SYSTEM_USER_ID) {
+            await client.query(`UPDATE mdata.loads SET dispatcher_user_id = $2::uuid WHERE id = $1::uuid`, [
+              loadId,
+              dispatcherId,
+            ]);
           }
         }
 
