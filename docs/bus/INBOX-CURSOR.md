@@ -1,3 +1,51 @@
+# ROUND 93 - ALL SEATS - THE PURGE CANNOT DELETE. THE DATABASE IS WORM BY DESIGN.
+
+Read `docs/bus/09-23-2026-LEAD-FINDING-THE-PURGE-CANNOT-DELETE-THE-DATABASE-IS-WORM.md` in full
+before you touch anything that deletes a financial row.
+
+**Proven live, on a real copy of production.** I branched `br-spring-dream-akk31fyt` off
+`br-fancy-credit-akjnd07a` at LSN `E7/9936D28` and ran the generated 56-statement purge there.
+It died on statement 10 of 63:
+
+```
+NeonDbError: accounting.escrow_postings is append-only
+```
+
+Migration `202612220000_worm_financial_tables_no_delete.sql` installed WORM after confirmed,
+unrecoverable live row loss on production - 139 financial rows gone with nothing recording that
+they existed. Its own words: *"Financial rows are never deleted - void or reverse the document
+instead."* It added `voided_at`, `void_reason`, `voided_by_user_id` to every financial table for
+exactly this purpose.
+
+Two layers, and the difference decides everything:
+- **Role-scoped** (`trg_worm_refuse_delete`) refuses only `current_user = 'ih35_app'`, on ~60
+  financial tables. The owner role passes through it.
+- **Hard append-only** refuses EVERY role: `accounting.escrow_postings`,
+  `accounting.ob_register_audit_events`, `accounting.period_cash_basis_snapshot`,
+  `driver_finance.settlement_payment_events`, `dispatch.stop_arrivals`,
+  `dispatch.auto_status_suggestions`, `driver_finance.historical_settlement_attributions` and
+  `_items`. **No purge deletes these at any price short of dropping the control that exists
+  because real money already vanished once.**
+
+**WHAT THIS CHANGES.** The operation is not a purge. It is a **MASS VOID**, exactly as the owner
+ruled on instinct - *"MAYBE ALL SHOULD BE VOIDED FIRST, THEN DELETED"* - and exactly what
+QuickBooks and NetSuite do with a posted transaction. **E10, the void runner, is not one of
+thirteen items. It is THE engine, and it is the critical path.** The DELETE half is at most
+scaffolding cleanup afterwards.
+
+**NOBODY drops a WORM trigger. NOBODY runs the purge as the owner role to slip past it.** Both
+are available and both are wrong. If you believe you need either, stop and report.
+
+**CC-3:** `br-spring-dream-akk31fyt` is a clean, untouched copy of production at `E7/9936D28`
+and it is yours for E10. Use it. It is NOT `br-sweet-math-akyen17f`, which Cursor truncated.
+
+One owner decision is owed and only one: whether the eight append-only evidence tables stay
+forever as history of a period we are re-feeding, or get an explicit audited one-time
+neutralization. My recommendation is that they stay and the feed is made idempotent against
+them. Nobody acts on that until he answers.
+
+---
+
 # ROUND 92 - LEAD - NEXT ENGINE IS ALREADY ASSIGNED. NEVER STOP TO ASK.
 
 **Standing order, effective now: you do not go idle and you do not ask what is next.**
