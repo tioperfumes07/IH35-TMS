@@ -5300,3 +5300,48 @@ Continuing to R-102-B items 2-6 per the same-session, no-pause instruction.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
+
+---
+
+## R-102-B item 2 ("EVERY LIST ROW") — MERGED (#22420, sha 4959dda7b0a1c18f9f8b44bbb6245de891411c8f)
+
+New shared `VoidedRowIndicator.tsx` (badge + row-dim, wraps the existing locked `StatusBadge`
+component — §9.0.17). Investigated all 8 named families (loads, invoices, expenses,
+driver_settlements, driver_bills, factoring_advances, fuel_purchases, JE register) via a
+read-only fan-out before touching anything: 4 were already compliant (loads, invoices, expenses,
+factoring_advances — the last already uses literal strikethrough), fixed the 3 real gaps
+(driver_bills row in BillsPage.tsx, the JE register's plain-text status column, and
+fuel_purchases end-to-end — this last one needed a real backend change, `fuel-transactions.routes.ts`'s
+list SELECT never returned `voided_at`/`void_reason` at all, only the DB column existed post
+R-102.1-A). Lane-crossed into CC-3's `apps/backend/src/fuel/**` with a ruling doc.
+
+**driver_settlements' default landing view (the tours register) intentionally left unbadged** —
+its own `listTours()` query already excludes cancelled settlements by an explicit, live-measured
+owner ruling (SETL-REVERSED-HIDE, "a reversed/cancelled settlement is economically void ...
+never shown as a live settlement"), so no voided row ever reaches that view to badge. That's a
+disclosed-count/filter-toggle concern (item 5), not a badge gap (item 2) — flagging it now so it
+isn't silently dropped when item 5 starts.
+
+**Two real regressions this PR's own push caught before merge (both fixed, not worked around):**
+1. `verify-ui-design-system-ratchet.mjs` — my first badge draft used an arbitrary-value Tailwind
+   font-size class; fixed by reusing the existing locked `StatusBadge` component instead of a
+   hand-rolled span (same lesson as the session's earlier `raw_font_sizes` note: even a raw class
+   string inside a *comment* trips this guard's regex — reworded the comment too).
+2. `verify-fuel-history-transaction-date-display.mjs` — putting the badge inside the fuel table's
+   Date column broke that guard's exact-shape check on `render: (row) => formatDateUS(row.transaction_date)`;
+   moved the badge to the Station column, restored the Date column's render verbatim.
+
+**Confirmed pre-existing, unrelated, zero diff-overlap (not fixed here):**
+`verify-void-predicate-map-current.mjs` (`accounting.factoring_advances` + `driver_finance.deduction_recovery_links`
+missing from `docs/audit/void-predicate-map.json` — both from CC-1's/the Lead's own recent
+migrations) and `verify-surface-bar-combobox-inventory.mjs` (my own earlier `SamsaraDriverMappingPage.tsx`
+— a third guard now named against that same file, alongside `go26-consolidation-ratchet` from the
+item-1 OUTBOX report; that file is overdue for its own small cleanup PR).
+
+**REMAINING:** R-102-B items 3-6 (read-only enforcement on voided documents; document-number-stays
+verification; default "Show voided" filter + honest count, including the tours-register
+disclosure noted above; the dedicated no-money-input guard). fuel_purchases has 0 live voided
+rows today — forward-looking wiring only, not yet visually provable.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
