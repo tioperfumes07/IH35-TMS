@@ -5029,5 +5029,37 @@ yet — flagging now rather than claiming the funding identity is fully rebuilt.
 Standing by — no further work on my list until you reassign; the rest ([R1 remainder, R3, E11
 boards, deduction screens]) stays parked exactly where you told me to leave it.
 
+### ROUND 86B — invoice 13572's stranded posting, live on main (#22336, sha a87dbf7d07)
+
+Root cause: `void.service.ts`'s `GlPostingRow` type carried no `id` field at all, so
+`postVoidReversal` (all six callers -- bills, invoices, payments, journal-entries, loan-payment,
+void.service itself) could write the JOURNAL-ENTRY-level reversal FK but never the LINE-level one
+(`reversal_of_line_id`/`reversed_by_line_id`) -- confirmed live on invoice 13572's own JE pair
+(009fb5f8/d4c74c17): JE-level FK correct, all 4 posting lines' line-level FK NULL. Fixed to follow
+the exact same two-write pattern `posting-engine.service.ts`'s own reversal path already uses.
+Real red-before-green proof, 162 tests across every caller, 0 regressions. Prospective only (no
+backfill -- the purge deletes every existing transaction row regardless).
+
+### ROUND 86 / "FINISH ALL 13" — item lines on screen, live on main (#22341, pending merge)
+
+Diesel/DEF fuel purchases now render as real QuickBooks item lines (item · description · QTY ·
+RATE · AMOUNT) on the Driver Settlement Detail screen -- new `FuelPurchasesSection.tsx`, sourced
+from `fuel.fuel_transactions.fuel_type`/`price_per_gallon` (additive SELECT, no schema change).
+Driver-pay loaded/empty miles were ALREADY fully built this way (EarningsSection/
+DeadheadPaySection, settlements.routes.ts's rate_basis join) -- confirmed by direct code read,
+nothing to build there. Live-verified against real USMCA rows (load 13609 diesel 115.0gal @
+$6.68 = $684.94; load 13613 DEF 4.7gal @ $4.89 = $22.98). Real red-before-green proof, 5 new
+component tests + fixed 1 pre-existing test whose fixture predated the new required fields.
+
+Noting for the record: Cursor's item/quantity/rate/unit schema migration
+(202614271200, #22337) landed after this PR was built -- adds item_id/quantity/rate_cents/
+unit_of_measure directly onto driver_finance.settlement_lines (+bill_lines/expense_lines).
+That's the FUTURE writer-side storage for money lines created going forward; my fuel-purchases
+work reads the real source (fuel_transactions) directly rather than through settlement_lines at
+all, so it doesn't depend on that migration and isn't superseded by it -- flagging the overlap so
+nobody duplicates work, not because either needs to change.
+
+Moving to E11-D2 now (still measured only per your "FINISH ALL 13" doc -- D4/D3 not started).
+
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7
