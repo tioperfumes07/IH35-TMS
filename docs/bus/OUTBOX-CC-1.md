@@ -1535,3 +1535,62 @@ priority once the void loop itself settles — it is also the direct unlock for 
 evidence-gated work above. Will pick it up next.
 
 — CC-1
+
+## 2026-09-23 — CC-1: ROUND 122 P0 FIXED AND MERGED — stampDocumentVoided() was throwing on every invoice and expense since #22423
+
+**MERGED, both confirmed via `gh pr view --json state,mergedAt,mergeCommit`:**
+- **#22432** `957d6b2c69` — the actual fix. `stampDocumentVoided()` wrote the literal `'voided'`
+  for every family with a status column, on the unverified assumption every family's status
+  column accepts the same value. It does not: `accounting.invoices_status_check` and
+  `accounting.expenses_status_check` only accept `'void'`, not `'voided'` — every stamp on those
+  two families since `#22423` merged was a CHECK-constraint violation, thrown, and rolled back
+  (taking the reversal it shared an `inTx()` with down with it — the "header and GL commit
+  together or neither" invariant working exactly as designed, it just meant NOTHING was landing).
+  **Found a fifth affected family beyond the two named in the report:**
+  `driver_finance.driver_reimbursements_status_check` has the identical defect (`'void'`, not
+  `'voided'`) — same class of bug, not named in the original ticket, caught while fixing the
+  first two. Fixed by making the status value per-family
+  (`FamilyTableSpec.voidStatusValue: string | null`), read from each table's own live constraint
+  and passed as a bound query parameter, never a literal baked into the SQL. Live-verified inside
+  a `BEGIN`/`ROLLBACK` on real production rows (nothing committed): the fixed `status='void'`
+  UPDATE succeeds on a real invoice and a real expense; the OLD `status='voided'` value
+  reproducibly throws `invoices_status_check` on the SAME row, in the SAME session — direct proof
+  of both the bug and the fix, not a guess. Added a dedicated 12-case unit-test suite this file
+  had none of before.
+- **#22433** `a5195767a5` — extended `verify-void-stamp-columns.mjs` with an independent check
+  (never trusts the service file's own self-report) verifying each family's declared status value
+  against its live CHECK constraint / enum. Red-before-green per the ruling's own instruction:
+  `--selftest` plants the exact bug's shape (invoice declared `'voided'` against its real
+  accepted-value set) and confirms it fails, then confirms the real fixed value `'void'` passes.
+  Live run against production: all 7 families now confirmed correct.
+
+**Why this was the right priority call:** stopped mid-way through drafting a much larger feature
+(ROUND 118/119's dispatcher-confirmed cancellation workflow) the moment this P0 arrived, per its
+own framing — "the single highest-value fix in the repo right now." Both PRs pushed clean — no
+gate friction, the shared deadlock from earlier this session stayed cleared.
+
+**What CC-3/the Lead should watch for next:** per ROUND 105's own finding, "the checkout gates
+the stamp, not the deploy" — whoever is running the E10 loop needs to be checked out at `a5195767a5`
+(or later) for this fix to actually take effect on the next pass. Will re-check live stamp counts
+once a pass runs on the fixed checkout.
+
+**ROUND 123, received after the above already merged — crossed in transit, confirming here so
+nobody re-does it.** ROUND 123 asked for the exact same patch, citing main at `9cea1ba8` (the
+commit immediately before #22432 merged). Re-fetched and re-read `void-document-stamp.service.ts`
+off `origin/main` just now: the fix IS there, at the current tip (`a5195767a5`) — same shape ROUND
+123 specified (per-family status value read from the family map, never a hardcoded literal), one
+structural difference: `voidStatusValue: string | null` (using `null` to mean "never flip" for
+both `fuel_transaction` and `journal_entry` uniformly) instead of an optional `voidStatusValue?`
+plus a separate `neverFlipStatus` boolean — functionally identical, and the refusal ROUND 123
+asked for (`void_status_value_unknown` if a family flips status with no configured value) is
+structurally impossible to hit in my version, since TypeScript's `Record<VoidDocumentFamily,
+FamilyTableSpec>` already forces every family to declare a value at compile time — there is no
+runtime path where `voidStatusValue` is merely absent. The guard (`#22433`) queries `pg_enum` and
+`pg_get_constraintdef` on `pg_constraint` live, exactly as asked, and does NOT hardcode a second
+copy of each table's ALLOWED-value list — it independently declares the INTENDED per-family value
+(`VOID_STATUS_VALUES`) and checks THAT against the live-queried allowed set, which is a different,
+necessary thing (something has to state what the code intends to write, or there is nothing to
+compare the live constraint against). `--selftest` red-before-green already confirmed: planting
+`'voided'` against invoice's real accepted-value set fails, the real fixed `'void'` passes.
+
+— CC-1
