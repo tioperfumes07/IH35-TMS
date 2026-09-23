@@ -7,10 +7,12 @@
 //   3. the window opens only on a verified purge, closes when day 1 closes, and expires 72 hours
 //      after verified_at whatever the feed has done;
 //   4. a committed purge_state.json parses and carries only the known keys.
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { PURGE_STATE_PATH, PURGE_WINDOW_GUARDS, PURGE_WINDOW_HOURS, purgeWindow } from "./lib/purge-window.mjs";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { EXPECTED_ZERO_PATH, PURGE_STATE_PATH, PURGE_WINDOW_GUARDS, PURGE_WINDOW_HOURS, purgeWindow } from "./lib/purge-window.mjs";
 
 const LABEL = "verify-purge-window-exemption";
 export const ALLOW_OFFLINE_SKIP = "static source and state-file checks; never connects to a database";
@@ -62,6 +64,44 @@ if (fs.existsSync(PURGE_STATE_PATH)) {
     failures.push(`${path.relative(ROOT, PURGE_STATE_PATH)} does not parse: ${e.message}`);
   }
   for (const k of Object.keys(state ?? {})) if (!KNOWN_KEYS.has(k)) failures.push(`purge_state.json has an unknown key "${k}"`);
+}
+
+// After a mass void the rows stay: the three arms that counted every row must count live rows by the
+// purge's own rule, read from the generated file, never a hand-typed filter.
+const LIVE_ARMS = [
+  ["verify-alwaystrack-parity", "mdata.loads"],
+  ["verify-no-empty-zero-settlement", "driver_finance.driver_settlements"],
+  ["verify-control-totals", "driver_finance.driver_settlements"],
+];
+for (const [arm, table] of LIVE_ARMS) {
+  const src = fs.readFileSync(path.join(ROOT, "scripts", `${arm}.mjs`), "utf8");
+  if (!new RegExp(`purgeLiveRowCondition\\(\\s*LABEL,\\s*["']${table.replace(".", "\\.")}["']\\s*\\)`).test(src)) {
+    failures.push(`${arm} does not count ${table} by the generated live_predicate (purgeLiveRowCondition)`);
+  }
+}
+const expectedZero = JSON.parse(fs.readFileSync(EXPECTED_ZERO_PATH, "utf8")).must_be_zero_after_purge ?? [];
+const unstated = expectedZero.filter((e) => !Object.prototype.hasOwnProperty.call(e, "live_predicate")).map((e) => e.table);
+if (unstated.length) failures.push(`${unstated.length} generated entries carry no live_predicate key at all (null must be stated): ${unstated.slice(0, 5).join(", ")}`);
+for (const [, table] of LIVE_ARMS) {
+  if (!expectedZero.find((e) => e.table === table)?.live_predicate) failures.push(`${table} has no live_predicate in the generated file; its arm would fail`);
+}
+{
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "purge-live-"));
+  const file = path.join(tmp, "expected.json");
+  fs.writeFileSync(file, JSON.stringify({ must_be_zero_after_purge: [
+    { table: "t.with_flag", where: "company = 1", live_predicate: "voided_at IS NULL" },
+    { table: "t.no_flag", where: "company = 1", live_predicate: null },
+  ] }));
+  const lib = pathToFileURL(path.join(ROOT, "scripts/lib/purge-window.mjs")).href;
+  const probe = (table) => spawnSync(process.execPath, ["--input-type=module", "-e",
+    `import { purgeLiveRowCondition } from ${JSON.stringify(lib)}; console.log(purgeLiveRowCondition("probe", ${JSON.stringify(table)}, ${JSON.stringify(file)}));`], { encoding: "utf8" });
+  const ok = probe("t.with_flag");
+  if (ok.status !== 0 || ok.stdout.trim() !== "(company = 1) AND (voided_at IS NULL)") failures.push(`purgeLiveRowCondition does not return where AND live_predicate (got "${ok.stdout.trim()}")`);
+  const nul = probe("t.no_flag");
+  if (nul.status !== 1 || !/no live_predicate/.test(nul.stderr)) failures.push("purgeLiveRowCondition does not refuse, out loud, a table whose live_predicate is null");
+  const missing = probe("t.absent");
+  if (missing.status !== 1) failures.push("purgeLiveRowCondition does not refuse a table missing from the generated file");
+  fs.rmSync(tmp, { recursive: true, force: true });
 }
 
 if (failures.length > 0) {

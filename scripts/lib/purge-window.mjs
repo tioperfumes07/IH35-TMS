@@ -32,6 +32,32 @@ export const PURGE_WINDOW_GUARDS = Object.freeze([
   "verify-control-totals",
 ]);
 
+export const EXPECTED_ZERO_PATH = path.join(ROOT, "scripts/purge/usmca-purge-expected-zero.generated.json");
+
+/**
+ * The purge's own liveness rule for one table, read from the file the purge SQL is generated with.
+ * After a mass void the rows stay, so an arm's "empty" must mean no LIVE row. A table whose
+ * live_predicate is null carries no void flag: its liveness is answered by its parent document (or,
+ * for a correction reversal, only by the account netting to zero), so an arm must not call it empty
+ * or non-empty by itself — it fails and says why.
+ */
+export function purgeLiveRowCondition(label, table, file = EXPECTED_ZERO_PATH) {
+  const spec = JSON.parse(fs.readFileSync(file, "utf8"));
+  const entry = (spec.must_be_zero_after_purge ?? []).find((e) => e.table === table);
+  if (!entry) {
+    console.error(`${label}: FAIL — ${table} is not in ${path.basename(file)}; this arm has no liveness rule for it.`);
+    process.exit(1);
+  }
+  if (!entry.live_predicate) {
+    console.error(
+      `${label}: FAIL — ${table} has no live_predicate in ${path.basename(file)}: it carries no void flag, so its ` +
+        `liveness is answered by its parent document. This arm cannot call it empty or non-empty by itself.`,
+    );
+    process.exit(1);
+  }
+  return `(${entry.where}) AND (${entry.live_predicate})`;
+}
+
 export function readPurgeState(file = PURGE_STATE_PATH) {
   if (!fs.existsSync(file)) return {};
   return JSON.parse(fs.readFileSync(file, "utf8"));
