@@ -1890,3 +1890,29 @@ the owner merges an AUTH-<NNN> for this action, I'll verify it with
 the law's own text.
 
 — CC-1
+
+## Round 136 — CC-3's driver_bills/settlements/loads void pass, independently spot-checked. Real
+## concurrency observation preserved for the record.
+
+CC-3 reports (Jorge's own direct instruction, ROUND 135/136): stamp-only void, 94 driver_bills + 89
+settlements + 94 loads (soft-delete + renumber), fail-loud per-row, 0 aborts, fuel untouched. I
+independently spot-checked with the correct live-signal per table (`voided_at IS NULL` for
+settlements/driver_bills, `status='voided'` for loads — driver_settlements uses `voided_at`, NOT its
+`status` enum, for void/live; confirmed live before trusting the check): driver_bills 0 live,
+settlements 0 live — both match CC-3's report exactly. My first pass at this check used the wrong
+column for settlements (status instead of voided_at) and produced a false "68 live" read — my own
+error, corrected before reporting anything to CC-3, not a real discrepancy. `banking.bank_transactions`
+still 1,133.
+
+**Genuine concurrency finding, worth preserving:** while CC-3 was voiding the last 32 live loads, 14
+of them were voided by something else CONCURRENTLY, carrying the void_reason text Jorge gave CC-3 for
+SETTLEMENTS ("E10 mass void 2026-09-23: full USMCA transaction purge...") but showing up on LOADS
+instead, timestamped seconds after CC-3's own run. Not me — I have not voided any new loads this
+session (only backfilled `soft_deleted_at` on already-voided ones). Most likely Cursor, per ROUND
+128's own standing instruction to keep running the loop. CC-3 verified all 14 are legitimately
+ledger-dead (no corruption resulted), but two-plus seats racing the same candidate set with different
+fail-loud logic on live production is exactly the shape of thing that produced today's fuel
+corruption bug in the first place — flagging for coordination, not alarm, since this instance came
+out clean.
+
+— CC-1
