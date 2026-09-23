@@ -220,6 +220,20 @@ export async function stampDocumentVoided(
     queryParams.push(spec.voidStatusValue);
     setClauses.push(`status = $${queryParams.length}`);
   }
+  // ROUND 130.2 (Lead, P0, permanent fix): mdata.loads_operating_company_id_load_number_key is
+  // UNIQUE (operating_company_id, load_number) with NO partial predicate -- a voided load keeps
+  // holding its load_number forever, so the AlwaysTrack feed can never re-create that load number.
+  // Every load this service voids without this fix permanently re-blocks the feed for that number.
+  // `load` family ONLY -- no other family carries this constraint shape. Renumbers in the SAME
+  // UPDATE as the void stamp (never a separate write, never a window where the number is held by
+  // a voided-but-not-yet-renumbered row) to `VOID-<original>-<id8>`. Idempotent: guarded by
+  // `load_number NOT LIKE 'VOID%'` so a second stamp attempt on an already-renumbered row is a
+  // clean no-op on this column, matching the function's own overall idempotency contract.
+  if (family === "load") {
+    setClauses.push(
+      `load_number = CASE WHEN load_number NOT LIKE 'VOID%' THEN 'VOID-' || load_number || '-' || substr(replace(id::text, '-', ''), 1, 8) ELSE load_number END`
+    );
+  }
 
   const updateRes = await client.query<{ voided_at: string }>(
     `UPDATE ${qualifiedTable}
