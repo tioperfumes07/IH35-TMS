@@ -53,11 +53,11 @@ Never work in the shared main checkout.
 [CC-3 2026-09-23T23:22:02Z] Q03 GUARD  Feed-scope verify-pl-cost-of-revenue.mjs — same shape as
       E12.3-R3. Read the CLOSED FEED SET the parity guard already computes.
       Print "P&L scope: N of X loads in scope, M skipped NOT FED YET".
-[ ] Q04 FEED-ENGINE  Feed-day executor IDEMPOTENT + RESUMABLE. Key on Faro
+[DONE CC-1 2026-09-23T23:29:52Z, PR pending merge (blocked on Devin-B's Q03 collision, not mine)] Q04 FEED-ENGINE  Feed-day executor IDEMPOTENT + RESUMABLE. Key on Faro
       invoice number + purchase date, never row counts. Derive the next
       unfed day from LIVE STATE. Guard verify-feed-day-is-idempotent.mjs,
       proven by feeding 8/10 twice on a REHEARSE branch. DO NOT RUN THE FEED.
-[ ] Q05 FINANCIAL  WO normalization at
+[DONE CC-1 2026-09-23T23:29:52Z, PR pending merge (blocked on Devin-B's Q03 collision, not mine)] Q05 FINANCIAL  WO normalization at
       apps/backend/src/factoring/faro-csv-import.ts:426 — strip whitespace,
       leading '#', leading zeros, case-insensitive. Never match on amount.
       0 or >1 -> STOP that invoice. Guard
