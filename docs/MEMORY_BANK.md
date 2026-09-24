@@ -55,17 +55,25 @@ but is NOT the real universe. Parsing EVERY signed `Driver_Settlement_*.pdf` in 
   **tour 5772**, Pedro Abraham Lopez Collado). The rebuild stamps `source_document_ref` = the 4-digit doc
   and that becomes the identity.
 
-## DOMAIN MODEL — WHAT A SETTLEMENT IS (READ THIS FIRST — owner corrected Cursor 3× on 2026-09-08)
+## DOMAIN MODEL — WHAT A SETTLEMENT IS (READ THIS FIRST — owner corrected Cursor 3× on 2026-09-08; restated 2026-09-24)
 
 Source: `docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md` §2–§3 (LOCKED). If you find yourself reasoning
 about settlements in "weeks" or calendar date-windows, STOP — you are wrong. Read this.
 
-- **A settlement is a SET OF TRIPS — a TOUR.** A tour = a NORTHBOUND trip (loaded, into the US) +
-  sometimes TRIANGULATION trip(s) (US-to-US legs) + a SOUTHBOUND trip (back to Laredo/Mexico). That is
-  why each signed AlwaysTrack doc lists 2–3 loads: those are the LEGS of one tour.
-- **HOS makes a weekly settlement IMPOSSIBLE.** A driver has 70 hours / 8 days and must take a 34-hour
-  reset. A tour runs as long as the round trip takes around that reset — it never lines up with a
-  calendar week. NEVER group or compare settlements by week/date-window.
+- **A settlement IS a tour. A tour IS a settlement.** Same thing. Identity = the AlwaysTrack 4-digit
+  document number (`source_document_ref`). Never invent a second object.
+- **Shape:** usually a NORTHBOUND load (starts Laredo) + optional TRIANGULATION load(s) (US↔US) + a
+  SOUTHBOUND load (home). That is why each signed AlwaysTrack doc lists 1–N loads — those are the
+  LEGS of one tour/settlement.
+- **Owner 2026-09-24 edge cases (not defects):**
+  - Sometimes **only 1 load** (local movement or NB alone).
+  - If the truck **broke down**, the tour may have **no SB** — still a valid (open/incomplete) tour.
+  - An SB may **deliver in another city**; the truck still ends in Laredo via **deadhead miles**.
+  - Duration is **usually ~1 week**, but **can last more than a week** when triangulation loads extend
+    the tour. Measured Aug 2026 stop-span: avg 7.7d, max 40d. Never force a calendar-week bucket.
+- **HOS makes a fixed weekly settlement IMPOSSIBLE.** A driver has 70 hours / 8 days and must take a
+  34-hour reset. A tour runs as long as the round trip takes around that reset — it never lines up
+  with a calendar week. NEVER group or compare settlements by week/date-window as the identity.
 - **Bill per LOAD** (`driver_finance.driver_bills`, one bill per load, numbered by load #, gross =
   the load's fixed fee from `accounting.bills.amount_cents`). **Multiple per-load bills aggregate into
   ONE settlement (the trip/tour).** Worked example in blueprint §3: Mecor, 3 loads → 1 settlement.
