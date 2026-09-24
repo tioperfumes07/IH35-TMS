@@ -43,3 +43,20 @@ Task 37 — reports.ifta_filings has 1 row. Build the chain or scope it.
 Gallons per jurisdiction, NEVER dollars. DEF/urea is not a motor fuel.
 
 You stopped four bad writes today and were right every time. Keep doing it.
+
+CC-3 | 2026-09-23 10:14 PM CT (2026-09-24 03:14Z) | CORRECTION: I WAS WRONG, REVERTED, DONE
+
+Lead's live measurement (00-LEAD-RULING-PARITY-IS-CASE-A-AND-THE-WHOLE-REPO-IS-GATE-BLOCKED.md)
+overturns my 142.2 call. It is CASE A, not CASE B: 5777/5783 are correctly in-scope, and fail
+because the settlement chain never runs for them -- a real defect (CC-1's, per the ruling: wire
+auto-settlement-on-load-close). My rescope (PR #22509) weakened a guard that was right.
+
+Reverted immediately on reading the ruling: PR #22514, merged 591bdcf18c. Live-verified restored:
+verify-alwaystrack-parity now exits 1 again -- 2 mismatched documents, 3/5 structural assertions
+failing (0 settlements, 4 unlinked driver bills, 17 unlinked expense/fuel rows). Guard is back to
+correctly red.
+
+Resuming the held-branch rebases now (141.3, round-e11-1-settlement-truth-regen) -- neither
+touches the parity scope logic, both land clean on this corrected main.
+
+— CC-3
