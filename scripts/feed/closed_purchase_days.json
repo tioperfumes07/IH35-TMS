@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-24T13:08:32Z",
+  "updated": "2026-09-24T13:18:23Z",
   "law": "LAW-2026-09-24-FARO-PURCHASE-DAY-FEED-NO-DEVIATION / Round 152.1",
   "note": "Contiguous closed prefix only. A day is closed only when LIVE Faro advances cover every day_control inv and purchase/escrow/discount/net_adv tie (not control-as-measured).",
   "closed_purchase_days": [
@@ -10,6 +10,7 @@
     "2026-08-14",
     "2026-08-17",
     "2026-08-18",
-    "2026-08-19"
+    "2026-08-19",
+    "2026-08-21"
   ]
 }
