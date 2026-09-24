@@ -16,6 +16,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { CreateSettlementDeductionDrawer } from "./components/CreateSettlementDeductionDrawer";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { settlementLabel } from "../../lib/settlementNumber";
 
 const EMPTY_FILTERS = { driverId: "" };
 
@@ -114,7 +115,24 @@ export function PendingSettlementDeductionsPanel() {
         ),
     },
     { key: "load_number", label: "Load", sortable: true, render: (row) => row.load_id ? <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} /> : "—" },
-    { key: "applied_to_settlement_display_id", label: "Settlement", sortable: true, render: (row) => row.applied_to_settlement_id ? <EntityLink kind="settlement" id={row.applied_to_settlement_id} label={entityLabel(row.applied_to_settlement_display_id, row.applied_to_settlement_id, "Settlement")} /> : "—" },
+    {
+      // ACCT-F20260911 (Q22, CC-2): rewired through settlementLabel() so the systemwide law's static
+      // check can see it — the value is unchanged, already source_document_ref (deductions.routes.ts:139
+      // aliases applied_to_settlement_display_id AS s.source_document_ref, never the retired display_id).
+      key: "applied_to_settlement_display_id",
+      label: "Settlement / Presettlement",
+      sortable: true,
+      render: (row) =>
+        row.applied_to_settlement_id ? (
+          <EntityLink
+            kind="settlement"
+            id={row.applied_to_settlement_id}
+            label={settlementLabel({ source_document_ref: row.applied_to_settlement_display_id })}
+          />
+        ) : (
+          "—"
+        ),
+    },
     { key: "status", label: "Status", sortable: true, render: (row) => <StatusBadge status={row.status} /> },
     { key: "remaining_balance_cents", label: "Amount", sortable: true, cellClass: "text-right font-semibold text-red-700", render: (row) => formatUsdCents(row.remaining_balance_cents ?? row.amount_cents) },
   ], []);
