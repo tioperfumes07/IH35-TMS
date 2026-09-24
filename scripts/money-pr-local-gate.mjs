@@ -385,6 +385,10 @@ const LIVE_DOMAIN_GUARDS = [
   // this domain is touched, same as every other LIVE_DOMAIN_GUARDS entry.
   ["verify-master-data-protected", ["db/migrations/", "scripts/ops/"]],
   [
+    "verify-loves-geofences-seeded",
+    ["scripts/verify-loves-geofences-seeded.mjs", "scripts/ops/loves-604-geofences-seed.ts", "db/migrations/"],
+  ],
+  [
     "verify-void-is-whole",
     ["apps/backend/src/accounting/", "apps/backend/src/driver-finance/", "apps/backend/src/factoring/", "apps/backend/src/fuel/", "db/migrations/", "scripts/purge/"],
   ],

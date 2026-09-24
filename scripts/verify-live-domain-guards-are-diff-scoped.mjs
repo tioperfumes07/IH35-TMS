@@ -55,6 +55,10 @@ export function findUnscopedLiveDomainGuardRuns(source) {
   if (ANTI_PATTERN_RE.test(source)) {
     problems.push('found "process.env.DATABASE_URL || touched" — a live-domain guard can still run on an untouched diff purely because a live DB is set');
   }
+  const GLOBAL_LIVE_DB_OR_SCOPE_RE = /^\s*if\s*\(\s*process\s*\.\s*env\s*\.\s*DATABASE_URL\s*\|\|\s*touches[A-Za-z]+Path\s*\(\s*\)\s*\)/m;
+  if (GLOBAL_LIVE_DB_OR_SCOPE_RE.test(source)) {
+    problems.push("a live DB alone can still trigger a diff-scoped global guard outside LIVE_DOMAIN_GUARDS");
+  }
   // The loop must gate `runNode(rel)` behind `if (touched)` alone, and fail closed (not skip) when
   // DATABASE_URL is absent for a touched domain.
   const loopMatch = source.match(/for\s*\(\s*const\s*\[\s*name\s*,\s*domainPaths\s*\]\s*of\s*LIVE_DOMAIN_GUARDS\s*\)\s*\{[\s\S]*?\n\}/);
@@ -89,6 +93,11 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
 `;
   const badProblems = findUnscopedLiveDomainGuardRuns(bad);
   if (badProblems.length === 0) failures.push("findUnscopedLiveDomainGuardRuns did not flag the bad (OR-with-DATABASE_URL) fixture");
+
+  const badGlobal = `${bad}\nif (process.env.DATABASE_URL || touchesMoneyPath()) { runNode("live.mjs"); }`;
+  if (!findUnscopedLiveDomainGuardRuns(badGlobal).some((p) => p.includes("diff-scoped global guard"))) {
+    failures.push("global DATABASE_URL-or-touched-path mutation escaped detection");
+  }
 
   const good = `
 const LIVE_DOMAIN_GUARDS = [["x", ["apps/backend/src/x/"]]];
