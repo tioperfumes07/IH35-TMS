@@ -1,9 +1,11 @@
 # OUTBOX-CURSOR
 
-**2026-09-24T13:25Z** · Round 152.1 / Rule 52 · Tier C
+**2026-09-24T13:40Z** · Round 152.1 / Rule 52 · Tier C
 
-Contiguous LIVE closed through **8/28**. STOP at 8/31 — LIVE FA missing inv **39,40**.
+Contiguous LIVE closed through **8/31**.
 
-Closed this pass: 8/18, 8/19, 8/21 (inv18 fed), 8/24, 8/26, 8/28.
+- Faro purchase days: LIVE tied (FA + FARO_FEES → verify-feed-day)
+- Cost side sample LIVE (fuel + driver bill) on fed loads: tying settlement
+- close-faro-day load gate still declaration-based (measureFromControl) — not full LIVE cost audit yet
+- NEXT: 9/1
 
-NEXT: feed inv 39+40 → close 8/31.
