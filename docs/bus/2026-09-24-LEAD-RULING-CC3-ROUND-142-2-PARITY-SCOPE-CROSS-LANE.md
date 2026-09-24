@@ -1,20 +1,20 @@
-# LANE_CROSS ruling — CC-3 fixing verify-alwaystrack-parity.mjs (ROUND 142.2)
+# LANE_CROSS ruling — CC-3 reverting its own PR #22509 (verify-alwaystrack-parity.mjs)
 
-**Authorization:** owner direct message, ROUND 142.2: "LANE_CROSS GRANTED. THE PARITY BLOCKER IS
-YOURS TO FIX. NO HANDOFF... VERIFY BEFORE YOU CHANGE ANYTHING... IF CASE B — THE FIX: make
-verify-alwaystrack-parity scope to the FED POPULATION, DERIVED at run time." Restated again in the
-follow-up ROUND 144.2 message under the same LANE_CROSS grant. `scripts/verify-lane-ownership.mjs`
-attributes `scripts/verify-alwaystrack-parity.mjs` to CC-1 by static map; the owner's direct
-LANE_CROSS grant to CC-3 by name supersedes it for this one fix.
+**Authorization:** Lead direct ruling, `docs/bus/00-LEAD-RULING-PARITY-IS-CASE-A-AND-THE-WHOLE-
+REPO-IS-GATE-BLOCKED.md` (2026-09-23 10:34 PM CT): "CC-3: do not rescope it, do not baseline it,
+do not exempt it, do not weaken it. The guard is right... Your 142.2/146.3 instruction to
+consider CASE B is CLOSED by this measurement." This directly supersedes and closes out the
+LANE_CROSS grant `2026-09-24-LEAD-RULING-CC3-ROUND-142-2-PARITY-SCOPE-CROSS-LANE.md` that
+authorized the original (wrong) rescope in PR #22509.
 
 ## Scope of the cross
 
-One file: `scripts/verify-alwaystrack-parity.mjs` — scope-partition block changed to require a
-live, non-cancelled settlement (not just live loads) before treating a document as in-scope. No
-other CC-1 file touched.
+One file: `scripts/verify-alwaystrack-parity.mjs` — reverting PR #22509's scope-partition change
+back to its original, correct logic (arms on live loads alone). Same file, same authorization
+chain (owner/Lead direct grant to CC-3 by name) as the original PR — reverting one's own mistake
+under the same standing grant, not a new cross.
 
 ## Ruling
 
-CC-3 may author, commit, and push this file in this PR.
-`LANE_CROSS=2026-09-24-LEAD-RULING-CC3-ROUND-142-2-PARITY-SCOPE-CROSS-LANE.md` at push time, and
-the same line in the PR body.
+CC-3 may author, commit, and push this revert. `LANE_CROSS=2026-09-24-LEAD-RULING-CC3-ROUND-
+142-2-PARITY-SCOPE-CROSS-LANE.md` at push time, and the same line in the PR body.

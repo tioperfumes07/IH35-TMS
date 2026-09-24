@@ -250,36 +250,16 @@ async function live() {
     // D input — moved after in-scope scoping (see below) — must use inScopeLoadNumbers.
 
     // ── Partition documents: IN SCOPE vs SKIPPED (NOT FED YET) ───────────────────────────
-    // ROUND 142.2 (owner ruling, 2026-09-24) — "every load is live" alone is NOT the fed
-    // population. docs/bus/00-FEED-MANIFEST.md's own chain is explicit: "load -> load_stops ->
-    // proforma invoice -> invoice -> driver bill -> expenses -> fuel -> settlement (only when its
-    // full load set is fed) -> factoring advance LAST" — settlement is the LAST step before
-    // factoring, not a byproduct of load creation. Live-verified 2026-09-24 (CASE B, established
-    // before touching this file, not guessed): documents 5777/5783's loads (13519/13521/13535/
-    // 13537) all exist, created within the last hour, driver bills exist for all four with
-    // settled_in_settlement_id NULL on every one — and driver_finance.driver_settlements has ZERO
-    // rows for USMCA, system-wide, right now. No document's settlement step has run yet for
-    // ANYONE. A document whose loads landed but whose settlement genuinely has not been created
-    // is NOT fully fed — it is mid-chain, the exact "loads landed before the chain's later steps
-    // caught up" shape this session already fixed for verify-pl-cost-of-revenue.mjs (Q31) and
-    // verify-control-totals.mjs's own EMPTY BY PURGE arm. The fix here is the same population-
-    // check shape as parity's own load-liveness check, not a flag/env var/date/hand-kept list —
-    // it arms itself, document by document, the moment each one's settlement actually posts, and
-    // NEVER excuses a document once its settlement exists (assertions A/C/D still run for real,
-    // hard, zero-tolerance, the instant scope includes it).
     const inScopeDocs = [];
     const skippedDocs = [];
     for (const target of documents) {
       const loads = target.loads ?? [];
-      const allLoadsLive = loads.length > 0 && loads.every((n) => liveLoadNumbers.has(n));
-      const hasLiveSettlement = (settlementsByDoc.get(target.doc) ?? []).some((c) => c.status !== "cancelled");
-      if (allLoadsLive && hasLiveSettlement) {
+      const allLive = loads.length > 0 && loads.every((n) => liveLoadNumbers.has(n));
+      if (allLive) {
         inScopeDocs.push(target);
-      } else if (!allLoadsLive) {
-        const missing = loads.filter((n) => !liveLoadNumbers.has(n));
-        skippedDocs.push({ doc: target.doc, missing, reason: "missing loads" });
       } else {
-        skippedDocs.push({ doc: target.doc, missing: [], reason: "loads live, settlement not yet posted" });
+        const missing = loads.filter((n) => !liveLoadNumbers.has(n));
+        skippedDocs.push({ doc: target.doc, missing });
       }
     }
 
@@ -312,8 +292,7 @@ async function live() {
 
     // ── Print SKIPPED documents (NOT FED YET) ───────────────────────────────────────────
     for (const s of skippedDocs) {
-      const detail = s.missing.length > 0 ? `missing loads: ${s.missing.join(",")}` : s.reason;
-      console.log(`${s.doc}: SKIPPED — NOT FED YET (${detail})`);
+      console.log(`${s.doc}: SKIPPED — NOT FED YET (missing loads: ${s.missing.join(",")})`);
     }
 
     // ── Scope line — printed EVERY run, always ─────────────────────────────────────────
