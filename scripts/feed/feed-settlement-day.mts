@@ -35,6 +35,7 @@ import { registerFuelTransactionsRoutes } from "../../apps/backend/src/fuel/fuel
 import { searchVendorsForAutocomplete } from "../../apps/backend/src/mdata/vendor-autocomplete.shared.js";
 import { postFuelExpenseFromEvent } from "../../apps/backend/src/accounting/fuel-posting/poster.service.js";
 import { postLoadRevenueLatch } from "../../apps/backend/src/accounting/revrec-delivery-posting/poster.service.js";
+import { ensureSettlementFromFedBills, closeFedSettlementIfRequested } from "../../apps/backend/src/feed/ensure-settlement-from-fed-bills.service.js";
 
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const OWNER = "e4117991-d2c0-406d-8cda-74e98d95bccd";
@@ -769,6 +770,69 @@ async function main() {
     const report = await feedOne(app, rec, ctrl, siblingCustomer(rec));
     for (const line of report) console.log(" ", line);
   }
+
+  // ROUND 152.1 — settlements MUST mint from fed bills (owner: automatic from data fed in).
+  // Group this day's loads by AlwaysTrack settlement_doc_no; close only when period is pure-Aug
+  // (period_end < Sep 1). Aug–Sep span docs stay open.
+  const byDoc = new Map<string, FeedRec[]>();
+  for (const r of records) {
+    const k = String(r.settlement_doc_no);
+    const list = byDoc.get(k) ?? [];
+    list.push(r);
+    byDoc.set(k, list);
+  }
+  for (const [documentNumber, loads] of byDoc) {
+    const driver_name = loads[0]!.driver_name;
+    const driverId = DRIVER_BY_NAME[driver_name];
+    if (!driverId) {
+      console.log(`SETTLEMENT ${documentNumber}: SKIP unmapped driver ${driver_name}`);
+      continue;
+    }
+    const periodDates = loads.flatMap((l) => [l.period_start, l.period_end]).sort();
+    const periodStart = periodDates[0]!;
+    const periodEnd = periodDates.at(-1)!;
+    const close = periodEnd < "2026-09-01";
+    console.log(`\n=== SETTLEMENT ${documentNumber} ${close ? "CLOSE" : "OPEN"} ===`);
+    try {
+      const minted = await withCurrentUser(OWNER, async (c) => {
+        await setScopedCompanyContext(c, OWNER, USMCA);
+        return ensureSettlementFromFedBills(c as never, {
+          operatingCompanyId: USMCA,
+          actorUserId: OWNER,
+          doc: {
+            documentNumber,
+            driverId,
+            periodStart,
+            periodEnd,
+            loadNumbers: loads.map((l) => l.load_number),
+            close,
+          },
+        });
+      });
+      const closed = await closeFedSettlementIfRequested({
+        operatingCompanyId: USMCA,
+        actorUserId: OWNER,
+        settlementId: minted.settlementId,
+        documentNumber: minted.documentNumber,
+        close: minted.closeRequested,
+      });
+      const warnings = [...minted.warnings, ...closed.warnings];
+      console.log(
+        `  settl=${minted.settlementId} status=${closed.status || minted.status} bills=${minted.billsLinked} ` +
+          `posted=${closed.settlementPosted} je=${closed.journalEntryId ?? "—"}` +
+          (warnings.length ? ` WARN=${warnings.join(" | ")}` : "")
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      // Zero-pay docs (all loads driver_pay=0) legitimately have no bills — log, do not abort day.
+      if (msg.includes("no_bills_for_settlement") || (e as { code?: string })?.code === "no_bills_for_settlement") {
+        console.log(`  SKIP ${documentNumber}: no driver bills (zero-pay loads)`);
+        continue;
+      }
+      throw e;
+    }
+  }
+
   console.log(`\nDONE settlement day ${day} n=${records.length}`);
   await app.close?.();
 }
