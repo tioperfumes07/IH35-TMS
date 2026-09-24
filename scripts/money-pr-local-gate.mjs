@@ -592,6 +592,16 @@ const LIVE_DOMAIN_GUARDS = [
       "docs/bus/",
     ],
   ],
+  // ROUND 140.6 (DEVIN-B): bank match/suggest path is read-only. GET never writes,
+  // bank_transactions count is derived and asserted unchanged, zero JEs from suggest/candidate paths.
+  [
+    "verify-bank-match-suggest-is-read-only",
+    [
+      "apps/backend/src/accounting/bank-recon/",
+      "banking.bank_transactions",
+      "accounting.journal_entries",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {
