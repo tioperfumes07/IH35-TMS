@@ -47,6 +47,16 @@ const MATCHED_COLUMN_BY_KIND: Partial<Record<LedgerEntryKind, string>> = {
   expense: "matched_expense_id",
 };
 
+// ROUND 141.4 — A kind that findCandidates can RETURN but that cannot be accepted
+// (not in PERSISTABLE_MATCH_KINDS) must be explicitly declared here with a reason.
+// This prevents the defect where 'bill' was queried as a candidate, rendered, was
+// selectable, and accept threw match_kind_not_acceptable:bill — the owner would have
+// walked into a wall. No third state: every returnable kind is EITHER persistable OR
+// view-only-declared. Guard: scripts/verify-every-match-kind-is-acceptable-or-declared.mjs
+export const VIEW_ONLY_MATCH_KINDS: Partial<Record<LedgerEntryKind, string>> = {
+  bill: "Open bills are shown as candidates so the user can see them, but accepting a bill payment with no GL JE is an orphan write — Part 2b (BLOCK-02 CHAIN-04), still gated. Accept throws match_kind_not_acceptable:bill by design.",
+};
+
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
 };
