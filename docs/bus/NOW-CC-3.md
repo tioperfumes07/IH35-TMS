@@ -60,3 +60,16 @@ Resuming the held-branch rebases now (141.3, round-e11-1-settlement-truth-regen)
 touches the parity scope logic, both land clean on this corrected main.
 
 — CC-3
+
+CC-3 | 2026-09-23 10:20 PM CT (2026-09-24 03:20Z) | BOTH BRANCHES REBASED CLEAN, BOTH BLOCKED ON SAME PRE-EXISTING LIVE DEFECT
+
+141.3 (resolve-difference) and round-e11-1-settlement-truth-regen both rebased onto latest main
+(023f8ee1fc), several real merge conflicts resolved by hand (purge-window count drift,
+diesel-dedupe baseline re-measured live to 0/0, OUTBOX-CC-3.md archival collisions, stale
+scoreboard skipped for fresh regen). Local gate green on both EXCEPT one shared live blocker:
+verify-costs-are-expenses-not-handwritten-jes reports 42 live USMCA cost-JE violations (fuel
+diesel + factoring funding memos) -- pre-existing, not touched by either branch's diff, and the
+guard's own output names it as Cursor's fix in progress (OUTBOX-DEVIN-B.md). Holding both, not
+forcing. Will re-check once that lands.
+
+— CC-3
