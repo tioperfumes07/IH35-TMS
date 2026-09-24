@@ -390,6 +390,8 @@ export type SeedSettlementDocumentInput = {
   actorUserId: string;
   companyDoc: TruthCompanyDoc;
   driverDoc: TruthDriverDoc | null;
+  /** Gate-B sample tag — bound from the caller, never hardcoded. Defaults to false (real data). */
+  is_sample_data?: boolean;
 };
 
 export type SeedSettlementDocumentResult = {
@@ -498,6 +500,10 @@ async function seedLoad(
     load_number: planLoad.loadNumber,
     notes: `AlwaysTrack seed — settlement ${plan.documentNumber} (${plan.startDate}..${plan.endDate})`,
     is_sample_data: false,
+    // ROUND 143.3 — linkage written at creation, not backfilled. Every one of the 89 is a Faro
+    // purchase, so every load carries the Faro Factoring vendor at creation. The load records
+    // who bought it, so a cost or a receivable can be attributed without reconstructing it later.
+    factoring_company_vendor_id: "a1f4c2b6-8e35-4f91-9c2d-6b7a58e0f3c4",
     charges: planLoad.invoiceLines.map((line, i) => ({
       code: `LINE-${i + 1}`,
       description: `${line.item} — ${line.description}`,
@@ -657,9 +663,11 @@ async function seedExpense(
   const expense = await client.query<{ id: string }>(
     `INSERT INTO accounting.expenses (
        operating_company_id, expense_number, vendor_uuid, driver_uuid, transaction_date,
-       total_amount_cents, memo, load_id, status, posting_status, created_by_user_id, updated_by_user_id, is_sample_data
+       total_amount_cents, memo, load_id, status, posting_status, created_by_user_id, updated_by_user_id, is_sample_data,
+       trailer_id, unit_id
      )
-     SELECT $1::uuid, $2, $3::uuid, d.id, $4::date, $5, $6, $7::uuid, 'draft', 'unposted', $8::uuid, $8::uuid, false
+     SELECT $1::uuid, $2, $3::uuid, d.id, $4::date, $5, $6, $7::uuid, 'draft', 'unposted', $8::uuid, $8::uuid, false,
+            l.assigned_trailer_id, l.assigned_unit_id
        FROM mdata.loads l JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
       WHERE l.id = $7::uuid
      RETURNING id::text`,
@@ -708,7 +716,10 @@ async function seedFuel(
   operatingCompanyId: string,
   actorUserId: string,
   loadId: string,
-  line: SeedPlanLoad["fuelLines"][number]
+  line: SeedPlanLoad["fuelLines"][number],
+  driverId: string | null,
+  unitId: string | null,
+  trailerId: string | null
 ): Promise<{ fuelTransactionId: string; postedAt: string; amountCents: number }> {
   const rowHash = `alwaystrack:${operatingCompanyId}:${loadId}:${line.date}:${line.vendor}:${line.invoice}`;
   const existing = await client.query<{ id: string }>(
@@ -719,15 +730,18 @@ async function seedFuel(
 
   const vendorId = await resolveByName(client, "mdata.vendors", "name", operatingCompanyId, line.vendor).catch(() => null);
 
+  // ROUND 143.3 — linkage written at creation, not backfilled. Every fuel transaction carries
+  // the load's driver, unit, and trailer, so a fuel purchase can be costed to a truck and a
+  // driver without reconstructing it from memory later.
   const inserted = await client.query<{ id: string }>(
     `INSERT INTO fuel.fuel_transactions (
        operating_company_id, transaction_at, purchased_at, load_id, vendor_id, fuel_type,
        gallons, total_cost, location_city, transaction_reference, source, source_row_hash,
-       created_by_user_id, updated_by_user_id
+       created_by_user_id, updated_by_user_id, driver_id, unit_id, trailer_id
      )
-     VALUES ($1::uuid, $2::date, $2::date, $3::uuid, $4::uuid, 'diesel', $5, $6, $7, $8, 'import', $9, $10::uuid, $10::uuid)
+     VALUES ($1::uuid, $2::date, $2::date, $3::uuid, $4::uuid, 'diesel', $5, $6, $7, $8, 'import', $9, $10::uuid, $10::uuid, $11::uuid, $12::uuid, $13::uuid)
      RETURNING id::text`,
-    [operatingCompanyId, line.date, loadId, vendorId, line.gallons, line.amountCents / 100, line.location, line.invoice, rowHash, actorUserId]
+    [operatingCompanyId, line.date, loadId, vendorId, line.gallons, line.amountCents / 100, line.location, line.invoice, rowHash, actorUserId, driverId, unitId, trailerId]
   );
   return { fuelTransactionId: inserted.rows[0].id, postedAt: line.date, amountCents: line.amountCents };
 }
@@ -743,18 +757,19 @@ async function seedDriverSettlement(
   operatingCompanyId: string,
   actorUserId: string,
   plan: SeedPlan,
-  driverBillIds: string[]
+  driverBillIds: string[],
+  isSampleData: boolean
 ): Promise<string> {
   const driverId = await resolveByName(client, "mdata.drivers", "full_name", operatingCompanyId, plan.driverName);
 
   const settlement = await client.query<{ id: string }>(
     `INSERT INTO driver_finance.driver_settlements (
        operating_company_id, display_id, driver_id, period_start, period_end, status,
-       net_pay, source_document_ref, created_by_user_id
+       net_pay, source_document_ref, created_by_user_id, is_sample_data
      )
-     VALUES ($1::uuid, $2, $3::uuid, $4::date, $5::date, 'approved', 0, $6, $7::uuid)
+     VALUES ($1::uuid, $2, $3::uuid, $4::date, $5::date, 'approved', 0, $6, $7::uuid, $8)
      RETURNING id::text`,
-    [operatingCompanyId, `S-${plan.documentNumber}`, driverId, plan.startDate, plan.endDate, plan.documentNumber, actorUserId]
+    [operatingCompanyId, `S-${plan.documentNumber}`, driverId, plan.startDate, plan.endDate, plan.documentNumber, actorUserId, isSampleData]
   );
   const settlementId = settlement.rows[0].id;
 
@@ -821,6 +836,16 @@ export async function seedSettlementDocument(
     const loadId = await seedLoad(client, operatingCompanyId, actorUserId, plan, planLoad);
     loadIds[planLoad.loadNumber] = loadId;
 
+    // ROUND 143.3 — resolve the load's driver, unit, and trailer for fuel/expense linkage.
+    const linkage = await client.query<{ driver_id: string | null; unit_id: string | null; trailer_id: string | null }>(
+      `SELECT assigned_primary_driver_id::text AS driver_id, assigned_unit_id::text AS unit_id, assigned_trailer_id::text AS trailer_id
+         FROM mdata.loads WHERE id = $1::uuid`,
+      [loadId]
+    );
+    const driverId = linkage.rows[0]?.driver_id ?? null;
+    const unitId = linkage.rows[0]?.unit_id ?? null;
+    const trailerId = linkage.rows[0]?.trailer_id ?? null;
+
     const invoiceId = await seedInvoice(client, operatingCompanyId, actorUserId, loadId, planLoad);
     invoiceIds[planLoad.loadNumber] = invoiceId;
 
@@ -834,7 +859,7 @@ export async function seedSettlementDocument(
       expenseIds.push(expenseId);
     }
     for (const fuelLine of planLoad.fuelLines) {
-      fuelTransactions.push(await seedFuel(client, operatingCompanyId, actorUserId, loadId, fuelLine));
+      fuelTransactions.push(await seedFuel(client, operatingCompanyId, actorUserId, loadId, fuelLine, driverId, unitId, trailerId));
     }
 
     // GL — existing poster only, in-transaction (AP side of expenses). postSourceTransactionInClientTx
@@ -849,7 +874,7 @@ export async function seedSettlementDocument(
     }
   }
 
-  const settlementId = await seedDriverSettlement(client, operatingCompanyId, actorUserId, plan, Object.values(driverBillIds));
+  const settlementId = await seedDriverSettlement(client, operatingCompanyId, actorUserId, plan, Object.values(driverBillIds), input.is_sample_data ?? false);
 
   await seedFactoringAdvancePlaceholder();
 
