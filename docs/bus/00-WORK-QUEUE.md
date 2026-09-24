@@ -94,7 +94,7 @@ Never work in the shared main checkout.
       611 live today; this protects finished work from a future purge.
 [CODEX 2026-09-24T01:25:00Z] Q15 GUARD  verify-no-capability-regression.mjs — 14 capabilities; fail on
       missing symbol, moved file, OR duplicate definition.
-[ ] Q16 GUARD  verify-no-driver-merge-without-hard-identifier.mjs
+[CC-3 2026-09-24T01:16:32Z] Q16 GUARD  verify-no-driver-merge-without-hard-identifier.mjs
 [DONE CC-1 2026-09-23T23:49:16Z, PR #22467 -- built and merged earlier this round (TASK 27), already live and self-arming] Q17 GUARD  verify-settled-load-carries-settled-status.mjs
 
 # P1 — DISPATCH / READ PATH
@@ -123,7 +123,7 @@ Never work in the shared main checkout.
       fix any booking/creation path leaving tour_id null.
 
 # P2 — ACCOUNTING ENGINES
-[CC-3 2026-09-23T23:55:36Z] Q24 ACCOUNTING  Task 17 — deductions.routes.ts + settlement voids through
+[DONE CC-3 2026-09-24T01:16:32Z, NO PR -- ALREADY DONE, confirmed live, verified not built] Q24 ACCOUNTING  Task 17 — deductions.routes.ts + settlement voids through
       the EXISTING dispatcher (all five engines). Never a sixth.
 [CC-2 2026-09-24T01:06:00Z] Q25 BANKING  Task 16 — banking /void routes through that same dispatcher.
       BUILT + TESTED, pushing now: apps/backend/src/accounting/void-document.service.ts
