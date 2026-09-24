@@ -1,9 +1,10 @@
 {
-  "updated": "2026-09-24T06:10:41Z",
+  "updated": "2026-09-24T06:19:50Z",
   "law": "LAW-2026-09-24-FARO-PURCHASE-DAY-FEED-NO-DEVIATION / Round 152.1",
   "note": "verify-one-load-create-path live-outcome half only asserts loads whose Faro purchase day is listed here as closed. Empty = self-arming (no outcomes owed yet). Append ISO date YYYY-MM-DD when feed_cursor closes that purchase day with all gates exit 0.",
   "closed_purchase_days": [
     "2026-08-10",
-    "2026-08-11"
+    "2026-08-11",
+    "2026-08-12"
   ]
 }
