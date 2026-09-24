@@ -1,33 +1,35 @@
 # NOW — CC-1
 
-CC-1 | 2026-09-23 9:55 PM CT (2026-09-24 02:55Z) | ROUND 145.1 ITEMS A+B — DONE, LIVE, REPORTED
+CC-1 | 2026-09-23 10:02 PM CT (2026-09-24 03:02Z) | ITEM C — TRUE ROOT CAUSE FOUND, REPORTING BEFORE BUILDING
 
-Owner ruling adopted (reverses my own earlier GAP-0 posting-path guess — noted, corrected before any
-code shipped on the wrong side): expense posts, fuel transaction never does.
+## FINDING (verified live, not guessed): Gap 1 and Gap 2 share ONE root cause, and Gap 2's part must land first.
+The credit side is already correct — payment_account_uuid on these expenses already resolves to a
+REAL card (checked one live: "Dreamline Diesel Card Payable", 2510, CreditCard subtype) — the
+posting engine already does DR fuel/expense / CR the real card exactly as ruled. Proved it live
+(rehearsal-branch call, real success, real JE, real card as the credit).
 
-## ITEM A — the 10 original fuel_event JEs. DONE, no action needed.
-Live query, all 10: `voided_at IS NULL`, every one carries a real `reversed_by_je_id` pointing at a
-real, separate reversing JE (10 originals + 10 reversals = 20 lines, matches the audit's own count).
-Before: 10 originals sum $7,250.20 debit (matches the session's own known figure). After: fully
-offset by 10 real reversing JEs, net $0.00 on 5000 today. This is the documented Option-1
-reversing-entry model (journal-entries.service.ts: a posted JE is never mutated/flipped — a status
-flip would silently drop it from every GL report filtering status<>'voided'), already re-confirmed
-correct once tonight (Q37). Nothing to void — they are already, genuinely reversed. No live money on
-the old fuel_event JEs.
+The actual blocker is ACC-50's tour-open gate (isLoadTourOpen,
+apps/backend/src/accounting/tour-open-gate.service.ts): a load's tour counts as open when it has
+`driver_finance.driver_bills -> settlement_lines -> driver_settlements` with a CLOSED status, OR
+"no settlement linked yet" = open. Live right now: `driver_settlements = 0` for USMCA. Every single
+load's tour reads as open — not because any tour is genuinely in progress, but because NOTHING in
+the current feed path creates the driver_settlements row + settlement_lines link at all. That is
+Gap 2's own subject matter (settlement-posting/settlement-bill-payment-posting.service.ts).
 
-## ITEM B — source_fuel_transaction_id linkage. DONE, live.
-Matched on load_id + vendor_id + purchase date + amount-to-the-cent (real keys, never guessed):
-  63 of 118 expenses matched 1:1 to a live fuel.fuel_transactions row. 0 ambiguous.
-  55 of 118 have no fuel origin (real non-fuel cost: tolls/lumper/etc.) — untouched.
-`source_fuel_transaction_id` written live on all 63. (Posted this same match+count in the prior
-GAP-0 report before the ruling landed — the link itself is correct and unaffected by which side
-posts; only my earlier posting-path guess was wrong, corrected above.)
+So: Item C (expenses post) cannot complete on its own — the SAME gate blocks driver bills (Gap 2)
+for the identical reason. Building a partial fix that only touches expenses would either (a) do
+nothing (still gated) or (b) require bypassing/loosening ACC-50, which is explicitly NOT the
+instruction. Reporting this dependency now rather than guessing past it or silently reordering.
 
-## NEXT — ITEM C, in progress
-Every expense must post AT CREATION, DR fuel/expense account, CR the real card (payment_account_uuid
-on the row) — not Undeposited Funds. Checking whether the existing posting engine's credit-side
-resolution already does this (payment_account_uuid IS already used as the credit account when set —
-confirmed present and non-null on the 63 fuel-linked rows) or whether the actual gap is purely the
-tour-open hold never releasing (found earlier: postHeldDocumentsForClosedTour exists, wired from the
-interactive settlement routes, never called from feed/seed-settlement-document.service.ts). Building
-now, guard next, deadline 10:00Z.
+## Not blocked, still moving: releasing the fix once a settlement exists.
+postHeldDocumentsForClosedTour() (tour-close-posting.service.ts) already does the exact release +
+post for BOTH expenses and driver bills once a tour closes, and is proven correct (wired from the
+interactive settlement routes). The moment a real driver_settlements row exists in a closed status
+for these loads, calling this one existing function releases and posts both Gap 1 and Gap 2 in the
+same step — still "no new GL math," still the existing poster.
+
+## Proposal, awaiting your call before I build it out of the stated order
+Building the settlement-creation piece (Gap 2's actual subject) as the enabling step for Item C,
+since the two are not separable at the root — OR hold Item C exactly as scoped (expense-only) and
+wait for Gap 2's own PR to create the first real settlement, then Item C's guard proves itself
+against that. Continuing to build toward the shared fix now; will not skip ahead without saying so.
