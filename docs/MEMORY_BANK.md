@@ -142,6 +142,17 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   (±$0.02). Do not invent a second `source_row_hash` path that re-inserts. Session mistake
   2026-09-24: re-feed wrote `alwaystrack-settl:` beside existing `alwaystrack:` rows — voided the
   duplicates; feeder now skips-on-amount before insert.
+- **AR $9,300 gap (13571+13574):** sent invoices with delivery evidence / `completed_docs_received`
+  but zero revrec latch rows. Invoice GL poster correctly refuses (`INVOICE_REVREC_LATCH_OWNS_LOAD`).
+  Fix = fire Event 1 earn + Event 2 bill via `postLoadRevenueLatch` (`scripts/feed/fire-revrec-bill-13571-13574.mts`).
+  Measured: AR gl=sub=$400,706.00, variance $0; `posted_without_posting` 0.
+- **AP tie-out:** expenses with vendor + no `payment_account_uuid` credit `ap_control` (poster
+  `expense_ap`). Health check must count those standing AP credits in the subledger alongside open
+  bills — do not invent duplicate bills for the same spend (owner matches bank to the expense doc).
+  Fixed in `ledger-financial-health.checks.ts` `assertApTieout`.
+- **Pure-Aug escrow TIE $875** (2026-09-24): released close-path excess on zero-AT docs; inserted
+  missing settlement_lines on 5769/13498 + 5775/13506; unwound duplicate ledger holds. CA pure-Aug
+  **TIES** $1,595.96 (CA-2026-0001…0007). Script: `scripts/feed/correct-aug-escrow-to-at.mts`.
 
 ## Known Quirks & Blockers
 

@@ -100,7 +100,15 @@ export async function assertArTieout(): Promise<void> {
   });
 }
 
-/** ledger.ap_tieout — GL ap_control vs open bill subledger (real rows only). */
+/**
+ * ledger.ap_tieout — GL ap_control vs open A/P subledger (real rows only).
+ *
+ * Subledger = open vendor bills PLUS expenses that posted the accrual credit
+ * (vendor set, no payment_account → CR ap_control). Measured 2026-09-24 USMCA:
+ * GL AP $2,976.63 was 60 expense AP credits with ZERO bills — bills-only subledger
+ * falsely red while the expense documents (owner bank-match targets) already held the
+ * liability. Do not invent duplicate bills for the same spend.
+ */
 export async function assertApTieout(): Promise<void> {
   await withHealthOpco(async (client) => {
     const apAccountId = await resolveRoleAccountOptional(client as never, HEALTH_LEDGER_OPCO, "ap_control");
@@ -117,7 +125,7 @@ export async function assertApTieout(): Promise<void> {
       `,
       [HEALTH_LEDGER_OPCO, apAccountId]
     );
-    const subRes = await client.query<{ cents: string | null }>(
+    const billRes = await client.query<{ cents: string | null }>(
       `
         SELECT COALESCE(SUM(ROUND((total_amount - COALESCE(paid_amount, 0)) * 100)), 0)::text AS cents
           FROM accounting.bills
@@ -128,14 +136,36 @@ export async function assertApTieout(): Promise<void> {
       `,
       [HEALTH_LEDGER_OPCO]
     );
+    // Accrual expenses (CR ap_control, no payment account) are open A/P until matched/paid.
+    const expenseApRes = await client.query<{ cents: string | null }>(
+      `
+        SELECT COALESCE(SUM(p.amount_cents), 0)::text AS cents
+          FROM accounting.journal_entry_postings p
+          JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+          JOIN accounting.expenses e
+            ON e.id::text = p.source_transaction_id
+           AND p.source_transaction_type = 'expense'
+         WHERE p.operating_company_id = $1::uuid
+           AND p.account_id = $2::uuid
+           AND p.debit_or_credit = 'credit'
+           AND je.status <> 'voided'
+           AND COALESCE(je.is_sample_data, false) = false
+           AND e.voided_at IS NULL
+           AND COALESCE(e.is_sample_data, false) = false
+           AND e.payment_account_uuid IS NULL
+      `,
+      [HEALTH_LEDGER_OPCO, apAccountId]
+    );
     const glCents = Number(glRes.rows[0]?.cents ?? 0);
-    const subCents = Number(subRes.rows[0]?.cents ?? 0);
+    const subCents = Number(billRes.rows[0]?.cents ?? 0) + Number(expenseApRes.rows[0]?.cents ?? 0);
     const diff = glCents - subCents;
     if (diff !== 0) {
       logger.error("health_ledger_ap_tieout", undefined, {
         opco: HEALTH_LEDGER_OPCO,
         gl_cents: glCents,
         subledger_cents: subCents,
+        bill_cents: Number(billRes.rows[0]?.cents ?? 0),
+        expense_ap_cents: Number(expenseApRes.rows[0]?.cents ?? 0),
         variance_cents: diff,
       });
       throw new HealthCheckError("ap_tieout_variance", `variance_cents=${diff}`);
