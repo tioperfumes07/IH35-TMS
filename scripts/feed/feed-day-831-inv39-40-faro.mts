@@ -357,9 +357,15 @@ async function feedOne(app: Awaited<ReturnType<typeof createIntegrationApp>>, LO
         WHERE id=$1::uuid AND operating_company_id=$4::uuid`,
       [created.id, `${LOAD.purchase_date}T18:00:00.000Z`, `Wire / Faro 08/31/26 inv ${LOAD.faro_inv}`, USMCA]
     );
+    // Faro Full Recourse V1 — stamp if create path left NULL (unassigned customer)
+    const FARO_PROFILE = "40b3690b-f1d4-44b4-90cf-c1cfd4f79c33";
     await c.query(
-      `UPDATE accounting.invoices SET factoring_status='advanced', updated_at=now(), updated_by_user_id=$2::uuid WHERE factoring_advance_id=$1::uuid`,
-      [created.id, OWNER]
+      `UPDATE accounting.invoices
+          SET factoring_status='advanced',
+              factor_profile_id=COALESCE(factor_profile_id, $3::uuid),
+              updated_at=now(), updated_by_user_id=$2::uuid
+        WHERE factoring_advance_id=$1::uuid`,
+      [created.id, OWNER, FARO_PROFILE]
     );
   });
 
