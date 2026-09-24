@@ -75,8 +75,10 @@ const LOAD = {
   factor_fee_pct: 1.5, // submit estimate; funding_figures corrects
   expected_purchase_cents: 360000,
   expected_reserve_cents: 5400, // Escrow Rsv $54
-  expected_fee_cents: 5400, // Discount $54
-  expected_ach_cents: 1000, // Wire $10
+  // Standing USMCA Faro row shape (LDT-4): factor_fee_cents = discount + wire; ach folded in.
+  // Matches FAC-2026-00001 / inv 12 / 19 pattern — advance+reserve+fee = purchase.
+  expected_fee_cents: 6400, // Discount $54 + Wire $10
+  expected_ach_cents: 0,
   expected_advance_cents: 348200, // Net Adv $3,482
   purchase_date: "2026-08-17",
 };
