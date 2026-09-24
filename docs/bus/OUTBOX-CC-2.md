@@ -5586,3 +5586,29 @@ untracked local state that could vanish under anyone at any time.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01Jc6h2LrzDTi8p2vk9NKUTm
+
+---
+
+## GATE-SCOPE-03 lost-update + external verify-pl-cost-of-revenue block — HOLDING THE PUSH
+
+**Lost update, disclosed and re-fixed:** GATE-SCOPE-03 (PR #22464, merged e71960a27e) was silently
+reverted by a concurrent PR (#22466, Claude-1/ROUND E11.3-R, merged 21:51:23Z, branched before
+#22464 landed) that also touched `scripts/money-pr-local-gate.mjs` — its squash-merge overwrote the
+fix with its own stale copy. Not deliberate, a genuine concurrent-edit collision. Re-applied
+identically on branch `cc2-gate-scope-03-refix`.
+
+**External blocker on the refix push, zero diff-overlap:** this refix touches only
+`scripts/money-pr-local-gate.mjs`, yet `verify-pl-cost-of-revenue.mjs` (pre-existing, ROUND 20.9,
+`alwaysRun: true` — runs whenever DATABASE_URL is set, by design, no coupled source path) FAILS
+live: "revenue has posted, but 3 carrier cost-of-revenue role(s) have NEVER posted: driver_pay_expense
+(6890), insurance_expense (5600), toll_scale_expense (5300)." Confirmed real, not a guard bug
+(direct query: 0 postings on all three accounts) and confirmed EXTERNAL: all 11 of USMCA's posted
+journal entries were created between 21:48:49Z and 22:06:31Z today — an 18-minute window, matching
+the live production re-feed campaign in progress (same one `PR #22466`'s
+`seed-settlement-document.routes.ts` and post-wipe baseline work belong to). Revenue has only just
+started posting fresh; the matching cost postings haven't landed yet in this same brief window.
+Holding the push per standing law — no bypass, no retry loop — will resend GATE-SCOPE-03-refix the
+moment this guard reads PASS.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LYVbEZDYyiNzr5MswCc1R7

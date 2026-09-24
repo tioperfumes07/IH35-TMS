@@ -16,6 +16,7 @@
  * Never `git commit --no-verify` / `git push --no-verify` (Rule 29).
  */
 import fs from "node:fs";
+import os from "node:os";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -538,13 +539,46 @@ function touchesMoneyPath() {
   return files.some((f) => MONEY_PATH_RE.test(f));
 }
 
+// E16.2 (owner, 2026-09-23 22:45 UTC) — gate slowness during a six-seat merge window was lock
+// contention, not a slow guard: every guard's live read was connecting as `neondb_owner`, which
+// contends for writer locks with the production feed. Every one of these guards is a read-only
+// check (SELECT / BEGIN READ ONLY / set_config bypass_rls) — none of them ever needs write
+// authority — so the gate defaults their DATABASE_URL to the `ih35_ci_readonly` role instead.
+// Read once, memoized, never logged (it's a live credential).
+const READONLY_DB_URL_FILE = path.join(os.homedir(), ".config/ih35/neon-prod-readonly.url");
+let cachedReadonlyDbUrl;
+function resolveGuardDatabaseUrl() {
+  if (cachedReadonlyDbUrl !== undefined) return cachedReadonlyDbUrl;
+  // An explicit env var always wins — lets a seat without the file (or CI, which injects its own
+  // scoped secret) opt in without touching this file.
+  if (process.env.DATABASE_URL_READONLY) {
+    cachedReadonlyDbUrl = process.env.DATABASE_URL_READONLY;
+    return cachedReadonlyDbUrl;
+  }
+  try {
+    const val = fs.readFileSync(READONLY_DB_URL_FILE, "utf8").trim();
+    cachedReadonlyDbUrl = val || undefined;
+  } catch {
+    cachedReadonlyDbUrl = undefined;
+  }
+  // No readonly credential available locally — fall back to whatever DATABASE_URL the caller
+  // already set (unchanged behavior; never block a seat that hasn't fetched the readonly role yet).
+  return cachedReadonlyDbUrl ?? process.env.DATABASE_URL;
+}
+
 function runNode(rel, extraEnv = {}, args = []) {
   const script = path.join(ROOT, rel);
   console.log(`[${LABEL}] RUN ${rel}${args.length ? ` ${args.join(" ")}` : ""}`);
+  const env = { ...process.env, ...extraEnv };
+  // Only override when a live DB is actually in play (DATABASE_URL set) and the caller didn't
+  // already pin a specific connection string via extraEnv (e.g. a test harness).
+  if (env.DATABASE_URL && !extraEnv.DATABASE_URL) {
+    env.DATABASE_URL = resolveGuardDatabaseUrl();
+  }
   const res = spawnSync(process.execPath, [script, ...args], {
     cwd: ROOT,
     encoding: "utf8",
-    env: { ...process.env, ...extraEnv },
+    env,
   });
   const out = `${res.stdout ?? ""}${res.stderr ?? ""}`.trim();
   if (out) console.log(out);
@@ -640,43 +674,63 @@ function acceptedAsEmptyByPurge(rel, code) {
   return true;
 }
 
-// 03c — control totals against LIVE production. Skipped only when DATABASE_URL is absent AND this
-// PR touches no money path (apps/backend/src/{accounting,banking,factoring,driver-finance,mdata}/**
-// or db/migrations/**). Touching a money path with no DATABASE_URL is NOT a skip — the guard's own
-// script refuses outright ("Refusing to pass a money gate that never ran"), which is correct: an
-// operator working a money path must have prod access wired before this gate can pass.
-if (process.env.DATABASE_URL || touchesMoneyPath()) {
+// GATE-SCOPE-03-REFIX (self-discovered, 2026-09-23, second occurrence) — this exact fix was already
+// shipped once (PR #22464, merged e71960a27e) and was silently reverted by a lost-update race: a
+// concurrent PR (#22466, branched before #22464 landed) also touched this file and its merge
+// overwrote the fix with its own stale copy — nobody's fault, a real concurrent-edit collision, not
+// a deliberate revert. Re-applying the identical, already-proven pattern. These four checks all
+// used `if (process.env.DATABASE_URL || touchesXPath())`, so a live DB's mere presence ran them on
+// every push regardless of diff content — reproduced live a second time: this exact class blocked
+// an apps/frontend-only diff (FILTER-MULTI-01) on verify-alwaystrack-parity, zero backend/migration
+// paths touched. Gate purely on `touched`; a touched domain with no DATABASE_URL still fails closed
+// (ROUND 29.9-B). Kept as four separate inline blocks (not a shared helper) —
+// verify-purge-window-exemption.mjs counts a literal source-text pattern in this file as proof the
+// purge exemption is still wired at exactly 4 named sites; a shared helper collapses that count.
+
+// 03c — control totals against LIVE production.
+if (touchesMoneyPath()) {
+  if (!process.env.DATABASE_URL) {
+    console.error(
+      `\n${LABEL}: FAIL — scripts/verify-control-totals.mjs (03c) — this diff touches a money path ` +
+        `but DATABASE_URL is not set. A touched live-domain guard with no DB is a FAIL, never a skip (ROUND 29.9-B).\n`,
+    );
+    process.exit(1);
+  }
   const code = runNode("scripts/verify-control-totals.mjs");
   if (code !== 0 && !acceptedAsEmptyByPurge("scripts/verify-control-totals.mjs", code)) {
     failStep("verify-control-totals (03c)");
     process.exit(code);
   }
 } else {
-  const msg = "verify-control-totals.mjs (03c) — no DATABASE_URL and no money path in this diff";
+  const msg = "verify-control-totals.mjs (03c) — no money path in this diff";
   console.log(`[${LABEL}] SKIP ${msg}`);
   skippedLiveChecks.push(msg);
 }
 
 // ROUND 23.3 SUPPLEMENT (owner/Lead, 2026-09-13) — the master AlwaysTrack parity guard, proves the
-// WHOLE ingest chain against prod. P0 (2026-09-22): moved OUT of the unconditional STEPS array
-// above (where it used to silently skip-pass with no DATABASE_URL, masking a real, pre-existing
-// 34-of-34-document mismatch) and into this SAME conditional 03c already uses — a non-money push
-// is never blocked by it; a money-relevant push with no DATABASE_URL correctly fails, never skips.
-if (process.env.DATABASE_URL || touchesMoneyPath()) {
+// WHOLE ingest chain against prod.
+if (touchesMoneyPath()) {
+  if (!process.env.DATABASE_URL) {
+    console.error(
+      `\n${LABEL}: FAIL — scripts/verify-alwaystrack-parity.mjs — this diff touches a money path but ` +
+        `DATABASE_URL is not set. A touched live-domain guard with no DB is a FAIL, never a skip (ROUND 29.9-B).\n`,
+    );
+    process.exit(1);
+  }
   const code = runNode("scripts/verify-alwaystrack-parity.mjs");
   if (code !== 0 && !acceptedAsEmptyByPurge("scripts/verify-alwaystrack-parity.mjs", code)) {
     failStep("verify-alwaystrack-parity");
     process.exit(code);
   }
 } else {
-  const msg = "verify-alwaystrack-parity.mjs — no DATABASE_URL and no money path in this diff";
+  const msg = "verify-alwaystrack-parity.mjs — no money path in this diff";
   console.log(`[${LABEL}] SKIP ${msg}`);
   skippedLiveChecks.push(msg);
 }
 
-// Lead ROUND 48 (2026-09-22): one fuel purchase, one posting. Moved out of the unconditional STEPS
-// array, where it skip-passed without DATABASE_URL. fuel/ is not in touchesMoneyPath() but a fuel
-// change is exactly what can post a second copy of a purchase, so this check keys on its own paths.
+// Lead ROUND 48 (2026-09-22): one fuel purchase, one posting. fuel/ is not in touchesMoneyPath()
+// but a fuel change is exactly what can post a second copy of a purchase, so this check keys on
+// its own paths.
 function touchesFuelOrExpensePath() {
   const res = spawnSync("git", ["diff", "--name-only", "origin/main...HEAD"], { cwd: ROOT, encoding: "utf8" });
   if ((res.status ?? 1) !== 0) return false;
@@ -684,36 +738,45 @@ function touchesFuelOrExpensePath() {
   const FUEL_EXPENSE_RE = /^(apps\/backend\/src\/(accounting|fuel)\/|db\/migrations\/)/;
   return files.some((f) => FUEL_EXPENSE_RE.test(f));
 }
-if (process.env.DATABASE_URL || touchesFuelOrExpensePath()) {
+if (touchesFuelOrExpensePath()) {
+  if (!process.env.DATABASE_URL) {
+    console.error(
+      `\n${LABEL}: FAIL — scripts/verify-diesel-expense-fuel-dedupe.mjs — this diff touches its ` +
+        `fuel/accounting/migration domain but DATABASE_URL is not set. A touched live-domain guard ` +
+        `with no DB is a FAIL, never a skip (ROUND 29.9-B).\n`,
+    );
+    process.exit(1);
+  }
   const code = runNode("scripts/verify-diesel-expense-fuel-dedupe.mjs");
   if (code !== 0) {
     failStep("verify-diesel-expense-fuel-dedupe");
     process.exit(code);
   }
 } else {
-  const msg = "verify-diesel-expense-fuel-dedupe.mjs — no DATABASE_URL and no accounting/fuel/migration path in this diff";
+  const msg = "verify-diesel-expense-fuel-dedupe.mjs — no accounting/fuel/migration path in this diff";
   console.log(`[${LABEL}] SKIP ${msg}`);
   skippedLiveChecks.push(msg);
 }
 
 // Lead ruling 4-of-4 (2026-09-22) — shrink-only ceiling ratchet, baseline 76: USMCA
 // fuel.fuel_transactions rows still carrying the raw Relay bridge token (transaction_reference LIKE
-// 'txn_%') instead of a real, vendor-matched reference. Freezes growth, target 0. Same conditional
-// shape as verify-alwaystrack-parity above (NOT the unconditional STEPS array) — this guard uses
-// requireLiveDbOrExit() internally and fails closed whenever it actually runs (ROUND 29.9-B: a live
-// money guard that cannot connect is a FAIL, never a pass), so it must only be forced to run when
-// this push is money-relevant or a live DB is already available — putting a fail-closed guard in
-// the unconditional STEPS array would make DATABASE_URL mandatory for every push in the repo,
-// which would also compound the already-known, already-worsened verify-alwaystrack-parity block
-// (docs/bus/OUTBOX-CC-1.md, 2026-09-23) onto pushes that have nothing to do with fuel.
-if (process.env.DATABASE_URL || touchesMoneyPath()) {
+// 'txn_%') instead of a real, vendor-matched reference.
+if (touchesMoneyPath()) {
+  if (!process.env.DATABASE_URL) {
+    console.error(
+      `\n${LABEL}: FAIL — scripts/verify-fuel-relay-txn-vendor-unmatched.mjs — this diff touches a ` +
+        `money path but DATABASE_URL is not set. A touched live-domain guard with no DB is a FAIL, ` +
+        `never a skip (ROUND 29.9-B).\n`,
+    );
+    process.exit(1);
+  }
   const code = runNode("scripts/verify-fuel-relay-txn-vendor-unmatched.mjs");
   if (code !== 0) {
     failStep("verify-fuel-relay-txn-vendor-unmatched");
     process.exit(code);
   }
 } else {
-  const msg = "verify-fuel-relay-txn-vendor-unmatched.mjs — no DATABASE_URL and no money path in this diff";
+  const msg = "verify-fuel-relay-txn-vendor-unmatched.mjs — no money path in this diff";
   console.log(`[${LABEL}] SKIP ${msg}`);
   skippedLiveChecks.push(msg);
 }

@@ -143,6 +143,20 @@ async function main() {
 
   const outcomes = await mapPool(files, 16, (f) => runsExit0(f, env));
 
+  // GATE-F005-B (2026-09-23) — a timeout under the 16-way concurrent pool is not proof of a real
+  // hang: live-verified verify-coa-canonical.mjs / verify-draft-load-saves-and-is-visible.mjs /
+  // verify-no-capability-regression.mjs all exit correctly (fast, non-zero) in 1-5s each when run
+  // standalone with the identical stripped env — the 8s timeout was only blown under concurrent
+  // CPU/IO contention from 16 simultaneous node+git subprocesses on a shared dev machine with
+  // several seats' agents running at once, not a defect in any of the 3 guards. Re-run any timed-out
+  // file ONE more time, serially (no contention), before treating it as a genuine hang — this does
+  // not loosen what's being asserted (a real hang still fails; the 8s-per-file bound is unchanged),
+  // it only removes false failures caused by the test harness's own concurrency, not the guard.
+  const retryIdx = outcomes.map((o, i) => (o.timedOut ? i : -1)).filter((i) => i !== -1);
+  for (const i of retryIdx) {
+    outcomes[i] = await runsExit0(files[i], env);
+  }
+
   files.forEach((f, i) => {
     const { exit0, timedOut: to, note } = outcomes[i];
     if (to) { timedOut.push({ f, note }); return; }
