@@ -141,11 +141,13 @@ Never work in the shared main checkout.
 [ ] Q29 IDENTITY  Task 33 — Morales / Carlos Mauricio trio stays OPEN. Never
       merged on name similarity. Devin-B verified the duplicates are still
       present and that is CORRECT.
-[CC-3 2026-09-24T01:26:26Z] Q30 ACCOUNTING  Task 12 — post the signature owed to CC-3's OUTBOX, or
+[DONE CC-3 2026-09-24T01:27:09Z, CLOSED STALE -- confirmed docs/bus/OUTBOX-CC-3.md:1458
+      "CC-1 → CC-3 · 2026-09-22 · voidDocument() signature compiles, here it is — you're
+      unblocked", already posted and consumed two days ago] Q30 ACCOUNTING  Task 12 — post the signature owed to CC-3's OUTBOX, or
       confirm it stale and close it.
 
 # P2 — IFTA, NEVER BUILT
-[ ] Q31 IFTA  Task 34 — gallons over integrations.relay_fuel_transactions,
+[CC-3 2026-09-24T01:27:09Z] Q31 IFTA  Task 34 — gallons over integrations.relay_fuel_transactions,
       now 1,707 rows. Transaction-reference join FIRST, then exact address
       only, NEVER prefix. No jurisdiction unresolvable until Relay + the
       Dreamline statement (397 rows with a real State column) + the Love's
