@@ -22,8 +22,8 @@ const LABEL = "verify-loves-geofences-seeded";
 // This checks data-linkage COMPLETENESS (every Love's location has a linked active geofence), not
 // a dollar amount or a GL routing decision -- a silent offline skip cannot mask money moving
 // incorrectly, only delay noticing a missing location/geofence link until DB access exists.
-export const ALLOW_OFFLINE_SKIP =
-  "location/geofence linkage completeness check, no money movement or GL routing involved";
+export const REQUIRES_LIVE_DB =
+  "master-data completeness guard; missing DB access is a failure, never a green skip";
 
 /**
  * @param {Array<{id: string, location_code: string}>} locations - mdata.locations rows with
@@ -32,8 +32,15 @@ export const ALLOW_OFFLINE_SKIP =
  *   rows with external_source = 'loves_import'
  * @returns {string[]} problems, empty when everything is seeded and linked correctly
  */
-export function checkLovesGeofencesSeeded(locations, geofences) {
+export function checkLovesGeofencesSeeded(locations, geofences, minimum = 604) {
   const problems = [];
+
+  if (locations.length < minimum) {
+    problems.push(`Love's location population ${locations.length} is below required floor ${minimum}`);
+  }
+  if (geofences.length < minimum) {
+    problems.push(`Love's geofence population ${geofences.length} is below required floor ${minimum}`);
+  }
 
   const activeGeofencedLocationIds = new Set(
     geofences.filter((g) => g.is_active && g.location_ref_id).map((g) => g.location_ref_id)
@@ -57,6 +64,19 @@ export function checkLovesGeofencesSeeded(locations, geofences) {
     );
   }
 
+  const unstatedRadius = geofences.filter(
+    (g) =>
+      !Number.isFinite(Number(g.radius_m)) ||
+      Number(g.radius_m) <= 0 ||
+      !Number.isFinite(Number(g.enter_radius_m)) ||
+      Number(g.enter_radius_m) <= 0 ||
+      !Number.isFinite(Number(g.exit_radius_m)) ||
+      Number(g.exit_radius_m) <= 0
+  );
+  if (unstatedRadius.length > 0) {
+    problems.push(`${unstatedRadius.length} Love's geofence row(s) have no complete positive radius declaration`);
+  }
+
   return problems;
 }
 
@@ -66,11 +86,11 @@ function selftest() {
     { id: "loc-2", location_code: "LOVES-225" },
   ];
   const goodGeofences = [
-    { location_ref_id: "loc-1", is_active: true },
-    { location_ref_id: "loc-2", is_active: true },
+    { location_ref_id: "loc-1", is_active: true, radius_m: 200, enter_radius_m: 200, exit_radius_m: 350 },
+    { location_ref_id: "loc-2", is_active: true, radius_m: 200, enter_radius_m: 200, exit_radius_m: 350 },
   ];
 
-  const goodProblems = checkLovesGeofencesSeeded(goodLocations, goodGeofences);
+  const goodProblems = checkLovesGeofencesSeeded(goodLocations, goodGeofences, 2);
   if (goodProblems.length) {
     console.error(`${LABEL} SELFTEST FAIL — known-good fixture flagged: ${goodProblems.join("; ")}`);
     process.exit(1);
@@ -79,8 +99,8 @@ function selftest() {
   // RED CASE 1: a location with no linked active geofence at all (the geofence for loc-2 is
   // missing entirely -- e.g. the seed script died partway through, as it did once live this pass
   // on the very first --execute attempt, before the source-check constraint fix).
-  const missingGeofence = [{ location_ref_id: "loc-1", is_active: true }];
-  const problems1 = checkLovesGeofencesSeeded(goodLocations, missingGeofence);
+  const missingGeofence = [goodGeofences[0]];
+  const problems1 = checkLovesGeofencesSeeded(goodLocations, missingGeofence, 2);
   if (!problems1.some((p) => p.includes("LOVES-225"))) {
     console.error(`${LABEL} SELFTEST FAIL — missing-geofence regression escaped detection`);
     process.exit(1);
@@ -89,10 +109,10 @@ function selftest() {
   // RED CASE 2: an inactive geofence does not count as "linked" (is_active=false must not
   // silently satisfy the check).
   const inactiveGeofence = [
-    { location_ref_id: "loc-1", is_active: true },
-    { location_ref_id: "loc-2", is_active: false },
+    goodGeofences[0],
+    { ...goodGeofences[1], is_active: false },
   ];
-  const problems2 = checkLovesGeofencesSeeded(goodLocations, inactiveGeofence);
+  const problems2 = checkLovesGeofencesSeeded(goodLocations, inactiveGeofence, 2);
   if (!problems2.some((p) => p.includes("LOVES-225"))) {
     console.error(`${LABEL} SELFTEST FAIL — inactive-geofence-counts-as-linked regression escaped detection`);
     process.exit(1);
@@ -100,17 +120,23 @@ function selftest() {
 
   // RED CASE 3: an orphan geofence with NULL location_ref_id -- floating, not linked.
   const orphan = [
-    { location_ref_id: "loc-1", is_active: true },
-    { location_ref_id: "loc-2", is_active: true },
-    { location_ref_id: null, is_active: true },
+    ...goodGeofences,
+    { ...goodGeofences[0], location_ref_id: null },
   ];
-  const problems3 = checkLovesGeofencesSeeded(goodLocations, orphan);
+  const problems3 = checkLovesGeofencesSeeded(goodLocations, orphan, 2);
   if (!problems3.some((p) => p.includes("NULL location_ref_id"))) {
     console.error(`${LABEL} SELFTEST FAIL — orphan-geofence regression escaped detection`);
     process.exit(1);
   }
 
-  console.log(`${LABEL} SELFTEST PASS — 3 regression mutations all detected, known-good fixture clean`);
+  const missingRadius = [{ ...goodGeofences[0], radius_m: null }, goodGeofences[1]];
+  const problems4 = checkLovesGeofencesSeeded(goodLocations, missingRadius, 2);
+  if (!problems4.some((p) => p.includes("radius declaration"))) {
+    console.error(`${LABEL} SELFTEST FAIL — missing-radius regression escaped detection`);
+    process.exit(1);
+  }
+
+  console.log(`${LABEL} SELFTEST PASS — 4 regression mutations all detected, known-good fixture clean`);
   process.exit(0);
 }
 
@@ -119,12 +145,12 @@ if (process.argv.includes("--selftest")) selftest();
 async function main() {
   const url = process.env.DATABASE_URL || process.env.DATABASE_DIRECT_URL || "";
   if (!url) {
-    console.log(`${LABEL}: SKIP (live check) — DATABASE_URL not set, not a pass or fail.`);
-    return 0;
+    console.error(`${LABEL}: FAIL — DATABASE_URL not set; live master-data guard fails closed.`);
+    return 1;
   }
   if (/-pooler\./.test(url)) {
-    console.log(`${LABEL}: SKIP (live check) — refusing a pooler endpoint.`);
-    return 0;
+    console.error(`${LABEL}: FAIL — refusing a pooler endpoint; direct read required.`);
+    return 1;
   }
 
   const { Client } = await import("pg");
@@ -132,9 +158,9 @@ async function main() {
   try {
     await client.connect();
   } catch (error) {
-    console.log(`${LABEL}: SKIP (live check) — database unreachable (${error.code ?? error.message}).`);
+    console.error(`${LABEL}: FAIL — database unreachable (${error.code ?? error.message}).`);
     await client.end().catch(() => {});
-    return 0;
+    return 1;
   }
 
   try {
@@ -146,7 +172,9 @@ async function main() {
       `SELECT id::text, location_code FROM mdata.locations WHERE location_code LIKE 'LOVES-%'`
     );
     const geofencesRes = await client.query(
-      `SELECT location_ref_id::text, is_active FROM geo.geofences WHERE external_source = 'loves_import'`
+      `SELECT location_ref_id::text, is_active, radius_m, enter_radius_m, exit_radius_m
+         FROM geo.geofences
+        WHERE external_source = 'loves_import'`
     );
     await client.query("ROLLBACK");
 

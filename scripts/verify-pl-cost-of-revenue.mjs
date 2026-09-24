@@ -226,16 +226,16 @@ async function auditLive(databaseUrl) {
          JOIN accounting.journal_entry_postings p ON p.account_id = a.id AND p.operating_company_id = r.operating_company_id
          JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
          LEFT JOIN LATERAL (
-           CASE p.source_transaction_type
+           SELECT CASE p.source_transaction_type
              WHEN 'load' THEN (SELECT l.id FROM mdata.loads l WHERE l.id::text = p.source_transaction_id AND l.operating_company_id = p.operating_company_id)
              WHEN 'fuel_event' THEN (SELECT ft.load_id FROM fuel.fuel_transactions ft WHERE ft.id::text = p.source_transaction_id AND ft.operating_company_id = p.operating_company_id)
              WHEN 'expense' THEN (SELECT e.load_id FROM accounting.expenses e WHERE e.id::text = p.source_transaction_id AND e.operating_company_id = p.operating_company_id)
              WHEN 'driver_bill' THEN (SELECT db.load_id FROM driver_finance.driver_bills db WHERE db.id::text = p.source_transaction_id AND db.operating_company_id = p.operating_company_id)
              WHEN 'bill' THEN (SELECT b.load_id FROM accounting.bills b WHERE b.id::text = p.source_transaction_id AND b.operating_company_id = p.operating_company_id)
              ELSE NULL
-           END
-         ) AS load_id ON true
-         JOIN mdata.loads l ON l.id = load_id AND l.operating_company_id = r.operating_company_id
+           END AS load_id
+         ) AS resolved_load ON true
+         JOIN mdata.loads l ON l.id = resolved_load.load_id AND l.operating_company_id = r.operating_company_id
         WHERE r.operating_company_id = $1 AND r.is_active = true AND r.role = ANY($2::text[])
           AND je.status <> 'void' AND je.voided_at IS NULL
           AND l.load_number = ANY($3::text[])
