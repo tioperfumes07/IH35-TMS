@@ -612,6 +612,16 @@ const LIVE_DOMAIN_GUARDS = [
       "banking.bank_transactions",
     ],
   ],
+  // ROUND 142.1 (DEVIN-B): the feed has no guard — arm it. Expected set derived from manifest,
+  // not hardcoded. Checks unstamped dates, duplicates, day mismatches, sample data. Prints progress.
+  [
+    "verify-feed-is-whole",
+    [
+      "apps/backend/src/accounting/factoring/",
+      "docs/bus/00-FEED-MANIFEST.md",
+      "accounting.factoring_advances",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {

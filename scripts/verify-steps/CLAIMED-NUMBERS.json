@@ -9069,5 +9069,10 @@
     "claimed_by": "devin-b",
     "claimed_at": "2026-09-24",
     "purpose": "verify-every-match-kind-is-acceptable-or-declared (ROUND 141.4, new guard)"
+  },
+  "11597": {
+    "claimed_by": "devin-b",
+    "claimed_at": "2026-09-24",
+    "purpose": "verify-feed-is-whole (ROUND 142.1, new guard)"
   }
 }
