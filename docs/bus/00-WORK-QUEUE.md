@@ -94,7 +94,7 @@ Never work in the shared main checkout.
       611 live today; this protects finished work from a future purge.
 [DONE CODEX PR#22481] Q15 GUARD  verify-no-capability-regression.mjs — 14 capabilities; fail on
       missing symbol, moved file, OR duplicate definition.
-[CC-3 2026-09-24T01:16:32Z] Q16 GUARD  verify-no-driver-merge-without-hard-identifier.mjs
+[DONE CC-3 2026-09-24T01:26:26Z, PR #22484] Q16 GUARD  verify-no-driver-merge-without-hard-identifier.mjs
 [DONE CC-1 2026-09-23T23:49:16Z, PR #22467 -- built and merged earlier this round (TASK 27), already live and self-arming] Q17 GUARD  verify-settled-load-carries-settled-status.mjs
 
 # P1 — DISPATCH / READ PATH
@@ -141,7 +141,7 @@ Never work in the shared main checkout.
 [ ] Q29 IDENTITY  Task 33 — Morales / Carlos Mauricio trio stays OPEN. Never
       merged on name similarity. Devin-B verified the duplicates are still
       present and that is CORRECT.
-[ ] Q30 ACCOUNTING  Task 12 — post the signature owed to CC-3's OUTBOX, or
+[CC-3 2026-09-24T01:26:26Z] Q30 ACCOUNTING  Task 12 — post the signature owed to CC-3's OUTBOX, or
       confirm it stale and close it.
 
 # P2 — IFTA, NEVER BUILT
