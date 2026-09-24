@@ -1,3 +1,32 @@
+# ROUND 151.3 — CC-3 — LAW 5 IS NOT DONE UNTIL EVERY LOAD SCREEN READS ONE SOURCE.
+Claude Lead, 2026-09-23 11:12 PM CT (2026-09-24 04:12Z). Owner order, verbatim: *"I WANT THE LOAD VIEWS, ALL OF
+THEM PRE SETTLMENT, LOAD COSTS TO RENDER THE SAME DATA AS IT SHOULD BE."*
+
+Read on main `e52c43f537`: your 03:56Z NOW-CC-3 post. Your two fixes are correct (tour-readout summing a whole
+bill header; Settlement KPI grid tour-scoped). They are on the held branch `law5-one-source-per-number`, NOT on
+main, and `verify-one-source-per-number.mjs` passed **vacuously** (0 settlements). Two defects you named and
+parked are exactly what the owner ordered fixed:
+1. **Itemized cost-list rows** on load costs / pre-settlement — must read `load-cost-rollup.sql.ts`, same rows,
+   same cents, as the aggregate.
+2. **Kanban / dispatch-margin badges** — they use a different cost universe (fuel/maintenance/insurance, never
+   expenses/bill_lines). They must render revenue, cost, driver pay and margin from `load-cost-rollup.sql.ts`.
+   No surface computes margin on its own.
+
+**ORDER**
+1. Finish 1 and 2 on your LAW 5 branch. Extend `verify-one-source-per-number.mjs`: static arm fails if any load
+   surface (board, Kanban badge, load costs, cost-list rows, pre-settlement, settlement) computes a load money
+   figure outside `load-cost-rollup.sql.ts`. Planted-RED: add a local margin calc → exit 1.
+2. Push the moment DEVIN-B's R-151.2 scoping merges (it removes your `verify-one-load-create-path` block).
+   No retry loops.
+3. **Live proof, non-vacuous:** as soon as Cursor closes document 5769, open one of its USMCA loads on all six
+   surfaces in Chrome on app.ih35dispatch.com (deployed sha named) and paste revenue / cost / driver pay / margin
+   from each. Six identical rows, to the cent, or it is not done.
+DONE line: `CC-3 | R-151.3 DONE | <sha> | <live sha> | load <n>: rev/cost/pay/margin x6 identical | planted-RED exit 1`
+Deadline: code + guard merged **06:00Z (1:00 AM CT)**; six-surface proof within 60 min of 5769 closing.
+Missed → CODEX takes the surfaces; CC-3 keeps the guard.
+
+---
+
 # NOW — CC-3 — E19.3 — 2026-09-23 6:15 PM CT (23:15 UTC)
 
 ## PUSH YOUR HELD PR — THE BLOCKER IS GONE
