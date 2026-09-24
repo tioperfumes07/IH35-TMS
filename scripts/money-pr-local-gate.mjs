@@ -106,6 +106,9 @@ const STEPS = [
   // `INSERT INTO mdata.loads` outside it, plus a by-symbol assertion the shared path still calls
   // every required INSERT/resolver/gate.
   ["verify-one-load-create-path", "scripts/verify-one-load-create-path.mjs"],
+  // DEVIN-B — seat distance from main. A branch too far from main is the
+  // class of defect that caused tonight's session. Static git guard, no DB.
+  ["verify-seat-distance-from-main", "scripts/verify-seat-distance-from-main.mjs"],
   // ROUND E15.7-R (DEVIN-B, task 47) — daily Relay deposit sync cron must exist and be wired.
   // POPULATION CHECK: cron absent → SKIPPED exit 0 (arms itself when CC-2 lands task 48);
   // cron present → assert daily + wired at boot, RED if broken. No .guard-exempt.json entry.

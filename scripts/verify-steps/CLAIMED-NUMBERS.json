@@ -9099,5 +9099,10 @@
     "claimed_by": "devin-b",
     "claimed_at": "2026-09-24",
     "purpose": "verify-trial-balance-and-balance-sheet (ROUND 143.2 Item 2)"
+  },
+  "11603": {
+    "claimed_by": "devin-b",
+    "claimed_at": "2026-09-24",
+    "purpose": "verify-seat-distance-from-main (seat distance from main)"
   }
 }

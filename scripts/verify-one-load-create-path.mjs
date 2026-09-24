@@ -28,10 +28,14 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+export const REQUIRES_LIVE_DB =
+  "mdata.loads + dispatch.load_charge_lines + driver_finance.driver_bills — outcome check must fail-closed";
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-one-load-create-path";
 const SRC_ROOT = path.join(ROOT, "apps", "backend", "src");
 const SHARED_PATH_FILE = path.join(SRC_ROOT, "dispatch", "book-load.service.ts");
+const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 // Shrink-only. Was 4 the day this guard was added (2026-09-22) -- the 4 files the ruling itself
 // named as offenders, confirmed live against this exact repo state. Lower this number only when a
@@ -165,6 +169,138 @@ export function check() {
   return { problems, offenderCount: offenders.length, offenders };
 }
 
+/**
+ * Live outcome check — asserts that the shared create path's side effects
+ * are actually PRESENT in live data, not just called in code. A path that
+ * calls every INSERT but produces no rows is a path that doesn't work.
+ *
+ * Checks (USMCA, non-voided, non-sample loads):
+ *  1. CHARGE_LINES: every load has at least one dispatch.load_charge_lines row.
+ *  2. FACTORING_VENDOR: every load has factoring_company_vendor_id set.
+ *  3. TOUR_LINK: every load has tour_id set (presettlement tour linkage).
+ *  4. DRIVER_BILLS: every load has at least one driver_finance.driver_bills row.
+ *
+ * Pure function — exported for selftest.
+ */
+export function classifyLoadOutcomes(input) {
+  const { totalLoads, loadsWithChargeLines, loadsWithFactoringVendor,
+    loadsWithTourLink, loadsWithDriverBills } = input;
+
+  const checks = [];
+  const problems = [];
+
+  // If no live loads, the guard is self-arming — out of scope, not a failure.
+  if (totalLoads === 0) {
+    return {
+      checks: [{ id: "OUTCOME", name: "SELF_ARMING", expected: "loads > 0", live: "0 loads (not fed yet)", pass: true }],
+      problems: [],
+      allPass: true,
+    };
+  }
+
+  // 1. CHARGE_LINES
+  const chargeGap = totalLoads - loadsWithChargeLines;
+  checks.push({
+    id: "CHARGE_LINES",
+    name: "CHARGE_LINES",
+    expected: `${totalLoads}/${totalLoads} loads with charge lines`,
+    live: `${loadsWithChargeLines}/${totalLoads} (${chargeGap} missing)`,
+    pass: chargeGap === 0,
+  });
+  if (chargeGap > 0) {
+    problems.push(`CHARGE_LINES_MISSING: ${chargeGap} of ${totalLoads} load(s) have no dispatch.load_charge_lines row. The shared create path calls INSERT INTO dispatch.load_charge_lines but the outcome is absent.`);
+  }
+
+  // 2. FACTORING_VENDOR
+  const vendorGap = totalLoads - loadsWithFactoringVendor;
+  checks.push({
+    id: "FACTORING_VENDOR",
+    name: "FACTORING_VENDOR",
+    expected: `${totalLoads}/${totalLoads} loads with factoring vendor`,
+    live: `${loadsWithFactoringVendor}/${totalLoads} (${vendorGap} missing)`,
+    pass: vendorGap === 0,
+  });
+  if (vendorGap > 0) {
+    problems.push(`FACTORING_VENDOR_MISSING: ${vendorGap} of ${totalLoads} load(s) have no factoring_company_vendor_id. The shared create path calls resolveFactoringVendorId but the outcome is absent.`);
+  }
+
+  // 3. TOUR_LINK
+  const tourGap = totalLoads - loadsWithTourLink;
+  checks.push({
+    id: "TOUR_LINK",
+    name: "TOUR_LINK",
+    expected: `${totalLoads}/${totalLoads} loads with tour link`,
+    live: `${loadsWithTourLink}/${totalLoads} (${tourGap} missing)`,
+    pass: tourGap === 0,
+  });
+  if (tourGap > 0) {
+    problems.push(`TOUR_LINK_MISSING: ${tourGap} of ${totalLoads} load(s) have no tour_id. The shared create path calls findOpenPresettlementTourForUnit but the outcome is absent.`);
+  }
+
+  // 4. DRIVER_BILLS
+  const billGap = totalLoads - loadsWithDriverBills;
+  checks.push({
+    id: "DRIVER_BILLS",
+    name: "DRIVER_BILLS",
+    expected: `${totalLoads}/${totalLoads} loads with driver bills`,
+    live: `${loadsWithDriverBills}/${totalLoads} (${billGap} missing)`,
+    pass: billGap === 0,
+  });
+  if (billGap > 0) {
+    problems.push(`DRIVER_BILLS_MISSING: ${billGap} of ${totalLoads} load(s) have no driver_finance.driver_bills row. The shared create path calls createDriverBillArtifacts but the outcome is absent.`);
+  }
+
+  return { checks, problems, allPass: problems.length === 0 };
+}
+
+/**
+ * Measure live load outcomes from the database. Read-only.
+ */
+export async function measureLoadOutcomes(client) {
+  await client.query("BEGIN");
+  await client.query("SELECT set_config('app.bypass_rls','lucia',false)");
+
+  const totalRes = await client.query(
+    `SELECT count(*)::int AS cnt FROM mdata.loads
+      WHERE operating_company_id = $1::uuid AND is_sample_data IS NOT TRUE AND voided_at IS NULL`,
+    [USMCA_COMPANY_ID],
+  );
+  const chargeRes = await client.query(
+    `SELECT count(*)::int AS cnt FROM mdata.loads l
+      WHERE l.operating_company_id = $1::uuid AND l.is_sample_data IS NOT TRUE AND l.voided_at IS NULL
+        AND EXISTS (SELECT 1 FROM dispatch.load_charge_lines lcl WHERE lcl.load_id = l.id)`,
+    [USMCA_COMPANY_ID],
+  );
+  const vendorRes = await client.query(
+    `SELECT count(*)::int AS cnt FROM mdata.loads l
+      WHERE l.operating_company_id = $1::uuid AND l.is_sample_data IS NOT TRUE AND l.voided_at IS NULL
+        AND l.factoring_company_vendor_id IS NOT NULL`,
+    [USMCA_COMPANY_ID],
+  );
+  const tourRes = await client.query(
+    `SELECT count(*)::int AS cnt FROM mdata.loads l
+      WHERE l.operating_company_id = $1::uuid AND l.is_sample_data IS NOT TRUE AND l.voided_at IS NULL
+        AND l.tour_id IS NOT NULL`,
+    [USMCA_COMPANY_ID],
+  );
+  const billRes = await client.query(
+    `SELECT count(*)::int AS cnt FROM mdata.loads l
+      WHERE l.operating_company_id = $1::uuid AND l.is_sample_data IS NOT TRUE AND l.voided_at IS NULL
+        AND EXISTS (SELECT 1 FROM driver_finance.driver_bills db WHERE db.load_id = l.id AND db.voided_at IS NULL)`,
+    [USMCA_COMPANY_ID],
+  );
+
+  await client.query("ROLLBACK");
+
+  return {
+    totalLoads: totalRes.rows[0].cnt,
+    loadsWithChargeLines: chargeRes.rows[0].cnt,
+    loadsWithFactoringVendor: vendorRes.rows[0].cnt,
+    loadsWithTourLink: tourRes.rows[0].cnt,
+    loadsWithDriverBills: billRes.rows[0].cnt,
+  };
+}
+
 function report({ problems, offenderCount, offenders }) {
   if (problems.length === 0) {
     console.log(
@@ -226,6 +362,42 @@ async function selftest() {
     failures.push("case4 FAIL — the offender-detection regex must match a planted direct INSERT INTO mdata.loads.");
   }
 
+  // case 5: outcome classifier — GREEN (all loads have all outcomes)
+  const greenOutcome = classifyLoadOutcomes({ totalLoads: 10, loadsWithChargeLines: 10, loadsWithFactoringVendor: 10, loadsWithTourLink: 10, loadsWithDriverBills: 10 });
+  if (!greenOutcome.allPass) {
+    failures.push(`case5 FAIL — GREEN outcome: expected all pass, got ${greenOutcome.problems}`);
+  }
+
+  // case 6: outcome classifier — RED (charge lines missing)
+  const redCharge = classifyLoadOutcomes({ totalLoads: 32, loadsWithChargeLines: 0, loadsWithFactoringVendor: 32, loadsWithTourLink: 32, loadsWithDriverBills: 30 });
+  if (redCharge.allPass || !redCharge.checks.find(c => c.id === "CHARGE_LINES").pass === false) {
+    failures.push("case6 FAIL — RED charge lines: expected CHARGE_LINES FAIL");
+  }
+
+  // case 7: outcome classifier — RED (factoring vendor missing)
+  const redVendor = classifyLoadOutcomes({ totalLoads: 32, loadsWithChargeLines: 32, loadsWithFactoringVendor: 0, loadsWithTourLink: 32, loadsWithDriverBills: 32 });
+  if (redVendor.allPass || redVendor.checks.find(c => c.id === "FACTORING_VENDOR").pass) {
+    failures.push("case7 FAIL — RED factoring vendor: expected FACTORING_VENDOR FAIL");
+  }
+
+  // case 8: outcome classifier — RED (tour link missing)
+  const redTour = classifyLoadOutcomes({ totalLoads: 32, loadsWithChargeLines: 32, loadsWithFactoringVendor: 32, loadsWithTourLink: 0, loadsWithDriverBills: 32 });
+  if (redTour.allPass || redTour.checks.find(c => c.id === "TOUR_LINK").pass) {
+    failures.push("case8 FAIL — RED tour link: expected TOUR_LINK FAIL");
+  }
+
+  // case 9: outcome classifier — RED (driver bills missing)
+  const redBills = classifyLoadOutcomes({ totalLoads: 32, loadsWithChargeLines: 32, loadsWithFactoringVendor: 32, loadsWithTourLink: 32, loadsWithDriverBills: 30 });
+  if (redBills.allPass || redBills.checks.find(c => c.id === "DRIVER_BILLS").pass) {
+    failures.push("case9 FAIL — RED driver bills: expected DRIVER_BILLS FAIL");
+  }
+
+  // case 10: outcome classifier — self-arming (0 loads = ok)
+  const emptyOutcome = classifyLoadOutcomes({ totalLoads: 0, loadsWithChargeLines: 0, loadsWithFactoringVendor: 0, loadsWithTourLink: 0, loadsWithDriverBills: 0 });
+  if (!emptyOutcome.allPass) {
+    failures.push("case10 FAIL — self-arming: 0 loads should PASS (out of scope)");
+  }
+
   fs.rmSync(tmpDir, { recursive: true, force: true });
   fs.rmSync(offenderDir, { recursive: true, force: true });
 
@@ -233,10 +405,39 @@ async function selftest() {
     for (const f of failures) console.error(`${LABEL} ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — well-formed fixture passes, missing-symbol/planted-offender fixtures are correctly caught, real repo carries every required call.`);
+  console.log(`${LABEL} SELFTEST PASS — well-formed fixture passes, missing-symbol/planted-offender fixtures are correctly caught, real repo carries every required call, outcome classifier 6/6 (GREEN + 4 RED + self-arming).`);
   return 0;
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  process.exit(process.argv.includes("--selftest") ? await selftest() : report(check()));
+  if (process.argv.includes("--selftest")) {
+    process.exit(await selftest());
+  }
+  // Static check
+  const staticResult = check();
+  const staticExit = report(staticResult);
+  if (staticExit !== 0) process.exit(staticExit);
+
+  // Live outcome check (requires DATABASE_URL)
+  const { requireLiveDbOrExit } = await import("./lib/require-live-db.mjs");
+  const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
+  let outcomes;
+  try {
+    outcomes = await measureLoadOutcomes(client);
+  } finally {
+    client.release();
+    await pool.end();
+  }
+  const { checks, problems, allPass } = classifyLoadOutcomes(outcomes);
+  console.log(`${LABEL}: live outcome check (USMCA, non-voided, non-sample)`);
+  for (const c of checks) {
+    const result = c.pass ? "PASS" : "FAIL";
+    console.log(`  ${c.id.padEnd(16)} ${c.name.padEnd(16)} expected ${c.expected.padEnd(30)} live ${c.live.padEnd(30)} ${result}`);
+  }
+  if (problems.length > 0) {
+    console.error(`${LABEL} FAIL — ${problems.length} outcome problem(s):\n` + problems.map((p) => `  ${p}`).join("\n"));
+    process.exit(1);
+  }
+  console.log(`${LABEL} OK — static path intact, live outcomes present.`);
+  process.exit(0);
 }
