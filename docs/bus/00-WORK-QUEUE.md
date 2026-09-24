@@ -86,7 +86,7 @@ Never work in the shared main checkout.
       not "fixed".
 [CODEX 2026-09-23T23:54:58Z] Q12 GUARD  verify-one-canonical-active-load-set.mjs — four-arm ratchet,
       selftest RED against current code first.
-[ ] Q13 GUARD  verify-load-costs-board-excludes-settled.mjs
+[CODEX 2026-09-24T00:30:00Z] Q13 GUARD  verify-load-costs-board-excludes-settled.mjs
 [ ] Q14 GUARD  verify-loves-geofences-seeded.mjs — assert >=604 Love's
       geofences + their mdata.locations halves + a stated radius each.
       611 live today; this protects finished work from a future purge.
