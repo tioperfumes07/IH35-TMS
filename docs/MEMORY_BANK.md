@@ -108,6 +108,29 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 
 ## Active Architectural Decisions
 
+### Active Architectural Decisions — Fed settlement auto-mint (Cursor, 2026-09-24 Round 152.1)
+
+- **Invoice vs driver-bill variance is NOT drift.** Day feed skips invoice when AlwaysTrack
+  `line_haul=0` and skips driver bill when `driver_pay=0`. Live measured: **13525** bill/no inv
+  (LH=$0); **13530** inv/no bill (pay=$0); **13501** inv/no bill (pay=$0, doc 5766). Same rule.
+- **Settlements did not auto-mint from historical feed** — `feed-settlement-day.mts` wrote loads /
+  invoices / bills only. Live auto-mint is `pingSettlementOnLoadEvent` on status transitions.
+  Company settlements mint only on driver close via `closeCompanySettlementAlongsideDriverSettlement`
+  inside `closeSettlementPayRun`.
+- **Fix (this session):** `ensureSettlementFromFedBills` + `closeFedSettlementIfRequested`
+  (`apps/backend/src/feed/ensure-settlement-from-fed-bills.service.ts`). Wired into
+  `feed-settlement-day.mts` after the per-load loop. Backfill script
+  `scripts/feed/mint-aug-settlements-from-fed-bills.mts`. Guard
+  `scripts/verify-feed-settlement-auto-mint.mjs`. TWO-PHASE: mint commits, then GL close (same
+  rule as `seedSettlementDocument` / `postGlForSeededDocument`).
+- **Live Aug 5769–5796 after mint:** 28 driver settlements (22 pure-Aug closed+posted with company
+  CS; 6 Aug–Sep SPAN left `open`, no company yet). Twin misattr bills re-homed to USMCA control
+  driver before mint (Alfonso TRANSP→USMCA; inverted 5779 period dates fixed via min/max of start+end).
+- **Still open:** 5769 / 5788 posted under twin-split gross (need reverse+repost after bill re-home);
+  healthz `ledger.ar_tieout` / `ap_tieout` still red; Faro self-carried AR (5) not yet done.
+
+## Known Quirks & Blockers
+
 - **Settlement identity (owner ruling 2026-09-07):** a settlement number IS a 4-digit AlwaysTrack
   document (e.g. 5786). Loads never carry an `S-` prefix. The DB `S-13xxx` / `S-137xx` values are an
   UNLINKED internal counter, NOT real settlements. Real USMCA driver settlements = **21 signed docs**
