@@ -229,8 +229,12 @@ async function main() {
     await withCurrentUser(OWNER, async (c) => {
       await setScopedCompanyContext(c, OWNER, USMCA);
       await c.query(
-        `UPDATE mdata.loads SET assigned_primary_driver_id=$1::uuid, updated_at=now() WHERE id=$2::uuid`,
-        [LOAD.driver_id, loadId]
+        `UPDATE mdata.loads
+            SET assigned_primary_driver_id=$1::uuid,
+                factoring_company_vendor_id=$2::uuid,
+                updated_at=now()
+          WHERE id=$3::uuid`,
+        [LOAD.driver_id, FARO_VENDOR, loadId]
       );
     });
 
