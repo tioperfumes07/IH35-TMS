@@ -18,7 +18,10 @@ const BYPASS = `WITH b AS MATERIALIZED (SELECT set_config('app.bypass_rls','luci
 const CHECKS = [
   {
     name: 'Driver settlements 5804-5815 net pay',
-    expect: 20191.07,
+    // AlwaysTrack settlement_control sum with 5812 at $0 (zero driver_pay / LH-only —
+    // finish-sep-close-failures.mts). Including AT's printed −$50 escrow on 5812 would be
+    // NET_PAY_NEGATIVE and is not collectable. 20241.07 = 20191.07 (formula incl. 5812=−50) + $50.
+    expect: 20241.07,
     // Transaction data the purge deletes. Inside a verified purge window, with no USMCA settlements
     // at all, this control is EMPTY BY PURGE (provisional per Round 86, re-priced once after day 1).
     emptyByPurgeWhenNoRows: 'driver_finance.driver_settlements',
