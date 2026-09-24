@@ -590,6 +590,8 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-bus-files-are-readable",
     [
       "docs/bus/",
+    ],
+  ],
   // ROUND 140.6 (DEVIN-B): bank match/suggest path is read-only. GET never writes,
   // bank_transactions count is derived and asserted unchanged, zero JEs from suggest/candidate paths.
   [
