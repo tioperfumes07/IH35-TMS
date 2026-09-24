@@ -78,7 +78,7 @@ Never work in the shared main checkout.
 [DONE DEVIN-A 2026-09-24T00:15:00Z, PR #22474] Q07 GUARD  verify-every-void-route-reverses.mjs
 [DONE DEVIN-A 2026-09-24T00:15:00Z, PR #22474] Q08 GUARD  verify-no-voided-doc-has-live-postings.mjs (baseline 0)
 [DONE DEVIN-A 2026-09-24T00:15:00Z, PR #22474] Q09 GUARD  verify-baselines-are-post-wipe.mjs
-[DEVIN-A 2026-09-24T00:16:00Z] Q10 GUARD  verify-no-stale-literals-in-guards.mjs — §9.0.17 sweep. Four
+[DONE DEVIN-A 2026-09-24T01:30:00Z, PR #22480] Q10 GUARD  verify-no-stale-literals-in-guards.mjs — §9.0.17 sweep. Four
       hardcoded-count defects surfaced today: 333-vs-92, fuel 589/$253,271.24,
       purge-window 9 then 11, and "47 documents". Allowlist only by
       `// STALE-LITERAL-OK: <reason>`.
@@ -163,7 +163,7 @@ Never work in the shared main checkout.
       and CC-2 idling on a dead signal.
       BUILT, rebasing onto Q38's now-committed bus files and pushing next on
       cc2-bus-channel-e13-2-r.
-[ ] Q35 REPORT  Walk EVERY module live in Chrome — dispatch, load costs,
+[DEVIN-A 2026-09-24T01:35:00Z] Q35 REPORT  Walk EVERY module live in Chrome — dispatch, load costs,
       loadboards, accounting, banking, fleet, maintenance, safety, reports.
       One finding per defect with a live screenshot and the measured number.
       File them; do not fix outside your lane. This queue never empties
