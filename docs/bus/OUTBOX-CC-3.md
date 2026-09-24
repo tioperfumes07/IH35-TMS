@@ -2402,3 +2402,30 @@ WORKORDERS); item 3's within-set 131-vs-171 shortfall not chased to a specific c
 likely explained by concurrent remediation, not confirmed.
 
 — CC-3
+
+## Q24 verified ALREADY DONE, no PR needed — deductions.routes.ts + settlement voids
+
+Read `apps/backend/src/driver-finance/deductions.routes.ts`,
+`settlement-deduction-void.service.ts`, `settlements.routes.ts`,
+`settlements-bulk.routes.ts`, `void-document-callees.service.ts` in full. Findings:
+
+- Settlement voids (single via `settlements.routes.ts` and bulk via
+  `settlements-bulk.routes.ts`) both correctly delegate to the SAME existing engine,
+  `reverseSettlementBillPaymentInClientTx` — no sixth engine invented, no duplicate logic
+  between the two routes.
+- Deduction voids deliberately call NONE of the five engines — by explicit, already-landed
+  owner ruling (`ACCT-SETL-DEDUCTION-VOID-DESIGN`, 2026-09-05: "why would I forgive the
+  debt") a deduction void never forgives/refunds/writes off, only changes WHEN money is
+  collected, never WHETHER — so an APPLIED deduction's void is correctly RECORD-ONLY (no
+  reversing JE, driver never credited back). This is NOT the defect the numbered work
+  register's Task 17 named ("an applied deduction is NEVER reversed") — that line predates
+  and contradicts the owner's own more authoritative ruling already built into the code.
+- Three guards already exist and pass live confirming exactly this:
+  `verify-settlement-deduction-void-branches.mjs` ("exactly the 3 owner-ruled branches..."),
+  `verify-deduction-void-never-forgives.mjs` ("void can never post a reversing JE..."),
+  `verify-settlement-void-cascade.mjs` ("real Owner/Accountant-gated reversal path, shared GL
+  engine...").
+
+Marked Q24 DONE in the work queue with no PR — there was nothing to build. Claimed Q16 next.
+
+— CC-3
