@@ -217,6 +217,12 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - `historical_backfill` cash advances skip the Active-status gate (Inactive/Probation drivers still owe documented advances).
 - Escrow ledger same-ms tie-break: guard uses `ctid DESC` (UUID id is not insertion order). Writer stamps `clock_timestamp()` on insert.
 
+### Active Architectural Decisions — Sep 5804–5815 AT net tie (Cursor, 2026-09-24)
+- **Control:** `verify-control-totals` expects **$20,241.07** for source_document_ref 5804–5815 (merged #22540). Formula = settlement_control driver_pay+tarp+extra_stop+other+reimb+escrow+admin+CA with **5812 at $0** (zero driver_pay / LH-only; AT −$50 escrow is not collectable — NET_PAY_NEGATIVE).
+- **Root cause of $17,090.82:** closed with `settlement_model=NULL` → flat $250 escrow; tarp/other/extra_stop never became `settlement_lines`; admin/CA missing. `closeSettlementPayRun` reads **header** `gross_pay`, not live lines — must `aggregateSettlementTotals` before close. After close, `stampTripClosedForBookendedSettlement` → `aggregateSettlementTotals` **wipes admin/CA from the header** (those live on deductions/advances, not lines) — always restamp header from pay-run breakdown.
+- **Completer:** `scripts/feed/tie-sep-5804-5815-to-at.mts` (maker≠checker reverse+reclose). Live proved each doc PASS; SUM=$20,241.07.
+- **Faro (live, same session):** 89 FA, zero_advance=0, advance_sum=$302,019.36 = day_control net_adv; day_control 23 days / purchase $311,587. Code for LDT-4 ach=0 + void DISTINCT still on `cursor/sep-settlement-complete-c89b` (parity gate red on 5769–5803 expenses/DRIVER_NET — pre-existing).
+
 ## Verify-step lane law (so the gate stops rejecting)
 
 - Cursor = EVEN numbers. CC-1 ≡1 (mod 4). CC-2 ≡3 (mod 4).
