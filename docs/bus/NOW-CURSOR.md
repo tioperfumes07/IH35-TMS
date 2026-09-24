@@ -1,6 +1,6 @@
 # NOW-CURSOR — 2026-09-24
 ## 13524 = $3,800 (rate con) — AT $4,200 was OUR misprint
-PDF `MPHC261334` LINE HAUL **$3,800** + Faro inv 16 **$3,800**. App already correct. Control/truth patched. Aug LH control=live **$189,569** (gap $0).
+PDF `MPHC261334` LINE HAUL **$3,800** + Faro inv 16 **$3,800**. App already correct. Control patched (truth file keeps AT misprint extract). Aug LH control=live **$189,569** (gap $0).
 
 ## Complete settlement seed (owner order)
 Company+driver settl → loads/expenses/fuel/deductions → CA linked to driver bill → Faro close → close pure-Aug settls (leave Aug–Sep open).

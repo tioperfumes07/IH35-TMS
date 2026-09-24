@@ -158,7 +158,7 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 ## Known Quirks & Blockers
 
 ### Active Architectural Decisions — Settlement feed / 13524 LH (Cursor, 2026-09-24)
-- **13524 LINE HAUL = $3,800** — rate confirmation `MPHC261334` + Faro purchase inv **16** both $3,800. AlwaysTrack company settlement 5778 showing **$4,200** was **our misprint**, not a customer dispute. Live app invoice/rate already $3,800 (correct). Control+truth JSON patched to 3800. LH Aug feed_input now ties control=live **$189,569**.
+- **13524 LINE HAUL = $3,800** — rate confirmation `MPHC261334` + Faro purchase inv **16** both $3,800. AlwaysTrack company settlement 5778 showing **$4,200** was **our misprint**, not a customer dispute. Live app invoice/rate already $3,800 (correct). `scripts/feed/settlement_control.json` patched to 3800 (authoritative for Aug LH tie). `data/alwaystrack/settlements-truth-*.json` keeps the AlwaysTrack-as-printed $4,200 extract — that file is the OCR of the misprint, not app truth; editing it also trips the fuel live-domain gate. LH Aug feed_input now ties control=live **$189,569**.
 - **Complete settlement seed order (owner):** company+driver settl docs → loads/expenses/fuel/deductions in order → cash advance = `createDriverCashAdvanceCore` with `linked_driver_bill_id` → Faro purchase closes invoices → close pure-Aug settlements; leave Aug–Sep span open.
 - **5778 proof:** escrow $25×2 on 13524/13525 + CA-2026-0001 $200 linked to bill 13524 (`scripts/feed/complete-settlement-5778.mts`).
 
