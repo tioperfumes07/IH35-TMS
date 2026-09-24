@@ -99,3 +99,32 @@ If a specific screen still shows the old behavior live, name the exact route+row
 today -- nothing reproduced this pass across the five REG-009-017 surfaces.
 
 — CC-3
+
+CC-3 | 2026-09-23 10:56 PM CT (2026-09-24 03:56Z) | LAW 5 BUILT + LIVE-VERIFIED. THREE BRANCHES, ONE SHARED HOLD.
+
+LAW 5 done: mapped all four screens (read-only, before any code change) -- five independent
+revenue/cost/driver-pay/margin formulas found across load board/load costs/pre-settlement/
+settlement, canonical is load-cost-rollup.sql.ts (money-contract, only 2 of 5+ consumers). Fixed
+the two highest-value defects: (1) tour-readout.routes.ts summed a bill's WHOLE HEADER TOTAL for
+any bill touching a load instead of the load-scoped bill_lines amount -- overstated cost on every
+multi-load bill, fixed to match canonical exactly, fixes both Pre-Settlement and Settlement
+screens from one change; (2) SettlementDetailPage's KPI grid read tour-scoped
+company_settlement.{revenue,margin}_cents while CompanyWaterfallSection a few tiles below the SAME
+page already used the company-scoped report -- now both read the same number. New guard
+verify-one-source-per-number.mjs: static regression lock (no route sums a bill header total as a
+load cost; KPI grid stays company-scoped) + live self-arming cross-check, LIVE PASS today (0
+divergent loads -- vacuous, matches 32-loads/0-settlements CASE A). Named, not fixed: the
+itemized cost-list rows (display-only, not the aggregate), and the Kanban/dispatch-margin badges'
+structurally different cost universe (fuel/maintenance/insurance, never expenses/bill_lines) --
+real follow-up, not a small fix.
+
+STATUS ACROSS ALL THREE HELD BRANCHES: gate-green except for pre-existing live-state gaps, none
+in my diffs, all tracing to the same CASE A root (feed/settlement chain incomplete):
+  - 141.3 (resolve-difference) + round-e11-1 (settlement-truth-regen): blocked on
+    verify-costs-are-expenses-not-handwritten-jes (42+ live violations, Cursor's fix in progress).
+  - law5-one-source-per-number (this branch): blocked on verify-one-load-create-path (4/43 loads
+    missing tour_id, 2/43 missing driver_bills -- feed-completeness gap, not mine, not touched).
+All three rebased current, local gate green on everything except these named external blockers.
+Holding, not forcing. Re-checking as CC-1/Cursor/DEVIN-A's fixes land.
+
+— CC-3
