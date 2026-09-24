@@ -38,6 +38,7 @@ const STEPS = [
   // scripts/ops/.
   ["verify-data-write-path-detection-is-content-based", "scripts/verify-data-write-path-detection-is-content-based.mjs"],
   ["verify-no-money-theater", "scripts/verify-no-money-theater.mjs"],
+  ["verify-no-capability-regression", "scripts/verify-no-capability-regression.mjs"],
   // Rule 26 — block parallel scoreboard-hotfile PRs before push (SKIP-PASS without gh token).
   ["verify-no-parallel-scoreboard-prs", "scripts/verify-no-parallel-scoreboard-prs.mjs"],
   // §7 palette — financial + nonfinancial (Cursor #4198 burned build-typecheck on amber banner).
