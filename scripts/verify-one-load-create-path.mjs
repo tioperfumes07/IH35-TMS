@@ -174,7 +174,13 @@ export function check() {
  * are actually PRESENT in live data, not just called in code. A path that
  * calls every INSERT but produces no rows is a path that doesn't work.
  *
- * Checks (USMCA, non-voided, non-sample loads):
+ * SCOPE (owner/Lead handoff 2026-09-24 + RULE 52): only loads whose Faro
+ * purchase day is listed in scripts/feed/closed_purchase_days.json. A day that
+ * has not closed is still being fed — asserting tour/charge/bill outcomes on
+ * every historical USMCA load deadlocks the entire repo (measured: 40/79 tour
+ * gaps while feed_cursor closed=0). Empty closed list → self-arming (0 owed).
+ *
+ * Checks (USMCA, non-voided, non-sample, closed-purchase-day loads):
  *  1. CHARGE_LINES: every load has at least one dispatch.load_charge_lines row.
  *  2. FACTORING_VENDOR: every load has factoring_company_vendor_id set.
  *  3. TOUR_LINK: every load has tour_id set (presettlement tour linkage).
@@ -182,6 +188,12 @@ export function check() {
  *
  * Pure function — exported for selftest.
  */
+function loadClosedPurchaseDays() {
+  const p = path.join(ROOT, "scripts/feed/closed_purchase_days.json");
+  if (!fs.existsSync(p)) return [];
+  const j = JSON.parse(fs.readFileSync(p, "utf8"));
+  return Array.isArray(j.closed_purchase_days) ? j.closed_purchase_days.map(String) : [];
+}
 export function classifyLoadOutcomes(input) {
   const { totalLoads, loadsWithChargeLines, loadsWithFactoringVendor,
     loadsWithTourLink, loadsWithDriverBills } = input;
@@ -255,39 +267,68 @@ export function classifyLoadOutcomes(input) {
 
 /**
  * Measure live load outcomes from the database. Read-only.
+ * Scoped to closed Faro purchase days (see loadClosedPurchaseDays).
  */
 export async function measureLoadOutcomes(client) {
+  const closedDays = loadClosedPurchaseDays();
   await client.query("BEGIN");
   await client.query("SELECT set_config('app.bypass_rls','lucia',false)");
 
+  // No closed purchase day yet → 0 loads in scope (self-arming). Never scan the whole board.
+  if (closedDays.length === 0) {
+    await client.query("ROLLBACK");
+    return {
+      totalLoads: 0,
+      loadsWithChargeLines: 0,
+      loadsWithFactoringVendor: 0,
+      loadsWithTourLink: 0,
+      loadsWithDriverBills: 0,
+      closedPurchaseDays: closedDays,
+    };
+  }
+
+  // In-scope = USMCA load linked to a live Faro advance whose purchase date is closed.
+  const scopeSql = `
+    l.operating_company_id = $1::uuid
+    AND l.is_sample_data IS NOT TRUE
+    AND l.voided_at IS NULL
+    AND EXISTS (
+      SELECT 1
+        FROM accounting.invoices i
+        JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
+       WHERE i.source_load_id = l.id
+         AND i.voided_at IS NULL
+         AND fa.voided_at IS NULL
+         AND fa.faro_purchase_date = ANY($2::date[])
+    )`;
+
   const totalRes = await client.query(
-    `SELECT count(*)::int AS cnt FROM mdata.loads
-      WHERE operating_company_id = $1::uuid AND is_sample_data IS NOT TRUE AND voided_at IS NULL`,
-    [USMCA_COMPANY_ID],
+    `SELECT count(*)::int AS cnt FROM mdata.loads l WHERE ${scopeSql}`,
+    [USMCA_COMPANY_ID, closedDays],
   );
   const chargeRes = await client.query(
     `SELECT count(*)::int AS cnt FROM mdata.loads l
-      WHERE l.operating_company_id = $1::uuid AND l.is_sample_data IS NOT TRUE AND l.voided_at IS NULL
+      WHERE ${scopeSql}
         AND EXISTS (SELECT 1 FROM dispatch.load_charge_lines lcl WHERE lcl.load_id = l.id)`,
-    [USMCA_COMPANY_ID],
+    [USMCA_COMPANY_ID, closedDays],
   );
   const vendorRes = await client.query(
     `SELECT count(*)::int AS cnt FROM mdata.loads l
-      WHERE l.operating_company_id = $1::uuid AND l.is_sample_data IS NOT TRUE AND l.voided_at IS NULL
+      WHERE ${scopeSql}
         AND l.factoring_company_vendor_id IS NOT NULL`,
-    [USMCA_COMPANY_ID],
+    [USMCA_COMPANY_ID, closedDays],
   );
   const tourRes = await client.query(
     `SELECT count(*)::int AS cnt FROM mdata.loads l
-      WHERE l.operating_company_id = $1::uuid AND l.is_sample_data IS NOT TRUE AND l.voided_at IS NULL
+      WHERE ${scopeSql}
         AND l.tour_id IS NOT NULL`,
-    [USMCA_COMPANY_ID],
+    [USMCA_COMPANY_ID, closedDays],
   );
   const billRes = await client.query(
     `SELECT count(*)::int AS cnt FROM mdata.loads l
-      WHERE l.operating_company_id = $1::uuid AND l.is_sample_data IS NOT TRUE AND l.voided_at IS NULL
+      WHERE ${scopeSql}
         AND EXISTS (SELECT 1 FROM driver_finance.driver_bills db WHERE db.load_id = l.id AND db.voided_at IS NULL)`,
-    [USMCA_COMPANY_ID],
+    [USMCA_COMPANY_ID, closedDays],
   );
 
   await client.query("ROLLBACK");
@@ -298,6 +339,7 @@ export async function measureLoadOutcomes(client) {
     loadsWithFactoringVendor: vendorRes.rows[0].cnt,
     loadsWithTourLink: tourRes.rows[0].cnt,
     loadsWithDriverBills: billRes.rows[0].cnt,
+    closedPurchaseDays: closedDays,
   };
 }
 
@@ -429,7 +471,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     await pool.end();
   }
   const { checks, problems, allPass } = classifyLoadOutcomes(outcomes);
-  console.log(`${LABEL}: live outcome check (USMCA, non-voided, non-sample)`);
+  const closed = outcomes.closedPurchaseDays ?? loadClosedPurchaseDays();
+  console.log(
+    `${LABEL}: live outcome check (USMCA, closed Faro purchase days only: ${closed.length ? closed.join(",") : "none — self-arming"})`,
+  );
   for (const c of checks) {
     const result = c.pass ? "PASS" : "FAIL";
     console.log(`  ${c.id.padEnd(16)} ${c.name.padEnd(16)} expected ${c.expected.padEnd(30)} live ${c.live.padEnd(30)} ${result}`);

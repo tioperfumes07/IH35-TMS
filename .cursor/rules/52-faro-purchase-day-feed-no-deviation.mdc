@@ -1,0 +1,75 @@
+---
+description: FARO purchase day feed — full settlement composition only. No advance-only Faro. No raw Neon accounting inserts. One day closed before the next. Owner law 2026-09-24 — cannot work around, disobey, or forget.
+alwaysApply: true
+---
+
+# RULE 52 — FARO PURCHASE DAY FEED: NO DEVIATION (owner 2026-09-24)
+
+Owner, verbatim (session 2026-09-24 CT): the feed without loads and expenses has no purpose;
+Neon bulk-seed that skips the app path is not the answer; complete the entire feeding correctly;
+**"OK I WANT YOUR WORD AND GUARANTEE YOU WILL NOT DEVIATE. IF YOU CANNOT PROVIDE THAT THEN DO NOT DO IT."**
+then **"OK WRITE THIS AS LAW, AS A LAW YOU CANNOT WORK AROUND, YOU CANNOT DISOBEY, FORGET, ETC. AND CONTINUE."**
+
+This supersedes any session memory, prior agent habit, or shortcut that feeds Faro advances alone,
+skips day close, or inserts money rows straight into Neon.
+
+## The rule (LAW) — disobeying is refusing the job
+
+For USMCA (`operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'`):
+
+1. **The unit of work is the Faro purchase day**, not a settlement document alone and not a lone
+   invoice number. Authority: `~/Downloads/IH35-RECONCILIATION-AND-FEED/` → `day_control.json`
+   `days[].inv[]` (Round 152.1). Start at the first day that is not `closed` in `feed_cursor.json`
+   (live start: **8/10/26**).
+
+2. **Full settlement composition for every invoice in that day's `inv[]`.** For each Faro invoice:
+   its load (from the reconciled Faro↔load map — never name-guess), with driver / unit / trailer /
+   customer / stops from `feed_input.json`; charge lines; proforma → invoice; Faro advance on
+   `faro_invoice_number` with that day's escrow / discount / wire / schedule fee from the Faro
+   register; driver bill; fuel; expenses; cash advances as **bill payments**; escrow (2100);
+   admin fee (income); tour / pre-settlement link.
+   **A load fed without its money is not fed. An advance without its load + expenses is a deviation.**
+
+3. **App create paths only.** Layer 1 originators create documents. **NO direct `INSERT` into
+   accounting / driver_finance / factoring money tables** to "seed through Neon" and catch up.
+   Canonical writers: `createLoadWithFullSideEffects` / Book Load side effects,
+   `seedSettlementDocument` / historical feed-day executor, expense / fuel / invoice / factoring
+   routes and their existing posters. Neon may be used to **measure and gate** — never as a
+   substitute writer for the feed.
+
+4. **One day, closed, then the next.** After the day's writes:
+   `verify-feed-day` + `verify-feed-load` + `verify-feed-is-whole` (day ✓) +
+   `verify-every-advance-is-one-of-the-89` (or the package equivalents under `scripts/feed/` and
+   `02-CONTROLS-AND-GATES/`). **All exit 0 → `feed_cursor.py close --day D` AND append that ISO date
+   to `scripts/feed/closed_purchase_days.json`.** Any red →
+   `feed_cursor.py dirty --day D --why "…"`, fix, re-run. **Day N+1 does not open until day N is
+   `closed`.** Live outcome guards assert only closed-purchase-day loads (empty list = self-arming).
+
+5. **Both sources of truth must tie that day.** Faro purchase / net advance / escrow / discount /
+   wire for the day = control. AlwaysTrack settlement lines for those loads = control. Surfaces
+   (load board, load costs, pre-settlement, settlement, factoring, P&L) **read the same numbers** —
+   never a second derived total.
+
+6. **Standing hard lines unchanged:** void never delete; never touch `banking.bank_transactions`
+   (MATCH posts nothing; CATEGORIZE books); bank count **1133** EXACT unless the owner changes it;
+   USMCA only; Transportation loads are not written into USMCA (costs on a USMCA settlement for a
+   Transportation leg stay USMCA per Round 151 entity sheets — do not re-derive); QBO write-back
+   stays off.
+
+7. **Forbidden shortcuts (automatic deviation — stop):**
+   - **Advance-only** Faro / factoring (no load, no expenses, no driver bill, no day gate)
+   - Bulk Neon SQL seed of invoices / advances / expenses to "get current to yesterday"
+   - Feeding later purchase days while an earlier day is still `pending` / `dirty`
+   - Closing a day on invoice count alone without the five Faro columns and load composition
+   - Inventing new GL math; inventing settlement numbers; writing `is_sample_data` fixtures into USMCA
+
+## If this rule conflicts with speed
+
+Speed loses. Three days of advance-only work that returns to the same place is the failure mode
+this law exists to end. Correct composition on one closed day beats eighty incomplete invoices.
+
+## Guard
+
+`scripts/verify-faro-purchase-day-feed-law.mjs` — registered in `docs/law/LAW.json`. Fails if this
+rule file is missing, stripped of its hard lines, or if new ops feed scripts introduce direct
+accounting `INSERT` as the feed path.

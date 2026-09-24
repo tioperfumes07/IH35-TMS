@@ -1,5 +1,12 @@
 [
   {
+    "id": "LAW-2026-09-24-FARO-PURCHASE-DAY-FEED-NO-DEVIATION",
+    "title": "Faro USMCA feed is one purchase day at a time with full settlement composition (load+expenses+invoice+advance+driver bill+fuel+tour); app writers only; gates then feed_cursor close; Advance-only Faro and raw Neon money seeds are forbidden",
+    "source_file": "docs/specs/FARO-PURCHASE-DAY-FEED-NO-DEVIATION-LAW-2026-09-24.md",
+    "guard": "scripts/verify-faro-purchase-day-feed-law.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "LAW-2026-09-03-VOID-COLUMN-CONVENTION",
     "title": "Three void-marker conventions, each with one meaning — voided_at (money reversed, WORM), deactivated_at (still real, not selectable), revoked_at (access withdrawn); deleted_at is retired, never added to a new table; the 36 existing deleted_at tables convert opportunistically, additive, never DROP; one predicate per surface (a list filter, its badge, its search and its count read the same column)",
     "source_file": "docs/specs/VOID-COLUMN-CONVENTION-LAW-2026-09-03.md",

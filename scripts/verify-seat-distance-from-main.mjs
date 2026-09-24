@@ -15,6 +15,8 @@
 //
 // This is a STATIC guard — no DATABASE_URL required. It runs in CI and locally.
 // It checks the CURRENT branch (the one being pushed), not other seats' branches.
+export const ALLOW_OFFLINE_SKIP =
+  "static git ahead/behind vs origin/main only — never reads money tables or DATABASE_URL";
 
 import { execSync } from "node:child_process";
 
