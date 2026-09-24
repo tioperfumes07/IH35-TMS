@@ -128,6 +128,40 @@ async function main() {
               },
               { userId: OWNER, role: "Owner" }
             );
+            // releaseEscrow moves GL; keep driver_finance.escrow_balances in lockstep
+            // (verify-escrow-balance-reconciles-gl — accounting.escrow_accounts is canonical).
+            const proj = await c.query<{ id: string; bal: string }>(
+              `SELECT id::text, current_balance_cents::text AS bal
+                 FROM driver_finance.escrow_balances WHERE driver_id=$1::uuid LIMIT 1`,
+              [row.driver_id]
+            );
+            if (proj.rows[0]) {
+              const releaseCents = Math.round(amt * 100);
+              const newBal = Math.max(0, Number(proj.rows[0].bal) - releaseCents);
+              await c.query(
+                `UPDATE driver_finance.escrow_balances
+                    SET current_balance_cents = $2,
+                        total_released_cents = COALESCE(total_released_cents,0) + $3,
+                        last_updated_at = now()
+                  WHERE id = $1::uuid`,
+                [proj.rows[0].id, newBal, releaseCents]
+              );
+              await c.query(
+                `INSERT INTO driver_finance.escrow_ledger
+                   (operating_company_id, driver_id, escrow_balance_id, transaction_type, amount_cents,
+                    running_balance_cents, description)
+                 VALUES ($1::uuid, $2::uuid, $3::uuid, 'release', $4, $5,
+                   $6)`,
+                [
+                  USMCA,
+                  row.driver_id,
+                  proj.rows[0].id,
+                  -releaseCents,
+                  newBal,
+                  `Projection sync after AT escrow excess release settl ${row.ref}`,
+                ]
+              );
+            }
           }
           remaining -= amt;
         }
