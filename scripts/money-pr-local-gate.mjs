@@ -635,6 +635,20 @@ const LIVE_DOMAIN_GUARDS = [
       "accounting.journal_entries",
     ],
   ],
+  // ROUND 142.3 (DEVIN-B): the day-close gate. Prevents another wipe. Takes one purchase day,
+  // returns exit 0 (GREEN, day closes) or exit 1 (RED, day does not close). 12 assertions.
+  [
+    "reconcile-feed-day",
+    [
+      "apps/backend/src/accounting/factoring-posting/",
+      "apps/backend/src/factoring/",
+      "docs/bus/00-FEED-MANIFEST.md",
+      "accounting.factoring_advances",
+      "accounting.journal_entries",
+      "accounting.payments",
+      "mdata.loads",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {
