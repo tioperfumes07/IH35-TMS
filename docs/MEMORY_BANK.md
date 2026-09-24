@@ -126,8 +126,22 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Live Aug 5769–5796 after mint:** 28 driver settlements (22 pure-Aug closed+posted with company
   CS; 6 Aug–Sep SPAN left `open`, no company yet). Twin misattr bills re-homed to USMCA control
   driver before mint (Alfonso TRANSP→USMCA; inverted 5779 period dates fixed via min/max of start+end).
-- **Still open:** 5769 / 5788 posted under twin-split gross (need reverse+repost after bill re-home);
-  healthz `ledger.ar_tieout` / `ap_tieout` still red; Faro self-carried AR (5) not yet done.
+- **Still open (feed/docs only):** AlwaysTrack parity 0/33 (expense/fuel dimension inflation — fuel
+  must not reappear as expense rows); Faro day 8/31 phantom extra advance ($17,400 vs $13,900);
+  Sep purchase days from 9/4 not fed. **Bank match is NOT Cursor work** (owner 2026-09-24).
+
+### Active Architectural Decisions — Owner bank match + no fuel re-feed (Cursor, 2026-09-24)
+
+- **OWNER (verbatim):** agent does **not** match and does **not** touch banking — Jorge matches
+  documents to `banking.bank_transactions` himself. Feeder never writes `banking.*`.
+- **Create like QuickBooks, then owner matches:** expenses / bills / bill payments / invoices /
+  factoring advances / settlements are created by the feed; MATCH links only (CC-2 law: MATCH
+  posts nothing; CATEGORIZE books). Cursor lane stops at the document.
+- **Fuel was purged — no duplicates.** Resume of `feed-settlement-day.mts` must skip when a live
+  (non-voided) `fuel.fuel_transactions` row already exists for the same load + fuel_type + amount
+  (±$0.02). Do not invent a second `source_row_hash` path that re-inserts. Session mistake
+  2026-09-24: re-feed wrote `alwaystrack-settl:` beside existing `alwaystrack:` rows — voided the
+  duplicates; feeder now skips-on-amount before insert.
 
 ## Known Quirks & Blockers
 

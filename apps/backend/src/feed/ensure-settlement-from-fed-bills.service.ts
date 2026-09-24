@@ -165,6 +165,26 @@ export async function ensureSettlementFromFedBills(
     alreadyExisted = true;
     settlementId = existing.id;
     status = existing.status;
+    // Empty approved shells (Sep pre-mint with $0 / 0 lines) must reopen so materialize +
+    // earnings append can run (materializeSettlementLines freezes non-open settlements).
+    if (status !== "open") {
+      const lineCount = await client.query<{ n: string }>(
+        `SELECT count(*)::text AS n FROM driver_finance.settlement_lines
+          WHERE settlement_id = $1::uuid AND is_active = true
+            AND line_type IN ('earnings','deadhead_pay')`,
+        [settlementId]
+      );
+      if (Number(lineCount.rows[0]?.n ?? 0) === 0) {
+        await client.query(
+          `UPDATE driver_finance.driver_settlements
+              SET status = 'open', trip_closed_at = NULL, updated_at = now()
+            WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+          [settlementId, operatingCompanyId]
+        );
+        status = "open";
+        warnings.push(`reopened empty shell ${doc.documentNumber} (status was ${existing.status}, 0 earnings lines)`);
+      }
+    }
   } else {
     // AlwaysTrack number is the business identity (Rule 03). display_id carries the same digits
     // (live bookend allocator also emits bare digits). Always mint as 'open' first so

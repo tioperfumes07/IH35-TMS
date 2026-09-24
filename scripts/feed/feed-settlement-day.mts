@@ -585,7 +585,11 @@ async function feedOne(
     if (bill.outcome === "refused") throw new Error(bill.reason);
   });
 
-  // Fuel: diesel + def + reefer (control.fuel = diesel+def; reefer tracked separately)
+  // Fuel: diesel + def + reefer (control.fuel = diesel+def; reefer tracked separately).
+  // LAW (owner 2026-09-24): purge already ran — NEVER create a second fuel row for the same
+  // load+type+amount. Hash collisions across feed paths (alwaystrack: vs alwaystrack-settl:)
+  // caused live duplicates; resume must skip when a live row already covers the cents.
+  // Banking is OWNER-ONLY — this feeder never touches banking.bank_transactions.
   const fuelLines = [
     ...diesel.map((l) => ({ ...l, fuel_type: "diesel" as const })),
     ...def.map((l) => ({ ...l, fuel_type: "def" as const })),
@@ -596,10 +600,30 @@ async function feedOne(
     fi += 1;
     const parsed = parseFuelDesc(f.description || f.item_name || `FUEL-${fi}`);
     const fuelDate = delivery.stop_date; // settlement lines often lack per-row date; use delivery
+    const amt = Number(f.amount);
+    const already = await withCurrentUser(OWNER, async (c) => {
+      await setScopedCompanyContext(c, OWNER, USMCA);
+      const ex = await c.query<{ id: string }>(
+        `SELECT id::text FROM fuel.fuel_transactions
+          WHERE operating_company_id = $1::uuid
+            AND load_id = $2::uuid
+            AND fuel_type = $3
+            AND voided_at IS NULL
+            AND abs(total_cost - $4::numeric) < 0.02
+          ORDER BY created_at ASC
+          LIMIT 1`,
+        [USMCA, loadId, f.fuel_type, amt]
+      );
+      return ex.rows[0]?.id ?? null;
+    });
+    if (already) {
+      report.push(`FUEL already ${f.fuel_type} ${parsed.invoice} $${amt}`);
+      continue;
+    }
     const fuelId = await withCurrentUser(OWNER, async (c) => {
       await setScopedCompanyContext(c, OWNER, USMCA);
       const vendorId = await resolveVendor(c as unknown as pg.PoolClient, parsed.vendor);
-      const rowHash = `alwaystrack-settl:${USMCA}:${loadId}:${f.fuel_type}:${fi}:${cents(f.amount)}:${parsed.invoice}`;
+      const rowHash = `alwaystrack-settl:${USMCA}:${loadId}:${f.fuel_type}:${fi}:${cents(amt)}:${parsed.invoice}`;
       const ins = await c.query<{ id: string }>(
         `INSERT INTO fuel.fuel_transactions (
            operating_company_id, transaction_at, purchased_at, load_id, vendor_id, fuel_type,
@@ -615,7 +639,7 @@ async function feedOne(
           vendorId,
           f.fuel_type,
           Number(f.quantity || 0),
-          Number(f.amount),
+          amt,
           parsed.location,
           parsed.invoice,
           rowHash,
@@ -641,10 +665,10 @@ async function feedOne(
       fuel_event_id: fuelId,
       fuel_kind: f.fuel_type === "def" ? "def" : f.fuel_type === "reefer_diesel" ? "reefer_diesel" : "diesel",
       posted_at: fuelDate,
-      amount_cents: cents(f.amount),
+      amount_cents: cents(amt),
       posting_path: "company_direct",
     }).catch((e) => report.push(`WARN fuel GL: ${(e as Error).message}`));
-    report.push(`FUEL ${f.fuel_type} ${parsed.invoice} $${f.amount}`);
+    report.push(`FUEL ${f.fuel_type} ${parsed.invoice} $${amt}`);
   }
 
   let ei = 0;

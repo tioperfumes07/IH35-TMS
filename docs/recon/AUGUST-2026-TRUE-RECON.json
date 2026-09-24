@@ -8,7 +8,7 @@
     "Owner 2026-09-24: a settlement usually spans ~1 week, but can last MORE than a week when triangulation loads extend the tour.",
     "TRIP-TYPE-DERIVE: NB=Laredo pickup, SB=Laredo delivery, TR=neither, LOCAL=Laredo↔Laredo."
   ],
-  "generated_at": "2026-09-24T15:14:29.086Z",
+  "generated_at": "2026-09-24T18:59:01.579Z",
   "neon": "tiny-field-89581227 / br-fancy-credit-akjnd07a",
   "verdict": {
     "faro_purchase_days": "TIE",
@@ -18,8 +18,8 @@
     "faro_ctrl_net_adv": 105575.74,
     "faro_live_net_adv": 105575.74,
     "tours_in_scope": 31,
-    "tours_composition_ok": 13,
-    "tours_with_gaps": 18,
+    "tours_composition_ok": 30,
+    "tours_with_gaps": 1,
     "tour_span_days_avg": 7.7,
     "tour_span_days_min": 1,
     "tour_span_days_max": 40,
@@ -57,10 +57,10 @@
       "5790"
     ],
     "feed_cursor_aug_pending": [],
-    "driver_settlements_minted_aug": 0,
-    "partial_open_invoices": 43,
-    "gl_aug_debit": 457235.87,
-    "gl_aug_credit": 457235.87,
+    "driver_settlements_minted_aug": 22,
+    "partial_open_invoices": 63,
+    "gl_aug_debit": 657143,
+    "gl_aug_credit": 657143,
     "gl_balanced": true
   },
   "tours": [
@@ -766,7 +766,17 @@
             }
           ],
           "period_end": "2026-08-10",
-          "live": null
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 3800,
+            "bill": 568.76,
+            "fuel": 0,
+            "exp": 0,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
         },
         {
           "load": "13508",
@@ -816,11 +826,9 @@
           }
         }
       ],
-      "composition_ok": false,
-      "gaps": [
-        "13498:MISSING_DB"
-      ],
-      "live_ok_loads": 1
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 2
     },
     {
       "tour": "5770",
@@ -871,7 +879,17 @@
             }
           ],
           "period_end": "2026-08-10",
-          "live": null
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 4900,
+            "bill": 947.15,
+            "fuel": 1770.91,
+            "exp": 0,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
         },
         {
           "load": "13509",
@@ -908,15 +926,22 @@
             }
           ],
           "period_end": "2026-08-10",
-          "live": null
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 4400,
+            "bill": 960.35,
+            "fuel": 1555.84,
+            "exp": 0,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
         }
       ],
-      "composition_ok": false,
-      "gaps": [
-        "13503:MISSING_DB",
-        "13509:MISSING_DB"
-      ],
-      "live_ok_loads": 0
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 2
     },
     {
       "tour": "5771",
@@ -962,7 +987,17 @@
             }
           ],
           "period_end": "2026-08-11",
-          "live": null
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 4900,
+            "bill": 945.1,
+            "fuel": 1713.5,
+            "exp": 0,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
         },
         {
           "load": "13510",
@@ -1019,11 +1054,9 @@
           }
         }
       ],
-      "composition_ok": false,
-      "gaps": [
-        "13504:MISSING_DB"
-      ],
-      "live_ok_loads": 1
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 2
     },
     {
       "tour": "5772",
@@ -1074,7 +1107,17 @@
             }
           ],
           "period_end": "2026-08-13",
-          "live": null
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 3800,
+            "bill": 485.87,
+            "fuel": 1139.3,
+            "exp": 0,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
         },
         {
           "load": "13507",
@@ -1111,7 +1154,17 @@
             }
           ],
           "period_end": "2026-08-13",
-          "live": null
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 1200,
+            "bill": 228.56,
+            "fuel": 449.47,
+            "exp": 0,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
         },
         {
           "load": "13512",
@@ -1195,16 +1248,22 @@
             }
           ],
           "period_end": "2026-08-13",
-          "live": null
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 525,
+            "bill": 244.94,
+            "fuel": 908.6,
+            "exp": 15.25,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
         }
       ],
-      "composition_ok": false,
-      "gaps": [
-        "13502:MISSING_DB",
-        "13507:MISSING_DB",
-        "13513:MISSING_DB"
-      ],
-      "live_ok_loads": 1
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 4
     },
     {
       "tour": "5773",
@@ -1250,7 +1309,17 @@
             }
           ],
           "period_end": "2026-08-12",
-          "live": null
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 7200,
+            "bill": 939.87,
+            "fuel": 2184.88,
+            "exp": 0,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
         },
         {
           "load": "13511",
@@ -1307,11 +1376,9 @@
           }
         }
       ],
-      "composition_ok": false,
-      "gaps": [
-        "13497:MISSING_DB"
-      ],
-      "live_ok_loads": 1
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 2
     },
     {
       "tour": "5774",
@@ -1362,7 +1429,17 @@
             }
           ],
           "period_end": "2026-08-14",
-          "live": null
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 3800,
+            "bill": 471.97,
+            "fuel": 1556.91,
+            "exp": 0,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
         },
         {
           "load": "13518",
@@ -1412,11 +1489,9 @@
           }
         }
       ],
-      "composition_ok": false,
-      "gaps": [
-        "13517:MISSING_DB"
-      ],
-      "live_ok_loads": 1
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 2
     },
     {
       "tour": "5775",
@@ -1467,7 +1542,17 @@
             }
           ],
           "period_end": "2026-08-14",
-          "live": null
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 3900,
+            "bill": 581.58,
+            "fuel": 1100.82,
+            "exp": 0,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
         },
         {
           "load": "13514",
@@ -1564,11 +1649,9 @@
           }
         }
       ],
-      "composition_ok": false,
-      "gaps": [
-        "13506:MISSING_DB"
-      ],
-      "live_ok_loads": 2
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 3
     },
     {
       "tour": "5776",
@@ -1619,7 +1702,17 @@
             }
           ],
           "period_end": "2026-08-13",
-          "live": null
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 3900,
+            "bill": 581.58,
+            "fuel": 1232.84,
+            "exp": 20.5,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
         },
         {
           "load": "13515",
@@ -1716,11 +1809,9 @@
           }
         }
       ],
-      "composition_ok": false,
-      "gaps": [
-        "13505:MISSING_DB"
-      ],
-      "live_ok_loads": 2
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 3
     },
     {
       "tour": "5777",
@@ -1864,7 +1955,7 @@
           "customer": "MPH CARRIER SERVICES, INC",
           "truck": "T173",
           "trailer": "10380",
-          "line_haul": 4200,
+          "line_haul": 3800,
           "driver_pay": 853.61,
           "fuel": 3657.9,
           "empty_miles": 711.5,
@@ -1933,12 +2024,22 @@
             }
           ],
           "period_end": "2026-08-10",
-          "live": null
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 0,
+            "bill": 586.4,
+            "fuel": 0,
+            "exp": 15.25,
+            "fa": null,
+            "invoices": 0,
+            "bills": 1
+          }
         }
       ],
       "composition_ok": false,
       "gaps": [
-        "13525:MISSING_DB"
+        "13525:inv"
       ],
       "live_ok_loads": 1
     },
@@ -2040,14 +2141,22 @@
             }
           ],
           "period_end": "2026-08-17",
-          "live": null
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 3000,
+            "bill": 696.15,
+            "fuel": 2008.66,
+            "exp": 15.25,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
         }
       ],
-      "composition_ok": false,
-      "gaps": [
-        "13527:MISSING_DB"
-      ],
-      "live_ok_loads": 1
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 2
     },
     {
       "tour": "5780",
@@ -2093,7 +2202,17 @@
             }
           ],
           "period_end": "2026-08-21",
-          "live": null
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 1500,
+            "bill": 0,
+            "fuel": 843.76,
+            "exp": 120,
+            "fa": null,
+            "invoices": 1,
+            "bills": 0
+          }
         },
         {
           "load": "13532",
@@ -2143,11 +2262,9 @@
           }
         }
       ],
-      "composition_ok": false,
-      "gaps": [
-        "13530:MISSING_DB"
-      ],
-      "live_ok_loads": 1
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 2
     },
     {
       "tour": "5781",
@@ -2358,14 +2475,22 @@
             }
           ],
           "period_end": "2026-08-24",
-          "live": null
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 3120,
+            "bill": 760.6,
+            "fuel": 1913.82,
+            "exp": 153.25,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
         }
       ],
-      "composition_ok": false,
-      "gaps": [
-        "13540:MISSING_DB"
-      ],
-      "live_ok_loads": 1
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 2
     },
     {
       "tour": "5783",
@@ -2533,7 +2658,17 @@
             }
           ],
           "period_end": "2026-08-24",
-          "live": null
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 3500,
+            "bill": 567.17,
+            "fuel": 1821.39,
+            "exp": 0,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
         },
         {
           "load": "13528",
@@ -2644,11 +2779,9 @@
           }
         }
       ],
-      "composition_ok": false,
-      "gaps": [
-        "13522:MISSING_DB"
-      ],
-      "live_ok_loads": 2
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 3
     },
     {
       "tour": "5785",
@@ -2694,7 +2827,17 @@
             }
           ],
           "period_end": "2026-08-26",
-          "live": null
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 4300,
+            "bill": 666.81,
+            "fuel": 2044.5,
+            "exp": 0,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
         },
         {
           "load": "13538",
@@ -2805,11 +2948,9 @@
           }
         }
       ],
-      "composition_ok": false,
-      "gaps": [
-        "13531:MISSING_DB"
-      ],
-      "live_ok_loads": 2
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 3
     },
     {
       "tour": "5786",
@@ -2860,7 +3001,17 @@
             }
           ],
           "period_end": "2026-08-26",
-          "live": null
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 3450,
+            "bill": 500.22,
+            "fuel": 1263.58,
+            "exp": 0,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
         },
         {
           "load": "13548",
@@ -2910,11 +3061,9 @@
           }
         }
       ],
-      "composition_ok": false,
-      "gaps": [
-        "13533:MISSING_DB"
-      ],
-      "live_ok_loads": 1
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 2
     },
     {
       "tour": "5787",
@@ -3080,7 +3229,17 @@
             }
           ],
           "period_end": "2026-08-31",
-          "live": null
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 4860,
+            "bill": 670.68,
+            "fuel": 2133.52,
+            "exp": 0,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
         },
         {
           "load": "13546",
@@ -3118,11 +3277,11 @@
           ],
           "period_end": "2026-08-31",
           "live": {
-            "status": "closed",
+            "status": "completed_docs_received",
             "trip_type": "NB",
             "inv": 1100,
             "bill": 369.86,
-            "fuel": 1396.44,
+            "fuel": 771.84,
             "exp": 1396.44,
             "fa": "FAC-2026-00026(inv31)",
             "invoices": 1,
@@ -3165,25 +3324,21 @@
           ],
           "period_end": "2026-08-31",
           "live": {
-            "status": "closed",
+            "status": "completed_docs_received",
             "trip_type": "NB",
             "inv": 3000,
             "bill": 685.35,
-            "fuel": 1298.02,
-            "exp": 1235.99,
+            "fuel": 1141.3,
+            "exp": 1256.79,
             "fa": "FAC-2026-00033(inv38)",
             "invoices": 1,
             "bills": 1
           }
         }
       ],
-      "composition_ok": false,
-      "gaps": [
-        "13539:MISSING_DB",
-        "13546:stops+fuel",
-        "13552:fuel"
-      ],
-      "live_ok_loads": 0
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 3
     },
     {
       "tour": "5789",
@@ -3492,14 +3647,22 @@
             }
           ],
           "period_end": "2026-08-31",
-          "live": null
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 2100,
+            "bill": 550.81,
+            "fuel": 1681.76,
+            "exp": 0,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
         }
       ],
-      "composition_ok": false,
-      "gaps": [
-        "13567:MISSING_DB"
-      ],
-      "live_ok_loads": 1
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 2
     },
     {
       "tour": "5796",
@@ -3559,14 +3722,22 @@
             }
           ],
           "period_end": "2026-08-28",
-          "live": null
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 2500,
+            "bill": 379.73,
+            "fuel": 0,
+            "exp": 0,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
         }
       ],
-      "composition_ok": false,
-      "gaps": [
-        "13541:MISSING_DB"
-      ],
-      "live_ok_loads": 0
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 1
     }
   ],
   "faro_days": [
@@ -4175,11 +4346,220 @@
       "closed": true
     }
   ],
-  "settlements_minted": [],
+  "settlements_minted": [
+    {
+      "source_document_ref": "5769",
+      "status": "approved",
+      "period_start": "2026-08-03",
+      "period_end": "2026-08-10",
+      "gross_pay": "586.76",
+      "net_pay": "324.77"
+    },
+    {
+      "source_document_ref": "5770",
+      "status": "approved",
+      "period_start": "2026-08-04",
+      "period_end": "2026-08-10",
+      "gross_pay": "1907.50",
+      "net_pay": "1847.50"
+    },
+    {
+      "source_document_ref": "5778",
+      "status": "approved",
+      "period_start": "2026-08-10",
+      "period_end": "2026-08-10",
+      "gross_pay": "1440.01",
+      "net_pay": "1354.76"
+    },
+    {
+      "source_document_ref": "5771",
+      "status": "approved",
+      "period_start": "2026-08-04",
+      "period_end": "2026-08-11",
+      "gross_pay": "1909.10",
+      "net_pay": "1829.10"
+    },
+    {
+      "source_document_ref": "5773",
+      "status": "approved",
+      "period_start": "2026-07-03",
+      "period_end": "2026-08-12",
+      "gross_pay": "1897.52",
+      "net_pay": "1847.52"
+    },
+    {
+      "source_document_ref": "5772",
+      "status": "approved",
+      "period_start": "2026-08-03",
+      "period_end": "2026-08-13",
+      "gross_pay": "1381.83",
+      "net_pay": "1271.83"
+    },
+    {
+      "source_document_ref": "5776",
+      "status": "approved",
+      "period_start": "2026-08-03",
+      "period_end": "2026-08-13",
+      "gross_pay": "1203.89",
+      "net_pay": "1108.89"
+    },
+    {
+      "source_document_ref": "5774",
+      "status": "approved",
+      "period_start": "2026-08-07",
+      "period_end": "2026-08-14",
+      "gross_pay": "1051.95",
+      "net_pay": "981.95"
+    },
+    {
+      "source_document_ref": "5775",
+      "status": "approved",
+      "period_start": "2026-08-04",
+      "period_end": "2026-08-14",
+      "gross_pay": "722.57",
+      "net_pay": "352.58"
+    },
+    {
+      "source_document_ref": "5777",
+      "status": "approved",
+      "period_start": "2026-08-11",
+      "period_end": "2026-08-17",
+      "gross_pay": "1908.00",
+      "net_pay": "1858.00"
+    },
+    {
+      "source_document_ref": "5779",
+      "status": "approved",
+      "period_start": "2026-08-17",
+      "period_end": "2026-08-18",
+      "gross_pay": "1420.66",
+      "net_pay": "1370.66"
+    },
+    {
+      "source_document_ref": "5780",
+      "status": "approved",
+      "period_start": "2026-08-18",
+      "period_end": "2026-08-21",
+      "gross_pay": "150.00",
+      "net_pay": "125.00"
+    },
+    {
+      "source_document_ref": "5781",
+      "status": "approved",
+      "period_start": "2026-08-15",
+      "period_end": "2026-08-21",
+      "gross_pay": "1280.31",
+      "net_pay": "1230.31"
+    },
+    {
+      "source_document_ref": "5787",
+      "status": "approved",
+      "period_start": "2026-08-22",
+      "period_end": "2026-08-22",
+      "gross_pay": "1000.72",
+      "net_pay": "950.72"
+    },
+    {
+      "source_document_ref": "5782",
+      "status": "approved",
+      "period_start": "2026-08-17",
+      "period_end": "2026-08-24",
+      "gross_pay": "1489.11",
+      "net_pay": "1439.11"
+    },
+    {
+      "source_document_ref": "5784",
+      "status": "approved",
+      "period_start": "2026-08-15",
+      "period_end": "2026-08-24",
+      "gross_pay": "1662.94",
+      "net_pay": "1587.94"
+    },
+    {
+      "source_document_ref": "5783",
+      "status": "approved",
+      "period_start": "2026-08-18",
+      "period_end": "2026-08-25",
+      "gross_pay": "1906.25",
+      "net_pay": "1856.25"
+    },
+    {
+      "source_document_ref": "5785",
+      "status": "approved",
+      "period_start": "2026-08-17",
+      "period_end": "2026-08-26",
+      "gross_pay": "1523.67",
+      "net_pay": "1136.68"
+    },
+    {
+      "source_document_ref": "5786",
+      "status": "approved",
+      "period_start": "2026-08-19",
+      "period_end": "2026-08-26",
+      "gross_pay": "1039.05",
+      "net_pay": "989.05"
+    },
+    {
+      "source_document_ref": "5796",
+      "status": "approved",
+      "period_start": "2026-08-25",
+      "period_end": "2026-08-28",
+      "gross_pay": "379.73",
+      "net_pay": "354.73"
+    },
+    {
+      "source_document_ref": "5788",
+      "status": "approved",
+      "period_start": "2026-08-20",
+      "period_end": "2026-08-31",
+      "gross_pay": "1725.89",
+      "net_pay": "1650.89"
+    },
+    {
+      "source_document_ref": "5795",
+      "status": "approved",
+      "period_start": "2026-08-29",
+      "period_end": "2026-08-31",
+      "gross_pay": "1051.03",
+      "net_pay": "779.04"
+    }
+  ],
   "partial_open_invoices": [
+    {
+      "load": "13497",
+      "invoice": "13497",
+      "total": 7200,
+      "open": 7200,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13487",
+      "invoice": "13487",
+      "total": 4900,
+      "open": 4900,
+      "paid": 0,
+      "status": "sent"
+    },
     {
       "load": "13535",
       "invoice": "13535",
+      "total": 4900,
+      "open": 4900,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13504",
+      "invoice": "13504",
+      "total": 4900,
+      "open": 4900,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13503",
+      "invoice": "13503",
       "total": 4900,
       "open": 4900,
       "paid": 0,
@@ -4194,10 +4574,34 @@
       "status": "sent"
     },
     {
-      "load": "13487",
-      "invoice": "13487",
-      "total": 4900,
-      "open": 4900,
+      "load": "13539",
+      "invoice": "13539",
+      "total": 4860,
+      "open": 4860,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13509",
+      "invoice": "13509",
+      "total": 4400,
+      "open": 4400,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13531",
+      "invoice": "13531",
+      "total": 4300,
+      "open": 4300,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13495",
+      "invoice": "13495",
+      "total": 4100,
+      "open": 4100,
       "paid": 0,
       "status": "sent"
     },
@@ -4210,10 +4614,10 @@
       "status": "sent"
     },
     {
-      "load": "13495",
-      "invoice": "13495",
-      "total": 4100,
-      "open": 4100,
+      "load": "13518",
+      "invoice": "13518",
+      "total": 4000,
+      "open": 4000,
       "paid": 0,
       "status": "sent"
     },
@@ -4234,18 +4638,26 @@
       "status": "sent"
     },
     {
-      "load": "13518",
-      "invoice": "13518",
-      "total": 4000,
-      "open": 4000,
-      "paid": 0,
-      "status": "sent"
-    },
-    {
       "load": "13481",
       "invoice": "13481",
       "total": 3920,
       "open": 3920,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13506",
+      "invoice": "13506",
+      "total": 3900,
+      "open": 3900,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13505",
+      "invoice": "13505",
+      "total": 3900,
+      "open": 3900,
       "paid": 0,
       "status": "sent"
     },
@@ -4266,8 +4678,8 @@
       "status": "sent"
     },
     {
-      "load": "13494",
-      "invoice": "13494",
+      "load": "13517",
+      "invoice": "13517",
       "total": 3800,
       "open": 3800,
       "paid": 0,
@@ -4276,6 +4688,30 @@
     {
       "load": "13524",
       "invoice": "13524",
+      "total": 3800,
+      "open": 3800,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13502",
+      "invoice": "13502",
+      "total": 3800,
+      "open": 3800,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13494",
+      "invoice": "13494",
+      "total": 3800,
+      "open": 3800,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13498",
+      "invoice": "13498",
       "total": 3800,
       "open": 3800,
       "paid": 0,
@@ -4306,16 +4742,24 @@
       "status": "sent"
     },
     {
-      "load": "13521",
-      "invoice": "13521",
+      "load": "13526",
+      "invoice": "13526",
       "total": 3500,
       "open": 3500,
       "paid": 0,
       "status": "sent"
     },
     {
-      "load": "13526",
-      "invoice": "13526",
+      "load": "13558",
+      "invoice": "13558",
+      "total": 3500,
+      "open": 3500,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13521",
+      "invoice": "13521",
       "total": 3500,
       "open": 3500,
       "paid": 0,
@@ -4330,10 +4774,18 @@
       "status": "sent"
     },
     {
-      "load": "13558",
-      "invoice": "13558",
+      "load": "13522",
+      "invoice": "13522",
       "total": 3500,
       "open": 3500,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13533",
+      "invoice": "13533",
+      "total": 3450,
+      "open": 3450,
       "paid": 0,
       "status": "sent"
     },
@@ -4362,6 +4814,14 @@
       "status": "sent"
     },
     {
+      "load": "13540",
+      "invoice": "13540",
+      "total": 3120,
+      "open": 3120,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
       "load": "13528",
       "invoice": "13528",
       "total": 3100,
@@ -4378,6 +4838,22 @@
       "status": "sent"
     },
     {
+      "load": "13496",
+      "invoice": "13496",
+      "total": 3000,
+      "open": 3000,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13527",
+      "invoice": "13527",
+      "total": 3000,
+      "open": 3000,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
       "load": "13552",
       "invoice": "13552",
       "total": 3000,
@@ -4388,14 +4864,6 @@
     {
       "load": "13510",
       "invoice": "13510",
-      "total": 3000,
-      "open": 3000,
-      "paid": 0,
-      "status": "sent"
-    },
-    {
-      "load": "13496",
-      "invoice": "13496",
       "total": 3000,
       "open": 3000,
       "paid": 0,
@@ -4426,6 +4894,14 @@
       "status": "sent"
     },
     {
+      "load": "13541",
+      "invoice": "13541",
+      "total": 2500,
+      "open": 2500,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
       "load": "13543",
       "invoice": "13543",
       "total": 2500,
@@ -4446,6 +4922,14 @@
       "invoice": "13548",
       "total": 2300,
       "open": 2300,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13567",
+      "invoice": "13567",
+      "total": 2100,
+      "open": 2100,
       "paid": 0,
       "status": "sent"
     },
@@ -4474,6 +4958,22 @@
       "status": "sent"
     },
     {
+      "load": "13530",
+      "invoice": "13530",
+      "total": 1500,
+      "open": 1500,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13507",
+      "invoice": "13507",
+      "total": 1200,
+      "open": 1200,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
       "load": "13546",
       "invoice": "13546",
       "total": 1100,
@@ -4482,16 +4982,16 @@
       "status": "sent"
     },
     {
-      "load": "13549",
-      "invoice": "13549",
+      "load": "13532",
+      "invoice": "13532",
       "total": 1000,
       "open": 1000,
       "paid": 0,
       "status": "sent"
     },
     {
-      "load": "13532",
-      "invoice": "13532",
+      "load": "13549",
+      "invoice": "13549",
       "total": 1000,
       "open": 1000,
       "paid": 0,
@@ -4520,13 +5020,21 @@
       "open": 525,
       "paid": 0,
       "status": "sent"
+    },
+    {
+      "load": "13513",
+      "invoice": "13513",
+      "total": 525,
+      "open": 525,
+      "paid": 0,
+      "status": "sent"
     }
   ],
   "vendors_on_aug_loads": [
     {
       "vendor": "LOVES",
-      "n": 109,
-      "amount": 36409.03
+      "n": 118,
+      "amount": 36748.53
     },
     {
       "vendor": "FLYING",
@@ -4549,6 +5057,11 @@
       "amount": 94.13
     },
     {
+      "vendor": "INDIANA TOLL ROAD",
+      "n": 4,
+      "amount": 62.55
+    },
+    {
       "vendor": "TEN STAR TRUCKWASH",
       "n": 1,
       "amount": 52
@@ -4557,11 +5070,6 @@
       "vendor": "FRONTIER TRUCK WASH",
       "n": 1,
       "amount": 42.23
-    },
-    {
-      "vendor": "INDIANA TOLL ROAD",
-      "n": 3,
-      "amount": 41.75
     },
     {
       "vendor": "PILOT",
@@ -4576,28 +5084,36 @@
   ],
   "gl_august": [
     {
+      "account": "1000",
+      "name": "Bank of America - Operating (USMCA)",
+      "type": "Asset",
+      "lines": 1,
+      "debit": 0,
+      "credit": 20.8
+    },
+    {
       "account": "1090",
       "name": "Undeposited Funds",
       "type": "Asset",
-      "lines": 130,
+      "lines": 193,
       "debit": 113256.44,
-      "credit": 34920.87
+      "credit": 65529.39
     },
     {
       "account": "1100",
       "name": "Accounts Receivable (A/R)",
       "type": "Asset",
-      "lines": 51,
-      "debit": 152744,
+      "lines": 71,
+      "debit": 223399,
       "credit": 0
     },
     {
       "account": "1150",
       "name": "Unbilled Revenue",
       "type": "Asset",
-      "lines": 102,
-      "debit": 152744,
-      "credit": 152744
+      "lines": 142,
+      "debit": 223399,
+      "credit": 223399
     },
     {
       "account": "1230",
@@ -4608,12 +5124,116 @@
       "credit": 52.5
     },
     {
+      "account": "1245",
+      "name": "Driver Cash Advances Receivable",
+      "type": "Asset",
+      "lines": 6,
+      "debit": 0,
+      "credit": 1595.96
+    },
+    {
       "account": "2000",
       "name": "Accounts Payable (A/P)",
       "type": "Liability",
       "lines": 4,
       "debit": 0,
       "credit": 139.3
+    },
+    {
+      "account": "2100-00-001",
+      "name": "LUIS ARMANDO SOSA PEREZ — Driver Escrow",
+      "type": "Liability",
+      "lines": 2,
+      "debit": 0,
+      "credit": 100
+    },
+    {
+      "account": "2100-00-002",
+      "name": "Neftali Coronado Urbano — Driver Escrow",
+      "type": "Liability",
+      "lines": 1,
+      "debit": 0,
+      "credit": 50
+    },
+    {
+      "account": "2100-00-004",
+      "name": "Rafael Rogelio Rivero Reynoso — Driver Escrow",
+      "type": "Liability",
+      "lines": 1,
+      "debit": 0,
+      "credit": 25
+    },
+    {
+      "account": "2100-00-006",
+      "name": "ALFONSO HIDALGO CHAVEZ — Driver Escrow",
+      "type": "Liability",
+      "lines": 2,
+      "debit": 0,
+      "credit": 100
+    },
+    {
+      "account": "2100-00-007",
+      "name": "Concepcion Cordova Dominguez — Driver Escrow",
+      "type": "Liability",
+      "lines": 2,
+      "debit": 0,
+      "credit": 100
+    },
+    {
+      "account": "2100-00-008",
+      "name": "PEDRO ABRAHAM LOPEZ COLLADO — Driver Escrow",
+      "type": "Liability",
+      "lines": 1,
+      "debit": 0,
+      "credit": 100
+    },
+    {
+      "account": "2100-00-022",
+      "name": "HUGO GAYTAN — Driver Escrow",
+      "type": "Liability",
+      "lines": 2,
+      "debit": 0,
+      "credit": 100
+    },
+    {
+      "account": "2100-00-023",
+      "name": "GENARO GUERRERO CHAVEZ — Driver Escrow",
+      "type": "Liability",
+      "lines": 1,
+      "debit": 0,
+      "credit": 75
+    },
+    {
+      "account": "2100-00-024",
+      "name": "ANGEL ALFONSO SOSA — Driver Escrow",
+      "type": "Liability",
+      "lines": 2,
+      "debit": 0,
+      "credit": 75
+    },
+    {
+      "account": "2100-00-026",
+      "name": "JOSE ANTONIO VICENTE MARTINEZ — Driver Escrow",
+      "type": "Liability",
+      "lines": 3,
+      "debit": 0,
+      "credit": 150
+    },
+    {
+      "account": "2100-00-027",
+      "name": "Jorge Luis Infante Corona — Driver Escrow",
+      "type": "Liability",
+      "lines": 3,
+      "debit": 0,
+      "credit": 150
+    },
+    {
+      "account": "2100-00-040",
+      "name": "Leonel Antonio Morales — Driver Escrow",
+      "type": "Liability",
+      "lines": 2,
+      "debit": 0,
+      "credit": 125
     },
     {
       "account": "2150",
@@ -4624,20 +5244,28 @@
       "credit": 109375
     },
     {
+      "account": "2170",
+      "name": "Driver Net-Pay Clearing",
+      "type": "Liability",
+      "lines": 22,
+      "debit": 0,
+      "credit": 25011.6
+    },
+    {
       "account": "4000",
       "name": "Freight / Line-haul Income",
       "type": "Income",
-      "lines": 51,
+      "lines": 71,
       "debit": 0,
-      "credit": 152744
+      "credit": 223399
     },
     {
       "account": "5000",
       "name": "Fuel & Diesel",
       "type": "CostOfGoodsSold",
-      "lines": 92,
-      "debit": 31483.37,
-      "credit": 7250.2
+      "lines": 165,
+      "debit": 62112.69,
+      "credit": 7400.2
     },
     {
       "account": "6300",
@@ -4654,6 +5282,22 @@
       "lines": 38,
       "debit": 1726.35,
       "credit": 10
+    },
+    {
+      "account": "6890",
+      "name": "Cost of Labor–Mexico Drivers",
+      "type": "CostOfGoodsSold",
+      "lines": 22,
+      "debit": 27967.81,
+      "credit": 0
+    },
+    {
+      "account": "7200",
+      "name": "Driver Admin Fee & Chargeback Income",
+      "type": "Income",
+      "lines": 2,
+      "debit": 0,
+      "credit": 60.25
     },
     {
       "account": "9000",

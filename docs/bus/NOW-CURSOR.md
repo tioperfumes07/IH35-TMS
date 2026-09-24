@@ -1,12 +1,19 @@
-# NOW-CURSOR — 2026-09-24
-## 13524 = $3,800 (rate con MPHC261334) — AT $4,200 was OUR misprint — MERGED #22536
-Live invoice+rate $3,800. Control patched. Escrow guard ctid tie-break.
+# NOW-CURSOR — 2026-09-24 (Laredo CT)
 
-## Pure-Aug deduction completer LIVE
-`scripts/feed/complete-aug-settlement-deductions.mts` — escrow holds + CA linked to driver bills + pending admin fees from AT truth (pure-Aug docs only).
-- Escrow holds seeded; CA-2026-0001..0007; 20 open AlwaysTrack admin deductions.
-- Alfonso map = USMCA twin `40823a77` (not TRANSP `dcd683f5`); misattr corrected.
-- historical_backfill CA allows non-Active drivers.
+## OWNER RULE (this session) — bank match is YOURS
+Cursor does **not** match. Cursor does **not** touch `banking.*`.
+You match documents → bank transactions in-app.
+Cursor only: feed AlwaysTrack + Faro → create loads/stops/invoices/bills/fuel/expenses/CAs/settlements/Faro advances.
 
-## NEXT
-Mint+close pure-Aug settlements (none exist yet — only Sep 5797+); leave Aug–Sep open; 5 self-carried AR; layover pay lines.
+## LIVE (measured)
+- Faro purchase days Aug: 12/13 ✓; **8/31 ✗** fed 5/$17400 vs manifest 4/$13900
+- Faro Sep: 9/1 ✓, 9/3 partial (4/6); 9/4→9/21 not fed
+- Settlements 5769–5816: closed/approved+posted (census)
+- AlwaysTrack parity: **0/33 exact** — expense totals inflated (fuel duplicated into expense dimension)
+- Bank Aug: 452 txns, **0 matched** — waiting on owner match (agent will not touch)
+
+## NEXT (Cursor only)
+1. Fix 8/31 phantom extra Faro advance (void never delete) → day ✓
+2. Finish Sep Faro purchase days from `day_control.json` (no bank)
+3. Feeder: one document line → one dimension (fuel≠expense) until parity greens
+4. Never re-insert fuel when live row already covers load+type+amount
