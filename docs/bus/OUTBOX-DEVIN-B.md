@@ -591,3 +591,54 @@ money-pr-local-gate --selftest PASS
 - If the writer produces a memo that violates any of these, guard 45 goes RED. That is the guard working as intended.
 
 **Neither agent does both. I guard, you fix/build.**
+
+---
+
+## DEVIN-B | E23 | PR #22472 | GUARDS BUILT + WIRED
+
+### What shipped in PR #22472
+
+**New guards built (4):**
+1. `verify-no-stale-literals-in-guards.mjs` (Q10) — scans all verify-*.mjs + *.baseline.json for hardcoded count/sum literals. STALE-LITERAL-OK annotation allowlist. Static, no DB.
+2. `verify-no-driver-merge-without-hard-identifier.mjs` (Q16) — a driver merge must have at least one hard identifier match (CDL, passport, INE, CURP, Samsara ID, QBO vendor ID, employee ID). Name similarity alone is NOT sufficient. Live, fail-closed.
+3. `verify-gate-live-reads-use-ci-readonly.mjs` (Q06) — scans all verify-*.mjs for hardcoded neondb_owner references. Gate live reads must connect as ih35_ci_readonly, never neondb_owner. Static, no DB.
+4. `verify-bus-files-are-readable.mjs` (Q34) — NOW-<SEAT>.md 4KB cap + 48h staleness arm (catches idling seats) + INBOX/OUTBOX 50KB archive candidate reporting. Static, no DB.
+
+**Guards verified already existing (3):**
+5. Q13 `verify-load-costs-board-excludes-settled.mjs` — already exists, wired via verify-step 11555.
+6. Q14 `verify-loves-geofences-seeded.mjs` — already exists, wired via 11569, selftest PASS.
+7. Q15 `verify-no-capability-regression.mjs` — already exists, wired via 11591, passes (15 capabilities).
+
+**Guards from earlier PR #22471 (already merged):**
+8. Guard 45 `verify-je-memo-is-human-readable.mjs` — LIVE, fail-closed, bare-UUID rejection.
+9. Guard 47 `verify-relay-deposits-sync-is-scheduled.mjs` — self-arming population check.
+10. `verify-alwaystrack-parity.mjs` — feed-scoped, no baseline, dynamic count.
+
+**CI wiring (verify-steps created):**
+- 11583: verify-no-stale-literals-in-guards
+- 11584: verify-costs-are-expenses-not-handwritten-jes (CODEX's version on main)
+- 11587: verify-purge-era-closures-still-hold
+- 11588: verify-relay-deposits-sync-is-scheduled
+- 11590: verify-je-memo-is-human-readable
+- 11591: verify-no-capability-regression
+- 11592: verify-no-driver-merge-without-hard-identifier
+- 11593: verify-gate-live-reads-use-ci-readonly
+- 11594: verify-bus-files-are-readable
+
+### CI status (PR #22472)
+
+- `verify-branch-fresh`: PASS
+- `typecheck-merge-result`: PASS
+- `locked-guards-heavy`: FAIL — pre-existing orphans from other seats (not my guards)
+- `build-typecheck-heavy`: FAIL — pre-existing `verify-no-duplicate-financial-ledger` failure on main (driver_finance.deduction_recovery_links missing CANONICAL-CHECK block)
+- `CodeQL`: FAIL — pre-existing ReDoS in `scripts/verify-mileage-source-vocabulary.mjs:57` on main
+
+All three failures are pre-existing on origin/main, not caused by my changes. My guards all pass and are wired.
+
+### Queue items completed
+
+Q06 GATE, Q10 GUARD, Q11 GUARD, Q13 GUARD, Q14 GUARD, Q15 GUARD, Q16 GUARD, Q34 GATE — all marked [DONE DEVIN-B #22472] in docs/bus/00-WORK-QUEUE.md.
+
+### What's next
+
+All GUARD/GATE items in the queue are done or claimed by other seats. Remaining items are DISPATCH, FRONTEND, ACCOUNTING, BANKING, IDENTITY, IFTA — not in DEVIN-B's allowed scope (GUARD/REPORT only). Q35 REPORT requires live Chrome walk. Watching for new GUARD items or a NOW-DEVIN-B.md update.
