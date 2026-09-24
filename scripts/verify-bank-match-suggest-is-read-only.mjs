@@ -317,13 +317,13 @@ async function measureLive(client) {
   );
   const btCount = btRes.rows[0].cnt;
 
-  // Check 3: JEs with forbidden source_transaction_type
+  // Check 3: JEs with forbidden source_transaction_type (on postings table, not journal_entries)
   const jeRes = await client.query(
-    `SELECT je.id::text, je.source_transaction_type
-       FROM accounting.journal_entries je
-      WHERE je.operating_company_id = $1::uuid
-        AND je.source_transaction_type IS NOT NULL
-        AND je.source_transaction_type = ANY($2::text[])`,
+    `SELECT jep.id::text, jep.source_transaction_type
+       FROM accounting.journal_entry_postings jep
+      WHERE jep.operating_company_id = $1::uuid
+        AND jep.source_transaction_type IS NOT NULL
+        AND jep.source_transaction_type = ANY($2::text[])`,
     [USMCA_COMPANY_ID, FORBIDDEN_JE_SOURCE_TYPES],
   );
 
