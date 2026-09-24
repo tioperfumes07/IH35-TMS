@@ -130,6 +130,9 @@
     },
     "telematics/stops-geocode-backfill.service.ts": {
       "count": 1
+    },
+    "feed/feed-day-preflight.service.ts": {
+      "count": 1
     }
   },
   "measured_at": "2026-09-24T00:30:00Z"
