@@ -65,6 +65,43 @@ if (fs.existsSync(opsDir)) {
   }
 }
 
+// close-faro-day must LIVE-measure — never echo day_control as --measured.
+const closeHelper = path.join(ROOT, "scripts/feed/close-faro-day.mjs");
+if (fs.existsSync(closeHelper)) {
+  const closeBody = fs.readFileSync(closeHelper, "utf8");
+  if (!closeBody.includes("measureDayLive") || !closeBody.includes("CLOSE REFUSED")) {
+    failures.push(
+      "scripts/feed/close-faro-day.mjs must LIVE-measure (measureDayLive) and CLOSE REFUSED on missing FA — never control-as-measured",
+    );
+  }
+  if (/dayMeasured\s*=\s*\{\s*invoices:\s*control\.invoices/.test(closeBody)) {
+    failures.push(
+      "scripts/feed/close-faro-day.mjs still echoes control as measured — Rule 52 deviation",
+    );
+  }
+}
+
+// closed_purchase_days must be a contiguous prefix of day_control (no skipping open days).
+const closedPath = path.join(ROOT, "scripts/feed/closed_purchase_days.json");
+const dayControlPath = path.join(ROOT, "scripts/feed/day_control.json");
+if (fs.existsSync(closedPath) && fs.existsSync(dayControlPath)) {
+  const closed = JSON.parse(fs.readFileSync(closedPath, "utf8")).closed_purchase_days || [];
+  const days = JSON.parse(fs.readFileSync(dayControlPath, "utf8")).days || [];
+  const isoOf = (d) => {
+    const [m, day, y] = d.date.split("/").map(Number);
+    return `20${String(y).padStart(2, "0")}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  };
+  const order = days.map(isoOf);
+  for (let i = 0; i < closed.length; i++) {
+    if (closed[i] !== order[i]) {
+      failures.push(
+        `closed_purchase_days not contiguous prefix: index ${i} has ${closed[i]}, want ${order[i]} (Round 152.1 — no skipping)`,
+      );
+      break;
+    }
+  }
+}
+
 if (failures.length) {
   console.error("FAIL verify-faro-purchase-day-feed-law:");
   for (const f of failures) console.error(" -", f);
