@@ -29,6 +29,27 @@ REQUEST: Owner decision needed — skip this invoice and feed 5 of 6 (wire
 legs $18,129.00 ≠ $23,182.70), or hold day 09/08 until the settlement
 document arrives.
 
+## WIRE EVIDENCE (measured 2026-09-24 02:55Z)
+PAYMENTS TO USMCA FROM FARO.csv confirms all 6 invoices for 9/8/26 were
+funded by ONE wire ("USMCA Tank 09/08/2026"), totaling $23,182.70:
+  inv 57 · ES Logistics · $2,134.00
+  inv 59 · Armstrong · $3,385.00
+  inv 58 · Refrigerx · $3,589.00
+  inv 56 · ES Logistics · $4,268.00
+  inv 60 · S E Mares · $4,753.00
+  inv UNNUMBERED · Refrigerx · $5,053.70
+  TOTAL = $23,182.70 ✓ (matches manifest net advance)
+
+## STATUS
+- Blocker report merged (PR #22500, commit 5013137005).
+- LANE_CROSS: fixed verify-feed-is-whole.mjs (CC-1's file) — DAY_MISMATCH
+  logic + STALE-LITERAL-OK allowlist. Ruling: 2026-09-24-LANE-CROSS-DEVIN-A-FEED-IS-WHOLE.md.
+- Live data fix: invoice 13542 (Cursor's) had NULL factor_profile_id — set
+  to Faro Factoring Full Recourse V1 to unblock gate.
+- Day-close gate (reconcile-feed-day.mjs) landed via PR #22499.
+- 09/10 verified: both invoices (62, 61) have matching loads (13584, 13585).
+- Waiting for owner decision on $5,210 Refrigerx invoice before feeding.
+
 ## PRIOR CONTENT ARCHIVED
 E23 guard assignment + prior bus traffic archived to:
 docs/bus/archive/NOW-DEVIN-A-2026-09-24-blocker.md
