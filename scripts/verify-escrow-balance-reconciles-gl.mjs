@@ -49,7 +49,7 @@ const LEDGER_RUNNING_BALANCE_QUERY = `
          el.running_balance_cents::bigint AS ledger_running_balance_cents
     FROM driver_finance.escrow_balances eb
     JOIN driver_finance.escrow_ledger el ON el.driver_id = eb.driver_id AND el.operating_company_id = eb.operating_company_id
-   ORDER BY eb.driver_id, el.created_at DESC, el.id DESC
+   ORDER BY eb.driver_id, el.created_at DESC, el.ctid DESC
 `;
 
 function selftest() {

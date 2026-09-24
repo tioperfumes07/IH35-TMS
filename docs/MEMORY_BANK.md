@@ -188,6 +188,12 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   15 advances short Faro's flat **$10 wire fee**; load 13513 app-only; invoice 13510 Faro-only;
   FAC-2026-00001/00050/00051 unlinked.
 
+### Active Architectural Decisions — Aug pure-settlement completer (Cursor, 2026-09-24)
+- Pure-Aug AT driver docs (start+end in 2026-08): seed escrow via `createHistoricalEscrowHold`, cash advances via `createDriverCashAdvanceCore` (`historical_backfill` + `linked_driver_bill_id`), admin fees via `createSettlementDeduction` (pending until settl mint/close). Script: `scripts/feed/complete-aug-settlement-deductions.mts`.
+- Alfonso Hidalgo AlwaysTrack name maps to **USMCA** driver `40823a77`, never TRANSP twin `dcd683f5`. Misattr release+void script: `scripts/feed/correct-alfonso-transp-escrow-misattr.mts`.
+- `historical_backfill` cash advances skip the Active-status gate (Inactive/Probation drivers still owe documented advances).
+- Escrow ledger same-ms tie-break: guard uses `ctid DESC` (UUID id is not insertion order). Writer stamps `clock_timestamp()` on insert.
+
 ## Verify-step lane law (so the gate stops rejecting)
 
 - Cursor = EVEN numbers. CC-1 ≡1 (mod 4). CC-2 ≡3 (mod 4).
