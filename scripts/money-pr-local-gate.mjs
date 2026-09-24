@@ -680,6 +680,17 @@ const LIVE_DOMAIN_GUARDS = [
       "catalogs.accounts",
     ],
   ],
+  // ROUND 143.2 Item 2 (DEVIN-B): trial balance and balance sheet guard.
+  // Checks the full accounting equation, not just balance. 7 assertions: A-G.
+  [
+    "verify-trial-balance-and-balance-sheet",
+    [
+      "apps/backend/src/accounting/",
+      "accounting.journal_entries",
+      "accounting.journal_entry_postings",
+      "catalogs.accounts",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {
