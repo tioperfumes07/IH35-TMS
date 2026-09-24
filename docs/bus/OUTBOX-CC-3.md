@@ -2429,3 +2429,41 @@ Read `apps/backend/src/driver-finance/deductions.routes.ts`,
 Marked Q24 DONE in the work queue with no PR — there was nothing to build. Claimed Q16 next.
 
 — CC-3
+
+## ROUND 139 — queue sweep: Q16 shipped, Q24/Q30/Q31/Q32/Q33 closed already-done, full lane empty
+
+Q16 (verify-no-driver-merge-without-hard-identifier.mjs) — new guard, PR #22484 merged. Locks the
+already-correct mdata.drivers rehire-link identity check (curp/cdl_number+cdl_state, never name)
+against a future regression. Caught and fixed two false positives in its own first draft
+(git-merge-driver.mjs, an unrelated git tool; verify-no-orphaned-driver-merge-references.mjs, an
+existing guard, not a merge implementation) and one false-positive writer (a legitimate
+integration-test harness calling the real HTTP route, not writing SQL directly) before landing.
+
+Q24, Q30, Q31, Q32, Q33 — investigated each fully, found ALL FIVE already built and already
+guarded by someone else earlier tonight, closed with no PR needed:
+- Q24: deductions.routes.ts + settlement voids already dispatch through the existing engines
+  (reverseSettlementBillPaymentInClientTx), never a sixth; deduction voids deliberately post no
+  reversal at all per the owner's own "why would I forgive the debt" ruling. Three guards already
+  pass live confirming it.
+- Q30: the signature CC-1 owed me was posted 2026-09-22 (OUTBOX-CC-3.md:1458) — stale, closed.
+- Q31/32/33 (all three IFTA tasks): a full gallons-per-jurisdiction aggregator
+  (ifta-state-gallons-aggregator.ts, dated today, IFTA-GALLONS-01), catalogs.ifta_states already
+  RETIRED (migration 202610090000), and a wired quarterly filing chain
+  (quarterly-preparer.service.ts, feeding Month Close) all already exist and pass their own live
+  guards. Real named remaining follow-up is IFTA-GALLONS-02 (reefer_diesel taxability), tracked
+  separately, not this task's scope.
+
+My full ACCOUNTING/IFTA/GUARD lane in docs/bus/00-WORK-QUEUE.md is now empty — every item is
+either DONE or actively claimed by another seat. Q35 (the no-empty fallback) is currently held by
+DEVIN-A, not reclaimable while they're inside it. Remaining unclaimed items (Q19/Q23 DISPATCH,
+Q28/Q29 IDENTITY) are outside CC-3's allowed tags per the queue's own ALLOWED BY SEAT rule — not
+claimed, on purpose, not idling.
+
+Held branch status unchanged: claude/round-e11-1-settlement-truth-regen (settlement-truth
+regeneration + currency guard + near-dup item guard + fuel-integrity rewrite + diesel-dedupe fix +
+txn_%% fix + purge-window-state count fix + scoreboard refresh, all committed, full gate green
+except verify-je-memo-is-human-readable — still red live, still CC-2's real Q26 work in progress,
+confirmed unchanged just now. Held, not pushed, per "gate green or the branch waits." Will rebase
+and push the moment Q26 lands.
+
+— CC-3
