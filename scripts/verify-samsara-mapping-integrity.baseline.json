@@ -1,5 +1,6 @@
 {
   "_what_this_measures": "integrations.samsara_drivers rows mapped (local_driver_id set) to a USMCA mdata.drivers row whose status is NOT Active/Probation -- pre-existing mappings made before the E20 driver-scope cut (only currently Active/Probation drivers are in scope for mapping going forward). Measured live 2026-09-23 via verify-samsara-mapping-integrity.mjs, shrink-only ratchet from here -- resolving one (re-point to the correct active driver, or clear the mapping) is real progress and lowers this number; a NEW mapping to a deactivated driver growing this count is a real regression this guard exists to catch.",
+  "stale_literal_ok": "shrink-only ratchet — count drains as mappings are resolved, measured live 2026-09-23",
   "count": 78,
   "established": "2026-09-23"
 }

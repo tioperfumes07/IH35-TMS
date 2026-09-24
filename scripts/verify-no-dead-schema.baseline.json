@@ -8,6 +8,7 @@
     "weak": "identifier appears in the codebase but in NO file that touches this table — the substring illusion (e.g. mdata.drivers.employment_status, superseded by driver_employment_status_id in 0343)"
   },
   "_recapture": "2026-07-21 — coverage went from 1,074 ADD COLUMN-only objects to 5,740 live columns (inline CREATE TABLE columns were 81% of the schema and were invisible), and whole-corpus substring matching was replaced by whole-token, table-context matching. The count grew because the guard now sees what it always claimed to check. DO-block DDL (real CREATE TABLE inside $$ bodies) and comma-separated inline columns are now parsed too — the prior revision discarded dollar-quoted bodies entirely.",
+  "stale_literal_ok": "shrink-only debt register — count drains as schema is wired, recaptured 2026-07-21",
   "count": 586,
   "entries": [
     {

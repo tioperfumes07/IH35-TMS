@@ -42,4 +42,22 @@ Plus the minimum wiring changes:
 
 **Scope:** These three guards + their gate wiring only. DEVIN-A does not touch any other CC-1 lane files.
 
-**Source:** Owner assignment E14.1 (2026-09-23 22:03 UTC), E15.6 (22:41 UTC), E19 (23:12 UTC).
+**Q10 extension (verify-no-stale-literals-in-guards.mjs):** DEVIN-A added STALE-LITERAL-OK
+allowlists to three CC-1-lane files whose selftest fixtures / debt-register baselines contained
+hardcoded counts that the new guard correctly flagged:
+- `scripts/verify-diesel-expense-fuel-dedupe.mjs` — STALE-LITERAL-OK on KNOWN_VOIDED_5782_IDS
+  (purge-aware: absence accepted after AUTH-001 wipe).
+- `scripts/verify-fuel-relay-txn-vendor-unmatched.mjs` — STALE-LITERAL-OK on selftest `cases`
+  block (hardcoded baseline counts 76 are ratchet-logic test fixtures, not real baselines).
+- `scripts/verify-samsara-mapping-integrity.mjs` — STALE-LITERAL-OK on selftest `ratchetCases`
+  block (hardcoded baseline counts 78 are ratchet-logic test fixtures, not real baselines).
+- `scripts/verify-no-dead-schema.baseline.json` — `stale_literal_ok` field (shrink-only debt
+  register, count 586 drains as schema is wired).
+- `scripts/verify-orphan-fk-inventory.baseline.json` — `stale_literal_ok` field (shrink-only
+  debt register, count 833 drains as FKs are added).
+- `scripts/verify-samsara-mapping-integrity.baseline.json` — `stale_literal_ok` field
+  (shrink-only ratchet, count 78 drains as mappings are resolved).
+These are allowlist annotations only — no guard logic or baseline values were changed.
+
+**Source:** Owner assignment E14.1 (2026-09-23 22:03 UTC), E15.6 (22:41 UTC), E19 (23:12 UTC),
+NO-IDLE law (2026-09-24).

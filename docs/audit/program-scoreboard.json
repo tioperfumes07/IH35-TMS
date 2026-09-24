@@ -1,10 +1,10 @@
 {
-  "healthzSha": "1f7ae46",
-  "generated_at": "2026-09-23T05:35:31.806Z",
+  "healthzSha": "13d2ce4",
+  "generated_at": "2026-09-23T23:50:08.164Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "1f7ae46",
+    "deployedSha": "13d2ce4",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 22401,
-      "title": "FINDING: ACCT-F2026092312 (shared backlog — Faro's export carries Cash Rsv, Fees, Dispatch and Sch Fee between face and net advance; nothing stored them, and the parser rejected the owner's real \"PURCHASE REPORT ALL\" export outright)",
+      "number": 0,
+      "title": "claim: Q11 CODEX",
       "state": "merged",
-      "mergedAtCt": "09/23/2026, 12:33 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22401",
-      "sha": "8d27b42189",
-      "committedAtIso": "2026-09-23T00:33:01-05:00"
+      "mergedAtCt": "09/23/2026, 06:49 PM CT",
+      "url": "",
+      "sha": "42480cb7a8",
+      "committedAtIso": "2026-09-23T18:49:01-05:00"
     },
     {
-      "number": 22399,
-      "title": "FINDING: E10-REHEARSAL-FAILED-416-ERRORS -- and the 274 orphan headers are NOT CC-3's concurrency race",
+      "number": 22477,
+      "title": "FINDING: N/A LANE: DOCS (Q38 -- commit the bus files to main)",
       "state": "merged",
-      "mergedAtCt": "09/23/2026, 12:24 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22399",
-      "sha": "80b137a198",
-      "committedAtIso": "2026-09-23T00:24:07-05:00"
+      "mergedAtCt": "09/23/2026, 06:42 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22477",
+      "sha": "13d2ce457b",
+      "committedAtIso": "2026-09-23T18:42:00-05:00"
     },
     {
-      "number": 22398,
-      "title": "FINDING: ACCT-F2026092311 (claim migration 202614301200 for the Faro deduction columns: cash_rsv, dispatch, sch_fee, fees; claim-before-author, Rule 37)",
+      "number": 0,
+      "title": "claim: Q02 CODEX",
       "state": "merged",
-      "mergedAtCt": "09/23/2026, 12:21 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22398",
-      "sha": "297514cd30",
-      "committedAtIso": "2026-09-23T00:21:20-05:00"
+      "mergedAtCt": "09/23/2026, 06:40 PM CT",
+      "url": "",
+      "sha": "3ec246ac3f",
+      "committedAtIso": "2026-09-23T18:40:37-05:00"
     },
     {
-      "number": 22397,
-      "title": "FINDING: N/A LANE: DOCS (OUTBOX-CC-2 final: E20 Part B, item lines, deduction screens all merged -- LIST EMPTY, all four assigned items live)",
+      "number": 22476,
+      "title": "FINDING: GUARD-Q01 cost JEs require expense documents",
       "state": "merged",
-      "mergedAtCt": "09/23/2026, 12:20 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22397",
-      "sha": "bd59b5e79e",
-      "committedAtIso": "2026-09-23T00:20:46-05:00"
+      "mergedAtCt": "09/23/2026, 06:40 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22476",
+      "sha": "017a3963a2",
+      "committedAtIso": "2026-09-23T18:40:03-05:00"
     },
     {
-      "number": 22396,
-      "title": "FINDING: ACCT-F70 (deduction screens -- the fault decision is a named human act, with a reason, unlocked only for fault_party=driver)",
+      "number": 0,
+      "title": "claim: Q03 DONE (Devin-A #22474, not CC-3) CC-3",
       "state": "merged",
-      "mergedAtCt": "09/23/2026, 12:12 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22396",
-      "sha": "7b65b75bee",
-      "committedAtIso": "2026-09-23T00:12:30-05:00"
+      "mergedAtCt": "09/23/2026, 06:39 PM CT",
+      "url": "",
+      "sha": "ee4dcf71ab",
+      "committedAtIso": "2026-09-23T18:39:42-05:00"
     },
     {
-      "number": 22395,
-      "title": "Cursor-OUTBOX: 13d live with first cron runs + program scoreboard regen (82 > 80 behind blocked every push)",
+      "number": 22475,
+      "title": "FINDING: claim Q07/Q08/Q09 DONE DEVIN-A (PR #22474 merged), Q10 DEVIN-A",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 11:55 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22395",
-      "sha": "ac985f8151",
-      "committedAtIso": "2026-09-22T23:55:41-05:00"
+      "mergedAtCt": "09/23/2026, 06:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22475",
+      "sha": "44c3f9d0b4",
+      "committedAtIso": "2026-09-23T18:37:47-05:00"
     },
     {
-      "number": 22393,
-      "title": "FINDING: FUEL-EXPENSE-DOC-02 -- the document now ADOPTS the posting that already exists, and only LIVE entries count",
+      "number": 22474,
+      "title": "FINDING: E15.6 THREE VOID/REVERSAL GUARDS (DEVIN-A, round 105 defect class)",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 11:44 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22393",
-      "sha": "1f7ae46a9c",
-      "committedAtIso": "2026-09-22T23:44:22-05:00"
+      "mergedAtCt": "09/23/2026, 06:32 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22474",
+      "sha": "6aa9232175",
+      "committedAtIso": "2026-09-23T18:32:24-05:00"
     },
     {
-      "number": 22392,
-      "title": "FINDING: ACCT-F2026092310 (13d follow-up — the reconciler cron ran twice per tick on production: every backend instance schedules it, and the ticks land seconds apart)",
+      "number": 22473,
+      "title": "claim: Q04 Q05 CC-1 (done, PR pending merge)",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 11:39 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22392",
-      "sha": "303dcf547a",
-      "committedAtIso": "2026-09-22T23:39:17-05:00"
+      "mergedAtCt": "09/23/2026, 06:30 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22473",
+      "sha": "e955111dc4",
+      "committedAtIso": "2026-09-23T18:30:57-05:00"
     },
     {
-      "number": 22391,
-      "title": "FINDING: THE-500.01-ESCROW-RESIDUAL-EXPLAINED -- three 2026-09-02 repair pairs where the release is double the deposit; no money is missing and E10 is unblocked",
+      "number": 0,
+      "title": "claim: Q01 CODEX",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 11:37 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22391",
-      "sha": "5be225fecd",
-      "committedAtIso": "2026-09-22T23:37:24-05:00"
+      "mergedAtCt": "09/23/2026, 06:28 PM CT",
+      "url": "",
+      "sha": "6c832f74aa",
+      "committedAtIso": "2026-09-23T18:28:49-05:00"
     },
     {
-      "number": 22390,
-      "title": "FINDING: E10-SETTLEMENTS-PHASE-WRONG-TABLE-USMCA-USES-PAYRUN-GL-RUNS-NOT-SETTLEMENT-GL-RUNS LANE: NON-FINANCIAL",
+      "number": 0,
+      "title": "claim: Q03 CC-3",
       "state": "merged",
-      "mergedAtCt": "09/22/2026, 11:36 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22390",
-      "sha": "28cf281397",
-      "committedAtIso": "2026-09-22T23:36:51-05:00"
+      "mergedAtCt": "09/23/2026, 06:22 PM CT",
+      "url": "",
+      "sha": "3e3e369ec6",
+      "committedAtIso": "2026-09-23T18:22:51-05:00"
     }
   ]
 }

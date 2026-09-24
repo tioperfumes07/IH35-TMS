@@ -23,7 +23,7 @@ const SKIP_DIR_NAMES = new Set(["node_modules", ".git", "dist", "coverage", ".ne
 
 /** Tests, e2e harnesses, and this family's planted strings are not production write paths. */
 const EXCLUDE_PATH_RE =
-  /(\/__tests__\/|\/tests\/|\/verify-steps\/|\.test\.|\.spec\.|e2e-|verify-no-hard-delete-document-number-tables)/i;
+  /(\/__tests__\/|\/tests\/|\/verify-steps\/|\.test\.|\.spec\.|e2e-|verify-no-hard-delete-document-number-tables|verify-no-unscoped-company-delete)/i;
 
 export function documentNumberTablesFromDisplayId(src) {
   const tables = new Set();

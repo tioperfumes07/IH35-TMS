@@ -154,7 +154,7 @@ async function live() {
 // planted "should be a defect" case is checked for the correct exit signal; reports a
 // machine-parseable N/N per verify-guard-selftests-are-real.mjs's convention.
 function selftest() {
-  const cases = [
+  const cases = [ // STALE-LITERAL-OK: selftest fixtures with hardcoded baseline counts for ratchet logic testing
     { name: "no baseline", liveCount: 5, baseline: null, wantOk: false },
     { name: "growth", liveCount: 80, baseline: { count: 76, established: "2026-09-23" }, wantOk: false },
     { name: "target-hit-stale-baseline", liveCount: 0, baseline: { count: 76, established: "2026-09-23" }, wantOk: false },
