@@ -113,6 +113,23 @@ export const SURFACES = [
   // (REG-032) renders the same beside the load number. Both alwaysVisible, source_document_ref only.
   { file: "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx", loadNumberNeedle: /r\.load_number/ },
   { file: "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx", loadNumberNeedle: /load\?\.load_number/ },
+  // CC-2 (Q22, ROUND 27) -- cc2_driverfinance_settlements_fuel bucket, 4 of 4 registered.
+  // SettlementsTable.tsx already satisfied this law before it existed (owner ruling 2026-09-11,
+  // "COLUMN-ORDERING LAW": Settlement/Tour renders FIRST, Load Number immediately beside it) --
+  // registered here with zero code changes, same as RevenueRecognitionPage.tsx above.
+  { file: "apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx", loadNumberNeedle: /label: "Load Number"/ },
+  // SettlementsCompanyDriverTab.tsx: the legs sub-table's load_number column sits under a
+  // settlementLabel(tour) group header ("DRIVER SETTLEMENT · {settlementLabel(tour)}") -- the
+  // settlement reference is already in the same file, zero code change needed.
+  { file: "apps/frontend/src/pages/driver-finance/SettlementsCompanyDriverTab.tsx", loadNumberNeedle: /key: "load_number"/ },
+  // PendingSettlementDeductionsPanel.tsx: rewired the existing Settlement column through
+  // settlementLabel() so this guard can see it -- value unchanged, already source_document_ref
+  // (deductions.routes.ts:139 aliases applied_to_settlement_display_id AS s.source_document_ref).
+  { file: "apps/frontend/src/pages/drivers/PendingSettlementDeductionsPanel.tsx", loadNumberNeedle: /key: "load_number"/ },
+  // SettlementsPage.tsx's Open Driver Bills panel was the one genuine gap in this bucket -- added a
+  // real SettlementReferenceCell + useSettlementReferences column (bills here are, by definition,
+  // not yet in a closed settlement, so most rows will show "Open"/"Not on a tour", which is correct).
+  { file: "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx", loadNumberNeedle: /key: "load_number"/ },
 ];
 
 // ACCT-F20260911 ALL-SEATS ROLLOUT INVENTORY (owner 2026-09-13, verbatim: "anywhere in the entire app,
@@ -169,10 +186,10 @@ export const LOAD_NUMBER_SURFACE_INVENTORY = {
     "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
   ],
   cc2_driverfinance_settlements_fuel: [
-    "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
-    "apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx",
-    "apps/frontend/src/pages/driver-finance/SettlementsCompanyDriverTab.tsx",
-    "apps/frontend/src/pages/drivers/PendingSettlementDeductionsPanel.tsx",
+    "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx", // CONVERTED (SURFACES)
+    "apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx", // CONVERTED (SURFACES)
+    "apps/frontend/src/pages/driver-finance/SettlementsCompanyDriverTab.tsx", // CONVERTED (SURFACES)
+    "apps/frontend/src/pages/drivers/PendingSettlementDeductionsPanel.tsx", // CONVERTED (SURFACES)
   ],
   cc3_safety_maintenance_fleet_insurance: [
     "apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx",

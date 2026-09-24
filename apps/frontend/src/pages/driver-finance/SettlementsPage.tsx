@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
-import { listSettlements, getOpenDriverBills, type OpenDriverBill, type SettlementListRow } from "../../api/driverFinance";
+import { listSettlements, getOpenDriverBills, type OpenDriverBill, type SettlementListRow, type SettlementReference } from "../../api/driverFinance";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -17,6 +17,8 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
+import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 import { DataTable, type DataTableColumn } from "../../components/DataTable";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { EntityPicker } from "../../components/EntityPicker";
@@ -528,6 +530,7 @@ export function SettlementsPage() {
       ) : null}
 
       <OpenDriverBillsPanel
+        companyId={companyId}
         loading={openBillsQuery.isPending}
         totalCount={openBillsSummary.total_count}
         totalGrossCents={openBillsSummary.total_gross_cents}
@@ -627,7 +630,11 @@ export function SettlementsPage() {
 // GO-UI-CONSISTENCY-WHOLE-APP-2026-08-31: Open Driver Bills uses DataTable columns
 // (DRIVER · LOAD NUMBER · BILL NUMBER · AMOUNT) instead of the old column-jam flex
 // layout (Driver · Load · Bill in one cell).
-const openDriverBillColumns: DataTableColumn<OpenDriverBill>[] = [
+// Q22 (CC-2, ROUND 27 — ACCT-F20260911 ALL-SEATS ROLLOUT): builds columns per-render so the
+// Settlement / Presettlement cell can read a live useSettlementReferences() Map — a bare module-level
+// array can't call a hook.
+function buildOpenDriverBillColumns(settlementReferences: Map<string, SettlementReference>): DataTableColumn<OpenDriverBill>[] {
+  return [
   {
     key: "driver",
     label: "Driver",
@@ -653,6 +660,12 @@ const openDriverBillColumns: DataTableColumn<OpenDriverBill>[] = [
         label={entityLabel(bill.load_number, bill.load_id, "Load")}
       />
     ),
+  },
+  {
+    key: "settlement_reference",
+    label: "Settlement / Presettlement",
+    sortable: false,
+    render: (bill) => <SettlementReferenceCell reference={bill.load_id ? settlementReferences.get(bill.load_id) : null} />,
   },
   {
     key: "bill_number",
@@ -681,19 +694,26 @@ const openDriverBillColumns: DataTableColumn<OpenDriverBill>[] = [
       <span className="font-semibold">{formatUsdCents(bill.gross_amount_cents)}</span>
     ),
   },
-];
+  ];
+}
 
 function OpenDriverBillsPanel({
+  companyId,
   loading,
   totalCount,
   totalGrossCents,
   items,
 }: {
+  companyId: string;
   loading: boolean;
   totalCount: number;
   totalGrossCents: number;
   items: OpenDriverBill[];
 }) {
+  // Called unconditionally, before the loading early-return (rules of hooks).
+  const settlementReferences = useSettlementReferences(companyId, items.map((bill) => bill.load_id));
+  const columns = useMemo(() => buildOpenDriverBillColumns(settlementReferences), [settlementReferences]);
+
   if (loading) {
     return (
       <DataPanel title={`Open Driver Bills · loading…`} accentColor="#64748b">
@@ -707,7 +727,7 @@ function OpenDriverBillsPanel({
         <p className="text-xs text-gray-500">No open driver bills — all driver pay is either settled or not yet booked.</p>
       ) : (
         <DataTable
-          columns={openDriverBillColumns}
+          columns={columns}
           rows={items}
           rowKey={(bill) => bill.id}
           hidePager
