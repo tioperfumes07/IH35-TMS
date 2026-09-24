@@ -1,10 +1,10 @@
 {
-  "healthzSha": "13d2ce4",
-  "generated_at": "2026-09-23T23:50:08.164Z",
+  "healthzSha": "cee30f5",
+  "generated_at": "2026-09-24T16:37:41.114Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "13d2ce4",
+    "deployedSha": "cee30f5",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2124,93 +2124,93 @@
   "recentActivity": [
     {
       "number": 0,
-      "title": "claim: Q11 CODEX",
+      "title": "FINDING: After Faro Aug TIE — Aug settlement feed_input 61/61 LIVE",
       "state": "merged",
-      "mergedAtCt": "09/23/2026, 06:49 PM CT",
+      "mergedAtCt": "09/24/2026, 11:11 AM CT",
       "url": "",
-      "sha": "42480cb7a8",
-      "committedAtIso": "2026-09-23T18:49:01-05:00"
+      "sha": "cee30f5485",
+      "committedAtIso": "2026-09-24T11:11:33-05:00"
     },
     {
-      "number": 22477,
-      "title": "FINDING: N/A LANE: DOCS (Q38 -- commit the bus files to main)",
+      "number": 22534,
+      "title": "Cursor-FEED-HONESTY-LIVE-MEASURE — Faro purchase days LIVE closed through 8/31",
       "state": "merged",
-      "mergedAtCt": "09/23/2026, 06:42 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22477",
-      "sha": "13d2ce457b",
-      "committedAtIso": "2026-09-23T18:42:00-05:00"
+      "mergedAtCt": "09/24/2026, 09:09 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22534",
+      "sha": "f107c1444d",
+      "committedAtIso": "2026-09-24T09:09:37-05:00"
     },
     {
-      "number": 0,
-      "title": "claim: Q02 CODEX",
+      "number": 22533,
+      "title": "FINDING: FEED-813-CLOSE",
       "state": "merged",
-      "mergedAtCt": "09/23/2026, 06:40 PM CT",
-      "url": "",
-      "sha": "3ec246ac3f",
-      "committedAtIso": "2026-09-23T18:40:37-05:00"
+      "mergedAtCt": "09/24/2026, 01:49 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22533",
+      "sha": "891771ecfe",
+      "committedAtIso": "2026-09-24T01:49:50-05:00"
     },
     {
-      "number": 22476,
-      "title": "FINDING: GUARD-Q01 cost JEs require expense documents",
+      "number": 22532,
+      "title": "FINDING: FEED-812-CLOSE",
       "state": "merged",
-      "mergedAtCt": "09/23/2026, 06:40 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22476",
-      "sha": "017a3963a2",
-      "committedAtIso": "2026-09-23T18:40:03-05:00"
+      "mergedAtCt": "09/24/2026, 01:32 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22532",
+      "sha": "200cbcda72",
+      "committedAtIso": "2026-09-24T01:32:20-05:00"
     },
     {
-      "number": 0,
-      "title": "claim: Q03 DONE (Devin-A #22474, not CC-3) CC-3",
+      "number": 22531,
+      "title": "FINDING: FEED-811-CLOSE",
       "state": "merged",
-      "mergedAtCt": "09/23/2026, 06:39 PM CT",
-      "url": "",
-      "sha": "ee4dcf71ab",
-      "committedAtIso": "2026-09-23T18:39:42-05:00"
+      "mergedAtCt": "09/24/2026, 01:18 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22531",
+      "sha": "f52bf1e4ec",
+      "committedAtIso": "2026-09-24T01:18:50-05:00"
     },
     {
-      "number": 22475,
-      "title": "FINDING: claim Q07/Q08/Q09 DONE DEVIN-A (PR #22474 merged), Q10 DEVIN-A",
+      "number": 22530,
+      "title": "Cursor-FEED-810-CLOSE closed_purchase_days 2026-08-10",
       "state": "merged",
-      "mergedAtCt": "09/23/2026, 06:37 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22475",
-      "sha": "44c3f9d0b4",
-      "committedAtIso": "2026-09-23T18:37:47-05:00"
+      "mergedAtCt": "09/24/2026, 01:01 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22530",
+      "sha": "ebfa320271",
+      "committedAtIso": "2026-09-24T01:01:08-05:00"
     },
     {
-      "number": 22474,
-      "title": "FINDING: E15.6 THREE VOID/REVERSAL GUARDS (DEVIN-A, round 105 defect class)",
+      "number": 22529,
+      "title": "FINDING: FEED-LAW-52",
       "state": "merged",
-      "mergedAtCt": "09/23/2026, 06:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22474",
-      "sha": "6aa9232175",
-      "committedAtIso": "2026-09-23T18:32:24-05:00"
+      "mergedAtCt": "09/24/2026, 12:33 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22529",
+      "sha": "de9dd358ef",
+      "committedAtIso": "2026-09-24T00:33:00-05:00"
     },
     {
-      "number": 22473,
-      "title": "claim: Q04 Q05 CC-1 (done, PR pending merge)",
+      "number": 22528,
+      "title": "FINDING: N/A LANE: DOCS (ROUND 152.1 -- the process is the Faro purchase day; feed_cursor.json shows 0 days ever closed; start at 8/10)",
       "state": "merged",
-      "mergedAtCt": "09/23/2026, 06:30 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22473",
-      "sha": "e955111dc4",
-      "committedAtIso": "2026-09-23T18:30:57-05:00"
+      "mergedAtCt": "09/23/2026, 11:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22528",
+      "sha": "45f3c23848",
+      "committedAtIso": "2026-09-23T23:35:04-05:00"
     },
     {
-      "number": 0,
-      "title": "claim: Q01 CODEX",
+      "number": 22527,
+      "title": "FINDING: N/A LANE: DOCS (ROUND 152 -- the scorecard: verify-alwaystrack-parity 0 of 12 documents exact, verify-feed-is-whole fake-green 40/89; build order to all seven seats)",
       "state": "merged",
-      "mergedAtCt": "09/23/2026, 06:28 PM CT",
-      "url": "",
-      "sha": "6c832f74aa",
-      "committedAtIso": "2026-09-23T18:28:49-05:00"
+      "mergedAtCt": "09/23/2026, 11:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22527",
+      "sha": "5d692865d9",
+      "committedAtIso": "2026-09-23T23:27:41-05:00"
     },
     {
-      "number": 0,
-      "title": "claim: Q03 CC-3",
+      "number": 22526,
+      "title": "FINDING: N/A LANE: DOCS (ROUND 151.5 -- Cursor: root cause is UNMATCHED name in faro_reconciliation_register.csv; invoice->load from reconciled sheets; real shortfall 18,700.00; guard verify-every-advance-is-one-of-the-89)",
       "state": "merged",
-      "mergedAtCt": "09/23/2026, 06:22 PM CT",
-      "url": "",
-      "sha": "3e3e369ec6",
-      "committedAtIso": "2026-09-23T18:22:51-05:00"
+      "mergedAtCt": "09/23/2026, 11:22 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22526",
+      "sha": "65317ffedd",
+      "committedAtIso": "2026-09-23T23:22:08-05:00"
     }
   ]
 }

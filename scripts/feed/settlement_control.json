@@ -1428,7 +1428,7 @@
    "truck": "T173",
    "trailer": "10380",
    "customer": "MPH CARRIER SERVICES, INC",
-   "line_haul": 4200.0,
+   "line_haul": 3800.0,
    "line_haul_miles": 1927.0,
    "driver_pay": 853.61,
    "loaded_miles": 1185.4,
@@ -1451,7 +1451,8 @@
    "def_rows": 4,
    "def_amount": 100.56,
    "reefer_fuel": 0.0,
-   "reefer_rows": 0
+   "reefer_rows": 0,
+   "line_haul_note": "Rate confirmation MPHC261334 LINE HAUL $3800 wins over AlwaysTrack company settl 5778 misprint $4200 (owner 2026-09-24)"
   },
   "13525": {
    "load": "13525",
