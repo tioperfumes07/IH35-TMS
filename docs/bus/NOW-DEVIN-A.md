@@ -40,6 +40,16 @@ funded by ONE wire ("USMCA Tank 09/08/2026"), totaling $23,182.70:
   inv UNNUMBERED · Refrigerx · $5,053.70
   TOTAL = $23,182.70 ✓ (matches manifest net advance)
 
+## CURSOR MAPPING ERROR FOUND (measured 2026-09-24 03:25Z)
+Cursor's companion data file (docs/reconciliation/2026-09-22-faro-append-lines.json)
+maps PO 1013272-2 to load 13579. This is WRONG:
+  - Load 13579 in feed_input.json = Semares Forwarding Services, $4,900 line haul
+  - NOT Refrigerx Transportation LLC, $5,210
+  - load_id 55e1b670-1201-40a8-8c48-b29d6bf73025 does NOT exist in live DB (wiped)
+  - Customer mismatch: Semares ≠ Refrigerx
+  - Amount mismatch: $4,900 ≠ $5,210
+The $5,210 Refrigerx invoice has NO matching load. Period.
+
 ## STATUS
 - Blocker report merged (PR #22500, commit 5013137005).
 - LANE_CROSS: fixed verify-feed-is-whole.mjs (CC-1's file) — DAY_MISMATCH
