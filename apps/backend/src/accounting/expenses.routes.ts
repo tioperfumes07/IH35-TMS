@@ -165,6 +165,10 @@ const createExpenseBodySchema = z.object({
   vendor_document_number: z.string().trim().max(80).optional().nullable(),
   // WAVE-H2: optional explicit load FK (TMS create). When set, stamped on INSERT; attribution only fills when absent.
   load_id: z.string().uuid().optional().nullable(),
+  // ROUND 145.2 — fuel-origin expense must point at the operational fuel.fuel_transactions row it
+  // came from. Without this, the same diesel can post twice (fuel txn + expense). Optional so
+  // non-fuel expenses stay unchanged; when present, columnExists-gated on INSERT.
+  source_fuel_transaction_id: z.string().uuid().optional().nullable(),
   location_lat: z.number().finite().optional(),
   location_lng: z.number().finite().optional(),
   // LV-G18-INERT-ON-EXPENSE-LINES: the escape hatch for a legitimate no-load over-the-road expense
@@ -927,8 +931,30 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         }
 
         if (hasTrailerId) {
+          // ROUND 145.2 — trailer inherits from the load when the caller omitted it.
+          // Physical trailer lives on dispatch.load_assignment_history.new_trailer_id
+          // (mdata.loads.load_trailer_equipment_id is the CATALOG type, not the asset).
+          let resolvedTrailerId = body.trailer_id ?? null;
+          if (!resolvedTrailerId && body.load_id) {
+            const trail = await client.query<{ trailer_id: string }>(
+              `SELECT h.new_trailer_id::text AS trailer_id
+                 FROM dispatch.load_assignment_history h
+                WHERE h.load_id = $1::uuid
+                  AND h.new_trailer_id IS NOT NULL
+                ORDER BY h.assigned_at DESC NULLS LAST, h.created_at DESC
+                LIMIT 1`,
+              [body.load_id]
+            );
+            resolvedTrailerId = trail.rows[0]?.trailer_id ?? null;
+          }
           columns.push(`trailer_id`);
-          values.push(body.trailer_id ?? null);
+          values.push(resolvedTrailerId);
+        }
+
+        const hasSourceFuelTxn = await columnExists(client, "accounting", "expenses", "source_fuel_transaction_id");
+        if (hasSourceFuelTxn && body.source_fuel_transaction_id) {
+          columns.push(`source_fuel_transaction_id`);
+          values.push(body.source_fuel_transaction_id);
         }
 
         const hasInsuranceClaimId = await columnExists(client, "accounting", "expenses", "insurance_claim_id");

@@ -58,6 +58,12 @@ const createBodySchema = z.object({
   reserve_pct: z.coerce.number().min(0).max(100),
   factor_fee_pct: z.coerce.number().min(0).max(100),
   notes: z.string().trim().max(5000).optional(),
+  // LAW 2 (ROUND 142.5) — Faro purchase-day stamp belongs on CREATE, not after /advance.
+  // A mid-batch read between create→advance saw NULL faro_purchase_date (FAC-2026-00027 / inv 34).
+  // When the caller knows the Faro invoice# + purchase day, write them in the INSERT so the row
+  // never exists unstamped. Optional for self-carried (unfactored) advances.
+  faro_invoice_number: z.string().trim().min(1).max(40).optional(),
+  faro_purchase_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
 /** FACT-PLEDGE-NET-CM — same net as ar-aging (payments + applied non-void credit memos), live not as-of. */
@@ -507,9 +513,11 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
             factor_fee_cents,
             notes,
             memo,
-            created_by_user_id
+            created_by_user_id,
+            faro_invoice_number,
+            faro_purchase_date
           )
-          VALUES ($1,$2,$3,'submitted',$4,$5,$6,$7,$8,$9,$10,$11,$12,$12,$13)
+          VALUES ($1,$2,$3,'submitted',$4,$5,$6,$7,$8,$9,$10,$11,$12,$12,$13,$14,$15::date)
           RETURNING id
         `,
         [
@@ -526,6 +534,8 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
           feeAmount,
           body.data.notes ?? null,
           user.uuid,
+          body.data.faro_invoice_number ?? null,
+          body.data.faro_purchase_date ?? null,
         ]
       );
       const advanceId = String(insertRes.rows[0]?.id ?? "");

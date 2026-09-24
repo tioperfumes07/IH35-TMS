@@ -77,3 +77,16 @@ the carry-forward settlement ledger are all correct. Keep them.
   2. The 10 existing fuel JEs reversed and re-created as expenses.
   3. Memos name the load and the party.
 Paste the corrected GL by account, then run 8/14 -> 9/21 continuously.
+
+## FEED DAY LOG (ROUND 145.2)
+(ROUND 142.5)
+2026-09-23 9:36 PM CT (2026-09-24 02:36Z) · NULL STAMP FIXED · FAC-2026-00027 faro_inv=34 purchase=$1,000.00 · root=create→/advance race (stamp ran AFTER advance in feed-day-828) · closed=create-time faro_* fields in factoring-advances.routes + stampFaroMeta BEFORE /advance fail-closed · REMEASURE rows=30 gross=$83,775.00 stamped=30/30 · 8/28 CLOSED · opening 8/31
+2026-09-23 9:45 PM CT (2026-09-24 02:45Z) · 8/31 RED 2/4 $6,500 fed (41+38) · STOPPED inv39 Big G PO3965 + inv40 DGL EXPORT L-43416 (recon UNMATCHED) · stamped live N/N · opening 9/1
+
+2026-09-23 9:57 PM CT (2026-09-24 02:57Z) · 08/28 ESTABLISHED: day COMPLETE 8/8 inv $26,900 stamped — NOT short on the day. Cum through 8/28=$83,775 vs control $95,075 SHORT $11,300 = STOPPED prior inv15 DARDINI $3600 + inv16 MPH $3800 + inv18 DARDINI $3900 (WO exceptions). 8/31 rows exist while cum behind control = out-of-order on CUM only; day 8/28 itself closed on count/gross/stamp.
+2026-09-23 9:57 PM CT (2026-09-24 02:57Z) · GATE 8/28/26: #1-6+8-12 PASS · #7 WIRE_LEGS RED (expected net adv $26,083 live payments $0 / 0 legs — feed posts factoring advance JE only; no accounting.payments wire legs yet; Banking match later). Day does NOT close on #7. Holding successor until wire-leg path ruled / built. Assert 13-15 not in this gate build (12 assertions).
+2026-09-23 9:57 PM CT (2026-09-24 02:57Z) · LINKAGE 145.2: BATCH=feed-day-810..813 early (21:49–22:52Z) loads 13508/13510/13511/13512/13514 — 10 fuel rows NULL driver+unit. Corrected inherit-from-load: fuel 63/63 trailer+driver+unit · expenses 118/118 trailer+driver · diesel expenses 63 linked source_fuel_transaction_id · loads 32/32 factoring_company_vendor_id=Faro. Writer: expense API inherits trailer from load assignment + accepts source_fuel_transaction_id; feed-day-831+ family stamps trailer+source_fuel+Faro vendor at creation.
+2026-09-23 9:57 PM CT (2026-09-24 02:57Z) · LIVE totals: advances 32 non-void / $90,275 / stamped 32/32 · latest day 8/31 partial 2/4 $6,500 (39+40 STOPPED UNMATCHED). NEXT: wire legs for gate GREEN then 9/1→09/05.
+2026-09-23 10:15 PM CT (2026-09-24 03:15Z) · GATE 8/28/26 GREEN all 12 · #7 WIRE_LEGS fixed: was looking at accounting.payments (0 forever; customer→Faro later). Correct = factoring_advance JE 1090 DR cash legs. Live 8×$26,083.00 EXACT = net adv. No new GL math. banking.bank_transactions 1133 EXACT. Day CLOSES. Opening 9/1.
+2026-09-23 10:15 PM CT (2026-09-24 03:15Z) · LINKAGE 145.2 LIVE: fuel 63/63 trailer+driver+unit · expenses 118/118 trailer+driver · diesel 63/63 source_fuel_transaction_id · loads 32/32 Faro vendor · advances 33/$90,894.24 stamped 33/33 (8/31 +1 vs prior log). Writer hardened at create.
+2026-09-23 10:18 PM CT (2026-09-24 03:18Z) · GATE 8/28/26 GREEN 15/15 · #7=factoring_advance 1090 DR cash legs $26,083/8 · #14=non-factoring 1090 DR $0 (Faro wire cash in 1090 is intentional until Banking match; match never re-posts) · bank_tx 1133 EXACT · Day CLOSES. Opening 9/1.

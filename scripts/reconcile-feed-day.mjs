@@ -23,8 +23,10 @@
 //  5. EVERY INVOICE IS IN THE MANIFEST: no live invoice absent from manifest, no manifest invoice absent from live.
 //  6. THE DAY'S ADVANCE IDENTITY: purchases − escrow − cash rsv − discount − fees − sch fee = NET ADVANCE.
 //     Assert live legs reproduce the manifest's net advance for that day, to the cent.
-//  7. THE WIRE LEGS: the day's cash receipt legs (one or two) SUM to that day's net advance.
-//     Zero legs on a day the manifest shows funded = RED.
+//  7. THE WIRE LEGS: Faro→USMCA wire cash is the factoring_advance JE debit to 1090
+//     (Undeposited Funds / cash clearing) — one leg per advance, SUM = day's net advance.
+//     Measured live 2026-09-24: 8/28 has 8×1090 DR = $26,083.00 EXACT. NOT accounting.payments
+//     (those are customer→Faro later; inventing them here would DOUBLE-POST cash). Zero legs = RED.
 //  8. LEDGER BALANCE: every journal entry created for that day has debits = credits, exactly.
 //  9. NO ORPHANS: every JE posted for that day resolves to a live source document, and every document
 //     created for that day that should carry a ledger has one.
@@ -37,7 +39,7 @@
 //
 // Self-test: node scripts/reconcile-feed-day.mjs --selftest
 export const REQUIRES_LIVE_DB =
-  "accounting.factoring_advances + journal_entries + payments + mdata.loads — must fail-closed, never skip";
+  "accounting.factoring_advances + journal_entry_postings (1090 wire cash) + mdata.loads — must fail-closed, never skip";
 
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 import fs from "node:fs";
@@ -256,15 +258,15 @@ export function classifyDayClose(input) {
     pass: liveAdvanceCents === expectedAdvanceCents,
   });
 
-  // 7. WIRE LEGS
+  // 7. WIRE LEGS — Faro wire cash = 1090 DR on each factoring_advance JE (not accounting.payments)
   const wireLegSumCents = livePayments.reduce((s, p) => s + Number(p.amount_cents), 0);
   const wireLegCount = livePayments.length;
   assertions.push({
     id: 7,
     name: "WIRE_LEGS",
-    expected: `$${(expectedAdvanceCents / 100).toFixed(2)} (${wireLegCount === 0 ? "0 legs" : `${wireLegCount} leg(s)`})`,
+    expected: `$${(expectedAdvanceCents / 100).toFixed(2)} (${liveRows.length} advance cash leg(s))`,
     live: `$${(wireLegSumCents / 100).toFixed(2)} (${wireLegCount} leg(s))`,
-    pass: wireLegSumCents === expectedAdvanceCents && wireLegCount > 0,
+    pass: wireLegSumCents === expectedAdvanceCents && wireLegCount === liveRows.length && wireLegCount > 0,
   });
 
   // 8. LEDGER BALANCE
@@ -329,16 +331,19 @@ export function classifyDayClose(input) {
     pass: unpostedClasses.length === 0,
   });
 
-  // 14. NO CLEARING-ACCOUNT RESIDUE FOR THE DAY
-  // 1090 Undeposited Funds is a pass-through. Money that entered 1090 on that day must
-  // have left by day close. A non-zero same-day residue = RED.
-  const clearingResidueCents = input.clearingResidueCents || 0;
+  // 14. NO CLEARING-ACCOUNT ABUSE FOR THE DAY
+  // 1090 Undeposited Funds is pass-through for customer receipts AND the secured-borrowing
+  // Faro→USMCA wire cash leg (factoring_advance JE DR 1090). That wire cash sits until Banking
+  // match clears the bank line — match NEVER re-posts (E22). So factoring_advance 1090 DR is
+  // INTENTIONAL and must NOT be scored as residue. What IS red: any OTHER same-day 1090 DEBIT
+  // (fuel/expense hand-JE parking — the E22 anti-pattern). Credits (voids) are fine.
+  const clearingAbuseDebitCents = input.clearingAbuseDebitCents ?? input.clearingResidueCents ?? 0;
   assertions.push({
     id: 14,
     name: "NO_CLEARING_RESIDUE",
-    expected: "$0.00 same-day residue in 1090",
-    live: `$${(clearingResidueCents / 100).toFixed(2)} same-day residue`,
-    pass: clearingResidueCents === 0,
+    expected: "$0.00 non-factoring 1090 DR",
+    live: `$${(clearingAbuseDebitCents / 100).toFixed(2)} non-factoring 1090 DR`,
+    pass: clearingAbuseDebitCents === 0,
   });
 
   // 15. EVERY EXPENSE LINE HITS A REAL EXPENSE-SIDE ACCOUNT
@@ -484,7 +489,7 @@ function runSelftest() {
   else pass += 1;
 
   // RED: clearing-account residue (assertion 14)
-  const red14 = classifyDayClose({ ...baseInput, clearingResidueCents: 50000 });
+  const red14 = classifyDayClose({ ...baseInput, clearingAbuseDebitCents: 50000 });
   if (red14.allPass) { console.error(`${LABEL} --selftest FAIL — clearing residue: expected assertion 14 FAIL`); fail += 1; }
   else pass += 1;
 
@@ -539,12 +544,22 @@ async function measureLive(client, normalizedDate) {
     [USMCA_COMPANY_ID],
   );
 
-  // 7: wire legs (payments for that day)
+  // 7: wire legs = cash DR (account 1090) on each factoring_advance JE for that purchase day.
+  // Secured-borrowing poster already books Faro→USMCA wire cash here. accounting.payments is the
+  // later customer→Faro event — never invent those as "wire legs" (would double-post cash).
   const payRes = await client.query(
-    `SELECT payment_date::text, amount_cents
-       FROM accounting.payments
-      WHERE operating_company_id = $1::uuid AND voided_at IS NULL AND payment_date = $2::date
-      ORDER BY payment_date`,
+    `SELECT fa.faro_purchase_date::text AS payment_date, jep.amount_cents
+       FROM accounting.factoring_advances fa
+       JOIN accounting.journal_entry_postings jep
+         ON jep.source_transaction_id = fa.id::text
+        AND jep.source_transaction_type = 'factoring_advance'
+        AND jep.debit_or_credit = 'debit'
+       JOIN catalogs.accounts a ON a.id = jep.account_id
+      WHERE fa.operating_company_id = $1::uuid
+        AND fa.voided_at IS NULL
+        AND fa.faro_purchase_date = $2::date
+        AND a.account_number = '1090'
+      ORDER BY fa.faro_invoice_number`,
     [USMCA_COMPANY_ID, normalizedDate],
   );
 
@@ -587,7 +602,7 @@ async function measureLive(client, normalizedDate) {
         AND NOT EXISTS (
           SELECT 1 FROM accounting.journal_entry_postings jep
            WHERE jep.source_transaction_type = 'invoice'
-             AND jep.source_transaction_id = i.id
+             AND jep.source_transaction_id = i.id::text
         )`,
     [USMCA_COMPANY_ID, normalizedDate],
   );
@@ -705,18 +720,22 @@ async function measureLive(client, normalizedDate) {
   // 14: clearing-account residue for the day (1090 Undeposited Funds)
   // Money that entered 1090 on that day must have left by day close.
   // Same-day residue = sum of debits to 1090 on that day minus sum of credits from 1090 on that day.
+  // 14: non-factoring 1090 DEBITS only (factoring_advance wire cash is intentional; E22 match does not re-post)
   const clearingRes = await client.query(
-    `SELECT COALESCE(SUM(CASE WHEN jep.debit_or_credit = 'debit' THEN jep.amount_cents ELSE -jep.amount_cents END), 0)::bigint AS residue_cents
+    `SELECT COALESCE(SUM(jep.amount_cents), 0)::bigint AS abuse_debit_cents
        FROM accounting.journal_entry_postings jep
        JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
        JOIN catalogs.accounts a ON a.id = jep.account_id
       WHERE je.operating_company_id = $1::uuid AND je.voided_at IS NULL
         AND je.entry_date = $2::date
         AND a.operating_company_id = $1::uuid
-        AND a.account_number = '1090'`,
+        AND a.account_number = '1090'
+        AND jep.debit_or_credit = 'debit'
+        AND COALESCE(jep.source_transaction_type, '') <> 'factoring_advance'`,
     [USMCA_COMPANY_ID, normalizedDate],
   );
-  const clearingResidueCents = Number(clearingRes.rows[0].residue_cents);
+  const clearingResidueCents = Number(clearingRes.rows[0].abuse_debit_cents);
+  const clearingAbuseDebitCents = clearingResidueCents;
 
   // 15: expense-side account net for the day
   // Sum all COGS + Expense + OtherExpense account movement on that day.
@@ -762,6 +781,7 @@ async function measureLive(client, normalizedDate) {
     nonUsmcaRows: nonUsmcaRes.rows[0].cnt,
     documentPosting,
     clearingResidueCents,
+    clearingAbuseDebitCents,
     expenseNetCents,
     expenseDocsForDay,
   };
@@ -843,6 +863,7 @@ async function runFull() {
     nonUsmcaRows: live.nonUsmcaRows,
     documentPosting: live.documentPosting,
     clearingResidueCents: live.clearingResidueCents,
+    clearingAbuseDebitCents: live.clearingAbuseDebitCents,
     expenseNetCents: live.expenseNetCents,
     expenseDocsForDay: live.expenseDocsForDay,
   });
