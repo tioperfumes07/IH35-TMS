@@ -172,6 +172,10 @@ export function parseAllManifestInvoiceNumbers(source) {
  *   linkageRows: Array<{ load_id: string, has_driver: boolean, has_unit: boolean, has_customer: boolean }>,
  *   sampleDataRows: Array<{ table: string, id: string }>,
  *   nonUsmcaRows: number,
+ *   documentPosting: Array<{ table: string, sourceType: string, expectedToPost: boolean, exists: boolean, nonVoided: number, withLedger: number, gap: number }>,
+ *   clearingResidueCents: number,
+ *   expenseNetCents: number,
+ *   expenseDocsForDay: number,
  * }} input
  * @returns {{ assertions: Array<{ id: number, name: string, expected: string, live: string, pass: boolean }>, allPass: boolean }}
  */
@@ -310,6 +314,46 @@ export function classifyDayClose(input) {
     pass: nonUsmcaRows === 0,
   });
 
+  // 13. DOCUMENT-POSTING COMPLETENESS FOR THE DAY
+  // For every financial document class created on that day, every non-voided document
+  // must resolve to at least one live JE. A class that legitimately does not post must
+  // be registered as non-posting with a written reason. Derive the class list from live schema.
+  const unpostedClasses = (input.documentPosting || []).filter(
+    (c) => c.exists && c.nonVoided > 0 && c.expectedToPost && c.gap > 0,
+  );
+  assertions.push({
+    id: 13,
+    name: "DOC_POSTING_COMPLETENESS",
+    expected: "0 classes with unposted docs",
+    live: `${unpostedClasses.length} class(es) with unposted doc(s)${unpostedClasses.length > 0 ? `: ${unpostedClasses.map((c) => `${c.table}(${c.gap})`).join(", ")}` : ""}`,
+    pass: unpostedClasses.length === 0,
+  });
+
+  // 14. NO CLEARING-ACCOUNT RESIDUE FOR THE DAY
+  // 1090 Undeposited Funds is a pass-through. Money that entered 1090 on that day must
+  // have left by day close. A non-zero same-day residue = RED.
+  const clearingResidueCents = input.clearingResidueCents || 0;
+  assertions.push({
+    id: 14,
+    name: "NO_CLEARING_RESIDUE",
+    expected: "$0.00 same-day residue in 1090",
+    live: `$${(clearingResidueCents / 100).toFixed(2)} same-day residue`,
+    pass: clearingResidueCents === 0,
+  });
+
+  // 15. EVERY EXPENSE LINE HITS A REAL EXPENSE-SIDE ACCOUNT
+  // A day whose COGS+Expense account movement nets to exactly $0.00 while expense
+  // documents exist for that day is RED — a reversal that was never re-posted.
+  const expenseNetCents = input.expenseNetCents || 0;
+  const expenseDocsExist = (input.expenseDocsForDay || 0) > 0;
+  assertions.push({
+    id: 15,
+    name: "EXPENSE_LINES_HIT_REAL_ACCOUNTS",
+    expected: expenseDocsExist ? "non-zero COGS+Expense net" : "$0.00 (no expense docs)",
+    live: `$${(expenseNetCents / 100).toFixed(2)} net (${input.expenseDocsForDay || 0} expense docs)`,
+    pass: !(expenseDocsExist && expenseNetCents === 0),
+  });
+
   const allPass = assertions.every((a) => a.pass);
   return { assertions, allPass };
 }
@@ -376,6 +420,10 @@ function runSelftest() {
     linkageRows: [{ load_id: "l1", has_driver: true, has_unit: true, has_customer: true }],
     sampleDataRows: [],
     nonUsmcaRows: 0,
+    documentPosting: [],
+    clearingResidueCents: 0,
+    expenseNetCents: 50000,
+    expenseDocsForDay: 1,
   };
 
   // Clean GREEN
@@ -426,6 +474,28 @@ function runSelftest() {
   // RED: orphan JE
   const red9 = classifyDayClose({ ...baseInput, orphanJes: [{ je_id: "je-x", reason: "no source doc" }] });
   if (red9.allPass) { console.error(`${LABEL} --selftest FAIL — orphan JE: expected assertion 9 FAIL`); fail += 1; }
+  else pass += 1;
+
+  // RED: unposted document class (assertion 13)
+  const red13 = classifyDayClose({ ...baseInput, documentPosting: [
+    { table: "accounting.expenses", sourceType: "expense", expectedToPost: true, exists: true, nonVoided: 5, withLedger: 0, gap: 5 },
+  ] });
+  if (red13.allPass) { console.error(`${LABEL} --selftest FAIL — unposted docs: expected assertion 13 FAIL`); fail += 1; }
+  else pass += 1;
+
+  // RED: clearing-account residue (assertion 14)
+  const red14 = classifyDayClose({ ...baseInput, clearingResidueCents: 50000 });
+  if (red14.allPass) { console.error(`${LABEL} --selftest FAIL — clearing residue: expected assertion 14 FAIL`); fail += 1; }
+  else pass += 1;
+
+  // RED: expense net $0 with expense docs (assertion 15)
+  const red15 = classifyDayClose({ ...baseInput, expenseNetCents: 0, expenseDocsForDay: 3 });
+  if (red15.allPass) { console.error(`${LABEL} --selftest FAIL — expense net $0 with docs: expected assertion 15 FAIL`); fail += 1; }
+  else pass += 1;
+
+  // GREEN: expense net $0 with NO expense docs (assertion 15 — no docs = ok)
+  const green15 = classifyDayClose({ ...baseInput, expenseNetCents: 0, expenseDocsForDay: 0 });
+  if (!green15.allPass) { console.error(`${LABEL} --selftest FAIL — expense net $0 no docs: expected all PASS`); fail += 1; }
   else pass += 1;
 
   if (fail > 0) {
@@ -576,6 +646,102 @@ async function measureLive(client, normalizedDate) {
     [normalizedDate, USMCA_COMPANY_ID],
   );
 
+  // 13: document-posting completeness for the day
+  // Derive document classes from live schema, check each for ledger linkage on that day.
+  const DAY_DOC_CLASSES = [
+    { table: "accounting.expenses", voidCol: "voided_at", sourceType: "expense", expectedToPost: true },
+    { table: "accounting.bills", voidCol: "voided_at", sourceType: "bill", expectedToPost: true },
+    { table: "accounting.bill_payments", voidCol: "voided_at", sourceType: "bill_payment", expectedToPost: true },
+    { table: "accounting.payments", voidCol: "voided_at", sourceType: "payment", expectedToPost: true },
+    { table: "accounting.invoices", voidCol: "voided_at", sourceType: "invoice", expectedToPost: true },
+    { table: "accounting.factoring_advances", voidCol: "voided_at", sourceType: "factoring_advance", expectedToPost: true },
+    { table: "banking.transfers", voidCol: "revoked_at", sourceType: "transfer", expectedToPost: true },
+    { table: "fuel.fuel_transactions", voidCol: "voided_at", sourceType: "fuel_event", expectedToPost: true },
+    { table: "driver_finance.driver_bills", voidCol: "voided_at", sourceType: "driver_bill", expectedToPost: true },
+    { table: "driver_finance.driver_settlements", voidCol: "voided_at", sourceType: "driver_settlement", expectedToPost: true },
+  ];
+
+  const documentPosting = [];
+  for (const cls of DAY_DOC_CLASSES) {
+    const [schema, table] = cls.table.split(".");
+    const existsRes = await client.query(
+      `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = $1 AND table_name = $2) AS exists`,
+      [schema, table],
+    );
+    const exists = existsRes.rows[0].exists;
+    if (!exists) {
+      documentPosting.push({ ...cls, exists: false, nonVoided: 0, withLedger: 0, gap: 0 });
+      continue;
+    }
+
+    // Count non-voided documents created on that day
+    const countRes = await client.query(
+      `SELECT count(*)::int AS cnt FROM ${cls.table}
+        WHERE operating_company_id = $1::uuid
+          AND ${cls.voidCol} IS NULL
+          AND created_at::date = $2::date`,
+      [USMCA_COMPANY_ID, normalizedDate],
+    );
+    const nonVoided = countRes.rows[0].cnt;
+
+    // Count how many have a ledger entry
+    const ledgerRes = await client.query(
+      `SELECT count(DISTINCT d.id)::int AS cnt
+         FROM ${cls.table} d
+        WHERE d.operating_company_id = $1::uuid
+          AND d.${cls.voidCol} IS NULL
+          AND d.created_at::date = $2::date
+          AND EXISTS (
+            SELECT 1 FROM accounting.journal_entry_postings jep
+             WHERE jep.source_transaction_type = $3
+               AND jep.source_transaction_id = d.id::text
+          )`,
+      [USMCA_COMPANY_ID, normalizedDate, cls.sourceType],
+    );
+    const withLedger = ledgerRes.rows[0].cnt;
+    documentPosting.push({ ...cls, exists: true, nonVoided, withLedger, gap: nonVoided - withLedger });
+  }
+
+  // 14: clearing-account residue for the day (1090 Undeposited Funds)
+  // Money that entered 1090 on that day must have left by day close.
+  // Same-day residue = sum of debits to 1090 on that day minus sum of credits from 1090 on that day.
+  const clearingRes = await client.query(
+    `SELECT COALESCE(SUM(CASE WHEN jep.debit_or_credit = 'debit' THEN jep.amount_cents ELSE -jep.amount_cents END), 0)::bigint AS residue_cents
+       FROM accounting.journal_entry_postings jep
+       JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+       JOIN catalogs.accounts a ON a.id = jep.account_id
+      WHERE je.operating_company_id = $1::uuid AND je.voided_at IS NULL
+        AND je.entry_date = $2::date
+        AND a.operating_company_id = $1::uuid
+        AND a.account_number = '1090'`,
+    [USMCA_COMPANY_ID, normalizedDate],
+  );
+  const clearingResidueCents = Number(clearingRes.rows[0].residue_cents);
+
+  // 15: expense-side account net for the day
+  // Sum all COGS + Expense + OtherExpense account movement on that day.
+  // If expense documents exist but the net is $0.00, it's a reversal that was never re-posted.
+  const expenseNetRes = await client.query(
+    `SELECT COALESCE(SUM(CASE WHEN jep.debit_or_credit = 'debit' THEN jep.amount_cents ELSE -jep.amount_cents END), 0)::bigint AS net_cents
+       FROM accounting.journal_entry_postings jep
+       JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+       JOIN catalogs.accounts a ON a.id = jep.account_id
+      WHERE je.operating_company_id = $1::uuid AND je.voided_at IS NULL
+        AND je.entry_date = $2::date
+        AND a.operating_company_id = $1::uuid
+        AND a.account_type IN ('CostOfGoodsSold', 'Expense', 'OtherExpense')`,
+    [USMCA_COMPANY_ID, normalizedDate],
+  );
+  const expenseNetCents = Number(expenseNetRes.rows[0].net_cents);
+
+  // 15: count expense documents for that day
+  const expenseDocsRes = await client.query(
+    `SELECT count(*)::int AS cnt FROM accounting.expenses
+      WHERE operating_company_id = $1::uuid AND voided_at IS NULL AND created_at::date = $2::date`,
+    [USMCA_COMPANY_ID, normalizedDate],
+  );
+  const expenseDocsForDay = expenseDocsRes.rows[0].cnt;
+
   await client.query("ROLLBACK");
 
   return {
@@ -594,6 +760,10 @@ async function measureLive(client, normalizedDate) {
     linkageRows: linkageRes.rows,
     sampleDataRows: sampleRes.rows,
     nonUsmcaRows: nonUsmcaRes.rows[0].cnt,
+    documentPosting,
+    clearingResidueCents,
+    expenseNetCents,
+    expenseDocsForDay,
   };
 }
 
@@ -671,6 +841,10 @@ async function runFull() {
     linkageRows: live.linkageRows,
     sampleDataRows: live.sampleDataRows,
     nonUsmcaRows: live.nonUsmcaRows,
+    documentPosting: live.documentPosting,
+    clearingResidueCents: live.clearingResidueCents,
+    expenseNetCents: live.expenseNetCents,
+    expenseDocsForDay: live.expenseDocsForDay,
   });
 
   // Print per-day table
