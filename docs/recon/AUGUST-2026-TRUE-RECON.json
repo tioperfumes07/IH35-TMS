@@ -1,0 +1,4667 @@
+{
+  "title": "USMCA August 2026 TRUE RECONCILIATION (tour-shaped)",
+  "law": [
+    "ARCHITECTURE-BLUEPRINT §3: Bill per LOAD; multiple bills → ONE settlement (a trip/tour).",
+    "MEMORY_BANK: settlement = TOUR = NB (+ optional TR triangulation) + SB back to Laredo/Mexico. Never group by calendar week as the identity.",
+    "GO-22: trip_type NB/TR/SB; NB opens tour; TR/SB join; AlwaysTrack 4-digit doc = settlement identity.",
+    "Owner 2026-09-24: sometimes only 1 load (local or NB); breakdown may omit SB; SB may deliver off-Laredo with deadhead miles home to Laredo.",
+    "Owner 2026-09-24: a settlement usually spans ~1 week, but can last MORE than a week when triangulation loads extend the tour.",
+    "TRIP-TYPE-DERIVE: NB=Laredo pickup, SB=Laredo delivery, TR=neither, LOCAL=Laredo↔Laredo."
+  ],
+  "generated_at": "2026-09-24T15:14:29.086Z",
+  "neon": "tiny-field-89581227 / br-fancy-credit-akjnd07a",
+  "verdict": {
+    "faro_purchase_days": "TIE",
+    "faro_days_tied": "13/13",
+    "faro_ctrl_purchase": 108975,
+    "faro_live_purchase": 108975,
+    "faro_ctrl_net_adv": 105575.74,
+    "faro_live_net_adv": 105575.74,
+    "tours_in_scope": 31,
+    "tours_composition_ok": 13,
+    "tours_with_gaps": 18,
+    "tour_span_days_avg": 7.7,
+    "tour_span_days_min": 1,
+    "tour_span_days_max": 40,
+    "tours_longer_than_week": [
+      "5772(10d/2TR)",
+      "5773(40d/1TR)",
+      "5775(10d/2TR)",
+      "5776(11d/1TR)",
+      "5778(10d/0TR)",
+      "5784(9d/2TR)",
+      "5785(9d/2TR)",
+      "5787(9d/1TR)",
+      "5788(11d/1TR)"
+    ],
+    "tours_missing_sb": [
+      "5760",
+      "5764",
+      "5766",
+      "5767",
+      "5771",
+      "5773",
+      "5777",
+      "5779",
+      "5783",
+      "5784",
+      "5785",
+      "5787",
+      "5789",
+      "5790",
+      "5794"
+    ],
+    "tours_not_beginning_laredo": [
+      "5775",
+      "5789",
+      "5790"
+    ],
+    "feed_cursor_aug_pending": [],
+    "driver_settlements_minted_aug": 0,
+    "partial_open_invoices": 43,
+    "gl_aug_debit": 457235.87,
+    "gl_aug_credit": 457235.87,
+    "gl_balanced": true
+  },
+  "tours": [
+    {
+      "tour": "5760",
+      "driver": "JORGE FLORES VALADEZ",
+      "truck": "T144",
+      "period_doc": "2026-07-27..2026-08-03",
+      "stop_span": "2026-07-27..2026-08-03",
+      "span_days": 7,
+      "longer_than_week": false,
+      "shape": "1NB+1TR",
+      "n_loads": 2,
+      "begins_laredo": true,
+      "has_sb": false,
+      "missing_sb_flag": true,
+      "triangulation_count": 1,
+      "deadhead_on_sb": [],
+      "loads": [
+        {
+          "load": "13481",
+          "leg": "NB",
+          "customer": "Larralde Transport Company, LLC",
+          "truck": "T144",
+          "trailer": "10222",
+          "line_haul": 3920,
+          "driver_pay": 639.59,
+          "fuel": 913.18,
+          "empty_miles": 0,
+          "loaded_miles": 1421.3,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "LAREDO",
+              "state": "TX",
+              "date": "2026-07-27",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "GROVEPORT",
+              "state": "OH",
+              "date": "2026-07-29",
+              "miles": 1421.3
+            }
+          ],
+          "period_end": "2026-08-03",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 3920,
+            "bill": 639.59,
+            "fuel": 913.18,
+            "exp": 0,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
+        },
+        {
+          "load": "13489",
+          "leg": "TR",
+          "customer": "BVB FREIGHT",
+          "truck": "T144",
+          "trailer": "10222",
+          "line_haul": 2800,
+          "driver_pay": 681.31,
+          "fuel": 1854.62,
+          "empty_miles": 363.5,
+          "loaded_miles": 1150.5,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "GROVEPORT",
+              "state": "OH",
+              "date": "2026-07-29",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "COLUMBUS",
+              "state": "OH",
+              "date": "2026-07-29",
+              "miles": 21.3
+            },
+            {
+              "type": "deliver",
+              "city": "LA PORTE",
+              "state": "TX",
+              "date": "2026-07-31",
+              "miles": 1150.5
+            },
+            {
+              "type": "empty",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-03",
+              "miles": 342.2
+            }
+          ],
+          "period_end": "2026-08-03",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 2800,
+            "bill": 681.31,
+            "fuel": 1854.62,
+            "exp": 0,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 2
+    },
+    {
+      "tour": "5761",
+      "driver": "Leonel Antonio Morales",
+      "truck": "T171",
+      "period_doc": "2026-07-28..2026-08-03",
+      "stop_span": "2026-07-28..2026-08-03",
+      "span_days": 6,
+      "longer_than_week": false,
+      "shape": "1NB+1SB",
+      "n_loads": 2,
+      "begins_laredo": true,
+      "has_sb": true,
+      "missing_sb_flag": false,
+      "triangulation_count": 0,
+      "deadhead_on_sb": [
+        {
+          "load": "13485",
+          "empty_miles": 223.3
+        }
+      ],
+      "loads": [
+        {
+          "load": "13482",
+          "leg": "NB",
+          "customer": "EGRO TRANSPORT LLC",
+          "truck": "T171",
+          "trailer": "10202",
+          "line_haul": 4100,
+          "driver_pay": 639.59,
+          "fuel": 1012.74,
+          "empty_miles": 0,
+          "loaded_miles": 1421.3,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "LAREDO",
+              "state": "TX",
+              "date": "2026-07-28",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "GROVEPORT",
+              "state": "OH",
+              "date": "2026-07-30",
+              "miles": 1421.3
+            }
+          ],
+          "period_end": "2026-08-03",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 4100,
+            "bill": 639.59,
+            "fuel": 1012.74,
+            "exp": 15.25,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
+        },
+        {
+          "load": "13485",
+          "leg": "SB",
+          "customer": "Unlimited Logistics",
+          "truck": "T171",
+          "trailer": "10202",
+          "line_haul": 2039,
+          "driver_pay": 759.61,
+          "fuel": 2219.88,
+          "empty_miles": 223.3,
+          "loaded_miles": 1464.7,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "GROVEPORT",
+              "state": "OH",
+              "date": "2026-07-30",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "ColdWater",
+              "state": "MI",
+              "date": "2026-07-31",
+              "miles": 223.3
+            },
+            {
+              "type": "deliver",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-03",
+              "miles": 1464.7
+            }
+          ],
+          "period_end": "2026-08-03",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 2039,
+            "bill": 759.61,
+            "fuel": 2219.88,
+            "exp": 142.05,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 2
+    },
+    {
+      "tour": "5764",
+      "driver": "Jorge Luis Infante Corona",
+      "truck": "T177",
+      "period_doc": "2026-07-28..2026-08-03",
+      "stop_span": "2026-07-28..2026-08-03",
+      "span_days": 6,
+      "longer_than_week": false,
+      "shape": "1NB+1TR",
+      "n_loads": 2,
+      "begins_laredo": true,
+      "has_sb": false,
+      "missing_sb_flag": true,
+      "triangulation_count": 1,
+      "deadhead_on_sb": [],
+      "loads": [
+        {
+          "load": "13487",
+          "leg": "NB",
+          "customer": "Semares Forwarding Services",
+          "truck": "T177",
+          "trailer": "FB-56704",
+          "line_haul": 4900,
+          "driver_pay": 945.1,
+          "fuel": 1992.4,
+          "empty_miles": 0,
+          "loaded_miles": 1890.2,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-07-28",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "EDISON",
+              "state": "NJ",
+              "date": "2026-07-31",
+              "miles": 1890.2
+            }
+          ],
+          "period_end": "2026-08-03",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 4900,
+            "bill": 945.1,
+            "fuel": 1992.4,
+            "exp": 0,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
+        },
+        {
+          "load": "13493",
+          "leg": "TR",
+          "customer": "Integrity Expres Logistics",
+          "truck": "T175",
+          "trailer": "FB-56207",
+          "line_haul": 4000,
+          "driver_pay": 984.2,
+          "fuel": 1916.07,
+          "empty_miles": 261.3,
+          "loaded_miles": 1707.1,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "EDISON",
+              "state": "NJ",
+              "date": "2026-07-31",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "EAST RUTHERFORD",
+              "state": "NJ",
+              "date": "2026-07-31",
+              "miles": 30.4
+            },
+            {
+              "type": "deliver",
+              "city": "Austin",
+              "state": "TX",
+              "date": "2026-08-03",
+              "miles": 1707.1
+            },
+            {
+              "type": "empty",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-03",
+              "miles": 230.9
+            }
+          ],
+          "period_end": "2026-08-03",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 4000,
+            "bill": 984.2,
+            "fuel": 1916.07,
+            "exp": 0,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 2
+    },
+    {
+      "tour": "5766",
+      "driver": "Rafael Rogelio Rivero Reynoso",
+      "truck": "T148",
+      "period_doc": "2026-08-04..2026-08-05",
+      "stop_span": "2026-08-04..2026-08-05",
+      "span_days": 1,
+      "longer_than_week": false,
+      "shape": "1NB",
+      "n_loads": 1,
+      "begins_laredo": true,
+      "has_sb": false,
+      "missing_sb_flag": true,
+      "triangulation_count": 0,
+      "deadhead_on_sb": [],
+      "loads": [
+        {
+          "load": "13501",
+          "leg": "NB",
+          "customer": "PAYPA TRANSPORT",
+          "truck": "T148",
+          "trailer": "447",
+          "line_haul": 1500,
+          "driver_pay": 0,
+          "fuel": 710.35,
+          "empty_miles": 0,
+          "loaded_miles": 0,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-04",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "BAYTOWN",
+              "state": "TX",
+              "date": "2026-08-04",
+              "miles": 351.7
+            },
+            {
+              "type": "empty",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-05",
+              "miles": 351.6
+            }
+          ],
+          "period_end": "2026-08-05",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 1500,
+            "bill": 0,
+            "fuel": 710.35,
+            "exp": 55.87,
+            "fa": null,
+            "invoices": 1,
+            "bills": 0
+          }
+        }
+      ],
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 1
+    },
+    {
+      "tour": "5767",
+      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
+      "truck": "T168",
+      "period_doc": "2026-07-31..2026-08-06",
+      "stop_span": "2026-07-31..2026-08-06",
+      "span_days": 6,
+      "longer_than_week": false,
+      "shape": "1NB+1TR",
+      "n_loads": 2,
+      "begins_laredo": true,
+      "has_sb": false,
+      "missing_sb_flag": true,
+      "triangulation_count": 1,
+      "deadhead_on_sb": [],
+      "loads": [
+        {
+          "load": "13495",
+          "leg": "NB",
+          "customer": "EGRO TRANSPORT LLC",
+          "truck": "T168",
+          "trailer": "10380",
+          "line_haul": 4100,
+          "driver_pay": 610.82,
+          "fuel": 1905.39,
+          "empty_miles": 0,
+          "loaded_miles": 1420.5,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-07-31",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "GROVEPORT",
+              "state": "OH",
+              "date": "2026-08-03",
+              "miles": 1420.5
+            }
+          ],
+          "period_end": "2026-08-06",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 4100,
+            "bill": 610.82,
+            "fuel": 1905.39,
+            "exp": 20.5,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
+        },
+        {
+          "load": "13496",
+          "leg": "TR",
+          "customer": "Smartway Transportation Inc",
+          "truck": "T168",
+          "trailer": "10209",
+          "line_haul": 3000,
+          "driver_pay": 696.38,
+          "fuel": 894.81,
+          "empty_miles": 489.1,
+          "loaded_miles": 1130.4,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "GROVEPORT",
+              "state": "OH",
+              "date": "2026-08-03",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "CALDWELL",
+              "state": "OH",
+              "date": "2026-08-03",
+              "miles": 85.9
+            },
+            {
+              "type": "deliver",
+              "city": "ENNIS",
+              "state": "TX",
+              "date": "2026-08-05",
+              "miles": 1130.4
+            },
+            {
+              "type": "empty",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-06",
+              "miles": 403.2
+            }
+          ],
+          "period_end": "2026-08-06",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 3000,
+            "bill": 696.38,
+            "fuel": 894.81,
+            "exp": 20.5,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 2
+    },
+    {
+      "tour": "5768",
+      "driver": "HUGO GAYTAN SARABIA",
+      "truck": "T173",
+      "period_doc": "2026-07-31..2026-08-06",
+      "stop_span": "2026-07-31..2026-08-06",
+      "span_days": 6,
+      "longer_than_week": false,
+      "shape": "1NB+1SB",
+      "n_loads": 2,
+      "begins_laredo": true,
+      "has_sb": true,
+      "missing_sb_flag": false,
+      "triangulation_count": 0,
+      "deadhead_on_sb": [
+        {
+          "load": "13500",
+          "empty_miles": 166.8
+        }
+      ],
+      "loads": [
+        {
+          "load": "13494",
+          "leg": "NB",
+          "customer": "Arvi Logistics",
+          "truck": "T173",
+          "trailer": "10380",
+          "line_haul": 3800,
+          "driver_pay": 562.46,
+          "fuel": 1822,
+          "empty_miles": 0,
+          "loaded_miles": 1249.9,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-07-31",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "GOODFIELD",
+              "state": "IL",
+              "date": "2026-08-03",
+              "miles": 1221.3
+            },
+            {
+              "type": "deliver",
+              "city": "MOSSVILLE",
+              "state": "IL",
+              "date": "2026-08-03",
+              "miles": 28.6
+            }
+          ],
+          "period_end": "2026-08-06",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 3800,
+            "bill": 562.46,
+            "fuel": 1822,
+            "exp": 0,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
+        },
+        {
+          "load": "13500",
+          "leg": "SB",
+          "customer": "Unlimited Logistics",
+          "truck": "T173",
+          "trailer": "10380",
+          "line_haul": 3500,
+          "driver_pay": 665.64,
+          "fuel": 1243.66,
+          "empty_miles": 166.8,
+          "loaded_miles": 1312.4,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "MOSSVILLE",
+              "state": "IL",
+              "date": "2026-08-03",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "DELPHI",
+              "state": "IN",
+              "date": "2026-08-03",
+              "miles": 166.8
+            },
+            {
+              "type": "deliver",
+              "city": "LAREDO",
+              "state": "TX",
+              "date": "2026-08-06",
+              "miles": 1312.4
+            },
+            {
+              "type": "deliver",
+              "city": "LAREDO",
+              "state": "TX",
+              "date": "2026-08-06",
+              "miles": null
+            }
+          ],
+          "period_end": "2026-08-06",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 3500,
+            "bill": 665.64,
+            "fuel": 1243.66,
+            "exp": 15.25,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 2
+    },
+    {
+      "tour": "5769",
+      "driver": "Angel Alfonso Sosa Perez",
+      "truck": "T156",
+      "period_doc": "2026-08-03..2026-08-10",
+      "stop_span": "2026-08-03..2026-08-10",
+      "span_days": 7,
+      "longer_than_week": false,
+      "shape": "1NB+1SB",
+      "n_loads": 2,
+      "begins_laredo": true,
+      "has_sb": true,
+      "missing_sb_flag": false,
+      "triangulation_count": 0,
+      "deadhead_on_sb": [
+        {
+          "load": "13508",
+          "empty_miles": 19.9
+        }
+      ],
+      "loads": [
+        {
+          "load": "13498",
+          "leg": "NB",
+          "customer": "Value Logistics Inc DBA A1 Value",
+          "truck": "T156",
+          "trailer": "538306",
+          "line_haul": 3800,
+          "driver_pay": 568.76,
+          "fuel": 0,
+          "empty_miles": 0,
+          "loaded_miles": 1263.9,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "LAREDO",
+              "state": "TX",
+              "date": "2026-08-03",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "PLAINFIELD",
+              "state": "IN",
+              "date": "2026-08-05",
+              "miles": 1263.9
+            }
+          ],
+          "period_end": "2026-08-10",
+          "live": null
+        },
+        {
+          "load": "13508",
+          "leg": "SB",
+          "customer": "NCC Logistics México",
+          "truck": "T156",
+          "trailer": "538306",
+          "line_haul": 2500,
+          "driver_pay": 586.76,
+          "fuel": 1346.06,
+          "empty_miles": 19.9,
+          "loaded_miles": 1284,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "PLAINFIELD",
+              "state": "IN",
+              "date": "2026-08-05",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "INDIANAPOLIS",
+              "state": "IN",
+              "date": "2026-08-07",
+              "miles": 19.9
+            },
+            {
+              "type": "deliver",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-10",
+              "miles": 1284
+            }
+          ],
+          "period_end": "2026-08-10",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 2500,
+            "bill": 586.76,
+            "fuel": 1346.06,
+            "exp": 1346.06,
+            "fa": "FAC-2026-00001(inv3)",
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": false,
+      "gaps": [
+        "13498:MISSING_DB"
+      ],
+      "live_ok_loads": 1
+    },
+    {
+      "tour": "5770",
+      "driver": "Neftali Coronado Urbano",
+      "truck": "T176",
+      "period_doc": "2026-08-04..2026-08-10",
+      "stop_span": "2026-08-04..2026-08-10",
+      "span_days": 6,
+      "longer_than_week": false,
+      "shape": "1NB+1SB",
+      "n_loads": 2,
+      "begins_laredo": true,
+      "has_sb": true,
+      "missing_sb_flag": false,
+      "triangulation_count": 0,
+      "deadhead_on_sb": [
+        {
+          "load": "13509",
+          "empty_miles": 107.4
+        }
+      ],
+      "loads": [
+        {
+          "load": "13503",
+          "leg": "NB",
+          "customer": "Semares Forwarding Services",
+          "truck": "T176",
+          "trailer": "FB-56210",
+          "line_haul": 4900,
+          "driver_pay": 947.15,
+          "fuel": 1770.91,
+          "empty_miles": 0,
+          "loaded_miles": 1894.3,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-04",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "EDISON",
+              "state": "NJ",
+              "date": "2026-08-07",
+              "miles": 1894.3
+            }
+          ],
+          "period_end": "2026-08-10",
+          "live": null
+        },
+        {
+          "load": "13509",
+          "leg": "SB",
+          "customer": "ES Logistics International LLC",
+          "truck": "T176",
+          "trailer": "FB-56710",
+          "line_haul": 4400,
+          "driver_pay": 960.35,
+          "fuel": 1555.84,
+          "empty_miles": 107.4,
+          "loaded_miles": 1813.3,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "EDISON",
+              "state": "NJ",
+              "date": "2026-08-07",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "CRESSONA",
+              "state": "PA",
+              "date": "2026-08-07",
+              "miles": 107.4
+            },
+            {
+              "type": "deliver",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-10",
+              "miles": 1813.3
+            }
+          ],
+          "period_end": "2026-08-10",
+          "live": null
+        }
+      ],
+      "composition_ok": false,
+      "gaps": [
+        "13503:MISSING_DB",
+        "13509:MISSING_DB"
+      ],
+      "live_ok_loads": 0
+    },
+    {
+      "tour": "5771",
+      "driver": "Jorge Luis Infante Corona",
+      "truck": "T177",
+      "period_doc": "2026-08-04..2026-08-11",
+      "stop_span": "2026-08-04..2026-08-11",
+      "span_days": 7,
+      "longer_than_week": false,
+      "shape": "1NB+1TR",
+      "n_loads": 2,
+      "begins_laredo": true,
+      "has_sb": false,
+      "missing_sb_flag": true,
+      "triangulation_count": 1,
+      "deadhead_on_sb": [],
+      "loads": [
+        {
+          "load": "13504",
+          "leg": "NB",
+          "customer": "Semares Forwarding Services",
+          "truck": "T177",
+          "trailer": "FB-56704",
+          "line_haul": 4900,
+          "driver_pay": 945.1,
+          "fuel": 1713.5,
+          "empty_miles": 0,
+          "loaded_miles": 1890.2,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-04",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "EDISON",
+              "state": "NJ",
+              "date": "2026-08-07",
+              "miles": 1890.2
+            }
+          ],
+          "period_end": "2026-08-11",
+          "live": null
+        },
+        {
+          "load": "13510",
+          "leg": "TR",
+          "customer": "IMPACT BULK LOGISTICS",
+          "truck": "T177",
+          "trailer": "FB-56704",
+          "line_haul": 3000,
+          "driver_pay": 964,
+          "fuel": 1610.5,
+          "empty_miles": 353.2,
+          "loaded_miles": 1574.8,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "EDISON",
+              "state": "NJ",
+              "date": "2026-08-07",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "LINDEN",
+              "state": "NJ",
+              "date": "2026-08-07",
+              "miles": 12.3
+            },
+            {
+              "type": "deliver",
+              "city": "CHANNELVIEW",
+              "state": "TX",
+              "date": "2026-08-10",
+              "miles": 1574.8
+            },
+            {
+              "type": "empty",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-11",
+              "miles": 340.9
+            }
+          ],
+          "period_end": "2026-08-11",
+          "live": {
+            "status": "closed",
+            "trip_type": "NB",
+            "inv": 3000,
+            "bill": 964,
+            "fuel": 1610.5,
+            "exp": 1528.8,
+            "fa": "FAC-2026-00002(inv2)",
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": false,
+      "gaps": [
+        "13504:MISSING_DB"
+      ],
+      "live_ok_loads": 1
+    },
+    {
+      "tour": "5772",
+      "driver": "PEDRO ABRAHAM LOPEZ COLLADO",
+      "truck": "T152",
+      "period_doc": "2026-08-03..2026-08-13",
+      "stop_span": "2026-08-03..2026-08-13",
+      "span_days": 10,
+      "longer_than_week": true,
+      "shape": "1NB+2TR+1SB",
+      "n_loads": 4,
+      "begins_laredo": true,
+      "has_sb": true,
+      "missing_sb_flag": false,
+      "triangulation_count": 2,
+      "deadhead_on_sb": [
+        {
+          "load": "13513",
+          "empty_miles": 108.2
+        }
+      ],
+      "loads": [
+        {
+          "load": "13502",
+          "leg": "NB",
+          "customer": "Value Logistics Inc DBA A1 Value",
+          "truck": "T152",
+          "trailer": "53R19049",
+          "line_haul": 3800,
+          "driver_pay": 485.87,
+          "fuel": 1139.3,
+          "empty_miles": 0,
+          "loaded_miles": 1079.7,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "LAREDO",
+              "state": "TX",
+              "date": "2026-08-03",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "RUSSELVILLE",
+              "state": "KY",
+              "date": "2026-08-05",
+              "miles": 1079.7
+            }
+          ],
+          "period_end": "2026-08-13",
+          "live": null
+        },
+        {
+          "load": "13507",
+          "leg": "TR",
+          "customer": "TWIN CITIES",
+          "truck": "T152",
+          "trailer": "53R19049",
+          "line_haul": 1200,
+          "driver_pay": 228.56,
+          "fuel": 449.47,
+          "empty_miles": 93.7,
+          "loaded_miles": 414.2,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "RUSSELVILLE",
+              "state": "KY",
+              "date": "2026-08-05",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "MARION",
+              "state": "KY",
+              "date": "2026-08-06",
+              "miles": 93.7
+            },
+            {
+              "type": "deliver",
+              "city": "DRAKESVILLE",
+              "state": "IA",
+              "date": "2026-08-07",
+              "miles": 414.2
+            }
+          ],
+          "period_end": "2026-08-13",
+          "live": null
+        },
+        {
+          "load": "13512",
+          "leg": "TR",
+          "customer": "Watco Supply Chain Services LLC DBA Watco Logistics",
+          "truck": "T152",
+          "trailer": "53211",
+          "line_haul": 1700,
+          "driver_pay": 422.46,
+          "fuel": 1066.44,
+          "empty_miles": 222,
+          "loaded_miles": 716.8,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "DRAKESVILLE",
+              "state": "IA",
+              "date": "2026-08-07",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "MARYLAND HEIGHTS",
+              "state": "MO",
+              "date": "2026-08-10",
+              "miles": 222
+            },
+            {
+              "type": "deliver",
+              "city": "WACO",
+              "state": "TX",
+              "date": "2026-08-12",
+              "miles": 716.8
+            }
+          ],
+          "period_end": "2026-08-13",
+          "live": {
+            "status": "closed",
+            "trip_type": "NB",
+            "inv": 1700,
+            "bill": 422.46,
+            "fuel": 1066.44,
+            "exp": 1133.66,
+            "fa": "FAC-2026-00004(inv4)",
+            "invoices": 1,
+            "bills": 1
+          }
+        },
+        {
+          "load": "13513",
+          "leg": "SB",
+          "customer": "FLS Transportation Services Limited",
+          "truck": "T152",
+          "trailer": "53211",
+          "line_haul": 525,
+          "driver_pay": 244.94,
+          "fuel": 908.6,
+          "empty_miles": 108.2,
+          "loaded_miles": 436.1,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "WACO",
+              "state": "TX",
+              "date": "2026-08-12",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "CARROLTON",
+              "state": "TX",
+              "date": "2026-08-12",
+              "miles": 108.2
+            },
+            {
+              "type": "deliver",
+              "city": "LAREDO",
+              "state": "TX",
+              "date": "2026-08-13",
+              "miles": 436.1
+            }
+          ],
+          "period_end": "2026-08-13",
+          "live": null
+        }
+      ],
+      "composition_ok": false,
+      "gaps": [
+        "13502:MISSING_DB",
+        "13507:MISSING_DB",
+        "13513:MISSING_DB"
+      ],
+      "live_ok_loads": 1
+    },
+    {
+      "tour": "5773",
+      "driver": "Concepcion Cordova Dominguez",
+      "truck": "T163",
+      "period_doc": "2026-07-03..2026-08-12",
+      "stop_span": "2026-07-03..2026-08-12",
+      "span_days": 40,
+      "longer_than_week": true,
+      "shape": "1NB+1TR",
+      "n_loads": 2,
+      "begins_laredo": true,
+      "has_sb": false,
+      "missing_sb_flag": true,
+      "triangulation_count": 1,
+      "deadhead_on_sb": [],
+      "loads": [
+        {
+          "load": "13497",
+          "leg": "NB",
+          "customer": "Mexicom Logistics",
+          "truck": "T163",
+          "trailer": "252111",
+          "line_haul": 7200,
+          "driver_pay": 939.87,
+          "fuel": 2184.88,
+          "empty_miles": 0,
+          "loaded_miles": 2088.6,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-07-03",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "NORTH KINGSTOWN",
+              "state": "RI",
+              "date": "2026-08-07",
+              "miles": 2088.6
+            }
+          ],
+          "period_end": "2026-08-12",
+          "live": null
+        },
+        {
+          "load": "13511",
+          "leg": "TR",
+          "customer": "Rehmann Transportation Corp.",
+          "truck": "T163",
+          "trailer": "252111",
+          "line_haul": 3600,
+          "driver_pay": 957.65,
+          "fuel": 1817.91,
+          "empty_miles": 587.6,
+          "loaded_miles": 1540.5,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "NORTH KINGSTOWN",
+              "state": "RI",
+              "date": "2026-07-07",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "Keasbey",
+              "state": "NJ",
+              "date": "2026-08-07",
+              "miles": 193.3
+            },
+            {
+              "type": "deliver",
+              "city": "Waxahachie",
+              "state": "TX",
+              "date": "2026-08-10",
+              "miles": 1540.5
+            },
+            {
+              "type": "empty",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-12",
+              "miles": 394.3
+            }
+          ],
+          "period_end": "2026-08-12",
+          "live": {
+            "status": "closed",
+            "trip_type": "NB",
+            "inv": 3600,
+            "bill": 957.65,
+            "fuel": 1817.91,
+            "exp": 1697.66,
+            "fa": "FAC-2026-00003(inv1)",
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": false,
+      "gaps": [
+        "13497:MISSING_DB"
+      ],
+      "live_ok_loads": 1
+    },
+    {
+      "tour": "5774",
+      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
+      "truck": "T171",
+      "period_doc": "2026-08-07..2026-08-14",
+      "stop_span": "2026-08-07..2026-08-14",
+      "span_days": 7,
+      "longer_than_week": false,
+      "shape": "1NB+1SB",
+      "n_loads": 2,
+      "begins_laredo": true,
+      "has_sb": true,
+      "missing_sb_flag": false,
+      "triangulation_count": 0,
+      "deadhead_on_sb": [
+        {
+          "load": "13518",
+          "empty_miles": 134
+        }
+      ],
+      "loads": [
+        {
+          "load": "13517",
+          "leg": "NB",
+          "customer": "Refrigerx Transportation LLC",
+          "truck": "T171",
+          "trailer": "10209",
+          "line_haul": 3800,
+          "driver_pay": 471.97,
+          "fuel": 1556.91,
+          "empty_miles": 0,
+          "loaded_miles": 1097.6,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "LAREDO",
+              "state": "TX",
+              "date": "2026-08-07",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "FRANKLIN",
+              "state": "KY",
+              "date": "2026-08-10",
+              "miles": 1097.6
+            }
+          ],
+          "period_end": "2026-08-14",
+          "live": null
+        },
+        {
+          "load": "13518",
+          "leg": "SB",
+          "customer": "CTS Xpress LLC",
+          "truck": "T171",
+          "trailer": "10209",
+          "line_haul": 4000,
+          "driver_pay": 579.98,
+          "fuel": 1018.96,
+          "empty_miles": 134,
+          "loaded_miles": 1214.8,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "FRANKLIN",
+              "state": "KY",
+              "date": "2026-08-10",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "LOUISVILLE",
+              "state": "KY",
+              "date": "2026-08-11",
+              "miles": 134
+            },
+            {
+              "type": "deliver",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-14",
+              "miles": 1214.8
+            }
+          ],
+          "period_end": "2026-08-14",
+          "live": {
+            "status": "closed",
+            "trip_type": "NB",
+            "inv": 4000,
+            "bill": 579.98,
+            "fuel": 1018.96,
+            "exp": 2219.23,
+            "fa": "FAC-2026-00011(inv12)",
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": false,
+      "gaps": [
+        "13517:MISSING_DB"
+      ],
+      "live_ok_loads": 1
+    },
+    {
+      "tour": "5775",
+      "driver": "ALFONSO HIDALGO CHAVEZ",
+      "truck": "T164",
+      "period_doc": "2026-08-04..2026-08-14",
+      "stop_span": "2026-08-04..2026-08-14",
+      "span_days": 10,
+      "longer_than_week": true,
+      "shape": "2TR+1SB",
+      "n_loads": 3,
+      "begins_laredo": false,
+      "has_sb": true,
+      "missing_sb_flag": false,
+      "triangulation_count": 2,
+      "deadhead_on_sb": [
+        {
+          "load": "13516",
+          "empty_miles": 25.6
+        }
+      ],
+      "loads": [
+        {
+          "load": "13506",
+          "leg": "TR",
+          "customer": "DH Express Inc",
+          "truck": "T164",
+          "trailer": "8258",
+          "line_haul": 3900,
+          "driver_pay": 581.58,
+          "fuel": 1100.82,
+          "empty_miles": 0,
+          "loaded_miles": 1292.4,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "Laedo",
+              "state": "TX",
+              "date": "2026-08-04",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "COAL CITY",
+              "state": "IL",
+              "date": "2026-08-07",
+              "miles": 1292.4
+            }
+          ],
+          "period_end": "2026-08-14",
+          "live": null
+        },
+        {
+          "load": "13514",
+          "leg": "TR",
+          "customer": "Magna Logistics Group LLC",
+          "truck": "T164",
+          "trailer": "35505",
+          "line_haul": 2700,
+          "driver_pay": 552.83,
+          "fuel": 1826.41,
+          "empty_miles": 109.3,
+          "loaded_miles": 1119.2,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "COAL CITY",
+              "state": "IL",
+              "date": "2026-08-07",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "BURLINGTON",
+              "state": "WI",
+              "date": "2026-08-10",
+              "miles": 109.3
+            },
+            {
+              "type": "deliver",
+              "city": "HOUSTON",
+              "state": "TX",
+              "date": "2026-08-12",
+              "miles": 1119.2
+            }
+          ],
+          "period_end": "2026-08-14",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 2700,
+            "bill": 552.83,
+            "fuel": 1826.41,
+            "exp": 1929.49,
+            "fa": "FAC-2026-00005(inv5)",
+            "invoices": 1,
+            "bills": 1
+          }
+        },
+        {
+          "load": "13516",
+          "leg": "SB",
+          "customer": "Sethmar Transportation",
+          "truck": "T164",
+          "trailer": "35505",
+          "line_haul": 700,
+          "driver_pay": 169.74,
+          "fuel": 417.11,
+          "empty_miles": 25.6,
+          "loaded_miles": 351.6,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "HOUSTON",
+              "state": "TX",
+              "date": "2026-08-12",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "BAYTOWN",
+              "state": "TX",
+              "date": "2026-08-13",
+              "miles": 25.6
+            },
+            {
+              "type": "deliver",
+              "city": "LAREDO",
+              "state": "TX",
+              "date": "2026-08-14",
+              "miles": 351.6
+            }
+          ],
+          "period_end": "2026-08-14",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 700,
+            "bill": 169.74,
+            "fuel": 417.11,
+            "exp": 344.53,
+            "fa": "FAC-2026-00008(inv11)",
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": false,
+      "gaps": [
+        "13506:MISSING_DB"
+      ],
+      "live_ok_loads": 2
+    },
+    {
+      "tour": "5776",
+      "driver": "Leonel Antonio Morales",
+      "truck": "T147",
+      "period_doc": "2026-08-03..2026-08-13",
+      "stop_span": "2026-08-03..2026-08-14",
+      "span_days": 11,
+      "longer_than_week": true,
+      "shape": "1NB+1TR+1SB",
+      "n_loads": 3,
+      "begins_laredo": true,
+      "has_sb": true,
+      "missing_sb_flag": false,
+      "triangulation_count": 1,
+      "deadhead_on_sb": [
+        {
+          "load": "13515",
+          "empty_miles": 36.6
+        }
+      ],
+      "loads": [
+        {
+          "load": "13505",
+          "leg": "NB",
+          "customer": "Value Logistics Inc DBA A1 Value",
+          "truck": "T147",
+          "trailer": "216",
+          "line_haul": 3900,
+          "driver_pay": 581.58,
+          "fuel": 1232.84,
+          "empty_miles": 0,
+          "loaded_miles": 1292.4,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-03",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "COAL CITY",
+              "state": "IL",
+              "date": "2026-08-07",
+              "miles": 1292.4
+            }
+          ],
+          "period_end": "2026-08-13",
+          "live": null
+        },
+        {
+          "load": "13515",
+          "leg": "SB",
+          "customer": "FLS Transportation Services Limited",
+          "truck": "T175",
+          "trailer": "0016",
+          "line_haul": 525,
+          "driver_pay": 208.53,
+          "fuel": 3178.91,
+          "empty_miles": 36.6,
+          "loaded_miles": 426.8,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "ARLINGTON",
+              "state": "TX",
+              "date": "2026-08-13",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "SEAGOVILLE",
+              "state": "TX",
+              "date": "2026-08-13",
+              "miles": 36.6
+            },
+            {
+              "type": "deliver",
+              "city": "LAREDO",
+              "state": "TX",
+              "date": "2026-08-14",
+              "miles": 426.8
+            }
+          ],
+          "period_end": "2026-08-13",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 525,
+            "bill": 208.53,
+            "fuel": 3178.91,
+            "exp": 3199.41,
+            "fa": "FAC-2026-00009(inv8)",
+            "invoices": 1,
+            "bills": 1
+          }
+        },
+        {
+          "load": "13520",
+          "leg": "TR",
+          "customer": "BV LOGISTICS INC",
+          "truck": "T175",
+          "trailer": "00121",
+          "line_haul": 2600,
+          "driver_pay": 413.78,
+          "fuel": 0,
+          "empty_miles": 21.9,
+          "loaded_miles": 897.6,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "COAL CITY",
+              "state": "IL",
+              "date": "2026-08-07",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "JOLIET",
+              "state": "IL",
+              "date": "2026-08-11",
+              "miles": 21.9
+            },
+            {
+              "type": "deliver",
+              "city": "ARLINGTON",
+              "state": "TX",
+              "date": "2026-08-13",
+              "miles": 897.6
+            }
+          ],
+          "period_end": "2026-08-13",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 2600,
+            "bill": 413.78,
+            "fuel": 0,
+            "exp": 0,
+            "fa": "FAC-2026-00006(inv6)",
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": false,
+      "gaps": [
+        "13505:MISSING_DB"
+      ],
+      "live_ok_loads": 2
+    },
+    {
+      "tour": "5777",
+      "driver": "Jorge Luis Infante Corona",
+      "truck": "T177",
+      "period_doc": "2026-08-11..2026-08-17",
+      "stop_span": "2026-08-11..2026-08-17",
+      "span_days": 6,
+      "longer_than_week": false,
+      "shape": "1NB+1TR",
+      "n_loads": 2,
+      "begins_laredo": true,
+      "has_sb": false,
+      "missing_sb_flag": true,
+      "triangulation_count": 1,
+      "deadhead_on_sb": [],
+      "loads": [
+        {
+          "load": "13519",
+          "leg": "NB",
+          "customer": "Semares Forwarding Services",
+          "truck": "T177",
+          "trailer": "FB-56704",
+          "line_haul": 4900,
+          "driver_pay": 945.1,
+          "fuel": 1839.06,
+          "empty_miles": 0,
+          "loaded_miles": 1890.2,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-11",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "EDISON",
+              "state": "NJ",
+              "date": "2026-08-14",
+              "miles": 1890.2
+            }
+          ],
+          "period_end": "2026-08-17",
+          "live": {
+            "status": "closed",
+            "trip_type": "NB",
+            "inv": 4900,
+            "bill": 945.1,
+            "fuel": 1839.06,
+            "exp": 1839.06,
+            "fa": "FAC-2026-00010(inv13)",
+            "invoices": 1,
+            "bills": 1
+          }
+        },
+        {
+          "load": "13521",
+          "leg": "TR",
+          "customer": "Core Logistics Brokerage",
+          "truck": "T177",
+          "trailer": "FB-56704",
+          "line_haul": 3500,
+          "driver_pay": 962.9,
+          "fuel": 1610.94,
+          "empty_miles": 368.1,
+          "loaded_miles": 1557.7,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "EDISON",
+              "state": "NJ",
+              "date": "2026-08-16",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "MANASSAS",
+              "state": "VA",
+              "date": "2026-08-16",
+              "miles": 224.5
+            },
+            {
+              "type": "deliver",
+              "city": "CORPUS CHRISTI",
+              "state": "TX",
+              "date": "2026-08-17",
+              "miles": 1557.7
+            },
+            {
+              "type": "empty",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-17",
+              "miles": 143.6
+            }
+          ],
+          "period_end": "2026-08-17",
+          "live": {
+            "status": "closed",
+            "trip_type": "NB",
+            "inv": 3500,
+            "bill": 962.9,
+            "fuel": 1610.94,
+            "exp": 1610.94,
+            "fa": "FAC-2026-00012(inv14)",
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 2
+    },
+    {
+      "tour": "5778",
+      "driver": "HUGO GAYTAN SARABIA",
+      "truck": "T173",
+      "period_doc": "2026-08-10..2026-08-10",
+      "stop_span": "2026-08-07..2026-08-17",
+      "span_days": 10,
+      "longer_than_week": true,
+      "shape": "1NB+1SB",
+      "n_loads": 2,
+      "begins_laredo": true,
+      "has_sb": true,
+      "missing_sb_flag": false,
+      "triangulation_count": 0,
+      "deadhead_on_sb": [
+        {
+          "load": "13524",
+          "empty_miles": 711.5
+        }
+      ],
+      "loads": [
+        {
+          "load": "13524",
+          "leg": "SB",
+          "customer": "MPH CARRIER SERVICES, INC",
+          "truck": "T173",
+          "trailer": "10380",
+          "line_haul": 4200,
+          "driver_pay": 853.61,
+          "fuel": 3657.9,
+          "empty_miles": 711.5,
+          "loaded_miles": 1185.4,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "ERLANGER",
+              "state": "KY",
+              "date": "2026-08-10",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "Storm Lake",
+              "state": "IA",
+              "date": "2026-08-14",
+              "miles": 711.5
+            },
+            {
+              "type": "deliver",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-17",
+              "miles": 1185.4
+            }
+          ],
+          "period_end": "2026-08-10",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 3800,
+            "bill": 853.61,
+            "fuel": 3657.9,
+            "exp": 33.25,
+            "fa": "FAC-2026-00043(inv16)",
+            "invoices": 1,
+            "bills": 1
+          }
+        },
+        {
+          "load": "13525",
+          "leg": "NB",
+          "customer": null,
+          "truck": "T173",
+          "trailer": "10219",
+          "line_haul": 0,
+          "driver_pay": 586.4,
+          "fuel": 0,
+          "empty_miles": 0,
+          "loaded_miles": 1303.1,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-07",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "ERLANGER",
+              "state": "KY",
+              "date": "2026-08-10",
+              "miles": 1303.1
+            }
+          ],
+          "period_end": "2026-08-10",
+          "live": null
+        }
+      ],
+      "composition_ok": false,
+      "gaps": [
+        "13525:MISSING_DB"
+      ],
+      "live_ok_loads": 1
+    },
+    {
+      "tour": "5779",
+      "driver": "LUIS ARMANDO SOSA PEREZ",
+      "truck": "T170",
+      "period_doc": "2026-08-18..2026-08-17",
+      "stop_span": "2026-08-14..2026-08-20",
+      "span_days": 6,
+      "longer_than_week": false,
+      "shape": "1NB+1TR",
+      "n_loads": 2,
+      "begins_laredo": true,
+      "has_sb": false,
+      "missing_sb_flag": true,
+      "triangulation_count": 1,
+      "deadhead_on_sb": [],
+      "loads": [
+        {
+          "load": "13526",
+          "leg": "TR",
+          "customer": "JRAYL TRANSPORT",
+          "truck": "T170",
+          "trailer": "201050",
+          "line_haul": 3500,
+          "driver_pay": 724.51,
+          "fuel": 1418.42,
+          "empty_miles": 487.9,
+          "loaded_miles": 1122.1,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "TALLMADGE",
+              "state": "OH",
+              "date": "2026-08-18",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "Uhrichsville",
+              "state": "OH",
+              "date": "2026-08-18",
+              "miles": 57.3
+            },
+            {
+              "type": "deliver",
+              "city": "MESQUITE",
+              "state": "TX",
+              "date": "2026-08-19",
+              "miles": 1122.1
+            },
+            {
+              "type": "empty",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-20",
+              "miles": 430.6
+            }
+          ],
+          "period_end": "2026-08-17",
+          "live": {
+            "status": "closed",
+            "trip_type": "NB",
+            "inv": 3500,
+            "bill": 724.51,
+            "fuel": 1418.42,
+            "exp": 1418.42,
+            "fa": "FAC-2026-00014(inv19)",
+            "invoices": 1,
+            "bills": 1
+          }
+        },
+        {
+          "load": "13527",
+          "leg": "NB",
+          "customer": "EGRO TRANSPORT LLC",
+          "truck": "T170",
+          "trailer": "201050",
+          "line_haul": 3000,
+          "driver_pay": 696.15,
+          "fuel": 2008.66,
+          "empty_miles": 0,
+          "loaded_miles": 1547,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-14",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "TALLMADGE",
+              "state": "OH",
+              "date": "2026-08-17",
+              "miles": 1547
+            }
+          ],
+          "period_end": "2026-08-17",
+          "live": null
+        }
+      ],
+      "composition_ok": false,
+      "gaps": [
+        "13527:MISSING_DB"
+      ],
+      "live_ok_loads": 1
+    },
+    {
+      "tour": "5780",
+      "driver": "Rafael Rogelio Rivero Reynoso",
+      "truck": "T148",
+      "period_doc": "2026-08-18..2026-08-21",
+      "stop_span": "2026-08-18..2026-08-21",
+      "span_days": 3,
+      "longer_than_week": false,
+      "shape": "1NB+1SB",
+      "n_loads": 2,
+      "begins_laredo": true,
+      "has_sb": true,
+      "missing_sb_flag": false,
+      "triangulation_count": 0,
+      "deadhead_on_sb": [],
+      "loads": [
+        {
+          "load": "13530",
+          "leg": "NB",
+          "customer": "BBA Logistics",
+          "truck": "T148",
+          "trailer": "10876",
+          "line_haul": 1500,
+          "driver_pay": 0,
+          "fuel": 843.76,
+          "empty_miles": 0,
+          "loaded_miles": 0,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-18",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "Houston",
+              "state": "TX",
+              "date": "2026-08-19",
+              "miles": 320.7
+            }
+          ],
+          "period_end": "2026-08-21",
+          "live": null
+        },
+        {
+          "load": "13532",
+          "leg": "SB",
+          "customer": "Del-Can Logistics LLC",
+          "truck": "T148",
+          "trailer": "10376",
+          "line_haul": 1000,
+          "driver_pay": 0,
+          "fuel": 0,
+          "empty_miles": 0,
+          "loaded_miles": 0,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "Houston",
+              "state": "TX",
+              "date": "2026-08-19",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "PALESTINE",
+              "state": "TX",
+              "date": "2026-08-20",
+              "miles": 160.3
+            },
+            {
+              "type": "deliver",
+              "city": "LAREDO",
+              "state": "TX",
+              "date": "2026-08-21",
+              "miles": 409.6
+            }
+          ],
+          "period_end": "2026-08-21",
+          "live": {
+            "status": "closed",
+            "trip_type": "NB",
+            "inv": 1000,
+            "bill": 150,
+            "fuel": 0,
+            "exp": 172,
+            "fa": "FAC-2026-00016(inv20)",
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": false,
+      "gaps": [
+        "13530:MISSING_DB"
+      ],
+      "live_ok_loads": 1
+    },
+    {
+      "tour": "5781",
+      "driver": "Leonel Antonio Morales",
+      "truck": "T175",
+      "period_doc": "2026-08-15..2026-08-21",
+      "stop_span": "2026-08-15..2026-08-21",
+      "span_days": 6,
+      "longer_than_week": false,
+      "shape": "1NB+1SB",
+      "n_loads": 2,
+      "begins_laredo": true,
+      "has_sb": true,
+      "missing_sb_flag": false,
+      "triangulation_count": 0,
+      "deadhead_on_sb": [
+        {
+          "load": "13534",
+          "empty_miles": 58.1
+        }
+      ],
+      "loads": [
+        {
+          "load": "13523",
+          "leg": "NB",
+          "customer": "DLS Dardini Logistics Services",
+          "truck": "T175",
+          "trailer": "10222",
+          "line_haul": 3600,
+          "driver_pay": 627.89,
+          "fuel": 1366.68,
+          "empty_miles": 0,
+          "loaded_miles": 1395.3,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "LAREDO",
+              "state": "TX",
+              "date": "2026-08-15",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "Salisbury",
+              "state": "NC",
+              "date": "2026-08-18",
+              "miles": 1395.3
+            }
+          ],
+          "period_end": "2026-08-21",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 3600,
+            "bill": 627.89,
+            "fuel": 1366.68,
+            "exp": 0,
+            "fa": "FAC-2026-00042(inv15)",
+            "invoices": 1,
+            "bills": 1
+          }
+        },
+        {
+          "load": "13534",
+          "leg": "SB",
+          "customer": "Del-Can Logistics LLC",
+          "truck": "T175",
+          "trailer": "10219",
+          "line_haul": 3100,
+          "driver_pay": 652.42,
+          "fuel": 1092.8,
+          "empty_miles": 58.1,
+          "loaded_miles": 1391.7,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "Salisbury",
+              "state": "NC",
+              "date": "2026-08-18",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "MARSHVILLE",
+              "state": "NC",
+              "date": "2026-08-19",
+              "miles": 58.1
+            },
+            {
+              "type": "deliver",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-21",
+              "miles": 1391.7
+            }
+          ],
+          "period_end": "2026-08-21",
+          "live": {
+            "status": "closed",
+            "trip_type": "NB",
+            "inv": 3100,
+            "bill": 652.42,
+            "fuel": 1092.8,
+            "exp": 1435.22,
+            "fa": "FAC-2026-00018(inv22)",
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 2
+    },
+    {
+      "tour": "5782",
+      "driver": "HUGO GAYTAN SARABIA",
+      "truck": "T173",
+      "period_doc": "2026-08-17..2026-08-24",
+      "stop_span": "2026-08-17..2026-08-24",
+      "span_days": 7,
+      "longer_than_week": false,
+      "shape": "1NB+1SB",
+      "n_loads": 2,
+      "begins_laredo": true,
+      "has_sb": true,
+      "missing_sb_flag": false,
+      "triangulation_count": 0,
+      "deadhead_on_sb": [
+        {
+          "load": "13540",
+          "empty_miles": 178.5
+        }
+      ],
+      "loads": [
+        {
+          "load": "13529",
+          "leg": "NB",
+          "customer": "DLS Dardini Logistics Services",
+          "truck": "T173",
+          "trailer": "10380",
+          "line_haul": 3900,
+          "driver_pay": 728.51,
+          "fuel": 1477.89,
+          "empty_miles": 0,
+          "loaded_miles": 1618.9,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "LAREDO",
+              "state": "TX",
+              "date": "2026-08-17",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "PETERSBURG",
+              "state": "VA",
+              "date": "2026-08-19",
+              "miles": 1618.9
+            }
+          ],
+          "period_end": "2026-08-24",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 3900,
+            "bill": 728.51,
+            "fuel": 1477.89,
+            "exp": 0,
+            "fa": "FAC-2026-00044(inv18)",
+            "invoices": 1,
+            "bills": 1
+          }
+        },
+        {
+          "load": "13540",
+          "leg": "SB",
+          "customer": "IM Specialized Logistics, LLC.",
+          "truck": "T173",
+          "trailer": "10870",
+          "line_haul": 3120,
+          "driver_pay": 760.6,
+          "fuel": 1913.82,
+          "empty_miles": 178.5,
+          "loaded_miles": 1511.7,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "PETERSBURG",
+              "state": "VA",
+              "date": "2026-08-19",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "CLINTON",
+              "state": "NC",
+              "date": "2026-08-22",
+              "miles": 178.5
+            },
+            {
+              "type": "deliver",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-24",
+              "miles": 1511.7
+            }
+          ],
+          "period_end": "2026-08-24",
+          "live": null
+        }
+      ],
+      "composition_ok": false,
+      "gaps": [
+        "13540:MISSING_DB"
+      ],
+      "live_ok_loads": 1
+    },
+    {
+      "tour": "5783",
+      "driver": "Jorge Luis Infante Corona",
+      "truck": "T177",
+      "period_doc": "2026-08-18..2026-08-25",
+      "stop_span": "2026-08-18..2026-08-25",
+      "span_days": 7,
+      "longer_than_week": false,
+      "shape": "1NB+1TR",
+      "n_loads": 2,
+      "begins_laredo": true,
+      "has_sb": false,
+      "missing_sb_flag": true,
+      "triangulation_count": 1,
+      "deadhead_on_sb": [],
+      "loads": [
+        {
+          "load": "13535",
+          "leg": "NB",
+          "customer": "Semares Forwarding Services",
+          "truck": "T177",
+          "trailer": "FB-56704",
+          "line_haul": 4900,
+          "driver_pay": 945.1,
+          "fuel": 1875.13,
+          "empty_miles": 0,
+          "loaded_miles": 1890.2,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-18",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "EDISON",
+              "state": "NJ",
+              "date": "2026-08-21",
+              "miles": 1890.2
+            }
+          ],
+          "period_end": "2026-08-25",
+          "live": {
+            "status": "closed",
+            "trip_type": "NB",
+            "inv": 4900,
+            "bill": 945.1,
+            "fuel": 1875.13,
+            "exp": 1956.58,
+            "fa": "FAC-2026-00015(inv23)",
+            "invoices": 1,
+            "bills": 1
+          }
+        },
+        {
+          "load": "13537",
+          "leg": "TR",
+          "customer": "OSTT Logistics",
+          "truck": "T177",
+          "trailer": "FB-56704",
+          "line_haul": 3300,
+          "driver_pay": 961.15,
+          "fuel": 1786.26,
+          "empty_miles": 335.7,
+          "loaded_miles": 1586.6,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "EDISON",
+              "state": "NJ",
+              "date": "2026-08-21",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "EDISON",
+              "state": "NJ",
+              "date": "2026-08-21",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "BAYTOWN",
+              "state": "TX",
+              "date": "2026-08-24",
+              "miles": 1548.4
+            },
+            {
+              "type": "deliver",
+              "city": "Houston",
+              "state": "TX",
+              "date": "2026-08-24",
+              "miles": 38.2
+            },
+            {
+              "type": "empty",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-25",
+              "miles": 335.7
+            }
+          ],
+          "period_end": "2026-08-25",
+          "live": {
+            "status": "closed",
+            "trip_type": "NB",
+            "inv": 3300,
+            "bill": 961.15,
+            "fuel": 1786.26,
+            "exp": 1704.81,
+            "fa": "FAC-2026-00019(inv21)",
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 2
+    },
+    {
+      "tour": "5784",
+      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
+      "truck": "T171",
+      "period_doc": "2026-08-15..2026-08-24",
+      "stop_span": "2026-08-15..2026-08-24",
+      "span_days": 9,
+      "longer_than_week": true,
+      "shape": "1NB+2TR",
+      "n_loads": 3,
+      "begins_laredo": true,
+      "has_sb": false,
+      "missing_sb_flag": true,
+      "triangulation_count": 2,
+      "deadhead_on_sb": [],
+      "loads": [
+        {
+          "load": "13522",
+          "leg": "NB",
+          "customer": "Del-Can Logistics LLC",
+          "truck": "T171",
+          "trailer": "10380",
+          "line_haul": 3500,
+          "driver_pay": 567.17,
+          "fuel": 1821.39,
+          "empty_miles": 0,
+          "loaded_miles": 1319,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "LAREDO",
+              "state": "TX",
+              "date": "2026-08-15",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "MOREHEAD",
+              "state": "KY",
+              "date": "2026-08-17",
+              "miles": 1319
+            }
+          ],
+          "period_end": "2026-08-24",
+          "live": null
+        },
+        {
+          "load": "13528",
+          "leg": "TR",
+          "customer": "Sajacks Freight",
+          "truck": "T171",
+          "trailer": "10222",
+          "line_haul": 3100,
+          "driver_pay": 285.39,
+          "fuel": 1945.84,
+          "empty_miles": 121.6,
+          "loaded_miles": 542.1,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "MOREHEAD",
+              "state": "KY",
+              "date": "2026-08-17",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "harrison",
+              "state": "OH",
+              "date": "2026-08-18",
+              "miles": 121.6
+            },
+            {
+              "type": "deliver",
+              "city": "COCKEYSVILLE",
+              "state": "MD",
+              "date": "2026-08-19",
+              "miles": 512.9
+            },
+            {
+              "type": "deliver",
+              "city": "BELCAMP",
+              "state": "MD",
+              "date": "2026-08-19",
+              "miles": 29.2
+            }
+          ],
+          "period_end": "2026-08-24",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 3100,
+            "bill": 285.39,
+            "fuel": 1945.84,
+            "exp": 1945.84,
+            "fa": "FAC-2026-00013(inv17)",
+            "invoices": 1,
+            "bills": 1
+          }
+        },
+        {
+          "load": "13536",
+          "leg": "TR",
+          "customer": "PRODIGEE LOGISTICS LLC",
+          "truck": "T171",
+          "trailer": "10870",
+          "line_haul": 4000,
+          "driver_pay": 810.38,
+          "fuel": 1973.72,
+          "empty_miles": 276.7,
+          "loaded_miles": 1607.9,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "BELCAMP",
+              "state": "MD",
+              "date": "2026-08-19",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "JONESTOWN",
+              "state": "PA",
+              "date": "2026-08-20",
+              "miles": 81.1
+            },
+            {
+              "type": "deliver",
+              "city": "CUERTO",
+              "state": "TX",
+              "date": "2026-08-21",
+              "miles": 1607.9
+            },
+            {
+              "type": "empty",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-24",
+              "miles": 195.6
+            }
+          ],
+          "period_end": "2026-08-24",
+          "live": {
+            "status": "closed",
+            "trip_type": "NB",
+            "inv": 4000,
+            "bill": 810.38,
+            "fuel": 1973.72,
+            "exp": 1950.91,
+            "fa": "FAC-2026-00017(inv24)",
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": false,
+      "gaps": [
+        "13522:MISSING_DB"
+      ],
+      "live_ok_loads": 2
+    },
+    {
+      "tour": "5785",
+      "driver": "Genaro Guerrero Chavez",
+      "truck": "T152",
+      "period_doc": "2026-08-17..2026-08-26",
+      "stop_span": "2026-08-17..2026-08-26",
+      "span_days": 9,
+      "longer_than_week": true,
+      "shape": "1NB+2TR",
+      "n_loads": 3,
+      "begins_laredo": true,
+      "has_sb": false,
+      "missing_sb_flag": true,
+      "triangulation_count": 2,
+      "deadhead_on_sb": [],
+      "loads": [
+        {
+          "load": "13531",
+          "leg": "NB",
+          "customer": "Refrigerx Transportation LLC",
+          "truck": "T152",
+          "trailer": "10870",
+          "line_haul": 4300,
+          "driver_pay": 666.81,
+          "fuel": 2044.5,
+          "empty_miles": 0,
+          "loaded_miles": 1481.8,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-17",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "Hialeah",
+              "state": "FL",
+              "date": "2026-08-19",
+              "miles": 1481.8
+            }
+          ],
+          "period_end": "2026-08-26",
+          "live": null
+        },
+        {
+          "load": "13538",
+          "leg": "TR",
+          "customer": "Jericho freight LLC",
+          "truck": "T152",
+          "trailer": "10870",
+          "line_haul": 800,
+          "driver_pay": 309.61,
+          "fuel": 1047.95,
+          "empty_miles": 126.9,
+          "loaded_miles": 561.1,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "Hialeah",
+              "state": "FL",
+              "date": "2026-08-19",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "FORT PIERCE",
+              "state": "FL",
+              "date": "2026-08-21",
+              "miles": 126.9
+            },
+            {
+              "type": "deliver",
+              "city": "PLANT CITY",
+              "state": "FL",
+              "date": "2026-08-22",
+              "miles": 125.5
+            },
+            {
+              "type": "deliver",
+              "city": "FOREST PARK",
+              "state": "GA",
+              "date": "2026-08-22",
+              "miles": 435.6
+            }
+          ],
+          "period_end": "2026-08-26",
+          "live": {
+            "status": "closed",
+            "trip_type": "NB",
+            "inv": 800,
+            "bill": 309.61,
+            "fuel": 1047.95,
+            "exp": 1114.13,
+            "fa": "FAC-2026-00020(inv25)",
+            "invoices": 1,
+            "bills": 1
+          }
+        },
+        {
+          "load": "13543",
+          "leg": "TR",
+          "customer": "PFL Logistics CO.",
+          "truck": "T152",
+          "trailer": "10870",
+          "line_haul": 2500,
+          "driver_pay": 547.25,
+          "fuel": 1613.29,
+          "empty_miles": 439.8,
+          "loaded_miles": 776.3,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "FOREST PARK",
+              "state": "GA",
+              "date": "2026-08-22",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "ALBERTIVILLE",
+              "state": "AL",
+              "date": "2026-08-24",
+              "miles": 144.3
+            },
+            {
+              "type": "deliver",
+              "city": "Temple",
+              "state": "TX",
+              "date": "2026-08-26",
+              "miles": 776.3
+            },
+            {
+              "type": "empty",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-26",
+              "miles": 295.5
+            }
+          ],
+          "period_end": "2026-08-26",
+          "live": {
+            "status": "closed",
+            "trip_type": "NB",
+            "inv": 2500,
+            "bill": 547.25,
+            "fuel": 1613.29,
+            "exp": 1536.51,
+            "fa": "FAC-2026-00022(inv27)",
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": false,
+      "gaps": [
+        "13531:MISSING_DB"
+      ],
+      "live_ok_loads": 2
+    },
+    {
+      "tour": "5786",
+      "driver": "Concepcion Cordova Dominguez",
+      "truck": "T163",
+      "period_doc": "2026-08-19..2026-08-26",
+      "stop_span": "2026-08-19..2026-08-26",
+      "span_days": 7,
+      "longer_than_week": false,
+      "shape": "1NB+1SB",
+      "n_loads": 2,
+      "begins_laredo": true,
+      "has_sb": true,
+      "missing_sb_flag": false,
+      "triangulation_count": 0,
+      "deadhead_on_sb": [
+        {
+          "load": "13548",
+          "empty_miles": 154
+        }
+      ],
+      "loads": [
+        {
+          "load": "13533",
+          "leg": "NB",
+          "customer": "Refrigerx Transportation LLC",
+          "truck": "T163",
+          "trailer": "10224",
+          "line_haul": 3450,
+          "driver_pay": 500.22,
+          "fuel": 1263.58,
+          "empty_miles": 0,
+          "loaded_miles": 1111.6,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-19",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "CONLEY",
+              "state": "GA",
+              "date": "2026-08-21",
+              "miles": 1111.6
+            }
+          ],
+          "period_end": "2026-08-26",
+          "live": null
+        },
+        {
+          "load": "13548",
+          "leg": "SB",
+          "customer": "MPH CARRIER SERVICES, INC",
+          "truck": "T163",
+          "trailer": "10224",
+          "line_haul": 2300,
+          "driver_pay": 538.83,
+          "fuel": 1215.55,
+          "empty_miles": 154,
+          "loaded_miles": 1043.4,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "CONLEY",
+              "state": "GA",
+              "date": "2026-08-21",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "GUNTERSVILLE",
+              "state": "AL",
+              "date": "2026-08-24",
+              "miles": 154
+            },
+            {
+              "type": "deliver",
+              "city": "LAREDO",
+              "state": "TX",
+              "date": "2026-08-26",
+              "miles": 1043.4
+            }
+          ],
+          "period_end": "2026-08-26",
+          "live": {
+            "status": "closed",
+            "trip_type": "NB",
+            "inv": 2300,
+            "bill": 538.83,
+            "fuel": 1215.55,
+            "exp": 1154.66,
+            "fa": "FAC-2026-00023(inv33)",
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": false,
+      "gaps": [
+        "13533:MISSING_DB"
+      ],
+      "live_ok_loads": 1
+    },
+    {
+      "tour": "5787",
+      "driver": "ALFONSO HIDALGO CHAVEZ",
+      "truck": "T164",
+      "period_doc": "2026-08-22..2026-08-22",
+      "stop_span": "2026-08-19..2026-08-28",
+      "span_days": 9,
+      "longer_than_week": true,
+      "shape": "1NB+1TR",
+      "n_loads": 2,
+      "begins_laredo": true,
+      "has_sb": false,
+      "missing_sb_flag": true,
+      "triangulation_count": 1,
+      "deadhead_on_sb": [],
+      "loads": [
+        {
+          "load": "13549",
+          "leg": "TR",
+          "customer": "R2X LLC",
+          "truck": "T164",
+          "trailer": "0510",
+          "line_haul": 1000,
+          "driver_pay": 569.57,
+          "fuel": 736.59,
+          "empty_miles": 520.2,
+          "loaded_miles": 745.5,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "Fountain",
+              "state": "CO",
+              "date": "2026-08-22",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "DENVER",
+              "state": "CO",
+              "date": "2026-08-25",
+              "miles": 84
+            },
+            {
+              "type": "deliver",
+              "city": "ROANOKE",
+              "state": "TX",
+              "date": "2026-08-27",
+              "miles": 745.5
+            },
+            {
+              "type": "empty",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-28",
+              "miles": 436.2
+            }
+          ],
+          "period_end": "2026-08-22",
+          "live": {
+            "status": "closed",
+            "trip_type": "NB",
+            "inv": 1000,
+            "bill": 569.57,
+            "fuel": 736.59,
+            "exp": 736.59,
+            "fa": "FAC-2026-00027(inv34)",
+            "invoices": 1,
+            "bills": 1
+          }
+        },
+        {
+          "load": "13555",
+          "leg": "NB",
+          "customer": "2EMS TRANSPORTATION",
+          "truck": "T164",
+          "trailer": "0510",
+          "line_haul": 3180,
+          "driver_pay": 431.15,
+          "fuel": 1328.21,
+          "empty_miles": 0,
+          "loaded_miles": 958.1,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "LAREDO",
+              "state": "TX",
+              "date": "2026-08-19",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "Fountain",
+              "state": "CO",
+              "date": "2026-08-22",
+              "miles": 958.1
+            }
+          ],
+          "period_end": "2026-08-22",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 3180,
+            "bill": 431.15,
+            "fuel": 1328.21,
+            "exp": 65.95,
+            "fa": null,
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 2
+    },
+    {
+      "tour": "5788",
+      "driver": "Angel Alfonso Sosa Perez",
+      "truck": "T156",
+      "period_doc": "2026-08-20..2026-08-31",
+      "stop_span": "2026-08-20..2026-08-31",
+      "span_days": 11,
+      "longer_than_week": true,
+      "shape": "1NB+1TR+1SB",
+      "n_loads": 3,
+      "begins_laredo": true,
+      "has_sb": true,
+      "missing_sb_flag": false,
+      "triangulation_count": 1,
+      "deadhead_on_sb": [
+        {
+          "load": "13552",
+          "empty_miles": 173.8
+        }
+      ],
+      "loads": [
+        {
+          "load": "13539",
+          "leg": "NB",
+          "customer": "Refrigerx Transportation LLC",
+          "truck": "T156",
+          "trailer": "10219",
+          "line_haul": 4860,
+          "driver_pay": 670.68,
+          "fuel": 2133.52,
+          "empty_miles": 0,
+          "loaded_miles": 1490.4,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "Nuevo Laredo",
+              "state": "Tam",
+              "date": "2026-08-20",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "Medley F",
+              "state": "FL",
+              "date": "2026-08-23",
+              "miles": 1490.4
+            }
+          ],
+          "period_end": "2026-08-31",
+          "live": null
+        },
+        {
+          "load": "13546",
+          "leg": "TR",
+          "customer": "John J. Jerue Truck Broker, Inc",
+          "truck": "T156",
+          "trailer": "10219",
+          "line_haul": 1100,
+          "driver_pay": 369.86,
+          "fuel": 771.84,
+          "empty_miles": 71.4,
+          "loaded_miles": 750.5,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "Medley F",
+              "state": "FL",
+              "date": "2026-08-23",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "BELLE GLADE",
+              "state": "FL",
+              "date": "2026-08-26",
+              "miles": 71.4
+            },
+            {
+              "type": "deliver",
+              "city": "MC LEANSVILLE",
+              "state": "NC",
+              "date": "2026-08-27",
+              "miles": 750.5
+            }
+          ],
+          "period_end": "2026-08-31",
+          "live": {
+            "status": "closed",
+            "trip_type": "NB",
+            "inv": 1100,
+            "bill": 369.86,
+            "fuel": 1396.44,
+            "exp": 1396.44,
+            "fa": "FAC-2026-00026(inv31)",
+            "invoices": 1,
+            "bills": 1
+          }
+        },
+        {
+          "load": "13552",
+          "leg": "SB",
+          "customer": "Del-Can Logistics LLC",
+          "truck": "T156",
+          "trailer": "10219",
+          "line_haul": 3000,
+          "driver_pay": 685.35,
+          "fuel": 1141.3,
+          "empty_miles": 173.8,
+          "loaded_miles": 1349.2,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "MC LEANSVILLE",
+              "state": "NC",
+              "date": "2026-08-27",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "CAMDEN",
+              "state": "SC",
+              "date": "2026-08-28",
+              "miles": 173.8
+            },
+            {
+              "type": "deliver",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-31",
+              "miles": 1349.2
+            }
+          ],
+          "period_end": "2026-08-31",
+          "live": {
+            "status": "closed",
+            "trip_type": "NB",
+            "inv": 3000,
+            "bill": 685.35,
+            "fuel": 1298.02,
+            "exp": 1235.99,
+            "fa": "FAC-2026-00033(inv38)",
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": false,
+      "gaps": [
+        "13539:MISSING_DB",
+        "13546:stops+fuel",
+        "13552:fuel"
+      ],
+      "live_ok_loads": 0
+    },
+    {
+      "tour": "5789",
+      "driver": "Jorge Luis Infante Corona",
+      "truck": "T177",
+      "period_doc": "2026-08-26..2026-09-01",
+      "stop_span": "2026-08-28..2026-09-01",
+      "span_days": 4,
+      "longer_than_week": false,
+      "shape": "1TR",
+      "n_loads": 1,
+      "begins_laredo": false,
+      "has_sb": false,
+      "missing_sb_flag": true,
+      "triangulation_count": 1,
+      "deadhead_on_sb": [],
+      "loads": [
+        {
+          "load": "13557",
+          "leg": "TR",
+          "customer": "DGL Freight Broker",
+          "truck": "T177",
+          "trailer": "FB-56713",
+          "line_haul": 3900,
+          "driver_pay": 980.75,
+          "fuel": 2002.01,
+          "empty_miles": 545.6,
+          "loaded_miles": 1415.9,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "EDISON",
+              "state": "NJ",
+              "date": "2026-08-28",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "ELKTON",
+              "state": "MD",
+              "date": "2026-08-28",
+              "miles": 107.2
+            },
+            {
+              "type": "deliver",
+              "city": "IRVING",
+              "state": "TX",
+              "date": "2026-08-31",
+              "miles": 1415.9
+            },
+            {
+              "type": "empty",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-09-01",
+              "miles": 438.4
+            }
+          ],
+          "period_end": "2026-09-01",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 3900,
+            "bill": 980.75,
+            "fuel": 2002.01,
+            "exp": 0,
+            "fa": "FAC-2026-00046(inv40)",
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 1
+    },
+    {
+      "tour": "5790",
+      "driver": "Leonel Antonio Morales",
+      "truck": "T175",
+      "period_doc": "2026-08-25..2026-09-01",
+      "stop_span": "2026-08-27..2026-09-01",
+      "span_days": 5,
+      "longer_than_week": false,
+      "shape": "1TR",
+      "n_loads": 1,
+      "begins_laredo": false,
+      "has_sb": false,
+      "missing_sb_flag": true,
+      "triangulation_count": 1,
+      "deadhead_on_sb": [],
+      "loads": [
+        {
+          "load": "13554",
+          "leg": "TR",
+          "customer": null,
+          "truck": "T175",
+          "trailer": "FB-56704",
+          "line_haul": 0,
+          "driver_pay": 761.7,
+          "fuel": 2106.71,
+          "empty_miles": 476.6,
+          "loaded_miles": 1046.8,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "MORRISVILLE",
+              "state": "NC",
+              "date": "2026-08-27",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "CATTAWBA",
+              "state": "NC",
+              "date": "2026-08-28",
+              "miles": 145.8
+            },
+            {
+              "type": "deliver",
+              "city": "HOUSTON",
+              "state": "TX",
+              "date": "2026-08-31",
+              "miles": 1046.8
+            },
+            {
+              "type": "empty",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-09-01",
+              "miles": 330.8
+            }
+          ],
+          "period_end": "2026-09-01",
+          "live": {
+            "status": "completed_docs_received",
+            "trip_type": "NB",
+            "inv": 3500,
+            "bill": 761.7,
+            "fuel": 2106.71,
+            "exp": 20.8,
+            "fa": "FAC-2026-00045(inv39)",
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 1
+    },
+    {
+      "tour": "5794",
+      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
+      "truck": "T171",
+      "period_doc": "2026-08-28..2026-09-03",
+      "stop_span": "2026-08-28..2026-08-31",
+      "span_days": 3,
+      "longer_than_week": false,
+      "shape": "1NB",
+      "n_loads": 1,
+      "begins_laredo": true,
+      "has_sb": false,
+      "missing_sb_flag": true,
+      "triangulation_count": 0,
+      "deadhead_on_sb": [],
+      "loads": [
+        {
+          "load": "13558",
+          "leg": "NB",
+          "customer": "AB Global Logistics , Inc",
+          "truck": "T171",
+          "trailer": "10870",
+          "line_haul": 3500,
+          "driver_pay": 564.42,
+          "fuel": 1394.72,
+          "empty_miles": 0,
+          "loaded_miles": 1312.6,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-28",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "WILDER",
+              "state": "KY",
+              "date": "2026-08-31",
+              "miles": 1312.6
+            }
+          ],
+          "period_end": "2026-09-03",
+          "live": {
+            "status": "closed",
+            "trip_type": "NB",
+            "inv": 3500,
+            "bill": 564.42,
+            "fuel": 1394.72,
+            "exp": 1447.16,
+            "fa": "FAC-2026-00032(inv41)",
+            "invoices": 1,
+            "bills": 1
+          }
+        }
+      ],
+      "composition_ok": true,
+      "gaps": [],
+      "live_ok_loads": 1
+    },
+    {
+      "tour": "5795",
+      "driver": "LUIS ARMANDO SOSA PEREZ",
+      "truck": "T170",
+      "period_doc": "2026-08-29..2026-08-31",
+      "stop_span": "2026-08-27..2026-08-31",
+      "span_days": 4,
+      "longer_than_week": false,
+      "shape": "1NB+1SB",
+      "n_loads": 2,
+      "begins_laredo": true,
+      "has_sb": true,
+      "missing_sb_flag": false,
+      "triangulation_count": 0,
+      "deadhead_on_sb": [
+        {
+          "load": "13567",
+          "empty_miles": 59.1
+        }
+      ],
+      "loads": [
+        {
+          "load": "13561",
+          "leg": "NB",
+          "customer": "Refrigerx Transportation LLC",
+          "truck": "T170",
+          "trailer": "10224",
+          "line_haul": 3450,
+          "driver_pay": 500.22,
+          "fuel": 1074.62,
+          "empty_miles": 0,
+          "loaded_miles": 1111.6,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-29",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "CONLEY",
+              "state": "GA",
+              "date": "2026-08-31",
+              "miles": 1111.6
+            }
+          ],
+          "period_end": "2026-08-31",
+          "live": {
+            "status": "closed",
+            "trip_type": "NB",
+            "inv": 3450,
+            "bill": 500.22,
+            "fuel": 1074.62,
+            "exp": 1619.76,
+            "fa": "FAC-2026-00034(inv44)",
+            "invoices": 1,
+            "bills": 1
+          }
+        },
+        {
+          "load": "13567",
+          "leg": "SB",
+          "customer": "AB Global Logistics , Inc",
+          "truck": "T170",
+          "trailer": "10224",
+          "line_haul": 2100,
+          "driver_pay": 550.81,
+          "fuel": 1681.76,
+          "empty_miles": 59.1,
+          "loaded_miles": 1164.9,
+          "stops": [
+            {
+              "type": "empty",
+              "city": "CONLEY",
+              "state": "GA",
+              "date": "2026-08-27",
+              "miles": null
+            },
+            {
+              "type": "pickup",
+              "city": "GAINSVILLE",
+              "state": "GA",
+              "date": "2026-08-28",
+              "miles": 59.1
+            },
+            {
+              "type": "deliver",
+              "city": "LAREDO",
+              "state": "TX",
+              "date": "2026-08-31",
+              "miles": 1164.9
+            }
+          ],
+          "period_end": "2026-08-31",
+          "live": null
+        }
+      ],
+      "composition_ok": false,
+      "gaps": [
+        "13567:MISSING_DB"
+      ],
+      "live_ok_loads": 1
+    },
+    {
+      "tour": "5796",
+      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
+      "truck": "T171",
+      "period_doc": "2026-08-25..2026-08-28",
+      "stop_span": "2026-08-25..2026-08-28",
+      "span_days": 3,
+      "longer_than_week": false,
+      "shape": "1LOCAL",
+      "n_loads": 1,
+      "begins_laredo": true,
+      "has_sb": false,
+      "missing_sb_flag": false,
+      "triangulation_count": 0,
+      "deadhead_on_sb": [],
+      "loads": [
+        {
+          "load": "13541",
+          "leg": "LOCAL",
+          "customer": "EGRO TRANSPORT LLC",
+          "truck": "T171",
+          "trailer": "10870",
+          "line_haul": 2500,
+          "driver_pay": 379.73,
+          "fuel": 0,
+          "empty_miles": 441.4,
+          "loaded_miles": 441.7,
+          "stops": [
+            {
+              "type": "pickup",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-25",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "VINTON",
+              "state": "LA",
+              "date": "2026-08-26",
+              "miles": 441.7
+            },
+            {
+              "type": "empty",
+              "city": "VINTON",
+              "state": "LA",
+              "date": "2026-08-26",
+              "miles": null
+            },
+            {
+              "type": "deliver",
+              "city": "Laredo",
+              "state": "TX",
+              "date": "2026-08-28",
+              "miles": 441.4
+            }
+          ],
+          "period_end": "2026-08-28",
+          "live": null
+        }
+      ],
+      "composition_ok": false,
+      "gaps": [
+        "13541:MISSING_DB"
+      ],
+      "live_ok_loads": 0
+    }
+  ],
+  "faro_days": [
+    {
+      "iso": "2026-08-10",
+      "ctrl_inv": [
+        "2",
+        "3"
+      ],
+      "live": [
+        {
+          "inv": "3",
+          "fa": "FAC-2026-00001",
+          "load": "13508",
+          "purchase": 2500,
+          "adv": 2415,
+          "reserve": 30.9,
+          "fee": 54.1
+        },
+        {
+          "inv": "2",
+          "fa": "FAC-2026-00002",
+          "load": "13510",
+          "purchase": 3000,
+          "adv": 2910,
+          "reserve": 45,
+          "fee": 45
+        }
+      ],
+      "purchase": {
+        "ctrl": 5500,
+        "live": 5500
+      },
+      "net": {
+        "ctrl": 5325,
+        "live": 5325
+      },
+      "miss": [],
+      "tie": true,
+      "closed": true
+    },
+    {
+      "iso": "2026-08-11",
+      "ctrl_inv": [
+        "1"
+      ],
+      "live": [
+        {
+          "inv": "1",
+          "fa": "FAC-2026-00003",
+          "load": "13511",
+          "purchase": 3600,
+          "adv": 3482,
+          "reserve": 54,
+          "fee": 64
+        }
+      ],
+      "purchase": {
+        "ctrl": 3600,
+        "live": 3600
+      },
+      "net": {
+        "ctrl": 3482,
+        "live": 3482
+      },
+      "miss": [],
+      "tie": true,
+      "closed": true
+    },
+    {
+      "iso": "2026-08-12",
+      "ctrl_inv": [
+        "4"
+      ],
+      "live": [
+        {
+          "inv": "4",
+          "fa": "FAC-2026-00004",
+          "load": "13512",
+          "purchase": 1700,
+          "adv": 1639,
+          "reserve": 25.5,
+          "fee": 35.5
+        }
+      ],
+      "purchase": {
+        "ctrl": 1700,
+        "live": 1700
+      },
+      "net": {
+        "ctrl": 1639,
+        "live": 1639
+      },
+      "miss": [],
+      "tie": true,
+      "closed": true
+    },
+    {
+      "iso": "2026-08-13",
+      "ctrl_inv": [
+        "5",
+        "6",
+        "7"
+      ],
+      "live": [
+        {
+          "inv": "5",
+          "fa": "FAC-2026-00005",
+          "load": "13514",
+          "purchase": 2700,
+          "adv": 2619,
+          "reserve": 40.5,
+          "fee": 40.5
+        },
+        {
+          "inv": "6",
+          "fa": "FAC-2026-00006",
+          "load": "13520",
+          "purchase": 2600,
+          "adv": 2512,
+          "reserve": 39,
+          "fee": 49
+        },
+        {
+          "inv": "7",
+          "fa": "FAC-2026-00007",
+          "load": "90007",
+          "purchase": 350,
+          "adv": 339.5,
+          "reserve": 5.02,
+          "fee": 5.48
+        }
+      ],
+      "purchase": {
+        "ctrl": 5650,
+        "live": 5650
+      },
+      "net": {
+        "ctrl": 5470.5,
+        "live": 5470.5
+      },
+      "miss": [],
+      "tie": true,
+      "closed": true
+    },
+    {
+      "iso": "2026-08-14",
+      "ctrl_inv": [
+        "8",
+        "11",
+        "12",
+        "13"
+      ],
+      "live": [
+        {
+          "inv": "13",
+          "fa": "FAC-2026-00010",
+          "load": "13519",
+          "purchase": 4900,
+          "adv": 4753,
+          "reserve": 73.5,
+          "fee": 73.5
+        },
+        {
+          "inv": "12",
+          "fa": "FAC-2026-00011",
+          "load": "13518",
+          "purchase": 4000,
+          "adv": 3870,
+          "reserve": 60,
+          "fee": 70
+        },
+        {
+          "inv": "11",
+          "fa": "FAC-2026-00008",
+          "load": "13516",
+          "purchase": 700,
+          "adv": 679,
+          "reserve": 9.11,
+          "fee": 11.89
+        },
+        {
+          "inv": "8",
+          "fa": "FAC-2026-00009",
+          "load": "13515",
+          "purchase": 525,
+          "adv": 509.24,
+          "reserve": 7.88,
+          "fee": 7.88
+        }
+      ],
+      "purchase": {
+        "ctrl": 10125,
+        "live": 10125
+      },
+      "net": {
+        "ctrl": 9811.24,
+        "live": 9811.24
+      },
+      "miss": [],
+      "tie": true,
+      "closed": true
+    },
+    {
+      "iso": "2026-08-17",
+      "ctrl_inv": [
+        "14",
+        "15"
+      ],
+      "live": [
+        {
+          "inv": "15",
+          "fa": "FAC-2026-00042",
+          "load": "13523",
+          "purchase": 3600,
+          "adv": 3482,
+          "reserve": 54,
+          "fee": 64
+        },
+        {
+          "inv": "14",
+          "fa": "FAC-2026-00012",
+          "load": "13521",
+          "purchase": 3500,
+          "adv": 3395,
+          "reserve": 52.5,
+          "fee": 52.5
+        }
+      ],
+      "purchase": {
+        "ctrl": 7100,
+        "live": 7100
+      },
+      "net": {
+        "ctrl": 6877,
+        "live": 6877
+      },
+      "miss": [],
+      "tie": true,
+      "closed": true
+    },
+    {
+      "iso": "2026-08-18",
+      "ctrl_inv": [
+        "16"
+      ],
+      "live": [
+        {
+          "inv": "16",
+          "fa": "FAC-2026-00043",
+          "load": "13524",
+          "purchase": 3800,
+          "adv": 3676,
+          "reserve": 57,
+          "fee": 67
+        }
+      ],
+      "purchase": {
+        "ctrl": 3800,
+        "live": 3800
+      },
+      "net": {
+        "ctrl": 3676,
+        "live": 3676
+      },
+      "miss": [],
+      "tie": true,
+      "closed": true
+    },
+    {
+      "iso": "2026-08-19",
+      "ctrl_inv": [
+        "17",
+        "19"
+      ],
+      "live": [
+        {
+          "inv": "17",
+          "fa": "FAC-2026-00013",
+          "load": "13528",
+          "purchase": 3100,
+          "adv": 3007,
+          "reserve": 46.5,
+          "fee": 46.5
+        },
+        {
+          "inv": "19",
+          "fa": "FAC-2026-00014",
+          "load": "13526",
+          "purchase": 3500,
+          "adv": 3385,
+          "reserve": 52.5,
+          "fee": 62.5
+        }
+      ],
+      "purchase": {
+        "ctrl": 6600,
+        "live": 6600
+      },
+      "net": {
+        "ctrl": 6392,
+        "live": 6392
+      },
+      "miss": [],
+      "tie": true,
+      "closed": true
+    },
+    {
+      "iso": "2026-08-21",
+      "ctrl_inv": [
+        "18",
+        "20",
+        "22",
+        "23",
+        "24"
+      ],
+      "live": [
+        {
+          "inv": "18",
+          "fa": "FAC-2026-00044",
+          "load": "13529",
+          "purchase": 3900,
+          "adv": 3783,
+          "reserve": 58.5,
+          "fee": 58.5
+        },
+        {
+          "inv": "23",
+          "fa": "FAC-2026-00015",
+          "load": "13535",
+          "purchase": 4900,
+          "adv": 4753,
+          "reserve": 73.5,
+          "fee": 73.5
+        },
+        {
+          "inv": "20",
+          "fa": "FAC-2026-00016",
+          "load": "13532",
+          "purchase": 1000,
+          "adv": 970,
+          "reserve": 15,
+          "fee": 15
+        },
+        {
+          "inv": "24",
+          "fa": "FAC-2026-00017",
+          "load": "13536",
+          "purchase": 4000,
+          "adv": 3870,
+          "reserve": 60,
+          "fee": 70
+        },
+        {
+          "inv": "22",
+          "fa": "FAC-2026-00018",
+          "load": "13534",
+          "purchase": 3100,
+          "adv": 3007,
+          "reserve": 46.5,
+          "fee": 46.5
+        }
+      ],
+      "purchase": {
+        "ctrl": 16900,
+        "live": 16900
+      },
+      "net": {
+        "ctrl": 16383,
+        "live": 16383
+      },
+      "miss": [],
+      "tie": true,
+      "closed": true
+    },
+    {
+      "iso": "2026-08-24",
+      "ctrl_inv": [
+        "21",
+        "25"
+      ],
+      "live": [
+        {
+          "inv": "21",
+          "fa": "FAC-2026-00019",
+          "load": "13537",
+          "purchase": 3300,
+          "adv": 3191,
+          "reserve": 49.5,
+          "fee": 59.5
+        },
+        {
+          "inv": "25",
+          "fa": "FAC-2026-00020",
+          "load": "13538",
+          "purchase": 800,
+          "adv": 776,
+          "reserve": 12,
+          "fee": 12
+        }
+      ],
+      "purchase": {
+        "ctrl": 4100,
+        "live": 4100
+      },
+      "net": {
+        "ctrl": 3967,
+        "live": 3967
+      },
+      "miss": [],
+      "tie": true,
+      "closed": true
+    },
+    {
+      "iso": "2026-08-26",
+      "ctrl_inv": [
+        "27",
+        "28"
+      ],
+      "live": [
+        {
+          "inv": "28",
+          "fa": "FAC-2026-00021",
+          "load": "13544",
+          "purchase": 600,
+          "adv": 582,
+          "reserve": 9,
+          "fee": 9
+        },
+        {
+          "inv": "27",
+          "fa": "FAC-2026-00022",
+          "load": "13543",
+          "purchase": 2500,
+          "adv": 2415,
+          "reserve": 37.5,
+          "fee": 47.5
+        }
+      ],
+      "purchase": {
+        "ctrl": 3100,
+        "live": 3100
+      },
+      "net": {
+        "ctrl": 2997,
+        "live": 2997
+      },
+      "miss": [],
+      "tie": true,
+      "closed": true
+    },
+    {
+      "iso": "2026-08-28",
+      "ctrl_inv": [
+        "29",
+        "30",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36"
+      ],
+      "live": [
+        {
+          "inv": "33",
+          "fa": "FAC-2026-00023",
+          "load": "13548",
+          "purchase": 2300,
+          "adv": 2221,
+          "reserve": 34.5,
+          "fee": 44.5
+        },
+        {
+          "inv": "36",
+          "fa": "FAC-2026-00024",
+          "load": "13565",
+          "purchase": 4000,
+          "adv": 3880,
+          "reserve": 60,
+          "fee": 60
+        },
+        {
+          "inv": "30",
+          "fa": "FAC-2026-00030",
+          "load": "13547",
+          "purchase": 4800,
+          "adv": 4656,
+          "reserve": 72,
+          "fee": 72
+        },
+        {
+          "inv": "35",
+          "fa": "FAC-2026-00025",
+          "load": "13550",
+          "purchase": 4900,
+          "adv": 4753,
+          "reserve": 73.5,
+          "fee": 73.5
+        },
+        {
+          "inv": "31",
+          "fa": "FAC-2026-00026",
+          "load": "13546",
+          "purchase": 1100,
+          "adv": 1067,
+          "reserve": 16.5,
+          "fee": 16.5
+        },
+        {
+          "inv": "34",
+          "fa": "FAC-2026-00027",
+          "load": "13549",
+          "purchase": 1000,
+          "adv": 970,
+          "reserve": 15,
+          "fee": 15
+        },
+        {
+          "inv": "29",
+          "fa": "FAC-2026-00028",
+          "load": "13542",
+          "purchase": 4000,
+          "adv": 3880,
+          "reserve": 60,
+          "fee": 60
+        },
+        {
+          "inv": "32",
+          "fa": "FAC-2026-00029",
+          "load": "13545",
+          "purchase": 4800,
+          "adv": 4656,
+          "reserve": 72,
+          "fee": 72
+        }
+      ],
+      "purchase": {
+        "ctrl": 26900,
+        "live": 26900
+      },
+      "net": {
+        "ctrl": 26083,
+        "live": 26083
+      },
+      "miss": [],
+      "tie": true,
+      "closed": true
+    },
+    {
+      "iso": "2026-08-31",
+      "ctrl_inv": [
+        "38",
+        "39",
+        "40",
+        "41"
+      ],
+      "live": [
+        {
+          "inv": "41",
+          "fa": "FAC-2026-00032",
+          "load": "13558",
+          "purchase": 3500,
+          "adv": 3385,
+          "reserve": 52.5,
+          "fee": 62.5
+        },
+        {
+          "inv": "39",
+          "fa": "FAC-2026-00045",
+          "load": "13554",
+          "purchase": 3500,
+          "adv": 3395,
+          "reserve": 52.5,
+          "fee": 52.5
+        },
+        {
+          "inv": "40",
+          "fa": "FAC-2026-00046",
+          "load": "13557",
+          "purchase": 3900,
+          "adv": 3783,
+          "reserve": 58.5,
+          "fee": 58.5
+        },
+        {
+          "inv": "38",
+          "fa": "FAC-2026-00033",
+          "load": "13552",
+          "purchase": 3000,
+          "adv": 2910,
+          "reserve": 45,
+          "fee": 45
+        }
+      ],
+      "purchase": {
+        "ctrl": 13900,
+        "live": 13900
+      },
+      "net": {
+        "ctrl": 13473,
+        "live": 13473
+      },
+      "miss": [],
+      "tie": true,
+      "closed": true
+    }
+  ],
+  "settlements_minted": [],
+  "partial_open_invoices": [
+    {
+      "load": "13535",
+      "invoice": "13535",
+      "total": 4900,
+      "open": 4900,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13519",
+      "invoice": "13519",
+      "total": 4900,
+      "open": 4900,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13487",
+      "invoice": "13487",
+      "total": 4900,
+      "open": 4900,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13482",
+      "invoice": "13482",
+      "total": 4100,
+      "open": 4100,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13495",
+      "invoice": "13495",
+      "total": 4100,
+      "open": 4100,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13536",
+      "invoice": "13536",
+      "total": 4000,
+      "open": 4000,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13493",
+      "invoice": "13493",
+      "total": 4000,
+      "open": 4000,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13518",
+      "invoice": "13518",
+      "total": 4000,
+      "open": 4000,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13481",
+      "invoice": "13481",
+      "total": 3920,
+      "open": 3920,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13557",
+      "invoice": "13557",
+      "total": 3900,
+      "open": 3900,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13529",
+      "invoice": "13529",
+      "total": 3900,
+      "open": 3900,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13494",
+      "invoice": "13494",
+      "total": 3800,
+      "open": 3800,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13524",
+      "invoice": "13524",
+      "total": 3800,
+      "open": 3800,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13523",
+      "invoice": "13523",
+      "total": 3600,
+      "open": 3600,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13511",
+      "invoice": "13511",
+      "total": 3600,
+      "open": 3600,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13554",
+      "invoice": "13554",
+      "total": 3500,
+      "open": 3500,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13521",
+      "invoice": "13521",
+      "total": 3500,
+      "open": 3500,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13526",
+      "invoice": "13526",
+      "total": 3500,
+      "open": 3500,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13500",
+      "invoice": "13500",
+      "total": 3500,
+      "open": 3500,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13558",
+      "invoice": "13558",
+      "total": 3500,
+      "open": 3500,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13561",
+      "invoice": "13561",
+      "total": 3450,
+      "open": 3450,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13537",
+      "invoice": "13537",
+      "total": 3300,
+      "open": 3300,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13555",
+      "invoice": "13555",
+      "total": 3180,
+      "open": 3180,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13528",
+      "invoice": "13528",
+      "total": 3100,
+      "open": 3100,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13534",
+      "invoice": "13534",
+      "total": 3100,
+      "open": 3100,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13552",
+      "invoice": "13552",
+      "total": 3000,
+      "open": 3000,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13510",
+      "invoice": "13510",
+      "total": 3000,
+      "open": 3000,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13496",
+      "invoice": "13496",
+      "total": 3000,
+      "open": 3000,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13489",
+      "invoice": "13489",
+      "total": 2800,
+      "open": 2800,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13514",
+      "invoice": "13514",
+      "total": 2700,
+      "open": 2700,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13520",
+      "invoice": "13520",
+      "total": 2600,
+      "open": 2600,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13543",
+      "invoice": "13543",
+      "total": 2500,
+      "open": 2500,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13508",
+      "invoice": "13508",
+      "total": 2500,
+      "open": 2500,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13548",
+      "invoice": "13548",
+      "total": 2300,
+      "open": 2300,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13485",
+      "invoice": "13485",
+      "total": 2039,
+      "open": 2039,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13512",
+      "invoice": "13512",
+      "total": 1700,
+      "open": 1700,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13501",
+      "invoice": "13501",
+      "total": 1500,
+      "open": 1500,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13546",
+      "invoice": "13546",
+      "total": 1100,
+      "open": 1100,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13549",
+      "invoice": "13549",
+      "total": 1000,
+      "open": 1000,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13532",
+      "invoice": "13532",
+      "total": 1000,
+      "open": 1000,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13538",
+      "invoice": "13538",
+      "total": 800,
+      "open": 800,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13516",
+      "invoice": "13516",
+      "total": 700,
+      "open": 700,
+      "paid": 0,
+      "status": "sent"
+    },
+    {
+      "load": "13515",
+      "invoice": "13515",
+      "total": 525,
+      "open": 525,
+      "paid": 0,
+      "status": "sent"
+    }
+  ],
+  "vendors_on_aug_loads": [
+    {
+      "vendor": "LOVES",
+      "n": 109,
+      "amount": 36409.03
+    },
+    {
+      "vendor": "FLYING",
+      "n": 2,
+      "amount": 1133.66
+    },
+    {
+      "vendor": "PALOS GARZA",
+      "n": 1,
+      "amount": 124.8
+    },
+    {
+      "vendor": "SR FORWARDING,INC",
+      "n": 1,
+      "amount": 120
+    },
+    {
+      "vendor": "Blue Beacon Truck Wash",
+      "n": 2,
+      "amount": 94.13
+    },
+    {
+      "vendor": "TEN STAR TRUCKWASH",
+      "n": 1,
+      "amount": 52
+    },
+    {
+      "vendor": "FRONTIER TRUCK WASH",
+      "n": 1,
+      "amount": 42.23
+    },
+    {
+      "vendor": "INDIANA TOLL ROAD",
+      "n": 3,
+      "amount": 41.75
+    },
+    {
+      "vendor": "PILOT",
+      "n": 1,
+      "amount": 24.88
+    },
+    {
+      "vendor": "DTOPS",
+      "n": 1,
+      "amount": 20.8
+    }
+  ],
+  "gl_august": [
+    {
+      "account": "1090",
+      "name": "Undeposited Funds",
+      "type": "Asset",
+      "lines": 130,
+      "debit": 113256.44,
+      "credit": 34920.87
+    },
+    {
+      "account": "1100",
+      "name": "Accounts Receivable (A/R)",
+      "type": "Asset",
+      "lines": 51,
+      "debit": 152744,
+      "credit": 0
+    },
+    {
+      "account": "1150",
+      "name": "Unbilled Revenue",
+      "type": "Asset",
+      "lines": 102,
+      "debit": 152744,
+      "credit": 152744
+    },
+    {
+      "account": "1230",
+      "name": "Factoring Reserves",
+      "type": "Asset",
+      "lines": 38,
+      "debit": 1632.41,
+      "credit": 52.5
+    },
+    {
+      "account": "2000",
+      "name": "Accounts Payable (A/P)",
+      "type": "Liability",
+      "lines": 4,
+      "debit": 0,
+      "credit": 139.3
+    },
+    {
+      "account": "2150",
+      "name": "Factoring Advance",
+      "type": "Liability",
+      "lines": 38,
+      "debit": 3500,
+      "credit": 109375
+    },
+    {
+      "account": "4000",
+      "name": "Freight / Line-haul Income",
+      "type": "Income",
+      "lines": 51,
+      "debit": 0,
+      "credit": 152744
+    },
+    {
+      "account": "5000",
+      "name": "Fuel & Diesel",
+      "type": "CostOfGoodsSold",
+      "lines": 92,
+      "debit": 31483.37,
+      "credit": 7250.2
+    },
+    {
+      "account": "6300",
+      "name": "Bank Service Charges & Wire Fees",
+      "type": "Expense",
+      "lines": 1,
+      "debit": 10,
+      "credit": 0
+    },
+    {
+      "account": "6400",
+      "name": "Factoring Fees",
+      "type": "Expense",
+      "lines": 38,
+      "debit": 1726.35,
+      "credit": 10
+    },
+    {
+      "account": "9000",
+      "name": "Ask My Accountant",
+      "type": "Expense",
+      "lines": 4,
+      "debit": 139.3,
+      "credit": 0
+    }
+  ]
+}
