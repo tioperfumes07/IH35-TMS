@@ -92,7 +92,7 @@ Never work in the shared main checkout.
 [CODEX 2026-09-24T01:15:00Z] Q14 GUARD  verify-loves-geofences-seeded.mjs — assert >=604 Love's
       geofences + their mdata.locations halves + a stated radius each.
       611 live today; this protects finished work from a future purge.
-[ ] Q15 GUARD  verify-no-capability-regression.mjs — 14 capabilities; fail on
+[CODEX 2026-09-24T01:25:00Z] Q15 GUARD  verify-no-capability-regression.mjs — 14 capabilities; fail on
       missing symbol, moved file, OR duplicate definition.
 [ ] Q16 GUARD  verify-no-driver-merge-without-hard-identifier.mjs
 [DONE CC-1 2026-09-23T23:49:16Z, PR #22467 -- built and merged earlier this round (TASK 27), already live and self-arming] Q17 GUARD  verify-settled-load-carries-settled-status.mjs
