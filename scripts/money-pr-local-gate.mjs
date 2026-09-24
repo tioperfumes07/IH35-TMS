@@ -602,14 +602,14 @@ const LIVE_DOMAIN_GUARDS = [
       "accounting.journal_entries",
     ],
   ],
-  // ROUND 140.6 (DEVIN-B): bank match/suggest path is read-only. GET never writes,
-  // bank_transactions count is derived and asserted unchanged, zero JEs from suggest/candidate paths.
+  // ROUND 141.4 (DEVIN-B): every match kind is acceptable or declared. No kind may be shown
+  // that cannot be accepted. Parsed from code, live CHECK + columns verified.
   [
-    "verify-bank-match-suggest-is-read-only",
+    "verify-every-match-kind-is-acceptable-or-declared",
     [
       "apps/backend/src/accounting/bank-recon/",
+      "banking.reconciliation_matches",
       "banking.bank_transactions",
-      "accounting.journal_entries",
     ],
   ],
 ];
