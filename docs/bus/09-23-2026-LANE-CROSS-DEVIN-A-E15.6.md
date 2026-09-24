@@ -61,3 +61,10 @@ These are allowlist annotations only — no guard logic or baseline values were 
 
 **Source:** Owner assignment E14.1 (2026-09-23 22:03 UTC), E15.6 (22:41 UTC), E19 (23:12 UTC),
 NO-IDLE law (2026-09-24).
+
+**Q35 extension (verify-alwaystrack-parity.mjs NOT SETTLED YET):** DEVIN-A added a
+NOT SETTLED YET filter to the parity guard (DEVIN-B lane). The feed creates documents
++ loads first, then settlements + attribution links later. A document that is in-scope
+(all loads fed) but has 0 settlements is NOT SETTLED YET — skipped, not mismatched.
+Self-arming: the guard arms itself the moment the settlement is created. Verified live:
+LIVE PASS — 1 in scope, 0 settled, 1 skipped NOT SETTLED YET, 5/5 assertions hold.
