@@ -622,6 +622,15 @@ const LIVE_DOMAIN_GUARDS = [
       "accounting.factoring_advances",
     ],
   ],
+  // ROUND 142.1 (DEVIN-B): every variance_posted audit event resolves to a live JE. 7-day scoped (LAW 3).
+  [
+    "verify-no-audit-event-without-its-journal-entry",
+    [
+      "apps/backend/src/accounting/bank-recon/",
+      "audit.audit_events",
+      "accounting.journal_entries",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {
