@@ -13,6 +13,14 @@ const voidInvoiceMock = vi.fn();
 const addInvoiceLineMock = vi.fn();
 const patchInvoiceLineMock = vi.fn();
 const deleteInvoiceLineMock = vi.fn();
+// Real getMoneyProofTrail() wasn't mocked here, so MoneyProofTrailPanel fell through to the real
+// fetch (fails/returns something incomplete under jsdom) and crashed reading proof.data.postings —
+// unrelated to this test's own assertions, caught while verifying VOID-BUTTON-01's InvoiceDetailPage
+// change didn't regress anything. MoneyProofTrail.postings is a real, always-present array per its
+// own type (api/accounting.ts) — mocked here with an empty one, matching the type contract.
+const getMoneyProofTrailMock = vi.fn((..._args: unknown[]) =>
+  Promise.resolve({ document_type: "invoice", document_id: "inv-100", display_id: "INV-100", status: null, trace_no: "", trace_key: "", postings: [] })
+);
 
 vi.mock("../../../api/accounting", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../../api/accounting")>();
@@ -24,6 +32,7 @@ vi.mock("../../../api/accounting", async (importOriginal) => {
     addInvoiceLine: (...args: unknown[]) => addInvoiceLineMock(...args),
     patchInvoiceLine: (...args: unknown[]) => patchInvoiceLineMock(...args),
     deleteInvoiceLine: (...args: unknown[]) => deleteInvoiceLineMock(...args),
+    getMoneyProofTrail: (...args: unknown[]) => getMoneyProofTrailMock(...args),
   };
 });
 

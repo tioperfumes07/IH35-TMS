@@ -31,6 +31,7 @@ import { SafetyAlertsReverseSection } from "../../components/safety/SafetyAlerts
 const INCOME_TYPES = ["Income", "OtherIncome"];
 
 import { formatUsdCents } from "../../lib/money";
+import { VoidActionMenu } from "../../components/shared/VoidActionMenu";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -360,13 +361,16 @@ export function InvoiceDetailPage() {
                 </span>
               ) : null}
             </span>
-            <Button
-              variant="danger"
-              onClick={() => setVoidOpen(true)}
+            {/* VOID-BUTTON-01 — QuickBooks-style split-button shape everywhere, ready to grow a
+                caret the moment a second real action (e.g. delete-while-draft) is actually wired.
+                Invoices have exactly one real destructive action today (void) -- Delete does not
+                exist as a real capability anywhere in this codebase yet (grepped, confirmed), so no
+                menuActions are passed; a fake/disabled menu item would be a silent no-op. */}
+            <VoidActionMenu
+              primary={{ key: "void", label: "Void", onSelect: () => setVoidOpen(true) }}
               disabled={invoice.status === "paid" || invoice.status === "void"}
-            >
-              Void
-            </Button>
+              data-testid="invoice-void-action"
+            />
             <VoidReasonModal
               open={voidOpen}
               title="Void Invoice"

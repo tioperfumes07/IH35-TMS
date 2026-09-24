@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 // LV-AUDIT-HISTORY-STATUS-SOURCE-SINGLE-SELECT: filters like Status/Source/Event type are naturally
@@ -16,10 +16,26 @@ type Props = {
   allLabel?: string;
   className?: string;
   "data-testid"?: string;
+  /** FILTER-MULTI-01: large reference lists (Vendor/Customer/Unit/Trailer/Driver/Load/Account/Class)
+   *  need a type-to-narrow box inside the open panel — a plain checkbox list of hundreds/thousands
+   *  of options is unusable. Small enumerated fields (Status/Category/Type) can omit this. */
+  searchable?: boolean;
+  searchPlaceholder?: string;
 };
 
-export function MultiSelectDropdown({ label, options, selected, onChange, allLabel = "All", className, ...rest }: Props) {
+export function MultiSelectDropdown({
+  label,
+  options,
+  selected,
+  onChange,
+  allLabel = "All",
+  className,
+  searchable = false,
+  searchPlaceholder = "Type to narrow…",
+  ...rest
+}: Props) {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,11 +54,25 @@ export function MultiSelectDropdown({ label, options, selected, onChange, allLab
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open) setQuery("");
+  }, [open]);
+
   const toggle = (value: string) => {
     onChange(selected.includes(value) ? selected.filter((v) => v !== value) : [...selected, value]);
   };
 
-  const summary = selected.length === 0 ? allLabel : selected.length === 1 ? (options.find((o) => o.value === selected[0])?.label ?? selected[0]) : `${selected.length} selected`;
+  // FILTER-MULTI-01: the closed label must never render a truncated value list — always the
+  // filter's own name plus a count, e.g. "Status (3)". Zero selected reads as the plain label
+  // (or allLabel, when the caller wants an explicit "All" state) so an untouched filter never
+  // looks like it's already narrowing anything.
+  const summary = selected.length === 0 ? allLabel : `${label} (${selected.length})`;
+
+  const visibleOptions = useMemo(() => {
+    if (!searchable || !query.trim()) return options;
+    const q = query.trim().toLowerCase();
+    return options.filter((o) => o.label.toLowerCase().includes(q));
+  }, [options, query, searchable]);
 
   return (
     <div ref={ref} className={`relative ${className ?? ""}`} data-testid={rest["data-testid"]}>
@@ -59,8 +89,18 @@ export function MultiSelectDropdown({ label, options, selected, onChange, allLab
       {open ? (
         <div
           role="listbox"
-          className="absolute z-20 mt-1 max-h-64 w-48 overflow-y-auto rounded-sm border border-gray-300 bg-white p-1 shadow-lg"
+          className="absolute z-20 mt-1 max-h-72 w-56 overflow-y-auto rounded-sm border border-gray-300 bg-white p-1 shadow-lg"
         >
+          {searchable ? (
+            <input
+              autoFocus
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={searchPlaceholder}
+              className="mb-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              data-testid={rest["data-testid"] ? `${rest["data-testid"]}-search` : undefined}
+            />
+          ) : null}
           <button
             type="button"
             onClick={() => onChange([])}
@@ -69,7 +109,7 @@ export function MultiSelectDropdown({ label, options, selected, onChange, allLab
             <input type="checkbox" readOnly checked={selected.length === 0} className="pointer-events-none" />
             {allLabel}
           </button>
-          {options.map((opt) => (
+          {visibleOptions.map((opt) => (
             <button
               key={opt.value}
               type="button"
@@ -77,9 +117,12 @@ export function MultiSelectDropdown({ label, options, selected, onChange, allLab
               className="flex w-full items-center gap-2 rounded-sm px-2 py-1 text-left text-xs hover:bg-gray-100"
             >
               <input type="checkbox" readOnly checked={selected.includes(opt.value)} className="pointer-events-none" />
-              {opt.label}
+              <span className="truncate">{opt.label}</span>
             </button>
           ))}
+          {searchable && visibleOptions.length === 0 ? (
+            <p className="px-2 py-1 text-xs text-gray-500">No matches for &ldquo;{query}&rdquo;</p>
+          ) : null}
         </div>
       ) : null}
       <span className="sr-only">{label}</span>

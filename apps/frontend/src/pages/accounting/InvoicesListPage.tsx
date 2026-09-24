@@ -1,6 +1,5 @@
 import { formatDateUS } from "../../lib/formatDate";
 import { useEffect, useMemo, useState } from "react";
-import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -19,14 +18,16 @@ import { VendorChargebackModal } from "./modals/VendorChargebackModal";
 import { InvoiceCreateModal } from "./InvoiceCreateModal";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/Combobox";
-import { ReferenceSelect, type ReferenceOption } from "../../components/parity/ReferenceSelect";
+import { type ReferenceOption } from "../../components/parity/ReferenceSelect";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { DateRangePresets } from "../../components/forms/DateRangePresets";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { customerFilterReferenceOptions } from "../../components/parity/referenceOptionLabels";
 import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";
 import { bulkRowLabelsFromRows, invoiceBulkRowLabel } from "../../components/bulk/bulkRowLabels";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { useToast } from "../../components/Toast";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { EntityPicker } from "../../components/EntityPicker";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -173,6 +174,23 @@ export function InvoicesListPage() {
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  // FILTER-MULTI-01: Customer is now a real multi-select — array state, seeded from the single-
+  // value deep-link contract (?customer_id=) above; the URL keeps only the first selection for
+  // back/forward + reverse-link compatibility (a 2+ selection is a same-page-session refinement,
+  // not something an inbound deep link ever names more than one of).
+  const [customerFilter, setCustomerFilter] = useState<string[]>(() => (customerId ? [customerId] : []));
+  function setCustomerFilterAndUrl(next: string[]) {
+    setCustomerFilter(next);
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next.length === 1) params.set("customer_id", next[0]);
+        else params.delete("customer_id");
+        return params;
+      },
+      { replace: true },
+    );
+  }
 
   // One-shot migrate legacy ?status=with_balance → ?has_balance=true (replace, no history spam).
   useEffect(() => {
@@ -196,34 +214,38 @@ export function InvoicesListPage() {
   // so only the last call's diff survived — Apply silently dropped every field but one. One combined
   // write fixes it; setFromDate/setToDate stay separate since they are plain local useState (not
   // searchParams), which React's own batching composes correctly.
-  function applyUrlFilters(next: { status: InvoiceListFilter; customerId: string; sourceLoadId: string }) {
+  // FILTER-MULTI-01: split into one combined write per real user interaction (status alone, load
+  // alone) instead of one shared staged/Apply button — each is now its own independent,
+  // immediate-apply setSearchParams call on its own render cycle, which is exactly what
+  // LV-INVOICES-FILTER-APPLY-DROPS-FIELDS's own fix already required (a single combined write per
+  // call); customer_id moved to setCustomerFilterAndUrl above, its own independent call for the
+  // same reason.
+  function applyStatusFilter(next: InvoiceListFilter) {
     setSearchParams(
       (prev) => {
         const params = new URLSearchParams(prev);
         params.delete("status");
         params.delete("has_balance");
-        if (next.status === "with_balance") params.set("has_balance", "true");
-        else if (next.status === "") params.set("status", "all");
-        else if (next.status === "active") params.set("status", "active");
-        else if (next.status) params.set("status", next.status);
-        if (next.customerId) params.set("customer_id", next.customerId);
-        else params.delete("customer_id");
-        if (next.sourceLoadId) params.set("source_load_id", next.sourceLoadId);
+        if (next === "with_balance") params.set("has_balance", "true");
+        else if (next === "") params.set("status", "all");
+        else if (next === "active") params.set("status", "active");
+        else if (next) params.set("status", next);
+        return params;
+      },
+      { replace: true },
+    );
+  }
+  function setSourceLoadFilter(next: string) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next) params.set("source_load_id", next);
         else params.delete("source_load_id");
         return params;
       },
-      { replace: true }
+      { replace: true },
     );
   }
-  const staged = useStagedListFilters({
-    applied: { status, customerId, fromDate, toDate, sourceLoadId: deepLinkSourceLoadId || "" },
-    empty: { status: "active" as InvoiceListFilter, customerId: "", fromDate: "", toDate: "", sourceLoadId: "" },
-    onApply: (next) => {
-      applyUrlFilters({ status: next.status, customerId: next.customerId, sourceLoadId: next.sourceLoadId });
-      setFromDate(next.fromDate);
-      setToDate(next.toDate);
-    },
-  });
 
   // Customer picker options — pass limit:200 (endpoint defaults to 50, would silently truncate).
   const customersQuery = useQuery({
@@ -272,6 +294,10 @@ export function InvoicesListPage() {
     setOpenModalType(createType);
   }, [createDeepLink, createType, selectedCompanyId]);
 
+  // FILTER-MULTI-01: listInvoices only ever accepted ONE customer_id value. Server-correct when
+  // exactly one is picked (identical to today); a 2+ selection fetches unnarrowed-on-customer + the
+  // client membership filter below does the real OR-of-several-values filtering.
+  const customerParam = customerFilter.length === 1 ? customerFilter[0] : undefined;
   const query = useQuery({
     queryKey: [
       "accounting",
@@ -279,7 +305,7 @@ export function InvoicesListPage() {
       selectedCompanyId,
       status,
       hasBalance,
-      customerId,
+      customerFilter,
       search,
       fromDate,
       toDate,
@@ -302,7 +328,7 @@ export function InvoicesListPage() {
                 ? status
                 : undefined,
         has_balance: hasBalance || undefined,
-        customer_id: customerId || undefined,
+        customer_id: customerParam,
         search: search || undefined,
         from_date: fromDate || undefined,
         to_date: toDate || undefined,
@@ -317,12 +343,13 @@ export function InvoicesListPage() {
   });
 
   const invoices = useMemo(() => {
-    const all = query.data?.invoices ?? [];
+    let all = query.data?.invoices ?? [];
+    if (customerFilter.length > 1) all = all.filter((row) => customerFilter.includes(row.customer_id ?? ""));
     // Client-side QBO pseudo-filter only for not_sent (no server contract).
     // with_balance / has_balance is server-filtered before LIMIT — do not re-slice a page.
     if (status === "not_sent") return all.filter((row) => row.status === "draft" || !row.sent_at);
     return all;
-  }, [query.data?.invoices, status]);
+  }, [query.data?.invoices, status, customerFilter]);
 
   const listMeta = useMemo(
     () => ({
@@ -526,7 +553,7 @@ export function InvoicesListPage() {
   );
 
   const invoicesActiveFilterCount =
-    (status ? 1 : 0) + (customerId ? 1 : 0) + (fromDate || toDate ? 1 : 0) + (deepLinkSourceLoadId ? 1 : 0);
+    (status ? 1 : 0) + customerFilter.length + (fromDate || toDate ? 1 : 0) + (deepLinkSourceLoadId ? 1 : 0);
 
   const filterBar = (
     <div className="space-y-2">
@@ -536,69 +563,59 @@ export function InvoicesListPage() {
           onRetry={() => void customersQuery.refetch()}
         />
       ) : null}
-      <CollapsedListFilters
+      <MoneyListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="INV-2026-00001 or customer"
+        searchTestId="invoices-search-input"
+        onClearAll={() => {
+          setSearch("");
+          applyStatusFilter("active");
+          setCustomerFilterAndUrl([]);
+          setFromDate("");
+          setToDate("");
+          setSourceLoadFilter("");
+        }}
         activeFilterCount={invoicesActiveFilterCount}
-        onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
         testIdPrefix="invoices"
-        dataAttributes={{ "data-invoices-filter-toolbar": "collapsed" }}
-        searchSlot={
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="INV-2026-00001 or customer"
-            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-xs"
-            aria-label="Search invoices"
-          />
-        }
       >
-        <div className="grid gap-2 md:grid-cols-4" data-testid="invoices-entity-filters">
-          <label className="flex flex-col gap-1 text-[11px] text-slate-600">
-            Load
-            <EntityPicker
-              kind="load"
-              operatingCompanyId={selectedCompanyId ?? ""}
-              value={staged.draft.sourceLoadId || null}
-              onChange={(next) => staged.setDraft({ ...staged.draft, sourceLoadId: next ?? "" })}
-              allowCreate={false}
-              placeholder="All loads"
-              dataTestId="invoices-filter-load"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            Status
-            <SelectCombobox value={staged.draft.status} onChange={(event) => staged.setDraft({ ...staged.draft, status: event.target.value as InvoiceListFilter })} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.label} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </SelectCombobox>
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
-            Customer
-            {/* A3/FIX-06: shared ReferenceSelect gives the customer FILTER the inline "+ Add new
-                customer" row too (writes to canonical mdata.customers — same table customerOptions
-                reads from). */}
-            <ReferenceSelect
-              value={staged.draft.customerId || null}
-              onChange={(next) => staged.setDraft({ ...staged.draft, customerId: next ?? "" })}
-              options={customerFilterOptions}
-              createKind="customer"
-              operatingCompanyId={selectedCompanyId ?? ""}
-              placeholder="All customers"
-              disabled={!selectedCompanyId}
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            From issue date
-            <DatePicker value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} className="h-9" />
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            To issue date
-            <DatePicker value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} className="h-9" />
-          </label>
+        <label className="text-[11px] text-slate-600">
+          Load
+          <EntityPicker
+            kind="load"
+            operatingCompanyId={selectedCompanyId ?? ""}
+            value={deepLinkSourceLoadId || null}
+            onChange={(next) => setSourceLoadFilter(next ?? "")}
+            allowCreate={false}
+            placeholder="All loads"
+            className="mt-1"
+            dataTestId="invoices-filter-load"
+          />
+        </label>
+        <div>
+          <span className="text-[11px] text-slate-600">Status</span>
+          <SelectCombobox value={status} onChange={(event) => applyStatusFilter(event.target.value as InvoiceListFilter)} className="mt-1 h-9 rounded-sm border border-gray-300 px-2 text-xs">
+            {STATUS_OPTIONS.map((option) => (
+              <option key={option.label} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </SelectCombobox>
         </div>
-      </CollapsedListFilters>
+        {/* A3/FIX-06: options still come from the canonical mdata.customers read
+            customerFilterOptions was already built from — same table, now rendered as checkboxes. */}
+        <MultiSelectDropdown
+          label="Customer"
+          options={customerFilterOptions.map((o) => ({ value: o.value, label: o.label }))}
+          selected={customerFilter}
+          onChange={setCustomerFilterAndUrl}
+          allLabel="All customers"
+          searchable
+          searchPlaceholder="Narrow by customer name…"
+          data-testid="invoices-customer-filter"
+        />
+        <DateRangePresets from={fromDate} to={toDate} onChange={({ from, to }) => { setFromDate(from); setToDate(to); }} data-testid="invoices-date-range" />
+      </MoneyListToolbar>
       <div className="flex items-center gap-3 text-xs text-gray-600">
         {/* CLS-MONEY-KPI-FAKE-ZERO-REMAINDER — totals used to compute straight from query.data with
             no isError awareness, so a failed fetch fabricated a real-looking "$0.00" here even while
@@ -668,6 +685,7 @@ export function InvoicesListPage() {
         onRowClick={(row) => navigate(`/accounting/invoices/${row.id}`)}
         filterBar={filterBar}
         suppressToolbarSearch
+        suppressToolbarRange
         exportFilename="invoices"
         storageKey="invoices-list"
         initialPageSize={50}

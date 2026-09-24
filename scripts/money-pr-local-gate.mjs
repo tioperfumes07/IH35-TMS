@@ -31,6 +31,10 @@ const LABEL = "money-pr-local-gate";
 /** Ordered fail-fast suite — same classes that red'd Cursor #4009–#4011 / #4198 vs Claude. */
 const STEPS = [
   ["verify-definition-of-done-evidence", "scripts/verify-definition-of-done-evidence.mjs"],
+  // FILTER-MULTI-01 — every registered money list (registry, not whole-tree) has one always-visible
+  // toolbar, no dead popover, at least one real multi-select, no duplicate search/range. Pure static
+  // text analysis, no DB.
+  ["verify-money-list-toolbar-one-and-multiselect", "scripts/verify-money-list-toolbar-one-and-multiselect.mjs"],
   // GATE-SCOPE-01 — proves this very file's LIVE_DOMAIN_GUARDS loop runs a guard only when its
   // own declared domain is touched, never merely because DATABASE_URL happens to be set.
   ["verify-live-domain-guards-are-diff-scoped", "scripts/verify-live-domain-guards-are-diff-scoped.mjs"],
