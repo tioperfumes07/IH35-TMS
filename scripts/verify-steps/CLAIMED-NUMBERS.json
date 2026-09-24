@@ -9084,5 +9084,10 @@
     "claimed_by": "devin-b",
     "claimed_at": "2026-09-24",
     "purpose": "reconcile-feed-day (ROUND 142.3, day-close gate)"
+  },
+  "11600": {
+    "claimed_by": "devin-b",
+    "claimed_at": "2026-09-24",
+    "purpose": "verify-no-document-without-a-ledger (ROUND 143.2 Item 1)"
   }
 }

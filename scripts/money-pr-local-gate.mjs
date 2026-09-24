@@ -649,6 +649,23 @@ const LIVE_DOMAIN_GUARDS = [
       "mdata.loads",
     ],
   ],
+  // ROUND 143.2 (DEVIN-B): no document without a ledger. Derives document classes from live schema.
+  // FAIL on any class where non-voided documents carry NO ledger. 7-day scoped (LAW 3).
+  [
+    "verify-no-document-without-a-ledger",
+    [
+      "apps/backend/src/accounting/",
+      "apps/backend/src/factoring/",
+      "apps/backend/src/fuel/",
+      "apps/backend/src/driver-finance/",
+      "accounting.journal_entry_postings",
+      "accounting.expenses",
+      "accounting.invoices",
+      "accounting.factoring_advances",
+      "fuel.fuel_transactions",
+      "driver_finance.driver_bills",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {
