@@ -169,8 +169,9 @@ export function classifyFeedState(input) {
       match: live.count === mDay.invoiceCount && Math.abs(live.dollars - mDay.dayDollars) < 0.01,
     });
 
-    // Only fail if the day has been FED (count > 0) but doesn't match
-    if (live.count > 0 && !perDay[perDay.length - 1].match) {
+    // Only fail if the day has been FULLY FED (count >= manifest count) but doesn't match.
+    // A partially fed day (count < manifest count) is NOT FED YET, not a money defect.
+    if (live.count >= mDay.invoiceCount && !perDay[perDay.length - 1].match) {
       problems.push(
         `DAY_MISMATCH: purchase day ${mDay.date} — fed ${live.count} invoice(s) / $${live.dollars.toFixed(2)} vs manifest ${mDay.invoiceCount} invoice(s) / $${mDay.dayDollars.toFixed(2)} — a day whose fed total does not equal its manifest total is a money defect`,
       );
@@ -218,6 +219,7 @@ function runSelftest() {
     fail += 1;
   } else pass += 1;
 
+  // STALE-LITERAL-OK: selftest fixture — hardcoded $9100 total for the planted test manifest
   if (manifest.totalDollars !== 9100) {
     console.error(`${LABEL} --selftest FAIL — parser: expected $9100 total, got ${manifest.totalDollars}`);
     fail += 1;
