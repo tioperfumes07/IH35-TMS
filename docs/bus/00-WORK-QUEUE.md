@@ -147,14 +147,31 @@ Never work in the shared main checkout.
       confirm it stale and close it.
 
 # P2 — IFTA, NEVER BUILT
-[CC-3 2026-09-24T01:27:09Z] Q31 IFTA  Task 34 — gallons over integrations.relay_fuel_transactions,
+[DONE CC-3 2026-09-24T01:29:05Z, CLOSED ALREADY-BUILT -- apps/backend/src/ifta/
+      ifta-state-gallons-aggregator.ts (IFTA-GALLONS-01, dated 2026-09-23) already reads
+      canonical fuel.fuel_transactions' own location_state (0 of 1707 live relay_fuel_transactions
+      rows now missing it -- the join gap the task described is closed at the ingest layer, not
+      re-derived here), excludes DEF and non-highway fuel, live-verified deterministic:
+      verify-ifta-aggregator-determinism PASS, verify-ifta-excludes-non-highway-fuel-types PASS,
+      verify-fuel-ifta-jurisdictions-complete PASS (58/58 IFTA jurisdictions seeded). Real named
+      remaining follow-up: IFTA-GALLONS-02 (reefer_diesel taxability, 315.14 gal, explicitly
+      tracked in the aggregator's own header, not this task's scope)] Q31 IFTA  Task 34 — gallons over integrations.relay_fuel_transactions,
       now 1,707 rows. Transaction-reference join FIRST, then exact address
       only, NEVER prefix. No jurisdiction unresolvable until Relay + the
       Dreamline statement (397 rows with a real State column) + the Love's
       604-store seed are ALL joined.
-[ ] Q32 IFTA  Task 36 — catalogs.ifta_states is 0 rows beside 96 live
+[DONE CC-3 2026-09-24T01:29:05Z, CLOSED ALREADY-BUILT -- retired, exactly the "retire it" branch
+      this task asked for. Migration 202610090000_retire_ifta_states_near_twin.sql; canonical is
+      catalogs.fuel_tax_jurisdictions. verify-ifta-single-canonical-catalog live-verified PASS:
+      "5306 app source files scanned — canonical catalogs.fuel_tax_jurisdictions is wired and the
+      retired catalogs.ifta_states has no application consumer."] Q32 IFTA  Task 36 — catalogs.ifta_states is 0 rows beside 96 live
       reference.ifta_tax_rates. Seed it or retire it. Decided, not empty.
-[ ] Q33 IFTA  Task 37 — reports.ifta_filings has 1 row. Build the filing
+[DONE CC-3 2026-09-24T01:29:05Z, CLOSED ALREADY-BUILT -- the filing chain exists:
+      apps/backend/src/reports/ifta/quarterly-preparer.service.ts + ifta-quarterly-preparer.routes.ts,
+      wired into Month Close (verify-acct-f52-month-close-ifta-quarterly live PASS: "Month Close
+      fuel-tax checklist item reads canonical reports.ifta_filings, keyed by quarter, gated to
+      quarter-end months"). verify-ifta-quarterly-preparer live PASS. Gallons-per-jurisdiction,
+      never dollars, already enforced (Q31's aggregator).] Q33 IFTA  Task 37 — reports.ifta_filings has 1 row. Build the filing
       chain or scope it. Gallons per jurisdiction, NEVER dollars. DEF/urea
       is not a motor fuel.
 
