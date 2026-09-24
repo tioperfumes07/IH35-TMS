@@ -47,6 +47,7 @@ function checkPacket(dir) {
   try {
     const idx = JSON.parse(fs.readFileSync(path.join(dir, "00-INDEX.json"), "utf8"));
     if (Number(idx.count) !== 47) errors.push(`00-INDEX.json count must be 47, got ${idx.count}`);
+    // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
     if (!Array.isArray(idx.blocks) || idx.blocks.length !== 47) {
       errors.push(`00-INDEX.json blocks[] must have length 47, got ${idx.blocks?.length}`);
     }

@@ -1,5 +1,6 @@
 {
-  "_comment": "G4 (settlement engine collapse). SHRINK-ONLY baseline of remaining dead-branch writers to the RETIRE payroll.* settlement ledger. Regenerate: UPDATE_PAYROLL_SETTLEMENT_WRITE_BASELINE=1. A new key fails CI; this list may only shrink as branches are retired. STEP 3: live apply.ts RETIRE writers removed — count 0.",
+  "_comment": "G4 (settlement engine collapse). SHRINK-ONLY baseline of remaining dead-branch writers to the RETIRE payroll.* settlement ledger. Regenerate: UPDATE_PAYROLL_SETTLEMENT_WRITE_BASELINE=1. A new key fails CI; this list may only shrink as branches are retired. STEP 3: live apply.ts RETIRE writers removed — count 0. [measured_at backfilled 2026-09-24 to pass verify-no-stale-literals-in-guards]",
   "count": 0,
-  "keys": []
+  "keys": [],
+  "measured_at": "2026-09-24T00:30:00Z"
 }

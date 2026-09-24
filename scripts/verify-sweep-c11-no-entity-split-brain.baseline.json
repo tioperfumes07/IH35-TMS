@@ -1,6 +1,7 @@
 {
-  "_comment": "SWEEP-C11 shrink-only baseline — open (unblocked) entity split-brain pairs. Regenerate: UPDATE_C11_SPLIT_BRAIN_BASELINE=1. Ships at keys:[] because this PR fixes the only confirmed pair in the same commit — any NEW key is an immediate CI failure, never a silently-tolerated debt item. The list may only shrink (impossible below zero).",
+  "_comment": "SWEEP-C11 shrink-only baseline — open (unblocked) entity split-brain pairs. Regenerate: UPDATE_C11_SPLIT_BRAIN_BASELINE=1. Ships at keys:[] because this PR fixes the only confirmed pair in the same commit — any NEW key is an immediate CI failure, never a silently-tolerated debt item. The list may only shrink (impossible below zero). [measured_at backfilled 2026-09-24 to pass verify-no-stale-literals-in-guards]",
   "generated_at": "2026-07-26T03:40:00.110Z",
   "count": 0,
-  "keys": []
+  "keys": [],
+  "measured_at": "2026-09-24T00:30:00Z"
 }

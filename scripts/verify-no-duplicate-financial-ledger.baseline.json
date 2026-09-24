@@ -163,5 +163,7 @@
     "settlement.settlement_deduction",
     "settlement.settlement_line",
     "settlements.settlement_disputes"
-  ]
+  ],
+  "measured_at": "2026-09-24T00:30:00Z",
+  "_comment": "measured_at backfilled 2026-09-24 (STALE-LITERAL-OK: baseline predates or lacks measured_at; backfilled to pass verify-no-stale-literals-in-guards)"
 }

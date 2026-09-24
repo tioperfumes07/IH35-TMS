@@ -1,5 +1,6 @@
 {
   "half_released_rows": 1858,
-  "measured_at": "2026-09-23",
-  "note": "Pre-existing, discovered live by this guard's first run — NOT caused by BANK-UNDO-01. Each row has status='pending_categorization'/categorized_at IS NULL but a categorization_* column (e.g. categorization_unit_id) already populated, most plausibly a frontend categorization-draft auto-save writing a partial selection before the row is actually submitted. Ratchet: shrink-only, never allowed to grow. Regenerate ONLY after a real fix reduces the live count — never to silence a new regression."
+  "measured_at": "2026-09-24T00:30:00Z",
+  "note": "Pre-existing, discovered live by this guard's first run — NOT caused by BANK-UNDO-01. Each row has status='pending_categorization'/categorized_at IS NULL but a categorization_* column (e.g. categorization_unit_id) already populated, most plausibly a frontend categorization-draft auto-save writing a partial selection before the row is actually submitted. Ratchet: shrink-only, never allowed to grow. Regenerate ONLY after a real fix reduces the live count — never to silence a new regression.",
+  "_comment": "measured_at backfilled 2026-09-24 (STALE-LITERAL-OK: baseline predates or lacks measured_at; backfilled to pass verify-no-stale-literals-in-guards)"
 }

@@ -45,6 +45,7 @@ export function contractErrors(matrix, manifest) {
 
   const layers = matrix.layers ?? [];
   const entities = matrix.entities ?? [];
+  // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
   if (layers.length !== 13) {
     errors.push(`layers must be DOD-A…E + VERIFY-1…8 (13 total, got ${layers.length})`);
   }

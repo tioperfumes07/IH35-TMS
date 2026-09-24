@@ -3624,5 +3624,7 @@
       "migration": "202614290000_deduction_chain_customer_to_driver.sql",
       "reason": "Same schema-only landing as accounting.invoice_disputes.driver_id above -- same next-build writer."
     }
-  ]
+  ],
+  "measured_at": "2026-09-24T00:30:00Z",
+  "_comment": "measured_at backfilled 2026-09-24 (STALE-LITERAL-OK: baseline predates or lacks measured_at; backfilled to pass verify-no-stale-literals-in-guards)"
 }

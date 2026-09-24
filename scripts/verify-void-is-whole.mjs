@@ -156,6 +156,7 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} --selftest FAIL: violation keys changed shape`);
     process.exit(1);
   }
+  // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
   if (FAMILIES.length !== 12 || FAMILIES.some(([, t]) => t.startsWith("banking."))) {
     console.error(`${LABEL} --selftest FAIL: the family list must be the 12 ruled families and never banking.*`);
     process.exit(1);

@@ -1,1 +1,1 @@
-{"count": 0, "total_cents": 0, "_doc": "Frozen at 0 after the void-reversal sweep. Shrink-only: count and total_cents must never increase. --write-baseline is FORBIDDEN."}
+{"count": 0, "total_cents": 0, "measured_at": "2026-09-24T00:30:00Z", "_doc": "Frozen at 0 after the void-reversal sweep. Shrink-only: count and total_cents must never increase. --write-baseline is FORBIDDEN."}

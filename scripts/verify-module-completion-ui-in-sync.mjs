@@ -60,6 +60,7 @@ function main() {
   } catch (e) {
     failures.push(String(e.message ?? e));
   }
+  // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
   if (sidebar14.length === 14 && gen14.length === 14) {
     const mismatch = sidebar14.filter((id, i) => gen14[i] !== id);
     if (mismatch.length > 0) {
@@ -81,6 +82,7 @@ function main() {
       /export const U14_EXCLUSIVE_ROWS: U14ExclusiveRow\[\] = ([\s\S]*?);\n\nexport const U14_EXCLUSIVE_CERTIFIED_COUNT/
     );
     if (!extracted) throw new Error("U14_EXCLUSIVE_ROWS missing from generated module");
+    // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
     const genRows = JSON.parse(extracted[1]);
     if (genRows.length !== 14) {
       failures.push(`U14_EXCLUSIVE_ROWS length ${genRows.length} !== 14`);

@@ -14,7 +14,12 @@
 //   3. NO DOCUMENT REFERENCE — the JE has no journal_entry_postings.source_transaction_type at all,
 //      meaning it is linked to no source document. The memo is the label; the linkage is the
 //      reference. A JE with neither is an orphan with an unresolvable memo.
-//   4. EMPTY — memo IS NULL or whitespace-only. No label at all.
+//   4. BARE UUID ONLY — the memo contains a UUID but NO human-resolvable identifier (load number
+//      134xx, settlement 57xx/58xx, Faro invoice, driver name, vendor name, unit Txxx). A bare UUID
+//      is machine-only; an operator cannot resolve it. A UUID ALONGSIDE one of those is fine.
+//      RED fixture: "Fuel event 56627fdf-6bf6-476b-a6ee-d8b5452ac1cf (diesel..." — has a UUID but
+//      no load number, settlement, invoice, driver, vendor, or unit.
+//   5. EMPTY — memo IS NULL or whitespace-only. No label at all.
 //
 // BASELINE 0 (shrink-only): USMCA journal entries are near-zero today, so the expected violation
 // count is 0. Any violation fails the guard. --write-baseline is FORBIDDEN — the baseline is 0 by
@@ -39,6 +44,40 @@ const LABEL = "verify-je-memo-is-human-readable";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const MEMO_MAX_CHARS = 200;
 
+// Human-resolvable identifier patterns. A memo must contain at least ONE of these
+// to be considered "human-readable." A bare UUID without any of these is machine-only.
+//   - Load number: 134xx (5+ digits starting with 13)
+//   - Settlement number: 57xx or 58xx (4+ digits starting with 57 or 58)
+//   - Faro invoice number: INV- prefix or similar invoice identifier
+//   - Driver name: a capitalized word (at least 2 chars) that is NOT a UUID
+//   - Vendor name: a capitalized word (at least 2 chars) that is NOT a UUID
+//   - Unit number: Txxx (T followed by digits)
+const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+const LOAD_NUM_RE = /\b1[3-9]\d{3,}\b/; // 134xx, 135xx, etc. (5+ digits starting with 13-19)
+const SETTLEMENT_NUM_RE = /\b5[78]\d{2,}\b/; // 57xx, 58xx (4+ digits starting with 57 or 58)
+const INVOICE_RE = /\b(?:INV|FARO|invoice)\s*[-#]?\s*\d/i;
+const UNIT_RE = /\bT\d{2,}\b/i; // Txxx unit number
+// A "name" is a word of 3+ alpha chars that is NOT part of a UUID and NOT a common machine word.
+// We strip UUIDs first, then look for any remaining word of 3+ alpha characters.
+const MACHINE_WORDS = new Set(["fuel", "event", "diesel", "posting", "payment", "advance", "settlement", "invoice", "bill", "expense", "load", "void", "reversal", "debit", "credit", "journal", "entry", "memo", "null", "true", "false", "type", "id", "uuid", "ref", "transaction", "source"]);
+
+function hasHumanReadableId(memo) {
+  const s = String(memo);
+  // Check for explicit identifiers first
+  if (LOAD_NUM_RE.test(s)) return true;
+  if (SETTLEMENT_NUM_RE.test(s)) return true;
+  if (INVOICE_RE.test(s)) return true;
+  if (UNIT_RE.test(s)) return true;
+  // Strip UUIDs, then look for any remaining word of 3+ alpha characters that
+  // is NOT a common machine word. A driver name or vendor name would survive.
+  const withoutUuids = s.replace(UUID_RE, " ");
+  const words = withoutUuids.match(/[a-zA-Z]{3,}/g) ?? [];
+  for (const w of words) {
+    if (!MACHINE_WORDS.has(w.toLowerCase())) return true;
+  }
+  return false;
+}
+
 /**
  * Classify a single JE memo + its document-reference state into a violation kind, or null if clean.
  * Pure function — exported for selftest.
@@ -53,6 +92,9 @@ export function classifyMemo(row) {
   if (/^\s*[\[{]/.test(s)) return "serialized_json";
   if (s.length > MEMO_MAX_CHARS) return "memo_over_200_chars";
   if (!row.has_source) return "no_document_reference";
+  // Bare UUID only: the memo has a UUID but NO human-resolvable identifier.
+  // A UUID alongside a load number, settlement, invoice, driver name, vendor name, or unit is fine.
+  if (UUID_RE.test(s) && !hasHumanReadableId(s)) return "bare_uuid_only";
   return null;
 }
 
@@ -94,6 +136,14 @@ function runClassifierSelftest() {
     { row: { memo: "Bill payment B-12225 posting", has_source: false }, expect: "no_document_reference" },
     { row: { memo: "Bill payment B-12225 posting", has_source: true }, expect: null },
     { row: { memo: "Fuel txn posting", has_source: true }, expect: null },
+    // E22 addendum: bare UUID is NOT a document reference
+    { row: { memo: "Fuel event 56627fdf-6bf6-476b-a6ee-d8b5452ac1cf (diesel...", has_source: true }, expect: "bare_uuid_only" },
+    // UUID alongside a load number is fine
+    { row: { memo: "Load 13508 fuel event 56627fdf-6bf6-476b-a6ee-d8b5452ac1cf", has_source: true }, expect: null },
+    // UUID alongside a unit number is fine
+    { row: { memo: "Unit T123 fuel 56627fdf-6bf6-476b-a6ee-d8b5452ac1cf", has_source: true }, expect: null },
+    // UUID alongside a driver name is fine
+    { row: { memo: "Carlos Galaviz fuel 56627fdf-6bf6-476b-a6ee-d8b5452ac1cf", has_source: true }, expect: null },
   ];
   let fixtureFail = 0;
   for (const { row, expect: exp } of fixtures) {

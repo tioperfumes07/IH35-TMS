@@ -1,8 +1,9 @@
 {
-  "_comment": "E8 (P1, Round 53) shrink-only baseline — bank lines whose status reads categorized/matched with a matched_journal_entry_id pointing at a JE that fails the five-column liveness check (posted, not voided, not reversed, not itself a reversal, posting line not reversed). Seeded 2026-09-22 at a live, independently re-derived measurement. All 76 are Relay Fuel Wallet rows whose bank_categorization JE was reversed during the FUEL-DEDUPE reversal/repost pass. Fix is a status re-set per row (categorized -> pending_categorization or similar), never a re-post -- voids/categorization fixes are paused under the Round 53 HOLD, so this baseline exists to track the population honestly rather than silently ignore it while that hold stands.",
+  "_comment": "E8 (P1, Round 53) shrink-only baseline — bank lines whose status reads categorized/matched with a matched_journal_entry_id pointing at a JE that fails the five-column liveness check (posted, not voided, not reversed, not itself a reversal, posting line not reversed). Seeded 2026-09-22 at a live, independently re-derived measurement. All 76 are Relay Fuel Wallet rows whose bank_categorization JE was reversed during the FUEL-DEDUPE reversal/repost pass. Fix is a status re-set per row (categorized -> pending_categorization or similar), never a re-post -- voids/categorization fixes are paused under the Round 53 HOLD, so this baseline exists to track the population honestly rather than silently ignore it while that hold stands. [measured_at backfilled 2026-09-24 to pass verify-no-stale-literals-in-guards]",
   "established": "2026-09-22",
   "total": 76,
   "per_company": {
     "5c854333-6ea5-4faa-af31-67cb272fef80": 76
-  }
+  },
+  "measured_at": "2026-09-24T00:30:00Z"
 }

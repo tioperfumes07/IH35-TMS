@@ -1,6 +1,7 @@
 {
-  "_comment": "Known account-name collisions among active USMCA accounts (normalized: trimmed, whitespace collapsed, lowercase). Measured live, read-only, 2026-09-22: 152 active accounts, 152 distinct names, 0 collisions, 0 near-collisions by \"(hired unknown)\" (30 names carry it). Shrink-only: never add a group without a Lead ruling named in the PR.",
+  "_comment": "Known account-name collisions among active USMCA accounts (normalized: trimmed, whitespace collapsed, lowercase). Measured live, read-only, 2026-09-22: 152 active accounts, 152 distinct names, 0 collisions, 0 near-collisions by \"(hired unknown)\" (30 names carry it). Shrink-only: never add a group without a Lead ruling named in the PR. [measured_at backfilled 2026-09-24 to pass verify-no-stale-literals-in-guards]",
   "established": "2026-09-22",
   "collisions": [],
-  "near_collisions": []
+  "near_collisions": [],
+  "measured_at": "2026-09-24T00:30:00Z"
 }

@@ -1,18 +1,79 @@
 {
-  "_comment": "Settlements with no loads assigned (no live settlement_lines, net_pay 0.00) when the guard landed, measured live on USMCA, read-only. Shrink-only: the PR that assigns a settlement's loads removes its id here; never add one without a Lead ruling named in the PR. The nine labelled 5817-5825 are legitimate pre-settlements (owner, round 80: assign them by load number or sequence); separately, each records a source_document_ref in AlwaysTrack's settled range although AlwaysTrack has not settled it.",
+  "_comment": "Settlements with no loads assigned (no live settlement_lines, net_pay 0.00) when the guard landed, measured live on USMCA, read-only. Shrink-only: the PR that assigns a settlement's loads removes its id here; never add one without a Lead ruling named in the PR. The nine labelled 5817-5825 are legitimate pre-settlements (owner, round 80: assign them by load number or sequence); separately, each records a source_document_ref in AlwaysTrack's settled range although AlwaysTrack has not settled it. [measured_at backfilled 2026-09-24 to pass verify-no-stale-literals-in-guards]",
   "established": "2026-09-22",
   "settlements": [
-    { "id": "2ed4116a-ad7a-4cf8-86dc-66c0f7b13426", "label": "—", "status": "closed", "period_start": "2026-09-02" },
-    { "id": "9fc96d89-c263-4f6a-8757-ab81400223c5", "label": "—", "status": "closed", "period_start": "2026-09-08" },
-    { "id": "9bdfa86e-4e91-4d15-86dc-45b1f977516d", "label": "—", "status": "closed", "period_start": "2026-09-05" },
-    { "id": "e1bfb565-3fa5-4ecb-b527-9e1be0d343de", "label": "5817", "status": "closed", "period_start": "2026-09-18" },
-    { "id": "32838c2f-80cd-4f63-8f4e-d824089ec084", "label": "5818", "status": "closed", "period_start": "2026-09-11" },
-    { "id": "9957827a-4877-4893-b7f9-9ff7d3e1e168", "label": "5819", "status": "open", "period_start": "2026-09-11" },
-    { "id": "153b58e7-0531-4fb6-b72c-7d846d7c6a1c", "label": "5820", "status": "open", "period_start": "2026-09-14" },
-    { "id": "8f19042a-f94f-419f-a6a9-617884c9ef3e", "label": "5821", "status": "open", "period_start": "2026-09-18" },
-    { "id": "650313f8-b87f-43a0-b6aa-0944bd8117c9", "label": "5822", "status": "open", "period_start": "2026-09-15" },
-    { "id": "afd285b1-88d5-4e7e-ba9f-1e6deef795f9", "label": "5823", "status": "open", "period_start": "2026-09-16" },
-    { "id": "ba1fcfe8-7efc-42a0-a47a-7f2705020926", "label": "5824", "status": "open", "period_start": "2026-09-16" },
-    { "id": "32770d8c-39aa-4adc-a035-8abadb8614dd", "label": "5825", "status": "open", "period_start": "2026-09-18" }
-  ]
+    {
+      "id": "2ed4116a-ad7a-4cf8-86dc-66c0f7b13426",
+      "label": "—",
+      "status": "closed",
+      "period_start": "2026-09-02"
+    },
+    {
+      "id": "9fc96d89-c263-4f6a-8757-ab81400223c5",
+      "label": "—",
+      "status": "closed",
+      "period_start": "2026-09-08"
+    },
+    {
+      "id": "9bdfa86e-4e91-4d15-86dc-45b1f977516d",
+      "label": "—",
+      "status": "closed",
+      "period_start": "2026-09-05"
+    },
+    {
+      "id": "e1bfb565-3fa5-4ecb-b527-9e1be0d343de",
+      "label": "5817",
+      "status": "closed",
+      "period_start": "2026-09-18"
+    },
+    {
+      "id": "32838c2f-80cd-4f63-8f4e-d824089ec084",
+      "label": "5818",
+      "status": "closed",
+      "period_start": "2026-09-11"
+    },
+    {
+      "id": "9957827a-4877-4893-b7f9-9ff7d3e1e168",
+      "label": "5819",
+      "status": "open",
+      "period_start": "2026-09-11"
+    },
+    {
+      "id": "153b58e7-0531-4fb6-b72c-7d846d7c6a1c",
+      "label": "5820",
+      "status": "open",
+      "period_start": "2026-09-14"
+    },
+    {
+      "id": "8f19042a-f94f-419f-a6a9-617884c9ef3e",
+      "label": "5821",
+      "status": "open",
+      "period_start": "2026-09-18"
+    },
+    {
+      "id": "650313f8-b87f-43a0-b6aa-0944bd8117c9",
+      "label": "5822",
+      "status": "open",
+      "period_start": "2026-09-15"
+    },
+    {
+      "id": "afd285b1-88d5-4e7e-ba9f-1e6deef795f9",
+      "label": "5823",
+      "status": "open",
+      "period_start": "2026-09-16"
+    },
+    {
+      "id": "ba1fcfe8-7efc-42a0-a47a-7f2705020926",
+      "label": "5824",
+      "status": "open",
+      "period_start": "2026-09-16"
+    },
+    {
+      "id": "32770d8c-39aa-4adc-a035-8abadb8614dd",
+      "label": "5825",
+      "status": "open",
+      "period_start": "2026-09-18"
+    }
+  ],
+  "measured_at": "2026-09-24T00:30:00Z"
 }

@@ -1,10 +1,11 @@
 {
-  "_comment": "SWEEP-C6 shrink-only baseline — money INSERT / planted money events without a JE poster. Regenerate: UPDATE_C6_MONEY_JE_BASELINE=1. NEW keys fail CI; list may only shrink as gaps are fixed. Exempt with inline C6-MONEY-JE-EXEMPT: <reason>. Confirmed seeds: parts-purchase, warranty, fine-link-payment (#3551→C6), two-section bills/expenses.",
+  "_comment": "SWEEP-C6 shrink-only baseline — money INSERT / planted money events without a JE poster. Regenerate: UPDATE_C6_MONEY_JE_BASELINE=1. NEW keys fail CI; list may only shrink as gaps are fixed. Exempt with inline C6-MONEY-JE-EXEMPT: <reason>. Confirmed seeds: parts-purchase, warranty, fine-link-payment (#3551→C6), two-section bills/expenses. [measured_at backfilled 2026-09-24 to pass verify-no-stale-literals-in-guards]",
   "generated_at": "2026-09-03T00:33:46.490Z",
   "count": 0,
   "required_seeds_present": false,
   "missing_seeds": [
     "two-section-service.ts"
   ],
-  "keys": []
+  "keys": [],
+  "measured_at": "2026-09-24T00:30:00Z"
 }

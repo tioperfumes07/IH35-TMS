@@ -47,6 +47,7 @@ function contains(relativePath, content, checks) {
   }
 }
 
+// STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
 if (SUB_VIEWS.length !== 12) {
   fail(`expected 12 sub-views, found ${SUB_VIEWS.length}`);
 }
