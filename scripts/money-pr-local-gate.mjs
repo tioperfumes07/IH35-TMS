@@ -666,6 +666,20 @@ const LIVE_DOMAIN_GUARDS = [
       "driver_finance.driver_bills",
     ],
   ],
+  // ROUND 145.3 (DEVIN-B): fuel costs post exactly once. Fuel transactions NEVER post;
+  // expenses post ONCE at creation; bank match NEVER posts again. 7-day scoped (LAW 3).
+  [
+    "verify-fuel-cost-posts-exactly-once",
+    [
+      "apps/backend/src/accounting/bank-recon/match.service.ts",
+      "apps/backend/src/fuel/",
+      "apps/backend/src/accounting/fuel-posting/",
+      "accounting.expenses",
+      "fuel.fuel_transactions",
+      "accounting.journal_entry_postings",
+      "catalogs.accounts",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {

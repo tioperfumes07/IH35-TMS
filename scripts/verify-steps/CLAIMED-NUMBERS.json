@@ -9089,5 +9089,10 @@
     "claimed_by": "devin-b",
     "claimed_at": "2026-09-24",
     "purpose": "verify-no-document-without-a-ledger (ROUND 143.2 Item 1)"
+  },
+  "11601": {
+    "claimed_by": "devin-b",
+    "claimed_at": "2026-09-24",
+    "purpose": "verify-fuel-cost-posts-exactly-once (ROUND 145.3)"
   }
 }
