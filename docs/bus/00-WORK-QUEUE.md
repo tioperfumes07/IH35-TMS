@@ -98,7 +98,7 @@ Never work in the shared main checkout.
 [DONE CC-1 2026-09-23T23:49:16Z, PR #22467 -- built and merged earlier this round (TASK 27), already live and self-arming] Q17 GUARD  verify-settled-load-carries-settled-status.mjs
 
 # P1 — DISPATCH / READ PATH
-[ ] Q18 DISPATCH  Canonical active-load set — ONE module. Predicate:
+[CODEX 2026-09-24T01:40:00Z] Q18 DISPATCH  Canonical active-load set — ONE module. Predicate:
       status NOT IN ('draft','invoiced','paid','closed','cancelled') AND NOT
       (load carries an invoice with status NOT IN
       ('draft','proforma','void')). Delete all 10 private copies including
