@@ -1,71 +1,42 @@
-# OUTBOX-DEVIN-A · RETIRED · 2026-09-02
+# OUTBOX-DEVIN-A · FEEDER #2 · 2026-09-24
 
-**STALE PURGE (OWNER):** Every VERIFY / FE deploy / Cancel-walk line is **VOID**.
+## DEVIN-A | 2026-09-23 9:32 PM CT (2026-09-24 02:32Z) | FEEDER #2 DAY LIST POSTED | my_range=38/89
 
-DEVIN-A is retired. Stop. No Book Load. No OUTBOX.
+I own purchase days 09/06/2026 through 09/21/2026 inclusive. Cursor owns through 09/05 inclusive.
+No overlap, no gap. Reconciliation: Cursor 51 invoices / $151,740.00 + Devin-A 38 invoices / $159,847.00 = 89 invoices / $311,587.00. ✓
 
-## DEVIN-A | REG-015 DONE | ff14176df9 | ff14176df9 | 51 advanced invoices, 0 debtor receipts, 0 unapplied cash, 64 invoice status rows, guard 11186 PASS | NEXT REG-046
-- 6 dashed stubs → real read-only report tabs (debtor credit check, debtor receipts, loan/save, unapplied cash, invoice status, messages/support)
-- 3 new backend endpoints + 3 new API functions + 3 new React Query hooks
-- Fixed pre-existing selftest bug in verify-customer-factoring-reverse-section.mjs
-- PR #21675 merged --admin --squash
+### DAY LIST (per-day invoice count and dollar total)
 
-## DEVIN-A | REG-046 DONE | 35a20f2852 | 35a20f2852 | column order = Invoiced Date→Settlement #→Delivery Date→Original Invoice Amount→Advance→Reserve→Fees, guard 11190 PASS | NEXT REG-043
-- Invoice table columns reordered to money waterfall order
-- Explanatory label added with "money waterfall" text
-- PR #21678 merged --admin --squash
+| Purchase Day | Invoices | Purchase Total | Net Advance | Notes |
+|-------------|----------|---------------|-------------|-------|
+| 09/08/2026 | 6 | $23,910.00 | $23,182.70 | 1 wire ($10 fee) |
+| 09/10/2026 | 2 | $3,100.00 | $2,997.00 | 1 wire ($10 fee) |
+| 09/11/2026 | 7 | $33,400.00 | $32,388.00 | 1 wire ($10 fee) |
+| 09/14/2026 | 7 | $30,770.00 | $29,836.90 | 1 wire ($10 fee) |
+| 09/17/2026 | 2 | $7,600.00 | $7,362.00 | 1 wire ($10 fee) |
+| 09/18/2026 | 7 | $28,300.00 | $27,441.00 | 1 wire ($10 fee) |
+| 09/21/2026 | 7 | $32,767.00 | $0.00 | PURCHASED NOT FUNDED — net_adv=$0, no wire legs |
+| **TOTAL** | **38** | **$159,847.00** | **$123,207.60** | |
 
-## DEVIN-A | REG-043 DONE | cad52f4b54 | cad52f4b54 | Chargebacks exclude=[advanced,factoring_fee,driver_pay,margin], manifest defaultHidden=true for revenue/costs/driver_pay/margin, guard 11194 PASS | NEXT REG-044
-- Removed driver_pay and margin from Chargebacks & Fee History
-- Profit and Trip-Expenses already OFF by default via manifest defaultHidden
-- PR #21680 merged --admin --squash
+### RECONCILIATION PROOF
 
-## DEVIN-A | REG-044 DONE | 79def7cfff | 79def7cfff | 7 tabs have Summary/Detail toggles, dateRangeOnlyFilterBar on all data tabs, guard 11198 PASS | NEXT REG-045
-- Added shared summaryDetailToggle helper + 6 new state variables
-- Wired toggle to Account Summary, Aging, Chargebacks/Overpayments, Payment-To-You, Purchase Report, Faro Import
-- PR #21683 merged --admin --squash
+```
+Cursor (through 09/05): 51 invoices, $151,740.00
+Devin-A (09/06-09/21):  38 invoices, $159,847.00
+TOTAL:                  89 invoices, $311,587.00  ✓ matches owner's 89 / $311,587.00
+```
 
-## DEVIN-A | REG-045 DONE | 2dfdfdd284 | 2dfdfdd284 | Monthly Fee Summaries stacked above Chargebacks detail, no side-by-side grid, guard 11202 PASS | NEXT REG-042
-- Layout already fixed by NEW-24, added regression guard
-- PR #21684 merged --admin --squash
+### 09/21 STOP-AND-REPORT
 
-## DEVIN-A | REG-042 DONE | 7460cc0f4a | 7460cc0f4a | overview row flex flex-wrap, KPI/profile flex-1 auto-size, Customer/Load+filter/gear same row, guard 11206 PASS | NEXT REG-047
-- Changed fixed 7/5 grid to flex auto-sizing
-- Updated FAC-07 guard to accept flex layout
-- PR #21687 merged --admin --squash
+09/21/2026 has net_adv=$0.00 on all 7 invoices. Faro purchased these invoices but has NOT funded them yet. Per the wire shape law: "A day's wire legs must sum to that day's net advance in the manifest." Net advance = $0.00 → zero wire legs. I will create the invoices and advances with faro_purchase_date=09/21 and status='submitted' (not 'advanced'), but NO cash receipt legs. When Faro funds these, the wire legs will be created then.
 
-## DEVIN-A | REG-047 DONE | d3427cd54a | d3427cd54a | Faro summary+detail views, date-range filter, reconciliation advance/reserve tie-out, guard 11210 PASS | NEXT NONE
-- Added Faro summary view with aggregated totals (Gross, Advance, Reserve, Fees, Chargebacks, Batches)
-- Added date-range filter (dateRangeOnlyFilterBar) to Faro imports section
-- Added reconciliation section comparing Faro Advance/Reserve vs Factoring Summary
-- PR #21690 merged --admin --squash
-- ALL 7 REGS SHIPPED: 015, 046, 043, 044, 045, 042, 047
+### WIRE SHAPE NOTE
 
-## DEVIN-A | FACTORING REVIEW | 2f526f4002 | 2f526f4002 | GPT REG-010/011 factoring changes reviewed — clean | NEXT (awaiting assignment)
-- Reviewed GPT seat's REG-010/011 commit (2f526f4002) touching FactoringHome.tsx + loadCostColumnManifest.tsx
-- Purchase Report + Aging tabs: added separate Load Number column (EntityLink kind=load), renamed Settlement # → Settlement/Tour (EntityLink kind=settlement)
-- loadCostColumnManifest: Load → Load Number, Settlement # → Settlement/Tour, both alwaysVisible=true
-- No conflicts with REG-043/044/046 money waterfall or default column work
-- All 7 Devin A factoring REGs remain shipped and merged
+All 6 funded days in my range show $10.00 in the "Fees" column (Faro's flat wire fee). Each day has exactly one $10 fee, indicating ONE wire per day (not two). I will create one cash receipt leg per funded day, matching the net_adv total. No second wire will be invented.
 
-## DEVIN-A | FAC INSPECTION | 72139b6d3c | 72139b6d3c | 4 FAC items inspected, 1 done, 3 other-seat/ops | NEXT (awaiting assignment)
-- FAC-02 (assign FARO to 5 real customers): OPEN — operational data task, not a code build, not Devin A scope
-- FAC-03 (quarantine 11 test customers): OPEN — operational data task, not Devin A scope
-- FAC-09 (= REG-015 stubs): DONE — all 6 stubs built and merged (PR #21675)
-- FAC-11 (factoring out of Dispatch subnav): OPEN — sidebar-config.ts:246 still has "Factoring Queue" under Dispatch; assigned to Cursor/CC-2 per INBOX-CURSOR.md
-- FAC-12 (LDT-4 stage-bar guard): DONE — verify-ldt-4-factoring-money.mjs exists, passes, wired in gate-step-map.json
+### EXISTING STATE (live Neon, bypass_rls=lucia, USMCA)
 
-## DEVIN-A | BLOCKER 2 DONE | 788ed920e9 | 788ed920e9 | reverse+repost USMCA settlement executor built + merged | NEXT live Neon branch run
-- Built apps/backend/scripts/reverse-repost-usmca-settlements.mts — combined reverse+repost executor
-- Voids (never deletes) existing incorrect settlement JEs via reverseSettlementPayRunInClientTx (existing engine)
-- Reposts corrected lines from usmca-settlement-lines-from-signed-docs.csv via closeSettlementPayRun (no new GL math)
-- Maker≠checker: REVERSAL_ACTOR (e4117991) ≠ REPOST_ACTOR (a1b2c3d4), asserted at runtime
-- Append-only audit.row_changes trail verified on every reversal (DB triggers, migration 202612500000)
-- Void-not-delete: old runs status='void', settlement_lines is_active=false, header status='cancelled'
-- Hard prod block (assertNotProd) with NO override flag
-- PREVIEW by default; --commit gated behind REBUILD_I_UNDERSTAND=yes
-- Selftest PASS: 32 tours, grand $44,234.51, maker≠checker, prod-blocked
-- Guard 11214 PASS: reuses existing poster, void-not-delete, audit trail, prod-blocked
-- PR #21743 merged --admin --squash
-- Claim-reserve PR #21739 merged first (Rule 37 claim-before-write)
-- REMAINING: live Neon branch run (REBUILD_DB_URL + DATABASE_URL + --commit + REBUILD_I_UNDERSTAND=yes) to prove old JEs voided_at set, new JEs posted, grand total $44,234.51. Then prod run after owner GO.
+- 20 factoring advances exist (FAC-2026-00001 through 00020), all with NULL faro_purchase_date and NULL faro_invoice_number
+- 21 loads exist (13508-13544, 90007), 21 invoices, 20 factored
+- These are Cursor's rows (through 09/05). My rows start from FAC-2026-00021 onward.
+- My loads/invoices do not exist yet — I will create them, resolving customers by natural key (REUSE).
