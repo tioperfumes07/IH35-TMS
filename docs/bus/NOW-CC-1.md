@@ -1,36 +1,33 @@
 # NOW — CC-1
 
-CC-1 | 2026-09-23 9:48 PM CT (2026-09-24 02:48Z) | NOT SILENT — inside GAP 0, ruled and half-landed
+CC-1 | 2026-09-23 9:55 PM CT (2026-09-24 02:55Z) | ROUND 145.1 ITEMS A+B — DONE, LIVE, REPORTED
 
-Not idle: last ~3h was WO/PO two-pass normalize + fuel-hash root-cause fix (blocked all night on
-live feed motion, documents 5777/5783, ~16 gate retries, still red — external, confirmed via direct
-DB query, not my diff), plus 141.1 Item 1 (bill-match posts a real payment) built/tested/guarded and
-held for that PR to land. Should have posted here sooner instead of only chasing the gate — noted.
+Owner ruling adopted (reverses my own earlier GAP-0 posting-path guess — noted, corrected before any
+code shipped on the wrong side): expense posts, fuel transaction never does.
 
-## GAP 0 — RULED, LINK WRITTEN, LIVE
-Matched on real keys (load_id + vendor_id + purchase date + amount to the cent, NOT guessed):
-  63 of 118 USMCA expenses are exact duplicates of a fuel.fuel_transactions row (memo prefix "Fuel ").
-  All 63 matched 1:1, zero ambiguous. `source_fuel_transaction_id` written on all 63, live, just now.
-  Remaining 55 expenses are genuinely non-fuel (tolls/lumper/etc.) — real cost, no fuel counterpart.
+## ITEM A — the 10 original fuel_event JEs. DONE, no action needed.
+Live query, all 10: `voided_at IS NULL`, every one carries a real `reversed_by_je_id` pointing at a
+real, separate reversing JE (10 originals + 10 reversals = 20 lines, matches the audit's own count).
+Before: 10 originals sum $7,250.20 debit (matches the session's own known figure). After: fully
+offset by 10 real reversing JEs, net $0.00 on 5000 today. This is the documented Option-1
+reversing-entry model (journal-entries.service.ts: a posted JE is never mutated/flipped — a status
+flip would silently drop it from every GL report filtering status<>'voided'), already re-confirmed
+correct once tonight (Q37). Nothing to void — they are already, genuinely reversed. No live money on
+the old fuel_event JEs.
 
-RULING: the fuel transaction is the canonical, sole posting path for fuel cost (matches Gap 3's own
-named accounts 5000/1295/2510/2500 and the canonical natural-key hash writer). Its duplicate
-accounting.expenses row NEVER posts — Gap 1's fix scopes to
-`source_fuel_transaction_id IS NULL` only (the 55 real non-fuel expenses), never the 63 linked ones.
-Guard for Gap 0 (in progress, landing with this PR): self-arming population check — 0 postings on
-BOTH a fuel_transaction's source and its linked expense's source for the same real cost.
+## ITEM B — source_fuel_transaction_id linkage. DONE, live.
+Matched on load_id + vendor_id + purchase date + amount-to-the-cent (real keys, never guessed):
+  63 of 118 expenses matched 1:1 to a live fuel.fuel_transactions row. 0 ambiguous.
+  55 of 118 have no fuel origin (real non-fuel cost: tolls/lumper/etc.) — untouched.
+`source_fuel_transaction_id` written live on all 63. (Posted this same match+count in the prior
+GAP-0 report before the ruling landed — the link itself is correct and unaffected by which side
+posts; only my earlier posting-path guess was wrong, corrected above.)
 
-## GAP 1 — ROOT CAUSE FOUND, NOT YET SHIPPED
-All 118 expenses carry `posting_hold_reason='tour_open'` (ACC-50, correct-by-design: an expense on
-an open tour must not post). The release mechanism EXISTS —
-`postHeldDocumentsForClosedTour()` (apps/backend/src/accounting/tour-close-posting.service.ts) — and
-is wired from the interactive settlement-close routes, but NEVER called from
-apps/backend/src/feed/seed-settlement-document.service.ts's seed path (my own file, earlier
-session). That is the actual defect: the seed closes a settlement without ever releasing the hold it
-itself created. Verified the poster works correctly (rehearsal-branch call, real success, real JE)
-before touching anything live. Fix: call postHeldDocumentsForClosedTour after seedDriverSettlement.
-This same call also posts held driver bills — likely also closes Gap 2's root cause, not just Gap 1's.
-
-## NEXT (no pause)
-Wiring the postHeldDocumentsForClosedTour call now, scoped to the 55 non-fuel expenses per the Gap 0
-ruling, then Gap 0 + Gap 1 guards, fast-merge. Gap 3/4/5 not yet started.
+## NEXT — ITEM C, in progress
+Every expense must post AT CREATION, DR fuel/expense account, CR the real card (payment_account_uuid
+on the row) — not Undeposited Funds. Checking whether the existing posting engine's credit-side
+resolution already does this (payment_account_uuid IS already used as the credit account when set —
+confirmed present and non-null on the 63 fuel-linked rows) or whether the actual gap is purely the
+tour-open hold never releasing (found earlier: postHeldDocumentsForClosedTour exists, wired from the
+interactive settlement routes, never called from feed/seed-settlement-document.service.ts). Building
+now, guard next, deadline 10:00Z.
