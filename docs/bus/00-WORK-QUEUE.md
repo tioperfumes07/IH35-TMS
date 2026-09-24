@@ -68,9 +68,11 @@ Never work in the shared main checkout.
       leading '#', leading zeros, case-insensitive. Never match on amount.
       0 or >1 -> STOP that invoice. Guard
       verify-faro-po-match-is-normalized.mjs.
-[ ] Q06 GATE  Gate live reads connect as ih35_ci_readonly, never
+[CC-2 2026-09-24T01:06:00Z] Q06 GATE  Gate live reads connect as ih35_ci_readonly, never
       neondb_owner — six seats read prod while the feed writes and
       owner-role reads contend with its locks.
+      BUILT + LIVE-VERIFIED, pushing now: scripts/money-pr-local-gate.mjs
+      resolveGuardDatabaseUrl() on cc2-gate-scope-03-refix (FINDING: GATE-F005).
 
 # P1 — GUARDS THAT STOP TODAY'S DEFECTS COMING BACK
 [DONE DEVIN-A 2026-09-24T00:15:00Z, PR #22474] Q07 GUARD  verify-every-void-route-reverses.mjs
@@ -105,11 +107,13 @@ Never work in the shared main checkout.
 [ ] Q19 DISPATCH  Report whether at_pickup / in_transit / at_delivery /
       assigned_not_dispatched are dead vocabulary. No load_status_history
       exists — file the finding, never silently drop them.
-[ ] Q20 FRONTEND  VOID-BUTTON-01 — QBO split button Cancel / Void / Delete by
+[CC-2 2026-09-24T01:06:00Z] Q20 FRONTEND  VOID-BUTTON-01 — QBO split button Cancel / Void / Delete by
       module, SAME options on the multi-selector, system-wide.
-[ ] Q21 FRONTEND  FILTER-MULTI-01 — finish: guard + live-Chrome screenshots
-      + the 8 remaining pages.
-[ ] Q22 FRONTEND  Settlement / Presettlement column on EVERY accounting,
+[CC-2 2026-09-24T01:06:00Z] Q21 FRONTEND  FILTER-MULTI-01 — finish: guard + live-Chrome screenshots
+      + the 8 remaining pages. In flight on cc2-filter-multi-01: shared
+      components + Bills/Expenses/Invoices/Banking/Journal-Entries retrofits +
+      guard done (5 of 12); 7 pages + screenshots remain.
+[CC-2 2026-09-24T01:06:00Z] Q22 FRONTEND  Settlement / Presettlement column on EVERY accounting,
       financial and dispatch surface — list, table, drawer, modal, report.
       Settlement via driver_settlements + settlement_lines.load_id (NOT the
       dead driver_bills.settled_in_settlement_id). Presettlement via
@@ -121,10 +125,13 @@ Never work in the shared main checkout.
 # P2 — ACCOUNTING ENGINES
 [CC-3 2026-09-23T23:55:36Z] Q24 ACCOUNTING  Task 17 — deductions.routes.ts + settlement voids through
       the EXISTING dispatcher (all five engines). Never a sixth.
-[ ] Q25 BANKING  Task 16 — banking /void routes through that same dispatcher.
+[CC-2 2026-09-24T01:06:00Z] Q25 BANKING  Task 16 — banking /void routes through that same dispatcher.
+      BUILT + TESTED, pushing now: apps/backend/src/accounting/void-document.service.ts
+      new bank_categorization_reversal case (thin pass-through to the SAME
+      reverseJournalEntryNoFlip) on cc2-task16-banking-void-dispatcher (FINDING: BANK-F30303).
 [CC-1 2026-09-23T23:49:16Z] Q26 ACCOUNTING  Task 38 — JE memo WRITER only. No backfill. One file.
       Do it before the feed writes many more.
-[ ] Q27 BANKING  Task 48 — Relay deposit fetch + DAILY cron. State its UTC
+[CC-2 2026-09-24T01:06:00Z] Q27 BANKING  Task 48 — Relay deposit fetch + DAILY cron. State its UTC
       cron expression and next fire time. In-app scheduling, never an
       in-process timer. Guard 47 self-arms when it lands.
 [ ] Q28 IDENTITY  Task 32 — Genaro Guerrero Chavez duplicate. TWO driver rows
@@ -150,10 +157,12 @@ Never work in the shared main checkout.
       is not a motor fuel.
 
 # P3 — INFRASTRUCTURE
-[ ] Q34 GATE  Bus channel — NOW-<SEAT>.md 4KB cap, archive the 83-548KB
+[CC-2 2026-09-24T01:06:00Z] Q34 GATE  Bus channel — NOW-<SEAT>.md 4KB cap, archive the 83-548KB
       INBOX/OUTBOX files, verify-bus-files-are-readable.mjs with the 48-hour
       staleness arm. That arm is what would have caught Codex idling 12 days
       and CC-2 idling on a dead signal.
+      BUILT, rebasing onto Q38's now-committed bus files and pushing next on
+      cc2-bus-channel-e13-2-r.
 [ ] Q35 REPORT  Walk EVERY module live in Chrome — dispatch, load costs,
       loadboards, accounting, banking, fleet, maintenance, safety, reports.
       One finding per defect with a live screenshot and the measured number.
