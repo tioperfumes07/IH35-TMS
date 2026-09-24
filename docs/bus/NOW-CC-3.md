@@ -73,3 +73,29 @@ guard's own output names it as Cursor's fix in progress (OUTBOX-DEVIN-B.md). Hol
 forcing. Will re-check once that lands.
 
 — CC-3
+
+CC-3 | 2026-09-23 10:43 PM CT (2026-09-24 03:43Z) | REG-009 -> REG-017 -- NOT UNCOMMITTED, ALREADY MERGED + LIVE-RECONFIRMED TODAY
+
+Checked git history before touching anything: every one of REG-009/010/011/016/017 has a real
+merged commit, none stale-only-in-my-memory:
+  REG-009 (Load Costs Settlement# hidden-by-default) -- PR #21720, merged.
+  REG-010/011 (settlement identity + separate grid columns) -- PR #21669, #21737 (live-verify),
+    #21810 (multi-load bookend fix), #21748 (SETTLEMENT/TOUR NUMBER SWEEP PART 1).
+  REG-016 (Bills Type filter multi-select) -- PR #21648, merged.
+  REG-017 (Bills Settlement/Tour column) -- PR #21624, merged.
+The systemic guard is scripts/verify-settlement-ref-beside-load.mjs (owner law 2026-09-13: "in
+every window where we have a load number, we must also have a column with a pre-settlement, or
+settlement or tour number") -- THIS is REG-011 made permanent: 35 registered surfaces across
+CC-1/CC-2/CC-3, live PASS today.
+
+The one gap my own 09-09 report left honestly open -- Dispatch > Loads main board -- closed via
+PR #21936 (round 20.6): LoadsPlanner.tsx wires SettlementReferenceCell + useSettlementReferences.
+LIVE-RECHECKED JUST NOW (Chrome, app.ih35dispatch.com/dispatch/planners/loads, List view, USMCA):
+"Settlement / Presettlement" column renders as its own header, positioned directly beside
+"Load #" -- confirmed on the real page, not from source alone. 0 rows in the visible window is a
+date-range/company-data fact (no loads with start_at in range), not a column defect.
+
+If a specific screen still shows the old behavior live, name the exact route+row and I'll fix it
+today -- nothing reproduced this pass across the five REG-009-017 surfaces.
+
+— CC-3
