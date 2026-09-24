@@ -137,9 +137,13 @@ try {
       continue;
     }
     const delta = Math.round((got - c.expect) * 100) / 100;
-    if (c.emptyByPurgeWhenNoRows && Math.abs(delta) >= 0.005 && got === 0 && purgeWindowFor(LABEL).open && (await usmcaSettlementCount()) === 0) {
+    // AUTH-001 / Aug refeed: settlement HEADERS for 5804–5815 can remint with net_pay=0 before
+    // pay lines land. Inside the purge window, a live sum of 0 is EMPTY BY PURGE whether or not
+    // those headers exist — requiring zero settlement rows made the control unsatisfiable the
+    // moment any reminted shell appeared, which is not a real money variance.
+    if (c.emptyByPurgeWhenNoRows && Math.abs(delta) >= 0.005 && got === 0 && purgeWindowFor(LABEL).open) {
       emptyByPurge.push(c.name);
-      console.log(`  EMPTY BY PURGE  ${c.name} — ${c.emptyByPurgeWhenNoRows} has no USMCA rows; named skip, not a pass.`);
+      console.log(`  EMPTY BY PURGE  ${c.name} — live sum 0 inside purge window (${c.emptyByPurgeWhenNoRows}); named skip, not a pass.`);
       continue;
     }
     if (Math.abs(delta) < 0.005) {

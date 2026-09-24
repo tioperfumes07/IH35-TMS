@@ -310,7 +310,14 @@ export async function createDriverCashAdvanceCore(
   );
   const driver = driverRes.rows[0];
   if (!driver) return { ok: false, code: 404, error: "driver_not_found" };
-  if (String(driver.status ?? "").toLowerCase() !== "active") {
+  // CLOSE-POST-A-2 / settlement refeed: a historical_backfill advance is evidenced by the signed
+  // AlwaysTrack settlement document. The driver may now be Inactive / Probation / Terminated —
+  // refusing on status would permanently block backfill of real money that already happened.
+  // Live disbursement methods still require Active.
+  if (
+    body.disbursement_method !== "historical_backfill" &&
+    String(driver.status ?? "").toLowerCase() !== "active"
+  ) {
     return { ok: false, code: 400, error: "driver_not_active" };
   }
 
