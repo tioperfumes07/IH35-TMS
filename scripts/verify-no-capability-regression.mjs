@@ -17,6 +17,7 @@ export const ALLOW_OFFLINE_SKIP =
   "pure static source-text scan of capability-registry.json against apps/backend/src — never " +
   "connects to a database, so there is nothing to silently skip.";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 const LABEL = "verify-no-capability-regression";
@@ -70,18 +71,16 @@ try {
 const caps = Array.isArray(registry.capabilities) ? registry.capabilities : [];
 if (caps.length === 0) fail("registry lists zero capabilities — refusing to pass on an empty registry");
 
-const sourceFiles = listSourceFiles(SRC_DIR);
-const sourceText = new Map(sourceFiles.map((f) => [f, fs.readFileSync(f, "utf8")]));
-
-const errors = [];
-const warnings = [];
-for (const cap of caps) {
+export function analyzeCapabilities(capabilities, sourceText, root = ROOT) {
+ const errors = [];
+ const warnings = [];
+ for (const cap of capabilities) {
   const tag = `${cap.id} ${cap.symbol}`;
   if (!cap.symbol || !cap.file) {
     errors.push(`${tag}: registry entry is missing symbol or file`);
     continue;
   }
-  const abs = path.join(ROOT, cap.file);
+  const abs = path.join(root, cap.file);
   const definedIn = [...sourceText]
     .map(([f, text]) => [f, definitionLines(text, cap.symbol)])
     .filter(([, lines]) => lines.length > 0);
@@ -89,7 +88,7 @@ for (const cap of caps) {
   if (definedIn.length > 1) {
     errors.push(
       `${tag}: DUPLICATE — defined in ${definedIn.length} files: ` +
-        definedIn.map(([f, l]) => `${path.relative(ROOT, f)}:${l.join(",")}`).join(" ; "),
+        definedIn.map(([f, l]) => `${path.relative(root, f)}:${l.join(",")}`).join(" ; "),
     );
   }
   if (!fs.existsSync(abs)) {
@@ -101,7 +100,7 @@ for (const cap of caps) {
     if (definedIn.length > 0) {
       errors.push(
         `${tag}: MOVED — no longer defined in ${cap.file}; now in ` +
-          definedIn.map(([f, l]) => `${path.relative(ROOT, f)}:${l[0]}`).join(" ; "),
+          definedIn.map(([f, l]) => `${path.relative(root, f)}:${l[0]}`).join(" ; "),
       );
     } else {
       errors.push(`${tag}: MISSING — not defined in ${cap.file} or anywhere under apps/backend/src`);
@@ -111,7 +110,47 @@ for (const cap of caps) {
   if (cap.line && !here[1].includes(Number(cap.line))) {
     warnings.push(`${tag}: line drift ${cap.file}:${cap.line} -> now :${here[1].join(",")} (refresh the registry)`);
   }
+ }
+ return { errors, warnings };
 }
+
+function selftest() {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "capability-regression-"));
+  const registered = path.join(root, "apps/backend/src/registered.ts");
+  const moved = path.join(root, "apps/backend/src/moved.ts");
+  const cap = { id: "CAP-1", symbol: "criticalCapability", file: "apps/backend/src/registered.ts", line: 1 };
+  fs.mkdirSync(path.dirname(registered), { recursive: true });
+  fs.writeFileSync(registered, "export function criticalCapability() {}\n");
+
+  const good = analyzeCapabilities([cap], new Map([[registered, "export function criticalCapability() {}\n"]]), root);
+  if (good.errors.length !== 0) fail(`SELFTEST known-good fixture failed: ${good.errors.join("; ")}`);
+
+  const missing = analyzeCapabilities([cap], new Map([[registered, "export function anotherCapability() {}\n"]]), root);
+  if (!missing.errors.some((e) => e.includes("MISSING"))) fail("SELFTEST missing-symbol mutation escaped");
+
+  const movedResult = analyzeCapabilities(
+    [cap],
+    new Map([[registered, "export function anotherCapability() {}\n"], [moved, "export function criticalCapability() {}\n"]]),
+    root,
+  );
+  if (!movedResult.errors.some((e) => e.includes("MOVED"))) fail("SELFTEST moved-symbol mutation escaped");
+
+  const duplicate = analyzeCapabilities(
+    [cap],
+    new Map([[registered, "export function criticalCapability() {}\n"], [moved, "export const criticalCapability = () => {};\n"]]),
+    root,
+  );
+  if (!duplicate.errors.some((e) => e.includes("DUPLICATE"))) fail("SELFTEST duplicate-symbol mutation escaped");
+  fs.rmSync(root, { recursive: true, force: true });
+  console.log(`[${LABEL}] SELFTEST PASS 3/3 — missing, moved, and duplicate mutations all RED`);
+  process.exit(0);
+}
+
+if (process.argv.includes("--selftest")) selftest();
+
+const sourceFiles = listSourceFiles(SRC_DIR);
+const sourceText = new Map(sourceFiles.map((f) => [f, fs.readFileSync(f, "utf8")]));
+const { errors, warnings } = analyzeCapabilities(caps, sourceText);
 
 for (const w of warnings) console.warn(`[${LABEL}] WARN: ${w}`);
 if (errors.length > 0) {
