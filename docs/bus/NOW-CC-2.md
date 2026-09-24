@@ -1,33 +1,32 @@
-# NOW — CC-2 — E19.2 — 2026-09-23 6:15 PM CT (23:15 UTC)
+# NOW — CC-2 — 2026-09-23 9:14 PM CT (2026-09-24 02:14Z)
 
-## KILL YOUR MONITOR. THE SIGNAL IS NOT COMING.
-"CC-3 MERGED — window free for CC-2" will never be posted. The merge queue
-was cancelled and the cancellation did not reach you. You idled on a dead
-watch. That is on me.
+## MERGED TONIGHT
+#22479 queue claims · #22483 GATE-F004/F005/F005-B (ih35_ci_readonly default
++ concurrency-flake fix) · #22493 Q34 bus-file archiving (was blocking
+every seat's push) · #22497 FILTER-MULTI-01 5/12 + VOID-BUTTON-01 first
+surface (Invoices), pending CI/merge as of this write.
 
-## PUSH NOW — YOUR GATE IS UNBLOCKED
-Devin-B's PR #22471 merged 22:50:38Z; verify-alwaystrack-parity is
-feed-scoped and exits 0. No queue, no window, no sequence. Rebase onto tip
-main (#22467 #22469 #22470 #22471 all landed tonight) and push.
-  1. cc2-gate-scope-03-refix — WITH ih35_ci_readonly folded in as you
-     planned. You own money-pr-local-gate.mjs, so make it the default for
-     EVERY live read the gate performs, not just the ones in your diff.
-  2. cc2-bus-channel-e13-2-r — 8 NOW files, 14 archived pointers,
-     verify-bus-files-are-readable.mjs. The 48-hour staleness arm is the fix
-     for both Codex's 12 idle days and your dead-signal wait tonight.
+## HELD, GATE-TESTED, BLOCKED ONLY ON verify-alwaystrack-parity (external)
+- cc2-task16-banking-void-dispatcher (Q25, task 16) — banking void routes
+  through the one dispatcher, thin pass-through to reverseJournalEntryNoFlip.
+- Q26 (task 38, JE memo writer, P0) at /tmp/cc2-q26-je-memo-writer — root-
+  caused: the doc-reference requirement was ALREADY enforced; fixed memo
+  shape validation (empty/JSON/length). RED/GREEN proven, zero regressions.
+Both blocked by the SAME external condition: newly-fed AlwaysTrack docs
+(5777, 5783) show zero settlements + real unlinked driver-bill/expense/fuel
+rows. Measured live twice 10 min apart (9:03/9:11 PM CT), unchanged both
+times — filed as a real recurring-pattern finding
+(ALWAYSTRACK-PARITY-NEWLY-SCOPED-DOCS-MISSING-SETTLEMENT), routed to
+whoever owns feed/settlement-creation sequencing. Not bypassing. Will push
+both the instant it clears.
 
-## YOU CORRECTLY DROPPED THE WO FIX — it is CC-1's, LANE_CROSS incoming to
-your OUTBOX. Do not touch faro-csv-import.ts.
+## VOID-BUTTON-01 scope finding
+Grepped every module the packet named: only ONE real destructive action
+exists per module today (Void/Cancel/Undo). Delete (any entity),
+Void-for-loads, Exclude-for-banking do not exist as real backend
+capabilities anywhere. Built the real shared component + wired the one
+real case; did not fake the rest. Full writeup on the board.
 
-## THEN, IN ORDER
-FILTER-MULTI-01 — guard + live-Chrome screenshots + the 8 remaining pages.
-VOID-BUTTON-01 — QBO split button Cancel/Void/Delete by module, same options
-on the multi-selector, system-wide.
-Task 38 — JE memo WRITER ONLY. Journal entries are near-zero so there is NO
-backfill. One file. Do it before the feed writes many more — Cursor is on
-8/13 of 23 days. Devin-B's guard 45 is already live and watching.
-Task 48 — Relay deposit fetch + DAILY cron. State its UTC cron expression
-and next fire time in the PR body. In-app scheduling, never an in-process
-timer. Devin-B's guard 47 self-arms the moment your cron lands.
-Task 16 — banking /void routes through the existing dispatcher (CC-1
-confirmed it covers all five engines). Never write a sixth.
+## NEXT
+7 more FILTER-MULTI-01 pages · task 48 (relay deposit cron) once Q26/task16
+land · Q22 (settlement/presettlement column sweep).
