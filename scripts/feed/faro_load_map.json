@@ -1,0 +1,506 @@
+{
+  "38": {
+    "load": "13552",
+    "settlement": "5788",
+    "date": "8/31/26",
+    "gross": 3000.0,
+    "net_adv": 2910.0,
+    "escrow": 45.0,
+    "discount": 45.0
+  },
+  "39": {
+    "load": "13554",
+    "settlement": "5790",
+    "date": "8/31/26",
+    "gross": 3500.0,
+    "net_adv": 3395.0,
+    "escrow": 52.5,
+    "discount": 52.5
+  },
+  "36": {
+    "load": "13556",
+    "settlement": "",
+    "date": "8/28/26",
+    "gross": 4000.0,
+    "net_adv": 3880.0,
+    "escrow": 60.0,
+    "discount": 60.0
+  },
+  "40": {
+    "load": "13557",
+    "settlement": "5789",
+    "date": "8/31/26",
+    "gross": 3900.0,
+    "net_adv": 3783.0,
+    "escrow": 58.5,
+    "discount": 58.5
+  },
+  "41": {
+    "load": "13558",
+    "settlement": "5794",
+    "date": "8/31/26",
+    "gross": 3500.0,
+    "net_adv": 3385.0,
+    "escrow": 52.5,
+    "discount": 52.5
+  },
+  "42": {
+    "load": "13559",
+    "settlement": "5792",
+    "date": "9/1/26",
+    "gross": 3800.0,
+    "net_adv": 3676.0,
+    "escrow": 57.0,
+    "discount": 57.0
+  },
+  "43": {
+    "load": "13560",
+    "settlement": "5791",
+    "date": "9/1/26",
+    "gross": 4400.0,
+    "net_adv": 4268.0,
+    "escrow": 66.0,
+    "discount": 66.0
+  },
+  "44": {
+    "load": "13561",
+    "settlement": "5795",
+    "date": "9/1/26",
+    "gross": 3450.0,
+    "net_adv": 3346.5,
+    "escrow": 51.75,
+    "discount": 51.75
+  },
+  "47": {
+    "load": "13562",
+    "settlement": "5792",
+    "date": "9/3/26",
+    "gross": 1000.0,
+    "net_adv": 970.0,
+    "escrow": 15.0,
+    "discount": 15.0
+  },
+  "46": {
+    "load": "13563",
+    "settlement": "",
+    "date": "9/3/26",
+    "gross": 600.0,
+    "net_adv": 582.0,
+    "escrow": 9.0,
+    "discount": 9.0
+  },
+  "51": {
+    "load": "13564",
+    "settlement": "5803",
+    "date": "9/3/26",
+    "gross": 3000.0,
+    "net_adv": 2900.0,
+    "escrow": 45.0,
+    "discount": 45.0
+  },
+  "48": {
+    "load": "13566",
+    "settlement": "5793",
+    "date": "9/3/26",
+    "gross": 1100.0,
+    "net_adv": 1067.0,
+    "escrow": 16.5,
+    "discount": 16.5
+  },
+  "49": {
+    "load": "13567",
+    "settlement": "5795",
+    "date": "9/3/26",
+    "gross": 2100.0,
+    "net_adv": 2037.0,
+    "escrow": 31.5,
+    "discount": 31.5
+  },
+  "50": {
+    "load": "13568",
+    "settlement": "5794",
+    "date": "9/4/26",
+    "gross": 4000.0,
+    "net_adv": 3870.0,
+    "escrow": 60.0,
+    "discount": 60.0
+  },
+  "45": {
+    "load": "13569",
+    "settlement": "5797",
+    "date": "9/3/26",
+    "gross": 3000.0,
+    "net_adv": 2910.0,
+    "escrow": 45.0,
+    "discount": 45.0
+  },
+  "52": {
+    "load": "13570",
+    "settlement": "5801",
+    "date": "9/4/26",
+    "gross": 6115.0,
+    "net_adv": 5931.54,
+    "escrow": 91.73,
+    "discount": 91.73
+  },
+  "53": {
+    "load": "13571",
+    "settlement": "5799",
+    "date": "9/4/26",
+    "gross": 4900.0,
+    "net_adv": 4753.0,
+    "escrow": 73.5,
+    "discount": 73.5
+  },
+  "54": {
+    "load": "13573",
+    "settlement": "5800",
+    "date": "9/4/26",
+    "gross": 2300.0,
+    "net_adv": 2231.0,
+    "escrow": 34.5,
+    "discount": 34.5
+  },
+  "56": {
+    "load": "13574",
+    "settlement": "5799",
+    "date": "9/8/26",
+    "gross": 4400.0,
+    "net_adv": 4268.0,
+    "escrow": 66.0,
+    "discount": 66.0
+  },
+  "57": {
+    "load": "13575",
+    "settlement": "5798",
+    "date": "9/8/26",
+    "gross": 2200.0,
+    "net_adv": 2134.0,
+    "escrow": 33.0,
+    "discount": 33.0
+  },
+  "58": {
+    "load": "13576",
+    "settlement": "5804",
+    "date": "9/8/26",
+    "gross": 3700.0,
+    "net_adv": 3589.0,
+    "escrow": 55.5,
+    "discount": 55.5
+  },
+  "59": {
+    "load": "13577",
+    "settlement": "5797",
+    "date": "9/8/26",
+    "gross": 3500.0,
+    "net_adv": 3385.0,
+    "escrow": 52.5,
+    "discount": 52.5
+  },
+  "60": {
+    "load": "13579",
+    "settlement": "5802",
+    "date": "9/8/26",
+    "gross": 4900.0,
+    "net_adv": 4753.0,
+    "escrow": 73.5,
+    "discount": 73.5
+  },
+  "63": {
+    "load": "13580",
+    "settlement": "5801",
+    "date": "9/11/26",
+    "gross": 3300.0,
+    "net_adv": 3201.0,
+    "escrow": 49.5,
+    "discount": 49.5
+  },
+  "67": {
+    "load": "13581",
+    "settlement": "5806",
+    "date": "9/11/26",
+    "gross": 4900.0,
+    "net_adv": 4753.0,
+    "escrow": 73.5,
+    "discount": 73.5
+  },
+  "65": {
+    "load": "13583",
+    "settlement": "5809",
+    "date": "9/11/26",
+    "gross": 6850.0,
+    "net_adv": 6644.5,
+    "escrow": 102.75,
+    "discount": 102.75
+  },
+  "62": {
+    "load": "13584",
+    "settlement": "5800",
+    "date": "9/10/26",
+    "gross": 1000.0,
+    "net_adv": 970.0,
+    "escrow": 15.0,
+    "discount": 15.0
+  },
+  "61": {
+    "load": "13585",
+    "settlement": "5807",
+    "date": "9/10/26",
+    "gross": 2100.0,
+    "net_adv": 2027.0,
+    "escrow": 31.5,
+    "discount": 31.5
+  },
+  "66": {
+    "load": "13586",
+    "settlement": "5803",
+    "date": "9/11/26",
+    "gross": 3600.0,
+    "net_adv": 3492.0,
+    "escrow": 54.0,
+    "discount": 54.0
+  },
+  "70": {
+    "load": "13587",
+    "settlement": "5807",
+    "date": "9/14/26",
+    "gross": 4120.0,
+    "net_adv": 3996.4,
+    "escrow": 61.8,
+    "discount": 61.8
+  },
+  "68": {
+    "load": "13588",
+    "settlement": "5812",
+    "date": "9/11/26",
+    "gross": 5700.0,
+    "net_adv": 5529.0,
+    "escrow": 85.5,
+    "discount": 85.5
+  },
+  "69": {
+    "load": "13589",
+    "settlement": "5802",
+    "date": "9/11/26",
+    "gross": 4150.0,
+    "net_adv": 4025.5,
+    "escrow": 62.25,
+    "discount": 62.25
+  },
+  "71": {
+    "load": "13590",
+    "settlement": "5810",
+    "date": "9/14/26",
+    "gross": 5500.0,
+    "net_adv": 5325.0,
+    "escrow": 82.5,
+    "discount": 82.5
+  },
+  "72": {
+    "load": "13591",
+    "settlement": "5806",
+    "date": "9/14/26",
+    "gross": 3700.0,
+    "net_adv": 3589.0,
+    "escrow": 55.5,
+    "discount": 55.5
+  },
+  "73": {
+    "load": "13592",
+    "settlement": "5805",
+    "date": "9/14/26",
+    "gross": 4400.0,
+    "net_adv": 4268.0,
+    "escrow": 66.0,
+    "discount": 66.0
+  },
+  "75": {
+    "load": "13594",
+    "settlement": "5804",
+    "date": "9/14/26",
+    "gross": 3250.0,
+    "net_adv": 3152.5,
+    "escrow": 48.75,
+    "discount": 48.75
+  },
+  "76": {
+    "load": "13596",
+    "settlement": "5811",
+    "date": "9/14/26",
+    "gross": 4900.0,
+    "net_adv": 4753.0,
+    "escrow": 73.5,
+    "discount": 73.5
+  },
+  "77": {
+    "load": "13597",
+    "settlement": "5808",
+    "date": "9/14/26",
+    "gross": 4900.0,
+    "net_adv": 4753.0,
+    "escrow": 73.5,
+    "discount": 73.5
+  },
+  "78": {
+    "load": "13598",
+    "settlement": "5809",
+    "date": "9/17/26",
+    "gross": 4000.0,
+    "net_adv": 3870.0,
+    "escrow": 60.0,
+    "discount": 60.0
+  },
+  "80": {
+    "load": "13599",
+    "settlement": "5810",
+    "date": "9/18/26",
+    "gross": 4400.0,
+    "net_adv": 4268.0,
+    "escrow": 66.0,
+    "discount": 66.0
+  },
+  "81": {
+    "load": "13600",
+    "settlement": "5812",
+    "date": "9/18/26",
+    "gross": 4900.0,
+    "net_adv": 4753.0,
+    "escrow": 73.5,
+    "discount": 73.5
+  },
+  "79": {
+    "load": "13601",
+    "settlement": "5808",
+    "date": "9/17/26",
+    "gross": 3600.0,
+    "net_adv": 3492.0,
+    "escrow": 54.0,
+    "discount": 54.0
+  },
+  "82": {
+    "load": "13602",
+    "settlement": "5813",
+    "date": "9/18/26",
+    "gross": 4900.0,
+    "net_adv": 4743.0,
+    "escrow": 73.5,
+    "discount": 73.5
+  },
+  "83": {
+    "load": "13603",
+    "settlement": "5811",
+    "date": "9/18/26",
+    "gross": 4400.0,
+    "net_adv": 4268.0,
+    "escrow": 66.0,
+    "discount": 66.0
+  },
+  "86": {
+    "load": "13604",
+    "settlement": "5814",
+    "date": "9/18/26",
+    "gross": 4900.0,
+    "net_adv": 4753.0,
+    "escrow": 73.5,
+    "discount": 73.5
+  },
+  "84": {
+    "load": "13605",
+    "settlement": "5815",
+    "date": "9/18/26",
+    "gross": 3700.0,
+    "net_adv": 3589.0,
+    "escrow": 55.5,
+    "discount": 55.5
+  },
+  "85": {
+    "load": "13606",
+    "settlement": "5809",
+    "date": "9/18/26",
+    "gross": 1100.0,
+    "net_adv": 1067.0,
+    "escrow": 16.5,
+    "discount": 16.5
+  },
+  "88": {
+    "load": "13607",
+    "settlement": "5813",
+    "date": "9/21/26",
+    "gross": 5217.0,
+    "net_adv": 0.0,
+    "escrow": 78.26,
+    "discount": 78.26
+  },
+  "89": {
+    "load": "13608",
+    "settlement": "5814",
+    "date": "9/21/26",
+    "gross": 4400.0,
+    "net_adv": 0.0,
+    "escrow": 66.0,
+    "discount": 66.0
+  },
+  "90": {
+    "load": "13610",
+    "settlement": "",
+    "date": "9/21/26",
+    "gross": 5900.0,
+    "net_adv": 0.0,
+    "escrow": 88.5,
+    "discount": 88.5
+  },
+  "91": {
+    "load": "13611",
+    "settlement": "5815",
+    "date": "9/21/26",
+    "gross": 3200.0,
+    "net_adv": 0.0,
+    "escrow": 48.0,
+    "discount": 48.0
+  },
+  "64": {
+    "load": "13612",
+    "settlement": "",
+    "date": "9/11/26",
+    "gross": 4900.0,
+    "net_adv": 4743.0,
+    "escrow": 73.5,
+    "discount": 73.5
+  },
+  "92": {
+    "load": "13613",
+    "settlement": "",
+    "date": "9/21/26",
+    "gross": 5700.0,
+    "net_adv": 0.0,
+    "escrow": 85.5,
+    "discount": 85.5
+  },
+  "93": {
+    "load": "13614",
+    "settlement": "",
+    "date": "9/21/26",
+    "gross": 3450.0,
+    "net_adv": 0.0,
+    "escrow": 51.75,
+    "discount": 51.75
+  },
+  "87": {
+    "load": "13615",
+    "settlement": "",
+    "date": "9/21/26",
+    "gross": 4900.0,
+    "net_adv": 0.0,
+    "escrow": 73.5,
+    "discount": 73.5
+  },
+  "1013272-2": {
+    "load": "13619",
+    "settlement": "",
+    "date": "9/8/26",
+    "gross": 5210,
+    "net_adv": 5053.7,
+    "escrow": 78.15,
+    "discount": 78.15
+  }
+}

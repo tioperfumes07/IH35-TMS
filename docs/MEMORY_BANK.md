@@ -126,9 +126,15 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Live Aug 5769–5796 after mint:** 28 driver settlements (22 pure-Aug closed+posted with company
   CS; 6 Aug–Sep SPAN left `open`, no company yet). Twin misattr bills re-homed to USMCA control
   driver before mint (Alfonso TRANSP→USMCA; inverted 5779 period dates fixed via min/max of start+end).
-- **Still open (feed/docs only):** AlwaysTrack parity 0/33 (expense/fuel dimension inflation — fuel
-  must not reappear as expense rows); Faro day 8/31 phantom extra advance ($17,400 vs $13,900);
-  Sep purchase days from 9/4 not fed. **Bank match is NOT Cursor work** (owner 2026-09-24).
+- **Still open (feed/docs only):** AlwaysTrack parity / CE tagging (company_expenses control
+  $2,446.77 vs labeled expense rows — non-fuel OTR expenses largely exist as plain expenses);
+  fuel≠expense dimension. **Bank match is NOT Cursor work** (owner 2026-09-24).
+- **Sep Faro purchase days CLOSED 2026-09-24 (this session):** all 10 Sep days in
+  `day_control` (9/1…9/21, 52 invs incl. `1013272-2`) have live FAs; per-day purchase$ **TIE**.
+  Authority inv→load = Excel `FARO LOAD MAP` → `scripts/feed/faro_load_map.json` (never
+  debtor-name / amount-match). Writers: `feed-sep-faro-fas.mts`, `feed-missing-sep-faro-loads.mts`.
+  Missing loads booked: 13563,13568,13610,13612–13615,13619 (`1013272-2` / WO transposed).
+  Settlements 5769–5816 all `approved`/`closed`. `closed_purchase_days.json` includes Sep ISO dates.
 
 ### Active Architectural Decisions — Owner bank match + no fuel re-feed (Cursor, 2026-09-24)
 

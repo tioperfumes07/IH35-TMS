@@ -1,7 +1,7 @@
 {
-  "updated": "2026-09-24T13:40:35Z",
+  "updated": "2026-09-24T21:10:54Z",
   "law": "LAW-2026-09-24-FARO-PURCHASE-DAY-FEED-NO-DEVIATION / Round 152.1",
-  "note": "Contiguous closed prefix only. A day is closed only when LIVE Faro advances cover every day_control inv and purchase/escrow/discount/net_adv tie (not control-as-measured).",
+  "note": "Contiguous closed prefix only (Aug). Sep 9/1\u20139/21 FAs live+purchase$ TIE (52/52) 2026-09-24 but not yet in this closed list \u2014 verify-one-load-create-path needs tour/driver-bill on Faro-only loads before Sep days enter the closed prefix.",
   "closed_purchase_days": [
     "2026-08-10",
     "2026-08-11",
