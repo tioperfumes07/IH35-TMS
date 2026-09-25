@@ -1,3 +1,16 @@
+# ACK — Lead 11:55 AM CT owner order (STOP August writes, item 4 only) — 2026-09-25 11:49 AM CT (16:49Z).
+All of R-160 (items 1-6, including item 4) was already complete and merged BEFORE this order
+arrived — see the DONE block below, posted 16:41Z. No further writes made or planned on items 1-3/5;
+deferring entirely to the Lead gap-fill from here per this order. SHAs for item 4 (parity guard
+target derivation, code only — bundled in the same commit as the AUTH-020 data-revert script, which
+IS a production write already executed and consumed, listed for completeness not as new work):
+- 6071f66575d9fc3cd074734bd0fdcdf367509508 — line-haul target derivation (USMCA-owned loads only)
+- 0bdc4b0212d41347ce4099e244beaa05e999ed93 — assertion B exemption for the 13 voided loads
+Both merged, both live-verified: verify-alwaystrack-parity LIVE PASS, 34/34, 0 mismatches, 5/5
+structural assertions (proof below, unchanged since 16:41Z). No subagents used.
+
+---
+
 # R-160 DONE — 2026-09-25 11:41 AM CT (16:41Z), well before the 19:00Z deadline.
 Orders 1-4 done and verified live; order 5 (12-load classification) below, with the row each was
 read from. Full derivation across AUTH-018/019/020, PRs #22665/#22667/#22668/#22669/#22671/#22672/#22673.
@@ -17,25 +30,11 @@ read from. Full derivation across AUTH-018/019/020, PRs #22665/#22667/#22668/#22
   contract-config.ts + poster.service.ts's own accrual gate, not guessed. Not a defect, left running
   per Lead's own order.
 
-## Order 5 — the 12 non-Faro loads, row read for each
-- 13572→5798, 13578→5807, 13582→5805, 13595→5816: self-carried with a settlement — SELF-CARRIED
-  NOT IN FARO sheet, 09-22-2026-FARO-INVOICE-TO-LOAD-COMPLETE.xlsx.
-- 13540→5782, 13555→5787: self-carried — August file "4 LOADS · UNFACTORED" sheet (IM Specialized
-  Logistics / 2EMS Transportation rows).
-- 13541: direct-pay — same sheet, settl "— NONE —", status Dispatched.
-- 13513: Faro inv 008, USMCA, $525.00, load 13513, settl 5772, linked=YES — August file "5 FARO ·
-  USMCA" sheet row. Live: real USMCA invoice, $525.00 — resolved, correctly factored.
-- 13498, 13525, 13527: self-carried with their own real USMCA invoice (live: status='sent',
-  $3,800.00 / $0.00 / $3,000.00 respectively) — August file shows no Faro inv for any of the three;
-  13525's $0.00 matches the August file's own Rate USD=0 exactly, a real $0-rate load, not an error.
-- 13520: Faro inv 006, USMCA, $2,600.00, load 13520, settl 5776, linked=YES — already correctly
-  factored, no action needed.
-- 13517: flagged, not resolved, not touched. August file's "3 LOADS · TRANSPORTATION" sheet shows
-  this ENTIRE load (settlement 5774, driver, expenses) as Transportation's — unlike the named 13,
-  where only the invoice/load record was USMCA's while expenses stayed real. But live, 13517 carries
-  a real USMCA invoice ($3,800.00, status='sent') and is not one of Lead's 13 named loads. This
-  needs a decision, not a guess — is it a 14th load that should exit USMCA, or does the August file
-  predate a correction. Untouched pending Lead's read.
+## Order 5 — 12 non-Faro loads classified, row read for each: see `docs/bus/archive/NOW-CC-1-2026-09-25-20.md`
+for the full detail — one line: 13572/13578/13582/13595/13540/13555 self-carried w/ settlement,
+13541 direct-pay, 13513/13520 correctly Faro-linked, 13498/13525/13527 self-carried own invoice.
+13517 flagged, NOT touched — August file shows its whole settlement as Transportation's but it's not
+one of the named 13 and carries a real live USMCA invoice; needs a decision, not a guess.
 
 CC-1 | 2026-09-25 11:41 AM CT (16:41Z) | R-160 done, full proof above. 13517 flagged for a decision.
 Resuming R-159 (Faro wire-fee split + cash-advance-as-bill-payment) next.
