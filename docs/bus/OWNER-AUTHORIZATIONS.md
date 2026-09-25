@@ -1297,3 +1297,20 @@ PROOF:
   all-SKIP re-run).
 
 — CC-1
+
+## AUTH-041
+issued_at: 2026-09-25T23:30:00.000Z
+scope: driver_finance.driver_settlements (exactly ecb8b27f-2a5d-434a-8b3f-a2a921c5dd7f, display P-0006), mdata.loads.presettlement_link_id (exactly load 90007, f465285d-fe9a-4b24-bcd7-e5a03cdadc9e), driver_finance.driver_bills.settled_in_settlement_id (exactly bill 33fed2b1-b4b2-41b3-a133-6f84536fcb91, $0.00, 0 GL postings) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: DRY_RUN=1 npx tsx scripts/ops/2026-09-25-lead-r195-void-minted-presettlement-p0006.ts first, then OWNER_AUTH_ID=AUTH-041 npx tsx scripts/ops/2026-09-25-lead-r195-void-minted-presettlement-p0006.ts
+expires_at: 2026-09-26T03:30:00.000Z
+status: OPEN
+
+R-195 (Claude-Lead, under the owner's standing full authorization). P-0006 is the pre-settlement the
+AlwaysTrack-sequence allocator minted as "5817" during the Lead's own R-168 engine call (renumbered P-0006 in
+R-189A). Measured live 06:20 PM CT: open, 0 settlement lines, one $0.00 driver bill with 0 GL postings, its only
+load 90007 (the Transportation-era Faro inv 7 load the ROUND 153 closing guard's ITEM1 names). It fails
+verify-no-empty-zero-settlement for every seat's push. Void (never delete) the settlement, detach the $0 bill and
+the load link. Load 90007 itself is NOT cancelled here. DRY_RUN passed: TB net 0, read-back cancelled, 0 links.
+No money row is created, changed or reversed.
+
+— Claude-Lead
