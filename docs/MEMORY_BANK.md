@@ -22,6 +22,10 @@ The factoring reconciliation is ALREADY DONE and committed — `usmca-factoring-
   already QuickBooks-reconciled — NOT in the USMCA rebuild.** Owner anchor: first USMCA Faro purchase
   ≈ Aug 7; the factoring CSV is the authoritative scope, not a hand-guessed date.
 - Next action is the REBUILD ORCHESTRATION, not more reconciliation.
+- **SUPERSEDES agent "unsettled USMCA load" audits (owner 2026-09-25):** every load that *belongs* to
+  USMCA already has a settlement. Loads without one are **not USMCA** (pre-Faro QBO 5753/5760–5768) or
+  **void** / out of control. See Active Architectural Decisions §"USMCA load belonging = has a
+  settlement". Do not re-open this.
 
 ## SCOPE CORRECTION — the real tour universe is 38 docs, not 21 (measured 2026-09-08)
 
@@ -141,6 +145,24 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   per expense, list query uses the same two-column liveness (JE `status` stays `posted` after reverse).
   Live: `DONE reversed=180 fail=0` → dry `voided_with_live_gl=0` → guard OK population 4741.
 
+### OWNER LAW — USMCA load belonging = has a settlement (2026-09-25, restated after agent re-derived false gaps)
+
+Owner (verbatim): *"all loads that belong to usmca have a settlement, other are not usmca, other are
+void. all this has been asked and answered, reconciled."*
+
+**DO NOT** scan `mdata.loads` where `operating_company_id=USMCA` and treat missing
+`driver_bills.settled_in_settlement_id` as an unsettled-USMCA debt. That is the exact deviation that
+reopened closed work. Belonging is **settlement_control / AlwaysTrack docs 5769–5815**, not OCI tag.
+
+Measured (Neon `br-fancy-credit-akjnd07a`, bypass_rls=lucia, tip `6d18a73826`):
+- **104/104** `settlement_control` loads on docs **5769–5815** have an **approved** driver settlement
+  (bill FK + active `settlement_lines` both present). **47/47** docs in that range `status=approved`.
+- **Pre-Faro docs 5753 + 5760–5768** (19 loads e.g. 13481/13489/13501) = **Transportation / QuickBooks**
+  — NOT USMCA belonging. Absent USMCA settlement is correct. OCI may still say USMCA; ignore OCI.
+- **NOT_IN_CONTROL** loads (e.g. 13544, 13563, 13610/13612–13619, 90007) = **not USMCA belonging** for
+  this close (or void) — already ruled; do not invent a settlement campaign.
+- Retracted false claim: "~20 unsettled USMCA loads." Zero USMCA-belonging settlement gaps remain.
+
 ## Known Quirks & Blockers
 
 
@@ -161,7 +183,6 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - `void.service` `SELECT DISTINCT … ORDER BY 1` fix (was 42P10 on reverse) shipped with this close.
 - **2026-09-25 close proof (tip `6547f2050a` + Neon):** `verify-alwaystrack-parity` **34/34 PASS** (LH/DP/fuel/expenses/driver_net exact); settlements **5769–5815** all `approved` (5812 unposted by design, net −50); `verify-control-totals` PASS; voided-with-live-GL **0**; healthz `ar_tieout`/`ap_tieout` green. TB still red on **1090 clearing pileup** + sign on **2100/1245** — next money residue, not AT parity.
 - FAST-MERGE law restated this session: gate → push → PR → `gh pr merge --squash --delete-branch --admin` immediately; open PRs emptied (#22548 merged, #22547 closed superseded).
-
 
 ### ACCT-F20260924 — pure-Aug AT nets + Faro 23/23 money + AR/AP (Cursor, 2026-09-24)
 - Pure-Aug driver nets 5769–5788/5795/5796 tied via `scripts/feed/tie-pure-aug-to-at.mts` (clear ALL applied deductions before one doc admin — load-level "Admin fee - Gas" double-counted). SPAN 5789–5794 stay open. Sep 5804–5815 remain $20,241.07.
@@ -216,7 +237,7 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   (8/12 Watco inv 4 — wire $1,639 only; Faro Internal Transfer $1,649 OUT+IN as separate
   `factoring.reserve_movement` legs, never netted, never extra advance; banking stays 1133).
 
-## Known Quirks & Blockers
+## Known Quirks & Blockers — Settlement feed / rebuild history (Cursor, 2026-09-24)
 
 ### Active Architectural Decisions — Settlement feed / 13524 LH (Cursor, 2026-09-24)
 - **13524 LINE HAUL = $3,800** — rate confirmation `MPHC261334` + Faro purchase inv **16** both $3,800. AlwaysTrack company settlement 5778 showing **$4,200** was **our misprint**, not a customer dispute. Live app invoice/rate already $3,800 (correct). `scripts/feed/settlement_control.json` patched to 3800 (authoritative for Aug LH tie). `data/alwaystrack/settlements-truth-*.json` keeps the AlwaysTrack-as-printed $4,200 extract — that file is the OCR of the misprint, not app truth; editing it also trips the fuel live-domain gate. LH Aug feed_input now ties control=live **$189,569**.
