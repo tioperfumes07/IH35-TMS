@@ -125,7 +125,12 @@ issued_at: 2026-09-25T11:45:00.000Z
 scope: accounting.journal_entries, accounting.journal_entry_postings (accounts 5310, 5400, 9000 only) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: node scripts/ops/2026-09-25-cc1-r153-followup-reclassify-9000-suspense.ts (run against production, no DRY_RUN) — posts 2 small correcting journal entries (Dr 5310 $560.00 / Cr 9000 $560.00 for EXP-2026-00053; Dr 5400 $64.60 / Cr 9000 $64.60 for EXP-2026-00050) reclassifying 2 expenses this session's own item 9 audit found posted to the 9000 "Ask My Accountant" suspense account instead of their own unambiguous, already-active category-map account. Touches no other row.
 expires_at: 2026-09-25T13:45:00.000Z
-status: OPEN
+status: CONSUMED
+
+consumed_at: 2026-09-25T10:45:00.000Z
+consumed_by: CC-1
+row_counts: 2 correcting journal entries posted — b699d2ac-f9b0-4646-84a4-b983b957e64a (Dr 5310 $560.00 / Cr 9000 $560.00, EXP-2026-00053) and 6ff6b8fa-7bb7-49bc-91de-e7256a9b2ff8 (Dr 5400 $64.60 / Cr 9000 $64.60, EXP-2026-00050).
+proof_query: SELECT a.account_number, SUM(...)::bigint AS net FROM journal_entry_postings ... WHERE account_number IN ('9000','5310','5400') — confirms 9000 net -$624.60 (down from $2,976.63 by exactly the 2 reclassified amounts), 5310 net $809.35, 5400 net $64.60. Trial balance still balanced (222,397,470 = 222,397,470) after.
 
 Issued before execution. ROUND 153 item 9 follow-up — full derivation, including why the other 3 of
 the 5 non-fuel 9000 lines are NOT covered by this authorization (2 genuinely ambiguous category
