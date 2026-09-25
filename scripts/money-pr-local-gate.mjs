@@ -115,6 +115,9 @@ const STEPS = [
   // ROUND 181 (DEVIN-B) — no auto-generated account numbers. Owner law: no auto
   // numbers without written owner approval. Static + live count (shrink-only).
   ["verify-no-auto-generated-account-numbers", "scripts/verify-no-auto-generated-account-numbers.mjs"],
+  // ROUND 181.1 (DEVIN-B) — Samsara map one-to-many. Owner order: one driver can have
+  // multiple Samsara accounts. Map table is canonical; legacy column is read-only.
+  ["verify-driver-samsara-map-one-to-many", "scripts/verify-driver-samsara-map-one-to-many.mjs"],
   // ROUND E15.7-R (DEVIN-B, task 47) — daily Relay deposit sync cron must exist and be wired.
   // POPULATION CHECK: cron absent → SKIPPED exit 0 (arms itself when CC-2 lands task 48);
   // cron present → assert daily + wired at boot, RED if broken. No .guard-exempt.json entry.
