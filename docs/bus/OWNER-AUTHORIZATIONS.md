@@ -592,3 +592,24 @@ the script's own console output (this run). Full proof, all four required checks
   from other settlements, unrelated to the R-161 correction — not zeroed by this fix, correctly.)
 
 — CC-1
+
+---
+
+## AUTH-018
+issued_at: 2026-09-25T16:18:00.000Z
+scope: mdata.loads (status only, 13 named loads), accounting.invoices (void only, 13 named invoices), accounting.journal_entries, accounting.journal_entry_postings, accounting.expenses (load_id only), driver_finance.settlement_lines (load_id only) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly 13 named loads (13497, 13502, 13503, 13504, 13505, 13506, 13507, 13509, 13522, 13530, 13531, 13533, 13539)
+action: node scripts/ops/2026-09-25-cc1-r160-transportation-loads-exit-usmca.ts (run against production, no DRY_RUN) — R-160 orders 1-2: for each of the 13 named loads (confirmed live before writing this against the owner's own authority file, sheet "6 FARO · TRANSPORTATION" — every one present there with a real Faro Transportation-portal purchase row): (1) void its USMCA invoice via the real bulk-void service (voidInvoiceInBulk, apps/backend/src/accounting/bulk-void.service.ts — same reversing-JE/cascade-void/audit primitives the interactive void route uses); (2) cancel the load via the real writer (cancelLoadInClientTx, apps/backend/src/dispatch/cancellation.service.ts, reason_code=OTHER, not billable); (3) re-link every accounting.expenses.load_id and driver_finance.settlement_lines.load_id row pointing at this load — to the one other USMCA load on the same settlement when there is exactly one (live-confirmed: 3 settlements qualify, 5773->13511, 5780->13532, 5786->13548), otherwise to NULL (settlement/driver linkage untouched, only load_id changes). Void, never delete; nothing written to TRANSP.
+expires_at: 2026-09-25T18:18:00.000Z
+status: OPEN
+
+Issued before execution. Lead R-160 (11:05 AM CT/16:05Z, corrected stamp ~10:48 AM CT), first
+priority, deadline 19:00Z: owner ruling that only USMCA loads belong in USMCA; these 13 were
+Faro-purchased on the Transportation portal but their invoice+load records were created in USMCA.
+Confirmed live before writing this: all 13 present on the owner's own authority file's sheet 6 FARO
+· TRANSPORTATION with a real purchase row each; all 13 have a live USMCA invoice (status='sent',
+~$51,810 total) and load (status='completed_docs_received'); 78 accounting.expenses rows and 45
+driver_finance.settlement_lines rows currently reference these 13 load ids. Full derivation
+including the "exactly one other USMCA load" relink resolution in the script's own header comment.
+Rehearsing on Neon before touching production, given this script has not yet been tested at all.
+
+— CC-1
