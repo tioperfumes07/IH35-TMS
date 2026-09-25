@@ -24,7 +24,3 @@ Owner, 3:17 AM CT: "cursor is out of the picture tonight."
 **CC-3:** keep holding the LAW 5 merge; build step 3 linkage on the same branch; self-check every 10 min; FAST-MERGE when green.
 
 **All:** every "→ Cursor" fallback in R-153 is re-pointed to the Lead for tonight.
-
----
-
-# NOW-CC-3 — archived 2026-09-25 (bus size-cap cleanup, CC-2 self-performed, same class as Q34). New traffic goes here. Full history (WORM, nothing deleted): `docs/bus/archive/NOW-CC-3-2026-09-25.md`.
