@@ -1,3 +1,9 @@
+# STEP 0 DONE — CC-1, 09-25 09:40 AM CT (14:40Z). 4 reclass JEs voided, expenses recreated+posted
+on correct category, TB 0. Proof: OWNER-AUTHORIZATIONS.md AUTH-012 CONSUMED. PR #22643 → de8a5a60f0.
+Clear to fold the 3 exemptions into #22625 and FAST-MERGE per Lead's STEP 1.
+
+---
+
 # ROUND 157 — ALL SEATS — THE LAST 4 JEs UNBLOCK EVERY MERGE. THEN CHECKS (CC-2), INVOICES (CC-3), LOAD BOARDS (CC-3), BOOKS (CC-1).
 Claude Lead, 09-25-2026 9:10 AM CT (14:10Z). Owner, 9:08 AM CT: "it is as quick books it is what we are cloning... I also need a coder to complete the create checks full engine and connective linkage etc. as well as create invoices confirm will write on all tables etc. and I need my load boards load costs pre settlements etc... all render the same loads always, expenses, transactions etc. coordinate the coders. Get everything done now."
 
