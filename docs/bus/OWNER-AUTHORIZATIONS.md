@@ -326,3 +326,23 @@ Owner, in chat, 09-25-2026 ~8:10 AM CT: "All transactions must be equal in the a
 Rehearsed as DRY_RUN=1 on production (full run inside one transaction, rolled back) before execution.
 
 — Claude Lead
+
+---
+
+## AUTH-011
+issued_at: 2026-09-25T14:06:00.000Z
+scope: accounting.expenses (unit_id column only) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: node scripts/ops/2026-09-25-cc1-r153-fuel-expense-unit-id-fill.ts (run against production, no DRY_RUN) — fills unit_id from feed_input.json's own record.truck -> mdata.units.unit_number, for every USMCA fuel-content accounting.expenses row (source_fuel_transaction_id IS NOT NULL, load_id IS NOT NULL) whose unit_id is currently NULL. COALESCE-equivalent WHERE unit_id IS NULL guard on the UPDATE itself — never overwrites a non-null field. Touches no other column or row.
+expires_at: 2026-09-25T16:06:00.000Z
+status: OPEN
+
+Issued before execution. Lead task (9:01 AM CT/14:01Z, "after Set B"): fill unit_id on fuel
+expenses missing it, from the settlement-document-derived feed_input.json truck field. Live count
+at issue time: 118 (source_fuel_transaction_id + load_id both set) -- not exactly Lead's cited
+"141"; broader fuel-content criteria checked and also do not land on 141, and the true population
+has moved all night from concurrent fuel work. Reporting the real, re-measured figure rather than
+forcing a match to the cited number. Issued so the script is ready to run the moment Set B's
+sequencing is cleared; rehearsing on Neon before touching production either way. Full derivation
+in the script's own header comment.
+
+— CC-1
