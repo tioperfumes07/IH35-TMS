@@ -247,3 +247,29 @@ live 3 days ago per docs/bus/../08-CODER-BOXES-AND-LAW's own record -- no longer
 production at all), is in the script's own header comment and in this round's PR body.
 
 — CC-1
+
+---
+
+## AUTH-008
+issued_at: 2026-09-25T11:40:00.000Z
+scope: accounting.expenses (unit_id, driver_uuid, trailer_id columns only) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: node scripts/ops/2026-09-25-cc1-r153-d2-expense-load-linkage.ts (run against production, no DRY_RUN) — fills unit_id from mdata.loads.assigned_unit_id, driver_uuid from mdata.loads.assigned_primary_driver_id (only when assigned_secondary_driver_id IS NULL), and trailer_id from the load's most recent dispatch.load_assignment_history.new_trailer_id, for every USMCA accounting.expenses row whose own load_id already points at a USMCA load. Every write is COALESCE(existing, resolved) — never overwrites a non-null field. Touches no other column, table, or company.
+expires_at: 2026-09-25T13:40:00.000Z
+status: OPEN
+
+Issued before execution. R-153.8 Decision 2 (Lead, 6:22 AM CT/11:22Z): "YES. This is linkage, not
+backfill... Source per row: the load's assignment for the expense date (unit, driver, trailer)...
+Write only when the assignment is single-valued... Never overwrite a non-null field." Supersedes
+ROUND 153 item 11's DECISION NEEDED (PR #22592), which was read-only precisely because this
+question was open. Full derivation of why each field's source is what it is (reusing the codebase's
+own existing resolution logic, not a new engine) is in the script's own header comment.
+
+Live count measured fresh at issue time (LAW 3 — never cite a stale figure): 613 USMCA expenses,
+no_unit=353, no_driver=307, no_trailer=534 — materially higher than item 11's 07:22Z/11:22Z reading
+(373/112/66/293) because docs/bus/NOW-CC-2.md's concurrent AUTH-005 fuel remediation (CONSUMED,
+PR #22610) creates new fuel-category expense rows via createExpenseFromFuelTransaction. This script
+never touches GL account, category, or dollar amount on any row (fuel-content included) — it only
+ever fills a NULL linkage field via COALESCE — so it does not cross the R-153.6 "do not touch fuel"
+line, which is about fuel dollar/GL treatment, not dispatch-linkage metadata.
+
+— CC-1
