@@ -394,7 +394,7 @@ export async function createExpenseFromFuelTransaction(
       )
       -- R-178: an item line must carry quantity/rate/uom with round(quantity*rate_cents)=amount_cents
       -- (expense_lines_item_qty_rate_amount_check). Without them every fuel expense create refused.
-      VALUES ($1::uuid, $2::uuid, 1, $3, $4, $5, $6::uuid, $7, $8::uuid, $9::uuid, 1, $4, 'each')
+      VALUES ($1::uuid, $2::uuid, 1, $3, $4::bigint, $5, $6::uuid, $7, $8::uuid, $9::uuid, 1, $4::bigint, 'each')
     `,
     [
       input.operating_company_id,
