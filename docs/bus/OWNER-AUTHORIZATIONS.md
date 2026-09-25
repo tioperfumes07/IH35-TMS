@@ -653,4 +653,29 @@ expense_load_links row at all was also found live and is explicitly NOT touched 
 predates R-160 and is out of this authorization's scope. Full derivation in the script's own header
 comment.
 
+CONSUMED 2026-09-25 11:32 AM CT (16:32Z). 9 expense_load_links rows resynced clean, matches the
+pre-check exactly. proof_query: structural assertion D in verify-alwaystrack-parity.mjs now PASSES
+("every live non-fuel expense has expense_load_links... D: PASS").
+
+— CC-1
+
+---
+
+## AUTH-020
+issued_at: 2026-09-25T16:37:00.000Z
+scope: accounting.expenses (load_id only, 63 named rows), driver_finance.settlement_lines (load_id only, 34 named rows), driver_finance.driver_bills (load_id only, 10 named rows) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: node scripts/ops/2026-09-25-cc1-r160-revert-ambiguous-load-nulls.ts (run against production, no DRY_RUN) — corrects a real mistake found live in AUTH-018's own required proof (verify-alwaystrack-parity): AUTH-018 set load_id=NULL on 107 rows across these 3 tables for the 10 (of 13) Transportation loads whose settlement had 0 or 2+ other USMCA loads. Every load_id-keyed query in the codebase (including this parity guard's own billByLoad/expenseByLoad lookups) JOINs on load_id, not the denormalized load_number text column — NULLing it made these rows invisible to any load-scoped read, silently zeroing 8 documents' driver_payment/expenses figures even though the owner's own R-160 order says those "stay whole per document." The load record itself was only soft-deleted (void, never delete, still exists) and Lead's own order never said to null it for the ambiguous cases ("list any settlement with none" — list/report, not null). Reverts exactly the rows identified via audit.row_changes (old_load_id one of the 10 named Transportation load ids, new_load_id NULL, changed during AUTH-018's own production run window) back to their original load_id. The 3 real relinks (13497->13511, 13530->13532, 13533->13548) are untouched.
+expires_at: 2026-09-25T18:37:00.000Z
+status: OPEN
+
+Issued before execution. Root-caused live, not guessed: verify-alwaystrack-parity showed 8
+documents' driver_payment/expenses at exactly $0.00 post-AUTH-018, traced to the load_id-JOIN
+mechanics of the guard's own SQL and confirmed via audit.row_changes (which recorded every row
+AUTH-018 touched, old and new load_id). Also fixing the parity guard's target derivation
+(scripts/verify-alwaystrack-parity.mjs, R-160 order 4 — a code change, not a production data write,
+no AUTH needed) in the same PR: line haul now targets USMCA-owned loads only (excludes the 13
+Transportation loads' customer_charges from the ground-truth sum; the live/actual side already
+reflects this naturally since AUTH-018 voided each Transportation load's invoice). Full derivation
+in each file's own header/inline comment.
+
 — CC-1
