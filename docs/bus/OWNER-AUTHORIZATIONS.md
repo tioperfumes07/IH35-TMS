@@ -863,3 +863,5 @@ Verified causes:
 DRY_RUN 02:07 PM CT: 31 reissued, 0 left on A/P, 0 refused, trial balance 0.
 
 — Claude Lead
+
+CONSUMED — AUTH-027 — 02:16 PM CT (19:16Z). Claude Lead. R-170 COMMITTED: 31 expenses reissued — 30 that were posted Cr 2000 A/P (some Dr 9000), now on their item account with the card rail, plus the 5794 driver-paid DEF 30.30 moved to 13558. 0 regular expenses left credited to 2000; trial balance 0. Live afterwards: verify-no-fuel-purchase-booked-twice PASS, verify-expense-line-account-matches-item PASS (117 lines), verify-load-to-cash-chain PASS, control totals PASS, escrow PASS.
