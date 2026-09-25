@@ -816,6 +816,8 @@ export async function postVoidReversal(
     // the first (lowest id) original for continuity with the existing single-original behavior;
     // the exhaustive, load-bearing signal for "is this original reversed" is `reversed_by_je_id` on
     // the ORIGINAL side, which this fix makes complete for every original, not just the lone one.
+    // DISTINCT + ORDER BY must use the same expression (Postgres 42P10). Cast once in SELECT
+    // and order by the alias — ORDER BY p.journal_entry_uuid (uuid) with ::text in SELECT fails.
     const src = await client.query<{ je_id: string }>(
       `
         SELECT DISTINCT p.journal_entry_uuid::text AS je_id
@@ -824,7 +826,7 @@ export async function postVoidReversal(
           AND p.source_transaction_type = $3
           AND p.source_transaction_id = $2
           AND p.journal_entry_uuid <> $4::uuid
-        ORDER BY p.journal_entry_uuid ASC
+        ORDER BY 1 ASC
       `,
       [params.operatingCompanyId, params.entityId, params.entityType, reversalJeId]
     );
