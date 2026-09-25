@@ -1092,7 +1092,7 @@ issued_at: 2026-09-25T21:51:17.000Z
 scope: accounting.factoring_advances (factor_fee_cents/reserve_amount_cents/related pct columns on 21 named rows via the funding poster's own repair path), accounting.journal_entries, accounting.journal_entry_postings — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly the 21 factoring_advances rows listed in scripts/ops/2026-09-25-cc1-r159-faro-wire-fee-split.ts's TARGET_DISPLAY_IDS
 action: DRY_RUN=1 first: OWNER_AUTH_ID=AUTH-035 tsx scripts/ops/2026-09-25-cc1-r159-faro-wire-fee-split.ts — then, once the production-write path is verified safe for this credential (see note below), the same command without DRY_RUN.
 expires_at: 2026-09-25T23:51:00.000Z
-status: OPEN
+status: OPEN — HELD, do not run further writes; see the BLOCKED note below for why and what needs a decision
 
 R-159 item 1 (Claude-Lead, 10:45 AM CT/15:45Z): Faro wire fees are bundled into 6400 Factoring Fees
 instead of split to 6300 Bank Service Charges & Wire Fees on pre-ROUND-86 advances. Confirmed live
@@ -1115,5 +1115,43 @@ Will not attempt the production write until that gap is either closed with a pro
 InClientTx extraction (mirroring reverseFactoringAdvanceEventInClientTx's own precedent) or the
 credential itself is granted membership in ih35_app — flagged to Claude-Lead/owner as the more
 efficient fix given this is the SECOND engine to hit this exact wall today.
+
+**BLOCKED 2026-09-25 05:06 PM CT (22:06Z) — the reverse+repost plan cannot work as designed, live-
+confirmed.** Built and tsc-verified postFactoringAdvanceEventInClientTx +
+postFactoringDefaultInterestAccrualEventInClientTx (ACCT-F2026092585, same precedent as
+reverseFactoringAdvanceEventInClientTx), closing the SET-ROLE gap above. Ran ONE real production
+row (FAC-2026-00001, ONLY_DISPLAY_ID=FAC-2026-00001) to validate before trusting the batch: the
+reversal succeeded, but the re-post immediately refused with `gate=already_posted`, rolling the
+whole transaction back atomically (confirmed live after: JE 60fcca1a still `status=posted`,
+`reversed_by_je_id=NULL`, unchanged — zero side effects, nothing written).
+
+ROOT CAUSE: `accounting.factoring_lifecycle_posting_keys` claims are PERMANENT per (advance,
+source_transaction_type, event_key) and are never released by a reversal.
+`findLifecyclePostingKeyJe` (the check postFactoringAdvanceEvent's "post" gate uses) queries that
+table alone — no join to journal_entries, no check of reversed_by_je_id — so it returns the SAME
+claimed (now-reversed) JE regardless of reversal. Reversal in this engine is reverse-not-flip
+(reverseJournalEntryNoFlip): the ORIGINAL JE's own `status` stays `'posted'` forever; only a NEW
+linked reversing JE is created. There is no way to re-post a fresh JE under the SAME event_key
+("funding") once claimed, on ANY credential, by ANY caller — this is not a permission problem, it
+is a permanent idempotency design in the schema itself. repairAlreadyPostedLifecycle (the "already
+posted" gate's own repair path) will not help either: it only re-attaches source links to an
+EXISTING JE whose shape exactly matches the expected legs — it refuses (shape mismatch) rather than
+amend an already-posted JE's amounts, so it cannot apply the corrected $10 split to the old JE
+either.
+
+This means Lead's own instruction ("through the factoring engine's own void/re-post path... no new
+writer, no hand-written JE") cannot be carried out as written — the engine has no supported path to
+re-post a corrected funding event under its original event_key. RECOMMENDATION (holding for a
+decision, not executing further factoring writes under this AUTH): a small manual reclassification
+JE per advance, Dr 6300 Bank Service Charges & Wire Fees $10.00 / Cr 6400 Factoring Fees $10.00,
+memo naming the advance's display_id — standard bookkeeping for a misclassified sub-amount, touches
+neither the funding JE's own postings nor its posting-key claim, same net GL effect as the
+originally-planned fix. This is technically a new hand-written JE, which is why it is NOT run under
+this AUTH without a decision first.
+
+The InClientTx additions (ACCT-F2026092585) stand on their own merit regardless of this blocker —
+tsc clean, 86/86 existing factoring-poster tests still pass, no existing caller touched — and are
+being landed separately since they generically fix the SET-ROLE gap for any future one-shot script
+needing a factoring funding/default-interest post.
 
 — CC-1
