@@ -105,7 +105,12 @@ issued_at: 2026-09-25T10:05:00.000Z
 scope: driver_finance.driver_advances (disbursement_status/voided_at), accounting.journal_entries, accounting.journal_entry_postings, driver_finance.driver_liabilities — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: node scripts/ops/2026-09-25-cc1-r153-item8-disburse-cash-advances.ts (run against production, no DRY_RUN) — (1) syncs disbursement_status='disbursed' on CA-2026-0001..0007 ONLY (no new JE — their GL already exists in journal_entries c8e25275-aee2-4fef-8b2b-82f8ba69ccf7); (2) posts ONE correcting journal entry (Cr 1245 $201.99 / Dr 1000 $201.99) reversing the CA-2026-0008+CA-2026-0009 duplicate of CA-2026-0007's own cash advance, then reverses those two rows via the existing reverseDriverAdvanceInClientTx path. Touches no other row.
 expires_at: 2026-09-25T12:05:00.000Z
-status: OPEN
+status: CONSUMED
+
+consumed_at: 2026-09-25T10:11:00.000Z
+consumed_by: CC-1
+row_counts: 7 driver_finance.driver_advances rows status-synced to 'disbursed' (CA-2026-0001..0007, no new JE). 1 correcting journal entry posted (id 374ab2d5-9421-45b4-88fe-127f686cbbb5, Cr 1245 $201.99 / Dr 1000 $201.99). 2 driver_finance.driver_advances rows reversed (CA-2026-0008, CA-2026-0009 — disbursement_status='reversed', voided_at stamped).
+proof_query: SELECT display_id, disbursement_status FROM driver_finance.driver_advances WHERE operating_company_id='5c854333-...' ORDER BY display_id — confirms 7x disbursed, 2x reversed, 3x already-disbursed TIE-* unchanged. Trial balance still balanced (222,330,602 = 222,330,602) after.
 
 Replaces AUTH-002 (superseded above, never consumed). Corrects a real, already-live double-posting
 defect (CA-2026-0008/0009 duplicating CA-2026-0007, $201.99) found while rehearsing AUTH-002's
