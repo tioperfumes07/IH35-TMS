@@ -269,24 +269,41 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
                 className="absolute right-0 z-30 mt-1 min-w-[200px] rounded-sm border border-gray-200 bg-white py-1 shadow-lg"
                 data-testid="global-create-menu"
               >
-                {([
-                  [t("topbar.create_customer", "Customer"), "/customers?create=1"],
-                  [t("topbar.create_invoice", "Invoice"), "/accounting/invoices?create=1"],
-                  [t("topbar.create_bill", "Bill"), "/accounting/bills/vendor?create=1"],
-                  [t("topbar.create_expense", "Expense"), "/accounting/expenses?create=1"],
-                  [t("topbar.create_receive_payment", "Receive payment"), "/accounting/payments?create=1"],
-                  [t("topbar.create_journal_entry", "Journal entry"), "/accounting/journal-entries?create=1"],
-                  [t("topbar.create_bill_payment", "Bill payment"), "/accounting/bill-payments?create=1"],
-                ] as [string, string][]).map(([label, to]) => (
-                  <button
-                    key={to}
-                    type="button"
-                    className="block w-full px-4 py-2 text-left text-xs text-gray-800 hover:bg-gray-50"
-                    onClick={() => { setCreateOpen(false); navigate(to); }}
-                  >
-                    {label}
-                  </button>
-                ))}
+                {(
+                  [
+                    ["— Drivers —", ""],
+                    [t("topbar.create_settlement_creator", "Settlement Creator"), "/driver-finance/settlement-creator"],
+                    ["— Accounting —", ""],
+                    [t("topbar.create_customer", "Customer"), "/customers?create=1"],
+                    [t("topbar.create_invoice", "Invoice"), "/accounting/invoices?create=1"],
+                    [t("topbar.create_bill", "Bill"), "/accounting/bills/vendor?create=1"],
+                    [t("topbar.create_expense", "Expense"), "/accounting/expenses?create=1"],
+                    [t("topbar.create_receive_payment", "Receive payment"), "/accounting/payments?create=1"],
+                    [t("topbar.create_journal_entry", "Journal entry"), "/accounting/journal-entries?create=1"],
+                    [t("topbar.create_bill_payment", "Bill payment"), "/accounting/bill-payments?create=1"],
+                  ] as [string, string][]
+                ).map(([label, to]) =>
+                  to ? (
+                    <button
+                      key={to}
+                      type="button"
+                      className="block w-full px-4 py-2 text-left text-xs text-gray-800 hover:bg-gray-50"
+                      onClick={() => {
+                        setCreateOpen(false);
+                        navigate(to);
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ) : (
+                    <div
+                      key={label}
+                      className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wide text-gray-400"
+                    >
+                      {label.replace(/^—\s*|\s*—$/g, "")}
+                    </div>
+                  ),
+                )}
               </div>
             ) : null}
           </div>

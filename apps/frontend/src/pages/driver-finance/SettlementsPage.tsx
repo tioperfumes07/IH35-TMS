@@ -1,7 +1,7 @@
 import { settlementLabel } from "../../lib/settlementNumber";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { listSettlements, getOpenDriverBills, type OpenDriverBill, type SettlementListRow, type SettlementReference } from "../../api/driverFinance";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -48,6 +48,7 @@ function parseFocus(raw: string | null): FocusFilter {
 
 export function SettlementsPage() {
   const { selectedCompanyId } = useCompanyContext();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -246,7 +247,20 @@ export function SettlementsPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="Driver Settlements" subtitle="List + detail settlement workflow" />
+      <PageHeader
+        title="Driver Settlements"
+        subtitle="List + detail settlement workflow"
+        actions={
+          <Button
+            size="sm"
+            variant="primary"
+            data-testid="settlements-open-creator"
+            onClick={() => navigate("/driver-finance/settlement-creator")}
+          >
+            Settlement Creator
+          </Button>
+        }
+      />
 
       <NavyPageSubNav
         items={[

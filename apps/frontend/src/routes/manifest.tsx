@@ -91,6 +91,9 @@ const BorderCrossingWizardPage = React.lazy(() => import("../pages/dispatch/Bord
 const BorderCrossingHistoryPage = React.lazy(() => import("../pages/dispatch/BorderCrossingHistoryPage").then((m) => ({ default: m.BorderCrossingHistoryPage })));
 import { BorderCrossingHistory as GpsBorderCrossingHistory } from "../pages/dispatch/borders/BorderCrossingHistory";
 const SettlementsPage = React.lazy(() => import("../pages/driver-finance/SettlementsPage").then((m) => ({ default: m.SettlementsPage })));
+const SettlementCreatorPage = React.lazy(() =>
+  import("../pages/settlements/SettlementCreatorPage").then((m) => ({ default: m.SettlementCreatorPage }))
+);
 const CashAdvanceRequestsPage = React.lazy(() => import("../pages/driver-finance/CashAdvanceRequestsPage").then((m) => ({ default: m.CashAdvanceRequestsPage })));
 const CompanySettlementsPage = React.lazy(() => import("../pages/driver-finance/CompanySettlementsPage").then((m) => ({ default: m.CompanySettlementsPage })));
 const SettlementCloseArrivalPage = React.lazy(() => import("../pages/driver-finance/SettlementCloseArrivalPage").then((m) => ({ default: m.SettlementCloseArrivalPage })));
@@ -2544,6 +2547,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <SettlementsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/driver-finance/settlement-creator"
+          element={
+            <ProtectedRoute>
+              <SettlementCreatorPage />
             </ProtectedRoute>
           }
         />
