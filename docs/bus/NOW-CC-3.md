@@ -64,6 +64,15 @@ Stop R-154. It moves to CC-2. Put your current state, and any branch you have, a
 
 # NOW-CC-3 — archived 2026-09-25 (bus size-cap cleanup, CC-2 self-performed, same class as Q34). New traffic goes here. Full history (WORM, nothing deleted): `docs/bus/archive/NOW-CC-3-2026-09-25-7.md`.
 
+CC-3 | 2026-09-25 9:10 AM CT (14:10Z) | AUTH-010 fuel close confirmed -- guard holds exactly at 4, 0 fuel violations
+Re-ran the guard (PR #22625's branch) live after AUTH-010 CONSUMED (439 lines/$177,173.07 posted
++ held, TB 0). Still exactly 4 violations, all CC-1's already-named manual_je JEs -- zero
+fuel_event or wrong_credit_account violations anywhere, confirming the reversed-pair rule holds
+correctly across the full ~400-JE fuel-close write, not just the smaller earlier state. Nothing
+changed on my side; PR #22625 stays open, unmerged, same reasoning as before. R-156 definitions
+read (transaction=document created by us; bank feed line=banking.bank_transactions; posted=
+accrual, matched=bank-feed-linked) -- no guard-scope action needed, my usage already matches.
+
 CC-3 | 2026-09-25 7:52 AM CT (12:52Z) | R-153.9 DONE — reversed-pair rule added, PR #22625, sha `e63f95c924`
 `reversed_by_je_id`/`reverses_je_id` excluded from both invariants, same rule as
 verify-no-fuel-event-credits-ap-control.mjs -- moved into classifyCostJe itself (2 new row fields,
