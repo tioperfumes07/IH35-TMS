@@ -183,10 +183,10 @@ async function measureLive() {
 
     // D. Legacy backfill: drivers with legacy samsara_driver_id vs map rows
     const legacyRes = await client.query(
-      `SELECT count(*)::int AS cnt FROM mdata.drivers WHERE samsara_driver_id IS NOT NULL`,
+      `SELECT count(*)::int AS cnt FROM mdata.drivers WHERE samsara_driver_id IS NOT NULL AND operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'` /* R-188: USMCA only — TRANSPORTATION/TRUCKING are frozen and never mapped */,
     );
     const mapRes = await client.query(
-      `SELECT count(*)::int AS cnt FROM mdata.driver_samsara_accounts`,
+      `SELECT count(DISTINCT m.driver_id)::int AS cnt FROM mdata.driver_samsara_accounts m JOIN mdata.drivers d ON d.id = m.driver_id WHERE d.operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80' AND d.samsara_driver_id IS NOT NULL`,
     );
     const liveDriversWithLegacySamsara = legacyRes.rows[0].cnt;
     const liveDriversWithMapRow = mapRes.rows[0].cnt;

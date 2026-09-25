@@ -175,7 +175,7 @@ async function resolveLocalIds(client: DbClient, event: SamsaraWebhookEvent, fal
     `
       SELECT d.id::text AS driver_id
       FROM mdata.drivers d
-      WHERE d.samsara_driver_id = $2
+      WHERE EXISTS (SELECT 1 FROM mdata.driver_samsara_accounts dsa WHERE dsa.driver_id = d.id AND dsa.samsara_driver_id = $2::text AND dsa.is_active) /* R-188: the one-driver-many-Samsara-accounts map, never the legacy column */
         AND (
           d.operating_company_id = $1::uuid
           OR EXISTS (

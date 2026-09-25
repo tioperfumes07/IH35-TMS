@@ -270,7 +270,7 @@ async function resolveLocalUnitAndDriver(
                  AND pairing_sync_dca.is_authorized = true
                  AND pairing_sync_dca.deactivated_at IS NULL
             ))
-        AND d.samsara_driver_id = $2
+        AND EXISTS (SELECT 1 FROM mdata.driver_samsara_accounts dsa WHERE dsa.driver_id = d.id AND dsa.samsara_driver_id = $2::text AND dsa.is_active) /* R-188: the one-driver-many-Samsara-accounts map, never the legacy column */
         AND d.deactivated_at IS NULL
       LIMIT 1
     `,
