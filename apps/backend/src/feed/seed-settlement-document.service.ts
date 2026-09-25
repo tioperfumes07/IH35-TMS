@@ -226,6 +226,73 @@ export function attributeExpenseLoad(
   return null;
 }
 
+/**
+ * ROUND 165 order 2 — feed_input.json merges the company and driver documents, so a cost the
+ * driver paid out of pocket prints TWICE in the company doc's own expenses[]: once as the real
+ * cost line, once again as "Driver Reimbursement-<whatever>" (the payment path, not a second
+ * cost). Confirmed live on doc 5775 (scale 15.25 prints 3x: 2 clean cost lines + 1
+ * description-truncated-to-"Drv" echo — the company document itself only ever shows 2).
+ *
+ * The truncation is real and inconsistent: `description` is sometimes corrupted to the literal
+ * string "Drv" for these echo lines, and even `raw` does not always retain the word
+ * "Reimbursement" on those truncated rows (confirmed against docs 5774/5784/5794/5800) — so "Drv"
+ * on its own is treated as a second, equally-reliable marker of the same echo class, not just a
+ * fallback when the "Reimbursement" text is missing.
+ */
+function isReimbursementMarkedLine(e: Pick<TruthExpenseLine, "description" | "raw">): boolean {
+  if (e.description.trim() === "Drv") return true;
+  return /reimbursement/i.test(e.description) || /reimbursement/i.test(e.raw);
+}
+
+/**
+ * ROUND 165 order 2 — "book an expense line only up to the number of times that amount prints in
+ * the company settlement's EXPENSES block." Implemented as: group same-document expense lines by
+ * (load, amount); within a group, a reimbursement-marked line is dropped whenever a genuine
+ * (non-reimbursement-marked) line already accounts for that amount — the genuine line(s) ARE the
+ * quota. A group with ONLY reimbursement-marked lines keeps exactly one (the first) rather than
+ * dropping to zero: an amount with no other representation on the document is still a real cost,
+ * just one whose only surviving text happens to be the reimbursement echo (see
+ * isReimbursementSurvivor on SeedPlanLoad.expenseLines).
+ *
+ * A SEPARATE pass first collapses exact duplicates (same load + date + vendor + description +
+ * amount) — this is the other class Lead's report names ("the parser duplicated it"): 5774
+ * reefer 45.47, 5784 washout 55.21, 5785 lumper 10.00, 5787 parking 22.00, each printing once on
+ * the real company document but twice, byte-identically, in this array.
+ *
+ * Pure, no DB, fully unit-testable — the exact contract order 2 asks for.
+ */
+export function dedupeCompanyExpenses(expenses: readonly TruthExpenseLine[]): Array<TruthExpenseLine & { isReimbursementSurvivor: boolean }> {
+  const exactSeen = new Set<string>();
+  const afterExactDedupe: TruthExpenseLine[] = [];
+  for (const e of expenses) {
+    const exactKey = `${e.load ?? ""} ${e.date} ${e.vendor} ${e.description} ${dollarsToCents(e.amount)}`;
+    if (exactSeen.has(exactKey)) continue;
+    exactSeen.add(exactKey);
+    afterExactDedupe.push(e);
+  }
+
+  const groups = new Map<string, TruthExpenseLine[]>();
+  for (const e of afterExactDedupe) {
+    const groupKey = `${e.load ?? ""} ${dollarsToCents(e.amount)}`;
+    const bucket = groups.get(groupKey) ?? [];
+    bucket.push(e);
+    groups.set(groupKey, bucket);
+  }
+
+  const result: Array<TruthExpenseLine & { isReimbursementSurvivor: boolean }> = [];
+  for (const bucket of groups.values()) {
+    const genuine = bucket.filter((e) => !isReimbursementMarkedLine(e));
+    if (genuine.length > 0) {
+      for (const e of genuine) result.push({ ...e, isReimbursementSurvivor: false });
+      continue;
+    }
+    // Every line in this (load, amount) group is reimbursement-marked -- keep exactly one, it is
+    // the only representation of this cost on the document.
+    result.push({ ...bucket[0], isReimbursementSurvivor: true });
+  }
+  return result;
+}
+
 export type SeedPlanLoad = {
   loadNumber: string;
   customerName: string;
@@ -234,7 +301,23 @@ export type SeedPlanLoad = {
   invoiceTotalCents: number;
   driverBillGrossCents: number;
   driverPayLines: TruthDriverPaymentLine[];
-  expenseLines: Array<{ date: string; vendor: string; description: string; amountCents: number; invoice: string }>;
+  expenseLines: Array<{
+    date: string;
+    vendor: string;
+    description: string;
+    amountCents: number;
+    invoice: string;
+    raw: string;
+    /**
+     * ROUND 165 order 2 — true only when this line survived dedupeCompanyExpenses() as a
+     * reimbursement-marked line with NO genuine (non-reimbursement) sibling at the same
+     * load+amount — i.e. it is the ONLY representation of this cost on the company document, so
+     * it must still be booked, but as the reimbursement item (Driver Reimbursement-...), not the
+     * regular cost item. Every other reimbursement echo never reaches this array at all — see
+     * dedupeCompanyExpenses.
+     */
+    isReimbursementSurvivor: boolean;
+  }>;
   fuelLines: Array<{ date: string; vendor: string; location: string; invoice: string; gallons: number; amountCents: number }>;
 };
 
@@ -280,9 +363,11 @@ export function parseSettlementDocumentPlan(companyDoc: TruthCompanyDoc, driverD
   const paymentByLoad = groupByLoad(companyDoc.driver_payment);
   const fuelByLoad = groupByLoad(companyDoc.fuel_purchases);
 
+  const dedupedExpenses = dedupeCompanyExpenses(companyDoc.expenses);
+
   const unattributedExpenses: TruthExpenseLine[] = [];
-  const expensesByLoad = new Map<string, TruthExpenseLine[]>();
-  for (const expense of companyDoc.expenses) {
+  const expensesByLoad = new Map<string, Array<TruthExpenseLine & { isReimbursementSurvivor: boolean }>>();
+  for (const expense of dedupedExpenses) {
     const attribution = attributeExpenseLoad(expense, companyDoc);
     if (!attribution) {
       unattributedExpenses.push(expense);
@@ -329,6 +414,8 @@ export function parseSettlementDocumentPlan(companyDoc: TruthCompanyDoc, driverD
         description: e.description,
         amountCents: dollarsToCents(e.amount),
         invoice: e.invoice,
+        raw: e.raw,
+        isReimbursementSurvivor: e.isReimbursementSurvivor,
       })),
       fuelLines: fuel.map((f) => ({
         date: f.date,
@@ -635,10 +722,115 @@ async function seedDriverBill(
   return outcome.driver_bill_id;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+// ROUND 165 order 1 — item/account resolution for expense lines. Every alias below was matched
+// against the LIVE catalogs.items rows for USMCA (queried directly, not guessed) — see the
+// account mapping table in docs/bus's ROUND 165 order for the account side of this; the item_name
+// strings here are the exact live names that resolve to those accounts. Ordered so a more
+// specific keyword (e.g. "washout") is tried before a more general one that could also match
+// (e.g. "reefer" alone would otherwise catch "reefer washout" and misfile it as reefer fuel).
+// Each entry's `reimb` name is used only for a line whose isReimbursementSurvivor is true (the
+// rare case where a reimbursement-marked line is the ONLY representation of that cost — see
+// dedupeCompanyExpenses); when no dedicated reimbursement item exists for a category, `reimb` is
+// omitted and such a line REFUSES rather than posting to the regular cost item under a guess.
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+type ExpenseItemAlias = {
+  test: (haystack: string) => boolean;
+  regular: string | ((haystack: string) => string);
+  reimb?: string;
+};
+const EXPENSE_ITEM_ALIASES: ExpenseItemAlias[] = [
+  { test: (h) => /\bscale\b/.test(h), regular: "OTR-Scale Expense", reimb: "Driver Reimbursement-Scale Expense" },
+  {
+    test: (h) => /\bwash\s*out\b/.test(h),
+    regular: "Reefer-Trailer Washout Expense",
+  },
+  {
+    test: (h) => /\btoll\b/.test(h),
+    regular: (h) => (/\bmex(ico)?\b/.test(h) ? "Highway Toll Expense-Mexico" : "Highway Toll Expense-USA"),
+    reimb: "Driver Reimbursement-TPE-Toll Expense",
+  },
+  { test: (h) => /\bpark(ing)?\b/.test(h), regular: "OTR-Parking Expense" },
+  { test: (h) => /\blumper\b/.test(h), regular: "Warehouse Lumper Expense", reimb: "Driver Reimbursement Warehouse-Lumper Fee" },
+  {
+    test: (h) => /\btires?\b/.test(h) && /\b(trailer|reefer|flatbed)\b/.test(h),
+    regular: "Road Service-Trailer Tire Expense",
+  },
+  { test: (h) => /\btires?\b/.test(h), regular: "Road Service-Truck Tire Expense" },
+  {
+    test: (h) => /\b(repair|mechanic)\b/.test(h) && /\b(trailer|reefer|flatbed)\b/.test(h),
+    regular: "IH 35-Internal-Trailer Repair & Maintenance",
+  },
+  { test: (h) => /\b(repair|mechanic)\b/.test(h), regular: "Road Service-Truck Repair Expense" },
+  { test: (h) => /\btools?\b/.test(h), regular: "OTR-Maintenance-Tools", reimb: "Driver Reimbursement-OTR-Maintenance, Oils, Additives" },
+  {
+    test: (h) => /\b(oil|additives?|antifreeze)\b/.test(h),
+    regular: "OTR-Additives, Oil, Antifreeze",
+    reimb: "Driver Reimbursement-OTR-Maintenance, Oils, Additives",
+  },
+  { test: (h) => /\bdef\b/.test(h), regular: "Fuel-DEF-Diesel Exhaust Fluid", reimb: "Driver Reimbursement-Fuel Def" },
+  { test: (h) => /\breefer\b/.test(h), regular: "Fuel-Reefer-Diesel" },
+];
+
+/**
+ * ROUND 165 order 1 — resolve item_name -> {item_id, expense_account_uuid}, USMCA-scoped first,
+ * then global (operating_company_id IS NULL). No keyword matches, or the matched item has no
+ * default_expense_account_id: REFUSE — never falls back to a default account. Matches against
+ * `description` first (genuine cost lines print real text like "SCALE"/"TOLL"/"WASHOUT" — Lead's
+ * own cited examples), falling back to `raw` for the rare surviving reimbursement line whose
+ * description is the corrupted literal "Drv".
+ */
+async function resolveExpenseItem(
+  client: QueryableClient,
+  operatingCompanyId: string,
+  line: SeedPlanLoad["expenseLines"][number]
+): Promise<{ itemId: string; expenseAccountId: string; itemName: string }> {
+  const haystack = `${line.description} ${line.raw}`.toLowerCase();
+  const alias = EXPENSE_ITEM_ALIASES.find((a) => a.test(haystack));
+  if (!alias) {
+    throw new ResolveOrThrowError(
+      `resolveExpenseItem: no item alias matches expense description "${line.description}" (${line.amountCents}c) — refusing rather than posting to a default; add a real alias or resolve by hand`
+    );
+  }
+  const regularName = typeof alias.regular === "function" ? alias.regular(haystack) : alias.regular;
+  const itemName = line.isReimbursementSurvivor ? alias.reimb ?? regularName : regularName;
+  if (line.isReimbursementSurvivor && !alias.reimb) {
+    throw new ResolveOrThrowError(
+      `resolveExpenseItem: "${line.description}" is a reimbursement-only line (no genuine sibling on the document) but its alias category has no dedicated reimbursement item — refusing rather than booking it as a regular cost under a guess`
+    );
+  }
+
+  const res = await client.query<{ id: string; expense_account_id: string | null }>(
+    `SELECT id::text, default_expense_account_id::text AS expense_account_id
+       FROM catalogs.items
+      WHERE item_name = $2 AND (operating_company_id = $1::uuid OR operating_company_id IS NULL)
+      ORDER BY (operating_company_id = $1::uuid) DESC
+      LIMIT 1`,
+    [operatingCompanyId, itemName]
+  );
+  const row = res.rows[0];
+  if (!row || !row.expense_account_id) {
+    throw new ResolveOrThrowError(
+      `resolveExpenseItem: catalogs.items "${itemName}" not found or has no default_expense_account_id for company ${operatingCompanyId} — refusing rather than posting to a default`
+    );
+  }
+  return { itemId: row.id, expenseAccountId: row.expense_account_id, itemName };
+}
+
 // STEP 4 — accounting.expenses + expense_lines + expense_attribution.expense_load_links. ONE
 // EXPENSES ROW PER expenses[] ENTRY, load_id set, expense_number on the link row set to the
 // LOAD'S load_number exactly (structural assertion D checks this literal equality — never a
 // generated expense display id).
+//
+// ROUND 165 order 1 — expense_lines.expense_account_uuid / item_id are now ALWAYS set via
+// resolveExpenseItem; a line whose item/account cannot be resolved throws rather than posting
+// anywhere (never a default, never 5000 Fuel & Diesel).
+//
+// ROUND 165 order 3 — DEF/reefer is never booked as a second, regular expense when a card fuel
+// expense (accounting.expenses.source_fuel_transaction_id IS NOT NULL, the LAW 4 record) already
+// exists for the same load and amount. That card-fuel path is a separate ingestion
+// (fuel-expense-document.service.ts), not this seeder — this is a read-before-write guard against
+// it, not a second writer. Returns null (a genuine, expected skip, not an error) when it applies.
 async function seedExpense(
   client: QueryableClient,
   operatingCompanyId: string,
@@ -646,7 +838,7 @@ async function seedExpense(
   loadId: string,
   loadNumber: string,
   line: SeedPlanLoad["expenseLines"][number]
-): Promise<string> {
+): Promise<string | null> {
   const existing = await client.query<{ id: string }>(
     `SELECT e.id::text FROM accounting.expenses e
       JOIN expense_attribution.expense_load_links l ON l.expense_source = 'accounting' AND l.expense_id = e.id
@@ -656,6 +848,17 @@ async function seedExpense(
     [operatingCompanyId, loadId, line.date, line.amountCents, line.description]
   );
   if (existing.rows[0]) return existing.rows[0].id;
+
+  const cardFuelDupe = await client.query<{ id: string }>(
+    `SELECT id::text FROM accounting.expenses
+      WHERE operating_company_id = $1::uuid AND load_id = $2::uuid AND total_amount_cents = $3
+        AND source_fuel_transaction_id IS NOT NULL AND voided_at IS NULL
+      LIMIT 1`,
+    [operatingCompanyId, loadId, line.amountCents]
+  );
+  if (cardFuelDupe.rows[0]) return null;
+
+  const item = await resolveExpenseItem(client, operatingCompanyId, line);
 
   const vendorId = await resolveByName(client, "mdata.vendors", "name", operatingCompanyId, line.vendor).catch(() => null);
 
@@ -676,9 +879,12 @@ async function seedExpense(
   const expenseId = expense.rows[0].id;
 
   await client.query(
-    `INSERT INTO accounting.expense_lines (operating_company_id, expense_id, line_sequence, amount, amount_cents, description, load_id, load_required)
-     VALUES ($1::uuid, $2::uuid, 1, $3, $4, $5, $6::uuid, true)`,
-    [operatingCompanyId, expenseId, line.amountCents / 100, line.amountCents, line.description, loadId]
+    `INSERT INTO accounting.expense_lines (
+       operating_company_id, expense_id, line_sequence, amount, amount_cents, description, load_id, load_required,
+       expense_account_uuid, item_id
+     )
+     VALUES ($1::uuid, $2::uuid, 1, $3, $4, $5, $6::uuid, true, $7::uuid, $8::uuid)`,
+    [operatingCompanyId, expenseId, line.amountCents / 100, line.amountCents, line.description, loadId, item.expenseAccountId, item.itemId]
   );
 
   const seq = await client.query<{ last_seq: number }>(
@@ -697,7 +903,7 @@ async function seedExpense(
     [operatingCompanyId, expenseId, loadId, loadNumber, seq.rows[0].last_seq, actorUserId]
   );
 
-  await appendCrudAudit(client, actorUserId, "accounting.expense.alwaystrack_seed", { operating_company_id: operatingCompanyId, expense_id: expenseId, load_id: loadId }, "info", "SEED-SETTLEMENT-DOCUMENT-04");
+  await appendCrudAudit(client, actorUserId, "accounting.expense.alwaystrack_seed", { operating_company_id: operatingCompanyId, expense_id: expenseId, load_id: loadId, item_name: item.itemName }, "info", "SEED-SETTLEMENT-DOCUMENT-04");
   return expenseId;
 }
 
@@ -855,6 +1061,14 @@ export async function seedSettlementDocument(
     const thisLoadExpenseIds: string[] = [];
     for (const expenseLine of planLoad.expenseLines) {
       const expenseId = await seedExpense(client, operatingCompanyId, actorUserId, loadId, planLoad.loadNumber, expenseLine);
+      // ROUND 165 order 3 — null is a genuine, expected skip (a card fuel expense already covers
+      // this exact load+amount), not an error; nothing to post, nothing to record as created.
+      if (expenseId === null) {
+        warnings.push(
+          `skipped a regular expense for load ${planLoad.loadNumber} (${expenseLine.amountCents}c, "${expenseLine.description}") — a card fuel expense already exists for the same load and amount`
+        );
+        continue;
+      }
       thisLoadExpenseIds.push(expenseId);
       expenseIds.push(expenseId);
     }

@@ -376,6 +376,17 @@ const GUARD_303 = [
 const DATA_WRITE_PATHS = ["db/migrations/", "scripts/ops/"];
 const ONE_SHOT_WRITER_RE = /^scripts\/run-[^/]+-once\.m?[jt]s$/;
 const LIVE_DOMAIN_GUARDS = [
+  // ROUND 165 order 6 — seed-settlement-document.service.ts's expense writer. Both guards are
+  // self-gated report-only via their own *.gate.json (blocking:false) until the Lead's R-164
+  // (AUTH-021) data fix lands; this array only decides WHEN they run, not blocking vs report.
+  [
+    "verify-expense-line-account-matches-item",
+    ["apps/backend/src/feed/", "scripts/verify-expense-line-account-matches-item.gate.json"],
+  ],
+  [
+    "verify-no-fuel-purchase-booked-twice",
+    ["apps/backend/src/feed/", "apps/backend/src/fuel/", "scripts/verify-no-fuel-purchase-booked-twice.gate.json"],
+  ],
   [
     "verify-costs-are-expenses-not-handwritten-jes",
     [
