@@ -1191,3 +1191,23 @@ Why:
 - The fix was drafted and live-verified correct earlier this session, then reverted because it was run without an open AUTH first (self-caught, disclosed in docs/audit/GUARD-WORKORDERS.md and docs/bus/NOW-CC-3.md) — this AUTH closes that gap before re-running the identical, already-tested script. (First attempt at this AUTH raced AUTH-036's number against another seat's own concurrent AUTH-036 for an unrelated scope; renumbered to 037, no content lost.)
 
 — Owner (chat), relayed by CC-3
+
+---
+
+## AUTH-038
+issued_at: 2026-09-25T22:34:43.000Z
+scope: mdata.loads (assigned_primary_driver_id, assigned_unit_id, presettlement_link_id), dispatch.load_assignment_history (insert), driver_finance.driver_bills.driver_id on 7 OPEN never-posted bills, driver_finance.driver_settlements (5 new open pre-settlements P-0001..P-0005; 5817/5818 renumbered to P-0006/P-0007 with source_document_ref NULL; the minted 5819 voided) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), loads 13563 13610 13612 13613 13614 13615 13619
+action: OWNER_AUTH_ID=AUTH-038 tsx scripts/ops/2026-09-25-lead-r189a-current-loads-right-driver.ts (production, no DRY_RUN), one transaction, existing reassignLoadToSettlementInClientTx.
+expires_at: 2026-09-26T00:34:43.000Z
+status: OPEN
+
+Why:
+- Owner, 06:25 PM CT: dispatch shows no current loads.
+- Measured: 7 loads sit on ONE driver (Leonel Noguez, truck T175) and ONE pre-settlement numbered 5819. That number was minted by the engine in R-168.
+- Truth: the owner's AlwaysTrack export, load history report 09-21-26.
+- All 7 drivers are on the same $0.48/mi rate, so the bill amounts are unchanged.
+- Owner, 06:35 PM CT: pre-settlement numbers are EDITABLE and no longer continue AlwaysTrack's sequence. They take the P-series instead.
+
+DRY_RUN 06:45 PM CT: 7 moved, 5 P-series pre-settlements created, 5817/5818 renumbered, 5819 emptied and voided. Trial balance 0.
+
+— Claude Lead
