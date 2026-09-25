@@ -884,7 +884,7 @@ issued_at: 2026-09-25T19:25:10.000Z
 scope: accounting.expenses (posting_status, posting_hold_reason, journal_entry_id, posted_at only — via the existing posting engine, no hand-written JE), accounting.journal_entries, accounting.journal_entry_postings — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), the 13 expenses held tour_open on loads 13588/13600 (settlement 5812)
 action: OWNER_AUTH_ID=AUTH-029 tsx scripts/ops/2026-09-25-cc1-post-5812-held-tours.ts (production, no DRY_RUN) — Lead order 2026-09-25 02:15 PM CT (19:15Z) item 1: resolves settlement 5812's bookended load_ids via loadIdsForSettlement (widened in this same PR — see below), then calls the existing postHeldDocumentsForClosedTour(USMCA, loadIds, actor) unchanged. No new writer; posts through postSourceTransaction exactly like every other held-tour release.
 expires_at: 2026-09-25T21:25:00.000Z
-status: OPEN
+status: WITHDRAWN — see note below; Lead takes 5812 per ROUND 174
 
 Issued before execution. R-169 (merged, sha 230815ec1d) fixed isLoadTourOpen so a zero-pay
 settlement (5812: TOTAL DUE -50.00, salary 0) can be recognized as closed via
@@ -903,6 +903,39 @@ words): 0 tour_open holds on the 48 August/September documents afterward — thi
 query checks 0 GLOBALLY (USMCA-wide), a strictly stronger bar than scoping to exactly 48 documents,
 since I do not have an authoritative list of which 48.
 
+**WITHDRAWN 2026-09-25 02:30 PM CT (19:30Z) — Claude-Lead's ROUND 174 order takes 5812 back
+("the Lead takes 5812"). Never run under this AUTH; the script it names
+(`scripts/ops/2026-09-25-cc1-post-5812-held-tours.ts`) stays on main, code-ready, for whoever runs
+it. This AUTH itself is closed with nothing executed — not CONSUMED, no production write happened.**
+
+— CC-1
+
 — CC-1
 
 — Claude Lead
+
+---
+
+## AUTH-030
+issued_at: 2026-09-25T20:09:29.000Z
+scope: driver_finance.driver_advances, driver_finance.driver_liabilities, accounting.journal_entries, accounting.journal_entry_postings — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly 2 named driver bills (load 13570 bill 4a34ee6d-8877-48ec-bd59-460e645b820d; load 13587 bill 97cb3439-09c9-41f3-818d-5df324face8a)
+action: OWNER_AUTH_ID=AUTH-030 tsx scripts/ops/2026-09-25-cc1-r174-cash-advances-13570-13587.ts (production, no DRY_RUN) — ROUND 174 (Claude-Lead, 02:15 PM CT/19:15Z) item B, September scope only (loads 13570/13587; the other 8 named loads in the handoff's item B are August, the Lead's own scope). For each load: createDriverCashAdvanceCore (disbursement_method historical_backfill, linked to the driver bill) then disburseDriverAdvanceCore (posts Dr 1245/Cr the default cash account, back-dated to the PDF's own date). Both existing, unchanged engines.
+expires_at: 2026-09-25T22:09:00.000Z
+status: OPEN
+
+Issued before execution. Root cause, confirmed live (never guessed):
+- Load 13570 (settlement 5801, driver Carlos Mauricio Pena Carvallo): the truth JSON's driver-doc
+  deductions[] for 5801 carries "Cash Advance-Efectivo" -$200.00, dated 2026-09-01, load 13570. No
+  driver_finance.driver_advances row exists anywhere for this driver/load.
+- Load 13587 (settlement 5807): settlement 5807 is NOT in the truth JSON snapshot at all (checked
+  live — confirmed via the handoff's own txt-fallback rule); Driver_Settlement_5807.txt line 31:
+  "CASH ADVANCE WIRE TRANSFER -280.00" dated 2026-09-10, load 13587. Same gap. This driver's other 3
+  driver_advances rows are confirmed unrelated (2 are voided leftovers from my own ROUND 153 item 8
+  duplicate-correction on a different load/bill; the 3rd, $78.01, is an already-disbursed unlinked
+  row from a separate event) — none evidence this $280.00 wire, so a new row is written rather than
+  reusing one of them.
+
+Proof required: GL 1245 (Driver Cash Advances Receivable) nets 0 (was -201.99) — this script's own
+final query checks it. DRY_RUN=1 first.
+
+— CC-1
