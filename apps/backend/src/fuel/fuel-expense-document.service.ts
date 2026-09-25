@@ -41,6 +41,11 @@
 
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { nextExpenseDisplayId } from "../accounting/display-id.js";
+import {
+  loadFuelTxnCreditSignals,
+  resolveCompanyDirectCreditPreference,
+} from "../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
+import { resolveCompanyDirectCreditAccount } from "../accounting/fuel-posting/poster.service.js";
 
 export type QueryableClient = {
   query: <T = Record<string, unknown>>(
@@ -244,6 +249,27 @@ export async function createExpenseFromFuelTransaction(
     new Date(`${txnDate}T00:00:00.000Z`),
   );
 
+  // ---- 4b. R-153.6/153.7: RESOLVE THE CARD-RAIL PAYMENT ACCOUNT. -------------------------
+  // Only needed for a fresh (non-adopted) draft -- an adopted document points at a JE that
+  // already has its own credit leg, so its payment_account_uuid is descriptive metadata here,
+  // not a posting input; still worth setting so the document is honest about the rail either way.
+  const creditSignals = await loadFuelTxnCreditSignals(client as never, input.operating_company_id, fuel.id);
+  const creditPreference = resolveCompanyDirectCreditPreference(
+    {
+      operating_company_id: input.operating_company_id,
+      fuel_transaction_id: fuel.id,
+      fuel_type: fuel.fuel_type ?? "diesel",
+      transaction_at: fuel.transaction_at ?? fuel.purchased_at ?? txnDate,
+      amount_cents: amountCents,
+    },
+    creditSignals,
+  );
+  const { account_id: paymentAccountId } = await resolveCompanyDirectCreditAccount(
+    client as never,
+    input.operating_company_id,
+    creditPreference,
+  );
+
   // ---- 5. WRITE THE DOCUMENT. STATUS 'draft' ON PURPOSE. ---------------------------------
   // A backfilled document is not posted by the act of existing. The existing expense posting
   // path posts it, applies the category account, and writes the GL — unchanged, so no new
@@ -253,10 +279,10 @@ export async function createExpenseFromFuelTransaction(
       INSERT INTO accounting.expenses (
         operating_company_id, vendor_uuid, status, transaction_date, total_amount_cents,
         memo, expense_number, source_fuel_transaction_id, load_id, is_sample_data,
-        journal_entry_id, posted_at
+        journal_entry_id, posted_at, payment_account_uuid
       )
       VALUES ($1::uuid, $2::uuid, $9, $3::date, $4::bigint, $5, $6, $7::uuid, $8::uuid, false,
-              $10::uuid, $11)
+              $10::uuid, $11, $12::uuid)
       RETURNING id::text
     `,
     [
@@ -275,6 +301,9 @@ export async function createExpenseFromFuelTransaction(
       adoptedJeId ? "posted" : "draft",
       adoptedJeId,
       adoptedJeId ? (fuel.purchased_at ?? fuel.transaction_at) : null,
+      // R-153.6/153.7: the card-rail account (Dreamline 2510 / Relay 1295 for USMCA), resolved
+      // above through the SAME function the live poster uses -- never 1090, never a guess.
+      paymentAccountId,
     ],
   );
   const expenseId = inserted.rows[0]!.id;
