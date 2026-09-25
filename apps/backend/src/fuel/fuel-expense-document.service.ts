@@ -83,6 +83,39 @@ export type FuelExpenseDocumentInput = {
   dry_run?: boolean;
 };
 
+// R-169 fix 2 — fuel.fuel_transactions.fuel_type CHECK: 'diesel' | 'def' | 'gas' | 'reefer_diesel' |
+// 'other' (verified live). Only the three the owner's fix names (diesel/DEF/reefer) have a real
+// catalog item today; 'gas'/'other' refuse rather than post to a guessed account.
+const FUEL_TYPE_ITEM_NAME: Record<string, string> = {
+  diesel: "Fuel-Truck Diesel",
+  def: "Fuel-DEF-Diesel Exhaust Fluid",
+  reefer_diesel: "Fuel-Reefer-Diesel",
+};
+
+async function resolveFuelItem(
+  client: QueryableClient,
+  operatingCompanyId: string,
+  fuelType: string | null,
+): Promise<{ itemId: string; expenseAccountId: string; itemName: string } | { refused: string }> {
+  const itemName = fuelType ? FUEL_TYPE_ITEM_NAME[fuelType] : undefined;
+  if (!itemName) {
+    return { refused: `fuel_type "${fuelType}" has no mapped catalogs.items entry — refusing rather than posting to a default (only diesel/def/reefer_diesel are mapped)` };
+  }
+  const res = await client.query<{ id: string; expense_account_id: string | null }>(
+    `SELECT id::text, default_expense_account_id::text AS expense_account_id
+       FROM catalogs.items
+      WHERE item_name = $2 AND (operating_company_id = $1::uuid OR operating_company_id IS NULL)
+      ORDER BY (operating_company_id = $1::uuid) DESC
+      LIMIT 1`,
+    [operatingCompanyId, itemName],
+  );
+  const row = res.rows[0];
+  if (!row || !row.expense_account_id) {
+    return { refused: `catalogs.items "${itemName}" not found or has no default_expense_account_id for company ${operatingCompanyId} — refusing rather than posting to a default` };
+  }
+  return { itemId: row.id, expenseAccountId: row.expense_account_id, itemName };
+}
+
 export type FuelExpenseDocumentOutcome =
   | {
       outcome: "created";
@@ -191,6 +224,15 @@ export async function createExpenseFromFuelTransaction(
       outcome: "refused",
       reason: `fuel transaction ${fuel.id} has neither purchased_at nor transaction_at — an expense must carry a real date`,
     };
+  }
+
+  // R-169 fix 2 — resolved here, before dry_run returns, so a dry-run report also catches a
+  // missing catalog item instead of writing a document that would later fail the ledger rule
+  // "a GL-posted expense's lines must sum to its total" (measured live: R-167 had to hand-add 6
+  // lines this class of gap left behind).
+  const fuelItem = await resolveFuelItem(client, input.operating_company_id, fuel.fuel_type);
+  if ("refused" in fuelItem) {
+    return { outcome: "refused", reason: `fuel transaction ${fuel.id}: ${fuelItem.refused}` };
   }
 
   // Cents is the authoritative spine everywhere in this codebase; the legacy numeric column
@@ -339,7 +381,33 @@ export async function createExpenseFromFuelTransaction(
   );
   const expenseId = inserted.rows[0]!.id;
 
-  // R-168: a load-attributed expense also gets its expense_attribution.expense_load_links row —
+  // R-169 fix 2 — ALWAYS write line 1, adopted or fresh draft alike. Its absence is exactly what
+  // broke the ledger rule "a GL-posted expense's lines must sum to its total" for every adopted
+  // document (measured live: R-167 had to hand-add 6 lines this gap left behind). Dr the fuel
+  // item's own account (resolved above, refuses rather than guessing); load_required mirrors
+  // whether this purchase actually carries a load, same as every other expense_lines writer.
+  await client.query(
+    `
+      INSERT INTO accounting.expense_lines (
+        operating_company_id, expense_id, line_sequence, amount, amount_cents, description,
+        load_id, load_required, expense_account_uuid, item_id
+      )
+      VALUES ($1::uuid, $2::uuid, 1, $3, $4, $5, $6::uuid, $7, $8::uuid, $9::uuid)
+    `,
+    [
+      input.operating_company_id,
+      expenseId,
+      amountCents / 100,
+      amountCents,
+      memo,
+      fuel.load_id,
+      Boolean(fuel.load_id),
+      fuelItem.expenseAccountId,
+      fuelItem.itemId,
+    ],
+  );
+
+  // R-168 — a load-attributed expense also gets its expense_attribution.expense_load_links row —
   // the same thing expenses.routes.ts's own two load-attribution branches write, previously
   // missing entirely from this path (the LV-EXPENSE-NUMBER-NEVER-POPULATED class of gap).
   if (loadAttribution && fuel.load_id) {

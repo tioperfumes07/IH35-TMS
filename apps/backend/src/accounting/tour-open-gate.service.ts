@@ -44,6 +44,17 @@ const CLOSED_TOUR_STATUSES = new Set(["approved", "paid", "cancelled", "closed",
  * Is the given load's tour still open? A load with no driver_bill/settlement link yet is
  * treated as open (the tour hasn't even been assembled, let alone closed) — matching the report
  * script's own `!r.settlement_status || !CLOSED.includes(r.settlement_status)` logic.
+ *
+ * R-169 fix 3 (owner 2026-09-25, measured live on settlement 5812: TOTAL DUE -50.00, salary 0) —
+ * the settlement_lines path alone missed a real close: a zero-pay settlement (driver owes the
+ * company, no salary/mileage line) never earns a driver_finance.settlement_lines row at all, so
+ * the LEFT JOIN chain above finds no settlement and reports the tour open forever, even after the
+ * settlement itself closed. driver_bills.settled_in_settlement_id is stamped directly on the bill
+ * at settlement time (independent of whether that settlement produced any pay line) and is the
+ * more fundamental "which settlement did this load's tour settle into" signal. The tour is closed
+ * when EITHER path resolves to a closed status — this only WIDENS what counts as closed, so an
+ * open tour under the old logic stays open; the settlement_lines path is not removed, only no
+ * longer the sole source of truth.
  */
 export async function isLoadTourOpen(
   client: DbClient | PoolClient,
@@ -61,13 +72,24 @@ export async function isLoadTourOpen(
       WHERE db.operating_company_id = $1::uuid
         AND db.load_id = $2::uuid
         AND db.status <> 'void'
-      ORDER BY ds.status NULLS FIRST
-      LIMIT 1
+
+      UNION ALL
+
+      SELECT ds2.status AS settlement_status
+      FROM driver_finance.driver_bills db2
+      JOIN driver_finance.driver_settlements ds2
+        ON ds2.id = db2.settled_in_settlement_id
+      WHERE db2.operating_company_id = $1::uuid
+        AND db2.load_id = $2::uuid
+        AND db2.status <> 'void'
+        AND db2.settled_in_settlement_id IS NOT NULL
     `,
     [operatingCompanyId, loadId]
   );
-  const status = res.rows[0]?.settlement_status ?? null;
-  return !status || !CLOSED_TOUR_STATUSES.has(status);
+  const statuses = res.rows.map((r) => r.settlement_status).filter((s): s is string => Boolean(s));
+  // Closed if ANY candidate settlement (settlement_lines path or settled_in_settlement_id path)
+  // is closed. No resolved status at all, or every resolved status is non-terminal -> still open.
+  return !statuses.some((s) => CLOSED_TOUR_STATUSES.has(s));
 }
 
 /**
