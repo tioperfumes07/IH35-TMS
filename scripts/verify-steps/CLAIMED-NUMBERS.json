@@ -9104,5 +9104,10 @@
     "claimed_by": "devin-b",
     "claimed_at": "2026-09-24",
     "purpose": "verify-seat-distance-from-main (seat distance from main)"
+  },
+  "11609": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-25",
+    "purpose": "verify-feed-day"
   }
 }
