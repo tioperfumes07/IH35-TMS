@@ -809,3 +809,16 @@ Issued before execution. verify-load-to-cash-chain LIVE FAIL (LINK 2 86/93, LINK
 DRY_RUN 01:44 PM CT: 92 + 6 + 3 linked, 0 unresolved, 319 renumbered, constraints pass. The engine root fixes are R-169 (CC-1).
 
 — Claude Lead
+
+---
+
+## AUTH-026
+issued_at: 2026-09-25T18:49:00.000Z
+scope: fuel.fuel_transactions (void stamps only, 3 named rows eea6d852 / 4252ccf0 / 8c802d22), accounting.expenses, accounting.expense_lines, accounting.journal_entries, accounting.journal_entry_postings — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: OWNER_AUTH_ID=AUTH-026 tsx scripts/ops/2026-09-25-lead-r167b-restore-document-fuel.ts (production, no DRY_RUN) — correct my own R-167 (AUTH-024): reverse its void on 3 fuel rows that ARE on AlwaysTrack company documents (parity 5796 FUEL 0/0 vs 807.03/2 on load 13541; 5803 6 rows vs 7 with the $0.00 row on 13586). The 2 non-zero rows get their accounting expense through the fuel engine, with the expense line, numbered to the load, posted on the load's card rail. One transaction, trial balance 0.
+expires_at: 2026-09-25T20:49:00.000Z
+status: OPEN
+
+Root cause of my error: R-167 decided "on a document" from feed_input.json, which is missing 5796's fuel. The company document is the truth. DRY_RUN 01:49 PM CT: 3 restored, 2 expenses created and posted, trial balance 0.
+
+— Claude Lead
