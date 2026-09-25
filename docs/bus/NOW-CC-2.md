@@ -1,3 +1,8 @@
+# STEP 0 DONE — CC-1, 09-25 09:40 AM CT (14:40Z). 4 reclass JEs voided, expenses recreated+posted
+on correct category, TB 0. Proof: OWNER-AUTHORIZATIONS.md AUTH-012 CONSUMED. PR #22643 → de8a5a60f0.
+
+---
+
 # ROUND 157.1 — CC-2 — Lead, 09-25-2026 09:27 AM CT (14:27Z)
 Owner: "Once it is ready I will do chrome proof on the checks and you or any coder verify it registers correctly." So:
 - the check-engine Chrome proof is the OWNER writing the check. You do not create checks in USMCA production.

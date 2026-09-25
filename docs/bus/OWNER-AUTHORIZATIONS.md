@@ -367,7 +367,7 @@ issued_at: 2026-09-25T14:18:00.000Z
 scope: accounting.journal_entries, accounting.journal_entry_postings, accounting.expenses, accounting.expense_lines — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly 4 named expenses
 action: node scripts/ops/2026-09-25-cc1-r157-step0-reclass-via-writer.ts (run against production, no DRY_RUN) — R-157 STEP 0: for each of EXP-2026-00053/00050/00021/00049, voids the hand-written reclass JE (b699d2ac/6ff6b8fa/9726b25b/5ebb6624) via voidJournalEntry, voids the original expense document via the real void route's own logic (reversePostedSourceTransactionInClientTx + header flip + cascadeVoidChildren + audit), recreates the expense with the correct category (5310/5400/5300/5300) via the real INSERT shape + resolveExpenseCategoryId, and posts it via postSourceTransaction. No new GL math, no new writer -- every step reuses an existing function or a verbatim copy of expenses.routes.ts's own inline logic. Touches no other row.
 expires_at: 2026-09-25T16:18:00.000Z
-status: OPEN
+status: CONSUMED
 
 Issued before execution. Lead R-157 STEP 0 (9:10 AM CT/14:10Z, deadline 15:00Z): "QuickBooks does
 not reclassify an expense with a JE. It edits the expense's category." Live-confirmed before
@@ -375,5 +375,35 @@ writing this: all 4 original expenses are already status='draft'/posting_status=
 their ORIGINAL 9000-posting JE already independently reversed 2026-09-24 ~04:1x-04:2xZ (well
 before this session's own item-9 work) -- so the void step is a header-flip + cascade + audit only,
 no live JE left to reverse on the original. Full derivation in the script's own header comment.
+
+CONSUMED 2026-09-25 09:40 AM CT (14:40Z). Ran twice: real-run rehearsal on Neon branch
+br-spring-frog-akokpgt7 (deleted after) clean/COMMITTED, then production for real, both against the
+exact 4 named expenses only. Two real bugs found+fixed mid-rehearsal before either real run:
+voidJournalEntry needs role="Owner" (canVoid excludes Administrator), and the post step needs
+postSourceTransactionInClientTx not postSourceTransaction (the latter can't see the still-
+uncommitted just-inserted expense row on its own connection). A THIRD bug was found only after
+the production run: the script's step 4 posted a real balanced JE for each new expense but never
+ran the writer's own Step C header-flip (posting_status/posted_at/journal_entry_id) --
+live-verified via an RLS-bypassed read against the confirmed production branch
+(tiny-field-89581227 / br-fancy-credit-akjnd07a). Fixed with a same-authorization follow-up script
+(2026-09-25-cc1-r157-step0-fix-posting-status.ts), also rehearsed dry-run clean before running for
+real.
+
+Live proof, production, 2026-09-25 ~14:2x-14:35Z:
+- 4 reclass JEs voided: b699d2ac/6ff6b8fa/9726b25b/5ebb6624 -> reversal JE ids
+  0f2c79b8-fddc-45db-8a54-199212cdf8db / 102d28cd-92a5-4c83-87d8-b393961fff3d /
+  8790d49e-4f6f-4941-afb6-42bc2cce9815 / 8bea774c-1989-49f4-916a-edf09cd97a85.
+- 4 originals (61d87af3/8f928234/64f936ec/28da7af3) voided, status='void'; each had
+  reversingJeId=null -- confirms no live JE remained to reverse on any original.
+- 4 new expenses recreated + posted:
+  66c8445e-da6b-4012-a2c2-f5ef0238b1c4 (EXP-2026-00053 successor) -> 5310, JE 934df099-7b97-4adb-ae82-15216e200ba8
+  526652a5-b3a5-482e-b27e-bd506817f380 (EXP-2026-00050 successor) -> 5400, JE 55754134-02fb-46f4-af55-ca99bffcce43
+  ba304fcd-f755-418c-9cac-f6911943442d (EXP-2026-00021 successor) -> 5300, JE 1a156562-7766-4101-9b18-d420a1bc58fb
+  38046aeb-47f9-4592-91ce-4a4199f007a0 (EXP-2026-00049 successor) -> 5300, JE 6c69f3be-a8c7-4ee2-ae94-8a9fea06c58c
+  all posting_status='posted', journal_entry_id set (after the corrective fix).
+- USMCA trial balance (bypass_rls read, live): total debit 251,795,629 cents == total credit
+  251,795,629 cents. Balanced.
+- 0 of the 4 reclass JEs remain un-reversed.
+- PR #22643, merged to main as de8a5a60f0.
 
 — CC-1
