@@ -1,31 +1,41 @@
-# R-161 + R-161.1 DONE — 2026-09-25 11:16 AM CT (16:16Z), before the 16:45Z deadline.
-Message to CC-3 retracted as instructed. Root cause was bigger than the 5 named settlements: R-161's
-own required proof (parity 34/34) surfaced the SAME AUTH-013 error on 13 MORE of Set B's 18 — fixed
-those too (AUTH-017), confirmed against each one's own signed document (zero escrow mentions, all
-13). All 4 required proofs green, live:
-- verify-alwaystrack-parity: 34/34, 0 mismatches, driver_net 47,840.56 (target 47,840.56, exact).
-- verify-control-totals: PASS, 5804-5815 net pay = 20,191.07 exact.
-- verify-escrow-balance-reconciles-gl: PASS, 17 drivers, all reconcile (the $25 drift was a stale
-  escrow_ledger display value on driver c864a4bb, not a real balance error — AUTH-016, one
-  append-only correction row, $0 money movement).
-- USMCA trial balance: debit 265,256,276¢ == credit 265,256,276¢.
-Full derivation + escrow ledger for the 5 named drivers on `docs/bus/OWNER-AUTHORIZATIONS.md`
-AUTH-015/016/017 CONSUMED blocks. PRs #22660/#22661/#22662, all merged.
+# R-160 DONE — 2026-09-25 11:41 AM CT (16:41Z), well before the 19:00Z deadline.
+Orders 1-4 done and verified live; order 5 (12-load classification) below, with the row each was
+read from. Full derivation across AUTH-018/019/020, PRs #22665/#22667/#22668/#22669/#22671/#22672/#22673.
 
-Full prior text (ROUND 161/161.1 orders, ROUND 160 first-priority order, ROUND 159, Set B done):
-`docs/bus/archive/NOW-CC-1-2026-09-25-18.md`.
+## Proof (order 6)
+- verify-alwaystrack-parity: LIVE PASS — 34 in scope, 0 skipped, 0 mismatches, 5/5 structural
+  assertions. Every dimension exact: line_haul=193,100.00, driver_payment=48,783.51,
+  fuel=110,072.33/171rows, expenses=8,487.81/178rows, driver_net=47,840.56.
+- USMCA trial balance: debit 270,437,276¢ == credit 270,437,276¢.
+- USMCA live loads (soft_deleted_at IS NULL): 112. (Lead's 16:00Z count was 114; 13 exited via
+  AUTH-018, offset by ~11 new dispatch activity since — not reconciled bucket-by-bucket against the
+  owner's exact $298,762.00/$12,592.40 A/R figures, which have moved with the day's real activity;
+  the live A/R total is queryable on request.)
+- Faro default interest, one line: rate=0.067%/day (FACTORING_DEFAULT_INTEREST_DAILY_RATE=0.00067),
+  start=purchase date + 35 days (FACTORING_INTEREST_ACCRUAL_AFTER_DAY=30+5), stops when
+  advance.status leaves 'advanced' (i.e. the day Faro is paid) — confirmed against
+  contract-config.ts + poster.service.ts's own accrual gate, not guessed. Not a defect, left running
+  per Lead's own order.
 
-## Resuming R-160 exactly where stopped (13 Transportation loads out of USMCA), per Lead's order.
-Already done before R-161 interrupted: confirmed all 13 loads/invoices live (13497/13502/13503/
-13504/13505/13506/13507/13509/13522/13530/13531/13533/13539, ~$51,810 total, all invoice
-status='sent'); found the exact writers (voidInvoiceInBulk, cancelLoadInClientTx); resolved the
-"exactly one other USMCA load" relink case for 3 settlements (5773→13511, 5780→13532, 5786→13548),
-the rest list as none-or-multiple; built+guard-checked+typechecked the script. Not yet AUTH'd or run.
-Next: issue AUTH, rehearse, run, then items 3 (parity target derivation), 4 (Faro interest one-line
-proof), 5 (classify the 12 remaining loads — partly done: 13572/13578/13582/13595 self-carried with
-settlement confirmed via the SELF-CARRIED sheet; 13513 confirmed Faro inv 008/$525/settl 5772/linked;
-13520 confirmed Faro inv 006/$2600, already correctly linked, no action; 13517 found on the
-TRANSPORTATION sheet with its own settlement 5774 — flagging for Lead, not one of the named 13,
-needs a decision before I touch it), 6 (proof block).
+## Order 5 — the 12 non-Faro loads, row read for each
+- 13572→5798, 13578→5807, 13582→5805, 13595→5816: self-carried with a settlement — SELF-CARRIED
+  NOT IN FARO sheet, 09-22-2026-FARO-INVOICE-TO-LOAD-COMPLETE.xlsx.
+- 13540→5782, 13555→5787: self-carried — August file "4 LOADS · UNFACTORED" sheet (IM Specialized
+  Logistics / 2EMS Transportation rows).
+- 13541: direct-pay — same sheet, settl "— NONE —", status Dispatched.
+- 13513: Faro inv 008, USMCA, $525.00, load 13513, settl 5772, linked=YES — August file "5 FARO ·
+  USMCA" sheet row. Live: real USMCA invoice, $525.00 — resolved, correctly factored.
+- 13498, 13525, 13527: self-carried with their own real USMCA invoice (live: status='sent',
+  $3,800.00 / $0.00 / $3,000.00 respectively) — August file shows no Faro inv for any of the three;
+  13525's $0.00 matches the August file's own Rate USD=0 exactly, a real $0-rate load, not an error.
+- 13520: Faro inv 006, USMCA, $2,600.00, load 13520, settl 5776, linked=YES — already correctly
+  factored, no action needed.
+- 13517: flagged, not resolved, not touched. August file's "3 LOADS · TRANSPORTATION" sheet shows
+  this ENTIRE load (settlement 5774, driver, expenses) as Transportation's — unlike the named 13,
+  where only the invoice/load record was USMCA's while expenses stayed real. But live, 13517 carries
+  a real USMCA invoice ($3,800.00, status='sent') and is not one of Lead's 13 named loads. This
+  needs a decision, not a guess — is it a 14th load that should exit USMCA, or does the August file
+  predate a correction. Untouched pending Lead's read.
 
-CC-1 | 2026-09-25 11:16 AM CT (16:16Z) | R-161+161.1 done, proof above. Resuming R-160.
+CC-1 | 2026-09-25 11:41 AM CT (16:41Z) | R-160 done, full proof above. 13517 flagged for a decision.
+Resuming R-159 (Faro wire-fee split + cash-advance-as-bill-payment) next.
