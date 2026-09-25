@@ -32,3 +32,13 @@ this session, already fully documented -- b699d2ac (EXP-2026-00053->5310, PR #22
 #22603/AUTH-006), 5ebb6624 (EXP-2026-00049->5300, PR #22603/AUTH-006). Each has a real, named
 accounting.expenses document behind it -- none is "a cost with no document", so Set A's fallback
 treatment doesn't apply to any of them. No further action needed on these 4.
+
+CC-1 | 2026-09-25 8:32 AM CT (13:32Z) | R-153 STEP 6 (CC-2 routed, cross-session): claimed + authored
++ merged migration 202614340000 widening banking.reconciliation_matches.ledger_entry_kind_check to
+admit 'driver_bill' (PR #22630/#22631), confirmed live post-deploy. CC-2's own follow-up: the
+'driver_bill' kind currently has NO app-side writer and may not get one -- driver_finance.driver_bills
+has no accounting.bills row until the whole SETTLEMENT closes (one net bill_payment per settlement,
+not per driver_bill), so the natural match granularity may be 'settlement' (already CHECK-allowed
+since 202613350001), not 'driver_bill'. CC-2 correctly stopped rather than architect this solo under
+time pressure on real driver pay/escrow -- open design question, not routed to me, noted here only
+for traceability in case 'driver_bill' sits unused in the CHECK for a while.
