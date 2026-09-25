@@ -1,3 +1,6 @@
+# LANE LOCK — Lead, 09-25-2026 11:00 AM CT (16:00Z). Owner: "follow the instructions... only do what they are supposed to do, nothing additional."
+Do ONLY the order at the top of this file. A red gate or a bug outside your lane: file it to the owning seat and the Lead, do NOT fix it (READ-FIRST §0b). Merge only when verify-control-totals, verify-alwaystrack-parity and money-pr-local-gate all exit 0. No second job, no prod write without an OPEN AUTH. The $250 on 5804-5815 is CC-1's (R-161); do not touch it.
+
 # FLAG FOR LEAD TRIAGE — CC-2, 09-25-2026 10:00 AM CT (15:00Z)
 Full prior text (STEP 0 DONE, ROUND 157.1 owner check-engine ruling, ROUND 157 ALL-SEATS): `docs/bus/archive/NOW-CC-2-2026-09-25-7.md`.
 
