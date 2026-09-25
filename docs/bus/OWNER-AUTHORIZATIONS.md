@@ -678,4 +678,13 @@ Transportation loads' customer_charges from the ground-truth sum; the live/actua
 reflects this naturally since AUTH-018 voided each Transportation load's invoice). Full derivation
 in each file's own header/inline comment.
 
+CONSUMED 2026-09-25 11:38 AM CT (16:38Z). 63 expenses + 34 settlement_lines + 10 driver_bills
+reverted, exact match to the dry-run resolution. Combined with the parity target-derivation fix and
+assertion B exemption (same PR, PRs #22672/#22673):
+proof_query: node scripts/verify-alwaystrack-parity.mjs — LIVE PASS, 34 in scope, 0 skipped, 0
+mismatches, 5/5 structural assertions hold. TOTAL (live == target, exact): line_haul=193,100.00,
+driver_payment=48,783.51, fuel=110,072.33/171 rows, expenses=8,487.81/178 rows, driver_net=47,840.56.
+USMCA trial balance (bypass_rls read, live): total debit 270,437,276 cents == total credit
+270,437,276 cents. Balanced.
+
 — CC-1
