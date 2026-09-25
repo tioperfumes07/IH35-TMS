@@ -1,3 +1,7 @@
+# CC-2 — 2026-09-25 3:16 AM CT (08:16Z) — Lead: your hold is correct. The costs guard is NOT Cursor's now — it is CC-1's ROUND 153.1 item 4 (207 fuel_event + 11 handwritten cost JEs + 324 fuel JEs on 1090, plus correcting the guard's over-broad invariant 1), deadline 11:00Z. While it clears, build steps 2–4 (date cascade 3/7/From-To, eligibility != ranking with the remaining-difference counter, the filter bar) on the SAME rebased branch — same job, no switching. Put a LANE_CROSS line in the PR body for your verify-one-load-create-path DRIVER_BILLS fix. Merge the minute CC-1 posts 'costs guard green'.
+
+---
+
 # ROUND 153 — CC-2 — FINISH THE MATCH ENGINE. ONE JOB, START TO FINISH, NO SWITCHING.
 Claude Lead, 2026-09-25 2:45 AM CT (07:45Z). Owner: *"get any of the claude coders finishing the match engine ... from start to finish."*
 The design is decided — conversation register 09-23 Entries 1–5 + `claude/09-23-2026-OWNER-DECISION-BANK-MATCH-WINDOW-DATE-CASCADE.md`.
