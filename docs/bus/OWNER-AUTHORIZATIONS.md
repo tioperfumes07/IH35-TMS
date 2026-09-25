@@ -976,7 +976,7 @@ action: OWNER_AUTH_ID=AUTH-032 tsx scripts/ops/2026-09-25-lead-r178-fuel-dates-t
   - it is posted with postSourceTransactionInClientTx and read back: JE date = PDF date, Dr = the same item account, Cr = the same card.
   The run commits only if the trial balance nets 0.
 expires_at: 2026-09-25T22:55:00.000Z
-status: OPEN
+status: CONSUMED — see the CONSUMED note below
 
 Why:
 - Root cause: feed-settlement-day.mts dated every fuel purchase and expense with the load's delivery date. Fixed in R-177, PR #22713.
@@ -1077,7 +1077,7 @@ action: two scripts, run in this order, each its own transaction:
   - Only where the field is empty or a feeder placeholder (AT-dddd-ddddd). Never overwrites a real W.O.
   - 13545 and 13547 are reported, not changed: their W.O.s are crossed against the cross-reference.
 expires_at: 2026-09-25T23:40:00.000Z
-status: OPEN
+status: CONSUMED — see the CONSUMED note below
 
 Why:
 - LAW 4: an expense credits the card it was bought on.
@@ -1086,6 +1086,8 @@ Why:
 - The Faro match key is PO → W.O. (closed reconciliation doc §5). With the W.O.s filled in, 80+ of 89 Faro rows match on the key instead of on a spreadsheet.
 
 — Claude Lead
+
+**CONSUMED 2026-09-25 (Claude-Lead).** COMMITTED twice under this AUTH: R-179 (scripts/ops/2026-09-25-lead-r179-reissue-cash-credited-company-expenses.ts) — 57 company expenses that credited 1000 cash reversed on their original dates and reissued crediting the card rail (1 unresolvable row, 13541-3, excluded and later fixed under AUTH-039); R-182 (scripts/ops/2026-09-25-lead-r182-load-wo-from-faro-po.ts) — 38 loads received customer_wo_number from the Faro PO per the FARO INVOICE -> LOAD truth map; Faro tie 77/89 after, 13545/13547 crossed W.O. reported. TB net 0 on both.
 
 ## AUTH-035
 issued_at: 2026-09-25T21:51:17.000Z
@@ -1163,7 +1165,7 @@ issued_at: 2026-09-25T22:18:46.000Z
 scope: mdata.driver_samsara_accounts.driver_id on the 56 rows that point at TRANSPORTATION driver records — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: OWNER_AUTH_ID=AUTH-036 tsx scripts/ops/2026-09-25-lead-r188-samsara-map-usmca.ts (production, no DRY_RUN), one transaction. Each row is repointed to its single USMCA twin driver (same Samsara id), with an audit row per row. Commits only if 0 USMCA drivers are left unmapped.
 expires_at: 2026-09-26T00:18:46.000Z
-status: OPEN
+status: CONSUMED — see the CONSUMED note below
 
 Why:
 - The Samsara map (Devin-B R-181.1 step 0, PR #22739) backfilled 56 of its 95 rows onto TRANSPORTATION (a frozen entity) driver records. The same human exists in both companies with the same Samsara id, and UNIQUE(samsara_driver_id) let the TRANSP row win.
@@ -1174,6 +1176,8 @@ Why:
 DRY_RUN 05:57 PM CT: 56 repointed, all 95 rows USMCA, 0 unmapped.
 
 — Claude Lead
+
+**CONSUMED 2026-09-25 (Claude-Lead).** COMMITTED: R-188 (scripts/ops/2026-09-25-lead-r188-samsara-map-usmca.ts) — the 56 mdata.driver_samsara_accounts rows Devin-B's step 0 wrote onto TRANSPORTATION drivers repointed to their USMCA twins; readers moved to the map (PR #22746). Samsara map guard LIVE PASS 5/5, scoped to USMCA.
 
 ## AUTH-037
 issued_at: 2026-09-25T22:20:00.000Z
@@ -1199,7 +1203,7 @@ issued_at: 2026-09-25T22:34:43.000Z
 scope: mdata.loads (assigned_primary_driver_id, assigned_unit_id, presettlement_link_id), dispatch.load_assignment_history (insert), driver_finance.driver_bills.driver_id on 7 OPEN never-posted bills, driver_finance.driver_settlements (5 new open pre-settlements P-0001..P-0005; 5817/5818 renumbered to P-0006/P-0007 with source_document_ref NULL; the minted 5819 voided) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), loads 13563 13610 13612 13613 13614 13615 13619
 action: OWNER_AUTH_ID=AUTH-038 tsx scripts/ops/2026-09-25-lead-r189a-current-loads-right-driver.ts (production, no DRY_RUN), one transaction, existing reassignLoadToSettlementInClientTx.
 expires_at: 2026-09-26T00:34:43.000Z
-status: OPEN
+status: CONSUMED — see the CONSUMED note below
 
 Why:
 - Owner, 06:25 PM CT: dispatch shows no current loads.
@@ -1214,12 +1218,14 @@ DRY_RUN 06:45 PM CT: 7 moved, 5 P-series pre-settlements created, 5817/5818 renu
 
 ---
 
+**CONSUMED 2026-09-25 (Claude-Lead).** COMMITTED: R-189A (scripts/ops/2026-09-25-lead-r189a-current-loads-right-driver.ts) — 7 current loads moved to the AlwaysTrack report's driver/unit (load_assignment_history 'manual_reassign'), driver bills' driver corrected ($0.48 rate), loads reassigned to P-series pre-settlements (source_document_ref NULL), minted 5817/5818 renumbered P-0006/P-0007, minted shell '5819' voided. TB net 0.
+
 ## AUTH-039
 issued_at: 2026-09-25T22:50:28.000Z
 scope: accounting.expenses, accounting.expense_lines, expense_attribution.expense_load_links, expense_attribution.expense_seq_per_load, accounting.journal_entries, accounting.journal_entry_postings — USMCA 5c854333-6ea5-4faa-af31-67cb272fef80, expense 13541-3 only
 action: OWNER_AUTH_ID=AUTH-039 tsx scripts/ops/2026-09-25-lead-r190-13541-dreamline-fuel-and-scale.ts. 13541-3 (15.25, posted Cr 1000 cash, no item) is reversed on its date, voided, and reissued as OTR-Scale Expense on the load's card rail.
 expires_at: 2026-09-26T00:50:28.000Z
-status: OPEN
+status: CONSUMED — see the CONSUMED note below
 
 Evidence: the Dreamline statement 0807-0921 row 2026-08-26 LOVES #471 NATALIA TX, T171, qty 1, price 0.00, 15.25 (a scale). The 5796 PDF prints no expenses.
 
@@ -1230,6 +1236,8 @@ R-187 G5 is resolved by the PDF flags: 13516-8 (5775) and 13568-13 (5794) match 
 DRY_RUN 07:25 PM CT: Dr 5300 15.25 / Cr 1295 15.25, trial balance 0.
 
 — Claude Lead
+
+**CONSUMED 2026-09-25 (Claude-Lead).** COMMITTED: R-190 (scripts/ops/2026-09-25-lead-r190-13541-dreamline-fuel-and-scale.ts) — 13541-3 reversed and reissued as 13541-10, Dr 5300 $15.25 / Cr 1295 (the diesel already existed). TB net 0.
 
 ## AUTH-040
 issued_at: 2026-09-25T22:53:20.000Z
@@ -1303,7 +1311,7 @@ issued_at: 2026-09-25T23:30:00.000Z
 scope: driver_finance.driver_settlements (exactly ecb8b27f-2a5d-434a-8b3f-a2a921c5dd7f, display P-0006), mdata.loads.presettlement_link_id (exactly load 90007, f465285d-fe9a-4b24-bcd7-e5a03cdadc9e), driver_finance.driver_bills.settled_in_settlement_id (exactly bill 33fed2b1-b4b2-41b3-a133-6f84536fcb91, $0.00, 0 GL postings) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: DRY_RUN=1 npx tsx scripts/ops/2026-09-25-lead-r195-void-minted-presettlement-p0006.ts first, then OWNER_AUTH_ID=AUTH-041 npx tsx scripts/ops/2026-09-25-lead-r195-void-minted-presettlement-p0006.ts
 expires_at: 2026-09-26T03:30:00.000Z
-status: OPEN
+status: CONSUMED — see the CONSUMED note below
 
 R-195 (Claude-Lead, under the owner's standing full authorization). P-0006 is the pre-settlement the
 AlwaysTrack-sequence allocator minted as "5817" during the Lead's own R-168 engine call (renumbered P-0006 in
@@ -1314,3 +1322,6 @@ the load link. Load 90007 itself is NOT cancelled here. DRY_RUN passed: TB net 0
 No money row is created, changed or reversed.
 
 — Claude-Lead
+
+**CONSUMED 2026-09-25 06:38 PM CT (Claude-Lead).** COMMITTED: R-195 — P-0006 (ecb8b27f) status cancelled + voided; bill 33fed2b1 ($0.00, 0 postings) detached; load 90007 unlinked. Read-back: status cancelled, 0 loads/bills linked. TB net 0. verify-no-empty-zero-settlement LIVE PASS after (was FAIL on this id). Load 90007 itself untouched (ROUND 153 ITEM1).
+
