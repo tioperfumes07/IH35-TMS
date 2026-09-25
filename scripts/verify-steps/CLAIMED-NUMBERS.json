@@ -9139,5 +9139,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-25",
     "purpose": "verify-load-views-current-trip-only"
+  },
+  "11633": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-25",
+    "purpose": "verify-load-cost-rollup-lateral-no-alias-shadow"
   }
 }
