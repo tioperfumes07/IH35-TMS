@@ -72,6 +72,16 @@ function isValidCategoryKind(kind: string): boolean {
   return validKindsCache.has(kind);
 }
 
+async function assertActiveAccount(client: DbClient, operatingCompanyId: string, accountId: string): Promise<string> {
+  const result = await client.query<{ id: string }>(
+    `SELECT id::text AS id FROM catalogs.accounts
+     WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
+    [accountId, operatingCompanyId],
+  );
+  if (!result.rows[0]) throw new BillLineAccountError("CATEGORY_MAPPING_MISSING", "Resolved account is inactive or outside the operating company");
+  return result.rows[0].id;
+}
+
 export async function resolveBillLineDebitAccount(
   client: DbClient,
   operatingCompanyId: string,
@@ -80,7 +90,7 @@ export async function resolveBillLineDebitAccount(
   // Tier 1 — explicit per-line account override.
   const explicit = line.explicit_account_id?.trim() || null;
   if (explicit) {
-    return { account_id: explicit, method: "bill_line_explicit_account", category_label: "Per-line account override" };
+    return { account_id: await assertActiveAccount(client, operatingCompanyId, explicit), method: "bill_line_explicit_account", category_label: "Per-line account override" };
   }
 
   const kind = line.category_kind?.trim() || null;
@@ -95,7 +105,7 @@ export async function resolveBillLineDebitAccount(
         "uncategorized_expense role (QBO-25) is not mapped — cannot place an uncategorized line (FAIL LOUD)"
       );
     }
-    return { account_id: uncategorized, method: "uncategorized_expense_role", category_label: "Uncategorized expense (QBO-25)" };
+    return { account_id: await assertActiveAccount(client, operatingCompanyId, uncategorized), method: "uncategorized_expense_role", category_label: "Uncategorized expense (QBO-25)" };
   }
 
   // A partially-specified category is a data error — surface it, never silently bucket to uncategorized.
@@ -115,7 +125,7 @@ export async function resolveBillLineDebitAccount(
   // Tier 2 — category present → expense_category_account_map. Tier 4 — present but unmapped → FAIL LOUD.
   try {
     const mapped = await resolveAccountForCategory(operatingCompanyId, kind as ExpenseCategoryMapKind, code);
-    return { account_id: mapped.account_id, method: "expense_category_map", category_label: `${kind}/${code}` };
+    return { account_id: await assertActiveAccount(client, operatingCompanyId, mapped.account_id), method: "expense_category_map", category_label: `${kind}/${code}` };
   } catch (err) {
     if (err instanceof ExpenseCategoryMapResolutionError) {
       throw new BillLineAccountError(
