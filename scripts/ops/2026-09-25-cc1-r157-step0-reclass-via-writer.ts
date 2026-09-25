@@ -55,7 +55,7 @@ const TARGETS: Target[] = [
 
 async function main() {
   const { voidJournalEntry } = await import("../../apps/backend/src/accounting/journal-entries.service.js");
-  const { reversePostedSourceTransactionInClientTx, postSourceTransaction, PostingEngineError } = await import(
+  const { reversePostedSourceTransactionInClientTx, postSourceTransactionInClientTx, PostingEngineError } = await import(
     "../../apps/backend/src/accounting/posting-engine.service.js"
   );
   const { todayIso, canVoid } = await import("../../apps/backend/src/accounting/void.service.js");
@@ -79,7 +79,10 @@ async function main() {
         console.log(`${t.expenseNumber}: reclass JE ${t.reclassJeId} already reversed -- skipping`);
         continue;
       }
-      const jeVoidRes = await voidJournalEntry(USMCA_ID, t.reclassJeId, "R-157 STEP 0 -- superseded by expense-category recreate, not a hand-written correcting JE", { userId: SYSTEM_ACTOR_USER_ID, role: "Administrator" });
+      // canVoid (void.service.ts) only allows role Owner or Accountant -- Administrator is
+      // deliberately excluded there (unlike createJournalEntryOnClient's own role check
+      // elsewhere in this session). Caught live on the first real-run rehearsal attempt.
+      const jeVoidRes = await voidJournalEntry(USMCA_ID, t.reclassJeId, "R-157 STEP 0 -- superseded by expense-category recreate, not a hand-written correcting JE", { userId: SYSTEM_ACTOR_USER_ID, role: "Owner" });
       console.log(`${t.expenseNumber}: voided reclass JE ${t.reclassJeId} -> ${JSON.stringify(jeVoidRes)}`);
     }
   } else {
@@ -201,8 +204,13 @@ async function main() {
         [newExpenseId, o.total_amount_cents, (Number(o.total_amount_cents) / 100).toFixed(2), o.memo, t.correctAccountId, expenseCategoryId]
       );
 
-      // 4. Post it for real.
-      const posted = await postSourceTransaction(
+      // 4. Post it for real -- IN-CLIENT variant, same transaction, so it can see the row just
+      // INSERTed above. The non-client postSourceTransaction opens its OWN connection and would
+      // not see this uncommitted insert (confirmed live on the first rehearsal: "Expense not
+      // found" -- exactly the ACCT-F5652-class cross-connection visibility gap this codebase has
+      // already fixed elsewhere).
+      const posted = await postSourceTransactionInClientTx(
+        client,
         { operating_company_id: USMCA_ID, source_transaction_type: "expense", source_transaction_id: newExpenseId },
         { userId: SYSTEM_ACTOR_USER_ID }
       );
