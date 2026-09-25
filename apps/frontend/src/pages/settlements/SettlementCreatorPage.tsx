@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { EntityPicker } from "../../components/EntityPicker";
+import { DatePicker } from "../../components/forms/DatePicker";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { formatUsdCents } from "../../lib/money";
@@ -236,10 +238,10 @@ export function SettlementCreatorPage() {
                 <input className={inputClass} value={trailerNumber} onChange={(e) => setTrailerNumber(e.target.value)} placeholder="equipment #" data-testid="sc-trailer" />
               </Field>
               <Field label="Start date">
-                <input type="date" className={inputClass} value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} data-testid="sc-start" />
+                <DatePicker value={periodStart} onChange={setPeriodStart} className={inputClass} data-testid="sc-start" />
               </Field>
               <Field label="End date">
-                <input type="date" className={inputClass} value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} data-testid="sc-end" />
+                <DatePicker value={periodEnd} onChange={setPeriodEnd} className={inputClass} data-testid="sc-end" />
               </Field>
             </div>
           </Section>
@@ -272,25 +274,23 @@ export function SettlementCreatorPage() {
                     />
                   </Field>
                   <Field label="Pickup date">
-                    <input
-                      type="date"
+                    <DatePicker
                       className={inputClass}
                       value={load.pickup_date ?? ""}
-                      onChange={(e) => {
+                      onChange={(v) => {
                         const next = [...loads];
-                        next[idx] = { ...load, pickup_date: e.target.value };
+                        next[idx] = { ...load, pickup_date: v };
                         setLoads(next);
                       }}
                     />
                   </Field>
                   <Field label="Delivery date">
-                    <input
-                      type="date"
+                    <DatePicker
                       className={inputClass}
                       value={load.delivery_date ?? ""}
-                      onChange={(e) => {
+                      onChange={(v) => {
                         const next = [...loads];
-                        next[idx] = { ...load, delivery_date: e.target.value };
+                        next[idx] = { ...load, delivery_date: v };
                         setLoads(next);
                       }}
                     />
@@ -307,14 +307,15 @@ export function SettlementCreatorPage() {
                     />
                   </Field>
                   <Field label="Rate $/mi">
-                    <input
+                    <MoneyInput
                       className={inputClass}
-                      value={load.line_haul_rate_cents != null ? (load.line_haul_rate_cents / 100).toFixed(2) : ""}
-                      onChange={(e) => {
+                      valueCents={load.line_haul_rate_cents}
+                      onChangeCents={(cents) => {
                         const next = [...loads];
-                        next[idx] = { ...load, line_haul_rate_cents: dollarsToCents(e.target.value) };
+                        next[idx] = { ...load, line_haul_rate_cents: cents };
                         setLoads(next);
                       }}
+                      ariaLabel="Rate dollars per mile"
                     />
                   </Field>
                   <Field label="Factoring">
@@ -333,13 +334,12 @@ export function SettlementCreatorPage() {
                     </select>
                   </Field>
                   <Field label="Date sent to factoring">
-                    <input
-                      type="date"
+                    <DatePicker
                       className={inputClass}
                       value={load.date_sent_to_factoring ?? ""}
-                      onChange={(e) => {
+                      onChange={(v) => {
                         const next = [...loads];
-                        next[idx] = { ...load, date_sent_to_factoring: e.target.value };
+                        next[idx] = { ...load, date_sent_to_factoring: v };
                         setLoads(next);
                       }}
                     />
@@ -356,8 +356,8 @@ export function SettlementCreatorPage() {
             {fuels.map((fuel, idx) => (
               <div key={idx} className="grid grid-cols-2 gap-2 border-t border-[#E5E7EB] pt-2 md:grid-cols-4">
                 <Field label="Date">
-                  <input type="date" className={inputClass} value={fuel.date} onChange={(e) => {
-                    const next = [...fuels]; next[idx] = { ...fuel, date: e.target.value }; setFuels(next);
+                  <DatePicker className={inputClass} value={fuel.date} onChange={(v) => {
+                    const next = [...fuels]; next[idx] = { ...fuel, date: v }; setFuels(next);
                   }} />
                 </Field>
                 <Field label="Vendor">
@@ -371,14 +371,28 @@ export function SettlementCreatorPage() {
                   }} />
                 </Field>
                 <Field label="CPG $">
-                  <input className={inputClass} value={fuel.cpg_cents ? (fuel.cpg_cents / 100).toFixed(3) : ""} onChange={(e) => {
-                    const next = [...fuels]; next[idx] = { ...fuel, cpg_cents: dollarsToCents(e.target.value) }; setFuels(next);
-                  }} />
+                  <MoneyInput
+                    className={inputClass}
+                    valueCents={fuel.cpg_cents || null}
+                    onChangeCents={(cents) => {
+                      const next = [...fuels];
+                      next[idx] = { ...fuel, cpg_cents: cents ?? 0 };
+                      setFuels(next);
+                    }}
+                    ariaLabel="Cents per gallon"
+                  />
                 </Field>
                 <Field label="Receipt $">
-                  <input className={inputClass} value={fuel.receipt_cents != null ? (fuel.receipt_cents / 100).toFixed(2) : ""} onChange={(e) => {
-                    const next = [...fuels]; next[idx] = { ...fuel, receipt_cents: dollarsToCents(e.target.value) }; setFuels(next);
-                  }} />
+                  <MoneyInput
+                    className={inputClass}
+                    valueCents={fuel.receipt_cents}
+                    onChangeCents={(cents) => {
+                      const next = [...fuels];
+                      next[idx] = { ...fuel, receipt_cents: cents };
+                      setFuels(next);
+                    }}
+                    ariaLabel="Fuel receipt amount"
+                  />
                 </Field>
                 <Field label="Card">
                   <select className={inputClass} value={fuel.card} onChange={(e) => {
@@ -421,8 +435,8 @@ export function SettlementCreatorPage() {
             {expenses.map((exp, idx) => (
               <div key={idx} className="grid grid-cols-2 gap-2 border-t border-[#E5E7EB] pt-2 md:grid-cols-4">
                 <Field label="Date">
-                  <input type="date" className={inputClass} value={exp.date} onChange={(e) => {
-                    const next = [...expenses]; next[idx] = { ...exp, date: e.target.value }; setExpenses(next);
+                  <DatePicker className={inputClass} value={exp.date} onChange={(v) => {
+                    const next = [...expenses]; next[idx] = { ...exp, date: v }; setExpenses(next);
                   }} />
                 </Field>
                 <Field label="Item">
@@ -431,9 +445,16 @@ export function SettlementCreatorPage() {
                   }} />
                 </Field>
                 <Field label="Amount $">
-                  <input className={inputClass} value={exp.amount_cents ? (exp.amount_cents / 100).toFixed(2) : ""} onChange={(e) => {
-                    const next = [...expenses]; next[idx] = { ...exp, amount_cents: dollarsToCents(e.target.value) }; setExpenses(next);
-                  }} />
+                  <MoneyInput
+                    className={inputClass}
+                    valueCents={exp.amount_cents || null}
+                    onChangeCents={(cents) => {
+                      const next = [...expenses];
+                      next[idx] = { ...exp, amount_cents: cents ?? 0 };
+                      setExpenses(next);
+                    }}
+                    ariaLabel="Expense amount"
+                  />
                 </Field>
                 <Field label="Load No.">
                   <input className={inputClass} value={exp.load_number ?? ""} onChange={(e) => {
