@@ -1,4 +1,28 @@
 /**
+ * WITHDRAWN 2026-09-25 — DO NOT RUN. See AUTH-033's WITHDRAWN note in docs/bus/OWNER-AUTHORIZATIONS.md.
+ *
+ * This script's entire premise was WRONG: advance 35269c66 (CA-2026-TIE-5801, $200.00) already has
+ * BOTH its issuance (Dr 1245, JE c8e25275, "CA issuance backfill CA-2026-TIE-5801") and its recovery
+ * (Cr 1245, JE ad91e791, "Settlement S-5801 — cash-advance recovery") posted — net $0 for this
+ * advance already. This script's own "existing JE" check below (and the investigation that led to
+ * writing this script) filtered `source_transaction_type = 'driver_advance'`, but the real value
+ * used on these backfilled rows is `'driver_cash_advance'` — a naming mismatch, not a real gap.
+ * Running this script would have posted a THIRD $200.00 debit and put GL 1245 at +$200.00. Caught
+ * live by Claude-Lead before any production run of this corrected version ever executed (an earlier
+ * attempt failed atomically on the resolveAccountForCategory/withLuciaBypass SET-ROLE wall — see
+ * ACCT-F2026092584 — and rolled back with nothing committed).
+ *
+ * Left in place (not deleted) as a record of the mistake and the fix in ACCT-F2026092584 it
+ * produced along the way. Hard-refuses immediately below — do not remove this guard and re-run
+ * without a fresh, independent live re-verification of the ACTUAL current gap (if any).
+ */
+throw new Error(
+  "WITHDRAWN — do not run. Advance 35269c66 already nets $0 on GL 1245 (issuance JE c8e25275 + " +
+    "recovery JE ad91e791, source_transaction_type='driver_cash_advance'). See AUTH-033's WITHDRAWN " +
+    "note in docs/bus/OWNER-AUTHORIZATIONS.md before touching this file again."
+);
+
+/**
  * ROUND 174 item B, load 13570 — CORRECTED PLAN. AUTH-031's original plan (createDriverCashAdvanceCore
  * for a brand-new row) was superseded live: the DRY_RUN under AUTH-031 refused with "driver_bill
  * ...already has a live driver_advances row (35269c66-a8df-4443-a7b5-4f78537d28b3)" — between my

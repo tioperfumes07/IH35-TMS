@@ -1033,6 +1033,33 @@ item, not a partial one. DRY_RUN=1 first.
 
 — CC-1
 
+**WITHDRAWN 2026-09-25 04:39 PM CT (21:39Z) — CC-1, per Claude-Lead's live catch.** DO NOT RUN.
+The DRY_RUN (2:xx PM CT, before this AUTH's own issuance) never actually SUCCEEDED — it hit the
+resolveAccountForCategory / withLuciaBypass SET-ROLE wall (see ACCT-F2026092584) and rolled back
+with nothing committed. Before retrying, Claude-Lead flagged live that advance 35269c66
+(CA-2026-TIE-5801, $200.00) already has BOTH legs posted: issuance Dr 1245 $200.00 (JE c8e25275,
+"CA issuance backfill CA-2026-TIE-5801", dated 2026-09-24) and recovery Cr 1245 $200.00 (JE
+ad91e791, "Settlement S-5801 — cash-advance recovery", dated 2026-09-10) — net $0 for this specific
+advance. My own measurement this whole time missed it because my query filtered
+`source_transaction_type = 'driver_advance'`; the real value on these backfilled rows is
+`'driver_cash_advance'` — a naming mismatch in my own read, not a real gap. Running AUTH-033's
+script would have posted a THIRD $200.00 debit, putting 1245 at +$200.00. Confirmed live myself
+after the Lead's flag (same query, corrected filter): matches exactly.
+
+Re-measured GL 1245's full live net while I was in there: $2,477.95, not $0 as I'd assumed from
+AUTH-030's own note. The gap traces to entries unrelated to 35269c66/load 13570: an unpaired
+$201.99 debit on settlement 5769 (void-reversal with no visible offsetting credit), an unpaired
+extra $200.00 debit on settlement S-5800 (two void-reversal debits found for one recovery credit),
+and the $201.99 reversal of manual JE 374ab2d5 (0379e154) reads as a standalone +$201.99 because my
+query excludes 374ab2d5 itself (reversed_by_je_id set) while still counting its reversal — possibly
+correct bookkeeping, possibly a query-filter artifact on my end; not chased further here since
+AUTH-030/R-176 owns this reconciliation and Lead is already the more thorough eye on it. Full row
+dump pasted to Lead directly. No production write happened under AUTH-033 at any point — script
+creates nothing on its own read-then-refuse path, and its one real production attempt failed
+atomically (BEGIN...ROLLBACK) before this withdrawal.
+
+— CC-1
+
 ---
 
 ## AUTH-034
