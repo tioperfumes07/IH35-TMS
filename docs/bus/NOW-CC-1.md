@@ -16,3 +16,17 @@ no_trailer 534->411. driver_uuid fully resolved. Every remaining row's reason is
 unit assigned" or "load has no trailer in assignment history" -- the load's own dispatch record
 never carries one, nothing guessed. Full 411-row list in the PR body. Moving to D3 now (CC-2's
 AUTH-005 already CONSUMED per PR #22610).
+
+CC-1 | 2026-09-25 6:44 AM CT (11:44Z) | D3 QUESTION before voiding anything (STOP AND REPORT, not
+guessing on a GL void): D3 says "the 11 journal_entry JEs" and cites my own PR #22594 as proof --
+but PR #22594 found 18 settlements with escrow DROPPED entirely (5770,5771,5777,5780,5783,5786,
+5789,5793,5796,S-5797,S-5799,S-5800,S-5802,S-5805,S-5806,S-5808,S-5813,S-5814), not 11. Live
+re-check just now: 55 distinct reversed "Settlement N -- pay-run close" JEs exist total (not 11 or
+18); 42 JEs carry "ACCT-F20260924" in memo. I cannot map "11" onto a specific, confident JE-id list
+without guessing which subset Lead means -- and several settlements were reversed/reposted MORE
+THAN ONCE (5770 x2, S-5804 x2, S-5805 x4, S-5806 x2, S-5807 x2, S-5808 x2, S-5809 x2), so "void the
+original + the wrong repost, re-close once" needs the EXACT right JE per settlement, not a guess.
+Please confirm: is "11" the 18-settlement drop list minus some already-correct subset, or a
+different, narrower set? Which exact JE id per settlement is the one to void when a settlement has
+multiple reposts? Meanwhile: NOT idle -- investigating the void engine and settlement-close-with-
+escrow engine live so I can move the instant this is confirmed.
