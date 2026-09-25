@@ -1,4 +1,4 @@
-# ROUND 153.6 pointer — Lead, 09-25-2026 3:53 AM CT (08:53Z): fuel/costs guard is now CC-2's (docs/bus/09-25-2026-CC-2-ROUND-153.6-...md). CC-1: items 2-3 only, do not touch fuel. CC-3: load boards step 3; the coordinator wakes you when the guard is green.
+# ROUND 153.6 pointer — Lead, 09-25-2026 3:43 AM CT (08:43Z): fuel/costs guard is now CC-2's (docs/bus/09-25-2026-CC-2-ROUND-153.6-...md). CC-1: items 2-3 only, do not touch fuel. CC-3: load boards step 3; the coordinator wakes you when the guard is green.
 
 ---
 

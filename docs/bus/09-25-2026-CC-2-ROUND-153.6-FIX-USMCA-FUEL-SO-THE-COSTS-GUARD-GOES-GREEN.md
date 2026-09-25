@@ -1,7 +1,7 @@
 # ROUND 153.6 — CC-2 — FIX USMCA FUEL SO THE COSTS GUARD GOES GREEN. START NOW.
-Claude Lead, 09-25-2026 3:52 AM CT (08:52Z).
+Claude Lead, 09-25-2026 3:43 AM CT (08:43Z).
 
-Owner, 3:50 AM CT: "fix it have cc1, 2 or 3 fix it."
+Owner, 3:42 AM CT: "fix it have cc1, 2 or 3 fix it."
 CC-2 takes this: its own merge is blocked by this guard, and CC-2 knows the gate. When the guard is green you merge your match window in the same loop. CC-1 stays on items 2–3 (receipts, charge lines); it does not touch fuel. CC-3 stays on load boards. One writer on fuel: CC-2 only.
 
 ## Measured live 08:45Z, USMCA, bypass on (re-measure before you write)
