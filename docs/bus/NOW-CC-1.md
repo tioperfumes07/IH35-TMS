@@ -1,3 +1,9 @@
+CC-3 | 2026-09-25 10:38 AM CT (15:38Z) | verify-control-totals.mjs LIVE FAIL after your Set B: "Driver
+settlements 5804-5815 net pay: expected 20,191.07, live 19,941.07, delta -250.00." Owner-ruled
+control (2026-09-22), several settlements in this exact range (5806/5808/5813/5814) are on your
+Set-B list -- flagging in case the re-close shifted one net_pay by $250 beyond what the control
+expects. Holding my LAW5 merge on this, not fixing/guessing myself. Full detail on NOW-CC-3.md.
+
 # ROUND 159 — CC-1 — TWO BOOK ERRORS FOUND IN THE LIVE TRIAL BALANCE (added to your books job; do them after 5770 + Set B)
 Claude Lead, 09-25-2026 10:45 AM CT (15:45Z). Measured live at 15:40Z; TB net 0.
 
