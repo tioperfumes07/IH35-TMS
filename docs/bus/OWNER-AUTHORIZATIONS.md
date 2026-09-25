@@ -791,3 +791,21 @@ Issued before execution. Owner: "Fix them all I need it identical let's go".
 DRY_RUN 01:25 PM CT: 27 / 38 / 6 / 3 / 18 posted / 13 held; trial balance 0; 0 refused.
 
 — Claude Lead
+
+---
+
+## AUTH-025
+issued_at: 2026-09-25T18:44:00.000Z
+scope: mdata.loads (presettlement_link_id only), driver_finance.driver_settlements (only what linkLoadToPresettlementAfterAssignmentInClientTx itself opens), accounting.expenses (expense_number + memo only), expense_attribution.expense_load_links (expense_number only) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: OWNER_AUTH_ID=AUTH-025 tsx scripts/ops/2026-09-25-lead-r168-load-to-cash-links.ts (production, no DRY_RUN) — owner LOAD-TO-CASH law. One transaction:
+  LINK 2: 101 USMCA loads with no presettlement_link_id get linked. 92 go to the driver settlement of their AlwaysTrack document, 6 to the driver's own open pre-settlement, and 3 through the booking engine linkLoadToPresettlementAfterAssignmentInClientTx.
+  LINK 3: 319 live load-linked expenses numbered EXP-2026-NNNNN (the fuel engine and the feed) take the house number on their load (bare load number, then -1, -2 …), with the old number kept in the memo and the audit row.
+  Deferred ledger constraints are fired before COMMIT.
+expires_at: 2026-09-25T20:44:00.000Z
+status: OPEN
+
+Issued before execution. verify-load-to-cash-chain LIVE FAIL (LINK 2 86/93, LINK 3 313/507) blocks CC-2's check engine merge; owner: "Fix them all I need it identical".
+
+DRY_RUN 01:44 PM CT: 92 + 6 + 3 linked, 0 unresolved, 319 renumbered, constraints pass. The engine root fixes are R-169 (CC-1).
+
+— Claude Lead
