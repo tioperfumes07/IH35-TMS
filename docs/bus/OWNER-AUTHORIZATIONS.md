@@ -359,3 +359,21 @@ sequencing is cleared; rehearsing on Neon before touching production either way.
 in the script's own header comment.
 
 — CC-1
+
+---
+
+## AUTH-012
+issued_at: 2026-09-25T14:18:00.000Z
+scope: accounting.journal_entries, accounting.journal_entry_postings, accounting.expenses, accounting.expense_lines — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly 4 named expenses
+action: node scripts/ops/2026-09-25-cc1-r157-step0-reclass-via-writer.ts (run against production, no DRY_RUN) — R-157 STEP 0: for each of EXP-2026-00053/00050/00021/00049, voids the hand-written reclass JE (b699d2ac/6ff6b8fa/9726b25b/5ebb6624) via voidJournalEntry, voids the original expense document via the real void route's own logic (reversePostedSourceTransactionInClientTx + header flip + cascadeVoidChildren + audit), recreates the expense with the correct category (5310/5400/5300/5300) via the real INSERT shape + resolveExpenseCategoryId, and posts it via postSourceTransaction. No new GL math, no new writer -- every step reuses an existing function or a verbatim copy of expenses.routes.ts's own inline logic. Touches no other row.
+expires_at: 2026-09-25T16:18:00.000Z
+status: OPEN
+
+Issued before execution. Lead R-157 STEP 0 (9:10 AM CT/14:10Z, deadline 15:00Z): "QuickBooks does
+not reclassify an expense with a JE. It edits the expense's category." Live-confirmed before
+writing this: all 4 original expenses are already status='draft'/posting_status='unposted' with
+their ORIGINAL 9000-posting JE already independently reversed 2026-09-24 ~04:1x-04:2xZ (well
+before this session's own item-9 work) -- so the void step is a header-flip + cascade + audit only,
+no live JE left to reverse on the original. Full derivation in the script's own header comment.
+
+— CC-1
