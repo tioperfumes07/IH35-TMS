@@ -112,6 +112,9 @@ const STEPS = [
   // DEVIN-B — seat distance from main. A branch too far from main is the
   // class of defect that caused tonight's session. Static git guard, no DB.
   ["verify-seat-distance-from-main", "scripts/verify-seat-distance-from-main.mjs"],
+  // ROUND 181 (DEVIN-B) — no auto-generated account numbers. Owner law: no auto
+  // numbers without written owner approval. Static + live count (shrink-only).
+  ["verify-no-auto-generated-account-numbers", "scripts/verify-no-auto-generated-account-numbers.mjs"],
   // ROUND E15.7-R (DEVIN-B, task 47) — daily Relay deposit sync cron must exist and be wired.
   // POPULATION CHECK: cron absent → SKIPPED exit 0 (arms itself when CC-2 lands task 48);
   // cron present → assert daily + wired at boot, RED if broken. No .guard-exempt.json entry.

@@ -189,11 +189,9 @@ export async function ensureDriverEscrowParent(
         notes, created_by_user_id, updated_by_user_id, operating_company_id
       )
       SELECT
-        -- ROW-259: the escrow SUB-PARENT header is numbered from its grandparent too. It is
-        -- is_postable=false, so nothing posts here — but an unnumbered header sorts to the top of the
-        -- chart and cannot be referenced by number, which is exactly the reconciliation complaint that
-        -- opened ROW 259. Header suffix '-00' keeps it above its own numbered leaves.
-        COALESCE(g.account_number || '-00', NULL),
+        -- ROUND 181 (owner law: no auto numbers without written owner approval).
+        -- The escrow SUB-PARENT header gets NO auto-generated number either.
+        NULL,
         $1, 'Liability', g.account_subtype, g.id,
         NULL, false, 'USD',
         $3, $4::uuid, $4::uuid, $5::uuid
@@ -330,17 +328,11 @@ export async function provisionDriverAdvanceSubAccount(
         notes, created_by_user_id, updated_by_user_id, operating_company_id
       )
       SELECT
-        -- ROW-259: derive locally. Sequence is computed from siblings under THIS parent inside the
-        -- same statement, so two concurrent hires cannot mint the same number.
-        p.account_number || '-' || lpad((
-          COALESCE((
-            SELECT MAX(NULLIF(regexp_replace(sib.account_number, '^' || p.account_number || '-', ''), '')::int)
-            FROM catalogs.accounts sib
-            WHERE sib.operating_company_id = $5::uuid
-              AND sib.parent_account_id = p.id
-              AND sib.account_number ~ ('^' || p.account_number || '-[0-9]+$')
-          ), 0) + 1
-        )::text, 3, '0'),
+        -- ROUND 181 (owner law: no auto numbers without written owner approval).
+        -- A new driver sub-account gets NO auto-generated number. Its name is the driver's name.
+        -- The previous code minted "DRIVERCASHAD896665-NNN" by appending a sequence to the parent
+        -- number — 47 such accounts now pollute the chart. Stop the generator here.
+        NULL,
         $1, 'Asset', p.account_subtype, p.id,
         NULL, true, 'USD',
         $3, $4::uuid, $4::uuid, $5::uuid
@@ -412,21 +404,10 @@ export async function provisionDriverEscrowSubAccount(
         notes, created_by_user_id, updated_by_user_id, operating_company_id
       )
       SELECT
-        -- ROW-259: same local derivation as the advance leaf. My first pass fixed only the ASSET
-        -- sub-account and left this LIABILITY one still inserting NULL — caught by
-        -- verify-entity-expense-category-map-complete before it shipped. Escrow is a driver's money
-        -- held in trust, so an unnumbered, unsortable escrow account is the worse of the two.
-        -- The sub-parent is a header and may itself be unnumbered; fall back to the parent NAME-derived
-        -- prefix only when it has a number, else leave the sequence bare rather than invent a prefix.
-        COALESCE(p.account_number || '-', '') || lpad((
-          COALESCE((
-            SELECT MAX(NULLIF(regexp_replace(sib.account_number, '^' || COALESCE(p.account_number || '-', ''), ''), '')::int)
-            FROM catalogs.accounts sib
-            WHERE sib.operating_company_id = $5::uuid
-              AND sib.parent_account_id = p.id
-              AND sib.account_number ~ ('^' || COALESCE(p.account_number || '-', '') || '[0-9]+$')
-          ), 0) + 1
-        )::text, 3, '0'),
+        -- ROUND 181 (owner law: no auto numbers without written owner approval).
+        -- A new driver sub-account gets NO auto-generated number. Its name is the driver's name.
+        -- The previous code minted sequence numbers by appending to the parent number — stop.
+        NULL,
         $1, 'Liability', p.account_subtype, p.id,
         NULL, true, 'USD',
         $3, $4::uuid, $4::uuid, $5::uuid
