@@ -55,7 +55,7 @@ function dollarsToCents(raw: string): number {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-2 rounded-sm border border-[#E5E7EB] bg-white p-3">
-      <h2 className="text-center text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">{title}</h2>
+      <h2 className="text-center text-section-header font-bold uppercase tracking-wide text-[#4B5563]">{title}</h2>
       {children}
     </section>
   );
@@ -69,7 +69,7 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className="flex min-w-0 flex-col gap-1 text-[11px] font-semibold uppercase text-[#4B5563]">
+    <label className="flex min-w-0 flex-col gap-1 text-section-header font-semibold uppercase text-[#4B5563]">
       <span className="text-center">{label}</span>
       {children}
     </label>
@@ -77,7 +77,7 @@ function Field({
 }
 
 const inputClass =
-  "h-7 w-full rounded-sm border border-[#E5E7EB] px-2 text-center text-[12px] text-[#0F1219]";
+  "h-7 w-full rounded-sm border border-[#E5E7EB] px-2 text-center text-xs text-[#0F1219]";
 
 export function SettlementCreatorPage() {
   const navigate = useNavigate();
@@ -194,10 +194,10 @@ export function SettlementCreatorPage() {
       />
 
       {!companyId ? (
-        <p className="text-[12px] text-red-600">Select an operating company.</p>
+        <p className="text-xs text-red-600">Select an operating company.</p>
       ) : null}
       {wrongEntity ? (
-        <p className="text-[12px] text-red-600" data-testid="settlement-creator-usmca-only">
+        <p className="text-xs text-red-600" data-testid="settlement-creator-usmca-only">
           Settlement Creator is USMCA only.
         </p>
       ) : null}
@@ -440,7 +440,7 @@ export function SettlementCreatorPage() {
                     const next = [...expenses]; next[idx] = { ...exp, load_number: e.target.value }; setExpenses(next);
                   }} />
                 </Field>
-                <label className="flex items-center justify-center gap-2 text-[12px] text-[#0F1219]">
+                <label className="flex items-center justify-center gap-2 text-xs text-[#0F1219]">
                   <input
                     type="checkbox"
                     checked={exp.is_company_expense}
@@ -452,7 +452,7 @@ export function SettlementCreatorPage() {
                   />
                   Comp. Exp. (Y)
                 </label>
-                <label className="flex items-center justify-center gap-2 text-[12px] text-[#0F1219]">
+                <label className="flex items-center justify-center gap-2 text-xs text-[#0F1219]">
                   <input
                     type="checkbox"
                     checked={exp.is_reimbursable}
@@ -516,34 +516,34 @@ export function SettlementCreatorPage() {
               Post settlement
             </Button>
           </div>
-          {error ? <p className="text-[12px] text-red-600" data-testid="sc-error">{error}</p> : null}
+          {error ? <p className="text-xs text-red-600" data-testid="sc-error">{error}</p> : null}
         </div>
 
         {/* Right preview panel */}
         <aside className="rounded-sm border border-[#E5E7EB] bg-white p-3" data-testid="sc-preview-panel">
-          <h2 className="mb-2 text-center text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">Live JE preview</h2>
+          <h2 className="mb-2 text-center text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Live JE preview</h2>
           {!preview ? (
-            <p className="text-center text-[12px] text-[#6B7280]">Run Preview to see Dr/Cr lines and control totals.</p>
+            <p className="text-center text-xs text-[#6B7280]">Run Preview to see Dr/Cr lines and control totals.</p>
           ) : (
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2 text-center text-[12px]">
+              <div className="grid grid-cols-2 gap-2 text-center text-xs">
                 <div className="rounded-sm border border-[#E5E7EB] p-2">
-                  <div className="text-[11px] font-bold uppercase text-[#4B5563]">Company EXP</div>
+                  <div className="text-section-header font-bold uppercase text-[#4B5563]">Company EXP</div>
                   <div className={preview.company_expenses_matches_pdf ? "text-[#16A34A]" : "text-red-600"}>
                     {formatUsdCents(preview.company_expenses_cents)}
                   </div>
                 </div>
                 <div className="rounded-sm border border-[#E5E7EB] p-2">
-                  <div className="text-[11px] font-bold uppercase text-[#4B5563]">Driver net</div>
+                  <div className="text-section-header font-bold uppercase text-[#4B5563]">Driver net</div>
                   <div className={preview.driver_net_matches_pdf ? "text-[#16A34A]" : "text-red-600"}>
                     {formatUsdCents(preview.driver_net_cents)}
                   </div>
                 </div>
               </div>
               <div className="max-h-[480px] overflow-auto">
-                <table className="w-full text-[12px]">
+                <table className="w-full text-xs">
                   <thead>
-                    <tr className="text-[11px] font-bold uppercase text-[#4B5563]">
+                    <tr className="text-section-header font-bold uppercase text-[#4B5563]">
                       <th className="p-1 text-center">Account</th>
                       <th className="p-1 text-center">Dr</th>
                       <th className="p-1 text-center">Cr</th>
@@ -554,7 +554,7 @@ export function SettlementCreatorPage() {
                       <tr key={i} className="border-t border-[#E5E7EB]">
                         <td className="p-1 text-center">
                           <div className="font-semibold text-[#0F1219]">{line.account_name}</div>
-                          <div className="text-[11px] text-[#6B7280]">{line.memo}</div>
+                          <div className="text-section-header text-[#6B7280]">{line.memo}</div>
                         </td>
                         <td className="whitespace-nowrap p-1 text-center">
                           {line.debit_cents ? formatUsdCents(line.debit_cents) : ""}
@@ -568,13 +568,13 @@ export function SettlementCreatorPage() {
                 </table>
               </div>
               {preview.blockers.length ? (
-                <ul className="list-disc pl-4 text-[12px] text-red-600">
+                <ul className="list-disc pl-4 text-xs text-red-600">
                   {preview.blockers.map((b) => (
                     <li key={b}>{b}</li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-center text-[12px] text-[#16A34A]">Ready to post.</p>
+                <p className="text-center text-xs text-[#16A34A]">Ready to post.</p>
               )}
             </div>
           )}

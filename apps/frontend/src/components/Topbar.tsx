@@ -298,7 +298,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
                   ) : (
                     <div
                       key={label}
-                      className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wide text-gray-400"
+                      className="px-4 pt-2 pb-1 text-section-header font-bold uppercase tracking-wide text-gray-400"
                     >
                       {label.replace(/^—\s*|\s*—$/g, "")}
                     </div>
