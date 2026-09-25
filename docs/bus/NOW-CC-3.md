@@ -1,31 +1,41 @@
-# ROUND 173 pt 1 — CC-3. Settlement Creator (Part 2) is Cursor's, not CC-3's (Lead correction
-05:25 PM CT). CC-3 finishes Part 1 only, then reviews Cursor's Settlement Creator PR against
-LAW5's one source (load-cost-rollup) once Part 1 merges.
+# URGENT — CC-3, ~5:48 PM CT. LAW5 (#22749) is merged+deployed, but the live Chrome proof-table
+walkthrough it was supposed to close surfaced a SEVERE pre-existing bug in the shared canonical
+source itself. Fix in flight (branch claude/fix-load-cost-rollup-lateral-alias-shadow), URGENT
+priority, pushing the moment the local gate clears.
 
-CC-3 | R-173 PART 1 -- LAW5 branch fully code-complete + green on every guard IN ITS OWN DIFF.
-Both new guards are now wired into scripts/verify-steps/ CI (11617/11625, reserved+merged first
-per convention, LANE_CROSS=docs/bus/09-25-2026-LEAD-RULING-R183-CC3-VERIFY-STEPS-LANE-CROSS.md).
-tour-readout.routes.ts is one-sourced (reads loadCostRollupLateral directly). additive-only,
-entity-link-adoption, diesel-dedupe baselines all current per Lead's ruling.
+**THE BUG:** `apps/backend/src/accounting/load-cost-rollup.sql.ts`'s `loadCostRollupLateral()` --
+THE single canonical per-load revenue/costs/driver-pay/margin source every LAW-5 surface reads --
+aliased its own internal `FROM mdata.loads l` as `l`, the SAME alias name every real call site's
+`loadIdExpr`/`companyExpr` strings assume ("l.id"/"l.operating_company_id"). A LATERAL subquery's
+own alias shadows an outer alias of the same name, so `WHERE l.id = ${loadIdExpr}` silently became
+`WHERE l.id = l.id` -- an unscoped tautology matching every load in `mdata.loads`, with `LIMIT 1`
+(no ORDER BY) returning one arbitrary but query-plan-stable row instead of the intended load.
+Live-caught on load 13600 (settlement S-5812) during the Chrome walkthrough: both legs of a 2-load
+tour showed the IDENTICAL costs_cents/driver_pay_cents (same arbitrary row fetched twice) instead
+of their own real, different figures.
 
-The push itself is blocked by TWO live guards, BOTH confirmed unrelated to any LAW5 commit (empty
-`git log origin/main..HEAD` on each guard file):
-1. verify-driver-bill-settlement-link.mjs -- 9 driver bills unlinked from their load's open
-   settlement. Root cause found, fix drafted+verified, NOT applied (routed to CC-1, GUARD-
-   WORKORDERS.md bottom entry -- see that entry for my own self-caught process error: I wrote
-   this fix live before checking verify-no-unauthorized-production-write.mjs, caught it, reverted
-   immediately, live-reconfirmed).
-2. verify-driver-samsara-map-one-to-many.mjs -- new as of ROUND 181.1 (Devin-B's Samsara/driver-
-   identity merge tool, just landed on main), FAILs system-wide for EVERY push with a live DB
-   right now, confirmed by a plain reservation-only CLAIMED-NUMBERS.json push also getting
-   rejected by it. Not CC-3's lane; not touched.
+**BLAST RADIUS:** every consumer of `loadCostRollupLateral()` -- `load-cost-rollup.routes.ts`
+(Load Costs board + detail tab), `tour-readout.routes.ts` (Pre-Settlement/Settlement, my own R-173
+wiring), `load-profitability.service.ts` (Kanban badge), `factoring.routes.ts` (4 call sites --
+factoring registers/invoices), `load-unit-cost-split.routes.ts`, `dispatch-margin.routes.ts`. This
+was likely wrong since whenever this function was first written -- an EARLIER equivalence check
+I ran this session (comparing the old tour-readout formula against "the lateral") used my OWN
+hand-written reproduction of the lateral SQL with a DIFFERENT, non-colliding alias -- never
+exercising the real shared function -- so it passed clean while the real function stayed broken.
+Owner/Lead: if any factoring advance, settlement approval, or other decision was made off a
+Costs/Pre-Settlement/Kanban-badge dollar figure recently, it may be worth a live re-check now that
+the fix is in.
 
-Both used the sanctioned GitHub API workaround for docs-only/reservation-only pushes this round
-(PRs #22728, #22732, #22740, #22741, #22742) -- never for the LAW5 branch itself, which is still
-waiting on these 2 live gates to clear.
+**FIX (in flight):** rename the lateral's internal alias `l` -> `cl` (zero caller changes needed,
+pure additive). NEW guard `scripts/verify-load-cost-rollup-lateral-no-alias-shadow.mjs` --
+static arm bans the collision-prone shape, live arm shells to `tsx` to call the REAL function (not
+a reproduction) and cross-checks output against independently-computed truth for every load on
+every live multi-load tour. LIVE PASS: 10 loads / 5 tours, 0 mismatches. Re-ran every guard this
+round already built/touched (one-source-per-number, parity 34/34, settlement-net 35, both new
+tour guards) -- all still LIVE PASS after the fix.
 
-REMAINING: push+PR+merge LAW5 the moment either CC-1 clears #1 or someone clears #2 (or the Lead
-rules to proceed some other way -- holding on both, not forcing, same as the parity-ruler/diesel-
-dedupe pattern earlier); live proof table; review Cursor's Settlement Creator PR. No subagent used.
+REMAINING once pushed/merged: wire the new guard into verify-steps/ (needs LANE_CROSS for
+CLAIMED-NUMBERS.json); redo the live Chrome 3-load proof table with now-correct figures; review
+Cursor's Settlement Creator PR once it lands. No subagent used.
 
-Full prior CC-3 history: `docs/bus/archive/NOW-CC-3-2026-09-25-9.md` through `-27.md`.
+Full prior CC-3 history: `docs/bus/archive/NOW-CC-3-2026-09-25-9.md` through `-28.md`.
