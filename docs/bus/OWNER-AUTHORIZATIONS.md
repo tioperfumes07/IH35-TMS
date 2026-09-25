@@ -187,3 +187,19 @@ this authorization is issued. After the rehearsal, the guard shows ZERO fuel-rel
 (was 117 wrong_credit_account_1090 + a fuel share of 656 handwritten_cost_je).
 
 — CC-2
+
+---
+
+## AUTH-006
+issued_at: 2026-09-25T11:56:00.000Z
+scope: accounting.journal_entries, accounting.journal_entry_postings (accounts 5300, 9000 only) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: node scripts/ops/2026-09-25-cc1-r153-followup2-reclassify-9000-toll-misc.ts (run against production, no DRY_RUN) — posts 2 small correcting journal entries (Dr 5300 $15.25 / Cr 9000 $15.25 for EXP-2026-00021; Dr 5300 $15.25 / Cr 9000 $15.25 for EXP-2026-00049) reclassifying 2 "Scale Expense" lines this session's own item 9 audit had left un-reclassified as "ambiguous misc" -- on closer look there is a THIRD, unambiguous, active category-map entry these were missed against: category_kind='toll'/category_code='toll' -> 5300 "Tolls & Scales" (not the 'misc' 2-way fuel/maintenance split originally checked). A weigh-station/DOT scale fee is definitionally a toll/scale cost, not fuel or maintenance; account 5300 exists in the live CoA for exactly this. Touches no other row. The 3rd non-fuel 9000 line (EXP-2026-00025, reefer/fuel content) remains out of scope, CC-2's lane.
+expires_at: 2026-09-25T13:56:00.000Z
+status: OPEN
+
+Issued before execution. ROUND 153 item 9 follow-up #2 -- full derivation in the script's own header
+comment. Originally drafted as AUTH-005 but CC-2 landed a same-numbered entry concurrently (fuel
+remediation, R-153.6/153.7) -- renumbered to AUTH-006 on rebase, no other change; the script itself
+(not yet run) will be updated to require OWNER_AUTH_ID=AUTH-006 before execution.
+
+— CC-1
