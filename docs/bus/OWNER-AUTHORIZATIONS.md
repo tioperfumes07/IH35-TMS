@@ -538,3 +538,23 @@ regardless of how many times it runs -- proven by tracing the full escrow_ledger
 history for this driver before writing this. Full derivation in the script's own header comment.
 
 — CC-1
+
+---
+
+## AUTH-017
+issued_at: 2026-09-25T16:11:00.000Z
+scope: driver_finance.settlement_lines (is_active flip only, 25 named escrow_contribution rows), driver_finance.driver_settlements, driver_finance.payrun_gl_runs, driver_finance.escrow_balances, driver_finance.escrow_ledger, accounting.escrow_postings, accounting.escrow_accounts, accounting.journal_entries, accounting.journal_entry_postings — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly 13 named settlements (5770, 5771, 5777, 5780, 5783, 5786, 5789, 5793, 5796, S-5797, S-5799, S-5800, S-5802)
+action: node scripts/ops/2026-09-25-cc1-r161-part2-remaining-off-document-escrow.ts (run against production, no DRY_RUN) — R-161's own required proof (verify-alwaystrack-parity 34/34) surfaced that AUTH-013's error (wrongly reactivated escrow_contribution lines with no Driver-Escrow line on the signed document) applies to these remaining 13 of Set B's original 18, not just the 5 named in AUTH-015 -- Lead's own control-totals check was scoped to 5804-5815 and caught 5 there; these 13 sit outside that range. Confirmed live before writing this: grepped every one of these 13 settlements' own signed Driver_Settlement_NNNN.txt for "escrow" (case-insensitive) -- zero mentions on all 13, identical shape to the 5 already fixed. Deactivates the 25 named escrow_contribution rows (documented: voided_at/void_reason="not on AlwaysTrack document — R-161 part 2"/voided_by_user_id), then reverses+recloses each of the 13 via reverseSettlementPayRun/closeSettlementPayRun. Same two engines, no override, no seventh engine.
+expires_at: 2026-09-25T18:11:00.000Z
+status: OPEN
+
+Issued before execution. Extends R-161/AUTH-015's exact fix to the rest of Set B's original 18 --
+the same root cause, same mechanism, confirmed against each settlement's own real document rather
+than assumed from the pattern of the first 5. Required because R-161's own proof requirement
+(verify-alwaystrack-parity 34/34) is not met without it: post-AUTH-015/016, parity showed exactly
+these 13 documents (and no others) mismatched on DRIVER_NET by precisely their escrow amount.
+Deadline 16:45Z — running directly against production, DRY_RUN pre-check first; reuses the exact
+reverseSettlementPayRun/closeSettlementPayRun/txn-wrap-fixed pattern already proven on all 18 Set B
+settlements and again on AUTH-015's 6. Full derivation in the script's own header comment.
+
+— CC-1
