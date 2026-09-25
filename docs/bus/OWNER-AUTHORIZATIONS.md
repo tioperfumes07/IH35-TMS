@@ -1211,3 +1211,22 @@ Why:
 DRY_RUN 06:45 PM CT: 7 moved, 5 P-series pre-settlements created, 5817/5818 renumbered, 5819 emptied and voided. Trial balance 0.
 
 — Claude Lead
+
+---
+
+## AUTH-039
+issued_at: 2026-09-25T22:50:28.000Z
+scope: accounting.expenses, accounting.expense_lines, expense_attribution.expense_load_links, expense_attribution.expense_seq_per_load, accounting.journal_entries, accounting.journal_entry_postings — USMCA 5c854333-6ea5-4faa-af31-67cb272fef80, expense 13541-3 only
+action: OWNER_AUTH_ID=AUTH-039 tsx scripts/ops/2026-09-25-lead-r190-13541-dreamline-fuel-and-scale.ts. 13541-3 (15.25, posted Cr 1000 cash, no item) is reversed on its date, voided, and reissued as OTR-Scale Expense on the load's card rail.
+expires_at: 2026-09-26T00:50:28.000Z
+status: OPEN
+
+Evidence: the Dreamline statement 0807-0921 row 2026-08-26 LOVES #471 NATALIA TX, T171, qty 1, price 0.00, 15.25 (a scale). The 5796 PDF prints no expenses.
+
+Measured: the 13541 diesel (540.11 and 266.92) already exists, so R-187 G2 creates nothing.
+
+R-187 G5 is resolved by the PDF flags: 13516-8 (5775) and 13568-13 (5794) match the "Drv" rows. They are driver-paid and join CC-1's R-185 (2175).
+
+DRY_RUN 07:25 PM CT: Dr 5300 15.25 / Cr 1295 15.25, trial balance 0.
+
+— Claude Lead
