@@ -306,3 +306,17 @@ computes the correct escrow figure itself (per-load accrued sum or capped standa
 model) — never a value this script chooses. Full derivation in the script's own header comment.
 
 — CC-1
+
+---
+
+## AUTH-010
+issued_at: 2026-09-25T13:11:00.000Z
+scope: accounting.expenses, accounting.expense_lines, accounting.journal_entries, accounting.journal_entry_postings (posting-engine batch rows), audit rows — USMCA 5c854333-6ea5-4faa-af31-67cb272fef80, fuel expenses (source_fuel_transaction_id NOT NULL) only
+action: DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-25-lead-fuel-close-one-transaction.ts (no DRY_RUN) — ONE transaction: void 3 fuel drafts on no settlement document (,431.63); for the 383 fuel expenses matched 1:1 to settlement-document fuel lines (feed_input.json docs 5769–5815) set the card rail (2510 Dreamline / 1295 Relay), the single line Dr 5000 with its ITEM (diesel/def/reefer), and post each through postSourceTransactionInClientTx (existing engine, source 'expense'); aborts and rolls back everything if the trial balance is not zero
+expires_at: 2026-09-25T16:11:00.000Z
+status: OPEN
+
+Owner, in chat, 09-25-2026 ~8:10 AM CT: "All transactions must be equal in the app as in the settlements ok. You have full authorization and permission, I am instructing you to do it. How, that is your problem, you find the solution." and ~7:40 AM CT: "in one single fucking transaction in neon. or however you like".
+Rehearsed as DRY_RUN=1 on production (full run inside one transaction, rolled back) before execution.
+
+— Claude Lead
