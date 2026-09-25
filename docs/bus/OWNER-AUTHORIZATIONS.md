@@ -772,3 +772,22 @@ CONSUMED — AUTH-021, AUTH-022, AUTH-023 — 01:09 PM CT (18:09Z). Claude Lead.
   - 5799/5803: diesel 640 / 790 / 490 / 340 have no card record.
   - 5805/5808: one 10.00 company line each has no load.
   - Trailers 53R19049 and 216 are not in mdata.equipment.
+
+---
+
+## AUTH-024
+issued_at: 2026-09-25T18:25:00.000Z
+scope: mdata.loads (assigned_unit_id only, 27 named September loads), accounting.expenses, accounting.expense_lines, accounting.journal_entries, accounting.journal_entry_postings, fuel.fuel_transactions (void stamps only) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), the loads of the 48 August/September settlement documents (5769–5816 set in R-164)
+action: OWNER_AUTH_ID=AUTH-024 tsx scripts/ops/2026-09-25-lead-r167-post-link-and-fuel-records.ts (production, no DRY_RUN) — one transaction:
+  (A) set the unit from the settlement document's truck on the 27 September loads that have none (one mdata.units match each, leased to USMCA), then on the 38 expenses with no unit;
+  (B) create, through createExpenseFromFuelTransaction, the accounting expense for the 6 document diesel fuel purchases that have none, and void (with stamps) the 3 fuel rows that are on no settlement document or are $0.00;
+  (C) post the 18 live unposted expenses through the existing engine; a missing payment account takes the load's card rail, else Dreamline 2510. The 13 on settlement 5812 (loads 13588/13600) stay held because the tour gate still reads them open.
+  Commits only with the trial balance at 0.
+expires_at: 2026-09-25T20:25:00.000Z
+status: OPEN
+
+Issued before execution. Owner: "Fix them all I need it identical let's go".
+
+DRY_RUN 01:25 PM CT: 27 / 38 / 6 / 3 / 18 posted / 13 held; trial balance 0; 0 refused.
+
+— Claude Lead
