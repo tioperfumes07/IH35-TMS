@@ -161,8 +161,12 @@ async function live() {
     // independently-reconciled figures. Every other live-row read in this codebase excludes
     // archived rows by convention; this one had drifted.
     const liveRes = await client.query(
-      `SELECT id::text AS id, source_row_hash, total_cost, fuel_type FROM fuel.fuel_transactions
-        WHERE operating_company_id = $1::uuid AND archived_at IS NULL`,
+      `SELECT ft.id::text AS id, ft.source_row_hash, ft.total_cost, ft.fuel_type,
+              ft.transaction_reference, ft.transaction_at::date::text AS txn_date,
+              ft.voided_at, l.load_number
+         FROM fuel.fuel_transactions ft
+         LEFT JOIN mdata.loads l ON l.id = ft.load_id
+        WHERE ft.operating_company_id = $1::uuid AND ft.archived_at IS NULL`,
       [USMCA_COMPANY_ID]
     );
     if (liveRes.rows.length === 0) {
@@ -184,7 +188,32 @@ async function live() {
       [USMCA_COMPANY_ID]
     );
     const documentedVoidHashes = new Set(archivedWithReasonRes.rows.map((r) => r.source_row_hash));
-    const missing = expectedRows.filter((r) => !liveHashes.has(r.hash) && !documentedVoidHashes.has(r.hash));
+    // ROUND 191 (Lead, 2026-09-25): the AUTH-001 wipe deleted every B1-ingested row, and the
+    // AlwaysTrack re-feed (scripts/feed/feed-settlement-day.mts + the R-178 date reissue) writes
+    // its OWN source_row_hash scheme ("alwaystrack:<co>:<load>:<date>:<vendor>:<invoice>",
+    // "alwaystrack-settl:…", "alwaystrack-gt-fuel:…"). A hash-only lookup therefore reported
+    // 171/171 "missing" while every receipt was live — an instrument failure, not a data one.
+    // Completeness is now proven by the receipt's NATURAL KEY — same load, same invoice, same
+    // cents — one live row consumed per expected row (so a receipt printed twice needs two live
+    // rows, and one live row can never satisfy two expected rows). The old hash is still
+    // accepted, so a B1-era row keeps counting.
+    const usedLiveIds = new Set();
+    const liveActive = liveRes.rows.filter((r) => !r.voided_at);
+    const naturalKeyMatch = (exp) => {
+      const cents = Math.round(Number(exp.amount) * 100);
+      const hit = liveActive.find(
+        (r) =>
+          !usedLiveIds.has(r.id) &&
+          r.load_number === exp.load_number &&
+          Math.round(Number(r.total_cost) * 100) === cents &&
+          (exp.invoice ? String(r.transaction_reference) === String(exp.invoice) : true)
+      );
+      if (hit) usedLiveIds.add(hit.id);
+      return Boolean(hit);
+    };
+    const missing = expectedRows.filter(
+      (r) => !liveHashes.has(r.hash) && !documentedVoidHashes.has(r.hash) && !naturalKeyMatch(r)
+    );
     if (missing.length > 0) {
       console.error(`${LABEL}: LIVE FAIL — ${missing.length} of ${expectedRows.length} expected fuel_purchases rows have NO matching fuel.fuel_transactions row (live or documented-voided):`);
       for (const r of missing.slice(0, 20)) {
@@ -307,21 +336,54 @@ async function live() {
       console.log(`${LABEL}: known, disclosed DEF/GL-segregation debt — ${sharedCount} posting(s) / $${(sharedCents / 100).toFixed(2)} (baseline established ${defBaseline.established}; CC-3's lane to fix, see def_gl_segregation.reconciliation in the baseline file).`);
     }
 
-    // 4. disclosed low-confidence corrections still present, not silently dropped.
-    const expectedLowConfHashes = new Set(expectedRows.filter((r) => r.flag).map((r) => r.hash));
-    const notesRes = await client.query(
-      `SELECT source_row_hash, notes FROM fuel.fuel_transactions
-        WHERE operating_company_id = $1::uuid AND source_row_hash = ANY($2::text[])`,
-      [USMCA_COMPANY_ID, Array.from(expectedLowConfHashes)]
-    );
-    const flaggedLive = new Set(
-      notesRes.rows.filter((r) => /confidence=low/.test(r.notes)).map((r) => r.source_row_hash)
-    );
-    const droppedFlags = Array.from(expectedLowConfHashes).filter((h) => !flaggedLive.has(h));
-    if (droppedFlags.length > 0) {
-      console.error(`${LABEL}: LIVE FAIL — ${droppedFlags.length} disclosed data-quality flag(s) missing/downgraded in live notes (hashes: ${droppedFlags.join(", ")})`);
+    // 4. The disclosed data-quality cases, tested on the DATA, not on a notes string.
+    // ROUND 191 (Lead, 2026-09-25): the old check looked for "confidence=low" in notes written by
+    // the B1 ingestion; the wipe deleted those rows and the re-feed never wrote that text, so it
+    // failed 5/5 forever regardless of the books. The real invariants are:
+    //   (a) SOURCE_DATE_CORRECTED rows carry the corrected date, never the typo'd one;
+    //   (b) the same fuel receipt (same invoice + same cents) live on MORE THAN ONE load is a
+    //       possible double-booked fill. The live set must equal the disclosed
+    //       `cross_load_duplicate_receipts` list in the baseline exactly: a NEW pair fails, and a
+    //       RESOLVED pair still listed fails "remove me" (shrink-only, same four-arm shape).
+    for (const exp of expectedRows.filter((r) => r.flag && r.flag.startsWith("SOURCE_DATE_CORRECTED"))) {
+      const cents = Math.round(Number(exp.amount) * 100);
+      const rows = liveActive.filter(
+        (r) => r.load_number === exp.load_number && String(r.transaction_reference) === String(exp.invoice) &&
+          Math.round(Number(r.total_cost) * 100) === cents
+      );
+      const wrong = rows.filter((r) => r.txn_date !== exp.date);
+      if (rows.length === 0 || wrong.length > 0) {
+        console.error(`${LABEL}: LIVE FAIL — date-corrected receipt load ${exp.load_number} invoice ${exp.invoice} must be dated ${exp.date}; live: ${rows.map((r) => r.txn_date).join(", ") || "none"}`);
+        failures++;
+      }
+    }
+    const dupKey = (r) => `${r.transaction_reference}|${Math.round(Number(r.total_cost) * 100)}`;
+    const loadsByReceipt = new Map();
+    for (const r of liveActive) {
+      if (!r.transaction_reference || !/^\d{5,}$/.test(String(r.transaction_reference)) || !r.load_number) continue;
+      const k = dupKey(r);
+      if (!loadsByReceipt.has(k)) loadsByReceipt.set(k, new Set());
+      loadsByReceipt.get(k).add(r.load_number);
+    }
+    const liveDupes = [...loadsByReceipt.entries()]
+      .filter(([, loads]) => loads.size > 1)
+      .map(([k, loads]) => `${k}|${[...loads].sort().join(",")}`)
+      .sort();
+    const disclosedDupes = ((baseline && baseline.cross_load_duplicate_receipts) || []).map((d) => d.key).sort();
+    const newDupes = liveDupes.filter((k) => !disclosedDupes.includes(k));
+    const resolvedDupes = disclosedDupes.filter((k) => !liveDupes.includes(k));
+    if (newDupes.length > 0) {
+      console.error(`${LABEL}: LIVE FAIL — ${newDupes.length} NEW receipt(s) live on more than one load (invoice|cents|loads), not in the disclosed baseline list: ${newDupes.join("; ")}`);
       failures++;
     }
+    if (resolvedDupes.length > 0) {
+      console.error(`${LABEL}: LIVE FAIL — disclosed duplicate receipt(s) no longer live on >1 load — good news; remove from cross_load_duplicate_receipts: ${resolvedDupes.join("; ")}`);
+      failures++;
+    }
+    if (liveDupes.length > 0 && newDupes.length === 0 && resolvedDupes.length === 0) {
+      console.log(`${LABEL}: known, disclosed, OPEN — ${liveDupes.length} receipt(s) booked on two loads (see cross_load_duplicate_receipts in the baseline; resolution is the Dreamline statement tie-out): ${liveDupes.join("; ")}`);
+    }
+    const expectedLowConfHashes = new Set(expectedRows.filter((r) => r.flag).map((r) => r.hash));
 
     await client.query("COMMIT");
     if (failures > 0) process.exit(1);
