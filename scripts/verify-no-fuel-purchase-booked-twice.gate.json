@@ -1,4 +1,4 @@
 {
-  "blocking": false,
-  "note": "ROUND 165 order 6 — report mode until the Lead's R-164 (AUTH-021) data fix for the existing August/September expense rows is CONSUMED in docs/bus/OWNER-AUTHORIZATIONS.md. Flip to true only then; the writer-side fix (seedExpense's card-fuel-dupe check in seed-settlement-document.service.ts) already prevents any NEW duplicate."
+  "blocking": true,
+  "note": "ROUND 165 order 6 — flipped blocking 2026-09-25 1:25 PM CT (18:25Z) after R-164 (AUTH-021+022+023) CONSUMED 01:09 PM CT (18:09Z, docs/bus/OWNER-AUTHORIZATIONS.md). Live-reconfirmed before flipping: 0 live (load, amount) duplicate groups today (was 37 before R-164's void+reissue pass) — real PASS, not vacuous."
 }
