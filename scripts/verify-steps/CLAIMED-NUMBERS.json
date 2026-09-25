@@ -9119,5 +9119,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-25",
     "purpose": "verify-fuel-expense-line-and-number-engine"
+  },
+  "11606": {
+    "claimed_by": "devin-b",
+    "claimed_at": "2026-09-25",
+    "purpose": "verify-no-auto-generated-account-numbers (ROUND 181 step 1)"
   }
 }
