@@ -390,9 +390,11 @@ export async function createExpenseFromFuelTransaction(
     `
       INSERT INTO accounting.expense_lines (
         operating_company_id, expense_id, line_sequence, amount, amount_cents, description,
-        load_id, load_required, expense_account_uuid, item_id
+        load_id, load_required, expense_account_uuid, item_id, quantity, rate_cents, unit_of_measure
       )
-      VALUES ($1::uuid, $2::uuid, 1, $3, $4, $5, $6::uuid, $7, $8::uuid, $9::uuid)
+      -- R-178: an item line must carry quantity/rate/uom with round(quantity*rate_cents)=amount_cents
+      -- (expense_lines_item_qty_rate_amount_check). Without them every fuel expense create refused.
+      VALUES ($1::uuid, $2::uuid, 1, $3, $4, $5, $6::uuid, $7, $8::uuid, $9::uuid, 1, $4, 'each')
     `,
     [
       input.operating_company_id,
