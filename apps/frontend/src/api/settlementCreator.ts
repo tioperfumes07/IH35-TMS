@@ -28,7 +28,11 @@ export type SettlementCreatorDraft = {
     empty_miles?: number | null;
     picks?: number | null;
     drops?: number | null;
+    trip_type?: "NB" | "TR" | "SB" | "LOCAL" | null;
+    join_outbound_load_number?: string | null;
+    not_yet_delivered?: boolean | null;
   }>;
+  seed_dispatched_loads?: boolean;
   fuel_purchases: Array<{
     date: string;
     vendor_name?: string | null;

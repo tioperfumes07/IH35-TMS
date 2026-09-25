@@ -19,7 +19,7 @@ export type SettlementCreatorLoadBlock = {
   customer_id?: string | null;
   pickup_date?: string | null; // YYYY-MM-DD
   pickup_city?: string | null;
-  delivery_date?: string | null; // blank = not delivered
+  delivery_date?: string | null; // blank = not delivered yet (dispatched / in transit)
   delivery_city?: string | null;
   line_haul_miles?: number | null;
   line_haul_rate_cents?: number | null;
@@ -31,6 +31,15 @@ export type SettlementCreatorLoadBlock = {
   empty_miles?: number | null;
   picks?: number | null;
   drops?: number | null;
+  /** R-186.1 — NB/TR/SB/LOCAL. SB joins the outbound tour. */
+  trip_type?: "NB" | "TR" | "SB" | "LOCAL" | null;
+  /** R-186.1 — SB return joins this outbound load's tour (e.g. 13609 → 13614). */
+  join_outbound_load_number?: string | null;
+  /**
+   * R-186.1 — not-yet-delivered load is first-class: status dispatched (or in_transit),
+   * NO invoice, pre-invoice exposure in Cash Flow, joins open pre-settlement.
+   */
+  not_yet_delivered?: boolean | null;
 };
 
 export type SettlementCreatorFuelLine = {
@@ -77,7 +86,11 @@ export type SettlementCreatorAdvanceLine = {
 
 export type SettlementCreatorDraft = {
   operating_company_id: string;
-  /** AlwaysTrack document number — business identity (e.g. "5806"). */
+  /**
+   * R-186.1 — editable. P-NNNN = our pre-settlement display_id.
+   * Bare digits = AlwaysTrack → source_document_ref.
+   * Empty = mint next P-series on post.
+   */
   settlement_no: string;
   driver_id: string;
   unit_id?: string | null;
@@ -93,10 +106,15 @@ export type SettlementCreatorDraft = {
   reimbursements: SettlementCreatorMoneyLine[];
   escrow: SettlementCreatorMoneyLine[];
   advances: SettlementCreatorAdvanceLine[];
-  /** Driver PDF control total — Post disabled until draft net equals this. */
+  /** Driver PDF control total — Post disabled until draft net equals this (0 OK for dispatched-only seed). */
   pdf_driver_net_cents: number;
   /** Company PDF EXPENSES control total. */
   pdf_company_expenses_cents: number;
+  /**
+   * R-186.1 — when true, missing loads are booked as dispatched via bookLoad (app path) with
+   * automatic Owner medical/HOS/CDL override attestation. No invoice is minted.
+   */
+  seed_dispatched_loads?: boolean;
   /** Optional uploaded AT PDF (docs.files id). */
   source_pdf_file_id?: string | null;
 };

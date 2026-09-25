@@ -844,11 +844,13 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     return detail;
   });
 
-  // REG-010/011 / Rule 03: canonical settlement numbers are server-generated and immutable.
-  // Keep this route for older clients, but never let a typed override recreate load-shaped IDs.
+  // REG-010/011 SUPERSEDED by R-186.1 (owner 2026-09-25 06:35 PM CT): pre-settlement numbers
+  // are EDITABLE. P-series stays on display_id; a bare AlwaysTrack number typed here moves to
+  // source_document_ref (and does not rewrite display_id). Unique per company, audited.
   const patchDisplayIdBodySchema = z.object({
     operating_company_id: z.string().uuid(),
-    display_id: z.string().trim().max(40).optional(),
+    display_id: z.string().trim().min(1).max(40).optional(),
+    source_document_ref: z.string().trim().min(1).max(40).nullable().optional(),
   });
   app.patch("/api/v1/driver-finance/settlements/:id/display-id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
@@ -857,19 +859,126 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     if (!params.success) return validationError(reply, params.error);
     const body = patchDisplayIdBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
-    const current = await withCompany(user.uuid, body.data.operating_company_id, async (client) => {
-      const result = await client.query(
-        `SELECT display_id FROM driver_finance.driver_settlements WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
-        [params.data.id, body.data.operating_company_id]
+
+    const { isPresettlementPSeries, isAlwaysTrackSettlementNumber } = await import("./settlement-display-id.js");
+    const { setSettlementSourceDocumentRef } = await import("./settlement-source-document-ref.service.js");
+    const { appendCrudAudit } = await import("../audit/crud-audit.js");
+
+    const result = await withCompany(user.uuid, body.data.operating_company_id, async (client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> }) => {
+      const currentRes = await client.query(
+        `SELECT id::text, display_id, source_document_ref, status::text
+           FROM driver_finance.driver_settlements
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+          LIMIT 1 FOR UPDATE`,
+        [params.data.id, body.data.operating_company_id],
       );
-      return result.rows[0] as { display_id: string } | undefined;
+      const current = currentRes.rows[0] as
+        | { id: string; display_id: string; source_document_ref: string | null; status: string }
+        | undefined;
+      if (!current) return { kind: "not_found" as const };
+
+      let nextDisplay = current.display_id;
+      let nextSource = current.source_document_ref;
+      const typed = body.data.display_id?.trim();
+      const typedSource = body.data.source_document_ref === undefined
+        ? undefined
+        : body.data.source_document_ref === null
+          ? null
+          : body.data.source_document_ref.trim();
+
+      if (typed && typed !== current.display_id) {
+        if (isAlwaysTrackSettlementNumber(typed)) {
+          nextSource = typed;
+        } else if (isPresettlementPSeries(typed)) {
+          const clash = await client.query(
+            `SELECT id::text FROM driver_finance.driver_settlements
+              WHERE operating_company_id = $1::uuid
+                AND display_id = $2
+                AND id <> $3::uuid
+                AND voided_at IS NULL
+              LIMIT 1`,
+            [body.data.operating_company_id, typed.toUpperCase(), params.data.id],
+          );
+          if (clash.rows[0]) return { kind: "conflict" as const, error: "display_id_taken" as const };
+          nextDisplay = typed.toUpperCase();
+        } else {
+          return { kind: "bad_format" as const };
+        }
+      }
+
+      if (typedSource !== undefined) {
+        if (typedSource === null) {
+          nextSource = null;
+        } else if (isAlwaysTrackSettlementNumber(typedSource) || typedSource.length > 0) {
+          nextSource = typedSource;
+        }
+      }
+
+      if (nextDisplay !== current.display_id) {
+        await client.query(
+          `UPDATE driver_finance.driver_settlements
+              SET display_id = $2, updated_at = now()
+            WHERE id = $1::uuid AND operating_company_id = $3::uuid`,
+          [params.data.id, nextDisplay, body.data.operating_company_id],
+        );
+        await appendCrudAudit(
+          client as never,
+          user.uuid,
+          "driver_finance.presettlement.display_id_edited",
+          {
+            settlement_id: params.data.id,
+            from: current.display_id,
+            to: nextDisplay,
+            operating_company_id: body.data.operating_company_id,
+          },
+          "info",
+          "R-186.1-EDITABLE-P-SERIES",
+        );
+      }
+
+      if (nextSource !== current.source_document_ref) {
+        if (nextSource) {
+          await setSettlementSourceDocumentRef(client as never, {
+            operatingCompanyId: body.data.operating_company_id,
+            settlementId: params.data.id,
+            sourceDocumentRef: nextSource,
+            actorUserId: user.uuid,
+          });
+        } else {
+          await client.query(
+            `UPDATE driver_finance.driver_settlements
+                SET source_document_ref = NULL, updated_at = now()
+              WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+            [params.data.id, body.data.operating_company_id],
+          );
+          await appendCrudAudit(
+            client as never,
+            user.uuid,
+            "driver_finance.settlement.source_document_ref_cleared",
+            { settlement_id: params.data.id, from: current.source_document_ref },
+            "info",
+            "R-186.1-EDITABLE-P-SERIES",
+          );
+        }
+      }
+
+      return {
+        kind: "ok" as const,
+        updated: nextDisplay !== current.display_id || nextSource !== current.source_document_ref,
+        display_id: nextDisplay,
+        source_document_ref: nextSource,
+      };
     });
-    if (!current) return reply.code(404).send({ error: "settlement_not_found" });
-    const typed = body.data.display_id;
-    if (typed && typed !== current.display_id) {
-      return reply.code(409).send({ error: "settlement_number_is_server_generated", message: "Settlement numbers are assigned automatically. Use Source reference for an external document number." });
+
+    if (result.kind === "not_found") return reply.code(404).send({ error: "settlement_not_found" });
+    if (result.kind === "conflict") return reply.code(409).send({ error: "display_id_taken", message: "That pre-settlement number is already in use for this company." });
+    if (result.kind === "bad_format") {
+      return reply.code(400).send({
+        error: "invalid_settlement_number",
+        message: "Use a P-NNNN pre-settlement number, or a bare AlwaysTrack document number (digits) which is stored as the source reference.",
+      });
     }
-    return { updated: false, display_id: current.display_id };
+    return result;
   });
 
   // LOAD-SETTLEMENT-TAB-SHOWS-OPEN-NOT-SETTLING — the load→settlement REVERSE hop. Before this route,

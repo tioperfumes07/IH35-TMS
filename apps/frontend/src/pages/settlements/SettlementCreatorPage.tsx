@@ -45,6 +45,9 @@ function emptyLoad(): LoadDraft {
     empty_miles: null,
     picks: null,
     drops: null,
+    trip_type: "NB",
+    join_outbound_load_number: "",
+    not_yet_delivered: true,
   };
 }
 
@@ -132,6 +135,7 @@ export function SettlementCreatorPage() {
       reimbursements,
       escrow,
       advances,
+      seed_dispatched_loads: true,
       pdf_company_expenses_cents: dollarsToCents(pdfCompanyExpenses),
       pdf_driver_net_cents: dollarsToCents(pdfDriverNet),
     };
@@ -209,8 +213,14 @@ export function SettlementCreatorPage() {
         <div className="space-y-3 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3">
           <Section title="Header">
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-              <Field label="Settlement No.">
-                <input className={inputClass} value={settlementNo} onChange={(e) => setSettlementNo(e.target.value)} data-testid="sc-settlement-no" />
+              <Field label="Settlement No. (editable)">
+                <input
+                  className={inputClass}
+                  value={settlementNo}
+                  onChange={(e) => setSettlementNo(e.target.value)}
+                  placeholder="P-0004 or AlwaysTrack #"
+                  data-testid="sc-settlement-no"
+                />
               </Field>
               <Field label="Driver">
                 <EntityPicker
@@ -344,6 +354,53 @@ export function SettlementCreatorPage() {
                       }}
                     />
                   </Field>
+                  <Field label="Trip type">
+                    <select
+                      className={inputClass}
+                      value={load.trip_type ?? "NB"}
+                      onChange={(e) => {
+                        const next = [...loads];
+                        next[idx] = { ...load, trip_type: e.target.value as LoadDraft["trip_type"] };
+                        setLoads(next);
+                      }}
+                      data-testid={`sc-trip-type-${idx}`}
+                    >
+                      <option value="NB">NB</option>
+                      <option value="TR">TR</option>
+                      <option value="SB">SB (return)</option>
+                      <option value="LOCAL">LOCAL</option>
+                    </select>
+                  </Field>
+                  <Field label="Join outbound load">
+                    <input
+                      className={inputClass}
+                      value={load.join_outbound_load_number ?? ""}
+                      placeholder="e.g. 13614"
+                      onChange={(e) => {
+                        const next = [...loads];
+                        next[idx] = { ...load, join_outbound_load_number: e.target.value };
+                        setLoads(next);
+                      }}
+                      data-testid={`sc-join-outbound-${idx}`}
+                    />
+                  </Field>
+                  <label className="flex items-center justify-center gap-2 text-xs text-[#0F1219]">
+                    <input
+                      type="checkbox"
+                      checked={load.not_yet_delivered !== false && !load.delivery_date}
+                      onChange={(e) => {
+                        const next = [...loads];
+                        next[idx] = {
+                          ...load,
+                          not_yet_delivered: e.target.checked,
+                          delivery_date: e.target.checked ? "" : load.delivery_date,
+                        };
+                        setLoads(next);
+                      }}
+                      data-testid={`sc-not-delivered-${idx}`}
+                    />
+                    Not delivered (dispatched)
+                  </label>
                 </div>
               </div>
             ))}

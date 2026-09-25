@@ -12,6 +12,10 @@ import {
   postSettlementCreatorInClientTx,
   SettlementCreatorError,
 } from "./settlement-creator.service.js";
+import {
+  ensureDispatchedLoadsForCreator,
+  SettlementCreatorSeedError,
+} from "./settlement-creator-seed-loads.js";
 import type { SettlementCreatorDraft } from "./settlement-creator.types.js";
 
 const AUTHORITY_ROLES = new Set(["Owner", "Administrator", "Accountant"]);
@@ -26,13 +30,14 @@ const moneyLine = z.object({
 
 const draftSchema = z.object({
   operating_company_id: z.string().uuid(),
-  settlement_no: z.string().trim().min(1).max(40),
+  settlement_no: z.string().trim().max(40).default(""),
   driver_id: z.string().uuid(),
   unit_id: z.string().uuid().nullable().optional(),
   trailer_equipment_number: z.string().trim().max(40).nullable().optional(),
   trailer_id: z.string().uuid().nullable().optional(),
   period_start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   period_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  seed_dispatched_loads: z.boolean().optional().default(true),
   loads: z
     .array(
       z.object({
@@ -61,6 +66,9 @@ const draftSchema = z.object({
         empty_miles: z.number().nullable().optional(),
         picks: z.number().nullable().optional(),
         drops: z.number().nullable().optional(),
+        trip_type: z.enum(["NB", "TR", "SB", "LOCAL"]).nullable().optional(),
+        join_outbound_load_number: z.string().trim().max(40).nullable().optional(),
+        not_yet_delivered: z.boolean().nullable().optional(),
       }),
     )
     .min(1),
@@ -163,6 +171,14 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
     await assertCompanyMembership(user.uuid, draft.operating_company_id);
 
     try {
+      // R-186.1 — book missing dispatched loads via bookLoad (own tx) BEFORE settlement post.
+      await withCurrentUser(user.uuid, async (client) => {
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+          draft.operating_company_id,
+        ]);
+        await ensureDispatchedLoadsForCreator(client, { uuid: user.uuid, role: user.role }, draft);
+      });
+
       const result = await withCurrentUser(user.uuid, async (client) => {
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
           draft.operating_company_id,
@@ -171,7 +187,7 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
       });
       return reply.code(200).send({ ok: true, ...result });
     } catch (err) {
-      if (err instanceof SettlementCreatorError) {
+      if (err instanceof SettlementCreatorError || err instanceof SettlementCreatorSeedError) {
         return reply.code(err.code === "settlement_exists" ? 409 : 400).send({
           error: err.code,
           message: err.message,

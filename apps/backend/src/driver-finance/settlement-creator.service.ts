@@ -10,12 +10,13 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { createExpenseFromFuelTransaction } from "../fuel/fuel-expense-document.service.js";
 import { createDriverCashAdvanceCore } from "../cash-advances/cash-advance-create.js";
-import {
-  linkLoadToPresettlementAfterAssignmentInClientTx,
-  type TripType,
-  type DbClient,
-} from "../dispatch/presettlement-link.service.js";
+import type { TripType, DbClient } from "../dispatch/presettlement-link.service.js";
 import { createBareSettlementForDocument } from "./settlement-load-reassignment.service.js";
+import {
+  allocateSettlementDisplayId,
+  isAlwaysTrackSettlementNumber,
+  isPresettlementPSeries,
+} from "./settlement-display-id.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 import { resolveCompanyDirectCreditAccount } from "../accounting/fuel-posting/poster.service.js";
@@ -92,7 +93,7 @@ export async function previewSettlementCreator(
   if (draft.operating_company_id !== USMCA) {
     blockers.push("Settlement Creator is USMCA-only.");
   }
-  if (!draft.settlement_no?.trim()) blockers.push("Settlement No. is required.");
+  // R-186.1 — settlement_no may be empty (mint P-series on post), P-NNNN, or AlwaysTrack digits.
   if (!draft.driver_id) blockers.push("Driver is required.");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(draft.period_start) || !/^\d{4}-\d{2}-\d{2}$/.test(draft.period_end)) {
     blockers.push("Start and end dates are required (YYYY-MM-DD).");
@@ -311,8 +312,8 @@ export async function previewSettlementCreator(
 
 /**
  * Post one settlement from the AlwaysTrack PDF draft — all or nothing on the caller's client.
- * Edit path (same settlement_no): void+repost is a follow-on; this create is idempotent on
- * source_document_ref via createBareSettlementForDocument + existing natural keys on fuel/expenses.
+ * R-186.1: settlement_no is editable P-series (display_id) or AlwaysTrack digits (source_document_ref).
+ * Missing loads must already exist (ensureDispatchedLoadsForCreator runs in the route before this tx).
  */
 export async function postSettlementCreatorInClientTx(
   client: DbClient,
@@ -324,37 +325,156 @@ export async function postSettlementCreatorInClientTx(
     throw new SettlementCreatorError("preview_blocked", preview.blockers.join(" · ") || "Post blocked");
   }
 
-  // Idempotent shell: if this AlwaysTrack number already has a live settlement, open it for edit
-  // (void+repost is a later slice — refuse duplicate create rather than mint a second).
-  const existing = await client.query<{ id: string; display_id: string; voided_at: string | null }>(
-    `
-      SELECT id::text, display_id, voided_at::text
-      FROM driver_finance.driver_settlements
-      WHERE operating_company_id = $1::uuid
-        AND source_document_ref = $2
-        AND voided_at IS NULL
-      ORDER BY created_at DESC
-      LIMIT 1
-    `,
-    [draft.operating_company_id, draft.settlement_no.trim()],
-  );
-  if (existing.rows[0]) {
-    throw new SettlementCreatorError(
-      "settlement_exists",
-      `Settlement ${draft.settlement_no} already exists (${existing.rows[0].display_id}). Edit = void and repost (next slice).`,
-    );
-  }
+  const typedNo = (draft.settlement_no ?? "").trim();
+  let settlementId: string;
+  let displayId: string;
+  let sourceDocumentRef: string | null = null;
 
-  const bare = await createBareSettlementForDocument(client, {
-    operating_company_id: draft.operating_company_id,
-    driver_id: draft.driver_id,
-    period_start: draft.period_start,
-    period_end: draft.period_end,
-    source_document_ref: draft.settlement_no.trim(),
-    actor_user_id: actorUserId,
-    is_sample_data: false,
-    status: "closed",
-  });
+  if (typedNo && isAlwaysTrackSettlementNumber(typedNo)) {
+    const existing = await client.query<{ id: string; display_id: string }>(
+      `
+        SELECT id::text, display_id
+        FROM driver_finance.driver_settlements
+        WHERE operating_company_id = $1::uuid
+          AND source_document_ref = $2
+          AND voided_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT 1
+      `,
+      [draft.operating_company_id, typedNo],
+    );
+    if (existing.rows[0]) {
+      throw new SettlementCreatorError(
+        "settlement_exists",
+        `Settlement ${typedNo} already exists (${existing.rows[0].display_id}). Edit = void and repost (next slice).`,
+      );
+    }
+    const bare = await createBareSettlementForDocument(client, {
+      operating_company_id: draft.operating_company_id,
+      driver_id: draft.driver_id,
+      period_start: draft.period_start,
+      period_end: draft.period_end,
+      source_document_ref: typedNo,
+      actor_user_id: actorUserId,
+      is_sample_data: false,
+      status: "closed",
+    });
+    settlementId = bare.settlement_id;
+    displayId = bare.display_id;
+    sourceDocumentRef = typedNo;
+  } else {
+    // P-series or empty → open pre-settlement (never mint AlwaysTrack sequence).
+    let targetDisplay = typedNo && isPresettlementPSeries(typedNo) ? typedNo.toUpperCase() : "";
+    if (targetDisplay) {
+      const found = await client.query<{ id: string; display_id: string; driver_id: string; status: string }>(
+        `
+          SELECT id::text, display_id, driver_id::text, status::text
+          FROM driver_finance.driver_settlements
+          WHERE operating_company_id = $1::uuid
+            AND display_id = $2
+            AND voided_at IS NULL
+          LIMIT 1
+          FOR UPDATE
+        `,
+        [draft.operating_company_id, targetDisplay],
+      );
+      if (found.rows[0]) {
+        if (found.rows[0].driver_id !== draft.driver_id) {
+          throw new SettlementCreatorError(
+            "presettlement_wrong_driver",
+            `${targetDisplay} belongs to another driver.`,
+          );
+        }
+        if (found.rows[0].status !== "open") {
+          throw new SettlementCreatorError(
+            "presettlement_not_open",
+            `${targetDisplay} is ${found.rows[0].status}, not open.`,
+          );
+        }
+        settlementId = found.rows[0].id;
+        displayId = found.rows[0].display_id;
+      } else {
+        // Create open shell with the typed P-number (unique).
+        const ins = await client.query<{ id: string }>(
+          `
+            INSERT INTO driver_finance.driver_settlements (
+              operating_company_id, driver_id, status, display_id, period_start, period_end,
+              trip_started_at, settlement_model, created_by_user_id, is_sample_data
+            )
+            VALUES ($1::uuid, $2::uuid, 'open', $3, $4::date, $5::date, $4::date, 'load_bookended', $6::uuid, false)
+            RETURNING id
+          `,
+          [
+            draft.operating_company_id,
+            draft.driver_id,
+            targetDisplay,
+            draft.period_start,
+            draft.period_end,
+            actorUserId,
+          ],
+        );
+        settlementId = ins.rows[0]!.id;
+        displayId = targetDisplay;
+        await appendCrudAudit(
+          client as never,
+          actorUserId,
+          "driver_finance.presettlement.created",
+          { settlement_id: settlementId, display_id: displayId, round: "R-186.1" },
+          "info",
+          AUDIT_TAG,
+        );
+      }
+    } else {
+      // Empty → driver's current open, else mint next P-series.
+      const open = await client.query<{ id: string; display_id: string }>(
+        `
+          SELECT id::text, display_id
+          FROM driver_finance.driver_settlements
+          WHERE operating_company_id = $1::uuid
+            AND driver_id = $2::uuid
+            AND status = 'open'
+            AND voided_at IS NULL
+          ORDER BY created_at DESC
+          LIMIT 1
+          FOR UPDATE
+        `,
+        [draft.operating_company_id, draft.driver_id],
+      );
+      if (open.rows[0]) {
+        settlementId = open.rows[0].id;
+        displayId = open.rows[0].display_id;
+      } else {
+        displayId = await allocateSettlementDisplayId(client, draft.operating_company_id, draft.period_start);
+        const ins = await client.query<{ id: string }>(
+          `
+            INSERT INTO driver_finance.driver_settlements (
+              operating_company_id, driver_id, status, display_id, period_start, period_end,
+              trip_started_at, settlement_model, created_by_user_id, is_sample_data
+            )
+            VALUES ($1::uuid, $2::uuid, 'open', $3, $4::date, $5::date, $4::date, 'load_bookended', $6::uuid, false)
+            RETURNING id
+          `,
+          [
+            draft.operating_company_id,
+            draft.driver_id,
+            displayId,
+            draft.period_start,
+            draft.period_end,
+            actorUserId,
+          ],
+        );
+        settlementId = ins.rows[0]!.id;
+        await appendCrudAudit(
+          client as never,
+          actorUserId,
+          "driver_finance.presettlement.created",
+          { settlement_id: settlementId, display_id: displayId, round: "R-186.1" },
+          "info",
+          AUDIT_TAG,
+        );
+      }
+    }
+  }
 
   const loadIds: string[] = [];
   const expenseIds: string[] = [];
@@ -362,8 +482,7 @@ export async function postSettlementCreatorInClientTx(
   const advanceIds: string[] = [];
   const journalEntryIds: string[] = [];
 
-  // Resolve / match loads by load_number (USMCA). Create is intentionally NOT via bookLoad —
-  // seats never POST Book Load; creator matches existing TMS loads minted through dispatch.
+  // Resolve loads (seeded via ensureDispatchedLoadsForCreator before this tx when missing).
   for (const load of draft.loads) {
     const found = await client.query<{
       id: string;
@@ -390,12 +509,11 @@ export async function postSettlementCreatorInClientTx(
     if (!row) {
       throw new SettlementCreatorError(
         "load_not_found",
-        `Load ${load.load_number} not found in USMCA. Book it in Dispatch first, then type it here.`,
+        `Load ${load.load_number} not found in USMCA after seed. Book Load path failed.`,
       );
     }
     loadIds.push(row.id);
 
-    // Ensure driver/unit assignment for pre-settlement link when missing.
     if (!row.assigned_primary_driver_id || row.assigned_primary_driver_id !== draft.driver_id) {
       await client.query(
         `
@@ -409,17 +527,48 @@ export async function postSettlementCreatorInClientTx(
       );
     }
 
-    const tripType = (row.trip_type as TripType | null) ?? "NB";
-    await linkLoadToPresettlementAfterAssignmentInClientTx(client, {
-      operating_company_id: draft.operating_company_id,
-      load_id: row.id,
-      presettlement_link_id_before: row.presettlement_link_id,
-      driver_id: draft.driver_id,
-      unit_id: draft.unit_id ?? row.assigned_unit_id,
-      trip_type: tripType,
-      tour_id: row.tour_id,
-      actor_user_id: actorUserId,
-    });
+    // SB return: join outbound tour when join_outbound_load_number provided.
+    let tourId = row.tour_id;
+    const tripType = (load.trip_type as TripType | null) ?? (row.trip_type as TripType | null) ?? "NB";
+    if ((tripType === "SB" || tripType === "TR") && load.join_outbound_load_number?.trim()) {
+      const outbound = await client.query<{ tour_id: string | null }>(
+        `SELECT tour_id::text FROM mdata.loads
+          WHERE operating_company_id = $1::uuid AND load_number = $2 AND soft_deleted_at IS NULL
+          ORDER BY created_at DESC LIMIT 1`,
+        [draft.operating_company_id, load.join_outbound_load_number.trim()],
+      );
+      if (outbound.rows[0]?.tour_id) {
+        tourId = outbound.rows[0].tour_id;
+        await client.query(
+          `UPDATE mdata.loads SET tour_id = $1::uuid, trip_type = $2, updated_at = now()
+            WHERE id = $3::uuid AND operating_company_id = $4::uuid`,
+          [tourId, tripType, row.id, draft.operating_company_id],
+        );
+      }
+    }
+
+    // Prefer linking directly onto the resolved open P-settlement (R-186.1 editable target).
+    if (row.presettlement_link_id !== settlementId) {
+      await client.query(
+        `UPDATE mdata.loads SET presettlement_link_id = $1::uuid, updated_at = now()
+          WHERE id = $2::uuid AND operating_company_id = $3::uuid`,
+        [settlementId, row.id, draft.operating_company_id],
+      );
+      await appendCrudAudit(
+        client as never,
+        actorUserId,
+        "load.presettlement_linked",
+        {
+          load_id: row.id,
+          load_number: load.load_number,
+          settlement_id: settlementId,
+          display_id: displayId,
+          round: "R-186.1",
+        },
+        "info",
+        AUDIT_TAG,
+      );
+    }
   }
 
   // Fuel → fuel.fuel_transactions → createExpenseFromFuelTransaction → post expense
@@ -657,7 +806,7 @@ export async function postSettlementCreatorInClientTx(
         VALUES ($1::uuid, $2::uuid, 'reimbursement', $3, $4, true, false)
       `,
       [
-        bare.settlement_id,
+        settlementId,
         draft.operating_company_id,
         r.description || `Settlement ${draft.settlement_no} reimbursement`,
         dollarsFromCents(r.amount_cents),
@@ -674,7 +823,7 @@ export async function postSettlementCreatorInClientTx(
         VALUES ($1::uuid, $2::uuid, 'reimbursement', $3, $4, true, false)
       `,
       [
-        bare.settlement_id,
+        settlementId,
         draft.operating_company_id,
         exp.description ?? exp.item_name,
         dollarsFromCents(exp.amount_cents),
@@ -709,9 +858,10 @@ export async function postSettlementCreatorInClientTx(
     "driver_finance.settlement_creator.posted",
     {
       resource_type: "driver_finance.driver_settlements",
-      resource_id: bare.settlement_id,
+      resource_id: settlementId,
       operating_company_id: draft.operating_company_id,
-      source_document_ref: draft.settlement_no.trim(),
+      display_id: displayId,
+      source_document_ref: sourceDocumentRef,
       load_ids: loadIds,
       expense_ids: expenseIds,
       fuel_transaction_ids: fuelTxnIds,
@@ -724,9 +874,9 @@ export async function postSettlementCreatorInClientTx(
   );
 
   return {
-    settlement_id: bare.settlement_id,
-    source_document_ref: draft.settlement_no.trim(),
-    display_id: bare.display_id,
+    settlement_id: settlementId,
+    source_document_ref: sourceDocumentRef ?? displayId,
+    display_id: displayId,
     load_ids: loadIds,
     expense_ids: expenseIds,
     fuel_transaction_ids: fuelTxnIds,
