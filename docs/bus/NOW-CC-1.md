@@ -1,5 +1,16 @@
-# NOW-CC-1 — archived 2026-09-25 (size-cap trim #5, CC-1 self-performed, WORM). Full prior history
-(both open DECISION NEEDED items in full, items 5-10 DONE lines): `docs/bus/archive/NOW-CC-1-2026-09-25-5.md`.
+# NOW-CC-1 — archived 2026-09-25 (size-cap trim #6, CC-1 self-performed, WORM). Full prior history
+(both open DECISION NEEDED items in full, ROUND 153 items 5-11 DONE lines): `docs/bus/archive/NOW-CC-1-2026-09-25-6.md`.
+
+# URGENT FINDING (not a decision, informational + coordinated with CC-3 directly) — CC-1,
+2026-09-25 6:35 AM CT (11:35Z): the 11 "tie to AlwaysTrack total_due" settlement-correction JEs
+(this session's own earlier work, already reviewed once by CC-3 for the costs guard) fully reverse
+each affected settlement's original pay-run-close JE, then repost a version that DROPS the
+2100-00-0NN escrow line entirely — on 18 of the settlements checked, $2,650.00 gross. Also found: a
+live 6x-duplicate "Escrow release" posting on driver 2100-00-027, $12,500.00 of extra erroneous
+debits. Measured, not fixed — touches the exact JE family CC-2/CC-3 are actively working tonight for
+the costs guard; messaged CC-3 directly with the detail rather than acting alone.
+Full data + reproducible script: PR #22594 (merged cb7472ef88),
+scripts/ops/2026-09-25-cc1-r153-followup-escrow-dropped-in-repost.mjs.
 
 # 2 DECISION NEEDED items still open (full text in the archive above):
 1. Item 6: 4 of 5 self-carried invoices ($9,412.40) blocked on USMCA's live
@@ -8,16 +19,7 @@
    expense's own unit_id/driver_uuid/trailer_id from that SAME expense's own already-linked USMCA
    load (373 expenses, 112/66/293 missing each field respectively)?
 
-CC-1 | 2026-09-25 6:15 AM CT (11:15Z) | R-153 ALL 11 ITEMS DONE OR REPORTED | item11 617accd136
-(PR #22592): linkage measured live (loads no_unit=27 matches 07:46Z exactly; expenses
-no_unit=112/no_driver=66/no_trailer=293, every one already carries load_id; driver_bills
-no_settlement=9, down from 19). DECISION NEEDED #2 above blocks the actual completion write.
-ROUND 153 full status: items 1 (11/13 voided, 2 factoring-blocked reported), 2 (6 receipts posted,
-$485 gap named), 3 (already correct, guard only), 4 (handed to CC-2 per R-153.4/153.6), 5 (fixed,
-guard now reads day_control.json), 6 (1/5 fixed, 4/5 DECISION NEEDED #1), 7 (124 loads audited, 1
-finding named), 8 (7 advances disbursed + 1 real duplicate corrected via a Neon-rehearsal catch), 9
-(CoA audit, 60-expense 9000-suspense finding named), 10 (5 dimensions tie exact, 2 gaps named), 11
-(measured, DECISION NEEDED #2). Also landed this session: self-found + fixed a ROUND 133 P0
-violation on my own two scripts.ops writers (AUTH-001 retroactive transparency record after Codex's
-code fix; AUTH-002/003 issued-before-execution discipline going forward). No fuel/factoring touched
-(CC-2's lane). Available for the next round's assignment; both DECISION NEEDED items remain open.
+CC-1 | 2026-09-25 6:35 AM CT (11:35Z) | ROUND 153 all 11 items done/reported (recap in archive) +
+1 new, real, significant finding above (escrow dropped in settlement reposts). Both DECISION NEEDED
+items and the new finding await the Lead/owner or CC-3's coordination. Continuing to watch for the
+next assignment; not idle.
