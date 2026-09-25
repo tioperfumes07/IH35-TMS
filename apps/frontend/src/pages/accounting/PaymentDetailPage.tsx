@@ -23,6 +23,7 @@ import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 
 import { formatUsdCents } from "../../lib/money";
+import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -31,9 +32,8 @@ function money(cents: number) {
 }
 
 function accountLabel(name: string | null | undefined, number: string | null | undefined, id: string) {
-  if (name && number) return `${number} — ${name}`;
-  if (name) return name;
-  if (number) return number;
+  const label = formatAccountDisplayLabel({ account_name: name, account_number: number });
+  if (label !== "—") return label;
   return entityLabel(null, id, "Record");
 }
 

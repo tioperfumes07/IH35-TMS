@@ -3,6 +3,7 @@ import { apiRequest } from "../../api/client";
 import { formatMoneyCents } from "./constants";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
 import { MoneyProofTrailPanel } from "../accounting/MoneyProofTrailPanel";
@@ -110,7 +111,7 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
   const totalDebit = posting_preview.debit.reduce((n, d) => n + d.amount_cents, 0);
   const totalCredit = posting_preview.credit.reduce((n, c) => n + c.amount_cents, 0);
   const basisLabel = (kind: MileageLine["kind"]) => (kind === "loaded" ? (rate_card?.basis_type === "shortest" ? "Short" : "Practical") : "Deadhead (attributed to this pickup)");
-  const acct = (a: { account_label: { account_number: string; account_name: string } | null; account_id: string }) => (a.account_label ? `${a.account_label.account_number} ${a.account_label.account_name}` : a.account_id);
+  const acct = (a: { account_label: { account_number: string; account_name: string } | null; account_id: string }) => a.account_label ? formatAccountDisplayLabel(a.account_label) : a.account_id;
   const escrow = deductions.filter((d) => /escrow/i.test(d.deduction_type) || /escrow/i.test(d.reason ?? ""));
   const otherDeductions = deductions.filter((d) => !escrow.includes(d));
   const money = (c: number) => formatMoneyCents(c, currencyCode);

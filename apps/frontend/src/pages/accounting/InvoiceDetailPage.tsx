@@ -31,6 +31,7 @@ import { SafetyAlertsReverseSection } from "../../components/safety/SafetyAlerts
 const INCOME_TYPES = ["Income", "OtherIncome"];
 
 import { formatUsdCents } from "../../lib/money";
+import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { VoidActionMenu } from "../../components/shared/VoidActionMenu";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
@@ -243,7 +244,7 @@ export function InvoiceDetailPage() {
         if (!line.account_id) return <span className="text-gray-400">—</span>;
         const label =
           line.income_account_number && line.income_account_name
-            ? `${line.income_account_number} - ${line.income_account_name}`
+            ? formatAccountDisplayLabel({ account_number: line.income_account_number, account_name: line.income_account_name })
             : entityLabel(line.income_account_name, line.account_id, "Account");
         return (
           <Link

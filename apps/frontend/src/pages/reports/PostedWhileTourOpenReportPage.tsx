@@ -12,6 +12,7 @@ import { formatQueryErrorDetail } from "../../lib/tableError";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { formatUsdCents } from "../../lib/money";
+import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { getPostedWhileTourOpenReport, type PostedWhileTourOpenRow } from "../../api/reports";
 
 // ACC-51 (LAW §2 reversal plan, item (3), owner 01:33Z) — read-only, no action button anywhere on
@@ -85,8 +86,7 @@ export function PostedWhileTourOpenReportPage() {
             <ul className="space-y-0.5 text-xs text-gray-700">
               {r.accounts.map((a, idx) => (
                 <li key={idx}>
-                  {a.account_number ? `${a.account_number} ` : ""}
-                  {a.account_name ?? "?"} · {a.debit_or_credit} {money(a.amount_cents)}
+                  {formatAccountDisplayLabel(a)} · {a.debit_or_credit} {money(a.amount_cents)}
                 </li>
               ))}
             </ul>
