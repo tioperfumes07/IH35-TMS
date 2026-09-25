@@ -1155,3 +1155,22 @@ being landed separately since they generically fix the SET-ROLE gap for any futu
 needing a factoring funding/default-interest post.
 
 — CC-1
+
+---
+
+## AUTH-036
+issued_at: 2026-09-25T22:18:46.000Z
+scope: mdata.driver_samsara_accounts.driver_id on the 56 rows that point at TRANSPORTATION driver records — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: OWNER_AUTH_ID=AUTH-036 tsx scripts/ops/2026-09-25-lead-r188-samsara-map-usmca.ts (production, no DRY_RUN), one transaction. Each row is repointed to its single USMCA twin driver (same Samsara id), with an audit row per row. Commits only if 0 USMCA drivers are left unmapped.
+expires_at: 2026-09-26T00:18:46.000Z
+status: OPEN
+
+Why:
+- The Samsara map (Devin-B R-181.1 step 0, PR #22739) backfilled 56 of its 95 rows onto TRANSPORTATION (a frozen entity) driver records. The same human exists in both companies with the same Samsara id, and UNIQUE(samsara_driver_id) let the TRANSP row win.
+- Measured 22:55Z: 56 of 56 have exactly one USMCA twin.
+- After the repoint: 95 of 95 rows are USMCA, and 0 USMCA drivers are unmapped.
+- The same PR repoints the 3 readers that still keyed on the legacy mdata.drivers.samsara_driver_id (vehicle-driver-lookup, the pairing service, the hos-projector) to the map, and scopes the guard's D check to USMCA.
+
+DRY_RUN 05:57 PM CT: 56 repointed, all 95 rows USMCA, 0 unmapped.
+
+— Claude Lead
