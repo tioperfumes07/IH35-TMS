@@ -213,11 +213,16 @@ async function live() {
     // C and D queries moved after in-scope scoping (see below) — they must use
     // inScopeLoadNumbers, not allLoadNumbers, to avoid checking NOT FED YET loads.
 
+    // EXPENSES dimension = AlwaysTrack company expenses (DEF, tolls, scales, …).
+    // Diesel fuel lives in FUEL dimension via fuel.fuel_transactions. Fuel-backed
+    // accounting.expenses (source_fuel_transaction_id set by createExpenseFromFuelTransaction)
+    // are the bank-match document for the same diesel purchase — counting them here double-counts.
     const expenseRes = await client.query(
       `SELECT l.load_number, sum(e.total_amount_cents) AS cents, count(e.id) AS n
          FROM mdata.loads l
          JOIN accounting.expenses e ON e.load_id = l.id AND e.operating_company_id = l.operating_company_id
         WHERE l.operating_company_id = $1::uuid AND l.load_number = ANY($2::text[]) AND e.voided_at IS NULL
+          AND e.source_fuel_transaction_id IS NULL
         GROUP BY l.load_number`,
       [USMCA_COMPANY_ID, allLoadNumbers]
     );
@@ -342,24 +347,30 @@ async function live() {
     const unlinkedBillCount = Number(unlinkedBillRes.rows[0].n);
 
     // D input — scoped to IN-SCOPE loads only (was allLoadNumbers, the bug that blocked every seat).
+    // Attribution is satisfied when:
+    //   accounting.expenses — expense_load_links row exists for the expense (join on expense_id + load_id;
+    //     do NOT require expense_number = load_number — seed wrote load_number there, live UI writes the
+    //     real expense display id).
+    //   fuel.fuel_transactions — ft.load_id IS NOT NULL (canonical FK). expense_load_links.expense_source
+    //     CHECK only allows 'accounting'|'driver_finance', so fuel cannot carry a typed link row; the
+    //     load_id on the fuel row IS the attribution.
     const unlinkedExpenseRes = await client.query(
       `SELECT l.load_number, e.id::text AS expense_id
          FROM mdata.loads l
          JOIN accounting.expenses e ON e.load_id = l.id AND e.operating_company_id = l.operating_company_id
          LEFT JOIN expense_attribution.expense_load_links ell
-           ON ell.expense_source = 'accounting' AND ell.expense_id = e.id AND ell.expense_number = l.load_number
+           ON ell.expense_source = 'accounting' AND ell.expense_id = e.id AND ell.load_id = l.id
         WHERE l.operating_company_id = $1::uuid AND l.load_number = ANY($2::text[])
-          AND e.voided_at IS NULL AND ell.id IS NULL`,
+          AND e.voided_at IS NULL AND ell.id IS NULL
+          AND e.source_fuel_transaction_id IS NULL`,
       [USMCA_COMPANY_ID, inScopeLoadNumbers]
     );
     const unlinkedFuelRes = await client.query(
       `SELECT l.load_number, ft.id::text AS fuel_id
          FROM mdata.loads l
          JOIN fuel.fuel_transactions ft ON ft.load_id = l.id AND ft.operating_company_id = l.operating_company_id
-         LEFT JOIN expense_attribution.expense_load_links ell
-           ON ell.expense_id = ft.id AND ell.expense_number = l.load_number
         WHERE l.operating_company_id = $1::uuid AND l.load_number = ANY($2::text[])
-          AND ft.archived_at IS NULL AND ell.id IS NULL`,
+          AND ft.archived_at IS NULL AND ft.load_id IS NULL`,
       [USMCA_COMPANY_ID, inScopeLoadNumbers]
     );
 
@@ -384,16 +395,16 @@ async function live() {
       detail: unlinkedBillCount > 0 ? `${unlinkedBillCount} live driver bill(s) company-wide still unlinked` : "",
     });
 
-    // D — every live expense/fuel row for an in-scope document load has an expense_load_links row.
+    // D — every live non-fuel expense has an expense_load_links row; every live fuel row carries load_id.
     const unlinkedExpenses = unlinkedExpenseRes.rows.map((r) => r.load_number);
     const unlinkedFuel = unlinkedFuelRes.rows.map((r) => r.load_number);
     structuralFailures.push({
       id: "D",
-      label: "every live expense/fuel row for an in-scope document load has an expense_attribution.expense_load_links row",
+      label: "every live non-fuel expense has expense_load_links; every live fuel row carries load_id",
       pass: unlinkedExpenses.length === 0 && unlinkedFuel.length === 0,
       detail:
         unlinkedExpenses.length || unlinkedFuel.length
-          ? `${unlinkedExpenses.length} expense row(s) unlinked (loads: ${[...new Set(unlinkedExpenses)].join(",")}), ${unlinkedFuel.length} fuel row(s) unlinked (loads: ${[...new Set(unlinkedFuel)].join(",")})`
+          ? `${unlinkedExpenses.length} expense row(s) unlinked (loads: ${[...new Set(unlinkedExpenses)].join(",")}), ${unlinkedFuel.length} fuel row(s) missing load_id (loads: ${[...new Set(unlinkedFuel)].join(",")})`
           : "",
     });
 
