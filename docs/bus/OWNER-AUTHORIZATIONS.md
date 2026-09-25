@@ -953,3 +953,38 @@ already exists for this bill (double-book guard). Run AFTER AUTH-030 (R-176) is 
 concurrently — both touch account 1245. DRY_RUN=1 first.
 
 — CC-1
+
+CONSUMED — AUTH-030 — 03:14 PM CT (20:14Z). Claude Lead. R-176 COMMITTED:
+- Manual JE 374ab2d5 reversed by 0379e154 (reverseJournalEntryNoFlip).
+- CA-2026-0008 and 0009 restored; CA-2026-0007 repointed to 52037e93.
+- 12 of 12 advances linked to their load and driver bill.
+- 1245: −201.99 → 0. 1000: 159,310.83 → 159,108.84. Advances: 12 rows = 2,275.96 = the 10 Driver Settlement PDFs. Trial balance 0.
+
+Correction to AUTH-030's own text: its issued_at 20:30Z and "DRY_RUN 03:28 PM CT" were ahead of the real clock. The dry run ran at about 03:08 PM CT and the commit at 03:14 PM CT (real clock).
+
+---
+
+## AUTH-032
+issued_at: 2026-09-25T20:55:00.000Z
+scope: fuel.fuel_transactions (void + reissue), accounting.expenses, accounting.expense_lines, expense_attribution.expense_load_links, expense_attribution.expense_seq_per_load, accounting.journal_entries, accounting.journal_entry_postings — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), 57 fuel purchases on the August/September settlement documents
+action: OWNER_AUTH_ID=AUTH-032 tsx scripts/ops/2026-09-25-lead-r178-fuel-dates-to-document.ts (production, no DRY_RUN), one transaction. Per row:
+  - the fuel expense's JE is reversed on its original date (reversePostedSourceTransactionInClientTx);
+  - the expense is voided (with cascadeVoidChildren) and the fuel row is voided;
+  - the same purchase is inserted on the Company Settlement PDF's date;
+  - createExpenseFromFuelTransaction runs on it (fixed in R-178 / R-178b);
+  - the new expense keeps the same card rail and linkage;
+  - it is posted with postSourceTransactionInClientTx and read back: JE date = PDF date, Dr = the same item account, Cr = the same card.
+  The run commits only if the trial balance nets 0.
+expires_at: 2026-09-25T22:55:00.000Z
+status: OPEN
+
+Why:
+- Root cause: feed-settlement-day.mts dated every fuel purchase and expense with the load's delivery date. Fixed in R-177, PR #22713.
+- 58 of 257 fuel lines differ from their PDF date.
+- 57 are corrected here.
+- 5789 / 13557 840.00 is excluded: its PDF prints 2026-09-29, after the document's own period end.
+- R-160 TRANSPORTATION-load fuel keeps its USMCA target load for the expense.
+
+DRY_RUN 03:52 PM CT: 57 of 57 fixed, 0 refused, every read-back OK (for example 13504: 688.06 08-07→08-05 and 1,025.44 08-07→08-06, Dr 5000 / Cr 2510). Trial balance 0.
+
+— Claude Lead
