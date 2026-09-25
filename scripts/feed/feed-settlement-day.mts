@@ -225,8 +225,25 @@ type FeedRec = {
     rate?: number;
     description?: string;
     item_name?: string;
+    /** R-177: the settlement document's own date for this line (fuel purchase / expense row). */
+    date?: string | null;
   }>;
 };
+
+/**
+ * R-177 ROOT FIX — a fuel purchase or expense is dated by the settlement DOCUMENT's own line date, never
+ * the load's delivery date. Measured 09-25: 57 of 257 USMCA fuel rows carried the delivery date instead
+ * of the purchase date the PDF prints (e.g. 13504: 688.06 bought 08-05, 1,025.44 bought 08-06, both
+ * stored 08-07), which moved fuel across month ends (5794/5795). Missing or impossible date => REFUSE the
+ * line loudly; never substitute a date.
+ */
+function documentLineDate(line: { date?: string | null; description?: string; item_name?: string; amount: number }, rec: FeedRec): string {
+  const d = line.date ?? null;
+  const what = `${line.description || line.item_name || "line"} ${Number(line.amount).toFixed(2)} load ${rec.load_number} settl ${rec.settlement_doc_no}`;
+  if (!d || !/^\d{4}-\d{2}-\d{2}$/.test(d)) throw new Error(`document_line_date_missing: ${what} — rebuild feed_input.json with build_feed_input.py (R-177 carries the date)`);
+  if (d > rec.period_end) throw new Error(`document_line_date_after_period_end: ${what} is dated ${d}, settlement period ends ${rec.period_end} — check the PDF`);
+  return d;
+}
 
 type Ctrl = {
   line_haul: number;
@@ -595,7 +612,7 @@ async function feedOne(
   for (const f of fuelLines) {
     fi += 1;
     const parsed = parseFuelDesc(f.description || f.item_name || `FUEL-${fi}`);
-    const fuelDate = delivery.stop_date; // settlement lines often lack per-row date; use delivery
+    const fuelDate = documentLineDate(f, rec); // R-177: the document's purchase date, never delivery
     const fuelId = await withCurrentUser(OWNER, async (c) => {
       await setScopedCompanyContext(c, OWNER, USMCA);
       const vendorId = await resolveVendor(c as unknown as pg.PoolClient, parsed.vendor);
@@ -674,7 +691,7 @@ async function feedOne(
         operating_company_id: USMCA,
         category_account_id: EXPENSE_ACCT,
         payment_account_uuid: BANK,
-        expense_date: delivery.stop_date,
+        expense_date: documentLineDate(e, rec), // R-177: the document's own expense date
         amount_cents: cents(Math.abs(e.amount)),
         vendor_uuid: vendorId,
         memo: `${e.description || e.item_name} — #${ei} $${Number(e.amount).toFixed(2)} load ${rec.load_number} settl ${rec.settlement_doc_no}`,
