@@ -694,6 +694,24 @@ const LIVE_DOMAIN_GUARDS = [
       "catalogs.accounts",
     ],
   ],
+  // ROUND 153 (owner, via Lead) — the closing guard for the USMCA reconciliation, built
+  // incrementally as each of the six items lands (this PR: items 2 and 3). See the guard's own
+  // header for exactly which assertions are live vs. not-yet-built.
+  [
+    "verify-usmca-book-equals-faro-and-alwaystrack",
+    [
+      "apps/backend/src/dispatch/cancellation.service.ts",
+      "apps/backend/src/dispatch/book-load.service.ts",
+      "apps/backend/src/accounting/payments/",
+      "apps/backend/src/feed/",
+      "mdata.loads",
+      "accounting.invoices",
+      "accounting.payments",
+      "dispatch.load_charge_lines",
+      "accounting.journal_entry_postings",
+      "catalogs.accounts",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {
