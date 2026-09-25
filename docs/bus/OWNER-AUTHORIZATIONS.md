@@ -208,3 +208,28 @@ remediation, R-153.6/153.7) -- renumbered to AUTH-006 on rebase, no other change
 (not yet run) will be updated to require OWNER_AUTH_ID=AUTH-006 before execution.
 
 — CC-1
+
+---
+
+## AUTH-007
+issued_at: 2026-09-25T11:32:00.000Z
+scope: accounting.payments, accounting.payment_applications, accounting.invoices (amount_paid/open/status only) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: node scripts/ops/2026-09-25-cc1-r153-d1-self-carried-invoice-026-payment.ts (run against production, no DRY_RUN) — posts ONE customer receipt of $3,032.60 against live invoice display_id=13540 (customer IM Specialized Logistics, LLC., source_load_id=load 13540) via the existing applyPayment() writer, the same engine and shape as item 2's PR #22569. Touches no other invoice or row.
+expires_at: 2026-09-25T13:32:00.000Z
+status: OPEN
+
+Issued before execution. R-153.8 Decision 1 (Lead, 6:22 AM CT/11:22Z): invoice PDF "026" (IM
+Specialized, $3,120.00 billed, $3,032.60 already paid per the signed PDF, $87.40 open) is the SAME
+transaction as live invoice display_id=13540 -- customer, amount ($3,120.00 to the cent), and
+source_load_id (load 13540, IM Specialized Logistics customer) all match exactly. That live invoice
+already exists, is already `status='sent'`, already has source_load_id set, and is already
+`factoring_status='not_factored'` -- it was never blocked by the delivery-evidence gate at all. The
+only real gap is the $3,032.60 payment shown on the signed PDF, which was never posted. This
+authorization covers posting exactly that receipt, nothing else. Full derivation, including why
+invoices "009" and "055-13555" needed NO write at all (both already live, sent, linked, unfactored --
+display_id 13513 and 13555 respectively) and why "010" and "074-13593" are NOT covered by any
+authorization (no rate confirmation, no settlement document, and for 074-13593 the load itself --
+live 3 days ago per docs/bus/../08-CODER-BOXES-AND-LAW's own record -- no longer exists in
+production at all), is in the script's own header comment and in this round's PR body.
+
+— CC-1
