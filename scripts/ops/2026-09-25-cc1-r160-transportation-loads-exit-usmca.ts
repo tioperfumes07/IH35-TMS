@@ -27,8 +27,9 @@
  *      the SAME "no longer live" filter (`soft_deleted_at IS NULL`) every load list/read endpoint
  *      already applies everywhere in this codebase, touches no other table, cascades to nothing,
  *      and is fully void-never-delete compliant (the row and all its data persist untouched).
- *   3. Re-link every accounting.expenses.load_id and driver_finance.settlement_lines.load_id row
- *      currently pointing at this load: to the ONE other USMCA load on the SAME settlement when
+ *   3. Re-link every accounting.expenses.load_id, driver_finance.settlement_lines.load_id, and
+ *      driver_finance.driver_bills.load_id/load_number row currently pointing at this load: to the
+ *      ONE other USMCA load on the SAME settlement when
  *      there is EXACTLY one (live-confirmed against the settlement_lines join before writing this
  *      -- 3 settlements qualify: 5773->13511, 5780->13532, 5786->13548); otherwise to NULL (the
  *      settlement/driver linkage the row already carries is untouched -- only load_id changes, so
@@ -169,6 +170,33 @@ async function main() {
           throw new Error(`${row.load_number}: invoice void failed -- ${failure.code} ${failure.message}`);
         }
 
+        // Relink FIRST, soft-delete the load LAST -- ACCT-F5683 (migration 202612870000) is a
+        // DATABASE TRIGGER on mdata.loads that refuses soft_deleted_at when an open
+        // driver_finance.driver_bills row still references the load (found live in rehearsal,
+        // before any production write). Relinking driver_bills.load_id/load_number away from this
+        // load first (same "exactly one USMCA load, else NULL" rule as expenses/settlement_lines --
+        // driver_finance.driver_bills is CC-1's own table, LANES.md) satisfies the trigger's own
+        // check honestly, not by voiding/settling a real payable as an automatic side effect (the
+        // trigger's own comment explicitly forbids that).
+        const expRes = await client.query(
+          `UPDATE accounting.expenses SET load_id = $2::uuid, updated_at = now()
+            WHERE load_id = $1::uuid AND operating_company_id = $3::uuid AND voided_at IS NULL
+          RETURNING id`,
+          [row.load_id, row.relink_load_id, USMCA_ID]
+        );
+        const slRes = await client.query(
+          `UPDATE driver_finance.settlement_lines SET load_id = $2::uuid, updated_at = now()
+            WHERE load_id = $1::uuid AND operating_company_id = $3::uuid AND is_active = true
+          RETURNING id`,
+          [row.load_id, row.relink_load_id, USMCA_ID]
+        );
+        const dbRes = await client.query(
+          `UPDATE driver_finance.driver_bills SET load_id = $2::uuid, load_number = $3, updated_at = now()
+            WHERE load_id = $1::uuid AND operating_company_id = $4::uuid AND voided_at IS NULL
+          RETURNING id`,
+          [row.load_id, row.relink_load_id, row.relink_load_number, USMCA_ID]
+        );
+
         // Soft-delete only -- the exact same two-column write PATCH /api/v1/loads/:id performs for
         // soft_deleted_at (mdata/loads.routes.ts). NOT cancelLoadInClientTx: it cascades to cancel
         // the ENTIRE settlement for every settlement any of the load's lines touch, which would
@@ -189,27 +217,15 @@ async function main() {
           "R-160"
         );
 
-        const expRes = await client.query(
-          `UPDATE accounting.expenses SET load_id = $2::uuid, updated_at = now()
-            WHERE load_id = $1::uuid AND operating_company_id = $3::uuid AND voided_at IS NULL
-          RETURNING id`,
-          [row.load_id, row.relink_load_id, USMCA_ID]
-        );
-        const slRes = await client.query(
-          `UPDATE driver_finance.settlement_lines SET load_id = $2::uuid, updated_at = now()
-            WHERE load_id = $1::uuid AND operating_company_id = $3::uuid AND is_active = true
-          RETURNING id`,
-          [row.load_id, row.relink_load_id, USMCA_ID]
-        );
-
         await client.query("COMMIT");
-        console.log(`  voided invoice, soft-deleted load, relinked ${expRes.rowCount} expenses + ${slRes.rowCount} settlement_lines`);
+        console.log(`  voided invoice, soft-deleted load, relinked ${expRes.rowCount} expenses + ${slRes.rowCount} settlement_lines + ${dbRes.rowCount} driver_bills`);
         results.push({
           load_number: row.load_number,
           status: "voided_and_cancelled",
           relink_to: row.relink_load_number,
           expenses_relinked: expRes.rowCount,
           settlement_lines_relinked: slRes.rowCount,
+          driver_bills_relinked: dbRes.rowCount,
         });
       } catch (err) {
         await client.query("ROLLBACK").catch(() => {});
