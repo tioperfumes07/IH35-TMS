@@ -131,10 +131,14 @@ export async function createExpenseFromFuelTransaction(
   }
 
   // ---- 2. IDEMPOTENCY. This is what stops a backfill doubling the fuel expense. -----------
+  // R-153.6 STEP 3: a VOIDED prior document must not block a fresh one -- that is the entire
+  // point of void-then-recreate during remediation. Without this filter a voided row (dead,
+  // reversed, superseded) permanently "already_exists"-blocks every future call for that fuel
+  // transaction, which is the opposite of what void means.
   const existing = await client.query<{ id: string; expense_number: string | null }>(
     `SELECT id::text, expense_number
        FROM accounting.expenses
-      WHERE operating_company_id = $1 AND source_fuel_transaction_id = $2
+      WHERE operating_company_id = $1 AND source_fuel_transaction_id = $2 AND voided_at IS NULL
       LIMIT 1`,
     [input.operating_company_id, fuel.id],
   );

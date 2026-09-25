@@ -93,13 +93,24 @@ async function measure(client) {
   await client.query("BEGIN");
   await client.query("SELECT set_config('app.bypass_rls','lucia',false)");
 
-  // Get all posted JEs for USMCA
+  // Get all posted JEs for USMCA. R-153.6: this system's void model (journal-entries.service.ts
+  // voidJournalEntry, Option-1) NEVER flips a voided JE's status -- it posts an equal/opposite
+  // REVERSING entry and stamps reversed_by_je_id on the original, which stays status='posted'
+  // forever by design (so it never silently drops out of the GL trail). Without excluding
+  // reversed_by_je_id IS NOT NULL here, a correctly-voided wrong posting (exactly what this
+  // guard exists to make possible) can NEVER stop counting as a violation -- proven live
+  // 2026-09-25: voided 54 wrong-1090 fuel JEs via the real voidJournalEntry engine, re-ran this
+  // guard unmodified, same JE ids still flagged. Excluding reversed originals is strictly more
+  // accurate (catches only LIVE violations), never weaker -- a JE that is itself a reversal
+  // never independently trips isCostJe/isFuelJe the same way (its 5xxx leg is a credit, not a
+  // debit, since a reversal flips both sides), so no separate exclusion is needed for those.
   const jeRes = await client.query(
     `SELECT je.id::text AS je_id, je.memo
        FROM accounting.journal_entries je
       WHERE je.operating_company_id = $1::uuid
         AND je.status = 'posted'
         AND je.is_sample_data IS NOT TRUE
+        AND je.reversed_by_je_id IS NULL
       ORDER BY je.created_at`,
     [USMCA_COMPANY_ID],
   );
