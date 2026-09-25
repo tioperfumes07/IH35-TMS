@@ -404,6 +404,16 @@ const LIVE_DOMAIN_GUARDS = [
       "apps/backend/src/factoring/",
     ],
   ],
+  // R-159.2 (Claude-Lead ruling) — a factoring lifecycle posting-key claim used to be permanent,
+  // blocking any corrected re-post of a reversed event forever. Fixed with revision claims
+  // ("<event_key>#revN", reversal_of); this guard is the live proof the mechanism stays correct.
+  [
+    "verify-factoring-event-one-live-claim",
+    [
+      "scripts/verify-factoring-event-one-live-claim.mjs",
+      "apps/backend/src/accounting/factoring-posting/",
+    ],
+  ],
   // PROTECT-LIST GUARD (owner, P0, ROUND E11.2) — "nothing in this repo prevents a purge or a feed
   // from deleting master data. The wipe spared geofences and locations because the table list
   // happened to omit them, not because anything forbade it." Static half (no new DELETE/TRUNCATE

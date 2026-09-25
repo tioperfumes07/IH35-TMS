@@ -6,6 +6,8 @@ import { describe, expect, it, vi } from "vitest";
 import {
   findStrictLifecycleRepairCandidate,
   attachFactoringLifecycleSourceLinksStrict,
+  claimFactoringLifecyclePostingKey,
+  findLiveLifecyclePostingKeyJe,
 } from "../lifecycle-repair.js";
 
 const OPCO = "11111111-1111-4111-8111-111111111111";
@@ -98,6 +100,161 @@ describe("findStrictLifecycleRepairCandidate", () => {
       }
     );
     expect(result.kind).toBe("invalid");
+  });
+});
+
+// R-159.2 (Claude-Lead ruling): a reversed claim allows a revision claim under a NEW event_key
+// ("<base>#revN") instead of permanently blocking re-post. An unreversed (still live) claim still
+// refuses exactly as before -- idempotency is unchanged.
+describe("claimFactoringLifecyclePostingKey", () => {
+  it("first claim on a fresh event_key succeeds", async () => {
+    const query = vi.fn(async (sql: string) => {
+      if (sql.includes("INSERT INTO accounting.factoring_lifecycle_posting_keys") && !sql.includes("reversal_of")) {
+        return { rows: [{ journal_entry_id: "je-new" }] };
+      }
+      throw new Error(`unexpected query: ${sql}`);
+    });
+    const result = await claimFactoringLifecyclePostingKey(
+      { query },
+      {
+        operating_company_id: OPCO,
+        factoring_advance_id: ADVANCE_A,
+        source_transaction_type: "factoring_advance",
+        event_key: "funding",
+        journal_entry_id: "je-new",
+      }
+    );
+    expect(result).toBe("claimed");
+  });
+
+  it("conflict + prior claim still LIVE (unreversed) => already_claimed, no revision attempted", async () => {
+    const query = vi.fn(async (sql: string) => {
+      if (sql.includes("INSERT INTO accounting.factoring_lifecycle_posting_keys") && !sql.includes("reversal_of")) {
+        return { rows: [] }; // ON CONFLICT DO NOTHING -- no row back
+      }
+      if (sql.includes("(je.reversed_by_je_id IS NOT NULL) AS reversed")) {
+        return { rows: [{ id: "prior-claim-1", reversed: false }] };
+      }
+      throw new Error(`unexpected query (should never reach revision logic): ${sql}`);
+    });
+    const result = await claimFactoringLifecyclePostingKey(
+      { query },
+      {
+        operating_company_id: OPCO,
+        factoring_advance_id: ADVANCE_A,
+        source_transaction_type: "factoring_advance",
+        event_key: "funding",
+        journal_entry_id: "je-attempt",
+      }
+    );
+    expect(result).toBe("already_claimed");
+  });
+
+  it("conflict + prior claim's JE was REVERSED => claims a #rev1 revision key, records reversal_of", async () => {
+    const query = vi.fn(async (sql: string) => {
+      if (sql.includes("INSERT INTO accounting.factoring_lifecycle_posting_keys") && sql.includes("reversal_of")) {
+        return { rows: [{ journal_entry_id: "je-revised" }] };
+      }
+      if (sql.includes("INSERT INTO accounting.factoring_lifecycle_posting_keys")) {
+        return { rows: [] }; // original conflicting insert
+      }
+      if (sql.includes("(je.reversed_by_je_id IS NOT NULL) AS reversed")) {
+        return { rows: [{ id: "prior-claim-1", reversed: true }] };
+      }
+      if (sql.includes("event_key LIKE")) {
+        return { rows: [] }; // no existing revisions yet -> next is #rev1
+      }
+      throw new Error(`unexpected query: ${sql}`);
+    });
+    const result = await claimFactoringLifecyclePostingKey(
+      { query },
+      {
+        operating_company_id: OPCO,
+        factoring_advance_id: ADVANCE_A,
+        source_transaction_type: "factoring_advance",
+        event_key: "funding",
+        journal_entry_id: "je-revised",
+      }
+    );
+    expect(result).toBe("claimed");
+    const revisionInsert = query.mock.calls.find(
+      (c) => String(c[0]).includes("INSERT INTO accounting.factoring_lifecycle_posting_keys") && String(c[0]).includes("reversal_of")
+    );
+    expect(revisionInsert).toBeDefined();
+    const params = revisionInsert![1] as unknown[];
+    expect(params[3]).toBe("funding#rev1"); // event_key
+    expect(params[5]).toBe("prior-claim-1"); // reversal_of
+  });
+
+  it("picks #rev2 when #rev1 already exists", async () => {
+    const query = vi.fn(async (sql: string) => {
+      if (sql.includes("INSERT INTO accounting.factoring_lifecycle_posting_keys") && sql.includes("reversal_of")) {
+        return { rows: [{ journal_entry_id: "je-revised-2" }] };
+      }
+      if (sql.includes("INSERT INTO accounting.factoring_lifecycle_posting_keys")) {
+        return { rows: [] };
+      }
+      if (sql.includes("(je.reversed_by_je_id IS NOT NULL) AS reversed")) {
+        return { rows: [{ id: "prior-claim-2", reversed: true }] };
+      }
+      if (sql.includes("event_key LIKE")) {
+        return { rows: [{ event_key: "funding#rev1" }] };
+      }
+      throw new Error(`unexpected query: ${sql}`);
+    });
+    const result = await claimFactoringLifecyclePostingKey(
+      { query },
+      {
+        operating_company_id: OPCO,
+        factoring_advance_id: ADVANCE_A,
+        source_transaction_type: "factoring_advance",
+        event_key: "funding",
+        journal_entry_id: "je-revised-2",
+      }
+    );
+    expect(result).toBe("claimed");
+    const revisionInsert = query.mock.calls.find(
+      (c) => String(c[0]).includes("INSERT INTO accounting.factoring_lifecycle_posting_keys") && String(c[0]).includes("reversal_of")
+    );
+    expect((revisionInsert![1] as unknown[])[3]).toBe("funding#rev2");
+  });
+});
+
+describe("findLiveLifecyclePostingKeyJe", () => {
+  it("returns the JE id when the claimed JE is still live (unreversed)", async () => {
+    const query = vi.fn(async (sql: string) => {
+      if (sql.includes("information_schema.columns")) return { rows: [{ n: "2" }] };
+      if (sql.includes("FROM accounting.factoring_lifecycle_posting_keys k")) return { rows: [{ journal_entry_id: "je-live" }] };
+      throw new Error(`unexpected query: ${sql}`);
+    });
+    const result = await findLiveLifecyclePostingKeyJe(
+      { query },
+      {
+        operating_company_id: OPCO,
+        factoring_advance_id: ADVANCE_A,
+        source_transaction_type: "factoring_advance",
+        event_key: "funding",
+      }
+    );
+    expect(result).toBe("je-live");
+  });
+
+  it("returns null when the claimed JE has been reversed (the SQL's own AND-filter excludes it)", async () => {
+    const query = vi.fn(async (sql: string) => {
+      if (sql.includes("information_schema.columns")) return { rows: [{ n: "2" }] };
+      if (sql.includes("FROM accounting.factoring_lifecycle_posting_keys k")) return { rows: [] };
+      throw new Error(`unexpected query: ${sql}`);
+    });
+    const result = await findLiveLifecyclePostingKeyJe(
+      { query },
+      {
+        operating_company_id: OPCO,
+        factoring_advance_id: ADVANCE_A,
+        source_transaction_type: "factoring_advance",
+        event_key: "funding",
+      }
+    );
+    expect(result).toBeNull();
   });
 });
 
