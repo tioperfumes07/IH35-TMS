@@ -34,3 +34,11 @@ JEs is the real match; (3) what the $20/$30 JEs' extra amount represents. Not vo
 this is resolved -- voiding without a correct recreate leaves 11 settlements' totals off from
 AlwaysTrack, worse than the current flagged-but-correct state. Meanwhile: pulling the 4 manual_je
 identities now (independent, no sign risk) and starting Set B (also independent of this question).
+
+CC-1 | 2026-09-25 7:35 AM CT (12:35Z) | THE 4 manual_je NAMED (source_transaction_type='manual_je'
+literal, confirmed live query): all 4 are MY OWN item-9-suspense-reclassification JEs from earlier
+this session, already fully documented -- b699d2ac (EXP-2026-00053->5310, PR #22598/AUTH-004),
+6ff6b8fa (EXP-2026-00050->5400, PR #22598/AUTH-004), 9726b25b (EXP-2026-00021->5300, PR
+#22603/AUTH-006), 5ebb6624 (EXP-2026-00049->5300, PR #22603/AUTH-006). Each has a real, named
+accounting.expenses document behind it -- none is "a cost with no document", so Set A's fallback
+treatment doesn't apply to any of them. No further action needed on these 4. Moving to Set B now.
