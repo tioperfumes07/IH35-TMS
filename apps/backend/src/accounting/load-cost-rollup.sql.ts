@@ -30,13 +30,27 @@
  * OUTER SQL expressions for the load id and the operating company (both internal column references,
  * never user input — no injection surface). RLS scopes the base-table reads to the session company
  * exactly as the board route relies on.
+ *
+ * ACCT-F2026092587 (CC-3, 2026-09-25, found live proving the R-173 Part 1 Chrome walkthrough):
+ * the lateral's own base table was aliased `l` — THE SAME alias name every caller's `loadIdExpr`/
+ * `companyExpr` strings assume for the OUTER query (every real call site passes "l.id"/
+ * "l.operating_company_id"). A LATERAL subquery's own FROM-clause alias shadows an outer alias of
+ * the same name for any unqualified-by-scope reference inside it, so `WHERE l.id = ${loadIdExpr}`
+ * resolved to `WHERE l.id = l.id` — an unscoped tautology matching every load in mdata.loads, with
+ * `LIMIT 1` then returning one arbitrary (but plan-stable, so identically-wrong for repeated calls
+ * within the same query) row's figures instead of the intended load's. Live-verified live on load
+ * 13600 (settlement S-5812): direct query gave costs_cents=0 instead of the correct 377406; two
+ * sibling legs on the same tour both showed the SAME wrong 195370 (one arbitrary row's value,
+ * fetched twice). Renamed the lateral's own base-table alias to `cl` (cost-load) so it can no
+ * longer collide with a caller's `l` — every existing call site keeps passing "l.id"/
+ * "l.operating_company_id" unchanged and is now correctly correlated.
  */
 export function loadCostRollupLateral(loadIdExpr: string, companyExpr: string): string {
   return `LEFT JOIN LATERAL (
       SELECT
-        l.load_number,
-        l.assigned_primary_driver_id::text AS driver_id,
-        mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id) AS driver_name,
+        cl.load_number,
+        cl.assigned_primary_driver_id::text AS driver_id,
+        mdata.resolve_driver_label_same_company(cl.assigned_primary_driver_id, cl.operating_company_id) AS driver_name,
         u.unit_number,
         (
           -- NEW-23 (owner 2026-09-07 raw findings): "Factoring is missing settlement numbers
@@ -57,23 +71,23 @@ export function loadCostRollupLateral(loadIdExpr: string, companyExpr: string): 
           FROM driver_finance.driver_bills db2
           JOIN driver_finance.settlement_lines sl2 ON sl2.source_driver_bill_id = db2.id
           JOIN driver_finance.driver_settlements ds ON ds.id = sl2.settlement_id
-          WHERE db2.load_id = l.id
-            AND db2.operating_company_id = l.operating_company_id
+          WHERE db2.load_id = cl.id
+            AND db2.operating_company_id = cl.operating_company_id
             AND db2.status <> 'void'
           ORDER BY db2.created_at DESC
           LIMIT 1
         ) AS settlement_number,
-        l.rate_total_cents::bigint AS revenue_cents,
+        cl.rate_total_cents::bigint AS revenue_cents,
         COALESCE(ec.fuel_cents, 0)::bigint AS fuel_cents,
         (COALESCE(ec.non_fuel_expense_cents, 0) + COALESCE(bc.bill_cents, 0))::bigint AS expenses_cents,
         (COALESCE(ec.expense_cents, 0) + COALESCE(bc.bill_cents, 0))::bigint AS costs_cents,
         COALESCE(dp.driver_pay_cents, 0)::bigint AS driver_pay_cents,
-        (l.rate_total_cents - COALESCE(ec.expense_cents, 0) - COALESCE(bc.bill_cents, 0) - COALESCE(dp.driver_pay_cents, 0))::bigint AS margin_cents,
-        (l.rate_total_cents - COALESCE(ec.expense_cents, 0) - COALESCE(bc.bill_cents, 0) - COALESCE(dp.driver_pay_cents, 0))::bigint AS net_cents
-      FROM mdata.loads l
+        (cl.rate_total_cents - COALESCE(ec.expense_cents, 0) - COALESCE(bc.bill_cents, 0) - COALESCE(dp.driver_pay_cents, 0))::bigint AS margin_cents,
+        (cl.rate_total_cents - COALESCE(ec.expense_cents, 0) - COALESCE(bc.bill_cents, 0) - COALESCE(dp.driver_pay_cents, 0))::bigint AS net_cents
+      FROM mdata.loads cl
       LEFT JOIN mdata.units u
-        ON u.id = l.assigned_unit_id
-       AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
+        ON u.id = cl.assigned_unit_id
+       AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = cl.operating_company_id
       LEFT JOIN (
         SELECT
           e.load_id,
@@ -83,7 +97,7 @@ export function loadCostRollupLateral(loadIdExpr: string, companyExpr: string): 
           FROM accounting.expenses e
          WHERE e.load_id IS NOT NULL AND e.status <> 'void'
          GROUP BY e.load_id
-      ) ec ON ec.load_id = l.id
+      ) ec ON ec.load_id = cl.id
       LEFT JOIN (
         SELECT bl.load_id, COALESCE(SUM(ROUND(bl.amount * 100)), 0)::bigint AS bill_cents
           FROM accounting.bill_lines bl
@@ -93,15 +107,15 @@ export function loadCostRollupLateral(loadIdExpr: string, companyExpr: string): 
            AND b.revoked_at IS NULL
            AND bl.voided_at IS NULL
          GROUP BY bl.load_id
-      ) bc ON bc.load_id = l.id
+      ) bc ON bc.load_id = cl.id
       LEFT JOIN (
         SELECT db.load_id, COALESCE(SUM(db.gross_amount_cents), 0)::bigint AS driver_pay_cents
           FROM driver_finance.driver_bills db
          WHERE db.load_id IS NOT NULL AND db.status <> 'void'
          GROUP BY db.load_id
-      ) dp ON dp.load_id = l.id
-      WHERE l.id = ${loadIdExpr}
-        AND l.operating_company_id = ${companyExpr}
+      ) dp ON dp.load_id = cl.id
+      WHERE cl.id = ${loadIdExpr}
+        AND cl.operating_company_id = ${companyExpr}
       LIMIT 1
     ) lcr ON true`;
 }
