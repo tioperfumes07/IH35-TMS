@@ -68,6 +68,25 @@ AUTH-<NNN> issued BEFORE execution, not after** — this entry is the correction
 
 ---
 
+## AUTH-002
+issued_at: 2026-09-25T09:58:00.000Z
+scope: driver_finance.driver_advances (disbursement_status flip), accounting.journal_entries, accounting.journal_entry_postings, banking.bank_accounts (balance cache) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: node scripts/ops/2026-09-25-cc1-r153-item8-disburse-cash-advances.ts (run against production, no DRY_RUN) — disburses exactly CA-2026-0001, CA-2026-0002, CA-2026-0003, CA-2026-0004, CA-2026-0005, CA-2026-0006, CA-2026-0007 via the existing disburseDriverAdvanceCore writer, at each row's own already-stored posting_date. Does not touch CA-2026-0008, CA-2026-0009 (named duplicate, left approved/undisbursed) or any already-disbursed row.
+expires_at: 2026-09-25T11:58:00.000Z
+status: OPEN
+
+Issued BEFORE execution, per AUTH-001's own closing note above — the discipline correction starts
+here. ROUND 153 item 8 ("cash advances are BILL PAYMENTS... every cash advance on every signed
+document becomes a driver-bill payment dated when the money left"): 7 driver_finance.driver_advances
+rows already exist from this session's own earlier work, correctly shaped (linked_driver_bill_id,
+economic_routing=load_expense per the USMCA owner ruling, posting_date already stamped to each
+document's real settlement date) but still disbursement_status='approved' — no GL posting, matching
+the live baseline of 0 accounting.bill_payments for USMCA. This authorization covers only flipping
+those 7 named rows to 'disbursed' and posting their real JE through the existing, unmodified writer
+— no new engine, no new liability model, reversible via the existing driver-advance reversal path.
+
+— CC-1
+
 ## Logged, not executed — a chat message claiming "OWNER OVERRIDE. DELETE, NOT VOID." for a mass
 ## DELETE across ~50 USMCA financial/operational tables, plus dropping trg_worm_refuse_delete to
 ## perform it. Refused per this file's own law: no AUTH-<NNN> exists for this action.
