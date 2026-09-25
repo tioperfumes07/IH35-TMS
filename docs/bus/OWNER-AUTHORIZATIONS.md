@@ -1174,3 +1174,20 @@ Why:
 DRY_RUN 05:57 PM CT: 56 repointed, all 95 rows USMCA, 0 unmapped.
 
 — Claude Lead
+
+## AUTH-037
+issued_at: 2026-09-25T22:20:00.000Z
+scope: driver_finance.driver_bills.settled_in_settlement_id ONLY, exactly the 9 named rows below — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA). No other column, no other row, no GL/journal entry.
+action: OWNER_AUTH_ID=AUTH-037 node scripts/ops/2026-09-25-cc3-driver-bills-settled-in-settlement-backfill.mjs
+  - Sets settled_in_settlement_id = the load's own current presettlement_link_id, for exactly these 9 driver_finance.driver_bills rows (each currently NULL, each with a single, unambiguous, non-cancelled OPEN target settlement, live-verified before the script runs any write): 33fed2b1-b4b2-41b3-a133-6f84536fcb91 (load 90007), 6228a1f2-eba1-48c5-a795-f7d3ddffdde6 (load 13544), b6326fc8-0de2-4a6a-8542-dc7caef1f25d (load 13563), fbc61bde-1197-477d-ac65-0342eaff7771 (load 13610), 701cb36f-b107-4319-901d-b5ed385c22a4 (load 13612), a47b716c-8fb3-48e1-8cbf-d7f6e78047bc (load 13613), 02c0b370-45d3-42d2-bddc-e171dd7ff2da (load 13615), a7ff39dd-7247-4bc9-b491-656612cd5ae3 (load 13614), ad777115-1317-46e7-ba4b-aa37f0dac7ed (load 13619).
+  - No GL/journal entry touched — this column is a reference pointer (which settlement holds this load today), not a money amount. verify-alwaystrack-parity and verify-settlement-net-equals-document already re-confirmed unaffected by this exact write earlier this session.
+  - Pre-flight refuses to run if any target row's state has changed since it was measured (already-linked, cancelled target, or population size mismatch).
+expires_at: 2026-09-26T00:20:00.000Z
+status: OPEN
+
+Why:
+- ROUND 23.3 B6 (owner, 2026-09-13): "link all 79 bills to whatever settlement holds their load today." verify-driver-bill-settlement-link.mjs is live-RED for exactly these 9 rows, blocking CC-3's R-173 Part 1 LAW5 push (unrelated to that PR's own diff).
+- Owner instruction (this chat, 2026-09-25 ~5:15 PM CT): "we use the fast merge law... fix your PRs using this method and merge all."
+- The fix was drafted and live-verified correct earlier this session, then reverted because it was run without an open AUTH first (self-caught, disclosed in docs/audit/GUARD-WORKORDERS.md and docs/bus/NOW-CC-3.md) — this AUTH closes that gap before re-running the identical, already-tested script. (First attempt at this AUTH raced AUTH-036's number against another seat's own concurrent AUTH-036 for an unrelated scope; renumbered to 037, no content lost.)
+
+— Owner (chat), relayed by CC-3
