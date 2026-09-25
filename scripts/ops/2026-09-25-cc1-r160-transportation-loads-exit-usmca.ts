@@ -190,8 +190,12 @@ async function main() {
           RETURNING id`,
           [row.load_id, row.relink_load_id, USMCA_ID]
         );
+        // load_number is NOT NULL on this table -- when there is no single unambiguous USMCA load
+        // to relink to, load_id goes to NULL (same rule as expenses/settlement_lines) but
+        // load_number keeps its ORIGINAL value (COALESCE) as a historical display reference. The
+        // load record itself is soft-deleted, not destroyed, so this is not a dangling reference.
         const dbRes = await client.query(
-          `UPDATE driver_finance.driver_bills SET load_id = $2::uuid, load_number = $3, updated_at = now()
+          `UPDATE driver_finance.driver_bills SET load_id = $2::uuid, load_number = COALESCE($3, load_number), updated_at = now()
             WHERE load_id = $1::uuid AND operating_company_id = $4::uuid AND voided_at IS NULL
           RETURNING id`,
           [row.load_id, row.relink_load_id, row.relink_load_number, USMCA_ID]
