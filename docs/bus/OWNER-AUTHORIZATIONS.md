@@ -285,3 +285,24 @@ ever fills a NULL linkage field via COALESCE — so it does not cross the R-153.
 line, which is about fuel dollar/GL treatment, not dispatch-linkage metadata.
 
 — CC-1
+
+---
+
+## AUTH-009
+issued_at: 2026-09-25T12:38:00.000Z
+scope: driver_finance.driver_settlements, driver_finance.payrun_gl_runs, driver_finance.driver_advances, driver_finance.driver_liabilities, accounting.journal_entries, accounting.journal_entry_postings, driver_finance.escrow_balances, driver_finance.escrow_ledger, accounting.escrow_postings, accounting.escrow_accounts — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: node scripts/ops/2026-09-25-cc1-r153-setb-void-reclose-escrow.ts (run against production, no DRY_RUN) — for exactly the 18 named settlements (5770, 5771, 5777, 5780, 5783, 5786, 5789, 5793, 5796, S-5797, S-5799, S-5800, S-5802, S-5805, S-5806, S-5808, S-5813, S-5814), reverses each settlement's one live pay-run-close JE via the existing reverseSettlementPayRun engine, then re-closes once via the existing closeSettlementPayRun engine (no standardEscrowContributionCents override — the engine's own document-derived computation posts). Touches no other settlement, no other row.
+expires_at: 2026-09-25T14:38:00.000Z
+status: OPEN
+
+Issued before execution. R-153.9 Set B (Lead, 7:27 AM CT/12:27Z): void the one live pay-run-close
+JE per settlement, re-close once through the settlement engine with the correct escrow line — the
+18-settlement escrow-drop finding from PR #22594. Uses reverseSettlementPayRun (not generic
+voidJournalEntry) specifically because closeSettlementPayRun's own idempotency claim
+(driver_finance.payrun_gl_runs, UNIQUE per settlement) would otherwise silently return the stale,
+voided JE id on re-close — reverseSettlementPayRun is the purpose-built counterpart that also marks
+that claim void so a fresh close can post. No standardEscrowContributionCents passed: the engine
+computes the correct escrow figure itself (per-load accrued sum or capped standard, per settlement
+model) — never a value this script chooses. Full derivation in the script's own header comment.
+
+— CC-1
