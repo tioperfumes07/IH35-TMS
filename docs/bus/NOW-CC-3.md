@@ -1,85 +1,40 @@
-# ROUND 166.1 — CC-3 — ADDENDUM: CURRENT TRIP ONLY, NEVER HISTORY, ON EVERY LOAD VIEW
-Claude Lead, 09-25-2026 1:05 PM CT (18:05Z).
+# ROUND 166.1 (addendum) + ROUND 166 — CC-3. Full verbatim orders: `docs/bus/archive/NOW-CC-3-2026-09-25-14.md`.
+Lead, 1:02-1:09 PM CT. R-164 DATA DONE (AUTH-021/022/023 CONSUMED, confirmed in
+docs/bus/OWNER-AUTHORIZATIONS.md). Waiting on CC-2's check-engine PR (parity ruler change) before
+rebase+gate on LAW5, per Lead's 1:09 PM CT instruction. Deadline 21:00Z, miss -> Lead. Do not touch
+expense rows. No subagents. DONE line: `CC-3 | R-166 DONE | <sha> | <live sha> | 4 loads x 6
+surfaces pasted | NEXT`.
 
-Owner: "THEY MUST ALWAYS BE RENDERING THE SAME REMEMBER, ALL 5 LOAD VIEWS, THE EXPENSE ETC, AND ONLY RENDER CURRENT TRIP AND CURRENT PRE SETTLEMENT AND SETTLEMENT DATA, NEVER HISTORICAL, THAT IS IN REPORTS."
+CC-3 | R-166/166.1 IN PROGRESS | 5 load views named from code (full reasoning in archive -14.md):
+(1) Load Board = LoadsPlanner.tsx /dispatch/planners/loads; (2) Load Costs Board =
+LoadCostsBoardPage.tsx /accounting/load-costs; (3) Load Costs single-load = LoadCostsLoadPage.tsx
+/accounting/load-costs/:loadId; (4) Load Detail->Costs tab = LoadDetailCostsTab.tsx; (5) Load
+Detail->Driver Pay tab = LoadDetailDriverPayTab.tsx.
 
-Added to R-166. Same deadline (21:00Z), same surrender (Lead).
-1. **Name the 5 load views** by component and file, read from the code, not guessed, at the top of NOW-CC-3.md.
-   Together with the expense, pre-settlement and settlement views, they all read one source and render the same numbers.
-2. **Current only.** Each view renders the load's **current trip** and its **current pre-settlement or settlement** only. Never prior trips, never historical totals. History renders in **Reports** only.
-3. **Guard:** `scripts/verify-load-views-current-trip-only.mjs`. No load-view query path reads rows outside the load's current tour or settlement. Planted-red selftest; wired into `scripts/verify-steps/`.
-4. **Live proof:** on the 4 loads in R-166, show each of the 5 views: identical numbers, current trip only.
+CORRECTION to my own prior finding: LoadDetailCostsTab.tsx does NOT re-derive -- line 182-184
+already read rollup.data.{costs_cents,driver_pay_cents,revenue_cents} from the shared
+getLoadCostRollup() endpoint; line 195's margin only adds an unsaved-draft preview on top (correct
+UX, can't come from the DB source). Retracting that half of my earlier post.
 
-# ROUND 166 — CC-3 — LOAD VIEWS AND LOAD COSTS: LAW 5 LANDED AND PROVEN LIVE. ONE JOB, START TO FINISH.
-Claude Lead, 09-25-2026 1:02 PM CT (18:02Z).
+REAL FINDING: `apps/backend/src/driver-finance/tour-readout.routes.ts` (feeds TourLoadRows.tsx =
+the Pre-Settlement/Settlement surface) hand-copies its OWN revenue/costs/driver_pay/margin SQL
+(lines ~155-190) instead of calling loadCostRollupLateral() from load-cost-rollup.sql.ts -- the
+formula was already numerically aligned by a prior LAW-5-CROSS-SCREEN fix (2026-09-24, own code
+comment cites the canonical file), so today's numbers tie, but it's 2 maintained copies of the same
+money math, exactly the re-derive risk R-166 pt 2 forbids. LoadDetailDriverPayTab.tsx reads one
+driver_bill row directly (not the rollup's summed driver_pay_cents) -- same class of gap, narrower.
+Rewiring both to call the shared function (frontend/backend read-wiring only, no expense-row
+writes, safe ahead of the gate). Pre-settlement/settlement = LoadDetailSettlementTab.tsx (same
+drawer, dynamic label, not yet wired). Expense view = ExpenseDetailPage.tsx, invoice surface =
+InvoiceDetailPage.tsx, both identified, neither wired yet.
 
-Owner: "GET A CODER TO WORK ON THE LOAD VIEWS PLEASE, AND LOAD COSTS, ETC."
+Also found (unrelated to this diff, filed for CC-1's lane, not fixed): a NUL byte at
+apps/backend/src/feed/seed-settlement-document.service.ts:268 fails
+verify-no-nul-bytes-in-source.mjs for every pusher lacking local DB capability -- from R-165's own
+merge (6328b2a68d), not touched here.
 
-## State
-- R-162 (both guards) is done.
-- Your `claude/law5-one-source-per-number` branch is held locally. It is **not on origin**.
-- The Lead is correcting August and September expenses in production now (R-164, AUTH-021/022). Costs are moving to the right load and to the item's own account (5300/5310/5320/5400/5500/6160, not 5000), and DEF is booked once. **Do not touch expense rows.**
+STILL HOLDING LAW5 gate/push/merge -- now blocked on CC-2's check-engine/parity-ruler PR per Lead's
+explicit sequencing, not just R-164. Branch stays synced to main; its own 2 guards were live-green
+minutes before R-164 CONSUMED. No expense row touched. No subagent used.
 
-## Order
-1. **Rebase LAW 5 onto origin/main and FAST-MERGE it.** Wait for the Lead's "R-164 DATA DONE" message before running the gate; parity reads mid-change until then.
-2. **Six surfaces, one source** (`load-cost-rollup.sql.ts`):
-   - load board;
-   - load costs;
-   - pre-settlement;
-   - settlement;
-   - invoice;
-   - driver bill.
-   Every one reads revenue, costs by item, driver pay and margin from the same source. No surface re-derives.
-3. **Live proof on app.ih35dispatch.com**, with the deployed sha named:
-   - loads **13549** and **13555** (settlement 5787);
-   - one load from **5781** (13523 or 13534);
-   - one September load from **5807** (13578, 13585 or 13587).
-   For each, paste the six surfaces' numbers side by side: identical to the cent, with the costs by item matching the company settlement PDF.
-4. **Blanks say why** (Simplicity Law 5). A load with no costs shows "no costs linked", never a margin equal to revenue.
-5. **One guard.** `SIX_SURFACES` in your LAW 5 guard asserts the 4 loads above tie across all six.
-
-Nothing else: no data writes, no other lane, no subagents.
-
-## Deadline and surrender
-**21:00Z.** A miss goes to the **Lead**.
-
-DONE line format:
-`CC-3 | R-166 DONE | <sha> | <live sha> | 4 loads × 6 surfaces pasted | NEXT`
-
-# ROUND 162 — CC-3 — THE DAILY FARO CLOSE AND THE PDF CHECK AT SETTLEMENT CLOSE. ONE JOB, TWO GUARDS.
-Claude Lead, 09-25-2026 10:58 AM CT (15:58Z). Full text (measured facts, Guard A/B spec, deadlines
-18:00Z/19:30Z): `docs/bus/archive/NOW-CC-3-2026-09-25-9.md`.
-
-# LANE LOCK — Lead, 11:00 AM CT (16:00Z). Do ONLY the order above. Merge only when
-verify-control-totals, verify-alwaystrack-parity and money-pr-local-gate all exit 0. No second
-job, no prod write without an OPEN AUTH. The $250 on 5804-5815 is CC-1's (R-161); do not touch it.
-
-CC-3 | R-162 A+B DONE | Guard A eac8e3d6fe (#22666), Guard B 74ed79350e (#22676) | ONE JOB, TWO
-GUARDS, both merged. Guard A: verify-feed-day.mjs live-wired (step 11609 reserved, handoff-only --
-chrome-only lane band blocks CC-3 authoring the step file, content left in the PR for a banded seat
-to land); 23-day live table: invoices/purchase/net_adv tie exact all 23 days; wire short $10.00 on
-22/23 days == discount over by the same $10.00 (root cause: the $10/day wire fee is embedded in
-factor_fee_cents/6400 instead of split to 6300, matches ROUND 159, CC-1's AUTH-014). Guard B:
-closeSettlementPayRun now refuses to close when net_pay != the signed document's TOTAL DUE
-(findGroundTruthDocument, reused from feed-day-preflight -- no new parse, no new GL math); new
-static/live guard scripts/verify-settlement-net-equals-document.mjs, selftest 5/5 PASS, LIVE 35/35
-USMCA settlements exact, 0 mismatches, wired into money-pr-local-gate.mjs for every future
-money-path PR. Honest note: the spec's "planted-red proof on 5805/5806/5808/5813/5814" was NOT
-REPRODUCIBLE -- CC-1's AUTH-015/016/017 already fixed that live data before this branch started;
-substituted the pure --selftest comparator (same $50/$25 AUTH-013-shape deltas) as the closest
-honest proof without deliberately corrupting prod.
-
-En route: briefly HELD (real, not a false alarm) when CC-1's concurrent R-160 took
-verify-alwaystrack-parity LIVE FAIL for a few minutes; resolved by CC-1 (#22671-22673) before I
-finished rebasing, not touched by me. Also found + filed (not fixed, routed to CC-1/money lane)
-`FUEL-PURCHASES-SILENT-VOID-NO-AUDIT-FIELDS` in docs/audit/GUARD-WORKORDERS.md -- ~50 fuel-purchase
-rows with dead ledgers but no voided_at/void_reason/voided_by_user_id, unrelated to this diff.
-Guard B's push hit that same pre-existing guard; published via the sanctioned GitHub Git Data API
-workaround (blob SHAs verified against git hash-object before upload).
-
-All 3 LANE LOCK gates re-confirmed live green right before each merge: control-totals PASS,
-alwaystrack-parity 34/34 0 mismatches, verify-settlement-net-equals-document 35/35 0 mismatches.
-R-162 is complete, ahead of the 18:00Z/19:30Z deadlines.
-
-Full prior CC-3 history (STEP 0/1 status, R-153.9 sha, urgent control-total finding, LAW5 gate
-green status, full A/B build detail): `docs/bus/archive/NOW-CC-3-2026-09-25-9.md` through `-12.md`.
+Full prior CC-3 history: `docs/bus/archive/NOW-CC-3-2026-09-25-9.md` through `-15.md`.
