@@ -7016,6 +7016,13 @@
      "miles": 1536.4,
      "rate": 2.603,
      "amount": 4000
+    },
+    {
+     "load": "13554",
+     "customer": "Faro inv 39 / AT sibling",
+     "item": "Line Haul",
+     "description": "Line Haul",
+     "amount": 3500
     }
    ],
    "driver_payment": [
@@ -10034,6 +10041,13 @@
      "miles": null,
      "rate": null,
      "amount": 3600
+    },
+    {
+     "load": "13564",
+     "customer": "Faro inv 51 / AT sibling",
+     "item": "Line Haul",
+     "description": "Line Haul",
+     "amount": 3000
     }
    ],
    "driver_payment": [
