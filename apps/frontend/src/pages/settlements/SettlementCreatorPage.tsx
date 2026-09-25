@@ -94,10 +94,10 @@ export function SettlementCreatorPage() {
   const [loads, setLoads] = useState<LoadDraft[]>([emptyLoad()]);
   const [fuels, setFuels] = useState<FuelDraft[]>([]);
   const [expenses, setExpenses] = useState<ExpDraft[]>([]);
-  const [deductions, setDeductions] = useState<MoneyDraft[]>([]);
-  const [reimbursements, setReimbursements] = useState<MoneyDraft[]>([]);
-  const [escrow, setEscrow] = useState<MoneyDraft[]>([]);
-  const [advances, setAdvances] = useState<Array<{ description: string; amount_cents: number }>>([]);
+  const [deductions] = useState<MoneyDraft[]>([]);
+  const [reimbursements] = useState<MoneyDraft[]>([]);
+  const [escrow] = useState<MoneyDraft[]>([]);
+  const [advances] = useState<Array<{ description: string; amount_cents: number }>>([]);
   const [pdfCompanyExpenses, setPdfCompanyExpenses] = useState("");
   const [pdfDriverNet, setPdfDriverNet] = useState("");
 
@@ -509,7 +509,7 @@ export function SettlementCreatorPage() {
               size="sm"
               variant="primary"
               loading={busy}
-              disabled={!preview?.can_post || wrongEntity}
+              disabled={!preview?.can_post || Boolean(wrongEntity)}
               onClick={() => void onPost()}
               data-testid="sc-post"
             >
