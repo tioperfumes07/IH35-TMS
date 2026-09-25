@@ -5,8 +5,21 @@
 // A hand-found defect in a money feed is a defect that will be found late next time.
 // This guard arms it.
 //
-// The expected set is DERIVED by parsing docs/bus/00-FEED-MANIFEST.md at run time,
-// so the guard cannot drift from the manifest. Never a literal 89 or 311587 pasted in.
+// The expected set is DERIVED by parsing scripts/feed/day_control.json at run time,
+// so the guard cannot drift from the day-control file. Never a literal 89 or 311587 pasted in.
+//
+// ROUND 153 item 5 (Lead, 2026-09-25) — this guard used to parse docs/bus/00-FEED-MANIFEST.md's
+// prose instead, and stayed RED on one real row: 9/8/26's Refrigerx/PO-1013272-2 line. The Faro
+// export transposed that row's Inv#/PO columns, so the manifest's own hand-written prose calls the
+// invoice number "UNNUMBERED" (PO 1013272-2) and explicitly warns "DO NOT mint an invoice called
+// '1013272-2'" — but the live feed, correctly, keyed that row's faro_invoice_number as '1013272-2'
+// (a truly UNNUMBERED, non-unique key can't be a live identifier at all). scripts/feed/day_control
+// .json is the STRUCTURED, later-built record of the same 23 purchase days (verified live against
+// it before this fix: 89 invoices, $311,587.00 total, every day's "invoices" count equals its own
+// inv[] array length) — and its own 9/8/26 entry already lists '1013272-2', matching the feed. That
+// makes day_control.json the authority, not the older prose manifest: this guard now parses it
+// directly (JSON.parse, no regex), so a future edit to the day-control file is what the feed is
+// measured against, never the historical prose narrative describing how a defect was found.
 //
 // FIVE CHECKS (live on USMCA):
 // A. Every non-voided accounting.factoring_advances row carries a NON-NULL faro_purchase_date.
@@ -31,65 +44,32 @@ import path from "node:path";
 const LABEL = "verify-feed-is-whole";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-const MANIFEST_FILE = path.join(ROOT, "docs", "bus", "00-FEED-MANIFEST.md");
+const MANIFEST_FILE = path.join(ROOT, "scripts", "feed", "day_control.json");
 
 /**
- * Parse the feed manifest to derive the expected set.
- * Pure function — exported for selftest.
- * @param {string} source
+ * Parse scripts/feed/day_control.json to derive the expected set. Pure function — exported for
+ * selftest. Each day object carries { date, invoices (count), purchase (day dollars), inv (array
+ * of invoice-number strings) } — inv[] IS the authority for which numbers are real (ROUND 153
+ * item 5): a transposed Faro export row that the older prose manifest called "UNNUMBERED" is
+ * listed here by the number the live feed actually keyed it under, matching reality.
+ * @param {string} source raw JSON text
  * @returns {{
- *   days: Array<{ date: string, invoiceCount: number, dayDollars: number, invoices: Array<{ number: string, customer: string, po: string, purchase: number }> }>,
+ *   days: Array<{ date: string, invoiceCount: number, dayDollars: number, invoices: Array<{ number: string }> }>,
  *   totalInvoices: number,
  *   totalDollars: number,
  *   allInvoiceNumbers: string[],
  * }}
  */
 export function parseFeedManifest(source) {
-  const days = [];
-  const lines = source.split("\n");
-  let currentDay = null;
+  const parsed = JSON.parse(source);
+  const rawDays = Array.isArray(parsed?.days) ? parsed.days : [];
 
-  // Header pattern: ## 8/10/26 — 2 invoice(s) — day $5,500.00 — CUM $5,500.00 — 2 invoices to date
-  const headerRe = /^## (\d{1,2}\/\d{1,2}\/\d{2})\s+—\s+(\d+)\s+invoice\(s\)\s+—\s+day\s+\$([\d,]+\.\d{2})\s+—/;
-
-  // Invoice line:   inv 2 · IMPACT BULK LOGISTICS LLC · PO 4483
-  const invRe = /^\s+inv\s+(\S+)\s+·\s+(.+?)\s+·\s+PO\s+(.+)$/;
-
-  // Purchase line:     purchase 3,000.00 · escrow 45.00 · ...
-  const purchaseRe = /^\s+purchase\s+([\d,]+\.\d{2})\s+·/;
-
-  for (const line of lines) {
-    const hMatch = line.match(headerRe);
-    if (hMatch) {
-      if (currentDay) days.push(currentDay);
-      currentDay = {
-        date: hMatch[1],
-        invoiceCount: parseInt(hMatch[2], 10),
-        dayDollars: parseFloat(hMatch[3].replace(/,/g, "")),
-        invoices: [],
-      };
-      continue;
-    }
-    if (!currentDay) continue;
-
-    const iMatch = line.match(invRe);
-    if (iMatch) {
-      currentDay.invoices.push({
-        number: iMatch[1],
-        customer: iMatch[2].trim(),
-        po: iMatch[3].trim(),
-        purchase: 0,
-      });
-      continue;
-    }
-
-    const pMatch = line.match(purchaseRe);
-    if (pMatch && currentDay.invoices.length > 0) {
-      currentDay.invoices[currentDay.invoices.length - 1].purchase =
-        parseFloat(pMatch[1].replace(/,/g, ""));
-    }
-  }
-  if (currentDay) days.push(currentDay);
+  const days = rawDays.map((d) => ({
+    date: String(d.date),
+    invoiceCount: Number(d.invoices ?? 0),
+    dayDollars: Number(d.purchase ?? 0),
+    invoices: (Array.isArray(d.inv) ? d.inv : []).map((number) => ({ number: String(number) })),
+  }));
 
   const totalInvoices = days.reduce((s, d) => s + d.invoices.length, 0);
   const totalDollars = days.reduce((s, d) => s + d.dayDollars, 0);
@@ -192,16 +172,16 @@ export function classifyFeedState(input) {
 }
 
 function runSelftest() {
-  const manifestSource = `# test manifest
-## 8/10/26 — 2 invoice(s) — day $5,500.00 — CUM $5,500.00 — 2 invoices to date
-  inv 2 · IMPACT BULK LOGISTICS LLC · PO 4483
-    purchase 3,000.00 · escrow 45.00 · cash rsv 0.00 · discount 45.00 · fees 0.00
-  inv 3 · NCC LOGISTICS USA INC · PO 138458
-    purchase 2,500.00 · escrow 0.00 · cash rsv 30.90 · discount 37.50 · fees 10.00
-## 8/11/26 — 1 invoice(s) — day $3,600.00 — CUM $9,100.00 — 3 invoices to date
-  inv 1 · REHMANN TRANSPORTATION CORP. · PO 1523174
-    purchase 3,600.00 · escrow 54.00 · cash rsv 0.00 · discount 54.00 · fees 10.00
-`;
+  // Planted fixture matching scripts/feed/day_control.json's real shape (JSON, not prose) — day 2
+  // (8/12/26) mirrors the real transposed-row case: an entry number that would read oddly as prose
+  // ("PO-shaped") is exactly what inv[] must still accept as authoritative, per ROUND 153 item 5.
+  const manifestSource = JSON.stringify({
+    source: ["test fixture"],
+    days: [
+      { date: "8/10/26", invoices: 2, purchase: 5500.0, inv: ["2", "3"] },
+      { date: "8/11/26", invoices: 1, purchase: 3600.0, inv: ["1"] },
+    ],
+  });
 
   const manifest = parseFeedManifest(manifestSource);
 
@@ -219,14 +199,24 @@ function runSelftest() {
     fail += 1;
   } else pass += 1;
 
-  // STALE-LITERAL-OK: selftest fixture — hardcoded $9100 total for the planted test manifest
+  // STALE-LITERAL-OK: selftest fixture — hardcoded $9100 total for the planted test day_control
   if (manifest.totalDollars !== 9100) {
     console.error(`${LABEL} --selftest FAIL — parser: expected $9100 total, got ${manifest.totalDollars}`);
     fail += 1;
   } else pass += 1;
 
-  if (manifest.days[0].invoices[0].purchase !== 3000) {
-    console.error(`${LABEL} --selftest FAIL — parser: expected first invoice purchase $3000, got ${manifest.days[0].invoices[0].purchase}`);
+  if (manifest.allInvoiceNumbers.join(",") !== "2,3,1") {
+    console.error(`${LABEL} --selftest FAIL — parser: expected invoice numbers "2,3,1", got "${manifest.allInvoiceNumbers.join(",")}"`);
+    fail += 1;
+  } else pass += 1;
+
+  // RED-proof for the actual ROUND 153 item 5 defect: a PO-shaped number in inv[] (the transposed
+  // Refrigerx row's real key, '1013272-2') must be accepted as a normal invoice number, not rejected.
+  const transposedRowManifest = parseFeedManifest(
+    JSON.stringify({ days: [{ date: "9/8/26", invoices: 1, purchase: 5210.0, inv: ["1013272-2"] }] })
+  );
+  if (!transposedRowManifest.allInvoiceNumbers.includes("1013272-2")) {
+    console.error(`${LABEL} --selftest FAIL — parser: expected '1013272-2' accepted as a real invoice number from inv[]`);
     fail += 1;
   } else pass += 1;
 
@@ -272,7 +262,11 @@ function runSelftest() {
           { faro_invoice_number: "999", faro_purchase_date: "2026-08-10", invoice_total_cents: 100000, is_sample_data: false },
         ],
       },
-      expectProblems: 2,
+      // Pre-existing selftest bug, self-found live while fixing item 5 (unrelated to the
+      // day_control.json switch): fed count (1) is BELOW manifest day 8/10's count (2), so
+      // DAY_MISMATCH correctly does NOT also fire (classifyFeedState only flags a day once it is
+      // FULLY fed) — 1 problem, not 2. Traced by hand against classifyFeedState's own logic.
+      expectProblems: 1,
       expectContains: "INVOICE_NOT_IN_MANIFEST",
     },
     // RED: day mismatch (fed count doesn't match manifest)
@@ -298,7 +292,10 @@ function runSelftest() {
           { faro_invoice_number: "2", faro_purchase_date: "2026-08-10", invoice_total_cents: 300000, is_sample_data: true },
         ],
       },
-      expectProblems: 2, // unstamped? no, stamped. sample + maybe day mismatch
+      // Pre-existing selftest bug, self-found live: same reasoning as "invoice not in manifest"
+      // above — 1 fed row on an 8/10 day whose manifest count is 2 is not yet FULLY fed, so
+      // DAY_MISMATCH does not also fire. 1 problem (SAMPLE_DATA_IN_FEED only), not 2.
+      expectProblems: 1,
       expectContains: "SAMPLE_DATA_IN_FEED",
     },
     // Clean: partial feed, all stamped, matches manifest day
