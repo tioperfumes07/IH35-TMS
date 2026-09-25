@@ -240,7 +240,12 @@ async function live() {
          FROM mdata.loads l
          JOIN accounting.expenses e ON e.load_id = l.id AND e.operating_company_id = l.operating_company_id
         WHERE l.operating_company_id = $1::uuid AND l.load_number = ANY($2::text[]) AND e.voided_at IS NULL
-          AND e.source_fuel_transaction_id IS NULL
+          -- R-164 (owner order 09-25-2026, LAW 4): DEF / reefer fuel bought on the card is booked ONCE, as the
+          -- fuel-backed accounting.expenses row (Cr the card). Only DIESEL belongs to the FUEL dimension; a
+          -- fuel-backed non-diesel expense is an AlwaysTrack company expense and counts here.
+          AND (e.source_fuel_transaction_id IS NULL
+               OR EXISTS (SELECT 1 FROM fuel.fuel_transactions ft
+                           WHERE ft.id = e.source_fuel_transaction_id AND ft.fuel_type <> 'diesel'))
         GROUP BY l.load_number`,
       [USMCA_COMPANY_ID, allLoadNumbers]
     );
