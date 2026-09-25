@@ -50,6 +50,10 @@ import {
 import { resolveSettlementMinNet } from "./settlement-deduction-cap.service.js";
 import { stampTripClosedForBookendedSettlement } from "./settlements-load-bookended.service.js";
 import { closeCompanySettlementAlongsideDriverSettlement } from "../accounting/company-settlement-close.service.js";
+// R-162 Guard B (Lead order, 2026-09-25) — reuse feed-day-preflight's OWN ground-truth reader
+// (findGroundTruthDocument, already backs verify-alwaystrack-parity's DRIVER_NET dimension) rather
+// than a second JSON-parsing implementation of the same signed-document source.
+import { findGroundTruthDocument } from "../feed/feed-day-preflight.service.js";
 
 import {
   SETTLEMENT_GL_POSTING_FLAG_KEY,
@@ -89,6 +93,7 @@ export type PayRunCloseErrorCode =
   | "CHARGEBACK_RECOVERY_ACCOUNT_MISSING"
   | "NET_PAY_NEGATIVE"
   | "NET_PAY_FLOOR_BREACH"
+  | "NET_PAY_DOCUMENT_MISMATCH"
   | "UNBALANCED_ENTRY"
   | "SETTLEMENT_ALREADY_POSTED_BY_OTHER_POSTER"
   | "OUTSTANDING_LOAN_DECISION_REQUIRED"
@@ -115,6 +120,7 @@ type SettlementRow = {
   gross_pay: string;
   settlement_model: string | null;
   trip_closed_at: string | null;
+  source_document_ref: string | null;
 };
 
 export type PayRunNetBreakdown = {
@@ -182,7 +188,8 @@ async function loadSettlement(client: DbClient, operatingCompanyId: string, sett
         period_end::text,
         gross_pay::text,
         settlement_model,
-        trip_closed_at::text
+        trip_closed_at::text,
+        source_document_ref
       FROM driver_finance.driver_settlements
       WHERE operating_company_id = $1::uuid AND id = $2::uuid
       LIMIT 1
@@ -711,6 +718,29 @@ export async function closeSettlementPayRun(
         },
         "warning",
         "SET-05-NETPAY-FLOOR-CLOSE"
+      );
+    }
+
+    // R-162 Guard B (Lead order, 2026-09-25) — the computed net must equal the signed AlwaysTrack
+    // document's own TOTAL DUE for this settlement, when a document is on file. Root cause this
+    // guard exists for: AUTH-013 (Set B escrow reactivation) silently pushed 5805/5806/5808/5813/
+    // 5814 and 13 more Set-B settlements $50/$25 off their signed documents with NOTHING at close
+    // time to catch it — verify-alwaystrack-parity only runs as a separate CI/local gate, never at
+    // the actual close call. This is the missing runtime backstop, checked against the SAME source
+    // findGroundTruthDocument reads for verify-alwaystrack-parity's own DRIVER_NET dimension — never
+    // a second parse of the signed PDF text. No document on file for this settlement (or the
+    // document's driver side is missing) => nothing to compare against, proceed unchanged.
+    const groundTruthDoc = settlement.source_document_ref ? findGroundTruthDocument(settlement.source_document_ref) : null;
+    if (groundTruthDoc && groundTruthDoc.driver_net_cents != null && groundTruthDoc.driver_net_cents !== netCents) {
+      throw new SettlementPayRunError(
+        "NET_PAY_DOCUMENT_MISMATCH",
+        `Settlement ${settlement.display_id ?? settlementId} (document ${settlement.source_document_ref}) computed net ${netCents}c does not equal the signed document's TOTAL DUE ${groundTruthDoc.driver_net_cents}c (delta ${netCents - groundTruthDoc.driver_net_cents}c) — refusing to close`,
+        {
+          ...breakdown,
+          source_document_ref: settlement.source_document_ref,
+          document_total_due_cents: groundTruthDoc.driver_net_cents,
+          delta_cents: netCents - groundTruthDoc.driver_net_cents,
+        } as unknown as Record<string, unknown>
       );
     }
 

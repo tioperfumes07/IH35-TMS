@@ -913,6 +913,32 @@ if (touchesMoneyPath()) {
   skippedLiveChecks.push(msg);
 }
 
+// R-162 GUARD B (Lead order, 2026-09-25) — settlement net_pay must equal the signed document's
+// own TOTAL DUE (the same runtime check closeSettlementPayRun now runs at close time). Mirrors
+// verify-control-totals/verify-alwaystrack-parity's own touchesMoneyPath()-gated live pattern.
+if (touchesMoneyPath()) {
+  if (!process.env.DATABASE_URL) {
+    console.error(
+      `\n${LABEL}: FAIL — scripts/verify-settlement-net-equals-document.mjs — this diff touches a ` +
+        `money path but DATABASE_URL is not set. A touched live-domain guard with no DB is a FAIL, never a skip (ROUND 29.9-B).\n`,
+    );
+    process.exit(1);
+  }
+  // No acceptedAsEmptyByPurge here (verify-purge-window-exemption.mjs hard-counts exactly 4 sites:
+  // control totals, parity, LIVE_DOMAIN_GUARDS, E7 batch 2) — this guard does not need it anyway: a
+  // purge that empties driver_settlements just yields "0 settlement(s) checked, 0 mismatches", a
+  // legitimate PASS with no special-cased exemption required.
+  const code = runNode("scripts/verify-settlement-net-equals-document.mjs");
+  if (code !== 0) {
+    failStep("verify-settlement-net-equals-document");
+    process.exit(code);
+  }
+} else {
+  const msg = "verify-settlement-net-equals-document.mjs — no money path in this diff";
+  console.log(`[${LABEL}] SKIP ${msg}`);
+  skippedLiveChecks.push(msg);
+}
+
 // Lead ROUND 48 (2026-09-22): one fuel purchase, one posting. fuel/ is not in touchesMoneyPath()
 // but a fuel change is exactly what can post a second copy of a purchase, so this check keys on
 // its own paths.
