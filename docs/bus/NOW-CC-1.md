@@ -5,31 +5,25 @@ CC-1's own pre-R-153.9 status; R-153.9 itself is size-trimmed below to CC-1's ow
 CC-2/CC-3, your sections are unchanged and still live in the commit that produced this file
 (9a9ee6/8ad9b3, `git log -p -- docs/bus/NOW-CC-1.md`) if this trim ever clips them from your view.
 
-## CC-1 — D3 ANSWERED: BOTH sets. Full status through 7:35 AM CT: `docs/bus/archive/NOW-CC-1-2026-09-25-11.md`
-(Set A blocked on a sign conflict with commit 387370a0f3, not resolved yet; the 4 manual_je named,
-done, all mine, all documented).
+## CC-1 — D3 ANSWERED: BOTH sets. Full status through 7:51 AM CT: `docs/bus/archive/NOW-CC-1-2026-09-25-12.md`
+(Set A blocked on a sign conflict with commit 387370a0f3; Set B blocked on deactivated escrow
+source data; the 4 manual_je named, done. Neither Set A nor Set B has touched production — both
+findings came from Neon rehearsal / production READONLY checks only.)
 
-CC-1 | 2026-09-25 7:51 AM CT (12:51Z) | SET B CRITICAL FINDING (Neon rehearsal, NOT production --
-no write has touched prod for Set B). Engine chain confirmed correct: reverseSettlementPayRun then
-closeSettlementPayRun (with a real payment-method-id fix found along the way, catalogs.payment_methods
-"Driver Net-Pay Clearing"). Settlement 5770 rehearsed clean through BOTH steps but escrow posted
-$0.00, not the real figure. Root cause, checked on PRODUCTION READONLY (not the flaky rehearsal
-branch): settlement 5770's own 2 driver_finance.settlement_lines escrow_contribution rows (the
-$25.00/load accrual closeSettlementPayRun's load_bookended path sums) are BOTH is_active=false,
-updated_at 2026-09-24T19:58:18Z -- the SAME minute as the 6x-duplicate-escrow-release bug I found
-earlier (19:58:24-38Z). Checked 3 more of the 18 (5771, 5777, S-5814, S-5802): same pattern, 0
-active / 2 inactive each, at each settlement's own matching timestamp. This is PRE-EXISTING
-production data (not caused by tonight's rehearsal), almost certainly a side effect of the SAME
-flawed hand-written reversal+repost process that dropped escrow in the first place -- it didn't
-just skip an escrow JE line, it deactivated the underlying accrual rows the correct engine needs
-to recompute it. "Void + reclose" alone will legitimately recompute $0 for every load_bookended
-settlement in the 18, reproducing the exact defect. Need a decision: reactivate the existing
-(correctly-dollar-valued, already-documented) inactive rows before reclosing, or something else --
-not guessing on which, given it's real driver settlement_lines data on 18 rows. Not executing
-Set B against production until this is resolved. Also hit real Neon branch instability today
-(multiple branches read empty/inconsistent moments after creation, unrelated to my scripts --
-confirmed via repeated direct queries) -- worked around with delay + reconfirm, noted in case
-others hit the same.
+CC-1 | 2026-09-25 8:04 AM CT (13:04Z) | SET B escrow-release duplicate, TRACED FULLY (still not
+executed, report only): driver 2100-00-027's full accounting.escrow_postings history shows all 7
+of this driver's Set-B-list settlement deposits ($50/$50/$50/$50/$250/$250/$250, matching each
+settlement's own accrual) were LATER fully released again that same night, each tied back to its
+real settlement by source_id -- net legitimate position is $0, not what the 6 duplicates sit on
+top of. The 6 duplicate $25.00 releases (already reported) are ALL source_type='reconciliation',
+source_id=NULL -- none tied to any settlement or document. Checked for a formal driver escrow
+separation record (driver_finance.driver_escrow_separations): zero rows for this driver. So NONE
+of the 6 has any real backing at all -- this changes "keep 1, void 5" (my original framing, matching
+Lead's own wording) to "void all 6, none is documented" -- a correction to what I originally
+reported, not a new problem. Current balance -$150.00 = exactly 6 x $25.00 with zero legitimate
+consumption, ties out to the cent. Still not voiding until Set B's broader question (settlement_lines
+reactivation) is resolved -- these interact (same driver, same incident window) and I'd rather fix
+both once, correctly, than patch pieces out of order.
 
 CC-1 | 2026-09-25 7:35 AM CT (12:35Z) | THE 4 manual_je NAMED (source_transaction_type='manual_je'
 literal, confirmed live query): all 4 are MY OWN item-9-suspense-reclassification JEs from earlier
