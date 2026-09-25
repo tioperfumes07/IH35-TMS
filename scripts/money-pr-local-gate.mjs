@@ -547,7 +547,7 @@ const LIVE_DOMAIN_GUARDS = [
   // ROUND E23 (DEVIN-B, Q01): a cost-of-revenue/expense JE (debiting 5xxx/6xxx) must have a
   // matching accounting.expenses row; a fuel/expense JE must NOT credit 1090/1100/1150.
   // RED fixture: 10 live fuel JEs crediting 1090 with bare-UUID memos, $7,250.20.
-  // Cursor fixes the writer; this guard catches the output. Baseline 0 (shrink-only).
+  // CC-2 owns the writer (R-153.6); CC-3 owns guard scope (R-153.7). Baseline 0 (shrink-only).
   [
     "verify-costs-are-expenses-not-handwritten-jes",
     [
