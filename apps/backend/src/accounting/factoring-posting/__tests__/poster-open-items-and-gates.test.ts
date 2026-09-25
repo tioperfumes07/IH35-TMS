@@ -247,13 +247,17 @@ describe("factoring poster — Round 86: real funding figures correct the advanc
     expect(correctionCall).toBeDefined();
     const [, params] = correctionCall as [string, unknown[]];
     // [advance_id, reserve, reserve_pct, fee, fee_pct, cash/advance_amount, advance_rate_pct,
-    //  faro_invoice_number, faro_purchase_date, operating_company_id]
+    //  wire_fee_cents, faro_invoice_number, faro_purchase_date, operating_company_id]
+    // Lead ruling (live blocking finding, 2026-09-25): advance+reserve+fee alone stopped summing to
+    // invoice_total once a real wire fee exists — wire_fee_cents is now recorded on the row too, at
+    // param index 7, so verify-ldt-4-factoring-money's reconciliation includes it.
     expect(params[1]).toBe(6000); // real reserve, NOT the 7500 submission estimate
     expect(params[3]).toBe(4500); // real fee, NOT the 0 submission estimate — and NOT equal to reserve
     expect(params[1]).not.toBe(params[3]); // the exact bug this fix closes: escrow ≠ fee
     expect(params[5]).toBe(500000 - 6000 - 4500 - 1000); // cash = liability - reserve - fee - ach (wire fee deducted)
-    expect(params[7]).toBe("92");
-    expect(params[8]).toBe("2026-09-11");
+    expect(params[7]).toBe(1000); // the wire fee itself, now recorded on the row (was previously dropped)
+    expect(params[8]).toBe("92");
+    expect(params[9]).toBe("2026-09-11");
   });
 
   it("funding: does NOT touch accounting.factoring_advances' reserve/fee/advance columns when no funding_figures are supplied (never fabricates a correction from numbers nobody gave it)", async () => {

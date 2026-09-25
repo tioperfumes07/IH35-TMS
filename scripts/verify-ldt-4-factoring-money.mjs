@@ -125,13 +125,15 @@ async function verifyLive() {
     await client.query(`SET app.bypass_rls = 'lucia'`);
     await client.query(`SET app.operating_company_id = '${USMCA_COMPANY_ID}'`);
 
-    // Find factoring advances for USMCA
+    // Find EVERY non-voided factoring advance for USMCA — no LIMIT. A guard that only samples the
+    // first N rows can look green while a real, systematic gap (like the wire-fee one below) sits
+    // undetected on row 11+; Lead's own ruling on this guard's live blocking finding was explicit:
+    // "the guard must reconcile ... for ALL 21 R-159 rows consistently".
     const advRes = await client.query(`
-      SELECT fa.id, fa.invoice_total_cents, fa.advance_amount_cents, fa.reserve_amount_cents,
-             fa.factor_fee_cents, fa.advance_rate_pct, fa.reserve_pct, fa.factor_fee_pct, fa.status
+      SELECT fa.id, fa.display_id, fa.invoice_total_cents, fa.advance_amount_cents, fa.reserve_amount_cents,
+             fa.factor_fee_cents, fa.wire_fee_cents, fa.advance_rate_pct, fa.reserve_pct, fa.factor_fee_pct, fa.status
       FROM accounting.factoring_advances fa
       WHERE fa.operating_company_id = $1 AND fa.status <> 'voided'
-      LIMIT 10
     `, [USMCA_COMPANY_ID]);
 
     if (advRes.rows.length === 0) {
@@ -141,19 +143,33 @@ async function verifyLive() {
 
     console.log(`${LABEL}: checking ${advRes.rows.length} USMCA factoring advance(s) for reconciliation`);
 
+    // Collect every violation instead of failing on the first — a guard that stops at row 1 never
+    // tells you rows 2-N are broken too (exactly what happened live: 21 rows shared one bug, and a
+    // fail-fast guard would only ever have shown you one of them at a time).
+    const violations = [];
     for (const adv of advRes.rows) {
       const invoiceTotal = Number(adv.invoice_total_cents ?? 0);
       const advanceAmount = Number(adv.advance_amount_cents ?? 0);
       const reserveAmount = Number(adv.reserve_amount_cents ?? 0);
       const factorFee = Number(adv.factor_fee_cents ?? 0);
-      const sum = advanceAmount + reserveAmount + factorFee;
+      // wire_fee_cents is NULL for any advance funded before this column existed and for any
+      // advance with no wire fee at all — both cases contribute 0, never a NULL-poisoned sum.
+      const wireFee = Number(adv.wire_fee_cents ?? 0);
+      const sum = advanceAmount + reserveAmount + factorFee + wireFee;
 
-      // Reconciliation: advance + reserve + fee should equal invoice_total (purchased amount)
+      // Reconciliation: advance + reserve + fee + wire should equal invoice_total (purchased amount)
       // Allow 1 cent tolerance for rounding
       if (Math.abs(sum - invoiceTotal) > 1) {
-        fail(`Advance ${adv.id}: advance(${advanceAmount}) + reserve(${reserveAmount}) + fee(${factorFee}) = ${sum} ≠ invoice_total(${invoiceTotal}) — reconciliation failed`);
+        violations.push(
+          `Advance ${adv.display_id ?? adv.id}: advance(${advanceAmount}) + reserve(${reserveAmount}) + fee(${factorFee}) + wire(${wireFee}) = ${sum} ≠ invoice_total(${invoiceTotal})`
+        );
+        console.log(`  ✗ Advance ${adv.display_id ?? adv.id}: advance=${advanceAmount} reserve=${reserveAmount} fee=${factorFee} wire=${wireFee} sum=${sum} invoice_total=${invoiceTotal}`);
+      } else {
+        console.log(`  Advance ${adv.display_id ?? adv.id}: advance=${advanceAmount} reserve=${reserveAmount} fee=${factorFee} wire=${wireFee} sum=${sum} invoice_total=${invoiceTotal} ✓`);
       }
-      console.log(`  Advance ${adv.id}: advance=${advanceAmount} reserve=${reserveAmount} fee=${factorFee} sum=${sum} invoice_total=${invoiceTotal} ✓`);
+    }
+    if (violations.length > 0) {
+      fail(`${violations.length} of ${advRes.rows.length} advance(s) fail reconciliation:\n  ${violations.join("\n  ")}`);
     }
 
     // A/R row unchanged after submission (no derecognition)
