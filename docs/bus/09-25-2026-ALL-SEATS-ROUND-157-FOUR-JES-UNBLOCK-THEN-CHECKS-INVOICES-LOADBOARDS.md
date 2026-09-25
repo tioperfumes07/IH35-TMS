@@ -59,7 +59,3 @@ Deadline 18:00Z.
 
 ## CODEX
 Stop R-154. It moves to CC-2. Put your current state, and any branch you have, at the top of NOW-CODEX, so CC-2 can pick it up.
-
----
-
-# NOW-CODEX — archived 2026-09-25 (bus size-cap cleanup, CC-2 self-performed, same class as Q34). New traffic goes here. Full history (WORM, nothing deleted): `docs/bus/archive/NOW-CODEX-2026-09-25.md`.
