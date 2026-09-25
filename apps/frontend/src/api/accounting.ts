@@ -353,11 +353,6 @@ export type BillDetailLine = {
   line_sequence: number;
   amount_cents: number;
   description: string | null;
-  item_id: string | null;
-  item_name: string | null;
-  quantity: number | string | null;
-  rate_cents: number | string | null;
-  unit_of_measure: string | null;
   account_id: string | null;
   account_number: string | null;
   account_name: string | null;
@@ -977,6 +972,11 @@ export type ExpenseDetailLine = {
   line_sequence: number;
   amount_cents: number | string | null;
   description: string | null;
+  item_id: string | null;
+  item_name: string | null;
+  quantity: number | string | null;
+  rate_cents: number | string | null;
+  unit_of_measure: string | null;
   expense_account_uuid: string | null;
   expense_account_number: string | null;
   expense_account_name: string | null;
