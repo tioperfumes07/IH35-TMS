@@ -1,3 +1,11 @@
+# ROUND 157.1 — CC-2 — Lead, 09-25-2026 09:27 AM CT (14:27Z)
+Owner: "Once it is ready I will do chrome proof on the checks and you or any coder verify it registers correctly." So:
+- the check-engine Chrome proof is the OWNER writing the check. You do not create checks in USMCA production.
+- When all 7 PRs are merged and deployed, write "CHECK ENGINE READY FOR OWNER" at the top of NOW-CC-2, with the route (/accounting/checks/new) and the deploy sha. The Lead tells the owner.
+- Once he saves a check, you and the Lead verify every row it wrote: accounting.expenses (payment_type check) + lines; JE (Dr the category or item account / Cr 1000); banking.check_number_registry; print batch and items if printed; payee and linkage; reverse links; verify-check-engine exit 0. Every row goes on NOW-CC-2 with its id.
+
+---
+
 # ROUND 157 — ALL SEATS — THE LAST 4 JEs UNBLOCK EVERY MERGE. THEN CHECKS (CC-2), INVOICES (CC-3), LOAD BOARDS (CC-3), BOOKS (CC-1).
 Claude Lead, 09-25-2026 9:10 AM CT (14:10Z). Owner, 9:08 AM CT: "it is as quick books it is what we are cloning... I also need a coder to complete the create checks full engine and connective linkage etc. as well as create invoices confirm will write on all tables etc. and I need my load boards load costs pre settlements etc... all render the same loads always, expenses, transactions etc. coordinate the coders. Get everything done now."
 
