@@ -147,7 +147,9 @@ async function resolveFuelCardRailAccount(
   throw new Error(`Fuel card rail account ${accountNumber} (${rail}) is missing for operating_company_id=${operatingCompanyId}`);
 }
 
-async function resolveCompanyDirectCreditAccount(
+/** R-153.6/153.7: exported so fuel-expense-document.service.ts's backfill/dedupe writer can resolve
+ *  the SAME card-rail account this poster already uses -- one resolution path, never a second one. */
+export async function resolveCompanyDirectCreditAccount(
   client: DbClient,
   operatingCompanyId: string,
   preference: CompanyDirectCredit

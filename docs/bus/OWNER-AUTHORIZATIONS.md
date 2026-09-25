@@ -171,7 +171,16 @@ issued_at: 2026-09-25T10:20:00.000Z
 scope: fuel.fuel_transactions (read-only, source), accounting.journal_entries, accounting.journal_entry_postings, accounting.expenses, accounting.transaction_source_links — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: node scripts/ops/fuel-remediation-run-2026-09-25.ts --execute (run against production, no --rehearsal). Reuses only the existing, audited engines (voidDocument->voidJournalEntry, Option-1 reversing-entry, MONEY_CONTROL_VOID_REVERSAL_ENABLED flag-gated, Owner/Accountant-role-gated, reason-required; createExpenseFromFuelTransaction, idempotent by source_fuel_transaction_id) to correct every USMCA fuel journal entry wrongly crediting 1090 (Undeposited Funds) instead of the real card rail (Dreamline 2510 / Relay 1295, per R-153.7's owner-stated rule), across exactly the 391-row AlwaysTrack-reconciled truth-set (docs/bus/fuel-truth-2026-09-25.csv) plus 11 additional orphan wrong-1090 JEs tied to fuel_transactions archived in an unrelated 2026-09-24 batch (voided only, never reposted — the archived source row is invalid). No new GL math. Full derivation, live rehearsal proof (Neon child branch br-plain-mouse-akjigngx), and every gap found and fixed during rehearsal are in this branch's own commit history (cc2-r153-6-fuel-fix).
 expires_at: 2026-09-25T22:20:00.000Z
-status: OPEN
+status: CONSUMED
+
+consumed_at: 2026-09-25T11:48:00.000Z
+consumed_by: CC-2
+row_counts: 385 accounting.expenses rows created/reposted through the fixed writer (1295 Relay Fuel Wallet: 307 rows / $120,489.95; 2510 Dreamline Diesel Card Payable: 78 rows / $52,403.35; total $172,893.30) — 245 of those 385 required voiding a wrong-1090 JE first (179 no-expense + 66 adopted-wrong-JE cases). 5 duplicate rows voided ($2,845.36, unit+date+amount match to a kept Dreamline row). 11 orphan wrong-1090 JEs (outside the 391-row truth-set — tied to fuel_transactions archived in an unrelated 2026-09-24 batch) voided only, never reposted. 1 row correctly refused (total_cost=0.00, disclosed not hidden).
+proof_query: node scripts/ops/fuel-remediation-classify-2026-09-25.mjs against production (direct connection) after the run: 385 EXPENSE_ALREADY_CORRECT_no_op + 5 VOID_DUPLICATE_already_clean + 1 NO_EXPENSE_NO_JE_create_fresh (the same disclosed $0.00 refusal), 0 unclassified, sum reconciles to 391. node scripts/verify-costs-are-expenses-not-handwritten-jes.mjs (this branch's own reversed_by_je_id-fixed copy) against production: wrong_credit_account_1090 117 -> 0; 15 USMCA violations remain, ZERO fuel-related (11 are CC-1's own #22594 settlement-reversal finding, Decision 3; 4 are CC-1's own AUTH-004 manual reclassification JEs).
+
+Fuel total vs the AlwaysTrack target: $172,893.30 / 385 lines vs $110,072.33 / 171 lines — residual
+$62,820.97 over target, disclosed per the Lead's own instruction, not force-matched to zero (full
+derivation: docs/bus/NOW-CC-2.md, this seat's own 09-25 6:50 AM CT status).
 
 Issued BEFORE execution, per AUTH-001's own closing note ("every scripts/ops/ financial write gets a
 real AUTH-<NNN> issued BEFORE execution, not after"). R-153.6/153.7 (Lead's own packets,
@@ -216,7 +225,12 @@ issued_at: 2026-09-25T11:32:00.000Z
 scope: accounting.payments, accounting.payment_applications, accounting.invoices (amount_paid/open/status only) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: node scripts/ops/2026-09-25-cc1-r153-d1-self-carried-invoice-026-payment.ts (run against production, no DRY_RUN) — posts ONE customer receipt of $3,032.60 against live invoice display_id=13540 (customer IM Specialized Logistics, LLC., source_load_id=load 13540) via the existing applyPayment() writer, the same engine and shape as item 2's PR #22569. Touches no other invoice or row.
 expires_at: 2026-09-25T13:32:00.000Z
-status: OPEN
+status: CONSUMED
+
+consumed_at: 2026-09-25T11:36:00.000Z
+consumed_by: CC-1
+row_counts: 1 accounting.payments row created (PMT-2026-00007, id 9ac8b201-8f6d-4b22-ba67-efcc3eb266fc, $3,032.60), 1 payment application against invoice display_id=13540. Invoice 13540: status sent->partial, amount_paid_cents 0->303260, amount_open_cents 312000->8740 ($87.40, matching the signed PDF to the cent).
+proof_query: SELECT display_id, status, amount_paid_cents, amount_open_cents, total_cents FROM accounting.invoices WHERE display_id='13540' -- confirms partial/$3,032.60 paid/$87.40 open/$3,120.00 total. Trial balance still balanced (1,397,905,662 = 1,397,905,662) after.
 
 Issued before execution. R-153.8 Decision 1 (Lead, 6:22 AM CT/11:22Z): invoice PDF "026" (IM
 Specialized, $3,120.00 billed, $3,032.60 already paid per the signed PDF, $87.40 open) is the SAME
