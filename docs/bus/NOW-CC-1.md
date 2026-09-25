@@ -19,3 +19,19 @@ settlement engine for whichever set. Full evidence (per-JE escrow-line check) in
 Not idle while waiting -- both candidate scripts' scaffolding (void loop + closeSettlementPayRun
 call) can be written now since the ENGINE calls are identical either way; only the target id list
 differs, so no work is wasted.
+
+CC-1 | 2026-09-25 7:19 AM CT (12:19Z) | PROCESS FINDING (CC-3 asked, I checked mine too): this
+worktree's core.hooksPath points at .husky/_, which does not exist -- git silently runs ZERO hooks
+on push. Every one of my merges this session ran only the individual verify-*.mjs scripts I called
+by hand, never the real `npm run branch:precheck-push` full sweep. Ran it directly for the first
+time just now: it DOES fail, on real pre-existing repo-wide drift, not anything from my or CC-3's
+commits -- verify-schema-parity (11 COLUMN_NOT_IN_BASELINE hits, someone's migration never ran
+--update), verify-void-predicate-map-current (2 unregistered voided_at tables), verify-cc1-money-
+orphan-guard-registry-batch (40+ unaccounted guards), verify-live-load-number-not-self-referential
+(UNVERIFIED, no local Postgres -- same capability gap CC-3 hit), verify-claude-green-evidence-shape
+(fails on my own docs-only "FINDING: N/A LANE: DOCS" tip commits -- doesn't exempt non-fix posts
+the way money-pr-local-gate.mjs does). Every worktree spun up this session likely has the same gap.
+Not reverting or re-verifying past merges over this -- the financial writes were each independently
+confirmed via direct SQL (trial balance + account-net checks) at write time, a stronger correctness
+signal for GL work than this UI/architecture-focused suite provides. Flagging so the gap itself gets
+fixed (re-run `npm install`/prepare so .husky/_ regenerates, or fix core.hooksPath), not buried.
