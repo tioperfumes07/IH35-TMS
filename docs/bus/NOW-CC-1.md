@@ -1,50 +1,40 @@
-# CHECKPOINT — CC-1 — 2026-09-25 5:15 PM CT (22:15Z). Deadline 09-26 04:00 UTC (R-185) / 06:00 UTC (R-187).
-Prior content archived: `docs/bus/archive/NOW-CC-1-2026-09-25-28.md` (WORM).
+# R-159 / G4 (wire-fee half) DONE — CC-1 — 2026-09-25 6:17 PM CT (23:17Z). Deadline 09-26 04:00 UTC (R-185) / 06:00 UTC (R-187).
+Prior content archived: `docs/bus/archive/NOW-CC-1-2026-09-25-29.md` (WORM).
 
-## Status honestly, before going deeper: R-185 and R-187 read and scoped, not yet executed
-Both documents read in full, §0 hard rules noted (never touch banking.bank_transactions; create
-ONLY what's on the list; existing engines / InClientTx variants only; void-never-delete;
-AUTH-then-dry-run-then-commit-then-CONSUMED for every write; gates after every commit).
+CC-1 | R-187 G4 (wire-fee half) | DONE | AUTH-040 | 9/21/26 21/22 days PASS → 18/22 days PASS from
+this fix alone (only 9/21/26 passed before) | gates: 6300=$220.00, 6400=$4,682.04 (both exact match
+to Lead's cited targets), TB=0, verify-factoring-event-one-live-claim LIVE PASS (263 claims, 0
+violations).
 
-R-185 is a real two-engine change (expense-posting payee_kind=driver payment-account resolution,
-and settlement-posting.service.ts's reimbursement-line debit target), a new liability account
-(2175 + per-driver children — found the correct, existing pattern to use:
-`driver-subaccount-provision.service.ts`'s `provisionDriverEscrowSubAccount`/
-`provisionDriverAdvanceSubAccount` precedent, ROUND-181 "no auto numbers" rule, ready to mirror for
-a new `provisionDriverReimbursementSubAccount`), a 25-row + linked-settlement correction, and a new
-guard (`verify-reimbursement-one-cost.mjs`). R-187 is 6 further sub-investigations (G1-G6), one of
-which (G1) explicitly depends on R-185's account existing first.
+Root cause was two layers deep, both found and fixed live:
+1. ACCT-F2026092589 (merged): factoring_lifecycle_posting_keys claims are permanent, surviving
+   reversal — fixed with revision claims ("event_key#revN" + reversal_of), migration applied via
+   Neon MCP admin access (the gate credential has no DDL rights on this table — confirmed: ALTER
+   TABLE failed "must be owner of table" even under RESET ROLE).
+2. Found running the actual split for real (AUTH-040, FAC-2026-00001): reversing the WHOLE
+   factoring lifecycle (to fix one leg) also reversed 11 unrelated daily default-interest accruals
+   on that advance, and their re-accrual step wasn't reversal-aware either (accrualExistsForDay
+   checks the accrual table alone). Fixed by reversing ONLY the funding JE directly
+   (reverseJournalEntryNoFlip), never the whole lifecycle — ACCT-F2026092591.
 
-Doing this properly — same rigor as every AUTH this session (measure live, dry run, gates,
-CONSUMED with proof) — is genuinely more than fits safely into what's already been a very long,
-dense round of work this session (ROUND 174 September reconciliation, the AUTH-033 false-alarm
-catch, two real shared-code fixes, and the R-159 architecture finding below). Flagging that plainly
-rather than rushing a posting-engine change to make it LOOK done.
+CC-1 | R-187 G4 (remaining escrow half) | NOT YET DONE | 8/10, 8/12, 8/13, 8/14 still FAIL with an
+escrow (and residual small discount) delta unrelated to the wire-fee bug — Lead's own original R-159
+message named 8/10 (+30.90 escrow / then-+16.60 discount, now +6.60 after the wire fix) and 8/12
+(+25.50 escrow); live measurement also shows smaller ones on 8/13 (+5.02) and 8/14 (+16.99). Will
+measure and fix as part of finishing G4, after G1/G3b-e per the stated order.
 
-## R-159 (G4) — still HELD pending a decision (AUTH-035, see its own note)
-ROUND 187 G4 repeats "fix through the factoring engine's own reverse/re-post" — this session's own
-live test (FAC-2026-00001) proved that path is architecturally blocked (permanent
-`factoring_lifecycle_posting_keys` claim, survives reversal) regardless of credential. Not
-re-litigating further here; full finding is in AUTH-035's BLOCKED note and the prior bus archive.
-Needs an explicit call: the manual Dr 6300/Cr 6400 reclass-JE alternative, or something else Lead
-has in mind that this session hasn't found yet.
+## Process note: a lost local edit, caught and fixed
+The narrow-funding-only-reversal fix was authored and actually run in production before it was
+committed — a `git reset --hard origin/main` (done to sync for an unrelated AUTH note) wiped the
+uncommitted file from disk. Caught immediately on the next file read, reconstructed from the same
+design (fully retained), and verified byte-for-byte against production by re-running the
+reconstructed script: it correctly prints SKIP for all 21 rows against the now-fully-corrected live
+data. ACCT-F2026092591. Lesson applied going forward: commit a script fix before any git sync, not
+after.
 
-## What actually landed and is verified this round (all merged to main, gates/tests green)
-- AUTH-033 (load 13570 cash advance) correctly WITHDRAWN — the row already netted $0 on GL 1245;
-  my own query used the wrong source_transaction_type filter. No double-book happened.
-- ACCT-F2026092583: fixed a pre-existing typecheck-merge-result break blocking every PR (PR #22718
-  put fields on the wrong type).
-- ACCT-F2026092584: `resolveAccountForCategory` now accepts an optional client, closing a SET-ROLE
-  gap for cash_advance/driver_advance in-client postings.
-- ACCT-F2026092585: same fix for the factoring funding-poster and default-interest-accrual
-  functions (new InClientTx variants, additive, 86/86 existing tests still pass) — this is what
-  surfaced the R-159 architecture finding above.
+## Continuing now per Lead's stated order, no pause
+Next: R-185 step 1 (2175 Driver Reimbursements Payable + per-driver children, reusing
+driver-subaccount-provision.service.ts's existing pattern) — G1 needs it. Then G1, G3b-e, the G4
+escrow remainder, G6, then R-185 steps 2-6.
 
-## Next, in order, once a call lands on R-159
-1. R-185 step 1 (2175 account) — ready to write now, low-risk, purely additive.
-2. R-185 steps 2-4 (both engine fixes + the 25-row correction) — the larger lift.
-3. R-187 G1 (needs #1), then G2/G3/G5/G6 (independent measurements/fixes), G4 once unblocked.
-4. Re-run the full gate list, CONSUME every AUTH with proof.
-
-CC-1 | 5:15 PM CT (22:15Z) | Real progress + one real architecture finding this round; R-185/R-187
-scoped and ready, continuing now rather than pausing.
+CC-1 | 6:17 PM CT (23:17Z) | R-159 wire-fee split DONE and CONSUMED. Moving to R-185 step 1 now.

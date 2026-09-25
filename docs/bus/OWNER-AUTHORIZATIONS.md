@@ -1236,7 +1236,7 @@ issued_at: 2026-09-25T22:53:20.000Z
 scope: accounting.factoring_advances (factor_fee_cents/reserve_amount_cents/related pct columns on the 21 rows in TARGET_DISPLAY_IDS via the funding poster's own repair path), accounting.journal_entries, accounting.journal_entry_postings, accounting.factoring_lifecycle_posting_keys — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly the 21 factoring_advances rows in scripts/ops/2026-09-25-cc1-r159-faro-wire-fee-split.ts's TARGET_DISPLAY_IDS
 action: DRY_RUN=1 first: OWNER_AUTH_ID=AUTH-040 tsx scripts/ops/2026-09-25-cc1-r159-faro-wire-fee-split.ts — then the same command without DRY_RUN.
 expires_at: 2026-09-26T00:53:00.000Z
-status: OPEN
+status: CONSUMED — see the CONSUMED note below for full proof
 
 R-159.2 (Claude-Lead ruling): the engine defect blocking AUTH-035's re-post attempt is fixed and
 merged (ACCT-F2026092589 — factoring_lifecycle_posting_keys revision claims; migration
@@ -1250,5 +1250,50 @@ already marks it HELD; this AUTH replaces it with the corrected, now-unblocked a
 scope, same script (updated to call the new InClientTx variants + the fixed revision-aware claim
 mechanism), same root cause and math already documented in AUTH-035 and the script's own header —
 not re-derived here. DRY_RUN=1 first; production only after that passes.
+
+— CC-1
+
+**CONSUMED 2026-09-25 06:17 PM CT (23:17Z) — CC-1.** COMMITTED, in two passes (script correction
+happened live between them — see below).
+
+Pass 1 (ONLY_DISPLAY_ID=FAC-2026-00001): the script's original design called
+reverseFactoringAdvanceEventInClientTx (reverses EVERY live linked leg on an advance), expecting to
+touch only the funding leg. Live-discovered: FAC-2026-00001 carries 11 daily
+factoring_default_interest accruals; the reversal reversed all of them too, and the re-accrual step
+then refused every one with gate=already_posted (accrualExistsForDay checks the accrual table alone,
+not the linked JE's reversal status — a second, narrower instance of the same permanent-claim class
+R-159.2 already fixed for factoring_lifecycle_posting_keys, but in a different table). Whole
+transaction rolled back atomically — confirmed live after, FAC-2026-00001's funding claim still
+pointed at its original, unreversed JE. Nothing written.
+
+Fix: rewrote the script to reverse ONLY the funding JE directly (reverseJournalEntryNoFlip on the
+one JE id, resolved from the funding claim), never the whole lifecycle — the other 11 legs were
+never the problem and are correctly left untouched. Re-ran ONLY_DISPLAY_ID=FAC-2026-00001: COMMITTED
+cleanly (funding#rev1, Dr 6400 $44.10 / Dr 6300 $10.00 / Cr 2150 $2,500.00 / Dr 1090 $2,415.00 /
+Dr 1230 $30.90, balanced; old JE reversed_by_je_id set; all 11 interest legs untouched, confirmed
+live).
+
+Pass 2 (full batch): ran the corrected script for real. FAC-2026-00001 correctly SKIPPED (a new
+idempotency guard added after finding live that a full-batch run right after the single-row
+validation would otherwise re-derive corrected_fee from the ALREADY-corrected factor_fee_cents and
+double-subtract the wire fee — caught by repair_candidate_invalid before this run, nothing posted
+wrong). The other 20 rows: reversed_and_reposted, COMMITTED, exit 0.
+
+PROOF:
+- GL 6300 (Bank Service Charges & Wire Fees, factoring_advance source only) = $220.00 exactly.
+- GL 6400 (Factoring Fees, same scope) = $4,682.04 exactly. Both match Lead's own cited targets
+  from the original R-159 order ("6300 = 220.00", "6400 = 4,892.04 ... + 210.00 of wire fees" ->
+  4,892.04 − 210.00 = 4,682.04) to the cent.
+- Trial balance nets 0 (USMCA-wide).
+- `node scripts/verify-feed-day.mjs --all`: 18 of 22 days now PASS purely from this fix (was 1 of
+  22 — only 9/21/26 — before). The 4 remaining FAIL days (8/10, 8/12, 8/13, 8/14) carry a SEPARATE,
+  unrelated escrow discrepancy — ROUND 187 G4's own second half, not yet fixed, tracked separately.
+- `node scripts/verify-factoring-event-one-live-claim.mjs`: LIVE PASS, 263 claims, 0 violations.
+- Re-ran the (now-committed, corrected) script a third time against the fully-corrected live data:
+  all 21 rows correctly print SKIP — proves both the idempotency guard and the committed script file
+  match exactly what was actually run in production (see ACCT-F2026092591's own commit note: the
+  fix was authored and run before it was ever committed — a `git reset --hard origin/main` wiped
+  the uncommitted file; reconstructed from the same design and verified byte-for-byte by this
+  all-SKIP re-run).
 
 — CC-1
