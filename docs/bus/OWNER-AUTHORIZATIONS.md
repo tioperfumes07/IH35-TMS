@@ -519,6 +519,15 @@ derivation in the script's own header comment. Running directly against producti
 closeSettlementPayRun/txn-wrap-fixed read pattern already proven on all 18 Set B settlements
 (AUTH-013, PRs #22649/#22650).
 
+CONSUMED 2026-09-25 11:16 AM CT (16:16Z). All 6 reversed+reclosed clean. S-5805/S-5806/S-5808/
+S-5813/S-5814 now post escrow_contribution_cents=0 each (matches their signed documents exactly);
+5780 reposted its correct $25.00 (escrow_contribution_cents=2500), untouched escrow lines. New JEs:
+5780->a4ae425b, S-5805->9ffb1aa3, S-5806->5b5c6873, S-5808->aa020762, S-5813->4e892ac8,
+S-5814->d1006954. verify-control-totals PASS (5804-5815 net pay = 20,191.07, exact). Did NOT by
+itself clear verify-escrow-balance-reconciles-gl (see AUTH-016) or verify-alwaystrack-parity 34/34
+(13 more settlements needed the same fix — see AUTH-017); both cleared after those ran, proof on
+AUTH-017's own consumed block below.
+
 — CC-1
 
 ---
@@ -536,6 +545,13 @@ symmetric operations (reverse -2500, reclose +2500) always return escrow_balance
 current_balance_cents to whatever it was anchored to by the pre-existing 2026-09-24 manual sync (0),
 regardless of how many times it runs -- proven by tracing the full escrow_ledger + escrow_postings
 history for this driver before writing this. Full derivation in the script's own header comment.
+
+CONSUMED 2026-09-25 11:16 AM CT (16:16Z). One row appended to driver_finance.escrow_ledger for
+driver c864a4bb (transaction_type='correction', amount_cents=0, running_balance_cents=0, matching
+both driver_finance.escrow_balances.current_balance_cents and the canonical
+accounting.escrow_accounts.balance_cents). proof_query: node scripts/verify-escrow-balance-
+reconciles-gl.mjs — PASS, "17 driver(s) GL-vs-projection checked, 17 driver(s) projection-vs-ledger
+checked, all reconcile" (was FAIL, this one driver, before).
 
 — CC-1
 
@@ -556,5 +572,23 @@ these 13 documents (and no others) mismatched on DRIVER_NET by precisely their e
 Deadline 16:45Z — running directly against production, DRY_RUN pre-check first; reuses the exact
 reverseSettlementPayRun/closeSettlementPayRun/txn-wrap-fixed pattern already proven on all 18 Set B
 settlements and again on AUTH-015's 6. Full derivation in the script's own header comment.
+
+CONSUMED 2026-09-25 11:16 AM CT (16:16Z). All 13 reversed+reclosed clean, all now post
+escrow_contribution_cents=0, matching their signed documents exactly. New JEs: 5770/5771/5777/5780
+(already done under AUTH-015)/5783/5786/5789/5793/5796/S-5797/S-5799/S-5800/S-5802 — full id list in
+the script's own console output (this run). Full proof, all four required checks green, live:
+- verify-alwaystrack-parity: LIVE PASS — 34 in scope, 0 skipped, 0 mismatches, 5/5 structural
+  assertions hold. TOTAL driver_net=47,840.56 (target 47,840.56, exact). DOCUMENTS: 34 of 34 exact
+  on all six dimensions.
+- verify-control-totals: PASS — Driver settlements 5804-5815 net pay = 20,191.07 (exact); every
+  other control ties to the cent.
+- verify-escrow-balance-reconciles-gl: PASS — 17 drivers checked, all reconcile.
+- USMCA trial balance (bypass_rls read, live): total debit 265,256,276 cents == total credit
+  265,256,276 cents. Balanced.
+- Escrow ledger for the 5 R-161 drivers, live (canonical accounting.escrow_accounts.balance_cents
+  == driver_finance.escrow_balances.current_balance_cents for each, confirmed matching):
+  driver 93be328f (S-5806/S-5813) = $0.00; driver 3e138476 (S-5805/S-5814) = -$150.00; driver
+  a32a35c8 (S-5808) = -$50.00. (Negative balances are this driver's own separate escrow deductions
+  from other settlements, unrelated to the R-161 correction — not zeroed by this fix, correctly.)
 
 — CC-1
