@@ -69,8 +69,24 @@ async function main() {
 
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   const readClient = await pool.connect();
+  // Neon pooled connections can downgrade the effective role below neondb_owner (documented
+  // landmine this session) -- RLS-protected tables (catalogs.payment_methods included) read back
+  // empty without this, even though neondb_owner "should" bypass RLS. Set explicitly, read-only.
+  await readClient.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
+  await readClient.query(`SELECT set_config('app.operating_company_id', $1, true)`, [USMCA_ID]);
   const results: Array<Record<string, unknown>> = [];
   const dryRun = process.env.DRY_RUN === "1";
+
+  // Same resolution driver-finance's own postLoadBookendedSettlementGlAfterClose uses: the
+  // records-only "Driver Net-Pay Clearing" catalog payment method (matches every one of these 18
+  // settlements' own driver_finance.driver_settlements.payment_method text field, confirmed live).
+  const methodRes = await readClient.query<{ id: string }>(
+    `SELECT id::text FROM catalogs.payment_methods
+      WHERE operating_company_id = $1::uuid AND display_name = 'Driver Net-Pay Clearing' LIMIT 1`,
+    [USMCA_ID]
+  );
+  const paymentMethodId = methodRes.rows[0]?.id;
+  if (!paymentMethodId) throw new Error('"Driver Net-Pay Clearing" payment method not found live -- refusing to guess an account');
 
   try {
     for (const displayId of TARGET_SETTLEMENTS) {
@@ -109,7 +125,7 @@ async function main() {
       console.log(`  reversed: run_id=${reversal.run_id} reversal_je=${reversal.reversal_journal_entry_id}`);
 
       const close = await closeSettlementPayRun(
-        { operatingCompanyId: USMCA_ID, settlementId },
+        { operatingCompanyId: USMCA_ID, settlementId, paymentMethodId },
         { userId: SYSTEM_ACTOR_USER_ID }
       );
       console.log(`  re-closed: new_je=${close.journal_entry_id} net=${close.breakdown.net_cents}c escrow=${close.breakdown.escrow_contribution_cents}c`);
