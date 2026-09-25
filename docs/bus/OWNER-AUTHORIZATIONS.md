@@ -469,3 +469,28 @@ Live proof, production, 2026-09-25 ~15:1x-15:31Z:
 - PRs: #22645 (AUTH-013 issued), #22649, #22650 (the two real fixes), all merged to main.
 
 — CC-1
+
+---
+
+## AUTH-014
+issued_at: 2026-09-25T15:46:00.000Z
+scope: accounting.factoring_advances, accounting.journal_entries, accounting.journal_entry_postings — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly 21 named factoring advances (FAC-2026-00001/00003/00004/00006/00011/00014/00017/00019/00022/00023/00032/00035/00039/00043/00093/00101/00103/00117/00132/00133/00134)
+action: node scripts/ops/2026-09-25-cc1-r159-faro-wire-fee-split.ts (run against production, no DRY_RUN) — R-159 item 1: for each of the 21 named advances, reverses the funding JE (and any linked factoring_default_interest JE) via reverseFactoringAdvanceEvent, re-posts funding via postFactoringAdvanceEvent with the same liability/reserve as before but fee_cents corrected to (original bundled factor_fee_cents − 1000) and ach_cents=1000 (the $10.00 wire fee, confirmed per-advance from the owner's own canonical Faro purchases file and each row's own FARO_FEES notes JSON) so the wire fee posts to 6300 instead of being bundled into 6400. For the 7 of the 21 that already carried a factoring_default_interest JE (reversed along with funding), re-accrues it fresh via postFactoringDefaultInterestAccrualEvent (deterministic day-count calculation, not a copied value). No new writer, no hand-written JE — every step is an existing, already-reviewed engine function.
+expires_at: 2026-09-25T17:46:00.000Z
+status: OPEN
+
+Issued before execution. Lead R-159 item 1 (10:45 AM CT/15:45Z, deadline 20:00Z): "6300 Bank Service
+Charges & Wire Fees = 10.00, but the LAW wire total = 220.00 ... Fix the factoring-advance writer's
+wire-fee account mapping to 6300. Re-post the affected advances through the factoring engine's own
+void/re-post path." Live-confirmed before writing this: the role mapping (factor_wire_fee -> 6300,
+factor_fee_expense -> 6400) is ALREADY correct in accounting.chart_of_accounts_roles -- there is no
+mapping bug to fix in code. The real bug is historical: commit 740b7be6fa (ROUND 86, PR #22329)
+fixed the writer to pass a real ach_cents (previously hardcoded 0); advances posted before that fix
+still carry the old bundled figure. Cross-referenced against the owner's own canonical Faro
+purchases file (22 invoices with a nonzero $10.00 wire_fee, summing to $220.00 -- exactly Lead's
+own cited target) and each advance's own FARO_FEES notes JSON: of the 22 live (non-voided) matches,
+21 are missing their 6300 leg, 1 (FAC-2026-00042) already has it. 21 x $10.00 = $210.00, exactly
+Lead's cited gap. Full derivation in the script's own header comment. Rehearsing on Neon before
+touching production.
+
+— CC-1
