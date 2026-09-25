@@ -494,3 +494,29 @@ Lead's cited gap. Full derivation in the script's own header comment. Rehearsing
 touching production.
 
 — CC-1
+
+---
+
+## AUTH-015
+issued_at: 2026-09-25T16:01:00.000Z
+scope: driver_finance.settlement_lines (is_active flip only, 10 named escrow_contribution rows on S-5805/S-5806/S-5808/S-5813/S-5814), driver_finance.driver_settlements, driver_finance.payrun_gl_runs, driver_finance.escrow_balances, driver_finance.escrow_ledger, accounting.escrow_postings, accounting.escrow_accounts, accounting.journal_entries, accounting.journal_entry_postings — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly 6 named settlements (S-5805, S-5806, S-5808, S-5813, S-5814, 5780)
+action: node scripts/ops/2026-09-25-cc1-r161-setb-deactivate-off-document-escrow.ts (run against production, no DRY_RUN) — R-161: deactivates (is_active=false, with voided_at/void_reason="not on AlwaysTrack document — R-161"/voided_by_user_id) exactly 10 named escrow_contribution settlement_lines rows on S-5805/S-5806/S-5808/S-5813/S-5814 (these 5 have no Driver-Escrow line on their signed AlwaysTrack document — AUTH-013 wrongly reactivated them), then reverses+recloses each of these 5 via reverseSettlementPayRun/closeSettlementPayRun so their re-close reads the corrected escrow. R-161.1: reverses+recloses settlement 5780 ALSO (its escrow_contribution lines are untouched — they are correctly on the document) to resync driver c864a4bb-a7ff-4373-a5e1-c1590eefe3b7's driver_finance.escrow_balances projection row, which live-confirmed drifted $25.00 out of step with escrow_ledger/accounting.escrow_postings after Set B's earlier reverse+reclose of 5780 — the engine's own atomic SQL increment on a fresh reverse+reclose resyncs it. Same two engines throughout, no override, no seventh engine.
+expires_at: 2026-09-25T18:01:00.000Z
+status: OPEN
+
+Issued before execution. Lead R-161 (11:00 AM CT/16:00Z) + R-161.1 (10:58 AM CT/15:58Z), deadline
+16:45Z: corrects an error in AUTH-013. Lead's own live measurement against the AlwaysTrack source
+documents (Driver_Settlement_58NN.txt) proves 5 of AUTH-013's 18 reactivated settlements had NO
+escrow line on their signed document at all — reactivating cost $250.00 too much net pay across
+these 5 ($50.00 x 5), confirmed live via verify-control-totals. Separately, verify-escrow-balance-
+reconciles-gl found a live $25.00 drift on driver c864a4bb — root-caused (not guessed) to settlement
+5780, one of Set B's original 18 whose escrow WAS correctly on the document: recordEscrowContribution's
+upsert is correct on its own, but this driver's escrow_balances row predates Set B and now sits
+arithmetically out of step with the live ledger after Set B's reverse+reclose cycle; a fresh
+reverse+reclose (untouched escrow lines) resyncs it via the engine's own atomic increment. Full
+derivation in the script's own header comment. Running directly against production given the
+16:45Z deadline — DRY_RUN pre-check first, this script reuses the exact reverseSettlementPayRun/
+closeSettlementPayRun/txn-wrap-fixed read pattern already proven on all 18 Set B settlements
+(AUTH-013, PRs #22649/#22650).
+
+— CC-1
