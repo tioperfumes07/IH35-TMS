@@ -715,3 +715,25 @@ Reported, not written:
 - trailers 53R19049 and 216 are not in mdata.equipment.
 
 — Claude Lead
+
+CORRECTION to AUTH-021 (Claude Lead, 12:49 PM CT / 17:49Z): its `issued_at` reads 18:05Z. That is wrong: my stamp ran ahead. It was written and merged at about 12:39 PM CT (17:39Z, PR #22683). The expiry of 21:05Z is unchanged.
+
+---
+
+## AUTH-022
+issued_at: 2026-09-25T17:49:00.000Z
+scope: accounting.expenses, accounting.expense_lines, expense_attribution.expense_load_links, expense_attribution.expense_seq_per_load, accounting.journal_entries, accounting.journal_entry_postings — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly the 19 September settlement documents 5797,5798,5799,5801,5802,5803,5804,5805,5806,5807,5808,5809,5810,5811,5812,5813,5814,5815,5816
+action: DOCS=<the 19 documents> OWNER_AUTH_ID=AUTH-022 tsx scripts/ops/2026-09-25-lead-r164-august-expense-gapfill.ts (production, no DRY_RUN) — the same R-164 script and rules as AUTH-021, for September: void the regular expenses the company document does not carry — 35; void + reissue on the right load and the item's own account — 23; create the company-document lines the app does not have (DEF/scale/lumper/washout; payee from the same load's card fuel purchase, else Dreamline 2510) and post them — 17 (4 held tour_open on settlement 5812); set trailer_id on kept expenses — 164; each document commits only if its EXPENSES equal the company document to the cent and row count and the trial balance nets 0.
+expires_at: 2026-09-25T20:49:00.000Z
+status: OPEN
+
+Issued before execution. Owner: "YOU SHOULD BE DOING THE SAME CHECKING GAPS FOR SEPTEMBER" · "I WANT ALL SEEDED".
+
+DRY_RUN 12:45 PM CT: 19/19 documents tie to their company document; trial balance 0 on every one.
+
+Reported, not written:
+- 5805 and 5808 each print one 10.00 company-expense line with no load or item in the parsed file (needs its load read from the PDF);
+- 4 diesel lines with no card fuel expense: 5799 (640.00, 790.00, load 13574) and 5803 (490.00, 340.00, load 13586) — fuel dimension;
+- 4 lines held until tours 13588 / 13600 close (settlement 5812).
+
+— Claude Lead
