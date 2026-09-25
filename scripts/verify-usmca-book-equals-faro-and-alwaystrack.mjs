@@ -34,7 +34,20 @@
 //   5. verify-feed-is-whole reads day_control.json as authority — out of this file's scope (a
 //      different guard's own fix, ROUND 153 item 5); not re-checked here.
 //   6. Self-carried invoices — the five named invoices exist, factoring_status='not_factored',
-//      live, on their load, totaling $12,592.40. NOT YET landed (verification-only item, no write).
+//      live, totaling $12,592.40. 1 of 5 (2EMS/13555, display_id "13555" not "055" — fixed here)
+//      was already live and correct. The other 4 (009 FLS, 010 Supply Chain Mgmt, 026 IM
+//      Specialized, 074 Alligator) are NOT YET landed — real and reported, not silently skipped.
+//      None of the four has a TMS dispatch record (checked against feed_input.json's 124
+//      AlwaysTrack-sourced records and the settlement PDF corpus), so each would need to be a
+//      load-less invoice — but the real sendDraftInvoice engine's own delivery-evidence gate
+//      (INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE, confirmed live ON for USMCA) refuses to send ANY
+//      load-less invoice ("this invoice is not linked to a load, so the system holds no delivery
+//      evidence for it"), confirmed live on a Neon rehearsal branch, with no override parameter in
+//      the real write path. DECISION NEEDED posted to NOW-CC-1.md. The writer is fully prepared
+//      (scripts/ops/2026-09-25-cc1-r153-item6-self-carried-invoices.ts) and rehearsed, ready to run
+//      the moment this is answered; invoice 026 must mint at its own document's net $87.40 (not the
+//      $3,120.00 pre-adjustment face) per the FIVE-TRAPS authority's ruling "$0.00 has been paid on
+//      any of them" — the only way that ruling and the $12,592.40 grand total both hold.
 //
 // Self-arming, USMCA-scoped, 7-day-irrelevant (these are structural/point-in-time facts about the
 // live book, not transaction-age-scoped events — LAW 3 exempts structural facts).
@@ -248,12 +261,18 @@ async function item3(client) {
 }
 
 // ---- ITEM 6 — the five self-carried invoices exist, not_factored, totaling $12,592.40 -----------
+// display_id fix, self-found live (ROUND 153 item 6): 2EMS's live invoice was created via the
+// load-linked path with no explicit display_id override, so it took its LOAD's number ("13555"),
+// never "055" — the load-number half of its own PDF's compound numbering ("055-13555"), matching
+// this session's own established pattern (confirmed live before this fix). This item MINTS the
+// other four through the real invoice engine (scripts/ops/2026-09-25-cc1-r153-item6-self-carried-
+// invoices.ts) — it is not verification-only.
 const SELF_CARRIED = [
   { display_id: "009", label: "FLS" },
   { display_id: "010", label: "Supply Chain Mgmt" },
   { display_id: "026", label: "IM Specialized" },
-  { display_id: "055", label: "2EMS (load 13555)" },
-  { display_id: "074", label: "Alligator (load 13593)" },
+  { display_id: "13555", label: "2EMS (load 13555)" },
+  { display_id: "074", label: "Alligator (no TMS dispatch record found; load-less)" },
 ];
 async function item6(client) {
   const res = await client.query(
@@ -267,7 +286,7 @@ async function item6(client) {
   for (const s of SELF_CARRIED) {
     const row = byDisplay.get(s.display_id);
     if (!row) {
-      fail(`ITEM6: self-carried invoice ${s.display_id} (${s.label}) not found live — verification-only item, do not mint it`);
+      fail(`ITEM6: self-carried invoice ${s.display_id} (${s.label}) not found live`);
       continue;
     }
     if (row.voided_at) fail(`ITEM6: self-carried invoice ${s.display_id} (${s.label}) is voided — should be live/open`);
