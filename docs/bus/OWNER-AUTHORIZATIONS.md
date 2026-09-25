@@ -216,7 +216,12 @@ issued_at: 2026-09-25T11:32:00.000Z
 scope: accounting.payments, accounting.payment_applications, accounting.invoices (amount_paid/open/status only) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: node scripts/ops/2026-09-25-cc1-r153-d1-self-carried-invoice-026-payment.ts (run against production, no DRY_RUN) — posts ONE customer receipt of $3,032.60 against live invoice display_id=13540 (customer IM Specialized Logistics, LLC., source_load_id=load 13540) via the existing applyPayment() writer, the same engine and shape as item 2's PR #22569. Touches no other invoice or row.
 expires_at: 2026-09-25T13:32:00.000Z
-status: OPEN
+status: CONSUMED
+
+consumed_at: 2026-09-25T11:36:00.000Z
+consumed_by: CC-1
+row_counts: 1 accounting.payments row created (PMT-2026-00007, id 9ac8b201-8f6d-4b22-ba67-efcc3eb266fc, $3,032.60), 1 payment application against invoice display_id=13540. Invoice 13540: status sent->partial, amount_paid_cents 0->303260, amount_open_cents 312000->8740 ($87.40, matching the signed PDF to the cent).
+proof_query: SELECT display_id, status, amount_paid_cents, amount_open_cents, total_cents FROM accounting.invoices WHERE display_id='13540' -- confirms partial/$3,032.60 paid/$87.40 open/$3,120.00 total. Trial balance still balanced (1,397,905,662 = 1,397,905,662) after.
 
 Issued before execution. R-153.8 Decision 1 (Lead, 6:22 AM CT/11:22Z): invoice PDF "026" (IM
 Specialized, $3,120.00 billed, $3,032.60 already paid per the signed PDF, $87.40 open) is the SAME
