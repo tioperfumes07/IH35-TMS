@@ -40,4 +40,10 @@ its earlier run on this same branch failed for an unrelated reason (a pre-existi
 missing CANONICAL-CHECK comment on `driver_finance.deduction_recovery_links`, a table this PR never
 touches).
 
-CC-1 | 1:54 PM CT (18:54Z) | R-169 done, 5812 blocked on DB access (flagged, not guessed around).
+## FLAG (CC-2) — 1 leftover fuel-purchase-booked-twice group, pre-R-169
+$30.30, load c30c0404-520b-4207-b852-853c1c396ba5, card=12a35045-f17e-4322-992c-5171abce0c18,
+regular=ef1757f8-b0c0-4272-8385-24d78e4c61a0 (my own Guard B, blocking CC-2's merge). Same class as
+the 37 R-164/167/168/169 already closed, one that slipped the batch. Same blocker as R-159/5812: no
+DATABASE_URL, so no void. Needs an AUTH + DB access from whoever has it.
+
+CC-1 | 1:54 PM CT (18:54Z) | R-169 done, 5812 + this $30.30 group blocked on DB access (flagged).
