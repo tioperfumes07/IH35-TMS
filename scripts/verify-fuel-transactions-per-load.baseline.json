@@ -1,7 +1,22 @@
 {
-  "_comment": "REGENERATED AT ZERO after the USMCA AUTH-001 wipe (ROUND E11.3, owner order). The prior 589-row / $253,271.24 baseline was measured against a ledger that no longer exists -- USMCA's entire fuel.fuel_transactions set was deleted by the wipe. Carrying that number forward would have baselined a wipe artifact as historical debt (the exact 333-vs-92 contamination class this round exists to prevent). Measured post-wipe, pre-feed: live count is genuinely 0 -- not a measurement failure, not EMPTY BY PURGE, the real current state of an intentionally emptied ledger awaiting Cursor's AlwaysTrack re-feed (5769-5803).",
-  "measured_at": "2026-09-23T21:35:00Z",
-  "established": "2026-09-23",
-  "count": 0,
-  "total_cents": 0
+  "_comment": "RE-STAMPED 2026-09-25 by Claude-Lead (ROUND 191) after the AlwaysTrack re-feed of the 48 USMCA settlement documents (5769-5816). Previous stamp: 0 rows / $0.00 (post-AUTH-001 wipe, pre-feed, 2026-09-23).",
+  "measured_at": "2026-09-25T23:10:00Z",
+  "established": "2026-09-25",
+  "count": 391,
+  "total_cents": 17573866,
+  "reconciliation": "Live USMCA fuel.fuel_transactions (archived_at IS NULL, voided_at IS NULL) = 391 rows / $175,738.66, all 391 on loads inside the 48 fed documents (0 outside). DIESEL 259 / $171,350.56 = the sum of the 46 PDF 'FUEL PURCHASES Totals' ($170,543.53) + load 13541 / doc 5796 $807.03 (5796's PDF prints no FUEL section; both fills, 97.33 gal $540.09 and 48.63 gal $266.93, are on the Dreamline statement 0807-0921, card ...2447 unit 171). Doc 5816 / load 13595 has no fuel on the PDF and none live. Per-document diesel ties 48/48 (.gap2.py). DEF 131 / $4,342.63 + REEFER 1 / $45.47 are card non-diesel inside the PDF EXPENSES totals (tied 44/48; the 4 differences are 5796/5805/5808/5816, measured and owned by CC-1 R-187 G1). Truth JSON 171/171 receipts matched by natural key (load + invoice + cents). Writers: R-177 feed, R-178 date reissue (AUTH-032), R-190 (AUTH-039).",
+  "cross_load_duplicate_receipts": [
+    {
+      "key": "1848853|58536|13543,13547",
+      "note": "LOVES #471 Natalia 2026-08-26 105.49 gal $585.36, GENARO GUERRERO T152. Printed on BOTH settlement 5785 (13543) and 5792 (13547); the Dreamline statement shows it ONCE (discount 46.94, net 538.42). Books carry it twice. OPEN: resolved by the Dreamline statement tie-out (Lead step 4)."
+    },
+    {
+      "key": "99530579|51061|13533,13548",
+      "note": "LOVES Natalia 92.018 gal $510.61, printed twice on settlement 5786 (13533 dated 08-20 and 13548 dated 08-26). NOT on the Dreamline statement (other card rail). OPEN: needs the card statement for that rail."
+    },
+    {
+      "key": "99794138|100559|13557,13571",
+      "note": "LOVES #719 Troy 2026-08-31 179.92 gal $1,005.59, JORGE INFANTE T177. Printed on BOTH settlement 5789 (13557) and 5799 (13571); the Dreamline statement shows it ONCE ($1,005.58 gross, discount 77.37, net 928.21). Books carry it twice. OPEN: resolved by the Dreamline statement tie-out (Lead step 4)."
+    }
+  ]
 }
