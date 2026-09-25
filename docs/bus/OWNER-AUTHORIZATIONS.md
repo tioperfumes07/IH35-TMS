@@ -688,3 +688,30 @@ USMCA trial balance (bypass_rls read, live): total debit 270,437,276 cents == to
 270,437,276 cents. Balanced.
 
 — CC-1
+
+---
+
+## AUTH-021
+issued_at: 2026-09-25T18:05:00.000Z
+scope: accounting.expenses, accounting.expense_lines, expense_attribution.expense_load_links, expense_attribution.expense_seq_per_load, accounting.journal_entries, accounting.journal_entry_postings — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly the 28 August settlement documents 5769,5770,5771,5772,5774,5775,5776,5777,5778,5779,5780,5781,5782,5783,5784,5785,5786,5787,5788,5789,5790,5791,5792,5793,5794,5795,5796,5800
+action: DOCS=<the 28 documents> OWNER_AUTH_ID=AUTH-021 tsx scripts/ops/2026-09-25-lead-r164-august-expense-gapfill.ts (production, no DRY_RUN) — per settlement document, one transaction: void the regular expenses the company settlement document does not carry (DEF booked a 2nd time Cr 1000 while the card fuel expense Cr 2510 exists; driver-reimbursement copies; duplicate parses) — 80; void + reissue on the right load and the item's own account the regular expenses posted to 5000 or on the wrong load — 60; set trailer_id from the document's trailer on kept expenses — 94; each document commits only if its EXPENSES (regular + card non-diesel) equal the company document to the cent and row count, and the trial balance nets 0.
+expires_at: 2026-09-25T21:05:00.000Z
+status: OPEN
+
+Issued before execution. Owner, 09-25-2026: "THE FIX ALL THESE ISSUES NOW ... YOU DO WHAT YOU NEED TO DO CORECTLY, I TRUST YOU" and "OK DO IT. GET IT FIXED AND UPDATED CORRECTLY."
+
+Root cause, verified in code and live:
+- `seedExpense` (apps/backend/src/feed/seed-settlement-document.service.ts) writes no `expense_account_uuid` and no `item_id`, so everything posts to 5000.
+- It books the merged company + driver lines, so reimbursements are booked twice.
+- DEF is booked as a regular expense on top of the card fuel expense.
+
+The writer fix is R-165 (CC-1). The ruler change (verify-alwaystrack-parity counts card non-diesel expenses in EXPENSES) ships in the same PR as this script.
+
+DRY_RUN over all 28 documents, 12:25–12:58 PM CT: 28/28 tie to the company document to the cent and row count; trial balance 0 on every document; created 0; held 0.
+
+Reported, not written:
+- 2 card fuel expenses on another load of the same settlement (5771: EXP-2026-00196 / 00188 on 13504, the document says 13510);
+- 1 diesel line with no card expense (5785, 585.36, load 13543);
+- trailers 53R19049 and 216 are not in mdata.equipment.
+
+— Claude Lead
