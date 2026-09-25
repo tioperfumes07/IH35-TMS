@@ -38,6 +38,16 @@
 //
 // COORDINATION: CC-2 owns the writer (R-153.6); CC-3 owns guard scope (R-153.7).
 //
+// REVERSED-PAIR RULE (R-153.9, Lead order): a JE that is EITHER half of a reversed pair —
+// reversed_by_je_id IS NOT NULL (the original) or reverses_je_id IS NOT NULL (its reversal) —
+// nets to zero and is excluded from BOTH invariants, unconditionally. Same rule
+// verify-no-fuel-event-credits-ap-control.mjs already carries, not a new exemption: a
+// voided-then-reposted wrong posting is exactly what this guard exists to let happen. Live-
+// verified 2026-09-25 that a reversal entry's own postings do not reliably carry the reversed
+// transaction's source_transaction_type (some relabel to 'journal_entry'), so the check is
+// explicit on reversed_by_je_id/reverses_je_id in classifyCostJe itself — never inferred from
+// isCostJe/isFuelJe reading false on the flipped shape.
+//
 // SCOPE (R-153.7, owner-approved via the Lead): three DOCUMENT ENGINES legitimately debit a
 // 5xxx/6xxx cost account WITHOUT an accounting.expenses row — a factoring advance's fee, a driver
 // settlement's cost recognition, and factoring default interest are posted through their own
@@ -67,10 +77,19 @@ const OK_CREDIT_ACCOUNTS = ["1295", "2510", "2500", "1000"];
 
 /**
  * Classify a JE's postings into violations. Pure function — exported for selftest.
- * @param {{ je_id: string, memo: string, postings: Array<{ account_number: string, account_type: string, debit_or_credit: string, amount_cents: string, source_transaction_type: string|null }>, has_expense_row: boolean }} row
+ * @param {{ je_id: string, memo: string, postings: Array<{ account_number: string, account_type: string, debit_or_credit: string, amount_cents: string, source_transaction_type: string|null }>, has_expense_row: boolean, reversed_by_je_id?: string|null, reverses_je_id?: string|null }} row
  * @returns {string|null} violation kind, or null if clean
  */
 export function classifyCostJe(row) {
+  // R-153.9 (Lead order): a JE that is EITHER member of a reversed pair — the original
+  // (reversed_by_je_id IS NOT NULL) or its reversal (reverses_je_id IS NOT NULL) — nets to zero
+  // and is excluded from BOTH invariants. Same rule verify-no-fuel-event-credits-ap-control.mjs
+  // already carries (reversed_by_je_id IS NULL), not a new exemption: a voided-then-reposted
+  // wrong posting is exactly what this guard exists to let happen. Checked FIRST, before either
+  // invariant, and unconditionally (not scoped to fuel_event or any source_transaction_type) —
+  // the pairing itself, not the transaction kind, is what makes both halves inert.
+  if (row.reversed_by_je_id || row.reverses_je_id) return null;
+
   const postings = row.postings;
   // Check if this JE debits a 5xxx or 6xxx account (cost-of-revenue or expense)
   const debits5xxx6xxx = postings.filter(
@@ -116,21 +135,25 @@ async function measure(client) {
   // Get all posted JEs for USMCA. R-153.6: this system's void model (journal-entries.service.ts
   // voidJournalEntry, Option-1) NEVER flips a voided JE's status -- it posts an equal/opposite
   // REVERSING entry and stamps reversed_by_je_id on the original, which stays status='posted'
-  // forever by design (so it never silently drops out of the GL trail). Without excluding
-  // reversed_by_je_id IS NOT NULL here, a correctly-voided wrong posting (exactly what this
-  // guard exists to make possible) can NEVER stop counting as a violation -- proven live
-  // 2026-09-25: voided 54 wrong-1090 fuel JEs via the real voidJournalEntry engine, re-ran this
-  // guard unmodified, same JE ids still flagged. Excluding reversed originals is strictly more
-  // accurate (catches only LIVE violations), never weaker -- a JE that is itself a reversal
-  // never independently trips isCostJe/isFuelJe the same way (its 5xxx leg is a credit, not a
-  // debit, since a reversal flips both sides), so no separate exclusion is needed for those.
+  // forever by design (so it never silently drops out of the GL trail). A correctly-voided wrong
+  // posting (exactly what this guard exists to make possible) must not count as a violation --
+  // proven live 2026-09-25: voided 54 wrong-1090 fuel JEs via the real voidJournalEntry engine,
+  // re-ran this guard unmodified, same JE ids still flagged.
+  //
+  // R-153.9 (Lead order): BOTH halves of a reversed pair are excluded, not just the original --
+  // live-verified 2026-09-25 that a reversal entry's own postings do not always carry the
+  // reversed transaction's source_transaction_type (e.g. relabeled 'journal_entry'), so the
+  // classifier cannot always rely on isFuelJe/isCostJe alone to stay inert for a reversal.
+  // reversed_by_je_id/reverses_je_id are selected here and the exclusion is enforced in
+  // classifyCostJe itself (checked first, unconditionally) so it is one testable rule instead of
+  // a SQL-only side effect -- see that function's own comment.
   const jeRes = await client.query(
-    `SELECT je.id::text AS je_id, je.memo
+    `SELECT je.id::text AS je_id, je.memo,
+            je.reversed_by_je_id::text AS reversed_by_je_id, je.reverses_je_id::text AS reverses_je_id
        FROM accounting.journal_entries je
       WHERE je.operating_company_id = $1::uuid
         AND je.status = 'posted'
         AND je.is_sample_data IS NOT TRUE
-        AND je.reversed_by_je_id IS NULL
       ORDER BY je.created_at`,
     [USMCA_COMPANY_ID],
   );
@@ -172,6 +195,8 @@ async function measure(client) {
       memo: je.memo,
       postings: postRes.rows,
       has_expense_row: hasExpenseRow,
+      reversed_by_je_id: je.reversed_by_je_id,
+      reverses_je_id: je.reverses_je_id,
     });
   }
 
@@ -344,6 +369,58 @@ function runClassifierSelftest() {
           { account_number: "1090", account_type: "Asset", debit_or_credit: "credit", amount_cents: "2938", source_transaction_type: "factoring_advance" },
         ],
         has_expense_row: true,
+      },
+      expect: "wrong_credit_account_1090",
+    },
+    // R-153.9 (Lead order) — Clean: the ORIGINAL half of a reversed fuel pair. Live shape (fuel
+    // JE Dr 5000 / Cr 1090, wrong-credit AND handwritten) but reversed_by_je_id is set — excluded
+    // from BOTH invariants, unconditionally, before either is evaluated.
+    {
+      name: "reversed pair — original half (reversed_by_je_id set) — clean",
+      row: {
+        je_id: "test13", memo: "Fuel event 2a27f7e2 (diesel) posting",
+        postings: [
+          { account_number: "5000", account_type: "Expense", debit_or_credit: "debit", amount_cents: "50367", source_transaction_type: "fuel_event" },
+          { account_number: "1090", account_type: "Asset", debit_or_credit: "credit", amount_cents: "50367", source_transaction_type: "fuel_event" },
+        ],
+        has_expense_row: false,
+        reversed_by_je_id: "8078f8fc-bedf-489c-8977-c9752ed545d0",
+        reverses_je_id: null,
+      },
+      expect: null,
+    },
+    // R-153.9 (Lead order) — Clean: the REVERSAL half of the same pair. Live-verified shape: the
+    // reversal's own postings relabel source_transaction_type to 'journal_entry' (not
+    // 'fuel_event') and flip debit/credit, so isCostJe/isFuelJe alone would already read false
+    // here -- this fixture proves the explicit reverses_je_id check is what makes that
+    // unconditional, not an accident of the flipped shape.
+    {
+      name: "reversed pair — reversal half (reverses_je_id set) — clean",
+      row: {
+        je_id: "test14", memo: "Reversal of journal entry 5be6aed9-dccc-4f1e-a46a-4d66d7cb855b: E22...",
+        postings: [
+          { account_number: "5000", account_type: "Expense", debit_or_credit: "credit", amount_cents: "50367", source_transaction_type: "journal_entry" },
+          { account_number: "1090", account_type: "Asset", debit_or_credit: "debit", amount_cents: "50367", source_transaction_type: "journal_entry" },
+        ],
+        has_expense_row: false,
+        reversed_by_je_id: null,
+        reverses_je_id: "5be6aed9-dccc-4f1e-a46a-4d66d7cb855b",
+      },
+      expect: null,
+    },
+    // R-153.9 (Lead order) — RED: an UNREVERSED fuel JE on 1090 (neither field set) must keep
+    // failing exactly as before -- the new check must not swallow a real, still-live violation.
+    {
+      name: "unreversed fuel JE crediting 1090 — still RED",
+      row: {
+        je_id: "test15", memo: "Fuel event 9c1a2b3d (diesel) posting",
+        postings: [
+          { account_number: "5000", account_type: "Expense", debit_or_credit: "debit", amount_cents: "42000", source_transaction_type: "fuel_event" },
+          { account_number: "1090", account_type: "Asset", debit_or_credit: "credit", amount_cents: "42000", source_transaction_type: "fuel_event" },
+        ],
+        has_expense_row: true,
+        reversed_by_je_id: null,
+        reverses_je_id: null,
       },
       expect: "wrong_credit_account_1090",
     },
