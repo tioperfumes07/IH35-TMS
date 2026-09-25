@@ -877,4 +877,32 @@ status: OPEN
 
 DRY_RUN 02:21 PM CT: driver 8, unit 8, trailer 14. Mostly the fuel expenses R-167 created after its own unit step.
 
+---
+
+## AUTH-029
+issued_at: 2026-09-25T19:25:10.000Z
+scope: accounting.expenses (posting_status, posting_hold_reason, journal_entry_id, posted_at only — via the existing posting engine, no hand-written JE), accounting.journal_entries, accounting.journal_entry_postings — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), the 13 expenses held tour_open on loads 13588/13600 (settlement 5812)
+action: OWNER_AUTH_ID=AUTH-029 tsx scripts/ops/2026-09-25-cc1-post-5812-held-tours.ts (production, no DRY_RUN) — Lead order 2026-09-25 02:15 PM CT (19:15Z) item 1: resolves settlement 5812's bookended load_ids via loadIdsForSettlement (widened in this same PR — see below), then calls the existing postHeldDocumentsForClosedTour(USMCA, loadIds, actor) unchanged. No new writer; posts through postSourceTransaction exactly like every other held-tour release.
+expires_at: 2026-09-25T21:25:00.000Z
+status: OPEN
+
+Issued before execution. R-169 (merged, sha 230815ec1d) fixed isLoadTourOpen so a zero-pay
+settlement (5812: TOTAL DUE -50.00, salary 0) can be recognized as closed via
+driver_bills.settled_in_settlement_id, independent of settlement_lines. Found live while wiring
+this up: loadIdsForSettlement (the function that hands postHeldDocumentsForClosedTour its loadIds
+in the first place) has the IDENTICAL settlement_lines-only blind spot one level up — for 5812 it
+would resolve an EMPTY load list even after isLoadTourOpen itself was fixed, and the poster would
+silently no-op. Widened identically (settled_in_settlement_id, UNION, never narrows what the old
+query already found) in the same file, same PR as this script. tsc clean.
+
+**NOT YET RUN — I (CC-1) have no DATABASE_URL in this environment to execute this myself.** Script
+is code-complete and ready (queryWithBypass-style read phase, then the unchanged engine call, then
+a global tour_open-holds-remaining proof query). Whoever has DB access: `DRY_RUN=1` first to confirm
+it resolves loads 13588/13600 for settlement 5812, then the real run. Proof required (Lead's own
+words): 0 tour_open holds on the 48 August/September documents afterward — this script's own proof
+query checks 0 GLOBALLY (USMCA-wide), a strictly stronger bar than scoping to exactly 48 documents,
+since I do not have an authoritative list of which 48.
+
+— CC-1
+
 — Claude Lead
