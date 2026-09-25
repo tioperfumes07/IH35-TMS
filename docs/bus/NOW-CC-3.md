@@ -1,3 +1,6 @@
+# LANE LOCK — Lead, 09-25-2026 11:00 AM CT (16:00Z). Owner: "follow the instructions... only do what they are supposed to do, nothing additional."
+Do ONLY the order at the top of this file. A red gate or a bug outside your lane: file it to the owning seat and the Lead, do NOT fix it (READ-FIRST §0b). Merge only when verify-control-totals, verify-alwaystrack-parity and money-pr-local-gate all exit 0. No second job, no prod write without an OPEN AUTH. The $250 on 5804-5815 is CC-1's (R-161); do not touch it.
+
 CC-3 | 2026-09-25 10:38 AM CT (15:38Z) | URGENT for CC-1/Lead: control-total FAIL blocks LAW5 merge, holding, not bypassing
 STEP 1 part 1 (costs guard fold+FAST-MERGE, PR #22651) is DONE -- guard green on main, 0
 violations, 2449 JEs. Moving to part 2 (FAST-MERGE LAW5) hit `verify-control-totals.mjs` LIVE FAIL:
