@@ -734,6 +734,35 @@ const LIVE_DOMAIN_GUARDS = [
       "catalogs.accounts",
     ],
   ],
+  // LAW 5 (owner, 2026-09-23/24): "one source per number, every screen reads it." Static arm
+  // (no bill-header-total-as-load-cost anti-pattern; SettlementDetailPage's KPI grid reads the
+  // company-scoped report) is diff-scoped like every LIVE_DOMAIN_GUARDS entry; live arm
+  // cross-checks canonical vs. naive bill_cents for every load with live bill_lines.
+  [
+    "verify-one-source-per-number",
+    [
+      "apps/backend/src/accounting/",
+      "apps/backend/src/driver-finance/",
+      "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+      "accounting.bill_lines",
+      "accounting.bills",
+    ],
+  ],
+  // ROUND 153 STEP 3 (owner, 2026-09-25) — "linkage renders both ways." Static arm: the six
+  // load->X forward links (driver bill, expenses, bills, fuel, Faro advance, invoice) and the
+  // settlement->loads reverse link stay wired; live arm: 0 dangling FKs on any of them.
+  [
+    "verify-load-linkage-renders-both-directions",
+    [
+      "apps/frontend/src/components/dispatch/",
+      "apps/backend/src/driver-finance/tour-readout.routes.ts",
+      "driver_finance.driver_bills",
+      "accounting.expenses",
+      "fuel.fuel_transactions",
+      "accounting.invoices",
+      "accounting.factoring_advances",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {

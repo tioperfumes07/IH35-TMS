@@ -703,8 +703,16 @@ export function SettlementDetailPage() {
         loadIds={settlementLoadIds}
         onRefresh={() => void debt.refresh()}
       />
+      {/* LAW-5-CROSS-SCREEN (2026-09-24): this grid used to always read readout.company_settlement
+          {revenue,margin}_cents -- TOUR-scoped despite the field name (tour-readout.routes.ts's
+          totals for this one settlement's own legs), while CompanyWaterfallSection a few tiles below
+          already switched to report.sections (company-settlement-scoped, the same COMPANY-WATERFALL-
+          FUEL-EXPENSE-SPLIT fix, 2026-09-09) once companyReport loads. Same page, same-named number,
+          two different populations -- exactly the LAW 5 defect. Now both read the identical
+          companyReport.sections values once loaded; falls back to the tour-scoped readout fields only
+          while companyReport hasn't loaded yet, same fallback shape CompanyWaterfallSection uses. */}
       <SettlementKpiGrid
-        revenueCents={readout?.company_settlement?.revenue_cents ?? 0}
+        revenueCents={companyReport ? companyReport.sections.revenue.invoiced_cents : (readout?.company_settlement?.revenue_cents ?? 0)}
         revenueSub={`${readout?.legs.length ?? 0} load${(readout?.legs.length ?? 0) === 1 ? "" : "s"}`}
         driverPayCents={readout?.driver_settlement?.gross_cents ?? Math.round((summary.earningsTotal + summary.deadheadTotal) * 100)}
         driverPaySub={`${kpi.loadedMiles.toLocaleString("en-US", { maximumFractionDigits: 0 })} mi loaded`}
@@ -713,8 +721,14 @@ export function SettlementDetailPage() {
         deductionCents={Math.round(summary.deductionTotal * 100)}
         deductionBreakdown={kpi.deductionBreakdown}
         netPayCents={kpi.netPayCents}
-        companyMarginCents={readout?.company_settlement?.margin_cents ?? 0}
-        companyMarginSub={readout?.totals?.margin_pct == null ? "—" : `${readout.totals.margin_pct.toFixed(1)}%`}
+        companyMarginCents={companyReport ? companyReport.sections.pl_rollup.net_revenue_cents : (readout?.company_settlement?.margin_cents ?? 0)}
+        companyMarginSub={
+          companyReport
+            ? (companyReport.sections.revenue.invoiced_cents
+                ? `${((companyReport.sections.pl_rollup.net_revenue_cents / companyReport.sections.revenue.invoiced_cents) * 100).toFixed(1)}%`
+                : "—")
+            : (readout?.totals?.margin_pct == null ? "—" : `${readout.totals.margin_pct.toFixed(1)}%`)
+        }
       />
       {readout ? <SettlementLoadsSection legs={readout.legs} operatingCompanyId={companyId} /> : null}
       {readout ? <CompanyWaterfallSection readout={readout} report={companyReport} /> : null}

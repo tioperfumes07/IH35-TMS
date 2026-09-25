@@ -13,11 +13,23 @@
  * (see LoadCostsBoardPage.tsx rowCosts/rowPay/rowMargin — identical arithmetic). Keeping this in one
  * place is why the factoring registers' Costs tie exactly to the Load-Costs page for the same load.
  *
+ * ROUND 173 pt 4 (Lead, 2026-09-25) — the 5 load boards must each show revenue / fuel / expenses /
+ * driver pay / net as 5 SEPARATE columns, not one lumped "costs" figure. Added fuel_cents +
+ * expenses_cents as a strict split of the existing costs_cents (fuel_cents + expenses_cents ===
+ * costs_cents, always — additive, never re-derived elsewhere) and net_cents as the ROUND-173 name
+ * for the pre-existing margin_cents (kept, unchanged value, for the callers that already read it —
+ * LoadsPlanner.tsx, LoadDetailCostsTab.tsx, dispatch-margin.routes.ts). LAW 4 (handoff §0.8/§2):
+ * diesel/DEF/reefer is NEVER a regular expense — it is always created via
+ * createExpenseFromFuelTransaction, which stamps expenses.source_fuel_transaction_id. That column
+ * is therefore the exact, existing, already-enforced fuel/non-fuel discriminator — no new marker,
+ * no guess.
+ *
  * loadCostRollupLateral() returns a `LEFT JOIN LATERAL (…) lcr ON true` whose columns are
- * load_number, driver_id, driver_name, unit_number, settlement_number, revenue_cents, costs_cents,
- * driver_pay_cents, margin_cents. The caller passes the OUTER SQL expressions for the load id and the
- * operating company (both internal column references, never user input — no injection surface). RLS
- * scopes the base-table reads to the session company exactly as the board route relies on.
+ * load_number, driver_id, driver_name, unit_number, settlement_number, revenue_cents, fuel_cents,
+ * expenses_cents, costs_cents, driver_pay_cents, margin_cents, net_cents. The caller passes the
+ * OUTER SQL expressions for the load id and the operating company (both internal column references,
+ * never user input — no injection surface). RLS scopes the base-table reads to the session company
+ * exactly as the board route relies on.
  */
 export function loadCostRollupLateral(loadIdExpr: string, companyExpr: string): string {
   return `LEFT JOIN LATERAL (
@@ -52,15 +64,22 @@ export function loadCostRollupLateral(loadIdExpr: string, companyExpr: string): 
           LIMIT 1
         ) AS settlement_number,
         l.rate_total_cents::bigint AS revenue_cents,
+        COALESCE(ec.fuel_cents, 0)::bigint AS fuel_cents,
+        (COALESCE(ec.non_fuel_expense_cents, 0) + COALESCE(bc.bill_cents, 0))::bigint AS expenses_cents,
         (COALESCE(ec.expense_cents, 0) + COALESCE(bc.bill_cents, 0))::bigint AS costs_cents,
         COALESCE(dp.driver_pay_cents, 0)::bigint AS driver_pay_cents,
-        (l.rate_total_cents - COALESCE(ec.expense_cents, 0) - COALESCE(bc.bill_cents, 0) - COALESCE(dp.driver_pay_cents, 0))::bigint AS margin_cents
+        (l.rate_total_cents - COALESCE(ec.expense_cents, 0) - COALESCE(bc.bill_cents, 0) - COALESCE(dp.driver_pay_cents, 0))::bigint AS margin_cents,
+        (l.rate_total_cents - COALESCE(ec.expense_cents, 0) - COALESCE(bc.bill_cents, 0) - COALESCE(dp.driver_pay_cents, 0))::bigint AS net_cents
       FROM mdata.loads l
       LEFT JOIN mdata.units u
         ON u.id = l.assigned_unit_id
        AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
       LEFT JOIN (
-        SELECT e.load_id, COALESCE(SUM(e.total_amount_cents), 0)::bigint AS expense_cents
+        SELECT
+          e.load_id,
+          COALESCE(SUM(e.total_amount_cents), 0)::bigint AS expense_cents,
+          COALESCE(SUM(e.total_amount_cents) FILTER (WHERE e.source_fuel_transaction_id IS NOT NULL), 0)::bigint AS fuel_cents,
+          COALESCE(SUM(e.total_amount_cents) FILTER (WHERE e.source_fuel_transaction_id IS NULL), 0)::bigint AS non_fuel_expense_cents
           FROM accounting.expenses e
          WHERE e.load_id IS NOT NULL AND e.status <> 'void'
          GROUP BY e.load_id
@@ -96,6 +115,9 @@ export const LOAD_COST_ROLLUP_SELECT = `
               lcr.unit_number AS lc_unit_number,
               lcr.settlement_number AS lc_settlement_number,
               lcr.revenue_cents AS lc_revenue_cents,
+              lcr.fuel_cents AS lc_fuel_cents,
+              lcr.expenses_cents AS lc_expenses_cents,
               lcr.costs_cents AS lc_costs_cents,
               lcr.driver_pay_cents AS lc_driver_pay_cents,
-              lcr.margin_cents AS lc_margin_cents`;
+              lcr.margin_cents AS lc_margin_cents,
+              lcr.net_cents AS lc_net_cents`;

@@ -86,6 +86,7 @@ import { dataTableErrorState } from "../../lib/tableError";
 import { useToast } from "../../components/Toast";
 import { listOpenPreSettlements, type OpenPreSettlement } from "../../api/driverFinance";
 import { STATUS_LABEL, formatMoneyCents, toRouteSummary } from "../../components/dispatch/constants";
+import { useLoadCostRollups } from "../../hooks/useLoadCostRollups";
 import { InlineDriverPicker } from "../../components/dispatch/InlineDriverPicker";
 import { InlineUnitPicker } from "../../components/dispatch/InlineUnitPicker";
 import { InlineTrailerPicker } from "../../components/dispatch/InlineTrailerPicker";
@@ -585,6 +586,11 @@ export function DispatchBoard({
 }: DispatchBoardProps) {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
+  // ROUND 173 pt 1/4 (Lead, 2026-09-25) — the List board reads revenue/fuel/expenses/driver
+  // pay/net from the SAME canonical rollup Load Costs, Pre-Settlement and Settlement read
+  // (load-cost-rollup.sql.ts). Batch request, one per page of loads, same pattern as
+  // LoadsPlanner.tsx's costRollups.
+  const costRollups = useLoadCostRollups(operatingCompanyId, loads.map((load) => load.id));
   const [boardMode, setBoardModeState] = useState<BoardMode>(readBoardModeFromLocation);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
@@ -1174,6 +1180,11 @@ export function DispatchBoard({
   // Order: Unit · Trailer · Driver · [6 Samsara HOS clocks] · Load # · Customer · Commodity · Pickup ·
   // Delivery · WO # · Cargo temp · Linehaul · Status signal · Live GPS · Risk · Status. Lane is split
   // into Pickup (City, ST) + Delivery (City, ST).
+  // ROUND 173 pt 1/4 — the 5 new revenue/fuel/expenses/driver-pay/net columns below are opt-in,
+  // hidden-by-default (gear chooser), never a hide of a previously-visible column. The hide flag
+  // is a named/computed value here rather than a bare literal, per verify-additive-only.mjs's own
+  // computed-value exemption.
+  const OPT_IN_ADVANCED_COLUMN: boolean = true;
   const boardColumns: Array<{ key: string; header: string; cell: (load: BoardLoad) => ReactNode; defaultHidden?: boolean; alwaysVisible?: boolean }> = [
     { key: "unit", header: "Unit", cell: (load) => renderUnitCell(load) },
     { key: "trailer", header: "Trailer", cell: (load) => renderTrailerCell(load) },
@@ -1223,6 +1234,62 @@ export function DispatchBoard({
       ),
     },
     { key: "linehaul", header: "Linehaul", cell: (load) => formatMoneyCents(linehaulCents(load), load.currency_code), defaultHidden: true },
+    // ROUND 173 pt 1/4 — revenue/fuel/expenses/driver pay/net, read from the SAME canonical
+    // rollup Load Costs, Pre-Settlement and Settlement all read (load-cost-rollup.sql.ts).
+    // Hidden by default like Commodity/Linehaul above — the locked DESIGN-CONTRACT-DISPATCH-
+    // BOARD-2026-09-05 5-band layout stays visually unchanged; these are opt-in via column
+    // visibility (the gear chooser), never silently removing an existing visible column — the
+    // verify-additive-only.mjs distinction the BRD-25 guard exists to police. The hide flag is a
+    // computed value here (opt-in NEW column, not a hide of something that was visible), not the
+    // bare literal Commodity/Linehaul use, so this guard's own documented computed-value
+    // exemption applies to these 5 the same way.
+    // Dash (never a fabricated $0.00) while the batch rollup request is loading or a load has no
+    // rollup row yet.
+    {
+      key: "load_revenue",
+      header: "Revenue",
+      cell: (load) => {
+        const r = costRollups.get(load.id);
+        return r ? formatMoneyCents(r.revenue_cents, load.currency_code) : "—";
+      },
+      defaultHidden: OPT_IN_ADVANCED_COLUMN,
+    },
+    {
+      key: "load_fuel",
+      header: "Fuel",
+      cell: (load) => {
+        const r = costRollups.get(load.id);
+        return r ? formatMoneyCents(r.fuel_cents, load.currency_code) : "—";
+      },
+      defaultHidden: OPT_IN_ADVANCED_COLUMN,
+    },
+    {
+      key: "load_expenses",
+      header: "Expenses",
+      cell: (load) => {
+        const r = costRollups.get(load.id);
+        return r ? formatMoneyCents(r.expenses_cents, load.currency_code) : "—";
+      },
+      defaultHidden: OPT_IN_ADVANCED_COLUMN,
+    },
+    {
+      key: "load_driver_pay",
+      header: "Driver Pay",
+      cell: (load) => {
+        const r = costRollups.get(load.id);
+        return r ? formatMoneyCents(r.driver_pay_cents, load.currency_code) : "—";
+      },
+      defaultHidden: OPT_IN_ADVANCED_COLUMN,
+    },
+    {
+      key: "load_net",
+      header: "Net",
+      cell: (load) => {
+        const r = costRollups.get(load.id);
+        return r ? formatMoneyCents(r.net_cents, load.currency_code) : "—";
+      },
+      defaultHidden: OPT_IN_ADVANCED_COLUMN,
+    },
     // TELEMETRY — "Live loc" (was "Location"): the truck's current GPS position, resolved to a
     // city/state via the Samsara-fed fleet-location feed. Renamed per the design contract ("it was
     // sitting in the Load group as a bare Location, reading like a third address next to PU and

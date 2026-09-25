@@ -66,6 +66,7 @@ import {
   stampTruckLineDeparture,
   type TruckLineRow,
 } from "../../api/truckLine";
+import { useLoadCostRollups } from "../../hooks/useLoadCostRollups";
 
 // THE LINE — 7 visual stations (V7). `backendIndex` is the station.ts index whose reached/next/
 // stamp signal drives this node; "Loaded" and "In transit" share index 3 on purpose (see file
@@ -839,6 +840,15 @@ export function TruckLineBoard({
     return withIndex.map((x) => x.r);
   }, [searchedRows, sort]);
 
+  // ROUND 173 pt 1/4 (Lead, 2026-09-25) — Fuel/Expenses/Driver Pay/Net, read from the SAME
+  // canonical rollup Load Costs/Pre-Settlement/Settlement/every other board read
+  // (load-cost-rollup.sql.ts). Never re-derived here — this board previously showed only
+  // rate_total_cents (revenue).
+  const costRollups = useLoadCostRollups(
+    operatingCompanyId,
+    rows.map((r) => r.load?.load_id).filter((id): id is string => Boolean(id))
+  );
+
   // V10 (ROUND 18.6) — top-bar counts, ALL computed from the live rows just fetched, none
   // hardcoded. Counted against the full unfiltered set (allRows), not the search-narrowed one, so
   // the summary always describes the whole board.
@@ -1190,6 +1200,16 @@ export function TruckLineBoard({
                       <div className="truck-line-v4-sub text-[#6B7280]">
                         {r.load.pickup.city ?? "—"}, {r.load.pickup.state ?? "—"} → {r.load.delivery.city ?? "—"}, {r.load.delivery.state ?? "—"} · {money(r.load.rate_total_cents)}
                       </div>
+                      {(() => {
+                        const rollup = costRollups.get(r.load.load_id);
+                        if (!rollup) return null;
+                        return (
+                          <div className="truck-line-v4-sub text-[#6B7280]" data-testid="truck-line-load-costs">
+                            Fuel {money(rollup.fuel_cents)} · Expenses {money(rollup.expenses_cents)} · Driver Pay{" "}
+                            {money(rollup.driver_pay_cents)} · Net {money(rollup.net_cents)}
+                          </div>
+                        );
+                      })()}
                     </>
                   ) : (
                     <span className="truck-line-v4-sub text-[#6B7280]">—</span>

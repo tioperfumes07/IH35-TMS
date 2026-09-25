@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
+import { getLoadCostRollup } from "../../api/accounting";
 import { formatMoneyCents } from "./constants";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
@@ -76,6 +77,18 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
       apiRequest<DriverPayDetail>(
         `/api/v1/driver-finance/loads/${encodeURIComponent(loadId)}/driver-pay-detail?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
       ),
+  });
+  // R-166 pt 2 (Lead, 2026-09-25) — "no surface re-derives." This tab previously showed only
+  // bill.gross_amount_cents (this load's own driver_bill row). Cross-check it against the SAME
+  // shared source load-cost-rollup.sql.ts's driver_pay_cents (SUM of every non-void driver_bill on
+  // this load) already backs — LoadDetailCostsTab.tsx / LoadsPlanner.tsx / TourLoadRows.tsx. The two
+  // agree by construction when a load carries exactly one live driver bill (the common case); a
+  // mismatch is a real signal (multiple bills, a stale/void row) worth surfacing, never silently
+  // hidden behind two numbers that happen to usually match.
+  const rollup = useQuery({
+    queryKey: ["load-cost-rollup", operatingCompanyId, loadId],
+    enabled: hasParams,
+    queryFn: () => getLoadCostRollup(operatingCompanyId, loadId),
   });
 
   if (!hasParams || query.isLoading) {
@@ -169,6 +182,17 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
             <span className="ldt-m" data-testid="driver-pay-gross">{money(bill.gross_amount_cents)}</span>
             <span className="ldt-k ldt-muted">gross_amount_cents {bill.gross_amount_cents} {knownLineTotal === bill.gross_amount_cents ? "✔ adds up" : `≠ lines ${knownLineTotal}`}</span>
           </div>
+          {rollup.data ? (
+            <div className="ldt-row">
+              <span>Load-cost-rollup driver pay (one source, R-166)</span><span /><span /><span />
+              <span className="ldt-m" data-testid="driver-pay-rollup-tie">{money(rollup.data.driver_pay_cents)}</span>
+              <span className="ldt-k ldt-muted">
+                {rollup.data.driver_pay_cents === bill.gross_amount_cents
+                  ? "✔ ties to this bill"
+                  : `≠ this bill (${bill.gross_amount_cents}) — another live driver_bill on this load, or a stale one`}
+              </span>
+            </div>
+          ) : null}
         </div>
         <div className="ldt-hint">
           Rate is <b>always</b> amount ÷ miles on this same line — a stored rate can never disagree with the amount it produced.

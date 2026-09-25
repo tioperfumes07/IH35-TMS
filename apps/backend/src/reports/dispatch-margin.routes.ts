@@ -2,6 +2,12 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, dateRangeOrderError, reportBasisSchema, validationError, withCompanyScope } from "./shared.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
+// LAW 5 / ROUND 153 (owner, 2026-09-23/25): "no surface computes margin on its own." revenue_cents/
+// driver_pay_cents/margin_cents below now come from the canonical per-load rollup, not this report's
+// own fuel+tolls+chargebacks formula. fuel_cents/tolls_cents/chargebacks_cents stay as informational
+// operational-cost breakdown (a real, separate question this report still answers) but no longer
+// feed margin_cents/direct_cost_cents' role in the headline number.
+import { loadCostRollupLateral, LOAD_COST_ROLLUP_SELECT } from "../accounting/load-cost-rollup.sql.js";
 
 const querySchema = companyQuerySchema.extend({
   from: z.string().date(),
@@ -128,12 +134,6 @@ export async function registerDispatchMarginRoutes(app: FastifyInstance) {
               AND l.status IS DISTINCT FROM 'cancelled'
               AND ${dateFilter}
           ),
-          pay AS (
-            SELECT db.load_id, COALESCE(SUM(db.gross_amount_cents), 0)::bigint AS driver_pay_cents
-            FROM driver_finance.driver_bills db
-            INNER JOIN load_scope ls ON ls.id = db.load_id
-            GROUP BY db.load_id
-          ),
           fuel AS (
             SELECT ft.load_id, COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::bigint AS fuel_cents
             FROM fuel.fuel_transactions ft
@@ -154,30 +154,30 @@ export async function registerDispatchMarginRoutes(app: FastifyInstance) {
             ls.load_number,
             ls.customer_id,
             ls.customer_name,
-            ls.revenue_cents::text AS revenue_cents,
-            COALESCE(pay.driver_pay_cents, 0)::text AS driver_pay_cents,
             COALESCE(fuel.fuel_cents, 0)::text AS fuel_cents,
             COALESCE(tolls.tolls_cents, 0)::text AS tolls_cents,
-            COALESCE(chargebacks.chargebacks_cents, 0)::text AS chargebacks_cents
+            COALESCE(chargebacks.chargebacks_cents, 0)::text AS chargebacks_cents,
+            ${LOAD_COST_ROLLUP_SELECT}
           FROM load_scope ls
-          LEFT JOIN pay ON pay.load_id = ls.id
           LEFT JOIN fuel ON fuel.load_id = ls.id
           LEFT JOIN tolls ON tolls.load_id = ls.id
           LEFT JOIN chargebacks ON chargebacks.load_id = ls.id
+          ${loadCostRollupLateral("ls.id", "$1::uuid")}
           ORDER BY ls.revenue_cents DESC
         `,
         [companyId, from, to]
       );
 
       const rows: DispatchMarginRow[] = (res.rows as Array<Record<string, string | null>>).map((row) => {
-        const revenue = num(row.revenue_cents);
-        const driverPay = num(row.driver_pay_cents);
+        // LAW 5 / ROUND 153 — canonical headline numbers, never re-derived.
+        const revenue = num(row.lc_revenue_cents);
+        const driverPay = num(row.lc_driver_pay_cents);
+        const margin = num(row.lc_margin_cents);
+        const marginPct = revenue > 0 ? Math.round((margin / revenue) * 10000) / 100 : 0;
+        // Informational operational-cost breakdown only — does not feed margin_cents above.
         const fuelCents = num(row.fuel_cents);
         const tollsCents = num(row.tolls_cents);
         const chargebacksCents = num(row.chargebacks_cents);
-        const directCost = driverPay + fuelCents + tollsCents + chargebacksCents;
-        const margin = revenue - directCost;
-        const marginPct = revenue > 0 ? Math.round((margin / revenue) * 10000) / 100 : 0;
         return {
           load_id: String(row.load_id),
           load_number: row.load_number,
@@ -188,7 +188,7 @@ export async function registerDispatchMarginRoutes(app: FastifyInstance) {
           fuel_cents: fuelCents,
           tolls_cents: tollsCents,
           chargebacks_cents: chargebacksCents,
-          direct_cost_cents: directCost,
+          direct_cost_cents: num(row.lc_costs_cents) + driverPay,
           margin_cents: margin,
           margin_pct: marginPct,
         };

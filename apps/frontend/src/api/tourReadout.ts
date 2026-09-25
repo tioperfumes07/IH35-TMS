@@ -7,6 +7,10 @@ export type TourLeg = {
   pickup_date: string | null; delivery_date: string | null;
   revenue_cents: number; costs_cents: number; driver_pay_cents: number; margin_cents: number; margin_pct: number | null;
   miles_practical: number | null; miles_shortest: number | null; miles_deadhead: number | null; miles_real: number | null;
+  /** ROUND 153 step 3 (owner, 2026-09-25) — per-leg unit/trailer, so a multi-leg tour that swapped
+   *  equipment mid-trip (SET-28) shows the REAL unit/trailer for each load, not just the tour's
+   *  first leg. unit_id/trailer_id let the UI render a real EntityLink instead of plain text. */
+  unit_id: string | null; unit_number: string | null; trailer_id: string | null; trailer_number: string | null;
   pod_count: number; cost_count: number; is_this_load: boolean;
 };
 export type TourCost = {
@@ -74,13 +78,19 @@ export type TourLegBrief = {
   lane: string; pickup_date: string | null; delivery_date: string | null;
   revenue_cents: number; costs_cents: number; driver_pay_cents: number; margin_cents: number; margin_pct: number | null;
   miles_practical: number | null; miles_real: number | null;
+  /** ROUND 153 step 3 (owner, 2026-09-25) — per-leg unit/trailer (a tour can swap equipment mid-trip). */
+  unit_id: string | null; unit_number: string | null; trailer_id: string | null; trailer_number: string | null;
 };
 export type TourListRow = {
   settlement_id: string; display_id: string | null;
   /** SETTLEMENT-NUMBER-IS-ALWAYSTRACK-DOC (owner 2026-09-11): the AlwaysTrack 4-digit doc number
    *  (source_document_ref). null while unsettled — render a dash, never the retired S-YYYY-NNNN counter. */
   settlement_number: string | null;
-  status: string; is_open: boolean; driver_name: string | null; unit_number: string | null;
+  status: string; is_open: boolean;
+  /** ROUND 153 step 3 (owner, 2026-09-25) — "fill unit/driver/trailer links": ids so the register
+   *  renders real EntityLinks instead of the plain-text driver_name/unit_number/trailer_number. */
+  driver_id: string | null; driver_name: string | null; unit_id: string | null; unit_number: string | null;
+  trailer_id: string | null; trailer_number: string | null;
   trip_started_at: string | null; trip_closed_at: string | null; leg_count: number; legs_label: string;
   /** ROUND 16.1 — the tour's live legs in order (load_id · load_number · trip_type) so the register
    *  can render each leg as a type-colored EntityLink pill. Downstream READ of the tour-readout model. */

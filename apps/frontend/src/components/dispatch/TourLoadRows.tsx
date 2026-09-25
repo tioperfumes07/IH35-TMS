@@ -39,6 +39,10 @@ export type TourLoadRow = TourListRow & {
   load_margin_pct: number | null;
   load_miles_practical: number | null;
   load_miles_real: number | null;
+  /** ROUND 153 step 3 (owner, 2026-09-25) — per-leg unit/trailer, so a multi-leg tour that swapped
+   *  equipment mid-trip (SET-28) shows the REAL unit/trailer for each load, falling back to the
+   *  tour-level pair only when a leg carries none of its own. */
+  load_unit_id: string | null; load_unit_number: string | null; load_trailer_id: string | null; load_trailer_number: string | null;
   /** 1-based position of this leg in its tour (NB→TR→SB order the readout already gives). */
   leg_index: number;
 };
@@ -54,7 +58,9 @@ export function flattenTourRows(rows: TourListRow[]): TourLoadRow[] {
       out.push({
         ...t, row_key: `${t.settlement_id}:none`, load_id: "", load_number: DASH, trip_type: null, load_status: "", lane: "",
         pickup_date: null, delivery_date: null, load_revenue_cents: 0, load_costs_cents: 0, load_driver_pay_cents: 0, load_margin_cents: 0,
-        load_margin_pct: null, load_miles_practical: null, load_miles_real: null, leg_index: 0,
+        load_margin_pct: null, load_miles_practical: null, load_miles_real: null,
+        load_unit_id: t.unit_id, load_unit_number: t.unit_number, load_trailer_id: t.trailer_id, load_trailer_number: t.trailer_number,
+        leg_index: 0,
       });
       continue;
     }
@@ -64,6 +70,10 @@ export function flattenTourRows(rows: TourListRow[]): TourLoadRow[] {
         lane: l.lane, pickup_date: l.pickup_date, delivery_date: l.delivery_date,
         load_revenue_cents: l.revenue_cents, load_costs_cents: l.costs_cents, load_driver_pay_cents: l.driver_pay_cents,
         load_margin_cents: l.margin_cents, load_margin_pct: l.margin_pct, load_miles_practical: l.miles_practical, load_miles_real: l.miles_real,
+        // Per-leg unit/trailer wins (a swapped-mid-trip tour); falls back to the tour-level pair
+        // only when this specific leg carries none of its own.
+        load_unit_id: l.unit_id ?? t.unit_id, load_unit_number: l.unit_number ?? t.unit_number,
+        load_trailer_id: l.trailer_id ?? t.trailer_id, load_trailer_number: l.trailer_number ?? t.trailer_number,
         leg_index: i + 1,
       });
     });
@@ -87,8 +97,17 @@ export function TOUR_LOAD_COLUMNS(state: "open" | "closed"): ParityColumn<TourLo
     { key: "leg_index", label: "Leg", headerTitle: "Position of this load in its tour (NB → TR → SB)", testId: "tour-col-leg", sortable: true, minWidth: 56, maxWidth: 72, cellClass: "whitespace-nowrap tabular-nums",
       sortValue: r => r.leg_index, render: r => r.leg_index ? `${r.leg_index} of ${r.leg_count}` : DASH },
     { key: "lane", label: "Lane", testId: "tour-col-lane", sortable: true, minWidth: 140, maxWidth: 260, cellClass: "whitespace-nowrap", sortValue: r => r.lane, render: r => <span className="block max-w-[260px] truncate" title={r.lane}>{r.lane || DASH}</span> },
-    { key: "driver", label: "Driver", testId: "tour-col-driver", sortable: true, minWidth: 120, maxWidth: 200, cellClass: "whitespace-nowrap", sortValue: r => r.driver_name ?? "", render: r => <span className="block max-w-[200px] truncate" title={r.driver_name ?? ""}>{r.driver_name ?? DASH}</span> },
-    { key: "unit", label: "Unit", testId: "tour-col-unit", sortable: true, minWidth: 56, maxWidth: 64, className: "whitespace-nowrap", sortValue: r => r.unit_number ?? "", render: r => r.unit_number ?? DASH },
+    // ROUND 153 step 3 (owner, 2026-09-25) — "fill unit/driver/trailer links": these three were
+    // plain text (driver_name/unit_number as strings — no id to link with). Now real EntityLinks.
+    { key: "driver", label: "Driver", testId: "tour-col-driver", sortable: true, minWidth: 120, maxWidth: 200, cellClass: "whitespace-nowrap",
+      sortValue: r => r.driver_name ?? "",
+      render: r => r.driver_id ? <EntityLink kind="driver" id={r.driver_id} label={r.driver_name ?? "Driver"} className="block max-w-[200px] truncate" title={r.driver_name ?? ""} /> : <span className="ldt-muted">{DASH}</span> },
+    { key: "unit", label: "Unit", testId: "tour-col-unit", sortable: true, minWidth: 56, maxWidth: 64, className: "whitespace-nowrap",
+      sortValue: r => r.load_unit_number ?? "",
+      render: r => r.load_unit_id ? <EntityLink kind="unit" id={r.load_unit_id} label={r.load_unit_number ?? "Unit"} /> : (r.load_unit_number ?? DASH) },
+    { key: "trailer", label: "Trailer", testId: "tour-col-trailer", sortable: true, minWidth: 56, maxWidth: 64, className: "whitespace-nowrap",
+      sortValue: r => r.load_trailer_number ?? "",
+      render: r => r.load_trailer_id ? <EntityLink kind="trailer" id={r.load_trailer_id} label={r.load_trailer_number ?? "Trailer"} /> : (r.load_trailer_number ?? DASH) },
     { key: "pickup", label: "Pickup", testId: "tour-col-pickup", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, sortValue: r => r.pickup_date ?? "", render: r => r.pickup_date ? mmmDd(r.pickup_date) : DASH },
     { key: "delivery", label: "Delivery", testId: "tour-col-delivery", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, sortValue: r => r.delivery_date ?? "", render: r => r.delivery_date ? mmmDd(r.delivery_date) : DASH },
     { key: "started", label: "Tour started", testId: "tour-col-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, sortValue: r => r.trip_started_at ?? "", render: r => r.trip_started_at ? mmmDd(r.trip_started_at) : DASH },

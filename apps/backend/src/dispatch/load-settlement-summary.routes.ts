@@ -34,26 +34,22 @@ export async function registerLoadSettlementSummaryRoutes(app: FastifyInstance) 
     const result = await withCurrentUser(user.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operating_company_id]);
 
-      const loadRes = await client.query<{ id: string }>(
-        `SELECT id FROM mdata.loads
-         WHERE id = $1 AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL
-         LIMIT 1`,
+      const loadRes = await client.query<{ id: string; presettlement_link_id: string | null }>(
+        `SELECT id, presettlement_link_id::text
+           FROM mdata.loads
+          WHERE id = $1 AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL
+          LIMIT 1`,
         [loadId, operating_company_id]
       );
-      if (!loadRes.rows[0]) return { settlement: null };
+      const loadRow = loadRes.rows[0];
+      if (!loadRow) return { settlement: null };
 
       const reg = await client.query<{ ok: boolean }>(
         `SELECT to_regclass('driver_finance.driver_settlements') IS NOT NULL AS ok`
       );
       if (!reg.rows[0]?.ok) return { settlement: null };
 
-      // Dual-path resolve (same load awareness as GET …/settlements/for-load/:loadId):
-      // 1) bookend first/last_load_id (incl. NULL settlement_model — live USMCA S-2026-0002)
-      // 2) settlement_lines / driver_bills.load_id (FinesDeductionsCard path)
-      // Do NOT require settlement_model='load_bookended' alone — that left LoadDetailSettlementTab empty
-      // while the fines card already showed the locked settlement EntityLink.
-      const settlRes = await client.query<Record<string, unknown>>(
-        `SELECT
+      const settlementCols = `
            s.id,
            s.display_id,
            s.source_document_ref,
@@ -70,26 +66,55 @@ export async function registerLoadSettlementSummaryRoutes(app: FastifyInstance) 
            s.net_pay,
            s.period_start,
            s.period_end,
-           s.settlement_model
-         FROM driver_finance.driver_settlements s
-         WHERE s.operating_company_id = $1::uuid
-           AND (
-             s.first_load_id = $2::uuid
-             OR s.last_load_id = $2::uuid
-             OR EXISTS (
-               SELECT 1
-               FROM driver_finance.settlement_lines sl
-               LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
-               WHERE sl.settlement_id = s.id
-                 AND COALESCE(db.load_id, sl.load_id) = $2::uuid
-             )
-           )
-         ORDER BY s.created_at DESC
-         LIMIT 1`,
-        [operating_company_id, loadId]
-      );
+           s.settlement_model`;
 
-      const s = settlRes.rows[0] ?? null;
+      // ROUND 173 pt 2 (Lead, 2026-09-25 — "OWNER RULE: THE TOUR") — mdata.loads.presettlement_link_id
+      // is the load's OWN current pointer to its settlement (R-168, landed on every load), open or
+      // closed alike (live-verified 2026-09-25: closed/'approved' settlements are still resolved by
+      // this column, not just open ones). Try it FIRST, unconditionally — it can never resolve a
+      // historical/superseded settlement, because it is the load's single current link, not a
+      // heuristic search across every settlement that ever mentioned the load.
+      let s: Record<string, unknown> | null = null;
+      if (loadRow.presettlement_link_id) {
+        const byLink = await client.query<Record<string, unknown>>(
+          `SELECT ${settlementCols}
+             FROM driver_finance.driver_settlements s
+            WHERE s.id = $1::uuid AND s.operating_company_id = $2::uuid`,
+          [loadRow.presettlement_link_id, operating_company_id]
+        );
+        s = byLink.rows[0] ?? null;
+      }
+
+      // Fallback ONLY when the load carries no presettlement_link_id at all (none observed live as
+      // of R-168, kept for older/edge-case rows) — the same dual-path heuristic as before
+      // (bookend first/last_load_id, or settlement_lines/driver_bills.load_id), now EXCLUDING
+      // cancelled settlements (the real gap this fix closes: the old query had no status filter at
+      // all and could surface a superseded/cancelled settlement as "the" one via created_at DESC).
+      if (!s) {
+        const settlRes = await client.query<Record<string, unknown>>(
+          `SELECT ${settlementCols}
+             FROM driver_finance.driver_settlements s
+            WHERE s.operating_company_id = $1::uuid
+              AND s.status <> 'cancelled'
+              AND (
+                s.first_load_id = $2::uuid
+                OR s.last_load_id = $2::uuid
+                OR EXISTS (
+                  SELECT 1
+                  FROM driver_finance.settlement_lines sl
+                  LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
+                  WHERE sl.settlement_id = s.id
+                    AND COALESCE(db.load_id, sl.load_id) = $2::uuid
+                    AND sl.is_active AND sl.voided_at IS NULL
+                )
+              )
+            ORDER BY s.created_at DESC
+            LIMIT 1`,
+          [operating_company_id, loadId]
+        );
+        s = settlRes.rows[0] ?? null;
+      }
+
       if (!s) return { settlement: null };
 
       const driverRes = await client.query<{ driver_name: string | null }>(

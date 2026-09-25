@@ -3,6 +3,16 @@ import type { PoolClient } from "pg";
 // on the Fleet roster/KPI (mdata/fleet-visibility.ts) applies here — a fixture unit must not
 // inflate the active-unit-count denominator this per-load insurance allocation estimate divides by.
 import { excludeDemoPhantomSql, excludeSampleDataSql } from "../mdata/fleet-visibility.js";
+// LAW 5 / R-151.3 (owner, 2026-09-23/24): "no surface computes margin on its own." The Kanban
+// badge's headline revenue/driver-pay/margin now READ the canonical per-load rollup instead of
+// re-deriving revenue from l.rate_total_cents and driver pay/net profit from this file's own
+// fuel+maintenance+insurance+factoring+accessorial formula (a genuinely different cost universe
+// than the accounting-ledger costs every other surface shows). fuel_cents/maintenance_cents/
+// insurance_alloc_cents/factoring_fee_cents/accessorial_deductions_cents remain as informational
+// operational-cost detail (a real, separate question this badge still answers) but no longer feed
+// net_profit_cents/margin_pct — those are the canonical margin_cents/costs_cents, unchanged by
+// this file's own math.
+import { loadCostRollupLateral, LOAD_COST_ROLLUP_SELECT } from "../accounting/load-cost-rollup.sql.js";
 
 export type LoadProfitabilitySnapshot = {
   load_id: string;
@@ -142,10 +152,22 @@ export async function computeLoadProfitability(
   );
   if (!loadRes.rows[0]) return null;
   const base = loadRes.rows[0];
-  const revenue = num(base.revenue_cents);
   const miles = num(base.miles);
   const tripStart = String(base.trip_start ?? "");
   const tripEnd = String(base.trip_end ?? "");
+
+  // LAW 5 / R-151.3 — the canonical rollup, the ONLY source for revenue/costs/driver_pay/margin.
+  const rollupRes = await client.query<{ lc_revenue_cents: string; lc_costs_cents: string; lc_driver_pay_cents: string; lc_margin_cents: string }>(
+    `SELECT ${LOAD_COST_ROLLUP_SELECT}
+       FROM mdata.loads l
+       ${loadCostRollupLateral("l.id", "l.operating_company_id")}
+      WHERE l.id = $1 AND l.operating_company_id = $2::uuid`,
+    [loadId, operatingCompanyId]
+  );
+  const rollup = rollupRes.rows[0];
+  const revenue = num(rollup?.lc_revenue_cents ?? base.revenue_cents);
+  const canonicalDriverPayCents = num(rollup?.lc_driver_pay_cents);
+  const canonicalMarginCents = num(rollup?.lc_margin_cents ?? revenue);
 
   // 2. Customer name
   const custRes = await client.query<{ customer_name: string | null }>(
@@ -255,7 +277,12 @@ export async function computeLoadProfitability(
     missSources.push("accessorials");
   }
 
-  const netProfit = revenue - driverPay - fuelCents - maintCents - insuranceCents - factoringFeeCents - accessorialCents;
+  // LAW 5 / R-151.3 — headline net_profit_cents/margin_pct are the CANONICAL margin_cents, not a
+  // locally re-derived sum. driverPay (raw driver_bills sum, section 3 above) is kept only to
+  // report a discrepancy in missing_sources if it ever diverges from the canonical (void-excluded)
+  // figure — it does not feed the badge.
+  if (driverPay !== canonicalDriverPayCents) missSources.push("driver_pay_reconciliation");
+  const netProfit = canonicalMarginCents;
 
   return {
     load_id: String(base.id),
@@ -263,7 +290,7 @@ export async function computeLoadProfitability(
     customer_name: customerName,
     status: String(base.status ?? ""),
     revenue_cents: revenue,
-    driver_pay_cents: driverPay,
+    driver_pay_cents: canonicalDriverPayCents,
     fuel_cents: fuelCents,
     maintenance_cents: maintCents,
     insurance_alloc_cents: insuranceCents,
