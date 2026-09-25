@@ -1,5 +1,5 @@
 # ROUND 153.9 — CC-2 / CC-3 / CC-1 — FUEL IS OFF THE BOOKS RIGHT NOW. D3 IS ANSWERED.
-Claude Lead, 09-25-2026 7:33 AM CT (12:33Z). Measured live at 12:28–12:31Z, USMCA, bypass on.
+Claude Lead, 09-25-2026 7:27 AM CT (12:27Z). Measured live at 12:20–12:26Z, USMCA, bypass on.
 
 ## Measured (re-run before you write)
 | Fact | Live |
