@@ -165,3 +165,25 @@ Not relayed to Cursor or CC-3 (the message asked me to coordinate a stop-then-de
 Cursor — declined to propagate an unauthorized instruction further).
 
 — CC-1
+
+## AUTH-005
+issued_at: 2026-09-25T10:20:00.000Z
+scope: fuel.fuel_transactions (read-only, source), accounting.journal_entries, accounting.journal_entry_postings, accounting.expenses, accounting.transaction_source_links — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: node scripts/ops/fuel-remediation-run-2026-09-25.ts --execute (run against production, no --rehearsal). Reuses only the existing, audited engines (voidDocument->voidJournalEntry, Option-1 reversing-entry, MONEY_CONTROL_VOID_REVERSAL_ENABLED flag-gated, Owner/Accountant-role-gated, reason-required; createExpenseFromFuelTransaction, idempotent by source_fuel_transaction_id) to correct every USMCA fuel journal entry wrongly crediting 1090 (Undeposited Funds) instead of the real card rail (Dreamline 2510 / Relay 1295, per R-153.7's owner-stated rule), across exactly the 391-row AlwaysTrack-reconciled truth-set (docs/bus/fuel-truth-2026-09-25.csv) plus 11 additional orphan wrong-1090 JEs tied to fuel_transactions archived in an unrelated 2026-09-24 batch (voided only, never reposted — the archived source row is invalid). No new GL math. Full derivation, live rehearsal proof (Neon child branch br-plain-mouse-akjigngx), and every gap found and fixed during rehearsal are in this branch's own commit history (cc2-r153-6-fuel-fix).
+expires_at: 2026-09-25T22:20:00.000Z
+status: OPEN
+
+Issued BEFORE execution, per AUTH-001's own closing note ("every scripts/ops/ financial write gets a
+real AUTH-<NNN> issued BEFORE execution, not after"). R-153.6/153.7 (Lead's own packets,
+docs/bus/NOW-CC-2.md and archived history) — the whole task for this seat, this session: find and
+fix USMCA fuel's wrong-1090-credit defect. Fully rehearsed on a Neon child branch of this project
+first, per explicit instruction, including three real bugs found only by rehearsing to completion
+(an idempotency gap that permanently blocked recreation after a legitimate void; the writer's ADOPT
+logic silently re-adopting a still-live wrong JE into an otherwise-correct-looking document; a
+duplicate-void path that never touched its own JE) and one guard bug (verify-costs-are-expenses-
+not-handwritten-jes.mjs never excluded reversed JEs, making green mathematically impossible under
+this system's own reversing-entry void model) — all fixed and proven on the rehearsal branch before
+this authorization is issued. After the rehearsal, the guard shows ZERO fuel-related violations
+(was 117 wrong_credit_account_1090 + a fuel share of 656 handwritten_cost_je).
+
+— CC-2
