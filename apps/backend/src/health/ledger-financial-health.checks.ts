@@ -198,6 +198,8 @@ export async function assertPostedWithoutPostingZero(): Promise<void> {
       `,
       [HEALTH_LEDGER_OPCO]
     );
+    // Owner 2026-09-25: AlwaysTrack/Faro SoT — explicit $0 invoices are minted (never skipped).
+    // A $0 sent invoice has no AR postings by design; do not count it as posted-without-posting.
     const invoiceRes = await client.query<{ count: string }>(
       `
         SELECT COUNT(*)::text AS count
@@ -206,6 +208,7 @@ export async function assertPostedWithoutPostingZero(): Promise<void> {
            AND i.source_system = 'tms'
            AND i.voided_at IS NULL
            AND i.status IN ('sent', 'partial', 'paid')
+           AND COALESCE(i.total_cents, 0) <> 0
            AND COALESCE(i.is_sample_data, false) = false
            AND NOT EXISTS (
              SELECT 1 FROM accounting.journal_entry_postings p

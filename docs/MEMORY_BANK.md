@@ -163,6 +163,23 @@ Measured (Neon `br-fancy-credit-akjnd07a`, bypass_rls=lucia, tip `6d18a73826`):
   this close (or void) — already ruled; do not invent a settlement campaign.
 - Retracted false claim: "~20 unsettled USMCA loads." Zero USMCA-belonging settlement gaps remain.
 
+### Active Architectural Decisions — Expense category + CoA hardline (Cursor, 2026-09-25)
+
+- **Owner:** AT company/driver settlements + Faro are SoT — every live USMCA expense line must carry
+  `expense_category_uuid` + `expense_account_uuid` (CoA), not blank. Measured before: **239/319** no
+  category, **46/319** no account. After backfill: **0/319** no_cat, **0/319** no_acct, **0 OTHER**.
+- **Classifier:** AT company-settlement EXPENSES text → DEF / LUMPER / REEFER / TOLL / MISC / TIRES /
+  REPAIR / DIESEL (Gasolina) / OTHER. Script: `scripts/feed/backfill-expense-coa-categories.mts`
+  (`E11_LEAD_AUTH=1 … --apply`). Synthetic `ATGTx*` vendor docs are ignored for invoice match; memo
+  `inv N` + settlement doc + amount are SoT. G18: set `load_exemption_reason` (≥20 chars) when
+  `load_id` is null so category writes do not trip `enforce_load_fk_invariant`.
+- **CoA map:** `accounting.expense_category_account_map` (USMCA) — realign accounts to map after
+  classify (DEF/DIESEL/REEFER→5000/5010, MISC→5400, LUMPER→5310, TOLL→5300, TIRES/REPAIR→5400, etc.).
+  Measured distribution after realign: DEF 157, DIESEL 81, MISC 41, REEFER 17, LUMPER 7, TOLL 6,
+  REPAIR 5, TIRES 5.
+- **$0 mint law (health):** explicit `$0` sent invoices (e.g. load 13525) have no AR postings by
+  design — `assertPostedWithoutPostingZero` excludes `total_cents=0`. Live healthz red until this
+  branch deploys; local measure: expense/bill/invoice posted-without-posting = **0** with exclusion.
 ## Known Quirks & Blockers
 
 
