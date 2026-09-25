@@ -58,6 +58,20 @@ const CUTOVER_DATE = "2026-08-07";
 // touch (Part A, Rule 3).
 const TRANSPORTATION_DOCS = ["5753", "5760", "5761", "5762", "5763", "5764", "5765", "5766", "5767", "5768"];
 
+// R-160 (Lead, 2026-09-25, owner ruling): "in our settlement it should only show our load, for
+// usmca, and all expenses are attributed to usmca. so our settlements will probably show a loss."
+// These 13 loads were Faro-purchased on the Transportation portal but their invoice+load records
+// were created in USMCA (AUTH-018) -- the shared settlement document still legitimately shows BOTH
+// loads' figures (that is the ground truth AlwaysTrack printed), but line haul must target USMCA-
+// owned loads only going forward; driver pay, fuel and expenses stay whole per document exactly as
+// ordered. The live (actual) side already reflects this naturally -- AUTH-018 voided each of these
+// 13 loads' USMCA invoice, so invoiceByLoad's own `i.voided_at IS NULL` join excludes them without
+// any change here. This set filters the GROUND-TRUTH (target) side's line-haul sum to match.
+const R160_TRANSPORTATION_LOADS = new Set([
+  "13497", "13502", "13503", "13504", "13505", "13506", "13507",
+  "13509", "13522", "13530", "13531", "13533", "13539",
+]);
+
 function sumBy(arr, key) {
   return (arr ?? []).reduce((s, r) => s + Number(r[key] ?? 0), 0);
 }
@@ -87,10 +101,14 @@ export function computeGroundTruthTargets(raw) {
     .map((r) => {
       const doc = String(r.settlement_no);
       const driverRow = driverByDoc.get(doc);
+      // R-160: line haul targets USMCA-owned loads only -- excludes charges billed against one of
+      // the 13 Transportation loads (its USMCA invoice is voided, AUTH-018). Every other dimension
+      // stays whole per document (owner's own explicit order), so no other field filters here.
+      const usmcaOnlyCharges = (r.customer_charges ?? []).filter((c) => !R160_TRANSPORTATION_LOADS.has(String(c.load)));
       return {
         doc,
         loads: r.loads ?? [],
-        line_haul_cents: round2Cents(sumBy(r.customer_charges, "amount")),
+        line_haul_cents: round2Cents(sumBy(usmcaOnlyCharges, "amount")),
         driver_payment_cents: round2Cents(r.driver_payment_total ?? 0),
         fuel_cents: round2Cents(sumBy(r.fuel_purchases, "actual")),
         fuel_count: (r.fuel_purchases ?? []).length,
