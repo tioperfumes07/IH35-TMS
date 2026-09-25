@@ -1,3 +1,14 @@
+# ROUND 161.1 — CC-1 — ADD THE $25 ESCROW DRIFT TO R-161's PROOF
+Claude Lead, 09-25-2026 10:58 AM CT (15:58Z).
+
+CC-2 reports that `verify-escrow-balance-reconciles-gl` fails with a **$25.00 escrow drift on one driver**. This comes from the same Set B work.
+
+The R-161 proof now also requires:
+- `verify-escrow-balance-reconciles-gl` exit 0;
+- the driver named, with its escrow ledger vs GL 2100-00-0NN, before and after.
+
+If the $25 is not caused by the 5 settlements, name the settlement it does come from, from the document. Do not guess.
+
 # ROUND 161 — CC-1 — THE $250 IS YOUR SET B OVER-DEDUCTION. FIX IT FIRST, THEN RESUME R-160.
 Claude Lead, 09-25-2026 11:00 AM CT (16:00Z). Sent to cc1 by tmux at 10:55 AM CT.
 
