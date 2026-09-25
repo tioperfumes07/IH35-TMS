@@ -1,21 +1,11 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { apiRequest } from "../../api/client";
-import { listAllLoads, type DispatchLoadRow, type LoadStatus } from "../../api/loads";
+import { listAllLoads, type LoadStatus } from "../../api/loads";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { colors, typography } from "../../design/tokens";
-
-type CostAggregate = {
-  load_id: string;
-  expense_cents: string;
-  bill_cents: string;
-  driver_pay_cents?: string;
-  expense_count: number;
-  bill_count: number;
-  unpaid_bill_count: number;
-};
+import { useLoadCostRollups } from "../../hooks/useLoadCostRollups";
 
 type SortKey = "load" | "unit" | "revenue" | "costs" | "driver" | "margin";
 
@@ -36,55 +26,41 @@ const IN_MOTION: LoadStatus[] = [
   "at_delivery",
 ];
 
-function costCents(row: CostAggregate): number {
-  return Number(row.expense_cents) + Number(row.bill_cents);
-}
-
-function driverPayCents(row: CostAggregate): number {
-  return Number(row.driver_pay_cents ?? 0);
-}
-
-function marginCents(load: DispatchLoadRow, row: CostAggregate | undefined): number {
-  const costs = row ? costCents(row) + driverPayCents(row) : 0;
-  return Number(load.rate_total_cents) - costs;
-}
-
 type Props = { operatingCompanyId: string };
 
 export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>("margin");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
+  // ROUND 173 pt 1 (Lead, 2026-09-25) — "one source... never its own." This panel used to fetch
+  // GET /api/v1/accounting/load-costs-board directly and compute margin (revenue - costs -
+  // driverPay) locally — a second copy of the same money math load-cost-rollup.sql.ts already
+  // owns. Now reads ONLY the loads themselves here; every cost/revenue/margin figure comes from
+  // the SAME canonical rollup every other board this round reads.
   const query = useQuery({
     queryKey: ["dispatch", "overview", "load-costs-board", operatingCompanyId],
-    queryFn: async () => {
-      const [loads, costs] = await Promise.all([
-        listAllLoads({
-          operating_company_id: [operatingCompanyId],
-          status: IN_MOTION,
-          sort: "created_at:desc",
-        }),
-        apiRequest<{ rows: CostAggregate[] }>(
-          `/api/v1/accounting/load-costs-board?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
-        ),
-      ]);
-      return { loads: loads.loads, costs: costs.rows };
-    },
+    queryFn: () =>
+      listAllLoads({
+        operating_company_id: [operatingCompanyId],
+        status: IN_MOTION,
+        sort: "created_at:desc",
+      }),
     enabled: Boolean(operatingCompanyId),
     retry: false,
     refetchInterval: 60_000,
   });
+  const costRollups = useLoadCostRollups(operatingCompanyId, (query.data?.loads ?? []).map((load) => load.id));
 
   const rows = useMemo(() => {
-    const costs = new Map((query.data?.costs ?? []).map((row) => [row.load_id, row]));
     const joined = (query.data?.loads ?? []).map((load) => {
-      const agg = costs.get(load.id);
+      const r = costRollups.get(load.id);
       return {
         load,
-        revenue: Number(load.rate_total_cents),
-        costSoFar: agg ? costCents(agg) : 0,
-        driverPay: agg ? driverPayCents(agg) : 0,
-        margin: marginCents(load, agg),
+        revenue: r ? r.revenue_cents : Number(load.rate_total_cents),
+        costSoFar: r ? r.costs_cents : 0,
+        driverPay: r ? r.driver_pay_cents : 0,
+        margin: r ? r.net_cents : 0,
+        hasRollup: Boolean(r),
       };
     });
     const dir = sortDir === "asc" ? 1 : -1;
@@ -98,7 +74,7 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
       if (sortKey === "driver") return dir * (a.driverPay - b.driverPay);
       return dir * (a.margin - b.margin);
     });
-  }, [query.data, sortKey, sortDir]);
+  }, [query.data, costRollups, sortKey, sortDir]);
 
   const clickSort = (key: SortKey) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -195,14 +171,15 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
                 <div className="border-l px-[7px] py-[7px] text-center tabular-nums" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219", borderColor: colors.tableColumnRule }}>
                   {formatMoney(row.revenue)}
                 </div>
+                {/* ROUND 173 pt 4 — "Blanks say why." No rollup row yet is not the same as $0.00 in costs. */}
                 <div className="border-l px-[7px] py-[7px] text-center tabular-nums" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219", borderColor: colors.tableColumnRule }}>
-                  {formatMoney(row.costSoFar)}
+                  {row.hasRollup ? formatMoney(row.costSoFar) : "no costs linked"}
                 </div>
                 <div className="border-l px-[7px] py-[7px] text-center tabular-nums" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219", borderColor: colors.tableColumnRule }}>
-                  {formatMoney(row.driverPay)}
+                  {row.hasRollup ? formatMoney(row.driverPay) : "—"}
                 </div>
                 <div className="border-l px-[7px] py-[7px] text-center tabular-nums font-semibold" style={{ fontSize: typography.bodyTextSmall, color: "#16A34A", borderColor: colors.tableColumnRule }}>
-                  {formatMoney(row.margin)}
+                  {row.hasRollup ? formatMoney(row.margin) : "—"}
                 </div>
               </div>
             ))}

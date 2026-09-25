@@ -7,6 +7,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { stampTripClosedForBookendedSettlement } from "./settlements-load-bookended.service.js";
 import { closeCompanySettlementAlongsideDriverSettlement } from "../accounting/company-settlement-close.service.js";
 import { postLoadBookendedSettlementGlAfterClose } from "./settlement-payrun-close.service.js";
+import { loadCostRollupLateral } from "../accounting/load-cost-rollup.sql.js";
 
 /**
  * LDT-5 / LDT-6 · ONE tour readout (owner order 2026-09-05 23:00Z, register § LDT-5: "One read model shared with
@@ -63,6 +64,15 @@ export type TourLeg = {
   pickup_date: string | null; delivery_date: string | null;
   revenue_cents: number; costs_cents: number; driver_pay_cents: number; margin_cents: number; margin_pct: number | null;
   miles_practical: number | null; miles_shortest: number | null; miles_deadhead: number | null; miles_real: number | null;
+  /** ROUND 153 step 3 (owner, 2026-09-25) — "fill unit/driver/trailer links." Per LEG, not only at
+   *  the tour summary level: a multi-leg tour can swap units/trailers mid-trip (SET-28), so each
+   *  load's OWN unit/trailer must render, not just the first leg's. unit_id lets the frontend render
+   *  a real EntityLink kind="unit" instead of the plain-text unit_number this route used to keep
+   *  only at the tour summary. trailer has NO column on mdata.loads (confirmed live,
+   *  load-costs-board.routes.ts's own W-FIX-3b note) — sourced from
+   *  dispatch.load_assignment_history.new_trailer_id, most recent row, same pattern that route
+   *  already uses. */
+  unit_id: string | null; unit_number: string | null; trailer_id: string | null; trailer_number: string | null;
   pod_count: number; cost_count: number; is_this_load: boolean;
 };
 export type TourCost = {
@@ -102,7 +112,8 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
     load_id: string; load_number: string; trip_type: string | null; status: string; rate_total_cents: unknown;
     miles_practical: unknown; miles_shortest: unknown; miles_deadhead: unknown; pickup_city: string | null; pickup_state: string | null; delivery_city: string | null; delivery_state: string | null;
     pickup_date: string | null; delivery_date: string | null;
-    unit_number: string | null; expense_cents: unknown; bill_cents: unknown; driver_pay_cents: unknown; cost_count: unknown; pod_count: unknown; miles_real: unknown;
+    unit_id: string | null; unit_number: string | null; trailer_id: string | null; trailer_number: string | null;
+    costs_cents: unknown; driver_pay_cents: unknown; cost_count: unknown; pod_count: unknown; miles_real: unknown;
   }>(
     `WITH legs AS (
        SELECT l.* FROM mdata.loads l
@@ -139,17 +150,37 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
             (SELECT s2.state FROM mdata.load_stops s2 WHERE s2.load_id = l.id AND s2.soft_deleted_at IS NULL ORDER BY s2.sequence_number DESC LIMIT 1) AS delivery_state,
             (SELECT COALESCE(s1.actual_arrival_at, s1.appointment_start_at, s1.scheduled_arrival_at)::text FROM mdata.load_stops s1 WHERE s1.load_id = l.id AND s1.soft_deleted_at IS NULL ORDER BY s1.sequence_number ASC LIMIT 1) AS pickup_date,
             (SELECT COALESCE(s2.actual_arrival_at, s2.appointment_start_at, s2.scheduled_arrival_at)::text FROM mdata.load_stops s2 WHERE s2.load_id = l.id AND s2.soft_deleted_at IS NULL ORDER BY s2.sequence_number DESC LIMIT 1) AS delivery_date,
-            u.unit_number,
-            (SELECT COALESCE(SUM(e.total_amount_cents),0) FROM accounting.expenses e WHERE e.load_id = l.id AND e.operating_company_id = l.operating_company_id AND e.status <> 'void') AS expense_cents,
-            (SELECT COALESCE(SUM(b.amount_cents),0) FROM accounting.bills b WHERE b.operating_company_id = l.operating_company_id AND b.status <> 'voided' AND b.voided_at IS NULL
-                AND EXISTS (SELECT 1 FROM accounting.bill_lines bl WHERE bl.bill_id = b.id AND bl.load_id = l.id AND bl.voided_at IS NULL)) AS bill_cents,
-            (SELECT COALESCE(SUM(db.gross_amount_cents),0) FROM driver_finance.driver_bills db WHERE db.load_id = l.id AND db.operating_company_id = l.operating_company_id AND db.status <> 'void' AND db.voided_at IS NULL) AS driver_pay_cents,
+            u.id::text AS unit_id, u.unit_number,
+            tr.trailer_id, tr.trailer_number,
+            -- LAW-5 ONE-SOURCE (ROUND 173, 2026-09-25): these 3 hand-copied subqueries (the
+            -- LAW-5-CROSS-SCREEN fix already made them numerically correct, bill_lines-scoped not
+            -- whole-bill) duplicated apps/backend/src/accounting/load-cost-rollup.sql.ts's own
+            -- formula instead of reading it -- a second copy that could silently drift again.
+            -- Reads the canonical lateral (lcr, joined below) instead; live-verified equivalent
+            -- first (0 driver_bills rows where status<>'void' but voided_at is set; the expense/
+            -- bill_lines predicates were already identical).
+            lcr.costs_cents AS costs_cents,
+            lcr.driver_pay_cents AS driver_pay_cents,
             (SELECT COUNT(*) FROM accounting.expenses e WHERE e.load_id = l.id AND e.operating_company_id = l.operating_company_id AND e.status <> 'void')
-              + (SELECT COUNT(DISTINCT b.id) FROM accounting.bills b JOIN accounting.bill_lines bl ON bl.bill_id = b.id WHERE b.operating_company_id = l.operating_company_id AND bl.load_id = l.id AND b.status <> 'voided' AND b.voided_at IS NULL) AS cost_count,
+              + (SELECT COUNT(DISTINCT bl.bill_id) FROM accounting.bill_lines bl JOIN accounting.bills b ON b.id = bl.bill_id WHERE bl.load_id = l.id AND b.status NOT IN ('void','voided') AND b.revoked_at IS NULL AND bl.voided_at IS NULL) AS cost_count,
             (SELECT COUNT(*) FROM documents.attachments a WHERE a.operating_company_id = l.operating_company_id AND a.entity_type = 'load' AND a.entity_id = l.id AND a.is_deleted = false AND a.category IN ('pod','bol','proof_of_delivery')) AS pod_count,
             ${milesRealSql} AS miles_real
        FROM legs l
        LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                              AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
+       -- mdata.loads has NO trailer_id column (confirmed live, load-costs-board.routes.ts's own
+       -- W-FIX-3b note) — the real trailer<->load link is dispatch.load_assignment_history.
+       -- new_trailer_id (mdata.equipment), most recent assignment, same pattern that route uses.
+       LEFT JOIN LATERAL (
+         SELECT eq.id::text AS trailer_id, eq.equipment_number AS trailer_number
+           FROM dispatch.load_assignment_history lah
+           JOIN mdata.equipment eq ON eq.id = lah.new_trailer_id
+                                  AND (eq.owner_company_id = l.operating_company_id OR eq.currently_leased_to_company_id = l.operating_company_id)
+          WHERE lah.load_id = l.id AND lah.new_trailer_id IS NOT NULL
+          ORDER BY lah.assigned_at DESC
+          LIMIT 1
+       ) tr ON true
+       ${loadCostRollupLateral("l.id", "l.operating_company_id")}
       ORDER BY CASE l.trip_type::text WHEN 'NB' THEN 1 WHEN 'TR' THEN 2 WHEN 'SB' THEN 3 ELSE 4 END, l.created_at ASC`,
     [settlementId, companyId, s.first_load_id, s.last_load_id, s.trip_closed_at == null]
   );
@@ -158,7 +189,7 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
   const CANCELLED = new Set(["cancelled", "canceled", "abandoned", "driver_walkoff", "driver_no_show"]);
   const legs: TourLeg[] = legsRes.rows.map((r) => {
     const cancelled = CANCELLED.has(String(r.status).toLowerCase());
-    const revenue = cancelled ? 0 : n(r.rate_total_cents); const costs = n(r.expense_cents) + n(r.bill_cents); const pay = n(r.driver_pay_cents); const margin = revenue - costs - pay;
+    const revenue = cancelled ? 0 : n(r.rate_total_cents); const costs = n(r.costs_cents); const pay = n(r.driver_pay_cents); const margin = revenue - costs - pay;
     return {
       load_id: r.load_id, load_number: r.load_number, trip_type: r.trip_type, status: r.status, is_delivered: DELIVERED.has(String(r.status).toLowerCase()), is_cancelled: cancelled,
       lane: `${[r.pickup_city, r.pickup_state].filter(Boolean).join(" ")} → ${[r.delivery_city, r.delivery_state].filter(Boolean).join(" ")}`.trim(),
@@ -166,11 +197,17 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
       pickup_date: r.pickup_date, delivery_date: r.delivery_date,
       revenue_cents: revenue, costs_cents: costs, driver_pay_cents: pay, margin_cents: margin, margin_pct: revenue > 0 ? Math.round((margin / revenue) * 1000) / 10 : null,
       miles_practical: nOrNull(r.miles_practical), miles_shortest: nOrNull(r.miles_shortest), miles_deadhead: nOrNull(r.miles_deadhead), miles_real: nOrNull(r.miles_real),
+      unit_id: r.unit_id, unit_number: r.unit_number, trailer_id: r.trailer_id, trailer_number: r.trailer_number,
       pod_count: n(r.pod_count), cost_count: n(r.cost_count), is_this_load: thisLoadId != null && r.load_id === thisLoadId,
     };
   });
   const loadIds = legs.map((l) => l.load_id);
-  const unitNumber = legsRes.rows.find((r) => r.unit_number)?.unit_number ?? null;
+  const unitLeg = legsRes.rows.find((r) => r.unit_number);
+  const unitNumber = unitLeg?.unit_number ?? null;
+  const unitId = unitLeg?.unit_id ?? null;
+  const trailerLeg = legsRes.rows.find((r) => r.trailer_number);
+  const trailerNumber = trailerLeg?.trailer_number ?? null;
+  const trailerId = trailerLeg?.trailer_id ?? null;
 
   const costsRes = loadIds.length ? await client.query<{
     id: string; kind: "expense" | "bill"; number: string | null; load_id: string; load_number: string | null; date: string | null; vendor_name: string | null; category: string | null;
@@ -187,23 +224,39 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
        LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = e.operating_company_id
       WHERE e.operating_company_id = $1::uuid AND e.load_id = ANY($2::uuid[]) AND e.status <> 'void'
      UNION ALL
-     SELECT b.id::text, 'bill', COALESCE(b.display_id, b.bill_number), l.id::text, l.load_number, b.bill_date::text, v.vendor_name,
-            acc.account_name, b.amount_cents, CASE WHEN b.status = 'paid' THEN 'paid' ELSE 'owed' END,
+     -- LAW 5 / R-151.3 (2026-09-24): was b.amount_cents -- the bill's WHOLE HEADER TOTAL -- per
+     -- matched line, which both overstated the row (showing the full bill, not this load's share)
+     -- and silently dropped a bill's OTHER load when it spanned more than one (the caller's seen-
+     -- dedup keyed on bill id alone). Now aggregates bl.amount per (bill, load) -- one row per load
+     -- a bill actually touches, each showing only that load's line-scoped amount -- the same
+     -- bill_lines-scoped sum load-cost-rollup.sql.ts and the now-fixed legsRes query above use.
+     -- id stays the bare bill UUID (EntityLink still opens the real bill); the caller's dedup key
+     -- is extended with load_id below so a multi-load bill's second load is no longer dropped.
+     SELECT b.id::text, 'bill', COALESCE(b.display_id, b.bill_number), bl_agg.load_id::text, l.load_number, b.bill_date::text, v.vendor_name,
+            acc.account_name, bl_agg.line_cents, CASE WHEN b.status = 'paid' THEN 'paid' ELSE 'owed' END,
             b.coa_account_id IS NOT NULL, b.vendor_uuid IS NOT NULL OR b.mdata_vendor_id IS NOT NULL,
             (SELECT COUNT(*) FROM documents.attachments a WHERE a.operating_company_id = b.operating_company_id AND a.entity_type = 'bill' AND a.entity_id = b.id AND a.is_deleted = false)
        FROM accounting.bills b
-       JOIN accounting.bill_lines bl ON bl.bill_id = b.id AND bl.voided_at IS NULL
-       JOIN mdata.loads l ON l.id = bl.load_id
+       JOIN (
+         SELECT bill_id, load_id, SUM(ROUND(amount * 100))::bigint AS line_cents
+           FROM accounting.bill_lines
+          WHERE voided_at IS NULL AND load_id = ANY($2::uuid[])
+          GROUP BY bill_id, load_id
+       ) bl_agg ON bl_agg.bill_id = b.id
+       JOIN mdata.loads l ON l.id = bl_agg.load_id
        LEFT JOIN mdata.vendors v ON v.id = b.mdata_vendor_id AND v.operating_company_id = b.operating_company_id
        LEFT JOIN catalogs.accounts acc ON acc.id = b.coa_account_id
-      WHERE b.operating_company_id = $1::uuid AND bl.load_id = ANY($2::uuid[]) AND b.status <> 'voided' AND b.voided_at IS NULL
+      WHERE b.operating_company_id = $1::uuid AND b.status NOT IN ('void','voided') AND b.revoked_at IS NULL AND b.voided_at IS NULL
       ORDER BY date ASC NULLS LAST, number ASC`,
     [companyId, loadIds]
   ) : { rows: [] };
   const seen = new Set<string>();
   const costs: TourCost[] = [];
   for (const r of costsRes.rows) {
-    if (seen.has(`${r.kind}:${r.id}`)) continue; seen.add(`${r.kind}:${r.id}`);
+    // LAW 5 / R-151.3 — load_id joins the dedup key so a bill spanning more than one of this
+    // tour's loads shows once per load (each with that load's own line-scoped amount), not once
+    // total with the first-seen load's amount silently absorbing every other load's share.
+    if (seen.has(`${r.kind}:${r.id}:${r.load_id}`)) continue; seen.add(`${r.kind}:${r.id}:${r.load_id}`);
     // ALL-SEATS LAW (owner, 2026-09-13): the Fuel & Expenses "Load Number" column must drill through
     // a real EntityLink, not print a bare number — l.id was already joined for load_number, just not
     // exposed until now.
@@ -289,7 +342,7 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
       // display_id is a retired internal counter and is NEVER rendered as a settlement number. A tour with
       // no AlwaysTrack number yet (open / unsettled) shows NO number — exactly AlwaysTrack "Unsettled Loads".
       settlement_number: s.source_document_ref, status: s.status, approval_status: s.approval_status, settlement_model: s.settlement_model, tour_id: s.tour_id,
-      driver_id: s.driver_id, driver_name: s.driver_name, unit_number: unitNumber, trip_started_at: s.trip_started_at, trip_closed_at: s.trip_closed_at,
+      driver_id: s.driver_id, driver_name: s.driver_name, unit_id: unitId, unit_number: unitNumber, trailer_id: trailerId, trailer_number: trailerNumber, trip_started_at: s.trip_started_at, trip_closed_at: s.trip_closed_at,
       period_start: s.period_start, period_end: s.period_end, is_open: !closedAlready, locked_at: s.locked_at, paid_at: s.paid_at,
       // NEW-10 — the ORIGINAL load that opened this (re)settlement, so the tours register can show its
       // "date started" (first pickup) + "delivery date". first_load_id is the NB bookend for a
@@ -327,7 +380,12 @@ export type TourListRow = {
    *  AlwaysTrack 4-digit doc (source_document_ref). null while unsettled. The retired S-YYYY-NNNN
    *  display_id is NEVER shown as a settlement number. */
   settlement_number: string | null;
-  status: string; is_open: boolean; driver_name: string | null; unit_number: string | null;
+  status: string; is_open: boolean;
+  /** ROUND 153 step 3 (owner, 2026-09-25) — "fill unit/driver/trailer links." driver_id/unit_id/
+   *  trailer_id let the register render real EntityLinks instead of the plain-text driver_name/
+   *  unit_number/trailer_number this row already carried. */
+  driver_id: string | null; driver_name: string | null; unit_id: string | null; unit_number: string | null;
+  trailer_id: string | null; trailer_number: string | null;
   trip_started_at: string | null; trip_closed_at: string | null; leg_count: number; legs_label: string;
   /** ROUND 16.1 (owner 2026-09-06): the tour's live legs in order, compact — so the Load-Costs
    *  Settlement/Pre-Settlement register can render each leg as a type-colored pill that is an
@@ -341,6 +399,8 @@ export type TourListRow = {
     lane: string; pickup_date: string | null; delivery_date: string | null;
     revenue_cents: number; costs_cents: number; driver_pay_cents: number; margin_cents: number; margin_pct: number | null;
     miles_practical: number | null; miles_real: number | null;
+    /** ROUND 153 step 3 — per-leg unit/trailer (a multi-leg tour can swap equipment mid-trip, SET-28). */
+    unit_id: string | null; unit_number: string | null; trailer_id: string | null; trailer_number: string | null;
   }[];
   /** NEW-10 (owner 2026-09-07): the ORIGINAL load that created this (re)settlement — its number,
    *  its "date started" (first pickup) and its "delivery date" (last delivery). READ-only projection
@@ -396,13 +456,16 @@ export async function listTours(client: Db, companyId: string, state: "open" | "
       r.legs[0] ?? null;
     out.push({
       settlement_id: r.tour.settlement_id, display_id: r.tour.display_id, settlement_number: r.tour.settlement_number, status: r.tour.status, is_open: r.tour.is_open,
-      driver_name: r.tour.driver_name, unit_number: r.tour.unit_number, trip_started_at: r.tour.trip_started_at, trip_closed_at: r.tour.trip_closed_at,
+      driver_id: r.tour.driver_id, driver_name: r.tour.driver_name,
+      unit_id: r.tour.unit_id, unit_number: r.tour.unit_number, trailer_id: r.tour.trailer_id, trailer_number: r.tour.trailer_number,
+      trip_started_at: r.tour.trip_started_at, trip_closed_at: r.tour.trip_closed_at,
       leg_count: live.length, legs_label: live.map((l) => `${l.trip_type ?? "?"} ${l.load_number}`).join(" → "),
       legs: live.map((l) => ({
         load_id: l.load_id, load_number: l.load_number, trip_type: l.trip_type, status: l.status,
         lane: l.lane, pickup_date: l.pickup_date, delivery_date: l.delivery_date,
         revenue_cents: l.revenue_cents, costs_cents: l.costs_cents, driver_pay_cents: l.driver_pay_cents, margin_cents: l.margin_cents, margin_pct: l.margin_pct,
         miles_practical: l.miles_practical, miles_real: l.miles_real,
+        unit_id: l.unit_id, unit_number: l.unit_number, trailer_id: l.trailer_id, trailer_number: l.trailer_number,
       })),
       origin_load_number: originLeg?.load_number ?? null,
       origin_pickup_date: originLeg?.pickup_date ?? null,

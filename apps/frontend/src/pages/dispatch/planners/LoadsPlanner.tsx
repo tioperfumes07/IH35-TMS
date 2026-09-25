@@ -16,8 +16,12 @@ import { usePlannerLoads } from "./planner-bars";
 import { PlannerViewToggle, type PlannerViewMode } from "./PlannerViewToggle";
 import { SettlementReferenceCell } from "../../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../../hooks/useSettlementReferences";
+import { useLoadCostRollups } from "../../../hooks/useLoadCostRollups";
+import { formatMoneyCents } from "../../../components/dispatch/constants";
 
 void PlannerAxisHead;
+
+const DASH = "—";
 
 type LoadListRow = {
   id: string;
@@ -72,6 +76,11 @@ export function LoadsPlanner() {
   // Richer load rows (DispatchLoadRow) for the list view — includes driver name, unit, rate.
   const listLoadsQuery = usePlannerLoads(operatingCompanyId, range.start, range.end);
   const settlementReferences = useSettlementReferences(operatingCompanyId, (listLoadsQuery.data ?? []).map((load) => load.id));
+  // LAW 5 / ROUND 153 (owner: "load boards ... rendering the exact same data"): the list view
+  // used to show ONLY revenue (rate) — nothing to re-derive, but nothing to CROSS-CHECK against
+  // load costs / pre-settlement / settlement either. Now reads the same canonical rollup those
+  // screens read, batched for the whole visible list in one request.
+  const costRollups = useLoadCostRollups(operatingCompanyId, (listLoadsQuery.data ?? []).map((load) => load.id));
 
   const rows = useMemo(() => loadsQuery.data ?? [], [loadsQuery.data]);
 
@@ -126,6 +135,63 @@ export function LoadsPlanner() {
             { key: "pickupDate", label: "Pickup Date", sortable: true },
             { key: "deliveryDate", label: "Delivery Date", sortable: true },
             { key: "rate", label: "Rate", sortable: true },
+            // LAW 5 / ROUND 153, extended ROUND 173 pt 4 — revenue/fuel/expenses/driver pay/net,
+            // read from the SAME canonical rollup (load-cost-rollup.sql.ts) Load Costs,
+            // Pre-Settlement and Settlement all read. Dash while the batch request is still
+            // loading or a specific load has no rollup row yet — never a fabricated 0. Fuel and
+            // Expenses are new (ROUND 173); Cost/Driver Pay/Margin kept unchanged (existing
+            // testids, existing tests) alongside them, additive-only.
+            {
+              key: "loadFuel",
+              label: "Fuel",
+              testId: "load-fuel-column",
+              sortValue: (row) => costRollups.get(row.id)?.fuel_cents ?? -Infinity,
+              render: (row) => {
+                const r = costRollups.get(row.id);
+                return r ? formatMoneyCents(r.fuel_cents) : DASH;
+              },
+            },
+            {
+              key: "loadExpenses",
+              label: "Expenses",
+              testId: "load-expenses-column",
+              sortValue: (row) => costRollups.get(row.id)?.expenses_cents ?? -Infinity,
+              render: (row) => {
+                const r = costRollups.get(row.id);
+                return r ? formatMoneyCents(r.expenses_cents) : DASH;
+              },
+            },
+            {
+              key: "loadCost",
+              label: "Cost",
+              testId: "load-cost-column",
+              sortValue: (row) => costRollups.get(row.id)?.costs_cents ?? -Infinity,
+              render: (row) => {
+                const r = costRollups.get(row.id);
+                return r ? formatMoneyCents(r.costs_cents) : DASH;
+              },
+            },
+            {
+              key: "loadDriverPay",
+              label: "Driver Pay",
+              testId: "load-driver-pay-column",
+              sortValue: (row) => costRollups.get(row.id)?.driver_pay_cents ?? -Infinity,
+              render: (row) => {
+                const r = costRollups.get(row.id);
+                return r ? formatMoneyCents(r.driver_pay_cents) : DASH;
+              },
+            },
+            {
+              key: "loadMargin",
+              label: "Net",
+              testId: "load-margin-column",
+              sortValue: (row) => costRollups.get(row.id)?.net_cents ?? -Infinity,
+              render: (row) => {
+                const r = costRollups.get(row.id);
+                if (!r) return DASH;
+                return <span className={r.net_cents < 0 ? "text-[#991B1B]" : undefined}>{formatMoneyCents(r.net_cents)}{r.margin_pct != null ? ` · ${r.margin_pct.toFixed(1)}%` : ""}</span>;
+              },
+            },
           ];
           return (
             <div data-testid="dispatch-loads-planner-list">

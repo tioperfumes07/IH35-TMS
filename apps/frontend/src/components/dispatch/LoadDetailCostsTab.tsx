@@ -6,6 +6,7 @@ import {
   createBrokerAdvance,
   createExpense,
   createVendorBill,
+  getLoadCostRollup,
   listBills,
   listBrokerAdvances,
   listCoaRoles,
@@ -144,6 +145,13 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
   const vendors = useQuery({ queryKey: ["load-costs", "vendors", opco], queryFn: () => listVendors({ operating_company_id: opco, status: "active", limit: 5000 }) });
   const accounts = useQuery({ queryKey: ["load-costs", "accounts", opco], queryFn: () => listCatalogAccounts({ operating_company_id: opco, status: "active", postable_only: true }) });
   const advances = useQuery({ queryKey: ["load-costs", "advances", opco, load.id], queryFn: () => listBrokerAdvances(opco, { load_id: load.id }) });
+  // LAW 5 / R-151.3 (owner, 2026-09-23/24): "no surface computes margin on its own." The KPI strip
+  // and footer totals below now READ this canonical rollup instead of re-summing
+  // expenses.total_amount_cents + bills.amount_cents locally — the bills sum in particular used to
+  // add each matched bill's WHOLE HEADER TOTAL, overstating cost for any bill spanning more than
+  // one load. Falls back to the local reduce only while the rollup hasn't loaded yet (never a blank
+  // KPI strip), same fallback shape SettlementDetailPage's KPI grid uses for its own company report.
+  const rollup = useQuery({ queryKey: ["load-cost-rollup", opco, load.id], queryFn: () => getLoadCostRollup(opco, load.id) });
   // ACCT-F25053 (owner 2026-09-04: "bind by role, never by name") — fuel-advance debit + operating bank
   // come from accounting.chart_of_accounts_roles.
   const coaRoles = useQuery({ queryKey: ["load-costs", "coa-roles", opco], queryFn: () => listCoaRoles(opco) });
@@ -166,10 +174,14 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
   const liveBills = savedBills.filter((row) => row.status !== "voided");
   const savedCount = savedExpenses.length + savedBills.length;
   const currency = load.currency_code === "MXN" ? "MXN" : "USD";
-  const savedCosts = liveExpenses.reduce((s, r) => s + num(r.total_amount_cents), 0) + liveBills.reduce((s, r) => s + num(r.amount_cents), 0);
+  // Local reduce kept ONLY as the pre-load fallback and for the bucket SPLIT display (split.tsx
+  // below is informational, not the driving total) — never the source of the headline KPI/footer.
+  const localSavedCostsFallback = liveExpenses.reduce((s, r) => s + num(r.total_amount_cents), 0) + liveBills.reduce((s, r) => s + num(r.amount_cents), 0);
   const driverBillRows = (driverBills.data?.driver_bills ?? []).filter((row) => row.status !== "void");
-  const driverPay = driverBillRows.reduce((s, r) => s + num(r.gross_amount_cents), 0);
-  const revenue = num(load.rate_total_cents);
+  const localDriverPayFallback = driverBillRows.reduce((s, r) => s + num(r.gross_amount_cents), 0);
+  const savedCosts = rollup.data ? rollup.data.costs_cents : localSavedCostsFallback;
+  const driverPay = rollup.data ? rollup.data.driver_pay_cents : localDriverPayFallback;
+  const revenue = rollup.data ? rollup.data.revenue_cents : num(load.rate_total_cents);
   const chart: CatalogAccount[] = accounts.data?.accounts ?? [];
   const categories = chart.filter((row) => row.account_type === "Expense" || row.account_type === "OtherExpense" || row.account_type === "CostOfGoodsSold");
   // LDT-1 LAW: Paid with = bank / card / fuel-card accounts ONLY (paidWith.ts). Never a receivable,

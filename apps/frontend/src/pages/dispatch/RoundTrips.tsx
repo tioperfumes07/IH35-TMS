@@ -15,6 +15,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { RT_KANBAN_CARD_CLASS, RT_KANBAN_COL_MIN, RT_PAIRING_ACTIVE_STATUSES, NEEDS_RETURN_STATUSES, orderedLegsForUnit, pairOutboundReturn, resolvedTripType } from "./roundTripsLegs";
 import { RoundTripsTimeline, defaultTimelineRange } from "./RoundTripsTimeline";
+import { useLoadCostRollups } from "../../hooks/useLoadCostRollups";
 
 const SORT_KEY = "ih35.roundTrips.sort";
 const VIEW_KEY = "ih35.roundTrips.view";
@@ -197,10 +198,39 @@ function TourHeaderMoney({
   }, 0);
   const tourRevenueCents = legs.reduce((sum, leg) => sum + Number(leg.rate_total_cents || 0), 0);
   const currencyCode = legs[0]?.currency_code ?? "USD";
+  // ROUND 173 pt 1/2 (Lead, 2026-09-25) — "OWNER RULE: THE TOUR": a pre-settlement is the driver's
+  // whole tour and must show every one of its loads. This header IS the tour view, so its
+  // fuel/expenses/driver-pay/net are the SUM across every leg's own canonical rollup row (the same
+  // load-cost-rollup.sql.ts every other board reads) — never a separate tour-level formula.
+  const costRollups = useLoadCostRollups(operatingCompanyId, legs.map((leg) => leg.id));
+  const tourTotals = legs.reduce(
+    (acc, leg) => {
+      const r = costRollups.get(leg.id);
+      if (!r) return acc;
+      return {
+        fuel: acc.fuel + r.fuel_cents,
+        expenses: acc.expenses + r.expenses_cents,
+        driverPay: acc.driverPay + r.driver_pay_cents,
+        net: acc.net + r.net_cents,
+        n: acc.n + 1,
+      };
+    },
+    { fuel: 0, expenses: 0, driverPay: 0, net: 0, n: 0 }
+  );
+  const tourTotalsReady = tourTotals.n === legs.length && legs.length > 0;
   return (
     <span className="text-xs text-gray-500" data-testid="round-trip-header-money">
       {deliveredCount} of {legs.length} delivered · Invoiced {formatMoneyCents(invoicedCents, currencyCode)} · Tour{" "}
       {formatMoneyCents(tourRevenueCents, currencyCode)}
+      {tourTotalsReady ? (
+        <span data-testid="round-trip-header-tour-costs">
+          {" "}
+          · Fuel {formatMoneyCents(tourTotals.fuel, currencyCode)} · Expenses{" "}
+          {formatMoneyCents(tourTotals.expenses, currencyCode)} · Driver Pay{" "}
+          {formatMoneyCents(tourTotals.driverPay, currencyCode)} · Net{" "}
+          {formatMoneyCents(tourTotals.net, currencyCode)}
+        </span>
+      ) : null}
     </span>
   );
 }
@@ -270,6 +300,30 @@ function TripCard({
       <div className="mt-1 text-xs font-semibold text-gray-800">
         {formatMoneyCents(load.rate_total_cents, load.currency_code)}
       </div>
+      <TripCardCostRow loadId={load.id} operatingCompanyId={operatingCompanyId} currencyCode={load.currency_code} />
+    </div>
+  );
+}
+
+/** ROUND 173 pt 1/4 — this load's own fuel/expenses/driver-pay/net, read from the SAME canonical
+ *  rollup Load Costs/Pre-Settlement/Settlement/every other board read (load-cost-rollup.sql.ts).
+ *  Never re-derived here. Dash while loading or no rollup row yet — never a fabricated $0.00. */
+function TripCardCostRow({
+  loadId,
+  operatingCompanyId,
+  currencyCode,
+}: {
+  loadId: string;
+  operatingCompanyId: string;
+  currencyCode: "USD" | "MXN";
+}) {
+  const costRollups = useLoadCostRollups(operatingCompanyId, [loadId]);
+  const r = costRollups.get(loadId);
+  if (!r) return null;
+  return (
+    <div className="mt-0.5 text-[11px] text-gray-500" data-testid="round-trip-card-costs">
+      Fuel {formatMoneyCents(r.fuel_cents, currencyCode)} · Expenses {formatMoneyCents(r.expenses_cents, currencyCode)} ·{" "}
+      Driver Pay {formatMoneyCents(r.driver_pay_cents, currencyCode)} · Net {formatMoneyCents(r.net_cents, currencyCode)}
     </div>
   );
 }

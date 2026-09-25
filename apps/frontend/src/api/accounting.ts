@@ -930,6 +930,37 @@ export function getLoadUnitCostSplit(operatingCompanyId: string, loadId: string)
   );
 }
 
+/** LAW 5 / R-151.3 — the ONE canonical per-load revenue/costs/driver_pay/margin. Every screen that
+ *  shows these four numbers for one load reads this, never re-derives them from its own list
+ *  fetches. Backend: apps/backend/src/accounting/load-cost-rollup.routes.ts (load-cost-rollup.sql.ts). */
+export type LoadCostRollup = {
+  load_id: string;
+  load_number: string | null;
+  revenue_cents: number;
+  /** ROUND 173 pt 4 — fuel split out of costs_cents (source_fuel_transaction_id IS NOT NULL). */
+  fuel_cents: number;
+  /** Non-fuel costs: fuel_cents + expenses_cents === costs_cents, always. */
+  expenses_cents: number;
+  costs_cents: number;
+  driver_pay_cents: number;
+  margin_cents: number;
+  /** ROUND 173's own name for margin_cents (same value) — the "net" column in the 5-board spec. */
+  net_cents: number;
+  margin_pct: number | null;
+};
+export function getLoadCostRollup(operatingCompanyId: string, loadId: string) {
+  return apiRequest<LoadCostRollup>(
+    withCompany(`/api/v1/accounting/loads/${encodeURIComponent(loadId)}/cost-rollup`, operatingCompanyId)
+  );
+}
+
+/** ROUND 153 — batch variant for list/board views (many loads, one request), same shape as
+ *  getSettlementRefs's batch pattern. */
+export function getLoadCostRollupBatch(operatingCompanyId: string, loadIds: string[]) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId, load_ids: loadIds.join(",") });
+  return apiRequest<{ rollups: LoadCostRollup[] }>(`/api/v1/accounting/loads/cost-rollup?${q}`);
+}
+
 /** ACCT-R-17 — duplicate expense fingerprint groups (vendor + date + amount). */
 export type ExpenseDuplicateMember = {
   id: string;
