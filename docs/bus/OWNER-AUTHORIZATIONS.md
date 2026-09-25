@@ -612,4 +612,45 @@ driver_finance.settlement_lines rows currently reference these 13 load ids. Full
 including the "exactly one other USMCA load" relink resolution in the script's own header comment.
 Rehearsing on Neon before touching production, given this script has not yet been tested at all.
 
+CONSUMED 2026-09-25 11:23 AM CT (16:23Z). Live/no-DRY_RUN version differs from the action line
+above in two ways, both real bugs caught in rehearsal (Neon branches, before any production write)
+and fixed under this same AUTH per the append-only law's own real-time-correction precedent (PRs
+#22667/#22668/#22669, full root cause in each commit message):
+  1. cancelLoadInClientTx cascades to CANCEL THE ENTIRE SETTLEMENT for every settlement any of the
+     load's lines touch, when that settlement isn't already paid/cancelled -- all 13 targets'
+     settlements are status='approved', so this would have destroyed the OTHER, legitimate USMCA
+     loads sharing those settlements. Replaced with a direct soft_deleted_at/deleted_by_user_id
+     write (the exact two-column update PATCH /api/v1/loads/:id itself performs), the same
+     "no longer live" filter every load list/read endpoint already applies, cascading to nothing.
+  2. driver_finance.driver_bills also references these loads (CC-1's own table, LANES.md) and a
+     real DB trigger (ACCT-F5683) refuses the soft-delete while an open bill still points at the
+     load -- added a driver_bills.load_id/load_number relink step (same exactly-one-USMCA-load rule,
+     load_number COALESCEd to keep the original since that column is NOT NULL) before the soft-delete.
+row_counts: 13 invoices voided, 13 loads soft-deleted, 78 accounting.expenses rows relinked, 41
+driver_finance.settlement_lines rows relinked, 13 driver_finance.driver_bills rows relinked (1 per
+load). 3 relinked to a specific USMCA load (13497->13511, 13530->13532, 13533->13548); the other 10
+relinked to NULL (no single unambiguous USMCA load on that settlement).
+proof_query: live re-run of the script's own output, full per-load id list in PR history; a
+follow-up gap (expense_attribution.expense_load_links not resynced) surfaced by
+verify-alwaystrack-parity's own structural assertion D is fixed under AUTH-019 below.
+
+— CC-1
+
+---
+
+## AUTH-019
+issued_at: 2026-09-25T16:32:00.000Z
+scope: expense_attribution.expense_load_links (load_id/load_number only, 9 named rows) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: node scripts/ops/2026-09-25-cc1-r160-fix-expense-load-links.ts (run against production, no DRY_RUN) — R-160 order 3 completeness: AUTH-018's expense relink (accounting.expenses.load_id) did not update the separate, denormalized expense_attribution.expense_load_links table, which carries its own load_id/load_number keyed by (expense_source, expense_id). verify-alwaystrack-parity's own structural assertion D caught this live: 9 rows for the 3 relink-target loads (13511, 13532, 13548) still show the OLD, now-soft-deleted Transportation load (13497/13530/13533) in expense_load_links while accounting.expenses.load_id already correctly points at the new load. Resyncs exactly these 9 named rows' load_id/load_number to match the expense's own current load. Touches no other row.
+expires_at: 2026-09-25T18:32:00.000Z
+status: OPEN
+
+Issued before execution. Confirmed live, not guessed: queried expense_attribution.expense_load_links
+joined to accounting.expenses/mdata.loads for the 3 relink-target loads, found exactly 9 rows whose
+own load_number disagrees with the expense's current (already-relinked) load's number, all 9 pointing
+at one of the 3 now-soft-deleted originals. A separate, larger set of expenses with NO
+expense_load_links row at all was also found live and is explicitly NOT touched here — that gap
+predates R-160 and is out of this authorization's scope. Full derivation in the script's own header
+comment.
+
 — CC-1
