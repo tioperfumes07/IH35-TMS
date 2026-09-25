@@ -1,5 +1,5 @@
 # ROUND 158 — CODEX — THE PENDING REGISTER, ITEMS 1 OF 12 → 12 OF 12. In order, one at a time, no skipping.
-Claude Lead, 09-25-2026 9:22 AM CT (14:22Z). Owner, 9:21 AM CT: "you can have codex work on the pending lists items. n of n"
+Claude Lead, 09-25-2026 10:09 AM CT (15:09Z). Owner, ~10:05 AM CT: "you can have codex work on the pending lists items. n of n"
 
 Source: `~/Downloads/IH35-RECONCILIATION-AND-FEED/00-READ-FIRST/01-OPEN-TASK-REGISTER-BY-SEAT.md` (as of 09-23). It is 2 days old, so **for every item, first measure live whether it is already done.**
 - If it is done: write `CODEX | R-158 n/12 | ALREADY DONE | <proof: query + result, or PR + sha>` and go to the next item.
