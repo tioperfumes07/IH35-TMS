@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getMoneyProofTrail, type MoneyProofDocumentType } from "../../api/accounting";
 import { formatUsdCents } from "../../lib/money";
 import { entityLabel } from "../../lib/entity-label";
+import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { Button } from "../Button";
 import { DataPanel } from "../layout/DataPanel";
 import { DataPanelRow } from "../layout/DataPanelRow";
@@ -55,7 +56,7 @@ export function MoneyProofTrailPanel({
       ))}
       {proof.data.postings.map((row) => (
         <DataPanelRow key={`${row.posting_id}-${row.linked_object_id ?? "account"}`}>
-          <span className="text-xs text-slate-700">{[row.account_number, row.account_name].filter(Boolean).join(" — ")}</span>
+          <span className="text-xs text-slate-700">{formatAccountDisplayLabel({ account_number: row.account_number, account_name: row.account_name })}</span>
           <span className="text-xs text-slate-900">{row.debit_or_credit} {formatUsdCents(row.amount_cents)}</span>
           {row.linked_object_id && LINK_KINDS.has(row.linked_object_type as EntityKind) ? (
             <EntityLink kind={row.linked_object_type as EntityKind} id={row.linked_object_id} label={row.relationship_role ?? "Linked record"} />

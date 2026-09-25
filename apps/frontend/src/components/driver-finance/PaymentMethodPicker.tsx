@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Combobox, type ComboboxOption } from "../Combobox";
 import { Modal } from "../Modal";
@@ -84,7 +85,7 @@ export function PaymentMethodPicker({ operatingCompanyId, value, onChange, disab
             <span className="text-xs font-medium text-gray-600">GL account (cash/bank)</span>
             <div className="mt-1">
               <Combobox
-                options={(accountsQuery.data?.accounts ?? []).map((a) => ({ value: a.id, label: a.account_name, sublabel: a.account_number }))}
+                options={(accountsQuery.data?.accounts ?? []).map((a) => ({ value: a.id, label: formatAccountDisplayLabel(a), sublabel: undefined }))}
                 value={glAccountId}
                 onChange={setGlAccountId}
                 placeholder="Select GL account (optional)"
