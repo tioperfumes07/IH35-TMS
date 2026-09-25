@@ -15,10 +15,18 @@
  *      apps/backend/src/accounting/bulk-void.service.ts -- the SAME reversing-JE + cascade-void +
  *      audit primitives the interactive POST /invoices/:id/void route uses, without that route's
  *      TMS-push/accounting-spine side effects, which do not belong on a backfilled correction).
- *   2. Cancel the USMCA load via the real writer (cancelLoadInClientTx,
- *      apps/backend/src/dispatch/cancellation.service.ts), reason_code=OTHER (none of USMCA's
- *      existing cancellation reasons name "wrong entity" -- OTHER + a real, specific note is the
- *      honest fit, not a forced categorical match), not billable to the customer.
+ *   2. Soft-delete the USMCA load (soft_deleted_at/deleted_by_user_id, the exact same two-column
+ *      write PATCH /api/v1/loads/:id itself performs -- copied verbatim, not reimplemented) plus
+ *      an appendCrudAudit entry. NOT cancelLoadInClientTx: rehearsal caught, before any production
+ *      write, that it cascades to CANCEL THE ENTIRE SETTLEMENT for every settlement any of its
+ *      lines touch ("VOID-CASCADE-SETTLEMENTS", cancellation.service.ts) whenever that settlement
+ *      isn't already paid/cancelled -- live-confirmed all 13 target loads' settlements are
+ *      status='approved' (not paid), so that cascade would fire for real and destroy the OTHER,
+ *      legitimate USMCA loads' settlement data sharing the same settlement -- exactly what R-160
+ *      orders 2-3 require to survive intact. soft_deleted_at is the correct primitive here: it is
+ *      the SAME "no longer live" filter (`soft_deleted_at IS NULL`) every load list/read endpoint
+ *      already applies everywhere in this codebase, touches no other table, cascades to nothing,
+ *      and is fully void-never-delete compliant (the row and all its data persist untouched).
  *   3. Re-link every accounting.expenses.load_id and driver_finance.settlement_lines.load_id row
  *      currently pointing at this load: to the ONE other USMCA load on the SAME settlement when
  *      there is EXACTLY one (live-confirmed against the settlement_lines join before writing this
@@ -87,7 +95,7 @@ async function queryWithBypass<T extends pg.QueryResultRow>(pool: pg.Pool, sql: 
 
 async function main() {
   const { voidInvoiceInBulk } = await import("../../apps/backend/src/accounting/bulk-void.service.js");
-  const { cancelLoadInClientTx } = await import("../../apps/backend/src/dispatch/cancellation.service.js");
+  const { appendCrudAudit } = await import("../../apps/backend/src/audit/crud-audit.js");
 
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   const dryRun = process.env.DRY_RUN === "1";
@@ -161,13 +169,25 @@ async function main() {
           throw new Error(`${row.load_number}: invoice void failed -- ${failure.code} ${failure.message}`);
         }
 
-        const cancelResult = await cancelLoadInClientTx(client, SYSTEM_ACTOR_USER_ID, "Owner", {
-          operating_company_id: USMCA_ID,
-          load_id: row.load_id,
-          reason_code: "OTHER",
-          cancellation_notes: CANCEL_NOTES,
-          billable_to_customer: false,
-        });
+        // Soft-delete only -- the exact same two-column write PATCH /api/v1/loads/:id performs for
+        // soft_deleted_at (mdata/loads.routes.ts). NOT cancelLoadInClientTx: it cascades to cancel
+        // the ENTIRE settlement for every settlement any of the load's lines touch, which would
+        // destroy the OTHER, legitimate USMCA loads sharing that settlement.
+        const softDeleteRes = await client.query(
+          `UPDATE mdata.loads SET soft_deleted_at = now(), deleted_by_user_id = $2::uuid, updated_at = now()
+            WHERE id = $1::uuid AND operating_company_id = $3::uuid AND soft_deleted_at IS NULL
+          RETURNING id`,
+          [row.load_id, SYSTEM_ACTOR_USER_ID, USMCA_ID]
+        );
+        if (softDeleteRes.rowCount !== 1) throw new Error(`${row.load_number}: soft-delete affected ${softDeleteRes.rowCount} rows, expected 1 -- STOP`);
+        await appendCrudAudit(
+          client,
+          SYSTEM_ACTOR_USER_ID,
+          "mdata.loads.soft_deleted",
+          { resource_type: "mdata.loads", resource_id: row.load_id, operating_company_id: USMCA_ID, reason: CANCEL_NOTES },
+          "warning",
+          "R-160"
+        );
 
         const expRes = await client.query(
           `UPDATE accounting.expenses SET load_id = $2::uuid, updated_at = now()
@@ -183,7 +203,7 @@ async function main() {
         );
 
         await client.query("COMMIT");
-        console.log(`  voided invoice, cancelled load (cancellation ${JSON.stringify(cancelResult).slice(0, 120)}), relinked ${expRes.rowCount} expenses + ${slRes.rowCount} settlement_lines`);
+        console.log(`  voided invoice, soft-deleted load, relinked ${expRes.rowCount} expenses + ${slRes.rowCount} settlement_lines`);
         results.push({
           load_number: row.load_number,
           status: "voided_and_cancelled",
