@@ -1,39 +1,3 @@
-## ROUND 153 — UPDATED 2026-09-25 2:48 AM CT (07:48Z) — THE SCOPE IS THE WHOLE USMCA BOOK, NOT SIX ITEMS
-Owner, verbatim: *"cc1 doesnt just need the reconcilaition it needs to feed and correct all the issues cursor created, feed all
-data and make sure it is correct in correct chart of accounts, reconcile ap, ar, balance, asset accounts liability accounts, bills,
-driver bills cash advance bill payments, expense, invoices line haul and other income categories, etc ... and of course many more
-linkages are missing, driver, unit, trailer, load settlement etc."*
-**Items 1–6 above stand and come first. Then 7–11. The job is done only when all eleven are proven. No switching.**
-Measured live 07:46Z (bypass in-tx, USMCA):
-```
-loads 125 · no unit 27 · no driver 0 · no trailer 0 · no customer 0
-expenses 385 · no load 0 · no unit 112 · no driver 66 · no trailer 305
-fuel 441 live (parity counts 171 on the 34 documents — explain the other 270: import, duplicate or out-of-scope) · no unit 160 · no trailer 314
-driver bills 124 · 19 not on a settlement · vendor bills 0 · BILL PAYMENTS 0
-```
-**7. Audit and correct everything the feed wrote** — every load, invoice, invoice line, driver bill, expense, fuel row, advance,
-settlement and JE created since the purge, against its signed AlwaysTrack document and Faro row. Wrong → void and re-create
-through the canonical writer. Never edit a posted row, never delete.
-**8. Cash advances are BILL PAYMENTS** (closed law). Live bill payments = **0**. Every cash advance on every signed document becomes a
-driver-bill payment dated when the money left, against that driver's bill for that document. Escrow → 2100 liability. Admin fee
-and company-vehicle-use fee → INCOME. Paste the count per document = the document.
-**9. Chart of accounts on every posting.** Line haul → 4000 · accessorials → 4200 / 4210 detention / 4220 layover / 4230 lumper /
-4240 TONU · admin fee and vehicle-use fee → income · fuel/DEF/reefer as ITEMS → 5000 · lumper expense → 5310 · tolls 5300 ·
-escrow 2100 · factoring per ASC 860 (A/R never derecognized) · cards 1295 / 2510 / 2500 · bank 1000. Paste account × source-type
-totals; any posting on an account its item does not map to is a defect.
-**10. Reconcile the ledger**, each to the cent, pasted: A/R 1100 = open invoice subledger = Faro AGING for factored + open
-self-carried · A/P 2000 = open bills · driver payables = open driver bills · 2100 escrow = document escrow · Faro reserve /
-advances = Faro RESERVE REPORT and FUNDS DUE · 1090 holds only undeposited receipts · 1000 = the bank register · trial balance
-balanced · balance sheet balances (assets = liabilities + equity) · P&L revenue = parity line haul + accessorials + other income.
-**11. Linkage on every record, both ways** — load ↔ driver ↔ unit ↔ trailer ↔ customer ↔ settlement; expense/fuel ↔ load ↔ unit
-↔ driver ↔ trailer ↔ vendor ↔ card; driver bill ↔ load ↔ settlement ↔ bill payment; invoice ↔ load ↔ Faro advance ↔ receipt.
-Source is the signed document (`Trk:` / `Trlr:` per stop), never a guess. Required after: every count above in the "no …" columns = 0,
-or the row names the document that genuinely has no value.
-**Guard** `verify-usmca-book-equals-faro-and-alwaystrack.mjs` gains an assertion per item 7–11. Planted-RED each.
-**Deadlines:** 7 → 18:00Z · 8 → 20:00Z · 9 → 21:00Z · 10 → 23:00Z · 11 → 2026-09-26 02:00Z. Missed → Cursor takes the item.
-
----
-
 # ROUND 153 — CC-1 — FINISH THE RECONCILIATION. ONE JOB, START TO FINISH, NO SWITCHING.
 Claude Lead, 2026-09-25 2:45 AM CT (07:45Z). Owner: *"i want it reconciled linked corretly etc as it sohuld be ... each coder
 must complete its task and job ... no switching. no deviating, from start to finish."*
@@ -74,9 +38,36 @@ charge lines = invoice total. Planted-RED per assertion. Wired in `money-pr-loca
 **You do not switch to any other work until item 6 is DONE.**
 
 ---
-
-# NOW-CC-1 — 2026-09-24 05:15 UTC
-## CURRENT (Round 152.1)
-Serve the day gate. Settlement lands per document as Cursor closes purchase days.
-Fuel posting / expenses posting / 1090→1000 remain CC-1 money lane.
-Do not run the Faro day feed (Cursor owns it).
+## ROUND 153 — UPDATED 2026-09-25 2:48 AM CT (07:48Z) — THE SCOPE IS THE WHOLE USMCA BOOK, NOT SIX ITEMS
+Owner, verbatim: *"cc1 doesnt just need the reconcilaition it needs to feed and correct all the issues cursor created, feed all
+data and make sure it is correct in correct chart of accounts, reconcile ap, ar, balance, asset accounts liability accounts, bills,
+driver bills cash advance bill payments, expense, invoices line haul and other income categories, etc ... and of course many more
+linkages are missing, driver, unit, trailer, load settlement etc."*
+**Items 1–6 above stand and come first. Then 7–11. The job is done only when all eleven are proven. No switching.**
+Measured live 07:46Z (bypass in-tx, USMCA):
+```
+loads 125 · no unit 27 · no driver 0 · no trailer 0 · no customer 0
+expenses 385 · no load 0 · no unit 112 · no driver 66 · no trailer 305
+fuel 441 live (parity counts 171 on the 34 documents — explain the other 270: import, duplicate or out-of-scope) · no unit 160 · no trailer 314
+driver bills 124 · 19 not on a settlement · vendor bills 0 · BILL PAYMENTS 0
+```
+**7. Audit and correct everything the feed wrote** — every load, invoice, invoice line, driver bill, expense, fuel row, advance,
+settlement and JE created since the purge, against its signed AlwaysTrack document and Faro row. Wrong → void and re-create
+through the canonical writer. Never edit a posted row, never delete.
+**8. Cash advances are BILL PAYMENTS** (closed law). Live bill payments = **0**. Every cash advance on every signed document becomes a
+driver-bill payment dated when the money left, against that driver's bill for that document. Escrow → 2100 liability. Admin fee
+and company-vehicle-use fee → INCOME. Paste the count per document = the document.
+**9. Chart of accounts on every posting.** Line haul → 4000 · accessorials → 4200 / 4210 detention / 4220 layover / 4230 lumper /
+4240 TONU · admin fee and vehicle-use fee → income · fuel/DEF/reefer as ITEMS → 5000 · lumper expense → 5310 · tolls 5300 ·
+escrow 2100 · factoring per ASC 860 (A/R never derecognized) · cards 1295 / 2510 / 2500 · bank 1000. Paste account × source-type
+totals; any posting on an account its item does not map to is a defect.
+**10. Reconcile the ledger**, each to the cent, pasted: A/R 1100 = open invoice subledger = Faro AGING for factored + open
+self-carried · A/P 2000 = open bills · driver payables = open driver bills · 2100 escrow = document escrow · Faro reserve /
+advances = Faro RESERVE REPORT and FUNDS DUE · 1090 holds only undeposited receipts · 1000 = the bank register · trial balance
+balanced · balance sheet balances (assets = liabilities + equity) · P&L revenue = parity line haul + accessorials + other income.
+**11. Linkage on every record, both ways** — load ↔ driver ↔ unit ↔ trailer ↔ customer ↔ settlement; expense/fuel ↔ load ↔ unit
+↔ driver ↔ trailer ↔ vendor ↔ card; driver bill ↔ load ↔ settlement ↔ bill payment; invoice ↔ load ↔ Faro advance ↔ receipt.
+Source is the signed document (`Trk:` / `Trlr:` per stop), never a guess. Required after: every count above in the "no …" columns = 0,
+or the row names the document that genuinely has no value.
+**Guard** `verify-usmca-book-equals-faro-and-alwaystrack.mjs` gains an assertion per item 7–11. Planted-RED each.
+**Deadlines:** 7 → 18:00Z · 8 → 20:00Z · 9 → 21:00Z · 10 → 23:00Z · 11 → 2026-09-26 02:00Z. Missed → Cursor takes the item.
