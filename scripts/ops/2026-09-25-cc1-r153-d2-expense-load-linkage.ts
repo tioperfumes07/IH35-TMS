@@ -107,17 +107,24 @@ async function main() {
     console.log(`driver_uuid filled: ${driverRes.rowCount}`);
 
     // trailer_id: the load's current trailer per its own assignment history (I8's own pattern).
+    // (UPDATE ... FROM cannot LATERAL-reference the target table itself, so resolve via a
+    // subquery keyed on expense id instead.)
     const trailerRes = await client.query(
       `UPDATE accounting.expenses e
-          SET trailer_id = tr.new_trailer_id
-         FROM LATERAL (
-           SELECT lah.new_trailer_id FROM dispatch.load_assignment_history lah
-            WHERE lah.load_id = e.load_id AND lah.operating_company_id = e.operating_company_id
-              AND lah.new_trailer_id IS NOT NULL
-            ORDER BY lah.assigned_at DESC, lah.created_at DESC, lah.id DESC LIMIT 1
-         ) tr
-        WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL
-          AND e.trailer_id IS NULL AND e.load_id IS NOT NULL
+          SET trailer_id = sub.new_trailer_id
+         FROM (
+           SELECT e2.id, tr.new_trailer_id
+             FROM accounting.expenses e2
+             CROSS JOIN LATERAL (
+               SELECT lah.new_trailer_id FROM dispatch.load_assignment_history lah
+                WHERE lah.load_id = e2.load_id AND lah.operating_company_id = e2.operating_company_id
+                  AND lah.new_trailer_id IS NOT NULL
+                ORDER BY lah.assigned_at DESC, lah.created_at DESC, lah.id DESC LIMIT 1
+             ) tr
+            WHERE e2.operating_company_id = $1::uuid AND e2.voided_at IS NULL
+              AND e2.trailer_id IS NULL AND e2.load_id IS NOT NULL
+         ) sub
+        WHERE e.id = sub.id
         RETURNING e.id`,
       [USMCA_ID]
     );

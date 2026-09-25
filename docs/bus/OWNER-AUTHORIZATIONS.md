@@ -255,7 +255,19 @@ issued_at: 2026-09-25T11:40:00.000Z
 scope: accounting.expenses (unit_id, driver_uuid, trailer_id columns only) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: node scripts/ops/2026-09-25-cc1-r153-d2-expense-load-linkage.ts (run against production, no DRY_RUN) — fills unit_id from mdata.loads.assigned_unit_id, driver_uuid from mdata.loads.assigned_primary_driver_id (only when assigned_secondary_driver_id IS NULL), and trailer_id from the load's most recent dispatch.load_assignment_history.new_trailer_id, for every USMCA accounting.expenses row whose own load_id already points at a USMCA load. Every write is COALESCE(existing, resolved) — never overwrites a non-null field. Touches no other column, table, or company.
 expires_at: 2026-09-25T13:40:00.000Z
-status: OPEN
+status: CONSUMED
+
+consumed_at: 2026-09-25T11:42:00.000Z
+consumed_by: CC-1
+row_counts: unit_id filled 189, driver_uuid filled 307, trailer_id filled 123 (619 field-writes total, one UPDATE statement per field, all via COALESCE). 0 rows overwritten (verified: idempotency re-run on the Neon rehearsal filled 0/0/0 the second time). BEFORE (measured live at issue time): 613 expenses, no_unit=353, no_driver=307, no_trailer=534. AFTER (measured live post-write): 613 expenses, no_unit=164, no_driver=0, no_trailer=411. driver_uuid fully resolved to 0 remaining; no team-driver-ambiguous rows were found live (0). 411 rows list — every remaining gap is either "load has no unit assigned" or "load has no trailer in assignment history" (the load's own dispatch record never carries one), never guessed; full per-row list in the PR body.
+proof_query: SELECT count(*), count(*) FILTER(unit_id IS NULL), count(*) FILTER(driver_uuid IS NULL), count(*) FILTER(trailer_id IS NULL) FROM accounting.expenses WHERE operating_company_id=USMCA AND voided_at IS NULL — {"total":613,"no_unit":164,"no_driver":0,"no_trailer":411}, matching the rehearsal exactly.
+
+BUG FOUND AND FIXED DURING REHEARSAL (before any production write): the trailer_id UPDATE's
+original LATERAL subquery tried to reference the UPDATE target table "e" directly inside a
+`FROM LATERAL (...)` clause — PostgreSQL does not expose the UPDATE target as a FROM-list item
+available to LATERAL. Fixed by resolving trailer via a keyed subquery (`SELECT e2.id, ... FROM
+accounting.expenses e2 CROSS JOIN LATERAL (...) ... WHERE e.id = sub.id`) instead. Caught on the
+first Neon dry-run, before any real or rehearsal commit — exactly what rehearsal is for.
 
 Issued before execution. R-153.8 Decision 2 (Lead, 6:22 AM CT/11:22Z): "YES. This is linkage, not
 backfill... Source per row: the load's assignment for the expense date (unit, driver, trailer)...
