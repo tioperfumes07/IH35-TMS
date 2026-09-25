@@ -195,7 +195,12 @@ issued_at: 2026-09-25T11:56:00.000Z
 scope: accounting.journal_entries, accounting.journal_entry_postings (accounts 5300, 9000 only) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: node scripts/ops/2026-09-25-cc1-r153-followup2-reclassify-9000-toll-misc.ts (run against production, no DRY_RUN) — posts 2 small correcting journal entries (Dr 5300 $15.25 / Cr 9000 $15.25 for EXP-2026-00021; Dr 5300 $15.25 / Cr 9000 $15.25 for EXP-2026-00049) reclassifying 2 "Scale Expense" lines this session's own item 9 audit had left un-reclassified as "ambiguous misc" -- on closer look there is a THIRD, unambiguous, active category-map entry these were missed against: category_kind='toll'/category_code='toll' -> 5300 "Tolls & Scales" (not the 'misc' 2-way fuel/maintenance split originally checked). A weigh-station/DOT scale fee is definitionally a toll/scale cost, not fuel or maintenance; account 5300 exists in the live CoA for exactly this. Touches no other row. The 3rd non-fuel 9000 line (EXP-2026-00025, reefer/fuel content) remains out of scope, CC-2's lane.
 expires_at: 2026-09-25T13:56:00.000Z
-status: OPEN
+status: CONSUMED
+
+consumed_at: 2026-09-25T11:04:00.000Z
+consumed_by: CC-1
+row_counts: 2 correcting journal entries posted — 9726b25b-0051-4655-90a3-2ee2b744703d (Dr 5300 $15.25 / Cr 9000 $15.25, EXP-2026-00021) and 5ebb6624-196a-4e73-8e03-510f07deacfc (Dr 5300 $15.25 / Cr 9000 $15.25, EXP-2026-00049).
+proof_query: SELECT a.account_number, SUM(...)::bigint AS net FROM journal_entry_postings ... WHERE account_number IN ('9000','5300') — confirms 5300 net $30.50 (exactly the 2 reclassified amounts) and 9000 net -$655.10 (down from -$624.60 after the first item-9 follow-up, by exactly $30.50). Trial balance still balanced (1,386,549,474 = 1,386,549,474) after.
 
 Issued before execution. ROUND 153 item 9 follow-up #2 -- full derivation in the script's own header
 comment. Originally drafted as AUTH-005 but CC-2 landed a same-numbered entry concurrently (fuel
