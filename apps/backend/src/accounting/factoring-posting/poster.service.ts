@@ -1145,10 +1145,11 @@ async function postFactoringAdvanceEventImpl(input: PostFactoringAdvanceInput): 
                          factor_fee_pct = $5::numeric,
                          advance_amount_cents = $6::bigint,
                          advance_rate_pct = $7::numeric,
-                         faro_invoice_number = COALESCE(faro_invoice_number, $8::text),
-                         faro_purchase_date = COALESCE(faro_purchase_date, $9::date)
+                         wire_fee_cents = $8::bigint,
+                         faro_invoice_number = COALESCE(faro_invoice_number, $9::text),
+                         faro_purchase_date = COALESCE(faro_purchase_date, $10::date)
                    WHERE id = $1::uuid
-                     AND operating_company_id = $10::uuid
+                     AND operating_company_id = $11::uuid
                 `,
                 [
                   input.factoring_advance_id,
@@ -1158,6 +1159,7 @@ async function postFactoringAdvanceEventImpl(input: PostFactoringAdvanceInput): 
                   feePct,
                   prepared.cash,
                   advanceRatePct,
+                  prepared.ach,
                   input.faro_invoice_number ?? null,
                   input.faro_purchase_date ?? null,
                   input.operating_company_id,
@@ -1457,10 +1459,11 @@ export async function postFactoringAdvanceEventInClientTx(
                        factor_fee_pct = $5::numeric,
                        advance_amount_cents = $6::bigint,
                        advance_rate_pct = $7::numeric,
-                       faro_invoice_number = COALESCE(faro_invoice_number, $8::text),
-                       faro_purchase_date = COALESCE(faro_purchase_date, $9::date)
+                       wire_fee_cents = $8::bigint,
+                       faro_invoice_number = COALESCE(faro_invoice_number, $9::text),
+                       faro_purchase_date = COALESCE(faro_purchase_date, $10::date)
                  WHERE id = $1::uuid
-                   AND operating_company_id = $10::uuid
+                   AND operating_company_id = $11::uuid
               `,
               [
                 input.factoring_advance_id,
@@ -1470,6 +1473,7 @@ export async function postFactoringAdvanceEventInClientTx(
                 feePct,
                 prepared.cash,
                 advanceRatePct,
+                prepared.ach,
                 input.faro_invoice_number ?? null,
                 input.faro_purchase_date ?? null,
                 input.operating_company_id,
