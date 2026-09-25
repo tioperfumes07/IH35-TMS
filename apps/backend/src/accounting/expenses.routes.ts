@@ -593,6 +593,10 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       const hasPaymentAccount = await columnExists(client, "accounting", "expenses", "payment_account_uuid");
       const hasExpenseAccount = await columnExists(client, "accounting", "expense_lines", "expense_account_uuid");
       const hasAmountCents = await columnExists(client, "accounting", "expense_lines", "amount_cents");
+      const hasItemId = await columnExists(client, "accounting", "expense_lines", "item_id");
+      const hasQuantity = await columnExists(client, "accounting", "expense_lines", "quantity");
+      const hasRateCents = await columnExists(client, "accounting", "expense_lines", "rate_cents");
+      const hasUnitOfMeasure = await columnExists(client, "accounting", "expense_lines", "unit_of_measure");
 
       const headerRes = await client.query(
         `
@@ -674,10 +678,16 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             el.line_sequence                             AS line_sequence,
             ${hasAmountCents ? "el.amount_cents::text" : "NULL::text"} AS amount_cents,
             el.description                               AS description,
+            ${hasItemId ? "el.item_id::text" : "NULL::text"} AS item_id,
+            ${hasQuantity ? "el.quantity::text" : "NULL::text"} AS quantity,
+            ${hasRateCents ? "el.rate_cents::text" : "NULL::text"} AS rate_cents,
+            ${hasUnitOfMeasure ? "el.unit_of_measure" : "NULL::text"} AS unit_of_measure,
+            ${hasItemId ? "item.item_name" : "NULL::text"} AS item_name,
             ${hasExpenseAccount ? "el.expense_account_uuid::text" : "NULL::text"} AS expense_account_uuid,
             acct.account_number                          AS expense_account_number,
             acct.account_name                            AS expense_account_name
           FROM accounting.expense_lines el
+          ${hasItemId ? "LEFT JOIN catalogs.items item ON item.id = el.item_id" : ""}
           ${hasExpenseAccount
             ? "LEFT JOIN catalogs.accounts acct ON acct.id = el.expense_account_uuid AND acct.operating_company_id = $2::uuid"
             : "LEFT JOIN catalogs.accounts acct ON acct.operating_company_id = $2::uuid AND false"}

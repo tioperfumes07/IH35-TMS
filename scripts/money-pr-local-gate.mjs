@@ -30,6 +30,7 @@ const LABEL = "money-pr-local-gate";
 
 /** Ordered fail-fast suite — same classes that red'd Cursor #4009–#4011 / #4198 vs Claude. */
 const STEPS = [
+  ["verify-expense-item-lines", "scripts/verify-expense-item-lines.mjs"],
   ["verify-account-number-hidden-by-default", "scripts/verify-account-number-hidden-by-default.mjs"],
   ["verify-definition-of-done-evidence", "scripts/verify-definition-of-done-evidence.mjs"],
   // FILTER-MULTI-01 — every registered money list (registry, not whole-tree) has one always-visible
