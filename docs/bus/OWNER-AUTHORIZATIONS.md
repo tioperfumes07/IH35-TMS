@@ -431,4 +431,41 @@ original correct close JE was computed from -- closeSettlementPayRun's own unmod
 then reproduces that figure, not a hand-picked override. Rehearsing both scripts on Neon before
 touching production. Full derivation in each script's own header comment.
 
+CONSUMED 2026-09-25 10:31 AM CT (15:31Z). The reactivation script ran clean first pass (35 rows,
+not 36 -- the "36" in this block's own action line was written before a live re-check found row
+count varies 1-3 per settlement by load count, not a uniform 2; the script's pre-check enforces the
+real per-row shape regardless of count, not a hardcoded number).
+
+The void+reclose script needed THREE real bug fixes discovered only via live production/rehearsal
+failures, all merged before the production run that actually committed (PRs #22649, #22650, full
+derivation in those commit messages):
+  1. Neon read-after-write false-empty on a quiet branch -- fixed by resolving all 18 settlement/JE
+     ids in one read phase before any write (PR #22649).
+  2. Against production's real CONCURRENT multi-seat load (which a quiet rehearsal branch does not
+     reproduce): four separate autocommitted statements (RESET ROLE + 2x set_config + the query) can
+     each land on a DIFFERENT Postgres backend under PgBouncer transaction pooling -- fixed by
+     wrapping all four in one explicit BEGIN...COMMIT (PR #22650).
+  3. A genuinely correctness-relevant one, caught by Lead's own live parity check (docs/bus/NOW-CC-1.md,
+     15:27Z): the script's skip logic only skips a settlement with NO live JE -- it does not
+     distinguish "already correctly re-closed" from "needs redoing," so an EARLIER partial run (before
+     fix 2) that left settlement 5770 with one correct live JE caused THIS run to reverse+reclose 5770
+     a second time when it hit that settlement again. Net effect: still exactly right (reverse+reclose
+     of an already-correct JE reproduces the same correct escrow), but it is a real design gap in the
+     script worth naming rather than quietly stepping around -- a future re-run against ANY settlement
+     that already has a live JE (correct or not) will unconditionally redo it. Not fixed further here
+     because the script is now retired (Set B is done); flagging it so no other script copies this
+     pattern uncritically.
+
+Live proof, production, 2026-09-25 ~15:1x-15:31Z:
+- All 18 settlements: exactly 1 live (posted, non-reversed) pay-run-close JE each, confirmed live
+  (bypass_rls read) after the run -- including 5770, which Lead's own verify-alwaystrack-parity flagged
+  at 15:27Z as having 2 live JEs (driver_net off by -$50.00, exactly one settlement's escrow amount)
+  from the earlier partial run; this run's own reprocessing of 5770 (reversal_je=7041a674...,
+  new_je=54f2f643..., escrow=5000c) resolved it back to exactly 1 live JE.
+- Escrow posted correctly per load count across all 18: $25.00 (1-load), $50.00 (2-load), $75.00
+  (3-load, S-5800) -- matches the reactivated settlement_lines rows exactly, not a chosen value.
+- USMCA trial balance (bypass_rls read, live): total debit 258,943,122 cents == total credit
+  258,943,122 cents. Balanced.
+- PRs: #22645 (AUTH-013 issued), #22649, #22650 (the two real fixes), all merged to main.
+
 — CC-1
