@@ -69,6 +69,13 @@ const OWNER_PENDING_UNLINKED = new Set([
   // same creation window, same driver-pay blocker) rather than independently confirmed per-load;
   // flagging that distinction honestly rather than asserting a dry-run result that wasn't taken.
   "13613", "13618", "13616", "13617", "13614",
+  // 90007 (2026-09-25, Claude-Lead, R-195/AUTH-041): its only pre-settlement was P-0006, the empty
+  // pre-settlement the AlwaysTrack-sequence allocator minted as "5817" (voided under AUTH-041). 90007
+  // is on the owner's ROUND 153 ITEM1 list (Transportation-era, must leave USMCA) but carries a LIVE
+  // factored invoice (Faro inv 7, $350.00, advance e93a0d50) -- a link fix cannot resolve it; the
+  // cancellation + factoring unwind is the closing guard's ITEM1 work (CC-1 R-187). Remove this entry
+  // in the PR that lands ITEM1 for 90007. Never re-link it to a pre-settlement.
+  "90007",
 ]);
 const DELIVERED_STATUSES = ["delivered_pending_docs", "completed_docs_received", "closed", "invoiced"];
 
