@@ -407,3 +407,28 @@ Live proof, production, 2026-09-25 ~14:2x-14:35Z:
 - PR #22643, merged to main as de8a5a60f0.
 
 — CC-1
+
+---
+
+## AUTH-013
+issued_at: 2026-09-25T14:51:00.000Z
+scope: driver_finance.settlement_lines (is_active flip only, 36 named rows), driver_finance.driver_settlements, driver_finance.payrun_gl_runs, accounting.journal_entries, accounting.journal_entry_postings, driver_finance.escrow_balances, driver_finance.escrow_ledger, accounting.escrow_postings, accounting.escrow_accounts — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly the 18 Set B settlements
+action: (1) node scripts/ops/2026-09-25-cc1-setb-reactivate-escrow-lines.ts (production, no DRY_RUN) -- flips is_active=true on exactly 36 named driver_finance.settlement_lines rows (escrow_contribution, 2 per settlement x 18 settlements), root cause of Set B's $0.00 re-close (AUTH-009 expired unconsumed on this exact blocker). Pre-checked shape (2 rows/settlement, $25.00 each, none carrying a documented voided_at/void_reason) before any write; refuses to touch anything that doesn't match. (2) node scripts/ops/2026-09-25-cc1-r153-setb-void-reclose-escrow.ts (production, no DRY_RUN) -- unchanged from AUTH-009, re-authorized since it expired: reverses each settlement's live pay-run-close JE via reverseSettlementPayRun, re-closes once via closeSettlementPayRun with no override -- the engine's own now-correctly-sourced computation posts.
+expires_at: 2026-09-25T16:51:00.000Z
+status: OPEN
+
+Issued before execution. Root cause of Set B's $0.00 escrow re-close (blocking AUTH-009, which
+expired unconsumed): the 18 settlements' escrow_contribution settlement_lines rows are ALL
+is_active=false -- 36 rows total, 2 per settlement (one per load, load_bookended model), $25.00
+each, matching Lead's own cited standard escrow cap exactly. None of the 36 carry a voided_at or
+void_reason -- contrast with CC-3's own documented 09-24 void-with-reason pattern for 5805/5806's
+genuinely extra, not-on-document escrow lines. PR #22594 (this session's own earlier finding)
+already established these 18 settlements' ORIGINAL pay-run-close JE correctly included this exact
+escrow line -- it only vanished when reversed+reposted for the unrelated AlwaysTrack-tie fix. The
+rows' updated_at timestamps cluster into 3 bulk-update batches, consistent with an unlogged bulk
+deactivation rather than 18 separate deliberate void decisions. Reactivating restores the shape the
+original correct close JE was computed from -- closeSettlementPayRun's own unmodified computation
+then reproduces that figure, not a hand-picked override. Rehearsing both scripts on Neon before
+touching production. Full derivation in each script's own header comment.
+
+— CC-1
