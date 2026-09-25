@@ -36,8 +36,20 @@
 // LIVE_DOMAIN_GUARDS so it runs when a diff touches the posting paths that write
 // JEs, and fails closed when no DATABASE_URL is available.
 //
-// COORDINATION: Cursor is the sole feeder/writer of USMCA data. This guard catches
-// the output; Cursor fixes the writer. Communicate through OUTBOX-DEVIN-B.md.
+// COORDINATION: CC-2 owns the writer (R-153.6); CC-3 owns guard scope (R-153.7).
+//
+// SCOPE (R-153.7, owner-approved via the Lead): three DOCUMENT ENGINES legitimately debit a
+// 5xxx/6xxx cost account WITHOUT an accounting.expenses row — a factoring advance's fee, a driver
+// settlement's cost recognition, and factoring default interest are posted through their own
+// document engines (accounting.factoring_advances / driver_finance.driver_settlements /
+// the default-interest engine), never through the expense-creation path, so "no expenses row" is
+// their correct, permanent shape, not a defect. Exempted from invariant 1 ONLY, by
+// source_transaction_type on the posting itself — never by account or amount, so a real
+// handwritten JE that happens to hit the same account is still caught. Invariant 2 (wrong credit
+// account) still applies to these postings; the exemption is scoped exactly as narrow as ordered.
+// The 86 factoring_default_interest JEs are NOT owner-approved for posting (R-101.2) — this
+// exemption only stops the GUARD from flagging their existing shape; it authorizes no new writer.
+const DOCUMENT_ENGINE_EXEMPT_SOURCE_TYPES = new Set(["factoring_advance", "driver_settlement", "factoring_default_interest"]);
 //
 // Self-test: node scripts/verify-costs-are-expenses-not-handwritten-jes.mjs --selftest
 export const REQUIRES_LIVE_DB = "money-relevant (cost JEs + expenses) — must fail-closed, never skip, per ROUND 29.9-B";
@@ -67,8 +79,16 @@ export function classifyCostJe(row) {
   const isCostJe = debits5xxx6xxx.length > 0;
   const isFuelJe = postings.some((p) => p.source_transaction_type === "fuel_event");
 
-  // Violation 1: handwritten cost JE — debits 5xxx/6xxx but no expense row
-  if (isCostJe && !row.has_expense_row) return "handwritten_cost_je";
+  // Violation 1: handwritten cost JE — debits 5xxx/6xxx but no expense row. R-153.7 SCOPE: a
+  // document-engine posting (factoring_advance / driver_settlement / factoring_default_interest)
+  // is exempt from THIS invariant only — it is by design never accompanied by an expenses row.
+  // Exempts by source_transaction_type on the posting alone; a JE is only exempt here if EVERY one
+  // of its cost-debiting lines carries an exempt source — a JE mixing an exempt line with a
+  // genuinely handwritten one still fails, on the handwritten line's own account.
+  const nonExemptCostDebits = debits5xxx6xxx.filter(
+    (p) => !DOCUMENT_ENGINE_EXEMPT_SOURCE_TYPES.has(p.source_transaction_type),
+  );
+  if (nonExemptCostDebits.length > 0 && !row.has_expense_row) return "handwritten_cost_je";
 
   // Violation 2: wrong credit account — credits 1090/1100/1150
   if (isCostJe || isFuelJe) {
@@ -93,13 +113,24 @@ async function measure(client) {
   await client.query("BEGIN");
   await client.query("SELECT set_config('app.bypass_rls','lucia',false)");
 
-  // Get all posted JEs for USMCA
+  // Get all posted JEs for USMCA. R-153.6: this system's void model (journal-entries.service.ts
+  // voidJournalEntry, Option-1) NEVER flips a voided JE's status -- it posts an equal/opposite
+  // REVERSING entry and stamps reversed_by_je_id on the original, which stays status='posted'
+  // forever by design (so it never silently drops out of the GL trail). Without excluding
+  // reversed_by_je_id IS NOT NULL here, a correctly-voided wrong posting (exactly what this
+  // guard exists to make possible) can NEVER stop counting as a violation -- proven live
+  // 2026-09-25: voided 54 wrong-1090 fuel JEs via the real voidJournalEntry engine, re-ran this
+  // guard unmodified, same JE ids still flagged. Excluding reversed originals is strictly more
+  // accurate (catches only LIVE violations), never weaker -- a JE that is itself a reversal
+  // never independently trips isCostJe/isFuelJe the same way (its 5xxx leg is a credit, not a
+  // debit, since a reversal flips both sides), so no separate exclusion is needed for those.
   const jeRes = await client.query(
     `SELECT je.id::text AS je_id, je.memo
        FROM accounting.journal_entries je
       WHERE je.operating_company_id = $1::uuid
         AND je.status = 'posted'
         AND je.is_sample_data IS NOT TRUE
+        AND je.reversed_by_je_id IS NULL
       ORDER BY je.created_at`,
     [USMCA_COMPANY_ID],
   );
@@ -228,6 +259,94 @@ function runClassifierSelftest() {
       },
       expect: null,
     },
+    // R-153.7 SCOPE — Clean: factoring_advance debits a 5xxx cost (its fee) with NO expense row,
+    // by design (document engine, never the expense-creation path). Must be exempt from invariant 1.
+    {
+      name: "factoring_advance cost debit, no expense row — exempt (R-153.7)",
+      row: {
+        je_id: "test7", memo: "Factoring funding FAC-2026-00001",
+        postings: [
+          { account_number: "6400", account_type: "Expense", debit_or_credit: "debit", amount_cents: "2938", source_transaction_type: "factoring_advance" },
+          { account_number: "1230", account_type: "Asset", debit_or_credit: "credit", amount_cents: "2938", source_transaction_type: "factoring_advance" },
+        ],
+        has_expense_row: false,
+      },
+      expect: null,
+    },
+    // R-153.7 SCOPE — Clean: driver_settlement cost recognition, same shape.
+    {
+      name: "driver_settlement cost debit, no expense row — exempt (R-153.7)",
+      row: {
+        je_id: "test8", memo: "Driver settlement S-2026-0013",
+        postings: [
+          { account_number: "5100", account_type: "Expense", debit_or_credit: "debit", amount_cents: "48000", source_transaction_type: "driver_settlement" },
+          { account_number: "2100", account_type: "Liability", debit_or_credit: "credit", amount_cents: "48000", source_transaction_type: "driver_settlement" },
+        ],
+        has_expense_row: false,
+      },
+      expect: null,
+    },
+    // R-153.7 SCOPE — Clean: factoring_default_interest, same shape. Exempting the GUARD does not
+    // authorize new postings of this kind (R-101.2, not owner-approved) — it only stops flagging
+    // the existing live rows as "handwritten".
+    {
+      name: "factoring_default_interest cost debit, no expense row — exempt (R-153.7)",
+      row: {
+        je_id: "test9", memo: "Factoring default interest",
+        postings: [
+          { account_number: "6410", account_type: "Expense", debit_or_credit: "debit", amount_cents: "1500", source_transaction_type: "factoring_default_interest" },
+          { account_number: "1230", account_type: "Asset", debit_or_credit: "credit", amount_cents: "1500", source_transaction_type: "factoring_default_interest" },
+        ],
+        has_expense_row: false,
+      },
+      expect: null,
+    },
+    // R-153.7 SCOPE — RED: a fuel_event cost debit with no expense row is STILL caught. The
+    // exemption is by source_transaction_type on the posting alone; fuel_event is not in the
+    // exempt set, so this must keep failing exactly as before the scope change.
+    {
+      name: "fuel_event cost debit, no expense row — NOT exempt, still fails",
+      row: {
+        je_id: "test10", memo: "Fuel event uuid (diesel) posting",
+        postings: [
+          { account_number: "5000", account_type: "Expense", debit_or_credit: "debit", amount_cents: "5000", source_transaction_type: "fuel_event" },
+          { account_number: "1295", account_type: "Asset", debit_or_credit: "credit", amount_cents: "5000", source_transaction_type: "fuel_event" },
+        ],
+        has_expense_row: false,
+      },
+      expect: "handwritten_cost_je",
+    },
+    // R-153.7 SCOPE — RED: a JE mixing an exempt line with a genuinely handwritten one still
+    // fails — the exemption never blanket-clears a whole JE, only the specific exempt-sourced
+    // cost-debit lines within it.
+    {
+      name: "mixed JE (exempt line + genuine handwritten line) — still fails",
+      row: {
+        je_id: "test11", memo: "Mixed posting",
+        postings: [
+          { account_number: "6400", account_type: "Expense", debit_or_credit: "debit", amount_cents: "2938", source_transaction_type: "factoring_advance" },
+          { account_number: "5000", account_type: "Expense", debit_or_credit: "debit", amount_cents: "5000", source_transaction_type: "journal_entry" },
+          { account_number: "1230", account_type: "Asset", debit_or_credit: "credit", amount_cents: "7938", source_transaction_type: "factoring_advance" },
+        ],
+        has_expense_row: false,
+      },
+      expect: "handwritten_cost_je",
+    },
+    // R-153.7 SCOPE — RED: invariant 2 (wrong credit account) is NOT exempted — a
+    // document-engine posting crediting 1090/1100/1150 must still fail, "exempt from invariant 1
+    // ONLY" per the order.
+    {
+      name: "factoring_advance crediting 1090 — invariant 2 still applies",
+      row: {
+        je_id: "test12", memo: "Factoring funding wrong credit",
+        postings: [
+          { account_number: "6400", account_type: "Expense", debit_or_credit: "debit", amount_cents: "2938", source_transaction_type: "factoring_advance" },
+          { account_number: "1090", account_type: "Asset", debit_or_credit: "credit", amount_cents: "2938", source_transaction_type: "factoring_advance" },
+        ],
+        has_expense_row: true,
+      },
+      expect: "wrong_credit_account_1090",
+    },
   ];
 
   let pass = 0;
@@ -292,7 +411,7 @@ async function run({ selftest }) {
       console.error(
         `${LABEL}: LIVE FAIL — ${violations.length} USMCA cost JE violation(s) (${summary}).\n` +
           `Baseline is 0 (shrink-only). First ${Math.min(10, violations.length)}:\n${sample}\n` +
-          `Cursor is fixing the WRITER — coordinate via OUTBOX-DEVIN-B.md.`,
+          `CC-2 owns the writer (R-153.6); CC-3 owns guard scope (R-153.7).`,
       );
       process.exitCode = 1;
       return;

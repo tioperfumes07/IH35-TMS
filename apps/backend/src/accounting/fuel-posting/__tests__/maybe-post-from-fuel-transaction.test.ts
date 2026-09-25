@@ -91,6 +91,28 @@ describe("resolveCompanyDirectCreditPreference", () => {
     );
   });
 
+  // R-153.7 (owner-stated fact, 2026-09-25): "USMCA buys fuel on two providers only: Relay and
+  // Dreamline... Dreamline-confirmed rows -> 2510; every other real USMCA fuel row -> Relay 1295.
+  // No card statement is needed to pick the rail." This is USMCA-ONLY -- every other entity keeps
+  // the pre-153.7 cash/fail-closed behavior (the "true cash" test above, on BASE's placeholder
+  // company id, is unaffected).
+  it("R-153.7: USMCA with no card evidence at all -> relay_fuel_wallet, never cash, never a throw", () => {
+    const usmca = { ...BASE, operating_company_id: "5c854333-6ea5-4faa-af31-67cb272fef80" };
+    expect(resolveCompanyDirectCreditPreference(usmca)).toBe("relay_fuel_wallet");
+    expect(resolveCompanyDirectCreditPreference(usmca, { fuel_card_id: null, notes: null, source: "import" })).toBe(
+      "relay_fuel_wallet"
+    );
+  });
+  it("R-153.7: USMCA still resolves DREAMLINE when the card code says so -- the rule does not override real evidence", () => {
+    const usmca = { ...BASE, operating_company_id: "5c854333-6ea5-4faa-af31-67cb272fef80" };
+    expect(resolveCompanyDirectCreditPreference(usmca, { fuel_card_code: "DREAMLINE" })).toBe("dreamline_card_payable");
+  });
+  it("R-153.7: a non-USMCA company with the same no-evidence shape is untouched (still cash)", () => {
+    expect(resolveCompanyDirectCreditPreference({ ...BASE, operating_company_id: "91e0bf0a-133f-4ce8-a734-2586cfa66d96" })).toBe(
+      "cash"
+    );
+  });
+
   it("explicit override wins", () => {
     expect(resolveCompanyDirectCreditPreference({ ...BASE, has_fuel_card: true, company_direct_credit: "cash" })).toBe(
       "cash"

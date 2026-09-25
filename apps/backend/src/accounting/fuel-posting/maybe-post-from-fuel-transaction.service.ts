@@ -78,6 +78,9 @@ function resolvePostingPath(candidate: FuelTxnGlPostCandidate): FuelPostingPath 
   return "company_direct";
 }
 
+/** USMCA operating_company_id — the only entity R-153.6/153.7's owner-stated rail rule applies to. */
+const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+
 /**
  * R-30.1-A (A/P control contamination fix, 2026-09-22) — SUPERSEDES the old FUEL-08 behavior of
  * this function, which collapsed EVERY card-settled fuel purchase into a blanket `ap` preference.
@@ -92,9 +95,14 @@ function resolvePostingPath(candidate: FuelTxnGlPostCandidate): FuelPostingPath 
  * never guessed:
  *   DREAMLINE (billed in arrears) -> "dreamline_card_payable" (GL 2510)
  *   RELAY (prefunded)             -> "relay_fuel_wallet"      (GL 1295)
- * True cash / undeposited stays `cash`. A card is signaled (fuel_card_id / has_fuel_card / a
- * card-shaped note) but the rail cannot be identified from a known fuel_card_types row -> FAIL
- * CLOSED (throw), never fall back to `ap` or guess a rail.
+ *
+ * R-153.7 (owner-stated fact, 2026-09-25, NOT a guess): "USMCA buys fuel on two providers only:
+ * Relay and Dreamline. USMCA runs its fuel on the IH 35 Transportation Relay account... So:
+ * Dreamline-confirmed rows -> 2510; every other real USMCA fuel row -> Relay 1295. No card
+ * statement is needed to pick the rail." This REPLACES the prior "no evidence -> cash" fallback,
+ * but ONLY for USMCA -- no other entity has this owner statement on record, so every other
+ * company keeps the pre-153.7 fail-closed/cash behavior unchanged (never widen an entity-specific
+ * owner fact into a global default).
  */
 export function resolveCompanyDirectCreditPreference(
   candidate: FuelTxnGlPostCandidate,
@@ -108,6 +116,10 @@ export function resolveCompanyDirectCreditPreference(
   // Legacy Relay-bridge rows created before fuel_card_id was stamped to the RELAY catalog row —
   // still Relay-settled by construction of the bridge itself.
   if (candidate.relay_fuel_transaction_id) return "relay_fuel_wallet";
+
+  // R-153.7: for USMCA only, no-evidence rows are owner-stated Relay, not "cash" -- checked BEFORE
+  // the cardSignaled throw below, since an owner FACT supersedes the "cannot identify" refusal.
+  if (candidate.operating_company_id === USMCA_COMPANY_ID) return "relay_fuel_wallet";
 
   const notes = (txnSignals?.notes ?? "").toLowerCase();
   const cardSignaled =
@@ -125,11 +137,14 @@ export function resolveCompanyDirectCreditPreference(
   }
   // No card signal at all (e.g. an older import row with neither a stamped fuel_card_id nor a
   // card-shaped note) — no evidence of a card/payable rail, so this is true cash, never a guess
-  // at "ap" the way the pre-fix `source === 'import'` branch used to.
+  // at "ap" the way the pre-fix `source === 'import'` branch used to. (USMCA never reaches here —
+  // handled above.)
   return "cash";
 }
 
-async function loadFuelTxnCreditSignals(
+/** R-153.6: exported so fuel-expense-document.service.ts resolves the rail from the SAME query
+ *  shape (fuel_card_id + catalogs.fuel_card_types.code) this poster already uses. */
+export async function loadFuelTxnCreditSignals(
   client: DbClient,
   operatingCompanyId: string,
   fuelTransactionId: string
