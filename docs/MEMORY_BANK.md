@@ -132,6 +132,15 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 ## Known Quirks & Blockers
 
 
+### Aug 100% + Sep Faro close (Cursor, 2026-09-25)
+
+- SPAN 5789–5794 + early-Sep 5797–5803 tied to AT `total_due` / `settlement_control` via `tie-span-and-early-sep-to-at.mts` (same reverse→load_bookended→close engine as pure-Aug/Sep 5804–5815).
+- 5812 paperwork stamped to AT TOTAL DUE **-50** (escrow only; pay-run close refuses $0 earnings — header net is truth).
+- All 23 Faro purchase days in `closed_purchase_days.json`. Create-path live outcome **89/89** charge/vendor/tour/bills PASS.
+- Purged Sep Faro driver bills reminted via `createDriverBillArtifacts` (`remint-unsettled-faro-bills.mts`); 13588/13600 tours via `mint-sep-faro-bills-and-tours.mts`.
+- `void.service` `SELECT DISTINCT … ORDER BY 1` fix (was 42P10 on reverse) shipped with this close.
+
+
 ### ACCT-F20260924 — pure-Aug AT nets + Faro 23/23 money + AR/AP (Cursor, 2026-09-24)
 - Pure-Aug driver nets 5769–5788/5795/5796 tied via `scripts/feed/tie-pure-aug-to-at.mts` (clear ALL applied deductions before one doc admin — load-level "Admin fee - Gas" double-counted). SPAN 5789–5794 stay open. Sep 5804–5815 remain $20,241.07.
 - Faro live: 89 FA, purchase $311,587.00, advance $302,019.36 = day_control exact (23/23). `closed_purchase_days` stays Aug 13-day prefix until Sep tour_id + driver_bills outcomes pass verify-one-load-create-path.
