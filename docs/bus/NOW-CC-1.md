@@ -30,3 +30,5 @@ Not routing around it by hand-setting `status='sent'` or disabling the flag myse
 7-11 while this is open, per "no seat goes idle."
 
 CC-1 | 2026-09-25 4:35 AM CT (09:35Z) | R-153.5/6 DONE | item5 9ad7910f3f (PR #22574) | item6 46fb80ad4b (PR #22577, 1 of 5 fixed, 4 of 5 DECISION NEEDED above) | fuel untouched (CC-2's). Moving to items 7-11 per R-153.7/ROUND 155.
+
+CC-1 | 2026-09-25 4:52 AM CT (09:52Z) | R-153.7 DONE | item7 96a6bc797d (PR #22581) | audited all 124 feed_input.json loads vs signed AlwaysTrack docs: 104/124 tie to the cent, 19 correctly absent (item 1's set + 8 more never-fed pre-Faro TRANSP loads on the same named documents), 1 real finding named not guessed at (load 13524, settlement says $4,200.00 but live invoice + Faro's own purchase both agree $3,800.00). Also fixed, same session: ROUND 133 P0 self-violation on my own item2/item6 scripts.ops writers — Codex's PR #22579 landed the code fix, I added the honest AUTH-001 retroactive transparency record (PR #22580, docs-only). Now on item 8 (cash advances as bill payments).
