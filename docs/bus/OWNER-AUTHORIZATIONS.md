@@ -994,3 +994,41 @@ CONSUMED — AUTH-032 — 04:02 PM CT (21:02Z). Claude Lead. R-178 COMMITTED:
 - Trial balance 0.
 - Re-measured afterwards: 256 of 257 fuel lines match their PDF date. The 1 left is 5789/13557 840.00, whose PDF prints 2026-09-29 (after its own period end); it was left as is and reported to the owner.
 - Live gates afterwards: fuel booked once PASS (515), expense account matches item PASS (175 lines), load-to-cash PASS (100 loads), control totals PASS, escrow PASS (17 drivers).
+
+---
+
+## AUTH-033
+issued_at: 2026-09-25T20:49:26.000Z
+scope: driver_finance.driver_advances (posting_date, disbursed_at only, on the one existing row 35269c66-a8df-4443-a7b5-4f78537d28b3), accounting.journal_entries, accounting.journal_entry_postings — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly the one named driver bill (load 13570, bill 4a34ee6d-8877-48ec-bd59-460e645b820d). No new driver_advances or driver_liabilities row.
+action: OWNER_AUTH_ID=AUTH-033 tsx scripts/ops/2026-09-25-cc1-r174-post-gl-13570-advance.ts (production, no DRY_RUN) — completes AUTH-031's item B / load 13570 fix, corrected for what actually happened on main between AUTH-031's DRY_RUN and its intended production run.
+expires_at: 2026-09-25T22:49:00.000Z
+status: OPEN
+
+Supersedes AUTH-031's "create a new row" plan for load 13570 ONLY (AUTH-031's own landed text cannot
+be edited per house rule; this is the corrected follow-on) and takes the number 033 because Lead
+claimed 032 concurrently (fuel-date fix above) — reconfirmed the free number on rebase. Running
+AUTH-031's script under DRY_RUN=1 refused with its own double-book guard: "driver_bill 4a34ee6d...
+already has a live driver_advances row (35269c66-a8df-4443-a7b5-4f78537d28b3)". Re-queried live
+(twice, ~30 min apart, unchanged both times): that row (originally unlinked, $200.00, driver
+61727a46) is now linked_driver_bill_id = 4a34ee6d... (load 13570) with disbursement_status =
+'disbursed', but disbursed_at and posting_date are both still NULL and
+accounting.journal_entry_postings has ZERO rows for source_transaction_type='driver_advance',
+source_transaction_id=this id. Someone else (not this session — the link/status change predates
+AUTH-031's own issuance timestamp) completed the record-linking half of the fix but not the
+GL-posting half. Root cause context (the advance itself, from AUTH-031): the truth JSON's
+driver-doc deductions[] for settlement 5801 carries "Cash Advance-Efectivo" -$200.00, dated
+2026-09-01, load 13570.
+
+This new script (scripts/ops/2026-09-25-cc1-r174-post-gl-13570-advance.ts) creates nothing: it
+re-verifies the row's linked_driver_bill_id live, re-confirms no live posted JE exists for it
+(exits cleanly, no-op, if one now does), sets disbursed_at/posting_date (COALESCE, so it never
+overwrites a value someone else may set first), then posts the GL via the same
+postSourceTransactionInClientTx call disburseDriverAdvanceCore's own phase 2 uses — replicated
+in-client for the same SET ROLE ih35_app reason AUTH-031 already documents (the ~/.ih35-gate.env
+credential cannot assume that role, confirmed again here). AUTH-030 (R-176, the 12-row batch) is
+now CONSUMED (see above, 03:14 PM CT) — confirmed row 35269c66 is not one of Lead's 12 (different
+advance numbers, different settlement documents) so no scope overlap; with AUTH-030 already landed,
+this fix's own proof output IS the final "GL 1245 nets 0" proof for the September cash-advance line
+item, not a partial one. DRY_RUN=1 first.
+
+— CC-1
