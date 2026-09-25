@@ -1,29 +1,32 @@
-# ROUND 166.1 (addendum) + ROUND 166 — CC-3. Full verbatim orders: `docs/bus/archive/NOW-CC-3-2026-09-25-14.md`.
-Lead, latest 1:50 PM CT: R-168 DONE, proceed with R-166/166.1 now; rebase LAW5 once after CC-2's
-check-engine PR merges, gate once. Deadline 21:00Z, miss -> Lead. Do not touch expense rows. No
-subagents. DONE line: `CC-3 | R-166 DONE | <sha> | <live sha> | 4 loads x 6 surfaces pasted | NEXT`.
+# ROUND 173 — CC-3. Load boards identical, then the Settlement Creator. Lead, 2:47 PM CT (19:47Z).
+Full order: `~/Downloads/09-25-26-handoff/orders/09-25-2026-CC-3-ROUND-173-...md`. Part 1 due
+09-26 01:00Z, Part 2 due 09-26 14:00Z; miss -> CC-1 takes the surface. Laws: handoff §0/§2/§5.
 
-CC-3 | R-166/166.1 IN PROGRESS | Prior findings in archive -15/-16/-17.md. New this pass:
+CC-3 | R-173 PART 1 IN PROGRESS | The "5 load boards" (not guessed, read from code): DispatchPage's
+`ViewMode` type has exactly 5 literal values -- Overview/List/Kanban/Round Trips/Truck Line --
+backed by DispatchOverview / DispatchBoard / DispatchKanban / RoundTrips / TruckLineBoard.tsx
+(apps/frontend/src/pages/Dispatch.tsx + pages/dispatch/*.tsx). None of the 4 non-List ones showed
+any cost/margin figure before this pass (List showed none either); RoundTrips/TruckLineBoard
+showed raw rate_total_cents only, not from the shared rollup.
 
-GOOD NEWS, verified not guessed: R-166 pt 5's guard ALREADY EXISTS on the LAW5 branch --
-`scripts/verify-one-source-per-number.mjs`'s `SIX_SURFACES` registry + `auditSixSurfaces()`,
-built earlier (R-151.3/153 lineage), already wired into that guard's own `live()` and selftest.
-Extended it this pass: added the 7th entry "driver bill (R-166)" for LoadDetailDriverPayTab.tsx's
-new getLoadCostRollup wiring (committed c2f20ed9e0 last pass); selftest PASS, live run exit 0.
-Kept the 6 original entries (Kanban badge + settlement KPI grid aren't in R-166's own six-name
-list but are real, still-enforced coverage -- narrowing would be a regression).
+DONE so far (all on LAW5 branch, apps/backend+frontend tsc clean, not yet pushed -- LAW5 merge
+still gated on CC-2's check-engine PR):
+1. Extended load-cost-rollup.sql.ts with fuel_cents + expenses_cents (strict split of costs_cents,
+   discriminator = expenses.source_fuel_transaction_id, LAW 4's own existing marker) + net_cents
+   (= margin_cents, ROUND 173's column name). Additive, every existing consumer unaffected.
+   Live-verified on 8 real USMCA loads: fuel+expenses==costs on every row, 0 mismatches.
+2. LoadsPlanner.tsx: added Fuel + Expenses columns, Margin label -> Net.
+3. DispatchBoard.tsx (List board): added Revenue/Fuel/Expenses/Driver Pay/Net as 5 new opt-in
+   columns (defaultHidden, respects the locked DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05 5-band
+   layout -- no visual change to what's on-screen by default).
 
-REMAINING to register: "invoice" (R-166's sixth named surface, InvoiceDetailPage.tsx) --
-deliberately not wiring it yet: an invoice can bill multiple loads across multiple lines (unlike
-the 1:1 driver-bill-to-load case just done), so the correct cross-check semantics need more care
-than a rushed pattern-copy on live financial UI. Also still open: tour-readout.routes.ts's
-hand-copied formula (archive -16.md), load-settlement-summary.routes.ts's
-created_at-DESC/no-cancelled-filter resolver (archive -16.md, real current-vs-history gap),
-verify-load-views-current-trip-only.mjs (166.1's own new guard, not started).
+REMAINING: wire DispatchKanban/RoundTrips/TruckLineBoard/DispatchOverview the same way; register
+all in SIX_SURFACES; wire Load Costs/Pre-Settlement/Settlement onto the same 5 fields (2 real gaps
+already found and NOT yet fixed: tour-readout.routes.ts hand-copies the formula,
+load-settlement-summary.routes.ts resolves via created_at DESC with no cancelled filter -- both in
+archive -16.md); build verify-load-views-current-trip-only.mjs +
+verify-presettlement-shows-whole-tour.mjs; FAST-MERGE; live proof table, 3 real open loads incl. a
+2-load tour. Part 2 (Settlement Creator) not started -- large net-new feature, starts after Part 1
+merges. Still watching for CC-2's check-engine PR. No expense row touched. No subagent used.
 
-Still deferring the settlement/tour-readout/invoice wiring + the current-trip-only guard until
-right after LAW5 merges (build on the corrected formula, not duplicate about-to-be-superseded
-work). Watching for CC-2's check-engine PR (still not open as of this post). No expense row
-touched. No subagent used.
-
-Full prior CC-3 history: `docs/bus/archive/NOW-CC-3-2026-09-25-9.md` through `-17.md`.
+Full prior CC-3 history: `docs/bus/archive/NOW-CC-3-2026-09-25-9.md` through `-18.md`.
