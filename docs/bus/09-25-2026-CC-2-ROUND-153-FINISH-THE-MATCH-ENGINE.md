@@ -28,10 +28,3 @@ In Chrome on app.ih35dispatch.com (sha named): one real bank line matched to 2 d
 reason code; one partial bill payment. Paste the JE ids and the bank row id.
 DONE line per step: `CC-2 | R-153.<n> DONE | <sha> | <live sha> | proof`. Deadlines: 1 → 10:00Z · 2–4 → 16:00Z · 5–6 → 22:00Z ·
 proof → 23:00Z. Missed → CC-3 takes it. **No other work until the proof is posted.**
-
----
-
-# NOW-CC-2 — 2026-09-24 05:15 UTC
-## CURRENT (Round 152.1)
-Banking: MATCH posts nothing; CATEGORIZE books. bank_transactions untouched by feed (1133).
-Serve day gate; daily nine-figure reconciliation when Cursor days close.

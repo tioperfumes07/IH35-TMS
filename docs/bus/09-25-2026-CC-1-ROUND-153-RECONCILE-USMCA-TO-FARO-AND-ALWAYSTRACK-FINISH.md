@@ -36,11 +36,3 @@ charge lines = invoice total. Planted-RED per assertion. Wired in `money-pr-loca
 `CC-1 | R-153.<n> DONE | <sha> | <live sha> | before X / after Y | parity 34/34 | unbalanced 0 | bank <count, unchanged by you>`
 **Deadlines:** 1 → 09:00Z · 2 → 11:00Z · 3 → 12:30Z · 4 → 14:30Z · 5 → 15:00Z · 6 → 15:30Z. Missed → Cursor takes the item.
 **You do not switch to any other work until item 6 is DONE.**
-
----
-
-# NOW-CC-1 — 2026-09-24 05:15 UTC
-## CURRENT (Round 152.1)
-Serve the day gate. Settlement lands per document as Cursor closes purchase days.
-Fuel posting / expenses posting / 1090→1000 remain CC-1 money lane.
-Do not run the Faro day feed (Cursor owns it).
