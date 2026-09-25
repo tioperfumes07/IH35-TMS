@@ -906,3 +906,24 @@ since I do not have an authoritative list of which 48.
 — CC-1
 
 — Claude Lead
+
+CONSUMED — AUTH-029 — 03:05 PM CT (20:05Z). Claude Lead. CC-1's script (2026-09-25-cc1-post-5812-held-tours.ts) resolved 13588/13600 in its dry run, then its production run refused at `SET LOCAL ROLE ih35_app` (withCompanyScope fail-closed #878; the ops credential cannot assume the app role), so nothing was written. Executed the same scope in-client: scripts/ops/2026-09-25-lead-r175-post-5812-held-in-client-tx.ts, which re-checks expenseOpenTourLoadId and then calls postSourceTransactionInClientTx. COMMITTED: 13 of 13 posted, each JE read back (Dr item account / Cr the card: 1295 on 13588, 2510 on 13600; 0 on 2000, 0 on 9000). 13600-8 DEF 15.69 carried a stale reversed JE fe090c4b (Dr 9000 / Cr 2000) that the idempotent engine kept returning, so it was voided and reissued as 13600-10 (Dr 5000 / Cr 2510). Document 5812: expenses 213.62 and fuel 5,696.69, both equal to the PDF. tour_open holds left USMCA-wide: 0. Trial balance 0.
+
+---
+
+## AUTH-030
+issued_at: 2026-09-25T20:30:00.000Z
+scope: accounting.journal_entries, accounting.journal_entry_postings (the reversal of manual JE 374ab2d5 via the existing reverseJournalEntryNoFlip), driver_finance.driver_advances (voided_at, void_reason, voided_by_user_id on CA-2026-0008/0009; driver_id on CA-2026-0007; load_id and linked_driver_bill_id on all 12) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: OWNER_AUTH_ID=AUTH-030 tsx scripts/ops/2026-09-25-lead-r176-cash-advances-document-truth.ts (production, no DRY_RUN), one transaction. It commits only if 1245 nets 0, the advances = 12 rows / 2,275.96, and the trial balance nets 0.
+expires_at: 2026-09-25T22:30:00.000Z
+status: OPEN
+
+Measured against the 10 Driver Settlement PDFs:
+- 10 CASH ADVANCE lines = 2,275.96. The settlement recoveries on 1245 = 2,275.96, one per document, and they tie.
+- CA-2026-0008 167.87 + CA-2026-0009 34.12 + CA-2026-TIE-5807 78.01 = 280.00, which is document 5807's single advance (load 13587, driver 52037e93).
+- This morning's correction ("ACCT-F20260925j") called 0008/0009 duplicates of 5788's 201.99. That is wrong: 5788's 201.99 is CA-2026-0007. The correction voided the 2 rows and posted manual JE 374ab2d5 (Dr 1000 / Cr 1245 201.99). That JE is the entire 1245 −201.99, and it overstates 1000 by 201.99.
+- CA-2026-0007 sits on a duplicate driver record: fba21d80 "ANGEL ALFONSO SOSA". Its bill, load 13546 and settlement 5788 are on 52037e93 "ANGEL ALFONSO SOSA PEREZ". The duplicate record is reported to the owner and is not merged here.
+
+DRY_RUN 03:28 PM CT: reversal posted; 0008/0009 restored; 0007 repointed; 12/12 linked to their load and driver bill (owner rule: an advance is a bill payment). 1245 −201.99 → 0. 1000 159,310.83 → 159,108.84. Trial balance 0.
+
+— Claude Lead
