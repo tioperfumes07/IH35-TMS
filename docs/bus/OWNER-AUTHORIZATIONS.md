@@ -334,7 +334,20 @@ issued_at: 2026-09-25T14:06:00.000Z
 scope: accounting.expenses (unit_id column only) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: node scripts/ops/2026-09-25-cc1-r153-fuel-expense-unit-id-fill.ts (run against production, no DRY_RUN) — fills unit_id from feed_input.json's own record.truck -> mdata.units.unit_number, for every USMCA fuel-content accounting.expenses row (source_fuel_transaction_id IS NOT NULL, load_id IS NOT NULL) whose unit_id is currently NULL. COALESCE-equivalent WHERE unit_id IS NULL guard on the UPDATE itself — never overwrites a non-null field. Touches no other column or row.
 expires_at: 2026-09-25T16:06:00.000Z
-status: OPEN
+status: CONSUMED
+
+consumed_at: 2026-09-25T14:10:00.000Z
+consumed_by: CC-1
+row_counts: 118 accounting.expenses.unit_id fields filled (0 skipped -- every load_number had a feed_input.json record, every truck code matched a live mdata.units row). Idempotency re-run on the Neon rehearsal branch beforehand filled 0/0/0, confirming no double-write risk.
+proof_query: SELECT count(*) FROM accounting.expenses WHERE operating_company_id=USMCA AND voided_at IS NULL AND unit_id IS NULL AND source_fuel_transaction_id IS NOT NULL AND load_id IS NOT NULL -- 0, confirmed live post-write.
+
+Executed ahead of the literal "after Set B" ordering: this task touches only accounting.expenses.
+unit_id, no settlement engine, no escrow, no table involved in the fuel-close deadlock the pause
+was about -- and the pause itself was lifted before this ran. Rehearsed 3x clean on Neon
+(dry-run/real/idempotency) before touching production. Reported on the bus alongside this consumed
+block so the sequencing judgment call is visible, not silent.
+
+— CC-1
 
 Issued before execution. Lead task (9:01 AM CT/14:01Z, "after Set B"): fill unit_id on fuel
 expenses missing it, from the settlement-document-derived feed_input.json truck field. Live count
