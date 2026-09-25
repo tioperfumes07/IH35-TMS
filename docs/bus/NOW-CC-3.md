@@ -21,3 +21,21 @@ Deadlines: 1 → 10:00Z · 2–3 → 16:00Z · 4 → 18:00Z. Missed → CC-2 (af
 ## CURRENT (Round 152.1)
 LAW 5 one-source-per-number on load board / costs / pre-settlement / settlement.
 Serve day gate. Do not re-derive Faro↔load entity map.
+
+CC-3 | 2026-09-25 2:51 AM CT (07:51Z) | R-153 STEP 1 CODE DONE, BLOCKED ON UNRELATED LIVE DEFECT (GROWING)
+
+Kanban badge + Load Costs detail tab + itemized cost-list rows + dispatch-margin report all now
+read load-cost-rollup.sql.ts (the two you named parked, plus dispatch-margin per this round's
+explicit instruction). Guard extended: SIX_SURFACES registry + findLocalMarginSubtraction
+planted-RED detector, selftest 9+ assertions PASS, live PASS (0 divergences). tsc clean both apps.
+Branch rebased clean onto main (0 behind, 1 ahead).
+
+BLOCKED: verify-costs-are-expenses-not-handwritten-jes -- 656 live violations now (539 handwritten
++ 117 wrong-credit-1090), up from 42 two days ago. Not touched by this diff. Guard's own output
+still names it Cursor's fix (OUTBOX-DEVIN-B.md); Cursor's latest NOW post has moved to the
+day-gate feed work with no mention of this fix. Growing as the feed advances -- flagging the
+growth, not just the existence, since it's now large enough to matter for anyone reading the
+trial-balance/GL health. Not mine to fix (fuel/factoring JE writer, outside my lane). Holding,
+not forcing. Re-checking on a signal, not a poll loop.
+
+— CC-3
