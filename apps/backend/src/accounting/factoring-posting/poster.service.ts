@@ -77,6 +77,7 @@ import {
   claimFactoringLifecyclePostingKey,
   findAllLifecyclePostingKeyJes,
   findLifecyclePostingKeyJe,
+  findLiveLifecyclePostingKeyJe,
   findStrictLifecycleRepairCandidate,
   liveJournalEntryNotReversedSql,
   validateLifecycleJeExactShape,
@@ -730,7 +731,7 @@ async function createFactoringJournalEntryAtomically(opts: {
     ]);
     await ensureOpenPeriod(client, opts.je.operating_company_id, opts.je.entry_date);
 
-    const existingKey = await findLifecyclePostingKeyJe(client, {
+    const existingKey = await findLiveLifecyclePostingKeyJe(client, {
       operating_company_id: opts.je.operating_company_id,
       factoring_advance_id: opts.factoring_advance_id,
       source_transaction_type: opts.source_transaction_type,
@@ -930,7 +931,7 @@ async function postFactoringAdvanceEventImpl(input: PostFactoringAdvanceInput): 
     const memo = `Factoring funding ${advance.display_id}`;
     const expectedLegs = fundingExpectedLegs({ cash, reserve, fee, ach, liability });
     const eventKey = "funding";
-    const keyJe = await findLifecyclePostingKeyJe(client, {
+    const keyJe = await findLiveLifecyclePostingKeyJe(client, {
       operating_company_id: input.operating_company_id,
       factoring_advance_id: input.factoring_advance_id,
       source_transaction_type: "factoring_advance",
@@ -1301,7 +1302,7 @@ export async function postFactoringAdvanceEventInClientTx(
     const memo = `Factoring funding ${advance.display_id}`;
     const expectedLegs = fundingExpectedLegs({ cash, reserve, fee, ach, liability });
     const eventKey = "funding";
-    const keyJe = await findLifecyclePostingKeyJe(client, {
+    const keyJe = await findLiveLifecyclePostingKeyJe(client, {
       operating_company_id: input.operating_company_id,
       factoring_advance_id: input.factoring_advance_id,
       source_transaction_type: "factoring_advance",
@@ -1735,7 +1736,7 @@ async function postFactoringCustomerPaymentEventImpl(input: PostFactoringCustome
 
     const memo = `Factoring customer payment ${advance.display_id} (${amount}@${entryDate})`;
     const eventKey = `customer_payment:${amount}@${entryDate}`;
-    const keyJe = await findLifecyclePostingKeyJe(client, {
+    const keyJe = await findLiveLifecyclePostingKeyJe(client, {
       operating_company_id: input.operating_company_id,
       factoring_advance_id: input.factoring_advance_id,
       source_transaction_type: "factoring_customer_payment",
@@ -1932,7 +1933,7 @@ async function postFactoringReleaseEventImpl(input: PostFactoringReleaseInput): 
 
     const memo = `Factoring reserve release ${advance.display_id} (${releaseAmount}@${entryDate})`;
     const eventKey = `reserve_release:${releaseAmount}@${entryDate}`;
-    const keyJe = await findLifecyclePostingKeyJe(client, {
+    const keyJe = await findLiveLifecyclePostingKeyJe(client, {
       operating_company_id: input.operating_company_id,
       factoring_advance_id: input.factoring_advance_id,
       source_transaction_type: "factoring_reserve_release",
@@ -2438,13 +2439,13 @@ async function postFactoringChargebackEventImpl(input: PostFactoringChargebackIn
     };
 
     // Posting-key check UNDER lock — before status/outstanding rejection.
-    const existingRepay = await findLifecyclePostingKeyJe(client, {
+    const existingRepay = await findLiveLifecyclePostingKeyJe(client, {
       operating_company_id: input.operating_company_id,
       factoring_advance_id: input.factoring_advance_id,
       source_transaction_type: "factoring_chargeback",
       event_key: repayEventKey,
     });
-    const existingReturn = await findLifecyclePostingKeyJe(client, {
+    const existingReturn = await findLiveLifecyclePostingKeyJe(client, {
       operating_company_id: input.operating_company_id,
       factoring_advance_id: input.factoring_advance_id,
       source_transaction_type: "factoring_chargeback",
@@ -2960,7 +2961,7 @@ async function postFactoringDefaultInterestAccrualEventImpl(
         return { kind: "repair_candidate_invalid" as const, reason: "missing_accrual_row" };
       }
 
-      const keyJe = await findLifecyclePostingKeyJe(client, {
+      const keyJe = await findLiveLifecyclePostingKeyJe(client, {
         operating_company_id: input.operating_company_id,
         factoring_advance_id: input.factoring_advance_id,
         source_transaction_type: "factoring_default_interest",

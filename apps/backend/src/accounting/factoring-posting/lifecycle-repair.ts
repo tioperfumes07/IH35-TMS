@@ -573,8 +573,64 @@ export async function attachFactoringLifecycleSourceLinksStrict(
 }
 
 /**
+ * R-159.2 (Claude-Lead ruling): find the next free revision suffix for an event_key whose prior
+ * claim's JE has been reversed, i.e. the smallest n such that "<baseEventKey>#rev<n>" is not yet
+ * claimed for this (advance, source_transaction_type). Scans existing "<base>#rev%" keys rather than
+ * counting them, so a gap (a revision claim voided/never-committed) never causes a collision.
+ */
+async function nextFactoringEventRevisionNumber(
+  client: DbClient,
+  opts: {
+    operating_company_id: string;
+    factoring_advance_id: string;
+    source_transaction_type: FactoringLifecycleSourceType;
+    base_event_key: string;
+  }
+): Promise<number> {
+  const res = await client.query<{ event_key: string }>(
+    `
+      SELECT event_key
+        FROM accounting.factoring_lifecycle_posting_keys
+       WHERE operating_company_id = $1::uuid
+         AND factoring_advance_id = $2::uuid
+         AND source_transaction_type = $3
+         AND event_key LIKE $4
+    `,
+    [
+      opts.operating_company_id,
+      opts.factoring_advance_id,
+      opts.source_transaction_type,
+      `${opts.base_event_key}#rev%`,
+    ]
+  );
+  let max = 0;
+  const suffix = new RegExp(`^${opts.base_event_key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}#rev(\\d+)$`);
+  for (const row of res.rows) {
+    const m = suffix.exec(row.event_key);
+    if (m) max = Math.max(max, Number(m[1]));
+  }
+  return max + 1;
+}
+
+/**
  * Claim a unique lifecycle posting key in the caller-owned txn (concurrency backstop).
  * Uses ON CONFLICT DO NOTHING so the loser never leaves the txn aborted (25P02).
+ *
+ * R-159.2 (Claude-Lead ruling, 2026-09-25) — REVISION CLAIMS. A posting-key claim used to be
+ * permanent: once (advance, type, event_key) was claimed, no caller could ever claim it again, even
+ * after the claimed JE was reversed (reverse-not-flip never releases the claim). That made a
+ * corrected re-post of the SAME event (e.g. re-splitting a bundled wire fee after reversing the
+ * original funding JE) impossible for any caller, on any credential — an engine defect, not a
+ * permissions problem. Confirmed live: AUTH-035, FAC-2026-00001, reverse succeeded, re-post refused
+ * with gate=already_posted, atomically rolled back.
+ *
+ * Fix, matching how NetSuite/QBO carry a correction: on a conflict, check whether the CONFLICTING
+ * claim's own journal_entry_id has since been reversed (reversed_by_je_id IS NOT NULL — reverse-not-
+ * flip, so status stays 'posted' but this column tells the true story). If it has, claim a NEW,
+ * distinct key instead: "<event_key>#rev<n>", recording reversal_of = the prior claim's own id. The
+ * ORIGINAL claim row is never edited or deleted (void-never-delete). If the conflicting claim's JE is
+ * still live (unreversed), behavior is UNCHANGED: "already_claimed", exactly as before — a second
+ * live claim for the same event is still refused, idempotency intact.
  */
 export async function claimFactoringLifecyclePostingKey(
   client: DbClient,
@@ -605,6 +661,54 @@ export async function claimFactoringLifecyclePostingKey(
     ]
   );
   if (res.rows[0]?.journal_entry_id) return "claimed";
+
+  // Conflict: is the prior claim's JE reversed? If so, this is a correction, not a collision.
+  const prior = await client.query<{ id: string; reversed: boolean }>(
+    `
+      SELECT k.id::text AS id, (je.reversed_by_je_id IS NOT NULL) AS reversed
+        FROM accounting.factoring_lifecycle_posting_keys k
+        JOIN accounting.journal_entries je ON je.id = k.journal_entry_id
+       WHERE k.operating_company_id = $1::uuid
+         AND k.factoring_advance_id = $2::uuid
+         AND k.source_transaction_type = $3
+         AND k.event_key = $4
+       LIMIT 1
+    `,
+    [opts.operating_company_id, opts.factoring_advance_id, opts.source_transaction_type, opts.event_key]
+  );
+  const priorRow = prior.rows[0];
+  if (!priorRow || !priorRow.reversed) return "already_claimed";
+
+  const n = await nextFactoringEventRevisionNumber(client, {
+    operating_company_id: opts.operating_company_id,
+    factoring_advance_id: opts.factoring_advance_id,
+    source_transaction_type: opts.source_transaction_type,
+    base_event_key: opts.event_key,
+  });
+  const revisionKey = `${opts.event_key}#rev${n}`;
+  const revRes = await client.query<{ journal_entry_id: string }>(
+    `
+      INSERT INTO accounting.factoring_lifecycle_posting_keys (
+        operating_company_id, factoring_advance_id, source_transaction_type, event_key, journal_entry_id, reversal_of
+      )
+      VALUES ($1::uuid, $2::uuid, $3, $4, $5::uuid, $6::uuid)
+      ON CONFLICT (operating_company_id, factoring_advance_id, source_transaction_type, event_key)
+      DO NOTHING
+      RETURNING journal_entry_id::text AS journal_entry_id
+    `,
+    [
+      opts.operating_company_id,
+      opts.factoring_advance_id,
+      opts.source_transaction_type,
+      revisionKey,
+      opts.journal_entry_id,
+      priorRow.id,
+    ]
+  );
+  if (revRes.rows[0]?.journal_entry_id) return "claimed";
+  // Extremely rare: a concurrent claimer took this exact revision number in between. The caller's
+  // own race-handling (FactoringLifecyclePostingKeyRaceError -> re-resolve via the *_live lookup)
+  // already exists for the canonical key; a second collision on a revision key is treated the same.
   return "already_claimed";
 }
 
@@ -633,6 +737,47 @@ export async function findLifecyclePostingKeyJe(
          AND factoring_advance_id = $2::uuid
          AND source_transaction_type = $3
          AND event_key = $4
+       LIMIT 1
+    `,
+    [
+      opts.operating_company_id,
+      opts.factoring_advance_id,
+      opts.source_transaction_type,
+      opts.event_key,
+    ]
+  );
+  return res.rows[0]?.journal_entry_id ?? null;
+}
+
+/**
+ * R-159.2 — the "gate check before posting" sibling of findLifecyclePostingKeyJe. Returns the
+ * claimed JE ONLY when it is still LIVE (unreversed): a claim whose JE has since been reversed is
+ * NOT "already posted" any more — it is eligible for a fresh, corrected re-post under a revision key
+ * (claimFactoringLifecyclePostingKey handles the revision-key mechanics transparently). Every
+ * "already_posted?" gate check in the posters should use THIS function, not the raw one above; the
+ * raw findLifecyclePostingKeyJe stays as-is for its OTHER use (resolving the winner of a genuine
+ * concurrent-claim race, where "any claim, reversed or not" is the correct thing to look up).
+ */
+export async function findLiveLifecyclePostingKeyJe(
+  client: DbClient,
+  opts: {
+    operating_company_id: string;
+    factoring_advance_id: string;
+    source_transaction_type: FactoringLifecycleSourceType;
+    event_key: string;
+  }
+): Promise<string | null> {
+  const notReversed = await liveJournalEntryNotReversedSql(client);
+  const res = await client.query<{ journal_entry_id: string }>(
+    `
+      SELECT k.journal_entry_id::text AS journal_entry_id
+        FROM accounting.factoring_lifecycle_posting_keys k
+        JOIN accounting.journal_entries je ON je.id = k.journal_entry_id
+       WHERE k.operating_company_id = $1::uuid
+         AND k.factoring_advance_id = $2::uuid
+         AND k.source_transaction_type = $3
+         AND k.event_key = $4
+         ${notReversed}
        LIMIT 1
     `,
     [
