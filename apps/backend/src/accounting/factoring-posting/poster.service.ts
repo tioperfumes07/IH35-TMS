@@ -1225,6 +1225,315 @@ async function postFactoringAdvanceEventImpl(input: PostFactoringAdvanceInput): 
   };
 }
 
+/**
+ * ACCT-F2026092585 — the client-accepting sibling postFactoringAdvanceEvent never had, mirroring
+ * reverseFactoringAdvanceEventInClientTx's own precedent above. postFactoringAdvanceEventImpl opens
+ * TWO of its own connections (withLuciaBypass for the read-only "prepare" phase, withCurrentUser for
+ * the write phase) — both run `SET ROLE ih35_app`, which the ~/.ih35-gate.env credential this repo's
+ * one-shot ops scripts use cannot assume (the same class of failure ACCT-F2026092584 fixed for
+ * driver_advance/cash_advance). This is the SAME logic as postFactoringAdvanceEventImpl, merged onto
+ * ONE caller-supplied client instead of two separate connections — note the two phases were ALREADY
+ * two separate, non-atomic transactions in the original (phase 1 commits before phase 2 opens), so
+ * running both on one already-open client is strictly no less atomic than production's own existing
+ * behavior, never more fragile.
+ *
+ * Scope limits, deliberate: only the "post" gate's write path is implemented here. Every other gate
+ * (flag_off, advance_not_found, zero_amount, the policy_* gates, repair_ambiguous,
+ * repair_candidate_invalid) is read-only and returns identically. The "already_posted" gate is NOT
+ * replicated — repairAlreadyPostedLifecycle opens its own connection with no client-accepting form,
+ * and a caller of THIS function is expected to be posting a funding event that has never been posted
+ * (typically right after reverseFactoringAdvanceEventInClientTx on the same client) — hitting
+ * "already_posted" here is unexpected and throws loudly rather than silently degrading or hiding a
+ * repair path that would itself fail on this credential.
+ *
+ * Also deliberately skips enqueueJournalEntrySideEffects (QBO sync-job enqueue + best-effort
+ * immediate QBO push): USMCA runs with QBO sync-back policy-OFF (ALL FLAGS ON except QBO syncback —
+ * see docs/bus memory), so this is a no-op for the one entity this function is used against; not
+ * calling it here avoids enqueueing a job before this caller's own transaction has even committed
+ * (the same after-commit-ordering concern withLuciaBypass's own comments raise about a GL poster
+ * awaited inline on a second connection).
+ */
+export async function postFactoringAdvanceEventInClientTx(
+  client: DbClient,
+  input: PostFactoringAdvanceInput
+): Promise<PostResult> {
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+
+  const prepared = await (async () => {
+    if (!(await factoringPostingEnabled(client, input.operating_company_id))) return { gate: "flag_off" as const };
+
+    const advance = await loadAdvance(client, input.operating_company_id, input.factoring_advance_id);
+    if (!advance) return { gate: "advance_not_found" as const };
+
+    let entryDate: string;
+    try {
+      entryDate = resolveCanonicalEntryDate(
+        input.advanced_at_iso,
+        advance.advanced_at,
+        advance.submitted_at,
+        companyBusinessDate()
+      );
+    } catch (e) {
+      if (e instanceof FactoringEntryDateError) return { gate: e.reason };
+      throw e;
+    }
+
+    const faro = await requireFaroBoundAdvance(
+      client,
+      input.operating_company_id,
+      input.factoring_advance_id,
+      entryDate
+    );
+    if (!faro.ok) return { gate: faro.reason! };
+
+    const liability = Number(input.funding_figures?.invoice_total_cents ?? advance.invoice_total_cents ?? 0);
+    const reserve = Number(input.funding_figures?.reserve_cents ?? advance.reserve_amount_cents ?? 0);
+    const fee = Number(input.funding_figures?.fee_cents ?? advance.factor_fee_cents ?? 0);
+    const ach = Number(input.funding_figures?.ach_cents ?? 0);
+    if (liability <= 0) return { gate: "zero_amount" as const };
+    const cash = liability - reserve - fee - ach;
+    if (cash < 0 || reserve < 0 || fee < 0 || ach < 0) {
+      throw new Error(
+        `factoring_funding_figures_invalid: liability=${liability} reserve=${reserve} fee=${fee} ach=${ach} => cash=${cash}`
+      );
+    }
+
+    const memo = `Factoring funding ${advance.display_id}`;
+    const expectedLegs = fundingExpectedLegs({ cash, reserve, fee, ach, liability });
+    const eventKey = "funding";
+    const keyJe = await findLifecyclePostingKeyJe(client, {
+      operating_company_id: input.operating_company_id,
+      factoring_advance_id: input.factoring_advance_id,
+      source_transaction_type: "factoring_advance",
+      event_key: eventKey,
+    });
+    const candidate = await findStrictLifecycleRepairCandidate(client, {
+      operating_company_id: input.operating_company_id,
+      factoring_advance_id: input.factoring_advance_id,
+      source_transaction_type: "factoring_advance",
+      memo,
+      expected_legs: expectedLegs,
+    });
+    if (candidate.kind === "ambiguous") return { gate: "repair_ambiguous" as const };
+    if (candidate.kind === "invalid") return { gate: "repair_candidate_invalid" as const, reason: candidate.reason };
+    if (keyJe || candidate.kind === "unique") {
+      return {
+        gate: "already_posted" as const,
+        memo,
+        reserve,
+        entryDate,
+        eventKey,
+        expected_legs: expectedLegs,
+        journal_entry_id: keyJe ?? candidate.journal_entry_id ?? null,
+      };
+    }
+
+    // Resolve every account per-entity, fail-closed. NO ar_control at funding (borrowing keeps A/R).
+    const cashAccountId = await resolveRoleAccount(client, input.operating_company_id, "cash_clearing");
+    const reserveAccountId = await resolveRoleAccount(client, input.operating_company_id, "factor_reserve_held");
+    const feeAccountId = await resolveRoleAccount(client, input.operating_company_id, "factor_fee_expense");
+    const wireFeeAccountId =
+      ach > 0 ? await resolveRoleAccount(client, input.operating_company_id, "factor_wire_fee") : null;
+    const liabilityAccountId = await resolveRoleAccount(client, input.operating_company_id, "factoring_advance_liability");
+
+    const postings: Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: number; description: string }> = [];
+    if (cash > 0) postings.push({ account_id: cashAccountId, debit_or_credit: "debit", amount_cents: cash, description: `${memo} — cash advanced` });
+    if (reserve > 0) postings.push({ account_id: reserveAccountId, debit_or_credit: "debit", amount_cents: reserve, description: `${memo} — reserve held (due-from-factor)` });
+    if (fee > 0) postings.push({ account_id: feeAccountId, debit_or_credit: "debit", amount_cents: fee, description: `${memo} — factoring fee (interest & financing)` });
+    if (ach > 0) {
+      if (!wireFeeAccountId) {
+        throw new Error("factor_wire_fee CoA role unbound — cannot post ACH/wire fee (FACT-05)");
+      }
+      postings.push({
+        account_id: wireFeeAccountId,
+        debit_or_credit: "debit",
+        amount_cents: ach,
+        description: `${memo} — bank/ACH wire fee`,
+      });
+    }
+    postings.push({ account_id: liabilityAccountId, debit_or_credit: "credit", amount_cents: liability, description: `${memo} — factoring advance (liability)` });
+
+    return {
+      gate: "post" as const,
+      memo,
+      entryDate,
+      postings,
+      reserve,
+      fee,
+      cash,
+      liability,
+      ach,
+      hasFundingFigures: input.funding_figures != null,
+      expected_legs: expectedLegs,
+      eventKey,
+    };
+  })();
+
+  if (prepared.gate === "flag_off") return FLAG_OFF;
+  if (prepared.gate === "advance_not_found") return { posted: false, reason: "advance_not_found" };
+  if (prepared.gate === "zero_amount") return { posted: false, reason: "zero_amount" };
+  if (prepared.gate === "policy_invalid_entry_date") return { posted: false, reason: "policy_invalid_entry_date" };
+  if (prepared.gate === "policy_missing_entry_date") return { posted: false, reason: "policy_missing_entry_date" };
+  if (prepared.gate === "policy_faro_agreement") return { posted: false, reason: "policy_faro_agreement" };
+  if (prepared.gate === "policy_advance_not_bound_to_faro") {
+    return { posted: false, reason: "policy_advance_not_bound_to_faro" };
+  }
+  if (prepared.gate === "repair_ambiguous") return { posted: false, reason: "repair_ambiguous" };
+  if (prepared.gate === "repair_candidate_invalid") {
+    return { posted: false, reason: "repair_candidate_invalid" };
+  }
+  if (prepared.gate === "already_posted") {
+    throw new Error(
+      `postFactoringAdvanceEventInClientTx: gate=already_posted (journal_entry_id=${prepared.journal_entry_id ?? "?"}) -- ` +
+        `this in-client variant does not replicate the repair path (repairAlreadyPostedLifecycle opens its own ` +
+        `connection). Investigate before retrying: was this advance's prior funding JE actually reversed first?`
+    );
+  }
+
+  if (prepared.gate !== "post") {
+    return { posted: false, reason: "advance_not_found" };
+  }
+
+  const jeInput: CreateJournalEntryInput = {
+    operating_company_id: input.operating_company_id,
+    entry_date: prepared.entryDate,
+    memo: prepared.memo,
+    source: "auto",
+    postings: prepared.postings,
+  };
+  await lockFactoringAdvanceForSettlement(client, input.operating_company_id, input.factoring_advance_id);
+  await ensureOpenPeriod(client, input.operating_company_id, prepared.entryDate);
+  await client.query(`SAVEPOINT factoring_lifecycle_je_create_inclient`);
+  let created: { id: string; already_claimed: boolean };
+  try {
+    const header = await createJournalEntry(
+      jeInput,
+      { userId: input.actor_user_id, role: "system" },
+      {
+        client,
+        suppressSideEffects: true,
+        afterInsertBeforeCommit: async (c, hdr) => {
+          if (__posterAtomicityTestHooks.failAfterJeBeforeLifecycleLinks) {
+            throw new Error("injected_failure_between_je_and_lifecycle_links");
+          }
+          const claim = await claimFactoringLifecyclePostingKey(c, {
+            operating_company_id: input.operating_company_id,
+            factoring_advance_id: input.factoring_advance_id,
+            source_transaction_type: "factoring_advance",
+            event_key: "funding",
+            journal_entry_id: hdr.id,
+          });
+          if (claim === "already_claimed") {
+            throw new FactoringLifecyclePostingKeyRaceError();
+          }
+          await attachFactoringLifecycleSourceLinksStrict(c, {
+            operating_company_id: input.operating_company_id,
+            journal_entry_id: hdr.id,
+            factoring_advance_id: input.factoring_advance_id,
+            source_transaction_type: "factoring_advance",
+          });
+          if (prepared.reserve > 0) {
+            await recordReserveMovement(
+              c,
+              input.operating_company_id,
+              input.factoring_advance_id,
+              "held",
+              prepared.reserve,
+              prepared.entryDate,
+              hdr.id
+            );
+          }
+          if (prepared.hasFundingFigures && prepared.liability > 0) {
+            const reservePct = Number(((prepared.reserve / prepared.liability) * 100).toFixed(4));
+            const feePct = Number(((prepared.fee / prepared.liability) * 100).toFixed(4));
+            const advanceRatePct = Number(((prepared.cash / prepared.liability) * 100).toFixed(2));
+            await c.query(
+              `
+                UPDATE accounting.factoring_advances
+                   SET reserve_amount_cents = $2::bigint,
+                       reserve_pct = $3::numeric,
+                       factor_fee_cents = $4::bigint,
+                       factor_fee_pct = $5::numeric,
+                       advance_amount_cents = $6::bigint,
+                       advance_rate_pct = $7::numeric,
+                       faro_invoice_number = COALESCE(faro_invoice_number, $8::text),
+                       faro_purchase_date = COALESCE(faro_purchase_date, $9::date)
+                 WHERE id = $1::uuid
+                   AND operating_company_id = $10::uuid
+              `,
+              [
+                input.factoring_advance_id,
+                prepared.reserve,
+                reservePct,
+                prepared.fee,
+                feePct,
+                prepared.cash,
+                advanceRatePct,
+                input.faro_invoice_number ?? null,
+                input.faro_purchase_date ?? null,
+                input.operating_company_id,
+              ]
+            );
+          }
+        },
+      }
+    );
+    await client.query(`RELEASE SAVEPOINT factoring_lifecycle_je_create_inclient`);
+    created = { id: header.id, already_claimed: false };
+  } catch (e) {
+    await client.query(`ROLLBACK TO SAVEPOINT factoring_lifecycle_je_create_inclient`);
+    if (
+      e instanceof FactoringLifecyclePostingKeyRaceError ||
+      (e as Error)?.message === "factoring_lifecycle_posting_key_race"
+    ) {
+      const winner = await findLifecyclePostingKeyJe(client, {
+        operating_company_id: input.operating_company_id,
+        factoring_advance_id: input.factoring_advance_id,
+        source_transaction_type: "factoring_advance",
+        event_key: "funding",
+      });
+      if (!winner) throw e;
+      if (prepared.expected_legs?.length) {
+        const shape = await validateLifecycleJeExactShape(client, {
+          operating_company_id: input.operating_company_id,
+          journal_entry_id: winner,
+          factoring_advance_id: input.factoring_advance_id,
+          source_transaction_type: "factoring_advance",
+          expected_legs: prepared.expected_legs,
+        });
+        if (!shape.ok) throw new Error(`factoring_lifecycle_posting_key_invalid_shape:${shape.reason}`);
+      }
+      await attachFactoringLifecycleSourceLinksStrict(client, {
+        operating_company_id: input.operating_company_id,
+        journal_entry_id: winner,
+        factoring_advance_id: input.factoring_advance_id,
+        source_transaction_type: "factoring_advance",
+      });
+      if (prepared.reserve > 0) {
+        await recordReserveMovement(
+          client,
+          input.operating_company_id,
+          input.factoring_advance_id,
+          "held",
+          prepared.reserve,
+          prepared.entryDate,
+          winner
+        );
+      }
+      created = { id: winner, already_claimed: true };
+    } else {
+      throw e;
+    }
+  }
+
+  return {
+    posted: !created.already_claimed,
+    reason: created.already_claimed ? "already_posted" : undefined,
+    journal_entry_id: created.id,
+    memo: prepared.memo,
+  };
+}
+
 // ---------------------------------------------------------------------------------------------------
 // VOID REVERSAL — ACCT-F5980. Voiding an advance BEFORE reserve-release/customer-payment/recourse
 // (route only allows void from status IN ('submitted','advanced')) is the only lifecycle point where a
@@ -2825,6 +3134,181 @@ async function postFactoringDefaultInterestAccrualEventImpl(
       );
       await appendCrudAudit(
         client,
+        input.actor_user_id,
+        "accounting.factoring_default_interest_accrued",
+        {
+          resource_type: "accounting.factoring_advances",
+          resource_id: input.factoring_advance_id,
+          operating_company_id: input.operating_company_id,
+          display_id: prepared.displayId,
+          accrual_date: prepared.accrualDate,
+          day_index: prepared.dayIndex,
+          interest_cents: prepared.interest,
+          closing_balance_cents: prepared.closing,
+          journal_entry_id: journalEntryId,
+        },
+        "info",
+        "FACTORING-DEFAULT-INTEREST"
+      );
+    },
+  });
+
+  return { posted: true, journal_entry_id: created.id, memo: prepared.memo, closing_balance_cents: prepared.closing };
+}
+
+/**
+ * ACCT-F2026092585 — client-accepting sibling of postFactoringDefaultInterestAccrualEvent, same
+ * reasoning as postFactoringAdvanceEventInClientTx above. Unlike the funding poster, the WRITE side
+ * here (createFactoringJournalEntryAtomically) already accepts an optional `client` — "caller owns
+ * the outer txn — no nested withCurrentUser" per its own doc comment — so only the READ-ONLY prepare
+ * phase (originally its own withLuciaBypass connection) needs replicating on the caller's client.
+ * Same scope limit as postFactoringAdvanceEventInClientTx: only the "post" gate is implemented; every
+ * other gate (flag_off, advance_not_found, not_outstanding, before_grace, the policy_* gates,
+ * zero_amount) is read-only and returns identically, and "already_posted" throws loudly rather than
+ * replicating its own-connection repair path (unexpected for a caller re-accruing right after a fresh
+ * funding re-post on the same client).
+ */
+export async function postFactoringDefaultInterestAccrualEventInClientTx(
+  client: DbClient,
+  input: PostFactoringDefaultInterestAccrualInput
+): Promise<PostResult> {
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+
+  const prepared = await (async () => {
+    if (!(await factoringPostingEnabled(client, input.operating_company_id))) return { gate: "flag_off" as const };
+
+    const advance = await loadAdvance(client, input.operating_company_id, input.factoring_advance_id);
+    if (!advance) return { gate: "advance_not_found" as const };
+    if (advance.status !== "advanced" || !advance.advanced_at) return { gate: "not_outstanding" as const };
+
+    let accrualDate: string;
+    try {
+      accrualDate = resolveCanonicalEntryDate(input.accrual_date_iso);
+    } catch (e) {
+      if (e instanceof FactoringEntryDateError) return { gate: e.reason };
+      throw e;
+    }
+
+    const faro = await requireFaroBoundAdvance(client, input.operating_company_id, input.factoring_advance_id, accrualDate);
+    if (!faro.ok) return { gate: faro.reason! };
+
+    const dayIndex = dayIndexBetween(advance.advanced_at, accrualDate);
+    if (dayIndex <= FACTORING_INTEREST_ACCRUAL_AFTER_DAY) return { gate: "before_grace" as const };
+
+    if (await accrualExistsForDay(client, input.operating_company_id, input.factoring_advance_id, accrualDate)) {
+      return { gate: "already_posted" as const };
+    }
+
+    await lockFactoringAdvanceForSettlement(client, input.operating_company_id, input.factoring_advance_id);
+    const opening = await defaultInterestOpeningFromOutstandingLiability(
+      client,
+      input.operating_company_id,
+      input.factoring_advance_id,
+      null,
+      accrualDate
+    );
+    if (opening <= 0) return { gate: "zero_amount" as const };
+
+    const interest = Math.round(opening * FACTORING_DEFAULT_INTEREST_DAILY_RATE);
+    if (interest <= 0) return { gate: "zero_amount" as const };
+    const closing = opening + interest;
+
+    const memo = `Factoring default interest ${advance.display_id} day ${dayIndex} (${accrualDate})`;
+    const interestAccountId = await resolveRoleAccount(client, input.operating_company_id, "default_interest_expense");
+    const liabilityAccountId = await resolveRoleAccount(client, input.operating_company_id, "factoring_advance_liability");
+
+    return {
+      gate: "post" as const,
+      memo,
+      accrualDate,
+      dayIndex,
+      opening,
+      interest,
+      closing,
+      displayId: advance.display_id,
+      postings: [
+        { account_id: interestAccountId, debit_or_credit: "debit" as const, amount_cents: interest, description: `${memo} — default interest (0.067%/day compounded)` },
+        { account_id: liabilityAccountId, debit_or_credit: "credit" as const, amount_cents: interest, description: `${memo} — compound into factoring advance (liability)` },
+      ],
+    };
+  })();
+
+  if (prepared.gate === "flag_off") return FLAG_OFF;
+  if (prepared.gate === "advance_not_found") return { posted: false, reason: "advance_not_found" };
+  if (prepared.gate === "not_outstanding") return { posted: false, reason: "not_outstanding" };
+  if (prepared.gate === "before_grace") return { posted: false, reason: "before_grace" };
+  if (prepared.gate === "policy_invalid_entry_date") return { posted: false, reason: "policy_invalid_entry_date" };
+  if (prepared.gate === "policy_missing_entry_date") return { posted: false, reason: "policy_missing_entry_date" };
+  if (prepared.gate === "policy_faro_agreement") return { posted: false, reason: "policy_faro_agreement" };
+  if (prepared.gate === "policy_advance_not_bound_to_faro") {
+    return { posted: false, reason: "policy_advance_not_bound_to_faro" };
+  }
+  if (prepared.gate === "already_posted") {
+    throw new Error(
+      "postFactoringDefaultInterestAccrualEventInClientTx: gate=already_posted -- this in-client variant " +
+        "does not replicate the repair path. Investigate before retrying."
+    );
+  }
+  if (prepared.gate === "zero_amount") return { posted: false, reason: "zero_amount" };
+  if (prepared.gate !== "post") return { posted: false, reason: "advance_not_found" };
+
+  const interestExpectedLegs: ExpectedLifecycleLeg[] = [
+    { role: "default_interest_expense", debit_or_credit: "debit", amount_cents: prepared.interest },
+    { role: "factoring_advance_liability", debit_or_credit: "credit", amount_cents: prepared.interest },
+  ];
+
+  const created = await createFactoringJournalEntryAtomically({
+    actor_user_id: input.actor_user_id,
+    je: {
+      operating_company_id: input.operating_company_id,
+      entry_date: prepared.accrualDate,
+      memo: prepared.memo,
+      source: "auto",
+      postings: prepared.postings,
+    },
+    factoring_advance_id: input.factoring_advance_id,
+    source_transaction_type: "factoring_default_interest",
+    event_key: `default_interest:${prepared.accrualDate}`,
+    expected_legs: interestExpectedLegs,
+    client,
+    afterLifecycleBeforeCommit: async (c, journalEntryId) => {
+      await lockFactoringAdvanceForSettlement(c, input.operating_company_id, input.factoring_advance_id);
+      const revalidatedOpening = await defaultInterestOpeningFromOutstandingLiability(
+        c,
+        input.operating_company_id,
+        input.factoring_advance_id,
+        journalEntryId,
+        prepared.accrualDate
+      );
+      const revalidatedInterest = Math.round(revalidatedOpening * FACTORING_DEFAULT_INTEREST_DAILY_RATE);
+      if (revalidatedOpening !== prepared.opening || revalidatedInterest !== prepared.interest) {
+        throw new Error(
+          `factoring_default_interest_base_changed_under_lock: opening ${prepared.opening}->${revalidatedOpening} interest ${prepared.interest}->${revalidatedInterest}`
+        );
+      }
+      await c.query(
+        `
+          INSERT INTO accounting.factoring_default_interest_accruals (
+            operating_company_id, factoring_advance_id, accrual_date, day_index, daily_rate,
+            opening_balance_cents, interest_cents, closing_balance_cents, journal_entry_id
+          )
+          VALUES ($1::uuid, $2::uuid, $3::date, $4, $5, $6, $7, $8, $9::uuid)
+          ON CONFLICT (operating_company_id, factoring_advance_id, accrual_date) DO NOTHING
+        `,
+        [
+          input.operating_company_id,
+          input.factoring_advance_id,
+          prepared.accrualDate,
+          prepared.dayIndex,
+          FACTORING_DEFAULT_INTEREST_DAILY_RATE,
+          prepared.opening,
+          prepared.interest,
+          prepared.closing,
+          journalEntryId,
+        ]
+      );
+      await appendCrudAudit(
+        c,
         input.actor_user_id,
         "accounting.factoring_default_interest_accrued",
         {

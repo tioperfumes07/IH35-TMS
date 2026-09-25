@@ -26,17 +26,29 @@
  *
  * FIX, per Lead's own instruction ("through the factoring engine's own void/re-post path"), no new
  * writer, no hand-written JE:
- *   1. reverseFactoringAdvanceEvent -- reverses the funding JE (and any linked
+ *   1. reverseFactoringAdvanceEventInClientTx -- reverses the funding JE (and any linked
  *      factoring_default_interest JE that advance already had; 7 of the 21 do).
- *   2. postFactoringAdvanceEvent -- re-posts funding with the SAME liability/reserve as before, but
- *      fee_cents corrected to (original bundled factor_fee_cents - 1000) and ach_cents=1000 (the
- *      $10.00 wire fee), so postings/wire-fee split lands on 6300, not 6400.
+ *   2. postFactoringAdvanceEventInClientTx -- re-posts funding with the SAME liability/reserve as
+ *      before, but fee_cents corrected to (original bundled factor_fee_cents - 1000) and
+ *      ach_cents=1000 (the $10.00 wire fee), so postings/wire-fee split lands on 6300, not 6400.
  *   3. For the 7 advances whose reversal also removed a factoring_default_interest JE,
- *      postFactoringDefaultInterestAccrualEvent re-establishes it fresh (deterministic, day-count
- *      based off advance.advanced_at -- not a value this script invents or copies from the old JE).
+ *      postFactoringDefaultInterestAccrualEventInClientTx re-establishes it fresh (deterministic,
+ *      day-count based off advance.advanced_at -- not a value this script invents or copies).
+ *
+ * ACCT-F2026092585 -- the standalone (connection-opening) postFactoringAdvanceEvent and
+ * postFactoringDefaultInterestAccrualEvent both run SET ROLE ih35_app internally
+ * (withLuciaBypass/withCurrentUser), which the ~/.ih35-gate.env credential cannot assume (confirmed
+ * live). Added client-accepting InClientTx siblings to apps/backend/src/accounting/factoring-posting/
+ * poster.service.ts (same precedent as the existing reverseFactoringAdvanceEventInClientTx) rather
+ * than reimplementing the posting engine by hand here. Each advance's reverse+repost(+reaccrual) runs
+ * as ONE transaction on this script's own bypassed client -- strictly MORE atomic than the standalone
+ * functions' own behavior (whose phases are already separate, non-atomic connections). No
+ * retryOnFactoringDeadlock wrapper here: this is a low-concurrency, single-operator one-shot script,
+ * not a live multi-writer request path.
  *
  * Touches exactly these 21 named factoring_advances rows and their own linked JEs. No other
- * advance, no other account.
+ * advance, no other account. Set ONLY_DISPLAY_ID=FAC-2026-NNNNN to run a single row (validate one
+ * live write before trusting the batch).
  */
 import { execFileSync } from "node:child_process";
 import path from "node:path";
@@ -86,10 +98,14 @@ async function queryWithBypass<T extends pg.QueryResultRow>(pool: pg.Pool, sql: 
   }
 }
 
+const ONLY_DISPLAY_ID = process.env.ONLY_DISPLAY_ID?.trim() || null;
+
 async function main() {
-  const { reverseFactoringAdvanceEvent, postFactoringAdvanceEvent, postFactoringDefaultInterestAccrualEvent } = await import(
-    "../../apps/backend/src/accounting/factoring-posting/poster.service.js"
-  );
+  const {
+    reverseFactoringAdvanceEventInClientTx,
+    postFactoringAdvanceEventInClientTx,
+    postFactoringDefaultInterestAccrualEventInClientTx,
+  } = await import("../../apps/backend/src/accounting/factoring-posting/poster.service.js");
   const { companyBusinessDate } = await import("../../apps/backend/src/lib/company-business-date.js");
 
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
@@ -97,6 +113,11 @@ async function main() {
   const results: Array<Record<string, unknown>> = [];
 
   try {
+    const targets = ONLY_DISPLAY_ID ? [ONLY_DISPLAY_ID] : TARGET_DISPLAY_IDS;
+    if (ONLY_DISPLAY_ID && !TARGET_DISPLAY_IDS.includes(ONLY_DISPLAY_ID)) {
+      throw new Error(`ONLY_DISPLAY_ID=${ONLY_DISPLAY_ID} is not one of this script's 21 target rows -- STOP`);
+    }
+
     // READ PHASE FIRST, entirely separate from the write phase -- this session's own Set B work
     // (docs/bus/OWNER-AUTHORIZATIONS.md AUTH-013) found live that reads interleaved with writes on
     // this Neon pooled endpoint can return false-empty results; resolving everything up front avoids
@@ -116,10 +137,10 @@ async function main() {
          FROM accounting.factoring_advances fa
         WHERE fa.operating_company_id = $1::uuid AND fa.display_id = ANY($2::text[])
         ORDER BY fa.display_id`,
-      [USMCA_ID, TARGET_DISPLAY_IDS]
+      [USMCA_ID, targets]
     );
-    if (rowsRes.rows.length !== TARGET_DISPLAY_IDS.length) {
-      throw new Error(`Expected ${TARGET_DISPLAY_IDS.length} advances, found ${rowsRes.rows.length} -- STOP`);
+    if (rowsRes.rows.length !== targets.length) {
+      throw new Error(`Expected ${targets.length} advances, found ${rowsRes.rows.length} -- STOP`);
     }
 
     for (const row of rowsRes.rows) {
@@ -133,52 +154,72 @@ async function main() {
         continue;
       }
 
-      const reversal = await reverseFactoringAdvanceEvent({
-        operating_company_id: USMCA_ID,
-        factoring_advance_id: row.id,
-        actor_user_id: SYSTEM_ACTOR_USER_ID,
-        reason: "R-159 item 1 -- wire fee was bundled into 6400 Factoring Fees instead of split to 6300 Bank Service Charges & Wire Fees (pre-ROUND-86 posting); reversing to re-post with the correct split.",
-      });
-      if (!reversal.reversed) throw new Error(`${row.display_id}: reversal failed -- ${JSON.stringify(reversal)} -- STOP`);
+      // One transaction per advance, on this script's own bypassed client -- reverse, repost, and
+      // (when applicable) reaccrue default interest all commit or roll back together.
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        await client.query("RESET ROLE");
+        await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
+        // reverseFactoringAdvanceEventInClientTx does NOT set this itself (per its own doc comment --
+        // "does NOT set app.operating_company_id itself... the CALLER's responsibility"); the standalone
+        // exported wrapper sets it before delegating, so this script must too.
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [USMCA_ID]);
 
-      const repost = await postFactoringAdvanceEvent({
-        operating_company_id: USMCA_ID,
-        factoring_advance_id: row.id,
-        actor_user_id: SYSTEM_ACTOR_USER_ID,
-        funding_figures: {
-          invoice_total_cents: Number(row.invoice_total_cents),
-          reserve_cents: Number(row.reserve_amount_cents),
-          fee_cents: correctedFee,
-          ach_cents: WIRE_FEE_CENTS,
-        },
-      });
-      if (!repost.posted || !repost.journal_entry_id) {
-        throw new Error(`${row.display_id}: re-post failed -- posted=${repost.posted} reason=${repost.reason} -- STOP`);
-      }
-      console.log(`  reversed_je=${reversal.reversal_journal_entry_id} new_je=${repost.journal_entry_id}`);
-
-      let interestResult: unknown = null;
-      if (row.had_default_interest) {
-        const interest = await postFactoringDefaultInterestAccrualEvent({
+        const reversal = await reverseFactoringAdvanceEventInClientTx(client, {
           operating_company_id: USMCA_ID,
           factoring_advance_id: row.id,
           actor_user_id: SYSTEM_ACTOR_USER_ID,
-          accrual_date_iso: companyBusinessDate(),
+          reason: "R-159 item 1 -- wire fee was bundled into 6400 Factoring Fees instead of split to 6300 Bank Service Charges & Wire Fees (pre-ROUND-86 posting); reversing to re-post with the correct split.",
         });
-        interestResult = interest;
-        console.log(`  default_interest_reaccrual: posted=${interest.posted} reason=${interest.reason ?? "n/a"} je=${interest.journal_entry_id ?? "n/a"}`);
-      }
+        if (!reversal.reversed) throw new Error(`${row.display_id}: reversal failed -- ${JSON.stringify(reversal)} -- STOP`);
 
-      results.push({
-        display_id: row.display_id,
-        status: "reversed_and_reposted",
-        bundled_fee_cents: bundledFee,
-        corrected_fee_cents: correctedFee,
-        wire_fee_cents: WIRE_FEE_CENTS,
-        reversal_je: reversal.reversal_journal_entry_id,
-        new_je: repost.journal_entry_id,
-        default_interest_reaccrual: interestResult,
-      });
+        const repost = await postFactoringAdvanceEventInClientTx(client, {
+          operating_company_id: USMCA_ID,
+          factoring_advance_id: row.id,
+          actor_user_id: SYSTEM_ACTOR_USER_ID,
+          funding_figures: {
+            invoice_total_cents: Number(row.invoice_total_cents),
+            reserve_cents: Number(row.reserve_amount_cents),
+            fee_cents: correctedFee,
+            ach_cents: WIRE_FEE_CENTS,
+          },
+        });
+        if (!repost.posted || !repost.journal_entry_id) {
+          throw new Error(`${row.display_id}: re-post failed -- posted=${repost.posted} reason=${repost.reason} -- STOP`);
+        }
+        console.log(`  reversed_je=${reversal.reversal_journal_entry_id} new_je=${repost.journal_entry_id}`);
+
+        let interestResult: unknown = null;
+        if (row.had_default_interest) {
+          const interest = await postFactoringDefaultInterestAccrualEventInClientTx(client, {
+            operating_company_id: USMCA_ID,
+            factoring_advance_id: row.id,
+            actor_user_id: SYSTEM_ACTOR_USER_ID,
+            accrual_date_iso: companyBusinessDate(),
+          });
+          interestResult = interest;
+          console.log(`  default_interest_reaccrual: posted=${interest.posted} reason=${interest.reason ?? "n/a"} je=${interest.journal_entry_id ?? "n/a"}`);
+        }
+
+        await client.query("COMMIT");
+
+        results.push({
+          display_id: row.display_id,
+          status: "reversed_and_reposted",
+          bundled_fee_cents: bundledFee,
+          corrected_fee_cents: correctedFee,
+          wire_fee_cents: WIRE_FEE_CENTS,
+          reversal_je: reversal.reversal_journal_entry_id,
+          new_je: repost.journal_entry_id,
+          default_interest_reaccrual: interestResult,
+        });
+      } catch (err) {
+        await client.query("ROLLBACK").catch(() => {});
+        throw err;
+      } finally {
+        client.release();
+      }
     }
 
     console.log(JSON.stringify(results, null, 2));
