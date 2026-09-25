@@ -1,32 +1,21 @@
-# NOW-CC-1 — trimmed 2026-09-25 (size-cap trim #8, WORM). Full R-153.8 text + D1 done-line:
-`docs/bus/archive/NOW-CC-1-2026-09-25-8.md`. R-153.8's 3 decisions (all mine): D1 item 6 DONE
-(partial, see archive) deadline was 15:00Z; D2 item 11 in progress below, deadline 16:00Z; D3
-(void 11 JEs + 5 duplicate escrows, re-close via settlement engine WITH escrow) starts once CC-2
-posts "AUTH-005 CONSUMED" -- already done (PR #22610) -- deadline 15:00Z, starting next.
+# NOW-CC-1 — trimmed 2026-09-25 (size-cap trim #9, WORM). Full D1/D2-done + first D3 question:
+`docs/bus/archive/NOW-CC-1-2026-09-25-9.md`. D1/D2 both DONE (see archive). D3 blocked, resolved
+below to a concrete identity question, not a vague "which 11" anymore.
 
-CC-1 | 2026-09-25 6:42 AM CT (11:42Z) | D2 DONE. AUTH-008 issued-before-execution then CONSUMED,
-same PR family, real proof. Found + fixed a real bug during Neon rehearsal (UPDATE...FROM cannot
-LATERAL-reference its own target table -- caught on the first dry-run, before any commit; full
-detail in AUTH-008's consumed block). Rehearsed clean (dry-run+real+idempotency all correct), then
-production: unit_id filled 189, driver_uuid filled 307 (0 team-driver-ambiguous found live),
-trailer_id filled 123. Live before/after (LAW 3 -- re-measured fresh, not citing the stale
-373/112/66/293): 613 expenses (grew from 373 due to CC-2's concurrent fuel remediation creating new
-fuel-category rows -- expected, not touched by this write) -> no_unit 353->164, no_driver 307->0,
-no_trailer 534->411. driver_uuid fully resolved. Every remaining row's reason is either "load has no
-unit assigned" or "load has no trailer in assignment history" -- the load's own dispatch record
-never carries one, nothing guessed. Full 411-row list in the PR body. Moving to D3 now (CC-2's
-AUTH-005 already CONSUMED per PR #22610).
-
-CC-1 | 2026-09-25 6:44 AM CT (11:44Z) | D3 QUESTION before voiding anything (STOP AND REPORT, not
-guessing on a GL void): D3 says "the 11 journal_entry JEs" and cites my own PR #22594 as proof --
-but PR #22594 found 18 settlements with escrow DROPPED entirely (5770,5771,5777,5780,5783,5786,
-5789,5793,5796,S-5797,S-5799,S-5800,S-5802,S-5805,S-5806,S-5808,S-5813,S-5814), not 11. Live
-re-check just now: 55 distinct reversed "Settlement N -- pay-run close" JEs exist total (not 11 or
-18); 42 JEs carry "ACCT-F20260924" in memo. I cannot map "11" onto a specific, confident JE-id list
-without guessing which subset Lead means -- and several settlements were reversed/reposted MORE
-THAN ONCE (5770 x2, S-5804 x2, S-5805 x4, S-5806 x2, S-5807 x2, S-5808 x2, S-5809 x2), so "void the
-original + the wrong repost, re-close once" needs the EXACT right JE per settlement, not a guess.
-Please confirm: is "11" the 18-settlement drop list minus some already-correct subset, or a
-different, narrower set? Which exact JE id per settlement is the one to void when a settlement has
-multiple reposts? Meanwhile: NOT idle -- investigating the void engine and settlement-close-with-
-escrow engine live so I can move the instant this is confirmed.
+CC-1 | 2026-09-25 7:00 AM CT (12:00Z) | D3 FOUND THE SOURCE OF "11" -- it's CC-3's PR #22576/#22600,
+not mine (#22594 was cited by mistake). CC-3's table names 11 exact JE ids (S-5807 $20, 5770 x2
+$10+$10, 5771 $30, 5772 $10, 5774 $20, 5775 $20, 5776 $20, 5778 $10, 5785 $10, 5795 $20 -- Dr 5000
+$180.00 total, "stays hand-written, tie-out residual"). Checked all 11 live just now: 10 of 11
+STILL CARRY a real 2100-00-0NN escrow debit line (only settlement 5770's SECOND JE has none) --
+these are NOT the ones that drop escrow. My own PR #22594's 18-settlement list (archive above) is a
+LARGELY DIFFERENT, mostly non-overlapping population (only 5770/5771/5776 appear in both) that
+genuinely drops escrow to zero. D3's own text ("reverse... repost... DROPS the escrow line...
+$2,650 across 18 settlements") describes MY 18-list's mechanism and number, but the literal "11"
+and "journal_entry JEs" phrasing is CC-3's different, already-reviewed, mostly-not-escrow-dropping
+set. These are two real, separate findings that the order merged into one line -- not something I
+can silently pick one side of. Need a decision: void CC-3's 11 (the tie-out residuals, which mostly
+already carry escrow correctly), void my 18 (the actual drops), or both, and re-close via the
+settlement engine for whichever set. Full evidence (per-JE escrow-line check) in this round's PR.
+Not idle while waiting -- both candidate scripts' scaffolding (void loop + closeSettlementPayRun
+call) can be written now since the ENGINE calls are identical either way; only the target id list
+differs, so no work is wasted.
