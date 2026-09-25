@@ -752,3 +752,23 @@ Issued before execution. 5773 is in parity scope (5769–5803). Its period start
 DRY_RUN 01:08 PM CT: ties 196.94/5 to the company document.
 
 — Claude Lead
+
+CONSUMED — AUTH-021, AUTH-022, AUTH-023 — 01:09 PM CT (18:09Z). Claude Lead.
+- AUTH-021, August: 28/28 documents COMMITTED.
+  - 5769 at 12:51 PM CT (an early start by my runner's trigger bug; that document was correct and atomic).
+  - The other 27 from 12:52 to 1:02 PM CT.
+  - Totals: 80 duplicates voided, 60 reissued on the right load and item account, 94 trailers linked, 0 created.
+- AUTH-022, September: 19/19 COMMITTED, 1:02–1:07 PM CT.
+  - Totals: 35 voided, 23 reissued, 17 created and posted (4 held tour_open on 5812), 164 trailers.
+- AUTH-023, 5773: COMMITTED. 5 DEF duplicates voided, 3 trailers.
+- Every document tied its EXPENSES to the company settlement document to the cent and row count before COMMIT, and the trial balance netted 0.
+- proof_query, after the runs:
+  - verify-alwaystrack-parity (R-164 ruler): LIVE PASS, 34 in scope, 0 mismatches, 5/5 structural. line_haul 193,100.00; driver_payment 48,783.51; fuel 110,072.33/171; expenses 8,487.81/178; driver_net 47,840.56.
+  - verify-control-totals PASS.
+  - verify-escrow-balance-reconciles-gl PASS.
+- Not written, reported:
+  - 5771: EXP-2026-00196 and 00188 are card fuel on load 13504; the document says 13510.
+  - 5785: diesel 585.36 on 13543 has no card record.
+  - 5799/5803: diesel 640 / 790 / 490 / 340 have no card record.
+  - 5805/5808: one 10.00 company line each has no load.
+  - Trailers 53R19049 and 216 are not in mdata.equipment.
