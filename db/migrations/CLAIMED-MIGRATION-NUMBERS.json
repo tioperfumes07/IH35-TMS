@@ -8,6 +8,11 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202614370000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-25",
+      "purpose": "Lead ruling, live blocking finding: accounting.factoring_advances gains a nullable wire_fee_cents column so the funding poster's own stored-figures correction (ROUND 86) can record the ACH/wire fee component alongside advance/reserve/factor_fee -- without it, advance+reserve+factor_fee+wire never sums back to invoice_total once a nonzero wire fee exists (verify-ldt-4-factoring-money's own reconciliation check). Additive only, no data change."
+    },
     "202614360000": {
       "claimed_by": "claude",
       "claimed_at": "2026-09-25",
