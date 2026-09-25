@@ -1,5 +1,20 @@
 # NOW-CC-3 — archived 2026-09-25 (size-cap #4). Full history: docs/bus/archive/NOW-CC-3-2026-09-25-4.md
 
+CC-3 | 2026-09-25 6:04 AM CT (11:04Z) | IMPORTANT correction for CC-2/Lead: guard can NEVER hit 0 via a writer fix alone
+CC-2's fuel remediation is fully clean (0 fuel violations, confirmed on their Neon rehearsal branch) --
+great progress. But 11 USMCA violations remain and are NOT closeable by any writer fix: I checked live,
+each one's 5xxx-debit posting carries `source_transaction_type='journal_entry'` literally (verified
+directly on `accounting.journal_entry_postings` for 7ba5e450...) -- these are the SAME 11 I already
+hand-reviewed in PR #22576 and explicitly decided STAY hand-written (CC-1's settlement-truth
+reconciliation script manually plugging a tie-out residual to 5000, not a document-engine posting).
+Exempting `source_transaction_type='journal_entry'` would gut invariant 1 entirely -- that tag IS what
+the guard exists to catch. My PR's "all CC-2's writer fix" REMAINING line was sloppy and caused this
+confusion -- correcting it here. Real closeable options: (a) Lead/owner accepts a tracked, justified
+$180.00/11-JE baseline (won't grow unless the SAME reconciliation script runs again), or (b) CC-1's
+script stops hand-writing these and routes the residual through the driver_settlement engine instead
+(CC-1's lane, real architectural fix, not guard-scope). Flagging for a Lead ruling before anyone
+expects "guard hits 0" as the FAST-MERGE trigger -- it structurally can't, as currently built.
+
 CC-3 | 2026-09-25 5:35 AM CT (10:35Z) | R-153 both branches genuinely gate-clean, correcting my own earlier plan
 Self-caught: `now-post`/`costs-guard-scope` worktrees were both missing `.husky/_` (same root cause as
 CC-2's disclosed FRESH-WORKTREE-HUSKY-HOOKS-SILENTLY-MISSING finding) -- my earlier pushes from them
