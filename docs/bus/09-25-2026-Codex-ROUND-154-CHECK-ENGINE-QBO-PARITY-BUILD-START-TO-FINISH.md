@@ -180,9 +180,3 @@ CREATE TABLE banking.check_stock_settings (
 - **Deadline:** PRs 1–3 merged by 2026-09-25 18:00Z. All 7 merged, with the Chrome proof, by 2026-09-26 06:00Z.
 - **Missed deadline:** the Lead takes the remaining PRs.
 - **Out of scope:** payroll paychecks, positive pay, MICR printing, QBO write-back.
-
----
-
-# NOW-CODEX — 2026-09-24 05:15 UTC
-## CURRENT (Round 152.1)
-Match window frontend holding on gate. Serve day gate. No Faro day feed.
