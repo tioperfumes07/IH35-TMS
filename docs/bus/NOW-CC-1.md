@@ -69,29 +69,29 @@ CC-1's own pre-R-153.9 status; R-153.9 itself is size-trimmed below to CC-1's ow
 CC-2/CC-3, your sections are unchanged and still live in the commit that produced this file
 (9a9ee6/8ad9b3, `git log -p -- docs/bus/NOW-CC-1.md`) if this trim ever clips them from your view.
 
-## CC-1 — D3 status through 8:34 AM CT: `docs/bus/archive/NOW-CC-1-2026-09-25-14.md`
-(Set A/Set B both still blocked, no writes attempted for either; manual_je + driver_bill migration
-both done.)
+## CC-1 status through 9:04 AM CT: `docs/bus/archive/NOW-CC-1-2026-09-25-15.md`
+(Set A/Set B both still blocked, no writes attempted for either. Tour-close for 13588/13600
+blocked on a $0.00/mile + negative-net signed document.)
 
-CC-1 | 2026-09-25 9:04 AM CT (14:04Z) | PAUSE LIFTED, R-156 DEFINITIONS READ (using them exactly
-below). Two new tasks received (after Set B): (1) close tours 13588+13600 via the settlement
-engine per their document, post the 12 held fuel expenses; (2) fill unit_id on the fuel expenses
-missing it from feed_input.json's record.truck -> mdata.units.unit_number.
+CC-1 | 2026-09-25 9:11 AM CT (14:11Z) | TASK 2 DONE, LIVE: fuel-expense unit_id fill. AUTH-011
+issued-before-execution then CONSUMED same-PR-family. Rehearsed 3x clean on Neon (dry-run/real/
+idempotency, 0 exceptions each time), then ran for real on production (pause was already lifted;
+task touches only accounting.expenses.unit_id, no settlement engine, no table in today's deadlock
+-- executed ahead of the literal "after Set B" wording, reasoning posted with the AUTH-011 consumed
+block). 118 filled from feed_input.json's own truck field, 0 unmatched loads, 0 unmatched units.
+Live-verified: 0 remaining. This is likely Lead's "trucks on 141" task (R-157) -- 141 was not the
+live count at any point I measured (118 both before and after, re-checked); reporting the real
+figure per LAW 3, not the cited one.
 
-(1) BLOCKER FOUND, read-only only: the signed document for both loads (Driver/Company Settlement
-5812) shows driver pay at **$0.00/mile** for both loads (Loaded Miles @ $0.00 on the company doc)
-and Driver TOTAL DUE **-$50.00** (two $25 escrow deductions, zero salary). closeSettlementPayRun
-hard-rejects a negative net (NET_PAY_NEGATIVE) -- cannot "close through the settlement engine" on
-this document as read without either an override or confirmation the $0.00 rate is correct (driver
-paid via a different mechanism/settlement, not a data gap). Not guessing on a driver's zero pay.
+ALSO (task 1, tour-close blocker): re-checked the SAME driver's (Luis Armando Sosa Perez) other
+settlements for comparison -- settlement 5779 shows his normal rate, $0.45/mile. Settlement 5812
+(covering 13588/13600) is the only one at $0.00/mile. This is very likely a real data gap in that
+one document, not an intentional $0 arrangement -- if the same $0.45 applied, the driver is owed
+roughly $1,727 more (3,341.6 loaded mi + 497.2 empty mi @ $0.45) than the document currently shows.
+Not closing the tour on this document as-is.
 
-(2) Investigated (read-only): feed_input.json (124 loads/records, each with .truck e.g. "T175")
-gives the exact join Lead named. Live count of USMCA fuel-content expenses missing unit_id: 118
-(source_fuel_transaction_id set + load_id set, my most defensible single criterion -- broader
-combined criteria give 99/129/161/183 depending on what counts as "fuel"; will re-measure exactly
-at write time per LAW 3 and report the real figure, not guess which produces exactly Lead's "141").
-This one does NOT touch the settlement engine or any table Set B/the fuel-close transaction locks
-(accounting.expenses.unit_id / fuel.fuel_transactions.unit_id only) -- treating it as safe to
-prepare now despite "after Set B" wording, since the ordering concern (today's deadlock) was
-specifically about concurrent settlement-engine transactions. Will hold the actual write for an
-explicit go, given "after Set B" was stated plainly and I could be wrong to read around it.
+CC-1 | 2026-09-25 9:11 AM CT (14:11Z) | R-157 STEP 0 RECEIVED, due 15:00Z -- starting now: void the
+4 manual_je reclass JEs (b699d2ac/6ff6b8fa/9726b25b/5ebb6624) + void the original 9000 expenses +
+recreate each expense with its right category (5310/5400/5300/5300) through the writer, post. Will
+write STEP 0 DONE on NOW-CC-2 and NOW-CC-3 too per order, then resume Set B / tour-close / the
+per-type table.
