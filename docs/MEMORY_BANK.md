@@ -131,6 +131,13 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 
 ## Known Quirks & Blockers
 
+
+### ACCT-F20260924 — pure-Aug AT nets + Faro 23/23 money + AR/AP (Cursor, 2026-09-24)
+- Pure-Aug driver nets 5769–5788/5795/5796 tied via `scripts/feed/tie-pure-aug-to-at.mts` (clear ALL applied deductions before one doc admin — load-level "Admin fee - Gas" double-counted). SPAN 5789–5794 stay open. Sep 5804–5815 remain $20,241.07.
+- Faro live: 89 FA, purchase $311,587.00, advance $302,019.36 = day_control exact (23/23). `closed_purchase_days` stays Aug 13-day prefix until Sep tour_id + driver_bills outcomes pass verify-one-load-create-path.
+- AR $135: invoice headers 13611/13570/13587/13589 drifted from `invoice_lines` — set total/subtotal = line sum. AP $2,976.63: 60 draft/unposted expenses had AP GL with zero bills — reversed via `reverse-draft-expense-ap-gl.mts`. healthz `ledger.ar_tieout`/`ap_tieout` green.
+- Deferred (parity gate): `void.service` SELECT DISTINCT … ORDER BY 1 fix (42P10) — same defer as Sep #22540 REMAINING.
+
 - **Settlement identity (owner ruling 2026-09-07):** a settlement number IS a 4-digit AlwaysTrack
   document (e.g. 5786). Loads never carry an `S-` prefix. The DB `S-13xxx` / `S-137xx` values are an
   UNLINKED internal counter, NOT real settlements. Real USMCA driver settlements = **21 signed docs**
