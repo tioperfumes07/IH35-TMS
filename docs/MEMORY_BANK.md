@@ -144,6 +144,14 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 ## Known Quirks & Blockers
 
 
+
+### ACCT-F20260925i — TB 1090/2100/1245 closed (Cursor, 2026-09-25)
+
+- **2100:** orphan escrow RELEASE JE `8e787ff4` hit parent 2100 (debit $125); real escrow is on `2100-00-*`. Reversed via `reverseJournalEntryNoFlip`.
+- **1245:** 12 recovered historical_backfill CAs had pay-run CR 1245 with no issuance DR — backfilled DR 1245 / CR 1000 ($2,275.96) JE `c8e25275`.
+- **1090:** Faro FA residual in Undeposited after fuel wash — deposited to Operating 1000 ($166,743.94) JE `43d6f4bf`. Residual $125 under clearing threshold (escrow-release counterpart).
+- **Proof:** `verify-trial-balance-and-balance-sheet` PASS (A–G). Script: `scripts/feed/fix-tb-1090-2100-1245.mts`.
+
 ### Aug 100% + Sep Faro close (Cursor, 2026-09-25)
 
 - SPAN 5789–5794 + early-Sep 5797–5803 tied to AT `total_due` / `settlement_control` via `tie-span-and-early-sep-to-at.mts` (same reverse→load_bookended→close engine as pure-Aug/Sep 5804–5815).
