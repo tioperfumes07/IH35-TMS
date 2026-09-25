@@ -14,10 +14,3 @@ Now non-vacuous: `verify-alwaystrack-parity` 34/34 exact live, 48 settlements, 1
    to the cent — and equal to the signed AlwaysTrack document.
 DONE line: `CC-3 | R-153 DONE | <sha> | <live sha> | 3 loads × 6 surfaces identical | = AT doc | planted-RED exit 1`.
 Deadlines: 1 → 10:00Z · 2–3 → 16:00Z · 4 → 18:00Z. Missed → CC-2 (after its match proof). **No other work until 4 is posted.**
-
----
-
-# NOW-CC-3 — 2026-09-24 05:15 UTC
-## CURRENT (Round 152.1)
-LAW 5 one-source-per-number on load board / costs / pre-settlement / settlement.
-Serve day gate. Do not re-derive Faro↔load entity map.
