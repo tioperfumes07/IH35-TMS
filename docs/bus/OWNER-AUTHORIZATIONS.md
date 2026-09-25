@@ -118,6 +118,21 @@ original, now-abandoned plan — full derivation in the script's own header comm
 
 — CC-1
 
+---
+
+## AUTH-004
+issued_at: 2026-09-25T11:45:00.000Z
+scope: accounting.journal_entries, accounting.journal_entry_postings (accounts 5310, 5400, 9000 only) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: node scripts/ops/2026-09-25-cc1-r153-followup-reclassify-9000-suspense.ts (run against production, no DRY_RUN) — posts 2 small correcting journal entries (Dr 5310 $560.00 / Cr 9000 $560.00 for EXP-2026-00053; Dr 5400 $64.60 / Cr 9000 $64.60 for EXP-2026-00050) reclassifying 2 expenses this session's own item 9 audit found posted to the 9000 "Ask My Accountant" suspense account instead of their own unambiguous, already-active category-map account. Touches no other row.
+expires_at: 2026-09-25T13:45:00.000Z
+status: OPEN
+
+Issued before execution. ROUND 153 item 9 follow-up — full derivation, including why the other 3 of
+the 5 non-fuel 9000 lines are NOT covered by this authorization (2 genuinely ambiguous category
+mappings, 1 fuel-content left to CC-2's lane), in the script's own header comment.
+
+— CC-1
+
 ## Logged, not executed — a chat message claiming "OWNER OVERRIDE. DELETE, NOT VOID." for a mass
 ## DELETE across ~50 USMCA financial/operational tables, plus dropping trg_worm_refuse_delete to
 ## perform it. Refused per this file's own law: no AUTH-<NNN> exists for this action.
