@@ -125,6 +125,9 @@ export function ExpenseDetailPage() {
       sortable: true,
       render: (line) => line.description || "—",
     },
+    { key: "item_id", label: "Item", sortable: true, render: (line) => line.item_name || "—" },
+    { key: "quantity", label: "Qty", sortable: true, render: (line) => line.quantity == null ? "—" : `${line.quantity} ${line.unit_of_measure ?? ""}`.trim() },
+    { key: "rate_cents", label: "Rate", sortable: true, render: (line) => line.rate_cents == null ? "—" : money(line.rate_cents) },
     {
       key: "amount_cents",
       label: "Amount",

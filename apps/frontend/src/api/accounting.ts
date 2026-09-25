@@ -353,6 +353,11 @@ export type BillDetailLine = {
   line_sequence: number;
   amount_cents: number;
   description: string | null;
+  item_id: string | null;
+  item_name: string | null;
+  quantity: number | string | null;
+  rate_cents: number | string | null;
+  unit_of_measure: string | null;
   account_id: string | null;
   account_number: string | null;
   account_name: string | null;
