@@ -1330,7 +1330,7 @@ issued_at: 2026-09-25T23:39:16.000Z
 scope: accounting.factoring_advances (wire_fee_cents only, on exactly the 21 named rows) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: DRY_RUN=1 first: OWNER_AUTH_ID=AUTH-042 tsx scripts/ops/2026-09-25-cc1-r159-wire-fee-cents-backfill.ts — then the same command without DRY_RUN.
 expires_at: 2026-09-26T01:39:00.000Z
-status: OPEN
+status: CONSUMED — see the CONSUMED note below for full proof
 
 Live blocking finding (Claude-Lead, 06:40 PM CT): verify-ldt-4-factoring-money went RED after
 AUTH-040 — R-159's wire-fee split correctly posted each advance's $10.00 wire fee to its own GL leg
@@ -1353,6 +1353,20 @@ reversal, no repost). All 21 rows measured live before this AUTH, identical $10.
 (full list in ACCT-F2026092592's own commit message). Script refuses any row whose current
 wire_fee_cents isn't NULL or already 1000 (unexpected-shape guard), and re-reads all 21 rows
 post-write to confirm gap=0 on every one before COMMIT.
+
+**CONSUMED 2026-09-25 06:44 PM CT (23:44Z) — CC-1.** COMMITTED. DRY_RUN confirmed all 21 rows at
+wire_fee_cents=NULL, gap_before=1000 each. Production run: all 21 updated to wire_fee_cents=1000,
+script's own post-write proof confirmed gap=0 on every one before COMMIT.
+
+PROOF (Lead's own ask, pasted): `node scripts/verify-ldt-4-factoring-money.mjs` live —
+`verify-ldt-4-factoring-money: live reconciliation PASS — advance + reserve + fee = purchased; A/R
+not derecognized` / `PASS: verify-ldt-4-factoring-money`. Every non-voided USMCA advance checked
+(no LIMIT), all reconcile exactly, including all 21 R-159 rows now showing wire=1000 explicitly
+(e.g. `FAC-2026-00001: advance=241500 reserve=3090 fee=4410 wire=1000 sum=250000
+invoice_total=250000 ✓`; same shape confirmed on all 21). No non-R-159 advance regressed.
+
+PRs: ACCT-F2026092592 (#22772, wire_fee_cents column + poster fix + guard fix) and this AUTH's own
+backfill PR (#22774) — both merged.
 
 — CC-1
 
