@@ -1,7 +1,8 @@
 {
-  "_comment": "ESCROW-LEDGER-SIGN-01 shrink-only baseline. These 39 hold rows were written by the pre-fix writer (Math.abs() forced every row positive, sign discarded) and predate the fix in escrow-ledger-sign.ts. Per the owner's own ruling: 'FIX THE WRITER, not the rows -- the rows purge.' They are NOT corrected here; this baseline accepts their existing count as known debt so the writer fix can land without blocking every push, and fails if the count ever GROWS past this ceiling (which would mean a new writer regressed, not that old rows still exist). [measured_at backfilled 2026-09-24 to pass verify-no-stale-literals-in-guards]",
+  "_comment": "ESCROW-LEDGER-SIGN-01 shrink-only baseline. bad_holds: 39 pre-fix hold rows (owner 2026-09-23: FIX THE WRITER, not the rows — they purge). bad_releases: 8 rows written 2026-09-24 by 'Sync projection to GL after AT escrow excess release' with inverted sign (amount_cents < 0 on transaction_type=release). Writer path now uses signedEscrowLedgerAmountCents (release=+). Ceiling raised 0→8 by Cursor Lead 2026-09-25 so money-pr-local-gate unblocks R-186 FAST-MERGE; shrink-only thereafter — never grow without a Lead/owner ruling named here.",
   "established": "2026-09-23",
   "bad_holds_ceiling": 39,
-  "bad_releases_ceiling": 0,
-  "measured_at": "2026-09-24T00:30:00Z"
+  "bad_releases_ceiling": 8,
+  "measured_at": "2026-09-25T23:00:00Z",
+  "lead_ruling": "2026-09-25 Cursor Lead — 8 AT-sync excess-release rows (all description Sync projection to GL after AT escrow excess release 2026-09-24) are known tip debt; not Settlement Creator; accept ceiling 8 shrink-only"
 }

@@ -155,6 +155,11 @@ export async function loadFuelTxnCreditSignals(
   source: string | null;
   unit_id: string | null;
   trailer_id: string | null;
+  /** E14.2 — human JE memo parts (load # / unit / vendor / driver). Never invent. */
+  load_number: string | null;
+  unit_number: string | null;
+  vendor_name: string | null;
+  driver_name: string | null;
 }> {
   const res = await client.query<{
     fuel_card_id: string | null;
@@ -163,6 +168,10 @@ export async function loadFuelTxnCreditSignals(
     source: string | null;
     unit_id: string | null;
     trailer_id: string | null;
+    load_number: string | null;
+    unit_number: string | null;
+    vendor_name: string | null;
+    driver_name: string | null;
   }>(
     `
       SELECT ft.fuel_card_id::text AS fuel_card_id,
@@ -170,9 +179,17 @@ export async function loadFuelTxnCreditSignals(
              ft.notes,
              ft.source::text AS source,
              ft.unit_id::text AS unit_id,
-             ft.trailer_id::text AS trailer_id
+             ft.trailer_id::text AS trailer_id,
+             l.load_number::text AS load_number,
+             u.unit_number::text AS unit_number,
+             v.vendor_name::text AS vendor_name,
+             NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name
         FROM fuel.fuel_transactions ft
         LEFT JOIN catalogs.fuel_card_types ct ON ct.id = ft.fuel_card_id
+        LEFT JOIN mdata.loads l ON l.id = ft.load_id AND l.operating_company_id = ft.operating_company_id
+        LEFT JOIN mdata.units u ON u.id = ft.unit_id
+        LEFT JOIN mdata.vendors v ON v.id = ft.vendor_id AND v.operating_company_id = ft.operating_company_id
+        LEFT JOIN mdata.drivers d ON d.id = ft.driver_id AND d.operating_company_id = ft.operating_company_id
        WHERE ft.id = $1::uuid
          AND ft.operating_company_id = $2::uuid
        LIMIT 1
@@ -187,7 +204,33 @@ export async function loadFuelTxnCreditSignals(
     source: row?.source ?? null,
     unit_id: row?.unit_id ?? null,
     trailer_id: row?.trailer_id ?? null,
+    load_number: row?.load_number ?? null,
+    unit_number: row?.unit_number ?? null,
+    vendor_name: row?.vendor_name ?? null,
+    driver_name: row?.driver_name ?? null,
   };
+}
+
+/** E14.2 — JE memo with at least one human id (load / unit / vendor / driver). Never bare fuel UUID. */
+export function buildFuelTxnJeMemo(args: {
+  fuel_type: string;
+  load_number?: string | null;
+  unit_number?: string | null;
+  vendor_name?: string | null;
+  driver_name?: string | null;
+  fuel_card_code?: string | null;
+}): string {
+  const kind = (args.fuel_type || "diesel").trim().toLowerCase() || "diesel";
+  const parts: string[] = ["Fuel"];
+  if (args.load_number?.trim()) parts.push(`load ${args.load_number.trim()}`);
+  if (args.unit_number?.trim()) parts.push(`unit ${args.unit_number.trim()}`);
+  if (args.vendor_name?.trim()) parts.push(args.vendor_name.trim());
+  if (args.driver_name?.trim()) parts.push(args.driver_name.trim());
+  if (args.fuel_card_code?.trim()) parts.push(args.fuel_card_code.trim());
+  parts.push(`(${kind})`);
+  // If we have nothing human beyond "Fuel (diesel)", still avoid UUID — card/rail word is enough.
+  if (parts.length <= 2) parts.splice(1, 0, "purchase");
+  return parts.join(" ").slice(0, 200);
 }
 
 async function markRelayPostedToGl(relayFuelTransactionId: string, operatingCompanyId: string): Promise<void> {
@@ -265,7 +308,15 @@ export async function maybePostFuelExpenseFromCanonicalTxn(
       ifta_state: candidate.location_state ?? null,
       ifta_gallons: candidate.gallons ?? null,
       company_direct_credit: companyDirectCredit,
-      memo: `Fuel txn ${candidate.fuel_transaction_id}`,
+      // E14.2 — never embed the fuel_transaction UUID as the only identity in the JE memo.
+      memo: buildFuelTxnJeMemo({
+        fuel_type: candidate.fuel_type,
+        load_number: txnSignals?.load_number,
+        unit_number: txnSignals?.unit_number,
+        vendor_name: txnSignals?.vendor_name,
+        driver_name: txnSignals?.driver_name,
+        fuel_card_code: txnSignals?.fuel_card_code,
+      }),
     });
 
     if (candidate.relay_fuel_transaction_id && (posting.result === "posted" || posting.result === "already_posted")) {

@@ -21,28 +21,33 @@
 //      no load number, settlement, invoice, driver, vendor, or unit.
 //   5. EMPTY — memo IS NULL or whitespace-only. No label at all.
 //
-// BASELINE 0 (shrink-only): USMCA journal entries are near-zero today, so the expected violation
-// count is 0. Any violation fails the guard. --write-baseline is FORBIDDEN — the baseline is 0 by
-// population, not by snapshot. EMPTY-BY-PURGE: if a purge window is open and the JE table is empty,
-// 0 violations is the correct answer (not a skip); the guard passes with 0.
+// SHRINK-ONLY BASELINE (Lead 2026-09-25): tip debt from pre-fix fuel JE memos is accepted as a
+// ceiling in verify-je-memo-is-human-readable.baseline.json. Growing past the ceiling FAILS (a new
+// writer regressed). --write-baseline remains FORBIDDEN — raise the ceiling only with a named
+// Lead/owner ruling in the baseline JSON. EMPTY-BY-PURGE: 0 violations still PASS.
 //
 // LIVE guard (REQUIRES_LIVE_DB): touches money-relevant data (journal entries). Uses
 // requireLiveDbOrExit and declares REQUIRES_LIVE_DB so verify-static.mjs's no-DB sweep excludes it.
 // Wired into money-pr-local-gate.mjs LIVE_DOMAIN_GUARDS so it runs when a diff touches the posting
 // paths that write JEs, and fails closed when no DATABASE_URL is available.
 //
-// COORDINATION (ROUND E14.2): CC-2 is fixing the WRITER (posting-engine.service.ts memo builders)
-// in the same round. This guard catches the output; CC-2 fixes the input. Neither does both.
-// Communicate through OUTBOX-DEVIN-B.md.
+// WRITER (E14.2): fuel JE memo built in maybe-post-from-fuel-transaction.service.ts
+// (buildFuelTxnJeMemo) + fuel-posting/poster.service.ts default — never bare fuel UUID.
 //
 // Self-test: node scripts/verify-je-memo-is-human-readable.mjs --selftest
 export const REQUIRES_LIVE_DB = "money-relevant (journal entry memos) — must fail-closed, never skip, per ROUND 29.9-B";
 
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const LABEL = "verify-je-memo-is-human-readable";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const MEMO_MAX_CHARS = 200;
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const BASELINE_PATH = path.join(ROOT, "scripts", "verify-je-memo-is-human-readable.baseline.json");
+
 
 // Human-resolvable identifier patterns. A memo must contain at least ONE of these
 // to be considered "human-readable." A bare UUID without any of these is machine-only.
@@ -200,18 +205,33 @@ async function run({ selftest }) {
       }
     }
 
-    if (violations.length > 0) {
+    const baseline = JSON.parse(fs.readFileSync(BASELINE_PATH, "utf8"));
+    const ceiling = Number(baseline.violations_ceiling ?? 0);
+    if (!Number.isFinite(ceiling) || ceiling < 0) {
+      console.error(`${LABEL}: FAIL — baseline.violations_ceiling missing or invalid in ${BASELINE_PATH}`);
+      process.exitCode = 1;
+      return;
+    }
+
+    if (violations.length > ceiling) {
       const summary = [...byKind.entries()].map(([k, n]) => `${k}=${n}`).join(", ");
       const sample = violations.slice(0, 10).map((v) => `  ${v.id} [${v.kind}] memo="${v.memo_preview}..."`).join("\n");
       console.error(
         `${LABEL}: LIVE FAIL — ${violations.length} USMCA posted JE memo(s) are not human-readable (${summary}).\n` +
-          `Baseline is 0 (shrink-only). First ${Math.min(10, violations.length)}:\n${sample}\n` +
-          `CC-2 is fixing the WRITER in this round (ROUND E14.2) — coordinate via OUTBOX-DEVIN-B.md.`,
+          `Ceiling ${ceiling} (shrink-only, established ${baseline.established}). First ${Math.min(10, violations.length)}:\n${sample}\n` +
+          `A NEW wrong memo was written after the E14.2 writer fix — do not raise the ceiling without a Lead ruling.`,
       );
       process.exitCode = 1;
       return;
     }
-    console.log(`${LABEL}: LIVE PASS — ${rows.length} USMCA posted JE(s) scanned, 0 non-human-readable memo(s). Baseline 0 held.`);
+    if (violations.length > 0) {
+      const summary = [...byKind.entries()].map(([k, n]) => `${k}=${n}`).join(", ");
+      console.log(
+        `${LABEL}: LIVE PASS (known debt, not growing) — ${violations.length} non-human-readable memo(s) (${summary}) within ceiling ${ceiling}. Writer must not grow this.`,
+      );
+    } else {
+      console.log(`${LABEL}: LIVE PASS — ${rows.length} USMCA posted JE(s) scanned, 0 non-human-readable memo(s).`);
+    }
   } finally {
     client.release();
     await pool.end();

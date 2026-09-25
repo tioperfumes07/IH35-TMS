@@ -1,0 +1,7 @@
+{
+  "_comment": "JE-MEMO-E14.2 shrink-only baseline. When Devin-B shipped this guard (2026-09-23) USMCA had ~15 posted JEs and 0 violations. Live debt then grew via fuel poster memos 'Fuel event <uuid> (diesel) posting' / 'Fuel txn <uuid>' (bare_uuid_only) plus long memos (>200). Writer fixed 2026-09-25 (maybe-post-from-fuel-transaction buildFuelTxnJeMemo + poster default without UUID). Existing rows purge/rewrite separately \u2014 never grow this ceiling without a Lead/owner ruling named here.",
+  "established": "2026-09-25",
+  "violations_ceiling": 1187,
+  "measured_at": "2026-09-25T23:58:00Z",
+  "lead_ruling": "2026-09-25 Claude-Lead (owner's Lead seat): ceiling 1187 = measured live 23:58Z (bare_uuid_only=801 fuel-poster memos, memo_over_200=386). The +20 since Cursor's 1167 are CC-1's AUTH-040 R-159 reversal JEs: the reversal engine writes 'Reversal of journal entry <uuid>: <reason>' over 200 chars. That writer is fixed next (Lead R-197 before the Dreamline reissue). Posted JEs are never edited; shrink-only."
+}

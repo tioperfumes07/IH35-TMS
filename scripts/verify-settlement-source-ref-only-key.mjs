@@ -39,8 +39,13 @@ const SELFTEST = process.argv.includes("--selftest");
 
 // The one real writer of both fields is allowed to reference display_id (it MINTS it, per
 // settlement-display-id.ts's own contract) -- it never uses display_id to LOOK UP a row.
+// R-186.1 (owner 2026-09-25): P-series display_id IS the editable pre-settlement identity
+// (not AlwaysTrack). Creator + PATCH display-id must look up open shells by display_id=P-NNNN;
+// AlwaysTrack digits still go only to source_document_ref (never treated as interchangeable).
 const EXEMPT = new Set([
   "apps/backend/src/driver-finance/settlement-display-id.ts",
+  "apps/backend/src/driver-finance/settlement-creator.service.ts",
+  "apps/backend/src/driver-finance/settlements.routes.ts",
 ]);
 
 function walk(dir, out) {

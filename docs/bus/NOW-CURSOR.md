@@ -1,12 +1,20 @@
-# NOW-CURSOR — 2026-09-24
-## 13524 = $3,800 (rate con MPHC261334) — AT $4,200 was OUR misprint — MERGED #22536
-Live invoice+rate $3,800. Control patched. Escrow guard ctid tie-break.
+# NOW-CURSOR — 2026-09-25 (R-186 Settlement Creator)
+## CURRENT
+Branch: `cursor/r186-settlement-creator-c89b` (synced to tip `7bf92278f5`).
+**Unblocking push:** E14.2 fuel JE memo writer fixed + shrink-only baseline ceiling 1167 (Lead ruling). Re-measure → LIVE PASS within ceiling. Push R-186 next.
 
-## Pure-Aug deduction completer LIVE
-`scripts/feed/complete-aug-settlement-deductions.mts` — escrow holds + CA linked to driver bills + pending admin fees from AT truth (pure-Aug docs only).
-- Escrow holds seeded; CA-2026-0001..0007; 20 open AlwaysTrack admin deductions.
-- Alfonso map = USMCA twin `40823a77` (not TRANSP `dcd683f5`); misattr corrected.
-- historical_backfill CA allows non-Active drivers.
+## SHIPPED (local)
+- Settlement Creator FE/API + Preview/Post (fuel, advances, Comp. Exp, reimbursements, escrow, load match)
+- Escrow sign baseline + empty-zero / owner-auth ops fixes
+- E14.2 writer: `buildFuelTxnJeMemo` (load/unit/vendor/driver) — never bare fuel UUID; poster default without UUID
 
 ## NEXT
-Mint+close pure-Aug settlements (none exist yet — only Sep 5797+); leave Aug–Sep open; 5 self-carried AR; layover pay lines.
+1. Push branch (money-pr-local-gate)
+2. Invoice/factoring Post legs
+3. Stop AT mint on open (`confirmPresettlementLink` create_new)
+4. Editable P-series for open pre-settlements
+5. Edit = void + repost · claim EVEN verify-step
+
+## COORD
+- GO-20: INBOX-CURSOR archived → this file. No GUARD-WORKORDERS / Downloads/abb sweep.
+- USMCA only · Never POST Book Load

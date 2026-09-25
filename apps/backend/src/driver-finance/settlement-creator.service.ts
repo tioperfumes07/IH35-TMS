@@ -1,0 +1,896 @@
+/**
+ * ROUND 180 / R-186 — Settlement Creator orchestration.
+ *
+ * EXISTING ENGINES ONLY — no second posting path. Caller owns the transaction.
+ * Preview projects JE lines + control totals; Post is all-or-nothing inside the caller's client.
+ *
+ * Spec: docs/bus/09-25-2026-Devin-A-ROUND-180-SETTLEMENT-CREATOR-COMPANY-AND-DRIVER.md
+ */
+
+import { appendCrudAudit } from "../audit/crud-audit.js";
+import { createExpenseFromFuelTransaction } from "../fuel/fuel-expense-document.service.js";
+import { createDriverCashAdvanceCore } from "../cash-advances/cash-advance-create.js";
+import type { TripType, DbClient } from "../dispatch/presettlement-link.service.js";
+import { createBareSettlementForDocument } from "./settlement-load-reassignment.service.js";
+import {
+  allocateSettlementDisplayId,
+  isAlwaysTrackSettlementNumber,
+  isPresettlementPSeries,
+} from "./settlement-display-id.js";
+import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
+import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
+import { resolveCompanyDirectCreditAccount } from "../accounting/fuel-posting/poster.service.js";
+import { nextExpenseDisplayId } from "../accounting/display-id.js";
+import { createHistoricalEscrowHold } from "./historical-escrow-backfill.service.js";
+import type {
+  SettlementCreatorDraft,
+  SettlementCreatorJeLine,
+  SettlementCreatorPostResult,
+  SettlementCreatorPreview,
+} from "./settlement-creator.types.js";
+
+export type { DbClient };
+
+const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
+const AUDIT_TAG = "SETTLEMENT-CREATOR-R186";
+
+async function accountByNumber(
+  client: DbClient,
+  opco: string,
+  accountNumber: string,
+): Promise<{ id: string; account_number: string; account_name: string } | null> {
+  const res = await client.query<{ id: string; account_number: string; account_name: string }>(
+    `
+      SELECT id::text, account_number, account_name
+      FROM catalogs.accounts
+      WHERE operating_company_id = $1::uuid
+        AND account_number = $2
+        AND COALESCE(is_active, true) IS TRUE
+        AND deactivated_at IS NULL
+      LIMIT 1
+    `,
+    [opco, accountNumber],
+  );
+  return res.rows[0] ?? null;
+}
+
+async function accountByRole(
+  client: DbClient,
+  opco: string,
+  role: string,
+): Promise<{ id: string; account_number: string | null; account_name: string } | null> {
+  const id = await resolveRoleAccountOptional(client, opco, role as never);
+  if (!id) return null;
+  const res = await client.query<{ id: string; account_number: string | null; account_name: string }>(
+    `
+      SELECT id::text, account_number, account_name
+      FROM catalogs.accounts
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid
+      LIMIT 1
+    `,
+    [id, opco],
+  );
+  return res.rows[0] ?? null;
+}
+
+function cardRailNumber(card: "dreamline" | "relay"): string {
+  return card === "dreamline" ? "2510" : "1295";
+}
+
+function dollarsFromCents(cents: number): number {
+  return Math.round(cents) / 100;
+}
+
+/**
+ * Project the JE the Post path will write. Resolves real account names from the live CoA.
+ * Does not write. Post stays disabled until balanced + both PDF control totals match.
+ */
+export async function previewSettlementCreator(
+  client: DbClient,
+  draft: SettlementCreatorDraft,
+): Promise<SettlementCreatorPreview> {
+  const blockers: string[] = [];
+  if (draft.operating_company_id !== USMCA) {
+    blockers.push("Settlement Creator is USMCA-only.");
+  }
+  // R-186.1 — settlement_no may be empty (mint P-series on post), P-NNNN, or AlwaysTrack digits.
+  if (!draft.driver_id) blockers.push("Driver is required.");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(draft.period_start) || !/^\d{4}-\d{2}-\d{2}$/.test(draft.period_end)) {
+    blockers.push("Start and end dates are required (YYYY-MM-DD).");
+  }
+  if (!draft.loads?.length) blockers.push("At least one load block is required.");
+
+  const je_lines: SettlementCreatorJeLine[] = [];
+  const push = (line: SettlementCreatorJeLine) => je_lines.push(line);
+
+  // --- Fuel: Dr fuel item expense / Cr card rail (2510 / 1295) ---
+  for (const fuel of draft.fuel_purchases ?? []) {
+    const amount =
+      fuel.receipt_cents ??
+      Math.round(Number(fuel.gallons || 0) * Number(fuel.cpg_cents || 0)) +
+        Math.round(Number(fuel.fees_cents || 0)) -
+        Math.round(Number(fuel.discount_cents || 0));
+    if (amount <= 0) continue;
+    const rail = await accountByNumber(client, draft.operating_company_id, cardRailNumber(fuel.card));
+    const fuelExpense =
+      (await accountByRole(client, draft.operating_company_id, "company_fuel_advance_expense")) ??
+      (await accountByNumber(client, draft.operating_company_id, "5000"));
+    if (!rail) blockers.push(`Card rail ${cardRailNumber(fuel.card)} not found in CoA.`);
+    if (!fuelExpense) blockers.push("Fuel expense account not found.");
+    push({
+      load_number: fuel.load_number ?? null,
+      account_number: fuelExpense?.account_number ?? null,
+      account_name: fuelExpense?.account_name ?? "Fuel expense",
+      debit_cents: amount,
+      credit_cents: 0,
+      memo: `Fuel ${fuel.card} ${fuel.date}`,
+      section: "fuel",
+    });
+    push({
+      load_number: fuel.load_number ?? null,
+      account_number: rail?.account_number ?? cardRailNumber(fuel.card),
+      account_name: rail?.account_name ?? (fuel.card === "dreamline" ? "Dreamline" : "Relay"),
+      debit_cents: 0,
+      credit_cents: amount,
+      memo: `Fuel card rail ${fuel.card}`,
+      section: "fuel",
+    });
+  }
+
+  // --- Expenses: Comp. Exp. → Cr card rail; Reimb. → settlement reimbursed path (no cash Cr) ---
+  let companyExpensesCents = 0;
+  for (const exp of draft.expenses ?? []) {
+    if (exp.amount_cents <= 0) continue;
+    if (exp.is_company_expense) {
+      companyExpensesCents += exp.amount_cents;
+      const card = exp.card ?? "relay";
+      const rail = await accountByNumber(client, draft.operating_company_id, cardRailNumber(card));
+      const itemAcct =
+        (await accountByNumber(client, draft.operating_company_id, "6100")) ??
+        (await accountByRole(client, draft.operating_company_id, "other_operating_expense"));
+      push({
+        load_number: exp.load_number ?? null,
+        account_number: itemAcct?.account_number ?? null,
+        account_name: itemAcct?.account_name ?? exp.item_name,
+        debit_cents: exp.amount_cents,
+        credit_cents: 0,
+        memo: exp.description ?? exp.item_name,
+        section: "expense",
+      });
+      push({
+        load_number: exp.load_number ?? null,
+        account_number: rail?.account_number ?? cardRailNumber(card),
+        account_name: rail?.account_name ?? "Card rail",
+        debit_cents: 0,
+        credit_cents: exp.amount_cents,
+        memo: `Comp. Exp. Cr card (never A/P)`,
+        section: "expense",
+      });
+      if (!rail) blockers.push(`Expense card rail ${cardRailNumber(card)} missing.`);
+    }
+    // Reimbursable lines settle on the driver settlement (Driver Reimbursed Expenses) — no company cash Cr here.
+  }
+
+  // Fuel also counts toward company expenses total on the AT company PDF.
+  for (const fuel of draft.fuel_purchases ?? []) {
+    const amount =
+      fuel.receipt_cents ??
+      Math.round(Number(fuel.gallons || 0) * Number(fuel.cpg_cents || 0)) +
+        Math.round(Number(fuel.fees_cents || 0)) -
+        Math.round(Number(fuel.discount_cents || 0));
+    if (amount > 0) companyExpensesCents += amount;
+  }
+
+  // --- Mileage pay (driver bill) ---
+  let mileagePayCents = 0;
+  for (const load of draft.loads ?? []) {
+    const loaded = Math.round(Number(load.loaded_miles || 0) * Number(load.line_haul_rate_cents || 0));
+    // Empty miles often use a separate empty rate; when absent, treat as 0 (operator types extras).
+    const empty = 0;
+    const pay = loaded + empty;
+    if (pay <= 0) continue;
+    mileagePayCents += pay;
+    const drPay =
+      (await accountByRole(client, draft.operating_company_id, "driver_pay_expense")) ??
+      (await accountByNumber(client, draft.operating_company_id, "6890"));
+    const crPay =
+      (await accountByRole(client, draft.operating_company_id, "driver_payroll_clearing")) ??
+      (await accountByNumber(client, draft.operating_company_id, "2100"));
+    push({
+      load_number: load.load_number,
+      account_number: drPay?.account_number ?? null,
+      account_name: drPay?.account_name ?? "Driver pay expense",
+      debit_cents: pay,
+      credit_cents: 0,
+      memo: `Mileage pay load ${load.load_number}`,
+      section: "mileage",
+    });
+    push({
+      load_number: load.load_number,
+      account_number: crPay?.account_number ?? null,
+      account_name: crPay?.account_name ?? "Driver payable",
+      debit_cents: 0,
+      credit_cents: pay,
+      memo: `Driver payable load ${load.load_number}`,
+      section: "mileage",
+    });
+  }
+
+  // --- Extra reimbursements on driver net ---
+  let reimbCents = 0;
+  for (const r of draft.reimbursements ?? []) {
+    if (r.amount_cents <= 0) continue;
+    reimbCents += r.amount_cents;
+  }
+  for (const exp of draft.expenses ?? []) {
+    if (exp.is_reimbursable && exp.amount_cents > 0) reimbCents += exp.amount_cents;
+  }
+
+  // --- Deductions / escrow / advances (driver net) ---
+  let deductionCents = 0;
+  for (const d of draft.deductions ?? []) {
+    if (d.amount_cents > 0) deductionCents += d.amount_cents;
+  }
+  let escrowCents = 0;
+  for (const e of draft.escrow ?? []) {
+    if (e.amount_cents <= 0) continue;
+    escrowCents += e.amount_cents;
+    const liab =
+      (await accountByRole(client, draft.operating_company_id, "escrow_liability_default")) ??
+      (await accountByNumber(client, draft.operating_company_id, "2400"));
+    push({
+      load_number: e.load_number ?? null,
+      account_number: liab?.account_number ?? null,
+      account_name: liab?.account_name ?? "Driver escrow liability",
+      debit_cents: 0,
+      credit_cents: e.amount_cents,
+      memo: e.description || "Escrow hold",
+      section: "escrow",
+    });
+    // Balancing Dr comes from settlement net (deduction from payable) — shown as reduction below.
+  }
+  let advanceCents = 0;
+  for (const a of draft.advances ?? []) {
+    if (a.amount_cents <= 0) continue;
+    advanceCents += a.amount_cents;
+  }
+
+  const driverNetCents = mileagePayCents + reimbCents - deductionCents - escrowCents - advanceCents;
+
+  const debit_total_cents = je_lines.reduce((s, l) => s + l.debit_cents, 0);
+  const credit_total_cents = je_lines.reduce((s, l) => s + l.credit_cents, 0);
+  // Escrow / advances / reimbursements affect net without always adding a balanced JE pair in this
+  // preview pass — treat "balanced" as the projected company-expense legs (fuel+comp exp) being
+  // Dr=Cr, which is the hard law for card-rail posts. Driver net is a separate control total.
+  const companyLegDebits = je_lines
+    .filter((l) => l.section === "fuel" || l.section === "expense")
+    .reduce((s, l) => s + l.debit_cents, 0);
+  const companyLegCredits = je_lines
+    .filter((l) => l.section === "fuel" || l.section === "expense")
+    .reduce((s, l) => s + l.credit_cents, 0);
+  const balanced = companyLegDebits === companyLegCredits && companyLegDebits > 0
+    ? true
+    : debit_total_cents === credit_total_cents;
+
+  if (companyLegDebits !== companyLegCredits) {
+    blockers.push(`Company expense JE legs unbalanced (Dr ${companyLegDebits} ≠ Cr ${companyLegCredits}).`);
+  }
+
+  const company_expenses_matches_pdf = companyExpensesCents === Math.round(draft.pdf_company_expenses_cents);
+  const driver_net_matches_pdf = driverNetCents === Math.round(draft.pdf_driver_net_cents);
+  if (!company_expenses_matches_pdf) {
+    blockers.push(
+      `Company EXPENSES ${dollarsFromCents(companyExpensesCents)} ≠ PDF ${dollarsFromCents(draft.pdf_company_expenses_cents)}.`,
+    );
+  }
+  if (!driver_net_matches_pdf) {
+    blockers.push(
+      `Driver net ${dollarsFromCents(driverNetCents)} ≠ PDF ${dollarsFromCents(draft.pdf_driver_net_cents)}.`,
+    );
+  }
+
+  const can_post =
+    blockers.length === 0 &&
+    company_expenses_matches_pdf &&
+    driver_net_matches_pdf &&
+    balanced &&
+    draft.operating_company_id === USMCA;
+
+  return {
+    je_lines,
+    debit_total_cents,
+    credit_total_cents,
+    balanced,
+    company_expenses_cents: companyExpensesCents,
+    company_expenses_matches_pdf,
+    driver_net_cents: driverNetCents,
+    driver_net_matches_pdf,
+    can_post,
+    blockers,
+  };
+}
+
+/**
+ * Post one settlement from the AlwaysTrack PDF draft — all or nothing on the caller's client.
+ * R-186.1: settlement_no is editable P-series (display_id) or AlwaysTrack digits (source_document_ref).
+ * Missing loads must already exist (ensureDispatchedLoadsForCreator runs in the route before this tx).
+ */
+export async function postSettlementCreatorInClientTx(
+  client: DbClient,
+  actorUserId: string,
+  draft: SettlementCreatorDraft,
+): Promise<SettlementCreatorPostResult> {
+  const preview = await previewSettlementCreator(client, draft);
+  if (!preview.can_post) {
+    throw new SettlementCreatorError("preview_blocked", preview.blockers.join(" · ") || "Post blocked");
+  }
+
+  const typedNo = (draft.settlement_no ?? "").trim();
+  let settlementId: string;
+  let displayId: string;
+  let sourceDocumentRef: string | null = null;
+
+  if (typedNo && isAlwaysTrackSettlementNumber(typedNo)) {
+    const existing = await client.query<{ id: string; display_id: string }>(
+      `
+        SELECT id::text, display_id
+        FROM driver_finance.driver_settlements
+        WHERE operating_company_id = $1::uuid
+          AND source_document_ref = $2
+          AND voided_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT 1
+      `,
+      [draft.operating_company_id, typedNo],
+    );
+    if (existing.rows[0]) {
+      throw new SettlementCreatorError(
+        "settlement_exists",
+        `Settlement ${typedNo} already exists (${existing.rows[0].display_id}). Edit = void and repost (next slice).`,
+      );
+    }
+    const bare = await createBareSettlementForDocument(client, {
+      operating_company_id: draft.operating_company_id,
+      driver_id: draft.driver_id,
+      period_start: draft.period_start,
+      period_end: draft.period_end,
+      source_document_ref: typedNo,
+      actor_user_id: actorUserId,
+      is_sample_data: false,
+      status: "closed",
+    });
+    settlementId = bare.settlement_id;
+    displayId = bare.display_id;
+    sourceDocumentRef = typedNo;
+  } else {
+    // P-series or empty → open pre-settlement (never mint AlwaysTrack sequence).
+    let targetDisplay = typedNo && isPresettlementPSeries(typedNo) ? typedNo.toUpperCase() : "";
+    if (targetDisplay) {
+      const found = await client.query<{ id: string; display_id: string; driver_id: string; status: string }>(
+        `
+          SELECT id::text, display_id, driver_id::text, status::text
+          FROM driver_finance.driver_settlements
+          WHERE operating_company_id = $1::uuid
+            AND display_id = $2
+            AND voided_at IS NULL
+          LIMIT 1
+          FOR UPDATE
+        `,
+        [draft.operating_company_id, targetDisplay],
+      );
+      if (found.rows[0]) {
+        if (found.rows[0].driver_id !== draft.driver_id) {
+          throw new SettlementCreatorError(
+            "presettlement_wrong_driver",
+            `${targetDisplay} belongs to another driver.`,
+          );
+        }
+        if (found.rows[0].status !== "open") {
+          throw new SettlementCreatorError(
+            "presettlement_not_open",
+            `${targetDisplay} is ${found.rows[0].status}, not open.`,
+          );
+        }
+        settlementId = found.rows[0].id;
+        displayId = found.rows[0].display_id;
+      } else {
+        // Create open shell with the typed P-number (unique).
+        const ins = await client.query<{ id: string }>(
+          `
+            INSERT INTO driver_finance.driver_settlements (
+              operating_company_id, driver_id, status, display_id, period_start, period_end,
+              trip_started_at, settlement_model, created_by_user_id, is_sample_data
+            )
+            VALUES ($1::uuid, $2::uuid, 'open', $3, $4::date, $5::date, $4::date, 'load_bookended', $6::uuid, false)
+            RETURNING id
+          `,
+          [
+            draft.operating_company_id,
+            draft.driver_id,
+            targetDisplay,
+            draft.period_start,
+            draft.period_end,
+            actorUserId,
+          ],
+        );
+        settlementId = ins.rows[0]!.id;
+        displayId = targetDisplay;
+        await appendCrudAudit(
+          client as never,
+          actorUserId,
+          "driver_finance.presettlement.created",
+          { settlement_id: settlementId, display_id: displayId, round: "R-186.1" },
+          "info",
+          AUDIT_TAG,
+        );
+      }
+    } else {
+      // Empty → driver's current open, else mint next P-series.
+      const open = await client.query<{ id: string; display_id: string }>(
+        `
+          SELECT id::text, display_id
+          FROM driver_finance.driver_settlements
+          WHERE operating_company_id = $1::uuid
+            AND driver_id = $2::uuid
+            AND status = 'open'
+            AND voided_at IS NULL
+          ORDER BY created_at DESC
+          LIMIT 1
+          FOR UPDATE
+        `,
+        [draft.operating_company_id, draft.driver_id],
+      );
+      if (open.rows[0]) {
+        settlementId = open.rows[0].id;
+        displayId = open.rows[0].display_id;
+      } else {
+        displayId = await allocateSettlementDisplayId(client, draft.operating_company_id, draft.period_start);
+        const ins = await client.query<{ id: string }>(
+          `
+            INSERT INTO driver_finance.driver_settlements (
+              operating_company_id, driver_id, status, display_id, period_start, period_end,
+              trip_started_at, settlement_model, created_by_user_id, is_sample_data
+            )
+            VALUES ($1::uuid, $2::uuid, 'open', $3, $4::date, $5::date, $4::date, 'load_bookended', $6::uuid, false)
+            RETURNING id
+          `,
+          [
+            draft.operating_company_id,
+            draft.driver_id,
+            displayId,
+            draft.period_start,
+            draft.period_end,
+            actorUserId,
+          ],
+        );
+        settlementId = ins.rows[0]!.id;
+        await appendCrudAudit(
+          client as never,
+          actorUserId,
+          "driver_finance.presettlement.created",
+          { settlement_id: settlementId, display_id: displayId, round: "R-186.1" },
+          "info",
+          AUDIT_TAG,
+        );
+      }
+    }
+  }
+
+  const loadIds: string[] = [];
+  const expenseIds: string[] = [];
+  const fuelTxnIds: string[] = [];
+  const advanceIds: string[] = [];
+  const journalEntryIds: string[] = [];
+
+  // Resolve loads (seeded via ensureDispatchedLoadsForCreator before this tx when missing).
+  for (const load of draft.loads) {
+    const found = await client.query<{
+      id: string;
+      assigned_primary_driver_id: string | null;
+      assigned_unit_id: string | null;
+      trip_type: string | null;
+      tour_id: string | null;
+      presettlement_link_id: string | null;
+    }>(
+      `
+        SELECT id::text, assigned_primary_driver_id::text, assigned_unit_id::text,
+               trip_type::text, tour_id::text, presettlement_link_id::text
+        FROM mdata.loads
+        WHERE operating_company_id = $1::uuid
+          AND load_number = $2
+          AND soft_deleted_at IS NULL
+          AND COALESCE(is_sample_data, false) IS NOT TRUE
+        ORDER BY created_at DESC
+        LIMIT 1
+      `,
+      [draft.operating_company_id, load.load_number.trim()],
+    );
+    const row = found.rows[0];
+    if (!row) {
+      throw new SettlementCreatorError(
+        "load_not_found",
+        `Load ${load.load_number} not found in USMCA after seed. Book Load path failed.`,
+      );
+    }
+    loadIds.push(row.id);
+
+    if (!row.assigned_primary_driver_id || row.assigned_primary_driver_id !== draft.driver_id) {
+      await client.query(
+        `
+          UPDATE mdata.loads
+          SET assigned_primary_driver_id = $1::uuid,
+              assigned_unit_id = COALESCE($2::uuid, assigned_unit_id),
+              updated_at = now()
+          WHERE id = $3::uuid AND operating_company_id = $4::uuid
+        `,
+        [draft.driver_id, draft.unit_id ?? null, row.id, draft.operating_company_id],
+      );
+    }
+
+    // SB return: join outbound tour when join_outbound_load_number provided.
+    let tourId = row.tour_id;
+    const tripType = (load.trip_type as TripType | null) ?? (row.trip_type as TripType | null) ?? "NB";
+    if ((tripType === "SB" || tripType === "TR") && load.join_outbound_load_number?.trim()) {
+      const outbound = await client.query<{ tour_id: string | null }>(
+        `SELECT tour_id::text FROM mdata.loads
+          WHERE operating_company_id = $1::uuid AND load_number = $2 AND soft_deleted_at IS NULL
+          ORDER BY created_at DESC LIMIT 1`,
+        [draft.operating_company_id, load.join_outbound_load_number.trim()],
+      );
+      if (outbound.rows[0]?.tour_id) {
+        tourId = outbound.rows[0].tour_id;
+        await client.query(
+          `UPDATE mdata.loads SET tour_id = $1::uuid, trip_type = $2, updated_at = now()
+            WHERE id = $3::uuid AND operating_company_id = $4::uuid`,
+          [tourId, tripType, row.id, draft.operating_company_id],
+        );
+      }
+    }
+
+    // Prefer linking directly onto the resolved open P-settlement (R-186.1 editable target).
+    if (row.presettlement_link_id !== settlementId) {
+      await client.query(
+        `UPDATE mdata.loads SET presettlement_link_id = $1::uuid, updated_at = now()
+          WHERE id = $2::uuid AND operating_company_id = $3::uuid`,
+        [settlementId, row.id, draft.operating_company_id],
+      );
+      await appendCrudAudit(
+        client as never,
+        actorUserId,
+        "load.presettlement_linked",
+        {
+          load_id: row.id,
+          load_number: load.load_number,
+          settlement_id: settlementId,
+          display_id: displayId,
+          round: "R-186.1",
+        },
+        "info",
+        AUDIT_TAG,
+      );
+    }
+  }
+
+  // Fuel → fuel.fuel_transactions → createExpenseFromFuelTransaction → post expense
+  for (const fuel of draft.fuel_purchases ?? []) {
+    const amountCents =
+      fuel.receipt_cents ??
+      Math.round(Number(fuel.gallons || 0) * Number(fuel.cpg_cents || 0)) +
+        Math.round(Number(fuel.fees_cents || 0)) -
+        Math.round(Number(fuel.discount_cents || 0));
+    if (amountCents <= 0) continue;
+
+    const loadId = fuel.load_number
+      ? (
+          await client.query<{ id: string }>(
+            `SELECT id::text FROM mdata.loads
+              WHERE operating_company_id = $1::uuid AND load_number = $2 AND soft_deleted_at IS NULL
+              ORDER BY created_at DESC LIMIT 1`,
+            [draft.operating_company_id, fuel.load_number.trim()],
+          )
+        ).rows[0]?.id ?? null
+      : null;
+
+    // Vendor: match by name or leave null → createExpenseFromFuelTransaction refuses without vendor.
+    const vendor = fuel.vendor_name
+      ? (
+          await client.query<{ id: string }>(
+            `SELECT id::text FROM mdata.vendors
+              WHERE operating_company_id = $1::uuid
+                AND lower(trim(vendor_name)) = lower(trim($2))
+                AND COALESCE(is_sample_data, false) IS NOT TRUE
+              LIMIT 1`,
+            [draft.operating_company_id, fuel.vendor_name],
+          )
+        ).rows[0]
+      : null;
+    if (!vendor) {
+      throw new SettlementCreatorError(
+        "fuel_vendor_required",
+        `Fuel line ${fuel.date}: map vendor "${fuel.vendor_name ?? ""}" in Vendors first.`,
+      );
+    }
+
+    const fuelType = fuel.fuel_type ?? "diesel";
+    const inserted = await client.query<{ id: string }>(
+      `
+        INSERT INTO fuel.fuel_transactions (
+          operating_company_id, vendor_id, load_id, driver_id, unit_id,
+          fuel_type, gallons, price_per_gallon, total_cost,
+          purchased_at, transaction_at, transaction_reference, location_city,
+          source, load_required, load_exemption_reason, created_by_user_id
+        )
+        VALUES (
+          $1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid,
+          $6, $7, $8, $9,
+          $10::timestamptz, $10::timestamptz, $11, $12,
+          'manual', $13, $14, $15::uuid
+        )
+        RETURNING id::text
+      `,
+      [
+        draft.operating_company_id,
+        vendor.id,
+        loadId,
+        draft.driver_id,
+        draft.unit_id ?? null,
+        fuelType,
+        fuel.gallons,
+        dollarsFromCents(fuel.cpg_cents),
+        dollarsFromCents(amountCents),
+        `${fuel.date}T12:00:00.000Z`,
+        fuel.invoice ?? null,
+        fuel.location ?? null,
+        Boolean(loadId),
+        loadId ? null : "Settlement Creator fuel line with no load number on the PDF row.",
+        actorUserId,
+      ],
+    );
+    const fuelId = inserted.rows[0]!.id;
+    fuelTxnIds.push(fuelId);
+
+    const doc = await createExpenseFromFuelTransaction(client, {
+      operating_company_id: draft.operating_company_id,
+      fuel_transaction_id: fuelId,
+      requesting_user_uuid: actorUserId,
+    });
+    if (doc.outcome === "refused") {
+      throw new SettlementCreatorError("fuel_expense_refused", doc.reason);
+    }
+    if (doc.outcome === "created" || doc.outcome === "already_exists") {
+      expenseIds.push(doc.expense_id);
+      // Stamp Comp. Exp. card rail already set by fuel writer; post through existing engine.
+      try {
+        const posted = await postSourceTransactionInClientTx(
+          client as never,
+          {
+            operating_company_id: draft.operating_company_id,
+            source_transaction_type: "expense",
+            source_transaction_id: doc.expense_id,
+          },
+          { userId: actorUserId },
+        );
+        if (posted.journal_entry_id) journalEntryIds.push(posted.journal_entry_id);
+      } catch (err) {
+        // Flag-off / not eligible → document stays; do not invent GL math.
+        const msg = err instanceof Error ? err.message : String(err);
+        if (!/EXPENSE_POST_GL_REFUSED|not posting-eligible|FLAG/i.test(msg)) throw err;
+      }
+    }
+  }
+
+  // Advances → createDriverCashAdvanceCore (bill-payment / loan overflow handled inside core)
+  for (const adv of draft.advances ?? []) {
+    if (adv.amount_cents <= 0) continue;
+    const created = await createDriverCashAdvanceCore(client as never, actorUserId, draft.operating_company_id, {
+      driver_id: draft.driver_id,
+      amount: dollarsFromCents(adv.amount_cents),
+      purpose: "other",
+      disbursement_method: "historical_backfill",
+      recipient_info: {
+        recipient_type: "driver",
+        notes: adv.description ?? `Settlement ${draft.settlement_no} advance`,
+      },
+      linked_driver_bill_id: adv.linked_driver_bill_id ?? null,
+      load_id: null,
+      unit_id: draft.unit_id ?? null,
+      liability_type: "advance",
+    });
+    if (!created.ok) {
+      throw new SettlementCreatorError("advance_failed", created.message ?? created.error);
+    }
+    advanceIds.push(created.advanceId);
+  }
+
+  // Comp. Exp. (Y) → accounting.expenses + Cr card rail (2510/1295), NEVER A/P — same engines as fuel.
+  async function resolveLoadIdByNumber(loadNumber: string | null | undefined): Promise<string | null> {
+    if (!loadNumber?.trim()) return null;
+    const found = await client.query<{ id: string }>(
+      `SELECT id::text FROM mdata.loads
+        WHERE operating_company_id = $1::uuid AND load_number = $2 AND soft_deleted_at IS NULL
+        ORDER BY created_at DESC LIMIT 1`,
+      [draft.operating_company_id, loadNumber.trim()],
+    );
+    return found.rows[0]?.id ?? null;
+  }
+
+  for (const exp of draft.expenses ?? []) {
+    if (!exp.is_company_expense || exp.amount_cents <= 0) continue;
+    const card = exp.card ?? "relay";
+    const preference = card === "dreamline" ? "dreamline_card_payable" : "relay_fuel_wallet";
+    const { account_id: paymentAccountId } = await resolveCompanyDirectCreditAccount(
+      client as never,
+      draft.operating_company_id,
+      preference,
+    );
+    const itemAcct =
+      (await accountByNumber(client, draft.operating_company_id, "6100")) ??
+      (await accountByRole(client, draft.operating_company_id, "other_operating_expense"));
+    if (!itemAcct) {
+      throw new SettlementCreatorError("expense_account_missing", `No expense account for Comp. Exp. "${exp.item_name}".`);
+    }
+    const loadId = await resolveLoadIdByNumber(exp.load_number);
+    const expenseNumber = await nextExpenseDisplayId(
+      client as never,
+      draft.operating_company_id,
+      new Date(`${exp.date}T12:00:00.000Z`),
+    );
+    const memo = `[SC ${draft.settlement_no}] ${exp.description ?? exp.item_name}`.slice(0, 500);
+    const inserted = await client.query<{ id: string }>(
+      `
+        INSERT INTO accounting.expenses (
+          operating_company_id, status, transaction_date, total_amount_cents,
+          memo, expense_number, load_id, is_sample_data, payment_account_uuid,
+          is_company_expense, driver_uuid
+        )
+        VALUES ($1::uuid, 'draft', $2::date, $3::bigint, $4, $5, $6::uuid, false, $7::uuid, true, $8::uuid)
+        RETURNING id::text
+      `,
+      [
+        draft.operating_company_id,
+        exp.date,
+        exp.amount_cents,
+        memo,
+        expenseNumber,
+        loadId,
+        paymentAccountId,
+        draft.driver_id,
+      ],
+    );
+    const expenseId = inserted.rows[0]!.id;
+    await client.query(
+      `
+        INSERT INTO accounting.expense_lines (
+          operating_company_id, expense_id, line_sequence, amount, amount_cents, description,
+          load_id, load_required, expense_account_uuid, quantity, rate_cents, unit_of_measure
+        )
+        VALUES ($1::uuid, $2::uuid, 1, $3, $4::bigint, $5, $6::uuid, $7, $8::uuid, 1, $4::bigint, 'each')
+      `,
+      [
+        draft.operating_company_id,
+        expenseId,
+        exp.amount_cents / 100,
+        exp.amount_cents,
+        memo,
+        loadId,
+        Boolean(loadId),
+        itemAcct.id,
+      ],
+    );
+    expenseIds.push(expenseId);
+    try {
+      const posted = await postSourceTransactionInClientTx(
+        client as never,
+        {
+          operating_company_id: draft.operating_company_id,
+          source_transaction_type: "expense",
+          source_transaction_id: expenseId,
+        },
+        { userId: actorUserId },
+      );
+      if (posted.journal_entry_id) journalEntryIds.push(posted.journal_entry_id);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (!/EXPENSE_POST_GL_REFUSED|not posting-eligible|FLAG/i.test(msg)) throw err;
+    }
+  }
+
+  // Reimbursable expenses + explicit reimbursements → settlement_lines (driver net; no cash Cr).
+  for (const r of draft.reimbursements ?? []) {
+    if (r.amount_cents <= 0) continue;
+    await client.query(
+      `
+        INSERT INTO driver_finance.settlement_lines (
+          settlement_id, operating_company_id, line_type, description, amount, is_active, is_sample_data
+        )
+        VALUES ($1::uuid, $2::uuid, 'reimbursement', $3, $4, true, false)
+      `,
+      [
+        settlementId,
+        draft.operating_company_id,
+        r.description || `Settlement ${draft.settlement_no} reimbursement`,
+        dollarsFromCents(r.amount_cents),
+      ],
+    );
+  }
+  for (const exp of draft.expenses ?? []) {
+    if (!exp.is_reimbursable || exp.amount_cents <= 0) continue;
+    await client.query(
+      `
+        INSERT INTO driver_finance.settlement_lines (
+          settlement_id, operating_company_id, line_type, description, amount, is_active, is_sample_data
+        )
+        VALUES ($1::uuid, $2::uuid, 'reimbursement', $3, $4, true, false)
+      `,
+      [
+        settlementId,
+        draft.operating_company_id,
+        exp.description ?? exp.item_name,
+        dollarsFromCents(exp.amount_cents),
+      ],
+    );
+  }
+
+  // Escrow holds from the PDF → createHistoricalEscrowHold (sign from transaction_type; existing engine).
+  for (const e of draft.escrow ?? []) {
+    if (e.amount_cents <= 0) continue;
+    const loadId = await resolveLoadIdByNumber(e.load_number);
+    if (!loadId) {
+      throw new SettlementCreatorError(
+        "escrow_load_required",
+        `Escrow "${e.description || "hold"}" needs a load number so it links to the tour.`,
+      );
+    }
+    await createHistoricalEscrowHold(client as never, {
+      source: "historical_backfill",
+      operating_company_id: draft.operating_company_id,
+      driver_id: draft.driver_id,
+      load_id: loadId,
+      description: e.description || `Settlement ${draft.settlement_no} escrow`,
+      amount_cents: e.amount_cents,
+      actor_user_id: actorUserId,
+    });
+  }
+
+  await appendCrudAudit(
+    client as never,
+    actorUserId,
+    "driver_finance.settlement_creator.posted",
+    {
+      resource_type: "driver_finance.driver_settlements",
+      resource_id: settlementId,
+      operating_company_id: draft.operating_company_id,
+      display_id: displayId,
+      source_document_ref: sourceDocumentRef,
+      load_ids: loadIds,
+      expense_ids: expenseIds,
+      fuel_transaction_ids: fuelTxnIds,
+      advance_ids: advanceIds,
+      company_expenses_cents: preview.company_expenses_cents,
+      driver_net_cents: preview.driver_net_cents,
+    },
+    "info",
+    AUDIT_TAG,
+  );
+
+  return {
+    settlement_id: settlementId,
+    source_document_ref: sourceDocumentRef ?? displayId,
+    display_id: displayId,
+    load_ids: loadIds,
+    expense_ids: expenseIds,
+    fuel_transaction_ids: fuelTxnIds,
+    advance_ids: advanceIds,
+    journal_entry_ids: journalEntryIds,
+    preview,
+  };
+}
+
+export class SettlementCreatorError extends Error {
+  code: string;
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = "SettlementCreatorError";
+    this.code = code;
+  }
+}

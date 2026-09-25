@@ -1,9 +1,5 @@
 import { assertNoHistoricalSettlementCoverage } from "./settlement-historical-attribution.service.js";
 import { allocateSettlementDisplayId } from "./settlement-display-id.js";
-import {
-  allocateNextSettlementSourceDocumentRef,
-  setSettlementSourceDocumentRef,
-} from "./settlement-source-document-ref.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { recordPostingFlagSkip } from "../accounting/posting-flag-skip-audit.js";
@@ -563,28 +559,10 @@ async function closeLoadBookendedSettlementForDriver(
     [settlementId, closedAt, opts.load.id, opts.load.load_number]
   );
 
-  // P1 SETTLEMENT NUMBERING (Claude Lead, ROUND 18.3, Item A) — CORRECTED 2026-09-11: reuses the
-  // SAME canonical allocator+writer presettlement-link.service.ts already uses at tour OPEN
-  // (allocateNextSettlementSourceDocumentRef / setSettlementSourceDocumentRef,
-  // settlement-source-document-ref.service.ts), rather than a second, independent
-  // implementation — an earlier version of this commit introduced its own
-  // allocateSettlementDocumentNumberIfMissing with a DIFFERENT advisory-lock key, which does not
-  // mutually exclude against the open-time allocator and could race it. Reusing the one real
-  // writer also gets its audit trail for free. No-ops if the settlement already carries a number
-  // (e.g. stamped instantly at open, per owner ruling 2026-09-11 "assigns when the load is
-  // closed... assigned instantly").
-  if (!(await client.query<{ source_document_ref: string | null }>(
-    `SELECT source_document_ref FROM driver_finance.driver_settlements WHERE id = $1`,
-    [settlementId]
-  )).rows[0]?.source_document_ref) {
-    const nextRef = await allocateNextSettlementSourceDocumentRef(client, opts.operatingCompanyId);
-    await setSettlementSourceDocumentRef(client, {
-      operatingCompanyId: opts.operatingCompanyId,
-      settlementId,
-      sourceDocumentRef: nextRef,
-      actorUserId: opts.actorUserId,
-    });
-  }
+  // R-186.1 (owner 2026-09-25): NEVER auto-mint AlwaysTrack sequence into source_document_ref.
+  // display_id is our P-series (open) / editable field. An AlwaysTrack number is written only when
+  // the owner types it on the Creator or Pre-Settlement header (setSettlementSourceDocumentRef).
+  // Retiring the allocateNextSettlementSourceDocumentRef call that minted fake 5817/5818/5819.
 
   const lineType =
     opts.team && opts.driverId === opts.team.primaryDriverId
@@ -945,22 +923,7 @@ export async function stampTripClosedForBookendedSettlement(
     [opts.settlementId, closedAt, anchorLoadId, anchorLoadNumber]
   );
 
-  // P1 SETTLEMENT NUMBERING (Claude Lead, ROUND 18.3, Item A) — same canonical allocator+writer,
-  // same in-transaction placement, as closeLoadBookendedSettlementForDriver above (see its comment
-  // for why this reuses settlement-source-document-ref.service.ts instead of a second
-  // implementation). No-ops if the settlement already carries a number.
-  if (!(await client.query<{ source_document_ref: string | null }>(
-    `SELECT source_document_ref FROM driver_finance.driver_settlements WHERE id = $1`,
-    [opts.settlementId]
-  )).rows[0]?.source_document_ref) {
-    const nextRef = await allocateNextSettlementSourceDocumentRef(client, opts.operatingCompanyId);
-    await setSettlementSourceDocumentRef(client, {
-      operatingCompanyId: opts.operatingCompanyId,
-      settlementId: opts.settlementId,
-      sourceDocumentRef: nextRef,
-      actorUserId: opts.actorUserId,
-    });
-  }
+  // R-186.1 — never auto-mint AlwaysTrack sequence on close (see closeLoadBookendedSettlementForDriver).
 
   await appendEarningsForAnchor();
 

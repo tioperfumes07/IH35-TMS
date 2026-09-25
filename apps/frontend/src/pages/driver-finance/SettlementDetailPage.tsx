@@ -22,6 +22,7 @@ import {
   resumeSettlementDeduction,
   reverseSettlement,
   unlockSettlement,
+  patchSettlementDisplayId,
   type SettlementDisputeCategory,
   type OpenDriverBill,
 } from "../../api/driverFinance";
@@ -667,7 +668,17 @@ export function SettlementDetailPage() {
       ) : null}
       {/* Server-assigned settlement identity, units and linked tour loads. */}
       <div className="ldt-card" data-testid="settlement-detail-identity-strip" style={{ padding: 10, display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-start" }}>
-        <SettlementNumberBox displayId={settlementDisplayId} />
+        <SettlementNumberBox
+          displayId={settlementDisplayId}
+          sourceDocumentRef={typeof settlement.source_document_ref === "string" ? settlement.source_document_ref : null}
+          editable={!settlementIsReadOnly}
+          onSave={async (value) => {
+            if (!settlementId || !companyId) return;
+            await patchSettlementDisplayId(settlementId, companyId, value);
+            pushToast("Settlement number saved", "success");
+            await refreshSettlementViews();
+          }}
+        />
         <div>
           <div className="text-[11px] uppercase text-gray-500">Unit(s)</div>
           <div className="text-xs font-semibold" data-testid="settlement-detail-unit">

@@ -395,8 +395,13 @@ export async function postFuelExpenseFromEvent(input: FuelPostingInput): Promise
     const postingBatchId = batchInsert.rows[0]?.id;
     if (!postingBatchId) throw new Error("fuel_posting_batch_create_failed");
 
-    const label = `Fuel event ${input.fuel_event_id}`;
-    const memo = input.memo?.trim() || `${label} (${fuelKind}) posting`;
+    // E14.2 — never default to "Fuel event <uuid>" (bare_uuid_only vs verify-je-memo-is-human-readable).
+    // Prefer caller memo when it already carries a human id; else a short kind+path label (no UUID).
+    const callerMemo = input.memo?.trim() || "";
+    const memo =
+      callerMemo && !/^[0-9a-f-]{36}$/i.test(callerMemo) && !/Fuel (?:event|txn) [0-9a-f-]{36}/i.test(callerMemo)
+        ? callerMemo.slice(0, 200)
+        : `Fuel ${input.posting_path.replace(/_/g, " ")} (${fuelKind})`.slice(0, 200);
     const fuelTypeColPresent = await hasJournalEntryTypeColumn(client);
     const fuelTypeId = fuelTypeColPresent
       ? await resolveJournalEntryTypeId(client, { source: "auto", memo })
@@ -457,13 +462,17 @@ export async function postFuelExpenseFromEvent(input: FuelPostingInput): Promise
         account_id: expense.account_id,
         debit_or_credit: "debit",
         amount_cents: amountCents,
-        description: `${label} fuel expense`,
+        description: `${memo} · fuel expense`.slice(0, 200),
       },
       {
         account_id: creditAccountId,
         debit_or_credit: "credit",
         amount_cents: amountCents,
-        description: input.posting_path === "driver_advance" ? `${label} driver advance liability` : `${label} company direct`,
+        description: (
+          input.posting_path === "driver_advance"
+            ? `${memo} · driver advance liability`
+            : `${memo} · company direct`
+        ).slice(0, 200),
       },
     ];
 
