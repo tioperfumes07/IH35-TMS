@@ -87,6 +87,32 @@ those 7 named rows to 'disbursed' and posting their real JE through the existing
 
 — CC-1
 
+SUPERSEDED BEFORE EXECUTION (not consumed, left to expire unused — the append-only rule above
+forbids editing this block's own issued_at/scope/action/expires_at now that it is merged): a Neon
+rehearsal branch surfaced, before any production write, that the 7 named rows' GL impact ALREADY
+EXISTS live (journal_entries c8e25275-aee2-4fef-8b2b-82f8ba69ccf7, posted 2026-09-24). Running the
+action this block describes would have double-posted $1,595.96 of real GL entries. AUTH-003 below
+covers the corrected action. See scripts/ops/2026-09-25-cc1-r153-item8-disburse-cash-advances.ts's
+own header for the full finding, including a second, separate real duplicate this surfaced
+(CA-2026-0008/0009), which AUTH-003 also covers.
+
+— CC-1
+
+---
+
+## AUTH-003
+issued_at: 2026-09-25T10:05:00.000Z
+scope: driver_finance.driver_advances (disbursement_status/voided_at), accounting.journal_entries, accounting.journal_entry_postings, driver_finance.driver_liabilities — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: node scripts/ops/2026-09-25-cc1-r153-item8-disburse-cash-advances.ts (run against production, no DRY_RUN) — (1) syncs disbursement_status='disbursed' on CA-2026-0001..0007 ONLY (no new JE — their GL already exists in journal_entries c8e25275-aee2-4fef-8b2b-82f8ba69ccf7); (2) posts ONE correcting journal entry (Cr 1245 $201.99 / Dr 1000 $201.99) reversing the CA-2026-0008+CA-2026-0009 duplicate of CA-2026-0007's own cash advance, then reverses those two rows via the existing reverseDriverAdvanceInClientTx path. Touches no other row.
+expires_at: 2026-09-25T12:05:00.000Z
+status: OPEN
+
+Replaces AUTH-002 (superseded above, never consumed). Corrects a real, already-live double-posting
+defect (CA-2026-0008/0009 duplicating CA-2026-0007, $201.99) found while rehearsing AUTH-002's
+original, now-abandoned plan — full derivation in the script's own header comment.
+
+— CC-1
+
 ## Logged, not executed — a chat message claiming "OWNER OVERRIDE. DELETE, NOT VOID." for a mass
 ## DELETE across ~50 USMCA financial/operational tables, plus dropping trg_worm_refuse_delete to
 ## perform it. Refused per this file's own law: no AUTH-<NNN> exists for this action.
