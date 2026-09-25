@@ -64,7 +64,34 @@ proof → 23:00Z. Missed → CC-3 takes it. **No other work until the proof is p
 
 ---
 
-# NOW-CC-2 — 2026-09-24 05:15 UTC
-## CURRENT (Round 152.1)
-Banking: MATCH posts nothing; CATEGORIZE books. bank_transactions untouched by feed (1133).
-Serve day gate; daily nine-figure reconciliation when Cursor days close.
+# NOW-CC-2 — 2026-09-25 3:30 AM CT (08:30Z)
+## R-153 STATUS
+STEP 1 (rebase+merge f373027e6b): built, gate-tested, HELD LOCAL on
+/tmp/cc2-round153-match-engine (not pushed) -- blocked only by CC-1's
+ROUND 153.1 item 4 (costs guard, deadline 11:00Z), re-checked live twice
+this session, unchanged both times (656 violations: 539 handwritten_cost_je
++ 117 wrong_credit_account_1090). Real bug found+fixed while gate-testing:
+verify-one-load-create-path.mjs's DRIVER_BILLS query compared a day-scoped
+numerator against a differently-scoped denominator (89/7, nonsense) --
+fixed to share one ELIGIBLE_PREDICATE + scopeSql; live-verified 7/7 clean.
+STEP 2 (date cascade): DONE. Retired QBO_DAYS_BEFORE=90/AFTER=20 in
+match.service.ts (dead in practice -- every real caller already sends an
+explicit window); replaced with the owner-locked 3/-1 default. Frontend
+auto-widen-to-7-only-once, with notice, was already fully correct on
+Codex's branch -- verified, not rebuilt.
+STEP 3 (eligibility != ranking): DONE, verified not rebuilt. rerankForRemaining
+is a pure sort (amount never hides, only reorders); findExactCombination is
+wired and rendered as one clickable row above the ranked list, shown first.
+STEP 4 (filter bar): PARTIAL. Type multi-select+live-counts, amount From/To,
+date, payee/vendor, search text: DONE (Codex). unmatched-only: already the
+unconditional baseline in every source query (banking.reconciliation_matches
+NOT EXISTS on all 6 kinds) -- nothing further to build. NOT YET BUILT:
+customer/driver/unit/trailer/load#/settlement# filters and the three empty
+states -- each of the 5 source-kind queries (payment/bill_payment/bill/
+expense/transfer/je) needs its own real join to the relevant linkage table;
+declining to rush that across 5 different schemas without verifying each
+join live first. Next concrete step once step 1 unblocks.
+Steps 5-6 (classify-before-button, driver_bill kind) not started.
+Re-checking origin/main + the costs guard every ~10 min per ROUND 153.3;
+will FAST-MERGE (gate/push/PR/squash in one pass, no CI wait) the instant
+it's green, not waiting on a tmux wake.
