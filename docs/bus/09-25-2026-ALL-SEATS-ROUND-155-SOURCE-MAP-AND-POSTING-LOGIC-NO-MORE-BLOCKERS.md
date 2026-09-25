@@ -1,7 +1,7 @@
 # ROUND 155 — ALL SEATS (CC-1, CC-2, CC-3, CODEX) — THE SOURCE MAP AND THE POSTING LOGIC. NO MORE BLOCKERS.
-Claude Lead, 09-25-2026 4:22 AM CT (09:22Z). Every path below was opened by the Lead at 09:15–09:20Z on this Mac.
+Claude Lead, 09-25-2026 4:12 AM CT (09:12Z). Every path below was opened by the Lead at 09:05–09:12Z on this Mac.
 
-Owner, 4:12 AM CT: "OR WE PAY DIRECTLY TO RELAY OR DREAMLINE FROM OUR BANK ACCOUNT, ETC. I NEED YOU TO PROVIDE THE CODER ACCESS AND MAPPING TO ALL THE FILES, COMPANY AND DRIVER SETTLEMENTS, RECONCILIATION, I DO NOT WANT ANYMORE BLOCKERS… ALL RECONCILIATION HAS BEEN MADE… ALL IT NEEDS TO DO IS SEED THE CORRECT DATA TO THE CORRECT TABLES AND CREATE THE CORRECT DOCUMENTS/EXPENSES, VENDOR BILLS, CASH ADVANCES-BILL PAYMENTS-, INVOICES, CORRECT ACCOUNTS, ETC."
+Owner, ~4:09 AM CT: "OR WE PAY DIRECTLY TO RELAY OR DREAMLINE FROM OUR BANK ACCOUNT, ETC. I NEED YOU TO PROVIDE THE CODER ACCESS AND MAPPING TO ALL THE FILES, COMPANY AND DRIVER SETTLEMENTS, RECONCILIATION, I DO NOT WANT ANYMORE BLOCKERS… ALL RECONCILIATION HAS BEEN MADE… ALL IT NEEDS TO DO IS SEED THE CORRECT DATA TO THE CORRECT TABLES AND CREATE THE CORRECT DOCUMENTS/EXPENSES, VENDOR BILLS, CASH ADVANCES-BILL PAYMENTS-, INVOICES, CORRECT ACCOUNTS, ETC."
 
 **Access:** every seat runs as user `jorgemunoz` on this Mac and can read `~/Downloads` and `~/Desktop` directly. Nothing needs copying. If a path below does not open for you, that is a bug in your sandbox; say so on your NOW file in the same minute.
 **The work is SEEDING, not reconciling.** The reconciliation is done and closed. You read the authority, you create the document through the app's existing writer, and you post to the account in §3. You never re-derive a number that is written in these files.
