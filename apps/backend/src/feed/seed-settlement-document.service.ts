@@ -69,7 +69,7 @@ import { postLoadRevenueLatch } from "../accounting/revrec-delivery-posting/post
 import { postFuelExpenseFromEvent } from "../accounting/fuel-posting/poster.service.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { postFactoringAdvanceEvent } from "../accounting/factoring-posting/poster.service.js";
-import { nextExpenseDisplayId } from "../accounting/display-id.js";
+import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -862,7 +862,15 @@ async function seedExpense(
 
   const vendorId = await resolveByName(client, "mdata.vendors", "name", operatingCompanyId, line.vendor).catch(() => null);
 
-  const expenseNumber = await nextExpenseDisplayId(client as never, operatingCompanyId, new Date(line.date));
+  // R-168: this row always has a load_id (it is one of a specific load's expenseLines), so its
+  // expense_number must come from the load-scoped series (generateExpenseNumber), the same one
+  // expenses.routes.ts and (post-R-168) fuel-expense-document.service.ts use for every other
+  // load-attributed expense — never nextExpenseDisplayId, which display-id.ts itself documents as
+  // "for expenses that are not load-attributed." generateExpenseNumber owns
+  // expense_attribution.expense_seq_per_load's own increment internally; the manual UPSERT that
+  // used to duplicate it below is gone — two writers incrementing the same sequence would double-count.
+  const attribution = await generateExpenseNumber(client as never, loadId, operatingCompanyId);
+  const expenseNumber = attribution.number;
   const expense = await client.query<{ id: string }>(
     `INSERT INTO accounting.expenses (
        operating_company_id, expense_number, vendor_uuid, driver_uuid, transaction_date,
@@ -887,20 +895,13 @@ async function seedExpense(
     [operatingCompanyId, expenseId, line.amountCents / 100, line.amountCents, line.description, loadId, item.expenseAccountId, item.itemId]
   );
 
-  const seq = await client.query<{ last_seq: number }>(
-    `INSERT INTO expense_attribution.expense_seq_per_load (load_id, last_seq)
-     VALUES ($1::uuid, 1)
-     ON CONFLICT (load_id) DO UPDATE SET last_seq = expense_attribution.expense_seq_per_load.last_seq + 1, updated_at = now()
-     RETURNING last_seq`,
-    [loadId]
-  );
   await client.query(
     `INSERT INTO expense_attribution.expense_load_links (
        operating_company_id, expense_id, expense_source, load_id, load_number, expense_seq,
        expense_number, attribution_method, attribution_confidence, attributed_by_user_id
      )
-     VALUES ($1::uuid, $2::uuid, 'accounting', $3::uuid, $4, $5, $4, 'auto_timestamp', 'high', $6::uuid)`,
-    [operatingCompanyId, expenseId, loadId, loadNumber, seq.rows[0].last_seq, actorUserId]
+     VALUES ($1::uuid, $2::uuid, 'accounting', $3::uuid, $4, $5, $6, 'auto_timestamp', 'high', $7::uuid)`,
+    [operatingCompanyId, expenseId, loadId, loadNumber, attribution.seq, expenseNumber, actorUserId]
   );
 
   await appendCrudAudit(client, actorUserId, "accounting.expense.alwaystrack_seed", { operating_company_id: operatingCompanyId, expense_id: expenseId, load_id: loadId, item_name: item.itemName }, "info", "SEED-SETTLEMENT-DOCUMENT-04");

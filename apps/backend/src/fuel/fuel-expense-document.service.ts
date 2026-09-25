@@ -30,9 +30,25 @@
  *     missing or non-positive the document is refused and the reason is returned.
  *   - It does not invent a vendor. A fuel transaction with no `vendor_id` is refused and named,
  *     because an expense whose payee is a guess is worse than a gap you can see.
- *   - It does not renumber. It uses `nextExpenseDisplayId`, the same series every other expense
- *     create path uses. A second numbering series is how a number gets issued twice.
  *   - It never sets `is_sample_data`. Every USMCA row it writes is REAL.
+ *
+ * R-168 CORRECTION (2026-09-25): this file's original numbering choice was wrong, not merely
+ * incomplete. `nextExpenseDisplayId` (EXP-YYYY-#####) is documented in display-id.ts itself as
+ * "for expenses that are not load-attributed" — a fuel transaction WITH a load_id is exactly the
+ * load-attributed case, and the codebase already has the right series for it:
+ * `generateExpenseNumber` (expense-attribution/expense-number.ts), the same one expenses.routes.ts
+ * uses for every other load-attributed expense create path, producing `<load_number>` /
+ * `<load_number>-1` / `<load_number>-2`. Owner law (verify-load-to-cash-chain.mjs LINK 3):
+ * "all expenses that are related to that load have the same expense number as the load." Using
+ * nextExpenseDisplayId here was NOT using "the same series every other expense create path uses"
+ * as the original comment claimed — it was the one series load-attributed expenses do NOT use.
+ * Measured live before this fix: 304 of LINK 3's 313 mismatches trace to this function (AUTH-005
+ * fuel run, 2026-09-25). Still exactly ONE series per case — a fuel transaction with no load_id
+ * still gets nextExpenseDisplayId, unchanged; this is not a second series, it is routing to the
+ * correct existing one. A load-attributed document also now gets its
+ * expense_attribution.expense_load_links row, matching every other load-attributed create path
+ * (previously missing here entirely — the same LV-EXPENSE-NUMBER-NEVER-POPULATED gap
+ * expenses.routes.ts already fixed for its own two create branches).
  *
  * IDEMPOTENT by `source_fuel_transaction_id`. Running it twice over the same 627 rows produces
  * 627 documents, not 1,254 — which is what makes the day-by-day re-feed re-runnable after a
@@ -41,6 +57,7 @@
 
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { nextExpenseDisplayId } from "../accounting/display-id.js";
+import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 import {
   loadFuelTxnCreditSignals,
   resolveCompanyDirectCreditPreference,
@@ -65,6 +82,39 @@ export type FuelExpenseDocumentInput = {
   /** Dry run: resolve and validate everything, write nothing, report what would happen. */
   dry_run?: boolean;
 };
+
+// R-169 fix 2 — fuel.fuel_transactions.fuel_type CHECK: 'diesel' | 'def' | 'gas' | 'reefer_diesel' |
+// 'other' (verified live). Only the three the owner's fix names (diesel/DEF/reefer) have a real
+// catalog item today; 'gas'/'other' refuse rather than post to a guessed account.
+const FUEL_TYPE_ITEM_NAME: Record<string, string> = {
+  diesel: "Fuel-Truck Diesel",
+  def: "Fuel-DEF-Diesel Exhaust Fluid",
+  reefer_diesel: "Fuel-Reefer-Diesel",
+};
+
+async function resolveFuelItem(
+  client: QueryableClient,
+  operatingCompanyId: string,
+  fuelType: string | null,
+): Promise<{ itemId: string; expenseAccountId: string; itemName: string } | { refused: string }> {
+  const itemName = fuelType ? FUEL_TYPE_ITEM_NAME[fuelType] : undefined;
+  if (!itemName) {
+    return { refused: `fuel_type "${fuelType}" has no mapped catalogs.items entry — refusing rather than posting to a default (only diesel/def/reefer_diesel are mapped)` };
+  }
+  const res = await client.query<{ id: string; expense_account_id: string | null }>(
+    `SELECT id::text, default_expense_account_id::text AS expense_account_id
+       FROM catalogs.items
+      WHERE item_name = $2 AND (operating_company_id = $1::uuid OR operating_company_id IS NULL)
+      ORDER BY (operating_company_id = $1::uuid) DESC
+      LIMIT 1`,
+    [operatingCompanyId, itemName],
+  );
+  const row = res.rows[0];
+  if (!row || !row.expense_account_id) {
+    return { refused: `catalogs.items "${itemName}" not found or has no default_expense_account_id for company ${operatingCompanyId} — refusing rather than posting to a default` };
+  }
+  return { itemId: row.id, expenseAccountId: row.expense_account_id, itemName };
+}
 
 export type FuelExpenseDocumentOutcome =
   | {
@@ -176,6 +226,15 @@ export async function createExpenseFromFuelTransaction(
     };
   }
 
+  // R-169 fix 2 — resolved here, before dry_run returns, so a dry-run report also catches a
+  // missing catalog item instead of writing a document that would later fail the ledger rule
+  // "a GL-posted expense's lines must sum to its total" (measured live: R-167 had to hand-add 6
+  // lines this class of gap left behind).
+  const fuelItem = await resolveFuelItem(client, input.operating_company_id, fuel.fuel_type);
+  if ("refused" in fuelItem) {
+    return { outcome: "refused", reason: `fuel transaction ${fuel.id}: ${fuelItem.refused}` };
+  }
+
   // Cents is the authoritative spine everywhere in this codebase; the legacy numeric column
   // mirrors it in dollars. Rounding happens once, here, not at three call sites.
   const amountCents = Math.round(totalCost * 100);
@@ -246,12 +305,22 @@ export async function createExpenseFromFuelTransaction(
   }
   const adoptedJeId = jeRes.rows[0]?.je ?? null;
 
-  // ---- 4. THE SAME NUMBER SERIES EVERY OTHER EXPENSE USES --------------------------------
-  const expenseNumber = await nextExpenseDisplayId(
-    client as never,
-    input.operating_company_id,
-    new Date(`${txnDate}T00:00:00.000Z`),
-  );
+  // ---- 4. THE CORRECT EXISTING SERIES FOR THIS DOCUMENT'S SHAPE --------------------------
+  // R-168: load-attributed -> generateExpenseNumber (load-scoped, owner law); no load ->
+  // nextExpenseDisplayId (QBO-style, unattributed) — see the header comment for the full
+  // derivation. loadAttribution is null when fuel.load_id is absent.
+  let expenseNumber: string;
+  let loadAttribution: { number: string; seq: number; loadNumber: string } | null = null;
+  if (fuel.load_id) {
+    loadAttribution = await generateExpenseNumber(client as never, fuel.load_id, input.operating_company_id);
+    expenseNumber = loadAttribution.number;
+  } else {
+    expenseNumber = await nextExpenseDisplayId(
+      client as never,
+      input.operating_company_id,
+      new Date(`${txnDate}T00:00:00.000Z`),
+    );
+  }
 
   // ---- 4b. R-153.6/153.7: RESOLVE THE CARD-RAIL PAYMENT ACCOUNT. -------------------------
   // Only needed for a fresh (non-adopted) draft -- an adopted document points at a JE that
@@ -311,6 +380,58 @@ export async function createExpenseFromFuelTransaction(
     ],
   );
   const expenseId = inserted.rows[0]!.id;
+
+  // R-169 fix 2 — ALWAYS write line 1, adopted or fresh draft alike. Its absence is exactly what
+  // broke the ledger rule "a GL-posted expense's lines must sum to its total" for every adopted
+  // document (measured live: R-167 had to hand-add 6 lines this gap left behind). Dr the fuel
+  // item's own account (resolved above, refuses rather than guessing); load_required mirrors
+  // whether this purchase actually carries a load, same as every other expense_lines writer.
+  await client.query(
+    `
+      INSERT INTO accounting.expense_lines (
+        operating_company_id, expense_id, line_sequence, amount, amount_cents, description,
+        load_id, load_required, expense_account_uuid, item_id
+      )
+      VALUES ($1::uuid, $2::uuid, 1, $3, $4, $5, $6::uuid, $7, $8::uuid, $9::uuid)
+    `,
+    [
+      input.operating_company_id,
+      expenseId,
+      amountCents / 100,
+      amountCents,
+      memo,
+      fuel.load_id,
+      Boolean(fuel.load_id),
+      fuelItem.expenseAccountId,
+      fuelItem.itemId,
+    ],
+  );
+
+  // R-168 — a load-attributed expense also gets its expense_attribution.expense_load_links row —
+  // the same thing expenses.routes.ts's own two load-attribution branches write, previously
+  // missing entirely from this path (the LV-EXPENSE-NUMBER-NEVER-POPULATED class of gap).
+  if (loadAttribution && fuel.load_id) {
+    await client.query(
+      `
+        INSERT INTO expense_attribution.expense_load_links (
+          operating_company_id, expense_id, expense_source, load_id, load_number, expense_seq,
+          expense_number, attribution_method, attribution_confidence, attribution_reason,
+          attributed_by_user_id
+        )
+        VALUES ($1::uuid, $2::uuid, 'accounting', $3::uuid, $4, $5, $6, 'auto_timestamp', 'high', $7, $8::uuid)
+      `,
+      [
+        input.operating_company_id,
+        expenseId,
+        fuel.load_id,
+        loadAttribution.loadNumber,
+        loadAttribution.seq,
+        expenseNumber,
+        "card fuel purchase — load_id carried on fuel.fuel_transactions at ingestion",
+        input.requesting_user_uuid ?? null,
+      ],
+    );
+  }
 
   await appendCrudAudit(
     client,
