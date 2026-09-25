@@ -27,14 +27,20 @@ import fs from "node:fs";
 import pg from "pg";
 
 const EXECUTE_EARLY = process.argv.includes("--execute");
-if (EXECUTE_EARLY) {
+const REHEARSAL_EARLY = process.argv.includes("--rehearsal");
+if (EXECUTE_EARLY && !REHEARSAL_EARLY) {
   // ROUND 133 P0 (owner law): a production financial write is authorized ONLY by an OPEN,
   // unexpired AUTH-<NNN> on origin/main. Same preflight pattern as
   // scripts/ops/2026-09-25-cc1-r153-item2-faro-aging-receipts.ts (PR #22579's own fix).
+  // --rehearsal explicitly opts out of this check for a Neon CHILD branch only (never production)
+  // -- the rehearsal step itself is what R-153.7's own instruction pre-authorizes; requiring a
+  // real AUTH-<NNN> there would conflate rehearsal with the production authorization it exists to
+  // gate. The caller names the flag explicitly, so the choice is auditable in the command line
+  // that ran, not silently assumed.
   const authId = process.env.OWNER_AUTH_ID;
   if (!authId) {
     throw new Error(
-      "OWNER_AUTH_ID is required; refusing a production financial write without an OPEN authorization on main",
+      "OWNER_AUTH_ID is required; refusing a production financial write without an OPEN authorization on main (pass --rehearsal for a Neon child branch run instead)",
     );
   }
   const authCheck = spawnSync("node", ["scripts/verify-owner-authorization.mjs", authId], {
@@ -44,6 +50,11 @@ if (EXECUTE_EARLY) {
   if (authCheck.status !== 0) {
     throw new Error(`verify-owner-authorization.mjs rejected ${authId}`);
   }
+}
+// Defense in depth: --rehearsal must never be pointed at the known production Neon endpoint.
+const PROD_HOST_FRAGMENT = "ep-broad-block-akykk7bw";
+if (EXECUTE_EARLY && REHEARSAL_EARLY && (process.env.DATABASE_URL ?? "").includes(PROD_HOST_FRAGMENT)) {
+  throw new Error("--rehearsal was passed but DATABASE_URL points at the known PRODUCTION endpoint -- refusing.");
 }
 
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -159,8 +170,9 @@ async function main() {
         case "VOID_DUPLICATE_already_clean":
           continue;
 
+        case "ORPHAN_VOID_JE_ONLY":
         case "PRE_EXISTING_CORRECT_EXPENSE_VOID_JE_ONLY": {
-          if (!row.je_id) throw new Error("PRE_EXISTING_CORRECT_EXPENSE_VOID_JE_ONLY with no je_id");
+          if (!row.je_id) throw new Error(`${row.action} with no je_id`);
           const stillLive = await reconfirmJeStillLive(row.je_id);
           if (!stillLive) {
             errors.push({
@@ -185,18 +197,48 @@ async function main() {
           break;
         }
 
-        case "VOID_DUPLICATE_expense_needs_void": {
-          if (!row.expense_id) throw new Error("VOID_DUPLICATE_expense_needs_void with no expense_id");
+        case "VOID_DUPLICATE_expense_needs_void":
+        case "VOID_DUPLICATE_expense_and_je_need_void":
+        case "VOID_DUPLICATE_je_needs_void_only": {
+          // BUG FOUND 2026-09-25: this bucket previously only ever voided the expense document,
+          // never the underlying JE -- a duplicate with no expense but a live wrong-1090 JE was
+          // silently left untouched. Every duplicate with a live JE gets it voided; the expense
+          // (if any) is also voided, but a duplicate is NEVER recreated afterward.
+          if (row.action !== "VOID_DUPLICATE_je_needs_void_only" && !row.expense_id) {
+            throw new Error(`${row.action} with no expense_id`);
+          }
+          if (row.action !== "VOID_DUPLICATE_expense_needs_void" && !row.je_id) {
+            throw new Error(`${row.action} with no je_id`);
+          }
           if (EXECUTE) {
-            await voidDocument(raw, {
-              operatingCompanyId: USMCA,
-              type: "expense",
-              id: row.expense_id,
-              reason: VOID_REASON_DUPLICATE(row.fuelId),
-              actor: OWNER_ACTOR,
-              currentBusinessDate: TODAY,
-            });
-            await markExpenseVoid(row.expense_id, null, VOID_REASON_DUPLICATE(row.fuelId));
+            if (row.expense_id) {
+              await voidDocument(raw, {
+                operatingCompanyId: USMCA,
+                type: "expense",
+                id: row.expense_id,
+                reason: VOID_REASON_DUPLICATE(row.fuelId),
+                actor: OWNER_ACTOR,
+                currentBusinessDate: TODAY,
+              });
+              await markExpenseVoid(row.expense_id, null, VOID_REASON_DUPLICATE(row.fuelId));
+            }
+            if (row.je_id) {
+              const stillLive = await reconfirmJeStillLive(row.je_id);
+              if (!stillLive) {
+                errors.push({ fuelId: row.fuelId, action: row.action, error: `JE ${row.je_id} no longer live -- skipped, re-classify.` });
+              } else {
+                log("  voidDocument(journal_entry, duplicate) start", row.je_id);
+                await voidDocument(raw, {
+                  operatingCompanyId: USMCA,
+                  type: "journal_entry",
+                  id: row.je_id,
+                  reason: VOID_REASON_DUPLICATE(row.fuelId),
+                  actor: OWNER_ACTOR,
+                  currentBusinessDate: TODAY,
+                });
+                log("  voidDocument(journal_entry, duplicate) done");
+              }
+            }
           }
           break;
         }

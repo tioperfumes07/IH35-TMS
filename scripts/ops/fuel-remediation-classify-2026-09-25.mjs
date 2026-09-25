@@ -63,8 +63,35 @@ for (const row of expRes.rows) {
   if (!expByFuel.has(row.fuel_id)) expByFuel.set(row.fuel_id, row);
 }
 
+// ORPHAN CHECK, found live 2026-09-25: any live wrong-1090 fuel JE whose fuel_id is NOT in the
+// 391-row truth-set at all. Discovered: 11 fuel_transactions archived in a single batch
+// (2026-09-24T18:58:45Z, unrelated to this remediation) still carry a live wrong-1090 JE that was
+// never cleaned up when the row was archived. Archived = superseded/invalid, so these are voided
+// only, never reposted (createExpenseFromFuelTransaction already refuses an archived source).
+const orphanRes = await client.query(
+  `SELECT tsl.linked_object_id AS fuel_id, je.id::text AS je_id, ft.archived_at IS NOT NULL AS is_archived
+     FROM accounting.transaction_source_links tsl
+     JOIN accounting.journal_entry_postings jep ON jep.id = tsl.journal_entry_posting_id
+     JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+     LEFT JOIN catalogs.accounts coa ON coa.id = jep.account_id
+     LEFT JOIN fuel.fuel_transactions ft ON ft.id::text = tsl.linked_object_id
+    WHERE tsl.linked_object_type = 'fuel_event'
+      AND jep.debit_or_credit = 'credit'
+      AND jep.reversed_by_line_id IS NULL
+      AND je.voided_at IS NULL AND je.status = 'posted' AND je.reversed_by_je_id IS NULL
+      AND je.operating_company_id = $2::uuid
+      AND coa.account_number = '1090'
+      AND NOT (tsl.linked_object_id = ANY($1::text[]))`,
+  [ids, USMCA],
+);
+
 await client.query("COMMIT");
 await client.end();
+
+for (const o of orphanRes.rows) {
+  rows.push({ fuelId: o.fuel_id, bucket: o.is_archived ? "ARCHIVED_ORPHAN" : "UNKNOWN_ORPHAN" });
+  jeByFuel.set(o.fuel_id, { je_id: o.je_id, fuel_id: o.fuel_id });
+}
 
 const buckets = {};
 const detail = [];
@@ -72,8 +99,19 @@ for (const r of rows) {
   const je = jeByFuel.get(r.fuelId) ?? null;
   const exp = expByFuel.get(r.fuelId) ?? null;
   let action;
-  if (r.bucket === "VOID_DUPLICATE") {
-    action = exp && !exp.voided_at ? "VOID_DUPLICATE_expense_needs_void" : "VOID_DUPLICATE_already_clean";
+  if (r.bucket === "ARCHIVED_ORPHAN" || r.bucket === "UNKNOWN_ORPHAN") {
+    // Outside the 391-row truth-set entirely (archived/superseded, or unexplained) -- void the
+    // wrong JE only, never repost (nothing valid to repost against).
+    action = "ORPHAN_VOID_JE_ONLY";
+  } else if (r.bucket === "VOID_DUPLICATE") {
+    // BUG FOUND 2026-09-25, fixed here: a duplicate that ALSO has a live wrong-1090 JE (no expense
+    // document ever created for it) was previously left completely untouched -- this bucket only
+    // ever checked the expense, never the JE. A duplicate is never reposted, but its wrong JE still
+    // needs voiding like every other row; only the recreate step is skipped for a duplicate.
+    const expNeedsVoid = exp && !exp.voided_at;
+    action = je
+      ? (expNeedsVoid ? "VOID_DUPLICATE_expense_and_je_need_void" : "VOID_DUPLICATE_je_needs_void_only")
+      : (expNeedsVoid ? "VOID_DUPLICATE_expense_needs_void" : "VOID_DUPLICATE_already_clean");
   } else if (exp && !exp.voided_at && je && exp.journal_entry_id === je.je_id) {
     // TRAP CASE, found live 2026-09-25: the expense LOOKS correct (payment_account_uuid set to
     // 1295/2510) but it ADOPTED the still-live wrong-1090 JE -- the account on the expense
