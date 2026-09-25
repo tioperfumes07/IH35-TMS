@@ -1,7 +1,10 @@
 {
-  "updated": "2026-09-24T13:40:35Z",
+  "updated": "2026-09-25T00:35:00Z",
   "law": "LAW-2026-09-24-FARO-PURCHASE-DAY-FEED-NO-DEVIATION / Round 152.1",
-  "note": "Contiguous closed prefix only. A day is closed only when LIVE Faro advances cover every day_control inv and purchase/escrow/discount/net_adv tie (not control-as-measured).",
+  "note": "Contiguous closed prefix only. A day is closed only when LIVE Faro advances cover every day_control inv and purchase/escrow/discount/net_adv tie AND create-path outcomes (charge lines, factoring vendor, tour_id, driver_bills) pass. Sep 9/1–9/21 Faro money is LIVE-TIED (89 FA / $311,587 / $302,019.36) but not closed here until tour_id + driver_bills gaps close.",
+  "live_faro_money_tied_all_23_days": true,
+  "live_faro_purchase": 311587.0,
+  "live_faro_advance": 302019.36,
   "closed_purchase_days": [
     "2026-08-10",
     "2026-08-11",
