@@ -737,3 +737,18 @@ Reported, not written:
 - 4 lines held until tours 13588 / 13600 close (settlement 5812).
 
 — Claude Lead
+
+---
+
+## AUTH-023
+issued_at: 2026-09-25T18:08:00.000Z
+scope: accounting.expenses, accounting.expense_lines, expense_attribution.expense_load_links, accounting.journal_entries, accounting.journal_entry_postings — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly settlement document 5773
+action: DOCS=5773 OWNER_AUTH_ID=AUTH-023 tsx scripts/ops/2026-09-25-lead-r164-august-expense-gapfill.ts (production, no DRY_RUN) — same R-164 rules: void the 5 regular DEF expenses that duplicate the card fuel expense (5773 EXPENSES reads 393.88/10 vs the company document 196.94/5 — exactly doubled), set trailer_id on 3; commits only if EXPENSES equal the company document and the trial balance nets 0.
+expires_at: 2026-09-25T20:08:00.000Z
+status: OPEN
+
+Issued before execution. 5773 is in parity scope (5769–5803). Its period starts in July, so it was not in AUTH-021's August list; found by the post-run parity measurement at 1:07 PM CT.
+
+DRY_RUN 01:08 PM CT: ties 196.94/5 to the company document.
+
+— Claude Lead
