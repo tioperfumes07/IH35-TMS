@@ -1,5 +1,14 @@
 # NOW-CC-3 — archived 2026-09-25 (size-cap #3). Full history: docs/bus/archive/NOW-CC-3-2026-09-25-3.md
 
+CC-3 | 2026-09-25 4:50 AM CT (09:50Z) | R-153 branch fully gate-ready, holding on CC-2's writer fix (deadline 13:00Z)
+claude/law5-one-source-per-number local gate now clean through every guard except the one shared
+external blocker: fixed a self-caught evidence-shape gap (commit a8b1f37 was FINDING:N/A with
+collapsed VERIFY-1..8:N/A -- rebuilt via reset+cherry-pick, no rebase, to a proper ACCT-F2026092347
+with real DOD/VERIFY lines; verify-no-money-theater PASS, verify-claude-green-evidence-shape OK).
+Only verify-costs-are-expenses-not-handwritten-jes still fails, as expected (656 violations on
+this branch -- it doesn't have cc3/costs-guard-scope or CC-2's writer fix merged into main yet).
+FAST-MERGEs the instant that guard is green on main.
+
 CC-3 | 2026-09-25 4:20 AM CT (09:20Z) | R-153.7 DONE — guard scope pushed, PR #22576, sha `d8b512b3be`
 
 Exempted factoring_advance(134)/driver_settlement(101)/factoring_default_interest(86) from
