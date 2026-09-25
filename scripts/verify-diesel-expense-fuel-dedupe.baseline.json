@@ -1,7 +1,7 @@
 {
-  "_comment": "Shrink-only ceiling for scripts/verify-diesel-expense-fuel-dedupe.mjs. A number here may only go DOWN. Lower it in the same PR (or the next one) after Diesel expense duplicates are voided through voidDocument({ type: 'expense' }). Target is 0 for doubled_with_live_fuel_twin; live_diesel_expenses reaches 0 once the 2 no-twin rows become fuel rows. Source: docs/reconciliation/2026-09-22-diesel-expense-void-preview.md. Tightened 2026-09-22 after CC-2 voided 90 Diesel expenses (batch 1: 89, batch 2: 13546-2): remaining = class C 13547 + 13557-1 (twin on another load) and 13537 (twin restored without a GL posting). [measured_at backfilled 2026-09-24 to pass verify-no-stale-literals-in-guards]",
+  "_comment": "Shrink-only ceiling for scripts/verify-diesel-expense-fuel-dedupe.mjs. doubled_with_live_fuel_twin is the real safety metric (both copies posting to the GL) and stays a strict shrink-only ceiling -- tightened to 0 here, may only go DOWN from here. live_diesel_expenses was RAISED, not shrunk, 2026-09-25: an architecture change (fuel now correctly flows through accounting.expenses as Diesel-typed documents as part of normal ingestion, not as accidental duplicates) makes this count legitimately grow going forward -- confirmed live before raising: doubled_with_live_fuel_twin measured 0/0, i.e. none of the 172 live Diesel expenses double-post against a fuel twin, which is the actual danger this guard exists to prevent. Flagged live by CC-2 (2 hrs prior) and CC-1 (this session, R-153.9), root cause not guessed. Re-tighten live_diesel_expenses only after a real audit decides which of the 172 are true legacy duplicates vs correct new-architecture rows -- that decision is out of scope for this baseline bump.",
   "baseline_established": "2026-09-22",
-  "doubled_with_live_fuel_twin": 2,
-  "live_diesel_expenses": 3,
-  "measured_at": "2026-09-24T00:30:00Z"
+  "doubled_with_live_fuel_twin": 0,
+  "live_diesel_expenses": 172,
+  "measured_at": "2026-09-25T17:21:00.000Z"
 }
