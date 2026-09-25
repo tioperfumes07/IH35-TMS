@@ -23,7 +23,7 @@ import { fileURLToPath } from "node:url";
 import { ensureFreshGateStepMap } from "./generate-gate-step-map.mjs";
 import { guardIsInScope } from "./verify-static.mjs";
 import { EMPTY_BY_PURGE_EXIT, PURGE_WINDOW_GUARDS, purgeWindow } from "./lib/purge-window.mjs";
-import { dataWritePathFileActuallyWrites } from "./lib/data-write-path-detection.mjs";
+import { dataWritePathDiffActuallyWrites, dataWritePathFileActuallyWrites } from "./lib/data-write-path-detection.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "money-pr-local-gate";
@@ -1004,8 +1004,15 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
     changedForLiveDomains === null ||
     changedForLiveDomains.some((f) => {
       if (f === rel || ONE_SHOT_WRITER_RE.test(f)) return true;
+      if (DATA_WRITE_PATHS.some((p) => f.startsWith(p))) {
+        const diff = spawnSync("git", ["diff", "--unified=0", "origin/main...HEAD", "--", f], {
+          cwd: ROOT,
+          encoding: "utf8",
+        });
+        if ((diff.status ?? 1) !== 0) return true;
+        return dataWritePathDiffActuallyWrites(f, ROOT, diff.stdout || "");
+      }
       if (domainPaths.some((p) => f.startsWith(p))) return true;
-      if (DATA_WRITE_PATHS.some((p) => f.startsWith(p))) return dataWritePathFileActuallyWrites(f, ROOT);
       return false;
     });
   if (touched) {

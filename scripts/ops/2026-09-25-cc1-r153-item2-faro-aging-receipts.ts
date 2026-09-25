@@ -41,6 +41,7 @@
  * already matches its target (see ensureNotAlreadyApplied below).
  */
 import pg from "pg";
+import { spawnSync } from "node:child_process";
 
 const USMCA_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const SYSTEM_ACTOR_USER_ID = "00000000-0000-4000-8000-000000000001";
@@ -72,6 +73,18 @@ const RECEIPTS: Receipt[] = [
 const UNREACHABLE_GAP = { faro_inv: "7", debtor: "ITS LOGISTICS, LLC", purchase_cents: 35000 };
 
 async function main() {
+  const authId = process.env.OWNER_AUTH_ID;
+  if (!authId) {
+    throw new Error("OWNER_AUTH_ID is required; refusing a production financial write without an OPEN authorization on main");
+  }
+  const authCheck = spawnSync("node", ["scripts/verify-owner-authorization.mjs", authId], {
+    cwd: process.cwd(),
+    stdio: "inherit",
+  });
+  if (authCheck.status !== 0) {
+    throw new Error(`verify-owner-authorization.mjs rejected ${authId}`);
+  }
+
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   const client = await pool.connect();
   try {

@@ -27,6 +27,7 @@ export const DATA_WRITE_PATHS = ["db/migrations/", "scripts/ops/"];
 export const READ_ONLY_MANIFEST_REL = "scripts/lib/data-write-path-read-only-manifest.json";
 
 const DB_CLIENT_RE = /\b(?:require\(\s*["']pg["']\s*\)|from\s+["']pg["']|new\s+(?:Client|Pool)\s*\(|process\.env\.DATABASE_URL)\b/;
+const DB_WRITE_RE = /\b(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM|TRUNCATE)\s+(?:accounting|mdata|fuel|driver_finance|banking|catalogs)\./i;
 
 function readReadOnlyManifest(root) {
   const abs = path.join(root, READ_ONLY_MANIFEST_REL);
@@ -65,6 +66,24 @@ export function dataWritePathFileActuallyWrites(relPath, root) {
     return true; // unreadable — fail toward triggering, never toward a silent skip
   }
   return DB_CLIENT_RE.test(source);
+}
+
+/**
+ * Does the actual added diff for a DATA_WRITE_PATHS file introduce a financial DB write?
+ * Existing writers frequently receive documentation, authorization, or safety-only edits; scanning
+ * their whole post-edit contents incorrectly treats those harmless hunks as a new money write.
+ */
+export function dataWritePathDiffActuallyWrites(relPath, root, diffText) {
+  const manifest = readReadOnlyManifest(root);
+  if (manifest.read_only.includes(relPath)) return false;
+  if (manifest.forced_write.includes(relPath)) return true;
+  if (relPath.startsWith("db/migrations/") && relPath.endsWith(".sql")) return true;
+  const added = String(diffText ?? "")
+    .split("\n")
+    .filter((line) => line.startsWith("+") && !line.startsWith("+++"))
+    .map((line) => line.slice(1))
+    .join("\n");
+  return DB_WRITE_RE.test(added);
 }
 
 /** True if `relPath` is under any DATA_WRITE_PATHS prefix at all (path-only, no content check). */
