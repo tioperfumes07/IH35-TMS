@@ -74,11 +74,18 @@ WITH voided_docs AS (
    WHERE operating_company_id = $1::uuid AND voided_at IS NOT NULL AND COALESCE(is_sample_data, false) IS NOT TRUE
 ),
 live_postings AS (
+  -- LIVE = original unreverted line. A proper void reverse keeps the original
+  -- (WORM) and stamps reversed_by_line_id; the reverse line carries
+  -- reversal_of_line_id. Filtering only reversal_of_line_id IS NULL falsely
+  -- counts already-reversed originals as live (measured 180 false positives
+  -- after ACCT-F20260925e reverse sweep). Same five-column liveness family as
+  -- verify-void-is-whole / diesel-expense-fuel-dedupe (reversed_by_line_id).
   SELECT source_transaction_type, source_transaction_id, operating_company_id,
          SUM(amount_cents) AS total_cents
     FROM accounting.journal_entry_postings
    WHERE operating_company_id = $1::uuid
      AND reversal_of_line_id IS NULL
+     AND reversed_by_line_id IS NULL
      AND source_transaction_type IN ('invoice','bill','expense','bill_payment','customer_payment')
    GROUP BY source_transaction_type, source_transaction_id, operating_company_id
 )
