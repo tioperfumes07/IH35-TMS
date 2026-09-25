@@ -57,6 +57,26 @@ export async function generateExpenseNumber(
   const loadNumber = String(loadRow.rows[0]?.load_number ?? "");
   if (!loadNumber) throw new Error("load_number_missing");
 
-  const number = formatLoadExpenseNumber(loadNumber, seq);
-  return { number, seq, loadNumber };
+  // R-178: the counter can sit behind numbers already taken on the load (hand-numbered, reissued, voided —
+  // voided numbers stay taken). Skip every taken number instead of colliding with
+  // uq_accounting_expenses_company_expense_number.
+  let s = seq;
+  let number = formatLoadExpenseNumber(loadNumber, s);
+  for (let i = 0; i < 1000; i += 1) {
+    const taken = await tx.query<{ n: number }>(
+      `
+        SELECT (SELECT count(*) FROM accounting.expenses WHERE operating_company_id = $1::uuid AND expense_number = $2)
+             + (SELECT count(*) FROM expense_attribution.expense_load_links WHERE operating_company_id = $1::uuid AND expense_number = $2) AS n
+      `,
+      [operatingCompanyId, number]
+    );
+    if (Number(taken.rows[0]?.n ?? 0) === 0) break;
+    const bump = await tx.query<{ last_seq: number }>(
+      `UPDATE expense_attribution.expense_seq_per_load SET last_seq = last_seq + 1, updated_at = now() WHERE load_id = $1 RETURNING last_seq`,
+      [loadId]
+    );
+    s = Number(bump.rows[0]?.last_seq ?? s + 1);
+    number = formatLoadExpenseNumber(loadNumber, s);
+  }
+  return { number, seq: s, loadNumber };
 }

@@ -9114,5 +9114,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-25",
     "purpose": "verify-feed-uses-document-line-dates"
+  },
+  "11605": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-25",
+    "purpose": "verify-fuel-expense-line-and-number-engine"
   }
 }
