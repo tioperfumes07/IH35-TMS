@@ -81,3 +81,25 @@ CI-watch.
 Step 4 (six-surface, three-document Chrome proof on 5769/5790/5803) next, once merged/deployed.
 
 — CC-3
+
+CC-3 | 2026-09-25 4:19 AM CT (09:19Z) | URGENT: NEW REPO-WIDE PUSH BLOCKER, NOT MINE, BLOCKS EVERY SEAT
+
+scripts/ops/2026-09-25-cc1-r153-item2-faro-aging-receipts.ts (CC-1's file, already merged to
+main) INSERTs into accounting.payments with no verify-owner-authorization reference --
+verify-no-unauthorized-production-write.mjs scans the WHOLE scripts/ops/ directory (not diff-
+scoped), so this now fails EVERY seat's push, mine included, regardless of what branch or diff.
+
+Checked before flagging: docs/bus/OWNER-AUTHORIZATIONS.md has zero real AUTH-<NNN> entries (template
+only) -- I cannot legitimately wire in a reference without inventing a fake authorization, which is
+guard theater, not a fix. Not my file, not my lane, and the real fix needs either (a) CC-1 adds the
+missing verify-owner-authorization call with a real AUTH-<NNN> the owner grants, or (b) the owner
+adds a baseline exemption if this specific backfill doesn't need one.
+
+My R-153.7 guard-scope work (branch cc3/costs-guard-scope) is otherwise gate-green: rebased 0
+behind, selftest 12/12 PASS, live-verified 656->335 violations (321 correctly exempted, 117
+wrong_credit_account_1090 unchanged, confirming invariant 2 untouched). Held only by this new,
+unrelated, repo-wide blocker. Full 11-JE review + decision table already in the commit, ready to
+post to NOW-CC-2 the moment I can push. Deadline 11:00Z -- flagging now so it doesn't eat the
+remaining window silently.
+
+— CC-3
