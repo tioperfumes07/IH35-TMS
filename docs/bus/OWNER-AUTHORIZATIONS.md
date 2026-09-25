@@ -1032,3 +1032,30 @@ this fix's own proof output IS the final "GL 1245 nets 0" proof for the Septembe
 item, not a partial one. DRY_RUN=1 first.
 
 — CC-1
+
+---
+
+## AUTH-034
+issued_at: 2026-09-25T21:40:00.000Z
+scope: accounting.expenses, accounting.expense_lines, expense_attribution.expense_load_links, expense_attribution.expense_seq_per_load, accounting.journal_entries, accounting.journal_entry_postings (R-179); mdata.loads.customer_wo_number only (R-182) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: two scripts, run in this order, each its own transaction:
+- OWNER_AUTH_ID=AUTH-034 tsx scripts/ops/2026-09-25-lead-r179-reissue-cash-credited-company-expenses.ts
+  - Covers the 58 company-borne load expenses (PDF "Comp. Exp.") posted Cr 1000 cash.
+  - Each is reversed on its original date, voided, and reissued on its item account, credited to the load's card (sibling card-fuel expense, else 2510 Dreamline).
+  - This includes 13541-4 and 13541-5, the last 2 lines still naming the deactivated 5010: they move to the DEF item → 5000.
+  - Where the document names no item (5796's text is truncated), the debit account stays and only the credit moves.
+  - Commits only if 0 of the 58 still credit 1000 and the trial balance nets 0.
+- OWNER_AUTH_ID=AUTH-034 tsx scripts/ops/2026-09-25-lead-r182-load-wo-from-faro-po.ts
+  - 38 USMCA loads take the Faro PO as customer_wo_number. Source: 09-22-2026-FARO-COMPLETE-CROSS-REFERENCE-FINAL.xlsx (AlwaysTrack exact W.O. / settlement document / prior Faro load map).
+  - Only where the field is empty or a feeder placeholder (AT-dddd-ddddd). Never overwrites a real W.O.
+  - 13545 and 13547 are reported, not changed: their W.O.s are crossed against the cross-reference.
+expires_at: 2026-09-25T23:40:00.000Z
+status: OPEN
+
+Why:
+- LAW 4: an expense credits the card it was bought on.
+- Measured 04:10 PM CT: 85 live load expenses Cr 1000 (5,484.14). Of those, 55 + 3 are company-borne per the PDF EXPENSES "Comp. Exp." flag; they are fixed here.
+- The other 27 (1,107.80) are driver-paid ("Reimb./Drv"). They are NOT touched: how a driver-reimbursed expense posts against the driver settlement is an owner decision, asked separately.
+- The Faro match key is PO → W.O. (closed reconciliation doc §5). With the W.O.s filled in, 80+ of 89 Faro rows match on the key instead of on a spreadsheet.
+
+— Claude Lead
