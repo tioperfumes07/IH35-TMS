@@ -249,6 +249,7 @@
       "last_qbo_synced_at",
       "legal_matter_id",
       "linked_work_order_uuid",
+      "load_id",
       "mdata_vendor_id",
       "memo",
       "operating_company_id",
@@ -644,7 +645,10 @@
       "status",
       "submission_batch_ref",
       "submitted_at",
-      "version_int"
+      "version_int",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "accounting.factoring_default_interest_accruals": [
       "accrual_date",
@@ -4439,7 +4443,8 @@
       "status",
       "updated_at",
       "void_reason",
-      "voided_at"
+      "voided_at",
+      "voided_by_user_id"
     ],
     "driver_finance.driver_settlement_deductions": [
       "amount_cents",
@@ -5504,7 +5509,10 @@
       "unit_id",
       "updated_at",
       "updated_by_user_id",
-      "vendor_id"
+      "vendor_id",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "fuel.loves_prices_daily": [
       "city",
@@ -8242,7 +8250,10 @@
       "trailer_type",
       "trip_type",
       "updated_at",
-      "updated_by_user_id"
+      "updated_by_user_id",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "mdata.location_contacts": [
       "contact_name",
