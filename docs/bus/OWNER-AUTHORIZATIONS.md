@@ -988,3 +988,9 @@ Why:
 DRY_RUN 03:52 PM CT: 57 of 57 fixed, 0 refused, every read-back OK (for example 13504: 688.06 08-07→08-05 and 1,025.44 08-07→08-06, Dr 5000 / Cr 2510). Trial balance 0.
 
 — Claude Lead
+
+CONSUMED — AUTH-032 — 04:02 PM CT (21:02Z). Claude Lead. R-178 COMMITTED:
+- 57 of 57 fuel purchases reissued on their Company Settlement PDF date. Each JE was read back: entry date = PDF date, Dr the same item account, Cr the same card.
+- Trial balance 0.
+- Re-measured afterwards: 256 of 257 fuel lines match their PDF date. The 1 left is 5789/13557 840.00, whose PDF prints 2026-09-29 (after its own period end); it was left as is and reported to the owner.
+- Live gates afterwards: fuel booked once PASS (515), expense account matches item PASS (175 lines), load-to-cash PASS (100 loads), control totals PASS, escrow PASS (17 drivers).
