@@ -822,3 +822,24 @@ status: OPEN
 Root cause of my error: R-167 decided "on a document" from feed_input.json, which is missing 5796's fuel. The company document is the truth. DRY_RUN 01:49 PM CT: 3 restored, 2 expenses created and posted, trial balance 0.
 
 — Claude Lead
+
+CONSUMED — AUTH-024, AUTH-025, AUTH-026 — 01:51 PM CT (18:51Z). Claude Lead.
+- **AUTH-024 (R-167) COMMITTED:**
+  - 27 September loads got their truck from the settlement document, and 38 expenses got their unit;
+  - 6 document diesel fuel purchases got their accounting expense and line;
+  - 3 fuel rows were voided (3 of those were wrong: reversed under AUTH-026);
+  - 18 unposted expenses were posted;
+  - 13 stay held on 5812 (13588/13600), which R-169 addresses;
+  - trial balance 0.
+  - A first production attempt was lost when the Mac device call timed out, and a second rolled back at COMMIT on the ledger line rule. Both wrote nothing. The final run committed.
+- **AUTH-025 (R-168) COMMITTED:**
+  - 101 loads linked to their pre-settlement or settlement: 92 through their document, 6 to the driver's open pre-settlement, 3 through the booking engine;
+  - 319 expenses renumbered to their load's house number.
+- **AUTH-026 (R-167b) COMMITTED:**
+  - reversed my R-167 void on 3 fuel rows that are on company documents 5796/5803;
+  - 2 of them got their expense created and posted.
+- proof_query, live, afterwards:
+  - verify-alwaystrack-parity LIVE PASS 34/34: line_haul 193,100.00; driver_payment 48,783.51; fuel 110,072.33/171; expenses 8,487.81/178; driver_net 47,840.56.
+  - verify-load-to-cash-chain LIVE PASS: 93 loads, 0 expense-number mismatches.
+  - verify-control-totals PASS.
+  - verify-escrow-balance-reconciles-gl PASS.
