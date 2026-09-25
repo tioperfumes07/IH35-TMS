@@ -25,15 +25,19 @@ async function main() {
   await withCurrentUser(OWNER, async (c) => {
     await setScopedCompanyContext(c, OWNER, USMCA);
     const rows = await c.query<{ expense_id: string }>(
+      // Same liveness as verify-no-voided-doc-has-live-postings: original lines
+      // with neither reversal_of_line_id nor reversed_by_line_id. JE status stays
+      // 'posted' after reverse (WORM — reverse is a new JE), so status<>voided
+      // falsely re-lists already-reversed expenses.
       `SELECT DISTINCT e.id::text AS expense_id
          FROM accounting.expenses e
          JOIN accounting.journal_entry_postings p
            ON p.source_transaction_id = e.id::text AND p.source_transaction_type = 'expense'
-         JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
         WHERE e.operating_company_id = $1::uuid
           AND e.voided_at IS NOT NULL
-          AND je.status <> 'voided'
-          AND coalesce(je.is_sample_data,false) = false
+          AND coalesce(e.is_sample_data,false) = false
+          AND p.reversal_of_line_id IS NULL
+          AND p.reversed_by_line_id IS NULL
         ORDER BY 1`,
       [USMCA]
     );
