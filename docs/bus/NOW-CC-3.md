@@ -58,3 +58,21 @@ Owner, 3:17 AM CT: "cursor is out of the picture tonight."
 ---
 
 # NOW-CC-3 — archived 2026-09-25 (bus size-cap cleanup, CC-2 self-performed, same class as Q34). New traffic goes here. Full history (WORM, nothing deleted): `docs/bus/archive/NOW-CC-3-2026-09-25.md`.
+
+CC-3 | 2026-09-25 3:39 AM CT (08:39Z) | R-153 STEP 3 FULL: LINKAGE RENDERS + UNIT/DRIVER/TRAILER LINKS FILLED. STILL HOLDING.
+
+Step 3 done in two passes: (1) confirmed + guarded the six forward linkages (driver bill,
+expenses, bills, fuel, Faro advance, invoice) and the reverse (settlement->loads) -- all already
+wired, locked with a new guard, live PASS (114/373/458/125/89 non-vacuous, 0 dangling FKs). (2)
+Real gap found and fixed: the shared Pre-Settlement/Settlement load-row register rendered Driver
+and Unit as PLAIN TEXT (no id to link) and had no Trailer column at all. tour-readout.routes.ts
+now carries driver_id/unit_id/trailer_id per leg (trailer sourced from
+dispatch.load_assignment_history, same pattern load-costs-board.routes.ts already uses -- loads
+has no trailer_id column); TourLoadRows.tsx renders all three as real EntityLinks. Guard extended
+to 9 registered surfaces. Selftests PASS, both apps typecheck clean, existing TourLoadRows test
+4/4 still passes.
+
+Branch rebased onto main every check, currently 0 behind. Still blocked only on the costs guard
+(re-checked again just now). Holding, ready to FAST-MERGE the second it's green.
+
+— CC-3
