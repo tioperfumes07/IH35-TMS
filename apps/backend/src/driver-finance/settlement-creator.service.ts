@@ -18,6 +18,9 @@ import {
 import { createBareSettlementForDocument } from "./settlement-load-reassignment.service.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
+import { resolveCompanyDirectCreditAccount } from "../accounting/fuel-posting/poster.service.js";
+import { nextExpenseDisplayId } from "../accounting/display-id.js";
+import { createHistoricalEscrowHold } from "./historical-escrow-backfill.service.js";
 import type {
   SettlementCreatorDraft,
   SettlementCreatorJeLine,
@@ -548,6 +551,156 @@ export async function postSettlementCreatorInClientTx(
       throw new SettlementCreatorError("advance_failed", created.message ?? created.error);
     }
     advanceIds.push(created.advanceId);
+  }
+
+  // Comp. Exp. (Y) → accounting.expenses + Cr card rail (2510/1295), NEVER A/P — same engines as fuel.
+  async function resolveLoadIdByNumber(loadNumber: string | null | undefined): Promise<string | null> {
+    if (!loadNumber?.trim()) return null;
+    const found = await client.query<{ id: string }>(
+      `SELECT id::text FROM mdata.loads
+        WHERE operating_company_id = $1::uuid AND load_number = $2 AND soft_deleted_at IS NULL
+        ORDER BY created_at DESC LIMIT 1`,
+      [draft.operating_company_id, loadNumber.trim()],
+    );
+    return found.rows[0]?.id ?? null;
+  }
+
+  for (const exp of draft.expenses ?? []) {
+    if (!exp.is_company_expense || exp.amount_cents <= 0) continue;
+    const card = exp.card ?? "relay";
+    const preference = card === "dreamline" ? "dreamline_card_payable" : "relay_fuel_wallet";
+    const { account_id: paymentAccountId } = await resolveCompanyDirectCreditAccount(
+      client as never,
+      draft.operating_company_id,
+      preference,
+    );
+    const itemAcct =
+      (await accountByNumber(client, draft.operating_company_id, "6100")) ??
+      (await accountByRole(client, draft.operating_company_id, "other_operating_expense"));
+    if (!itemAcct) {
+      throw new SettlementCreatorError("expense_account_missing", `No expense account for Comp. Exp. "${exp.item_name}".`);
+    }
+    const loadId = await resolveLoadIdByNumber(exp.load_number);
+    const expenseNumber = await nextExpenseDisplayId(
+      client as never,
+      draft.operating_company_id,
+      new Date(`${exp.date}T12:00:00.000Z`),
+    );
+    const memo = `[SC ${draft.settlement_no}] ${exp.description ?? exp.item_name}`.slice(0, 500);
+    const inserted = await client.query<{ id: string }>(
+      `
+        INSERT INTO accounting.expenses (
+          operating_company_id, status, transaction_date, total_amount_cents,
+          memo, expense_number, load_id, is_sample_data, payment_account_uuid,
+          is_company_expense, driver_uuid
+        )
+        VALUES ($1::uuid, 'draft', $2::date, $3::bigint, $4, $5, $6::uuid, false, $7::uuid, true, $8::uuid)
+        RETURNING id::text
+      `,
+      [
+        draft.operating_company_id,
+        exp.date,
+        exp.amount_cents,
+        memo,
+        expenseNumber,
+        loadId,
+        paymentAccountId,
+        draft.driver_id,
+      ],
+    );
+    const expenseId = inserted.rows[0]!.id;
+    await client.query(
+      `
+        INSERT INTO accounting.expense_lines (
+          operating_company_id, expense_id, line_sequence, amount, amount_cents, description,
+          load_id, load_required, expense_account_uuid, quantity, rate_cents, unit_of_measure
+        )
+        VALUES ($1::uuid, $2::uuid, 1, $3, $4::bigint, $5, $6::uuid, $7, $8::uuid, 1, $4::bigint, 'each')
+      `,
+      [
+        draft.operating_company_id,
+        expenseId,
+        exp.amount_cents / 100,
+        exp.amount_cents,
+        memo,
+        loadId,
+        Boolean(loadId),
+        itemAcct.id,
+      ],
+    );
+    expenseIds.push(expenseId);
+    try {
+      const posted = await postSourceTransactionInClientTx(
+        client as never,
+        {
+          operating_company_id: draft.operating_company_id,
+          source_transaction_type: "expense",
+          source_transaction_id: expenseId,
+        },
+        { userId: actorUserId },
+      );
+      if (posted.journal_entry_id) journalEntryIds.push(posted.journal_entry_id);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (!/EXPENSE_POST_GL_REFUSED|not posting-eligible|FLAG/i.test(msg)) throw err;
+    }
+  }
+
+  // Reimbursable expenses + explicit reimbursements → settlement_lines (driver net; no cash Cr).
+  for (const r of draft.reimbursements ?? []) {
+    if (r.amount_cents <= 0) continue;
+    await client.query(
+      `
+        INSERT INTO driver_finance.settlement_lines (
+          settlement_id, operating_company_id, line_type, description, amount, is_active, is_sample_data
+        )
+        VALUES ($1::uuid, $2::uuid, 'reimbursement', $3, $4, true, false)
+      `,
+      [
+        bare.settlement_id,
+        draft.operating_company_id,
+        r.description || `Settlement ${draft.settlement_no} reimbursement`,
+        dollarsFromCents(r.amount_cents),
+      ],
+    );
+  }
+  for (const exp of draft.expenses ?? []) {
+    if (!exp.is_reimbursable || exp.amount_cents <= 0) continue;
+    await client.query(
+      `
+        INSERT INTO driver_finance.settlement_lines (
+          settlement_id, operating_company_id, line_type, description, amount, is_active, is_sample_data
+        )
+        VALUES ($1::uuid, $2::uuid, 'reimbursement', $3, $4, true, false)
+      `,
+      [
+        bare.settlement_id,
+        draft.operating_company_id,
+        exp.description ?? exp.item_name,
+        dollarsFromCents(exp.amount_cents),
+      ],
+    );
+  }
+
+  // Escrow holds from the PDF → createHistoricalEscrowHold (sign from transaction_type; existing engine).
+  for (const e of draft.escrow ?? []) {
+    if (e.amount_cents <= 0) continue;
+    const loadId = await resolveLoadIdByNumber(e.load_number);
+    if (!loadId) {
+      throw new SettlementCreatorError(
+        "escrow_load_required",
+        `Escrow "${e.description || "hold"}" needs a load number so it links to the tour.`,
+      );
+    }
+    await createHistoricalEscrowHold(client as never, {
+      source: "historical_backfill",
+      operating_company_id: draft.operating_company_id,
+      driver_id: draft.driver_id,
+      load_id: loadId,
+      description: e.description || `Settlement ${draft.settlement_no} escrow`,
+      amount_cents: e.amount_cents,
+      actor_user_id: actorUserId,
+    });
   }
 
   await appendCrudAudit(
