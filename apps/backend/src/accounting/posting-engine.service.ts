@@ -1865,7 +1865,9 @@ async function buildCashAdvanceLines(
     );
   }
 
-  const mapped = await resolveAccountForCategory(operatingCompanyId, "cash_advance", "cash_advance");
+  // ACCT-F2026092584 — pass this function's own client so the read runs on it, not a second
+  // withLuciaBypass connection (which needs SET LOCAL ROLE ih35_app — unavailable to some callers).
+  const mapped = await resolveAccountForCategory(operatingCompanyId, "cash_advance", "cash_advance", client);
   const debitAccountId = mapped.account_id;
 
   // ACCT-F5687 — same precedence as buildDriverAdvanceLines' CHAIN-04 fix (ACCT-F358): an explicit
@@ -1972,7 +1974,9 @@ async function buildDriverAdvanceLines(
     );
   }
 
-  const mapped = await resolveAccountForCategory(operatingCompanyId, "cash_advance", "cash_advance");
+  // ACCT-F2026092584 — pass this function's own client so the read runs on it, not a second
+  // withLuciaBypass connection (which needs SET LOCAL ROLE ih35_app — unavailable to some callers).
+  const mapped = await resolveAccountForCategory(operatingCompanyId, "cash_advance", "cash_advance", client);
   const debitAccountId = mapped.account_id;
 
   // CLS-CASH-OUT-CREDITS-CLEARING-ACCOUNT / LV-ADVANCE-CREDITS-UNDEPOSITED-NOT-THE-BANK — this used to

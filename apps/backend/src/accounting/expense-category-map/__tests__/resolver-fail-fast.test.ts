@@ -52,4 +52,30 @@ describe("expense-category-map resolver", () => {
       posting_side: "debit",
     });
   });
+
+  // ACCT-F2026092584 — a caller-supplied client must be used directly, never withLuciaBypass's own
+  // second connection (which needs SET LOCAL ROLE ih35_app — unavailable to some callers, e.g. a
+  // one-shot ops script running on a read-scoped-but-bypass-capable credential).
+  it("queries the caller-supplied client directly and never opens withLuciaBypass", async () => {
+    mockWithLuciaBypass.mockClear();
+    const callerQuery = vi.fn().mockResolvedValueOnce({ rows: [], rowCount: 0 }).mockResolvedValueOnce({
+      rows: [{ account_id: "44444444-4444-4444-8444-444444444444", posting_side: "credit" }],
+      rowCount: 1,
+    });
+    const callerClient = { query: callerQuery };
+
+    const resolved = await resolveAccountForCategory(
+      "11111111-1111-4111-8111-111111111111",
+      "cash_advance",
+      "cash_advance",
+      callerClient,
+    );
+
+    expect(resolved).toEqual({
+      account_id: "44444444-4444-4444-8444-444444444444",
+      posting_side: "credit",
+    });
+    expect(callerQuery).toHaveBeenCalled();
+    expect(mockWithLuciaBypass).not.toHaveBeenCalled();
+  });
 });
