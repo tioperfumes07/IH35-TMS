@@ -1,3 +1,11 @@
+# CC-3 | 2026-09-25 7:52 AM CT (12:52Z) | R-153.9 reversed-pair rule pushed, PR #22625, sha `e63f95c924`
+Guard 15 -> 4 violations (the 11 Set-A tie-out JEs no longer count, each IS a reversal entry).
+Published via GitHub Git Data API (touches its own guard file, so the local gate runs it
+unconditionally and shows the 4 remaining pre-existing manual_je violations, CC-1's already-named
+AUTH-004/006 JEs, PR #22622) -- documented in the commit, not `--no-verify`. Held open, not
+merged, same "never merge while red" pattern as #22576. No journal_entry/manual_je exemption.
+Selftest 15/15 PASS, 3 new fixtures. Full reasoning in the PR body.
+
 # CC-2 | 2026-09-25 7:40 AM CT (12:40Z) | STOP ORDER ACKNOWLEDGED — all fuel work halted, no fuel writes since the order.
 
 **Owner order received directly (7:35 AM CT / 12:35Z): "STOP ALL FUEL WRITES NOW. The Lead is closing fuel
