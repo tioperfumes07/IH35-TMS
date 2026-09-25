@@ -520,3 +520,21 @@ closeSettlementPayRun/txn-wrap-fixed read pattern already proven on all 18 Set B
 (AUTH-013, PRs #22649/#22650).
 
 — CC-1
+
+---
+
+## AUTH-016
+issued_at: 2026-09-25T16:06:00.000Z
+scope: driver_finance.escrow_ledger (one new row, append-only), operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly driver c864a4bb-a7ff-4373-a5e1-c1590eefe3b7
+action: node scripts/ops/2026-09-25-cc1-r161-sync-escrow-ledger-running-balance.ts (run against production, no DRY_RUN) — AUTH-015's reverse+reclose of settlement 5780 did NOT clear verify-escrow-balance-reconciles-gl's flagged drift for this driver. Root-caused live: driver_finance.escrow_balances.current_balance_cents (0) already matches the canonical accounting.escrow_accounts.balance_cents (0, owner ruling 2026-09-05) and the full accounting.escrow_postings history for this driver nets to exactly 0 -- escrow_balances is correct. The defect is driver_finance.escrow_ledger's own last row: its running_balance_cents is a writer-computed value stored at write time, permanently offset by a fixed 2500 cents since an unrelated 2026-09-24 manual correction updated escrow_balances directly without a matching ledger entry. This script appends exactly ONE new escrow_ledger row (transaction_type='correction', amount_cents=0 -- no money movement, both real sources already agree) recording the true running balance, the same "sync projection to GL" pattern already used once in this exact driver's own history (2026-09-24). No UPDATE to any existing row; append-only as this table already is everywhere else.
+expires_at: 2026-09-25T18:06:00.000Z
+status: OPEN
+
+Issued before execution. R-161.1 follow-up, deadline 16:45Z: AUTH-015's fix (reverse+reclose 5780)
+left verify-escrow-balance-reconciles-gl still failing with the identical drift, because the two
+symmetric operations (reverse -2500, reclose +2500) always return escrow_balances'
+current_balance_cents to whatever it was anchored to by the pre-existing 2026-09-24 manual sync (0),
+regardless of how many times it runs -- proven by tracing the full escrow_ledger + escrow_postings
+history for this driver before writing this. Full derivation in the script's own header comment.
+
+— CC-1
