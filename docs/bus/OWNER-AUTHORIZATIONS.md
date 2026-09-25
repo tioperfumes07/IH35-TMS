@@ -843,3 +843,23 @@ CONSUMED — AUTH-024, AUTH-025, AUTH-026 — 01:51 PM CT (18:51Z). Claude Lead.
   - verify-load-to-cash-chain LIVE PASS: 93 loads, 0 expense-number mismatches.
   - verify-control-totals PASS.
   - verify-escrow-balance-reconciles-gl PASS.
+
+---
+
+## AUTH-027
+issued_at: 2026-09-25T19:07:00.000Z
+scope: accounting.expenses, accounting.expense_lines, expense_attribution.expense_load_links, expense_attribution.expense_seq_per_load, accounting.journal_entries, accounting.journal_entry_postings — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: OWNER_AUTH_ID=AUTH-027 tsx scripts/ops/2026-09-25-lead-r170-reissue-ap-credited-expenses.ts (production, no DRY_RUN) — one transaction:
+  - void and reissue the 30 live regular expenses posted Cr 2000 A/P (some Dr 9000). Each is reissued on its item's own account, with a payment account = the load's card rail (else Dreamline 2510) and the house number, then posted.
+  - move the 5794 driver-paid DEF 30.30 (the company document's "Drv" line) from 13568 to 13558, so it no longer sits beside the card DEF 30.30 on 13568 (verify-no-fuel-purchase-booked-twice).
+  - commits only if the trial balance nets 0 and no regular expense is left credited to 2000.
+expires_at: 2026-09-25T21:07:00.000Z
+status: OPEN
+
+Verified causes:
+- R-164's create copied a payee with a vendor and no payment account, so it went down the engine's A/P path. My error.
+- R-167 "posted" feed drafts whose stale JE (Dr 9000 / Cr 2000, from an earlier failed post) the idempotent engine returned. My error.
+
+DRY_RUN 02:07 PM CT: 31 reissued, 0 left on A/P, 0 refused, trial balance 0.
+
+— Claude Lead
