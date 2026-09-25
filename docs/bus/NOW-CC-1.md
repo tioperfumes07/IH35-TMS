@@ -14,7 +14,12 @@ scripts/ops/2026-09-25-cc1-r153-followup-escrow-dropped-in-repost.mjs.
 
 # 2 DECISION NEEDED items still open (full text in the archive above):
 1. Item 6: 4 of 5 self-carried invoices ($9,412.40) blocked on USMCA's live
-   INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE flag refusing any load-less invoice send.
+   INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE flag refusing any load-less invoice send. CONFIRMED via
+   code read (invoice-send.service.ts, LV-012/ACCT-F61): a no-load invoice's evidenceReason is
+   only ever "no_source_load", and mode='historical_backfill's settlement/Faro-line lookup requires
+   source_load_id truthy to run at all -- there is no existing code path that can ever satisfy this
+   gate for a load-less invoice. Not more-investigable; needs an owner override policy or a load
+   linked to each invoice, not a code fix.
 2. Item 11: does LAW.md's "no USMCA backfill" law cover self-referential completion of a USMCA
    expense's own unit_id/driver_uuid/trailer_id from that SAME expense's own already-linked USMCA
    load (373 expenses, 112/66/293 missing each field respectively)?
