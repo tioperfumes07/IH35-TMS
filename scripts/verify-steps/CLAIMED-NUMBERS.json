@@ -9129,5 +9129,10 @@
     "claimed_by": "devin-b",
     "claimed_at": "2026-09-25",
     "purpose": "verify-driver-samsara-map-one-to-many (ROUND 181.1 step 0)"
+  },
+  "11617": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-25",
+    "purpose": "verify-presettlement-shows-whole-tour"
   }
 }
