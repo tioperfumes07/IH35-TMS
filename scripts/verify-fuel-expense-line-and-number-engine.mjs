@@ -15,6 +15,7 @@ for (const i of ins) {
   if (/\bitem_id\b/.test(i) && !(/\bquantity\b/.test(i) && /\brate_cents\b/.test(i) && /\bunit_of_measure\b/.test(i)))
     fails.push("fuel-expense-document expense_lines insert sets item_id without quantity/rate_cents/unit_of_measure");
 }
+if (/1, \$4, 'each'\)/.test(fuel)) fails.push("expense_lines insert reuses an uncast $4 for amount_cents and rate_cents (inconsistent types deduced for parameter $4)");
 if (!ins.length) fails.push("no expense_lines insert found in fuel-expense-document.service.ts");
 if (!/expense_attribution\.expense_load_links WHERE operating_company_id = \$1::uuid AND expense_number = \$2/.test(num)) fails.push("generateExpenseNumber no longer checks taken numbers");
 // selftest
