@@ -126,8 +126,20 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Live Aug 5769–5796 after mint:** 28 driver settlements (22 pure-Aug closed+posted with company
   CS; 6 Aug–Sep SPAN left `open`, no company yet). Twin misattr bills re-homed to USMCA control
   driver before mint (Alfonso TRANSP→USMCA; inverted 5779 period dates fixed via min/max of start+end).
-- **Still open:** 5769 / 5788 posted under twin-split gross (need reverse+repost after bill re-home);
-  healthz `ledger.ar_tieout` / `ap_tieout` still red; Faro self-carried AR (5) not yet done.
+- **Still open (superseded 2026-09-25):** twin-split 5769/5788 was closed by later AT ties. healthz
+  `ledger.ar_tieout` / `ap_tieout` are **green** (measured 2026-09-25). Faro self-carried AR (5) may
+  still be a separate queue if it resurfaces — do not re-open from this stale line.
+
+### Active Architectural Decisions — voided-doc live-postings liveness (Cursor, 2026-09-25)
+
+- **LIVE posting line** = `reversal_of_line_id IS NULL AND reversed_by_line_id IS NULL`. WORM reverse
+  keeps the original line and stamps `reversed_by_line_id`; the reverse line alone carries
+  `reversal_of_line_id`. Filtering only `reversal_of_line_id IS NULL` falsely counts already-reversed
+  originals (measured **180** false positives after the expense reverse sweep).
+- **Guard:** `scripts/verify-no-voided-doc-has-live-postings.mjs` (merged #22548 / `6547f2050a`).
+- **Feed reverse:** `scripts/feed/reverse-voided-expense-live-gl.mts` — one connection, BEGIN/COMMIT
+  per expense, list query uses the same two-column liveness (JE `status` stays `posted` after reverse).
+  Live: `DONE reversed=180 fail=0` → dry `voided_with_live_gl=0` → guard OK population 4741.
 
 ## Known Quirks & Blockers
 
@@ -135,10 +147,12 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 ### Aug 100% + Sep Faro close (Cursor, 2026-09-25)
 
 - SPAN 5789–5794 + early-Sep 5797–5803 tied to AT `total_due` / `settlement_control` via `tie-span-and-early-sep-to-at.mts` (same reverse→load_bookended→close engine as pure-Aug/Sep 5804–5815).
-- 5812 paperwork stamped to AT TOTAL DUE **-50** (escrow only; pay-run close refuses $0 earnings — header net is truth).
+- 5812 paperwork stamped to AT TOTAL DUE **-50** (escrow only; pay-run close refuses $0 earnings — header net is truth). Control expect **$20,191.07** (not $20,241.07).
 - All 23 Faro purchase days in `closed_purchase_days.json`. Create-path live outcome **89/89** charge/vendor/tour/bills PASS.
 - Purged Sep Faro driver bills reminted via `createDriverBillArtifacts` (`remint-unsettled-faro-bills.mts`); 13588/13600 tours via `mint-sep-faro-bills-and-tours.mts`.
 - `void.service` `SELECT DISTINCT … ORDER BY 1` fix (was 42P10 on reverse) shipped with this close.
+- **2026-09-25 close proof (tip `6547f2050a` + Neon):** `verify-alwaystrack-parity` **34/34 PASS** (LH/DP/fuel/expenses/driver_net exact); settlements **5769–5815** all `approved` (5812 unposted by design, net −50); `verify-control-totals` PASS; voided-with-live-GL **0**; healthz `ar_tieout`/`ap_tieout` green. TB still red on **1090 clearing pileup** + sign on **2100/1245** — next money residue, not AT parity.
+- FAST-MERGE law restated this session: gate → push → PR → `gh pr merge --squash --delete-branch --admin` immediately; open PRs emptied (#22548 merged, #22547 closed superseded).
 
 
 ### ACCT-F20260924 — pure-Aug AT nets + Faro 23/23 money + AR/AP (Cursor, 2026-09-24)

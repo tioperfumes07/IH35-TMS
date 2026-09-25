@@ -164,6 +164,16 @@ async function runReal() {
     process.exit(1);
   }
 
+  // Fail-closed BEFORE vitest when DATABASE_URL is absent. verify-no-silent-db-skip strips
+  // DATABASE_URL and requires a fast non-zero exit; spawning vitest without a DB hung the
+  // silent-db-skip pool (measured flake on MEMORY_BANK push 2026-09-25).
+  if (!process.env.DATABASE_URL) {
+    console.error(
+      `${LABEL}: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).`
+    );
+    process.exit(1);
+  }
+
   try {
     execSync(`npx vitest run ${DB_TEST_REL.replace(/^apps\/backend\//, "")}`, {
       cwd: path.join(ROOT, "apps/backend"),
