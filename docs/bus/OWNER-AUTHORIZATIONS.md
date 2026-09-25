@@ -927,3 +927,29 @@ Measured against the 10 Driver Settlement PDFs:
 DRY_RUN 03:28 PM CT: reversal posted; 0008/0009 restored; 0007 repointed; 12/12 linked to their load and driver bill (owner rule: an advance is a bill payment). 1245 −201.99 → 0. 1000 159,310.83 → 159,108.84. Trial balance 0.
 
 — Claude Lead
+
+---
+
+## AUTH-031
+issued_at: 2026-09-25T20:19:49.000Z
+scope: driver_finance.driver_advances (one new row), driver_finance.driver_liabilities (one new row), accounting.journal_entries, accounting.journal_entry_postings — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly the one named driver bill (load 13570, bill 4a34ee6d-8877-48ec-bd59-460e645b820d)
+action: OWNER_AUTH_ID=AUTH-031 tsx scripts/ops/2026-09-25-cc1-r174-cash-advance-13570.ts (production, no DRY_RUN) — ROUND 174 (Claude-Lead, 02:15 PM CT/19:15Z) item B, September scope, load 13570 ONLY. createDriverCashAdvanceCore (disbursement_method historical_backfill, linked to the driver bill) then the disburse step replicated in-client (see script header: disburseDriverAdvanceCore itself calls withCurrentUser -> SET ROLE ih35_app, which the ~/.ih35-gate.env credential cannot assume, per AUTH-029's own consumed note — same class of failure, same class of workaround Lead used for 5812) — same two DB phases, same postSourceTransactionInClientTx GL call, just run on this script's own already-bypassed client instead. Best-effort phase 3 (cash-advance-request timeline emit) skipped: this advance never originated from a request.
+expires_at: 2026-09-25T22:19:00.000Z
+status: OPEN
+
+Issued before execution. Originally drafted to cover load 13587 too — DROPPED after reading Lead's
+own AUTH-030 (R-176): my earlier ROUND 153 item 8 correction was itself wrong (CA-2026-0008 +
+CA-2026-0009 + CA-2026-TIE-5807 = $280.00, document 5807's real single advance for load 13587, not
+a duplicate of CA-2026-0007). Lead's fix already restores/repoints those rows; a fresh $280.00 row
+here would have double-booked it. Caught before running — closed PR #22710, no write happened under
+the withdrawn draft of this AUTH.
+
+Load 13570 is NOT part of Lead's 12-row historical batch (confirmed: none of the 12 link to this
+load or driver Carlos Mauricio Pena Carvallo) and outside AUTH-030's scope — a genuinely separate
+gap. Root cause: the truth JSON's driver-doc deductions[] for settlement 5801 carries "Cash
+Advance-Efectivo" -$200.00, dated 2026-09-01, load 13570; no driver_finance.driver_advances row
+exists anywhere for this driver/load. This script's own read phase also refuses if a live advance
+already exists for this bill (double-book guard). Run AFTER AUTH-030 (R-176) is CONSUMED, not
+concurrently — both touch account 1245. DRY_RUN=1 first.
+
+— CC-1
