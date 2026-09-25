@@ -143,6 +143,17 @@ export async function billOpenTourLoadId(
 
 /** All load_ids whose tour this settlement bookends (via driver_bills <-> settlement_lines). Used
  *  at tour close to find every expense/bill that was held for these specific loads. */
+/**
+ * R-169 follow-on (found live while preparing 5812's tour-close call) — the settlement_lines path
+ * alone has the SAME zero-pay blind spot isLoadTourOpen had before R-169: a zero-pay settlement
+ * (5812: TOTAL DUE -50.00, salary 0) earns no settlement_lines row, so this returned an empty load
+ * list for it even after isLoadTourOpen correctly reported the tour closed — postHeldDocumentsFor-
+ * ClosedTour would then silently no-op on an empty loadIds array. Widened the same way: also
+ * resolve via driver_bills.settled_in_settlement_id directly, independent of whether that
+ * settlement produced a pay line. UNION of both paths — this only ADDS loads a zero-pay settlement
+ * bookends that the settlement_lines path could never see; every load the old query already found
+ * is still found.
+ */
 export async function loadIdsForSettlement(
   client: DbClient | PoolClient,
   operatingCompanyId: string,
@@ -158,6 +169,15 @@ export async function loadIdsForSettlement(
         AND db.operating_company_id = $2::uuid
         AND db.status <> 'void'
         AND db.load_id IS NOT NULL
+
+      UNION
+
+      SELECT DISTINCT db2.load_id::text AS load_id
+      FROM driver_finance.driver_bills db2
+      WHERE db2.settled_in_settlement_id = $1::uuid
+        AND db2.operating_company_id = $2::uuid
+        AND db2.status <> 'void'
+        AND db2.load_id IS NOT NULL
     `,
     [settlementId, operatingCompanyId]
   );
