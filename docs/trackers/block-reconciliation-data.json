@@ -1,6 +1,6 @@
 {
- "date": "2026-09-24",
- "generated_at_iso": "2026-09-24T21:36:52.087Z",
+ "date": "2026-09-25",
+ "generated_at_iso": "2026-09-25T05:06:02.146Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13727,6 +13727,78 @@
  ],
  "merged_prs": [
   {
+   "number": 22552,
+   "title": "Cursor- MEMORY_BANK: USMCA belonging = has settlement (retract false gaps)",
+   "mergedAt": "2026-09-25T04:56:46Z",
+   "branch": "cursor/usmca-settlement-belonging-law-c89b"
+  },
+  {
+   "number": 22551,
+   "title": "Cursor- clear residual \\$125 Undeposited Funds (ACCT-F20260925j)",
+   "mergedAt": "2026-09-25T04:24:16Z",
+   "branch": "cursor/clear-1090-dust-c89b"
+  },
+  {
+   "number": 22550,
+   "title": "Cursor- TB close 1090 deposit + 2100/1245 sign fix (ACCT-F20260925i)",
+   "mergedAt": "2026-09-25T04:17:35Z",
+   "branch": "cursor/fix-tb-sign-clearing-c89b"
+  },
+  {
+   "number": 22549,
+   "title": "Cursor- MEMORY_BANK voided-live close proof + draft-load silent-db hang fix",
+   "mergedAt": "2026-09-25T03:43:55Z",
+   "branch": "cursor/memory-voided-live-gl-c89b"
+  },
+  {
+   "number": 22548,
+   "title": "Cursor- voided live-postings predicate + reverse loop (ACCT-F20260925e/f)",
+   "mergedAt": "2026-09-25T03:23:44Z",
+   "branch": "cursor/voided-live-postings-predicate-c89b"
+  },
+  {
+   "number": 22546,
+   "title": "Cursor- AT parity 34/34 + reverse voided expense GL",
+   "mergedAt": "2026-09-25T03:04:11Z",
+   "branch": "cursor/at-parity-final-c89b"
+  },
+  {
+   "number": 22545,
+   "title": "Cursor- Exact AT expense reset + 13524 GT $3800",
+   "mergedAt": "2026-09-25T03:01:44Z",
+   "branch": "cursor/at-expenses-exact-close-c89b"
+  },
+  {
+   "number": 22544,
+   "title": "Cursor- Aug 100% + Sep Faro close — SPAN/early-Sep AT nets + all 23 purchase days",
+   "mergedAt": "2026-09-25T01:24:52Z",
+   "branch": "cursor/close-aug-sep-complete-c89b"
+  },
+  {
+   "number": 22543,
+   "title": "Cursor-MEMORY_BANK ACCT-F20260924 pure-Aug Faro AR/AP",
+   "mergedAt": "2026-09-25T00:47:45Z",
+   "branch": "cursor/memory-aug-faro-tie-c89b"
+  },
+  {
+   "number": 22542,
+   "title": "Cursor-ACCT-F20260924 pure-Aug AT tie + Faro 23/23 money + AR/AP green",
+   "mergedAt": "2026-09-25T00:43:59Z",
+   "branch": "cursor/aug-settlement-complete-tie-c89b"
+  },
+  {
+   "number": 22541,
+   "title": "Cursor-ACCT-F20260924 MEMORY_BANK Sep 5804-5815 AT net tie",
+   "mergedAt": "2026-09-24T23:56:40Z",
+   "branch": "cursor/memory-sep-tie-c89b"
+  },
+  {
+   "number": 22540,
+   "title": "Cursor-ACCT-F20260924 tie Sep 5804-5815 net to AlwaysTrack ($20,241.07)",
+   "mergedAt": "2026-09-24T23:55:18Z",
+   "branch": "cursor/at-tie-5804-control-c89b"
+  },
+  {
    "number": 22538,
    "title": "Cursor-Fed settlement auto-mint — invoice/bill variance + Aug settls from bills",
    "mergedAt": "2026-09-24T18:36:06Z",
@@ -14571,6 +14643,12 @@
    "title": "Cursor-OUTBOX: 13d live with first cron runs + program scoreboard regen (82 > 80 behind blocked every push)",
    "mergedAt": "2026-09-23T04:55:41Z",
    "branch": "cursor/outbox-cron-proof"
+  },
+  {
+   "number": 22394,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-25T02:53:28Z",
+   "branch": "chore/tracker-artifacts-sync"
   },
   {
    "number": 22393,
@@ -16115,6 +16193,18 @@
    "branch": "chore/tracker-artifacts-sync"
   },
   {
+   "number": 22132,
+   "title": "chore(deps): bump the production-dependencies group across 1 directory with 24 updates",
+   "mergedAt": "2026-09-25T02:53:32Z",
+   "branch": "dependabot/npm_and_yarn/production-dependencies-7e4b29bdb2"
+  },
+  {
+   "number": 22130,
+   "title": "chore(ci): bump github/codeql-action from 4.37.7 to 4.38.1",
+   "mergedAt": "2026-09-25T02:53:39Z",
+   "branch": "dependabot/github_actions/github/codeql-action-4.38.1"
+  },
+  {
    "number": 22129,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-09-21T05:07:23Z",
@@ -17235,96 +17325,6 @@
    "title": "Claude-3-IN-round-20.3-updated-confirm",
    "mergedAt": "2026-09-12T23:55:39Z",
    "branch": "claude/round-20.3-updated-confirm-2026-09-12"
-  },
-  {
-   "number": 21937,
-   "title": "Claude-1-: CLAIM-RESERVE 11381 (verify-pl-cost-of-revenue)",
-   "mergedAt": "2026-09-12T23:52:47Z",
-   "branch": "claude/claim-reserve-11381"
-  },
-  {
-   "number": 21936,
-   "title": "Claude-3-IN-round-20.6-planners-labels-columns",
-   "mergedAt": "2026-09-12T23:47:48Z",
-   "branch": "claude/round-20.6-planners-labels-columns"
-  },
-  {
-   "number": 21935,
-   "title": "CC-2-ROUND 20.7 follow-up: profile-page px→rem + autofit guard registry expansion",
-   "mergedAt": "2026-09-12T23:48:39Z",
-   "branch": "cc2/autofit-profile-pages-and-registry"
-  },
-  {
-   "number": 21934,
-   "title": "CC-2-FINDING: N/A (docs only -- ROUND-20.7 planners sub-piece DONE line)",
-   "mergedAt": "2026-09-12T23:34:43Z",
-   "branch": "cc2/autofit-planners-done-line"
-  },
-  {
-   "number": 21933,
-   "title": "CC-2-FINDING: N/A (ROUND-20.7 -- APP-WIDE AUTOFIT LAW: Dispatch Planners no longer capped at 1400px)",
-   "mergedAt": "2026-09-12T23:25:08Z",
-   "branch": "cc2/autofit-planners"
-  },
-  {
-   "number": 21932,
-   "title": "Claude-3-IN-claim-reserve-11377",
-   "mergedAt": "2026-09-12T23:23:43Z",
-   "branch": "claude/claim-reserve-11377"
-  },
-  {
-   "number": 21931,
-   "title": "Claude-1-: bus post -- ROUND 20.1 DONE, loads/tours reassignment, 2 CI P0s fixed, void status",
-   "mergedAt": "2026-09-12T23:18:27Z",
-   "branch": "claude/outbox-round20-final-report"
-  },
-  {
-   "number": 21930,
-   "title": "CC-2-FINDING: N/A (docs only -- ROUND-20.2 Round Trips DONE line, all 4 proof items live-confirmed)",
-   "mergedAt": "2026-09-12T23:16:36Z",
-   "branch": "cc2/round-trips-done-line"
-  },
-  {
-   "number": 21929,
-   "title": "CC-2-FINDING: N/A (ROUND-20.2 follow-up -- tour header money summed as strings)",
-   "mergedAt": "2026-09-12T23:10:13Z",
-   "branch": "cc2/round-trips-money-string-fix"
-  },
-  {
-   "number": 21928,
-   "title": "Claude-1-: wire 2 orphaned guards into verify-steps (locked-guards-heavy P0, all seats blocked)",
-   "mergedAt": "2026-09-12T23:15:42Z",
-   "branch": "claude/wire-verify-step-11365-api"
-  },
-  {
-   "number": 21927,
-   "title": "Claude-1-: CLAIM-RESERVE 11369 (verify-round-trips-full-tour wrapper)",
-   "mergedAt": "2026-09-12T23:02:55Z",
-   "branch": "claude/claim-reserve-11369"
-  },
-  {
-   "number": 21926,
-   "title": "CC-2-FINDING: N/A (ROUND-20.2 follow-up -- include_open_tour_legs GUC fix)",
-   "mergedAt": "2026-09-12T23:00:27Z",
-   "branch": "cc2/round-trips-guc-fix"
-  },
-  {
-   "number": 21925,
-   "title": "Claude-1-: CLAIM-RESERVE 11365 (verify-customers-vendors-list-view-no-duplicate-sidebar wrapper)",
-   "mergedAt": "2026-09-12T23:00:01Z",
-   "branch": "claude/claim-reserve-11365"
-  },
-  {
-   "number": 21924,
-   "title": "Claude-3-IN-bus-post-13593-load-mutation-disclosure",
-   "mergedAt": "2026-09-12T22:53:34Z",
-   "branch": "claude/bus-post-13593-load-mutation-disclosure"
-  },
-  {
-   "number": 21922,
-   "title": "CC-2-FINDING: N/A (ROUND-20.2 -- Round Trips renders the whole tour, not just the current leg)",
-   "mergedAt": "2026-09-12T22:52:14Z",
-   "branch": "cc2/round-trips-full-tour"
   }
  ],
  "merged_pr_total": 3000,
