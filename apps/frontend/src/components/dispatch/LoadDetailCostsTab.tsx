@@ -22,6 +22,7 @@ import { apiRequest, generateIdempotencyKey } from "../../api/client";
 import type { LoadDetail } from "../../api/loads";
 import { listVendors } from "../../api/mdata";
 import { companyToday } from "../../lib/businessDate";
+import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { DatePicker } from "../forms/DatePicker";
 import { MoneyInput } from "../forms/MoneyInput";
@@ -128,7 +129,8 @@ const num = (v: number | string | null | undefined) => (v == null || v === "" ? 
 const fmtMiles = (v: number | string | null | undefined) => (v == null || v === "" || !Number.isFinite(Number(v)) ? DASH : Number(v).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }));
 const fmtRate = (cents: number | string | null | undefined) => (cents == null || cents === "" ? DASH : `$${(Number(cents) / 100).toFixed(4)}`);
 const mmdd = (iso: string | null | undefined) => (iso ? `${iso.slice(5, 7)} / ${iso.slice(8, 10)}` : DASH);
-const acctLabel = (number: string | null | undefined, name: string | null | undefined) => (name ? `${number ? `${number} ` : ""}${name}` : DASH);
+const acctLabel = (number: string | null | undefined, name: string | null | undefined) =>
+  formatAccountDisplayLabel({ account_number: number, account_name: name });
 
 export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: LoadDetail; canEdit: boolean; canEditReason?: string }) {
   const [drafts, setDrafts] = useState<Draft[]>([blankDraft()]);

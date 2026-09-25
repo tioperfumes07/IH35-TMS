@@ -24,6 +24,7 @@ import { printLetterHtml } from "../../lib/openPrintableDocument";
 import { useState } from "react";
 
 import { formatUsdCents } from "../../lib/money";
+import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -48,7 +49,8 @@ function statusVariant(status: string): "positive" | "neutral" | "crit" | "warn"
 }
 
 function accountLabel(_number: string | null | undefined, name: string | null | undefined, id: string) {
-  return entityLabel(name, id, "Account");
+  const label = formatAccountDisplayLabel({ account_name: name, account_number: _number });
+  return label === "—" ? entityLabel(name, id, "Account") : label;
 }
 
 export function ExpenseDetailPage() {

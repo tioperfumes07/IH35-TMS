@@ -9,6 +9,7 @@ import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
 import { SelectCombobox } from "../Combobox";
+import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 
 // B6 — Driver Inbox (inside Driver Hub Home). Built to APPROVED-PREVIEW-driver-inbox.html.
 // Locked tokens: navy banner #1A1F36, white active-tab underline; cards #fff / #e5e7eb 4px;
@@ -215,7 +216,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                             <option value="">Company default cash account</option>
                             {payFromAccounts.map((a) => (
                               <option key={a.id} value={a.id}>
-                                {a.account_number} · {a.account_name}
+                                {formatAccountDisplayLabel(a)}
                               </option>
                             ))}
                           </SelectCombobox>
