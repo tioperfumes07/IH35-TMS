@@ -14,7 +14,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "no
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { dataWritePathFileActuallyWrites } from "./lib/data-write-path-detection.mjs";
+import { dataWritePathDiffActuallyWrites, dataWritePathFileActuallyWrites } from "./lib/data-write-path-detection.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const GATE_FILE = "scripts/money-pr-local-gate.mjs";
@@ -37,6 +37,9 @@ function checkGateFileStructure(source) {
   if (!/dataWritePathFileActuallyWrites/.test(source)) {
     fail(`${GATE_FILE} never references dataWritePathFileActuallyWrites — the content-based check is not wired in.`);
   }
+  if (!/dataWritePathDiffActuallyWrites/.test(source)) {
+    fail(`${GATE_FILE} does not inspect added diff lines before activating all live-domain guards.`);
+  }
   if (!/from ["']\.\/lib\/data-write-path-detection\.mjs["']/.test(source)) {
     fail(`${GATE_FILE} does not import from ./lib/data-write-path-detection.mjs — the shared implementation is not actually used.`);
   }
@@ -44,6 +47,11 @@ function checkGateFileStructure(source) {
   // regardless of content, only the DATA_WRITE_PATHS branch gets the content gate.
   if (!/domainPaths\.some\(\(p\) => f\.startsWith\(p\)\)\) return true;/.test(source)) {
     fail(`${GATE_FILE} no longer triggers unconditionally on a domainPaths match — that would silently weaken real domain guards, not just fix the false-positive class.`);
+  }
+  const dataWriteBranch = source.indexOf("if (DATA_WRITE_PATHS.some((p) => f.startsWith(p)))");
+  const domainBranch = source.indexOf("if (domainPaths.some((p) => f.startsWith(p))) return true;", dataWriteBranch);
+  if (dataWriteBranch < 0 || domainBranch < 0 || dataWriteBranch > domainBranch) {
+    fail(`${GATE_FILE} checks domainPaths before DATA_WRITE_PATHS, allowing a broad db/migrations/ or scripts/ops/ domain entry to bypass the diff-content gate.`);
   }
 }
 
@@ -86,7 +94,17 @@ function checkDetectionFunctionBehavior() {
       fail("a scripts/ops/ file that imports pg's Client and reads DATABASE_URL was NOT detected as a write — the content check itself is broken, not just narrowed.");
     }
 
-    ok(`unit proof PASS — 4/4 (real .sql migration=write, claim-registry JSON=not-write, read-only ops script=not-write, real pg-client ops script=write)`);
+    const authOnlyDiff = `diff --git a/${writerRel} b/${writerRel}\n+const authId = process.env.OWNER_AUTH_ID;\n+spawnSync("node", ["scripts/verify-owner-authorization.mjs", authId]);\n`;
+    if (dataWritePathDiffActuallyWrites(writerRel, tmp, authOnlyDiff)) {
+      fail("an authorization-only edit to an existing writer was misclassified as a new financial write.");
+    }
+
+    const realWriteDiff = `diff --git a/${writerRel} b/${writerRel}\n+await client.query("UPDATE accounting.expenses SET memo = $1 WHERE id = $2", [memo, id]);\n`;
+    if (!dataWritePathDiffActuallyWrites(writerRel, tmp, realWriteDiff)) {
+      fail("a newly added financial UPDATE was not detected from the actual diff hunk.");
+    }
+
+    ok(`unit proof PASS — 6/6 (file class + authorization-only diff + real financial-write diff)`);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }

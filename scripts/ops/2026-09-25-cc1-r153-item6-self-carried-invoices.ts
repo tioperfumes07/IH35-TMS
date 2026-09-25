@@ -56,6 +56,7 @@
  * Idempotent: skips any target display_id that already has a live (non-voided) invoice.
  */
 import pg from "pg";
+import { spawnSync } from "node:child_process";
 
 const USMCA_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const SYSTEM_ACTOR_USER_ID = "00000000-0000-4000-8000-000000000001";
@@ -80,6 +81,17 @@ async function main() {
   if (INVOICES.length === 0) {
     console.log("verify-usmca-book-equals-faro-and-alwaystrack item 6: INVOICES is empty — all 4 remaining self-carried invoices are blocked on the live delivery-evidence gate (see this file's header). Nothing to do until DECISION NEEDED is answered.");
     return;
+  }
+  const authId = process.env.OWNER_AUTH_ID;
+  if (!authId) {
+    throw new Error("OWNER_AUTH_ID is required; refusing a production financial write without an OPEN authorization on main");
+  }
+  const authCheck = spawnSync("node", ["scripts/verify-owner-authorization.mjs", authId], {
+    cwd: process.cwd(),
+    stdio: "inherit",
+  });
+  if (authCheck.status !== 0) {
+    throw new Error(`verify-owner-authorization.mjs rejected ${authId}`);
   }
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   const client = await pool.connect();
