@@ -19,7 +19,7 @@
      "description": "Line Haul",
      "miles": 1612.5,
      "rate": 1.984,
-     "amount": 3200.0
+     "amount": 3200
     },
     {
      "load": "13480",
@@ -28,7 +28,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 4900.0
+     "amount": 4900
     }
    ],
    "driver_payment": [
@@ -51,14 +51,14 @@
      "driver": "Neftali Coronado Urbano",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13471",
      "driver": "Neftali Coronado Urbano",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13480",
@@ -72,14 +72,14 @@
      "driver": "Neftali Coronado Urbano",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13480",
      "driver": "Neftali Coronado Urbano",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1897.95,
@@ -93,9 +93,9 @@
      "gallons": 155.771,
      "cpg": 5.149,
      "receipt": 802.06,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 802.06
     },
     {
@@ -107,9 +107,9 @@
      "gallons": 121.612,
      "cpg": 5.759,
      "receipt": 700.36,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 700.36
     },
     {
@@ -121,9 +121,9 @@
      "gallons": 123.038,
      "cpg": 5.289,
      "receipt": 650.75,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 650.75
     },
     {
@@ -135,9 +135,9 @@
      "gallons": 124.037,
      "cpg": 5.249,
      "receipt": 651.07,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 651.07
     },
     {
@@ -149,9 +149,9 @@
      "gallons": 120.879,
      "cpg": 5.689,
      "receipt": 687.68,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 687.68
     }
    ],
@@ -159,9 +159,9 @@
     "gallons": 645.337,
     "cpg": 5.411,
     "receipt": 3491.92,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3491.92
    },
    "expenses": [
@@ -198,7 +198,7 @@
    ],
    "expenses_total": 121.52,
    "revenue": {
-    "invoiced": 8100.0,
+    "invoiced": 8100,
     "driver_salary": -1897.95,
     "fuel": -3491.92,
     "company_expenses": -121.52,
@@ -226,7 +226,7 @@
      "description": "Line Haul",
      "miles": 1467.9,
      "rate": 2.67,
-     "amount": 3920.0
+     "amount": 3920
     },
     {
      "load": "13489",
@@ -235,7 +235,7 @@
      "description": "Line Haul",
      "miles": 1205.3,
      "rate": 2.323,
-     "amount": 2800.0
+     "amount": 2800
     }
    ],
    "driver_payment": [
@@ -251,14 +251,14 @@
      "driver": "JORGE FLORES VALADEZ",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13481",
      "driver": "JORGE FLORES VALADEZ",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13489",
@@ -279,14 +279,14 @@
      "driver": "JORGE FLORES VALADEZ",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13489",
      "driver": "JORGE FLORES VALADEZ",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1320.9,
@@ -300,9 +300,9 @@
      "gallons": 164.566,
      "cpg": 5.549,
      "receipt": 913.18,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 913.18
     },
     {
@@ -313,11 +313,11 @@
      "invoice": "2954174",
      "gallons": 166.312,
      "cpg": 5.159,
-     "receipt": 858.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 858.0
+     "receipt": 858,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 858
     },
     {
      "load": "13489",
@@ -328,9 +328,9 @@
      "gallons": 168.376,
      "cpg": 5.289,
      "receipt": 890.54,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 890.54
     }
    ],
@@ -338,9 +338,9 @@
     "gallons": 499.254,
     "cpg": 5.331,
     "receipt": 2661.72,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 2661.72
    },
    "expenses": [
@@ -377,7 +377,7 @@
    ],
    "expenses_total": 106.08,
    "revenue": {
-    "invoiced": 6720.0,
+    "invoiced": 6720,
     "driver_salary": -1320.9,
     "fuel": -2661.72,
     "company_expenses": -106.08,
@@ -405,7 +405,7 @@
      "description": "Line Haul",
      "miles": 1467.9,
      "rate": 2.793,
-     "amount": 4100.0
+     "amount": 4100
     },
     {
      "load": "13485",
@@ -414,7 +414,7 @@
      "description": "Line Haul",
      "miles": 1741.6,
      "rate": 1.171,
-     "amount": 2039.0
+     "amount": 2039
     }
    ],
    "driver_payment": [
@@ -430,14 +430,14 @@
      "driver": "Leonel Antonio Morales",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13482",
      "driver": "Leonel Antonio Morales",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13485",
@@ -458,14 +458,14 @@
      "driver": "Leonel Antonio Morales",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13485",
      "driver": "Leonel Antonio Morales",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1399.2,
@@ -476,12 +476,12 @@
      "vendor": "LOVES",
      "location": "21548FM471S NATALIA,TX,",
      "invoice": "99510004",
-     "gallons": 160.0,
+     "gallons": 160,
      "cpg": 5.079,
      "receipt": 812.64,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 812.64
     },
     {
@@ -493,9 +493,9 @@
      "gallons": 38.488,
      "cpg": 5.199,
      "receipt": 200.1,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 200.1
     },
     {
@@ -507,9 +507,9 @@
      "gallons": 151.005,
      "cpg": 5.449,
      "receipt": 822.83,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 822.83
     },
     {
@@ -521,9 +521,9 @@
      "gallons": 106.009,
      "cpg": 5.089,
      "receipt": 539.48,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 539.48
     },
     {
@@ -535,9 +535,9 @@
      "gallons": 82.646,
      "cpg": 5.489,
      "receipt": 453.64,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 453.64
     },
     {
@@ -549,9 +549,9 @@
      "gallons": 50.041,
      "cpg": 5.449,
      "receipt": 272.67,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 272.67
     }
    ],
@@ -559,9 +559,9 @@
     "gallons": 588.189,
     "cpg": 5.273,
     "receipt": 3101.36,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3101.36
    },
    "expenses": [
@@ -632,7 +632,7 @@
      "invoice": "",
      "reimb": "",
      "comp": "Y",
-     "amount": 50.0,
+     "amount": 50,
      "raw": "2026-07-31   SOAKERZ       3184MLD TOLL BLVD                      Reefer Trailer-Washout Expense             Drv         Y             50.00"
     },
     {
@@ -702,13 +702,13 @@
      "invoice": "",
      "reimb": "",
      "comp": "Y",
-     "amount": 100.0,
+     "amount": 100,
      "raw": "2026-08-03   CONTINENTAL   23852MINES ROAD      559545            Warehouse-Lumper Fee Expense               Drv         Y            100.00"
     }
    ],
    "expenses_total": 531.73,
    "revenue": {
-    "invoiced": 6139.0,
+    "invoiced": 6139,
     "driver_salary": -1399.2,
     "fuel": -3101.36,
     "company_expenses": -531.73,
@@ -734,9 +734,9 @@
      "customer": "Unlimited Logistics",
      "item": "Line Haul",
      "description": "Line Haul",
-     "miles": 1535.0,
+     "miles": 1535,
      "rate": 1.263,
-     "amount": 1939.0
+     "amount": 1939
     },
     {
      "load": "13491",
@@ -745,7 +745,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 5500.0
+     "amount": 5500
     }
    ],
    "driver_payment": [
@@ -761,14 +761,14 @@
      "driver": "Ruben Pedro Perez Garcia",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13491",
      "driver": "Ruben Pedro Perez Garcia",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13484",
@@ -789,14 +789,14 @@
      "driver": "Ruben Pedro Perez Garcia",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13484",
      "driver": "Ruben Pedro Perez Garcia",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1359.28,
@@ -810,9 +810,9 @@
      "gallons": 57.726,
      "cpg": 5.199,
      "receipt": 300.12,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 300.12
     },
     {
@@ -824,9 +824,9 @@
      "gallons": 28.867,
      "cpg": 5.199,
      "receipt": 150.08,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 150.08
     },
     {
@@ -838,9 +838,9 @@
      "gallons": 87.678,
      "cpg": 5.199,
      "receipt": 455.84,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 455.84
     },
     {
@@ -852,9 +852,9 @@
      "gallons": 82.999,
      "cpg": 5.079,
      "receipt": 421.55,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 421.55
     },
     {
@@ -866,9 +866,9 @@
      "gallons": 180.045,
      "cpg": 5.349,
      "receipt": 963.06,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 963.06
     },
     {
@@ -880,9 +880,9 @@
      "gallons": 121.001,
      "cpg": 5.389,
      "receipt": 652.07,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 652.07
     },
     {
@@ -894,9 +894,9 @@
      "gallons": 128.006,
      "cpg": 5.289,
      "receipt": 677.02,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 677.02
     },
     {
@@ -905,12 +905,12 @@
      "vendor": "LOVES",
      "location": "3201 12TH N.W",
      "invoice": "99700596",
-     "gallons": 118.0,
+     "gallons": 118,
      "cpg": 5.089,
      "receipt": 600.5,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 600.5
     }
    ],
@@ -918,9 +918,9 @@
     "gallons": 804.322,
     "cpg": 5.247,
     "receipt": 4220.24,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 4220.24
    },
    "expenses": [
@@ -987,7 +987,7 @@
    ],
    "expenses_total": 189.41,
    "revenue": {
-    "invoiced": 7439.0,
+    "invoiced": 7439,
     "driver_salary": -1359.28,
     "fuel": -4220.24,
     "company_expenses": -189.41,
@@ -1015,7 +1015,7 @@
      "description": "Line Haul",
      "miles": 1385.7,
      "rate": 2.454,
-     "amount": 3400.0
+     "amount": 3400
     },
     {
      "load": "13488",
@@ -1024,7 +1024,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 4200.0
+     "amount": 4200
     }
    ],
    "driver_payment": [
@@ -1040,14 +1040,14 @@
      "driver": "JOSE MIGUEL DE SANTIAGO PALACIOS",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13488",
      "driver": "JOSE MIGUEL DE SANTIAGO PALACIOS",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13486",
@@ -1068,14 +1068,14 @@
      "driver": "JOSE MIGUEL DE SANTIAGO PALACIOS",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13486",
      "driver": "JOSE MIGUEL DE SANTIAGO PALACIOS",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1202.59,
@@ -1089,9 +1089,9 @@
      "gallons": 196.176,
      "cpg": 5.199,
      "receipt": 1019.92,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1019.92
     },
     {
@@ -1103,9 +1103,9 @@
      "gallons": 142.679,
      "cpg": 5.289,
      "receipt": 754.63,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 754.63
     },
     {
@@ -1117,9 +1117,9 @@
      "gallons": 133.559,
      "cpg": 5.299,
      "receipt": 707.73,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 707.73
     }
    ],
@@ -1127,9 +1127,9 @@
     "gallons": 472.414,
     "cpg": 5.254,
     "receipt": 2482.28,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 2482.28
    },
    "expenses": [
@@ -1166,7 +1166,7 @@
    ],
    "expenses_total": 344.49,
    "revenue": {
-    "invoiced": 7600.0,
+    "invoiced": 7600,
     "driver_salary": -1202.59,
     "fuel": -2482.28,
     "company_expenses": -344.49,
@@ -1194,7 +1194,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 4900.0
+     "amount": 4900
     },
     {
      "load": "13493",
@@ -1203,7 +1203,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 4000.0
+     "amount": 4000
     }
    ],
    "driver_payment": [
@@ -1219,14 +1219,14 @@
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13487",
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13493",
@@ -1247,14 +1247,14 @@
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13493",
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1929.3,
@@ -1268,9 +1268,9 @@
      "gallons": 164.828,
      "cpg": 5.199,
      "receipt": 856.94,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 856.94
     },
     {
@@ -1282,9 +1282,9 @@
      "gallons": 100.033,
      "cpg": 5.289,
      "receipt": 529.07,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 529.07
     },
     {
@@ -1296,9 +1296,9 @@
      "gallons": 106.031,
      "cpg": 5.719,
      "receipt": 606.39,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 606.39
     },
     {
@@ -1307,12 +1307,12 @@
      "vendor": "LOVES",
      "location": "10465LONESME PINE",
      "invoice": "99438151",
-     "gallons": 198.0,
+     "gallons": 198,
      "cpg": 5.689,
      "receipt": 1126.42,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1126.42
     },
     {
@@ -1324,9 +1324,9 @@
      "gallons": 123.512,
      "cpg": 5.349,
      "receipt": 660.67,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 660.67
     }
    ],
@@ -1334,9 +1334,9 @@
     "gallons": 692.404,
     "cpg": 5.459,
     "receipt": 3779.49,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3779.49
    },
    "expenses": [
@@ -1373,7 +1373,7 @@
    ],
    "expenses_total": 128.98,
    "revenue": {
-    "invoiced": 8900.0,
+    "invoiced": 8900,
     "driver_salary": -1929.3,
     "fuel": -3779.49,
     "company_expenses": -128.98,
@@ -1401,7 +1401,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 4000.0
+     "amount": 4000
     },
     {
      "load": "13499",
@@ -1410,7 +1410,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 4900.0
+     "amount": 4900
     }
    ],
    "driver_payment": [
@@ -1433,14 +1433,14 @@
      "driver": "Neftali Coronado Urbano",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13492",
      "driver": "Neftali Coronado Urbano",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13499",
@@ -1454,14 +1454,14 @@
      "driver": "Neftali Coronado Urbano",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13499",
      "driver": "Neftali Coronado Urbano",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1929.3,
@@ -1475,9 +1475,9 @@
      "gallons": 115.027,
      "cpg": 5.349,
      "receipt": 615.28,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 615.28
     },
     {
@@ -1486,12 +1486,12 @@
      "vendor": "LOVES",
      "location": "10465LONESOME PINE",
      "invoice": "99438150",
-     "gallons": 198.0,
+     "gallons": 198,
      "cpg": 5.689,
      "receipt": 1126.42,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1126.42
     },
     {
@@ -1503,9 +1503,9 @@
      "gallons": 127.912,
      "cpg": 5.199,
      "receipt": 665.01,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 665.01
     },
     {
@@ -1517,9 +1517,9 @@
      "gallons": 93.349,
      "cpg": 5.719,
      "receipt": 533.86,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 533.86
     },
     {
@@ -1531,9 +1531,9 @@
      "gallons": 15.999,
      "cpg": 5.719,
      "receipt": 91.5,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 91.5
     }
    ],
@@ -1541,9 +1541,9 @@
     "gallons": 550.287,
     "cpg": 5.51,
     "receipt": 3032.07,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3032.07
    },
    "expenses": [
@@ -1580,7 +1580,7 @@
    ],
    "expenses_total": 95.59,
    "revenue": {
-    "invoiced": 8900.0,
+    "invoiced": 8900,
     "driver_salary": -1929.3,
     "fuel": -3032.07,
     "company_expenses": -95.59,
@@ -1605,9 +1605,9 @@
      "customer": "PAYPA TRANSPORT",
      "item": "Line Haul",
      "description": "Line Haul",
-     "miles": 757.0,
+     "miles": 757,
      "rate": 1.982,
-     "amount": 1500.0
+     "amount": 1500
     }
    ],
    "driver_payment": [
@@ -1616,10 +1616,10 @@
      "driver": "Rafael Rogelio Rivero Reynoso",
      "item": "*Flat Rate",
      "detail": "",
-     "amount": 300.0
+     "amount": 300
     }
    ],
-   "driver_payment_total": 300.0,
+   "driver_payment_total": 300,
    "fuel_purchases": [
     {
      "load": "13501",
@@ -1630,9 +1630,9 @@
      "gallons": 74.845,
      "cpg": 5.349,
      "receipt": 400.35,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 400.35
     },
     {
@@ -1644,9 +1644,9 @@
      "gallons": 47.403,
      "cpg": 5.489,
      "receipt": 260.2,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 260.2
     }
    ],
@@ -1654,9 +1654,9 @@
     "gallons": 122.248,
     "cpg": 5.403,
     "receipt": 660.55,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 660.55
    },
    "expenses": [
@@ -1687,18 +1687,18 @@
      "invoice": "",
      "reimb": "",
      "comp": "",
-     "amount": 20.0,
+     "amount": 20,
      "raw": "2026-08-03   LOVES                  135HWY 44           1771088             Driver Reimbursement-Fuel-Def                         Drv                 Y            20.00"
     }
    ],
    "expenses_total": 105.67,
    "revenue": {
-    "invoiced": 1500.0,
-    "driver_salary": -300.0,
+    "invoiced": 1500,
+    "driver_salary": -300,
     "fuel": -660.55,
     "company_expenses": -105.67,
     "net_revenue": 433.78,
-    "miles": 757.0,
+    "miles": 757,
     "mpg": 6.192
    }
   },
@@ -1721,7 +1721,7 @@
      "description": "Line Haul",
      "miles": 1467.9,
      "rate": 2.793,
-     "amount": 4100.0
+     "amount": 4100
     },
     {
      "load": "13496",
@@ -1730,7 +1730,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3000.0
+     "amount": 3000
     }
    ],
    "driver_payment": [
@@ -1746,14 +1746,14 @@
      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13495",
      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13496",
@@ -1774,14 +1774,14 @@
      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13496",
      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1307.2,
@@ -1795,9 +1795,9 @@
      "gallons": 180.065,
      "cpg": 5.389,
      "receipt": 970.37,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 970.37
     },
     {
@@ -1809,9 +1809,9 @@
      "gallons": 98.092,
      "cpg": 5.349,
      "receipt": 524.69,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 524.69
     },
     {
@@ -1823,9 +1823,9 @@
      "gallons": 76.143,
      "cpg": 5.389,
      "receipt": 410.33,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 410.33
     },
     {
@@ -1837,9 +1837,9 @@
      "gallons": 52.617,
      "cpg": 5.289,
      "receipt": 278.29,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 278.29
     },
     {
@@ -1850,20 +1850,20 @@
      "invoice": "99113999",
      "gallons": 94.431,
      "cpg": 5.189,
-     "receipt": 490.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 490.0
+     "receipt": 490,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 490
     }
    ],
    "fuel_totals": {
     "gallons": 501.348,
     "cpg": 5.333,
     "receipt": 2673.68,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 2673.68
    },
    "expenses": [
@@ -1940,7 +1940,7 @@
    ],
    "expenses_total": 147.02,
    "revenue": {
-    "invoiced": 7100.0,
+    "invoiced": 7100,
     "driver_salary": -1307.2,
     "fuel": -2673.68,
     "company_expenses": -147.02,
@@ -1968,7 +1968,7 @@
      "description": "Line Haul",
      "miles": 1261.1,
      "rate": 3.013,
-     "amount": 3800.0
+     "amount": 3800
     },
     {
      "load": "13500",
@@ -1977,7 +1977,7 @@
      "description": "Line Haul",
      "miles": 1549.1,
      "rate": 2.259,
-     "amount": 3500.0
+     "amount": 3500
     }
    ],
    "driver_payment": [
@@ -1993,14 +1993,14 @@
      "driver": "HUGO GAYTAN SARABIA",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13494",
      "driver": "HUGO GAYTAN SARABIA",
      "item": "2 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13500",
@@ -2021,14 +2021,14 @@
      "driver": "HUGO GAYTAN SARABIA",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13500",
      "driver": "HUGO GAYTAN SARABIA",
      "item": "2 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1228.1,
@@ -2041,11 +2041,11 @@
      "invoice": "99384848",
      "gallons": 113.106,
      "cpg": 5.349,
-     "receipt": 605.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 605.0
+     "receipt": 605,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 605
     },
     {
      "load": "13494",
@@ -2056,9 +2056,9 @@
      "gallons": 55.53,
      "cpg": 5.389,
      "receipt": 299.25,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 299.25
     },
     {
@@ -2070,9 +2070,9 @@
      "gallons": 165.39,
      "cpg": 5.549,
      "receipt": 917.75,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 917.75
     },
     {
@@ -2084,9 +2084,9 @@
      "gallons": 50.243,
      "cpg": 5.489,
      "receipt": 275.78,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 275.78
     },
     {
@@ -2098,9 +2098,9 @@
      "gallons": 169.958,
      "cpg": 5.129,
      "receipt": 871.71,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 871.71
     }
    ],
@@ -2108,9 +2108,9 @@
     "gallons": 554.227,
     "cpg": 5.358,
     "receipt": 2969.49,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 2969.49
    },
    "expenses": [
@@ -2167,7 +2167,7 @@
    ],
    "expenses_total": 111.42,
    "revenue": {
-    "invoiced": 7300.0,
+    "invoiced": 7300,
     "driver_salary": -1228.1,
     "fuel": -2969.49,
     "company_expenses": -111.42,
@@ -2195,16 +2195,16 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3800.0
+     "amount": 3800
     },
     {
      "load": "13508",
-     "customer": "NCC Logistics M\u00e9xico",
+     "customer": "NCC Logistics México",
      "item": "Line Haul",
      "description": "Line Haul",
-     "miles": 1353.0,
+     "miles": 1353,
      "rate": 1.848,
-     "amount": 2500.0
+     "amount": 2500
     }
    ],
    "driver_payment": [
@@ -2220,14 +2220,14 @@
      "driver": "Angel Alfonso Sosa Perez",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13498",
      "driver": "Angel Alfonso Sosa Perez",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13508",
@@ -2248,14 +2248,14 @@
      "driver": "Angel Alfonso Sosa Perez",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13508",
      "driver": "Angel Alfonso Sosa Perez",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1155.52,
@@ -2269,9 +2269,9 @@
      "gallons": 93.463,
      "cpg": 5.389,
      "receipt": 503.67,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 503.67
     },
     {
@@ -2283,9 +2283,9 @@
      "gallons": 144.802,
      "cpg": 5.349,
      "receipt": 774.55,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 774.55
     }
    ],
@@ -2293,9 +2293,9 @@
     "gallons": 238.265,
     "cpg": 5.365,
     "receipt": 1278.22,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 1278.22
    },
    "expenses": [
@@ -2312,7 +2312,7 @@
    ],
    "expenses_total": 67.84,
    "revenue": {
-    "invoiced": 6300.0,
+    "invoiced": 6300,
     "driver_salary": -1155.52,
     "fuel": -1278.22,
     "company_expenses": -67.84,
@@ -2340,7 +2340,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 4900.0
+     "amount": 4900
     },
     {
      "load": "13509",
@@ -2349,7 +2349,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 4400.0
+     "amount": 4400
     }
    ],
    "driver_payment": [
@@ -2365,14 +2365,14 @@
      "driver": "Neftali Coronado Urbano",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13503",
      "driver": "Neftali Coronado Urbano",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13509",
@@ -2393,14 +2393,14 @@
      "driver": "Neftali Coronado Urbano",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13509",
      "driver": "Neftali Coronado Urbano",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1907.5,
@@ -2414,9 +2414,9 @@
      "gallons": 152.547,
      "cpg": 5.589,
      "receipt": 852.59,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 852.59
     },
     {
@@ -2428,9 +2428,9 @@
      "gallons": 45.999,
      "cpg": 5.389,
      "receipt": 247.89,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 247.89
     },
     {
@@ -2442,9 +2442,9 @@
      "gallons": 120.17,
      "cpg": 5.579,
      "receipt": 670.43,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 670.43
     },
     {
@@ -2456,9 +2456,9 @@
      "gallons": 189.237,
      "cpg": 5.549,
      "receipt": 1050.08,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1050.08
     },
     {
@@ -2470,9 +2470,9 @@
      "gallons": 74.914,
      "cpg": 5.349,
      "receipt": 400.71,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 400.71
     }
    ],
@@ -2480,9 +2480,9 @@
     "gallons": 582.867,
     "cpg": 5.527,
     "receipt": 3221.7,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3221.7
    },
    "expenses": [
@@ -2519,7 +2519,7 @@
    ],
    "expenses_total": 105.05,
    "revenue": {
-    "invoiced": 9300.0,
+    "invoiced": 9300,
     "driver_salary": -1907.5,
     "fuel": -3221.7,
     "company_expenses": -105.05,
@@ -2547,7 +2547,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 4900.0
+     "amount": 4900
     },
     {
      "load": "13510",
@@ -2556,7 +2556,7 @@
      "description": "Line Haul",
      "miles": 1984.3,
      "rate": 1.512,
-     "amount": 3000.0
+     "amount": 3000
     }
    ],
    "driver_payment": [
@@ -2572,14 +2572,14 @@
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13504",
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13510",
@@ -2600,14 +2600,14 @@
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13510",
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1909.1,
@@ -2621,9 +2621,9 @@
      "gallons": 133.63,
      "cpg": 5.149,
      "receipt": 688.06,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 688.06
     },
     {
@@ -2635,9 +2635,9 @@
      "gallons": 183.804,
      "cpg": 5.579,
      "receipt": 1025.44,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1025.44
     },
     {
@@ -2649,9 +2649,9 @@
      "gallons": 190.632,
      "cpg": 5.549,
      "receipt": 1057.82,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1057.82
     },
     {
@@ -2663,9 +2663,9 @@
      "gallons": 76.561,
      "cpg": 5.229,
      "receipt": 400.34,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 400.34
     }
    ],
@@ -2673,9 +2673,9 @@
     "gallons": 584.627,
     "cpg": 5.425,
     "receipt": 3171.66,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3171.66
    },
    "expenses": [
@@ -2722,7 +2722,7 @@
    ],
    "expenses_total": 152.34,
    "revenue": {
-    "invoiced": 7900.0,
+    "invoiced": 7900,
     "driver_salary": -1909.1,
     "fuel": -3171.66,
     "company_expenses": -152.34,
@@ -2752,7 +2752,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3800.0
+     "amount": 3800
     },
     {
      "load": "13507",
@@ -2761,7 +2761,7 @@
      "description": "Line Haul",
      "miles": 535.4,
      "rate": 2.241,
-     "amount": 1200.0
+     "amount": 1200
     },
     {
      "load": "13512",
@@ -2770,7 +2770,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 1700.0
+     "amount": 1700
     },
     {
      "load": "13513",
@@ -2779,7 +2779,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 525.0
+     "amount": 525
     }
    ],
    "driver_payment": [
@@ -2795,14 +2795,14 @@
      "driver": "PEDRO ABRAHAM LOPEZ COLLADO",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13502",
      "driver": "PEDRO ABRAHAM LOPEZ COLLADO",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13507",
@@ -2823,14 +2823,14 @@
      "driver": "PEDRO ABRAHAM LOPEZ COLLADO",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13507",
      "driver": "PEDRO ABRAHAM LOPEZ COLLADO",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13512",
@@ -2851,14 +2851,14 @@
      "driver": "PEDRO ABRAHAM LOPEZ COLLADO",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13512",
      "driver": "PEDRO ABRAHAM LOPEZ COLLADO",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13513",
@@ -2879,14 +2879,14 @@
      "driver": "PEDRO ABRAHAM LOPEZ COLLADO",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13513",
      "driver": "PEDRO ABRAHAM LOPEZ COLLADO",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1381.83,
@@ -2899,11 +2899,11 @@
      "invoice": "1909308",
      "gallons": 185.563,
      "cpg": 5.389,
-     "receipt": 1000.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 1000.0
+     "receipt": 1000,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 1000
     },
     {
      "load": "13502",
@@ -2914,9 +2914,9 @@
      "gallons": 26.042,
      "cpg": 5.349,
      "receipt": 139.3,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 139.3
     },
     {
@@ -2927,11 +2927,11 @@
      "invoice": null,
      "gallons": 110.301,
      "cpg": 5.349,
-     "receipt": 590.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 590.0
+     "receipt": 590,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 590
     },
     {
      "load": "13507",
@@ -2942,9 +2942,9 @@
      "gallons": 88.322,
      "cpg": 5.089,
      "receipt": 449.47,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 449.47
     },
     {
@@ -2953,12 +2953,12 @@
      "vendor": "FLYING",
      "location": "102FORM DRIVE",
      "invoice": "99975493",
-     "gallons": 199.0,
+     "gallons": 199,
      "cpg": 5.359,
      "receipt": 1066.44,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1066.44
     },
     {
@@ -2970,9 +2970,9 @@
      "gallons": 141.218,
      "cpg": 5.199,
      "receipt": 734.19,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 734.19
     }
    ],
@@ -2980,9 +2980,9 @@
     "gallons": 750.446,
     "cpg": 5.303,
     "receipt": 3979.4,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3979.4
    },
    "expenses": [
@@ -3029,7 +3029,7 @@
    ],
    "expenses_total": 189.66,
    "revenue": {
-    "invoiced": 7225.0,
+    "invoiced": 7225,
     "driver_salary": -1381.83,
     "fuel": -3979.4,
     "company_expenses": -189.66,
@@ -3057,7 +3057,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 7200.0
+     "amount": 7200
     },
     {
      "load": "13511",
@@ -3066,7 +3066,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3600.0
+     "amount": 3600
     }
    ],
    "driver_payment": [
@@ -3082,14 +3082,14 @@
      "driver": "Concepcion Cordova Dominguez",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13497",
      "driver": "Concepcion Cordova Dominguez",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13511",
@@ -3110,14 +3110,14 @@
      "driver": "Concepcion Cordova Dominguez",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13511",
      "driver": "Concepcion Cordova Dominguez",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1897.52,
@@ -3131,9 +3131,9 @@
      "gallons": 61.788,
      "cpg": 5.289,
      "receipt": 326.8,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 326.8
     },
     {
@@ -3145,9 +3145,9 @@
      "gallons": 144.518,
      "cpg": 5.289,
      "receipt": 764.36,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 764.36
     },
     {
@@ -3159,9 +3159,9 @@
      "gallons": 188.605,
      "cpg": 5.799,
      "receipt": 1093.72,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1093.72
     },
     {
@@ -3173,9 +3173,9 @@
      "gallons": 151.316,
      "cpg": 5.149,
      "receipt": 779.13,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 779.13
     },
     {
@@ -3187,9 +3187,9 @@
      "gallons": 159.168,
      "cpg": 5.289,
      "receipt": 841.84,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 841.84
     }
    ],
@@ -3197,9 +3197,9 @@
     "gallons": 705.395,
     "cpg": 5.395,
     "receipt": 3805.85,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3805.85
    },
    "expenses": [
@@ -3256,12 +3256,12 @@
    ],
    "expenses_total": 196.94,
    "revenue": {
-    "invoiced": 10800.0,
+    "invoiced": 10800,
     "driver_salary": -1897.52,
     "fuel": -3805.85,
     "company_expenses": -196.94,
     "net_revenue": 4683.69,
-    "miles": 4304.0,
+    "miles": 4304,
     "mpg": 6.102
    }
   },
@@ -3284,7 +3284,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3800.0
+     "amount": 3800
     },
     {
      "load": "13518",
@@ -3293,7 +3293,7 @@
      "description": "Line Haul",
      "miles": 1396.4,
      "rate": 2.865,
-     "amount": 4000.0
+     "amount": 4000
     }
    ],
    "driver_payment": [
@@ -3309,14 +3309,14 @@
      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13517",
      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13518",
@@ -3337,14 +3337,14 @@
      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13518",
      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1051.95,
@@ -3358,9 +3358,9 @@
      "gallons": 141.998,
      "cpg": 5.249,
      "receipt": 745.35,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 745.35
     },
     {
@@ -3372,9 +3372,9 @@
      "gallons": 150.039,
      "cpg": 5.409,
      "receipt": 811.56,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 811.56
     },
     {
@@ -3386,9 +3386,9 @@
      "gallons": 180.01,
      "cpg": 5.349,
      "receipt": 962.87,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 962.87
     }
    ],
@@ -3396,9 +3396,9 @@
     "gallons": 472.047,
     "cpg": 5.338,
     "receipt": 2519.78,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 2519.78
    },
    "expenses": [
@@ -3449,7 +3449,7 @@
      "invoice": "",
      "reimb": "",
      "comp": "",
-     "amount": 70.0,
+     "amount": 70,
      "raw": "2026-08-12   THORNTON                120LUYBEN HILLS     01011813             Fuel-Reefer Diesel                                  Drv                 Y            70.00"
     },
     {
@@ -3465,7 +3465,7 @@
    ],
    "expenses_total": 1256.36,
    "revenue": {
-    "invoiced": 7800.0,
+    "invoiced": 7800,
     "driver_salary": -1051.95,
     "fuel": -2519.78,
     "company_expenses": -1256.36,
@@ -3494,7 +3494,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3900.0
+     "amount": 3900
     },
     {
      "load": "13514",
@@ -3503,7 +3503,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 2700.0
+     "amount": 2700
     },
     {
      "load": "13516",
@@ -3512,7 +3512,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 700.0
+     "amount": 700
     }
    ],
    "driver_payment": [
@@ -3528,14 +3528,14 @@
      "driver": "ALFONSO HIDALGO CHAVEZ",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13506",
      "driver": "ALFONSO HIDALGO CHAVEZ",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13514",
@@ -3556,14 +3556,14 @@
      "driver": "ALFONSO HIDALGO CHAVEZ",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13514",
      "driver": "ALFONSO HIDALGO CHAVEZ",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13516",
@@ -3584,14 +3584,14 @@
      "driver": "ALFONSO HIDALGO CHAVEZ",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13516",
      "driver": "ALFONSO HIDALGO CHAVEZ",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1304.15,
@@ -3605,9 +3605,9 @@
      "gallons": 65.984,
      "cpg": 5.349,
      "receipt": 352.95,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 352.95
     },
     {
@@ -3619,9 +3619,9 @@
      "gallons": 141.401,
      "cpg": 5.289,
      "receipt": 747.87,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 747.87
     },
     {
@@ -3633,9 +3633,9 @@
      "gallons": 140.039,
      "cpg": 5.349,
      "receipt": 749.07,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 749.07
     },
     {
@@ -3647,9 +3647,9 @@
      "gallons": 144.009,
      "cpg": 5.189,
      "receipt": 747.26,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 747.26
     },
     {
@@ -3661,9 +3661,9 @@
      "gallons": 60.026,
      "cpg": 5.499,
      "receipt": 330.08,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 330.08
     },
     {
@@ -3675,9 +3675,9 @@
      "gallons": 50.128,
      "cpg": 5.589,
      "receipt": 280.17,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 280.17
     }
    ],
@@ -3685,9 +3685,9 @@
     "gallons": 601.587,
     "cpg": 5.332,
     "receipt": 3207.4,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3207.4
    },
    "expenses": [
@@ -3774,7 +3774,7 @@
    ],
    "expenses_total": 182.69,
    "revenue": {
-    "invoiced": 7300.0,
+    "invoiced": 7300,
     "driver_salary": -1304.15,
     "fuel": -3207.4,
     "company_expenses": -182.69,
@@ -3803,7 +3803,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3900.0
+     "amount": 3900
     },
     {
      "load": "13515",
@@ -3812,7 +3812,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 525.0
+     "amount": 525
     },
     {
      "load": "13520",
@@ -3821,7 +3821,7 @@
      "description": "Line Haul",
      "miles": 929.7,
      "rate": 2.797,
-     "amount": 2600.0
+     "amount": 2600
     }
    ],
    "driver_payment": [
@@ -3837,14 +3837,14 @@
      "driver": "Leonel Antonio Morales",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13505",
      "driver": "Leonel Antonio Morales",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13515",
@@ -3865,14 +3865,14 @@
      "driver": "Leonel Antonio Morales",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13515",
      "driver": "Leonel Antonio Morales",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13520",
@@ -3893,14 +3893,14 @@
      "driver": "Leonel Antonio Morales",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13520",
      "driver": "Leonel Antonio Morales",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1203.89,
@@ -3914,9 +3914,9 @@
      "gallons": 50.006,
      "cpg": 5.349,
      "receipt": 267.48,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 267.48
     },
     {
@@ -3928,9 +3928,9 @@
      "gallons": 150.516,
      "cpg": 5.289,
      "receipt": 796.08,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 796.08
     },
     {
@@ -3942,9 +3942,9 @@
      "gallons": 32.006,
      "cpg": 5.289,
      "receipt": 169.28,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 169.28
     },
     {
@@ -3956,9 +3956,9 @@
      "gallons": 187.009,
      "cpg": 5.409,
      "receipt": 1011.53,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1011.53
     },
     {
@@ -3970,9 +3970,9 @@
      "gallons": 112.005,
      "cpg": 5.359,
      "receipt": 600.23,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 600.23
     },
     {
@@ -3984,9 +3984,9 @@
      "gallons": 152.335,
      "cpg": 5.449,
      "receipt": 830.07,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 830.07
     },
     {
@@ -3998,9 +3998,9 @@
      "gallons": 99.085,
      "cpg": 5.549,
      "receipt": 549.82,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 549.82
     }
    ],
@@ -4008,9 +4008,9 @@
     "gallons": 782.962,
     "cpg": 5.396,
     "receipt": 4224.49,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 4224.49
    },
    "expenses": [
@@ -4117,7 +4117,7 @@
    ],
    "expenses_total": 248.76,
    "revenue": {
-    "invoiced": 7025.0,
+    "invoiced": 7025,
     "driver_salary": -1203.89,
     "fuel": -4224.49,
     "company_expenses": -248.76,
@@ -4145,7 +4145,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 4900.0
+     "amount": 4900
     },
     {
      "load": "13521",
@@ -4154,7 +4154,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3500.0
+     "amount": 3500
     }
    ],
    "driver_payment": [
@@ -4170,14 +4170,14 @@
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13519",
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13521",
@@ -4198,17 +4198,17 @@
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13521",
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
-   "driver_payment_total": 1908.0,
+   "driver_payment_total": 1908,
    "fuel_purchases": [
     {
      "load": "13519",
@@ -4219,9 +4219,9 @@
      "gallons": 153.686,
      "cpg": 5.329,
      "receipt": 818.99,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 818.99
     },
     {
@@ -4233,9 +4233,9 @@
      "gallons": 179.306,
      "cpg": 5.689,
      "receipt": 1020.07,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1020.07
     },
     {
@@ -4247,9 +4247,9 @@
      "gallons": 180.199,
      "cpg": 5.719,
      "receipt": 1030.56,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1030.56
     },
     {
@@ -4261,9 +4261,9 @@
      "gallons": 90.111,
      "cpg": 5.549,
      "receipt": 500.03,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 500.03
     }
    ],
@@ -4271,9 +4271,9 @@
     "gallons": 603.302,
     "cpg": 5.585,
     "receipt": 3369.65,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3369.65
    },
    "expenses": [
@@ -4300,8 +4300,8 @@
    ],
    "expenses_total": 80.35,
    "revenue": {
-    "invoiced": 8400.0,
-    "driver_salary": -1908.0,
+    "invoiced": 8400,
+    "driver_salary": -1908,
     "fuel": -3369.65,
     "company_expenses": -80.35,
     "net_revenue": 2813.5,
@@ -4326,9 +4326,9 @@
      "customer": "MPH CARRIER SERVICES, INC",
      "item": "Line Haul",
      "description": "Line Haul",
-     "miles": 1927.0,
+     "miles": 1927,
      "rate": 2.18,
-     "amount": 4200.0
+     "amount": 3800
     }
    ],
    "driver_payment": [
@@ -4351,14 +4351,14 @@
      "driver": "HUGO GAYTAN SARABIA",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13524",
      "driver": "HUGO GAYTAN SARABIA",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13525",
@@ -4372,14 +4372,14 @@
      "driver": "HUGO GAYTAN SARABIA",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13525",
      "driver": "HUGO GAYTAN SARABIA",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1440.01,
@@ -4393,9 +4393,9 @@
      "gallons": 60.207,
      "cpg": 5.229,
      "receipt": 314.82,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 314.82
     },
     {
@@ -4404,12 +4404,12 @@
      "vendor": "LOVES",
      "location": "2005HWY 19NORTH",
      "invoice": "99491524",
-     "gallons": 198.0,
+     "gallons": 198,
      "cpg": 5.349,
      "receipt": 1059.1,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1059.1
     },
     {
@@ -4421,9 +4421,9 @@
      "gallons": 104.829,
      "cpg": 4.949,
      "receipt": 518.8,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 518.8
     },
     {
@@ -4435,9 +4435,9 @@
      "gallons": 129.699,
      "cpg": 5.389,
      "receipt": 698.95,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 698.95
     },
     {
@@ -4449,9 +4449,9 @@
      "gallons": 175.929,
      "cpg": 5.489,
      "receipt": 965.67,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 965.67
     }
    ],
@@ -4459,9 +4459,9 @@
     "gallons": 668.664,
     "cpg": 5.32,
     "receipt": 3557.34,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3557.34
    },
    "expenses": [
@@ -4482,7 +4482,7 @@
      "invoice": "",
      "reimb": "",
      "comp": "",
-     "amount": 18.0,
+     "amount": 18,
      "raw": "2026-08-14   TYSON                                                          Warehouse-Lumper Fee Expense                                           Y            18.00"
     },
     {
@@ -4528,7 +4528,7 @@
    ],
    "expenses_total": 133.81,
    "revenue": {
-    "invoiced": 4200.0,
+    "invoiced": 4200,
     "driver_salary": -1440.01,
     "fuel": -3557.34,
     "company_expenses": -133.81,
@@ -4556,7 +4556,7 @@
      "description": "Line Haul",
      "miles": 1643.2,
      "rate": 2.13,
-     "amount": 3500.0
+     "amount": 3500
     },
     {
      "load": "13527",
@@ -4565,7 +4565,7 @@
      "description": "Line Haul",
      "miles": 1602.9,
      "rate": 1.872,
-     "amount": 3000.0
+     "amount": 3000
     }
    ],
    "driver_payment": [
@@ -4588,14 +4588,14 @@
      "driver": "LUIS ARMANDO SOSA PEREZ",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13526",
      "driver": "LUIS ARMANDO SOSA PEREZ",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13527",
@@ -4609,14 +4609,14 @@
      "driver": "LUIS ARMANDO SOSA PEREZ",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13527",
      "driver": "LUIS ARMANDO SOSA PEREZ",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1420.66,
@@ -4630,9 +4630,9 @@
      "gallons": 134.954,
      "cpg": 5.649,
      "receipt": 762.36,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 762.36
     },
     {
@@ -4644,9 +4644,9 @@
      "gallons": 117.384,
      "cpg": 5.589,
      "receipt": 656.06,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 656.06
     },
     {
@@ -4658,9 +4658,9 @@
      "gallons": 50.319,
      "cpg": 5.489,
      "receipt": 276.2,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 276.2
     },
     {
@@ -4672,9 +4672,9 @@
      "gallons": 48.07,
      "cpg": 5.389,
      "receipt": 259.05,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 259.05
     },
     {
@@ -4686,9 +4686,9 @@
      "gallons": 145.078,
      "cpg": 5.489,
      "receipt": 796.33,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 796.33
     },
     {
@@ -4700,9 +4700,9 @@
      "gallons": 99.039,
      "cpg": 5.549,
      "receipt": 549.57,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 549.57
     }
    ],
@@ -4710,9 +4710,9 @@
     "gallons": 594.844,
     "cpg": 5.547,
     "receipt": 3299.57,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3299.57
    },
    "expenses": [
@@ -4769,7 +4769,7 @@
    ],
    "expenses_total": 142.76,
    "revenue": {
-    "invoiced": 6500.0,
+    "invoiced": 6500,
     "driver_salary": -1420.66,
     "fuel": -3299.57,
     "company_expenses": -142.76,
@@ -4797,7 +4797,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 1500.0
+     "amount": 1500
     },
     {
      "load": "13532",
@@ -4806,7 +4806,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 1000.0
+     "amount": 1000
     }
    ],
    "driver_payment": [
@@ -4815,17 +4815,17 @@
      "driver": "Rafael Rogelio Rivero Reynoso",
      "item": "*Flat Rate",
      "detail": "",
-     "amount": 150.0
+     "amount": 150
     },
     {
      "load": "13532",
      "driver": "Rafael Rogelio Rivero Reynoso",
      "item": "*Flat Rate",
      "detail": "",
-     "amount": 150.0
+     "amount": 150
     }
    ],
-   "driver_payment_total": 300.0,
+   "driver_payment_total": 300,
    "fuel_purchases": [
     {
      "load": "13530",
@@ -4836,9 +4836,9 @@
      "gallons": 153.16,
      "cpg": 5.509,
      "receipt": 843.76,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 843.76
     }
    ],
@@ -4846,9 +4846,9 @@
     "gallons": 153.16,
     "cpg": 5.509,
     "receipt": 843.76,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 843.76
    },
    "expenses": [
@@ -4869,7 +4869,7 @@
      "invoice": "",
      "reimb": "",
      "comp": "Y",
-     "amount": 52.0,
+     "amount": 52,
      "raw": "2026-08-19   TEN STAR TRUCKWASH 3922 11TH               397322164          Reefer Trailer-Washout Expense                                         Y            52.00"
     },
     {
@@ -4879,14 +4879,14 @@
      "invoice": "",
      "reimb": "",
      "comp": "Y",
-     "amount": 120.0,
+     "amount": 120,
      "raw": "2026-08-21   SR FORWARDING,INC                                             Warehouse-Lumper Fee Expense                                           Y           120.00"
     }
    ],
    "expenses_total": 220.71,
    "revenue": {
-    "invoiced": 2500.0,
-    "driver_salary": -300.0,
+    "invoiced": 2500,
+    "driver_salary": -300,
     "fuel": -843.76,
     "company_expenses": -220.71,
     "net_revenue": 1098.03,
@@ -4913,7 +4913,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3600.0
+     "amount": 3600
     },
     {
      "load": "13534",
@@ -4922,7 +4922,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3100.0
+     "amount": 3100
     }
    ],
    "driver_payment": [
@@ -4938,14 +4938,14 @@
      "driver": "Leonel Antonio Morales",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13523",
      "driver": "Leonel Antonio Morales",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13534",
@@ -4966,14 +4966,14 @@
      "driver": "Leonel Antonio Morales",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13534",
      "driver": "Leonel Antonio Morales",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1280.31,
@@ -4987,9 +4987,9 @@
      "gallons": 53.008,
      "cpg": 5.389,
      "receipt": 285.66,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 285.66
     },
     {
@@ -5001,9 +5001,9 @@
      "gallons": 79.004,
      "cpg": 5.689,
      "receipt": 449.45,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 449.45
     },
     {
@@ -5015,9 +5015,9 @@
      "gallons": 113.002,
      "cpg": 5.589,
      "receipt": 631.57,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 631.57
     },
     {
@@ -5029,9 +5029,9 @@
      "gallons": 130.041,
      "cpg": 5.589,
      "receipt": 726.8,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 726.8
     },
     {
@@ -5043,9 +5043,9 @@
      "gallons": 50.006,
      "cpg": 5.849,
      "receipt": 292.49,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 292.49
     }
    ],
@@ -5053,9 +5053,9 @@
     "gallons": 425.061,
     "cpg": 5.613,
     "receipt": 2385.97,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 2385.97
    },
    "expenses": [
@@ -5172,7 +5172,7 @@
    ],
    "expenses_total": 796.36,
    "revenue": {
-    "invoiced": 6700.0,
+    "invoiced": 6700,
     "driver_salary": -1280.31,
     "fuel": -2385.97,
     "company_expenses": -796.36,
@@ -5200,7 +5200,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 4900.0
+     "amount": 4900
     },
     {
      "load": "13537",
@@ -5209,7 +5209,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3300.0
+     "amount": 3300
     }
    ],
    "driver_payment": [
@@ -5225,14 +5225,14 @@
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13535",
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13537",
@@ -5253,14 +5253,14 @@
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13537",
      "driver": "Jorge Luis Infante Corona",
      "item": "2 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1906.25,
@@ -5274,9 +5274,9 @@
      "gallons": 146.818,
      "cpg": 5.449,
      "receipt": 800.01,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 800.01
     },
     {
@@ -5288,9 +5288,9 @@
      "gallons": 182.564,
      "cpg": 5.889,
      "receipt": 1075.12,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1075.12
     },
     {
@@ -5299,12 +5299,12 @@
      "vendor": "LOVES",
      "location": "10465LONESOME PINE",
      "invoice": "99456225",
-     "gallons": 198.0,
+     "gallons": 198,
      "cpg": 5.879,
      "receipt": 1164.04,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1164.04
     },
     {
@@ -5316,9 +5316,9 @@
      "gallons": 88.604,
      "cpg": 5.649,
      "receipt": 500.52,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 500.52
     }
    ],
@@ -5326,9 +5326,9 @@
     "gallons": 615.986,
     "cpg": 5.746,
     "receipt": 3539.69,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3539.69
    },
    "expenses": [
@@ -5365,7 +5365,7 @@
    ],
    "expenses_total": 121.7,
    "revenue": {
-    "invoiced": 8200.0,
+    "invoiced": 8200,
     "driver_salary": -1906.25,
     "fuel": -3539.69,
     "company_expenses": -121.7,
@@ -5394,16 +5394,16 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3500.0
+     "amount": 3500
     },
     {
      "load": "13528",
      "customer": "Sajacks Freight",
      "item": "Line Haul",
      "description": "Line Haul",
-     "miles": 713.0,
+     "miles": 713,
      "rate": 4.348,
-     "amount": 3100.0
+     "amount": 3100
     },
     {
      "load": "13536",
@@ -5412,7 +5412,7 @@
      "description": "Line Haul",
      "miles": 1911.8,
      "rate": 2.092,
-     "amount": 4000.0
+     "amount": 4000
     }
    ],
    "driver_payment": [
@@ -5428,14 +5428,14 @@
      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13522",
      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13528",
@@ -5456,14 +5456,14 @@
      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13528",
      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
      "item": "2 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13536",
@@ -5484,14 +5484,14 @@
      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13536",
      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1662.94,
@@ -5505,9 +5505,9 @@
      "gallons": 68.344,
      "cpg": 5.489,
      "receipt": 375.14,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 375.14
     },
     {
@@ -5519,9 +5519,9 @@
      "gallons": 165.199,
      "cpg": 5.389,
      "receipt": 890.26,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 890.26
     },
     {
@@ -5533,9 +5533,9 @@
      "gallons": 102.036,
      "cpg": 5.449,
      "receipt": 555.99,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 555.99
     },
     {
@@ -5547,9 +5547,9 @@
      "gallons": 143.381,
      "cpg": 5.289,
      "receipt": 758.34,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 758.34
     },
     {
@@ -5560,11 +5560,11 @@
      "invoice": "99415804",
      "gallons": 67.37,
      "cpg": 5.789,
-     "receipt": 390.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 390.0
+     "receipt": 390,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 390
     },
     {
      "load": "13528",
@@ -5575,9 +5575,9 @@
      "gallons": 127.621,
      "cpg": 6.249,
      "receipt": 797.5,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 797.5
     },
     {
@@ -5589,9 +5589,9 @@
      "gallons": 137.175,
      "cpg": 5.669,
      "receipt": 777.65,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 777.65
     },
     {
@@ -5603,9 +5603,9 @@
      "gallons": 174.439,
      "cpg": 5.749,
      "receipt": 1002.85,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1002.85
     }
    ],
@@ -5613,9 +5613,9 @@
     "gallons": 985.565,
     "cpg": 5.629,
     "receipt": 5547.73,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 5547.73
    },
    "expenses": [
@@ -5626,7 +5626,7 @@
      "invoice": "",
      "reimb": "",
      "comp": "Y",
-     "amount": 30.0,
+     "amount": 30,
      "raw": "2026-08-14   LOVES          101 PINNACLE ROAD         99984843           Fuel-DEF-Diesel Exhaust Fluid                                    Y             30.00"
     },
     {
@@ -5742,7 +5742,7 @@
    ],
    "expenses_total": 373.06,
    "revenue": {
-    "invoiced": 10600.0,
+    "invoiced": 10600,
     "driver_salary": -1662.94,
     "fuel": -5547.73,
     "company_expenses": -373.06,
@@ -5771,7 +5771,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 4300.0
+     "amount": 4300
     },
     {
      "load": "13538",
@@ -5780,7 +5780,7 @@
      "description": "Line Haul",
      "miles": 689.9,
      "rate": 1.16,
-     "amount": 800.0
+     "amount": 800
     },
     {
      "load": "13543",
@@ -5789,7 +5789,7 @@
      "description": "Line Haul",
      "miles": 1251.2,
      "rate": 1.998,
-     "amount": 2500.0
+     "amount": 2500
     }
    ],
    "driver_payment": [
@@ -5805,14 +5805,14 @@
      "driver": "Genaro Guerrero Chavez",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13531",
      "driver": "Genaro Guerrero Chavez",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13538",
@@ -5833,14 +5833,14 @@
      "driver": "Genaro Guerrero Chavez",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13538",
      "driver": "Genaro Guerrero Chavez",
      "item": "2 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13543",
@@ -5861,14 +5861,14 @@
      "driver": "Genaro Guerrero Chavez",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13543",
      "driver": "Genaro Guerrero Chavez",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1523.67,
@@ -5882,9 +5882,9 @@
      "gallons": 193.631,
      "cpg": 5.489,
      "receipt": 1062.84,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1062.84
     },
     {
@@ -5896,9 +5896,9 @@
      "gallons": 172.554,
      "cpg": 5.689,
      "receipt": 981.66,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 981.66
     },
     {
@@ -5910,9 +5910,9 @@
      "gallons": 155.015,
      "cpg": 5.359,
      "receipt": 830.73,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 830.73
     },
     {
@@ -5924,9 +5924,9 @@
      "gallons": 41.071,
      "cpg": 5.289,
      "receipt": 217.22,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 217.22
     },
     {
@@ -5938,9 +5938,9 @@
      "gallons": 105.489,
      "cpg": 5.549,
      "receipt": 585.36,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 585.36
     },
     {
@@ -5952,9 +5952,9 @@
      "gallons": 157.962,
      "cpg": 5.649,
      "receipt": 892.33,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 892.33
     }
    ],
@@ -5962,9 +5962,9 @@
     "gallons": 825.722,
     "cpg": 5.535,
     "receipt": 4570.14,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 4570.14
    },
    "expenses": [
@@ -5985,7 +5985,7 @@
      "invoice": "",
      "reimb": "",
      "comp": "Y",
-     "amount": 10.0,
+     "amount": 10,
      "raw": "2026-08-21                                                 Warehouse-Lumper Fee Expense COBRO POR    Drv         Y             10.00"
     },
     {
@@ -6031,12 +6031,12 @@
    ],
    "expenses_total": 145.6,
    "revenue": {
-    "invoiced": 7600.0,
+    "invoiced": 7600,
     "driver_salary": -1523.67,
     "fuel": -4570.14,
     "company_expenses": -145.6,
     "net_revenue": 1196.09,
-    "miles": 3470.0,
+    "miles": 3470,
     "mpg": 4.202
    }
   },
@@ -6059,7 +6059,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3450.0
+     "amount": 3450
     },
     {
      "load": "13548",
@@ -6068,7 +6068,7 @@
      "description": "Line Haul",
      "miles": 1272.3,
      "rate": 1.808,
-     "amount": 2300.0
+     "amount": 2300
     }
    ],
    "driver_payment": [
@@ -6084,14 +6084,14 @@
      "driver": "Concepcion Cordova Dominguez",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13533",
      "driver": "Concepcion Cordova Dominguez",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13548",
@@ -6112,14 +6112,14 @@
      "driver": "Concepcion Cordova Dominguez",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13548",
      "driver": "Concepcion Cordova Dominguez",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1039.05,
@@ -6133,9 +6133,9 @@
      "gallons": 92.018,
      "cpg": 5.549,
      "receipt": 510.61,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 510.61
     },
     {
@@ -6147,9 +6147,9 @@
      "gallons": 130.069,
      "cpg": 5.789,
      "receipt": 752.97,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 752.97
     },
     {
@@ -6161,9 +6161,9 @@
      "gallons": 113.21,
      "cpg": 5.689,
      "receipt": 644.05,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 644.05
     },
     {
@@ -6175,9 +6175,9 @@
      "gallons": 92.018,
      "cpg": 5.549,
      "receipt": 510.61,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 510.61
     }
    ],
@@ -6185,9 +6185,9 @@
     "gallons": 427.315,
     "cpg": 5.659,
     "receipt": 2418.24,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 2418.24
    },
    "expenses": [
@@ -6234,7 +6234,7 @@
    ],
    "expenses_total": 91.39,
    "revenue": {
-    "invoiced": 5750.0,
+    "invoiced": 5750,
     "driver_salary": -1039.05,
     "fuel": -2418.24,
     "company_expenses": -91.39,
@@ -6262,7 +6262,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 1000.0
+     "amount": 1000
     },
     {
      "load": "13555",
@@ -6271,7 +6271,7 @@
      "description": "Line Haul",
      "miles": 1008.9,
      "rate": 3.152,
-     "amount": 3180.0
+     "amount": 3180
     }
    ],
    "driver_payment": [
@@ -6294,14 +6294,14 @@
      "driver": "ALFONSO HIDALGO CHAVEZ",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13549",
      "driver": "ALFONSO HIDALGO CHAVEZ",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13555",
@@ -6315,14 +6315,14 @@
      "driver": "ALFONSO HIDALGO CHAVEZ",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13555",
      "driver": "ALFONSO HIDALGO CHAVEZ",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1000.72,
@@ -6336,9 +6336,9 @@
      "gallons": 127.239,
      "cpg": 5.789,
      "receipt": 736.59,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 736.59
     },
     {
@@ -6350,9 +6350,9 @@
      "gallons": 113.135,
      "cpg": 5.699,
      "receipt": 644.76,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 644.76
     },
     {
@@ -6361,12 +6361,12 @@
      "vendor": "LOVES",
      "location": "1001EL MORO RD",
      "invoice": "2244651",
-     "gallons": 109.0,
+     "gallons": 109,
      "cpg": 5.589,
      "receipt": 609.2,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 609.2
     }
    ],
@@ -6374,9 +6374,9 @@
     "gallons": 349.374,
     "cpg": 5.697,
     "receipt": 1990.55,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 1990.55
    },
    "expenses": [
@@ -6387,7 +6387,7 @@
      "invoice": "",
      "reimb": "",
      "comp": "",
-     "amount": 22.0,
+     "amount": 22,
      "raw": "2026-08-22   FLYING                   16751 EAST 32ND   5320194             Bridge & Toll Expenses:OTR-Parking Expense          Drv                 Y            22.00"
     },
     {
@@ -6453,7 +6453,7 @@
    ],
    "expenses_total": 140.2,
    "revenue": {
-    "invoiced": 4180.0,
+    "invoiced": 4180,
     "driver_salary": -1000.72,
     "fuel": -1990.55,
     "company_expenses": -140.2,
@@ -6482,7 +6482,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 4860.0
+     "amount": 4860
     },
     {
      "load": "13546",
@@ -6491,7 +6491,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 1100.0
+     "amount": 1100
     },
     {
      "load": "13552",
@@ -6500,7 +6500,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3000.0
+     "amount": 3000
     }
    ],
    "driver_payment": [
@@ -6516,14 +6516,14 @@
      "driver": "Angel Alfonso Sosa Perez",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13539",
      "driver": "Angel Alfonso Sosa Perez",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13546",
@@ -6544,14 +6544,14 @@
      "driver": "Angel Alfonso Sosa Perez",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13546",
      "driver": "Angel Alfonso Sosa Perez",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13552",
@@ -6572,14 +6572,14 @@
      "driver": "Angel Alfonso Sosa Perez",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13552",
      "driver": "Angel Alfonso Sosa Perez",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1725.89,
@@ -6593,9 +6593,9 @@
      "gallons": 197.907,
      "cpg": 5.589,
      "receipt": 1106.1,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1106.1
     },
     {
@@ -6604,12 +6604,12 @@
      "vendor": "LOVES",
      "location": "265 Opportunity Way,",
      "invoice": "2247170",
-     "gallons": 198.0,
+     "gallons": 198,
      "cpg": 5.189,
      "receipt": 1027.42,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1027.42
     },
     {
@@ -6621,9 +6621,9 @@
      "gallons": 90.75,
      "cpg": 5.549,
      "receipt": 503.57,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 503.57
     },
     {
@@ -6632,12 +6632,12 @@
      "vendor": "LOVES",
      "location": "200 S Kings Hwy, Fort",
      "invoice": "99579865",
-     "gallons": 48.0,
+     "gallons": 48,
      "cpg": 5.589,
      "receipt": 268.27,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 268.27
     },
     {
@@ -6649,9 +6649,9 @@
      "gallons": 115.24,
      "cpg": 5.42,
      "receipt": 624.6,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 624.6
     },
     {
@@ -6663,9 +6663,9 @@
      "gallons": 104.994,
      "cpg": 5.429,
      "receipt": 570.01,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 570.01
     },
     {
@@ -6677,9 +6677,9 @@
      "gallons": 78.988,
      "cpg": 5.429,
      "receipt": 428.83,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 428.83
     },
     {
@@ -6691,9 +6691,9 @@
      "gallons": 25.489,
      "cpg": 5.589,
      "receipt": 142.46,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 142.46
     }
    ],
@@ -6701,9 +6701,9 @@
     "gallons": 859.368,
     "cpg": 5.436,
     "receipt": 4671.26,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 4671.26
    },
    "expenses": [
@@ -6780,7 +6780,7 @@
    ],
    "expenses_total": 271.71,
    "revenue": {
-    "invoiced": 8960.0,
+    "invoiced": 8960,
     "driver_salary": -1725.89,
     "fuel": -4671.26,
     "company_expenses": -271.71,
@@ -6808,7 +6808,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 4900.0
+     "amount": 4900
     },
     {
      "load": "13557",
@@ -6817,7 +6817,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3900.0
+     "amount": 3900
     }
    ],
    "driver_payment": [
@@ -6833,14 +6833,14 @@
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13550",
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13557",
@@ -6861,14 +6861,14 @@
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13557",
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1925.85,
@@ -6882,9 +6882,9 @@
      "gallons": 41.036,
      "cpg": 5.489,
      "receipt": 225.25,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 225.25
     },
     {
@@ -6896,9 +6896,9 @@
      "gallons": 157.367,
      "cpg": 5.549,
      "receipt": 873.23,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 873.23
     },
     {
@@ -6910,9 +6910,9 @@
      "gallons": 148.502,
      "cpg": 5.759,
      "receipt": 855.22,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 855.22
     },
     {
@@ -6923,11 +6923,11 @@
      "invoice": "99462408",
      "gallons": 146.879,
      "cpg": 5.719,
-     "receipt": 840.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 840.0
+     "receipt": 840,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 840
     },
     {
      "load": "13557",
@@ -6938,9 +6938,9 @@
      "gallons": 179.923,
      "cpg": 5.589,
      "receipt": 1005.59,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1005.59
     }
    ],
@@ -6948,9 +6948,9 @@
     "gallons": 673.707,
     "cpg": 5.639,
     "receipt": 3799.29,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3799.29
    },
    "expenses": [
@@ -6987,7 +6987,7 @@
    ],
    "expenses_total": 156.42,
    "revenue": {
-    "invoiced": 8800.0,
+    "invoiced": 8800,
     "driver_salary": -1925.85,
     "fuel": -3799.29,
     "company_expenses": -156.42,
@@ -7015,7 +7015,7 @@
      "description": "Line Haul",
      "miles": 1536.4,
      "rate": 2.603,
-     "amount": 4000.0
+     "amount": 4000
     }
    ],
    "driver_payment": [
@@ -7031,14 +7031,14 @@
      "driver": "Leonel Antonio Morales",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13542",
      "driver": "Leonel Antonio Morales",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13554",
@@ -7059,14 +7059,14 @@
      "driver": "Leonel Antonio Morales",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13554",
      "driver": "Leonel Antonio Morales",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1512.75,
@@ -7080,9 +7080,9 @@
      "gallons": 100.558,
      "cpg": 5.749,
      "receipt": 578.11,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 578.11
     },
     {
@@ -7094,9 +7094,9 @@
      "gallons": 184.001,
      "cpg": 5.549,
      "receipt": 1021.02,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1021.02
     },
     {
@@ -7108,9 +7108,9 @@
      "gallons": 49.091,
      "cpg": 5.489,
      "receipt": 269.46,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 269.46
     },
     {
@@ -7122,9 +7122,9 @@
      "gallons": 70.071,
      "cpg": 5.169,
      "receipt": 362.2,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 362.2
     },
     {
@@ -7136,9 +7136,9 @@
      "gallons": 118.097,
      "cpg": 5.769,
      "receipt": 681.3,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 681.3
     },
     {
@@ -7150,9 +7150,9 @@
      "gallons": 161.216,
      "cpg": 5.549,
      "receipt": 894.59,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 894.59
     }
    ],
@@ -7160,9 +7160,9 @@
     "gallons": 683.034,
     "cpg": 5.573,
     "receipt": 3806.68,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3806.68
    },
    "expenses": [
@@ -7229,7 +7229,7 @@
    ],
    "expenses_total": 189.42,
    "revenue": {
-    "invoiced": 4000.0,
+    "invoiced": 4000,
     "driver_salary": -1512.75,
     "fuel": -3806.68,
     "company_expenses": -189.42,
@@ -7257,7 +7257,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 4800.0
+     "amount": 4800
     },
     {
      "load": "13560",
@@ -7266,7 +7266,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 4400.0
+     "amount": 4400
     }
    ],
    "driver_payment": [
@@ -7282,14 +7282,14 @@
      "driver": "HUGO GAYTAN SARABIA",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13545",
      "driver": "HUGO GAYTAN SARABIA",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13560",
@@ -7303,21 +7303,21 @@
      "driver": "HUGO GAYTAN SARABIA",
      "item": "Empty Miles",
      "detail": "411.1 @ $0.45",
-     "amount": 185.0
+     "amount": 185
     },
     {
      "load": "13560",
      "driver": "HUGO GAYTAN SARABIA",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13560",
      "driver": "HUGO GAYTAN SARABIA",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1690.03,
@@ -7331,9 +7331,9 @@
      "gallons": 96.953,
      "cpg": 5.549,
      "receipt": 537.99,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 537.99
     },
     {
@@ -7345,9 +7345,9 @@
      "gallons": 101.999,
      "cpg": 5.489,
      "receipt": 559.87,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 559.87
     },
     {
@@ -7359,9 +7359,9 @@
      "gallons": 160.235,
      "cpg": 5.749,
      "receipt": 921.19,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 921.19
     },
     {
@@ -7372,11 +7372,11 @@
      "invoice": "99418769",
      "gallons": 132.795,
      "cpg": 5.949,
-     "receipt": 790.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 790.0
+     "receipt": 790,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 790
     },
     {
      "load": "13560",
@@ -7387,9 +7387,9 @@
      "gallons": 184.509,
      "cpg": 5.589,
      "receipt": 1031.22,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1031.22
     }
    ],
@@ -7397,9 +7397,9 @@
     "gallons": 676.491,
     "cpg": 5.677,
     "receipt": 3840.27,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3840.27
    },
    "expenses": [
@@ -7436,7 +7436,7 @@
    ],
    "expenses_total": 111.48,
    "revenue": {
-    "invoiced": 9200.0,
+    "invoiced": 9200,
     "driver_salary": -1690.03,
     "fuel": -3840.27,
     "company_expenses": -111.48,
@@ -7465,7 +7465,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 4800.0
+     "amount": 4800
     },
     {
      "load": "13559",
@@ -7474,7 +7474,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3800.0
+     "amount": 3800
     },
     {
      "load": "13562",
@@ -7483,7 +7483,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 1000.0
+     "amount": 1000
     }
    ],
    "driver_payment": [
@@ -7499,14 +7499,14 @@
      "driver": "Genaro Guerrero Chavez",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13547",
      "driver": "Genaro Guerrero Chavez",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13559",
@@ -7527,14 +7527,14 @@
      "driver": "Genaro Guerrero Chavez",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13559",
      "driver": "Genaro Guerrero Chavez",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13562",
@@ -7555,14 +7555,14 @@
      "driver": "Genaro Guerrero Chavez",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13562",
      "driver": "Genaro Guerrero Chavez",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1738.05,
@@ -7576,9 +7576,9 @@
      "gallons": 105.489,
      "cpg": 5.549,
      "receipt": 585.36,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 585.36
     },
     {
@@ -7590,9 +7590,9 @@
      "gallons": 181.244,
      "cpg": 5.589,
      "receipt": 1012.97,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1012.97
     },
     {
@@ -7604,9 +7604,9 @@
      "gallons": 109.65,
      "cpg": 6.049,
      "receipt": 663.27,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 663.27
     },
     {
@@ -7618,9 +7618,9 @@
      "gallons": 103.854,
      "cpg": 5.689,
      "receipt": 590.83,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 590.83
     },
     {
@@ -7632,9 +7632,9 @@
      "gallons": 171.3,
      "cpg": 5.489,
      "receipt": 940.27,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 940.27
     }
    ],
@@ -7642,9 +7642,9 @@
     "gallons": 671.537,
     "cpg": 5.648,
     "receipt": 3792.7,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3792.7
    },
    "expenses": [
@@ -7691,12 +7691,12 @@
    ],
    "expenses_total": 138.99,
    "revenue": {
-    "invoiced": 9600.0,
+    "invoiced": 9600,
     "driver_salary": -1738.05,
     "fuel": -3792.7,
     "company_expenses": -138.99,
     "net_revenue": 3642.26,
-    "miles": 3946.0,
+    "miles": 3946,
     "mpg": 5.876
    }
   },
@@ -7719,7 +7719,7 @@
      "description": "Line Haul",
      "miles": 1535.8,
      "rate": 2.605,
-     "amount": 4000.0
+     "amount": 4000
     },
     {
      "load": "13566",
@@ -7728,7 +7728,7 @@
      "description": "Line Haul",
      "miles": 1525.7,
      "rate": 0.721,
-     "amount": 1100.0
+     "amount": 1100
     }
    ],
    "driver_payment": [
@@ -7737,7 +7737,7 @@
      "driver": "Neftali Coronado Urbano",
      "item": "Loaded Miles",
      "detail": "1,086.0 @ $0.50",
-     "amount": 543.0
+     "amount": 543
     },
     {
      "load": "13566",
@@ -7751,14 +7751,14 @@
      "driver": "Neftali Coronado Urbano",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13566",
      "driver": "Neftali Coronado Urbano",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13565",
@@ -7772,14 +7772,14 @@
      "driver": "Neftali Coronado Urbano",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13565",
      "driver": "Neftali Coronado Urbano",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1486.65,
@@ -7793,9 +7793,9 @@
      "gallons": 111.08,
      "cpg": 5.489,
      "receipt": 609.72,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 609.72
     },
     {
@@ -7806,11 +7806,11 @@
      "invoice": "99143243",
      "gallons": 165.327,
      "cpg": 5.849,
-     "receipt": 967.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 967.0
+     "receipt": 967,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 967
     },
     {
      "load": "13566",
@@ -7820,11 +7820,11 @@
      "invoice": "99535609",
      "gallons": 83.779,
      "cpg": 5.789,
-     "receipt": 485.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 485.0
+     "receipt": 485,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 485
     },
     {
      "load": "13565",
@@ -7832,12 +7832,12 @@
      "vendor": "LOVES",
      "location": "101 PINNACLE ROAD",
      "invoice": "1922974",
-     "gallons": 50.0,
+     "gallons": 50,
      "cpg": 5.589,
      "receipt": 279.45,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 279.45
     },
     {
@@ -7849,9 +7849,9 @@
      "gallons": 172.491,
      "cpg": 5.549,
      "receipt": 957.15,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 957.15
     },
     {
@@ -7863,9 +7863,9 @@
      "gallons": 126.529,
      "cpg": 5.089,
      "receipt": 643.91,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 643.91
     }
    ],
@@ -7873,9 +7873,9 @@
     "gallons": 709.206,
     "cpg": 5.559,
     "receipt": 3942.23,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3942.23
    },
    "expenses": [
@@ -7952,7 +7952,7 @@
    ],
    "expenses_total": 193.19,
    "revenue": {
-    "invoiced": 5100.0,
+    "invoiced": 5100,
     "driver_salary": -1486.65,
     "fuel": -3942.23,
     "company_expenses": -193.19,
@@ -7980,7 +7980,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3500.0
+     "amount": 3500
     },
     {
      "load": "13568",
@@ -7989,7 +7989,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 4000.0
+     "amount": 4000
     }
    ],
    "driver_payment": [
@@ -8005,14 +8005,14 @@
      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13558",
      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13568",
@@ -8033,14 +8033,14 @@
      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13568",
      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1288.84,
@@ -8054,9 +8054,9 @@
      "gallons": 157.147,
      "cpg": 5.549,
      "receipt": 872.01,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 872.01
     },
     {
@@ -8068,9 +8068,9 @@
      "gallons": 95.229,
      "cpg": 5.489,
      "receipt": 522.71,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 522.71
     },
     {
@@ -8082,9 +8082,9 @@
      "gallons": 60.15,
      "cpg": 5.789,
      "receipt": 348.21,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 348.21
     },
     {
@@ -8096,9 +8096,9 @@
      "gallons": 35.128,
      "cpg": 5.989,
      "receipt": 210.38,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 210.38
     },
     {
@@ -8110,9 +8110,9 @@
      "gallons": 162.644,
      "cpg": 5.889,
      "receipt": 957.81,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 957.81
     },
     {
@@ -8124,9 +8124,9 @@
      "gallons": 135.302,
      "cpg": 5.889,
      "receipt": 796.79,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 796.79
     }
    ],
@@ -8134,9 +8134,9 @@
     "gallons": 645.6,
     "cpg": 5.743,
     "receipt": 3707.91,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3707.91
    },
    "expenses": [
@@ -8263,7 +8263,7 @@
    ],
    "expenses_total": 336.88,
    "revenue": {
-    "invoiced": 7500.0,
+    "invoiced": 7500,
     "driver_salary": -1288.84,
     "fuel": -3707.91,
     "company_expenses": -336.88,
@@ -8291,7 +8291,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3450.0
+     "amount": 3450
     },
     {
      "load": "13567",
@@ -8300,7 +8300,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 2100.0
+     "amount": 2100
     }
    ],
    "driver_payment": [
@@ -8323,14 +8323,14 @@
      "driver": "LUIS ARMANDO SOSA PEREZ",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13567",
      "driver": "LUIS ARMANDO SOSA PEREZ",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13561",
@@ -8344,14 +8344,14 @@
      "driver": "LUIS ARMANDO SOSA PEREZ",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13561",
      "driver": "LUIS ARMANDO SOSA PEREZ",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1051.03,
@@ -8365,9 +8365,9 @@
      "gallons": 137.143,
      "cpg": 5.489,
      "receipt": 752.78,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 752.78
     },
     {
@@ -8379,9 +8379,9 @@
      "gallons": 158.828,
      "cpg": 5.849,
      "receipt": 928.98,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 928.98
     },
     {
@@ -8393,9 +8393,9 @@
      "gallons": 62.016,
      "cpg": 5.489,
      "receipt": 340.41,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 340.41
     },
     {
@@ -8407,9 +8407,9 @@
      "gallons": 119.333,
      "cpg": 5.549,
      "receipt": 662.18,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 662.18
     }
    ],
@@ -8417,9 +8417,9 @@
     "gallons": 477.32,
     "cpg": 5.624,
     "receipt": 2684.35,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 2684.35
    },
    "expenses": [
@@ -8456,7 +8456,7 @@
    ],
    "expenses_total": 699.57,
    "revenue": {
-    "invoiced": 5550.0,
+    "invoiced": 5550,
     "driver_salary": -1051.03,
     "fuel": -2684.35,
     "company_expenses": -699.57,
@@ -8483,7 +8483,7 @@
      "description": "Line Haul",
      "miles": 934.8,
      "rate": 2.674,
-     "amount": 2500.0
+     "amount": 2500
     }
    ],
    "driver_payment": [
@@ -8506,14 +8506,14 @@
      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13541",
      "driver": "JOSE ANTONIO VICENTE MARTINEZ",
      "item": "2 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 379.73,
@@ -8527,9 +8527,9 @@
      "gallons": 97.334,
      "cpg": 5.549,
      "receipt": 540.11,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 540.11
     },
     {
@@ -8541,9 +8541,9 @@
      "gallons": 48.629,
      "cpg": 5.489,
      "receipt": 266.92,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 266.92
     }
    ],
@@ -8551,9 +8551,9 @@
     "gallons": 145.963,
     "cpg": 5.529,
     "receipt": 807.03,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 807.03
    },
    "expenses": [
@@ -8590,7 +8590,7 @@
    ],
    "expenses_total": 45.05,
    "revenue": {
-    "invoiced": 2500.0,
+    "invoiced": 2500,
     "driver_salary": -379.73,
     "fuel": -807.03,
     "company_expenses": -45.05,
@@ -8618,7 +8618,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3000.0
+     "amount": 3000
     },
     {
      "load": "13577",
@@ -8627,7 +8627,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3500.0
+     "amount": 3500
     }
    ],
    "driver_payment": [
@@ -8650,14 +8650,14 @@
      "driver": "Fernando Mecor Hernandez",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13577",
      "driver": "Fernando Mecor Hernandez",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13569",
@@ -8671,14 +8671,14 @@
      "driver": "Fernando Mecor Hernandez",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13569",
      "driver": "Fernando Mecor Hernandez",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1416.85,
@@ -8692,9 +8692,9 @@
      "gallons": 141.676,
      "cpg": 5.789,
      "receipt": 820.16,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 820.16
     },
     {
@@ -8706,9 +8706,9 @@
      "gallons": 106.347,
      "cpg": 5.989,
      "receipt": 636.91,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 636.91
     },
     {
@@ -8720,9 +8720,9 @@
      "gallons": 53.107,
      "cpg": 5.749,
      "receipt": 305.31,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 305.31
     },
     {
@@ -8734,9 +8734,9 @@
      "gallons": 145.031,
      "cpg": 5.789,
      "receipt": 839.58,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 839.58
     },
     {
@@ -8748,9 +8748,9 @@
      "gallons": 121.323,
      "cpg": 5.849,
      "receipt": 709.62,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 709.62
     }
    ],
@@ -8758,9 +8758,9 @@
     "gallons": 567.484,
     "cpg": 5.836,
     "receipt": 3311.58,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3311.58
    },
    "expenses": [
@@ -8817,7 +8817,7 @@
    ],
    "expenses_total": 137.48,
    "revenue": {
-    "invoiced": 6500.0,
+    "invoiced": 6500,
     "driver_salary": -1416.85,
     "fuel": -3311.58,
     "company_expenses": -137.48,
@@ -8845,7 +8845,7 @@
      "description": "Line Haul",
      "miles": 1114.9,
      "rate": 2.87,
-     "amount": 3200.0
+     "amount": 3200
     },
     {
      "load": "13575",
@@ -8854,7 +8854,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 2200.0
+     "amount": 2200
     }
    ],
    "driver_payment": [
@@ -8870,14 +8870,14 @@
      "driver": "Genaro Guerrero Chavez",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13572",
      "driver": "Genaro Guerrero Chavez",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13575",
@@ -8898,14 +8898,14 @@
      "driver": "Genaro Guerrero Chavez",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13575",
      "driver": "Genaro Guerrero Chavez",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 987.85,
@@ -8919,9 +8919,9 @@
      "gallons": 115.541,
      "cpg": 5.789,
      "receipt": 668.87,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 668.87
     },
     {
@@ -8933,9 +8933,9 @@
      "gallons": 125.803,
      "cpg": 5.899,
      "receipt": 742.11,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 742.11
     },
     {
@@ -8946,11 +8946,11 @@
      "invoice": "99858171",
      "gallons": 64.05,
      "cpg": 6.089,
-     "receipt": 390.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 390.0
+     "receipt": 390,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 390
     },
     {
      "load": "13575",
@@ -8960,20 +8960,20 @@
      "invoice": "99995594",
      "gallons": 31.204,
      "cpg": 6.089,
-     "receipt": 190.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 190.0
+     "receipt": 190,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 190
     }
    ],
    "fuel_totals": {
     "gallons": 336.598,
     "cpg": 5.915,
     "receipt": 1990.98,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 1990.98
    },
    "expenses": [
@@ -9000,7 +9000,7 @@
    ],
    "expenses_total": 51.36,
    "revenue": {
-    "invoiced": 5400.0,
+    "invoiced": 5400,
     "driver_salary": -987.85,
     "fuel": -1990.98,
     "company_expenses": -51.36,
@@ -9028,7 +9028,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 4900.0
+     "amount": 4900
     },
     {
      "load": "13574",
@@ -9037,7 +9037,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 4400.0
+     "amount": 4400
     }
    ],
    "driver_payment": [
@@ -9053,14 +9053,14 @@
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13571",
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13574",
@@ -9081,14 +9081,14 @@
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13574",
      "driver": "Jorge Luis Infante Corona",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1902.65,
@@ -9102,9 +9102,9 @@
      "gallons": 179.923,
      "cpg": 5.589,
      "receipt": 1005.59,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 1005.59
     },
     {
@@ -9116,9 +9116,9 @@
      "gallons": 115.673,
      "cpg": 5.889,
      "receipt": 681.2,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 681.2
     },
     {
@@ -9130,9 +9130,9 @@
      "gallons": 80.006,
      "cpg": 5.849,
      "receipt": 467.96,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 467.96
     },
     {
@@ -9144,9 +9144,9 @@
      "gallons": 97.512,
      "cpg": 6.149,
      "receipt": 599.6,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 599.6
     },
     {
@@ -9157,11 +9157,11 @@
      "invoice": "99468434",
      "gallons": 104.422,
      "cpg": 6.129,
-     "receipt": 640.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 640.0
+     "receipt": 640,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 640
     },
     {
      "load": "13574",
@@ -9171,20 +9171,20 @@
      "invoice": "99036374",
      "gallons": 132.795,
      "cpg": 5.949,
-     "receipt": 790.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 790.0
+     "receipt": 790,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 790
     }
    ],
    "fuel_totals": {
     "gallons": 710.331,
     "cpg": 5.891,
     "receipt": 4184.35,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 4184.35
    },
    "expenses": [
@@ -9231,12 +9231,12 @@
    ],
    "expenses_total": 658.32,
    "revenue": {
-    "invoiced": 9300.0,
+    "invoiced": 9300,
     "driver_salary": -1902.65,
     "fuel": -4184.35,
     "company_expenses": -658.32,
     "net_revenue": 2315.18,
-    "miles": 3930.0,
+    "miles": 3930,
     "mpg": 5.533
    }
   },
@@ -9260,7 +9260,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3000.0
+     "amount": 3000
     },
     {
      "load": "13573",
@@ -9269,7 +9269,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 2300.0
+     "amount": 2300
     },
     {
      "load": "13584",
@@ -9278,7 +9278,7 @@
      "description": "Line Haul",
      "miles": 468.9,
      "rate": 2.133,
-     "amount": 1000.0
+     "amount": 1000
     }
    ],
    "driver_payment": [
@@ -9294,14 +9294,14 @@
      "driver": "Vicente Santos Contreras",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13551",
      "driver": "Vicente Santos Contreras",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13573",
@@ -9315,14 +9315,14 @@
      "driver": "Vicente Santos Contreras",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13573",
      "driver": "Vicente Santos Contreras",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13584",
@@ -9343,14 +9343,14 @@
      "driver": "Vicente Santos Contreras",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13584",
      "driver": "Vicente Santos Contreras",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1462.1,
@@ -9364,9 +9364,9 @@
      "gallons": 93.754,
      "cpg": 5.549,
      "receipt": 520.24,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 520.24
     },
     {
@@ -9378,9 +9378,9 @@
      "gallons": 116.376,
      "cpg": 5.769,
      "receipt": 671.37,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 671.37
     },
     {
@@ -9391,11 +9391,11 @@
      "invoice": "2245936",
      "gallons": 71.573,
      "cpg": 5.449,
-     "receipt": 390.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 390.0
+     "receipt": 390,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 390
     },
     {
      "load": "13573",
@@ -9405,11 +9405,11 @@
      "invoice": "98140573",
      "gallons": 166.972,
      "cpg": 5.989,
-     "receipt": 1000.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 1000.0
+     "receipt": 1000,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 1000
     },
     {
      "load": "13573",
@@ -9420,9 +9420,9 @@
      "gallons": 70.003,
      "cpg": 5.889,
      "receipt": 412.25,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 412.25
     },
     {
@@ -9433,20 +9433,20 @@
      "invoice": "1366918",
      "gallons": 64.05,
      "cpg": 6.089,
-     "receipt": 390.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 390.0
+     "receipt": 390,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 390
     }
    ],
    "fuel_totals": {
     "gallons": 582.728,
     "cpg": 5.807,
     "receipt": 3383.86,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3383.86
    },
    "expenses": [
@@ -9503,7 +9503,7 @@
    ],
    "expenses_total": 572.45,
    "revenue": {
-    "invoiced": 6300.0,
+    "invoiced": 6300,
     "driver_salary": -1462.1,
     "fuel": -3383.86,
     "company_expenses": -572.45,
@@ -9531,7 +9531,7 @@
      "description": "Line Haul",
      "miles": 1728.8,
      "rate": 3.413,
-     "amount": 5900.0
+     "amount": 5900
     },
     {
      "load": "13580",
@@ -9540,7 +9540,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3300.0
+     "amount": 3300
     }
    ],
    "driver_payment": [
@@ -9556,14 +9556,14 @@
      "driver": "CARLOS MAURICIO PENA CARVALLO",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13570",
      "driver": "CARLOS MAURICIO PENA CARVALLO",
      "item": "3 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13580",
@@ -9584,14 +9584,14 @@
      "driver": "CARLOS MAURICIO PENA CARVALLO",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13580",
      "driver": "CARLOS MAURICIO PENA CARVALLO",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1508.27,
@@ -9602,12 +9602,12 @@
      "vendor": "LOVES",
      "location": "3158WEST IH-10 SEGUIN",
      "invoice": "99407022",
-     "gallons": 122.0,
+     "gallons": 122,
      "cpg": 5.949,
      "receipt": 725.78,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 725.78
     },
     {
@@ -9618,11 +9618,11 @@
      "invoice": "99143994",
      "gallons": 78.016,
      "cpg": 5.909,
-     "receipt": 461.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 461.0
+     "receipt": 461,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 461
     },
     {
      "load": "13580",
@@ -9632,11 +9632,11 @@
      "invoice": "99597828",
      "gallons": 100.172,
      "cpg": 6.389,
-     "receipt": 640.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 640.0
+     "receipt": 640,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 640
     },
     {
      "load": "13580",
@@ -9647,9 +9647,9 @@
      "gallons": 95.888,
      "cpg": 6.049,
      "receipt": 580.03,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 580.03
     },
     {
@@ -9660,11 +9660,11 @@
      "invoice": "99877729",
      "gallons": 103.709,
      "cpg": 5.689,
-     "receipt": 590.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 590.0
+     "receipt": 590,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 590
     },
     {
      "load": "13580",
@@ -9674,20 +9674,20 @@
      "invoice": "99519143",
      "gallons": 55.838,
      "cpg": 6.089,
-     "receipt": 340.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 340.0
+     "receipt": 340,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 340
     }
    ],
    "fuel_totals": {
     "gallons": 555.623,
     "cpg": 6.006,
     "receipt": 3336.81,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3336.81
    },
    "expenses": [
@@ -9748,7 +9748,7 @@
      "invoice": "",
      "reimb": "",
      "comp": "",
-     "amount": 40.0,
+     "amount": 40,
      "raw": "2026-09-09   LOVES   2129WASHINGTON    99877734           Fuel-DEF-Diesel Exhaust Fluid                          Y             40.00"
     },
     {
@@ -9764,12 +9764,12 @@
    ],
    "expenses_total": 119.97,
    "revenue": {
-    "invoiced": 9200.0,
+    "invoiced": 9200,
     "driver_salary": -1508.27,
     "fuel": -3336.81,
     "company_expenses": -119.97,
     "net_revenue": 4085.95,
-    "miles": 3431.0,
+    "miles": 3431,
     "mpg": 6.175
    }
   },
@@ -9792,7 +9792,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 4900.0
+     "amount": 4900
     },
     {
      "load": "13589",
@@ -9801,7 +9801,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 4120.0
+     "amount": 4120
     }
    ],
    "driver_payment": [
@@ -9817,14 +9817,14 @@
      "driver": "Neftali Coronado Urbano",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13579",
      "driver": "Neftali Coronado Urbano",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13589",
@@ -9845,14 +9845,14 @@
      "driver": "Neftali Coronado Urbano",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13589",
      "driver": "Neftali Coronado Urbano",
      "item": "2 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1954.85,
@@ -9865,11 +9865,11 @@
      "invoice": "99323900",
      "gallons": 130.6,
      "cpg": 6.049,
-     "receipt": 790.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 790.0
+     "receipt": 790,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 790
     },
     {
      "load": "13579",
@@ -9880,9 +9880,9 @@
      "gallons": 111.575,
      "cpg": 6.289,
      "receipt": 701.7,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 701.7
     },
     {
@@ -9893,11 +9893,11 @@
      "invoice": "99055485",
      "gallons": 74.821,
      "cpg": 6.549,
-     "receipt": 490.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 490.0
+     "receipt": 490,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 490
     },
     {
      "load": "13589",
@@ -9908,9 +9908,9 @@
      "gallons": 59.627,
      "cpg": 6.219,
      "receipt": 370.82,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 370.82
     },
     {
@@ -9922,9 +9922,9 @@
      "gallons": 118.937,
      "cpg": 6.389,
      "receipt": 759.89,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 759.89
     },
     {
@@ -9935,20 +9935,20 @@
      "invoice": "99150961",
      "gallons": 62.41,
      "cpg": 6.249,
-     "receipt": 390.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 390.0
+     "receipt": 390,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 390
     }
    ],
    "fuel_totals": {
     "gallons": 557.97,
     "cpg": 6.277,
     "receipt": 3502.41,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 3502.41
    },
    "expenses": [
@@ -9959,7 +9959,7 @@
      "invoice": "",
      "reimb": "",
      "comp": "Y",
-     "amount": 10.0,
+     "amount": 10,
      "raw": "2026-09-05   ROAD RANGER             20002FM-1472       38031247           Gasolina para Camioneta Honda                        Drv               Y            10.00"
     },
     {
@@ -10005,12 +10005,12 @@
    ],
    "expenses_total": 122.58,
    "revenue": {
-    "invoiced": 9020.0,
+    "invoiced": 9020,
     "driver_salary": -1954.85,
     "fuel": -3502.41,
     "company_expenses": -122.58,
     "net_revenue": 3179.86,
-    "miles": 4035.0,
+    "miles": 4035,
     "mpg": 7.232
    }
   },
@@ -10033,7 +10033,7 @@
      "description": "Line Haul",
      "miles": null,
      "rate": null,
-     "amount": 3600.0
+     "amount": 3600
     }
    ],
    "driver_payment": [
@@ -10049,14 +10049,14 @@
      "driver": "Leonel Antonio Morales",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13564",
      "driver": "Leonel Antonio Morales",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13586",
@@ -10077,14 +10077,14 @@
      "driver": "Leonel Antonio Morales",
      "item": "1 Picks",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     },
     {
      "load": "13586",
      "driver": "Leonel Antonio Morales",
      "item": "1 Drops",
      "detail": "$0.00 After 0",
-     "amount": 0.0
+     "amount": 0
     }
    ],
    "driver_payment_total": 1459.05,
@@ -10098,9 +10098,9 @@
      "gallons": 90.039,
      "cpg": 5.889,
      "receipt": 530.24,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 530.24
     },
     {
@@ -10109,12 +10109,12 @@
      "vendor": "LOVES",
      "location": "66595WADSWORTH PKWY",
      "invoice": "99144054",
-     "gallons": 58.0,
+     "gallons": 58,
      "cpg": 5.849,
      "receipt": 339.24,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
      "actual": 339.24
     },
     {
@@ -10125,11 +10125,11 @@
      "invoice": "99119764",
      "gallons": 66.225,
      "cpg": 5.889,
-     "receipt": 390.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 390.0
+     "receipt": 390,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 390
     },
     {
      "load": "13586",
@@ -10139,11 +10139,11 @@
      "invoice": "99671555",
      "gallons": 49.244,
      "cpg": 5.889,
-     "receipt": 290.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 290.0
+     "receipt": 290,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 290
     },
     {
      "load": "13586",
@@ -10153,11 +10153,11 @@
      "invoice": "99448828",
      "gallons": 79.173,
      "cpg": 6.189,
-     "receipt": 490.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 490.0
+     "receipt": 490,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 490
     },
     {
      "load": "13586",
@@ -10167,11 +10167,11 @@
      "invoice": "99021341",
      "gallons": 54.936,
      "cpg": 6.189,
-     "receipt": 340.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 340.0
+     "receipt": 340,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 340
     },
     {
      "load": "13586",
@@ -10180,21 +10180,21 @@
      "location": "66595WADSWORTH PKWY",
      "invoice": null,
      "gallons": 6.249,
-     "cpg": 0.0,
-     "receipt": 0.0,
-     "fees": 0.0,
-     "disc": 0.0,
-     "discpg": 0.0,
-     "actual": 0.0
+     "cpg": 0,
+     "receipt": 0,
+     "fees": 0,
+     "disc": 0,
+     "discpg": 0,
+     "actual": 0
     }
    ],
    "fuel_totals": {
     "gallons": 403.866,
     "cpg": 5.892,
     "receipt": 2379.48,
-    "fees": 0.0,
-    "disc": 0.0,
-    "discpg": 0.0,
+    "fees": 0,
+    "disc": 0,
+    "discpg": 0,
     "actual": 2379.48
    },
    "expenses": [
@@ -10221,7 +10221,7 @@
    ],
    "expenses_total": 37.36,
    "revenue": {
-    "invoiced": 3600.0,
+    "invoiced": 3600,
     "driver_salary": -1459.05,
     "fuel": -2379.48,
     "company_expenses": -37.36,
@@ -10248,7 +10248,7 @@
    "total_empty_miles": 384.8,
    "total_miles": 3795.9,
    "salary": 1897.95,
-   "deductions_total": -10.0,
+   "deductions_total": -10,
    "reimbursements_total": null,
    "total_due": 1987.95,
    "pay_lines": [
@@ -10279,7 +10279,7 @@
      "load": "13480",
      "date": "2026-07-28",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -10299,7 +10299,7 @@
    "total_empty_miles": 363.5,
    "total_miles": 2935.3,
    "salary": 1320.9,
-   "deductions_total": -50.0,
+   "deductions_total": -50,
    "reimbursements_total": null,
    "total_due": 1270.9,
    "pay_lines": [
@@ -10330,13 +10330,13 @@
      "load": "13481",
      "date": "2026-08-03",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13489",
      "date": "2026-08-03",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     }
    ]
   },
@@ -10352,11 +10352,11 @@
     "13482",
     "13485"
    ],
-   "total_loaded_miles": 2886.0,
+   "total_loaded_miles": 2886,
    "total_empty_miles": 223.3,
    "total_miles": 3109.3,
    "salary": 1399.2,
-   "deductions_total": -115.0,
+   "deductions_total": -115,
    "reimbursements_total": null,
    "total_due": 1484.85,
    "pay_lines": [
@@ -10387,25 +10387,25 @@
      "load": "13482",
      "date": "2026-08-03",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13485",
      "date": "2026-08-03",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13485",
      "date": "2026-08-03",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     },
     {
      "load": "13485",
      "date": "2026-07-31",
      "description": "CASH ADVANCE WIRE TRANSFER - CASH ADVANCE WIRE TRANSFER",
-     "amount": -55.0
+     "amount": -55
     }
    ]
   },
@@ -10425,7 +10425,7 @@
    "total_empty_miles": 333.7,
    "total_miles": 3020.6,
    "salary": 1359.28,
-   "deductions_total": -108.0,
+   "deductions_total": -108,
    "reimbursements_total": null,
    "total_due": 1312.38,
    "pay_lines": [
@@ -10456,25 +10456,25 @@
      "load": "13491",
      "date": "2026-08-03",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13484",
      "date": "2026-08-03",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13484",
      "date": "2026-08-03",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     },
     {
      "load": "13484",
      "date": "2026-07-31",
      "description": "CASH ADVANCE WIRE TRANSFER - CASH ADVANCE WIRE TRANSFER",
-     "amount": -48.0
+     "amount": -48
     }
    ]
   },
@@ -10494,7 +10494,7 @@
    "total_empty_miles": 107.9,
    "total_miles": 2672.4,
    "salary": 1202.59,
-   "deductions_total": -260.0,
+   "deductions_total": -260,
    "reimbursements_total": null,
    "total_due": 1057.84,
    "pay_lines": [
@@ -10515,7 +10515,7 @@
     {
      "load": "13488",
      "item": "Loaded Miles",
-     "miles": 1335.0,
+     "miles": 1335,
      "rate": 0.45,
      "amount": 600.75
     }
@@ -10525,25 +10525,25 @@
      "load": "13488",
      "date": "2026-08-04",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13488",
      "date": "2026-08-04",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     },
     {
      "load": "13488",
      "date": "2026-08-04",
      "description": "CASH ADVANCE WIRE TRANSFER - CASH ADVANCE WIRE TRANSFER",
-     "amount": -200.0
+     "amount": -200
     },
     {
      "load": "13486",
      "date": "2026-08-04",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     }
    ]
   },
@@ -10563,7 +10563,7 @@
    "total_empty_miles": 261.3,
    "total_miles": 3858.6,
    "salary": 1929.3,
-   "deductions_total": -10.0,
+   "deductions_total": -10,
    "reimbursements_total": null,
    "total_due": 2019.3,
    "pay_lines": [
@@ -10594,7 +10594,7 @@
      "load": "13493",
      "date": "2026-08-04",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -10653,13 +10653,13 @@
    "loads": [
     "13501"
    ],
-   "total_loaded_miles": 0.0,
+   "total_loaded_miles": 0,
    "total_empty_miles": null,
    "total_miles": null,
    "salary": null,
    "deductions_total": null,
    "reimbursements_total": null,
-   "total_due": 320.0,
+   "total_due": 320,
    "pay_lines": [],
    "deductions": []
   },
@@ -10677,9 +10677,9 @@
    ],
    "total_loaded_miles": 2550.9,
    "total_empty_miles": 489.1,
-   "total_miles": 3040.0,
+   "total_miles": 3040,
    "salary": 1307.2,
-   "deductions_total": -60.0,
+   "deductions_total": -60,
    "reimbursements_total": null,
    "total_due": 1267.7,
    "pay_lines": [
@@ -10710,19 +10710,19 @@
      "load": "13495",
      "date": "2026-08-06",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13496",
      "date": "2026-08-06",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13496",
      "date": "2026-08-06",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -10742,7 +10742,7 @@
    "total_empty_miles": 166.8,
    "total_miles": 2729.1,
    "salary": 1228.1,
-   "deductions_total": -60.0,
+   "deductions_total": -60,
    "reimbursements_total": null,
    "total_due": 1193.1,
    "pay_lines": [
@@ -10773,19 +10773,19 @@
      "load": "13494",
      "date": "2026-08-06",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13500",
      "date": "2026-08-06",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13500",
      "date": "2026-08-06",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -10805,7 +10805,7 @@
    "total_empty_miles": 19.9,
    "total_miles": 2567.8,
    "salary": 1155.52,
-   "deductions_total": -60.0,
+   "deductions_total": -60,
    "reimbursements_total": null,
    "total_due": 1095.52,
    "pay_lines": [
@@ -10819,7 +10819,7 @@
     {
      "load": "13508",
      "item": "Loaded Miles",
-     "miles": 1284.0,
+     "miles": 1284,
      "rate": 0.45,
      "amount": 577.8
     },
@@ -10836,19 +10836,19 @@
      "load": "13498",
      "date": "2026-08-12",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13508",
      "date": "2026-08-12",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13508",
      "date": "2026-08-12",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -10866,9 +10866,9 @@
    ],
    "total_loaded_miles": 3707.6,
    "total_empty_miles": 107.4,
-   "total_miles": 3815.0,
+   "total_miles": 3815,
    "salary": 1907.5,
-   "deductions_total": -10.0,
+   "deductions_total": -10,
    "reimbursements_total": null,
    "total_due": 1997.5,
    "pay_lines": [
@@ -10899,7 +10899,7 @@
      "load": "13509",
      "date": "2026-08-12",
      "description": "Admin fee - Gas",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -10915,11 +10915,11 @@
     "13504",
     "13510"
    ],
-   "total_loaded_miles": 3465.0,
+   "total_loaded_miles": 3465,
    "total_empty_miles": 353.2,
    "total_miles": 3818.2,
    "salary": 1909.1,
-   "deductions_total": -10.0,
+   "deductions_total": -10,
    "reimbursements_total": null,
    "total_due": 1949.1,
    "pay_lines": [
@@ -10950,7 +10950,7 @@
      "load": "13510",
      "date": "2026-08-12",
      "description": "Admin fee - Gas",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -10972,7 +10972,7 @@
    "total_empty_miles": 423.9,
    "total_miles": 3070.7,
    "salary": 1381.83,
-   "deductions_total": -500.0,
+   "deductions_total": -500,
    "reimbursements_total": null,
    "total_due": 997.08,
    "pay_lines": [
@@ -11007,7 +11007,7 @@
     {
      "load": "13512",
      "item": "Empty Miles",
-     "miles": 222.0,
+     "miles": 222,
      "rate": 0.45,
      "amount": 99.9
     },
@@ -11031,37 +11031,37 @@
      "load": "13502",
      "date": "2026-08-13",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13502",
      "date": "2026-08-01",
      "description": "Cash Advance-Check - Cash Advance-Check EFS",
-     "amount": -390.0
+     "amount": -390
     },
     {
      "load": "13507",
      "date": "2026-08-13",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13512",
      "date": "2026-08-13",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13513",
      "date": "2026-08-13",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13513",
      "date": "2026-08-13",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -11081,7 +11081,7 @@
    "total_empty_miles": 587.6,
    "total_miles": 4216.7,
    "salary": 1897.52,
-   "deductions_total": -60.0,
+   "deductions_total": -60,
    "reimbursements_total": null,
    "total_due": 1837.52,
    "pay_lines": [
@@ -11112,19 +11112,19 @@
      "load": "13497",
      "date": "2026-08-13",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13511",
      "date": "2026-08-13",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13511",
      "date": "2026-08-13",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -11141,10 +11141,10 @@
     "13518"
    ],
    "total_loaded_miles": 2312.4,
-   "total_empty_miles": 134.0,
+   "total_empty_miles": 134,
    "total_miles": 2446.4,
    "salary": 1051.95,
-   "deductions_total": -60.0,
+   "deductions_total": -60,
    "reimbursements_total": null,
    "total_due": 1107.42,
    "pay_lines": [
@@ -11165,7 +11165,7 @@
     {
      "load": "13518",
      "item": "Empty Miles",
-     "miles": 134.0,
+     "miles": 134,
      "rate": 0.43,
      "amount": 57.62
     }
@@ -11175,19 +11175,19 @@
      "load": "13517",
      "date": "2026-08-14",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13518",
      "date": "2026-08-14",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13518",
      "date": "2026-08-14",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -11208,7 +11208,7 @@
    "total_empty_miles": 134.9,
    "total_miles": 2898.1,
    "salary": 1304.15,
-   "deductions_total": -233.0,
+   "deductions_total": -233,
    "reimbursements_total": null,
    "total_due": 1186.4,
    "pay_lines": [
@@ -11253,31 +11253,31 @@
      "load": "13506",
      "date": "2026-08-14",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13514",
      "date": "2026-08-14",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13516",
      "date": "2026-08-14",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13516",
      "date": "2026-08-14",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     },
     {
      "load": "13516",
      "date": "2026-08-05",
      "description": "CASH ADVANCE WIRE TRANSFER - CASH ADVANCE WIRE TRANSFER",
-     "amount": -148.0
+     "amount": -148
     }
    ]
   },
@@ -11298,7 +11298,7 @@
    "total_empty_miles": 58.5,
    "total_miles": 2675.3,
    "salary": 1203.89,
-   "deductions_total": -85.0,
+   "deductions_total": -85,
    "reimbursements_total": null,
    "total_due": 1280.39,
    "pay_lines": [
@@ -11343,25 +11343,25 @@
      "load": "13505",
      "date": "2026-08-14",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13515",
      "date": "2026-08-14",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13515",
      "date": "2026-08-14",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     },
     {
      "load": "13520",
      "date": "2026-08-14",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     }
    ]
   },
@@ -11379,11 +11379,11 @@
    ],
    "total_loaded_miles": 3447.9,
    "total_empty_miles": 368.1,
-   "total_miles": 3816.0,
-   "salary": 1908.0,
-   "deductions_total": -10.0,
+   "total_miles": 3816,
+   "salary": 1908,
+   "deductions_total": -10,
    "reimbursements_total": null,
-   "total_due": 1948.0,
+   "total_due": 1948,
    "pay_lines": [
     {
      "load": "13519",
@@ -11412,7 +11412,7 @@
      "load": "13521",
      "date": "2026-08-17",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -11430,9 +11430,9 @@
    ],
    "total_loaded_miles": 2488.5,
    "total_empty_miles": 711.5,
-   "total_miles": 3200.0,
+   "total_miles": 3200,
    "salary": 1440.01,
-   "deductions_total": -260.0,
+   "deductions_total": -260,
    "reimbursements_total": null,
    "total_due": 1245.26,
    "pay_lines": [
@@ -11463,25 +11463,25 @@
      "load": "13524",
      "date": "2026-08-17",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13524",
      "date": "2026-08-17",
      "description": "Admin fee -",
-     "amount": -10.0
+     "amount": -10
     },
     {
      "load": "13524",
      "date": "2026-08-15",
      "description": "CASH ADVANCE WIRE TRANSFER - CASH ADVANCE WIRE TRANSFER",
-     "amount": -200.0
+     "amount": -200
     },
     {
      "load": "13525",
      "date": "2026-08-17",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     }
    ]
   },
@@ -11499,9 +11499,9 @@
    ],
    "total_loaded_miles": 2669.1,
    "total_empty_miles": 487.9,
-   "total_miles": 3157.0,
+   "total_miles": 3157,
    "salary": 1420.66,
-   "deductions_total": -60.0,
+   "deductions_total": -60,
    "reimbursements_total": null,
    "total_due": 1387.66,
    "pay_lines": [
@@ -11522,7 +11522,7 @@
     {
      "load": "13527",
      "item": "Loaded Miles",
-     "miles": 1547.0,
+     "miles": 1547,
      "rate": 0.45,
      "amount": 696.15
     }
@@ -11532,19 +11532,19 @@
      "load": "13526",
      "date": "2026-08-20",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13526",
      "date": "2026-08-20",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     },
     {
      "load": "13527",
      "date": "2026-08-20",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     }
    ]
   },
@@ -11560,13 +11560,13 @@
     "13530",
     "13532"
    ],
-   "total_loaded_miles": 0.0,
+   "total_loaded_miles": 0,
    "total_empty_miles": null,
    "total_miles": null,
    "salary": null,
    "deductions_total": null,
    "reimbursements_total": null,
-   "total_due": 300.0,
+   "total_due": 300,
    "pay_lines": [],
    "deductions": []
   },
@@ -11582,11 +11582,11 @@
     "13523",
     "13534"
    ],
-   "total_loaded_miles": 2787.0,
+   "total_loaded_miles": 2787,
    "total_empty_miles": 58.1,
    "total_miles": 2845.1,
    "salary": 1280.31,
-   "deductions_total": -60.0,
+   "deductions_total": -60,
    "reimbursements_total": null,
    "total_due": 1220.31,
    "pay_lines": [
@@ -11617,19 +11617,19 @@
      "load": "13523",
      "date": "2026-08-21",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13534",
      "date": "2026-08-21",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13534",
      "date": "2026-08-21",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -11680,19 +11680,19 @@
      "load": "13529",
      "date": "2026-08-24",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13540",
      "date": "2026-08-24",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13540",
      "date": "2026-08-24",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     },
     {
      "load": "13540",
@@ -11718,7 +11718,7 @@
    "total_empty_miles": 335.7,
    "total_miles": 3812.5,
    "salary": 1906.25,
-   "deductions_total": -10.0,
+   "deductions_total": -10,
    "reimbursements_total": null,
    "total_due": 2071.25,
    "pay_lines": [
@@ -11749,7 +11749,7 @@
      "load": "13537",
      "date": "2026-08-25",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -11766,18 +11766,18 @@
     "13528",
     "13536"
    ],
-   "total_loaded_miles": 3469.0,
+   "total_loaded_miles": 3469,
    "total_empty_miles": 398.3,
    "total_miles": 3867.3,
    "salary": 1662.94,
-   "deductions_total": -85.0,
+   "deductions_total": -85,
    "reimbursements_total": null,
    "total_due": 1752.28,
    "pay_lines": [
     {
      "load": "13522",
      "item": "Loaded Miles",
-     "miles": 1319.0,
+     "miles": 1319,
      "rate": 0.43,
      "amount": 567.17
     },
@@ -11815,25 +11815,25 @@
      "load": "13522",
      "date": "2026-08-25",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13528",
      "date": "2026-08-25",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13536",
      "date": "2026-08-25",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13536",
      "date": "2026-08-25",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -11899,7 +11899,7 @@
      "load": "13531",
      "date": "2026-08-26",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13531",
@@ -11911,19 +11911,19 @@
      "load": "13538",
      "date": "2026-08-26",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13543",
      "date": "2026-08-26",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13543",
      "date": "2026-08-26",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -11939,9 +11939,9 @@
     "13533",
     "13548"
    ],
-   "total_loaded_miles": 2155.0,
-   "total_empty_miles": 154.0,
-   "total_miles": 2309.0,
+   "total_loaded_miles": 2155,
+   "total_empty_miles": 154,
+   "total_miles": 2309,
    "salary": 1039.05,
    "deductions_total": null,
    "reimbursements_total": null,
@@ -11964,7 +11964,7 @@
     {
      "load": "13548",
      "item": "Empty Miles",
-     "miles": 154.0,
+     "miles": 154,
      "rate": 0.45,
      "amount": 69.3
     }
@@ -12018,7 +12018,7 @@
      "load": "13549",
      "date": "2026-08-28",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13549",
@@ -12030,13 +12030,13 @@
      "load": "13555",
      "date": "2026-08-28",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13555",
      "date": "2026-08-28",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -12102,19 +12102,19 @@
      "load": "13539",
      "date": "2026-08-31",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13546",
      "date": "2026-08-31",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13546",
      "date": "2026-08-24",
      "description": "Admin fee - PAGO DE TELEFONO PERSONAL",
-     "amount": -165.0
+     "amount": -165
     },
     {
      "load": "13546",
@@ -12126,13 +12126,13 @@
      "load": "13552",
      "date": "2026-08-31",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13552",
      "date": "2026-08-31",
      "description": "Admin fee - Gas",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -12152,7 +12152,7 @@
    "total_empty_miles": 545.6,
    "total_miles": 3851.7,
    "salary": 1925.85,
-   "deductions_total": -10.0,
+   "deductions_total": -10,
    "reimbursements_total": null,
    "total_due": 2015.85,
    "pay_lines": [
@@ -12183,7 +12183,7 @@
      "load": "13557",
      "date": "2026-09-01",
      "description": "Admin fee - Gas",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -12203,7 +12203,7 @@
    "total_empty_miles": 476.6,
    "total_miles": 3025.5,
    "salary": 1512.75,
-   "deductions_total": -60.0,
+   "deductions_total": -60,
    "reimbursements_total": null,
    "total_due": 1452.75,
    "pay_lines": [
@@ -12234,19 +12234,19 @@
      "load": "13542",
      "date": "2026-09-01",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13554",
      "date": "2026-09-01",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13554",
      "date": "2026-09-01",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -12266,7 +12266,7 @@
    "total_empty_miles": 411.1,
    "total_miles": 3755.6,
    "salary": 1690.03,
-   "deductions_total": -60.0,
+   "deductions_total": -60,
    "reimbursements_total": null,
    "total_due": 1630.03,
    "pay_lines": [
@@ -12289,7 +12289,7 @@
      "item": "Empty Miles",
      "miles": 411.1,
      "rate": 0.45,
-     "amount": 185.0
+     "amount": 185
     }
    ],
    "deductions": [
@@ -12297,19 +12297,19 @@
      "load": "13545",
      "date": "2026-09-01",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13560",
      "date": "2026-09-01",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13560",
      "date": "2026-09-01",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -12330,7 +12330,7 @@
    "total_empty_miles": 113.7,
    "total_miles": 3862.3,
    "salary": 1738.05,
-   "deductions_total": -352.0,
+   "deductions_total": -352,
    "reimbursements_total": null,
    "total_due": 1386.05,
    "pay_lines": [
@@ -12375,31 +12375,31 @@
      "load": "13547",
      "date": "2026-09-01",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13559",
      "date": "2026-09-01",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13562",
      "date": "2026-09-02",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13562",
      "date": "2026-09-02",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     },
     {
      "load": "13562",
      "date": "2026-09-02",
      "description": "Admin fee - VUELO",
-     "amount": -267.0
+     "amount": -267
     }
    ]
   },
@@ -12419,7 +12419,7 @@
    "total_empty_miles": 402.1,
    "total_miles": 2973.3,
    "salary": 1486.65,
-   "deductions_total": -10.0,
+   "deductions_total": -10,
    "reimbursements_total": null,
    "total_due": 1568.91,
    "pay_lines": [
@@ -12433,9 +12433,9 @@
     {
      "load": "13566",
      "item": "Loaded Miles",
-     "miles": 1086.0,
+     "miles": 1086,
      "rate": 0.5,
-     "amount": 543.0
+     "amount": 543
     },
     {
      "load": "13566",
@@ -12450,7 +12450,7 @@
      "load": "13566",
      "date": "2026-09-03",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -12467,10 +12467,10 @@
     "13568"
    ],
    "total_loaded_miles": 2777.3,
-   "total_empty_miles": 220.0,
+   "total_empty_miles": 220,
    "total_miles": 2997.3,
    "salary": 1288.84,
-   "deductions_total": -60.0,
+   "deductions_total": -60,
    "reimbursements_total": null,
    "total_due": 1330.6,
    "pay_lines": [
@@ -12491,7 +12491,7 @@
     {
      "load": "13568",
      "item": "Empty Miles",
-     "miles": 220.0,
+     "miles": 220,
      "rate": 0.43,
      "amount": 94.6
     }
@@ -12501,19 +12501,19 @@
      "load": "13558",
      "date": "2026-09-04",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13568",
      "date": "2026-09-04",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13568",
      "date": "2026-09-04",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -12564,13 +12564,13 @@
      "load": "13567",
      "date": "2026-09-03",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13567",
      "date": "2026-09-03",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     },
     {
      "load": "13567",
@@ -12582,7 +12582,7 @@
      "load": "13561",
      "date": "2026-09-03",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     }
    ]
   },
@@ -12634,11 +12634,11 @@
     "13569",
     "13577"
    ],
-   "total_loaded_miles": 2711.0,
+   "total_loaded_miles": 2711,
    "total_empty_miles": 122.7,
    "total_miles": 2833.7,
    "salary": 1416.85,
-   "deductions_total": -10.0,
+   "deductions_total": -10,
    "reimbursements_total": null,
    "total_due": 1544.48,
    "pay_lines": [
@@ -12669,7 +12669,7 @@
      "load": "13577",
      "date": "2026-09-07",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -12689,7 +12689,7 @@
    "total_empty_miles": 110.8,
    "total_miles": 2195.2,
    "salary": 987.85,
-   "deductions_total": -60.0,
+   "deductions_total": -60,
    "reimbursements_total": null,
    "total_due": 927.85,
    "pay_lines": [
@@ -12720,19 +12720,19 @@
      "load": "13572",
      "date": "2026-09-08",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13575",
      "date": "2026-09-08",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13575",
      "date": "2026-09-08",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -12752,7 +12752,7 @@
    "total_empty_miles": 107.4,
    "total_miles": 3805.3,
    "salary": 1902.65,
-   "deductions_total": -10.0,
+   "deductions_total": -10,
    "reimbursements_total": null,
    "total_due": 2523.91,
    "pay_lines": [
@@ -12783,7 +12783,7 @@
      "load": "13574",
      "date": "2026-09-08",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -12804,7 +12804,7 @@
    "total_empty_miles": 39.3,
    "total_miles": 2924.2,
    "salary": 1462.1,
-   "deductions_total": -285.0,
+   "deductions_total": -285,
    "reimbursements_total": null,
    "total_due": 1407.4,
    "pay_lines": [
@@ -12825,7 +12825,7 @@
     {
      "load": "13584",
      "item": "Loaded Miles",
-     "miles": 421.0,
+     "miles": 421,
      "rate": 0.5,
      "amount": 210.5
     },
@@ -12842,19 +12842,19 @@
      "load": "13584",
      "date": "2026-09-05",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     },
     {
      "load": "13584",
      "date": "2026-09-09",
      "description": "CASH ADVANCE WIRE TRANSFER - CASH ADVANCE WIRE TRANSFER",
-     "amount": -200.0
+     "amount": -200
     },
     {
      "load": "13584",
      "date": "2026-09-09",
      "description": "Admin fee - PAGO DE TELEFONO PERSONAL",
-     "amount": -75.0
+     "amount": -75
     }
    ]
   },
@@ -12874,14 +12874,14 @@
    "total_empty_miles": 92.1,
    "total_miles": 3351.7,
    "salary": 1508.27,
-   "deductions_total": -260.0,
+   "deductions_total": -260,
    "reimbursements_total": null,
    "total_due": 1334.02,
    "pay_lines": [
     {
      "load": "13570",
      "item": "Loaded Miles",
-     "miles": 1693.0,
+     "miles": 1693,
      "rate": 0.45,
      "amount": 761.85
     },
@@ -12905,25 +12905,25 @@
      "load": "13570",
      "date": "2026-09-11",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13570",
      "date": "2026-09-01",
      "description": "Cash Advance-Efectivo - Cash Advance-Efectivo",
-     "amount": -200.0
+     "amount": -200
     },
     {
      "load": "13580",
      "date": "2026-09-11",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13580",
      "date": "2026-09-11",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -12943,7 +12943,7 @@
    "total_empty_miles": 430.8,
    "total_miles": 3909.7,
    "salary": 1954.85,
-   "deductions_total": -10.0,
+   "deductions_total": -10,
    "reimbursements_total": null,
    "total_due": 2104.84,
    "pay_lines": [
@@ -12974,7 +12974,7 @@
      "load": "13589",
      "date": "2026-09-11",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   },
@@ -12994,7 +12994,7 @@
    "total_empty_miles": 223.6,
    "total_miles": 2918.1,
    "salary": 1459.05,
-   "deductions_total": -60.0,
+   "deductions_total": -60,
    "reimbursements_total": null,
    "total_due": 1624.05,
    "pay_lines": [
@@ -13025,19 +13025,19 @@
      "load": "13564",
      "date": "2026-09-11",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13586",
      "date": "2026-09-11",
      "description": "Driver-Escrow For Claims - Driver-Escrow For Claims",
-     "amount": -25.0
+     "amount": -25
     },
     {
      "load": "13586",
      "date": "2026-09-11",
      "description": "Admin fee - GAS",
-     "amount": -10.0
+     "amount": -10
     }
    ]
   }
