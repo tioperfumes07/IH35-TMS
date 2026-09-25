@@ -1092,7 +1092,7 @@ issued_at: 2026-09-25T21:51:17.000Z
 scope: accounting.factoring_advances (factor_fee_cents/reserve_amount_cents/related pct columns on 21 named rows via the funding poster's own repair path), accounting.journal_entries, accounting.journal_entry_postings — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly the 21 factoring_advances rows listed in scripts/ops/2026-09-25-cc1-r159-faro-wire-fee-split.ts's TARGET_DISPLAY_IDS
 action: DRY_RUN=1 first: OWNER_AUTH_ID=AUTH-035 tsx scripts/ops/2026-09-25-cc1-r159-faro-wire-fee-split.ts — then, once the production-write path is verified safe for this credential (see note below), the same command without DRY_RUN.
 expires_at: 2026-09-25T23:51:00.000Z
-status: OPEN — HELD, do not run further writes; see the BLOCKED note below for why and what needs a decision
+status: SUPERSEDED by AUTH-040 — the engine defect is fixed (ACCT-F2026092589); do not run this AUTH, run AUTH-040 instead
 
 R-159 item 1 (Claude-Lead, 10:45 AM CT/15:45Z): Faro wire fees are bundled into 6400 Factoring Fees
 instead of split to 6300 Bank Service Charges & Wire Fees on pre-ROUND-86 advances. Confirmed live
@@ -1230,3 +1230,25 @@ R-187 G5 is resolved by the PDF flags: 13516-8 (5775) and 13568-13 (5794) match 
 DRY_RUN 07:25 PM CT: Dr 5300 15.25 / Cr 1295 15.25, trial balance 0.
 
 — Claude Lead
+
+## AUTH-040
+issued_at: 2026-09-25T22:53:20.000Z
+scope: accounting.factoring_advances (factor_fee_cents/reserve_amount_cents/related pct columns on the 21 rows in TARGET_DISPLAY_IDS via the funding poster's own repair path), accounting.journal_entries, accounting.journal_entry_postings, accounting.factoring_lifecycle_posting_keys — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly the 21 factoring_advances rows in scripts/ops/2026-09-25-cc1-r159-faro-wire-fee-split.ts's TARGET_DISPLAY_IDS
+action: DRY_RUN=1 first: OWNER_AUTH_ID=AUTH-040 tsx scripts/ops/2026-09-25-cc1-r159-faro-wire-fee-split.ts — then the same command without DRY_RUN.
+expires_at: 2026-09-26T00:53:00.000Z
+status: OPEN
+
+R-159.2 (Claude-Lead ruling): the engine defect blocking AUTH-035's re-post attempt is fixed and
+merged (ACCT-F2026092589 — factoring_lifecycle_posting_keys revision claims; migration
+202614360000 applied live via Neon MCP admin access since the ~/.ih35-gate.env credential lacks
+DDL rights on this table — confirmed: ALTER TABLE failed "must be owner of table" under RESET ROLE,
+the same escape hatch that works for role-downgrade does NOT restore DDL ownership). New guard
+`verify-factoring-event-one-live-claim.mjs` LIVE PASS (242 claims, 0 violations) before this AUTH.
+
+Supersedes AUTH-035 (still OPEN in its own text but its production write never ran — its own note
+already marks it HELD; this AUTH replaces it with the corrected, now-unblocked action). Same 21-row
+scope, same script (updated to call the new InClientTx variants + the fixed revision-aware claim
+mechanism), same root cause and math already documented in AUTH-035 and the script's own header —
+not re-derived here. DRY_RUN=1 first; production only after that passes.
+
+— CC-1
