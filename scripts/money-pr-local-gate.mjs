@@ -30,6 +30,7 @@ const LABEL = "money-pr-local-gate";
 
 /** Ordered fail-fast suite — same classes that red'd Cursor #4009–#4011 / #4198 vs Claude. */
 const STEPS = [
+  ["verify-deduction-chain-schema", "scripts/verify-deduction-chain-schema.mjs"],
   ["verify-no-posting-to-inactive-account", "scripts/verify-no-posting-to-inactive-account.mjs"],
   ["verify-expense-item-lines", "scripts/verify-expense-item-lines.mjs"],
   ["verify-account-number-hidden-by-default", "scripts/verify-account-number-hidden-by-default.mjs"],
