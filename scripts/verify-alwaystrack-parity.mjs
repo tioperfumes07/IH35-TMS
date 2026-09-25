@@ -394,7 +394,11 @@ async function live() {
 
     const missingLoads = inScopeLoadNumbers.filter((n) => !loadByNumber.has(n));
     const staleSampleLoads = inScopeLoadNumbers.filter((n) => loadByNumber.get(n)?.is_sample_data === true);
-    const softDeletedLoads = inScopeLoadNumbers.filter((n) => loadByNumber.get(n)?.is_soft_deleted === true);
+    // R-160: the 13 Transportation loads are EXPECTED to be soft-deleted (AUTH-018, order 1) — that
+    // is the correct, intended state going forward, not a defect this assertion should flag.
+    const softDeletedLoads = inScopeLoadNumbers.filter(
+      (n) => loadByNumber.get(n)?.is_soft_deleted === true && !R160_TRANSPORTATION_LOADS.has(n)
+    );
     const badB = [...missingLoads, ...staleSampleLoads, ...softDeletedLoads];
     structuralFailures.push({
       id: "B",
