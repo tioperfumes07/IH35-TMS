@@ -119,7 +119,14 @@ describe("posting-engine driver_advance source type (B3)", () => {
 
     expect(result.result).toBe("posted");
     expect(result.source_transaction_type).toBe("driver_advance");
-    expect(mockResolveAccountForCategory).toHaveBeenCalledWith(OPCO, "cash_advance", "cash_advance");
+    // ACCT-F2026092584 — passes this function's own client (4th arg) so the read runs on it, not a
+    // second withLuciaBypass connection.
+    expect(mockResolveAccountForCategory).toHaveBeenCalledWith(
+      OPCO,
+      "cash_advance",
+      "cash_advance",
+      expect.objectContaining({ query: expect.any(Function) })
+    );
 
     // posting_date drives the journal entry date — cash given May 25 posts as 2026-05-25.
     expect(cap.getEntryDate()).toBe("2026-05-25");

@@ -113,8 +113,14 @@ describe("posting-engine cash_advance source type (B2)", () => {
     expect(result.result).toBe("posted");
     expect(result.source_transaction_type).toBe("cash_advance");
 
-    // DEBIT resolves to the B1 cash_advance account via the category resolver.
-    expect(mockResolveAccountForCategory).toHaveBeenCalledWith(OPCO, "cash_advance", "cash_advance");
+    // DEBIT resolves to the B1 cash_advance account via the category resolver. ACCT-F2026092584 —
+    // passes this function's own client (4th arg) so the read runs on it, not a second connection.
+    expect(mockResolveAccountForCategory).toHaveBeenCalledWith(
+      OPCO,
+      "cash_advance",
+      "cash_advance",
+      expect.objectContaining({ query: expect.any(Function) })
+    );
 
     expect(postingLines).toHaveLength(2);
     const debit = postingLines.find((l) => l.debit_or_credit === "debit");
