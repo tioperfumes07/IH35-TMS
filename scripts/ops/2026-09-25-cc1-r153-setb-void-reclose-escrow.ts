@@ -68,27 +68,35 @@ async function main() {
   const { closeSettlementPayRun } = await import("../../apps/backend/src/driver-finance/settlement-payrun-close.service.js");
 
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
-  // ROOT CAUSE, found after 5 live failed attempts (every mitigation short of this one -- session-
-  // scope config, per-read retry, a brand-new connection per read, a 5s pacing delay -- still failed
-  // deterministically on the settlement immediately after any reverseSettlementPayRun/
-  // closeSettlementPayRun call): those two engine functions run inside withCurrentUser
-  // (apps/backend/src/auth/db.ts), which does `SET LOCAL ROLE ih35_app` on its pooled connection
-  // before running -- LOCAL/transaction-scoped, so it SHOULD auto-revert on COMMIT. But this
-  // session's own already-documented landmine ("Neon pooled connection downgrades to ih35_app --
-  // RESET ROLE before DDL") is exactly PgBouncer transaction-pooling handing that SAME underlying
-  // Postgres BACKEND PROCESS to the NEXT unrelated frontend connection (mine) without a clean
-  // RESET ROLE in between -- so my very next query, even on a brand-new pg.Pool().connect() client
-  // pointed at the SAME db, can silently run AS ih35_app (a restricted, RLS-enforced role) instead
-  // of the DATABASE_URL login. `app.bypass_rls` alone doesn't help if ih35_app's own grants (not
-  // just its RLS policies) don't cover the read. Fix: RESET ROLE first, on every fresh connection,
-  // before trusting anything about its role.
+  // ROOT CAUSE, found after 7 live failed attempts (one production, six rehearsal -- every earlier
+  // mitigation, including a brand-new pool.connect() per read and RESET ROLE, still failed
+  // deterministically against production's real concurrent multi-seat load, even though the LAST
+  // rehearsal pass -- run against a quiet branch with zero concurrent traffic -- came back fully
+  // clean, which is what exposed this): `client = await pool.connect()` gives node-postgres's own
+  // CLIENT-SIDE dedicated socket, but that socket still talks to Neon's SERVER-SIDE PgBouncer in
+  // transaction-pooling mode. Four separate, individually-autocommitted statements over that ONE
+  // socket (RESET ROLE; two set_config calls; the actual SELECT) can each be transaction-pooling-
+  // bound to a DIFFERENT real Postgres backend -- fine on a quiet branch where the pool has spare
+  // idle backends and keeps handing back the same one by chance, but under production's real
+  // concurrent load from every other seat's own sessions, a later statement in this same sequence
+  // can land on a backend another seat's connection left with `SET LOCAL ROLE ih35_app` active
+  // (withCurrentUser, apps/backend/src/auth/db.ts) or otherwise mid-flight, invisibly changing what
+  // the SELECT is allowed to see. Fix: wrap all four statements in one explicit BEGIN...COMMIT --
+  // PgBouncer transaction-pooling guarantees one bound backend for the life of an open transaction,
+  // which is the actual contract this needs, not best-effort statement-to-statement luck.
   async function queryWithBypass<T extends pg.QueryResultRow = { id: string }>(sql: string, params: unknown[]): Promise<pg.QueryResult<T>> {
     const client = await pool.connect();
     try {
+      await client.query(`BEGIN`);
       await client.query(`RESET ROLE`);
       await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [USMCA_ID]);
-      return await client.query<T>(sql, params);
+      const result = await client.query<T>(sql, params);
+      await client.query(`COMMIT`);
+      return result;
+    } catch (err) {
+      await client.query(`ROLLBACK`).catch(() => {});
+      throw err;
     } finally {
       client.release();
     }
