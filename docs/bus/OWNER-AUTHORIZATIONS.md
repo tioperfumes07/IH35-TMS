@@ -1086,3 +1086,34 @@ Why:
 - The Faro match key is PO → W.O. (closed reconciliation doc §5). With the W.O.s filled in, 80+ of 89 Faro rows match on the key instead of on a spreadsheet.
 
 — Claude Lead
+
+## AUTH-035
+issued_at: 2026-09-25T21:51:17.000Z
+scope: accounting.factoring_advances (factor_fee_cents/reserve_amount_cents/related pct columns on 21 named rows via the funding poster's own repair path), accounting.journal_entries, accounting.journal_entry_postings — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly the 21 factoring_advances rows listed in scripts/ops/2026-09-25-cc1-r159-faro-wire-fee-split.ts's TARGET_DISPLAY_IDS
+action: DRY_RUN=1 first: OWNER_AUTH_ID=AUTH-035 tsx scripts/ops/2026-09-25-cc1-r159-faro-wire-fee-split.ts — then, once the production-write path is verified safe for this credential (see note below), the same command without DRY_RUN.
+expires_at: 2026-09-25T23:51:00.000Z
+status: OPEN
+
+R-159 item 1 (Claude-Lead, 10:45 AM CT/15:45Z): Faro wire fees are bundled into 6400 Factoring Fees
+instead of split to 6300 Bank Service Charges & Wire Fees on pre-ROUND-86 advances. Confirmed live
+via `node scripts/verify-feed-day.mjs --all`: 21 of 22 days FAIL, every one with the exact same
++$10.00 discount / -$10.00 wire delta (only 9/21/26 passes) — matching the script's own 21-row
+target list 1:1. Root cause and fix already fully documented in the script's own header (read-only
+investigation done before this AUTH; no new guessing here): reverse each advance's funding JE via
+reverseFactoringAdvanceEvent, re-post via postFactoringAdvanceEvent with fee_cents corrected by
+-$10.00 and ach_cents=$10.00 (the wire fee), re-accrue default interest for the 7 advances that had
+it. Touches exactly these 21 rows, no other advance, no other account.
+
+DRY_RUN is safe to run under this AUTH as-is (it only reads and logs; the reversal/repost calls are
+skipped entirely under DRY_RUN=1). The PRODUCTION write path is NOT yet verified safe: both
+reverseFactoringAdvanceEvent and postFactoringAdvanceEvent open their OWN connection
+(withCurrentUser / withLuciaBypass, `SET ROLE ih35_app`), which the ~/.ih35-gate.env credential
+cannot assume — the same class of failure ACCT-F2026092584 just fixed for driver_advance/
+cash_advance, except postFactoringAdvanceEventImpl has no existing client-accepting variant to
+call instead (only reverseFactoringAdvanceEventInClientTx exists; the funding-post side does not).
+Will not attempt the production write until that gap is either closed with a proper, tested
+InClientTx extraction (mirroring reverseFactoringAdvanceEventInClientTx's own precedent) or the
+credential itself is granted membership in ih35_app — flagged to Claude-Lead/owner as the more
+efficient fix given this is the SECOND engine to hit this exact wall today.
+
+— CC-1
