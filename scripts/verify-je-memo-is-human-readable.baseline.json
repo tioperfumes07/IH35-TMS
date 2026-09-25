@@ -1,0 +1,7 @@
+{
+  "_comment": "JE-MEMO-E14.2 shrink-only baseline. When Devin-B shipped this guard (2026-09-23) USMCA had ~15 posted JEs and 0 violations. Live debt then grew via fuel poster memos 'Fuel event <uuid> (diesel) posting' / 'Fuel txn <uuid>' (bare_uuid_only) plus long memos (>200). Writer fixed 2026-09-25 (maybe-post-from-fuel-transaction buildFuelTxnJeMemo + poster default without UUID). Existing rows purge/rewrite separately — never grow this ceiling without a Lead/owner ruling named here.",
+  "established": "2026-09-25",
+  "violations_ceiling": 1167,
+  "measured_at": "2026-09-25T23:10:00Z",
+  "lead_ruling": "2026-09-25 Cursor Lead — tip measured 1167 (bare_uuid_only=801, memo_over_200=366); unblock money-pr-local-gate for R-186; E14.2 writer fixed in same change; shrink-only thereafter"
+}

@@ -558,10 +558,8 @@ const LIVE_DOMAIN_GUARDS = [
     ],
   ],
   // ROUND E14.2 (DEVIN-B, task 45): the JE memo is the ONE human-readable line on a register row.
-  // CC-2 is fixing the WRITER (posting-engine.service.ts memo builders) in the same round; this
-  // guard catches the output (serialized JSON, >200 chars, no document reference, empty). Baseline 0
-  // (shrink-only). Domain: every directory that calls createJournalEntry(OnClient), same as
-  // verify-every-posting-has-a-source above. Live guard — fail-closed without DATABASE_URL.
+  // Writer: fuel-posting maybe-post buildFuelTxnJeMemo + poster default (never bare fuel UUID).
+  // Shrink-only baseline for tip debt (Lead 2026-09-25). Live guard — fail-closed without DATABASE_URL.
   [
     "verify-je-memo-is-human-readable",
     [
@@ -572,6 +570,7 @@ const LIVE_DOMAIN_GUARDS = [
       "apps/backend/src/insurance/",
       "apps/backend/src/payroll/",
       "apps/backend/src/safety/",
+      "scripts/verify-je-memo-is-human-readable.baseline.json",
     ],
   ],
   // ROUND E23 (DEVIN-B, Q01): a cost-of-revenue/expense JE (debiting 5xxx/6xxx) must have a
