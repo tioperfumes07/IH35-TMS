@@ -1,10 +1,10 @@
 {
-  "healthzSha": "cee30f5",
-  "generated_at": "2026-09-24T16:37:41.114Z",
+  "healthzSha": "b815157",
+  "generated_at": "2026-09-25T12:07:35.590Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "cee30f5",
+    "deployedSha": "b815157",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 0,
-      "title": "FINDING: After Faro Aug TIE — Aug settlement feed_input 61/61 LIVE",
+      "number": 22616,
+      "title": "FINDING: N/A LANE: DOCS (R-153.8 D3 -- located the real source of \"11\", it's a different, mostly non-overlapping finding from mine)",
       "state": "merged",
-      "mergedAtCt": "09/24/2026, 11:11 AM CT",
-      "url": "",
-      "sha": "cee30f5485",
-      "committedAtIso": "2026-09-24T11:11:33-05:00"
+      "mergedAtCt": "09/25/2026, 07:01 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22616",
+      "sha": "8e87389183",
+      "committedAtIso": "2026-09-25T07:01:14-05:00"
     },
     {
-      "number": 22534,
-      "title": "Cursor-FEED-HONESTY-LIVE-MEASURE — Faro purchase days LIVE closed through 8/31",
+      "number": 22615,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "09/24/2026, 09:09 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22534",
-      "sha": "f107c1444d",
-      "committedAtIso": "2026-09-24T09:09:37-05:00"
+      "mergedAtCt": "09/25/2026, 06:59 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22615",
+      "sha": "b815157440",
+      "committedAtIso": "2026-09-25T11:59:31Z"
     },
     {
-      "number": 22533,
-      "title": "FINDING: FEED-813-CLOSE",
+      "number": 22614,
+      "title": "FINDING: N/A LANE: DOCS (self-caught WORM-archive-collision root cause, found+fixed by CC-3: docs/bus/archive/NOW-CC-3-2026-09-25-3.md)",
       "state": "merged",
-      "mergedAtCt": "09/24/2026, 01:49 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22533",
-      "sha": "891771ecfe",
-      "committedAtIso": "2026-09-24T01:49:50-05:00"
+      "mergedAtCt": "09/25/2026, 06:47 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22614",
+      "sha": "99bb4c9912",
+      "committedAtIso": "2026-09-25T06:47:08-05:00"
     },
     {
-      "number": 22532,
-      "title": "FINDING: FEED-812-CLOSE",
+      "number": 22613,
+      "title": "FINDING: N/A LANE: DOCS (R-153.8 D3 -- scope question before voiding, \"11 JEs\" does not match the 18-settlement finding in PR #22594)",
       "state": "merged",
-      "mergedAtCt": "09/24/2026, 01:32 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22532",
-      "sha": "200cbcda72",
-      "committedAtIso": "2026-09-24T01:32:20-05:00"
+      "mergedAtCt": "09/25/2026, 06:45 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22613",
+      "sha": "b855987dc2",
+      "committedAtIso": "2026-09-25T06:45:37-05:00"
     },
     {
-      "number": 22531,
-      "title": "FINDING: FEED-811-CLOSE",
+      "number": 22608,
+      "title": "Claude-3: FINDING: N/A LANE: DOCS (R-153.8 item 4 proof-script + 2 real findings; bus size-cap fix for all 3 seats)",
       "state": "merged",
-      "mergedAtCt": "09/24/2026, 01:18 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22531",
-      "sha": "f52bf1e4ec",
-      "committedAtIso": "2026-09-24T01:18:50-05:00"
+      "mergedAtCt": "09/25/2026, 06:44 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22608",
+      "sha": "49fd023391",
+      "committedAtIso": "2026-09-25T06:44:41-05:00"
     },
     {
-      "number": 22530,
-      "title": "Cursor-FEED-810-CLOSE closed_purchase_days 2026-08-10",
+      "number": 22612,
+      "title": "FINDING: ACCT-F20260925M LANE: FINANCIAL (R-153.8 D2 -- expense unit/driver/trailer linkage filled from own load, AUTH-008 consumed)",
       "state": "merged",
-      "mergedAtCt": "09/24/2026, 01:01 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22530",
-      "sha": "ebfa320271",
-      "committedAtIso": "2026-09-24T01:01:08-05:00"
+      "mergedAtCt": "09/25/2026, 06:44 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22612",
+      "sha": "b3331cf1e1",
+      "committedAtIso": "2026-09-25T06:44:02-05:00"
     },
     {
-      "number": 22529,
-      "title": "FINDING: FEED-LAW-52",
+      "number": 22611,
+      "title": "FINDING: N/A LANE: DOCS (R-153.8 D2 -- AUTH-008 issued before execution, expense load-linkage fill)",
       "state": "merged",
-      "mergedAtCt": "09/24/2026, 12:33 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22529",
-      "sha": "de9dd358ef",
-      "committedAtIso": "2026-09-24T00:33:00-05:00"
+      "mergedAtCt": "09/25/2026, 06:40 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22611",
+      "sha": "e1588b20e3",
+      "committedAtIso": "2026-09-25T06:40:35-05:00"
     },
     {
-      "number": 22528,
-      "title": "FINDING: N/A LANE: DOCS (ROUND 152.1 -- the process is the Faro purchase day; feed_cursor.json shows 0 days ever closed; start at 8/10)",
+      "number": 22610,
+      "title": "CC-2-r153.6: USMCA fuel wrong-1090-credit remediation -- LIVE on production, verified clean",
       "state": "merged",
-      "mergedAtCt": "09/23/2026, 11:35 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22528",
-      "sha": "45f3c23848",
-      "committedAtIso": "2026-09-23T23:35:04-05:00"
+      "mergedAtCt": "09/25/2026, 06:36 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22610",
+      "sha": "d1af80fbfb",
+      "committedAtIso": "2026-09-25T06:36:37-05:00"
     },
     {
-      "number": 22527,
-      "title": "FINDING: N/A LANE: DOCS (ROUND 152 -- the scorecard: verify-alwaystrack-parity 0 of 12 documents exact, verify-feed-is-whole fake-green 40/89; build order to all seven seats)",
+      "number": 22609,
+      "title": "FINDING: ACCT-F20260925L LANE: FINANCIAL (R-153.8 D1 -- self-carried invoice 026/13540 payment posted, AUTH-007 consumed)",
       "state": "merged",
-      "mergedAtCt": "09/23/2026, 11:27 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22527",
-      "sha": "5d692865d9",
-      "committedAtIso": "2026-09-23T23:27:41-05:00"
+      "mergedAtCt": "09/25/2026, 06:35 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22609",
+      "sha": "4d944bc49f",
+      "committedAtIso": "2026-09-25T06:35:17-05:00"
     },
     {
-      "number": 22526,
-      "title": "FINDING: N/A LANE: DOCS (ROUND 151.5 -- Cursor: root cause is UNMATCHED name in faro_reconciliation_register.csv; invoice->load from reconciled sheets; real shortfall 18,700.00; guard verify-every-advance-is-one-of-the-89)",
+      "number": 22607,
+      "title": "FINDING: N/A LANE: DOCS (R-153.8 D1 -- AUTH-007 issued before execution for invoice 026/13540 payment; NOW-CC-1 trim #7, WORM)",
       "state": "merged",
-      "mergedAtCt": "09/23/2026, 11:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22526",
-      "sha": "65317ffedd",
-      "committedAtIso": "2026-09-23T23:22:08-05:00"
+      "mergedAtCt": "09/25/2026, 06:32 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22607",
+      "sha": "aea8bf0691",
+      "committedAtIso": "2026-09-25T06:32:02-05:00"
     }
   ]
 }

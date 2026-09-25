@@ -66,6 +66,13 @@
         "voided_at"
       ]
     },
+    "driver_finance.deduction_recovery_links": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
     "driver_finance.driver_advances": {
       "canonical_column": "voided_at",
       "predicate": "voided_at IS NULL",
@@ -181,6 +188,13 @@
         "voided_at",
         "deleted_at",
         "is_active"
+      ]
+    },
+    "accounting.factoring_advances": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
       ]
     },
     "accounting.factoring_default_interest_accruals": {
