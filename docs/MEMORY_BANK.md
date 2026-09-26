@@ -190,11 +190,13 @@ Measured (Neon `br-fancy-credit-akjnd07a`, bypass_rls=lucia, tip `6d18a73826`):
   → Cr **2175**, never 6890/5310; Post blocked for that section if 2175 missing) · Additional pay ·
   Deductions · Cash advances · Escrow (hold +, release/forfeit −) · Control totals (green/red to the
   cent vs typed PDF).
-- **Engines (R-186 on main):** preview/post already orchestrate fuel/expense/advance/escrow/control
-  totals. **BE follow-up (held):** Drv Cr 2175 JE, `buildInvoiceFromLoad` + Faro auto-submit,
-  `syncSettlementLoadsToBilling` — blocked by LIVE `verify-purge-era-closures-still-hold` red
-  (pasted Lead OUTBOX 2026-09-25; never baselined). FE ships Preview-first (`allowPost=false`).
-- **DONE bar:** Preview-first. Guard `scripts/verify-settlement-creator-ties-document.mjs`.
+- **Engines (R-186 on main):** preview/post orchestrate fuel/expense/advance/escrow/control totals.
+  Drv reimbursement preview → Cr **2175** (blocker if missing). **LIVE 2026-09-26:** `allowPost={true}`
+  on SettlementsPage; squash `024cb391ca`; API `git_sha=024cb391…`; FE bundle `allowPost:!0`.
+  **BE follow-up still open:** invoice mint + Faro auto-submit on Post (`buildInvoiceFromLoad` /
+  `syncSettlementLoadsToBilling`).
+- **DONE bar:** Post live (control totals still gate `can_post`). Guard
+  `scripts/verify-settlement-creator-ties-document.mjs`.
 - **Love's / fuel-stop location catalog (2026-09-26):** `mdata.locations` has **604** `LOVES-*`
   `fuel_stop` rows (name `Love's #N — City, ST`, lat/lng set; `address_line1` still null on the
   network-file seed). Shared `FuelStopLocationPicker` + `formatFuelStopLocationLabel` (street first

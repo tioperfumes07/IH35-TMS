@@ -1,5 +1,11 @@
 # OUTBOX-CURSOR
 
+**2026-09-26T02:10Z · R-186.2 Settlement Creator LIVE**
+
+CURSOR | R-186.2 DONE | squash `024cb391ca` (#22789) | API healthz/shallow `git_sha=024cb391ca4f980eb8313edd43b4fd76b98f9d0d` | FE SettlementsPage chunk `allowPost:!0` + FuelStop + `sc-je` | go26 exit 0 · creator-ties --selftest exit 0 · fuel-stop-catalog --selftest exit 0 | Post enabled from Settlements `?creator=1`. Load boards: CC-3 LAW5 #22749 + alias-shadow #22757 already MERGED — Cursor does not re-open. NEXT: Chrome owner walk Post; invoice/Faro auto-submit on Creator Post still follow-up.
+
+---
+
 **2026-09-25T19:40 CT · R-186.2 PASTE TO LEAD — live domain red (NOT baselined)**
 
 Cursor R-186.2 half-panel Creator is FE-ready. Gate red on live driver-finance domain (triggered by any
