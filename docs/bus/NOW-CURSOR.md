@@ -1,16 +1,14 @@
-# NOW-CURSOR — 2026-09-26 (Creator invoice + Faro Post)
+# NOW-CURSOR — 2026-09-26 (Creator invoice + Faro Post LIVE)
 ## CURRENT
-Branch: `cursor/creator-invoice-faro-post-c89b` off tip `44bba06e0f`.
-Wiring delivered-load invoice mint + Faro auto-submit on Settlement Creator Post (owner CONTINUE).
+**SHIPPED + DEPLOYED:** #22843 squash `8942623a99` · healthz `git_sha=8942623a99…` (shallow HTTP 200).
 
-## SHIPPED (prior)
-- Creator AlwaysTrack numbers #22835 (`44bba06e0f`)
-- R207 bank match cascade #22829
+Creator Post (delivered loads): `buildInvoiceFromLoad` + `sendDraftInvoice(historical_backfill)` in-tx;
+after commit `faro_usmca` → `autoSubmitDeliveredLoadToFactor` + `syncSettlementLoadsToBilling`.
+Not-delivered skips invoice/Faro.
 
 ## NEXT
-1. Ship this PR (money-pr-local-gate / focused green)
-2. Deploy Render · Chrome Post delivered load → invoice sent + Faro submitted
-3. Edit = void + repost (next slice)
+1. Owner Chrome: Settlements `?creator=1` Post a delivered faro_usmca load → prove invoice `sent` + Faro `submitted`
+2. Edit = void + repost (next slice)
 
 ## COORD
 - LANE_CROSS: `docs/bus/09-26-2026-LEAD-RULING-CURSOR-CREATOR-INVOICE-FARO-POST-LANE-CROSS.md`
