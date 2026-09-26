@@ -1,18 +1,28 @@
-# ROUND 189 R-211 root fix landed; Lead owns the 6 bills (AUTH-071) — CC-1 — 2026-09-26 06:41Z.
-Prior content archived: `docs/bus/archive/NOW-CC-1-2026-09-26-14.md` (WORM).
+# FLAG: my AUTH-062 fix vanished all 6 ROUND 189 loads off the LIVE Dispatch board — CC-1 — 06:52Z.
+Prior content archived: `docs/bus/archive/NOW-CC-1-2026-09-26-15.md` (WORM).
 
-CC-1 | R-211 | DONE | code-only, no AUTH | appendSettlementLineFromDriverBillIfMissing now syncs
-driver_bills.settled_in_settlement_id whenever it appends a line (was never synced) -- ACCT-F2026092661,
-merged. Lead is linking the 6 live ROUND 189 bills by hand under AUTH-071; not touching them per Lead's
-instruction.
+CC-1 | ROUND 189 REGRESSION | FOUND, NOT YET FIXED | root cause confirmed live, no write made pending
+your call (you're mid-AUTH-071 on these same bills). `views.live_loads` (migration 202614180000)
+excludes ANY load from BOTH live_state buckets the instant it has an active driver_finance.settlement_
+lines row — by design, for a load whose round trip already ended. My AUTH-062 fix (materializing an
+earnings line via appendSettlementLineFromDriverBillIfMissing, to satisfy verify-no-empty-zero-
+settlement) did exactly that to all 6 loads while they're still dispatched/in-transit, not delivered.
+Confirmed via the live API (board_scope=live): all 6 (13609/16/17/18/20/21) return 0 rows now, though
+board_scope=off finds them correctly with status='dispatched'. This is the opposite of ROUND 189's own
+goal (the board must show them as the open set).
 
-Prior: ROUND 189 steps 2-6 booked/fixed live under AUTH-061/062 (6 loads, mileage, settlement lines);
-both redded guards LIVE PASS.
+Root cause of the guard conflict: verify-no-empty-zero-settlement's SQL flags "zero settlement_lines",
+but a legitimately-open, correctly-loaded pre-settlement (P-0008/9/10/11 — the 4 auto-minted for these
+drivers) is exactly the guard's own documented exception ("an open pre-settlement is legitimate ... it
+must carry its loads" — its loads ARE linked). The baseline.json whitelist mechanism the guard already
+has is the intended path for this, not a premature earnings line.
+
+Proposed fix (not yet run — need your call given AUTH-071 is live on these bills right now): void the
+6 settlement_lines rows I added, add P-0008/9/10/11 to verify-no-empty-zero-settlement.baseline.json as
+known-open+loaded, re-confirm the Dispatch board shows all 6 live. Holding until you weigh in.
 
 ## Still open
-Screenshot proof (Dispatch board + Load Costs) still pending -- board search/filter behaved oddly
-mid-capture, investigating before pasting. ROUND 189 step 6 guards
-(verify-no-minted-presettlement-number.mjs, verify-open-set-matches-source.mjs) don't exist yet. 13619's
-customer/WO mismatch vs the xlsx flagged (pre-existing). G4 Sch Fee GL ruling. G3a. ROUND 202 c/d+STEP3.
+Screenshot proof still pending on this fix. ROUND 189 step 6 guards don't exist yet. 13619 customer/WO
+mismatch (pre-existing). G4 Sch Fee GL ruling. G3a. ROUND 202 c/d+STEP3.
 
-CC-1 | 06:41Z | R-211 fix merged. Resuming screenshot proof.
+CC-1 | 06:52Z | Holding on the 6 settlement lines — awaiting your call, not touching AUTH-071's bills.
