@@ -679,20 +679,10 @@ const LIVE_DOMAIN_GUARDS = [
       "accounting.journal_entries",
     ],
   ],
-  // ROUND 142.3 (DEVIN-B): the day-close gate. Prevents another wipe. Takes one purchase day,
-  // returns exit 0 (GREEN, day closes) or exit 1 (RED, day does not close). 12 assertions.
-  [
-    "reconcile-feed-day",
-    [
-      "apps/backend/src/accounting/factoring-posting/",
-      "apps/backend/src/factoring/",
-      "docs/bus/00-FEED-MANIFEST.md",
-      "accounting.factoring_advances",
-      "accounting.journal_entries",
-      "accounting.payments",
-      "mdata.loads",
-    ],
-  ],
+  // ROUND 142.3 (DEVIN-B) reconcile-feed-day is the per-DAY close gate: it REQUIRES a purchase-day argument
+  // (node scripts/reconcile-feed-day.mjs 8/10/26) and is run by the day-close procedure for that day. Listed here it
+  // was spawned with NO argument and failed "usage" on every in-scope push (Lead 2026-09-26) — it cannot run in this
+  // zero-argument loop, so it is not listed; the whole-book control is verify-usmca-book-equals-faro-and-alwaystrack.
   // ROUND 143.2 (DEVIN-B): no document without a ledger. Derives document classes from live schema.
   // FAIL on any class where non-voided documents carry NO ledger. 7-day scoped (LAW 3).
   [
