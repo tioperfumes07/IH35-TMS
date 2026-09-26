@@ -22,7 +22,10 @@ const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 // table -> { floor, exact } — exact:true means the count must equal floor precisely, never rise
 // or fall; exact:false (default) means the count must be >= floor (the feed can only add rows).
 const FLOORS = {
-  "banking.bank_transactions": { floor: 1133, exact: true },
+  // Raised 2026-09-26 (Claude-Lead): 1133 -> 1146 = 13 Plaid feed rows created 2026-09-24 11:00Z (source='plaid').
+  // "exact" was a single-session claim (that session made no INSERT/DELETE); the live bank feed legitimately adds
+  // rows, so the table is a FLOOR like every other feed table. Deletes stay forbidden by the static scan (1).
+  "banking.bank_transactions": { floor: 1146 },
   "geo.geofences": { floor: 611 },
   "mdata.locations": { floor: 621 },
   "mdata.customers": { floor: 1239 },
