@@ -92,15 +92,20 @@ const FUEL_TYPE_ITEM_NAME: Record<string, string> = {
   reefer_diesel: "Fuel-Reefer-Diesel",
 };
 
-async function resolveFuelItem(
+// ROUND 192 (Lead, 2026-09-25) — Ruling R-30.1: fuel posts at NET, the card's own fee posts
+// separately, Dr 5005 / Cr the card rail. The account is not hardcoded here — it lives on this
+// catalog item, same as every fuel-type item above (the Lead points this item at 5005 in
+// AUTH-042; this file only ever resolves by name and refuses if the item or its account is
+// missing).
+const FUEL_FEE_ITEM_NAME = "Fuel Card Fee";
+
+/** Shared by resolveFuelItem (fuel-type-keyed) and the fee-line resolver (fixed name) — the
+ *  account always lives on the catalog item, this function never guesses one. */
+async function resolveItemByName(
   client: QueryableClient,
   operatingCompanyId: string,
-  fuelType: string | null,
+  itemName: string,
 ): Promise<{ itemId: string; expenseAccountId: string; itemName: string } | { refused: string }> {
-  const itemName = fuelType ? FUEL_TYPE_ITEM_NAME[fuelType] : undefined;
-  if (!itemName) {
-    return { refused: `fuel_type "${fuelType}" has no mapped catalogs.items entry — refusing rather than posting to a default (only diesel/def/reefer_diesel are mapped)` };
-  }
   const res = await client.query<{ id: string; expense_account_id: string | null }>(
     `SELECT id::text, default_expense_account_id::text AS expense_account_id
        FROM catalogs.items
@@ -114,6 +119,27 @@ async function resolveFuelItem(
     return { refused: `catalogs.items "${itemName}" not found or has no default_expense_account_id for company ${operatingCompanyId} — refusing rather than posting to a default` };
   }
   return { itemId: row.id, expenseAccountId: row.expense_account_id, itemName };
+}
+
+async function resolveFuelItem(
+  client: QueryableClient,
+  operatingCompanyId: string,
+  fuelType: string | null,
+): Promise<{ itemId: string; expenseAccountId: string; itemName: string } | { refused: string }> {
+  const itemName = fuelType ? FUEL_TYPE_ITEM_NAME[fuelType] : undefined;
+  if (!itemName) {
+    return { refused: `fuel_type "${fuelType}" has no mapped catalogs.items entry — refusing rather than posting to a default (only diesel/def/reefer_diesel are mapped)` };
+  }
+  return resolveItemByName(client, operatingCompanyId, itemName);
+}
+
+/** resolveFeeItem — the "Fuel Card Fee" item, resolved by name exactly like resolveFuelItem.
+ *  Never called unless fee_amount > 0. */
+async function resolveFeeItem(
+  client: QueryableClient,
+  operatingCompanyId: string,
+): Promise<{ itemId: string; expenseAccountId: string; itemName: string } | { refused: string }> {
+  return resolveItemByName(client, operatingCompanyId, FUEL_FEE_ITEM_NAME);
 }
 
 export type FuelExpenseDocumentOutcome =
@@ -146,6 +172,9 @@ type FuelRow = {
   location_city: string | null;
   location_state: string | null;
   archived_at: string | null;
+  gross_cost: string | null;
+  discount_amount: string | null;
+  fee_amount: string | null;
 };
 
 /**
@@ -161,7 +190,8 @@ export async function createExpenseFromFuelTransaction(
     `SELECT id::text, operating_company_id::text, vendor_id::text, load_id::text,
             driver_id::text, unit_id::text, fuel_type, gallons::text, price_per_gallon::text,
             total_cost::text, transaction_at::text, purchased_at::text, transaction_reference,
-            location_city, location_state, archived_at::text
+            location_city, location_state, archived_at::text,
+            gross_cost::text, discount_amount::text, fee_amount::text
        FROM fuel.fuel_transactions
       WHERE id = $1 AND operating_company_id = $2`,
     [input.fuel_transaction_id, input.operating_company_id],
@@ -237,19 +267,47 @@ export async function createExpenseFromFuelTransaction(
 
   // Cents is the authoritative spine everywhere in this codebase; the legacy numeric column
   // mirrors it in dollars. Rounding happens once, here, not at three call sites.
+  // ROUND 192 / Ruling R-30.1: total_cost is what the card charged for the FUEL — NET. It is
+  // never touched by gross_cost/discount_amount; those are memo-only context, never GL math.
   const amountCents = Math.round(totalCost * 100);
+
+  // ROUND 192 (Lead, 2026-09-25) — the card's own fee posts as its OWN line, on its OWN item
+  // ("Fuel Card Fee"), never folded into the fuel line. Refuse rather than silently dropping a
+  // real fee if the item isn't there yet (the Lead creates it in AUTH-042, after this PR merges).
+  const feeAmount = Number(fuel.fee_amount ?? "0");
+  const feeCents = Number.isFinite(feeAmount) && feeAmount > 0 ? Math.round(feeAmount * 100) : 0;
+  let feeItem: { itemId: string; expenseAccountId: string; itemName: string } | null = null;
+  if (feeCents > 0) {
+    const resolved = await resolveFeeItem(client, input.operating_company_id);
+    if ("refused" in resolved) {
+      return { outcome: "refused", reason: `fuel transaction ${fuel.id}: ${resolved.refused}` };
+    }
+    feeItem = resolved;
+  }
+  const totalAmountCents = amountCents + feeCents;
 
   const where =
     [fuel.location_city, fuel.location_state].filter(Boolean).join(", ") || "location not recorded";
   const gallons = fuel.gallons ? `${fuel.gallons} gal` : "gallons not recorded";
   const ppg = fuel.price_per_gallon ? ` @ $${fuel.price_per_gallon}/gal` : "";
+  // ROUND 192 — gross/discount are MEMO ONLY, never GL math: total_cost (net) is what actually
+  // posts, always. The memo states the reconciliation so a reader can tie the net back to the
+  // statement's own gross/discount without the ledger ever deriving from gross.
+  const grossCost = fuel.gross_cost != null ? Number(fuel.gross_cost) : null;
+  const discountAmount = fuel.discount_amount != null ? Number(fuel.discount_amount) : 0;
+  const grossDiscountNote =
+    grossCost != null && Number.isFinite(grossCost)
+      ? ` — gross $${grossCost.toFixed(2)} − discount $${discountAmount.toFixed(2)} = net $${totalCost.toFixed(2)}` +
+        (feeCents > 0 ? ` (+ fee $${(feeCents / 100).toFixed(2)})` : "")
+      : "";
   const memo =
     `${fuel.fuel_type ?? "Fuel"} purchase — ${gallons}${ppg}, ${where}` +
     (fuel.transaction_reference ? `, ref ${fuel.transaction_reference}` : "") +
+    grossDiscountNote +
     ` (document created from fuel transaction ${fuel.id}; amount as charged, not derived)`;
 
   if (input.dry_run) {
-    return { outcome: "would_create", expense_number: null, amount_cents: amountCents };
+    return { outcome: "would_create", expense_number: null, amount_cents: totalAmountCents };
   }
 
   // ---- 3b. ADOPT THE POSTING THAT ALREADY EXISTS. --------------------------------------
@@ -304,6 +362,20 @@ export async function createExpenseFromFuelTransaction(
     };
   }
   const adoptedJeId = jeRes.rows[0]?.je ?? null;
+
+  // ROUND 192 — an ADOPTED journal entry was posted before the fee line existed as a concept: it
+  // has no fee leg, so this document cannot both adopt that entry AND carry a real fee_amount
+  // without silently understating what the entry actually posted. Refuse rather than adopt a JE
+  // that does not match the document's own total.
+  if (adoptedJeId && feeCents > 0) {
+    return {
+      outcome: "refused",
+      reason:
+        `fuel transaction ${fuel.id} would adopt journal entry ${adoptedJeId}, but fee_amount is ` +
+        `$${(feeCents / 100).toFixed(2)} — an already-posted entry has no fee leg, so adopting it ` +
+        `here would silently understate the document. Not written.`,
+    };
+  }
 
   // ---- 4. THE CORRECT EXISTING SERIES FOR THIS DOCUMENT'S SHAPE --------------------------
   // R-168: load-attributed -> generateExpenseNumber (load-scoped, owner law); no load ->
@@ -365,7 +437,9 @@ export async function createExpenseFromFuelTransaction(
       // total_amount_cents is the REAL column and it is bigint NOT NULL. There is no
       // `total_amount` numeric column on accounting.expenses -- verified live. Cents is the
       // spine; nothing here divides by 100 and hands a float to the ledger.
-      amountCents,
+      // ROUND 192: the document's total is net + fee (both lines), never just the fuel line --
+      // "lines must sum to total" applies here exactly like every other multi-line expense.
+      totalAmountCents,
       memo,
       expenseNumber,
       fuel.id,
@@ -409,6 +483,34 @@ export async function createExpenseFromFuelTransaction(
     ],
   );
 
+  // ROUND 192 — LINE 2, the card's own fee, on its own item/account. Same shape as line 1
+  // (qty 1, rate_cents = amount_cents, 'each' -- the same expense_lines_item_qty_rate_amount_check
+  // constraint applies to every item line, not just line 1). Only written when fee_amount > 0;
+  // feeItem is resolved (or the whole document already refused) above.
+  if (feeCents > 0 && feeItem) {
+    const feeMemo = `Card fee — ${fuel.fuel_type ?? "Fuel"} purchase ${fuel.id}` + (fuel.transaction_reference ? `, ref ${fuel.transaction_reference}` : "");
+    await client.query(
+      `
+        INSERT INTO accounting.expense_lines (
+          operating_company_id, expense_id, line_sequence, amount, amount_cents, description,
+          load_id, load_required, expense_account_uuid, item_id, quantity, rate_cents, unit_of_measure
+        )
+        VALUES ($1::uuid, $2::uuid, 2, $3, $4::bigint, $5, $6::uuid, $7, $8::uuid, $9::uuid, 1, $4::bigint, 'each')
+      `,
+      [
+        input.operating_company_id,
+        expenseId,
+        feeCents / 100,
+        feeCents,
+        feeMemo,
+        fuel.load_id,
+        Boolean(fuel.load_id),
+        feeItem.expenseAccountId,
+        feeItem.itemId,
+      ],
+    );
+  }
+
   // R-168 — a load-attributed expense also gets its expense_attribution.expense_load_links row —
   // the same thing expenses.routes.ts's own two load-attribution branches write, previously
   // missing entirely from this path (the LV-EXPENSE-NUMBER-NEVER-POPULATED class of gap).
@@ -448,7 +550,9 @@ export async function createExpenseFromFuelTransaction(
       load_id: fuel.load_id,
       driver_id: fuel.driver_id,
       unit_id: fuel.unit_id,
-      amount_cents: amountCents,
+      amount_cents: totalAmountCents,
+      fuel_amount_cents: amountCents,
+      fee_amount_cents: feeCents,
       transaction_date: txnDate,
       adopted_journal_entry_id: adoptedJeId,
       status: adoptedJeId ? "posted" : "draft",
@@ -464,7 +568,7 @@ export async function createExpenseFromFuelTransaction(
     outcome: "created",
     expense_id: expenseId,
     expense_number: expenseNumber,
-    amount_cents: amountCents,
+    amount_cents: totalAmountCents,
     adopted_journal_entry_id: adoptedJeId,
   };
 }
