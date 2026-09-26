@@ -1880,7 +1880,16 @@ issued_at: 2026-09-26T04:28:20.000Z
 scope: accounting.expenses (27 rows voided + 27 new rows created, load-attributed) + accounting.expense_lines (27 new lines) + their reversal/repost JEs — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: OWNER_AUTH_ID=AUTH-059 tsx scripts/ops/2026-09-26-cc1-r185-repost-27-driver-paid-expenses.ts (no dry run, per owner order)
 expires_at: 2026-09-26T06:28:20.000Z
-status: OPEN
+status: CONSUMED
+
+CONSUMED 2026-09-26T04:35Z — all 27 of 27 rows reissued live, verified via direct query (memo LIKE
+'%R-185 reissue of%'): all status='posted', posting_status='posted', all 27 payment_account_uuid now
+point at the driver's own 2175-00-NNN leaf (was 1000 Bank on all 27). Sample verified balanced JE
+(13569-17, Fernando Mecor Hernandez): Dr 6160 Parts & Supplies $37.63 / Cr 2175-00-007 "Fernando Mecor
+Hernandez — Driver Reimbursements" $37.63. New expense numbers: 13513-9, 13515-28..33, 13516-17,
+13518-17, 13522-23, 13524-29, 13536-29/30, 13538-11, 13540-12, 13549-13, 13565-20..22, 13568-31,
+13569-17, 13574-9, 13579-8, 13580-12..14, 13589-11 (old numbers voided, reversed_by_je_id set on each,
+never UPDATEd). R-185 steps 2-6 done.
 
 R-185 steps 2-6 (Lead order, 2026-09-26): the 27 driver-paid expenses in
 ~/ih35-worktrees/.cr1000.json (25 "drv" + 2 "comp" that joined per R-187 G5's ruling: 13516-8/13568-13
