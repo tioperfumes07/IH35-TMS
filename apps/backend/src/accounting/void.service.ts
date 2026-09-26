@@ -12,6 +12,7 @@ import { assertNoHistoricalJournalCoverage } from "../driver-finance/settlement-
 // The reversal + the status flip run on the SAME transaction client passed in by the caller, so they
 // are atomic. This module does not open its own transaction and does not modify the posting engine.
 
+import { boundJeMemo } from "./je-memo.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
@@ -657,7 +658,7 @@ export async function postVoidReversal(
       VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, $5::uuid, true, $6)
       RETURNING id::text
     `,
-        [params.operatingCompanyId, reversalDate, params.memo, typeId, actor.userId, originalIsSample]
+        [params.operatingCompanyId, reversalDate, boundJeMemo(params.memo), typeId, actor.userId, originalIsSample]
       )
     : await client.query<{ id: string }>(
         `
@@ -667,7 +668,7 @@ export async function postVoidReversal(
       VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true, $5)
       RETURNING id::text
     `,
-        [params.operatingCompanyId, reversalDate, params.memo, actor.userId, originalIsSample]
+        [params.operatingCompanyId, reversalDate, boundJeMemo(params.memo), actor.userId, originalIsSample]
       );
   const reversalJeId = header.rows[0]!.id;
 
