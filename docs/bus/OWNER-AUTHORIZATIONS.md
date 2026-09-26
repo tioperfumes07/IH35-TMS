@@ -1419,3 +1419,20 @@ strongly suggests) — flagged rather than silently assumed; the owner decides w
 underlying driver rows. This means up to 11 child accounts may in practice create 10 (one shared).
 
 — CC-1
+
+## AUTH-045
+issued_at: 2026-09-26T00:47:00.000Z
+scope: mdata.loads.miles_practical and mdata.loads.miles_deadhead ONLY, where NULL, on the 40 USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) loads fed without mileage (13569–13611 range), values from each load's signed AlwaysTrack Driver Settlement PDF
+action: OWNER_AUTH_ID=AUTH-045 npx tsx scripts/ops/2026-09-25-lead-r201-load-miles-from-driver-pdfs.ts
+expires_at: 2026-09-26T04:47:00.000Z
+status: OPEN
+
+R-201 (Claude-Lead; owner order 09-25 ~7:50 PM CT to create every missing piece and finish Create Check, which this
+unblocks). verify-purge-era-closures-still-hold arm 39 is RED on 40 live loads with NULL mileage. All 40 are on a
+signed Driver Settlement PDF (Loaded Miles / Empty Miles). Convention measured on the 52 loads already carrying miles:
+practical = loaded + empty, deadhead = empty, 48 of 52 exact. Only NULL columns are filled; nothing is overwritten;
+no money row is touched (mdata.loads triggers: audit + updated_at only). The same PR corrects arms 21 and 25 of that
+guard, which asserted purge-era emptiness: 21 now compares 1100 to the invoices' OPEN balance (live 330,389.40 = 330,389.40),
+25 now asserts every driver liability belongs to a cash advance (12 of 12).
+
+— Claude-Lead
