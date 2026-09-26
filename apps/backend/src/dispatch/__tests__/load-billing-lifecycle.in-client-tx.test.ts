@@ -21,21 +21,42 @@ describe("syncLoadStatusToBillingInClientTx (R-205)", () => {
     const query = vi
       .fn()
       .mockResolvedValueOnce({ rows: [{ load_status: "invoiced", invoice_status: "sent", factoring_status: "advanced" }] })
+      .mockResolvedValueOnce({ rows: [{ bills: 1, settled: 1 }] })
       .mockResolvedValueOnce({ rows: [{ id: "load-1" }] });
     const result = await syncLoadStatusToBillingInClientTx({ query }, input);
     expect(result).toEqual({ changed: true, from: "invoiced", to: "closed" });
-    expect(String(query.mock.calls[1][0])).toMatch(/UPDATE mdata\.loads/);
-    expect(query.mock.calls[1][1]).toEqual(["load-1", "closed", "opco-1", "invoiced"]);
+    expect(String(query.mock.calls[2][0])).toMatch(/UPDATE mdata\.loads/);
+    expect(query.mock.calls[2][1]).toEqual(["load-1", "closed", "opco-1", "invoiced"]);
   });
 
   it("walks completed_docs_received -> invoiced -> closed for a funded invoice", async () => {
     const query = vi
       .fn()
       .mockResolvedValueOnce({ rows: [{ load_status: "completed_docs_received", invoice_status: "sent", factoring_status: "advanced" }] })
+      .mockResolvedValueOnce({ rows: [{ bills: 2, settled: 2 }] })
       .mockResolvedValueOnce({ rows: [{ id: "load-1" }] })
       .mockResolvedValueOnce({ rows: [{ id: "load-1" }] });
     const result = await syncLoadStatusToBillingInClientTx({ query }, input);
     expect(result).toEqual({ changed: true, from: "completed_docs_received", to: "closed" });
+  });
+
+  it("R-210: a FUNDED load whose driver settlement is still open stops at invoiced (stays on the board)", async () => {
+    const query = vi
+      .fn()
+      .mockResolvedValueOnce({ rows: [{ load_status: "completed_docs_received", invoice_status: "sent", factoring_status: "advanced" }] })
+      .mockResolvedValueOnce({ rows: [{ bills: 1, settled: 0 }] })
+      .mockResolvedValueOnce({ rows: [{ id: "load-1" }] });
+    const result = await syncLoadStatusToBillingInClientTx({ query }, input);
+    expect(result).toEqual({ changed: true, from: "completed_docs_received", to: "invoiced" });
+  });
+
+  it("R-210: a funded load with NO driver bill never closes", async () => {
+    const query = vi
+      .fn()
+      .mockResolvedValueOnce({ rows: [{ load_status: "invoiced", invoice_status: "sent", factoring_status: "advanced" }] })
+      .mockResolvedValueOnce({ rows: [{ bills: 0, settled: 0 }] });
+    const result = await syncLoadStatusToBillingInClientTx({ query }, input);
+    expect(result).toEqual({ changed: false, reason: "already_at_or_past_target" });
   });
 
   it("leaves a sent, unfunded invoice's load at invoiced", async () => {

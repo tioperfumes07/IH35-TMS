@@ -205,6 +205,26 @@ export async function syncLoadStatusToBillingInClientTx(
   }
   if (!target) return { changed: false, reason: "invoice_not_billable_yet" };
 
+  // R-210 (Lead 2026-09-26, ROUND 33.2 §1 ruling): a load closes ONLY when BOTH chains are complete — revenue (the
+  // invoice is paid or factoring-funded, checked above) AND driver pay (every live driver bill on the load sits in a
+  // CLOSED driver settlement). Funded-but-unsettled loads stop at 'invoiced' and stay on the board. R-205 closed 7
+  // unsettled loads (13563, 13610, 13612, 13613, 13614, 13615, 13619) because this check was missing.
+  if (target === "closed") {
+    const driverSide = await client.query(
+      `SELECT count(*)::int AS bills,
+              count(*) FILTER (WHERE s.status = 'closed' AND s.voided_at IS NULL)::int AS settled
+         FROM driver_finance.driver_bills b
+         LEFT JOIN driver_finance.driver_settlements s ON s.id = b.settled_in_settlement_id
+        WHERE b.load_id = $1::uuid AND b.operating_company_id = $2::uuid
+          AND b.voided_at IS NULL AND b.status <> 'void'`,
+      [input.loadId, input.operatingCompanyId]
+    );
+    const d = driverSide.rows[0] as { bills?: number; settled?: number } | undefined;
+    const bills = Number(d?.bills ?? 0);
+    const settled = Number(d?.settled ?? 0);
+    if (bills === 0 || settled < bills) target = "invoiced";
+  }
+
   return walkForward(client, input.operatingCompanyId, input.loadId, input.actorUserId, loadStatus, target);
 }
 

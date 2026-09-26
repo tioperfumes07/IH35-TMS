@@ -1905,3 +1905,18 @@ Each row is its own transaction; a failure partway stops the loop without rollin
 reissued. Paste the live before/after JE rows for all 27 after running.
 
 — CC-1
+
+## AUTH-070
+issued_at: 2026-09-26T04:32:27.000Z
+scope: mdata.loads.status on 7 USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) loads — 13563, 13610, 13612, 13613, 13614, 13615, 13619 — 'closed' -> 'completed_docs_received' (their status before R-205), audited
+action: OWNER_AUTH_ID=AUTH-070 npx tsx scripts/ops/2026-09-26-lead-r210-reopen-7-unsettled-loads.ts
+expires_at: 2026-09-26T08:32:27.000Z
+status: OPEN
+
+R-210 (Claude-Lead). My R-205 (AUTH-051) closed these 7 Faro-funded loads although their driver bills sit in OPEN
+pre-settlements (P-0001..P-0007) — the close rule (ROUND 33.2 §1) needs both the revenue and the driver-pay chain.
+Owner, 2026-09-25 11:40 PM CT: current loads must render on every load board. Code fix in the same PR. AUTH-070..079
+are reserved for Claude-Lead (collision on 055).
+
+— Claude-Lead
+

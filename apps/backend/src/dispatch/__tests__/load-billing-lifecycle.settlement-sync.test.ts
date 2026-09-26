@@ -56,6 +56,8 @@ describe("syncSettlementLoadsToBilling — ROUND 33.2 §1, fired after settlemen
     queryMock.mockResolvedValueOnce({
       rows: [{ load_status: "delivered", invoice_status: "paid", factoring_status: "not_factored" }],
     });
+    // R-210: driver side complete — every live driver bill sits in a closed settlement.
+    queryMock.mockResolvedValueOnce({ rows: [{ bills: 1, settled: 1 }] });
     // The forward-walk takes multiple UPDATE steps (delivered -> ... -> closed) — any number of
     // them succeed identically for this test; only the FIRST call (the SELECT above) matters for
     // resolving the target.
