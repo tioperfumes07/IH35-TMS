@@ -1959,7 +1959,21 @@ issued_at: 2026-09-26T05:11:46.000Z
 scope: mdata.loads (6 new INSERT rows), dispatch.load_charge_lines, mdata.load_stops, dispatch.load_assignment_history, driver_finance.driver_bills (mint), driver_finance.driver_settlements (auto-link/mint if a driver has no open pre-settlement) — via the real book-load engine (bookLoad(), same path as the Book Load screen) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly load_numbers 13609, 13616, 13617, 13618, 13620, 13621
 action: OWNER_AUTH_ID=AUTH-061 tsx scripts/ops/2026-09-26-cc1-round189-book-6-missing-loads.ts (no dry run, per owner order)
 expires_at: 2026-09-26T07:11:46.000Z
-status: OPEN
+status: CONSUMED — see the CONSUMED note below
+
+CONSUMED 2026-09-26T05:15Z — all 6 loads booked live via bookLoad(): 13609 (ef643e83), 13616
+(7e98159b), 13617 (66bc4cd8), 13618 (e77e198c), 13620 (e87907c6), 13621 (e092cb0f). Correct
+customer/driver/unit/trailer/stops/linehaul charge on every row, status='dispatched' (none delivered,
+so no invoice minted). Driver bill mint refused on all 6 (miles_shortest not yet captured on any of
+these xlsx rows — expected, not a defect: driver pay needs shortest miles, resolved in the follow-up
+below). Two loads (13609, 13617) hit uq_driver_settlements_one_open_per_driver on first attempt
+(their drivers already had an open P-000N pre-settlement from AUTH-038) and booked with trip_type/
+tour_id omitted per the known workaround; a same-AUTH follow-up script
+(2026-09-26-cc1-round189-link-2-presettlements.ts) then linked both to their driver's existing open
+pre-settlement via reassignLoadToSettlementInClientTx. The other 4 auto-minted a fresh bare
+pre-settlement each (P-0008 Jose Antonio Vicente Martinez, P-0009 Angel Alfonso Sosa Perez, P-0010
+Fernando Mecor Hernandez, P-0011 Leonel Antonio Morales), source_document_ref NULL, correctly matching
+closed-doc §10.
 
 ROUND 189 step 4 (owner priority, ahead of R-187 remainder; CC-3 missed its deadline). Source of truth:
 ~/Downloads/load history report 09-21-26 without cancelled loads.xlsx, rows 108/115-120 (not the
@@ -1984,6 +1998,39 @@ IDs resolved live before this AUTH (see script PLAN array). trailer_type set per
 live catalog type (DryVan/Reefer/Flatbed), not hardcoded — 10870 is catalogued DryVan despite the
 xlsx's "Reefer" label on that row; the assigned_trailer_unit_id (the real equipment link) is
 authoritative either way.
+
+— CC-1
+
+---
+
+## AUTH-062
+issued_at: 2026-09-26T05:21:01.000Z
+scope: mdata.loads (miles_practical/miles_shortest/miles_deadhead via updateDispatchLoad; mileage_source via a narrow disclosed raw UPDATE, metadata only), driver_finance.driver_bills (mint via ensureDriverBillArtifactsForLoad, re-entered inside updateDispatchLoad), driver_finance.settlement_lines (append via appendSettlementLineFromDriverBillIfMissing) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly load_numbers 13609, 13616, 13617, 13618, 13620, 13621 (the AUTH-061 loads)
+action: OWNER_AUTH_ID=AUTH-062 tsx scripts/ops/2026-09-26-cc1-round189-fill-mileage-and-settlement-lines.ts (no dry run, per owner order)
+expires_at: 2026-09-26T07:21:01.000Z
+status: OPEN
+
+STOP-THE-LINE (Lead): the 6 AUTH-061 loads redded 2 gates — verify-purge-era-closures-still-hold arm 39
+(6 live loads missing mileage) and verify-no-empty-zero-settlement (P-0008/P-0009/P-0010/P-0011: each a
+brand-new pre-settlement with exactly one load, $0 net pay, no settlement line — the driver bill mint
+was refused because miles_shortest was never set).
+
+Mileage source: the same xlsx rows AUTH-061 booked from. All 6 carry St.Miles=0/E.Miles=0 (AlwaysTrack
+does not capture shortest-miles on a still-in-transit load) and a real nonzero L.Miles. miles_shortest
+:= miles_practical here is NOT invented — it is the exact fallback already coded into
+book-load.service.ts's own INSERT path (`miles_shortest > 0 ? miles_shortest : miles_practical`), made
+explicit because this is an UPDATE, which that INSERT-only fallback never reaches.
+
+mileage_source: verified live that updateDispatchLoadBodySchema/UpdateDispatchLoadFields have NO field
+for this column at all (present on create, absent from edit — a real engine gap). Narrowly-scoped,
+disclosed raw UPDATE of ONLY mdata.loads.mileage_source (metadata, not a dollar-math field) — same
+class of disclosed exception the ROUND 27.1 reference script (round27-1-step1-loads-and-rate-corrections.ts)
+names in its own header for its two narrow raw-SQL exceptions.
+
+Root sequence per load: updateDispatchLoad() sets the 3 mileage columns (which also re-enters
+ensureDriverBillArtifactsForLoad in the same transaction, minting the bill now that miles_shortest is
+present) -> the mileage_source UPDATE -> appendSettlementLineFromDriverBillIfMissing() turns the fresh
+bill into a real settlement_lines row on the load's own pre-settlement.
 
 — CC-1
 
