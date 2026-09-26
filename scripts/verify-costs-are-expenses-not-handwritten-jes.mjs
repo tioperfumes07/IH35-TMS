@@ -158,43 +158,44 @@ async function measure(client) {
     [USMCA_COMPANY_ID],
   );
 
+  // Set-based (Lead 2026-09-26): the per-JE loop issued 1-2 queries per journal entry (thousands of round trips),
+  // which timed out under concurrent seat gates and blocked every push. Same rows, same classification, 2 queries.
+  const postAll = await client.query(
+    `SELECT jep.journal_entry_uuid::text AS je_id, jep.debit_or_credit, jep.amount_cents::text,
+            jep.source_transaction_type, a.account_number, a.account_name, a.account_type
+       FROM accounting.journal_entry_postings jep
+       JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+       JOIN catalogs.accounts a ON a.id = jep.account_id
+      WHERE je.operating_company_id = $1::uuid
+        AND je.status = 'posted'
+        AND je.is_sample_data IS NOT TRUE
+      ORDER BY jep.journal_entry_uuid, jep.line_sequence`,
+    [USMCA_COMPANY_ID],
+  );
+  const postingsByJe = new Map();
+  for (const p of postAll.rows) {
+    const { je_id, ...rest } = p;
+    if (!postingsByJe.has(je_id)) postingsByJe.set(je_id, []);
+    postingsByJe.get(je_id).push(rest);
+  }
+  const expAll = await client.query(
+    `SELECT DISTINCT journal_entry_id::text AS je_id FROM accounting.expenses
+      WHERE operating_company_id = $1::uuid AND deleted_at IS NULL AND journal_entry_id IS NOT NULL`,
+    [USMCA_COMPANY_ID],
+  );
+  const jeWithExpense = new Set(expAll.rows.map((r) => r.je_id));
+
   const results = [];
   for (const je of jeRes.rows) {
-    // Get postings for this JE
-    const postRes = await client.query(
-      `SELECT jep.debit_or_credit, jep.amount_cents::text, jep.source_transaction_type,
-              a.account_number, a.account_name, a.account_type
-         FROM accounting.journal_entry_postings jep
-         JOIN catalogs.accounts a ON a.id = jep.account_id
-        WHERE jep.journal_entry_uuid = $1::uuid
-        ORDER BY jep.line_sequence`,
-      [je.je_id],
-    );
-
-    // Check if any of these postings debit a 5xxx/6xxx account
-    const hasCostDebit = postRes.rows.some(
+    const postings = postingsByJe.get(je.je_id) ?? [];
+    const hasCostDebit = postings.some(
       (p) => p.debit_or_credit === "debit" && /^(5|6)\d{3}/.test(p.account_number),
     );
-
-    // Check if there's a matching expense row
-    let hasExpenseRow = false;
-    if (hasCostDebit) {
-      const expRes = await client.query(
-        `SELECT 1 FROM accounting.expenses
-          WHERE journal_entry_id = $1::uuid
-            AND operating_company_id = $2::uuid
-            AND deleted_at IS NULL
-          LIMIT 1`,
-        [je.je_id, USMCA_COMPANY_ID],
-      );
-      hasExpenseRow = expRes.rows.length > 0;
-    }
-
     results.push({
       je_id: je.je_id,
       memo: je.memo,
-      postings: postRes.rows,
-      has_expense_row: hasExpenseRow,
+      postings,
+      has_expense_row: hasCostDebit ? jeWithExpense.has(je.je_id) : false,
       reversed_by_je_id: je.reversed_by_je_id,
       reverses_je_id: je.reverses_je_id,
     });
