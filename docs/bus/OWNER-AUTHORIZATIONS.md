@@ -1953,3 +1953,38 @@ as the expense insert, so a re-run or copy-pasted script cannot repeat the gap.
 — CC-1
 
 ---
+
+## AUTH-061
+issued_at: 2026-09-26T05:11:46.000Z
+scope: mdata.loads (6 new INSERT rows), dispatch.load_charge_lines, mdata.load_stops, dispatch.load_assignment_history, driver_finance.driver_bills (mint), driver_finance.driver_settlements (auto-link/mint if a driver has no open pre-settlement) — via the real book-load engine (bookLoad(), same path as the Book Load screen) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly load_numbers 13609, 13616, 13617, 13618, 13620, 13621
+action: OWNER_AUTH_ID=AUTH-061 tsx scripts/ops/2026-09-26-cc1-round189-book-6-missing-loads.ts (no dry run, per owner order)
+expires_at: 2026-09-26T07:11:46.000Z
+status: OPEN
+
+ROUND 189 step 4 (owner priority, ahead of R-187 remainder; CC-3 missed its deadline). Source of truth:
+~/Downloads/load history report 09-21-26 without cancelled loads.xlsx, rows 108/115-120 (not the
+briefing doc's summary table, which the doc itself warns not to copy blindly). Steps 2/3 (the 6 loads
+on the wrong driver/pre-settlement, and voiding the minted shell '5819') are ALREADY DONE under
+AUTH-038 (Claude-Lead, R-189A) — re-verified live before this AUTH, not re-derived: all 6 (13610, 13612,
+13613, 13614, 13615, 13619) carry the report's driver/unit/trailer, status correctly left at 'closed'
+per tonight's owner ruling (a closed load on an OPEN settlement stays in pre-settlement — not touched
+here), each linked to its own driver's P-000N open pre-settlement, shell '5819' voided (cancelled, 0
+loads). This AUTH covers ONLY the 6 genuinely missing loads (table B).
+
+QP (Quick Pay) column: confirmed live that quick_pay_cents (load-profitability.service.ts) is DERIVED
+post-hoc from accounting.factoring_advances.factor_fee_cents once Faro actually factors an invoice —
+not a booking-time charge code, and none of these 6 is invoiced yet (none delivered). Only the
+linehaul charge (xlsx "Charges" column) is booked; QP will emerge naturally if/when factored. Disclosed
+in the script header, not silently dropped.
+
+Customers: all 6 already exist in USMCA under an exact name match to the xlsx Customer column
+(Steam Logistics International, Hawkeye Transportation Services, Greatwide Dallas Mavis LLC, Refrigerx
+Transportation LLC, ACE DORAN, Semares Forwarding Services) — reused, none created. Driver/unit/trailer
+IDs resolved live before this AUTH (see script PLAN array). trailer_type set per each equipment's own
+live catalog type (DryVan/Reefer/Flatbed), not hardcoded — 10870 is catalogued DryVan despite the
+xlsx's "Reefer" label on that row; the assigned_trailer_unit_id (the real equipment link) is
+authoritative either way.
+
+— CC-1
+
+---
