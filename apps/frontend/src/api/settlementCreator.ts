@@ -69,6 +69,8 @@ export type SettlementCreatorDraft = {
   }>;
   pdf_driver_net_cents: number;
   pdf_company_expenses_cents: number;
+  /** ROUND 180 §14 — confirm Edit = void and repost when Settlement No. already exists. */
+  edit_void_repost?: boolean;
 };
 
 export type SettlementCreatorJeLine = {

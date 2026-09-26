@@ -123,6 +123,7 @@ const draftSchema = z.object({
     .default([]),
   pdf_driver_net_cents: z.number().int(),
   pdf_company_expenses_cents: z.number().int(),
+  edit_void_repost: z.boolean().optional().default(false),
   source_pdf_file_id: z.string().uuid().nullable().optional(),
 });
 
@@ -270,7 +271,13 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
       });
     } catch (err) {
       if (err instanceof SettlementCreatorError || err instanceof SettlementCreatorSeedError) {
-        return reply.code(err.code === "settlement_exists" ? 409 : 400).send({
+        const conflict = new Set([
+          "settlement_exists",
+          "settlement_reverse_blocked_paid",
+          "settlement_reverse_blocked_locked",
+          "settlement_already_cancelled",
+        ]);
+        return reply.code(conflict.has(err.code) ? 409 : 400).send({
           error: err.code,
           message: err.message,
         });

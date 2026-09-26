@@ -9,7 +9,10 @@
 
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { createExpenseFromFuelTransaction } from "../fuel/fuel-expense-document.service.js";
-import { createDriverCashAdvanceCore } from "../cash-advances/cash-advance-create.js";
+import {
+  createDriverCashAdvanceCore,
+  reverseDriverAdvanceInClientTx,
+} from "../cash-advances/cash-advance-create.js";
 import type { TripType, DbClient } from "../dispatch/presettlement-link.service.js";
 import { createBareSettlementForDocument } from "./settlement-load-reassignment.service.js";
 import {
@@ -24,6 +27,12 @@ import { nextExpenseDisplayId } from "../accounting/display-id.js";
 import { createHistoricalEscrowHold } from "./historical-escrow-backfill.service.js";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";
 import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
+import { voidDocument } from "../accounting/void-document.service.js";
+import {
+  reverseSettlementForVoid,
+  SettlementVoidBlockedError,
+} from "./void-document-callees.service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 import type {
   SettlementCreatorDraft,
   SettlementCreatorJeLine,
@@ -114,6 +123,178 @@ async function stampDeliveryStopActuals(
          AND soft_deleted_at IS NULL
     `,
     [loadId, at],
+  );
+}
+
+type PriorCreatorPostPayload = {
+  expense_ids?: string[];
+  fuel_transaction_ids?: string[];
+  advance_ids?: string[];
+  invoice_ids?: string[];
+};
+
+/**
+ * ROUND 180 §14 — Edit = void and repost. Existing engines only:
+ * voidDocument (expense/invoice/factoring_advance) + reverseDriverAdvanceInClientTx +
+ * reverseSettlementForVoid. Companion ids come from the prior settlement_creator.posted audit.
+ */
+async function voidPriorCreatorSettlementForEdit(
+  client: DbClient,
+  actorUserId: string,
+  opco: string,
+  settlementId: string,
+  settlementLabel: string,
+): Promise<void> {
+  const reason = `Settlement Creator Edit = void and repost (${settlementLabel})`;
+  const businessDate = companyBusinessDate();
+
+  const audit = await client.query<{ payload: PriorCreatorPostPayload }>(
+    `
+      SELECT payload
+        FROM audit.audit_events
+       WHERE event_class = 'driver_finance.settlement_creator.posted'
+         AND payload->>'resource_id' = $1
+       ORDER BY created_at DESC
+       LIMIT 1
+    `,
+    [settlementId],
+  );
+  const prior = audit.rows[0]?.payload ?? {};
+
+  for (const expenseId of prior.expense_ids ?? []) {
+    try {
+      await voidDocument(client as never, {
+        operatingCompanyId: opco,
+        type: "expense",
+        id: expenseId,
+        reason,
+        actor: { userId: actorUserId },
+        currentBusinessDate: businessDate,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (!/already.?void|not found|SOURCE_NOT_FOUND/i.test(msg)) throw err;
+    }
+  }
+
+  for (const fuelId of prior.fuel_transaction_ids ?? []) {
+    await client.query(
+      `
+        UPDATE fuel.fuel_transactions
+           SET voided_at = COALESCE(voided_at, now()),
+               void_reason = COALESCE(void_reason, $3),
+               voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid),
+               updated_at = now()
+         WHERE id = $1::uuid
+           AND operating_company_id = $2::uuid
+           AND voided_at IS NULL
+      `,
+      [fuelId, opco, reason, actorUserId],
+    );
+  }
+
+  for (const invoiceId of prior.invoice_ids ?? []) {
+    try {
+      await voidDocument(client as never, {
+        operatingCompanyId: opco,
+        type: "invoice",
+        id: invoiceId,
+        reason,
+        actor: { userId: actorUserId },
+        currentBusinessDate: businessDate,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (!/already.?void|not found|VOID/i.test(msg)) throw err;
+    }
+    // Factoring purchase linked to this invoice (submit-only; voidDocument reverses if funded).
+    const fa = await client.query<{ id: string }>(
+      `
+        SELECT fa.id::text
+          FROM accounting.invoices i
+          JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
+         WHERE i.operating_company_id = $1::uuid
+           AND i.id = $2::uuid
+           AND fa.voided_at IS NULL
+         LIMIT 1
+      `,
+      [opco, invoiceId],
+    );
+    for (const row of fa.rows) {
+      try {
+        await voidDocument(client as never, {
+          operatingCompanyId: opco,
+          type: "factoring_advance",
+          id: row.id,
+          reason,
+          actor: { userId: actorUserId },
+          currentBusinessDate: businessDate,
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (!/already.?void|not found|NOT YET WIRED/i.test(msg)) throw err;
+      }
+    }
+  }
+
+  for (const advanceId of prior.advance_ids ?? []) {
+    const adv = await client.query<{
+      id: string;
+      liability_id: string | null;
+      linked_bill_id: string | null;
+      voided_at: string | null;
+    }>(
+      `
+        SELECT id::text, liability_id::text, linked_bill_id::text, voided_at::text
+          FROM driver_finance.driver_advances
+         WHERE id = $1::uuid AND operating_company_id = $2::uuid
+         LIMIT 1
+      `,
+      [advanceId, opco],
+    );
+    const row = adv.rows[0];
+    if (!row || row.voided_at) continue;
+    await reverseDriverAdvanceInClientTx(client as never, actorUserId, opco, {
+      advanceId: row.id,
+      liabilityId: row.liability_id,
+      linkedBillId: row.linked_bill_id,
+      reason,
+    });
+  }
+
+  try {
+    await reverseSettlementForVoid(client, {
+      operatingCompanyId: opco,
+      settlementId,
+      reason,
+      actor: { userId: actorUserId },
+    });
+  } catch (err) {
+    if (err instanceof SettlementVoidBlockedError) {
+      throw new SettlementCreatorError(
+        err.code,
+        `Cannot Edit/void settlement ${settlementLabel}: ${err.code.replace(/_/g, " ")}.`,
+      );
+    }
+    throw err;
+  }
+
+  await appendCrudAudit(
+    client as never,
+    actorUserId,
+    "driver_finance.settlement_creator.edit_voided",
+    {
+      resource_type: "driver_finance.driver_settlements",
+      resource_id: settlementId,
+      operating_company_id: opco,
+      settlement_label: settlementLabel,
+      prior_expense_ids: prior.expense_ids ?? [],
+      prior_invoice_ids: prior.invoice_ids ?? [],
+      prior_advance_ids: prior.advance_ids ?? [],
+      prior_fuel_transaction_ids: prior.fuel_transaction_ids ?? [],
+    },
+    "warning",
+    AUDIT_TAG,
   );
 }
 
@@ -413,9 +594,18 @@ export async function postSettlementCreatorInClientTx(
       [draft.operating_company_id, targetDisplay],
     );
     if (found.rows[0]) {
-      throw new SettlementCreatorError(
-        "settlement_exists",
-        `${targetDisplay} already exists. Settlement Creator creates a NEW settlement — leave the auto AlwaysTrack number or Edit to a free number.`,
+      if (!draft.edit_void_repost) {
+        throw new SettlementCreatorError(
+          "settlement_exists",
+          `${targetDisplay} already exists. Confirm Edit = void and repost to replace it.`,
+        );
+      }
+      await voidPriorCreatorSettlementForEdit(
+        client,
+        actorUserId,
+        draft.operating_company_id,
+        found.rows[0].id,
+        targetDisplay,
       );
     }
     const ins = await client.query<{ id: string }>(
@@ -464,9 +654,18 @@ export async function postSettlementCreatorInClientTx(
         [draft.operating_company_id, typedNo],
       );
       if (existing.rows[0]) {
-        throw new SettlementCreatorError(
-          "settlement_exists",
-          `Settlement ${typedNo} already exists (${existing.rows[0].display_id}). Edit = void and repost (next slice).`,
+        if (!draft.edit_void_repost) {
+          throw new SettlementCreatorError(
+            "settlement_exists",
+            `Settlement ${typedNo} already exists (${existing.rows[0].display_id}). Confirm Edit = void and repost to replace it.`,
+          );
+        }
+        await voidPriorCreatorSettlementForEdit(
+          client,
+          actorUserId,
+          draft.operating_company_id,
+          existing.rows[0].id,
+          typedNo,
         );
       }
       atRef = typedNo;
