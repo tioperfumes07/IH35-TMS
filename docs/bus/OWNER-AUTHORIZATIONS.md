@@ -1690,7 +1690,17 @@ issued_at: 2026-09-26T02:47:05.000Z
 scope: driver_finance.driver_advances (3 rows: recovered_in_settlement_id and/or status only — no amount, no GL write) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: OWNER_AUTH_ID=AUTH-054 tsx scripts/ops/2026-09-26-cc1-item-e-fix-3-advance-linkages.ts (no dry run, per owner order)
 expires_at: 2026-09-26T04:47:05.000Z
-status: OPEN
+status: CONSUMED
+
+CONSUMED 2026-09-26T02:49Z — live before/after, all 3 writes + 1 verified-no-write:
+  CA-2026-0005: recovered_in_settlement_id e56dc6d6-95fa-4a51-bd08-9c3e8c1a04bf (settlement "5787",
+    wrong) -> 1709fb7c-a589-42f7-8085-e40f0ad0f0af (settlement 5775, PDF-matched). status unchanged.
+  CA-2026-0008: recovered_in_settlement_id 0f48de2f-6363-4f19-899b-229375a44448 -> NULL; status
+    'recovered' -> 'reversed'.
+  CA-2026-0009: same as 0008 -- recovered_in_settlement_id -> NULL; status -> 'reversed'.
+  CA-2026-TIE-5807: not_touched, confirmed already correct (see reasoning above).
+Item e is now closed: 8/12 correct as-is (no write), 4/12 corrected/confirmed under this AUTH. No GL
+write on any of the 12.
 
 Item e (Lead ruling, 2026-09-26): 8 of 12 advances already reconcile to their own settlement JE's 1245
 credit — post/relink nothing for them. For the 4 that don't, read the signed AlwaysTrack Driver
