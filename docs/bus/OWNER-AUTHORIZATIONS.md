@@ -1757,7 +1757,13 @@ issued_at: 2026-09-26T03:09:32.000Z
 scope: accounting.factoring_advances (2 rows: faro_invoice_number only — no amount, no GL write) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: OWNER_AUTH_ID=AUTH-055 tsx scripts/ops/2026-09-26-cc1-g3c-fix-crossed-faro-invoice-numbers.ts (no dry run, per owner order)
 expires_at: 2026-09-26T05:09:32.000Z
-status: OPEN
+status: CONSUMED
+
+CONSUMED 2026-09-26T03:14Z — first two attempts rolled back atomically on
+uq_factoring_advances_faro_invoice_number (non-deferred unique index, needed a 3-step staged swap
+through a temp placeholder, fixed forward twice). Live, verified: FAC-2026-00029 (load 13545)
+faro_invoice_number '32' -> '30'; FAC-2026-00030 (load 13547) faro_invoice_number '30' -> '32'. G3c
+done.
 
 R-187 G3c: loads 13545/13547 (both John J Jerue Truck Broker Inc., both $4,800.00, same
 faro_purchase_date 2026-08-28) had their accounting.factoring_advances.faro_invoice_number SWAPPED
