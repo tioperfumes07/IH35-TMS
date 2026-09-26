@@ -154,8 +154,9 @@ if (designView) {
   if (!/PrintOrientationDialog|printDialogOpen/.test(designView)) {
     failures.push("BankingTransactionsDesignView must ask portrait/landscape before print");
   }
-  if (!/Search all|matchSearchAll|inline-match-search-all/.test(designView)) {
-    failures.push("BankingTransactionsDesignView match pane must expose Search all (QBO)");
+  // Owner ruling 2026-09-23 (#22829): "Search all" retired for the 3 -> 7 day -> From/To cascade.
+  if (!/banking-match-search-7-days/.test(designView) || !/widened to 7 days/.test(designView)) {
+    failures.push("BankingTransactionsDesignView match pane must expose the 3→7 day cascade (Search 7 days + widened banner)");
   }
   if (!/This month|Last month|bank-date-filter-button/.test(designView)) {
     failures.push("BankingTransactionsDesignView must expose QBO date presets + dynamic date label");
