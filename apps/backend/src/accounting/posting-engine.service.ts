@@ -1,4 +1,5 @@
 import { withCurrentUser } from "../auth/db.js";
+import { boundJeMemo, sourceDocumentLabel } from "./je-memo.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 import { resolveRoleAccountOptional, resolveReimbursementExpenseAccount } from "./coa-roles/resolver.service.js";
 import { STANDING_LATCH_JE_PREDICATE } from "./revrec-delivery-posting/poster.service.js";
@@ -2861,11 +2862,16 @@ async function executeSourceReversalOnClient(
     sourceId
   );
 
+  // R-197: a person must be able to read the reversal line — the source document's own number and the
+  // original memo, bounded to the register's 200 chars (was "Reversal of <uuid>").
+  const reversalLabel = (await sourceDocumentLabel(client, input.operating_company_id, sourceType, sourceId)) ?? sourceType;
+  const originalMemo = (await client.query<{ memo: string | null }>(`SELECT memo FROM accounting.journal_entries WHERE id = $1::uuid`, [original.journal_entry_id])).rows[0]?.memo ?? null;
+  const reversalMemo = boundJeMemo(`Reversal of ${reversalLabel}${originalMemo ? ` — ${originalMemo}` : ""}`);
   const reversalJeId = await createJournalEntryHeader(
     client,
     input.operating_company_id,
     reversalDate,
-    `Reversal of ${original.journal_entry_id}`,
+    reversalMemo,
     actor.userId,
     reversalSourceIsSample,
     sourceType
