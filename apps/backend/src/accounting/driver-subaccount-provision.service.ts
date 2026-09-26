@@ -500,14 +500,17 @@ export async function upsertDriverAdvanceAccountLink(
 // "One cost, one payable": a driver-paid expense posts Dr item / Cr 2175-<driver> (never 1000/2000);
 // the settlement's reimbursement line debits 2175-<driver> (never 6890/5310) so the cost is recorded
 // exactly once (NetSuite/QuickBooks payroll-reimbursement model). This section provisions the
-// LIABILITY side: the parent "2175 Driver Reimbursements Payable" (a REAL, owner-approved account
-// number — unlike the escrow/advance parents above, which are resolved by name only) and its
-// per-driver named children (no auto number, per ROUND 181, matching the other two sub-account
-// families above). Single-level nesting (parent -> per-driver leaf), no grandparent — unlike escrow's
-// two-level "Damage Claim Escrow -> Driver Escrow -> <driver>" shape, there is no shared
-// TRANSP-mirrored concept to nest under here.
+// LIABILITY side, in the SAME two-level numbered shape as the escrow family (owner ruling, 2026-09-25,
+// "already been asked and answered ... same format", mirroring 2100 -> 2100-00 -> 2100-00-NNN exactly):
+//   2175        "Driver Reimbursements Payable"  (top-level parent, real owner-approved number)
+//   2175-00     "Driver Reimbursements"          (year-agnostic sub-parent, header only)
+//   2175-00-NNN "<Driver Name> — Driver Reimbursements" (per-driver leaf, zero-padded sequence)
+// Unlike escrow's grandparent, "Driver Reimbursements Payable" has no shared TRANSP-mirrored concept
+// to nest under, so the top-level parent here IS the numbered 2175 account itself (no third level).
 export const DRIVER_REIMBURSEMENT_PARENT_NAME = "Driver Reimbursements Payable";
 export const DRIVER_REIMBURSEMENT_PARENT_ACCOUNT_NUMBER = "2175";
+export const DRIVER_REIMBURSEMENT_SUB_PARENT_NAME = "Driver Reimbursements";
+export const DRIVER_REIMBURSEMENT_SUB_PARENT_ACCOUNT_NUMBER = "2175-00";
 
 /**
  * Resolve-or-CREATE the "2175 Driver Reimbursements Payable" top-level Liability parent (idempotent,
@@ -570,14 +573,97 @@ export async function ensureDriverReimbursementParent(
   return parentId;
 }
 
-/** "<Driver Name>" — the leaf name IS the driver's name (matches R-185's own text exactly). */
+/**
+ * Resolve-or-CREATE the "2175-00 Driver Reimbursements" year-agnostic sub-parent under the "2175
+ * Driver Reimbursements Payable" top-level parent (idempotent). Mirrors ensureDriverEscrowParent's
+ * "2100-00 Driver Escrow" sub-parent exactly, one level shallower (no grandparent). Header only
+ * (is_postable=false); only the per-driver leaves under it post.
+ */
+export async function ensureDriverReimbursementSubParent(
+  client: DbClient,
+  args: { operatingCompanyId: string; actorUserId: string }
+): Promise<string> {
+  const parentId = await ensureDriverReimbursementParent(client, args);
+  const existing = await resolveChildAccountId(client, {
+    subAccountName: DRIVER_REIMBURSEMENT_SUB_PARENT_NAME,
+    parentId,
+    operatingCompanyId: args.operatingCompanyId,
+  });
+  if (existing) return existing;
+
+  const ins = await client.query<{ id: string }>(
+    `
+      INSERT INTO catalogs.accounts (
+        account_number, account_name, account_type, account_subtype, parent_account_id,
+        qbo_account_id, is_postable, currency_code,
+        notes, created_by_user_id, updated_by_user_id, operating_company_id
+      )
+      SELECT
+        $1, $2, 'Liability', p.account_subtype, p.id,
+        NULL, false, 'USD',
+        $4, $5::uuid, $5::uuid, $6::uuid
+      FROM catalogs.accounts p
+      WHERE p.id = $3::uuid AND p.operating_company_id = $6::uuid
+      RETURNING id::text
+    `,
+    [
+      DRIVER_REIMBURSEMENT_SUB_PARENT_ACCOUNT_NUMBER,
+      DRIVER_REIMBURSEMENT_SUB_PARENT_NAME,
+      parentId,
+      "Owner ruling 2026-09-25 (\"already been asked and answered ... same format\"): year-agnostic sub-parent for per-driver 2175-00-NNN reimbursement leaves, mirroring 2100-00 Driver Escrow.",
+      args.actorUserId,
+      args.operatingCompanyId,
+    ]
+  );
+  const subParentId = ins.rows[0]!.id;
+
+  await appendCrudAudit(
+    client as never,
+    args.actorUserId,
+    "catalogs.accounts.created",
+    {
+      resource_type: "catalogs.accounts",
+      resource_id: subParentId,
+      operating_company_id: args.operatingCompanyId,
+      account_number: DRIVER_REIMBURSEMENT_SUB_PARENT_ACCOUNT_NUMBER,
+      account_name: DRIVER_REIMBURSEMENT_SUB_PARENT_NAME,
+      account_type: "Liability",
+      parent_account_id: parentId,
+      auto_provisioned: true,
+      is_reimbursement_sub_parent: true,
+    },
+    "info",
+    "R-185-DRIVER-REIMBURSEMENT-PAYABLE"
+  );
+  return subParentId;
+}
+
+/** "<Driver Name> — Driver Reimbursements" — mirrors driverEscrowSubAccountName's naming shape. */
 export function driverReimbursementSubAccountName(driverName: string): string {
-  return driverName.trim();
+  return `${driverName.trim()} — ${DRIVER_REIMBURSEMENT_SUB_PARENT_NAME}`;
 }
 
 /**
- * READ-ONLY resolve of a per-driver reimbursement leaf under the 2175 parent. Returns null if
- * either the parent or this driver's leaf doesn't exist yet (caller decides whether to provision).
+ * Next free "2175-00-NNN" (zero-padded 3-digit, sequential) leaf number under the reimbursement
+ * sub-parent — same generation shape as the live 2100-00-NNN escrow sequence. Scans existing
+ * children's account_number suffixes and returns max+1 (never reuses a number, even across voids).
+ */
+async function nextDriverReimbursementLeafNumber(client: DbClient, subParentId: string): Promise<string> {
+  const rows = await client.query<{ account_number: string }>(
+    `SELECT account_number FROM catalogs.accounts WHERE parent_account_id = $1::uuid AND account_number LIKE $2`,
+    [subParentId, `${DRIVER_REIMBURSEMENT_SUB_PARENT_ACCOUNT_NUMBER}-%`]
+  );
+  let max = 0;
+  for (const r of rows.rows) {
+    const m = r.account_number.match(/-(\d+)$/);
+    if (m) max = Math.max(max, Number(m[1]));
+  }
+  return `${DRIVER_REIMBURSEMENT_SUB_PARENT_ACCOUNT_NUMBER}-${String(max + 1).padStart(3, "0")}`;
+}
+
+/**
+ * READ-ONLY resolve of a per-driver reimbursement leaf under the 2175-00 sub-parent. Returns null if
+ * the parent, sub-parent, or this driver's leaf doesn't exist yet (caller decides whether to provision).
  */
 export async function resolveDriverReimbursementSubAccountId(
   client: DbClient,
@@ -589,34 +675,44 @@ export async function resolveDriverReimbursementSubAccountId(
     operatingCompanyId: args.operatingCompanyId,
   });
   if (!parentId) return null;
+  const subParentId = await resolveChildAccountId(client, {
+    subAccountName: DRIVER_REIMBURSEMENT_SUB_PARENT_NAME,
+    parentId,
+    operatingCompanyId: args.operatingCompanyId,
+  });
+  if (!subParentId) return null;
   return resolveChildAccountId(client, {
     subAccountName: driverReimbursementSubAccountName(args.driverName),
-    parentId,
+    parentId: subParentId,
     operatingCompanyId: args.operatingCompanyId,
   });
 }
 
 /**
- * Create the per-driver LIABILITY leaf "<Driver Name>" nested under "2175 Driver Reimbursements
- * Payable" (resolve-or-creates the parent first, idempotent). account_number NULL (ROUND 181, no
- * auto numbers); is_postable=true; account_subtype inherited from the parent.
+ * Create the per-driver LIABILITY leaf "<Driver Name> — Driver Reimbursements" nested under
+ * "2175-00 Driver Reimbursements" (resolve-or-creates both the 2175 parent and 2175-00 sub-parent
+ * first, idempotent). account_number = next sequential "2175-00-NNN" (owner ruling 2026-09-25,
+ * mirroring the live 2100-00-NNN escrow sequence exactly); is_postable=true; account_subtype
+ * inherited from the sub-parent.
  */
 export async function provisionDriverReimbursementSubAccount(
   client: DbClient,
   input: { operatingCompanyId: string; driverId: string; driverName: string; actorUserId: string }
 ): Promise<ProvisionResult> {
   const name = driverReimbursementSubAccountName(input.driverName);
-  const parentId = await ensureDriverReimbursementParent(client, {
+  const subParentId = await ensureDriverReimbursementSubParent(client, {
     operatingCompanyId: input.operatingCompanyId,
     actorUserId: input.actorUserId,
   });
 
   const existingId = await resolveChildAccountId(client, {
     subAccountName: name,
-    parentId,
+    parentId: subParentId,
     operatingCompanyId: input.operatingCompanyId,
   });
   if (existingId) return { created: false, reason: "already_exists", accountId: existingId };
+
+  const leafNumber = await nextDriverReimbursementLeafNumber(client, subParentId);
 
   const ins = await client.query<{ id: string }>(
     `
@@ -626,15 +722,15 @@ export async function provisionDriverReimbursementSubAccount(
         notes, created_by_user_id, updated_by_user_id, operating_company_id
       )
       SELECT
-        NULL,
-        $1, 'Liability', p.account_subtype, p.id,
+        $1,
+        $2, 'Liability', p.account_subtype, p.id,
         NULL, true, 'USD',
-        $3, $4::uuid, $4::uuid, $5::uuid
+        $4, $5::uuid, $5::uuid, $6::uuid
       FROM catalogs.accounts p
-      WHERE p.id = $2::uuid AND p.operating_company_id = $5::uuid
+      WHERE p.id = $3::uuid AND p.operating_company_id = $6::uuid
       RETURNING id::text
     `,
-    [name, parentId, `Auto-provisioned driver reimbursement sub-account (driver ${input.driverId})`, input.actorUserId, input.operatingCompanyId]
+    [leafNumber, name, subParentId, `Auto-provisioned driver reimbursement sub-account (driver ${input.driverId})`, input.actorUserId, input.operatingCompanyId]
   );
   const accountId = ins.rows[0]!.id;
 
@@ -646,9 +742,10 @@ export async function provisionDriverReimbursementSubAccount(
       resource_type: "catalogs.accounts",
       resource_id: accountId,
       operating_company_id: input.operatingCompanyId,
+      account_number: leafNumber,
       account_name: name,
       account_type: "Liability",
-      parent_account_id: parentId,
+      parent_account_id: subParentId,
       auto_provisioned: true,
       driver_id: input.driverId,
     },
