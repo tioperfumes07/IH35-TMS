@@ -15,6 +15,8 @@ import { useToast } from "../../components/Toast";
 import { formatUsdCents } from "../../lib/money";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { useAccountingItemsQuery } from "../../hooks/useAccountingItemsQuery";
+import { FuelStopLocationPicker } from "../../components/locations/FuelStopLocationPicker";
+import { formatFuelStopLocationLabel } from "../../lib/fuelStopLocationLabel";
 import {
   previewSettlementCreator,
   postSettlementCreator,
@@ -28,8 +30,14 @@ import type { ReactNode } from "react";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 type LoadDraft = SettlementCreatorDraft["loads"][number];
-type FuelDraft = SettlementCreatorDraft["fuel_purchases"][number];
-type ExpDraft = SettlementCreatorDraft["expenses"][number];
+/** location_id is picker state only — API gets the AT-style location string. */
+type FuelDraft = SettlementCreatorDraft["fuel_purchases"][number] & {
+  location_id?: string | null;
+};
+type ExpDraft = SettlementCreatorDraft["expenses"][number] & {
+  location?: string | null;
+  location_id?: string | null;
+};
 type MoneyDraft = {
   description: string;
   amount_cents: number;
@@ -70,6 +78,8 @@ function emptyFuel(): FuelDraft {
     cpg_cents: 0,
     card: "relay",
     vendor_name: "",
+    location: "",
+    location_id: null,
     load_number: "",
   };
 }
@@ -83,6 +93,8 @@ function emptyCompExp(): ExpDraft {
     is_company_expense: true,
     is_reimbursable: false,
     card: "relay",
+    location: "",
+    location_id: null,
   };
 }
 
@@ -95,6 +107,8 @@ function emptyDrvReimb(): ExpDraft {
     is_company_expense: false,
     is_reimbursable: true,
     card: null,
+    location: "",
+    location_id: null,
   };
 }
 
@@ -262,8 +276,11 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
         date_sent_to_factoring: l.date_sent_to_factoring || null,
         join_outbound_load_number: l.join_outbound_load_number || null,
       })),
-      fuel_purchases: fuels,
-      expenses: expensesMerged,
+      fuel_purchases: fuels.map(({ location_id: _lid, ...fuel }) => fuel),
+      expenses: expensesMerged.map(({ location, location_id: _lid, ...exp }) => ({
+        ...exp,
+        description: [location?.trim(), exp.description?.trim()].filter(Boolean).join(" · ") || exp.description,
+      })),
       deductions: deductions.map((d) => ({ ...d, description: d.description || "Deduction" })),
       reimbursements: additionalPayForApi,
       escrow: escrowForApi,
@@ -577,7 +594,37 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         next[idx] = { ...fuel, vendor_name: e.target.value };
                         setFuels(next);
                       }}
+                      placeholder="LOVES"
+                      data-testid={`sc-fuel-vendor-${idx}`}
                     />
+                  </Field>
+                  <Field label="Location">
+                    <FuelStopLocationPicker
+                      operatingCompanyId={companyId}
+                      value={fuel.location_id ?? null}
+                      dataTestId={`sc-fuel-location-${idx}`}
+                      onChange={(id, loc) => {
+                        const next = [...fuels];
+                        const label = loc ? formatFuelStopLocationLabel(loc) : "";
+                        const lovesVendor =
+                          loc?.location_code?.toUpperCase().startsWith("LOVES-") &&
+                          !(fuel.vendor_name ?? "").trim()
+                            ? "LOVES"
+                            : fuel.vendor_name;
+                        next[idx] = {
+                          ...fuel,
+                          location_id: id,
+                          location: label,
+                          vendor_name: lovesVendor ?? fuel.vendor_name,
+                        };
+                        setFuels(next);
+                      }}
+                    />
+                    {fuel.location ? (
+                      <span className="text-center text-xs text-[#6B7280]" data-testid={`sc-fuel-location-label-${idx}`}>
+                        {fuel.location}
+                      </span>
+                    ) : null}
                   </Field>
                   <Field label="Gallons">
                     <input
@@ -719,6 +766,27 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       }}
                     />
                   </Field>
+                  <Field label="Location">
+                    <FuelStopLocationPicker
+                      operatingCompanyId={companyId}
+                      value={exp.location_id ?? null}
+                      dataTestId={`sc-comp-location-${idx}`}
+                      onChange={(id, loc) => {
+                        const next = [...companyExpenses];
+                        next[idx] = {
+                          ...exp,
+                          location_id: id,
+                          location: loc ? formatFuelStopLocationLabel(loc) : "",
+                        };
+                        setCompanyExpenses(next);
+                      }}
+                    />
+                    {exp.location ? (
+                      <span className="text-center text-xs text-[#6B7280]" data-testid={`sc-comp-location-label-${idx}`}>
+                        {exp.location}
+                      </span>
+                    ) : null}
+                  </Field>
                 </div>
               ))}
             </Section>
@@ -815,6 +883,27 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         setDrvReimbursements(next);
                       }}
                     />
+                  </Field>
+                  <Field label="Location">
+                    <FuelStopLocationPicker
+                      operatingCompanyId={companyId}
+                      value={exp.location_id ?? null}
+                      dataTestId={`sc-drv-location-${idx}`}
+                      onChange={(id, loc) => {
+                        const next = [...drvReimbursements];
+                        next[idx] = {
+                          ...exp,
+                          location_id: id,
+                          location: loc ? formatFuelStopLocationLabel(loc) : "",
+                        };
+                        setDrvReimbursements(next);
+                      }}
+                    />
+                    {exp.location ? (
+                      <span className="text-center text-xs text-[#6B7280]" data-testid={`sc-drv-location-label-${idx}`}>
+                        {exp.location}
+                      </span>
+                    ) : null}
                   </Field>
                 </div>
               ))}

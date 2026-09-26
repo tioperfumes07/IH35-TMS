@@ -46,6 +46,9 @@ export type RecordExpenseFormValues = {
   expenseNumber: string;
   /** Vendor's document. Blank allowed. Never auto-filled. */
   vendorDocumentNumber: string;
+  /** Fuel-stop / Love's catalog location (AT settlement shape) — folded into memo. */
+  locationId: string | null;
+  locationLabel: string;
   /** GO-19-09 — QBO Class reporting dimension (catalogs.classes), mirrors the bill form's Class field. */
   classId: string;
   classLabel: string;
@@ -68,6 +71,7 @@ export type RecordExpenseLinkage = {
 export function buildRecordExpenseMemo(values: RecordExpenseFormValues, linkage?: RecordExpenseLinkage) {
   const parts = ["Expense capture"];
   if (linkage?.linkedWoDisplayId) parts.push(`WO: ${linkage.linkedWoDisplayId}`);
+  if (values.locationLabel.trim()) parts.push(values.locationLabel.trim());
   if (values.description.trim()) parts.push(values.description.trim());
   if (values.categoryLabel) parts.push(`Category: ${values.categoryLabel}`);
   if (values.unitLabel) parts.push(`Unit: ${values.unitLabel}`);
@@ -187,6 +191,8 @@ export function initialRecordExpenseFormValues(): RecordExpenseFormValues {
     paymentMethod: "",
     expenseNumber: "",
     vendorDocumentNumber: "",
+    locationId: null,
+    locationLabel: "",
     classId: "",
     classLabel: "",
   };

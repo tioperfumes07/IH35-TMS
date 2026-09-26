@@ -71,6 +71,12 @@ function runChecks() {
   assert(/formatAccountDisplayLabel/.test(drawer),
     "JE preview must hide account numbers by default (formatAccountDisplayLabel)", failures);
 
+  // R-186.2 follow-on — Love's / fuel_stop catalog feeds Creator Location (AT settlement shape).
+  assert(/FuelStopLocationPicker/.test(drawer),
+    "Drawer fuel/expense Location must use FuelStopLocationPicker (mdata.locations fuel_stop)", failures);
+  assert(/sc-fuel-location|formatFuelStopLocationLabel/.test(drawer),
+    "Drawer must bind fuel Location to AlwaysTrack-style fuel-stop labels", failures);
+
   return failures;
 }
 

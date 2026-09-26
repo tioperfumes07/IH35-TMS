@@ -195,6 +195,13 @@ Measured (Neon `br-fancy-credit-akjnd07a`, bypass_rls=lucia, tip `6d18a73826`):
   `syncSettlementLoadsToBilling` — blocked by LIVE `verify-purge-era-closures-still-hold` red
   (pasted Lead OUTBOX 2026-09-25; never baselined). FE ships Preview-first (`allowPost=false`).
 - **DONE bar:** Preview-first. Guard `scripts/verify-settlement-creator-ties-document.mjs`.
+- **Love's / fuel-stop location catalog (2026-09-26):** `mdata.locations` has **604** `LOVES-*`
+  `fuel_stop` rows (name `Love's #N — City, ST`, lat/lng set; `address_line1` still null on the
+  network-file seed). Shared `FuelStopLocationPicker` + `formatFuelStopLocationLabel` (street first
+  when present, else catalog name — AT settlement shape) feeds Settlement Creator fuel + Comp./Drv
+  Location, Create Fuel Purchase, and Record Expense memo. Guard:
+  `scripts/verify-fuel-stop-location-catalog.mjs`. Never free-text city/state as the only fuel
+  location path.
 
 ## Known Quirks & Blockers
 

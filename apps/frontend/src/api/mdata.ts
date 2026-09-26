@@ -2041,9 +2041,19 @@ export type MdataLocation = {
   lng: number | null;
 };
 
-export function listLocations(params: CompanyScopedListParams = {}) {
+export function listLocations(
+  params: CompanyScopedListParams & {
+    /** mdata.location_type_enum — e.g. fuel_stop for Love's / fuel vendor catalog. */
+    location_type?: string;
+    city?: string;
+    state?: string;
+  } = {},
+) {
   const query = new URLSearchParams();
   appendCompanyScopedQuery(query, params);
+  if (params.location_type) query.set("location_type", params.location_type);
+  if (params.city) query.set("city", params.city);
+  if (params.state) query.set("state", params.state);
   const qs = query.toString();
   return apiRequest<{ locations: MdataLocation[] }>(`/api/v1/mdata/locations${qs ? `?${qs}` : ""}`);
 }

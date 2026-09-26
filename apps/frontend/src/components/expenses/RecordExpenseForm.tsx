@@ -18,6 +18,8 @@ import { EntityPicker } from "../EntityPicker";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { coaAccountReferenceOption, vendorReferenceOption } from "../parity/referenceOptionLabels";
 import { SelectCombobox } from "../Combobox";
+import { FuelStopLocationPicker } from "../locations/FuelStopLocationPicker";
+import { formatFuelStopLocationLabel } from "../../lib/fuelStopLocationLabel";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { UploadZone } from "../UploadZone";
@@ -370,6 +372,29 @@ export function RecordExpenseForm({
             onChange={(next) => setValues((prev) => ({ ...prev, driverId: next ?? null }))}
             placeholder="Search driver…"
           />
+        </div>
+      </label>
+
+      <label className="text-xs font-semibold text-gray-700">
+        Location (Love&apos;s / fuel stop)
+        <div className="mt-1" data-testid="record-expense-location-picker">
+          <FuelStopLocationPicker
+            operatingCompanyId={operatingCompanyId}
+            value={values.locationId}
+            dataTestId="record-expense-location"
+            onChange={(id, loc) => {
+              setValues((prev) => ({
+                ...prev,
+                locationId: id,
+                locationLabel: loc ? formatFuelStopLocationLabel(loc) : "",
+              }));
+            }}
+          />
+          {values.locationLabel ? (
+            <p className="mt-1 text-center text-xs text-slate-600" data-testid="record-expense-location-label">
+              {values.locationLabel}
+            </p>
+          ) : null}
         </div>
       </label>
 
