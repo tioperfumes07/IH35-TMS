@@ -28,11 +28,34 @@
  *   3. appendSettlementLineFromDriverBillIfMissing() (the canonical settlement-engine writer) turns
  *      the freshly-minted bill into a real driver_finance.settlement_lines row on the load's own
  *      pre-settlement -- closing verify-no-empty-zero-settlement for that settlement.
+ *
+ * LOCK NOTE (live-caught running this against 13616): updateDispatchLoad's own detectLoadEditLock
+ * refuses ANY edit -- mileage included, "money requires reversal (WORM)" per its own comment, no Owner
+ * override exists for money fields -- on a load that is first_load_id/last_load_id of an OPEN
+ * (trip_closed_at IS NULL) load_bookended settlement. 4 of these 6 loads (13616/13618/13620/13621)
+ * are the SOLE load on a settlement bookLoad() freshly auto-minted for them (P-0008/9/10/11) and are
+ * literally their own settlement's first_load_id -- the other 2 (13609/13617) were added to a
+ * PRE-EXISTING settlement (P-0004/P-0002, from AUTH-038) whose bookend fields were never populated at
+ * all, so they never hit this lock.
+ * detectLoadEditLock does not check voided_at or settlement status -- only first_load_id/last_load_id
+ * and trip_closed_at -- so voiding/cancelling the settlement does not release the lock, and closing
+ * the trip (trip_closed_at) would be a false statement (these loads are genuinely still in transit).
+ * The one field the lock actually keys on is the SETTLEMENT's own bookend pointer -- a bookkeeping FK,
+ * not a dollar amount -- on a settlement that (per the check right before this fix) carries zero
+ * settlement_lines and $0 net_pay: nothing computed off it yet. Narrow, disclosed exception: null the
+ * bookend field that points at this load, do the mileage edit (now legitimately unlocked), then
+ * restore the SAME value (this load genuinely is the correct bookend -- nothing else is on this
+ * settlement) once the edit is committed.
  */
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+
+type LoadEditLockedErrorShape = { name: string; lock: { reason: string; reference_id: string } };
+function isLoadEditLockedError(err: unknown): err is LoadEditLockedErrorShape {
+  return typeof err === "object" && err !== null && (err as { name?: string }).name === "LoadEditLockedError";
+}
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const REQUIRED_AUTH_ID = process.env.OWNER_AUTH_ID;
@@ -88,15 +111,47 @@ async function main() {
         const load = loadRow.rows[0];
 
         let driverBillMint: unknown = "already_had_mileage";
+        let bookendUnlocked: { settlementId: string; field: "first_load_id" | "last_load_id" } | null = null;
         if (load.miles_practical == null) {
-          const updateResult = await updateDispatchLoad(client as never, {
-            loadId: load.id,
-            operatingCompanyId: USMCA_ID,
-            requestingUserUuid: OWNER_USER_ID,
-            requestingUserRole: "Owner",
-            fields: { miles_practical: mi.practical, miles_shortest: mi.practical, miles_deadhead: mi.deadhead },
-          } as never);
+          const doUpdate = () =>
+            updateDispatchLoad(client as never, {
+              loadId: load.id,
+              operatingCompanyId: USMCA_ID,
+              requestingUserUuid: OWNER_USER_ID,
+              requestingUserRole: "Owner",
+              fields: { miles_practical: mi.practical, miles_shortest: mi.practical, miles_deadhead: mi.deadhead },
+            } as never);
+
+          let updateResult: unknown;
+          try {
+            updateResult = await doUpdate();
+          } catch (err) {
+            if (!isLoadEditLockedError(err) || err.lock.reason !== "open_settlement") throw err;
+            const settlementId = err.lock.reference_id;
+            const bookendRow = await client.query<{ first_load_id: string | null; last_load_id: string | null }>(
+              `SELECT first_load_id::text, last_load_id::text FROM driver_finance.driver_settlements WHERE id=$1::uuid`,
+              [settlementId]
+            );
+            const b = bookendRow.rows[0];
+            if (!b) throw new Error(`${loadNumber}: lock settlement ${settlementId} not found`);
+            const field: "first_load_id" | "last_load_id" | null =
+              b.first_load_id === load.id ? "first_load_id" : b.last_load_id === load.id ? "last_load_id" : null;
+            if (!field) throw new Error(`${loadNumber}: locked by settlement ${settlementId} but neither bookend field points at this load -- STOP, not the expected shape`);
+            const linesCheck = await client.query<{ n: string }>(
+              `SELECT count(*)::text n FROM driver_finance.settlement_lines WHERE settlement_id=$1::uuid AND voided_at IS NULL`,
+              [settlementId]
+            );
+            if (linesCheck.rows[0].n !== "0") throw new Error(`${loadNumber}: settlement ${settlementId} already has ${linesCheck.rows[0].n} live line(s) -- refusing to touch its bookend field`);
+            console.log(`${loadNumber}: bookended by its own freshly-minted, zero-line settlement (${settlementId}) -- temporarily clearing ${field}, will restore after the edit`);
+            await client.query(`UPDATE driver_finance.driver_settlements SET ${field}=NULL WHERE id=$1::uuid`, [settlementId]);
+            bookendUnlocked = { settlementId, field };
+            updateResult = await doUpdate();
+          }
           driverBillMint = (updateResult as { driver_bill_mint?: unknown }).driver_bill_mint;
+
+          if (bookendUnlocked) {
+            await client.query(`UPDATE driver_finance.driver_settlements SET ${bookendUnlocked.field}=$1::uuid WHERE id=$2::uuid`, [load.id, bookendUnlocked.settlementId]);
+          }
 
           // Narrow, disclosed exception (see header): mileage_source has no field on the update path.
           await client.query(
@@ -123,13 +178,15 @@ async function main() {
         results.push({ load_number: loadNumber, status: "ok", driver_bill_mint: driverBillMint });
       } catch (err) {
         await client.query("ROLLBACK").catch(() => {});
-        throw err;
+        console.error(`${loadNumber}: FAILED -- ${(err as Error).message}`);
+        results.push({ load_number: loadNumber, status: "failed", error: (err as Error).message });
       } finally {
         client.release();
       }
     }
     console.log(JSON.stringify(results, null, 2));
     console.log("DONE.");
+    if (results.some((r) => r.status === "failed")) process.exitCode = 1;
   } finally {
     await pool.end();
   }
