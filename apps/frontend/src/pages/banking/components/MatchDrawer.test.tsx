@@ -183,3 +183,51 @@ describe("MatchDrawer — Confirm-match exact-only (BANKREC-CONFIRM-01)", () => 
     expect(radio.checked).toBe(false);
   });
 });
+
+describe("MatchDrawer — ROUND 207 date cascade UI", () => {
+  beforeEach(() => {
+    vi.mocked(bankingApi.getMatchCandidates).mockReset();
+  });
+
+  it("shows Within 3 days header and Search 7 days when step-1 has candidates", async () => {
+    vi.mocked(bankingApi.getMatchCandidates).mockResolvedValue({
+      candidates: [candidate({ amount_gap_cents: 0 })],
+      match_candidates_count: 1,
+      window: { step: 1, from: "2026-09-02", to: "2026-09-06", auto_widened: false },
+    });
+    render(wrap(<MatchDrawer open bankTransactionId={bankTxnId} operatingCompanyId={companyId} onClose={vi.fn()} />));
+    await waitFor(() => {
+      expect(screen.getByTestId("match-window-header")).toHaveTextContent(/Within 3 days/);
+    });
+    expect(screen.getByTestId("match-search-7-days")).toBeInTheDocument();
+    expect(screen.queryByTestId("match-window-widened-banner")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("match-search-all")).not.toBeInTheDocument();
+  });
+
+  it("shows widened banner when auto_widened", async () => {
+    vi.mocked(bankingApi.getMatchCandidates).mockResolvedValue({
+      candidates: [candidate({ amount_gap_cents: 0 })],
+      match_candidates_count: 1,
+      window: { step: 2, from: "2026-08-29", to: "2026-09-07", auto_widened: true },
+    });
+    render(wrap(<MatchDrawer open bankTransactionId={bankTxnId} operatingCompanyId={companyId} onClose={vi.fn()} />));
+    await waitFor(() => {
+      expect(screen.getByTestId("match-window-widened-banner")).toHaveTextContent(
+        "No candidates within 3 days — widened to 7 days.",
+      );
+    });
+    expect(screen.queryByTestId("match-search-7-days")).not.toBeInTheDocument();
+  });
+
+  it("shows From/To when step-2 returns empty", async () => {
+    vi.mocked(bankingApi.getMatchCandidates).mockResolvedValue({
+      candidates: [],
+      match_candidates_count: 0,
+      window: { step: 2, from: "2026-08-29", to: "2026-09-07", auto_widened: true },
+    });
+    render(wrap(<MatchDrawer open bankTransactionId={bankTxnId} operatingCompanyId={companyId} onClose={vi.fn()} />));
+    expect(await screen.findByTestId("match-from-to")).toBeInTheDocument();
+    expect(screen.getByTestId("match-date-from")).toBeInTheDocument();
+    expect(screen.getByTestId("match-date-to")).toBeInTheDocument();
+  });
+});

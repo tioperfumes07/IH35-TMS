@@ -390,10 +390,11 @@ function toCandidate(kind: LedgerEntryKind, row: RawRow, counterpartyKind: Match
 }
 
 /**
- * BANK-MATCH-QBO — the QuickBooks "Find match" filter set: Show (transaction type), Payee, date From/To,
- * amount From/To. QuickBooks' default recommendation window is 90 calendar days BEFORE the bank date and
- * 20 after (quickbooks.intuit.com community answer, read 2026-09-06); the old ±7 here hid most real
- * documents. `windowDays` (symmetric) is kept for callers that pass it (Search all, the cron).
+ * BANK-MATCH date cascade (owner 2026-09-23 LOCKED — ROUND 207):
+ * Step 1 = bank −3..+1 → if ZERO candidates, Step 2 = −7..+2 (auto_widened).
+ * Never auto-advance past Step 2. Explicit From/To (or other filters) bypass the cascade.
+ * Backward-leaning windows: ledger document precedes bank clearing (NetSuite txn date <= bank date);
+ * +1/+2 covers late entry only. `windowDays` kept only for rare cron callers — NOT the default path.
  */
 export type CandidateFilters = {
   windowDays?: number;
@@ -406,13 +407,47 @@ export type CandidateFilters = {
   amountMaxCents?: number;
 };
 
-export const QBO_DAYS_BEFORE = 90;
-export const QBO_DAYS_AFTER = 20;
+/** Owner-locked cascade steps — never resurrect QBO_DAYS_BEFORE=90 / AFTER=20. */
+export const MATCH_WINDOW_STEPS = {
+  step1: { before: 3, after: 1 },
+  step2: { before: 7, after: 2 },
+} as const;
+
+export type MatchWindowStep = 1 | 2 | "custom";
+
+export type MatchWindowInfo = {
+  step: MatchWindowStep;
+  from: string;
+  to: string;
+  auto_widened: boolean;
+};
+
+export type FindCandidatesResult = {
+  candidates: MatchCandidate[];
+  window: MatchWindowInfo;
+};
+
+const MAX_CUSTOM_SPAN_DAYS = 730;
 
 function shiftDate(iso: string, days: number) {
   const d = new Date(`${iso.slice(0, 10)}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
+}
+
+function boundsForStep(txnDate: string, step: 1 | 2): { from: string; to: string } {
+  const s = step === 1 ? MATCH_WINDOW_STEPS.step1 : MATCH_WINDOW_STEPS.step2;
+  return { from: shiftDate(txnDate, -s.before), to: shiftDate(txnDate, s.after) };
+}
+
+/** Clamp an explicit From/To span to MAX_CUSTOM_SPAN_DAYS (existing 730-day cap). */
+function clampCustomSpan(from: string, to: string): { from: string; to: string } {
+  const fromMs = Date.parse(`${from.slice(0, 10)}T00:00:00Z`);
+  const toMs = Date.parse(`${to.slice(0, 10)}T00:00:00Z`);
+  if (!Number.isFinite(fromMs) || !Number.isFinite(toMs)) return { from, to };
+  const spanDays = Math.round((toMs - fromMs) / 86_400_000);
+  if (spanDays <= MAX_CUSTOM_SPAN_DAYS) return { from, to };
+  return { from, to: shiftDate(from, MAX_CUSTOM_SPAN_DAYS) };
 }
 
 /**
@@ -454,14 +489,21 @@ async function fetchLedgerCandidates(
   options: CandidateFilters = {}
 ): Promise<RawLedgerCandidate[]> {
   const results: RawLedgerCandidate[] = [];
-  // Date range: explicit From/To wins; else a symmetric windowDays (Search all / cron); else the
-  // QuickBooks default of 90 days before and 20 days after the bank date.
-  const windowDays = options.windowDays == null ? null : Math.min(Math.max(Number(options.windowDays) || 7, 1), 730);
-  const fromDate = options.dateFrom ?? (windowDays != null ? shiftDate(txnDate, -windowDays) : shiftDate(txnDate, -QBO_DAYS_BEFORE));
-  const toDate = options.dateTo ?? (windowDays != null ? shiftDate(txnDate, windowDays) : shiftDate(txnDate, QBO_DAYS_AFTER));
-  // When windowDays is provided, the SQL date window can also be expressed as
-  // txn_date BETWEEN txn_date - make_interval(days => $N::int) AND txn_date + make_interval(days => $N::int)
-  // (parameterized make_interval for the match date window — guard verify-relay-wallet-bank-feed).
+  // Date range: caller (findCandidates cascade) supplies From/To. Optional symmetric windowDays is
+  // cron-only — NEVER the default path (no search_all→365, no QBO 90/20).
+  const windowDays =
+    options.windowDays == null ? null : Math.min(Math.max(Number(options.windowDays) || 7, 1), MAX_CUSTOM_SPAN_DAYS);
+  let fromDate =
+    options.dateFrom ??
+    (windowDays != null ? shiftDate(txnDate, -windowDays) : boundsForStep(txnDate, 2).from);
+  let toDate =
+    options.dateTo ??
+    (windowDays != null ? shiftDate(txnDate, windowDays) : boundsForStep(txnDate, 2).to);
+  if (options.dateFrom || options.dateTo) {
+    const clamped = clampCustomSpan(fromDate, toDate);
+    fromDate = clamped.from;
+    toDate = clamped.to;
+  }
   const searchNeedle = (options.searchQuery ?? "").trim().toLowerCase();
   const payeeNeedle = (options.payee ?? "").trim().toLowerCase();
   const hasFilters = Boolean(searchNeedle || payeeNeedle || options.kinds?.length || options.amountMinCents != null || options.amountMaxCents != null);
@@ -975,7 +1017,15 @@ export async function findCandidates(input: {
   operating_company_id: string;
   bank_transaction_id: string;
   actor_user_uuid?: string;
-  /** QBO "Search all" — widen date window (default 7). Cap 730. */
+  /**
+   * ROUND 207 — optional forced cascade step (1|2). Default (omit) runs Step 1 then auto-widens to
+   * Step 2 only when Step 1 returns ZERO. Never advances past Step 2.
+   */
+  window_step?: 1 | 2;
+  /**
+   * Cron / rare callers only — symmetric ±days. REMOVED from the Match drawer default path
+   * (no search_all→365). Measured 2026-09-26: no live cron calls findCandidates with window_days.
+   */
   window_days?: number;
   /** Optional memo/payee/ref text filter (case-insensitive contains). */
   search_query?: string;
@@ -986,96 +1036,135 @@ export async function findCandidates(input: {
   date_to?: string;
   amount_min_cents?: number;
   amount_max_cents?: number;
-}): Promise<MatchCandidate[]> {
+}): Promise<FindCandidatesResult> {
   return withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     const txn = await loadTransaction(client, input.operating_company_id, input.bank_transaction_id);
-    if (!txn) return [];
+    if (!txn) {
+      return {
+        candidates: [],
+        window: { step: 1, from: "", to: "", auto_widened: false },
+      };
+    }
 
     const toleranceCents = toleranceForAmount(txn.amount_cents);
     const txnAmountAbs = Math.abs(Number(txn.amount_cents ?? 0));
     const txnMemo = `${txn.merchant_name ?? ""} ${txn.description ?? ""} ${txn.notes ?? ""}`.trim();
-    const rawCandidates = await fetchLedgerCandidates(
-      client,
-      input.operating_company_id,
-      txn.transaction_date,
-      txn.is_credit,
-      txn.bank_account_id,
-      {
-        windowDays: input.window_days,
+    const txnDate = txn.transaction_date;
+
+    const rank = (rawCandidates: RawLedgerCandidate[]): MatchCandidate[] =>
+      rawCandidates
+        .map((candidate) => {
+          const amountGapCents = Math.abs(txnAmountAbs - candidate.amount_cents);
+          const dateGapDays = daysBetween(txnDate, candidate.event_date);
+          const payeeSim = payeeSimilarity(txnMemo, candidate.counterparty_name);
+          const similarity = Math.max(
+            memoSimilarity(txnMemo, candidate.memo),
+            memoSimilarity(txnMemo, candidate.description),
+            payeeSim
+          );
+          const autoMatch =
+            amountGapCents <= toleranceCents &&
+            dateGapDays <= AUTO_MATCH_DATE_WINDOW_DAYS &&
+            similarity >= AUTO_MATCH_MEMO_SIMILARITY_MIN;
+          const score = computeMatchScore({
+            amountGapCents,
+            toleranceCents,
+            dateGapDays,
+            similarity,
+            txnAmountCents: txnAmountAbs,
+          });
+          return {
+            ...candidate,
+            amount_gap_cents: amountGapCents,
+            date_gap_days: dateGapDays,
+            memo_similarity: similarity,
+            payee_similarity: payeeSim,
+            match_score: score,
+            auto_match: autoMatch,
+            exact_amount: amountGapCents === 0,
+          };
+        })
+        .sort(compareCandidatesExactFirst)
+        .slice(0, 50);
+
+    const fetchAt = async (from: string, to: string, extra: CandidateFilters = {}) =>
+      fetchLedgerCandidates(client, input.operating_company_id, txnDate, txn.is_credit, txn.bank_account_id, {
+        ...extra,
+        dateFrom: from,
+        dateTo: to,
         searchQuery: input.search_query,
         kinds: input.kinds,
         payee: input.payee,
-        dateFrom: input.date_from,
-        dateTo: input.date_to,
         amountMinCents: input.amount_min_cents,
         amountMaxCents: input.amount_max_cents,
-      }
+      });
+
+    const hasExplicitDates = Boolean(input.date_from || input.date_to);
+    const hasOtherFilters = Boolean(
+      (input.search_query ?? "").trim() ||
+        (input.payee ?? "").trim() ||
+        (input.kinds?.length ?? 0) > 0 ||
+        input.amount_min_cents != null ||
+        input.amount_max_cents != null
     );
 
-    const ranked = rawCandidates
-      .map((candidate) => {
-        const amountGapCents = Math.abs(txnAmountAbs - candidate.amount_cents);
-        const dateGapDays = daysBetween(txn.transaction_date, candidate.event_date);
-        // BANK-MATCH-QBO: the payee NAME is the strongest text signal a bank line carries ("HOLIDAY INN
-        // LAREDO TX" names the vendor, never our expense number). The old memo-only comparison scored a
-        // Holiday Inn expense at 0 because its memo is "13568-1". Best of memo / description / payee.
-        const payeeSim = payeeSimilarity(txnMemo, candidate.counterparty_name);
-        const similarity = Math.max(
-          memoSimilarity(txnMemo, candidate.memo),
-          memoSimilarity(txnMemo, candidate.description),
-          payeeSim
-        );
-        const autoMatch =
-          amountGapCents <= toleranceCents &&
-          dateGapDays <= AUTO_MATCH_DATE_WINDOW_DAYS &&
-          similarity >= AUTO_MATCH_MEMO_SIMILARITY_MIN;
-        const score = computeMatchScore({
-          amountGapCents,
-          toleranceCents,
-          dateGapDays,
-          similarity,
-          txnAmountCents: txnAmountAbs,
-        });
-        return {
-          ...candidate,
-          amount_gap_cents: amountGapCents,
-          date_gap_days: dateGapDays,
-          memo_similarity: similarity,
-          payee_similarity: payeeSim,
-          match_score: score,
-          auto_match: autoMatch,
-          exact_amount: amountGapCents === 0,
-        };
-      })
-      // FAIL-BM2 — exactness is the PRIMARY key, score only breaks ties within a group.
-      // Exported as `compareCandidatesExactFirst` so the test binds to THIS comparator rather than
-      // reimplementing it — a copy in the test would stay green if this changed.
-      //
-      // match_score weights amount at 0.55 and date+memo at 0.45, so the 0.45 can outvote a perfect
-      // amount: a $15.00 line scores an EXACT candidate with weak memo/date at 0.590 and a $1-off
-      // candidate with perfect memo+date at 0.966 — the near miss ranks first. On a reconciliation
-      // surface that is backwards; amount equality is the strongest evidence two records are the same
-      // transaction, and a memo is free text.
-      //
-      // Ordering rather than re-weighting is deliberate: the weights also feed the persisted
-      // match_score, and inflating it for exact matches would change a stored number other code reads.
-      // autoMatch is untouched — it still keys on amountGapCents <= toleranceCents.
-      .sort(compareCandidatesExactFirst)
-      .slice(0, 50);
+    // Cron-only symmetric window — never the Match drawer default.
+    if (input.window_days != null && !hasExplicitDates) {
+      const days = Math.min(Math.max(Number(input.window_days) || 7, 1), MAX_CUSTOM_SPAN_DAYS);
+      const from = shiftDate(txnDate, -days);
+      const to = shiftDate(txnDate, days);
+      const candidates = rank(await fetchAt(from, to, { windowDays: days }));
+      return { candidates, window: { step: "custom", from, to, auto_widened: false } };
+    }
 
-    // ACCT-F26301 — OWNER LAW B (verbatim, 2026-09-12): "it should never automatch, it suggests and
-    // we accept it or change the transactions." This function used to persist a
-    // banking.reconciliation_matches row with match_state='auto_matched' right here, as a side
-    // effect of a bare candidate search — meaning a GET request (opening the Match drawer, or the
-    // bulk /transactions/suggest endpoint) could silently write a match with no human action behind
-    // it. A GET must never write. findCandidates() is READ-ONLY: it returns ranked candidates, each
-    // carrying its own `auto_match` boolean (still computed below, unchanged) so a caller/UI can
-    // show "high confidence" — but persistence now happens ONLY in the explicit accept handler,
-    // acceptMatchWithResolveDifference(), which already requires a real actor_user_uuid and writes
-    // match_state='user_matched'. 'auto_matched' is no longer written anywhere in this codebase; the
-    // MatchState union member is kept only so any pre-existing historical rows still deserialize.
-    return ranked;
+    // ANY explicit filter overrides the cascade. From/To exact; other filters use Step 2 bounds.
+    if (hasExplicitDates || hasOtherFilters) {
+      let from: string;
+      let to: string;
+      if (hasExplicitDates) {
+        const step2 = boundsForStep(txnDate, 2);
+        from = input.date_from ?? step2.from;
+        to = input.date_to ?? step2.to;
+        const clamped = clampCustomSpan(from, to);
+        from = clamped.from;
+        to = clamped.to;
+      } else {
+        ({ from, to } = boundsForStep(txnDate, 2));
+      }
+      const candidates = rank(await fetchAt(from, to));
+      return { candidates, window: { step: "custom", from, to, auto_widened: false } };
+    }
+
+    // Forced Step 2 (FE "Search 7 days") — no further auto-widen.
+    if (input.window_step === 2) {
+      const { from, to } = boundsForStep(txnDate, 2);
+      const candidates = rank(await fetchAt(from, to));
+      return { candidates, window: { step: 2, from, to, auto_widened: false } };
+    }
+
+    // Forced Step 1 only (no auto-widen) when window_step === 1.
+    if (input.window_step === 1) {
+      const { from, to } = boundsForStep(txnDate, 1);
+      const candidates = rank(await fetchAt(from, to));
+      return { candidates, window: { step: 1, from, to, auto_widened: false } };
+    }
+
+    // DEFAULT cascade: Step 1 → if ZERO, Step 2 with auto_widened. Never auto-advance past Step 2.
+    const step1 = boundsForStep(txnDate, 1);
+    const step1Ranked = rank(await fetchAt(step1.from, step1.to));
+    if (step1Ranked.length > 0) {
+      return {
+        candidates: step1Ranked,
+        window: { step: 1, from: step1.from, to: step1.to, auto_widened: false },
+      };
+    }
+    const step2 = boundsForStep(txnDate, 2);
+    const step2Ranked = rank(await fetchAt(step2.from, step2.to));
+    return {
+      candidates: step2Ranked,
+      window: { step: 2, from: step2.from, to: step2.to, auto_widened: true },
+    };
   });
 }
 

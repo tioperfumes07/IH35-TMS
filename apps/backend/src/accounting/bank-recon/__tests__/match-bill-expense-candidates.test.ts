@@ -63,7 +63,7 @@ describe("bank-recon bill/expense candidates + direction awareness", () => {
       return { rows: [] };
     });
 
-    const candidates = await findCandidates({
+    const { candidates } = await findCandidates({
       operating_company_id: TRANSP,
       bank_transaction_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       actor_user_uuid: "22222222-2222-4222-8222-222222222222",
@@ -102,7 +102,7 @@ describe("bank-recon bill/expense candidates + direction awareness", () => {
       return { rows: [] };
     });
 
-    const candidates = await findCandidates({
+    const { candidates } = await findCandidates({
       operating_company_id: TRANSP,
       bank_transaction_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
     });

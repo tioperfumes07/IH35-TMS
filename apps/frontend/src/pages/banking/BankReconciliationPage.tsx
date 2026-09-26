@@ -177,7 +177,7 @@ export function BankReconciliationPage() {
     queryKey: ["bank-recon", "manual-match-candidates", selectedCompanyId, selectedRow?.id, manualLedgerSearch],
     queryFn: () =>
       getMatchCandidates(String(selectedRow?.id), selectedCompanyId!, {
-        searchAll: true,
+        windowStep: 2,
         q: manualLedgerSearch || undefined,
       }),
     enabled: Boolean(selectedCompanyId && selectedRow?.id),

@@ -4,7 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { BankingRuleRow, PlaidCategoryRuleRow, mergeSuggestionPreferHigher, suggestionFromPlaidCategory, suggestionFromRules } from "./suggestion-engine.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
-import { findCandidates, QBO_DAYS_AFTER, QBO_DAYS_BEFORE } from "../accounting/bank-recon/match.service.js";
+import { findCandidates, MATCH_WINDOW_STEPS } from "../accounting/bank-recon/match.service.js";
 import { bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
 import { supersedePlaidPendingByExactPostedCandidate } from "./bank-tx-dedup.js";
 import { runDriftDetectors } from "./drift-alerts.service.js";
@@ -198,12 +198,9 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const parsed = companyQuerySchema
       .extend({
-        window_days: z.coerce.number().int().min(1).max(730).optional(),
+        /** ROUND 207 — force cascade step 1 or 2. Omit = default cascade (3d → 7d). */
+        window_step: z.coerce.number().int().min(1).max(2).optional(),
         q: z.string().max(200).optional(),
-        search_all: z
-          .union([z.literal("1"), z.literal("true"), z.literal("yes")])
-          .optional()
-          .transform((v) => Boolean(v)),
         // BANK-MATCH-QBO (owner 2026-09-06): the QuickBooks "Find match" filters — Show (kinds, csv),
         // Payee, date From/To, amount From/To (dollars, as typed).
         kinds: z
@@ -225,12 +222,11 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     // Membership guard: a user may only pull candidates for an entity they belong to.
     await assertCompanyMembership(user.uuid, operatingCompanyId);
 
-    const windowDays = parsed.data.search_all ? parsed.data.window_days ?? 365 : parsed.data.window_days;
-    const candidates = await findCandidates({
+    const result = await findCandidates({
       operating_company_id: operatingCompanyId,
       bank_transaction_id: params.data.id,
       actor_user_uuid: user.uuid,
-      window_days: windowDays,
+      window_step: parsed.data.window_step === 1 || parsed.data.window_step === 2 ? parsed.data.window_step : undefined,
       search_query: parsed.data.q,
       kinds: parsed.data.kinds,
       payee: parsed.data.payee,
@@ -244,12 +240,22 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     // callers (MatchDrawer.tsx) had to rely entirely on the id they already threaded in as a prop,
     // with no authoritative confirmation from the response itself. Small, real completeness fix.
     return {
-      candidates,
-      match_candidates_count: candidates.length,
-      // QuickBooks default: 90 days before / 20 after the bank date when no window is given.
-      window_days: windowDays ?? null,
-      days_before: windowDays ?? QBO_DAYS_BEFORE,
-      days_after: windowDays ?? QBO_DAYS_AFTER,
+      candidates: result.candidates,
+      match_candidates_count: result.candidates.length,
+      window: result.window,
+      // Compat mirrors for older FE — derived from MATCH_WINDOW_STEPS, never 90/20.
+      days_before:
+        result.window.step === 1
+          ? MATCH_WINDOW_STEPS.step1.before
+          : result.window.step === 2
+            ? MATCH_WINDOW_STEPS.step2.before
+            : null,
+      days_after:
+        result.window.step === 1
+          ? MATCH_WINDOW_STEPS.step1.after
+          : result.window.step === 2
+            ? MATCH_WINDOW_STEPS.step2.after
+            : null,
       search_query: parsed.data.q ?? null,
       filters: {
         kinds: parsed.data.kinds ?? null,
@@ -287,7 +293,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
 
     const results = await Promise.all(
       body.data.bank_transaction_ids.map(async (bankTransactionId) => {
-        const candidates = await findCandidates({
+        const result = await findCandidates({
           operating_company_id: operatingCompanyId,
           bank_transaction_id: bankTransactionId,
           actor_user_uuid: user.uuid,
@@ -295,7 +301,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
         // "suggest exact cents +-5d to expenses/bills" — literal filter, narrower than the general
         // auto_match flag (which also requires memo_similarity >= 0.8): amount_gap_cents === 0 and
         // date_gap_days <= AUTO_MATCH_DATE_WINDOW_DAYS (5), kind in {expense, bill} only.
-        const best = candidates.find(
+        const best = result.candidates.find(
           (c) => c.exact_amount && c.date_gap_days <= 5 && (c.ledger_entry_kind === "expense" || c.ledger_entry_kind === "bill")
         );
         if (!best) return { bank_transaction_id: bankTransactionId, suggestion: null };
