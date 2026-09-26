@@ -1,6 +1,6 @@
 {
  "date": "2026-09-26",
- "generated_at_iso": "2026-09-26T11:34:12.598Z",
+ "generated_at_iso": "2026-09-26T16:30:47.267Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13727,6 +13727,12 @@
  ],
  "merged_prs": [
   {
+   "number": 22874,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-26T11:34:40Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 22873,
    "title": "FINDING: N/A LANE: DOCS (AUTH-051 / AUTH-053 / AUTH-056 CONSUMED with live proof)",
    "mergedAt": "2026-09-26T06:27:48Z",
@@ -17319,12 +17325,6 @@
    "title": "Claude-3: FUEL-DEDUPE-06 -- self-audit, 2 more wrongly-archived rows corrected (13557/13547)",
    "mergedAt": "2026-09-22T20:17:05Z",
    "branch": "claude-3-urgent-2-more-wrong-archives"
-  },
-  {
-   "number": 22258,
-   "title": "Claude-1-LAND THE CURSOR SEAT (LEAD RULING — ROUND 48, 2026-09-22)",
-   "mergedAt": "2026-09-22T20:15:13Z",
-   "branch": "cc-1/land-cursor-seat-lane"
   }
  ],
  "merged_pr_total": 3000,
