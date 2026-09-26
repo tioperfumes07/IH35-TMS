@@ -1922,7 +1922,18 @@ issued_at: 2026-09-26T04:55:12.000Z
 scope: expense_attribution.expense_load_links (29 new INSERT rows only — no UPDATE/DELETE on any other table) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), the 29 expense_numbers listed in scripts/ops/2026-09-26-cc1-stop-the-line-backfill-expense-load-links.ts's EXPENSE_NUMBERS
 action: OWNER_AUTH_ID=AUTH-060 tsx scripts/ops/2026-09-26-cc1-stop-the-line-backfill-expense-load-links.ts (no dry run, per owner order)
 expires_at: 2026-09-26T06:55:12.000Z
-status: OPEN
+status: CONSUMED — see the CONSUMED note below
+
+CONSUMED 2026-09-26T04:57Z — all 29 of 29 expense_load_links rows inserted live (13513-9, 13515-28..33,
+13516-17, 13518-17, 13522-23, 13524-29, 13536-29/30, 13538-11, 13540-12, 13549-13, 13565-20..22,
+13568-31, 13569-17, 13574-9, 13579-8, 13580-12..14, 13582-5, 13589-11, 13597-5), each expense_seq
+derived from the header's already-assigned expense_number (no generateExpenseNumber() re-call).
+Re-ran scripts/verify-alwaystrack-parity.mjs live after: arm D now PASS (was FAIL), full guard LIVE
+PASS -- 34 in scope, 0 skipped, 0 mismatches, 5/5 structural assertions hold (A/B/C/D/E all PASS).
+Companion fix in the same PR: both source scripts (2026-09-26-cc1-r187-g1-repost-with-item.ts,
+2026-09-26-cc1-r185-repost-27-driver-paid-expenses.ts) now INSERT the expense_load_links row in the
+same transaction as the expense, right after expenseId is known, mirroring the canonical writer's
+shape exactly -- a re-run or copy-paste of either script cannot repeat this gap.
 
 STOP-THE-LINE (Lead): 29 expenses this seat created via raw ops scripts (2 from R-187 G1, 27 from
 R-185) never got an expense_attribution.expense_load_links row — those scripts INSERTed directly into

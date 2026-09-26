@@ -195,6 +195,20 @@ async function main() {
         );
         const newExpenseId = insExp.rows[0]!.id;
 
+        // AUTH-060 STOP-THE-LINE fix: mirror the canonical create path's expense_load_links write
+        // (expenses.routes.ts, body.load_id branch) in the SAME transaction as the expense insert --
+        // omitting it is what broke verify-alwaystrack-parity arm D for this script's first run.
+        await client.query(
+          `
+            INSERT INTO expense_attribution.expense_load_links (
+              operating_company_id, expense_id, expense_source, load_id, load_number,
+              expense_seq, expense_number, attribution_method, attribution_confidence,
+              attribution_reason, attributed_by_user_id
+            ) VALUES ($1,$2,'accounting',$3,$4,$5,$6,'user_assigned','high',$7,$8)
+          `,
+          [USMCA_ID, newExpenseId, h.load_id, numbering.loadNumber, numbering.seq, numbering.number, `R-185 reissue of ${h.expense_number}: driver-paid expense re-credited to the driver's 2175 reimbursement leaf`, SYSTEM_ACTOR_USER_ID]
+        );
+
         await client.query(
           `
             INSERT INTO accounting.expense_lines (
