@@ -50,6 +50,30 @@ export type SetSettlementSourceDocumentRefInput = {
  */
 const SETTLEMENT_SOURCE_DOC_REF_FLOOR = 5803; // last AllwaysTrack-imported closed tour; first minted = 5804
 
+function nextSourceDocumentRefSql(): string {
+  return `
+    SELECT (GREATEST($2::int, COALESCE(MAX((source_document_ref)::int), 0)) + 1)::text AS next
+      FROM driver_finance.driver_settlements
+     WHERE operating_company_id = $1::uuid
+       AND source_document_ref ~ '^[0-9]+$'
+  `;
+}
+
+/**
+ * Pure peek — next AlwaysTrack settlement document number (digits). Does not lock or insert.
+ * Settlement Creator shows this as the locked default; Edit unlocks override.
+ */
+export async function peekNextSettlementSourceDocumentRef(
+  client: Queryable,
+  operatingCompanyId: string
+): Promise<string> {
+  const res = await client.query<{ next: string }>(nextSourceDocumentRefSql(), [
+    operatingCompanyId,
+    SETTLEMENT_SOURCE_DOC_REF_FLOOR,
+  ]);
+  return res.rows[0]!.next;
+}
+
 export async function allocateNextSettlementSourceDocumentRef(
   client: Queryable,
   operatingCompanyId: string
@@ -57,15 +81,10 @@ export async function allocateNextSettlementSourceDocumentRef(
   await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [
     `settlement-source-doc-ref:${operatingCompanyId}`,
   ]);
-  const res = await client.query<{ next: string }>(
-    `
-      SELECT (GREATEST($2::int, COALESCE(MAX((source_document_ref)::int), 0)) + 1)::text AS next
-        FROM driver_finance.driver_settlements
-       WHERE operating_company_id = $1::uuid
-         AND source_document_ref ~ '^[0-9]+$'
-    `,
-    [operatingCompanyId, SETTLEMENT_SOURCE_DOC_REF_FLOOR]
-  );
+  const res = await client.query<{ next: string }>(nextSourceDocumentRefSql(), [
+    operatingCompanyId,
+    SETTLEMENT_SOURCE_DOC_REF_FLOOR,
+  ]);
   return res.rows[0]!.next;
 }
 

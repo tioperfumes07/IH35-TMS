@@ -89,17 +89,21 @@ function runChecks() {
   assert(/Drv reimb Cr 2175|2175/.test(service),
     "Service preview must project Drv reimbursements to Cr 2175", failures);
 
-  // Owner 2026-09-26 — Creator creates NEW only: auto next load/settlement sequence, Edit unlock.
-  assert(/peekNextLoadNumber/.test(drawer) && /peekNextSettlementDisplayId/.test(drawer),
-    "Drawer must peek next load # + next P-settlement on open", failures);
+  // Owner 2026-09-26 — Creator creates NEW only: auto next load # + AlwaysTrack settlement #, Edit unlock.
+  assert(/peekNextLoadNumber/.test(drawer) && /peekNextSettlementNumber/.test(drawer),
+    "Drawer must peek next load # + next AlwaysTrack settlement # on open", failures);
   assert(/sc-load-number-edit|sc-settlement-no-edit/.test(drawer) && /readOnly=\{!/.test(drawer),
     "Load No. and Settlement No. must be read-only until Edit", failures);
   assert(/nextSequentialLoadNumber|addLoadRow/.test(drawer),
     "Add Load must continue the numeric sequence automatically", failures);
   assert(/load_already_exists/.test(fs.readFileSync(path.join(ROOT, "apps/backend/src/driver-finance/settlement-creator-seed-loads.ts"), "utf8")),
     "Seed path must refuse existing load numbers (Creator books NEW only)", failures);
-  assert(/never attach to driver's existing open|always mint next P-series/.test(service),
-    "Post must mint a NEW P-settlement (never attach empty→driver open)", failures);
+  assert(/allocateNextSettlementSourceDocumentRef/.test(service) && /never attach to driver's existing open/.test(service),
+    "Post empty must mint next AlwaysTrack source_document_ref (never attach to driver open / never default P-series)", failures);
+  assert(/peekNextSettlementSourceDocumentRef/.test(fs.readFileSync(path.join(ROOT, "apps/backend/src/driver-finance/settlement-source-document-ref.service.ts"), "utf8")),
+    "source-document-ref service must export peekNextSettlementSourceDocumentRef", failures);
+  assert(/next_number/.test(fs.readFileSync(path.join(ROOT, "apps/frontend/src/api/settlementCreator.ts"), "utf8")),
+    "FE peek API must read next_number (AlwaysTrack digits), not next_display_id P-series", failures);
 
   return failures;
 }

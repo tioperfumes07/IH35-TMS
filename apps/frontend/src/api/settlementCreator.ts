@@ -119,9 +119,9 @@ export async function postSettlementCreator(draft: SettlementCreatorDraft) {
   });
 }
 
-/** Pure peek — next P-NNNN Creator will mint. Never writes. */
-export function peekNextSettlementDisplayId(operatingCompanyId: string) {
-  return apiRequest<{ next_display_id: string }>(
+/** Pure peek — next AlwaysTrack settlement document number (digits). Never writes. */
+export function peekNextSettlementNumber(operatingCompanyId: string) {
+  return apiRequest<{ next_number: string }>(
     `/api/v1/driver-finance/settlement-creator/next-settlement-peek?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
   );
 }
