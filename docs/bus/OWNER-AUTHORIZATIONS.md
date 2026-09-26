@@ -1684,3 +1684,43 @@ Load 13562 Empty Miles 44.9 @ $0.45 = 20.21, Salary 1,738.05, TOTAL DUE 1,386.05
 
 — Claude-Lead
 
+
+## AUTH-054
+issued_at: 2026-09-26T02:47:05.000Z
+scope: driver_finance.driver_advances (3 rows: recovered_in_settlement_id and/or status only — no amount, no GL write) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: OWNER_AUTH_ID=AUTH-054 tsx scripts/ops/2026-09-26-cc1-item-e-fix-3-advance-linkages.ts (no dry run, per owner order)
+expires_at: 2026-09-26T04:47:05.000Z
+status: OPEN
+
+Item e (Lead ruling, 2026-09-26): 8 of 12 advances already reconcile to their own settlement JE's 1245
+credit — post/relink nothing for them. For the 4 that don't, read the signed AlwaysTrack Driver
+Settlement PDFs (Downloads/IH35-MASTER-RECONCILIATION/03-SETTLEMENTS/text/) and correct
+recovered_in_settlement_id/status to what the PDF actually shows:
+
+- CA-2026-0005 ($148.00): PDF match found — Driver_Settlement_5775.txt, ALFONSO HIDALGO CHAVEZ:
+  "Load 13516  2026-08-05 - CASH ADVANCE WIRE TRANSFER - CASH ADVANCE WIRE TRANSFER  -148.00" — exact
+  match, same driver, same load as its own linked_driver_bill_id (4ee15c3f/bill 13516). Its
+  recovered_in_settlement_id was wrong (pointed to settlement "5787" instead) — corrected to 5775's
+  real id (1709fb7c-a589-42f7-8085-e40f0ad0f0af). status unchanged ('recovered' — real money, real
+  recovery, wrong pointer).
+- CA-2026-0008 ($167.87) and CA-2026-0009 ($34.12): searched every Driver_Settlement_*.txt for both
+  exact amounts — zero matches for either, anywhere. Both rows are disbursement_status='reversed',
+  disbursed_at NULL (money never left). status='recovered' is therefore unearned — corrected to
+  status='reversed' (matches disbursement_status) with recovered_in_settlement_id cleared to NULL (no
+  PDF backs a recovery that never happened). CA-2026-0009's own memo already says "booked as a separate
+  loan per owner's advance/bill-payment/loan-overflow rule" — consistent with neither being a real
+  recovery event.
+- CA-2026-TIE-5807 ($78.01): Driver_Settlement_5807.txt (Angel Alfonso Sosa Perez) carries exactly ONE
+  cash-advance line for load 13587: "2026-09-10 - CASH ADVANCE WIRE TRANSFER -280.00" — not $78.01, but
+  $78.01 (TIE-5807) + $167.87 (0008) + $34.12 (0009) = $280.00 EXACTLY, matching this one PDF line to
+  the cent — the historical backfill evidently split one $280.00 advance into three rows, of which only
+  $78.01 actually disbursed. TIE-5807's recovered_in_settlement_id (S-5807) is therefore ALREADY
+  CORRECT — its PDF genuinely carries a load-13587 advance. NOT changed. The $280.00-vs-$78.01 amount
+  gap is a separate, real finding (flagged, not fixed here — out of this AUTH's scope: linkage/status,
+  not amount).
+
+No GL write — pure driver_finance.driver_advances header correction with audit rows
+(appendCrudAudit, action R-187-ITEM-E-LINKAGE-FIX). Each write refuses unless the row's current state
+exactly matches what was measured above.
+
+— CC-1
