@@ -148,6 +148,19 @@ async function main() {
           { userId: SYSTEM_ACTOR_USER_ID }
         );
 
+        // ROOT CAUSE FIX (Lead finding, 2026-09-26): this script originally left status/posting_status/
+        // posted_at/journal_entry_id at their INSERT-time draft/unposted/NULL values after posting --
+        // the SAME defect as expenses.routes.ts's two posting UPDATEs, tour-close-posting.service.ts,
+        // and two-section-service.ts (all now fixed). Flip the header here too, in lockstep.
+        if (posted.journal_entry_id) {
+          await client.query(
+            `UPDATE accounting.expenses
+                SET status='posted', posting_status='posted', posted_at=now(), journal_entry_id=$2::uuid, updated_at=now()
+              WHERE id=$1::uuid AND operating_company_id=$3::uuid`,
+            [expenseId, posted.journal_entry_id, USMCA_ID]
+          );
+        }
+
         await appendCrudAudit(
           client as never,
           SYSTEM_ACTOR_USER_ID,

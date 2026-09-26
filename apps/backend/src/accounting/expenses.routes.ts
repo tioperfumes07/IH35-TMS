@@ -1382,8 +1382,14 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             journal_entry_id = posting.journal_entry_id;
             await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
               await client.query(
+                // ROOT CAUSE FIX (Lead finding, 2026-09-26): this UPDATE flipped posting_status to
+                // 'posted' but never touched the SEPARATE `status` column (draft/posted/void) --
+                // leaving a genuinely GL-posted expense's own header reading status='draft' forever
+                // (15 live USMCA rows found this way, no code path ever advances it). A document
+                // whose GL just posted IS posted; status must move in lockstep with posting_status
+                // here, not stay behind for some later, nonexistent step.
                 `UPDATE accounting.expenses
-                    SET posting_status='posted', posted_at=now(), journal_entry_id=$2::uuid, updated_at=now()
+                    SET status='posted', posting_status='posted', posted_at=now(), journal_entry_id=$2::uuid, updated_at=now()
                   WHERE id=$1::uuid AND operating_company_id=$3::uuid`,
                 [expenseId, journal_entry_id, body.operating_company_id]
               );
@@ -1639,10 +1645,12 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
     }
 
     // Step C: flip the header to posted — Phase-1.5 gate passes (total = sum after synthesis).
+    // ROOT CAUSE FIX (Lead finding, 2026-09-26): status must move with posting_status here too --
+    // see the sister UPDATE above (record_expense_create's inline auto-post) for the full note.
     await withCompanyScope(user.uuid, oci, async (client) => {
       await client.query(
         `UPDATE accounting.expenses
-         SET posting_status='posted', posted_at=now(), journal_entry_id=$2::uuid, updated_at=now()
+         SET status='posted', posting_status='posted', posted_at=now(), journal_entry_id=$2::uuid, updated_at=now()
          WHERE id=$1::uuid AND operating_company_id=$3::uuid`,
         [expenseId, journalEntryId, oci]
       );

@@ -109,8 +109,11 @@ export async function postHeldDocumentsForClosedTour(
       );
       await withCompanyScope(actor.userId, operatingCompanyId, async (client: DbClient) => {
         await client.query(
+          // ROOT CAUSE FIX (Lead finding, 2026-09-26): status must move with posting_status -- see
+          // expenses.routes.ts's sister UPDATEs for the full note. Same defect, same table, third
+          // independent writer.
           `UPDATE accounting.expenses
-              SET posting_status='posted', posted_at=now(), journal_entry_id=$2::uuid, posting_hold_reason=NULL, updated_at=now()
+              SET status='posted', posting_status='posted', posted_at=now(), journal_entry_id=$2::uuid, posting_hold_reason=NULL, updated_at=now()
             WHERE id=$1::uuid AND operating_company_id=$3::uuid`,
           [expense.id, posting.journal_entry_id, operatingCompanyId]
         );
