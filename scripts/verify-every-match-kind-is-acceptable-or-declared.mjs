@@ -55,7 +55,9 @@ export function parseLedgerEntryKind(source) {
  */
 export function parsePersistableMatchKinds(source) {
   // Match: export const PERSISTABLE_MATCH_KINDS ... new Set([... "a", "b", ...])
-  const m = source.match(/export\s+const\s+PERSISTABLE_MATCH_KINDS[^]*?new\s+Set[^]*?\[([^]*)\]/);
+  // Bounded to the declaration: the array ends at its own first "]" (a greedy [^]* ran to the LAST "]" in the file
+  // and parsed hundreds of unrelated strings as kinds once the file grew — 265 phantom problems on main 2026-09-26).
+  const m = source.match(/export\s+const\s+PERSISTABLE_MATCH_KINDS[^=]*=\s*new\s+Set(?:<[^>]*>)?\(\s*\[([^\]]*)\]/);
   if (!m) return [];
   const body = m[1];
   const kinds = [];
@@ -75,14 +77,16 @@ export function parsePersistableMatchKinds(source) {
 export function parseViewOnlyMatchKinds(source) {
   const result = {};
   // Match: export const VIEW_ONLY_MATCH_KINDS ... { "a": "reason", "b": "reason", }
-  const m = source.match(/export\s+const\s+VIEW_ONLY_MATCH_KINDS[^]*?\{([^]*)\}/);
+  // Bounded to the object literal after "=" (the type annotation Partial<Record<...>> has no braces).
+  const m = source.match(/export\s+const\s+VIEW_ONLY_MATCH_KINDS[^=]*=\s*\{([\s\S]*?)\n\};/);
   if (!m) return result;
   const body = m[1];
   // Parse key: "value" pairs
-  const re = /"([^"]+)"\s*:\s*"([^"]+)"/g;
+  // Keys may be quoted ("bill") or bare identifiers (bill) — match both.
+  const re = /(?:"([^"]+)"|\b([A-Za-z_]\w*))\s*:\s*"([^"]+)"/g;
   let match;
   while ((match = re.exec(body)) !== null) {
-    result[match[1]] = match[2];
+    result[match[1] ?? match[2]] = match[3];
   }
   return result;
 }
