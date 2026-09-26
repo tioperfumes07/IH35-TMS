@@ -327,6 +327,24 @@ export async function appendSettlementLineFromDriverBillIfMissing(
       [input.settlementId, entry.lineType, entry.description, entry.dollars, ...loadParam, settlement.is_sample_data]
     );
   }
+
+  // ROUND 189 root fix (Lead, 2026-09-26): this function inserted the earnings/deadhead line(s) but
+  // never synced the bill's own legacy pointer, driver_finance.driver_bills.settled_in_settlement_id
+  // (reassignLoadToSettlementInClientTx already keeps that pointer in sync on a REASSIGN -- this was
+  // the one other settlement_lines writer that could leave it behind). Live-caught: 6 ROUND 189 driver
+  // bills got real settlement_lines rows here with settled_in_settlement_id still NULL. A bill whose
+  // lines just landed in a settlement is, by definition, settled in that settlement -- sync it
+  // unconditionally, not just on first insert, so a second call (already-materialized lines) still
+  // self-heals a bill that fell out of sync some other way.
+  await client.query(
+    `
+      UPDATE driver_finance.driver_bills
+         SET settled_in_settlement_id = $1::uuid
+       WHERE id = $2::uuid
+         AND (settled_in_settlement_id IS NULL OR settled_in_settlement_id <> $1::uuid)
+    `,
+    [input.settlementId, bill.id]
+  );
 }
 
 /**
