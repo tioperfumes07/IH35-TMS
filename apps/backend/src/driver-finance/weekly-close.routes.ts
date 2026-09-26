@@ -152,7 +152,7 @@ export async function buildWeeklyCloseDraftForDriver(
         -- reachable through the bill.
         INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount, source_driver_bill_id)
         VALUES ($1::uuid,'earnings',$2,$3,$4::uuid)
-        ON CONFLICT (source_driver_bill_id) WHERE source_driver_bill_id IS NOT NULL DO NOTHING
+        ON CONFLICT (source_driver_bill_id, line_type) WHERE source_driver_bill_id IS NOT NULL AND voided_at IS NULL DO NOTHING
       `,
       [settlementId, `Driver bill ${bill.bill_number ?? bill.load_number ?? bill.id}`, cents, bill.id]
     );

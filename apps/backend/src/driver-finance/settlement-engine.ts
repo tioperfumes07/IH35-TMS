@@ -270,7 +270,7 @@ export async function appendSettlementLineFromDriverBillIfMissing(
             -- MILES SPEC (202613510001) widened this to (source_driver_bill_id, line_type) so a bill
             -- can carry BOTH an 'earnings'/team-split line and a 'deadhead_pay' line without the second
             -- silently dropping.
-            ON CONFLICT (source_driver_bill_id, line_type) WHERE source_driver_bill_id IS NOT NULL DO NOTHING
+            ON CONFLICT (source_driver_bill_id, line_type) WHERE source_driver_bill_id IS NOT NULL AND voided_at IS NULL DO NOTHING
           `,
           [input.settlementId, entry.lineType, entry.description, entry.dollars, input.teamId ?? null, bill.id, ...loadParam, settlement.is_sample_data]
         );
@@ -287,7 +287,7 @@ export async function appendSettlementLineFromDriverBillIfMissing(
             source_driver_bill_id${loadCols.join("")}, is_sample_data
           )
           VALUES ($1,$2,$3,$4,$5::uuid${loadColPlaceholder(6).join("")},$${hasLoadCol.rows[0]?.ok ? 7 : 6}::boolean)
-          ON CONFLICT (source_driver_bill_id, line_type) WHERE source_driver_bill_id IS NOT NULL DO NOTHING
+          ON CONFLICT (source_driver_bill_id, line_type) WHERE source_driver_bill_id IS NOT NULL AND voided_at IS NULL DO NOTHING
         `,
         [input.settlementId, entry.lineType, entry.description, entry.dollars, bill.id, ...loadParam, settlement.is_sample_data]
       );
@@ -461,7 +461,7 @@ export async function appendEscrowContributionLineIfMissing(
       VALUES ($1,$2,$3,$4,$5::uuid${loadColPlaceholder},$${hasLoadCol.rows[0]?.ok ? 7 : 6}::boolean)
       -- Same (source_driver_bill_id, line_type) uniqueness the earnings/deadhead lines rely on above
       -- (MILES SPEC 202613510001) — a re-run for a load whose escrow line already landed is a no-op.
-      ON CONFLICT (source_driver_bill_id, line_type) WHERE source_driver_bill_id IS NOT NULL DO NOTHING
+      ON CONFLICT (source_driver_bill_id, line_type) WHERE source_driver_bill_id IS NOT NULL AND voided_at IS NULL DO NOTHING
     `,
     [input.settlementId, "escrow_contribution", `Load ${loadLabel} — Escrow Contribution`, contributionCents / 100, bill.id, ...loadParam, settlement.is_sample_data]
   );

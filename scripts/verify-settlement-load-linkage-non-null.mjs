@@ -28,10 +28,13 @@ export function run(root = process.cwd()) {
   const sourceColumnCount = engine.match(/\n\s+source_driver_bill_id\$\{loadCols\.join\(""\)\}/g)?.length ?? 0;
   if (sourceColumnCount !== 2) errors.push(`both team and solo settlement-line writers must persist source_driver_bill_id (expected 2, found ${sourceColumnCount})`);
   const billBindingCount = engine.match(/bill\.id, \.\.\.loadParam/g)?.length ?? 0;
-  if (billBindingCount !== 2) errors.push(`both team and solo settlement-line writers must bind the canonical driver bill id (expected 2, found ${billBindingCount})`);
-  const conflictCount = engine.match(/ON CONFLICT \(source_driver_bill_id\) WHERE source_driver_bill_id IS NOT NULL DO NOTHING/g)?.length ?? 0;
-  if (conflictCount !== 2) errors.push(`both source-driver-bill writers must be idempotent (expected 2, found ${conflictCount})`);
-  requireMatch(bookended, /COALESCE\(db\.load_id, sl\.load_id\)[\s\S]*?LEFT JOIN driver_finance\.driver_bills db ON db\.id = sl\.source_driver_bill_id/, "settlement rollup must resolve canonical driver-bill load before denormalized line load");
+  // team + solo line writers and the per-load escrow writer (ROUND 36 per-load escrow) all bind the bill.
+  if (billBindingCount !== 3) errors.push(`team, solo and per-load escrow settlement-line writers must bind the canonical driver bill id (expected 3, found ${billBindingCount})`);
+  // The live arbiter is uniq_settlement_lines_source_driver_bill_id_line_type (bill, line_type), active rows only
+  // (202614410000: a voided line never blocks its own reissue).
+  const conflictCount = engine.match(/ON CONFLICT \(source_driver_bill_id, line_type\) WHERE source_driver_bill_id IS NOT NULL AND voided_at IS NULL DO NOTHING/g)?.length ?? 0;
+  if (conflictCount !== 3) errors.push(`team, solo and per-load escrow writers must be idempotent on (bill, line_type) active rows (expected 3, found ${conflictCount})`);
+  requireMatch(bookended, /SELECT COALESCE\(db\.load_id, sl\.load_id\) AS load_id[\s\S]*?LEFT JOIN driver_finance\.driver_bills db ON db\.id = sl\.source_driver_bill_id/, "settlement rollup must resolve canonical driver-bill load before denormalized line load");
   return errors;
 }
 
@@ -53,7 +56,7 @@ if (process.argv.includes("--selftest")) {
     [FILES.engine, "column_name = 'source_driver_bill_id'", "column_name = 'wrong_source_id'"],
     [FILES.engine, 'source_driver_bill_id${loadCols.join("")}', 'wrong_source_driver_bill_id${loadCols.join("")}' ],
     [FILES.engine, "bill.id, ...loadParam", "null, ...loadParam"],
-    [FILES.engine, "ON CONFLICT (source_driver_bill_id) WHERE source_driver_bill_id IS NOT NULL DO NOTHING", "ON CONFLICT DO NOTHING"],
+    [FILES.engine, "ON CONFLICT (source_driver_bill_id, line_type) WHERE source_driver_bill_id IS NOT NULL AND voided_at IS NULL DO NOTHING", "ON CONFLICT DO NOTHING"],
     [FILES.bookended, "COALESCE(db.load_id, sl.load_id) AS load_id", "sl.load_id AS load_id"],
   ];
   let rejected = 0;
