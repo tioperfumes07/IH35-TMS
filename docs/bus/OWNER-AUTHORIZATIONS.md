@@ -1398,12 +1398,17 @@ action: DRY_RUN=1 first: OWNER_AUTH_ID=AUTH-044 tsx scripts/ops/2026-09-25-cc1-r
 expires_at: 2026-09-26T02:30:00.000Z
 status: OPEN
 
-R-185 step 1 (Claude-Lead ruling, owner-approved 2026-09-25 05:15 PM CT): "Create the parent
-Liability 2175 Driver Reimbursements Payable. Children are one per driver, named <DRIVER NAME>, with
-no auto number." Code merged separately (ACCT-F2026092593): ensureDriverReimbursementParent +
-provisionDriverReimbursementSubAccount in driver-subaccount-provision.service.ts, mirroring the
-file's own existing escrow/advance-account patterns exactly. This AUTH is the live creation only —
-no expense/settlement posting-path change here (R-185 steps 2-3), no data correction (step 4).
+R-185 step 1 (Claude-Lead ruling, owner-approved 2026-09-25 05:15 PM CT). SUPERSEDING UPDATE (owner
+answer, relayed by Lead, 2026-09-25 ~8:00 PM CT, verbatim): "THIS HAS ALREADY BEEN ASKED AND ANSWERED.
+IN THE SAME FORMAT. ADD IT." — same format as the existing per-driver escrow accounts: parent 2175
+"Driver Reimbursements Payable", year-agnostic sub-parent 2175-00 "Driver Reimbursements", children
+2175-00-001, 2175-00-002 ... named "<DRIVER NAME> — Driver Reimbursements" (mirrors the live
+2100 -> 2100-00 -> 2100-00-NNN escrow numbering exactly, confirmed against the live 41-row escrow
+sequence). Code updated in the same file (driver-subaccount-provision.service.ts):
+ensureDriverReimbursementParent (2175, unchanged), NEW ensureDriverReimbursementSubParent (2175-00),
+provisionDriverReimbursementSubAccount now inserts a real sequential "2175-00-NNN" leaf number instead
+of NULL. Unit tests updated (15/15 pass), tsc clean. This AUTH is the live creation only — no
+expense/settlement posting-path change here (R-185 steps 2-3), no data correction (step 4).
 
 11 distinct driver_uuids identified live from ~/ih35-worktrees/.cr1000.json's 27 driver-paid/
 company-flagged expense rows (25 "drv" + 2 that joined per Lead's later R-187 G5 ruling: 13516-8,
