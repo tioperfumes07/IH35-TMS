@@ -70,8 +70,17 @@ export function checkSource(src) {
   // which also matches a SET assignment in an UPDATE (a write, not a lookup, and possibly a
   // totally different table's own display_id column -- confirmed false-positive on
   // accounting/bills.service.ts:2475's `SET display_id = $3`, unrelated to driver_settlements).
-  const lookupRe = /WHERE[\s\S]{0,200}?\bdisplay_id\s*=\s*(\$\d+|['"][^'"]*['"])/;
-  if (lookupRe.test(src) && /driver_finance\.driver_settlements|driver_settlements\b/.test(src)) {
+  // R-200 (owner 2026-09-25): accounting.company_settlements.display_id IS the AlwaysTrack company-settlement number
+  // (Company_Settlement_NNNN) and is legitimately looked up by it. Only a display_id predicate inside a query whose
+  // FROM/JOIN names driver_settlements counts — judged per statement, not per file.
+  const lookupRe = /WHERE[\s\S]{0,200}?\bdisplay_id\s*=\s*(\$\d+|['"][^'"]*['"])/g;
+  const driverSettlementLookup = [...src.matchAll(lookupRe)].some((m) => {
+    const before = src.slice(Math.max(0, m.index - 400), m.index + m[0].length);
+    const lastFrom = before.lastIndexOf("FROM ");
+    const scope = lastFrom >= 0 ? before.slice(lastFrom) : before;
+    return /driver_settlements\b/.test(scope);
+  });
+  if (driverSettlementLookup) {
     problems.push(
       "filters/looks up driver_finance.driver_settlements by display_id= -- use source_document_ref or the row's own id"
     );
@@ -111,6 +120,17 @@ function selftest() {
   const goodWrite = `
     await client.query("UPDATE accounting.bills SET display_id = $3::text WHERE id = $1", [id, v, next]);
   `;
+  // R-200: a company-settlement lookup by its own AlwaysTrack number, in a file that also reads driver_settlements,
+  // is legitimate; a driver_settlements lookup by display_id in that same file still fails.
+  const goodCs = `
+    await client.query("SELECT COALESCE(source_document_ref, display_id) AS n FROM driver_finance.driver_settlements WHERE id = $1::uuid", [id]);
+    await client.query("SELECT id::text FROM accounting.company_settlements WHERE operating_company_id = $1::uuid AND display_id = $2", [o, n]);
+  `;
+  const badMixed = goodCs + `
+    await client.query("SELECT id FROM driver_finance.driver_settlements WHERE display_id = $1", [x]);
+  `;
+  if (checkSource(goodCs).length !== 0) throw new Error(`${LABEL} selftest: company-settlement number lookup flagged`);
+  if (checkSource(badMixed).length !== 1) throw new Error(`${LABEL} selftest: driver_settlements display_id lookup beside a company lookup not caught`);
   if (checkSource(bad1).length !== 1) throw new Error(`${LABEL} selftest: display_id lookup not caught`);
   if (checkSource(bad2).length !== 1) throw new Error(`${LABEL} selftest: prefix-strip derivation not caught`);
   if (checkSource(good).length !== 0) throw new Error(`${LABEL} selftest: compliant source flagged`);
