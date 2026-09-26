@@ -109,7 +109,7 @@ describe("bank-recon match tenant isolation", () => {
       return { rows: [] };
     });
 
-    const candidates = await findCandidates({
+    const { candidates } = await findCandidates({
       operating_company_id: TRANSP,
       bank_transaction_id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
     });

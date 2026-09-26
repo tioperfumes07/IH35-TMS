@@ -58,7 +58,7 @@ describe("bank-recon auto vs manual matching", () => {
       return { rows: [] };
     });
 
-    const candidates = await findCandidates({
+    const { candidates } = await findCandidates({
       operating_company_id: "11111111-1111-4111-8111-111111111111",
       bank_transaction_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       actor_user_uuid: "22222222-2222-4222-8222-222222222222",
@@ -108,7 +108,7 @@ describe("bank-recon auto vs manual matching", () => {
       return { rows: [] };
     });
 
-    const candidates = await findCandidates({
+    const { candidates } = await findCandidates({
       operating_company_id: "11111111-1111-4111-8111-111111111111",
       bank_transaction_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
     });
@@ -166,7 +166,7 @@ describe("bank-recon auto vs manual matching", () => {
       return { rows: [] };
     });
 
-    const candidates = await findCandidates({
+    const { candidates } = await findCandidates({
       operating_company_id: "11111111-1111-4111-8111-111111111111",
       bank_transaction_id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
     });

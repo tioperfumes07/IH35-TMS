@@ -42,7 +42,7 @@ describe("findCandidates payee signal", () => {
       if (sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [] };
       return { rows: [] };
     });
-    const candidates = await findCandidates({ operating_company_id: "5c854333-6ea5-4faa-af31-67cb272fef80", bank_transaction_id: "tx-1" });
+    const { candidates } = await findCandidates({ operating_company_id: "5c854333-6ea5-4faa-af31-67cb272fef80", bank_transaction_id: "tx-1" });
     expect(candidates.map((c) => c.ledger_entry_id)).toEqual(["exp-hi", "exp-other"]);
     expect(candidates[0]?.payee_similarity).toBe(1);
     expect(candidates[0]?.counterparty_name).toBe("Holiday Inn");
@@ -68,7 +68,7 @@ describe("findCandidates payee signal", () => {
       }
       return { rows: [] };
     });
-    const candidates = await findCandidates({
+    const { candidates } = await findCandidates({
       operating_company_id: "5c854333-6ea5-4faa-af31-67cb272fef80",
       bank_transaction_id: "tx-1",
       kinds: ["expense"],

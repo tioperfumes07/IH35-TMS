@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   acceptBankReconMatch,
@@ -14,6 +14,7 @@ import { EntityLink, type EntityKind } from "../../../components/shared/EntityLi
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../../components/parity/referenceOptionLabels";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { useToast } from "../../../components/Toast";
 import { useListState } from "../../../components/list-state";
 import { formatUsdCents } from "../../../lib/money";
@@ -78,22 +79,63 @@ function kindBadgeClassName() {
   return "inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-700 hover:underline";
 }
 
+
+function formatWindowDay(iso: string) {
+  const d = new Date(`${iso.slice(0, 10)}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+}
+
+function windowHeaderLabel(step: 1 | 2 | "custom" | undefined, from: string, to: string) {
+  if (!from || !to) return "Match window";
+  const range = `${formatWindowDay(from)} – ${formatWindowDay(to)}`;
+  if (step === 1) return `Within 3 days (${range})`;
+  if (step === 2) return `Within 7 days (${range})`;
+  return `Custom search (${range})`;
+}
+
 export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, operatingCompanyId, onClose, onAccepted }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
-  const [searchAll, setSearchAll] = useState(false);
+  /** undefined = default cascade; 2 = user clicked Search 7 days */
+  const [windowStep, setWindowStep] = useState<1 | 2 | undefined>(undefined);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [searchQ, setSearchQ] = useState("");
   const [draftQ, setDraftQ] = useState("");
   const [categorizeVendorId, setCategorizeVendorId] = useState("");
   const [categorizeGlAccountId, setCategorizeGlAccountId] = useState("");
   const { pushToast } = useToast();
 
+  useEffect(() => {
+    if (!open) return;
+    setWindowStep(undefined);
+    setDateFrom("");
+    setDateTo("");
+    setSearchQ("");
+    setDraftQ("");
+    setSelectedId(null);
+  }, [open, bankTransactionId]);
+
+  const hasCustomFilters = Boolean(dateFrom || dateTo || searchQ.trim());
+
   const candidatesQuery = useQuery({
-    queryKey: ["banking", "match-candidates", operatingCompanyId, bankTransactionId, searchAll, searchQ],
+    queryKey: [
+      "banking",
+      "match-candidates",
+      operatingCompanyId,
+      bankTransactionId,
+      windowStep ?? "cascade",
+      dateFrom,
+      dateTo,
+      searchQ,
+    ],
     queryFn: () =>
       getMatchCandidates(String(bankTransactionId), operatingCompanyId, {
-        searchAll,
+        windowStep: hasCustomFilters ? undefined : windowStep,
         q: searchQ || undefined,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
       }),
     enabled: open && Boolean(operatingCompanyId && bankTransactionId),
   });
@@ -148,30 +190,25 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
     },
   });
 
-  // Empty message renders only once the candidates query settles, never mid-fetch.
   const listState = useListState(candidatesQuery, (candidatesQuery.data?.candidates ?? []).length === 0);
 
   if (!bankTransactionId) return null;
 
   const candidates: BankMatchCandidate[] = candidatesQuery.data?.candidates ?? [];
+  const win = candidatesQuery.data?.window;
   const topAutoMatchId = candidates.find((c) => c.auto_match)?.ledger_entry_id ?? null;
   const canCategorize = Boolean(categorizeGlAccountId) && !categorizeMutation.isPending;
+  const showSearch7Days =
+    !hasCustomFilters && win?.step === 1 && candidates.length > 0 && windowStep !== 2;
+  const showWidenBanner = Boolean(win?.auto_widened) && !hasCustomFilters;
+  const showFromTo =
+    hasCustomFilters ||
+    (win?.step === 2 && candidates.length === 0) ||
+    (windowStep === 2 && candidates.length === 0);
 
   return (
-    // CLS-BANKING-MATCHDRAWER-NOT-PARITYDRAWER — was a hand-rolled <aside> shell (fixed right-0 +
-    // manual scrim), which meant no portal render: a drawer opened from inside another <form> would
-    // have its own <form> tag silently deleted by the HTML5 parser (the exact INLINE-CREATE-NESTED-
-    // FORM defect class ParityDrawer's own top comment documents). BankingTransactionsDesignView, the
-    // only caller, has no <form> wrapper today so this was latent, not active — but VERIFY-1 (money
-    // creators are right-side ParityDrawer, DEFINITION-OF-DONE.md) requires the canonical shell
-    // regardless. Same body content, same testids on every interactive element below — only the
-    // wrapper changed.
     <ParityDrawer open={open} title="Match transaction" onClose={onClose}>
       <div data-testid="match-drawer">
-        {/* LINK-F5190: bankTransactionId is the real banking.bank_transactions id being matched
-            (already used throughout getMatchCandidates/acceptBankReconMatch/categorizeBankTransaction
-            below) -- the drawer only ever showed the static title "Match transaction", never a link
-            to the transaction itself. */}
         {bankTransactionId ? (
           <p className="mb-1 text-[11px] text-slate-600">
             Bank transaction:{" "}
@@ -182,14 +219,27 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
             />
           </p>
         ) : null}
+        <p className="mb-1 text-xs font-medium text-[#1F2A44]" data-testid="match-window-header">
+          {hasCustomFilters
+            ? "Custom search"
+            : windowHeaderLabel(win?.step, win?.from ?? "", win?.to ?? "")}
+        </p>
         <p className="mb-3 text-[11px] text-slate-500">
-          Recommended matches (±7 days). If none fit, use <strong>Search all</strong> like QuickBooks to widen the
-          window and search by payee / memo / ref. Exact-amount matches can be confirmed to link and clear — no
-          journal entry is posted. Bill payments and any amount variance stay held. Candidates are live production
-          ledger rows — never fixtures.
+          Exact-amount matches can be confirmed to link and clear — no journal entry is posted. Bill
+          payments and any amount variance stay held. Candidates are live production ledger rows —
+          never fixtures.
         </p>
 
-        <div className="mb-3 flex flex-wrap items-center gap-2" data-testid="match-search-all-controls">
+        {showWidenBanner ? (
+          <p
+            className="mb-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs text-[#1F2A44]"
+            data-testid="match-window-widened-banner"
+          >
+            No candidates within 3 days — widened to 7 days.
+          </p>
+        ) : null}
+
+        <div className="mb-3 flex flex-wrap items-center gap-2" data-testid="match-window-controls">
           <input
             type="search"
             value={draftQ}
@@ -198,39 +248,57 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
             className="min-h-11 min-w-[160px] flex-1 rounded-sm border border-slate-300 px-2 text-xs"
             data-testid="match-search-query"
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                setSearchQ(draftQ.trim());
-                setSearchAll(true);
-              }
+              if (e.key === "Enter") setSearchQ(draftQ.trim());
             }}
           />
           <button
             type="button"
-            data-testid="match-search-all"
-            className={`rounded-sm border px-2 py-1.5 text-[11px] ${
-              searchAll ? "border-slate-800 bg-slate-900 text-white" : "border-slate-300 bg-white text-slate-700"
-            }`}
-            onClick={() => {
-              setSearchQ(draftQ.trim());
-              setSearchAll(true);
-            }}
+            data-testid="match-search-apply"
+            className="rounded-sm border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700"
+            onClick={() => setSearchQ(draftQ.trim())}
           >
-            Search all
+            Search
           </button>
-          {searchAll ? (
+          {showSearch7Days ? (
             <button
               type="button"
-              className="rounded-sm border border-slate-300 px-2 py-1.5 text-[11px] text-slate-600"
+              data-testid="match-search-7-days"
+              className="rounded-sm border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700"
+              onClick={() => setWindowStep(2)}
+            >
+              Search 7 days
+            </button>
+          ) : null}
+          {hasCustomFilters || windowStep === 2 ? (
+            <button
+              type="button"
+              className="rounded-sm border border-slate-300 px-2 py-1.5 text-xs text-slate-600"
+              data-testid="match-window-reset"
               onClick={() => {
-                setSearchAll(false);
+                setWindowStep(undefined);
+                setDateFrom("");
+                setDateTo("");
                 setSearchQ("");
                 setDraftQ("");
               }}
             >
-              Reset to recommended
+              Reset to 3 days
             </button>
           ) : null}
         </div>
+
+        {showFromTo ? (
+          <div className="mb-3 flex flex-wrap items-end gap-2" data-testid="match-from-to">
+            <label className="text-xs text-slate-600">
+              From
+              <DatePicker data-testid="match-date-from" value={dateFrom} onChange={setDateFrom} className="mt-0.5 h-7" />
+            </label>
+            <label className="text-xs text-slate-600">
+              To
+              <DatePicker data-testid="match-date-to" value={dateTo} onChange={setDateTo} className="mt-0.5 h-7" />
+            </label>
+          </div>
+        ) : null}
 
         {candidatesQuery.isError ? <ListErrorBanner onRetry={() => void candidatesQuery.refetch()} /> : null}
         {candidatesQuery.isLoading ? <p className="text-xs text-slate-600">Loading candidates…</p> : null}
@@ -339,9 +407,9 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
           })}
           {listState.isEmpty ? (
             <p className="text-xs text-slate-600" data-testid="match-candidate-empty">
-              {candidatesQuery.data?.window_days == null
-                ? "No matchable records found in the ±7-day window for this transaction."
-                : `No matchable records found in the ±${candidatesQuery.data.window_days}-day window for this transaction.`}
+              {showFromTo
+                ? "No matchable records in this window. Set From / To to search a custom range."
+                : "No matchable records found for this transaction."}
             </p>
           ) : null}
         </div>

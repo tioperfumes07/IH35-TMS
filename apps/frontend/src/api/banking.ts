@@ -502,9 +502,9 @@ export type BankMatchCandidate = {
 };
 
 export type BankMatchFilters = {
-  searchAll?: boolean;
+  /** ROUND 207 — force cascade step (1 = 3d, 2 = 7d). Omit = default cascade. */
+  windowStep?: 1 | 2;
   q?: string;
-  windowDays?: number;
   /** Show: which record types (QuickBooks "Show" dropdown). Empty = all. */
   kinds?: BankMatchCandidateKind[];
   payee?: string;
@@ -515,16 +515,21 @@ export type BankMatchFilters = {
   amountMax?: number;
 };
 
+export type BankMatchWindow = {
+  step: 1 | 2 | "custom";
+  from: string;
+  to: string;
+  auto_widened: boolean;
+};
+
 // Ranked match candidates for one bank transaction (Match drawer / inline pane). Read-only.
 // companyId is the active entity from useCompanyContext; the server re-scopes + membership-guards it.
-// QBO parity: default window 90 days before / 20 after; searchAll widens ±365d; q searches memo /
-// payee / ref; kinds / payee / date / amount are the QuickBooks "Find match" filters.
+// ROUND 207 cascade: default Step 1 (−3/+1) → auto-widen Step 2 (−7/+2); From/To = custom.
 export function getMatchCandidates(bankTxnId: string, companyId: string, opts?: BankMatchFilters) {
   const params = new URLSearchParams();
   params.set("operating_company_id", companyId);
-  if (opts?.searchAll) params.set("search_all", "1");
+  if (opts?.windowStep === 1 || opts?.windowStep === 2) params.set("window_step", String(opts.windowStep));
   if (opts?.q?.trim()) params.set("q", opts.q.trim());
-  if (opts?.windowDays != null) params.set("window_days", String(opts.windowDays));
   if (opts?.kinds?.length) params.set("kinds", opts.kinds.join(","));
   if (opts?.payee?.trim()) params.set("payee", opts.payee.trim());
   if (opts?.dateFrom) params.set("date_from", opts.dateFrom);
@@ -534,9 +539,9 @@ export function getMatchCandidates(bankTxnId: string, companyId: string, opts?: 
   return apiRequest<{
     candidates: BankMatchCandidate[];
     match_candidates_count: number;
-    window_days?: number | null;
-    days_before?: number;
-    days_after?: number;
+    window?: BankMatchWindow;
+    days_before?: number | null;
+    days_after?: number | null;
     search_query?: string | null;
     bank_transaction_id?: string;
   }>(`/api/v1/banking/transactions/${bankTxnId}/match-candidates?${params.toString()}`);

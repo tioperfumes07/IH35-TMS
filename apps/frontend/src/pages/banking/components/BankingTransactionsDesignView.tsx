@@ -636,7 +636,7 @@ export function BankingTransactionsDesignView({
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [collapsedAllGroupings, setCollapsedAllGroupings] = useState(false);
-  const [matchSearchAll, setMatchSearchAll] = useState(false);
+  const [matchWindowStep, setMatchWindowStep] = useState<1 | 2 | undefined>(undefined);
   const [matchSearchQ, setMatchSearchQ] = useState("");
   const [matchDraftQ, setMatchDraftQ] = useState("");
   // BANK-MATCH-QBO (owner 2026-09-06): the QuickBooks "Find match" filters — Show (record type), Payee,
@@ -842,12 +842,12 @@ export function BankingTransactionsDesignView({
   // it answers a different question and always came back empty for a first-time transaction).
   const matchCandidatesQuery = useQuery({
     queryKey: [
-      "banking", "tx-match-candidates", companyId, expandedTxId ?? "", matchSearchAll, matchSearchQ,
+      "banking", "tx-match-candidates", companyId, expandedTxId ?? "", matchWindowStep ?? "cascade", matchSearchQ,
       [...matchKinds].sort().join(","), matchPayee, matchDateFrom, matchDateTo, matchAmountMin, matchAmountMax,
     ],
     queryFn: () =>
       getMatchCandidates(String(expandedTxId), companyId, {
-        searchAll: matchSearchAll,
+        windowStep: matchDateFrom || matchDateTo || matchPayee || matchSearchQ || matchAmountMin || matchAmountMax || matchKinds.size < ALL_MATCH_KINDS.length ? undefined : matchWindowStep,
         q: matchSearchQ || undefined,
         // All six checked == no filter (same as the route's own "omit kinds" semantics).
         kinds: matchKinds.size >= ALL_MATCH_KINDS.length ? undefined : [...matchKinds],
@@ -861,7 +861,7 @@ export function BankingTransactionsDesignView({
   });
 
   useEffect(() => {
-    setMatchSearchAll(false);
+    setMatchWindowStep(undefined);
     setMatchSearchQ("");
     setMatchDraftQ("");
     setMatchKinds(new Set(ALL_MATCH_KINDS));
@@ -2963,11 +2963,33 @@ export function BankingTransactionsDesignView({
             </span>
           </div>
           <div className="p-2">
-          <p className="ldt-muted">
-            Recommended matches from the live ledger — {matchCandidatesQuery.data?.days_before ?? 90} days before and{" "}
-            {matchCandidatesQuery.data?.days_after ?? 20} days after the bank date, like QuickBooks. Ranked by the payee name on the bank
-            line, exact amount, then date. Search all widens to a year.
+          <p className="ldt-muted" data-testid="banking-match-window-header">
+            {matchCandidatesQuery.data?.window?.auto_widened
+              ? "No candidates within 3 days — widened to 7 days."
+              : matchDateFrom || matchDateTo || matchPayee || matchSearchQ || matchAmountMin || matchAmountMax || matchKinds.size < ALL_MATCH_KINDS.length
+                ? "Custom search"
+                : matchCandidatesQuery.data?.window?.step === 2
+                  ? `Within 7 days (${matchCandidatesQuery.data.window.from} – ${matchCandidatesQuery.data.window.to})`
+                  : matchCandidatesQuery.data?.window
+                    ? `Within 3 days (${matchCandidatesQuery.data.window.from} – ${matchCandidatesQuery.data.window.to})`
+                    : "Within 3 days (default)"}
+            {" "}Ranked by payee, exact amount, then date.
           </p>
+          {matchCandidatesQuery.data?.window?.auto_widened ? (
+            <p className="mt-1 text-xs text-[#1F2A44]" data-testid="banking-match-widened-banner">
+              No candidates within 3 days — widened to 7 days.
+            </p>
+          ) : null}
+          {!matchDateFrom && !matchDateTo && matchCandidatesQuery.data?.window?.step === 1 && (matchCandidatesQuery.data?.candidates?.length ?? 0) > 0 ? (
+            <button
+              type="button"
+              data-testid="banking-match-search-7-days"
+              className="mt-1 rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-700"
+              onClick={() => setMatchWindowStep(2)}
+            >
+              Search 7 days
+            </button>
+          ) : null}
           {/* BANK-MATCH-QBO: the QuickBooks "Find match" filter row — Show · Payee · Date from/to · Amount from/to.
               BANK-MATCH-QBO-c (owner 2026-09-06 verbatim): Show is now a multi-select checklist
               (all six kinds on by default), never a single-select dropdown. */}
@@ -3022,21 +3044,27 @@ export function BankingTransactionsDesignView({
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   setMatchSearchQ(matchDraftQ.trim());
-                  setMatchSearchAll(true);
                 }
               }}
             />
             <button
               type="button"
-              data-testid="inline-match-search-all"
-              className={`rounded-sm border px-2 py-1 text-[11px] ${matchSearchAll ? "border-slate-800 bg-slate-900 text-white" : "border-gray-300 text-gray-700"}`}
-              onClick={() => {
-                setMatchSearchQ(matchDraftQ.trim());
-                setMatchSearchAll(true);
-              }}
+              data-testid="inline-match-search-apply"
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-700"
+              onClick={() => setMatchSearchQ(matchDraftQ.trim())}
             >
-              Search all
+              Search
             </button>
+            {matchWindowStep === 2 || matchSearchQ ? (
+              <button
+                type="button"
+                data-testid="inline-match-window-reset"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-600"
+                onClick={() => { setMatchWindowStep(undefined); setMatchSearchQ(""); setMatchDraftQ(""); }}
+              >
+                Reset to 3 days
+              </button>
+            ) : null}
           </div>
           {matchCandidatesQuery.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading match candidates...</p> : null}
           {matchCandidatesQuery.isError ? (
