@@ -1922,7 +1922,7 @@ issued_at: 2026-09-26T04:55:12.000Z
 scope: expense_attribution.expense_load_links (29 new INSERT rows only — no UPDATE/DELETE on any other table) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), the 29 expense_numbers listed in scripts/ops/2026-09-26-cc1-stop-the-line-backfill-expense-load-links.ts's EXPENSE_NUMBERS
 action: OWNER_AUTH_ID=AUTH-060 tsx scripts/ops/2026-09-26-cc1-stop-the-line-backfill-expense-load-links.ts (no dry run, per owner order)
 expires_at: 2026-09-26T06:55:12.000Z
-status: CONSUMED — see the CONSUMED note below
+status: OPEN
 
 STOP-THE-LINE (Lead): 29 expenses this seat created via raw ops scripts (2 from R-187 G1, 27 from
 R-185) never got an expense_attribution.expense_load_links row — those scripts INSERTed directly into
