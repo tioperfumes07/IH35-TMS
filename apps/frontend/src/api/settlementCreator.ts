@@ -15,6 +15,7 @@ export type SettlementCreatorDraft = {
   loads: Array<{
     load_number: string;
     customer_name?: string | null;
+    customer_id?: string | null;
     pickup_date?: string | null;
     pickup_city?: string | null;
     delivery_date?: string | null;

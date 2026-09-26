@@ -168,7 +168,37 @@ export async function previewSettlementCreator(
       });
       if (!rail) blockers.push(`Expense card rail ${cardRailNumber(card)} missing.`);
     }
-    // Reimbursable lines settle on the driver settlement (Driver Reimbursed Expenses) — no company cash Cr here.
+  }
+
+  // Drv reimbursements (is_reimbursable) — Dr reimbursement expense / Cr 2175 (never card rail / never 6890/5310).
+  const acct2175 = await accountByNumber(client, draft.operating_company_id, "2175");
+  for (const exp of draft.expenses ?? []) {
+    if (!exp.is_reimbursable || exp.amount_cents <= 0) continue;
+    if (!acct2175) {
+      blockers.push("Account 2175 Driver Reimbursements Payable missing — cannot post Drv reimbursements.");
+      break;
+    }
+    const itemAcct =
+      (await accountByNumber(client, draft.operating_company_id, "6100")) ??
+      (await accountByRole(client, draft.operating_company_id, "other_operating_expense"));
+    push({
+      load_number: exp.load_number ?? null,
+      account_number: itemAcct?.account_number ?? null,
+      account_name: itemAcct?.account_name ?? exp.item_name,
+      debit_cents: exp.amount_cents,
+      credit_cents: 0,
+      memo: exp.description ?? exp.item_name,
+      section: "expense",
+    });
+    push({
+      load_number: exp.load_number ?? null,
+      account_number: acct2175.account_number ?? "2175",
+      account_name: acct2175.account_name ?? "Driver Reimbursements Payable",
+      debit_cents: 0,
+      credit_cents: exp.amount_cents,
+      memo: "Drv reimb Cr 2175 (never 6890/5310)",
+      section: "expense",
+    });
   }
 
   // Fuel also counts toward company expenses total on the AT company PDF.

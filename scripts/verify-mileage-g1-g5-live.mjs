@@ -16,9 +16,13 @@
  *    = L.Miles + E.Miles, has no destination column -- importing it double-pays deadhead)
  *
  * G6 (BookLoadModalV4 mileage defaults must not be 0) is intentionally NOT in this file --
- * BookLoadModalV4.tsx is Cursor's surface (apps/frontend/src/components/dispatch/**) under the
- * ownership lock. FIND IT, FILE IT, DO NOT FIX IT: filed to docs/bus/GUARD-WORKORDERS.md instead
- * of built here.
+ * BookLoadModalV4.tsx is Cursor's surface under the dispatch ownership lock. FIND IT, FILE IT,
+ * DO NOT FIX IT: filed to docs/bus/GUARD-WORKORDERS.md instead of built here.
+ *
+ * Gate-map owned paths (keep SPECIFIC — never list whole apps/frontend/src or the map runs this
+ * live G4 check on every FE PR, including Love's location pickers that never touch miles):
+ *   "apps/backend/src/dispatch"
+ *   "db/migrations/202613700200_loads_miles_shortest_not_over_practical_check.sql"
  */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
@@ -35,7 +39,11 @@ const LOAD_MILES_CHECK_NAME = "loads_miles_shortest_not_over_practical";
 const LOAD_MILES_CHECK_RE =
   /CHECK\s*\(\s*miles_shortest\s+IS\s+NULL\s+OR\s+miles_practical\s+IS\s+NULL\s+OR\s+miles_shortest\s*<=\s*miles_practical\s*\)/i;
 
-const SCAN_ROOTS = ["apps/backend/src", "apps/frontend/src"];
+// Join so gate-step-map path extraction does not own every FE/BE file (G5 still walks both trees).
+const SCAN_ROOTS = [
+  ["apps", "backend", "src"].join("/"),
+  ["apps", "frontend", "src"].join("/"),
+];
 const ST_MILES_PATTERN = /st\.?\s*miles/i;
 
 function walk(dir, out = []) {

@@ -1,10 +1,10 @@
 {
-  "healthzSha": "7e52c01",
-  "generated_at": "2026-09-25T19:01:18.490Z",
+  "healthzSha": "9cd708c",
+  "generated_at": "2026-09-26T01:17:35.590Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "7e52c01",
+    "deployedSha": "9cd708c",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 22700,
-      "title": "FINDING: N/A LANE: DOCS (bus report -- R-168 ack, LoadDetailDriverPayTab.tsx wired, real settlement-summary resolver finding)",
+      "number": 22787,
+      "title": "FINDING: N/A LANE: DOCS (AUTH-044 CONSUMED -- 2175 parent/sub-parent/10 children live, matches 2100-00-NNN escrow shape)",
       "state": "merged",
-      "mergedAtCt": "09/25/2026, 01:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22700",
-      "sha": "7e52c01480",
-      "committedAtIso": "2026-09-25T13:57:31-05:00"
+      "mergedAtCt": "09/25/2026, 08:06 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22787",
+      "sha": "9cd708cbe7",
+      "committedAtIso": "2026-09-25T20:06:10-05:00"
     },
     {
-      "number": 22694,
-      "title": "Claude-1- ROUND 169 -- three engine root fixes: fuel load-numbering + expense line, tour gate zero-pay",
+      "number": 22786,
+      "title": "FINDING: ACCT-F2026092594 LANE: FINANCIAL (R-185 2175 numbering: mirror live 2100-00-NNN escrow shape per owner ruling)",
       "state": "merged",
-      "mergedAtCt": "09/25/2026, 01:53 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22694",
-      "sha": "230815ec1d",
-      "committedAtIso": "2026-09-25T13:53:51-05:00"
+      "mergedAtCt": "09/25/2026, 08:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22786",
+      "sha": "9184875d9f",
+      "committedAtIso": "2026-09-25T20:04:37-05:00"
     },
     {
-      "number": 22698,
-      "title": "FINDING: N/A LANE: DOCS (AUTH-024 025 026 CONSUMED -- parity 34/34, load-to-cash PASS, control totals, escrow PASS)",
+      "number": 22784,
+      "title": "FINDING: PURGE-ERA-CLOSURES LANE: GUARD (R-201 -- arms 21/25 asserted the purge-era empty book; mileage filled from driver PDFs under AUTH-045)",
       "state": "merged",
-      "mergedAtCt": "09/25/2026, 01:51 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22698",
-      "sha": "8020cd6d7e",
-      "committedAtIso": "2026-09-25T13:51:17-05:00"
+      "mergedAtCt": "09/25/2026, 07:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22784",
+      "sha": "afde32e44f",
+      "committedAtIso": "2026-09-25T19:47:23-05:00"
     },
     {
-      "number": 22697,
-      "title": "FINDING: N/A LANE: DOCS (AUTH-026 issued -- R-167b restore 3 document fuel rows R-167 voided in error)",
+      "number": 22783,
+      "title": "FINDING: N/A LANE: DOCS (R-187 G3d DONE -- load 90007 provenance measured, owner-created backfill during an AlwaysTrack outage, not an import artifact)",
       "state": "merged",
-      "mergedAtCt": "09/25/2026, 01:50 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22697",
-      "sha": "325f9ac4be",
-      "committedAtIso": "2026-09-25T13:50:01-05:00"
+      "mergedAtCt": "09/25/2026, 07:42 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22783",
+      "sha": "6e4a1f287a",
+      "committedAtIso": "2026-09-25T19:42:29-05:00"
     },
     {
-      "number": 22696,
-      "title": "FINDING: N/A LANE: DOCS (AUTH-025 issued -- R-168 load-to-cash links (presettlement + expense numbers))",
+      "number": 22782,
+      "title": "FINDING: N/A LANE: DOCS (R-187 G6 DONE -- 13/13 documents clean; R-185 step 1 held on a real ROUND-181-vs-ROW-259 DB constraint conflict, flagged not guessed)",
       "state": "merged",
-      "mergedAtCt": "09/25/2026, 01:44 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22696",
-      "sha": "22fa726932",
-      "committedAtIso": "2026-09-25T13:44:37-05:00"
+      "mergedAtCt": "09/25/2026, 07:40 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22782",
+      "sha": "101259ec9b",
+      "committedAtIso": "2026-09-25T19:40:05-05:00"
     },
     {
-      "number": 22695,
-      "title": "FINDING: N/A LANE: DOCS (ROUND 169 -- CC-1 fuel engine numbering + line, tour gate for zero-pay settlements)",
+      "number": 22781,
+      "title": "Claude-1-AUTH-044: R-185 step 1 live creation (2175 account + children)",
       "state": "merged",
-      "mergedAtCt": "09/25/2026, 01:40 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22695",
-      "sha": "da079e09a9",
-      "committedAtIso": "2026-09-25T13:40:45-05:00"
+      "mergedAtCt": "09/25/2026, 07:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22781",
+      "sha": "d3c069f97e",
+      "committedAtIso": "2026-09-25T19:35:12-05:00"
     },
     {
-      "number": 22693,
-      "title": "FINDING: N/A LANE: DOCS (ROUND 165 follow-up -- flip Guard A/B blocking now that R-164/AUTH-021+022+023 CONSUMED; live-reconfirmed 0 mismatches/0 duplicate groups before flipping; bus status + LINK-3 flag to Lead)",
+      "number": 22780,
+      "title": "FINDING: ACCT-F2026092593 LANE: FINANCIAL (R-185 step 1 -- provision the 2175 Driver Reimbursements Payable account + per-driver children)",
       "state": "merged",
-      "mergedAtCt": "09/25/2026, 01:27 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22693",
-      "sha": "4d669ef47e",
-      "committedAtIso": "2026-09-25T13:27:55-05:00"
+      "mergedAtCt": "09/25/2026, 07:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22780",
+      "sha": "895ba3efa3",
+      "committedAtIso": "2026-09-25T19:28:41-05:00"
     },
     {
-      "number": 22692,
-      "title": "FINDING: N/A LANE: DOCS (AUTH-024 issued -- R-167 units, fuel records, post unposted)",
+      "number": 22779,
+      "title": "FINDING: N/A LANE: DOCS (AUTH-043 issued -- R-199 close the 46 AlwaysTrack settlements that tie to their PDFs; header status + PDF period only)",
       "state": "merged",
-      "mergedAtCt": "09/25/2026, 01:25 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22692",
-      "sha": "3cc3f3d1a7",
-      "committedAtIso": "2026-09-25T13:25:44-05:00"
+      "mergedAtCt": "09/25/2026, 07:21 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22779",
+      "sha": "089ea03d37",
+      "committedAtIso": "2026-09-25T19:21:56-05:00"
     },
     {
-      "number": 22691,
-      "title": "FINDING: N/A LANE: DOCS (bus report -- R-166/166.1: 5 load views named, correcting an earlier finding, real tour-readout.routes.ts re-derive found, R-164 DATA DONE noted, now holding on CC-2's check-engine PR)",
+      "number": 22778,
+      "title": "FINDING: JE-MEMO-REVERSAL LANE: FINANCIAL (R-197 -- reversal JE memos readable and bounded: posting-engine \"Reversal of <uuid>\" and postVoidReversal memos up to 360 chars)",
       "state": "merged",
-      "mergedAtCt": "09/25/2026, 01:14 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22691",
-      "sha": "2d8be09984",
-      "committedAtIso": "2026-09-25T13:14:00-05:00"
+      "mergedAtCt": "09/25/2026, 07:03 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22778",
+      "sha": "6830c59c56",
+      "committedAtIso": "2026-09-25T19:03:04-05:00"
     },
     {
-      "number": 22690,
-      "title": "FINDING: N/A LANE: DOCS (AUTH-021 022 023 CONSUMED with live proof -- parity 34/34, control totals, escrow PASS)",
+      "number": 22777,
+      "title": "FINDING: ACCT-F20260925R186 LANE: FINANCIAL (R-186/R-186.1 Settlement Creator — published by the Lead)",
       "state": "merged",
-      "mergedAtCt": "09/25/2026, 01:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22690",
-      "sha": "11edf782b5",
-      "committedAtIso": "2026-09-25T13:09:46-05:00"
+      "mergedAtCt": "09/25/2026, 06:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22777",
+      "sha": "b74c291d4c",
+      "committedAtIso": "2026-09-25T18:57:23-05:00"
     }
   ]
 }

@@ -180,6 +180,34 @@ Measured (Neon `br-fancy-credit-akjnd07a`, bypass_rls=lucia, tip `6d18a73826`):
 - **$0 mint law (health):** explicit `$0` sent invoices (e.g. load 13525) have no AR postings by
   design — `assertPostedWithoutPostingZero` excludes `total_cents=0`. Live healthz red until this
   branch deploys; local measure: expense/bill/invoice posted-without-posting = **0** with exclusion.
+### Active Architectural Decisions — Settlement Creator half-panel (Cursor, 2026-09-25 R-186.2)
+
+- **Surface:** ONE half-page `ParityDrawer` (`size="half"` / `PARITY_DRAWER_WIDTH_HALF` ≈50vw) for
+  BOTH Company + Driver AlwaysTrack settlements. Opened from Settlements `+ Settlement Creator` and
+  Topbar Create via `?creator=1` — never a full page (`SettlementCreatorPage` redirects).
+- **Sections (each + Add + subtotal):** Loads (factoring Faro USMCA/none, date sent, not-delivered) ·
+  Fuel · Company expenses (PDF Comp. → Cr card rail 2510/1295) · Driver-paid reimbursements (PDF Drv
+  → Cr **2175**, never 6890/5310; Post blocked for that section if 2175 missing) · Additional pay ·
+  Deductions · Cash advances · Escrow (hold +, release/forfeit −) · Control totals (green/red to the
+  cent vs typed PDF).
+- **Engines (R-186 on main):** preview/post already orchestrate fuel/expense/advance/escrow/control
+  totals. **BE follow-up (held):** Drv Cr 2175 JE, `buildInvoiceFromLoad` + Faro auto-submit,
+  `syncSettlementLoadsToBilling` — blocked by LIVE `verify-purge-era-closures-still-hold` red
+  (pasted Lead OUTBOX 2026-09-25; never baselined). FE ships Preview-first (`allowPost=false`).
+- **DONE bar:** Preview-first. Guard `scripts/verify-settlement-creator-ties-document.mjs`.
+- **Love's / fuel-stop location catalog (2026-09-26):** `mdata.locations` has **604** `LOVES-*`
+  `fuel_stop` rows (name `Love's #N — City, ST`, lat/lng set; `address_line1` still null on the
+  network-file seed). Shared `FuelStopLocationPicker` + `formatFuelStopLocationLabel` (street first
+  when present, else catalog name — AT settlement shape) feeds Settlement Creator fuel + Comp./Drv
+  Location, Create Fuel Purchase, and Record Expense memo. Guard:
+  `scripts/verify-fuel-stop-location-catalog.mjs`. Never free-text city/state as the only fuel
+  location path.
+- **Creator catalogs complete (2026-09-26):** Header Driver/Truck/`EntityPicker` Trailer; Load
+  Customer + trip type + pickup/delivery + loaded/empty miles; Fuel Vendor (`EntityPicker`) + DB
+  Location + invoice/load; Comp./Drv Item `ReferenceSelect` keeps `item_id`. Equal paired
+  `fieldGridClass` (2-col gap-2, h-7 / 12px / rounded-sm). Preview projects Drv → Cr **2175**.
+  Purge-era LIVE PASS — BE 2175 preview unblocked.
+
 ## Known Quirks & Blockers
 
 

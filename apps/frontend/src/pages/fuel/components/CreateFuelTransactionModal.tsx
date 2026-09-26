@@ -10,6 +10,8 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { EntityPicker } from "../../../components/EntityPicker";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { SelectCombobox } from "../../../components/Combobox";
+import { FuelStopLocationPicker } from "../../../components/locations/FuelStopLocationPicker";
+import { formatFuelStopLocationLabel } from "../../../lib/fuelStopLocationLabel";
 import { useToast } from "../../../components/Toast";
 import { companyToday } from "../../../lib/businessDate";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -49,6 +51,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
   const [totalCost, setTotalCost] = useState<number | null>(null);
   const [locationCity, setLocationCity] = useState("");
   const [locationState, setLocationState] = useState("");
+  const [locationId, setLocationId] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [sourceDocFile, setSourceDocFile] = useState<File | null>(null);
   const [suggestionPinned, setSuggestionPinned] = useState(false);
@@ -69,6 +72,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
     setTotalCost(null);
     setLocationCity("");
     setLocationState("");
+    setLocationId(null);
     setNotes("");
     setSourceDocFile(null);
     setSuggestionPinned(false);
@@ -367,24 +371,30 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
           />
         </label>
 
-        <div className="grid gap-3 md:grid-cols-2">
-          <label className="block font-semibold text-gray-700">
-            City
-            <input
-              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
-              value={locationCity}
-              onChange={(e) => setLocationCity(e.target.value)}
-            />
-          </label>
-          <label className="block font-semibold text-gray-700">
-            State
-            <input
-              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
-              value={locationState}
-              onChange={(e) => setLocationState(e.target.value)}
-              maxLength={10}
-            />
-          </label>
+        <div className="space-y-1">
+          <span className="block font-semibold text-gray-700">Location (Love&apos;s / fuel stop)</span>
+          <FuelStopLocationPicker
+            operatingCompanyId={operatingCompanyId}
+            value={locationId}
+            dataTestId="fuel-create-location"
+            onChange={(id, loc) => {
+              setLocationId(id);
+              if (!loc) {
+                setLocationCity("");
+                setLocationState("");
+                return;
+              }
+              // AT settlements store the readable stop string in location_city; keep state for filters.
+              setLocationCity(formatFuelStopLocationLabel(loc));
+              setLocationState(loc.state?.trim() || "");
+            }}
+          />
+          {locationCity ? (
+            <p className="text-center text-xs text-slate-600" data-testid="fuel-create-location-label">
+              {locationCity}
+              {locationState && !locationCity.includes(`, ${locationState}`) ? `, ${locationState}` : ""}
+            </p>
+          ) : null}
         </div>
 
         <label className="block font-semibold text-gray-700">
