@@ -825,6 +825,9 @@ export type PostFactoringAdvanceInput = {
     reserve_cents?: number;
     fee_cents?: number;
     ach_cents?: number;
+    // R-187 G4 — Faro's "Cash Rsv" export column: its own reserve pool per owner ruling (GL 1235),
+    // never the escrow reserve (reserve_cents/GL 1230). Defaults to 0 (not captured) like ach_cents.
+    cash_rsv_cents?: number;
   } | null;
   // ROUND 86 (Lead, 2026-09-23) — Faro's own invoice number/purchase date for THIS advance, known
   // only once the funding report (CSV import) names it. Columns already exist on
@@ -839,6 +842,7 @@ function fundingExpectedLegs(opts: {
   reserve: number;
   fee: number;
   ach: number;
+  cashRsv: number;
   liability: number;
 }): ExpectedLifecycleLeg[] {
   const legs: ExpectedLifecycleLeg[] = [];
@@ -847,6 +851,8 @@ function fundingExpectedLegs(opts: {
   if (opts.fee > 0) legs.push({ role: "factor_fee_expense", debit_or_credit: "debit", amount_cents: opts.fee });
   // FACT-05 — ACH/wire is a transaction cost, not the Faro financing fee.
   if (opts.ach > 0) legs.push({ role: "factor_wire_fee", debit_or_credit: "debit", amount_cents: opts.ach });
+  // R-187 G4 — Cash Rsv is its own reserve pool (owner ruling: GL 1235), never factor_reserve_held.
+  if (opts.cashRsv > 0) legs.push({ role: "factor_cash_reserve_held", debit_or_credit: "debit", amount_cents: opts.cashRsv });
   legs.push({ role: "factoring_advance_liability", debit_or_credit: "credit", amount_cents: opts.liability });
   return legs;
 }
@@ -918,18 +924,19 @@ async function postFactoringAdvanceEventImpl(input: PostFactoringAdvanceInput): 
     const reserve = Number(input.funding_figures?.reserve_cents ?? advance.reserve_amount_cents ?? 0);
     const fee = Number(input.funding_figures?.fee_cents ?? advance.factor_fee_cents ?? 0);
     const ach = Number(input.funding_figures?.ach_cents ?? 0);
+    const cashRsv = Number(input.funding_figures?.cash_rsv_cents ?? 0);
     if (liability <= 0) return { gate: "zero_amount" as const };
-    const cash = liability - reserve - fee - ach;
-    if (cash < 0 || reserve < 0 || fee < 0 || ach < 0) {
+    const cash = liability - reserve - fee - ach - cashRsv;
+    if (cash < 0 || reserve < 0 || fee < 0 || ach < 0 || cashRsv < 0) {
       // FAIL CLOSED — never post a funding entry whose fees exceed the pledged invoice (would imply a
       // negative cash leg / unbalanced economics). Surface for reconciliation instead of silently posting.
       throw new Error(
-        `factoring_funding_figures_invalid: liability=${liability} reserve=${reserve} fee=${fee} ach=${ach} => cash=${cash}`
+        `factoring_funding_figures_invalid: liability=${liability} reserve=${reserve} fee=${fee} ach=${ach} cash_rsv=${cashRsv} => cash=${cash}`
       );
     }
 
     const memo = `Factoring funding ${advance.display_id}`;
-    const expectedLegs = fundingExpectedLegs({ cash, reserve, fee, ach, liability });
+    const expectedLegs = fundingExpectedLegs({ cash, reserve, fee, ach, cashRsv, liability });
     const eventKey = "funding";
     const keyJe = await findLiveLifecyclePostingKeyJe(client, {
       operating_company_id: input.operating_company_id,
@@ -964,6 +971,9 @@ async function postFactoringAdvanceEventImpl(input: PostFactoringAdvanceInput): 
     const feeAccountId = await resolveRoleAccount(client, input.operating_company_id, "factor_fee_expense");
     const wireFeeAccountId =
       ach > 0 ? await resolveRoleAccount(client, input.operating_company_id, "factor_wire_fee") : null;
+    // R-187 G4 — Cash Rsv is its own reserve pool (owner ruling: GL 1235), never factor_reserve_held.
+    const cashReserveAccountId =
+      cashRsv > 0 ? await resolveRoleAccount(client, input.operating_company_id, "factor_cash_reserve_held") : null;
     const liabilityAccountId = await resolveRoleAccount(client, input.operating_company_id, "factoring_advance_liability");
 
     const postings: Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: number; description: string }> = [];
@@ -982,6 +992,18 @@ async function postFactoringAdvanceEventImpl(input: PostFactoringAdvanceInput): 
         description: `${memo} — bank/ACH wire fee`,
       });
     }
+    // R-187 G4 — Cash Rsv on its own leg (GL 1235), distinct from factor_reserve_held/factor_wire_fee.
+    if (cashRsv > 0) {
+      if (!cashReserveAccountId) {
+        throw new Error("factor_cash_reserve_held CoA role unbound — cannot post Cash Rsv (R-187 G4)");
+      }
+      postings.push({
+        account_id: cashReserveAccountId,
+        debit_or_credit: "debit",
+        amount_cents: cashRsv,
+        description: `${memo} — Faro cash reserve held`,
+      });
+    }
     postings.push({ account_id: liabilityAccountId, debit_or_credit: "credit", amount_cents: liability, description: `${memo} — factoring advance (liability)` });
 
     return {
@@ -997,6 +1019,7 @@ async function postFactoringAdvanceEventImpl(input: PostFactoringAdvanceInput): 
       cash,
       liability,
       ach,
+      cashRsv,
       hasFundingFigures: input.funding_figures != null,
       expected_legs: expectedLegs,
       eventKey,
@@ -1146,6 +1169,7 @@ async function postFactoringAdvanceEventImpl(input: PostFactoringAdvanceInput): 
                          advance_amount_cents = $6::bigint,
                          advance_rate_pct = $7::numeric,
                          wire_fee_cents = $8::bigint,
+                         cash_rsv_cents = $12::bigint,
                          faro_invoice_number = COALESCE(faro_invoice_number, $9::text),
                          faro_purchase_date = COALESCE(faro_purchase_date, $10::date)
                    WHERE id = $1::uuid
@@ -1163,6 +1187,7 @@ async function postFactoringAdvanceEventImpl(input: PostFactoringAdvanceInput): 
                   input.faro_invoice_number ?? null,
                   input.faro_purchase_date ?? null,
                   input.operating_company_id,
+                  prepared.cashRsv,
                 ]
               );
             }
@@ -1293,16 +1318,17 @@ export async function postFactoringAdvanceEventInClientTx(
     const reserve = Number(input.funding_figures?.reserve_cents ?? advance.reserve_amount_cents ?? 0);
     const fee = Number(input.funding_figures?.fee_cents ?? advance.factor_fee_cents ?? 0);
     const ach = Number(input.funding_figures?.ach_cents ?? 0);
+    const cashRsv = Number(input.funding_figures?.cash_rsv_cents ?? 0);
     if (liability <= 0) return { gate: "zero_amount" as const };
-    const cash = liability - reserve - fee - ach;
-    if (cash < 0 || reserve < 0 || fee < 0 || ach < 0) {
+    const cash = liability - reserve - fee - ach - cashRsv;
+    if (cash < 0 || reserve < 0 || fee < 0 || ach < 0 || cashRsv < 0) {
       throw new Error(
-        `factoring_funding_figures_invalid: liability=${liability} reserve=${reserve} fee=${fee} ach=${ach} => cash=${cash}`
+        `factoring_funding_figures_invalid: liability=${liability} reserve=${reserve} fee=${fee} ach=${ach} cash_rsv=${cashRsv} => cash=${cash}`
       );
     }
 
     const memo = `Factoring funding ${advance.display_id}`;
-    const expectedLegs = fundingExpectedLegs({ cash, reserve, fee, ach, liability });
+    const expectedLegs = fundingExpectedLegs({ cash, reserve, fee, ach, cashRsv, liability });
     const eventKey = "funding";
     const keyJe = await findLiveLifecyclePostingKeyJe(client, {
       operating_company_id: input.operating_company_id,
@@ -1337,6 +1363,9 @@ export async function postFactoringAdvanceEventInClientTx(
     const feeAccountId = await resolveRoleAccount(client, input.operating_company_id, "factor_fee_expense");
     const wireFeeAccountId =
       ach > 0 ? await resolveRoleAccount(client, input.operating_company_id, "factor_wire_fee") : null;
+    // R-187 G4 — Cash Rsv is its own reserve pool (owner ruling: GL 1235), never factor_reserve_held.
+    const cashReserveAccountId =
+      cashRsv > 0 ? await resolveRoleAccount(client, input.operating_company_id, "factor_cash_reserve_held") : null;
     const liabilityAccountId = await resolveRoleAccount(client, input.operating_company_id, "factoring_advance_liability");
 
     const postings: Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: number; description: string }> = [];
@@ -1354,6 +1383,18 @@ export async function postFactoringAdvanceEventInClientTx(
         description: `${memo} — bank/ACH wire fee`,
       });
     }
+    // R-187 G4 — Cash Rsv on its own leg (GL 1235), distinct from factor_reserve_held/factor_wire_fee.
+    if (cashRsv > 0) {
+      if (!cashReserveAccountId) {
+        throw new Error("factor_cash_reserve_held CoA role unbound — cannot post Cash Rsv (R-187 G4)");
+      }
+      postings.push({
+        account_id: cashReserveAccountId,
+        debit_or_credit: "debit",
+        amount_cents: cashRsv,
+        description: `${memo} — Faro cash reserve held`,
+      });
+    }
     postings.push({ account_id: liabilityAccountId, debit_or_credit: "credit", amount_cents: liability, description: `${memo} — factoring advance (liability)` });
 
     return {
@@ -1366,6 +1407,7 @@ export async function postFactoringAdvanceEventInClientTx(
       cash,
       liability,
       ach,
+      cashRsv,
       hasFundingFigures: input.funding_figures != null,
       expected_legs: expectedLegs,
       eventKey,
@@ -1460,6 +1502,7 @@ export async function postFactoringAdvanceEventInClientTx(
                        advance_amount_cents = $6::bigint,
                        advance_rate_pct = $7::numeric,
                        wire_fee_cents = $8::bigint,
+                       cash_rsv_cents = $12::bigint,
                        faro_invoice_number = COALESCE(faro_invoice_number, $9::text),
                        faro_purchase_date = COALESCE(faro_purchase_date, $10::date)
                  WHERE id = $1::uuid
@@ -1477,6 +1520,7 @@ export async function postFactoringAdvanceEventInClientTx(
                 input.faro_invoice_number ?? null,
                 input.faro_purchase_date ?? null,
                 input.operating_company_id,
+                prepared.cashRsv,
               ]
             );
           }
