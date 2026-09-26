@@ -1,39 +1,28 @@
-# R-187 G6 DONE, R-185 BLOCKED (real DB conflict, flagged) — CC-1 — 2026-09-25 7:39 PM CT (00:39Z 09-26).
-Prior content archived: `docs/bus/archive/NOW-CC-1-2026-09-25-31.md` (WORM).
+# R-187 G3d DONE (measurement) — CC-1 — 2026-09-25 7:41 PM CT (00:41Z 09-26).
+Prior content archived: `docs/bus/archive/NOW-CC-1-2026-09-25-32.md` (WORM).
 
-CC-1 | R-187 G6 | DONE | no AUTH needed (read-only measurement) | 13/13 documents (5804-5816) measured
-against their own Driver_Settlement PDF's TOTAL DUE | 0 differences found.
+CC-1 | R-187 G3d | DONE | no AUTH (read-only measurement, no write) | load 90007 provenance
+measured via audit.row_changes | not an import artifact.
 
-```
-5804 net_pay=1601.08 PDF=1,601.08 ✓    5811 net_pay=1964.35 PDF=1,964.35 ✓
-5805 net_pay=2002.65 PDF=2,002.65 ✓    5812 net_pay=-50.00  PDF=-50.00  ✓ (status=approved, others closed)
-5806 net_pay=2008.15 PDF=2,008.15 ✓    5813 net_pay=1986.05 PDF=1,986.05 ✓
-5807 net_pay=1702.05 PDF=1,702.05 ✓    5814 net_pay=1992.65 PDF=1,992.65 ✓
-5808 net_pay=2001.25 PDF=2,001.25 ✓    5815 net_pay=1206.10 PDF=1,206.10 ✓
-5809 net_pay=2075.97 PDF=2,075.97 ✓    5816 net_pay=0.00    PDF=0.00    ✓
-5810 net_pay=1700.77 PDF=1,700.77 ✓
-```
-All 13 match to the cent, none voided. Extends `verify-settlement-net-equals-document`'s own
-35-document coverage to the full 48 the round asked for (this session's own slice; the other 35 are
-already covered by that gate).
+Load 90007 (`mdata.loads` id `f465285d-fe9a-4b24-bcd7-e5a03cdadc9e`) was created 2026-09-23
+22:56:17 UTC by `changed_by_user_id = e4117991-d2c0-406d-8cda-74e98d95bccd`, `changed_by_role =
+"Owner"` (audit.row_changes INSERT row) — the owner's own account, `booking_mode = "single_popup"`
+(a manual single-load UI entry, not a feed/CSV/OCR import — `ocr_source_pdf_r2_key` and
+`predicted_source` both NULL). The load's own `notes` field, written at creation, says exactly why:
+`"Faro inv 7 ITS — AT outage window, no AlwaysTrack load; WO 68747 stored AT form"`. This is a
+deliberate owner-created backfill record for a real Faro-factored invoice (ITS Logistics, inv 7, PO
+68747, $350.00) that had no corresponding AlwaysTrack load during a data-outage window — not an
+import error, not a duplicate, not something a feed script invented.
 
-## R-185 step 1: BLOCKED on a real, pre-existing DB conflict — flagged to Lead, not guessed at
-Creating the 2175 account's per-driver children (AUTH-044) hit a live constraint failure:
-`accounts_active_requires_account_number` (migration 202612700000, 2026-08-16, ROW-259 fix — "an
-account may have NULL account_number only while deactivated") directly conflicts with ROUND 181's
-own code (`driver-subaccount-provision.service.ts`, "owner law: no auto numbers without written
-owner approval" — inserts NULL for every new driver leaf). This has been silently broken since
-ROUND 181 landed: no NEW driver escrow/advance/reimbursement leaf can be created at all right now,
-not just mine — confirmed live, rolled back cleanly, nothing committed (AUTH-044's parent row did
-not persist either, one transaction).
+Load itself is untouched (per R-187's own instruction — the owner decides the intercompany
+treatment against the cross-reference's "EXCLUDED — TRANSPORTATION-ENTITY" note; that's a
+classification question separate from this load's own provenance, which is now fully answered).
+Its settlement (P-0006) was already voided separately by Lead in R-195 (AUTH-041, CONSUMED).
 
-Not inventing a numbering scheme myself given ROUND 181's own "written owner approval" language.
-Messaged Lead directly with the full finding. Holding this one piece; the rest of R-185/R-187
-continues.
+## Still open
+R-185 step 1 (2175 children) — held on the ROUND-181/ROW-259 constraint conflict, flagged to Lead,
+awaiting a call on the numbering scheme. G3b (4 invoice discrepancies vs rate confirmations), G3c
+(13545/13547 W.O. cross-reference), G3e (Hummingbird/Refrigerx, report-only), G4's escrow remainder
+(8/10, 8/12, 8/13, 8/14) — not yet started.
 
-## Continuing — G3b-e, R-159 escrow remainder, R-185 steps 2-6 (pending the numbering decision)
-Next: G3d (load 90007 provenance measurement, read-only) and G3b (4 invoice discrepancies vs rate
-confirmations) — both don't depend on the 2175 account.
-
-CC-1 | 7:39 PM CT (00:39Z) | G6 clean. R-185 step 1 correctly held on a real cross-cutting DB
-conflict rather than guessed past. Continuing with unblocked items now.
+CC-1 | 7:41 PM CT (00:41Z) | G3d clean measurement, load 90007 fully explained. Continuing.
