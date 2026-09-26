@@ -6,13 +6,13 @@
 -- operating_company_id uuid NOT NULL + FK to org.companies + an opco-scoped FORCE RLS policy.
 --
 -- What this does (idempotent, additive, no row deleted):
---   1. ADD COLUMN operating_company_id uuid (nullable first).
+--   1. ADD COLUMN operating_company_id uuid REFERENCES org.companies(id) (nullable first).
 --   2. Backfill it from the owning driver (mdata.drivers.operating_company_id). Measured before authoring:
 --      95 rows, every one joins to a driver, 1 operating company.
 --   3. A BEFORE INSERT OR UPDATE OF driver_id, operating_company_id trigger sets it from the driver, so the
 --      existing writers (the R-188 re-point script and the driver-merge tool, which only UPDATE driver_id)
 --      never need to know about the column and can never store a company that disagrees with the driver.
---   4. SET NOT NULL + FK to org.companies(id) + index.
+--   4. SET NOT NULL + index.
 --   5. The entity policy is rewritten on the direct column (the session's app.operating_company_id, plus
 --      the standard Lucia bypass), with a matching WITH CHECK.
 --
@@ -30,7 +30,7 @@ BEGIN
   END IF;
 
   -- 1. column
-  ALTER TABLE mdata.driver_samsara_accounts ADD COLUMN IF NOT EXISTS operating_company_id uuid;
+  ALTER TABLE mdata.driver_samsara_accounts ADD COLUMN IF NOT EXISTS operating_company_id uuid REFERENCES org.companies(id);
 
   -- 2. backfill from the driver
   UPDATE mdata.driver_samsara_accounts m
@@ -71,18 +71,8 @@ BEGIN
     BEFORE INSERT OR UPDATE OF driver_id, operating_company_id ON mdata.driver_samsara_accounts
     FOR EACH ROW EXECUTE FUNCTION mdata.driver_samsara_accounts_set_operating_company();
 
-  -- 4. NOT NULL + FK + index
+  -- 4. NOT NULL + index (the FK is inline on the column, step 1)
   ALTER TABLE mdata.driver_samsara_accounts ALTER COLUMN operating_company_id SET NOT NULL;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint
-     WHERE conrelid = 'mdata.driver_samsara_accounts'::regclass
-       AND conname = 'driver_samsara_accounts_operating_company_id_fkey'
-  ) THEN
-    ALTER TABLE mdata.driver_samsara_accounts
-      ADD CONSTRAINT driver_samsara_accounts_operating_company_id_fkey
-      FOREIGN KEY (operating_company_id) REFERENCES org.companies(id);
-  END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_driver_samsara_accounts_operating_company_id') THEN
     CREATE INDEX idx_driver_samsara_accounts_operating_company_id
