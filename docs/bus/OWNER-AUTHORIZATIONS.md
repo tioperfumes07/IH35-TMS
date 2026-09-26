@@ -1466,7 +1466,15 @@ issued_at: 2026-09-26T01:16:17.000Z
 scope: accounting.expenses (2 new rows, load-attributed, $10.00 each) + their catalogs.accounts credit legs (existing 2175-00-NNN driver reimbursement leaves, created under AUTH-044) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: OWNER_AUTH_ID=AUTH-046 tsx scripts/ops/2026-09-25-cc1-round202-items-ab-honda-gas.ts (no dry run, per owner order)
 expires_at: 2026-09-26T03:16:17.000Z
-status: CONSUMED (items a/b only — see items c/d/e below, not run under this AUTH)
+status: CONSUMED (items a/b only — see items c/d/e below, not run under this AUTH) — RETRACTED 2026-09-26T01:58Z
+
+RETRACTED 2026-09-26T01:58Z (self-correction, AUTH-048): items a/b below were posted to the WRONG
+debit account (5000 Fuel & Diesel). R-187's own G1 spec (this exact document, read earlier this
+session) requires a distinct "Company Vehicle Fuel" account — "NOT 5000" — and explicitly says to
+BLOCK rather than invent one when it doesn't exist (confirmed: it doesn't exist in USMCA's chart).
+Both JEs reversed live under AUTH-048 (reversing JE ids 7538eee2.../77206ffc..., expenses now
+status='void'/posting_status='reversed'). G1 (settlements 5805/5808) is BLOCKED again pending Lead/
+owner's account-creation ruling — the credit side (2175-<driver>) was correct and is unaffected.
 
 CONSUMED 2026-09-26T01:19Z — items a/b live rows (first attempt rolled back atomically on
 expense_lines_item_qty_rate_amount_check, fixed forward PR #22791, zero rows written until the fix):
@@ -1582,7 +1590,14 @@ issued_at: 2026-09-26T01:57:16.000Z
 scope: accounting.expenses (2 rows) + accounting.journal_entries (2 reversal JEs) — reverse only, no repost — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: OWNER_AUTH_ID=AUTH-048 tsx scripts/ops/2026-09-26-cc1-r187-g1-reverse-wrong-account-honda-gas.ts (no dry run, per owner order)
 expires_at: 2026-09-26T03:57:16.000Z
-status: OPEN
+status: CONSUMED
+
+CONSUMED 2026-09-26T01:58Z — both reversed live and verified: expense 0db68e11... status='void',
+posting_status='reversed', reversed_by_je_id=7538eee2-59a3-42c1-8d03-573b1abbd6c1 (Cr 5000 $10.00 /
+Dr 2175-00-004 $10.00, the exact mirror of the original); expense 2e63d46c... status='void',
+posting_status='reversed', reversed_by_je_id=77206ffc-324e-4dea-a541-70390f79e053 (Cr 5000 $10.00 /
+Dr 2175-00-005 $10.00). G1 (both lines) is BLOCKED again pending Lead/owner's "Company Vehicle Fuel"
+account-creation ruling — see AUTH-046's own CONSUMED block, RETRACTED note.
 
 SELF-CORRECTION. R-187's own G1 spec (read earlier this session, cross-check missed before running
 AUTH-046 items a/b) requires the two missing $10.00 Honda pickup gas lines (settlements 5805/5808) to
