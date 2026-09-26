@@ -1,20 +1,16 @@
-# G4: 20/23 PASS, root cause fixed + 6 advances corrected — CC-1 — 2026-09-26 04:23Z.
-Prior content archived: `docs/bus/archive/NOW-CC-1-2026-09-26-10.md` (WORM); full earlier detail in
-the archive chain (G1, G3a, G3b, G3c, item e).
+# R-185 DONE (27/27 reposted); pivoting to ROUND 189 (owner priority) — CC-1 — 2026-09-26 04:36Z.
+Prior content archived: `docs/bus/archive/NOW-CC-1-2026-09-26-11.md` (WORM); full earlier detail in the
+archive chain.
 
-CC-1 | R-187 G4 | 20/23 PASS (was 17/23) | AUTH-057+058 | root cause: Faro's Cash Rsv had no GL
-leg/column, silently posted into 1230 alongside real Escrow Rsv. Fixed: new GL 1235 + poster leg +
-migration + 6-advance reverse/repost + 1 metadata-only backfill. 8/10, 8/13, 8/14 remain FAIL on
-discount only — Sch Fee has no owner ruling yet on its GL destination (needs one, like Cash Rsv got).
+CC-1 | R-185 steps 2-6 | DONE | AUTH-059 | all 27 driver-paid expenses reversed+reposted, Cr each
+driver's own 2175-00-NNN leaf (was 1000 Bank), all live/posted/balanced | now on ROUND 189 (owner
+priority, ahead of R-187 remainder) — CC-3's missed deadline, loads 13609-13621.
 
-Also fixed along the way: ACCT-F20260926G4D (funding repair-candidate lookup was missing event_key
-scoping — a real pre-existing bug that blocked reverse+repost on any advance old enough to carry
-accrued default interest; root-caused, fixed, tested).
+R-185 is fully closed: STEP 1 (2175 accounts, AUTH-044) + steps 2-6 (27-row repost, AUTH-059) both
+live and verified.
 
 ## Still open
-Sch Fee GL ruling (blocks 8/10, 8/13, 8/14 from full PASS — dollar amounts are small and known:
-$6.60/$0.23/$1.39). G3a (Lead/owner call, cross-customer Faro misapplication). ROUND 202 c/d + STEP 3.
-R-185 steps 2-6 (repost 27-row driver-paid list via catalogs.items, G1's pattern).
+G4 Sch Fee GL ruling (small, 3 invoices, being reported to Lead this pass). G3a (Lead/owner call).
+ROUND 202 c/d + STEP 3. ROUND 189 (now in progress, owner priority).
 
-CC-1 | 04:23Z | G4 mostly closed, one small owner question left. R-187's full item list (G1-G4) is
-now done or escalated with a specific, named blocker for each open piece.
+CC-1 | 04:36Z | R-185 fully closed. Starting ROUND 189 now, no pause.
