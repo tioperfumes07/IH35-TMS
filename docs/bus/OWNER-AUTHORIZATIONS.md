@@ -1543,3 +1543,29 @@ e) The 12 cash advances ($2,275.96 total, all 10 documents): research done (link
    same session, no pause.
 
 — CC-1
+
+## AUTH-047
+issued_at: 2026-09-26T01:44:50.000Z
+scope: accounting.expenses (15 existing rows, status column only — no GL/posting_status/journal_entry_id change) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: OWNER_AUTH_ID=AUTH-047 tsx scripts/ops/2026-09-26-cc1-fix-expense-status-draft-backfill.ts (no dry run, per owner order)
+expires_at: 2026-09-26T03:44:50.000Z
+status: OPEN
+
+Lead finding (2026-09-26 01:2x CT): root cause fixed in the writer (ACCT-F2026092595, PR #22794,
+merged — 4 independent accounting.expenses posting writers now flip status in lockstep with
+posting_status). This AUTH is the data correction for the 15 rows that were ALREADY wrong before that
+fix landed, found and verified via journal_entry_postings ground truth (source_transaction_type=
+'expense'), not the (for 2 of the 15, also-wrong) expenses.journal_entry_id column:
+  - 13 rows: status='draft', posting_status already 'posted', journal_entry_id already set correctly.
+    UPDATE sets status='posted' only — posting_status/posted_at/journal_entry_id untouched (already
+    right).
+  - 2 rows (0db68e11-b09a-4254-aff8-815835ca47fc, 2e63d46c-e47f-4457-9514-5d0e97df1008 — this
+    session's own AUTH-046 items a/b, created before the writer fix landed): status='draft',
+    posting_status='unposted', journal_entry_id NULL, despite a real posted JE existing
+    (2786bcc5-3249-47b5-ada2-ed967cf8e42d / 1a94c2d1-532f-4336-8be0-1183c0daad42, both verified
+    posted+balanced live). UPDATE sets status='posted', posting_status='posted', posted_at=now(),
+    journal_entry_id=<the real JE id from journal_entry_postings>.
+No new JE, no reversal, no repost — a pure header-metadata correction, each row refused unless its
+current state exactly matches one of the two expected shapes above (STOP on any surprise).
+
+— CC-1
