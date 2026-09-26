@@ -1778,3 +1778,20 @@ change. Each write refuses unless the row's current faro_invoice_number exactly 
 before-value.
 
 — CC-1
+
+## AUTH-056
+issued_at: 2026-09-26T04:02:17.000Z
+scope: settlement 5812 only (driver_finance.driver_settlements e45eb50a-f64b-4b7f-a999-5e61e6af22d5, LUIS ARMANDO SOSA PEREZ) — price driver bills 13588/13600 at $0.45/mi, void+reissue the two $0 earnings lines, add the empty-miles line, post through closeSettlementPayRun, close the header, walk loads 13588/13600 forward — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: OWNER_AUTH_ID=AUTH-056 npx tsx scripts/ops/2026-09-26-lead-r208-settlement-5812-pay-at-045-and-close.ts
+expires_at: 2026-09-26T10:02:17.000Z
+status: OPEN
+
+R-208 (Claude-Lead). Renumbered: the AUTH-055 written in #22822 was dropped in a rebase because CC-1 had already taken
+AUTH-055 (G3c) — this is the same authorization under the next free number. Owner 2026-09-25 ~10:05 PM CT: "check other
+loads by sosa, the rpm is there", confirmed booking at it. AlwaysTrack 5812 printed every mile @ $0.00; his rate on 5779
+(1,122.1 @ $0.45 = 504.95) and 5795 (1,111.6 @ $0.45 = 500.22; empty miles paid) is $0.45. Result: 834.80 + 668.93 +
+223.74 = Salary 1,727.47; escrow 2 x 25; net 1,677.47 (Dr 6890 1,727.47 / Cr 2100-00-001 50.00 / Cr 2170 1,677.47).
+Runs only after CC-3's escrow-line void leaves exactly 2 x 25.00 active escrow lines on 5812.
+
+— Claude-Lead
+
