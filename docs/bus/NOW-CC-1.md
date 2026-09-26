@@ -1,21 +1,20 @@
-# G3e DONE (report-only, both non-issues); G3c/item e/G1/G3b done — CC-1 — 2026-09-26 03:20Z.
-Prior content archived: `docs/bus/archive/NOW-CC-1-2026-09-26-09.md` (WORM); full earlier detail in
-the archive chain.
+# G4: 20/23 PASS, root cause fixed + 6 advances corrected — CC-1 — 2026-09-26 04:23Z.
+Prior content archived: `docs/bus/archive/NOW-CC-1-2026-09-26-10.md` (WORM); full earlier detail in
+the archive chain (G1, G3a, G3b, G3c, item e).
 
-CC-1 | R-187 G3e | DONE | no AUTH (report-only, both items confirmed non-issues) | proceeding to G4.
+CC-1 | R-187 G4 | 20/23 PASS (was 17/23) | AUTH-057+058 | root cause: Faro's Cash Rsv had no GL
+leg/column, silently posted into 1230 alongside real Escrow Rsv. Fixed: new GL 1235 + poster leg +
+migration + 6-advance reverse/repost + 1 metadata-only backfill. 8/10, 8/13, 8/14 remain FAIL on
+discount only — Sch Fee has no owner ruling yet on its GL destination (needs one, like Cash Rsv got).
 
-- Hummingbird inv 36 (PO 488, $4,000.00, load 13459): confirmed live — load 13459 does not exist in
-  the TMS under ANY entity (not just excluded from USMCA; genuinely never imported anywhere). Nothing
-  to reconcile against; report only, per the instruction.
-- Refrigerx $5,210.00 (raw CSV has Inv#/PO swapped: "1013272-2"/"59" — the trap the doc warned about):
-  ALREADY correctly resolved live, contrary to faro-map.json's stale "NO LOAD" flag. Load 13619's
-  invoice (faf63fe4-...) is factored via FAC-2026-00097, faro_invoice_number='1013272-2',
-  faro_purchase_date 2026-09-08, invoice_total_cents 521000 — exact match to the purchase report row.
-  Trap avoided: invoice "59" (the malformed PO-column value) was never invented as a real Faro invoice
-  number. No action needed.
+Also fixed along the way: ACCT-F20260926G4D (funding repair-candidate lookup was missing event_key
+scoping — a real pre-existing bug that blocked reverse+repost on any advance old enough to carry
+accrued default interest; root-caused, fixed, tested).
 
 ## Still open
-G3a (Lead/owner call on unwind+reattach across two customers). ROUND 202 c/d + STEP 3. G4 escrow
-remainder (8/10, 8/12, 8/13, 8/14). R-185 steps 2-6 (repost 27-row list via catalogs.items).
+Sch Fee GL ruling (blocks 8/10, 8/13, 8/14 from full PASS — dollar amounts are small and known:
+$6.60/$0.23/$1.39). G3a (Lead/owner call, cross-customer Faro misapplication). ROUND 202 c/d + STEP 3.
+R-185 steps 2-6 (repost 27-row driver-paid list via catalogs.items, G1's pattern).
 
-CC-1 | 03:20Z | G3e closed, both items were already correct — zero writes needed. Continuing to G4 now.
+CC-1 | 04:23Z | G4 mostly closed, one small owner question left. R-187's full item list (G1-G4) is
+now done or escalated with a specific, named blocker for each open piece.
