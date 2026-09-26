@@ -1396,7 +1396,26 @@ issued_at: 2026-09-26T00:30:20.000Z
 scope: catalogs.accounts (one new parent row "2175 Driver Reimbursements Payable" + up to 11 new per-driver child rows) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: DRY_RUN=1 first: OWNER_AUTH_ID=AUTH-044 tsx scripts/ops/2026-09-25-cc1-r185-create-2175-account.ts — then the same command without DRY_RUN.
 expires_at: 2026-09-26T02:30:00.000Z
-status: OPEN
+status: CONSUMED
+
+CONSUMED 2026-09-26T01:07Z — live rows (all 11 driver_uuids resolved, one duplicate-name collapse):
+  2175        Driver Reimbursements Payable          (Liability, parent, not postable)
+  2175-00     Driver Reimbursements                  (Liability, sub-parent under 2175, not postable)
+  2175-00-001 GENARO GUERRERO CHAVEZ — Driver Reimbursements
+  2175-00-002 Carlos Mauricio Pena Carvallo — Driver Reimbursements
+  2175-00-003 Leonel Antonio Morales — Driver Reimbursements
+  2175-00-004 Jorge Luis Infante Corona — Driver Reimbursements
+  2175-00-005 Neftali Coronado Urbano — Driver Reimbursements
+  2175-00-006 JOSE ANTONIO VICENTE MARTINEZ — Driver Reimbursements
+  2175-00-007 Fernando Mecor Hernandez — Driver Reimbursements
+  2175-00-008 PEDRO ABRAHAM LOPEZ COLLADO — Driver Reimbursements
+  2175-00-009 HUGO GAYTAN — Driver Reimbursements
+  2175-00-010 ALFONSO HIDALGO CHAVEZ — Driver Reimbursements (driver_uuid 40823a77-...; the second
+              driver_uuid dcd683f5-... resolved by NAME to this SAME account_id, created:false,
+              reason:already_exists — no 11th leaf, per the FLAG below)
+10 new rows created + 1 name-collapse, exactly matching the live 2100->2100-00->2100-00-NNN escrow
+numbering shape (verified against the live 41-row escrow sequence before running). PR #22786
+(ACCT-F2026092594) merged via fast weekend merge law before this run.
 
 R-185 step 1 (Claude-Lead ruling, owner-approved 2026-09-25 05:15 PM CT). SUPERSEDING UPDATE (owner
 answer, relayed by Lead, 2026-09-25 ~8:00 PM CT, verbatim): "THIS HAS ALREADY BEEN ASKED AND ANSWERED.
