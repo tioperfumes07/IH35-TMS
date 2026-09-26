@@ -70,12 +70,18 @@ async function handleSettlementBulk(
       companyBusinessDate()
     );
 
+    // A line is switched off only by VOIDING it (voided_at is the void marker every reader, unique index
+    // and guard keys on). A bare is_active=false left 113 lines "off" but unvoided (Lead AUTH-072, 2026-09-26).
     await client.query(
       `UPDATE driver_finance.settlement_lines
-          SET is_active = false, updated_at = now()
+          SET is_active = false,
+              voided_at = COALESCE(voided_at, now()),
+              void_reason = COALESCE(void_reason, $3),
+              voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid),
+              updated_at = now()
         WHERE settlement_id = $1::uuid AND operating_company_id = $2::uuid
           AND is_active IS DISTINCT FROM false`,
-      [id, operatingCompanyId]
+      [id, operatingCompanyId, `settlement reversed (bulk): ${reason.trim()}`, actorUserId]
     );
 
     const flipped = await client.query(

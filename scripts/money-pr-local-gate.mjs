@@ -683,6 +683,11 @@ const LIVE_DOMAIN_GUARDS = [
   // (node scripts/reconcile-feed-day.mjs 8/10/26) and is run by the day-close procedure for that day. Listed here it
   // was spawned with NO argument and failed "usage" on every in-scope push (Lead 2026-09-26) — it cannot run in this
   // zero-argument loop, so it is not listed; the whole-book control is verify-usmca-book-equals-faro-and-alwaystrack.
+  // Lead AUTH-072 (2026-09-26): a settlement line is switched off only by voiding it (113 half-voids measured).
+  [
+    "verify-settlement-line-off-is-voided",
+    ["apps/backend/src/driver-finance/", "apps/backend/src/settlements/", "driver_finance.settlement_lines"],
+  ],
   // ROUND 143.2 (DEVIN-B): no document without a ledger. Derives document classes from live schema.
   // FAIL on any class where non-voided documents carry NO ledger. 7-day scoped (LAW 3).
   [

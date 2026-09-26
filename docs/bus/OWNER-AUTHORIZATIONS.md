@@ -2071,13 +2071,17 @@ issued_at: 2026-09-26T06:10:54.000Z
 scope: driver_finance.settlement_lines — stamp voided_at / void_reason / voided_by_user_id on exactly the 113 lines ($3,010.50, 35 settlements) that are is_active=false with voided_at NULL — no amount, no JE, no posted-money row — USMCA 5c854333-6ea5-4faa-af31-67cb272fef80
 action: OWNER_AUTH_ID=AUTH-072 npx tsx scripts/ops/2026-09-26-lead-r212-stamp-void-on-switched-off-settlement-lines.ts
 expires_at: 2026-09-26T09:10:54.000Z
-status: OPEN
+status: CONSUMED
 
 R-212 (Claude-Lead). Lines switched off 2026-09-24 18:48Z..09-25 01:13Z without a void stamp: the pay-run engine
 excluded them (GL right), every void-keyed reader counted them (CC-3 "duplicate escrow", 5812 4 lines vs PDF 2, S-5816
 closed with no JE carrying $25 escrow its AlwaysTrack PDF — TOTAL DUE 0.00 — does not have). Blocks CC-2 Create Check
 through verify-no-document-without-a-ledger. Refuses unless population is exactly 113 / 3010.50, unreferenced, TB unchanged.
 Owner told 2026-09-26 ~01:05 CT before work.
+
+CONSUMED 2026-09-26 ~06:25Z on main 635de19f5a: COMMITTED — stamped 113 lines / 35 settlements; TB 0 before and after,
+posting rows 7444 = 7444; off-not-voided left 0; S-5816 active total 0 (= PDF TOTAL DUE 0.00); S-5812 escrow 2 x 25.00
+= 50.00 (= PDF). verify-no-document-without-a-ledger LIVE PASS; verify-settlement-line-off-is-voided LIVE PASS.
 
 — Claude-Lead
 

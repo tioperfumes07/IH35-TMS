@@ -37,17 +37,71 @@ const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
  * The registry is DERIVED from the live schema at runtime — we enumerate which
  * of these tables actually exist, and only check classes that do.
  */
+// A document is covered only by a LIVE posting: its journal entry is not voided and not reversed.
+// A reversed JE with no reissue is a document with no ledger (Claude-Lead 2026-09-26, measured: the
+// 218 fuel_event JEs of the last 7 days are all reversed; the fuel is carried by its expense JE).
+export function livePostingSql(sourceTypes, idExpr) {
+  const types = sourceTypes.map((t) => `'${t}'`).join(",");
+  return `EXISTS (SELECT 1 FROM accounting.journal_entry_postings jep
+      JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+     WHERE jep.source_transaction_type = ANY(ARRAY[${types}]::text[])
+       AND jep.source_transaction_id = (${idExpr})::text
+       AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL)`;
+}
+
+// The settlement that carries a driver bill: the one holding the bill's ACTIVE settlement line.
+const BILL_CLOSED_SETTLEMENT = (extra) => `EXISTS (SELECT 1 FROM driver_finance.settlement_lines sl
+      JOIN driver_finance.driver_settlements s ON s.id = sl.settlement_id AND s.voided_at IS NULL
+     WHERE sl.source_driver_bill_id = d.id AND sl.voided_at IS NULL AND s.status = 'closed' AND ${extra})`;
+const SETTLEMENT_LINES_TOTAL = (sid) =>
+  `COALESCE((SELECT SUM(x.amount) FROM driver_finance.settlement_lines x WHERE x.settlement_id = ${sid} AND x.voided_at IS NULL), 0)`;
+// Settlement states that are not yet postable (the JE posts at close — settlement-pay-run closeSettlementPayRun).
+const SETTLEMENT_NOT_YET_POSTABLE = ["draft", "open", "approved"];
+
+/**
+ * Each class resolves to its REAL ledger path (measured live 2026-09-26, not assumed):
+ *   - customer payments post as source 'customer_payment' (never 'payment' — 0 rows in 30 days);
+ *   - fuel posts through its expense (accounting.expenses.source_fuel_transaction_id -> source 'expense');
+ *     a live 'fuel_event' JE also counts;
+ *   - a driver bill never posts its own JE (0 'driver_bill' postings in 30 days): driver pay posts through the
+ *     settlement JE (source 'driver_settlement') when the settlement that carries the bill's active line closes.
+ *     While that settlement is open/approved (or the bill is not on one yet) the bill is PENDING, not unposted;
+ *   - a settlement posts at close; open/approved settlements are PENDING;
+ *   - a document whose amount is exactly zero has nothing to post (QuickBooks does not post a $0 document).
+ * coveredSql / zeroSql / pendingSql are evaluated per document row aliased `d`.
+ */
 const DOCUMENT_CLASSES = [
   { table: "accounting.expenses", voidCol: "voided_at", sourceType: "expense", expectedToPost: true },
   { table: "accounting.bills", voidCol: "voided_at", sourceType: "bill", expectedToPost: true },
   { table: "accounting.bill_payments", voidCol: "voided_at", sourceType: "bill_payment", expectedToPost: true },
-  { table: "accounting.payments", voidCol: "voided_at", sourceType: "payment", expectedToPost: true },
-  { table: "accounting.invoices", voidCol: "voided_at", sourceType: "invoice", expectedToPost: true },
+  {
+    table: "accounting.payments", voidCol: "voided_at", sourceType: "customer_payment", expectedToPost: true,
+    coveredSql: livePostingSql(["customer_payment", "payment"], "d.id"),
+    zeroSql: "COALESCE(d.amount_cents, 0) = 0",
+  },
+  {
+    table: "accounting.invoices", voidCol: "voided_at", sourceType: "invoice", expectedToPost: true,
+    zeroSql: "COALESCE(d.total_cents, 0) = 0",
+  },
   { table: "accounting.factoring_advances", voidCol: "voided_at", sourceType: "factoring_advance", expectedToPost: true },
   { table: "banking.transfers", voidCol: "revoked_at", sourceType: "transfer", expectedToPost: true },
-  { table: "fuel.fuel_transactions", voidCol: "voided_at", sourceType: "fuel_event", expectedToPost: true },
-  { table: "driver_finance.driver_bills", voidCol: "voided_at", sourceType: "driver_bill", expectedToPost: true },
-  { table: "driver_finance.driver_settlements", voidCol: "voided_at", sourceType: "driver_settlement", expectedToPost: true },
+  {
+    table: "fuel.fuel_transactions", voidCol: "voided_at", sourceType: "expense|fuel_event", expectedToPost: true,
+    coveredSql: `(${livePostingSql(["fuel_event"], "d.id")} OR EXISTS (SELECT 1 FROM accounting.expenses e
+       WHERE e.source_fuel_transaction_id = d.id AND e.voided_at IS NULL AND ${livePostingSql(["expense"], "e.id")}))`,
+    zeroSql: "COALESCE(d.total_cost, 0) = 0",
+  },
+  {
+    table: "driver_finance.driver_bills", voidCol: "voided_at", sourceType: "driver_settlement (via its settlement)", expectedToPost: true,
+    coveredSql: BILL_CLOSED_SETTLEMENT(livePostingSql(["driver_settlement"], "s.id")),
+    zeroSql: BILL_CLOSED_SETTLEMENT(`${SETTLEMENT_LINES_TOTAL("s.id")} = 0`),
+    pendingSql: `NOT ${BILL_CLOSED_SETTLEMENT("true")}`,
+  },
+  {
+    table: "driver_finance.driver_settlements", voidCol: "voided_at", sourceType: "driver_settlement", expectedToPost: true,
+    zeroSql: `d.status = 'closed' AND ${SETTLEMENT_LINES_TOTAL("d.id")} = 0`,
+    pendingSql: `d.status::text = ANY(ARRAY[${SETTLEMENT_NOT_YET_POSTABLE.map((s) => `'${s}'`).join(",")}]::text[])`,
+  },
 ];
 
 /**
@@ -78,12 +132,19 @@ export function classifyDocumentLedgerCoverage(input) {
       continue;
     }
 
-    const gap = cls.nonVoided - cls.withLedger;
-    const pct = cls.nonVoided > 0 ? ((cls.withLedger / cls.nonVoided) * 100).toFixed(1) : "0.0";
+    // zeroAmount: nothing to post. pending: not yet postable (open settlement). Both are counted and printed,
+    // never folded into "posted" — the gap is what is left after them.
+    const zeroAmount = cls.zeroAmount ?? 0;
+    const pending = cls.pending ?? 0;
+    const gap = cls.nonVoided - cls.withLedger - zeroAmount - pending;
+    const postable = cls.nonVoided - zeroAmount - pending;
+    const pct = postable > 0 ? ((cls.withLedger / postable) * 100).toFixed(1) : "100.0";
+    const extra = zeroAmount || pending ? ` (zero-amount ${zeroAmount}, pending ${pending})` : "";
 
     if (cls.expectedToPost && gap > 0) {
+      const sample = Array.isArray(cls.gapSample) && cls.gapSample.length ? ` e.g. ${cls.gapSample.join(", ")}` : "";
       problems.push(
-        `UNPOSTED_DOCUMENTS: ${cls.table} — ${gap} of ${cls.nonVoided} non-voided document(s) have NO ledger entry (source_transaction_type='${cls.sourceType}'). ${pct}% posted.`,
+        `UNPOSTED_DOCUMENTS: ${cls.table} — ${gap} of ${cls.nonVoided} non-voided document(s) have NO live ledger entry (path '${cls.sourceType}')${extra}. ${pct}% of postable posted.${sample}`,
       );
       rows.push({
         table: cls.table,
@@ -112,7 +173,7 @@ export function classifyDocumentLedgerCoverage(input) {
         withLedger: cls.withLedger,
         gap,
         pctPosted: `${pct}%`,
-        status: "PASS",
+        status: `PASS${extra}`,
       });
     }
   }
@@ -188,6 +249,44 @@ function runSelftest() {
     fail += 1;
   } else pass += 1;
 
+  // Zero-amount + pending are subtracted, and a class fully explained by them is GREEN.
+  const explained = classifyDocumentLedgerCoverage({
+    classes: [
+      { table: "driver_finance.driver_settlements", sourceType: "driver_settlement", expectedToPost: true, nonPostingReason: null, exists: true, nonVoided: 12, withLedger: 0, pending: 11, zeroAmount: 1 },
+    ],
+  });
+  if (!explained.allPass) {
+    console.error(`${LABEL} --selftest FAIL — pending 11 + zero 1 of 12 must be GREEN, got ${JSON.stringify(explained.problems)}`);
+    fail += 1;
+  } else pass += 1;
+
+  // Pending / zero never hide a real gap.
+  const hidden = classifyDocumentLedgerCoverage({
+    classes: [
+      { table: "driver_finance.driver_settlements", sourceType: "driver_settlement", expectedToPost: true, nonPostingReason: null, exists: true, nonVoided: 12, withLedger: 0, pending: 10, zeroAmount: 1, gapSample: ["S-5816"] },
+    ],
+  });
+  if (hidden.allPass || !/1 of 12/.test(hidden.problems[0] ?? "") || !/S-5816/.test(hidden.problems[0] ?? "")) {
+    console.error(`${LABEL} --selftest FAIL — a closed settlement with no JE must stay RED and be named, got ${JSON.stringify(hidden.problems)}`);
+    fail += 1;
+  } else pass += 1;
+
+  // Registry mutations: each class must resolve its REAL ledger path.
+  const byTable = Object.fromEntries(DOCUMENT_CLASSES.map((c) => [c.table, c]));
+  const registryChecks = [
+    ["live posting excludes reversed JEs", /reversed_by_je_id IS NULL/.test(livePostingSql(["x"], "d.id")) && /voided_at IS NULL/.test(livePostingSql(["x"], "d.id"))],
+    ["payments resolve 'customer_payment'", /'customer_payment'/.test(byTable["accounting.payments"]?.coveredSql ?? "")],
+    ["fuel resolves through its expense", /source_fuel_transaction_id/.test(byTable["fuel.fuel_transactions"]?.coveredSql ?? "") && /'expense'/.test(byTable["fuel.fuel_transactions"]?.coveredSql ?? "")],
+    ["driver bills resolve through the closed settlement JE", /'driver_settlement'/.test(byTable["driver_finance.driver_bills"]?.coveredSql ?? "") && /status = 'closed'/.test(byTable["driver_finance.driver_bills"]?.coveredSql ?? "")],
+    ["closed settlements are never pending", !SETTLEMENT_NOT_YET_POSTABLE.includes("closed")],
+  ];
+  for (const [name, ok] of registryChecks) {
+    if (!ok) {
+      console.error(`${LABEL} --selftest FAIL — registry: ${name}`);
+      fail += 1;
+    } else pass += 1;
+  }
+
   if (fail > 0) {
     process.exitCode = 1;
   } else {
@@ -215,33 +314,38 @@ async function measureLive(client) {
       continue;
     }
 
-    // Count non-voided documents in last 7 days (LAW 3)
-    const countRes = await client.query(
-      `SELECT count(*)::int AS cnt FROM ${cls.table}
-        WHERE operating_company_id = $1::uuid
-          AND ${cls.voidCol} IS NULL
-          AND created_at >= now() - interval '7 days'`,
+    // Non-voided documents created in the last 7 days (LAW 3), each put in exactly ONE bucket:
+    // covered (live posting on its real path) > zero-amount > pending > gap.
+    const coveredSql = cls.coveredSql ?? livePostingSql([cls.sourceType], "d.id");
+    const res = await client.query(
+      `WITH x AS (
+         SELECT COALESCE(to_jsonb(d)->>'display_id', to_jsonb(d)->>'bill_number', d.id::text) AS label,
+                (${coveredSql}) AS covered,
+                (${cls.zeroSql ?? "false"}) AS zero,
+                (${cls.pendingSql ?? "false"}) AS pending
+           FROM ${cls.table} d
+          WHERE d.operating_company_id = $1::uuid
+            AND d.${cls.voidCol} IS NULL
+            AND d.created_at >= now() - interval '7 days'
+       )
+       SELECT count(*)::int AS non_voided,
+              count(*) FILTER (WHERE covered)::int AS with_ledger,
+              count(*) FILTER (WHERE NOT covered AND zero)::int AS zero_amount,
+              count(*) FILTER (WHERE NOT covered AND NOT zero AND pending)::int AS pending,
+              (array_agg(label ORDER BY label) FILTER (WHERE NOT covered AND NOT zero AND NOT pending))[1:10] AS gap_sample
+         FROM x`,
       [USMCA_COMPANY_ID],
     );
-    const nonVoided = countRes.rows[0].cnt;
-
-    // Count how many have a ledger entry
-    const ledgerRes = await client.query(
-      `SELECT count(DISTINCT d.id)::int AS cnt
-         FROM ${cls.table} d
-        WHERE d.operating_company_id = $1::uuid
-          AND d.${cls.voidCol} IS NULL
-          AND d.created_at >= now() - interval '7 days'
-          AND EXISTS (
-            SELECT 1 FROM accounting.journal_entry_postings jep
-             WHERE jep.source_transaction_type = $2
-               AND jep.source_transaction_id = d.id::text
-          )`,
-      [USMCA_COMPANY_ID, cls.sourceType],
-    );
-    const withLedger = ledgerRes.rows[0].cnt;
-
-    results.push({ ...cls, exists: true, nonVoided, withLedger });
+    const r = res.rows[0];
+    results.push({
+      ...cls,
+      exists: true,
+      nonVoided: r.non_voided,
+      withLedger: r.with_ledger,
+      zeroAmount: r.zero_amount,
+      pending: r.pending,
+      gapSample: r.gap_sample ?? [],
+    });
   }
 
   await client.query("ROLLBACK");
