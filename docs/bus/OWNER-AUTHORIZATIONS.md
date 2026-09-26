@@ -1376,7 +1376,7 @@ issued_at: 2026-09-26T00:55:00.000Z
 scope: driver_finance.driver_settlements — status and period_start/period_end ONLY, on the USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) AlwaysTrack settlements 5769–5816 whose live Driver Net-Pay Clearing (2170) credit equals the signed Driver PDF TOTAL DUE to the cent (46 measured; 5792 and 5812 excluded, not tied)
 action: DRY_RUN=1 npx tsx scripts/ops/2026-09-25-lead-r199-close-alwaystrack-settlements.ts first, then OWNER_AUTH_ID=AUTH-043 npx tsx scripts/ops/2026-09-25-lead-r199-close-alwaystrack-settlements.ts
 expires_at: 2026-09-26T04:55:00.000Z
-status: OPEN
+status: CONSUMED — see the CONSUMED note below
 
 R-199 (Claude-Lead, owner order 09-25 ~7:45 PM CT: "finish and close all the settlements, company and driver").
 Measured live: 48 fed AlwaysTrack settlements; 47 'approved' + 1 'closed' (5816). Their GL is already posted
@@ -1390,6 +1390,9 @@ Date -> audit -> read back: no new settlement line, no new JE, TB 0. 5779's PDF 
 reversed. payment_state stays 'unpaid' (driver disbursement is the banking step, later, owner's order).
 
 — Claude-Lead
+
+**CONSUMED 2026-09-25 08:10 PM CT (01:10Z 09-26) — Claude-Lead.** COMMITTED 00:23Z: R-199 closed 46 AlwaysTrack driver settlements whose live 2170 net (non-reversed JEs) equals the PDF TOTAL DUE, header only (status='closed', period_start/end from the PDF). No new lines or JEs, TB 0. Not tied, left 'approved': 5792 (fixed under AUTH-051) and 5812 (PDF pays $0.00/mi; owner to rule). Live read-back: closed 46 · approved 2 · open 6 (P-series). CLOCK CORRECTION: this entry's issued_at (00:55Z) was stamped AHEAD of the real clock; the run committed at 00:23:35Z (audit.row_changes max changed_at on driver_finance.driver_settlements). Recorded here, not rewritten above.
+
 
 ## AUTH-044
 issued_at: 2026-09-26T00:30:20.000Z
@@ -1449,7 +1452,7 @@ issued_at: 2026-09-26T00:47:00.000Z
 scope: mdata.loads.miles_practical and mdata.loads.miles_deadhead ONLY, where NULL, on the 40 USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) loads fed without mileage (13569–13611 range), values from each load's signed AlwaysTrack Driver Settlement PDF
 action: OWNER_AUTH_ID=AUTH-045 npx tsx scripts/ops/2026-09-25-lead-r201-load-miles-from-driver-pdfs.ts
 expires_at: 2026-09-26T04:47:00.000Z
-status: OPEN
+status: CONSUMED — see the CONSUMED note below
 
 R-201 (Claude-Lead; owner order 09-25 ~7:50 PM CT to create every missing piece and finish Create Check, which this
 unblocks). verify-purge-era-closures-still-hold arm 39 is RED on 40 live loads with NULL mileage. All 40 are on a
@@ -1460,6 +1463,9 @@ guard, which asserted purge-era emptiness: 21 now compares 1100 to the invoices'
 25 now asserts every driver liability belongs to a cash advance (12 of 12).
 
 — Claude-Lead
+
+**CONSUMED 2026-09-25 08:10 PM CT (01:10Z 09-26) — Claude-Lead.** COMMITTED: R-201 filled miles_practical/miles_deadhead on 40 loads from their signed Driver Settlement PDFs (only NULL columns; last write 00:48:37Z). Samples: 13595 351.7/0.0 (5816), 13594 1494.8/22.5 (5804). Live: 0 of 125 non-voided USMCA loads have NULL miles_practical. It did not stamp mileage_source — corrected under AUTH-050.
+
 
 ## AUTH-046
 issued_at: 2026-09-26T01:16:17.000Z
@@ -1652,7 +1658,7 @@ issued_at: 2026-09-26T02:17:05.000Z
 scope: mdata.loads.mileage_source ONLY, where NULL, on the 40 USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) loads whose miles were filled under AUTH-045 (R-201) from their signed AlwaysTrack Driver Settlement PDFs — value 'History'
 action: OWNER_AUTH_ID=AUTH-050 npx tsx scripts/ops/2026-09-26-lead-r201b-stamp-mileage-source.ts
 expires_at: 2026-09-26T04:17:05.000Z
-status: OPEN
+status: CONSUMED — see the CONSUMED note below
 
 R-201b (Claude-Lead). My R-201 filled miles_practical/miles_deadhead but did not stamp mileage_source, so
 verify-mileage-g1-g5-live G4 is red on 40 loads and blocks every push (reported by CC-3). 'History' is the value all 85
@@ -1660,4 +1666,6 @@ other fed loads carry (same AlwaysTrack source; CHECK allows History/Manual/Rout
 mileage_source on the R-201 plan loads is written; no money row is touched. (Renumbered from 049: CC-1 took 049 first.)
 
 — Claude-Lead
+
+**CONSUMED 2026-09-26 02:28Z — Claude-Lead.** COMMITTED: {"stamped":40,"left":0}. verify-mileage-g1-g5-live after: G1 0 · G2 0 · G3 0 · G4 0 · G5 0 — OK, G1-G5 all clean.
 
