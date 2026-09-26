@@ -1618,7 +1618,19 @@ issued_at: 2026-09-26T02:12:15.000Z
 scope: accounting.expenses (2 new rows, load-attributed, $10.00 each, item_id set) + their catalogs.accounts credit legs (existing 2175-00-NNN driver reimbursement leaves) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: OWNER_AUTH_ID=AUTH-049 tsx scripts/ops/2026-09-26-cc1-r187-g1-repost-with-item.ts (no dry run, per owner order)
 expires_at: 2026-09-26T04:12:15.000Z
-status: OPEN
+status: CONSUMED
+
+CONSUMED 2026-09-26T02:15Z — both posted live and verified:
+  a) accounting.expenses cbe97c1f-5e99-440a-a7c2-100f0b5febdc, expense_number 13582-5, status=posted,
+     posting_status=posted. Line: item_id e93a0c79... (Driver Reimbursement-Company Vehicle Fuel),
+     qty 1.000, rate 1000.0000, amount_cents 1000, unit_of_measure 'each'. JE
+     8d08083b-5c9e-47e1-a302-e7d8f927635f: Dr 5000 Fuel & Diesel $10.00 / Cr 2175-00-004
+     "Jorge Luis Infante Corona — Driver Reimbursements" $10.00.
+  b) accounting.expenses fccf8282-f131-444b-a5fa-a8fc40b3c34b, expense_number 13597-5, status=posted,
+     posting_status=posted. Same line shape. JE 23dee220-2310-4e2b-90de-115c152776f1: Dr 5000 Fuel &
+     Diesel $10.00 / Cr 2175-00-005 "Neftali Coronado Urbano — Driver Reimbursements" $10.00.
+Both JEs balanced, posted, status/posting_status correct at insert (ACCT-F2026092595 root-cause fix).
+R-187 G1 is now DONE (both lines).
 
 Lead ruling (2026-09-26, supersedes R-187's "NOT 5000" text): USMCA's live catalog already carries the
 QBO item "Driver Reimbursement-Company Vehicle Fuel" (catalogs.items e93a0c79-337f-4563-b0fc-d09c9b36e499),
