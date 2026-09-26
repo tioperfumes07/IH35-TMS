@@ -118,6 +118,14 @@ function runChecks() {
   assert(/syncSettlementLoadsToBilling/.test(routes),
     "Post route must syncSettlementLoadsToBilling after commit", failures);
 
+  // ROUND 180 §14 — Edit = void and repost (existing engines only).
+  assert(/edit_void_repost/.test(service) && /voidPriorCreatorSettlementForEdit|reverseSettlementForVoid/.test(service),
+    "Post must support edit_void_repost via reverseSettlementForVoid / companion void", failures);
+  assert(/voidDocument/.test(service) && /reverseDriverAdvanceInClientTx/.test(service),
+    "Edit void must use voidDocument + reverseDriverAdvanceInClientTx (no new GL math)", failures);
+  assert(/edit_void_repost/.test(drawer) && /settlement_exists/.test(drawer),
+    "Drawer Post must confirm Edit = void and repost on settlement_exists", failures);
+
   return failures;
 }
 

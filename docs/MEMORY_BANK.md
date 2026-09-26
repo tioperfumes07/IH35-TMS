@@ -217,11 +217,18 @@ Measured (Neon `br-fancy-credit-akjnd07a`, bypass_rls=lucia, tip `6d18a73826`):
   next **AlwaysTrack** settlement digits (`peekNextSettlementNumber` →
   `peekNextSettlementSourceDocumentRef` / `source_document_ref`). Load No. + Settlement No. are
   **read-only** until a small **Edit** button unlocks override. Add Load continues the numeric
-  sequence. Post refuses existing load numbers (`load_already_exists`) and existing AT/P settlements;
-  empty `settlement_no` always mints next AlwaysTrack via `allocateNextSettlementSourceDocumentRef`
+  sequence. Post refuses existing load numbers (`load_already_exists`). Existing AT/P settlements
+  refuse unless `edit_void_repost=true` (void prior + repost). Empty `settlement_no` always mints
+  next AlwaysTrack via `allocateNextSettlementSourceDocumentRef`
   (never attaches to the driver's open pre-settlement; never defaults to P-series). Edit may still
   type a free AT number or optional P-NNNN. R-186.1 (no AT mint on Book Load open) unchanged —
   Creator Post is the authorized mint.
+- **Edit = void + repost (ROUND 180 §14, Cursor 2026-09-26):** Posting an existing AlwaysTrack /
+  P-series number returns `settlement_exists` unless `edit_void_repost=true`. Confirmed Edit voids
+  prior Creator companions via existing engines (`voidDocument` expense/invoice/factoring_advance,
+  `reverseDriverAdvanceInClientTx`, `reverseSettlementForVoid`) then creates the NEW settlement with
+  the same document number (voided prior row retained — WORM). FE confirms before retry. Guard
+  asserts the wire.
 
 ## Known Quirks & Blockers
 

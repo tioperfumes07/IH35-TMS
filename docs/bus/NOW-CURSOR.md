@@ -1,15 +1,13 @@
-# NOW-CURSOR — 2026-09-26 (Creator invoice + Faro Post LIVE)
+# NOW-CURSOR — 2026-09-26 (Creator Edit = void + repost)
 ## CURRENT
-**SHIPPED + DEPLOYED:** #22843 squash `8942623a99` · healthz `git_sha=8942623a99…` (shallow HTTP 200).
+Branch: `cursor/creator-edit-void-repost-c89b` — ROUND 180 §14.
 
-Creator Post (delivered loads): `buildInvoiceFromLoad` + `sendDraftInvoice(historical_backfill)` in-tx;
-after commit `faro_usmca` → `autoSubmitDeliveredLoadToFactor` + `syncSettlementLoadsToBilling`.
-Not-delivered skips invoice/Faro.
+## SHIPPED
+- Creator AT numbers #22835 · invoice+Faro Post #22843 (live ancestor of tip)
 
-## NEXT
-1. Owner Chrome: Settlements `?creator=1` Post a delivered faro_usmca load → prove invoice `sent` + Faro `submitted`
-2. Edit = void + repost (next slice)
+## THIS PR
+Edit = void + repost: `edit_void_repost` voids prior Creator settlement + companions (existing
+engines) then creates NEW row with same document number. FE confirms on `settlement_exists`.
 
-## COORD
-- LANE_CROSS: `docs/bus/09-26-2026-LEAD-RULING-CURSOR-CREATOR-INVOICE-FARO-POST-LANE-CROSS.md`
-- USMCA only · Never POST Book Load · No QBO write-back
+## NEXT after merge
+Owner Chrome: Post → confirm Edit void/repost on an existing AT # (or first live Post if none yet)

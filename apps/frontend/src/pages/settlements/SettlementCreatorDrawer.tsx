@@ -434,6 +434,28 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
       pushToast(`Settlement ${res.source_document_ref || res.display_id} posted`, "success");
       onClose();
     } catch (e) {
+      const apiErr = e as { status?: number; data?: { error?: string; message?: string }; message?: string };
+      if (apiErr?.status === 409 && apiErr?.data?.error === "settlement_exists") {
+        const ok = window.confirm(
+          `${apiErr.data.message ?? "Settlement already exists."}\n\nEdit = void the prior settlement and all Creator companion docs, then repost. Continue?`,
+        );
+        if (ok) {
+          try {
+            const res = await postSettlementCreator({ ...draft, edit_void_repost: true });
+            pushToast(
+              `Settlement ${res.source_document_ref || res.display_id} voided prior + reposted`,
+              "success",
+            );
+            onClose();
+            return;
+          } catch (retryErr) {
+            setError(String((retryErr as Error).message || "Void and repost failed"));
+            return;
+          }
+        }
+        setError(apiErr.data.message ?? "Post cancelled — settlement already exists.");
+        return;
+      }
       setError(String((e as Error).message || "Post failed"));
     } finally {
       setBusy(false);

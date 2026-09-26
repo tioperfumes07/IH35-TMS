@@ -116,6 +116,11 @@ export type SettlementCreatorDraft = {
    * automatic Owner medical/HOS/CDL override attestation. No invoice is minted.
    */
   seed_dispatched_loads?: boolean;
+  /**
+   * ROUND 180 §14 — when true and Settlement No. already exists (non-void), void the prior
+   * Creator settlement + companion docs then repost. FE confirms; never silent.
+   */
+  edit_void_repost?: boolean;
   /** Optional uploaded AT PDF (docs.files id). */
   source_pdf_file_id?: string | null;
 };
