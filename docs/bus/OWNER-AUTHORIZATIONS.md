@@ -1837,3 +1837,19 @@ destination (mirroring Cash Rsv's own "GL 1235" ruling, but no equivalent exists
 Paste the live verify-feed-day.mjs --all output after running.
 
 — CC-1
+
+## AUTH-058
+issued_at: 2026-09-26T04:15:34.000Z
+scope: accounting.factoring_advances (1 additional row: FAC-2026-00043, reserve_amount_cents/cash_rsv_cents only) + its reversal/repost JE — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: OWNER_AUTH_ID=AUTH-058 tsx scripts/ops/2026-09-26-cc1-g4-cash-rsv-split.ts (script now lists 6 targets; the first 5 — already fixed under AUTH-057 — self-skip via the existing idempotency guard) — no dry run
+expires_at: 2026-09-26T06:15:34.000Z
+status: OPEN
+
+AUTH-057 addendum: running verify-feed-day.mjs --all AFTER the 5 AUTH-057 fixes landed surfaced a 6th
+day I had missed in the original sweep — 8/18/26 (Faro inv 16, MPH CARRIER SERVICES INC,
+FAC-2026-00043): live reserve_amount_cents=5700c, but Escrow Rsv=0/Cash Rsv=57.00 per the PURCHASE
+REPORT — the SAME contamination shape as the other 5. factor_fee_cents (5700c) already matches
+Discount exactly (Sch Fee=0 for this invoice, no fee contamination). Same reverse+repost mechanism,
+same script, added as a 6th TARGETS entry.
+
+— CC-1

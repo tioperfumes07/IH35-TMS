@@ -53,6 +53,10 @@ const TARGETS: Record<string, number> = {
   "FAC-2026-00007": 502,
   "FAC-2026-00008": 911,
   "FAC-2026-00009": 788,
+  // AUTH-058 addendum: 8/18/26 (Faro inv 16, MPH CARRIER SERVICES) was missed from the original
+  // 5-day sweep -- found running verify-feed-day.mjs --all AFTER the first 5 were fixed. Same
+  // Escrow Rsv=0/Cash Rsv=57.00 contamination shape; fee already correct (Discount=Fee, no Sch Fee).
+  "FAC-2026-00043": 5700,
 };
 
 async function queryWithBypass<T extends pg.QueryResultRow>(pool: pg.Pool, sql: string, params: unknown[]): Promise<pg.QueryResult<T>> {
@@ -90,6 +94,12 @@ async function main() {
       funding_je_id: string;
     }>(
       pool,
+      // BUG FIX: 2 of these 5 rows (FAC-2026-00001/00004) already went through R-159's wire-fee-split
+      // revision claim -- their LIVE funding JE is keyed under 'funding#rev1', not the base 'funding'
+      // event_key. Joining on event_key='funding' literally would fetch the ORIGINAL, already-reversed
+      // JE id instead (confirmed live: first attempt at this script hit repair_candidate_invalid
+      // because it tried to reverse an already-reversed JE's now-stale id). Match either the base key
+      // or any revision, then keep only the one whose JE is still live (not reversed).
       `SELECT fa.id::text, fa.display_id, fa.invoice_total_cents::text, fa.reserve_amount_cents::text,
               fa.factor_fee_cents::text, fa.wire_fee_cents::text, fa.cash_rsv_cents::text,
               k.journal_entry_id::text AS funding_je_id
@@ -98,7 +108,9 @@ async function main() {
            ON k.operating_company_id = fa.operating_company_id
           AND k.factoring_advance_id = fa.id
           AND k.source_transaction_type = 'factoring_advance'
-          AND k.event_key = 'funding'
+          AND k.event_key ~ '^funding(#rev[0-9]+)?$'
+         JOIN accounting.journal_entries je
+           ON je.id = k.journal_entry_id AND je.reversed_by_je_id IS NULL
         WHERE fa.operating_company_id = $1::uuid AND fa.display_id = ANY($2::text[])
         ORDER BY fa.display_id`,
       [USMCA_ID, targets]
