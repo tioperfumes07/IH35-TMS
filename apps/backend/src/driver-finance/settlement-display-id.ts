@@ -20,8 +20,9 @@ function nextPSeriesSql(): string {
 }
 
 /**
- * Pure peek — next P-NNNN Creator would mint. Does not lock or insert.
- * Settlement Creator shows this as the locked default; Edit unlocks override.
+ * Pure peek — next P-NNNN (internal display_id). Does not lock or insert.
+ * Settlement Creator defaults to AlwaysTrack digits (peekNextSettlementSourceDocumentRef);
+ * this remains for optional Edit → P-series and for Book Load / open pre-settlement shells.
  */
 export async function peekNextSettlementDisplayId(
   client: Queryable,

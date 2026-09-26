@@ -21,7 +21,7 @@ import { peekNextLoadNumber } from "../../api/dispatch";
 import {
   previewSettlementCreator,
   postSettlementCreator,
-  peekNextSettlementDisplayId,
+  peekNextSettlementNumber,
   type SettlementCreatorDraft,
   type SettlementCreatorPreview,
   type SettlementCreatorFuelCard,
@@ -238,7 +238,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
 
   const wrongEntity = Boolean(companyId && companyId !== USMCA);
 
-  // Owner 2026-09-26: auto next load # + next P-settlement on open. Locked until Edit.
+  // Owner 2026-09-26: auto next load # + next AlwaysTrack settlement # on open. Locked until Edit.
   useEffect(() => {
     if (!open || !companyId || wrongEntity) return;
     let cancelled = false;
@@ -249,12 +249,12 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
       try {
         const [loadPeek, settPeek] = await Promise.all([
           peekNextLoadNumber(companyId),
-          peekNextSettlementDisplayId(companyId),
+          peekNextSettlementNumber(companyId),
         ]);
         if (cancelled) return;
         const nextLoad = loadPeek.next_number;
         setPeekLoadBase(nextLoad);
-        setSettlementNo(settPeek.next_display_id);
+        setSettlementNo(settPeek.next_number);
         setLoads([emptyLoad(nextLoad)]);
         setLoadNumberEditing([false]);
       } catch (err) {
@@ -431,7 +431,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     setError(null);
     try {
       const res = await postSettlementCreator(draft);
-      pushToast(`Settlement ${res.display_id || res.source_document_ref} posted`, "success");
+      pushToast(`Settlement ${res.source_document_ref || res.display_id} posted`, "success");
       onClose();
     } catch (e) {
       setError(String((e as Error).message || "Post failed"));
@@ -493,11 +493,11 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   value={settlementNo}
                   readOnly={!settlementNoEditing}
                   onChange={(e) => setSettlementNo(e.target.value)}
-                  placeholder="Next P-NNNN"
+                  placeholder="Next AlwaysTrack #"
                   title={
                     settlementNoEditing
-                      ? "Override — must be a free P-NNNN or new AlwaysTrack digits"
-                      : "Next free settlement number (auto). Edit to change."
+                      ? "Override — must be free AlwaysTrack digits (or optional P-NNNN)"
+                      : "Next AlwaysTrack settlement number (auto). Edit to change."
                   }
                   data-testid="sc-settlement-no"
                 />

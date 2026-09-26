@@ -16,7 +16,7 @@ import {
   ensureDispatchedLoadsForCreator,
   SettlementCreatorSeedError,
 } from "./settlement-creator-seed-loads.js";
-import { peekNextSettlementDisplayId } from "./settlement-display-id.js";
+import { peekNextSettlementSourceDocumentRef } from "./settlement-source-document-ref.service.js";
 import type { SettlementCreatorDraft } from "./settlement-creator.types.js";
 
 const AUTHORITY_ROLES = new Set(["Owner", "Administrator", "Accountant"]);
@@ -130,7 +130,7 @@ function currentUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerSettlementCreatorRoutes(app: FastifyInstance): Promise<void> {
-  // Owner 2026-09-26 — Creator locks Settlement No. to the next free P-NNNN (peek only; mint on Post).
+  // Owner 2026-09-26 — Creator follows AlwaysTrack settlement numbers (source_document_ref digits).
   app.get(
     "/api/v1/driver-finance/settlement-creator/next-settlement-peek",
     { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
@@ -152,9 +152,9 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
           query.data.operating_company_id,
         ]);
-        return peekNextSettlementDisplayId(client, query.data.operating_company_id);
+        return peekNextSettlementSourceDocumentRef(client, query.data.operating_company_id);
       });
-      return reply.code(200).send({ next_display_id: next });
+      return reply.code(200).send({ next_number: next });
     },
   );
 

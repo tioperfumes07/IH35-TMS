@@ -13,10 +13,10 @@ import { createDriverCashAdvanceCore } from "../cash-advances/cash-advance-creat
 import type { TripType, DbClient } from "../dispatch/presettlement-link.service.js";
 import { createBareSettlementForDocument } from "./settlement-load-reassignment.service.js";
 import {
-  allocateSettlementDisplayId,
   isAlwaysTrackSettlementNumber,
   isPresettlementPSeries,
 } from "./settlement-display-id.js";
+import { allocateNextSettlementSourceDocumentRef } from "./settlement-source-document-ref.service.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 import { resolveCompanyDirectCreditAccount } from "../accounting/fuel-posting/poster.service.js";
@@ -342,9 +342,10 @@ export async function previewSettlementCreator(
 
 /**
  * Post one settlement from the AlwaysTrack PDF draft — all or nothing on the caller's client.
- * R-186.1 + owner 2026-09-26: settlement_no is editable P-series (display_id) or AlwaysTrack
- * digits (source_document_ref). Creator always creates NEW — never attaches to a prior open
- * settlement or an existing load number. Empty mints next P-series.
+ * Owner 2026-09-26: Creator follows AlwaysTrack numbers (source_document_ref digits). Empty or
+ * bare digits → NEW AlwaysTrack settlement (never attach to a prior open). Edit may override to
+ * a free AT number or optional P-NNNN. R-186.1 (no AT mint on Book Load open) is unchanged —
+ * Creator Post allocate is the authorized mint path.
  */
 export async function postSettlementCreatorInClientTx(
   client: DbClient,
@@ -361,23 +362,85 @@ export async function postSettlementCreatorInClientTx(
   let displayId: string;
   let sourceDocumentRef: string | null = null;
 
-  if (typedNo && isAlwaysTrackSettlementNumber(typedNo)) {
-    const existing = await client.query<{ id: string; display_id: string }>(
+  if (typedNo && isPresettlementPSeries(typedNo)) {
+    // Optional Edit override → P-series shell (never attach to an existing P).
+    const targetDisplay = typedNo.toUpperCase();
+    const found = await client.query<{ id: string; display_id: string; status: string }>(
       `
-        SELECT id::text, display_id
+        SELECT id::text, display_id, status::text
         FROM driver_finance.driver_settlements
         WHERE operating_company_id = $1::uuid
-          AND source_document_ref = $2
+          AND display_id = $2
           AND voided_at IS NULL
-        ORDER BY created_at DESC
         LIMIT 1
       `,
-      [draft.operating_company_id, typedNo],
+      [draft.operating_company_id, targetDisplay],
     );
-    if (existing.rows[0]) {
+    if (found.rows[0]) {
       throw new SettlementCreatorError(
         "settlement_exists",
-        `Settlement ${typedNo} already exists (${existing.rows[0].display_id}). Edit = void and repost (next slice).`,
+        `${targetDisplay} already exists. Settlement Creator creates a NEW settlement — leave the auto AlwaysTrack number or Edit to a free number.`,
+      );
+    }
+    const ins = await client.query<{ id: string }>(
+      `
+          INSERT INTO driver_finance.driver_settlements (
+            operating_company_id, driver_id, status, display_id, period_start, period_end,
+            trip_started_at, settlement_model, created_by_user_id, is_sample_data
+          )
+          VALUES ($1::uuid, $2::uuid, 'open', $3, $4::date, $5::date, $4::date, 'load_bookended', $6::uuid, false)
+          RETURNING id
+        `,
+      [
+        draft.operating_company_id,
+        draft.driver_id,
+        targetDisplay,
+        draft.period_start,
+        draft.period_end,
+        actorUserId,
+      ],
+    );
+    settlementId = ins.rows[0]!.id;
+    displayId = targetDisplay;
+    await appendCrudAudit(
+      client as never,
+      actorUserId,
+      "driver_finance.presettlement.created",
+      { settlement_id: settlementId, display_id: displayId, round: "R-186.1" },
+      "info",
+      AUDIT_TAG,
+    );
+  } else {
+    // Empty or AlwaysTrack digits → NEW AlwaysTrack settlement (source_document_ref).
+    // Never attach to driver's existing open. Empty allocates under advisory lock.
+    let atRef: string;
+    if (typedNo && isAlwaysTrackSettlementNumber(typedNo)) {
+      const existing = await client.query<{ id: string; display_id: string }>(
+        `
+          SELECT id::text, display_id
+          FROM driver_finance.driver_settlements
+          WHERE operating_company_id = $1::uuid
+            AND source_document_ref = $2
+            AND voided_at IS NULL
+          ORDER BY created_at DESC
+          LIMIT 1
+        `,
+        [draft.operating_company_id, typedNo],
+      );
+      if (existing.rows[0]) {
+        throw new SettlementCreatorError(
+          "settlement_exists",
+          `Settlement ${typedNo} already exists (${existing.rows[0].display_id}). Edit = void and repost (next slice).`,
+        );
+      }
+      atRef = typedNo;
+    } else if (!typedNo) {
+      // Empty → always mint next AlwaysTrack number (never attach to driver's existing open).
+      atRef = await allocateNextSettlementSourceDocumentRef(client, draft.operating_company_id);
+    } else {
+      throw new SettlementCreatorError(
+        "invalid_settlement_no",
+        `Settlement No. must be AlwaysTrack digits or P-NNNN (got "${typedNo}").`,
       );
     }
     const bare = await createBareSettlementForDocument(client, {
@@ -385,96 +448,14 @@ export async function postSettlementCreatorInClientTx(
       driver_id: draft.driver_id,
       period_start: draft.period_start,
       period_end: draft.period_end,
-      source_document_ref: typedNo,
+      source_document_ref: atRef,
       actor_user_id: actorUserId,
       is_sample_data: false,
       status: "closed",
     });
     settlementId = bare.settlement_id;
     displayId = bare.display_id;
-    sourceDocumentRef = typedNo;
-  } else {
-    // P-series or empty → NEW pre-settlement only (owner 2026-09-26: Creator never attaches to a
-    // prior open settlement by typing its number or by empty→driver-open). Empty mint next P.
-    let targetDisplay = typedNo && isPresettlementPSeries(typedNo) ? typedNo.toUpperCase() : "";
-    if (targetDisplay) {
-      const found = await client.query<{ id: string; display_id: string; status: string }>(
-        `
-          SELECT id::text, display_id, status::text
-          FROM driver_finance.driver_settlements
-          WHERE operating_company_id = $1::uuid
-            AND display_id = $2
-            AND voided_at IS NULL
-          LIMIT 1
-        `,
-        [draft.operating_company_id, targetDisplay],
-      );
-      if (found.rows[0]) {
-        throw new SettlementCreatorError(
-          "settlement_exists",
-          `${targetDisplay} already exists. Settlement Creator creates a NEW settlement — leave the auto number or Edit to a free P-NNNN.`,
-        );
-      }
-      // Create open shell with the typed P-number (unique).
-      const ins = await client.query<{ id: string }>(
-        `
-            INSERT INTO driver_finance.driver_settlements (
-              operating_company_id, driver_id, status, display_id, period_start, period_end,
-              trip_started_at, settlement_model, created_by_user_id, is_sample_data
-            )
-            VALUES ($1::uuid, $2::uuid, 'open', $3, $4::date, $5::date, $4::date, 'load_bookended', $6::uuid, false)
-            RETURNING id
-          `,
-        [
-          draft.operating_company_id,
-          draft.driver_id,
-          targetDisplay,
-          draft.period_start,
-          draft.period_end,
-          actorUserId,
-        ],
-      );
-      settlementId = ins.rows[0]!.id;
-      displayId = targetDisplay;
-      await appendCrudAudit(
-        client as never,
-        actorUserId,
-        "driver_finance.presettlement.created",
-        { settlement_id: settlementId, display_id: displayId, round: "R-186.1" },
-        "info",
-        AUDIT_TAG,
-      );
-    } else {
-      // Empty → always mint next P-series (never attach to driver's existing open).
-      displayId = await allocateSettlementDisplayId(client, draft.operating_company_id, draft.period_start);
-      const ins = await client.query<{ id: string }>(
-        `
-            INSERT INTO driver_finance.driver_settlements (
-              operating_company_id, driver_id, status, display_id, period_start, period_end,
-              trip_started_at, settlement_model, created_by_user_id, is_sample_data
-            )
-            VALUES ($1::uuid, $2::uuid, 'open', $3, $4::date, $5::date, $4::date, 'load_bookended', $6::uuid, false)
-            RETURNING id
-          `,
-        [
-          draft.operating_company_id,
-          draft.driver_id,
-          displayId,
-          draft.period_start,
-          draft.period_end,
-          actorUserId,
-        ],
-      );
-      settlementId = ins.rows[0]!.id;
-      await appendCrudAudit(
-        client as never,
-        actorUserId,
-        "driver_finance.presettlement.created",
-        { settlement_id: settlementId, display_id: displayId, round: "R-186.1" },
-        "info",
-        AUDIT_TAG,
-      );
-    }
+    sourceDocumentRef = atRef;
   }
 
   const loadIds: string[] = [];

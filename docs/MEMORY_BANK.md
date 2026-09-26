@@ -210,10 +210,14 @@ Measured (Neon `br-fancy-credit-akjnd07a`, bypass_rls=lucia, tip `6d18a73826`):
   `fieldGridClass` (2-col gap-2, h-7 / 12px / rounded-sm). Preview projects Drv → Cr **2175**.
   Purge-era LIVE PASS — BE 2175 preview unblocked.
 - **NEW-only sequence (owner 2026-09-26):** On open, peek next load # (`peekNextLoadNumber`) and
-  next P-settlement (`peekNextSettlementDisplayId`). Load No. + Settlement No. are **read-only**
-  until a small **Edit** button unlocks override. Add Load continues the numeric sequence.
-  Post refuses existing load numbers (`load_already_exists`) and existing P-settlements; empty
-  settlement_no always mints a NEW P (never attaches to the driver's open pre-settlement).
+  next **AlwaysTrack** settlement digits (`peekNextSettlementNumber` →
+  `peekNextSettlementSourceDocumentRef` / `source_document_ref`). Load No. + Settlement No. are
+  **read-only** until a small **Edit** button unlocks override. Add Load continues the numeric
+  sequence. Post refuses existing load numbers (`load_already_exists`) and existing AT/P settlements;
+  empty `settlement_no` always mints next AlwaysTrack via `allocateNextSettlementSourceDocumentRef`
+  (never attaches to the driver's open pre-settlement; never defaults to P-series). Edit may still
+  type a free AT number or optional P-NNNN. R-186.1 (no AT mint on Book Load open) unchanged —
+  Creator Post is the authorized mint.
 
 ## Known Quirks & Blockers
 
