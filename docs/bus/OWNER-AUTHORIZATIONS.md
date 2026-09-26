@@ -1734,3 +1734,20 @@ No GL write — pure driver_finance.driver_advances header correction with audit
 exactly matches what was measured above.
 
 — CC-1
+
+## AUTH-053
+issued_at: 2026-09-26T02:35:04.000Z
+scope: accounting.company_settlements (display_id, period_start/end on the 37 live headers; up to 11 new headers for the bundled driver settlements) + accounting.company_settlement_driver_settlements.company_settlement_id re-point — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA). No money row, no JE.
+action: OWNER_AUTH_ID=AUTH-053 npx tsx scripts/ops/2026-09-26-lead-r200-company-settlements-one-per-alwaystrack-number.ts
+expires_at: 2026-09-26T05:35:04.000Z
+status: OPEN
+
+R-200 (Claude-Lead). Owner 2026-09-25: "always is the source of truth", "deactivate it from creating numbers", "the company and
+driver settlements are for the same loads one for how we pay the driver and one for the company profit". Source: every
+Driver_Settlement_NNNN.pdf has its own Company_Settlement_NNNN.pdf under the same number (checked for all 19 bundled ones).
+Live: 37 headers numbered CS-2026-0001..0037, 8 bundle 2-4 driver settlements by shared dates. After: one header per driver
+settlement, display_id = its AlwaysTrack number; the code in the same PR stops minting (next_company_settlement_display_id
+never called) and stops linking by shared dates. AUTH-052 is reserved for CC-3's escrow-line void.
+
+— Claude-Lead
+

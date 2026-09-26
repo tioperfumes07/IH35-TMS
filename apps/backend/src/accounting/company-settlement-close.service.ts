@@ -56,28 +56,31 @@ export async function closeCompanySettlementAlongsideDriverSettlement(
   let companySettlementId = existingLinkRes.rows[0]?.company_settlement_id ?? null;
 
   if (!companySettlementId) {
-    // Find-or-create by EXACT period match — never merges a driver settlement into an
-    // unrelated/broader period it wasn't actually part of.
-    const existingCsRes = await client.query<{ id: string }>(
-      `
-        SELECT id::text
-        FROM accounting.company_settlements
-        WHERE operating_company_id = $1::uuid
-          AND period_start = $2::date
-          AND period_end = $3::date
-          AND voided_at IS NULL
-        LIMIT 1
-      `,
-      [input.operatingCompanyId, ds.period_start, ds.period_end]
+    // R-200 (owner, 2026-09-25): "AlwaysTrack is the source of truth ... deactivate it from creating numbers."
+    // AlwaysTrack issues ONE Company Settlement per driver settlement, under the SAME number (Company 5769 =
+    // Driver 5769). The old find-or-create-by-exact-period merged different drivers' settlements that shared
+    // dates into one header and minted "CS-YYYY-NNNN" numbers AlwaysTrack never issued. Now: one header per
+    // driver settlement, numbered by that driver settlement (its AlwaysTrack number, or its P-number while
+    // the tour is open). No number -> refuse. accounting.next_company_settlement_display_id is never called.
+    const numRes = await client.query<{ n: string | null }>(
+      `SELECT COALESCE(source_document_ref, display_id) AS n FROM driver_finance.driver_settlements WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [input.driverSettlementId, input.operatingCompanyId]
     );
-    companySettlementId = existingCsRes.rows[0]?.id ?? null;
-
-    if (!companySettlementId) {
-      const displayIdRes = await client.query<{ display_id: string }>(
-        `SELECT accounting.next_company_settlement_display_id($1::uuid, $2::date) AS display_id`,
-        [input.operatingCompanyId, ds.period_start]
-      );
-      const displayId = displayIdRes.rows[0]?.display_id;
+    const displayId = numRes.rows[0]?.n ?? null;
+    if (!displayId) {
+      throw Object.assign(new Error("driver_settlement_has_no_number"), { code: "driver_settlement_has_no_number" });
+    }
+    // Find-or-create BY THAT NUMBER: a team tour's second driver settlement that carries the same AlwaysTrack
+    // company-settlement number joins the existing header instead of creating a duplicate.
+    const byNumber = await client.query<{ id: string }>(
+      `SELECT id::text FROM accounting.company_settlements
+        WHERE operating_company_id = $1::uuid AND display_id = $2 AND voided_at IS NULL
+        ORDER BY created_at LIMIT 1`,
+      [input.operatingCompanyId, displayId]
+    );
+    if (byNumber.rows[0]) {
+      companySettlementId = byNumber.rows[0].id;
+    } else {
       const insertRes = await client.query<{ id: string }>(
         `
           INSERT INTO accounting.company_settlements
