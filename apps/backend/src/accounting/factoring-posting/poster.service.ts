@@ -950,6 +950,14 @@ async function postFactoringAdvanceEventImpl(input: PostFactoringAdvanceInput): 
       source_transaction_type: "factoring_advance",
       memo,
       expected_legs: expectedLegs,
+      // R-187 G4 root-cause fix: without event_key scoping, a live sibling JE on this SAME advance
+      // for a DIFFERENT event (e.g. one of many daily factoring_default_interest accruals) can be
+      // picked up as a "candidate" for the funding event and rejected as repair_candidate_invalid
+      // (wrong shape) purely because it shares source_transaction_type + source_transaction_id.
+      // "funding" is technically a singleton event, but an advance can accumulate many OTHER live
+      // events over its life; scoping by eventKey here costs nothing for true singletons and fixes
+      // this collision for every advance old enough to carry accrued interest.
+      event_key: eventKey,
     });
     if (candidate.kind === "ambiguous") return { gate: "repair_ambiguous" as const };
     if (candidate.kind === "invalid") return { gate: "repair_candidate_invalid" as const, reason: candidate.reason };
@@ -1342,6 +1350,14 @@ export async function postFactoringAdvanceEventInClientTx(
       source_transaction_type: "factoring_advance",
       memo,
       expected_legs: expectedLegs,
+      // R-187 G4 root-cause fix: without event_key scoping, a live sibling JE on this SAME advance
+      // for a DIFFERENT event (e.g. one of many daily factoring_default_interest accruals) can be
+      // picked up as a "candidate" for the funding event and rejected as repair_candidate_invalid
+      // (wrong shape) purely because it shares source_transaction_type + source_transaction_id.
+      // "funding" is technically a singleton event, but an advance can accumulate many OTHER live
+      // events over its life; scoping by eventKey here costs nothing for true singletons and fixes
+      // this collision for every advance old enough to carry accrued interest.
+      event_key: eventKey,
     });
     if (candidate.kind === "ambiguous") return { gate: "repair_ambiguous" as const };
     if (candidate.kind === "invalid") return { gate: "repair_candidate_invalid" as const, reason: candidate.reason };
