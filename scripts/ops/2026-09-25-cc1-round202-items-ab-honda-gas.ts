@@ -127,13 +127,17 @@ async function main() {
         );
         const expenseId = inserted.rows[0]!.id;
 
+        // expense_lines_item_qty_rate_amount_check requires item_id/quantity/rate_cents/unit_of_measure
+        // to be ALL NULL or ALL set (with item_id NOT NULL) -- no catalogs.items row applies here, so
+        // all four stay NULL (amount/amount_cents alone fully describe this line, same as any expense
+        // line with no item-catalog linkage).
         await client.query(
           `
             INSERT INTO accounting.expense_lines (
               operating_company_id, expense_id, line_sequence, amount, amount_cents, description,
-              load_id, load_required, expense_account_uuid, quantity, rate_cents, unit_of_measure, driver_id
+              load_id, load_required, expense_account_uuid, driver_id
             )
-            VALUES ($1::uuid, $2::uuid, 1, $3, $4::bigint, $5, $6::uuid, true, $7::uuid, 1, $4::bigint, 'each', $8::uuid)
+            VALUES ($1::uuid, $2::uuid, 1, $3, $4::bigint, $5, $6::uuid, true, $7::uuid, $8::uuid)
           `,
           [USMCA_ID, expenseId, AMOUNT_CENTS / 100, AMOUNT_CENTS, item.memo, loadId, fuelAccountId, item.driverId]
         );
