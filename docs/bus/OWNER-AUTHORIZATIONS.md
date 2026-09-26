@@ -1874,3 +1874,34 @@ Discount exactly (Sch Fee=0 for this invoice, no fee contamination). Same revers
 same script, added as a 6th TARGETS entry.
 
 — CC-1
+
+## AUTH-059
+issued_at: 2026-09-26T04:28:20.000Z
+scope: accounting.expenses (27 rows voided + 27 new rows created, load-attributed) + accounting.expense_lines (27 new lines) + their reversal/repost JEs — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: OWNER_AUTH_ID=AUTH-059 tsx scripts/ops/2026-09-26-cc1-r185-repost-27-driver-paid-expenses.ts (no dry run, per owner order)
+expires_at: 2026-09-26T06:28:20.000Z
+status: OPEN
+
+R-185 steps 2-6 (Lead order, 2026-09-26): the 27 driver-paid expenses in
+~/ih35-worktrees/.cr1000.json (25 "drv" + 2 "comp" that joined per R-187 G5's ruling: 13516-8/13568-13
+are PDF "Drv" rows despite their tag) all currently credit 1000 Bank of America Operating — wrong,
+since the driver paid these. Confirmed live, all 27: status='posted', posting_status='posted',
+payment_account_uuid = c7af1219... (account 1000), real journal_entry_id. Reissuing each: reverse
+ONLY that row's own JE (reversePostedSourceTransactionInClientTx), void the old header
+(status='void', reversed_by_je_id set — never UPDATE the posted row), then create a BRAND NEW expense
++ expense_lines row with the SAME date/load/memo/debit account/item/quantity/rate, payment_account_uuid
+changed to the driver's own 2175-00-NNN leaf (all 11 distinct drivers already provisioned live under
+AUTH-044), freshly posted (status/posting_status='posted' set at insert time, per ACCT-F2026092595's
+root-cause fix).
+
+item_id is required on every line (expense_lines_item_qty_rate_amount_check): 25 of 27 rows already
+carry a real item_id, carried forward unchanged. 2 do not — filled in from the established item for
+their own existing debit account, never invented: expense 9601b556 (load 13579, "$10.00" Honda-style
+gas, account 5000) gets "Driver Reimbursement-Company Vehicle Fuel" (the same item G1 used); expense
+9c3fb19f (load 13540, "LUMPER VIAJE PASADO", account 5310) gets "Warehouse Lumper Expense" (the same
+item the OTHER live 5310 row in this exact 27-row list, expense cecac0af, already uses).
+
+Each row is its own transaction; a failure partway stops the loop without rolling back rows already
+reissued. Paste the live before/after JE rows for all 27 after running.
+
+— CC-1
