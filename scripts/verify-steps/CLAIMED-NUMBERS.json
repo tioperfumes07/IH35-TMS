@@ -9149,5 +9149,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-25",
     "purpose": "verify-fuel-expense-one-to-one"
+  },
+  "11649": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-26",
+    "purpose": "verify-driver-settlement-escrow-matches-gl"
   }
 }
