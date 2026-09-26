@@ -1549,7 +1549,14 @@ issued_at: 2026-09-26T01:44:50.000Z
 scope: accounting.expenses (15 existing rows, status column only — no GL/posting_status/journal_entry_id change) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: OWNER_AUTH_ID=AUTH-047 tsx scripts/ops/2026-09-26-cc1-fix-expense-status-draft-backfill.ts (no dry run, per owner order)
 expires_at: 2026-09-26T03:44:50.000Z
-status: OPEN
+status: CONSUMED
+
+CONSUMED 2026-09-26T01:49Z — 13 shape-A rows (status flipped only, posting_status/journal_entry_id
+already correct) + 2 shape-B rows (0db68e11.../2e63d46c... — status+posting_status+posted_at+
+journal_entry_id all corrected from the writer defect, JE ids 2786bcc5.../1a94c2d1... confirmed live
+and balanced). Post-write proof, live status counts (operating_company_id
+5c854333-6ea5-4faa-af31-67cb272fef80): posted 517, void 801, draft 0 (was: draft 15, posted 502, void
+801). Script asserted zero remaining draft-with-posted-JE rows before COMMIT.
 
 Lead finding (2026-09-26 01:2x CT): root cause fixed in the writer (ACCT-F2026092595, PR #22794,
 merged — 4 independent accounting.expenses posting writers now flip status in lockstep with
