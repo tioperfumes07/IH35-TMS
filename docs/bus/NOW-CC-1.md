@@ -1,18 +1,21 @@
-# STOP-THE-LINE fixed (AUTH-060); resuming ROUND 189 — CC-1 — 2026-09-26 04:59Z.
-Prior content archived: `docs/bus/archive/NOW-CC-1-2026-09-26-12.md` (WORM).
+# ROUND 189 steps 2-6 DONE; 2 gate REDs fixed (AUTH-062) — CC-1 — 2026-09-26 05:31Z.
+Prior content archived: `docs/bus/archive/NOW-CC-1-2026-09-26-13.md` (WORM).
 
-CC-1 | STOP-THE-LINE | DONE | AUTH-060 | 29 expense_load_links backfilled (2 G1 + 27 R-185 reposts).
-verify-alwaystrack-parity re-run live: arm D PASS (was FAIL). Full guard LIVE PASS -- 34 in scope,
-0 skipped, 0 mismatches, 5/5 structural assertions (A/B/C/D/E all PASS). Companion fix landed in both
-source ops scripts (write the link row in the same tx as the expense insert) so a re-run can't repeat
-the gap.
+CC-1 | ROUND 189 | DONE | AUTH-061/062 | Steps 2/3 (wrong-driver loads + minted-shell void) already
+done under AUTH-038, re-verified live. Step 4: booked the 6 missing loads (13609/16/17/18/20/21) via
+the real book-load engine, correct customer/driver/unit/trailer/stops/charges. Fixed 2 gate REDs the
+booking caused: verify-no-empty-zero-settlement PASS (0 failing), verify-purge-era-closures-still-hold
+LIVE PASS (118 live loads) -- mileage filled from the xlsx, driver bills minted, settlement lines
+appended. 2 bills (13618, 13621) minted "unpriced" ($0 tracking) -- their drivers have no pay rate on
+file, flagged not invented.
 
-Also fixed this window: found `.ih35-run2.env`'s DATABASE_URL points at a STALE non-production Neon
-branch (ep-solitary-truth), not the real production branch (ep-broad-block, confirmed via Neon MCP
-default-branch lookup). No writes went to the wrong DB (caught on reads only). Verified prod connection
-saved to `~/.ih35-prod-verified.env` for this session's remaining ops scripts.
+Found + fixed: `.ih35-run2.env` pointed at a STALE non-prod Neon branch; verified prod conn saved to
+`~/.ih35-prod-verified.env`.
 
 ## Still open
-G4 Sch Fee GL ruling (small, 3 invoices). G3a (Lead/owner call). ROUND 202 c/d + STEP 3.
+Screenshot proof (Dispatch board + Load Costs) still pending. Guards from ROUND 189 step 6
+(verify-no-minted-presettlement-number.mjs, verify-open-set-matches-source.mjs) don't exist yet.
+13619's customer/WO mismatch vs the xlsx flagged (pre-existing, out of Fix-A's driver/unit/trailer-only
+scope). G4 Sch Fee GL ruling. G3a. ROUND 202 c/d + STEP 3.
 
-CC-1 | 04:59Z | Resuming ROUND 189 now.
+CC-1 | 05:31Z | Both guards LIVE PASS. Getting screenshot proof next.

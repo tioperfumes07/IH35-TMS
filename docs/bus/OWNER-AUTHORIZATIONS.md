@@ -2008,7 +2008,20 @@ issued_at: 2026-09-26T05:21:01.000Z
 scope: mdata.loads (miles_practical/miles_shortest/miles_deadhead via updateDispatchLoad; mileage_source via a narrow disclosed raw UPDATE, metadata only), driver_finance.driver_bills (mint via ensureDriverBillArtifactsForLoad, re-entered inside updateDispatchLoad), driver_finance.settlement_lines (append via appendSettlementLineFromDriverBillIfMissing) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), exactly load_numbers 13609, 13616, 13617, 13618, 13620, 13621 (the AUTH-061 loads)
 action: OWNER_AUTH_ID=AUTH-062 tsx scripts/ops/2026-09-26-cc1-round189-fill-mileage-and-settlement-lines.ts (no dry run, per owner order)
 expires_at: 2026-09-26T07:21:01.000Z
-status: OPEN
+status: CONSUMED — see the CONSUMED note below
+
+CONSUMED 2026-09-26T05:29Z — mileage set on all 6 (miles_practical/miles_shortest from the xlsx L.Miles,
+miles_deadhead=0, mileage_source='History'), driver bill minted on all 6 that didn't already have one
+(13609 already had one from AUTH-062's first pass): 13616, 13617, 13618, 13620, 13621. Two bills
+(13618 Angel Alfonso Sosa Perez, 13621 Leonel Antonio Morales) minted "unpriced" (bill_number set, $0
+tracking bill) — neither driver has a driver_pay_rate_per_mile on file; disclosed here, NOT invented,
+flagged as a separate data gap (needs the driver's rate seeded, then a remint). 4 of the 6 hit
+updateDispatchLoad's open_settlement WORM lock (they are the sole load + bookend of their own
+freshly-minted P-0008/9/10/11) — handled via the disclosed bookend-pointer exception in the script
+header (temporarily null the settlement's own first_load_id, never touched after the load's own money
+fields, restored to the same value once the edit committed). Both guards re-run live after:
+verify-no-empty-zero-settlement: PASS (0 failing shells). verify-purge-era-closures-still-hold:
+LIVE PASS — all purge-era closures hold at 118 live loads.
 
 STOP-THE-LINE (Lead): the 6 AUTH-061 loads redded 2 gates — verify-purge-era-closures-still-hold arm 39
 (6 live loads missing mileage) and verify-no-empty-zero-settlement (P-0008/P-0009/P-0010/P-0011: each a
