@@ -193,8 +193,12 @@ Measured (Neon `br-fancy-credit-akjnd07a`, bypass_rls=lucia, tip `6d18a73826`):
 - **Engines (R-186 on main):** preview/post orchestrate fuel/expense/advance/escrow/control totals.
   Drv reimbursement preview → Cr **2175** (blocker if missing). **LIVE 2026-09-26:** `allowPost={true}`
   on SettlementsPage; squash `024cb391ca`; API `git_sha=024cb391…`; FE bundle `allowPost:!0`.
-  **BE follow-up still open:** invoice mint + Faro auto-submit on Post (`buildInvoiceFromLoad` /
-  `syncSettlementLoadsToBilling`).
+  **Invoice + Faro on Post (owner CONTINUE 2026-09-26):** delivered loads only →
+  `buildInvoiceFromLoad` + `sendDraftInvoice({ mode: 'historical_backfill' })` inside the Creator
+  tx (stop actuals stamped + earnings `settlement_lines.load_id` for evidence). After COMMIT:
+  `faro_usmca` → `autoSubmitDeliveredLoadToFactor` (own connection); then
+  `syncSettlementLoadsToBilling`. Not-delivered loads skip invoice/Faro. No new GL math — existing
+  engines only. Guard `scripts/verify-settlement-creator-ties-document.mjs` asserts the wire.
 - **DONE bar:** Post live (control totals still gate `can_post`). Guard
   `scripts/verify-settlement-creator-ties-document.mjs`.
 - **Love's / fuel-stop location catalog (2026-09-26):** `mdata.locations` has **604** `LOVES-*`

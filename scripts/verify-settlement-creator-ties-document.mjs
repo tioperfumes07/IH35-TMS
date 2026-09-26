@@ -105,6 +105,19 @@ function runChecks() {
   assert(/next_number/.test(fs.readFileSync(path.join(ROOT, "apps/frontend/src/api/settlementCreator.ts"), "utf8")),
     "FE peek API must read next_number (AlwaysTrack digits), not next_display_id P-series", failures);
 
+  // Owner 2026-09-26 CONTINUE — invoice mint + Faro auto-submit on Creator Post (existing engines only).
+  assert(/buildInvoiceFromLoad/.test(service) && /sendDraftInvoice/.test(service),
+    "Post must mint+send invoices via buildInvoiceFromLoad + sendDraftInvoice", failures);
+  assert(/historical_backfill/.test(service),
+    "Invoice send on Creator Post must use historical_backfill mode (closed settlement / stop evidence)", failures);
+  assert(/isDeliveredCreatorLoad|not_yet_delivered/.test(service),
+    "Invoice mint must skip not-yet-delivered loads", failures);
+  const routes = read(path.join(ROOT, "apps/backend/src/driver-finance/settlement-creator.routes.ts"));
+  assert(/autoSubmitDeliveredLoadToFactor/.test(routes) && /faro_usmca/.test(routes),
+    "Post route must Faro-auto-submit faro_usmca loads AFTER COMMIT", failures);
+  assert(/syncSettlementLoadsToBilling/.test(routes),
+    "Post route must syncSettlementLoadsToBilling after commit", failures);
+
   return failures;
 }
 

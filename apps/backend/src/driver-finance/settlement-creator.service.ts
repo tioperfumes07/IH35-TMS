@@ -22,9 +22,12 @@ import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.ser
 import { resolveCompanyDirectCreditAccount } from "../accounting/fuel-posting/poster.service.js";
 import { nextExpenseDisplayId } from "../accounting/display-id.js";
 import { createHistoricalEscrowHold } from "./historical-escrow-backfill.service.js";
+import { buildInvoiceFromLoad } from "../accounting/from-load.js";
+import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
 import type {
   SettlementCreatorDraft,
   SettlementCreatorJeLine,
+  SettlementCreatorLoadBlock,
   SettlementCreatorPostResult,
   SettlementCreatorPreview,
 } from "./settlement-creator.types.js";
@@ -79,6 +82,39 @@ function cardRailNumber(card: "dreamline" | "relay"): string {
 
 function dollarsFromCents(cents: number): number {
   return Math.round(cents) / 100;
+}
+
+/**
+ * Delivered = has a delivery date on the AT PDF, or the operator cleared not_yet_delivered.
+ * Matches settlement-creator-seed-loads (notDelivered = not_yet_delivered !== false && !delivery_date).
+ * Not-delivered loads stay dispatched — no invoice / Faro until POD.
+ */
+function isDeliveredCreatorLoad(load: SettlementCreatorLoadBlock): boolean {
+  return !(load.not_yet_delivered !== false && !load.delivery_date);
+}
+
+/**
+ * Stamp stop actuals so sendDraftInvoice can evidence delivery (live stop departure OR
+ * historical_backfill via closed settlement_lines.load_id). Never invent GL math.
+ */
+async function stampDeliveryStopActuals(
+  client: DbClient,
+  loadId: string,
+  deliveryDate: string | null | undefined,
+): Promise<void> {
+  const at = deliveryDate ? `${deliveryDate}T18:00:00.000Z` : new Date().toISOString();
+  await client.query(
+    `
+      UPDATE mdata.load_stops
+         SET actual_arrival_at = COALESCE(actual_arrival_at, $2::timestamptz),
+             actual_departure_at = COALESCE(actual_departure_at, $2::timestamptz),
+             updated_at = now()
+       WHERE load_id = $1::uuid
+         AND stop_type = 'delivery'
+         AND soft_deleted_at IS NULL
+    `,
+    [loadId, at],
+  );
 }
 
 /**
@@ -834,6 +870,99 @@ export async function postSettlementCreatorInClientTx(
     });
   }
 
+  // Invoice mint + send (existing engines only). Delivered loads only — not_yet_delivered skips.
+  // historical_backfill: closed settlement_lines.load_id OR stamped stop departure = evidence.
+  // Faro auto-submit runs AFTER COMMIT (own connection) — see settlement-creator.routes.ts.
+  const invoiceIds: string[] = [];
+  for (let i = 0; i < draft.loads.length; i++) {
+    const load = draft.loads[i]!;
+    if (!isDeliveredCreatorLoad(load)) continue;
+    const loadId = loadIds[i];
+    if (!loadId) {
+      throw new SettlementCreatorError(
+        "load_not_found",
+        `Load ${load.load_number}: cannot mint invoice — load missing after seed.`,
+      );
+    }
+
+    await stampDeliveryStopActuals(client, loadId, load.delivery_date);
+
+    // Closed-settlement evidence for historical_backfill (AT path status=closed).
+    const earningsCents =
+      load.line_haul_amount_cents ??
+      (load.line_haul_rate_cents != null && load.loaded_miles != null
+        ? Math.round(Number(load.line_haul_rate_cents) * Number(load.loaded_miles))
+        : 0);
+    await client.query(
+      `
+        INSERT INTO driver_finance.settlement_lines (
+          settlement_id, operating_company_id, line_type, description, amount, load_id, is_active, is_sample_data
+        )
+        SELECT $1::uuid, $2::uuid, 'earnings', $3, $4, $5::uuid, true, false
+        WHERE NOT EXISTS (
+          SELECT 1 FROM driver_finance.settlement_lines sl
+           WHERE sl.settlement_id = $1::uuid
+             AND sl.load_id = $5::uuid
+             AND sl.line_type = 'earnings'
+             AND sl.voided_at IS NULL
+        )
+      `,
+      [
+        settlementId,
+        draft.operating_company_id,
+        `Load ${load.load_number} line haul`,
+        dollarsFromCents(Math.max(0, earningsCents)),
+        loadId,
+      ],
+    );
+
+    let built;
+    try {
+      built = await buildInvoiceFromLoad(client, {
+        userId: actorUserId,
+        operatingCompanyId: draft.operating_company_id,
+        loadId,
+      });
+    } catch (err) {
+      const code = err && typeof err === "object" && "code" in err ? String((err as { code: unknown }).code) : "";
+      const msg = err instanceof Error ? err.message : String(err);
+      if (code === "load_has_no_rate" || /load_has_no_rate/i.test(msg)) {
+        throw new SettlementCreatorError(
+          "invoice_load_has_no_rate",
+          `Load ${load.load_number}: cannot mint invoice — rate is $0. Enter line haul on the load block.`,
+        );
+      }
+      throw err;
+    }
+    const invoiceId = String((built.invoice as { id?: unknown }).id ?? "");
+    if (!invoiceId) {
+      throw new SettlementCreatorError(
+        "invoice_mint_failed",
+        `Load ${load.load_number}: buildInvoiceFromLoad returned no invoice id.`,
+      );
+    }
+    invoiceIds.push(invoiceId);
+
+    // Idempotent re-post may already be sent — only send drafts.
+    const status = String((built.invoice as { status?: unknown }).status ?? "");
+    if (status === "draft") {
+      const sent = await sendDraftInvoice(client, {
+        invoiceId,
+        operatingCompanyId: draft.operating_company_id,
+        userId: actorUserId,
+        mode: "historical_backfill",
+      });
+      if (!sent.ok) {
+        throw new SettlementCreatorError(
+          "invoice_send_failed",
+          `Load ${load.load_number}: sendDraftInvoice — ${sent.error}${
+            "message" in sent && sent.message ? `: ${sent.message}` : ""
+          }`,
+        );
+      }
+    }
+  }
+
   await appendCrudAudit(
     client as never,
     actorUserId,
@@ -848,6 +977,7 @@ export async function postSettlementCreatorInClientTx(
       expense_ids: expenseIds,
       fuel_transaction_ids: fuelTxnIds,
       advance_ids: advanceIds,
+      invoice_ids: invoiceIds,
       company_expenses_cents: preview.company_expenses_cents,
       driver_net_cents: preview.driver_net_cents,
     },
@@ -864,6 +994,7 @@ export async function postSettlementCreatorInClientTx(
     fuel_transaction_ids: fuelTxnIds,
     advance_ids: advanceIds,
     journal_entry_ids: journalEntryIds,
+    invoice_ids: invoiceIds,
     preview,
   };
 }

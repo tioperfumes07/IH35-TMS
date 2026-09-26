@@ -152,5 +152,9 @@ export type SettlementCreatorPostResult = {
   fuel_transaction_ids: string[];
   advance_ids: string[];
   journal_entry_ids: string[];
+  /** Customer invoices minted+sent for delivered loads (empty when all not_yet_delivered). */
+  invoice_ids: string[];
+  /** Faro submitted advance ids (filled by route after commit — never inside the Creator tx). */
+  factoring_advance_ids?: string[];
   preview: SettlementCreatorPreview;
 };
