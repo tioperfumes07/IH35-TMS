@@ -10,9 +10,9 @@
 //
 // Closures re-asserted (all USMCA, all live, all self-arming):
 //   19 — GL 1000 has no negative balance (no negative postings sum)
-//   21 — A/R vs Faro: every live invoice ties (no gap)
+//   21 — A/R (1100) equals the open balance of the live invoices (no gap)
 //   24 — no duplicate invoice display_id
-//   25 — driver_finance.driver_liabilities is empty (no reserve residual)
+//   25 — every driver_finance.driver_liabilities row belongs to a cash advance (no reserve residual)
 //   26 — every live invoice is from_load (no missing self-carried)
 //   29 — no settlements present (feed hasn't reached settlements yet)
 //   30 — every live load has driver + unit coverage
@@ -94,13 +94,17 @@ export async function measureClosures(client) {
   }
 
   // 25 — driver_finance.driver_liabilities is empty (no reserve residual)
+  // 25 — R-201 (Lead, 2026-09-25): "empty" was the purge-era truth; the feed now records the owner's real cash
+  // advances, and each advance carries its driver_liabilities row (12 of 12 measured live). The closure property is
+  // NO RESIDUAL: every liability row belongs to a live or voided advance — never an orphan left behind.
   const liabRes = await client.query(
-    `SELECT COUNT(*)::int AS n FROM driver_finance.driver_liabilities
-      WHERE operating_company_id = $1::uuid`,
+    `SELECT COUNT(*)::int AS n FROM driver_finance.driver_liabilities dl
+      WHERE dl.operating_company_id = $1::uuid
+        AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_advances a WHERE a.liability_id = dl.id)`,
     [USMCA_COMPANY_ID],
   );
   if (liabRes.rows[0].n > 0) {
-    failures.push(`25: driver_finance.driver_liabilities has ${liabRes.rows[0].n} rows (expected 0)`);
+    failures.push(`25: ${liabRes.rows[0].n} driver_finance.driver_liabilities row(s) belong to no cash advance (reserve residual)`);
   }
 
   // 26 — every live invoice is from_load (no missing self-carried)
@@ -172,7 +176,9 @@ export async function measureClosures(client) {
   // 21 — A/R vs Faro: every live invoice ties (no gap)
   // This checks that the sum of live invoices matches the sum of A/R postings.
   const invSumRes = await client.query(
-    `SELECT COALESCE(SUM(total_cents), 0)::bigint AS total FROM accounting.invoices
+    // 21 — R-201 (Lead, 2026-09-25): A/R (1100) is what is still OPEN on the invoices, not their face. Face minus
+    // collected receipts ($15,507.60 live) is exactly the gap this arm reported; the identity is 1100 = amount_open.
+    `SELECT COALESCE(SUM(amount_open_cents), 0)::bigint AS total FROM accounting.invoices
       WHERE operating_company_id = $1::uuid
         AND is_sample_data IS NOT TRUE
         AND voided_at IS NULL
@@ -194,7 +200,7 @@ export async function measureClosures(client) {
   const arSum = Number(arSumRes.rows[0].total);
   // Allow a tolerance of $1.00 (100 cents) for rounding
   if (Math.abs(invSum - arSum) > 100) {
-    failures.push(`21: A/R vs invoice gap — invoices=${invSum} cents, A/R=${arSum} cents, gap=${invSum - arSum} cents`);
+    failures.push(`21: A/R vs open invoices gap — open invoices=${invSum} cents, A/R=${arSum} cents, gap=${invSum - arSum} cents`);
   }
 
   await client.query("ROLLBACK");
