@@ -1,7 +1,7 @@
 /**
  * R-186.2 — Settlement Creator half-page side panel.
  * ONE panel for BOTH Company + Driver AlwaysTrack settlements (USMCA only).
- * Preview-first; Post disabled until every control total ties to the typed PDF totals.
+ * Live Post enabled (owner 2026-09-25). Preview still gates can_post on control totals.
  */
 import { useMemo, useState } from "react";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
@@ -1249,32 +1249,46 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                 {preview.driver_net_matches_pdf ? "✓" : "≠ PDF"}
               </div>
             </div>
-            <div className="max-h-48 overflow-auto">
-              <table className="w-full text-center text-xs">
-                <thead>
-                  <tr className="text-section-header uppercase text-[#4B5563]">
-                    <th className="p-1">Account</th>
-                    <th className="p-1">Dr</th>
-                    <th className="p-1">Cr</th>
-                    <th className="p-1">Memo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {preview.je_lines.map((line, i) => (
-                    <tr key={i} className="border-t border-[#E5E7EB]">
-                      <td className="p-1">
-                        {formatAccountDisplayLabel({
-                          account_number: line.account_number,
-                          account_name: line.account_name,
-                        })}
-                      </td>
-                      <td className="p-1">{line.debit_cents ? formatUsdCents(line.debit_cents) : ""}</td>
-                      <td className="p-1">{line.credit_cents ? formatUsdCents(line.credit_cents) : ""}</td>
-                      <td className="p-1">{line.memo}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="max-h-48 overflow-auto" data-testid="sc-je-lines">
+              <div
+                className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,2fr)] gap-x-2 text-center text-xs"
+                role="table"
+                aria-label="Journal entry preview lines"
+              >
+                <div role="row" className="contents text-section-header font-bold uppercase text-[#4B5563]">
+                  <div role="columnheader" className="p-1">
+                    Account
+                  </div>
+                  <div role="columnheader" className="p-1">
+                    Dr
+                  </div>
+                  <div role="columnheader" className="p-1">
+                    Cr
+                  </div>
+                  <div role="columnheader" className="p-1">
+                    Memo
+                  </div>
+                </div>
+                {preview.je_lines.map((line, i) => (
+                  <div key={i} role="row" className="contents border-t border-[#E5E7EB]">
+                    <div role="cell" className="border-t border-[#E5E7EB] p-1">
+                      {formatAccountDisplayLabel({
+                        account_number: line.account_number,
+                        account_name: line.account_name,
+                      })}
+                    </div>
+                    <div role="cell" className="border-t border-[#E5E7EB] p-1">
+                      {line.debit_cents ? formatUsdCents(line.debit_cents) : ""}
+                    </div>
+                    <div role="cell" className="border-t border-[#E5E7EB] p-1">
+                      {line.credit_cents ? formatUsdCents(line.credit_cents) : ""}
+                    </div>
+                    <div role="cell" className="border-t border-[#E5E7EB] p-1">
+                      {line.memo}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
             {preview.blockers.length ? (
               <ul className="list-inside list-disc text-left text-xs text-red-600">

@@ -275,7 +275,7 @@ export function SettlementsPage() {
         }
       />
 
-      <SettlementCreatorDrawer open={creatorOpen} onClose={closeCreator} allowPost={false} />
+      <SettlementCreatorDrawer open={creatorOpen} onClose={closeCreator} allowPost={true} />
 
       <NavyPageSubNav
         items={[
