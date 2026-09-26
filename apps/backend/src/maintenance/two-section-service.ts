@@ -1096,9 +1096,12 @@ export async function autoCreateExpenseFromWO(
           { userId }
         );
         await client.query(
+          // ROOT CAUSE FIX (Lead finding, 2026-09-26): status must move with posting_status -- see
+          // expenses.routes.ts's sister UPDATEs for the full note. Same defect, same table, fourth
+          // independent writer.
           `
             UPDATE accounting.expenses
-               SET posting_status = 'posted', posted_at = now(), journal_entry_id = $2::uuid, updated_at = now()
+               SET status = 'posted', posting_status = 'posted', posted_at = now(), journal_entry_id = $2::uuid, updated_at = now()
              WHERE id = $1::uuid AND operating_company_id = $3::uuid
           `,
           [expenseId, posting.journal_entry_id, wo.operating_company_id]
