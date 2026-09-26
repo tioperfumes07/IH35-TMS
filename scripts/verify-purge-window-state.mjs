@@ -32,6 +32,7 @@ const LIVE_ARMS = [
 
 export function staticViolations({ readScript, spec, state }) {
   const v = [];
+  // STALE-LITERAL-OK: ruled arm count — the owner-ruled exemption list size, not a live measurement (tenth arm #22467)
   if (PURGE_WINDOW_GUARDS.length !== 10) v.push(`the exemption lists ${PURGE_WINDOW_GUARDS.length} arms; exactly 10 are ruled`);
   for (const arm of PURGE_WINDOW_GUARDS) {
     const src = readScript(arm);
