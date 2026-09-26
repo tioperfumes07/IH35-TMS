@@ -57,7 +57,7 @@ async function main() {
               ON jep.source_transaction_type = 'expense' AND jep.source_transaction_id::text = e.id::text
             JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
            WHERE e.operating_company_id = $1::uuid AND e.status = 'draft' AND je.status = 'posted'
-           ORDER BY e.id
+           ORDER BY 1
         `,
         [USMCA_ID]
       );
