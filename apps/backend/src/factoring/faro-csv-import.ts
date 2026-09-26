@@ -1,4 +1,5 @@
 import { upsertFaroDailyImportOnClient } from "../data-infra/data-infra.service.js";
+import { syncLoadStatusToBillingInClientTx } from "../dispatch/load-billing-lifecycle.service.js";
 import { postReserveMovement } from "./reserve.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
@@ -518,7 +519,8 @@ async function applyInvoiceAndReserveUpdates(
   companyId: string,
   lines: FaroCsvLine[],
   factorId: string | null,
-  postingEnabled: boolean
+  postingEnabled: boolean,
+  actorUserId: string
 ) {
   let invoices_updated = 0;
   let reserve_movements = 0;
@@ -538,6 +540,24 @@ async function applyInvoiceAndReserveUpdates(
     );
     const wasNewlyAdvanced = Boolean(invoiceRes.rows[0]);
     if (wasNewlyAdvanced) invoices_updated += 1;
+    if (wasNewlyAdvanced) {
+      // R-205 (Lead 2026-09-26): factoring funded = the carrier has its money = the load closes
+      // (LOAD-CLOSE-LIFECYCLE). This import flips factoring_status inside its own transaction and
+      // never reached syncLoadsForFactoringAdvance, so 54 funded USMCA loads sat on 'invoiced' /
+      // 'completed_docs_received'. Walk the load forward in the SAME transaction.
+      const loadRes = await client.query<{ source_load_id: string | null }>(
+        `SELECT source_load_id::text FROM accounting.invoices WHERE id = $1::uuid`,
+        [invoiceRes.rows[0].id]
+      );
+      const loadId = loadRes.rows[0]?.source_load_id;
+      if (loadId) {
+        await syncLoadStatusToBillingInClientTx(client as never, {
+          operatingCompanyId: companyId,
+          loadId,
+          actorUserId,
+        });
+      }
+    }
 
     // ACCT-F5614 — honest flag-OFF = ZERO financial rows written (the same "TIER-1 FINANCIAL,
     // BUILD-AND-HOLD" law this codebase enforces everywhere else, e.g.
@@ -788,7 +808,8 @@ export async function commitFaroCsvImport(input: {
         input.operatingCompanyId,
         parsed.lines,
         factorId,
-        enabled
+        enabled,
+        input.userId
       );
       const actuals = await aggregateFaroActualsByAdvance(client, input.operatingCompanyId, parsed.lines);
       return {
