@@ -1801,7 +1801,20 @@ issued_at: 2026-09-26T04:06:34.000Z
 scope: catalogs.accounts (1 new row, GL 1235), accounting.chart_of_accounts_roles (1 new role binding), accounting.factoring_advances (6 rows: reserve_amount_cents/cash_rsv_cents/factor_fee_cents/wire_fee_cents corrections only — no invoice_total_cents change) + their reversal/repost JEs — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: (1) OWNER_AUTH_ID=AUTH-057 tsx scripts/ops/2026-09-26-cc1-g4-create-cash-reserve-account-and-role.ts (2) OWNER_AUTH_ID=AUTH-057 tsx scripts/ops/2026-09-26-cc1-g4-cash-rsv-split.ts (3) OWNER_AUTH_ID=AUTH-057 tsx scripts/ops/2026-09-26-cc1-g4-inv15-wire-fee-backfill.ts — no dry run, per owner order
 expires_at: 2026-09-26T06:06:34.000Z
-status: OPEN
+status: CONSUMED
+
+CONSUMED 2026-09-26T04:20Z — all 3 scripts run live: (1) GL 1235 "Faro Cash Reserve" created
+(ddcb9350-bbe3-425d-b15d-99c75351b567), factor_cash_reserve_held bound to it. (2) FAC-2026-00001/04/07/
+08/09 reversed+reposted (first attempt hit repair_candidate_invalid twice — a real pre-existing bug in
+findStrictLifecycleRepairCandidate's funding-event call sites, missing event_key scoping, letting a
+sibling default_interest JE be picked up as an invalid candidate; fixed at the root, ACCT-F20260926G4D,
+merged — then a second bug in this script's own query, fetching the stale pre-R-159-revision JE id for
+2 of the 5 rows; also fixed forward). All 5 now live: reserve reduced to Escrow-Rsv-only, cash_rsv_cents
+set, fee/wire unchanged. (3) FAC-2026-00042 (Faro inv 15) stored columns corrected to match its
+already-correct live JE (factor_fee_cents 6400->5400, wire_fee_cents NULL->1000), no JE touched.
+verify-feed-day.mjs --all after: 8/12 and 8/17 now full PASS. See AUTH-058 for the 6th row found in
+this same pass. 8/10, 8/13, 8/14 remain FAIL on discount only (Sch Fee contamination, no owner ruling
+yet on its GL destination — separate, small, flagged).
 
 R-187 G4 (Faro fees per purchase day, verify-feed-day.mjs --all): 5 of 22 days FAIL live
 (8/10, 8/12, 8/13, 8/14, 8/17). Root-caused, not guessed:
@@ -1843,7 +1856,15 @@ issued_at: 2026-09-26T04:15:34.000Z
 scope: accounting.factoring_advances (1 additional row: FAC-2026-00043, reserve_amount_cents/cash_rsv_cents only) + its reversal/repost JE — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: OWNER_AUTH_ID=AUTH-058 tsx scripts/ops/2026-09-26-cc1-g4-cash-rsv-split.ts (script now lists 6 targets; the first 5 — already fixed under AUTH-057 — self-skip via the existing idempotency guard) — no dry run
 expires_at: 2026-09-26T06:15:34.000Z
-status: OPEN
+status: CONSUMED
+
+CONSUMED 2026-09-26T04:22Z — FAC-2026-00043 reversed+reposted live: reserve 5700c -> 0c,
+cash_rsv_cents -> 5700c (reversal_je 7c7cd540-61c9-4170-aa99-ea0beee48267, new_je
+6705aca7-d0c5-45ea-ae0f-bc97805b4c36). The other 5 targets correctly self-skipped (already fixed under
+AUTH-057). verify-feed-day.mjs --all after: 8/18/26 now full PASS. G4 result: 20 of 23 days PASS (was
+17 of 23 before this window's fixes); the 3 remaining (8/10, 8/13, 8/14) fail on discount only, by
+exactly their Sch Fee amount ($6.60/$0.23/$1.39) — needs an owner ruling on Sch Fee's GL destination
+before it can close (mirroring the "GL 1235" ruling Cash Rsv already had).
 
 AUTH-057 addendum: running verify-feed-day.mjs --all AFTER the 5 AUTH-057 fixes landed surfaced a 6th
 day I had missed in the original sweep — 8/18/26 (Faro inv 16, MPH CARRIER SERVICES INC,
