@@ -1675,7 +1675,7 @@ issued_at: 2026-09-26T02:20:02.000Z
 scope: (1) mdata.loads.status on live USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) loads whose invoice is paid or factoring-funded (advanced/collected/released), walked forward ONLY through syncLoadStatusToBillingInClientTx (LOAD-CLOSE-LIFECYCLE, measured 54: 47 invoiced + 7 completed_docs_received, all factoring 'advanced'); (2) settlement 5792 only — void+reissue one settlement line (20.20 -> 20.21), driver bill 13562 loaded/deadhead split (gross unchanged), one adjusting JE Dr 6890 $0.01 / Cr 2170 $0.01, header gross_pay/period_end/status closed
 action: OWNER_AUTH_ID=AUTH-051 npx tsx scripts/ops/2026-09-26-lead-r205-close-funded-loads.ts ; OWNER_AUTH_ID=AUTH-051 npx tsx scripts/ops/2026-09-26-lead-r206-settlement-5792-cent-and-close.ts
 expires_at: 2026-09-26T05:20:02.000Z
-status: OPEN
+status: CONSUMED
 
 R-205 / R-206 (Claude-Lead). Owner 2026-09-26: "all these loads are linked to faro factoring now" and "fix that .01".
 R-205: funded = carrier has its money = the load closes (LOAD-CLOSE-LIFECYCLE); the Faro CSV import never synced the
@@ -1684,6 +1684,7 @@ Load 13562 Empty Miles 44.9 @ $0.45 = 20.21, Salary 1,738.05, TOTAL DUE 1,386.05
 
 — Claude-Lead
 
+CONSUMED 2026-09-26 (Claude-Lead): R-205 COMMITTED — 52 funded loads closed (35 -> 87); 13588/13600 refused (no priced bill, later booked by R-208). R-206 COMMITTED after #22819 — 5792 net 2170 = 138605, adjusting JE 6cf08eea-84e9-4f22-8395-03a9825a52db, TB 0, 5792 closed.
 
 ## AUTH-054
 issued_at: 2026-09-26T02:47:05.000Z
@@ -1740,7 +1741,7 @@ issued_at: 2026-09-26T02:35:04.000Z
 scope: accounting.company_settlements (display_id, period_start/end on the 37 live headers; up to 11 new headers for the bundled driver settlements) + accounting.company_settlement_driver_settlements.company_settlement_id re-point — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA). No money row, no JE.
 action: OWNER_AUTH_ID=AUTH-053 npx tsx scripts/ops/2026-09-26-lead-r200-company-settlements-one-per-alwaystrack-number.ts
 expires_at: 2026-09-26T05:35:04.000Z
-status: OPEN
+status: CONSUMED
 
 R-200 (Claude-Lead). Owner 2026-09-25: "always is the source of truth", "deactivate it from creating numbers", "the company and
 driver settlements are for the same loads one for how we pay the driver and one for the company profit". Source: every
@@ -1751,6 +1752,7 @@ never called) and stops linking by shared dates. AUTH-052 is reserved for CC-3's
 
 — Claude-Lead
 
+CONSUMED 2026-09-26 (Claude-Lead): COMMITTED — renamed 37, created 11; company settlements linked 48 = numbered_right 48 = headers 48, minted_left 0.
 
 ## AUTH-055
 issued_at: 2026-09-26T03:09:32.000Z
@@ -1784,7 +1786,7 @@ issued_at: 2026-09-26T04:02:17.000Z
 scope: settlement 5812 only (driver_finance.driver_settlements e45eb50a-f64b-4b7f-a999-5e61e6af22d5, LUIS ARMANDO SOSA PEREZ) — price driver bills 13588/13600 at $0.45/mi, void+reissue the two $0 earnings lines, add the empty-miles line, post through closeSettlementPayRun, close the header, walk loads 13588/13600 forward — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: OWNER_AUTH_ID=AUTH-056 npx tsx scripts/ops/2026-09-26-lead-r208-settlement-5812-pay-at-045-and-close.ts
 expires_at: 2026-09-26T10:02:17.000Z
-status: OPEN
+status: CONSUMED
 
 R-208 (Claude-Lead). Renumbered: the AUTH-055 written in #22822 was dropped in a rebase because CC-1 had already taken
 AUTH-055 (G3c) — this is the same authorization under the next free number. Owner 2026-09-25 ~10:05 PM CT: "check other
@@ -1795,6 +1797,7 @@ Runs only after CC-3's escrow-line void leaves exactly 2 x 25.00 active escrow l
 
 — Claude-Lead
 
+CONSUMED 2026-09-26 06:25Z (Claude-Lead) on main db9a8a3554 (after #22871 header rollup, #22872 payment method): COMMITTED — JE 205eb110-e460-478b-a4ab-7df8d8bfb287, pay-run run 3c7dbcfa; gross 172747, escrow 5000 (2 x 25.00), net 167747; GL 6890 = 172747, 2170 = -167747, 2100-00-001 = -5000; TB 0; loads 13588/13600 invoiced -> closed. Two earlier runs rolled back whole (header gross $0; no payment method) — nothing written.
 
 ## AUTH-057
 issued_at: 2026-09-26T04:06:34.000Z
