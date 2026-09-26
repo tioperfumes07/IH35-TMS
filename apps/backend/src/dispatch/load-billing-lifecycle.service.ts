@@ -156,6 +156,58 @@ async function walkForward(
   return { changed: true, from, to: status };
 }
 
+type LifecycleClient = { query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }> };
+
+/**
+ * R-205 (Lead, 2026-09-26) — the same decision as syncLoadStatusToBilling, on the CALLER's client and
+ * transaction. Writers that flip invoices.factoring_status inside their own transaction (the Faro CSV
+ * import) call this so the load walks forward in the same commit instead of waiting on a hook that
+ * never fires for them. Throws on a database error (the caller's transaction decides); returns the
+ * same SyncResult reasons as the scoped wrapper.
+ */
+export async function syncLoadStatusToBillingInClientTx(
+  client: LifecycleClient,
+  input: { operatingCompanyId: string; loadId: string; actorUserId: string }
+): Promise<SyncResult> {
+  const res = await client.query(
+    `
+      SELECT
+        l.status AS load_status,
+        i.status AS invoice_status,
+        COALESCE(i.factoring_status, 'not_factored') AS factoring_status
+      FROM mdata.loads l
+      LEFT JOIN accounting.invoices i
+        ON i.source_load_id = l.id
+       AND i.operating_company_id = l.operating_company_id
+       AND i.voided_at IS NULL
+      WHERE l.id = $1::uuid
+        AND l.operating_company_id = $2::uuid
+      ORDER BY i.created_at DESC NULLS LAST
+      LIMIT 1
+    `,
+    [input.loadId, input.operatingCompanyId]
+  );
+  const row = res.rows[0] as Record<string, unknown> | undefined;
+  if (!row) return { changed: false, reason: "load_not_found" };
+  const loadStatus = String(row.load_status);
+  const invoiceStatus = row.invoice_status ? String(row.invoice_status) : null;
+  const factoringStatus = String(row.factoring_status);
+  if (!invoiceStatus) return { changed: false, reason: "no_invoice" };
+
+  let target: BillingTailStatus | null = null;
+  if (
+    (LOAD_CLOSE_INVOICE_STATUSES as readonly string[]).includes(invoiceStatus) ||
+    (LOAD_CLOSE_FACTORING_STATUSES as readonly string[]).includes(factoringStatus)
+  ) {
+    target = "closed";
+  } else if (invoiceStatus === "sent") {
+    target = "invoiced";
+  }
+  if (!target) return { changed: false, reason: "invoice_not_billable_yet" };
+
+  return walkForward(client, input.operatingCompanyId, input.loadId, input.actorUserId, loadStatus, target);
+}
+
 /**
  * Sync a single load's status to its invoice's billing state. Reads the load's linked invoice
  * (accounting.invoices.source_load_id) and advances the load to `invoiced` (invoice sent) or `closed`
@@ -168,45 +220,9 @@ export async function syncLoadStatusToBilling(input: {
   actorUserId: string;
 }): Promise<SyncResult> {
   try {
-    return await withCompanyScope(input.actorUserId, input.operatingCompanyId, async (client) => {
-      const res = await client.query(
-        `
-          SELECT
-            l.status AS load_status,
-            i.status AS invoice_status,
-            COALESCE(i.factoring_status, 'not_factored') AS factoring_status
-          FROM mdata.loads l
-          LEFT JOIN accounting.invoices i
-            ON i.source_load_id = l.id
-           AND i.operating_company_id = l.operating_company_id
-           AND i.voided_at IS NULL
-          WHERE l.id = $1::uuid
-            AND l.operating_company_id = $2::uuid
-          ORDER BY i.created_at DESC NULLS LAST
-          LIMIT 1
-        `,
-        [input.loadId, input.operatingCompanyId]
-      );
-      const row = res.rows[0] as Record<string, unknown> | undefined;
-      if (!row) return { changed: false, reason: "load_not_found" };
-      const loadStatus = String(row.load_status);
-      const invoiceStatus = row.invoice_status ? String(row.invoice_status) : null;
-      const factoringStatus = String(row.factoring_status);
-      if (!invoiceStatus) return { changed: false, reason: "no_invoice" };
-
-      let target: BillingTailStatus | null = null;
-      if (
-        (LOAD_CLOSE_INVOICE_STATUSES as readonly string[]).includes(invoiceStatus) ||
-        (LOAD_CLOSE_FACTORING_STATUSES as readonly string[]).includes(factoringStatus)
-      ) {
-        target = "closed";
-      } else if (invoiceStatus === "sent") {
-        target = "invoiced";
-      }
-      if (!target) return { changed: false, reason: "invoice_not_billable_yet" };
-
-      return walkForward(client, input.operatingCompanyId, input.loadId, input.actorUserId, loadStatus, target);
-    });
+    return await withCompanyScope(input.actorUserId, input.operatingCompanyId, (client) =>
+      syncLoadStatusToBillingInClientTx(client as never, input)
+    );
   } catch (err) {
     console.warn({ err, load_id: input.loadId }, "load_billing_lifecycle_sync_failed");
     return { changed: false, reason: "error" };

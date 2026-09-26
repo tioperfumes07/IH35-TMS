@@ -1669,3 +1669,18 @@ mileage_source on the R-201 plan loads is written; no money row is touched. (Ren
 
 **CONSUMED 2026-09-26 02:28Z — Claude-Lead.** COMMITTED: {"stamped":40,"left":0}. verify-mileage-g1-g5-live after: G1 0 · G2 0 · G3 0 · G4 0 · G5 0 — OK, G1-G5 all clean.
 
+
+## AUTH-051
+issued_at: 2026-09-26T02:20:02.000Z
+scope: (1) mdata.loads.status on live USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) loads whose invoice is paid or factoring-funded (advanced/collected/released), walked forward ONLY through syncLoadStatusToBillingInClientTx (LOAD-CLOSE-LIFECYCLE, measured 54: 47 invoiced + 7 completed_docs_received, all factoring 'advanced'); (2) settlement 5792 only — void+reissue one settlement line (20.20 -> 20.21), driver bill 13562 loaded/deadhead split (gross unchanged), one adjusting JE Dr 6890 $0.01 / Cr 2170 $0.01, header gross_pay/period_end/status closed
+action: OWNER_AUTH_ID=AUTH-051 npx tsx scripts/ops/2026-09-26-lead-r205-close-funded-loads.ts ; OWNER_AUTH_ID=AUTH-051 npx tsx scripts/ops/2026-09-26-lead-r206-settlement-5792-cent-and-close.ts
+expires_at: 2026-09-26T05:20:02.000Z
+status: OPEN
+
+R-205 / R-206 (Claude-Lead). Owner 2026-09-26: "all these loads are linked to faro factoring now" and "fix that .01".
+R-205: funded = carrier has its money = the load closes (LOAD-CLOSE-LIFECYCLE); the Faro CSV import never synced the
+load (fixed in this PR); the close still refuses any load without a priced driver bill. R-206: Driver_Settlement_5792.pdf
+Load 13562 Empty Miles 44.9 @ $0.45 = 20.21, Salary 1,738.05, TOTAL DUE 1,386.05, Start 2026-08-26 End 2026-09-02.
+
+— Claude-Lead
+
