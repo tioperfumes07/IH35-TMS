@@ -49,7 +49,14 @@ function verify(files) {
   // 4 — NUMBER box: server-generated read-only settlement display_id.
   if (!/data-testid="settlement-number-box"/.test(numberBox)) f.push("number-box-missing");
   if (!/\{displayId \?\?/.test(numberBox)) f.push("number-box-not-wired");
-  if (/<input[\s>]|patchSettlementDisplayId/.test(numberBox)) f.push("number-box-must-be-read-only");
+  // R-186.1 (owner 2026-09-25, #22777): the number is EDITABLE while the settlement is not read-only (AlwaysTrack
+  // digits go to source_document_ref). A closed/read-only settlement must still render a frozen, input-free box.
+  {
+    const frozenIdx = numberBox.search(/if \(!editable \|\| !onSave\) \{/);
+    const frozen = frozenIdx >= 0 ? numberBox.slice(frozenIdx, numberBox.indexOf("\n  }\n", frozenIdx)) : numberBox;
+    if (frozenIdx < 0 && /<input[\s>]|patchSettlementDisplayId/.test(numberBox)) f.push("number-box-must-be-read-only");
+    if (frozenIdx >= 0 && (/<input[\s>]/.test(frozen) || !/settlement-number-box-frozen/.test(frozen))) f.push("number-box-must-be-read-only");
+  }
   if (!/<SettlementNumberBox/.test(page)) f.push("number-box-not-mounted");
 
   // 5 — LOADS + COMPANY WATERFALL sections exist with testids, mounted on the page.
@@ -86,10 +93,10 @@ if (process.argv.includes("--selftest")) {
     { ...base, page: base.page.replace('className="ldt-card"', 'className="not-ldt"') },
     { ...base, loadsSection: base.loadsSection.replace(/<ParityTable/g, "<table") },
     { ...base, loadsSection: base.loadsSection.replace(/<ParityTable/g, "<NotAParityTable") },
-    { ...base, numberBox: base.numberBox.replace('data-testid="settlement-number-box"', 'data-testid="oops"') },
+    { ...base, numberBox: base.numberBox.replaceAll('data-testid="settlement-number-box"', 'data-testid="oops"') },
     { ...base, numberBox: base.numberBox.replace(/displayId/g, "missingIdentity") },
-    { ...base, numberBox: base.numberBox + "<input />" },
-    { ...base, numberBox: base.numberBox + "patchSettlementDisplayId()" },
+    { ...base, numberBox: base.numberBox.replace('data-testid="settlement-number-box-frozen">', 'data-testid="settlement-number-box-frozen"><input />') },
+    { ...base, numberBox: base.numberBox.replace('data-testid="settlement-number-box-frozen"', 'data-testid="oops"') },
     { ...base, page: base.page.replace("<SettlementNumberBox", "<Nope") },
     { ...base, loadsSection: base.loadsSection.replace('data-testid="settlement-loads-section"', 'data-testid="oops"') },
     { ...base, page: base.page.replace("<SettlementLoadsSection", "<Nope") },

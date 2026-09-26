@@ -50,6 +50,7 @@ const HARD_IDENTIFIER_COLUMNS = [
 export function classifyDriverMerge(row) {
   const { from_driver, to_driver } = row;
   if (!from_driver || !to_driver) return "missing_driver_record";
+  if (row.single_driver) return null;
 
   // At least one hard identifier must match (both non-null and equal)
   const hasHardMatch = HARD_IDENTIFIER_COLUMNS.some(
@@ -74,9 +75,19 @@ async function measure(client) {
   await client.query("BEGIN");
   await client.query("SELECT set_config('app.bypass_rls','lucia',false)");
 
-  // Get all driver_vendor_merges for USMCA
+  // Live shape of mdata.driver_vendor_merges (measured 2026-09-26): one row per QBO-vendor merge
+  // for ONE driver — (driver_id, from_qbo_vendor_id, to_qbo_vendor_id). There is no
+  // from_driver_id/to_driver_id column; the original query referenced columns that do not exist
+  // and crashed (42703) instead of measuring. A merge collapses TWO driver records only when the
+  // from-vendor still belongs to a different mdata.drivers row; that pair must share a hard
+  // identifier. A vendor merge inside a single driver record merges no driver records.
   const mergeRes = await client.query(
-    `SELECT m.id::text AS merge_id, m.from_driver_id, m.to_driver_id
+    `SELECT m.id::text AS merge_id, m.driver_id::text AS to_driver_id,
+            (SELECT d.id::text FROM mdata.drivers d
+              WHERE d.operating_company_id = m.operating_company_id
+                AND d.qbo_vendor_id = m.from_qbo_vendor_id
+                AND d.id <> m.driver_id
+              ORDER BY d.created_at LIMIT 1) AS from_driver_id
        FROM mdata.driver_vendor_merges m
       WHERE m.operating_company_id = $1::uuid
       ORDER BY m.created_at`,
@@ -85,26 +96,25 @@ async function measure(client) {
 
   const results = [];
   for (const merge of mergeRes.rows) {
-    // Get from_driver
-    const fromRes = await client.query(
-      `SELECT ${HARD_IDENTIFIER_COLUMNS.join(", ")}
-         FROM mdata.drivers
-        WHERE id = $1::uuid`,
-      [merge.from_driver_id],
-    );
-    // Get to_driver
     const toRes = await client.query(
       `SELECT ${HARD_IDENTIFIER_COLUMNS.join(", ")}
          FROM mdata.drivers
         WHERE id = $1::uuid`,
       [merge.to_driver_id],
     );
-
-    results.push({
-      merge_id: merge.merge_id,
-      from_driver: fromRes.rows[0] || null,
-      to_driver: toRes.rows[0] || null,
-    });
+    const to_driver = toRes.rows[0] || null;
+    if (!merge.from_driver_id) {
+      // Single-driver vendor merge: no second driver record exists, so no driver-record merge.
+      results.push({ merge_id: merge.merge_id, single_driver: true, from_driver: to_driver, to_driver });
+      continue;
+    }
+    const fromRes = await client.query(
+      `SELECT ${HARD_IDENTIFIER_COLUMNS.join(", ")}
+         FROM mdata.drivers
+        WHERE id = $1::uuid`,
+      [merge.from_driver_id],
+    );
+    results.push({ merge_id: merge.merge_id, from_driver: fromRes.rows[0] || null, to_driver });
   }
 
   await client.query("ROLLBACK");
@@ -157,6 +167,18 @@ function runSelftest() {
         to_driver: { cdl_number: null, passport_number: null, ine_number: null, curp: "ABCD123456HDFLMN01", samsara_driver_id: null, qbo_vendor_id: null, employee_id_display: null },
       },
       expect: null,
+    },
+    // Clean: vendor merge inside ONE driver record (no second driver record merged)
+    {
+      name: "single-driver vendor merge",
+      row: { single_driver: true, from_driver: { cdl_number: null }, to_driver: { cdl_number: null } },
+      expect: null,
+    },
+    // RED: single-driver vendor merge whose driver record is gone
+    {
+      name: "single-driver vendor merge with missing driver",
+      row: { single_driver: true, from_driver: null, to_driver: null },
+      expect: "missing_driver_record",
     },
     // RED: missing driver record
     {

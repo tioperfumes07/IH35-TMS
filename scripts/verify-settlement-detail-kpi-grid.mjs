@@ -41,8 +41,12 @@ function verify(grid, page) {
   }
   // 4 — page mounts the grid fed from the shared readout
   if (!/<SettlementKpiGrid/.test(page)) f.push("page-mounts-grid");
-  if (!/revenueCents=\{readout\?\.company_settlement\?\.revenue_cents/.test(page)) f.push("page-revenue");
-  if (!/companyMarginCents=\{readout\?\.company_settlement\?\.margin_cents/.test(page)) f.push("page-margin");
+  // R-186.1 (#22777): the Company Settlement report (the AlwaysTrack document's own sections) is read first and the
+  // readout stays the fallback. Either shape is accepted; a KPI wired to neither source still fails.
+  if (!/revenueCents=\{readout\?\.company_settlement\?\.revenue_cents/.test(page) &&
+      !/revenueCents=\{companyReport \? companyReport\.sections\.revenue\.invoiced_cents : \(readout\?\.company_settlement\?\.revenue_cents \?\? 0\)\}/.test(page)) f.push("page-revenue");
+  if (!/companyMarginCents=\{readout\?\.company_settlement\?\.margin_cents/.test(page) &&
+      !/companyMarginCents=\{companyReport \? companyReport\.sections\.pl_rollup\.net_revenue_cents : \(readout\?\.company_settlement\?\.margin_cents \?\? 0\)\}/.test(page)) f.push("page-margin");
   if (!/netPayCents=\{kpi\.netPayCents\}/.test(page)) f.push("page-net");
   // 5 — SETL-KPI-CENTS-01: dollar-denominated legacy totals must be converted to cents before feeding
   // a `...Cents` prop. Bare `summary.reimbTotal` / `summary.deductionTotal` (no `* 100`) is the exact
@@ -68,8 +72,8 @@ if (process.argv.includes("--selftest")) {
     [grid.replace('label="Net pay"', 'label="Net"'), page],
     [grid, page.replace('<SettlementKpiGrid', '<Nope')],
     [grid, page.replace('netPayCents={kpi.netPayCents}', 'netPayCents={0}')],
-    [grid, page.replace('revenueCents={readout?.company_settlement?.revenue_cents', 'revenueCents={0} //readout?.company_settlement?.revenue_cents')],
-    [grid, page.replace('companyMarginCents={readout?.company_settlement?.margin_cents', 'companyMarginCents={0} //readout?.company_settlement?.margin_cents')],
+    [grid, page.replace(/revenueCents=\{companyReport [^\n]*\}/, 'revenueCents={0}')],
+    [grid, page.replace(/companyMarginCents=\{companyReport [^\n]*\}/, 'companyMarginCents={0}')],
     [grid, page.replace('reimbursementCents={Math.round(summary.reimbTotal * 100)}', 'reimbursementCents={summary.reimbTotal}')],
     [grid, page.replace('deductionCents={Math.round(summary.deductionTotal * 100)}', 'deductionCents={summary.deductionTotal}')],
     [grid, page.replace('formatUsd(d.this_period_amount)', 'formatUsdCents(d.this_period_amount)')],

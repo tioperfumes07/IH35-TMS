@@ -31,7 +31,10 @@ function assertHasUnitsPrimary(src) {
   if (!hasUnitsPrimary)
     offenders.push(`${FILE}: resolveLocalIds must resolve the unit PRIMARY via mdata.units.samsara_vehicle_id (COALESCE(lessee,owner) scoped) before the equipment fallback`);
   const hasSharedDriverScope =
-    /d\.samsara_driver_id\s*=\s*\$2/.test(scope) &&
+    // R-188 (#22746): the driver resolves through the one-driver-many-Samsara-accounts map
+    // (mdata.driver_samsara_accounts, active rows), never the legacy mdata.drivers.samsara_driver_id column.
+    /FROM\s+mdata\.driver_samsara_accounts\s+dsa\s+WHERE\s+dsa\.driver_id\s*=\s*d\.id\s+AND\s+dsa\.samsara_driver_id\s*=\s*\$2(::text)?\s+AND\s+dsa\.is_active/.test(scope) &&
+    !/d\.samsara_driver_id\s*=\s*\$2/.test(scope) &&
     /d\.operating_company_id\s*=\s*\$1::uuid/.test(scope) &&
     /FROM\s+mdata\.driver_company_authorizations\s+webhook_pairing_driver_dca/.test(scope) &&
     /webhook_pairing_driver_dca\.driver_id\s*=\s*d\.id/.test(scope) &&
@@ -39,7 +42,7 @@ function assertHasUnitsPrimary(src) {
     /webhook_pairing_driver_dca\.is_authorized\s*=\s*true/.test(scope) &&
     /webhook_pairing_driver_dca\.deactivated_at\s+IS\s+NULL/.test(scope);
   if (!hasSharedDriverScope)
-    offenders.push(`${FILE}: resolveLocalIds must admit an active shared-driver authorization in the webhook event company`);
+    offenders.push(`${FILE}: resolveLocalIds must match the driver through the active mdata.driver_samsara_accounts map (R-188, never the legacy column) and admit an active shared-driver authorization in the webhook event company`);
   return offenders;
 }
 
@@ -49,7 +52,7 @@ export function run() {
 }
 
 if (process.argv.includes("--selftest")) {
-  const sharedDriver = "SELECT d.id FROM mdata.drivers d WHERE d.samsara_driver_id = $2 AND (d.operating_company_id = $1::uuid OR EXISTS (SELECT 1 FROM mdata.driver_company_authorizations webhook_pairing_driver_dca WHERE webhook_pairing_driver_dca.driver_id = d.id AND webhook_pairing_driver_dca.company_id = $1::uuid AND webhook_pairing_driver_dca.is_authorized = true AND webhook_pairing_driver_dca.deactivated_at IS NULL))";
+  const sharedDriver = "SELECT d.id FROM mdata.drivers d WHERE EXISTS (SELECT 1 FROM mdata.driver_samsara_accounts dsa WHERE dsa.driver_id = d.id AND dsa.samsara_driver_id = $2::text AND dsa.is_active) AND (d.operating_company_id = $1::uuid OR EXISTS (SELECT 1 FROM mdata.driver_company_authorizations webhook_pairing_driver_dca WHERE webhook_pairing_driver_dca.driver_id = d.id AND webhook_pairing_driver_dca.company_id = $1::uuid AND webhook_pairing_driver_dca.is_authorized = true AND webhook_pairing_driver_dca.deactivated_at IS NULL))";
   const good =
     `async function resolveLocalIds(){ SELECT id FROM mdata.units WHERE COALESCE(currently_leased_to_company_id, owner_company_id) = $1 AND samsara_vehicle_id = $2; ${sharedDriver} } async function getOpenAssignment(){}`;
   const badUnit =
@@ -58,11 +61,17 @@ if (process.argv.includes("--selftest")) {
     "webhook_pairing_driver_dca.is_authorized = true",
     "webhook_pairing_driver_dca.is_authorized = false"
   );
+  // R-188 regression: matching on the legacy mdata.drivers.samsara_driver_id column must fail.
+  const legacyColumn = good.replace(
+    "EXISTS (SELECT 1 FROM mdata.driver_samsara_accounts dsa WHERE dsa.driver_id = d.id AND dsa.samsara_driver_id = $2::text AND dsa.is_active)",
+    "d.samsara_driver_id = $2"
+  );
+  const legacyColumnFails = assertHasUnitsPrimary(legacyColumn).some((problem) => problem.includes("driver_samsara_accounts map"));
   const goodPasses = assertHasUnitsPrimary(good).length === 0;
   const badUnitFails = assertHasUnitsPrimary(badUnit).some((problem) => problem.includes("unit PRIMARY"));
   const badDriverFails = assertHasUnitsPrimary(badDriver).some((problem) => problem.includes("shared-driver authorization"));
-  if (goodPasses && badUnitFails && badDriverFails) {
-    console.log("verify:samsara-webhook-unit-fallback selftest OK — unit primary + shared-driver authorization defects rejected");
+  if (goodPasses && badUnitFails && badDriverFails && legacyColumnFails) {
+    console.log("verify:samsara-webhook-unit-fallback selftest OK — unit primary, legacy-column driver match and shared-driver authorization defects rejected");
     process.exit(0);
   }
   console.error("verify:samsara-webhook-unit-fallback selftest FAILED");

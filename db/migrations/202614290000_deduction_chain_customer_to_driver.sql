@@ -113,6 +113,10 @@ $$;
 -- =========================================================================================
 -- §2 — the link itself: which short-pay produced which driver deduction, and for how much
 -- =========================================================================================
+-- CANONICAL-CHECK: driver_finance.deduction_recovery_links is a LINK/decision record, not a ledger. It holds no
+-- balance and posts nothing (header "NO GL MATH HERE"). It does not duplicate accounting.invoice_disputes (the
+-- customer short-pay, referenced by FK) or driver_finance.driver_settlement_deductions (the driver deduction,
+-- referenced by FK); it records which short-pay caused which deduction, capped per dispute by trigger (§2/§3).
 CREATE TABLE IF NOT EXISTS driver_finance.deduction_recovery_links (
   id                      uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   operating_company_id    uuid NOT NULL REFERENCES org.companies(id),

@@ -65,7 +65,8 @@ if (!/useState<"all" \| "active" \| "voided">\("active"\)/.test(payments)) {
 }
 
 const expenses = read("apps/frontend/src/pages/accounting/ExpensesListPage.tsx");
-if (!/useState<"" \| ExpenseListStatus>\("active"\)/.test(expenses)) {
+// FILTER-MULTI-01 (#22497) made the status filter multi-select; the default must still be exactly ["active"].
+if (!/useState<"" \| ExpenseListStatus>\("active"\)/.test(expenses) && !/const \[statusFilter, setStatusFilter\] = useState<string\[\]>\(\["active"\]\)/.test(expenses)) {
   failures.push("FLT-03: ExpensesListPage must default status filter to active (hide voided)");
 }
 if (!/value: "active", label: "Active \(hide voided\)"/.test(expenses)) {
@@ -81,10 +82,10 @@ if (!/filters\.status === "active"[\s\S]{0,200}e\.status <> 'void'/.test(expRout
 }
 
 const billsPage = read("apps/frontend/src/pages/accounting/BillsPage.tsx");
-if (!/const \[status, setStatus\][\s\S]{0,320}: "active"/.test(billsPage)) {
+if (!/const \[status, setStatus\][\s\S]{0,320}: "active"/.test(billsPage) && !/const \[statusFilter, setStatusFilter\] = useState<string\[\]>\([\s\S]{0,200}: \["active"\]\s*\)/.test(billsPage)) {
   failures.push("FLT-03: BillsPage must default status filter to active (hide voided)");
 }
-if (!/value="active">Active \(hide voided\)/.test(billsPage)) {
+if (!/value="active">Active \(hide voided\)/.test(billsPage) && !/value: "active", label: "Active \(hide voided\)"/.test(billsPage)) {
   failures.push("FLT-03: BillsPage must expose Active (hide voided) status option");
 }
 
@@ -128,7 +129,7 @@ if (!/value: "posted", label: "Posted \(GL\)"/.test(invoicesPage)) {
 if (!/q\.status === "posted"[\s\S]{0,800}source_transaction_type = 'invoice'/.test(invRoutes)) {
   failures.push("FLT-02: listInvoices must map status=posted → GL-posted invoices EXISTS");
 }
-if (!/value="posted">Posted \(GL\)/.test(billsPage)) {
+if (!/value="posted">Posted \(GL\)/.test(billsPage) && !/value: "posted", label: "Posted \(GL\)"/.test(billsPage)) {
   failures.push("FLT-02: BillsPage must expose Posted (GL) status filter option");
 }
 if (!/status === "posted"[\s\S]{0,200}BILL_POSTED_GL_EXISTS_SQL/.test(billsSvc)) {

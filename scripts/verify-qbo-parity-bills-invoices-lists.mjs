@@ -31,7 +31,10 @@ export function check({ bills, invoices }) {
     f.push(`${BILLS}: Bills list must render a per-row Overdue badge (billDueStatus + BillDueBadge + "Overdue")`);
   if (!/import\s*\{\s*listVendors\s*\}\s*from\s*["']\.\.\/\.\.\/api\/mdata["']/.test(bills))
     f.push(`${BILLS}: Bills list must import listVendors for the Vendor filter`);
-  if (!/vendor_id:\s*vendorId\s*\|\|\s*undefined/.test(bills))
+  // FILTER-MULTI-01 (#22497): the Vendor filter is multi-select; exactly one selection narrows the SQL
+  // query (vendor_id: vendorParam, vendorParam = the single selected vendor). Either shape is accepted.
+  if (!/vendor_id:\s*vendorId\s*\|\|\s*undefined/.test(bills) &&
+      !(/const vendorParam = vendorFilter\.length === 1 \? vendorFilter\[0\] : undefined/.test(bills) && /vendor_id:\s*vendorParam/.test(bills)))
     f.push(`${BILLS}: Bills list must wire vendor_id (vendorId) into listBills`);
   if (!/All vendors/.test(bills)) f.push(`${BILLS}: Bills list must have an "All vendors" Vendor filter option`);
 
@@ -54,7 +57,8 @@ export function check({ bills, invoices }) {
     f.push(`${INVOICES}: Customer filter must call listAllCustomers with selectedCompanyId scope`);
   if (/\blistCustomers\s*\(/.test(invoices))
     f.push(`${INVOICES}: Customer filter must not regress to the capped listCustomers roster`);
-  if (!/customer_id:\s*customerId\s*\|\|\s*undefined/.test(invoices))
+  if (!/customer_id:\s*customerId\s*\|\|\s*undefined/.test(invoices) &&
+      !(/const customerParam = customerFilter\.length === 1 \? customerFilter\[0\] : undefined/.test(invoices) && /customer_id:\s*customerParam/.test(invoices)))
     f.push(`${INVOICES}: Invoices list must wire customer_id (customerId) into listInvoices`);
   if (!/All customers/.test(invoices)) f.push(`${INVOICES}: Invoices list must have an "All customers" Customer filter option`);
 

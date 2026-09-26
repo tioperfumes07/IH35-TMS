@@ -51,7 +51,12 @@ export function check({ customers, invoices }) {
   if (!/searchParams\.get\(\s*["']customer_id["']\s*\)/.test(invoices)) {
     f.push(`${INVOICES}: must seed customer filter from searchParams.get("customer_id")`);
   }
-  if (!/customer_id:\s*customerId\s*\|\|\s*undefined/.test(invoices)) {
+  // FILTER-MULTI-01 (#22497): the deep-linked customer_id seeds the multi-select customerFilter, and a single
+  // selection narrows listInvoices via customerParam. Either shape is accepted; dropping the wiring still fails.
+  if (!/customer_id:\s*customerId\s*\|\|\s*undefined/.test(invoices) &&
+      !(/useState<string\[\]>\(\(\) => \(customerId \? \[customerId\] : \[\]\)\)/.test(invoices) &&
+        /const customerParam = customerFilter\.length === 1 \? customerFilter\[0\] : undefined/.test(invoices) &&
+        /customer_id:\s*customerParam/.test(invoices))) {
     f.push(`${INVOICES}: must wire customer_id (customerId) into listInvoices`);
   }
 

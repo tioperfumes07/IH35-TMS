@@ -27,8 +27,12 @@ function walkDir(dir, exts, results = []) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const fp = join(dir, entry.name);
     if (entry.isDirectory()) {
-      if (entry.name === "node_modules" || entry.name === ".git") continue;
+      // Test fixtures are not runtime callers: *.db.test.ts files run only against CI's ephemeral,
+      // torn-down Postgres and clean their own fixture rows. INV-1 is a RUNTIME invariant (header).
+      if (entry.name === "node_modules" || entry.name === ".git" || entry.name === "__tests__") continue;
       walkDir(fp, exts, results);
+    } else if (/\.test\.[cm]?[jt]sx?$/.test(entry.name)) {
+      continue;
     } else if (exts.some((e) => entry.name.endsWith(e))) {
       results.push(fp);
     }
