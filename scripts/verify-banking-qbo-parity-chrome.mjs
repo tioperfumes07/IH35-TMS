@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * verify-banking-qbo-parity-chrome.mjs
- * Guards owner 2026-07-16 Banking QBO chrome: column sort, date presets, Search all,
+ * Guards owner 2026-07-16 Banking QBO chrome: column sort, date presets, the 3→7 day match cascade (was Search all),
  * print orientation, View/Inspect tiles, recon flatten/print.
  */
 import fs from "node:fs";
@@ -44,8 +44,14 @@ if (tile && !/bank-account-tile-view/.test(tile)) {
 if (tile && !/bank-account-tile-inspect/.test(tile)) {
   failures.push("AccountTile must expose Inspect action");
 }
-if (matchDrawer && !/match-search-all/.test(matchDrawer)) {
-  failures.push("MatchDrawer must expose Search all control");
+// Owner ruling 2026-09-23 (claude/09-23-2026-OWNER-DECISION-BANK-MATCH-WINDOW-DATE-CASCADE.md, built in #22829):
+// "Search all" is RETIRED. The match window is 3 days -> 7 days -> From/To; the drawer must expose "Search 7 days"
+// and state an auto-widen, and must never bring "Search all" back.
+if (matchDrawer && (!/match-search-7-days/.test(matchDrawer) || !/widened to 7 days/.test(matchDrawer))) {
+  failures.push("MatchDrawer must expose the 3→7 day cascade (Search 7 days + widened banner)");
+}
+if (matchDrawer && /match-search-all/.test(matchDrawer)) {
+  failures.push("MatchDrawer must not bring back the retired Search all control");
 }
 if (recon && !/PrintOrientationDialog/.test(recon)) {
   failures.push("ReconciliationWorkspace must use PrintOrientationDialog");
