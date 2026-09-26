@@ -1460,3 +1460,76 @@ guard, which asserted purge-era emptiness: 21 now compares 1100 to the invoices'
 25 now asserts every driver liability belongs to a cash advance (12 of 12).
 
 — Claude-Lead
+
+## AUTH-046
+issued_at: 2026-09-26T01:16:17.000Z
+scope: accounting.expenses (2 new rows, load-attributed, $10.00 each) + their catalogs.accounts credit legs (existing 2175-00-NNN driver reimbursement leaves, created under AUTH-044) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: OWNER_AUTH_ID=AUTH-046 tsx scripts/ops/2026-09-25-cc1-round202-items-ab-honda-gas.ts (no dry run, per owner order)
+expires_at: 2026-09-26T03:16:17.000Z
+status: OPEN
+
+ROUND 202 (Claude-Lead) STEP 2, items a) and b) ONLY (c/d/e below — findings, not run under this AUTH;
+see the "items c/d/e" note under this entry):
+
+a) Settlement 5805, load 13582, 2026-09-08, LOVES inv 16049982, driver Jorge Luis Infante Corona
+   (3e138476-06db-4b08-9ebe-527a5d8c591d): $10.00 Honda "Drv" line on the signed AlwaysTrack PDF,
+   confirmed live to have NO matching accounting.expenses row on that load at all (measured before
+   writing this AUTH) — genuinely missing, not misclassified. Create Dr 5000 Fuel & Diesel $10.00 /
+   Cr the driver's 2175-00-004 "Jorge Luis Infante Corona — Driver Reimbursements" leaf (created live
+   under AUTH-044), matching R-185's "one cost, one payable" model exactly (never 1000/2000).
+b) Settlement 5808, load 13597, 2026-09-12, ROAD RANGER inv 00034608, driver Neftali Coronado Urbano
+   (a32a35c8-7cd5-4368-83f0-35e185092433): same treatment, Cr 2175-00-005 "Neftali Coronado Urbano —
+   Driver Reimbursements".
+
+Debit account 5000 Fuel & Diesel matches the live precedent for a driver-paid $10.00 gas line
+(expense 9601b556-713f-479f-8f2a-95ded5ae9456, "ATGTx settl 5802 #1 $10.00 load 13579") — that
+precedent's OWN credit side (1000 Bank) is R-185's separate, not-yet-run correction scope (steps 2-6,
+the 27-row list in ~/ih35-worktrees/.cr1000.json); items a/b are NEW rows created CORRECTLY from
+inception, not a repost of an existing wrong one. Posting via postSourceTransactionInClientTx
+(source_transaction_type='expense'), numbered via generateExpenseNumber (load-attributed, per R-168),
+mirroring settlement-creator.service.ts's own expense+posting call site exactly. Idempotent: refuses
+to double-create if a matching memo already exists on the load. tsc clean.
+
+ITEMS c/d/e — NOT run under this AUTH; findings reported to Lead instead of a blind live write:
+
+c) Settlement S-5812 (id e45eb50a-f64b-4b7f-a999-5e61e6af22d5, driver LUIS ARMANDO SOSA PEREZ):
+   measured live — ZERO journal_entries/journal_entry_postings exist for this settlement at all (never
+   posted). net_pay = -50.00 (2 active $25.00 escrow_contribution settlement_lines, $0.00 earnings on
+   both loads). The canonical live poster, closeSettlementPayRun (settlement-payrun-close.service.ts),
+   computes netCents the same way and explicitly THROWS "NET_PAY_NEGATIVE" for any settlement whose
+   computed net is negative — it will refuse to post this settlement at all. Per the file's own header
+   comment (RULING B, owner 2026-09-01): "A negative net_pay means the driver owes the company. It
+   posts AUTOMATICALLY to the driver's account on the RECEIVABLE side" via
+   driver_finance.driver_liabilities (postNegativeSettlementLiabilityIfNeeded, called from settlement
+   FINALIZE, not payrun-close) — "No settlement may close negative without creating the corresponding
+   account entry," and that liability row does NOT exist yet for this settlement either (measured
+   live, zero rows). This is a genuine conflict between ROUND 202's item c) instruction ("post the
+   escrow lines so live 2170 net = PDF TOTAL DUE exactly," implying a GL clearing-account entry) and
+   the owner's own more recent RULING B (negative settlements never post as a 2170 clearing draw — they
+   book to the driver_liabilities subledger instead, and the escrow side has no documented treatment
+   when the settlement that accrued it can never reach payrun-close). Declining to hand-roll a JE that
+   bypasses RULING B's guard on live money — flagging for a ruling instead: does the owner want (i) the
+   settlement finalized so postNegativeSettlementLiabilityIfNeeded books the $50 receivable, escrow
+   contribution left unposted to GL until this is resolved another way, or (ii) an explicit,
+   owner-authorized exception JE that behaves like RULING B never anticipated this shape (a
+   $0-earnings, escrow-only, negative-net settlement)?
+d) Settlement 5792 (id 51ea6bd4-96e7-4a44-b06f-74169b23a371, driver GENARO GUERRERO CHAVEZ): the LIVE
+   GL is already correct and matches the PDF exactly — journal_entry 728b7677-0342-4aee-8342-7f35ac940096
+   (posted, not reversed) credits 2170 Driver Net-Pay Clearing $1,386.04, tying to gross 1738.04 minus
+   the 6890/7200/2100-00-023 legs exactly, matching the PDF's $1,386.04. The 1-cent gap ROUND 202
+   describes is NOT in the GL — it's in driver_finance.driver_settlements.net_pay (header cache field),
+   which stores $1,386.05, inconsistent with ITS OWN gross_pay ($1,738.04) minus deductions_total
+   ($352.00) = $1,386.04, and inconsistent with the live JE it supposedly backs. This is a stale/drifted
+   header value on a driver_finance.driver_settlements row (CC-3's lane per LANES.md, not
+   catalogs.accounts/accounting.journal_entries), not a posted-money defect — reversing and reissuing
+   the (already-correct) JE would not fix a header column and would be needless churn on a correct
+   entry. Flagging for Lead/CC-3 to correct the header field rather than acting outside lane or
+   touching a correct JE.
+e) The 12 cash advances ($2,275.96 total, all 10 documents): research done (linked_bill_payment_id
+   lives on driver_finance.driver_advances, not driver_bills; the live precedent is the inline
+   mark-disbursed route in cash-advances.routes.ts, which INSERTs accounting.bill_payments then sets
+   driver_finance.driver_advances.linked_bill_payment_id, no banking.bank_transactions row). Row-level
+   identification (which 12 advance ids, across which 10 documents) not yet done — continuing next,
+   same session, no pause.
+
+— CC-1
