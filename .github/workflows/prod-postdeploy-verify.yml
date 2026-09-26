@@ -77,6 +77,9 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Install dependencies (the live read-only verifiers below import pg)
+        run: npm ci --ignore-scripts
+
       - name: Replay proofs at the live SHA
         # SHADOW: continue-on-error + replay exit 0 unless PROOF_REPLAY_FAIL_ON_FAIL=1.
         # That env is unset. Do not call this enforcement. Pull per module only when

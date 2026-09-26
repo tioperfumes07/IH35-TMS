@@ -91,6 +91,7 @@ const DISPATCH_NAV_ITEMS: readonly NavItem[] = [
     label: "Settlements",
     children: [
       { label: "Settlements", href: "/driver-finance/settlements" },
+      { label: "Settlement Creator", href: "/driver-finance/settlement-creator" },
       { label: "Pre-settlements", href: "/accounting/pre-settlements" },
     ],
   },
@@ -152,6 +153,7 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   "/dispatch/book-load": "Reserve a Load",
   "/dispatch/book-load?book_load=1": "Reserve a Load",
   "/driver-finance/settlements": "Settlements",
+  "/driver-finance/settlement-creator": "Settlement Creator",
   "/accounting/pre-settlements": "Pre-settlements",
   "/dispatch/pod-review": "POD Review",
   "/dispatch/ocr-queue": "OCR Queue",
@@ -218,6 +220,8 @@ export function dispatchSubNavActiveHref(
     return "/dispatch/geofencing";
   if (pathname.startsWith("/driver-finance/settlements"))
     return "/driver-finance/settlements";
+  if (pathname.startsWith("/driver-finance/settlement-creator"))
+    return "/driver-finance/settlement-creator";
   if (pathname.startsWith("/accounting/pre-settlements"))
     return "/accounting/pre-settlements";
   if (pathname.startsWith("/dispatch/pod-review"))

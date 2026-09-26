@@ -240,6 +240,9 @@ const expectedOrder = [
   "unit", "trailer", "load", "driver",
   "customer", "commodity", "wo", "pickup", "pickup_date", "pickup_time", "delivery", "delivery_date", "delivery_time",
   "cargo_temp", "linehaul",
+  // ADDITIVE 2026-09-25 (ROUND 173 pt 1, LAW 5 one-source-per-number, #22757 9d51e74c0c): the load's
+  // money from the single load-cost rollup, right after linehaul. Nothing dropped or reordered.
+  "load_revenue", "load_fuel", "load_expenses", "load_driver_pay", "load_net",
   "location", "live_gps", "driver_status", "samsara_eta", "on_time", "eta_freshness",
   "status_signal", "risk", "status", "pre_settlement",
 ];

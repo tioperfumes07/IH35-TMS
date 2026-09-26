@@ -430,5 +430,13 @@
     "reason": "GRANT to ih35_ci_readonly wrapped in IF EXISTS (pg_roles) so the migration replays on CI/verify databases that lack the role (security-audit-heavy: role \"ih35_ci_readonly\" does not exist). Prod already applied the original; the grant exists there and nothing is re-run.",
     "added_at": "2026-09-26",
     "added_in_pr": "claude/r186-creator-je-preview-paritytable"
+  },
+  {
+    "filename": "202614290000_deduction_chain_customer_to_driver.sql",
+    "ledger_checksum": "3fb64642f8f2edfc5314e7fcc57c867834da0b0cd4d39d20e4a961a5b263beff",
+    "disk_checksum": "8772f0ca48a76896ded79c9b07324d928d015d7f514fd8f242ebc60fda67eb6e",
+    "reason": "Comment-only edit: added the '-- CANONICAL-CHECK:' block verify-no-duplicate-financial-ledger requires for the new driver_finance.deduction_recovery_links table (locked-guards red on main since #22355). No SQL statement changed; prod already applied the original and nothing is re-run.",
+    "added_at": "2026-09-26",
+    "added_in_pr": "claude/r186-creator-je-preview-paritytable"
   }
 ]

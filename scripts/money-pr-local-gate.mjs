@@ -384,6 +384,16 @@ const GUARD_303 = [
 const DATA_WRITE_PATHS = ["db/migrations/", "scripts/ops/"];
 const ONE_SHOT_WRITER_RE = /^scripts\/run-[^/]+-once\.m?[jt]s$/;
 const LIVE_DOMAIN_GUARDS = [
+  // Claude-Lead 2026-09-26 — two LIVE guards that ran nowhere (verify-guard-wired orphans, neither in CI nor here).
+  // Both LIVE PASS at wiring: 10 loads / 5 multi-load tours; 758 Samsara profiles, 0 structural problems.
+  [
+    "verify-load-cost-rollup-lateral-no-alias-shadow",
+    ["apps/backend/src/accounting/load-cost-rollup", "apps/backend/src/accounting/load-unit-cost-split", "apps/backend/src/dispatch/"],
+  ],
+  [
+    "verify-samsara-mapping-integrity",
+    ["apps/backend/src/integrations/samsara/", "apps/backend/src/telematics/"],
+  ],
   // ROUND 165 order 6 — seed-settlement-document.service.ts's expense writer. Both guards are
   // self-gated report-only via their own *.gate.json (blocking:false) until the Lead's R-164
   // (AUTH-021) data fix lands; this array only decides WHEN they run, not blocking vs report.
