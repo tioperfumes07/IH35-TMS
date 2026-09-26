@@ -1370,3 +1370,23 @@ backfill PR (#22774) — both merged.
 
 — CC-1
 
+
+## AUTH-043
+issued_at: 2026-09-26T00:55:00.000Z
+scope: driver_finance.driver_settlements — status and period_start/period_end ONLY, on the USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) AlwaysTrack settlements 5769–5816 whose live Driver Net-Pay Clearing (2170) credit equals the signed Driver PDF TOTAL DUE to the cent (46 measured; 5792 and 5812 excluded, not tied)
+action: DRY_RUN=1 npx tsx scripts/ops/2026-09-25-lead-r199-close-alwaystrack-settlements.ts first, then OWNER_AUTH_ID=AUTH-043 npx tsx scripts/ops/2026-09-25-lead-r199-close-alwaystrack-settlements.ts
+expires_at: 2026-09-26T04:55:00.000Z
+status: OPEN
+
+R-199 (Claude-Lead, owner order 09-25 ~7:45 PM CT: "finish and close all the settlements, company and driver").
+Measured live: 48 fed AlwaysTrack settlements; 47 'approved' + 1 'closed' (5816). Their GL is already posted
+(e.g. 5769: Dr 6890 1,155.52 / Cr 2170 1,095.52 / Cr escrow 50.00 / Cr 7200 10.00) and their trips are already
+stamped closed, so the posting close (closeSettlementPayRun) must NOT run again. The header is what is wrong:
+status 'approved' and period_end = the feed date (e.g. 5769 period_end 2026-09-25; the PDF says 2026-08-10).
+Per settlement, one short transaction: tie (live 2170 net = PDF TOTAL DUE) -> status 'closed' + PDF Start/End
+Date -> audit -> read back: no new settlement line, no new JE, TB 0. 5779's PDF prints its dates inverted
+(Start 08-18 / End 08-17); stored in order, inversion recorded in the audit row. DRY_RUN: closed 46, not tied 2
+(5792 1386.05 vs 1386.04; 5812 -50.00 vs 0.00 — CC-2 R-197), refused 0. No money row is created, changed or
+reversed. payment_state stays 'unpaid' (driver disbursement is the banking step, later, owner's order).
+
+— Claude-Lead
