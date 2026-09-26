@@ -1390,3 +1390,32 @@ Date -> audit -> read back: no new settlement line, no new JE, TB 0. 5779's PDF 
 reversed. payment_state stays 'unpaid' (driver disbursement is the banking step, later, owner's order).
 
 — Claude-Lead
+
+## AUTH-044
+issued_at: 2026-09-26T00:30:20.000Z
+scope: catalogs.accounts (one new parent row "2175 Driver Reimbursements Payable" + up to 11 new per-driver child rows) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: DRY_RUN=1 first: OWNER_AUTH_ID=AUTH-044 tsx scripts/ops/2026-09-25-cc1-r185-create-2175-account.ts — then the same command without DRY_RUN.
+expires_at: 2026-09-26T02:30:00.000Z
+status: OPEN
+
+R-185 step 1 (Claude-Lead ruling, owner-approved 2026-09-25 05:15 PM CT): "Create the parent
+Liability 2175 Driver Reimbursements Payable. Children are one per driver, named <DRIVER NAME>, with
+no auto number." Code merged separately (ACCT-F2026092593): ensureDriverReimbursementParent +
+provisionDriverReimbursementSubAccount in driver-subaccount-provision.service.ts, mirroring the
+file's own existing escrow/advance-account patterns exactly. This AUTH is the live creation only —
+no expense/settlement posting-path change here (R-185 steps 2-3), no data correction (step 4).
+
+11 distinct driver_uuids identified live from ~/ih35-worktrees/.cr1000.json's 27 driver-paid/
+company-flagged expense rows (25 "drv" + 2 that joined per Lead's later R-187 G5 ruling: 13516-8,
+13568-13 are PDF "Drv" rows despite their "comp" tag in that file).
+
+FLAG (not fixed here, reported): driver_uuid 40823a77-d8d4-481c-88cb-1387556aa98e and
+dcd683f5-b8a1-46a8-aa6b-093732e70b92 are BOTH named "ALFONSO HIDALGO CHAVEZ" in mdata.drivers (both
+status Inactive, created 2 days apart) — the same duplicate-driver-record class already found and
+reported to the owner for "ANGEL ALFONSO SOSA" (fba21d80/52037e93) earlier this session, not merged
+there either. The provisioning function resolves by NAME, so both driver_uuids correctly route to
+the SAME "ALFONSO HIDALGO CHAVEZ" 2175 child if they are the same real person (which the evidence
+strongly suggests) — flagged rather than silently assumed; the owner decides whether to merge the
+underlying driver rows. This means up to 11 child accounts may in practice create 10 (one shared).
+
+— CC-1
