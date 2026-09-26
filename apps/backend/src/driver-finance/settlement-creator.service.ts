@@ -7,6 +7,7 @@
  * Spec: docs/bus/09-25-2026-Devin-A-ROUND-180-SETTLEMENT-CREATOR-COMPANY-AND-DRIVER.md
  */
 
+import { stampDocumentVoided } from "../accounting/void-document-stamp.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { createExpenseFromFuelTransaction } from "../fuel/fuel-expense-document.service.js";
 import {
@@ -177,20 +178,16 @@ async function voidPriorCreatorSettlementForEdit(
     }
   }
 
+  // The one void writer (stampDocumentVoided): voided_at/void_reason/voided_by_user_id + archived_at liveness, idempotent
+  // on an already-voided row — never a hand-rolled UPDATE (verify-void-stamp-columns, zero-tolerance on fuel).
   for (const fuelId of prior.fuel_transaction_ids ?? []) {
-    await client.query(
-      `
-        UPDATE fuel.fuel_transactions
-           SET voided_at = COALESCE(voided_at, now()),
-               void_reason = COALESCE(void_reason, $3),
-               voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid),
-               updated_at = now()
-         WHERE id = $1::uuid
-           AND operating_company_id = $2::uuid
-           AND voided_at IS NULL
-      `,
-      [fuelId, opco, reason, actorUserId],
-    );
+    await stampDocumentVoided(client as never, {
+      operatingCompanyId: opco,
+      family: "fuel_transaction",
+      documentId: fuelId,
+      voidReason: reason,
+      voidedByUserId: actorUserId,
+    });
   }
 
   for (const invoiceId of prior.invoice_ids ?? []) {
