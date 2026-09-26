@@ -1795,3 +1795,45 @@ Runs only after CC-3's escrow-line void leaves exactly 2 x 25.00 active escrow l
 
 — Claude-Lead
 
+
+## AUTH-057
+issued_at: 2026-09-26T04:06:34.000Z
+scope: catalogs.accounts (1 new row, GL 1235), accounting.chart_of_accounts_roles (1 new role binding), accounting.factoring_advances (6 rows: reserve_amount_cents/cash_rsv_cents/factor_fee_cents/wire_fee_cents corrections only — no invoice_total_cents change) + their reversal/repost JEs — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: (1) OWNER_AUTH_ID=AUTH-057 tsx scripts/ops/2026-09-26-cc1-g4-create-cash-reserve-account-and-role.ts (2) OWNER_AUTH_ID=AUTH-057 tsx scripts/ops/2026-09-26-cc1-g4-cash-rsv-split.ts (3) OWNER_AUTH_ID=AUTH-057 tsx scripts/ops/2026-09-26-cc1-g4-inv15-wire-fee-backfill.ts — no dry run, per owner order
+expires_at: 2026-09-26T06:06:34.000Z
+status: OPEN
+
+R-187 G4 (Faro fees per purchase day, verify-feed-day.mjs --all): 5 of 22 days FAIL live
+(8/10, 8/12, 8/13, 8/14, 8/17). Root-caused, not guessed:
+
+1) Faro's "Cash Rsv" export column has its own reserve pool per an EXISTING owner ruling already in
+   the code (faro-csv-import.ts: "Cash Rsv is its own reserve pool, owner ruling: GL 1235, never
+   aliased to reserve") — but no column/leg/account has ever existed for it; it was silently posted
+   into 1230 Factoring Reserves (factor_reserve_held) alongside the real Escrow Rsv at funding time.
+   Confirmed live, per-invoice, against the PURCHASE REPORT: FAC-2026-00001 (Faro inv 3) reserve
+   3090c should be 0 (Escrow Rsv=0) + cash_rsv 3090c; FAC-2026-00004 (inv 4) reserve 2550c -> 0 +
+   cash_rsv 2550c; FAC-2026-00007 (inv 7) reserve 502c -> 0 + cash_rsv 502c; FAC-2026-00008 (inv 11)
+   reserve 911c -> 0 + cash_rsv 911c; FAC-2026-00009 (inv 8) reserve 788c -> 0 + cash_rsv 788c.
+   Fixed via: migration 202614390000 (cash_rsv_cents column, applied), migration 202614400000
+   (chart_of_accounts_roles.role CHECK widened for factor_cash_reserve_held, applied),
+   ACCT-F20260926G4C (poster engine gains the new leg, merged) — this AUTH covers (a) creating GL
+   1235 "Faro Cash Reserve" (the owner-approved number, mirroring 1230's shape) + binding
+   factor_cash_reserve_held to it, and (b) reversing ONLY the funding JE (never the whole lifecycle)
+   + reposting each of the 5 advances above with reserve reduced by exactly its Cash Rsv amount, fee
+   and wire UNCHANGED. factor_fee_cents is DELIBERATELY left untouched for 3 of these 5
+   (FAC-2026-00001/07/08 also carry a Sch Fee contamination) — Sch Fee has NO owner ruling on its GL
+   destination yet, unlike Cash Rsv's explicit one; flagged separately below, not guessed at here.
+
+2) FAC-2026-00042 (Faro inv 15, 8/17/26) was missed from the original AUTH-042 21-row wire-fee
+   backfill. Confirmed live: its funding JE is ALREADY correctly split (Dr 6400 $54.00 / Dr 6300
+   $10.00) — only the STORED factor_fee_cents (still $64.00) and wire_fee_cents (still NULL) columns
+   are stale. Pure metadata backfill, no JE touched, same shape as AUTH-042 itself.
+
+Expected result after this AUTH: 8/12 and 8/17 reach full PASS (6/6 columns each). 8/10, 8/13, 8/14
+will flip their escrow column to PASS but remain FAIL overall on discount alone, by exactly their
+Sch Fee amount (8/10: $6.60: FAC-2026-00001; 8/13: $0.23: FAC-2026-00007; 8/14: $1.39:
+FAC-2026-00008) — a separate, smaller, still-open finding pending an owner ruling on Sch Fee's GL
+destination (mirroring Cash Rsv's own "GL 1235" ruling, but no equivalent exists yet for Sch Fee).
+Paste the live verify-feed-day.mjs --all output after running.
+
+— CC-1
