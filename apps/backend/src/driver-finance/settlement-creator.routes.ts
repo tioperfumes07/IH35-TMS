@@ -18,6 +18,8 @@ import {
 } from "./settlement-creator-seed-loads.js";
 import { peekNextSettlementSourceDocumentRef } from "./settlement-source-document-ref.service.js";
 import type { SettlementCreatorDraft } from "./settlement-creator.types.js";
+import { autoSubmitDeliveredLoadToFactor } from "../factoring/auto-submit-on-delivery.service.js";
+import { syncSettlementLoadsToBilling } from "../dispatch/load-billing-lifecycle.service.js";
 
 const AUTHORITY_ROLES = new Set(["Owner", "Administrator", "Accountant"]);
 const WRITE_RL = { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } };
@@ -214,7 +216,58 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
         ]);
         return postSettlementCreatorInClientTx(client, user.uuid, draft);
       });
-      return reply.code(200).send({ ok: true, ...result });
+
+      // AFTER COMMIT — Faro auto-submit + billing sync use own connections (never share Creator tx).
+      // FACT-DELIVERED-AUTO: faro_usmca only (USMCA factor). faro_transportation / direct = no-op.
+      const factoringAdvanceIds: string[] = [];
+      for (let i = 0; i < draft.loads.length; i++) {
+        const load = draft.loads[i]!;
+        const loadId = result.load_ids[i];
+        if (!loadId) continue;
+        if (load.factoring !== "faro_usmca") continue;
+        // Not-delivered: no invoice yet → autoSubmit no-ops on no_invoice; skip the call.
+        if (load.not_yet_delivered !== false && !load.delivery_date) continue;
+        try {
+          const submitted = await autoSubmitDeliveredLoadToFactor({
+            operatingCompanyId: draft.operating_company_id,
+            loadId,
+            actorUserId: user.uuid,
+          });
+          if (submitted.submitted && submitted.advanceId) {
+            factoringAdvanceIds.push(submitted.advanceId);
+          } else if (!submitted.submitted) {
+            console.warn(
+              {
+                load_id: loadId,
+                load_number: load.load_number,
+                reason: submitted.reason,
+              },
+              "settlement_creator_faro_auto_submit_noop",
+            );
+          }
+        } catch (err) {
+          console.warn(
+            { err, load_id: loadId, load_number: load.load_number },
+            "settlement_creator_faro_auto_submit_failed",
+          );
+        }
+      }
+
+      try {
+        await syncSettlementLoadsToBilling({
+          operatingCompanyId: draft.operating_company_id,
+          loadIds: result.load_ids,
+          actorUserId: user.uuid,
+        });
+      } catch (err) {
+        console.warn({ err, settlement_id: result.settlement_id }, "settlement_creator_billing_sync_failed");
+      }
+
+      return reply.code(200).send({
+        ok: true,
+        ...result,
+        factoring_advance_ids: factoringAdvanceIds,
+      });
     } catch (err) {
       if (err instanceof SettlementCreatorError || err instanceof SettlementCreatorSeedError) {
         return reply.code(err.code === "settlement_exists" ? 409 : 400).send({
