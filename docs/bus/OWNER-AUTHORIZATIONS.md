@@ -1612,3 +1612,25 @@ route uses) — it does NOT repost to a new account, since G1's own spec forbids
 (both lines) goes back to BLOCKED, reported to Lead, pending the owner's account-creation ruling.
 
 — CC-1
+
+## AUTH-049
+issued_at: 2026-09-26T02:12:15.000Z
+scope: accounting.expenses (2 new rows, load-attributed, $10.00 each, item_id set) + their catalogs.accounts credit legs (existing 2175-00-NNN driver reimbursement leaves) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: OWNER_AUTH_ID=AUTH-049 tsx scripts/ops/2026-09-26-cc1-r187-g1-repost-with-item.ts (no dry run, per owner order)
+expires_at: 2026-09-26T04:12:15.000Z
+status: OPEN
+
+Lead ruling (2026-09-26, supersedes R-187's "NOT 5000" text): USMCA's live catalog already carries the
+QBO item "Driver Reimbursement-Company Vehicle Fuel" (catalogs.items e93a0c79-337f-4563-b0fc-d09c9b36e499),
+confirmed live: default_expense_account_id resolves to account 5000 Fuel & Diesel, item_type
+NonInventory, not deactivated. Two-layer QBO clone law: coarse chart (5000, correct all along) +
+detailed item on the line (the missing piece AUTH-046's original attempt lacked, and the actual reason
+AUTH-048 reversed it — expense_lines_item_qty_rate_amount_check needs item_id+quantity+rate_cents+
+unit_of_measure ALL set together, not the account itself). No new account created; the item mapping is
+the source, per this ruling.
+
+Reposts the two G1 lines (settlements 5805/5808, loads 13582/13597) WITH item_id set, quantity=1,
+rate_cents=1000, unit_of_measure='each', same 5000 debit / 2175-00-NNN credit as the reversed
+originals. Idempotent (refuses to double-create if a matching memo already exists on the load).
+
+— CC-1
