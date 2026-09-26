@@ -64,21 +64,29 @@ async function main() {
         }
       }
 
-      // uq_factoring_advances_faro_invoice_number blocks a direct simultaneous swap (row A's target
-      // value is row B's current value) -- stage row A through a temporary placeholder first.
+      // uq_factoring_advances_faro_invoice_number (operating_company_id, faro_invoice_number) is a
+      // plain, non-deferred unique index -- Postgres checks it at the end of EACH statement, so a
+      // direct simultaneous swap (row A's target value is row B's CURRENT value) fails no matter what
+      // order the two final UPDATEs run in. Three real steps, in this exact order:
+      //   1. row A (rows[0]) -> a temporary placeholder (frees up its old value, '32')
+      //   2. row B (rows[1]) -> its final value ('32', now free)
+      //   3. row A (rows[0]) -> its final value ('30', now free since row B no longer holds it)
+      const [rowA, rowB] = rows;
       const TEMP_PLACEHOLDER = "TEMP-G3C-SWAP-IN-PROGRESS";
-      await client.query(
-        `UPDATE accounting.factoring_advances SET faro_invoice_number=$2 WHERE id=$1::uuid AND operating_company_id=$3::uuid AND faro_invoice_number=$4`,
-        [rows[0]!.id, TEMP_PLACEHOLDER, USMCA_ID, rows[0]!.before]
-      );
 
-      for (const row of rows) {
-        const setFrom = row === rows[0] ? TEMP_PLACEHOLDER : row.before;
+      async function doUpdate(row: (typeof rows)[number], setFrom: string, setTo: string) {
         const upd = await client.query(
           `UPDATE accounting.factoring_advances SET faro_invoice_number=$2 WHERE id=$1::uuid AND operating_company_id=$3::uuid AND faro_invoice_number=$4`,
-          [row.id, row.after, USMCA_ID, setFrom]
+          [row.id, setTo, USMCA_ID, setFrom]
         );
-        if (upd.rowCount !== 1) throw new Error(`STOP: ${row.display_id} UPDATE affected ${upd.rowCount} rows`);
+        if (upd.rowCount !== 1) throw new Error(`STOP: ${row.display_id} UPDATE (${setFrom} -> ${setTo}) affected ${upd.rowCount} rows`);
+      }
+
+      await doUpdate(rowA!, rowA!.before, TEMP_PLACEHOLDER);
+      await doUpdate(rowB!, rowB!.before, rowB!.after);
+      await doUpdate(rowA!, TEMP_PLACEHOLDER, rowA!.after);
+
+      for (const row of rows) {
         await appendCrudAudit(
           client as never, SYSTEM_ACTOR_USER_ID, "factoring_advances.faro_invoice_number_corrected",
           {
