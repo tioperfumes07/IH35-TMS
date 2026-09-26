@@ -1576,3 +1576,24 @@ No new JE, no reversal, no repost — a pure header-metadata correction, each ro
 current state exactly matches one of the two expected shapes above (STOP on any surprise).
 
 — CC-1
+
+## AUTH-048
+issued_at: 2026-09-26T01:57:16.000Z
+scope: accounting.expenses (2 rows) + accounting.journal_entries (2 reversal JEs) — reverse only, no repost — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: OWNER_AUTH_ID=AUTH-048 tsx scripts/ops/2026-09-26-cc1-r187-g1-reverse-wrong-account-honda-gas.ts (no dry run, per owner order)
+expires_at: 2026-09-26T03:57:16.000Z
+status: OPEN
+
+SELF-CORRECTION. R-187's own G1 spec (read earlier this session, cross-check missed before running
+AUTH-046 items a/b) requires the two missing $10.00 Honda pickup gas lines (settlements 5805/5808) to
+debit a distinct "Company Vehicle Fuel" account — "NOT 5000 and NOT an IFTA gallon" — and explicitly:
+"if no 'Company Vehicle Fuel' item/account exists in USMCA -> BLOCKED line to the Lead (do not invent
+a number)." AUTH-046 posted both to 5000 Fuel & Diesel instead (the credit side, 2175-<driver>, was
+correct). Confirmed live: no "Company Vehicle Fuel" account exists in USMCA's chart.
+
+This AUTH reverses ONLY the two wrong-account JEs (void-never-delete: reversePostedSourceTransactionInClientTx
++ the expense header flipped to status='void'/posting_status='reversed', the same shape the live void
+route uses) — it does NOT repost to a new account, since G1's own spec forbids inventing one. G1
+(both lines) goes back to BLOCKED, reported to Lead, pending the owner's account-creation ruling.
+
+— CC-1
