@@ -36,50 +36,20 @@ export async function openOrGetCompanySettlementForPeriod(
     `,
     [input.operatingCompanyId, input.periodStart, input.periodEnd]
   );
-  let header = existingRes.rows[0];
+  const header = existingRes.rows[0];
 
   if (!header) {
-    const displayIdRes = await client.query<{ display_id: string }>(
-      `SELECT accounting.next_company_settlement_display_id($1::uuid, $2::date) AS display_id`,
-      [input.operatingCompanyId, input.periodStart]
-    );
-    const displayId = displayIdRes.rows[0]?.display_id;
-    const insertRes = await client.query<{ id: string; display_id: string; status: string }>(
-      `
-        INSERT INTO accounting.company_settlements
-          (operating_company_id, display_id, period_start, period_end, status, created_by_user_id)
-        VALUES ($1::uuid, $2, $3::date, $4::date, 'open', $5::uuid)
-        RETURNING id::text, display_id, status
-      `,
-      [input.operatingCompanyId, displayId, input.periodStart, input.periodEnd, input.actorUserId]
-    );
-    header = insertRes.rows[0];
+    // R-200 (owner, 2026-09-25): company settlements are one per driver settlement and carry its AlwaysTrack
+    // (or P-) number; they are created when that driver settlement closes. This path may no longer create a
+    // header or mint a number — it only returns an existing one.
+    throw Object.assign(new Error("company_settlement_not_found_for_period"), {
+      code: "company_settlement_not_found_for_period",
+      message_for_user: "Company settlements are created with their driver settlement, under the same AlwaysTrack number.",
+    });
   }
 
-  // Link every driver settlement sharing this EXACT period -- idempotent (the junction's own
-  // uq_driver_settlement_one_company_settlement refuses a second link for an already-linked driver
-  // settlement, so a driver settlement belonging to a DIFFERENT company settlement is silently
-  // skipped here rather than stolen into this one).
-  const dsRes = await client.query<{ id: string }>(
-    `
-      SELECT id::text
-      FROM driver_finance.driver_settlements
-      WHERE operating_company_id = $1::uuid
-        AND period_start = $2::date
-        AND period_end = $3::date
-    `,
-    [input.operatingCompanyId, input.periodStart, input.periodEnd]
-  );
-  for (const ds of dsRes.rows) {
-    await client.query(
-      `
-        INSERT INTO accounting.company_settlement_driver_settlements (company_settlement_id, driver_settlement_id)
-        VALUES ($1::uuid, $2::uuid)
-        ON CONFLICT DO NOTHING
-      `,
-      [header.id, ds.id]
-    );
-  }
+  // R-200: never link other driver settlements into a header by shared dates (that is the merge the owner
+  // rejected). The header's own driver settlement link is written where it is created.
 
   const countRes = await client.query<{ n: string }>(
     `SELECT count(*)::text AS n FROM accounting.company_settlement_driver_settlements WHERE company_settlement_id = $1::uuid`,

@@ -52,16 +52,26 @@ export async function registerCompanySettlementOpenCloseRoutes(app: FastifyInsta
       }
       await assertCompanyMembership(user.uuid, body.data.operating_company_id);
 
-      const result = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) =>
-        openOrGetCompanySettlementForPeriod(client, {
-          operatingCompanyId: body.data.operating_company_id,
-          periodStart: body.data.period_start,
-          periodEnd: body.data.period_end,
-          actorUserId: user.uuid,
-        })
-      );
-
-      return reply.code(200).send(result);
+      try {
+        const result = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) =>
+          openOrGetCompanySettlementForPeriod(client, {
+            operatingCompanyId: body.data.operating_company_id,
+            periodStart: body.data.period_start,
+            periodEnd: body.data.period_end,
+            actorUserId: user.uuid,
+          })
+        );
+        return reply.code(200).send(result);
+      } catch (err) {
+        // R-200: the open-by-period path no longer creates headers or mints numbers.
+        if ((err as { code?: string }).code === "company_settlement_not_found_for_period") {
+          return reply.code(409).send({
+            error: "company_settlement_not_found_for_period",
+            message: "Company settlements are created with their driver settlement, under the same AlwaysTrack number.",
+          });
+        }
+        throw err;
+      }
     }
   );
 

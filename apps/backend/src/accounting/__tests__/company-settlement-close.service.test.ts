@@ -30,15 +30,20 @@ describe("closeCompanySettlementAlongsideDriverSettlement — 25-TASK #4", () =>
     ).rejects.toMatchObject({ code: "driver_settlement_not_found" });
   });
 
-  it("no existing company settlement for the exact period — creates one via the generator, links, closes it", async () => {
+  it("R-200: creates ONE company settlement for the driver settlement, numbered by the driver settlement (AlwaysTrack), never minted", async () => {
     const inserted: unknown[][] = [];
+    let minted = false;
     const client = makeClient({
+      "COALESCE(source_document_ref, display_id)": () => ({ rows: [{ n: "5805" }] }),
       "FROM driver_finance.driver_settlements": () => ({
-        rows: [{ period_start: "2026-08-01", period_end: "2026-08-07", status: "closed" }],
+        rows: [{ period_start: "2026-09-08", period_end: "2026-09-14", status: "closed" }],
       }),
       "FROM accounting.company_settlement_driver_settlements": () => ({ rows: [] }),
-      "FROM accounting.company_settlements\n": () => ({ rows: [] }), // find-by-period: none yet
-      "next_company_settlement_display_id": () => ({ rows: [{ display_id: "CS-2026-0001" }] }),
+      "AND display_id = $2 AND voided_at IS NULL": () => ({ rows: [] }),
+      "next_company_settlement_display_id": () => {
+        minted = true;
+        return { rows: [{ display_id: "CS-2026-0001" }] };
+      },
       "INSERT INTO accounting.company_settlements": (_sql, values) => {
         inserted.push(values!);
         return { rows: [{ id: "cs1" }] };
@@ -48,7 +53,7 @@ describe("closeCompanySettlementAlongsideDriverSettlement — 25-TASK #4", () =>
         rows: [{ status: "open", voided_at: null }],
       }),
       "UPDATE accounting.company_settlements": () => ({
-        rows: [{ id: "cs1", display_id: "CS-2026-0001", status: "closed" }],
+        rows: [{ id: "cs1", display_id: "5805", status: "closed" }],
       }),
     });
 
@@ -58,44 +63,52 @@ describe("closeCompanySettlementAlongsideDriverSettlement — 25-TASK #4", () =>
       actorUserId: ACTOR,
     });
 
-    expect(result).toEqual({
-      company_settlement_id: "cs1",
-      display_id: "CS-2026-0001",
-      status: "closed",
-      already_closed: false,
-    });
-    expect(inserted[0]).toEqual([OPCO, "CS-2026-0001", "2026-08-01", "2026-08-07", ACTOR]);
+    expect(minted).toBe(false);
+    expect(result).toEqual({ company_settlement_id: "cs1", display_id: "5805", status: "closed", already_closed: false });
+    expect(inserted[0]).toEqual([OPCO, "5805", "2026-09-08", "2026-09-14", ACTOR]);
   });
 
-  it("an existing OPEN company settlement for the exact period is reused, not duplicated", async () => {
-    let createCalled = false;
+  it("R-200: a header that already carries that AlwaysTrack number is reused (team tour), never duplicated", async () => {
+    let inserted = false;
     const client = makeClient({
+      "COALESCE(source_document_ref, display_id)": () => ({ rows: [{ n: "5805" }] }),
       "FROM driver_finance.driver_settlements": () => ({
-        rows: [{ period_start: "2026-08-01", period_end: "2026-08-07", status: "closed" }],
+        rows: [{ period_start: "2026-09-08", period_end: "2026-09-14", status: "closed" }],
       }),
       "FROM accounting.company_settlement_driver_settlements": () => ({ rows: [] }),
-      "FROM accounting.company_settlements\n": () => ({ rows: [{ id: "existing-cs" }] }),
-      "next_company_settlement_display_id": () => {
-        createCalled = true;
-        return { rows: [{ display_id: "CS-2026-9999" }] };
+      "AND display_id = $2 AND voided_at IS NULL": () => ({ rows: [{ id: "cs-existing" }] }),
+      "INSERT INTO accounting.company_settlements": () => {
+        inserted = true;
+        return { rows: [{ id: "cs-new" }] };
       },
       "INSERT INTO accounting.company_settlement_driver_settlements": () => ({ rows: [] }),
       "SELECT status, voided_at::text FROM accounting.company_settlements": () => ({
         rows: [{ status: "open", voided_at: null }],
       }),
       "UPDATE accounting.company_settlements": () => ({
-        rows: [{ id: "existing-cs", display_id: "CS-2026-0002", status: "closed" }],
+        rows: [{ id: "cs-existing", display_id: "5805", status: "closed" }],
       }),
     });
-
     const result = await closeCompanySettlementAlongsideDriverSettlement(client as never, {
       operatingCompanyId: OPCO,
       driverSettlementId: DS_ID,
       actorUserId: ACTOR,
     });
+    expect(inserted).toBe(false);
+    expect(result.company_settlement_id).toBe("cs-existing");
+  });
 
-    expect(createCalled).toBe(false);
-    expect(result.company_settlement_id).toBe("existing-cs");
+  it("R-200: a driver settlement with no number is refused — the app never invents one", async () => {
+    const client = makeClient({
+      "COALESCE(source_document_ref, display_id)": () => ({ rows: [{ n: null }] }),
+      "FROM driver_finance.driver_settlements": () => ({
+        rows: [{ period_start: "2026-09-08", period_end: "2026-09-14", status: "closed" }],
+      }),
+      "FROM accounting.company_settlement_driver_settlements": () => ({ rows: [] }),
+    });
+    await expect(
+      closeCompanySettlementAlongsideDriverSettlement(client as never, { operatingCompanyId: OPCO, driverSettlementId: DS_ID, actorUserId: ACTOR })
+    ).rejects.toMatchObject({ code: "driver_settlement_has_no_number" });
   });
 
   it("already linked (idempotent re-entry) reuses the junction, never re-creates or re-links", async () => {
@@ -107,7 +120,7 @@ describe("closeCompanySettlementAlongsideDriverSettlement — 25-TASK #4", () =>
       "FROM accounting.company_settlement_driver_settlements": () => ({
         rows: [{ company_settlement_id: "already-linked-cs" }],
       }),
-      "FROM accounting.company_settlements\n": () => {
+      "COALESCE(source_document_ref, display_id)": () => {
         findOrCreateTouched = true;
         return { rows: [] };
       },
