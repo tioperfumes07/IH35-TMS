@@ -13,6 +13,7 @@ import pg from "pg";
 import { appendCrudAudit } from "../../apps/backend/src/audit/crud-audit.js";
 import { closeSettlementPayRun } from "../../apps/backend/src/driver-finance/settlement-payrun-close.service.js";
 import { syncLoadStatusToBillingInClientTx } from "../../apps/backend/src/dispatch/load-billing-lifecycle.service.js";
+import { recomputeSettlementHeader } from "../../apps/backend/src/driver-finance/settlement-load-reassignment.service.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -57,6 +58,13 @@ try {
   const l1 = await ins(BILL_13588, "earnings", "Load 13588 — Loaded Miles 1,855.1 @ $0.45", "834.80");
   const l2 = await ins(BILL_13600, "earnings", "Load 13600 — Loaded Miles 1,486.5 @ $0.45", "668.93");
   const l3 = await ins(BILL_13600, "deadhead_pay", "Load 13600 — Empty Miles 497.2 @ $0.45", "223.74");
+
+  // 2b. the pay-run close reads the HEADER gross (settlement.gross_pay); roll the header up from the active lines with
+  //     the canonical rollup (aggregateSettlementTotals via recomputeSettlementHeader) — first run refused "net -5000c"
+  //     because the header still carried the $0 gross.
+  const hdr = await recomputeSettlementHeader(c as never, SETTLEMENT, USMCA);
+  const h = (await q(`SELECT gross_pay::text g, deductions_total::text d, net_pay::text n FROM driver_finance.driver_settlements WHERE id=$1`, [SETTLEMENT])).rows[0];
+  if (h.g !== "1727.47") throw new Error(`header gross ${h.g} after ${hdr.method} rollup, expected 1727.47`);
 
   // 3. post through the real pay-run close on this transaction
   const pay = await closeSettlementPayRun({ operatingCompanyId: USMCA, settlementId: SETTLEMENT } as never, { userId: OWNER, role: "Owner" } as never, { client: c as never });
