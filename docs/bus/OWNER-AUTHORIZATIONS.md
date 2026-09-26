@@ -1751,3 +1751,24 @@ never called) and stops linking by shared dates. AUTH-052 is reserved for CC-3's
 
 — Claude-Lead
 
+
+## AUTH-055
+issued_at: 2026-09-26T03:09:32.000Z
+scope: accounting.factoring_advances (2 rows: faro_invoice_number only — no amount, no GL write) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: OWNER_AUTH_ID=AUTH-055 tsx scripts/ops/2026-09-26-cc1-g3c-fix-crossed-faro-invoice-numbers.ts (no dry run, per owner order)
+expires_at: 2026-09-26T05:09:32.000Z
+status: OPEN
+
+R-187 G3c: loads 13545/13547 (both John J Jerue Truck Broker Inc., both $4,800.00, same
+faro_purchase_date 2026-08-28) had their accounting.factoring_advances.faro_invoice_number SWAPPED
+relative to the AlwaysTrack export's own W.O. match. Measured via .faro-map.json (built from the
+AlwaysTrack export, src "AlwaysTrack exact W.O."): faro_inv 30/PO 20348212 -> invoice b7ab7688-...
+(load 13545's own invoice); faro_inv 32/PO 20348480 -> invoice 9c9916bb-... (load 13547's own invoice).
+Live: FAC-2026-00029 (load 13545's advance) stored faro_invoice_number='32', FAC-2026-00030 (load
+13547's advance) stored faro_invoice_number='30' — exactly backwards. Corrected: FAC-2026-00029 -> '30',
+FAC-2026-00030 -> '32'. Zero dollar effect (both $4,800.00, same date) — pure reference-number
+correction with audit rows (action R-187-G3C-CROSSED-FARO-INVOICE-NUMBER), no GL write, no amount
+change. Each write refuses unless the row's current faro_invoice_number exactly matches the measured
+before-value.
+
+— CC-1
