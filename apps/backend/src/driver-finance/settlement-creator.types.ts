@@ -87,9 +87,10 @@ export type SettlementCreatorAdvanceLine = {
 export type SettlementCreatorDraft = {
   operating_company_id: string;
   /**
-   * R-186.1 — editable. P-NNNN = our pre-settlement display_id.
-   * Bare digits = AlwaysTrack → source_document_ref.
-   * Empty = mint next P-series on post.
+   * R-186.1 + owner 2026-09-26 — Creator creates NEW only.
+   * P-NNNN = our pre-settlement display_id (must not already exist).
+   * Bare digits = AlwaysTrack → source_document_ref (must not already exist).
+   * Empty = mint next P-series on post (never attach to driver's open).
    */
   settlement_no: string;
   driver_id: string;

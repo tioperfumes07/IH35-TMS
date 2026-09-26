@@ -3,7 +3,7 @@
  * ONE panel for BOTH Company + Driver AlwaysTrack settlements (USMCA only).
  * Live Post enabled (owner 2026-09-25). Preview still gates can_post on control totals.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { Button } from "../../components/Button";
@@ -17,9 +17,11 @@ import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { useAccountingItemsQuery } from "../../hooks/useAccountingItemsQuery";
 import { FuelStopLocationPicker } from "../../components/locations/FuelStopLocationPicker";
 import { formatFuelStopLocationLabel } from "../../lib/fuelStopLocationLabel";
+import { peekNextLoadNumber } from "../../api/dispatch";
 import {
   previewSettlementCreator,
   postSettlementCreator,
+  peekNextSettlementDisplayId,
   type SettlementCreatorDraft,
   type SettlementCreatorPreview,
   type SettlementCreatorFuelCard,
@@ -50,9 +52,9 @@ type MoneyDraft = {
   pay_kind?: "detention" | "layover" | "bonus" | "stop_pay" | "other";
 };
 
-function emptyLoad(): LoadDraft {
+function emptyLoad(loadNumber = ""): LoadDraft {
   return {
-    load_number: "",
+    load_number: loadNumber,
     customer_name: "",
     pickup_date: "",
     pickup_city: "",
@@ -72,6 +74,20 @@ function emptyLoad(): LoadDraft {
     not_yet_delivered: true,
   };
 }
+
+/** Next free numeric load # after every number already on the form (and the peeked base). */
+function nextSequentialLoadNumber(existing: LoadDraft[], peekBase: string): string {
+  const nums = existing
+    .map((l) => Number.parseInt(String(l.load_number).trim(), 10))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  const base = Number.parseInt(String(peekBase).trim(), 10);
+  const floor = Number.isFinite(base) && base > 0 ? base - 1 : 0;
+  const max = nums.length ? Math.max(...nums, floor) : floor;
+  return String(max + 1);
+}
+
+const editBtnClass =
+  "h-7 shrink-0 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#1F2A44] hover:bg-[#F7F8FA]";
 
 function emptyFuel(): FuelDraft {
   return {
@@ -193,6 +209,10 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
   const companyId = selectedCompanyId ?? "";
 
   const [settlementNo, setSettlementNo] = useState("");
+  const [settlementNoEditing, setSettlementNoEditing] = useState(false);
+  const [peekLoadBase, setPeekLoadBase] = useState<string>("");
+  const [loadNumberEditing, setLoadNumberEditing] = useState<boolean[]>([false]);
+  const [seqError, setSeqError] = useState<string | null>(null);
   const [driverId, setDriverId] = useState<string | null>(null);
   const [unitId, setUnitId] = useState<string | null>(null);
   const [trailerId, setTrailerId] = useState<string | null>(null);
@@ -217,6 +237,46 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
   const [error, setError] = useState<string | null>(null);
 
   const wrongEntity = Boolean(companyId && companyId !== USMCA);
+
+  // Owner 2026-09-26: auto next load # + next P-settlement on open. Locked until Edit.
+  useEffect(() => {
+    if (!open || !companyId || wrongEntity) return;
+    let cancelled = false;
+    setSeqError(null);
+    setSettlementNoEditing(false);
+    setLoadNumberEditing([false]);
+    void (async () => {
+      try {
+        const [loadPeek, settPeek] = await Promise.all([
+          peekNextLoadNumber(companyId),
+          peekNextSettlementDisplayId(companyId),
+        ]);
+        if (cancelled) return;
+        const nextLoad = loadPeek.next_number;
+        setPeekLoadBase(nextLoad);
+        setSettlementNo(settPeek.next_display_id);
+        setLoads([emptyLoad(nextLoad)]);
+        setLoadNumberEditing([false]);
+      } catch (err) {
+        if (cancelled) return;
+        const msg = err instanceof Error ? err.message : "Could not peek next load/settlement number";
+        setSeqError(msg);
+        setPeekLoadBase("");
+        setSettlementNo("");
+        setLoads([emptyLoad()]);
+        setLoadNumberEditing([false]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, companyId, wrongEntity]);
+
+  function addLoadRow() {
+    const nextNum = nextSequentialLoadNumber(loads, peekLoadBase || "0");
+    setLoads([...loads, emptyLoad(nextNum)]);
+    setLoadNumberEditing([...loadNumberEditing, false]);
+  }
 
   const itemsQuery = useAccountingItemsQuery({
     operatingCompanyId: companyId,
@@ -417,18 +477,42 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
           </p>
         ) : null}
         {error ? <p className="text-xs text-red-600">{error}</p> : null}
+        {seqError ? (
+          <p className="text-xs text-red-600" data-testid="sc-seq-error">
+            {seqError}
+          </p>
+        ) : null}
 
         {/* Shared header */}
         <Section title="Header">
           <div className={`${fieldGridClass} md:grid-cols-3`}>
             <Field label="Settlement No.">
-              <input
-                className={inputClass}
-                value={settlementNo}
-                onChange={(e) => setSettlementNo(e.target.value)}
-                placeholder="P-0004 or AlwaysTrack #"
-                data-testid="sc-settlement-no"
-              />
+              <div className="flex items-center gap-1">
+                <input
+                  className={inputClass}
+                  value={settlementNo}
+                  readOnly={!settlementNoEditing}
+                  onChange={(e) => setSettlementNo(e.target.value)}
+                  placeholder="Next P-NNNN"
+                  title={
+                    settlementNoEditing
+                      ? "Override — must be a free P-NNNN or new AlwaysTrack digits"
+                      : "Next free settlement number (auto). Edit to change."
+                  }
+                  data-testid="sc-settlement-no"
+                />
+                {!settlementNoEditing ? (
+                  <button
+                    type="button"
+                    className={editBtnClass}
+                    onClick={() => setSettlementNoEditing(true)}
+                    data-testid="sc-settlement-no-edit"
+                    title="Edit settlement number"
+                  >
+                    Edit
+                  </button>
+                ) : null}
+              </div>
             </Field>
             <Field label="Driver">
               <EntityPicker
@@ -486,20 +570,43 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               Company Settlement
             </h2>
 
-            <Section title="Loads" onAdd={() => setLoads([...loads, emptyLoad()])}>
+            <Section title="Loads" onAdd={addLoadRow}>
               {loads.map((load, idx) => (
                 <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
                   <Field label="Load No.">
-                    <input
-                      className={inputClass}
-                      value={load.load_number}
-                      onChange={(e) => {
-                        const next = [...loads];
-                        next[idx] = { ...load, load_number: e.target.value };
-                        setLoads(next);
-                      }}
-                      data-testid={`sc-load-number-${idx}`}
-                    />
+                    <div className="flex items-center gap-1">
+                      <input
+                        className={inputClass}
+                        value={load.load_number}
+                        readOnly={!loadNumberEditing[idx]}
+                        onChange={(e) => {
+                          const next = [...loads];
+                          next[idx] = { ...load, load_number: e.target.value };
+                          setLoads(next);
+                        }}
+                        title={
+                          loadNumberEditing[idx]
+                            ? "Override — must be a NEW free load number (not an existing load)"
+                            : "Next free load number (auto). Edit to change."
+                        }
+                        data-testid={`sc-load-number-${idx}`}
+                      />
+                      {!loadNumberEditing[idx] ? (
+                        <button
+                          type="button"
+                          className={editBtnClass}
+                          onClick={() => {
+                            const next = [...loadNumberEditing];
+                            next[idx] = true;
+                            setLoadNumberEditing(next);
+                          }}
+                          data-testid={`sc-load-number-edit-${idx}`}
+                          title="Edit load number"
+                        >
+                          Edit
+                        </button>
+                      ) : null}
+                    </div>
                   </Field>
                   <Field label="Customer">
                     <EntityPicker

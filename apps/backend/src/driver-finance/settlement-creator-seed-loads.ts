@@ -135,7 +135,14 @@ export async function ensureDispatchedLoadsForCreator(
         LIMIT 1`,
       [draft.operating_company_id, load.load_number.trim()],
     );
-    if (existing.rows[0]) continue;
+    if (existing.rows[0]) {
+      // Owner 2026-09-26: Creator creates NEW loads only — never attach a prior load by typing
+      // its number. Auto sequence + Edit override must land on a free number.
+      throw new SettlementCreatorSeedError(
+        "load_already_exists",
+        `Load ${load.load_number} already exists. Settlement Creator only books NEW load numbers — use the next sequence (or Edit to a free number).`,
+      );
+    }
     if (!seed) {
       throw new SettlementCreatorSeedError(
         "load_not_found",
