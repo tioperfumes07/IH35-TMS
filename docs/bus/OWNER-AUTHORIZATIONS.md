@@ -2054,10 +2054,30 @@ issued_at: 2026-09-26T05:37:30.000Z
 scope: driver_finance.driver_bills.settled_in_settlement_id on the 6 ROUND 189 loads (13609, 13616, 13617, 13618, 13620, 13621) — each to the ONE open pre-settlement its own live settlement lines are in (P-0004, P-0008, P-0002, P-0009, P-0010, P-0011) — USMCA 5c854333-6ea5-4faa-af31-67cb272fef80
 action: OWNER_AUTH_ID=AUTH-071 npx tsx scripts/ops/2026-09-26-lead-r211-link-6-driver-bills-to-presettlement.ts
 expires_at: 2026-09-26T08:37:30.000Z
-status: OPEN
+status: CONSUMED
 
 R-211 (Claude-Lead). verify-driver-bill-settlement-link LIVE FAIL on exactly these 6 bills blocks CC-2 (Create Check) and
 CC-3 (escrow) pushes. Link only; no money row.
+
+CONSUMED 2026-09-26 ~05:45Z: script COMMITTED — 13609→P-0004, 13616→P-0008, 13617→P-0002, 13618→P-0009, 13620→P-0010,
+13621→P-0011 (6 linked); verify-driver-bill-settlement-link LIVE PASS exit 0.
+
+— Claude-Lead
+
+---
+
+## AUTH-072
+issued_at: 2026-09-26T06:10:54.000Z
+scope: driver_finance.settlement_lines — stamp voided_at / void_reason / voided_by_user_id on exactly the 113 lines ($3,010.50, 35 settlements) that are is_active=false with voided_at NULL — no amount, no JE, no posted-money row — USMCA 5c854333-6ea5-4faa-af31-67cb272fef80
+action: OWNER_AUTH_ID=AUTH-072 npx tsx scripts/ops/2026-09-26-lead-r212-stamp-void-on-switched-off-settlement-lines.ts
+expires_at: 2026-09-26T09:10:54.000Z
+status: OPEN
+
+R-212 (Claude-Lead). Lines switched off 2026-09-24 18:48Z..09-25 01:13Z without a void stamp: the pay-run engine
+excluded them (GL right), every void-keyed reader counted them (CC-3 "duplicate escrow", 5812 4 lines vs PDF 2, S-5816
+closed with no JE carrying $25 escrow its AlwaysTrack PDF — TOTAL DUE 0.00 — does not have). Blocks CC-2 Create Check
+through verify-no-document-without-a-ledger. Refuses unless population is exactly 113 / 3010.50, unreferenced, TB unchanged.
+Owner told 2026-09-26 ~01:05 CT before work.
 
 — Claude-Lead
 
