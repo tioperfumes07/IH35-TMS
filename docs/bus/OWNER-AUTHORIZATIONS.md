@@ -1914,3 +1914,31 @@ Each row is its own transaction; a failure partway stops the loop without rollin
 reissued. Paste the live before/after JE rows for all 27 after running.
 
 — CC-1
+
+---
+
+## AUTH-060
+issued_at: 2026-09-26T04:55:12.000Z
+scope: expense_attribution.expense_load_links (29 new INSERT rows only — no UPDATE/DELETE on any other table) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA), the 29 expense_numbers listed in scripts/ops/2026-09-26-cc1-stop-the-line-backfill-expense-load-links.ts's EXPENSE_NUMBERS
+action: OWNER_AUTH_ID=AUTH-060 tsx scripts/ops/2026-09-26-cc1-stop-the-line-backfill-expense-load-links.ts (no dry run, per owner order)
+expires_at: 2026-09-26T06:55:12.000Z
+status: CONSUMED — see the CONSUMED note below
+
+STOP-THE-LINE (Lead): 29 expenses this seat created via raw ops scripts (2 from R-187 G1, 27 from
+R-185) never got an expense_attribution.expense_load_links row — those scripts INSERTed directly into
+accounting.expenses/expense_lines with load_id and expense_number already set on the header, but never
+wrote the link row the canonical create path (expenses.routes.ts, body.load_id branch) writes in the
+same transaction. verify-alwaystrack-parity arm D requires that row for every live non-fuel expense
+with a load_id — failing company-wide, blocking every seat's push.
+
+Root fix: mirrors the canonical writer's exact INSERT shape (expense_source='accounting',
+attribution_method='user_assigned', attribution_confidence='high'), deriving expense_seq from the
+header's ALREADY-ASSIGNED expense_number (no generateExpenseNumber() re-call, which would
+double-increment expense_attribution.expense_seq_per_load a second time for the same load). Companion
+fix in the same PR: both source scripts (2026-09-26-cc1-r187-g1-repost-with-item.ts,
+2026-09-26-cc1-r185-repost-27-driver-paid-expenses.ts) now write this link row in the same transaction
+as the expense insert, so a re-run or copy-pasted script cannot repeat the gap.
+
+— CC-1
+
+---
