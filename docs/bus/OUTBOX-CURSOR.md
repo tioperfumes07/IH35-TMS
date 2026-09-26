@@ -44,3 +44,6 @@ Shipping FE-only: half-page dual panel + entry + guard (no driver-finance BE dif
 - Artifacts: `docs/recon/AUGUST-2026-TRUE-RECON.md` + `.json` · builders `scripts/feed/feed-settlement-day.mts`, `build-august-true-recon.mjs`.
 - LIVE: 31 Aug tours · composition OK **13** · gaps **18** (missing legs) · GL Aug balanced $457,235.87 · 0 minted driver_settlements · span avg 7.7d / max 40d.
 - NEXT: feed missing tour legs until 31/31 composition OK — then September.
+
+## OUTBOX-CURSOR 2026-09-26 BANK-F209
+SHIPPED #22843 squash 8942623a99 · healthz git_sha=8942623a99 · Creator Post invoice+Faro wire LIVE API · Chrome Post still owner proof
