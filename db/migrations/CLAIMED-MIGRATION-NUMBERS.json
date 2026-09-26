@@ -1051,6 +1051,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-09-25",
       "purpose": "ROUND 154/154.1 owner-ordered QuickBooks-parity check engine schema: additive check fields on accounting.expenses; one bank-scoped banking.check_number_registry; nullable-until-owner-initializes banking.check_stock_settings; durable banking.check_print_batches and check_print_batch_items for number assignment, confirmation, spoiled/reprint audit; FORCE RLS, no DELETE grants, and no routing/account-number storage. No production fixture rows and no guessed first check number."
+    },
+    "202614380000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-26",
+      "purpose": "Lead, live finding: mdata.driver_samsara_accounts (202614350000) has no operating_company_id \u2014 walled only through driver_id. Adds operating_company_id uuid NOT NULL + FK org.companies(id), backfilled from mdata.drivers, a trigger that sets/re-derives it from driver_id on INSERT/UPDATE, and an opco-scoped FORCE RLS policy; removes the entity-isolation remediation_backlog entry."
     }
   },
   "202613590001": {
