@@ -2048,3 +2048,16 @@ bill into a real settlement_lines row on the load's own pre-settlement.
 — CC-1
 
 ---
+
+## AUTH-071
+issued_at: 2026-09-26T05:37:30.000Z
+scope: driver_finance.driver_bills.settled_in_settlement_id on the 6 ROUND 189 loads (13609, 13616, 13617, 13618, 13620, 13621) — each to the ONE open pre-settlement its own live settlement lines are in (P-0004, P-0008, P-0002, P-0009, P-0010, P-0011) — USMCA 5c854333-6ea5-4faa-af31-67cb272fef80
+action: OWNER_AUTH_ID=AUTH-071 npx tsx scripts/ops/2026-09-26-lead-r211-link-6-driver-bills-to-presettlement.ts
+expires_at: 2026-09-26T08:37:30.000Z
+status: OPEN
+
+R-211 (Claude-Lead). verify-driver-bill-settlement-link LIVE FAIL on exactly these 6 bills blocks CC-2 (Create Check) and
+CC-3 (escrow) pushes. Link only; no money row.
+
+— Claude-Lead
+
