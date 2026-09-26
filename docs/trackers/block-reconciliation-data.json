@@ -1,6 +1,6 @@
 {
  "date": "2026-09-26",
- "generated_at_iso": "2026-09-26T05:08:58.979Z",
+ "generated_at_iso": "2026-09-26T11:34:12.598Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13727,6 +13727,102 @@
  ],
  "merged_prs": [
   {
+   "number": 22873,
+   "title": "FINDING: N/A LANE: DOCS (AUTH-051 / AUTH-053 / AUTH-056 CONSUMED with live proof)",
+   "mergedAt": "2026-09-26T06:27:48Z",
+   "branch": "claude/auth-051-053-056-consumed"
+  },
+  {
+   "number": 22872,
+   "title": "FINDING: R-208 LANE: DOCS (AUTH-056 script passes the pay-run payment method used by every USMCA close)",
+   "mergedAt": "2026-09-26T06:24:13Z",
+   "branch": "claude/r208-payment-method"
+  },
+  {
+   "number": 22871,
+   "title": "FINDING: R-208 LANE: DOCS (AUTH-056 script rolls the 5812 header up before the pay-run close)",
+   "mergedAt": "2026-09-26T06:21:18Z",
+   "branch": "claude/r208-recompute-header"
+  },
+  {
+   "number": 22870,
+   "title": "FINDING: LEDGER-PATH LANE: FINANCIAL (verify-no-document-without-a-ledger checks each document's REAL ledger path; settlement lines are switched off only by voi",
+   "mergedAt": "2026-09-26T06:17:03Z",
+   "branch": "claude/no-document-without-ledger-real-paths"
+  },
+  {
+   "number": 22869,
+   "title": "Claude-1: FLAG -- AUTH-062 settlement lines dropped 6 loads off live Dispatch board",
+   "mergedAt": "2026-09-26T06:15:27Z",
+   "branch": "cc-1/flag-round189-live-board-regression-0652"
+  },
+  {
+   "number": 22868,
+   "title": "FINDING: HALF-VOID LANE: DOCS (AUTH-072 — R-212 stamp the void on 113 switched-off settlement lines)",
+   "mergedAt": "2026-09-26T06:13:26Z",
+   "branch": "claude/auth-072-r212-void-stamp"
+  },
+  {
+   "number": 22867,
+   "title": "Claude-1: NOW-CC-1 update -- R-211 fixed",
+   "mergedAt": "2026-09-26T06:02:09Z",
+   "branch": "cc-1/now-r211-fixed-0641"
+  },
+  {
+   "number": 22866,
+   "title": "Claude-1: R-211 root fix -- appendSettlementLineFromDriverBillIfMissing syncs settled_in_settlement_id",
+   "mergedAt": "2026-09-26T05:56:53Z",
+   "branch": "cc-1/round189-r211-driver-bill-settlement-sync-fix-0640"
+  },
+  {
+   "number": 22865,
+   "title": "FINDING: N/A LANE: DOCS (AUTH-071 — R-211 link the 6 ROUND 189 driver bills to their pre-settlements)",
+   "mergedAt": "2026-09-26T05:39:18Z",
+   "branch": "claude/auth-071-bill-settlement-link"
+  },
+  {
+   "number": 22864,
+   "title": "Claude-1: AUTH-062 CONSUMED -- ROUND 189 gates PASS, live proof",
+   "mergedAt": "2026-09-26T05:30:04Z",
+   "branch": "cc-1/auth-062-consumed-now-update-0531"
+  },
+  {
+   "number": 22863,
+   "title": "Claude-1: ROUND 189 mileage script fix -- handle open_settlement lock, under AUTH-062",
+   "mergedAt": "2026-09-26T05:27:25Z",
+   "branch": "cc-1/round189-mileage-script-lock-fix-0528"
+  },
+  {
+   "number": 22862,
+   "title": "Claude-1: AUTH-061 CONSUMED + AUTH-062 issued -- ROUND 189 mileage/settlement-line fix",
+   "mergedAt": "2026-09-26T05:22:18Z",
+   "branch": "cc-1/auth-061-consumed-auth-062-mileage-0521"
+  },
+  {
+   "number": 22861,
+   "title": "Claude-1: ROUND 189 follow-up -- link 13609/13617 to existing open pre-settlements",
+   "mergedAt": "2026-09-26T05:16:56Z",
+   "branch": "cc-1/round189-link-2-presettlements-0515"
+  },
+  {
+   "number": 22860,
+   "title": "Claude-1: AUTH-061 issued -- ROUND 189 step 4, book 6 missing loads (13609/13616/13617/13618/13620/13621)",
+   "mergedAt": "2026-09-26T05:12:51Z",
+   "branch": "cc-1/auth-061-round189-book-6-loads-0512"
+  },
+  {
+   "number": 22859,
+   "title": "FINDING: VOID-STAMP LANE: FINANCIAL (Settlement Creator Edit voids fuel through stampDocumentVoided)",
+   "mergedAt": "2026-09-26T05:13:09Z",
+   "branch": "claude/creator-fuel-void-stamp"
+  },
+  {
+   "number": 22858,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-26T05:09:29Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 22857,
    "title": "Cursor- docs BANK-F210 Creator Edit void+repost live",
    "mergedAt": "2026-09-26T05:08:15Z",
@@ -17229,102 +17325,6 @@
    "title": "Claude-1-LAND THE CURSOR SEAT (LEAD RULING — ROUND 48, 2026-09-22)",
    "mergedAt": "2026-09-22T20:15:13Z",
    "branch": "cc-1/land-cursor-seat-lane"
-  },
-  {
-   "number": 22257,
-   "title": "LEAD RULING: Cursor gate-wiring lane cross (fail-closed dedupe guard lands atomically)",
-   "mergedAt": "2026-09-22T20:14:51Z",
-   "branch": "claude/ruling-cursor-gate-lane-cross"
-  },
-  {
-   "number": 22256,
-   "title": "Claude-3: FUEL-DEDUPE-05 -- URGENT correction, restore wrongly-archived 13537 fuel row + GL",
-   "mergedAt": "2026-09-22T20:11:26Z",
-   "branch": "claude-3-urgent-13537-restore-correction"
-  },
-  {
-   "number": 22255,
-   "title": "CC-2-Receipt application: 7 of 7 debtor receipts applied live; 681-pending report",
-   "mergedAt": "2026-09-22T20:12:42Z",
-   "branch": "cc2-round44-receipt-application-live-and-pending-report"
-  },
-  {
-   "number": 22254,
-   "title": "Claude-3: docs(bus) report -- Round 43 item 3 of 4, 5774's third defect class named for the owner",
-   "mergedAt": "2026-09-22T19:47:46Z",
-   "branch": "claude-3-5774-third-defect-report"
-  },
-  {
-   "number": 22253,
-   "title": "CC-2-Relay 43->17 re-measured, GL 6400 residual reconciled, receipt-application path scoped",
-   "mergedAt": "2026-09-22T19:51:27Z",
-   "branch": "cc2-round42-relay-double-post-and-receipt-app-scope"
-  },
-  {
-   "number": 22252,
-   "title": "Claude-3: FUEL-DEDUPE-03/04 -- Round 43 follow-up, 8 more Relay dup fuel rows archived + GL reversed, 9 filed",
-   "mergedAt": "2026-09-22T19:47:06Z",
-   "branch": "claude-3-round43-followup-relay-loose-dedupe"
-  },
-  {
-   "number": 22251,
-   "title": "Claude-3: docs(audit+bus) report -- Round 43 fuel dedupe partial close, GL reversed, baseline re-measurement filed",
-   "mergedAt": "2026-09-22T19:23:37Z",
-   "branch": "claude-3-guard-workorders-round43-report"
-  },
-  {
-   "number": 22250,
-   "title": "Claude-1: docs(bus) -- fake SYSTEM_USER_ID blocks EDI-204/CSV feed-parity wiring",
-   "mergedAt": "2026-09-22T19:16:33Z",
-   "branch": "cc-1/outbox-system-user-id-fk-finding"
-  },
-  {
-   "number": 22249,
-   "title": "Claude-1-FINDING: FEED-PARITY-02 — permanent CI regression test for the zero-dollar dispatch gate",
-   "mergedAt": "2026-09-22T19:10:00Z",
-   "branch": "cc-1/feed-parity-zero-dollar-gate-db-test"
-  },
-  {
-   "number": 22248,
-   "title": "Claude-1-FINDING: ACCT-F2026092210 — views.live_loads: the permanent, structural fix (ROUND 36.1)",
-   "mergedAt": "2026-09-22T19:09:02Z",
-   "branch": "cc-1/round36-1-views-live-loads-v3"
-  },
-  {
-   "number": 22247,
-   "title": "Claude-1-FINDING: FEED-PARITY-02 — load may not reach 'dispatched' with $0.00 charge lines",
-   "mergedAt": "2026-09-22T19:03:33Z",
-   "branch": "cc-1/feed-parity-zero-dollar-dispatch-gate"
-  },
-  {
-   "number": 22246,
-   "title": "CC-2-18-load Faro batch: 1 resolved live, 1 rate flag, 0/18 delivery evidence",
-   "mergedAt": "2026-09-22T19:02:48Z",
-   "branch": "cc2-round41-18-loads-evidence-finding"
-  },
-  {
-   "number": 22245,
-   "title": "Claude-1: docs(bus) report -- alwaystrack-parity worsened-arm investigation, P0 gate status",
-   "mergedAt": "2026-09-22T18:48:20Z",
-   "branch": "cc-1/outbox-alwaystrack-evidence-and-p0-status"
-  },
-  {
-   "number": 22244,
-   "title": "Claude-3: FEED-PARITY-01 — one shared load-create path, two-case gate semantics (LANE_CROSS)",
-   "mergedAt": "2026-09-22T18:44:22Z",
-   "branch": "claude-3-feed-parity-shared-create-path"
-  },
-  {
-   "number": 22243,
-   "title": "Claude-3: docs(bus) report -- Task 37 IFTA first filing closed, root causes + hypothesis correction",
-   "mergedAt": "2026-09-22T18:24:22Z",
-   "branch": "claude-3-outbox-task37-report"
-  },
-  {
-   "number": 22242,
-   "title": "Claude-3: Task 37 — first real IFTA filing (Q3-2026), $0-tax root cause + miles-source correction",
-   "mergedAt": "2026-09-22T18:20:46Z",
-   "branch": "claude-3-ifta-first-filing-task37"
   }
  ],
  "merged_pr_total": 3000,
