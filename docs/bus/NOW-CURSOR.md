@@ -1,13 +1,13 @@
-# NOW-CURSOR — 2026-09-26 (Creator Edit = void + repost)
+# NOW-CURSOR — 2026-09-26 (Creator vertical COMPLETE for pending slices)
 ## CURRENT
-Branch: `cursor/creator-edit-void-repost-c89b` — ROUND 180 §14.
+**SHIPPED:**
+- #22843 BANK-F209 invoice mint + Faro on Post (ancestor of tip)
+- #22852 BANK-F210 Edit = void and repost · squash `6118640928`
+- Live healthz includes F210 (`ce50b50…` or newer)
 
-## SHIPPED
-- Creator AT numbers #22835 · invoice+Faro Post #22843 (live ancestor of tip)
+## PENDING (owner Chrome only — no seat fixtures)
+1. Settlements `?creator=1` Post delivered faro_usmca → invoice sent + Faro submitted
+2. Optional: Post same AT # again → confirm Edit void+repost
 
-## THIS PR
-Edit = void + repost: `edit_void_repost` voids prior Creator settlement + companions (existing
-engines) then creates NEW row with same document number. FE confirms on `settlement_exists`.
-
-## NEXT after merge
-Owner Chrome: Post → confirm Edit void/repost on an existing AT # (or first live Post if none yet)
+## COORD
+USMCA only · Never POST Book Load · No QBO write-back
