@@ -1,24 +1,21 @@
-# Item e: 4 rows being fixed via PDF; G1 DONE — CC-1 — 2026-09-26 02:35Z.
-Prior content archived: `docs/bus/archive/NOW-CC-1-2026-09-26-05.md` (WORM, full detail).
+# Item e CLOSED; G1 DONE — CC-1 — 2026-09-26 02:50Z.
+Prior content archived: `docs/bus/archive/NOW-CC-1-2026-09-26-06.md` (WORM, full detail in earlier archives too).
 
-CC-1 | R-187 G1 DONE (AUTH-049) | item e: 8/12 correct in GL as-is (post nothing), 4/12 being
-corrected to their PDF's real settlement under a new AUTH | G3a escalated (cross-customer Faro
-misapplication, FAC-2026-00009/PMT-2026-00003 on the wrong invoice — see archive for detail).
+CC-1 | R-187 G1 DONE (AUTH-049) | item e CLOSED (AUTH-054): 8/12 correct as-is, 3/12 relinked to their
+PDF-matched settlement, 1/12 confirmed already correct | G3a still escalated (cross-customer Faro
+misapplication — see archive).
 
-G1: reposted with item_id (catalogs.items "Driver Reimbursement-Company Vehicle Fuel" -> 5000, per
-Lead ruling). Both JEs live/balanced/verified. DONE.
-
-Item e ruling (Lead): the 8 advances whose own amount already sits as a 1245 credit in their
-settlement JE are correct — post nothing. The 4 that don't reconcile (CA-2026-0005, CA-2026-0008,
-CA-2026-0009, CA-2026-TIE-5807) get their `recovered_in_settlement_id`/status corrected to match the
-signed PDF, under a new AUTH, no GL write unless the PDF proves a missing recovery. In progress —
-searching each PDF for the exact advance amount.
+Item e, per-row PDF verification (AUTH-054, CONSUMED): CA-2026-0005 relinked 5787->5775 (exact PDF
+match, "Load 13516 ... CASH ADVANCE ... -148.00"). CA-2026-0008/0009 corrected to status='reversed',
+recovered_in_settlement_id NULL (no PDF anywhere carries either amount; both never disbursed).
+CA-2026-TIE-5807 left as-is (S-5807's PDF genuinely carries a $280.00 load-13587 advance;
+78.01+167.87+34.12=280.00 exactly — a real amount-split finding, flagged, not fixed here). No GL write
+on any of the 12. Keeping this file terse per the 4KB cap (Lead's live order this session) — details in
+the WORM archive chain.
 
 ## Still open
-Item e's 4-row correction (in progress). G3a (needs Lead/owner call on unwind+reattach across two
-customers). ROUND 202 items c/d + STEP 3 (blocked behind c/d). G3b, G3c, G3e, G4 escrow remainder
-(8/10, 8/12, 8/13, 8/14). R-185 steps 2-6 (repost 27-row driver-paid list via catalogs.items mapping,
-same pattern as G1 — check each row's own item, don't assume 5000).
+G3a (needs Lead/owner call on unwind+reattach across two customers, FAC-2026-00009/PMT-2026-00003).
+ROUND 202 items c/d + STEP 3 (blocked behind c/d). G3b, G3c, G3e, G4 escrow remainder (8/10, 8/12,
+8/13, 8/14). R-185 steps 2-6 (repost 27-row driver-paid list via catalogs.items mapping, G1's pattern).
 
-CC-1 | 02:35Z | trimmed for the 4KB bus-file cap per Lead's order (was 9,269 bytes) — full detail in
-the WORM archive above. Continuing item e's PDF-verified per-row correction.
+CC-1 | 02:50Z | item e closed clean, no GL write, PDF-proved. Continuing to G3b now.
