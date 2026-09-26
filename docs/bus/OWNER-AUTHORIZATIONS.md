@@ -1646,3 +1646,18 @@ rate_cents=1000, unit_of_measure='each', same 5000 debit / 2175-00-NNN credit as
 originals. Idempotent (refuses to double-create if a matching memo already exists on the load).
 
 — CC-1
+
+## AUTH-050
+issued_at: 2026-09-26T02:17:05.000Z
+scope: mdata.loads.mileage_source ONLY, where NULL, on the 40 USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) loads whose miles were filled under AUTH-045 (R-201) from their signed AlwaysTrack Driver Settlement PDFs — value 'History'
+action: OWNER_AUTH_ID=AUTH-050 npx tsx scripts/ops/2026-09-26-lead-r201b-stamp-mileage-source.ts
+expires_at: 2026-09-26T04:17:05.000Z
+status: OPEN
+
+R-201b (Claude-Lead). My R-201 filled miles_practical/miles_deadhead but did not stamp mileage_source, so
+verify-mileage-g1-g5-live G4 is red on 40 loads and blocks every push (reported by CC-3). 'History' is the value all 85
+other fed loads carry (same AlwaysTrack source; CHECK allows History/Manual/Routing engine/Operator entered). Only NULL
+mileage_source on the R-201 plan loads is written; no money row is touched. (Renumbered from 049: CC-1 took 049 first.)
+
+— Claude-Lead
+
