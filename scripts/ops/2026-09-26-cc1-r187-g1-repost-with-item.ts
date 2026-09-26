@@ -124,6 +124,20 @@ async function main() {
         );
         const expenseId = inserted.rows[0]!.id;
 
+        // AUTH-060 STOP-THE-LINE fix: mirror the canonical create path's expense_load_links write
+        // (expenses.routes.ts, body.load_id branch) in the SAME transaction as the expense insert --
+        // omitting it is what broke verify-alwaystrack-parity arm D for this script's first run.
+        await client.query(
+          `
+            INSERT INTO expense_attribution.expense_load_links (
+              operating_company_id, expense_id, expense_source, load_id, load_number,
+              expense_seq, expense_number, attribution_method, attribution_confidence,
+              attribution_reason, attributed_by_user_id
+            ) VALUES ($1,$2,'accounting',$3,$4,$5,$6,'user_assigned','high',$7,$8)
+          `,
+          [USMCA_ID, expenseId, loadId, numbering.loadNumber, numbering.seq, numbering.number, "R-187 G1 repost: item mapping fix, load-attributed expense", SYSTEM_ACTOR_USER_ID]
+        );
+
         // expense_lines_item_qty_rate_amount_check: item_id/quantity/rate_cents/unit_of_measure ALL
         // set (the branch AUTH-046's original attempt missed), quantity>0, round(qty*rate)=amount.
         await client.query(
