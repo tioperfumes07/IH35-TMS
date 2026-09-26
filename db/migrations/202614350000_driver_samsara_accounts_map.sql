@@ -70,8 +70,10 @@ BEGIN
   -- 4. Grants
   -- ih35_app: read (Samsara resolution paths run as app)
   GRANT SELECT ON mdata.driver_samsara_accounts TO ih35_app;
-  -- ih35_ci_readonly: read (guards)
-  GRANT SELECT ON mdata.driver_samsara_accounts TO ih35_ci_readonly;
+  -- ih35_ci_readonly: read (guards). Guarded: the role exists in prod but not in every CI/verify database.
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ih35_ci_readonly') THEN
+    GRANT SELECT ON mdata.driver_samsara_accounts TO ih35_ci_readonly;
+  END IF;
   -- neondb_owner: full (owner)
   -- (already has by default)
 
