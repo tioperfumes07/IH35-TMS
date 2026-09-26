@@ -1056,6 +1056,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-09-26",
       "purpose": "Lead, live finding: mdata.driver_samsara_accounts (202614350000) has no operating_company_id \u2014 walled only through driver_id. Adds operating_company_id uuid NOT NULL + FK org.companies(id), backfilled from mdata.drivers, a trigger that sets/re-derives it from driver_id on INSERT/UPDATE, and an opco-scoped FORCE RLS policy; removes the entity-isolation remediation_backlog entry."
+    },
+    "202614410000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-26",
+      "purpose": "Lead, live blocker: uniq_settlement_lines_source_driver_bill_id_line_type (source_driver_bill_id, line_type) WHERE source_driver_bill_id IS NOT NULL ignores voided_at, so a voided settlement line blocks its own reissue (void-never-delete cannot be honored; blocked R-206 settlement 5792). Recreate it WHERE source_driver_bill_id IS NOT NULL AND voided_at IS NULL."
     }
   },
   "202613590001": {
