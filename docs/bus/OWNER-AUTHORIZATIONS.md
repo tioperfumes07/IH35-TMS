@@ -1466,7 +1466,17 @@ issued_at: 2026-09-26T01:16:17.000Z
 scope: accounting.expenses (2 new rows, load-attributed, $10.00 each) + their catalogs.accounts credit legs (existing 2175-00-NNN driver reimbursement leaves, created under AUTH-044) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: OWNER_AUTH_ID=AUTH-046 tsx scripts/ops/2026-09-25-cc1-round202-items-ab-honda-gas.ts (no dry run, per owner order)
 expires_at: 2026-09-26T03:16:17.000Z
-status: OPEN
+status: CONSUMED (items a/b only — see items c/d/e below, not run under this AUTH)
+
+CONSUMED 2026-09-26T01:19Z — items a/b live rows (first attempt rolled back atomically on
+expense_lines_item_qty_rate_amount_check, fixed forward PR #22791, zero rows written until the fix):
+  a) accounting.expenses 0db68e11-b09a-4254-aff8-815835ca47fc, expense_number 13582-4, JE
+     2786bcc5-3249-47b5-ada2-ed967cf8e42d: Dr 5000 Fuel & Diesel $10.00 / Cr 2175-00-004
+     "Jorge Luis Infante Corona — Driver Reimbursements" $10.00.
+  b) accounting.expenses 2e63d46c-e47f-4457-9514-5d0e97df1008, expense_number 13597-4, JE
+     1a94c2d1-532f-4336-8be0-1183c0daad42: Dr 5000 Fuel & Diesel $10.00 / Cr 2175-00-005
+     "Neftali Coronado Urbano — Driver Reimbursements" $10.00.
+Both JEs balanced, posted, verified live against journal_entry_postings directly.
 
 ROUND 202 (Claude-Lead) STEP 2, items a) and b) ONLY (c/d/e below — findings, not run under this AUTH;
 see the "items c/d/e" note under this entry):
