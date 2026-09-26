@@ -10,6 +10,31 @@ import type { Queryable } from "./settlement-source-document-ref.service.js";
  *
  * periodDate kept for call-site compatibility; P-series is opco-scoped, not date-scoped.
  */
+function nextPSeriesSql(): string {
+  return `
+    SELECT ('P-' || lpad((COALESCE(MAX(substring(display_id from '^P-([0-9]+)$')::int), 0) + 1)::text, 4, '0')) AS next
+      FROM driver_finance.driver_settlements
+     WHERE operating_company_id = $1::uuid
+       AND display_id ~ '^P-[0-9]+$'
+  `;
+}
+
+/**
+ * Pure peek — next P-NNNN Creator would mint. Does not lock or insert.
+ * Settlement Creator shows this as the locked default; Edit unlocks override.
+ */
+export async function peekNextSettlementDisplayId(
+  client: Queryable,
+  operatingCompanyId: string,
+): Promise<string> {
+  const res = await client.query<{ next: string }>(nextPSeriesSql(), [operatingCompanyId]);
+  const id = res.rows[0]?.next;
+  if (typeof id !== "string" || !/^P-\d{4,}$/.test(id)) {
+    throw new Error("Settlement number peek failed: expected P-NNNN");
+  }
+  return id;
+}
+
 export async function allocateSettlementDisplayId(
   client: Queryable,
   operatingCompanyId: string,
@@ -19,15 +44,7 @@ export async function allocateSettlementDisplayId(
   await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [
     `settlement-p-series:${operatingCompanyId}`,
   ]);
-  const res = await client.query<{ next: string }>(
-    `
-      SELECT ('P-' || lpad((COALESCE(MAX(substring(display_id from '^P-([0-9]+)$')::int), 0) + 1)::text, 4, '0')) AS next
-        FROM driver_finance.driver_settlements
-       WHERE operating_company_id = $1::uuid
-         AND display_id ~ '^P-[0-9]+$'
-    `,
-    [operatingCompanyId],
-  );
+  const res = await client.query<{ next: string }>(nextPSeriesSql(), [operatingCompanyId]);
   const id = res.rows[0]?.next;
   if (typeof id !== "string" || !/^P-\d{4,}$/.test(id)) {
     throw new Error("Settlement number allocation failed: expected P-NNNN");

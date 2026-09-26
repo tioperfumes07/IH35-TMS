@@ -118,3 +118,10 @@ export async function postSettlementCreator(draft: SettlementCreatorDraft) {
     body: JSON.stringify(draft),
   });
 }
+
+/** Pure peek — next P-NNNN Creator will mint. Never writes. */
+export function peekNextSettlementDisplayId(operatingCompanyId: string) {
+  return apiRequest<{ next_display_id: string }>(
+    `/api/v1/driver-finance/settlement-creator/next-settlement-peek?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+  );
+}

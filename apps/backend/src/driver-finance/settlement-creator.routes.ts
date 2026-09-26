@@ -16,6 +16,7 @@ import {
   ensureDispatchedLoadsForCreator,
   SettlementCreatorSeedError,
 } from "./settlement-creator-seed-loads.js";
+import { peekNextSettlementDisplayId } from "./settlement-display-id.js";
 import type { SettlementCreatorDraft } from "./settlement-creator.types.js";
 
 const AUTHORITY_ROLES = new Set(["Owner", "Administrator", "Accountant"]);
@@ -129,6 +130,34 @@ function currentUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerSettlementCreatorRoutes(app: FastifyInstance): Promise<void> {
+  // Owner 2026-09-26 — Creator locks Settlement No. to the next free P-NNNN (peek only; mint on Post).
+  app.get(
+    "/api/v1/driver-finance/settlement-creator/next-settlement-peek",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentUser(req, reply);
+      if (!user) return;
+      if (!AUTHORITY_ROLES.has(user.role)) {
+        return reply.code(403).send({ error: "forbidden", message: "Owner/Administrator/Accountant only" });
+      }
+      const query = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+      if (!query.success) {
+        return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+      }
+      if (query.data.operating_company_id !== USMCA) {
+        return reply.code(400).send({ error: "usmca_only" });
+      }
+      await assertCompanyMembership(user.uuid, query.data.operating_company_id);
+      const next = await withCurrentUser(user.uuid, async (client) => {
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+          query.data.operating_company_id,
+        ]);
+        return peekNextSettlementDisplayId(client, query.data.operating_company_id);
+      });
+      return reply.code(200).send({ next_display_id: next });
+    },
+  );
+
   app.post("/api/v1/driver-finance/settlement-creator/preview", WRITE_RL, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;

@@ -89,6 +89,18 @@ function runChecks() {
   assert(/Drv reimb Cr 2175|2175/.test(service),
     "Service preview must project Drv reimbursements to Cr 2175", failures);
 
+  // Owner 2026-09-26 — Creator creates NEW only: auto next load/settlement sequence, Edit unlock.
+  assert(/peekNextLoadNumber/.test(drawer) && /peekNextSettlementDisplayId/.test(drawer),
+    "Drawer must peek next load # + next P-settlement on open", failures);
+  assert(/sc-load-number-edit|sc-settlement-no-edit/.test(drawer) && /readOnly=\{!/.test(drawer),
+    "Load No. and Settlement No. must be read-only until Edit", failures);
+  assert(/nextSequentialLoadNumber|addLoadRow/.test(drawer),
+    "Add Load must continue the numeric sequence automatically", failures);
+  assert(/load_already_exists/.test(fs.readFileSync(path.join(ROOT, "apps/backend/src/driver-finance/settlement-creator-seed-loads.ts"), "utf8")),
+    "Seed path must refuse existing load numbers (Creator books NEW only)", failures);
+  assert(/never attach to driver's existing open|always mint next P-series/.test(service),
+    "Post must mint a NEW P-settlement (never attach empty→driver open)", failures);
+
   return failures;
 }
 
