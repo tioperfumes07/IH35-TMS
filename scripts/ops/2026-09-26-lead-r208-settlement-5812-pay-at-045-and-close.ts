@@ -21,6 +21,9 @@ const OWNER = "e4117991-d2c0-406d-8cda-74e98d95bccd";
 const SETTLEMENT = "e45eb50a-f64b-4b7f-a999-5e61e6af22d5";
 const BILL_13588 = "289af2c2-e759-499b-bbb2-e32d6f0be7c4";
 const BILL_13600 = "c8e643f0-7ecc-4fb7-a89a-00f3f5e7630a";
+// The payment method every USMCA pay-run close used (139 closes in 7 days, incl. Luis's own 5779 and 5795; audit
+// driver_finance.settlement.payrun_closed). Its GL account is asserted below (net must land on 2170).
+const PAYMENT_METHOD = "81f95ee0-fb05-4b73-a0b6-867e02ed2117";
 const auth = process.env.OWNER_AUTH_ID;
 if (!auth) { console.error("OWNER_AUTH_ID required"); process.exit(1); }
 execFileSync("node", [path.join(ROOT, "scripts/verify-owner-authorization.mjs"), auth], { stdio: "inherit" });
@@ -67,7 +70,7 @@ try {
   if (h.g !== "1727.47") throw new Error(`header gross ${h.g} after ${hdr.method} rollup, expected 1727.47`);
 
   // 3. post through the real pay-run close on this transaction
-  const pay = await closeSettlementPayRun({ operatingCompanyId: USMCA, settlementId: SETTLEMENT } as never, { userId: OWNER, role: "Owner" } as never, { client: c as never });
+  const pay = await closeSettlementPayRun({ operatingCompanyId: USMCA, settlementId: SETTLEMENT, paymentMethodId: PAYMENT_METHOD } as never, { userId: OWNER, role: "Owner" } as never, { client: c as never });
 
   // 4. read back the GL for 5812
   const gl = (await q(`SELECT a.account_number n, SUM(CASE WHEN p.debit_or_credit='debit' THEN p.amount_cents ELSE -p.amount_cents END)::bigint v
