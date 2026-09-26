@@ -1,26 +1,19 @@
-# G3b DONE (report-only); item e CLOSED; G1 DONE — CC-1 — 2026-09-26 03:01Z.
-Prior content archived: `docs/bus/archive/NOW-CC-1-2026-09-26-07.md` (WORM); earlier detail in the
-archive chain (item e, G1, G3a).
+# G3c DONE (AUTH-055); item e/G1/G3b done — CC-1 — 2026-09-26 03:15Z.
+Prior content archived: `docs/bus/archive/NOW-CC-1-2026-09-26-08.md` (WORM); full earlier detail in the
+archive chain (item e, G1, G3a, G3b).
 
-CC-1 | R-187 G3b | DONE | no AUTH (report-only, no invoice changed) | all 4 TMS invoice amounts proved
-correct against the company settlement's own Customer Charges Line Haul; every variance is on Faro's
-side, not ours.
+CC-1 | R-187 G3c | DONE | AUTH-055 | loads 13545/13547's crossed faro_invoice_number swapped and
+verified live | proceeding to G3e per Lead's order (no standing by).
 
-- 13570: TMS $5,900.00 = settlement 5801's Line Haul for XPR LOGISTICS LLC exactly. Faro's $6,115.00
-  (inv 52) is Faro's own overstatement.
-- 13587: TMS $4,000.00 = settlement 5807's Line Haul for Key Global Logistics exactly. Faro's $4,120.00
-  (inv 70) overstated.
-- 13589: TMS $4,120.00 = settlement 5802's Line Haul for Kirsch Transportation Services INC exactly.
-  Faro's $4,150.00 (inv 69) overstated.
-- 13611: NOT the wrong load — PO 1013707 is an exact W.O. match to 13611 (faro-map.json), and the two
-  other same-week $3,700 Refrigerx purchases are independently, cleanly mapped elsewhere (13576/1013406,
-  13605/1013634, zero issues) — no load is missing a match. TMS $3,700.00 = settlement 5815's Line Haul
-  for Refrigerx exactly. Faro's $3,200.00 (inv 91) is short $500 — Faro's own underpurchase.
-No document (rate con or company settlement) supports changing any of the 4 invoice amounts — none
-touched.
+G3c: FAC-2026-00029 (load 13545) and FAC-2026-00030 (load 13547) — both $4,800.00, same
+faro_purchase_date — had faro_invoice_number swapped relative to the AlwaysTrack export's own W.O.
+match (.faro-map.json, src "AlwaysTrack exact W.O."). Corrected: 00029 '32'->'30', 00030 '30'->'32'.
+Zero dollar effect. Script hit uq_factoring_advances_faro_invoice_number twice (non-deferred unique
+index needs a 3-step staged swap through a temp placeholder) before landing clean; both fixed forward,
+confirmed live.
 
 ## Still open
-G3a (Lead/owner call on unwind+reattach across two customers). ROUND 202 c/d + STEP 3. G3c, G3e, G4
-escrow remainder (8/10, 8/12, 8/13, 8/14). R-185 steps 2-6 (repost 27-row list via catalogs.items).
+G3a (Lead/owner call on unwind+reattach across two customers). ROUND 202 c/d + STEP 3. G3e, G4 escrow
+remainder (8/10, 8/12, 8/13, 8/14). R-185 steps 2-6 (repost 27-row list via catalogs.items).
 
-CC-1 | 03:01Z | G3b closed clean, zero writes. Continuing to G3c now.
+CC-1 | 03:15Z | G3c closed clean, zero GL/amount change. Continuing to G3e now, no pause.
