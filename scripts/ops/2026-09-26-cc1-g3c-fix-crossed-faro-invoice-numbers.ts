@@ -52,18 +52,31 @@ async function main() {
         { id: "e9e676d0-3b22-4865-b3b8-f4cb4efb1b18", display_id: "FAC-2026-00030", load: "13547", before: "30", after: "32" },
       ];
 
+      // Verify both before-states first (fail loud before touching anything).
       for (const row of rows) {
-        const before = await client.query<{ faro_invoice_number: string | null; invoice_total_cents: string }>(
-          `SELECT faro_invoice_number, invoice_total_cents::text FROM accounting.factoring_advances WHERE id=$1::uuid AND operating_company_id=$2::uuid`,
+        const before = await client.query<{ faro_invoice_number: string | null }>(
+          `SELECT faro_invoice_number FROM accounting.factoring_advances WHERE id=$1::uuid AND operating_company_id=$2::uuid`,
           [row.id, USMCA_ID]
         );
         if (!before.rows[0]) throw new Error(`STOP: ${row.id} not found`);
         if (before.rows[0].faro_invoice_number !== row.before) {
           throw new Error(`STOP: ${row.display_id} faro_invoice_number is '${before.rows[0].faro_invoice_number}', expected '${row.before}'`);
         }
+      }
+
+      // uq_factoring_advances_faro_invoice_number blocks a direct simultaneous swap (row A's target
+      // value is row B's current value) -- stage row A through a temporary placeholder first.
+      const TEMP_PLACEHOLDER = "TEMP-G3C-SWAP-IN-PROGRESS";
+      await client.query(
+        `UPDATE accounting.factoring_advances SET faro_invoice_number=$2 WHERE id=$1::uuid AND operating_company_id=$3::uuid AND faro_invoice_number=$4`,
+        [rows[0]!.id, TEMP_PLACEHOLDER, USMCA_ID, rows[0]!.before]
+      );
+
+      for (const row of rows) {
+        const setFrom = row === rows[0] ? TEMP_PLACEHOLDER : row.before;
         const upd = await client.query(
           `UPDATE accounting.factoring_advances SET faro_invoice_number=$2 WHERE id=$1::uuid AND operating_company_id=$3::uuid AND faro_invoice_number=$4`,
-          [row.id, row.after, USMCA_ID, row.before]
+          [row.id, row.after, USMCA_ID, setFrom]
         );
         if (upd.rowCount !== 1) throw new Error(`STOP: ${row.display_id} UPDATE affected ${upd.rowCount} rows`);
         await appendCrudAudit(
