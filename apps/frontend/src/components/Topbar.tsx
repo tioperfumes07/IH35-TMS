@@ -272,7 +272,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
                 {(
                   [
                     ["— Drivers —", ""],
-                    [t("topbar.create_settlement_creator", "Settlement Creator"), "/driver-finance/settlement-creator"],
+                    [t("topbar.create_settlement_creator", "Settlement Creator"), "/driver-finance/settlements?creator=1"],
                     ["— Accounting —", ""],
                     [t("topbar.create_customer", "Customer"), "/customers?create=1"],
                     [t("topbar.create_invoice", "Invoice"), "/accounting/invoices?create=1"],

@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { ConfirmDiscardDialog } from "../dialogs/ConfirmDiscardDialog";
-import { PARITY_DRAWER_WIDTH, PARITY_DRAWER_WIDTH_WIDE } from "./sizing";
+import { PARITY_DRAWER_WIDTH, PARITY_DRAWER_WIDTH_WIDE, PARITY_DRAWER_WIDTH_HALF } from "./sizing";
 import { colors, typography } from "../../design/tokens";
 import "../../styles/proportion-chrome.css";
 
@@ -24,8 +24,8 @@ export type ParityDrawerProps = {
   /** Sticky footer slot (Cancel / Save / Make inactive). */
   footer?: ReactNode;
   children: ReactNode;
-  /** "regular" ≈576px, "wide" ≈700px. */
-  size?: "regular" | "wide";
+  /** "regular" ≈576px, "wide" ≈700px, "half" ≈50vw (R-186.2 Settlement Creator dual columns). */
+  size?: "regular" | "wide" | "half";
   /**
    * Nested inline "+ Create" opened from a wide wizard / shared Modal (z-[215]). Stacks at
    * z-[218] so Save clicks are not intercepted by the parent overlay; Escape is scoped to this
@@ -104,7 +104,8 @@ export function ParityDrawer({
   }, [attemptClose, open, stackAboveModal]);
 
   if (!open) return null;
-  const widthClass = size === "wide" ? PARITY_DRAWER_WIDTH_WIDE : PARITY_DRAWER_WIDTH;
+  const widthClass =
+    size === "half" ? PARITY_DRAWER_WIDTH_HALF : size === "wide" ? PARITY_DRAWER_WIDTH_WIDE : PARITY_DRAWER_WIDTH;
 
   // INLINE-CREATE-NESTED-FORM (2026-08-02): rendered through a PORTAL to document.body, not inline.
   //

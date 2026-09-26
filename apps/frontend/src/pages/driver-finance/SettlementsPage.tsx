@@ -1,7 +1,7 @@
 import { settlementLabel } from "../../lib/settlementNumber";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { listSettlements, getOpenDriverBills, type OpenDriverBill, type SettlementListRow, type SettlementReference } from "../../api/driverFinance";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -30,6 +30,7 @@ import { BulkProgressDialog } from "../../components/bulk/BulkProgressDialog";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { useToast } from "../../components/Toast";
 import { bulkRowLabelsFromRows } from "../../components/bulk/bulkRowLabels";
+import { SettlementCreatorDrawer } from "../settlements/SettlementCreatorDrawer";
 
 type FocusFilter = "debt" | "pending_acks" | "held" | null;
 type PaymentStateFilter =
@@ -48,7 +49,6 @@ function parseFocus(raw: string | null): FocusFilter {
 
 export function SettlementsPage() {
   const { selectedCompanyId } = useCompanyContext();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -77,6 +77,19 @@ export function SettlementsPage() {
   // the payment pipeline + bulk void).
   const settlementsView = searchParams.get("view") === "payments" ? "payments" : "tours";
   const selectedSettlementId = searchParams.get("settlement_id");
+  // R-186.2 — half-page Settlement Creator panel (Company + Driver). Opened from Settlements
+  // and Topbar Create via ?creator=1 — never a full page.
+  const creatorOpen = searchParams.get("creator") === "1";
+  const closeCreator = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("creator");
+    setSearchParams(next, { replace: true });
+  };
+  const openCreator = () => {
+    const next = new URLSearchParams(searchParams);
+    next.set("creator", "1");
+    setSearchParams(next, { replace: true });
+  };
   // Driver profile "Full settlements" → /settlements?driver_id= (PreserveSearchNavigate keeps param).
   // BANK-F5165 — visible EntityPicker (URL-only client filter is not reverse chrome).
   const filterDriverId = searchParams.get("driver_id");
@@ -255,12 +268,14 @@ export function SettlementsPage() {
             size="sm"
             variant="primary"
             data-testid="settlements-open-creator"
-            onClick={() => navigate("/driver-finance/settlement-creator")}
+            onClick={openCreator}
           >
-            Settlement Creator
+            + Settlement Creator
           </Button>
         }
       />
+
+      <SettlementCreatorDrawer open={creatorOpen} onClose={closeCreator} allowPost={false} />
 
       <NavyPageSubNav
         items={[

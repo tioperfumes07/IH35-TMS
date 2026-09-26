@@ -35,4 +35,6 @@ export const PARITY_DRAWER_WIDTH = "w-full sm:w-[576px]";
 /** C7 shared create-drawer: full-bleed on mobile, 480px from `sm` up. */
 export const PARITY_CREATE_DRAWER_WIDTH = "w-full sm:w-[480px]";
 export const PARITY_DRAWER_WIDTH_WIDE = "w-full sm:w-[700px]";
+/** R-186.2 — half-page dual Company+Driver Settlement Creator. */
+export const PARITY_DRAWER_WIDTH_HALF = "w-full sm:w-[min(960px,50vw)] sm:min-w-[720px]";
 export const PARITY_MODAL_WIDTH = "w-full sm:w-[760px]";

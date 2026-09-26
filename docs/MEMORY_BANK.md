@@ -180,6 +180,22 @@ Measured (Neon `br-fancy-credit-akjnd07a`, bypass_rls=lucia, tip `6d18a73826`):
 - **$0 mint law (health):** explicit `$0` sent invoices (e.g. load 13525) have no AR postings by
   design — `assertPostedWithoutPostingZero` excludes `total_cents=0`. Live healthz red until this
   branch deploys; local measure: expense/bill/invoice posted-without-posting = **0** with exclusion.
+### Active Architectural Decisions — Settlement Creator half-panel (Cursor, 2026-09-25 R-186.2)
+
+- **Surface:** ONE half-page `ParityDrawer` (`size="half"` / `PARITY_DRAWER_WIDTH_HALF` ≈50vw) for
+  BOTH Company + Driver AlwaysTrack settlements. Opened from Settlements `+ Settlement Creator` and
+  Topbar Create via `?creator=1` — never a full page (`SettlementCreatorPage` redirects).
+- **Sections (each + Add + subtotal):** Loads (factoring Faro USMCA/none, date sent, not-delivered) ·
+  Fuel · Company expenses (PDF Comp. → Cr card rail 2510/1295) · Driver-paid reimbursements (PDF Drv
+  → Cr **2175**, never 6890/5310; Post blocked for that section if 2175 missing) · Additional pay ·
+  Deductions · Cash advances · Escrow (hold +, release/forfeit −) · Control totals (green/red to the
+  cent vs typed PDF).
+- **Engines (R-186 on main):** preview/post already orchestrate fuel/expense/advance/escrow/control
+  totals. **BE follow-up (held):** Drv Cr 2175 JE, `buildInvoiceFromLoad` + Faro auto-submit,
+  `syncSettlementLoadsToBilling` — blocked by LIVE `verify-purge-era-closures-still-hold` red
+  (pasted Lead OUTBOX 2026-09-25; never baselined). FE ships Preview-first (`allowPost=false`).
+- **DONE bar:** Preview-first. Guard `scripts/verify-settlement-creator-ties-document.mjs`.
+
 ## Known Quirks & Blockers
 
 
