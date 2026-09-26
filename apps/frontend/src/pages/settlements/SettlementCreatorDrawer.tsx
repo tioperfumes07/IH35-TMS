@@ -30,13 +30,15 @@ import type { ReactNode } from "react";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 type LoadDraft = SettlementCreatorDraft["loads"][number];
-/** location_id is picker state only — API gets the AT-style location string. */
+/** location_id / vendor_id / item_id are picker state only — stripped before API. */
 type FuelDraft = SettlementCreatorDraft["fuel_purchases"][number] & {
   location_id?: string | null;
+  vendor_id?: string | null;
 };
 type ExpDraft = SettlementCreatorDraft["expenses"][number] & {
   location?: string | null;
   location_id?: string | null;
+  item_id?: string | null;
 };
 type MoneyDraft = {
   description: string;
@@ -78,8 +80,10 @@ function emptyFuel(): FuelDraft {
     cpg_cents: 0,
     card: "relay",
     vendor_name: "",
+    vendor_id: null,
     location: "",
     location_id: null,
+    invoice: "",
     load_number: "",
   };
 }
@@ -88,6 +92,7 @@ function emptyCompExp(): ExpDraft {
   return {
     date: new Date().toISOString().slice(0, 10),
     item_name: "",
+    item_id: null,
     amount_cents: 0,
     load_number: "",
     is_company_expense: true,
@@ -102,6 +107,7 @@ function emptyDrvReimb(): ExpDraft {
   return {
     date: new Date().toISOString().slice(0, 10),
     item_name: "",
+    item_id: null,
     amount_cents: 0,
     load_number: "",
     is_company_expense: false,
@@ -162,14 +168,17 @@ function Section({
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex min-w-0 flex-col gap-1 text-section-header font-semibold uppercase text-[#4B5563]">
-      <span className="text-center">{label}</span>
-      {children}
+      <span className="text-center leading-tight">{label}</span>
+      <div className="min-h-7 w-full min-w-0">{children}</div>
     </label>
   );
 }
 
+/** Locked baseline: 28px clickable boxes, 12px body, 2px radius, equal paired widths. */
 const inputClass =
-  "h-7 w-full rounded-sm border border-[#E5E7EB] px-2 text-center text-xs text-[#0F1219]";
+  "h-7 w-full min-w-0 rounded-sm border border-[#E5E7EB] px-2 text-center text-xs text-[#0F1219]";
+const fieldGridClass = "grid grid-cols-2 gap-2";
+const pickerSize = "sm" as const;
 
 export type SettlementCreatorDrawerProps = {
   open: boolean;
@@ -186,6 +195,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
   const [settlementNo, setSettlementNo] = useState("");
   const [driverId, setDriverId] = useState<string | null>(null);
   const [unitId, setUnitId] = useState<string | null>(null);
+  const [trailerId, setTrailerId] = useState<string | null>(null);
   const [trailerNumber, setTrailerNumber] = useState("");
   const [periodStart, setPeriodStart] = useState("");
   const [periodEnd, setPeriodEnd] = useState("");
@@ -265,6 +275,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
       settlement_no: settlementNo.trim(),
       driver_id: driverId,
       unit_id: unitId,
+      trailer_id: trailerId,
       trailer_equipment_number: trailerNumber.trim() || null,
       period_start: periodStart,
       period_end: periodEnd,
@@ -276,8 +287,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
         date_sent_to_factoring: l.date_sent_to_factoring || null,
         join_outbound_load_number: l.join_outbound_load_number || null,
       })),
-      fuel_purchases: fuels.map(({ location_id: _lid, ...fuel }) => fuel),
-      expenses: expensesMerged.map(({ location, location_id: _lid, ...exp }) => ({
+      fuel_purchases: fuels.map(({ location_id: _lid, vendor_id: _vid, ...fuel }) => fuel),
+      expenses: expensesMerged.map(({ location, location_id: _lid, item_id: _iid, ...exp }) => ({
         ...exp,
         description: [location?.trim(), exp.description?.trim()].filter(Boolean).join(" · ") || exp.description,
       })),
@@ -297,6 +308,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     companyId,
     driverId,
     unitId,
+    trailerId,
     trailerNumber,
     settlementNo,
     periodStart,
@@ -408,7 +420,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
 
         {/* Shared header */}
         <Section title="Header">
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+          <div className={`${fieldGridClass} md:grid-cols-3`}>
             <Field label="Settlement No.">
               <input
                 className={inputClass}
@@ -425,6 +437,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                 value={driverId}
                 onChange={setDriverId}
                 allowCreate={false}
+                size={pickerSize}
                 className="mt-0"
                 dataTestId="sc-driver"
               />
@@ -436,12 +449,25 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                 value={unitId}
                 onChange={setUnitId}
                 allowCreate={false}
+                size={pickerSize}
                 className="mt-0"
                 dataTestId="sc-unit"
               />
             </Field>
             <Field label="Trailer">
-              <input className={inputClass} value={trailerNumber} onChange={(e) => setTrailerNumber(e.target.value)} placeholder="equipment #" data-testid="sc-trailer" />
+              <EntityPicker
+                kind="trailer"
+                operatingCompanyId={companyId}
+                value={trailerId}
+                onChange={(id, opt) => {
+                  setTrailerId(id);
+                  setTrailerNumber(opt?.label ?? "");
+                }}
+                allowCreate={false}
+                size={pickerSize}
+                className="mt-0"
+                dataTestId="sc-trailer"
+              />
             </Field>
             <Field label="Start date">
               <DatePicker value={periodStart} onChange={setPeriodStart} className={inputClass} data-testid="sc-start" />
@@ -462,7 +488,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
 
             <Section title="Loads" onAdd={() => setLoads([...loads, emptyLoad()])}>
               {loads.map((load, idx) => (
-                <div key={idx} className="grid grid-cols-2 gap-1 border-t border-[#E5E7EB] pt-2">
+                <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
                   <Field label="Load No.">
                     <input
                       className={inputClass}
@@ -480,22 +506,112 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       kind="customer"
                       operatingCompanyId={companyId}
                       value={load.customer_id ?? null}
-                      onChange={(id) => {
+                      onChange={(id, opt) => {
                         const next = [...loads];
-                        next[idx] = { ...load, customer_id: id };
+                        next[idx] = {
+                          ...load,
+                          customer_id: id,
+                          customer_name: opt?.label ?? load.customer_name,
+                        };
                         setLoads(next);
                       }}
                       allowCreate={false}
+                      size={pickerSize}
                       className="mt-0"
+                      dataTestId={`sc-load-customer-${idx}`}
                     />
                   </Field>
-                  <Field label="Miles">
+                  <Field label="Trip type">
+                    <select
+                      className={inputClass}
+                      value={load.trip_type ?? "NB"}
+                      onChange={(e) => {
+                        const next = [...loads];
+                        next[idx] = { ...load, trip_type: e.target.value as LoadDraft["trip_type"] };
+                        setLoads(next);
+                      }}
+                      data-testid={`sc-load-trip-type-${idx}`}
+                    >
+                      <option value="NB">NB</option>
+                      <option value="TR">TR</option>
+                      <option value="SB">SB</option>
+                      <option value="LOCAL">LOCAL</option>
+                    </select>
+                  </Field>
+                  <Field label="Join outbound (SB)">
+                    <input
+                      className={inputClass}
+                      value={load.join_outbound_load_number ?? ""}
+                      onChange={(e) => {
+                        const next = [...loads];
+                        next[idx] = { ...load, join_outbound_load_number: e.target.value };
+                        setLoads(next);
+                      }}
+                      placeholder="Outbound load #"
+                    />
+                  </Field>
+                  <Field label="Pickup date">
+                    <DatePicker
+                      className={inputClass}
+                      value={load.pickup_date ?? ""}
+                      onChange={(v) => {
+                        const next = [...loads];
+                        next[idx] = { ...load, pickup_date: v };
+                        setLoads(next);
+                      }}
+                    />
+                  </Field>
+                  <Field label="Pickup city">
+                    <input
+                      className={inputClass}
+                      value={load.pickup_city ?? ""}
+                      onChange={(e) => {
+                        const next = [...loads];
+                        next[idx] = { ...load, pickup_city: e.target.value };
+                        setLoads(next);
+                      }}
+                    />
+                  </Field>
+                  <Field label="Delivery date">
+                    <DatePicker
+                      className={inputClass}
+                      value={load.delivery_date ?? ""}
+                      onChange={(v) => {
+                        const next = [...loads];
+                        next[idx] = { ...load, delivery_date: v, not_yet_delivered: !v };
+                        setLoads(next);
+                      }}
+                    />
+                  </Field>
+                  <Field label="Delivery city">
+                    <input
+                      className={inputClass}
+                      value={load.delivery_city ?? ""}
+                      onChange={(e) => {
+                        const next = [...loads];
+                        next[idx] = { ...load, delivery_city: e.target.value };
+                        setLoads(next);
+                      }}
+                    />
+                  </Field>
+                  <Field label="Loaded miles">
                     <input
                       className={inputClass}
                       value={load.loaded_miles ?? ""}
                       onChange={(e) => {
                         const next = [...loads];
                         next[idx] = { ...load, loaded_miles: e.target.value === "" ? null : Number(e.target.value) };
+                        setLoads(next);
+                      }}
+                    />
+                  </Field>
+                  <Field label="Empty miles">
+                    <input
+                      className={inputClass}
+                      value={load.empty_miles ?? ""}
+                      onChange={(e) => {
+                        const next = [...loads];
+                        next[idx] = { ...load, empty_miles: e.target.value === "" ? null : Number(e.target.value) };
                         setLoads(next);
                       }}
                     />
@@ -550,7 +666,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       }}
                     />
                   </Field>
-                  <label className="flex items-center justify-center gap-2 text-xs text-[#0F1219]">
+                  <label className="col-span-2 flex h-7 items-center justify-center gap-2 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#0F1219]">
                     <input
                       type="checkbox"
                       checked={load.not_yet_delivered !== false && !load.delivery_date}
@@ -573,7 +689,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
 
             <Section title="Fuel purchases" subtotalCents={fuelSubtotal} onAdd={() => setFuels([...fuels, emptyFuel()])}>
               {fuels.map((fuel, idx) => (
-                <div key={idx} className="grid grid-cols-2 gap-1 border-t border-[#E5E7EB] pt-2">
+                <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
                   <Field label="Date">
                     <DatePicker
                       className={inputClass}
@@ -586,16 +702,24 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     />
                   </Field>
                   <Field label="Vendor">
-                    <input
-                      className={inputClass}
-                      value={fuel.vendor_name ?? ""}
-                      onChange={(e) => {
+                    <EntityPicker
+                      kind="vendor"
+                      operatingCompanyId={companyId}
+                      value={fuel.vendor_id ?? null}
+                      onChange={(id, opt) => {
                         const next = [...fuels];
-                        next[idx] = { ...fuel, vendor_name: e.target.value };
+                        next[idx] = {
+                          ...fuel,
+                          vendor_id: id,
+                          vendor_name: opt?.label ?? fuel.vendor_name,
+                        };
                         setFuels(next);
                       }}
-                      placeholder="LOVES"
-                      data-testid={`sc-fuel-vendor-${idx}`}
+                      allowCreate={false}
+                      size={pickerSize}
+                      className="mt-0"
+                      dataTestId={`sc-fuel-vendor-${idx}`}
+                      placeholder="Search vendor (LOVES)…"
                     />
                   </Field>
                   <Field label="Location">
@@ -606,25 +730,30 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       onChange={(id, loc) => {
                         const next = [...fuels];
                         const label = loc ? formatFuelStopLocationLabel(loc) : "";
-                        const lovesVendor =
-                          loc?.location_code?.toUpperCase().startsWith("LOVES-") &&
-                          !(fuel.vendor_name ?? "").trim()
-                            ? "LOVES"
-                            : fuel.vendor_name;
+                        const lovesCode = loc?.location_code?.toUpperCase().startsWith("LOVES-");
                         next[idx] = {
                           ...fuel,
                           location_id: id,
                           location: label,
-                          vendor_name: lovesVendor ?? fuel.vendor_name,
+                          // DB Love's stop → default vendor name LOVES when unset
+                          vendor_name:
+                            lovesCode && !(fuel.vendor_name ?? "").trim() ? "LOVES" : fuel.vendor_name,
                         };
                         setFuels(next);
                       }}
                     />
-                    {fuel.location ? (
-                      <span className="text-center text-xs text-[#6B7280]" data-testid={`sc-fuel-location-label-${idx}`}>
-                        {fuel.location}
-                      </span>
-                    ) : null}
+                  </Field>
+                  <Field label="Invoice #">
+                    <input
+                      className={inputClass}
+                      value={fuel.invoice ?? ""}
+                      onChange={(e) => {
+                        const next = [...fuels];
+                        next[idx] = { ...fuel, invoice: e.target.value };
+                        setFuels(next);
+                      }}
+                      data-testid={`sc-fuel-invoice-${idx}`}
+                    />
                   </Field>
                   <Field label="Gallons">
                     <input
@@ -675,6 +804,17 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       <option value="relay">Relay</option>
                     </select>
                   </Field>
+                  <Field label="Load No.">
+                    <input
+                      className={inputClass}
+                      value={fuel.load_number ?? ""}
+                      onChange={(e) => {
+                        const next = [...fuels];
+                        next[idx] = { ...fuel, load_number: e.target.value };
+                        setFuels(next);
+                      }}
+                    />
+                  </Field>
                 </div>
               ))}
             </Section>
@@ -688,7 +828,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                 PDF &quot;Comp.&quot; — credits the fuel card rail (never A/P)
               </p>
               {companyExpenses.map((exp, idx) => (
-                <div key={idx} className="grid grid-cols-2 gap-1 border-t border-[#E5E7EB] pt-2">
+                <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
                   <Field label="Date">
                     <DatePicker
                       className={inputClass}
@@ -702,11 +842,15 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   </Field>
                   <Field label="Item">
                     <ReferenceSelect
-                      value={null}
+                      value={exp.item_id ?? null}
                       onChange={(id) => {
                         const opt = itemOptions.find((o) => o.value === id);
                         const next = [...companyExpenses];
-                        next[idx] = { ...exp, item_name: opt?.label ?? exp.item_name };
+                        next[idx] = {
+                          ...exp,
+                          item_id: id,
+                          item_name: opt?.label ?? (id ? exp.item_name : ""),
+                        };
                         setCompanyExpenses(next);
                       }}
                       options={itemOptions}
@@ -718,16 +862,11 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       onSearch={(q) => setItemSearch(q)}
                       onOptionCreated={(opt) => {
                         const next = [...companyExpenses];
-                        next[idx] = { ...exp, item_name: opt.label };
+                        next[idx] = { ...exp, item_id: opt.value, item_name: opt.label };
                         setCompanyExpenses(next);
                         void itemsQuery.refetch();
                       }}
                     />
-                    {exp.item_name ? (
-                      <span className="text-center text-xs text-[#6B7280]" data-testid={`sc-comp-item-${idx}`}>
-                        {exp.item_name}
-                      </span>
-                    ) : null}
                   </Field>
                   <Field label="Amount">
                     <MoneyInput
@@ -781,11 +920,6 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         setCompanyExpenses(next);
                       }}
                     />
-                    {exp.location ? (
-                      <span className="text-center text-xs text-[#6B7280]" data-testid={`sc-comp-location-label-${idx}`}>
-                        {exp.location}
-                      </span>
-                    ) : null}
                   </Field>
                 </div>
               ))}
@@ -820,7 +954,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                 PDF &quot;Drv&quot; — Cr 2175 Driver Reimbursements Payable (never 6890/5310)
               </p>
               {drvReimbursements.map((exp, idx) => (
-                <div key={idx} className="grid grid-cols-2 gap-1 border-t border-[#E5E7EB] pt-2">
+                <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
                   <Field label="Date">
                     <DatePicker
                       className={inputClass}
@@ -834,11 +968,15 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   </Field>
                   <Field label="Item">
                     <ReferenceSelect
-                      value={null}
+                      value={exp.item_id ?? null}
                       onChange={(id) => {
                         const opt = drvItemOptions.find((o) => o.value === id);
                         const next = [...drvReimbursements];
-                        next[idx] = { ...exp, item_name: opt?.label ?? exp.item_name };
+                        next[idx] = {
+                          ...exp,
+                          item_id: id,
+                          item_name: opt?.label ?? (id ? exp.item_name : ""),
+                        };
                         setDrvReimbursements(next);
                       }}
                       options={drvItemOptions}
@@ -850,16 +988,11 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       onSearch={(q) => setDrvItemSearch(q)}
                       onOptionCreated={(opt) => {
                         const next = [...drvReimbursements];
-                        next[idx] = { ...exp, item_name: opt.label };
+                        next[idx] = { ...exp, item_id: opt.value, item_name: opt.label };
                         setDrvReimbursements(next);
                         void drvItemsQuery.refetch();
                       }}
                     />
-                    {exp.item_name ? (
-                      <span className="text-center text-xs text-[#6B7280]" data-testid={`sc-drv-item-${idx}`}>
-                        {exp.item_name}
-                      </span>
-                    ) : null}
                   </Field>
                   <Field label="Amount">
                     <MoneyInput
@@ -899,11 +1032,6 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         setDrvReimbursements(next);
                       }}
                     />
-                    {exp.location ? (
-                      <span className="text-center text-xs text-[#6B7280]" data-testid={`sc-drv-location-label-${idx}`}>
-                        {exp.location}
-                      </span>
-                    ) : null}
                   </Field>
                 </div>
               ))}
@@ -915,7 +1043,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               onAdd={() => setAdditionalPay([...additionalPay, { ...emptyMoney(), pay_kind: "detention" }])}
             >
               {additionalPay.map((row, idx) => (
-                <div key={idx} className="grid grid-cols-2 gap-1 border-t border-[#E5E7EB] pt-2">
+                <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
                   <Field label="Type">
                     <select
                       className={inputClass}
@@ -973,7 +1101,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
 
             <Section title="Deductions" subtotalCents={dedSubtotal} onAdd={() => setDeductions([...deductions, emptyMoney()])}>
               {deductions.map((row, idx) => (
-                <div key={idx} className="grid grid-cols-2 gap-1 border-t border-[#E5E7EB] pt-2">
+                <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
                   <Field label="Description">
                     <input
                       className={inputClass}
@@ -1003,7 +1131,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
 
             <Section title="Cash advances" subtotalCents={advSubtotal} onAdd={() => setAdvances([...advances, emptyMoney()])}>
               {advances.map((row, idx) => (
-                <div key={idx} className="grid grid-cols-2 gap-1 border-t border-[#E5E7EB] pt-2">
+                <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
                   <Field label="Description">
                     <input
                       className={inputClass}
@@ -1038,7 +1166,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
             >
               <p className="text-center text-xs text-[#6B7280]">Hold +, release/forfeit − · existing escrow engine</p>
               {escrow.map((row, idx) => (
-                <div key={idx} className="grid grid-cols-2 gap-1 border-t border-[#E5E7EB] pt-2">
+                <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
                   <Field label="Type">
                     <select
                       className={inputClass}

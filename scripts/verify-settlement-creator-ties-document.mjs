@@ -76,6 +76,18 @@ function runChecks() {
     "Drawer fuel/expense Location must use FuelStopLocationPicker (mdata.locations fuel_stop)", failures);
   assert(/sc-fuel-location|formatFuelStopLocationLabel/.test(drawer),
     "Drawer must bind fuel Location to AlwaysTrack-style fuel-stop labels", failures);
+  assert(/kind=\"vendor\"/.test(drawer) && /sc-fuel-vendor/.test(drawer),
+    "Fuel Vendor must be EntityPicker kind=vendor (catalog), not free text", failures);
+  assert(/kind=\"trailer\"/.test(drawer) && /sc-trailer/.test(drawer),
+    "Header Trailer must be EntityPicker kind=trailer (catalog)", failures);
+  assert(/kind=\"customer\"/.test(drawer),
+    "Load Customer must be EntityPicker kind=customer", failures);
+  assert(/fieldGridClass|grid-cols-2 gap-2/.test(drawer),
+    "Creator fields must use equal paired grid (gap-2, 2-col)", failures);
+  assert(/item_id/.test(drawer) && !/ReferenceSelect[\s\S]{0,80}value=\{null\}/.test(drawer),
+    "Comp./Drv Item ReferenceSelect must keep selected item_id (never value={null})", failures);
+  assert(/Drv reimb Cr 2175|2175/.test(service),
+    "Service preview must project Drv reimbursements to Cr 2175", failures);
 
   return failures;
 }

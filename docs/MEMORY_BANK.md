@@ -202,6 +202,11 @@ Measured (Neon `br-fancy-credit-akjnd07a`, bypass_rls=lucia, tip `6d18a73826`):
   Location, Create Fuel Purchase, and Record Expense memo. Guard:
   `scripts/verify-fuel-stop-location-catalog.mjs`. Never free-text city/state as the only fuel
   location path.
+- **Creator catalogs complete (2026-09-26):** Header Driver/Truck/`EntityPicker` Trailer; Load
+  Customer + trip type + pickup/delivery + loaded/empty miles; Fuel Vendor (`EntityPicker`) + DB
+  Location + invoice/load; Comp./Drv Item `ReferenceSelect` keeps `item_id`. Equal paired
+  `fieldGridClass` (2-col gap-2, h-7 / 12px / rounded-sm). Preview projects Drv → Cr **2175**.
+  Purge-era LIVE PASS — BE 2175 preview unblocked.
 
 ## Known Quirks & Blockers
 
