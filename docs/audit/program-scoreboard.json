@@ -1,10 +1,10 @@
 {
-  "healthzSha": "40f5806",
-  "generated_at": "2026-09-28T02:45:39.535Z",
+  "healthzSha": "0ff379d",
+  "generated_at": "2026-09-28T02:50:19.007Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "40f5806",
+    "deployedSha": "0ff379d",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 22886,
+      "title": "Claude-1- fix verify-list-empty-settled stale MatchDrawer literal (repo-wide CI break)",
+      "state": "merged",
+      "mergedAtCt": "09/27/2026, 09:48 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22886",
+      "sha": "82898726fc",
+      "committedAtIso": "2026-09-27T21:48:55-05:00"
+    },
+    {
       "number": 22885,
       "title": "Cursor- Lead census: AUTH-073 OPEN unblock CC-1 live_loads FLAG",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22875",
       "sha": "053d0808c1",
       "committedAtIso": "2026-09-26T11:31:15-05:00"
-    },
-    {
-      "number": 22874,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-      "state": "merged",
-      "mergedAtCt": "09/26/2026, 06:34 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22874",
-      "sha": "1479d54c9e",
-      "committedAtIso": "2026-09-26T06:34:40-05:00"
     }
   ]
 }
