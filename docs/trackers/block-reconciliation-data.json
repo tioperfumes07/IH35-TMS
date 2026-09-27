@@ -1,6 +1,6 @@
 {
- "date": "2026-09-26",
- "generated_at_iso": "2026-09-26T21:17:32.723Z",
+ "date": "2026-09-27",
+ "generated_at_iso": "2026-09-27T05:26:50.274Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13727,6 +13727,12 @@
  ],
  "merged_prs": [
   {
+   "number": 22876,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-26T21:18:04Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 22875,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-09-26T16:31:15Z",
@@ -17319,12 +17325,6 @@
    "title": "Claude-3: docs(bus+audit) report -- Round 43 all 3 items closed/investigated, relay-ingest-cut held",
    "mergedAt": "2026-09-22T20:31:44Z",
    "branch": "claude-3-round43-final-report-and-held-branches"
-  },
-  {
-   "number": 22260,
-   "title": "Claude-1-RESET CURSOR'S BUS (INBOX/OUTBOX 9-11 days stale)",
-   "mergedAt": "2026-09-22T20:19:10Z",
-   "branch": "cc-1/reset-cursor-bus"
   }
  ],
  "merged_pr_total": 3000,
