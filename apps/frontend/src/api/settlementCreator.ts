@@ -23,10 +23,16 @@ export type SettlementCreatorDraft = {
     line_haul_miles?: number | null;
     line_haul_rate_cents?: number | null;
     line_haul_amount_cents?: number | null;
+    accessorials?: Array<{
+      item_name: string;
+      description?: string | null;
+      amount_cents: number;
+    }>;
     factoring: SettlementCreatorFactorOption;
     date_sent_to_factoring?: string | null;
     loaded_miles?: number | null;
     empty_miles?: number | null;
+    empty_rate_cents?: number | null;
     picks?: number | null;
     drops?: number | null;
     trip_type?: "NB" | "TR" | "SB" | "LOCAL" | null;
@@ -60,6 +66,12 @@ export type SettlementCreatorDraft = {
   }>;
   deductions: Array<{ description: string; amount_cents: number; load_number?: string | null }>;
   reimbursements: Array<{ description: string; amount_cents: number; load_number?: string | null }>;
+  additional_pay?: Array<{
+    description: string;
+    amount_cents: number;
+    load_number?: string | null;
+    pay_kind?: "detention" | "layover" | "bonus" | "stop_pay" | "other";
+  }>;
   escrow: Array<{ description: string; amount_cents: number; load_number?: string | null }>;
   advances: Array<{
     description?: string | null;
@@ -67,6 +79,8 @@ export type SettlementCreatorDraft = {
     load_number?: string | null;
     linked_driver_bill_id?: string | null;
   }>;
+  /** AlwaysTrack admin fee → 7200 income via createSettlementDeduction(other). */
+  admin_fee_cents?: number | null;
   pdf_driver_net_cents: number;
   pdf_company_expenses_cents: number;
   /** ROUND 180 §14 — confirm Edit = void and repost when Settlement No. already exists. */

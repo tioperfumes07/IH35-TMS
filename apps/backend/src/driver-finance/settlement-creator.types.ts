@@ -29,6 +29,8 @@ export type SettlementCreatorLoadBlock = {
   date_sent_to_factoring?: string | null;
   loaded_miles?: number | null;
   empty_miles?: number | null;
+  /** Driver empty-miles rate ($/mi). When null, empty miles contribute $0 (operator types extras). */
+  empty_rate_cents?: number | null;
   picks?: number | null;
   drops?: number | null;
   /** R-186.1 — NB/TR/SB/LOCAL. SB joins the outbound tour. */
@@ -84,6 +86,13 @@ export type SettlementCreatorAdvanceLine = {
   linked_driver_bill_id?: string | null;
 };
 
+export type SettlementCreatorAdditionalPayLine = {
+  description: string;
+  amount_cents: number;
+  load_number?: string | null;
+  pay_kind?: "detention" | "layover" | "bonus" | "stop_pay" | "other";
+};
+
 export type SettlementCreatorDraft = {
   operating_company_id: string;
   /**
@@ -105,8 +114,15 @@ export type SettlementCreatorDraft = {
   expenses: SettlementCreatorExpenseLine[];
   deductions: SettlementCreatorMoneyLine[];
   reimbursements: SettlementCreatorMoneyLine[];
+  /** Driver settlement additional pay (detention/layover/bonus) — settlement_lines, not reimbursements. */
+  additional_pay?: SettlementCreatorAdditionalPayLine[];
   escrow: SettlementCreatorMoneyLine[];
   advances: SettlementCreatorAdvanceLine[];
+  /**
+   * AlwaysTrack admin fee (typically $10) → createSettlementDeduction sourceType=other →
+   * other_recovery → 7200 Driver Admin Fee & Chargeback Income (existing close engine).
+   */
+  admin_fee_cents?: number | null;
   /** Driver PDF control total — Post disabled until draft net equals this (0 OK for dispatched-only seed). */
   pdf_driver_net_cents: number;
   /** Company PDF EXPENSES control total. */

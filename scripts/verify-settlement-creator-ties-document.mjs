@@ -126,6 +126,24 @@ function runChecks() {
   assert(/edit_void_repost/.test(drawer) && /settlement_exists/.test(drawer),
     "Drawer Post must confirm Edit = void and repost on settlement_exists", failures);
 
+  // ROUND 180 complete wires — admin fee 7200, empty rate, accessorials, additional_pay, deductions post.
+  assert(/admin_fee_cents/.test(service) && /createSettlementDeduction/.test(service) && /7200/.test(service),
+    "Post must createSettlementDeduction admin fee → 7200 (other_recovery)", failures);
+  assert(/empty_rate_cents/.test(service) && /empty_miles/.test(service),
+    "Preview/post mileage must use empty_miles × empty_rate_cents", failures);
+  assert(/additional_pay/.test(service) && /detention_pay|extra_pay/.test(service),
+    "Post must write additional_pay as detention_pay/extra_pay settlement_lines", failures);
+  assert(/accessorials/.test(service),
+    "Preview must project load accessorials", failures);
+  assert(/miles_shortest/.test(fs.readFileSync(path.join(ROOT, "apps/backend/src/driver-finance/settlement-creator-seed-loads.ts"), "utf8")),
+    "Seed bookLoad must stamp miles_shortest so driver bill can mint", failures);
+  assert(/sc-admin-fee/.test(drawer) && /empty_rate_cents|Empty \$\/mi/.test(drawer),
+    "Drawer must expose Admin fee + Empty $/mi", failures);
+  assert(/sc-accessorial-item|Accessorial/.test(drawer),
+    "Drawer load block must expose Accessorial fields", failures);
+  assert(/additional_pay/.test(fs.readFileSync(path.join(ROOT, "apps/frontend/src/api/settlementCreator.ts"), "utf8")),
+    "FE draft must send additional_pay (not map extras into reimbursements)", failures);
+
   return failures;
 }
 
