@@ -26,6 +26,7 @@ import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.ser
 import { resolveCompanyDirectCreditAccount } from "../accounting/fuel-posting/poster.service.js";
 import { nextExpenseDisplayId } from "../accounting/display-id.js";
 import { createHistoricalEscrowHold } from "./historical-escrow-backfill.service.js";
+import { createSettlementDeduction } from "./deductions.service.js";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";
 import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
 import { voidDocument } from "../accounting/void-document.service.js";
@@ -429,8 +430,9 @@ export async function previewSettlementCreator(
   let mileagePayCents = 0;
   for (const load of draft.loads ?? []) {
     const loaded = Math.round(Number(load.loaded_miles || 0) * Number(load.line_haul_rate_cents || 0));
-    // Empty miles often use a separate empty rate; when absent, treat as 0 (operator types extras).
-    const empty = 0;
+    // Empty miles × empty_rate (AT driver PDF). When rate absent, empty contributes $0 —
+    // operator types empty pay as Additional pay.
+    const empty = Math.round(Number(load.empty_miles || 0) * Number(load.empty_rate_cents || 0));
     const pay = loaded + empty;
     if (pay <= 0) continue;
     mileagePayCents += pay;
@@ -460,6 +462,25 @@ export async function previewSettlementCreator(
     });
   }
 
+  // Accessorials (customer charges) — projected on preview for JE completeness; invoice mint uses Book Load charges.
+  for (const load of draft.loads ?? []) {
+    for (const acc of load.accessorials ?? []) {
+      if (acc.amount_cents <= 0) continue;
+      const rev =
+        (await accountByNumber(client, draft.operating_company_id, "4200")) ??
+        (await accountByRole(client, draft.operating_company_id, "accessorial_revenue"));
+      push({
+        load_number: load.load_number,
+        account_number: rev?.account_number ?? "4200",
+        account_name: rev?.account_name ?? acc.item_name,
+        debit_cents: 0,
+        credit_cents: acc.amount_cents,
+        memo: acc.description ?? acc.item_name,
+        section: "accessorial",
+      });
+    }
+  }
+
   // --- Extra reimbursements on driver net ---
   let reimbCents = 0;
   for (const r of draft.reimbursements ?? []) {
@@ -470,10 +491,32 @@ export async function previewSettlementCreator(
     if (exp.is_reimbursable && exp.amount_cents > 0) reimbCents += exp.amount_cents;
   }
 
-  // --- Deductions / escrow / advances (driver net) ---
+  // Additional pay (detention / layover / bonus) — adds to driver net.
+  let additionalPayCents = 0;
+  for (const p of draft.additional_pay ?? []) {
+    if (p.amount_cents <= 0) continue;
+    additionalPayCents += p.amount_cents;
+  }
+
+  // --- Deductions / escrow / advances / admin fee (driver net) ---
   let deductionCents = 0;
   for (const d of draft.deductions ?? []) {
     if (d.amount_cents > 0) deductionCents += d.amount_cents;
+  }
+  const adminFeeCents = Math.max(0, Math.round(Number(draft.admin_fee_cents || 0)));
+  if (adminFeeCents > 0) {
+    const income7200 =
+      (await accountByNumber(client, draft.operating_company_id, "7200")) ??
+      (await accountByRole(client, draft.operating_company_id, "other_recovery"));
+    push({
+      load_number: null,
+      account_number: income7200?.account_number ?? "7200",
+      account_name: income7200?.account_name ?? "Driver Admin Fee & Chargeback Income",
+      debit_cents: 0,
+      credit_cents: adminFeeCents,
+      memo: "Admin fee → 7200 income",
+      section: "admin_fee",
+    });
   }
   let escrowCents = 0;
   for (const e of draft.escrow ?? []) {
@@ -499,7 +542,14 @@ export async function previewSettlementCreator(
     advanceCents += a.amount_cents;
   }
 
-  const driverNetCents = mileagePayCents + reimbCents - deductionCents - escrowCents - advanceCents;
+  const driverNetCents =
+    mileagePayCents +
+    reimbCents +
+    additionalPayCents -
+    deductionCents -
+    adminFeeCents -
+    escrowCents -
+    advanceCents;
 
   const debit_total_cents = je_lines.reduce((s, l) => s + l.debit_cents, 0);
   const credit_total_cents = je_lines.reduce((s, l) => s + l.credit_cents, 0);
@@ -1066,6 +1116,68 @@ export async function postSettlementCreatorInClientTx(
     });
   }
 
+  // Additional pay → settlement_lines (detention_pay / extra_pay). Never reimbursement.
+  for (const p of draft.additional_pay ?? []) {
+    if (p.amount_cents <= 0) continue;
+    const lineType = p.pay_kind === "detention" ? "detention_pay" : "extra_pay";
+    const loadId = await resolveLoadIdByNumber(p.load_number);
+    await client.query(
+      `
+        INSERT INTO driver_finance.settlement_lines (
+          settlement_id, operating_company_id, line_type, description, amount, load_id, is_active, is_sample_data
+        )
+        VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6::uuid, true, false)
+      `,
+      [
+        settlementId,
+        draft.operating_company_id,
+        lineType,
+        p.description || `${p.pay_kind ?? "other"} pay`,
+        dollarsFromCents(p.amount_cents),
+        loadId,
+      ],
+    );
+  }
+
+  // Deductions + admin fee → createSettlementDeduction (other → 7200 on close) + apply to this settlement.
+  async function applyDeduction(amountCents: number, reason: string, sourceType: "other" | "fine" | "toll" = "other") {
+    if (amountCents <= 0) return;
+    const created = await createSettlementDeduction(client as never, {
+      operatingCompanyId: draft.operating_company_id,
+      driverId: draft.driver_id,
+      amountCents,
+      reason,
+      sourceType,
+      createdByUserId: actorUserId,
+    });
+    await client.query(
+      `
+        UPDATE driver_finance.driver_settlement_deductions
+           SET applied_to_settlement_id = $1::uuid, status = 'pending', updated_at = now()
+         WHERE id = $2::uuid
+      `,
+      [settlementId, created.id],
+    );
+  }
+
+  for (const d of draft.deductions ?? []) {
+    if (d.amount_cents <= 0) continue;
+    const reason = d.description?.trim() || `Settlement ${draft.settlement_no} deduction`;
+    const isAdmin = /admin\s*fee/i.test(reason);
+    await applyDeduction(d.amount_cents, reason, "other");
+    if (isAdmin) {
+      // Already routed via other → 7200; no second row.
+    }
+  }
+  const adminFeePost = Math.max(0, Math.round(Number(draft.admin_fee_cents || 0)));
+  if (adminFeePost > 0) {
+    await applyDeduction(
+      adminFeePost,
+      `AlwaysTrack settl ${draft.settlement_no || sourceDocumentRef || displayId}: Admin fee`,
+      "other",
+    );
+  }
+
   // Invoice mint + send (existing engines only). Delivered loads only — not_yet_delivered skips.
   // historical_backfill: closed settlement_lines.load_id OR stamped stop departure = evidence.
   // Faro auto-submit runs AFTER COMMIT (own connection) — see settlement-creator.routes.ts.
@@ -1084,11 +1196,15 @@ export async function postSettlementCreatorInClientTx(
     await stampDeliveryStopActuals(client, loadId, load.delivery_date);
 
     // Closed-settlement evidence for historical_backfill (AT path status=closed).
+    const accessorialCents = (load.accessorials ?? []).reduce(
+      (s, a) => s + Math.max(0, Math.round(Number(a.amount_cents || 0))),
+      0,
+    );
     const earningsCents =
-      load.line_haul_amount_cents ??
-      (load.line_haul_rate_cents != null && load.loaded_miles != null
-        ? Math.round(Number(load.line_haul_rate_cents) * Number(load.loaded_miles))
-        : 0);
+      (load.line_haul_amount_cents ??
+        (load.line_haul_rate_cents != null && load.loaded_miles != null
+          ? Math.round(Number(load.line_haul_rate_cents) * Number(load.loaded_miles))
+          : 0)) + accessorialCents;
     await client.query(
       `
         INSERT INTO driver_finance.settlement_lines (

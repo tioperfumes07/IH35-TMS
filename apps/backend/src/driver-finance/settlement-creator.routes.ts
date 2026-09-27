@@ -67,6 +67,7 @@ const draftSchema = z.object({
         date_sent_to_factoring: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
         loaded_miles: z.number().nullable().optional(),
         empty_miles: z.number().nullable().optional(),
+        empty_rate_cents: z.number().int().nullable().optional(),
         picks: z.number().nullable().optional(),
         drops: z.number().nullable().optional(),
         trip_type: z.enum(["NB", "TR", "SB", "LOCAL"]).nullable().optional(),
@@ -110,6 +111,16 @@ const draftSchema = z.object({
     .default([]),
   deductions: z.array(moneyLine).default([]),
   reimbursements: z.array(moneyLine).default([]),
+  additional_pay: z
+    .array(
+      z.object({
+        description: z.string().trim().min(1).max(500),
+        amount_cents: z.number().int(),
+        load_number: z.string().trim().max(40).nullable().optional(),
+        pay_kind: z.enum(["detention", "layover", "bonus", "stop_pay", "other"]).optional(),
+      }),
+    )
+    .default([]),
   escrow: z.array(moneyLine).default([]),
   advances: z
     .array(
@@ -121,6 +132,7 @@ const draftSchema = z.object({
       }),
     )
     .default([]),
+  admin_fee_cents: z.number().int().nullable().optional(),
   pdf_driver_net_cents: z.number().int(),
   pdf_company_expenses_cents: z.number().int(),
   edit_void_repost: z.boolean().optional().default(false),
@@ -236,6 +248,36 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
           });
           if (submitted.submitted && submitted.advanceId) {
             factoringAdvanceIds.push(submitted.advanceId);
+            // ROUND 180 — stamp purchase/submitted date from AT "Date sent to factoring"
+            // when provided (funding JE still posts at actual Faro funding — never invent cash).
+            if (load.date_sent_to_factoring) {
+              try {
+                await withCurrentUser(user.uuid, async (client) => {
+                  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+                    draft.operating_company_id,
+                  ]);
+                  await client.query(
+                    `
+                      UPDATE accounting.factoring_advances
+                         SET submitted_at = $2::timestamptz,
+                             updated_at = now()
+                       WHERE id = $1::uuid
+                         AND operating_company_id = $3::uuid
+                    `,
+                    [
+                      submitted.advanceId,
+                      `${load.date_sent_to_factoring}T12:00:00.000Z`,
+                      draft.operating_company_id,
+                    ],
+                  );
+                });
+              } catch (stampErr) {
+                console.warn(
+                  { err: stampErr, advance_id: submitted.advanceId },
+                  "settlement_creator_faro_date_stamp_failed",
+                );
+              }
+            }
           } else if (!submitted.submitted) {
             console.warn(
               {

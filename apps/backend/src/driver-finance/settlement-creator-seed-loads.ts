@@ -105,13 +105,22 @@ function buildCharges(load: SettlementCreatorLoadBlock): Array<{ code: string; d
     (load.line_haul_rate_cents != null && load.loaded_miles != null
       ? Math.round(load.line_haul_rate_cents * Number(load.loaded_miles))
       : 0);
-  return [
+  const charges: Array<{ code: string; description?: string; amount_cents: number }> = [
     {
       code: "LH",
       description: amount > 0 ? "Line haul" : "Line haul (seeded — rate pending)",
       amount_cents: Math.max(0, amount),
     },
   ];
+  for (const acc of load.accessorials ?? []) {
+    if (acc.amount_cents <= 0) continue;
+    charges.push({
+      code: "ACC",
+      description: acc.description?.trim() || acc.item_name,
+      amount_cents: acc.amount_cents,
+    });
+  }
+  return charges;
 }
 
 /**
@@ -173,6 +182,8 @@ export async function ensureDispatchedLoadsForCreator(
       assigned_unit_id: draft.unit_id ?? undefined,
       assigned_trailer_unit_id: draft.trailer_id ?? undefined,
       miles_practical: load.loaded_miles ?? load.line_haul_miles ?? null,
+      // P1 driver-bill mint requires miles_shortest > 0 — AT loaded miles are the shortest basis.
+      miles_shortest: load.loaded_miles ?? load.line_haul_miles ?? null,
       miles_deadhead: load.empty_miles ?? null,
       save_mode: "book_dispatch",
       addToOpenPresettlement: true,

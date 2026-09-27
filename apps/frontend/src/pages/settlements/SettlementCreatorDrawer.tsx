@@ -67,6 +67,8 @@ function emptyLoad(loadNumber = ""): LoadDraft {
     date_sent_to_factoring: "",
     loaded_miles: null,
     empty_miles: null,
+    empty_rate_cents: null,
+    accessorials: [],
     picks: null,
     drops: null,
     trip_type: "NB",
@@ -227,6 +229,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
   const [deductions, setDeductions] = useState<MoneyDraft[]>([]);
   const [advances, setAdvances] = useState<MoneyDraft[]>([]);
   const [escrow, setEscrow] = useState<MoneyDraft[]>([]);
+  const [adminFeeCents, setAdminFeeCents] = useState(0);
   const [pdfCompanyExpenses, setPdfCompanyExpenses] = useState(0);
   const [pdfDriverNet, setPdfDriverNet] = useState(0);
   const [itemSearch, setItemSearch] = useState("");
@@ -304,14 +307,17 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     [companyExpenses, drvReimbursements],
   );
 
-  /** Additional pay only — goes to settlement_lines / driver net, never Cr 2175. */
+  /** Additional pay → BE additional_pay (extra_pay / detention_pay), never reimbursements. */
   const additionalPayForApi = useMemo(
     () =>
-      additionalPay.map((a) => ({
-        description: `${a.pay_kind ?? "other"}: ${a.description || "Additional pay"}`,
-        amount_cents: a.amount_cents,
-        load_number: a.load_number,
-      })),
+      additionalPay
+        .filter((a) => a.amount_cents > 0)
+        .map((a) => ({
+          description: a.description || `${a.pay_kind ?? "other"} pay`,
+          amount_cents: a.amount_cents,
+          load_number: a.load_number,
+          pay_kind: a.pay_kind ?? "other",
+        })),
     [additionalPay],
   );
 
@@ -353,13 +359,15 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
         description: [location?.trim(), exp.description?.trim()].filter(Boolean).join(" · ") || exp.description,
       })),
       deductions: deductions.map((d) => ({ ...d, description: d.description || "Deduction" })),
-      reimbursements: additionalPayForApi,
+      reimbursements: [],
+      additional_pay: additionalPayForApi,
       escrow: escrowForApi,
       advances: advances.map((a) => ({
         description: a.description || "Cash advance",
         amount_cents: a.amount_cents,
         load_number: a.load_number,
       })),
+      admin_fee_cents: adminFeeCents > 0 ? adminFeeCents : null,
       seed_dispatched_loads: true,
       pdf_company_expenses_cents: pdfCompanyExpenses,
       pdf_driver_net_cents: pdfDriverNet,
@@ -380,6 +388,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     additionalPayForApi,
     escrowForApi,
     advances,
+    adminFeeCents,
     pdfCompanyExpenses,
     pdfDriverNet,
   ]);
@@ -745,6 +754,18 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       }}
                     />
                   </Field>
+                  <Field label="Empty $/mi">
+                    <MoneyInput
+                      className={inputClass}
+                      valueCents={load.empty_rate_cents}
+                      onChangeCents={(cents) => {
+                        const next = [...loads];
+                        next[idx] = { ...load, empty_rate_cents: cents };
+                        setLoads(next);
+                      }}
+                      ariaLabel="Empty miles rate"
+                    />
+                  </Field>
                   <Field label="Rate $/mi">
                     <MoneyInput
                       className={inputClass}
@@ -767,6 +788,37 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         setLoads(next);
                       }}
                       ariaLabel="Load revenue"
+                    />
+                  </Field>
+                  <Field label="Accessorial item">
+                    <input
+                      className={inputClass}
+                      value={load.accessorials?.[0]?.item_name ?? ""}
+                      onChange={(e) => {
+                        const next = [...loads];
+                        const acc = [...(load.accessorials ?? [])];
+                        const row = acc[0] ?? { item_name: "", amount_cents: 0, description: null };
+                        acc[0] = { ...row, item_name: e.target.value };
+                        next[idx] = { ...load, accessorials: acc.filter((a) => a.item_name || a.amount_cents > 0) };
+                        setLoads(next);
+                      }}
+                      placeholder="Detention / layover…"
+                      data-testid={`sc-accessorial-item-${idx}`}
+                    />
+                  </Field>
+                  <Field label="Accessorial $">
+                    <MoneyInput
+                      className={inputClass}
+                      valueCents={load.accessorials?.[0]?.amount_cents || null}
+                      onChangeCents={(cents) => {
+                        const next = [...loads];
+                        const acc = [...(load.accessorials ?? [])];
+                        const row = acc[0] ?? { item_name: "Accessorial", amount_cents: 0, description: null };
+                        acc[0] = { ...row, amount_cents: cents ?? 0, item_name: row.item_name || "Accessorial" };
+                        next[idx] = { ...load, accessorials: (cents ?? 0) > 0 || row.item_name ? acc : [] };
+                        setLoads(next);
+                      }}
+                      ariaLabel="Accessorial amount"
                     />
                   </Field>
                   <Field label="Factoring">
@@ -1228,7 +1280,17 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               ))}
             </Section>
 
-            <Section title="Deductions" subtotalCents={dedSubtotal} onAdd={() => setDeductions([...deductions, emptyMoney()])}>
+            <Section title="Deductions" subtotalCents={dedSubtotal + adminFeeCents} onAdd={() => setDeductions([...deductions, emptyMoney()])}>
+              <Field label="Admin fee (7200)">
+                <div data-testid="sc-admin-fee">
+                  <MoneyInput
+                    className={inputClass}
+                    valueCents={adminFeeCents || null}
+                    onChangeCents={(c) => setAdminFeeCents(c ?? 0)}
+                    ariaLabel="Admin fee"
+                  />
+                </div>
+              </Field>
               {deductions.map((row, idx) => (
                 <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
                   <Field label="Description">

@@ -229,6 +229,12 @@ Measured (Neon `br-fancy-credit-akjnd07a`, bypass_rls=lucia, tip `6d18a73826`):
   `reverseDriverAdvanceInClientTx`, `reverseSettlementForVoid`) then creates the NEW settlement with
   the same document number (voided prior row retained — WORM). FE confirms before retry. Guard
   asserts the wire.
+- **ROUND 180 complete wires (Cursor 2026-09-27):** Admin fee → `createSettlementDeduction(other)` +
+  `applied_to_settlement_id` → close posts **7200**. Empty miles × `empty_rate_cents` in preview/net.
+  Accessorials on load block → Book Load charges + earnings. Additional pay → `detention_pay` /
+  `extra_pay` settlement_lines (never reimbursements). Deductions post via same deduction engine.
+  Seed stamps `miles_shortest` so driver bill can mint. Faro `submitted_at` stamped from Date sent
+  (funding JE still at actual Faro funding). Owner Chrome Post still required for R180 §17 DONE.
 
 ## Known Quirks & Blockers
 
