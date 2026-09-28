@@ -1,0 +1,7 @@
+{
+  "_comment": "ROUND 163 JOB 1. mismatched_load_numbers: 6 of our earliest USMCA loads (13505-13511, all from the Aug 7-10 batch) carry a customer_id and/or rate_total_cents that disagrees with QBO's own record for the same load number -- a real, confirmed data-attribution defect from that early import, not a QBO error (QBO is the customer's own accounting system of record for AR). Pattern looks like a customer/rate rotation across adjacent rows (13506<->13507 look swapped; 13508/13510/13511 each disagree with QBO by a different amount) rather than a single simple two-row swap -- do NOT 'fix' this by guessing a rotation and writing new customer_id/rate_total_cents values. Each of these 6 needs its own real rate-con/source document (not yet located in Downloads for loads this old) before correction. unmatched_count: 73 CSV rows (Aug 7 - Sep 27) carry no real LOAD reference (blank, or a text placeholder like 'NOT PURCHASED') -- per the order's own instruction, never assumed from the Num suffix. Both ceilings shrink only when a real investigation resolves a specific row -- never by editing this file alone.",
+  "mismatched_load_numbers": ["13505", "13506", "13507", "13508", "13510", "13511"],
+  "unmatched_count": 73,
+  "established": "2026-09-28",
+  "measured_at": "2026-09-28T11:45:00Z"
+}
