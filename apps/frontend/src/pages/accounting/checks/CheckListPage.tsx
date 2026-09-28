@@ -7,6 +7,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { Button } from "../../../components/Button";
 import { formatDateUS } from "../../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 
 /**
  * Check list route (`/accounting/checks`), R-154 §5. Minimal server-sorted-by-date list for PR 4/7 --
@@ -76,6 +77,8 @@ export function CheckListPage() {
     >
       {!companyId ? (
         <div className="text-xs text-red-600">Select an operating company in the shell header.</div>
+      ) : query.isError ? (
+        <ListErrorBanner onRetry={() => void query.refetch()} />
       ) : (
         <div className="rounded border border-gray-200">
           <ParityTable<CheckListRow>

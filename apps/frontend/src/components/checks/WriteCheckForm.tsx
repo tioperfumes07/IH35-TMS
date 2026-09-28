@@ -344,7 +344,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
     queryFn: () => getBankingTiles(operatingCompanyId),
     enabled: open && Boolean(operatingCompanyId),
   });
-  const selectedBankBalance = bankTilesQuery.data?.tiles.find((t) => t.id === bankAccountId)?.current_balance ?? null;
+  const selectedBankBalance = bankTilesQuery.data?.tiles?.find((t) => t.id === bankAccountId)?.current_balance ?? null;
 
   // R-172 step 2 -- payee mailing address auto-fill, read-only preview (never invented client-side).
   const payeePreviewQuery = useQuery({
