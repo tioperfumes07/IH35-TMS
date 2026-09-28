@@ -238,7 +238,16 @@ Measured (Neon `br-fancy-credit-akjnd07a`, bypass_rls=lucia, tip `6d18a73826`):
 
 ## Known Quirks & Blockers
 
+### AUTH-061 stamp-less shells on Truck Line (Cursor, 2026-09-28)
 
+- Loads **13609 / 13616 / 13617 / 13618 / 13620 / 13621** sit on `views.live_loads` as `open_dispatch` /
+  `dispatched` with **0 stop stamps** and delivery appointments already past (Sep 23–25). They are
+  AUTH-061 shells, not operated CURRENT work. Measured 2026-09-28: those six are the *only*
+  USMCA `open_dispatch` rows.
+- Truck Line must not paint them LOADED or mark their drivers busy. Predicate:
+  `CURRENT_TRUCK_LINE_LOAD_SQL` in `truck-line.routes.ts` — stamp-less `dispatched` only counts when
+  delivery appointment ≥ now−48h. Guard: `verify-dispatch-truck-line.mjs` clause (m). PR #22922.
+- Does **not** void the shells (void-not-delete). Real rate-cons still need AUTH / create path.
 
 ### ACCT-F20260925i — TB 1090/2100/1245 closed (Cursor, 2026-09-25)
 

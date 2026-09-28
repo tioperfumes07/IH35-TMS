@@ -191,6 +191,23 @@ export function verify(files) {
     problems.push('(l) TruckLineBoard.tsx must branch on r.kind === "available" to render THE AVAILABLE TRUCK — the row scope change is not optional styling');
   }
 
+  // (m) CURRENT load predicate — hide stamp-less dispatched shells whose delivery is already
+  // >48h past (AUTH-061 13609/16/17/18/20/21 class). Same constant must gate BOTH the unit
+  // live_loads lateral AND busy_drivers so a shell cannot paint as LOADED or block AVAILABLE.
+  if (!/const CURRENT_TRUCK_LINE_LOAD_SQL\s*=/.test(truckLineRoutes)) {
+    problems.push("(m) truck-line.routes.ts must declare CURRENT_TRUCK_LINE_LOAD_SQL (CURRENT load vs stamp-less dispatched shell)");
+  }
+  if (!/interval '48 hours'/.test(truckLineRoutes)) {
+    problems.push("(m) CURRENT_TRUCK_LINE_LOAD_SQL must keep the 48-hour delivery window for stamp-less dispatched shells");
+  }
+  if (!/actual_arrival_at IS NOT NULL OR s\.actual_departure_at IS NOT NULL/.test(truckLineRoutes)) {
+    problems.push("(m) CURRENT_TRUCK_LINE_LOAD_SQL must treat any stop stamp as evidence the dispatched load is real work");
+  }
+  const currentSqlUses = (truckLineRoutes.match(/\$\{CURRENT_TRUCK_LINE_LOAD_SQL\}/g) ?? []).length;
+  if (currentSqlUses < 3) {
+    problems.push(`(m) CURRENT_TRUCK_LINE_LOAD_SQL must be interpolated into the unit live_loads lateral AND both busy_drivers unions (found ${currentSqlUses}, need >=3)`);
+  }
+
   return problems;
 }
 
@@ -245,6 +262,14 @@ function runSelftest() {
     ["(l) Assign a load pill removed", { ...good, boardTsx: good.boardTsx.replaceAll("Assign a load →", "REMOVED") }],
     ["(l) onAssignDriver wiring removed", { ...good, boardTsx: good.boardTsx.replaceAll("onAssignDriver", "REMOVED") }],
     ["(l) available-row branch removed", { ...good, boardTsx: good.boardTsx.replaceAll('r.kind === "available"', "false") }],
+    ["(m) CURRENT_TRUCK_LINE_LOAD_SQL removed", { ...good, truckLineRoutes: good.truckLineRoutes.replace(/const CURRENT_TRUCK_LINE_LOAD_SQL\s*=/, "const REMOVED_CURRENT_TRUCK_LINE_LOAD_SQL =") }],
+    ["(m) 48h window removed", { ...good, truckLineRoutes: good.truckLineRoutes.replace(/interval '48 hours'/g, "interval '7 days'") }],
+    ["(m) busy_drivers stopped using CURRENT predicate", { ...good, truckLineRoutes: good.truckLineRoutes.replace(/\$\{CURRENT_TRUCK_LINE_LOAD_SQL\}/g, (m, offset, src) => {
+      // Keep the first use (unit lateral); blank the rest so busy_drivers unions lose it.
+      const before = src.slice(0, offset);
+      const prior = (before.match(/\$\{CURRENT_TRUCK_LINE_LOAD_SQL\}/g) ?? []).length;
+      return prior === 0 ? m : "TRUE /* REMOVED */";
+    }) }],
   ];
   let failed = 0;
   for (const [name, mutated] of cases) {
