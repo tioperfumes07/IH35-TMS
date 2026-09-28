@@ -3,16 +3,15 @@
 ## HARD LINE
 STOP FACTORING. CLOSED. AUTH-113. Settlements 5769–5819 OWNER-CLOSED. matched_* stand-down.
 Credentials: `~/Desktop/09-28-2026-IH35-MASTER-KEYS-ENVS-SINGLE-SOURCE-OF-TRUTH.md` ONLY.
+**ROUND 209:** Auto-Deploy OFF on BE+FE. Never say "live"/"shipped" for own PR — say **merged, in batch**. Captain batches every 5–10. Law: `docs/bus/00-ROUND-209-AUTO-DEPLOY-OFF-BULK-BATCH.md`.
 
 ## ITEM 1 — G-16 CHECK CREATOR — DONE
 REGISTRY_COUNT_BEFORE=2 · REGISTRY_COUNT_AFTER=3
 createCheck(print_later)→print batch #1003→GL JE `0afd6588`→void JE `496afcc3`.
 
-## ITEM 2 — RESOLVE FULLY WIRED — DONE + LIVE
-Merged #23078 sha `629f70aaba`.
-BE deploy `dep-datdkt49v7es73aba380` status **live**.
-FE deploy `dep-datdkt49v7es73aba58g` status **live**.
-healthz/shallow `git_sha=629f70aaba334b2f0866f3438e91f48a89b5a712`.
+## ITEM 2 — RESOLVE FULLY WIRED — MERGED, IN BATCH
+Merged #23078 sha `629f70aaba`. (ROUND 209: seats do not claim "live" — captain reports batch.)
+Pre-merge FE/BE tsc exit 0 + money-pr-local-gate exit 0 were pasted on the PR.
 
 ## ITEM 3 — BULK ACCEPT — DONE (AUTH-112)
 `acceptMatchWithResolveDifference` only via
