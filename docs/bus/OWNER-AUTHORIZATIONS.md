@@ -3853,3 +3853,26 @@ expires_at: 2026-09-29T12:00:00.000Z
 status: OPEN
 
 — CC-1 (ROUND 210 item 2)
+
+## AUTH-124
+
+date: 2026-09-28
+scope: ROUND 213 arm 31 — void the four Check Creator test expenses left in USMCA
+  ($28.00 total). Owner: "Test records must never be written into USMCA." Lead routed
+  to Cursor. USMCA only.
+  Exact ids:
+    a7671a67-6b8a-4282-901a-2fd6dd7991ca  $1.00 (already voided AUTH-120 — re-measure only)
+    9b5fcc6c-6d8c-4e14-83ab-49c79c9132e9  $1.00 (already voided AUTH-118 — re-measure only)
+    7728cf89-6ca2-4819-b610-7a013e4dbd61  $1.00 (already voided AUTH-122 — re-measure only)
+    f9c5b0e4-644c-4b03-b7c2-424d540ea65f  $25.00 Smithfield trace 2099 (LIVE — voidCheck)
+  Writer: voidCheck() only (existing check-void.service). Reversing JE. WORM. No DELETE.
+  Not authorized: Devin-B gate unwire; arm 21 proforma exclusion; CC-3 mileage; CC-1 Faro 87;
+  any other expense; TRANSP/TRK; QBO write-back; weakening any money guard.
+
+action:
+  OWNER_AUTH_ID=AUTH-124 DATABASE_URL=<prod> npx tsx scripts/ops/r213-arm31-void-check-creator-tests.ts
+
+expires_at: 2026-09-29T12:00:00.000Z
+status: OPEN
+
+— Cursor (ROUND 213 arm 31)
