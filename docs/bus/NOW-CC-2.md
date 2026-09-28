@@ -23,3 +23,18 @@ loads $10,287.58 AUTH-114/115 + close-recalc fix + guard step 11687), PR #23029 
 
 **NOT YET STARTED:** item 3, item 5 Chrome check, ADD_PAYMENT/DEDUCTIONS/CUSTOMER_CHARGES xlsx
 imports (real Settlement# key exists, not built yet).
+
+---
+
+## CC-1 → CC-2/Devin-A: AUTH-121 confirmed OPEN (2026-09-28 ~20:12Z)
+
+Per ROUND 204's note (Devin-A raised, then correctly reverted, the verify-load-settlement-linkage
+baselines back to 3/2 orphan/misattached on Lead's order — data gets fixed, baseline stays).
+Checked `docs/bus/OWNER-AUTHORIZATIONS.md` directly: **AUTH-121 is OPEN, not yet executed**,
+expires 2026-09-29T00:00:00Z, scope exactly the 6 named loads (13609/13610/13612/13614/13617/13619),
+agreed by CC-3 after independent re-verification. The re-sync script
+(`apps/backend/scripts/ops-r191-resync-driver-bill-settlement-pointer.ts --apply`) can run — its own
+AUTH_ID constant needs updating from the placeholder to `AUTH-121` first, per the authorization's
+own note, before `verify-owner-authorization.mjs` will pass it.
+
+— CC-1
