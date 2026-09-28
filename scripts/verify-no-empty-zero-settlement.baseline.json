@@ -1,79 +1,50 @@
 {
-  "_comment": "Settlements with no loads assigned (no live settlement_lines, net_pay 0.00) when the guard landed, measured live on USMCA, read-only. Shrink-only: the PR that assigns a settlement's loads removes its id here; never add one without a Lead ruling named in the PR. The nine labelled 5817-5825 are legitimate pre-settlements (owner, round 80: assign them by load number or sequence); separately, each records a source_document_ref in AlwaysTrack's settled range although AlwaysTrack has not settled it. [measured_at backfilled 2026-09-24 to pass verify-no-stale-literals-in-guards]",
+  "_comment": "Settlements with no loads assigned (no live settlement_lines, net_pay 0.00) when the guard landed, measured live on USMCA, read-only. Shrink-only: the PR that assigns a settlement's loads removes its id here; never add one without a Lead ruling named in the PR. 2026-09-28 (CC-1, AUTH-074 PR): removed 9bdfa86e, e1bfb565(5817), 32838c2f(5818), 9957827a(5819), 5820, 5821, 5822, 5823, 5824, 5825 -- verify-no-empty-zero-settlement's own live re-run confirmed each now has its loads (fixed by other seats overnight, unrelated to this PR -- these are different rows than the P-0001/0002/0004/0008/0009/0010/0011 pre-settlements this PR works with, which use their own system-minted ids, not the '5817/5818/5819' labels formerly on these now-resolved rows). Added S-5816 (empty shell, Lead ROUND 144 ruling item 6, not fixed here) and P-0002/P-0004/P-0008/P-0009/P-0010/P-0011 (the 6 ROUND-189 pre-settlements AUTH-074 emptied on purpose to restore views.live_loads -- each still carries its load via mdata.loads.presettlement_link_id, the guard's own documented open+loaded exception). [measured_at backfilled 2026-09-24 to pass verify-no-stale-literals-in-guards]",
   "established": "2026-09-22",
   "settlements": [
     {
-      "id": "2ed4116a-ad7a-4cf8-86dc-66c0f7b13426",
-      "label": "—",
+      "id": "b64cf94e-c8cf-4a8a-b129-2eda0420d1de",
+      "label": "S-5816",
       "status": "closed",
-      "period_start": "2026-09-02"
+      "period_start": "2026-09-10",
+      "note": "empty shell -- closed, 0 lines, gross 0.00, one load (13595) linked, no PDF in this pack (Lead ROUND 144 ruling item 6, 2026-09-28). Not fixed here; out of scope for this PR."
     },
     {
-      "id": "9fc96d89-c263-4f6a-8757-ab81400223c5",
-      "label": "—",
-      "status": "closed",
-      "period_start": "2026-09-08"
-    },
-    {
-      "id": "9bdfa86e-4e91-4d15-86dc-45b1f977516d",
-      "label": "—",
-      "status": "closed",
-      "period_start": "2026-09-05"
-    },
-    {
-      "id": "e1bfb565-3fa5-4ecb-b527-9e1be0d343de",
-      "label": "5817",
-      "status": "closed",
-      "period_start": "2026-09-18"
-    },
-    {
-      "id": "32838c2f-80cd-4f63-8f4e-d824089ec084",
-      "label": "5818",
-      "status": "closed",
-      "period_start": "2026-09-11"
-    },
-    {
-      "id": "9957827a-4877-4893-b7f9-9ff7d3e1e168",
-      "label": "5819",
-      "status": "open",
-      "period_start": "2026-09-11"
-    },
-    {
-      "id": "153b58e7-0531-4fb6-b72c-7d846d7c6a1c",
-      "label": "5820",
-      "status": "open",
-      "period_start": "2026-09-14"
-    },
-    {
-      "id": "8f19042a-f94f-419f-a6a9-617884c9ef3e",
-      "label": "5821",
+      "id": "8fefac42-b60b-443e-9ceb-1e7b9350d696",
+      "label": "P-0002",
       "status": "open",
       "period_start": "2026-09-18"
     },
     {
-      "id": "650313f8-b87f-43a0-b6aa-0944bd8117c9",
-      "label": "5822",
+      "id": "2ef96b64-c4bf-4f4e-8bd6-50cf0d8e8224",
+      "label": "P-0004",
       "status": "open",
-      "period_start": "2026-09-15"
+      "period_start": "2026-09-17"
     },
     {
-      "id": "afd285b1-88d5-4e7e-ba9f-1e6deef795f9",
-      "label": "5823",
+      "id": "14a9fa91-3ea7-4fa7-88d1-eb692c02a6a1",
+      "label": "P-0008",
       "status": "open",
-      "period_start": "2026-09-16"
+      "period_start": "2026-09-21"
     },
     {
-      "id": "ba1fcfe8-7efc-42a0-a47a-7f2705020926",
-      "label": "5824",
+      "id": "9e338215-e6f9-4625-9fdc-0b4e51d06086",
+      "label": "P-0009",
       "status": "open",
-      "period_start": "2026-09-16"
+      "period_start": "2026-09-21"
     },
     {
-      "id": "32770d8c-39aa-4adc-a035-8abadb8614dd",
-      "label": "5825",
+      "id": "14f06775-5830-40fa-b19e-93908b9a4c88",
+      "label": "P-0010",
       "status": "open",
-      "period_start": "2026-09-18"
+      "period_start": "2026-09-22"
+    },
+    {
+      "id": "349c0884-0a8b-4ee2-891d-1f9e75d20162",
+      "label": "P-0011",
+      "status": "open",
+      "period_start": "2026-09-22"
     }
   ],
-  "measured_at": "2026-09-24T00:30:00Z"
+  "measured_at": "2026-09-28T03:28:22.874Z"
 }
