@@ -9209,5 +9209,10 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-28",
     "purpose": "verify-close-recalculates-bills-from-real-mileage"
+  },
+  "11691": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-28",
+    "purpose": "verify-factoring-posting-legs-match-header"
   }
 }
