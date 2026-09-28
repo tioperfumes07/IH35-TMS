@@ -397,6 +397,12 @@ const GUARD_303 = [
 const DATA_WRITE_PATHS = ["db/migrations/", "scripts/ops/"];
 const ONE_SHOT_WRITER_RE = /^scripts\/run-[^/]+-once\.m?[jt]s$/;
 const LIVE_DOMAIN_GUARDS = [
+  // ROUND 163 JOB 1 (P0) — our issued-invoice total must tie to the QBO control file for its date
+  // range, or the gate reports the exact delta (actionable/mismatched/unmatched broken out).
+  [
+    "verify-ar-ties-to-qbo-invoice-list",
+    ["apps/backend/src/accounting/from-load.ts", "apps/backend/src/accounting/invoice-send.service.ts", "feed-input/qbo-invoice-list-2026-08-07-to-2026-09-27.csv"],
+  ],
   // ROUND 155.23/157-A item 6 — a load whose first and last scheduled stop share the same city
   // while its own recorded miles exceed 100 is physically impossible and always means copied/
   // corrupted stop data (found live: 13614 and 6 other historical loads).

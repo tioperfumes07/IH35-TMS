@@ -2945,3 +2945,47 @@ mentioned nearby but never actually gates the write) — the live behavioral gua
 (verify-presettlement-shows-only-this-load-and-its-open-tour.mjs) is what actually covers that one.
 
 — CC-1
+
+---
+
+## AUTH-099
+issued_at: 2026-09-28T11:40:00.000Z
+scope: accounting.invoices + accounting.invoice_lines INSERT ONLY, via the sanctioned engine ONLY
+(buildInvoiceFromLoad -> sendDraftInvoice, mode="historical_backfill") for exactly 5 loads whose
+own rate_total_cents AND customer already agree with the QBO control file's stated amount/customer
+for that load number: 13503 ($4,900.00), 13504 ($4,900.00), 13509 ($4,400.00), 13533 ($3,450.00),
+13539 ($4,860.00). No caller-supplied amount or date -- the engine derives both from the load's own
+real data (rate + delivery-stop timestamp), never hand-written. operating_company_id
+5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA) only.
+action: OWNER_AUTH_ID=AUTH-099 npx tsx scripts/ops/2026-09-28-round163-job1-create-missing-invoices.mjs
+expires_at: 2026-09-28T17:40:00.000Z
+status: DONE — executed live 2026-09-28T11:4xZ
+
+ROUND 163 JOB 1 (P0): QBO total $454,991.72 vs our issued total, control file
+feed-input/qbo-invoice-list-2026-08-07-to-2026-09-27.csv (copied verbatim from the owner's Desktop
+export). Full row-by-row reconciliation, both embedded tables parsed (main + a second block of 11
+invoices hidden in columns 19-26), every amount cross-checked -- not a coarse total-vs-total
+subtraction:
+  - 5 invoices: real, populated LOAD, load's own customer+rate agree with QBO, not yet issued.
+    CREATED here, live-verified: all 5 minted at the exact QBO amount and sent successfully.
+  - 6 loads (13505/13506/13507/13508/13510/13511, all from the Aug 7-10 batch): QBO's stated
+    customer and/or amount for that load DISAGREES with our own load record -- a real, confirmed
+    data-attribution defect from that early import (pattern looks like a customer/rate rotation
+    across adjacent rows, not a single clean swap). NOT created or corrected here -- each needs its
+    own real rate-con/source document (not located for loads this old) before touching customer_id
+    or rate_total_cents. Reported, baselined, not guessed at.
+  - 73 CSV rows: LOAD column blank or a text placeholder ("NOT PURCHASED") -- per the order's own
+    instruction, never assumed from the Num suffix (a real trap: row "105- 13627" carries LOAD
+    13572, a DIFFERENT real load). Reported as unmatched, listed by name in the guard's own output,
+    not created.
+  - 1 row (BBA Logistics LLC, load 13530): "TRANSPORTATION" in Location full name -- QBO's own
+    record of a different billing entity. Excluded, not USMCA's.
+Math ties exactly: $143,920 (already issued, matched) + $22,510 (created here) + $20,400
+(mismatched, reported) + $278,061.72 (unmatched, reported) + $1,500 (excluded) = $454,991.72,
+QBO's own printed total, exact to the cent.
+
+Guard scripts/verify-ar-ties-to-qbo-invoice-list.mjs: live PASS. Fails on any NEW actionable gap
+(real load, agreeing customer+amount, not yet issued) immediately; the mismatched/unmatched buckets
+are named-exception baselines (6 and 73) that block only if they grow, never silently.
+
+— CC-1

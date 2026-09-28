@@ -1,48 +1,64 @@
-# ROUND 155.23 fully complete (both remaining guards shipped) + 13614 lane fix — CC-1 — 2026-09-28 11:25Z
-Archived: `docs/bus/archive/NOW-CC-1-2026-09-28-19.md`.
+# ROUND 163 JOB 1 DONE (AR reconciled to QBO to the cent) — CC-1 — 2026-09-28 11:50Z
+Archived: `docs/bus/archive/NOW-CC-1-2026-09-28-20.md`.
 
-## ROUND 155.23/157-A item 6 — NOW FULLY DONE, AUTH-098
-13614's fabricated Laredo->Laredo lane fixed from its real signed settlement document
-(Driver_Settlement_5818.pdf): real delivery is CONLEY, GA 30288, real loaded miles 1,111.6.
-Root cause confirmed live before writing: the delivery stop was a literal database copy of the
-pickup stop (identical city/state/postal AND identical actual_arrival_at timestamp). miles_shortest
-set to NULL (not copied from practical) — the document has no independently-sourced shortest
-figure, so NULL is the honest value per 155.12 FIX 2's own rule.
+## ROUND 163: Lead's claimed fixes — VERIFIED, not redone
+Re-checked with the full read pattern (SET LOCAL ROLE neondb_owner; SET LOCAL app.bypass_rls;
+verified neondb_owner/true — my first attempt silently ran as ih35_app, caught before trusting it):
+- Unit constraint replaced: uq_loads_one_active_unit confirmed DROPPED, trg_refuse_overlapping_unit_assignment confirmed present.
+- All 16 real loads (13624-13639): dispatched=16, with_unit=16, with_wo=16, missing_unit=0 — confirmed live, matches the Lead's numbers exactly.
+- 7 stale loads: 13609/13617 -> invoiced, 13616/13618/13620/13621/13622 -> delivered — confirmed live.
+- Samsara: is_enabled=true, confirmed still on (I found this earlier this session; it's held).
+No redo needed on any of this.
 
-Both remaining named guards shipped:
-- scripts/verify-stop-lane-is-consistent-with-miles.mjs — a load whose first/last stop share a
-  city while recorded miles exceed 100 fails. Live run found the SAME defect on 6 MORE historical
-  loads (13610,13612,13613,13615,13619,13541) — baselined as real, documented debt, not silently
-  fixed or hidden; each needs its own source document before correction.
-- scripts/verify-tour-groups-by-tour-id-only.mjs — static sweep of driver-finance/** for a
-  presettlement_link_id write with no tour_id check nearby. Found settlement-load-reassignment
-  .service.ts has this exact gap (a manual admin tool) — baselined as known debt. This guard's own
-  documented limitation: it could NOT reliably catch settlement-creator.service.ts's own confirmed
-  defect (tour_id mentioned nearby but never actually gating the write) — the live behavioral guard
-  from earlier this round (verify-presettlement-shows-only-this-load-and-its-open-tour.mjs) is what
-  actually covers that one.
+## ROUND 163 JOB 1 (P0) — DONE, AUTH-099, AR reconciles to QBO exactly
+Control file feed-input/qbo-invoice-list-2026-08-07-to-2026-09-27.csv (committed verbatim from the
+owner's Desktop export). Full row-by-row reconciliation, both embedded tables parsed (main table +
+a second block of 11 invoices hidden in CSV columns 19-26), every amount cross-checked against our
+own DB — not a coarse total-minus-total subtraction. Math ties EXACTLY to QBO's own printed total:
 
-ROUND 155.23 is now fully complete: JOB 1+2 (tour_id-only grouping, closed-load exclusion, live-
-proven) + item 6 (13614's lane, both remaining guards) all shipped.
+  $143,920.00  already issued, matched by load number
++ $ 22,510.00  created live this round (5 loads, listed below)
++ $ 20,400.00  mismatched — customer/rate disagreement, reported not guessed (6 loads)
++ $278,061.72  unmatched — LOAD blank/text in QBO, reported not guessed (73 rows)
++ $  1,500.00  excluded — different billing entity (BBA Logistics/13530)
+= $454,991.72  QBO's own printed control total, exact to the cent
 
-## Full picture across all rounds as of this update
-- 155.12: FIX 1, FIX 2(a), FIX 2(b), FIX 4 all DONE. FIX 2(c)/(d) (mileage for the 16 current real
-  loads) and FIX 3 (11 of 12 remaining unit assignments) still genuinely blocked — no real source /
-  real DB constraint, both re-confirmed multiple times this session, not re-litigated further.
-- 155.20: JOB 1 DONE (corrected via 155.26/AUTH-095). JOB 2 DONE (root-cause diagnosed: USMCA's
-  Samsara toggle was off the whole time, flipped mid-session; guard shipped; not a code defect).
-  JOB 3 (advance the stale/delivered loads) still blocked on real delivery-evidence timestamps;
-  CC-2's AUTH-096 (real settlement posting covering several of them) was still authorized-but-not-
-  executed as of the last check — re-verify before touching those loads.
-- 155.23: FULLY DONE (this update).
-- 155.26/157-A item 3: WO numbers done for all 16 real loads; trailers/drivers/customers/lanes
-  already matched AlwaysTrack (no changes needed beyond 13614, which is a 155.23 item, not this
-  one); units: 1 of 12 done, 11 correctly blocked (AUTH-095).
-- New, documented (not yet fixed) debt discovered as a side effect of this round's guards: 6 more
-  loads with the same copied-stop-data defect as 13614; 1 more file
-  (settlement-load-reassignment.service.ts) with the same driver/unit-not-tour_id linking gap as
-  settlement-creator.service.ts.
+CREATED (real, populated LOAD, customer+amount agree with QBO, not yet issued — minted through the
+sanctioned engine, buildInvoiceFromLoad -> sendDraftInvoice mode="historical_backfill", never
+hand-written; amount/date both derived from the load's own real data, never caller-supplied):
+  13503 Semares Forwarding Services    $4,900.00
+  13504 Semares Forwarding Services    $4,900.00
+  13509 ES Logistics International LLC $4,400.00
+  13533 Refrigerx Transportation LLC   $3,450.00
+  13539 Refrigerx Transportation LLC   $4,860.00
+All 5 live-verified: minted, sent, exact QBO amount.
 
-Next candidate: either wait for/verify CC-2's AUTH-096 execution before touching the stale loads'
-status (157-A item 1), or start correcting the 6 newly-found copy-artifact loads one at a time
-against their own real source documents (same method as 13614).
+MISMATCHED, reported, NOT touched (6 loads, all from the Aug 7-10 batch — a real, confirmed
+customer/rate-attribution defect in our own data, pattern looks like a rotation across adjacent
+rows, not one clean swap; needs each load's own real rate-con document, none located for loads
+this old, before correcting customer_id or rate_total_cents):
+  13505 QBO: Value Logistics LLC $3,900.00      | ours: Value Logistics Inc DBA A1 Value $3,900.00
+  13506 QBO: Twin Cities Logistics $1,200.00    | ours: DH Express Inc $3,900.00
+  13507 QBO: Value Logistics LLC $3,900.00      | ours: Twin Cities Logistics $1,200.00
+  13508 QBO: Value Logistics LLC $3,800.00      | ours: NCC Logistics México $2,500.00
+  13510 QBO: Refrigerx Transportation LLC $3,800.00 | ours: Impact Bulk Logistics $3,000.00
+  13511 QBO: Refrigerx Transportation LLC $3,800.00 | ours: Rehmann Transportation Corp. $3,600.00
+
+UNMATCHED, reported, NOT created (73 rows — LOAD column blank or a text placeholder like "NOT
+PURCHASED" in QBO's own export; per the order's own instruction, never assumed from the Num suffix
+— confirmed real trap: row "105- 13627" carries LOAD=13572, a DIFFERENT real load). Full list is in
+the guard's own live output (scripts/verify-ar-ties-to-qbo-invoice-list.mjs) and the baseline file.
+
+EXCLUDED: BBA Logistics LLC / load 13530 — "TRANSPORTATION" in QBO's own Location full name field,
+a different billing entity, not USMCA's.
+
+Guard scripts/verify-ar-ties-to-qbo-invoice-list.mjs: live PASS. Blocks immediately on any NEW
+actionable gap (real load, agreeing customer+amount, not yet issued); the mismatched/unmatched
+buckets are named-exception baselines (6/73) that only block if they grow.
+
+## ROUND 163 JOB 2/3/4 — NOT STARTED THIS TURN
+JOB 2 (Samsara backfill for the 16 current loads + prove a stamp lands): not started.
+JOB 3 (mileage from Samsara position history): depends on JOB 2.
+JOB 4 (fix the 6 copied-stop-data loads + the 1 tour_id-check-gap file, both already baselined by
+me in ROUND 155.23): not started this turn.
+Picking up JOB 2 next.
