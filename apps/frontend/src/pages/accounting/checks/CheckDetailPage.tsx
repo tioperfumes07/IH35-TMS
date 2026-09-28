@@ -12,7 +12,8 @@ import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal"
 import { VoidedBanner } from "../../../components/accounting/VoidedBanner";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { formatDateUS } from "../../../lib/formatDate";
-import { getCheck, voidCheckApi } from "../../../api/checks";
+import { getCheck, voidCheckApi, type CheckDetailLine } from "../../../api/checks";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 function formatMoneyCents(cents: number): string {
   return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -58,6 +59,18 @@ export function CheckDetailPage() {
 
   const { check, lines } = query.data;
   const isVoided = check.status === "void";
+
+  const lineColumns: Array<ParityColumn<CheckDetailLine>> = [
+    { key: "line_sequence", label: "#", sortable: false, className: "w-12", cellClass: "text-gray-500" },
+    { key: "description", label: "Description", sortable: false },
+    {
+      key: "amount_cents",
+      label: "Amount",
+      sortable: false,
+      className: "w-28",
+      render: (line) => formatMoneyCents(line.amount_cents),
+    },
+  ];
 
   return (
     <AccountingSubNavWrapper
@@ -169,24 +182,16 @@ export function CheckDetailPage() {
         </div>
 
         <div className="rounded border border-gray-200">
-          <table className="w-full text-xs">
-            <thead className="bg-gray-50 text-left text-gray-500">
-              <tr>
-                <th className="px-2 py-1">#</th>
-                <th className="px-2 py-1">Description</th>
-                <th className="w-28 px-2 py-1">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lines.map((line) => (
-                <tr key={line.id} className="border-t border-gray-100">
-                  <td className="px-2 py-1 text-gray-500">{line.line_sequence}</td>
-                  <td className="px-2 py-1">{line.description}</td>
-                  <td className="px-2 py-1">{formatMoneyCents(line.amount_cents)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ParityTable<CheckDetailLine>
+            columns={lineColumns}
+            rows={lines}
+            rowKey={(line) => line.id}
+            emptyText="No lines."
+            pageSize={lines.length || 1}
+            hidePager
+            enableColumnResize={false}
+            enableColumnReorder={false}
+          />
         </div>
       </div>
 
