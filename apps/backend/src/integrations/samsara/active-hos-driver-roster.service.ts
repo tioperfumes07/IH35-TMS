@@ -45,6 +45,7 @@ export async function listActiveHosDriverRoster(
        AND d.samsara_driver_id IS NOT NULL
        AND d.deactivated_at IS NULL
        AND d.status = 'Active'
+       AND d.is_sample_data IS NOT TRUE
      ORDER BY d.id, a.started_at DESC NULLS LAST`,
     [operatingCompanyId]
   );
