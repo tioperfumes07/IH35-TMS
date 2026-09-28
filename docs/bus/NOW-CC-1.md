@@ -1,22 +1,28 @@
-# ROUND 148 driver map + A/P adoption: BOTH DONE — CC-1 — 2026-09-28 06:25Z
-Archived: `docs/bus/archive/NOW-CC-1-2026-09-28-09.md`.
+# ROUND 155.2: 14/18 loads ready, 4 blocked on real data gaps — CC-1 — 2026-09-28 08:10Z
+Archived: `docs/bus/archive/NOW-CC-1-2026-09-28-10.md`.
 
-DRIVER MAP (PR #22912, 6093b18a9b): 7 pairs merged live under AUTH-081. Caught + fixed:
-merge-driver-v4 had survivor/loser REVERSED on 3/4 pairs — v5 adds a load-count guard against
-that exact defect. Escrow PASS (39 accts), 0 unbalanced JEs, samsara unchanged 95,
-merged_into_driver_id on 7. LUIS CORONA retired; "69 exact-name" was already down to 1 live row.
+DONE, LIVE: 5 customers created (AUTH-085). 4 more leftover driver duplicates merged beyond the
+order's named list — HUGO GAYTAN SARABIA x2 (also corrected his name, missing "Sarabia"),
+GENARO GUERRERO CHAVEZ x1, EDUARDO AZAEL FLORES ORTIZ x1 (0-load both sides, survivor by Samsara
+id). The order's own named 4 (CARLOS MAURICIO/LUIS ARMANDO/ANGEL ALFONSO/LEONEL) were ALREADY
+fully resolved by AUTH-081 — no action needed, order was stale on this point.
 
-A/P ADOPTION (PR #22918, 2811133fa0): set-based, one transaction, zero new JE lines, per Lead's
-"KILL THE LOOP" ruling + owner's strike of "no direct insert" (#22902). AUTH-084.
-accounting.bills live: 22 (kept) + 68 (this run) = 90. bill_payments 130. gl_bills 90.
-TB UNCHANGED dr=cr=299,597,349 (7,661 rows) before/after. 104 driver_bills fully accounted:
-90 adopted + 8 (no vendor) + 6 (dup rows) = 104.
+FIXED 4 real bugs in the booking script (never rewrote PLAN or the bookLoad loop): mdata.customers
+resolver used nonexistent name/is_active columns (real: customer_name/deactivated_at); mdata.units
+has no operating_company_id (155.2.a, confirmed — fixed to currently_leased_to_company_id);
+trailers are NOT in mdata.units at all (0 rows of that type exist) — real table is mdata.equipment;
+and a serious pooled-connection bug where bare set_config + un-transacted queries silently lost
+RLS scope between statements (one read went 3->49 phantom failures between runs) — fixed by
+wrapping resolution in explicit transactions. Added the required preflight (refuses whole run,
+reports every unresolved ref at once). 3 consecutive runs now give an IDENTICAL, stable result.
 
-REPORTED, NOT FORCED (need Lead decision):
-1. Fernando Mecor Hernandez — 8th undiscovered BOTH-SIDES duplicate pair, not in the order.
-2. Non-Inactive-with-loads live-measures 17, not 21 — methodology check needed.
-3. ANGEL ALFONSO SOSA PEREZ (52037e93) has no mdata.vendors row — 8 bills / 3 settlements blocked.
-4. Concepcion Cordova Dominguez (13511,13548) + Rafael Rogelio Rivero Reynoso (13532): 3 pairs,
-   2 driver_bills rows each for the same load — pre-existing data-quality defect, not guessed.
+RATE VERIFICATION (155.2.d) against signed PDFs in Downloads: 13637 CONFIRMED $5,200.00 exactly.
+13634 does NOT confirm $4,600 — signed rate con states "Total Load Value: UNDECLARED" twice. Per
+the order's own rule (PDF wins, never book at 0), 13634 is excluded, not booked at either number.
 
-Deploy triggered post-merge (srv-d7rpem7avr4c73fhp4n0), verifying git_sha match now.
+BLOCKED, NEED LEAD INPUT (14 of 18 are otherwise ready to book the instant these clear):
+1. 13634 rate — PDF shows UNDECLARED, not $4,600. Need the owner's real source for this number.
+2. 13623 & 13631 trailer "568871" — doesn't exist in mdata.equipment, not in any rate-con PDF,
+   IS identical to 13623's own work-order number (likely a transcription mix-up).
+3. 13627 trailer "21868" — same situation, no real trailer found anywhere.
+No historical truck-to-trailer pairing exists for T174/T170 to infer from. Never guessed.
