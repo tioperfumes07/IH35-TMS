@@ -3532,3 +3532,60 @@ status: DONE — executed live 2026-09-28, but NOT as authorized above. Full res
 — CC-1
 
 ---
+
+## AUTH-114
+issued_at: 2026-09-28T15:05:00.000Z
+scope: mdata.loads UPDATE ONLY (miles_deadhead), USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only,
+exactly 3 rows: load_number 13629, 13635, 13637. mdata.loads carries two parallel, unsynced
+deadhead-mile columns -- miles_deadhead (what resolveDriverBasePayCents() actually reads to price
+the empty leg) and deadhead_miles_to_pickup (Round 174's Google-Routes deadhead-to-pickup
+optimizer output). All 15 currently-unbilled USMCA loads had miles_deadhead NULL; 3 of them
+(13629=114, 13635=104, 13637=113) had a real, non-fabricated deadhead_miles_to_pickup value the
+pay engine could never see through this column. Narrow, targeted sync of exactly those 3 rows --
+not a blanket COALESCE, not a schema merge. The other 12 loads keep miles_deadhead NULL (genuinely
+unknown first-leg deadhead, never coerced to 0).
+action: DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r178-deadhead-miles-backfill.ts --apply
+expires_at: 2026-09-28T21:05:00.000Z
+status: DONE -- executed live 2026-09-28. Dry-run confirmed exactly 3 eligible rows. Applied: all 3
+updated (13629: null->114.0, 13635: null->104.0, 13637: null->113.0), re-verified live afterward.
+
+— CC-2
+
+---
+
+## AUTH-115
+issued_at: 2026-09-28T15:15:00.000Z
+scope: driver_finance.driver_bills INSERT/UPDATE, USMCA (5c854333-6ea5-4faa-af31-67cb272fef80)
+only, exactly the 15 loads named in ROUND 178's follow-up order (13622, 13624-13630, 13632-13633,
+13635-13639) that carried no non-voided driver_bills row. NOT a hand-derived formula -- every mint
+went through the SAME sanctioned engine every booking/dispatch/close path already calls
+(ensureDriverBillArtifactsForLoad -> createDriverBillArtifacts -> resolveDriverBasePayCents in
+apps/backend/src/dispatch/book-load.service.ts), called directly (no HTTP hop, same
+DB-credential-role limitation as AUTH-108) rather than reimplemented. Fixed one real bug in the
+entry point first: ensureDriverBillArtifactsForLoad's own SELECT never carried miles_deadhead, so
+the deadhead leg silently priced at 0 through this path regardless of the column's real value
+(fixed in apps/backend/src/dispatch/book-load.service.ts, same PR). This is the PRE-SETTLEMENT
+ESTIMATE the Lead explicitly ordered -- priced off today's miles/rate-card, NOT required to
+reproduce the two already-closed reference bills (13631, 13634), which priced off a now-drifted
+miles_shortest snapshot from before Round 174's Google-Routes recalculation.
+action: DATABASE_URL=<prod> npx tsx apps/backend/scripts/ops-r178-mint-driver-bills.ts --apply (run
+from apps/backend/)
+expires_at: 2026-09-28T21:15:00.000Z
+status: DONE -- executed live 2026-09-28. Dry-run (every tx rolled back) matched the apply run
+exactly. Result: 14 of 15 loads minted a real driver_bills row (13630 minted an honest $0 tracking
+bill -- driver has no active driver_finance.driver_pay_rates card, same pattern as the already-
+closed Rafael/13595 bill; never fabricated a rate). 13622 REFUSED outright (outcome
+refused_no_shortest_miles) -- neither miles_shortest nor miles_practical is captured on that load;
+no bill of any kind was written, honest gap over a fabricated number. 13629/13635/13637 correctly
+carry non-zero deadhead_pay_cents (5472/4992/5424) after AUTH-114's targeted miles_deadhead
+backfill -- hand-verified: 114mi x $0.48 = $54.72, 104mi x $0.48 = $49.92, 113mi x $0.48 = $54.24,
+each exactly matching the live loaded_pay_cents + deadhead_pay_cents = gross_amount_cents
+arithmetic. Total: 14 rows, $10,287.58 gross across all 14 (13622 excluded, correctly zero rows).
+NOTE for the Lead: mdata.drivers.pay_basis is NOT a salaried-vs-per-mile flag -- live schema shows
+it is a miles-measurement enum (udt_name=miles_basis), and every driver in USMCA, including Rafael,
+carries the same value 'short_miles'. No special salaried-exclusion logic was needed or built --
+the correct exclusion already happens naturally via the no-active-rate-card path (same mechanism
+that produced Rafael's own $0/no-lines 13595, untouched by this run).
+GUARD: verify-close-recalculates-bills-from-real-mileage.mjs -- open, tracked separately.
+
+— CC-2
