@@ -3681,6 +3681,20 @@ status: DONE -- executed live 2026-09-28. reinstateDocument(expense) on check #1
 
 — Cursor (R-191 universal unvoid)
 
+## AUTH-120
+issued_at: 2026-09-28T19:00:00.000Z
+scope: Round 197 item 1 — G-16 Check Creator MERGE PROOF. #23037 was closed unmerged by
+  mistake as "superseded by #23040" (G-16 code DID land via that squash, but #23037 itself
+  never got merged_at). Owner requires merge sha + live registry row through the canonical
+  allocator (createCheck), not a raw INSERT. Authorize ONE createCheck→registry→void walk on
+  BoA USMCA FREIGHT using stock next_check_number (currently 1002 after AUTH-117 — never invent
+  mid-sequence). Leaves proof check VOIDED same session (seat-fixtures law). USMCA only.
+action: OWNER_AUTH_ID=AUTH-120 DATABASE_URL=<prod> npx tsx scripts/ops/r197-g16-allocator-registry-proof.ts
+expires_at: 2026-09-29T08:00:00.000Z
+status: OPEN
+
+— Cursor (R-197 G-16 merge proof)
+
 ---
 
 ---

@@ -1,21 +1,14 @@
-# NOW-CURSOR — 2026-09-28 ROUND 191
+# NOW-CURSOR — 2026-09-28 ROUND 197
 
-## CURRENT — NEXT: Resolve fully wired (item 3)
-Items 1–2 closed:
-1. G-16 CHECK CREATOR — DONE (#23040 squash includes G-16 + AUTH-117)
-2. Universal unvoid/reinstate — MERGED #23040 / 4b46e11683 · AUTH-118 LIVE PROOF PASS
-   (reinstateDocument expense 9b5fcc6c → posted → re-void left voided)
+## CURRENT — G-16 CHECK CREATOR MERGE (#23037)
+**WHY #23037 closed unmerged:** Closed by mistake as "superseded by #23040" — not conflict/gate.
+G-16 code already on main via #23040 squash; this PR never got `merged_at`. Reopened; AUTH-120
+live allocator proof; FAST-MERGE.
 
-## ROUND 191 QUEUE
-1. G-16 CHECK CREATOR — DONE
-2. Universal unvoid/reinstate — DONE
-3. **Resolve fully wired** — NEXT (diff / write-off / partial / 1→many)
-4. Bulk accept remaining counterparties (812 unmatched) — report before/after/Resolve
+## QUEUE AFTER G-16 MERGE
+3. Resolve fully wired
+4. Bulk accept remaining counterparties (accept handler only) — before/after/Resolve
 5. G-13 $34,210 no-load · G-14 invoice 87 / load 13604
-6. Guard cleanup from d4985591bb
 
 ## HARD LINE
-BEFORE touching factoring: read AUTH-113. Twins FAC-2026-00091..~00132 already live — do not repost/void/fix.
-
-## COORD
-USMCA only · Never POST Book Load · No QBO write-back · FAST-MERGE
+No factoring without AUTH-113. No cashflow/receivable lag (CC-1 #23043).
