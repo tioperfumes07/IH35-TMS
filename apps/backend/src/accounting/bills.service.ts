@@ -3494,11 +3494,17 @@ export async function voidBillInClientTx(
       )
     : null;
 
+  // R-191 — write BOTH revoked_* AND voided_* in the SAME UPDATE (parity with
+  // voidBillPaymentInClientTx's ACCT-SETL-BILLPAY-VOID-MIRROR). reinstateDocument clears both.
   const updated = await client.query<{ id: string }>(
     `UPDATE accounting.bills
         SET paid_cents = 0, paid_amount = 0, status = 'void',
             revoked_at = now(), revoked_by_user_id = $3::uuid,
-            revoked_reason = $4, updated_at = now()
+            revoked_reason = $4,
+            voided_at = now(),
+            void_reason = $4,
+            voided_by_user_id = $3::uuid,
+            updated_at = now()
       WHERE id = $1::uuid AND operating_company_id = $2::uuid AND revoked_at IS NULL
       RETURNING id::text`,
     [input.billId, input.operatingCompanyId, input.userId, input.reason]

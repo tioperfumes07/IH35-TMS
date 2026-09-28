@@ -14,6 +14,10 @@ import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { recordPostingFlagSkip } from "./posting-flag-skip-audit.js";
 import { pgDateColumnToIsoDay, postVoidReversal } from "./void.service.js";
+import {
+  reinstateDocumentThenVoidReversal,
+  ReinstateDocumentError,
+} from "./reinstate-document.service.js";
 
 const paymentMethodSchema = z.enum([
   "ach",
@@ -814,6 +818,58 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
 
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
     return result.data;
+  });
+
+  // R-191 — universal unvoid counterpart to payment /void.
+  app.post("/api/v1/accounting/payments/:id/unvoid", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const body = voidBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+
+    if (
+      !(await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
+        requireVoidCancelExecutorWired(reply, {
+          role: String(user.role ?? ""),
+          client,
+          permissionKey: "payment.void",
+          operatingCompanyId: query.data.operating_company_id,
+          userUuid: user.uuid,
+        })
+      ))
+    ) {
+      return;
+    }
+
+    try {
+      const result = await reinstateDocumentThenVoidReversal(
+        (fn) =>
+          withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+            await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+              query.data.operating_company_id,
+            ]);
+            return fn(client as never);
+          }),
+        {
+          operatingCompanyId: query.data.operating_company_id,
+          type: "customer_payment",
+          id: params.data.id,
+          reason: body.data.void_reason,
+          actor: { userId: String(user.uuid), role: String(user.role ?? "") },
+        }
+      );
+      return { ok: true, reinstated_at: result.reinstatedAt, reinstated_from_void_je_id: result.reinstatedFromVoidJeId };
+    } catch (error) {
+      if (error instanceof ReinstateDocumentError) {
+        const code = error.code.includes("not_found") ? 404 : error.code.includes("not_void") ? 409 : 400;
+        return reply.code(code).send({ error: error.code, message: error.message });
+      }
+      throw error;
+    }
   });
 }
 

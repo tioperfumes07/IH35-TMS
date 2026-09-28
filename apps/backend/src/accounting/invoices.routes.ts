@@ -16,6 +16,10 @@ import { requireVoidCancelExecutorWired } from "../lib/authz/void-cancel-authz.j
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { buildListSearchClause, invoiceListSearchFields } from "../lib/list-search/build-list-search.js";
 import { cascadeVoidChildren } from "./cascade-void-engine.service.js";
+import {
+  reinstateDocumentThenVoidReversal,
+  ReinstateDocumentError,
+} from "./reinstate-document.service.js";
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
 
@@ -1280,6 +1284,67 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
     return result.data;
   });
+
+  // R-191 — universal unvoid counterpart to invoice /void.
+  app.post(
+    "/api/v1/accounting/invoices/:id/unvoid",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      const params = idParamsSchema.safeParse(req.params ?? {});
+      if (!params.success) return validationError(reply, params.error);
+      const query = companyQuerySchema.safeParse(req.query ?? {});
+      if (!query.success) return validationError(reply, query.error);
+      const body = voidBodySchema.safeParse(req.body ?? {});
+      if (!body.success) return validationError(reply, body.error);
+
+      if (
+        !(await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
+          requireVoidCancelExecutorWired(reply, {
+            role: String(user.role ?? ""),
+            client,
+            permissionKey: "invoice.void",
+            operatingCompanyId: query.data.operating_company_id,
+            userUuid: user.uuid,
+          })
+        ))
+      ) {
+        return;
+      }
+
+      try {
+        const result = await reinstateDocumentThenVoidReversal(
+          (fn) =>
+            withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+              await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+                query.data.operating_company_id,
+              ]);
+              return fn(client as never);
+            }),
+          {
+            operatingCompanyId: query.data.operating_company_id,
+            type: "invoice",
+            id: params.data.id,
+            reason: body.data.reason ?? "reinstated",
+            actor: { userId: String(user.uuid), role: String(user.role ?? "") },
+          }
+        );
+        return {
+          ok: true,
+          reinstated_at: result.reinstatedAt,
+          reinstated_from_void_je_id: result.reinstatedFromVoidJeId,
+          status: result.restoreStatus,
+        };
+      } catch (error) {
+        if (error instanceof ReinstateDocumentError) {
+          const code = error.code.includes("not_found") ? 404 : error.code.includes("not_void") ? 409 : 400;
+          return reply.code(code).send({ error: error.code, message: error.message });
+        }
+        throw error;
+      }
+    }
+  );
 
   // WAVE-H2 reverse drill: load → invoices (same pattern as GET /api/v1/loads/:id/expenses).
   const loadIdParamSchema = z.object({ id: z.string().uuid() });

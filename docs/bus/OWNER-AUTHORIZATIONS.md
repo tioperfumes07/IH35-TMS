@@ -3662,4 +3662,20 @@ status: DONE -- executed live 2026-09-28. createCheck #1001 AMPARTS $1.00 posted
 
 — Cursor (R-191 G-16)
 
+## AUTH-118
+issued_at: 2026-09-28T17:50:00.000Z
+scope: Round 191 item 2 — Universal unvoid / reinstate engine LIVE proof — USMCA only
+  (5c854333-6ea5-4faa-af31-67cb272fef80). Owner order: void path exists with no counterpart;
+  reinstated_* columns already on bills/bill_payments — bring writers to parity. Authorize ONE
+  reinstate→re-void walk through reinstateDocument (expense family) on the AUTH-117 proof check
+  #1001 (expense 9b5fcc6c-6d8c-4e14-83ab-49c79c9132e9), currently voided. Proves the universal
+  dispatcher + stampDocumentReinstated reinstated_* write + Option-1 void of reversing JE.
+  Leaves the proof check VOIDED same session (seat-fixtures law). Does NOT touch factoring
+  (AUTH-113 hard line).
+action: OWNER_AUTH_ID=AUTH-118 DATABASE_URL=<prod> npx tsx scripts/ops/r191-universal-unvoid-live-proof.ts
+expires_at: 2026-09-29T06:00:00.000Z
+status: OPEN
+
+— Cursor (R-191 universal unvoid)
+
 ---

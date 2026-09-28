@@ -647,6 +647,26 @@ prod post is a separate, intentional, owner-authorized action, not a repoint of 
   `--settlement-only` / `--apply`). Confidence bar (non-settlement): exact amount + date≤5 +
   sim≥0.5 + unambiguous both ways + zero variance.
 
+## Active Architectural Decisions — Universal unvoid / reinstate (Cursor, 2026-09-28 R-191)
+
+- **Counterpart to voidDocument.** `reinstateDocument()` in `reinstate-document.service.ts` is the
+  single entry point. Metadata clear via `stampDocumentReinstated()`; reversing JE is voided via
+  existing `voidJournalEntry` (Option-1 reverse-of-reversal) AFTER the stamp tx commits — never
+  re-posts, never invents GL math. Wrapper: `reinstateDocumentThenVoidReversal`.
+- **reinstated_* columns already existed** on bills, bill_payments, payments, credit_memos,
+  prepaid_assets, expenses, invoices, JEs, factoring, loads, fuel, WOs, driver_* (measured Neon
+  2026-09-28). Writers were missing — stamp now covers `REINSTATE_DOCUMENT_FAMILIES` (void seven +
+  bill / bill_payment / customer_payment / credit_memo / prepaid_purchase). Bills also clear
+  `revoked_*` (voidBill now writes voided_* parity with bill_payments).
+- **/unvoid routes** beside every money /void: bills, bill_payments, expenses, invoices, payments,
+  credit_memos, prepaid. Check path already had unvoidCheck (G-16 / AUTH-117).
+- **Factoring refused by default** (`factoring_reinstate_requires_auth`) — AUTH-113 hard line;
+  twins FAC-2026-00091..~00132 already live. Settlement / deduction / liability = not_yet_wired
+  (driver-finance lane).
+- **Guard:** `scripts/verify-universal-reinstate-engine.mjs`.
+- **Period-close prerequisite:** a lock with no reopen path traps the book — this engine is that
+  reopen path for money documents.
+
 ## Active Architectural Decisions — Banking (CC-2, 2026-09-08)
 
 - **Bank reconciliation — cleared_date:** `accounting.payments`/`accounting.bill_payments` carry

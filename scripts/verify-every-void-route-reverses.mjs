@@ -67,6 +67,12 @@ const REVERSAL_WRAPPERS = [
   // check-void.service.ts's voidCheck() (R-154 §6, checks.routes.ts's POST /:id/void) -- calls
   // voidDocument({type:'expense'}) internally, one call site, verified.
   "voidCheck",
+  // R-191 universal unvoid — reinstateDocumentThenVoidReversal stamps reinstated_* then voids the
+  // void's reversing JE via voidJournalEntry (Option-1). reinstateDocument is the in-tx half;
+  // unvoidCheck is the G-16 check-specific path that does the same for expenses.payment_type=check.
+  "reinstateDocumentThenVoidReversal",
+  "reinstateDocument",
+  "unvoidCheck",
 ];
 
 /** All function names that satisfy the reversal requirement. */
