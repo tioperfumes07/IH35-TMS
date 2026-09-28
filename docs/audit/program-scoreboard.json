@@ -1,10 +1,10 @@
 {
-  "healthzSha": "9cd708c",
-  "generated_at": "2026-09-26T01:17:35.590Z",
+  "healthzSha": "40f5806",
+  "generated_at": "2026-09-28T02:45:39.535Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "9cd708c",
+    "deployedSha": "40f5806",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 22787,
-      "title": "FINDING: N/A LANE: DOCS (AUTH-044 CONSUMED -- 2175 parent/sub-parent/10 children live, matches 2100-00-NNN escrow shape)",
+      "number": 22885,
+      "title": "Cursor- Lead census: AUTH-073 OPEN unblock CC-1 live_loads FLAG",
       "state": "merged",
-      "mergedAtCt": "09/25/2026, 08:06 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22787",
-      "sha": "9cd708cbe7",
-      "committedAtIso": "2026-09-25T20:06:10-05:00"
+      "mergedAtCt": "09/27/2026, 09:43 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22885",
+      "sha": "0ff379d919",
+      "committedAtIso": "2026-09-27T21:43:51-05:00"
     },
     {
-      "number": 22786,
-      "title": "FINDING: ACCT-F2026092594 LANE: FINANCIAL (R-185 2175 numbering: mirror live 2100-00-NNN escrow shape per owner ruling)",
+      "number": 22883,
+      "title": "FINDING: ACCT-F2026092701 LANE: FINANCIAL (verify-ldt-4-factoring-money omitted cash_rsv_cents from the factoring reconciliation identity)",
       "state": "merged",
-      "mergedAtCt": "09/25/2026, 08:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22786",
-      "sha": "9184875d9f",
-      "committedAtIso": "2026-09-25T20:04:37-05:00"
+      "mergedAtCt": "09/27/2026, 09:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22883",
+      "sha": "40f58065b5",
+      "committedAtIso": "2026-09-27T21:37:16-05:00"
     },
     {
-      "number": 22784,
-      "title": "FINDING: PURGE-ERA-CLOSURES LANE: GUARD (R-201 -- arms 21/25 asserted the purge-era empty book; mileage filled from driver PDFs under AUTH-045)",
+      "number": 22882,
+      "title": "Cursor- BANK-F211 ROUND 180 Creator complete wires (admin fee 7200, empty rate, accessorials)",
       "state": "merged",
-      "mergedAtCt": "09/25/2026, 07:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22784",
-      "sha": "afde32e44f",
-      "committedAtIso": "2026-09-25T19:47:23-05:00"
+      "mergedAtCt": "09/27/2026, 05:23 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22882",
+      "sha": "e74c04efd0",
+      "committedAtIso": "2026-09-27T17:23:11-05:00"
     },
     {
-      "number": 22783,
-      "title": "FINDING: N/A LANE: DOCS (R-187 G3d DONE -- load 90007 provenance measured, owner-created backfill during an AlwaysTrack outage, not an import artifact)",
+      "number": 22880,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "09/25/2026, 07:42 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22783",
-      "sha": "6e4a1f287a",
-      "committedAtIso": "2026-09-25T19:42:29-05:00"
+      "mergedAtCt": "09/27/2026, 04:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22880",
+      "sha": "3ed4e85150",
+      "committedAtIso": "2026-09-27T21:27:30Z"
     },
     {
-      "number": 22782,
-      "title": "FINDING: N/A LANE: DOCS (R-187 G6 DONE -- 13/13 documents clean; R-185 step 1 held on a real ROUND-181-vs-ROW-259 DB constraint conflict, flagged not guessed)",
+      "number": 22879,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "09/25/2026, 07:40 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22782",
-      "sha": "101259ec9b",
-      "committedAtIso": "2026-09-25T19:40:05-05:00"
+      "mergedAtCt": "09/27/2026, 12:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22879",
+      "sha": "5158a70bc0",
+      "committedAtIso": "2026-09-27T17:04:40Z"
     },
     {
-      "number": 22781,
-      "title": "Claude-1-AUTH-044: R-185 step 1 live creation (2175 account + children)",
+      "number": 22878,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "09/25/2026, 07:35 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22781",
-      "sha": "d3c069f97e",
-      "committedAtIso": "2026-09-25T19:35:12-05:00"
+      "mergedAtCt": "09/27/2026, 07:13 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22878",
+      "sha": "524a5dcafa",
+      "committedAtIso": "2026-09-27T12:13:15Z"
     },
     {
-      "number": 22780,
-      "title": "FINDING: ACCT-F2026092593 LANE: FINANCIAL (R-185 step 1 -- provision the 2175 Driver Reimbursements Payable account + per-driver children)",
+      "number": 22877,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "09/25/2026, 07:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22780",
-      "sha": "895ba3efa3",
-      "committedAtIso": "2026-09-25T19:28:41-05:00"
+      "mergedAtCt": "09/27/2026, 12:27 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22877",
+      "sha": "4318a538d1",
+      "committedAtIso": "2026-09-27T05:27:15Z"
     },
     {
-      "number": 22779,
-      "title": "FINDING: N/A LANE: DOCS (AUTH-043 issued -- R-199 close the 46 AlwaysTrack settlements that tie to their PDFs; header status + PDF period only)",
+      "number": 22876,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "09/25/2026, 07:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22779",
-      "sha": "089ea03d37",
-      "committedAtIso": "2026-09-25T19:21:56-05:00"
+      "mergedAtCt": "09/26/2026, 04:18 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22876",
+      "sha": "65676c6ed5",
+      "committedAtIso": "2026-09-26T16:18:03-05:00"
     },
     {
-      "number": 22778,
-      "title": "FINDING: JE-MEMO-REVERSAL LANE: FINANCIAL (R-197 -- reversal JE memos readable and bounded: posting-engine \"Reversal of <uuid>\" and postVoidReversal memos up to 360 chars)",
+      "number": 22875,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "09/25/2026, 07:03 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22778",
-      "sha": "6830c59c56",
-      "committedAtIso": "2026-09-25T19:03:04-05:00"
+      "mergedAtCt": "09/26/2026, 11:31 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22875",
+      "sha": "053d0808c1",
+      "committedAtIso": "2026-09-26T11:31:15-05:00"
     },
     {
-      "number": 22777,
-      "title": "FINDING: ACCT-F20260925R186 LANE: FINANCIAL (R-186/R-186.1 Settlement Creator — published by the Lead)",
+      "number": 22874,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "09/25/2026, 06:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22777",
-      "sha": "b74c291d4c",
-      "committedAtIso": "2026-09-25T18:57:23-05:00"
+      "mergedAtCt": "09/26/2026, 06:34 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22874",
+      "sha": "1479d54c9e",
+      "committedAtIso": "2026-09-26T06:34:40-05:00"
     }
   ]
 }
