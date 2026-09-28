@@ -51,6 +51,7 @@ const PROOF_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80"; // USMCA
 
 function selftest() {
   const failures = [];
+  // STALE-LITERAL-OK: fixed owner-locked QBO key-list length selftest, not a purge/count window.
   if (REQUIRED_BLOCKED_KEYS.length !== 17) failures.push(`expected exactly 17 required keys, found ${REQUIRED_BLOCKED_KEYS.length}`);
   if (new Set(REQUIRED_BLOCKED_KEYS).size !== REQUIRED_BLOCKED_KEYS.length) failures.push("duplicate key in REQUIRED_BLOCKED_KEYS");
   for (const hardCore of ["QBO_JE_PUSH_ENABLED", "QBO_ENTITY_PUSH_ENABLED", "VOID_QBO_MIRROR_ENABLED"]) {
