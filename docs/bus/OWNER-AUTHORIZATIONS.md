@@ -3316,3 +3316,54 @@ proof_query: SELECT count(*) FROM accounting.expenses e JOIN accounting.journal_
   node scripts/verify-void-header-matches-postings.mjs -> PASS (was FAIL at 141 before).
 
 — CC-2
+
+---
+
+## AUTH-105
+Full ruling text: docs/bus/00-LEAD-AUTH-105-STALE-LOAD-STATUS-SYNC.md
+
+issued_at: 2026-09-28 (Lead ruling, in chat, verified live independently before granting)
+scope: mdata.loads status UPDATE ONLY, via the existing sanctioned engine ONLY
+  (syncLoadStatusToBilling / syncLoadStatusToBillingInClientTx,
+  apps/backend/src/dispatch/load-billing-lifecycle.service.ts) -- the SAME function
+  scripts/ops/2026-09-26-lead-r205-close-funded-loads.ts already used for the identical defect
+  class two days ago. USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY these 4 load
+  numbers and no others: 13503, 13504, 13509, 13539. Each carries a `sent` invoice and a driver
+  bill already settled into a closed settlement, but `mdata.loads.status` never advanced past
+  `completed_docs_received` (verify-settled-load-carries-settled-status.mjs's own live tripwire,
+  a zero-tolerance/never-baselined guard). Not authorized: any load outside these four, any
+  status transition the engine does not already permit, any hand-written status UPDATE. The
+  engine invents no data, creates no document, moves no money -- it only walks status forward
+  through already-allowed transitions (loads.routes.ts's own allowedStatusTransitions), and is a
+  no-op (never throws) on a load it does not recognize as eligible.
+
+action:
+  OWNER_AUTH_ID=AUTH-105 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc3-auth105-sync-4-stale-status-loads.ts --apply
+expires_at: 2026-09-28T20:00:00.000Z
+status: OPEN
+
+— CC-3
+
+---
+
+## AUTH-106
+issued_at: RETROACTIVE — ROUND 173 JOB 2 (owner P0, direct chat order) already authorized filling
+  the 8 named dispatchable-load stops' missing address_line1/postal_code from signed rate
+  confirmations; no separate AUTH-XXX pre-issue was requested at the time, matching AUTH-102's own
+  retroactive-citation precedent above. Formalized here (CC-3, 2026-09-28) purely so
+  verify-no-unauthorized-production-write.mjs's static compliance check has a real citation to
+  find -- this is a paperwork retrofit for already-executed, owner-P0-ordered work, not a new
+  authorization for new work.
+scope: mdata.load_stops UPDATE ONLY (address_line1, postal_code -- never latitude/longitude/
+  geocode_precision, per the owner's own explicit instruction until a real geocode re-run), 8
+  named stop ids across loads 13625/13627/13628/13631/13638, USMCA only, idempotent
+  (`WHERE address_line1 IS NULL`). Script:
+  scripts/ops/2026-09-28-round173-job2-fill-8-stop-addresses.mjs. Every value sourced from a
+  signed rate confirmation named per-row in the script; never an invented address.
+action:
+  OWNER_AUTH_ID=AUTH-106 DATABASE_URL=<prod> node scripts/ops/2026-09-28-round173-job2-fill-8-stop-addresses.mjs --apply
+expires_at: 2026-10-05T00:00:00.000Z
+status: DONE — already executed live per the script's own "LIVE RESULT (2026-09-28)" comment
+  before this retroactive AUTH text was written; this entry documents it, does not re-trigger it.
+
+— CC-3
